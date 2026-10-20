@@ -2,6 +2,7 @@
 // Session phases: setup AutomaticSpawnBoundary; teardown —.
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using EntityStates;
@@ -12,6 +13,110 @@ using UnityEngine;
 // Original Unity callbacks; the harness only observes and supplies diagnostic input.
 public sealed partial class PortSession
 {
+    internal static void CaptureAutomaticSpawnCleanup(Action action, ref Exception failure)
+    {
+        try
+        {
+            action();
+        }
+        catch (Exception error)
+        {
+            failure = failure == null ? error : new AggregateException(failure, error);
+        }
+    }
+
+    internal static void AcquireAutomaticSpawnCallback(Action subscribe, ref bool attempted)
+    {
+        // Mark before invoking the event add accessor: if an accessor mutates then throws,
+        // the finally path still makes a best-effort idempotent unsubscribe.
+        attempted = true;
+        subscribe();
+    }
+
+    internal static void ReleaseAutomaticSpawnCallback(Action unsubscribe, bool attempted, ref Exception failure)
+    {
+        if (attempted)
+            CaptureAutomaticSpawnCleanup(unsubscribe, ref failure);
+    }
+
+    internal static EntityStateMachine[] CaptureCanonicalSkillMachines(SkillLocator skills, Action<bool, string> check)
+    {
+        check(skills && skills.primary && skills.secondary && skills.utility && skills.special,
+              "Original playable body is missing a canonical skill slot before spawn callbacks");
+        var captured =
+            new[] { skills.primary.stateMachine, skills.secondary.stateMachine, skills.utility.stateMachine, skills.special.stateMachine };
+        check(captured.Length == 4 && captured.All(stateMachine => stateMachine),
+              "Original playable body is missing a canonical skill state machine before spawn callbacks");
+        return captured;
+    }
+
+    internal static bool ContainsStateMachineReference(EntityStateMachine[] candidates, EntityStateMachine sought)
+    {
+        if (candidates == null)
+            return false;
+        foreach (var candidate in candidates)
+            if (ReferenceEquals(candidate, sought))
+                return true;
+        return false;
+    }
+
+    internal static Exception DestroyOwnedPlayableSkillMachines(EntityStateMachine[] captured, EntityStateMachine[] currentCanonical,
+                                                                EntityStateMachine[] currentRootMachines, GameObject ownerObject,
+                                                                EntityStateMachine bodyMachine, bool ownerAlive,
+                                                                bool expectedOwnerDestruction, Action<EntityStateMachine> destroy,
+                                                                out int unavailable)
+    {
+        unavailable = 0;
+        // Unity's native body destruction already invokes child OnDestroy callbacks. Treat
+        // fake-null children as complete only when the owner recorded its native destruction.
+        if (!ownerAlive)
+            return expectedOwnerDestruction
+                       ? null
+                       : new InvalidOperationException("Playable body disappeared without recorded native destruction");
+        if (!ownerObject || captured == null || currentCanonical == null || currentRootMachines == null || destroy == null)
+        {
+            unavailable++;
+            return new InvalidOperationException("Playable skill-machine cleanup lease is incomplete for a live body");
+        }
+
+        int invalidReferences = 0;
+        var merged = new List<EntityStateMachine>();
+        Action<EntityStateMachine> include = stateMachine =>
+        {
+            if (ReferenceEquals(stateMachine, bodyMachine) || ContainsStateMachineReference(merged.ToArray(), stateMachine))
+                return;
+            if (!stateMachine || stateMachine.gameObject != ownerObject ||
+                !ContainsStateMachineReference(currentRootMachines, stateMachine))
+            {
+                invalidReferences++;
+                return;
+            }
+            merged.Add(stateMachine);
+        };
+        foreach (var stateMachine in captured)
+            include(stateMachine);
+        foreach (var stateMachine in currentCanonical)
+            include(stateMachine);
+
+        unavailable = invalidReferences;
+        Exception failure =
+            unavailable == 0
+                ? null
+                : new InvalidOperationException("Live playable body lost or replaced a root-owned canonical skill state machine");
+        foreach (var stateMachine in merged)
+        {
+            try
+            {
+                destroy(stateMachine);
+            }
+            catch (Exception error)
+            {
+                failure = failure == null ? error : new AggregateException(failure, error);
+            }
+        }
+        return failure;
+    }
+
     internal static int RestoreCapturedEnabledRootStateMachines(EntityStateMachine[] captured, bool integratedWorld)
     {
         if (!integratedWorld || captured == null)
@@ -39,8 +144,17 @@ public sealed partial class PortSession
         var solver = body.GetComponent<KinematicCharacterMotor>();
         var input = body.inputBank;
         var spawnedMaster = body.master;
-        var sourceEnabledRootStateMachines =
-            body.GetComponents<EntityStateMachine>().Where(stateMachine => stateMachine && stateMachine.enabled).ToArray();
+        var rootEntityStateMachines = body.GetComponents<EntityStateMachine>();
+        var sourceEnabledRootStateMachines = rootEntityStateMachines.Where(stateMachine => stateMachine && stateMachine.enabled).ToArray();
+        EntityStateMachine[] playableSkillMachines = null;
+        if (IsPlayableSpine())
+        {
+            playableSkillMachines = CaptureCanonicalSkillMachines(body.skillLocator, Check);
+            Check(playableSkillMachines.All(stateMachine => stateMachine.gameObject == body.gameObject &&
+                                                            ContainsStateMachineReference(rootEntityStateMachines, stateMachine)),
+                  "Original playable skill slots must bind to state machines on their owned body root");
+        }
+        Exception automaticSpawnCleanupFailure = null;
         bool automaticBody = IsAutomaticBody(), automaticDirection = IsAutomaticDirection(), automaticModel = IsAutomaticModel();
         var direction = body.GetComponent<CharacterDirection>();
         if (automaticDirection)
@@ -63,7 +177,9 @@ public sealed partial class PortSession
             if (b == body)
                 r.motorStartEvents++;
         };
-        motor.onMotorStart += observed;
+        bool observedSubscriptionAttempted = false, masterSubscriptionAttempted = false, bodySubscriptionAttempted = false,
+             statsSubscriptionAttempted = false;
+        bool automaticSpawnSetupStarted = false;
         Action<CharacterBody> masterStarted =
                                   b =>
         {
@@ -81,14 +197,17 @@ public sealed partial class PortSession
             if (b == body)
                 r.automaticBodyStatsEvents++;
         };
-        if (automaticBody)
-        {
-            body.master.onBodyStart += masterStarted;
-            CharacterBody.onBodyStartGlobal += bodyStarted;
-            body.onRecalculateStats += stats;
-        }
         try
         {
+            // Enclose acquisition itself so partial subscription setup is always unwound.
+            AcquireAutomaticSpawnCallback(() => motor.onMotorStart += observed, ref observedSubscriptionAttempted);
+            if (automaticBody)
+            {
+                AcquireAutomaticSpawnCallback(() => spawnedMaster.onBodyStart += masterStarted, ref masterSubscriptionAttempted);
+                AcquireAutomaticSpawnCallback(() => CharacterBody.onBodyStartGlobal += bodyStarted, ref bodySubscriptionAttempted);
+                AcquireAutomaticSpawnCallback(() => body.onRecalculateStats += stats, ref statsSubscriptionAttempted);
+            }
+            automaticSpawnSetupStarted = true;
             // Body-enabled probes use only Unity Start/Update/FixedUpdate; other root callbacks remain inactive.
             foreach (var component in body.GetComponents<MonoBehaviour>())
                 component.enabled = false;
@@ -351,44 +470,86 @@ public sealed partial class PortSession
         }
         finally
         {
-            if (!r.sourceStageLifecycleRecoveryRequired)
+            // These observer leases are always released, including the source-recovery path.
+            ReleaseAutomaticSpawnCallback(() => motor.onMotorStart -= observed, observedSubscriptionAttempted,
+                                          ref automaticSpawnCleanupFailure);
+            if (automaticBody)
+            {
+                ReleaseAutomaticSpawnCallback(
+                    () =>
+                    {
+                        if (spawnedMaster)
+                            spawnedMaster.onBodyStart -= masterStarted;
+                    },
+                    masterSubscriptionAttempted, ref automaticSpawnCleanupFailure);
+                ReleaseAutomaticSpawnCallback(() => CharacterBody.onBodyStartGlobal -= bodyStarted, bodySubscriptionAttempted,
+                                              ref automaticSpawnCleanupFailure);
+                ReleaseAutomaticSpawnCallback(
+                    () =>
+                    {
+                        if (body)
+                            body.onRecalculateStats -= stats;
+                    },
+                    statsSubscriptionAttempted, ref automaticSpawnCleanupFailure);
+            }
+            if (!r.sourceStageLifecycleRecoveryRequired && automaticSpawnSetupStarted)
             {
                 if (body)
-                    body.gameObject.SetActive(false);
-                if (!ReferenceEquals(motor, null))
-                    motor.onMotorStart -= observed;
+                    CaptureAutomaticSpawnCleanup(() => body.gameObject.SetActive(false), ref automaticSpawnCleanupFailure);
                 if (input)
-                    input.moveVector = Vector3.zero;
-                if (automaticBody)
+                    CaptureAutomaticSpawnCleanup(() => input.moveVector = Vector3.zero, ref automaticSpawnCleanupFailure);
+                // Capture source identities before any yield: cleanup must not rediscover canonical slots
+                // through a body whose native lifecycle may already be unwinding.
+                if (playableSkillMachines != null)
                 {
-                    if (spawnedMaster)
-                        spawnedMaster.onBodyStart -= masterStarted;
-                    CharacterBody.onBodyStartGlobal -= bodyStarted;
-                    if (!ReferenceEquals(body, null))
-                        body.onRecalculateStats -= stats;
+                    // A completed native body-destruction path owns child callbacks already.
+                    // Otherwise inspect the current canonical binding as well as entry identities:
+                    // native skill overrides can remap a slot while this coroutine is suspended.
+                    bool ownerAlive = body;
+                    bool expectedOwnerDestruction = !ownerAlive && r.playerDefeat != null && r.playerDefeat.bodyDestroyed;
+                    EntityStateMachine[] currentCanonical = null;
+                    EntityStateMachine[] currentRootMachines = null;
+                    if (ownerAlive)
+                    {
+                        CaptureAutomaticSpawnCleanup(
+                            () =>
+                            {
+                                currentRootMachines = body.GetComponents<EntityStateMachine>();
+                                currentCanonical = CaptureCanonicalSkillMachines(body.skillLocator, Check);
+                            },
+                            ref automaticSpawnCleanupFailure);
+                    }
+                    int unavailable;
+                    var skillCleanupError = DestroyOwnedPlayableSkillMachines(
+                        playableSkillMachines, currentCanonical, currentRootMachines, body ? body.gameObject : null, machine, ownerAlive,
+                        expectedOwnerDestruction, weapon => Call(weapon, "OnDestroy"), out unavailable);
+                    if (skillCleanupError != null)
+                        CaptureAutomaticSpawnCleanup(() =>
+                                                     { throw skillCleanupError; },
+                                                     ref automaticSpawnCleanupFailure);
                 }
-                // Explicit original exit keeps measured buff/material dependencies alive during teardown.
-                if (body && IsPlayableSpine())
-                    foreach (var weapon in new[] { body.skillLocator.primary.stateMachine, body.skillLocator.secondary.stateMachine,
-                                                   body.skillLocator.utility.stateMachine, body.skillLocator.special.stateMachine }
-                                 .Distinct()
-                                 .Where(x => x != machine))
-                        if (weapon)
-                            Call(weapon, "OnDestroy");
                 if (machine)
-                    Call(machine, "OnDestroy");
-                Physics.gravity = savedGravity;
+                    CaptureAutomaticSpawnCleanup(() => Call(machine, "OnDestroy"), ref automaticSpawnCleanupFailure);
+                CaptureAutomaticSpawnCleanup(() => Physics.gravity = savedGravity, ref automaticSpawnCleanupFailure);
                 if (solver)
                 {
-                    solver.CollidableLayers = savedLayers;
-                    solver.SetGroundSolvingActivation(savedSolving);
+                    CaptureAutomaticSpawnCleanup(() => solver.CollidableLayers = savedLayers, ref automaticSpawnCleanupFailure);
+                    CaptureAutomaticSpawnCleanup(() => solver.SetGroundSolvingActivation(savedSolving), ref automaticSpawnCleanupFailure);
                 }
                 if ((restartRequested || (r.playerDefeat != null && r.playerDefeat.bodyDestroyed)) && ownedDetachedModel)
-                    Destroy(ownedDetachedModel);
+                    CaptureAutomaticSpawnCleanup(() => Destroy(ownedDetachedModel), ref automaticSpawnCleanupFailure);
+            }
+            if (automaticSpawnCleanupFailure != null)
+            {
+                r.success = false;
+                r.cleanup = false;
+                r.error += " Automatic spawn cleanup: " + automaticSpawnCleanupFailure;
             }
         }
         if (r.sourceStageLifecycleRecoveryRequired)
             yield break;
+        if (automaticSpawnCleanupFailure != null)
+            Check(false, "Automatic spawn cleanup failed after preserving the primary iterator failure: " + automaticSpawnCleanupFailure);
         Check(!automaticBody || !CharacterBody.readOnlyInstancesList.Contains(body), "Original automatic body deregistration");
         Check(machine.state == null && !KinematicCharacterSystem.CharacterMotors_Important.Contains(solver),
               "Automatic state exit/solver unregistration");

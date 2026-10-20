@@ -460,19 +460,10 @@ public sealed partial class PortSession
                               "Original Stage prefab contract changed");
             if (coordinator.r.sirenSourceEntryDiagnosticAttempt && coordinator.stageGeometryScene.name == SirenEncounterContract.SceneName)
             {
-                coordinator.Check(sirenSourceEntry == null && sirenEncounter == null && coordinator.stageSourceObjects &&
-                                      !coordinator.r.diagnosticSirenEggInput,
-                                  "Siren source-entry attempt requires a fresh source owner and Siren egg input OFF");
-                // Both owner preflight and ID-11 activation require the exact current
-                // temporary Stage. Retain the owner before its native mutations; this
-                // still precedes the one original Run scene callback.
-                coordinator.Check(ReferenceEquals(Stage.instance, coordinator.objectiveStage),
-                                  "Siren source preflight requires the exact temporary Stage owner");
-                sirenSourceEntry = SirenSourceEntrySession.Prepare(
-                    coordinator.stageGeometryScene, selected => coordinator.r.stageProgress.sirenSourceEntries.Add(selected));
-                coordinator.RetainNativeLifecycleObject(sirenSourceEntry);
-                coordinator.Check(ReferenceEquals(Stage.instance, coordinator.objectiveStage),
-                                  "Siren source activation requires the exact temporary Stage owner");
+                coordinator.Check(sirenSourceEntry != null && coordinator.stageSourceObjects &&
+                                      ReferenceEquals(Stage.instance, coordinator.objectiveStage) && coordinator.automaticDirectorHost &&
+                                      coordinator.automaticDirectorHost.activeSelf && !coordinator.r.diagnosticSirenEggInput,
+                                  "Siren source entry requires its preflighted owner and exact temporary Stage");
                 sirenSourceEntry.ActivateAndSpawnController();
             }
             var prior = coordinator.objectiveStageHost;
@@ -772,6 +763,7 @@ public sealed partial class PortSession
                               "Configured manual Moon boundary refused further original stage transport");
             var next = integratedStageConfig.integratedStages.SingleOrDefault(x => x.name == coordinator.pendingStage);
             coordinator.Check(next != null, "Original next destination has no accepted converted content: " + coordinator.pendingStage);
+            bool sirenSourceEntryAttempt = coordinator.r.sirenSourceEntryDiagnosticAttempt && next.name == SirenEncounterContract.SceneName;
             var report = coordinator.r.stageProgress;
             var run = Run.instance;
             var body = coordinator.worldPlayer;
@@ -1028,12 +1020,15 @@ public sealed partial class PortSession
                                                              else
                                                                  coordinator.RecordDirectorActor(obj, coordinator.worldPlayer);
                                                          });
-            coordinator.automaticDirectorHost.SetActive(true);
-            coordinator.Check(
-                DirectorCore.instance == coordinator.automaticDirectorHost.GetComponent<DirectorCore>() &&
-                    coordinator.rewardDirector.enabled && CombatDirector.instancesList.Contains(coordinator.rewardDirector) &&
-                    (!coordinator.stageSourceObjects || CombatDirector.instancesList.Contains(coordinator.sourceSlowDirector)),
-                "Next-stage original director missing");
+            if (!sirenSourceEntryAttempt)
+            {
+                coordinator.automaticDirectorHost.SetActive(true);
+                coordinator.Check(
+                    DirectorCore.instance == coordinator.automaticDirectorHost.GetComponent<DirectorCore>() &&
+                        coordinator.rewardDirector.enabled && CombatDirector.instancesList.Contains(coordinator.rewardDirector) &&
+                        (!coordinator.stageSourceObjects || CombatDirector.instancesList.Contains(coordinator.sourceSlowDirector)),
+                    "Next-stage original director missing");
+            }
             coordinator.worldObjective = 0;
             coordinator.stagePickupBaseline = coordinator.r.world.pickupMessages;
             coordinator.worldLastPress = -1;
@@ -1088,8 +1083,24 @@ public sealed partial class PortSession
                         yield return objective.Current;
                     coordinator.PrepareWorldCommerce(integratedStageConfig, origin);
                 }
-                bool observeSirenTransport = coordinator.r.sirenSourceEntryDiagnosticAttempt &&
-                                             next.name == SirenEncounterContract.SceneName;
+                bool observeSirenTransport = sirenSourceEntryAttempt;
+                if (observeSirenTransport)
+                {
+                    coordinator.Check(coordinator.stageSourceObjects && ReferenceEquals(Stage.instance, coordinator.objectiveStage) &&
+                                          coordinator.automaticDirectorHost && !coordinator.automaticDirectorHost.activeSelf &&
+                                          sirenSourceEntry == null && sirenEncounter == null && !coordinator.r.diagnosticSirenEggInput,
+                                      "Siren source preflight must precede the owned Director activation");
+                    sirenSourceEntry = SirenSourceEntrySession.Prepare(
+                        coordinator.stageGeometryScene, selected => coordinator.r.stageProgress.sirenSourceEntries.Add(selected));
+                    coordinator.RetainNativeLifecycleObject(sirenSourceEntry);
+                    coordinator.automaticDirectorHost.SetActive(true);
+                    coordinator.Check(DirectorCore.instance == coordinator.automaticDirectorHost.GetComponent<DirectorCore>() &&
+                                          coordinator.rewardDirector.enabled &&
+                                          CombatDirector.instancesList.Contains(coordinator.rewardDirector) &&
+                                          CombatDirector.instancesList.Contains(coordinator.sourceSlowDirector),
+                                      "Siren source Director activation did not complete under its retained owner");
+                    sirenSourceEntry.RecordOwnedDirectorActivation(coordinator.automaticDirectorHost);
+                }
                 var population = coordinator.PopulateWholeStage();
                 if (observeSirenTransport)
                     population = ObserveSirenTransportRoutine("PopulateWholeStage", population);

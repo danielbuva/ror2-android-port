@@ -41,11 +41,13 @@ class AutomaticSpawnRestorationTests(unittest.TestCase):
 
     def test_capture_call_release_and_strict_count_contract(self) -> None:
         source = " ".join(self.candidate.split())
-        snapshot = "var sourceEnabledRootStateMachines = body.GetComponents<EntityStateMachine>()"
+        roots = "var rootEntityStateMachines = body.GetComponents<EntityStateMachine>();"
+        snapshot = "var sourceEnabledRootStateMachines = rootEntityStateMachines.Where("
         disable = "foreach (var component in body.GetComponents<MonoBehaviour>()) component.enabled = false;"
         selection = "if (IsPlayableSpine())"
         call = "RestoreCapturedEnabledRootStateMachines(sourceEnabledRootStateMachines, cfg.integratedWorld)"
         capture_filter = ".Where(stateMachine => stateMachine && stateMachine.enabled).ToArray()"
+        self.assertLess(source.index(roots), source.index(snapshot))
         self.assertLess(source.index(snapshot), source.index(disable))
         self.assertIn(capture_filter, source)
         self.assertLess(source.index(selection), source.index(call))

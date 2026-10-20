@@ -123,6 +123,7 @@ public sealed class SirenSourceEntrySession : IDisposable
         public bool activeBefore, registeredBefore, expectedActive, expectedKnown;
     }
 
+    const uint DirectorSceneId = 2;
     const uint ControllerSceneId = 11;
     static readonly int[] GroupWidths = { 1, 2, 4, 3, 32 };
     static readonly int[] GroupMinimums = { 0, 1, 2, 1, 12 };
@@ -146,6 +147,9 @@ public sealed class SirenSourceEntrySession : IDisposable
     readonly List<SourceIdentityState> foreignSourceIdentities = new List<SourceIdentityState>();
     readonly List<ToggleTargetState> toggleTargetStates = new List<ToggleTargetState>();
     readonly HashSet<uint> networkIdsBefore = new HashSet<uint>();
+    GameObject directorRoot;
+    NetworkIdentity directorIdentity;
+    bool directorRootActivationExpected;
     SceneObjectToggleGroup controller;
     NetworkIdentity controllerIdentity;
     GameObject controllerObject;
@@ -267,7 +271,16 @@ public sealed class SirenSourceEntrySession : IDisposable
                         ", expectedName='" + expectedName + "', actualName='" + actualName + "', expectedActiveSelf=" + expectedActiveSelf +
                         ", actualActiveSelf=" + actualActiveSelf + ", registered=" + registered);
             bool nativeToggleTarget = toggleTargetStates.Any(target => ReferenceEquals(target.target, matches[0].gameObject));
-            if (sceneId != ControllerSceneId && !nativeToggleTarget)
+            if (sceneId == DirectorSceneId)
+            {
+                directorRoot = matches[0].gameObject;
+                directorIdentity = matches[0];
+                Require(directorRoot.name == "Director" && directorRoot.scene == scene && !directorRoot.activeSelf &&
+                            directorRoot.GetComponent<SceneDirector>() && ReferenceEquals(directorIdentity.gameObject, directorRoot),
+                        "Receipt-bound ID-2 Director is not the exact inactive source root before its owned activation");
+                VerifyOwnedDirectorIdentityState();
+            }
+            if (sceneId != ControllerSceneId && sceneId != DirectorSceneId && !nativeToggleTarget)
                 foreignSourceIdentities.Add(new SourceIdentityState { identity = matches[0], activeSelf = matches[0].gameObject.activeSelf });
         }
 
@@ -315,8 +328,36 @@ public sealed class SirenSourceEntrySession : IDisposable
         report.status = "source-contract-preflight-passed";
     }
 
+    void VerifyOwnedDirectorIdentityState()
+    {
+        var current = scene.GetRootGameObjects()
+                          .SelectMany(root => root.GetComponentsInChildren<NetworkIdentity>(true))
+                          .Where(identity => identity && identity.sceneId.Value == DirectorSceneId)
+                          .ToArray();
+        var actualIdentity = current.Length == 1 ? current[0] : null;
+        var actualRoot = actualIdentity ? actualIdentity.gameObject : null;
+        bool active = actualRoot && actualRoot.activeSelf;
+        bool registered = actualIdentity && IsRegistered(actualIdentity);
+        Require(current.Length == 1 && actualRoot && actualIdentity && actualRoot.scene == scene &&
+                    ReferenceEquals(actualIdentity.gameObject, actualRoot) && actualRoot.name == "Director" &&
+                    SirenSourceEntryContract.MatchesOwnedSourceDirectorState(directorRoot, actualRoot, directorIdentity, actualIdentity,
+                                                                             active, directorRootActivationExpected, registered),
+                "Exact source ID-2 Director changed outside its recorded AutomaticDirectorSession activation");
+    }
+
+    public void RecordOwnedDirectorActivation(GameObject root)
+    {
+        Require(!directorRootActivationExpected && ReferenceEquals(root, directorRoot) && root && directorIdentity && root.activeSelf &&
+                    root.scene == scene && ReferenceEquals(directorIdentity.gameObject, root) &&
+                    directorIdentity.sceneId.Value == DirectorSceneId && !IsRegistered(directorIdentity),
+                "AutomaticDirectorSession did not activate the exact unregistered receipt-bound ID-2 Director");
+        directorRootActivationExpected = true;
+        VerifyOwnedDirectorIdentityState();
+    }
+
     public void ActivateAndSpawnController()
     {
+        VerifyOwnedDirectorIdentityState();
         Require(!activated && !complete && NetworkServer.active && Run.instance && Stage.instance &&
                     SceneManager.GetActiveScene() == scene && SirenSourceEntryContract.IsSameScene(controllerObject.scene, scene),
                 "Siren source controller activation is out of order or source ownership changed");
@@ -403,6 +444,7 @@ public sealed class SirenSourceEntrySession : IDisposable
             if (target.identity)
                 Require(IsRegistered(target.identity) == target.registeredBefore,
                         "Native toggle changed registration of a source target identity");
+        VerifyOwnedDirectorIdentityState();
         foreach (var state in foreignSourceIdentities)
             Require(state.identity && state.identity.gameObject.activeSelf == state.activeSelf && !IsRegistered(state.identity),
                     "Complete native source toggle multicast changed a foreign scene identity (including ID 10/disabled MapZones)");
@@ -900,6 +942,14 @@ public sealed class SirenSourceEntrySpawnWitness : MonoBehaviour
 
 public static class SirenSourceEntryContract
 {
+    internal static bool MatchesOwnedSourceDirectorState(object capturedRoot, object currentRoot, object capturedIdentity,
+                                                         object currentIdentity, bool activeSelf, bool expectedActiveSelf, bool registered)
+    {
+        return !ReferenceEquals(capturedRoot, null) && ReferenceEquals(capturedRoot, currentRoot) &&
+               !ReferenceEquals(capturedIdentity, null) && ReferenceEquals(capturedIdentity, currentIdentity) &&
+               activeSelf == expectedActiveSelf && !registered;
+    }
+
     public static bool IsExactBijection<TSpawner, TEgg>(IList<TSpawner> allSpawners, IList<TSpawner> selectedSpawners,
                                                         IList<TEgg> eggRoots, IList<uint> networkIds, IList<bool> observed,
                                                         int expectedCount)

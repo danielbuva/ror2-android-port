@@ -15918,3 +15918,83 @@ negative-control-r2.stdout,negative-root-acceptance.json,global-event.stdout,
 global-root-acceptance.json}; codex-idle-displays-post-r6-root-r1.json.
 Those private receipts reference the complete per-device evidence. Banks,
 managed/native binaries, audio captures and raw process records stay ignored.
+
+
+## J792 — Retain exact stage and playable-body ownership before native callbacks
+
+Date: 2026-10-20. Hypothesis: the fresh Siren refusal is caused by the
+Android Director activation order. Separately, J790's visible MUL-T cleanup
+exception can hide the primary iterator failure; cleanup must retain exact
+entry identities and independently release its observer leases.
+
+The source-bound Siren retry on J790's accepted APK
+`01654e8187c378e6b26dd6033aa2fac9ce6b7d1b140cb98bf8a0619ea50bf63c`
+completes two exits and reaches Ship Graveyard while transporting. At
+298.143555 s of world time, BeginOriginalStage refuses ID 2: exactly one
+Director matches the expected name and remains unregistered, but activeSelf
+is true rather than the receipt's false. Host duration is 469.737 s. Applied
+runs remain 13, egg input stays off and source recovery is false. The selector
+is removed, the owned app stops and the display sleeps without cleanup errors.
+No native source entry, cohort or encounter is accepted. Final-report SHA-256:
+`55c7ea08c90927817037446f9f32220307c98cc30c037df9ed9d77ef761c0281`;
+summary: `7590d7379a7a2fb14fdad536ab6de827eb60ac3c0cac47438d6f0cdaf9b68411`.
+Root independently checks the frozen guard/APK bindings, operands and cleanup.
+
+Transport currently activates its owned source Director before receipt
+preflight. Only the explicit Siren branch now defers that activation until
+after objective/commerce setup and strict full preflight under the exact
+temporary Stage. It retains the entry owner, activates through the existing
+Director owner, checks native Director membership, then records a lease for
+that same ID-2 root and identity. Later checks require unchanged references,
+the recorded active state and no registration. This is not a relaxed receipt
+or general foreign-identity exemption. ID 11 activates under the same temporary
+Stage before its release, the one original Run callback and the complete
+native multicast. Default stages, ID 10, egg input and manual-Moon refusal
+remain unchanged. Final review restores the explicit temporary-Stage reference
+check immediately before preflight as well as before ID-11 activation.
+
+AutomaticSpawnBoundary now captures canonical skill-machine identities before
+yielding. For a live body, cleanup merges the entry/current canonical bindings
+and admits only machines on that exact owned root, preserving native remapping
+such as Weapon2. Only a recorded native body destruction permits already-destroyed
+children; unknown disappearance still fails. Each counter observer marks its
+release lease before event-add inside the protected try. Independent releases
+run even when source recovery retains the native world; destructive cleanup
+remains guarded. Cleanup faults are recorded without replacing an exception
+already unwinding. These changes do not establish the cause or repair of
+J790's original 18 s primary failure. Fresh default-kit first-error evidence and
+a separate J753-like native destroyed-body regression remain necessary.
+
+Prior art: consult community-prior-art and re-inspect pinned Starstorm2's
+SS2VanillaSurvivor at a9a4badd, which explicitly maintains named state-machine
+network/death/hurt relationships. The accepted prefab still governs those
+relationships; none is rewritten here. The preserved HLAPI SpawnObjects
+validates source identities before activation/spawn, supporting strict preflight
+rather than a blanket activation waiver. J753 and J773 supply the accepted
+native body-destruction and static-observer lifetime comparators. No protected
+or community implementation is copied into tracked source.
+
+Independent reviews pass both owner changes. Public host tests execute the
+production identity/cleanup helpers with synthetic objects, including partial
+event-add failure, primary exception preservation, recovery, destroyed bodies,
+remapped slots and foreign/missing identities. Existing source-order assertions
+are updated for the new capture location and handoff. The final suite passes
+all 1,133 tests in 31.064 s, zero skips, with 409 recorded source inputs and
+HEAD unchanged. Offline compilation passes 106 runtime plus four support
+sources and 264 exact references, zero errors and no source/reference/compiler
+or HEAD drift; assembly SHA-256:
+`be080b807e15f6171cdb1c6435bc5af7625de322be4c904fb6b52a504a3431a1`.
+Doctor passes. These are host/source gates only; the latest accepted and
+installed game APK remains 01654e81 until both new default device checks pass.
+
+Evidence: work/experiments/siren-route/20261020T104309.771469Z/;
+work/coordination/codex-0165-siren-root-validation.json;
+siren-0165-active-director-triage/ and root-final-review/;
+toolbot-0165-default-first-failure/r3/ and independent-review/;
+codex-director-cleanup-format-root-r1/;
+codex-director-cleanup-full-host-root-r3/;
+codex-director-cleanup-owner-compile-r2/;
+codex-director-cleanup-doctor-root-r1/.
+Raw source, logs and identity receipts stay ignored. Rebuild source staging
+must replay all three changed existing runtime owners; the parallel rebuild
+track remains separate.
