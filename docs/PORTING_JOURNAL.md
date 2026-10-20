@@ -17386,3 +17386,120 @@ GUID, required local input or build membership changes in this acceptance
 checkpoint. Adopted Nova retains J809 and internal Nova retains J788; preserve
 both and all listed executable rollbacks. Isolated audio remains unavailable
 in the game and has separate acceptance gates.
+
+## J814 — Pass a stock MUL-T retry and a separate Commando loss/restart
+
+Date: 2026-10-20. Hypothesis: J813's default-qualified diagnostic player can
+capture J811's shared-input NRE if it recurs, while the separate loss/restart
+contract can requalify its ordinary lifecycle without inferring Toolbot teardown.
+APK remains `91b0b7c93e03772d5eafb26e059a3f942be7f28563d2a07b98607f43710c7e50`
+from b68eb8e3; build and both default controls are J813.
+
+The Thor stock MUL-T retry passes four canonical native callbacks with all
+five live skill components valid and matching the selected native loadout.
+The runner records no first failure, missing callback or classified runtime
+error. World input reaches 306 motion samples and 3,478 automatic frames;
+combat observations include eighteen projectiles and five player-owned damage
+facts totaling 124.079987. These are bounded output observations, not complete
+ability semantics. Thirty-one temporary primary-state-unavailable observations
+remain separate from the final available state. The new first-NRE DTO remains
+empty: no ObjectiveCombatInput NRE was captured. This diagnostic-only source
+change does not establish a causal fix for J811's earlier failure. The final
+world and observer remain active, so the four-slot check does not accept
+Toolbot session teardown. Root views the first-world capture as composition
+evidence only; no matched PC visual or sustained frame-rate claim follows.
+
+The separately selected Commando loss/restart check passes on the same APK.
+The first world records a native death event, Commando DeathState, destroyed
+body, corpse and death-effect witnesses. One process reaches a healthy second
+world with fresh body/master identities and local authority. The named
+combat-output lifecycle validates attached, detached/cleaned, then newly
+attached states. Completed world/stage cleaned flags are true; active-client
+removed/cleaned flags remain false, although client-scene cleanup and master
+local-authority removal are true. Do not widen the observer contract to every
+cleanup lease. Profile counters stay zero across all three snapshots; the
+diagnostic input attempt excludes assisted discoveries from grants.
+
+The stricter nativeFirstStageLifecycleDiagnosticAttempt is false throughout,
+and sourceStageLifecycleRecoveryRequired is false with generation zero. Its
+recovery path is unexercised. This is a first-stage diagnostic-input loss and
+same-process restart, not a stage clear, unassisted run, Toolbot teardown or
+special recovery acceptance. No settings/abandon request is sent. Host reads
+place completed-cleanup validation just after the healthy second-world read;
+that ordering does not describe native event chronology. The current-process
+log has no NRE, fatal exception or ANR match; catalog, collider and scene-lookup
+warnings remain in the raw evidence. Both host finally paths preserve owned
+APK identity, remove their selector, stop the app and sleep both OLEDs.
+
+Evidence: work/experiments/survivor-check/20261020T171652.103628Z/Toolbot/;
+selected-device session-cleanup run `20261020T172141.293219Z`;
+work/coordination/{codex-91b0-toolbot-root-r1/,codex-91b0-native-loss-root-r1/,
+toolbot-91b0-result-triage/,native-loss-91b0-result-triage/}. MUL-T result/report:
+`d05acdb0d4655115599c364de323d9bd3aa95a4dba0b9464b30d777feb189a81` /
+`26d384c2bad02ce9352e9a8acebbdaed1f5f8a651018b362ac32b1d28af166b3`.
+Loss/restart result:
+`7ef4a8cc8414b6bf95878d268850a23eb9d381759f43351b3fab94d21c18ecc0`;
+completed-session report:
+`8df8f11244c67dd7ed1dc7a270e73bd347129ee448174f2f80130cc32fe049a6`;
+restarted report:
+`9f276225444dd5b4878851b8220833dfe077139165c5377e4c272373fa132484`.
+Root status receipts:
+`c12ed4da87a0b11a5feb2dd8a3163eb91eb5241cabebedd74d4f8708159a7514` /
+`1f800a3d792d2f95e36b5692dd07c358e8f91d0e92bf272ca888b207741bc6a4`.
+Prior art and replay scope remain J811/J813; no source or build-input change.
+
+## J815 — Add bounded read-only Siren target eligibility snapshots
+
+Date: 2026-10-20. Hypothesis: J812's active tracker and zero registered-egg
+matches can be separated into current HurtBox/registry eligibility and held
+input geometry without changing native search, aim policy or the input budget.
+
+The existing SirenEggDiagnosticInput owner gains at most two one-shot report
+snapshots: the first visible-primary identified mismatch, then a null target
+after a bounded wait while the selected egg stays unchanged. They read the
+held selected/native target references, body/team/layer/health/collider data,
+exact-reference membership in the original bullseye list with a 4,096-entry
+cap, actual InputBank aim and finite range/cone/LOS observations. A truncated
+negative membership stays unknown. The report labels sampling before this
+frame's aim write and cached target age unknown; it cannot reconstruct the
+native search's earlier decision. Only data is retained, not engine references.
+Optional snapshot exceptions are reported separately. The original native
+getter records its failure type then bare-rethrows the same exception before
+any later observation or input action. The final concrete helper adds no
+per-sample delegate or closure. No native search/update invocation, target
+injection, direct damage, egg counter, registration, aim or timeout change.
+
+Root reviews the frozen source and independent review, verifies exact preimages,
+applies the cumulative source, formats only changed C# ranges and confirms
+non-whitespace identity. The initial integration path check stops before a
+source write; its private refusal is retained. Three new host contracts execute
+the production membership/geometry policy and native getter wrapper, including
+fake-null identity, truncation/unknowns, finite bounds, two-snapshot budget and
+same-exception/no-following-input behavior. Existing tracker/witness extractor
+contracts now include the actual added DTO and concrete helper. After retaining
+the first stale-harness result, the full environment-sourced suite passes
+1,156 tests with no skips, 450 frozen inputs and no drift. All 107 runtime plus
+four support sources compile against 264 saved references with zero errors
+and no source/reference/tool drift. Host DLL SHA-256:
+`bee229a74d51cced9e774d137c1428a732b494b09c712c358212b1945ef4c205`.
+This source is not yet built or run; native egg eligibility remains unknown.
+
+Prior art: community-prior-art's read-only diagnostic relationship guidance;
+DebugToolkit at d1e2f0aa4b8ac4747547db0fcd87344953432f06, inspected Util target
+master/query seams, distinguishes actual identity from a display name. Current
+input HuntressTracker/BullseyeSearch provide the cache, filter and world-LOS
+contracts; the Android source-registration report remains authoritative. No
+community implementation or protected source body is copied.
+
+Evidence: work/coordination/{siren-4c37-native-target-triage/r4/,
+siren-native-target-witness-review/r3/,codex-siren-target-source-root-r1/}.
+Frozen draft manifest:
+`4cb0a880ecb6d4906249e7729fc3ea10a3d22bb217f3074f611ffcec00b04d9e`;
+independent review:
+`8c3b3c46681e9ba8951f2207336e6ac4198a66fff15bd15238de5ec65f51952e`;
+full-suite stderr:
+`7a5b11e302639acb1fd494a8b47848e6cea6adb38709a905d3a1e34c88471559`.
+The named owner/setup/retirement contract is in ARCHITECTURE. No runtime file,
+GUID, required local build input or source membership is added. R8 must restage
+the changed authored Siren input source. J813 remains the accepted APK; preserve
+all listed executable rollbacks and keep Moon/finale progression manual.

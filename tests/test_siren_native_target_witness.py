@@ -46,11 +46,17 @@ class SirenNativeTargetWitnessTests(unittest.TestCase):
     def test_production_ranking_and_witness_accounting(self):
         text = INPUT.read_text()
         report = declaration(text, "public sealed class SirenEggInputReport")
+        eligibility = declaration(text, "public struct SirenTargetEligibilitySnapshot")
         ranking = declaration(text, "public static class SirenEggTargetSelectionPolicy")
         observation = declaration(text, "public enum SirenNativeTargetObservation")
         witness = declaration(text, "public static class SirenNativeTargetWitnessPolicy")
         source = (
-            "using System;\n"
+            "using System;\nusing UnityEngine;\n"
+            + "namespace UnityEngine { public struct Vector3 { } }\n"
+            + "public class HurtBox { }\n"
+            + "public class HuntressTracker { public HurtBox GetTrackingTarget() => null; }\n"
+            + eligibility
+            + "\n"
             + report
             + "\n"
             + ranking
@@ -137,7 +143,10 @@ public static class Program
         source = INPUT.read_text()
         sample = declaration(source, "void ObserveNativeHuntressTarget")
         self.assertIn("player.GetComponent<HuntressTracker>()", sample)
-        self.assertIn("tracker.GetTrackingTarget()", sample)
+        self.assertIn("SirenNativeTargetWitnessPolicy.ReadTargetOrThrow(tracker, report)", sample)
+        read_target = declaration(source, "public static HurtBox ReadTargetOrThrow(")
+        self.assertIn("tracker.GetTrackingTarget()", read_target)
+        self.assertIn("throw;", read_target)
         self.assertIn("ReferenceEquals(nativeTarget, null)", sample)
         self.assertIn("else if (!nativeTarget)", sample)
         self.assertIn(
@@ -156,7 +165,7 @@ public static class Program
         self.assertNotIn("Physics.", sample)
         self.assertNotIn("new ", sample)
         self.assertIn("SirenNativeTargetWitnessPolicy.Record(report, observation", sample)
-        self.assertIn("ObserveNativeHuntressTarget(player, selectedEggNetworkId, visible)", source)
+        self.assertIn("ObserveNativeHuntressTarget(player, egg, selectedEggNetworkId, visible, point)", source)
         self.assertIn("bridge.diagnosticPrimary = visible", source)
         self.assertIn('"visible-egg-requested-primary"', source)
         self.assertIn('"no-visible-egg-primary-released"', source)
@@ -168,7 +177,7 @@ public static class Program
         self.assertIn("if (!context.Selected)", source)
         self.assertLess(
             source.index("if (!context.Selected)"),
-            source.index("ObserveNativeHuntressTarget(player, selectedEggNetworkId, visible)"),
+            source.index("ObserveNativeHuntressTarget(player, egg, selectedEggNetworkId, visible, point)"),
         )
 
         targets, world, stage = (

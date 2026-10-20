@@ -1158,7 +1158,18 @@ separates missing, disabled and inactive trackers before reading an active
 tracker; target states distinguish destroyed, unidentified and known targets,
 selected/native ID matches and requested primary. It records live tracker
 settings and current geometry without refreshing native tracking or claiming its last LOS/range/cone
-decision. The existing aim helper can issue at most 24 linecasts per active
+decision. Two optional, one-shot eligibility snapshots use the first visible
+primary mismatch and a later null target with the same selected egg. They
+record the held input aim before this frame's write, exact HurtBox registry
+membership with a 4,096-entry cap, current body/team/layer/health/collider data,
+and finite range/cone/LOS observations. Cached native target age remains
+unknown; truncated absence and unavailable operands remain unknown. Optional
+snapshot failures are reported separately, while the existing native target
+getter still propagates its original exception before any input action.
+Snapshot data survives the existing stop/disposal path; no engine reference
+is retained by the report. `test_siren_target_eligibility_witness.py` executes
+the authored membership, geometry-policy and getter-rethrow contracts.
+The existing aim helper can issue at most 24 linecasts per active
 sample for the inspected original egg shape; inactive selection does no witness
 work. It yields to manual control and nearby hostile combat. Native encounter start, source/stage
 loss, transport, first failure and the 180 s observation budget latch a stop.

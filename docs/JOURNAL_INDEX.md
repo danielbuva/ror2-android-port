@@ -10,6 +10,8 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J815](PORTING_JOURNAL.md#j815--add-bounded-read-only-siren-target-eligibility-snapshots) | 2026-10-20 | Add bounded read-only Siren target eligibility snapshots | Date: 2026-10-20. |
+| [J814](PORTING_JOURNAL.md#j814--pass-a-stock-mul-t-retry-and-a-separate-commando-lossrestart) | 2026-10-20 | Pass a stock MUL-T retry and a separate Commando loss/restart | Date: 2026-10-20. |
 | [J813](PORTING_JOURNAL.md#j813--accept-the-shared-input-witness-player-on-both-thor-defaults) | 2026-10-20 | Accept the shared-input witness player on both Thor defaults | Date: 2026-10-20. |
 | [J812](PORTING_JOURNAL.md#j812--observe-active-huntress-tracking-without-native-siren-egg-selection) | 2026-10-20 | Observe active Huntress tracking without native Siren egg selection | Date: 2026-10-20. |
 | [J811](PORTING_JOURNAL.md#j811--reach-stock-mul-t-world-play-and-instrument-its-shared-input-failure) | 2026-10-20 | Reach stock MUL-T world play and instrument its shared input failure | Date: 2026-10-20. |

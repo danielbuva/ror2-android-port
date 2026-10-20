@@ -145,8 +145,9 @@ class Test
         self.assertIn("lastNativeTrackerEnabled = tracker.enabled", text)
         self.assertIn("lastNativeTrackerActiveAndEnabled = tracker.isActiveAndEnabled", text)
         gate = text.index("IsTrackerReadEligible(true, tracker.enabled, tracker.isActiveAndEnabled)")
-        target_read = text.index("tracker.GetTrackingTarget()", gate)
+        target_read = text.index("SirenNativeTargetWitnessPolicy.ReadTargetOrThrow(tracker, report)", gate)
         self.assertLess(gate, target_read)
+        self.assertEqual(text.count("tracker.GetTrackingTarget()"), 1)
         self.assertIn("SirenNativeTargetObservation.TrackerDisabled", text)
         self.assertIn("SirenNativeTargetObservation.TrackerInactive", text)
 

@@ -139,6 +139,13 @@ public sealed class SirenEggInputReport
     public bool lastNativeTargetCurrentGeometryObserved;
     public string lastNativeTargetObservation = "not-sampled";
     public string lastPrimaryRequestReason = "not-sampled";
+    public int nativeTargetReadErrors;
+    public string lastNativeTargetReadErrorType;
+
+    // At most two one-shot snapshots per stage; no per-frame diagnostic history.
+    public int eligibilitySnapshotAttempts, eligibilitySnapshotErrors;
+    public string lastEligibilitySnapshotErrorType;
+    public SirenTargetEligibilitySnapshot firstMismatchEligibilitySnapshot, delayedNullEligibilitySnapshot;
 }
 
 public enum SirenNativeTargetObservation
@@ -151,11 +158,145 @@ public enum SirenNativeTargetObservation
     HealthUnavailable,
     IdentityUnavailable,
     ZeroNetworkId,
-    IdentifiedTarget
+    IdentifiedTarget,
+    TargetReadError
+}
+
+[Serializable]
+public struct SirenTargetEligibilitySnapshot
+{
+    public bool attempted, captured;
+    public string kind, samplePhase, errorType;
+    public float waitSinceFirstMismatchSeconds;
+    public uint selectedEggNetworkId, nativeTargetNetworkId;
+    public int selectedBodyIndex, selectedBodyTeamIndex, selectedHurtBoxTeamIndex, nativeBodyIndex, nativeBodyTeamIndex,
+        nativeHurtBoxTeamIndex;
+    public bool selectedBodyAvailable, selectedTeamAvailable, selectedHurtBoxTeamAvailable, nativeBodyAvailable, nativeTeamAvailable,
+        nativeHurtBoxTeamAvailable;
+    public int selectedHurtBoxLayer, nativeHurtBoxLayer, selectedColliderLayer, nativeColliderLayer;
+    public bool selectedHurtBoxAvailable, selectedHurtBoxEnabled, selectedHurtBoxActive, selectedHurtBoxBullseye;
+    public bool selectedHurtBoxHealthAvailable, selectedHurtBoxHealthAlive, selectedColliderAvailable, selectedColliderEnabled;
+    public bool nativeHurtBoxAvailable, nativeHurtBoxEnabled, nativeHurtBoxActive, nativeHurtBoxBullseye;
+    public bool nativeHurtBoxHealthAvailable, nativeHurtBoxHealthAlive, nativeColliderAvailable, nativeColliderEnabled;
+    public uint selectedBodyNetworkId;
+    public bool selectedRegistryAvailable, selectedRegistryMembershipKnown, selectedInGlobalBullseyeList;
+    public bool nativeRegistryAvailable, nativeRegistryMembershipKnown, nativeInGlobalBullseyeList, nativeCacheAgeKnown;
+    public bool registryScanTruncated;
+    public int registryTotalCount, registryScannedCount;
+    public Vector3 aimOrigin, heldAimDirection, selectedHurtBoxPoint, selectedAimRequestPoint, nativeHurtBoxPoint;
+    public bool aimOriginAvailable, heldAimDirectionAvailable, selectedPointAvailable, selectedAimRequestPointAvailable,
+        nativePointAvailable;
+    public float selectedDistance, selectedAimDot, nativeDistance, nativeAimDot;
+    public bool selectedGeometryAvailable, nativeGeometryAvailable;
+    public float maxTrackingDistance, maxTrackingAngle;
+    public bool trackerLimitsAvailable;
+    public bool selectedRangeKnown, selectedWithinRange, selectedConeKnown, selectedWithinCone;
+    public bool nativeRangeKnown, nativeWithinRange, nativeConeKnown, nativeWithinCone;
+    public bool selectedLosKnown, selectedLineOfSight, nativeLosKnown, nativeLineOfSight;
+}
+
+public struct SirenBullseyeMembershipEvidence
+{
+    public bool available, known, present, truncated;
+    public int totalCount, scannedCount;
+}
+
+public static class SirenTargetEligibilityWitnessPolicy
+{
+    public const int MaximumGlobalBullseyeScanCount = 4096;
+    public const float FollowupWaitSeconds = 0.5f;
+
+    public static bool WithinCaptureBudget(int attempts) => attempts >= 0 && attempts < 2;
+
+    public static bool ShouldCaptureFirstMismatch(bool alreadyAttempted, bool visiblePrimary, bool identifiedTarget, uint selectedId,
+                                                  uint nativeId)
+    {
+        return !alreadyAttempted && visiblePrimary && identifiedTarget && selectedId != 0 && nativeId != 0 && nativeId != selectedId;
+    }
+
+    public static bool ShouldCaptureDelayedNull(bool nullTarget, bool selectedEggUnchanged, float elapsed)
+    {
+        return nullTarget && selectedEggUnchanged && IsFinite(elapsed) && elapsed >= FollowupWaitSeconds;
+    }
+
+    public static bool TryMeasureRangeAndCone(float distance, float aimDot, float maxDistance, float maxAngle, out bool rangePass,
+                                              out bool conePass)
+    {
+        rangePass = false;
+        conePass = false;
+        if (!IsFinite(distance) || !IsFinite(aimDot) || !IsFinite(maxDistance) || maxDistance < 0f || !IsFinite(maxAngle) ||
+            maxAngle < 0f || maxAngle > 180f)
+            return false;
+        rangePass = distance <= maxDistance;
+        float minDot = Mathf.Cos(maxAngle * (Mathf.PI / 180f));
+        conePass = aimDot >= minDot;
+        return true;
+    }
+
+    public static void ScanMembershipPair<T>(IList<T> list, T firstTarget, T secondTarget, int maximum,
+                                             out SirenBullseyeMembershipEvidence first, out SirenBullseyeMembershipEvidence second)
+        where T : class
+    {
+        first = new SirenBullseyeMembershipEvidence();
+        second = new SirenBullseyeMembershipEvidence();
+        if (list == null || maximum < 0)
+            return;
+        int total = list.Count;
+        int limit = Math.Min(total, maximum);
+        bool truncated = limit < total;
+        first.available = second.available = true;
+        first.totalCount = second.totalCount = total;
+        first.truncated = second.truncated = truncated;
+        bool firstHasReference = !ReferenceEquals(firstTarget, null);
+        bool secondHasReference = !ReferenceEquals(secondTarget, null);
+        if (!firstHasReference && !secondHasReference)
+            return;
+        int scanned = 0;
+        for (int i = 0; i < limit; i++)
+        {
+            scanned++;
+            T candidate = list[i];
+            if (firstHasReference && !first.present && ReferenceEquals(candidate, firstTarget))
+            {
+                first.known = true;
+                first.present = true;
+            }
+            if (secondHasReference && !second.present && ReferenceEquals(candidate, secondTarget))
+            {
+                second.known = true;
+                second.present = true;
+            }
+            if ((!firstHasReference || first.present) && (!secondHasReference || second.present))
+                break;
+        }
+        first.scannedCount = second.scannedCount = scanned;
+        if (firstHasReference && !first.present)
+            first.known = !truncated;
+        if (secondHasReference && !second.present)
+            second.known = !truncated;
+    }
+
+    public static bool IsFinite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
 }
 
 public static class SirenNativeTargetWitnessPolicy
 {
+    // Preserve the native getter's original exception and control flow. The
+    // optional witness records only the exception type before rethrowing it.
+    public static HurtBox ReadTargetOrThrow(HuntressTracker tracker, SirenEggInputReport report)
+    {
+        try
+        {
+            return tracker.GetTrackingTarget();
+        }
+        catch (Exception error)
+        {
+            report.nativeTargetReadErrors++;
+            report.lastNativeTargetReadErrorType = error.GetType().FullName;
+            throw;
+        }
+    }
+
     static int Increment(int value) => value < int.MaxValue ? value + 1 : value;
 
     public static bool IsTrackerReadEligible(bool componentPresent, bool enabled, bool activeAndEnabled)
@@ -185,6 +326,8 @@ public static class SirenNativeTargetWitnessPolicy
             return "zero-network-id";
         case SirenNativeTargetObservation.IdentifiedTarget:
             return "identified-target";
+        case SirenNativeTargetObservation.TargetReadError:
+            return "target-read-error";
         default:
             return "unknown-observation";
         }
@@ -364,6 +507,9 @@ public sealed class SirenEggDiagnosticInput : IDisposable
     int startedSceneHandle;
     int lastObservedInputTick = int.MinValue;
     bool lastSubmittedPrimary, listenerObserved, started, terminal, disposed;
+    bool firstEligibilitySnapshotAttempted, delayedEligibilitySnapshotAttempted, selectedEggChangedAfterMismatch;
+    uint firstEligibilitySnapshotSelectedId;
+    float firstEligibilitySnapshotRealtime = float.NaN;
 
     public SirenEggDiagnosticInput(ISirenEggDiagnosticContext context, SirenEggInputReport report)
     {
@@ -557,7 +703,7 @@ public sealed class SirenEggDiagnosticInput : IDisposable
         Vector3 point = visible ? visiblePoint : nearestPoint;
         var identity = egg.GetComponent<UnityEngine.Networking.NetworkIdentity>();
         uint selectedEggNetworkId = identity ? identity.netId.Value : 0;
-        ObserveNativeHuntressTarget(player, selectedEggNetworkId, visible);
+        ObserveNativeHuntressTarget(player, egg, selectedEggNetworkId, visible, point);
         Vector3 aim = point - player.inputBank.aimOrigin;
         bridge.aim = new Vector2(aim.x, aim.z).normalized;
         bridge.diagnosticAim = aim.normalized;
@@ -574,10 +720,12 @@ public sealed class SirenEggDiagnosticInput : IDisposable
         return true;
     }
 
-    void ObserveNativeHuntressTarget(CharacterBody player, uint selectedEggNetworkId, bool primaryRequested)
+    void ObserveNativeHuntressTarget(CharacterBody player, CharacterBody selectedEgg, uint selectedEggNetworkId, bool primaryRequested,
+                                     Vector3 selectedAimPoint)
     {
-        SirenNativeTargetObservation observation;
+        SirenNativeTargetObservation observation = SirenNativeTargetObservation.TrackerUnavailable;
         uint nativeTargetNetworkId = 0;
+        HurtBox nativeTarget = null;
         report.lastNativeTrackerAvailable = false;
         report.lastNativeTrackerEnabled = false;
         report.lastNativeTrackerActiveAndEnabled = false;
@@ -622,7 +770,7 @@ public sealed class SirenEggDiagnosticInput : IDisposable
                     report.lastNativePlayerTeamObserved = true;
                 }
 
-                HurtBox nativeTarget = tracker.GetTrackingTarget();
+                nativeTarget = SirenNativeTargetWitnessPolicy.ReadTargetOrThrow(tracker, report);
                 if (ReferenceEquals(nativeTarget, null))
                 {
                     observation = SirenNativeTargetObservation.NoTarget;
@@ -683,7 +831,220 @@ public sealed class SirenEggDiagnosticInput : IDisposable
         }
 
         SirenNativeTargetWitnessPolicy.Record(report, observation, selectedEggNetworkId, nativeTargetNetworkId, primaryRequested);
+        TryCaptureEligibilitySnapshot(player, selectedEgg, selectedEggNetworkId, selectedAimPoint, primaryRequested, observation,
+                                      nativeTarget, nativeTargetNetworkId);
     }
+
+    void TryCaptureEligibilitySnapshot(CharacterBody player, CharacterBody selectedEgg, uint selectedEggNetworkId, Vector3 selectedAimPoint,
+                                       bool primaryRequested, SirenNativeTargetObservation observation, HurtBox nativeTarget,
+                                       uint nativeTargetNetworkId)
+    {
+        if (firstEligibilitySnapshotAttempted && selectedEggNetworkId != firstEligibilitySnapshotSelectedId)
+            selectedEggChangedAfterMismatch = true;
+        if (!primaryRequested || selectedEggNetworkId == 0 || !selectedEgg ||
+            !SirenTargetEligibilityWitnessPolicy.WithinCaptureBudget(report.eligibilitySnapshotAttempts))
+            return;
+        bool firstMismatch = SirenTargetEligibilityWitnessPolicy.ShouldCaptureFirstMismatch(
+            firstEligibilitySnapshotAttempted, primaryRequested, observation == SirenNativeTargetObservation.IdentifiedTarget,
+            selectedEggNetworkId, nativeTargetNetworkId);
+        if (firstMismatch)
+        {
+            firstEligibilitySnapshotAttempted = true;
+            delayedEligibilitySnapshotAttempted = false;
+            selectedEggChangedAfterMismatch = false;
+            firstEligibilitySnapshotSelectedId = selectedEggNetworkId;
+            firstEligibilitySnapshotRealtime = Time.realtimeSinceStartup;
+            CaptureEligibilitySnapshot(ref report.firstMismatchEligibilitySnapshot, "first-visible-primary-mismatch", 0f, player,
+                                       selectedEgg, selectedEggNetworkId, selectedAimPoint, nativeTarget, nativeTargetNetworkId);
+            return;
+        }
+        if (firstEligibilitySnapshotAttempted && !delayedEligibilitySnapshotAttempted &&
+            selectedEggNetworkId == firstEligibilitySnapshotSelectedId)
+        {
+            float wait = Time.realtimeSinceStartup - firstEligibilitySnapshotRealtime;
+            if (SirenTargetEligibilityWitnessPolicy.ShouldCaptureDelayedNull(observation == SirenNativeTargetObservation.NoTarget,
+                                                                             !selectedEggChangedAfterMismatch, wait))
+            {
+                delayedEligibilitySnapshotAttempted = true;
+                CaptureEligibilitySnapshot(ref report.delayedNullEligibilitySnapshot, "delayed-null-same-selected-egg", wait, player,
+                                           selectedEgg, selectedEggNetworkId, selectedAimPoint, null, 0);
+            }
+        }
+    }
+
+    void CaptureEligibilitySnapshot(ref SirenTargetEligibilitySnapshot snapshot, string kind, float wait, CharacterBody player,
+                                    CharacterBody selectedEgg, uint selectedEggNetworkId, Vector3 selectedAimPoint, HurtBox nativeTarget,
+                                    uint nativeTargetNetworkId)
+    {
+        snapshot = new SirenTargetEligibilitySnapshot { attempted = true,
+                                                        kind = kind,
+                                                        samplePhase = "before-current-frame-diagnostic-aim-write;cached-target-age-unknown",
+                                                        waitSinceFirstMismatchSeconds = wait,
+                                                        selectedEggNetworkId = selectedEggNetworkId,
+                                                        selectedBodyNetworkId = selectedEggNetworkId,
+                                                        nativeTargetNetworkId = nativeTargetNetworkId };
+        report.eligibilitySnapshotAttempts++;
+        try
+        {
+            InputBankTest input = player ? player.inputBank : null;
+            if (!input || !selectedEgg)
+                return;
+
+            snapshot.aimOrigin = input.aimOrigin;
+            snapshot.heldAimDirection = input.aimDirection;
+            snapshot.selectedAimRequestPoint = selectedAimPoint;
+            snapshot.aimOriginAvailable = IsFinite(snapshot.aimOrigin);
+            snapshot.heldAimDirectionAvailable = IsFinite(snapshot.heldAimDirection);
+            snapshot.selectedAimRequestPointAvailable = IsFinite(snapshot.selectedAimRequestPoint);
+            snapshot.selectedBodyAvailable = true;
+            snapshot.selectedBodyIndex = (int)selectedEgg.bodyIndex;
+            if (selectedEgg.teamComponent)
+            {
+                snapshot.selectedTeamAvailable = true;
+                snapshot.selectedBodyTeamIndex = (int)selectedEgg.teamComponent.teamIndex;
+            }
+
+            HurtBox selectedHurtBox = selectedEgg.mainHurtBox;
+            if (selectedHurtBox)
+            {
+                snapshot.selectedHurtBoxAvailable = true;
+                snapshot.selectedHurtBoxEnabled = selectedHurtBox.enabled;
+                snapshot.selectedHurtBoxActive = selectedHurtBox.gameObject.activeInHierarchy;
+                snapshot.selectedHurtBoxBullseye = selectedHurtBox.isBullseye;
+                snapshot.selectedHurtBoxLayer = selectedHurtBox.gameObject.layer;
+                snapshot.selectedHurtBoxTeamIndex = (int)selectedHurtBox.teamIndex;
+                snapshot.selectedHurtBoxTeamAvailable = true;
+                snapshot.selectedHurtBoxPoint = selectedHurtBox.transform.position;
+                snapshot.selectedPointAvailable = IsFinite(snapshot.selectedHurtBoxPoint);
+                HealthComponent hurtBoxHealth = selectedHurtBox.healthComponent;
+                if (hurtBoxHealth)
+                {
+                    snapshot.selectedHurtBoxHealthAvailable = true;
+                    snapshot.selectedHurtBoxHealthAlive = hurtBoxHealth.alive;
+                }
+                if (selectedHurtBox.collider)
+                {
+                    snapshot.selectedColliderAvailable = true;
+                    snapshot.selectedColliderEnabled = selectedHurtBox.collider.enabled;
+                    snapshot.selectedColliderLayer = selectedHurtBox.collider.gameObject.layer;
+                }
+            }
+
+            HuntressTracker tracker = player.GetComponent<HuntressTracker>();
+            if (tracker)
+            {
+                snapshot.maxTrackingDistance = tracker.maxTrackingDistance;
+                snapshot.maxTrackingAngle = tracker.maxTrackingAngle;
+                snapshot.trackerLimitsAvailable = SirenTargetEligibilityWitnessPolicy.IsFinite(snapshot.maxTrackingDistance) &&
+                                                  SirenTargetEligibilityWitnessPolicy.IsFinite(snapshot.maxTrackingAngle) &&
+                                                  snapshot.maxTrackingDistance >= 0f && snapshot.maxTrackingAngle >= 0f &&
+                                                  snapshot.maxTrackingAngle <= 180f;
+            }
+
+            SirenBullseyeMembershipEvidence selectedMembership, nativeMembership;
+            SirenTargetEligibilityWitnessPolicy.ScanMembershipPair(HurtBox.readOnlyBullseyesList, selectedHurtBox, nativeTarget,
+                                                                   SirenTargetEligibilityWitnessPolicy.MaximumGlobalBullseyeScanCount,
+                                                                   out selectedMembership, out nativeMembership);
+            snapshot.selectedRegistryAvailable = selectedMembership.available;
+            snapshot.selectedRegistryMembershipKnown = selectedMembership.known;
+            snapshot.selectedInGlobalBullseyeList = selectedMembership.present;
+            snapshot.nativeRegistryAvailable = nativeMembership.available;
+            snapshot.nativeRegistryMembershipKnown = nativeMembership.known;
+            snapshot.nativeInGlobalBullseyeList = nativeMembership.present;
+            snapshot.registryScanTruncated = selectedMembership.truncated || nativeMembership.truncated;
+            snapshot.registryTotalCount = selectedMembership.totalCount;
+            snapshot.registryScannedCount = selectedMembership.scannedCount;
+
+            MeasureEligibilityGeometry(snapshot.aimOrigin, snapshot.heldAimDirection, snapshot.selectedHurtBoxPoint,
+                                       snapshot.aimOriginAvailable, snapshot.heldAimDirectionAvailable, snapshot.selectedPointAvailable,
+                                       snapshot.trackerLimitsAvailable, snapshot.maxTrackingDistance, snapshot.maxTrackingAngle,
+                                       out snapshot.selectedGeometryAvailable, out snapshot.selectedDistance, out snapshot.selectedAimDot,
+                                       out snapshot.selectedRangeKnown, out snapshot.selectedWithinRange, out snapshot.selectedConeKnown,
+                                       out snapshot.selectedWithinCone, out snapshot.selectedLosKnown, out snapshot.selectedLineOfSight);
+
+            if (nativeTarget)
+            {
+                snapshot.nativeHurtBoxAvailable = true;
+                snapshot.nativeHurtBoxEnabled = nativeTarget.enabled;
+                snapshot.nativeHurtBoxActive = nativeTarget.gameObject.activeInHierarchy;
+                snapshot.nativeHurtBoxBullseye = nativeTarget.isBullseye;
+                snapshot.nativeHurtBoxLayer = nativeTarget.gameObject.layer;
+                snapshot.nativeHurtBoxTeamIndex = (int)nativeTarget.teamIndex;
+                snapshot.nativeHurtBoxTeamAvailable = true;
+                snapshot.nativeHurtBoxPoint = nativeTarget.transform.position;
+                snapshot.nativePointAvailable = IsFinite(snapshot.nativeHurtBoxPoint);
+                HealthComponent targetHealth = nativeTarget.healthComponent;
+                if (targetHealth)
+                {
+                    snapshot.nativeHurtBoxHealthAvailable = true;
+                    snapshot.nativeHurtBoxHealthAlive = targetHealth.alive;
+                    CharacterBody nativeBody = targetHealth.body;
+                    if (nativeBody)
+                    {
+                        snapshot.nativeBodyAvailable = true;
+                        snapshot.nativeBodyIndex = (int)nativeBody.bodyIndex;
+                        if (nativeBody.teamComponent)
+                        {
+                            snapshot.nativeTeamAvailable = true;
+                            snapshot.nativeBodyTeamIndex = (int)nativeBody.teamComponent.teamIndex;
+                        }
+                    }
+                }
+                if (nativeTarget.collider)
+                {
+                    snapshot.nativeColliderAvailable = true;
+                    snapshot.nativeColliderEnabled = nativeTarget.collider.enabled;
+                    snapshot.nativeColliderLayer = nativeTarget.collider.gameObject.layer;
+                }
+                MeasureEligibilityGeometry(snapshot.aimOrigin, snapshot.heldAimDirection, snapshot.nativeHurtBoxPoint,
+                                           snapshot.aimOriginAvailable, snapshot.heldAimDirectionAvailable, snapshot.nativePointAvailable,
+                                           snapshot.trackerLimitsAvailable, snapshot.maxTrackingDistance, snapshot.maxTrackingAngle,
+                                           out snapshot.nativeGeometryAvailable, out snapshot.nativeDistance, out snapshot.nativeAimDot,
+                                           out snapshot.nativeRangeKnown, out snapshot.nativeWithinRange, out snapshot.nativeConeKnown,
+                                           out snapshot.nativeWithinCone, out snapshot.nativeLosKnown, out snapshot.nativeLineOfSight);
+            }
+            snapshot.captured = true;
+        }
+        catch (Exception error)
+        {
+            report.eligibilitySnapshotErrors++;
+            snapshot.errorType = error.GetType().FullName;
+            report.lastEligibilitySnapshotErrorType = snapshot.errorType;
+            snapshot.captured = false;
+        }
+    }
+
+    static void MeasureEligibilityGeometry(Vector3 origin, Vector3 aimDirection, Vector3 point, bool originAvailable, bool aimAvailable,
+                                           bool pointAvailable, bool limitsAvailable, float maxDistance, float maxAngle,
+                                           out bool geometryAvailable, out float distance, out float aimDot, out bool rangeKnown,
+                                           out bool withinRange, out bool coneKnown, out bool withinCone, out bool losKnown,
+                                           out bool lineOfSight)
+    {
+        geometryAvailable = rangeKnown = coneKnown = losKnown = false;
+        distance = aimDot = 0f;
+        withinRange = withinCone = lineOfSight = false;
+        Vector3 direction = point - origin;
+        if (!originAvailable || !pointAvailable || !IsFinite(direction) || !(direction.sqrMagnitude > 0f))
+            return;
+        distance = direction.magnitude;
+        RaycastHit hit;
+        lineOfSight =
+            !Physics.Raycast(origin, direction, out hit, direction.magnitude, LayerIndex.world.mask, QueryTriggerInteraction.UseGlobal);
+        losKnown = true;
+        if (!aimAvailable)
+            return;
+        aimDot = Vector3.Dot(aimDirection, direction.normalized);
+        geometryAvailable = SirenTargetEligibilityWitnessPolicy.IsFinite(distance) && SirenTargetEligibilityWitnessPolicy.IsFinite(aimDot);
+        if (geometryAvailable && limitsAvailable)
+        {
+            rangeKnown = coneKnown = SirenTargetEligibilityWitnessPolicy.TryMeasureRangeAndCone(distance, aimDot, maxDistance, maxAngle,
+                                                                                                out withinRange, out withinCone);
+        }
+    }
+
+    static bool IsFinite(Vector3 value) => SirenTargetEligibilityWitnessPolicy.IsFinite(value.x) &&
+                                           SirenTargetEligibilityWitnessPolicy.IsFinite(value.y) &&
+                                           SirenTargetEligibilityWitnessPolicy.IsFinite(value.z);
 
     bool OwnsDiagnosticInput(CharacterBody player, NovaInputBridge bridge)
     {

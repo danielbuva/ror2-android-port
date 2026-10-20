@@ -79,10 +79,11 @@ The plain check and its acceptance criteria remain unchanged.
 | Placement | Thor updates under its internal-reserve policy and passes both checks. Adopted Nova retains J809's accepted 4c37596c…; internal Nova retains be26c21c… while isolated audio uses disposable packages. |
 | Rollbacks | Previous baseline J809 `4c37596c…` and all retained executable rollback hashes are listed in [PORTING_STATE.md](../PORTING_STATE.md). |
 
-J813 qualifies J811 on the default route. The separate stock MUL-T
-regression, native Huntress target updates/Siren execution and native indicator
-rendering/teardown remain pending; the default
-checks do not qualify them. J801's observer and strict cleanup failures remain
+J813 qualifies J811 on the default route. J814 separately passes a stock MUL-T
+four-callback retry without reproducing the earlier NRE, and a Commando
+loss/restart observer lifecycle. The NRE cause, MUL-T teardown, native Huntress
+target updates/Siren execution, indicator rendering/teardown and special
+first-stage recovery remain open; the default checks do not qualify them. J801's observer and strict cleanup failures remain
 evidence on that player. J790's earlier native
 offhand activation and J795's bounded native Siren registration/cleanup remain
 evidence on their recorded APKs. Siren encounter execution is open.
