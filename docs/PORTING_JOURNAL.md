@@ -20183,3 +20183,110 @@ or original input is changed. J850 remains the default baseline. No authored
 runtime or recipe changes occur; the next visual candidate must restore the
 original camera/rig semantics and then confront the first runtime failure,
 without forcing visibility or inventing presentation.
+
+## J853 — Read partial owner-SDK native registration metadata on Android
+
+2026-10-20. Hypothesis: J851's owner-supplied SDK registration data can be read
+by independently authored Android-host tooling without running the desktop
+editor, executing its instructions or consuming a captured native table.
+Start from accepted `origin/main` `d20f8b8`, then integrate `e3a4e04` before
+recording this result; preserve the main session's J854. Route A, the IL2CPP ARM64 runtime,
+renderer and desktop owner-build fallback stay fixed. No game/Unity build,
+installation, shader change or performance-equivalence claim occurs here.
+
+**Owner and provenance.** `phone_registry.py` owns the current experimental
+`phone-native-registry` action. An explicit ignored request selects the exact
+owner SDK binary. Its SHA-256 must be
+`906123118e45d56c6bcf20f3776ed2373417553042500714023daeb9e53058e8`;
+unknown SDKs refuse before staging. The action stages unchanged private bytes,
+a standalone standard-library Python reader and input/source hashes into a
+fresh `work/experiments/phone-registry/` attempt. The report is created
+exclusively; SDK drift during reading refuses. ARCHITECTURE names this support
+owner; LOCAL_STATE lists inputs, outputs and the local device replay adapter.
+No game build reads the result.
+
+This is SDK metadata extraction, not a new runtime or SDK implementation.
+Consult J851's pinned UnityType/root-producer API research. Use Apple's public
+[Mach-O format declarations](https://github.com/apple-oss-distributions/cctools/blob/main/include/mach-o/loader.h),
+Arm's [AAPCS64 register contract](https://github.com/ARM-software/abi-aa/blob/main/aapcs64/aapcs64.rst)
+and LLVM's public
+[AArch64 instruction formats](https://github.com/llvm/llvm-project/blob/release/21.x/llvm/lib/Target/AArch64/AArch64InstrFormats.td)
+for bounded file/virtual-address reading and static argument analysis. Read
+symbols and the observed registration-record layout from the supplied SDK;
+copy no SDK implementation, instruction sequence, binary or extracted table
+into public source. There is no RoR2-specific reconstruction or runtime
+observer in this generic SDK reader. SDK acquisition/delivery rights and app
+sandbox hosting remain separate gates.
+
+**Decoder boundary and first failures.** The reader accepts thin little-endian
+ARM64 Mach-O executable metadata, validates load-command/table/file bounds and
+requires unambiguous symbols when used. Static records provide class/namespace
+strings and self/parent pointers; their module slots are unresolved placeholders.
+Generated module-registration functions materialize module strings and pass them
+to typed registration callees. Bounded straight-line constant propagation
+tracks those arguments, clears caller-saved registers after calls and invalidates
+runtime-restored registers. Unknown instructions, branches, callees, module
+literals, ambiguous pointers or conflicting assignments refuse. No SDK function
+is called or emulated.
+
+The first module decode refuses an unhandled post-index load-pair instruction;
+retain `native-module-decoder-result.json`. Extend only the public instruction
+format's pair/address-writeback handling and add an authored argument-clobber
+fixture; the next decode covers all 73 generated module-registration functions.
+A later exact-schema comparison exposes the reader's initial null representation
+of empty native namespaces. Preserve its host/Android reports and v1 comparison;
+`28534e6` retains the SDK's actual empty string and tests that distinction.
+No captured/native table is used to fill a missing value or rewrite an output.
+
+**Host and phone observation.** Seven focused authored tests cover Mach-O
+bounds, metadata parent links, instruction/ABI clobber behavior, typed module
+binding, empty namespaces, unknown instructions/SDKs and request validation.
+The CLI dispatch suite also passes. A fresh isolated host attempt from committed
+`28534e6a1448cbf25584239ebb139307898d413e` stages and reads only the supplied SDK
+and reader. Its private request has no fixture, oracle, prior symbol dump,
+SDK-record table or game-file input.
+
+On the explicitly assigned alpha phone, verify the existing workspace ownership,
+Python 3.14.8 hash, fresh storage/backing/capacity reserve and every staged input
+hash before a new owned child attempt. Run the same reader with `-I -S` on the
+unchanged SDK file. It completes in 2.433 seconds. Its report is byte-identical
+to the host report, SHA-256
+`637f376ac22959d32d6069a05d8306051a037b42834885c2c74bc112bd903892`.
+The reader SHA-256 is
+`13a5dfd98bf73e3f0bb3e09634c402655e9925bdc591a0aaa078946e1e85b3ec`.
+A second invocation refuses an existing report and preserves its hash. An
+independently authored unknown-SDK input refuses before creating any report.
+The supplied SDK hash remains unchanged. No app is installed/launched; the
+installed alpha game stays
+`be26c21c4cd8ff15a8a663528216cf7a69394a51d8b9441a63a1a496f83e98b5`,
+and the display is left asleep.
+
+**Oracle comparison and limit.** Only after extraction, compare against J846's
+unchanged exact-editor oracle, SHA-256
+`34c3177601e7a31dc24efab295280a13c21c2a306a1f70c7171e78a0041bcf30`.
+All 305 extracted class/namespace/qualified names match. Generated registrations
+resolve 235 matching modules; static parent links resolve 280 matching base names,
+including 176 matching base modules. There are no contradictions among resolved
+fields. Thirteen of the oracle's 318 native types are absent, 70 extracted types
+have no resolved module, and 25 parent links remain unresolved. The reader
+reports partial coverage and `root_generation_qualified: false`; it emits no
+linker roots and feeds no stripping step. This reduces the Android metadata
+reading uncertainty, not the complete independent-root-production gate.
+
+**Evidence and revisit.** Retain original/refused attempts, raw SDK symbols and
+bounded disassembly privately. `native-registry-v2-stage-selection.json` and
+`native-registry-v2-run-selection.json` select the unchanged host stage and
+actual phone attempt; `native-registry-on-android.py` is the retained selected-
+device replay/collection support. `native-registry-v2-oracle-comparison.json`
+records the independent post-extraction comparison. Whole-project doctor still
+refuses this isolated worktree's absent game inventory/bootstrap; this probe
+is not public-bootstrap acceptance. Fresh-clone CI on `28534e6` passes 1,239
+tests with 55 optional skips, Ruff, the public audit and documentation checks.
+`native-registry-proof-receipt.json` binds 33 source/input/report/control/test/
+CI/doctor artifacts, including both preserved namespace-schema attempts;
+SHA-256 `20c0c46c6adbf244e503d9988dd8e4d69207bf2d7ec884d7a7d04a99cee5f703`.
+Continue with the missing native records,
+non-generated module registration and complete base identity, then scene usage
+and project module policy. Unknown data must remain unresolved. Content/shaders,
+managed compilation, richer dependencies, permitted tool delivery and measured
+whole-game performance remain separate work.
