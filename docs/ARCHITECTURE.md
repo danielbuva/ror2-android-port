@@ -195,20 +195,28 @@ ancestry, stale identities, changed snapshots and missing callback evidence
 refuse.
 
 The additional `--capture-il2cpp-invocation` opt-in requires
-`--capture-player-linker-inputs` and is independently false by default. The
-staged `Il2CppInvocationCapture.cs` subscribes only for that request, captures
-Unity's pre-launch rendered IL2CPP command line and the one simple
-`--directory=` input path, then snapshots the directory under request-owned
-ignored storage. It records the project-relative input path and BuildReport
-GUID; the UnityLinker receipt and final successful build result carry the same
-GUID. `player_il2cpp_receipt.py` verifies the request/source/input/target/GUID
-join and hashes before adding generic `il2cpp_snapshot_to_apk_build_binding`
-evidence to the build receipt. This does not claim that the process consumed
-those exact bytes, an exact argv vector, or equivalence with the composed-audio
-transformed-input manifest; `stage_to_apk_binding` remains false. The native
-`UnityLogWriter` to `Application.logMessageReceived` delivery is still
-unverified until an owning editor build observes it. No runtime dispatch or
-audio acceptance follows from this receipt.
+`--capture-player-linker-inputs` and remains false by default.
+`Il2CppInvocationCapture.cs` owns its editor pre/post-build boundaries: bind the
+active exact-version editor process, source/input/request and BuildReport GUID;
+inventory Bee files and record the editor-log byte boundary before building;
+then retain the unchanged prefix hash and new log slice for that same successful
+BuildReport. Ordinary builds return before capture setup.
+
+`bee_codegen_capture.py` owns the host verifier. It joins that fresh log slice
+to the Player Bee graph, response-file metadata, changed conversion trace,
+managed input closure and final APK/BuildReport identity, then copies and
+rehashes the managed snapshot under request-owned ignored storage. Multiline
+trace parsing rejects malformed separators and extra conversion/Player records.
+The toolchain's version and revision fields form the exact editor pin.
+`build.py` calls this owner only for the explicit opt-in. Missing, unchanged or
+inconsistent execution evidence refuses the enriched receipt while preserving
+raw build outputs. No cache is cleared merely to obtain a receipt.
+
+This is generic same-build evidence, not an exact argv vector, transformed-audio
+stage equivalence or runtime acceptance. J852 qualifies host contracts only;
+the native Unity serializer/callback and owning build remain unverified.
+`player_il2cpp_receipt.py` retains the historical J843 legacy-log verifier and
+its tests; the current build no longer calls that legacy collector.
 
 `test_player_linker_receipt.py` covers the existing input capture and opt-in
 forwarding. `test_player_il2cpp_receipt.py` covers the joined receipt contract;

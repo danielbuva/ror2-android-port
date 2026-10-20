@@ -612,6 +612,7 @@ def build(
         if capture_player_linker_inputs and dest.exists():
             raise RuntimeError("Refuse to overwrite an existing request-specific linker output")
         dest.mkdir(parents=True, exist_ok=not capture_player_linker_inputs)
+        build_report_output_path = str(Path(r["apk"]).resolve())
         apk = dest / Path(r["apk"]).name
         copy_build_artifact(r["apk"], apk)
         r.update(
@@ -627,6 +628,8 @@ def build(
         )
         if source is not None:
             r["source"] = source
+        if capture_il2cpp_invocation:
+            r["build_report_output_path"] = build_report_output_path
         if capture_player_linker_inputs:
             capture_path = WORK / "lab-build/player-linker-inputs" / (request_id + ".json")
             if not capture_path.is_file():
@@ -642,20 +645,17 @@ def build(
                 input_id=capture_request["inputId"],
             )
         if capture_il2cpp_invocation:
-            poststrip_path = WORK / "lab-build/player-linker-inputs" / (request_id + ".il2cpp.json")
-            if not poststrip_path.is_file():
-                raise RuntimeError("Opted-in build lacks its same-request IL2CPP invocation capture")
-            from player_il2cpp_receipt import verify_poststrip
+            from bee_codegen_capture import collect_request_capture, editor_version_from_toolchain
 
-            r["player_il2cpp_inputs"] = verify_poststrip(
-                read(poststrip_path),
-                prestrip=read(capture_path),
-                work_root=WORK,
+            r["player_il2cpp_inputs"] = collect_request_capture(
                 project_root=project,
-                result=r,
+                work_root=WORK,
+                snapshot_destination=WORK / "lab-build/player-linker-inputs" / request_id / "bee",
+                final_result=r,
                 request_id=request_id,
                 source_commit=source["commit"],
                 input_id=capture_request["inputId"],
+                editor_version=editor_version_from_toolchain(toolchain()),
             )
         if android_symbols == "debugging":
             from symbol_artifacts import validate_fresh_symbol_package, verify_apk_symbol_pair

@@ -600,7 +600,17 @@ runner, strict persisted-profile schema check, failed live attempt, J841’s
 completed native teardown/host deadline and exclusive inventory-owner analysis.
 They are required local diagnostic support and are not game build inputs.
 
-### Isolated Wwise diagnostic inputs
+#The optional Bee execution capture writes request-owned
+`work/lab-build/player-linker-inputs/<request>.bee-pre.json`,
+`<request>.bee-post.json` and `<request>.bee-log-slice`, then the verified
+snapshot under `<request>/bee/`. Producers are the tracked
+`Il2CppInvocationCapture.cs` and `bee_codegen_capture.py`; the active
+`work/editor/lab-process.json` binds the process/log owner. Captured graphs,
+response files, SDK/game-derived assemblies and real traces stay ignored.
+The tracked multiline trace test is independently authored synthetic data.
+Old legacy invocation witnesses remain historical evidence.
+
+## Isolated Wwise diagnostic inputs
 
 The optional J740/J742 native fixtures and fresh Unity managed-readiness
 fixture require the locally authorized Wwise 2023.1.8.8601 SDK and matching

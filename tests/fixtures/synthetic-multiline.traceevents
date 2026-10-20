@@ -1,0 +1,2 @@
+{"pid":"synthetic_trace","tid":1,"ts":10,"dur":5,"ph":"X","name":"layout_probe","args":{"nested":{"items":[1,{"label":"alpha"}]}}},
+{"pid":"il2cpp_in_graph","tid":2,"ts":20,"dur":9,"ph":"X","name":"il2cpp.exe","args":{"status":"synthetic","nested":{"records":[{"kind":"compile","count":2}]}}},

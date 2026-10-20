@@ -19915,3 +19915,50 @@ music, spatialization or the original game lifecycle. Game audio stays
 unavailable. Next integrate the original startup/initializer/controller/bank
 loaders as the sole owners, using current-input source contracts and explicit
 payload preparation. No R8/R9 game rebuild recipe changes in this checkpoint.
+
+
+## J852 — Replace legacy IL2CPP log capture with the pinned Bee build owner
+
+2026-10-20. Hypothesis: J843's absent legacy command line is the wrong seam for
+the active pipeline; a pre-build file/log boundary plus the actual Bee
+execution graph can supply generic same-build managed-input evidence during a
+future meaningful code build. Do not clear caches or repeat f155 solely to
+obtain a receipt. This small shared build-tool change serves original audio;
+alpha retains launcher/packaging behavior ownership.
+
+Replace the implementation of the existing `Il2CppInvocationCapture.cs` owner,
+retaining its path/GUID and default-off request flag. It records the exact
+editor process/log prefix, complete Bee baseline and request/source/input/GUID,
+then the same successful BuildReport's new log segment. The new authored host
+owner `bee_codegen_capture.py` binds the Player command, graph/response-file
+metadata, fresh conversion trace, managed input hashes and APK identity.
+`build.py` preserves the actual BuildReport output path before copying the APK
+and combines pinned version/revision for the verifier. Historical legacy
+receipts/verifier remain preserved; no current build uses the old log seam.
+
+Independent review first finds a generated Unity trace in the proposed tracked
+fixture. Reject that patch and replace it with two independently authored
+multiline JSON records. The final patch contains no generated trace or private
+row. A mislabeled standalone draft file is separately classified as a duplicate
+of build.py; integrate only the reviewed patch, whose 636-line collector is
+byte-identical to the tested preview. No protected local artifact is published.
+
+The integrated nine host verifier tests and two C# runtime-harness tests pass,
+including multiline parsing, malformed separators/extra invocations, version
+bridging, identity/drift refusals and field-based serialization. Ruff passes.
+The exact-reference compile checks editor API compatibility; the C# harness
+uses a JsonUtility stub. Unity's native serializer, callback execution and an
+owning opt-in build remain untested. No new player, device action, audio
+availability, argv-vector or transformed-stage-to-APK claim follows.
+
+Private reviewed patch is `audio-poststrip-owning-build-triage/r5/integration.patch`,
+SHA-256 `a33857d3724155b1af0ff5ed308b9fce616bf7c15098d41012bac8f93eb12d84`.
+Review is `audio-poststrip-owning-build-triage-review/r6/review.md`, SHA-256
+`6596ff1aabe53a6871df863973c279af1d8d04cc843fab4b78174ac2c3de656d`;
+artifact addendum SHA-256 is
+`b72e733a123f8c59bf86af598e68f5959d366765eebd32905da46e6be305a67a`.
+Root corrects the integrated module's draft-only description to its actual
+opt-in build role. ARCHITECTURE names both owners and LOCAL_STATE lists the
+tracked receipt producers. R8/R9 must replay the changed editor source, while
+this optional collector remains unsupported for destination builds.
+Revisit on the next actual audio/code candidate with fresh Bee execution.

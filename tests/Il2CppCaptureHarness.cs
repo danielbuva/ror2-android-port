@@ -1,129 +1,83 @@
 using System;
 using System.IO;
-using System.Linq;
+using System.Diagnostics;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
-using UnityEngine;
 
 public static class CaptureHarness
 {
     static void Check(bool value, string reason) { if (!value) throw new Exception(reason); }
-    static BuildReport Report(string guid, BuildResult result = BuildResult.Unknown)
+    static BuildReport Report(string guid, BuildResult result, string output)
     {
-        return new BuildReport { summary = new BuildSummary { guid = new GUID { value = guid }, platform = BuildTarget.Android, outputPath = "fixture.apk", result = result } };
+        return new BuildReport { summary = new BuildSummary { guid = new GUID { value = guid }, platform = BuildTarget.Android, outputPath = output, result = result, totalErrors = 0 } };
     }
-    static string Arg(string[] args, string flag)
+    static void Write(string path, string text) { Directory.CreateDirectory(Path.GetDirectoryName(path)); File.WriteAllText(path, text); }
+    static void Fixture(string scratch, string project, string work, bool opted)
     {
-        int i = Array.IndexOf(args, flag);
-        return i < 0 || i + 1 >= args.Length ? null : args[i + 1];
+        Directory.CreateDirectory(Path.Combine(project, "Assets"));
+        Directory.CreateDirectory(Path.Combine(work, "inventory"));
+        Directory.CreateDirectory(Path.Combine(work, "editor"));
+        Write(Path.Combine(project, ".port-input.json"), "{\"input_id\":\"" + new string('b', 64) + "\"}");
+        Write(Path.Combine(work, "inventory/files.json"), "{\"input_id\":\"" + new string('b', 64) + "\"}");
+        Write(Path.Combine(work, "build-request.json"), "{\"request_id\":\"host-request-1\",\"captureIl2CppInvocation\":" + (opted ? "true" : "false") + ",\"sourceCommit\":\"" + new string('a', 40) + "\",\"inputId\":\"" + new string('b', 64) + "\"}");
+        Write(Path.Combine(work, "Editor.log"), "old editor log prefix\n");
+        Write(Path.Combine(work, "editor/lab-process.json"), "{\"log\":\"" + Path.Combine(work, "Editor.log").Replace("\\", "\\\\") + "\",\"pid\":" + Process.GetCurrentProcess().Id + "}");
+        Directory.CreateDirectory(Path.Combine(project, "Library/Bee/artifacts"));
+        Write(Path.Combine(project, "Library/Bee/artifacts/il2cpp_conv_current.traceevents"), "old trace\n");
+        Write(Path.Combine(project, "Library/Bee/PlayerCurrent.dag"), "old graph\n");
+        Write(Path.Combine(project, "Library/Bee/PlayerCurrent.dag.json"), "{}\n");
     }
     public static int Main(string[] args)
     {
         string mode = args.Length == 0 ? "default-off" : args[0];
-        string workArg = Arg(args, "-labWorkRoot");
-        string tempRoot = Environment.GetEnvironmentVariable("LAB_HOST_TEMP_ROOT") ?? Path.GetTempPath();
-        string scratch = Path.Combine(tempRoot, "il2cpp-capture-host-" + Guid.NewGuid().ToString("N"));
+        string scratch = Path.Combine(Environment.GetEnvironmentVariable("LAB_HOST_TEMP_ROOT") ?? Path.GetTempPath(), "bee-capture-host-" + Guid.NewGuid().ToString("N"));
         string project = Path.Combine(scratch, "unity-project");
         string work = Path.GetFullPath(Path.Combine(project, ".."));
-        if (workArg != null)
-        {
-            work = Path.GetFullPath(workArg);
-            DirectoryInfo parent = Directory.GetParent(work);
-            parent = parent == null ? null : parent.Parent;
-            parent = parent == null ? null : parent.Parent;
-            project = parent == null ? null : parent.FullName;
-            if (project == null) throw new Exception("invalid fixture work-root layout");
-            scratch = Directory.GetParent(project).FullName;
-        }
-        Application.dataPath = Path.Combine(project, "Assets");
-        Directory.CreateDirectory(Application.dataPath);
-        EditorApplication.timeSinceStartup = 100;
+        string output = Path.Combine(project, "verified.apk");
         try
         {
+            UnityEngine.Application.dataPath = Path.Combine(project, "Assets");
             var capture = new Il2CppInvocationCapture();
             if (mode == "default-off")
             {
-                capture.OnPreprocessBuild(Report("guid-default"));
-                Check(Application.Subscribers == 0, "ordinary build subscribed to Unity logs");
-                Check(!File.Exists(Path.Combine(work, "build-request.json")), "ordinary build read or created a request file");
-                Console.WriteLine("ordinary-build early-return host contract passed");
+                UnityEditor.SessionState.request = null;
+                // Even a malformed isolated-work-root switch must be ignored when
+                // no lab build session owns this Editor callback.
+                capture.OnPreprocessBuild(Report("guid-default", BuildResult.Unknown, output));
+                Check(!File.Exists(Path.Combine(work, "build-request.json")), "ordinary build accessed the request");
+                Check(!Directory.Exists(Path.Combine(work, "lab-build")), "ordinary build created capture output");
+                Console.WriteLine("ordinary build returned before request/path access");
                 return 0;
             }
-            if (mode == "explicit-off")
+            if (mode == "active-off")
             {
-                Directory.CreateDirectory(work);
-                File.WriteAllText(Path.Combine(work, "build-request.json"), "{\"request_id\":\"host-request-1\",\"captureIl2CppInvocation\":false}");
-                SessionState.request = "host-request-1";
-                capture.OnPreprocessBuild(Report("guid-off"));
-                Check(Application.Subscribers == 0, "explicitly disabled request subscribed to Unity logs");
-                Check(!Directory.Exists(Path.Combine(work, "lab-build")), "explicitly disabled request wrote capture output");
-                Console.WriteLine("explicit-off host contract passed");
+                Fixture(scratch, project, work, false);
+                UnityEditor.SessionState.request = "host-request-1";
+                capture.OnPreprocessBuild(Report("guid-off", BuildResult.Unknown, output));
+                Check(!Directory.Exists(Path.Combine(work, "lab-build")), "off request created capture output");
+                Check(!File.Exists(Path.Combine(work, "lab-build/player-linker-inputs/host-request-1.bee-pre.json")), "off request wrote pre receipt");
+                Console.WriteLine("active explicitly disabled request returned without capture");
                 return 0;
             }
-            Directory.CreateDirectory(work);
-            Directory.CreateDirectory(Path.Combine(work, "inventory"));
-            string id = mode == "wrong-active" ? "different-active-request" : "host-request-1";
-            File.WriteAllText(Path.Combine(project, ".port-input.json"), "{\"input_id\":\"" + new string('b', 64) + "\"}");
-            File.WriteAllText(Path.Combine(work, "inventory", "files.json"), "{\"input_id\":\"" + new string('b', 64) + "\"}");
-            File.WriteAllText(Path.Combine(work, "build-request.json"), "{\"request_id\":\"" + id + "\",\"captureIl2CppInvocation\":true,\"sourceCommit\":\"" + new string('a', 40) + "\",\"inputId\":\"" + new string('b', 64) + "\"}");
-            SessionState.request = mode == "wrong-active" ? "host-request-1" : id;
-            if (mode == "wrong-active")
-            {
-                bool refused = false;
-                try { capture.OnPreprocessBuild(Report("guid-wrong-active")); }
-                catch (InvalidOperationException) { refused = true; }
-                Check(refused, "opted-in request with wrong active identity was accepted");
-                Check(Application.Subscribers == 0, "wrong active identity installed callback");
-                Console.WriteLine("wrong-active-request refusal host contract passed");
-                return 0;
-            }
-            string input = Path.Combine(project, "Temp", "StagingArea", "Data", "Managed");
-            Directory.CreateDirectory(input);
-            File.WriteAllBytes(Path.Combine(input, "Game.dll"), new byte[] { 1, 2, 3, 4 });
-            string guid = "abcdef0123456789abcdef0123456789";
-            BuildPipeline.isBuildingPlayer = true;
-            capture.OnPreprocessBuild(Report(guid));
-            Check(Application.Subscribers == 1, "opted-in request did not subscribe");
-
-            if (mode == "cancel")
-            {
-                BuildPipeline.isBuildingPlayer = false;
-                EditorApplication.timeSinceStartup += 6;
-                EditorApplication.Tick();
-                Check(Application.Subscribers == 0, "cancel path leaked log listener");
-                Check(File.Exists(Path.Combine(work, "lab-build", "player-linker-inputs", id + ".il2cpp-incomplete.json")), "cancel path omitted failure witness");
-                Check(!File.Exists(Path.Combine(work, "lab-build", "player-linker-inputs", id + ".il2cpp.json")), "cancel path emitted complete receipt");
-                Console.WriteLine("cancel cleanup host contract passed");
-                return 0;
-            }
-
-            Application.Emit("Invoking il2cpp with arguments: --convert-in-graph --directory=" + input);
-            if (mode == "duplicate-directory")
-            {
-                Application.Emit("Invoking il2cpp with arguments: --directory=" + input + " --directory=" + input);
-                BuildPipeline.isBuildingPlayer = false;
-                capture.OnPostprocessBuild(Report(guid, BuildResult.Unknown));
-                Check(Application.Subscribers == 0, "malformed invocation leaked log listener");
-                Check(File.Exists(Path.Combine(work, "lab-build", "player-linker-inputs", id + ".il2cpp-incomplete.json")), "duplicate --directory omitted failure witness");
-                Check(!File.Exists(Path.Combine(work, "lab-build", "player-linker-inputs", id + ".il2cpp.json")), "duplicate --directory emitted complete receipt");
-                Console.WriteLine("duplicate-directory refusal host contract passed");
-                return 0;
-            }
-            string snapshot = Path.Combine(work, "lab-build", "player-linker-inputs", id, "poststrip", "Game.dll");
-            Check(File.Exists(snapshot), "snapshot was not written under distinct work root");
-            Check(File.ReadAllBytes(snapshot).SequenceEqual(new byte[] { 1, 2, 3, 4 }), "snapshot bytes differ");
-            Check(!Directory.Exists(Path.Combine(project, "lab-build")), "snapshot incorrectly used project as work root");
-            BuildPipeline.isBuildingPlayer = false;
-            capture.OnPostprocessBuild(Report(guid, BuildResult.Unknown));
-            Check(Application.Subscribers == 0, "postprocess leaked log listener");
-            string receipt = File.ReadAllText(Path.Combine(work, "lab-build", "player-linker-inputs", id + ".il2cpp.json"));
-            Check(receipt.Contains("Temp/ StagingArea") == false, "unexpected path rewrite");
-            Check(receipt.Contains("Temp/StagingArea/Data/Managed"), "receipt did not record project-relative input");
-            Check(receipt.Contains(guid), "receipt omitted BuildReport GUID");
-            Check(receipt.Contains("Unknown"), "probe incorrectly assumed callback result already succeeded");
-            Console.WriteLine("distinct project/work-root host contract passed");
+            if (mode != "roundtrip") throw new Exception("unknown host mode");
+            Fixture(scratch, project, work, true);
+            UnityEditor.SessionState.request = "host-request-1";
+            string guid = "0123456789abcdef0123456789abcdef";
+            capture.OnPreprocessBuild(Report(guid, BuildResult.Unknown, output));
+            Check(File.Exists(Path.Combine(work, "lab-build/player-linker-inputs/host-request-1.bee-pre.json")), "opted-in pre receipt missing");
+            string logSlice = "Starting: /Unity/bee_backend --profile=\"Library/Bee/backend_profiler0.traceevents\" --stdin-canary --dagfile=\"Library/Bee/Player123.dag\" --continue-on-failure Player\n" +
+                "WorkingDir: " + project + "\nExitCode: 0 Duration: 0s476ms\n";
+            File.AppendAllText(Path.Combine(work, "Editor.log"), logSlice);
+            File.WriteAllBytes(output, new byte[] { 1, 2, 3, 4 });
+            capture.OnPostprocessBuild(Report(guid, BuildResult.Succeeded, output));
+            Check(File.Exists(Path.Combine(work, "lab-build/player-linker-inputs/host-request-1.bee-post.json")), "opted-in post receipt missing");
+            Console.WriteLine("PROJECT=" + project);
+            Console.WriteLine("WORK=" + work);
+            Console.WriteLine("APK=" + output);
+            Console.WriteLine("GUID=" + guid);
+            Console.WriteLine("C# receipt bridge produced pre/post JSON");
             return 0;
         }
-        finally { try { Directory.Delete(scratch, true); } catch { } }
+        catch (Exception e) { Console.Error.WriteLine(e); return 1; }
     }
 }

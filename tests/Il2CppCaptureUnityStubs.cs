@@ -1,5 +1,5 @@
 using System;
-using System.Linq;
+using System.Collections;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -10,17 +10,39 @@ namespace UnityEngine
     public static class Application
     {
         public static string dataPath;
-        public delegate void LogCallback(string condition, string stackTrace, LogType type);
-        public static event LogCallback logMessageReceived;
-        public static int Subscribers { get { return logMessageReceived == null ? 0 : logMessageReceived.GetInvocationList().Length; } }
-        public static void Emit(string value) { if (logMessageReceived != null) logMessageReceived(value, "", LogType.Log); }
+        public static void LogWarning(string value) { Console.Error.WriteLine(value); }
+    }
+    public static class Debug
+    {
+        public static void LogWarning(string value) { Console.Error.WriteLine(value); }
     }
     public static class JsonUtility
     {
         static string ReadString(string json, string key)
         {
-            Match m = Regex.Match(json, "\\\"" + Regex.Escape(key) + "\\\"\\s*:\\s*\\\"([^\\\"]*)\\\"");
-            return m.Success ? m.Groups[1].Value : null;
+            Match m = Regex.Match(json, "\"" + Regex.Escape(key) + "\"\\s*:\\s*\"((?:\\\\.|[^\"\\\\])*)\"");
+            return m.Success ? m.Groups[1].Value.Replace("\\\"", "\"").Replace("\\\\\\", "\\\\") : null;
+        }
+        static string Quote(string value)
+        {
+            return "\"" + (value ?? "").Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\r", "\\r").Replace("\n", "\\n").Replace("\t", "\\t") + "\"";
+        }
+        static string Write(object value)
+        {
+            if (value == null) return "null";
+            if (value is string) return Quote((string)value);
+            if (value is bool) return (bool)value ? "true" : "false";
+            if (value is int || value is long || value is double || value is float) return Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture);
+            if (value is IEnumerable && !(value is string))
+            {
+                var parts = new System.Collections.Generic.List<string>();
+                foreach (object item in (IEnumerable)value) parts.Add(Write(item));
+                return "[" + String.Join(",", parts.ToArray()) + "]";
+            }
+            var fields = new System.Collections.Generic.List<string>();
+            foreach (FieldInfo field in value.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public))
+                fields.Add(Quote(field.Name) + ":" + Write(field.GetValue(value)));
+            return "{" + String.Join(",", fields.ToArray()) + "}";
         }
         public static T FromJson<T>(string json) where T : new()
         {
@@ -33,22 +55,15 @@ namespace UnityEngine
                     Match m = Regex.Match(json, "\\\"" + Regex.Escape(f.Name) + "\\\"\\s*:\\s*(true|false)");
                     if (m.Success) f.SetValue(value, m.Groups[1].Value == "true");
                 }
+                else if (f.FieldType == typeof(int) || f.FieldType == typeof(long))
+                {
+                    Match m = Regex.Match(json, "\\\"" + Regex.Escape(f.Name) + "\\\"\\s*:\\s*(-?[0-9]+)");
+                    if (m.Success) f.SetValue(value, Convert.ChangeType(m.Groups[1].Value, f.FieldType));
+                }
             }
             return value;
         }
-        public static string ToJson(object value, bool prettyPrint)
-        {
-            var builder = new StringBuilder("{");
-            bool first = true;
-            foreach (FieldInfo field in value.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public))
-            {
-                if (field.FieldType != typeof(string)) continue;
-                if (!first) builder.Append(',');
-                first = false;
-                builder.Append('"').Append(field.Name).Append("\":\"").Append((field.GetValue(value) as string ?? "").Replace("\\", "\\\\").Replace("\"", "\\\"")).Append('"');
-            }
-            return builder.Append('}').ToString();
-        }
+        public static string ToJson(object value, bool prettyPrint) { return Write(value); }
     }
 }
 namespace UnityEditor
@@ -57,12 +72,12 @@ namespace UnityEditor
     public enum BuildResult { Unknown, Succeeded, Failed }
     public class GUID { public string value; public override string ToString() { return value; } }
     public static class SessionState { public static string request; public static string GetString(string key, string fallback) { return request ?? fallback; } }
-    public static class BuildPipeline { public static bool isBuildingPlayer; }
-    public static class EditorApplication
+}
+namespace UnityEditorInternal
+{
+    public static class InternalEditorUtility
     {
-        public static double timeSinceStartup;
-        public static event Action update;
-        public static void Tick() { if (update != null) update(); }
+        public static string GetFullUnityVersion() { return "2021.3.45f2 (88f88f591b2e)"; }
     }
 }
 namespace UnityEditor.Build
@@ -78,6 +93,7 @@ namespace UnityEditor.Build.Reporting
         public UnityEditor.BuildTarget platform;
         public string outputPath;
         public UnityEditor.BuildResult result;
+        public ulong totalErrors;
     }
     public class BuildReport { public BuildSummary summary; }
 }
