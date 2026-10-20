@@ -15,12 +15,12 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
 
 - [ ] Resolve the editor-equivalent Android content/shader production gate without
       consuming desktop-generated game data as a hidden prerequisite; extend
-      [J832's precursor](PORTING_JOURNAL.md#j829--run-the-exact-converter-on-android-and-load-content-built-without-a-template)
+      [J832's precursor](PORTING_JOURNAL.md#j832--run-the-exact-converter-on-android-and-load-content-built-without-a-template)
       to the full rendered/script-bound fixture; phone-side TextAsset generation
       is qualified in [J833](PORTING_JOURNAL.md#j833--generate-content-and-sign-increasing-fixture-updates-on-android).
 - [ ] Establish permitted acquisition and Android execution of the exact IL2CPP
       tools beyond the authored converter proof; qualify full native linking,
-      app sandbox execution, complete packaging, durable owner signing-key
+      app sandbox execution (including [J836’s unresolved refusal control](PORTING_JOURNAL.md#j836--build-an-authored-apk-on-android-and-test-app-host-execution)), complete packaging, durable owner signing-key
       custody and user-mediated installer/update flows beyond the fixture proof.
 - [ ] Present bounded proof findings before changing the working build or choosing
       the final installation experience. Keep other execution backends excluded.

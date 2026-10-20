@@ -36,3 +36,8 @@ Android documents the
 [writable execution restriction](https://developer.android.com/about/versions/10/behavior-changes-10#execute-permission)
 and the public
 [native library directory](https://developer.android.com/reference/android/content/pm/ApplicationInfo#nativeLibraryDir).
+
+J836 records the phone build and installed execution observation. The writable
+copy also executes on the selected device, so the sandbox-policy control fails.
+The report retains optional self/child contexts without changing security state;
+this fixture does not establish a general app-host environment.
