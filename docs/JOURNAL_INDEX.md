@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J844](PORTING_JOURNAL.md#j844--reach-ship-graveyard-but-retain-the-unarmed-siren-navigation-observation) | 2026-10-20 | Reach Ship Graveyard but retain the unarmed Siren navigation observation | 2026-10-20. |
 | [J842](PORTING_JOURNAL.md#j842--run-the-full-authored-converter-and-load-its-phone-compiled-native-output) | 2026-10-20 | Run the full authored converter and load its phone-compiled native output | 2026-10-20. |
 | [J843](PORTING_JOURNAL.md#j843--retain-the-successful-player-but-refuse-the-legacy-il2cpp-invocation-receipt) | 2026-10-20 | Retain the successful player but refuse the legacy IL2CPP invocation receipt | 2026-10-20. |
 | [J839](PORTING_JOURNAL.md#j839--compile-and-link-the-authored-il2cpp-native-library-on-android) | 2026-10-20 | Compile and link the authored IL2CPP native library on Android | 2026-10-20. |
