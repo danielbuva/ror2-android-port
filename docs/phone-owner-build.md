@@ -8,6 +8,7 @@ Evidence: [J831](PORTING_JOURNAL.md#j831--assess-phone-only-owner-builds-with-th
 First probe checkpoint: [J832](PORTING_JOURNAL.md#j832--run-the-exact-converter-on-android-and-load-content-built-without-a-template).
 Phone generation/update checkpoint:
 [J833](PORTING_JOURNAL.md#j833--generate-content-and-sign-increasing-fixture-updates-on-android).
+Storage/oracle review qualification: [J834](PORTING_JOURNAL.md#j834--bind-phone-fixture-paths-and-the-exact-editor-oracle-after-review).
 
 **Finding:** this repository has no demonstrated phone-only build path. Many
 preparation and packaging stages have Android-capable open-source building

@@ -37,6 +37,11 @@ unsigned outputs under `work/rebuild/phone-packaging/`; alignment/signing remain
 separate explicit stages. No code selects a timestamped evidence directory as a
 hidden build input.
 
+J834 retains `review-package-on-android.py`, explicit review selectors and
+`review-proof-receipt.json` under the same private proof root. These are local
+replay/evidence support, not game-build inputs. Editor launches now keep fresh
+per-operation report directories containing their actual version/content oracle.
+
 The public scaffold and its generators are described in
 [tools/phone-build](../tools/phone-build/README.md). No current game build reads
 these support paths, and no compiler/editor redistribution grant is inferred.

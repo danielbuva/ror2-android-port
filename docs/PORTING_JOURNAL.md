@@ -18382,7 +18382,7 @@ moves to J820 and has its index/checklist references regenerated. The original
 proposal receipts remain local historical evidence, not current commit proof.
 
 Resolve the alpha device uniquely from the configured authorized internal-storage
-device profile, following J818's exclusive alpha assignment. Write an independent
+device profile, following the user's exclusive alpha assignment. Write an independent
 ignored work/config/local.json containing only that device in its allowlist;
 keep the legitimate game path and device settings. No main configuration or
 original installation is changed. Run ./dev doctor with that explicit serial;
@@ -18589,7 +18589,7 @@ correct that version alone. Exact Unity then loads, reads and unloads it.
 Preserve the failed candidate and log. A separate check attempt refuses the
 held main build mutex; retry only after the owning build releases it.
 
-Termux Python 3.14.8 runs the same source with `-I -S` on internal-storage alpha device,
+Termux Python 3.14.8 runs the same source with `-I -S` on the internal-storage alpha device,
 without site packages. Its 3,118-byte output matches host bytes:
 `6c4ce15b5d766a99284e2488d10c22902c5d231389b357abefdc06dfddddb313`.
 The source is portable here for this two-type contract, not a general Unity
@@ -18693,3 +18693,84 @@ user-mediated installer flow. Preserve the desktop fallback and exact game
 runtime. No benchmark or numerical performance claim follows from these passes.
 Fresh-clone CI, Ruff, documentation freshness, privacy/provenance and whitespace
 checks qualify the local tooling checkpoint separately from these device results.
+
+## J834 — Bind phone fixture paths and the exact-editor oracle after review
+
+2026-10-20. Hypothesis: the separate phone-content fixture can repeat its native
+content/update contract using observed Android/Unity data directories and a
+verified exact-editor oracle, without assuming a portable storage path or
+accepting exit code zero alone. Fetch `origin/main` `e4868eb` before this entry;
+merge its J828 snapshot without rewriting the published alpha branch. Retain
+alpha J829–J833 and coordinate the next journal number with the main session.
+No game runtime owner, working game build or original installation changes.
+
+**Review changes.** The player publishes Android's private/external files
+locations and `Application.persistentDataPath` into its private bootstrap
+report. `phone_package_check` reads this fresh report per launch, validates
+fixture ownership, canonicalizes external paths and records separate private
+and persistent backing. Bind package-private storage to the freshly selected
+installation storage. Report, selector and candidate paths derive from these
+observations; no portable SD path is assumed.
+
+Both editor entry points require Unity 2021.3.45f2. Each launch has a new report
+directory; its receipt records the executed editor and actual oracle report.
+The launcher requires the pinned reported version and native load/read/unload
+checks even if the editor exits successfully. Host contracts reject wrong or
+missing versions, failed content checks, mismatched external paths, wrong
+storage placement and different private filesystem/inode identities. Public
+state/device references use non-identifying roles; preserve main's newer game
+APK and source facts rather than overwriting them with alpha's older snapshot.
+
+**First failures.** The first two device attempts refuse the private path
+comparison and remove only their owned fixture. Preserved observations show
+Android exposes its private files through two bind-mount aliases; canonical
+path strings alone differ. Compare actual filesystem device/inode identities
+under the app UID and require equality, while still checking selected storage
+and both backing reports. Host controls reject a different device number or
+inode. Do not weaken this to a string suffix or assume aliases are equivalent.
+The original failed attempts remain at
+`work/experiments/phone-packaging/20261020T210830.363433Z/` and
+`work/experiments/phone-packaging/20261020T210922.561681Z/`.
+
+**Execution.** The revised fixture builds from committed `025bfc9`, under the
+primary checkout's existing mutex, with exact Unity 2021.3.45f2, ARM64 IL2CPP,
+Vulkan, Low managed stripping and engine stripping disabled. Its new explicit
+oracle passes. Base APK:
+`339c672442a1ce21c8a31e115986bb9152f8fb80b52e0b7570cd962228f7b17b`.
+Phone packaging uses the unchanged J833 tool set, actual phone-generated bundle
+and a new disposable signing identity. Versions 3 and 4 verify on Android and
+independently on the desktop, with equal certificates. Only the binary manifest
+entry differs from the new base; native libraries and content remain identical.
+
+- Phone version 3: `ec39c2ca562ae1270e68709502fd3f9ff6d736ef56e5e27998a2036d7e8a1f1c`.
+- Phone version 4: `ff9c5977054d9e18d004d6a8164d498a2dc64186ebd5ae7575a412cf72f62414`.
+
+The identity-bound device runner executes committed `5f5f1b9` against those exact
+APKs. Embedded control, hash refusal before loading, phone-generated external
+input, two native load/read/unload cycles per positive phase, increasing-version
+update, private marker retention and external candidate retention all pass.
+Each install queries fresh storage/capacity and records actual package
+placement; every phase binds actual data paths/backing. Hash-proven teardown
+removes the fixture, verifies display sleep and confirms the existing game APK
+is unchanged. No other device receives an operation.
+
+**Evidence.** Successful device result:
+`work/experiments/phone-packaging/20261020T211001.254532Z/result.json`.
+`work/coordination/phone-proof/review-proof-receipt.json` binds that result,
+exact-editor receipt, APK comparison, signatures and explicit request; SHA-256
+`a932d2cea1a73218824e66dd37c4543b61a027dab5c0c1b240700b1553373898`.
+The private `review-package-on-android.py` adapter copies supplied inputs and
+invokes the retained Android packaging driver unchanged. Raw logs, data paths,
+identifiers, SDK inputs and signing outputs remain ignored.
+
+**Validation.** Fresh-clone CI on `5f5f1b9` passes 1,168 host tests with 52
+optional skips, Ruff, the public-content audit and documentation freshness.
+The final push repeats these checks on the documentation checkpoint.
+
+**Classification.** The PR's storage/oracle correctness gaps are resolved for
+this fixture on the selected device. J833's phone packaging/content conclusion
+remains narrow: the base player still requires the desktop editor. Full phone
+player construction, rich content/shaders, app-host dependencies, permitted
+tool delivery, durable owner signing, user-mediated installation and performance
+comparison remain open. Revisit on a storage/path regression or a changed tool,
+editor, fixture or input contract; no runtime migration is authorized.
