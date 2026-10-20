@@ -8,7 +8,7 @@ standard library. UnityPy independently checks the output on the host. Its bundl
 APK are outputs, not inputs to the game build. Debug signing and Gradle state
 are isolated under `.local/phone-build-*`.
 
-`work/coordination/phone-proof/` retains J831's private execution adapters,
+`work/coordination/phone-proof/` retains J832's private execution adapters,
 hash-bound tool/package manifests, original failed attempts and collected device
 evidence. The `converter-host.py`, `converter-android.py`,
 `converter-layout-retry.py`, `compile-android.py` and `content-device.py` adapters
@@ -19,7 +19,7 @@ Termux package archives are bound to their official HTTPS index hashes.
 on the alpha device for replay. It contains no installed game or package data.
 The disposable content fixture package is removed after verification.
 
-J832 adds private tool acquisition/staging and Android execution adapters under
+J833 adds private tool acquisition/staging and Android execution adapters under
 that same evidence root: `fetch-python.py`, `fetch-packaging.py`,
 `fetch-signer.py`, `generate-on-android.py`, `stage-packaging-tools.py`,
 `package-on-android.py` and `android-packaging-driver.py`. They retain hash-bound
@@ -468,6 +468,16 @@ contents. They are not user-supplied state or game content. The support fixture
 is staged by `whole_catalog.stage_build_sources`; ordinary player behavior
 never reads this test directory.
 
+### Current gameplay qualification support
+
+`work/coordination/codex-skin-siren-*`,
+`work/coordination/siren-navigation-new-player-guard/` and
+`work/coordination/animation-native-skin-device-plan/` retain hash-bound source
+snapshots, saved compiler references, rendered editor guards and selected-device
+qualification inputs for J829 and the next targeted runs. They are required local
+diagnostic support; the game build reads the tracked fixture/runtime sources,
+not these run directories. No game-derived material is public.
+
 ### Isolated Wwise diagnostic inputs
 
 The optional J740/J742 native fixtures and fresh Unity managed-readiness
@@ -499,6 +509,16 @@ with the public repository. Preserve the following local inputs for replay:
 | `work/toolchains/android-ndk-r25c*` | Official Google NDK r25c archive and isolated native-library toolchain, bound by download checksum and local revision/tool hashes. The supplied Wwise Android SDK requires r25; this optional diagnostic build dependency stays separate from Unity's pinned r21 SDK/NDK and does not change editor preferences or `scripts/env.sh`. |
 | `work/coordination/wwise-unity-filename-io-triage/`, `work/coordination/wwise-managed-v5-independent-review/` | Local official-source/API evidence and independent review pins for J759's AddBasePath filename diagnostic. Its v8 source and v8-r2 package plan are frozen within the preceding row's directories; retry binds the terminal build request, exact package-only receipt and all 41 input hashes. These inputs do not enable composed audio. |
 | `work/coordination/wwise-android-fixture-draft/fixture-signing.*` | Disposable locally generated signing identity used only for standalone fixtures; key/password bytes must remain private. |
+
+The protected candidates in `work/coordination/audio-r6-formatted-monitor-control/`,
+`audio-formatted-native-root-build-plan/`, `audio-formatted-fixture-root-plan/`
+and Root's `codex-audio-formatted-*` support directories are required local state
+for the authorized isolated native/managed fixture. They retain reviewed SDK
+source overlays, exact native build inputs, static audits and selected stage/build
+proofs until public authored generators replace that local dependency. No current
+game build reads these protected overlays; they remain ignored and do not enable
+game audio. The current pre-strip inventory/comparison is retained under
+`work/coordination/audio-current-player-closure-consumer/`.
 
 These fixtures select explicit hash-bound inputs, not a timestamped run as a
 mutable source. Raw device output remains local evidence. Their authored

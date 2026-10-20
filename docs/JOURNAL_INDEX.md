@@ -10,11 +10,12 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
-| [J832](PORTING_JOURNAL.md#j832--generate-content-and-sign-increasing-fixture-updates-on-android) | 2026-10-20 | Generate content and sign increasing fixture updates on Android | 2026-10-20. |
-| [J831](PORTING_JOURNAL.md#j831--run-the-exact-converter-on-android-and-load-content-built-without-a-template) | 2026-10-20 | Run the exact converter on Android and load content built without a template | 2026-10-20. |
-| [J830](PORTING_JOURNAL.md#j830--assess-phone-only-owner-builds-with-the-il2cpp-runtime-fixed) | 2026-10-20 | Assess phone-only owner builds with the IL2CPP runtime fixed | 2026-10-20, host/source inspection only. |
-| [J829](PORTING_JOURNAL.md#j829--accept-owner-built-route-a-and-isolate-the-alpha-environment) | 2026-10-20 | Accept owner-built Route A and isolate the alpha environment | 2026-10-20, decision and environment inspection only. |
-| [J828](PORTING_JOURNAL.md#j828--research-public-alpha-distribution-before-choosing-a-launcher) | 2026-10-20 | Research public alpha distribution before choosing a launcher | 2026-10-20, host/source review only. |
+| [J833](PORTING_JOURNAL.md#j833--generate-content-and-sign-increasing-fixture-updates-on-android) | 2026-10-20 | Generate content and sign increasing fixture updates on Android | 2026-10-20. |
+| [J832](PORTING_JOURNAL.md#j832--run-the-exact-converter-on-android-and-load-content-built-without-a-template) | 2026-10-20 | Run the exact converter on Android and load content built without a template | 2026-10-20. |
+| [J831](PORTING_JOURNAL.md#j831--assess-phone-only-owner-builds-with-the-il2cpp-runtime-fixed) | 2026-10-20 | Assess phone-only owner builds with the IL2CPP runtime fixed | 2026-10-20, host/source inspection only. |
+| [J830](PORTING_JOURNAL.md#j830--accept-owner-built-route-a-and-isolate-the-alpha-environment) | 2026-10-20 | Accept owner-built Route A and isolate the alpha environment | 2026-10-20, decision and environment inspection only. |
+| [J829](PORTING_JOURNAL.md#j829--research-public-alpha-distribution-before-choosing-a-launcher) | 2026-10-20 | Research public alpha distribution before choosing a launcher | 2026-10-20, host/source review only. |
+| [J828](PORTING_JOURNAL.md#j828--accept-the-skinsiren-player-and-its-same-request-linker-capture) | 2026-10-20 | Accept the skin/Siren player and its same-request linker capture | 2026-10-20. |
 | [J827](PORTING_JOURNAL.md#j827--repair-the-siren-editor-fixture-before-dispatching-the-owning-build) | 2026-10-20 | Repair the Siren editor fixture before dispatching the owning build | 2026-10-20. |
 | [J826](PORTING_JOURNAL.md#j826--restore-the-original-selected-skin-lifecycle-behind-a-per-run-gate) | 2026-10-20 | Restore the original selected-skin lifecycle behind a per-run gate | 2026-10-20. |
 | [J825](PORTING_JOURNAL.md#j825--bind-a-bounded-siren-approach-trace-to-its-real-input-owner) | 2026-10-20 | Bind a bounded Siren approach trace to its real input owner | 2026-10-20. |

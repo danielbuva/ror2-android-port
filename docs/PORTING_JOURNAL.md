@@ -18257,7 +18257,70 @@ cache clearing occurs. Accepted/installed game remains `107718f8…`, with Main
 asleep. Next commit the repair, refresh the editor and retry through a new owning
 request; both default checks and the targeted animation/Siren gates remain open.
 
-## J828 — Research public alpha distribution before choosing a launcher
+## J828 — Accept the skin/Siren player and its same-request linker capture
+
+2026-10-20. After J827's editor-fixture repair, Main doctor and preflight pass.
+Build committed source `72f9b2ea4777841ea9e807720be5849bcd69fe76` through the
+serialized whole-catalog code-only path with debugging symbols and explicit
+J823 linker-input capture. Request
+`20261020T203424.928531Z-fbc939f272d9478984528ea8bb728c52` succeeds in
+226.333356 seconds with zero errors. Freeze 301 authored source inputs, all
+110 runtime sources, the APK, symbols and unchanged 266-entry payload map.
+
+APK `922cfb86e895118285d8c93f588ff57c4052154d15e88688bf7b46f357474112`;
+symbol ZIP `188d26b78303a26e83049ee20633afe8a176d03216845457be9a51f288706736`;
+libil2cpp build ID `d60d8f970cdd3f654b938b25d7d64e30975c8950`.
+The frozen candidate is
+`work/experiments/native-skin-siren-next/candidate-20261020T204025.855268Z/`;
+Root build and earlier refusal evidence are under
+`work/coordination/codex-skin-siren-build-root-r{1,2}/`.
+
+The actual UnityLinker callback captures 330 pre-strip DLLs from its supplied
+`Temp/StagingArea/Data/Managed` directory and binds independent saved bytes to
+this request, accepted input, source commit and successful APK. Compare J820's
+historical 330-file source set: names match exactly and 329 files match hash
+and size; only the newly compiled Assembly-CSharp differs. J820's 331 transform
+rows include one synthesized owner, so 331 was not the source-file count. The
+host comparison and full saved inventory are under
+`work/coordination/audio-current-player-closure-consumer/r2/` (inventory
+`e458fedf06eec55042f008bff03980e26561bbe20fdee459937f906c1c7b2656`).
+The editor log confirms this UnityLinker directory and successful request.
+The existing IL2CPP DAG/trace lacks request identity: post-strip/IL2CPP inventory
+binding, a current audio transform/scanner run and runtime audio remain open.
+
+Root catches and corrects the private guard renderer's JSON-array/C# syntax
+before editor execution, compiles the rendered body, and runs it in the exact
+idle Main editor under the host mutex. All ten staged source hashes match
+before/after. Survivor input, source-egg contracts, bounded navigation policy
+and target-witness policy pass; this is a synthetic source guard, not live
+native ability/encounter acceptance. The complete editor result is
+`work/coordination/codex-skin-siren-guard-root-r1/result.json`.
+
+Install only the frozen APK on Main, updating in place with fresh adopted
+placement/reserve checks. Bootstrap and payload sync pass. The observed vendor
+prompt requests gamepad A; Root uses that ordinary unlock source before launch
+without changing USB/storage configuration. The two canonical checks pass:
+
+- Plain `work/experiments/baseline/20261020T204525.460489Z/`: 35.217300 seconds
+  of live Lakes play, current-build true, no report/current-process error.
+- One-exit `work/experiments/baseline/20261020T204912.703806Z/`: exactly one
+  original exit, Goolake, 12.658783 seconds in-stage, current-build true and no
+  report/current-process error.
+
+Both retain appliedRuns 13 and exact owned APK identity. Native skin, Siren,
+first-stage recovery and encounter-continuation flags remain off. Selectors are
+absent, the game force-stops and Main sleeps. Alpha's device and the shared spare
+receive no action. Root status/log validations and acceptance are under
+`work/coordination/codex-skin-siren-device-root-r1/`.
+
+This is the new default baseline, not full game or native skin/animation/Siren
+acceptance. Next run the explicit source-selected native skin lifecycle and
+bounded original Siren route with the matching source guard; keep Moon manual.
+J814's native shared-input NRE cause, complete ability semantics, normal play,
+visual parity and composed audio remain separate. No authored game source
+changes after this APK; R8/R9 replay J825–J827 as documented.
+
+## J829 — Research public alpha distribution before choosing a launcher
 
 2026-10-20, host/source review only. Hypothesis: the user-supplied-input
 distribution boundary needs an explicit execution/content-delivery decision
@@ -18304,7 +18367,7 @@ Revisit after the user selects a route and authorizes its first bounded proof;
 resolve the alpha device assignment before any hardware work. Preserve the
 main session's runtime, packages, build mutex and rollback receipts.
 
-## J829 — Accept owner-built Route A and isolate the alpha environment
+## J830 — Accept owner-built Route A and isolate the alpha environment
 
 2026-10-20, decision and environment inspection only. The user selects Route A
 from ADR-002: each owner supplies legitimate game files, reconstructs content
@@ -18335,7 +18398,7 @@ mutation, APK or payload is produced. PORTING_STATE's main device facts remain
 unchanged. Revisit the missing owner-build prerequisites through public
 producers, retaining J818's device roles and the shared build mutex.
 
-## J830 — Assess phone-only owner builds with the IL2CPP runtime fixed
+## J831 — Assess phone-only owner builds with the IL2CPP runtime fixed
 
 2026-10-20, host/source inspection only. The user clarifies Route A: retain
 native IL2CPP ARM64 and the existing renderer, investigate a phone-only owner
@@ -18396,7 +18459,7 @@ Require real-device matched-workload correctness/performance and memory results
 before adopting an alternative pipeline. Preserve desktop fallback/rollback
 receipts; a failed build-tool gate does not authorize a new game runtime.
 
-## J831 — Run the exact converter on Android and load content built without a template
+## J832 — Run the exact converter on Android and load content built without a template
 
 2026-10-20. Hypothesis: at least the managed IL2CPP conversion stage and a small
 native serialized-content contract can be separated from the desktop editor,
@@ -18507,9 +18570,9 @@ checkpoint; final CI receipts stay private under the evidence directory.
 PORTING_STATE replaces its alpha installation facts while preserving the
 main session's accepted game APK and unresolved gameplay/audio gates.
 
-## J832 — Generate content and sign increasing fixture updates on Android
+## J833 — Generate content and sign increasing fixture updates on Android
 
-2026-10-20. Hypothesis: J831's small content and packaging stages can execute
+2026-10-20. Hypothesis: J832's small content and packaging stages can execute
 on the assigned phone while preserving the exact native IL2CPP/Vulkan player.
 The user requests autonomous continuation under Route A. Rebase onto
 `origin/main` `72f9b2e` precedes this entry. Main gameplay/audio, the working
