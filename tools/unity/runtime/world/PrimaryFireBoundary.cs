@@ -62,6 +62,11 @@ public sealed partial class PortSession
     {
         return r.id.StartsWith("body-state-spawn-state-auto-nova-spine");
     }
+    internal static bool IsCommandoPrimaryDiagnosticBody(CharacterBody body)
+    {
+        BodyIndex expected = BodyCatalog.FindBodyIndex("CommandoBody");
+        return body && expected != BodyIndex.None && body.bodyIndex == expected;
+    }
     PrimaryFireSession primaryFireSession;
     PrimaryFireSession GetPrimaryFireSession()
     {

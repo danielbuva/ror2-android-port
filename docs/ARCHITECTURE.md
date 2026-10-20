@@ -755,7 +755,16 @@ records secondary detail in `automaticSpawnCleanupError`. These diagnostics
 share the existing session report lifetime and retain no Unity references.
 `test_primary_operand_witness.py` executes the production observer and guarded
 iterator with fake-null, single-read, thrown-accessor and cleanup-failure cases
-(J796). The exact MUL-T operand still requires device evidence.
+(J796). J797 observes a CLR-null primary slot on a live MUL-T body/locator.
+The input owner computes one `commandoPrimaryDiagnostic` gate from the native
+Commando body catalog identity for each session. Only that gate enables the
+Commando-specific primary observer, completion readiness read and Commando HUD.
+General playable-spine setup and survivor skill coverage retain their existing
+scope, as does strict canonical-machine cleanup. The identity policy executes
+in `test_toolbot_commando_observer_scope.py`; consumer wiring is checked from
+source, while the observer's strict missing-operand behavior is executed by the
+existing operand test. Device acceptance of this scope correction remains open
+(J799).
 
 Only an explicit Siren source-entry diagnostic entering Ship Graveyard wraps
 the existing population and original-stage iterators with

@@ -16429,3 +16429,52 @@ The private classification is reviewed against the actual first-live and latest
 reports, preserving prior-session files as historical only. J797's operand
 clock wording is corrected to distinguish Unity realtime from world elapsed.
 No runtime, pipeline, required local build input or rebuild source changes.
+
+
+## J799 — Scope the Commando primary diagnostic by native survivor identity
+
+Date: 2026-10-20. Hypothesis: J797's MUL-T refusal comes from applying a
+Commando-specific observer to every playable-spine survivor, so correcting its
+scope lets native Toolbot execution continue without repairing its slots.
+The exact native stance at the failing tick remains unobserved.
+
+IsPlayableSpine is a case-family predicate, not a survivor predicate. Its
+primary observer counts Commando FirePistol2/ReloadPistols states; the readiness
+assertion and HUD also describe Commando. Accepted native Toolbot stance source
+permits a temporary null primary during a swap and restores the selected primary
+in the subsequent stance. This supplies a legitimate lifecycle possibility for
+J797's operand, not proof of the precise state at that device tick. Pinned
+Starstorm2's named state-machine relationships and J796's native inspection
+remain the relevant prior-art context; no protected implementation is copied.
+
+The existing PrimaryFireBoundary owner adds a native BodyCatalog lookup for
+CommandoBody and compares the live body's catalog identity, with no hardcoded
+numeric index. NovaInputBoundary computes one session gate from this predicate
+and the existing playable-spine predicate. The primary observer, final primary
+readiness dereference and Commando-only HUD use that same gate. General input,
+model setup and survivor skill coverage continue for every selected survivor.
+No native skill/slot/state/stock is written; the strict cleanup validator and
+J796 first-failure attribution are unchanged.
+
+Independent review clears the runtime diff and requires one host-test output
+path correction. Root applies the exact reviewed patch, redirects its temporary
+compiler outputs beneath ignored work/host-tests, formats touched C# ranges
+with a byte-backed whitespace-only receipt and runs Ruff on the new Python
+contract. The extracted native identity policy passes synthetic routing cases;
+source assertions check all three consumers. The existing production-extracted
+primary observer/cleanup/guarded-iterator tests also pass (three tests). These
+do not execute the full Nova input iterator or establish Toolbot semantics.
+
+Root compiles all 106 current runtime sources and four support sources against
+the exact saved 264-reference editor closure, with zero errors and no
+source/reference/compiler drift. Assembly SHA-256:
+`c8ff42619b0c627385a62058635a472f7ee755fc1ba06a67941149cbace47696`.
+This is a source checkpoint; accepted and installed game APKs remain J797's
+40299fc5. Next pass both default modes on a new player, then repeat the stock
+MUL-T kit and strict teardown before accepting the hypothesis on device.
+
+Evidence: work/coordination/{toolbot-4029-first-failure-triage/,
+toolbot-4029-observer-scope-review/,codex-commando-scope-format-root-r1/,
+codex-commando-scope-compile-root-r1/}. R8 replay must restage the changed
+PrimaryFireBoundary and NovaInputBoundary authored files. No runtime file,
+asset GUID, payload or required local build input is added.

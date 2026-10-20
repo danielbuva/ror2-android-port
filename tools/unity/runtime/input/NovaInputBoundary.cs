@@ -74,6 +74,7 @@ public sealed partial class PortSession
         public float aimPitchCycle, aimYawCycle;
         public Vector3 modelForward;
         public bool novaOnly, originalInputConsumer, stopped, aimConsumed, rendersOriginalModel, diagnosticInput;
+        public bool commandoPrimaryDiagnostic;
         public string inputSource;
         public bool physicalInputAvailable, mappingAvailable;
         public bool automaticDiagnosticInputHeldAtBoundary;
@@ -135,7 +136,7 @@ public sealed partial class PortSession
                 Application.Quit();
             return;
         }
-        if (r != null && IsPlayableSpine() && r.primary != null)
+        if (r != null && r.nova != null && r.nova.commandoPrimaryDiagnostic && r.primary != null)
             GUI.Label(
                 new Rect(20, 70, 850, 100),
                 "Commando | A: jump | X: primary | Y: secondary | LB: roll | RB: barrage | audio unavailable\nOriginal primary entries: " +
@@ -245,6 +246,7 @@ public sealed partial class PortSession
         public IEnumerator NovaInputBoundary(CharacterBody body, EntityStateMachine machine, SessionConfig cfg)
         {
             bool spine = coordinator.IsPlayableSpine(), bringup = coordinator.r.id.EndsWith("-bringup", StringComparison.Ordinal);
+            bool commandoPrimaryDiagnostic = spine && IsCommandoPrimaryDiagnosticBody(body);
             coordinator.r.integratedWorld = cfg.integratedWorld;
             coordinator.r.teleporterLoop = cfg.teleporterLoop;
             var inputMode = InputSessionPolicy.Resolve(CurrentDeviceModel(), bringup);
@@ -254,9 +256,13 @@ public sealed partial class PortSession
             bool automaticDiagnosticOnly = inputMode == InputSessionPolicy.Mode.AutomaticDiagnosticWithoutPhysicalInput;
             if (physicalInputAvailable)
                 NovaInputBridge.RequireNova();
-            coordinator.r.nova = new NovaReport { rendersOriginalModel = spine, diagnosticInput = bringup || automaticDiagnosticOnly,
-                                                  novaOnly = physicalInputAvailable, inputSource = physicalInputAvailable ? "measured-nova" : "automatic-diagnostic",
-                                                  physicalInputAvailable = physicalInputAvailable, spawnedBodyId = body.netId.Value,
+            coordinator.r.nova = new NovaReport { rendersOriginalModel = spine,
+                                                  commandoPrimaryDiagnostic = commandoPrimaryDiagnostic,
+                                                  diagnosticInput = bringup || automaticDiagnosticOnly,
+                                                  novaOnly = physicalInputAvailable,
+                                                  inputSource = physicalInputAvailable ? "measured-nova" : "automatic-diagnostic",
+                                                  physicalInputAvailable = physicalInputAvailable,
+                                                  spawnedBodyId = body.netId.Value,
                                                   masterId = body.master.netId.Value };
             NovaInputBridge.Mapping mapping = null;
             if (physicalInputAvailable)
@@ -519,7 +525,7 @@ public sealed partial class PortSession
                     long observerPart = System.Diagnostics.Stopwatch.GetTimestamp();
                     if (cfg.integratedWorld)
                         coordinator.r.performance.preObserversMs += PerformanceMs(performancePart);
-                    if (spine)
+                    if (commandoPrimaryDiagnostic)
                         coordinator.ObserveSpinePrimary(body);
                     if (cfg.integratedWorld)
                     {
@@ -771,7 +777,7 @@ public sealed partial class PortSession
                                   "Physical movement and original stopping not observed");
                 coordinator.Check(coordinator.r.nova.aimConsumed && (bringup || bridge.aimTicks > 10),
                                   "Physical right-stick aim not consumed by original state");
-                if (spine)
+                if (commandoPrimaryDiagnostic)
                     coordinator.Check(coordinator.r.primary.shots > 0 &&
                                           (cfg.combatSpine ? body.skillLocator.primary.CanExecute() : body.skillLocator.primary.stock == 1),
                                       "Original primary firing/readiness not observed");
