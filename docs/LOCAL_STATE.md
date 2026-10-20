@@ -7,6 +7,11 @@
 standard library. UnityPy independently checks the output on the host. Its bundle/source receipt, exact-editor reports and separate
 APK are outputs, not inputs to the game build. Debug signing and Gradle state
 are isolated under `.local/phone-build-*`.
+Fresh fixture builds also generate `editor-build-<attempt>/linker-capture/`
+through the authored `ContentFixtureLinkerCapture.cs` callback and
+`player-build.json` through the builder. Their private input copies are bound
+to the same BuildReport/commit by `phone_content.validate_linker_capture`.
+These are experimental stripping inputs, not current game-build inputs.
 
 `work/coordination/phone-proof/` retains J832's private execution adapters,
 hash-bound tool/package manifests, original failed attempts and collected device

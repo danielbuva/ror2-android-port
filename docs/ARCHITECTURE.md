@@ -53,6 +53,17 @@ before reading reports or copying candidates. Editor checks/builds each write
 an isolated oracle report and require its pinned actual Unity version and
 native content checks, independently of process exit status.
 
+`ContentFixtureLinkerCapture.cs` is a fixture-only editor observer for the next
+stripping experiment. It snapshots the active public UnityLinker callback's
+complete input directory into the explicitly owned build attempt, preserving
+source/hash identity and rejecting links or concurrent drift. It returns only
+an inert linker XML. The builder records its final BuildReport identity;
+`phone_content.validate_linker_capture` requires matching build/commit/version,
+required assembly/scene/editor-data inputs and every copied hash before accepting
+a fixture build. This does not establish Android stripping or input consumption
+by itself; the fresh graph and emitted outputs still need independent binding.
+It is never staged into the game project.
+
 `tools/phone-build/host/` is separate experimental **support**. Its Android
 driver owns compilation of authored C/Java/XML, DEX/APK production and disposable
 signing from explicitly supplied local tools. `HostProbeActivity` owns one

@@ -171,6 +171,7 @@ def fixture_request(request, *, optional_fields=()):
     """Bind the shared authored fixture before staging any private build inputs."""
     from common import ROOT, WORK
     from phone_apk import update_manifest
+    from phone_content import SOURCES
 
     import zipfile
 
@@ -190,11 +191,11 @@ def fixture_request(request, *, optional_fields=()):
     receipt = json.loads((project / "fixture-inputs.json").read_text())
     if receipt.get("game_inputs") is not False or receipt.get("unity") != "2021.3.45f2":
         raise ValueError("Expected the pinned authored fixture")
-    for name in ("ContentFixture.cs", "ContentFixtureBuilder.cs"):
+    for name, folder in SOURCES.items():
         source = ROOT / "tools/phone-build" / name
         if receipt["sources"]["tools/phone-build/" + name] != hashlib.sha256(source.read_bytes()).hexdigest():
             raise ValueError("Fixture source drift")
-        staged = project / ("Assets/Editor" if name.endswith("Builder.cs") else "Assets") / name
+        staged = project / folder / name
         if staged.read_bytes() != source.read_bytes():
             raise ValueError("Staged fixture source drift")
     with zipfile.ZipFile(apk) as archive:

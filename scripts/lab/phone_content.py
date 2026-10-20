@@ -9,6 +9,12 @@ import uuid
 
 from phone_bundle import VERSION, make_bundle
 
+SOURCES = {
+    "ContentFixture.cs": "Assets",
+    "ContentFixtureBuilder.cs": "Assets/Editor",
+    "ContentFixtureLinkerCapture.cs": "Assets/Editor",
+}
+
 
 def stage(destination):
     """Stage a new isolated project; refuse to overwrite any earlier attempt."""
@@ -19,7 +25,8 @@ def stage(destination):
     assets = destination / "Assets"
     (assets / "Editor").mkdir(parents=True)
     (assets / "StreamingAssets").mkdir()
-    for name, folder in (("ContentFixture.cs", assets), ("ContentFixtureBuilder.cs", assets / "Editor")):
+    for name, relative in SOURCES.items():
+        folder = destination / relative
         source = ROOT / "tools/phone-build" / name
         (folder / name).write_bytes(source.read_bytes())
     (destination / "Packages").mkdir()
@@ -46,6 +53,7 @@ def stage(destination):
                 "scripts/lab/phone_bundle.py",
                 "tools/phone-build/ContentFixture.cs",
                 "tools/phone-build/ContentFixtureBuilder.cs",
+                "tools/phone-build/ContentFixtureLinkerCapture.cs",
             )
         },
     }
@@ -65,6 +73,32 @@ def validate_oracle(report):
         raise RuntimeError("Exact-editor oracle version/content contract failed")
 
 
+def validate_linker_capture(attempt, commit):
+    from phone_converter import bounded, sha
+
+    attempt = Path(attempt)
+    build = json.loads((attempt / "player-build.json").read_text())
+    capture = attempt / "linker-capture"
+    receipt = json.loads((capture / "receipt.json").read_text())
+    for value in (build, receipt):
+        if value.get("unity") != VERSION or value.get("source_commit") != commit or not value.get("build_report_guid"):
+            raise RuntimeError("Fixture linker build identity mismatch")
+    if receipt["build_report_guid"] != build["build_report_guid"]:
+        raise RuntimeError("Fixture linker capture belongs to another build")
+    files = receipt["files"]
+    names = [row["name"] for row in files]
+    if len(set(names)) != len(names) or not {"Assembly-CSharp.dll", "TypesInScenes.xml", "EditorToUnityLinkerData.json"} <= set(names):
+        raise RuntimeError("Fixture linker input closure is incomplete or duplicated")
+    actual = {p.relative_to(capture / "inputs").as_posix() for p in (capture / "inputs").rglob("*") if p.is_file()}
+    if actual != set(names):
+        raise RuntimeError("Fixture linker input file set drift")
+    for row in files:
+        path = bounded(capture / "inputs", row["name"])
+        if path.stat().st_size != row["bytes"] or sha(path) != row["sha256"]:
+            raise RuntimeError("Fixture linker captured input drift")
+    return {"capture": str(capture), "files": len(files), "receipt_sha256": sha(capture / "receipt.json"), "build_report_guid": build["build_report_guid"]}
+
+
 def run_editor(project, *, build=False):
     """Use only the generated fixture and the primary checkout's build mutex."""
     from build_lock import host_build_lock
@@ -77,8 +111,8 @@ def run_editor(project, *, build=False):
     for name, expected in receipt["sources"].items():
         if hashlib.sha256((ROOT / name).read_bytes()).hexdigest() != expected:
             raise RuntimeError("Source changed; generate a new attempt: " + name)
-    for name, relative in (("ContentFixture.cs", "Assets/ContentFixture.cs"), ("ContentFixtureBuilder.cs", "Assets/Editor/ContentFixtureBuilder.cs")):
-        if (project / relative).read_bytes() != (ROOT / "tools/phone-build" / name).read_bytes():
+    for name, folder in SOURCES.items():
+        if (project / folder / name).read_bytes() != (ROOT / "tools/phone-build" / name).read_bytes():
             raise RuntimeError("Staged fixture source changed: " + name)
     if hashlib.sha256((project / "Assets/StreamingAssets/phone-fixture.bundle").read_bytes()).hexdigest() != receipt["bundle_sha256"]:
         raise RuntimeError("Generated fixture bundle changed")
@@ -97,6 +131,7 @@ def run_editor(project, *, build=False):
     method = "ContentFixtureBuilder.Build" if build else "ContentFixtureBuilder.Check"
     env = dict(os.environ)
     env["ROR2_PHONE_ORACLE_REPORT"] = str(attempt / "oracle.json")
+    env["ROR2_PHONE_BUILD_SOURCE"] = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     env["ANDROID_SDK_HOME"] = str(ROOT / ".local/phone-build-android")
     env["ANDROID_USER_HOME"] = str(ROOT / ".local/phone-build-android/.android")
     env["GRADLE_USER_HOME"] = str(ROOT / ".local/phone-build-gradle")
@@ -120,9 +155,12 @@ def run_editor(project, *, build=False):
     (attempt / "launch.txt").write_bytes(result.stdout + result.stderr)
     oracle = None
     oracle_error = None
+    linker_capture = None
     try:
         oracle = json.loads((attempt / "oracle.json").read_text())
         validate_oracle(oracle)
+        if build and result.returncode == 0:
+            linker_capture = validate_linker_capture(attempt, env["ROR2_PHONE_BUILD_SOURCE"])
     except (OSError, ValueError, RuntimeError) as error:
         oracle_error = str(error)
     outcome = {
@@ -133,6 +171,7 @@ def run_editor(project, *, build=False):
         "editor": env["UNITY_EDITOR"],
         "oracle": oracle,
         "oracle_error": oracle_error,
+        "linker_capture": linker_capture,
     }
     (attempt / "receipt.json").write_text(json.dumps(outcome, indent=2) + "\n")
     print(json.dumps(outcome, indent=2))
