@@ -240,12 +240,18 @@ Wwise interface in fresh Unity players and is not the normal game controller.
 Its Android filename resolver registers the verified app-private bank directory
 with `AddBasePath` after `SetBasePath`, matching the official integration's
 POSIX-storage seam. Each result has a separate diagnostic phase; refusal keeps
-the first result through owned reverse cleanup. File loading, cumulative
+the first result through owned reverse cleanup. The private managed event owner
+pumps RenderAudio with callback serialization each frame. Capture stop moves to
+a bounded finalization state; the actual fixture caller keeps pumping while
+healthy pending work waits for two consistent stable RIFF observations. Unknown
+native outcomes retain ownership and prohibit unload/Term. The strict PCM
+container profile preserves a zero valid-bits field as unknown precision;
+container output, effective precision and physical audibility are separate facts. File loading, cumulative
 middleware errors, event callbacks, PCM and composed gameplay have separate
 acceptance gates; a successful bank result cannot qualify all of them.
 Their setup/input boundaries are listed in
 [LOCAL_STATE](LOCAL_STATE.md#isolated-wwise-diagnostic-inputs); experiment
-acceptance and limits are recorded once in J740/J742. Neither diagnostic owner
+acceptance and limits are recorded once in J740/J742 and J791. Neither diagnostic owner
 changes the default assembly transforms or the current game build pipeline.
 
 `tools/wwise-android-abi/generate.py` is a current, explicitly invoked host

@@ -15830,3 +15830,91 @@ work/experiments/survivor-check/20261020T103240.683529Z/Toolbot/ and
 20261020T104025.860736Z/Toolbot/.
 Game-derived snapshots, symbols, raw logs and device/storage identifiers remain
 ignored. Rebuild source staging must replay J789's changed owners.
+
+## J791 — Qualify one managed original audio event with a stable PCM container
+
+Hypothesis: J786's capture refusal is a finalization/container interpretation
+problem, not evidence that the original Global event cannot render through
+the retained managed interface. Keep its exact Android Profile library, raw
+managed API/closure, adapted Init metadata and unchanged Global bank; repair
+only bounded capture finalization and the actual fixture caller.
+
+The private owner calls StopOutputCapture once, continues the existing healthy
+render/callback pump while finalization is pending, and requires two consistent
+stable RIFF observations within a bounded frame window. An uncertain native
+stop outcome retains ownership and refuses retry, unload and Term. The fixture's
+Update caller now waits for known healthy pending finalization before parsing,
+owned teardown and terminal validation. Host cases exercise that caller, the
+unknown-stop rollback, real preserved WAV bytes and invalid profiles. The full
+reviewed source compiles against the exact Unity/managed references with zero
+errors; independent review verifies the frozen candidate. No game audio path
+is enabled.
+
+Prior art: official Integration callback/render ordering and J786's measured
+failure; FFmpeg n9.0.1's
+[WAVE format reader](https://github.com/FFmpeg/FFmpeg/blob/n9.0.1/libavformat/riffdec.c#L57-L84)
+uses container width when the extensible valid-bits field is zero. Independent
+host decoding of the preserved failed artifact confirms container-word access,
+not effective precision. The new strict witness requires the full PCM subtype,
+16-bit stereo container, 48 kHz, matching block/channel metadata and validBits
+zero explicitly reported as unknown precision. It neither rewrites headers nor
+retroactively accepts the failed J786 run.
+
+Root stages four reviewed whole files while preserving all 45 importer metadata
+files and the other runtime/bank/scene inputs. The package-only helper verifies
+the separate fixture's exact 07-to-08 transition. After correcting private
+orchestration's stale predecessor hooks, path contract and package-setting
+comparison, a real generic-entry host test reaches all three validators and
+stops before publication; independent review and Root repeat it. The isolated
+ARM64/OpenGLES3 player builds in 35.8487525 s, zero errors and five warnings,
+with all 107 input hashes identical before/after. Request:
+53818e4494d04c58aa412b680002252f. APK SHA-256:
+`535fc5fa04304c5ae1dfa1fce718026efb304df7c4eabeb3768638407a4f69e5`.
+Frozen candidate: work/coordination/codex-audio-managed-r6-candidate-root-r1/.
+Manifest SHA-256:
+`0a1c771f9a1820b63ca54a17ae928c887f6c92be84bcffbfb1df7094fad0866e`;
+managed closure remains 855892ff… and raw API remains 2bd97317….
+
+On the internal-storage Nova, the separate missing-event control passes first:
+one readable native error callback, the exact EventIDNotFound result, no
+playing event, completed engine/callback-manager Term, known native state,
+owned package removal and no cleanup errors. Root validates and hashes that
+result before authorizing the separate original-event process. Negative result
+SHA-256:
+`b20cbd8d835fe68b50eb87f7e82ad0cc42941d3a714d6a60797d7db82cd03061`.
+
+The unchanged original Global UI event then passes: playing ID 1, one
+EndOfEvent, 15 successful RenderAudio calls, zero post-Init monitored errors,
+complete known teardown and owned fixture removal. Root independently validates
+the production report and re-counts the captured data words. The 78,404-byte
+WAVE_FORMAT_EXTENSIBLE file contains 78,336 data bytes, 19,584 stereo frames,
+39,168 signed 16-bit container words and 32,400 nonzero words, range
+[-6130, 3871]. RIFF length, full PCM subtype and report/hash bindings agree.
+Capture SHA-256:
+`c05749bf19774924bd4a21bd04416fa53a93cccb5923b845dffcea92d00fa76b`;
+player report: `67320d0bf4de9c9941cd6e4a968a8f29e46d03172e4d34c3d5e53e96c2aa836f`;
+runner result: `4d438cbad9bf3e64821a3857b7119de04e77e7bbd898dba19ba050e2c5e4cbbe`.
+
+Acceptance is one isolated managed event and a container-level PCM witness.
+Effective sample precision and physical audibility remain unestablished.
+Monitoring begins only after successful engine Init and continues through Term;
+pre-Init coverage remains false. The fixture uses J744's explicit Init metadata
+adaptation; it does not prove unchanged Windows Init compatibility. Wider
+bank/effect/context behavior, music, positional mixing, production lifecycle
+and all five composed-audio acceptance pins remain open. Current game audio
+is unavailable. Revisit integration after these explicit gates pass.
+
+Fresh storage/reserve checks and APK readback bind each installation. Both
+fixtures remove only their newly owned package. Root verifies the game APK
+receipts remain separate and that all three idle devices' four physical OLED
+panels are off. No device receipt is manually repaired.
+
+Evidence: work/coordination/wwise-managed-capture-r6-owner-fix/r3/ and
+independent-r3-review/; codex-audio-r6-stage-draft/;
+codex-audio-r6-package-root-r1/; codex-audio-r6-final-selection-draft/;
+codex-audio-r6-prequeue-root-r1.json; codex-audio-r6-device-binding-draft/;
+codex-audio-managed-r6-candidate-root-r1/{root-candidate.json,
+negative-control-r2.stdout,negative-root-acceptance.json,global-event.stdout,
+global-root-acceptance.json}; codex-idle-displays-post-r6-root-r1.json.
+Those private receipts reference the complete per-device evidence. Banks,
+managed/native binaries, audio captures and raw process records stay ignored.

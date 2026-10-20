@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J791](PORTING_JOURNAL.md#j791--qualify-one-managed-original-audio-event-with-a-stable-pcm-container) | 2026-10-20 | Qualify one managed original audio event with a stable PCM container | Hypothesis: J786's capture refusal is a finalization/container interpretation problem, not evidence that the original Global event cannot render through the re… |
 | [J790](PORTING_JOURNAL.md#j790--accept-the-equipment-owner-player-and-observe-native-mul-t-offhand) | 2026-10-20 | Accept the equipment-owner player and observe native MUL-T offhand | Hypothesis: J789's early acquisition of the existing equipment-availability lease permits native survivor stance entry without changing equipment or expansion… |
 | [J789](PORTING_JOURNAL.md#j789--initialize-the-owned-equipment-mask-before-native-survivor-state-entry) | 2026-10-20 | Initialize the owned equipment mask before native survivor state entry | Date: 2026-10-20. |
 | [J788](PORTING_JOURNAL.md#j788--accept-both-default-controls-and-preserve-the-earlier-mul-t-spawn-failure) | 2026-10-20 | Accept both default controls and preserve the earlier MUL-T spawn failure | Date: 2026-10-20. |

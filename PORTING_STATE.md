@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-20 after **J790** (new default baseline; native MUL-T offhand observed; broader default trial exposes cleanup failure).
+Last updated 2026-10-20 after **J791** (isolated managed original UI event and stable PCM container pass; game audio remains unavailable).
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
@@ -69,39 +69,18 @@ unavailable): [docs/subsystem-coverage.md](docs/subsystem-coverage.md).
 - Moon, finale and escape: deferred; manual only, never navigated autonomously.
 - Stock Steam startup, cloud profiles, platform identity: unavailable by design (no
   fabricated ownership or service success).
-- Audio remains unavailable: J722 identifies the accepted native wrapper as Wwise
-  2023.1.8.8601 and records the Vorbis/seven-effect requirements. An authorized
-  Android SDK and matching Unity Integration are supplied locally. J732 proves
-  independent native PCM output and unchanged original Init load/unload. J734
-  posts an unchanged original Global event and captures nonzero PCM, but strict
-  validation fails on the unavailable Controller Speaker output plugin. An
-  explicit Android bus adaptation succeeds but still fails an Init-time plugin
-  lookup under cumulative error observation (J736). A fixture-only Init output
-  metadata adaptation then loads/unloads with zero post-Term cumulative errors
-  (J740), then supports one unchanged Global UI event with EndOfEvent, finite
-  nonzero PCM and zero post-Term cumulative errors (J742). The retained managed
-  ABI, wider bank behavior and game lifecycle remain open. J743 maps the official
-  library in a fresh Unity player. J747 localizes the managed fixture refusal
-  to import-metadata validation before the native initialized query; its verbose
-  log report is also truncated and rejected. J744 publicly reproduces the tested Init variant; other private fixture
-  producers remain unwired.
-  J756's revised managed fixture initializes Wwise on Thor but refuses Init
-  filename loading. J759 registers the persistent POSIX path with AddBasePath,
-  then loads/unloads the unchanged Init and cleans up. Its current-process log
-  still records five middleware errors for the Windows output plugin/device;
-  no event, PCM, cumulative-error or composed-audio acceptance follows.
-  J778's corrected standalone managed player passes the numeric native monitor
-  control and strict teardown. That player uses the wrong message encoding; J781 reproduces the host
-  correction. J786 passes readable monitoring and native per-frame rendering, then
-  completes one original Global event with EndOfEvent and zero post-Init monitored
-  errors. Its strict capture check refuses unfinished RIFF evidence and lacks
-  WAVE_FORMAT_EXTENSIBLE support; PCM and audibility remain unvalidated. These are isolated fixtures, and no
-  composed-audio gate is accepted. J770 makes the incomplete ABI candidate
-  reproducible without enabling audio. Wider bank behavior and production
-  lifecycle remain open.
-  J627 rejects a proposed static UI fallback; J640 resolves its numeric default
-  but leaves native switch/routing semantics unproven.
-  Licensed Rewired and generic controllers remain open.
+- Audio remains unavailable in the game. Authorized Wwise 2023.1.8.8601 and its
+  matching Unity Integration are supplied locally. J791's isolated managed Unity
+  player completes one unchanged Global UI event, with EndOfEvent, nonzero
+  signed PCM-container words, zero post-Init monitor errors and complete owned
+  teardown; the separate negative monitor control passes. It uses J744's explicit
+  Init metadata adaptation. Pre-Init monitoring, effective sample precision,
+  physical audibility, wider banks/effects, music, positioning and game lifecycle
+  remain open; all five composed-audio gates stay closed. J770/J781 reproduce
+  the managed ABI work without enabling it in the game; the remaining isolated
+  fixture producers remain required local support. J627/J640 record the limits
+  of a simple clip fallback.
+- Licensed Rewired and generic physical controllers remain open.
 - Complete skill kits, most positive ordinary unlock grants, DLC scene play.
 - Native first-stage loss/restart passes on J752's APK in J753, including genuine
   defeat, strict cleanup and a healthy same-process second session. Native stage
