@@ -15319,3 +15319,63 @@ work/experiments/baseline/20261020T084905.352957Z/ and
 the initial baseline-wrapper attempt and
 codex-survivor-siren-next-baseline-resume-r2/;
 siren-1311-guard-qualification/ and editor-root-r2/. Raw device evidence stays ignored.
+
+
+## J784 — Accept native Captain deployment and identify MUL-T's disabled offhand machine
+
+Date: 2026-10-20. Hypothesis: J779's source-aligned Captain readiness gate
+permits the original supply deployment, while J780's terminal snapshot
+separates a transient MUL-T transition from a persistent lifecycle defect.
+Both explicit owned-APK trials use J783's
+`1311f1057275ef2a34a3fc964a6f79e033086243d066deea40775b9178d2bba5`.
+No input recipe, native state, stock, cooldown or gameplay source is changed
+between the trials.
+
+Captain passes the bounded supply sequence in 5.000824 s of world play.
+Exactly two native input pulses/edges occur, special then primary. Both the
+special and supply authority/server callback counts increase from zero to one.
+Placement is valid at the actual primary-request decision; the terminal
+current-placement field correctly reports that the setup state is no longer
+current after completion. The historical valid-placement witness remains
+separate. The same CharacterMaster's CaptainSupplyDrop count increases from
+zero to one, the deployable remains present at return, no native state is
+pending, and the body returns to GenericCharacterMain. Independent review
+confirms these operands against the accepted SetupSupplyDrop/Skillswap and
+native callback/deployable contracts. J779's prior attempt never sent primary
+or registered a deployable.
+
+This is assisted, invincible diagnostic acceptance of native deployment and
+ordinary return. Healing, damage, presentation, both beacon variants and
+complete skill semantics are unproven. The original HealingWard uses native
+HealthComponent.Heal, but its general heal callback carries no ward/source
+identifier. No extra observer or success condition is inferred from that
+callback. Positive healing needs natural damage and attributable native ward/
+health evidence in a separate gameplay trial.
+
+MUL-T still refuses the offhand secondary at the existing deadline. The new
+terminal observation occurs at 8.365341 s, after the first refusal at
+0.369156 s, and captures once in phase 3. Stock is 1/1; native IsReady and
+interrupt checks are true, but native SkillDef.CanExecute remains false.
+The contextual resolver identifies Weapon2. That machine stays active in the
+hierarchy but disabled, with network index -1, native authority, pending-main
+true and Uninitialized state throughout the bounded wait. The ordinary Weapon
+machine is enabled, index 1 and Idle. Networker presence does not establish
+private-array membership. There is one special request/callback pair and no
+secondary request, buzzsaw state or damage acceptance. This is a persistent
+lifecycle/composition discriminator, not justification to bypass native
+readiness or assign a state directly. Next inspect the original prefab/network
+roster and the named Android lifecycle owner before changing behavior.
+
+Both current-process logs and report error/firstFailure fields are empty;
+profiles remain at 13 applied runs. Each selector is removed, the owned app is
+force-stopped and its display sleeps. Root independently revalidates the logs,
+APK binding and report hashes. The first failure is the MUL-T native-readiness
+refusal; the Captain sequence is accepted only within the bounded scope above.
+No new build step or file owner is introduced by these observations.
+
+Evidence: work/experiments/survivor-check/20261020T085937.791956Z/Captain/
+(report SHA-256 `4044c77872b5407faef3ad2f971cde458b77f8fef6c129159d79b9afc6c05c62`)
+and 20261020T090249.613157Z/Toolbot/
+(report SHA-256 `eb8f0922b9a13c608bdb0a26222a648ec24bc520210fcdddf261dce9998e3558`);
+work/coordination/codex-1311-survivor-root-validation.json and
+captain-1311-acceptance-review/. Raw game/API references and captures stay ignored.
