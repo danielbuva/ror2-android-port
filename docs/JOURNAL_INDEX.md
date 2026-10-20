@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J843](PORTING_JOURNAL.md#j843--retain-the-successful-player-but-refuse-the-legacy-il2cpp-invocation-receipt) | 2026-10-20 | Retain the successful player but refuse the legacy IL2CPP invocation receipt | 2026-10-20. |
 | [J839](PORTING_JOURNAL.md#j839--compile-and-link-the-authored-il2cpp-native-library-on-android) | 2026-10-20 | Compile and link the authored IL2CPP native library on Android | 2026-10-20. |
 | [J836](PORTING_JOURNAL.md#j836--build-an-authored-apk-on-android-and-test-app-host-execution) | 2026-10-20 | Build an authored APK on Android and test app-host execution | 2026-10-20. |
 | [J841](PORTING_JOURNAL.md#j841--observe-native-huntress-skin-teardown-and-retain-the-next-menu-timeout) | 2026-10-20 | Observe native Huntress skin teardown and retain the next-menu timeout | 2026-10-20. |
