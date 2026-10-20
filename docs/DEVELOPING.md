@@ -122,6 +122,7 @@ by hand. Regenerate with `python3 scripts/readme-actions.py`; CI checks freshnes
 
 | Command | What it does |
 | --- | --- |
+| `./dev prototype --action phone-root-contract` | Experimental read-only host contract: --target REQUEST.json binds an authored fixture/capture and inventories SDK native-type metadata without executing inspected assemblies. Reports explicit matches separately from name guesses; produces no roots, game build, install or editor mutation. |
 | `./dev prototype --action phone-linker-fixture` | Experimental: --target REQUEST.json binds the authored fixture APK/project and its exact editor callback capture for Android UnityLinker replay. Supplied tools and desktop-generated scene/editor roots remain private inputs. No editor mutation, installation or game build. |
 | `./dev prototype --action phone-converter-fixture` | Experimental: stage the authored player's hash-bound stripped closure and exact supplied Unity converter from --target REQUEST.json. An optional linker selector consumes verified phone stripping output; desktop editor roots remain inputs. Build-tool host only; no game, editor mutation or installation. |
 | `./dev prototype --action phone-native-apk-fixture` | Experimental: --target REQUEST.json pins the authored fixture APK, matching metadata and ARM64 library hashes; writes a new unsigned native-swap fixture for separate alignment/signing and device checks. Never packages the game. |

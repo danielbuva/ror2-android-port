@@ -360,5 +360,20 @@
     "effects": [],
     "stdout": "",
     "exit": null
+  },
+  "phone-root-contract": {
+    "calls": [
+      {
+        "module": "phone_roots",
+        "function": "inspect_action",
+        "args": [
+          "lab"
+        ],
+        "kwargs": {}
+      }
+    ],
+    "effects": [],
+    "stdout": "",
+    "exit": null
   }
 }
