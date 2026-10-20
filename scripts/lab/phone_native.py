@@ -75,7 +75,7 @@ def command_arguments(command, compiler, roots, outputs):
     return result
 
 
-def stage(project, destination, editor, android):
+def stage(project, destination, editor, android, *, generated_cpp=None):
     project, destination, editor, android = map(Path, (project, destination, editor, android))
     destination.mkdir(parents=True, exist_ok=False)
     roots = [(project, "project"), (editor, "unity"), (android, "android")]
@@ -98,7 +98,10 @@ def stage(project, destination, editor, android):
     for source, target in (
         (editor / "il2cpp/libil2cpp", "unity/il2cpp/libil2cpp"),
         (editor / "il2cpp/external", "unity/il2cpp/external"),
-        (project / "Library/Bee/artifacts/Android/il2cppOutput/cpp", "project/Library/Bee/artifacts/Android/il2cppOutput/cpp"),
+        (
+            Path(generated_cpp) if generated_cpp else project / "Library/Bee/artifacts/Android/il2cppOutput/cpp",
+            "project/Library/Bee/artifacts/Android/il2cppOutput/cpp",
+        ),
     ):
         shutil.copytree(source, destination / target)
     sysroot = android / "NDK/toolchains/llvm/prebuilt/darwin-x86_64/sysroot"
@@ -146,7 +149,9 @@ def stage(project, destination, editor, android):
             "Explicit original static C++/ABI/GCC archives replace compiler implicit C++/unwind selection",
         ],
         "game_inputs": False,
-        "desktop_stripping_and_codegen_inputs": True,
+        "desktop_stripping_and_codegen_inputs": generated_cpp is None,
+        "desktop_stripping_inputs": True,
+        "codegen_origin": "phone-converter" if generated_cpp else "desktop",
     }
     (destination / "plan.json").write_text(json.dumps(plan, indent=2) + "\n")
     shutil.copy2(Path(__file__), destination / "phone_native.py")
@@ -162,7 +167,7 @@ def stage(project, destination, editor, android):
     }
 
 
-def fixture_request(request):
+def fixture_request(request, *, optional_fields=()):
     """Bind the shared authored fixture before staging any private build inputs."""
     from common import ROOT, WORK
     from phone_apk import update_manifest
@@ -173,7 +178,7 @@ def fixture_request(request):
     if not request.is_relative_to(WORK.resolve()):
         raise ValueError("Native fixture request must be ignored local state")
     value = json.loads(request.read_text())
-    if set(value) != {"project", "apk", "sha256"}:
+    if set(value) - set(optional_fields) != {"project", "apk", "sha256"}:
         raise ValueError("Expected explicit fixture project, APK and hash")
     project, apk = Path(value["project"]).resolve(), Path(value["apk"]).resolve()
     if (
@@ -204,9 +209,16 @@ def fixture_request(request):
 def stage_action(request):
     from common import ROOT, WORK, now
 
-    value, project = fixture_request(request)
+    value, project = fixture_request(request, optional_fields=("converter",))
+    generated_cpp = None
+    if "converter" in value:
+        from phone_converter import cpp_input
+
+        if any(not Path(value["converter"][key]).resolve().is_relative_to(WORK.resolve()) for key in ("stage", "output")):
+            raise ValueError("Converter inputs must remain ignored local state")
+        generated_cpp = cpp_input(value["converter"], value)
     destination = WORK / "rebuild/phone-native" / now()
-    result = stage(project, destination, Path(os.environ["UNITY_EDITOR"]).parent.parent, Path(os.environ["UNITY_ANDROID_ROOT"]))
+    result = stage(project, destination, Path(os.environ["UNITY_EDITOR"]).parent.parent, Path(os.environ["UNITY_ANDROID_ROOT"]), generated_cpp=generated_cpp)
     result.update(stage=str(destination), request=value, source_commit=subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip())
     (destination / "stage-receipt.json").write_text(json.dumps(result, indent=2) + "\n")
     print(json.dumps(result, indent=2))

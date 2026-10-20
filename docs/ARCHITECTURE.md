@@ -93,7 +93,10 @@ guard, requires the exact assembly closure and known options, copies supplied
 stripped assemblies/tool DLLs/icalls unchanged, and records their hashes.
 The standalone Android driver uses a separate .NET build-tool host, verifies
 inputs before execution, relocates only output paths, disables unnecessary
-tool analytics and retains fresh output/log/failure directories. The game
+tool analytics and retains fresh output/log/failure directories. An explicit
+optional `converter` selector in a native-fixture request binds that converter's
+stage/result/output hashes, original stripped input closure and byte-identical
+data/metadata before choosing its emitted C++ for native compilation. The game
 runtime is still IL2CPP; desktop stripping and permitted proprietary tool
 delivery remain gates. No whole-catalog game build calls this owner.
 

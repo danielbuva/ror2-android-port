@@ -6,10 +6,55 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from phone_converter import FLAGS, OUTPUTS, STRIPPED, arguments, bounded, convert, stage
+from phone_converter import FLAGS, OUTPUTS, STRIPPED, arguments, bounded, convert, cpp_input, sha, stage
 
 
 class PhoneConverterTests(unittest.TestCase):
+    def test_native_handoff_binds_fixture_input_closure_outputs_and_exact_metadata(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            project, staged, output = (root / name for name in ("project", "stage", "output"))
+            original = project / STRIPPED / "Fixture.dll"
+            original.parent.mkdir(parents=True)
+            original.write_bytes(b"stripped fixture")
+            copied = staged / "project" / STRIPPED / "Fixture.dll"
+            copied.parent.mkdir(parents=True)
+            copied.write_bytes(original.read_bytes())
+            oracle = project / "Library/Bee/artifacts/Android/il2cppOutput/data/Metadata/global-metadata.dat"
+            oracle.parent.mkdir(parents=True)
+            oracle.write_bytes(b"exact fixture metadata")
+            (output / "cpp").mkdir(parents=True)
+            (output / "cpp/Fixture.cpp").write_bytes(b"actual phone code generation")
+            data = output / "data/Metadata/global-metadata.dat"
+            data.parent.mkdir(parents=True)
+            data.write_bytes(oracle.read_bytes())
+            fixture = {"project": str(project), "apk": str(root / "fixture.apk"), "sha256": "fixture-apk-hash"}
+            (staged / "stage-receipt.json").write_text(json.dumps({"request": fixture}))
+            (staged / "input-manifest.json").write_text(json.dumps({copied.relative_to(staged).as_posix(): sha(copied)}))
+            result = {
+                "success": True,
+                "exit_code": 0,
+                "input_manifest_sha256": sha(staged / "input-manifest.json"),
+                "outputs": {p.relative_to(output).as_posix(): sha(p) for p in (output / "cpp/Fixture.cpp", data)},
+            }
+            (output / "result.json").write_text(json.dumps(result))
+            request = {"stage": str(staged), "output": str(output), "result_sha256": sha(output / "result.json")}
+            self.assertEqual(cpp_input(request, fixture), output / "cpp")
+            data.write_bytes(b"changed metadata")
+            with self.assertRaisesRegex(ValueError, "output drift"):
+                cpp_input(request, fixture)
+            result["outputs"][data.relative_to(output).as_posix()] = sha(data)
+            (output / "result.json").write_text(json.dumps(result))
+            request["result_sha256"] = sha(output / "result.json")
+            with self.assertRaisesRegex(ValueError, "metadata differs"):
+                cpp_input(request, fixture)
+            data.write_bytes(oracle.read_bytes())
+            original.write_bytes(b"another stripped input")
+            with self.assertRaisesRegex(ValueError, "input closure differs"):
+                cpp_input(request, fixture)
+            with self.assertRaisesRegex(ValueError, "another fixture"):
+                cpp_input(request, fixture | {"sha256": "other-apk"})
+
     def command(self, project, launcher):
         return shlex.join(
             [

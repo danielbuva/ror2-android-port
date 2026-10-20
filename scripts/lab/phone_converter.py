@@ -148,6 +148,39 @@ def stage_action(request):
     print(json.dumps(result, indent=2))
 
 
+def cpp_input(request, fixture):
+    """Bind actual converter outputs before selecting them for native compilation."""
+    if set(request) != {"stage", "output", "result_sha256"}:
+        raise ValueError("Expected explicit converter stage/output/result hash")
+    stage_root, output = (Path(request[key]).resolve() for key in ("stage", "output"))
+    receipt = json.loads((stage_root / "stage-receipt.json").read_text())
+    if receipt["request"] != {key: fixture[key] for key in ("project", "apk", "sha256")}:
+        raise ValueError("Converter belongs to another fixture")
+    result_file = output / "result.json"
+    if sha(result_file) != request["result_sha256"]:
+        raise ValueError("Converter result drift")
+    result = json.loads(result_file.read_text())
+    if result.get("success") is not True or result.get("exit_code") != 0 or result.get("input_manifest_sha256") != sha(stage_root / "input-manifest.json"):
+        raise ValueError("Converter result/manifest failed")
+    manifest = json.loads((stage_root / "input-manifest.json").read_text())
+    for path, digest in manifest.items():
+        if sha(bounded(stage_root, path)) != digest:
+            raise ValueError("Converter input drift")
+    project = Path(fixture["project"])
+    original = {p.relative_to(project).as_posix(): sha(p) for p in (project / STRIPPED).rglob("*") if p.is_file()}
+    staged = {path.removeprefix("project/"): digest for path, digest in manifest.items() if path.startswith("project/" + STRIPPED + "/")}
+    if original != staged:
+        raise ValueError("Converter stripped input closure differs")
+    actual = {p.relative_to(output).as_posix(): sha(p) for folder in (output / "cpp", output / "data") for p in folder.rglob("*") if p.is_file()}
+    if not actual or actual != result["outputs"]:
+        raise ValueError("Converter output drift")
+    data = project / "Library/Bee/artifacts/Android/il2cppOutput/data"
+    oracle = {"data/" + p.relative_to(data).as_posix(): sha(p) for p in data.rglob("*") if p.is_file()}
+    if not oracle or oracle != {path: digest for path, digest in actual.items() if path.startswith("data/")}:
+        raise ValueError("Converter data/metadata differs from the fixture")
+    return output / "cpp"
+
+
 def convert(stage_root, tool_root, output):
     stage_root, tool_root, output = (Path(p).resolve() for p in (stage_root, tool_root, output))
     output.mkdir(parents=True, exist_ok=False)

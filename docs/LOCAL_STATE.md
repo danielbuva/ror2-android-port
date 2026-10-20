@@ -93,7 +93,12 @@ driver creates new output and first-failure receipts. The proof root's
 `full-converter-on-android.py` is required local replay support: it binds the
 existing device/workspace receipt, checks capacity and tool hashes, stages the
 inputs and collects outputs into a new attempt. `full-converter-run-selection.json`
-selects that explicit attempt for independent comparison. None is a game-build
+selects that explicit attempt for independent comparison. The private
+`full-converter-native-request.json` binds that result/stage to the original
+fixture for native recompilation; the emitted C++ is copied without editing.
+`full-converter-output-comparison.json` and
+`full-converter-comment-classification.json` retain the original byte comparison
+and narrow missing-source-comment classification. None is a game-build
 input; the original smaller converter attempts remain retained.
 
 The public scaffold and its generators are described in
