@@ -19386,3 +19386,108 @@ uses that frozen APK. No original input, storage configuration, alpha/spare
 device or audio availability is changed. R8/R9 must replay the new authored
 editor instrumentation, but invocation capture is unsupported on destination
 builds and remains an independent opt-in.
+
+## J842 — Run the full authored converter and load its phone-compiled native output
+
+2026-10-20. Hypothesis: the complete authored content player's stripped assembly
+closure can pass the exact Unity converter on Android, feed the recorded native
+graph and load in the unchanged Unity player. Integrate main through J843
+`3775b35` before this entry. J843's game capture refusal and the main session's
+active Siren work remain separate. No game-runtime source, original installation,
+working game build or other device is changed.
+
+**Converter owner and inputs.** `phone_converter.py` owns the experimental
+`phone-converter-fixture` action and standalone Android driver. It shares the
+native fixture's explicit project/APK/hash guard, now also verifying actual
+staged authored C# bytes against public sources. It parses exactly one recorded
+IL2CPP code-generation command, preserves assembly order/code-generation flags,
+requires the complete stripped DLL closure and refuses unknown options or
+foreign/traversing paths. Its manifest binds all supplied stripped inputs,
+converter DLLs/icalls, structured plan and driver. Supplied tools/generated
+content stay ignored; no redistribution grant is inferred.
+
+From committed `afd4554`, stage the same J834/J839 authored player: 36 stripped
+assemblies, 2,652,672 bytes total. Desktop managed compilation/stripping, content
+and base engine/player data remain explicit dependencies. The Android build-tool
+host is the previously pinned .NET 8.0.32, not a gameplay backend. Use unchanged
+Unity 2021.3.45f2 converter DLLs and icall data. Preserve the original Low
+stripping/Development/null/array checks and unityaot-linux profile. Relocate
+output paths and disable unnecessary tool analytics; retain raw commands/logs.
+
+The full converter exits 0 in 6.780 seconds after staging. It emits 79 C++ and
+47 C source files. Exactly 125 of those 126 files match the desktop oracle byte
+for byte; `Assembly-CSharp.cpp` has 66 deletion hunks containing only 70 complete
+source-comment lines. Missing original-source annotations are consistent with
+unavailable PDB desktop source-document paths; the cause is inferred, not a
+separate symbol-reader proof. Retain the difference; do not normalize either
+output to claim equality.
+The disabled tool's `analytics.json` is intentionally absent. Both data files
+match exactly, including metadata SHA-256
+`d515a852e565f151c1ea4f6d0ecb96aab93b8d9b095207df4feebf619e69b9b5`.
+This is a qualified component execution, not a full phone-build claim.
+
+**Actual source handoff and native build.** Committed `e7be361` adds an explicit
+optional converter selector to `phone-native-fixture`. It binds converter
+stage/result/output hashes, the same fixture request, the complete original
+stripped input set and exact data/metadata before choosing the emitted C++.
+Copy that actual directory unchanged; preserve the original ordered include
+wrappers and native flags. Do not reuse J839's objects: one source differs.
+
+All 264 native compilation tasks and the link pass on Android in 175.323 seconds
+excluding staging/collection. Compiler, linker and original target-library
+selection remain J839's explicit Clang 21.1.8/LLD versus desktop Clang 9.0.8/BFD
+contract. The unstripped 81,064,360-byte library hashes to
+`b2c699043b6ad9c7cce784379fa91ec5948eb014ba06378377254312d8bf3c1b`.
+Independent pinned NDK ELF inspection confirms AArch64 shared-library form,
+SONAME libil2cpp.so, all 237 expected IL2CPP APIs and no new shared dependencies.
+It exports 2,353 symbols; log/dl/m/libc remain its dependency set. No broad ABI,
+release-size or game-performance equivalence is inferred.
+
+**Packaging and device acceptance.** The unchanged authored native APK writer
+runs on Android, substitutes the new library and increases versions under one
+new disposable signing identity. Both phone signature/alignment checks and
+independent desktop signature checks pass; certificates match. The only changed
+uncompressed payload entries are the versioned manifest and libil2cpp.so.
+Metadata, libunity/libmain, shader/player data and authored bundle bytes stay
+identical to the base fixture. The password remains in memory/child environment.
+
+- Version 3: `15753fe7b2f9b0060cbd921007f324fb361ba6b8f6fbe545a8b6cef3c13d821e`.
+- Version 4: `8158c6bc70541517f1c833c32887da81d7cef65e7691000cedcf8abb598c8270`.
+
+From committed `a6b893a`, the explicitly assigned alpha device passes embedded,
+refused-hash, phone-candidate and updated-candidate phases. All four map exactly
+the new native hash above inside the observed installed code directory. The
+three positive phases report actual Unity 2021.3.45f2/Vulkan and two native
+load/read/unload cycles each; the negative phase refuses before content loading.
+The increasing-version update retains private marker and external candidate.
+Both installs query fresh storage/capacity and record package/private/runtime
+backing. Ownership-checked teardown removes the exact fixture and verifies
+absence, display sleep and unchanged installed alpha game hash. No new game
+qualification, security-policy change or main/spare-device action occurs.
+
+Successful result:
+`work/experiments/phone-packaging/20261020T223014.377342Z/result.json`.
+The private `full-converter-proof-receipt.json` under the phone proof root binds
+23 stage/converter/native/ELF/signing/device/CI/first-failure artifacts; SHA-256
+`95108c3ad430f6f776a036694aa16a5d168dfe1ca4dd3e936838e08b417187bb`.
+ARCHITECTURE names setup/ownership; LOCAL_STATE lists generators, explicit
+selectors and private replay adapters. Nothing consumes a newest-run search.
+
+**Checks and remaining gates.** Fresh-clone CI on `2a5c042` passes 1,208 tests,
+54 optional skips, Ruff, public audit and documentation freshness. Independent
+contracts cover option/assembly order, closure/path/symlink refusal, immutable
+staging, first-failure retention, source drift and exact metadata/output handoff.
+An initial host assertion confused macOS temporary-path aliases; canonicalize
+that assertion and retain the failed log. Whole-project doctor/preflight still
+refuse this isolated worktree's absent game inventory/bootstrap state; they are
+not passing public-bootstrap evidence.
+
+The converter-to-native-to-installed-fixture path is demonstrated using desktop
+stripping and base engine/content inputs. J836's sandbox negative control remains
+failed. Next qualify stripping/root/dependency production and richer rendered
+content/shaders; resolve permitted tool delivery, normal app-host execution,
+durable owner keys and user-mediated installation. Benchmark an eventual game
+pipeline under matched pins/workloads. Preserve Route A, the working Android
+renderer/runtime and desktop fallback. Revisit when assembly/source/metadata,
+converter host/options, compiler/linker/sysroot or engine/content contracts change.
+This generic authored probe adds no RoR2-specific runtime or reconstruction.
