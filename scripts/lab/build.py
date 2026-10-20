@@ -12,6 +12,7 @@ import time
 import zipfile
 import sys
 import threading
+import uuid
 from contextlib import contextmanager
 
 _build_dispatch_state = threading.local()
@@ -485,13 +486,24 @@ def build_source_identity():
     return dict(commit=git("rev-parse", "HEAD").strip(), clean_paths=list(BUILD_SOURCE_PATHS))
 
 
-def build(api="gles", force=False, reuse_payload=False, destination=None, work=None, source=None, android_symbols="none"):
+def build(api="gles", force=False, reuse_payload=False, destination=None, work=None, source=None, android_symbols="none", capture_player_linker_inputs=False):
     if api not in ["gles", "vulkan", "lab"]:
         raise RuntimeError("Build target must be gles or vulkan")
     if android_symbols not in {"none", "debugging"}:
         raise RuntimeError("Android symbols mode must be none or debugging")
     if destination is not None and android_symbols != "none":
         raise RuntimeError("Debugging symbols are supported only by the normal lab build path")
+    if capture_player_linker_inputs and destination is not None:
+        raise RuntimeError("Linker input capture requires the current local Unity project")
+    capture_request = {}
+    request_id = now()
+    if capture_player_linker_inputs:
+        from player_linker_receipt import request_capture_fields
+
+        capture_request = request_capture_fields(True, source, read(WORK / "inventory/files.json")["input_id"])
+        # Opt-in captures always get a fresh receipt namespace; cached player
+        # results cannot stand in for a capture made by this exact request.
+        request_id = request_id + "-" + uuid.uuid4().hex
     if api == "lab":
         api = "gles"
     assert_build_unblocked()
@@ -514,6 +526,10 @@ def build(api="gles", force=False, reuse_payload=False, destination=None, work=N
         if reuse_payload:
             validate_whole_payload_reuse(project)
         key = build_cache_key(project, api) if android_symbols == "none" else build_cache_key(project, api, android_symbols)
+        if capture_player_linker_inputs:
+            from player_linker_receipt import capture_cache_key
+
+            key = capture_cache_key(key, request_id)
         dest = WORK / "build-cache" / key
         receipt = dest / "result.json"
         if android_symbols == "debugging" and dest.exists():
@@ -524,7 +540,9 @@ def build(api="gles", force=False, reuse_payload=False, destination=None, work=N
             from symbol_artifacts import verify_cached_symbol_receipt
 
             verify_cached_symbol_receipt(receipt, dest)
-        if receipt.exists() and not force:
+        if receipt.exists() and capture_player_linker_inputs:
+            raise RuntimeError("Refuse to reuse or overwrite an opted-in request-specific linker receipt")
+        if receipt.exists() and not force and not capture_player_linker_inputs:
             r = read(receipt)
             if r.get("success") and r.get("errors", 0) == 0 and Path(r["apk"]).exists() and sha(r["apk"]) == r["apk_sha256"]:
                 if android_symbols == "none" and r.get("android_symbols", "none") != "none":
@@ -541,8 +559,9 @@ def build(api="gles", force=False, reuse_payload=False, destination=None, work=N
         result = WORK / "lab-build/result.json"
         if result.exists():
             result.rename(result.with_name("previous-" + now() + ".json"))
-        request_id = now()
         request = {"request_id": request_id, "api": api, "reusePayload": reuse_payload}
+        if capture_player_linker_inputs:
+            request.update(capture_request)
         if android_symbols != "none":
             request["androidSymbols"] = android_symbols
         write(WORK / "build-request.json", request)
@@ -567,9 +586,15 @@ def build(api="gles", force=False, reuse_payload=False, destination=None, work=N
         if not r["success"] or r.get("errors", 0) > 0:
             raise RuntimeError(r["result"] + "; build errors=" + str(r.get("errors", 0)))
         key = build_cache_key(project, api) if android_symbols == "none" else build_cache_key(project, api, android_symbols)
+        if capture_player_linker_inputs:
+            from player_linker_receipt import capture_cache_key
+
+            key = capture_cache_key(key, request_id)
         dest = WORK / "build-cache" / key
         receipt = dest / "result.json"
-        dest.mkdir(parents=True, exist_ok=True)
+        if capture_player_linker_inputs and dest.exists():
+            raise RuntimeError("Refuse to overwrite an existing request-specific linker output")
+        dest.mkdir(parents=True, exist_ok=not capture_player_linker_inputs)
         apk = dest / Path(r["apk"]).name
         copy_build_artifact(r["apk"], apk)
         r.update(
@@ -583,6 +608,22 @@ def build(api="gles", force=False, reuse_payload=False, destination=None, work=N
                 "android_symbols": android_symbols,
             }
         )
+        if source is not None:
+            r["source"] = source
+        if capture_player_linker_inputs:
+            capture_path = WORK / "lab-build/player-linker-inputs" / (request_id + ".json")
+            if not capture_path.is_file():
+                raise RuntimeError("Opted-in build lacks its same-request UnityLinker input capture")
+            from player_linker_receipt import bind_successful_apk
+
+            r = bind_successful_apk(
+                r,
+                read(capture_path),
+                work_root=WORK,
+                request_id=request_id,
+                source_commit=source["commit"],
+                input_id=capture_request["inputId"],
+            )
         if android_symbols == "debugging":
             from symbol_artifacts import validate_fresh_symbol_package, verify_apk_symbol_pair
 
@@ -608,8 +649,6 @@ def build(api="gles", force=False, reuse_payload=False, destination=None, work=N
         payload = dest / "payload"
         shutil.copytree(WORK / "generated-android-data", payload, dirs_exist_ok=True, copy_function=copy_build_artifact)
         r["payload"] = {p.name: sha(p) for p in payload.glob("*") if p.is_file()}
-        if source is not None:
-            r["source"] = source
         write(receipt, r)
         write(WORK / "config/current-build.json", r)
         print(json.dumps(r, indent=2))

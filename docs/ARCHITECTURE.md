@@ -55,6 +55,29 @@ matching ELF identities after correcting the debugging size bound; canonical
 build publication and device qualification still require the retry. Retention
 alone does not symbolicate the existing `performance_capture.py` report.
 
+`--capture-player-linker-inputs` on `whole-catalog-code-build` is current,
+opt-in build support for audio integration. `PlayerLinkerInputCapture.cs` in
+`android/Assets/Editor` implements the pinned editor's `IUnityLinkerProcessor`;
+the existing Android-asset staging owns its copy. The callback preserves an
+inert linker descriptor on ordinary builds. Opted-in captures require the
+active request ID, committed source ID, accepted input ID and Android target.
+They inventory only Unity's supplied pre-strip `inputDirectory` and independently
+copy every DLL to request-owned ignored storage, checking hashes before and
+after the copy. No Library/Bee directory search supplies inputs.
+
+`scripts/lab/player_linker_receipt.py` verifies saved path/hash/size identities
+and seals that inventory with the successful request and APK hash. `build.py`
+gives each capture a fresh request-specific output/cache namespace and refuses
+reuse; default builds retain their existing invocation/cache behavior. Output
+ancestry, stale identities, changed snapshots and missing callback evidence
+refuse. This is a UnityLinker-input receipt: a same-request comparison with the
+actual linker/IL2CPP invocation is still required before calling it the complete
+player closure. `test_player_linker_receipt.py` covers identity/dispatch/refusal;
+`test_describe_runtime.py` executes the actual C# copy/output helpers against
+minimal host stubs and skips without the pinned Mono compiler. Exact-editor
+compilation and later device acceptance remain separate. This narrow
+build-receipt addition serves original audio; alpha retains packaging ownership.
+
 `whole_catalog.analyze` owns the host dependency closure. Audit, reconciliation
 and root-binding repair supply the accepted decompile root to
 `entity_state_gameobject_fields`, a scoped field reader checked against the

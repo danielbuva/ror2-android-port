@@ -48,6 +48,8 @@ def _whole_catalog_code_build(function, kwargs, args):
     selected = dict(kwargs)
     if getattr(args, "debug_symbols", False):
         selected["android_symbols"] = "debugging"
+    if getattr(args, "capture_player_linker_inputs", False):
+        selected["capture_player_linker_inputs"] = True
     return function(**selected)
 
 
@@ -276,7 +278,7 @@ _ENTRIES = (
         "build_integration",
         {"code_only": True},
         "current",
-        "Build player code while verifying and reusing the frozen payload. Optional --debug-symbols retains matching Unity IL2CPP symbols for this exact APK.",
+        "Build player code while verifying and reusing the frozen payload. Optional --debug-symbols retains matching Unity IL2CPP symbols for this exact APK. --capture-player-linker-inputs opts into a request/source/input-bound pre-strip UnityLinker inventory in the APK receipt.",
         handler=_whole_catalog_code_build,
     ),
     Action("whole-catalog-run", "whole_catalog", "run_integration", {}, "current", "Install, sync and run the catalog-registration check."),

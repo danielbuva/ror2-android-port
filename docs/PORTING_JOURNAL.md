@@ -17946,3 +17946,62 @@ baseline or shipped runtime behavior is introduced by this checkpoint. Moon and
 finale remain manual only. Revisit after a source-backed movement/selection
 change or a measured closer eligible egg; do not extend the 180-second budget or
 force native targeting to manufacture success.
+
+
+## J823 — Add an opt-in current-player linker input receipt for audio
+
+2026-10-20. Hypothesis: Unity's active pre-strip linker callback can preserve
+current-player managed inputs, closing J820's historical-player binding gap
+without a guessed Bee directory or a second compiler run. The exact installed
+Unity 2021.3.45f2 API and CoreModule call path were inspected: its
+`IUnityLinkerProcessor.GenerateAdditionalLinkXmlFile` receives the active
+`UnityLinkerBuildPipelineData.inputDirectory` before linker configuration.
+This identifies linker inputs; it does not establish the full IL2CPP closure.
+The community prior-art map has no mechanism for this lab receipt; no
+RoR2/community implementation is copied.
+
+Add `android/Assets/Editor/PlayerLinkerInputCapture.cs`, staged by the existing
+Android-asset copier, and `scripts/lab/player_linker_receipt.py`. The explicit
+`whole-catalog-code-build --capture-player-linker-inputs` flag defaults off.
+Opt-in requests require active request/source/input/target identity and preserve
+independent DLL copies with relative path, size and SHA-256, source-before /
+copy / source-after checks, and pre-write path-integrity refusal. A successful
+build receipt binds the immutable inventory to the exact APK. Captures use a
+fresh UUID-qualified request/output/cache namespace and refuse receipt reuse.
+Ordinary build calls and cache behavior retain their previous arguments.
+
+This is a minimal audio-required exception to alpha's packaging ownership;
+launcher, controls, settings, game UI and generic playtest tooling are untouched.
+No game runtime, asset recipe, original input or audio gate changes. The new
+Editor source is a reproducible staging input, so the corresponding R8/R9 build
+stage must replay it; it is not an edit to generated project source.
+
+Root and independent review caught and corrected a first-copy filesystem
+exception and output-prologue path checks before integration. Nine host cases
+execute the actual C# output/copy helpers through the pinned Mono runtime;
+ten receipt/dispatch cases cover default-off forwarding, malformed/stale
+request/source/input/target, missing or tampered snapshots, path escapes,
+unsuccessful APK binding and request-specific cache separation. The callback
+also compiles against exact installed Unity editor assemblies. The full host
+suite initially catches two changed default-call assertions; Root restores
+the unchanged default invocation and repeats validation. Ruff format/check
+passes on all changed Python files. The repeated full suite passes 1,172 tests
+with one environment-gated assembly-slice module skip; sourcing the pinned
+toolchain then passes all four tests in that module separately. Outcomes are
+retained in `work/coordination/codex-linker-receipt-root-r1/`.
+
+The reviewed ignored producer is
+`work/coordination/audio-game-current-closure-receipt-draft/r5/`:
+complete patch `7dc400bcf58f32849656d7f9dc2fc63ae09d008b754d02cf3823ec4d15ec25b0`;
+independent review
+`work/coordination/audio-game-current-closure-receipt-review/r2/review.md`
+`d65b184f89a6559b7017b08680fc5ed21678d1727f51a3c17c7eb38d36b2e73a`.
+Root's final diff additionally preserves the original default build invocation
+and tests the public opt-in handler. Generated binaries and private compilation
+outputs stay ignored.
+
+No Unity callback or new game build is claimed here. Next commit the sources,
+run preflight and make one owning build under the shared Unity mutex, then
+compare its same-request linker and IL2CPP inputs. Missing capture or an
+incomplete closure remains a refusal. The accepted game APK stays `107718f8…`;
+current-player audio staging, dispatch and playback acceptance remain closed.

@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J823](PORTING_JOURNAL.md#j823--add-an-opt-in-current-player-linker-input-receipt-for-audio) | 2026-10-20 | Add an opt-in current-player linker input receipt for audio | 2026-10-20. |
 | [J822](PORTING_JOURNAL.md#j822--native-siren-snapshots-expose-an-out-of-range-selected-egg) | 2026-10-20 | Native Siren snapshots expose an out-of-range selected egg | 2026-10-20. |
 | [J821](PORTING_JOURNAL.md#j821--build-the-first-message-audio-fixture-and-retain-its-startup-deadline) | 2026-10-20 | Build the first-message audio fixture and retain its startup deadline | Date: 2026-10-20. |
 | [J820](PORTING_JOURNAL.md#j820--complete-the-original-api-postevent-host-closure-scan) | 2026-10-20 | Complete the original-API PostEvent host closure scan | Date: 2026-10-20. |
