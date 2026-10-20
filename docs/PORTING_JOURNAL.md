@@ -14073,3 +14073,44 @@ wwise-managed-v5-independent-review/v8-review.md and codex-audio-v8-*.
 LOCAL_STATE lists the private replay gap. No production source, assembly
 transform, current payload or R8 game-build dependency changes in this result;
 audio remains unavailable in the composed game.
+
+## J760 — Correct the MUL-T family-name guard at the accepted native API boundary
+
+Hypothesis: the combined identity refusal is caused by reading the hidden
+SkillFamily name property instead of Unity's base-object name. Root inspects
+the accepted current SkillFamily API; its obsolete hidden getter supplies no
+asset name and explicitly directs callers to the ScriptableObject base.
+The accepted-source receipt matches original RoR2.dll, and the current
+optional-presentation transform leaves this method unchanged. Existing
+SkillDef identity checks already use that base-object convention. This is
+the 1.3.9 memory-optimization/version clue documented in community-prior-art,
+with exact current input taking precedence over older assumptions. Pinned
+R2API.Loadout still supplies the family/catalog versus live-state distinction.
+
+Review and integrate a two-read correction in SurvivorSkillInputCoverage:
+the selected-family predicate and refusal description explicitly read the
+ScriptableObject name. Keep all expected names, family/catalog/variant/runtime
+tuples, bounds, body/component/canonical-slot liveness guards and refusal
+paths. No inferred replacement definition, wider allowlist or gameplay write.
+Independent review confirms the exact API cause and unchanged predicates.
+
+An authored host fixture extracts the three production capture/match/describe
+methods and compiles them against minimal synthetic collaborators with the
+hidden getter shape. It accepts the exact five-component selected loadout,
+keeps the serialized FireSpear label distinct from the selected Buzzsaw family/
+SkillDef, and rejects changed family, component/catalog, selected variant,
+runtime index/status, absent/out-of-bounds variant and definition identities.
+Root also adds an empty-variant-array refusal. Nine focused Toolbot tests pass
+in 2.608 seconds. This qualifies the host API correction, not native stance,
+Buzzsaw execution or damage.
+
+Private source receipt review and patch are under
+work/coordination/toolbot-offhand-family-name-fix/; Root output is
+work/coordination/codex-toolbot-family-name-host.stdout/stderr. The current
+96006814dd2ba80f65cd24413c50c11c3061060f9d90977296f1e00d71ec7fd1
+candidate was frozen before this correction and remains useful for Thor/default
+gates and refusal operands. Do not change its running tests or frozen inputs.
+The corrected source requires its own committed build, both baseline modes
+and the bounded receipt-bound offhand retry. This changes one existing R8
+authored source; no new file/GUID, protected implementation or private build
+input. Recipe provenance/privacy review is recorded in recipe/README.md.

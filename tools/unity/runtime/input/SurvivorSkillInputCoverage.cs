@@ -404,7 +404,7 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
         var rows = inventory != null ? inventory.components : null;
         var row = rows != null && componentIndex >= 0 && componentIndex < rows.Length
             ? rows[componentIndex] : null;
-        string familyName = skill && skill.skillFamily ? skill.skillFamily.name : "";
+        string familyName = skill && skill.skillFamily ? ((ScriptableObject)skill.skillFamily).name : "";
         string familyCatalogIndex = skill && skill.skillFamily ? skill.skillFamily.catalogIndex.ToString() : "missing";
         string definitionName = skill && skill.skillDef ? ((ScriptableObject)skill.skillDef).name : "";
         string definitionIndex = skill && skill.skillDef ? skill.skillDef.skillIndex.ToString() : "missing";
@@ -427,7 +427,7 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
         // During Dual Wield the native special slot legitimately returns its
         // contextual Cancel SkillDef; compare the selected loadout row/family,
         // not GenericSkill.skillDef, after initial live-identity validation.
-        return skill && skill.skillFamily && skill.skillFamily.name == familyName && expectedDefinition &&
+        return skill && skill.skillFamily && ((ScriptableObject)skill.skillFamily).name == familyName && expectedDefinition &&
                ((ScriptableObject)expectedDefinition).name == skillName && row != null && row.componentIndex == componentIndex &&
                row.familyCatalogIndex == familyIndex && row.selectedLoadoutVariantIndex == variantIndex &&
                row.selectedLoadoutSkillCatalogIndex == skillIndex && row.runtimeSkillCatalogIndex == skillIndex &&

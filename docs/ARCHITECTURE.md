@@ -922,6 +922,12 @@ the observer/body. The default selector remains false. Aggregate damage
 counters provide context only; this mode establishes no slot-specific damage
 or complete ability semantics. Host contracts extract the production phase
 policy and check selector/refusal routing.
+Family names use an explicit `ScriptableObject` base-object read: the accepted
+native `SkillFamily` API hides the name property with an unavailable getter.
+The same read supplies refusal details, separately from the serialized
+`GenericSkill.skillName` label. `test_toolbot_family_name_shadow.py` executes
+the production identity/refusal methods with that API shape and rejects
+mutated family/catalog/variant/runtime identities.
 
 Siren egg diagnostic input (`SirenEggDiagnosticInput.cs`, explicit default-off
 per-attempt selection): `SessionReport.diagnosticSirenEggInput` constructs an

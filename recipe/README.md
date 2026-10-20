@@ -1240,3 +1240,9 @@ and selected-row identity observations. These authored diagnostic strings copy
 no original implementation or serialized data, retain every acceptance guard,
 and add no content input. Runtime results and raw evidence remain ignored;
 R8 reproduces the source change through its existing staging step.
+
+J760 corrects those two family-name reads using the public Unity base-object
+API. The synthetic host collaborators reproduce the API shape independently;
+no original class or method implementation is tracked. The same exact native
+selection predicates remain, with no content, ownership or entitlement change.
+R8 stages the existing authored owner; the new test adds no build input.
