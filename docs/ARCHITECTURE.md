@@ -34,6 +34,15 @@ new unsigned outputs; alignment and owner signing follow separately. The current
 `phone-apk-fixture` action takes an ignored hash-bound request via `--target`;
 the same file has a standalone Android CLI. It cannot repackage the game ID.
 
+`phone_package_check.py` owns the separate fixture's device acceptance: require
+explicit selection, local APK hashes, matching shell-workspace ownership and
+fresh storage/capacity checks; exercise embedded input, refused hash drift,
+phone-produced input, native reload/unload, a version-code upgrade and data
+retention. Its `finally` removes only a package whose actual APK hash matches
+the owned attempts and verifies display sleep. It records game APK hashes
+read-only before/after. `phone-package-check` takes an ignored request and
+writes private evidence under `work/experiments/phone-packaging/`.
+
 Status words used below: **current** (part of the shipped whole-catalog game or the
 commands that build it), **support** (editor builders, host fixtures and tooling around the
 current path) and **historical** (kept for evidence; not reached by current commands).
