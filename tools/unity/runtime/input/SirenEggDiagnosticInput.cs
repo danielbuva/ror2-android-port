@@ -743,7 +743,7 @@ public sealed class SirenEggDiagnosticInput : IDisposable
         bridge.diagnosticAim = aim.normalized;
         bridge.diagnosticPrimary = visible;
         inputLease.CaptureOwnedOverlay(bridge);
-        navigationObservation.QueueRequest(bridge.movement, bridge.fixedTicks);
+        navigationObservation.QueueRequest(bridge.movement, bridge.fixedTicks, context.NavigationObjectiveStalledSeconds);
         ownedBridge = bridge;
         report.active = true;
         report.targetSamples++;

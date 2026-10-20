@@ -170,10 +170,23 @@ public static class SirenEggDiagnosticInputExactEditorFixture
         Require(float.IsNaN(context.NavigationObjectiveStalledSeconds) &&
                     context.CreateNavigationObservationReader(null, null) == null,
                 "Synthetic fixture must not claim live stage or world observation");
-        Require(SirenNavigationObservationPolicy.ShouldStart(true, 398, 167f, 60f, .5f, 6.1f) &&
-                    !SirenNavigationObservationPolicy.ShouldStart(true, 0, 167f, 60f, .5f, 6.1f) &&
-                    !SirenNavigationObservationPolicy.ShouldStart(true, 398, float.NaN, 60f, .5f, 6.1f),
-                "Compiled observation policy synthetic guards changed");
+        Require(SirenNavigationObservationPolicy.ShouldStart(true, 398, 167f, 60f, .5f) &&
+                    !SirenNavigationObservationPolicy.ShouldStart(false, 398, 167f, 60f, .5f) &&
+                    !SirenNavigationObservationPolicy.ShouldStart(true, 0, 167f, 60f, .5f) &&
+                    !SirenNavigationObservationPolicy.ShouldStart(true, 398, float.NaN, 60f, .5f) &&
+                    !SirenNavigationObservationPolicy.ShouldStart(true, 398, 167f, 60f, float.NaN),
+                "Compiled observation policy range/identity/time guards changed");
+        var progressing = new SirenNavigationObservationRecorder();
+        Require(!progressing.ObserveTrigger(true, true, 398, 167f, 60f, 0f, 1f) &&
+                    progressing.ObserveTrigger(true, true, 398, 167f, 60f, 0f, 1.5f) &&
+                    progressing.report.triggerObjectiveStallAvailable &&
+                    progressing.report.triggerObjectiveStalledSeconds == 0f,
+                "Progressing out-of-range route should arm and preserve zero stall");
+        var unknownStall = new SirenNavigationObservationRecorder();
+        Require(!unknownStall.ObserveTrigger(true, true, 399, 167f, 60f, float.NaN, 2f) &&
+                    unknownStall.ObserveTrigger(true, true, 399, 167f, 60f, float.NaN, 2.5f) &&
+                    !unknownStall.report.triggerObjectiveStallAvailable,
+                "Unknown stall should not block range observation or be fabricated");
     }
 
     static void VerifyCandidateContract()

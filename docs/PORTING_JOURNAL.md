@@ -19551,3 +19551,51 @@ data. Review and host-test that read-only change before another player build;
 do not alter movement tolerance, tracking range, combat or the encounter from
 these missing samples. No new runtime, reconstruction or replay input is added
 by this experiment.
+
+## J847 — Arm the bounded Siren approach recorder without requiring a stall
+
+2026-10-20. J844 reaches the selected egg's approach but captures no navigation
+samples. Its final objective-stall value is zero despite the egg remaining
+outside native tracker range. Hypothesis: require the existing continuous
+same-egg range mismatch, and observe stall as data, so intermittent forward
+progress cannot suppress all diagnostic evidence.
+
+`SirenNavigationObservationPolicy` now arms after 0.5 seconds of a valid same
+selected egg outside the active native tracker's range. It no longer requires
+six seconds of objective stall. `SirenEggDiagnosticInput` copies objective
+stall into each queued observation request; trigger and sample values carry
+explicit finite/unavailable flags. The recorder remains default-off, read-only
+and one-shot, with eight samples/eight seconds, later fixed-tick pairing,
+identity/clock/dependency/manual-yield guards and the existing teardown.
+Movement, aiming, skills, tracker range and encounter state are unchanged.
+
+The initial host draft passes its recorder harness but independent review
+finds three old six-argument calls in the actual exact-editor fixture. Preserve
+that unapplied failure. The corrected draft updates the fixture and compiles
+the complete current 111-source runtime plus six support/fixture sources
+against 264 pinned references, including the actual input owner, world context
+and exact-editor fixture. Compile exit is zero. The fixture is compiled, not
+executed. The production-declaration host test also passes after Root
+integration; it covers progressing zero stall, unavailable stall, identity and
+tracker loss, invalid/rolled-back clocks, exact request pairing, sample/window
+bounds and cleanup.
+
+Candidate patch SHA-256
+`97129a41214c1febd9d5ca2284bff4bcb78c46004964e0c69ddc664ca9093e69`
+and full compile evidence are under
+`work/coordination/siren-8357-navigation-triage/r3/`.
+The independent review closes the fixture-compile hold at
+`work/coordination/siren-8357-navigation-triage-review/r3/`, review SHA-256
+`af023ad77b25bd406cd17caedb9f8d2309e956bb1c7006c064026905bb3c2eea`.
+Root's actual integrated host test is retained under
+`work/coordination/codex-siren-observation-integration-root-r1/`.
+J825's pinned DebugToolkit ownership observation remains the prior-art basis;
+no community navigation implementation is copied.
+
+This is a source checkpoint before a new player build. It has no new APK,
+editor execution, device trace or encounter acceptance. J840's frozen 8357db8b
+player stays installed/default-qualified. Revisit on the next default-qualified
+player with this exact source and a bounded Siren trace; do not infer the
+underlying route fault before the paired samples exist. R8/R9 replay the two
+changed authored runtime sources and updated exact-editor fixture. No new
+required local input or build-time source replacement is introduced.

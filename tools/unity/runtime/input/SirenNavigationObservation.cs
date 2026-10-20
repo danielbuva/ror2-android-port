@@ -15,6 +15,8 @@ public struct SirenNavigationObservationSample
     public Vector3 pathWaypoint;
     public string pathNodeIdentity, pathRequestReason, movementState;
     public float pathRequestStageSeconds, pathRequestAgeSeconds;
+    public bool navigationObjectiveStallAvailable;
+    public float navigationObjectiveStalledSeconds;
 }
 
 [Serializable]
@@ -24,6 +26,7 @@ public sealed class SirenNavigationObservationReport
     public bool started, completed;
     public uint selectedEggNetworkId;
     public float startedRealtimeSeconds, triggerEggDistance, triggerTrackerMaximumDistance;
+    public bool triggerObjectiveStallAvailable;
     public float triggerObjectiveStalledSeconds, triggerSameEggOutOfRangeSeconds;
     public int sampleCount;
     public string stopReason;
@@ -33,16 +36,15 @@ public sealed class SirenNavigationObservationReport
 public static class SirenNavigationObservationPolicy
 {
     public const float MinimumOutOfRangeSeconds = .5f;
-    public const float MinimumObjectiveStallSeconds = 6f;
     public const float SampleIntervalSeconds = 1f;
     public const float MaximumWindowSeconds = 8f;
     public const int MaximumSamples = 8;
     public static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
 
-    public static bool ShouldStart(bool selected, uint eggId, float distance, float maxDistance, float rangeAge, float stall)
+    public static bool ShouldStart(bool selected, uint eggId, float distance, float maxDistance, float rangeAge)
     {
         return selected && eggId != 0 && Finite(distance) && Finite(maxDistance) && maxDistance >= 0 && distance > maxDistance &&
-               Finite(rangeAge) && rangeAge >= MinimumOutOfRangeSeconds && Finite(stall) && stall > MinimumObjectiveStallSeconds;
+               Finite(rangeAge) && rangeAge >= MinimumOutOfRangeSeconds;
     }
 
     public static bool ShouldComplete(int count, float age) => count >= MaximumSamples || !Finite(age) || age < 0 || age >= MaximumWindowSeconds;
@@ -71,6 +73,8 @@ public sealed class SirenNavigationObservationRecorder
     float rangeSince = float.NaN, lastRealtime = float.NaN, lastSampleRealtime = float.NaN;
     Vector2 pendingMovement;
     int pendingWrittenAfterTick;
+    float pendingObjectiveStalledSeconds;
+    bool pendingObjectiveStallAvailable;
     bool pending;
 
     public SirenNavigationObservationRecorder(SirenNavigationObservationReport report = null)
@@ -103,24 +107,27 @@ public sealed class SirenNavigationObservationRecorder
             return false;
         }
         float rangeAge = realtimeSeconds - rangeSince;
-        if (!SirenNavigationObservationPolicy.ShouldStart(selected, eggId, distance, maxDistance, rangeAge, stallSeconds))
+        if (!SirenNavigationObservationPolicy.ShouldStart(selected, eggId, distance, maxDistance, rangeAge))
             return false;
         report.started = true;
         report.selectedEggNetworkId = eggId;
         report.startedRealtimeSeconds = realtimeSeconds;
         report.triggerEggDistance = distance;
         report.triggerTrackerMaximumDistance = maxDistance;
-        report.triggerObjectiveStalledSeconds = stallSeconds;
+        report.triggerObjectiveStallAvailable = SirenNavigationObservationPolicy.Finite(stallSeconds);
+        report.triggerObjectiveStalledSeconds = report.triggerObjectiveStallAvailable ? stallSeconds : 0f;
         report.triggerSameEggOutOfRangeSeconds = rangeAge;
         return true;
     }
 
-    public void QueueRequest(Vector2 movement, int bridgeFixedTicks)
+    public void QueueRequest(Vector2 movement, int bridgeFixedTicks, float objectiveStalledSeconds)
     {
         if (!report.started || report.completed)
             return;
         pendingMovement = movement;
         pendingWrittenAfterTick = bridgeFixedTicks;
+        pendingObjectiveStallAvailable = SirenNavigationObservationPolicy.Finite(objectiveStalledSeconds);
+        pendingObjectiveStalledSeconds = pendingObjectiveStallAvailable ? objectiveStalledSeconds : 0f;
         pending = true;
     }
 
@@ -194,6 +201,8 @@ public sealed class SirenNavigationObservationRecorder
             return false;
         }
         sample.selectedEggNetworkId = currentEggId;
+        sample.navigationObjectiveStallAvailable = pendingObjectiveStallAvailable;
+        sample.navigationObjectiveStalledSeconds = pendingObjectiveStalledSeconds;
         report.samples[report.sampleCount++] = sample;
         lastSampleRealtime = realtimeSeconds;
         ClearPending();
@@ -235,6 +244,8 @@ public sealed class SirenNavigationObservationRecorder
         pending = false;
         pendingMovement = Vector2.zero;
         pendingWrittenAfterTick = 0;
+        pendingObjectiveStalledSeconds = 0f;
+        pendingObjectiveStallAvailable = false;
     }
 
     public void Complete(string reason)
