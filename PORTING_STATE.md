@@ -1,7 +1,7 @@
 # Porting state
 
-Last updated 2026-10-20 after **J801** (J799/J800 player passes both defaults;
-MUL-T reaches a separate shared combat-observer null reference).
+Last updated 2026-10-20 after **J802** (game baseline remains J801; the isolated
+native-audio monitor player fails its pre-Init callback-observation assumption).
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
@@ -79,10 +79,12 @@ unavailable): [docs/subsystem-coverage.md](docs/subsystem-coverage.md).
   physical audibility, wider banks/effects, music, positioning and game lifecycle
   remain open; all five composed-audio gates stay closed. J770/J781 reproduce
   the managed ABI work without enabling it in the game; the remaining isolated
-  fixture producers remain required local support. J794 links and statically
-  audits a same-library native monitor/capture extension with isolated NDK r25c;
-  its export/dependency checks pass, but review catches a narrowed SDK output ID
-  that must be corrected before loading. It has no Android/runtime acceptance.
+  fixture producers remain required local support. J802 loads the corrected
+  native monitor/capture library in a fresh player, then fails before engine Init
+  because its pre-Init test message produces no observed callback. Registration
+  succeeds; engine playback, capture and through-Term continuity are untested
+  there. The failed fixture is removed and the game APK is untouched. The next
+  contract separates registration from correlated post-Init callback delivery.
   J627/J640 record the limits of a simple clip fallback.
 - Licensed Rewired and generic physical controllers remain open.
 - Complete skill kits, most positive ordinary unlock grants, DLC scene play.

@@ -260,10 +260,14 @@ keeps its pinned r21 toolchain. Its authored same-library diagnostic bridge and
 serializer hook must keep the monitor armed through engine and callback-manager
 Term; explicit return witnesses gate disarm, and bounded capture counters do
 not acquire another engine owner. J794 qualifies only the static ELF's export,
-import and dependency closure. A later interface review catches an output-ID
-width mismatch and blocks loading until corrected. Android loading, native
-monitor continuity and capture callbacks remain runtime gates; this library is
-outside the game.
+import and dependency closure. J802 corrects the output-ID width and loads the
+replacement, then refuses its pre-Init callback-observation assumption before
+engine Init. Registration and delivered callback coverage are separate facts;
+monitor continuity and capture callbacks remain runtime gates. The library is
+outside the game. The private NativeMonitorLease owns diagnostic registration,
+return witnesses and disarm state; its injected API is a host contract seam,
+not native callback evidence. First failure and uncertain outcomes remain
+visible through owner teardown.
 
 `tools/wwise-android-abi/generate.py` is a current, explicitly invoked host
 support tool with policy in `recipe/wwise-android-abi.json`. It reads the

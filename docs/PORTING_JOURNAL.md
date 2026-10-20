@@ -16611,3 +16611,78 @@ observer policy before another player trial. Qualify the exact source guard
 before the opt-in Siren continuation; Moon remains manual-only. J799/J800 list
 the authored files that R8 replay must restage. This entry changes no runtime,
 recipe, payload or required local build input.
+
+
+## J802 — Load the native monitor bridge and reject its pre-init callback assumption
+
+Date: 2026-10-20. Hypothesis: the corrected SDK-width same-library monitor and
+capture extension can preserve diagnostic ownership through the retained managed
+API and both Terms in a fresh isolated player. The negative control is required
+before a separate original-event attempt.
+
+The earlier narrowed output-ID artifact remains preserved and was never loaded.
+Root's replacement keeps the complete unsigned 64-bit AkOutputDeviceID, including
+high bits and the SDK's zero invalid sentinel, with schema 2 and 22 snapshot
+slots. Native SHA-256:
+`5d10f45840ee9de2b03f4313aa990b3f5f2d35bfed74812e34393749c561fde3`.
+The static ELF audit confirms AArch64, all retained managed exports, ten diagnostic
+exports, seven DT_NEEDED entries and zero unresolved imports. The isolated NDK
+r25c and Unity's pinned r21 remain separate. This qualifies the inspected binary
+contract, not monitor delivery or output callbacks.
+
+Root stages the reviewed managed/native inputs and importer metadata, explicitly
+imports the new authored NativeMonitorLease, and reconciles compilation after a
+domain reload. A fresh package-only receipt precedes one successful isolated
+build. Unity completes in 34.998802 s with zero errors and five warnings; all 112
+frozen inputs match before/after. APK SHA-256:
+`1ed036acef9b866dc787c518f6e84d34231c6fcd7364dacf78839011cf43045c`.
+Request: `f2a9aac2a2754d2ebbe2c38e3ea58537`. Host APK checks verify the exact
+native library, adapted Init and unchanged Global bytes. Earlier host staging,
+compile-refresh, package-response and frozen-input refusals remain preserved;
+none is treated as an extra successful player build. The game APK is untouched.
+
+On the internal-storage Nova, the exact R8 library maps and the activity check
+passes. Native monitor registration returns success and armed state is one.
+The raw message control also returns success, but its immediate snapshot has
+zero callbacks. The managed owner refuses with a pre-Init callback-observation
+exception before AkSoundEngine.Init. Native initialized is explicitly known
+false; neither engine nor callback-manager Term is attempted. The broad
+exception path marks the lease's outcome unknown and retains it, so owned
+teardown is incomplete. The negative control fails; no Global-event attempt is
+made. Init, bank/event playback, capture callbacks and through-Term continuity
+are untested by this player. No Android runtime fatal is observed. The host
+force-stops and removes only its newly owned fixture and sleeps the display;
+that process cleanup does not qualify engine-owner teardown.
+
+The exact official Android SWIG PostString wrappers refuse forwarding unless
+SoundEngine.IsInitialized is true. The raw bridge bypasses that wrapper guard,
+so its return value cannot establish pre-Init callback delivery. The SDK header
+also supplies no synchronous-delivery guarantee. Existing generic callback
+count deltas cannot distinguish the authored marker from unrelated messages.
+The next coherent contract therefore separates pre-Init registration from
+positively observed post-Init coverage, correlates the exact marker within a
+bounded serviced window, and removes the unsupported post-Term marker claim.
+Actual native calls, return witnesses and uncertain ownership remain distinct;
+no callback or Term will be fabricated to pass a gate.
+
+Evidence: work/coordination/{codex-audio-native-r7-root-r1/,
+codex-audio-managed-r7-candidate-root-r1/,
+codex-audio-native-r7-first-failure-root-r1/,
+wwise-managed-native-monitor-r7-draft/r2/,
+audio-r7-preinit-first-failure-native-triage/,
+audio-r7-preinit-first-failure-managed-triage/}; the native source, build and
+ELF receipts remain under work/coordination/
+wwise-managed-preinit-monitor-investigation/native-build-feasibility/.
+Player report SHA-256:
+`116fd316565a9a0b983a3131514b959a37d526b3e70575ebda62efe372e50406`;
+runner result SHA-256:
+`086b525de37666c72355fb45b57216eb97dc4a2d7cc4ccb00502c64589e1e6d2`.
+The private classification receipt records the selected-device run path.
+
+Prior art remains the official authorized Unity wrapper/callback serializer and
+SDK monitor/capture declarations, alongside J772/J778/J791's callback-manager
+ordering and render/finalization evidence. J791's earlier isolated Global event
+is unchanged evidence on its own APK. All five composed-audio gates remain
+closed; audio is unavailable in the game. LOCAL_STATE records the private
+fixture inputs. No default game transform, runtime source, recipe or R8 replay
+input changes in this entry.
