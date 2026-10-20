@@ -74,12 +74,12 @@ The plain check and its acceptance criteria remain unchanged.
 
 | Item | Value |
 | --- | --- |
-| APK | `8357db8b6ef29f8958c5f4207ad2207f214ee60ae4923cc68f6de55fe55f6770`, source a4664d7; 111 runtime sources including the exclusive native item-display dispatch correction; 266 payload hashes unchanged; matching symbols and same-request pre-strip linker capture retained |
-| Check | Both modes pass on the adopted-storage gameplay device without report/current-process error or applied-run change: 35.228836 s and one exit plus 10.662109 s on Goolake. Both record current-build true and unchanged owned artifact identity before/after. Full evidence is recorded once in J840. |
+| APK | `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`, source 1780ea9; 111 runtime sources, 312 frozen authored inputs, 266 payload hashes unchanged, matching symbols and same-request pre-strip capture |
+| Check | Both modes pass on the adopted-storage gameplay device with no report/current-process failure or applied-run change: 35.206436 s on Lakes and one exit plus 10.111176 s on Goolake. Both record current-build true and stable owned artifact identity. Full evidence is recorded once in J850. |
 | Placement | Adopted Nova updates in place with fresh adopted-only placement checks. Thor retains the earlier J818 automatic-check result on APK 107718f8…; this new APK was not installed there. Current assignments reserve adopted Nova for gameplay/audio, internal Nova for the separate alpha session, and Thor as an unassigned spare. |
-| Rollbacks | Previous baseline J828 `922cfb86…` and all retained executable rollback hashes are listed in [PORTING_STATE.md](../PORTING_STATE.md). |
+| Rollbacks | Previous baseline J840 `8357db8b…` and all retained executable rollback hashes are listed in [PORTING_STATE.md](../PORTING_STATE.md). |
 
-J840 qualifies J838 on the default route only. The opt-in native skin lifecycle
+J850 qualifies J847/J848 on the default route only. The opt-in native skin lifecycle
 and Siren recorder still require explicit targeted runs. J814 separately passes a stock MUL-T
 four-callback retry without reproducing the earlier NRE, and a Commando
 loss/restart observer lifecycle. The NRE cause, MUL-T teardown, native Huntress

@@ -19962,3 +19962,63 @@ opt-in build role. ARCHITECTURE names both owners and LOCAL_STATE lists the
 tracked receipt producers. R8/R9 must replay the changed editor source, while
 this optional collector remains unsupported for destination builds.
 Revisit on the next actual audio/code candidate with fresh Bee execution.
+
+
+## J850 — Accept both default checks on the native visual/Siren observer build
+
+2026-10-20. Hypothesis: J847's default-off Siren recorder trigger and J848's
+bounded model/Animator/camera snapshots preserve both standard gameplay checks.
+The observers do not change tracking, movement, combat, animation or materials.
+Their prior-art/current-source contracts are recorded in those entries.
+Targeted diagnostic behavior remains a separate gate.
+
+**Frozen build.** Source `1780ea9545f1597c033a8d32e08074b03c7f38c8`
+builds request `20261020T225705.730704Z-bcd8d7eff910478bb3448e8b292cbc6c`
+in 173.516445 seconds with zero errors; BuildReport GUID
+`28ae4d5dc471b41f3abb67e68c8899cf`.
+APK SHA-256 is
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+The frozen candidate retains 312 authored inputs, 111 runtime sources,
+matching symbols and all 266 payload hashes unchanged from J840.
+The debug-symbol archive is
+`2d06dc8ec00f6e491f3a6dae1cc9e682130aa1c89d44f9289f7da254dd9c0be7`;
+Build ID is `d00fb3b84b2f73300a9a6ead45f3d627592ed364`.
+Same-request pre-strip evidence is retained; no IL2CPP invocation capture is
+requested on this build. J852's later host/editor change is not in this APK.
+
+After J845's verified fixture removal, install this explicit frozen APK over
+the owned main package in place. Fresh adopted-only capacity/reserve, package
+placement and runtime-backing checks pass; bootstrap and sync pass. Do not
+select a mutable build alias or use an extra device.
+
+**Actual default results.** Plain `20261020T232945.363181Z` passes at
+35.206436 seconds of Lakes world play. One-exit
+`20261020T233331.534294Z` passes exactly one native exit to Goolake and
+10.111176 seconds there. Both return success with no report/current-process
+failure, current-APK identity true and the profile unchanged at 13 applied
+runs. Diagnostic native-skin and Siren flags are off. The original baseline
+runners remove their selectors, force-stop and sleep the display in cleanup.
+A concurrent read-only diagnostic sampled the first world frame; its later
+log read encountered the already-stopped process after successful cleanup.
+It changed no input or baseline outcome.
+
+Root's acceptance is
+`work/coordination/codex-main-f155-device-root-r1/root-default-acceptance.json`,
+SHA-256 `dd056dfa0dde566123f5d43ea07f5dbd3122bed5456a8ef7eb28e1d31b8fce63`.
+Complete phase receipts are under
+`work/experiments/visual-siren-next-main/root-f155-defaults-20261020T2328/`.
+The frozen candidate is
+`work/experiments/native-skin-siren-next/candidate-20261020T230133.234544Z/`;
+its explicit device manifest is
+`74a751976394154766cdf5901e5242413acd0fb7b9eead7bc2cb4bac80713ed3`.
+Root scripts, the fixture-clearance proof and all prelaunch captures remain
+private. The fresh source-bound unlock helper sends a key only for an observed
+exact vendor prompt; normal prompt absence proceeds without a key.
+
+This is the new default-route baseline only. Native visual lifecycle,
+Siren egg/encounter execution, normal-difficulty play, complete survivor
+semantics, audio, performance and PC visual parity remain separate gates.
+Continue with the already-built, bounded native-model visual diagnostic;
+Moon/finale stay manual only. Preserve J840's executable rollback.
+No source, recipe, storage configuration, alpha/spare install or original
+installation is changed by these device checks.
