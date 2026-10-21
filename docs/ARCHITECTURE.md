@@ -511,14 +511,14 @@ or failure; there is no persistent state. This verifies plugin bytes only, not
 importers, script orders or project initialization. Host contracts:
 `tests/test_assembly_transforms.py`.
 
-Composed audio playback remains unqualified; J868 observes original engine/bank
-readiness with unresolved producer/path errors. The default-off original-owner
+Composed audio playback remains unqualified; J872 observes original engine/bank
+readiness with the path warning removed and original point-sound failures remaining. The default-off original-owner
 integration uses `runtime/session/PortSessionOriginalAudioOwner.cs` after the
 offline menu and before selected body activation. It coordinates the existing
 `WwiseIntegrationManager.Init` and original prefab callbacks; `AkInitializer`
 and `AudioManager` retain native initialization, service, focus/pause and
 termination ownership. It adds no second native engine owner. Its bounded
-snapshot is attached to the session report.
+snapshot refreshes at every session-report save, including teardown observations.
 
 `tools/unity/support/audio/core/` owns admission, readiness and copied lifecycle
 observations. `support/audio/bootstrap/` owns the explicit request, hash-bound
@@ -571,6 +571,25 @@ existence warning on Android, where StreamingAssets is an APK URI. The transform
 imports the pinned editor's exact platform getter and enum; non-Android keeps
 the original probe. The previous valid API can upgrade in place; the older
 invalid-IL API is accepted only for restoration to default off.
+`core/PointSoundDiagnosticObserver.cs` owns the separately selected point-sound
+localization counters and first matching exception stage. Requested audio builds
+instrument the exact composed game's original pool/prefab, transform, event-post
+and timeout boundaries without changing their calls or exception behavior. The
+producer passes the accepted Managed reference directory explicitly when writing
+the isolated intermediate assembly. The generated request binds the resulting
+game hash and the callsite capability pin; ordinary default-off assemblies retain
+no injected calls. The predecessor and current API/game pairs may share an API
+hash but must differ as complete pairs; unknown pairs refuse.
+
+The per-session `pointSoundDiagnosticRequested` selector defaults false and
+requires the integrated route, ready selected audio and instrumented callsites.
+`PortSessionOriginalAudioOwner` owns the matching Unity log subscription;
+the Core observer stores bounded scalar values only, never raw messages/stacks
+or Unity objects. `PortSession.Save` refreshes its snapshot. Completion, lifecycle
+recovery and `OnDestroy` disable and unsubscribe the observer idempotently,
+without terminating or releasing the original process audio owner. Event/stage
+correlation is best effort and cannot prove native posting or audible output.
+
 The lower-level `original_game_audio.py` is host staging support;
 current Unity project mutation belongs to the mutex-protected build action.
 Use a full bundle build for the first audio candidate: code-only payload reuse

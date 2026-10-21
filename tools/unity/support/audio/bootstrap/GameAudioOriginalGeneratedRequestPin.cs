@@ -9,6 +9,7 @@ internal static class GameAudioOriginalGeneratedRequestPin
     internal const string StageReceiptSha256 = "";
     internal const string AdaptedInitSha256 = "";
     internal const string GameAssemblySha256 = "";
+    internal const string ComposedGameSha256 = "";
     internal const string RawApiSha256 = "";
     internal const string AdaptedApiSha256 = "";
     internal const string ObservedApiSha256 = "";

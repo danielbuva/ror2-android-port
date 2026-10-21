@@ -16,6 +16,7 @@ EXPECTED = {
     "accepted_input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
     "adapted_init_sha256": "618d1c5d534af10fc4cc30a1bacd193bf6871dab3e63992ebedd92a92576fb90",
     "game_assembly_sha256": "a5f7d83c7e6872fdd6099fdc299adb7d4fa03cbf465e526d6f5efcc35c2c281d",
+    "composed_game_sha256": "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc",
     "raw_api_sha256": "564b74ec232e81af8fa4b65c17537a4d05890d9181281eab0bc28bd441a3a781",
     "adapted_api_sha256": "2bd973178c99bfcb4d20510e2d1eac7efa9dd6d698237f2edfa486171bc2f272",
     "observed_api_sha256": "7ec842ee2244590f9227c44280ebbb4a0debf9b83ad1958c045d68dec47e0af9",
@@ -30,6 +31,7 @@ HASH_RE = re.compile(r"^[0-9a-f]{64}$")
 CONTRACT_SCHEMA = "game-audio-original-build-input-contract-r1"
 CONTRACT_ROLES = {
     "game_assembly_sha256",
+    "composed_game_sha256",
     "raw_api_sha256",
     "adapted_api_sha256",
     "observed_api_sha256",
@@ -210,6 +212,7 @@ def emit(request_path: Path, manifest_path: Path, stage_path: Path, output: Path
         "StageReceiptSha256": result["stage_receipt_sha256"],
         "AdaptedInitSha256": request["adapted_init_sha256"],
         "GameAssemblySha256": request["game_assembly_sha256"],
+        "ComposedGameSha256": request["composed_game_sha256"],
         "RawApiSha256": request["raw_api_sha256"],
         "AdaptedApiSha256": request["adapted_api_sha256"],
         "ObservedApiSha256": request["observed_api_sha256"],

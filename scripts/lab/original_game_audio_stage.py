@@ -47,11 +47,13 @@ LINEAGE = {
     "adapted_api_sha256": "2bd973178c99bfcb4d20510e2d1eac7efa9dd6d698237f2edfa486171bc2f272",
     "observed_api_sha256": "7ec842ee2244590f9227c44280ebbb4a0debf9b83ad1958c045d68dec47e0af9",
     "composed_api_sha256": "d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23",
-    "composed_game_sha256": "1034a747e31a3b79554b9cb06f941c7acabaa9e0ee82c2a00abc4b24f9327c1c",
+    "composed_game_sha256": "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc",
     "native_library_sha256": "bb5879b4eb38b81dc3830a1662ba467b60b595e7fedb88a1301d3161f8ab9304",
     "stage_receipt_sha256": "8fe02400a7ab0905ae21b728e702d7ef2c4dcf8646f77f631682a81bda0ab88c",
 }
-PREVIOUS_COMPOSED_API_SHA256 = "9a3f9911697b4ce28a955dff09f618e0f2662083e56eeb28ff5b6ecc02b588f3"
+PREVIOUS_COMPOSED_API_SHA256 = "d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23"
+OLDER_RESTORE_API_SHA256 = "9a3f9911697b4ce28a955dff09f618e0f2662083e56eeb28ff5b6ecc02b588f3"
+PREVIOUS_COMPOSED_GAME_SHA256 = "1034a747e31a3b79554b9cb06f941c7acabaa9e0ee82c2a00abc4b24f9327c1c"
 LEGACY_RESTORE_API_SHA256 = "793f22866c85bbcf104f20f5c1f619062eaad9f5414a217b602fe758c71e01b9"
 PREVIOUS_LINEAGE = {
     "accepted_input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
@@ -65,10 +67,11 @@ PREVIOUS_LINEAGE = {
     "native_library_sha256": "bb5879b4eb38b81dc3830a1662ba467b60b595e7fedb88a1301d3161f8ab9304",
     "stage_receipt_sha256": "8fe02400a7ab0905ae21b728e702d7ef2c4dcf8646f77f631682a81bda0ab88c",
 }
+OLDER_RESTORE_LINEAGE = {**PREVIOUS_LINEAGE, "composed_api_sha256": OLDER_RESTORE_API_SHA256}
 LEGACY_RESTORE_LINEAGE = {**PREVIOUS_LINEAGE, "composed_api_sha256": LEGACY_RESTORE_API_SHA256}
 ALLOWED_RESTORE_PREIMAGES = {
-    "restore_api": frozenset({LEGACY_RESTORE_API_SHA256, PREVIOUS_COMPOSED_API_SHA256, LINEAGE["composed_api_sha256"]}),
-    "restore_game": frozenset({LINEAGE["composed_game_sha256"]}),
+    "restore_api": frozenset({LEGACY_RESTORE_API_SHA256, OLDER_RESTORE_API_SHA256, PREVIOUS_COMPOSED_API_SHA256, LINEAGE["composed_api_sha256"]}),
+    "restore_game": frozenset({LINEAGE["composed_game_sha256"], PREVIOUS_COMPOSED_GAME_SHA256}),
 }
 RESTORE_HASHES = {
     "restore_api": "107295e478a58ef295a83228111f375c536861bc9081f482d638c59899bf495c",
@@ -387,7 +390,7 @@ def inspect_previous_stage(project: Path, receipt_path: Path) -> tuple[dict | No
         not isinstance(previous, dict)
         or previous.get("schema") != RECEIPT_SCHEMA
         or previous.get("accepted_input_id") != LINEAGE["accepted_input_id"]
-        or previous.get("lineage") not in (LINEAGE, PREVIOUS_LINEAGE, LEGACY_RESTORE_LINEAGE)
+        or previous.get("lineage") not in (LINEAGE, PREVIOUS_LINEAGE, OLDER_RESTORE_LINEAGE, LEGACY_RESTORE_LINEAGE)
         or type(previous.get("requested")) is not bool
         or not isinstance(previous.get("outputs"), list)
         or not HASH.fullmatch(str(previous.get("artifact_manifest_sha256", "")))
@@ -482,7 +485,7 @@ def stage(project: Path, manifest_path: Path, request_path: Path | None, stage_r
     no_symlink_path(receipt_path, allow_missing=True)
     previous, remove_after_stage = inspect_previous_stage(project, receipt_path)
     if pins["requested"]:
-        if previous is not None and previous.get("lineage") == LEGACY_RESTORE_LINEAGE:
+        if previous is not None and previous.get("lineage") in (OLDER_RESTORE_LINEAGE, LEGACY_RESTORE_LINEAGE):
             raise ValueError("legacy 793 API lineage must be restored to default-off before a new opt-in")
         # The requested generation still owns the native and bank payload. The
         # prior receipt is validated for preimage ownership but nothing is removed.

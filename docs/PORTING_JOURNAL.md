@@ -21731,3 +21731,84 @@ observation, then build their committed sources. Preserve this candidate and
 all failed evidence. Revisit playback qualification only with actual-game event
 and output evidence; physical audibility, spatialization and music remain open.
 No reconstruction step or authored runtime source changes in this checkpoint.
+
+## J874 — Stage bounded original point-sound localization through the public producer
+
+Date: 2026-10-20.
+
+Hypothesis: J872's original `PointSoundManager.EmitSoundLocal` null reference
+needs the failing boundary identified before changing gameplay or Wwise behavior.
+The pinned R2API.Sound source's post-engine-Init bank seam confirms that bank
+readiness alone does not identify event posting or output. Current input IL and
+device stacks, rather than a replacement emitter implementation, guide this step.
+
+Change: an authored Cecil transformation adds scalar stage/event observations to
+the exact composed game's existing emitter acquisition, Unity fake-null test,
+transform access, original event-post alternatives and timeout enqueue. It
+preserves original event arguments, calls, branches and exception behavior.
+Only the two pinned original point-sound methods can change. No emitter,
+listener, native engine or alternate playback system is created. The bounded
+Core observer retains no original messages/stacks or Unity objects. Its
+best-effort last-event/stage correlation does not prove native output.
+
+The process audio coordinator owns a per-session Unity log subscription. The
+explicit `pointSoundDiagnosticRequested` selector defaults false and requires
+the integrated route, selected ready audio and an instrumented-callsite build
+pin. Every report save refreshes original-audio and diagnostic snapshots.
+Completion, source-lifecycle recovery and session destruction retire only this
+observer idempotently. Original engine, bank and catalog lifetime ownership stay
+with their named owners. The observer is one selected diagnostic session per
+process; subsequent same-process diagnostic rearming is refused.
+
+Pipeline: the public producer, generated request/provider and stager bind the
+actual instrumented game hash, not just the raw input. API remains
+`d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23`;
+game is `6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc`.
+Current/predecessor validation compares complete API/game pairs, allowing an
+unchanged API with a changed game. The immediately preceding `d540/1034` pair
+upgrades through its owned receipt; `9a3/1034` and the older invalid-IL API remain
+restore-only. Default-off uses the ordinary guarded modules with no injected
+calls and a false callsite pin.
+
+Root's actual public-chain replay exposed and repaired two integration failures
+before accepting this source: an API-only predecessor check rejected the intended
+game-only change, and an isolated intermediate assembly lacked its dependency
+resolution directory when Cecil wrote it. The production transform now receives
+the accepted Managed directory explicitly. Its source and managed-producer pins
+are checked against actual bytes; raw game/API and transformed output pins
+remain exact. New host regressions cover the pair classifier and argument/pin
+binding. Existing Core compile fixtures include the new observer/build pin.
+
+Host evidence: all requested/current stages contain 165 owned outputs. The third
+request reuses a validated generation cache, then default off restores the
+ordinary modules with eight outputs. Root additionally reconstructs the owned
+J872 stage in disposable scratch, upgrades it to the new pair with 165 outputs,
+then restores default off. Evidence:
+`work/coordination/codex-original-audio-host-stage-root/r4/`.
+Cached report SHA-256
+`cf4aac039b589ea65804eda8ae27003db0f96f65e934541cefb7cc13c79720ff`;
+default-off report
+`cd3279f008eedafaa372a014db35b2901b242f77f92ee9d7c597d1f6e12da729`.
+The failed replay logs remain alongside the successful receipts.
+
+Independent integration review:
+`work/coordination/original-game-audio-point-sound-review/r3/review.md`,
+SHA-256 `956065e5ef0ad8de6ec29cf36d6f3d56d75c97c98b2f698af83f8455939f67a4`.
+The full exact-editor host runtime compile passes with 118 source files and 264
+references, no camera overlay and no errors. Receipt:
+`work/coordination/original-audio-point-sound-repair/root-runtime-compile-r1/compile_receipt.json`,
+SHA-256 `5d8d6972b14f8af76a2dc6d6948d891fd2cc67bea3c172ffcfa952b28a0c1eab`.
+All 46 public audio/point-sound contracts pass with the installed toolchain;
+Ruff and diff checks pass. These host results supply no runtime proof. No Unity player build or device qualification is
+claimed for this checkpoint. Installed APK remains J872 `417ce856…`; accepted
+baseline remains J850 `f1550ce0…`.
+
+Provenance/privacy review: only authored transformations, coordinator/observer
+code, synthetic fixtures and summaries are tracked. No original implementation,
+managed binary, bank, SDK or raw capture is published. This changes authored
+runtime sources and generation tools consumed by reconstruction; replay the
+relevant generation steps before the next full build. No new build input reads
+a timestamped experiment output. Next: build committed source, run both default
+checks and an explicitly selected point-sound run; classify the first actual
+failing boundary before proposing a behavior repair. Passive PCM is a separate
+host draft and has no output acceptance here.

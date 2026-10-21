@@ -19,11 +19,212 @@ internal static class OriginalGameCecilTransform
             if (args.Length == 4 && args[0] == "game") return TransformGame(args[1], args[2], args[3], null);
             if (args.Length == 5 && args[0] == "game") return TransformGame(args[1], args[2], args[3], args[4]);
             if (args.Length == 2 && args[0] == "validate-bank-il") return ValidateBankMethod(args[1]);
+            if (args.Length == 5 && args[0] == "point-sound") return TransformPointSound(args[1], args[2], args[3], args[4]);
+            if (args.Length == 2 && args[0] == "validate-point-sound") return ValidatePointSound(args[1]);
             if (args.Length == 3 && args[0] == "validate-android-probe") return ValidateAndroidProbe(args[1], args[2]);
-            throw new InvalidOperationException("usage: api <7ec-api> <core.dll> <output.dll> <UnityEngine.CoreModule.dll> | game <current-guarded-RoR2.dll> <core.dll> <output.dll>");
+            throw new InvalidOperationException("usage: api <7ec-api> <core.dll> <output.dll> <UnityEngine.CoreModule.dll> | game <current-guarded-RoR2.dll> <core.dll> <output.dll> | point-sound <1034-game.dll> <core.dll> <output.dll> <managed-reference-directory>");
         }
         catch (Exception error) { Console.Error.WriteLine(error.GetType().Name + ": " + error.Message); return 2; }
     }
+
+    private static int TransformPointSound(string input, string observerPath, string output, string referenceDirectory)
+    {
+        const string expectedInput = "1034a747e31a3b79554b9cb06f941c7acabaa9e0ee82c2a00abc4b24f9327c1c";
+        Require(Hash(input) == expectedInput, "point-sound diagnostic requires exact composed game 1034 input");
+        using (var observer = AssemblyDefinition.ReadAssembly(observerPath))
+        using (var resolver = Resolver(input, observerPath, referenceDirectory))
+        using (var game = AssemblyDefinition.ReadAssembly(input, new ReaderParameters { AssemblyResolver = resolver }))
+        {
+            var before = AllMethods(game.MainModule).ToDictionary(m => m.FullName, Fingerprint);
+            var type = FindType(game.MainModule, "RoR2.Audio.PointSoundManager");
+            var request = FindMethod(type, "RequestEmitter");
+            var emit = FindMethod(type, "EmitSoundLocal", "RoR2.Audio.AkEventIdArg", "UnityEngine.Vector3");
+            int requestShortBranchCount = ShortBranchCount(request);
+            int emitShortBranchCount = ShortBranchCount(emit);
+            var observerType = FindType(observer.MainModule, "PointSoundDiagnosticObserver");
+            var mark = game.MainModule.ImportReference(FindMethod(observerType, "Mark", "System.Int32"));
+
+            var begin = game.MainModule.ImportReference(FindMethod(observerType, "Begin", "System.UInt32"));
+            var beginSequence = new[] {
+                emit.Body.GetILProcessor().Create(OpCodes.Ldarg_0),
+                emit.Body.GetILProcessor().Create(OpCodes.Ldfld, FindField(game.MainModule, "RoR2.Audio.AkEventIdArg", "id")),
+                emit.Body.GetILProcessor().Create(OpCodes.Call, begin)
+            };
+            InsertBeforeWithoutRetarget(emit, emit.Body.Instructions[0], beginSequence);
+            var requestCall = emit.Body.Instructions.Single(i => IsCall(i, "RoR2.Audio.PointSoundManager", "RequestEmitter"));
+            MarkBefore(emit, requestCall, mark, 2); // emitter acquisition entered
+            MarkAfter(emit, requestCall, mark, 3); // returned reference is now on the stack
+            var emitterStore = requestCall.Next.Next.Next;
+            Require(emitterStore != null && emitterStore.OpCode == OpCodes.Stloc_0, "emitter local store shape changed");
+            var objectTruth = request.Body.Instructions.Single(i => IsCall(i, "UnityEngine.Object", "op_Implicit"));
+            var enabledGetter = game.MainModule.ImportReference(FindMethod(observerType, "get_Enabled"));
+            var aliveObserver = game.MainModule.ImportReference(FindMethod(observerType, "RecordEmitterAlive", "System.Boolean"));
+            var il = emit.Body.GetILProcessor();
+            var skipEmitterCheck = il.Create(OpCodes.Nop);
+            il.InsertAfter(emitterStore, il.Create(OpCodes.Call, enabledGetter));
+            il.InsertAfter(emitterStore.Next, il.Create(OpCodes.Brfalse, skipEmitterCheck));
+            il.InsertAfter(emitterStore.Next.Next, il.Create(OpCodes.Ldloc_0));
+            il.InsertAfter(emitterStore.Next.Next.Next, il.Create(OpCodes.Call, game.MainModule.ImportReference((MethodReference)objectTruth.Operand)));
+            il.InsertAfter(emitterStore.Next.Next.Next.Next, il.Create(OpCodes.Call, aliveObserver));
+            il.InsertAfter(emitterStore.Next.Next.Next.Next.Next, skipEmitterCheck);
+            var getTransform = emit.Body.Instructions.Single(i => IsCall(i, "UnityEngine.Component", "get_transform"));
+            MarkBefore(emit, getTransform, mark, 4);
+            var setPosition = emit.Body.Instructions.Single(i => IsCall(i, "UnityEngine.Transform", "set_position"));
+            MarkAfter(emit, setPosition, mark, 5);
+            var setAkPosition = emit.Body.Instructions.Single(i => IsCall(i, "AkGameObj", "SetPosition"));
+            MarkAfter(emit, setAkPosition, mark, 6);
+            var postEvents = emit.Body.Instructions.Where(i => IsCall(i, "AkSoundEngine", "PostEvent")).ToArray();
+            Require(postEvents.Length == 2, "expected original timeout/callback PostEvent alternatives");
+            foreach (var post in postEvents) { MarkBefore(emit, post, mark, 7); MarkAfter(emit, post, mark, 8); }
+            var enqueue = emit.Body.Instructions.Single(i => IsCall(i,
+                "System.Collections.Generic.Queue`1<RoR2.Audio.PointSoundManager/TimeoutInfo>", "Enqueue"));
+            MarkBefore(emit, enqueue, mark, 9);
+            MarkAfter(emit, enqueue, mark, 10);
+
+            // Mark the selected source-owned acquisition path immediately before
+            // its first operation; this distinguishes a thrown pool/prefab/fallback
+            // operation as well as successful returns.
+            MarkBefore(request, request.Body.Instructions.Single(i => IsCall(i,
+                "System.Collections.Generic.Stack`1<AkGameObj>", "Pop")), mark, 20);
+            MarkBefore(request, request.Body.Instructions.Single(i => IsCall(i,
+                "UnityEngine.Object", "Instantiate")), mark, 21);
+            MarkBefore(request, request.Body.Instructions.Single(i => IsCall(i,
+                "RoR2.Audio.PointSoundManager", "LoadEmitterPrefab")), mark, 22);
+
+            game.Write(output);
+            using (var result = AssemblyDefinition.ReadAssembly(output, new ReaderParameters { AssemblyResolver = resolver }))
+            {
+                var resultType = FindType(result.MainModule, "RoR2.Audio.PointSoundManager");
+                var resultRequest = FindMethod(resultType, "RequestEmitter");
+                var resultEmit = FindMethod(resultType, "EmitSoundLocal", "RoR2.Audio.AkEventIdArg", "UnityEngine.Vector3");
+                VerifyStackHeights(resultRequest);
+                VerifyStackHeights(resultEmit);
+                Require(resultEmit.Body.Instructions.Count(i => IsObserverCall(i, "Mark")) == 11,
+                    "unexpected EmitSoundLocal marker count");
+                Require(resultEmit.Body.Instructions.Count(i => IsObserverCall(i, "Begin")) == 1 &&
+                    resultEmit.Body.Instructions.Count(i => IsObserverCall(i, "RecordEmitterAlive")) == 1,
+                    "event identity or Unity fake-null observation hook missing");
+                Require(resultRequest.Body.Instructions.Count(i => IsObserverCall(i, "Mark")) == 3,
+                    "unexpected RequestEmitter branch marker count");
+                Require(ShortBranchCount(resultRequest) == requestShortBranchCount &&
+                    ShortBranchCount(resultEmit) == emitShortBranchCount,
+                    "existing short-branch shape changed; refuse diagnostic output");
+                var after = AllMethods(result.MainModule).ToDictionary(m => m.FullName, Fingerprint);
+                foreach (var pair in before)
+                    if (pair.Key != emit.FullName && pair.Key != request.FullName)
+                        Require(after[pair.Key] == pair.Value, "unexpected method changed by diagnostic: " + pair.Key);
+                Require(result.MainModule.AssemblyReferences.Any(r => r.Name == observer.Name.Name),
+                    "transformed game lacks point-sound diagnostic owner reference");
+            }
+            Console.WriteLine("point-sound diagnostic boundaries verified; original PostEvent callsites retained; output " + Hash(output));
+        }
+        return 0;
+    }
+
+    private static int ValidatePointSound(string path)
+    {
+        using (var game = AssemblyDefinition.ReadAssembly(path))
+        {
+            var type = FindType(game.MainModule, "RoR2.Audio.PointSoundManager");
+            var request = FindMethod(type, "RequestEmitter");
+            var emit = FindMethod(type, "EmitSoundLocal", "RoR2.Audio.AkEventIdArg", "UnityEngine.Vector3");
+            VerifyStackHeights(request);
+            VerifyStackHeights(emit);
+            Require(emit.Body.Instructions.Count(i => IsObserverCall(i, "Mark")) == 11,
+                "instrumented EmitSoundLocal boundary set is incomplete");
+            Require(emit.Body.Instructions.Count(i => IsObserverCall(i, "Begin")) == 1 &&
+                emit.Body.Instructions.Count(i => IsObserverCall(i, "RecordEmitterAlive")) == 1,
+                "instrumented request/event/alive check is incomplete");
+            Require(request.Body.Instructions.Count(i => IsObserverCall(i, "Mark")) == 3,
+                "instrumented RequestEmitter branch set is incomplete");
+            Require(emit.Body.Instructions.Count(i => IsCall(i, "AkSoundEngine", "PostEvent")) == 2,
+                "original callback/timeout PostEvent alternatives changed");
+            Require(emit.Body.Instructions.Count(i => IsCall(i, "RoR2.Audio.PointSoundManager", "RequestEmitter")) == 1,
+                "original emitter request call changed");
+            RequireNoIncomingControlEdge(emit, emit.Body.Instructions.Single(i => IsCall(i, "RoR2.Audio.PointSoundManager", "RequestEmitter")));
+            RequireNoIncomingControlEdge(request, request.Body.Instructions.Single(i => IsCall(i,
+                "System.Collections.Generic.Stack`1<AkGameObj>", "Pop")));
+            RequireNoIncomingControlEdge(request, request.Body.Instructions.Single(i => IsCall(i, "UnityEngine.Object", "Instantiate")));
+            RequireNoIncomingControlEdge(request, request.Body.Instructions.Single(i => IsCall(i,
+                "RoR2.Audio.PointSoundManager", "LoadEmitterPrefab")));
+            RequireNoIncomingControlEdge(emit, emit.Body.Instructions.Single(i => IsCall(i, "UnityEngine.Component", "get_transform")));
+            RequireNoIncomingControlEdge(emit, emit.Body.Instructions.Single(i => IsCall(i, "UnityEngine.Transform", "set_position")));
+            RequireNoIncomingControlEdge(emit, emit.Body.Instructions.Single(i => IsCall(i, "AkGameObj", "SetPosition")));
+            foreach (var post in emit.Body.Instructions.Where(i => IsCall(i, "AkSoundEngine", "PostEvent")))
+                RequireNoIncomingControlEdge(emit, post);
+            RequireNoIncomingControlEdge(emit, emit.Body.Instructions.Single(i => IsCall(i,
+                "System.Collections.Generic.Queue`1<RoR2.Audio.PointSoundManager/TimeoutInfo>", "Enqueue")));
+        }
+        Console.WriteLine("point-sound diagnostic validation passed: " + Hash(path));
+        return 0;
+    }
+
+    private static void MarkBefore(MethodDefinition method, Instruction before, MethodReference observer, int stage)
+    {
+        var il = method.Body.GetILProcessor();
+        InsertBeforeAndRetarget(method, before, new[] {
+            il.Create(OpCodes.Ldc_I4, stage),
+            il.Create(OpCodes.Call, observer)
+        });
+    }
+
+    // Existing branches and exception-region entries must land on the first
+    // diagnostic instruction, or a source path can bypass its stage marker.
+    private static void InsertBeforeAndRetarget(MethodDefinition method, Instruction before, Instruction[] inserted)
+    {
+        Require(inserted != null && inserted.Length > 0, "empty instrumentation sequence");
+        var il = method.Body.GetILProcessor();
+        foreach (var instruction in inserted) il.InsertBefore(before, instruction);
+        var first = inserted[0];
+        foreach (var instruction in method.Body.Instructions)
+        {
+            if (ReferenceEquals(instruction, first) || inserted.Contains(instruction)) continue;
+            if (ReferenceEquals(instruction.Operand, before)) instruction.Operand = first;
+            else if (instruction.Operand is Instruction[] targets)
+                for (int i = 0; i < targets.Length; i++) if (ReferenceEquals(targets[i], before)) targets[i] = first;
+        }
+        foreach (var handler in method.Body.ExceptionHandlers)
+        {
+            if (ReferenceEquals(handler.TryStart, before)) handler.TryStart = first;
+            if (ReferenceEquals(handler.HandlerStart, before)) handler.HandlerStart = first;
+            if (ReferenceEquals(handler.FilterStart, before)) handler.FilterStart = first;
+        }
+    }
+
+    private static void MarkAfter(MethodDefinition method, Instruction after, MethodReference observer, int stage)
+    {
+        var next = after.Next ?? throw new InvalidOperationException("cannot mark after terminal instruction");
+        var il = method.Body.GetILProcessor();
+        InsertBeforeWithoutRetarget(method, next, new[] {
+            il.Create(OpCodes.Ldc_I4, stage),
+            il.Create(OpCodes.Call, observer)
+        });
+    }
+
+    private static void InsertBeforeWithoutRetarget(MethodDefinition method, Instruction before, Instruction[] inserted)
+    {
+        Require(inserted != null && inserted.Length > 0, "empty instrumentation sequence");
+        var il = method.Body.GetILProcessor();
+        foreach (var instruction in inserted) il.InsertBefore(before, instruction);
+    }
+
+    private static bool IsObserverCall(Instruction instruction, string name) =>
+        instruction.Operand is MethodReference method && method.DeclaringType.FullName == "PointSoundDiagnosticObserver" && method.Name == name;
+    private static void RequireNoIncomingControlEdge(MethodDefinition method, Instruction target)
+    {
+        foreach (var instruction in method.Body.Instructions)
+        {
+            if (ReferenceEquals(instruction.Operand, target) ||
+                instruction.Operand is Instruction[] targets && targets.Any(x => ReferenceEquals(x, target)))
+                throw new InvalidOperationException("control-flow edge bypasses point-sound marker before " + target);
+        }
+        foreach (var handler in method.Body.ExceptionHandlers)
+            if (ReferenceEquals(handler.TryStart, target) || ReferenceEquals(handler.HandlerStart, target) ||
+                ReferenceEquals(handler.FilterStart, target))
+                throw new InvalidOperationException("exception-region entry bypasses point-sound marker before " + target);
+    }
+    private static int ShortBranchCount(MethodDefinition method) => method.Body.Instructions.Count(i =>
+        i.OpCode.OperandType == OperandType.ShortInlineBrTarget);
 
     private static int TransformApi(string input, string ownerPath, string output, string unityCorePath)
     {

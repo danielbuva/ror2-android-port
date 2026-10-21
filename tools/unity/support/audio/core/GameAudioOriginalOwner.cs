@@ -55,6 +55,7 @@ public static class GameAudioOriginalOwner
     private static bool postCallbacksSeen;
     private static int engineTermReturns;
     private static int callbackManagerTermReturns;
+    private static bool pointSoundDiagnosticConfigured;
 
     // Called once from generated, request-bound composition configuration. No
     // generated acceptance record means no provider and therefore no startup.
@@ -201,6 +202,43 @@ public static class GameAudioOriginalOwner
     }
     public static bool HasTerminalFailure
     { get { lock (Sync) return failure != null || (readiness != null && readiness.Failed); } }
+
+    // The PortSession selector may arm only a diagnostic build after the
+    // original owner is ready. This observer lives with this process-lifetime
+    // owner; it never creates or owns Wwise objects and stores no Unity objects.
+    public static void ConfigurePointSoundDiagnostic(bool requested)
+    {
+        lock (Sync)
+        {
+            if (pointSoundDiagnosticConfigured)
+                throw new InvalidOperationException("Point-sound diagnostic selection is immutable for this process.");
+            pointSoundDiagnosticConfigured = true;
+            if (!requested) return;
+            if (!GameAudioOriginalPointSoundBuildPin.DiagnosticCallsitesPresent)
+                throw new InvalidOperationException("Point-sound diagnostic selector requires the instrumented diagnostic game assembly.");
+            PointSoundDiagnosticObserver.Configure(true);
+        }
+    }
+
+    public static string PointSoundDiagnosticBuildRefusal(bool requested) =>
+        requested && !GameAudioOriginalPointSoundBuildPin.DiagnosticCallsitesPresent
+            ? "Point-sound diagnostic selector requires the instrumented diagnostic game assembly"
+            : null;
+
+    public static PointSoundDiagnosticObserver.Snapshot CapturePointSoundDiagnosticSnapshot()
+    {
+        lock (Sync) return PointSoundDiagnosticObserver.CaptureSnapshot();
+    }
+
+    // The diagnostic is scoped to one PortSession run. Capture its last scalar
+    // snapshot first, then detach the Unity log observer at terminal report save.
+    public static void DisablePointSoundDiagnostic()
+    {
+        lock (Sync)
+        {
+            PointSoundDiagnosticObserver.Disable();
+        }
+    }
 
     public static void RecordOriginalManagerInitReturned()
     { lock (Sync) originalManagerInitReturned = true; }

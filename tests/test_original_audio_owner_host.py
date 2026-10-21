@@ -26,6 +26,8 @@ CORE_SOURCES = [
     AUDIO_CORE / "GameAudioOriginalOwner.cs",
     AUDIO_CORE / "GameAudioOriginalReadiness.cs",
     AUDIO_CORE / "OriginalOwnerProbeObserver.cs",
+    AUDIO_CORE / "PointSoundDiagnosticObserver.cs",
+    Path(__file__).resolve().parent / "fixtures/point_sound/PointSoundBuildPin.cs",
 ]
 
 
