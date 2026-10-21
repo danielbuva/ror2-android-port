@@ -20517,3 +20517,65 @@ produce scene usage/module policy and exact linker inputs independently of a
 desktop capture, then connect those to J846/J849's stripping/conversion contract.
 Target content/shaders, managed compilation, tool-delivery rights, the installer
 experience and measured whole-game performance remain independent gates.
+
+## J858 — Correct the Siren recorder's incompatible launch selection
+
+2026-10-20. Hypothesis: J856's host clock/schema corrections allow the existing
+J847 recorder to observe selected-egg movement on the accepted f1550ce0 player.
+Use the unchanged installed APK
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`,
+source `1780ea9545f1597c033a8d32e08074b03c7f38c8`, retaining J850's two default
+passes. Root independently reviews the frozen R4 runner, verifies its candidate
+and control hashes, and passes all 21 host tests. The runner manifest hash is
+`f90152350a38cb3c7e31b21bff649451392ca7f89a98b59b18bd66b47d1878d5`;
+Root source review hash is
+`3d6c9b180cd4203ec26a8489399a23a0b6edbd083f2ba35c84d2d4a04260c960`.
+No build or installation occurs.
+
+The bounded attempt is
+`work/coordination/f155-siren-device-plan/r4/attempts/20261021T003238.018865Z-b95d29db70de/`.
+It selects ordinary Huntress, seed 2, with invincibility, high damage and fast
+charge; movement and jump boosts remain off. After three exits it reaches
+Ship Graveyard without a reported runtime error or firstFailure. The corrected
+schema parser accepts the actual zero-sample report. Target-stage clock samples
+are already fresh in this run: 107 observations span through 122.615387 seconds
+of stage age, so the stale-entry grace path is not exercised on this device
+attempt.
+
+The recorder remains unstarted. The source encounter reports Listening and
+source ownership, but zero registered egg slots, zero egg bodies and no source
+entry. The egg-input observation reports `no-current-source-egg-target`.
+This is a concrete host setup error: R4 sets launch
+`diagnosticSirenEggInput=true` while omitting both
+`sirenSourceEntryDiagnosticAttempt` and
+`sirenNativeEncounterContinuationRequested`. Current source enters
+`SirenSourceEntrySession` only through the source-entry selection. Its preflight
+requires launch egg input OFF; the continuation arms input only after exact
+native Listening/12-egg registration. J812/J844 use that compatible selection.
+Root's runner review missed this prerequisite. No movement defect follows
+from a trace with no source eggs.
+
+At world time 467.460480, the report names Sky Meadow with transport active and
+three completed transitions. The host stops at its target-route boundary;
+Moon/finale is not entered, and this is no acceptance of a fourth stage. The
+raw child result hash is
+`01e8aaa9489c38ec72d27bc9d46d025949193eb13b532ae4e56910d3451cd1fb`;
+Root's separately serialized copy under
+`work/coordination/codex-main-f155-siren-root-r3/` hashes to
+`012d512a2d766be56dc6dd09a88e63791a960d201fa160edb521f1083d98f365`.
+Selected profile counters remain unchanged; this does not hash the whole profile.
+
+Cleanup removes the exact owned selector and stops the owned process. The first
+sleep poll is false despite a successful sleep request; preserve that result.
+Root's later guarded read confirms process absence, power asleep and a retained
+display dump, without another sleep request. The terminal claim is archived and
+released. Forced stop proves no native owner teardown. The f1550ce0 baseline
+remains installed, with no new device qualification.
+
+Prior art remains J825's pinned DebugToolkit ownership-observation technique;
+this failure requires no new navigation mechanism. Revisit only with the
+historically qualified source-entry/continuation launch contract, retaining
+R4's clock/schema and route/deadline/cleanup guards. Host-test source-owner
+admission before dispatch; do not change gameplay or infer movement behavior
+from the eight unused array slots. No runtime, recipe or APK changes occur as
+part of this experiment; the separate audio source integration is still unbuilt.
