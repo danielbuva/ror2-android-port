@@ -63,6 +63,8 @@ bytes, conditional/unknown literal origins and output/input drift refuse.
 It needs the two unchanged authored registry readers alongside it; no editor,
 game files or previous captured mapping is an input. Reports stay private and
 no cache, scene-root or game-build consumer is selected.
+The bounded Android shell qualification is recorded in
+[J876](../../docs/PORTING_JOURNAL.md#j876--decode-native-sdk-type-flags-on-android).
 
 ```sh
 ./dev prototype --action phone-content-fixture

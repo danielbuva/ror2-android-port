@@ -21945,3 +21945,92 @@ installation/key custody and matched-workload performance remain separate gates.
 Both root_generation_qualified and cache_population_qualified remain false.
 Revisit on SDK/API/module/file-set/source or consumer-contract drift; retain
 this independent oracle as verification only.
+
+
+## J876 — Decode native SDK type flags on Android
+
+2026-10-20. Hypothesis: the native abstract/sealed/editor metadata observed by
+J873 can be read from the pinned SDK as data, including the code-built root and
+nonobject descriptors, without executing Unity on Android. Begin after PR18's
+independent review/repair and accepted merge `6304521`. Main owns its separate
+R6 diagnostic player and J875 device result; no main device or editor action is
+part of this experiment. Route A, native IL2CPP ARM64, Android rendering and
+the desktop owner-build fallback remain fixed.
+
+**Owner and first observation.** `phone_native_flags.py` owns a separate current
+experimental standard-library reader. Its standalone explicit owner-SDK/new-
+private-report invocation uses the two unchanged authored registry readers.
+ARCHITECTURE records setup/teardown; LOCAL_STATE lists the private selectors and
+replay adapter. No game, editor project, previous mapping or linker stage
+consumes this helper. Output replacement, unknown SDKs, non-boolean bytes,
+input/source drift and incomplete/duplicate identities refuse.
+
+A first 32-bit field scan finds no descriptor word that equals all observed
+flags; its best field matches only 139 of 305 static rows. Preserve that failed
+representation hypothesis. The actual three boolean bytes pack into API flag
+bits. Inspect bounded SDK registration/transport functions as data to verify
+that descriptor bytes are copied into native type metadata and exposed in the
+reported order. The pinned reference-only
+[UnityType API](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Editor/Mono/TypeSystem/UnityType.cs)
+provides abstract/sealed/editor flag definitions. This is generic SDK metadata
+inspection, not a RoR2 runtime mechanism; no SDK instructions, registry list or
+reference implementation is copied into public source.
+
+The existing wider-field literal reader correctly refuses the root's partially
+overwritten word. The new reader proves each selected byte independently. Its
+last defining store must dominate the registration call and have a literal
+origin; a wider proven zero store can supply neighboring bytes after a later
+byte write. It checks the descriptor's stack argument, fixed frame and bounded
+control flow. Unknown effects, aliases, unqualified calls, conditional origins
+and loops refuse. Boolean values must be exactly 0 or 1; no truthiness default
+fills gaps. The static rows and literal registrations retain unique persistent
+IDs. Captured oracle flags are comparison data, never decoder inputs.
+
+**Source and host checks.** Committed source
+`a05f2996d53708ff625f8015b526b997393ff532` reads all 318 records: 305 static and
+13 code-built registrations. Every flag matches the independent exact-editor
+oracle from J873's corrected `f31770c` source, with zero mismatches. Seven
+host contracts cover all eight flag combinations, separated byte fields,
+wide-store/byte-overwrite behavior, vector-zero provenance, skipped/unknown/
+parameter origins, frame/alias/call/loop refusals, output preservation and input
+drift. Fixtures use authored instructions/data and a different field layout.
+An optional real-SDK test skips when the pinned SDK is absent; an explicit
+hash-checked SDK path lets that same test run on Android. Fresh-clone CI passes
+1,335 tests with 62 optional skips, Ruff, public audit and documentation checks.
+The independent root/bootstrap and game-readiness gates do not change.
+
+**Android result.** Select only the configured alpha device and its explicitly
+owned shell workspace. Bind source/tool/input hashes, query current storage,
+workspace backing and free capacity, and preserve the configured reserve.
+Create a fresh owned child and reuse the receipt-bound SDK copy read-only; no
+additional SDK copy, package installation or user-data movement is needed.
+The supplied Mach-O is parsed as data by trusted Android Python, never run.
+
+The reader exits 0 in 4.846 seconds of host-observed wall time. All 318 rows are
+byte-identical to host output, SHA-256
+`3997974aa4bc9b3c693d070113864e43eaf1443c655d4a3de85f164893aba9e7`.
+A separate comparison verifies every phone flag against the independent oracle:
+318 matches, zero mismatches. All seven authored/SDK tests also pass on Android
+with no skips. Existing-output and unknown-SDK controls refuse; the former
+preserves its report bytes and the latter creates no negative report. Reader
+sources and supplied SDK hashes remain unchanged. The alpha APK remains
+`be26c21c4cd8ff15a8a663528216cf7a69394a51d8b9441a63a1a496f83e98b5`
+before/after, and its display is asleep. No new gameplay acceptance or numerical
+performance equivalence is inferred from this metadata-tool timing.
+
+Private `native-flags-proof-receipt.json` binds 184 source/input/output/control/
+comparison/SDK-observation/CI/prerequisite artifacts; SHA-256
+`ccf1cdf3d897937e67ba7b3c79158f6bc00cad20ab3aba1189544c2c69e76dbb`.
+Earlier field observations, literal refusal, source-bound stage, phone selector
+and J873 evidence remain intact. SDK metadata, disassembly, workspace/device
+identifiers and raw logs stay ignored. No APK is produced or installed.
+
+**Next gate.** Use these flags with independently qualified cache-population
+control flow and all extra-type rules, preserving J873's direct-scene versus
+cache-query distinction. Native scene/manager/dependency usage and exact linker
+roots remain unproduced; general policy, managed compilation, content/shaders,
+permitted tool delivery, normal app hosting, installation/key custody and
+matched-workload performance remain separate gates. Both
+cache_population_qualified and root_generation_qualified remain false. Revisit
+on SDK/hash/descriptor/constructor/API or source drift, retaining the working
+build and desktop fallback.
