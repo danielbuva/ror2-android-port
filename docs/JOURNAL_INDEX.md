@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J899](PORTING_JOURNAL.md#j899--compile-an-authored-c-fixture-on-android-and-preserve-cross-host-output-differences) | 2026-10-21 | Compile an authored C# fixture on Android and preserve cross-host output differences | Date: 2026-10-21. |
 | [J900](PORTING_JOURNAL.md#j900--preserve-source-exception-handlers-in-the-owned-camera-marker) | 2026-10-21 | Preserve source exception handlers in the owned camera marker | Date: 2026-10-21. |
 | [J898](PORTING_JOURNAL.md#j898--observe-siren-registration-and-five-ordered-navigation-pairs-without-a-boss-start) | 2026-10-21 | Observe Siren registration and five ordered navigation pairs without a boss start | Date: 2026-10-21. |
 | [J897](PORTING_JOURNAL.md#j897--preserve-the-camera-players-il2cpp-exception-handler-failure) | 2026-10-21 | Preserve the camera player's IL2CPP exception-handler failure | Date: 2026-10-21. |

@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-21 after **J900/J897/J898/J895**. Diagnostic fae79734 still
+Last updated 2026-10-21 after **J900/J899/J897/J898/J895**. Diagnostic fae79734 still
 passes both standard checks. Original music preload is observed; captured PCM
 remains zero and playback is unqualified. J897's new camera player fails IL2CPP
 because its authored helper copier drops exception-handler metadata; no new APK
@@ -9,7 +9,9 @@ J898 reaches Siren with twelve registered eggs and five ordered
 navigation pairs, then stops at the source-stage budget without a native boss
 start. Main is stopped, selector absent and display asleep. Accepted baseline
 stays f1550ce0. J895 adds isolated SDK registration metadata; independent phone
-roots remain unqualified.
+roots remain unqualified. J899 compiles an authored arithmetic library on Android
+with the exact SDK compiler; repeated Android bytes match, while desktop/Android
+DLL and PDB bytes differ. General managed compilation remains unqualified.
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
@@ -22,7 +24,7 @@ content on every update. Results are recorded once in the
 | --- | --- |
 | Accepted input | Steam build 25475991, input id `6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88` |
 | Toolchain | Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan (`environment/toolchain.json`) |
-| Owner-build research | J883 matches Android wrapper metadata to native SDK caches; J893 adds separate authored scene/manager observations. J895 qualifies SDK manager registration declarations and asset-dependency exclusions on Android. Live state, target/object retention, native project usage identities, scene labels, complete roots, managed game compilation, general policy and content/shaders remain open. SDK observations are comparison evidence only. Route A and the desktop fallback stay fixed; no game build or install changes. |
+| Owner-build research | J883/J893/J895 qualify bounded SDK wrapper/scene/manager prerequisites; complete roots remain open. J899 runs the exact SDK compiler and unchanged configuration for an authored core-library fixture on Android. Android repeats its own DLL/PDB bytes; desktop/Android bytes differ with the recorded compiler-host version/debug identities. General managed game compilation, live state, target/object retention, native usage/scene labels, general policy and content/shaders remain open. SDK observations remain comparisons. Route A and the desktop fallback stay fixed. |
 | Latest device-verified APK | J891 diagnostic `fae79734107d07d7c9a8af838961ccf82b4e6fa530e4f1a6238b17eda3a44b1d`, source c02013b: full build, both default checks and same-build bootstrap post-strip reflection pass; 333 same-request pre-strip DLLs, 382 frozen authored inputs, 266 payload files and matching symbols. Original music preload and guard registration pass; source camera/body context and playback remain unqualified. Accepted baseline remains J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`, source 1780ea9. |
 | Installed now | The primary gameplay device retains J891 diagnostic fae79734 after J898; installed bytes, selector absence, stopped process and display sleep are independently checked. Audible playback is unqualified. Other devices are outside this session's current assignment; historical receipts do not establish their present state. |
 | Runtime source since verified APK | J892 camera source repair and J896 catalog regeneration follow installed source c02013b. J897 reaches IL2CPP but fails on omitted exception-handler metadata; J900 repairs and host-checks the copier and refreshes exact generation/restore pins. No newer player is installed. J898 observes twelve registered Siren eggs and five ordered navigation pairs on fae79734, without native encounter start. Camera activation/context, shader fidelity, composed audio and natural teardown remain unqualified. SDK metadata work does not alter the installed player. |

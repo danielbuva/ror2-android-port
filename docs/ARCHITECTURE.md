@@ -270,6 +270,9 @@ child exiting, with logs, runtime identity and failed attempts retained. This
 does not start Unity, build a player, select a game backend or qualify managed
 game compilation, editor-generated type databases or ordinary app hosting.
 Its authored IL remains an input candidate for the existing IL2CPP pipeline.
+J899 records Android repeatability and the failed raw desktop/Android equality
+comparison. Compiler-host version and derived debug identities remain recorded;
+no build consumer normalizes away that evidence.
 
 `phone_registry.py` and `phone_registry_literals.py` own separate experimental
 static SDK metadata support.
