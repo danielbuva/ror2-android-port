@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J856](PORTING_JOURNAL.md#j856--reach-ship-graveyard-and-correct-siren-recorder-host-observations) | 2026-10-20 | Reach Ship Graveyard and correct Siren recorder host observations | 2026-10-20. |
 | [J855](PORTING_JOURNAL.md#j855--resolve-static-sdk-modules-from-explicit-registration-call-arguments) | 2026-10-20 | Resolve static SDK modules from explicit registration call arguments | 2026-10-20. |
 | [J853](PORTING_JOURNAL.md#j853--read-partial-owner-sdk-native-registration-metadata-on-android) | 2026-10-20 | Read partial owner-SDK native registration metadata on Android | 2026-10-20. |
 | [J854](PORTING_JOURNAL.md#j854--observe-invisible-native-huntress-renderers-and-correct-the-menu-timeout-diagnosis) | 2026-10-20 | Observe invisible native Huntress renderers and correct the menu-timeout diagnosis | 2026-10-20. |

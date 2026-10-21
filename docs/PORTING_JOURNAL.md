@@ -20361,3 +20361,56 @@ All SDK-derived rows, source binary, instruction views and call-site indexes sta
 ignored. Continue with non-static native registrations and the root record,
 then exact scene usage/module policy. Complete target-content production,
 permitted tool delivery and the full owner-build/install experience remain open.
+
+## J856 — Reach Ship Graveyard and correct Siren recorder host observations
+
+2026-10-20. Hypothesis: J847's out-of-range trigger records the selected egg's
+requested/applied movement, motor and path context without changing gameplay.
+Use J850's both-default-qualified APK
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`,
+source `1780ea9545f1597c033a8d32e08074b03c7f38c8`, already installed on the
+adopted-only main gameplay device. No Unity build, install or payload sync occurs.
+Read J844/J847 and the pinned navigation prior art before this retry.
+
+Root reviews the private Main-only runner and actual default-check receipts.
+Host review corrects an existing-selector exit-status check, verifies the actual
+installed APK hash before mutations, preserves the retained destination string
+after stage arrival, and reserves cleanup time including an ambiguous wake
+attempt. The frozen R3 runner has 17 passing host tests and an independent GO;
+manifest SHA-256 is
+`e069066a9a5ccfaffd6ad8f00ea9f332e6b5d0e40c45c28a0eaf1633ee050285`.
+A Root wrapper syntax error refuses before executing any statement/device action;
+preserve it and use a separately corrected wrapper. Its fresh claim binds the
+exact installed candidate, adopted backing and absence of other-session leases.
+The source-bound observed vendor prompt receives its permitted single unlock
+key. Diagnostic invincibility/high damage/fast charge remain explicit; movement
+and jump boosts stay off. This is assisted observation, not normal-difficulty play.
+
+The actual attempt is
+`work/coordination/f155-siren-device-plan/r3/attempts/20261021T000842.990806Z-614fbb5eaafd/`.
+The same process/session reaches Lakes, Goolake, Wisp Graveyard and Ship Graveyard
+through three original transitions with no report error/firstFailure. The host
+then stops with `siren-stage-clock-invalid`: its first target-stage report still
+has world.seconds 344.257996 while stage enteredAt has advanced to 345.680664.
+Source updates the stage entry during transport completion before the next
+integrated-world observation refreshes world.seconds. This one report does not
+establish an invalid game clock. The runner also rejects the current navigation
+schema because its exact field set omits the source's stall-availability fields.
+The serialized recorder itself is not started and has zero samples; all eight
+slots are defaults. There is no movement/motor/path trace to interpret, so no
+gameplay correction follows this attempt. Source owner attachment alongside the
+early input wait remains an observation to revisit after the host can continue.
+
+Preserve the failed result and full reports, selected diagnostics, logs, prompt
+observation and source/review pins. The compared profile counters are unchanged;
+this runner does not establish a whole-profile file hash. Cleanup removes the
+owned selector, stops its launched process and observes the display asleep,
+with no cleanup error. No fourth transition, Moon, alpha/spare device or original
+installation is touched. J850 remains the default baseline, and targeted Siren
+interaction/encounter and navigation acceptance remain open.
+
+Next use the actual F155 report and serialized C# fields as host fixtures. Permit
+only bounded fresh-report grace for the demonstrated finite entry skew, keep
+stage age unknown until refreshed, and retain all route/identity/deadline guards.
+Recognize both stall-availability fields before interpreting recorder rows.
+No authored runtime, recipe or known-good APK changes occur in this experiment.
