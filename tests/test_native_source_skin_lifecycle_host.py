@@ -7,14 +7,7 @@ import tempfile
 import unittest
 
 
-def find_root() -> Path:
-    for parent in Path(__file__).resolve().parents:
-        if (parent / "AGENTS.md").is_file() and (parent / "work/lab-project").is_dir():
-            return parent
-    raise RuntimeError("repository root not found")
-
-
-REPO = find_root()
+REPO = Path(__file__).resolve().parents[1]
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 EDITOR = Path(os.environ.get("UNITY_EDITOR_PATH", "/Applications/Unity/Hub/Editor/2021.3.45f2/Unity.app/Contents"))
 MONO = EDITOR / "MonoBleedingEdge/bin/mono"

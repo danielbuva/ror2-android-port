@@ -7,14 +7,7 @@ import tempfile
 import unittest
 
 
-def find_root() -> Path:
-    for parent in Path(__file__).resolve().parents:
-        if (parent / "AGENTS.md").is_file() and (parent / "tools/unity/runtime/session/PortSessionOriginalAudioOwner.cs").is_file():
-            return parent
-    raise RuntimeError("repository root not found")
-
-
-ROOT = find_root()
+ROOT = Path(__file__).resolve().parents[1]
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 EDITOR = Path(os.environ.get("UNITY_EDITOR_PATH", "/Applications/Unity/Hub/Editor/2021.3.45f2/Unity.app/Contents"))
 MONO = EDITOR / "MonoBleedingEdge/bin/mono"

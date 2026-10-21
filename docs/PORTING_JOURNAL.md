@@ -22591,7 +22591,11 @@ live read inside the guard; a throwing-getter regression passes. Correction
 review: `work/coordination/original-camera-integration-review/r2/review.md`,
 SHA-256 `088a48d6f6ff5c3ae67e4bc766a4cf338d3aaa1b34c7e352e958418071fb1a53`.
 Public test packaging also fixes the candidate-only ancestor-root lookup and
-fixture filename mismatch before the final host run.
+fixture filename mismatch before the final host run. A subsequent fresh-clone
+pre-push check catches a test root lookup that depends on ignored
+`work/lab-project`; all three new/updated compiled fixtures now locate the
+tracked repository by their file position, then skip when the compiler is absent.
+The gate is rerun before publishing.
 
 Host evidence:
 
