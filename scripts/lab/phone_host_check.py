@@ -3,6 +3,7 @@
 import hashlib
 import json
 from pathlib import Path
+import re
 import subprocess
 import time
 import zipfile
@@ -11,6 +12,52 @@ from phone_package_check import package_hash
 
 
 PACKAGE = "dev.ror2lab.phonehostfixture"
+
+
+def request_target(value):
+    if not isinstance(value, dict) or set(value) not in ({"apk", "sha256"}, {"apk", "sha256", "target_sdk"}):
+        raise ValueError("Expected exact APK path/hash and optional authored target SDK")
+    target = value.get("target_sdk", 30)
+    if type(target) is not int or target not in (30, 33):
+        raise ValueError("Only authored target SDK 30 and 33 fixtures are supported")
+    return target
+
+
+def validate_report(report, target_sdk):
+    """Require observed positive/negative facts, not just the activity's flags."""
+    uid = report.get("uid")
+    api = report.get("deviceApi")
+    if (
+        type(uid) is not int
+        or uid < 10000
+        or type(api) is not int
+        or api < target_sdk
+        or report.get("targetSdk") != target_sdk
+        or any(report.get(key) is not True for key in ("success", "installedPassed", "installedExists", "writableRefused", "writableMarkedExecutable"))
+        or report.get("installedWritable") is not False
+    ):
+        raise ValueError("Installed/writable app-sandbox execution contract failed")
+    positive = report.get("installed", {})
+    negative = report.get("writable", {})
+    try:
+        child = json.loads(positive.get("output", ""))
+    except (TypeError, ValueError) as error:
+        raise ValueError("Installed tool output is not a child observation") from error
+    context = report.get("selfContext", "")
+    if (
+        positive.get("exit") != 0
+        or positive.get("error")
+        or child.get("uid") != uid
+        or child.get("answer") != 42
+        or child.get("marker") != "authored-phone-host-v1"
+        or not isinstance(context, str)
+        or not re.fullmatch(r"u:r:untrusted_app(?:_[0-9]+)?:s0(?::c[0-9]+(?:,c[0-9]+)*)?", context)
+        or child.get("context") != context
+        or "error=13" not in negative.get("error", "")
+        or "exit" in negative
+        or "output" in negative
+    ):
+        raise ValueError("Observed child identity/context or writable refusal differs")
 
 
 def cleanup_owned(device, digest):
@@ -45,8 +92,7 @@ def check_action(request):
     if not request.is_relative_to(WORK.resolve()):
         raise ValueError("Host request must be ignored local evidence")
     value = json.loads(request.read_text())
-    if set(value) != {"apk", "sha256"}:
-        raise ValueError("Expected exact APK path and hash")
+    target_sdk = request_target(value)
     apk = Path(value["apk"]).resolve()
     if not apk.is_relative_to(WORK.resolve()) or hashlib.sha256(apk.read_bytes()).hexdigest() != value["sha256"]:
         raise ValueError("Host APK path/hash mismatch")
@@ -59,6 +105,7 @@ def check_action(request):
         "schema": 1,
         "serial": device.serial,
         "request": value,
+        "target_sdk": target_sdk,
         "success": False,
         "reports": [],
         "source_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
@@ -86,6 +133,8 @@ def check_action(request):
         if expected not in result["package_path"]:
             raise RuntimeError("Host placement does not match selected storage")
         result["package_details"] = device.sh("dumpsys", "package", PACKAGE)
+        result["selinux_status"] = device.sh("getenforce", check=False)
+        result["selinux_enforce_file"] = device.sh("cat", "/sys/fs/selinux/enforce", check=False)
         for cycle in range(2):
             device.sh("am", "force-stop", PACKAGE)
             device.sh("run-as", PACKAGE, "rm", "-f", "files/host-report.json")
@@ -109,9 +158,10 @@ def check_action(request):
                     (directory / f"cycle-{cycle}-logcat.txt").write_text(
                         device.cmd("logcat", "-d", "--pid=" + pid.split()[0], "-v", "threadtime", "PhoneHostFixture:I", "AndroidRuntime:E", "*:S")
                     )
-            if report.get("success") is not True or report.get("targetSdk") != 30 or report.get("uid", 0) < 10000:
-                raise RuntimeError("Installed/writable app-sandbox execution contract failed")
-        result["app_data_backing"] = device.sh("run-as", PACKAGE, "sh", "-c", "pwd; df -k .")
+            result["app_data_backing"] = device.sh("run-as", PACKAGE, "sh", "-c", "pwd; df -k .")
+            result["writable_metadata"] = device.sh("run-as", PACKAGE, "ls", "-lZ", "files/writable-probe", check=False)
+            save()
+            validate_report(report, target_sdk)
         result["success"] = True
     except Exception as error:
         result["failure"] = str(error)

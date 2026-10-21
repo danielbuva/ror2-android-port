@@ -16,6 +16,19 @@ SPEC.loader.exec_module(BUILDER)
 
 
 class PhoneHostBuildTests(unittest.TestCase):
+    def test_target_selection_uses_authored_manifest_and_refuses_downgrade_or_drift(self):
+        source = SCRIPT.parent
+        self.assertEqual(BUILDER.selected_manifest(source, 30).name, "AndroidManifest.xml")
+        self.assertEqual(BUILDER.selected_manifest(source, 33).name, "AndroidManifestTarget33.xml")
+        for value in (28, 29, 31, 32, 34, "33", True):
+            with self.subTest(value=value), self.assertRaisesRegex(ValueError, "Only"):
+                BUILDER.selected_manifest(source, value)
+        with tempfile.TemporaryDirectory() as temporary:
+            source = Path(temporary)
+            (source / "AndroidManifestTarget33.xml").write_bytes((SCRIPT.parent / "AndroidManifest.xml").read_bytes())
+            with self.assertRaisesRegex(ValueError, "differs"):
+                BUILDER.selected_manifest(source, 33)
+
     def test_first_failure_stops_signing_retains_evidence_and_refuses_overwrite(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -23,6 +36,7 @@ class PhoneHostBuildTests(unittest.TestCase):
             source.mkdir()
             for name in ("NativeProbe.c", "HostProbeActivity.java", "AndroidManifest.xml", "build_on_android.py", "android.jar", "d8.jar", "apksigner.jar"):
                 (source / name).write_text("fixture input")
+            (source / "AndroidManifest.xml").write_bytes((SCRIPT.parent / "AndroidManifest.xml").read_bytes())
             output = root / "attempt"
             failure = subprocess.CompletedProcess([], 1, "", "authored link failure")
             with (
@@ -41,3 +55,22 @@ class PhoneHostBuildTests(unittest.TestCase):
             self.assertFalse((output / "owner.p12").exists())
             for path in output.iterdir():
                 self.assertNotIn("private-password-sentinel", path.read_text())
+
+    def test_target33_failure_hashes_selected_manifest_without_overwriting_original(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = root / "source"
+            source.mkdir()
+            for name in ("NativeProbe.c", "HostProbeActivity.java", "build_on_android.py", "android.jar", "d8.jar", "apksigner.jar"):
+                (source / name).write_text("fixture input")
+            original = (SCRIPT.parent / "AndroidManifest.xml").read_bytes()
+            (source / "AndroidManifest.xml").write_bytes(original)
+            (source / "AndroidManifestTarget33.xml").write_bytes((SCRIPT.parent / "AndroidManifestTarget33.xml").read_bytes())
+            failure = subprocess.CompletedProcess([], 1, "", "authored link failure")
+            with patch.object(BUILDER, "__file__", str(source / "build_on_android.py")), patch.object(BUILDER.subprocess, "run", return_value=failure):
+                self.assertFalse(BUILDER.build(root, root / "attempt", 33))
+            report = json.loads((root / "attempt/build-result.json").read_text())
+            self.assertEqual(report["target_sdk"], 33)
+            self.assertIn("AndroidManifestTarget33.xml", report["inputs"])
+            self.assertNotIn("AndroidManifest.xml", report["inputs"])
+            self.assertEqual((source / "AndroidManifest.xml").read_bytes(), original)

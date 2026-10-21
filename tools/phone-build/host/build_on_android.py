@@ -1,6 +1,6 @@
 """Build the authored sandbox fixture on Android with explicit supplied tools.
 
-Usage: python3 -I -S build_on_android.py OWNED_TOOL_ROOT NEW_OUTPUT
+Usage: python3 -I -S build_on_android.py OWNED_TOOL_ROOT NEW_OUTPUT [30|33]
 The staging directory supplies android.jar, d8.jar and apksigner.jar privately.
 """
 
@@ -11,11 +11,23 @@ from pathlib import Path
 import secrets
 import subprocess
 import sys
+import xml.etree.ElementTree as ET
 import zipfile
 
 
-def build(tool_root, output):
+def selected_manifest(source, target_sdk):
+    if type(target_sdk) is not int or target_sdk not in (30, 33):
+        raise ValueError("Only the authored target SDK 30 and 33 fixtures are supported")
+    manifest = source / ("AndroidManifest.xml" if target_sdk == 30 else "AndroidManifestTarget33.xml")
+    sdk = ET.parse(manifest).getroot().find("uses-sdk")
+    if sdk is None or sdk.get("{http://schemas.android.com/apk/res/android}targetSdkVersion") != str(target_sdk):
+        raise ValueError("Authored manifest target SDK differs from the requested fixture")
+    return manifest
+
+
+def build(tool_root, output, target_sdk=30):
     source = Path(__file__).resolve().parent
+    manifest = selected_manifest(source, target_sdk)
     tool_root = Path(tool_root).resolve(strict=True)
     output = Path(output).resolve()
     output.mkdir(mode=0o700, parents=False, exist_ok=False)
@@ -26,7 +38,16 @@ def build(tool_root, output):
     env = dict(os.environ)
     env["LD_LIBRARY_PATH"] = ":".join(str(tool_root / part) for part in ("packaging/usr/lib", "python/usr/lib", "usr/lib"))
     env["ROR2_PHONE_SIGNING_PASSWORD"] = secrets.token_urlsafe(40)
-    result = {"schema": 1, "success": False, "commands": [], "inputs": {}, "disposable_key": True, "password_persisted": False}
+    result = {
+        "schema": 1,
+        "success": False,
+        "target_sdk": target_sdk,
+        "manifest": manifest.name,
+        "commands": [],
+        "inputs": {},
+        "disposable_key": True,
+        "password_persisted": False,
+    }
 
     def run(command, label):
         command = [str(part) for part in command]
@@ -37,7 +58,7 @@ def build(tool_root, output):
             raise RuntimeError(label + " exit " + str(process.returncode))
 
     try:
-        for name in ("NativeProbe.c", "HostProbeActivity.java", "AndroidManifest.xml", "build_on_android.py", "android.jar", "d8.jar", "apksigner.jar"):
+        for name in ("NativeProbe.c", "HostProbeActivity.java", manifest.name, "build_on_android.py", "android.jar", "d8.jar", "apksigner.jar"):
             result["inputs"][name] = hashlib.sha256((source / name).read_bytes()).hexdigest()
         binary = output / "libtoolprobe.so"
         run(
@@ -85,7 +106,7 @@ def build(tool_root, output):
         dex.mkdir()
         run([java, "-cp", source / "d8.jar", "com.android.tools.r8.D8", "--min-api", "24", "--lib", source / "android.jar", "--output", dex, class_jar], "dex")
         unsigned = output / "unsigned.apk"
-        run([packaging / "bin/aapt", "package", "-f", "-M", source / "AndroidManifest.xml", "-I", source / "android.jar", "-F", unsigned], "aapt")
+        run([packaging / "bin/aapt", "package", "-f", "-M", manifest, "-I", source / "android.jar", "-F", unsigned], "aapt")
         with zipfile.ZipFile(unsigned, "a", zipfile.ZIP_DEFLATED) as archive:
             archive.write(dex / "classes.dex", "classes.dex")
             archive.write(binary, "lib/arm64-v8a/libtoolprobe.so")
@@ -152,6 +173,6 @@ def build(tool_root, output):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
+    if len(sys.argv) not in (3, 4):
         raise SystemExit(__doc__)
-    raise SystemExit(0 if build(*sys.argv[1:]) else 1)
+    raise SystemExit(0 if build(*sys.argv[1:3], target_sdk=int(sys.argv[3]) if len(sys.argv) == 4 else 30) else 1)
