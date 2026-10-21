@@ -36,6 +36,11 @@ public final class HostProbeActivity extends Activity {
                 } catch (Exception error) { report.put("selfContextError", error.toString()); }
                 report.put("installedExists", installed.isFile());
                 report.put("installedWritable", installed.canWrite());
+                report.put("installedPath", installed.getAbsolutePath());
+                try (InputStream input = new FileInputStream("/sys/fs/selinux/enforce")) {
+                    int mode = input.read();
+                    report.put("selinuxEnforce", mode == '1' ? "enforcing" : mode == '0' ? "permissive" : "unknown");
+                } catch (Exception error) { report.put("selinuxEnforceError", error.toString()); }
                 JSONObject positive = execute(installed);
                 report.put("installed", positive);
                 try (InputStream input = getAssets().open("control.bin");
@@ -45,6 +50,7 @@ public final class HostProbeActivity extends Activity {
                     while ((count = input.read(buffer)) != -1) output.write(buffer, 0, count);
                 }
                 report.put("writableMarkedExecutable", writable.setExecutable(true, true));
+                report.put("writablePath", writable.getAbsolutePath());
                 JSONObject negative = execute(writable);
                 report.put("writable", negative);
                 JSONObject child = new JSONObject(positive.optString("output", "{}"));

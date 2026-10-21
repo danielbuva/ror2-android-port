@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J929](PORTING_JOURNAL.md#j929--test-the-authored-app-host-refusal-at-target-sdk-33) | 2026-10-21 | Test the authored app-host refusal at target SDK 33 | 2026-10-21. |
 | [J927](PORTING_JOURNAL.md#j927--qualify-r22-camera-lifecycle-and-preserve-the-premature-render-capture) | 2026-10-21 | Qualify R22 camera lifecycle and preserve the premature render capture | Date: 2026-10-21. |
 | [J926](PORTING_JOURNAL.md#j926--build-r22-and-observe-selected-music-context-through-both-standard-checks) | 2026-10-21 | Build R22 and observe selected music context through both standard checks | Date: 2026-10-21. |
 | [J925](PORTING_JOURNAL.md#j925--repair-the-current-musictrackdef-cached-name-compiler-contract) | 2026-10-21 | Repair the current MusicTrackDef cached-name compiler contract | Date: 2026-10-21. |

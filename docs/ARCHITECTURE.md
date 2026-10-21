@@ -389,7 +389,12 @@ code, permissions or network. Setup and device cleanup are described in its
 [README](../tools/phone-build/host/README.md); no game build calls it.
 `phone_host_check.py` owns its explicit-device, hash-bound installation,
 two launches, report/backing collection and ownership-checked teardown through
-the current experimental `phone-host-check` action.
+the current experimental `phone-host-check` action. The default target 30 and
+explicit target 33 use separate literal manifests; the driver validates selection
+and never rewrites either. Both require identical installed/control bytes,
+observed app UID/context agreement and an actual writable-copy permission denial.
+Optional unprivileged enforcement reads can remain unknown. Failed controls
+retain their file metadata/backing and owned cleanup evidence.
 
 `phone_native.py` owns experimental **support** for replaying the authored
 content fixture's native graph. `phone-native-fixture` verifies an explicit

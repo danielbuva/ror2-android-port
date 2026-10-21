@@ -178,7 +178,12 @@ driver inside the existing receipt-owned shell workspace. Its per-attempt
 build outputs, encrypted disposable key and reports remain ignored. This is
 required local replay support; no game build reads it.
 `phone_host_check` generates private device results under
-`work/experiments/phone-host/`; its ignored request binds the exact APK path/hash.
+`work/experiments/phone-host/`; its ignored request binds the exact APK path/hash
+and optional target SDK (30 by default or the authored 33 variant). The private
+`stage-host-target33-v1.py` adapter binds the same supplied tools and current
+committed sources, verifies the explicitly configured device/owned workspace,
+fresh capacity and unchanged stopped game, and invokes the tracked driver with
+target 33. Its separate selector preserves the original J836 attempts.
 
 `phone_native.stage_action` generates `work/rebuild/phone-native/<attempt>/`
 from an explicit authored fixture project/APK/hash request. It copies supplied

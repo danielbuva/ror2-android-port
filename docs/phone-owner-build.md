@@ -10,6 +10,7 @@ Phone generation/update checkpoint:
 [J833](PORTING_JOURNAL.md#j833--generate-content-and-sign-increasing-fixture-updates-on-android).
 Storage/oracle review qualification: [J834](PORTING_JOURNAL.md#j834--bind-phone-fixture-paths-and-the-exact-editor-oracle-after-review).
 Authored phone-app build and unresolved sandbox control: [J836](PORTING_JOURNAL.md#j836--build-an-authored-apk-on-android-and-test-app-host-execution).
+Target-33 follow-up: [J929](PORTING_JOURNAL.md#j929--test-the-authored-app-host-refusal-at-target-sdk-33).
 Native fixture compile/link/loading: [J839](PORTING_JOURNAL.md#j839--compile-and-link-the-authored-il2cpp-native-library-on-android).
 Full authored converter/native/device closure: [J842](PORTING_JOURNAL.md#j842--run-the-full-authored-converter-and-load-its-phone-compiled-native-output).
 Authored input capture and Android stripping: [J846](PORTING_JOURNAL.md#j846--capture-authored-stripping-inputs-and-replay-unitylinker-on-android).
@@ -97,8 +98,9 @@ implementation DLL/PDB bytes still differ. Full player defines, generators,
 custom packages, stripping integration and game compilation remain open.
 J905 connects the actual Android-produced fixture DLL/PDB to a separate
 stripping handoff. The same output closure is emitted, with only those two
-members differing from the earlier replay. Desktop scene roots remain inputs;
-conversion and player loading with the newly compiled artifacts remain open.
+members differing from the earlier replay. J920/J921 then qualify conversion,
+fresh native compilation and installed loading of that authored closure.
+Desktop scene roots and base engine/content remain inputs.
 These are build-pipeline problems; keep the game runtime
 and desktop fallback while investigating them independently.
 
@@ -119,8 +121,8 @@ not proof that reimplementation is impossible. Owners: [ARCHITECTURE](ARCHITECTU
 | Import, script/plugin binding and settling (R9 `LabBuild`) | **Yes** | Native importers, AssetDatabase and two-pass dependency reimport have no demonstrated Android equivalent here. Host validators do not replace importers. |
 | Shader compilation/Android bundles (`LabBuild`, `WholeCatalogBuild`) | **Yes** | BuildAssetBundles, UnityShaderCompiler and ShaderUtil produce/validate target variants. SPIR-V compilation or a UnityFS writer alone does not recreate shader metadata, object graphs, mesh/animation import or dependencies. |
 | C# compilation (`BuildPlayer`) | **Yes in current orchestration** | J899 runs exact SDK Roslyn components on Android with the original configuration. J902 derives the authored fixture's ordered SDK/package reference closure and compiles its unconditional Unity API source there; generated references and reference DLL match the host. Implementation DLL/PDB bytes differ. General defines, generators, custom packages, downstream integration and actual game/player compilation remain unqualified. No game runtime changes. |
-| Stripping, IL2CPP C++/metadata (`BuildPlayer`) | **Yes in current orchestration** | J859/J862 connect SDK-native metadata and restricted fixture module-policy generation to authored stripping/conversion, reaching J842's qualified native-source boundary. J905 separately strips the actual Android-compiled fixture inputs without weakening the earlier exact-replay gate. Conversion/loading of those new inputs, captured project roots, general module policy, richer dependencies, actual player compilation and app/tool delivery remain gates. |
-| C++/Burst/plugin compilation/linking | Not inherently, once all inputs exist | J839/J842 qualify the authored native graph with desktop or phone-generated C++, original target libraries and actual Unity loading. Desktop stripping/base engine/content remain inputs; compiler/linker and game-performance equivalence, Burst and middleware remain separate gates. |
+| Stripping, IL2CPP C++/metadata (`BuildPlayer`) | **Yes in current orchestration** | J859/J862 connect SDK-native metadata and restricted fixture module-policy generation to authored stripping/conversion. J905 strips the actual Android-compiled fixture inputs; J920/J921 connect their conversion, fresh native linking and installed loading without weakening earlier replay gates. Captured project roots, general module policy, richer dependencies, game compilation and app/tool delivery remain gates. |
+| C++/Burst/plugin compilation/linking | Not inherently, once all inputs exist | J839/J842 qualify the authored native graph with desktop or phone-generated C++; J921 uses the actual phone-compiled/stripped fixture closure. Original target libraries, captured native graph, base engine/content remain inputs. Compiler/linker and game-performance equivalence, Burst and middleware remain separate gates. |
 | Java/resources/DEX, APK alignment/signing | No Unity import APIs | AOSP/Termux provide resource-tool, alignment and signing precedents; D8/R8 source is available. J836 builds native C/Java/DEX/resources and signs an authored app wholly in a phone shell. Full Unity player packaging, app-host tool dependencies and durable owner signing remain open. These tools cannot fill missing game code/data. |
 | Install, placement, data retention and rollback | No | Android PackageInstaller provides user-mediated installation. Keep stable private owner keys, live capacity/backing checks and interruption handling. Host ADB scripts need on-device equivalents. |
 
