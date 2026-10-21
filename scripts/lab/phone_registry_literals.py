@@ -2,6 +2,8 @@
 
 import struct
 
+POINTER_FIELDS = ((0, 8), (16, 8), (24, 8), (32, 8), (80, 8))
+
 
 def signed(value, bits):
     return value - (1 << bits) if value & (1 << (bits - 1)) else value
@@ -149,8 +151,64 @@ def known_literal_instruction(word):
     )
 
 
-def descriptor(image, function, target, constant_argument):
-    """Read selected pointer fields of one stack literal passed to RegisterType.
+def integer_writes(word):
+    """Known integer-register effects for retention checks; None means refuse."""
+    rd, rn = word & 31, (word >> 5) & 31
+    if word & 0x3A000000 == 0x28000000:
+        operation = (word >> 30) & 3
+        if operation == 3 or operation == 1 and not word & 0x4000000 and not word & 0x400000:
+            return None
+        result = {rn} if (word >> 23) & 3 in (1, 3) else set()
+        if word & 0x400000 and not word & 0x4000000:
+            result |= {rd, (word >> 10) & 31}
+        return result
+    if store(word) is not None:
+        return set()
+    if (
+        word & 0x9F000000 in (0x10000000, 0x90000000)
+        or word & 0x7F000000 in (0x11000000, 0x51000000)
+        or word & 0x7FE0FFE0 == 0x2A0003E0
+        or word & 0x7F800000 in (0x12800000, 0x52800000, 0x72800000)
+    ):
+        return {rd}
+    if known_literal_instruction(word):
+        if word & 0xFC000000 == 0x94000000:
+            return set(range(19)) | {30}
+        if word & 0x3FC00000 in (0x39400000, 0x3D400000, 0x3DC00000) or word & 0x3B600000 == 0x38400000:
+            return set() if word & 0x4000000 else {rd}
+        return set()
+    return None
+
+
+def retained_literals(image, use, constant_argument):
+    """Prove callee-saved wide-move literals survive every path to one use."""
+    start = max(value for values in image.symbols.values() for value in values if value <= use)
+    names = [name for name, values in image.symbols.items() if values == {start}]
+    if not names:
+        return {}
+    words = function_words(image, names[0])
+    edges = graph(words)
+    dominance = dominators(edges)
+    if use not in dominance:
+        return {}
+    result = {}
+    for register in range(19, 29):
+        candidates = [pc for pc in dominance[use] if pc < use and words[pc] & 31 == register and words[pc] & 0x7F800000 in (0x12800000, 0x52800000, 0x72800000)]
+        if not candidates:
+            continue
+        definition = max(candidates)
+        value = constant_argument(image, definition + 4, register)
+        if value is None or any(pc > definition and step <= pc and step <= use for pc, targets in edges.items() for step in targets):
+            continue
+        changes = [integer_writes(word) for pc, word in words.items() if definition < pc < use]
+        if any(change is None or register in change for change in changes):
+            continue
+        result[register] = (definition, value)
+    return result
+
+
+def descriptor(image, function, target, constant_argument, *, fields=POINTER_FIELDS):
+    """Read selected pointer/integer fields of a stack literal passed to RegisterType.
 
     Definitions must dominate the call. Partial/conditional overwrites, later
     backedges, frame movement, unknown stack access and non-stack stores refuse.
@@ -169,12 +227,14 @@ def descriptor(image, function, target, constant_argument):
     if call not in dominance:
         raise ValueError("Metadata registration is unreachable")
     writes = [(pc, part) for pc, word in words.items() if pc < call for part in (store(word) or [])]
-    for field in (0, 16, 24, 32, 80):
-        overlaps = [(pc, part) for pc, part in writes if part[0] == 31 and part[1] < field + 8 and field < part[1] + part[2]]
+    for field, size in fields:
+        if size not in (4, 8) or field < 0 or field % size or field + size > 112 or field in selected:
+            raise ValueError("Unqualified metadata field selection")
+        overlaps = [(pc, part) for pc, part in writes if part[0] == 31 and part[1] < field + size and field < part[1] + part[2]]
         if not overlaps:
             raise ValueError("Missing metadata literal field")
         pc, (base, offset, width, register, vector) = max(overlaps, key=lambda item: item[0])
-        if pc not in dominance[call] or offset > field or offset + width < field + 8:
+        if pc not in dominance[call] or offset > field or offset + width < field + size:
             raise ValueError("Metadata field definition can be skipped or partially overwritten")
         if vector:
             if not vector_zero(words, pc, register):
@@ -183,12 +243,14 @@ def descriptor(image, function, target, constant_argument):
         else:
             value = 0 if register == 31 else constant_argument(image, pc, register)
             if value is not None:
-                origin = ("constant", value)
-            elif untouched_parameter(words, pc, register):
+                origin = ("constant", (value >> ((field - offset) * 8)) & ((1 << (size * 8)) - 1))
+            elif offset == field and untouched_parameter(words, pc, register):
                 origin = ("parameter", register)
             else:
                 raise ValueError("Unknown metadata field origin")
         selected[field] = (pc, origin)
+    if not selected:
+        raise ValueError("Missing metadata field selection")
     first = min(pc for pc, origin in selected.values())
     assertions = image.symbols.get("__Z20AssertImplementationiPKciiS0_", set())
     for pc in range(first, call, 4):
@@ -219,9 +281,10 @@ def descriptor(image, function, target, constant_argument):
 
 def extra_records(image, constant_argument, direct_calls):
     target = image.symbol("__ZN11TypeManager12RegisterTypeERK20TypeRegistrationDesc")
-    root = descriptor(image, "__ZN6Object16StaticInitializeEv", target, constant_argument)
+    fields = POINTER_FIELDS + ((40, 4),)
+    root = descriptor(image, "__ZN6Object16StaticInitializeEv", target, constant_argument, fields=fields)
     function = "__ZN11TypeManager21RegisterNonObjectTypeEiP4RTTIPKcS3_"
-    template = descriptor(image, function, target, constant_argument)
+    template = descriptor(image, function, target, constant_argument, fields=fields)
 
     def row(fields, caller=None):
         values = {}
@@ -230,6 +293,8 @@ def extra_records(image, constant_argument, direct_calls):
                 if caller is None:
                     raise ValueError("Root metadata unexpectedly depends on an entry argument")
                 value = constant_argument(image, caller, value)
+                if value is None and field == 40:
+                    value = constant_argument(image, caller, fields[field][1], retained=lambda pc: retained_literals(image, pc, constant_argument))
                 if value is None:
                     raise ValueError("Unknown non-object registration argument")
             elif kind != "constant":
@@ -247,6 +312,7 @@ def extra_records(image, constant_argument, direct_calls):
             "nativeNamespace": namespace,
             "qualifiedName": (namespace + "::" if namespace else "") + name,
             "module": module,
+            "persistentTypeID": signed(values[40] & 0xFFFFFFFF, 32),
         }
 
     calls = direct_calls(image, {image.symbol(function)})

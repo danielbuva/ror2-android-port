@@ -43,6 +43,7 @@ def registry():
                 "baseName": "",
                 "baseModule": "",
                 "base_resolved": True,
+                "persistentTypeID": 100,
             },
             {
                 "self": 2,
@@ -54,6 +55,7 @@ def registry():
                 "baseName": "Root",
                 "baseModule": "Core",
                 "base_resolved": True,
+                "persistentTypeID": 101,
             },
         ],
     }

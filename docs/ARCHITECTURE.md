@@ -137,6 +137,17 @@ that authored helper under isolated Python. Unknown layouts, instructions,
 arguments and parent identities refuse. It neither executes SDK instructions
 nor supplies an execution backend. Source/input hashes, metadata and failures remain under
 `work/experiments/phone-registry/`; exclusive output creation preserves attempts.
+The same reader reports persistent native class IDs from the pinned descriptor's
+explicit signed 32-bit field. Static data and bounded literal/entry-argument
+origins are kept separate. Numeric literal selection checks exact width and
+little-endian slices; partial/conditional definitions and ambiguous/invalid IDs
+refuse. A scalar argument may reuse a wide-move literal held in an AAPCS64
+callee-saved register only after a bounded CFG proof: its definition dominates
+the use, every intervening instruction has a known register effect, no path
+writes that register and no later backedge can revisit the use. This does not
+select a branch or read runtime memory. ID metadata does not establish managed
+wrapper names, scene usage or
+manager/dependency roots. The six-field native projection remains unchanged.
 Only the explicit authored-fixture SDK-native stripping mode consumes freshly
 generated registry data. No whole-catalog build consumes it or receives complete
 project roots from it; no editor or game state changes.

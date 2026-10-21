@@ -20944,3 +20944,106 @@ Public managed-producer source now hashes to
 APK hash is not applicable. R8/R9 support generation must replay this source fix.
 Next: a fresh immutable generation and full player build from committed source;
 no runtime, audio, bank or physical-audibility acceptance follows from this repair.
+
+## J864 — Read persistent native class IDs from the pinned SDK on Android
+
+2026-10-20. Hypothesis: the supplied SDK's registration metadata can provide
+persistent native class IDs independently of an editor run or captured root
+table. This is a prerequisite for scene-root investigation, not a scene-root
+producer. Start from the frozen J862 branch, integrate accepted main `93a95aa`
+and its `5540fdc` audio metadata fix before recording. J863/J865 belong to the
+main session. Keep Route A, IL2CPP ARM64, Android rendering and the desktop
+fallback fixed. No Unity action, game build, package install or gameplay launch.
+
+**Contract and observations.** The pinned public
+[scene-root producer](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Editor/Mono/BuildPipeline/AssemblyStripper.cs)
+and [class registry](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Editor/Mono/BuildPipeline/RuntimeClassMetadata.cs)
+identify the separate inputs: native classes including managers, persistent
+class IDs, managed wrapper names and per-scene usage. The
+[type transport](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Editor/Mono/TypeSystem/UnityType.bindings.cs)
+includes a signed persistent ID. These references supply API/schema knowledge;
+no implementation is copied. J857's reader does not yet expose this field.
+
+Read the exact owner SDK as data. An initial unqualified field candidate is
+uniformly zero and is discarded. SDK registration diagnostics and native type
+transport agree on the explicit signed 32-bit field at descriptor byte 40.
+Its static descriptors contain 305 unique nonnegative IDs, including all ten
+class IDs in the authored scene's YAML headers. Those headers alone are not
+the complete scene/manager/dependency closure. SDK wrapper lookup separately
+uses a runtime scripting-class cache and parent fallback; wrapper-name
+production remains unqualified. Raw SDK instruction/data views stay ignored.
+An initial disassembler invocation omits its required disassembly option;
+preserve the CLI refusal and correct the invocation. The SDK is never executed.
+
+**Owner, failures and repair.** Extend the existing `phone_registry.py` and
+`phone_registry_literals.py` owners with persistentTypeID metadata and explicit
+4-byte/8-byte field selection. Widths, little-endian slices, dominating literal
+stores and unchanged entry-argument origins remain checked; partial/conditional
+updates and invalid/ambiguous IDs refuse. No native ID table or SDK instruction
+sequence is embedded in public source/tests. The six-field native projection
+used by J859/J862 remains unchanged. No scene-root consumer is added.
+
+Commit `b442af7` before the first staged SDK run. It refuses a non-object numeric
+argument: eleven of the twelve generated registrations use a seed in a
+callee-saved register across conditional assertion paths. Do not infer IDs from
+registration order or names. The authored retention proof uses
+[Arm's pinned AAPCS64 register contract](https://github.com/ARM-software/abi-aa/blob/7485cc1a1240d9143c6c759390469ae0cbe2d02e/aapcs64/aapcs64.rst):
+only registers 19–28 are eligible; a known wide-move definition must dominate
+the operand use, every intervening instruction needs a known register effect,
+no path may write that register and later backedges refuse. No branch is
+selected, SDK function executed or runtime memory read.
+
+The next staged run at `ea78c22` still refuses the final argument: its expression
+is computed before the function restores that saved register. Bind retention
+at each expression operand's actual use, retaining the ordinary backward
+argument reader's block bounds. Self-review also finds that explicitly replacing
+those block bounds could bless a dominating MOVK whose earlier initializer was
+skipped. Preserve the synthetic accepted-before-fix control, restore normal
+branch-derived bounds and add the refusing regression case before any phone
+run. Freeze the corrected actual reader at
+`7275b076e97882e7e8dbcf843685d8215e6b357f`; both original failed stages remain.
+ARCHITECTURE and LOCAL_STATE record the schema, proof limits and replay owner.
+
+Six new authored contracts cover ID validity/uniqueness, numeric widths/slices,
+explicit parameters and partial/conditional stores, branch-join retention,
+overwritten/unknown/looped state and an operand computed before a later restore.
+The skipped-initializer control now refuses. All 24 registry/literal tests and
+40 focused registry/linker/policy tests pass. The linker fixture additionally
+carries authored IDs to prove its six-field projection remains unchanged.
+Fresh-clone CI after main integration at `77136d9` passes 1,288 tests with
+58 optional skips, Ruff, public audit and documentation checks. This does not
+remove the isolated worktree's previously recorded game-bootstrap debt.
+
+**Actual Android result and comparison.** The current `phone-native-registry`
+action stages the frozen authored readers and unchanged pinned SDK without a
+captured table or earlier dump. Verify explicit alpha selection/workspace
+ownership, fresh storage/backing/reserve, supplied Python hash and every staged
+input hash. A fresh owned child completes the actual reader in 10.180 seconds
+of host-observed wall time. Its report is byte-identical to host output:
+`df8c13231a79cff063868b6cfd3431ab71bba7e8e70a825ca567bf323a4404ed`.
+It resolves 318 unique signed IDs: 305 static and 13 literal registrations.
+Unknown SDK and output-overwrite controls refuse; SDK/report/game hashes remain
+unchanged and the alpha display is left asleep. Alpha's APK remains be26c21c…;
+no main/spare action. This is metadata-tool timing, not gameplay performance.
+
+Only after extraction compare with Unity's versioned
+[2021.3 public class-ID reference](https://docs.unity3d.com/2021.3/Documentation/Manual/ClassIDReference.html).
+All 313 documented ID/name pairs match exactly, with zero contradictions;
+five SDK entries are absent from that public reference. It is not an independent
+complete oracle for those five. All 1,908 previously qualified native
+name/namespace/qualified-name/module/base-name/base-module values remain exactly
+J857's final report; no root, stripped assembly or native compilation changes.
+
+**Evidence and next gate.** The ignored proof root retains `scene-root-ids-*`
+requests, failed/final stage selectors, committed-source replay adapter, phone
+selector/results, public-table comparison and six-field regression check.
+`scene-root-ids-proof-receipt.json` binds 53 source/input/output/failure/control/
+comparison/test artifacts, SHA-256
+`f68139c50ba461e6b81efbe5cd143b16f16c378f6e9590957b4163e906e28b08`.
+SDK bytes, IDs/rows, raw logs/contexts and disassembly remain private. Metadata
+completeness is separate from complete editor roots; root_generation_qualified
+remains false. Next qualify explicit native-to-managed wrapper metadata and
+scene/manager/dependency usage independently. Managed compilation, target
+content/shaders, general module policy, permitted tool delivery, app sandbox,
+installation and game-performance equivalence remain open. No new execution
+backend or desktop-only final installation experience is selected.
