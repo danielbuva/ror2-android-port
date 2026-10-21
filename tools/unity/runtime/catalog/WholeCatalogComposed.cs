@@ -11,6 +11,7 @@ using UnityEngine.AddressableAssets.ResourceLocators;
 using UnityEngine.ResourceManagement.ResourceProviders;
 using UnityEngine.ResourceManagement.ResourceLocations;
 using UnityEngine.ResourceManagement.Util;
+using UnityEngine.ResourceManagement.AsyncOperations;
 using System.Collections.Generic;
 using System.Reflection;
 
@@ -35,6 +36,145 @@ public static class WholeCatalogComposed
     // AssetBundle instance or a Resources duplicate.
     static string originalAudioLeaseIdentity;
     static bool originalAudioLeaseHeld;
+    static bool sessionBundleOwnershipActive;
+    static RetainedDependencyOwners originalAudioDependencies;
+
+    // A retained bundle also retains its declared dependency owners. Ownership
+    // moves to this parking place between sessions and back to the next session;
+    // provider handles and locations are transferred, never duplicated.
+    sealed class RetainedDependencyOwners
+    {
+        readonly Dictionary<string, AssetBundle> expected;
+        readonly Dictionary<string, AssetBundle> manual = new Dictionary<string, AssetBundle>(StringComparer.Ordinal);
+        readonly Dictionary<string, ResourceLocationBase> locations = new Dictionary<string, ResourceLocationBase>(StringComparer.Ordinal);
+        readonly Dictionary<string, AsyncOperationHandle<IAssetBundleResource>> provided =
+            new Dictionary<string, AsyncOperationHandle<IAssetBundleResource>>(StringComparer.Ordinal);
+        public RetainedDependencyOwners(string root, IDictionary<string, string[]> dependencies, IEnumerable<AssetBundle> loaded)
+        {
+            var names = new HashSet<string>(StringComparer.Ordinal);
+            var pending = new Queue<string>();
+            pending.Enqueue(root);
+            while (pending.Count != 0)
+            {
+                var name = pending.Dequeue();
+                if (!names.Add(name))
+                    continue;
+                string[] children;
+                if (String.IsNullOrEmpty(name) || !dependencies.TryGetValue(name, out children) || children == null ||
+                    children.Any(String.IsNullOrEmpty) || children.Distinct(StringComparer.Ordinal).Count() != children.Length)
+                    throw new InvalidOperationException("Retained content dependency graph differs");
+                foreach (var child in children)
+                    pending.Enqueue(child);
+            }
+            var bundles = loaded.ToArray();
+            expected = names.ToDictionary(name => name, name => bundles.Single(bundle => bundle && bundle.name == name),
+                                          StringComparer.Ordinal);
+            expected.Remove(root); // The existing whole-content owner keeps the root.
+        }
+        void Validate(string name, AssetBundle bundle)
+        {
+            AssetBundle value;
+            if (!bundle || !expected.TryGetValue(name, out value) || !ReferenceEquals(value, bundle) || bundle.name != name)
+                throw new InvalidOperationException("Retained dependency identity changed: " + name);
+        }
+        public bool ParkManual(AssetBundle bundle)
+        {
+            if (!bundle || !expected.ContainsKey(bundle.name))
+                return false;
+            var name = bundle.name;
+            Validate(name, bundle);
+            if (manual.ContainsKey(name) || provided.ContainsKey(name))
+                throw new InvalidOperationException("Retained dependency already parked: " + name);
+            manual.Add(name, bundle);
+            return true;
+        }
+        public bool TakeManual(string name, out AssetBundle bundle)
+        {
+            if (provided.ContainsKey(name))
+                throw new InvalidOperationException("Retained dependency requires its provider handle: " + name);
+            if (!manual.TryGetValue(name, out bundle))
+                return false;
+            Validate(name, bundle);
+            manual.Remove(name);
+            return true;
+        }
+        void ValidateProvided(string name, AsyncOperationHandle<IAssetBundleResource> handle)
+        {
+            if (!handle.IsValid() || handle.Status != AsyncOperationStatus.Succeeded || handle.Result == null)
+                throw new InvalidOperationException("Retained dependency provider is unavailable: " + name);
+            Validate(name, handle.Result.GetAssetBundle());
+        }
+        public bool ParkProvided(string name, ResourceLocationBase location, AsyncOperationHandle<IAssetBundleResource> handle)
+        {
+            if (!expected.ContainsKey(name))
+                return false;
+            ValidateProvided(name, handle);
+            if (location == null || location.PrimaryKey != name || manual.ContainsKey(name) || provided.ContainsKey(name))
+                throw new InvalidOperationException("Retained dependency provider ownership differs: " + name);
+            locations.Add(name, location);
+            provided.Add(name, handle);
+            return true;
+        }
+        public bool TakeProvided(string name, out ResourceLocationBase location, out AsyncOperationHandle<IAssetBundleResource> handle)
+        {
+            location = null;
+            if (manual.ContainsKey(name))
+                throw new InvalidOperationException("Retained dependency has a manual owner: " + name);
+            if (!provided.TryGetValue(name, out handle))
+                return false;
+            ValidateProvided(name, handle);
+            location = locations[name];
+            locations.Remove(name);
+            provided.Remove(name);
+            return true;
+        }
+        public void ReleaseParked()
+        {
+            // Refuse before releasing anything if a retained owner has drifted.
+            foreach (var pair in provided)
+                ValidateProvided(pair.Key, pair.Value);
+            foreach (var pair in manual)
+                Validate(pair.Key, pair.Value);
+            foreach (var handle in provided.Values)
+                Addressables.Release(handle);
+            foreach (var bundle in manual.Values)
+                bundle.Unload(true);
+            provided.Clear();
+            locations.Clear();
+            manual.Clear();
+        }
+    }
+    public static bool ParkRetainedDependency(AssetBundle bundle)
+    {
+        return originalAudioDependencies != null && originalAudioDependencies.ParkManual(bundle);
+    }
+    public static bool TakeRetainedDependency(string name, out AssetBundle bundle)
+    {
+        bundle = null;
+        return originalAudioDependencies != null && originalAudioDependencies.TakeManual(name, out bundle);
+    }
+    public static bool ParkRetainedDependency(string name, ResourceLocationBase location,
+                                              AsyncOperationHandle<IAssetBundleResource> handle)
+    {
+        return originalAudioDependencies != null && originalAudioDependencies.ParkProvided(name, location, handle);
+    }
+    public static bool TakeRetainedDependency(string name, out ResourceLocationBase location,
+                                              out AsyncOperationHandle<IAssetBundleResource> handle)
+    {
+        location = null;
+        handle = default(AsyncOperationHandle<IAssetBundleResource>);
+        return originalAudioDependencies != null && originalAudioDependencies.TakeProvided(name, out location, out handle);
+    }
+    static void ReleaseParkedAudioDependencies()
+    {
+        if (sessionBundleOwnershipActive)
+            return;
+        if (originalAudioDependencies != null)
+        {
+            originalAudioDependencies.ReleaseParked();
+            originalAudioDependencies = null;
+        }
+    }
     delegate bool ExtractSubObjectKey(object key, out string mainKey, out string subKey);
     static readonly ExtractSubObjectKey originalSubObjectKey = (ExtractSubObjectKey)Delegate.CreateDelegate(
         typeof(ExtractSubObjectKey),
@@ -70,14 +210,23 @@ public static class WholeCatalogComposed
             (string)descriptor["attempt"] != attempt)
             throw new Exception("Original audio whole-catalog package descriptor mismatch");
         string manifestPath = Path.Combine(Application.persistentDataPath, "payload", "whole-catalog.json");
+        var manifestBytes = File.ReadAllBytes(manifestPath);
         string manifestSha;
         using (var sha = System.Security.Cryptography.SHA256.Create())
-            manifestSha = BitConverter.ToString(sha.ComputeHash(File.ReadAllBytes(manifestPath))).Replace("-", "").ToLowerInvariant();
+            manifestSha = BitConverter.ToString(sha.ComputeHash(manifestBytes)).Replace("-", "").ToLowerInvariant();
         if (manifestSha != activeManifestSha256)
             throw new Exception("Original audio catalog manifest changed after location validation");
         string identity = expectedInputId + ":" + attempt + ":" + activeManifestSha256;
         if (originalAudioLeaseHeld && originalAudioLeaseIdentity != identity)
             throw new Exception("A different whole-catalog identity already has the process audio lease");
+        if (originalAudioDependencies == null)
+        {
+            var manifest = JObject.Parse(System.Text.Encoding.UTF8.GetString(manifestBytes));
+            var bundles = (JObject)manifest["bundles"];
+            var dependencies = bundles.Properties().ToDictionary(property => property.Name,
+                property => property.Value["dependencies"].Select(value => (string)value).ToArray(), StringComparer.Ordinal);
+            originalAudioDependencies = new RetainedDependencyOwners(owned.name, dependencies, AssetBundle.GetAllLoadedAssetBundles());
+        }
         originalAudioLeaseIdentity = identity;
         originalAudioLeaseHeld = true;
         return identity;
@@ -93,13 +242,15 @@ public static class WholeCatalogComposed
             GameAudioOriginalOwner.NativeInitAttemptObserved,
             GameAudioOriginalOwner.OriginalTermsReturned))
             throw new Exception("Original audio bundle cannot be released before both original Term calls return");
-        originalAudioLeaseHeld = false;
-        originalAudioLeaseIdentity = null;
-        if (owned && ownedLocator == null)
+        // Keep the identity retryable if a parked owner's preflight refuses.
+        ReleaseParkedAudioDependencies();
+        if (owned && ownedLocator == null && !sessionBundleOwnershipActive)
         {
             owned.Unload(true);
             owned = null;
         }
+        originalAudioLeaseHeld = false;
+        originalAudioLeaseIdentity = null;
         return true;
     }
     sealed class BorrowedBundle : IAssetBundleResource
@@ -198,6 +349,8 @@ public static class WholeCatalogComposed
     {
         if (!Resources.Load<TextAsset>("WholeCatalogBootstrap"))
             yield break;
+        if (sessionBundleOwnershipActive)
+            throw new Exception("Shared content session already active");
         if (owned)
         {
             if (!originalAudioLeaseHeld)
@@ -213,6 +366,7 @@ public static class WholeCatalogComposed
                 actualSha = BitConverter.ToString(sha.ComputeHash(File.ReadAllBytes(manifestPath))).Replace("-", "").ToLowerInvariant();
             if (!originalAudioLeaseIdentity.EndsWith(":" + actualSha, StringComparison.Ordinal))
                 throw new Exception("Retained audio bundle manifest bytes changed");
+            sessionBundleOwnershipActive = true;
             yield break;
         }
         string path = Path.Combine(Application.persistentDataPath, "payload", "whole-game-content");
@@ -225,6 +379,7 @@ public static class WholeCatalogComposed
         owned = load.assetBundle;
         if (!owned)
             throw new Exception("Shared whole-content dependency failed to load");
+        sessionBundleOwnershipActive = true;
     }
     public static void ConfigureLocations()
     {
@@ -277,8 +432,10 @@ public static class WholeCatalogComposed
         definitionFamilies.Clear();
         BorrowedAssetProvider.ResetFailures();
         borrowedNames = null;
+        sessionBundleOwnershipActive = false;
         if (owned && !originalAudioLeaseHeld)
         {
+            ReleaseParkedAudioDependencies();
             owned.Unload(true);
             owned = null;
         }

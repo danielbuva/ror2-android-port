@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J914](PORTING_JOURNAL.md#j914--retain-the-declared-audio-content-dependencies-across-session-cleanup) | 2026-10-21 | Retain the declared audio content dependencies across session cleanup | Date: 2026-10-21. |
 | [J916](PORTING_JOURNAL.md#j916--retry-exact-owned-camera-binding-after-activation-readiness) | 2026-10-21 | Retry exact owned camera binding after activation readiness | Date: 2026-10-21. |
 | [J915](PORTING_JOURNAL.md#j915--observe-the-selected-cameras-missing-delegate-and-isolate-menu-failure) | 2026-10-21 | Observe the selected camera's missing delegate and isolate menu failure | Date: 2026-10-21. |
 | [J913](PORTING_JOURNAL.md#j913--admit-one-original-music-startup-component-after-owned-queue-success) | 2026-10-21 | Admit one original music startup component after owned queue success | Date: 2026-10-21. |

@@ -24883,3 +24883,91 @@ recipe and audit notes enter public Git. This changes a source reproduced by
 rebuild staging; replay its canonical transform rather than editing generated
 Unity data. J913's startup trigger is also pending the next player. Installed
 diagnostic 6435f1ff and accepted baseline f1550ce0 remain unchanged.
+
+## J914 — Retain the declared audio content dependencies across session cleanup
+
+Date: 2026-10-21. Hypothesis: retaining only the whole-content bundle for the
+original process audio owner while unloading its serialized dependencies
+invalidates the next menu's existing survivor references. This is Alpha's
+reserved entry; J915 records Main's device observation separately. Work stays
+host-only in Alpha while Main builds and tests J916. No editor, device or
+installed game is changed by this experiment.
+
+Inspect J915's frozen R18 manifest and its completed/next-menu reports. The
+manifest SHA-256 is
+`44f3450e155c9be2a9b6f3a209e372cb5991cb001c5920c8c9978497662969f3`.
+Its whole-content, body and objective-support bundles form a three-member
+dependency cycle. The Commando survivor definition lives in whole-content;
+its body prefab lives in the body bundle. The completed-session reclamation
+and next-menu observations retain whole-content and geometry, with both body
+and objective-support absent. The ordinary selector requires live original
+body references and both free survivors. Its last report phase predates the
+failing selection call; this is not evidence of a new loadout initialization
+failure. These observations establish an ownership conflict; its complete
+device causality remains a hypothesis until the new player is tested.
+
+Prior art: consult `community-prior-art.md` and pinned R2API
+`f539511eabf87f02afddb5a83cafd2f4704c85ad`. Its
+`R2API.Skins/Skins.cs` checks actual survivor body/display references at late
+main-menu initialization; its AddressReferencedAsset owner releases the valid
+handle when the address changes and clears cached assets. Use that lifecycle
+knowledge, without copying implementation or adding a desktop mod host.
+Revisit J493's ordinary availability boundary, J609/J730's previous restart
+acceptance, J773/J787's cleanup and J889's process audio lifetime. Current
+legitimate input and the frozen Android dependency graph determine this change.
+
+Add the nested `WholeCatalogComposed.RetainedDependencyOwners` owner. At audio
+admission it traverses the already hash-bound manifest's dependency closure,
+accepting cycles and requiring one exact live loaded instance for each name.
+Body cleanup parks its existing manual owner; objective preload cleanup parks
+its exact existing provider handle and location. Next setup takes those same
+owners back, with no duplicate bundle load, provider acquisition or fabricated
+asset reference. The existing locators, completed operation cache and definition
+families still detach. Original Term admission stays unchanged. Term during an
+active session defers final release until session cleanup; between sessions it
+releases parked owners and whole-content. Default-off cleanup remains immediate.
+Preflight refuses graph, identity, location or handle drift before any release;
+the lease identity survives a refusal for retry. Survivor filtering, profile,
+expansion and entitlement admission are unchanged.
+
+Four focused host tests pass using the exact editor's Mono/Roslyn compiler and
+authored lifetime doubles. They compile the actual production owner, public
+lease transitions, body load/cleanup, objective preload/release, ordinary
+selector and original catalog-release policy. Three sessions reuse one body
+load and one provider load, preserving the same bundle instances, provider
+operation, location and single reference. Final Term unloads each owner once.
+Active-session Term, default-off cleanup and 18 ownership/package refusal cases
+pass. Reintroducing the old manual unload reproduces the exact production
+`Original free survivor choices unavailable` failure on the next session.
+This independently exercises the failure contract; it does not simulate Unity's
+native deserializer or prove a repaired device menu.
+
+A separate compile of the actual new owner and lease/prepare methods against
+the pinned Unity, Addressables, ResourceManager and JSON APIs passes. Its first
+two setup attempts lacked the appropriate netstandard/facade references; the
+successful setup uses nine pinned reference assemblies and disables compiler
+default references. All attempt logs remain private. No editor is started or
+mutated. Alpha's doctor still refuses game bootstrap because its accepted
+inventory and generated lab project are absent; host work does not override
+that refusal. No new APK or payload is produced. The triggering device APK is
+J915's `6435f1ff0eafaa7690530ddb76bb2ec7afee84321da7dfa3755beb24c3ad38cc`;
+this source candidate has no installed identity.
+
+Private evidence under `work/coordination/menu-restart/`:
+`frozen-r18-dependency-observation-v1.json` SHA-256
+`8b5db4f1afceb68985fc540b8ecbd05e2aaee2b332b5d688af169ef9fc4f8b2b`;
+`host-observations-v1.json` records source hashes and the mutation result;
+`sdk-api-compile-v1/report.json` SHA-256
+`1302ace351f2766f30e403e3017fdf131a291a965e5a399efcb6cf6d98a999a2`.
+Only authored source, fixtures and summaries enter Git. No new runtime build
+input reads these investigation files.
+
+Revisit on a newly committed, frozen player: ordinary selection and a completed
+run must return to a genuine menu and start again in the same process, with
+valid original prefab references, unchanged availability guards, clean profile
+state and exact source audio termination. Also test default-off cleanup and a
+long session series. Retaining the declared dependency closure may increase
+between-run memory; its device cost and the older managed-growth gate remain
+unmeasured. This is a source-faithful lifetime candidate, not menu, performance
+or public-alpha acceptance. Route A and the desktop owner-build fallback stay
+unchanged.

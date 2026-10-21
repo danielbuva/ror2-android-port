@@ -404,12 +404,16 @@ public sealed partial class PortSession
             var providers = Addressables.ResourceManager.ResourceProviders;
             if (!providers.Any(x => x is AssetBundleProvider))
                 providers.Add(new AssetBundleProvider());
-            coordinator.objectiveBundleLocation = new ResourceLocationBase(
-                "objective-support-lab", System.IO.Path.Combine(Application.persistentDataPath, "payload", "objective-support-lab"),
-                typeof(AssetBundleProvider).FullName, typeof(IAssetBundleResource));
-            coordinator.objectiveBundleLocation.Data = new AssetBundleRequestOptions { BundleName = "objective-support-lab" };
-            coordinator.objectiveBundlePreload =
-                Addressables.ResourceManager.ProvideResource<IAssetBundleResource>(coordinator.objectiveBundleLocation);
+            if (!WholeCatalogComposed.TakeRetainedDependency("objective-support-lab", out coordinator.objectiveBundleLocation,
+                                                            out coordinator.objectiveBundlePreload))
+            {
+                coordinator.objectiveBundleLocation = new ResourceLocationBase(
+                    "objective-support-lab", System.IO.Path.Combine(Application.persistentDataPath, "payload", "objective-support-lab"),
+                    typeof(AssetBundleProvider).FullName, typeof(IAssetBundleResource));
+                coordinator.objectiveBundleLocation.Data = new AssetBundleRequestOptions { BundleName = "objective-support-lab" };
+                coordinator.objectiveBundlePreload =
+                    Addressables.ResourceManager.ProvideResource<IAssetBundleResource>(coordinator.objectiveBundleLocation);
+            }
             ownsObjectiveBundlePreload = true;
             yield return coordinator.objectiveBundlePreload;
             coordinator.Check(coordinator.objectiveBundlePreload.Status == AsyncOperationStatus.Succeeded &&
@@ -431,7 +435,9 @@ public sealed partial class PortSession
         {
             if (ownsObjectiveBundlePreload)
             {
-                if (coordinator.objectiveBundlePreload.IsValid())
+                if (coordinator.objectiveBundlePreload.IsValid() &&
+                    !WholeCatalogComposed.ParkRetainedDependency("objective-support-lab", coordinator.objectiveBundleLocation,
+                                                               coordinator.objectiveBundlePreload))
                     Addressables.Release(coordinator.objectiveBundlePreload);
                 ownsObjectiveBundlePreload = false;
                 coordinator.objectiveBundleLocation = null;

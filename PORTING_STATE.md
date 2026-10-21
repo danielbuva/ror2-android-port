@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-21 after **J916/J915/J913/J911/J912/J905**. Diagnostic
+Last updated 2026-10-21 after **J914/J916/J915/J913/J911/J912/J905**. Diagnostic
 6435f1ff passes both standard checks and observes a successful queued original
 music-output request for the exact owned controller. Its finite PCM is zero,
 but the measured output differs from that music output, so music playback is
@@ -9,6 +9,8 @@ selector absent and asleep. Accepted baseline stays f1550ce0. J915 observes an
 active exactly bound camera whose delegate is absent; source now retries binding
 after readiness. Camera readiness and Siren's native boss start remain open;
 Alpha's bounded compiler and linker evidence stays separate from gameplay.
+J914 adds a host-qualified dependency-lifetime candidate for J915's next-menu
+failure; it has no new device result or memory qualification.
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the

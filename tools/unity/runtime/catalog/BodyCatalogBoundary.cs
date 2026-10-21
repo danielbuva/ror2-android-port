@@ -42,7 +42,8 @@ public sealed partial class PortSession
         }
         if (artifactBundle)
         {
-            artifactBundle.Unload(true);
+            if (!WholeCatalogComposed.ParkRetainedDependency(artifactBundle))
+                artifactBundle.Unload(true);
             artifactBundle = null;
         }
         ReleaseObjectiveBundlePreload();
@@ -386,8 +387,9 @@ public sealed partial class PortSession
             coordinator.Check(LegacyResourcesAPI.ActiveCount == 0, "Missing request callback not drained");
             // MovementBatchProbe is the unchanged resource/file name.
             var cfg = JsonUtility.FromJson<SessionConfig>(Resources.Load<TextAsset>("MovementBatchProbe").text);
-            coordinator.artifactBundle =
-                AssetBundle.LoadFromFile(Path.Combine(Application.persistentDataPath, "payload", "commando-prefab-lab"));
+            if (!WholeCatalogComposed.TakeRetainedDependency("commando-prefab-lab", out coordinator.artifactBundle))
+                coordinator.artifactBundle =
+                    AssetBundle.LoadFromFile(Path.Combine(Application.persistentDataPath, "payload", "commando-prefab-lab"));
             coordinator.Check(coordinator.artifactBundle, "Body bundle missing");
             if (cfg.teleporterLoop)
             {

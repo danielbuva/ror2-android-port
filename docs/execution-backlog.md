@@ -28,6 +28,9 @@ result in the journal.
 
 ## Stability and performance
 
+- [ ] Device-test J914's retained dependency ownership against J915's next-menu
+      failure; measure the additional bundle retention and preserve ordinary
+      survivor/profile/entitlement checks and source audio termination.
 - [ ] Attribute the remaining ~52 MB/session managed growth (J787): not reachable
       from enumerable static/live roots; next a long session series on the
       internal Nova to test whether PSS or Boehm usage reaches a limit.
