@@ -344,6 +344,18 @@ rewritten. Failed stages are retained, and no game build reads an observation
 or timestamped run path. This fixture does not supply general player compilation
 or the SDK's native TypeDB.
 
+`phone_unity_compile.py stage ROOT OWNER_SDK_CONTENTS WORK` generates a separate
+`work/rebuild/phone-managed-compile/unity-<owned-attempt>/` with compiler inputs,
+the public Unity fixture, builtin package/module metadata and the complete
+hash-pinned SDK reference inventory. The phone derives its selected references;
+no captured response or precompiled player is staged. The `sdk` or `android`
+run creates one private `output/` with `references.json`, implementation and
+reference assemblies, portable debug data and checked child/result logs.
+The original compiler configuration remains unchanged. Explicit selections,
+SDK-only inventory comparisons, failed attempts and device controls live under
+`work/coordination/phone-proof/managed-unity-*`. They are investigation evidence,
+never game-build inputs or redistribution permission for SDK reference bytes.
+
 `phone_registry.inspect_action` generates
 `work/experiments/phone-registry/<attempt>/` from an explicit JSON request with
 one absolute `binary` path. Only the pinned supplied Unity SDK executable is

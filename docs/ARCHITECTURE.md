@@ -274,6 +274,21 @@ J899 records Android repeatability and the failed raw desktop/Android equality
 comparison. Compiler-host version and derived debug identities remain recorded;
 no build consumer normalizes away that evidence.
 
+`phone_unity_compile.py` owns a separate current experimental compilation of
+the public `ContentFixture.cs` Unity API fixture. It stages pinned SDK compiler,
+target managed modules, standard-library references, builtin package metadata
+and the authored four-package manifest. It reuses `phone_module_policy.py` to
+derive references on the selected host, excluding package-disabled modules;
+captured Bee response files and editor reports are comparison evidence only.
+The standalone runner verifies its authored sibling helpers before importing
+them, works under Python isolation, and records a generated reference report
+alongside implementation/reference DLLs and a portable PDB. Setup requires
+committed authored sources, an explicit owner SDK and a qualified build-tool
+host. One compiler child exits at teardown; failed stages/results stay private.
+This fixed source contains no conditional directives. General defines,
+generators, custom packages/callbacks, editor type databases, stripping and
+player/game compilation remain separate gates. No game build consumes outputs.
+
 `phone_registry.py` and `phone_registry_literals.py` own separate experimental
 static SDK metadata support.
 The current `phone-native-registry` action accepts an explicit owner binary,

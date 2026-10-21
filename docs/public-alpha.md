@@ -55,10 +55,13 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       through target/state-dependent serialization and native scene retention;
       asset-dependency exclusions alone do not determine class usage.
 - [ ] Extend [J899's authored compiler fixture](PORTING_JOURNAL.md#j899--compile-an-authored-c-fixture-on-android-and-preserve-cross-host-output-differences)
-      through Unity references/defines, generators, real source semantics and
-      downstream stripping/conversion. Preserve the observed desktop/Android
-      DLL/PDB inequality and compiler-host version distinction; same-compiler
-      execution alone does not establish equivalent outputs or performance.
+      through general defines/generators, real source semantics and downstream
+      stripping/conversion. [J902](PORTING_JOURNAL.md#j902--compile-the-authored-unity-fixture-with-sdkpackage-derived-references-on-android)
+      derives the restricted fixture's references and compiles its Unity API
+      source on Android; broader packages/player compilation remain open.
+      Preserve the observed desktop/Android implementation DLL/PDB inequality
+      and compiler-host distinction; a matching reference assembly alone does
+      not establish equivalent behavior or performance.
 - [ ] Benchmark any alternative pipeline with pinned versions/options/shaders and
       matched device workloads; IL2CPP alone does not prove equivalent performance.
 - [ ] Qualify the isolated owner-build environment; the alpha device is alpha's
