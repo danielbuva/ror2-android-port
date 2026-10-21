@@ -530,7 +530,8 @@ importers, script orders or project initialization. Host contracts:
 `tests/test_assembly_transforms.py`.
 
 Composed audio playback remains unqualified; J872 observes original engine/bank
-readiness with the path warning removed and original point-sound failures remaining. The default-off original-owner
+readiness with the path warning removed; J875 localizes the first point-sound
+failure to transform access after emitter acquisition returns. The default-off original-owner
 integration uses `runtime/session/PortSessionOriginalAudioOwner.cs` after the
 offline menu and before selected body activation. It coordinates the existing
 `WwiseIntegrationManager.Init` and original prefab callbacks; `AkInitializer`
