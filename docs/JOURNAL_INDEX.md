@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J931](PORTING_JOURNAL.md#j931--read-manager-write-dispatch-bindings-on-android-without-evaluating-retention) | 2026-10-21 | Read manager write dispatch bindings on Android without evaluating retention | 2026-10-21. |
 | [J932](PORTING_JOURNAL.md#j932--join-the-owned-source-camera-callback-to-exact-model-membership) | 2026-10-21 | Join the owned source camera callback to exact model membership | Date: 2026-10-21. |
 | [J930](PORTING_JOURNAL.md#j930--stock-commando-reaches-siren-but-the-live-registration-set-shrinks) | 2026-10-21 | Stock Commando reaches Siren but the live registration set shrinks | Date: 2026-10-21. |
 | [J928](PORTING_JOURNAL.md#j928--preserve-original-music-call-results-and-resolved-rtpc-observations) | 2026-10-21 | Preserve original music call results and resolved RTPC observations | Date: 2026-10-21. |
