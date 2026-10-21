@@ -715,13 +715,25 @@ Original audio can be admitted only after all declared preparation succeeds;
 actual engine, bank and event results require device evidence.
 
 `WholeCatalogComposed` supplies the existing GUID-bound settings asset and a
-single process-audio lease over its existing content bundle. Session locators
-and caches still detach normally. Default-off release still unloads the bundle;
-an admitted audio owner defers unload until both original Term calls return.
+single process-audio lease over its existing content bundle and declared
+dependency closure. Session locators and caches still detach normally.
+Default-off release still unloads the bundles; an admitted audio owner defers
+unload until both original Term calls return and active session ownership ends.
 Only a refusal before both manager admission and native Init attempt can release
 early. Retained input, attempt and manifest hashes constrain bundle reuse.
-This minimal shared cleanup change serves original audio; its memory impact is
-unmeasured. The historical private composed-audio candidate below is separate.
+Its nested `RetainedDependencyOwners` captures the manifest's transitive bundle
+graph, including cycles, against the exact loaded instances at audio admission.
+`CleanupBodyCatalog` transfers its manual body bundle into this owner;
+`TeleporterWorldSession.ReleaseObjectiveBundlePreload` transfers the existing
+provider handle and location. Next-session acquisition transfers those owners
+back without another native load or provider acquisition. The source audio
+release gate remains authoritative. A Term during an active session defers
+dependency release until `WholeCatalogComposed.Release`; a Term between sessions
+releases the parked owners immediately. Ownership drift refuses before release
+and preserves the lease identity for retry. The host contract is exercised by
+`tests/test_retained_catalog_dependencies.py`; device restart and memory impact
+remain unqualified (J914). The historical private composed-audio candidate below
+is separate.
 
 The current `whole-catalog-build` action invokes
 `scripts/lab/original_game_audio_build_hook.py` under the existing host build

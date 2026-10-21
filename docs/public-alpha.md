@@ -105,6 +105,9 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       qualify menus, settings persistence and touch/controller navigation.
 - [ ] Qualify end-run confirmation, teardown, results/return-menu and same-process
       restart with ordinary input ([session owners](ARCHITECTURE.md#ownership)).
+      Device-test [J914's dependency-lifetime candidate](PORTING_JOURNAL.md#j914--retain-the-declared-audio-content-dependencies-across-session-cleanup)
+      against J915's genuine next-menu failure, including default-off cleanup,
+      original audio termination and repeated-session memory.
 - [ ] Coordinate gameplay/audio/animation prerequisites with the main session;
       acceptance follows [capability gates](milestones.md), including an
       unassisted run. Keep Moon/finale manual.
