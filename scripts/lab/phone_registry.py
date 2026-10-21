@@ -2,6 +2,7 @@
 
 from bisect import bisect_right
 import hashlib
+import importlib.util
 import json
 from pathlib import Path
 import re
@@ -388,22 +389,37 @@ def inspect(binary, output):
     if unresolved or set(direct) != {row["self"] for row in records} or any(direct.get(pointer) != module for pointer, module in modules.items()):
         raise ValueError("Pinned SDK direct/generated module registrations differ or remain unresolved")
     modules = direct
-    parents = {row["self"]: row for row in records}
     for row in records:
-        row["module"] = modules.get(row["self"])
+        row["module"] = modules[row["self"]]
+    helper = Path(__file__).with_name("phone_registry_literals.py")
+    specification = importlib.util.spec_from_file_location("_phone_registry_literals", helper)
+    literals = importlib.util.module_from_spec(specification)
+    specification.loader.exec_module(literals)  # Authored tool code; never SDK code.
+    records += literals.extra_records(image, call_argument, direct_calls)
+    parents = {row["self"]: row for row in records}
+    if len(records) != 318 or len(parents) != 318 or len({row["qualifiedName"] for row in records}) != 318:
+        raise ValueError("Pinned SDK native registration identity set differs")
+    for row in records:
         parent = parents.get(row["parent"])
-        row["baseModule"] = modules.get(row["parent"]) if parent else None
+        row["base_resolved"] = row["parent"] == 0 or parent is not None
+        row["baseName"] = parent["name"] if parent else "" if row["parent"] == 0 else None
+        row["baseModule"] = parent["module"] if parent else "" if row["parent"] == 0 else None
+        if not row["base_resolved"] or row["module"] is None:
+            raise ValueError("Pinned SDK native hierarchy remains unresolved")
     if hashlib.sha256(binary.read_bytes()).hexdigest() != BINARY_SHA256:
         raise ValueError("SDK binary changed during metadata inspection")
     result = {
         "profile": PROFILE,
         "binary_sha256": BINARY_SHA256,
         "reader_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "literal_reader_sha256": hashlib.sha256(helper.read_bytes()).hexdigest(),
         "executes_sdk": False,
         "root_generation_qualified": False,
         "module_registration_functions": functions,
         "counts": {
-            "static_records": len(records),
+            "static_records": 305,
+            "literal_records": 13,
+            "native_records": len(records),
             "module_resolved": sum(row["module"] is not None for row in records),
             "base_resolved": sum(row["base_resolved"] for row in records),
         },
@@ -434,8 +450,9 @@ def inspect_action(request):
     }
     try:
         shutil.copyfile(__file__, destination / "reader.py")
+        shutil.copyfile(Path(__file__).with_name("phone_registry_literals.py"), destination / "phone_registry_literals.py")
         shutil.copyfile(binary, destination / "owner-sdk")
-        inputs = {name: hashlib.sha256((destination / name).read_bytes()).hexdigest() for name in ("reader.py", "owner-sdk")}
+        inputs = {name: hashlib.sha256((destination / name).read_bytes()).hexdigest() for name in ("reader.py", "phone_registry_literals.py", "owner-sdk")}
         if inputs["owner-sdk"] != BINARY_SHA256:
             raise ValueError("SDK changed while staging the private input")
         (destination / "inputs.json").write_text(json.dumps(inputs, indent=2) + "\n")
