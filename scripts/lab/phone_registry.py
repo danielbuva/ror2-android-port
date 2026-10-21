@@ -299,12 +299,14 @@ def call_argument(image, pc, register, start=None, budget=128, *, retained=None)
     yields unknown. Callee-saved constants may cross calls under AAPCS64.
     No control-flow path is selected and no SDK function is executed.
     """
-    if register == 31:
+    if register == 31 or budget <= 0:
         return None
-    if retained and register in retained:
-        definition, value = retained[register]
-        if 19 <= register <= 28 and definition < pc:
-            return value  # Supplied only by the bounded CFG retention proof.
+    if retained and 19 <= register <= 28:
+        known = retained(pc)  # Prove retention at this operand's use, before later restores.
+        if register in known:
+            definition, value = known[register]
+            if definition < pc:
+                return value  # Supplied only by the bounded CFG retention proof.
     if start is None:
         start = argument_block_start(image, pc)
     if start is None or pc < start or pc - start > 65536 or budget <= 0:

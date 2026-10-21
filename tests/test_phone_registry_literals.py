@@ -61,12 +61,19 @@ class LiteralRecordTests(unittest.TestCase):
         self.assertIsNone(call_argument(image, 0x1014, 1))
         retained = retained_literals(image, 0x1014, call_argument)
         self.assertEqual(retained, {20: (0x1000, 17)})
-        self.assertEqual(call_argument(image, 0x1014, 1, retained=retained), 22)
+        self.assertEqual(call_argument(image, 0x1014, 1, retained=lambda pc: retained_literals(image, pc, call_argument)), 22)
+
+    def test_argument_expression_is_bound_before_a_later_callee_saved_restore(self):
+        words = [0x52800014 | (17 << 5), 0xB4000040, 0xD503201F, 0x11001681, 0xA8C24FF4, branch(0x1014, 0x2000), 0xD65F03C0]
+        image = LiteralImage(words)
+        self.assertEqual(retained_literals(image, 0x1014, call_argument), {})
+        self.assertEqual(call_argument(image, 0x1014, 1, retained=lambda pc: retained_literals(image, pc, call_argument)), 22)
 
     def test_retention_refuses_skipped_or_changed_definitions_unknown_effects_and_later_loops(self):
         seed, use = 0x52800014 | (17 << 5), 0x11001681
         for words in (
             [0xB4000040, seed, use],  # The only literal definition can be skipped.
+            [0xB4000040, seed, 0x72A00014 | (1 << 5), use],  # A dominating MOVK cannot bless a skipped MOVZ.
             [seed, 0xB4000040, 0x52800014 | (99 << 5), use],
             [seed, 0xF94003F4, use],  # Runtime load overwrites X20.
             [seed, 0xA94057F4, use],  # Pair load overwrites X20/X21.

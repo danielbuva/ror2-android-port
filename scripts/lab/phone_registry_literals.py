@@ -197,7 +197,7 @@ def retained_literals(image, use, constant_argument):
         if not candidates:
             continue
         definition = max(candidates)
-        value = constant_argument(image, definition + 4, register, start)
+        value = constant_argument(image, definition + 4, register)
         if value is None or any(pc > definition and step <= pc and step <= use for pc, targets in edges.items() for step in targets):
             continue
         changes = [integer_writes(word) for pc, word in words.items() if definition < pc < use]
@@ -294,7 +294,7 @@ def extra_records(image, constant_argument, direct_calls):
                     raise ValueError("Root metadata unexpectedly depends on an entry argument")
                 value = constant_argument(image, caller, value)
                 if value is None and field == 40:
-                    value = constant_argument(image, caller, fields[field][1], retained=retained_literals(image, caller, constant_argument))
+                    value = constant_argument(image, caller, fields[field][1], retained=lambda pc: retained_literals(image, pc, constant_argument))
                 if value is None:
                     raise ValueError("Unknown non-object registration argument")
             elif kind != "constant":

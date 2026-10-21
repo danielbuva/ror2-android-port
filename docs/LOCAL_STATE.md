@@ -235,6 +235,11 @@ build consumes these records or receives independent project roots from them.
 The later `native-registry-extra-on-android.py` retains those device boundaries
 and additionally verifies the literal-helper source is committed/unchanged.
 Earlier adapters and their hash-bound receipts remain immutable evidence.
+`scene-root-ids-*` selects the later persistent-ID investigation, including its
+preserved failed host stages and final source-bound stage/run selections.
+`scene-root-ids-on-android.py` is local replay support with the same explicit
+device/workspace, committed-source, fresh capacity, tool/input hash, refusal
+control and idle-display boundaries. It generates no scene roots or game input.
 
 The public scaffold and its generators are described in
 [tools/phone-build](../tools/phone-build/README.md). No current game build reads
