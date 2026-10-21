@@ -74,3 +74,28 @@ class PhoneHostBuildTests(unittest.TestCase):
             self.assertIn("AndroidManifestTarget33.xml", report["inputs"])
             self.assertNotIn("AndroidManifest.xml", report["inputs"])
             self.assertEqual((source / "AndroidManifest.xml").read_bytes(), original)
+
+    def test_aapt_receives_required_basename_with_unchanged_selected_bytes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = root / "source"
+            source.mkdir()
+            for name in ("NativeProbe.c", "HostProbeActivity.java", "build_on_android.py", "android.jar", "d8.jar", "apksigner.jar"):
+                (source / name).write_text("fixture input")
+            selected = (SCRIPT.parent / "AndroidManifestTarget33.xml").read_bytes()
+            (source / "AndroidManifestTarget33.xml").write_bytes(selected)
+
+            def run(command, **kwargs):
+                return subprocess.CompletedProcess(command, 1 if "package" in command else 0, "", "fixture packaging stop")
+
+            output = root / "attempt"
+            with patch.object(BUILDER, "__file__", str(source / "build_on_android.py")), patch.object(BUILDER.subprocess, "run", side_effect=run):
+                self.assertFalse(BUILDER.build(root, output, 33))
+            report = json.loads((output / "build-result.json").read_text())
+            self.assertEqual(report["failure"], "aapt exit 1")
+            command = report["commands"][-1]["args"]
+            manifest = Path(command[command.index("-M") + 1])
+            self.assertEqual(manifest.name, "AndroidManifest.xml")
+            self.assertTrue(manifest.is_relative_to(output.resolve()))
+            self.assertEqual(manifest.read_bytes(), selected)
+            self.assertEqual((source / "AndroidManifestTarget33.xml").read_bytes(), selected)

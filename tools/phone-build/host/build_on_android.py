@@ -106,7 +106,10 @@ def build(tool_root, output, target_sdk=30):
         dex.mkdir()
         run([java, "-cp", source / "d8.jar", "com.android.tools.r8.D8", "--min-api", "24", "--lib", source / "android.jar", "--output", dex, class_jar], "dex")
         unsigned = output / "unsigned.apk"
-        run([packaging / "bin/aapt", "package", "-f", "-M", manifest, "-I", source / "android.jar", "-F", unsigned], "aapt")
+        packaging_manifest = output / "manifest/AndroidManifest.xml"
+        packaging_manifest.parent.mkdir()
+        packaging_manifest.write_bytes(manifest.read_bytes())
+        run([packaging / "bin/aapt", "package", "-f", "-M", packaging_manifest, "-I", source / "android.jar", "-F", unsigned], "aapt")
         with zipfile.ZipFile(unsigned, "a", zipfile.ZIP_DEFLATED) as archive:
             archive.write(dex / "classes.dex", "classes.dex")
             archive.write(binary, "lib/arm64-v8a/libtoolprobe.so")
