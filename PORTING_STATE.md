@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-21 after **J918/J917/J914**. Diagnostic b4d1c191
+Last updated 2026-10-21 after **J920/J918/J917/J914**. Diagnostic b4d1c191
 passes both standard checks. The selected original camera now binds its source
 callback and supplies context, with owned skin/camera cleanup observed; the
 screenshot still has severe visual artifacts and the next menu refuses.
@@ -22,7 +22,7 @@ content on every update. Results are recorded once in the
 | --- | --- |
 | Accepted input | Steam build 25475991, input id `6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88` |
 | Toolchain | Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan (`environment/toolchain.json`) |
-| Owner-build research | J883/J893/J895 qualify bounded SDK wrapper/scene/manager prerequisites. J899/J902 run the SDK compiler and derive restricted fixture references on Android; J905 feeds its actual Android DLL/PDB into a separate stripper handoff. The 67-member stripping closure retains 65 exact members; only the authored DLL/PDB differ, with matching observed method bodies. Original replay gates stay intact. Complete roots, general defines/generators/packages, new-input conversion/loading, game compilation and content/shaders remain open. Route A and the desktop fallback stay fixed. |
+| Owner-build research | J883/J893/J895 qualify bounded SDK wrapper/scene/manager prerequisites. J899/J902 compile the authored fixture on Android; J905 strips its actual DLL/PDB. J920 converts that complete stripping output on Android: all 128 generated source/data files match the independent desktop control and prior phone output. Original replay gates stay intact. Captured desktop roots, general defines/generators/packages, the new native/player consumer, game compilation and content/shaders remain open. Route A and the desktop fallback stay fixed. |
 | Latest device-verified APK | J917 diagnostic `b4d1c1919d14a057183f3c98827c1736aaf3d7620bb96a1ef543b2bc67292b78`, source 42a74c1: full build, both standard checks and pre/post-strip retention pass; 333 pre-strip DLLs, 391 authored inputs, 266 payload files, matching symbols. Selected camera context and owned cleanup pass; visual artifacts and next-menu failure remain. Accepted baseline remains J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`, source 1780ea9. |
 | Installed now | Main has J917 diagnostic b4d1c191. Installed bytes, owned placement, selector absence, stopped process and display sleep are independently checked. Audible playback is unqualified. Other devices are outside this session's assignment; historical receipts do not establish their present state. |
 | Runtime source since verified APK | Installed 42a74c1 includes the original startup trigger and guarded late camera binding. J914 adds declared audio dependency retention across sessions; its menu repair is merged but untested on device. J918 adds opt-in exact music-output PCM selection with a paired new native ABI/library and strict request/cache/receipt ownership. Those changes are host-qualified and require a new player. Original audio remains default off; menu restart, rendering, music playback and Siren encounter remain open. |

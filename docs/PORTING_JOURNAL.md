@@ -25115,3 +25115,91 @@ Installed J917 remains separate. Next build must retain the complete new ABI
 post-strip, pass both standard checks and only then measure the actual selected
 output. Playback, physical audibility, source music semantics and next-menu
 restart remain unqualified.
+
+## J920 — Convert the Android-compiled and stripped fixture without relaxing replay gates
+
+Date: 2026-10-21. Hypothesis: J905's actual Android compiler/stripper outputs
+can pass the unchanged exact SDK converter on Android without replacing them
+with desktop DLL/PDB bytes or weakening the earlier replay gate. Main reserves
+J917–J919 and allocates J920 to Alpha. The experiment starts from merged PR #28/main 3b25569; publication integrates
+Main 5a97f93, preserving J917/J918 and the current Main snapshot. Main's R19 device/camera work and next player remain separate;
+no shared editor operation or Main-device action occurs.
+
+Consult J832/J842/J849's converter and native-source contracts and J905's
+separate compiled-input stripping profile. This is generic build-tool plumbing,
+with no new RoR2 reconstruction, loader or runtime adapter. The converter,
+SDK libraries and icall data remain user-supplied private inputs. The Android
+.NET 8.0.32 process hosts build tools; the game retains IL2CPP ARM64 and the
+existing renderer. No redistribution permission for supplied SDK bytes is
+inferred.
+
+Add `phone_compiled_converter.py` as a separate named experimental consumer.
+Committed source a257f0a verifies the pinned converter template, the complete
+J905 supplier stage and successful raw stripping receipts, then creates a
+fresh stage. It supplies the actual 67-member stripped closure, retains the
+converter's assembly order/options and SDK bytes, and records a separate
+handoff result without modifying the child's result. The original replay
+consumers are unchanged. The standalone wrapper validates all inputs before
+and after execution, refuses foreign/reused output paths and preserves scope
+flags. Keeping the full upstream proof costs 948 staged input files and
+245,495,631 bytes including the manifest; this is laboratory evidence overhead,
+not a settled phone installation design.
+
+First run a separate desktop control on those same actual Android-produced
+stripped bytes. The exact SDK launcher exits 0 in 2.438 s and emits 128 source/data
+members. All raw members match the retained earlier phone converter output.
+This preliminary control uses source 55a4b6f and no editor; the input and tool
+hashes, rather than unrelated runtime-source history, bind the comparison.
+
+Eight new host contracts pass, alongside seven existing compiled-linker and
+six original converter tests. They check actual input copying, supplier/input
+preservation, result failure, rehashed unknown stripped bytes, scope promotion,
+foreign files/links, child mutation, raw child-output binding and fresh owned
+output selection. Their tool doubles contain no SDK or game data. Ruff and the
+staged public audit pass before committing. Real staging independently validates
+the full upstream SDK/profile inputs; host mocks alone are not qualification.
+
+On the explicitly configured Alpha device, require the existing workspace and
+lab ownership receipts, matching installed APK hash, absent game process and
+selector, matching Python/.NET tool hashes, and freshly queried storage/backing
+with the configured reserve and conservative payload allowance. Supply the
+unchanged staged closure and execute only the standalone converter wrapper.
+The actual converter exits 0 in 6.237 s; its enclosing execution records
+6.293 s excluding transfer and initial verification. It emits 126 generated
+source-directory members and two data files. All 128 match both the fresh
+desktop control and prior qualified phone output byte for byte, with no missing
+or additional member. Preserve raw outputs; no normalization is performed.
+Metadata remains
+`d515a852e565f151c1ea4f6d0ecb96aab93b8d9b095207df4feebf619e69b9b5`.
+
+The first actual device conversion passes; no converter failure is concealed.
+Reusing its output refuses before execution. Remote input, output and receipt
+hashes remain unchanged after that refusal. No APK is built or installed and
+the game is never launched. Read-only installed game hash
+`be26c21c4cd8ff15a8a663528216cf7a69394a51d8b9441a63a1a496f83e98b5`
+is unchanged; final process/selector absence and display sleep are verified.
+These controls apply to Alpha only and do not establish other devices' state.
+
+Private evidence under `work/coordination/phone-proof/`:
+`compiled-converter-stage-selection-v1.json` binds the generated stage, whose
+input manifest SHA-256 is
+`c19766458e0aa420af43e43c7f80b71177aaf78df65a6037d0b8e0728c63f02c`.
+`compiled-converter-phone-selection-v1.json` selects the actual device attempt;
+its final control result SHA-256 is
+`95f90fd0bca732a06ccb05fafc9eed18b2979ad07624cb33076f5eca384ed849`,
+and its handoff result SHA-256 is
+`6a0ae7527e3d0102b68def270d5df922be4af5999428fd246638d0b9685498e4`.
+`compiled-converter-cross-host-comparison-v1.json` SHA-256 is
+`4d4ace54418eaf69d7559580aff556cdc6f62d9c20c7e7c94519a06a2cf5fa25`.
+Supplied libraries, generated code, commands, storage and device identities
+remain ignored. Only authored tooling, contracts and summaries enter Git.
+
+This connects the restricted authored Android compiler, stripper and converter
+at the raw code/metadata boundary. Native compilation and player loading are
+not repeated. A separate native/player consumer must bind this provenance and
+the complete resulting source/data closure; do not route it through a relaxed
+legacy selector. General defines/generators/packages, independently produced
+scene/editor roots, accepted-game compilation/content/shaders, ordinary app
+hosting, permitted tool delivery and matched performance remain open. Revisit
+on any source/tool/input/profile change or a downstream consumer difference.
+Route A and the desktop owner-build fallback stay fixed.

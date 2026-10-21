@@ -318,6 +318,8 @@ separate `handoff-result.json`. Teardown is the child exiting; preserve failures
 and receipts. Captured desktop scene/editor roots remain prerequisites. A
 passing conversion alone does not qualify native compilation, metadata/player
 loading, performance, game compilation or final tool distribution.
+J920 qualifies this fixed authored conversion profile; the native/player
+consumer remains a separate gate.
 
 `phone_registry.py` and `phone_registry_literals.py` own separate experimental
 static SDK metadata support.
