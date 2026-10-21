@@ -18,6 +18,7 @@ Independent-root contract inventory: [J851](PORTING_JOURNAL.md#j851--measure-sdk
 Partial native-registry extraction on Android: [J853](PORTING_JOURNAL.md#j853--read-partial-owner-sdk-native-registration-metadata-on-android).
 Explicit static-record module completion: [J855](PORTING_JOURNAL.md#j855--resolve-static-sdk-modules-from-explicit-registration-call-arguments).
 Complete pinned native-registry metadata: [J857](PORTING_JOURNAL.md#j857--recover-the-complete-pinned-native-registry-from-owner-sdk-metadata-literals).
+SDK-native metadata into stripping/conversion: [J859](PORTING_JOURNAL.md#j859--generate-sdk-native-root-metadata-on-android-and-preserve-stripping-conversion).
 
 **Finding:** this repository has no demonstrated phone-only build path. Many
 preparation and packaging stages have Android-capable open-source building
@@ -37,6 +38,8 @@ hash-bound phone converter output; that does not recreate missing content or
 editor-generated stripping roots.
 J851 measures why managed SDK metadata alone cannot replace those roots and
 J857 qualifies the pinned SDK's complete native-registry metadata on Android.
+J859 generates that native table at the actual stripping invocation and reaches
+the same qualified C++/metadata boundary with captured project roots retained.
 Project scene usage, module policy and complete independent linker roots remain
 unproduced.
 These are build-pipeline problems; keep the game runtime
@@ -58,7 +61,7 @@ not proof that reimplementation is impossible. Owners: [ARCHITECTURE](ARCHITECTU
 | HUD/inherited assets (`RecoveredHudBuilder`) | **Yes, existing producer** | AssetDatabase, prefab, font/material and asset-saving APIs are used. Fourteen inherited-store files remain bootstrap debt; generated game assets cannot be shipped to conceal this dependency. |
 | Import, script/plugin binding and settling (R9 `LabBuild`) | **Yes** | Native importers, AssetDatabase and two-pass dependency reimport have no demonstrated Android equivalent here. Host validators do not replace importers. |
 | Shader compilation/Android bundles (`LabBuild`, `WholeCatalogBuild`) | **Yes** | BuildAssetBundles, UnityShaderCompiler and ShaderUtil produce/validate target variants. SPIR-V compilation or a UnityFS writer alone does not recreate shader metadata, object graphs, mesh/animation import or dependencies. |
-| C# compilation, stripping, IL2CPP C++/metadata (`BuildPlayer`) | **Yes in current orchestration** | J846/J849 qualify connected authored stripping/conversion using captured desktop roots, reaching J842's qualified native-source boundary. J851 rejects managed-name guesses; J857 qualifies complete pinned native-registry metadata reading on Android without executing the SDK. Independent scene usage/module policy/roots, desktop managed compilation, richer dependencies, app policy and tool delivery remain gates. |
+| C# compilation, stripping, IL2CPP C++/metadata (`BuildPlayer`) | **Yes in current orchestration** | J859 connects SDK-native metadata generation to authored stripping/conversion, reaching J842's qualified native-source boundary. Captured project scene/module-policy roots and desktop managed compilation remain inputs. Independent complete roots, richer dependencies, app policy and tool delivery remain gates. |
 | C++/Burst/plugin compilation/linking | Not inherently, once all inputs exist | J839/J842 qualify the authored native graph with desktop or phone-generated C++, original target libraries and actual Unity loading. Desktop stripping/base engine/content remain inputs; compiler/linker and game-performance equivalence, Burst and middleware remain separate gates. |
 | Java/resources/DEX, APK alignment/signing | No Unity import APIs | AOSP/Termux provide resource-tool, alignment and signing precedents; D8/R8 source is available. J836 builds native C/Java/DEX/resources and signs an authored app wholly in a phone shell. Full Unity player packaging, app-host tool dependencies and durable owner signing remain open. These tools cannot fill missing game code/data. |
 | Install, placement, data retention and rollback | No | Android PackageInstaller provides user-mediated installation. Keep stable private owner keys, live capacity/backing checks and interruption handling. Host ADB scripts need on-device equivalents. |

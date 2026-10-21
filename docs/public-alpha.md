@@ -28,7 +28,9 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       the final installation experience. Keep other execution backends excluded.
       Extend [J857's complete pinned native metadata](PORTING_JOURNAL.md#j857--recover-the-complete-pinned-native-registry-from-owner-sdk-metadata-literals)
       through independent project scene usage, module policy and exact root
-      outputs. The SDK registry alone does not establish those project inputs.
+      outputs. [J859](PORTING_JOURNAL.md#j859--generate-sdk-native-root-metadata-on-android-and-preserve-stripping-conversion)
+      qualifies native-table generation at the stripping boundary; captured
+      project fields and managed compilation remain explicit inputs.
 - [ ] Benchmark any alternative pipeline with pinned versions/options/shaders and
       matched device workloads; IL2CPP alone does not prove equivalent performance.
 - [ ] Qualify the isolated owner-build environment; the alpha device is alpha's
