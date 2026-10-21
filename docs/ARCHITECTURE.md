@@ -336,6 +336,9 @@ the child exiting. `library_input` validates the resulting AArch64 shared-librar
 header, full library hash and provenance before returning the exact APK/library
 pair for separate packaging/audit/player checks. No native build, player,
 ordinary app hosting or game/performance qualification follows from host tests.
+J921 separately qualifies the fixed authored native/player path on the assigned
+device, with a full native compile, explicit APK/library binding and owned
+load/update/refusal checks. It retains all desktop-root and full-game gates.
 
 `phone_registry.py` and `phone_registry_literals.py` own separate experimental
 static SDK metadata support.

@@ -25428,3 +25428,113 @@ game/API profile changes. Installed J919 stays separate. Next build must pass
 both standard checks and preserve the observation members post-strip before
 interpreting a new device sample. Track selection, original event completion,
 composed playback, whole-process Term/restart and physical audibility remain open.
+
+## J921 — Construct and load the authored player from actual Android compiler/stripper/converter outputs
+
+Date: 2026-10-21. Hypothesis: J920's actual Android-compiled, stripped and
+converted fixture can feed a separately checked native/player consumer while
+preserving the original replay, metadata and native object-reuse gates. Main
+allocates J921 to Alpha, retaining J919/J922/J923/J924. Integrate published Main
+158f4dc before this entry; its gameplay/audio/render observations and device
+state remain separate. No shared editor, Main or spare-device action occurs.
+
+Consult J839/J842's native ABI/player contracts, J849's original converter
+handoff and J905/J920's actual compiled-input chain. This is generic build-tool
+plumbing, with no new RoR2 loader, reconstruction or runtime backend. Owner SDK
+sources/tools and all generated libraries/APKs remain private. No SDK/tool
+redistribution clearance or ordinary Android app-hosting acceptance is inferred.
+
+Add the named `phone_compiled_native.py` owner, its host contracts and local-state
+recipe. Source 9f01b0a is committed before real staging. The historical native
+proof used a different fixture APK and graph despite matching generated C++.
+Use its pinned manifest only as the SDK/NDK inventory. Bind the exact J920
+fixture instead: base APK
+`90e8f9f8fa5028716cf9f1c8de8afb6d297f048c8c0bb486a987a594e3ab5a61`,
+its source/generator receipt and both emitted data files. Those data bytes must
+match the actual base APK entries before native capture. The existing stage
+builder captures its native graph, which must match the converter generation.
+Copy actual generated C++ unchanged and preserve ordered compile/link arguments.
+Only generated plan scope annotations change; legacy sources/gates are untouched.
+
+The fresh stage contains 4,706 input members and 508,517,411 bytes including its
+manifest. It retains the complete upstream proof, exact APK/authored sources,
+SDK/target files and native plan/manifest. This is deliberate laboratory storage
+overhead, not a final installation design. All nonmetadata input bytes match the
+older native proof, but 126 object output identities and task ordering differ.
+The existing complete-plan reuse gate is ineligible. Preserve that observation;
+do not normalize paths or relax the gate. Choose a fresh full compilation.
+
+Eleven host contracts pass, alongside six existing native and eight compiled
+converter tests. They check source/metadata/fixture binding, graph generation,
+SDK drift, compile-option preservation, child mutation, output ownership,
+context restoration, scope promotion and exact APK/library selection. The
+library selector also checks ELF64/little-endian/AArch64 shared-library form.
+Its constants are checked against the pinned NDK headers. Host SDK/producer
+doubles contain no protected input. Ruff and staged public audit pass before
+committing. Alpha's separate game-lab preflight still refuses absent inventory
+`files.json`; do not substitute Main's inventory or infer game bootstrap from
+the independent authored fixture's successful admission.
+
+On explicitly assigned Alpha, verify current ownership/workspace receipts,
+installed game bytes, absent process/selector, fresh storage/backing/reserve and
+Python/.NET/Clang/LLD hashes before transfer/execution. The actual native child
+compiles all 264 tasks and links in 177.958 s, excluding transfer/collection;
+the wrapper records 178.018 s. No objects are reused. The 81,128,296-byte library
+SHA-256 is
+`9c5f1261152bd6cc1bb2c0d271ab75c33e3d996c47497fff8ee5ca9b30798d6e`.
+It differs from J842's raw library and is retained unchanged. Independent
+bundled-NDK inspection confirms AArch64 DYN, SONAME `libil2cpp.so`, all 237
+expected IL2CPP APIs, no missing API and no new shared dependency. Input,
+object, library and receipt hashes remain unchanged after rerun refusal.
+The first admitted native execution passes; failed controls remain separate.
+
+The new `library_input` contract returns the exact validated APK/library pair
+on both host and Android. The unchanged private packaging helper substitutes
+that library and increments the manifest under one new disposable signing
+identity. Password material stays in process/child environment, not logs or
+source. Android signature/alignment checks and independent bundled-SDK signer
+verification pass. Both versions share their certificate; the only changed
+uncompressed payload entries are the manifest and `libil2cpp.so`. Metadata,
+resource data, engine libraries and authored content stay exact.
+
+- Version 3: `ac20aa9a2520383ed4c4282bad02aba98479660699950a5ea13ca282417e7ffb`.
+- Version 4: `f3496b27d246830869489fc114b51920bda4a14512626ec5f248ad2309cdfdd1`.
+
+The existing owned-package check refuses a pre-existing fixture and queries
+fresh capacity/storage before each explicit install. Embedded, refused-hash,
+phone-candidate and updated-candidate phases all map exactly the new native
+library inside the observed installed code directory. Each positive phase
+reports Unity 2021.3.45f2/Vulkan and two native load/read/unload cycles. The wrong
+content hash refuses before loading, with zero successful cycles. The update
+retains its private marker and candidate content. Package placement, private
+app data and runtime backing are recorded from live observations. The owned
+fixture is removed afterward. An independent terminal query confirms fixture
+absence, unchanged owned game APK
+`be26c21c4cd8ff15a8a663528216cf7a69394a51d8b9441a63a1a496f83e98b5`,
+stopped game process, absent selector and asleep/off physical displays. The
+actual game is never built, installed, launched or reset by this experiment.
+
+Private evidence under `work/coordination/phone-proof/` is bound by
+`compiled-native-proof-receipt-v1.json` SHA-256
+`8bf63b5ed16e44d5e56dd896c05c14fe4aafae9834a2fc345910e44a69b8ee97`.
+Its 19 artifacts include explicit stage/native/package/player selections,
+reuse-plan comparison, original child/handoff results, raw ABI/signature/archive
+checks and terminal controls. Stage manifest SHA-256 is
+`348eff37abe63cd78d83647d4ba6948a8b880780354e0adf6846051616e9c460`.
+Player result SHA-256 is
+`a851120fdd854810ec0c3c00debf6a15cdd28822f8cd3152cdb9956d18c113e5`;
+terminal control SHA-256 is
+`91996093a25c1aa3430de313336df14746737b105a3d991232f0237ee866b809`.
+Raw device/storage paths, SDK/generated files, signing material and logs stay
+ignored. Only authored tooling, contracts and summaries enter public Git.
+
+This connects the fixed authored Android compiler/stripper/converter outputs
+to fresh native construction, phone packaging and actual player load/update
+checks. Captured desktop scene/editor roots, independent player/content/shader
+production, general defines/generators/packages, accepted-game construction,
+ordinary app execution policy, permitted tool delivery, durable owner signing
+and matched performance remain open. Clang 21/LLD is still a distinct build-tool
+contract from the desktop Clang 9/BFD path. Preserve raw differences and require
+matched workloads before performance claims. Route A's native IL2CPP/rendering
+architecture and the desktop owner-build fallback stay fixed. Revisit on any
+source/input/tool/fixture/profile or downstream consumer change.

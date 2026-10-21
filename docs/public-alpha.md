@@ -62,9 +62,11 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       [J905](PORTING_JOURNAL.md#j905--feed-the-android-compiled-unity-fixture-into-a-separate-stripping-handoff)
       separately strips those actual Android outputs.
       [J920](PORTING_JOURNAL.md#j920--convert-the-android-compiled-and-stripped-fixture-without-relaxing-replay-gates)
-      converts them on Android with matching raw source/data outputs. Connect
-      the separate native/player consumer while keeping captured scene roots
-      explicit and the earlier exact-replay gate intact.
+      converts them on Android with matching raw source/data outputs.
+      [J921](PORTING_JOURNAL.md#j921--construct-and-load-the-authored-player-from-actual-android-compilerstripperconverter-outputs)
+      connects the separate native/player consumer through device load/update
+      checks. Extend beyond the fixed fixture while keeping captured scene
+      roots explicit and the earlier exact-replay gate intact.
       Preserve the observed desktop/Android implementation DLL/PDB inequality
       and compiler-host distinction; a matching reference assembly alone does
       not establish equivalent behavior or performance.
