@@ -51,8 +51,21 @@ namespace UnityEngine
         public Material(Material source) { name = source.name + ".copy"; shader = source.shader; }
     }
     public class Shader : Object { }
-    public struct Vector3 { public float x, y, z; public static Vector3 zero => new Vector3(); }
-    public struct Bounds { public Vector3 center, extents; }
+    public struct Vector3
+    {
+        public float x, y, z;
+        public Vector3(float x, float y, float z) { this.x = x; this.y = y; this.z = z; }
+        public static Vector3 zero => new Vector3();
+    }
+    public struct Quaternion { public float x, y, z, w; }
+    public struct Rect { public float x, y, width, height; }
+    public struct Bounds
+    {
+        public Vector3 center, extents;
+        public Vector3 min => new Vector3 { x = center.x - extents.x, y = center.y - extents.y, z = center.z - extents.z };
+        public Vector3 max => new Vector3 { x = center.x + extents.x, y = center.y + extents.y, z = center.z + extents.z };
+    }
+    public enum CameraClearFlags { Skybox = 1, Color = 2, Depth = 3, Nothing = 4 }
     public class Renderer : Behaviour
     {
         public Material[] sharedMaterials = Array.Empty<Material>();
@@ -70,8 +83,47 @@ namespace UnityEngine
     public class Mesh : Object { }
     public class MeshFilter : Component { public Mesh sharedMesh; }
     public class SkinnedMeshRenderer : Renderer { public Mesh sharedMesh; }
-    public class Camera : Behaviour { }
-    public class Transform : Component { public Vector3 position; }
+    public class Camera : Behaviour
+    {
+        public static readonly List<Camera> enabledCameras = new List<Camera>();
+        public static int getAllCamerasCalls;
+        public static int growBeforeGet, removedBeforeGet;
+        public static bool throwCameraCount;
+        public static bool nonFiniteProjection;
+        public static int allCamerasCount
+        {
+            get
+            {
+                if (throwCameraCount) throw new InvalidOperationException("synthetic camera count read failure");
+                return enabledCameras.Count;
+            }
+        }
+        public static int GetAllCameras(Camera[] destination)
+        {
+            getAllCamerasCalls++;
+            while (growBeforeGet-- > 0)
+                enabledCameras.Add(new GameObject("racing camera").AddComponent<Camera>());
+            while (removedBeforeGet-- > 0 && enabledCameras.Count > 0)
+                enabledCameras.RemoveAt(enabledCameras.Count - 1);
+            if (destination == null) throw new NullReferenceException();
+            if (destination.Length < allCamerasCount)
+                throw new ArgumentException("GetAllCameras requires enough room for all enabled cameras");
+            int count = enabledCameras.Count;
+            for (int i = 0; i < count; i++) destination[i] = enabledCameras[i];
+            return count;
+        }
+        public float depth, nearClipPlane = .3f, farClipPlane = 1000f, fieldOfView = 60f;
+        public int cullingMask = -1, targetDisplay;
+        public CameraClearFlags clearFlags = CameraClearFlags.Skybox;
+        public bool orthographic;
+        public Rect rect = new Rect { width = 1, height = 1 };
+        public Texture targetTexture;
+        public Vector3 WorldToScreenPoint(Vector3 point) => nonFiniteProjection
+            ? new Vector3(float.NaN, point.y, point.z)
+            : point;
+    }
+    public class Texture : Object { }
+    public class Transform : Component { public Vector3 position; public Quaternion rotation; }
     public class RuntimeAnimatorController : Object { public RuntimeAnimatorController() { name = "runtime controller"; } }
     public class Avatar : Object { public Avatar() { name = "avatar"; } }
     public class Animator : Component

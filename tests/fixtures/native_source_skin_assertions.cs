@@ -334,7 +334,64 @@ static class AdapterContractTests
         var cameraOwner = cameraObject.AddComponent<AndroidNativeSourceCameraRigOwner>();
         cameraOwner.ready = true;
         cameraOwner.status = "synthetic ready owner";
+        renderer.bounds = new Bounds
+        {
+            center = new Vector3 { x = 10f, y = 20f, z = .1f },
+            extents = new Vector3 { x = 1f, y = 2f, z = .2f }
+        };
+        renderer.sharedMaterials = new[] {
+            new Material("slot 0"), new Material("slot 1"), new Material("slot 2"), new Material("slot 3"),
+            new Material("slot 4"), new Material("slot 5"), new Material("slot 6"), new Material("slot 7"),
+            new Material("slot 8"), new Material("slot 9")
+        };
+        Camera.enabledCameras.Clear();
+        for (int cameraIndex = 0; cameraIndex < 11; cameraIndex++)
+        {
+            var otherCameraObject = new GameObject("camera stack member " + cameraIndex);
+            var otherCamera = otherCameraObject.AddComponent<Camera>();
+            otherCamera.depth = cameraIndex;
+            Camera.enabledCameras.Add(otherCamera);
+        }
+        Camera.enabledCameras.Add(camera);
+        Camera.getAllCamerasCalls = 0;
         adapter.CaptureNativeVisualState(camera, animator, cameraOwner);
+        Check(report.visual.renderEvidence != null && report.visual.renderEvidence.cameraInventoryKnown &&
+                  !report.visual.renderEvidence.cameraInventoryTruncated && report.visual.renderEvidence.cameras.Length == 12 &&
+                  report.visual.renderEvidence.observedCameraCount == 12 && report.visual.renderEvidence.capturedCameraCount == 12 &&
+                  report.visual.renderEvidence.omittedCameraCount == 0 && report.visual.renderEvidence.frame == report.visual.frame &&
+                  Math.Abs(report.visual.renderEvidence.realtime - report.visual.realtime) < 0.0001f &&
+                  report.visual.renderEvidence.observedRendererCount == 1 &&
+                  report.visual.renderEvidence.capturedRendererCount == 1 && report.visual.renderEvidence.omittedRendererCount == 0,
+              "one-shot live camera inventory records a stable in-cap stack without invented omissions");
+        AndroidNativeSourceSkinLifecycle.VisualCameraSnapshot sourceCamera = null;
+        foreach (var cameraSnapshot in report.visual.renderEvidence.cameras)
+            if (cameraSnapshot.ownedSourceCamera) sourceCamera = cameraSnapshot;
+        Check(sourceCamera != null && sourceCamera.instanceId == camera.GetInstanceID() &&
+                  sourceCamera.active && sourceCamera.enabled && sourceCamera.clearFlags == (int)CameraClearFlags.Skybox &&
+                  sourceCamera.nearClip == camera.nearClipPlane && sourceCamera.cullingMask == camera.cullingMask &&
+                  sourceCamera.rectWidth == 1f && sourceCamera.targetDisplay == camera.targetDisplay &&
+                  sourceCamera.scalarValuesFinite,
+              "camera stack records exact owned source identity and render-state scalars");
+        Check(report.visual.renderEvidence.renderers[0].screenBoundsKnown && report.visual.renderEvidence.renderers[0].hasBehindCameraCorner &&
+                  report.visual.renderEvidence.renderers[0].crossesNearClip && report.visual.renderEvidence.renderers[0].sampledMaterialCount == 1 &&
+                  report.visual.renderEvidence.renderers[0].materialSlotCount == -1 && report.visual.renderEvidence.renderers[0].materialsTruncated &&
+                  report.visual.renderEvidence.renderers[0].sampledNamedMaterialCount == 1 &&
+                  report.visual.renderEvidence.renderers[0].sampledNamesTruncated && report.visual.renderEvidence.renderers[0].materialNames.Length == 1 &&
+                  report.visual.renderEvidence.renderers[0].sampledNullMaterialSlots == 0 && report.visual.renderers[0].materialIdentities.Length == 1 &&
+                  !report.visual.renderers[0].materialSlotCountKnown && renderer.getSharedMaterialsCalls == 0 &&
+                  report.visual.renderEvidence.renderers[0].materialNames[0] == "slot 0" &&
+                  report.visual.renderEvidence.renderers[0].shaderNames[0] == "test-shader" &&
+                  report.visual.renderEvidence.renderers[0].screenMinX == 9f &&
+                  report.visual.renderEvidence.renderers[0].screenMaxX == 11f &&
+                  report.visual.renderEvidence.renderers[0].screenMinY == 18f &&
+                  report.visual.renderEvidence.renderers[0].screenMaxY == 22f,
+              "same-capture projection reports finite bounds while material evidence remains first-slot-only and later slots unknown");
+        var cameraScratch = (Camera[])typeof(AndroidNativeSourceSkinLifecycle).GetField("renderCameraScratch", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(adapter);
+        bool cameraScratchCleared = true;
+        foreach (var scratchCamera in cameraScratch)
+            cameraScratchCleared &= ReferenceEquals(scratchCamera, null);
+        Check(cameraScratchCleared, "camera census releases temporary Unity references after scalar capture");
+        int capturedEvidenceFrame = report.visual.renderEvidence.frame;
         Check(report.visual.nativeCameraOwnerAttached && report.visual.nativeCameraOwnerReady &&
                   report.visual.nativeCameraOwnerStatus == "synthetic ready owner" && !report.visual.rigOverrideInstalled,
               "bounded visual report consumes the exact camera-owner readiness/status surface and records override ownership separately");
@@ -370,17 +427,17 @@ static class AdapterContractTests
               "optional gate field absence stays unknown and bounded without failing the visual capture");
         cameraOwner.observationFieldsAvailable = true;
 
-        var slots = new Material[10];
+        var slots = new Material[12];
         for (int i = 0; i < slots.Length; i++)
             slots[i] = new Material("slot " + i);
         renderer.sharedMaterials = slots;
         model.baseRendererInfos = new[] { model.baseRendererInfos[0] };
         renderer.getSharedMaterialsCalls = 0;
         adapter.CaptureNativeVisualState(camera, animator, cameraOwner);
-        Check(!report.visual.renderers[0].materialSlotCountKnown && report.visual.renderers[0].materialSlotCount == -1 &&
-                  report.visual.renderers[0].materialsTruncated && report.visual.renderers[0].materialIdentities.Length == 1 &&
-                  renderer.getSharedMaterialsCalls == 0,
-              "large material slot arrays are not enumerated by visual capture");
+        Check(report.visual.renderEvidence != null && report.visual.renderEvidence.renderers[0].materialSlotCount == -1 &&
+                  report.visual.renderEvidence.renderers[0].sampledMaterialCount == 1 && report.visual.renderEvidence.renderers[0].materialsTruncated &&
+                  report.visual.renderEvidence.frame == capturedEvidenceFrame && Camera.getAllCamerasCalls == 1 && renderer.getSharedMaterialsCalls == 0,
+              "one-shot material evidence is not rescanned on later report saves");
 
         var many = new CharacterModel.RendererInfo[40];
         for (int i = 0; i < many.Length; i++)
@@ -411,6 +468,71 @@ static class AdapterContractTests
                   report.visual.captureSequence == lastLiveSequence && report.displayDeactivated && report.ownerDestroyed,
               "teardown preserves the last complete pre-disposal visual sample without Unity reads after destruction");
     }
+
+    static AndroidNativeSourceSkinLifecycle.VisualRenderEvidence CaptureCameraFallback(int mode, out int getCalls)
+    {
+        var adapter = Prepare(out var go, out var model, out var skin, out var renderer, out var source);
+        skin.CompleteNativeSkin(4);
+        var animator = go.GetComponent<Animator>();
+        renderer.bounds = new Bounds { center = new Vector3 { x = 5f, y = 6f, z = 7f }, extents = new Vector3 { x = 1f, y = 1f, z = 1f } };
+        var cameraObject = new GameObject("owned source camera");
+        var camera = cameraObject.AddComponent<Camera>();
+        var sceneCamera = cameraObject.AddComponent<SceneCamera>();
+        var rig = cameraObject.AddComponent<CameraRigController>();
+        rig.sceneCam = camera;
+        sceneCamera.camera = camera;
+        sceneCamera.cameraRigController = rig;
+        CameraRigController.readOnlyInstancesList.Clear();
+        CameraRigController.readOnlyInstancesList.Add(rig);
+        var owner = cameraObject.AddComponent<AndroidNativeSourceCameraRigOwner>();
+        owner.ready = true;
+        Camera.enabledCameras.Clear();
+        Camera.enabledCameras.Add(camera);
+        if (mode == 0)
+            for (int i = 0; i < 12; i++) Camera.enabledCameras.Add(new GameObject("overflow camera").AddComponent<Camera>());
+        Camera.growBeforeGet = mode == 1 ? 13 : 0;
+        Camera.removedBeforeGet = 0;
+        Camera.throwCameraCount = mode == 2;
+        Camera.nonFiniteProjection = mode == 3;
+        Camera.getAllCamerasCalls = 0;
+
+        adapter.CaptureNativeVisualState(camera, animator, owner);
+        getCalls = Camera.getAllCamerasCalls;
+        Camera.growBeforeGet = 0;
+        Camera.removedBeforeGet = 0;
+        Camera.throwCameraCount = false;
+        Camera.nonFiniteProjection = false;
+        return GetReport(adapter).visual.renderEvidence;
+    }
+
+    static void TestCameraInventoryOverflowRaceAndUnknownAreContained()
+    {
+        int calls;
+        var overflow = CaptureCameraFallback(0, out calls);
+        Check(overflow != null && !overflow.cameraInventoryKnown && overflow.cameraInventoryTruncated &&
+                  overflow.observedCameraCount == 13 && overflow.capturedCameraCount == 1 && overflow.omittedCameraCount == 12 &&
+                  overflow.cameras.Length == 1 && overflow.cameras[0].ownedSourceCamera && calls == 0 &&
+                  overflow.renderers[0].screenBoundsKnown,
+              "over-cap census refuses an undersized Unity buffer, retains only the exact owned camera, and still projects renderers");
+
+        var raced = CaptureCameraFallback(1, out calls);
+        Check(raced != null && !raced.cameraInventoryKnown && raced.cameraInventoryTruncated &&
+                  raced.observedCameraCount == 1 && raced.capturedCameraCount == 1 && raced.omittedCameraCount == -1 &&
+                  raced.cameras.Length == 1 && raced.cameras[0].ownedSourceCamera && calls == 1 &&
+                  raced.renderers[0].screenBoundsKnown,
+              "count growth between Unity count and copy is caught as unknown without aborting renderer projection");
+
+        var unknown = CaptureCameraFallback(2, out calls);
+        Check(unknown != null && !unknown.cameraInventoryKnown && unknown.cameraInventoryTruncated &&
+                  unknown.observedCameraCount == -1 && unknown.capturedCameraCount == 1 && unknown.omittedCameraCount == -1 &&
+                  unknown.cameras.Length == 1 && unknown.cameras[0].ownedSourceCamera && calls == 0 &&
+                  unknown.renderers[0].screenBoundsKnown,
+              "camera-count read failure remains explicitly unknown while exact-camera projection continues");
+
+        var nonFinite = CaptureCameraFallback(3, out calls);
+        Check(nonFinite != null && nonFinite.renderers[0] != null && !nonFinite.renderers[0].screenBoundsKnown && calls == 1,
+              "non-finite projected corners remain unknown rather than publishing invalid screen bounds");
+    }
     public static int Main()
     {
         TestOptInSelectionPolicy();
@@ -422,6 +544,7 @@ static class AdapterContractTests
         TestRetirementWaitsForNativeRendererRelease();
         TestBodyLifetimeCleanupUnsubscribesAndReleasesCopies();
         TestBoundedVisualSnapshotIsReadOnly();
+        TestCameraInventoryOverflowRaceAndUnknownAreContained();
         Console.WriteLine("PASS: " + assertions + " adapter/selection/lifecycle/report assertions");
         return 0;
     }

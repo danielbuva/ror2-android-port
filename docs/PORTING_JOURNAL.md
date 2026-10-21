@@ -25203,3 +25203,55 @@ scene/editor roots, accepted-game compilation/content/shaders, ordinary app
 hosting, permitted tool delivery and matched performance remain open. Revisit
 on any source/tool/input/profile change or a downstream consumer difference.
 Route A and the desktop owner-build fallback stay fixed.
+
+## J922 — Bound the selected source camera's next render observations
+
+Date: 2026-10-21. Hypothesis: J917's severe selected-camera artifacts need an
+actual camera-stack and projection observation before changing authored visual
+behavior. J919's frozen player remains a separate device experiment; this
+checkpoint changes the next player source only.
+
+Consult the camera/animation section of `docs/community-prior-art.md` and pinned
+DebugToolkit `Code/Util.cs` at `d1e2f0aa4b8ac4747547db0fcd87344953432f06`:
+its typed body/target observation technique helps identify the actual selected
+character. It does not resolve Android rendering or camera stacking. No community
+implementation is copied. Local source-prefab inspection suggests the cloned
+camera retains its source clear and clipping settings, but a hypothesis about
+erasing earlier world passes is not accepted without a live stack observation.
+
+Extend the existing named `AndroidNativeSourceSkinLifecycle` observer rather than
+add gameplay or rendering behavior. At first selected-skin/camera readiness,
+cache at most 12 camera records and 32 renderer records, camera clear/depth/mask,
+clipping, transform, projection and eight-corner screen bounds. Overflow, camera
+count races and failed reads retain incomplete/unknown observations and the
+exact owned camera. Publish no non-finite bounds. Material names sample only the
+pre-existing first shared material and shader, each limited to 96 characters;
+total slot count and later names remain unknown. The scalar/string cache keeps
+its first frame/realtime through disposal and has no static/object-reference
+retention. It does not change clear flags, visibility, material assignment,
+camera ordering, animation or input.
+
+Root rejects an earlier full-material-list draft because a cap applied after
+`GetSharedMaterials` still allocates the complete list. The corrected private
+R7 candidate independently reviews GO, then Root integrates it after verifying
+all tracked preimages. Remove draft-only test source overrides; the public test
+compiles the actual tracked owner. Root also clears the temporary camera census
+array in `finally` after copying scalars, with an added retention regression.
+Both host tests pass: 74 synthetic
+lifecycle/report assertions and a separate compilation against the exact pinned
+Unity CoreModule. Compiler-dependent tests skip when that runtime is unavailable;
+Ruff passes. No Unity build or device rendering result is claimed by this entry.
+
+Private candidate/review evidence is under
+`work/coordination/original-camera-visual-next/r7/` and
+`work/coordination/original-camera-visual-review/r2/`; final review SHA-256 is
+`f86b9302f3e8adceb07004d2f0428b93d53ea7f6015a21e1a4aa9723afa97c54`.
+The scratch-release integration addendum also reviews GO, SHA-256
+`ca9a71ddeef505f46da39ac9dcb4155b00d49d60aef7c0d8f0ef93fbb8f33e86`.
+Refresh the camera recipe's authored lifecycle hash and record its public-content
+audit in `recipe/README.md`. This changes rebuild-staged source; replay the
+committed runtime staging/recipe before the next build. Exact game/API transform
+outputs and default-off behavior remain unchanged. Next acceptance needs the
+new player, both standard checks, bounded selected-camera evidence and a capture
+whose timing is recorded separately. The cached first-ready frame must not be
+presented as matching an earlier or later screenshot. Visual parity remains open.

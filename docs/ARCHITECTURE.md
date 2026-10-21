@@ -2556,6 +2556,21 @@ Optional field resolution is independent of camera admission. Typed known flags
 and bounded errors retain unavailable observations as unknown; capture invokes
 no callback and does not change camera or target state.
 
+`AndroidNativeSourceSkinLifecycle` also owns one cached render-evidence snapshot
+at the first ready selected-skin/camera observation. It records at most 12 camera
+records and 32 renderer records, including camera clear/depth/clip/mask settings
+and eight-corner bounds projected through the exact owned camera. Camera counts
+above capacity, count races and getter failures retain an explicitly incomplete
+owned-camera observation. Non-finite projections remain unknown. Material names
+sample only the existing first shared material and shader, bounded to 96
+characters; total slots and later names remain unknown. No full material-array
+query is introduced. The snapshot contains scalar/string data, keeps its original
+frame/realtime through later reports and survives disposal in the final report;
+it retains no Unity objects. It changes no rendering state and does not establish
+that a later screenshot represents its captured frame. The existing lifecycle
+host fixture checks these limits, and `Unity2021CameraApiCompile.cs` checks the
+pinned editor API without connecting to an editor.
+
 The current whole-catalog path restores only an exact prior camera stage result
 to its guarded 3124, 1034 or 6f96 preimage, runs the original-audio producer,
 then inserts the source-output observer after the exact 6f96 result when selected,

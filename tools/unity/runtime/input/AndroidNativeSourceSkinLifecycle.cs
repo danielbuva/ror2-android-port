@@ -25,9 +25,41 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
     {
         public int index, instanceId, layer, defaultShadowCastingMode, materialSlotCount, sampledMaterialCount, sampledNullMaterialSlots;
         public string rendererType, rendererName, meshIdentity, rendererRecordMaterialIdentity;
-        public bool exists, active, enabled, visible, ignoreOverlays, materialsTruncated, materialSlotCountKnown;
+        public bool exists, active, enabled, visible, ignoreOverlays, materialsTruncated, sampledNamesTruncated, materialSlotCountKnown;
         public Vector3 boundsCenter, boundsExtents;
         public string[] materialIdentities;
+        public bool screenBoundsKnown, crossesNearClip, hasBehindCameraCorner;
+        public float screenMinX, screenMinY, screenMaxX, screenMaxY, viewMinZ, viewMaxZ;
+        public int sampledNamedMaterialCount;
+        public string[] sampledMaterialNames, sampledShaderNames;
+    }
+    [Serializable]
+    public sealed class VisualCameraSnapshot
+    {
+        public int instanceId, clearFlags, cullingMask, targetDisplay;
+        public bool exists, ownedSourceCamera, active, enabled, orthographic, targetTexturePresent, scalarValuesFinite;
+        public float depth, nearClip, farClip, fieldOfView, rectX, rectY, rectWidth, rectHeight;
+        public Vector3 position;
+        public Quaternion rotation;
+    }
+    [Serializable]
+    public sealed class VisualRenderEvidence
+    {
+        public int frame, observedCameraCount, capturedCameraCount, omittedCameraCount;
+        public int observedRendererCount, capturedRendererCount, omittedRendererCount;
+        public float realtime;
+        public bool cameraInventoryKnown, cameraInventoryTruncated;
+        public VisualCameraSnapshot[] cameras;
+        public VisualRenderEvidenceRenderer[] renderers;
+    }
+    [Serializable]
+    public sealed class VisualRenderEvidenceRenderer
+    {
+        public int index, instanceId, materialSlotCount, sampledMaterialCount, sampledNullMaterialSlots, sampledNamedMaterialCount;
+        public bool boundsKnown, screenBoundsKnown, crossesNearClip, hasBehindCameraCorner, materialsTruncated, sampledNamesTruncated;
+        public Vector3 boundsCenter, boundsExtents;
+        public float screenMinX, screenMinY, screenMaxX, screenMaxY, viewMinZ, viewMaxZ;
+        public string[] materialNames, shaderNames;
     }
     [Serializable]
     public sealed class VisualCameraRigSnapshot
@@ -56,6 +88,8 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
         public int observedCameraRigCount, capturedCameraRigCount, omittedCameraRigCount, capturedMatchingBodyRigCount;
         public bool cameraRigInventoryComplete;
         public VisualCameraRigSnapshot[] cameraRigs;
+        public VisualRenderEvidence renderEvidence;
+        [NonSerialized] public VisualCameraSnapshot[] pendingRenderCameras;
         public float realtime;
         public bool captured, modelExists, modelActive, modelEnabled, forceUpdate;
         public bool cameraExists, cameraActive, cameraEnabled, cameraHasSceneCamera, sceneCameraEnabled, cameraHasRig;
@@ -86,7 +120,11 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
     }
     const int MaxVisualRendererRecords = 32;
     const int MaxVisualMaterialSlots = 8;
+    const int MaxRenderCameras = 12;
     int visualCaptureSequence;
+    bool renderEvidenceCaptured;
+    VisualRenderEvidence cachedRenderEvidence;
+    readonly Camera[] renderCameraScratch = new Camera[MaxRenderCameras];
     Report report;
 
     CharacterModel model;
@@ -274,6 +312,7 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
         // destroyed native object or an exceptional Unity getter must remain a
         // serializable diagnostic failure, never escape this observer.
         report.visual = snapshot;
+        snapshot.renderEvidence = cachedRenderEvidence;
         snapshot.originalWwiseCameraListener = OriginalWwiseCameraListenerContract.CaptureSnapshot(null);
         snapshot.captureSequence = ++visualCaptureSequence;
         try
@@ -410,6 +449,13 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
             snapshot.capturedRendererCount = count;
             snapshot.omittedRendererCount = Math.Max(0, snapshot.rendererRecordCount - count);
             snapshot.renderers = new VisualRendererSnapshot[count];
+            bool captureRenderEvidenceNow = !renderEvidenceCaptured && NativeSelectedSkinReady && ownedCamera &&
+                                           nativeCameraOwner != null && nativeCameraOwner.ready;
+            if (captureRenderEvidenceNow)
+            {
+                try { CaptureRenderCameraStack(snapshot, ownedCamera); }
+                finally { Array.Clear(renderCameraScratch, 0, renderCameraScratch.Length); }
+            }
             for (int i = 0; i < count; i++)
             {
                 var renderer = records[i].renderer;
@@ -447,12 +493,25 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
                 item.materialSlotCount = -1;
                 item.materialSlotCountKnown = false;
                 item.materialsTruncated = true;
-                var material = renderer.sharedMaterial;
-                item.sampledMaterialCount = material ? 1 : 0;
-                item.sampledNullMaterialSlots = 0;
-                item.materialIdentities = material
-                    ? new[] { ShortText(Identity(material) + "|" + (material.shader ? material.shader.name : "<null-shader>"), 192) }
-                    : Array.Empty<string>();
+                if (captureRenderEvidenceNow)
+                    CaptureFirstRendererMaterial(item, renderer);
+                else
+                {
+                    var material = renderer.sharedMaterial;
+                    item.sampledMaterialCount = material ? 1 : 0;
+                    item.sampledNullMaterialSlots = 0;
+                    item.materialIdentities = material
+                        ? new[] { ShortText(Identity(material) + "|" + (material.shader ? material.shader.name : "<null-shader>"), 192) }
+                        : Array.Empty<string>();
+                }
+                if (captureRenderEvidenceNow && ownedCamera)
+                    CaptureRendererProjection(item, ownedCamera, bounds);
+            }
+            if (captureRenderEvidenceNow)
+            {
+                cachedRenderEvidence = BuildRenderEvidence(snapshot);
+                renderEvidenceCaptured = cachedRenderEvidence != null;
+                snapshot.renderEvidence = cachedRenderEvidence;
             }
             snapshot.captured = true;
         }
@@ -463,6 +522,248 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
         }
         report.visual = snapshot;
     }
+
+    void CaptureRenderCameraStack(VisualSnapshot snapshot, Camera ownedCamera)
+    {
+        int observed;
+        try
+        {
+            observed = Camera.allCamerasCount;
+        }
+        catch
+        {
+            CaptureOwnedCameraOnly(snapshot, ownedCamera, -1);
+            return;
+        }
+
+        // Unity 2021.3 validates GetAllCameras buffer length against the live
+        // allCamerasCount and throws when it is too small. Never request a
+        // truncated copy: over-cap inventories are explicitly unknown and the
+        // exact owned camera is retained as a one-record diagnostic.
+        if (observed < 0 || observed > MaxRenderCameras)
+        {
+            CaptureOwnedCameraOnly(snapshot, ownedCamera, observed);
+            return;
+        }
+
+        int copied;
+        try
+        {
+            copied = Camera.GetAllCameras(renderCameraScratch);
+        }
+        catch
+        {
+            // Count can grow after the first read. Treat this as a race, keep
+            // the exact owned camera, and continue renderer projection.
+            CaptureOwnedCameraOnly(snapshot, ownedCamera, observed, false);
+            return;
+        }
+
+        if (copied != observed || copied < 0 || copied > MaxRenderCameras)
+        {
+            CaptureOwnedCameraOnly(snapshot, ownedCamera, observed, false);
+            return;
+        }
+
+        bool ownedPresent = false;
+        for (int i = 0; i < copied; i++)
+            if (renderCameraScratch[i] == ownedCamera)
+                ownedPresent = true;
+        if (!ownedPresent && ownedCamera && ownedCamera.isActiveAndEnabled)
+        {
+            // A stable active-camera census that omits its exact enabled owner
+            // is inconsistent. Avoid presenting a partial stack as complete.
+            CaptureOwnedCameraOnly(snapshot, ownedCamera, observed, false);
+            return;
+        }
+
+        int outputCount = copied + (!ownedPresent && ownedCamera ? 1 : 0);
+        bool replaceLastWithOwned = outputCount > MaxRenderCameras;
+        if (replaceLastWithOwned)
+            outputCount = MaxRenderCameras;
+        snapshot.pendingRenderCameras = new VisualCameraSnapshot[outputCount];
+        for (int i = 0; i < outputCount; i++)
+        {
+            Camera camera = replaceLastWithOwned && i == outputCount - 1
+                ? ownedCamera
+                : i < copied ? renderCameraScratch[i] : ownedCamera;
+            snapshot.pendingRenderCameras[i] = CaptureCamera(camera, camera == ownedCamera);
+        }
+        pendingCameraCount = observed;
+        pendingCapturedCameraCount = outputCount;
+        pendingOmittedCameraCount = Math.Max(0, observed - copied) + (replaceLastWithOwned ? 1 : 0);
+        pendingCameraInventoryKnown = true;
+        pendingCameraInventoryTruncated = pendingOmittedCameraCount > 0;
+    }
+
+    int pendingCameraCount, pendingCapturedCameraCount, pendingOmittedCameraCount;
+    bool pendingCameraInventoryKnown, pendingCameraInventoryTruncated;
+
+    void CaptureOwnedCameraOnly(VisualSnapshot snapshot, Camera ownedCamera, int observed, bool omittedCountKnown = true)
+    {
+        snapshot.pendingRenderCameras = ownedCamera
+            ? new[] { CaptureCamera(ownedCamera, true) }
+            : Array.Empty<VisualCameraSnapshot>();
+        pendingCameraCount = observed;
+        pendingCapturedCameraCount = snapshot.pendingRenderCameras.Length;
+        pendingOmittedCameraCount = omittedCountKnown && observed >= 0
+            ? Math.Max(0, observed - (ownedCamera && ownedCamera.isActiveAndEnabled ? 1 : 0))
+            : -1;
+        pendingCameraInventoryKnown = false;
+        pendingCameraInventoryTruncated = true;
+    }
+
+    VisualRenderEvidence BuildRenderEvidence(VisualSnapshot snapshot)
+    {
+        var evidence = new VisualRenderEvidence
+        {
+            frame = snapshot.frame,
+            realtime = snapshot.realtime,
+            observedCameraCount = pendingCameraCount,
+            capturedCameraCount = pendingCapturedCameraCount,
+            omittedCameraCount = pendingOmittedCameraCount,
+            observedRendererCount = snapshot.rendererRecordCount,
+            capturedRendererCount = snapshot.capturedRendererCount,
+            omittedRendererCount = snapshot.omittedRendererCount,
+            cameraInventoryKnown = pendingCameraInventoryKnown,
+            cameraInventoryTruncated = pendingCameraInventoryTruncated,
+            cameras = snapshot.pendingRenderCameras,
+            renderers = CloneRenderers(snapshot.renderers)
+        };
+        return evidence;
+    }
+
+    static VisualRenderEvidenceRenderer[] CloneRenderers(VisualRendererSnapshot[] source)
+    {
+        if (source == null)
+            return null;
+        var copy = new VisualRenderEvidenceRenderer[source.Length];
+        for (int i = 0; i < source.Length; i++)
+        {
+            var item = source[i];
+            if (item == null)
+                continue;
+            copy[i] = new VisualRenderEvidenceRenderer
+            {
+                index = item.index,
+                instanceId = item.instanceId,
+                materialSlotCount = item.materialSlotCount,
+                sampledMaterialCount = item.sampledMaterialCount,
+                sampledNullMaterialSlots = item.sampledNullMaterialSlots,
+                sampledNamedMaterialCount = item.sampledNamedMaterialCount,
+                boundsKnown = item.exists,
+                materialsTruncated = item.materialsTruncated,
+                sampledNamesTruncated = item.sampledNamesTruncated,
+                boundsCenter = item.boundsCenter,
+                boundsExtents = item.boundsExtents,
+                screenBoundsKnown = item.screenBoundsKnown,
+                crossesNearClip = item.crossesNearClip,
+                hasBehindCameraCorner = item.hasBehindCameraCorner,
+                screenMinX = item.screenMinX,
+                screenMinY = item.screenMinY,
+                screenMaxX = item.screenMaxX,
+                screenMaxY = item.screenMaxY,
+                viewMinZ = item.viewMinZ,
+                viewMaxZ = item.viewMaxZ,
+                materialNames = item.sampledMaterialNames != null ? (string[])item.sampledMaterialNames.Clone() : null,
+                shaderNames = item.sampledShaderNames != null ? (string[])item.sampledShaderNames.Clone() : null
+            };
+        }
+        return copy;
+    }
+
+    static VisualCameraSnapshot CaptureCamera(Camera camera, bool ownedSourceCamera)
+    {
+        if (!camera)
+            return new VisualCameraSnapshot();
+        var rect = camera.rect;
+        return new VisualCameraSnapshot
+        {
+            exists = true,
+            instanceId = camera.GetInstanceID(),
+            ownedSourceCamera = ownedSourceCamera,
+            active = camera.gameObject.activeInHierarchy,
+            enabled = camera.isActiveAndEnabled,
+            depth = camera.depth,
+            clearFlags = (int)camera.clearFlags,
+            cullingMask = camera.cullingMask,
+            nearClip = camera.nearClipPlane,
+            farClip = camera.farClipPlane,
+            fieldOfView = camera.fieldOfView,
+            orthographic = camera.orthographic,
+            rectX = rect.x,
+            rectY = rect.y,
+            rectWidth = rect.width,
+            rectHeight = rect.height,
+            targetDisplay = camera.targetDisplay,
+            targetTexturePresent = camera.targetTexture,
+            position = camera.transform.position,
+            rotation = camera.transform.rotation,
+            scalarValuesFinite = Finite(camera.depth) && Finite(camera.nearClipPlane) && Finite(camera.farClipPlane) &&
+                                 Finite(camera.fieldOfView) && Finite(rect.x) && Finite(rect.y) &&
+                                 Finite(rect.width) && Finite(rect.height) &&
+                                 Finite(camera.transform.position.x) && Finite(camera.transform.position.y) &&
+                                 Finite(camera.transform.position.z) && Finite(camera.transform.rotation.x) &&
+                                 Finite(camera.transform.rotation.y) && Finite(camera.transform.rotation.z) &&
+                                 Finite(camera.transform.rotation.w)
+        };
+    }
+
+    void CaptureFirstRendererMaterial(VisualRendererSnapshot item, Renderer renderer)
+    {
+        // Preserve the lifecycle report's existing first-shared-material
+        // observation. Do not enumerate a renderer's full material array here:
+        // Unity exposes no slot count that is safe to query without materializing
+        // the complete list, so the total and all later names remain unknown.
+        var material = renderer.sharedMaterial;
+        item.materialSlotCount = -1;
+        item.materialSlotCountKnown = false;
+        item.materialsTruncated = true;
+        item.sampledMaterialCount = material ? 1 : 0;
+        item.sampledNullMaterialSlots = 0;
+        item.sampledNamedMaterialCount = material ? 1 : 0;
+        item.sampledNamesTruncated = true;
+        item.materialIdentities = material
+            ? new[] { ShortText(Identity(material) + "|" + (material.shader ? material.shader.name : "<null-shader>"), 192) }
+            : Array.Empty<string>();
+        item.sampledMaterialNames = material ? new[] { ShortText(material.name, 96) } : Array.Empty<string>();
+        item.sampledShaderNames = material && material.shader ? new[] { ShortText(material.shader.name, 96) } : Array.Empty<string>();
+    }
+
+    static void CaptureRendererProjection(VisualRendererSnapshot item, Camera camera, Bounds bounds)
+    {
+        Vector3 min = bounds.min;
+        Vector3 max = bounds.max;
+        float minX = float.PositiveInfinity, minY = float.PositiveInfinity;
+        float maxX = float.NegativeInfinity, maxY = float.NegativeInfinity;
+        float minZ = float.PositiveInfinity, maxZ = float.NegativeInfinity;
+        for (int i = 0; i < 8; i++)
+        {
+            Vector3 corner = new Vector3((i & 1) == 0 ? min.x : max.x,
+                                         (i & 2) == 0 ? min.y : max.y,
+                                         (i & 4) == 0 ? min.z : max.z);
+            Vector3 projected = camera.WorldToScreenPoint(corner);
+            if (!Finite(projected.x) || !Finite(projected.y) || !Finite(projected.z))
+                return;
+            minX = Math.Min(minX, projected.x);
+            minY = Math.Min(minY, projected.y);
+            maxX = Math.Max(maxX, projected.x);
+            maxY = Math.Max(maxY, projected.y);
+            minZ = Math.Min(minZ, projected.z);
+            maxZ = Math.Max(maxZ, projected.z);
+        }
+        item.screenMinX = minX;
+        item.screenMinY = minY;
+        item.screenMaxX = maxX;
+        item.screenMaxY = maxY;
+        item.viewMinZ = minZ;
+        item.viewMaxZ = maxZ;
+        item.hasBehindCameraCorner = minZ <= 0f;
+        item.crossesNearClip = minZ < camera.nearClipPlane && maxZ >= camera.nearClipPlane;
+        item.screenBoundsKnown = true;
+    }
+
+    static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
 
     static void CaptureLocalCameraContext(VisualSnapshot snapshot, CharacterBody selectedBody)
     {

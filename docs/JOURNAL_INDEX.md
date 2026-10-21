@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J922](PORTING_JOURNAL.md#j922--bound-the-selected-source-cameras-next-render-observations) | 2026-10-21 | Bound the selected source camera's next render observations | Date: 2026-10-21. |
 | [J920](PORTING_JOURNAL.md#j920--convert-the-android-compiled-and-stripped-fixture-without-relaxing-replay-gates) | 2026-10-21 | Convert the Android-compiled and stripped fixture without relaxing replay gates | Date: 2026-10-21. |
 | [J918](PORTING_JOURNAL.md#j918--bind-passive-pcm-capture-to-the-owned-original-music-output) | 2026-10-21 | Bind passive PCM capture to the owned original music output | Date: 2026-10-21. |
 | [J917](PORTING_JOURNAL.md#j917--qualify-the-late-bound-camera-player-and-preserve-its-visual-failure) | 2026-10-21 | Qualify the late-bound camera player and preserve its visual failure | Date: 2026-10-21. |

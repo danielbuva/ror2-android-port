@@ -15,10 +15,11 @@ CSC = EDITOR / "MonoBleedingEdge/lib/mono/msbuild/Current/bin/Roslyn/csc.exe"
 OWNER = REPO / "tools/unity/runtime/input/AndroidNativeSourceSkinLifecycle.cs"
 DISPATCH = REPO / "tools/unity/runtime/input/AndroidNativeItemDisplayDispatch.cs"
 POLICY = REPO / "tools/unity/runtime/input/AndroidNativeSkinActivationPolicy.cs"
+LISTENER_CONTRACT = REPO / "tools/unity/runtime/input/OriginalWwiseCameraListenerContract.cs"
 STUBS = FIXTURES / "native_source_skin_stubs.cs"
 ASSERTIONS = FIXTURES / "native_source_skin_assertions.cs"
 CAMERA_OWNER_CONTRACT = FIXTURES / "native_source_skin_camera_owner_contract.cs"
-LISTENER_CONTRACT = REPO / "tools/unity/runtime/input/OriginalWwiseCameraListenerContract.cs"
+CORE = EDITOR / "Managed/UnityEngine/UnityEngine.CoreModule.dll"
 
 
 class NativeSourceSkinLifecycleHostTests(unittest.TestCase):
@@ -53,7 +54,24 @@ class NativeSourceSkinLifecycleHostTests(unittest.TestCase):
             self.assertEqual(compiled.returncode, 0, compiled.stdout + compiled.stderr)
             ran = subprocess.run([str(MONO), str(executable)], cwd=temp_path, capture_output=True, text=True)
             self.assertEqual(ran.returncode, 0, ran.stdout + ran.stderr)
-            self.assertIn("PASS: 66 adapter/selection/lifecycle/report assertions", ran.stdout)
+            self.assertIn("PASS: 74 adapter/selection/lifecycle/report assertions", ran.stdout)
+
+    def test_exact_pinned_camera_api_compiles_when_coremodule_is_available(self) -> None:
+        if not MONO.is_file() or not CSC.is_file():
+            self.skipTest("pinned Unity 2021.3.45f2 Mono/Roslyn host compiler is unavailable")
+        if not CORE.is_file():
+            self.skipTest("pinned Unity 2021.3.45f2 CoreModule is unavailable")
+        fixture = FIXTURES / "Unity2021CameraApiCompile.cs"
+        self.assertTrue(fixture.is_file(), f"missing exact Unity Camera API fixture: {fixture}")
+        with tempfile.TemporaryDirectory(prefix="native-source-skin-camera-api-") as temp:
+            output = Path(temp) / "UnityCameraApi.dll"
+            compiled = subprocess.run(
+                [str(MONO), str(CSC), "-nologo", "-langversion:latest", "-target:library", f"-out:{output}", f"-r:{CORE}", str(fixture)],
+                cwd=temp,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(compiled.returncode, 0, compiled.stdout + compiled.stderr)
 
 
 if __name__ == "__main__":

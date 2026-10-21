@@ -1560,3 +1560,13 @@ redistributing middleware or game content. Rebuild staging must replay these
 committed producer/transform sources. J917's camera screenshot failure and
 J918's untested Android capture remain explicit; neither host tests nor library
 static audit qualify audio playback, rendering parity or physical audibility.
+
+## Selected-skin render observer audit (J922, 2026-10-21)
+
+Refresh only `native-view-camera-transform.json`'s authored skin-lifecycle source
+hash after adding bounded, read-only camera/renderer observations. Existing exact
+game/API/profile/output identities and default-off admission remain unchanged.
+The owner, synthetic host contracts and compile-only Unity Camera API fixture
+are independently authored; no game, SDK or community implementation, generated
+asset, private device/storage identity or binary is published. The recipe still
+requires legitimate local input and reproduces the staged authored source.
