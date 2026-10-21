@@ -23738,3 +23738,121 @@ ancestry when integrating this checkpoint. Keep Route A and the desktop
 fallback. Next gates are state/target-dependent manager serialization, scene
 object retention and complete independent usage/scene-label/root production;
 this metadata qualification establishes no gameplay or installer readiness.
+
+## J897 — Preserve the camera player's IL2CPP exception-handler failure
+
+Date: 2026-10-21. Hypothesis: J896's regenerated catalog allows J892's
+owned source camera lifecycle to reach a reproducible player build. This is
+a build qualification, not camera activation or original shader parity.
+
+**Change and controls.** Build committed, synchronized source
+`95b1a43fdfdff6d22f4ccc8add2de4c2d7a9f8bc`, preserving 384 authored input
+hashes before dispatch. Doctor and preflight pass. The pinned lab editor is
+compiled and idle before the single serialized full build. Retain J896's
+prepared catalog and exact-editor host result; no cache reset, shader rewrite
+or source mutation occurs during the build. J892's source/API prior art and
+ownership boundaries remain applicable.
+
+**Terminal evidence and first failure.** Request
+`20261021T165909.550313Z-dc18d48965fd45c195b51bb7e566cdcd` terminates after
+719.856544 s with three reported build errors. The first substantive failure
+is IL2CPP's `System.InvalidOperationException: Stack empty` in the authored
+`AndroidNativeSourceViewOnlyRigMarker.TryPumpOriginalEarlyUpdate` method.
+The failed stripped assembly's SHA-256 is
+`2c41051e93e7398457c2ab32dd7005c018f9055c55637dfd7e1a4dfe2f2dde97`.
+There is no new accepted APK, symbol package, installation or default check.
+Earlier player logs and the retained installed APK do not qualify this request.
+
+Private driver, source hashes, stdout/stderr, terminal result and a read-only
+editor process sample remain under
+`work/coordination/codex-original-game-audio-build-root/r14/`. The exact terminal
+result has SHA-256
+`5c1d66c87187ecb946f85f9d8bc777903c1cbc00a5f7fc618839ebb3a809435a`.
+The editor sample during the long content phase observes LZ4HC archive
+compression; the editor is not stopped or restarted. The shared build mutex
+records normal release at the terminal.
+
+**Classification.** The marker has a catch/rethrow path. Its authored Cecil
+copier clones instructions and locals but omits exception-handler records.
+Inspection of the failed stripped method confirms the catch's `pop` and
+`rethrow` instructions have no corresponding handler entry. The catch's
+implicit exception stack is therefore absent. This is an authored IL-copy
+defect, not evidence that original camera code or the bank data is incompatible.
+Revisit with mapped exception-handler boundaries/types, an independent
+source-to-copy handler comparison and a mutant that removes that metadata.
+Refresh only the affected transform/profile pins and preserve receipt-bound
+restoration of the failed staged output before rebuilding.
+
+**Shader limitation and disposition.** The three prerequisite shader roots
+and Sobel bytes are accepted export placeholders, not recovered original GPU
+programs. The accepted D3D11 bundles retain program and binding metadata,
+but faithful Android replacements for these four effects are not established.
+Offline assessments remain under
+`work/coordination/original-camera-shader-parity-next/r1/` and
+`work/coordination/original-camera-shader-recovery-next/r1/`. Typed lookup and
+import success cannot qualify their rendering. A later selected camera run
+must distinguish lifecycle/context evidence from effect fidelity. The installed
+J891 diagnostic fae79734 and accepted J850 baseline f1550ce0 are unchanged.
+
+## J898 — Observe Siren registration and five ordered navigation pairs without a boss start
+
+Date: 2026-10-21. Hypothesis: after J886's route-writer correction and a bounded
+wait for the original encounter's initialization, the existing diagnostic can
+observe stable navigation and reach the native encounter. J894's immediate
+preregistration stop is not evidence of native encounter failure.
+
+**Boundary and prior art.** Reuse J886's native navigation/input contract and
+pinned community observation knowledge. Inspect the accepted source lifecycle:
+the encounter starts uninitialized and its Listening state registers eggs
+later. The private R8 host plan allows only that exact early pending state,
+with the same source identities and twelve egg slots, before continuing.
+It does not change the APK, gameplay targeting, native encounter state or
+source-stage budget. Forty-eight host checks and independent plan review pass.
+
+**Frozen player and route.** Use only J891's diagnostic APK
+`fae79734107d07d7c9a8af838961ccf82b4e6fa530e4f1a6238b17eda3a44b1d`,
+its frozen payload and both previously passing standard checks. The authored
+Huntress diagnostic uses seed 2, free play, invincibility, increased damage
+and fast charge; movement/jump boosts are off. It follows Lakes, Goolake,
+Wisp Graveyard and Siren's Call through exactly three exits. This assisted
+route is not ordinary player completion. There is no fourth exit or Moon.
+
+The run observes native Listening, all twelve registered source eggs and an
+armed continuation. It reaches the existing 180 s source-stage limit without
+both native encounter start and exact boss identity. The last world clock is
+504.4799194 s, source entry is 324.4888306 s and observed stage age is
+179.9910889 s. The first failure is
+`siren-native-encounter-continuation-timeout`; runtime acceptance remains false.
+No native boss completion, reward or damage result is accepted.
+
+**Navigation evidence.** Five complete pairs have one request identity, ordered
+writer/read ticks, available path requests/nodes/waypoints, finite increasing
+path ages, matching requested/applied movement and changing body positions.
+The grounded movement state is the original GenericCharacterMain. The recorder
+stops when the selected egg changes; remaining allocated slots are empty.
+These pairs support the narrow ordering/path-availability observation but fail
+the planned eight-pair stable-target contract. Do not freeze gameplay selection
+to satisfy the recorder. A separate adapter stop reports an occluded source aim.
+
+The native target observer records 16,051 samples: 16,049 null and two destroyed
+references, with no identified target. All 8,419 primary requests report an
+unknown native target. Destroyed references cannot be attributed to eggs.
+Native egg damage and destroyed-count causality remain unqualified. The existing
+eligibility witness takes no snapshots: it first arms on an identified-target
+mismatch, so this all-unknown observation never reaches that gate. Next work
+is a bounded observation of the unknown-target eligibility path, preserving
+selection, movement and native targeting semantics.
+
+**Evidence and teardown.** Preserve the complete attempt under
+`work/coordination/siren-after-route-fix-device-plan/r8/attempts/` and offline
+analysis under `work/coordination/siren-r8-observation-analysis/r1/`. The terminal
+result SHA-256 is
+`d889109060ba8ac87a628a63d93432d6e4912b6c30aded90f880231bf57e3b24`.
+Root's separate qualification and post-run queries are under
+`work/coordination/codex-siren-r8-device-root/r1/`; qualification SHA-256 is
+`a64c53ff0a21f8460538055742172cd22d9cfd9d9dd8b2390143d74864ddd8d2`.
+Applied runs remain 13, earned/available unlock counts remain one, and no run
+result is applied. Selector removal, process absence, installed APK bytes and
+display sleep are independently checked; cleanup reports no errors. This is
+checked process cleanup, not proof of natural source-owner teardown. No other
+device is used. The installed diagnostic and accepted baseline are unchanged.

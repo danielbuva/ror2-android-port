@@ -10,6 +10,8 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J898](PORTING_JOURNAL.md#j898--observe-siren-registration-and-five-ordered-navigation-pairs-without-a-boss-start) | 2026-10-21 | Observe Siren registration and five ordered navigation pairs without a boss start | Date: 2026-10-21. |
+| [J897](PORTING_JOURNAL.md#j897--preserve-the-camera-players-il2cpp-exception-handler-failure) | 2026-10-21 | Preserve the camera player's IL2CPP exception-handler failure | Date: 2026-10-21. |
 | [J895](PORTING_JOURNAL.md#j895--read-sdk-manager-registration-declarations-on-android-and-preserve-retention-boundaries) | 2026-10-21 | Read SDK manager registration declarations on Android and preserve retention boundaries | Date: 2026-10-21. |
 | [J896](PORTING_JOURNAL.md#j896--reject-the-stale-prepared-camera-catalog-and-regenerate-its-exact-shader-roots) | 2026-10-21 | Reject the stale prepared camera catalog and regenerate its exact shader roots | Date: 2026-10-21. |
 | [J892](PORTING_JOURNAL.md#j892--restore-owned-original-camera-prerequisites-and-update-lifecycle) | 2026-10-21 | Restore owned original camera prerequisites and update lifecycle | Date: 2026-10-21. |
