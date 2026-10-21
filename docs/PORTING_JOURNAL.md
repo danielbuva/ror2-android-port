@@ -24078,3 +24078,94 @@ latest player verified by both checks; accepted baseline f1550ce0 remains the
 rollback. Camera activation, real target/context, rendering, animation parity
 and natural teardown still require the selected lifecycle run. J899's later
 SDK/compiler metadata changes no runtime source in this frozen player.
+
+## J902 — Compile the authored Unity fixture with SDK/package-derived references on Android
+
+Date: 2026-10-21. Hypothesis: J899's exact SDK compiler can compile the existing
+public Unity API fixture on Android once its reference closure is produced from
+SDK/package data, without consuming a captured compiler response. Keep Route A,
+the Android renderer, the working game and the desktop fallback fixed.
+
+**Prior knowledge and scope.** Reuse J862's pinned SDK module/package policy
+and J899's compiler/runtime/configuration identities. The existing
+`ContentFixture.cs` is public authored source, containing no conditional
+directives or game code. Its SDK oracle has no custom packages, generators or
+callbacks. The comparison is the retained J893 Android-development script
+compilation; its response is an oracle only, never a generator input. SDK
+component/license observations remain bounded as in J899; this does not clear
+Unity reference libraries or a combined tool bundle for distribution.
+
+**Owner and input production.** `scripts/lab/phone_unity_compile.py` stages a
+fresh guarded attempt with 233 hash-bound inputs: six unchanged compiler/license
+components, 186 supplied SDK reference files, builtin module/package metadata,
+the explicit four-package manifest, authored helpers and the public fixture.
+The initial read-only all-references candidate has 29 extra target modules
+relative to the oracle and is not accepted as that closure. Reuse the existing
+module policy to exclude disabled builtin modules. On each host, the runner
+generates 157 ordered references from the supplied files. Every path, order and
+hash matches the independent SDK response. No captured reference array, policy
+output, player assembly, scene report or native type database is staged.
+
+SDK/reference/package membership and hashes are pinned. Source must be committed;
+unknown inputs, links, foreign files and replay refuse. Authored sibling helpers
+are hash-checked before execution. The original compiler runtime configuration
+is unchanged. The fixed fixture profile specifies C# 9, AnyCPU, deterministic
+portable-debug development output and virtual source paths. It supplies no
+general player define/generator/custom-package producer. Generated references
+are not serialized native roots or the editor's TypeDB.
+
+**First failure and correction.** Source
+`c7d219934ac930cc9eeaebff7cd440d3cecada82` passes direct host API tests, but its
+first retained standalone invocation refuses before compilation: helper imports
+create `__pycache__` files, violating exact stage membership. Preserve that
+stage, exception and bytecode. Source
+`e9eae1da652221709db7d224397c4757f5d190d3` disables bytecode writes while loading
+the verified helpers and restores the caller's setting afterward. Add a real
+isolated subprocess regression and change the optional SDK test to execute the
+standalone runner under Python `-I -S`. Eight focused tests now pass, including
+two fresh standalone SDK compilations and deterministic output comparison.
+
+**Android result.** Two fresh Alpha phone stages independently generate the
+same reference report and compile successfully with the qualified .NET 8.0.32
+build-tool host; the desktop control uses the SDK .NET 6.0.21 host. Reference
+report SHA-256 is
+`ea67c7b6c6c839ae5b63b85f9654a86badb68065a2512dbda080e451fba314f4`
+on both hosts. All three Android compiler outputs repeat exactly across fresh
+stages. Cross-host comparison remains deliberately separate:
+
+| Output | SDK desktop SHA-256 | Android SHA-256 |
+| --- | --- | --- |
+| Implementation DLL | `2e42e41d2b54d24ff9a2a2b3ad0d2d60cf1ffd1ba3115f727861faafc89299c8` | `d34d7a7341d8cbf8a1a0f29f452bafe1839d400cfd5c8351e9a9378fe68693dd` |
+| Reference DLL | `d912f592d09ad4e47f64c85310dd2d3db90db31586f93ea298d3e62a64220e66` | `d912f592d09ad4e47f64c85310dd2d3db90db31586f93ea298d3e62a64220e66` |
+| PDB | `5764adc55db25a5a6f9911e97e086f010e206f149aedc94839cb9d0911a454b0` | `a62e6c053cc38b692d6a3ed153b4ae2673c4f9992df7763fd51c6e92aff6d130` |
+
+The raw implementation/PDB comparison fails. Apply J899's format-aware
+in-memory diagnostic to the new outputs: only the PDB's compiler-host runtime
+option and derived content/debug identity fields differ; remaining bytes match.
+No output is modified or normalized for a build. The reference assembly's
+byte equality establishes this fixture's reference output, not executable
+behavior, general compiler equivalence or gameplay performance.
+
+**Controls and evidence.** Both Android replay attempts refuse without replacing
+inputs, output bytes, generated references or result receipts. All 233 input
+hashes and the original compiler configuration remain unchanged. Fresh device
+storage/backing/reserves pass before writes. The existing host preflight still
+refuses Alpha's missing accepted game inventory; this is no full-game build
+qualification. Ruff, staged public scan and manual authored provenance/privacy
+review pass. Private inventory candidates, selectors, source snapshot, failed
+and successful stages, raw outputs, controls and diagnostics remain under
+`work/coordination/phone-proof/managed-unity-*` and generated
+`work/rebuild/phone-managed-compile/unity-*` stages. The private proof receipt
+binds 548 artifacts, SHA-256
+`3ebb1c8e74c0150f0c89d74d4943f1a6d18da2a52a6b089e94538bd6c4006ab8`.
+SDK files, references, compiler products and raw evidence stay ignored.
+
+**Device and disposition.** No Unity editor, APK build/install, payload sync or
+game launch occurs. Alpha's owned be26c21c APK remains byte-identical, with
+process absence, selector absence and display sleep checked. Main/spare
+resources and Main's selected-camera claim are untouched. Main's J901 installed
+b0f7ae7e snapshot rows are preserved exactly. Both
+`unity_player_compilation_qualified` and `managed_game_compilation_qualified`
+remain false. Revisit downstream stripping/conversion with this newly generated
+input, then general defines/generators/packages and complete roots; content,
+shaders, app-host/tool delivery and matched gameplay benchmarks remain open.

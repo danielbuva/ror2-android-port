@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-21 after **J901/J900/J899/J898**. Diagnostic b0f7ae7e
+Last updated 2026-10-21 after **J902/J901/J900/J899**. Diagnostic b0f7ae7e
 builds and passes both standard checks after the camera marker's exception
 handler repair. It is installed on Main; process stopped, selector absent and
 display asleep are independently checked. Original music preload is observed,
@@ -8,7 +8,9 @@ but measured PCM remains zero and playback is unqualified. Source-camera
 activation, context, rendering and natural teardown remain unqualified.
 Accepted baseline stays f1550ce0. Siren's native boss start remains open after
 J898. Alpha's bounded SDK/compiler evidence remains separate from gameplay
-and general phone-build readiness.
+and general phone-build readiness. J902 adds SDK/package-derived reference
+selection and authored Unity API compilation on Android; full players remain
+unqualified.
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
@@ -21,7 +23,7 @@ content on every update. Results are recorded once in the
 | --- | --- |
 | Accepted input | Steam build 25475991, input id `6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88` |
 | Toolchain | Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan (`environment/toolchain.json`) |
-| Owner-build research | J883/J893/J895 qualify bounded SDK wrapper/scene/manager prerequisites; complete roots remain open. J899 runs the exact SDK compiler and unchanged configuration for an authored core-library fixture on Android. Android repeats its own DLL/PDB bytes; desktop/Android bytes differ with the recorded compiler-host version/debug identities. General managed game compilation, live state, target/object retention, native usage/scene labels, general policy and content/shaders remain open. SDK observations remain comparisons. Route A and the desktop fallback stay fixed. |
+| Owner-build research | J883/J893/J895 qualify bounded SDK wrapper/scene/manager prerequisites; complete roots remain open. J899 runs the SDK compiler on Android; J902 derives the restricted Unity fixture reference closure and compiles its public source there. Generated references and reference DLL match the host; implementation DLL/PDB differ with compiler-host/debug identities. General defines/generators/packages, downstream integration, managed game compilation, live/target retention, complete roots and content/shaders remain open. Route A and the desktop fallback stay fixed. |
 | Latest device-verified APK | J901 diagnostic `b0f7ae7e2218bb5caa353eb32d2b60ac680e7183b8ec53442d193c0e8af9c45e`, source ffe3e63: full build, both standard checks and matching bootstrap post-strip inspection pass; 333 same-request pre-strip DLLs, 385 frozen authored inputs, 266 payload files and matching symbols. Original music preload passes; source-camera activation and playback remain unqualified. Accepted baseline remains J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`, source 1780ea9. |
 | Installed now | The primary gameplay device has J901 diagnostic b0f7ae7e. Installed bytes, owned placement, selector absence, stopped process and display sleep are independently checked. Audible playback is unqualified. Other devices are outside this session's current assignment; historical receipts do not establish their present state. |
 | Runtime source since verified APK | No runtime source change after ffe3e63; later J899 tooling is separate. J892/J900 camera prerequisites, update/context ownership and handler-copy repair are in b0f7ae7e, with camera activation off during both J901 controls. J889 music lifecycle and J886 Siren writer correction remain integrated. Selected camera/context/teardown, original effects, composed audio and Siren encounter acceptance remain open; queued host drafts are not installed behavior. |
