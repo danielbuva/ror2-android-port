@@ -9,7 +9,9 @@ always force-stop the app and turn the display off.
 
 import json
 import math
+import shlex
 import time
+from pathlib import PurePosixPath
 
 from common import WORK, now, read, write
 from device import Device, PACKAGE
@@ -21,6 +23,77 @@ STAGE_WORLD_SECONDS = 10
 FIRST_STAGE = "lakes"
 DEADLINE_SECONDS = 370
 DEBUG_OPTIONS = ("invincibility", "highDamage", "fastCharge", "movementBoost", "jumpBoost")
+STOP_TIMEOUT_SECONDS = 5
+
+
+def runtime_files(d, runtime):
+    """Positive directory evidence; transport failures never mean absence."""
+    names = d.sh("ls", "-1a", "--", runtime).splitlines()
+    if names.count(".") != 1 or names.count("..") != 1:
+        raise RuntimeError("Incomplete baseline runtime directory observation")
+    return set(names)
+
+
+def process_pid(d):
+    """Distinguish pidof's expected no-match from command/transport failure."""
+    script = (
+        "value=$(pidof " + shlex.quote(PACKAGE) + " 2>&1); status=$?; "
+        'if [ "$status" -eq 0 ] && [ -n "$value" ]; then printf "pid:%s\\n" "$value"; '
+        'elif [ "$status" -eq 1 ] && [ -z "$value" ]; then printf "absent\\n"; '
+        'else printf "invalid pidof observation\\n" >&2; exit 2; fi'
+    )
+    value = d.sh("sh", "-c", script)
+    if value == "absent":
+        return None
+    if value.startswith("pid:") and value[4:].isascii() and value[4:].isdigit():
+        return value[4:]
+    raise RuntimeError("Incomplete or ambiguous baseline process observation")
+
+
+def current_report(d, runtime, report_path):
+    if PurePosixPath(report_path).name not in runtime_files(d, runtime):
+        return None
+    try:
+        value = json.loads(d.sh("cat", report_path))
+    except ValueError:
+        # A live writer may be between truncation and its complete JSON write.
+        return None
+    if not isinstance(value, dict):
+        raise RuntimeError("Malformed baseline report")
+    return value
+
+
+def cleanup(d, runtime, selector):
+    """Attempt every owned teardown step, and refuse unverified cleanup."""
+    errors = []
+    result = {}
+    try:
+        d.sh("rm", "-f", selector)
+        if PurePosixPath(selector).name in runtime_files(d, runtime):
+            raise RuntimeError("Baseline selector remains after removal")
+        result["selector_absent"] = True
+    except Exception as error:
+        errors.append(str(error))
+    try:
+        d.sh("am", "force-stop", PACKAGE)
+        deadline = time.monotonic() + STOP_TIMEOUT_SECONDS
+        while process_pid(d) is not None:
+            if time.monotonic() >= deadline:
+                raise RuntimeError("Baseline process remains after force-stop")
+            time.sleep(0.2)
+        result["process_absent"] = True
+    except Exception as error:
+        errors.append(str(error))
+    try:
+        result["sleep_requested"] = bool(d.settings.get("sleep_display_when_idle", False))
+        result["display_asleep"] = d.display(False)
+        if result["sleep_requested"] and result["display_asleep"] is not True:
+            raise RuntimeError("Baseline display sleep was not verified")
+    except Exception as error:
+        errors.append(str(error))
+    if errors:
+        raise RuntimeError("Baseline cleanup failed: " + "; ".join(errors))
+    return result
 
 
 def selection(attempt, stage_exit=False):
@@ -139,7 +212,7 @@ def check_baseline(stage_exit=False):
     runtime = d.read_receipt("runtime.json")["persistentDataPath"]
     selector = runtime + "/movement-batch-selection.json"
     report_path = runtime + "/movement-batch-" + SPINE_ID + ".json"
-    if d.sh("sh", "-c", "test -e " + selector + " && echo present", check=False).strip():
+    if PurePosixPath(selector).name in runtime_files(d, runtime):
         raise RuntimeError("Existing diagnostic selector")
     write(out / "selection.json", selection(attempt, stage_exit=stage_exit))
     pid = None
@@ -147,19 +220,19 @@ def check_baseline(stage_exit=False):
     stop = "deadline"
     first = None
     last_report = None
+    operation_error = None
     began = time.monotonic()
     try:
         d.sh("rm", "-f", report_path)
         d.cmd("push", str(out / "selection.json"), selector)
         pid = d.launch()["pid"]
+        if not isinstance(pid, str) or not pid.isascii() or not pid.isdigit():
+            raise RuntimeError("Baseline launch has no unambiguous process identity")
         while time.monotonic() - began < DEADLINE_SECONDS:
-            if d.sh("pidof", PACKAGE, check=False).strip() != pid:
+            if process_pid(d) != pid:
                 stop = "process-exited"
                 break
-            try:
-                r = json.loads(d.sh("cat", report_path, check=False))
-            except ValueError:
-                r = None
+            r = current_report(d, runtime, report_path)
             if r and str(r.get("pid")) == pid:
                 last_report = r
                 phase = r.get("phase")
@@ -190,24 +263,25 @@ def check_baseline(stage_exit=False):
             time.sleep(2)
         if stage_exit:
             # End auto-input before any artifact collection can extend the run.
-            d.sh("am", "force-stop", PACKAGE, check=False)
+            d.sh("am", "force-stop", PACKAGE)
             final = last_report
         else:
-            try:
-                final = json.loads(d.sh("cat", report_path, check=False))
-            except ValueError:
-                final = None
+            final = current_report(d, runtime, report_path)
+            if final and str(final.get("pid")) != pid:
+                raise RuntimeError("Final baseline report belongs to another process")
         write(out / "final-report.json", final)
         d.collect("logs", out / "capture")
         d.collect("screenshot", out / "capture")
+    except Exception as error:
+        operation_error = error
+        raise
     finally:
         try:
-            d.sh("rm", "-f", selector, check=False)
-        finally:
-            try:
-                d.sh("am", "force-stop", PACKAGE, check=False)
-            finally:
-                d.display(False)
+            teardown = cleanup(d, runtime, selector)
+        except Exception as error:
+            if operation_error is not None:
+                raise RuntimeError(str(operation_error) + "; " + str(error)) from operation_error
+            raise
     failures = assess(stop, first, final, stage_exit=stage_exit)
     result = {
         "success": not failures,
@@ -219,6 +293,7 @@ def check_baseline(stage_exit=False):
         "world_seconds": ((final or {}).get("world") or {}).get("seconds"),
         "applied_runs": ((final or {}).get("profile") or {}).get("appliedRuns"),
         "evidence": str(out.relative_to(WORK.parent)),
+        "cleanup": teardown,
     }
     if stage_exit:
         result.update(

@@ -335,6 +335,14 @@ Steps 6–9a are the `./dev prototype --action whole-catalog-*` actions listed i
 which makes `PortSession.Start` exit: it checks catalog registration
 (`whole-catalog-result.json`), not gameplay. Gameplay is launched by a runner that pushes an
 attempt-bound `movement-batch-selection.json` and then launches the app.
+The standard `baseline.py` owner checks selector absence with a successful,
+complete runtime-directory observation before writes. Process replies are typed;
+transport errors are never absence. Live reports remain bound to the launched
+PID. Its teardown attempts removal, force-stop and the configured sleep policy,
+verifies the resulting absence states and records them in `result.json`.
+An unknown observation or failed cleanup refuses acceptance. Setup retains the
+selected-device ownership/storage gates and APK-embedded attempt identity;
+teardown handles a push that succeeded remotely before a local timeout.
 The exact editor is started with `./dev editor --target lab --action open`; send it one
 mutation at a time. Device acceptance is always the real device, never the editor.
 

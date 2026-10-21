@@ -15,9 +15,23 @@ display off. It passes when:
 - the session report has no `error` or `firstFailure`;
 - the run is marked assisted;
 - the profile's applied-run count is the same at the end as at the start of world play.
+- teardown verifies selector absence, process exit and the selected device's
+  configured idle display policy.
 
 Evidence goes to `work/experiments/baseline/<timestamp>/` (`result.json`, final report,
 log and screenshot). It needs the configured device and the payload already synced.
+
+Before any runtime write, a checked directory listing must positively show that
+the diagnostic selector is absent. Transport errors and incomplete listings
+refuse. Live process checks distinguish a successful `pidof` no-match from
+command/transport failure; report-file absence, a partial JSON write and a failed
+read are separate states. A final report must belong to the launched process.
+
+Teardown attempts selector removal, force-stop and display sleep even after a
+failed push or another operation. Removal and process exit are checked again;
+unknown or failed teardown cannot return success. The result's `cleanup` object
+records selector/process absence and whether display sleep was requested and
+verified. If both the operation and teardown fail, the error retains both.
 
 ## One-exit subsystem check
 
