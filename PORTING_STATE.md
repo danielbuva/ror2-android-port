@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-21 after **J923/J922/J920/J919**. Diagnostic 8f33e1a9
+Last updated 2026-10-21 after **J921/J923/J922/J920/J919**. Diagnostic 8f33e1a9
 passes both standard checks. Its exact music-output identity matches the selector
 and callback, but all three bounded PCM windows contain only zero samples.
 The selected source camera supplies context and cleans up its owned skin/listener;
@@ -22,7 +22,7 @@ content on every update. Results are recorded once in the
 | --- | --- |
 | Accepted input | Steam build 25475991, input id `6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88` |
 | Toolchain | Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan (`environment/toolchain.json`) |
-| Owner-build research | J883/J893/J895 qualify bounded SDK wrapper/scene/manager prerequisites. J899/J902 compile the authored fixture on Android; J905 strips its actual DLL/PDB. J920 converts that complete stripping output on Android: all 128 generated source/data files match the independent desktop control and prior phone output. Original replay gates stay intact. Captured desktop roots, general defines/generators/packages, the new native/player consumer, game compilation and content/shaders remain open. Route A and the desktop fallback stay fixed. |
+| Owner-build research | J899/J902 compile the authored fixture on Android; J905 strips its actual DLL/PDB and J920 converts it. J921 binds that provenance to 264 fresh native compilation tasks, phone packaging/signing and device load/update/refusal checks. All phases map the actual new library; the game is unchanged. Original replay/reuse gates stay intact. Captured desktop roots, general compiler features/packages, game compilation, content/shaders, ordinary app hosting, tool delivery and matched performance remain open. Route A and the desktop fallback stay fixed. |
 | Latest device-verified APK | J919 diagnostic `8f33e1a92f60b00fffc4d0b980ab3a1a9d8851207b4ba11627f08384e16d6221`, source 5a97f93: full build, both standard checks and bounded pre/post-strip retention pass; 333 captured pre-strip DLLs, 391 frozen authored inputs, 266 payload files, matching symbols. Selected camera/live cleanup and genuine next menu are observed; its raw host-predicate failure and severe visual artifacts remain. Accepted baseline remains J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`, source 1780ea9. |
 | Installed now | Main has J919 diagnostic 8f33e1a9. Installed bytes, owned placement, selector absence, stopped process and display sleep are independently checked after the selected route. Audible playback is unqualified. Other devices are outside this session's assignment; historical receipts do not establish their present state. |
 | Runtime source since verified APK | Installed 5a97f93 includes J914 dependency retention and J918 exact music-output capture. J922 adds bounded first-ready camera-stack/renderer projection evidence; J923 adds read-only selected-track, source-context and global RTPC observations. Those source changes require a new player. Original audio and native-skin routes remain opt-in. Track/state/native results, broader rendering and Siren encounter remain open. |

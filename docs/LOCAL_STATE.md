@@ -403,6 +403,24 @@ selections, controls, failures and comparisons remain investigation evidence
 under `work/coordination/phone-proof/compiled-converter-*`; no runtime reads a
 timestamped investigation directory.
 
+`phone_compiled_native.py stage ROOT QUALIFIED_NATIVE_TEMPLATE FIXTURE_REQUEST
+CONVERTER_STAGE CONVERTER_OUTPUT EDITOR ANDROID WORK` generates
+`work/rebuild/phone-managed-compile/native-<owned-attempt>/`. The qualified
+historical native template supplies only the SDK/target hash inventory; its
+older fixture APK and graph are not substituted. The explicit authored fixture
+request selects the same exact APK/project as the compiled converter profile.
+The existing native stage builder captures its matching graph and copies actual
+converter C++; generated metadata/resources must equal the selected APK entries.
+The generator retains the original captured plan/manifest and annotates only
+generated scope metadata. SDK/player/source copies, full upstream proof and raw
+results stay ignored. `run STAGE OWNED_TOOL_ROOT NEW_SIBLING_OUTPUT
+[REUSE_REQUEST]` runs the pinned native driver; an optional reuse request still
+requires its existing complete object/source/argument checks. `library_input`
+accepts explicit stage/output/handoff-result hash selections. No game build
+reads these experiment files; explicit selections, SDK inventory comparisons,
+failures and device controls live under
+`work/coordination/phone-proof/compiled-native-*`.
+
 `phone_registry.inspect_action` generates
 `work/experiments/phone-registry/<attempt>/` from an explicit JSON request with
 one absolute `binary` path. Only the pinned supplied Unity SDK executable is
