@@ -30,6 +30,7 @@ COMMON = "__Z25GetCommonScriptingClassesv"
 CORLIB = "__Z36FillCommonScriptingClassesCorlibOnlyR22CommonScriptingClasses"
 REQUIRE = "__ZL17RequireCorLibTypePKcS0_"
 OPTIONAL = "__Z12OptionalTypePKcS0_S0_"
+MANAGED_SET_SHA256 = "76d7a57034a225897e082df2f8c3937b1a949382cd68cb58ffec4ba18d997790"
 
 
 def calls(words, target):
@@ -268,5 +269,68 @@ def reconstruct(image, inventory):
     }
 
 
+def sha(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def bind_inventory(inventory, engine_directory, corlib):
+    """Check a complete, relocatable owner-SDK file set before resolving absence."""
+    engine_directory, corlib = Path(engine_directory), Path(corlib)
+    files = [*engine_directory.glob("UnityEngine*.dll"), *engine_directory.glob("UnityEditor*.dll"), corlib]
+    by_name = {path.name: path for path in files}
+    if len(files) != 84 or len(by_name) != len(files) or any(not path.is_file() for path in files):
+        raise ValueError("Incomplete or ambiguous owner managed SDK file set")
+    manifest = sorted((name, sha(path)) for name, path in by_name.items())
+    if hashlib.sha256(json.dumps(manifest, separators=(",", ":")).encode()).hexdigest() != MANAGED_SET_SHA256:
+        raise ValueError("Unknown owner managed SDK file set")
+    selected = [row for row in inventory["assemblies"] if row["group"] == "engine-directory"]
+    rows = {Path(row["path"]).name: row for row in selected}
+    if len(rows) != len(selected) or set(rows) != set(by_name):
+        raise ValueError("Scoped inventory does not cover the complete selected SDK")
+    for name, digest in manifest:
+        if rows[name]["sha256"] != digest or rows[name]["assembly"] + ".dll" != name:
+            raise ValueError("Scoped inventory and owner SDK identity disagree")
+    return by_name, dict(manifest)
+
+
+def inspect(binary, inventory_path, engine_directory, corlib, output):
+    binary, inventory_path, output = Path(binary), Path(inventory_path), Path(output)
+    if output.exists() or output.is_symlink():
+        raise FileExistsError("Select a new private population report")
+    binary_hash, inventory_hash = sha(binary), sha(inventory_path)
+    if binary_hash != registry.BINARY_SHA256:
+        raise ValueError("Unknown owner SDK binary")
+    inventory = json.loads(inventory_path.read_text())
+    if inventory.get("schema") != 2 or inventory.get("executes_inputs") is not False:
+        raise ValueError("Non-executing scoped inventory required")
+    files, manifest = bind_inventory(inventory, engine_directory, corlib)
+    readers = [Path(__file__), Path(registry.__file__), Path(literals.__file__), Path(search.__file__), Path(flags.__file__), Path(metadata.__file__)]
+    sources = {path.name: sha(path) for path in readers}
+    report = reconstruct(registry.MachO(binary.read_bytes()), inventory)
+    if sha(binary) != binary_hash or sha(inventory_path) != inventory_hash:
+        raise ValueError("Population SDK or inventory changed during inspection")
+    if any(sha(path) != manifest[name] for name, path in files.items()) or any(sha(path) != sources[path.name] for path in readers):
+        raise ValueError("Population managed SDK or reader changed during inspection")
+    report.update(
+        schema=1, profile=registry.PROFILE, binary_sha256=binary_hash, inventory_sha256=inventory_hash, managed_set_sha256=MANAGED_SET_SHA256, sources=sources
+    )
+    with output.open("x") as stream:
+        stream.write(json.dumps(report, indent=2) + "\n")
+    return report
+
+
 if __name__ == "__main__":
-    raise SystemExit("Experimental API only; standalone input binding is not qualified yet")
+    if len(sys.argv) != 6:
+        raise SystemExit("Usage: phone_wrapper_population.py OWNER_SDK_BINARY SCOPED_METADATA ENGINE_DIRECTORY CORLIB NEW_PRIVATE_REPORT")
+    report = inspect(*sys.argv[1:])
+    print(
+        json.dumps(
+            {
+                "forward": len(report["forward"]),
+                "reverse": len(report["reverse"]),
+                "executes_sdk": False,
+                "cache_population_qualified": False,
+                "root_generation_qualified": False,
+            }
+        )
+    )

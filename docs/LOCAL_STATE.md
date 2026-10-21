@@ -284,6 +284,12 @@ build inputs. `phone_wrapper_population_oracle.py` generates fresh
 `work/rebuild/phone-wrapper-oracle/population-<owned-attempt>/` SDK-only projects,
 inputs, logs, reports and receipts from committed authored sources. The explicit
 attempt receipt selects comparison data; no consumer embeds a timestamped path.
+`wrapper-population-on-android.py` and explicit source-stage/run selections bind
+committed readers and select existing J864 owner-SDK and J866 phone-generated
+scoped inventory/assembly workspaces by receipt and hash. They are operator
+qualification state, not inputs to a game build. Fresh child directories,
+storage reserves, tool hashes, refusal controls and the unchanged APK receipt
+remain local with their outputs; no SDK binary or assembly is republished.
 
 `phone_registry.inspect_action` generates
 `work/experiments/phone-registry/<attempt>/` from an explicit JSON request with

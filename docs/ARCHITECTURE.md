@@ -184,8 +184,11 @@ oracles, never phone-build/linker inputs, project scene roots or game behavior.
 `phone_wrapper_population.py` owns the current experimental cache reconstruction
 API. It decodes extra-registration operands from owner SDK data, uses the scoped
 managed metadata universe and keeps direct names, inherited forward entries and
-reverse registrations distinct. Its standalone input binding and phone replay
-are not yet qualified; no game or linker consumer reads it.
+reverse registrations distinct. Its standalone invocation selects an owner SDK
+binary, scoped inventory, managed SDK directory, corlib and new private output.
+It binds the complete pinned 84-file managed set, inventory and reader hashes,
+refusing replacement, missing files, mixed inputs and drift. Phone replay and
+complete cache qualification remain open; no game or linker consumer reads it.
 `phone_wrapper_population_oracle.py` and `WrapperPopulationOracle.cs` own a
 separate SDK-only desktop check. The explicit root/work/editor invocation stages
 a fresh project using the guarded directory writer and runs under the existing

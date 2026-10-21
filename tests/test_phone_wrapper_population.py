@@ -1,3 +1,6 @@
+import hashlib
+import json
+import os
 from pathlib import Path
 import struct
 import subprocess
@@ -43,7 +46,7 @@ class PopulationOriginTests(unittest.TestCase):
                     population.Origins(image, image.words).origin(max(image.words), register)
 
     def test_native_extra_shape_is_decoded_without_a_captured_table(self):
-        sdk = Path("/Applications/Unity/Hub/Editor/2021.3.45f2/Unity.app/Contents/MacOS/Unity")
+        sdk = Path(os.environ.get("ROR2_POPULATION_SDK", "/Applications/Unity/Hub/Editor/2021.3.45f2/Unity.app/Contents/MacOS/Unity"))
         if not sdk.is_file():
             self.skipTest("Optional owner SDK absent")
         data = sdk.read_bytes()
@@ -133,3 +136,72 @@ class PopulationStagingTests(unittest.TestCase):
         _, receipt = self.invoke(changed)
         self.assertFalse(receipt["success"])
         self.assertIn("Foreign population oracle asset", receipt["error"])
+
+
+class PopulationInputTests(unittest.TestCase):
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name)
+        self.engine = self.root / "managed"
+        self.engine.mkdir()
+        self.corlib = self.root / "mscorlib.dll"
+        names = ["UnityEngine.Authored" + str(i) + ".dll" for i in range(83)] + ["mscorlib.dll"]
+        self.rows = []
+        for name in names:
+            file = self.corlib if name == "mscorlib.dll" else self.engine / name
+            file.write_bytes(b"authored metadata file-set control")
+            self.rows.append({"path": "relocated/" + name, "sha256": population.sha(file), "assembly": file.stem, "group": "engine-directory"})
+        manifest = sorted((Path(row["path"]).name, row["sha256"]) for row in self.rows)
+        self.digest = hashlib.sha256(json.dumps(manifest, separators=(",", ":")).encode()).hexdigest()
+        self.inventory = self.root / "inventory.json"
+        self.inventory.write_text(json.dumps({"schema": 2, "executes_inputs": False, "assemblies": self.rows}))
+        self.binary = self.root / "owner-sdk"
+        self.binary.write_bytes(b"authored SDK inspection control")
+        self.output = self.root / "report.json"
+
+    def test_complete_file_set_relocation_and_identity_drift(self):
+        with patch.object(population, "MANAGED_SET_SHA256", self.digest):
+            files, _ = population.bind_inventory({"assemblies": self.rows}, self.engine, self.corlib)
+            self.assertEqual(len(files), 84)
+            with self.assertRaisesRegex(ValueError, "complete selected SDK"):
+                population.bind_inventory({"assemblies": self.rows[:-1]}, self.engine, self.corlib)
+            self.rows[0]["sha256"] = "0" * 64
+            with self.assertRaisesRegex(ValueError, "identity disagree"):
+                population.bind_inventory({"assemblies": self.rows}, self.engine, self.corlib)
+            self.corlib.write_bytes(b"different authored SDK")
+            with self.assertRaisesRegex(ValueError, "Unknown owner managed SDK"):
+                population.bind_inventory({"assemblies": self.rows}, self.engine, self.corlib)
+
+    def test_output_and_unknown_binary_refuse_without_replacement(self):
+        args = (self.binary, self.inventory, self.engine, self.corlib, self.output)
+        with self.assertRaisesRegex(ValueError, "Unknown owner SDK binary"):
+            population.inspect(*args)
+        self.assertFalse(self.output.exists())
+        self.output.write_bytes(b"existing authored report")
+        with self.assertRaises(FileExistsError):
+            population.inspect(*args)
+        self.assertEqual(self.output.read_bytes(), b"existing authored report")
+
+    def test_inventory_drift_and_concurrent_output_creation_refuse(self):
+        original = self.inventory.read_bytes()
+        for mode in ["drift", "output-race"]:
+            with self.subTest(mode=mode):
+                self.inventory.write_bytes(original)
+
+                def changed(*args):
+                    (self.inventory if mode == "drift" else self.output).write_bytes(b"authored concurrent change")
+                    return {"forward": [], "reverse": []}
+
+                with (
+                    patch.object(population, "MANAGED_SET_SHA256", self.digest),
+                    patch.object(population.registry, "BINARY_SHA256", population.sha(self.binary)),
+                    patch.object(population.registry, "MachO", return_value=object()),
+                    patch.object(population, "reconstruct", side_effect=changed),
+                ):
+                    with self.assertRaises((ValueError, FileExistsError)):
+                        population.inspect(self.binary, self.inventory, self.engine, self.corlib, self.output)
+                if mode == "drift":
+                    self.assertFalse(self.output.exists())
+                else:
+                    self.assertEqual(self.output.read_bytes(), b"authored concurrent change")
