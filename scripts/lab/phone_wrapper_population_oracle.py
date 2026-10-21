@@ -174,6 +174,13 @@ def validate_reverse(report, inputs, editor):
         path = Path(row["managed"]["image_path"])
         if not path.resolve().is_relative_to(contents) or base.sha(path) != row["managed"]["image_sha256"]:
             raise ValueError("Observed reverse SDK assembly drift")
+    forward = report["forward"]
+    if not forward or len({row["persistentTypeID"] for row in forward}) != len(forward):
+        raise ValueError("Incomplete or ambiguous native forward cache")
+    for row in forward:
+        path = Path(row["managed"]["image_path"])
+        if row["persistentTypeID"] not in native_ids or not path.resolve().is_relative_to(contents) or base.sha(path) != row["managed"]["image_sha256"]:
+            raise ValueError("Observed forward SDK identity drift")
 
 
 if __name__ == "__main__":

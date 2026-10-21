@@ -6,7 +6,7 @@ Mach-O reader remains unchanged and must still refuse reads from those tails.
 
 import struct
 
-from phone_wrapper_population import Origins, literals, registry
+from phone_wrapper_population import Origins, REBUILD, literals, registry
 
 MANAGER = "__Z19GetScriptingManagerv"
 CONTEXT = "__Z21GetManagerFromContexti"
@@ -99,6 +99,33 @@ def layout(image):
     ranges = readable_ranges(image)
     if sum(row["start"] <= slots[0] and slots[0] + 8 <= row["start"] + row["size"] for row in ranges) != 1:
         raise ValueError("Manager slot is outside readable SDK VM")
+    rebuild = literals.function_words(image, REBUILD)
+    forward = set()
+    for pc, word in rebuild.items():
+        if pc > min(rebuild) + 120:
+            break
+        if word & 0xFFC00000 == 0xF9400000 and word & 31 == 0:
+            prefix = {p: w for p, w in rebuild.items() if p <= pc}
+            if Origins(image, prefix).origin(pc, (word >> 5) & 31) == ("parameter", 0):
+                forward.add(((word >> 10) & 4095) * 8)
+    if len(forward) != 1:
+        raise ValueError("Missing or ambiguous forward vector")
+    forward_offset = next(iter(forward))
+    # The SDK's dynamic_array size is independently evidenced by the count
+    # stores in this same rebuild function, not supplied by the wrapper model.
+    count_stores = []
+    for pc, word in rebuild.items():
+        if word & 0xFFC00000 != 0xF9000000 or ((word >> 10) & 4095) * 8 != forward_offset + 24:
+            continue
+        count_stores.append(pc)
+    if len(count_stores) != 2:
+        raise ValueError("Forward vector size stores differ")
+    # Qualify the first assignment prefix only. A later shift on the zero-size
+    # path is outside the existing operand reader; do not weaken that reader.
+    pc = min(count_stores)
+    word = rebuild[pc]
+    if Origins(image, {p: w for p, w in rebuild.items() if p <= pc}).origin(pc, (word >> 5) & 31) != ("parameter", 0):
+        raise ValueError("Forward count field has another base")
     return {
         "schema": 1,
         "manager_slot": slots[0],
@@ -106,5 +133,7 @@ def layout(image):
         "end_offset": end,
         "stride": next(iter(strides)),
         "native_id_offset": 40,
+        "forward_offset": forward_offset,
+        "forward_count_offset": forward_offset + 24,
         "ranges": ranges,
     }

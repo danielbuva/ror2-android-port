@@ -32,6 +32,14 @@ public static class ReverseHost
     {
         return new WrapperReverseOracle.Name {name = "Authored." + pointer, assembly_identity = "Authored, Version=1.0.0.0"};
     }
+    static WrapperReverseOracle.Layout ForwardReset()
+    {
+        var value = Reset(); value.forward_offset = 0x100; value.forward_count_offset = 0x118;
+        Write(0x4100, BitConverter.GetBytes(0x6000UL));
+        Write(0x4118, BitConverter.GetBytes(3UL));
+        Write(0x6000, new[] {0x7000UL, 0UL, 0x7100UL}.SelectMany(BitConverter.GetBytes).ToArray());
+        return value;
+    }
     static void Refuse(Action action)
     {
         try {action();} catch (InvalidOperationException) {return;}
@@ -66,6 +74,15 @@ public static class ReverseHost
         Refuse(() => WrapperReverseOracle.ReadTable(layout, 0, Read, p => {Write(0x4088, BitConverter.GetBytes(0x5010UL)); return Identify(p);}));
         layout = Reset(); layout.manager_slot = 0x3000;
         Refuse(() => WrapperReverseOracle.ReadTable(layout, 0, Read, Identify));
+        layout = ForwardReset();
+        rows = WrapperReverseOracle.ReadForward(layout, 0, new[] {801, 802, 803}, Read, Identify);
+        if (!rows.Select(r => r.persistentTypeID).SequenceEqual(new[] {801, 803})) throw new Exception("Forward zero-slot coverage differs");
+        layout = ForwardReset(); Write(0x4118, BitConverter.GetBytes(4UL));
+        Refuse(() => WrapperReverseOracle.ReadForward(layout, 0, new[] {801, 802, 803}, Read, Identify));
+        layout = ForwardReset();
+        Refuse(() => WrapperReverseOracle.ReadForward(layout, 0, new[] {801, 802, 803}, Read, p => {Write(0x6000, BitConverter.GetBytes(0UL)); return Identify(p);}));
+        layout = ForwardReset();
+        Refuse(() => WrapperReverseOracle.ReadForward(layout, 0, new[] {801, 801, 803}, Read, Identify));
         Console.WriteLine("PASS: reverse snapshot, zero-fill VM, bounds, keys, identities, foreign pointers and drift");
         return 0;
     }

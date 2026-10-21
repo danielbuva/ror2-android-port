@@ -15,7 +15,7 @@ public static class WrapperReverseOracle
     [Serializable] public sealed class Range {public ulong start, size, file_size;}
     [Serializable] public sealed class Layout
     {
-        public int schema, begin_offset, end_offset, stride, native_id_offset;
+        public int schema, begin_offset, end_offset, stride, native_id_offset, forward_offset, forward_count_offset;
         public ulong manager_slot;
         public Range[] ranges;
     }
@@ -34,6 +34,7 @@ public static class WrapperReverseOracle
         public WrapperMetadataOracle.Row[] records;
         public WrapperMetadataOracle.AssemblyInput[] assemblies;
         public Row[] reverse;
+        public Row[] forward;
     }
     const string SystemLibrary = "/usr/lib/libSystem.B.dylib";
     [DllImport(SystemLibrary)] static extern uint _dyld_image_count();
@@ -99,6 +100,37 @@ public static class WrapperReverseOracle
         if (!bounds.SequenceEqual(read(boundsAddress, 16)) || !bytes.SequenceEqual(read(begin, bytes.Length))
             || manager != BitConverter.ToUInt64(read(slot, 8), 0))
             throw new InvalidOperationException("Reverse cache changed during observation");
+        return rows.ToArray();
+    }
+    public static Row[] ReadForward(Layout layout, long slide, int[] nativeIDs, Func<ulong, int, byte[]> read, Func<ulong, Name> identify)
+    {
+        if (layout.forward_offset < 0 || layout.forward_count_offset != layout.forward_offset + 24
+            || nativeIDs == null || nativeIDs.Length == 0 || nativeIDs.Length > 4096 || nativeIDs.Distinct().Count() != nativeIDs.Length)
+            throw new InvalidOperationException("Unsupported forward vector identity/layout");
+        var slot = Address(layout.manager_slot, slide);
+        if (!Contains(layout, slide, slot, 8)) throw new InvalidOperationException("Manager slot outside SDK VM");
+        var manager = BitConverter.ToUInt64(read(slot, 8), 0);
+        Pointer(manager);
+        var pointerAddress = checked(manager + (ulong)layout.forward_offset);
+        var countAddress = checked(manager + (ulong)layout.forward_count_offset);
+        var pointer = BitConverter.ToUInt64(read(pointerAddress, 8), 0);
+        Pointer(pointer);
+        var count = BitConverter.ToUInt64(read(countAddress, 8), 0);
+        if (count != (ulong)nativeIDs.Length) throw new InvalidOperationException("Forward vector differs from native registry coverage");
+        var bytes = read(pointer, checked(nativeIDs.Length * 8));
+        var rows = new List<Row>();
+        for (int i = 0; i < nativeIDs.Length; i++) {
+            ulong value = BitConverter.ToUInt64(bytes, i * 8);
+            if (value == 0) continue;
+            Pointer(value);
+            var name = identify(value);
+            if (name == null || String.IsNullOrEmpty(name.name) || String.IsNullOrEmpty(name.assembly_identity))
+                throw new InvalidOperationException("Incomplete forward identity");
+            rows.Add(new Row {persistentTypeID = nativeIDs[i], managed = name});
+        }
+        if (pointer != BitConverter.ToUInt64(read(pointerAddress, 8), 0) || count != BitConverter.ToUInt64(read(countAddress, 8), 0)
+            || !bytes.SequenceEqual(read(pointer, bytes.Length)) || manager != BitConverter.ToUInt64(read(slot, 8), 0))
+            throw new InvalidOperationException("Forward cache changed during observation");
         return rows.ToArray();
     }
     static Accessor Api(IntPtr handle, string symbol)
@@ -184,6 +216,16 @@ public static class WrapperReverseOracle
         var report = new Report {unity = Application.unityVersion, source_commit = commit, layout_sha256 = layoutHash,
             mono_path = mono, mono_sha256 = Hash(mono), records = WrapperPopulationOracle.Collect(native, wrapper)};
         report.reverse = ReadTable(layout, slide, read, identify);
+        var nodes = ((System.Collections.IEnumerable)native.GetMethod("GetTypes", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
+            .Invoke(null, null)).Cast<object>().ToArray();
+        var indexField = native.GetField("runtimeTypeIndex", BindingFlags.Instance | BindingFlags.NonPublic);
+        var idProperty = native.GetProperty("persistentTypeID", BindingFlags.Instance | BindingFlags.Public);
+        if (indexField == null || indexField.FieldType != typeof(uint) || nodes.Length != report.records.Length)
+            throw new InvalidOperationException("Native runtime index API differs");
+        var indexed = nodes.ToDictionary(n => (uint)indexField.GetValue(n), n => (int)idProperty.GetValue(n, null));
+        if (Enumerable.Range(0, nodes.Length).Any(i => !indexed.ContainsKey((uint)i)))
+            throw new InvalidOperationException("Native runtime index coverage differs");
+        report.forward = ReadForward(layout, slide, Enumerable.Range(0, nodes.Length).Select(i => indexed[(uint)i]).ToArray(), read, identify);
         report.stable_snapshot = true;
         report.assemblies = new[] {native.Assembly, wrapper.Assembly, typeof(UnityEngine.Object).Assembly}.Distinct()
             .Select(a => new WrapperMetadataOracle.AssemblyInput {identity = a.FullName, path = Path.GetFullPath(a.Location), sha256 = Hash(a.Location)}).ToArray();
