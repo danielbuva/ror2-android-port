@@ -38,6 +38,12 @@ The retained `native-root-linker-on-android.py` under the phone proof root is
 local replay support for the same owned workspace, explicit device, fresh
 capacity, exact staged inputs, tool verification and output collection. It
 never overwrites the earlier stripping adapters, selectors or results.
+The `native-root-linker-*` request/stage/run/boundary-check files under the phone
+proof root select that explicit experiment. `native-root-converter-*` and the
+retained `native-root-converter-on-android.py` select its downstream unchanged
+converter action and owned Android execution. `native-root-native-selection.json`
+and `native-root-native-handoff-check.json` bind the validated C++/metadata
+boundary; no native compile or game build reads an unselected run directory.
 
 `work/coordination/phone-proof/` retains J832's private execution adapters,
 hash-bound tool/package manifests, original failed attempts and collected device

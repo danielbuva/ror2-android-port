@@ -20579,3 +20579,98 @@ R4's clock/schema and route/deadline/cleanup guards. Host-test source-owner
 admission before dispatch; do not change gameplay or infer movement behavior
 from the eight unused array slots. No runtime, recipe or APK changes occur as
 part of this experiment; the separate audio source integration is still unbuilt.
+
+## J859 — Generate SDK-native root metadata on Android and preserve stripping/conversion
+
+2026-10-20. Hypothesis: J857's independent SDK-native table can replace the
+captured table at the actual Android UnityLinker invocation and preserve the
+qualified stripping/converter outputs. Keep captured project scene usage/module
+policy explicit. Start from accepted main `aa885e9`, then integrate `09e8512`
+before recording this result; preserve the main session's J858 and J860
+reservation. Route A, IL2CPP ARM64, the renderer, working game build and desktop
+fallback remain unchanged. No Unity build, package install or gameplay action.
+
+**Owner and inputs.** `phone_linker_roots.py` owns the optional SDK-native mode
+of `phone-linker-fixture`. An explicit `native_registry` request selects the
+owner SDK binary/hash. Staging copies the pinned SDK and the two unchanged
+registry readers; it omits `inputs/EditorToUnityLinkerData.json` completely.
+Only the four project fields are selected from that captured document:
+serializedTypes, typesInScenes, forceIncludeModules and forceExcludeModules.
+The captured native-table value is never selected. Nonempty serialized-type
+roots need separate qualification; this authored fixture's list is empty.
+TypesInScenes.xml, 43 scene-usage records, 33 forced exclusions, no forced
+inclusions, pre-strip assemblies and their desktop compilation remain inputs.
+SDK/linker tools and implicit descriptor closure remain owner-supplied/private.
+
+At the actual stripping invocation, the authored readers inspect the unchanged
+SDK as data and generate all 318 native records. The new owner verifies native
+identities/parent links, refuses ambiguity/cycles and projects the six native
+fields in qualified-name ordinal order. UnityLinker receives the new owned
+output `native-roots/EditorToUnityLinkerData.json`. Generated data/source/scope
+receipts are revalidated by `stripped_input` before converter staging and again
+at the native C++ handoff. Complete editor-root generation remains false;
+no whole-catalog build or game runtime consumes this mode. ARCHITECTURE and
+LOCAL_STATE name its setup/output/failure ownership and local replay adapters.
+
+**Contracts and frozen source.** Commit `e854a747e6fa101a57189a4400f02aa2dcf183ce`
+before staging/running. Six new authored host contracts cover independent native
+projection/order, ignored captured-table values, unsupported project policy,
+incomplete/ambiguous/cyclic native data, receipt/data binding, forbidden captured
+native staging and generated-path delivery to the linker. An unknown SDK still
+refuses before tool execution even under a self-consistent staged manifest.
+A later test-only checkpoint `ef6aad2` additionally proves downstream converter
+handoff refuses a changed generated native-root artifact. All 11 focused linker
+contracts pass. Fresh-clone CI on `ef6aad2` passes 1,257 tests with 55 optional
+skips, Ruff, audit and documentation checks. No SDK/game data is in a fixture.
+
+**Actual Android stripping.** Stage 596 files / 174,439,356 bytes, then verify
+the configured alpha device, workspace ownership, fresh capacity/backing/reserve,
+Python/.NET hashes and the exact manifest. The native table is absent from the
+staged inputs, and project-root-data.json contains only the four project fields.
+Run once in a new owned child. Metadata generation plus UnityLinker completes
+successfully in 11.931 seconds of Android-driver elapsed time. Actual command
+arguments point to the fresh generated file; no captured native table is present
+for the tool to consume.
+
+The generated SDK report hash equals J857's final report:
+`65a9619d55806f041d3a36a55bc901530d29cfa62f54246e0933113ebe8e1f8a`.
+Generated editor data is
+`713e327c36d143091abe4d9d70998851c3a0ab3b9060f5805d3b9ea36ee81b3e`.
+Only after the run, compare it to the unchanged captured oracle
+`34c3177601e7a31dc24efab295280a13c21c2a306a1f70c7171e78a0041bcf30`:
+all four project fields are equal, all 318 native identities/six-field values
+match, and native array order differs. No captured ordering is reused.
+
+All 36 emitted DLLs and 30 PDBs match the desktop outputs byte for byte.
+The 67-file closure passes the existing strict report comparison: only the
+previously qualified module-array ordering difference is permitted, with raw
+bytes preserved. Its raw UnityLinkerToEditorData.json hash is
+`dff4312e6da36ab6d0be20bf61ee4d04442146971fa32cc831aa860b7250796e`.
+No report, assembly or source output is normalized or edited to obtain the pass.
+
+**Connected converter.** Stage those actual phone outputs through the existing
+explicit linker selector. The full Android converter succeeds in 6.497 seconds.
+All 126 C/C++ files match J849's actual phone outputs byte for byte; both data
+files match, including global-metadata.dat
+`d515a852e565f151c1ea4f6d0ecb96aab93b8d9b095207df4feebf619e69b9b5`.
+`cpp_input` validates nested SDK-root/stripping lineage, copied inputs, actual
+emitted C++ and exact metadata before accepting the native compilation boundary.
+This reaches J842's already compiled/loaded source boundary; no redundant native
+compile or fixture install occurs. These are build-tool timings, not gameplay
+or app-sandbox performance/qualification. Alpha's game remains be26c21c… and
+its display is asleep after both probes; no main/spare device action occurs.
+
+**Evidence and remaining gate.** Raw SDK/root data and logs stay ignored.
+`native-root-linker-stage-selection.json`, `native-root-linker-run-selection.json`
+and `native-root-linker-boundary-comparison.json` bind the first boundary.
+`native-root-converter-stage-selection.json`, its run selector and
+`native-root-native-handoff-check.json` bind the converter/native boundary.
+`native-root-proof-receipt.json` binds 35 source/input/output/comparison/test/CI
+artifacts; SHA-256
+`9721cf23c65ab84fd77f92188b18c5185d621c423445ef5d6623bc2f59d1fa0c`.
+Both real SDK invocations pass on their first attempts. Project scene usage,
+module policy, TypesInScenes.xml and managed compilation remain captured
+workstation inputs. Independent complete roots, target content/shaders, richer
+dependencies, permitted tool delivery and complete owner installation remain
+open. SDK-native metadata no longer requires the captured native table at this
+authored stripping/conversion boundary.

@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J859](PORTING_JOURNAL.md#j859--generate-sdk-native-root-metadata-on-android-and-preserve-strippingconversion) | 2026-10-20 | Generate SDK-native root metadata on Android and preserve stripping/conversion | 2026-10-20. |
 | [J858](PORTING_JOURNAL.md#j858--correct-the-siren-recorders-incompatible-launch-selection) | 2026-10-20 | Correct the Siren recorder's incompatible launch selection | 2026-10-20. |
 | [J857](PORTING_JOURNAL.md#j857--recover-the-complete-pinned-native-registry-from-owner-sdk-metadata-literals) | 2026-10-20 | Recover the complete pinned native registry from owner-SDK metadata literals | 2026-10-20. |
 | [J856](PORTING_JOURNAL.md#j856--reach-ship-graveyard-and-correct-siren-recorder-host-observations) | 2026-10-20 | Reach Ship Graveyard and correct Siren recorder host observations | 2026-10-20. |
