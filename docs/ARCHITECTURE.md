@@ -496,7 +496,8 @@ or failure; there is no persistent state. This verifies plugin bytes only, not
 importers, script orders or project initialization. Host contracts:
 `tests/test_assembly_transforms.py`.
 
-Audio remains unavailable in the composed game. The default-off original-owner
+Composed audio playback remains unqualified; J868 observes original engine/bank
+readiness with unresolved producer/path errors. The default-off original-owner
 integration uses `runtime/session/PortSessionOriginalAudioOwner.cs` after the
 offline menu and before selected body activation. It coordinates the existing
 `WwiseIntegrationManager.Init` and original prefab callbacks; `AkInitializer`
