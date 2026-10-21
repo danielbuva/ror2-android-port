@@ -25825,3 +25825,84 @@ independent query context
 The host-trigger correction remains local at
 `work/coordination/original-camera-listener-device-plan/render-capture-contract-r2/`.
 Raw images, logs, runtime identities and proprietary data remain ignored.
+
+## J929 — Test the authored app-host refusal at target SDK 33
+
+2026-10-21. Hypothesis: raising the independently authored J836 fixture from
+SDK 30 to 33 changes its ordinary app domain and may expose the documented
+writable-execution restriction on the assigned Alpha platform. Rebase on main
+`76ea364`; coordinate J927/J928 for Main and J929 for Alpha. Preserve J836's
+failed control. No Unity editor, game build, runtime architecture, security
+policy or other device changes.
+
+**Basis and bounded change.** Android's [execution restriction](https://developer.android.com/about/versions/10/behavior-changes-10#execute-permission)
+already applies to apps targeting Android 10 or later. The pinned AOSP
+[domain mapping](https://android.googlesource.com/platform/system/sepolicy/+/ea6e9e3d3c569fcd9a292e9dac8aa324745f9982/private/seapp_contexts)
+distinguishes targets 30 and 32+, while the inspected
+[neverallow rule](https://android.googlesource.com/platform/system/sepolicy/+/44785c26236768099d35cb717f035e963fa9ba12/private/app_neverallows.te)
+covers both ordinary domains. These sources motivate observation; they do not
+establish this vendor's effective enforcement. Add a separate literal SDK 33
+manifest, keeping the original SDK 30 manifest and default. Both variants
+retain the identical immutable/control bytes and permission-denied requirement.
+The checker independently requires observed child identity, matching untrusted
+process context, arithmetic and actual refusal, rather than trusting flags.
+It preserves file metadata/backing on failure. Optional unprivileged enforcement
+reads leave denied observations unknown. No permission or network is added.
+
+**First failure and repair.** Source `e9e62d1` compiles authored native C,
+Java and DEX on Android, then aapt refuses the differently named manifest:
+`No AndroidManifest.xml file found`. Preserve that attempt. Source `c9713ed`
+copies the selected manifest byte-for-byte into a fresh output subdirectory
+under aapt's required basename. Neither authored manifest is rewritten. A host
+regression reaches this packaging command and checks its path and exact bytes.
+The first host assertion's macOS temporary-path alias mismatch is also retained;
+resolving the expected test directory fixes that assertion.
+
+**Phone build and device result.** The current receipt-owned shell workspace,
+SDK API 30 Java classpath, private D8 and pinned J836 tool inputs compile, package,
+align, sign and verify the new authored app entirely on Android. No editor-built
+base player or game input is used. APK SHA-256:
+`fd51af5d2c3cc0bb11c607ad731ac7d4120a736a611b46eb6cc0a589be770f9b`.
+Its identical installed/control executable SHA-256 is
+`356c4a55ffa60819a733dc2b0461d532411e269fdc1fcd9918e1c88e9c8022bf`.
+The bundled desktop SDK independently verifies the APK signature, separate
+fixture package and target 33; this check contributes no build output.
+
+On device API 33, the app now reports `untrusted_app`, rather than J836's
+`untrusted_app_30`. The PackageManager-installed executable is not writable to
+the app and returns the expected marker, arithmetic, UID and matching context.
+The identical writable copy, labelled `app_data_file`, also exits zero with the
+same UID/context and output. The required refusal is false. The checker stops
+at that first failed cycle, retains the raw failure, and does not claim its
+requested two-cycle acceptance. App and shell enforcement reads are denied;
+these observations cannot distinguish enforcement mode, vendor policy or another
+platform cause. A higher target/domain change does not repair this gate.
+
+Fresh install capacity/storage, actual package placement and runtime backing are
+recorded privately. Exact-hash cleanup removes the fixture; an independent
+terminal observation confirms it absent, the owned game APK still
+`be26c21c4cd8ff15a8a663528216cf7a69394a51d8b9441a63a1a496f83e98b5`,
+its process stopped, selector absent and display asleep. The game is not launched.
+
+**Evidence and classification.** Device failure:
+`work/experiments/phone-host/20261021T224002.597404Z/result.json`.
+`work/coordination/phone-proof/host-target33-proof-receipt-v1.json` binds 25
+artifacts, both build attempts, source/tool-input hashes, the original host test
+failure, passing tests, signature/target checks and independent terminal state;
+SHA-256 `5c9ec94e88944b3118911c0b4e206bac7cc575501c4e3c8df891270b9c11b089`.
+Raw contexts/categories, device/storage identifiers, supplied tools, logs and
+signing outputs remain ignored. Ten focused host tests and changed-file Ruff
+pass. Game doctor/preflight still refuse Alpha's absent local inventory/bootstrap;
+independent fixture guards do not qualify the game build.
+
+Ordinary-app tool hosting remains unqualified. Python/.NET/Clang dependency
+hosting, permitted tool delivery, independent roots/content/shaders, durable
+owner signing, user installation and matched performance remain open. Revisit
+this refusal only with new effective-policy evidence or an explicitly assigned
+platform demonstrating the documented restriction. Do not lower the target,
+change security state or execute writable tools to claim an installer. Route A
+and the desktop fallback remain authoritative.
+
+The same four changed executable/manifest inputs are byte-identical after
+rebasing onto Main J927 `1fb3bd5`; the source checkpoint is now `1458857`.
+The actual device receipts retain their original committed source identities.
