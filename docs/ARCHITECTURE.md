@@ -539,7 +539,12 @@ does not change their pinned generated metadata (J863).
 The cache binds producer sources, recipes, editor references, compiler/tool
 identities and explicit inputs; cached generations revalidate that receipt.
 `original_game_audio_stage.py` checks exact assembly preimages, GUIDs and owned
-payloads before staging. Default-off restores the ordinary guarded assemblies
+payloads before staging. Requested stages also package the exact bank-cohort
+receipt at `Assets/StreamingAssets/stage-receipt.json`, the URL consumed by
+`GameAudioOriginalPayloadCopy`; the separate `Lab/OriginalGameAudioStageReceipt.json`
+records project ownership. The previous 164-output stage is recognized during
+upgrade; the current 165-output stage owns the added receipt by its exact hash.
+Default-off restores the ordinary guarded assemblies
 and removes only prior receipt-owned audio payloads, preserving Unity metadata
 sidecars. J865 adds one exact predecessor lineage for receipt-verified upgrade
 or restoration; unknown module pairs still refuse. The managed transform checks

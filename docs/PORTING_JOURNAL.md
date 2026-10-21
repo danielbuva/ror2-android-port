@@ -21130,12 +21130,103 @@ its private harness passes 20 focused contract tests and two real transform test
 R8/R9 support production must replay this authored transform/pin change. No alpha
 or spare action occurs in this experiment.
 
+## J867 — Build the original-audio player, preserve its receipt refusal and package the missing cohort witness
+
+2026-10-20.
+
+**Hypothesis and prior evidence.** J865's repaired async-bank transform can pass
+IL2CPP in the composed player. Retain J860's original lifecycle ownership and
+pinned R2API.Sound distinction between engine readiness, bank results and actual
+playback. This attempt adds no new game reconstruction or middleware substitute.
+
+**Build and artifact qualification.** Synchronized source `f344441` passes doctor
+and preflight. The full Unity 2021.3.45f2 ARM64 Vulkan player succeeds with zero
+errors in 268.438249 s, request
+`20261021T021320.387933Z-45f3831ff676476690464ac55ac91754`.
+The host command nevertheless exits 1: its optional Bee collector lacks the
+request-owned C# postprocess receipt. The callback logs an
+`InvalidOperationException` without its message. Immutable evidence excludes the
+file/hash/log-range checks, but does not identify the exact remaining BuildReport
+guard; an unfinished callback-time result is a hypothesis, not a finding. Preserve
+that failure and never synthesize its missing witness.
+
+Root independently freezes APK
+`8e71428e4e83bba7aff2f69e0d68b68501eea6723f76282ca409ffa0a21fe91a`,
+debugging symbols
+`015ad16d5d6a9e209cccf61eb4ea7b5bc8229e0da2e36a417990470db0eccf01`
+and matching IL2CPP Build ID `4d08cb2239c605a000ce26d374943ef6c6523aa2`.
+The existing validators bind all 333 same-request pre-strip DLLs to the APK;
+356 frozen authored inputs still match the commit. All 164 staged audio outputs
+match, including current API `9a3f9911…`, game `1034a747…`, native runtime
+`bb5879b4…` and all 154 bank entries inside the APK. Freeze the 266 payload files
+separately. Independent review permits controlled first-failure testing only;
+no normal cache/current-build stamp or Bee/post-strip claim is written.
+
+**Device result and first audio failure.** Install the explicit frozen APK in
+place on the assigned primary device, using fresh adopted-storage/reserve and
+placement checks; sync its own frozen payload. Inspect the current unlock screen
+before its requested A-key action. Both standard checks pass: 35.193253 s on
+Lakes, then exactly one exit and 10.752960 s on Goolake at 146.241196 total world
+seconds. Both have no report/current-process error and keep `appliedRuns` at 13.
+Their `is_current_build` values are false because the normal pointer deliberately
+still names the accepted f1550ce0 baseline.
+
+In both processes, the audio request configures and Java-first native API loading
+is available, but preparation fails at
+`stage_receipt_read_failed:ProtocolError`. Neither manager admission nor native
+Init occurs; the owner records no-audio and releases its early catalog lease.
+The payload copier requests `stage-receipt.json` at the StreamingAssets root.
+The APK contains the banks and the separate project ownership receipt under
+`Lab/`, but omits the request-bound bank-cohort receipt at that URL. No bank,
+engine, PCM, audibility or lifecycle success is established. Both runs finish
+with the selector absent, package stopped and display asleep. Alpha and spare
+are untouched. The diagnostic APK remains installed; f1550ce0 remains the accepted
+baseline/rollback.
+
+**Smallest repair and host checks.** Add one requested producer artifact for the
+exact cohort receipt already validated against the banks, at
+`Assets/StreamingAssets/stage-receipt.json`. The stager binds its target, hash and
+bytes to that same receipt. It recognizes the exact previous 164-output shape
+without granting it ownership of the new path; the new shape has 165 outputs.
+An unowned conflicting file refuses. Default-off removes only the hash-verified,
+receipt-owned copy and preserves Unity metadata. Producer/stager source changes
+invalidate their generation cache normally. This is a minimal audio-required
+packaging change; general alpha packaging is unchanged.
+
+Thirty-five audio host tests pass with one optional SDK skip. A real public
+producer/stager scratch roundtrip upgrades the old stage to 165 outputs, verifies
+the packaged receipt hash `8fe02400…`, reuses its validated cache, and removes the
+owned receipt on default-off. Independent review is GO. Separately improve the
+optional collector's diagnostics with fixed reason tokens and actual/expected
+BuildReport identities, preserving every refusal. Exact Unity host compilation
+passes; the public C# harness checks mismatched result/GUID/target/errors and the
+successful roundtrip. Its stubs now model Unity's value-type BuildSummary and
+GUID. No protected input or generated receipt is published.
+
+**Evidence and revisit.** Full build/failure/frozen qualification evidence is
+`work/coordination/codex-original-game-audio-build-root/r3/`; the frozen candidate
+is `work/experiments/original-game-audio/candidate-20261021T021320-root-qualified/`.
+Device outputs and root qualification are
+`work/coordination/codex-original-game-audio-device-root/r2/`, with baseline runs
+`20261021T022859.125283Z` and `20261021T023325.336297Z`.
+Read-only artifact review is `original-audio-r3-postbuild-review/r1/review.md`
+(SHA-256 `34794c8ff3b9b68eb26503056a529767380bd5ab1b9b5b74d2b86d64d260ef3e`).
+Packaging review is `original-audio-bank-receipt-packaging-review/r1/review.md`
+(SHA-256 `fbac63e8221838931715bc8fbb26804e728824075cdce8e22807b806eec413cb`);
+actual scratch receipts are `codex-original-audio-host-stage-root/r2/`.
+Collector diagnostic source/API proof is `original-audio-r3-postbuild-review/r3/`.
+Commit and sync, then full-build and verify the newly packaged receipt in the APK
+before retrying. Retain symbols and same-request pre-strip capture; optional Bee
+capture remains a separate unresolved diagnostic. R8/R9 support production must
+replay the authored producer/stager and collector changes. No new audio acceptance.
+
 ## J866 — Qualify scoped SDK assembly metadata and forwarding on Android
 
 2026-10-20. Hypothesis: explicit assembly identities, reference scopes and type
 forwarders can replace J851's short-name guesses for the managed half of native
 wrapper lookup. Begin from accepted main `f344441`, including PR14 and J865's
-separate audio repair. The main session reserves J867 for its player result.
+separate audio repair. Integrate main's J867 `e53adf0` before the final record;
+its installed player and original-audio packaging failure remain separate facts.
 Keep Route A, IL2CPP ARM64, Android rendering and the desktop fallback fixed.
 No editor mutation, game build, package install, gameplay launch or original
 installation change occurs. The generic SDK investigation adds no RoR2 runtime.

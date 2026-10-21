@@ -539,6 +539,15 @@ def compile_requested(
                 "requires_request": True,
             }
         )
+    outputs.append(
+        {
+            "role": "bank_receipt",
+            "source": str(stage_receipt_path.resolve().relative_to(ROOT / "work")),
+            "target": "Assets/StreamingAssets/stage-receipt.json",
+            "sha256": sha256(stage_receipt_path),
+            "requires_request": True,
+        }
+    )
     manifest = {
         "schema": "original-game-audio-artifact-set-r1",
         "accepted_input_id": LINEAGE["accepted_input_id"],

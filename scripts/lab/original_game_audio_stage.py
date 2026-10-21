@@ -24,7 +24,7 @@ SCHEMA = "original-game-audio-artifact-set-r1"
 RECEIPT_SCHEMA = "original-game-audio-project-stage-r1"
 HASH = re.compile(r"^[0-9a-f]{64}$")
 DEFAULT_ROLES = frozenset({"observer", "core", "bootstrap"})
-OPT_IN_ROLES = frozenset({"api", "game", "native", "banks"})
+OPT_IN_ROLES = frozenset({"api", "game", "native", "banks", "bank_receipt"})
 RESTORE_ROLES = frozenset({"restore_api", "restore_game"})
 DEFAULT_TARGETS = {
     "observer": "Assets/LabLoadingScene/Plugins/OriginalOwnerProbeObserver.dll",
@@ -38,6 +38,7 @@ DEFAULT_TARGETS = {
 NEW_ASSEMBLY_META = frozenset({target + ".meta" for role, target in DEFAULT_TARGETS.items() if role in {"observer", "core", "bootstrap"}})
 NATIVE_TARGET = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so"
 NATIVE_META = NATIVE_TARGET + ".meta"
+BANK_RECEIPT_TARGET = "Assets/StreamingAssets/stage-receipt.json"
 LINEAGE = {
     "accepted_input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
     "accepted_game_sha256": "a5f7d83c7e6872fdd6099fdc299adb7d4fa03cbf465e526d6f5efcc35c2c281d",
@@ -294,6 +295,14 @@ def read_artifacts(manifest_path: Path, request_path: Path | None, stage_receipt
         if any(not row["target_relative"].startswith("Assets/StreamingAssets/Audio/GeneratedSoundBanks/Android/") for row in banks):
             raise ValueError("bank payload target is outside the exact Android Wwise cohort directory")
         receipt_sha = verify_bank_receipt(stage_receipt_path, banks)
+        bank_receipt = [row for row in rows if row["role"] == "bank_receipt"]
+        if (
+            len(bank_receipt) != 1
+            or bank_receipt[0]["target_relative"] != BANK_RECEIPT_TARGET
+            or bank_receipt[0]["sha256"] != receipt_sha
+            or bank_receipt[0]["source_path"].read_bytes() != stage_receipt_path.read_bytes()
+        ):
+            raise ValueError("opt-in artifact set must package the exact request-bound bank cohort receipt")
         native = [row for row in rows if row["role"] == "native"]
         if len(native) != 1 or native[0]["sha256"] != LINEAGE["native_library_sha256"] or native[0]["target_relative"] != NATIVE_TARGET:
             raise ValueError("opt-in artifact set must contain the exact accepted ARM64 native library")
@@ -343,11 +352,14 @@ def install_one(project: Path, item: dict) -> dict:
 def inspect_previous_stage(project: Path, receipt_path: Path) -> tuple[dict | None, list[Path]]:
     """Recognize this stager's prior receipt before changing its owned inputs."""
     native = project / NATIVE_TARGET
+    packaged_receipt = project / BANK_RECEIPT_TARGET
     bank_root = project / "Assets/StreamingAssets/Audio/GeneratedSoundBanks/Android"
     existing_payload: list[Path] = []
     for path in (native, project / NATIVE_META):
         if path.exists() or path.is_symlink():
             existing_payload.append(path)
+    if packaged_receipt.exists() or packaged_receipt.is_symlink():
+        existing_payload.append(packaged_receipt)
     if bank_root.exists() or bank_root.is_symlink():
         no_symlink_path(bank_root)
         if not bank_root.is_dir():
@@ -400,7 +412,7 @@ def inspect_previous_stage(project: Path, receipt_path: Path) -> tuple[dict | No
     composed_api = previous["lineage"]["composed_api_sha256"]
     composed_game = previous["lineage"]["composed_game_sha256"]
     allowed_targets = set(expected_base) | {api_target, game_target}
-    optional_targets = {NATIVE_TARGET, NATIVE_META}
+    optional_targets = {NATIVE_TARGET, NATIVE_META, BANK_RECEIPT_TARGET}
     bank_targets = {target for target in targets if target.startswith("Assets/StreamingAssets/Audio/GeneratedSoundBanks/Android/")}
     meta_guids: dict[str, str] = {}
     for target in targets:
@@ -420,8 +432,11 @@ def inspect_previous_stage(project: Path, receipt_path: Path) -> tuple[dict | No
             raise ValueError("previous opt-in receipt lacks a valid request identity")
         if previous.get("stage_receipt_sha256") != LINEAGE["stage_receipt_sha256"]:
             raise ValueError("previous opt-in receipt is not bound to the exact accepted bank cohort")
-        if not optional_targets.issubset(targets) or len(bank_targets) != 154:
+        required_optional_targets = {NATIVE_TARGET, NATIVE_META}
+        if not required_optional_targets.issubset(targets) or len(bank_targets) != 154:
             raise ValueError("previous opt-in receipt does not own the complete native and 154-file bank cohort")
+        if BANK_RECEIPT_TARGET in targets and targets[BANK_RECEIPT_TARGET]["sha256"] != previous["stage_receipt_sha256"]:
+            raise ValueError("previous opt-in receipt packaged a different bank cohort receipt")
         bank_dir = "Assets/StreamingAssets/Audio/GeneratedSoundBanks/Android"
         if any(PurePosixPath(target).parent.as_posix() != bank_dir for target in bank_targets):
             raise ValueError("previous opt-in receipt owns a bank outside the direct Android cohort directory")
@@ -432,10 +447,12 @@ def inspect_previous_stage(project: Path, receipt_path: Path) -> tuple[dict | No
         bank_names = {PurePosixPath(target).name for target in bank_targets}
         if len(bank_names) != 154 or "Init.bnk" not in bank_names or any(not name.endswith(".bnk") for name in bank_names):
             raise ValueError("previous opt-in receipt bank names are not the exact unique cohort shape")
-        allowed_targets.update(optional_targets | bank_targets)
-        if set(targets) != allowed_targets:
+        allowed_without_receipt = allowed_targets | {NATIVE_TARGET, NATIVE_META} | bank_targets
+        allowed_with_receipt = allowed_without_receipt | {BANK_RECEIPT_TARGET}
+        if set(targets) not in (allowed_without_receipt, allowed_with_receipt):
             raise ValueError("previous opt-in receipt has outputs outside its exact owned cohort")
-        remove = [project / target for target in sorted(optional_targets | bank_targets)]
+        remove_targets = (optional_targets | bank_targets).intersection(targets)
+        remove = [project / target for target in sorted(remove_targets)]
         if set(existing_payload) != set(remove):
             raise ValueError("native or bank files exist outside the previous receipt's owned payload")
         return previous, remove

@@ -70,7 +70,7 @@ namespace UnityEditor
 {
     public enum BuildTarget { Android, StandaloneOSX }
     public enum BuildResult { Unknown, Succeeded, Failed }
-    public class GUID { public string value; public override string ToString() { return value; } }
+    public struct GUID { public string value; public override string ToString() { return value; } }
     public static class SessionState { public static string request; public static string GetString(string key, string fallback) { return request ?? fallback; } }
 }
 namespace UnityEditorInternal
@@ -87,13 +87,13 @@ namespace UnityEditor.Build
 }
 namespace UnityEditor.Build.Reporting
 {
-    public class BuildSummary
+    public struct BuildSummary
     {
-        public UnityEditor.GUID guid;
-        public UnityEditor.BuildTarget platform;
-        public string outputPath;
-        public UnityEditor.BuildResult result;
-        public ulong totalErrors;
+        public UnityEditor.GUID guid { get; set; }
+        public UnityEditor.BuildTarget platform { get; set; }
+        public string outputPath { get; set; }
+        public UnityEditor.BuildResult result { get; set; }
+        public int totalErrors { get; set; }
     }
-    public class BuildReport { public BuildSummary summary; }
+    public class BuildReport { public BuildSummary summary { get; set; } }
 }
