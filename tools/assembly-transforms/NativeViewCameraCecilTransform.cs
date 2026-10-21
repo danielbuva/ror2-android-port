@@ -190,6 +190,44 @@ internal static class NativeViewCameraCecilTransform
         method.Body.MaxStackSize = Math.Max(method.Body.MaxStackSize, 2);
     }
 
+    static void AddSceneCameraConsoleGuard(ModuleDefinition target, TypeDefinition marker)
+    {
+        var sceneCamera = FindType(target, "RoR2.SceneCamera");
+        var configure = FindOne(sceneCamera.Methods, x => x.Name == "ConfigureGraphicsSettings" && x.HasThis &&
+            !x.IsStatic && x.ReturnType.FullName == "System.Void" && x.Parameters.Count == 0,
+            "SceneCamera.ConfigureGraphicsSettings signature");
+        if (!configure.IsPrivate || !configure.HasBody || configure.Body.Instructions.Count < 1)
+            throw new InvalidOperationException("SceneCamera ConfigureGraphicsSettings visibility/body changed");
+        var originalEntry = configure.Body.Instructions[0];
+        if (configure.Body.Instructions.Any(x => x.Operand == originalEntry ||
+            x.Operand is Instruction[] targets && targets.Contains(originalEntry)) ||
+            configure.Body.ExceptionHandlers.Any(x => x.TryStart == originalEntry || x.HandlerStart == originalEntry || x.FilterStart == originalEntry))
+            throw new InvalidOperationException("SceneCamera graphics method has an incoming branch/handler at entry");
+        var consoleType = FindType(target, "RoR2.Console");
+        var getInstance = FindOne(consoleType.Methods, x => x.Name == "get_instance" && x.IsStatic &&
+            x.Parameters.Count == 0 && x.ReturnType.FullName == "RoR2.Console", "Console.instance getter");
+        var guard = FindOne(marker.Methods, x => x.Name == "ShouldSkipMissingConsole" && x.IsStatic &&
+            x.ReturnType.FullName == "System.Boolean" && x.Parameters.Count == 2 &&
+            x.Parameters[0].ParameterType.FullName == "RoR2.SceneCamera" &&
+            x.Parameters[1].ParameterType.FullName == "System.Boolean", "owned SceneCamera Console guard");
+        var il = configure.Body.GetILProcessor();
+        var begin = Instruction.Create(OpCodes.Ldarg_0);
+        var getConsole = Instruction.Create(OpCodes.Call, target.ImportReference(getInstance));
+        var nullValue = Instruction.Create(OpCodes.Ldnull);
+        var notNull = Instruction.Create(OpCodes.Cgt_Un);
+        var callGuard = Instruction.Create(OpCodes.Call, guard);
+        var continueOriginal = Instruction.Create(OpCodes.Brfalse, originalEntry);
+        var returnVoid = Instruction.Create(OpCodes.Ret);
+        il.InsertBefore(originalEntry, begin);
+        il.InsertBefore(originalEntry, getConsole);
+        il.InsertBefore(originalEntry, nullValue);
+        il.InsertBefore(originalEntry, notNull);
+        il.InsertBefore(originalEntry, callGuard);
+        il.InsertBefore(originalEntry, continueOriginal);
+        il.InsertBefore(originalEntry, returnVoid);
+        configure.Body.MaxStackSize = Math.Max(configure.Body.MaxStackSize, 3);
+    }
+
     static Dictionary<string, string> ReadAssemblyNames(string directory)
     {
         var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -287,6 +325,7 @@ internal static class NativeViewCameraCecilTransform
             var sourceMarker = FindType(helper, "RoR2.AndroidNativeSourceViewOnlyRigMarker");
             var marker = CopyMarkerType(target, sourceMarker);
             AddGuard(target, marker);
+            AddSceneCameraConsoleGuard(target, marker);
             target.Write(output);
         }
     }

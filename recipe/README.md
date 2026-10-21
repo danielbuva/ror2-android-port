@@ -81,11 +81,11 @@ produce the file from the input, prefer tracking the generator.
 | `authored-additions.json` | 15 inherited shader/include addition pairs | Existing tracked sources (14 shaders, one include), source hashes, output paths and stable lab GUIDs only. | No new shader content, importer bodies, game content or private identifiers. Importers use an authored minimal schema. This audits the selection/identities, not redistribution rights for unrelated recovered shader programs. Reviewed 2026-10-17. | `authored_additions.py` generates bytes without history; `composition_migration.stage` prepares the complete cohort before writes; `authored-additions-check` compares with the migration oracle read-only. Independent of game input; the oracle check gates composition/UI input IDs. |
 | `asset-transforms.json` | Preview copies for 28 SurfaceDefs, six identity assets, ten field-only prefabs and all 178 structural prefabs/scenes (migration-removal commit 4 cohorts) | Accepted-export selectors/SHA-256; authored clearing, identity, typed field edits, explicit local-reference nulling, component/settings deletion and two typed adapter constructors. Four UI prefabs reuse the hash-pinned uGUI mapping. | J548 minimal source/output, hierarchy/script, removal/owner identifiers, field paths, reference preconditions, activation/reflection values and deterministic allocation namespaces only. No YAML blocks, original component bodies, importer bodies, private paths or historical asset reads. Constructor defaults are authored schemas matching the existing sanitizer; seed names preserve its IDs without reading the named location. Provenance/privacy/licensing audit extended 2026-10-17. | `asset_transforms.py` gates input/source hashes and returns asset/meta bytes; `composition_migration.stage` verifies them against the existing plan before writing. Current `asset-transforms-check` compares the migration-stage oracle, reports exclusive structural cohorts and lists later project changes separately, without writing. |
 | `hud-ui-remaps.json` | `work/config/hud-ui-remaps.json` (LOCAL_STATE blocker B2) | 43 rows mapping Unity's own uGUI script identities: the precompiled `UnityEngine.UI.dll` reference in exported scenes (`from`) to the public `com.unity.ugui` package script GUID (`to`), with the type name and package path. Measured for input `6af7ed94…`; re-verified for the 2021.3.45f2 toolchain. | No game content, names or assets; identifiers and hashes only. One repo-relative evidence path. Audited 2026-10-17. | `composition_migration.py`, `whole_catalog.py`, `source_scene_candidate.py`, `integrated_objective.py`; each checks `input_id`, two also the `UnityEngine.UI.dll` hash |
-| `runtime-sources.json` | Explicit and existing-file membership in `build.py` and the `whole_catalog.build_integration` copy loop | Authored file list: 117 sorted C# paths relative to `tools/unity`; coordinator entry renamed to `PortSession.cs` (source name only). Initial selection reproduces the old rules using generated-project filenames and existence only. | No game content, generated source, private paths or identifiers; repository-authored source names only. Audited 2026-10-17. | `build.py` derives player-only source and `.meta` inputs; `whole_catalog.py` stages the same selection. No game input dependency. |
-| `runtime-sources.native-view-camera.json` | Explicit 115-source runtime selection for the default-off native view-camera route | Authored C# source paths and authored first-import script identities, including the native-skin lifecycle, camera contract/owner, and diagnostic boundary. | Source names and lab script GUIDs only; no game or SDK implementation, serialized content, private path, device/account data, or binary. Audited 2026-10-20. | `whole_catalog.py` validates source membership and stages the selected runtime files; runtime camera admission remains default-off and separately gated. |
+| `runtime-sources.json` | Explicit and existing-file membership in `build.py` and the `whole_catalog.build_integration` copy loop | Authored file list: 118 sorted C# paths relative to `tools/unity`; coordinator entry renamed to `PortSession.cs` (source name only). Initial selection reproduces the old rules using generated-project filenames and existence only. | No game content, generated source, private paths or identifiers; repository-authored source names only. Audited 2026-10-17. | `build.py` derives player-only source and `.meta` inputs; `whole_catalog.py` stages the same selection. No game input dependency. |
+| `runtime-sources.native-view-camera.json` | Explicit 118-source runtime selection for the default-off native view-camera route | Authored C# source paths and authored first-import script identities, including the native-skin lifecycle, camera contract/owner, and diagnostic boundary. | Source names and lab script GUIDs only; no game or SDK implementation, serialized content, private path, device/account data, or binary. Audited 2026-10-20. | `whole_catalog.py` validates source membership and stages the selected runtime files; runtime camera admission remains default-off and separately gated. |
 | `importer-identities.json` | Pre-import host importer identity placement | 137 script selections (106 reuse project-layout GUIDs; 31 extra authored script GUIDs, 17 added in J751 for new editor hosts and fixtures), 175 lab shader GUIDs and six lab asset GUID/template selections. | J548 minimum output identities for exact reconstruction; public importer schemas only, no game bodies, private paths or account/device data. | `importer_rebuild.py` renders public templates, gates the complete cohort against local provenance and compares via the rebuild coordinator. |
 | `project-layout.json` | Inherited authored script identities and package dependency selection | 117 GUID lines for authored sources in `runtime-sources.json`; 36 public direct dependency pins. | Identifiers and public package coordinates only; no importer bodies, game-derived content or private URLs. Per-package audit below, 2026-10-17. | `build.py` validates staged identities and manifest dependencies without writing them. No game input dependency. |
-| `project-layout-current.json` | Current full source layout with the selected native camera owner | Authored script GUID identities for 117 runtime sources and public Unity package coordinates. | GUIDs identify authored project scripts; package coordinates are public. No protected asset body, game implementation, private path, device/account data, or third-party implementation is included. Audited 2026-10-20. | `build.py` and `whole_catalog.py` validate authored script/importer membership and public package dependencies before staging. |
+| `project-layout-current.json` | Current full source layout with the selected native camera owner | Authored script GUID identities for 118 runtime sources and public Unity package coordinates. | GUIDs identify authored project scripts; package coordinates are public. No protected asset body, game implementation, private path, device/account data, or third-party implementation is included. Audited 2026-10-20. | `build.py` and `whole_catalog.py` validate authored script/importer membership and public package dependencies before staging. |
 | `runtime-config.json` | Public selection in ignored `Resources/MovementBatchProbe.json`; generated at whole-catalog build entry | The lab's runtime selection for the accepted input `6af7ed94…` (Steam build 25475991); 183 present `SessionConfig` keys, preserving values and JSON types. | Authored options and necessary identifiers/relationships only; no protected content. 45 authored fields (44 present), 139 selector fields, 0 private/content fields. Excluded: `detailedVisualDiagnostics` is absent locally, so no value is invented. Audit details below, 2026-10-17. | `build.py` checks recipe keys against staged config after layout validation; extra local/obsolete keys remain allowed. Build-entry generation replaces the whole object before existing accepted-input-gated validation; no extra keys survive generation. |
 | `content.json` | Public selection in ignored `work/scene-probe-build.json`; generated at whole-catalog build entry | Accepted input `6af7ed94…` (Steam build 25475991); 14 current build fields, 4,304 path strings, values and array order unchanged. | J548 permits these minimal selectors; no asset bodies, private paths or device/storage identities. Includes 61 Wwise asset UUID filenames, not middleware or banks. All fields retained; audit below, 2026-10-17. | `build.py` validates after runtime config on the accepted-input-gated whole-catalog path, before cache lookup/editor invocation. Build-entry generation replaces the work file from this recipe before validation. |
 | `native-view-camera-transform.json` | Exact, default-off native view-camera transform producer | Four exact RoR2/API profile pairs, authored transformation output hashes, tool/source hashes, a disabled-by-default request gate, and the minimum base-prefab path/GUID. | Minimum identifiers only; no serialized content, IL, game implementation, protected assembly/prefab, private path, device/account data, or third-party code. The operator supplies legitimate local input. Audited 2026-10-20. | `native_view_camera_transform.py` and `native_view_camera_build_hook.py` validate source and profile hashes; generated assemblies/resolver files remain under ignored `work/`. Player closure, APK binding and runtime acceptance are separate gates. |
@@ -1427,3 +1427,57 @@ J890 adds the two authored music script importer selections to the existing
 `importer-identities.json` generator, using their recorded project-layout GUIDs
 and shared MonoImporter template. This covers both first placement in the
 current project and reconstruction; no generated metadata is published.
+
+
+### Original camera prerequisite composition (private R4)
+
+The committed Music owner source set is preserved and extended with the exact
+`AndroidNativeSourceCameraPrerequisites` runtime source. The full and native
+camera runtime lists both contain 118 sorted paths; `project-layout.json` and
+the original-audio owner-cohort recipe retain all prior Music rows and add the
+new helper identity as an authored, not-yet-imported GUID. The camera opt-in
+remains disabled. When the actual Console is absent, only the exact owned
+source camera skips its Console-dependent configuration and reports reduced
+fidelity using prefab defaults. Three exact shader roots are added to the
+whole-catalog profile; no shader implementation is included. Host compilation
+and static transformation do not establish bundle, player, APK, or runtime
+readiness.
+
+### Camera stage restore-only predecessor output (R5)
+
+The camera build hook can unwind the exact historical `f6bc...` output only
+when the current 6f96 game/API stage receipt, audio stage receipt hash and
+mode, declared 1ced or d540 profile, and 6f96 preimage snapshot all match. This
+hash is restore-only: the current 1ced and d540 profile selectors continue to
+produce the `41b66...` output, and no new staging path chooses the predecessor.
+The exact local R12 receipt and snapshot are qualification evidence under
+ignored `work/`; no generated DLL or receipt is published here. The predecessor
+is not runtime accepted and restores only the exact game preimage.
+
+
+### Camera profile output requalification (R6)
+
+The Console-guard camera transform is qualified against four exact pairs:
+3124/API 107 produces `e237af...`; 1034/API d540 produces `aa7ca...`;
+PointSound 6f96/API d540 and 6f96/API 1ced both produce `41b66...`.
+The 1ced row is the current R12 requested-audio profile; it remains an
+explicitly matched input and is not inferred from the d540 row. The independent
+Cecil transformer and verifier were run for all four pairs using frozen managed
+inputs and resolved plugin/Unity references. The SceneCamera prefix's computed
+maximum stack is at least 3; the emitted module hashes remained stable after
+that explicit stack bound was added.
+
+Older `236fab...` (3124/API 107) and `e16e...` (1034/d540 and the legacy
+1034/793 receipt only) are restore-only receipt outputs. The exact historical
+`f6bc...` output remains restore-only for the two 6f96 API profiles. Restore
+requires the existing camera receipt, its matching audio-stage receipt and mode,
+exact profile/API/game bytes, and the original input snapshot; none of these
+outputs can be selected for new camera generation. The default-off R8 receipt
+was replayed in an isolated project and restored 236fab to exact 3124 bytes;
+receipt, API, output, snapshot, mode and profile mutants refused without writes.
+The R12 f6bc receipt replay remains covered by the inherited R5 fixture.
+
+R6 adds authored host contracts for the exact four profile mapping and
+restore-only separation. Full player closure, IL2CPP conversion, APK binding,
+camera activation and runtime acceptance remain false. No device or Unity build
+was run.

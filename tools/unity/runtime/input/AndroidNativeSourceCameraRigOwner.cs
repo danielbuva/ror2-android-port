@@ -26,7 +26,7 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
     Component guardMarker;
     GameObject stagingRoot;
     Camera previousGlobalSceneCamera;
-    bool capturedGlobalSceneCamera, viewReady, overrideInstalled, audioComponentPolicyVerified;
+    bool capturedGlobalSceneCamera, viewReady, overrideInstalled, audioComponentPolicyVerified, terminallyRetired;
     Component sourceDefaultListener, sourceAkGameObject;
     bool sourceDefaultListenerPreserved;
     public bool managedSourceDefaultListenerObserved { get; private set; }
@@ -43,6 +43,8 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
     public string nativeDefaultListenerRegistrationOutcome { get; private set; } = "not_observed_original_wrapper_discards_AKRESULT";
     public string nativeDefaultListenerRemovalOutcome { get; private set; } = "not_observed_original_wrapper_discards_AKRESULT";
     bool sourceListenerTeardownStarted;
+    public bool sourceConsoleConfigurationUnavailable { get; private set; }
+    public string sourceCameraFidelityState { get; private set; } = "unprepared";
 
     bool IOriginalWwiseCameraListenerState.ListenerStateEvidenceCaptured => true;
     bool IOriginalWwiseCameraListenerState.SourceDefaultListenerPreserved => sourceDefaultListenerPreserved;
@@ -105,6 +107,9 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
             var scene = camera.GetComponent<SceneCamera>();
             if (!scene)
                 throw new InvalidOperationException("Original Main Camera camera lacks its source SceneCamera component");
+            var preparedCamera = AndroidNativeSourceCameraPrerequisites.Prepare(scene, out var prerequisiteFailure);
+            if (preparedCamera == null)
+                throw new InvalidOperationException("original camera prerequisites unavailable: " + prerequisiteFailure);
 
             rig.createHud = false;
             rig.enableMusic = false;
@@ -189,14 +194,26 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
                 throw new InvalidOperationException("camera audio-component policy could not be verified before activation");
             owner.previousGlobalSceneCamera = SceneCamera._camera;
             owner.capturedGlobalSceneCamera = true;
-            staging.SetActive(true);
+            var activationScope = AndroidNativeSourceCameraPrerequisites.BeginOwnedViewActivation(preparedCamera);
+            try
+            {
+                staging.SetActive(true);
+            }
+            finally
+            {
+                activationScope.Dispose();
+                owner.sourceConsoleConfigurationUnavailable = activationScope.ConsoleConfigurationUnavailable;
+                owner.sourceCameraFidelityState = owner.sourceConsoleConfigurationUnavailable
+                    ? "source_prefab_defaults_console_unavailable_reduced_fidelity"
+                    : "original_console_configuration_applied";
+            }
             owner.CaptureManagedSourceListenerState();
             owner.RestoreGlobalSceneCameraPointer();
-            owner.status = preserveSourceListener
+            owner.status = owner.WithCameraFidelity(preserveSourceListener
                 ? owner.managedSourceDefaultListenerObserved
                     ? "original prefab listener lifecycle preserved; exact listener is in the managed default list; native registration result is unobserved, so no spatial PCM claim is permitted"
                     : "original prefab listener lifecycle preserved; exact managed default-list membership was not observed; no spatial PCM claim is permitted"
-                : "waiting for original PlayerBasic target/team and configured native view pose; default-off audio components are isolated; audio spatialization is outside this view-only diagnostic";
+                : "waiting for original PlayerBasic target/team and configured native view pose; default-off audio components are isolated; audio spatialization is outside this view-only diagnostic");
             if (!preserveSourceListener)
                 owner.sourceDefaultListenerLifecycleState = "not_preserved_default_off";
             return owner;
@@ -217,6 +234,7 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
     static bool markerContractResolved;
     static Type markerTypeCache;
     static FieldInfo markerRigField, markerTargetField, markerOwnerField;
+    static MethodInfo markerContextReadyMethod;
 
     static Type ResolveOptionalMarkerType()
     {
@@ -232,11 +250,14 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
         markerOwnerField = markerType.GetField("ownerProvider", fields);
         var isBound = markerType.GetMethod("IsBoundTo", BindingFlags.Instance | BindingFlags.Public, null,
             new[] { typeof(CameraRigController), typeof(GameObject), typeof(ICameraStateProvider) }, null);
+        var contextReady = markerType.GetMethod("IsOriginalUpdateContextReadyFor", BindingFlags.Instance | BindingFlags.Public, null,
+            new[] { typeof(CameraRigController), typeof(GameObject), typeof(ICameraStateProvider) }, null);
         if (markerRigField == null || markerRigField.FieldType != typeof(CameraRigController) ||
             markerTargetField == null || markerTargetField.FieldType != typeof(GameObject) ||
             markerOwnerField == null || markerOwnerField.FieldType != typeof(ICameraStateProvider) ||
-            isBound == null || isBound.ReturnType != typeof(bool))
+            isBound == null || isBound.ReturnType != typeof(bool) || contextReady == null || contextReady.ReturnType != typeof(bool))
             return null;
+        markerContextReadyMethod = contextReady;
         markerTypeCache = markerType;
         return markerTypeCache;
     }
@@ -259,6 +280,16 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
             !ReferenceEquals(markerOwnerField.GetValue(marker), owner))
             throw new InvalidOperationException("exact merged view-only rig marker could not retain its owner binding");
         return marker;
+    }
+
+    string WithCameraFidelity(string value)
+    {
+        string fidelity = sourceCameraFidelityState == "source_prefab_defaults_console_unavailable_reduced_fidelity"
+            ? "reduced fidelity: source-prefab defaults; original Console absent"
+            : sourceCameraFidelityState == "original_console_configuration_applied"
+                ? "original Console camera configuration applied"
+                : "camera configuration state unavailable";
+        return fidelity + "; " + value;
     }
 
     static InvalidOperationException Refuse(AndroidNativeSourceSkinLifecycle.Report report, string reason)
@@ -415,6 +446,8 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
 
     void LateUpdate()
     {
+        if (terminallyRetired)
+            return;
         bool audioModeCompatible = IsOriginalAudioModeCompatible();
         if (sourceDefaultListenerPreserved)
         {
@@ -428,15 +461,14 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
                 string reason = !audioModeCompatible
                     ? "original audio owner readiness ended"
                     : "original Wwise engine is no longer initialized";
-                DisposeOwnedView();
-                status = reason + "; source listener teardown state: " + sourceDefaultListenerLifecycleState +
-                    "; native removal result remains unobserved";
+                RetireOwnedView(reason + "; source listener teardown state: " + sourceDefaultListenerLifecycleState +
+                    "; native removal result remains unobserved");
                 return;
             }
         }
         else if (!audioModeCompatible)
         {
-            Refuse("original audio owner is pending, failed, or terminated; diagnostic view owner will not infer silent success");
+            RetireOwnedView("original audio owner is pending, failed, or terminated; diagnostic view owner will not infer silent success");
             return;
         }
         if (!cameraRig || !expectedBody || !viewCamera || !sceneCamera || !guardMarker)
@@ -464,7 +496,27 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
             RemoveOwnedOverride();
             if (viewCamera.enabled)
                 viewCamera.enabled = false;
-            status = "native view pose is not configured";
+            status = WithCameraFidelity("native view pose is not configured");
+            return;
+        }
+        // The original SetOverrideCam(null) path calls CameraModeBase.MatchState
+        // using the rig's private context dictionary. Wait for the exact original
+        // EarlyUpdate context before installing an override, so refusal/teardown
+        // cannot enter that path with a default context.
+        bool originalContextReady = markerContextReadyMethod != null && guardMarker &&
+            (bool)markerContextReadyMethod.Invoke(guardMarker,
+                new object[] { cameraRig, expectedBody.gameObject, (ICameraStateProvider)this });
+        if (!originalContextReady)
+        {
+            if (ready || (cameraRig.hasOverride && cameraRig.IsOverrideCam(this)))
+                RetireOwnedView("owned original CameraRigController context was lost after camera admission");
+            else
+            {
+                ready = false;
+                if (viewCamera.enabled)
+                    viewCamera.enabled = false;
+                status = WithCameraFidelity("waiting for the owned original CameraRigController update context");
+            }
             return;
         }
         if (!overrideInstalled)
@@ -507,11 +559,11 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
         ready = true;
         if (!viewCamera.enabled)
             viewCamera.enabled = true;
-        status = sourceDefaultListenerPreserved
+        status = WithCameraFidelity(sourceDefaultListenerPreserved
             ? managedSourceDefaultListenerObserved
                 ? "original prefab SceneCamera and PlayerBasic view active; source default listener is in the managed list; native registration result is unobserved, so spatial PCM is not claimed"
                 : "original prefab SceneCamera and PlayerBasic view active; source listener is not in the observed managed default list; spatial PCM is not claimed"
-            : "original prefab SceneCamera and PlayerBasic view active; default-off audio components remain isolated; spatial PCM is not claimed";
+            : "original prefab SceneCamera and PlayerBasic view active; default-off audio components remain isolated; spatial PCM is not claimed");
     }
 
     public bool IsOwnedNullViewerRig(CameraRigController candidate, GameObject target)
@@ -555,17 +607,55 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
 
     void Refuse(string reason)
     {
-        status = reason;
+        if (cameraRig && cameraRig.IsOverrideCam(this) && !HasOriginalUpdateContext())
+        {
+            RetireOwnedView(reason + "; retiring owned rig because its original context is unavailable");
+            return;
+        }
+        status = WithCameraFidelity(reason);
         ready = false;
         if (viewCamera)
             viewCamera.enabled = false;
         RemoveOwnedOverride();
     }
 
+    void RetireOwnedView(string reason)
+    {
+        if (terminallyRetired)
+            return;
+        status = WithCameraFidelity(reason);
+        terminallyRetired = true;
+        DisposeOwnedView();
+        // SetActive(false) above runs the original listener's OnDisable and
+        // captures managed membership before destruction. The rig, marker, and
+        // provider are all descendants of this one owned staging root, so
+        // destroying it retires the stale override graph without invoking
+        // SetOverrideCam(null) against an invalid CameraModeContext.
+        var retiredRoot = stagingRoot;
+        if (retiredRoot)
+            Destroy(retiredRoot);
+    }
+
+    bool HasOriginalUpdateContext()
+    {
+        if (markerContextReadyMethod == null || !guardMarker || !cameraRig || !expectedBody)
+            return false;
+        object result = markerContextReadyMethod.Invoke(guardMarker,
+            new object[] { cameraRig, expectedBody.gameObject, (ICameraStateProvider)this });
+        return result is bool && (bool)result;
+    }
+
     void RemoveOwnedOverride()
     {
         if (cameraRig && cameraRig.IsOverrideCam(this))
+        {
+            // Destroying the owned rig lets its original OnDestroy clear the
+            // component-owned override when no valid original context remains.
+            // Never ask SetOverrideCam(null) to MatchState against a default context.
+            if (!HasOriginalUpdateContext())
+                return;
             cameraRig.SetOverrideCam(null, 0f);
+        }
         overrideInstalled = false;
     }
 

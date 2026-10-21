@@ -23463,3 +23463,118 @@ raw logs and captures remain ignored. Main retains fae79734; accepted baseline
 remains J850 f1550ce0. Revisit after a source-backed bounded admission policy
 can distinguish pending native registration from a known mismatch. Do not
 repeat the frozen R6 attempt or infer navigation failure from its empty trace.
+
+
+## J892 — Restore owned original camera prerequisites and update lifecycle
+
+Date: 2026-10-21.
+
+Hypothesis: J887's selected source-camera failure is caused by missing source
+shader prerequisites, absent original application update dispatch and an
+invalid CameraModeContext during override retirement. Preserve the source
+camera, selected body and native listener callbacks while repairing only the
+owned camera's composed lifecycle. This checkpoint is source and host work;
+Android activation, visual fidelity and playback require a new player.
+
+Prior art: consult the community map and pinned R2API.Sound/SoundAPI.cs at
+`f539511eabf87f02afddb5a83cafd2f4704c85ad`: native initialization, bank loading
+and source music/scene seams remain distinct. Pinned DebugToolkit Code/Util.cs
+at `d1e2f0aa4b8ac4747547db0fcd87344953432f06` uses typed body/master identities;
+object names alone do not establish the camera target. Neither supplies this
+Android update/graphics lifecycle. The accepted source and J887 failure govern
+the narrow repair; no protected implementation is copied into public Git.
+
+The authored marker pumps the original private CameraRigController.EarlyUpdate
+for its exact bound null-viewer rig only while the original application owner
+is inactive. It does not dispatch the application's global update event or
+create LocalUser/NetworkUser state. The owner waits for the original target
+and context before installing or removing its view override. Lost context
+retires only its staging root instead of asking CameraModeBase to match a
+default context. Native Unity callbacks retain listener setup and teardown.
+
+Before activation the owner resolves the accepted source shaders and original
+Sobel preload; the whole-catalog builder includes the three exact missing
+shader location rows and validates their source conversion. An exact owned
+SceneCamera activation scope guards the original Console-dependent graphics
+configuration only when Console is absent. The report leads with reduced
+fidelity and source prefab defaults in that case. This is an explicit
+approximation; normal source Console configuration remains available when its
+owner exists. No global shader cache is substituted.
+
+Preserve the committed MusicController sources, importer identities, passive
+capture cleanup and default-off behavior. New camera helper setup/teardown is
+named in ARCHITECTURE and its source membership is represented in runtime,
+project-layout and audio-owner recipes. The audio producer and camera producer
+must bind the same owner recipe. Exact preceding camera outputs are available
+only for receipt-bound restoration before fresh production; arbitrary
+API/game pairs and input drift remain refused.
+
+Frozen cumulative R6 patch SHA-256 is
+`8785dd5a6dc678fc678c588608a9ff4afbd7000571a368273d9115b01d192129`;
+manifest SHA-256 is
+`5252e6b625001edf0c7a6162d697ec1ecae3511f1ee3df0a70672dbb5cc7adb5`.
+All 26 patch-member hashes bind their authored candidate files. Four actual
+Cecil generations and independent verifications pass: default 3124/API 107
+produces e237af4f, legacy 1034/API d540 produces aa7ca07c, and PointSound game
+6f96 with either d540 or current 1ced produces 41b66d07. Prefix stack depth is
+explicitly at least three. Prior 236fab/e16e/f6bc results remain restore-only;
+exact current receipts, API bytes, profile, preimage snapshot and output bytes
+must agree. An actual preceding default-off receipt and R12 receipt replay
+restore only their declared preimages; mismatched receipt/profile/API/output
+and snapshot mutants refuse.
+
+The preceding R5 full roundtrip retained a default-profile output mismatch;
+R6 fixes that pin using a fresh exact transformation rather than accepting
+arbitrary outputs. Its 118-runtime plus six-support-source compile is inherited
+from the unchanged R4 authored runtime sources, output SHA-256
+`a5ffe5bc0c77ffadc04ce548df7a2518f84588c61d15e77587e85c13fa035849`.
+It uses frozen same-request R10 references and the pinned Unity toolchain,
+not a changing editor Library.
+
+Independent R6 source review passes:
+`work/coordination/original-camera-update-review/r6/review.md`, SHA-256
+`5d47294c7b5ae982cd4c75f5b29720cd0b03e5ecb496f72707385abee4fcda02`.
+The legacy e16e restore branch has no local stage receipt for replay; its
+qualification remains code-scoped. Current R12 and default-off preceding
+receipts are replay-qualified.
+
+Root applies the 26 frozen members against synchronized Main after the
+docs-only J894 checkpoint. Integration finds two new tests assumed they were
+inside the private candidate tree and excluded the repository itself from root
+discovery; include the current repository and use its AGENTS marker. Ruff
+reformats the hook with an identical parsed AST; bind its resulting source hash
+in the recipe. Correct the assembly-transform recipe's stale pre-stack-fix
+transformer hash to the actual independently verified R6 source. An initial
+host retry also correctly refuses macOS's /var symlink; use the canonical
+/private/tmp test root. Preserve those first logs. Independent integration-delta
+review passes, SHA-256
+`77332010cf13477542e43519c1ac2ae0de91bd3e144d7832927af807e83cc57b`.
+
+Root's focused suite passes 63 tests with three optional skips, including the
+actual marker fixture, exact source/recipe bindings, shader-root refusal,
+Music/cohort preservation, producer/cache contracts and receipt restoration.
+Log: `work/coordination/codex-camera-integration-root/r1/root-tests-retry2.log`.
+Ruff format/check passes. The first pre-push fresh-clone gate then reports
+seven errors because the existing synthetic catalog replay does not supply the
+new mandatory shader dependencies. Preserve the refused push log. Add three
+authored stand-in shaders and their exact catalog/source identities to that
+fixture, preserving its GUID-repair coverage; production refusal stays strict.
+The focused catalog replay passes all 27 tests after that fixture correction.
+The fresh isolated four-mode audio-to-camera roundtrip remains in progress at
+this source checkpoint; do not claim it has
+passed. Its earlier R5 requested modes passed, and the R6 current requested
+path preserves that behavior with separately tested restore/profile changes.
+Proceed to the committed canonical build while the independent isolated checks
+continue; a failed actual producer or build remains a first failure to retain.
+
+This changes authored runtime/Cecil/catalog recipes reproduced by R8/R9;
+replay those steps rather than editing generated sources. The new helper is
+staged from tracked source by the existing generator, with first-import identity
+explicitly null in project-layout. No new private runtime input is introduced.
+Architecture names its setup, update/context state and teardown. The opt-in
+camera stays default-off. No Unity build or device action occurs for this
+checkpoint: Main retains J891's fae79734, stopped/asleep after J894, accepted
+baseline f1550ce0. Device camera/body/listener activation, shader rendering,
+visual fidelity, composed audio output and natural teardown remain unqualified.
+Build the committed sources and pass both standard controls before the selected
+camera/lifecycle run.
