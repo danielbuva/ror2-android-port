@@ -23554,8 +23554,14 @@ Root's focused suite passes 63 tests with three optional skips, including the
 actual marker fixture, exact source/recipe bindings, shader-root refusal,
 Music/cohort preservation, producer/cache contracts and receipt restoration.
 Log: `work/coordination/codex-camera-integration-root/r1/root-tests-retry2.log`.
-Ruff format/check passes. The fresh isolated four-mode audio-to-camera
-roundtrip remains in progress at this source checkpoint; do not claim it has
+Ruff format/check passes. The first pre-push fresh-clone gate then reports
+seven errors because the existing synthetic catalog replay does not supply the
+new mandatory shader dependencies. Preserve the refused push log. Add three
+authored stand-in shaders and their exact catalog/source identities to that
+fixture, preserving its GUID-repair coverage; production refusal stays strict.
+The focused catalog replay passes all 27 tests after that fixture correction.
+The fresh isolated four-mode audio-to-camera roundtrip remains in progress at
+this source checkpoint; do not claim it has
 passed. Its earlier R5 requested modes passed, and the R6 current requested
 path preserves that behavior with separately tested restore/profile changes.
 Proceed to the committed canonical build while the independent isolated checks

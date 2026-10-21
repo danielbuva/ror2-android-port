@@ -50,6 +50,24 @@ class CatalogRebuildTests(unittest.TestCase):
         write(self.catalog / "source-guid-repairs.json", [])
         write(self.catalog / "native-conversions.json", dict(issues=[]))
         write(self.catalog / "source-catalog.json", dict(locations=[dict(id=1, type="UnityEngine.GameObject", primaryKey="test")], keys=[], providers=[]))
+        # The real catalog builder now requires the original camera's three
+        # shader dependencies. Supply authored stand-ins to keep this replay
+        # exercising its normal identity and copying paths.
+        metadata = read(self.catalog / "source-catalog.json")
+        closure = read(self.catalog / "reconciled-closure.json")
+        index = read(self.catalog / "source-guid-index.json")
+        for location_id, (address, primary_key) in whole_catalog.CAMERA_SHADER_ROOTS.items():
+            source = f"Assets/SyntheticCamera{location_id}.shader"
+            guid = f"{location_id:032x}"
+            self.put(self.export / source, f'Shader "Synthetic/Camera{location_id}" {{}}\n')
+            self.put(self.export / (source + ".meta"), "guid: " + guid + "\n")
+            metadata["locations"].append(dict(id=location_id, type=whole_catalog.SHADER_LOCATION_TYPE, primaryKey=primary_key))
+            metadata["keys"].append(dict(key=address, keyType="System.String", locations=[location_id]))
+            closure["converted"][str(location_id)] = dict(source=source, resolution="exact")
+            index[guid] = source
+        write(self.catalog / "source-catalog.json", metadata)
+        write(self.catalog / "reconciled-closure.json", closure)
+        write(self.catalog / "source-guid-index.json", index)
         self.support = "Assets/Scripts/Assembly-CSharp/AffixBeadProjectileSound.cs"
         self.support_target = "Assets/WholeGame/Scripts/Assembly-CSharp/AffixBeadProjectileSound.cs"
         self.put(self.export / self.support, "class SyntheticSupport {}\n")
@@ -171,7 +189,10 @@ class CatalogRebuildTests(unittest.TestCase):
 
     def test_scene_guid_repair_uses_recorded_identity(self):
         write(self.catalog / "source-guid-repairs.json", [dict(source=self.source, source_guid=self.guid, guid="e" * 32)])
-        write(self.catalog / "source-guid-index.json", {"e" * 32: self.source})
+        index = read(self.catalog / "source-guid-index.json")
+        del index[self.guid]
+        index["e" * 32] = self.source
+        write(self.catalog / "source-guid-index.json", index)
         self.pin()
         staging = self.staging()
         whole_catalog.prepare_integration(staging)
