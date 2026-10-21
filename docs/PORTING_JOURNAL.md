@@ -20674,3 +20674,103 @@ workstation inputs. Independent complete roots, target content/shaders, richer
 dependencies, permitted tool delivery and complete owner installation remain
 open. SDK-native metadata no longer requires the captured native table at this
 authored stripping/conversion boundary.
+
+## J862 — Derive authored fixture module policy from owner SDK and package data on Android
+
+2026-10-20. Hypothesis: J859's authored fixture can replace its captured module
+policy with values derived from the supplied SDK's module/package metadata and
+the project's builtin-package manifest, then preserve actual phone stripping
+and converter outputs. Sync against origin/main `09e8512` before recording;
+J860/J861 remain reserved for the main session. Source freeze is
+`0cd76da3c5d4ae4aa83384bffac0d8f5244b73bc`. Route A, IL2CPP ARM64, renderer,
+working game build and desktop fallback stay unchanged. No Unity action,
+package install or gameplay launch.
+
+**Scope and source knowledge.** The pinned public
+[ModuleMetadata bindings](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Editor/Mono/ModuleMetadata.bindings.cs)
+expose mutable automatic/include/exclude settings; the
+[package build callback API](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Modules/PackageManager/Editor/Managed/BuildUtilities.cs)
+also permits package-specific decisions. These are scope clues, not a general
+native-policy implementation or license to distribute SDK data. No reference
+implementation is copied. Qualify only the authored fixture's explicit
+`builtin-modules-no-overrides-v1` profile; custom overrides/callbacks and other
+projects require separate work. This is generic build metadata support, not a
+RoR2-specific runtime mechanism.
+
+The exact editor's modules.asset has 67 modules, 34 controlled by builtin
+packages; Android's file has 63 modules, 33 controlled. All 34 editor controlled
+module names map unambiguously to their SDK builtin package identities. Resolve
+requested packages and transitive dependencies from their supplied package.json
+files. Derive exclusions as the union of disabled controlled modules and editor
+modules absent in the target SDK. Do not embed the missing-module list or the
+captured exclusion list. Explicit profile semantics produce no forced inclusions.
+The SDK bytes and all derived rows remain private.
+
+**Named owner and contracts.** `phone_module_policy.py` parses only the observed
+module-data schema, pins both SDK module-file hashes, validates builtin package
+identities/versions/dependencies, resolves closure and refuses nonstrippable
+exclusions. Staging requires the known authored fixture file set and a consistent
+builtin package lock, in addition to the existing source/APK/capture guards.
+Unknown/custom source inputs, non-builtin packages, unknown versions and schema
+changes refuse. The new `module_policy` request requires SDK-native mode.
+ARCHITECTURE names its lifecycle; LOCAL_STATE records generators and replay
+support. Failure directories and older selectors/adapters remain intact.
+
+Staging copies 37 SDK/package/manifest data inputs and the authored reader;
+it omits both captured policy arrays and the captured native table completely.
+`project-root-data.json` contains only serializedTypes and typesInScenes.
+At actual stripping invocation, Android generates `native-roots/module-policy.json`
+and combines its policy with freshly read SDK-native metadata and the captured
+scene roots. Generated input/policy/source hashes are revalidated before the
+converter handoff and again at the native-source boundary. Complete independent
+editor-root generation remains false.
+
+Five new host contracts cover strict YAML/dependency parsing, transitive package
+closure and overlapping exclusion reasons, unsupported versions/packages and
+cyclic/contradictory data, staging eligibility/lock/drift refusal, and omitted
+captured policy with generated-output/source binding. Fixtures use authored
+synthetic data, no copied SDK table. All 16 focused linker/policy tests pass.
+Fresh-clone CI on the frozen source passes 1,262 tests with 55 optional skips,
+Ruff, audit and documentation checks. The ordinary doctor/preflight still refuse
+missing inventory/accepted-input/lab-project state in this isolated worktree;
+that unchanged game-bootstrap gate is separate from the explicitly selected
+fixture, which passes its own source/capture/input guards.
+
+**Phone execution and independent comparison.** Stage 634 files / 174,490,826
+bytes. Verify explicit alpha device/workspace ownership, fresh capacity/backing/
+reserve, supplied Python/.NET hashes and complete staged manifests for each run.
+In a new owned directory, policy/native generation plus UnityLinker passes in
+12.188 seconds of Android-driver time. Actual arguments point to the newly
+generated editor-data file. No captured policy/native input is present for it
+to consume. Only after execution, compare with the unchanged exact-editor oracle:
+33 exclusions, zero inclusions, four enabled packages, 318 native types and
+43 retained scene records agree. The generated editor-data bytes equal J859's
+`713e327c36d143091abe4d9d70998851c3a0ab3b9060f5805d3b9ea36ee81b3e`.
+The policy receipt is
+`5d7440196aba1bed8fe10c656e13faf457d9a2dcf578bc5705f6b38202206dd2`.
+
+All 36 DLLs and 30 PDBs match desktop bytes. The 67-file emitted closure passes
+the existing strict comparison, permitting only the previously qualified report
+module-array ordering difference while preserving raw bytes. The raw report
+hash remains `dff4312e6da36ab6d0be20bf61ee4d04442146971fa32cc831aa860b7250796e`.
+Feed these actual outputs through the explicit linker selector to a new Android
+converter attempt: it passes in 6.292 seconds. All 126 C/C++ files and both data
+files match J859 byte for byte; global-metadata.dat remains
+`d515a852e565f151c1ea4f6d0ecb96aab93b8d9b095207df4feebf619e69b9b5`.
+`cpp_input` validates the nested policy/native/stripping lineage and exact emitted
+boundary. No redundant native compile or fixture install is needed. These are
+tool timings, not game performance or app-sandbox qualification. Both actual
+SDK invocations pass first time. Alpha's game remains be26c21c… and the display
+is asleep after each probe; main/spare devices are untouched.
+
+**Evidence and remaining work.** The ignored proof root retains
+`module-policy-linker-*` and `module-policy-converter-*` requests, adapters,
+stage/run selections and boundary checks; `module-policy-native-*` selects the
+validated final handoff. `module-policy-proof-receipt.json` binds 43 source/input/
+output/comparison/test artifacts, SHA-256
+`ec42b6114069cbd98c6f9960ac0d08a2ec10eb3d6691123acac2c651137699b6`.
+No private SDK data is published. Captured scene usage, TypesInScenes.xml and
+managed compilation remain desktop inputs. General project/module policy,
+independent complete roots, content/shaders, richer dependencies, permitted tool
+delivery, app sandbox execution and complete owner installation remain open.
+Revisit this profile only for a changed contract/input or a concrete regression.
