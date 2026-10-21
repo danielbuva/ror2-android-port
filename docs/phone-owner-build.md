@@ -98,8 +98,9 @@ implementation DLL/PDB bytes still differ. Full player defines, generators,
 custom packages, stripping integration and game compilation remain open.
 J905 connects the actual Android-produced fixture DLL/PDB to a separate
 stripping handoff. The same output closure is emitted, with only those two
-members differing from the earlier replay. Desktop scene roots remain inputs;
-conversion and player loading with the newly compiled artifacts remain open.
+members differing from the earlier replay. J920/J921 then qualify conversion,
+fresh native compilation and installed loading of that authored closure.
+Desktop scene roots and base engine/content remain inputs.
 These are build-pipeline problems; keep the game runtime
 and desktop fallback while investigating them independently.
 
