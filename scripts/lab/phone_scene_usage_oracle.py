@@ -102,8 +102,8 @@ def type_rows(rows):
         if set(row) != {"assembly", "name"} or not all(isinstance(row[k], str) and row[k] for k in row):
             raise ValueError("Incomplete observed type identity")
         keys.append((row["assembly"], row["name"]))
-    if len(set(keys)) != len(keys):
-        raise ValueError("Repeated observed type identity")
+    # Native types can share a wrapper (notably UnityEngine.Object). Preserve
+    # the API's multiplicity rather than treating wrappers as native identities.
     return keys
 
 

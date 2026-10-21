@@ -202,7 +202,7 @@ class SceneUsageOracleTests(unittest.TestCase):
             lambda r: r.update(root_generation_qualified=True),
             lambda r: r.update(phase="manager-dependencies"),
             lambda r: r["settings"].update(backend="Mono"),
-            lambda r: r.update(scene_types=r["scene_types"] * 2),
+            lambda r: r.update(scene_types=[dict(assembly="Authored", name="")]),
             lambda r: r["groups"].append(r["groups"][0]),
             lambda r: next(g["objects"][0] for g in r["groups"] if g["objects"]).update(supported=True),
             lambda r: next(g["objects"][0] for g in r["groups"] if g["objects"]).update(types=[dict(assembly="A", name="Invented")]),
@@ -219,6 +219,20 @@ class SceneUsageOracleTests(unittest.TestCase):
                 change(report)
                 with self.assertRaises(ValueError):
                     oracle.validate_report(report, inputs, destination, self.editor)
+
+    def test_shared_wrappers_remain_repeated_observations_with_no_native_identity_claim(self):
+        destination, inputs = oracle.stage(self.root, self.work, self.editor)
+        report = self.report(destination, inputs)
+        report["scene_types"] *= 2
+        report["manager_types"] = report["scene_types"] * 3
+        group = next(g for g in report["groups"] if g["objects"])
+        row = group["objects"][0]
+        row.update(types_returned_null=False, types=report["scene_types"] * 2)
+        oracle.validate_report(report, inputs, destination, self.editor)
+        self.assertEqual(len(report["scene_types"]), 2)
+        self.assertEqual(len(report["manager_types"]), 6)
+        self.assertEqual(len(row["types"]), 4)
+        self.assertFalse(report["root_generation_qualified"])
 
 
 class SceneUsageSdkCompilationTests(unittest.TestCase):
