@@ -23214,3 +23214,87 @@ Installed diagnostic stays 3c72fe05, stopped with selector absent and display
 asleep; accepted baseline stays f1550ce0. Revisit with the next committed build,
 post-strip reflection proof and both standard device checks. Actual music,
 camera and normal-difficulty acceptance remain open.
+
+
+## J891 — Bind the music player and observe original controller preload on device
+
+Date: 2026-10-21. Hypothesis: the committed original MusicController lifecycle
+and importer correction can survive the real UnityLinker/IL2CPP player and both
+standard gameplay controls, exposing any remaining source context without
+forcing events. J889 records the prior-art and authored owner; J890 records
+the preceding pre-compilation refusal. No new gameplay/audio mechanism is
+introduced by this experiment.
+
+**Build and closure.** Explicit-device doctor/preflight pass. The full R12 build
+uses synchronized source `c02013bd7ebd9116497077b22bc7e7372df2d911`, holds the
+shared build mutex and finishes in 224.609402 s with zero build errors. Freeze
+382 authored inputs, 333 same-request pre-strip assemblies, 154 bank files,
+266 payload hashes and matching debugging symbols before moving Main source.
+Request is `20261021T085246.921272Z-c8b078c68a3b42c8887468339bfad66a`.
+APK SHA-256:
+`fae79734107d07d7c9a8af838961ccf82b4e6fa530e4f1a6238b17eda3a44b1d`.
+Symbols SHA-256:
+`867cd2ec7fd6080fefb7fc2cdc826f870d20643ad52c68cd715b13a4fc950cad`;
+libil2cpp build ID `edfad8c451b0d42645a30a79e1e923edc7bfd42a`.
+
+The actual stripped Bootstrap and IL2CPP backup match SHA-256
+`072888caf30d4cb9a60263f4abd84b7c884a5d69ba5727d86d9ab9529c00499f`.
+The pinned metadata inspector verifies exact assembly identity and the
+nonpublic static ProcessLifetimeOwner getter and RegisterMusicBeforeTerm(Action)
+method after this build. Bind that observation to this request, source, APK
+and native build ID. This closes the named metadata-retention gate, not native
+output creation, callback removal or audible playback.
+
+Freeze the APK, payload, source ZIP/hashes, receipts, symbols and post-strip
+proof under `work/experiments/original-game-audio/candidate-20261021T085802.632468Z/`.
+Driver/source-freeze evidence is under
+`work/coordination/codex-original-game-audio-build-root/r12/`.
+No editor mutation overlaps this build. Other-session SDK work uses the shared
+mutex only after terminal artifact freeze.
+
+**Install and controls.** Install the explicitly selected frozen APK in place
+on Main with fresh adopted-volume/free-space queries and verify its package
+and runtime backing. Sync only its independently frozen payload. No storage
+configuration or unrelated data is changed. Both canonical checks pass on the
+same owned APK: plain reaches 35.214066 s on Lakes; one-exit reaches 156.220047 s
+total world time with one original exit and 12.771332 s on Goolake. Both report
+current-build true, empty error/firstFailure and unchanged applied-run counts.
+The selected camera and point-sound observer remain off. Logs contain only the
+five known Windows-bundle negative-control error lines, with no new music or
+point-sound failure.
+
+In both reports the accepted original MusicController prefab/key and exact
+source components verify, the instance matches its source static singleton,
+preload returns, the non-intro scene callback retires and retirement stays
+known. The actual runtime bootstrap installs the music participant behind the
+existing passive-capture Term guard. The source music system remains enabled;
+scene identity changes from Lakes to Goolake, teleporter context is present and
+the source listener's managed object ID is valid. The managed default-listener
+census is known with count one. Target camera inventory and target body remain
+absent. No native AddOutput/RemoveOutput result or track-playing result is
+observed, so preload does not establish output or music playback.
+
+Capture is finite and all zero: plain has 452 callbacks and 520,704 finite
+samples; stage-exit has 467 callbacks and 537,984 finite samples. Both observe
+the requested output identity with no invalid/rejected/capped buffers or
+capture failure. Original Term return and natural same-process restart remain
+unexercised; these controls force-stop the process. Physical audibility remains
+unqualified. The next concrete context gate is the separately reviewed source
+camera repair, whose J887 first failure remains preserved.
+
+Plain evidence: `work/experiments/baseline/20261021T154238.587223Z/`.
+One-exit evidence: `work/experiments/baseline/20261021T154625.031707Z/`.
+Root's derived qualification is
+`work/coordination/codex-original-game-audio-device-root/r9/root-final-qualification.json`,
+SHA-256 `16f01f61bc0c4d1a6cbfcc4bd9cc54b9ede211ee38cddc7bc35baab849bf72a3`.
+Each check positively verifies selector absence, process exit and display sleep;
+a separate post-run query confirms them and the same installed APK. Raw logs,
+screenshots, device/storage identities and receipts stay ignored.
+
+**Disposition.** Keep fae79734 as the latest device-verified diagnostic; do not
+promote composed audio or camera acceptance. Accepted rollback stays J850
+f1550ce0. J886 is now in this player, but its bounded Siren route remains to be
+measured. Revisit with source camera/body context, native output/event evidence,
+nonzero composed capture and separately observed teardown behavior. The source
+changes consumed by reconstruction are recorded in J889/J890; this entry adds
+no runtime source change.
