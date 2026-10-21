@@ -339,6 +339,9 @@ ordinary app hosting or game/performance qualification follows from host tests.
 J921 separately qualifies the fixed authored native/player path on the assigned
 device, with a full native compile, explicit APK/library binding and owned
 load/update/refusal checks. It retains all desktop-root and full-game gates.
+If the native child reaches its 1,800 s deadline, the wrapper records a failed
+handoff with an unknown exit code and bounded stdout/stderr (64 KiB each),
+preserving partial child results without admitting a library.
 
 `phone_registry.py` and `phone_registry_literals.py` own separate experimental
 static SDK metadata support.

@@ -284,6 +284,60 @@ class PhoneCompiledNativeTests(unittest.TestCase):
             self.stage()
         self.assertEqual((common.ROOT, common.WORK), prior)
 
+    def test_child_timeout_preserves_bounded_diagnostics_and_failure_receipt(self):
+        for stdout, stderr, partial in ((None, None, False), (b"\xff" + b"x" * 100000, "e" * 100000, True)):
+            with self.subTest(partial_output=partial):
+                stage = self.stage()
+                stage_hash = consumer.sha(stage / "input-manifest.json")
+                output = stage.with_name(stage.name + "-output-timeout")
+
+                def timeout(argv, **kwargs):
+                    self.assertEqual(kwargs["timeout"], 1800)
+                    if partial:
+                        self.child(argv, **kwargs)
+                    raise subprocess.TimeoutExpired(argv, kwargs["timeout"], output=stdout, stderr=stderr)
+
+                with patch.object(consumer.subprocess, "run", side_effect=timeout):
+                    result = consumer.build(stage, self.base / "tool", output)
+                self.assertFalse(result["success"])
+                self.assertTrue(result["timed_out"])
+                self.assertIsNone(result["exit_code"])
+                self.assertEqual(result["timeout_seconds"], 1800)
+                self.assertIn("timed out", result["failure"])
+                self.assertNotIn("library_sha256", result)
+                self.assertNotIn("native_built", result)
+                self.assertEqual(result, json.loads((output / "handoff-result.json").read_text()))
+                self.assertLessEqual((output / "stdout.log").stat().st_size, 65536)
+                self.assertLessEqual((output / "stderr.log").stat().st_size, 65536)
+                self.assertLessEqual((output / "driver.log").stat().st_size, 131072)
+                self.assertEqual(result["stdout_truncated"], partial)
+                self.assertEqual(result["stderr_truncated"], partial)
+                self.assertEqual(consumer.sha(stage / "input-manifest.json"), stage_hash)
+                if partial:
+                    self.assertIn("\ufffd", (output / "stdout.log").read_text())
+                    self.assertTrue(json.loads((output / "result.json").read_text())["success"])
+
+    def test_normal_completion_keeps_full_long_stdout_and_stderr(self):
+        stdout, stderr = "normal stdout " * 10000, "normal stderr " * 10000
+        for exit_code in (0, 7):
+            with self.subTest(exit_code=exit_code):
+                stage = self.stage()
+                output = stage.with_name(stage.name + "-output-normal")
+
+                def completed(argv, **kwargs):
+                    self.child(argv, **kwargs)
+                    return subprocess.CompletedProcess(argv, exit_code, stdout, stderr)
+
+                with patch.object(consumer.subprocess, "run", side_effect=completed):
+                    result = consumer.build(stage, self.base / "tool", output)
+                self.assertEqual(result["success"], exit_code == 0)
+                self.assertEqual(result["exit_code"], exit_code)
+                self.assertEqual((output / "driver.log").read_text(), stdout + stderr)
+                self.assertNotIn("timed_out", result)
+                self.assertNotIn("stdout_truncated", result)
+                self.assertFalse((output / "stdout.log").exists())
+                self.assertFalse((output / "stderr.log").exists())
+
 
 if __name__ == "__main__":
     unittest.main()

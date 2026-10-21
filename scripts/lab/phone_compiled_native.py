@@ -37,6 +37,8 @@ DATA = {
     "data/Resources/mscorlib.dll-resources.dat": "assets/bin/Data/Managed/Resources/mscorlib.dll-resources.dat",
 }
 SCOPE = dict(game_inputs=False, desktop_editor_roots=True, desktop_compiled_fixture_input=False, managed_game_compilation_qualified=False, player_built=False)
+CHILD_TIMEOUT_SECONDS = 1800
+CHILD_OUTPUT_LIMIT_BYTES = 64 * 1024
 
 
 def sha(path):
@@ -309,6 +311,13 @@ def native_result(stage_root, output, provenance):
     return plan, result
 
 
+def captured_output(value):
+    # TimeoutExpired can retain bytes even when run(text=True) was requested.
+    raw = value if isinstance(value, bytes) else (value or "").encode("utf-8", errors="replace")
+    encoded = raw[:CHILD_OUTPUT_LIMIT_BYTES].decode("utf-8", errors="replace").encode("utf-8")
+    return encoded[:CHILD_OUTPUT_LIMIT_BYTES].decode("utf-8", errors="ignore"), len(raw) > CHILD_OUTPUT_LIMIT_BYTES or len(encoded) > CHILD_OUTPUT_LIMIT_BYTES
+
+
 def build(stage_root, tool_root, output, reuse_request=None):
     stage_root, tool_root, output = (Path(path).absolute() for path in (stage_root, tool_root, output))
     manifest, provenance = validate(stage_root)
@@ -318,9 +327,20 @@ def build(stage_root, tool_root, output, reuse_request=None):
     if reuse_request is not None:
         command.append(str(Path(reuse_request).absolute()))
     started = time.monotonic()
-    child = subprocess.run(command, capture_output=True, text=True, timeout=1800)
+    timed_out = False
+    try:
+        child = subprocess.run(command, capture_output=True, text=True, timeout=CHILD_TIMEOUT_SECONDS)
+        stdout, stderr, exit_code = child.stdout, child.stderr, child.returncode
+    except subprocess.TimeoutExpired as error:
+        stdout, stdout_truncated = captured_output(error.stdout)
+        stderr, stderr_truncated = captured_output(error.stderr)
+        exit_code = None
+        timed_out = True
     output.mkdir(exist_ok=True)
-    (output / "driver.log").write_text(child.stdout + child.stderr)
+    (output / "driver.log").write_text(stdout + stderr)
+    if timed_out:
+        (output / "stdout.log").write_text(stdout)
+        (output / "stderr.log").write_text(stderr)
     result = dict(
         schema=1,
         profile=PROFILE,
@@ -328,12 +348,24 @@ def build(stage_root, tool_root, output, reuse_request=None):
         source_commit=provenance["source_commit"],
         converter_handoff_sha256=provenance["converter_handoff_sha256"],
         input_manifest_sha256=sha(stage_root / "input-manifest.json"),
-        exit_code=child.returncode,
+        exit_code=exit_code,
         elapsed_seconds=time.monotonic() - started,
         **SCOPE,
     )
+    if timed_out:
+        result.update(
+            timed_out=True,
+            timeout_seconds=CHILD_TIMEOUT_SECONDS,
+            child_output_limit_bytes=CHILD_OUTPUT_LIMIT_BYTES,
+            stdout_truncated=stdout_truncated,
+            stderr_truncated=stderr_truncated,
+        )
     try:
-        if validate(stage_root)[0] != manifest or child.returncode:
+        if validate(stage_root)[0] != manifest:
+            raise ValueError("Native input preservation failed")
+        if timed_out:
+            raise ValueError("Native child timed out after " + str(CHILD_TIMEOUT_SECONDS) + " seconds")
+        if exit_code:
             raise ValueError("Native execution or input preservation failed")
         plan, original = native_result(stage_root, output, provenance)
         result.update(
