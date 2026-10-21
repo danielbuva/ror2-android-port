@@ -21669,3 +21669,65 @@ with bounded callback lifetime and real pre-Term cleanup, alongside the
 point-sound null-site witness. A later playback control must require energy
 in a properly aligned event interval rather than global nonzero samples.
 No game-audio, acoustic, parity or baseline promotion is claimed.
+
+## J872 — Verify the Android bank-path repair and retain the point-sound failure
+
+Date: 2026-10-20.
+
+Hypothesis: J870's Android-only warning-predicate repair removes the invalid
+filesystem warning while preserving original native Init, bank loading and
+ordinary gameplay. It does not address J868's point-sound null references or
+establish audible output. The pinned R2API.Sound engine-initialization/bank-loading
+seam remains the prior-art basis; current original callbacks and device logs
+are authoritative.
+
+Change: full original-audio player from committed source `d31fc02`, using the
+accepted input and unchanged original bank cohort. The actual generated API is
+`d540a226…`, with game `1034a747…`. No point-sound instrumentation or passive
+PCM draft is in this APK. The isolated fixture/capture qualification remains J871.
+
+Build evidence: request `20261021T035449.427900Z-8ba5983754294891adef6b0f27da4870`
+succeeds in 198.168488 s with zero build errors. Frozen candidate:
+`work/experiments/original-game-audio/candidate-20261021T035935.774439Z/`.
+APK SHA-256:
+`417ce85643e877c56c5a963d254a4c7bdb92ae1a40f923366191b1128720818d`.
+Matching symbols ZIP SHA-256:
+`6bee47a002c7cf0de4692312b3e1fd75a5a3efa18eaf6893a1ea5905b2e8bfc1`;
+`libil2cpp` Build ID `cfcaeb10241a43c6f42e1c2d78382b6cc46b9c53`.
+The candidate binds 358 authored inputs, 333 same-request pre-strip assemblies,
+266 frozen payload hashes and all 154 packaged banks (Init plus 153 requested).
+
+Device evidence: explicit primary-device installation and payload sync pass
+with fresh adopted-only capacity/placement checks. Both default checks pass
+with current-build true, empty report failure fields and 13 applied runs:
+
+- Plain: `work/experiments/baseline/20261021T040153.700858Z/`, 35.205719 s
+  on Lakes.
+- One exit: `work/experiments/baseline/20261021T040539.566563Z/`, exactly one
+  transition to Goolake, 151.246490 s total and 12.166351 s in the new stage.
+
+The original startup snapshot records native Init attempted, manager returned,
+153/153 banks complete, Ready true, no-audio false and the catalog lease held.
+This installed implementation captures startup state only; it supplies no live
+later-event or termination assertion. Neither current process has the missing
+SoundBanks path warning. Plain has only the five intentional Windows-bundle
+negative-control error lines. Stage mode additionally records four original
+`PointSoundManager.EmitSoundLocal` null references at offset zero. Its raw log
+also contains earlier-process history; Root's derived qualification filters
+each run by its actual process identity. The raw runner's broad
+`unexpected_unity_error_lines` field is preserved, not accepted as a diagnosis.
+
+Qualification and cleanup:
+`work/coordination/codex-original-game-audio-device-root/r4/root-qualified-current-pids.json`,
+SHA-256 `fee57e276c5809cf03f79ad590a4b11e3d5a2e997b9933bece8b64b201d29dd6`.
+The runner removes its selector, stops the game and sleeps the display;
+terminal evidence confirms process absence and sleep. The new diagnostic is
+installed. The accepted baseline remains J850 `f1550ce0…`; do not promote this
+player or infer audio playback from bank readiness and passing gameplay checks.
+
+First remaining audio failure: original point-sound emission null reference.
+Next: host-validate bounded stage localization and passive actual-game PCM
+observation, then build their committed sources. Preserve this candidate and
+all failed evidence. Revisit playback qualification only with actual-game event
+and output evidence; physical audibility, spatialization and music remain open.
+No reconstruction step or authored runtime source changes in this checkpoint.
