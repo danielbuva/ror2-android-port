@@ -1334,3 +1334,9 @@ private device/path data. Generated request/bank pins are disabled placeholders;
 accepted local inputs and protected generated outputs remain ignored. R8/R9
 must replay the source selection and support-assembly producer. Host source
 qualification does not establish a built APK, bank readiness or audible output.
+
+The bank-receipt packaging repair adds only an authored artifact role, the
+runtime copier's required relative path and strict ownership/hash checks.
+The selected cohort receipt and its bank contents remain generated under
+ignored `work/`; no receipt bytes or protected audio are added to this recipe.
+Synthetic staging/ZIP tests check the path contract without game content.

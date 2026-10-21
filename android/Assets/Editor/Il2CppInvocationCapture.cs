@@ -104,10 +104,12 @@ public sealed class Il2CppInvocationCapture : IPreprocessBuildWithReport, IPostp
         if (String.IsNullOrEmpty(requestId)) return;
         try
         {
-            if (report == null || report.summary.platform != BuildTarget.Android ||
-                report.summary.guid.ToString() != guid || report.summary.result != BuildResult.Succeeded ||
-                report.summary.totalErrors != 0)
-                throw new InvalidOperationException("Bee capture requires the same successful Android BuildReport");
+            string reportFailure = BuildReportFailure(report, guid);
+            if (reportFailure != null)
+            {
+                Debug.LogWarning("Bee IL2CPP capture post-build witness unavailable: " + reportFailure);
+                return;
+            }
             if (HashFile(prePath) != preHash) throw new InvalidOperationException("Bee pre-build receipt changed");
             if (new FileInfo(logPath).Length < logOffset) throw new InvalidOperationException("Editor.log shortened after pre-build boundary");
             if (HashRange(logPath, 0, logOffset) != ReadPrePrefixHash(prePath))
@@ -132,6 +134,22 @@ public sealed class Il2CppInvocationCapture : IPreprocessBuildWithReport, IPostp
             Debug.LogWarning("Bee IL2CPP capture post-build witness unavailable: " + exception.GetType().Name);
         }
         finally { Reset(); }
+    }
+
+    static string BuildReportFailure(BuildReport report, string expectedGuid)
+    {
+        const string expected = "expectedTarget=Android expectedResult=Succeeded expectedErrors=0";
+        if (report == null) return "reason=report-null " + expected + " expectedGuid=" + expectedGuid;
+        string actualGuid = Convert.ToString(report.summary.guid);
+        string identity = "actualTarget=" + report.summary.platform +
+            " actualResult=" + report.summary.result +
+            " actualErrors=" + report.summary.totalErrors +
+            " actualGuid=" + actualGuid + " " + expected + " expectedGuid=" + expectedGuid;
+        if (report.summary.platform != BuildTarget.Android) return "reason=target-mismatch " + identity;
+        if (actualGuid != expectedGuid) return "reason=build-report-guid-mismatch " + identity;
+        if (report.summary.result != BuildResult.Succeeded) return "reason=build-report-result-mismatch " + identity;
+        if (report.summary.totalErrors != 0) return "reason=build-report-errors-nonzero " + identity;
+        return null;
     }
 
     static FileRow[] InventoryBeeFiles(string root)

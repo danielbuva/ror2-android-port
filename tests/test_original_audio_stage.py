@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+import zipfile
 from unittest import mock
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts/lab/original_game_audio_stage.py"
@@ -84,6 +85,19 @@ def write_set(root: Path, requested: bool, roles: list[str] | None = None) -> tu
                 }
             ),
             encoding="utf-8",
+        )
+        receipt_bytes = receipt_path.read_bytes()
+        receipt_source = root / "out/bank-receipt.json"
+        receipt_source.parent.mkdir(parents=True, exist_ok=True)
+        receipt_source.write_bytes(receipt_bytes)
+        outputs.append(
+            {
+                "role": "bank_receipt",
+                "source": "out/bank-receipt.json",
+                "target": stage_module.BANK_RECEIPT_TARGET,
+                "sha256": hashlib.sha256(receipt_bytes).hexdigest(),
+                "requires_request": True,
+            }
         )
         lineage["stage_receipt_sha256"] = hashlib.sha256(receipt_path.read_bytes()).hexdigest()
     if requested and native_hash:
@@ -214,7 +228,7 @@ class StageTests(unittest.TestCase):
             self.assertTrue(result["requested"])
             self.assertEqual(current_policy, result["lineage"])
             self.assertEqual(new_bytes, (project / stage_module.DEFAULT_TARGETS["api"]).read_bytes())
-            self.assertEqual(164, len(result["outputs"]))
+            self.assertEqual(165, len(result["outputs"]))
 
     def test_old_lineage_default_off_receipt_may_own_only_exact_ordinary_pair(self):
         with self.temporary_directory() as temp:
@@ -291,7 +305,83 @@ class StageTests(unittest.TestCase):
                 receipt = stage_module.stage(project, manifest, request, stage_receipt)
             self.assertTrue(receipt["requested"])
             self.assertEqual("0123456789abcdef0123456789abcdef", receipt["request_id"])
-            self.assertEqual(164, len(receipt["outputs"]))
+            self.assertEqual(165, len(receipt["outputs"]))
+
+    def test_requested_receipt_is_staged_and_present_at_payload_copy_url(self) -> None:
+        with self.temporary_directory() as temp:
+            root = Path(temp)
+            manifest, request, bank_receipt = write_set(root, True)
+            assert request is not None and bank_receipt is not None
+            manifest_doc = json.loads(manifest.read_text())
+            lineage = manifest_doc["lineage"]
+            for key in ("composed_api_sha256", "composed_game_sha256", "native_library_sha256", "stage_receipt_sha256"):
+                if key in {"composed_api_sha256", "composed_game_sha256"}:
+                    lineage[key] = next(row["sha256"] for row in manifest_doc["outputs"] if row["role"] == key.removesuffix("_sha256").replace("composed_", ""))
+            manifest.write_text(json.dumps(manifest_doc))
+            project = root / "project"
+            project.mkdir()
+            with mock.patch.dict(
+                stage_module.LINEAGE,
+                {key: lineage[key] for key in ("composed_api_sha256", "composed_game_sha256", "native_library_sha256", "stage_receipt_sha256")},
+            ):
+                result = stage_module.stage(project, manifest, request, bank_receipt)
+            expected = bank_receipt.read_bytes()
+            packaged = project / stage_module.BANK_RECEIPT_TARGET
+            self.assertEqual(expected, packaged.read_bytes())
+            self.assertEqual(
+                hashlib.sha256(expected).hexdigest(), next(row["sha256"] for row in result["outputs"] if row["target"] == stage_module.BANK_RECEIPT_TARGET)
+            )
+            archive = root / "streaming-assets.zip"
+            with zipfile.ZipFile(archive, "w") as output:
+                for path in (project / "Assets/StreamingAssets").rglob("*"):
+                    if path.is_file():
+                        output.write(path, path.relative_to(project / "Assets/StreamingAssets").as_posix())
+            with zipfile.ZipFile(archive) as packaged_assets:
+                self.assertEqual(expected, packaged_assets.read("stage-receipt.json"))
+
+    def test_requested_set_cannot_omit_or_retarget_the_copy_receipt(self) -> None:
+        with self.temporary_directory() as temp:
+            root = Path(temp)
+            manifest, request, receipt_path = write_set(root, True)
+            assert request is not None and receipt_path is not None
+            original = json.loads(manifest.read_text())
+            for mutation in ("missing", "retargeted"):
+                document = json.loads(json.dumps(original))
+                row = next(row for row in document["outputs"] if row["role"] == "bank_receipt")
+                if mutation == "missing":
+                    document["outputs"].remove(row)
+                else:
+                    row["target"] = "Assets/StreamingAssets/Lab/stage-receipt.json"
+                manifest.write_text(json.dumps(document))
+                with self.subTest(mutation=mutation), self.assertRaises(ValueError):
+                    stage_module.read_artifacts(manifest, request, receipt_path)
+
+    def test_164_output_requested_predecessor_is_recognized_and_removable(self) -> None:
+        with self.temporary_directory() as temp:
+            root = Path(temp)
+            manifest, request, bank_receipt = write_set(root, True)
+            assert request is not None and bank_receipt is not None
+            document = json.loads(manifest.read_text())
+            for key in ("composed_api_sha256", "composed_game_sha256", "native_library_sha256", "stage_receipt_sha256"):
+                if key.startswith("composed_"):
+                    role = key.removesuffix("_sha256").replace("composed_", "")
+                    document["lineage"][key] = next(row["sha256"] for row in document["outputs"] if row["role"] == role)
+            manifest.write_text(json.dumps(document))
+            project = root / "project"
+            project.mkdir()
+            pins = {key: document["lineage"][key] for key in ("composed_api_sha256", "composed_game_sha256", "native_library_sha256", "stage_receipt_sha256")}
+            with mock.patch.dict(stage_module.LINEAGE, pins):
+                stage_module.stage(project, manifest, request, bank_receipt)
+                receipt_path = project / "Assets/StreamingAssets/Lab/OriginalGameAudioStageReceipt.json"
+                receipt = json.loads(receipt_path.read_text())
+                removed = project / stage_module.BANK_RECEIPT_TARGET
+                receipt["outputs"] = [row for row in receipt["outputs"] if row["target"] != stage_module.BANK_RECEIPT_TARGET]
+                removed.unlink()
+                receipt_path.write_text(json.dumps(receipt))
+                previous, removal = stage_module.inspect_previous_stage(project, receipt_path)
+            self.assertTrue(previous["requested"])
+            self.assertEqual(164, len(previous["outputs"]))
+            self.assertNotIn(removed, removal)
 
     def test_default_off_rejects_opt_in_native_or_bank_bytes(self) -> None:
         with self.temporary_directory() as temp:
@@ -432,6 +522,7 @@ class StageTests(unittest.TestCase):
             self.assertFalse(receipt["requested"])
             self.assertFalse((project / stage_module.NATIVE_TARGET).exists())
             self.assertFalse((project / stage_module.NATIVE_META).exists())
+            self.assertFalse((project / stage_module.BANK_RECEIPT_TARGET).exists())
             bank_root = project / "Assets/StreamingAssets/Audio/GeneratedSoundBanks/Android"
             self.assertEqual([sidecar], list(bank_root.iterdir()))
             self.assertEqual(sidecar_before, sidecar.read_bytes())

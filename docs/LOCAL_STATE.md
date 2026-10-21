@@ -31,7 +31,10 @@ directories adjacent to the selected project under `original-game-audio-owner/`.
 These contain compiler response files/logs, transformed assemblies, generated
 request/contract/pins, artifact manifest and generation receipt. The project
 ownership receipt records exactly staged files; Unity-created bank metadata
-sidecars are preserved. No build reads the host scratch roundtrip reports or
+sidecars are preserved. Requested staging copies the selected bank-cohort receipt
+to `Assets/StreamingAssets/stage-receipt.json` for the runtime payload copier;
+the project ownership receipt under `StreamingAssets/Lab/` is a separate output.
+Both files are generated locally and stay ignored. No build reads the host scratch roundtrip reports or
 timestamped experiment outputs implicitly. Destination builds select their own
 work root's configuration, keeping the current lab opt-in separate.
 

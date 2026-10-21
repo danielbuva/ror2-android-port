@@ -72,6 +72,12 @@ The plain check and its acceptance criteria remain unchanged.
 
 ## Current baseline (2026-10-20)
 
+J867's later diagnostic APK is installed after both default checks, but is not
+promoted: its optional build capture failed and original audio refused before
+initialization. See the [current snapshot](../PORTING_STATE.md) for installed
+identity and the [journal](PORTING_JOURNAL.md#j867--build-the-original-audio-player-preserve-its-receipt-refusal-and-package-the-missing-cohort-witness)
+for the single result record. The accepted baseline below remains the rollback.
+
 | Item | Value |
 | --- | --- |
 | APK | `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`, source 1780ea9; 111 runtime sources, 312 frozen authored inputs, 266 payload hashes unchanged, matching symbols and same-request pre-strip capture |

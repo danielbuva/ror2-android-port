@@ -62,6 +62,21 @@ class Il2CppInvocationCaptureRuntimeTests(unittest.TestCase):
         self.assertEqual(active_false.returncode, 0, active_false.stderr)
         self.assertIn("disabled request returned", active_false.stdout)
 
+    def test_build_report_mismatches_are_refused_with_safe_diagnostics(self):
+        cases = {
+            "post-unknown": "reason=build-report-result-mismatch actualTarget=Android actualResult=Unknown actualErrors=0",
+            "post-guid-mismatch": "reason=build-report-guid-mismatch actualTarget=Android actualResult=Succeeded actualErrors=0 actualGuid=fedcba9876543210fedcba9876543210",
+            "post-errors": "reason=build-report-errors-nonzero actualTarget=Android actualResult=Succeeded actualErrors=2",
+            "post-target": "reason=target-mismatch actualTarget=StandaloneOSX",
+        }
+        for mode, expected in cases.items():
+            with self.subTest(mode=mode):
+                result = self.run_mode(mode)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertIn(expected, result.stderr)
+                self.assertIn("expectedGuid=0123456789abcdef0123456789abcdef", result.stderr)
+                self.assertIn("REJECTED=" + mode, result.stdout)
+
     def test_csharp_json_receipts_join_to_python_host_capture_and_full_toolchain_pin(
         self,
     ) -> None:
