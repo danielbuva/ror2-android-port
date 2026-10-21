@@ -289,6 +289,21 @@ This fixed source contains no conditional directives. General defines,
 generators, custom packages/callbacks, editor type databases, stripping and
 player/game compilation remain separate gates. No game build consumes outputs.
 
+`phone_compiled_linker.py` owns a separate current experimental handoff from the
+qualified authored Android compiler profile to the existing fixture stripper.
+It verifies the completed compiler input/output receipts and the pinned authored
+SDK-root template, then creates a fresh stage with only its two compiler inputs
+replaced. Historical stages, manifests and the original exact-replay converter
+gate remain intact. Compiler code/data/reference fingerprints exclude only Git
+commit metadata, so unchanged inputs remain eligible after unrelated commits;
+the actual commits and every raw receipt/hash are preserved. Its standalone
+runner checks the staged closure before and after the bounded linker child and
+writes a separate `handoff-result.json` without modifying the child result.
+Setup requires committed handoff code and explicit qualified input selections;
+teardown is the linker child exiting, with failed stages and outputs retained.
+Captured desktop scene/editor roots remain required. A passing stripper does
+not qualify conversion, a player, game semantics or ordinary app hosting.
+
 `phone_registry.py` and `phone_registry_literals.py` own separate experimental
 static SDK metadata support.
 The current `phone-native-registry` action accepts an explicit owner binary,
