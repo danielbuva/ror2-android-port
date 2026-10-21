@@ -235,6 +235,10 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
     static Type markerTypeCache;
     static FieldInfo markerRigField, markerTargetField, markerOwnerField;
     static MethodInfo markerContextReadyMethod;
+    static bool cameraGateFieldsResolved;
+    static Type cameraGateFieldsType;
+    static FieldInfo cameraGateEarlyUpdateField, cameraGateContextReadyField, cameraGatePumpCountField;
+    static string cameraGateFieldsFailure;
 
     static Type ResolveOptionalMarkerType()
     {
@@ -260,6 +264,139 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
         markerContextReadyMethod = contextReady;
         markerTypeCache = markerType;
         return markerTypeCache;
+    }
+
+    // Resolve optional snapshot-only fields independently from the mandatory
+    // marker binding contract above. Missing observation fields never prevent
+    // creation of a rig that satisfies the existing binding contract.
+    static bool ResolveCameraGateObservationFields(Type markerType, out string failure)
+    {
+        failure = null;
+        if (cameraGateFieldsResolved && cameraGateFieldsType == markerType)
+        {
+            failure = cameraGateFieldsFailure;
+            return string.IsNullOrEmpty(failure);
+        }
+        cameraGateFieldsResolved = true;
+        cameraGateFieldsType = markerType;
+        cameraGateEarlyUpdateField = null;
+        cameraGateContextReadyField = null;
+        cameraGatePumpCountField = null;
+        const BindingFlags fields = BindingFlags.Instance | BindingFlags.NonPublic;
+        if (markerType == null)
+            cameraGateFieldsFailure = "exact marker type unavailable for optional camera gate observation";
+        else
+        {
+            var earlyUpdate = markerType.GetField("originalEarlyUpdate", fields);
+            var contextReady = markerType.GetField("originalContextReady", fields);
+            var pumpCount = markerType.GetField("originalEarlyUpdatePumpCount", fields);
+            if (earlyUpdate == null || earlyUpdate.FieldType != typeof(Action))
+                cameraGateFieldsFailure = "optional marker originalEarlyUpdate field missing or not Action";
+            else if (contextReady == null || contextReady.FieldType != typeof(bool))
+                cameraGateFieldsFailure = "optional marker originalContextReady field missing or not Boolean";
+            else if (pumpCount == null || pumpCount.FieldType != typeof(int))
+                cameraGateFieldsFailure = "optional marker originalEarlyUpdatePumpCount field missing or not Int32";
+            else
+            {
+                cameraGateEarlyUpdateField = earlyUpdate;
+                cameraGateContextReadyField = contextReady;
+                cameraGatePumpCountField = pumpCount;
+                cameraGateFieldsFailure = null;
+            }
+        }
+        failure = cameraGateFieldsFailure;
+        return string.IsNullOrEmpty(failure);
+    }
+
+    // Read-only bounded fields collected only by the visual-report snapshot.
+    // This never invokes the captured callback or writes any native state.
+    public void CaptureUpdateContextObservation(AndroidNativeSourceSkinLifecycle.VisualSnapshot snapshot)
+    {
+        if (snapshot == null)
+            return;
+        snapshot.cameraGateObservationRequested = true;
+        try
+        {
+            if (!cameraRig || !expectedBody)
+                throw new InvalidOperationException("owned rig or expected body unavailable");
+            var expectedTarget = expectedBody.gameObject;
+            snapshot.cameraGateExpectedTargetInstanceId = expectedTarget ? expectedTarget.GetInstanceID() : 0;
+            snapshot.cameraGateNextTargetInstanceId = cameraRig.nextTarget ? cameraRig.nextTarget.GetInstanceID() : 0;
+            snapshot.cameraGateTargetInstanceId = cameraRig.target ? cameraRig.target.GetInstanceID() : 0;
+            snapshot.cameraGateNextTargetMatchesExpected = ReferenceEquals(cameraRig.nextTarget, expectedTarget);
+            snapshot.cameraGateNextTargetKnown = true;
+            snapshot.cameraGateTargetMatchesExpected = ReferenceEquals(cameraRig.target, expectedTarget);
+            snapshot.cameraGateTargetKnown = true;
+            snapshot.cameraGateRigActive = cameraRig.isActiveAndEnabled && cameraRig.gameObject.activeInHierarchy;
+            snapshot.cameraGateRigActiveKnown = true;
+            snapshot.cameraGateProviderActive = isActiveAndEnabled && gameObject == cameraRig.gameObject;
+            snapshot.cameraGateProviderActiveKnown = true;
+            snapshot.cameraGateCutsceneKnown = true;
+            snapshot.cameraGateIsCutscene = cameraRig.isCutscene;
+
+            var application = RoR2Application.instance;
+            snapshot.cameraGateApplicationPresent = application;
+            snapshot.cameraGateApplicationKnown = true;
+            snapshot.cameraGateApplicationActive = application && application.isActiveAndEnabled;
+            snapshot.cameraGateApplicationActiveKnown = true;
+            float deltaTime = Time.deltaTime;
+            if (float.IsNaN(deltaTime) || float.IsInfinity(deltaTime))
+                throw new InvalidOperationException("camera update delta time is non-finite");
+            snapshot.cameraGateDeltaTime = deltaTime;
+            snapshot.cameraGateDeltaTimeNonzero = deltaTime != 0f;
+            snapshot.cameraGateDeltaTimeKnown = true;
+
+            var marker = guardMarker as MonoBehaviour;
+            snapshot.cameraGateMarkerPresent = marker;
+            snapshot.cameraGateMarkerPresentKnown = true;
+            if (!marker)
+                throw new InvalidOperationException("owned view-only marker unavailable");
+            snapshot.cameraGateMarkerActive = marker.isActiveAndEnabled;
+            snapshot.cameraGateMarkerActiveKnown = true;
+            var markerType = ResolveOptionalMarkerType();
+            if (markerType == null || marker.GetType() != markerType ||
+                markerRigField == null || markerTargetField == null || markerOwnerField == null)
+                throw new InvalidOperationException("existing marker binding contract unavailable for observation");
+
+            object markerRig = markerRigField.GetValue(marker);
+            object markerTarget = markerTargetField.GetValue(marker);
+            object markerOwner = markerOwnerField.GetValue(marker);
+            snapshot.cameraGateMarkerBoundToRig = ReferenceEquals(markerRig, cameraRig);
+            snapshot.cameraGateMarkerBoundToTarget = ReferenceEquals(markerTarget, expectedTarget);
+            snapshot.cameraGateMarkerBoundToProvider = ReferenceEquals(markerOwner, (ICameraStateProvider)this);
+            snapshot.cameraGateMarkerBindingKnown = true;
+
+            if (!ResolveCameraGateObservationFields(markerType, out var fieldFailure))
+                throw new InvalidOperationException(fieldFailure ?? "optional marker observation fields unavailable");
+            object callback = cameraGateEarlyUpdateField.GetValue(marker);
+            if (callback != null && !(callback is Action))
+                throw new InvalidOperationException("optional originalEarlyUpdate value has wrong runtime type");
+            snapshot.cameraGateDelegatePresent = callback is Action;
+            snapshot.cameraGateDelegateKnown = true;
+
+            object contextReady = cameraGateContextReadyField.GetValue(marker);
+            if (!(contextReady is bool))
+                throw new InvalidOperationException("optional originalContextReady value has wrong runtime type");
+            snapshot.cameraGateContextReady = (bool)contextReady;
+            snapshot.cameraGateContextReadyKnown = true;
+
+            object pumpCount = cameraGatePumpCountField.GetValue(marker);
+            if (!(pumpCount is int))
+                throw new InvalidOperationException("optional marker pump counter value has wrong runtime type");
+            snapshot.cameraGatePumpCount = (int)pumpCount;
+            snapshot.cameraGatePumpCountKnown = true;
+        }
+        catch (Exception error)
+        {
+            snapshot.cameraGateCaptureError = ShortText(error.GetBaseException().Message, 160);
+        }
+    }
+
+    static string ShortText(string value, int maxLength)
+    {
+        if (string.IsNullOrEmpty(value))
+            return string.Empty;
+        return value.Length <= maxLength ? value : value.Substring(0, maxLength);
     }
 
     static Component AddAndBindOptionalMarker(GameObject rigObject, CameraRigController rig,

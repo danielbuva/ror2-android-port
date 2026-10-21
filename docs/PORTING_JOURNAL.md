@@ -24244,3 +24244,55 @@ action occurs for this source checkpoint. Installed b0f7ae7e and accepted
 baseline f1550ce0 stay fixed. The next selected run must establish actual snapshot
 capture and the native egg interaction/encounter result; this host result accepts
 none of those gameplay claims.
+
+## J907 — Observe the original camera dispatch gates without changing admission
+
+Date: 2026-10-21. Hypothesis: J903's active rig with zero target/body identity
+can be narrowed by reading its existing marker binding, delegate and pump state.
+Recheck the exact accepted current a5f7 input and same-request R15 pre-strip
+2ae5d9 module; the old-input decompilation is not current authority. The original
+EarlyUpdate target assignment precedes its time/cutscene gate. Reuse J892/J900's
+source contract and DebugToolkit's typed body identity observation as prior art,
+without its mutating commands. No new camera behavior is justified yet.
+
+AndroidNativeSourceCameraRigOwner now captures bounded scalars through the
+existing AndroidNativeSourceSkinLifecycle visual-report cadence: next/current
+and expected target identities, rig/provider/marker activity, exact binding,
+delegate presence, context latch, raw pump count, application activity,
+finite delta time and cutscene state. It reads existing fields only, invokes
+no callback and adds no pump, state assignment, target search or polling loop.
+Known flags follow successful typed reads; unavailable fields retain unknown
+values with a bounded capture error. No Unity object is added to report state.
+
+Independent review rejects the first draft because diagnostic field checks
+extend the mandatory marker-admission resolver. Preserve that failure. R2 moves
+them to a separate observation-only resolver and leaves the complete original
+admission method unchanged. Root formats the Python test, refreshes the two
+authored source hashes in the camera recipe and runs six focused checks.
+All pass in 1.326 s. The production optional resolver is extracted and compiled
+rather than reimplemented in its host harness; 19 assertions cover correct,
+missing/wrong Action/bool/int fields, null type, cached failures and recovery
+with another type. The existing lifecycle fixture verifies snapshot wiring and
+serialization using a synthetic camera owner; it does not execute the real
+owner's reflection or prove Unity scheduling. The source contract checks that
+admission stays separate and capture contains no reflection invocation/writes.
+Current recipe source/profile contracts pass. Ruff passes.
+
+Private R2 evidence and the frozen 118-source R15 host compile are under
+`work/coordination/original-camera-update-context-observer/r2/`; the actual
+resolver test and Root checks are under the adjacent r3 directory. That frozen
+compile deliberately uses R15's music owner and references; it is not a proof
+of composition with J904's newer callbacks. A current Library metadata read
+under `work/coordination/original-camera-marker-strip-triage/r1/` finds intact
+marker callbacks and matching stripped/IL2CPP-backup bytes, but R15's original
+receipt does not hash those post-strip copies, so it is not independent APK
+callback evidence. The next build must freeze and inspect matching outputs.
+
+Only authored source, tests, minimal field identities and hash pins are tracked.
+Generated code, current-input IL, raw reports and assemblies remain ignored.
+The marker helper and game transformation output profiles are unchanged;
+rebuild steps must regenerate the owner/lifecycle source bytes. No editor,
+player build, device run or installed APK change occurs at this checkpoint.
+Source-camera activation, correct original context, rendering, animation parity
+and next-menu acceptance remain open. Installed b0f7ae7e and accepted baseline
+f1550ce0 remain fixed pending the new composed player and both standard checks.

@@ -2432,6 +2432,12 @@ removing the override; lost context deactivates and destroys only the owned
 staging root. These are source dependencies and lifecycle contracts only;
 bundle/Unity/runtime readiness remains unproven.
 
+The existing source-skin visual snapshot reads its owned camera marker's binding,
+delegate, pump count and native update gates at the existing report cadence.
+Optional field resolution is independent of camera admission. Typed known flags
+and bounded errors retain unavailable observations as unknown; capture invokes
+no callback and does not change camera or target state.
+
 The current whole-catalog path restores only an exact prior camera stage result
 to its guarded 3124, 1034 or 6f96 preimage, runs the original-audio producer,
 then inserts the source-output observer after the exact 6f96 result when selected,
