@@ -193,13 +193,13 @@
     "whole_catalog": "scripts/lab/whole_catalog.py"
   },
   "source_sha256": {
-    "build_hook": "db2be2a847d0f9f1b66e71b4e36e4cb5c30baa88fc318defd92bd6c03cbda48f",
+    "build_hook": "203f3fde2c4360e2e8ffc7e8a65823936343d2342c6a22b1a9bb535986535321",
     "camera_contract": "f31276a3ef620b82db6998257ef86c7d69d9bfee6a05a43ad3fa5d67dfbed202",
     "camera_owner": "f121923d5a354469a1512d5accdb419503c34d24d22386accb0b0760e0a2b884",
     "camera_prerequisites": "dc8539bd7935bc7357dd298c7c89b63af7f1f6e253ca55423bc0edbb3c333214",
     "listener_contract": "e138a103abc56700af610044e833811c8dce4eeb3d205dc3c20fc491bb962a4b",
     "marker": "ac43d56534da33148e81e90722a370fd61c1c099bc24c7db186a7f6a9618241c",
-    "music_controller_owner": "ff15495def16260f11aeea15e2f18509d79091ebb0e57bb6580bf07d672e7304",
+    "music_controller_owner": "5e578fb654e898864cc3ba497b06f3acba5bf6d92230a9b47b50032fa45ec2ec",
     "music_observer_core": "7a95cfbf3528eaad15a2efe188b896fd1e925a3e5dfa5809d8f7ef5c44d856d8",
     "music_observer_stage": "9e27ee448b20232ba62384f189531e908e82a130e7ef47cf06a64927837d2ced",
     "music_observer_transform": "049e1664dd4aa3aa0ec0bcb16129badae67290a985512463c404ddd1a2025201",

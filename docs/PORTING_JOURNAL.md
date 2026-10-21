@@ -24421,3 +24421,54 @@ under `work/coordination/ci-cleanup-background-next/r1/root-push.log`. Move the
 logs to the directory resolved by Git's own private-state path API, so neither
 a primary checkout nor a linked worktree acquires untracked cleanup files.
 The clean-repository regression remains enabled and the next hook reruns it.
+
+## J909 — Catch the music observer's static-type compile error before player dispatch
+
+Date: 2026-10-21. Hypothesis: the committed output observer, Siren witness and
+camera gate snapshot can be composed into the next exact-editor player. R17
+pins synchronized source `1871e933944cb8f8e31945e6a0a9808af4ec7454`, 389
+build-read sources and final source manifest
+`6ba46b831d9a1e8026fa52fa160e1fca83303ecc03e05c8749d0c55936e19a0b`.
+Its independent build-driver review and eight host shape/manifest checks pass;
+doctor and preflight pass. The shared Unity mutex is acquired and released
+normally. Keep the exact accepted current input, editor, original banks,
+Wwise library and J904's prior-art/output-lifetime contract unchanged.
+
+**First failure.** Staging reaches the expected audio 6f96, observed 27340 and
+camera a205 module chain, but Unity C# compilation fails in the two new
+InstallMusicOutputObserver/DetachMusicOutputObserver methods. The expression
+`var observer = OriginalOwnerProbeObserver.Observer` treats a static class as
+a value; CS0119/CS0723 and subsequent CS0176 diagnostics identify the fault.
+The editor guard refuses stale player dispatch. No player build, new APK,
+installation or device run occurs. The Root integration/review missed a
+straightforward C# error; the prior host suite compiled the callback core and
+lifecycle policies, not this whole owner. It cannot stand in for that check.
+
+Preserve terminal logs and status under
+`work/coordination/codex-original-game-audio-build-root/r17/`. Its
+`pre-player-stage/` snapshot retains nine source/assembly/receipt inputs,
+including the failing staged owner, plus the first compiler diagnostics and
+hash ledger. Do not mutate that evidence or its spent execution directory.
+The mutex is released at terminal failure; no editor is stopped/restarted and
+no cache is cleared. Main retains J901's b0f7ae7e player, stopped/asleep with
+no new device action. Accepted baseline remains f1550ce0.
+
+**Smallest repair and regression.** Qualify the static observer's existing
+fields directly in both methods, keeping callback ownership checks and exact
+delegate removal unchanged. Update the authored owner manifest, producer and
+camera source pins. Neither original native call sites nor game transform
+output hashes change. The new portable host test compiles the actual tracked
+music owner, contract and observer against minimal authored Unity/game API-shape
+declarations; it also requires the former static-as-value mutant to fail
+compilation. This is a compile contract, not Unity behavior or audio evidence.
+The test skips when the exact-editor Mono/Roslyn tools are absent. Root's
+20-test focused suite passes in 3.288 s, including current source/recipe pins.
+Ruff passes. Protected code, original assemblies and generated outputs remain
+ignored; fixtures contain authored declarations only.
+
+The source fix and host fixture evidence are under
+`work/coordination/original-music-static-observer-fix/r1/`. Rebuild steps that
+stage the authored owner must regenerate it. A new committed/synchronized
+source, preflight, canonical build and matching artifact freeze are required
+before any install or both standard checks. Output acceptance, native playback,
+camera readiness and gameplay acceptance remain open.

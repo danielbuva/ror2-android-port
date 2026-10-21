@@ -811,7 +811,9 @@ Cecil transform preserves the original call count, arguments, return and excepti
 flow, while the owned session records only exact-instance scalar results. Its
 receipt follows the audio stage; the camera transform consumes its exact 27340
 intermediate only under d540 or 1ced. This observation is not playback or
-audibility evidence.
+audibility evidence. The host music-owner compile fixture compiles the actual
+owner, contract and observer against authored API-shape declarations and rejects
+a static-class-as-value mutant; it does not model Unity lifecycle execution.
 
 `recipe/original-audio-owner-sources.json` pins the authored owner cohort and
 runtime membership. Both producer compile modes validate its bytes and source

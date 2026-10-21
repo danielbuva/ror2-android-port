@@ -298,11 +298,11 @@ public sealed class PortSessionOriginalMusicControllerOwner : MonoBehaviour
 
     void InstallMusicOutputObserver()
     {
-        var observer = OriginalOwnerProbeObserver.Observer;
-        if (observer.MusicAddOutputReturned != null || observer.MusicRemoveOutputReturned != null)
+        if (OriginalOwnerProbeObserver.Observer.MusicAddOutputReturned != null ||
+            OriginalOwnerProbeObserver.Observer.MusicRemoveOutputReturned != null)
             throw new InvalidOperationException("Music output observer already has an owner");
-        observer.MusicAddOutputReturned = ObserveMusicAddOutput;
-        observer.MusicRemoveOutputReturned = ObserveMusicRemoveOutput;
+        OriginalOwnerProbeObserver.Observer.MusicAddOutputReturned = ObserveMusicAddOutput;
+        OriginalOwnerProbeObserver.Observer.MusicRemoveOutputReturned = ObserveMusicRemoveOutput;
         outputObserverInstalled = true;
     }
 
@@ -368,11 +368,10 @@ public sealed class PortSessionOriginalMusicControllerOwner : MonoBehaviour
     void DetachMusicOutputObserver()
     {
         if (!outputObserverInstalled) return;
-        var observer = OriginalOwnerProbeObserver.Observer;
-        if (observer.MusicAddOutputReturned == (Action<int, object, ulong>)ObserveMusicAddOutput)
-            observer.MusicAddOutputReturned = null;
-        if (observer.MusicRemoveOutputReturned == (Action<int, object, ulong>)ObserveMusicRemoveOutput)
-            observer.MusicRemoveOutputReturned = null;
+        if (OriginalOwnerProbeObserver.Observer.MusicAddOutputReturned == (Action<int, object, ulong>)ObserveMusicAddOutput)
+            OriginalOwnerProbeObserver.Observer.MusicAddOutputReturned = null;
+        if (OriginalOwnerProbeObserver.Observer.MusicRemoveOutputReturned == (Action<int, object, ulong>)ObserveMusicRemoveOutput)
+            OriginalOwnerProbeObserver.Observer.MusicRemoveOutputReturned = null;
         outputObserverInstalled = false;
     }
 
