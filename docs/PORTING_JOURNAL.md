@@ -20421,7 +20421,8 @@ No authored runtime, recipe or known-good APK changes occur in this experiment.
 recovered from explicit SDK descriptor literals and registration arguments,
 without SDK execution, a captured table or guessed defaults. Start from main
 `91fd337` after PR #10's independent review/merge; reserve J856 for the main
-session's separate Siren attempt. Its scan-bounds documentation correction is
+session's separate Siren attempt; integrate its `5f2298c` checkpoint before the
+final record. Its scan-bounds documentation correction is
 preserved. Route A, the game runtime/renderer and desktop fallback remain fixed.
 No Unity/game build, package installation or original-game file change occurs.
 
@@ -20456,21 +20457,28 @@ schema for a known null parent; an unknown pointer refuses. Project scene
 usage and module policy are not produced by this registry reader.
 
 **Source and host contracts.** Commit before probing at
-`86f4c2fc9ea61fe5aa332efadc343e0558df407f`. Stage and hash both authored readers
-and the unchanged owner SDK through the current `phone-native-registry` action.
+`86f4c2fc9ea61fe5aa332efadc343e0558df407f`, then freeze the corrected final
+reader at `bd649f6be07bf1e0b1828158c3f67cfa1d53c48d`. Stage and hash both authored
+readers and the unchanged owner SDK through the current `phone-native-registry` action.
 The explicit helper-file import loads only authored tool code under isolated
 Python, never SDK code. Source hashes are
 `248b8bc32000dc76b93438defb381935137c8de0f0ba0edc7389791ce32d3a1d`
-and `e0800a4e45fcf0cec45e97c57ed2fb8006844d25cf8ef4680a4cb431cea8d6de`.
+and `a1d8dc1a5619494fedf39b644b2af0fd7f2108c691a74a76e5c6068c668a848b`.
 ARCHITECTURE names the helper/lifecycle; LOCAL_STATE lists both staged sources
 and the new local replay adapter. Earlier adapters/receipts stay immutable.
 
 Six new authored literal/ABI contracts check constants and explicit entry
 parameters; skipped/partial overwrites; frame movement, alias writes, unknown
 calls, indirect flow and backedges; unproven vector zeros; parameter clobbers;
-and assertion arguments that could otherwise masquerade as literals. These
+and assertion arguments that could otherwise masquerade as literals. Final source
+review adds invalid/unknown and register-based SP-operation cases: the first
+helper incorrectly accepts the unknown word after literal setup. Preserve that
+replay in `native-registry-extra-self-review-control.json` and the initial phone
+proof. `bd649f6` adds an explicit instruction allowlist after setup; both cases
+now refuse, and actual SDK extraction is repeated from the frozen corrected
+source. These
 and the 12 existing reader tests pass. No SDK binary/row/instruction sequence is
-part of a public fixture. Fresh-clone CI on `86f4c2f` passes 1,250 tests with
+part of a public fixture. Fresh-clone CI on `bd649f6` passes 1,250 tests with
 55 optional skips, Ruff, public audit and documentation freshness. No formal
 SDK invocation fails; the deliberately invalid controls below refuse as expected.
 
@@ -20478,9 +20486,9 @@ SDK invocation fails; the deliberately invalid controls below refuse as expected
 fresh storage/backing/reserve, supplied Python hash and all three staged input
 hashes. `native-registry-extra-on-android.py` additionally checks both source
 owners are committed/unchanged. In a fresh owned child, the Android invocation
-completes in 9.364 seconds of host-observed wall time. It produces byte-identical
+completes in 9.280 seconds of host-observed wall time. It produces byte-identical
 host output, SHA-256
-`be4e7095de0f7f6477c952e6a792d6bc5064707196b8b206fa0ed283ec726fbd`.
+`65a9619d55806f041d3a36a55bc901530d29cfa62f54246e0933113ebe8e1f8a`.
 Unknown SDK and overwrite controls refuse; the report, SDK and installed alpha
 game hashes remain unchanged, and the display is left asleep. The APK remains
 J853's be26c21c…; no app is installed or launched. This is a metadata-tool timing,
@@ -20497,12 +20505,13 @@ not qualify other SDK versions, player variations or complete project roots;
 `root_generation_qualified` remains false and no build consumes the report.
 
 Retain raw SDK instruction views, literals and derived rows privately.
-`native-registry-extra-stage-selection.json` and
-`native-registry-extra-run-selection.json` select the frozen host/phone attempts;
-`native-registry-extra-oracle-comparison.json` records the independent comparison.
-`native-registry-extra-proof-receipt.json` binds 20 source/input/output/control/
-comparison/test/CI artifacts; SHA-256
-`7919f8537b63f704f68536af50e82eb4fa1b2d1177cf0de5a0c468359b2c0241`.
+`native-registry-extra-v2-stage-selection.json` and
+`native-registry-extra-v2-run-selection.json` select the frozen final host/phone
+attempts; `native-registry-extra-v2-oracle-comparison.json` records the independent
+comparison. `native-registry-extra-v2-proof-receipt.json` binds 22 source/input/
+output/control/comparison/test/CI artifacts, including the self-review control
+and original proof receipt; SHA-256
+`721339c4803923914951447000d640580747ddb3775067692835e6541db97427`.
 Whole-project game bootstrap remains unqualified as recorded in J853. Next
 produce scene usage/module policy and exact linker inputs independently of a
 desktop capture, then connect those to J846/J849's stripping/conversion contract.
