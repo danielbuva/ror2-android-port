@@ -1772,7 +1772,11 @@ separates missing, disabled and inactive trackers before reading an active
 tracker; target states distinguish destroyed, unidentified and known targets,
 selected/native ID matches and requested primary. It records live tracker
 settings and current geometry without refreshing native tracking or claiming its last LOS/range/cone
-decision. Two optional, one-shot eligibility snapshots use the first visible
+decision. If only same-egg NoTarget observations occur, a read-only scalar window
+can use the existing delayed slot after 0.5 s of samples with gaps at most
+0.25 s; invalid/discontinuous observations reset it. The two-snapshot stage cap
+stays fixed and this changes no native target behavior. Two optional, one-shot
+eligibility snapshots use the first visible
 primary mismatch and a later null target with the same selected egg. They
 record the held input aim before this frame's write, exact HurtBox registry
 membership with a 4,096-entry cap, current body/team/layer/health/collider data,

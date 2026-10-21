@@ -24200,3 +24200,47 @@ player, APK, output creation, track selection, playback or audibility. R15 b0f7a
 remains installed; the accepted baseline remains f1550ce0. A matching canonical
 build and both standard checks are required next, with actual stage, closure,
 APK and post-strip identities checked independently.
+
+## J906 — Capture sustained null Siren target evidence within the existing budget
+
+Date: 2026-10-21. Hypothesis: J898's all-null native tracker interval leaves an
+observation gap because the first eligibility snapshot requires an identified
+mismatch. Reuse J815's bounded, read-only tracker/bullseye observation and J886's
+pinned DebugToolkit typed identity technique; neither establishes native target
+eligibility or authorizes changing the tracker. No targeting fix is inferred.
+
+The existing default-off SirenEggDiagnosticInput owner now qualifies an
+observation window only from its already-read NoTarget result, requested primary,
+a live selected egg and the same nonzero selected identity. At least two samples
+must span 0.5 s with every sample gap at most 0.25 s. An identity change,
+nonqualifying observation, larger gap, backwards or nonfinite time resets the
+window; a paused interval is unknown, not a gameplay failure. Counter saturation
+is bounded. The qualified window may consume the existing delayed-null slot
+when no first mismatch snapshot began. The original two-snapshot stage limit
+and no-overwrite rule remain. This adds no search, refresh, target assignment,
+physics query, movement or input; it does not change native target selection.
+
+The source candidate and focused portable test pass independent review. The
+source SHA-256 is
+`ac6a62f26af19e9abd19aef02b6195e75a2e33c89e8217ffe6659e1fdd746138`.
+The portable integration patch is
+`e8183d088c5c1096fca2822021d15884f403322b615fa384c92f8af50c4765b1`.
+Root runs both tests against the actual authored source: the production policy
+is compiled/executed for exact and over-bound timing, resets, identity changes,
+saturation and budget, and the source wiring contract checks observer-only use.
+Both pass in 0.588 s. A separate unavailable-compiler run retains the source
+contract and skips only the compiled policy. Ruff passes. The prior full-owner
+compile is frozen host evidence only; a new composed player remains required.
+
+Private proposal/compile evidence is under
+`work/coordination/siren-null-target-witness-next/r2/`; portable integration and
+Root checks are under
+`work/coordination/siren-null-target-witness-integration/r1/`. Independent review
+is under `work/coordination/siren-null-target-witness-integration-review/r1/`.
+Only authored code, tests and summaries are published. Existing recipe membership
+and importer identity are unchanged; rebuild steps must regenerate the authored
+runtime source bytes. No editor, build, install, game launch or other device
+action occurs for this source checkpoint. Installed b0f7ae7e and accepted
+baseline f1550ce0 stay fixed. The next selected run must establish actual snapshot
+capture and the native egg interaction/encounter result; this host result accepts
+none of those gameplay claims.

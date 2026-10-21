@@ -171,7 +171,7 @@ public struct SirenTargetEligibilitySnapshot
 {
     public bool attempted, captured;
     public string kind, samplePhase, errorType;
-    public float waitSinceFirstMismatchSeconds;
+    public float waitSinceFirstMismatchSeconds, sustainedNullTargetSeconds;
     public uint selectedEggNetworkId, nativeTargetNetworkId;
     public int selectedBodyIndex, selectedBodyTeamIndex, selectedHurtBoxTeamIndex, nativeBodyIndex, nativeBodyTeamIndex,
         nativeHurtBoxTeamIndex;
@@ -205,10 +205,55 @@ public struct SirenBullseyeMembershipEvidence
     public int totalCount, scannedCount;
 }
 
+public struct SirenNullTargetWitnessWindow
+{
+    public bool active;
+    public uint selectedEggNetworkId;
+    public int consecutiveSamples;
+    public float firstObservedRealtime;
+    public float lastObservedRealtime;
+}
+
 public static class SirenTargetEligibilityWitnessPolicy
 {
     public const int MaximumGlobalBullseyeScanCount = 4096;
     public const float FollowupWaitSeconds = 0.5f;
+    public const int MinimumSustainedNullSamples = 2;
+    // Require observations to remain continuous at the owner's fixed-sample cadence.
+    // A larger pause starts a new window; it is not evidence of a gameplay failure.
+    public const float MaximumObservationGapSeconds = 0.25f;
+
+    public static bool ObserveSustainedNullTarget(ref SirenNullTargetWitnessWindow window, bool qualifyingNoTarget,
+                                                   uint selectedEggNetworkId, float realtime, out float elapsed)
+    {
+        elapsed = 0f;
+        if (!qualifyingNoTarget || selectedEggNetworkId == 0 || !IsFinite(realtime))
+        {
+            window = new SirenNullTargetWitnessWindow();
+            return false;
+        }
+        float sampleGap = realtime - window.lastObservedRealtime;
+        if (!window.active || window.selectedEggNetworkId != selectedEggNetworkId ||
+            !IsFinite(window.firstObservedRealtime) || !IsFinite(window.lastObservedRealtime) ||
+            !IsFinite(sampleGap) || sampleGap < 0f || sampleGap > MaximumObservationGapSeconds)
+        {
+            window = new SirenNullTargetWitnessWindow { active = true, selectedEggNetworkId = selectedEggNetworkId,
+                                                        consecutiveSamples = 1, firstObservedRealtime = realtime,
+                                                        lastObservedRealtime = realtime };
+            return false;
+        }
+        if (window.consecutiveSamples < int.MaxValue)
+            window.consecutiveSamples++;
+        window.lastObservedRealtime = realtime;
+        elapsed = realtime - window.firstObservedRealtime;
+        if (!IsFinite(elapsed))
+        {
+            window = new SirenNullTargetWitnessWindow();
+            elapsed = 0f;
+            return false;
+        }
+        return window.consecutiveSamples >= MinimumSustainedNullSamples && elapsed >= FollowupWaitSeconds;
+    }
 
     public static bool WithinCaptureBudget(int attempts) => attempts >= 0 && attempts < 2;
 
@@ -513,6 +558,7 @@ public sealed class SirenEggDiagnosticInput : IDisposable
     int lastObservedInputTick = int.MinValue;
     bool lastSubmittedPrimary, listenerObserved, started, terminal, disposed;
     bool firstEligibilitySnapshotAttempted, delayedEligibilitySnapshotAttempted, selectedEggChangedAfterMismatch;
+    SirenNullTargetWitnessWindow nullTargetWitnessWindow;
     uint firstEligibilitySnapshotSelectedId;
     float firstEligibilitySnapshotRealtime = float.NaN;
 
@@ -877,6 +923,14 @@ public sealed class SirenEggDiagnosticInput : IDisposable
                                        bool primaryRequested, SirenNativeTargetObservation observation, HurtBox nativeTarget,
                                        uint nativeTargetNetworkId)
     {
+        bool sustainedNullEligible = !firstEligibilitySnapshotAttempted && !report.delayedNullEligibilitySnapshot.attempted &&
+                                     SirenTargetEligibilityWitnessPolicy.WithinCaptureBudget(report.eligibilitySnapshotAttempts) &&
+                                     primaryRequested && selectedEggNetworkId != 0 && selectedEgg &&
+                                     observation == SirenNativeTargetObservation.NoTarget;
+        float sustainedNullElapsed;
+        bool sustainedNull = SirenTargetEligibilityWitnessPolicy.ObserveSustainedNullTarget(
+            ref nullTargetWitnessWindow, sustainedNullEligible, selectedEggNetworkId,
+            sustainedNullEligible ? Time.realtimeSinceStartup : 0f, out sustainedNullElapsed);
         if (firstEligibilitySnapshotAttempted && selectedEggNetworkId != firstEligibilitySnapshotSelectedId)
             selectedEggChangedAfterMismatch = true;
         if (!primaryRequested || selectedEggNetworkId == 0 || !selectedEgg ||
@@ -888,7 +942,7 @@ public sealed class SirenEggDiagnosticInput : IDisposable
         if (firstMismatch)
         {
             firstEligibilitySnapshotAttempted = true;
-            delayedEligibilitySnapshotAttempted = false;
+            delayedEligibilitySnapshotAttempted = report.delayedNullEligibilitySnapshot.attempted;
             selectedEggChangedAfterMismatch = false;
             firstEligibilitySnapshotSelectedId = selectedEggNetworkId;
             firstEligibilitySnapshotRealtime = Time.realtimeSinceStartup;
@@ -907,6 +961,16 @@ public sealed class SirenEggDiagnosticInput : IDisposable
                 CaptureEligibilitySnapshot(ref report.delayedNullEligibilitySnapshot, "delayed-null-same-selected-egg", wait, player,
                                            selectedEgg, selectedEggNetworkId, selectedAimPoint, null, 0);
             }
+            return;
+        }
+        if (!firstEligibilitySnapshotAttempted && !delayedEligibilitySnapshotAttempted && sustainedNull &&
+            !report.delayedNullEligibilitySnapshot.attempted &&
+            SirenTargetEligibilityWitnessPolicy.WithinCaptureBudget(report.eligibilitySnapshotAttempts))
+        {
+            delayedEligibilitySnapshotAttempted = true;
+            CaptureEligibilitySnapshot(ref report.delayedNullEligibilitySnapshot, "first-sustained-null-primary-same-selected-egg",
+                                       0f, player, selectedEgg, selectedEggNetworkId, selectedAimPoint, null, 0);
+            report.delayedNullEligibilitySnapshot.sustainedNullTargetSeconds = sustainedNullElapsed;
         }
     }
 
