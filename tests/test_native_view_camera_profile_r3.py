@@ -4,7 +4,7 @@ from pathlib import Path
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-R3_CAMERA_GAME = "41b66d072085f70b6929dcd2a566fffff3f26b9c886d8781624e52ae8ab7e92f"
+R3_CAMERA_GAME = "2ae5d92a652d69c7e6fd471448af203d52be3ef9350743a91fc84a5bd2bc1384"
 
 
 class NativeViewCameraR3ProfileTests(unittest.TestCase):
@@ -30,7 +30,7 @@ class NativeViewCameraR3ProfileTests(unittest.TestCase):
         )
         self.assertTrue(all(row["bundle"] == "must_be_present_in_built_manifest" for row in rows))
 
-    def test_build_hook_uses_same_camera_r3_profile_hashes(self):
+    def test_build_hook_uses_same_camera_profile_hashes(self):
         pins = json.loads((ROOT / "recipe/native-view-camera-transform.json").read_text())
         hook_text = (ROOT / "scripts/lab/native_view_camera_build_hook.py").read_text()
         self.assertIn('"camera_after_point_sound": "' + R3_CAMERA_GAME + '"', hook_text)

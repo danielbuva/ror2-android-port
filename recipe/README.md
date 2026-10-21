@@ -1448,14 +1448,14 @@ readiness.
 The camera build hook can unwind the exact historical `f6bc...` output only
 when the current 6f96 game/API stage receipt, audio stage receipt hash and
 mode, declared 1ced or d540 profile, and 6f96 preimage snapshot all match. This
-hash is restore-only: the current 1ced and d540 profile selectors continue to
-produce the `41b66...` output, and no new staging path chooses the predecessor.
+hash is restore-only. Current generation pins are listed below; no new staging
+path chooses this predecessor.
 The exact local R12 receipt and snapshot are qualification evidence under
 ignored `work/`; no generated DLL or receipt is published here. The predecessor
 is not runtime accepted and restores only the exact game preimage.
 
 
-### Camera profile output requalification (R6)
+### Historical camera profile output requalification (R6)
 
 The Console-guard camera transform is qualified against four exact pairs:
 3124/API 107 produces `e237af...`; 1034/API d540 produces `aa7ca...`;
@@ -1481,3 +1481,20 @@ R6 adds authored host contracts for the exact four profile mapping and
 restore-only separation. Full player closure, IL2CPP conversion, APK binding,
 camera activation and runtime acceptance remain false. No device or Unity build
 was run.
+
+### Current camera exception-handler preservation
+
+J900 repairs the authored marker copier's omission of exception-handler
+metadata. It preserves handler type, imported catch type and every instruction
+boundary, including nullable ends. The independent verifier receives the exact
+compiled helper as a third input and compares its handler table to the copied
+marker. A host fixture removes the copied table and must be rejected.
+
+Current exact outputs are 3124/API 107 to `d5fc52...`, 1034/API d540 to
+`e4aeeb...`, and 6f96 with d540 or 1ced to `2ae5d9...`. The previous R6
+outputs are now receipt-bound restore-only, including the failed R14 `41b66...`.
+Existing older predecessor restoration remains available. No generated assembly,
+helper binary, private receipt or protected source is published. The runtime
+marker's authored source and original-audio owner cohort are unchanged.
+This audit covers the authored copier/verifier, pin updates and host fixtures;
+player, camera activation, rendering and playback still require device evidence.

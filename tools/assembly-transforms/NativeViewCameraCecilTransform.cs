@@ -145,6 +145,23 @@ internal static class NativeViewCameraCecilTransform
                     throw new InvalidOperationException("unsupported marker operand " + operand.GetType().FullName);
                 instructionMap[instruction].Operand = operand;
             }
+            // Preserve the source exception regions along with their IL. In
+            // particular, TryPumpOriginalEarlyUpdate has a catch whose first
+            // instruction consumes the exception object and rethrows it.
+            foreach (var handler in method.Body.ExceptionHandlers)
+            {
+                copy.Body.ExceptionHandlers.Add(new ExceptionHandler(handler.HandlerType)
+                {
+                    CatchType = handler.CatchType == null
+                        ? null
+                        : ImportType(target, handler.CatchType, source, type),
+                    TryStart = handler.TryStart == null ? null : instructionMap[handler.TryStart],
+                    TryEnd = handler.TryEnd == null ? null : instructionMap[handler.TryEnd],
+                    HandlerStart = handler.HandlerStart == null ? null : instructionMap[handler.HandlerStart],
+                    HandlerEnd = handler.HandlerEnd == null ? null : instructionMap[handler.HandlerEnd],
+                    FilterStart = handler.FilterStart == null ? null : instructionMap[handler.FilterStart],
+                });
+            }
         }
         return type;
     }

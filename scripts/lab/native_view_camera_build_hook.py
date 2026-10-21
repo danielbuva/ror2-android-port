@@ -42,15 +42,16 @@ HASHES = {
     "previous_composed_api_restore_only": "793f22866c85bbcf104f20f5c1f619062eaad9f5414a217b602fe758c71e01b9",
     "composed_game": "1034a747e31a3b79554b9cb06f941c7acabaa9e0ee82c2a00abc4b24f9327c1c",
     "point_sound_composed_game": "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc",
-    "camera_default": "e237af4fea2b04dfecb54593e39d98862078a66de4a08272b75531303fe4b33d",
+    "camera_default": "d5fc522e83cb6f6f6845b2a8b7e5de28011031fe2f3b54c0716c52db9679c65c",
     "camera_default_previous_restore_only": "236fab2c616b1a017971c316437ec1a9fa9f6b3999563263d4a8ab689a1e59b6",
-    "camera_after_audio": "aa7ca07c363d6d2d144cc6d378264302846036661daa631b8a3a52dc9ed15ffc",
+    "camera_after_audio": "e4aeeb5acb7b81922a0a6603d01c1d407c57e9b00852b5e15ef70838e1961e5b",
     "camera_after_audio_previous_restore_only": "e16e01bc6545bb6d8248c9196be890b99cf60df721d1b894b8d9871a880c7f91",
-    "camera_after_point_sound": "41b66d072085f70b6929dcd2a566fffff3f26b9c886d8781624e52ae8ab7e92f",
-    "camera_after_r10_1ced": "41b66d072085f70b6929dcd2a566fffff3f26b9c886d8781624e52ae8ab7e92f",
+    "camera_after_point_sound": "2ae5d92a652d69c7e6fd471448af203d52be3ef9350743a91fc84a5bd2bc1384",
+    "camera_after_r10_1ced": "2ae5d92a652d69c7e6fd471448af203d52be3ef9350743a91fc84a5bd2bc1384",
     # Restore-only predecessor emitted by the exact older R12 camera receipt.
     # It is never selected by select_profile or stage_after_audio.
     "camera_predecessor_f6bc_restore_only": "f6bc1a860e8abe2c82a397a83e55ec2050136e91763ade302ed0e181b320083c",
+    "camera_after_point_sound_previous_restore_only": "41b66d072085f70b6929dcd2a566fffff3f26b9c886d8781624e52ae8ab7e92f",
 }
 
 
@@ -446,15 +447,31 @@ def restore_previous_camera(project: Path, work: Path) -> dict | None:
         expected_input == HASHES["ordinary_game"]
         and expected_api == HASHES["ordinary_api"]
         and expected_profile == "default-game-3124"
-        and receipt.get("output_sha256") == HASHES["camera_default_previous_restore_only"]
+        and receipt.get("output_sha256")
+        in {
+            HASHES["camera_default_previous_restore_only"],
+            "e237af4fea2b04dfecb54593e39d98862078a66de4a08272b75531303fe4b33d",
+        }
     )
     exact_prior_1034 = (
         expected_input == HASHES["composed_game"]
         and expected_api in {HASHES["composed_api"], HASHES["previous_composed_api_restore_only"]}
         and expected_profile in {"post-audio-r4-1034-api-d540", "post-audio-r4-1034"}
-        and receipt.get("output_sha256") == HASHES["camera_after_audio_previous_restore_only"]
+        and receipt.get("output_sha256")
+        in {
+            HASHES["camera_after_audio_previous_restore_only"],
+            "aa7ca07c363d6d2d144cc6d378264302846036661daa631b8a3a52dc9ed15ffc",
+        }
     )
-    is_restore_only_predecessor = (predecessor_profile and receipt.get("output_sha256") == predecessor_output) or exact_prior_default or exact_prior_1034
+    exact_r14_broken_point_sound = (
+        expected_input == HASHES["point_sound_composed_game"]
+        and expected_api in {HASHES["composed_api"], HASHES["pcm_composed_api"]}
+        and expected_profile in {"post-audio-point-sound-6f96-api-d540", "post-audio-r10-1ced-game-6f96"}
+        and receipt.get("output_sha256") == HASHES["camera_after_point_sound_previous_restore_only"]
+    )
+    is_restore_only_predecessor = (
+        (predecessor_profile and receipt.get("output_sha256") == predecessor_output) or exact_prior_default or exact_prior_1034 or exact_r14_broken_point_sound
+    )
     if receipt.get("output_sha256") != expected_output and not is_restore_only_predecessor:
         raise ValueError("camera receipt output is outside the exact current or restore-only profile")
     if receipt.get("accepted") is not False or receipt.get("runtime_requested") is not False or receipt.get("runtime_dispatch_ready") is not False:

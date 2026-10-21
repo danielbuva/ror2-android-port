@@ -23856,3 +23856,58 @@ result is applied. Selector removal, process absence, installed APK bytes and
 display sleep are independently checked; cleanup reports no errors. This is
 checked process cleanup, not proof of natural source-owner teardown. No other
 device is used. The installed diagnostic and accepted baseline are unchanged.
+
+## J900 — Preserve source exception handlers in the owned camera marker
+
+Date: 2026-10-21. Hypothesis: J897's IL2CPP stack failure is removed by copying
+the authored helper's exception-handler records along with its instructions.
+This is a generic Cecil-copy repair within J892's existing owner and prior-art
+contract, not a new original-game reconstruction or camera behavior.
+
+**Smallest change.** `NativeViewCameraCecilTransform.CopyMarkerType` now copies
+each handler after constructing the complete instruction map. Handler type,
+imported catch type, try/handler/filter boundaries and nullable ends preserve
+the source helper's exact table. The runtime marker source, original methods,
+input/profile identities and original-audio owner cohort are unchanged.
+The independent verifier takes the compiled helper as a third input and checks
+handler count, order, types and boundary instruction indices for every copied
+marker method. The pump's catch entry must begin with the exception-consuming
+`pop`. An absent handler table can no longer qualify from instruction checks alone.
+
+**Host qualification.** The four existing immutable-input profiles transform
+and independently verify. The current outputs are
+`d5fc522e83cb6f6f6845b2a8b7e5de28011031fe2f3b54c0716c52db9679c65c`
+for 3124/API 107,
+`e4aeeb5acb7b81922a0a6603d01c1d407c57e9b00852b5e15ef70838e1961e5b`
+for 1034/API d540, and
+`2ae5d92a652d69c7e6fd471448af203d52be3ef9350743a91fc84a5bd2bc1384`
+for both 6f96/API d540 and 6f96/API 1ced. Matching generation/source pins are
+refreshed together. Older outputs remain receipt-bound restore-only.
+
+Root runs the camera suite: 37 cases pass with three unavailable-fixture skips.
+With explicit actual transformed inputs, the two exception-copy cases pass: the
+valid source/output table is accepted and a mutant deleting only handler
+metadata is rejected. The existing actual R12 restoration remains checked.
+The failed R14 staged DLL, exact camera/audio receipts and saved preimage are
+hash-frozen under
+`work/coordination/codex-original-game-audio-build-root/r14/pre-player-stage/`.
+A private-copy replay restores exact 6f96 bytes; six receipt/profile/audio/
+snapshot/output mutants refuse without writes. Tests use that frozen evidence
+rather than the mutable current project. R6 receipts remain immutable historical
+evidence and are compared with restore-only rows, not current generation pins.
+
+Private source candidate, profile outputs, source-copy review and Root test logs
+are under `work/coordination/original-camera-il-stack-fix/r1/`. Root additionally
+formats changed Python, updates its affected source hash and replaces the live
+R14 fixture input with the independent frozen copy. Ruff passes. Public audit
+and manual provenance review cover authored tooling, hashes and test fixtures
+only; no original binary, generated helper, protected method body or private
+receipt is tracked. The recipe audit records the new verifier contract.
+
+**Disposition.** This changes authored transformation/build inputs used by
+reconstruction; replay their tracked steps when needed, without modifying
+`work/rebuild/`. The source is ready for a committed build. No new APK is yet
+qualified or installed, and both standard controls precede any selected camera
+activation. Shader fidelity, actual camera/body/listener context, native output
+and natural teardown remain open. Installed fae79734, accepted baseline
+f1550ce0 and J898's bounded Siren failure remain unchanged.

@@ -25,10 +25,16 @@ API_D540 = (
     ROOT
     / "work/coordination/codex-original-audio-host-stage-root/r4/original-game-audio-owner/b653ba648a1624781279e0ce7422dd903a042c1fb4778c7e2118bb570ee9d3af/managed-chain/api-instrumented-composed.dll"
 )
-CURRENT_CAMERA_DLL = ROOT / "work/coordination/original-camera-update-next/r3/official-producer-final/RoR2.native-view-camera.dll"
+CURRENT_CAMERA_DLL = ROOT / "work/coordination/original-camera-il-stack-fix/r1/outputs/profiles/post-audio-r10-1ced-game-6f96/RoR2.native-view-camera.dll"
+R14_FIXTURE = ROOT / "work/coordination/codex-original-game-audio-build-root/r14/pre-player-stage"
+R14_CAMERA_DLL = R14_FIXTURE / "RoR2.dll"
+R14_CAMERA_RECEIPT = R14_FIXTURE / "NativeViewCameraStageReceipt.json"
+R14_AUDIO_RECEIPT = R14_FIXTURE / "OriginalGameAudioStageReceipt.json"
+R14_PREIMAGE = R14_FIXTURE / "RoR2.preimage.dll"
 EXPECTED = {
     "camera_old": "f6bc1a860e8abe2c82a397a83e55ec2050136e91763ade302ed0e181b320083c",
-    "camera_current": "41b66d072085f70b6929dcd2a566fffff3f26b9c886d8781624e52ae8ab7e92f",
+    "camera_current": "2ae5d92a652d69c7e6fd471448af203d52be3ef9350743a91fc84a5bd2bc1384",
+    "camera_r14_broken": "41b66d072085f70b6929dcd2a566fffff3f26b9c886d8781624e52ae8ab7e92f",
     "game": "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc",
     "api_1ced": "1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b",
     "api_d540": "d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23",
@@ -60,7 +66,7 @@ def evidence_ready() -> bool:
 class CameraRestorePredecessorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.scratch_parent = Path(os.environ.get("ORIGINAL_CAMERA_RESTORE_TEST_ROOT", tempfile.gettempdir()))
+        cls.scratch_parent = Path(os.environ.get("ORIGINAL_CAMERA_RESTORE_TEST_ROOT", CANDIDATE / "test-scratch"))
         cls.scratch_parent.mkdir(parents=True, exist_ok=True)
         if not evidence_ready():
             raise unittest.SkipTest("exact R12 camera/audio receipts and pinned source snapshots are not available locally")
@@ -201,6 +207,65 @@ class CameraRestorePredecessorTests(unittest.TestCase):
             EXPECTED["game"],
         )
         self.assertFalse(camera_path.exists())
+
+    def _new_actual_r14_project(self, mutation: str | None = None):
+        if not all(p.is_file() for p in (R14_CAMERA_DLL, R14_CAMERA_RECEIPT, R14_AUDIO_RECEIPT, R14_PREIMAGE)):
+            self.skipTest("exact frozen R14 fixture is unavailable")
+        self.assertTrue(R14_CAMERA_RECEIPT.is_file())
+        self.assertTrue(R14_AUDIO_RECEIPT.is_file())
+        self.assertTrue(R14_CAMERA_DLL.is_file())
+        self.assertTrue(R14_PREIMAGE.is_file())
+        self.assertEqual(digest(R14_CAMERA_DLL), EXPECTED["camera_r14_broken"])
+        module, root, work, project, camera_path = self.new_module_and_project(camera_kind="current")
+        game = project / "Assets/LabLoadingScene/Plugins/RoR2.dll"
+        shutil.copy2(R14_CAMERA_DLL, game)
+        (project / "Assets/StreamingAssets/Lab/OriginalGameAudioStageReceipt.json").write_bytes(R14_AUDIO_RECEIPT.read_bytes())
+        camera_path.write_bytes(R14_CAMERA_RECEIPT.read_bytes())
+        snapshot_rel = "native-view-camera/8f19e37bfb57af0285781c6f82f32e3ec1f64dcc4a3b45af501c671b529819ee/RoR2.preimage.dll"
+        snapshot = work / snapshot_rel
+        snapshot.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(R14_PREIMAGE, snapshot)
+        camera = json.loads(camera_path.read_text())
+        self.assertEqual(camera["output_sha256"], EXPECTED["camera_r14_broken"])
+        self.assertEqual(camera["producer_receipt_sha256"], "c9cfc7f940c0b53b27fb4e8b3756679d38869fa143d9f80f946c29240dba2fc6")
+        if mutation == "receipt_output":
+            camera["output_sha256"] = EXPECTED["camera_current"]
+        elif mutation == "receipt_audio":
+            camera["audio_stage_receipt_sha256"] = "0" * 64
+        elif mutation == "receipt_profile":
+            camera["profile"] = "post-audio-r4-1034-api-d540"
+        elif mutation == "snapshot_bytes":
+            snapshot.write_bytes(snapshot.read_bytes() + b"tamper")
+        elif mutation == "output_bytes":
+            game.write_bytes(game.read_bytes() + b"tamper")
+        elif mutation == "audio_bytes":
+            audio_path = project / "Assets/StreamingAssets/Lab/OriginalGameAudioStageReceipt.json"
+            audio_path.write_bytes(audio_path.read_bytes() + b"tamper")
+        if mutation in {"receipt_output", "receipt_audio", "receipt_profile"}:
+            camera_path.write_text(json.dumps(camera, sort_keys=True, indent=2) + "\n")
+        return module, work, project, camera_path
+
+    def test_actual_r14_broken_output_restores_exact_snapshot_in_private_copy(self):
+        before_live_game = digest(R14_CAMERA_DLL)
+        module, work, project, camera_path = self._new_actual_r14_project()
+        self.assertEqual(digest(project / "Assets/LabLoadingScene/Plugins/RoR2.dll"), EXPECTED["camera_r14_broken"])
+        result = module.restore_previous_camera(project, work)
+        self.assertEqual(result["restored_sha256"], EXPECTED["game"])
+        self.assertEqual(digest(project / "Assets/LabLoadingScene/Plugins/RoR2.dll"), EXPECTED["game"])
+        self.assertFalse(camera_path.exists())
+        self.assertEqual(digest(R14_CAMERA_DLL), before_live_game)
+
+    def test_actual_r14_restore_refuses_receipt_snapshot_and_byte_mutants(self):
+        for mutation in ("receipt_output", "receipt_audio", "receipt_profile", "snapshot_bytes", "output_bytes", "audio_bytes"):
+            with self.subTest(mutation=mutation):
+                module, work, project, camera_path = self._new_actual_r14_project(mutation)
+                game = project / "Assets/LabLoadingScene/Plugins/RoR2.dll"
+                before_game = digest(game)
+                before_receipt = camera_path.read_bytes()
+                with self.assertRaises(ValueError):
+                    module.restore_previous_camera(project, work)
+                self.assertEqual(digest(game), before_game)
+                self.assertEqual(camera_path.read_bytes(), before_receipt)
 
     def test_predecessor_restore_is_limited_to_declared_d540_and_1ced_profiles(self):
         module, *_ = self.new_module_and_project()

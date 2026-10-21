@@ -260,6 +260,7 @@ def transform(profile: str, supplied_input: Path, resolution_dir: Path, output_p
                 str(verify_exe),
                 str(input_path),
                 str(generated),
+                str(helper_dll),
             ],
             cwd=run_root,
         )

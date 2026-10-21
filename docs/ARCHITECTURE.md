@@ -2417,9 +2417,20 @@ removing the override; lost context deactivates and destroys only the owned
 staging root. These are source dependencies and lifecycle contracts only;
 bundle/Unity/runtime readiness remains unproven.
 
-The current whole-catalog path restores only an exact prior camera stage result to its guarded 3124 or
-audio-composed 1034 preimage, runs the original-audio producer, then applies the camera
-producer to that immediate result. Destination R8/R9 rebuilds restore a receipt-bound prior camera result when present, then keep their existing audio/build route without applying this current-project camera transform. The active exact profiles are 3124/API 107 to e237af, 1034/API d540 to aa7ca, and PointSound game 6f96 with either the retained d540 profile or the R10 1ced profile to 41b66. The latter accepts its exact 165-row audio stage receipt for either explicit passive-PCM state (`true` or `false`); camera staging does not depend on enabling the passive PCM diagnostic. It has a separately derived camera output pin, and arbitrary API/game pairs remain refused. The 793 API is restore-only. Cecil reference resolution is
+The current whole-catalog path restores only an exact prior camera stage result
+to its guarded 3124, 1034 or 6f96 preimage, runs the original-audio producer, then
+applies the camera producer to that immediate result. Destination R8/R9 rebuilds
+unwind an owned prior camera result and retain their existing build route.
+The active exact profiles are 3124/API 107 to d5fc52, 1034/API d540 to e4aeeb,
+and PointSound game 6f96 with either d540 or 1ced to 2ae5d9. The latter consumes
+its exact 165-row audio stage receipt for either explicit passive-PCM state;
+camera staging does not enable the PCM diagnostic. Arbitrary API/game pairs
+refuse; the 793 API is restore-only. Historical outputs, including failed
+41b66, require matching camera/audio receipts and preimage bytes for restoration.
+The marker copier preserves exception handlers and maps their types and instruction
+boundaries. Its independent verifier receives the compiled source helper and
+compares the copied handler table before accepting output; a removed-handler
+mutant checks this boundary. Cecil reference resolution is
 materialized from the current project plugin DLLs and the exact pinned Unity engine
 modules/Mono BCL. Its receipt is a host type-resolution input, not the full player
 linker/IL2CPP closure or an APK/runtime acceptance record.

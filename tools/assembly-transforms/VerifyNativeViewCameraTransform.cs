@@ -32,12 +32,49 @@ internal static class VerifyCameraGuardPatch
         if (!condition) throw new InvalidOperationException(reason);
     }
 
+    static string Boundary(Instruction instruction, System.Collections.Generic.Dictionary<Instruction, int> indexes)
+    {
+        return instruction == null ? "end" : indexes[instruction].ToString();
+    }
+
+    static string ExceptionTableKey(MethodDefinition method)
+    {
+        var indexes = method.Body.Instructions.Select((instruction, index) => new { instruction, index })
+            .ToDictionary(x => x.instruction, x => x.index);
+        return String.Join(";", method.Body.ExceptionHandlers.Select(h => String.Join(":", new[] {
+            ((int)h.HandlerType).ToString(), h.CatchType == null ? "" : h.CatchType.FullName,
+            Boundary(h.TryStart, indexes), Boundary(h.TryEnd, indexes), Boundary(h.HandlerStart, indexes),
+            Boundary(h.HandlerEnd, indexes), Boundary(h.FilterStart, indexes)
+        })));
+    }
+
+    static void VerifyCopiedMarkerExceptionTables(ModuleDefinition helper, ModuleDefinition output)
+    {
+        var sourceMarker = helper.GetType("RoR2.AndroidNativeSourceViewOnlyRigMarker");
+        var copiedMarker = output.GetType("RoR2.AndroidNativeSourceViewOnlyRigMarker");
+        Require(sourceMarker != null && copiedMarker != null, "source/output marker type missing for EH comparison");
+        foreach (var sourceMethod in sourceMarker.Methods)
+        {
+            var copied = copiedMarker.Methods.SingleOrDefault(x => x.FullName == sourceMethod.FullName);
+            Require(copied != null && sourceMethod.HasBody == copied.HasBody, "copied marker method missing/body mismatch " + sourceMethod.FullName);
+            if (!sourceMethod.HasBody) continue;
+            Require(ExceptionTableKey(sourceMethod) == ExceptionTableKey(copied),
+                "copied marker exception handlers changed " + sourceMethod.FullName);
+        }
+        var pump = copiedMarker.Methods.Single(x => x.Name == "TryPumpOriginalEarlyUpdate");
+        Require(pump.Body.ExceptionHandlers.Count == 1 && pump.Body.ExceptionHandlers[0].HandlerType == ExceptionHandlerType.Catch &&
+                pump.Body.ExceptionHandlers[0].HandlerStart.OpCode == OpCodes.Pop,
+                "original update pump catch entry must receive and consume the caught exception");
+    }
+
     static int Main(string[] args)
     {
-        if (args.Length != 2) return 2;
+        if (args.Length != 3) return 2;
         using (var before = ModuleDefinition.ReadModule(args[0]))
         using (var after = ModuleDefinition.ReadModule(args[1]))
+        using (var helper = ModuleDefinition.ReadModule(args[2]))
         {
+            VerifyCopiedMarkerExceptionTables(helper, after);
             Require(before.Assembly.Name.Name == after.Assembly.Name.Name &&
                     before.Assembly.Name.Version.ToString() == after.Assembly.Name.Version.ToString(), "assembly identity changed");
             var oldNames = before.Types.Select(x => x.FullName).ToArray();

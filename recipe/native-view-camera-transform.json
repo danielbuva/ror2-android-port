@@ -51,22 +51,22 @@
     "default-game-3124": {
       "input_relative_path": "Assets/LabLoadingScene/Plugins/RoR2.dll",
       "input_sha256": "3124a2ed9cf458acee78b1beaf969590b184be452e2b3aa5a8852df82ff95d30",
-      "output_sha256": "e237af4fea2b04dfecb54593e39d98862078a66de4a08272b75531303fe4b33d"
+      "output_sha256": "d5fc522e83cb6f6f6845b2a8b7e5de28011031fe2f3b54c0716c52db9679c65c"
     },
     "post-audio-point-sound-6f96-api-d540": {
       "input_relative_path": "Assets/LabLoadingScene/Plugins/RoR2.dll",
       "input_sha256": "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc",
-      "output_sha256": "41b66d072085f70b6929dcd2a566fffff3f26b9c886d8781624e52ae8ab7e92f"
+      "output_sha256": "2ae5d92a652d69c7e6fd471448af203d52be3ef9350743a91fc84a5bd2bc1384"
     },
     "post-audio-r10-1ced-game-6f96": {
       "input_relative_path": "Assets/LabLoadingScene/Plugins/RoR2.dll",
       "input_sha256": "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc",
-      "output_sha256": "41b66d072085f70b6929dcd2a566fffff3f26b9c886d8781624e52ae8ab7e92f"
+      "output_sha256": "2ae5d92a652d69c7e6fd471448af203d52be3ef9350743a91fc84a5bd2bc1384"
     },
     "post-audio-r4-1034-api-d540": {
       "input_relative_path": "Assets/LabLoadingScene/Plugins/RoR2.dll",
       "input_sha256": "1034a747e31a3b79554b9cb06f941c7acabaa9e0ee82c2a00abc4b24f9327c1c",
-      "output_sha256": "aa7ca07c363d6d2d144cc6d378264302846036661daa631b8a3a52dc9ed15ffc"
+      "output_sha256": "e4aeeb5acb7b81922a0a6603d01c1d407c57e9b00852b5e15ef70838e1961e5b"
     }
   },
   "purpose": "Unaccepted native-view camera module transform producer; exact default 3124/API107 and retained composed-audio 1034, PointSound 6f96/API d540, and R10 6f96/API 1ced profiles. Both 6f96 API profiles produce the same R3 game module; its exact SceneCamera guard reports prefab defaults when the real Console is absent.",
@@ -124,6 +124,34 @@
       "output_sha256": "f6bc1a860e8abe2c82a397a83e55ec2050136e91763ade302ed0e181b320083c",
       "profile": "post-audio-r10-1ced-game-6f96",
       "source": "exact historical R12 stage receipt; restore only"
+    },
+    {
+      "api_sha256": "107295e478a58ef295a83228111f375c536861bc9081f482d638c59899bf495c",
+      "input_sha256": "3124a2ed9cf458acee78b1beaf969590b184be452e2b3aa5a8852df82ff95d30",
+      "output_sha256": "e237af4fea2b04dfecb54593e39d98862078a66de4a08272b75531303fe4b33d",
+      "profile": "default-game-3124",
+      "source": "R6 output emitted before marker exception-handler preservation; restore only"
+    },
+    {
+      "api_sha256": "d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23",
+      "input_sha256": "1034a747e31a3b79554b9cb06f941c7acabaa9e0ee82c2a00abc4b24f9327c1c",
+      "output_sha256": "aa7ca07c363d6d2d144cc6d378264302846036661daa631b8a3a52dc9ed15ffc",
+      "profile": "post-audio-r4-1034-api-d540",
+      "source": "R6 output emitted before marker exception-handler preservation; restore only"
+    },
+    {
+      "api_sha256": "d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23",
+      "input_sha256": "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc",
+      "output_sha256": "41b66d072085f70b6929dcd2a566fffff3f26b9c886d8781624e52ae8ab7e92f",
+      "profile": "post-audio-point-sound-6f96-api-d540",
+      "source": "R14 failed IL2CPP output without copied marker exception handlers; receipt-bound restore only"
+    },
+    {
+      "api_sha256": "1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b",
+      "input_sha256": "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc",
+      "output_sha256": "41b66d072085f70b6929dcd2a566fffff3f26b9c886d8781624e52ae8ab7e92f",
+      "profile": "post-audio-r10-1ced-game-6f96",
+      "source": "R14 failed IL2CPP output without copied marker exception handlers; receipt-bound restore only"
     }
   ],
   "schema": 1,
@@ -142,17 +170,17 @@
     "whole_catalog": "scripts/lab/whole_catalog.py"
   },
   "source_sha256": {
-    "build_hook": "6e6cd3168523685905059603ebe92d4fdceb6fdc33feb51746aafd6ad0c1ddf7",
+    "build_hook": "678cc97a52236a8441c508cc02c06fcb5fdcb6047201d633df8db79422a53540",
     "camera_contract": "f31276a3ef620b82db6998257ef86c7d69d9bfee6a05a43ad3fa5d67dfbed202",
     "camera_owner": "266e03f6c49df44738312e57fa29148a1c4cf1bdd3892805e20eaea35d70a0b2",
     "camera_prerequisites": "dc8539bd7935bc7357dd298c7c89b63af7f1f6e253ca55423bc0edbb3c333214",
     "listener_contract": "e138a103abc56700af610044e833811c8dce4eeb3d205dc3c20fc491bb962a4b",
     "marker": "ac43d56534da33148e81e90722a370fd61c1c099bc24c7db186a7f6a9618241c",
-    "producer": "8d42498ee967c6372444d368cd5014dfca16a87c30af2394770ef7fba7ddf3f0",
+    "producer": "c0e72a2fa6018a0d10bb2b16b00ec55125f754919198c09581a8d83b1257d0ac",
     "resolver": "b00dc10599fa62637e5fcd74a7dcbbf4225eddaf81fb1b6bfcddaa8ff57f12d4",
     "skin_lifecycle_audio_camera_merge": "a0263efe4c555004d8b6a7cd41526c24f90f3cb2d786eacd0408a724e6015b17",
-    "transformer": "d35e27034211fec454d5005e6d31ebff69887c05d6fd95fdebe19b0e202a373f",
-    "verifier": "e8e3e70e06a611bc5433e8669007a4f4b3c8c8a35b44d64799a6a1e9776976df",
+    "transformer": "2b561ae074e6e5eb53c787c4f68cbed832365fb6756dbe701f427f290f69c81a",
+    "verifier": "f9047828a437fc650dbc30e68c81585a80b3f38ed87cc81427b32314b6cf9b91",
     "whole_catalog": "99c06fe87fcdd0f782aa4432ce20d0442ef98c1a702420a4876592cfb9f3fdf0"
   },
   "stage_receipt_sha256": "21aeba0fa4e20e70346fdcc6e309d056ea385b63be013726f690b930ba33c05b",
