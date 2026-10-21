@@ -1,5 +1,6 @@
 """Static owner-SDK metadata reading; never executes the SDK or generates roots yet."""
 
+from bisect import bisect_right
 import hashlib
 import json
 from pathlib import Path
@@ -24,7 +25,7 @@ class MachO:
         magic, cpu, subtype, kind, commands, size, flags, reserved = struct.unpack_from("<IiiIIIII", data)
         if magic != 0xFEEDFACF or cpu != 0x100000C or kind != 2 or commands > 4096:
             raise ValueError("Expected a thin ARM64 little-endian SDK executable")
-        self.segments, self.symbols = [], {}
+        self.segments, self.symbols, self.sections = [], {}, []
         self.take(32, size)
         position, symtab = 32, None
         for _ in range(commands):
@@ -43,6 +44,17 @@ class MachO:
                     raise ValueError("Overlapping file-backed virtual segments")
                 if file_size:
                     self.segments.append((vm, file_size, offset))
+                section_count = struct.unpack_from("<I", data, position + 64)[0]
+                if length != 72 + section_count * 80:
+                    raise ValueError("Malformed SDK segment section table")
+                for index in range(section_count):
+                    item = position + 72 + index * 80
+                    name, segment, address, section_size, file_offset = struct.unpack_from("<16s16sQQI", data, item)
+                    if name.rstrip(b"\0") == b"__text" and segment.rstrip(b"\0") == b"__TEXT":
+                        if not (vm <= address and address + section_size <= vm + file_size) or file_offset != offset + address - vm or section_size % 4:
+                            raise ValueError("SDK instruction section escapes its segment")
+                        self.take(file_offset, section_size)
+                        self.sections.append((address, section_size, file_offset))
             elif command == 2:
                 if length != 24 or symtab is not None:
                     raise ValueError("Malformed or duplicate symbol table")
@@ -64,6 +76,7 @@ class MachO:
                 raise ValueError("Unterminated symbol name")
             name = strings[name_offset:end].decode("utf-8")
             self.symbols.setdefault(name, set()).add(value)
+        self.symbol_addresses = sorted({value for values in self.symbols.values() for value in values})
 
     def take(self, offset, size):
         if offset < 0 or size < 0 or offset + size > len(self.data):
@@ -226,6 +239,139 @@ def module_assignments(image):
     return assignments, functions
 
 
+def direct_calls(image, targets):
+    """Index direct branches in the declared code section, never raw data bytes."""
+    if len(image.sections) != 1:
+        raise ValueError("Expected one bounded SDK instruction section")
+    address, size, offset = image.sections[0]
+    found = []
+    for index in range(0, size, 4):
+        word = struct.unpack_from("<I", image.data, offset + index)[0]
+        if word & 0x7C000000 != 0x14000000:
+            continue
+        pc = address + index
+        target = pc + signed(word & 0x3FFFFFF, 26) * 4
+        if target in targets:
+            found.append((pc, target))
+    return found
+
+
+def argument_block_start(image, pc):
+    addresses = getattr(image, "symbol_addresses", None)
+    if addresses is None:
+        addresses = sorted({value for values in image.symbols.values() for value in values})
+    index = bisect_right(addresses, pc)
+    if index == 0 or index == len(addresses):
+        return None
+    start, end = addresses[index - 1 : index + 1]
+    if end - start > 65536 or (end - start) % 4:
+        return None
+    block = start
+    for position in range(start, end, 4):
+        word = struct.unpack("<I", image.at(position, 4))[0]
+        target = None
+        if word & 0xFC000000 == 0x14000000:
+            target = position + signed(word & 0x3FFFFFF, 26) * 4
+        elif word & 0xFF000010 == 0x54000000 or word & 0x7E000000 == 0x34000000:
+            target = position + signed((word >> 5) & 0x7FFFF, 19) * 4
+        elif word & 0x7E000000 == 0x36000000:
+            target = position + signed((word >> 5) & 0x3FFF, 14) * 4
+        if target is not None:
+            if position < pc:
+                block = max(block, position + 4)
+            if start <= target <= pc:
+                block = max(block, target)
+    return block
+
+
+def call_argument(image, pc, register, start=None, budget=128):
+    """Conservative backwards constant slicing within one straight-line block.
+
+    A branch, unknown definition/instruction, runtime load or exhausted bound
+    yields unknown. Callee-saved constants may cross calls under AAPCS64.
+    No control-flow path is selected and no SDK function is executed.
+    """
+    if register == 31:
+        return None
+    if start is None:
+        start = argument_block_start(image, pc)
+    if start is None or pc < start or pc - start > 65536 or budget <= 0:
+        return None
+    for position in range(pc - 4, start - 1, -4):
+        budget -= 1
+        if budget <= 0:
+            return None
+        word = struct.unpack("<I", image.at(position, 4))[0]
+        rd, rn = word & 31, (word >> 5) & 31
+        if word & 0x9F000000 in (0x10000000, 0x90000000):
+            if rd == register:
+                immediate = signed(((word >> 5) & 0x7FFFF) << 2 | ((word >> 29) & 3), 21)
+                return (position & ~4095) + immediate * 4096 if word & 0x80000000 else position + immediate
+        elif word & 0x7F000000 in (0x11000000, 0x51000000):
+            if rd == register:
+                value = call_argument(image, position, rn, start, budget)
+                if value is None:
+                    return None
+                immediate = ((word >> 10) & 4095) << (12 if word & 0x400000 else 0)
+                value += -immediate if word & 0x40000000 else immediate
+                return value & (0xFFFFFFFFFFFFFFFF if word & 0x80000000 else 0xFFFFFFFF)
+        elif word & 0x7FE0FFE0 == 0x2A0003E0:
+            if rd == register:
+                rm = (word >> 16) & 31
+                value = 0 if rm == 31 else call_argument(image, position, rm, start, budget)
+                return value if value is None or word & 0x80000000 else value & 0xFFFFFFFF
+        elif word & 0x7F800000 in (0x12800000, 0x52800000, 0x72800000):
+            if rd == register:
+                shift = ((word >> 21) & 3) * 16
+                immediate, kind = ((word >> 5) & 65535) << shift, word & 0x7F800000
+                if kind == 0x52800000:
+                    value = immediate
+                elif kind == 0x12800000:
+                    value = ~immediate
+                else:
+                    value = call_argument(image, position, register, start, budget)
+                    if value is None:
+                        return None
+                    value = (value & ~(65535 << shift)) | immediate
+                return value & (0xFFFFFFFFFFFFFFFF if word & 0x80000000 else 0xFFFFFFFF)
+        elif word & 0x7E000000 == 0x28000000:
+            if word & 0x800000 and rn == register or word & 0x400000 and register in (rd, (word >> 10) & 31):
+                return None
+        elif word & 0xFFC00000 == 0xF9000000:
+            pass
+        elif word & 0xFC000000 == 0x94000000:
+            if register < 19 or register == 30:
+                return None
+        elif word == 0xD503201F:
+            pass
+        else:
+            return None
+    return None
+
+
+def direct_module_assignments(image):
+    targets = {}
+    for symbol in image.symbols:
+        if re.fullmatch(r"__Z\d+RegisterUnityClassI.+EvPKc", symbol):
+            address = image.symbol(symbol)
+            if address in targets:
+                raise ValueError("Ambiguous SDK typed registration callee")
+            targets[address] = symbol
+    assignments, unresolved = {}, []
+    for pc, target in direct_calls(image, targets):
+        value = call_argument(image, pc, 0)
+        if value is None:
+            unresolved.append(pc)
+            continue
+        module = image.string(value)
+        encoded = re.fullmatch(r"__Z\d+RegisterUnityClassI(.+)EvPKc", targets[target]).group(1)
+        pointer = image.symbol("__ZN13TypeContainerI" + encoded + "E4rttiE")
+        if pointer in assignments and assignments[pointer] != module:
+            raise ValueError("Conflicting direct SDK module assignments")
+        assignments[pointer] = module
+    return assignments, unresolved
+
+
 def inspect(binary, output):
     binary, output = map(Path, (binary, output))
     data = binary.read_bytes()
@@ -238,6 +384,10 @@ def inspect(binary, output):
     modules, functions = module_assignments(image)
     if len(functions) != 73 or len(modules) != 235:
         raise ValueError("Pinned SDK generated-module registration coverage differs")
+    direct, unresolved = direct_module_assignments(image)
+    if unresolved or set(direct) != {row["self"] for row in records} or any(direct.get(pointer) != module for pointer, module in modules.items()):
+        raise ValueError("Pinned SDK direct/generated module registrations differ or remain unresolved")
+    modules = direct
     parents = {row["self"]: row for row in records}
     for row in records:
         row["module"] = modules.get(row["self"])
