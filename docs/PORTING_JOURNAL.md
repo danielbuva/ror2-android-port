@@ -26011,3 +26011,137 @@ The next candidate must pass its full build, same-request post-strip contracts,
 both standard device modes and a separately selected route. Rebuild steps that
 stage these authored sources and recipes must be replayed; generated assemblies,
 requests, native middleware, banks and raw evidence stay ignored.
+
+
+## J930 — Stock Commando reaches Siren but the live registration set shrinks
+
+Date: 2026-10-21. Hypothesis: ordinary Commando selection and primary input can
+exercise the source eggs after J924's Huntress target-admission stall. Consult
+J924 and the existing source-entry/encounter ownership contracts before another
+attempt; pinned R2API.Director scene-name knowledge and the accepted original
+Listening state remain the authority. This is an assisted diagnostic, with the
+existing invincibility/high-damage/fast-charge settings, no developer survivor or
+loadout override, and no movement/jump boost. It does not qualify difficulty,
+physical input or complete ability semantics.
+
+**Frozen attempt.** Use J926's own R22 APK
+ac1d2176717b526ed70c1b836e55b0dda8e27cc2066c9823f8f642ceffc33195,
+source 75bd53f, after both standard controls pass on those exact bytes. Preserve
+the bound driver and all raw evidence under
+`work/coordination/original-siren-next-after-r20/commando-root-r3/`.
+The actual attempt is `attempts/20261021T224456.581045Z-cb66ff48233a/`;
+result.json SHA-256 is
+d86585ead1153d896eb368cbaa0bbfaa4fb78f881e519995df679a832f588589.
+The route retains three natural transitions, a 180 s target-stage window,
+900 s observation bound and separate cleanup reserve. Moon/transition four is
+refused. Candidate/default/post-strip/request/source/payload proofs are checked
+before dispatch; no current-build pointer selects this player.
+
+Commando completes Lakes → Goolake → Wisp Graveyard → Ship Graveyard through
+original boss/charge/reward/exit paths. At the target, source entry proves the
+exact 12-egg mapping and 12 source-spawner disable observations. The runner
+records two polls admitted by its full 12-ID source/native registration predicate
+before two later lifecycle polls refuse. The final Listening report retains
+12 registered slots but only 10 projected live IDs, with its full-set match flag
+false. Stage identity/clock are fresh, about 3.905 s after entry. The first
+failure is the host gate `siren-source-entry-registration-not-proven`; no native
+encounter start, exact boss identity or completion is established. Profile
+comparison observes no difference. Two primary request samples are reported;
+no per-egg hit/health/death correlation proves why either ID disappeared.
+
+**Classification.** Preserve the failed result. A partial final set does not
+mean initial registration was never observed: the runner's two admitted polls
+required complete equality. Their per-poll arrays/times were not retained, which
+limits independent reconstruction. The accepted R22 receipt-bound Listening
+metadata retains registered object slots and tests Unity-null entries; the
+observer projects only live objects with readable network IDs. Native egg
+consumption is a plausible explanation for 12 slots/10 live IDs, but missing
+identity and other causes remain unknown. Historical decompiled source is only
+a clue until checked against the actual R22 assembly. The follow-up narrow Cecil
+inspection binds these field/call semantics to 4bd3b240 from R22's linker-input
+receipt, whose upstream 6f96 lineage points to the accepted input. No original
+implementation is copied. Local triage is
+`work/coordination/original-siren-r22-commando-triage/r1/` and `r2/`;
+the unarmed R3 contract proposal retains initial exact admission and labels later
+valid subsets unknown rather than fabricating a death or current full census.
+It requires separate review before any later attempt.
+
+**Cleanup and limits.** The runner removes its selector, stops the process and
+requests sleep; collection reports no cleanup command error. Final in-game
+owners are not shown retired, so force-stop is not source cleanup or menu-return
+acceptance. An independent query rehashes the installed APK and verifies owned
+placement, absent process/selector and the asleep display. Its freshness context
+is `post-run-query-context.json`, SHA-256
+7b578c40bd648bdba18ec6747e7b24341b2a2ed477578b843a0ec6ae75398859.
+The device claim is released. Accepted baseline stays J850; the Siren encounter,
+egg-death cause, boss/reward semantics and source teardown remain open. Revisit
+with an audited initial-registration witness and bounded per-poll receipts;
+do not rewrite this failed attempt or infer success from navigation.
+
+
+## J932 — Join the owned source camera callback to exact model membership
+
+Date: 2026-10-21. Hypothesis: J927's disabled renderers and null first-material
+samples require the actual source pre-render boundary and model tracker join.
+Active camera/rig components and update pumps do not prove that callback ran.
+Consult J922/J927 and pinned DebugToolkit/R2API.Skins observation knowledge in
+community-prior-art.md; source identities and bounded read-only observations
+are useful, while those projects do not solve Android rendering. Use the exact
+R22 game metadata rather than transplanting a historical decompilation.
+
+**Evidence before change.** Private causal inspection is
+`work/coordination/original-camera-r22-character-model/r1/` through `r3/`.
+The exact R22 4bd3b240 linker input matches the relevant source callback bodies
+before and after the established camera transform. SceneCamera invokes its
+public pre-render event; the original CharacterModel handler enumerates the
+source InstanceTracker list before its per-model update. The per-model update
+contains an exception handler, so no visible error does not prove completion.
+The exact public generic tracker getter reads its backing field; first use can
+also initialize/register that list through the closed type initializer. On this
+admitted event path the earlier original handler has already fetched the same
+closed generic list before the diagnostic subscriber. This is not a general
+claim that every tracker lookup is side-effect-free.
+
+**Change and ownership.** Extend AndroidNativeSourceSkinLifecycle, the existing
+selected-model owner. Its visual-report cadence binds once to the exact owned
+SceneCamera, Camera, rig and selected body, then subscribes a passive listener.
+The first matching event records frame/realtime, scalar identities, source model
+active/enabled/visibility/invisibility/forceUpdate values, and at most 12 renderer
+records with enabled/active/visibility and known first-material identity. Foreign
+senders are ignored; later events do not recapture or allocate histories. No
+original update, renderer/material change, camera adjustment or enable operation
+is introduced. The owner removes its exact delegate before its existing teardown.
+All persistent report fields are scalar records; retained Unity references stay
+private to that owner lifetime.
+
+At the same event boundary, read at most 256 source tracker entries and compare
+the exact selected model with ReferenceEquals. A found prefix is known-positive,
+a complete miss known-negative, and an over-cap miss unknown. Count and truncation
+remain explicit even for an early positive; scanned count includes completed
+index reads. Getter/list failures leave this optional join unknown while retaining
+independent callback evidence. Other sampling failures are contained. Existing
+cached renderEvidence and live visual reports remain separate observations.
+
+**Host qualification.** Private R4/R5 candidates and independent reviews stay
+under the same coordination root. R5 review SHA-256 is
+2c178eb2756ab838260901f0c209d6440da60fb790640547c36195e7b00a500a.
+Root integrates the authored owner into the existing portable fixture, preserves
+all prior cases, and adds an over-cap positive-prefix assertion. The actual owner,
+policy and contracts compile and execute 87 fixture assertions, including exact
+binding, foreign callback rejection, first-only capture, no source state mutation,
+unsubscribe, known/unknown tracker cases and failure containment. The exact pinned
+Unity Camera API compile fixture also passes. Refresh only the existing camera
+recipe's authored skin-owner hash; game/API/native outputs and the J928 transform
+chain stay unchanged. No new local build input or generated asset is required.
+Rebuild staging must replay this authored source.
+
+**Interpretation and next gate.** This source has no player/device result yet.
+A matching event proves this listener was reached, not that the source per-model
+update completed or its caught exception is known. Tracker membership and renderer
+state are facts at this subscriber's turn; later subscribers/rendering may change
+them. Renderer.isVisible can reflect prior culling history. No screenshot parity,
+original animation acceptance or visual restoration is claimed. Main still has
+R22 with J927's severe rendering defects; the next separately frozen candidate
+must pass both standard checks and a selected camera route before these new
+observations can guide a behavior change. No aesthetic replacement or forced
+renderer enable is introduced.

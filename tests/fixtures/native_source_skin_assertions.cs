@@ -533,6 +533,148 @@ static class AdapterContractTests
         Check(nonFinite != null && nonFinite.renderers[0] != null && !nonFinite.renderers[0].screenBoundsKnown && calls == 1,
               "non-finite projected corners remain unknown rather than publishing invalid screen bounds");
     }
+    static void TestSceneCameraCallbackObserverIsBoundedReadOnlyAndUnsubscribes()
+    {
+        var adapter = Prepare(out var modelObject, out var model, out var skin, out var renderer, out var source);
+        skin.CompleteNativeSkin(4);
+        var animator = modelObject.GetComponent<Animator>();
+        var cameraObject = new GameObject("owned source camera");
+        var camera = cameraObject.AddComponent<Camera>();
+        var sceneCamera = cameraObject.AddComponent<SceneCamera>();
+        var rig = cameraObject.AddComponent<CameraRigController>();
+        rig.sceneCam = camera; rig.targetBody = model.body;
+        sceneCamera.camera = camera; sceneCamera.cameraRigController = rig;
+        CameraRigController.readOnlyInstancesList.Clear(); CameraRigController.readOnlyInstancesList.Add(rig);
+        var beforeEnabled = renderer.enabled; var beforeMaterial = renderer.sharedMaterial;
+        var beforeVisibility = model.visibility; var beforeForceUpdate = model.forceUpdate;
+        adapter.CaptureNativeVisualState(camera, animator, cameraObject.AddComponent<AndroidNativeSourceCameraRigOwner>());
+        var report = GetReport(adapter);
+        Check(report.sceneCameraCallback != null && report.sceneCameraCallback.status == "subscribed" && report.sceneCameraCallback.subscriptionActive,
+              "exact owned SceneCamera binds a passive event observer");
+        var foreignObject = new GameObject("foreign camera");
+        var foreign = foreignObject.AddComponent<SceneCamera>();
+        SceneCamera.RaisePreRender(foreign);
+        Check(!report.sceneCameraCallback.callbackObserved && report.sceneCameraCallback.callbackCount == 0,
+              "foreign SceneCamera events are ignored");
+        Time.frameCountValue = 91; Time.realtimeSinceStartup = 12.5f;
+        InstanceTracker.throwGetInstancesList = false;
+        InstanceTracker.tracked.Clear();
+        InstanceTracker.GetInstancesList<CharacterModel>().Add(model);
+        SceneCamera.RaisePreRender(sceneCamera);
+        var observed = report.sceneCameraCallback;
+        Check(observed.callbackObserved && observed.callbackCount == 1 && observed.identityMatched && observed.status == "captured" &&
+              observed.frame == 91 && observed.realtime == 12.5f && observed.cameraInstanceId == camera.GetInstanceID() &&
+              observed.rigInstanceId == rig.GetInstanceID() && observed.sampledRendererCount == 1 &&
+              observed.renderers[0].rendererInstanceId == renderer.GetInstanceID() &&
+              observed.trackedModelCountKnown && observed.trackedModelMembershipKnown && observed.trackedModelContainsSelected &&
+              observed.trackedModelsScanned == 1 && !observed.trackedModelScanTruncated,
+              "first exact callback captures bounded scalar model/renderer and tracker membership state");
+        Check(renderer.enabled == beforeEnabled && renderer.sharedMaterial == beforeMaterial && model.visibility == beforeVisibility &&
+              model.forceUpdate == beforeForceUpdate && camera.enabled, "observer leaves source renderer/model/camera state untouched");
+        SceneCamera.RaisePreRender(sceneCamera);
+        Check(observed.callbackCount == 1 && observed.frame == 91 && observed.sampledRendererCount == 1,
+              "later exact callbacks do not recapture or grow observation data");
+        CallPrivate(adapter, "OnDestroy");
+        SceneCamera.RaisePreRender(sceneCamera);
+        Check(!observed.subscriptionActive && observed.status == "capturedUnsubscribed" && observed.callbackCount == 1,
+              "owner teardown removes its exact subscriber");
+    }
+    static void TestSceneCameraObserverRefusesWrongRig()
+    {
+        var adapter = Prepare(out var modelObject, out var model, out var skin, out var renderer, out var source);
+        skin.CompleteNativeSkin(4);
+        var cameraObject = new GameObject("mismatched source camera");
+        var camera = cameraObject.AddComponent<Camera>();
+        var sceneCamera = cameraObject.AddComponent<SceneCamera>();
+        var rig = cameraObject.AddComponent<CameraRigController>();
+        rig.sceneCam = camera; rig.targetBody = new GameObject("other body").AddComponent<CharacterBody>();
+        sceneCamera.camera = camera; sceneCamera.cameraRigController = rig;
+        adapter.CaptureNativeVisualState(camera, modelObject.GetComponent<Animator>(), cameraObject.AddComponent<AndroidNativeSourceCameraRigOwner>());
+        var observation = GetReport(adapter).sceneCameraCallback;
+        Check(observation != null && observation.status == "refused" && !observation.subscriptionActive,
+              "subscription refuses SceneCamera rig targeting a different body");
+        SceneCamera.RaisePreRender(sceneCamera);
+        Check(!observation.callbackObserved, "refused mismatched source camera cannot produce a callback observation");
+        CallPrivate(adapter, "OnDestroy");
+    }
+    static void TestSceneCameraTrackerMembershipKnownNegative()
+    {
+        var adapter = Prepare(out var modelObject, out var model, out var skin, out var renderer, out var source);
+        skin.CompleteNativeSkin(4);
+        var cameraObject = new GameObject("owned source camera");
+        var camera = cameraObject.AddComponent<Camera>(); var sceneCamera = cameraObject.AddComponent<SceneCamera>();
+        var rig = cameraObject.AddComponent<CameraRigController>(); rig.sceneCam = camera; rig.targetBody = model.body;
+        sceneCamera.camera = camera; sceneCamera.cameraRigController = rig;
+        InstanceTracker.tracked.Clear();
+        InstanceTracker.GetInstancesList<CharacterModel>().Add(new GameObject("other model").AddComponent<CharacterModel>());
+        adapter.CaptureNativeVisualState(camera, modelObject.GetComponent<Animator>(), cameraObject.AddComponent<AndroidNativeSourceCameraRigOwner>());
+        SceneCamera.RaisePreRender(sceneCamera);
+        var observation = GetReport(adapter).sceneCameraCallback;
+        Check(observation.trackedModelCountKnown && observation.trackedModelMembershipKnown &&
+              !observation.trackedModelContainsSelected && !observation.trackedModelScanTruncated,
+              "complete bounded tracker scan reports an exact known-negative selected-model membership");
+        CallPrivate(adapter, "OnDestroy");
+    }
+    static void TestSceneCameraTrackerMembershipTruncatedAndLookupFailureStayUnknown()
+    {
+        var adapter = Prepare(out var modelObject, out var model, out var skin, out var renderer, out var source);
+        skin.CompleteNativeSkin(4);
+        var cameraObject = new GameObject("owned source camera");
+        var camera = cameraObject.AddComponent<Camera>(); var sceneCamera = cameraObject.AddComponent<SceneCamera>();
+        var rig = cameraObject.AddComponent<CameraRigController>(); rig.sceneCam = camera; rig.targetBody = model.body;
+        sceneCamera.camera = camera; sceneCamera.cameraRigController = rig;
+        var tracked = InstanceTracker.GetInstancesList<CharacterModel>(); tracked.Clear();
+        for (int i = 0; i < 257; i++) tracked.Add(new GameObject("tracked model").AddComponent<CharacterModel>());
+        adapter.CaptureNativeVisualState(camera, modelObject.GetComponent<Animator>(), cameraObject.AddComponent<AndroidNativeSourceCameraRigOwner>());
+        SceneCamera.RaisePreRender(sceneCamera);
+        var observation = GetReport(adapter).sceneCameraCallback;
+        Check(observation.trackedModelCountKnown && observation.trackedModelCount == 257 &&
+              observation.trackedModelsScanned == 256 && observation.trackedModelScanTruncated &&
+              !observation.trackedModelMembershipKnown && !observation.trackedModelContainsSelected,
+              "over-cap tracker list preserves count but leaves unobserved membership unknown");
+        var positivePrefix = new AndroidNativeSourceSkinLifecycle.SceneCameraCallbackSnapshot();
+        tracked[0] = model;
+        typeof(AndroidNativeSourceSkinLifecycle).GetMethod("CaptureTrackedModelMembership", BindingFlags.Instance | BindingFlags.NonPublic)
+            .Invoke(adapter, new object[] { positivePrefix });
+        Check(positivePrefix.trackedModelCount == 257 && positivePrefix.trackedModelsScanned == 1 &&
+              positivePrefix.trackedModelScanTruncated && positivePrefix.trackedModelMembershipKnown &&
+              positivePrefix.trackedModelContainsSelected,
+              "positive prefix remains known while preserving the over-cap inventory flag");
+        CallPrivate(adapter, "OnDestroy");
+
+        adapter = Prepare(out modelObject, out model, out skin, out renderer, out source); skin.CompleteNativeSkin(4);
+        cameraObject = new GameObject("owned source camera"); camera = cameraObject.AddComponent<Camera>(); sceneCamera = cameraObject.AddComponent<SceneCamera>();
+        rig = cameraObject.AddComponent<CameraRigController>(); rig.sceneCam = camera; rig.targetBody = model.body;
+        sceneCamera.camera = camera; sceneCamera.cameraRigController = rig;
+        InstanceTracker.throwGetInstancesList = true;
+        adapter.CaptureNativeVisualState(camera, modelObject.GetComponent<Animator>(), cameraObject.AddComponent<AndroidNativeSourceCameraRigOwner>());
+        SceneCamera.RaisePreRender(sceneCamera); observation = GetReport(adapter).sceneCameraCallback;
+        Check(observation.status == "captured" && observation.callbackObserved && observation.identityMatched &&
+              !observation.trackedModelCountKnown && !observation.trackedModelMembershipKnown && !observation.trackedModelContainsSelected &&
+              observation.modelStateKnown && observation.rendererJoinKnown,
+              "tracker accessor failure stays unknown without discarding callback or renderer observations");
+        InstanceTracker.throwGetInstancesList = false;
+        CallPrivate(adapter, "OnDestroy");
+    }
+    static void TestSceneCameraObserverContainsReadFailure()
+    {
+        var adapter = Prepare(out var modelObject, out var model, out var skin, out var renderer, out var source);
+        skin.CompleteNativeSkin(4);
+        var cameraObject = new GameObject("owned source camera");
+        var camera = cameraObject.AddComponent<Camera>();
+        var sceneCamera = cameraObject.AddComponent<SceneCamera>();
+        var rig = cameraObject.AddComponent<CameraRigController>();
+        rig.sceneCam = camera; rig.targetBody = model.body; sceneCamera.camera = camera; sceneCamera.cameraRigController = rig;
+        renderer.throwSharedMaterialGetter = true;
+        adapter.CaptureNativeVisualState(camera, modelObject.GetComponent<Animator>(), cameraObject.AddComponent<AndroidNativeSourceCameraRigOwner>());
+        var observation = GetReport(adapter).sceneCameraCallback;
+        bool escaped = false;
+        try { SceneCamera.RaisePreRender(sceneCamera); } catch { escaped = true; }
+        Check(!escaped && observation.status == "captureFailed" && !observation.modelStateKnown &&
+              !observation.rendererJoinKnown && observation.renderers == null,
+              "observer contains Unity getter failure without changing source callbacks");
+        CallPrivate(adapter, "OnDestroy");
+    }
     public static int Main()
     {
         TestOptInSelectionPolicy();
@@ -545,6 +687,11 @@ static class AdapterContractTests
         TestBodyLifetimeCleanupUnsubscribesAndReleasesCopies();
         TestBoundedVisualSnapshotIsReadOnly();
         TestCameraInventoryOverflowRaceAndUnknownAreContained();
+        TestSceneCameraCallbackObserverIsBoundedReadOnlyAndUnsubscribes();
+        TestSceneCameraObserverContainsReadFailure();
+        TestSceneCameraTrackerMembershipKnownNegative();
+        TestSceneCameraTrackerMembershipTruncatedAndLookupFailureStayUnknown();
+        TestSceneCameraObserverRefusesWrongRig();
         Console.WriteLine("PASS: " + assertions + " adapter/selection/lifecycle/report assertions");
         return 0;
     }

@@ -54,7 +54,7 @@ class NativeSourceSkinLifecycleHostTests(unittest.TestCase):
             self.assertEqual(compiled.returncode, 0, compiled.stdout + compiled.stderr)
             ran = subprocess.run([str(MONO), str(executable)], cwd=temp_path, capture_output=True, text=True)
             self.assertEqual(ran.returncode, 0, ran.stdout + ran.stderr)
-            self.assertIn("PASS: 74 adapter/selection/lifecycle/report assertions", ran.stdout)
+            self.assertIn("PASS: 87 adapter/selection/lifecycle/report assertions", ran.stdout)
 
     def test_exact_pinned_camera_api_compiles_when_coremodule_is_available(self) -> None:
         if not MONO.is_file() or not CSC.is_file():

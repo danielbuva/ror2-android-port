@@ -10,6 +10,8 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J932](PORTING_JOURNAL.md#j932--join-the-owned-source-camera-callback-to-exact-model-membership) | 2026-10-21 | Join the owned source camera callback to exact model membership | Date: 2026-10-21. |
+| [J930](PORTING_JOURNAL.md#j930--stock-commando-reaches-siren-but-the-live-registration-set-shrinks) | 2026-10-21 | Stock Commando reaches Siren but the live registration set shrinks | Date: 2026-10-21. |
 | [J928](PORTING_JOURNAL.md#j928--preserve-original-music-call-results-and-resolved-rtpc-observations) | 2026-10-21 | Preserve original music call results and resolved RTPC observations | Date: 2026-10-21. |
 | [J929](PORTING_JOURNAL.md#j929--test-the-authored-app-host-refusal-at-target-sdk-33) | 2026-10-21 | Test the authored app-host refusal at target SDK 33 | 2026-10-21. |
 | [J927](PORTING_JOURNAL.md#j927--qualify-r22-camera-lifecycle-and-preserve-the-premature-render-capture) | 2026-10-21 | Qualify R22 camera lifecycle and preserve the premature render capture | Date: 2026-10-21. |

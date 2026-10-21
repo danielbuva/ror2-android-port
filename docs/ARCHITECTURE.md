@@ -1519,7 +1519,16 @@ It copies selected-model visibility/invisibility, Animator state and identity,
 the owned camera's SceneCamera/rig association and at most 32 renderer records.
 Only the first shared material is sampled; total slot count remains unknown.
 Exceptions publish a partial diagnostic instead of escaping report saving.
-No renderer, material, camera or visibility state is changed. The report retains
+No renderer, material, camera or visibility state is changed.
+
+The same selected-model owner subscribes once to the exact owned source
+SceneCamera pre-render event after its camera/rig/body identity gate. Its first
+matching callback records a separate scalar snapshot: frame/time, model state,
+at most 12 renderer samples and a bounded 256-entry exact InstanceTracker join.
+A complete miss is known-negative; an over-cap miss or accessor failure is unknown.
+Later callbacks do not recapture. OnDestroy removes the exact delegate before
+existing cleanup. This observes one subscriber boundary and does not prove the
+original per-model update completed or that final pixels match the source. The report retains
 the last complete pre-disposal sample without retaining Unity object references;
 teardown observations remain separate. The production-owner synthetic host
 contract covers boundedness, read failures and preservation of native state.

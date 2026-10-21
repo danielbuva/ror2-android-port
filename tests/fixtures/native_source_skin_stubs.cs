@@ -70,8 +70,9 @@ namespace UnityEngine
     {
         public Material[] sharedMaterials = Array.Empty<Material>();
         public int getSharedMaterialsCalls, sharedMaterialGetterCalls;
-        public Material sharedMaterial { get { sharedMaterialGetterCalls++; return sharedMaterials.Length > 0 ? sharedMaterials[0] : null; } }
+        public Material sharedMaterial { get { sharedMaterialGetterCalls++; if (throwSharedMaterialGetter) throw new InvalidOperationException("synthetic sharedMaterial read failure"); return sharedMaterials.Length > 0 ? sharedMaterials[0] : null; } }
         public bool isVisible;
+        public bool throwSharedMaterialGetter;
         public Bounds bounds;
         public void GetSharedMaterials(List<Material> destination)
         {
@@ -138,13 +139,26 @@ namespace UnityEngine
     public static class Time
     {
         public static bool throwFrameCount;
-        public static int frameCount { get { if (throwFrameCount) throw new InvalidOperationException("synthetic Unity frame read failure"); return 12; } }
+        public static int frameCountValue = 12;
+        public static int frameCount { get { if (throwFrameCount) throw new InvalidOperationException("synthetic Unity frame read failure"); return frameCountValue; } }
         public static float realtimeSinceStartup = 34.5f;
     }
 }
 
 namespace RoR2
 {
+    public static class InstanceTracker
+    {
+        public static readonly Dictionary<Type, object> tracked = new Dictionary<Type, object>();
+        public static bool throwGetInstancesList;
+        public static System.Collections.Generic.List<T> GetInstancesList<T>()
+        {
+            if (throwGetInstancesList) throw new InvalidOperationException("synthetic tracker lookup failure");
+            object values;
+            if (tracked.TryGetValue(typeof(T), out values)) return (System.Collections.Generic.List<T>)values;
+            var created = new System.Collections.Generic.List<T>(); tracked[typeof(T)] = created; return created;
+        }
+    }
     public static class WwiseIntegrationManager { public static bool noAudio; }
     public class CharacterBody : UnityEngine.MonoBehaviour { public int skinIndex; public ModelLocator modelLocator; public CharacterMaster master; }
     public class ModelLocator : UnityEngine.MonoBehaviour { public UnityEngine.Transform modelTransform; }
@@ -181,9 +195,12 @@ namespace RoR2
     }
     public class SceneCamera : UnityEngine.MonoBehaviour
     {
+        public delegate void SceneCameraDelegate(SceneCamera value);
+        public static event SceneCameraDelegate onSceneCameraPreRender;
         public static UnityEngine.Camera _camera;
         public UnityEngine.Camera camera;
         public CameraRigController cameraRigController;
+        public static void RaisePreRender(SceneCamera value) { var callback = onSceneCameraPreRender; if (callback != null) callback(value); }
     }
     public class CameraTargetParams : UnityEngine.MonoBehaviour { }
     public class CharacterMaster : UnityEngine.MonoBehaviour { public PlayerCharacterMasterController playerCharacterMasterController; }

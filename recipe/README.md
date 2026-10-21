@@ -1604,3 +1604,14 @@ No original method implementation, decompiled source, game/SDK binary, bank,
 private device identity or raw report is published. The observer does not replay
 native calls or replace their outcomes. Rebuild staging must replay these sources;
 host qualification does not establish a player, playback or audibility.
+
+
+## Source pre-render observation audit (J932, 2026-10-21)
+
+Refresh the existing native camera recipe's authored skin-owner hash for a
+bounded passive event/tracker observation. Existing game/API/native output hashes
+are unchanged. Only independently authored owner/test code, API identity knowledge
+and result notes are published; no original implementation, asset, raw capture,
+private identity or SDK binary is copied. The same source generator stages the
+owner; no timestamped private evidence becomes a build input. Host contracts do
+not establish visual parity, callback completion or source animation acceptance.

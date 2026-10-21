@@ -7,8 +7,28 @@ using UnityEngine;
 public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
 {
     [Serializable]
+    public sealed class SceneCameraCallbackRendererSample
+    {
+        public int rendererInstanceId, sharedMaterialInstanceId;
+        public bool rendererExists, rendererActive, rendererEnabled, rendererVisible, sharedMaterialKnown;
+    }
+    [Serializable]
+    public sealed class SceneCameraCallbackSnapshot
+    {
+        public string status;
+        public int callbackCount, frame, sceneCameraInstanceId, cameraInstanceId, rigInstanceId;
+        public int modelInstanceId, visibilityValue, invisibilityCount, rendererRecordCount, sampledRendererCount;
+        public int trackedModelCount, trackedModelsScanned;
+        public float realtime;
+        public bool requested, subscriptionActive, callbackObserved, identityMatched, modelStateKnown, rendererJoinKnown;
+        public bool modelActive, modelEnabled, forceUpdate;
+        public bool trackedModelCountKnown, trackedModelMembershipKnown, trackedModelContainsSelected, trackedModelScanTruncated;
+        public SceneCameraCallbackRendererSample[] renderers;
+    }
+    [Serializable]
     public sealed class Report
     {
+        public SceneCameraCallbackSnapshot sceneCameraCallback;
         public bool requested, attached, nativeOwnersActive, selectedSkinReady, animatorInitialized, displayDeactivated, ownerDestroyed;
         public int selectedSkinIndex = -1, currentSkinIndex = -1;
         public string controllerIdentity, avatarIdentity, firstFailure, cameraAdmissionFailure;
@@ -126,6 +146,11 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
     VisualRenderEvidence cachedRenderEvidence;
     readonly Camera[] renderCameraScratch = new Camera[MaxRenderCameras];
     Report report;
+    SceneCamera subscribedSceneCamera;
+    bool sceneCameraSubscribed;
+    Camera subscribedCamera;
+    CameraRigController subscribedRig;
+    SceneCameraCallbackSnapshot sceneCameraCallback;
 
     CharacterModel model;
     ModelSkinController skinController;
@@ -409,6 +434,7 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
                 snapshot.sceneCameraName = sceneCamera ? ShortText(sceneCamera.name, 96) : string.Empty;
                 snapshot.sceneCameraInstanceId = sceneCamera ? sceneCamera.GetInstanceID() : 0;
                 var rig = sceneCamera ? sceneCamera.cameraRigController : null;
+                TryBindSceneCameraObservation(sceneCamera, ownedCamera, rig);
                 snapshot.cameraHasRig = rig;
                 snapshot.rigInstanceId = rig ? rig.GetInstanceID() : 0;
                 if (rig)
@@ -521,6 +547,170 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
             snapshot.captured = false;
         }
         report.visual = snapshot;
+    }
+
+    void TryBindSceneCameraObservation(SceneCamera candidate, Camera camera, CameraRigController rig)
+    {
+        if (report == null)
+            return;
+        if (sceneCameraCallback == null)
+        {
+            sceneCameraCallback = new SceneCameraCallbackSnapshot { requested = true, status = "refused" };
+            report.sceneCameraCallback = sceneCameraCallback;
+        }
+        if (sceneCameraSubscribed)
+        {
+            if (candidate != subscribedSceneCamera || camera != subscribedCamera || rig != subscribedRig)
+                sceneCameraCallback.status = "identityChanged";
+            return;
+        }
+        if (!candidate || !camera || !rig || candidate.camera != camera || candidate.cameraRigController != rig ||
+            rig.sceneCam != camera || !model || !model.body || rig.targetBody != model.body ||
+            !candidate.isActiveAndEnabled || !camera.isActiveAndEnabled || !rig.isActiveAndEnabled)
+        {
+            sceneCameraCallback.status = "refused";
+            return;
+        }
+        subscribedSceneCamera = candidate;
+        subscribedCamera = camera;
+        subscribedRig = rig;
+        try
+        {
+            SceneCamera.onSceneCameraPreRender += CaptureOwnedSceneCameraPreRender;
+            sceneCameraSubscribed = true;
+            sceneCameraCallback.subscriptionActive = true;
+            sceneCameraCallback.status = "subscribed";
+            sceneCameraCallback.sceneCameraInstanceId = candidate.GetInstanceID();
+            sceneCameraCallback.cameraInstanceId = camera.GetInstanceID();
+            sceneCameraCallback.rigInstanceId = rig.GetInstanceID();
+            sceneCameraCallback.modelInstanceId = model.GetInstanceID();
+        }
+        catch
+        {
+            sceneCameraCallback.status = "subscribeFailed";
+            sceneCameraCallback.subscriptionActive = false;
+            subscribedSceneCamera = null;
+            subscribedCamera = null;
+            subscribedRig = null;
+        }
+    }
+
+    void CaptureOwnedSceneCameraPreRender(SceneCamera value)
+    {
+        if (!sceneCameraSubscribed || sceneCameraCallback == null || sceneCameraCallback.callbackObserved)
+            return;
+        if (!value || value != subscribedSceneCamera)
+            return;
+        sceneCameraCallback.callbackObserved = true;
+        sceneCameraCallback.callbackCount = 1;
+        try
+        {
+            var camera = value.camera;
+            var rig = value.cameraRigController;
+            bool exact = value == subscribedSceneCamera && camera == subscribedCamera && rig == subscribedRig &&
+                         camera && rig && rig.sceneCam == camera && model && model.body && rig.targetBody == model.body;
+            sceneCameraCallback.identityMatched = exact;
+            if (!exact)
+            {
+                sceneCameraCallback.status = "callbackIdentityMismatch";
+                return;
+            }
+            sceneCameraCallback.frame = Time.frameCount;
+            sceneCameraCallback.realtime = Time.realtimeSinceStartup;
+            CaptureTrackedModelMembership(sceneCameraCallback);
+            sceneCameraCallback.modelInstanceId = model.GetInstanceID();
+            sceneCameraCallback.modelActive = model.gameObject.activeInHierarchy;
+            sceneCameraCallback.modelEnabled = model.enabled;
+            sceneCameraCallback.forceUpdate = model.forceUpdate;
+            sceneCameraCallback.visibilityValue = (int)model.visibility;
+            sceneCameraCallback.invisibilityCount = model.invisibilityCount;
+            sceneCameraCallback.modelStateKnown = true;
+            var records = model.baseRendererInfos;
+            sceneCameraCallback.rendererRecordCount = records != null ? records.Length : 0;
+            int count = records != null ? Math.Min(records.Length, 12) : 0;
+            var samples = new SceneCameraCallbackRendererSample[count];
+            for (int i = 0; i < count; i++)
+            {
+                var renderer = records[i].renderer;
+                var sample = new SceneCameraCallbackRendererSample { rendererExists = renderer };
+                samples[i] = sample;
+                if (!renderer)
+                    continue;
+                sample.rendererInstanceId = renderer.GetInstanceID();
+                sample.rendererActive = renderer.gameObject.activeInHierarchy;
+                sample.rendererEnabled = renderer.enabled;
+                sample.rendererVisible = renderer.isVisible;
+                var material = renderer.sharedMaterial;
+                sample.sharedMaterialKnown = true;
+                sample.sharedMaterialInstanceId = material ? material.GetInstanceID() : 0;
+            }
+            sceneCameraCallback.renderers = samples;
+            sceneCameraCallback.sampledRendererCount = count;
+            sceneCameraCallback.rendererJoinKnown = records != null;
+            sceneCameraCallback.status = "captured";
+        }
+        catch
+        {
+            sceneCameraCallback.status = "captureFailed";
+            sceneCameraCallback.modelStateKnown = false;
+            sceneCameraCallback.rendererJoinKnown = false;
+            sceneCameraCallback.renderers = null;
+        }
+    }
+
+    void CaptureTrackedModelMembership(SceneCameraCallbackSnapshot snapshot)
+    {
+        const int maxTrackedModelScan = 256;
+        try
+        {
+            var tracked = InstanceTracker.GetInstancesList<CharacterModel>();
+            if (tracked == null)
+                return;
+            int count = tracked.Count;
+            snapshot.trackedModelCount = count;
+            snapshot.trackedModelCountKnown = true;
+            snapshot.trackedModelScanTruncated = count > maxTrackedModelScan;
+            int scanCount = Math.Min(count, maxTrackedModelScan);
+            for (int i = 0; i < scanCount; i++)
+            {
+                var candidate = tracked[i];
+                snapshot.trackedModelsScanned++;
+                if (ReferenceEquals(candidate, model))
+                {
+                    snapshot.trackedModelMembershipKnown = true;
+                    snapshot.trackedModelContainsSelected = true;
+                    return;
+                }
+            }
+            if (!snapshot.trackedModelScanTruncated)
+                snapshot.trackedModelMembershipKnown = true;
+        }
+        catch
+        {
+            // Membership is optional evidence. Preserve callback/model observations and leave this join unknown.
+            snapshot.trackedModelCountKnown = false;
+            snapshot.trackedModelMembershipKnown = false;
+            snapshot.trackedModelContainsSelected = false;
+        }
+    }
+
+    void UnsubscribeSceneCameraObservation()
+    {
+        if (sceneCameraSubscribed)
+        {
+            try { SceneCamera.onSceneCameraPreRender -= CaptureOwnedSceneCameraPreRender; }
+            catch { if (sceneCameraCallback != null) sceneCameraCallback.status = "unsubscribeFailed"; }
+            sceneCameraSubscribed = false;
+        }
+        if (sceneCameraCallback != null)
+        {
+            sceneCameraCallback.subscriptionActive = false;
+            if (sceneCameraCallback.status == "subscribed" || sceneCameraCallback.status == "captured")
+                sceneCameraCallback.status = sceneCameraCallback.callbackObserved ? "capturedUnsubscribed" : "unsubscribedBeforeCallback";
+        }
+        subscribedSceneCamera = null;
+        subscribedCamera = null;
+        subscribedRig = null;
     }
 
     void CaptureRenderCameraStack(VisualSnapshot snapshot, Camera ownedCamera)
@@ -974,6 +1164,7 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
 
     void OnDestroy()
     {
+        UnsubscribeSceneCameraObservation();
         if (!ReferenceEquals(skinController, null))
             skinController.onSkinApplied -= OnSkinApplied;
         selectedControllerSnapshot = null;
