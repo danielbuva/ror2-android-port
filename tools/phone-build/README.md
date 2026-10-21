@@ -83,6 +83,16 @@ and nonobject IDs, and retains receipts/logs even on failure. It builds no playe
 and never reuses or stops an MCP editor. Its output is verification only, never
 an input to phone preparation or a game build.
 
+The same command with an explicit trailing `--reverse` selects experimental
+read-only native cache observation in that fresh SDK process. It derives a
+layout from the pinned SDK bytes, reads only its own process, and uses public
+metadata accessors from the SDK's already loaded Mono library. It never loads
+another runtime, attaches to an existing editor or consumes a reconstructed
+mapping as oracle input. Source, layout, native runtime and observed managed
+image hashes bind the private report. A stable native snapshot and independent
+comparison are required; this observer alone does not qualify complete linker
+roots or phone-only installation.
+
 ```sh
 ./dev prototype --action phone-content-fixture
 ./dev prototype --action phone-content-check --target <generated-project>

@@ -17,7 +17,19 @@ def support(name):
 
 
 base = support("phone_wrapper_oracle")
-SOURCES = ("scripts/lab/phone_wrapper_population_oracle.py", "tools/phone-build/WrapperPopulationOracle.cs", *base.SOURCES)
+observer = support("phone_wrapper_reverse")
+SOURCES = tuple(
+    dict.fromkeys(
+        (
+            "scripts/lab/phone_wrapper_population_oracle.py",
+            "tools/phone-build/WrapperPopulationOracle.cs",
+            *base.SOURCES,
+            "scripts/lab/build_lock.py",
+            "tools/phone-build/WrapperReverseOracle.cs",
+            *observer.SOURCES,
+        )
+    )
+)
 ASSETS = ("WrapperPopulationOracle.cs", "WrapperMetadataOracle.cs")
 
 
@@ -40,7 +52,7 @@ def validate_report(report, commit):
         raise ValueError("Pinned population oracle query coverage differs")
 
 
-def run(root, work, editor):
+def run(root, work, editor, *, reverse=False):
     root, work, editor = Path(root).absolute(), Path(work).absolute(), Path(editor).absolute()
     commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
     if subprocess.check_output(["git", "status", "--porcelain", "--", *SOURCES], cwd=root):
@@ -48,6 +60,12 @@ def run(root, work, editor):
     if base.sha(editor) != base.BINARY_SHA256:
         raise ValueError("Unknown owner SDK")
     sources = {name: base.sha(root / name) for name in SOURCES}
+    mono = editor.parent.parent / "Frameworks/MonoBleedingEdge/MonoEmbedRuntime/osx/libmonobdwgc-2.0.dylib"
+    layout_bytes = None
+    if reverse:
+        if base.sha(mono) != observer.MONO_SHA256:
+            raise ValueError("Unknown existing SDK Mono library")
+        layout_bytes = (json.dumps(observer.layout(observer.registry.MachO(editor.read_bytes())), indent=2) + "\n").encode()
     destination = work / "rebuild/phone-wrapper-oracle" / ("population-" + uuid.uuid4().hex)
     project = destination / "project"
     base.owned_destination(project, work)
@@ -56,11 +74,15 @@ def run(root, work, editor):
     for name in ("Assets/Editor", "Packages", "ProjectSettings"):
         with base.owned_directory(project / name, work, create=True):
             pass
-    authored = {"Assets/Editor/" + name: (root / "tools/phone-build" / name).read_bytes() for name in ASSETS}
+    assets = (*ASSETS, "WrapperReverseOracle.cs") if reverse else ASSETS
+    authored = {"Assets/Editor/" + name: (root / "tools/phone-build" / name).read_bytes() for name in assets}
     authored.update({"Packages/manifest.json": base.MANIFEST.encode(), "ProjectSettings/ProjectVersion.txt": base.PROJECT_VERSION.encode()})
     for name, data in authored.items():
         base.write_owned(project / name, data, work)
     inputs = {"schema": 1, "generator": SOURCES[0], "source_commit": commit, "sources": sources, "editor_sha256": base.BINARY_SHA256, "game_inputs": False}
+    if reverse:
+        base.write_owned(destination / "layout.json", layout_bytes, work)
+        inputs.update(reverse_observer=True, layout_sha256=base.sha(destination / "layout.json"), mono_sha256=observer.MONO_SHA256)
     base.write_owned(destination / "inputs.json", (json.dumps(inputs, indent=2) + "\n").encode(), work)
 
     def validate():
@@ -70,15 +92,19 @@ def run(root, work, editor):
         for name, data in authored.items():
             if (project / name).read_bytes() != data:
                 raise ValueError("Population project input drift")
-        allowed = {"Editor.meta", *("Editor/" + name for name in ASSETS), *("Editor/" + name + ".meta" for name in ASSETS)}
+        allowed = {"Editor.meta", *("Editor/" + name for name in assets), *("Editor/" + name + ".meta" for name in assets)}
         if not {p.relative_to(project / "Assets").as_posix() for p in (project / "Assets").rglob("*") if p.is_file()} <= allowed:
             raise ValueError("Foreign population oracle asset")
         if any(base.sha(root / name) != value for name, value in sources.items()) or base.sha(editor) != base.BINARY_SHA256:
             raise ValueError("Population source or SDK drift")
+        if reverse and ((destination / "layout.json").read_bytes() != layout_bytes or base.sha(mono) != observer.MONO_SHA256):
+            raise ValueError("Reverse layout or existing runtime drift")
 
     validate()
     output, log = destination / "oracle.json", destination / "editor.log"
     env = dict(os.environ, ROR2_POPULATION_ORACLE_REPORT=str(output), ROR2_PHONE_BUILD_SOURCE=commit)
+    if reverse:
+        env.update(ROR2_REVERSE_ORACLE_LAYOUT=str(destination / "layout.json"), ROR2_REVERSE_ORACLE_EDITOR=str(editor), ROR2_REVERSE_ORACLE_MONO=str(mono))
     args = [
         str(editor),
         "-batchmode",
@@ -89,7 +115,7 @@ def run(root, work, editor):
         "-buildTarget",
         "Android",
         "-executeMethod",
-        "WrapperPopulationOracle.Check",
+        "WrapperReverseOracle.Check" if reverse else "WrapperPopulationOracle.Check",
         "-logFile",
         str(log),
     ]
@@ -113,6 +139,8 @@ def run(root, work, editor):
             path = Path(assembly["path"])
             if not path.resolve().is_relative_to(editor.resolve().parent.parent) or base.sha(path) != assembly["sha256"]:
                 raise ValueError("Loaded population SDK assembly drift")
+        if reverse:
+            validate_reverse(report, inputs, editor)
     except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as failure:
         error = str(failure)
     receipt = {
@@ -128,9 +156,29 @@ def run(root, work, editor):
     return destination, receipt
 
 
+def validate_reverse(report, inputs, editor):
+    if any(report.get(name) is not True for name in ("self_process_only", "existing_runtime_only", "stable_snapshot")):
+        raise ValueError("Reverse observation scope or stability differs")
+    if report.get("layout_sha256") != inputs["layout_sha256"] or report.get("mono_sha256") != observer.MONO_SHA256:
+        raise ValueError("Reverse layout/runtime identity differs")
+    contents = Path(editor).resolve().parent.parent
+    mono = Path(report["mono_path"])
+    if not mono.resolve().is_relative_to(contents) or base.sha(mono) != observer.MONO_SHA256:
+        raise ValueError("Observed runtime identity differs")
+    rows = report["reverse"]
+    native_ids = {row["persistentTypeID"] for row in report["records"]}
+    keys = {(row["managed"]["assembly_identity"], row["managed"]["name"]) for row in rows}
+    if not rows or len(keys) != len(rows) or any(row["persistentTypeID"] not in native_ids for row in rows):
+        raise ValueError("Incomplete or ambiguous reverse identity")
+    for row in rows:
+        path = Path(row["managed"]["image_path"])
+        if not path.resolve().is_relative_to(contents) or base.sha(path) != row["managed"]["image_sha256"]:
+            raise ValueError("Observed reverse SDK assembly drift")
+
+
 if __name__ == "__main__":
-    if len(sys.argv) != 4:
-        raise SystemExit("Usage: phone_wrapper_population_oracle.py ROOT WORK EXACT_EDITOR")
-    destination, receipt = run(*sys.argv[1:])
+    if len(sys.argv) not in (4, 5) or (len(sys.argv) == 5 and sys.argv[4] != "--reverse"):
+        raise SystemExit("Usage: phone_wrapper_population_oracle.py ROOT WORK EXACT_EDITOR [--reverse]")
+    destination, receipt = run(*sys.argv[1:4], reverse=len(sys.argv) == 5)
     print(json.dumps({"evidence": str(destination), **receipt}))
     raise SystemExit(not receipt["success"])
