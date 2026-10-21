@@ -782,6 +782,14 @@ before invoking music cleanup; either refusal prevents original Term. After both
 original Term calls return, the music lease can release. Owner destruction that
 loses retirement observation keeps the state unknown and retains references.
 
+The optional source-output observer samples the result of the existing
+MusicController `AddOutput` and `RemoveOutput` calls after they return. A separate
+Cecil transform preserves the original call count, arguments, return and exception
+flow, while the owned session records only exact-instance scalar results. Its
+receipt follows the audio stage; the camera transform consumes its exact 27340
+intermediate only under d540 or 1ced. This observation is not playback or
+audibility evidence.
+
 `recipe/original-audio-owner-sources.json` pins the authored owner cohort and
 runtime membership. Both producer compile modes validate its bytes and source
 map; camera staging requires the same ancestor pin. Cache identity includes the
@@ -2421,8 +2429,9 @@ staging root. These are source dependencies and lifecycle contracts only;
 bundle/Unity/runtime readiness remains unproven.
 
 The current whole-catalog path restores only an exact prior camera stage result
-to its guarded 3124, 1034 or 6f96 preimage, runs the original-audio producer, then
-applies the camera producer to that immediate result. Destination R8/R9 rebuilds
+to its guarded 3124, 1034 or 6f96 preimage, runs the original-audio producer,
+then inserts the source-output observer after the exact 6f96 result when selected,
+and applies the camera producer to that immediate result. Destination R8/R9 rebuilds
 unwind an owned prior camera result and retain their existing build route.
 The active exact profiles are 3124/API 107 to d5fc52, 1034/API d540 to e4aeeb,
 and PointSound game 6f96 with either d540 or 1ced to 2ae5d9. The latter consumes

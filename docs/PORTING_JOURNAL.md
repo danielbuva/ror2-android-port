@@ -24138,3 +24138,65 @@ and display sleep. All pass before releasing the exact scoped claim. No other
 device, storage configuration or user data is changed. Accepted baseline
 f1550ce0 stays fixed. Revisit camera context from the exact owned marker
 lifecycle and accepted native update contract, not forced game state.
+
+## J904 — Observe original music output results without changing native calls
+
+Date: 2026-10-21. Hypothesis: return values from the original MusicController
+output calls distinguish output setup failure from the later context/playback
+questions left by J901/J903's finite zero PCM. Reuse the Wwise lifetime prior art
+in community-prior-art.md: R2API.Sound's bank registration/loading contracts
+inform lifetime observation, not Android compatibility. The exact current
+6f96 composed module and accepted native call sites are the authority.
+
+**Change and ownership.** The authored MusicOutputObserverCecilTransform adds
+bounded callbacks immediately after the original Awake AddOutput and OnDestroy
+RemoveOutput return sites. It preserves their arguments, output ID, call count,
+return stack, branches and exception regions. Callback exceptions are contained.
+It makes no extra Wwise calls and changes no native success or failure result.
+The existing process-scoped PortSessionOriginalMusicControllerOwner joins the
+Awake observation after active instantiation using exact controller identity;
+ambiguous observations are flagged and temporary object references cleared.
+Only bounded scalar results remain in its snapshot. The same owner retires its
+exact callbacks during teardown. There is no new experiment-switch behavior.
+
+The generated observer stage is owned by
+`scripts/lab/original_music_output_observer_build_hook.py`. Its receipt binds
+the exact preceding audio receipt, API, observer core and game preimage. It runs
+between audio 6f96 and camera staging: the observer result is 27340e, then the
+EH-correct camera result is a2054d for either pinned d540 or 1ced API. Restore
+unwinds camera, then observer, before replacing audio. No observer receipt is
+an inert restore; a present receipt requires strict lineage and ignored-work
+containment. Existing default-off paths and historical restore-only pairs stay
+separate. The source cohort and transformation recipes are updated; authored
+sources and tracked generators reproduce the generated files locally. Rebuild
+steps that stage these authored sources must be replayed.
+
+**Host evidence and limitations.** The independent R5 review approves the
+source contract and patch on the EH-fixed base. Preserve its reviewed patch at
+`work/coordination/original-music-output-observer-next/r5/`, SHA-256
+`8d550bb1d1fbb570d973d7847d31ed1a4a508f15c92d011c4b8d839095553edb`.
+Root integration evidence is under
+`work/coordination/codex-music-output-observer-integration/r1/`.
+The initial full host suite passes 1,522 tests with six skips, but several
+inherited optional tests still compile private draft copies. Preserve that
+result as draft verification. Correct those tests to compile tracked sources
+with temporary outputs and explicitly selected, hash-bound optional legitimate
+fixtures; the corrected focused suite passes 21 tests in 35.008 s with one skip
+for the absent hash-bound historical core. Both camera API outputs, actual
+transform mutants, copied-fixture stage/restore, callback exception containment
+and current receipt/source contracts pass. Explicit fixture drift fails rather
+than silently skipping. Fresh-clone contracts require no private artifacts;
+unavailable editor/tool-dependent checks skip honestly. Ruff passes.
+
+The preserved historical R8 core lacks the new callback and refuses before
+writes with Sequence contains no matching element; neither its receipt nor its
+staged bytes is altered to hide that incompatibility. Recipe changes contain
+only authored source hashes, minimal type/call identities and transformation
+relationships. Protected assemblies, middleware, banks, original code, fixtures
+and raw logs remain ignored. Doctor with the explicit assigned device and
+preflight pass; an initial doctor without a selector refuses in the multi-device
+configuration and is retained. This checkpoint does not qualify a newly staged
+player, APK, output creation, track selection, playback or audibility. R15 b0f7ae7e
+remains installed; the accepted baseline remains f1550ce0. A matching canonical
+build and both standard checks are required next, with actual stage, closure,
+APK and post-strip identities checked independently.

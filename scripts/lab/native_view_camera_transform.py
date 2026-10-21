@@ -312,7 +312,11 @@ def transform(profile: str, supplied_input: Path, resolution_dir: Path, output_p
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--profile", choices=("default-game-3124", "post-audio-r4-1034-api-d540"), required=True)
+    parser.add_argument(
+        "--profile",
+        choices=("default-game-3124", "post-audio-r4-1034-api-d540", "post-audio-music-observer-6f96-api-d540", "post-audio-music-observer-r10-1ced"),
+        required=True,
+    )
     parser.add_argument("--input", type=Path, required=True)
     parser.add_argument("--resolution-dir", type=Path, required=True)
     parser.add_argument("--project", type=Path, required=True, help="current canonical whole-catalog project supplying the exact profile DLLs")

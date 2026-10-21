@@ -53,6 +53,16 @@
       "input_sha256": "3124a2ed9cf458acee78b1beaf969590b184be452e2b3aa5a8852df82ff95d30",
       "output_sha256": "d5fc522e83cb6f6f6845b2a8b7e5de28011031fe2f3b54c0716c52db9679c65c"
     },
+    "post-audio-music-observer-6f96-api-d540": {
+      "input_relative_path": "Assets/LabLoadingScene/Plugins/RoR2.dll",
+      "input_sha256": "27340ed60dbfe77f66fa394d028b597d3e4613ee8ea405416c061766fb226eef",
+      "output_sha256": "a2054dcfc5d14d2fdfba0fd0e61851e4a153b842be6bb6f1c0e1df8ef634762e"
+    },
+    "post-audio-music-observer-r10-1ced": {
+      "input_relative_path": "Assets/LabLoadingScene/Plugins/RoR2.dll",
+      "input_sha256": "27340ed60dbfe77f66fa394d028b597d3e4613ee8ea405416c061766fb226eef",
+      "output_sha256": "a2054dcfc5d14d2fdfba0fd0e61851e4a153b842be6bb6f1c0e1df8ef634762e"
+    },
     "post-audio-point-sound-6f96-api-d540": {
       "input_relative_path": "Assets/LabLoadingScene/Plugins/RoR2.dll",
       "input_sha256": "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc",
@@ -69,12 +79,20 @@
       "output_sha256": "e4aeeb5acb7b81922a0a6603d01c1d407c57e9b00852b5e15ef70838e1961e5b"
     }
   },
-  "purpose": "Unaccepted native-view camera module transform producer; exact default 3124/API107 and retained composed-audio 1034, PointSound 6f96/API d540, and R10 6f96/API 1ced profiles. Both 6f96 API profiles produce the same R3 game module; its exact SceneCamera guard reports prefab defaults when the real Console is absent.",
+  "purpose": "Exact default-off native camera transform with a source-output observer as a pinned post-audio intermediate; all active game/API pairs and outputs are exact, and runtime acceptance remains disabled.",
   "resolution_note": "Cecil resolution materializes the explicit current project plugin DLL roots, pinned Unity 2021.3.45f2 UnityEngine modules and Mono mscorlib reference. It is limited to transform-required type/signature resolution and is not the pre-strip player-linker or IL2CPP closure. The complete current-player closure scan remains a separate required gate.",
   "resolver_profiles": {
     "default-game-3124": {
       "api_sha256": "107295e478a58ef295a83228111f375c536861bc9081f482d638c59899bf495c",
       "profile": "current-project-3124-api107-unity-2021.3.45f2"
+    },
+    "post-audio-music-observer-6f96-api-d540": {
+      "api_sha256": "d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23",
+      "profile": "post-audio-music-observer-6f96-api-d540-unity-2021.3.45f2"
+    },
+    "post-audio-music-observer-r10-1ced": {
+      "api_sha256": "1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b",
+      "profile": "post-audio-music-observer-r10-1ced-unity-2021.3.45f2"
     },
     "post-audio-point-sound-6f96-api-d540": {
       "api_sha256": "d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23",
@@ -162,6 +180,11 @@
     "camera_prerequisites": "tools/unity/runtime/input/AndroidNativeSourceCameraPrerequisites.cs",
     "listener_contract": "tools/unity/runtime/input/OriginalWwiseCameraListenerContract.cs",
     "marker": "tools/unity/runtime/input/AndroidNativeSourceViewOnlyRigMarker.cs",
+    "music_controller_owner": "tools/unity/runtime/session/PortSessionOriginalMusicControllerOwner.cs",
+    "music_observer_core": "tools/unity/support/audio/core/OriginalOwnerProbeObserver.cs",
+    "music_observer_stage": "scripts/lab/original_music_output_observer_build_hook.py",
+    "music_observer_transform": "tools/assembly-transforms/MusicOutputObserverCecilTransform.cs",
+    "music_observer_transform_project": "tools/assembly-transforms/MusicOutputObserverCecilTransform.csproj",
     "producer": "scripts/lab/native_view_camera_transform.py",
     "resolver": "scripts/lab/native_view_camera_resolver.py",
     "skin_lifecycle_audio_camera_merge": "tools/unity/runtime/input/AndroidNativeSourceSkinLifecycle.cs",
@@ -170,18 +193,23 @@
     "whole_catalog": "scripts/lab/whole_catalog.py"
   },
   "source_sha256": {
-    "build_hook": "678cc97a52236a8441c508cc02c06fcb5fdcb6047201d633df8db79422a53540",
+    "build_hook": "db2be2a847d0f9f1b66e71b4e36e4cb5c30baa88fc318defd92bd6c03cbda48f",
     "camera_contract": "f31276a3ef620b82db6998257ef86c7d69d9bfee6a05a43ad3fa5d67dfbed202",
     "camera_owner": "266e03f6c49df44738312e57fa29148a1c4cf1bdd3892805e20eaea35d70a0b2",
     "camera_prerequisites": "dc8539bd7935bc7357dd298c7c89b63af7f1f6e253ca55423bc0edbb3c333214",
     "listener_contract": "e138a103abc56700af610044e833811c8dce4eeb3d205dc3c20fc491bb962a4b",
     "marker": "ac43d56534da33148e81e90722a370fd61c1c099bc24c7db186a7f6a9618241c",
-    "producer": "c0e72a2fa6018a0d10bb2b16b00ec55125f754919198c09581a8d83b1257d0ac",
+    "music_controller_owner": "ff15495def16260f11aeea15e2f18509d79091ebb0e57bb6580bf07d672e7304",
+    "music_observer_core": "7a95cfbf3528eaad15a2efe188b896fd1e925a3e5dfa5809d8f7ef5c44d856d8",
+    "music_observer_stage": "9e27ee448b20232ba62384f189531e908e82a130e7ef47cf06a64927837d2ced",
+    "music_observer_transform": "049e1664dd4aa3aa0ec0bcb16129badae67290a985512463c404ddd1a2025201",
+    "music_observer_transform_project": "bfca91b1984488e25dd1849433c319c1288fff37630b0279c6684cec140a012b",
+    "producer": "4ee18bdc3595a52e7bc1f73cd2ea1ac35ab8d58151b3d66207194e86e9e18e69",
     "resolver": "b00dc10599fa62637e5fcd74a7dcbbf4225eddaf81fb1b6bfcddaa8ff57f12d4",
     "skin_lifecycle_audio_camera_merge": "a0263efe4c555004d8b6a7cd41526c24f90f3cb2d786eacd0408a724e6015b17",
-    "transformer": "2b561ae074e6e5eb53c787c4f68cbed832365fb6756dbe701f427f290f69c81a",
+    "transformer": "843dbf79f9c5746d2c676e1c79448e3ec9b558e4139eb74ec531ca6668e944ff",
     "verifier": "f9047828a437fc650dbc30e68c81585a80b3f38ed87cc81427b32314b6cf9b91",
-    "whole_catalog": "99c06fe87fcdd0f782aa4432ce20d0442ef98c1a702420a4876592cfb9f3fdf0"
+    "whole_catalog": "c602dfef6390ab5d4f445b477c0b9cf5f3d30e8022dbf4b2a9977db9d167e23b"
   },
   "stage_receipt_sha256": "21aeba0fa4e20e70346fdcc6e309d056ea385b63be013726f690b930ba33c05b",
   "unity_tools_sha256": {

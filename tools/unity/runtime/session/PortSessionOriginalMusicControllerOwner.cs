@@ -24,6 +24,10 @@ public sealed class PortSessionOriginalMusicControllerOwner : MonoBehaviour
     GameObject ownedControllerRoot;
     bool started, loadCompleted, stopRequested, termsReturnHandled, preloadCalled, preloadAttempted;
     bool sourcePreloadReturned, sourceSceneCallbackObserverAttached, failedInstanceCleanupPending;
+    bool outputObserverInstalled, awaitingInstantiationAwake;
+    object pendingAddOutputController;
+    int pendingAddOutputResult, pendingAddOutputCount;
+    ulong pendingAddOutputId;
     float loadStartedAt;
     int unityThreadId;
     FieldInfo apiBeforeEngineTermField;
@@ -51,6 +55,10 @@ public sealed class PortSessionOriginalMusicControllerOwner : MonoBehaviour
         public bool sourcePrefabWasActiveAtInstantiation;
         public bool sourceMusicControllerEnabled, sourceMusicSystemEnabled;
         public bool sourceAddOutputLifecycleExpected, outputResultObserved, outputAccepted;
+        public bool outputDeviceIdValid, removeOutputResultObserved, removeOutputDeviceIdValid;
+        public bool outputObservationOwnerMismatch;
+        public int outputResultCode, removeOutputResultCode;
+        public ulong outputDeviceId, removeOutputDeviceId;
         public bool sceneDefObserved, teleporterObserved, targetCameraInventoryNonempty, targetBodyObserved;
         public bool introSceneLoadedAfterPreload, nonIntroSceneLoadedAfterPreload;
         public bool preloadAttempted;
@@ -73,7 +81,7 @@ public sealed class PortSessionOriginalMusicControllerOwner : MonoBehaviour
         outputResultObserved = false,
         outputAccepted = false,
         teardownEvidence = "not_observed",
-        limitations = "native AddOutput/RemoveOutput results, track state/event completion, scene/run ownership, and audible or spatial PCM are unobserved"
+        limitations = "AddOutput/RemoveOutput result codes are captured only for the exact owned MusicController; accepted output setup, track state/event completion, scene/run ownership, and audible or spatial PCM remain unproven"
     };
 
     public static PortSessionOriginalMusicControllerOwner StartForReadyAudio(
@@ -114,7 +122,11 @@ public sealed class PortSessionOriginalMusicControllerOwner : MonoBehaviour
             Refuse(existing ? "duplicate_original_music_controller" : "original_music_start_gate_refused");
             return;
         }
-        try { InstallBeforeTermCleanupHook(); }
+        try
+        {
+            InstallMusicOutputObserver();
+            InstallBeforeTermCleanupHook();
+        }
         catch (Exception error)
         {
             Refuse("original_music_pre_term_hook_install_failed:" + error.GetType().Name);
@@ -215,12 +227,17 @@ public sealed class PortSessionOriginalMusicControllerOwner : MonoBehaviour
 
         try
         {
+            awaitingInstantiationAwake = true;
+            pendingAddOutputCount = 0;
+            pendingAddOutputController = null;
             ownedControllerRoot = UnityEngine.Object.Instantiate(prefab, transform, false);
             ownedController = ownedControllerRoot ? ownedControllerRoot.GetComponent<MusicController>() : null;
+            awaitingInstantiationAwake = false;
             snapshot.instanceCreated = ownedController;
             snapshot.sourcePrefabWasActiveAtInstantiation = ownedController && ownedController.isActiveAndEnabled;
             if (!ownedController || ownedControllerRoot.GetComponents<MusicController>().Length != 1)
                 throw new InvalidOperationException("Instantiated source MusicController component cardinality changed");
+            JoinPendingAddOutputToExactOwnedController();
             // Preserve the stock Init completion ordering: active Instantiate
             // first dispatches source Awake/OnEnable, then Preload exactly once.
             preloadAttempted = true;
@@ -256,11 +273,14 @@ public sealed class PortSessionOriginalMusicControllerOwner : MonoBehaviour
             snapshot.ownedMusicControllerInstanceId = ownedController.GetInstanceID();
             snapshot.phase = OriginalMusicControllerContract.MayReportPreloaded(
                 snapshot.staticInstanceMatchesOwnedController, preloadCalled, snapshot.sourcePrefabWasActiveAtInstantiation,
-                snapshot.sourceMusicControllerEnabled) ? "source_controller_preloaded_output_unobserved" :
+                snapshot.sourceMusicControllerEnabled) ? (snapshot.outputResultObserved ? "source_controller_preloaded_output_result_observed" : "source_controller_preloaded_output_result_unknown") :
                 "preload_called_controller_identity_or_activation_unverified";
         }
         catch (Exception error)
         {
+            awaitingInstantiationAwake = false;
+            pendingAddOutputController = null;
+            pendingAddOutputCount = 0;
             Refuse("original_music_instantiation_or_preload_failed:" + error.GetType().Name);
             stopRequested = true;
             failedInstanceCleanupPending = ownedControllerRoot;
@@ -274,6 +294,86 @@ public sealed class PortSessionOriginalMusicControllerOwner : MonoBehaviour
             }
             ReleaseLoadHandleIfSafe();
         }
+    }
+
+    void InstallMusicOutputObserver()
+    {
+        var observer = OriginalOwnerProbeObserver.Observer;
+        if (observer.MusicAddOutputReturned != null || observer.MusicRemoveOutputReturned != null)
+            throw new InvalidOperationException("Music output observer already has an owner");
+        observer.MusicAddOutputReturned = ObserveMusicAddOutput;
+        observer.MusicRemoveOutputReturned = ObserveMusicRemoveOutput;
+        outputObserverInstalled = true;
+    }
+
+    void ObserveMusicAddOutput(int result, object sourceOwner, ulong outputId)
+    {
+        if (awaitingInstantiationAwake)
+        {
+            if (pendingAddOutputCount == 0)
+            {
+                pendingAddOutputCount = 1;
+                pendingAddOutputController = sourceOwner;
+                pendingAddOutputResult = result;
+                pendingAddOutputId = outputId;
+            }
+            else
+            {
+                pendingAddOutputCount = 2; // Saturated ambiguity marker.
+                pendingAddOutputController = null;
+            }
+            return;
+        }
+        if (ownedController && ReferenceEquals(sourceOwner, (object)ownedController))
+            RecordOwnedAddOutput(result, outputId);
+        else
+            snapshot.outputObservationOwnerMismatch = true;
+    }
+
+    void JoinPendingAddOutputToExactOwnedController()
+    {
+        if (pendingAddOutputCount == 1 && ownedController &&
+            ReferenceEquals(pendingAddOutputController, (object)ownedController))
+            RecordOwnedAddOutput(pendingAddOutputResult, pendingAddOutputId);
+        else if (pendingAddOutputCount != 0)
+            snapshot.outputObservationOwnerMismatch = true;
+        pendingAddOutputController = null;
+        pendingAddOutputCount = 0;
+        pendingAddOutputResult = 0;
+        pendingAddOutputId = 0;
+    }
+
+    void RecordOwnedAddOutput(int result, ulong outputId)
+    {
+        snapshot.outputResultObserved = true;
+        snapshot.outputResultCode = result;
+        snapshot.outputAccepted = result == (int)AKRESULT.AK_Success;
+        snapshot.outputDeviceIdValid = snapshot.outputAccepted;
+        snapshot.outputDeviceId = snapshot.outputAccepted ? outputId : 0;
+    }
+
+    void ObserveMusicRemoveOutput(int result, object sourceOwner, ulong outputId)
+    {
+        if (!ownedController || !ReferenceEquals(sourceOwner, (object)ownedController))
+        {
+            snapshot.outputObservationOwnerMismatch = true;
+            return;
+        }
+        snapshot.removeOutputResultObserved = true;
+        snapshot.removeOutputResultCode = result;
+        snapshot.removeOutputDeviceIdValid = snapshot.outputDeviceIdValid && outputId == snapshot.outputDeviceId;
+        snapshot.removeOutputDeviceId = snapshot.removeOutputDeviceIdValid ? outputId : 0;
+    }
+
+    void DetachMusicOutputObserver()
+    {
+        if (!outputObserverInstalled) return;
+        var observer = OriginalOwnerProbeObserver.Observer;
+        if (observer.MusicAddOutputReturned == (Action<int, object, ulong>)ObserveMusicAddOutput)
+            observer.MusicAddOutputReturned = null;
+        if (observer.MusicRemoveOutputReturned == (Action<int, object, ulong>)ObserveMusicRemoveOutput)
+            observer.MusicRemoveOutputReturned = null;
+        outputObserverInstalled = false;
     }
 
     void AttachSourceCallbackRetirementObserver()
@@ -557,6 +657,7 @@ public sealed class PortSessionOriginalMusicControllerOwner : MonoBehaviour
 
     void OnDestroy()
     {
+        DetachMusicOutputObserver();
         if (sourceSceneCallbackObserverAttached)
         {
             if (!snapshot.sourceSceneLoadedCallbackRetiredObserved)

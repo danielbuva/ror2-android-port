@@ -21,6 +21,7 @@ internal static class NativeViewCameraCecilTransform
         "3124a2ed9cf458acee78b1beaf969590b184be452e2b3aa5a8852df82ff95d30",
         "1034a747e31a3b79554b9cb06f941c7acabaa9e0ee82c2a00abc4b24f9327c1c",
         "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc",
+        "27340ed60dbfe77f66fa394d028b597d3e4613ee8ea405416c061766fb226eef", // exact observer output from 6f96
     };
 
     static string Sha256(string path)
@@ -268,13 +269,15 @@ internal static class NativeViewCameraCecilTransform
             ? Sha256(input)
             : "3124a2ed9cf458acee78b1beaf969590b184be452e2b3aa5a8852df82ff95d30";
         if (audioProfile && expectedInput != "1034a747e31a3b79554b9cb06f941c7acabaa9e0ee82c2a00abc4b24f9327c1c" &&
-            expectedInput != "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc")
+            expectedInput != "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc" &&
+            expectedInput != "27340ed60dbfe77f66fa394d028b597d3e4613ee8ea405416c061766fb226eef")
             throw new InvalidOperationException("audio-profile input is outside exact owned game preimages");
         var actualApi = rows.ContainsKey("AK.Wwise.Unity.API")
             ? Sha256(Path.Combine(baseDirectory, "AK.Wwise.Unity.API.dll"))
             : "";
         var expectedApi = audioProfile
-            ? (expectedInput == "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc"
+            ? ((expectedInput == "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc" ||
+                expectedInput == "27340ed60dbfe77f66fa394d028b597d3e4613ee8ea405416c061766fb226eef")
                 ? new HashSet<string>(StringComparer.OrdinalIgnoreCase)
                 {
                     "d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23",
