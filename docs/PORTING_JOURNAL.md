@@ -23171,3 +23171,8 @@ music hypothesis with the committed full player, same-request post-strip
 reflection proof, both standard checks and actual source-controller/output
 observations. Original output creation/removal, track context, audible playback
 and normal-difficulty game acceptance remain open.
+
+The first pre-push full suite refuses two missing recipe audit-table entries;
+the prose audits were present but did not satisfy the repository's enumerated
+recipe contract. Add both rows before retrying synchronization. No Unity or
+device action occurs while that host gate is failing.
