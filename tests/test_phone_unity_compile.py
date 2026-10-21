@@ -187,7 +187,14 @@ class ExactSdkUnityCompilerTests(unittest.TestCase):
             results = []
             for _ in range(2):
                 stage, _ = unity.stage(root, sdk, Path(temporary).resolve() / "work")
-                result = unity.compile_fixture(stage, sdk / "NetCoreRuntime/dotnet", "sdk")
+                child = subprocess.run(
+                    [sys.executable, "-I", "-S", str(stage / "phone_unity_compile.py"), "run", str(stage), str(sdk / "NetCoreRuntime/dotnet"), "sdk"],
+                    capture_output=True,
+                    text=True,
+                    timeout=240,
+                )
+                self.assertEqual(child.returncode, 0, child.stderr)
+                result = json.loads(child.stdout)
                 self.assertTrue(result["success"], (result, (stage / "output/compiler.log").read_text() if (stage / "output/compiler.log").exists() else ""))
                 self.assertEqual(result["reference_count"], 157)
                 report = json.loads((stage / "output/references.json").read_text())
@@ -197,6 +204,18 @@ class ExactSdkUnityCompilerTests(unittest.TestCase):
 
 
 class CompilerSupportIdentityTests(unittest.TestCase):
+    def test_isolated_standalone_support_load_does_not_add_cache_files(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            source = Path(unity.__file__).parent
+            names = ("phone_unity_compile.py", "phone_managed_compile.py", "phone_module_policy.py")
+            for name in names:
+                (directory / name).write_bytes((source / name).read_bytes())
+            code = "import runpy,sys; m=runpy.run_path(sys.argv[1]); m['support']('phone_managed_compile'); m['support']('phone_module_policy')"
+            child = subprocess.run([sys.executable, "-I", "-S", "-c", code, str(directory / names[0])], capture_output=True, text=True, timeout=30)
+            self.assertEqual(child.returncode, 0, child.stderr)
+            self.assertEqual(set(p.name for p in directory.iterdir()), set(names))
+
     def test_changed_support_refuses_before_executing_it(self):
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)
