@@ -321,6 +321,22 @@ loading, performance, game compilation or final tool distribution.
 J920 qualifies this fixed authored conversion profile; the native/player
 consumer remains a separate gate.
 
+`phone_compiled_native.py` owns the separate current experimental native
+consumer for that fixed profile. Setup requires committed sources, the exact
+authored fixture request, its matching converter stage/output, the qualified
+SDK native inventory and owner SDK paths. It checks both generated data files
+against the exact base APK before capturing a fresh native graph with the
+unchanged native stage builder. That graph must match the converter generation;
+the SDK/target inventory must match qualification. Actual C++ bytes and ordered
+compile/link arguments stay unchanged. Only generated plan scope annotations
+are updated. The complete upstream proof, fixture sources/APK and native inputs
+remain private and hash-bound. The bounded native child retains the original
+exact object-reuse checks; failed stages/results remain evidence. Teardown is
+the child exiting. `library_input` validates the resulting AArch64 shared-library
+header, full library hash and provenance before returning the exact APK/library
+pair for separate packaging/audit/player checks. No native build, player,
+ordinary app hosting or game/performance qualification follows from host tests.
+
 `phone_registry.py` and `phone_registry_literals.py` own separate experimental
 static SDK metadata support.
 The current `phone-native-registry` action accepts an explicit owner binary,
