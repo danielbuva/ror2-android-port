@@ -23397,3 +23397,69 @@ qualified fae79734 and accepted f1550ce0 baseline remain J891 facts. Route A,
 working game sources and desktop fallback are unchanged. Revisit with an
 independent native-identity/usage producer and exact root comparisons; this
 oracle, its name equality and host checks establish no gameplay readiness.
+
+## J894 — Reach Siren's Call and retain the early native-registration admission stop
+
+Date: 2026-10-21. Hypothesis: the J886 route-writer/clock correction, now in
+J891's device-verified diagnostic, can yield paired native-navigation samples
+on Siren's Call. J886 records prior art and the authored correction; J861's
+unavailable path observations remain comparison evidence. This attempt adds
+no gameplay source, event, entitlement or reward substitution.
+
+Root validates the frozen R6 runner, exact candidate, source, 266 payload hashes
+and both J891 standard-control receipts. Manifest SHA-256 is
+`cac53cedc24011cad8ecedb1e36141f87a41cc64e0888a34e2b498c8b3591172`.
+The independent review reruns 44 host tests and the validator; review SHA-256
+is `fad22de68b0ce39c2386a16073f631038ae2e2ac38a6f69c865c3860c1efd6cf`.
+Explicit-device doctor and preflight pass. Dispatch once on the primary adopted
+Nova, using its installed frozen APK
+`fae79734107d07d7c9a8af838961ccf82b4e6fa530e4f1a6238b17eda3a44b1d`,
+source `c02013bd7ebd9116497077b22bc7e7372df2d911`, under a fresh exclusive Root
+claim. Retain the one-shot marker. No build, install, payload replacement,
+other-device action or storage change occurs.
+
+The ordinary selected Huntress route uses invincibility, high damage and fast
+charge, with movement/jump boosts off. It completes exactly three original
+exits: Lakes, Goolake, Wispgraveyard, then Shipgraveyard. The first target report
+has world time 310.979736 s, entry time 310.945557 s and stage age 0.034180 s.
+The source entry observes 32 spawners, 12 selected nests, all 12 spawner disables,
+12 mapped egg bodies with an exact network-identity bijection, native Awake
+and drained queues. This qualifies the recorded assisted route and mapping,
+not ordinary encounter execution.
+
+The host stops at `siren-source-entry-registration-not-proven`. Its one target
+snapshot has an attached native encounter owner, an Uninitialized state, no
+active Listening state and zero registered native egg slots. Continuation is
+unarmed. The report contains no gameplay error/firstFailure. This is an unmet
+observation gate in the first 0.034 s of the stage; it does not establish a
+persistent native lifecycle defect. The runner allows a reporting grace for
+continuation arming only after registration is already proven. Investigate
+that distinction against the original queued state lifecycle before changing
+gameplay or interpreting this stop as a regression.
+
+Navigation never starts and records zero samples. The eight allocated default
+slots are placeholders. There is no paired path request, input write/read,
+motor response, range or tracker-target evidence. J886's hypothesis remains
+untested. No boss start/completion, reward, unlock or source retirement is
+accepted. Independent Lakes and target profile snapshots retain 13 applied
+runs with no result application or profile difference. No fourth exit or Moon
+entry occurs.
+
+Raw evidence is under
+`work/coordination/siren-after-route-fix-device-plan/r6/attempts/20261021T162300.093426Z-405142b5bc23/`.
+Result SHA-256 is
+`45d0186593109c3ca4e0756c3a13501f381ad58459448c96b29c0f9c63c54141`;
+final report SHA-256 is
+`0f7d9090ca06983aeb5c4ca17a4cb22c8302efb201895843916acf31401ba8ea`.
+Root qualification is
+`work/coordination/codex-siren-r6-device-root/r1/qualification.json`, SHA-256
+`61bc7471146cf43922d7294afcb3aad40332401814861005d5b9f2bd60f4db48`.
+
+Cleanup verifies the owned selector removed, owned process stopped and display
+asleep, with no cleanup errors. A separate successful checked query rehashes
+the installed APK and positively observes process absence, selector absence
+and display sleep before Root releases the claim. Device/storage identifiers,
+raw logs and captures remain ignored. Main retains fae79734; accepted baseline
+remains J850 f1550ce0. Revisit after a source-backed bounded admission policy
+can distinguish pending native registration from a known mismatch. Do not
+repeat the frozen R6 attempt or infer navigation failure from its empty trace.

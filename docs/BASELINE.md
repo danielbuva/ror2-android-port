@@ -109,7 +109,8 @@ target updates/Siren execution, indicator rendering/teardown and special
 first-stage recovery remain open; the default checks do not qualify them. J801's observer and strict cleanup failures remain
 evidence on that player. J790's earlier native
 offhand activation and J795's bounded native Siren registration/cleanup remain
-evidence on their recorded APKs. Siren encounter execution is open.
+evidence on their recorded APKs. [J894](PORTING_JOURNAL.md#j894--reach-sirens-call-and-retain-the-early-native-registration-admission-stop)
+records the latest fae79734 Siren admission stop; encounter execution remains open.
 
 The default checks keep native diagnostic flags off. Native first-stage defeat,
 strict cleanup and healthy same-process restart previously pass on J752's APK
