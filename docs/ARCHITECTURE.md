@@ -240,6 +240,22 @@ unqualified. API knowledge comes from the pinned Unity reference source
 and [`PlayerBuildInterface`](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Modules/BuildPipeline/Editor/Managed/PlayerBuildInterface.bindings.cs);
 no reference implementation is copied.
 
+`phone_manager_context.py` owns current experimental SDK registration metadata
+inspection. Its standalone owner-binary/new-private-report invocation reads the
+pinned SDK as data, without creating an editor project or executing SDK code.
+It proves literal class-name arguments, lookup return stores, context-relative
+slot indices and native manager ancestry. Declaration order stays separate from
+slot order. The context bound must compare the incoming argument; unknown or
+skipped definitions, clobbered operands, incomplete/aliased slots, ambiguous
+native identities and unknown predicate shapes refuse. A separate bounded
+predicate reader resolves the SDK's asset-dependency exclusion indices. Those
+exclusions describe asset dependency collection, not native class retention.
+Setup is the supplied SDK and a new private output; teardown releases parsed
+bytes and preserves the report. Reader/SDK hashes bind the result. No live
+context, target support, object retention or project/linker root is qualified;
+no game or build consumer reads the output. Runtime context storage may be
+zero-fill memory and is never treated as file-backed metadata.
+
 `phone_registry.py` and `phone_registry_literals.py` own separate experimental
 static SDK metadata support.
 The current `phone-native-registry` action accepts an explicit owner binary,

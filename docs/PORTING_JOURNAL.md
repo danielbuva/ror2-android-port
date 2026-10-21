@@ -23640,3 +23640,101 @@ runtime acceptance. Main still has frozen J891 fae79734; accepted baseline is
 J850 f1550ce0. A separate bounded Siren observation on that existing APK is
 active, with no install or payload sync while it runs. This entry does not
 claim that observation's outcome or alter another device.
+
+## J895 — Read SDK manager registration declarations on Android and preserve retention boundaries
+
+Date: 2026-10-21. Hypothesis: native manager-context declarations can be
+reconstructed from owner SDK metadata without consuming J893's SDK observations
+as generation inputs. This is a prerequisite for understanding native usage,
+not a new runtime or a complete linker-root producer.
+
+**Boundary and prior art.** Consult `docs/community-prior-art.md`; this is
+Unity build metadata, with no new RoR2 reconstruction or platform adapter.
+The pinned Unity reference APIs and registry consumer inspected in J893 keep
+manager dependencies and native usage separate. J864/J883 already qualify the
+native identities and bounded SDK operand readers reused here. Inspect only
+the pinned owner's SDK symbols, registration declarations and dependency
+predicate; execute no inspected SDK code and copy no SDK implementation or
+raw instruction dump into public source. Protected observations stay ignored.
+
+**First hypothesis check.** Native ancestry lists 20 concrete global managers;
+J893's dependency API exposes 13 manager objects. Read their native identities
+from the generated verification files: 11 YAML headers and two binary serialized
+files inspected with the pinned UnityPy. These files are oracle outputs only,
+never independent phone inputs. The scene/manager/reference seed set has 27
+identities; native parent closure gives 38 classes against the retained full
+player's 42. It misses ShaderNameRegistry, DelayedCallManager, ResourceManager,
+RuntimeInitializeOnLoadManager and StreamingManager, and additionally retains
+OcclusionCullingSettings. Keep that failed equality: neither generic manager
+ancestry nor these dependency objects alone predict final native usage.
+Fresh static SDK registry extraction remains byte-equal to the earlier Android
+registry, with 318 identities; no saved usage table supplies the new reader.
+
+**New owner.** `phone_manager_context.py` reads only the hash-pinned owner SDK
+and authored readers. It proves each literal ClassNameToRTTI argument, returned
+pointer store, name store, original context parameter and relative slot index.
+Registration call order differs from slot order: some level declarations occur
+before later global declarations. Slots, not call ordinal, establish the index.
+A dominance/operand proof rejects skipped definitions and clobbered return,
+context or name values. A dead local initialization between lookup and stores
+is accepted only when the operand proofs still hold. The context's argument
+bound, complete slot coverage, unique native identities and global/level native
+ancestry partition must all agree. Unknown shapes or ambiguity refuse.
+
+A separate bounded metadata predicate resolves the two asset-dependency
+exclusion indices and associates them with the independently decoded slots.
+It preserves the incoming argument and validates the literal-load and boolean
+operation shape. This is not evaluation of target support or a manager's
+virtual serialization decision. Runtime context-name storage is zero-fill;
+a direct file read correctly refuses. Read declarations from file-backed
+operands instead; never relax that file-reader boundary or claim a live cache.
+
+**Host and Android qualification.** Committed source is
+`73a3b57314b8e623f931d4e571bb1d68cea032d2`. Eight host checks pass, including
+synthetic reordered slots, skipped/clobbered operands, malformed predicates,
+missing/cyclic native parents, role ambiguity, actual optional SDK inspection
+and isolated `-I -S` CLI launch. The CLI loads only explicit authored siblings;
+the optional SDK check skips when the SDK is absent. Seven selected contracts
+pass on Android with no skips; the real SDK CLI is also exercised there.
+
+Reuse Alpha's existing receipt/hash-bound SDK and Python workspaces read-only,
+with fresh storage/backing/reserve checks and new owned output directories.
+The reader emits 24 declarations: 20 global and four level registrations.
+The Android report is byte-identical to the host, SHA-256
+`73b95c01d86ff6759edb64718ce68d8e73c13ec95440e0a56115165159bf1014`.
+The Android metadata read takes 4.791951 s; this is not gameplay performance.
+Overwrite and unknown-SDK controls refuse without replacing the accepted
+report or creating the denied output. All staged source and SDK hashes remain
+unchanged. An earlier operator adapter import typo refuses before Device
+construction or target writes; preserve its log and correction separately.
+
+Private selectors, source snapshots, SDK observations, controls and comparisons
+are under `work/coordination/phone-proof/manager-context-*` and
+`manager-family-*`. `manager-context-proof-receipt-v1.json` binds 85 artifacts,
+SHA-256 `67bad392bbb9834aa4c25b107efa6b412b779d03d839455b6fcca558ee4c1883`.
+No SDK binary, generated asset, native table, raw log, device/storage identifier
+or private path is published. Ruff, the staged public scan and manual authored
+source/provenance review pass.
+
+**Consumer comparison and limits.** All 13 independently observed manager
+identities occur in the 20 global declarations; all four level declarations
+occur in the generated scene. The two excluded asset-dependency slots identify
+ResourceManager and ShaderNameRegistry. Both are absent from the API manager
+objects yet present in the full player's native usage. Thus excluding asset
+dependencies does not establish native class exclusion. Those declarations
+explain a distinction; they do not produce the native usage rows. Three other
+missing manager identities and the extra scene-settings identity still need
+actual retention/serialization semantics. No captured native mapping, manager
+file, fixture scene or SDK observation is an input to the Android reader.
+`live_context_qualified`, `target_retention_qualified` and
+`root_generation_qualified` remain false.
+
+**Device and disposition.** No APK is built or installed, no payload is synced,
+and no game is launched. Alpha's owned be26c21c APK bytes are unchanged; process
+absence, selector absence and display sleep are checked. No Main or spare
+operation occurs. Main independently owns the frozen R13 build and its R12
+player observations. Preserve its current snapshot rows and tested source
+ancestry when integrating this checkpoint. Keep Route A and the desktop
+fallback. Next gates are state/target-dependent manager serialization, scene
+object retention and complete independent usage/scene-label/root production;
+this metadata qualification establishes no gameplay or installer readiness.

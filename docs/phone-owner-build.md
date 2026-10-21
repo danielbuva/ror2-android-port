@@ -33,6 +33,8 @@ Root-inclusive Android metadata/native SDK cache comparison:
 [J883](PORTING_JOURNAL.md#j883--include-the-object-root-and-match-android-metadata-to-native-sdk-caches).
 Independent desktop scene/manager observation and bounded name comparison:
 [J893](PORTING_JOURNAL.md#j893--observe-authored-scene-and-manager-dependencies-without-conflating-native-identities).
+Android SDK manager registration declarations and asset-dependency metadata:
+[J895](PORTING_JOURNAL.md#j895--read-sdk-manager-registration-declarations-on-android-and-preserve-retention-boundaries).
 
 **Finding:** this repository has no demonstrated phone-only build path. Many
 preparation and packaging stages have Android-capable open-source building
@@ -74,6 +76,9 @@ J893 adds a fresh authored SDK scene/manager dependency oracle and a bounded
 comparison with the retained fixture's linker type names. Native usage
 identities, scene associations and complete independent roots remain open;
 the oracle is never a phone-build input.
+J895 qualifies manager registration declarations on Android while retaining
+live-context, target/serialization and complete native-usage gates. Dependency
+exclusions remain separate from native class retention.
 These are build-pipeline problems; keep the game runtime
 and desktop fallback while investigating them independently.
 
