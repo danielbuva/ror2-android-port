@@ -386,7 +386,8 @@ _ENTRIES = (
         "build_integration",
         {},
         "current",
-        "Compose content, stage explicit original-audio selection (default off), and build the player.",
+        "Compose content, stage explicit original-audio selection (default off), and build the player. Supports --debug-symbols, --capture-player-linker-inputs and --capture-il2cpp-invocation with the same contracts as whole-catalog-code-build.",
+        handler=_whole_catalog_code_build,
     ),
     Action(
         "whole-catalog-code-build",

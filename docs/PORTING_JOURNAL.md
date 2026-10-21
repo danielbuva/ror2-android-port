@@ -20642,6 +20642,13 @@ The actual public 112-source runtime plus six support sources compiles against
 `original-audio-public-full-runtime/r1/Assembly-CSharp.original-audio.host.dll`,
 SHA-256 `0154501e9522a2af787ab5ba0905ba1ea34e7e4d71e9245486ae57a53989d26a`.
 The original API/Mono type identities are retained.
+The fresh-clone pre-push check then catches five older orchestration fixtures
+which did not mock the newly added staging owner. Add that explicit mock and
+assert its order/result; no production guard is weakened. Extend the existing
+full-build CLI to forward the same optional symbols/pre-strip/Bee capture flags
+already supported by its build function, so this meaningful audio build can
+exercise them without relaxing code-only reuse. A public CLI dispatch test covers
+all three options. This minimal shared build-interface change serves audio.
 
 **Limits and next gate.** No Unity build, APK, install or composed audio device
 result is produced by this checkpoint; APK hash is not applicable. f1550ce0 remains

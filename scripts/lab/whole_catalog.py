@@ -1800,6 +1800,8 @@ def _build_integration(
     if capture_il2cpp_invocation and not capture_player_linker_inputs:
         raise RuntimeError("IL2CPP invocation capture requires --capture-player-linker-inputs for the pre-strip join")
     if destination is not None:
+        if code_only:
+            raise RuntimeError("Destination builds require full content; payload reuse is forbidden")
         if capture_player_linker_inputs or capture_il2cpp_invocation:
             raise RuntimeError("UnityLinker input capture is supported only for the current local whole-catalog build")
         # R1–R8 already supplied the host products. Share the Unity half only.
