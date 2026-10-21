@@ -51,6 +51,35 @@ public static class WholeCatalogBuild
 {
     static JObject catalog;
     static string root;
+    static readonly Dictionary<int, string> cameraShaderLocations = new Dictionary<int, string>
+    {
+        { 16022, "41e90cbc5ad198a438128b019f8d8553" }, // HGOutlineHighlight
+        { 16025, "5e246b703e2090148a761d52af19744b" }, // HGVisionLimit
+        { 2537, "e4abd95960ed75f4a9f59cac7c40bd9d" },  // TranslucentImage DownTent
+    };
+    const string ShaderLocationType = "UnityEngine.Shader, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null";
+
+    static void ValidateCameraShaderRows(ISet<string> ownerPaths = null, bool requireBuiltBundles = false)
+    {
+        var locations = catalog["locations"].ToDictionary(row => (int)row["id"]);
+        var keys = catalog["keys"].Where(row => (string)row["keyType"] == "System.String")
+                         .ToDictionary(row => (string)row["key"], row => row);
+        foreach (var expected in cameraShaderLocations)
+        {
+            if (!locations.TryGetValue(expected.Key, out var row) || (string)row["type"] != ShaderLocationType ||
+                row["root"]?.Value<bool>() != true)
+                throw new Exception("Original camera shader row missing or changed: " + expected.Key);
+            if (!keys.TryGetValue(expected.Value, out var key) || !key["locations"].Any(value => (int)value == expected.Key))
+                throw new Exception("Original camera shader address key changed: " + expected.Value);
+            string path = (string)row["path"];
+            string bundle = (string)row["bundle"];
+            if (string.IsNullOrEmpty(path) || string.IsNullOrEmpty(bundle) || ownerPaths != null && !ownerPaths.Contains(path))
+                throw new Exception("Original camera shader has no exact bundle owner: " + expected.Key);
+            if (requireBuiltBundles && (catalog["bundles"][bundle] == null || !File.Exists(Path.Combine(root, "generated-android-data", bundle))))
+                throw new Exception("Original camera shader bundle was not built: " + expected.Key);
+        }
+    }
+
     public static void Append(string work, List<AssetBundleBuild> builds)
     {
         string recipe = Path.Combine(work, "whole-catalog-build.json");
@@ -95,6 +124,7 @@ public static class WholeCatalogBuild
         }
         foreach (var row in catalog["locations"])
             row["bundle"] = owners[(string)row["path"]];
+        ValidateCameraShaderRows(new HashSet<string>(owners.Keys, StringComparer.OrdinalIgnoreCase));
     }
     public static void Complete(AssetBundleManifest manifest)
     {
@@ -112,6 +142,7 @@ public static class WholeCatalogBuild
                 new { sha256 = hash, bytes = new FileInfo(path).Length, dependencies = manifest.GetAllDependencies(name) });
         }
         catalog["bundles"] = bundles;
+        ValidateCameraShaderRows(requireBuiltBundles: true);
         File.WriteAllText(Path.Combine(output, "whole-catalog.json"), catalog.ToString(Newtonsoft.Json.Formatting.None));
     }
 }

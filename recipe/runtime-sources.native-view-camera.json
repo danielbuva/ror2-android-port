@@ -26,6 +26,7 @@
   "runtime/commerce/WorldCommerceBoundary.cs",
   "runtime/input/AndroidNativeItemDisplayDispatch.cs",
   "runtime/input/AndroidNativeSkinActivationPolicy.cs",
+  "runtime/input/AndroidNativeSourceCameraPrerequisites.cs",
   "runtime/input/AndroidNativeSourceCameraRigContract.cs",
   "runtime/input/AndroidNativeSourceCameraRigOwner.cs",
   "runtime/input/AndroidNativeSourceSkinLifecycle.cs",

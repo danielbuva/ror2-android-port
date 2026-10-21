@@ -6,6 +6,44 @@ from collections import Counter, deque
 import re
 
 
+# The original Main Camera prefab's current opt-in overlay calls these shaders
+# during activation. Keep the runtime key -> typed location identities intact;
+# this is a three-asset profile extension, not a broad shader-catalog import.
+CAMERA_SHADER_ROOTS = {
+    16022: ("41e90cbc5ad198a438128b019f8d8553", "RoR2/Base/Shaders/HGOutlineHighlight.shader"),
+    16025: ("5e246b703e2090148a761d52af19744b", "RoR2/Base/Shaders/HGVisionLimit.shader"),
+    2537: ("e4abd95960ed75f4a9f59cac7c40bd9d", "TranslucentImage/DownTent.shader"),
+}
+SHADER_LOCATION_TYPE = "UnityEngine.Shader, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"
+
+
+def camera_shader_roots(metadata, closure):
+    """Return the exact source paths and IDs needed by the original camera.
+
+    Source keys can outlive filtered location rows. Refuse malformed or
+    ambiguous rows rather than emitting a partially valid camera profile.
+    """
+    locations = {int(row["id"]): row for row in metadata["locations"]}
+    keys = {row["key"]: row for row in metadata["keys"] if row.get("keyType", "System.String") == "System.String"}
+    converted = closure["converted"]
+    paths = set()
+    for location_id, (guid, primary_key) in CAMERA_SHADER_ROOTS.items():
+        row = locations.get(location_id)
+        key = keys.get(guid)
+        conversion = converted.get(str(location_id))
+        if not row or row.get("type") != SHADER_LOCATION_TYPE or row.get("primaryKey") != primary_key:
+            raise RuntimeError("Original camera shader location changed: " + str(location_id))
+        if not key or key.get("locations") != [location_id]:
+            raise RuntimeError("Original camera shader address key changed: " + guid)
+        if not conversion or conversion.get("resolution") != "exact" or not conversion.get("source"):
+            raise RuntimeError("Original camera shader source conversion is not exact: " + str(location_id))
+        source = conversion["source"]
+        if not source.startswith("Assets/") or ".." in Path(source).parts:
+            raise RuntimeError("Original camera shader source path is unsafe: " + source)
+        paths.add(source)
+    return paths
+
+
 def copy_catalog_asset(source, target):
     """Bulk imports must not launch one subprocess for every asset and meta file."""
     import ctypes
@@ -1222,12 +1260,13 @@ def prepare_integration(io=None, *, attempt=None):
     remaps = io.read(RECIPE / "hud-ui-remaps.json")
     if remaps["input_id"] != closure["input_id"]:
         raise RuntimeError("UI remaps belong to different input")
+    camera_shader_paths = camera_shader_roots(metadata, closure)
     destination = out / (attempt if attempt is not None else "integration-" + now())
     io.mkdir(destination)
     mapped = {}
     copies = []
     # Copy each original identity once. Do not overwrite the accepted composition.
-    for relative in sorted(set(closure["files"]) | {row["source"] for row in mesh_subobjects}):
+    for relative in sorted(set(closure["files"]) | camera_shader_paths | {row["source"] for row in mesh_subobjects}):
         source = export / relative
         guid = guids.get(relative)
         if not guid or not source.is_file():
@@ -1266,7 +1305,7 @@ def prepare_integration(io=None, *, attempt=None):
         repair_support_source(export, mapped, project, destination, io)
     for copied in copies:
         copied["sha256"] = io.sha(project / copied["target"])
-    roots = set(closure["roots"]) | set(closure.get("runtime_roots", []))
+    roots = set(closure["roots"]) | set(closure.get("runtime_roots", [])) | set(CAMERA_SHADER_ROOTS)
     locations = []
     for row in metadata["locations"]:
         conversion = closure["converted"].get(str(row["id"]))

@@ -56,7 +56,9 @@ internal static class VerifyCameraGuardPatch
                     var newMethod = newType.Methods.Single(x => x.FullName == oldMethod.FullName);
                     if (!oldMethod.HasBody) { Require(!newMethod.HasBody, "body added " + oldMethod.FullName); continue; }
                     Require(newMethod.HasBody, "body removed " + oldMethod.FullName);
-                    if (oldType.FullName != targetName || oldMethod.Name != "ModifyAimRayIfApplicable")
+                    bool aimTarget = oldType.FullName == targetName && oldMethod.Name == "ModifyAimRayIfApplicable";
+                    bool sceneCameraTarget = oldType.FullName == "RoR2.SceneCamera" && oldMethod.Name == "ConfigureGraphicsSettings";
+                    if (!aimTarget && !sceneCameraTarget)
                         Require(BodyKey(oldMethod).SequenceEqual(BodyKey(newMethod)), "unrelated body changed " + oldMethod.FullName);
                 }
             }
@@ -76,10 +78,54 @@ internal static class VerifyCameraGuardPatch
                 x.x.Operand is MethodReference m && m.Name == "ShouldSkipNullViewerAim").Select(x => x.i).Single();
             Require(BodyKey(oldTarget).SequenceEqual(BodyKey(newTarget, i => i >= skip - 2 && i <= skip + 1)),
                     "original target method instructions changed outside the guard");
+            var oldScene = before.GetType("RoR2.SceneCamera").Methods.Single(x => x.Name == "ConfigureGraphicsSettings");
+            var newScene = after.GetType("RoR2.SceneCamera").Methods.Single(x => x.Name == "ConfigureGraphicsSettings");
+            var sceneInstructions = newScene.Body.Instructions.ToArray();
+            int sceneGuardCall = Array.FindIndex(sceneInstructions, x => x.OpCode == OpCodes.Call &&
+                x.Operand is MethodReference m && m.FullName == "System.Boolean RoR2.AndroidNativeSourceViewOnlyRigMarker::ShouldSkipMissingConsole(RoR2.SceneCamera,System.Boolean)");
+            Require(sceneGuardCall == 4 && sceneInstructions.Length == oldScene.Body.Instructions.Count + 7,
+                    "SceneCamera guard is absent or not the exact seven-instruction entry gate");
+            Require(sceneInstructions[0].OpCode == OpCodes.Ldarg_0 &&
+                    sceneInstructions[1].OpCode == OpCodes.Call && sceneInstructions[1].Operand is MethodReference console &&
+                    console.FullName == "RoR2.Console RoR2.Console::get_instance()" &&
+                    sceneInstructions[2].OpCode == OpCodes.Ldnull && sceneInstructions[3].OpCode == OpCodes.Cgt_Un &&
+                    sceneInstructions[5].OpCode == OpCodes.Brfalse && sceneInstructions[6].OpCode == OpCodes.Ret &&
+                    ReferenceEquals(sceneInstructions[5].Operand, sceneInstructions[7]),
+                    "SceneCamera guard does not preserve the original entry on Console-present/other-camera paths");
+            Require(BodyKey(oldScene).SequenceEqual(BodyKey(newScene, i => i < 7)),
+                    "original SceneCamera configuration body changed outside the guard");
             var marker = after.GetType("RoR2.AndroidNativeSourceViewOnlyRigMarker");
-            Require(marker != null && marker.Methods.Any(x => x.Name == "Bind") &&
+            Require(marker != null && !marker.HasProperties && !marker.HasEvents &&
+                    marker.Methods.Any(x => x.Name == "Bind") &&
                     marker.Methods.Any(x => x.Name == "IsBoundTo") &&
-                    marker.Methods.Any(x => x.Name == "ShouldSkipNullViewerAim"), "marker methods incomplete");
+                    marker.Methods.Any(x => x.Name == "ShouldSkipNullViewerAim") &&
+                    marker.Methods.Any(x => x.Name == "GetOriginalEarlyUpdatePumpCount") &&
+                    marker.Methods.Any(x => x.Name == "BeginOwnedSceneCameraActivation") &&
+                    marker.Methods.Any(x => x.Name == "EndOwnedSceneCameraActivation") &&
+                    marker.Methods.Any(x => x.Name == "ShouldSkipMissingConsole"),
+                    "marker methods or copier-compatible type shape incomplete");
+            var update = marker.Methods.Single(x => x.Name == "Update");
+            var pump = marker.Methods.Single(x => x.Name == "TryPumpOriginalEarlyUpdate");
+            var contextReady = marker.Methods.Single(x => x.Name == "IsOriginalUpdateContextReadyFor");
+            Require(update.IsPrivate && !update.IsStatic && update.ReturnType.FullName == "System.Void" &&
+                    update.Parameters.Count == 0 && update.HasBody, "Unity Update pump callback signature changed");
+            Require(pump.IsPublic && !pump.IsStatic && pump.ReturnType.FullName == "System.Boolean" &&
+                    pump.Parameters.Count == 0 && pump.HasBody, "manual original update pump signature changed");
+            Require(contextReady.IsPublic && !contextReady.IsStatic && contextReady.ReturnType.FullName == "System.Boolean" &&
+                    contextReady.Parameters.Count == 3 && contextReady.Parameters[0].ParameterType.FullName == "RoR2.CameraRigController" &&
+                    contextReady.Parameters[1].ParameterType.FullName == "UnityEngine.GameObject" &&
+                    contextReady.Parameters[2].ParameterType.FullName == "RoR2.ICameraStateProvider", "context readiness contract changed");
+            Require(update.Body.Instructions.Count(x => x.OpCode == OpCodes.Call &&
+                    x.Operand is MethodReference m && m.Name == "TryPumpOriginalEarlyUpdate") == 1,
+                    "Unity Update must dispatch exactly one bounded pump");
+            Require(pump.Body.Instructions.Count(x => x.OpCode == OpCodes.Callvirt &&
+                    x.Operand is MethodReference m && m.FullName == "System.Void System.Action::Invoke()") == 1,
+                    "pump must invoke only the cached original callback delegate");
+            Require(pump.Body.Instructions.Any(x => x.Operand is MethodReference m &&
+                    m.FullName == "RoR2.RoR2Application RoR2.RoR2Application::get_instance()") &&
+                    pump.Body.Instructions.Any(x => x.Operand is MethodReference m &&
+                    m.FullName == "System.Boolean UnityEngine.Behaviour::get_isActiveAndEnabled()"),
+                    "pump must refuse while original application updates are active");
             var beforeRefs = before.AssemblyReferences.Select(x => x.FullName).OrderBy(x => x).ToArray();
             var afterRefs = after.AssemblyReferences.Select(x => x.FullName).OrderBy(x => x).ToArray();
             if (!beforeRefs.SequenceEqual(afterRefs))
@@ -88,8 +134,9 @@ internal static class VerifyCameraGuardPatch
                 Console.WriteLine("after_refs=" + String.Join("|", afterRefs));
                 throw new InvalidOperationException("assembly references changed");
             }
-            Console.WriteLine("existing_types=" + oldNames.Length + " target_original_instructions=" + oldTarget.Body.Instructions.Count +
-                              " target_new_instructions=" + newTarget.Body.Instructions.Count + " unrelated_bodies_unchanged=true");
+            Console.WriteLine("existing_types=" + oldNames.Length + " aim_original_instructions=" + oldTarget.Body.Instructions.Count +
+                              " aim_new_instructions=" + newTarget.Body.Instructions.Count + " scene_original_instructions=" + oldScene.Body.Instructions.Count +
+                              " scene_new_instructions=" + newScene.Body.Instructions.Count + " unrelated_bodies_unchanged=true");
         }
         return 0;
     }

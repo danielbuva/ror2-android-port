@@ -45,12 +45,12 @@
     "tools/assembly-transforms/CatalogContract.cs": "5c9ec3e42209d7f1cf1f7cbc18e2ff61c16e314363b3fc9135fc77c8747e1da4",
     "tools/assembly-transforms/CatalogNames.cs": "ff18bcf18c58de1e5a2113bcfb35b02d98b1c33db80e7345bd077daea6ace682",
     "tools/assembly-transforms/MigrationSurface.cs": "771f9ecb44b76328b135eecb3539a611ffc3f8ab3fff7213494865e84d7a56af",
-    "tools/assembly-transforms/NativeViewCameraCecilTransform.cs": "78d8734e77b17e0261e2c016ccf8131fd410a6b61f3cb10d52704664a0ba5d21",
+    "tools/assembly-transforms/NativeViewCameraCecilTransform.cs": "d35e27034211fec454d5005e6d31ebff69887c05d6fd95fdebe19b0e202a373f",
     "tools/assembly-transforms/OptionalPresentationGuard.cs": "a78d5d453bfe7d78a2df3b2040ff3ca09f22ef6ef9dd9047be751b5ed6e962f0",
     "tools/assembly-transforms/Program.cs": "f4fd626746cd6a2a970e3a543a62ce1f487587c5ce10bf356a3611e4c5d6bf28",
     "tools/assembly-transforms/RewiredContract.cs": "ed300e3f88ed25823d05ef9ab22e732d9d37d6dee0e5968e837c50ec63c8b8f3",
     "tools/assembly-transforms/Slice.cs": "6d25f9bf0c8f8f4107708d32d0275fb728ffe06de81ec1fdee7fcb32962bf494",
-    "tools/assembly-transforms/VerifyNativeViewCameraTransform.cs": "2823433b7b1d2edd76363db1720fa7ecd4878db92180a34731fa314a8fa0f04e",
+    "tools/assembly-transforms/VerifyNativeViewCameraTransform.cs": "e8e3e70e06a611bc5433e8669007a4f4b3c8c8a35b44d64799a6a1e9776976df",
     "tools/assembly-transforms/WwiseUnavailable.cs": "81ebaa69b8c40a19c2068dfcb856ceffe67a0b3d4be8852936ffcbedb8486ba3"
   }
 }

@@ -189,7 +189,7 @@ binary, scoped inventory, managed SDK directory, corlib and new private output.
 It binds the complete pinned 84-file managed set, inventory and reader hashes,
 refusing replacement, missing files, mixed inputs and drift. J878 verifies forward
 mappings on Android; J883 matches root-inclusive metadata to native SDK cache
-observations. Complete consumer semantics and independent project roots remain open.
+observations. Emitted caches, consumer semantics and complete roots remain open.
 No game or linker consumer reads it.
 `phone_wrapper_population_oracle.py` and `WrapperPopulationOracle.cs` own a
 separate SDK-only desktop check. The explicit root/work/editor invocation stages
@@ -216,29 +216,6 @@ cache comparison before any broader qualification. Forward slots use only the
 SDK's observed runtime indices/IDs, with complete registry coverage; zero slots
 remain absent entries. Root membership in native population is inclusive, while
 the separate wrapper-query collector retains its root exclusion.
-
-`phone_scene_usage_oracle.py` and `SceneUsageOracle.cs` own a current experimental
-desktop verification step for the authored content fixture. An explicit
-root/work/exact-editor invocation stages a fresh SDK-only project through the
-existing guarded writer and claims the primary checkout's build mutex. The
-collector creates a default scene with the authored `ContentFixture`, compiles
-its Android player scripts into a fresh type database, and observes scene and
-global-manager dependencies through the SDK content-build APIs. Loaded scene
-objects remain separate from asset identifiers, referenced objects and usage-tag
-objects; a live object without an asset identifier remains explicitly observed.
-Included type arrays retain shared-wrapper multiplicity rather than inventing
-unique native identities; global usage fields remain separate observations.
-Unresolved
-objects have no claimed support result, and null type responses stay distinct
-from empty arrays. The receipt binds committed transitive source, the SDK,
-staged inputs, scene and observed assemblies. Teardown disposes the type
-database and usage sets and exits only this new batch process; failures and logs
-remain local. No player is built, no MCP editor or game project is reused, and
-no report supplies phone-build/linker inputs. Complete root production remains
-unqualified. API knowledge comes from the pinned Unity reference source
-[`ContentBuildInterface`](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Modules/BuildPipeline/Editor/Managed/ContentBuildInterface.bindings.cs)
-and [`PlayerBuildInterface`](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Modules/BuildPipeline/Editor/Managed/PlayerBuildInterface.bindings.cs);
-no reference implementation is copied.
 
 `phone_registry.py` and `phone_registry_literals.py` own separate experimental
 static SDK metadata support.
@@ -2373,12 +2350,21 @@ the visual report refreshes after disposal and retains the object ID. The origin
 wrapper discards native Add/Remove results, so these remain explicitly unobserved.
 Neither managed membership nor this camera establishes spatial playback. The marker
 is compiled into RoR2.dll for exact-profile rig association; the runtime owner
-remains off by default.
+remains off by default. When Console is absent, an activation scope guards only
+the owned cloned `SceneCamera` from its Console-dependent graphics configuration;
+the owner explicitly reports reduced fidelity using source prefab defaults. `AndroidNativeSourceCameraPrerequisites.cs` resolves the original Sobel shader
+and three source-catalog shader roots (Outline Highlight, Vision Limit and
+TranslucentImage DownTent) while the clone is inactive; its exact SceneCamera
+activation scope is released in `finally`. The bound marker pumps the original
+private `EarlyUpdate` only for this owned null-viewer rig while the application
+owner is inactive. It tracks real target/context readiness before installing or
+removing the override; lost context deactivates and destroys only the owned
+staging root. These are source dependencies and lifecycle contracts only;
+bundle/Unity/runtime readiness remains unproven.
 
 The current whole-catalog path restores only an exact prior camera stage result to its guarded 3124 or
 audio-composed 1034 preimage, runs the original-audio producer, then applies the camera
-producer to that immediate result. Destination R8/R9 rebuilds restore a receipt-bound prior camera result when present, then keep their existing audio/build route without applying this current-project camera transform. The accepted profiles are 3124/API 107 to 236fab,
-1034/API d540 to e16e, and PointSound game 6f96 with either the retained d540 profile or the R10 1ced profile. The latter accepts its exact 165-row audio stage receipt for either explicit passive-PCM state (`true` or `false`); camera staging does not depend on enabling the passive PCM diagnostic. It has a separately derived camera output pin, and arbitrary API/game pairs remain refused. The 793 API is restore-only. Cecil reference resolution is
+producer to that immediate result. Destination R8/R9 rebuilds restore a receipt-bound prior camera result when present, then keep their existing audio/build route without applying this current-project camera transform. The active exact profiles are 3124/API 107 to e237af, 1034/API d540 to aa7ca, and PointSound game 6f96 with either the retained d540 profile or the R10 1ced profile to 41b66. The latter accepts its exact 165-row audio stage receipt for either explicit passive-PCM state (`true` or `false`); camera staging does not depend on enabling the passive PCM diagnostic. It has a separately derived camera output pin, and arbitrary API/game pairs remain refused. The 793 API is restore-only. Cecil reference resolution is
 materialized from the current project plugin DLLs and the exact pinned Unity engine
 modules/Mono BCL. Its receipt is a host type-resolution input, not the full player
 linker/IL2CPP closure or an APK/runtime acceptance record.
