@@ -24,7 +24,7 @@ ACCEPTED = "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88"
 DEFAULT_ROLES = list(stage_module.DEFAULT_ROLES)
 
 
-def write_set(root: Path, requested: bool, roles: list[str] | None = None) -> tuple[Path, Path | None, Path | None]:
+def write_set(root: Path, requested: bool, roles: list[str] | None = None, *, music_output_requested: bool = False) -> tuple[Path, Path | None, Path | None]:
     if roles is None:
         roles = DEFAULT_ROLES + (["api", "game", "native"] + ["banks"] * 154 if requested else [])
     rows_to_write = [(role, index) for index, role in enumerate(roles)]
@@ -70,7 +70,8 @@ def write_set(root: Path, requested: bool, roles: list[str] | None = None) -> tu
     request = {
         "schema": "game-audio-original-runtime-request-r3",
         "requested": requested,
-        "passive_pcm_capture_requested": False,
+        "passive_pcm_capture_requested": bool(requested and music_output_requested),
+        "passive_pcm_capture_music_output_requested": music_output_requested,
         "request_id": "0123456789abcdef0123456789abcdef" if requested else "",
         "build_input_contract_sha256": "a" * 64 if requested else "",
     }
@@ -204,11 +205,89 @@ class StageTests(unittest.TestCase):
 
     def test_predecessor_lineage_differs_only_at_declared_composed_game_pin(self):
         differences = {key for key in stage_module.LINEAGE if stage_module.LINEAGE[key] != stage_module.PREVIOUS_LINEAGE.get(key)}
-        self.assertEqual({"observed_api_sha256", "composed_api_sha256"}, differences)
+        self.assertEqual({"observed_api_sha256", "composed_api_sha256", "native_library_sha256"}, differences)
         self.assertEqual(
             "d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23",
             stage_module.PREVIOUS_LINEAGE["composed_api_sha256"],
         )
+
+    def test_five_previous_lineages_keep_bb_native_pin_while_current_uses_new_output(self):
+        old_lineages = (
+            stage_module.OLD_CURRENT_LINEAGE,
+            stage_module.PREVIOUS_LINEAGE,
+            stage_module.OLDER_PREVIOUS_LINEAGE,
+            stage_module.OLDER_RESTORE_LINEAGE,
+            stage_module.LEGACY_RESTORE_LINEAGE,
+        )
+        self.assertEqual(5, len(old_lineages))
+        self.assertEqual(
+            {"bb5879b4eb38b81dc3830a1662ba467b60b595e7fedb88a1301d3161f8ab9304"},
+            {item["native_library_sha256"] for item in old_lineages},
+        )
+        self.assertEqual(
+            "4f309b9df05392b7b78ea51c53955225f27400a83810e260441f65dfdc335498",
+            stage_module.LINEAGE["native_library_sha256"],
+        )
+
+    def test_old_current_requested_receipt_upgrades_directly_to_new_native(self):
+        with self.temporary_directory() as temp:
+            root = Path(temp)
+            old_manifest, old_request, old_receipt = write_set(root / "old", True)
+            new_manifest, new_request, new_receipt = write_set(root / "new", True)
+            self.assertIsNotNone(old_request)
+            self.assertIsNotNone(old_receipt)
+            self.assertIsNotNone(new_request)
+            self.assertIsNotNone(new_receipt)
+            old = json.loads(old_manifest.read_text())
+            new = json.loads(new_manifest.read_text())
+            for document in (old, new):
+                api_hash = next(row["sha256"] for row in document["outputs"] if row["role"] == "api")
+                game_hash = next(row["sha256"] for row in document["outputs"] if row["role"] == "game")
+                document["lineage"]["composed_api_sha256"] = api_hash
+                document["lineage"]["composed_game_sha256"] = game_hash
+            old_native = next(row for row in old["outputs"] if row["role"] == "native")
+            old_lineage = {
+                **stage_module.OLD_CURRENT_LINEAGE,
+                "composed_api_sha256": old["lineage"]["composed_api_sha256"],
+                "composed_game_sha256": old["lineage"]["composed_game_sha256"],
+                "native_library_sha256": old_native["sha256"],
+                "stage_receipt_sha256": old["lineage"]["stage_receipt_sha256"],
+            }
+            old["lineage"] = old_lineage
+            new_native = next(row for row in new["outputs"] if row["role"] == "native")
+            new_native_path = new_manifest.parent / new_native["source"]
+            new_native_path.write_bytes(b"new native selector output fixture")
+            new_native["sha256"] = hashlib.sha256(new_native_path.read_bytes()).hexdigest()
+            new_lineage = {
+                **old_lineage,
+                "native_library_sha256": new_native["sha256"],
+                "stage_receipt_sha256": new["lineage"]["stage_receipt_sha256"],
+            }
+            new["lineage"] = new_lineage
+            old_manifest.write_text(json.dumps(old))
+            new_manifest.write_text(json.dumps(new))
+            project = root / "project"
+            project.mkdir()
+            with mock.patch.dict(stage_module.LINEAGE, old_lineage, clear=True):
+                stage_module.stage(project, old_manifest, old_request, old_receipt)
+            prior_receipt_path = project / "Assets/StreamingAssets/Lab/OriginalGameAudioStageReceipt.json"
+            with mock.patch.dict(stage_module.LINEAGE, new_lineage, clear=True), mock.patch.object(stage_module, "OLD_CURRENT_LINEAGE", old_lineage):
+                result = stage_module.stage(project, new_manifest, new_request, new_receipt)
+            self.assertTrue(result["requested"])
+            self.assertEqual(new_lineage, result["lineage"])
+            self.assertEqual(
+                new_native_path.read_bytes(),
+                (project / stage_module.NATIVE_TARGET).read_bytes(),
+            )
+            self.assertEqual(
+                new_native["sha256"],
+                next(row["sha256"] for row in result["outputs"] if row["target"] == stage_module.NATIVE_TARGET),
+            )
+            self.assertNotEqual(
+                old_native["sha256"],
+                new_native["sha256"],
+            )
+            self.assertTrue(prior_receipt_path.is_file())
 
     def test_9a_lineage_is_restore_only_and_migrates_to_current_default_off(self):
         with self.temporary_directory() as temp:
@@ -343,10 +422,42 @@ class StageTests(unittest.TestCase):
             self.assertEqual("0123456789abcdef0123456789abcdef", receipt["request_id"])
             self.assertEqual(165, len(receipt["outputs"]))
 
+    def test_stage_binds_music_output_selector_and_refuses_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            request = {
+                "schema": "game-audio-original-runtime-request-r3",
+                "requested": True,
+                "request_id": "0123456789abcdef0123456789abcdef",
+                "passive_pcm_capture_requested": True,
+                "passive_pcm_capture_music_output_requested": True,
+                "build_input_contract_sha256": "a" * 64,
+            }
+            request_path = root / "request.json"
+            request_path.write_text(json.dumps(request), encoding="utf-8")
+            manifest = {
+                "request": {
+                    "requested": True,
+                    "request_id": request["request_id"],
+                    "passive_pcm_capture_requested": True,
+                    "passive_pcm_capture_music_output_requested": True,
+                    "build_input_contract_sha256": "a" * 64,
+                }
+            }
+            pins = stage_module.verify_request(manifest, request_path)
+            self.assertIs(pins["passive_pcm_capture_music_output_requested"], True)
+            mismatched_manifest = {"request": {**manifest["request"], "passive_pcm_capture_music_output_requested": False}}
+            with self.assertRaisesRegex(ValueError, "specific-output PCM selection differs"):
+                stage_module.verify_request(mismatched_manifest, request_path)
+            request["passive_pcm_capture_requested"] = False
+            request_path.write_text(json.dumps(request), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "requires passive PCM capture"):
+                stage_module.verify_request(manifest, request_path)
+
     def test_requested_receipt_is_staged_and_present_at_payload_copy_url(self) -> None:
         with self.temporary_directory() as temp:
             root = Path(temp)
-            manifest, request, bank_receipt = write_set(root, True)
+            manifest, request, bank_receipt = write_set(root, True, music_output_requested=True)
             assert request is not None and bank_receipt is not None
             manifest_doc = json.loads(manifest.read_text())
             lineage = manifest_doc["lineage"]
@@ -361,6 +472,7 @@ class StageTests(unittest.TestCase):
                 {key: lineage[key] for key in ("composed_api_sha256", "composed_game_sha256", "native_library_sha256", "stage_receipt_sha256")},
             ):
                 result = stage_module.stage(project, manifest, request, bank_receipt)
+            self.assertTrue(result["passive_pcm_capture_music_output_requested"])
             expected = bank_receipt.read_bytes()
             packaged = project / stage_module.BANK_RECEIPT_TARGET
             self.assertEqual(expected, packaged.read_bytes())

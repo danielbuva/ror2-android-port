@@ -46,6 +46,11 @@ def main() -> int:
         action="store_true",
         help="explicitly select the bounded passive PCM diagnostic",
     )
+    parser.add_argument(
+        "--passive-pcm-capture-music-output",
+        action="store_true",
+        help="select the exact observed original music output for passive PCM capture",
+    )
     parser.add_argument("--stage-receipt", type=Path)
     parser.add_argument("--stage-root", type=Path)
     parser.add_argument("--prefab", type=Path)
@@ -63,8 +68,10 @@ def main() -> int:
             args.csc.resolve(strict=True),
         )
         output = args.artifact_output.resolve(strict=False)
-        if args.variant == "default-off" and args.passive_pcm_capture:
-            parser.error("--passive-pcm-capture requires --variant requested")
+        if args.variant == "default-off" and (args.passive_pcm_capture or args.passive_pcm_capture_music_output):
+            parser.error("passive PCM selectors require --variant requested")
+        if args.passive_pcm_capture_music_output and not args.passive_pcm_capture:
+            parser.error("--passive-pcm-capture-music-output requires --passive-pcm-capture")
         if args.variant == "default-off":
             result = producer.compile_default_off(*common, output)
             receipt = stager.stage(args.project, output / "artifact-manifest.json", None, None)
@@ -113,6 +120,7 @@ def main() -> int:
                 output,
                 args.request_id,
                 args.passive_pcm_capture,
+                args.passive_pcm_capture_music_output,
             )
             request_file = args.request.resolve(strict=True) if args.request else output / "generated/request.json"
             receipt = stager.stage(

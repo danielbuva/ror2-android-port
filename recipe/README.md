@@ -1539,3 +1539,24 @@ observer, ownership and preimage checks. SDK/game-derived DLLs, resolver
 snapshots, receipts and device reports remain ignored. The source/hash update
 and synthetic fixtures pass the public-content boundary; device camera
 readiness, visual parity and audio acceptance remain separate gates.
+
+
+### Exact music-output passive capture source audit
+
+J918 extends the authored passive monitor's immutable selector and request
+plumbing. Source/default-off admission, full 64-bit identity, matching removal,
+unknown-outcome Term refusal and cache/stage ownership have host contracts.
+The owner cohort recipe and camera build-hook ancestor pin name only reviewed
+authored sources; original game/API transform outputs remain independently
+pinned. Previous exact native/API/game receipts remain restore/upgrade inputs,
+never a permissive unknown-module admission.
+
+The custom native ABI requires a paired licensed local library, recorded in
+`docs/LOCAL_STATE.md`. Its SDK-derived bridge, licensed sources/archives, native
+outputs, game assemblies, banks and raw device reports stay ignored. Public
+changes contain authored interfaces, adapters, tests, hashes and result notes;
+no protected SDK implementation is reproduced. This audit does not authorize
+redistributing middleware or game content. Rebuild staging must replay these
+committed producer/transform sources. J917's camera screenshot failure and
+J918's untested Android capture remain explicit; neither host tests nor library
+static audit qualify audio playback, rendering parity or physical audibility.

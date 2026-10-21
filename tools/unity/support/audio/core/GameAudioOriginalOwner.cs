@@ -209,7 +209,8 @@ public static class GameAudioOriginalOwner
 
     // A capture request is armed only by the verified playable-world boundary,
     // never by process startup or Wwise readiness alone.
-    public static bool ArmPassiveCaptureAtGameplayBoundary(bool explicitlyRequested, bool playableWorldStarted)
+    public static bool ArmPassiveCaptureAtGameplayBoundary(bool explicitlyRequested, bool playableWorldStarted,
+        GameAudioOriginalPassivePcmCaptureSelection selection)
     {
         IGameAudioOriginalPassivePcmCapture selected;
         lock (Sync)
@@ -217,7 +218,7 @@ public static class GameAudioOriginalOwner
             if (!explicitlyRequested || !playableWorldStarted || !optInRequested || passiveCapture == null) return false;
             selected = passiveCapture;
         }
-        return selected.RequestGameplayArm();
+        return selected.RequestGameplayArm(selection);
     }
     public static void FinishPassiveCaptureGameplayWindow()
     {

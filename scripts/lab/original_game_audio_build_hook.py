@@ -181,14 +181,23 @@ def read_selection(work: Path, selection_path: Path) -> tuple[dict, dict[str, Pa
         # in either legacy shape maps to false. Unknown fields remain a hard
         # refusal so the diagnostic is never inferred or enabled.
         selection_keys = {"schema", "requested", "request_id", "inputs"}
-        if selection["schema"] == SELECTION_SCHEMA and "passive_pcm_capture_requested" in selection:
-            selection_keys.add("passive_pcm_capture_requested")
+        if selection["schema"] == SELECTION_SCHEMA:
+            if "passive_pcm_capture_requested" in selection:
+                selection_keys.add("passive_pcm_capture_requested")
+            if "passive_pcm_capture_music_output_requested" in selection:
+                selection_keys.add("passive_pcm_capture_music_output_requested")
         if set(selection) != selection_keys:
             raise ValueError("requested audio selection has unexpected fields")
         passive_pcm_requested = selection.get("passive_pcm_capture_requested", False)
         if type(passive_pcm_requested) is not bool:
             raise ValueError("passive PCM diagnostic selection must be a boolean")
         selection["passive_pcm_capture_requested"] = passive_pcm_requested
+        music_output_requested = selection.get("passive_pcm_capture_music_output_requested", False)
+        if type(music_output_requested) is not bool:
+            raise ValueError("specific-output PCM selection must be a boolean")
+        if music_output_requested and not passive_pcm_requested:
+            raise ValueError("specific-output PCM selection requires passive PCM capture")
+        selection["passive_pcm_capture_music_output_requested"] = music_output_requested
         paths = selection.get("inputs")
         if not isinstance(paths, dict) or set(paths) != set(REQUESTED_PATHS):
             raise ValueError("requested audio selection must provide the exact explicit input path set")
@@ -376,6 +385,7 @@ def stage_for_build(project: Path, work: Path, *, selection_path: Path | None = 
         payload["managed_producer_sha256"] = file_sha(ROOT / "tools/unity/support/audio/managed-producer/produce.py")
         payload["request_id"] = selection["request_id"]
         payload["passive_pcm_capture_requested"] = selection["passive_pcm_capture_requested"]
+        payload["passive_pcm_capture_music_output_requested"] = selection["passive_pcm_capture_music_output_requested"]
         payload["input_sha256"] = {key: file_sha(path) for key, path in sorted(resolved.items()) if key != "stage_root"}
         payload["receipt_bound_payload"] = json.loads(resolved["stage_receipt"].read_text(encoding="utf-8"))["outputs"]
     sound_emitter = synchronize_sound_emitter(project, work, requested=variant == "requested", resolved=resolved)
@@ -435,6 +445,7 @@ def stage_for_build(project: Path, work: Path, *, selection_path: Path | None = 
             output,
             selection["request_id"],
             selection["passive_pcm_capture_requested"],
+            selection["passive_pcm_capture_music_output_requested"],
         )
         record_generation(output, generation_key, payload)
         receipt = stager.stage(

@@ -1,5 +1,11 @@
 using System;
 
+namespace UnityEngine.Scripting
+{
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method | AttributeTargets.Property | AttributeTargets.Constructor)]
+    internal sealed class PreserveAttribute : Attribute { }
+}
+
 internal sealed class GameAudioOriginalAndroidNativeBootstrap
 {
     internal NativeWwiseMonitorLease MonitorLease { get; set; }
@@ -19,6 +25,8 @@ internal sealed class PassivePcmCaptureReport
     internal bool OutputIdentityObserved;
     internal bool CaptureOutputDeviceIdObserved;
     internal ulong CaptureOutputDeviceId;
+    internal bool CaptureSelectorObserved;
+    internal GameAudioOriginalPassivePcmCaptureSelection CaptureSelection;
 }
 
 internal sealed class PassivePcmCaptureWindow
@@ -32,6 +40,7 @@ internal sealed class PassivePcmCaptureWindow
     internal string Failure { get; set; }
     internal PassivePcmCaptureReport Report { get; } = new PassivePcmCaptureReport();
     internal bool RequestGameplayArm() { return true; }
+    internal bool RequestGameplayArm(GameAudioOriginalPassivePcmCaptureSelection selection) { return selection.IsWellFormed; }
     internal void FinishGameplayWindow() { }
     internal bool Start(float time, bool ownerReady, bool exactControlObserved, bool serviceObserved, ulong frames) { return true; }
     internal void Tick(float time, bool ownerReady, bool exactControlObserved, ulong frames) { }

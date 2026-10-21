@@ -58,6 +58,16 @@ class ProducerManifestTests(unittest.TestCase):
     def temporary_directory(self):
         return tempfile.TemporaryDirectory()
 
+    def test_new_native_output_pin_replaces_old_pin_for_producer_artifacts(self):
+        self.assertEqual(
+            "4f309b9df05392b7b78ea51c53955225f27400a83810e260441f65dfdc335498",
+            producer.LINEAGE["native_library_sha256"],
+        )
+        self.assertNotEqual(
+            "bb5879b4eb38b81dc3830a1662ba467b60b595e7fedb88a1301d3161f8ab9304",
+            producer.LINEAGE["native_library_sha256"],
+        )
+
     def test_actual_current_pair_accepts_game_only_transform_with_same_api(self):
         current_api = producer.LINEAGE["composed_api_sha256"]
         current_game = producer.LINEAGE["composed_game_sha256"]

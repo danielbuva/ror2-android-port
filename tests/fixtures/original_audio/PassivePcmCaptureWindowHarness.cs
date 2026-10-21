@@ -7,6 +7,13 @@ internal sealed class FakePcmApi : INativeWwiseDiagApi
     internal bool ThrowSnapshot;
     internal int RegisterCalls;
     internal int UnregisterCalls;
+    internal uint RegisteredMode;
+    internal ulong RegisteredOutput;
+    internal uint UnregisteredMode;
+    internal ulong UnregisteredOutput;
+    internal bool FailRegistration;
+    internal bool RefuseUnregisterPairMismatch;
+    internal int EngineTermReturns;
 
     internal FakePcmApi()
     {
@@ -19,20 +26,26 @@ internal sealed class FakePcmApi : INativeWwiseDiagApi
     public int PostControl() { Values[22]++; return 1; }
     public int MarkEngineInitAttempted() { Values[23] = 1; return 1; }
     public int DisarmBeforeInit() { Values[13] = 2; return 1; }
-    public void EngineTermReturned() { Values[12] = 1; }
+    public void EngineTermReturned() { EngineTermReturns++; Values[12] = 1; }
     public void CallbackManagerTermReturned() { Values[20] = 1; }
     public int DisarmAfterTerm() { Values[13] = 2; return 1; }
-    public int RegisterCapture()
+    public int RegisterCapture(uint selectorMode, ulong outputSelector)
     {
         RegisterCalls++;
+        RegisteredMode = selectorMode;
+        RegisteredOutput = outputSelector;
         Values[11] = 1;
         Values[15] = 1;
         Values[17] = 1;
-        return 1;
+        return FailRegistration ? 0 : 1;
     }
-    public int UnregisterCapture()
+    public int UnregisterCapture(uint selectorMode, ulong outputSelector)
     {
         UnregisterCalls++;
+        UnregisteredMode = selectorMode;
+        UnregisteredOutput = outputSelector;
+        if (RefuseUnregisterPairMismatch &&
+            (selectorMode != RegisteredMode || outputSelector != RegisteredOutput)) return 0;
         Values[11] = 0;
         Values[16] = 1;
         return 1;
@@ -111,6 +124,9 @@ internal static class PassivePcmCaptureWindowHarness
             "partial gameplay-window counters are reported after early session completion");
         Check(report.SampleCount == 8 && report.FiniteSamples == 8 && report.NonzeroFiniteSamples == 3, "finite and nonzero counters are preserved");
         Check(report.OutputIdentityObserved && api.UnregisterCalls == 1 && lease.CaptureSafeBeforeEngineTerm, "owned callback is removed exactly once before Term");
+        Check(api.RegisteredMode == 0 && api.RegisteredOutput == 0 &&
+            api.UnregisteredMode == api.RegisteredMode && api.UnregisteredOutput == api.RegisteredOutput,
+            "default main-output selection is registered and unregistered with the same exact selector");
         ownedGuard();
         Check(lease.CaptureSafeBeforeEngineTerm, "original Term guard accepts only confirmed removal");
     }
@@ -179,6 +195,95 @@ internal static class PassivePcmCaptureWindowHarness
             "a nonzero stale slot without a callback in this window remains unknown");
     }
 
+
+    private static void SpecificOutputPreservesFullWidthPairThroughRemoval()
+    {
+        const ulong highBitOutput = 0xF123456789ABCDEFUL;
+        GameAudioOriginalPassivePcmCaptureSelection selection;
+        Check(GameAudioOriginalPassivePcmCaptureSelection.TrySpecificOutput(
+            true, true, true, highBitOutput, out selection), "exact owned successful output is selectable");
+        Check(selection.Mode == GameAudioOriginalPassivePcmCaptureSelectorMode.SpecificOutput &&
+            selection.IsWellFormed && selection.NativeOutputSelector == highBitOutput,
+            "specific selector preserves all 64 output-ID bits");
+
+        var api = new FakePcmApi();
+        api.RefuseUnregisterPairMismatch = true;
+        var lease = ReadyLease(api);
+        Action ownedGuard = null;
+        var window = new PassivePcmCaptureWindow(lease, true,
+            delegate(Action value) { ownedGuard = value; }, delegate { return ownedGuard; }, null);
+        Check(window.RequestGameplayArm(selection), "specific-output selection arms at the gameplay boundary");
+        Check(window.Start(1f, true, true, true, 1), "specific-output capture starts after readiness and a service frame");
+        Check(api.RegisteredMode == (uint)GameAudioOriginalPassivePcmCaptureSelectorMode.SpecificOutput &&
+            api.RegisteredOutput == highBitOutput, "register receives the exact mode and high-bit output ID");
+        api.AddPcm();
+        api.Values[18] = unchecked((long)highBitOutput);
+        window.Tick(1.1f, true, true, 2);
+        window.FinishGameplayWindow();
+        var report = window.Report;
+        Check(report.State == "captured" && report.CaptureSelectorObserved &&
+            report.CaptureSelection.SpecificOutputId == highBitOutput,
+            "report retains the frozen specific-output selector");
+        Check(report.CaptureOutputDeviceIdObserved && report.CaptureOutputDeviceId == highBitOutput,
+            "callback output identity remains a distinct exact unsigned 64-bit value");
+        Check(api.UnregisterCalls == 1 && api.UnregisteredMode == api.RegisteredMode &&
+            api.UnregisteredOutput == api.RegisteredOutput && lease.CaptureSafeBeforeEngineTerm,
+            "unregister uses the exact registered selector pair");
+    }
+
+    private static void InvalidOrFailedSpecificOutputNeverFallsBackToMain()
+    {
+        GameAudioOriginalPassivePcmCaptureSelection selection;
+        Check(!GameAudioOriginalPassivePcmCaptureSelection.TrySpecificOutput(
+            false, true, true, 55, out selection), "unowned output is refused");
+        Check(!GameAudioOriginalPassivePcmCaptureSelection.TrySpecificOutput(
+            true, false, true, 55, out selection), "unsuccessful AddOutput is refused");
+        Check(!GameAudioOriginalPassivePcmCaptureSelection.TrySpecificOutput(
+            true, true, false, 55, out selection), "unknown output ID is refused");
+        Check(!GameAudioOriginalPassivePcmCaptureSelection.TrySpecificOutput(
+            true, true, true, 0, out selection), "main-output sentinel cannot masquerade as specific output");
+        Check(!GameAudioOriginalPassivePcmCaptureSelection.TrySpecificOutput(
+            true, true, true, ulong.MaxValue, out selection), "invalid maximum sentinel is refused");
+
+        Check(GameAudioOriginalPassivePcmCaptureSelection.TrySpecificOutput(
+            true, true, true, 55, out selection), "valid selector setup");
+        var failedApi = new FakePcmApi { FailRegistration = true };
+        var failedLease = ReadyLease(failedApi);
+        Action failedGuard = null;
+        var failedWindow = new PassivePcmCaptureWindow(failedLease, true,
+            delegate(Action value) { failedGuard = value; }, delegate { return failedGuard; }, null);
+        Check(failedWindow.RequestGameplayArm(selection), "valid selector can arm before native result");
+        Check(!failedWindow.Start(1f, true, true, true, 1), "known registration failure refuses capture");
+        failedWindow.BeforeOriginalEngineTerm();
+        Check(failedApi.RegisterCalls == 1 && failedApi.UnregisterCalls == 0 &&
+            failedLease.CaptureSafeBeforeEngineTerm,
+            "known failed registration owns no callback and never falls back or unregisters");
+    }
+
+    private static void UnregisterPairFailureKeepsTermFailClosed()
+    {
+        GameAudioOriginalPassivePcmCaptureSelection selection;
+        Check(GameAudioOriginalPassivePcmCaptureSelection.TrySpecificOutput(
+            true, true, true, 91, out selection), "valid selector setup for removal refusal");
+        var api = new FakePcmApi { RefuseUnregisterPairMismatch = true };
+        var lease = ReadyLease(api);
+        Action ownedGuard = null;
+        int refusals = 0;
+        var window = new PassivePcmCaptureWindow(lease, true,
+            delegate(Action value) { ownedGuard = value; }, delegate { return ownedGuard; }, error => refusals++);
+        Check(window.RequestGameplayArm(selection), "pair-refusal capture arms");
+        Check(window.Start(1f, true, true, true, 1), "pair-refusal capture starts");
+        api.RegisteredOutput = 92; // Simulate an inconsistent native registration ledger.
+        window.FinishGameplayWindow();
+        Check(window.State == "outcome_unknown" && !lease.CaptureSafeBeforeEngineTerm,
+            "inconsistent output pair leaves callback ownership unresolved");
+        bool refused = false;
+        try { window.BeforeOriginalEngineTerm(); }
+        catch (InvalidOperationException) { refused = true; }
+        Check(refused && refusals == 1 && api.UnregisterCalls == 1 && api.EngineTermReturns == 0,
+            "wrong selector pair refuses the existing Term guard without retry or Term marker");
+    }
+
     private static int Main()
     {
         NoOpGuardRefusesBeforeRegistration();
@@ -186,7 +291,10 @@ internal static class PassivePcmCaptureWindowHarness
         BoundedCaptureRemovesBeforeTerm();
         UnknownSnapshotUsesOneCleanupOnlyUnregister();
         FullWidthOutputIdsSurviveSnapshotAndDecimalEncoding();
-        Console.WriteLine("PASS PCM owner guard, bounded counters, and unknown-outcome cleanup contract");
+        SpecificOutputPreservesFullWidthPairThroughRemoval();
+        InvalidOrFailedSpecificOutputNeverFallsBackToMain();
+        UnregisterPairFailureKeepsTermFailClosed();
+        Console.WriteLine("PASS PCM guard, bounded counters, main/specific selector pairing, full-width IDs, and fail-closed cleanup");
         return 0;
     }
 }

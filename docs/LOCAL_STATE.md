@@ -43,7 +43,24 @@ the optional boolean `passive_pcm_capture_requested`, default false. R1 remains
 accepted with capture disabled; it rejects the new field. The flag is included
 in generation/cache identity and the generated process request. It selects a
 bounded observation of ordinary gameplay output, with no test event or saved
-audio. The SoundEmitter restorer also reads the existing accepted-input,
+audio. The optional R2 boolean `passive_pcm_capture_music_output_requested` defaults
+false and requires passive capture. It selects the exact ready original music
+output dynamically at gameplay admission; no output identity is configured on
+the host. Both flags enter cache/request/staging identity. R1 rejects these
+new fields. J918's matching native runtime is an explicit licensed local input:
+`work/coordination/original-music-target-capture-native-build-root/r1/`
+`root-native-target-capture-r1/libs/arm64-v8a/libAkSoundEngine.so`, SHA-256
+`4f309b9df05392b7b78ea51c53955225f27400a83810e260441f65dfdc335498`.
+Its adjacent `build-record.json` binds the authorized SDK sources/archives,
+exact NDK r25c tools and authored adapter. Those protected inputs and the private
+SDK-derived bridge remain required local state; public source cannot distribute
+them. This library changes the custom capture ABI and must be selected with
+the corresponding committed managed producer. It is not a Release ABI-inspection
+replacement. The selection names this exact artifact explicitly; no timestamped
+run is searched or read implicitly. The new artifact's local compilation and
+static qualification do not establish Android loading or playback.
+
+The SoundEmitter restorer also reads the existing accepted-input,
 reconstruction and project-input receipts and the accepted export's prefab/meta;
 it pins the exact source bytes and changes only the owned project copy.
 

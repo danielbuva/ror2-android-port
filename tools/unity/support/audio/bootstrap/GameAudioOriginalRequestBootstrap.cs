@@ -11,20 +11,25 @@ public sealed class GameAudioOriginalRequest
     public readonly IEnumerable<string> SourceBankNames;
     public readonly IGameAudioOriginalStartupPreparation Preparation;
     public readonly bool PassivePcmCaptureRequested;
+    public readonly bool PassivePcmCaptureMusicOutputRequested;
     public readonly IGameAudioOriginalPassivePcmCapture PassivePcmCapture;
 
     public GameAudioOriginalRequest(bool requested, IEnumerable<string> sourceBankNames,
         IGameAudioOriginalStartupPreparation preparation, bool passivePcmCaptureRequested = false,
-        IGameAudioOriginalPassivePcmCapture passivePcmCapture = null)
+        IGameAudioOriginalPassivePcmCapture passivePcmCapture = null,
+        bool passivePcmCaptureMusicOutputRequested = false)
     {
         if (passivePcmCaptureRequested && (!requested || passivePcmCapture == null))
             throw new ArgumentException("Passive PCM opt-in requires an accepted original-audio request and its bootstrap-owned capture owner.");
         if (!passivePcmCaptureRequested && passivePcmCapture != null)
             throw new ArgumentException("A passive PCM owner cannot be attached when the explicit diagnostic selection is false.");
+        if (passivePcmCaptureMusicOutputRequested && !passivePcmCaptureRequested)
+            throw new ArgumentException("Music-output selector requires passive PCM capture to be explicitly selected.");
         Requested = requested;
         SourceBankNames = sourceBankNames;
         Preparation = preparation;
         PassivePcmCaptureRequested = passivePcmCaptureRequested;
+        PassivePcmCaptureMusicOutputRequested = passivePcmCaptureMusicOutputRequested;
         PassivePcmCapture = passivePcmCapture;
     }
 }
@@ -38,6 +43,7 @@ public static class GameAudioOriginalRequestBootstrap
     // A generated request pin can opt in only for this exact accepted build.
     public static Func<GameAudioOriginalRequest> RequestProvider = GameAudioOriginalAcceptedRequestProvider.Create;
     public static bool PassivePcmCaptureRequested { get; private set; }
+    public static bool PassivePcmCaptureMusicOutputRequested { get; private set; }
     // Supplied by the reachable Assembly-CSharp owner. It resolves the original
     // serialized settings asset from the already-owned whole-game content bundle;
     // Bootstrap never creates a Resources duplicate or references RoR2.
@@ -60,12 +66,16 @@ public static class GameAudioOriginalRequestBootstrap
         if (request == null)
         {
             PassivePcmCaptureRequested = false;
+            PassivePcmCaptureMusicOutputRequested = false;
             GameAudioOriginalOwner.Configure(false, null, null);
             return;
         }
         PassivePcmCaptureRequested = request.PassivePcmCaptureRequested;
+        PassivePcmCaptureMusicOutputRequested = request.PassivePcmCaptureMusicOutputRequested;
         if (request.PassivePcmCaptureRequested && (!request.Requested || request.PassivePcmCapture == null))
             throw new InvalidOperationException("Passive PCM opt-in is missing an accepted owner-bound capture instance.");
+        if (request.PassivePcmCaptureMusicOutputRequested && !request.PassivePcmCaptureRequested)
+            throw new InvalidOperationException("Specific output capture is selected without passive PCM capture.");
         GameAudioOriginalOwner.Configure(request.Requested, request.SourceBankNames, request.Preparation, request.PassivePcmCapture, request.PassivePcmCaptureRequested);
     }
 
@@ -74,6 +84,7 @@ public static class GameAudioOriginalRequestBootstrap
     {
         configured = false;
         PassivePcmCaptureRequested = false;
+        PassivePcmCaptureMusicOutputRequested = false;
         RequestProvider = GameAudioOriginalAcceptedRequestProvider.Create;
     }
 #endif

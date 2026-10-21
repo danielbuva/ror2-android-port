@@ -214,6 +214,8 @@ class RequestPipelineTests(unittest.TestCase):
                     bank_index,
                     bank_dir / "Init.bnk",
                     init_receipt,
+                    True,
+                    True,
                 )
             contract = json.loads(contract_path.read_text())
             request = json.loads(request_path.read_text())
@@ -221,6 +223,8 @@ class RequestPipelineTests(unittest.TestCase):
             composed_row = next(row for row in contract["inputs"] if row["role"] == "composed_game_sha256")
             self.assertEqual(expected["composed_game_sha256"], composed_row["sha256"])
             self.assertEqual(expected["composed_game_sha256"], request["composed_game_sha256"])
+            self.assertIs(request["passive_pcm_capture_requested"], True)
+            self.assertIs(request["passive_pcm_capture_music_output_requested"], True)
             generator.ROOT = root
             generator.WORK = work
             generator.EXPECTED = expected
@@ -229,7 +233,9 @@ class RequestPipelineTests(unittest.TestCase):
             self.assertEqual(request["request_id"], validated["request"]["request_id"])
             generated_pin = work / "generated-pin.cs"
             generator.emit(request_path, contract_path, stage_path, generated_pin)
-            self.assertIn(expected["composed_game_sha256"], generated_pin.read_text())
+            generated_text = generated_pin.read_text()
+            self.assertIn(expected["composed_game_sha256"], generated_text)
+            self.assertIn("PassivePcmCaptureMusicOutputRequested = true;", generated_text)
             tampered = json.loads(request_path.read_text())
             tampered["composed_game_sha256"] = "f" * 64
             request_path.write_text(json.dumps(tampered))

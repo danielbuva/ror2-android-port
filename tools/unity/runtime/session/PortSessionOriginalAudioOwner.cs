@@ -39,6 +39,7 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
         public int sessionEntries;
         public float observedStartupSeconds;
         public bool passivePcmCaptureRequested;
+        public bool passivePcmMusicOutputRequested;
         public bool passivePcmGameplayArmRequested;
         public float passivePcmWindowStartRealtimeSinceStartup;
         public ulong passivePcmWindowStartServiceFrames;
@@ -52,6 +53,11 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
         public bool passivePcmCaptureOutputDeviceIdObserved;
         public ulong passivePcmCaptureOutputDeviceId;
         public string passivePcmCaptureOutputDeviceIdDecimal;
+        public bool passivePcmCaptureSelectorObserved;
+        public string passivePcmCaptureSelectorMode;
+        public bool passivePcmCaptureSelectedOutputIdKnown;
+        public ulong passivePcmCaptureSelectedOutputId;
+        public string passivePcmCaptureSelectedOutputIdDecimal;
         public bool managedDefaultListenerCensusKnown;
         public int managedDefaultListenerCount;
         public PortSessionOriginalMusicControllerOwner.Snapshot originalMusicController;
@@ -115,8 +121,26 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
 
     public static bool ArmPassivePcmCaptureAtGameplayBoundary(bool playableWorldStarted)
     {
+        if (!playableWorldStarted || !GameAudioOriginalRequestBootstrap.PassivePcmCaptureRequested)
+            return false;
+        GameAudioOriginalPassivePcmCaptureSelection selection =
+            GameAudioOriginalPassivePcmCaptureSelection.MainOutput();
+        if (GameAudioOriginalRequestBootstrap.PassivePcmCaptureMusicOutputRequested)
+        {
+            PortSessionOriginalMusicControllerOwner.Snapshot music =
+                PortSessionOriginalMusicControllerOwner.CaptureSnapshot();
+            bool currentOwner = music != null && music.requested && music.sourceAudioReady &&
+                !music.noAudio && music.engineInitialized && music.staticInstanceMatchesOwnedController &&
+                !music.outputObservationOwnerMismatch && !music.ownerCleanupRequested &&
+                !music.controllerDestroyedObserved && !music.removeOutputResultObserved;
+            if (!GameAudioOriginalPassivePcmCaptureSelection.TrySpecificOutput(currentOwner,
+                music != null && music.outputResultObserved && music.outputAccepted,
+                music != null && music.outputDeviceIdValid,
+                music == null ? 0UL : music.outputDeviceId, out selection))
+                return false; // A selected music-output profile never falls back to MainOutput.
+        }
         return GameAudioOriginalOwner.ArmPassiveCaptureAtGameplayBoundary(
-            GameAudioOriginalRequestBootstrap.PassivePcmCaptureRequested, playableWorldStarted);
+            GameAudioOriginalRequestBootstrap.PassivePcmCaptureRequested, playableWorldStarted, selection);
     }
 
     private static void ObservePointSoundLog(string condition, string stackTrace, LogType type)
@@ -173,6 +197,7 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
             sessionEntries = entries,
             observedStartupSeconds = host ? host.elapsed : 0f,
             passivePcmCaptureRequested = GameAudioOriginalRequestBootstrap.PassivePcmCaptureRequested,
+            passivePcmMusicOutputRequested = GameAudioOriginalRequestBootstrap.PassivePcmCaptureMusicOutputRequested,
             passivePcmGameplayArmRequested = pcm != null && pcm.ArmRequested,
             passivePcmWindowStartRealtimeSinceStartup = pcm == null ? 0f : pcm.WindowStartRealtimeSinceStartup,
             passivePcmWindowStartServiceFrames = pcm == null ? 0UL : pcm.WindowStartServiceFrames,
@@ -193,6 +218,16 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
             passivePcmCaptureOutputDeviceId = pcm == null ? 0UL : pcm.CaptureOutputDeviceId,
             passivePcmCaptureOutputDeviceIdDecimal = pcm != null && pcm.CaptureOutputDeviceIdObserved
                 ? GameAudioOriginalPassivePcmIdentity.ToDecimalString(pcm.CaptureOutputDeviceId) : null,
+            passivePcmCaptureSelectorObserved = pcm != null && pcm.CaptureSelectorObserved,
+            passivePcmCaptureSelectorMode = pcm != null && pcm.CaptureSelectorObserved
+                ? (pcm.CaptureSelection.Mode == GameAudioOriginalPassivePcmCaptureSelectorMode.MainOutput ? "main" : "specific") : null,
+            passivePcmCaptureSelectedOutputIdKnown = pcm != null && pcm.CaptureSelectorObserved &&
+                pcm.CaptureSelection.SpecificOutputIdKnown,
+            passivePcmCaptureSelectedOutputId = pcm != null && pcm.CaptureSelectorObserved &&
+                pcm.CaptureSelection.SpecificOutputIdKnown ? pcm.CaptureSelection.SpecificOutputId : 0UL,
+            passivePcmCaptureSelectedOutputIdDecimal = pcm != null && pcm.CaptureSelectorObserved &&
+                pcm.CaptureSelection.SpecificOutputIdKnown
+                ? GameAudioOriginalPassivePcmIdentity.ToDecimalString(pcm.CaptureSelection.SpecificOutputId) : null,
             managedDefaultListenerCensusKnown = managedDefaultListenerCensusKnown,
             managedDefaultListenerCount = managedDefaultListenerCount,
             originalMusicController = PortSessionOriginalMusicControllerOwner.CaptureSnapshot()

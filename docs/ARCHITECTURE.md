@@ -816,6 +816,25 @@ scalar measurements, not audio data. Nonzero native PCM alone cannot establish
 Android playback or physical audibility. Host fixtures check capture bounds,
 ownership, default-off behavior and both actual pre-Term injection branches.
 
+The optional R2 build selection
+`passive_pcm_capture_music_output_requested` selects the original music output
+instead of main. It requires the existing passive-capture flag and is bound by
+the actual build hook, cache, generated request/pin, artifact manifest and stage
+receipt. Missing fields remain false; requested mismatch refuses. At the same
+one-shot gameplay boundary, `PortSessionOriginalAudioOwner` snapshots the exact
+live, ready, initialized original music owner and accepted non-sentinel output.
+`GameAudioOriginalPassivePcmCaptureSelection` carries the immutable mode and
+complete unsigned 64-bit selector through the capture window and native monitor
+lease. Specific-output failure never silently falls back to main. Reports keep
+requested selector and actual callback output identity separate, with exact
+string companions for numeric consumers. Both custom native capture calls take
+an unsigned 32-bit mode and unsigned 64-bit selector; the producer/stager bind
+the corresponding native library. Removal uses the same frozen pair. Known
+registration failure performs no removal; unknown native outcomes retain roots
+and refuse Term. The previous exact owned native/API/game receipt tuples retain
+their existing upgrade/restoration policy. J918 records host/native qualification;
+player and selected-output playback remain separate gates.
+
 `runtime/session/PortSessionOriginalMusicControllerOwner.cs` owns the accepted
 original MusicController prefab for the admitted process audio lifetime.
 `OriginalMusicControllerContract.cs` defines its pure admission and retirement

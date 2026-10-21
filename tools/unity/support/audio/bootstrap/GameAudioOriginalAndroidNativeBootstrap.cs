@@ -21,12 +21,15 @@ internal sealed class GameAudioOriginalAndroidNativeBootstrap : IGameAudioOrigin
     internal NativeWwiseMonitorLease MonitorLease { get { return monitor; } }
     internal bool OwnsMonitorLease(NativeWwiseMonitorLease lease) { return object.ReferenceEquals(monitor, lease); }
 
-    internal IGameAudioOriginalPassivePcmCapture CreatePassivePcmCaptureOwner(bool requested)
+    internal IGameAudioOriginalPassivePcmCapture CreatePassivePcmCaptureOwner(bool requested,
+        bool specificOutputRequested)
     {
+        if (specificOutputRequested && !requested)
+            throw new InvalidOperationException("Specific-output selection requires passive capture to be requested.");
         if (!requested) return null;
         if (!object.ReferenceEquals(monitor, MonitorLease))
             throw new InvalidOperationException("Accepted bootstrap monitor lease identity changed.");
-        return OriginalGameAudioPassivePcmOwner.CreateForAcceptedBootstrap(this, true);
+        return OriginalGameAudioPassivePcmOwner.CreateForAcceptedBootstrap(this, true, specificOutputRequested);
     }
 
     internal GameAudioOriginalAndroidNativeBootstrap(NativeWwiseMonitorLease lease)

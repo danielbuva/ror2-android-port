@@ -48,16 +48,18 @@ LINEAGE = {
     "observed_api_sha256": "a2914ace8e2a7338010f8e9a9515911d68489bf0ad467bc7f73f4de293a19fe9",
     "composed_api_sha256": "1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b",
     "composed_game_sha256": "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc",
-    "native_library_sha256": "bb5879b4eb38b81dc3830a1662ba467b60b595e7fedb88a1301d3161f8ab9304",
+    "native_library_sha256": "4f309b9df05392b7b78ea51c53955225f27400a83810e260441f65dfdc335498",
     "stage_receipt_sha256": "8fe02400a7ab0905ae21b728e702d7ef2c4dcf8646f77f631682a81bda0ab88c",
 }
+PREVIOUS_NATIVE_LIBRARY_SHA256 = "bb5879b4eb38b81dc3830a1662ba467b60b595e7fedb88a1301d3161f8ab9304"
+OLD_CURRENT_LINEAGE = {**LINEAGE, "native_library_sha256": PREVIOUS_NATIVE_LIBRARY_SHA256}
 PREVIOUS_COMPOSED_API_SHA256 = "d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23"
 OLDER_RESTORE_API_SHA256 = "9a3f9911697b4ce28a955dff09f618e0f2662083e56eeb28ff5b6ecc02b588f3"
 PREVIOUS_COMPOSED_GAME_SHA256 = "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc"
 OLDER_PREVIOUS_GAME_SHA256 = "1034a747e31a3b79554b9cb06f941c7acabaa9e0ee82c2a00abc4b24f9327c1c"
 LEGACY_RESTORE_API_SHA256 = "793f22866c85bbcf104f20f5c1f619062eaad9f5414a217b602fe758c71e01b9"
 PREVIOUS_LINEAGE = {
-    **LINEAGE,
+    **OLD_CURRENT_LINEAGE,
     "observed_api_sha256": "7ec842ee2244590f9227c44280ebbb4a0debf9b83ad1958c045d68dec47e0af9",
     "composed_api_sha256": PREVIOUS_COMPOSED_API_SHA256,
     "composed_game_sha256": PREVIOUS_COMPOSED_GAME_SHA256,
@@ -127,6 +129,7 @@ def verify_request(manifest: dict, request_path: Path | None) -> dict:
         return {
             "requested": False,
             "passive_pcm_capture_requested": False,
+            "passive_pcm_capture_music_output_requested": False,
             "request_sha256": None,
         }
     if request_path is None:
@@ -138,14 +141,20 @@ def verify_request(manifest: dict, request_path: Path | None) -> dict:
         not isinstance(value, dict)
         or value.get("schema") != "game-audio-original-runtime-request-r3"
         or type(value.get("passive_pcm_capture_requested")) is not bool
+        or type(value.get("passive_pcm_capture_music_output_requested", False)) is not bool
     ):
         raise ValueError("unsupported runtime request schema")
+    music_output_requested = value.get("passive_pcm_capture_music_output_requested", False)
+    if music_output_requested and not value["passive_pcm_capture_requested"]:
+        raise ValueError("specific-output PCM selection requires passive PCM capture")
     if value.get("requested") is not True:
         raise ValueError("request file must explicitly opt in")
     if value.get("request_id") != request.get("request_id"):
         raise ValueError("request identity does not match compiled artifact set")
     if value.get("passive_pcm_capture_requested") != request.get("passive_pcm_capture_requested"):
         raise ValueError("passive PCM diagnostic selection differs from compiled artifact set")
+    if music_output_requested != request.get("passive_pcm_capture_music_output_requested", False):
+        raise ValueError("specific-output PCM selection differs from compiled artifact set")
     if value.get("build_input_contract_sha256") != request.get("build_input_contract_sha256"):
         raise ValueError("request build-input contract differs from compiled artifact set")
     if not HASH.fullmatch(str(request.get("build_input_contract_sha256", ""))):
@@ -153,6 +162,7 @@ def verify_request(manifest: dict, request_path: Path | None) -> dict:
     return {
         "requested": True,
         "passive_pcm_capture_requested": value["passive_pcm_capture_requested"],
+        "passive_pcm_capture_music_output_requested": music_output_requested,
         "request_sha256": hashlib.sha256(raw).hexdigest(),
     }
 
@@ -435,7 +445,8 @@ def inspect_previous_stage(project: Path, receipt_path: Path) -> tuple[dict | No
         not isinstance(previous, dict)
         or previous.get("schema") != RECEIPT_SCHEMA
         or previous.get("accepted_input_id") != LINEAGE["accepted_input_id"]
-        or previous.get("lineage") not in (LINEAGE, PREVIOUS_LINEAGE, OLDER_PREVIOUS_LINEAGE, OLDER_RESTORE_LINEAGE, LEGACY_RESTORE_LINEAGE)
+        or previous.get("lineage")
+        not in (LINEAGE, OLD_CURRENT_LINEAGE, PREVIOUS_LINEAGE, OLDER_PREVIOUS_LINEAGE, OLDER_RESTORE_LINEAGE, LEGACY_RESTORE_LINEAGE)
         or type(previous.get("requested")) is not bool
         or not isinstance(previous.get("outputs"), list)
         or not HASH.fullmatch(str(previous.get("artifact_manifest_sha256", "")))
@@ -490,7 +501,7 @@ def inspect_previous_stage(project: Path, receipt_path: Path) -> tuple[dict | No
         bank_dir = "Assets/StreamingAssets/Audio/GeneratedSoundBanks/Android"
         if any(PurePosixPath(target).parent.as_posix() != bank_dir for target in bank_targets):
             raise ValueError("previous opt-in receipt owns a bank outside the direct Android cohort directory")
-        if targets[NATIVE_TARGET]["sha256"] != LINEAGE["native_library_sha256"]:
+        if targets[NATIVE_TARGET]["sha256"] != previous["lineage"]["native_library_sha256"]:
             raise ValueError("previous opt-in receipt native library differs from the accepted pin")
         if targets.get(api_target, {}).get("sha256") != composed_api or targets.get(game_target, {}).get("sha256") != composed_game:
             raise ValueError("previous opt-in receipt API/game outputs differ from its exact declared lineage")
@@ -591,6 +602,7 @@ def stage(
         "lineage": manifest["lineage"],
         "requested": pins["requested"],
         "passive_pcm_capture_requested": pins["passive_pcm_capture_requested"],
+        "passive_pcm_capture_music_output_requested": pins["passive_pcm_capture_music_output_requested"],
         "request_id": manifest.get("request", {}).get("request_id") if pins["requested"] else None,
         "request_sha256": pins["request_sha256"],
         "artifact_manifest_sha256": pins["artifact_manifest_sha256"],

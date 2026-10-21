@@ -14,8 +14,8 @@ internal interface INativeWwiseDiagApi
     void EngineTermReturned();
     void CallbackManagerTermReturned();
     int DisarmAfterTerm();
-    int RegisterCapture();
-    int UnregisterCapture();
+    int RegisterCapture(uint selectorMode, ulong outputSelector);
+    int UnregisterCapture(uint selectorMode, ulong outputSelector);
     long[] Snapshot();
 }
 
@@ -145,6 +145,8 @@ internal sealed class NativeWwiseMonitorLease
     private bool postInitControlAttempted, postInitControlObserved;
     private ulong postInitControlBaseline;
     private bool outcomeUnknown;
+    private bool captureSelectionFrozen;
+    private GameAudioOriginalPassivePcmCaptureSelection captureSelection;
 
     internal NativeWwiseMonitorLease(INativeWwiseDiagApi api)
     {
@@ -264,15 +266,19 @@ internal sealed class NativeWwiseMonitorLease
         catch (Exception) { outcomeUnknown = true; throw; }
     }
 
-    internal NativeWwiseDiagSnapshot RegisterCaptureCallback()
+    internal NativeWwiseDiagSnapshot RegisterCaptureCallback(GameAudioOriginalPassivePcmCaptureSelection selection)
     {
         EnsureUsable();
         if (captureRegisterAttempted || engineTermReturned || !postInitControlObserved)
             throw new InvalidOperationException("Output capture callback registration requires post-Init exact-control coverage and is single-shot.");
+        if (!selection.IsWellFormed)
+            throw new InvalidOperationException("Output capture registration requires a well-formed immutable selector.");
+        captureSelection = selection;
+        captureSelectionFrozen = true;
         captureRegisterAttempted = true;
         try
         {
-            int result = api.RegisterCapture();
+            int result = api.RegisterCapture((uint)captureSelection.Mode, captureSelection.NativeOutputSelector);
             captureRegisterResultKnown = true;
             RequireSuccess(result, "native output callback registration");
             // Record native ownership before the following snapshot: a snapshot
@@ -295,7 +301,7 @@ internal sealed class NativeWwiseMonitorLease
         captureUnregisterAttempted = true;
         try
         {
-            int result = api.UnregisterCapture();
+            int result = api.UnregisterCapture((uint)captureSelection.Mode, captureSelection.NativeOutputSelector);
             RequireSuccess(result, "native output callback unregister");
             // AK_Success is the bridge's authoritative removal result. Preserve
             // it even if the optional verification snapshot fails afterwards.
@@ -322,7 +328,10 @@ internal sealed class NativeWwiseMonitorLease
         captureUnregisterAttempted = true;
         try
         {
-            RequireSuccess(api.UnregisterCapture(), "cleanup-only native output callback unregister");
+            if (!captureSelectionFrozen)
+                throw new NativeWwiseDiagRefusalException("Cleanup-only unregister has no frozen output selector.");
+            RequireSuccess(api.UnregisterCapture((uint)captureSelection.Mode, captureSelection.NativeOutputSelector),
+                "cleanup-only native output callback unregister");
             captureUnregisterCallSucceeded = true;
             return true;
         }
@@ -442,9 +451,9 @@ internal sealed class NativeWwiseDiagPInvokeApi : INativeWwiseDiagApi
     [DllImport("AkSoundEngine", EntryPoint = "WwiseDiag_MonitorDisarmAfterTerm")]
     private static extern int NativeDisarmAfterTerm();
     [DllImport("AkSoundEngine", EntryPoint = "WwiseDiag_CaptureRegister")]
-    private static extern int NativeCaptureRegister();
+    private static extern int NativeCaptureRegister(uint selectorMode, ulong outputSelector);
     [DllImport("AkSoundEngine", EntryPoint = "WwiseDiag_CaptureUnregister")]
-    private static extern int NativeCaptureUnregister();
+    private static extern int NativeCaptureUnregister(uint selectorMode, ulong outputSelector);
     [DllImport("AkSoundEngine", EntryPoint = "WwiseDiag_Snapshot")]
     private static extern void NativeSnapshot(IntPtr output, uint capacity);
 
@@ -456,8 +465,8 @@ internal sealed class NativeWwiseDiagPInvokeApi : INativeWwiseDiagApi
     public void EngineTermReturned() { NativeEngineTermReturned(); }
     public void CallbackManagerTermReturned() { NativeCallbackManagerTermReturned(); }
     public int DisarmAfterTerm() { return NativeDisarmAfterTerm(); }
-    public int RegisterCapture() { return NativeCaptureRegister(); }
-    public int UnregisterCapture() { return NativeCaptureUnregister(); }
+    public int RegisterCapture(uint selectorMode, ulong outputSelector) { return NativeCaptureRegister(selectorMode, outputSelector); }
+    public int UnregisterCapture(uint selectorMode, ulong outputSelector) { return NativeCaptureUnregister(selectorMode, outputSelector); }
 
     public long[] Snapshot()
     {

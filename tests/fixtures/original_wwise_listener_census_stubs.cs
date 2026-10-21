@@ -39,7 +39,14 @@ namespace UnityEngine
 // its own compiled lifecycle fixture.
 public sealed class PortSessionOriginalMusicControllerOwner : UnityEngine.Component
 {
-    public sealed class Snapshot { }
+    public sealed class Snapshot
+    {
+        public bool requested, sourceAudioReady, noAudio, engineInitialized;
+        public bool staticInstanceMatchesOwnedController, outputObservationOwnerMismatch;
+        public bool ownerCleanupRequested, controllerDestroyedObserved, removeOutputResultObserved;
+        public bool outputResultObserved, outputAccepted, outputDeviceIdValid;
+        public ulong outputDeviceId;
+    }
     public static Snapshot CaptureSnapshot() => null;
     public static void StartForReadyAudio(UnityEngine.MonoBehaviour owner, bool explicitlyRequested) { }
     public void NotifyOriginalTermsReturned() { }
@@ -72,6 +79,7 @@ public sealed class AkAudioListener
 public static class GameAudioOriginalRequestBootstrap
 {
     public static bool PassivePcmCaptureRequested;
+    public static bool PassivePcmCaptureMusicOutputRequested;
     public static bool IsConfigured;
     public static Func<AkWwiseInitializationSettings> OriginalSettingsProvider;
     public static void ConfigureBeforeOriginalStartup() { }
@@ -98,7 +106,7 @@ public static class GameAudioOriginalOwner
     public static void DisablePointSoundDiagnostic() { }
     public static PointSoundDiagnosticObserver.Snapshot CapturePointSoundDiagnosticSnapshot() => null;
     public static void FinishPassiveCaptureGameplayWindow() { }
-    public static bool ArmPassiveCaptureAtGameplayBoundary(bool requested, bool playableWorldStarted) => false;
+    public static bool ArmPassiveCaptureAtGameplayBoundary(bool requested, bool playableWorldStarted, GameAudioOriginalPassivePcmCaptureSelection selection) => false;
     public static IEnumerator PrepareBeforeOriginalManagerInit() => null;
     public static void RecordOriginalManagerInitException(string type) { }
     public static void AbandonPreparationBeforeOriginalInit() { }
@@ -122,7 +130,14 @@ public static class WholeCatalogComposed
 
 public static class PointSoundDiagnosticObserver
 {
-    public sealed class Snapshot { }
+    public sealed class Snapshot
+    {
+        public bool requested, sourceAudioReady, noAudio, engineInitialized;
+        public bool staticInstanceMatchesOwnedController, outputObservationOwnerMismatch;
+        public bool ownerCleanupRequested, controllerDestroyedObserved, removeOutputResultObserved;
+        public bool outputResultObserved, outputAccepted, outputDeviceIdValid;
+        public ulong outputDeviceId;
+    }
     public static void ObserveUnityLog(string condition, string stackTrace) { }
 }
 

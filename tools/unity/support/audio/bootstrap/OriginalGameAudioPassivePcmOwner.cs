@@ -16,6 +16,7 @@ internal sealed class OriginalGameAudioPassivePcmOwner : IGameAudioOriginalPassi
     private static bool configured;
 
     private readonly bool requested;
+    private readonly bool specificOutputRequested;
     private readonly NativeWwiseMonitorLease existingMonitorLease;
     private readonly PassivePcmCaptureWindow window;
     private readonly FieldInfo apiBeforeEngineTermField;
@@ -27,10 +28,12 @@ internal sealed class OriginalGameAudioPassivePcmOwner : IGameAudioOriginalPassi
     private bool terminalRefusal;
     private string terminalFailure;
 
-    private OriginalGameAudioPassivePcmOwner(GameAudioOriginalAndroidNativeBootstrap bootstrap)
+    private OriginalGameAudioPassivePcmOwner(GameAudioOriginalAndroidNativeBootstrap bootstrap,
+        bool specificOutputRequested)
     {
         if (bootstrap == null) throw new ArgumentNullException(nameof(bootstrap));
         requested = true;
+        this.specificOutputRequested = specificOutputRequested;
         existingMonitorLease = bootstrap.MonitorLease;
         if (existingMonitorLease == null || !bootstrap.OwnsMonitorLease(existingMonitorLease))
             throw new InvalidOperationException("Capture must use the exact live lease owned by the accepted native bootstrap.");
@@ -48,16 +51,18 @@ internal sealed class OriginalGameAudioPassivePcmOwner : IGameAudioOriginalPassi
     // generated request must explicitly select capture; false is the default.
     // A second capture owner or a different native lease is never admitted.
     internal static OriginalGameAudioPassivePcmOwner CreateForAcceptedBootstrap(
-        GameAudioOriginalAndroidNativeBootstrap bootstrap, bool captureRequested)
+        GameAudioOriginalAndroidNativeBootstrap bootstrap, bool captureRequested, bool specificOutputRequested)
     {
         lock (Sync)
         {
             if (configured)
                 throw new InvalidOperationException("The passive PCM process selection is immutable and already configured.");
             configured = true;
+            if (specificOutputRequested && !captureRequested)
+                throw new InvalidOperationException("Specific-output capture requires the passive capture opt-in.");
             if (!captureRequested) return null;
             if (bootstrap == null) throw new ArgumentNullException(nameof(bootstrap));
-            processOwner = new OriginalGameAudioPassivePcmOwner(bootstrap);
+            processOwner = new OriginalGameAudioPassivePcmOwner(bootstrap, specificOutputRequested);
             return processOwner;
         }
     }
@@ -113,6 +118,8 @@ internal sealed class OriginalGameAudioPassivePcmOwner : IGameAudioOriginalPassi
     public bool OutputIdentityObserved { get { return CurrentReport.OutputIdentityObserved; } }
     public bool CaptureOutputDeviceIdObserved { get { return CurrentReport.CaptureOutputDeviceIdObserved; } }
     public ulong CaptureOutputDeviceId { get { return CurrentReport.CaptureOutputDeviceId; } }
+    public bool CaptureSelectorObserved { get { return CurrentReport.CaptureSelectorObserved; } }
+    public GameAudioOriginalPassivePcmCaptureSelection CaptureSelection { get { return CurrentReport.CaptureSelection; } }
     internal string TerminalFailure { get { return terminalFailure; } }
     internal string CaptureState { get { return window.State; } }
     internal PassivePcmCaptureReport Report { get { return window.Report; } }
@@ -121,10 +128,17 @@ internal sealed class OriginalGameAudioPassivePcmOwner : IGameAudioOriginalPassi
     // spawned its original body. Engine readiness alone never starts capture.
     public bool RequestGameplayArm()
     {
+        return RequestGameplayArm(GameAudioOriginalPassivePcmCaptureSelection.MainOutput());
+    }
+
+    public bool RequestGameplayArm(GameAudioOriginalPassivePcmCaptureSelection selection)
+    {
         lock (gate)
         {
             if (!requested || terminalRefusal || gameplayArmRequested) return gameplayArmRequested;
-            gameplayArmRequested = window.RequestGameplayArm();
+            bool specific = selection.Mode == GameAudioOriginalPassivePcmCaptureSelectorMode.SpecificOutput;
+            if (!selection.IsWellFormed || specific != specificOutputRequested) return false;
+            gameplayArmRequested = window.RequestGameplayArm(selection);
             return gameplayArmRequested;
         }
     }

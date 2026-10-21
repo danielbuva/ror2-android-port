@@ -95,6 +95,7 @@ class OriginalMusicControllerTests(unittest.TestCase):
                     "-target:exe",
                     f"-out:{output}",
                     str(PASSIVE_WINDOW),
+                    str(PASSIVE_CONTRACT),
                     str(TESTS / "InstalledGuardCompositionFixture.cs"),
                     str(TESTS / "InstalledGuardCompositionHarness.cs"),
                 ],

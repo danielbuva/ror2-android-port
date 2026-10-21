@@ -24971,3 +24971,147 @@ between-run memory; its device cost and the older managed-growth gate remain
 unmeasured. This is a source-faithful lifetime candidate, not menu, performance
 or public-alpha acceptance. Route A and the desktop owner-build fallback stay
 unchanged.
+
+
+## J917 — Qualify the late-bound camera player and preserve its visual failure
+
+Date: 2026-10-21. Hypothesis: J916's guarded binding retry lets the original
+camera callback supply its own target/context without replacing source camera
+behavior. Build committed source `42a74c1` with J913's startup trigger. This is
+an opt-in diagnostic player, not a promoted baseline. J915/J916 and pinned
+DebugToolkit's typed target observations in `community-prior-art.md` supply
+prior art; accepted source identities and Android reports determine admission.
+
+R19's full build succeeds in 233.15 s with zero errors. Freeze 391 authored
+inputs, 333 pre-strip assemblies, 154 banks, 266 payload files, the same-request
+receipt, matching symbols and the complete generated artifacts before releasing
+the source freeze. The APK SHA-256 is
+`b4d1c1919d14a057183f3c98827c1736aaf3d7620bb96a1ef543b2bc67292b78`;
+its receipt is `c55626c3deb9faf4e204e6bfb49e00a0597c4d3152a8d06c36e037541edb1121`.
+The frozen source manifest is
+`6715761bd24e08439deafb8d257be4d8ef36a953b94a41f396d0395f847c01ca`.
+Pre/post-strip inspection retains the exact original intro trigger callback and
+private instance camera update method, plus the marker's guarded retry and
+single-delegate context path. This is retention evidence, not runtime behavior.
+
+Install the explicit frozen APK on the assigned adopted-storage device through
+fresh reserve, owned placement and payload checks. Both standard modes pass:
+plain reaches 35.225 s; stage-exit reaches Goolake after one transition with
+10.097 s on the new stage. Both preserve 13 applied runs and report no failure.
+The original intro component's attempted activation and inactive retirement
+are observed, with explicitly adapted process-start timing. Music output queue
+acceptance is observed, but the measured main output has a different identity.
+Its 528,768 and 524,160 finite samples are zero; this does not prove music silence
+or playback. Each mode retains five known intentional Windows-bundle negative
+controls. Root-derived qualification SHA-256 is
+`f466e00cd2645f2460c485dd66cb5b6e1dda8e3466249840bd36338f86d86aaf`.
+
+One separately bound selected-Huntress replay reaches 35.213 s. The exact source
+rig and SceneCamera are active/enabled, target/provider identities agree, the
+original delegate is present with 4,524 pumps, and source context is ready.
+Completion at 37.129 s disables the owned camera, destroys the visual owner,
+releases all five copied materials and removes its exact managed listener entry
+(census two to one). Native listener registration/removal remains unknown because
+its result is discarded. The next menu then genuinely refuses with
+`Original free survivor choices unavailable`; the wrapper preserves that failure
+and returns unsuccessful. J914's merged dependency repair is absent from this
+APK and still needs a new player. No same-process restart is accepted.
+
+Root inspects the matching live screenshot: severe dark/bright foreground
+geometry and washed scene appearance remain. Camera context readiness does not
+qualify rendered geometry, animation or PC parity. Earlier disabled-camera
+captures are not matched-view controls. Before changing pose or shaders, obtain
+a bounded same-frame camera-stack and exact selected-renderer bounds snapshot.
+The captured camera uses source-prefab defaults with missing Console settings
+explicitly recorded as reduced fidelity. No cause is assigned from the image.
+
+Full evidence remains once under ignored
+`work/coordination/codex-original-game-audio-build-root/r19/`,
+`codex-original-game-audio-device-root/r12/`,
+`original-camera-listener-device-plan/r11/` and
+`work/experiments/original-camera-listener-lifecycle/20261021T202203.590467Z/`.
+The selected replay's live summary SHA-256 is
+`a349d7962cf88f344e1ac103b7cf190548a061dbc143983565d9c28135ceac6e`.
+An independent final query rehashes installed bytes and verifies owned placement,
+process/selector absence and display sleep. This player remains installed;
+accepted baseline J850 remains unchanged. Revisit menu restart on J914's player,
+visual artifacts with actual render identity, and music with its exact output.
+
+## J918 — Bind passive PCM capture to the owned original music output
+
+Date: 2026-10-21. Hypothesis: J911/J917's main-output samples cannot qualify a
+different original music output. Extend the existing passive diagnostic to select
+that exact dynamically observed output. Consult the existing J837/J845 native
+monitor, J889/J891 music lifecycle, J911 output observations and J588's pinned
+wwiser graph limitations in `community-prior-art.md`; neither bank inspection
+nor a queued event establishes playback. Inspect the authorized SDK's actual
+64-bit output-capture register/unregister signatures. Do not re-author banks.
+
+The named session audio owner snapshots its exact live music controller at the
+existing one-shot gameplay boundary, requiring source readiness, live singleton,
+initialized engine, accepted output queue, valid non-sentinel identity and no
+cleanup/removal/Term state. An immutable typed selector carries main versus
+specific output plus the complete unsigned 64-bit identity through Core,
+capture window, shared monitor lease and native registration/removal. A requested
+specific output never falls back to main. Reports separate requested selector
+from actual callback output identity, including a valid observed numeric zero.
+Known failed registration does not unregister; unknown outcomes retain roots
+and refuse unsafe original Term. Existing capture bounds remain unchanged.
+
+The optional R2 selection boolean
+`passive_pcm_capture_music_output_requested` defaults false and requires passive
+capture. Carry it through actual build-hook invocation, cache identity, generated
+request/pin, producer validation, artifact manifest and staging receipt. Strict
+booleans, omitted/mismatched requested values and default-off hidden fields are
+checked. Earlier draft missing end-to-end selection plumbing is rejected before
+integration. The custom native ABI now takes `(uint32 mode, uint64 selector)`
+for both capture operations; managed and native must be rebuilt together.
+
+Root builds the licensed native candidate once under the shared host mutex from
+332 source files, 32 archives and 11 pinned tools, checking all 552 declared
+inputs before and after. Use the authorized SDK's NDK r25c/API 21; Unity's pinned
+NDK is unchanged. New native SHA-256 is
+`4f309b9df05392b7b78ea51c53955225f27400a83810e260441f65dfdc335498`;
+its immutable build receipt is
+`6bca2311fe512180bdcfc363529465e0e8d94cc5fcb8827a46d2c71f0c49ffd3`.
+Static audit passes exact 1,280 wrapper, 480 extra and 12 diagnostic exports,
+all 182 imports resolved, ARM64/API 21 and unchanged 24-slot snapshot schema.
+Audit SHA-256 is
+`d1ca9ab931a7435e09cfc669698a1ee9982f62e8096be732eb6c8efb9ee400b0`.
+No native or SDK-derived code/library enters public Git.
+
+Root's integrated host suite passes 91 tests in 18.009 s with two optional
+prerequisite skips. Final integration review then catches two stale native
+admission pins in the actual request generator and managed provider: their
+old-library expectation contradicts the new producer/stager. Correct those
+pins and regenerate the cohort/tool/source digests before any player build.
+Synthetic request fixtures alone had concealed that integration refusal. The corrected
+91-test replay passes in 24.496 s with the same two skips. Two added portable
+regressions compare actual producer/generator/provider pins and compile the
+actual managed validator with current generator-derived constants; current
+native admission succeeds and a stale-native mutant refuses with
+`audio_native_library_pin_mismatch`. A separate private replay also emits the
+request from actual accepted inputs and checks the same production validator.
+No production pin is replaced for those admission checks. Fixtures exercise high-bit identity preservation, exact
+register/unregister pairing, failed/unknown ownership, original Term ordering,
+real session/bootstrap compilation, request/cache/stage plumbing and migration.
+A separate host harness compiles the exact two private C++ function bodies with
+authored SDK doubles and passes main/specific identity, invalid sentinel/mode,
+wrong-removal, failed registration and removal retry cases. This is not Android
+runtime evidence. Previous exact native/API/game receipts retain their owned
+upgrade/restoration path; unknown pairs refuse. An overbroad draft requiring
+all older native receipts to restore default-off first is rejected; historical
+invalid-IL restoration policy remains specific to its existing predecessors.
+
+Private drafts, reviews and replay evidence remain under
+`work/coordination/original-music-target-capture-next/`,
+`original-music-target-capture-integration-root/r1/`,
+`original-music-target-capture-native-build-root/r1/` and
+`original-music-target-capture-native-contract/r1/`.
+Authored source/fixtures and reviewed recipe pins are public. These changes alter
+rebuild-staged source; replay the committed producer and transform recipes.
+The new library is not yet staged into a player, installed or loaded on Android.
+Installed J917 remains separate. Next build must retain the complete new ABI
+post-strip, pass both standard checks and only then measure the actual selected
+output. Playback, physical audibility, source music semantics and next-menu
+restart remain unqualified.

@@ -15,7 +15,7 @@ internal static class GameAudioOriginalAcceptedRequestProvider
     private const string AcceptedAdaptedApiSha256 = "2bd973178c99bfcb4d20510e2d1eac7efa9dd6d698237f2edfa486171bc2f272";
     private const string AcceptedObservedApiSha256 = "a2914ace8e2a7338010f8e9a9515911d68489bf0ad467bc7f73f4de293a19fe9";
     private const string AcceptedInstrumentedApiSha256 = "1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b";
-    private const string AcceptedNativeLibrarySha256 = "bb5879b4eb38b81dc3830a1662ba467b60b595e7fedb88a1301d3161f8ab9304";
+    private const string AcceptedNativeLibrarySha256 = "4f309b9df05392b7b78ea51c53955225f27400a83810e260441f65dfdc335498";
     private const string AcceptedAdaptedInitSha256 = "618d1c5d534af10fc4cc30a1bacd193bf6871dab3e63992ebedd92a92576fb90";
 
     internal static GameAudioOriginalRequest Create()
@@ -29,12 +29,17 @@ internal static class GameAudioOriginalAcceptedRequestProvider
         var monitor = new NativeWwiseMonitorLease(new NativeWwiseDiagPInvokeApi());
         var native = new GameAudioOriginalAndroidNativeBootstrap(monitor);
         bool captureRequested = GameAudioOriginalGeneratedRequestPin.PassivePcmCaptureRequested;
-        IGameAudioOriginalPassivePcmCapture passiveCapture = native.CreatePassivePcmCaptureOwner(captureRequested);
+        bool musicOutputRequested = GameAudioOriginalGeneratedRequestPin.PassivePcmCaptureMusicOutputRequested;
+        if (musicOutputRequested && !captureRequested)
+            return new GameAudioOriginalRequest(true, RefusalNames(),
+                new RefusedPreparation("music_output_capture_without_passive_capture_request"));
+        IGameAudioOriginalPassivePcmCapture passiveCapture = native.CreatePassivePcmCaptureOwner(
+            captureRequested, musicOutputRequested);
         return new GameAudioOriginalRequest(true, GameAudioOriginalGeneratedStagePin.BankNames,
             new GameAudioOriginalPreparation(Application.streamingAssetsPath,
                 GameAudioOriginalGeneratedStagePin.BankNames,
                 GameAudioOriginalGeneratedStagePin.ReceiptSha256, native),
-            captureRequested, passiveCapture);
+            captureRequested, passiveCapture, musicOutputRequested);
     }
 
     internal static IGameAudioOriginalStartupPreparation Refused(string reason) => new RefusedPreparation(reason);

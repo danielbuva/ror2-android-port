@@ -28,6 +28,9 @@ internal sealed class PassivePcmCaptureWindow
     private bool closed;
     private Action beforeTermParticipant;
     private bool beforeTermParticipantCompleted;
+    private GameAudioOriginalPassivePcmCaptureSelection captureSelection =
+        GameAudioOriginalPassivePcmCaptureSelection.MainOutput();
+    private bool captureSelectionFrozen;
     private string state;
     private string stopReason;
     private string failure;
@@ -86,7 +89,15 @@ internal sealed class PassivePcmCaptureWindow
 
     internal bool RequestGameplayArm()
     {
+        return RequestGameplayArm(GameAudioOriginalPassivePcmCaptureSelection.MainOutput());
+    }
+
+    internal bool RequestGameplayArm(GameAudioOriginalPassivePcmCaptureSelection selection)
+    {
         if (!requested || closed || !beforeTermGuardInstalled) return false;
+        if (!selection.IsWellFormed || captureSelectionFrozen) return false;
+        captureSelection = selection;
+        captureSelectionFrozen = true;
         gameplayArmRequested = true;
         if (!registrationAttempted) state = "gameplay_armed_waiting_for_ready_render";
         return true;
@@ -191,7 +202,9 @@ internal sealed class PassivePcmCaptureWindow
                 baseline.CaptureRegistered != 0 || baseline.CaptureUsed != 0)
                 throw new InvalidOperationException("Native bridge state is not ready for one passive capture lease.");
             registrationMayHaveReachedNative = true;
-            latest = lease.RegisterCaptureCallback();
+            if (!captureSelectionFrozen || !captureSelection.IsWellFormed)
+                throw new InvalidOperationException("Capture cannot start without its frozen gameplay selector.");
+            latest = lease.RegisterCaptureCallback(captureSelection);
             registrationOwned = true;
             registrationMayHaveReachedNative = false;
             startedAt = lastSnapshotAt = realtimeSinceStartup;
@@ -313,7 +326,8 @@ internal sealed class PassivePcmCaptureWindow
     private PassivePcmCaptureReport CreateReport()
     {
         if (baseline == null || latest == null || (state != "captured" && state != "captured_before_term"))
-            return new PassivePcmCaptureReport(state, stopReason, failure, 0, 0, 0, 0, 0, 0, 0, 0, false, false, 0);
+            return new PassivePcmCaptureReport(state, stopReason, failure, 0, 0, 0, 0, 0, 0, 0, 0,
+                false, false, 0, captureSelectionFrozen, captureSelection);
         bool outputDeviceIdObserved = latest.CaptureCallbacks > baseline.CaptureCallbacks;
         return new PassivePcmCaptureReport(state, stopReason, failure,
             latest.CaptureCallbacks - baseline.CaptureCallbacks,
@@ -326,7 +340,7 @@ internal sealed class PassivePcmCaptureWindow
             latest.CappedBuffers - baseline.CappedBuffers,
             latest.CaptureOutputId != 0,
             outputDeviceIdObserved,
-            outputDeviceIdObserved ? latest.CaptureOutputId : 0);
+            outputDeviceIdObserved ? latest.CaptureOutputId : 0, captureSelectionFrozen, captureSelection);
     }
 }
 
@@ -342,11 +356,14 @@ internal sealed class PassivePcmCaptureReport
     internal readonly bool OutputIdentityObserved;
     internal readonly bool CaptureOutputDeviceIdObserved;
     internal readonly ulong CaptureOutputDeviceId;
+    internal readonly bool CaptureSelectorObserved;
+    internal readonly GameAudioOriginalPassivePcmCaptureSelection CaptureSelection;
 
     internal PassivePcmCaptureReport(string state, string stopReason, string failure,
         ulong callbacks, ulong frames, ulong samples, ulong finite, ulong nonzero,
         ulong nonfinite, ulong rejected, ulong capped, bool outputIdentityObserved,
-        bool captureOutputDeviceIdObserved, ulong captureOutputDeviceId)
+        bool captureOutputDeviceIdObserved, ulong captureOutputDeviceId,
+        bool captureSelectorObserved, GameAudioOriginalPassivePcmCaptureSelection captureSelection)
     {
         State = state; StopReason = stopReason; Failure = failure;
         CallbackCount = callbacks; FrameCount = frames; SampleCount = samples;
@@ -355,5 +372,7 @@ internal sealed class PassivePcmCaptureReport
         OutputIdentityObserved = outputIdentityObserved;
         CaptureOutputDeviceIdObserved = captureOutputDeviceIdObserved;
         CaptureOutputDeviceId = captureOutputDeviceIdObserved ? captureOutputDeviceId : 0;
+        CaptureSelectorObserved = captureSelectorObserved;
+        CaptureSelection = captureSelectorObserved ? captureSelection : GameAudioOriginalPassivePcmCaptureSelection.MainOutput();
     }
 }

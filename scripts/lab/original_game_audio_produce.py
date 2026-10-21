@@ -48,7 +48,7 @@ LINEAGE = {
     "observed_api_sha256": "a2914ace8e2a7338010f8e9a9515911d68489bf0ad467bc7f73f4de293a19fe9",
     "composed_api_sha256": "1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b",
     "composed_game_sha256": "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc",
-    "native_library_sha256": "bb5879b4eb38b81dc3830a1662ba467b60b595e7fedb88a1301d3161f8ab9304",
+    "native_library_sha256": "4f309b9df05392b7b78ea51c53955225f27400a83810e260441f65dfdc335498",
     "stage_receipt_sha256": "8fe02400a7ab0905ae21b728e702d7ef2c4dcf8646f77f631682a81bda0ab88c",
 }
 ASSEMBLY_TARGETS = {
@@ -66,9 +66,9 @@ META_GUIDS = {
 NATIVE_META_GUID = "a2a09e81876b46f2a202e62f96644331"
 NATIVE_TARGET = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so"
 NATIVE_META = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so.meta"
-OWNER_ANCESTOR_MANIFEST_SHA256 = "063db58d6a0db505a703b92ebee0ebe43a06f00c7e892e0995047b053fb5ccb3"
+OWNER_ANCESTOR_MANIFEST_SHA256 = "326ec12e5b778757f317e63032496441317fe20195e755c71f341016b71c7382"
 STAGE_PIN_TOOL_SHA256 = "82e9a3dd9ab6057d2fba086337504bc3381f289e13fe29403d3825f0b99e13ce"
-REQUEST_PIN_TOOL_SHA256 = "b60ff6013a1e6cecf2e730cdc29a57d5b36e8228a5134c35fce028ed471d5113"
+REQUEST_PIN_TOOL_SHA256 = "cfec7590ac45b63e140cbe66b93689143489516830582a6fa99b48b2fd2dafb6"
 MANAGED_PRODUCER_SHA256 = "12c1aaed5fca694657c2c841c57e6ead399352e58b1cd0e7662dec75e2749421"
 ABI_NATIVE_PLUGIN_SHA256 = "cfec01cb3aab87edbde3db38e3c0bbe6a1d18ffea2a1f831a59cf64a5526daca"
 ABI_GENERATED_SOURCE_SHA256 = "511f5e1ee552a874850a1fab5f613eeb51e7b6bc706a07bb57418c03e75df242"
@@ -77,20 +77,20 @@ ABI_LLVM_NM_SHA256 = "6ffe6bb8699a354c4699a6cdfcebdb9ec6a2c8d0d89beaac978f629a0f
 OWNER_SOURCE_HASHES = {
     "../../runtime/session/OriginalMusicControllerContract.cs": "bd8f78977722a276409623cea4909b0e41065fda6c195a6b0dee94ef8bb8b485",
     "../../runtime/session/PortSession.cs": "233e40b41b02aa601d110db38bdb738ed35438a91131823d609a2909719e6731",
-    "../../runtime/session/PortSessionOriginalAudioOwner.cs": "79701337eacf5267259a909b7d01dfe6ad3fe881840198115252b5b5546645c0",
+    "../../runtime/session/PortSessionOriginalAudioOwner.cs": "6cc2da1d17c4169b153eaba2fa6a770e0d16b6bd3005b66ca80c5f4d8c81f638",
     "../../runtime/session/PortSessionOriginalMusicControllerOwner.cs": "dd8c38d9658cd57733043857eac7b109d78e5be7c014197aee76d7d11864cb40",
-    "bootstrap/GameAudioOriginalAcceptedRequestProvider.cs": "72e2fc997ad80ee3e86cee428c3857b7be035070483007b24d929039aa0aa7e1",
-    "bootstrap/GameAudioOriginalAndroidNativeBootstrap.cs": "bea349d5c344f43293abeca65508790971305e4d38c60050fc956fa956205d20",
-    "bootstrap/GameAudioOriginalGeneratedRequestPin.cs": "24e560195c4350aefe717b3acbc78697871effa88b70e23be07225c6487545d4",
+    "bootstrap/GameAudioOriginalAcceptedRequestProvider.cs": "640f4cf1420457d2233138c06ae889312a6f0b669181bd225814cffc75cd3485",
+    "bootstrap/GameAudioOriginalAndroidNativeBootstrap.cs": "ea46a876fa82ccbe0b2ab748435b62061d68718665abfe3092cd0335ee8bfc75",
+    "bootstrap/GameAudioOriginalGeneratedRequestPin.cs": "f41a033141c7ed1b4c33f9f7ce6337a4a7b247c6ba96d93f514c0a37178ac4a9",
     "bootstrap/GameAudioOriginalGeneratedStagePin.cs": "d54d445d05712432559a5e332457af0b20200c93895bd79374c42b6280bd07a4",
     "bootstrap/GameAudioOriginalPayloadCopy.cs": "1be21165d6ad8b1df1ab7513016da6ad78ad62350977550c376179f44f48e05f",
     "bootstrap/GameAudioOriginalPreparation.cs": "9894781b7ff0b5cde30b4b67ad0fb9f65a037ba0c124a086fe562c181fa41168",
-    "bootstrap/GameAudioOriginalRequestBootstrap.cs": "faff62d15e6b1828a814a55af4a9a25d04b315ba5c462cb4bf6c34f569e8657c",
-    "bootstrap/NativeWwiseMonitorLease.cs": "79b234526c893902474bf84317638724ae62b440e2395b4451d55f12ec877e72",
-    "bootstrap/OriginalGameAudioPassivePcmOwner.cs": "e4fd8a4c26d5ce074e0ab62af03b3e1e38651e68686d75cf2982fa7c4b738327",
-    "bootstrap/PassivePcmCaptureWindow.cs": "151e600ef7b7ad6ac76d8f38d40e0de9250c0344e4e3fb0c28b875472f649feb",
-    "core/GameAudioOriginalOwner.cs": "66fc16c9948089a09c77ada50a2eaa5a39f917cf943b5357971c73dae0b0e3c6",
-    "core/GameAudioOriginalPassivePcmContract.cs": "b3fb5b3a75a4ab82e925a95965feeb91e00de39a6dbafef62a1e16225d6c7503",
+    "bootstrap/GameAudioOriginalRequestBootstrap.cs": "d8adaa8a8aa7c035a5a4dfe102c736555effae3de9708fc4bfe0834ab724c2de",
+    "bootstrap/NativeWwiseMonitorLease.cs": "4fa40d608ba54dc33474fa23a01069fa71ae2e62997f56555929800f3d1fbed6",
+    "bootstrap/OriginalGameAudioPassivePcmOwner.cs": "6921d90f7aecd474c032351730e4c7df67e52accca4c718378687566cc4a7e93",
+    "bootstrap/PassivePcmCaptureWindow.cs": "d23dd383e75dff9e67e9008b887e62797e131ce0eebc6892094be0dbd1c9c364",
+    "core/GameAudioOriginalOwner.cs": "7a837190ee8a02b01e0cce5883869c125ca7f9938c415be4559dc577bb72a647",
+    "core/GameAudioOriginalPassivePcmContract.cs": "fc1a621277c26017e03625b797557415509faab37de990ab1aaaaea9e0c668a7",
     "core/GameAudioOriginalReadiness.cs": "ab7be883932ce975615676882440c74d43b039fce067a9cab0572d7198c4db19",
     "core/OriginalOwnerProbeObserver.cs": "7a95cfbf3528eaad15a2efe188b896fd1e925a3e5dfa5809d8f7ef5c44d856d8",
     "core/PointSoundDiagnosticObserver.cs": "ebd0b2c0089150c4302c00824ee32e7a8e8b1906f26ad2137bdb0cee4cf1b4c7",
@@ -398,6 +398,7 @@ def compile_default_off(project: Path, unity_contents: Path, mono: Path, csc: Pa
             "request_id": None,
             "build_input_contract_sha256": None,
             "passive_pcm_capture_requested": False,
+            "passive_pcm_capture_music_output_requested": False,
         },
         "outputs": artifacts,
         "runtime_accepted": False,
@@ -455,6 +456,7 @@ def compile_requested(
     output: Path,
     request_id: str | None = None,
     passive_pcm_capture_requested: bool = False,
+    passive_pcm_capture_music_output_requested: bool = False,
 ) -> dict:
     """Generate, compile and describe one explicit requested artifact set.
 
@@ -462,6 +464,10 @@ def compile_requested(
     adapter owns the request-derived Bootstrap sources, Unity compilation,
     and the complete hash-checked staging manifest.
     """
+    if type(passive_pcm_capture_requested) is not bool or type(passive_pcm_capture_music_output_requested) is not bool:
+        raise ValueError("passive PCM request flags must be explicit booleans")
+    if passive_pcm_capture_music_output_requested and not passive_pcm_capture_requested:
+        raise ValueError("specific-output PCM selection requires passive PCM capture")
     validate_owner_source_manifest()
     for relative, expected in OWNER_SOURCE_HASHES.items():
         source = SOURCE / relative
@@ -581,6 +587,7 @@ def compile_requested(
             adapted_init,
             init_receipt,
             passive_pcm_capture_requested,
+            passive_pcm_capture_music_output_requested,
         )
     assert request_path is not None and input_contract_path is not None
     for label, path in (
@@ -610,6 +617,12 @@ def compile_requested(
         or request_document["passive_pcm_capture_requested"] != passive_pcm_capture_requested
     ):
         raise ValueError("passive PCM selection must be an explicit boolean bound by the request and invocation")
+    if (
+        type(request_document.get("passive_pcm_capture_music_output_requested", False)) is not bool
+        or request_document.get("passive_pcm_capture_music_output_requested", False) != passive_pcm_capture_music_output_requested
+        or (passive_pcm_capture_music_output_requested and not passive_pcm_capture_requested)
+    ):
+        raise ValueError("specific-output PCM selection must be an explicit dependent boolean bound by the request and invocation")
     if sha256(native_library) != request_document.get("native_library_sha256"):
         raise ValueError("explicit native input differs from request pin")
 
@@ -790,6 +803,7 @@ def compile_requested(
             "request_id": request_document["request_id"],
             "build_input_contract_sha256": request_result["build_input_contract_sha256"],
             "passive_pcm_capture_requested": passive_pcm_capture_requested,
+            "passive_pcm_capture_music_output_requested": passive_pcm_capture_music_output_requested,
         },
         "outputs": outputs,
         "runtime_accepted": False,
@@ -899,6 +913,7 @@ def generate_request_contract(
     adapted_init: Path,
     init_receipt: Path,
     passive_pcm_capture_requested: bool = False,
+    passive_pcm_capture_music_output_requested: bool = False,
 ) -> tuple[Path, Path]:
     """Create the pre-derivative input contract and same-build request.
 
@@ -908,6 +923,10 @@ def generate_request_contract(
     """
     if not re.fullmatch(r"[0-9a-f]{32}", request_id):
         raise ValueError("request identity must be compact lowercase UUID hex")
+    if type(passive_pcm_capture_requested) is not bool or type(passive_pcm_capture_music_output_requested) is not bool:
+        raise ValueError("passive PCM request flags must be explicit booleans")
+    if passive_pcm_capture_music_output_requested and not passive_pcm_capture_requested:
+        raise ValueError("specific-output PCM selection requires passive PCM capture")
     local = json.loads((ROOT / "work/config/local.json").read_text(encoding="utf-8"))
     game_root = Path(local["game_path"]).expanduser().resolve(strict=True)
     managed_root = game_root / "Risk of Rain 2_Data/Managed"
@@ -985,7 +1004,8 @@ def generate_request_contract(
     request = {
         "schema": "game-audio-original-runtime-request-r3",
         "requested": True,
-        "passive_pcm_capture_requested": bool(passive_pcm_capture_requested),
+        "passive_pcm_capture_requested": passive_pcm_capture_requested,
+        "passive_pcm_capture_music_output_requested": passive_pcm_capture_music_output_requested,
         "request_id": request_id,
         "build_input_contract_sha256": contract_sha,
         "stage_receipt_sha256": sha256(stage_receipt_path),

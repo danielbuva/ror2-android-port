@@ -40,9 +40,10 @@ class FakeProducer:
         return [], []
 
     def compile_requested(self, *args: object) -> None:
-        output = args[-3]
+        output = args[-4]
         assert isinstance(output, Path)
         self.compile_outputs.append(output)
+        self.last_compile_args = args
         raise RuntimeError("requested cache miss compiled")
 
 
@@ -89,8 +90,9 @@ def make_fake_source_bundle(root: Path) -> None:
         path.write_text(f"fixture source {relative}\n", encoding="utf-8")
 
 
-def make_fixture(root: Path) -> tuple[Path, Path, Path, Path, Path, Path]:
+def make_fixture(root: Path, *, music_output_requested: bool = False) -> tuple[Path, Path, Path, Path, Path, Path]:
     root = root.resolve()
+    root.mkdir(parents=True, exist_ok=True)
     work = root / "work"
     work.mkdir()
     project = work / "build/project"
@@ -137,6 +139,9 @@ def make_fixture(root: Path) -> tuple[Path, Path, Path, Path, Path, Path]:
         "request_id": "0123456789abcdef0123456789abcdef",
         "inputs": {name: path.relative_to(work).as_posix() for name, path in inputs.items()},
     }
+    if music_output_requested:
+        selection["passive_pcm_capture_requested"] = True
+        selection["passive_pcm_capture_music_output_requested"] = True
     selection_path.write_text(json.dumps(selection), encoding="utf-8")
     return work, project, editor, dotnet, llvm_nm, selection_path
 
@@ -157,6 +162,7 @@ def expected_payload(project: Path, work: Path, selection_path: Path, dotnet: Pa
         "managed_producer_sha256": hook.file_sha(hook.ROOT / "tools/unity/support/audio/managed-producer/produce.py"),
         "request_id": selection["request_id"],
         "passive_pcm_capture_requested": selection["passive_pcm_capture_requested"],
+        "passive_pcm_capture_music_output_requested": selection["passive_pcm_capture_music_output_requested"],
         "input_sha256": {name: hook.file_sha(path) for name, path in sorted(resolved.items()) if name != "stage_root"},
         "receipt_bound_payload": json.loads(resolved["stage_receipt"].read_text(encoding="utf-8"))["outputs"],
     }
@@ -181,6 +187,7 @@ class GenerationCacheTests(unittest.TestCase):
             self.assertEqual("requested", variant)
             self.assertEqual(hook.SELECTION_SCHEMA, selection["schema"])
             self.assertIs(selection["passive_pcm_capture_requested"], False)
+            self.assertIs(selection["passive_pcm_capture_music_output_requested"], False)
 
     def test_r1_rejects_diagnostic_field_and_unknown_schema(self) -> None:
         with tempfile.TemporaryDirectory() as temp_name:
@@ -211,10 +218,34 @@ class GenerationCacheTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "boolean"):
                 hook.read_selection(work, selection_path)
             selection["passive_pcm_capture_requested"] = False
+            selection["passive_pcm_capture_music_output_requested"] = True
+            selection_path.write_text(json.dumps(selection), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "requires passive PCM capture"):
+                hook.read_selection(work, selection_path)
+            selection["passive_pcm_capture_requested"] = True
+            selection["passive_pcm_capture_music_output_requested"] = 1
+            selection_path.write_text(json.dumps(selection), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "boolean"):
+                hook.read_selection(work, selection_path)
+            selection["passive_pcm_capture_music_output_requested"] = False
             selection["unrecognized"] = False
             selection_path.write_text(json.dumps(selection), encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "unexpected fields"):
                 hook.read_selection(work, selection_path)
+
+    def test_music_output_selection_is_in_generation_key_and_payload(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            make_fake_source_bundle(root)
+            ordinary = make_fixture(root / "ordinary")
+            selected = make_fixture(root / "selected", music_output_requested=True)
+            producer = FakeProducer()
+            with mock.patch.object(hook, "ROOT", root):
+                ordinary_payload = expected_payload(ordinary[1], ordinary[0], ordinary[5], ordinary[3], ordinary[4], producer)
+                selected_payload = expected_payload(selected[1], selected[0], selected[5], selected[3], selected[4], producer)
+            self.assertIs(ordinary_payload["passive_pcm_capture_music_output_requested"], False)
+            self.assertIs(selected_payload["passive_pcm_capture_music_output_requested"], True)
+            self.assertNotEqual(key_for(ordinary_payload), key_for(selected_payload))
 
     def test_source_bundle_lists_public_audio_and_transform_inputs(self) -> None:
         bundle = hook.source_bundle_hashes()
@@ -293,6 +324,24 @@ class GenerationCacheTests(unittest.TestCase):
                     self.assertNotEqual(output, producer.compile_outputs[-1])
                     tool.write_bytes(original_bytes)
                 self.assertEqual(1, stager.stages)
+
+    def test_build_hook_forwards_music_output_selection_to_producer(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            make_fake_source_bundle(root)
+            work, project, editor, dotnet, llvm_nm, selection_path = make_fixture(root, music_output_requested=True)
+            producer, stager = FakeProducer(), FakeStager()
+            with mock.patch.object(hook, "ROOT", root):
+                with (
+                    mock.patch.dict(os.environ, {"UNITY_EDITOR": str(editor)}),
+                    mock.patch.object(hook, "load", side_effect=[producer, stager]),
+                    mock.patch.object(hook.shutil, "which", return_value=str(dotnet)),
+                    mock.patch.object(hook, "synchronize_sound_emitter", return_value={"fixture": True}),
+                    self.assertRaisesRegex(RuntimeError, "requested cache miss compiled"),
+                ):
+                    hook.stage_for_build(project, work, selection_path=selection_path)
+            self.assertIs(producer.last_compile_args[-2], True)
+            self.assertIs(producer.last_compile_args[-1], True)
 
     def test_cache_receipt_must_match_current_key_and_payload(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
