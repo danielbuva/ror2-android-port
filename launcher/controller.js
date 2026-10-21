@@ -16,17 +16,19 @@ export function validate(value) {
     capabilities: Object.freeze(Object.fromEntries(actions.map(a => [a, value.capabilities[a] === true])))});
 }
 export function createController(onChange = () => {}) {
-  let state = validate(unavailable()), adapter = null, unsubscribe = null, generation = 0, busy = false;
-  const snapshot = () => ({...state, busy});
+  let state = validate(unavailable()), adapter = null, unsubscribe = null, generation = 0;
+  const pending = new Set();
+  const snapshot = () => ({...state, busy: pending.size > 0});
   const notify = () => onChange(snapshot());
   function disconnect(message) {
     generation++;
     const cleanup = unsubscribe;
-    unsubscribe = null; adapter = null; busy = false;
+    unsubscribe = null; adapter = null; pending.clear();
     state = validate(unavailable(message));
     try { cleanup?.(); } finally { notify(); }
   }
-  const can = action => !busy && !!adapter && allowed[state.status].includes(action) && state.capabilities[action] === true;
+  const offers = action => !!adapter && allowed[state.status].includes(action) && state.capabilities[action] === true;
+  const can = action => offers(action) && !pending.has(action);
   async function connect(next) {
     disconnect();
     const token = generation;
@@ -50,7 +52,7 @@ export function createController(onChange = () => {}) {
   async function invoke(action) {
     if (!can(action)) return false;
     const token = generation;
-    busy = true; notify();
+    pending.add(action); notify();
     try {
       await adapter.invoke(action);
       // Completion alone never implies preparation/launch success. Only host state does.
@@ -58,7 +60,7 @@ export function createController(onChange = () => {}) {
     } catch {
       if (token === generation) disconnect('Operation failed. Reconnect to inspect backend state.');
       return false;
-    } finally { if (token === generation) { busy = false; notify(); } }
+    } finally { if (token === generation) { pending.delete(action); notify(); } }
   }
-  return {snapshot, can, connect, invoke, disconnect};
+  return {snapshot, offers, can, connect, invoke, disconnect};
 }

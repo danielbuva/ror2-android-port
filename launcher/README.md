@@ -12,12 +12,15 @@ architecture.
 From the repository root, `python3 -m http.server 8080 --bind 127.0.0.1`;
 open `http://127.0.0.1:8080/launcher/`. Serve locally, not on a public interface.
 Run `node --test launcher/tests/*.test.js` (Node 18 or newer).
+Open `http://127.0.0.1:8080/launcher/tests/view.html` for browser regression checks
+against the real frontend: pending Prepare/Pause, action and navigation focus,
+and modal focus during background updates. All four results must read PASS.
 No dependencies, build step, external fonts, analytics or remote requests.
 
 - `index.html`: safe disconnected default, setup and diagnostics routes.
 - `app.js`: view rendering, hash navigation, modal and accessibility wiring.
 - `controller.js`: versioned state/action boundary; owns connection, subscription,
-  in-flight request lock and stale-response rejection. `disconnect()` or page exit
+  per-action pending requests and stale-response rejection. `disconnect()` or page exit
   tears down the subscription; no preparation is canceled implicitly.
 - `style.css`, `background.png`: approved shared visual treatment.
 - `demo/`: explicitly separate, simulated click-through. No route or flag enables
@@ -57,7 +60,12 @@ revalidate its own authorization and prerequisites: UI gating is not security.
 Commands are also state-gated: idle → select/prepare; preparing → pause;
 paused → resume; error → select/retry; ready → select/launch. Unavailable offers
 none. Never advertise pause/retry before the backend can safely perform them.
-Duplicate pending requests are suppressed. Adapter errors fail closed without
+Duplicate pending requests for the same action are suppressed. An `invoke` Promise
+may remain pending while its operation runs; newly published state and capabilities
+can authorize a different action, such as Pause during Prepare. The host must
+serialize or reject incompatible operations. Pending actions remain visible but
+disabled, and state updates preserve keyboard focus or move it to the next state
+action. Adapter errors fail closed without
 exposing their text; reconnect and re-query the host to recover. A host operation
 may continue after disconnection, so its lifecycle/persistence must live outside
 this UI. Reloading does not synthesize progress or remember readiness.

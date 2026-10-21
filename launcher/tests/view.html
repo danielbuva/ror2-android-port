@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>Launcher browser regression checks</title>
+<h1>Launcher browser regression checks</h1>
+<p>Local simulated adapters only. No game, native bridge or device access.</p>
+<ol id="results"></ol>
+<iframe src="../index.html" title="Frontend under test" width="900" height="600"></iframe>
+<script type="module">
+const frame = document.querySelector('iframe');
+await new Promise(resolve => frame.addEventListener('load', resolve, {once:true}));
+const win = frame.contentWindow, doc = win.document;
+const tick = () => new Promise(resolve => setTimeout(resolve, 0));
+const snapshot = (status = 'idle', capabilities = {selectFiles:true, prepare:true}) =>
+  ({status, capabilities, progress:null, message:'Simulated host status'});
+const assert = (condition, message) => { if (!condition) throw new Error(message); };
+async function route(view) {
+  if (win.location.hash === `#${view}`) return;
+  const changed = new Promise(resolve => win.addEventListener('hashchange', resolve, {once:true}));
+  win.location.hash = view;
+  await changed;
+}
+async function fixture() {
+  let listener, state = snapshot();
+  const adapter = {version:1, getState:async () => state,
+    subscribe:fn => { listener = fn; fn(state); return () => {}; },
+    invoke:async () => {}, emit:value => { state = value; listener(value); }};
+  await win.launcher.connect(adapter);
+  return adapter;
+}
+async function check(name, run) {
+  const result = document.createElement('li');
+  try { await run(); result.textContent = `PASS: ${name}`; }
+  catch (error) { result.textContent = `FAIL: ${name}: ${error.message}`; }
+  document.querySelector('#results').append(result);
+}
+await check('Pause is enabled and focused while Prepare remains pending', async () => {
+  const adapter = await fixture(); await route('setup'); let finish;
+  adapter.invoke = action => {
+    if (action === 'prepare') {
+      adapter.emit(snapshot('preparing', {pause:true}));
+      return new Promise(resolve => { finish = resolve; });
+    }
+    adapter.emit(snapshot('paused', {resume:true}));
+    return Promise.resolve();
+  };
+  const prepare = doc.querySelector('[data-action="prepare"]');
+  prepare.focus(); prepare.click();
+  try {
+    const pause = doc.querySelector('[data-action="pause"]');
+    assert(pause && !pause.disabled, 'Pause unavailable');
+    assert(doc.activeElement === pause, 'Focus did not follow Prepare to Pause');
+    pause.click(); await tick();
+    assert(doc.activeElement?.dataset.action === 'resume', 'Focus did not follow Pause to Resume');
+  } finally { finish(); await tick(); }
+});
+await check('An immediate action restores keyboard focus after its request settles', async () => {
+  await fixture(); await route('setup');
+  const select = doc.querySelector('[data-action="selectFiles"]');
+  select.focus(); select.click(); await tick();
+  assert(doc.activeElement?.dataset.action === 'selectFiles', 'Selection focus lost');
+});
+await check('Navigation focus survives background state updates', async () => {
+  const adapter = await fixture(); await route('home');
+  doc.querySelector('[data-view="diagnostics"]').focus();
+  adapter.emit(snapshot());
+  assert(doc.activeElement?.dataset.view === 'diagnostics', 'Navigation focus lost');
+});
+await check('Background updates do not steal focus from the About dialog', async () => {
+  const adapter = await fixture();
+  doc.querySelector('#about').click();
+  const close = doc.querySelector('#close-about'); close.focus();
+  adapter.emit(snapshot());
+  assert(doc.activeElement === close, 'Dialog focus stolen');
+  close.click();
+});
+document.title = document.querySelector('#results').textContent.includes('FAIL:')
+  ? 'FAIL · Launcher browser checks' : 'PASS · Launcher browser checks';
+</script></html>

@@ -49,3 +49,36 @@ test('malformed adapters and teardown contract fail closed', async () => {
   assert.throws(() => validate({...snapshot(), message:'x'.repeat(501)}));
   assert.equal(validate(snapshot('idle', {prepare:'true'})).capabilities.prepare, false);
 });
+test('host-authorized pause and resume work while preparation remains pending', async () => {
+  const c = createController(), f = fixture(); let finish;
+  f.invoke = action => {
+    f.calls.push(action);
+    if (action === 'prepare') {
+      f.emit(snapshot('preparing', {pause:true}));
+      return new Promise(resolve => { finish = resolve; });
+    }
+    f.emit(snapshot(action === 'pause' ? 'paused' : 'preparing',
+      action === 'pause' ? {resume:true} : {pause:true}));
+    return Promise.resolve();
+  };
+  await c.connect(f); const preparation = c.invoke('prepare');
+  assert.equal(c.can('pause'), true);
+  assert.equal(await c.invoke('pause'), true);
+  assert.equal(c.snapshot().busy, true);
+  assert.equal(c.can('resume'), true);
+  assert.equal(await c.invoke('resume'), true);
+  assert.deepEqual(f.calls, ['prepare', 'pause', 'resume']);
+  finish(); await preparation;
+  assert.equal(c.snapshot().busy, false);
+});
+test('pending actions stay visible but reject duplicate requests across state updates', async () => {
+  const c = createController(), f = fixture(); let finish;
+  f.invoke = () => new Promise(resolve => { finish = resolve; });
+  await c.connect(f); const pending = c.invoke('prepare');
+  assert.equal(c.offers('prepare'), true);
+  assert.equal(c.can('prepare'), false);
+  f.emit(snapshot());
+  assert.equal(await c.invoke('prepare'), false);
+  finish(); await pending;
+  assert.equal(c.can('prepare'), true);
+});
