@@ -38,7 +38,9 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       [J866's scoped metadata qualification](PORTING_JOURNAL.md#j866--qualify-scoped-sdk-assembly-metadata-and-forwarding-on-android)
       and [J869's SDK search metadata](PORTING_JOURNAL.md#j869--decode-pinned-sdk-wrapper-search-order-on-android),
       qualify complete wrapper-cache/mapping and scene/manager usage with
-      independent producers.
+      independent producers. Preserve
+      [J873's direct-name/cache-query distinction](PORTING_JOURNAL.md#j873--separate-direct-scene-names-from-sdk-wrapper-cache-queries);
+      the independent desktop oracle must never become a phone-build input.
 - [ ] Benchmark any alternative pipeline with pinned versions/options/shaders and
       matched device workloads; IL2CPP alone does not prove equivalent performance.
 - [ ] Qualify the isolated owner-build environment; the alpha device is alpha's

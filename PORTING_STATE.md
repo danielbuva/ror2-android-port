@@ -1,12 +1,12 @@
 # Porting state
 
-Last updated 2026-10-20 after **J871/J870/J869**. Diagnostic c077ed2a passes both
+Last updated 2026-10-20 after **J873/J871**. Diagnostic c077ed2a passes both
 default gameplay checks and initializes the original Wwise owner with all 153
 requested banks. It retains a path-probe error, point-sound null references and a
 zero device playback capture. Audio playback remains unqualified. The accepted
 baseline stays f1550ce0; c077ed2a is installed, stopped and asleep. J871 confirms isolated native event PCM but leaves Android event capture
-unqualified. Alpha separately qualifies bounded SDK wrapper-search metadata
-on Android.
+unqualified. Alpha adds an independent desktop SDK wrapper-query oracle;
+complete phone root production remains open.
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
@@ -19,7 +19,7 @@ content on every update. Results are recorded once in the
 | --- | --- |
 | Accepted input | Steam build 25475991, input id `6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88` |
 | Toolchain | Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan (`environment/toolchain.json`) |
-| Owner-build research | J862 connects restricted fixture module policy/native metadata to phone stripping/conversion; J864/J866 add SDK class IDs and scoped metadata/forwarding, and J869 qualifies bounded SDK search metadata on Android. Complete wrapper-cache/mapping, scene roots and managed game compilation remain unresolved inputs. General module policy, content/shaders and complete phone-only owner builds remain open; Route A and the desktop fallback stay fixed. Research probes change no game build or install. |
+| Owner-build research | J862 connects restricted fixture module policy/native metadata to phone stripping/conversion; J864/J866/J869 qualify SDK class IDs, scoped metadata and search order on Android. J873 adds a desktop concrete-wrapper oracle and distinguishes direct scene names from cache fallback. Complete cache population/mapping, scene roots and managed game compilation remain unresolved inputs. General module policy, content/shaders and complete phone-only owner builds remain open; Route A and the desktop fallback stay fixed. Research probes change no game build or install. |
 | Latest device-verified APK | J868 diagnostic `c077ed2ae685251762215580a82e424c4405aa13279a65a9be28209f8fc3c842`, source e53adf0: full build/host wrapper and both default checks pass, 333 same-request pre-strip DLLs, 356 frozen authored inputs, 266 payload files and matching symbols. Original engine/153 banks are Ready; path-probe and point-sound log errors prevent promotion. Accepted baseline remains J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`, source 1780ea9. |
 | Installed now | The primary gameplay device has diagnostic c077ed2a after both J868 default checks; selector and recorder server absent, process stopped and display asleep. Audible playback is unqualified. The spare retains 107718f8… with earlier automatic checks; no new spare action. The alpha device retains unchanged be26c21c… and is asleep after J869’s SDK metadata probe; no new alpha gameplay qualification is inferred. |
 | Runtime source since verified APK | J870 host-verifies the Android path-probe repair and exact producer/stager roundtrip; it is not in the installed APK. Original point-sound localization remains a host draft. Main’s PR #16/#17 merges are metadata tooling/docs only; the source-skin host fixture repair changes tests only. Native camera integration and passive PCM also remain queued, with no device acceptance. J861 retains the bounded Siren path-request/encounter failure. |

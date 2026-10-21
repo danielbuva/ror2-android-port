@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J873](PORTING_JOURNAL.md#j873--separate-direct-scene-names-from-sdk-wrapper-cache-queries) | 2026-10-20 | Separate direct scene names from SDK wrapper-cache queries | 2026-10-20. |
 | [J871](PORTING_JOURNAL.md#j871--reject-whole-recording-signal-as-proof-of-original-event-playback-capture) | 2026-10-20 | Reject whole-recording signal as proof of original event playback capture | Date: 2026-10-20. |
 | [J869](PORTING_JOURNAL.md#j869--decode-pinned-sdk-wrapper-search-order-on-android) | 2026-10-20 | Decode pinned SDK wrapper-search order on Android | 2026-10-20. |
 | [J870](PORTING_JOURNAL.md#j870--preserve-android-bank-paths-while-removing-an-invalid-filesystem-warning) | 2026-10-20 | Preserve Android bank paths while removing an invalid filesystem warning | Date: 2026-10-20. |

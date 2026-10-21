@@ -23,6 +23,8 @@ Restricted fixture module policy into stripping/conversion: [J862](PORTING_JOURN
 Persistent native class-ID prerequisite: [J864](PORTING_JOURNAL.md#j864--read-persistent-native-class-ids-from-the-pinned-sdk-on-android).
 Scoped managed metadata/forwarding on Android: [J866](PORTING_JOURNAL.md#j866--qualify-scoped-sdk-assembly-metadata-and-forwarding-on-android).
 SDK normal-path wrapper-search metadata: [J869](PORTING_JOURNAL.md#j869--decode-pinned-sdk-wrapper-search-order-on-android).
+Independent desktop wrapper-query oracle:
+[J873](PORTING_JOURNAL.md#j873--separate-direct-scene-names-from-sdk-wrapper-cache-queries).
 
 **Finding:** this repository has no demonstrated phone-only build path. Many
 preparation and packaging stages have Android-capable open-source building
@@ -51,7 +53,9 @@ roots remain unproduced.
 J864 independently reads persistent native class IDs as another prerequisite;
 J866 qualifies scoped managed metadata/forwarding on Android; J869 decodes the
 SDK's normal-path wrapper-search metadata there. Complete wrapper-cache/mapping
-and scene/manager/dependency usage remain open.
+and scene/manager/dependency usage remain open. J873 adds an independent desktop
+verification oracle and separates direct scene names from inherited cache
+queries; its reports are never phone-build inputs.
 These are build-pipeline problems; keep the game runtime
 and desktop fallback while investigating them independently.
 
