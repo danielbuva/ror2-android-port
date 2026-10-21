@@ -5,6 +5,7 @@ Desktop scene/editor root production and supplied tools remain dependencies.
 """
 
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path, PurePosixPath
@@ -107,7 +108,7 @@ def stage_action(request):
     from phone_content import validate_linker_capture
     from phone_native import fixture_request
 
-    value, project = fixture_request(request, optional_fields=("capture",))
+    value, project = fixture_request(request, optional_fields=("capture", "native_registry"))
     attempt = Path(value["capture"]).resolve()
     if attempt.parent != project.parent or not attempt.name.startswith("editor-build-"):
         raise ValueError("Select the same fixture's owned editor attempt")
@@ -131,7 +132,20 @@ def stage_action(request):
     plan = arguments(node["Action"], editor / "il2cpp/build/deploy/UnityLinker", project, input_directory, capture, android)
     destination = WORK / "rebuild/phone-linker" / now()
     destination.mkdir(parents=True, exist_ok=False)
-    shutil.copytree(capture / "inputs", destination / "inputs")
+    native_configuration = None
+    if "native_registry" in value:
+        from phone_linker_roots import EDITOR_DATA, stage_support
+
+        shutil.copytree(capture / "inputs", destination / "inputs", ignore=shutil.ignore_patterns("EditorToUnityLinkerData.json"))
+        native_configuration = stage_support(
+            destination, value["native_registry"], json.loads((capture / "inputs/EditorToUnityLinkerData.json").read_text()), ROOT
+        )
+        plan = [
+            {"output": EDITOR_DATA, "prefix": item["prefix"]} if isinstance(item, dict) and item.get("prefix") == "--editor-data-file=" else item
+            for item in plan
+        ]
+    else:
+        shutil.copytree(capture / "inputs", destination / "inputs")
     shutil.copy2(capture / "empty-linker.xml", destination / "empty-linker.xml")
     if (destination / "empty-linker.xml").read_text() != '<?xml version="1.0" encoding="utf-8"?>\n<linker />\n':
         raise ValueError("Fixture callback descriptor is not inert")
@@ -166,6 +180,7 @@ def stage_action(request):
                 "callback": identity,
                 "game_inputs": False,
                 "desktop_editor_roots": True,
+                **({"native_registry": native_configuration} if native_configuration else {}),
                 "changes": ["Android .NET 8.0.32 build-tool host", "Relocated input/output paths; unnecessary tool analytics disabled"],
             },
             indent=2,
@@ -204,6 +219,11 @@ def stripped_input(request, fixture):
     for name, digest in json.loads((stage_root / "input-manifest.json").read_text()).items():
         if sha(bounded(stage_root, name)) != digest:
             raise ValueError("Linker staged input drift")
+    plan = json.loads((stage_root / "plan.json").read_text()) if (stage_root / "plan.json").exists() else {}
+    if "native_registry" in plan:
+        from phone_linker_roots import verify
+
+        verify(stage_root, output, result.get("native_roots"))
     stripped = output / "stripped"
     actual = {p.relative_to(stripped).as_posix(): sha(p) for p in stripped.rglob("*") if p.is_file()}
     if actual != result["outputs"]:
@@ -238,6 +258,11 @@ def strip(stage_root, tool_root, output):
         plan = json.loads((stage_root / "plan.json").read_text())
         if plan["game_inputs"] is not False or plan["desktop_editor_roots"] is not True:
             raise ValueError("Expected isolated authored linker inputs")
+        if "native_registry" in plan:
+            specification = importlib.util.spec_from_file_location("_phone_linker_roots", stage_root / "phone_linker_roots.py")
+            roots = importlib.util.module_from_spec(specification)
+            specification.loader.exec_module(roots)  # Authored generation tool only.
+            result["native_roots"] = roots.generate(stage_root, output, plan["native_registry"])
         argv = [
             str(tool_root / "usr/lib/dotnet/dotnet"),
             "exec",
@@ -250,7 +275,11 @@ def strip(stage_root, tool_root, output):
                 argv.append(item)
             elif isinstance(item, dict) and set(item) == {"path", "prefix"}:
                 argv.append(item["prefix"] + str(bounded(stage_root, item["path"])))
-            elif isinstance(item, dict) and set(item) == {"output", "prefix"} and item["output"] in {"stripped", "linker.traceevents"}:
+            elif (
+                isinstance(item, dict)
+                and set(item) == {"output", "prefix"}
+                and item["output"] in {"stripped", "linker.traceevents", "native-roots/EditorToUnityLinkerData.json"}
+            ):
                 argv.append(item["prefix"] + str(bounded(output, item["output"])))
             else:
                 raise ValueError("Unknown staged linker argument")

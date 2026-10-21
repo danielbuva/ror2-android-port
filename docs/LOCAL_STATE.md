@@ -25,6 +25,20 @@ The private `strip-linker-on-android.py` adapter is required local replay suppor
 for receipt-bound workspace/tool verification, fresh capacity, staging/execution
 and output collection. No current game build reads these inputs.
 
+The optional `native_registry` object contains an explicit absolute owner SDK
+`binary` path and its pinned `sha256`. `phone_linker_roots.stage_support` produces
+`project-root-data.json`, `registry/` with both authored readers and unchanged
+SDK bytes, and the staged generation helper. The captured
+`inputs/EditorToUnityLinkerData.json` is deliberately absent in this mode.
+`phone_linker_roots.generate` produces `native-roots/sdk-registry.json`,
+`EditorToUnityLinkerData.json` and `receipt.json` at the actual stripping output;
+the linker command points there. Source/input/output hashes and a captured-
+project flag preserve the distinction between SDK metadata and project roots.
+The retained `native-root-linker-on-android.py` under the phone proof root is
+local replay support for the same owned workspace, explicit device, fresh
+capacity, exact staged inputs, tool verification and output collection. It
+never overwrites the earlier stripping adapters, selectors or results.
+
 `work/coordination/phone-proof/` retains J832's private execution adapters,
 hash-bound tool/package manifests, original failed attempts and collected device
 evidence. The `converter-host.py`, `converter-android.py`,

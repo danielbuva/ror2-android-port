@@ -76,6 +76,20 @@ tool analytics. Desktop-generated scene/editor root production remains an input;
 matching output hashes and fresh execution evidence are separate acceptance
 checks. No whole-catalog build or game runtime calls it.
 
+`phone_linker_roots.py` owns the optional SDK-native metadata handoff for that
+authored fixture only. An explicit `native_registry` binary/hash request causes
+staging to omit the captured native table entirely and retain only validated
+project scene/module-policy fields. At the actual Android stripping invocation,
+the staged authored registry readers inspect the pinned SDK as data. The handoff
+checks complete native identities/parents, orders rows by qualified name, and
+creates a new `native-roots/EditorToUnityLinkerData.json` under the owned output.
+UnityLinker receives that generated path; hashes/source/scope receipts bind it
+through the converter boundary. Invalid SDK data, captured table leakage, source
+or output drift and incomplete metadata refuse. Scene usage, TypesInScenes.xml,
+module policy and managed compilation remain captured desktop inputs; complete
+independent editor roots remain unqualified. There is no editor mutation or
+whole-catalog/game consumer. Failure directories and earlier modes remain intact.
+
 `phone_roots.py` and `tools/phone-build/metadata/` own experimental read-only
 host support for investigating independent root production. The current
 `phone-root-contract` action binds the authored fixture/capture, inventories
@@ -108,8 +122,9 @@ that authored helper under isolated Python. Unknown layouts, instructions,
 arguments and parent identities refuse. It neither executes SDK instructions
 nor supplies an execution backend. Source/input hashes, metadata and failures remain under
 `work/experiments/phone-registry/`; exclusive output creation preserves attempts.
-No build consumes its registry or receives project roots from it; no editor or
-game state changes.
+Only the explicit authored-fixture SDK-native stripping mode consumes freshly
+generated registry data. No whole-catalog build consumes it or receives complete
+project roots from it; no editor or game state changes.
 
 `tools/phone-build/host/` is separate experimental **support**. Its Android
 driver owns compilation of authored C/Java/XML, DEX/APK production and disposable
