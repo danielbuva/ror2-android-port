@@ -283,13 +283,17 @@ def check_baseline(stage_exit=False):
                 raise RuntimeError(str(operation_error) + "; " + str(error)) from operation_error
             raise
     failures = assess(stop, first, final, stage_exit=stage_exit)
+    try:
+        current_build_sha256 = read(WORK / "config/current-build.json")["apk_sha256"]
+    except FileNotFoundError:
+        current_build_sha256 = None
     result = {
         "success": not failures,
         "failures": failures,
         "stop": stop,
         "pid": pid,
         "apk_sha256": installed["apk_sha256"],
-        "is_current_build": installed["apk_sha256"] == read(WORK / "config/current-build.json")["apk_sha256"],
+        "is_current_build": installed["apk_sha256"] == current_build_sha256,
         "world_seconds": ((final or {}).get("world") or {}).get("seconds"),
         "applied_runs": ((final or {}).get("profile") or {}).get("appliedRuns"),
         "evidence": str(out.relative_to(WORK.parent)),

@@ -178,12 +178,14 @@ class BaselineRunnerProtocolTests(unittest.TestCase):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
         work = Path(temporary.name) / "work"
+        if getattr(device, "current_build_sha256", None) is not None:
+            (work / "config").mkdir(parents=True)
+            (work / "config/current-build.json").write_text(json.dumps({"apk_sha256": device.current_build_sha256}))
         with (
             patch.object(baseline, "WORK", work),
             patch.object(baseline, "now", return_value="authored-attempt"),
             patch.object(baseline, "Device", return_value=device),
             patch.object(baseline, "attempt_from_installed", return_value="authored-attempt"),
-            patch.object(baseline, "read", return_value={"apk_sha256": "a" * 64}),
             patch.object(baseline.time, "monotonic", side_effect=itertools.count()),
             patch.object(baseline.time, "sleep"),
         ):
@@ -198,6 +200,16 @@ class BaselineRunnerProtocolTests(unittest.TestCase):
                 self.assertEqual(result["cleanup"], {"selector_absent": True, "process_absent": True, "sleep_requested": True, "display_asleep": True})
                 self.assertFalse(device.running or device.selector)
                 self.assertFalse(any(check is False for _, check in device.calls))
+
+    def test_owned_apk_identity_does_not_require_a_local_build_pointer(self):
+        for pointer, expected in ((None, False), ("a" * 64, True), ("b" * 64, False)):
+            with self.subTest(pointer=pointer):
+                device = FixtureDevice()
+                device.current_build_sha256 = pointer
+                result = self.invoke(device)
+                self.assertTrue(result["success"])
+                self.assertEqual(result["apk_sha256"], "a" * 64)
+                self.assertIs(result["is_current_build"], expected)
 
     def test_selector_transport_failure_does_not_overwrite_or_launch(self):
         device = FixtureDevice(failure="selector-observation")

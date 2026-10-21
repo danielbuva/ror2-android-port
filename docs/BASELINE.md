@@ -20,6 +20,8 @@ display off. It passes when:
 
 Evidence goes to `work/experiments/baseline/<timestamp>/` (`result.json`, final report,
 log and screenshot). It needs the configured device and the payload already synced.
+It binds the installed ownership receipt's APK even when this worktree has no
+local build pointer; `is_current_build` is false in that case.
 
 Before any runtime write, a checked directory listing must positively show that
 the diagnostic selector is absent. Transport errors and incomplete listings
