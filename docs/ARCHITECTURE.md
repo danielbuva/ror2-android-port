@@ -372,7 +372,7 @@ current path) and **historical** (kept for evidence; not reached by current comm
 `scripts/git-hooks/pre-push` delegates committed-source checks to
 `scripts/ci-local.sh` in a fresh clone. Verification retains its original exit
 status. Disposable host-volume cleanup runs separately after verification,
-with phase logs under ignored `.local/ci-cleanup/`; a failed detach preserves
+with phase logs in Git-private `ci-cleanup/` metadata; a failed detach preserves
 the scratch directory rather than deleting a mounted volume. Cleanup never
 opens or stops an editor or uses a device. A blocked cleanup cannot hold a
 completed verification, and failing verification still refuses the push.

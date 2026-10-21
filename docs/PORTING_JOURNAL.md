@@ -24310,7 +24310,7 @@ No Unity editor, shared build lock, Android storage or user data is touched.
 
 The minimal fix moves disposable host cleanup to a redirected background job
 while preserving the original verification status. Private phase logs live
-under `.local/ci-cleanup/`. A failed detach preserves its scratch directory;
+in Git-private `ci-cleanup/` metadata. A failed detach preserves its scratch directory;
 cleanup does not delete a still-mounted volume. The tracked shell harness
 extracts the actual cleanup function and supplies a blocking fake detach:
 the parent returns before release, status 37 is retained, phase logs are written
@@ -24321,3 +24321,11 @@ commands stay unchanged, and failures still refuse the push. The next push
 must rerun all checks on the committed fix; the earlier pass does not substitute
 for that run. Preserve pending J904/J906/J907 commits and sync them together
 with this repair when the required hook completes.
+
+The first repaired-hook run executes 1,459 tests with 89 unavailable-tool/evidence
+skips, but refuses the push on the clean-repository fixture: eagerly creating
+`.local/ci-cleanup/` makes that fixture dirty. Preserve the failed hook output
+under `work/coordination/ci-cleanup-background-next/r1/root-push.log`. Move the
+logs to the directory resolved by Git's own private-state path API, so neither
+a primary checkout nor a linked worktree acquires untracked cleanup files.
+The clean-repository regression remains enabled and the next hook reruns it.

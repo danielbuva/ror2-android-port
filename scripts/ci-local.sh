@@ -15,8 +15,9 @@ python="$root/.local/lab-venv/bin/python"
 [ -x "$python" ] || python=python3
 scratch=$(mktemp -d "${TMPDIR:-/tmp}/ci-local.XXXXXX")
 volume="$scratch/case-sensitive"
-cleanup_log="$root/.local/ci-cleanup/$(basename "$scratch").log"
-mkdir -p "$(dirname "$cleanup_log")"
+cleanup_dir=$(git -C "$root" rev-parse --path-format=absolute --git-path ci-cleanup)
+cleanup_log="$cleanup_dir/$(basename "$scratch").log"
+mkdir -p "$cleanup_dir"
 cleanup() {
   local status=$?
   trap - EXIT
