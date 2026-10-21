@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J893](PORTING_JOURNAL.md#j893--observe-authored-scene-and-manager-dependencies-without-conflating-native-identities) | 2026-10-21 | Observe authored scene and manager dependencies without conflating native identities | Date: 2026-10-21. |
 | [J891](PORTING_JOURNAL.md#j891--bind-the-music-player-and-observe-original-controller-preload-on-device) | 2026-10-21 | Bind the music player and observe original controller preload on device | Date: 2026-10-21. |
 | [J890](PORTING_JOURNAL.md#j890--generate-the-new-music-script-importer-identities-before-building) | 2026-10-21 | Generate the new music script importer identities before building | Date: 2026-10-21. |
 | [J889](PORTING_JOURNAL.md#j889--integrate-the-original-musiccontroller-with-guarded-process-teardown) | 2026-10-21 | Integrate the original MusicController with guarded process teardown | Date: 2026-10-21. |

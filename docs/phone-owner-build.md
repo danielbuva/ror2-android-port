@@ -1,6 +1,6 @@
 # Phone-only owner-build assessment
 
-2026-10-20. Scope: build/distribution engineering under
+2026-10-21. Scope: build/distribution engineering under
 [ADR-002](ADR-002-public-alpha-distribution.md), keeping the IL2CPP ARM64 game
 and Android renderer fixed. This combines source/tool inspection and isolated
 authored probes, not a complete phone build or gameplay proof.
@@ -31,6 +31,8 @@ SDK forward wrapper population on Android:
 [J878](PORTING_JOURNAL.md#j878--reconstruct-sdk-wrapper-population-on-android-with-a-complete-forward-oracle).
 Root-inclusive Android metadata/native SDK cache comparison:
 [J883](PORTING_JOURNAL.md#j883--include-the-object-root-and-match-android-metadata-to-native-sdk-caches).
+Independent desktop scene/manager observation and bounded name comparison:
+[J893](PORTING_JOURNAL.md#j893--observe-authored-scene-and-manager-dependencies-without-conflating-native-identities).
 
 **Finding:** this repository has no demonstrated phone-only build path. Many
 preparation and packaging stages have Android-capable open-source building
@@ -68,6 +70,10 @@ queries. J883 corrects root membership and matches Android-produced metadata to
 independently observed native forward/reverse caches. Complete
 linker-consumer semantics and root production remain unqualified; direct scene
 names stay separate.
+J893 adds a fresh authored SDK scene/manager dependency oracle and a bounded
+comparison with the retained fixture's linker type names. Native usage
+identities, scene associations and complete independent roots remain open;
+the oracle is never a phone-build input.
 These are build-pipeline problems; keep the game runtime
 and desktop fallback while investigating them independently.
 
