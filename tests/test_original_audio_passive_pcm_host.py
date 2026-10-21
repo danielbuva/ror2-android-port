@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 import subprocess
 import tempfile
@@ -17,7 +18,8 @@ def find_repo_root() -> Path:
 ROOT = find_repo_root()
 AUDIO = ROOT / "tools/unity/support/audio/bootstrap"
 FIXTURE = Path(__file__).resolve().parent / "fixtures/original_audio/PassivePcmCaptureWindowHarness.cs"
-UNITY_MONO = Path("/Applications/Unity/Hub/Editor/2021.3.45f2/Unity.app/Contents/MonoBleedingEdge")
+UNITY_EDITOR = Path(os.environ.get("UNITY_EDITOR_PATH", "/Applications/Unity/Hub/Editor/2021.3.45f2/Unity.app/Contents"))
+UNITY_MONO = UNITY_EDITOR / "MonoBleedingEdge"
 MONO = UNITY_MONO / "bin/mono"
 CSC = UNITY_MONO / "lib/mono/msbuild/Current/bin/Roslyn/csc.exe"
 
@@ -40,6 +42,7 @@ class OriginalAudioPassivePcmHostTests(unittest.TestCase):
                     "-out:" + str(executable),
                     str(AUDIO / "NativeWwiseMonitorLease.cs"),
                     str(AUDIO / "PassivePcmCaptureWindow.cs"),
+                    str(ROOT / "tools/unity/support/audio/core/GameAudioOriginalPassivePcmContract.cs"),
                     str(FIXTURE),
                 ],
                 capture_output=True,

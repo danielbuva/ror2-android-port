@@ -105,16 +105,48 @@ class NativeViewCameraIntegrationTests(unittest.TestCase):
         if camera_receipt.is_file():
             # Validate the audio stage before its later, receipt-owned camera
             # overlay, using scratch copies only. The live project stays intact.
+            camera = json.loads(camera_receipt.read_text())
+            music_receipt_relative = Path("Assets/StreamingAssets/Lab/OriginalMusicOutputObserverStageReceipt.json")
+            music_receipt = project / music_receipt_relative
+            music_profiles = {
+                "post-audio-music-observer-6f96-api-d540",
+                "post-audio-music-observer-r10-1ced",
+            }
+            music_receipt_required = camera.get("profile") in music_profiles
+            if music_receipt.is_file():
+                self.hook._reject_symlinks(music_receipt)
+            if music_receipt_required and not music_receipt.is_file():
+                self.skipTest("current camera stage has no local music-observer receipt to restore")
             work_copy = self.root / "work"
             project_copy = work_copy / "project-stage"
-            for relative in [row["target"] for row in stage["outputs"]] + [
+            project_files = [row["target"] for row in stage["outputs"]] + [
                 self.hook.CAMERA_STAGE_RELATIVE.as_posix(),
                 stage_path.relative_to(project).as_posix(),
-            ]:
+            ]
+            if music_receipt.is_file():
+                project_files.append(music_receipt_relative.as_posix())
+            for relative in project_files:
                 target = project_copy / relative
                 target.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(project / relative, target)
-            camera = json.loads(camera_receipt.read_text())
+
+            if music_receipt.is_file():
+                music = json.loads(music_receipt.read_text())
+                music_snapshot = music.get("preimage_snapshot")
+                self.assertIsInstance(music_snapshot, str)
+                music_snapshot_path = Path(music_snapshot)
+                self.assertFalse(music_snapshot_path.is_absolute())
+                self.assertNotIn("..", music_snapshot_path.parts)
+                self.assertNotIn("\\", music_snapshot)
+                self.assertEqual(music_snapshot_path.as_posix(), music_snapshot)
+                source = REPOSITORY / "work" / music_snapshot
+                if not source.is_file():
+                    self.skipTest("local music-observer preimage snapshot is unavailable")
+                self.hook._reject_symlinks(source)
+                target = work_copy / music_snapshot
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(source, target)
+
             snapshot = camera["preimage_snapshot"]
             snapshot_path = Path(snapshot)
             self.assertFalse(snapshot_path.is_absolute())

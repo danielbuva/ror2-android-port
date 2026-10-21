@@ -815,6 +815,14 @@ audibility evidence. The host music-owner compile fixture compiles the actual
 owner, contract and observer against authored API-shape declarations and rejects
 a static-class-as-value mutant; it does not model Unity lifecycle execution.
 
+The completed passive PCM window exposes the callback's full unsigned output ID
+with a separate observed flag and exact decimal-string companion. Known zero
+remains distinct from unknown; a stale slot without a callback in this window
+is unknown. The native main-output capture selector is unchanged. Comparing
+this identity with the exact owned MusicController output requires both
+observations and successful AddOutput; neither equality nor inequality proves
+playback or physical audibility.
+
 `recipe/original-audio-owner-sources.json` pins the authored owner cohort and
 runtime membership. Both producer compile modes validate its bytes and source
 map; camera staging requires the same ancestor pin. Cache identity includes the

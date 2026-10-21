@@ -24472,3 +24472,54 @@ stage the authored owner must regenerate it. A new committed/synchronized
 source, preflight, canonical build and matching artifact freeze are required
 before any install or both standard checks. Output acceptance, native playback,
 camera readiness and gameplay acceptance remain open.
+
+## J910 — Preserve the passive callback's complete output identity
+
+Date: 2026-10-21. Hypothesis: the composed player's zero PCM cannot qualify
+all original music output when the monitor's main-output selector and the
+source MusicController's separate output have not been joined by identity.
+Keep J904's exact source-call observer, the official SDK callback contract and
+pinned R2API.Sound initialization/lifetime prior art from
+`docs/community-prior-art.md`. The accepted input and native library remain
+fixed; no community or game implementation is copied.
+
+The existing native callback records its unsigned output ID in slot 18.
+Expose that full 64-bit value through the completed passive window, bootstrap
+contract and session snapshot, with an explicit observed flag and an invariant
+decimal-string companion. Known zero is valid observation; failed/incomplete
+windows and stale slots without a callback in this window stay unknown.
+Preserve the legacy nonzero boolean for compatibility. No native call,
+registration selector, callback lifetime or audio behavior changes.
+
+Preserve the cumulative reviewed draft, source hashes and host logs under
+`work/coordination/original-music-output-capture-identity-next/r2/`; its patch
+SHA-256 is `966d2e7560b874200c90123eb4f551530804617ef97d854a37449c1b25befaa7`.
+The independent R1 behavior review remains under
+`work/coordination/original-music-output-capture-identity-review/r1/`.
+Root reviews R2's compile-fixture closure: the preservation and listener tests
+now compile the actual shared contract instead of duplicate declarations.
+Four changed runtime sources, the owner recipe, producer and camera ancestor
+pins are synchronized. The focused Root suite passes 14 tests in 6.300 s,
+including whole music-owner compilation and its static-type regression;
+unsigned high-bit/max-value round trips, known zero and stale/no-callback
+refusal pass. Ruff passes. These authored declarations and tests contain no
+original assemblies or protected implementation.
+
+The broader local stage-copy fixture initially omits the newly required
+music-observer receipt while copying a current observed-camera stage. Preserve
+that host failure in `r2/root-pin-tests.log`; complete the fixture's faithful
+receipt/preimage copy without weakening production lineage checks.
+The corrected scratch fixture copies the optional observer receipt and its
+safe local preimage; missing local evidence skips explicitly. Root reruns the
+20-test producer/camera suite: it passes in 0.663 s with two expected profile
+skips, and the actual 165-row staged cohort check passes. Production lineage
+and symlink checks remain enabled.
+
+This is source-only instrumentation. A new committed player must confirm Unity
+serialization and compare both observed IDs from the same run, requiring the
+exact owned controller's successful AddOutput and no ownership mismatch.
+Missing prerequisites remain unknown; matching output IDs alone still do not
+qualify playback. Rebuild steps that stage these authored owners must regenerate
+them. No new APK, install or device run occurs here: Main retains diagnostic
+b0f7ae7e and accepted baseline f1550ce0. Native music playback, camera readiness,
+normal gameplay and physical audibility remain open.

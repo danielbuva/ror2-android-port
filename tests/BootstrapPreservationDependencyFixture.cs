@@ -1,28 +1,5 @@
 using System;
 
-internal interface IGameAudioOriginalPassivePcmCapture
-{
-    bool TerminalStopRequested { get; }
-    bool ArmRequested { get; }
-    float WindowStartRealtimeSinceStartup { get; }
-    ulong WindowStartServiceFrames { get; }
-    string State { get; }
-    string StopReason { get; }
-    string Failure { get; }
-    ulong CallbackCount { get; }
-    ulong FrameCount { get; }
-    ulong SampleCount { get; }
-    ulong FiniteSamples { get; }
-    ulong NonzeroFiniteSamples { get; }
-    ulong NonfiniteSamples { get; }
-    ulong RejectedBuffers { get; }
-    ulong CappedBuffers { get; }
-    bool OutputIdentityObserved { get; }
-    bool RequestGameplayArm();
-    void FinishGameplayWindow();
-    void Tick(float realtimeSinceStartup, bool ownerReady, bool exactControlObserved, ulong successfulOriginalRenderFrames);
-}
-
 internal sealed class GameAudioOriginalAndroidNativeBootstrap
 {
     internal NativeWwiseMonitorLease MonitorLease { get; set; }
@@ -40,6 +17,8 @@ internal sealed class PassivePcmCaptureReport
     internal ulong CallbackCount, FrameCount, SampleCount, FiniteSamples, NonzeroFiniteSamples;
     internal ulong NonfiniteSamples, RejectedBuffers, CappedBuffers;
     internal bool OutputIdentityObserved;
+    internal bool CaptureOutputDeviceIdObserved;
+    internal ulong CaptureOutputDeviceId;
 }
 
 internal sealed class PassivePcmCaptureWindow

@@ -49,6 +49,9 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
         public ulong passivePcmCallbacks, passivePcmFrames, passivePcmSamples, passivePcmFiniteSamples;
         public ulong passivePcmNonzeroFiniteSamples, passivePcmNonfiniteSamples, passivePcmRejectedBuffers, passivePcmCappedBuffers;
         public bool passivePcmOutputIdentityObserved;
+        public bool passivePcmCaptureOutputDeviceIdObserved;
+        public ulong passivePcmCaptureOutputDeviceId;
+        public string passivePcmCaptureOutputDeviceIdDecimal;
         public bool managedDefaultListenerCensusKnown;
         public int managedDefaultListenerCount;
         public PortSessionOriginalMusicControllerOwner.Snapshot originalMusicController;
@@ -186,6 +189,10 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
             passivePcmRejectedBuffers = pcm == null ? 0 : pcm.RejectedBuffers,
             passivePcmCappedBuffers = pcm == null ? 0 : pcm.CappedBuffers,
             passivePcmOutputIdentityObserved = pcm != null && pcm.OutputIdentityObserved,
+            passivePcmCaptureOutputDeviceIdObserved = pcm != null && pcm.CaptureOutputDeviceIdObserved,
+            passivePcmCaptureOutputDeviceId = pcm == null ? 0UL : pcm.CaptureOutputDeviceId,
+            passivePcmCaptureOutputDeviceIdDecimal = pcm != null && pcm.CaptureOutputDeviceIdObserved
+                ? GameAudioOriginalPassivePcmIdentity.ToDecimalString(pcm.CaptureOutputDeviceId) : null,
             managedDefaultListenerCensusKnown = managedDefaultListenerCensusKnown,
             managedDefaultListenerCount = managedDefaultListenerCount,
             originalMusicController = PortSessionOriginalMusicControllerOwner.CaptureSnapshot()

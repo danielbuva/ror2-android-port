@@ -69,30 +69,6 @@ public sealed class AkAudioListener
     }
 }
 
-public interface IGameAudioOriginalPassivePcmCapture
-{
-    bool ArmRequested { get; }
-    float WindowStartRealtimeSinceStartup { get; }
-    ulong WindowStartServiceFrames { get; }
-    bool TerminalStopRequested { get; }
-    string State { get; }
-    string StopReason { get; }
-    string Failure { get; }
-    ulong CallbackCount { get; }
-    ulong FrameCount { get; }
-    ulong SampleCount { get; }
-    ulong FiniteSamples { get; }
-    ulong NonzeroFiniteSamples { get; }
-    ulong NonfiniteSamples { get; }
-    ulong RejectedBuffers { get; }
-    ulong CappedBuffers { get; }
-    bool OutputIdentityObserved { get; }
-    bool RequestGameplayArm();
-    void FinishGameplayWindow();
-    void Tick(float realtimeSinceStartup, bool ownerReady, bool exactControlObserved, ulong successfulOriginalRenderFrames);
-    void BeforeOriginalEngineTerm();
-}
-
 public static class GameAudioOriginalRequestBootstrap
 {
     public static bool PassivePcmCaptureRequested;

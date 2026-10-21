@@ -1414,6 +1414,11 @@ cohort and ancestor hash are recorded in
 `recipe/original-audio-owner-sources.json`; changing runtime source membership
 invalidates the current stage/ancestor receipt and requires re-generation.
 
+J910 extends only authored passive-capture reports with an observed flag and
+full unsigned output ID plus exact decimal serialization. Runtime values remain
+in ignored local reports; no captured identifier or additional native/SDK code
+is published. The changed owner cohort and ancestor pins are regenerated.
+
 The authored output observer is a follow-on Cecil pass between the exact 6f96
 audio output and native-camera stage. It reads only the return codes from the
 original MusicController `AddOutput` and `RemoveOutput` calls; it does not add

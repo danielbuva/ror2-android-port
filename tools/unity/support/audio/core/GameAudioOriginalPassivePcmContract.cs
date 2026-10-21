@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 
 // Cross-assembly contract: the Core owner can drive/report a bootstrap-owned
 // diagnostic callback lease without referencing the bootstrap assembly.
@@ -24,6 +25,18 @@ public interface IGameAudioOriginalPassivePcmCapture
     ulong RejectedBuffers { get; }
     ulong CappedBuffers { get; }
     bool OutputIdentityObserved { get; }
+    bool CaptureOutputDeviceIdObserved { get; }
+    ulong CaptureOutputDeviceId { get; }
+}
+
+// JSON number consumers implemented with IEEE-754 doubles cannot preserve all
+// AkOutputDeviceID values. Keep the companion representation decimal and exact.
+public static class GameAudioOriginalPassivePcmIdentity
+{
+    public static string ToDecimalString(ulong outputDeviceId)
+    {
+        return outputDeviceId.ToString(CultureInfo.InvariantCulture);
+    }
 }
 
 
