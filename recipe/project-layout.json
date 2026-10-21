@@ -96,6 +96,7 @@
     "runtime/session/OfflineApplicationBoundary.cs": "dc5ef4018312240e2ae1a635593a9d88",
     "runtime/session/OfflineRunSeedBoundary.cs": "52ceeccedc9ce4953a076034db6249a8",
     "runtime/session/PortSession.cs": "e278bd80452dd40bdb7943cae9c70403",
+    "runtime/session/PortSessionOriginalAudioOwner.cs": null,
     "runtime/session/RewiredPlatformBoundary.cs": "4219da72f5da341f2a5079297b54b3b2",
     "runtime/session/SessionResourceBoundary.cs": "189e260ead19d401aa9b77ab83e4fb5f",
     "runtime/session/SurvivorSelectionBoundary.cs": "fae678bf953364541ac1ba6d88323873",

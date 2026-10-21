@@ -17,6 +17,7 @@ import catalog_rebuild
 import rebuild
 import recovery
 import whole_catalog
+import original_game_audio_build_hook as audio_build_hook
 from common import read, sha, write
 from composition_io import StageIO
 
@@ -282,6 +283,13 @@ class BuildEntryTests(unittest.TestCase):
         for name in ("CharacterBody.cs", "HealthComponent.cs", "GlobalEventManager.cs"):
             self.put(self.work / "decompiled/RoR2" / key[:16] / "RoR2" / name, (self.work / "sources" / name).read_text())
         order = []
+        audio_stage_calls = []
+        audio_stage_result = {"variant": "default-off", "producer": {"cached": True}}
+
+        def stage_audio(project, work, *, selection_path=None):
+            order.append("audio-stage")
+            audio_stage_calls.append((Path(project), Path(work), selection_path))
+            return audio_stage_result
 
         def tracked(module, name):
             function = getattr(module, name)
@@ -306,6 +314,7 @@ class BuildEntryTests(unittest.TestCase):
                 (whole_catalog, "generate_build_bootstrap"),
             ):
                 stack.enter_context(tracked(module, name))
+            stack.enter_context(patch.object(audio_build_hook, "stage_for_build", side_effect=stage_audio))
             stack.enter_context(patch.object(whole_catalog, "game", return_value=self.assembly.parents[2]))
             stack.enter_context(
                 patch.object(build, "validate_runtime_source_membership", side_effect=lambda project: order.append("membership") or build.runtime_sources())
@@ -325,6 +334,7 @@ class BuildEntryTests(unittest.TestCase):
                 "generate",
                 "repair",
                 "original_stage_contexts",
+                "audio-stage",
                 "stage_build_sources",
                 "preservation_descriptor",
                 "generate_build_bootstrap",
@@ -332,9 +342,10 @@ class BuildEntryTests(unittest.TestCase):
             ],
         )
         actual_build.assert_called_once_with("vulkan", force=True, reuse_payload=True, source=dict(commit="synthetic", clean_paths=[]))
+        self.assertEqual(audio_stage_calls, [(self.project, self.work, None)])
         freeze.assert_not_called()
         self.assertEqual(read(self.work / "whole-catalog-build.json"), dict(manifest=str(attempt / "manifest.json")))
-        self.assertEqual(read(attempt / "build.json"), dict(host_fixture=True))
+        self.assertEqual(read(attempt / "build.json"), dict(host_fixture=True, original_audio=audio_stage_result))
 
     def binding_setup(self):
         r9 = read(Path(__file__).resolve().parents[1] / "recipe/rebuild-r9-obligations.json")

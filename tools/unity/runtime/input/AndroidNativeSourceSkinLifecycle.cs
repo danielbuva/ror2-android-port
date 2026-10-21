@@ -87,7 +87,9 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
             throw Refuse(report, "Native skin lifecycle must bind before source model activation");
         // This property is true only when the exact-input optional presentation transform was staged.
         // It guards CharacterModel.OnEnable's original RtpcSetter constructor/flush boundary.
-        bool noAudioBoundary = WwiseIntegrationManager.noAudio;
+        // Safe source-model activation requires either the deliberate silent
+        // path or the same original Wwise owner's fully observed Ready state.
+        bool audioLifecycleSafeBoundary = WwiseIntegrationManager.noAudio || GameAudioOriginalOwner.Ready;
         var model = modelObject.GetComponent<CharacterModel>();
         var skin = modelObject.GetComponent<ModelSkinController>();
         var animator = modelObject.GetComponentInChildren<Animator>(true);
@@ -96,7 +98,7 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
             throw Refuse(report, "Selected source model/body/catalog linkage is incomplete or mismatched");
         // Only continue when both native callbacks were enabled by the selected source prefab.
         // Do not force-enable a source-disabled callback.
-        if (!AndroidNativeSkinActivationPolicy.ShouldActivate(true, true, noAudioBoundary, model.enabled, skin.enabled))
+        if (!AndroidNativeSkinActivationPolicy.ShouldActivate(true, true, audioLifecycleSafeBoundary, model.enabled, skin.enabled))
             throw Refuse(report, "Opt-in source skin lifecycle refused by source/audio/authored-enabled gate");
         var lifecycle = modelObject.GetComponent<AndroidNativeSourceSkinLifecycle>();
         if (!lifecycle)

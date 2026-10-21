@@ -1,0 +1,230 @@
+using System;
+using System.Collections;
+using UnityEngine;
+
+// Persistent setup/session coordinator for the original game audio owner. This
+// component owns no Ak/Wwise lifecycle; the original AkInitializer and
+// AudioManager remain the only engine/service/focus/pause/Term owners.
+public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
+{
+    private const float StartupDeadlineSeconds = 180.0f;
+    private static readonly object Sync = new object();
+    private static PortSessionOriginalAudioOwner instance;
+    private static int sessionEntries;
+    private bool started;
+    private bool completed;
+    private float elapsed;
+    private string coordinatorFailure;
+    private string catalogLeaseIdentity;
+    private bool catalogLeaseAcquired;
+
+    [Serializable]
+    public sealed class Snapshot
+    {
+        public string phase;
+        public string failure;
+        public bool requestConfigured;
+        public bool managerInitClaimed;
+        public bool managerInitReturned;
+        public bool ready;
+        public bool noAudio;
+        public bool nativeApiCallsAvailable;
+        public bool nativeInitAttemptObserved;
+        public bool originalTermsReturned;
+        public bool catalogBundleLeaseHeld;
+        public string catalogBundleLeaseIdentity;
+        public int requestedBankCount;
+        public int completedBankCount;
+        public int sessionEntries;
+        public float observedStartupSeconds;
+    }
+
+    public static IEnumerator EnsureOriginalOwner()
+    {
+        PortSessionOriginalAudioOwner host;
+        lock (Sync)
+        {
+            sessionEntries++;
+            if (!instance)
+            {
+                var gameObject = new GameObject("Original Wwise process owner coordinator");
+                UnityEngine.Object.DontDestroyOnLoad(gameObject);
+                instance = gameObject.AddComponent<PortSessionOriginalAudioOwner>();
+            }
+            host = instance;
+            if (!host.started)
+            {
+                host.started = true;
+                host.StartCoroutine(host.RunOriginalOwnerOnce());
+            }
+        }
+        while (!host.completed) yield return null;
+    }
+
+    public static Snapshot CaptureSnapshot()
+    {
+        PortSessionOriginalAudioOwner host;
+        int entries;
+        lock (Sync) { host = instance; entries = sessionEntries; }
+        bool ready = GameAudioOriginalOwner.Ready;
+        bool claimed = GameAudioOriginalOwner.OriginalManagerInitClaimed;
+        string failure = (host ? host.coordinatorFailure : null) ?? GameAudioOriginalOwner.Failure;
+        return new Snapshot {
+            phase = ready ? "ready" : (failure != null ? "failed_closed" : (claimed ? "original_manager_starting" :
+                (GameAudioOriginalOwner.StartupSelected ? "prepared" : (host && host.completed ? "disabled_or_refused" : "starting")))),
+            failure = failure,
+            requestConfigured = GameAudioOriginalRequestBootstrap.IsConfigured,
+            managerInitClaimed = claimed,
+            managerInitReturned = GameAudioOriginalOwner.OriginalManagerInitReturned,
+            ready = ready,
+            noAudio = GameAudioOriginalOwner.NoAudio,
+            nativeApiCallsAvailable = GameAudioOriginalOwner.NativeApiCallsAvailable,
+            nativeInitAttemptObserved = GameAudioOriginalOwner.NativeInitAttemptObserved,
+            originalTermsReturned = GameAudioOriginalOwner.OriginalTermsReturned,
+            catalogBundleLeaseHeld = WholeCatalogComposed.OriginalAudioLeaseHeld,
+            catalogBundleLeaseIdentity = WholeCatalogComposed.OriginalAudioLeaseIdentity,
+            requestedBankCount = GameAudioOriginalOwner.RequestedBankCount,
+            completedBankCount = GameAudioOriginalOwner.CompletedBankCount,
+            sessionEntries = entries,
+            observedStartupSeconds = host ? host.elapsed : 0f
+        };
+    }
+
+    private IEnumerator RunOriginalOwnerOnce()
+    {
+        float startedAt = Time.realtimeSinceStartup;
+        try
+        {
+            // This route enters RegisterBodyCatalog before AwaitOfflineRunStart;
+            // the original settings asset is already in that owned content bundle.
+            // The closure is only invoked for an explicit request and obtains the
+            // same GUID-bound object referenced by the original WwiseGlobal prefab.
+            GameAudioOriginalRequestBootstrap.OriginalSettingsProvider = () =>
+                WholeCatalogComposed.LoadOwnedContent<AkWwiseInitializationSettings>(
+                    "Assets/WholeGame/Wwise/ScriptableObjects/AkWwiseInitializationSettings.asset");
+            Exception setupError = null;
+            try { GameAudioOriginalRequestBootstrap.ConfigureBeforeOriginalStartup(); }
+            catch (Exception error) { setupError = error; }
+            if (setupError != null)
+            {
+                coordinatorFailure = "original_audio_configuration_threw:" + setupError.GetType().Name;
+                yield break;
+            }
+
+            if (GameAudioOriginalOwner.OptInRequested)
+            {
+                try
+                {
+                    if (!WholeCatalogComposed.IsConfigured)
+                        throw new InvalidOperationException("The current PortSession route did not prepare the shared whole-catalog owner.");
+                    catalogLeaseIdentity = WholeCatalogComposed.RetainForOriginalAudioOwner(
+                        "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88");
+                    catalogLeaseAcquired = true;
+                }
+                catch (Exception error)
+                {
+                    coordinatorFailure = "original_audio_catalog_lease_refused:" + error.GetType().Name;
+                    yield break;
+                }
+            }
+
+            IEnumerator preparation = null;
+            try { preparation = GameAudioOriginalOwner.PrepareBeforeOriginalManagerInit(); }
+            catch (Exception error)
+            {
+                GameAudioOriginalOwner.RecordOriginalManagerInitException(error.GetType().Name);
+                GameAudioOriginalOwner.AbandonPreparationBeforeOriginalInit();
+            }
+            if (preparation != null)
+            {
+                bool keepPreparing = true;
+                while (keepPreparing)
+                {
+                    bool moved = false;
+                    object current = null;
+                    try { moved = preparation.MoveNext(); current = moved ? preparation.Current : null; }
+                    catch (Exception error)
+                    {
+                        coordinatorFailure = "original_audio_preparation_owner_threw:" + error.GetType().Name;
+                        GameAudioOriginalOwner.RecordOriginalManagerInitException(error.GetType().Name);
+                        GameAudioOriginalOwner.AbandonPreparationBeforeOriginalInit();
+                        keepPreparing = false;
+                    }
+                    if (!keepPreparing || !moved) break;
+                    yield return current;
+                }
+            }
+            if (!GameAudioOriginalOwner.StartupSelected) yield break;
+
+            if (UnityEngine.Object.FindObjectOfType<AkInitializer>())
+            {
+                GameAudioOriginalOwner.RecordExistingInitializerConflict();
+                GameAudioOriginalOwner.AbandonPreparationBeforeOriginalInit();
+                yield break;
+            }
+            if (GameAudioOriginalOwner.TryBeginOriginalManagerInit())
+            {
+                Exception managerError = null;
+                try
+                {
+                    // Exact accepted static manager call; its unchanged body issues
+                    // both LegacyResourcesAPI requests and preserves their callbacks.
+                    RoR2.WwiseIntegrationManager.Init();
+                    GameAudioOriginalOwner.RecordOriginalManagerInitReturned();
+                }
+                catch (Exception error) { managerError = error; }
+                if (managerError != null)
+                {
+                    GameAudioOriginalOwner.RecordOriginalManagerInitException(managerError.GetType().Name);
+                    GameAudioOriginalOwner.AbandonPreparationBeforeOriginalInit();
+                    yield break;
+                }
+            }
+
+            while (!GameAudioOriginalOwner.Ready && !GameAudioOriginalOwner.HasTerminalFailure &&
+                   Time.realtimeSinceStartup - startedAt < StartupDeadlineSeconds)
+            {
+                elapsed = Time.realtimeSinceStartup - startedAt;
+                yield return null;
+            }
+            if (!GameAudioOriginalOwner.Ready && !GameAudioOriginalOwner.HasTerminalFailure)
+            {
+                GameAudioOriginalOwner.RecordStartupTimeout();
+                GameAudioOriginalOwner.AbandonPreparationBeforeOriginalInit();
+            }
+        }
+        finally
+        {
+            elapsed = Time.realtimeSinceStartup - startedAt;
+            // If the request was refused before the original manager was
+            // admitted, no Wwise prefab/initializer owns this bundle yet and
+            // the normal catalog cleanup may unload it. Once manager startup
+            // was claimed, retain it until the exact original Term witnesses.
+            if (catalogLeaseAcquired && !GameAudioOriginalOwner.OriginalManagerInitClaimed &&
+                !GameAudioOriginalOwner.OriginalTermsReturned)
+                ReleaseCatalogLease();
+            completed = true;
+        }
+    }
+
+    private void Update()
+    {
+        if (catalogLeaseAcquired && GameAudioOriginalOwner.OriginalTermsReturned)
+            ReleaseCatalogLease();
+    }
+
+    private void ReleaseCatalogLease()
+    {
+        if (!catalogLeaseAcquired) return;
+        try
+        {
+            WholeCatalogComposed.ReleaseOriginalAudioOwnerLease(catalogLeaseIdentity);
+            catalogLeaseAcquired = false;
+            catalogLeaseIdentity = null;
+        }
+        catch (Exception error)
+        {
+            coordinatorFailure = coordinatorFailure ?? "original_audio_catalog_lease_release_failed:" + error.GetType().Name;
+        }
+    }
+}

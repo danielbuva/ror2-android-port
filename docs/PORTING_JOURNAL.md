@@ -20580,6 +20580,7 @@ admission before dispatch; do not change gameplay or infer movement behavior
 from the eight unused array slots. No runtime, recipe or APK changes occur as
 part of this experiment; the separate audio source integration is still unbuilt.
 
+
 ## J859 — Generate SDK-native root metadata on Android and preserve stripping/conversion
 
 2026-10-20. Hypothesis: J857's independent SDK-native table can replace the
@@ -20674,6 +20675,131 @@ workstation inputs. Independent complete roots, target content/shaders, richer
 dependencies, permitted tool delivery and complete owner installation remain
 open. SDK-native metadata no longer requires the captured native table at this
 authored stripping/conversion boundary.
+
+## J860 — Integrate the original Wwise process owner behind an explicit build selection
+
+2026-10-20. Hypothesis: J845's retained Android interface can serve the ordinary
+composed game when its original initializer, bank owners, service and shutdown
+remain authoritative. Read the architecture/ADR, audio prior-art map, J744,
+J759, J770, J794 and J845. Pinned R2API.Sound at f539511e loads banks only after
+native engine initialization; managed registration is insufficient. The accepted
+input and actual callbacks determine this integration, with no community or
+SDK implementation copied.
+
+**Change.** Add the named `PortSessionOriginalAudioOwner` before body activation,
+with separate authored admission/bootstrap/observation assemblies. Preserve the
+original Wwise manager, AkInitializer, AudioManager, nine bank loaders and their
+Init/update/focus/pause/Term contracts. Reuse the existing GUID-bound settings
+asset and content bundle. A single process-audio lease postpones bundle unload
+until both original Term witnesses return; ordinary session locators still detach.
+This minimal shared cleanup change serves original audio; memory effects remain
+unmeasured. Native skin admission accepts observed original audio readiness.
+Default-off retains the silent boundary.
+
+The mutex-protected current whole-catalog build stages audio before hashing
+project inputs. Its optional local selection explicitly names all protected
+inputs; destination builds use a separate selection. Public generators recreate
+ABI adaptation, observers and composed transformations from accepted raw API/game
+assemblies, preserving unrelated guards. Request contracts precede derivatives;
+final manifests bind the derivatives separately. Inspection uses the official
+Release plugin, while the selected instrumented runtime remains J845's exact
+library. Stage ownership checks assembly preimages/GUIDs and bank hashes; restore
+removes only receipt-owned audio payloads and preserves Unity bank sidecars.
+Source, recipe, reference, compiler/tool and input hashes bind cache generations.
+The first player candidate requires a full bundle build; code-only reuse is not
+relaxed. R8/R9 must replay changed authored runtime sources, recipes and support
+assembly production. No new build step edits authored source by text replacement.
+
+**Host result and preserved failures.** The actual public managed producer
+reproduces API `793f2286…` and guarded/composed game `1034a747…` from legitimate
+inputs. Its manifest is
+`work/coordination/game-audio-original-public-producer-root-review/r1/producer-run-4/manifest.json`,
+SHA-256 `ca2b8097c8b30264668b0081b986551a4c15ea05dce3f9d539c417c9d76395b9`.
+The initial scratch stage exposes a missing API artifact-target entry; inspection
+also finds an omitted native payload row. Both are fixed without altering the
+preserved failed generation. Android compilation initially omits UNITY_ANDROID;
+correct it before any player build. The actual Bootstrap IL now includes Java
+loadLibrary on Android and excludes it with UNITY_EDITOR. Native loading is not
+inferred from source text alone.
+
+The actual scratch project passes requested generation/staging (164 owned rows,
+including 154 banks totaling 247,848,826 bytes), a verified cache hit, and restoration
+to API `107295e4…` / game `3124a2ed…`, with native payload and banks absent afterward.
+The original MonoBehaviour assembly remains unchanged. Logs and failed generations
+are retained under `work/coordination/codex-original-audio-host-stage-root/r1/`.
+Twenty-three focused public tests pass, including owner contracts, producer path
+and editor pins, source/tool cache invalidation, payload separation, sidecar
+preservation and compiled Android/Editor branches; Ruff passes. Independent final
+source review is `original-game-audio-staging-review/r4/review.md`, SHA-256
+`73be2337961a1063bd4f8090ca8776295cc83eea64b691752565e6ee1bf52605`.
+The actual public 112-source runtime plus six support sources compiles against
+264 saved exact-editor references, producing
+`original-audio-public-full-runtime/r1/Assembly-CSharp.original-audio.host.dll`,
+SHA-256 `0154501e9522a2af787ab5ba0905ba1ea34e7e4d71e9245486ae57a53989d26a`.
+The original API/Mono type identities are retained.
+The fresh-clone pre-push check then catches five older orchestration fixtures
+which did not mock the newly added staging owner. Add that explicit mock and
+assert its order/result; no production guard is weakened. Extend the existing
+full-build CLI to forward the same optional symbols/pre-strip/Bee capture flags
+already supported by its build function, so this meaningful audio build can
+exercise them without relaxing code-only reuse. A public CLI dispatch test covers
+all three options. This minimal shared build-interface change serves audio.
+
+**Limits and next gate.** No Unity build, APK, install or composed audio device
+result is produced by this checkpoint; APK hash is not applicable. f1550ce0 remains
+the installed, default-qualified player. Source admission, real native Init, each
+bank result, ordinary events/music/spatialization, teardown and audible output
+remain separate gates. Next: committed-source full build with matching symbols,
+pre-strip/Bee receipts, explicit frozen-APK installation on the primary device,
+then both default checks and first-failure audio analysis. No alpha/spare action.
+
+## J861 — Observe paired Siren movement but retain the bounded encounter timeout
+
+2026-10-20. Hypothesis: J858's incompatible selector prevented source-entry
+admission; use the J812/J844-compatible source-entry/continuation selection to
+obtain the existing paired navigation observation before deciding on a gameplay
+change. Read those entries, the pinned navigation prior art and the actual recorder
+contract. No runtime source, APK or movement behavior changes in this attempt.
+
+**Selection and evidence.** The frozen R5 runner keeps diagnostic egg input off
+at launch, selects source entry and native encounter continuation, then arms only
+after the original 12-egg Listening admission. Huntress seed 2 retains diagnostic
+invincibility/high damage/fast charge; movement/jump boosts remain off. APK remains
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`,
+with both J850 default passes. Twenty-four host runner tests and actual prior-report
+replay pass before dispatch. Runner SHA-256 is
+`f0802348c16d0b9f3a494721e8718d07c0810c70ad1a598df6f87b886defc7cc`.
+Local attempt:
+`work/coordination/f155-siren-device-plan/r5/attempts/20261021T005419.177668Z-e2e24f901b8f/`.
+Result SHA-256 is
+`9f6854885f07d156e95abd39053f1deb74ac234812da523ecffc9f79091d21ad`.
+
+Three original stage exits reach Ship Graveyard. All 32 source spawners, 12 nests,
+12 mapped egg bodies and the exact native Listening registration are observed.
+Eight consecutive requested/applied fixed-tick movement samples pair correctly;
+body/motor motion occurs around two nearby waypoints. Every sample has
+requestId 0 and pathRequestAvailable false, despite node/waypoint availability.
+Preserve the raw rows; the conservative classifier does not count them as eight
+fully attributed path samples. This does not establish a pathfinding failure.
+
+The selected egg is about 170.67 units away at observation trigger, beyond the
+observed 60-unit tracker range. Of 6,239 tracker samples, selected matches are 0,
+different matches 163, null 6,074 and destroyed 2. No native encounter start or
+exact boss identity is observed before the existing 180-second source-stage
+budget. That timeout is the first failure; neither boss execution nor encounter
+completion passes. No fatal/crash is found. The run ends on Ship Graveyard after
+three exits and never enters Moon. The assisted profile remains at 13 applied runs.
+
+**Cleanup and decision.** Owned selector removal, force-stop and display sleep
+complete without errors. Root separately verifies process absent, selector absent
+and display asleep in `codex-main-f155-siren-root-r4/terminal-verification.json`,
+then releases the private runtime claim. No alpha/spare action. Independent triage
+is `f155-siren-runtime-triage/r3/findings.md`, SHA-256
+`f95e9adb12a761b2e2406c861bdf53737472e8f960306aec211e636be7a99da2`.
+There is no supported targeting/movement fix from this trace. Revisit only with
+bounded availability observations of the existing request prerequisites, so a
+missing attribution seam can be distinguished from an actual navigation fault.
+The installed default baseline is unchanged; special encounter execution stays open.
 
 ## J862 — Derive authored fixture module policy from owner SDK and package data on Android
 

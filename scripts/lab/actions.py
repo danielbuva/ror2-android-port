@@ -380,7 +380,15 @@ _ENTRIES = (
     ),
     Action("whole-catalog-host-providers", "whole_catalog", "host_providers", {}, "current", "Run the whole-catalog native-provider host fixture."),
     Action("whole-catalog-repair-bindings", "whole_catalog", "repair_root_bindings", {}, "current", "Repair recorded whole-catalog root bindings."),
-    Action("whole-catalog-build", "whole_catalog", "build_integration", {}, "current", "Compose content and build the whole-catalog player."),
+    Action(
+        "whole-catalog-build",
+        "whole_catalog",
+        "build_integration",
+        {},
+        "current",
+        "Compose content, stage explicit original-audio selection (default off), and build the player. Supports --debug-symbols, --capture-player-linker-inputs and --capture-il2cpp-invocation with the same contracts as whole-catalog-code-build.",
+        handler=_whole_catalog_code_build,
+    ),
     Action(
         "whole-catalog-code-build",
         "whole_catalog",
