@@ -68,7 +68,7 @@ static class Program
     }
 
     // Update only after deliberately freezing a newly compiled observer source.
-    const string ExpectedObserverSha = "e98c8d66b9a85b219f01d6475dcde110ff5db2ea7f944ede6a8c259b3ece2357";
+    const string ExpectedObserverSha = "db6dba4c977328bfdb37004fd2a8957a5a627217959835edfd3ded09ed340e62";
 
     static int ValidateSites(string mutantPath, string observerPath)
     {
