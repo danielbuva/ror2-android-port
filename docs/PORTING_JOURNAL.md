@@ -20361,3 +20361,97 @@ All SDK-derived rows, source binary, instruction views and call-site indexes sta
 ignored. Continue with non-static native registrations and the root record,
 then exact scene usage/module policy. Complete target-content production,
 permitted tool delivery and the full owner-build/install experience remain open.
+
+## J857 — Recover the complete pinned native registry from owner-SDK metadata literals
+
+2026-10-20. Hypothesis: J855's remaining 13 records and 25 parent links can be
+recovered from explicit SDK descriptor literals and registration arguments,
+without SDK execution, a captured table or guessed defaults. Start from main
+`91fd337` after PR #10's independent review/merge; reserve J856 for the main
+session's separate Siren attempt. Its scan-bounds documentation correction is
+preserved. Route A, the game runtime/renderer and desktop fallback remain fixed.
+No Unity/game build, package installation or original-game file change occurs.
+
+**Observe and implement.** All 25 unresolved parent pointers refer to the same
+Object RTTI identity. The other 12 missing names/namespaces/self pointers appear
+as explicit arguments to non-object registration calls. The SDK constructs the
+corresponding TypeRegistrationDesc values in stack storage; both the root and
+non-object descriptor constructors are identifiable in the same pinned owner
+binary. This is generic SDK metadata extraction using J853's format/ABI sources,
+not a gameplay runtime or RoR2-specific reconstruction.
+
+Add the authored `phone_registry_literals.py` owner alongside `phone_registry.py`.
+It reads selected descriptor pointer fields from bounded stores. Definitions
+must dominate the registration call in the symbol/branch-derived scan region.
+Partial or conditional overwrites, later backedges, frame movement, possible
+alias stores, unknown stack access and indirect/unknown calls refuse. Literal
+zero is established from its vector definition; it is never assumed. Preserved
+entry arguments remain explicit parameters and are resolved at actual direct
+registration sites. The only allowed intervening call is the exact assertion
+signature with file-backed literal strings and integer arguments, never the
+descriptor address. No SDK function or instruction is executed.
+
+The root's name/namespace/module/self and null parent come from its literal.
+The 12 non-object names/namespaces/self values come from their callers; their
+null parent and module string come from the descriptor constructor. No type
+name list, module default or native table is embedded. Merge those records with
+the static subset and require unique native identities/pointers plus complete
+parent resolution. The pinned [managed root producer](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Editor/Mono/BuildPipeline/AssemblyStripper.cs)
+uses null for an absent base before JsonUtility serialization; the exact-editor
+JSON transport contains empty base strings. The authored report follows that
+schema for a known null parent; an unknown pointer refuses. Project scene
+usage and module policy are not produced by this registry reader.
+
+**Source and host contracts.** Commit before probing at
+`86f4c2fc9ea61fe5aa332efadc343e0558df407f`. Stage and hash both authored readers
+and the unchanged owner SDK through the current `phone-native-registry` action.
+The explicit helper-file import loads only authored tool code under isolated
+Python, never SDK code. Source hashes are
+`248b8bc32000dc76b93438defb381935137c8de0f0ba0edc7389791ce32d3a1d`
+and `e0800a4e45fcf0cec45e97c57ed2fb8006844d25cf8ef4680a4cb431cea8d6de`.
+ARCHITECTURE names the helper/lifecycle; LOCAL_STATE lists both staged sources
+and the new local replay adapter. Earlier adapters/receipts stay immutable.
+
+Six new authored literal/ABI contracts check constants and explicit entry
+parameters; skipped/partial overwrites; frame movement, alias writes, unknown
+calls, indirect flow and backedges; unproven vector zeros; parameter clobbers;
+and assertion arguments that could otherwise masquerade as literals. These
+and the 12 existing reader tests pass. No SDK binary/row/instruction sequence is
+part of a public fixture. Fresh-clone CI on `86f4c2f` passes 1,250 tests with
+55 optional skips, Ruff, public audit and documentation freshness. No formal
+SDK invocation fails; the deliberately invalid controls below refuse as expected.
+
+**Android and independent oracle.** Verify the selected alpha device/workspace,
+fresh storage/backing/reserve, supplied Python hash and all three staged input
+hashes. `native-registry-extra-on-android.py` additionally checks both source
+owners are committed/unchanged. In a fresh owned child, the Android invocation
+completes in 9.364 seconds of host-observed wall time. It produces byte-identical
+host output, SHA-256
+`be4e7095de0f7f6477c952e6a792d6bc5064707196b8b206fa0ed283ec726fbd`.
+Unknown SDK and overwrite controls refuse; the report, SDK and installed alpha
+game hashes remain unchanged, and the display is left asleep. The APK remains
+J853's be26c21c…; no app is installed or launched. This is a metadata-tool timing,
+not a game-performance or app-sandbox qualification.
+
+Only after extraction, compare against the unchanged exact-editor oracle
+`34c3177601e7a31dc24efab295280a13c21c2a306a1f70c7171e78a0041bcf30`.
+Native identity sets match exactly: 305 static plus 13 literal records, 318
+unique pointers and 318 resolved modules/parent identities. All 1,908 values
+match across name, nativeNamespace, qualifiedName, module, baseName and baseModule.
+There are no missing/extra rows or field contradictions. This qualifies the
+complete native-registry metadata for this exact supplied SDK profile. It does
+not qualify other SDK versions, player variations or complete project roots;
+`root_generation_qualified` remains false and no build consumes the report.
+
+Retain raw SDK instruction views, literals and derived rows privately.
+`native-registry-extra-stage-selection.json` and
+`native-registry-extra-run-selection.json` select the frozen host/phone attempts;
+`native-registry-extra-oracle-comparison.json` records the independent comparison.
+`native-registry-extra-proof-receipt.json` binds 20 source/input/output/control/
+comparison/test/CI artifacts; SHA-256
+`7919f8537b63f704f68536af50e82eb4fa1b2d1177cf0de5a0c468359b2c0241`.
+Whole-project game bootstrap remains unqualified as recorded in J853. Next
+produce scene usage/module policy and exact linker inputs independently of a
+desktop capture, then connect those to J846/J849's stripping/conversion contract.
+Target content/shaders, managed compilation, tool-delivery rights, the installer
+experience and measured whole-game performance remain independent gates.

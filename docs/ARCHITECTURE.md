@@ -105,8 +105,8 @@ allowance is the exact assertion signature with file-backed literal strings and
 integer arguments, never a passed descriptor. The action stages/hashes both
 authored source files alongside the owner SDK; explicit file loading imports only
 that authored helper under isolated Python. Unknown layouts, instructions,
-arguments and parent identities refuse. It neither executes SDK instructions nor supplies an execution
-backend. Source/input hashes, metadata and failures remain under
+arguments and parent identities refuse. It neither executes SDK instructions
+nor supplies an execution backend. Source/input hashes, metadata and failures remain under
 `work/experiments/phone-registry/`; exclusive output creation preserves attempts.
 No build consumes its registry or receives project roots from it; no editor or
 game state changes.

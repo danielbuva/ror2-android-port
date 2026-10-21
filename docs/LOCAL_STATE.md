@@ -152,7 +152,8 @@ decoder needs its own generator/contract before consuming those observations.
 `phone_registry.inspect_action` generates
 `work/experiments/phone-registry/<attempt>/` from an explicit JSON request with
 one absolute `binary` path. Only the pinned supplied Unity SDK executable is
-accepted. `reader.py`, `phone_registry_literals.py`, the unchanged `owner-sdk`, their `inputs.json` hashes,
+accepted. `reader.py`, `phone_registry_literals.py`, the unchanged `owner-sdk`,
+their `inputs.json` hashes,
 `registry.json`, `host.log` and `result.json` form an isolated metadata attempt.
 This SDK binary and its extracted records are protected local inputs/outputs;
 they cannot be redistributed with the authored reader. The reader consumes no
