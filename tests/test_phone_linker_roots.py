@@ -7,7 +7,7 @@ import unittest
 from unittest.mock import patch
 
 import phone_linker_roots
-from phone_linker import strip
+from phone_linker import strip, stripped_input
 from phone_linker_roots import compose, generate, native_types, project_subset, sha, verify
 
 
@@ -167,6 +167,37 @@ class PhoneLinkerRootTests(unittest.TestCase):
             (stage / "project-root-data.json").write_text(json.dumps(project() | {"allNativeTypes": []}))
             with self.assertRaisesRegex(ValueError, "foreign/native"):
                 generate(stage, root / "output", configuration)
+
+    def test_converter_handoff_revalidates_the_generated_native_root_artifacts(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            stage, output, project_root = (root / name for name in ("stage", "output", "project"))
+            configuration = fixture(stage)
+            native = generate(stage, output, configuration)
+            original = project_root / "Library/Bee/artifacts/Android/ManagedStripped"
+            stripped = output / "stripped"
+            for folder in (original, stripped):
+                folder.mkdir(parents=True)
+                (folder / "Fixture.dll").write_bytes(b"authored assembly")
+                (folder / "Fixture.pdb").write_bytes(b"authored symbols")
+                (folder / "UnityLinkerToEditorData.json").write_text(json.dumps({"report": {"modules": []}}))
+            request = {"project": str(project_root), "apk": str(root / "fixture.apk"), "sha256": "authored-apk"}
+            (stage / "stage-receipt.json").write_text(json.dumps({"request": request}))
+            manifest = {p.relative_to(stage).as_posix(): sha(p) for p in stage.rglob("*") if p.is_file()}
+            (stage / "input-manifest.json").write_text(json.dumps(manifest))
+            result = {
+                "success": True,
+                "exit_code": 0,
+                "input_manifest_sha256": sha(stage / "input-manifest.json"),
+                "outputs": {p.relative_to(stripped).as_posix(): sha(p) for p in stripped.iterdir()},
+                "native_roots": native,
+            }
+            (output / "result.json").write_text(json.dumps(result))
+            selector = {"stage": str(stage), "output": str(output), "result_sha256": sha(output / "result.json")}
+            self.assertEqual(stripped_input(selector, request), stripped)
+            (output / "native-roots/EditorToUnityLinkerData.json").write_text("changed generated data")
+            with self.assertRaisesRegex(ValueError, "data drift"):
+                stripped_input(selector, request)
 
     def test_linker_receives_the_fresh_generated_path_and_sdk_failure_prevents_execution(self):
         with tempfile.TemporaryDirectory() as temporary:
