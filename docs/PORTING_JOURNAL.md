@@ -23911,3 +23911,93 @@ qualified or installed, and both standard controls precede any selected camera
 activation. Shader fidelity, actual camera/body/listener context, native output
 and natural teardown remain open. Installed fae79734, accepted baseline
 f1550ce0 and J898's bounded Siren failure remain unchanged.
+
+## J899 — Compile an authored C# fixture on Android and preserve cross-host output differences
+
+Date: 2026-10-21. Hypothesis: the pinned SDK's actual managed compiler can
+compile a small public source fixture on the already qualified Android build-tool
+host without changing its runtime configuration. This is a build-stage probe;
+Route A, the Android renderer and the working game remain fixed.
+
+**Prior knowledge and owner.** Inspect the retained J893 Bee compiler invocation
+as comparison evidence, the supplied SDK compiler/runtime inventory and component
+license. Unity invokes `DotNetSdkRoslyn/csc.dll`, Roslyn
+`4.3.1-3.22526.13 (41a5af9d)`, through its .NET 6.0.21 host. The older Mono
+MSBuild Roslyn 3.7 fixture compiler is a different component. Reuse J832/J842's
+Android .NET 8.0.32 build-tool host; this CLR runs tools and does not replace the
+IL2CPP game runtime. The compiler folder's MIT license is preserved alongside
+the components. This component observation does not clear an entire SDK or
+app tool bundle for redistribution.
+
+`scripts/lab/phone_managed_compile.py` owns fresh input staging and bounded
+compilation. Commit `059b351b44b11dda2679eb8bcc52521123d2d68b` binds seven
+hash-pinned SDK inputs, the existing public `ConverterFixture.cs` arithmetic
+source and the portable runner. No game source, captured response file, compiled
+player, editor observation or previous output is a generator input. Guarded
+fresh directories refuse links, drift, foreign files and replay. Keep C# 9,
+AnyCPU, deterministic generation, portable debug information and development
+optimization settings explicit. Use fixed relative outputs and one virtual
+source path. The original SDK `csc.runtimeconfig.json` is copied byte-for-byte;
+its existing roll-forward policy admits the Android tool host. Neither compiler
+nor runtime configuration is patched.
+
+**Compilation and first failure.** Two fresh desktop stages pass and produce
+identical DLL/PDB bytes. The Android compiler exits successfully in each of two
+fresh stages, also producing identical bytes within that host. Raw cross-host
+equality fails on the first Android attempt and remains failed:
+
+| Output | SDK desktop SHA-256 | Android SHA-256 |
+| --- | --- | --- |
+| DLL | `ba0d7bbf665348a7a6f28123be8eaf790aa3499bc0786dcdbea03f6017f16384` | `25bbaf0fdc4b7acedbad4706c03bba2790edf89ae157decc81619e733da58520` |
+| PDB | `6b039a5b07246607fd87987a99a2036576b6a3986e9802b13878b0499d11ef09` | `140b72bf8978c29103c72f9d410911a4b61807295dd42c078e66a806ae21bd4a` |
+
+The first operator adapter stops at that equality assertion; its unexecuted
+later controls are not accepted from that attempt. A separate retained control
+checks both stages' complete input/output hashes, the original configuration,
+result-receipt immutability and replay refusal. Each replay refuses before
+compiler dispatch and preserves the earlier outputs. The second fresh Android
+compilation matches the first, while still differing from the desktop control.
+
+**Difference attribution, not acceptance.** Read the portable PDB Compilation
+Options record according to the [official format specification](https://github.com/dotnet/runtime/blob/main/docs/design/specs/PortablePdb-Metadata.md).
+Its only unequal option is `runtime-version`: SDK 6.0.21 versus Android 8.0.32.
+A private format-aware diagnostic compares copies in memory, accounting for
+that documented field and content identities. All other PDB bytes match.
+All other DLL bytes match after accounting for the module identity, COFF/debug
+timestamps, PDB identity and PDB checksum. No output file is modified, no
+normalized artifact is emitted and no equality gate is changed. The
+specification explains that compiler-host runtime behavior can affect output;
+this one ASCII arithmetic fixture does not establish general compiler semantics,
+IL equivalence for richer inputs or gameplay performance.
+
+**Checks and evidence.** Six focused host tests pass, including two actual SDK
+compilations; the SDK-dependent test skips when that optional installation is
+absent. The generic tests exercise input identity, ancestor links, drift,
+unknown runtime, compiler failure, invalid output, concurrent input drift and
+replay. Preserve the initial fake-process test adapter error and its correction.
+Doctor and host preflight retain Alpha's existing missing accepted game
+inventory/project refusal; no full game build is attempted or qualified.
+The isolated fixture has its own exact SDK/source checks. Fresh capacity and
+workspace backing/reserve checks pass before Android writes.
+
+Private compiler inventory, source snapshot, selectors, raw outputs, failure,
+controls and diagnostics remain under
+`work/coordination/phone-proof/managed-compiler-*` and the generated
+`work/rebuild/phone-managed-compile/` stage. The private proof receipt binds
+94 artifacts, SHA-256
+`f60301dacb8b7addb29288eafbccd497f16fbfaeba2b59dceff28bc0b9aacc5a`.
+Only authored tooling/tests and summaries are published; SDK components,
+references, DLL/PDB files and raw logs stay ignored. Ruff, the staged public
+scan and manual provenance/privacy review pass.
+
+**Device and disposition.** No Unity editor operation, APK build, install,
+payload sync or game launch occurs. Alpha's owned APK remains
+`be26c21c4cd8ff15a8a663528216cf7a69394a51d8b9441a63a1a496f83e98b5`;
+process absence, selector absence and display sleep are checked. No Main or
+spare device action occurs. Preserve Main's independently owned current rows
+and R15 artifact/device qualification. `managed_game_compilation_qualified`
+remains false. Revisit with Unity reference/define/generator closure, richer
+source semantics and downstream stripping/conversion, while retaining the raw
+inequality. App-host policy, tool acquisition/delivery, complete roots,
+content/shader generation and matched gameplay benchmarks remain separate
+open gates. Keep the desktop owner-build fallback.

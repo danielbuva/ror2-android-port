@@ -333,6 +333,17 @@ qualification logs under `work/coordination/phone-proof/` are investigation
 evidence only. They supply no game-build input. Context indices describe
 declarations; live state and target/object retention remain separate gates.
 
+`phone_managed_compile.py stage ROOT OWNER_SDK_CONTENTS WORK` generates a fresh
+`work/rebuild/phone-managed-compile/<owned-attempt>/` from the exact supplied SDK
+and tracked arithmetic fixture. Its manifest binds the original compiler/config,
+license, target core library, authored source and portable runner. The explicit
+run uses the SDK's existing .NET 6.0.21 host or the separately qualified Android
+.NET 8.0.32 tool host retained in the owned phone workspace. Compiler inputs,
+DLL/PDB outputs and raw logs stay private; the SDK runtime configuration is not
+rewritten. Failed stages are retained, and no game build reads an observation
+or timestamped run path. This fixture does not supply general player compilation
+or the SDK's native TypeDB.
+
 `phone_registry.inspect_action` generates
 `work/experiments/phone-registry/<attempt>/` from an explicit JSON request with
 one absolute `binary` path. Only the pinned supplied Unity SDK executable is

@@ -54,6 +54,11 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       Extend [J895's manager declaration metadata](PORTING_JOURNAL.md#j895--read-sdk-manager-registration-declarations-on-android-and-preserve-retention-boundaries)
       through target/state-dependent serialization and native scene retention;
       asset-dependency exclusions alone do not determine class usage.
+- [ ] Extend [J899's authored compiler fixture](PORTING_JOURNAL.md#j899--compile-an-authored-c-fixture-on-android-and-preserve-cross-host-output-differences)
+      through Unity references/defines, generators, real source semantics and
+      downstream stripping/conversion. Preserve the observed desktop/Android
+      DLL/PDB inequality and compiler-host version distinction; same-compiler
+      execution alone does not establish equivalent outputs or performance.
 - [ ] Benchmark any alternative pipeline with pinned versions/options/shaders and
       matched device workloads; IL2CPP alone does not prove equivalent performance.
 - [ ] Qualify the isolated owner-build environment; the alpha device is alpha's
