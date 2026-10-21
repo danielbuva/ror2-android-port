@@ -292,7 +292,7 @@ def argument_block_start(image, pc):
     return block
 
 
-def call_argument(image, pc, register, start=None, budget=128):
+def call_argument(image, pc, register, start=None, budget=128, *, retained=None):
     """Conservative backwards constant slicing within one straight-line block.
 
     A branch, unknown definition/instruction, runtime load or exhausted bound
@@ -301,6 +301,10 @@ def call_argument(image, pc, register, start=None, budget=128):
     """
     if register == 31:
         return None
+    if retained and register in retained:
+        definition, value = retained[register]
+        if 19 <= register <= 28 and definition < pc:
+            return value  # Supplied only by the bounded CFG retention proof.
     if start is None:
         start = argument_block_start(image, pc)
     if start is None or pc < start or pc - start > 65536 or budget <= 0:
@@ -317,7 +321,7 @@ def call_argument(image, pc, register, start=None, budget=128):
                 return (position & ~4095) + immediate * 4096 if word & 0x80000000 else position + immediate
         elif word & 0x7F000000 in (0x11000000, 0x51000000):
             if rd == register:
-                value = call_argument(image, position, rn, start, budget)
+                value = call_argument(image, position, rn, start, budget, retained=retained)
                 if value is None:
                     return None
                 immediate = ((word >> 10) & 4095) << (12 if word & 0x400000 else 0)
@@ -326,7 +330,7 @@ def call_argument(image, pc, register, start=None, budget=128):
         elif word & 0x7FE0FFE0 == 0x2A0003E0:
             if rd == register:
                 rm = (word >> 16) & 31
-                value = 0 if rm == 31 else call_argument(image, position, rm, start, budget)
+                value = 0 if rm == 31 else call_argument(image, position, rm, start, budget, retained=retained)
                 return value if value is None or word & 0x80000000 else value & 0xFFFFFFFF
         elif word & 0x7F800000 in (0x12800000, 0x52800000, 0x72800000):
             if rd == register:
@@ -337,7 +341,7 @@ def call_argument(image, pc, register, start=None, budget=128):
                 elif kind == 0x12800000:
                     value = ~immediate
                 else:
-                    value = call_argument(image, position, register, start, budget)
+                    value = call_argument(image, position, register, start, budget, retained=retained)
                     if value is None:
                         return None
                     value = (value & ~(65535 << shift)) | immediate

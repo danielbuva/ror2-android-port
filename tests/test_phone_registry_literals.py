@@ -2,7 +2,7 @@ import struct
 import unittest
 
 from phone_registry import call_argument
-from phone_registry_literals import descriptor
+from phone_registry_literals import descriptor, retained_literals
 
 
 class LiteralImage:
@@ -54,6 +54,32 @@ def root_fixture(intermediate=(), first=0x6F00E400):
 class LiteralRecordTests(unittest.TestCase):
     def read(self, image):
         return descriptor(image, "construct", image.target, call_argument)
+
+    def test_callee_saved_literal_survives_a_branch_join_without_choosing_a_path(self):
+        words = [0x52800014 | (17 << 5), 0xB4000040, 0xD503201F, branch(0x100C, 0x2400), 0x11001681, branch(0x1014, 0x2000), 0xD65F03C0]
+        image = LiteralImage(words)
+        self.assertIsNone(call_argument(image, 0x1014, 1))
+        retained = retained_literals(image, 0x1014, call_argument)
+        self.assertEqual(retained, {20: (0x1000, 17)})
+        self.assertEqual(call_argument(image, 0x1014, 1, retained=retained), 22)
+
+    def test_retention_refuses_skipped_or_changed_definitions_unknown_effects_and_later_loops(self):
+        seed, use = 0x52800014 | (17 << 5), 0x11001681
+        for words in (
+            [0xB4000040, seed, use],  # The only literal definition can be skipped.
+            [seed, 0xB4000040, 0x52800014 | (99 << 5), use],
+            [seed, 0xF94003F4, use],  # Runtime load overwrites X20.
+            [seed, 0xA94057F4, use],  # Pair load overwrites X20/X21.
+            [seed, 0x91000694, use],  # Arithmetic writes X20.
+            [seed, 0, use],
+            [seed, 0xE94003E0, use],  # Reserved pair encoding has no qualified effect.
+        ):
+            pc = 0x1000 + len(words) * 4
+            image = LiteralImage(words + [branch(pc, 0x2000), 0xD65F03C0])
+            with self.subTest(words=words):
+                self.assertNotIn(20, retained_literals(image, pc, call_argument))
+        words = [seed, use, branch(0x1008, 0x2000), 0x52800014 | (99 << 5), 0x17FFFFFD, 0xD65F03C0]
+        self.assertNotIn(20, retained_literals(LiteralImage(words), 0x1008, call_argument))
 
     def test_authored_stack_literal_recovers_constants_and_zero_parent(self):
         self.assertEqual(

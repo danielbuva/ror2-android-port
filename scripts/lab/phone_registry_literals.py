@@ -151,6 +151,62 @@ def known_literal_instruction(word):
     )
 
 
+def integer_writes(word):
+    """Known integer-register effects for retention checks; None means refuse."""
+    rd, rn = word & 31, (word >> 5) & 31
+    if word & 0x3A000000 == 0x28000000:
+        operation = (word >> 30) & 3
+        if operation == 3 or operation == 1 and not word & 0x4000000 and not word & 0x400000:
+            return None
+        result = {rn} if (word >> 23) & 3 in (1, 3) else set()
+        if word & 0x400000 and not word & 0x4000000:
+            result |= {rd, (word >> 10) & 31}
+        return result
+    if store(word) is not None:
+        return set()
+    if (
+        word & 0x9F000000 in (0x10000000, 0x90000000)
+        or word & 0x7F000000 in (0x11000000, 0x51000000)
+        or word & 0x7FE0FFE0 == 0x2A0003E0
+        or word & 0x7F800000 in (0x12800000, 0x52800000, 0x72800000)
+    ):
+        return {rd}
+    if known_literal_instruction(word):
+        if word & 0xFC000000 == 0x94000000:
+            return set(range(19)) | {30}
+        if word & 0x3FC00000 in (0x39400000, 0x3D400000, 0x3DC00000) or word & 0x3B600000 == 0x38400000:
+            return set() if word & 0x4000000 else {rd}
+        return set()
+    return None
+
+
+def retained_literals(image, use, constant_argument):
+    """Prove callee-saved wide-move literals survive every path to one use."""
+    start = max(value for values in image.symbols.values() for value in values if value <= use)
+    names = [name for name, values in image.symbols.items() if values == {start}]
+    if not names:
+        return {}
+    words = function_words(image, names[0])
+    edges = graph(words)
+    dominance = dominators(edges)
+    if use not in dominance:
+        return {}
+    result = {}
+    for register in range(19, 29):
+        candidates = [pc for pc in dominance[use] if pc < use and words[pc] & 31 == register and words[pc] & 0x7F800000 in (0x12800000, 0x52800000, 0x72800000)]
+        if not candidates:
+            continue
+        definition = max(candidates)
+        value = constant_argument(image, definition + 4, register, start)
+        if value is None or any(pc > definition and step <= pc and step <= use for pc, targets in edges.items() for step in targets):
+            continue
+        changes = [integer_writes(word) for pc, word in words.items() if definition < pc < use]
+        if any(change is None or register in change for change in changes):
+            continue
+        result[register] = (definition, value)
+    return result
+
+
 def descriptor(image, function, target, constant_argument, *, fields=POINTER_FIELDS):
     """Read selected pointer/integer fields of a stack literal passed to RegisterType.
 
@@ -237,6 +293,8 @@ def extra_records(image, constant_argument, direct_calls):
                 if caller is None:
                     raise ValueError("Root metadata unexpectedly depends on an entry argument")
                 value = constant_argument(image, caller, value)
+                if value is None and field == 40:
+                    value = constant_argument(image, caller, fields[field][1], retained=retained_literals(image, caller, constant_argument))
                 if value is None:
                     raise ValueError("Unknown non-object registration argument")
             elif kind != "constant":
