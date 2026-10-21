@@ -11,6 +11,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
 | [J876](PORTING_JOURNAL.md#j876--decode-native-sdk-type-flags-on-android) | 2026-10-20 | Decode native SDK type flags on Android | 2026-10-20. |
+| [J875](PORTING_JOURNAL.md#j875--localize-original-point-sound-failure-to-the-returned-emitters-transform-access) | 2026-10-20 | Localize original point-sound failure to the returned emitter's transform access | Date: 2026-10-20. |
 | [J873](PORTING_JOURNAL.md#j873--separate-direct-scene-names-from-sdk-wrapper-cache-queries) | 2026-10-20 | Separate direct scene names from SDK wrapper-cache queries | 2026-10-20. |
 | [J874](PORTING_JOURNAL.md#j874--stage-bounded-original-point-sound-localization-through-the-public-producer) | 2026-10-20 | Stage bounded original point-sound localization through the public producer | Date: 2026-10-20. |
 | [J872](PORTING_JOURNAL.md#j872--verify-the-android-bank-path-repair-and-retain-the-point-sound-failure) | 2026-10-20 | Verify the Android bank-path repair and retain the point-sound failure | Date: 2026-10-20. |

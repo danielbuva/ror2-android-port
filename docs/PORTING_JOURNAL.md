@@ -21946,6 +21946,88 @@ Both root_generation_qualified and cache_population_qualified remain false.
 Revisit on SDK/API/module/file-set/source or consumer-contract drift; retain
 this independent oracle as verification only.
 
+## J875 — Localize original point-sound failure to the returned emitter's transform access
+
+Date: 2026-10-20.
+
+Hypothesis: J874's separately selected observer can distinguish the first
+failing original point-sound boundary without altering or suppressing it.
+The pinned R2API.Sound post-engine-Init bank seam remains the prior-art limit:
+engine/bank readiness cannot qualify an emitter, native event or output.
+
+Change: full player from committed source `d02732f`, with API `d540a226…`
+and instrumented game `6f96ed83…`. The generated request binds that exact
+pair and its diagnostic-callsite pin. The ordinary default checks leave the
+per-session observer disabled; a third run explicitly selects it using the
+same canonical one-exit flow and diagnostic assists. No behavior repair or
+passive PCM candidate is in this APK.
+
+Build evidence: request
+`20261021T042622.890282Z-cad5b0f8505a4517b1113bf8f67f5297` succeeds in
+216.520227 s with zero build errors. Frozen candidate:
+`work/experiments/original-game-audio/candidate-20261021T043158.251375Z/`.
+APK SHA-256:
+`db5c6800e18c5924a5d8aa03caee23e63d9f0b4690e74a116131b20e138dbcb0`.
+Symbols ZIP SHA-256:
+`a5dba06a09400ae93c97f746f043f343a46b427f51eb164c9ca7820876823ea9`;
+`libil2cpp` Build ID `2589aac9a915fe0cb5a02faccdd4bc27b1da1e85`.
+The frozen source, same-request pre-strip assemblies, payload and packaged-bank
+counts are 359, 333, 266 and 154 respectively. Main's later metadata-only PR #18
+merge does not change this build's frozen source identity.
+
+Device evidence: the exact frozen APK installs in place on the explicit primary
+device after fresh adopted-only capacity/placement checks, then its independently
+frozen payload syncs. All three runs preserve 13 applied runs and current-build
+true, with no report error or first failure:
+
+- Plain: `work/experiments/baseline/20261021T043353.458936Z/`, 35.213181 s
+  of Lakes play.
+- Default one exit: `work/experiments/baseline/20261021T043740.130365Z/`,
+  exactly one exit to Goolake, 126.042404 s total and 10.098114 s in that stage.
+- Selected point-sound diagnostic:
+  `work/experiments/baseline/20261021T044258.174182Z/`, exactly one exit to
+  Goolake, 156.209015 s total and 13.501984 s there. This is a separate selected
+  diagnostic, not a substitute for either default check.
+
+Original audio remains Ready with native Init observed, all 153 requested banks
+complete, no-audio false and the catalog lease held. Report saves now refresh
+these observations rather than retaining only the startup copy. No current
+process has the invalid SoundBanks filesystem warning. Plain has only the five
+intentional Windows-bundle negative-control error lines. Each longer run also
+has five original point-sound null references; Root filters raw logs by each
+run's actual process, excluding earlier-process history.
+
+Selected result: the report proves the selector and observer are active. It
+records 47 requests and five matching null references, with the first failure
+at marker 4: immediately before original `Component.get_transform`, after
+`RequestEmitter` returned. The final request also ends at marker 4 and records
+an emitter that fails Unity's null/destroyed-object truth check. That last
+alive value belongs to the last request, not an independently saved first-error
+operand. The current observer overwrites the acquisition-path marker on return;
+it does not establish whether the first invalid component came from the pool,
+a prefab component lookup or source fallback. Correlation remains best effort.
+No pool repair, replacement emitter, native event success or audibility follows
+from this result.
+
+Qualification:
+`work/coordination/codex-original-game-audio-device-root/r5/root-final-qualification.json`,
+SHA-256 `86be08fa5e1b6f9fd30ff6ca3cb30979055b031d07aaeaf027fa49574a0d1968`.
+Selected final report SHA-256
+`9d235ddfa1bafc53c29598691320c7e7df997257fea02ba69410297a9d0bd095`.
+Both canonical flows remove their selectors, stop the game and sleep the display;
+post-run read-only queries independently confirm selector/process absence and
+sleep. The final report precedes host force-stop, so it does not qualify original
+Term, observer unsubscription during a natural completion, or same-process
+restart. The installed diagnostic is now `db5c6800…`; J850 `f1550ce0…` remains
+the accepted baseline and retained rollback. Audio output stays unqualified.
+
+First failure and next step: identify the source-owned acquisition branch that
+returned the invalid component. Host triage maps the exact pinned IL and
+prefab/pool/lifecycle dependencies; add only the missing bounded first-error
+acquisition/operand facts if that evidence cannot select a repair. Preserve
+original pooling, event and timeout behavior. The passive PCM draft must arm
+during actual world play rather than expire during startup; it remains host-only.
+This checkpoint changes documentation only, with no new reconstruction input.
 
 ## J876 — Decode native SDK type flags on Android
 

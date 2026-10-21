@@ -13,6 +13,15 @@ command reference, including the generated prototype-action table.
 [Branding notes](assets/branding/README.md) record the two repository-only
 promotional graphics and their sources; they are not part of the runtime pipeline.
 
+Launcher presentation: [`launcher/`](../launcher/README.md) owns the approved
+original background and dependency-free frontend. `controller.js` owns the
+versioned host state/action adapter, subscription teardown and pending-action
+guard; `app.js` owns views and navigation. No backend is connected by default.
+The separate `demo/` is simulated and is never loaded by the frontend. This
+package is a public-alpha integration boundary, not an Android shell, new
+build pipeline or runtime owner. Setup, lifecycle and acceptance gates are in
+its README; the existing owner-built delivery route remains unchanged.
+
 Public alpha delivery: [ADR-002](ADR-002-public-alpha-distribution.md) accepts
 owner-built APKs and locally reconstructed content; [public-alpha.md](public-alpha.md)
 holds open release work. ADR-001's architecture C and the runtime pipeline below
@@ -540,7 +549,8 @@ importers, script orders or project initialization. Host contracts:
 `tests/test_assembly_transforms.py`.
 
 Composed audio playback remains unqualified; J872 observes original engine/bank
-readiness with the path warning removed and original point-sound failures remaining. The default-off original-owner
+readiness with the path warning removed; J875 localizes the first point-sound
+failure to transform access after emitter acquisition returns. The default-off original-owner
 integration uses `runtime/session/PortSessionOriginalAudioOwner.cs` after the
 offline menu and before selected body activation. It coordinates the existing
 `WwiseIntegrationManager.Init` and original prefab callbacks; `AkInitializer`
