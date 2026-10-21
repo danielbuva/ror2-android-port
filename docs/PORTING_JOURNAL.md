@@ -23578,3 +23578,65 @@ baseline f1550ce0. Device camera/body/listener activation, shader rendering,
 visual fidelity, composed audio output and natural teardown remain unqualified.
 Build the committed sources and pass both standard controls before the selected
 camera/lifecycle run.
+
+## J896 — Reject the stale prepared camera catalog and regenerate its exact shader roots
+
+Date: 2026-10-21. Hypothesis: committed J892 can build through the canonical
+original-audio/camera chain. Run R13 from synchronized source
+`1447806f1077d64698781cba5ba7db49670f5c0d` after explicit-device doctor/preflight,
+under the shared Unity mutex. Freeze the 384 authored inputs during the attempt.
+J892 records source prior art and transformation checks; no new runtime mechanism
+is introduced here.
+
+The canonical producer stages the requested 165 audio outputs and current API
+1ced/game 6f96 pair, then applies the exact camera transform to 41b66d07. Bind
+the audio/camera receipt hashes and actual project game bytes before the next
+attempt. This is the real requested producer-to-camera chain, not a claim that
+all isolated modes passed. The pre-player proof is
+`work/coordination/codex-original-game-audio-build-root/r13/pre-player-stage/qualification.json`,
+SHA-256 `4d11960e4c8e165b655c5ceb3e472f1b90165147c0835d9484f6ec5e72dc6ee9`.
+
+**First failure.** Before BuildPlayer, `WholeCatalogBuild.Append` refuses
+`Original camera shader row missing or changed: 16022`. The active prepared
+manifest is an older integration and has none of the three new shader rows.
+The source generator has changed, but a full player build consumes the existing
+prepared catalog; it does not repeat that generator automatically. No new APK
+or matching symbols exist. Retain R13's status, CLI/MCP logs and source hashes
+under `work/coordination/codex-original-game-audio-build-root/r13/`. Do not
+misattribute an older successful BuildPlayer message in editor logs to R13.
+
+Use the current standard `whole-catalog-prepare` action under the same host
+mutex. It copies three assets, reuses 43,711, emits 30,325 locations and 7,461
+roots, preserving prior preparations. All three exact shader rows now have the
+expected type, imported path and root flag. Prepared manifest SHA-256 is
+`af56a73d745a5aa30c67bbb4f1afb1945dedbea5520fa0ca2f7705eb8ff1cf63`.
+Run `whole-catalog-host` through the pinned idle editor, also under the mutex:
+7,461 of 7,461 typed roots and 526 mesh aliases load, with zero failures. This
+is an editor import result, not shader rendering, player readiness or gameplay.
+Host report SHA-256 is
+`cbd0cf528cf66c37ba708be58c579e607a3013894d0f2063daf56dd01499a4ec`.
+The new preparation is
+`work/experiments/whole-catalog/20261012T052308.866868Z/integration-20261021T165423.408594Z/`;
+preparation/host command logs are retained under
+`work/coordination/codex-original-game-audio-build-root/r14/`.
+
+The separate isolated four-mode roundtrip stops during private seed-project
+preparation. Its frozen receipt/source assumptions are incomplete; no scenario
+is accepted from that new harness. Preserve its attempts under
+`work/coordination/original-camera-audio-roundtrip-root/r2/`. Earlier requested
+roundtrip and exact four-profile results retain their original scopes. The
+canonical R13 requested chain above supplies distinct actual staging evidence.
+
+Document that catalog-root changes require the standard preparation and host
+check before building. Restore PR23's approved architecture owner paragraph,
+which the cumulative camera draft accidentally omitted; no Alpha runtime,
+settings, packaging or UI code changes. The local shader data is generated
+from tracked J892 machinery and legitimate input, not hand-edited or published.
+No new required private build input or cache purge is introduced.
+
+Rebuild the committed source against this new prepared catalog. Both standard
+checks and the selected camera/listener teardown remain required before any
+runtime acceptance. Main still has frozen J891 fae79734; accepted baseline is
+J850 f1550ce0. A separate bounded Siren observation on that existing APK is
+active, with no install or payload sync while it runs. This entry does not
+claim that observation's outcome or alter another device.

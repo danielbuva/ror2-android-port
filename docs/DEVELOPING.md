@@ -162,6 +162,11 @@ by hand. Regenerate with `python3 scripts/readme-actions.py`; CI checks freshnes
 
 <!-- prototype-actions:end -->
 
+The full build consumes the current prepared catalog. After changing catalog roots
+or conversion membership, run `whole-catalog-prepare` and `whole-catalog-host`
+before building; existing preparations remain available as evidence.
+
+
 ## Current integration loop
 
 The active composition is the whole-catalog integration

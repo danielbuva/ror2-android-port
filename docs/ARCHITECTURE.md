@@ -189,7 +189,7 @@ binary, scoped inventory, managed SDK directory, corlib and new private output.
 It binds the complete pinned 84-file managed set, inventory and reader hashes,
 refusing replacement, missing files, mixed inputs and drift. J878 verifies forward
 mappings on Android; J883 matches root-inclusive metadata to native SDK cache
-observations. Emitted caches, consumer semantics and complete roots remain open.
+observations. Complete consumer semantics and independent project roots remain open.
 No game or linker consumer reads it.
 `phone_wrapper_population_oracle.py` and `WrapperPopulationOracle.cs` own a
 separate SDK-only desktop check. The explicit root/work/editor invocation stages
@@ -216,6 +216,29 @@ cache comparison before any broader qualification. Forward slots use only the
 SDK's observed runtime indices/IDs, with complete registry coverage; zero slots
 remain absent entries. Root membership in native population is inclusive, while
 the separate wrapper-query collector retains its root exclusion.
+
+`phone_scene_usage_oracle.py` and `SceneUsageOracle.cs` own a current experimental
+desktop verification step for the authored content fixture. An explicit
+root/work/exact-editor invocation stages a fresh SDK-only project through the
+existing guarded writer and claims the primary checkout's build mutex. The
+collector creates a default scene with the authored `ContentFixture`, compiles
+its Android player scripts into a fresh type database, and observes scene and
+global-manager dependencies through the SDK content-build APIs. Loaded scene
+objects remain separate from asset identifiers, referenced objects and usage-tag
+objects; a live object without an asset identifier remains explicitly observed.
+Included type arrays retain shared-wrapper multiplicity rather than inventing
+unique native identities; global usage fields remain separate observations.
+Unresolved
+objects have no claimed support result, and null type responses stay distinct
+from empty arrays. The receipt binds committed transitive source, the SDK,
+staged inputs, scene and observed assemblies. Teardown disposes the type
+database and usage sets and exits only this new batch process; failures and logs
+remain local. No player is built, no MCP editor or game project is reused, and
+no report supplies phone-build/linker inputs. Complete root production remains
+unqualified. API knowledge comes from the pinned Unity reference source
+[`ContentBuildInterface`](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Modules/BuildPipeline/Editor/Managed/ContentBuildInterface.bindings.cs)
+and [`PlayerBuildInterface`](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Modules/BuildPipeline/Editor/Managed/PlayerBuildInterface.bindings.cs);
+no reference implementation is copied.
 
 `phone_registry.py` and `phone_registry_literals.py` own separate experimental
 static SDK metadata support.
@@ -2352,7 +2375,8 @@ Neither managed membership nor this camera establishes spatial playback. The mar
 is compiled into RoR2.dll for exact-profile rig association; the runtime owner
 remains off by default. When Console is absent, an activation scope guards only
 the owned cloned `SceneCamera` from its Console-dependent graphics configuration;
-the owner explicitly reports reduced fidelity using source prefab defaults. `AndroidNativeSourceCameraPrerequisites.cs` resolves the original Sobel shader
+the owner explicitly reports reduced fidelity using source prefab defaults.
+`AndroidNativeSourceCameraPrerequisites.cs` resolves the original Sobel shader
 and three source-catalog shader roots (Outline Highlight, Vision Limit and
 TranslucentImage DownTent) while the clone is inactive; its exact SceneCamera
 activation scope is released in `finally`. The bound marker pumps the original
