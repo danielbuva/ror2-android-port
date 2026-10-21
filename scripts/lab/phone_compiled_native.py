@@ -332,10 +332,10 @@ def build(stage_root, tool_root, output, reuse_request=None):
         child = subprocess.run(command, capture_output=True, text=True, timeout=CHILD_TIMEOUT_SECONDS)
         stdout, stderr, exit_code = child.stdout, child.stderr, child.returncode
     except subprocess.TimeoutExpired as error:
-        stdout, stderr, exit_code = error.stdout, error.stderr, None
+        stdout, stdout_truncated = captured_output(error.stdout)
+        stderr, stderr_truncated = captured_output(error.stderr)
+        exit_code = None
         timed_out = True
-    stdout, stdout_truncated = captured_output(stdout)
-    stderr, stderr_truncated = captured_output(stderr)
     output.mkdir(exist_ok=True)
     (output / "driver.log").write_text(stdout + stderr)
     if timed_out:

@@ -317,6 +317,27 @@ class PhoneCompiledNativeTests(unittest.TestCase):
                     self.assertIn("\ufffd", (output / "stdout.log").read_text())
                     self.assertTrue(json.loads((output / "result.json").read_text())["success"])
 
+    def test_normal_completion_keeps_full_long_stdout_and_stderr(self):
+        stdout, stderr = "normal stdout " * 10000, "normal stderr " * 10000
+        for exit_code in (0, 7):
+            with self.subTest(exit_code=exit_code):
+                stage = self.stage()
+                output = stage.with_name(stage.name + "-output-normal")
+
+                def completed(argv, **kwargs):
+                    self.child(argv, **kwargs)
+                    return subprocess.CompletedProcess(argv, exit_code, stdout, stderr)
+
+                with patch.object(consumer.subprocess, "run", side_effect=completed):
+                    result = consumer.build(stage, self.base / "tool", output)
+                self.assertEqual(result["success"], exit_code == 0)
+                self.assertEqual(result["exit_code"], exit_code)
+                self.assertEqual((output / "driver.log").read_text(), stdout + stderr)
+                self.assertNotIn("timed_out", result)
+                self.assertNotIn("stdout_truncated", result)
+                self.assertFalse((output / "stdout.log").exists())
+                self.assertFalse((output / "stderr.log").exists())
+
 
 if __name__ == "__main__":
     unittest.main()
