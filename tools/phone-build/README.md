@@ -54,6 +54,16 @@ Its bounded Android shell qualification is recorded in
 [J869](../../docs/PORTING_JOURNAL.md#j869--decode-pinned-sdk-wrapper-search-order-on-android);
 complete wrapper-cache/mapping, scene usage and app hosting remain open.
 
+`phone_native_flags.py` is separate current experimental metadata support:
+`python3 -I -S scripts/lab/phone_native_flags.py OWNER_SDK_BINARY NEW_PRIVATE_REPORT.json`.
+It reads the exact supplied SDK as data and packs abstract/sealed/editor-only
+booleans for persistent native IDs. Static descriptors and individual bytes of
+code-built literals have separate origin checks. Unknown SDKs, non-boolean
+bytes, conditional/unknown literal origins and output/input drift refuse.
+It needs the two unchanged authored registry readers alongside it; no editor,
+game files or previous captured mapping is an input. Reports stay private and
+no cache, scene-root or game-build consumer is selected.
+
 ```sh
 ./dev prototype --action phone-content-fixture
 ./dev prototype --action phone-content-check --target <generated-project>

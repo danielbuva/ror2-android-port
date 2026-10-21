@@ -129,6 +129,16 @@ forwarding entry, binds the inventory hash, refuses output overwrite or input
 drift, and emits a private observation report. No game build or linker stage
 consumes this helper.
 
+`phone_native_flags.py` owns separate current experimental native flag metadata.
+Its standalone owner-SDK/new-report invocation checks the pinned binary and
+reader hashes, reads the three static boolean bytes, and proves individual
+stack-literal bytes for the root/nonobject registrations. Wider zero stores and
+later byte writes remain distinct; conditional or unknown origins, alias stores,
+frame movement, loops and escaping calls refuse. It packs abstract/sealed/editor
+flags for unique persistent IDs. Setup is explicit owner SDK data and a new
+private report; teardown releases parsed data. It executes no SDK code, stages
+no editor project, produces no cache/scene roots and has no game/linker consumer.
+
 `phone_wrapper_search.py` owns separate current experimental SDK search-order
 support. `phone-wrapper-search --target REQUEST.json` accepts only the pinned
 owner binary and stages that data with the three authored Python readers.
