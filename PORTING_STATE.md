@@ -1,18 +1,14 @@
 # Porting state
 
-Last updated 2026-10-21 after **J925/J924/J921/J923/J922/J920/J919**. Diagnostic 8f33e1a9
-passes both standard checks. Its exact music-output identity matches the selector
-and callback, but all three bounded PCM windows contain only zero samples.
-The selected source camera supplies context and cleans up its owned skin/listener;
-rendering still has severe artifacts. Genuine same-process return to the next
-menu is observed; a second run is untested. The raw selected-run host assertion
-failure remains preserved separately. Main retains 8f33e1a9, independently
-rehashed, stopped, selector absent and asleep. Accepted baseline stays f1550ce0.
-J922's render observer and J923's read-only music context await the next player.
-R21 refused player dispatch on an obsolete track-name API; J925 repairs the
-three reads and strengthens the host compiler fixture. R22 is next.
-J924 reaches Siren through three natural transitions, but the native encounter
-and exact boss identity time out; ordinary Commando primary is the next test.
+Last updated 2026-10-21 after **J926/J925/J924/J921**. Diagnostic ac1d2176
+passes both standard modes and both bounded post-strip contracts. The actual
+scene music track is selected, but matched-output PCM windows still contain
+only zero samples. Master/music RTPC queries resolve to Default scope; their
+cleared report placeholders do not establish muted volume. Main has R22;
+its post-default independent hash/placement/cleanup/sleep query passes. The
+selected camera replay is now underway; J919 remains the older player evidence
+for skin/listener teardown, next-menu return and severe visual artifacts.
+Accepted baseline stays f1550ce0. Siren encounter entry remains open after J924.
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
@@ -26,9 +22,9 @@ content on every update. Results are recorded once in the
 | Accepted input | Steam build 25475991, input id `6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88` |
 | Toolchain | Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan (`environment/toolchain.json`) |
 | Owner-build research | J899/J902 compile the authored fixture on Android; J905 strips its actual DLL/PDB and J920 converts it. J921 binds that provenance to 264 fresh native compilation tasks, phone packaging/signing and device load/update/refusal checks. All phases map the actual new library; the game is unchanged. Original replay/reuse gates stay intact. Captured desktop roots, general compiler features/packages, game compilation, content/shaders, ordinary app hosting, tool delivery and matched performance remain open. Route A and the desktop fallback stay fixed. |
-| Latest device-verified APK | J919 diagnostic `8f33e1a92f60b00fffc4d0b980ab3a1a9d8851207b4ba11627f08384e16d6221`, source 5a97f93: full build, both standard checks and bounded pre/post-strip retention pass; 333 captured pre-strip DLLs, 391 frozen authored inputs, 266 payload files, matching symbols. Selected camera/live cleanup and genuine next menu are observed; its raw host-predicate failure and severe visual artifacts remain. Accepted baseline remains J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`, source 1780ea9. |
-| Installed now | Main has J919 diagnostic 8f33e1a9. Installed bytes, owned placement, selector absence, stopped process and display sleep are independently checked after the selected route and J924 Siren timeout. Audible playback is unqualified. Other devices are outside this session's assignment; historical receipts do not establish their present state. |
-| Runtime source since verified APK | Installed 5a97f93 includes J914 dependency retention and J918 exact music-output capture. J922 adds bounded first-ready camera-stack/renderer projection evidence; J923 adds read-only selected-track, source-context and global RTPC observations. Those source changes require a new player. Original audio and native-skin routes remain opt-in. Track/state/native results, broader rendering and Siren encounter remain open. |
+| Latest device-verified APK | J926 diagnostic `ac1d2176717b526ed70c1b836e55b0dda8e27cc2066c9823f8f642ceffc33195`, source 75bd53f: full build, both standard checks and bounded bootstrap/music/render post-strip contracts pass; 333 captured DLLs, 393 authored inputs, 266 payload files and matching symbols. Actual scene-track context is observed; both matched-output windows remain all zero. Selected-camera behavior on this APK awaits separate evidence. Accepted J850 stays `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`, source 1780ea9. |
+| Installed now | Main has J926 diagnostic ac1d2176. The independent post-default query verifies installed bytes, owned placement, absent process/selector and display asleep; the next selected replay is underway. Playback is unqualified. Other devices are outside this assignment; historical receipts do not establish their present state. |
+| Runtime source since verified APK | Installed 75bd53f contains J922/J923 observers and J925 cached-name repair. Subsequent Main changes are Alpha host tooling; no newer runtime source is integrated. Resolved default-scope values and original event/state returns still need observations. Audio and native-skin routes remain opt-in; broader rendering, complete audio and Siren encounter remain open. |
 | Device tooling | J755 verifies discovery, allowlist/profiles, separate ownership/runtime receipts, fresh reserves and idle screens on all three. The secondary test device passes both checks and produces J761's app-scope trace. The spare test device passes J762's automatic game checks and isolated audio; generic physical input remains unverified. Unity builds serialize while selected-device runs overlap. J888 verifies checked observations and teardown in both alpha standard modes. |
 | Executable rollbacks | J840 `8357db8b6ef29f8958c5f4207ad2207f214ee60ae4923cc68f6de55fe55f6770` · J828 `922cfb86e895118285d8c93f588ff57c4052154d15e88688bf7b46f357474112` · J817 `107718f8e318a22a90623ef3895c85ecdd164f4a5f8b3226dd342aaeec9113cb` · J813 `91b0b7c93e03772d5eafb26e059a3f942be7f28563d2a07b98607f43710c7e50` · J809 `4c37596cd5828047a5cb19bc2df8c5c6913333cce01104d3f0b1e4bf748dccb9` · J805 `66c8162dbdc97b86486b7a748b3da26887cf7399571a4724d31704b9c4ca8e66` · J801 `319a39871c3bcf43760b0d2a96a9634d859149699da1c2ca0c9944c40bc881e3` · J797 `40299fc59da8d6553bbd6681a4515ad4281b4ef6bcd33ac75012dce3c7a952b1` · J793 `23916334f598f68b2f3b7e464b709a74c0b54bb222107031d32dbac9f0a18494` · J790 `01654e8187c378e6b26dd6033aa2fac9ce6b7d1b140cb98bf8a0619ea50bf63c` · J788 `be26c21c4cd8ff15a8a663528216cf7a69394a51d8b9441a63a1a496f83e98b5` · J783 `1311f1057275ef2a34a3fc964a6f79e033086243d066deea40775b9178d2bba5` · J776 `bbd1f3c15958ee42d272d58770a8caa2a73e327354bc668d9564bbd595656eb9` · J771 `0dd3f57328883d9dd927362775277b876cbf59ddaa17e0a9d0e719a15094684d` (exact debugging symbols retained) · J767 `2aa936c059331c6a2dcf2a3ef56ef928103707b1f009532dbfaa1c6f6c9697c3` · J764 `d7974718a48c008d83ab0bb411a8ea22093cbc23950a76e7cfffa17297285bfa` · J762 `96006814dd2ba80f65cd24413c50c11c3061060f9d90977296f1e00d71ec7fd1` · J758 `aabf41ab5ece8a34d9ac4b70946dad5d8b827baa40e4dd927afd98e6ff15deee` · J752 `aa732f88948062c43a59378bf7dd53f1a473c828a479adbaee32e976207fb159` · J749 `771fc75282b45197d0dd25d3d537a121112ca35830c8d4dd516711aa7aa813cf` · J745 `caeeb62fe45e7b8bad8a89272390a11a392152b975277660675a75e56a230453` · J737 `12d793593d216ea50d6db400fb4e8f7a3258657acd39a382181f0dc6b18035f8` · J728 `885ea2946869ca8a206739cf74acd9bbf75705651d5f3974c30a56724d93e715` · J724 `b32998b87706977e2945ae3b709e26486b76bf9403894262877a9e3829d80b54` · J707 `d545d80048fbc26b882ada5ecb1e38346239f121d8cdb00266ef3d29be703bee` · J702 `efb0ba9354923c1fbe453d28364018e078627cd15c65fc4813dcc3f0c13d577d` · J698 `fe4dc0de0f70ec70b699e9d54e55e3e657c0a89f1f9efb52ee58411ed0bcc383` · J695 `039bc73d59822801da9258a7f90b5bfa7e77080e0c4d49058f81916a61f0cfbc` · J689 `55dee31826b7ecd545488d601490ba92623d6640a711e9a534fdd2c898ede861` · J680 `e09920fd9df2c5b03416b33766fbdaf4c64f2feeeee9b68eff200435c0716ebc` · J670 `ad84d0cb55bc6a18dabf67e90839c78100abcb846c6feaff13c758a6b8a6fb69` · J663 `6506b99bfa5004960721868b222d15010718a81f4c55f28bd29d153976d97cec` · J657 `86d2542aadcc12dbfdb53fe957d7aedf32ebeb8d38c94fbf4732ef5211ed7d03` · J654 `f57e172b9da1a5717144355266cd2e1a1de93fa775c14233a06c93a3a635e2b8` · J647 `9e7c4224896cd9257d102bef728073db0f142269358b42c244ae4e1ec9ac1f82` · J644 `118540ea2cf3f7b3b26979150e44edc54ee3f87cb79da296ca7df21fce70c717` · J637 `03339547317e8d543f65696ac0e6af412778f6bbb62bbdc2ad31cae96c442648` · J585 `da5e495910a6b6f669389bdfd7184960949a62b469d6bbd78f78384e5364b0c0` · J503 `f567e9f6dc606c6a9eceff8dc54ed798c2645536ea47c2e8da42a8bc3867a76e` · J502 `395385929be5b706a079286738f6e47cf73f7694d990ca6fe02c2696d72a7f6c` · J425 pre-migration gameplay `5a25bb9fe001440a01316bbe79f4e8269ac37e6bf33e91d4c20e91f1f9ae63b0` · J323 paused Moon `893b03c4162a79d4cc9b194fb07b412695e34c1b50439434230902289bd385a9` |
 | Retained old input | Steam 21587608 and Unity 2021.3.33f1 under `work/migrations/steam-21587608` (old rollbacks only) |
@@ -82,12 +78,11 @@ unavailable): [docs/subsystem-coverage.md](docs/subsystem-coverage.md).
 - Moon, finale and escape: deferred; manual only, never navigated autonomously.
 - Stock Steam startup, cloud profiles, platform identity: unavailable by design (no
   fabricated ownership or service success).
-- Audio playback remains unqualified. J919 observes matching specific music-output
-  identities but zero nonzero finite samples in both standard checks and the
-  selected-camera window. Static music dispatch survives stripping unchanged;
-  current track/state and native return values remain unobserved. Camera context
-  alone does not resolve this result. Native event/output results, positioning
-  and composed playback need separate evidence.
+- Audio playback remains unqualified. J926 confirms actual selected scene tracks
+  and matching specific-output identities, with all-zero finite PCM windows.
+  Default-scope volume query results are deliberately unknown in the current
+  global-only fields. Original native event/state returns and effective gain
+  remain unobserved; J919's older camera context did not resolve its zero window.
   J845 separately qualifies one original pickup in an isolated managed player
   with nonzero PCM and owned teardown. Global remains unchanged; Init uses J744's
   metadata adaptation. Ordinary event output, positioning, music, wider effects,

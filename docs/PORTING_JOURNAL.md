@@ -25656,3 +25656,92 @@ Revisit by building a separate R22 attempt, retaining the versioned R21
 post-strip metadata contract, and qualifying its actual same-request observer
 members before both default controls and targeted interpretation. Compilation,
 post-strip retention, runtime behavior and physical audibility remain distinct.
+
+
+## J926 — Build R22 and observe selected music context through both standard checks
+
+Date: 2026-10-21. Hypothesis: J925's supported-name repair admits J922/J923's
+observers into an actual player, distinguishing live track/context from J919's
+unexplained zero PCM. Reuse the same explicit audio request, native library and
+source dispatch profiles. This extends the existing owners, not the experiment
+switch. J923's pinned R2API.Sound prior art and J925's current-input API evidence
+remain the references; no protected implementation is copied.
+
+Freeze source 75bd53f and all 393 authored build inputs, after exact-editor host
+fixtures, doctor and preflight pass. The serialized full Unity build succeeds
+in 231.521 s with zero errors; capture 333 pre-strip managed DLLs from its actual
+request and freeze 266 payload files, 154 bank entries, symbols and source ZIP.
+APK SHA-256:
+`ac1d2176717b526ed70c1b836e55b0dda8e27cc2066c9823f8f642ceffc33195`.
+Symbols SHA-256:
+`3ebf466f25417458b033ff1a696d07ffabc91b11819305a654d3e981688f0dd8`;
+libil2cpp Build ID `99cd1d542e05c8c071f579251bb9ad65a4e8b9de`.
+The R21 attempt remains failed, with no player dispatched; R22 is a separate
+attempt. The versioned R21-named metadata contract is retained explicitly as a
+schema revision, while actual run revision is R22.
+
+The existing same-request bootstrap/observer/camera and typed capture inspection
+passes. A supplemental read-only Cecil inspection also passes for the exact
+Assembly-CSharp, RoR2 and Wwise API pre/post pairs. Every pre-strip input joins
+the captured request, every stripped copy equals the IL2CPP backup, and the six
+hashes remain frozen. It verifies selected music snapshot/call boundaries,
+private track and source parameter fields, typed RTPC API and render-evidence
+schema. This is bounded metadata retention, not a complete closure or runtime
+qualification. Root initially supplied extra provenance keys in the strict
+three-row qualification format; the device wrapper refuses before device
+access. Preserve that receipt and refusal, and put the same inspected hash
+tuples in a separate conforming contract receipt. No predicate is loosened.
+Historical R5 patch/cohort lineage remains distinct from current source ownership,
+which joins the frozen recipe/source ZIP and actual producer artifact manifest.
+
+Install the exact frozen APK in place on the assigned adopted-storage test
+device, with fresh placement/reserve checks, and synchronize its frozen payload.
+Both standard modes pass independently. Plain reaches 35.208 s on Lakes;
+stage-exit completes one natural transition to Goolake and observes 12.637 s
+there (156.170 s total world time). Both identify the current APK, report no
+session error/first failure and retain thirteen applied runs. Each removes its
+selector, stops the process and verifies sleep. The five known Windows-bundle
+negative controls remain visible per mode; no PointSound or bank-path warning
+frames are observed. They do not turn into a claim of a clean generic log.
+
+The exact requested, callback and owned MusicController output identities match
+in both modes. Plain records 484 callbacks and 557,568 finite samples; stage-exit
+records 460 callbacks and 529,920. Both windows have zero non-finite and zero
+nonzero finite samples. Callback identity passes while the signal predicate
+fails. This does not qualify playback or physical audibility.
+
+New device observations resolve one missing fact: the actual selected track is
+present and matches the scene candidate, first on Lakes and then on Goolake.
+The source owner and all five sampled source parameter values are observed
+without an owner failure. Master and music RTPC queries return native success
+with Default scope, not the requested Global scope. J923 deliberately clears
+values outside Global scope, so the reported zero is a placeholder and cannot
+establish muted volume. The parent-music name returns IDNotFound/Unavailable.
+The exact API enum receipt distinguishes those cases. A separate observer-only
+draft will retain successful finite resolved values with their actual scope;
+original event/state returns, computed gain and playback remain unobserved.
+No track, event, volume, listener or rendering behavior is changed here.
+
+An independent final query rehashes installed bytes, verifies owned placement,
+absent process/selector and display asleep. Main now has this diagnostic;
+accepted J850 remains unchanged. J919's selected-camera cleanup/menu and severe
+rendering result belong to its older APK. R22's opt-in render snapshot and
+camera/skin replay are pending separate evidence, and no visual or animation
+acceptance follows from these default checks. Revisit with a bounded selected
+camera capture and the missing native/resolved-volume observations, preserving
+both controls before interpreting subsequent candidates.
+
+Private evidence: `work/coordination/codex-original-game-audio-build-root/r22/`,
+`work/experiments/original-game-audio/candidate-20261021T221516.342687Z/`,
+`work/coordination/codex-original-game-audio-device-root/r16-root/`,
+`work/experiments/baseline/20261021T221952.983072Z/` and
+`work/experiments/baseline/20261021T222341.204608Z/`.
+Build receipt SHA-256:
+`3e82f491e064a203cc6b0dcad1eda46ceb9e563a1288fcfbc930adac29d4269d`;
+supplemental contract qualification:
+`24904a4e373df9ca8a8fcd274803e6a58483fcd877f363ab2f3c0d74afc0cac2`;
+both-control derived qualification:
+`e1457188c898bf98c5e2056064933f4935eb5b5132372079093ce9b8a5c73af7`;
+independent final query:
+`88a27419621b055b06b17e0a0806e30e86b6892ca2519d4e356a9aa87de1ca89`.
+Raw logs, captures, middleware, input material and device identifiers stay local.
