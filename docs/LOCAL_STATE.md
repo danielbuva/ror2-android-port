@@ -355,6 +355,16 @@ qualification logs under `work/coordination/phone-proof/` are investigation
 evidence only. They supply no game-build input. Context indices describe
 declarations; live state and target/object retention remain separate gates.
 
+`phone_manager_retention.py OWNER_SDK_BINARY NEW_PRIVATE_REPORT` generates
+static write-method bindings from the same owner SDK and authored siblings.
+It reads no captured vtable, disassembly, manager/scene list or oracle report.
+Private `manager-retention-*` source stages, host observations and controls under
+the same proof root are retained investigation evidence. The local
+`stage-manager-retention-v1.py` and `manager-retention-on-android-v1.py` adapters
+copy committed sources unchanged and reuse the receipt/hash-bound SDK/Python
+workspace with explicit Alpha selection, fresh capacity and unchanged-game
+guards. No SDK code, editor or player executes; no game-build input is generated.
+
 `phone_managed_compile.py stage ROOT OWNER_SDK_CONTENTS WORK` generates a fresh
 `work/rebuild/phone-managed-compile/<owned-attempt>/` from the exact supplied SDK
 and tracked arithmetic fixture. Its manifest binds the original compiler/config,

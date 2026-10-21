@@ -26145,3 +26145,90 @@ R22 with J927's severe rendering defects; the next separately frozen candidate
 must pass both standard checks and a selected camera route before these new
 observations can guide a behavior change. No aesthetic replacement or forced
 renderer enable is introduced.
+
+## J931 — Read manager write dispatch bindings on Android without evaluating retention
+
+2026-10-21. Hypothesis: J895's manager declarations can be associated with the
+SDK's actual build-consumer write dispatch independently of captured manager
+objects or native-usage tables. This is a metadata prerequisite for the open
+target/state-dependent retention gate. Main reserves J928/J930/J932; Alpha owns
+J931. Rebase on `90326b4` before this entry. No editor, player build, installation,
+game launch, runtime architecture or original input changes.
+
+**Basis and ownership.** Revisit J893/J895 and `docs/community-prior-art.md`;
+this is generic Unity build metadata, with no new RoR2 mechanism. The
+[Itanium ABI](https://itanium-cxx-abi.github.io/cxx-abi/abi.html#vtable)
+distinguishes a table symbol from its address point and permits primary,
+secondary and construction layouts. Inspect only the pinned owner's SDK as
+data, using the existing bounded readers; execute no SDK instruction or method.
+No inspected implementation, disassembly, captured table or usage list becomes
+public source or a phone-generation input.
+
+New current experimental support owner `phone_manager_retention.py` resolves
+both global-manager build consumer symbols, derives their virtual-call offset,
+and proves the same nullable context-lookup receiver supplies the vptr loads
+and ABI argument. Definitions must dominate the call in normal control flow.
+For every independently decoded manager declaration, exact RTTI/type-name
+identity and zero offset-to-top validate its complete primary table before
+selecting the address point. The selected function must identify one write
+method in that native class's ancestry. No slot number, saved mapping or
+manager result is substituted for those proofs. Architecture and local-state
+docs name setup, teardown, report/source hashes and the isolated Android adapter.
+
+**Preserved failures.** Existing operand slicing refuses the unfamiliar consumer
+code. A diagnostic scan ignoring unknown effects is explicitly unqualified.
+The new bounded reader initially also refuses an unrecognised SUB-register
+effect. Inspect the exact operand and extend only this new owner's public
+integer-instruction destination-effect model; no arithmetic result is evaluated.
+Synthetic clobbers verify those instructions cannot silently preserve a pointer.
+A first test incorrectly expects a call to clobber an already saved callee-saved
+receiver; correct that test, retain its failure, and test both preserved receiver
+and clobbered incoming result. Existing metadata owners and their pins stay
+unchanged.
+
+**Host contract.** Committed actual source `683fb2e` passes nine focused checks,
+including real optional SDK inspection, isolated `-I -S` launch, unknown-SDK and
+overwrite refusal, receiver/call/null-alternative mutations, skipped definitions,
+wrong slots, RTTI/secondary-table/extent/ancestry ambiguity and destination
+clobbers. The eight J895 checks still pass. After rebasing, all nine staged
+source/test files are byte-identical at `1aa1149`; actual receipts retain their
+original source commit. Native exception flow is not evaluated: the report
+explicitly limits its control-flow proof to the normal path.
+
+**Android result.** Reuse only Alpha's receipt/hash-bound SDK and Python workspace
+read-only, with explicit configured selection, fresh capacity/backing and owned
+stopped-game guards. Stage the eight authored reader sources and one test file;
+no host report, manager object, scene, native table or oracle is sent as reader
+input. The real SDK CLI completes in 9.359269 s and emits a report byte-identical
+to the independent host run, SHA-256
+`6a1f8f07bc8c67e23e4672bf7078b57cc8b33e2d69e7069df212e914348d97d2`.
+Both consumers derive offset 328. All 24 declared managers resolve (20 global,
+four level): 21 bind the base GameManager method; ClusterInputManager,
+UnityConnectSettings and OcclusionCullingSettings bind separate overrides.
+These are static dispatch identities, not predicate results or live-object proof.
+
+Eight portable contracts pass on Android without skips. Unknown SDK and output
+replacement attempts refuse; the accepted report, all source inputs and SDK
+bytes remain unchanged. Zero installs and zero game launches occur. Alpha's
+owned be26c21c APK hash is unchanged, its process/selector absent and display
+asleep. Game preflight still refuses missing clone-local inventory; independent
+metadata guards do not qualify the game build. No APK is produced by this test.
+
+**Evidence and disposition.** Private result:
+`work/coordination/phone-proof/manager-retention-phone-30a5b3a529ac4549bda368fd03dd8921/result.json`.
+`manager-retention-proof-receipt-v1.json` under the same proof root binds 53
+artifacts, including source stages, original refusals/test failure, host and
+Android reports, controls, unchanged-game guards and rebase equality;
+SHA-256 `25be3d01fca3cf94376c54a90db02fab1e7c09663d390dd74833f0a2a2df569a`.
+Raw SDK observations, disassembly, input binaries, device/storage identifiers
+and logs remain ignored. Changed-file Ruff, public scan and manual authored
+source review pass.
+
+`executes_sdk`, `live_context_qualified`, `target_retention_qualified`,
+`state_retention_qualified`, `native_usage_qualified` and
+`root_generation_qualified` all remain false. This qualifies static bindings,
+not target support, write decisions, serialized class retention or complete
+independent roots. Next requires independently verified target/state semantics
+and native-usage equality; the J895 failed 38-versus-42 comparison is retained.
+J929's app-host refusal remains failed. Keep Route A, the working Android
+pipeline and desktop fallback; no gameplay or installer readiness is established.

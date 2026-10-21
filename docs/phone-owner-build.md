@@ -86,6 +86,9 @@ the oracle is never a phone-build input.
 J895 qualifies manager registration declarations on Android while retaining
 live-context, target/serialization and complete native-usage gates. Dependency
 exclusions remain separate from native class retention.
+[J931](PORTING_JOURNAL.md#j931--read-manager-write-dispatch-bindings-on-android-without-evaluating-retention)
+qualifies static write-method bindings and consumer dispatch offsets on Android;
+actual target/state decisions and independent root production remain open.
 J899 runs the SDK's actual Roslyn compiler and unchanged runtime configuration
 on Android for one authored arithmetic library. Android repeats its own outputs
 exactly, but its DLL/PDB bytes differ from the desktop control. The observed

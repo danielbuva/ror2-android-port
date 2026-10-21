@@ -256,6 +256,21 @@ context, target support, object retention or project/linker root is qualified;
 no game or build consumer reads the output. Runtime context storage may be
 zero-fill memory and is never treated as file-backed metadata.
 
+`phone_manager_retention.py` owns separate current experimental SDK metadata
+support. It derives the write-method dispatch offset from both bounded global
+manager build consumers. A normal-control-flow proof requires the same nullable
+context-lookup receiver for the vptr loads, call target and ABI argument.
+Unknown operand effects, clobbers, skipped definitions, mismatched call sequences
+and ambiguous consumers refuse. RTTI symbols, encoded type names and zero
+offset-to-top validate each declared manager's complete primary vtable before
+using its address point; an unverified two-word header is never assumed. The
+selected target must match one method in that native class's ancestry.
+Setup takes the pinned owner SDK and a fresh private report; teardown releases
+parsed bytes and keeps source/SDK hashes and failed attempts. It neither invokes
+the virtual methods nor evaluates live manager state, target support, exception
+flow, serialized retention or final native usage. No build consumes its output;
+all live/state/target/native-usage/root qualifications stay false.
+
 `phone_managed_compile.py` owns a current experimental authored compiler fixture.
 Its explicit stage invocation copies hash-pinned owner Roslyn components, their
 unchanged runtime configuration/license, the SDK Unity AOT core library and the
