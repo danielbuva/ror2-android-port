@@ -210,6 +210,9 @@ public sealed partial class PortSession : MonoBehaviour
         public SourceAnimationEventReport sourceAnimationEvents;
         public List<SessionResourceSample> sessionResources = new List<SessionResourceSample>();
         public OfflineSettingsReport settings;
+        // Default-off passive PCM measurement for naturally rendered gameplay.
+        // These are per-run observations; capture starts only after the integrated world is playable.
+        public bool passivePcmCaptureRequested, passivePcmGameplayArmRequested;
         // Snapshot contains only bounded primitive values; no Unity objects.
         public PortSessionOriginalAudioOwner.Snapshot originalAudio;
         public PointSoundDiagnosticObserver.Snapshot pointSoundDiagnostic;
@@ -414,6 +417,7 @@ public sealed partial class PortSession : MonoBehaviour
     NetworkIdentity recoveredOwnedIdentity;
     SessionReport r;
     GameObject host, obstacle, eventHost, artifactHost;
+    bool passivePcmGameplayArmBoundaryAttempted;
     readonly List<object> retainedNativeLifecycleObjects = new List<object>();
     void RetainNativeLifecycleObject(object value)
     {
@@ -476,10 +480,29 @@ public sealed partial class PortSession : MonoBehaviour
     {
         if (r != null)
         {
-            // The original-audio owner is process-lifetime state. Refresh its
-            // bounded value snapshot at each report boundary rather than leaving
-            // the startup-only copy stale during later callbacks and teardown.
+            // The PCM window may arm only after an existing authoritative world
+            // producer has reported playable phase and positive simulation time.
+            // In particular, body creation while its GameObject is inactive is
+            // not evidence that gameplay has begun; this observer never writes r.phase.
+            bool playableWorldObserved = r.integratedWorld && r.integratedResults &&
+                r.phase == "integrated-world-playing" && r.world != null && r.world.seconds > 0f;
+            if (!passivePcmGameplayArmBoundaryAttempted && playableWorldObserved &&
+                PortSessionOriginalAudioOwner.PassivePcmCaptureRequested)
+            {
+                passivePcmGameplayArmBoundaryAttempted = true;
+                if (!PortSessionOriginalAudioOwner.ArmPassivePcmCaptureAtGameplayBoundary(true))
+                    RecordPrimarySessionFailure(r, new InvalidOperationException(
+                        "Passive PCM capture arm was refused at an observed playable-world save boundary."));
+            }
+
+            // Report selection/arm state from the owning process-lifetime audio
+            // owner, never from serialized fields that default to false.
+            r.passivePcmCaptureRequested = PortSessionOriginalAudioOwner.PassivePcmCaptureRequested;
+            r.passivePcmGameplayArmRequested = PortSessionOriginalAudioOwner.PassivePcmGameplayArmRequested;
             r.originalAudio = PortSessionOriginalAudioOwner.CaptureSnapshot();
+            if (!string.IsNullOrEmpty(r.originalAudio.passivePcmFailure))
+                RecordPrimarySessionFailure(r, new InvalidOperationException(
+                    "Passive PCM capture reported: " + r.originalAudio.passivePcmFailure));
             if (r.pointSoundDiagnosticRequested)
             {
                 r.pointSoundDiagnostic = PortSessionOriginalAudioOwner.CapturePointSoundDiagnosticSnapshot();
@@ -520,12 +543,17 @@ public sealed partial class PortSession : MonoBehaviour
 
     private void OnDestroy()
     {
-        // Unexpected session destruction is also a terminal path. Retiring this
-        // report observer never releases the original process-lifetime audio owner.
-        if (r == null || !r.pointSoundDiagnosticRequested) return;
+        // Unexpected session destruction is terminal for an explicitly armed PCM
+        // window too. Finish is idempotent; default-off runs never call native capture.
+        if (r == null) return;
+        bool pcmArmed = PortSessionOriginalAudioOwner.PassivePcmGameplayArmRequested;
+        if (!r.pointSoundDiagnosticRequested && !pcmArmed) return;
         try
         {
-            RetirePointSoundDiagnostic();
+            if (pcmArmed)
+                PortSessionOriginalAudioOwner.FinishPassivePcmCaptureGameplayWindow();
+            if (r.pointSoundDiagnosticRequested)
+                RetirePointSoundDiagnostic();
             Save();
         }
         catch (Exception) { /* Teardown diagnostics cannot interfere with Unity destruction. */ }
@@ -818,6 +846,16 @@ public sealed partial class PortSession : MonoBehaviour
             PortSessionOriginalAudioOwner.ConfigurePointSoundDiagnostic(true);
             r.pointSoundDiagnostic = PortSessionOriginalAudioOwner.CapturePointSoundDiagnosticSnapshot();
         }
+        if (GameAudioOriginalOwner.PassiveCaptureStopRequested)
+        {
+            string failure = GameAudioOriginalOwner.Failure;
+            RecordPrimarySessionFailure(r, new InvalidOperationException(
+                string.IsNullOrEmpty(failure) ? "Passive PCM capture requires lifecycle stop." : failure));
+            r.cleanup = false;
+            r.phase = "audio-capture-terminal-stop";
+            Save();
+            yield break;
+        }
         var selected = RunSelectedProbe(catalogFixture);
         for (var step = RunGuarded(selected,
                                    e =>
@@ -827,6 +865,19 @@ public sealed partial class PortSession : MonoBehaviour
                                    });
              step.MoveNext();)
             yield return step.Current;
+        if (GameAudioOriginalOwner.PassiveCaptureStopRequested)
+        {
+            string failure = GameAudioOriginalOwner.Failure;
+            RecordPrimarySessionFailure(r, new InvalidOperationException(
+                string.IsNullOrEmpty(failure) ? "Passive PCM capture requires lifecycle stop." : failure));
+            r.phase = "audio-capture-terminal-stop";
+            if (!GameAudioOriginalOwner.OriginalTermsReturned)
+            {
+                r.cleanup = false; r.originalAudio = PortSessionOriginalAudioOwner.CaptureSnapshot(); Save();
+                yield break; // Retain the session owner and source roots until original Terms prove cleanup.
+            }
+            r.cleanup = true; // Exact original Term returns settled native ownership; ordinary local cleanup may now finish.
+        }
         if (r.sourceStageLifecycleRecoveryRequired)
         {
             r.cleanup = false;
@@ -918,8 +969,10 @@ public sealed partial class PortSession : MonoBehaviour
                 while (reclaim.MoveNext())
                     yield return reclaim.Current;
             }
+            r.originalAudio = PortSessionOriginalAudioOwner.CaptureSnapshot();
             r.phase = "complete";
             Save();
+            if (GameAudioOriginalOwner.PassiveCaptureStopRequested) yield break;
             RestartWorldAfterCleanup();
         }
     }
@@ -954,14 +1007,30 @@ public sealed partial class PortSession : MonoBehaviour
         {
             session = IsPlayableSpine() ? GameSession() : LabExperiment(catalogFixture);
             while (session.MoveNext())
+            {
+                if (GameAudioOriginalOwner.PassiveCaptureStopRequested) yield break;
                 yield return session.Current;
+                if (GameAudioOriginalOwner.PassiveCaptureStopRequested) yield break;
+            }
             CompleteSuccessfulSession(r);
         }
         finally
         {
-            if (r.sourceStageLifecycleRecoveryRequired)
+            // Close a requested window on normal completion and iterator unwind.
+            // The owner/window makes this idempotent, and the authoritative arm
+            // state avoids a stale serialized report suppressing cleanup.
+            if (PortSessionOriginalAudioOwner.PassivePcmGameplayArmRequested)
+            {
+                PortSessionOriginalAudioOwner.FinishPassivePcmCaptureGameplayWindow();
+                r.originalAudio = PortSessionOriginalAudioOwner.CaptureSnapshot();
+                Save();
+            }
+            if (r.sourceStageLifecycleRecoveryRequired ||
+                (GameAudioOriginalOwner.PassiveCaptureStopRequested && !GameAudioOriginalOwner.OriginalTermsReturned))
             {
                 RetainNativeLifecycleObject(session);
+                r.originalAudio = PortSessionOriginalAudioOwner.CaptureSnapshot();
+                r.error = r.error ?? (GameAudioOriginalOwner.Failure ?? "Original audio lifecycle is retained after passive capture stop.");
                 // The inner native owner retained a live Stage/cohort. Preserve the
                 // server, client, body, and catalogs that make that owner recoverable.
                 r.cleanup = false;

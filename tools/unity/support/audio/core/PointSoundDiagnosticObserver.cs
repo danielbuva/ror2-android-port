@@ -12,6 +12,10 @@ public static class PointSoundDiagnosticObserver
     private static int lastStage;
     private static int hasEmitterAlive;
     private static int emitterAlive;
+    private static int currentAcquisitionPath;
+    private static int firstNullReferenceAcquisitionPath;
+    private static int hasFirstNullReferenceEmitterAlive;
+    private static int firstNullReferenceEmitterAlive;
     private static int firstNullReferenceStage;
     private static uint firstNullReferenceEventId;
     private static int matchingNullReferenceCount;
@@ -48,8 +52,12 @@ public static class PointSoundDiagnosticObserver
         lastStage = 0;
         hasEmitterAlive = 0;
         emitterAlive = 0;
+        currentAcquisitionPath = 0;
         firstNullReferenceStage = 0;
         firstNullReferenceEventId = 0;
+        firstNullReferenceAcquisitionPath = 0;
+        hasFirstNullReferenceEmitterAlive = 0;
+        firstNullReferenceEmitterAlive = 0;
         matchingNullReferenceCount = 0;
     }
 
@@ -61,12 +69,17 @@ public static class PointSoundDiagnosticObserver
         lastStage = 1;
         hasEmitterAlive = 0;
         emitterAlive = 0;
+        currentAcquisitionPath = 0;
     }
 
     public static void Mark(int stage)
     {
         if (!enabled) return;
         lastStage = stage;
+        // Existing emitted markers 20/21/22 already identify RequestEmitter's
+        // pool, prefab, and fallback branches. Preserve that context while the
+        // later EmitSoundLocal stages continue updating lastStage.
+        if (stage >= 20 && stage <= 22) currentAcquisitionPath = stage;
     }
 
     public static void RecordEmitterAlive(bool value)
@@ -88,10 +101,13 @@ public static class PointSoundDiagnosticObserver
                  stackTrace.IndexOf("PointSoundManager:EmitSoundLocal", StringComparison.Ordinal) < 0))
                 return;
             matchingNullReferenceCount = SaturatingIncrement(matchingNullReferenceCount);
-            if (firstNullReferenceStage == 0)
+            if (matchingNullReferenceCount == 1)
             {
                 firstNullReferenceStage = lastStage;
                 firstNullReferenceEventId = lastEventId;
+                firstNullReferenceAcquisitionPath = currentAcquisitionPath;
+                hasFirstNullReferenceEmitterAlive = hasEmitterAlive;
+                firstNullReferenceEmitterAlive = emitterAlive;
             }
         }
         catch
@@ -122,6 +138,9 @@ public static class PointSoundDiagnosticObserver
         public bool hasFirstNullReference;
         public uint firstNullReferenceEventId;
         public int firstNullReferenceStage;
+        public int firstNullReferenceAcquisitionPath;
+        public bool hasFirstNullReferenceEmitterAlive;
+        public bool firstNullReferenceEmitterAlive;
         public int matchingNullReferenceCount;
     }
 
@@ -136,9 +155,12 @@ public static class PointSoundDiagnosticObserver
             lastStage = lastStage,
             hasEmitterAlive = hasEmitterAlive != 0,
             emitterAlive = emitterAlive != 0,
-            hasFirstNullReference = firstNullReferenceStage != 0,
+            hasFirstNullReference = matchingNullReferenceCount != 0,
             firstNullReferenceEventId = firstNullReferenceEventId,
             firstNullReferenceStage = firstNullReferenceStage,
+            firstNullReferenceAcquisitionPath = firstNullReferenceAcquisitionPath,
+            hasFirstNullReferenceEmitterAlive = hasFirstNullReferenceEmitterAlive != 0,
+            firstNullReferenceEmitterAlive = firstNullReferenceEmitterAlive != 0,
             matchingNullReferenceCount = matchingNullReferenceCount
         };
     }

@@ -475,7 +475,11 @@ project equivalence or device acceptance.
 - `integrated_objective.sanitize_optional_content`, reached by
   `composition_migration.stage_missing_sources`: retained `prefabAssets` update
   during dependency staging, before build-entry generation. Its asset transforms
-  are unchanged. It is not reached after generation in either current build path.
+  retain the silent-audio Wwise stripping policy. The later original-audio build
+  hook conditionally restores only the exact accepted SoundEmitter `AkGameObj`
+  component, and returns it to that stripped form for default off. No source
+  serialized bytes are tracked. It is not reached after generation in either
+  current build path.
 
 Historical writers are unchanged: `source_scene_candidate.prepare`,
 `stage_variants.stage` (including rollback), `scene_runtime` (staging, snapshot
@@ -1340,3 +1344,13 @@ runtime copier's required relative path and strict ownership/hash checks.
 The selected cohort receipt and its bank contents remain generated under
 ignored `work/`; no receipt bytes or protected audio are added to this recipe.
 Synthetic staging/ZIP tests check the path contract without game content.
+
+The passive PCM diagnostic adds authored callback ownership, bounded scalar
+measurement and an exact API pre-Term guard; it copies no SDK implementation,
+audio or native library. The SoundEmitter restorer publishes only minimum asset,
+component and input/hash relationships; protected serialized bytes are read from
+the accepted export and written only under ignored `work/`. Unknown source or
+project drift refuses. These changes use existing local inputs, introduce no
+new protected recipe payload and require replay of the runtime/support producer
+and full bundle build. Provenance/privacy review: 2026-10-20; device acceptance
+and audible output remain separate gates.

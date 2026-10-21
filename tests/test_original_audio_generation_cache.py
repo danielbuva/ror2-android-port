@@ -40,7 +40,7 @@ class FakeProducer:
         return [], []
 
     def compile_requested(self, *args: object) -> None:
-        output = args[-2]
+        output = args[-3]
         assert isinstance(output, Path)
         self.compile_outputs.append(output)
         raise RuntimeError("requested cache miss compiled")
@@ -148,12 +148,66 @@ def expected_payload(project: Path, work: Path, selection_path: Path, dotnet: Pa
         "requested_tools": hook.requested_tool_identity(dotnet, llvm_nm),
         "managed_producer_sha256": hook.file_sha(hook.ROOT / "tools/unity/support/audio/managed-producer/produce.py"),
         "request_id": selection["request_id"],
+        "passive_pcm_capture_requested": selection["passive_pcm_capture_requested"],
         "input_sha256": {name: hook.file_sha(path) for name, path in sorted(resolved.items()) if name != "stage_root"},
         "receipt_bound_payload": json.loads(resolved["stage_receipt"].read_text(encoding="utf-8"))["outputs"],
     }
 
 
 class GenerationCacheTests(unittest.TestCase):
+    def test_actual_r1_requested_selection_defaults_passive_pcm_to_false(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_name:
+            work, _, _, _, _, selection_path = make_fixture(Path(temp_name))
+            selection = json.loads(selection_path.read_text(encoding="utf-8"))
+            selection["schema"] = hook.LEGACY_SELECTION_SCHEMA
+            selection_path.write_text(json.dumps(selection), encoding="utf-8")
+            selection, _, variant = hook.read_selection(work, selection_path)
+            self.assertEqual("requested", variant)
+            self.assertEqual(hook.LEGACY_SELECTION_SCHEMA, selection["schema"])
+            self.assertIs(selection["passive_pcm_capture_requested"], False)
+
+    def test_r2_requested_selection_without_flag_remains_default_off(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_name:
+            work, _, _, _, _, selection_path = make_fixture(Path(temp_name))
+            selection, _, variant = hook.read_selection(work, selection_path)
+            self.assertEqual("requested", variant)
+            self.assertEqual(hook.SELECTION_SCHEMA, selection["schema"])
+            self.assertIs(selection["passive_pcm_capture_requested"], False)
+
+    def test_r1_rejects_diagnostic_field_and_unknown_schema(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_name:
+            work, _, _, _, _, selection_path = make_fixture(Path(temp_name))
+            selection = json.loads(selection_path.read_text(encoding="utf-8"))
+            selection["schema"] = hook.LEGACY_SELECTION_SCHEMA
+            selection["passive_pcm_capture_requested"] = False
+            selection_path.write_text(json.dumps(selection), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "unexpected fields"):
+                hook.read_selection(work, selection_path)
+
+            selection.pop("passive_pcm_capture_requested")
+            selection["schema"] = "original-game-audio-build-selection-r999"
+            selection_path.write_text(json.dumps(selection), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "schema/request flag"):
+                hook.read_selection(work, selection_path)
+
+    def test_passive_pcm_selection_requires_bool_and_rejects_unknown_fields(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_name:
+            work, _, _, _, _, selection_path = make_fixture(Path(temp_name))
+            selection = json.loads(selection_path.read_text(encoding="utf-8"))
+            selection["passive_pcm_capture_requested"] = True
+            selection_path.write_text(json.dumps(selection), encoding="utf-8")
+            migrated, _, _ = hook.read_selection(work, selection_path)
+            self.assertIs(migrated["passive_pcm_capture_requested"], True)
+            selection["passive_pcm_capture_requested"] = 1
+            selection_path.write_text(json.dumps(selection), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "boolean"):
+                hook.read_selection(work, selection_path)
+            selection["passive_pcm_capture_requested"] = False
+            selection["unrecognized"] = False
+            selection_path.write_text(json.dumps(selection), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "unexpected fields"):
+                hook.read_selection(work, selection_path)
+
     def test_source_bundle_lists_public_audio_and_transform_inputs(self) -> None:
         bundle = hook.source_bundle_hashes()
         required = {
@@ -194,6 +248,7 @@ class GenerationCacheTests(unittest.TestCase):
                         mock.patch.dict(os.environ, {"UNITY_EDITOR": str(editor)}),
                         mock.patch.object(hook, "load", side_effect=[producer, stager]),
                         mock.patch.object(hook.shutil, "which", return_value=str(dotnet)),
+                        mock.patch.object(hook, "synchronize_sound_emitter", return_value={"fixture": True}),
                     ):
                         return hook.stage_for_build(project, work, selection_path=selection_path)
 
@@ -232,6 +287,7 @@ class GenerationCacheTests(unittest.TestCase):
                     mock.patch.dict(os.environ, {"UNITY_EDITOR": str(editor)}),
                     mock.patch.object(hook, "load", side_effect=[producer, stager]),
                     mock.patch.object(hook.shutil, "which", return_value=str(dotnet)),
+                    mock.patch.object(hook, "synchronize_sound_emitter", return_value={"fixture": True}),
                 ):
                     with self.assertRaisesRegex(ValueError, "differs from current source/input identity"):
                         hook.stage_for_build(project, work, selection_path=selection_path)

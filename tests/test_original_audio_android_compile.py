@@ -128,6 +128,7 @@ class OriginalAudioAndroidCompileTests(unittest.TestCase):
             cls.core,
             [
                 SOURCE / "core/GameAudioOriginalReadiness.cs",
+                SOURCE / "core/GameAudioOriginalPassivePcmContract.cs",
                 SOURCE / "core/GameAudioOriginalOwner.cs",
                 SOURCE / "core/PointSoundDiagnosticObserver.cs",
                 ROOT / "tests/fixtures/point_sound/PointSoundBuildPin.cs",

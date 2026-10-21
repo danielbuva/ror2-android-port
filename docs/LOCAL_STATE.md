@@ -38,6 +38,15 @@ Both files are generated locally and stay ignored. No build reads the host scrat
 timestamped experiment outputs implicitly. Destination builds select their own
 work root's configuration, keeping the current lab opt-in separate.
 
+Schema `original-game-audio-build-selection-r2` retains those inputs and adds
+the optional boolean `passive_pcm_capture_requested`, default false. R1 remains
+accepted with capture disabled; it rejects the new field. The flag is included
+in generation/cache identity and the generated process request. It selects a
+bounded observation of ordinary gameplay output, with no test event or saved
+audio. The SoundEmitter restorer also reads the existing accepted-input,
+reconstruction and project-input receipts and the accepted export's prefab/meta;
+it pins the exact source bytes and changes only the owned project copy.
+
 ## Isolated phone build support (2026-10-20)
 
 `native-flags-*` selectors, source-bound stages and the retained Android adapter

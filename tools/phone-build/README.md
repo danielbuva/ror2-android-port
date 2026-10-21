@@ -71,8 +71,9 @@ separates direct names, forward inheritance and reverse registrations. Invoke
 `python3 -I -S scripts/lab/phone_wrapper_population.py OWNER_SDK_BINARY SCOPED_METADATA ENGINE_DIRECTORY CORLIB NEW_PRIVATE_REPORT`
 with explicit owner inputs. The complete pinned 84-file managed set and all
 reader/input hashes are checked; inventory paths may be relocated only through
-this complete file-set binding. Phone execution and complete cache qualification
-remain open. The separate desktop verification command is
+this complete file-set binding. J878 verifies the forward mappings on Android;
+reverse registrations and complete cache/root qualification remain open.
+The separate desktop verification command is
 `python3 scripts/lab/phone_wrapper_population_oracle.py ROOT WORK EXACT_EDITOR`.
 Use explicit absolute paths for this checkout, its ignored work directory and
 the pinned editor. It creates a new SDK-only project, requires committed sources,

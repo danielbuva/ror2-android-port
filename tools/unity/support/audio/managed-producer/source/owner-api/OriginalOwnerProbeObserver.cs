@@ -14,6 +14,11 @@ namespace OriginalOwnerProbeObserver
         public static int BeforeEngineInitFailure;
         public static string BeforeEngineInitFailureType;
         public static Action<int, uint> InitBankReturned;
+        public static Action BeforeEngineTerm;
+        public static int BeforeEngineTermCalls;
+        public static int BeforeEngineTermSuccesses;
+        public static int BeforeEngineTermFailure;
+        public static string BeforeEngineTermFailureType;
         public static Action EngineTermReturned;
         public static Action CallbackManagerTermReturned;
 
@@ -44,6 +49,11 @@ namespace OriginalOwnerProbeObserver
             BeforeEngineInitFailure = 0;
             BeforeEngineInitFailureType = string.Empty;
             InitBankReturned = null;
+            BeforeEngineTerm = null;
+            BeforeEngineTermCalls = 0;
+            BeforeEngineTermSuccesses = 0;
+            BeforeEngineTermFailure = 0;
+            BeforeEngineTermFailureType = string.Empty;
             EngineTermReturned = null;
             CallbackManagerTermReturned = null;
             HasInitResult = 0;
@@ -135,6 +145,32 @@ namespace OriginalOwnerProbeObserver
             }
             try { InitBankReturned?.Invoke(result, bankId); }
             catch { ObserverCallbackFailures++; }
+        }
+
+        // Called only by the transformed accepted API at the common teardown
+        // entry reached by both admitted Term branches. The default-off path is
+        // inert; a configured passive capture guard must prove native callback
+        // removal before any original teardown mutation, or its exception escapes.
+        public static void RecordBeforeEngineTerm()
+        {
+            BeforeEngineTermCalls++;
+            if (BeforeEngineTerm == null) return;
+            try
+            {
+                BeforeEngineTerm();
+                BeforeEngineTermSuccesses++;
+            }
+            catch (Exception e)
+            {
+                BeforeEngineTermFailure = 1;
+                if (string.IsNullOrEmpty(BeforeEngineTermFailureType))
+                {
+                    string name = e.GetType().FullName;
+                    BeforeEngineTermFailureType = string.IsNullOrEmpty(name) ? "unknown" :
+                        (name.Length <= 256 ? name : name.Substring(0, 256));
+                }
+                throw;
+            }
         }
 
         public static void RecordEngineTermReturned()

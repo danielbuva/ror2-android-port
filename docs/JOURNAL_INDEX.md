@@ -10,6 +10,9 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J878](PORTING_JOURNAL.md#j878--reconstruct-sdk-wrapper-population-on-android-with-a-complete-forward-oracle) | 2026-10-20 | Reconstruct SDK wrapper population on Android with a complete forward oracle | 2026-10-20. |
+| [J879](PORTING_JOURNAL.md#j879--restore-only-the-accepted-original-soundemitter-component-for-selected-audio) | 2026-10-20 | Restore only the accepted original SoundEmitter component for selected audio | Date: 2026-10-20. |
+| [J877](PORTING_JOURNAL.md#j877--host-qualify-passive-pcm-measurement-of-ordinary-original-gameplay) | 2026-10-20 | Host-qualify passive PCM measurement of ordinary original gameplay | Date: 2026-10-20. |
 | [J876](PORTING_JOURNAL.md#j876--decode-native-sdk-type-flags-on-android) | 2026-10-20 | Decode native SDK type flags on Android | 2026-10-20. |
 | [J875](PORTING_JOURNAL.md#j875--localize-original-point-sound-failure-to-the-returned-emitters-transform-access) | 2026-10-20 | Localize original point-sound failure to the returned emitter's transform access | Date: 2026-10-20. |
 | [J873](PORTING_JOURNAL.md#j873--separate-direct-scene-names-from-sdk-wrapper-cache-queries) | 2026-10-20 | Separate direct scene names from SDK wrapper-cache queries | 2026-10-20. |

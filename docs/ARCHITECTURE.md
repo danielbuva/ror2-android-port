@@ -187,8 +187,9 @@ managed metadata universe and keeps direct names, inherited forward entries and
 reverse registrations distinct. Its standalone invocation selects an owner SDK
 binary, scoped inventory, managed SDK directory, corlib and new private output.
 It binds the complete pinned 84-file managed set, inventory and reader hashes,
-refusing replacement, missing files, mixed inputs and drift. Phone replay and
-complete cache qualification remain open; no game or linker consumer reads it.
+refusing replacement, missing files, mixed inputs and drift. J878 verifies forward
+mappings on Android; reverse-cache and complete-root qualification remain open.
+No game or linker consumer reads it.
 `phone_wrapper_population_oracle.py` and `WrapperPopulationOracle.cs` own a
 separate SDK-only desktop check. The explicit root/work/editor invocation stages
 a fresh project using the guarded directory writer and runs under the existing
@@ -609,6 +610,12 @@ Authored .NET helper builds disable SourceLink so changing repository revisions
 does not change their pinned generated metadata (J863).
 The cache binds producer sources, recipes, editor references, compiler/tool
 identities and explicit inputs; cached generations revalidate that receipt.
+The same build hook synchronizes the original `SoundEmitter.prefab` before
+project/cache hashing. Requested audio restores its exact accepted `AkGameObj`
+component; default off restores the sanitizer's stripped form. Accepted input,
+source bytes, asset/script GUIDs and the selected project must match before
+writing. The original component owns its runtime lifecycle. Other stripped
+Wwise components remain unchanged; no replacement emitter is introduced.
 `original_game_audio_stage.py` checks exact assembly preimages, GUIDs and owned
 payloads before staging. Requested stages also package the exact bank-cohort
 receipt at `Assets/StreamingAssets/stage-receipt.json`, the URL consumed by
@@ -644,6 +651,25 @@ or Unity objects. `PortSession.Save` refreshes its snapshot. Completion, lifecyc
 recovery and `OnDestroy` disable and unsubscribe the observer idempotently,
 without terminating or releasing the original process audio owner. Event/stage
 correlation is best effort and cannot prove native posting or audible output.
+The observer retains the existing acquisition markers independently of later
+stages and freezes the first matching exception's path and known/unknown emitter
+state. Stage zero is a valid first observation; later activity cannot overwrite it.
+This adds no game callsite or change to the instrumented game DLL.
+
+`bootstrap/OriginalGameAudioPassivePcmOwner.cs` and
+`PassivePcmCaptureWindow.cs` own a separate default-off native-output diagnostic.
+The explicit build selection binds its flag through the generated request;
+the owner shares the existing native monitor lease and creates no engine or
+events. `PortSession.Save` arms once after observing the existing playable-world
+phase and positive simulation time. The callback counts bounded finite/nonzero
+samples with stop thresholds of 10 s or 600 successful render frames, checked
+on the next owner Update tick. Completion, unwind
+and destruction close the window idempotently without delaying gameplay.
+The exact transformed API guards both original Term paths before native teardown;
+uncertain callback removal retains roots and refuses termination. Reports contain
+scalar measurements, not audio data. Nonzero native PCM alone cannot establish
+Android playback or physical audibility. Host fixtures check capture bounds,
+ownership, default-off behavior and both actual pre-Term injection branches.
 
 The lower-level `original_game_audio.py` is host staging support;
 current Unity project mutation belongs to the mutex-protected build action.

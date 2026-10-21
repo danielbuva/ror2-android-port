@@ -45,38 +45,46 @@ LINEAGE = {
     "guarded_game_input_sha256": "3124a2ed9cf458acee78b1beaf969590b184be452e2b3aa5a8852df82ff95d30",
     "raw_api_sha256": "564b74ec232e81af8fa4b65c17537a4d05890d9181281eab0bc28bd441a3a781",
     "adapted_api_sha256": "2bd973178c99bfcb4d20510e2d1eac7efa9dd6d698237f2edfa486171bc2f272",
-    "observed_api_sha256": "7ec842ee2244590f9227c44280ebbb4a0debf9b83ad1958c045d68dec47e0af9",
-    "composed_api_sha256": "d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23",
+    "observed_api_sha256": "a2914ace8e2a7338010f8e9a9515911d68489bf0ad467bc7f73f4de293a19fe9",
+    "composed_api_sha256": "1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b",
     "composed_game_sha256": "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc",
     "native_library_sha256": "bb5879b4eb38b81dc3830a1662ba467b60b595e7fedb88a1301d3161f8ab9304",
     "stage_receipt_sha256": "8fe02400a7ab0905ae21b728e702d7ef2c4dcf8646f77f631682a81bda0ab88c",
 }
 PREVIOUS_COMPOSED_API_SHA256 = "d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23"
 OLDER_RESTORE_API_SHA256 = "9a3f9911697b4ce28a955dff09f618e0f2662083e56eeb28ff5b6ecc02b588f3"
-PREVIOUS_COMPOSED_GAME_SHA256 = "1034a747e31a3b79554b9cb06f941c7acabaa9e0ee82c2a00abc4b24f9327c1c"
+PREVIOUS_COMPOSED_GAME_SHA256 = "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc"
+OLDER_PREVIOUS_GAME_SHA256 = "1034a747e31a3b79554b9cb06f941c7acabaa9e0ee82c2a00abc4b24f9327c1c"
 LEGACY_RESTORE_API_SHA256 = "793f22866c85bbcf104f20f5c1f619062eaad9f5414a217b602fe758c71e01b9"
 PREVIOUS_LINEAGE = {
-    "accepted_input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
-    "accepted_game_sha256": "a5f7d83c7e6872fdd6099fdc299adb7d4fa03cbf465e526d6f5efcc35c2c281d",
-    "guarded_game_input_sha256": "3124a2ed9cf458acee78b1beaf969590b184be452e2b3aa5a8852df82ff95d30",
-    "raw_api_sha256": "564b74ec232e81af8fa4b65c17537a4d05890d9181281eab0bc28bd441a3a781",
-    "adapted_api_sha256": "2bd973178c99bfcb4d20510e2d1eac7efa9dd6d698237f2edfa486171bc2f272",
+    **LINEAGE,
     "observed_api_sha256": "7ec842ee2244590f9227c44280ebbb4a0debf9b83ad1958c045d68dec47e0af9",
     "composed_api_sha256": PREVIOUS_COMPOSED_API_SHA256,
-    "composed_game_sha256": "1034a747e31a3b79554b9cb06f941c7acabaa9e0ee82c2a00abc4b24f9327c1c",
-    "native_library_sha256": "bb5879b4eb38b81dc3830a1662ba467b60b595e7fedb88a1301d3161f8ab9304",
-    "stage_receipt_sha256": "8fe02400a7ab0905ae21b728e702d7ef2c4dcf8646f77f631682a81bda0ab88c",
+    "composed_game_sha256": PREVIOUS_COMPOSED_GAME_SHA256,
 }
-OLDER_RESTORE_LINEAGE = {**PREVIOUS_LINEAGE, "composed_api_sha256": OLDER_RESTORE_API_SHA256}
-LEGACY_RESTORE_LINEAGE = {**PREVIOUS_LINEAGE, "composed_api_sha256": LEGACY_RESTORE_API_SHA256}
-ALLOWED_RESTORE_PREIMAGES = {
-    "restore_api": frozenset({LEGACY_RESTORE_API_SHA256, OLDER_RESTORE_API_SHA256, PREVIOUS_COMPOSED_API_SHA256, LINEAGE["composed_api_sha256"]}),
-    "restore_game": frozenset({LINEAGE["composed_game_sha256"], PREVIOUS_COMPOSED_GAME_SHA256}),
-}
+OLDER_PREVIOUS_LINEAGE = {**PREVIOUS_LINEAGE, "composed_game_sha256": OLDER_PREVIOUS_GAME_SHA256}
+OLDER_RESTORE_LINEAGE = {**OLDER_PREVIOUS_LINEAGE, "composed_api_sha256": OLDER_RESTORE_API_SHA256}
+LEGACY_RESTORE_LINEAGE = {**OLDER_PREVIOUS_LINEAGE, "composed_api_sha256": LEGACY_RESTORE_API_SHA256}
 RESTORE_HASHES = {
     "restore_api": "107295e478a58ef295a83228111f375c536861bc9081f482d638c59899bf495c",
     "restore_game": "3124a2ed9cf458acee78b1beaf969590b184be452e2b3aa5a8852df82ff95d30",
 }
+ALLOWED_RESTORE_PREIMAGES = {
+    "restore_api": frozenset(
+        {LEGACY_RESTORE_API_SHA256, OLDER_RESTORE_API_SHA256, PREVIOUS_COMPOSED_API_SHA256, LINEAGE["composed_api_sha256"], RESTORE_HASHES["restore_api"]}
+    ),
+    "restore_game": frozenset({OLDER_PREVIOUS_GAME_SHA256, PREVIOUS_COMPOSED_GAME_SHA256, LINEAGE["composed_game_sha256"], RESTORE_HASHES["restore_game"]}),
+}
+ALLOWED_RESTORE_PREIMAGE_PAIRS = frozenset(
+    {
+        (PREVIOUS_COMPOSED_API_SHA256, PREVIOUS_COMPOSED_GAME_SHA256),
+        (PREVIOUS_COMPOSED_API_SHA256, OLDER_PREVIOUS_GAME_SHA256),
+        (OLDER_RESTORE_API_SHA256, OLDER_PREVIOUS_GAME_SHA256),
+        (LEGACY_RESTORE_API_SHA256, OLDER_PREVIOUS_GAME_SHA256),
+        (LINEAGE["composed_api_sha256"], LINEAGE["composed_game_sha256"]),
+        (RESTORE_HASHES["restore_api"], RESTORE_HASHES["restore_game"]),
+    }
+)
 
 
 def sha256(path: Path) -> str:
@@ -116,23 +124,37 @@ def verify_request(manifest: dict, request_path: Path | None) -> dict:
     if not request["requested"]:
         if request_path is not None:
             raise ValueError("a request file was supplied but the artifact set is default-off")
-        return {"requested": False, "request_sha256": None}
+        return {
+            "requested": False,
+            "passive_pcm_capture_requested": False,
+            "request_sha256": None,
+        }
     if request_path is None:
         raise ValueError("requested audio variant requires an explicit request file")
     no_symlink_path(request_path)
     raw = request_path.read_bytes()
     value = json.loads(raw)
-    if not isinstance(value, dict) or value.get("schema") != "game-audio-original-runtime-request-r2":
+    if (
+        not isinstance(value, dict)
+        or value.get("schema") != "game-audio-original-runtime-request-r3"
+        or type(value.get("passive_pcm_capture_requested")) is not bool
+    ):
         raise ValueError("unsupported runtime request schema")
     if value.get("requested") is not True:
         raise ValueError("request file must explicitly opt in")
     if value.get("request_id") != request.get("request_id"):
         raise ValueError("request identity does not match compiled artifact set")
+    if value.get("passive_pcm_capture_requested") != request.get("passive_pcm_capture_requested"):
+        raise ValueError("passive PCM diagnostic selection differs from compiled artifact set")
     if value.get("build_input_contract_sha256") != request.get("build_input_contract_sha256"):
         raise ValueError("request build-input contract differs from compiled artifact set")
     if not HASH.fullmatch(str(request.get("build_input_contract_sha256", ""))):
         raise ValueError("request build-input contract hash is malformed")
-    return {"requested": True, "request_sha256": hashlib.sha256(raw).hexdigest()}
+    return {
+        "requested": True,
+        "passive_pcm_capture_requested": value["passive_pcm_capture_requested"],
+        "request_sha256": hashlib.sha256(raw).hexdigest(),
+    }
 
 
 def verify_bank_receipt(receipt_path: Path, rows: list[dict]) -> str:
@@ -258,7 +280,14 @@ def read_artifacts(manifest_path: Path, request_path: Path | None, stage_receipt
         if needs_request and not request["requested"]:
             raise ValueError(f"default-off artifact set includes opt-in output: {role}")
         roles.add(role)
-        rows.append({**item, "source_path": source, "source_relative": source_rel, "target_relative": target_rel})
+        rows.append(
+            {
+                **item,
+                "source_path": source,
+                "source_relative": source_rel,
+                "target_relative": target_rel,
+            }
+        )
     if roles - (DEFAULT_ROLES | OPT_IN_ROLES | RESTORE_ROLES | {"metadata"}):
         raise ValueError("artifact set contains an unknown output role")
     if not DEFAULT_ROLES.issubset(roles):
@@ -271,7 +300,10 @@ def read_artifacts(manifest_path: Path, request_path: Path | None, stage_receipt
             raise ValueError(f"opt-in artifact set must contain exactly one {role} transformation at its owned target")
         if request["requested"] and role in {"api", "game"} and matches[0]["sha256"] != LINEAGE[f"composed_{role}_sha256"]:
             raise ValueError(f"opt-in {role} bytes differ from the current declared composed lineage")
-    for role, target in (("restore_api", DEFAULT_TARGETS["api"]), ("restore_game", DEFAULT_TARGETS["game"])):
+    for role, target in (
+        ("restore_api", DEFAULT_TARGETS["api"]),
+        ("restore_game", DEFAULT_TARGETS["game"]),
+    ):
         matches = [row for row in rows if row["role"] == role]
         if matches and (
             len(matches) != 1 or matches[0]["target_relative"] != target or matches[0].get("preimage_sha256") not in ALLOWED_RESTORE_PREIMAGES[role]
@@ -289,6 +321,11 @@ def read_artifacts(manifest_path: Path, request_path: Path | None, stage_receipt
     restore_present = roles & RESTORE_ROLES
     if restore_present and restore_present != RESTORE_ROLES:
         raise ValueError("default-off restoration must include both ordinary guarded game/API outputs")
+    if restore_present:
+        restore_preimages = {row["role"]: row.get("preimage_sha256") for row in rows if row["role"] in RESTORE_ROLES}
+        pair = (restore_preimages.get("restore_api"), restore_preimages.get("restore_game"))
+        if pair not in ALLOWED_RESTORE_PREIMAGE_PAIRS:
+            raise ValueError("default-off restoration preimages are not one exact declared API/game lineage pair")
     if not request["requested"] and any(role in OPT_IN_ROLES for role in roles):
         raise ValueError("default-off artifact set must not require API/game transformation or native/bank inputs")
     if request["requested"] and not (OPT_IN_ROLES | DEFAULT_ROLES).issubset(roles):
@@ -337,7 +374,11 @@ def install_one(project: Path, item: dict) -> dict:
         if current != item.get("preimage_sha256") and current != item["sha256"]:
             raise ValueError(f"project target drift; refusing overwrite: {item['target_relative']}")
         if current == item["sha256"]:
-            return {"target": item["target_relative"], "sha256": current, "status": "already-identical"}
+            return {
+                "target": item["target_relative"],
+                "sha256": current,
+                "status": "already-identical",
+            }
     elif item.get("preimage_sha256") not in (None, ""):
         raise ValueError(f"expected preimage is missing: {item['target_relative']}")
     with tempfile.NamedTemporaryFile(prefix=".original-audio-", dir=target.parent, delete=False) as tmp:
@@ -351,7 +392,11 @@ def install_one(project: Path, item: dict) -> dict:
         temporary.unlink(missing_ok=True)
         raise ValueError(f"staged copy hash mismatch: {item['target_relative']}")
     os.replace(temporary, target)
-    return {"target": item["target_relative"], "sha256": item["sha256"], "status": "staged"}
+    return {
+        "target": item["target_relative"],
+        "sha256": item["sha256"],
+        "status": "staged",
+    }
 
 
 def inspect_previous_stage(project: Path, receipt_path: Path) -> tuple[dict | None, list[Path]]:
@@ -390,7 +435,7 @@ def inspect_previous_stage(project: Path, receipt_path: Path) -> tuple[dict | No
         not isinstance(previous, dict)
         or previous.get("schema") != RECEIPT_SCHEMA
         or previous.get("accepted_input_id") != LINEAGE["accepted_input_id"]
-        or previous.get("lineage") not in (LINEAGE, PREVIOUS_LINEAGE, OLDER_RESTORE_LINEAGE, LEGACY_RESTORE_LINEAGE)
+        or previous.get("lineage") not in (LINEAGE, PREVIOUS_LINEAGE, OLDER_PREVIOUS_LINEAGE, OLDER_RESTORE_LINEAGE, LEGACY_RESTORE_LINEAGE)
         or type(previous.get("requested")) is not bool
         or not isinstance(previous.get("outputs"), list)
         or not HASH.fullmatch(str(previous.get("artifact_manifest_sha256", "")))
@@ -475,7 +520,12 @@ def inspect_previous_stage(project: Path, receipt_path: Path) -> tuple[dict | No
     return previous, []
 
 
-def stage(project: Path, manifest_path: Path, request_path: Path | None, stage_receipt_path: Path | None) -> dict:
+def stage(
+    project: Path,
+    manifest_path: Path,
+    request_path: Path | None,
+    stage_receipt_path: Path | None,
+) -> dict:
     project = project.resolve(strict=True)
     if not project.is_dir():
         raise ValueError("project must be an existing directory")
@@ -528,12 +578,19 @@ def stage(project: Path, manifest_path: Path, request_path: Path | None, stage_r
     for item in rows:
         target = project / item["target_relative"]
         already_identical = target.is_file() and sha256(target) == item["sha256"]
-        planned.append({"target": item["target_relative"], "sha256": item["sha256"], "status": "already-identical" if already_identical else "staged"})
+        planned.append(
+            {
+                "target": item["target_relative"],
+                "sha256": item["sha256"],
+                "status": "already-identical" if already_identical else "staged",
+            }
+        )
     receipt = {
         "schema": RECEIPT_SCHEMA,
         "accepted_input_id": manifest["accepted_input_id"],
         "lineage": manifest["lineage"],
         "requested": pins["requested"],
+        "passive_pcm_capture_requested": pins["passive_pcm_capture_requested"],
         "request_id": manifest.get("request", {}).get("request_id") if pins["requested"] else None,
         "request_sha256": pins["request_sha256"],
         "artifact_manifest_sha256": pins["artifact_manifest_sha256"],

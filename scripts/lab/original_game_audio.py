@@ -41,6 +41,11 @@ def main() -> int:
     parser.add_argument("--request", type=Path)
     parser.add_argument("--input-contract", type=Path)
     parser.add_argument("--request-id")
+    parser.add_argument(
+        "--passive-pcm-capture",
+        action="store_true",
+        help="explicitly select the bounded passive PCM diagnostic",
+    )
     parser.add_argument("--stage-receipt", type=Path)
     parser.add_argument("--stage-root", type=Path)
     parser.add_argument("--prefab", type=Path)
@@ -58,6 +63,8 @@ def main() -> int:
             args.csc.resolve(strict=True),
         )
         output = args.artifact_output.resolve(strict=False)
+        if args.variant == "default-off" and args.passive_pcm_capture:
+            parser.error("--passive-pcm-capture requires --variant requested")
         if args.variant == "default-off":
             result = producer.compile_default_off(*common, output)
             receipt = stager.stage(args.project, output / "artifact-manifest.json", None, None)
@@ -105,9 +112,15 @@ def main() -> int:
                 args.init_receipt.resolve(strict=True),
                 output,
                 args.request_id,
+                args.passive_pcm_capture,
             )
             request_file = args.request.resolve(strict=True) if args.request else output / "generated/request.json"
-            receipt = stager.stage(args.project, output / "artifact-manifest.json", request_file, args.stage_receipt)
+            receipt = stager.stage(
+                args.project,
+                output / "artifact-manifest.json",
+                request_file,
+                args.stage_receipt,
+            )
     except (OSError, ValueError, RuntimeError) as error:
         print(f"audio owner staging refused: {error}", file=sys.stderr)
         return 2

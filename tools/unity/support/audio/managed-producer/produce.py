@@ -21,15 +21,15 @@ EXPECTED = {
     "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
     "raw_api": "564b74ec232e81af8fa4b65c17537a4d05890d9181281eab0bc28bd441a3a781",
     "adapted_api": "2bd973178c99bfcb4d20510e2d1eac7efa9dd6d698237f2edfa486171bc2f272",
-    "observed_api": "7ec842ee2244590f9227c44280ebbb4a0debf9b83ad1958c045d68dec47e0af9",
-    "composed_api": "d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23",
+    "observed_api": "a2914ace8e2a7338010f8e9a9515911d68489bf0ad467bc7f73f4de293a19fe9",
+    "composed_api": "1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b",
     "raw_game": "a5f7d83c7e6872fdd6099fdc299adb7d4fa03cbf465e526d6f5efcc35c2c281d",
     "guarded_game": "3124a2ed9cf458acee78b1beaf969590b184be452e2b3aa5a8852df82ff95d30",
     "composed_game": "1034a747e31a3b79554b9cb06f941c7acabaa9e0ee82c2a00abc4b24f9327c1c",
-    "composed_transform_source": "7c4ab70c83f6da4c74242a6fdad230450b888e006a81054f54bf8a7aa82eb6ff",
+    "composed_transform_source": "53e732cbdf507e79bb0c9581acdf138c8e3b028efac20d8adcfd8a73dc5e5aba",
     "point_sound_composed_game": "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc",
-    "owner_api_observer_source": "83f04c419ca68e1bdf9ae670c842e44cba367d377c7a9c78808b6057b92982e3",
-    "owner_api_observer_dll": "db6dba4c977328bfdb37004fd2a8957a5a627217959835edfd3ded09ed340e62",
+    "owner_api_observer_source": "96faf7b479af9733dffe434fc24ffae6e6ef41408dd7b3a85c8dea6d52f18477",
+    "owner_api_observer_dll": "21c797a5f098a2de9ef5b723558693eb110a30011412bc87f2a2f3ad368279cf",
     "unity_reference_count": 195,
 }
 
@@ -48,7 +48,15 @@ def require(ok: bool, message: str) -> None:
 
 
 def run(command: list[str], *, cwd: Path, env: dict[str, str], log: Path, timeout: int = 180) -> None:
-    result = subprocess.run(command, cwd=cwd, env=env, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=timeout)
+    result = subprocess.run(
+        command,
+        cwd=cwd,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        timeout=timeout,
+    )
     log.parent.mkdir(parents=True, exist_ok=True)
     log.write_text(result.stdout, encoding="utf-8")
     if result.returncode:
@@ -57,8 +65,14 @@ def run(command: list[str], *, cwd: Path, env: dict[str, str], log: Path, timeou
 
 def output_directory(raw: Path) -> Path:
     absolute = Path(os.path.abspath(raw.expanduser()))
-    require(not absolute.exists() and not absolute.is_symlink(), "output directory must be new")
-    require(absolute.is_relative_to(WORK.resolve()), "output directory must be under repository work/")
+    require(
+        not absolute.exists() and not absolute.is_symlink(),
+        "output directory must be new",
+    )
+    require(
+        absolute.is_relative_to(WORK.resolve()),
+        "output directory must be under repository work/",
+    )
     parent = absolute.parent.resolve(strict=True)
     require(parent == absolute.parent, "output parent may not traverse symlinks")
     for component in (absolute, *absolute.parents):
@@ -82,7 +96,10 @@ def cecil_from_editor(editor: Path) -> Path:
 
 
 def validate_editor_identity(editor: Path) -> None:
-    require(editor.is_file() and editor.name == "Unity", "pass the pinned Unity editor executable")
+    require(
+        editor.is_file() and editor.name == "Unity",
+        "pass the pinned Unity editor executable",
+    )
     pin = json.loads((ROOT / "environment/toolchain.json").read_text(encoding="utf-8"))
     with (editor.parent.parent / "Info.plist").open("rb") as stream:
         metadata = plistlib.load(stream)
@@ -108,15 +125,28 @@ def unity_compile_references(editor: Path, managed: Path) -> tuple[list[Path], l
         refs.extend(sorted(root.glob("*.dll")))
     netstandard = contents / "NetStandard/ref/2.1.0/netstandard.dll"
     unity_engine = contents / "Managed/UnityEngine"
-    require(netstandard.is_file() and unity_engine.is_dir(), "pinned Unity reference assemblies are incomplete")
+    require(
+        netstandard.is_file() and unity_engine.is_dir(),
+        "pinned Unity reference assemblies are incomplete",
+    )
     refs.append(netstandard)
     refs.extend(path for path in sorted(unity_engine.glob("*.dll")) if not path.name.startswith("UnityEditor"))
-    refs.extend(managed / name for name in ("AK.Wwise.Unity.API.dll", "AK.Wwise.Unity.MonoBehaviour.dll", "RoR2.dll"))
+    refs.extend(
+        managed / name
+        for name in (
+            "AK.Wwise.Unity.API.dll",
+            "AK.Wwise.Unity.MonoBehaviour.dll",
+            "RoR2.dll",
+        )
+    )
     require(
         len(refs) == EXPECTED["unity_reference_count"] and len(set(refs)) == len(refs),
         "Unity reference set differs from the deterministic 195-reference contract",
     )
-    require(all(path.is_file() for path in refs), "one or more pinned Unity/game compile references are missing")
+    require(
+        all(path.is_file() for path in refs),
+        "one or more pinned Unity/game compile references are missing",
+    )
     return refs, ["-langversion:9"]
 
 
@@ -147,10 +177,22 @@ def compile_library(
         + "\n",
         encoding="utf-8",
     )
-    run([str(mono), str(csc), "@" + str(rsp)], cwd=ROOT, env=env, log=out / "logs" / f"{label}.log")
+    run(
+        [str(mono), str(csc), "@" + str(rsp)],
+        cwd=ROOT,
+        env=env,
+        log=out / "logs" / f"{label}.log",
+    )
 
 
-def build_dotnet(project: Path, output: Path, cecil: Path, dotnet: Path, out: Path, env: dict[str, str]) -> None:
+def build_dotnet(
+    project: Path,
+    output: Path,
+    cecil: Path,
+    dotnet: Path,
+    out: Path,
+    env: dict[str, str],
+) -> None:
     output.mkdir(parents=True, exist_ok=True)
     # Compile isolated authored copies; generated intermediates never touch
     # the tracked source tree. The observer project maps this source directory
@@ -210,7 +252,10 @@ def main() -> None:
     managed = Path(local["game_path"]).expanduser().resolve(strict=True) / "Risk of Rain 2_Data/Managed"
     raw_game = managed / "RoR2.dll"
     raw_api = managed / "AK.Wwise.Unity.API.dll"
-    require(raw_game.is_file() and raw_api.is_file(), "configured accepted managed assemblies are missing")
+    require(
+        raw_game.is_file() and raw_api.is_file(),
+        "configured accepted managed assemblies are missing",
+    )
     require(sha(raw_game) == EXPECTED["raw_game"], "accepted raw game assembly hash changed")
     require(sha(raw_api) == EXPECTED["raw_api"], "accepted raw Wwise API hash changed")
     require(
@@ -262,7 +307,10 @@ def main() -> None:
     isolated_netstandard.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(installed_netstandard, isolated_netstandard)
     nuget = out / "NuGet.Config"
-    nuget.write_text("<configuration><packageSources><clear /></packageSources></configuration>\n", encoding="utf-8")
+    nuget.write_text(
+        "<configuration><packageSources><clear /></packageSources></configuration>\n",
+        encoding="utf-8",
+    )
 
     # Generate adapted API bytes directly from the accepted raw installation.
     abi_plan = out / "abi-plan.json"
@@ -293,12 +341,22 @@ def main() -> None:
         env=env,
         log=out / "logs/abi-adapter.log",
     )
-    require(sha(adapted_api) == EXPECTED["adapted_api"], "adapted API output differs from the qualified byte pin")
+    require(
+        sha(adapted_api) == EXPECTED["adapted_api"],
+        "adapted API output differs from the qualified byte pin",
+    )
 
     # Compile and apply the pre-init observer authored from the accepted API contract.
     owner_observer_project = HERE / "source/owner-api/OriginalOwnerProbeObserver.csproj"
     owner_observer_out = out / "compiled/owner-api-observer"
-    build_dotnet(owner_observer_project, owner_observer_out, cecil, args.dotnet.resolve(strict=True), out, env)
+    build_dotnet(
+        owner_observer_project,
+        owner_observer_out,
+        cecil,
+        args.dotnet.resolve(strict=True),
+        out,
+        env,
+    )
     owner_observer = owner_observer_out / "OriginalOwnerProbeObserver.dll"
     require(
         sha(owner_observer) == EXPECTED["owner_api_observer_dll"],
@@ -306,7 +364,14 @@ def main() -> None:
     )
     owner_tool_project = HERE / "tools/owner-api/OwnerApiCecilTransform.csproj"
     owner_tool_out = out / "compiled/owner-api-transform"
-    build_dotnet(owner_tool_project, owner_tool_out, cecil, args.dotnet.resolve(strict=True), out, env)
+    build_dotnet(
+        owner_tool_project,
+        owner_tool_out,
+        cecil,
+        args.dotnet.resolve(strict=True),
+        out,
+        env,
+    )
     observed_api = out / "api-observed.dll"
     run(
         [
@@ -321,7 +386,10 @@ def main() -> None:
         env=env,
         log=out / "logs/owner-api-transform.log",
     )
-    require(sha(observed_api) == EXPECTED["observed_api"], "observed API output differs from the qualified byte pin")
+    require(
+        sha(observed_api) == EXPECTED["observed_api"],
+        "observed API output differs from the qualified byte pin",
+    )
 
     # Compile the runtime core from source. The helper is a distinct assembly from
     # the pre-init observer, preserving the reviewed assembly DAG.
@@ -355,6 +423,7 @@ def main() -> None:
         core,
         [
             core_sources / "GameAudioOriginalReadiness.cs",
+            core_sources / "GameAudioOriginalPassivePcmContract.cs",
             core_sources / "GameAudioOriginalOwner.cs",
             core_sources / "PointSoundDiagnosticObserver.cs",
             point_sound_build_pin,
@@ -477,6 +546,7 @@ def main() -> None:
                 HERE / "source/owner-api/OriginalOwnerProbeObserver.csproj",
                 HERE.parent / "core/OriginalOwnerProbeObserver.cs",
                 HERE.parent / "core/GameAudioOriginalReadiness.cs",
+                HERE.parent / "core/GameAudioOriginalPassivePcmContract.cs",
                 HERE.parent / "core/GameAudioOriginalOwner.cs",
                 HERE.parent / "core/PointSoundDiagnosticObserver.cs",
                 HERE / "tools/owner-api/OwnerApiCecilTransform.cs",
@@ -485,7 +555,11 @@ def main() -> None:
                 HERE / "tools/composed/ComposedGameCecilTransform.csproj",
             )
         },
-        "abi_policy": {"mapped_imports": 1269, "unavailable_imports": 11, "full_enable_ready": False},
+        "abi_policy": {
+            "mapped_imports": 1269,
+            "unavailable_imports": 11,
+            "full_enable_ready": False,
+        },
         "toolchain_inputs": {
             "unity_editor_executable": sha(editor),
             "unity_mono": sha(mono),
@@ -494,7 +568,11 @@ def main() -> None:
             "cecil": sha(cecil),
             "unity_references": [sha(path) for path in unity_refs],
         },
-        "request": {"requested": False, "stage_to_apk_binding": False, "dispatch_ready": False},
+        "request": {
+            "requested": False,
+            "stage_to_apk_binding": False,
+            "dispatch_ready": False,
+        },
         "outputs_relative_to_work": {str(p.relative_to(WORK)): sha(p) for p in sorted(out.rglob("*")) if p.is_file() and p.name != "manifest.json"},
     }
     manifest_path = out / "manifest.json"

@@ -39,6 +39,9 @@ public static class GameAudioOriginalOwner
     private static readonly object Sync = new object();
     private static GameAudioOriginalReadiness readiness;
     private static IGameAudioOriginalStartupPreparation preparation;
+    private static IGameAudioOriginalPassivePcmCapture passiveCapture;
+    private static ulong successfulOriginalRenderFrames;
+    private static bool passiveCaptureStopRequested;
     private static bool optInRequested;
     private static bool configured;
     private static bool prepareAttempted;
@@ -60,7 +63,8 @@ public static class GameAudioOriginalOwner
     // Called once from generated, request-bound composition configuration. No
     // generated acceptance record means no provider and therefore no startup.
     public static void Configure(bool requested, IEnumerable<string> sourceBankNames,
-        IGameAudioOriginalStartupPreparation acceptedPreparation)
+        IGameAudioOriginalStartupPreparation acceptedPreparation, IGameAudioOriginalPassivePcmCapture acceptedPassiveCapture = null,
+        bool passivePcmCaptureRequested = false)
     {
         lock (Sync)
         {
@@ -68,7 +72,14 @@ public static class GameAudioOriginalOwner
                 throw new InvalidOperationException("Original audio selection is immutable after startup preparation.");
             configured = true;
             optInRequested = requested;
-            if (!requested) return;
+            if (!requested)
+            {
+                if (passivePcmCaptureRequested || acceptedPassiveCapture != null)
+                    throw new InvalidOperationException("Passive PCM capture cannot be selected without original audio.");
+                return;
+            }
+            if (passivePcmCaptureRequested != (acceptedPassiveCapture != null))
+                throw new InvalidOperationException("Passive PCM selection and bootstrap-owned capture instance disagree.");
             if (sourceBankNames == null || acceptedPreparation == null)
             {
                 failure = "selected_original_audio_missing_manifest_or_preparation";
@@ -76,6 +87,7 @@ public static class GameAudioOriginalOwner
             }
             readiness = new GameAudioOriginalReadiness(sourceBankNames);
             preparation = acceptedPreparation;
+            passiveCapture = acceptedPassiveCapture;
             WireOriginalObserver();
         }
     }
@@ -188,6 +200,68 @@ public static class GameAudioOriginalOwner
     { get { lock (Sync) return nativeInitAttemptObserved; } }
     public static bool OriginalTermsReturned
     { get { lock (Sync) return engineTermReturns > 0 && callbackManagerTermReturns > 0; } }
+    public static bool PassiveCaptureStopRequested
+    { get { lock (Sync) return passiveCaptureStopRequested || (passiveCapture != null && passiveCapture.TerminalStopRequested); } }
+    public static ulong SuccessfulOriginalRenderFrames
+    { get { lock (Sync) return successfulOriginalRenderFrames; } }
+    public static bool PassiveCaptureArmRequested
+    { get { lock (Sync) return passiveCapture != null && passiveCapture.ArmRequested; } }
+
+    // A capture request is armed only by the verified playable-world boundary,
+    // never by process startup or Wwise readiness alone.
+    public static bool ArmPassiveCaptureAtGameplayBoundary(bool explicitlyRequested, bool playableWorldStarted)
+    {
+        IGameAudioOriginalPassivePcmCapture selected;
+        lock (Sync)
+        {
+            if (!explicitlyRequested || !playableWorldStarted || !optInRequested || passiveCapture == null) return false;
+            selected = passiveCapture;
+        }
+        return selected.RequestGameplayArm();
+    }
+    public static void FinishPassiveCaptureGameplayWindow()
+    {
+        IGameAudioOriginalPassivePcmCapture selected;
+        lock (Sync) selected = passiveCapture;
+        selected?.FinishGameplayWindow();
+    }
+
+    public static IGameAudioOriginalPassivePcmCapture PassiveCapture
+    { get { lock (Sync) return passiveCapture; } }
+
+    // Called only by the existing PortSessionOriginalAudioOwner.Update. This is
+    // an observer tick; it never invokes Wwise service or changes engine state.
+    public static void TickPassiveCapture(float realtimeSinceStartup)
+    {
+        IGameAudioOriginalPassivePcmCapture selected;
+        bool ready, exactControl;
+        ulong frames;
+        lock (Sync)
+        {
+            selected = passiveCapture;
+            ready = readiness != null && readiness.IsReady;
+            exactControl = readiness != null && readiness.ControlObserved;
+            frames = successfulOriginalRenderFrames;
+        }
+        selected?.Tick(realtimeSinceStartup, ready, exactControl, frames);
+    }
+
+    public static void RequestPassivePcmTerminalStop(string reason)
+    {
+        lock (Sync)
+        {
+            passiveCaptureStopRequested = true;
+            failure = failure ?? ("passive_pcm_terminal_stop:" + (reason ?? "unknown"));
+            readiness?.RecordTerminalFailure();
+        }
+    }
+
+    private static void RecordBeforeOriginalEngineTerm()
+    {
+        IGameAudioOriginalPassivePcmCapture selected;
+        lock (Sync) selected = passiveCapture;
+        selected?.BeforeOriginalEngineTerm();
+    }
     public static bool CanReleaseCatalogLease(bool managerInitClaimed, bool nativeInitAttemptObserved, bool termsReturned)
     {
         return (!managerInitClaimed && !nativeInitAttemptObserved) || termsReturned;
@@ -369,8 +443,16 @@ public static class GameAudioOriginalOwner
     {
         int callbacks;
         bool postSeen;
-        lock (Sync) { callbacks = postCallbacksResult; postSeen = postCallbacksSeen; postCallbacksSeen = false; }
-        ObserveOriginalServiceFrame(postSeen && callbacks >= 0, result == successValue);
+        bool callbacksSucceeded;
+        bool renderSucceeded = result == successValue;
+        lock (Sync)
+        {
+            callbacks = postCallbacksResult; postSeen = postCallbacksSeen; postCallbacksSeen = false;
+            callbacksSucceeded = postSeen && callbacks >= 0;
+            if (callbacksSucceeded && renderSucceeded && successfulOriginalRenderFrames < UInt64.MaxValue)
+                successfulOriginalRenderFrames++;
+        }
+        ObserveOriginalServiceFrame(callbacksSucceeded, renderSucceeded);
     }
 
     public static void RecordEngineTermReturned()
@@ -425,13 +507,15 @@ public static class GameAudioOriginalOwner
     {
         lock (Sync)
         {
-            readiness = null; preparation = null; optInRequested = false; configured = false;
+            readiness = null; preparation = null; passiveCapture = null; optInRequested = false; configured = false;
             prepareAttempted = false; originalManagerInitClaimed = false; failure = null;
             originalManagerInitReturned = false;
             nativeLibraryLoaded = false;
             nativeInitAttemptObserved = false;
+            successfulOriginalRenderFrames = 0; passiveCaptureStopRequested = false;
             postCallbacksResult = 0; postCallbacksSeen = false; engineTermReturns = 0; callbackManagerTermReturns = 0;
             OriginalOwnerProbeObserver.Observer.BeforeEngineInit = null;
+            OriginalOwnerProbeObserver.Observer.BeforeEngineTerm = null;
             OriginalOwnerProbeObserver.Observer.InitReturned = null;
             OriginalOwnerProbeObserver.Observer.InitBankReturned = null;
             OriginalOwnerProbeObserver.Observer.InitializeMethodReturned = null;

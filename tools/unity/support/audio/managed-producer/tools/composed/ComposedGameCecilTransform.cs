@@ -7,7 +7,7 @@ using Mono.Cecil.Cil;
 
 internal static class OriginalGameCecilTransform
 {
-    private const string ApiObserverInputSha = "7ec842ee2244590f9227c44280ebbb4a0debf9b83ad1958c045d68dec47e0af9";
+    private const string ApiObserverInputSha = "a2914ace8e2a7338010f8e9a9515911d68489bf0ad467bc7f73f4de293a19fe9";
     private const string AcceptedRoR2Sha = "3124a2ed9cf458acee78b1beaf969590b184be452e2b3aa5a8852df82ff95d30";
     private const string OwnerType = "GameAudioOriginalOwner";
 
