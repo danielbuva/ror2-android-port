@@ -323,7 +323,7 @@ tracked runner and collector; no historical scene, captured linker input,
 game file or saved dependency list is required. Select an attempt through its
 explicit terminal receipt. These reports are comparison evidence only, with
 root generation unqualified; no game or phone build reads them. Failed attempts
-remain available, including their first failing phase when the collector ran.
+remain available, including a failing phase if the collector emitted a report.
 
 `phone_manager_context.py OWNER_SDK_BINARY NEW_PRIVATE_REPORT` generates static
 manager registration declarations directly from the pinned owner SDK. No saved

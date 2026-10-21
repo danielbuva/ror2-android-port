@@ -51,6 +51,9 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       adds separate desktop scene/manager observations and bounded type-name
       comparison. Produce native usage identities, scene labels and exact linker
       roots independently; keep SDK oracle reports out of phone generation.
+      Extend [J895's manager declaration metadata](PORTING_JOURNAL.md#j895--read-sdk-manager-registration-declarations-on-android-and-preserve-retention-boundaries)
+      through target/state-dependent serialization and native scene retention;
+      asset-dependency exclusions alone do not determine class usage.
 - [ ] Benchmark any alternative pipeline with pinned versions/options/shaders and
       matched device workloads; IL2CPP alone does not prove equivalent performance.
 - [ ] Qualify the isolated owner-build environment; the alpha device is alpha's

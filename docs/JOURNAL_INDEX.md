@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J895](PORTING_JOURNAL.md#j895--read-sdk-manager-registration-declarations-on-android-and-preserve-retention-boundaries) | 2026-10-21 | Read SDK manager registration declarations on Android and preserve retention boundaries | Date: 2026-10-21. |
 | [J892](PORTING_JOURNAL.md#j892--restore-owned-original-camera-prerequisites-and-update-lifecycle) | 2026-10-21 | Restore owned original camera prerequisites and update lifecycle | Date: 2026-10-21. |
 | [J894](PORTING_JOURNAL.md#j894--reach-sirens-call-and-retain-the-early-native-registration-admission-stop) | 2026-10-21 | Reach Siren's Call and retain the early native-registration admission stop | Date: 2026-10-21. |
 | [J893](PORTING_JOURNAL.md#j893--observe-authored-scene-and-manager-dependencies-without-conflating-native-identities) | 2026-10-21 | Observe authored scene and manager dependencies without conflating native identities | Date: 2026-10-21. |
