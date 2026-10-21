@@ -21440,13 +21440,67 @@ probe and missing original point-sound context, then pair ordinary event activit
 with qualified native PCM and device output. Camera and passive-PCM source drafts
 remain unshipped; no new runtime source is introduced by this result checkpoint.
 
+## J870 — Preserve Android bank paths while removing an invalid filesystem warning
+
+Date: 2026-10-20.
+
+Hypothesis: J868's first missing-SoundBanks error is a diagnostic mismatch:
+Android StreamingAssets uses an APK URI, while the accepted managed API probes
+Init with `File.Exists`. The unchanged native base path already loads Init and
+all 153 requested banks. The authorized matching Integration source explicitly
+omits this filesystem probe on Android. Community prior art remains
+`R2API.Sound/SoundAPI.cs` in the pinned reference checkout: its post-engine-Init
+bank loading seam supports preserving original initialization and bank lifetime,
+not substituting an event renderer or claiming output.
+
+Change: the authored production composed Cecil transform imports the exact
+pinned Unity CoreModule platform getter and enum. Android supplies true only
+to the existing warning predicate; other platforms retain the original
+filesystem call. Original path construction, assignment, native calls and
+bank readiness checks remain intact. The producer, request generator and
+stager bind the actual resulting API, with the previous valid API as the
+sole immediate upgrade predecessor. The earlier invalid-IL API is restore-only
+and must return to default off before a new opt-in. No original input is edited.
+
+Host evidence: exact production transformation yields API
+`d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23`;
+the composed game stays `1034a747…`. A public authored synthetic Cecil fixture
+compiles and invokes the actual production injector/verifier with the pinned
+CoreModule, checks the preserved paths and rejects three altered probes. It
+requires no game files and skips when the optional editor toolchain is absent.
+Root's audio host suite passes 37 tests with one optional skip. Independent
+source/test review is recorded under
+`work/coordination/original-game-audio-basepath-review/r2/`; review SHA-256
+`777c6ecca53963dd4b87b406f774a600558928ccb7f86e0e0bc45e1caee9123d`.
+
+Root also exercised the real build hook in a disposable project under
+`work/coordination/codex-original-audio-host-stage-root/r3/`: requested staging
+has all 165 outputs, a repeated generation is cached, and default off restores
+the ordinary modules and removes only owned audio payload. The cached report
+SHA-256 is `500b1bc502d6b682cd0235d64c8cb9a507abdd9ce407ef074dcd1b77d0b986c9`;
+the default-off report is
+`3c3308923e0d47c6f6e387871cb23a46139a9f5cabfc4545cf4fc2848ee686bf`.
+Ruff and diff checks pass. Public-content review finds authored tooling/tests
+only, with protected SDK/game inputs and generated outputs remaining ignored.
+
+First failure and limits: no candidate APK is built for this checkpoint.
+Installed diagnostic c077ed2a and accepted baseline f1550ce0 remain distinct
+and unchanged. J868's point-sound null references and zero playback capture
+remain unresolved. Its session audio snapshot was captured once at startup;
+later reports do not independently prove continuous readiness. The queued
+observer must refresh the actual report before interpreting late lifecycle
+state. Next build must verify the warning is absent while preserving startup,
+both default checks and truthful later errors. These authored transform changes
+affect reproducible rebuild inputs and must be replayed by the build pipeline.
+
 ## J869 — Decode pinned SDK wrapper-search order on Android
 
 2026-10-20. Hypothesis: a version-bound static reader can replace J866's manual
 search-order observation with SDK-derived assembly templates and ordered
 namespaces, while preserving the native-name argument and first-nonnull return
 contract. Start after independently accepted PR16/main `474597a`; integrate
-main's `96a178b`/J868 before recording this entry. Preserve its diagnostic player,
+main's `96a178b`/J868 and the reviewed `59a83e7`/J870 before the final record.
+Preserve its diagnostic player,
 accepted baseline and original-audio findings. Route A, IL2CPP ARM64, Android
 rendering and the desktop fallback remain fixed. No editor action, game build,
 package install, gameplay launch or original-installation change occurs.
