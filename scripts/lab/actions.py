@@ -161,7 +161,7 @@ _ENTRIES = (
         "stage_action",
         {},
         "current",
-        "Experimental: --target REQUEST.json binds the authored fixture APK/project and exact callback capture for Android UnityLinker replay. Optional native_registry selects a pinned owner SDK binary/hash: native metadata is generated on invocation, while captured scene/module-policy roots stay explicit. No editor mutation, installation or game build.",
+        "Experimental: --target REQUEST.json binds the authored fixture APK/project and exact callback capture for Android UnityLinker replay. Optional native_registry selects a pinned owner SDK binary/hash. Optional module_policy selects builtin-modules-no-overrides-v1 with SDK/package-derived exclusions. Scene roots remain captured. No editor mutation, installation or game build.",
         handler=_target,
     ),
     Action(

@@ -90,6 +90,21 @@ module policy and managed compilation remain captured desktop inputs; complete
 independent editor roots remain unqualified. There is no editor mutation or
 whole-catalog/game consumer. Failure directories and earlier modes remain intact.
 
+`phone_module_policy.py` owns an additional optional fixture-only policy profile.
+With `module_policy: {"profile": "builtin-modules-no-overrides-v1"}` alongside
+`native_registry`, staging omits captured module-policy arrays as well. It
+requires the authored fixture's known source/file set, builtin-only manifest
+and consistent package lock. Pinned editor/Android module data and SDK builtin
+package metadata stay private. At stripping invocation the authored reader
+resolves transitive builtin dependencies and derives disabled/unavailable
+module exclusions from those SDK inputs. It writes `native-roots/module-policy.json`;
+its input hashes, generated policy and reader hash are rechecked downstream.
+Unknown schemas/versions, foreign packages, custom project code, nonstrippable
+exclusions and unsupported profile requests refuse. Custom callbacks/overrides
+are unsupported; this is not general Unity project policy. Scene usage,
+TypesInScenes.xml and managed compilation remain captured desktop inputs.
+The profile adds no editor, game-runtime or whole-catalog consumer.
+
 `phone_roots.py` and `tools/phone-build/metadata/` own experimental read-only
 host support for investigating independent root production. The current
 `phone-root-contract` action binds the authored fixture/capture, inventories

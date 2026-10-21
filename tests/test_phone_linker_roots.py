@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 import phone_linker_roots
 from phone_linker import strip, stripped_input
-from phone_linker_roots import compose, generate, native_types, project_subset, sha, verify
+from phone_linker_roots import compose, generate, native_types, project_subset, scene_subset, sha, verify
 
 
 def project():
@@ -59,7 +59,7 @@ def registry():
     }
 
 
-def fixture(stage):
+def fixture(stage, *, module_policy=False):
     """An authored fake SDK reader exercises the isolated tool boundary without SDK data."""
     stage.mkdir()
     (stage / "registry").mkdir()
@@ -86,6 +86,24 @@ def fixture(stage):
     (stage / "registry/phone_registry.py").write_text(source)
     shutil.copyfile(phone_linker_roots.__file__, stage / "phone_linker_roots.py")
     (stage / "project-root-data.json").write_text(json.dumps(project()))
+    if module_policy:
+        configuration["module_policy"] = {
+            "profile": "authored-module-fixture",
+            "captured_policy_staged": False,
+            "package_closure_validated": True,
+            "enabled_package_count": 1,
+        }
+        (stage / "module-policy").mkdir()
+        (stage / "module-policy/input.json").write_text(json.dumps({"excluded": ["Regenerated"]}))
+        (stage / "phone_module_policy.py").write_text(
+            "import json, hashlib\nfrom pathlib import Path\nPROFILE = 'authored-module-fixture'\n"
+            "def evaluate_stage(directory):\n"
+            "    path = Path(directory) / 'input.json'\n"
+            "    return dict(profile=PROFILE, enabledPackages=['authored'], forceIncludeModules=[], "
+            "forceExcludeModules=json.loads(path.read_text())['excluded'], "
+            "input_hashes={'input.json': hashlib.sha256(path.read_bytes()).hexdigest()})\n"
+        )
+        (stage / "project-root-data.json").write_text(json.dumps(scene_subset(project())))
     (stage / "plan.json").write_text(
         json.dumps(
             {
@@ -100,6 +118,32 @@ def fixture(stage):
 
 
 class PhoneLinkerRootTests(unittest.TestCase):
+    def test_module_mode_omits_captured_policy_and_binds_regenerated_data_and_source(self):
+        poisoned = project() | {"forceIncludeModules": "unused poison", "forceExcludeModules": None, "allNativeTypes": "unused poison"}
+        self.assertEqual(set(scene_subset(poisoned)), {"serializedTypes", "typesInScenes"})
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            stage, output = root / "stage", root / "output"
+            configuration = fixture(stage, module_policy=True)
+            result = generate(stage, output, configuration)
+            generated = json.loads((output / "native-roots/EditorToUnityLinkerData.json").read_text())
+            self.assertEqual(generated["forceExcludeModules"], ["Regenerated"])
+            self.assertEqual(verify(stage, output, result), result)
+            self.assertIs(result["complete_editor_root_generation"], False)
+            policy_path = output / "native-roots/module-policy.json"
+            original = policy_path.read_bytes()
+            policy_path.write_text("changed policy")
+            with self.assertRaisesRegex(ValueError, "module-policy"):
+                verify(stage, output, result)
+            policy_path.write_bytes(original)
+            source = stage / "phone_module_policy.py"
+            source.write_text(source.read_text() + "\n# Changed authored source.\n")
+            with self.assertRaisesRegex(ValueError, "module-policy"):
+                verify(stage, output, result)
+            (stage / "project-root-data.json").write_text(json.dumps(project()))
+            with self.assertRaisesRegex(ValueError, "foreign/native/policy"):
+                generate(stage, root / "leaked", configuration)
+
     def test_projection_ignores_captured_native_values_and_uses_independent_order(self):
         captured = project() | {"allNativeTypes": [{"name": "PoisonedCapture"}]}
         before = deepcopy(captured)

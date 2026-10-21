@@ -27,10 +27,12 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
 - [ ] Present bounded proof findings before changing the working build or choosing
       the final installation experience. Keep other execution backends excluded.
       Extend [J857's complete pinned native metadata](PORTING_JOURNAL.md#j857--recover-the-complete-pinned-native-registry-from-owner-sdk-metadata-literals)
-      through independent project scene usage, module policy and exact root
-      outputs. [J859](PORTING_JOURNAL.md#j859--generate-sdk-native-root-metadata-on-android-and-preserve-stripping-conversion)
-      qualifies native-table generation at the stripping boundary; captured
-      project fields and managed compilation remain explicit inputs.
+      through independent project scene usage, general module policy and exact root
+      outputs. [J859](PORTING_JOURNAL.md#j859--generate-sdk-native-root-metadata-on-android-and-preserve-strippingconversion)
+      qualifies native-table generation at the stripping boundary;
+      [J862](PORTING_JOURNAL.md#j862--derive-authored-fixture-module-policy-from-owner-sdk-and-package-data-on-android)
+      adds restricted fixture SDK/package-derived module policy. Captured scene
+      roots and managed compilation remain explicit inputs.
 - [ ] Benchmark any alternative pipeline with pinned versions/options/shaders and
       matched device workloads; IL2CPP alone does not prove equivalent performance.
 - [ ] Qualify the isolated owner-build environment; the alpha device is alpha's

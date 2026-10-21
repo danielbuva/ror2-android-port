@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J862](PORTING_JOURNAL.md#j862--derive-authored-fixture-module-policy-from-owner-sdk-and-package-data-on-android) | 2026-10-20 | Derive authored fixture module policy from owner SDK and package data on Android | 2026-10-20. |
 | [J861](PORTING_JOURNAL.md#j861--observe-paired-siren-movement-but-retain-the-bounded-encounter-timeout) | 2026-10-20 | Observe paired Siren movement but retain the bounded encounter timeout | 2026-10-20. |
 | [J860](PORTING_JOURNAL.md#j860--integrate-the-original-wwise-process-owner-behind-an-explicit-build-selection) | 2026-10-20 | Integrate the original Wwise process owner behind an explicit build selection | 2026-10-20. |
 | [J859](PORTING_JOURNAL.md#j859--generate-sdk-native-root-metadata-on-android-and-preserve-strippingconversion) | 2026-10-20 | Generate SDK-native root metadata on Android and preserve stripping/conversion | 2026-10-20. |
