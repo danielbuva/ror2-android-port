@@ -38,10 +38,23 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
         public int completedBankCount;
         public int sessionEntries;
         public float observedStartupSeconds;
+        public bool passivePcmCaptureRequested;
+        public bool passivePcmGameplayArmRequested;
+        public float passivePcmWindowStartRealtimeSinceStartup;
+        public ulong passivePcmWindowStartServiceFrames;
+        public bool passivePcmTerminalStopRequested;
+        public string passivePcmState;
+        public string passivePcmStopReason;
+        public string passivePcmFailure;
+        public ulong passivePcmCallbacks, passivePcmFrames, passivePcmSamples, passivePcmFiniteSamples;
+        public ulong passivePcmNonzeroFiniteSamples, passivePcmNonfiniteSamples, passivePcmRejectedBuffers, passivePcmCappedBuffers;
+        public bool passivePcmOutputIdentityObserved;
     }
 
     public static IEnumerator EnsureOriginalOwner()
     {
+        while (GameAudioOriginalOwner.PassiveCaptureStopRequested && !GameAudioOriginalOwner.OriginalTermsReturned)
+            yield return null; // A live/unknown callback retains the process and catalog roots.
         PortSessionOriginalAudioOwner host;
         lock (Sync)
         {
@@ -83,6 +96,23 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
     public static PointSoundDiagnosticObserver.Snapshot CapturePointSoundDiagnosticSnapshot() =>
         GameAudioOriginalOwner.CapturePointSoundDiagnosticSnapshot();
 
+    public static bool PassivePcmCaptureRequested
+    { get { return GameAudioOriginalRequestBootstrap.PassivePcmCaptureRequested; } }
+
+    public static bool PassivePcmGameplayArmRequested
+    { get { return GameAudioOriginalOwner.PassiveCaptureArmRequested; } }
+
+    public static void FinishPassivePcmCaptureGameplayWindow()
+    {
+        GameAudioOriginalOwner.FinishPassiveCaptureGameplayWindow();
+    }
+
+    public static bool ArmPassivePcmCaptureAtGameplayBoundary(bool playableWorldStarted)
+    {
+        return GameAudioOriginalOwner.ArmPassiveCaptureAtGameplayBoundary(
+            GameAudioOriginalRequestBootstrap.PassivePcmCaptureRequested, playableWorldStarted);
+    }
+
     private static void ObservePointSoundLog(string condition, string stackTrace, LogType type)
     {
         try { PointSoundDiagnosticObserver.ObserveUnityLog(condition, stackTrace); }
@@ -97,6 +127,7 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
         bool ready = GameAudioOriginalOwner.Ready;
         bool claimed = GameAudioOriginalOwner.OriginalManagerInitClaimed;
         string failure = (host ? host.coordinatorFailure : null) ?? GameAudioOriginalOwner.Failure;
+        IGameAudioOriginalPassivePcmCapture pcm = GameAudioOriginalOwner.PassiveCapture;
         return new Snapshot {
             phase = ready ? "ready" : (failure != null ? "failed_closed" : (claimed ? "original_manager_starting" :
                 (GameAudioOriginalOwner.StartupSelected ? "prepared" : (host && host.completed ? "disabled_or_refused" : "starting")))),
@@ -114,7 +145,24 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
             requestedBankCount = GameAudioOriginalOwner.RequestedBankCount,
             completedBankCount = GameAudioOriginalOwner.CompletedBankCount,
             sessionEntries = entries,
-            observedStartupSeconds = host ? host.elapsed : 0f
+            observedStartupSeconds = host ? host.elapsed : 0f,
+            passivePcmCaptureRequested = GameAudioOriginalRequestBootstrap.PassivePcmCaptureRequested,
+            passivePcmGameplayArmRequested = pcm != null && pcm.ArmRequested,
+            passivePcmWindowStartRealtimeSinceStartup = pcm == null ? 0f : pcm.WindowStartRealtimeSinceStartup,
+            passivePcmWindowStartServiceFrames = pcm == null ? 0UL : pcm.WindowStartServiceFrames,
+            passivePcmTerminalStopRequested = GameAudioOriginalOwner.PassiveCaptureStopRequested,
+            passivePcmState = pcm == null ? "disabled" : pcm.State,
+            passivePcmStopReason = pcm == null ? null : pcm.StopReason,
+            passivePcmFailure = pcm == null ? null : pcm.Failure,
+            passivePcmCallbacks = pcm == null ? 0 : pcm.CallbackCount,
+            passivePcmFrames = pcm == null ? 0 : pcm.FrameCount,
+            passivePcmSamples = pcm == null ? 0 : pcm.SampleCount,
+            passivePcmFiniteSamples = pcm == null ? 0 : pcm.FiniteSamples,
+            passivePcmNonzeroFiniteSamples = pcm == null ? 0 : pcm.NonzeroFiniteSamples,
+            passivePcmNonfiniteSamples = pcm == null ? 0 : pcm.NonfiniteSamples,
+            passivePcmRejectedBuffers = pcm == null ? 0 : pcm.RejectedBuffers,
+            passivePcmCappedBuffers = pcm == null ? 0 : pcm.CappedBuffers,
+            passivePcmOutputIdentityObserved = pcm != null && pcm.OutputIdentityObserved
         };
     }
 
@@ -237,6 +285,7 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
 
     private void Update()
     {
+        GameAudioOriginalOwner.TickPassiveCapture(Time.realtimeSinceStartup);
         if (catalogLeaseAcquired && GameAudioOriginalOwner.OriginalTermsReturned)
             ReleaseCatalogLease();
     }

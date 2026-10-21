@@ -21,7 +21,7 @@ static class Program
             if (args.Length == 4 && args[0] == "verify") return Verify(args[1], args[2], args[3]);
             if (args.Length == 3 && args[0] == "validate-sites") return ValidateSites(args[1], args[2]);
             if (args.Length == 4 && args[0] == "mutate") return Mutate(args[1], args[2], args[3]);
-            throw new InvalidOperationException("usage: inspect <dll> | transform <input> <output> <observer.dll> | verify <input> <output> <observer.dll> | validate-sites <mutant.dll> <observer.dll> | mutate <input> <output> <missing-init|duplicate-init|missing-bank|duplicate-bank|missing-engine-term|missing-callback-term|missing/duplicate-postobserver|missing/duplicate-renderobserver|undeclared-body>");
+            throw new InvalidOperationException("usage: inspect <dll> | transform <input> <output> <observer.dll> | verify <input> <output> <observer.dll> | validate-sites <mutant.dll> <observer.dll> | mutate <input> <output> <missing-init|duplicate-init|missing-bank|duplicate-bank|missing-engine-term|missing-callback-term|missing/duplicate-postobserver|missing/duplicate-renderobserver|undeclared-body|term-guard-bypass>");
         }
         catch (Exception e) { Console.Error.WriteLine(e.GetType().Name + ": " + e.Message); return 2; }
     }
@@ -68,7 +68,7 @@ static class Program
     }
 
     // Update only after deliberately freezing a newly compiled observer source.
-    const string ExpectedObserverSha = "db6dba4c977328bfdb37004fd2a8957a5a627217959835edfd3ded09ed340e62";
+    const string ExpectedObserverSha = "21c797a5f098a2de9ef5b723558693eb110a30011412bc87f2a2f3ad368279cf";
 
     static int ValidateSites(string mutantPath, string observerPath)
     {
@@ -87,6 +87,11 @@ static class Program
         Instruction target;
         switch (mutation)
         {
+            case "term-guard-bypass":
+                if (sites.TermTeardownBranches.Length == 0) throw new InvalidOperationException("teardown branch site missing");
+                sites.TermTeardownBranches[0].Operand = sites.TermTeardownBodyStart;
+                a.Write(output);
+                return 0;
             case "undeclared-body":
                 method = FindMethod(a.MainModule, InitType, "ResetBanks", Array.Empty<string>());
                 var ret = method.Body.Instructions.Last(i => i.OpCode == OpCodes.Ret);
@@ -160,7 +165,7 @@ static class Program
         Require(afterSites.BeforeInitObserverCalls == 1 && afterSites.InitObserverCalls == 1 && afterSites.InitFailureTermObserverCalls == 2 &&
                 afterSites.InitializeReturnObserverCalls == 3 && afterSites.BankObserverCalls == 1 &&
                 afterSites.PostCallbacksObserverCalls == 1 && afterSites.RenderAudioObserverCalls == 1 &&
-                afterSites.EngineTermObserverCalls == 1 && afterSites.CallbackTermObserverCalls == 1,
+                afterSites.BeforeEngineTermObserverCalls == 1 && afterSites.EngineTermObserverCalls == 1 && afterSites.CallbackTermObserverCalls == 1,
                 "injected observer call count is not exact");
         Require(afterSites.InitCallCount == 1 && afterSites.InitFailureTermCallCount == 2 && afterSites.BankCallCount == 1 &&
                 afterSites.EngineTermCallCount == 1 && afterSites.CallbackTermCallCount == 1 &&
@@ -190,11 +195,13 @@ static class Program
             "InitializeSoundEngine failure Term callsite set drift");
         RequireCallsOnlyOne(bank, EngineType, "LoadBank", "AKRESULT AkSoundEngine::LoadBank(System.String,System.UInt32&)");
         RequireCallsOnlyOne(term, EngineType, "Term", "System.Void AkSoundEngine::Term()");
+        RequireCallsOnlyOne(term, EngineType, "SetOfflineRendering", "AKRESULT AkSoundEngine::SetOfflineRendering(System.Boolean)");
         RequireCallsOnlyOne(term, CallbackType, "Term", "System.Void AkCallbackManager::Term()");
         RequireCallsOnlyOne(renderAudio, SoundEnginePinvokeType, "CSharp_RenderAudio__SWIG_1", "System.Int32 AkSoundEnginePINVOKE::CSharp_RenderAudio__SWIG_1()");
         var initCall = FindUniqueCall(init, EngineType, "Init");
         var bankCall = FindUniqueCall(bank, EngineType, "LoadBank");
         var engineTerm = FindUniqueCall(term, EngineType, "Term");
+        var teardown = FindTermTeardownStart(term);
         var callbackTerm = FindUniqueCall(term, CallbackType, "Term");
         var postCallbacksReturns = postCallbacks.Body.Instructions.Where(i => i.OpCode == OpCodes.Ret).ToArray();
         var renderAudioReturns = renderAudio.Body.Instructions.Where(i => i.OpCode == OpCodes.Ret).ToArray();
@@ -209,7 +216,9 @@ static class Program
         Require(outputIdLoad.Previous?.OpCode == OpCodes.Ldstr && (string)outputIdLoad.Previous.Operand == "Init.bnk", "Init bank name/call sequence drift");
         Require(!HasIncomingControlBoundary(init, initCall.Next) && !HasIncomingControlBoundary(bank, bankCall.Next) &&
                 initFailureTerms.All(t => !HasIncomingControlBoundary(init, t.Next)) &&
-                !HasIncomingControlBoundary(term, engineTerm.Next) && !HasIncomingControlBoundary(term, callbackTerm.Next),
+                !IsInsideExceptionRegion(term, teardown.BodyStart) &&
+                !HasIncomingControlBoundary(term, engineTerm) && !HasIncomingControlBoundary(term, engineTerm.Next) &&
+                !IsInsideExceptionRegion(term, engineTerm) && !HasIncomingControlBoundary(term, callbackTerm.Next),
                 "observer insertion point is a branch or exception-region boundary; refuse ambiguous IL");
         RequireCallsOnlyOne(bank, BankType, "Reset", "System.Void AkBankManager::Reset()");
         var loadWrapper = FindMethod(module, InitType, "LoadInitBank", Array.Empty<string>());
@@ -218,7 +227,7 @@ static class Program
         var returns = init.Body.Instructions.Where(i => i.OpCode == OpCodes.Ret).ToArray();
         Require(returns.Length == 3, "InitializeSoundEngine return-site count drift");
         Require(returns.All(r => !HasIncomingControlBoundary(init, r)), "InitializeSoundEngine return is a branch/EH boundary");
-        return new Sites(init, bank, term, postCallbacks, renderAudio, initCall, initFailureTerms, bankCall, engineTerm, callbackTerm, outputId, returns, postCallbacksReturns, renderAudioReturns);
+        return new Sites(init, bank, term, postCallbacks, renderAudio, initCall, initFailureTerms, bankCall, engineTerm, teardown.BodyStart, teardown.Entry, teardown.Branches, callbackTerm, outputId, returns, postCallbacksReturns, renderAudioReturns);
     }
 
     static Sites FindInstrumentedSites(ModuleDefinition module)
@@ -230,6 +239,7 @@ static class Program
         sites.InitializeReturnObserverCalls = counters.initializeReturn;
         sites.InitObserverCalls = counters.init;
         sites.BankObserverCalls = counters.bank;
+        sites.BeforeEngineTermObserverCalls = counters.beforeEngineTerm;
         sites.EngineTermObserverCalls = counters.engineTerm;
         sites.CallbackTermObserverCalls = counters.callbackTerm;
         sites.PostCallbacksObserverCalls = counters.postCallbacks;
@@ -253,14 +263,14 @@ static class Program
         return FindSites(module);
     }
 
-    static (int beforeInit, int init, int bank, int initFailureTerm, int initializeReturn, int engineTerm, int callbackTerm, int postCallbacks, int renderAudio) CountObserverCalls(ModuleDefinition module)
+    static (int beforeInit, int init, int bank, int initFailureTerm, int initializeReturn, int beforeEngineTerm, int engineTerm, int callbackTerm, int postCallbacks, int renderAudio) CountObserverCalls(ModuleDefinition module)
     {
         var calls = AllTypes(module.Types).SelectMany(t => t.Methods).Where(m => m.HasBody).SelectMany(m => m.Body.Instructions)
             .Where(i => i.OpCode == OpCodes.Call && i.Operand is MethodReference mr && mr.DeclaringType.FullName == ObserverType)
             .Select(i => ((MethodReference)i.Operand).Name).ToArray();
         return (calls.Count(n => n == "RecordBeforeEngineInit"), calls.Count(n => n == "RecordInitResult"), calls.Count(n => n == "RecordInitBankResult"),
             calls.Count(n => n == "RecordInitFailureTermReturned"), calls.Count(n => n == "RecordInitializeMethodReturned"),
-            calls.Count(n => n == "RecordEngineTermReturned"), calls.Count(n => n == "RecordCallbackManagerTermReturned"),
+            calls.Count(n => n == "RecordBeforeEngineTerm"), calls.Count(n => n == "RecordEngineTermReturned"), calls.Count(n => n == "RecordCallbackManagerTermReturned"),
             calls.Count(n => n == "RecordPostCallbacksReturned"), calls.Count(n => n == "RecordRenderAudioReturned"));
     }
 
@@ -272,6 +282,7 @@ static class Program
         var recordInitializeMethodReturned = Import(module, observer, "RecordInitializeMethodReturned", "System.Int32");
         var recordInit = Import(module, observer, "RecordInitResult", "System.Int32");
         var recordBank = Import(module, observer, "RecordInitBankResult", "System.Int32", "System.UInt32");
+        var recordBeforeEngineTerm = Import(module, observer, "RecordBeforeEngineTerm");
         var recordEngineTerm = Import(module, observer, "RecordEngineTermReturned");
         var recordCallbackTerm = Import(module, observer, "RecordCallbackManagerTermReturned");
         var recordPostCallbacks = Import(module, observer, "RecordPostCallbacksReturned", "System.Int32");
@@ -304,6 +315,9 @@ static class Program
         s.BankMethod.Body.MaxStackSize = Math.Max(s.BankMethod.Body.MaxStackSize, 3);
 
         var termIl = s.TermMethod.Body.GetILProcessor();
+        var preTeardownGuard = termIl.Create(OpCodes.Call, recordBeforeEngineTerm);
+        termIl.InsertBefore(s.TermTeardownBodyStart, preTeardownGuard);
+        foreach (var branch in s.TermTeardownBranches) branch.Operand = preTeardownGuard;
         termIl.InsertAfter(s.EngineTermCall, termIl.Create(OpCodes.Call, recordEngineTerm));
         termIl.InsertAfter(s.CallbackTermCall, termIl.Create(OpCodes.Call, recordCallbackTerm));
         var postIl = s.PostCallbacksMethod.Body.GetILProcessor();
@@ -312,11 +326,12 @@ static class Program
         var renderIl = s.RenderAudioMethod.Body.GetILProcessor();
         renderIl.InsertBefore(s.RenderAudioReturns[0], renderIl.Create(OpCodes.Dup));
         renderIl.InsertBefore(s.RenderAudioReturns[0], renderIl.Create(OpCodes.Call, recordRenderAudio));
-        VerifyInjectionForm(s.InitMethod, s.BankMethod, s.TermMethod, s.PostCallbacksMethod, s.RenderAudioMethod);
+        VerifyInjectionForm(s);
     }
 
-    static void VerifyInjectionForm(MethodDefinition init, MethodDefinition bank, MethodDefinition term, MethodDefinition post, MethodDefinition render)
+    static void VerifyInjectionForm(Sites s)
     {
+        var init = s.InitMethod; var bank = s.BankMethod; var term = s.TermMethod; var post = s.PostCallbacksMethod; var render = s.RenderAudioMethod;
         var initObserver = FindObserverCalls(init, "RecordInitResult").Single();
         Require(initObserver.Previous?.OpCode == OpCodes.Dup && IsCall(initObserver.Previous.Previous, EngineType, "Init"), "Init observer is not immediately after the original Init result");
         var beforeInitObserver = FindObserverCalls(init, "RecordBeforeEngineInit").Single();
@@ -333,8 +348,14 @@ static class Program
         var bankObserver = FindObserverCalls(bank, "RecordInitBankResult").Single();
         Require(bankObserver.Previous?.OpCode == OpCodes.Ldloc && bankObserver.Previous.Previous?.OpCode == OpCodes.Dup &&
                 IsCall(bankObserver.Previous.Previous.Previous, EngineType, "LoadBank"), "Init-bank observer does not preserve result/out ID at original call site");
+        var beforeEngineTermObserver = FindObserverCalls(term, "RecordBeforeEngineTerm").Single();
         var engineTermObserver = FindObserverCalls(term, "RecordEngineTermReturned").Single();
         var callbackTermObserver = FindObserverCalls(term, "RecordCallbackManagerTermReturned").Single();
+        Require(beforeEngineTermObserver.Next == s.TermTeardownBodyStart && beforeEngineTermObserver.Next?.OpCode == OpCodes.Ldc_I4_0 &&
+                IsCall(beforeEngineTermObserver.Next.Next, EngineType, "SetOfflineRendering"),
+            "pre-Term observer is not the first instruction after both original early-return gates and before teardown");
+        Require(s.TermTeardownBranches.All(b => ReferenceEquals(b.Operand, beforeEngineTermObserver)) && s.TermTeardownBranches.Length == 2,
+            "both admitted teardown branches must pass through the pre-teardown guard");
         Require(IsCall(engineTermObserver.Previous, EngineType, "Term"), "engine Term witness is not at its original return site");
         Require(IsCall(callbackTermObserver.Previous, CallbackType, "Term"), "callback-manager Term witness is not at its original return site");
         var postObserver = FindObserverCalls(post, "RecordPostCallbacksReturned").Single();
@@ -367,11 +388,65 @@ static class Program
             ReferenceEquals(e.HandlerStart, next) || ReferenceEquals(e.HandlerEnd, next) || ReferenceEquals(e.FilterStart, next));
     }
 
+    // The pre-Term observer may deliberately throw to preserve a still-owned
+    // native callback. Refuse a callsite inside an existing EH region where the
+    // original method could catch that refusal and continue into Term.
+    static bool IsInsideExceptionRegion(MethodDefinition method, Instruction target)
+    {
+        var instructions = method.Body.Instructions;
+        int targetIndex = instructions.IndexOf(target);
+        if (targetIndex < 0) return true;
+        bool Covers(Instruction? start, Instruction? end)
+        {
+            if (start == null) return false;
+            int startIndex = instructions.IndexOf(start);
+            int endIndex = end == null ? instructions.Count : instructions.IndexOf(end);
+            return startIndex >= 0 && endIndex >= 0 && startIndex <= targetIndex && targetIndex < endIndex;
+        }
+        foreach (var handler in method.Body.ExceptionHandlers)
+        {
+            if (Covers(handler.TryStart, handler.TryEnd) || Covers(handler.HandlerStart, handler.HandlerEnd) ||
+                (handler.FilterStart != null && Covers(handler.FilterStart, handler.HandlerStart))) return true;
+        }
+        return false;
+    }
+
     static void RequireCallsOnlyOne(MethodDefinition m, string type, string name, string exact)
     {
         var calls = m.Body.Instructions.Where(i => IsCall(i, type, name)).ToArray();
         Require(calls.Length == 1, $"expected exactly one {type}::{name} call in {m.FullName}; got {calls.Length}");
         Require(((MethodReference)calls[0].Operand).FullName == exact, $"call signature drift: {calls[0].Operand}");
+    }
+
+    static (Instruction BodyStart, Instruction Entry, Instruction[] Branches) FindTermTeardownStart(MethodDefinition term)
+    {
+        var instructions = term.Body.Instructions;
+        var offline = FindUniqueCall(term, EngineType, "SetOfflineRendering");
+        var bodyStart = offline.Previous;
+        Require(bodyStart?.OpCode == OpCodes.Ldc_I4_0, "Term teardown no longer disables offline rendering with literal false");
+        var existingGuards = FindObserverCalls(term, "RecordBeforeEngineTerm").ToArray();
+        Require(existingGuards.Length <= 1, "duplicate pre-teardown observer guard");
+        var entry = existingGuards.Length == 1 ? existingGuards[0] : bodyStart!;
+        if (existingGuards.Length == 1)
+            Require(existingGuards[0].Next == bodyStart, "pre-teardown guard is not directly before offline-rendering disable");
+        var keep = instructions.Where(i => IsCall(i, InitType, "ShouldKeepSoundEngineEnabled")).ToArray();
+        Require(keep.Length == 1, "Term early-return gate callsite changed");
+        var keepIndex = instructions.IndexOf(keep[0]);
+        Require(keepIndex + 4 < instructions.Count, "Term early-return gate instruction count drift");
+        Require(instructions[keepIndex + 1].OpCode == OpCodes.Brfalse_S, "ShouldKeep early gate branch opcode drift: " + instructions[keepIndex + 1]);
+        Require(ReferenceEquals(instructions[keepIndex + 1].Operand, entry), "ShouldKeep false branch no longer enters teardown");
+        Require(instructions[keepIndex + 2].OpCode == OpCodes.Ldarg_1, "forceReset argument load drift");
+        Require(instructions[keepIndex + 3].OpCode == OpCodes.Brtrue_S, "forceReset early gate branch opcode drift: " + instructions[keepIndex + 3]);
+        Require(ReferenceEquals(instructions[keepIndex + 3].Operand, entry), "forceReset true branch no longer enters teardown");
+        Require(instructions[keepIndex + 4].OpCode == OpCodes.Ret, "ShouldKeep early-return ret drift");
+        var incoming = instructions.Where(i => (i.Operand is Instruction target && ReferenceEquals(target, entry)) ||
+            (i.Operand is Instruction[] targets && targets.Any(t => ReferenceEquals(t, entry)))).ToArray();
+        Require(incoming.Length == 2 && incoming.All(i => i.OpCode == OpCodes.Brfalse_S || i.OpCode == OpCodes.Brtrue_S),
+            "Term teardown entry has an unexpected branch predecessor");
+        Require(bodyStart != null && !IsInsideExceptionRegion(term, bodyStart), "pre-teardown insertion point is inside an exception region or absent");
+        // The expected two conditional branches are the only control-flow entry
+        // into teardown; redirect both through the refusal gate before any mutation.
+        return (bodyStart!, entry, incoming);
     }
 
     static Instruction FindUniqueCall(MethodDefinition m, string type, string name)
@@ -456,8 +531,8 @@ static class Program
             string operand = i.Operand switch
             {
                 null => "",
-                Instruction target => "target:" + index[target],
-                Instruction[] targets => "targets:" + string.Join(",", targets.Select(t => index[t])),
+                Instruction target => "target:" + index[NormalizeTarget(target)],
+                Instruction[] targets => "targets:" + string.Join(",", targets.Select(t => index[NormalizeTarget(t)])),
                 VariableDefinition v => "var:" + v.Index + ":" + v.VariableType.FullName,
                 ParameterDefinition p => "param:" + p.Index + ":" + p.ParameterType.FullName,
                 MethodReference mr => "method:" + mr.FullName,
@@ -467,6 +542,13 @@ static class Program
                 _ => i.Operand.ToString() ?? ""
             };
             lines.Add(i.OpCode.Code + " " + operand);
+        }
+        Instruction NormalizeTarget(Instruction target)
+        {
+            if (stripObserver && target.OpCode == OpCodes.Call && target.Operand is MethodReference mr &&
+                mr.DeclaringType.FullName == ObserverType && mr.Name == "RecordBeforeEngineTerm")
+                return target.Next ?? throw new InvalidOperationException("pre-teardown observer has no continuation target");
+            return target;
         }
         string locals = string.Join(";", m.Body.Variables.Select(v => v.Index + ":" + v.VariableType.FullName));
         string handlers = string.Join(";", m.Body.ExceptionHandlers.Select(e => (int)e.HandlerType + ":" + Boundary(e.TryStart) + ":" + Boundary(e.TryEnd) + ":" + Boundary(e.HandlerStart) + ":" + Boundary(e.HandlerEnd) + ":" + Boundary(e.FilterStart)));
@@ -494,6 +576,7 @@ static class Program
                     case "RecordInitBankResult":
                         Require(result.Count >= 2 && result[^1].OpCode == OpCodes.Ldloc && result[^2].OpCode == OpCodes.Dup, "malformed Init-bank observer injection");
                         result.RemoveRange(result.Count - 2, 2); break;
+                    case "RecordBeforeEngineTerm":
                     case "RecordEngineTermReturned":
                     case "RecordCallbackManagerTermReturned": break;
                     case "RecordPostCallbacksReturned":
@@ -527,11 +610,14 @@ static class Program
         public Instruction[] RenderAudioReturns { get; }
         public Instruction BankCall { get; }
         public Instruction EngineTermCall { get; }
+        public Instruction TermTeardownBodyStart { get; }
+        public Instruction TermTeardownEntry { get; }
+        public Instruction[] TermTeardownBranches { get; }
         public Instruction CallbackTermCall { get; }
         public VariableDefinition OutputId { get; }
-        public int BeforeInitObserverCalls, InitObserverCalls, InitFailureTermObserverCalls, InitializeReturnObserverCalls, BankObserverCalls, EngineTermObserverCalls, CallbackTermObserverCalls, PostCallbacksObserverCalls, RenderAudioObserverCalls;
+        public int BeforeInitObserverCalls, InitObserverCalls, InitFailureTermObserverCalls, InitializeReturnObserverCalls, BankObserverCalls, BeforeEngineTermObserverCalls, EngineTermObserverCalls, CallbackTermObserverCalls, PostCallbacksObserverCalls, RenderAudioObserverCalls;
         public int InitCallCount, InitFailureTermCallCount, BankCallCount, EngineTermCallCount, CallbackTermCallCount, PostCallbacksReturnCount, RenderAudioReturnCount;
-        public Sites(MethodDefinition init, MethodDefinition bank, MethodDefinition term, MethodDefinition postCallbacks, MethodDefinition renderAudio, Instruction initCall, Instruction[] initFailureTermCalls, Instruction bankCall, Instruction engineTerm, Instruction callbackTerm, VariableDefinition outputId, Instruction[] initializeReturns, Instruction[] postCallbacksReturns, Instruction[] renderAudioReturns)
-        { InitMethod=init; BankMethod=bank; TermMethod=term; PostCallbacksMethod=postCallbacks; RenderAudioMethod=renderAudio; InitCall=initCall; InitFailureTermCalls=initFailureTermCalls; BankCall=bankCall; EngineTermCall=engineTerm; CallbackTermCall=callbackTerm; OutputId=outputId; InitializeReturns=initializeReturns; PostCallbacksReturns=postCallbacksReturns; RenderAudioReturns=renderAudioReturns; }
+        public Sites(MethodDefinition init, MethodDefinition bank, MethodDefinition term, MethodDefinition postCallbacks, MethodDefinition renderAudio, Instruction initCall, Instruction[] initFailureTermCalls, Instruction bankCall, Instruction engineTerm, Instruction teardownBodyStart, Instruction teardownEntry, Instruction[] teardownBranches, Instruction callbackTerm, VariableDefinition outputId, Instruction[] initializeReturns, Instruction[] postCallbacksReturns, Instruction[] renderAudioReturns)
+        { InitMethod=init; BankMethod=bank; TermMethod=term; PostCallbacksMethod=postCallbacks; RenderAudioMethod=renderAudio; InitCall=initCall; InitFailureTermCalls=initFailureTermCalls; BankCall=bankCall; EngineTermCall=engineTerm; TermTeardownBodyStart=teardownBodyStart; TermTeardownEntry=teardownEntry; TermTeardownBranches=teardownBranches; CallbackTermCall=callbackTerm; OutputId=outputId; InitializeReturns=initializeReturns; PostCallbacksReturns=postCallbacksReturns; RenderAudioReturns=renderAudioReturns; }
     }
 }

@@ -10,6 +10,11 @@ namespace OriginalOwnerProbeObserver
         public static Action<int> InitializeMethodReturned;
         public static Action BeforeEngineInit;
         public static Action<int, uint> InitBankReturned;
+        public static Action BeforeEngineTerm;
+        public static int BeforeEngineTermCalls;
+        public static int BeforeEngineTermSuccesses;
+        public static int BeforeEngineTermFailure;
+        public static string BeforeEngineTermFailureType;
         public static Action EngineTermReturned;
         public static Action CallbackManagerTermReturned;
         public static Action<int> PostCallbacksReturned;
@@ -19,6 +24,30 @@ namespace OriginalOwnerProbeObserver
         {
             if (BeforeEngineInit == null) throw new InvalidOperationException("Native pre-Init monitor arm is not configured.");
             BeforeEngineInit();
+        }
+
+        // No handler means ordinary default-off operation. When a capture owner
+        // installs this callback, a refusal must escape before original Term.
+        public static void RecordBeforeEngineTerm()
+        {
+            BeforeEngineTermCalls++;
+            if (BeforeEngineTerm == null) return;
+            try
+            {
+                BeforeEngineTerm();
+                BeforeEngineTermSuccesses++;
+            }
+            catch (Exception e)
+            {
+                BeforeEngineTermFailure = 1;
+                if (string.IsNullOrEmpty(BeforeEngineTermFailureType))
+                {
+                    string typeName = e.GetType().FullName;
+                    BeforeEngineTermFailureType = string.IsNullOrEmpty(typeName) ? "unknown" :
+                        (typeName.Length <= 256 ? typeName : typeName.Substring(0, 256));
+                }
+                throw;
+            }
         }
 
         public static void RecordInitResult(int result) { Safe(() => InitReturned?.Invoke(result)); }

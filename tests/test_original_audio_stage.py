@@ -68,8 +68,9 @@ def write_set(root: Path, requested: bool, roles: list[str] | None = None) -> tu
         if role == "native":
             native_hash = outputs[-1]["sha256"]
     request = {
-        "schema": "game-audio-original-runtime-request-r2",
+        "schema": "game-audio-original-runtime-request-r3",
         "requested": requested,
+        "passive_pcm_capture_requested": False,
         "request_id": "0123456789abcdef0123456789abcdef" if requested else "",
         "build_input_contract_sha256": "a" * 64 if requested else "",
     }
@@ -194,9 +195,16 @@ class StageTests(unittest.TestCase):
             self.assertEqual(stage_module.LINEAGE, result["lineage"])
             self.assertNotEqual(previous_hash, hashlib.sha256(previous_path.read_bytes()).hexdigest())
 
+    def test_r6_immediate_predecessor_lineage_is_exact_and_older_pairs_do_not_cross(self):
+        self.assertEqual("d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23", stage_module.PREVIOUS_LINEAGE["composed_api_sha256"])
+        self.assertEqual("6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc", stage_module.PREVIOUS_LINEAGE["composed_game_sha256"])
+        self.assertEqual("1034a747e31a3b79554b9cb06f941c7acabaa9e0ee82c2a00abc4b24f9327c1c", stage_module.OLDER_PREVIOUS_LINEAGE["composed_game_sha256"])
+        self.assertNotIn((stage_module.OLDER_RESTORE_API_SHA256, stage_module.PREVIOUS_COMPOSED_GAME_SHA256), stage_module.ALLOWED_RESTORE_PREIMAGE_PAIRS)
+        self.assertNotIn((stage_module.LEGACY_RESTORE_API_SHA256, stage_module.PREVIOUS_COMPOSED_GAME_SHA256), stage_module.ALLOWED_RESTORE_PREIMAGE_PAIRS)
+
     def test_predecessor_lineage_differs_only_at_declared_composed_game_pin(self):
         differences = {key for key in stage_module.LINEAGE if stage_module.LINEAGE[key] != stage_module.PREVIOUS_LINEAGE.get(key)}
-        self.assertEqual({"composed_api_sha256", "composed_game_sha256"}, differences)
+        self.assertEqual({"observed_api_sha256", "composed_api_sha256"}, differences)
         self.assertEqual(
             "d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23",
             stage_module.PREVIOUS_LINEAGE["composed_api_sha256"],
@@ -464,7 +472,15 @@ class StageTests(unittest.TestCase):
                 "restore_api": frozenset({hashlib.sha256((project / stage_module.DEFAULT_TARGETS["api"]).read_bytes()).hexdigest()}),
                 "restore_game": frozenset({hashlib.sha256((project / stage_module.DEFAULT_TARGETS["game"]).read_bytes()).hexdigest()}),
             }
-            with mock.patch.dict(stage_module.RESTORE_HASHES, restore_hashes), mock.patch.dict(stage_module.ALLOWED_RESTORE_PREIMAGES, fixture_preimages):
+            with (
+                mock.patch.dict(stage_module.RESTORE_HASHES, restore_hashes),
+                mock.patch.dict(stage_module.ALLOWED_RESTORE_PREIMAGES, fixture_preimages),
+                mock.patch.object(
+                    stage_module,
+                    "ALLOWED_RESTORE_PREIMAGE_PAIRS",
+                    frozenset({(next(iter(fixture_preimages["restore_api"])), next(iter(fixture_preimages["restore_game"])))}),
+                ),
+            ):
                 receipt = stage_module.stage(project, manifest_path, None, None)
             self.assertFalse(receipt["requested"])
             for role in ("api", "game"):
@@ -544,7 +560,10 @@ class StageTests(unittest.TestCase):
                 restore_hashes = {
                     f"restore_{role}": next(row["sha256"] for row in default_doc["outputs"] if row["role"] == f"restore_{role}") for role in ("api", "game")
                 }
-                with mock.patch.dict(stage_module.RESTORE_HASHES, restore_hashes):
+                with (
+                    mock.patch.dict(stage_module.RESTORE_HASHES, restore_hashes),
+                    mock.patch.object(stage_module, "ALLOWED_RESTORE_PREIMAGE_PAIRS", frozenset({(api_hash, game_hash)})),
+                ):
                     receipt = stage_module.stage(project, default_off, None, None)
 
             self.assertFalse(receipt["requested"])

@@ -140,6 +140,7 @@ internal sealed class NativeWwiseMonitorLease
     private readonly INativeWwiseDiagApi api;
     private NativeWwiseDiagSnapshot latest;
     private bool armAttempted, captureRegisterAttempted, captureUnregisterAttempted;
+    private bool captureRegisterResultKnown, captureRegisterCallSucceeded, captureUnregisterCallSucceeded;
     private bool engineInitAttempted, engineTermReturned, callbackManagerTermReturned, disarmAttempted;
     private bool postInitControlAttempted, postInitControlObserved;
     private ulong postInitControlBaseline;
@@ -154,6 +155,21 @@ internal sealed class NativeWwiseMonitorLease
     internal bool Armed { get { return latest != null && latest.ArmedState == 1; } }
     internal bool CaptureRegistered { get { return latest != null && latest.CaptureRegistered == 1; } }
     internal bool CaptureRegisterAttempted { get { return captureRegisterAttempted; } }
+    internal bool CaptureRegisterResultKnown { get { return captureRegisterResultKnown; } }
+    internal bool CaptureRegisterCallSucceeded { get { return captureRegisterCallSucceeded; } }
+    internal bool CaptureUnregisterCallSucceeded { get { return captureUnregisterCallSucceeded; } }
+    // Term is safe with respect to this callback only when a registration
+    // result is known and either it failed or its matching unregister succeeded.
+    internal bool CaptureSafeBeforeEngineTerm
+    {
+        get
+        {
+            if (!captureRegisterAttempted) return true;
+            if (!captureRegisterResultKnown) return false;
+            if (!captureRegisterCallSucceeded) return true;
+            return captureUnregisterCallSucceeded;
+        }
+    }
     internal bool CaptureUnregisterAttempted { get { return captureUnregisterAttempted; } }
     internal bool EngineInitAttempted { get { return engineInitAttempted || (latest != null && latest.EngineInitAttempted == 1); } }
     internal bool EngineTermReturnedState { get { return engineTermReturned; } }
@@ -256,7 +272,12 @@ internal sealed class NativeWwiseMonitorLease
         captureRegisterAttempted = true;
         try
         {
-            RequireSuccess(api.RegisterCapture(), "native output callback registration");
+            int result = api.RegisterCapture();
+            captureRegisterResultKnown = true;
+            RequireSuccess(result, "native output callback registration");
+            // Record native ownership before the following snapshot: a snapshot
+            // failure must not erase proof that this exact callback registered.
+            captureRegisterCallSucceeded = true;
             NativeWwiseDiagSnapshot snapshot = ReadSnapshot();
             if (snapshot.CaptureRegistered != 1 || snapshot.CaptureRegisterResult != AkSuccess || snapshot.CaptureUsed != 1)
                 throw new InvalidOperationException("Native output callback registration snapshot is inconsistent.");
@@ -274,13 +295,38 @@ internal sealed class NativeWwiseMonitorLease
         captureUnregisterAttempted = true;
         try
         {
-            RequireSuccess(api.UnregisterCapture(), "native output callback unregister");
+            int result = api.UnregisterCapture();
+            RequireSuccess(result, "native output callback unregister");
+            // AK_Success is the bridge's authoritative removal result. Preserve
+            // it even if the optional verification snapshot fails afterwards.
+            captureUnregisterCallSucceeded = true;
             NativeWwiseDiagSnapshot snapshot = ReadSnapshot();
             if (snapshot.CaptureRegistered != 0 || snapshot.CaptureUnregisterResult != AkSuccess)
                 throw new InvalidOperationException("Native output callback unregister snapshot is inconsistent.");
             return snapshot;
         }
         catch (NativeWwiseDiagRefusalException) { throw; }
+        catch (Exception) { outcomeUnknown = true; throw; }
+    }
+
+    // Cleanup-only exception to the normal unknown-outcome guard. The bridge
+    // contract sets capture_registered only on successful RegisterCapture and
+    // clears it only on successful UnregisterCapture. This permits exactly one
+    // reverse call for this lease, but never snapshots, retries, or other API
+    // calls. A failed/throwing unregister leaves Term unsafe.
+    internal bool CleanupOwnedCaptureBeforeEngineTerm()
+    {
+        if (!outcomeUnknown || !captureRegisterAttempted || !captureRegisterResultKnown || !captureRegisterCallSucceeded ||
+            captureUnregisterAttempted || captureUnregisterCallSucceeded || engineTermReturned)
+            throw new NativeWwiseDiagRefusalException("Cleanup-only unregister requires this lease's known successful, still-live capture registration.");
+        captureUnregisterAttempted = true;
+        try
+        {
+            RequireSuccess(api.UnregisterCapture(), "cleanup-only native output callback unregister");
+            captureUnregisterCallSucceeded = true;
+            return true;
+        }
+        catch (NativeWwiseDiagRefusalException) { outcomeUnknown = true; throw; }
         catch (Exception) { outcomeUnknown = true; throw; }
     }
 

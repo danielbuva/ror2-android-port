@@ -22116,3 +22116,125 @@ matched-workload performance remain separate gates. Both
 cache_population_qualified and root_generation_qualified remain false. Revisit
 on SDK/hash/descriptor/constructor/API or source drift, retaining the working
 build and desktop fallback.
+
+
+## J877 — Host-qualify passive PCM measurement of ordinary original gameplay
+
+Date: 2026-10-20.
+
+Hypothesis: J875's native engine/bank readiness is insufficient to tell whether
+ordinary game events render samples. A bounded callback on the existing output,
+armed only after actual world play begins, can separate that question without
+posting a synthetic event or replacing the original sound engine. Pinned
+R2API.Sound `SoundAPI.cs` at f539511e supplies the post-engine-Init bank-lifetime
+prior art; its successful registration is not an output qualification.
+
+Change: the generated process request accepts an explicit default-false passive
+PCM flag. R1 selections remain accepted with capture off; R2 adds the optional
+boolean and rejects unknown/nonboolean fields. The existing bootstrap's native
+monitor lease supplies capture; no second engine, listener or test event is
+created. Named owners are `OriginalGameAudioPassivePcmOwner` and
+`PassivePcmCaptureWindow`, documented in ARCHITECTURE. PortSession observes its
+existing playable-world phase and positive world time before the one-shot arm;
+it never fabricates that phase. Request/arm report fields come from the owner.
+Stop thresholds are 10 s or 600 successful original render frames, enforced on
+the next owner Update tick, with a separate sample-analysis cap. Completion,
+iterator unwind and destruction close idempotently without prolonging gameplay.
+The exact API transform guards both original Term branches before native
+teardown. Unknown callback removal retains the rooted delegate/lease and
+refuses Term rather than claiming cleanup. Failure recording preserves an
+earlier primary failure. The native library is unchanged.
+
+The selected point-sound observer also preserves existing Mark(20/21/22) path
+context through later stages and freezes first-error emitter-known/alive state.
+The first matching exception is identified by count, including valid stage zero;
+later events cannot overwrite it. This Core-only update adds no game callsite:
+API is `1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b`,
+while game remains
+`6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc`.
+The exact preceding owned d540/6f96 pair upgrades; older supported pairs retain
+strict restoration-only handling. No Cartesian widening of module pairs occurs.
+
+Root host evidence: 63 audio/point-sound tests pass without skips. Log:
+`work/coordination/codex-original-audio-host-stage-root/r5/final-host-tests.log`,
+SHA-256 `ce42f8a042c16105c2cb7f4754070fd3e3f08101e412d219f4ca6c178096570a`.
+This includes actual Cecil pre-Term branch/bypass fixtures, capture lifecycle
+bounds/default-off behavior, cache contracts and first-error context tests.
+Combined actual producer/stager roundtrip:
+`work/coordination/codex-original-audio-host-stage-root/r6/`:
+
+- `r6-upgrade-pcm-off.json`, SHA-256 `c441fb61ff4922528ca8cc617047232f72359354d22f1b6a028dabc19bcda92e`;
+- `pcm-on.json`, SHA-256 `5c2da629dc44c6adedc8367fb1f28247812a1617221cb969e6bbd7ba1484d2d3`;
+- `pcm-on-cached.json`, SHA-256 `6ec9b79418a8cf28861b00ca72d99cda97edf26b8f44519cf8a22e7e2207a80b`;
+- `default-off.json`, SHA-256 `df5342cef63c1560dd5aebfe2d939bf5593b36a2a7135f22d7384e71e44f9c73`.
+
+The first three each verify 165 owned outputs; the third reuses the validated
+cache. Default off restores eight ordinary outputs. J879 records the same
+roundtrip's source component selection. Full exact-editor-reference host compile
+passes 118 sources against 264 references with 395 unchanged inputs; receipt
+`work/coordination/original-audio-pcm-root/r2/compile_receipt.json`, SHA-256
+`35729057c6e3590a2b33c1ecfb3f2c8972d1a9cdf1d1d9d781995795f1a3a78d`; output assembly SHA-256
+`d9b603bd2ad778361ff6ac757e85806374314cb93a85089ef0b9b7164efd6d92`.
+Independent reviews are retained under
+`original-game-audio-passive-pcm-review/r8/`,
+`original-game-audio-combined-review/r1/` and
+`original-game-audio-point-context-review/r3/` in ignored coordination storage.
+Explicit-device doctor and preflight pass. Python Ruff format/check pass.
+
+First unresolved boundary: no player or device result exists for these changes.
+The installed diagnostic remains J875 db5c6800 and accepted baseline remains
+J850 f1550ce0. Native PCM, Android playback, physical audibility, natural Term
+and same-process lifecycle remain unqualified. Next: full committed-source
+build, exact APK/payload installation, both default checks, then classify the
+first current-process audio failure. Nonzero native PCM alone will not qualify
+physical output. R8/R9 must replay the changed runtime/support producer and build
+hook; no new protected input or timestamp-selected build dependency is added.
+
+## J879 — Restore only the accepted original SoundEmitter component for selected audio
+
+Date: 2026-10-20. J878 is reserved for the independent alpha track.
+
+Hypothesis: J875's returned invalid emitter may be related to a measured source
+asset mismatch. The accepted SoundEmitter contains `AkGameObj`, while the staged
+project copy is exactly that source with its component/reference stripped.
+This source fact does not establish which acquisition branch caused the first
+runtime exception. Pinned R2API prefab/content guidance distinguishes actual
+component identity and asset resolution from successful catalog registration;
+current accepted input and device evidence remain authoritative.
+
+Change: `original_game_audio_build_hook.synchronize_sound_emitter` runs before
+project/cache hashing, for both cached and uncached builds. Requested original
+audio restores the accepted source component on
+`Assets/WholeGame/RoR2/Base/Utility/SoundEmitter.prefab`; missing/default-off
+selection restores the silent-audio sanitizer form. All other stripped Wwise
+components remain unchanged. Accepted input, reconstruction/project receipts,
+source/project asset GUID, script GUID and selected WwiseGlobal source must
+match. The source SHA-256 is pinned from the accepted import receipt's asset
+row before deriving either form. Unknown drift, links and foreign project files
+refuse before target writes. Atomic replacement affects only the owned ignored
+project. The original component owns normal Unity setup/teardown; there is no
+replacement emitter implementation or serialized asset in public source.
+
+Accepted prefab SHA-256:
+`9eeef75a0a96fb748820b26775720ae14e6d2718f86d6477530d46c69fb4ab1e`;
+stripped form:
+`7ac4db8ff768d7c22f7b976d34efc79b708dcd7f367f20973c3f0fdd7a7a1d8a`.
+The import receipt is retained at
+`work/experiments/whole-catalog/20261012T052308.866868Z/integration-20261012T055915.544368Z/import-receipt.json`,
+SHA-256 `4ab64deaa2a14c5e372210774f112ec9569505f78b81bc9027269168f4720db0`.
+Eight authored synthetic tests cover exact on/off, wrong input, altered source
+component bytes, unrelated target drift and missing/duplicate references.
+The combined actual on/cached/off roundtrip, exact hashes and full host compile
+are recorded once in J877; all requested modes reproduce the accepted form and
+default off reproduces the stripped form. Independent source review:
+`work/coordination/original-game-audio-point-sound-repair-review/r4/independent-review.md`,
+SHA-256 `1c95ba6d365a73bfc9362869ced08b382b590100aff877afdee3216fc99e1a21`.
+ARCHITECTURE, LOCAL_STATE and the existing recipe sanitizer/provenance audit
+identify the owner, accepted-export dependency and rollback behavior.
+
+First unresolved boundary: the restored component has not been included in a
+player build or exercised on device. A full bundle build is required; code-only
+reuse cannot qualify the changed asset. Revisit after both default checks and
+the current-process point-sound/PCM observations. R8/R9 must replay the changed
+build hook. No legitimate installation, device receipt or protected public
+payload is changed by this host checkpoint.

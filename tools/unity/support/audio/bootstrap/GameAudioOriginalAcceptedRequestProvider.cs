@@ -13,8 +13,8 @@ internal static class GameAudioOriginalAcceptedRequestProvider
     private const string AcceptedComposedGameSha256 = "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc";
     private const string AcceptedRawApiSha256 = "564b74ec232e81af8fa4b65c17537a4d05890d9181281eab0bc28bd441a3a781";
     private const string AcceptedAdaptedApiSha256 = "2bd973178c99bfcb4d20510e2d1eac7efa9dd6d698237f2edfa486171bc2f272";
-    private const string AcceptedObservedApiSha256 = "7ec842ee2244590f9227c44280ebbb4a0debf9b83ad1958c045d68dec47e0af9";
-    private const string AcceptedInstrumentedApiSha256 = "d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23";
+    private const string AcceptedObservedApiSha256 = "a2914ace8e2a7338010f8e9a9515911d68489bf0ad467bc7f73f4de293a19fe9";
+    private const string AcceptedInstrumentedApiSha256 = "1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b";
     private const string AcceptedNativeLibrarySha256 = "bb5879b4eb38b81dc3830a1662ba467b60b595e7fedb88a1301d3161f8ab9304";
     private const string AcceptedAdaptedInitSha256 = "618d1c5d534af10fc4cc30a1bacd193bf6871dab3e63992ebedd92a92576fb90";
 
@@ -28,10 +28,13 @@ internal static class GameAudioOriginalAcceptedRequestProvider
 
         var monitor = new NativeWwiseMonitorLease(new NativeWwiseDiagPInvokeApi());
         var native = new GameAudioOriginalAndroidNativeBootstrap(monitor);
+        bool captureRequested = GameAudioOriginalGeneratedRequestPin.PassivePcmCaptureRequested;
+        IGameAudioOriginalPassivePcmCapture passiveCapture = native.CreatePassivePcmCaptureOwner(captureRequested);
         return new GameAudioOriginalRequest(true, GameAudioOriginalGeneratedStagePin.BankNames,
             new GameAudioOriginalPreparation(Application.streamingAssetsPath,
                 GameAudioOriginalGeneratedStagePin.BankNames,
-                GameAudioOriginalGeneratedStagePin.ReceiptSha256, native));
+                GameAudioOriginalGeneratedStagePin.ReceiptSha256, native),
+            captureRequested, passiveCapture);
     }
 
     internal static IGameAudioOriginalStartupPreparation Refused(string reason) => new RefusedPreparation(reason);

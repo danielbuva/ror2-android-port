@@ -39,6 +39,7 @@ class PointSoundDiagnosticTests(unittest.TestCase):
         cls.core_default = cls.work / "GameAudioOriginalCore-default.dll"
         cls.transform = cls.work / "ComposedGameCecilTransform.exe"
         cls.fixture = cls.work / "PointSoundObserverFixture.exe"
+        cls.context_fixture = cls.work / "PointSoundAcquisitionContextFixture.exe"
         cls.mutator = cls.work / "BypassPointSoundMarker.exe"
         cls.default_fixture = cls.work / "PointSoundBuildPinDefaultFixture.exe"
         cls.candidate = cls.work / "RoR2-point-sound-diagnostic.dll"
@@ -46,6 +47,7 @@ class PointSoundDiagnosticTests(unittest.TestCase):
         cls.compile(cls.core_observer, [CORE / "OriginalOwnerProbeObserver.cs"])
         common = [
             CORE / "GameAudioOriginalReadiness.cs",
+            CORE / "GameAudioOriginalPassivePcmContract.cs",
             CORE / "GameAudioOriginalOwner.cs",
             CORE / "PointSoundDiagnosticObserver.cs",
         ]
@@ -54,6 +56,7 @@ class PointSoundDiagnosticTests(unittest.TestCase):
         cls.env["MONO_PATH"] = str(cls.work) + os.pathsep + str(CECIL.parent)
         cls.compile(cls.transform, [COMPOSED], [CECIL], target="exe")
         cls.compile(cls.fixture, [FIXTURES / "PointSoundObserverFixture.cs"], [cls.core], target="exe")
+        cls.compile(cls.context_fixture, [FIXTURES / "PointSoundAcquisitionContextFixture.cs"], [cls.core], target="exe")
         cls.compile(cls.mutator, [FIXTURES / "BypassPointSoundMarker.cs"], [CECIL], target="exe")
         cls.compile(cls.default_fixture, [FIXTURES / "PointSoundBuildPinDefaultFixture.cs"], [cls.core_default], target="exe")
 
@@ -84,6 +87,10 @@ class PointSoundDiagnosticTests(unittest.TestCase):
         self.assertIn("ShortBranchCount(resultEmit) == emitShortBranchCount", source)
         self.assertIn("original PostEvent callsites retained", source)
 
+    def test_existing_markers_freeze_first_acquisition_context(self) -> None:
+        result = run([str(MONO), str(self.context_fixture)], self.env)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_default_off_pin_and_save_scoped_selection(self) -> None:
         result = run([str(MONO), str(self.default_fixture)], self.env)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
@@ -103,9 +110,10 @@ class PointSoundDiagnosticTests(unittest.TestCase):
         self.assertIn('"point_sound_composed_game": "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc"', producer)
         self.assertIn('"point_sound_composed_game": LINEAGE["composed_game_sha256"]', adapter)
         self.assertIn('Path(key).name == "game-original-owner-point-sound-composed.dll"', adapter)
-        self.assertIn("pair == (current_api, PREVIOUS_COMPOSED_GAME_SHA256)", adapter)
+        self.assertIn("if pair == current_pair:", adapter)
         self.assertIn("pair == (PREVIOUS_COMPOSED_API_SHA256, PREVIOUS_COMPOSED_GAME_SHA256)", adapter)
-        self.assertIn("pair == (LEGACY_RESTORE_API_SHA256, PREVIOUS_COMPOSED_GAME_SHA256)", adapter)
+        self.assertIn("pair == (PREVIOUS_COMPOSED_API_SHA256, OLDER_PREVIOUS_GAME_SHA256)", adapter)
+        self.assertIn("pair == (LEGACY_RESTORE_API_SHA256, OLDER_PREVIOUS_GAME_SHA256)", adapter)
 
 
 if __name__ == "__main__":

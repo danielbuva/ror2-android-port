@@ -24,6 +24,7 @@ CSC = UNITY_MONO / "lib/mono/msbuild/Current/bin/Roslyn/csc.exe"
 
 CORE_SOURCES = [
     AUDIO_CORE / "GameAudioOriginalOwner.cs",
+    AUDIO_CORE / "GameAudioOriginalPassivePcmContract.cs",
     AUDIO_CORE / "GameAudioOriginalReadiness.cs",
     AUDIO_CORE / "OriginalOwnerProbeObserver.cs",
     AUDIO_CORE / "PointSoundDiagnosticObserver.cs",

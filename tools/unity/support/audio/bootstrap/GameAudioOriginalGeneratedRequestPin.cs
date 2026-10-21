@@ -3,6 +3,7 @@
 internal static class GameAudioOriginalGeneratedRequestPin
 {
     internal const bool Requested = false;
+    internal const bool PassivePcmCaptureRequested = false;
     internal const string RequestId = "";
     internal const string RequestReceiptSha256 = "";
     internal const string BuildInputContractSha256 = "";

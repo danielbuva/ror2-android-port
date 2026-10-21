@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Produce the default-off Wwise owner assemblies from authored R4 sources.
+"""Produce the default-off Wwise owner assemblies from authored R5 sources.
 
 The opt-in branch is intentionally a separate operation because it consumes
 licensed native and bank inputs. This producer contains no implicit lookup of
@@ -29,7 +29,8 @@ DEFAULT_API_SHA256 = "107295e478a58ef295a83228111f375c536861bc9081f482d638c59899
 DEFAULT_GAME_SHA256 = "3124a2ed9cf458acee78b1beaf969590b184be452e2b3aa5a8852df82ff95d30"
 PREVIOUS_COMPOSED_API_SHA256 = "d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23"
 OLDER_RESTORE_API_SHA256 = "9a3f9911697b4ce28a955dff09f618e0f2662083e56eeb28ff5b6ecc02b588f3"
-PREVIOUS_COMPOSED_GAME_SHA256 = "1034a747e31a3b79554b9cb06f941c7acabaa9e0ee82c2a00abc4b24f9327c1c"
+PREVIOUS_COMPOSED_GAME_SHA256 = "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc"
+OLDER_PREVIOUS_GAME_SHA256 = "1034a747e31a3b79554b9cb06f941c7acabaa9e0ee82c2a00abc4b24f9327c1c"
 LEGACY_RESTORE_API_SHA256 = "793f22866c85bbcf104f20f5c1f619062eaad9f5414a217b602fe758c71e01b9"
 LINEAGE = {
     "accepted_input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
@@ -37,8 +38,8 @@ LINEAGE = {
     "guarded_game_input_sha256": DEFAULT_GAME_SHA256,
     "raw_api_sha256": "564b74ec232e81af8fa4b65c17537a4d05890d9181281eab0bc28bd441a3a781",
     "adapted_api_sha256": "2bd973178c99bfcb4d20510e2d1eac7efa9dd6d698237f2edfa486171bc2f272",
-    "observed_api_sha256": "7ec842ee2244590f9227c44280ebbb4a0debf9b83ad1958c045d68dec47e0af9",
-    "composed_api_sha256": "d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23",
+    "observed_api_sha256": "a2914ace8e2a7338010f8e9a9515911d68489bf0ad467bc7f73f4de293a19fe9",
+    "composed_api_sha256": "1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b",
     "composed_game_sha256": "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc",
     "native_library_sha256": "bb5879b4eb38b81dc3830a1662ba467b60b595e7fedb88a1301d3161f8ab9304",
     "stage_receipt_sha256": "8fe02400a7ab0905ae21b728e702d7ef2c4dcf8646f77f631682a81bda0ab88c",
@@ -60,27 +61,30 @@ NATIVE_TARGET = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so"
 NATIVE_META = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so.meta"
 OWNER_ANCESTOR_MANIFEST_SHA256 = "7737ea90e3ae4b980d56e4aea3fa540f6ea49c1c7e2929430d324dd662ed8471"
 STAGE_PIN_TOOL_SHA256 = "82e9a3dd9ab6057d2fba086337504bc3381f289e13fe29403d3825f0b99e13ce"
-REQUEST_PIN_TOOL_SHA256 = "562c86c75ebb4e1a8fbce4f9eaea21e9b3c96d378b98203b6a503a65b0ef8a94"
-MANAGED_PRODUCER_SHA256 = "dfa95ae455edbe44532446cdd87111f9ce2240f1b919ee792709c0d6145a8a19"
+REQUEST_PIN_TOOL_SHA256 = "b60ff6013a1e6cecf2e730cdc29a57d5b36e8228a5134c35fce028ed471d5113"
+MANAGED_PRODUCER_SHA256 = "12c1aaed5fca694657c2c841c57e6ead399352e58b1cd0e7662dec75e2749421"
 ABI_NATIVE_PLUGIN_SHA256 = "cfec01cb3aab87edbde3db38e3c0bbe6a1d18ffea2a1f831a59cf64a5526daca"
 ABI_GENERATED_SOURCE_SHA256 = "511f5e1ee552a874850a1fab5f613eeb51e7b6bc706a07bb57418c03e75df242"
 ABI_HANDWRITTEN_SOURCE_SHA256 = "7cc79d60937708fd9f34fd67e90a743fe9e03e58c2325bf0f9e9dbbf8be327e6"
 ABI_LLVM_NM_SHA256 = "6ffe6bb8699a354c4699a6cdfcebdb9ec6a2c8d0d89beaac978f629a0fc67ae0"
 OWNER_SOURCE_HASHES = {
-    "core/GameAudioOriginalOwner.cs": "5915328fe9a0392f2fb67de8c34759aee6f3ac1887134cdbe2c6abf274cf8df0",
-    "../../runtime/session/PortSession.cs": "9db763305d7faa73d33a9485cb8fdde38e705c023d69c2f50285eba3cc82a189",
-    "../../runtime/session/PortSessionOriginalAudioOwner.cs": "be51afd68aad291c8b925efb94799aad1f827c53184eb9cb29ed806337e02a96",
-    "core/PointSoundDiagnosticObserver.cs": "8836cd883ef36d431cf533f33017d9f773711b51b4ccff2a398a0261cfc1f035",
+    "core/GameAudioOriginalOwner.cs": "66fc16c9948089a09c77ada50a2eaa5a39f917cf943b5357971c73dae0b0e3c6",
+    "../../runtime/session/PortSession.cs": "2689be1a88dd595eb2c0992998fbf447d52527862a35274c3abac8f50c1ebf90",
+    "../../runtime/session/PortSessionOriginalAudioOwner.cs": "2cf4f55b577aad96c8d2a52c2b75cc2be271bb466193cb8d8dc7e3a127d2d040",
+    "core/PointSoundDiagnosticObserver.cs": "ebd0b2c0089150c4302c00824ee32e7a8e8b1906f26ad2137bdb0cee4cf1b4c7",
     "core/GameAudioOriginalReadiness.cs": "ab7be883932ce975615676882440c74d43b039fce067a9cab0572d7198c4db19",
-    "core/OriginalOwnerProbeObserver.cs": "450127cefc43c65393e450c59bcc220b396d0dd05f0bfd123ce474c426500475",
-    "bootstrap/GameAudioOriginalAcceptedRequestProvider.cs": "97c3ff531744825e866fa9f3ae199304a1281720b1daca56dca80160c45177d4",
-    "bootstrap/GameAudioOriginalAndroidNativeBootstrap.cs": "c0538617063fc8f2c1f4babc33a3fe5144cf0b3594016d8bbb4102806867a26a",
-    "bootstrap/GameAudioOriginalGeneratedRequestPin.cs": "04a52448959df86f5756d78c5420aaabe09c322a925ca35c0a7e05acaaea0c91",
+    "core/OriginalOwnerProbeObserver.cs": "c3cc7450ac5a5b3d6ea269a713a2629df9396714e672357d874ab9e670ea17fa",
+    "bootstrap/GameAudioOriginalAcceptedRequestProvider.cs": "72e2fc997ad80ee3e86cee428c3857b7be035070483007b24d929039aa0aa7e1",
+    "bootstrap/GameAudioOriginalAndroidNativeBootstrap.cs": "bea349d5c344f43293abeca65508790971305e4d38c60050fc956fa956205d20",
+    "bootstrap/GameAudioOriginalGeneratedRequestPin.cs": "24e560195c4350aefe717b3acbc78697871effa88b70e23be07225c6487545d4",
     "bootstrap/GameAudioOriginalGeneratedStagePin.cs": "d54d445d05712432559a5e332457af0b20200c93895bd79374c42b6280bd07a4",
     "bootstrap/GameAudioOriginalPayloadCopy.cs": "1be21165d6ad8b1df1ab7513016da6ad78ad62350977550c376179f44f48e05f",
     "bootstrap/GameAudioOriginalPreparation.cs": "9894781b7ff0b5cde30b4b67ad0fb9f65a037ba0c124a086fe562c181fa41168",
-    "bootstrap/GameAudioOriginalRequestBootstrap.cs": "61a306855ce2634d5a047f11a29a00cebdf9027222be55b094ad823b4e00b041",
-    "bootstrap/NativeWwiseMonitorLease.cs": "6c527165187c4fd34a22d035f79dd7530808023cc3db35356957f6919ab0d5d3",
+    "bootstrap/GameAudioOriginalRequestBootstrap.cs": "faff62d15e6b1828a814a55af4a9a25d04b315ba5c462cb4bf6c34f569e8657c",
+    "bootstrap/NativeWwiseMonitorLease.cs": "79b234526c893902474bf84317638724ae62b440e2395b4451d55f12ec877e72",
+    "core/GameAudioOriginalPassivePcmContract.cs": "e7398ae3d3f17ad09c4a646ec3a36cbf75b7283855b7879528bf4e2076c1c6c7",
+    "bootstrap/OriginalGameAudioPassivePcmOwner.cs": "6fbc008ee73b5b65828e4a053cc7d87cc63375235602530ec936bad74fd8a286",
+    "bootstrap/PassivePcmCaptureWindow.cs": "2601433feccd7e87fb17023135baf7969ea9b7f26d7db135f86ff3e78c55d78f",
 }
 
 
@@ -149,7 +153,11 @@ def unity_reference_options(unity_contents: Path, project: Path, plugin_override
         )
     )
     plugin = project / "Assets/LabLoadingScene/Plugins"
-    for name in ("AK.Wwise.Unity.API.dll", "AK.Wwise.Unity.MonoBehaviour.dll", "RoR2.dll"):
+    for name in (
+        "AK.Wwise.Unity.API.dll",
+        "AK.Wwise.Unity.MonoBehaviour.dll",
+        "RoR2.dll",
+    ):
         path = (plugin_overrides or {}).get(name, plugin / name)
         if path.is_file():
             references.append(path)
@@ -170,15 +178,15 @@ def classify_project_pair(api_sha256: str, game_sha256: str) -> str:
     pair = (api_sha256, game_sha256)
     if pair == (DEFAULT_API_SHA256, DEFAULT_GAME_SHA256):
         return "ordinary"
+    if pair == current_pair:
+        return "current-audio"
     if pair == (PREVIOUS_COMPOSED_API_SHA256, PREVIOUS_COMPOSED_GAME_SHA256):
         return "previous-audio"
-    if pair == (current_api, PREVIOUS_COMPOSED_GAME_SHA256):
-        return "previous-audio"
-    if pair == (current_api, LINEAGE["composed_game_sha256"]):
-        return "current-audio"
-    if pair == (OLDER_RESTORE_API_SHA256, PREVIOUS_COMPOSED_GAME_SHA256):
+    if pair == (PREVIOUS_COMPOSED_API_SHA256, OLDER_PREVIOUS_GAME_SHA256):
+        return "older-previous-audio"
+    if pair == (OLDER_RESTORE_API_SHA256, OLDER_PREVIOUS_GAME_SHA256):
         return "older-restore-only"
-    if pair == (LEGACY_RESTORE_API_SHA256, PREVIOUS_COMPOSED_GAME_SHA256):
+    if pair == (LEGACY_RESTORE_API_SHA256, OLDER_PREVIOUS_GAME_SHA256):
         return "legacy-restore-only"
     raise ValueError("project API/game pair is neither ordinary guarded nor a declared current/previous audio pair")
 
@@ -228,7 +236,7 @@ def compile_default_off(project: Path, unity_contents: Path, mono: Path, csc: Pa
     for relative, expected in OWNER_SOURCE_HASHES.items():
         source = SOURCE / relative
         if not source.is_file() or source.is_symlink() or sha256(source) != expected:
-            raise ValueError(f"integrated owner source differs from frozen R4 input: {relative}")
+            raise ValueError(f"integrated owner source differs from frozen R5 input: {relative}")
     toolchain = validate_toolchain(project, unity_contents, mono, csc)
     reject_symlink_components(output)
     if output.exists() or output.is_symlink() or not output.resolve(strict=False).is_relative_to((ROOT / "work").resolve()):
@@ -279,6 +287,7 @@ def compile_default_off(project: Path, unity_contents: Path, mono: Path, csc: Pa
         core,
         [
             SOURCE / "core/GameAudioOriginalReadiness.cs",
+            SOURCE / "core/GameAudioOriginalPassivePcmContract.cs",
             SOURCE / "core/GameAudioOriginalOwner.cs",
             SOURCE / "core/PointSoundDiagnosticObserver.cs",
             point_sound_build_pin,
@@ -338,7 +347,12 @@ def compile_default_off(project: Path, unity_contents: Path, mono: Path, csc: Pa
             (sha256(observer) + sha256(core) + sha256(bootstrap) + "\n".join(sha256(path) for path in references)).encode()
         ).hexdigest(),
         "variant": "default-off",
-        "request": {"requested": False, "request_id": None, "build_input_contract_sha256": None},
+        "request": {
+            "requested": False,
+            "request_id": None,
+            "build_input_contract_sha256": None,
+            "passive_pcm_capture_requested": False,
+        },
         "outputs": artifacts,
         "runtime_accepted": False,
         "audible": False,
@@ -390,6 +404,7 @@ def compile_requested(
     init_receipt: Path,
     output: Path,
     request_id: str | None = None,
+    passive_pcm_capture_requested: bool = False,
 ) -> dict:
     """Generate, compile and describe one explicit requested artifact set.
 
@@ -484,7 +499,7 @@ def compile_requested(
     stage_pin_tool = TOOLS / "generate_runtime_stage_pin.py"
     request_pin_tool = TOOLS / "generate_accepted_request_pin.py"
     if sha256(stage_pin_tool) != STAGE_PIN_TOOL_SHA256 or sha256(request_pin_tool) != REQUEST_PIN_TOOL_SHA256:
-        raise ValueError("request/stage source generators differ from the frozen R4 adapters")
+        raise ValueError("request/stage source generators differ from the frozen R5 adapters")
     stage_generator = load_module(stage_pin_tool, "audio_stage_pin")
     request_generator = load_module(request_pin_tool, "audio_request_pin")
     generated = output / "generated"
@@ -507,19 +522,36 @@ def compile_requested(
             bank_index,
             adapted_init,
             init_receipt,
+            passive_pcm_capture_requested,
         )
     assert request_path is not None and input_contract_path is not None
-    for label, path in (("request", request_path), ("input contract", input_contract_path)):
+    for label, path in (
+        ("request", request_path),
+        ("input contract", input_contract_path),
+    ):
         resolved = path.resolve(strict=True)
         if path.is_symlink() or not resolved.is_relative_to((ROOT / "work").resolve()) or not resolved.is_file():
             raise ValueError(f"{label} must be an explicit regular file under work/")
     stage_source = generated / "GameAudioOriginalGeneratedStagePin.cs"
-    stage_result = stage_generator.generate(stage_receipt_path, stage_root, stage_source, prefab, bank_index, adapted_init, init_receipt)
+    stage_result = stage_generator.generate(
+        stage_receipt_path,
+        stage_root,
+        stage_source,
+        prefab,
+        bank_index,
+        adapted_init,
+        init_receipt,
+    )
     request_source = generated / "GameAudioOriginalGeneratedRequestPin.cs"
     request_result = request_generator.emit(request_path, input_contract_path, stage_receipt_path, request_source)
     request_document = json.loads(request_path.read_text(encoding="utf-8"))
     if request_document.get("requested") is not True:
         raise ValueError("requested producer requires an explicit request with requested=true")
+    if (
+        type(request_document.get("passive_pcm_capture_requested")) is not bool
+        or request_document["passive_pcm_capture_requested"] != passive_pcm_capture_requested
+    ):
+        raise ValueError("passive PCM selection must be an explicit boolean bound by the request and invocation")
     if sha256(native_library) != request_document.get("native_library_sha256"):
         raise ValueError("explicit native input differs from request pin")
 
@@ -571,6 +603,7 @@ def compile_requested(
         core,
         [
             SOURCE / "core/GameAudioOriginalReadiness.cs",
+            SOURCE / "core/GameAudioOriginalPassivePcmContract.cs",
             SOURCE / "core/GameAudioOriginalOwner.cs",
             SOURCE / "core/PointSoundDiagnosticObserver.cs",
             point_sound_build_pin,
@@ -582,7 +615,11 @@ def compile_requested(
     bootstrap_sources = [
         path
         for path in sorted((SOURCE / "bootstrap").glob("*.cs"))
-        if path.name not in {"GameAudioOriginalGeneratedRequestPin.cs", "GameAudioOriginalGeneratedStagePin.cs"}
+        if path.name
+        not in {
+            "GameAudioOriginalGeneratedRequestPin.cs",
+            "GameAudioOriginalGeneratedStagePin.cs",
+        }
     ] + [request_source, stage_source]
     compile_library(
         "compile_bootstrap",
@@ -694,6 +731,7 @@ def compile_requested(
             "requested": True,
             "request_id": request_document["request_id"],
             "build_input_contract_sha256": request_result["build_input_contract_sha256"],
+            "passive_pcm_capture_requested": passive_pcm_capture_requested,
         },
         "outputs": outputs,
         "runtime_accepted": False,
@@ -709,7 +747,11 @@ def compile_requested(
         "contract_sha256": request_result["build_input_contract_sha256"],
         "stage_receipt_sha256": stage_result["receipt_sha256"],
         "managed_manifest_sha256": sha256(managed_manifest_path),
-        "compiled": {"observer": sha256(observer), "core": sha256(core), "bootstrap": sha256(bootstrap)},
+        "compiled": {
+            "observer": sha256(observer),
+            "core": sha256(core),
+            "bootstrap": sha256(bootstrap),
+        },
         "manifest_sha256": sha256(manifest_path),
         "manifest_path": str(manifest_path),
         "runtime_accepted": False,
@@ -738,7 +780,7 @@ def verify_managed_output_manifest(manifest: dict, work_root: Path) -> dict[str,
         "observed_api": LINEAGE["observed_api_sha256"],
         "composed_api": LINEAGE["composed_api_sha256"],
         "guarded_game": LINEAGE["guarded_game_input_sha256"],
-        "composed_game": PREVIOUS_COMPOSED_GAME_SHA256,
+        "composed_game": OLDER_PREVIOUS_GAME_SHA256,
         "point_sound_composed_game": LINEAGE["composed_game_sha256"],
     }
     source_hashes = manifest.get("source_input_hashes")
@@ -773,7 +815,7 @@ def verify_managed_output_manifest(manifest: dict, work_root: Path) -> dict[str,
         raise ValueError("managed transform manifest omits a required intermediate in the accepted chain")
     for filename, expected_sha in (
         ("api-instrumented-composed.dll", LINEAGE["composed_api_sha256"]),
-        ("game-original-owner-composed.dll", PREVIOUS_COMPOSED_GAME_SHA256),
+        ("game-original-owner-composed.dll", OLDER_PREVIOUS_GAME_SHA256),
         ("game-original-owner-point-sound-composed.dll", LINEAGE["composed_game_sha256"]),
     ):
         matches = [path for key, path in paths.items() if Path(key).name == filename]
@@ -795,6 +837,7 @@ def generate_request_contract(
     bank_index: Path,
     adapted_init: Path,
     init_receipt: Path,
+    passive_pcm_capture_requested: bool = False,
 ) -> tuple[Path, Path]:
     """Create the pre-derivative input contract and same-build request.
 
@@ -814,7 +857,12 @@ def generate_request_contract(
     copied_game = copied_root / "accepted-RoR2.dll"
     copied_api = copied_root / "accepted-AK.Wwise.Unity.API.dll"
     for source, destination, expected, label in (
-        (raw_game, copied_game, LINEAGE["accepted_game_sha256"], "accepted game assembly"),
+        (
+            raw_game,
+            copied_game,
+            LINEAGE["accepted_game_sha256"],
+            "accepted game assembly",
+        ),
         (raw_api, copied_api, LINEAGE["raw_api_sha256"], "accepted raw API assembly"),
     ):
         if source.is_symlink() or not source.is_file() or sha256(source) != expected:
@@ -857,7 +905,13 @@ def generate_request_contract(
         digest = sha256(resolved)
         if digest != expected[role]:
             raise ValueError(f"contract source does not match accepted input pin: {role}")
-        rows.append({"role": role, "path": resolved.relative_to(work_root).as_posix(), "sha256": digest})
+        rows.append(
+            {
+                "role": role,
+                "path": resolved.relative_to(work_root).as_posix(),
+                "sha256": digest,
+            }
+        )
     contract = {
         "schema": request_generator.CONTRACT_SCHEMA,
         "accepted_input_id": LINEAGE["accepted_input_id"],
@@ -868,8 +922,9 @@ def generate_request_contract(
     contract_path.write_bytes(contract_bytes)
     contract_sha = hashlib.sha256(contract_bytes).hexdigest()
     request = {
-        "schema": "game-audio-original-runtime-request-r2",
+        "schema": "game-audio-original-runtime-request-r3",
         "requested": True,
+        "passive_pcm_capture_requested": bool(passive_pcm_capture_requested),
         "request_id": request_id,
         "build_input_contract_sha256": contract_sha,
         "stage_receipt_sha256": sha256(stage_receipt_path),
