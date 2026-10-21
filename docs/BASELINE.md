@@ -88,12 +88,10 @@ The plain check and its acceptance criteria remain unchanged.
 
 ## Current baseline (2026-10-20)
 
-J885's later diagnostic APK is installed after both default checks, but is not
-promoted: native output remains finite and all zero, and the managed default
-listener list is observed empty. Source camera activation and audible playback
-remain unqualified.
+J891's later diagnostic APK is installed after both default checks, but remains
+unpromoted while composed audio and source-camera acceptance are open.
 See the [current snapshot](../PORTING_STATE.md) for installed identity and
-[J885](PORTING_JOURNAL.md#j885--bind-the-camera-player-and-observe-an-empty-managed-listener-list)
+[J891](PORTING_JOURNAL.md#j891--bind-the-music-player-and-observe-original-controller-preload-on-device)
 for the single result record. The accepted baseline below remains the rollback.
 
 | Item | Value |
