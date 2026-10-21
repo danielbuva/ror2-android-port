@@ -27,6 +27,20 @@ class Image:
 
 
 class PopulationOriginTests(unittest.TestCase):
+    def test_native_population_range_includes_root_and_refuses_invalid_graph(self):
+        root = {"self": 101, "parent": 0}
+        child = {"self": 202, "parent": 101}
+        outside = {"self": 303, "parent": 0}
+        rows = {row["self"]: row for row in (root, child, outside)}
+        self.assertTrue(population.object_hierarchy(root, rows, 101))
+        self.assertTrue(population.object_hierarchy(child, rows, 101))
+        self.assertFalse(population.object_hierarchy(outside, rows, 101))
+        for parent in (202, 404):
+            with self.subTest(parent=parent):
+                child["parent"] = parent
+                with self.assertRaisesRegex(ValueError, "Cyclic or missing"):
+                    population.object_hierarchy(child, rows, 101)
+
     def test_literal_and_call_result_are_different_origins(self):
         image = Image([0x52800062, 0x94000010, 0xAA0003E2, 0xD65F03C0])
         reader = population.Origins(image, image.words)

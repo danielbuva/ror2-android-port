@@ -37,15 +37,17 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       adds class-ID metadata. Following
       [J866's scoped metadata qualification](PORTING_JOURNAL.md#j866--qualify-scoped-sdk-assembly-metadata-and-forwarding-on-android)
       and [J869's SDK search metadata](PORTING_JOURNAL.md#j869--decode-pinned-sdk-wrapper-search-order-on-android),
-      qualify complete wrapper-cache/mapping and scene/manager usage with
+      qualify wrapper-metadata consumer semantics and scene/manager usage with
       independent producers. Preserve
       [J873's direct-name/cache-query distinction](PORTING_JOURNAL.md#j873--separate-direct-scene-names-from-sdk-wrapper-cache-queries);
       the independent desktop oracle must never become a phone-build input.
       Extend [J876's native flag metadata](PORTING_JOURNAL.md#j876--decode-native-sdk-type-flags-on-android)
-      through complete cache population and extra-type rules before root production.
+      through complete cache-consumer semantics before root production.
       [J878](PORTING_JOURNAL.md#j878--reconstruct-sdk-wrapper-population-on-android-with-a-complete-forward-oracle)
-      verifies forward mappings on Android; independent reverse-cache verification
-      and scene/manager usage remain open.
+      verifies supported forward queries.
+      [J883](PORTING_JOURNAL.md#j883--include-the-object-root-and-match-android-metadata-to-native-sdk-caches)
+      matches root-inclusive Android metadata to native SDK cache observations;
+      exact linker roots and scene/manager usage remain open.
 - [ ] Benchmark any alternative pipeline with pinned versions/options/shaders and
       matched device workloads; IL2CPP alone does not prove equivalent performance.
 - [ ] Qualify the isolated owner-build environment; the alpha device is alpha's

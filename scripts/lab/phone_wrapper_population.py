@@ -170,6 +170,22 @@ def profile(image):
     return root, extras
 
 
+def object_hierarchy(row, by_pointer, root):
+    """Native derived-type ranges include the selected base itself."""
+    seen = set()
+    while True:
+        if row["self"] in seen or row["self"] not in by_pointer:
+            raise ValueError("Cyclic or missing native cache parent")
+        seen.add(row["self"])
+        if row["self"] == root:
+            return True
+        if not row["parent"]:
+            return False
+        if row["parent"] not in by_pointer:
+            raise ValueError("Cyclic or missing native cache parent")
+        row = by_pointer[row["parent"]]
+
+
 def reconstruct(image, inventory):
     rows = registry.static_records(image)
     generated, functions = registry.module_assignments(image)
@@ -205,17 +221,6 @@ def reconstruct(image, inventory):
                     return value
         return None
 
-    def descends(row):
-        seen = set()
-        while row["parent"]:
-            if row["self"] in seen or row["parent"] not in by_pointer:
-                raise ValueError("Cyclic or missing native cache parent")
-            seen.add(row["self"])
-            row = by_pointer[row["parent"]]
-            if row["self"] == root:
-                return True
-        return False
-
     object_identity = universe.names["UnityEngine"]
 
     def object_class(value):
@@ -228,7 +233,7 @@ def reconstruct(image, inventory):
     for row in sorted(rows, key=lambda row: row["persistentTypeID"]):
         first = lookup(row["name"], row["module"])
         direct.append({"persistentTypeID": row["persistentTypeID"], "managed": identity(first)})
-        if not descends(row):
+        if not object_hierarchy(row, by_pointer, root):
             continue
         ancestor, value = row, first
         while not object_class(value):
@@ -253,7 +258,7 @@ def reconstruct(image, inventory):
             value = universe.resolve(universe.names[assembly], source["namespace"] + "." + source["name"])
         if value is not None:
             reverse.append({"persistentTypeID": row["persistentTypeID"], "managed": identity(value), "extra": True})
-    if len(forward) != 305:
+    if len(forward) != 306:
         raise ValueError("Pinned forward cache population differs")
     keys = [(row["managed"]["assembly_identity"], row["managed"]["name"]) for row in reverse]
     if len(keys) != len(set(keys)):

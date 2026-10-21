@@ -71,8 +71,10 @@ separates direct names, forward inheritance and reverse registrations. Invoke
 `python3 -I -S scripts/lab/phone_wrapper_population.py OWNER_SDK_BINARY SCOPED_METADATA ENGINE_DIRECTORY CORLIB NEW_PRIVATE_REPORT`
 with explicit owner inputs. The complete pinned 84-file managed set and all
 reader/input hashes are checked; inventory paths may be relocated only through
-this complete file-set binding. J878 verifies the forward mappings on Android;
-reverse registrations and complete cache/root qualification remain open.
+this complete file-set binding. J878 verifies supported forward queries;
+[J883](../../docs/PORTING_JOURNAL.md#j883--include-the-object-root-and-match-android-metadata-to-native-sdk-caches)
+matches root-inclusive Android metadata to native SDK cache observations.
+Emitted caches and complete cache-consumer/root qualification remain open.
 The separate desktop verification command is
 `python3 scripts/lab/phone_wrapper_population_oracle.py ROOT WORK EXACT_EDITOR`.
 Use explicit absolute paths for this checkout, its ignored work directory and
@@ -82,6 +84,18 @@ It queries abstract and concrete Object descendants, excludes the native root
 and nonobject IDs, and retains receipts/logs even on failure. It builds no player
 and never reuses or stops an MCP editor. Its output is verification only, never
 an input to phone preparation or a game build.
+
+The same command with an explicit trailing `--reverse` selects experimental
+read-only native forward/reverse cache observation in that fresh SDK process. It derives a
+layout from the pinned SDK bytes, reads only its own process, and uses public
+metadata accessors from the SDK's already loaded Mono library. It never loads
+another runtime, attaches to an existing editor or consumes a reconstructed
+mapping as oracle input. Source, layout, native runtime and observed managed
+image hashes bind the private report. Forward slots use independently observed
+native runtime indices, including the root; the query API still excludes that
+root. A stable native snapshot and independent
+comparison are required; this observer alone does not qualify complete linker
+roots or phone-only installation.
 
 ```sh
 ./dev prototype --action phone-content-fixture

@@ -300,6 +300,20 @@ qualification state, not inputs to a game build. Fresh child directories,
 storage reserves, tool hashes, refusal controls and the unchanged APK receipt
 remain local with their outputs; no SDK binary or assembly is republished.
 
+The population oracle's optional `--reverse` mode generates its private
+`layout.json` from the pinned SDK through `phone_wrapper_reverse.py` in the
+same fresh attempt. No saved layout or mapping is a required local input.
+The explicit attempt receipt selects native observations for comparison only;
+the build reads no timestamped observation path. The supplied SDK's already
+loaded native Mono library is hash-bound; it is not copied or redistributed.
+Private `wrapper-reverse-*` selectors, SDK observations, controls and comparison
+reports remain operator evidence under `work/coordination/phone-proof/`.
+The root-inclusive replay uses a separate
+`wrapper-population-root-on-android.py`, new source-stage/run selections and
+fresh owned children, retaining J878's original source/results. It reuses only
+the receipt-bound SDK and complete managed metadata inputs read-only. Neither
+that adapter nor a native oracle report is a game-build input.
+
 `phone_registry.inspect_action` generates
 `work/experiments/phone-registry/<attempt>/` from an explicit JSON request with
 one absolute `binary` path. Only the pinned supplied Unity SDK executable is

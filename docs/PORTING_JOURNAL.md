@@ -22640,3 +22640,141 @@ full player build with the same-request audio-to-camera-to-pre-strip binding,
 both standard checks, then explicit camera/listener activation evidence. Music
 lifecycle remains a separately reviewed draft; its uncalled pre-Term cleanup is
 not integrated.
+
+
+## J883 — Include the Object root and match Android metadata to native SDK caches
+
+2026-10-20. Hypothesis: an independent snapshot of the exact SDK's native
+reverse cache can test J878's 253 provisional registrations without accepting
+the model as oracle input. Begin from main `8c1523c` after PR20; wait for Main's
+R9 build to finish before acquiring the existing mutex. Main retains original
+gameplay/audio/animation ownership and its separate device. Route A, native
+IL2CPP ARM64, Android rendering and the desktop owner-build fallback stay fixed.
+This experiment adds SDK-only verification and metadata production, not a game
+build, installation or new execution backend.
+
+**Owners and isolation.** `phone_wrapper_reverse.py` derives a private observer
+layout from the pinned SDK as data. `WrapperReverseOracle.cs`, selected by the
+population runner's explicit `--reverse` mode, reads only its own fresh SDK
+process. The guarded project writer, committed-source check and primary mutex
+remain in force. The stage now binds `build_lock.py` and every transitive
+authored reader, addressing J878's review note. Neither MCP editor is attached,
+reused or stopped. The isolated batch exit is teardown; failures and reports
+stay local. ARCHITECTURE and LOCAL_STATE name setup, ownership and retained
+operator selections. No game or linker consumer reads these observations.
+
+Use bounded self-task VM copies, the actual image slide and readable SDK
+segment ranges. The manager slot lies in a zero-fill tail: the unchanged
+file-backed reader correctly refuses it. Runtime VM ranges are a separate
+contract; no SDK file-read guard is relaxed. The native-ID field is explicitly
+pinned to this SDK layout. Five public opaque metadata accessors resolve names,
+nesting and image filenames from the SDK's already loaded, hash-bound Mono
+library. `RTLD_NOLOAD` obtains that existing image only; no runtime is initialized
+or reloaded and no private native SDK function is invoked. Names and assembly
+identities come from the observed cache and SDK images, never the phone model.
+
+Consult the pinned reference-only
+[UnityType API](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Editor/Mono/TypeSystem/UnityType.cs)
+and [registry consumer](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Editor/Mono/BuildPipeline/RuntimeClassMetadata.cs),
+plus the public [Mono class](https://github.com/mono/mono/blob/mono-6.12.0.182/mono/metadata/class.h)
+and [image accessor declarations](https://github.com/mono/mono/blob/mono-6.12.0.182/mono/metadata/image.h)
+for API/ABI knowledge. Local platform headers establish self-task VM-read and
+already-loaded-image flags. This is generic SDK build-tool work; no community
+implementation, SDK instructions or generated mapping table is copied into
+public source. Owner-supplied SDK inspection establishes no redistribution right.
+
+**First native result and failure.** Oracle source
+`105a807370c2e65c1862e8267ed45b7cbd396d66` exits 0 in a fresh SDK-only project.
+Report SHA-256 is
+`060e95a68b61f92909136351364d31793a74aa3dee10fdc28c240e5c26682fa6`.
+The stable reverse vector contains 254 registrations. All 253 J878 model entries
+match their full managed identities and native IDs, but one additional native
+Object-root registration is missing. Preserve that failed comparison. The 305
+supported forward queries still match; their root exclusion cannot establish
+the complete cache population. J878's query result remains valid, while its
+305-entry model is incomplete.
+
+The native range includes its selected base. The pinned managed API's range
+test includes self, and bounded SDK traversal has a header before its first
+array entry. Treating that header offset as exclusion of the base was the wrong
+interpretation. `object_hierarchy` now includes the selected root as well as its
+descendants, refuses missing/cyclic parents and preserves unrelated roots. The
+result is 306 forward and 254 reverse entries, with no hardcoded root mapping.
+The six extra registrations and all 318 direct-name results remain separate.
+Reverse keys are full managed identities; native IDs need not be unique.
+
+**Complete cache observation.** The extended observer reads the native forward
+vector as well. Runtime indices and persistent IDs come only from the SDK's
+complete independently validated registry; zero slots remain absent entries.
+An initial field-prefix expansion correctly refuses a later unsupported shift.
+The accepted layout uses the earlier qualified assignment prefix, preserving
+the original reader's refusal. Stable before/after bounds, manager pointer and
+vector bytes are required. This proves these vector snapshots, not arbitrary
+SDK-object immutability or a globally atomic runtime snapshot.
+
+Committed source `1179e4989e9d79617493682e1cfe7fe69a289170` runs another fresh
+mutex-protected SDK-only batch, exits 0 and releases the lock. Report SHA-256 is
+`675de2120b794fa1f9890ad4aed3266a5a27d6ad9c4da35cde67968092977dd0`.
+All 306 forward and 254 reverse entries match the corrected model's names,
+assembly identities and native IDs, with zero missing/unexpected entries. All
+306 flags match the independent SDK records. The earlier 305 supported queries
+retain their exclusions and all 318 direct names are unchanged. The owner SDK
+binary stays `906123118e45d56c6bcf20f3776ed2373417553042500714023daeb9e53058e8`;
+its already loaded native Mono library stays
+`5d262167de4d3001a48f50baafcc03a55ceebaf817429e0dcc049cb0b0883995`.
+
+**Android result.** Replay that same committed producer on the explicitly
+configured alpha device. Verify the owned workspace/tool/input receipts and
+fresh storage/backing/free reserve; create a fresh child and stage ten authored
+readers/tests. Reuse J864's supplied SDK and J866's phone-produced scoped
+inventory/complete managed file set read-only. No SDK/assembly copy, package
+installation, original-installation edit or data movement is needed. Trusted
+Android Python parses supplied SDK bytes and managed metadata as data.
+
+The producer exits 0 in 14.575 seconds of host-observed wall time. Its entire
+report is byte-identical to host output using the same phone-generated
+inventory, SHA-256
+`9662efb12311043af469af4db1b87bbcf3b6aa260829a09f63df6ef43284fc66`.
+It contains 306 forward entries, including 28 abstract rows, and 254 reverse
+entries. Seven Android contracts pass with no skips. Existing-output, unknown
+native SDK and mixed-corlib controls refuse; existing report bytes survive and
+negative outputs remain absent. Reader and reused input hashes are unchanged.
+The alpha APK remains
+`be26c21c4cd8ff15a8a663528216cf7a69394a51d8b9441a63a1a496f83e98b5`
+before/after and its display is asleep. No gameplay or performance equivalence
+is inferred from metadata-tool timing.
+
+Thirty focused host tests pass. The actual C# collector runs against independent
+authored memory and rejects invalid/excessive bounds, unordered/duplicate class
+keys, duplicate managed identities, foreign native pointers, incomplete runtime
+indices and vector drift. It covers ASLR, zero-fill VM, forward zero slots and
+count mismatch. Fresh-clone CI on actual source passes 1,366 tests with 68
+optional skips, Ruff, public audit and document freshness; both GitHub checks
+pass. Whole-game preflight still refuses this worktree's missing bootstrap
+inventory. Independent review of the original observer accepts its bounded
+scope and independently confirms the preserved first mismatch. Review of the
+expanded source at `1179e49` accepts the bounded metadata claims and rehashes all
+363 artifacts with zero missing files or mismatches. It verifies runtime-index
+binding, inclusive root membership and the native/model comparisons, retaining
+the vector-stability and qualification limits above.
+
+Private `wrapper-reverse-proof-receipt-v2.json` binds 370 source/input/output/
+failure/control/comparison/review/CI/prerequisite artifacts, including the
+reviewed 363-artifact first proof, final source review and J878's unchanged
+260-artifact proof; SHA-256
+`87eaaecc25af343fc9830a7e46b1560630c5c4a161e3663e806230d2e996ed32`.
+Raw SDK observations, cache tables and device/workspace identifiers stay ignored.
+
+**Remaining gate.** The verified contract is Android-produced metadata matching
+desktop SDK cache observations. Complete linker-consumer/root semantics remain
+unqualified; both cache_population_qualified and
+root_generation_qualified stay false. Produce independent project scene,
+manager and dependency usage and exact fixture linker roots next, preserving
+direct scene names and the consumer's separate ID-based/name-based root rules.
+The entire SDK registry is not project usage. General module policy, managed
+game compilation,
+content/shaders, permitted tool delivery, normal app hosting, owner signing and
+installation/update flows and matched-workload performance remain separate
+gates. Revisit on SDK/hash/layout/ABI, managed set, source, consumer or inventory
+drift. No alternative runtime, working-build change or final distribution shell
+is selected.
