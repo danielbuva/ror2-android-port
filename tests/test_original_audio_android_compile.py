@@ -126,7 +126,12 @@ class OriginalAudioAndroidCompileTests(unittest.TestCase):
             MONO,
             CSC,
             cls.core,
-            [SOURCE / "core/GameAudioOriginalReadiness.cs", SOURCE / "core/GameAudioOriginalOwner.cs"],
+            [
+                SOURCE / "core/GameAudioOriginalReadiness.cs",
+                SOURCE / "core/GameAudioOriginalOwner.cs",
+                SOURCE / "core/PointSoundDiagnosticObserver.cs",
+                ROOT / "tests/fixtures/point_sound/PointSoundBuildPin.cs",
+            ],
             cls.options,
             [cls.observer],
             cls.work,

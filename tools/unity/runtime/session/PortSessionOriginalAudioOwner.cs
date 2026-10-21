@@ -11,6 +11,7 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
     private static readonly object Sync = new object();
     private static PortSessionOriginalAudioOwner instance;
     private static int sessionEntries;
+    private static bool pointSoundLogObserverAttached;
     private bool started;
     private bool completed;
     private float elapsed;
@@ -59,6 +60,33 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
             }
         }
         while (!host.completed) yield return null;
+    }
+
+    // Unity owns this callback boundary, while Core retains a Unity-free
+    // bounded observer. Subscribe only for an explicitly selected PortSession.
+    public static void ConfigurePointSoundDiagnostic(bool requested)
+    {
+        GameAudioOriginalOwner.ConfigurePointSoundDiagnostic(requested);
+        if (!requested || pointSoundLogObserverAttached) return;
+        Application.logMessageReceived += ObservePointSoundLog;
+        pointSoundLogObserverAttached = true;
+    }
+
+    public static void DisablePointSoundDiagnostic()
+    {
+        GameAudioOriginalOwner.DisablePointSoundDiagnostic();
+        if (!pointSoundLogObserverAttached) return;
+        Application.logMessageReceived -= ObservePointSoundLog;
+        pointSoundLogObserverAttached = false;
+    }
+
+    public static PointSoundDiagnosticObserver.Snapshot CapturePointSoundDiagnosticSnapshot() =>
+        GameAudioOriginalOwner.CapturePointSoundDiagnosticSnapshot();
+
+    private static void ObservePointSoundLog(string condition, string stackTrace, LogType type)
+    {
+        try { PointSoundDiagnosticObserver.ObserveUnityLog(condition, stackTrace); }
+        catch { /* The diagnostic callback never changes Unity's original log path. */ }
     }
 
     public static Snapshot CaptureSnapshot()

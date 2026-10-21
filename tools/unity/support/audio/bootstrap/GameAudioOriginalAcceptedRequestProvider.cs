@@ -10,6 +10,7 @@ internal static class GameAudioOriginalAcceptedRequestProvider
 {
     private const string AcceptedInputId = "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88";
     private const string AcceptedGameAssemblySha256 = "a5f7d83c7e6872fdd6099fdc299adb7d4fa03cbf465e526d6f5efcc35c2c281d";
+    private const string AcceptedComposedGameSha256 = "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc";
     private const string AcceptedRawApiSha256 = "564b74ec232e81af8fa4b65c17537a4d05890d9181281eab0bc28bd441a3a781";
     private const string AcceptedAdaptedApiSha256 = "2bd973178c99bfcb4d20510e2d1eac7efa9dd6d698237f2edfa486171bc2f272";
     private const string AcceptedObservedApiSha256 = "7ec842ee2244590f9227c44280ebbb4a0debf9b83ad1958c045d68dec47e0af9";
@@ -61,6 +62,7 @@ internal static class GameAudioOriginalAcceptedRequestProvider
             if (String.IsNullOrEmpty(name) || name.IndexOfAny(new[] { '/', '\\', ':' }) >= 0 || !names.Add(name))
                 return "audio_stage_bank_names_invalid";
         if (!Equal(GameAudioOriginalGeneratedRequestPin.GameAssemblySha256, AcceptedGameAssemblySha256)) return "audio_game_source_pin_mismatch";
+        if (!Equal(GameAudioOriginalGeneratedRequestPin.ComposedGameSha256, AcceptedComposedGameSha256)) return "audio_composed_game_pin_mismatch";
         if (!Equal(GameAudioOriginalGeneratedRequestPin.RawApiSha256, AcceptedRawApiSha256)) return "audio_raw_api_pin_mismatch";
         if (!Equal(GameAudioOriginalGeneratedRequestPin.AdaptedApiSha256, AcceptedAdaptedApiSha256)) return "audio_adapted_api_pin_mismatch";
         if (!Equal(GameAudioOriginalGeneratedRequestPin.ObservedApiSha256, AcceptedObservedApiSha256)) return "audio_observer_api_pin_mismatch";

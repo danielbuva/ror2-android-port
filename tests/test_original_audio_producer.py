@@ -13,7 +13,6 @@ SPEC = importlib.util.spec_from_file_location("audio_producer", SCRIPT)
 assert SPEC and SPEC.loader
 producer = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(producer)
-producer.LINEAGE["composed_api_sha256"] = "c" * 64
 
 
 def fixture_manifest(root: Path) -> tuple[dict, dict[str, Path]]:
@@ -25,6 +24,7 @@ def fixture_manifest(root: Path) -> tuple[dict, dict[str, Path]]:
         "composed_api": "api-instrumented-composed.dll",
         "guarded_game": "game-optional-presentation-guarded.dll",
         "composed_game": "game-original-owner-composed.dll",
+        "point_sound_composed_game": "game-original-owner-point-sound-composed.dll",
     }
     hashes: dict[str, str] = {}
     outputs: dict[str, Path] = {}
@@ -57,15 +57,29 @@ class ProducerManifestTests(unittest.TestCase):
     def temporary_directory(self):
         return tempfile.TemporaryDirectory()
 
+    def test_actual_current_pair_accepts_game_only_transform_with_same_api(self):
+        current_api = producer.LINEAGE["composed_api_sha256"]
+        current_game = producer.LINEAGE["composed_game_sha256"]
+        predecessor_api = producer.PREVIOUS_COMPOSED_API_SHA256
+        predecessor_game = producer.PREVIOUS_COMPOSED_GAME_SHA256
+        self.assertEqual(predecessor_api, current_api)
+        self.assertNotEqual(predecessor_game, current_game)
+        self.assertEqual("current-audio", producer.classify_project_pair(current_api, current_game))
+        self.assertEqual("previous-audio", producer.classify_project_pair(predecessor_api, predecessor_game))
+
     def test_only_declared_ordinary_previous_and_current_pairs_are_accepted(self):
         current_api = "c" * 64
-        old_api = producer.PREVIOUS_COMPOSED_API_SHA256
+        old_api = producer.OLDER_RESTORE_API_SHA256
+        predecessor_api = producer.PREVIOUS_COMPOSED_API_SHA256
         game = producer.LINEAGE["composed_game_sha256"]
+        old_game = producer.PREVIOUS_COMPOSED_GAME_SHA256
         with mock.patch.dict(producer.LINEAGE, {"composed_api_sha256": current_api}):
             self.assertEqual("ordinary", producer.classify_project_pair(producer.DEFAULT_API_SHA256, producer.DEFAULT_GAME_SHA256))
-            self.assertEqual("previous-audio", producer.classify_project_pair(old_api, game))
+            self.assertEqual("older-restore-only", producer.classify_project_pair(old_api, old_game))
+            self.assertEqual("previous-audio", producer.classify_project_pair(predecessor_api, old_game))
+            self.assertEqual("previous-audio", producer.classify_project_pair(current_api, old_game))
             self.assertEqual("current-audio", producer.classify_project_pair(current_api, game))
-            self.assertEqual("legacy-restore-only", producer.classify_project_pair(producer.LEGACY_RESTORE_API_SHA256, game))
+            self.assertEqual("legacy-restore-only", producer.classify_project_pair(producer.LEGACY_RESTORE_API_SHA256, old_game))
             with self.assertRaisesRegex(ValueError, "neither ordinary guarded"):
                 producer.classify_project_pair("d" * 64, game)
             with self.assertRaisesRegex(ValueError, "neither ordinary guarded"):
@@ -85,12 +99,16 @@ class ProducerManifestTests(unittest.TestCase):
                 "observed_api_sha256": manifest["source_input_hashes"]["observed_api"],
                 "composed_api_sha256": manifest["source_input_hashes"]["composed_api"],
                 "guarded_game_input_sha256": manifest["source_input_hashes"]["guarded_game"],
-                "composed_game_sha256": manifest["source_input_hashes"]["composed_game"],
+                "composed_game_sha256": manifest["source_input_hashes"]["point_sound_composed_game"],
             }
-            with mock.patch.dict(producer.LINEAGE, lineage):
+            with (
+                mock.patch.dict(producer.LINEAGE, lineage),
+                mock.patch.object(producer, "PREVIOUS_COMPOSED_GAME_SHA256", manifest["source_input_hashes"]["composed_game"]),
+            ):
                 joined = producer.verify_managed_output_manifest(manifest, root)
             self.assertEqual(set(outputs), set(joined))
             self.assertEqual("api-instrumented-composed.dll", next(p.name for p in joined.values() if p.name == "api-instrumented-composed.dll"))
+            self.assertIn("game-original-owner-point-sound-composed.dll", {p.name for p in joined.values()})
 
     def test_managed_output_bytes_must_match_the_manifest(self) -> None:
         with self.temporary_directory() as temp:
@@ -103,11 +121,25 @@ class ProducerManifestTests(unittest.TestCase):
                 "observed_api_sha256": manifest["source_input_hashes"]["observed_api"],
                 "composed_api_sha256": manifest["source_input_hashes"]["composed_api"],
                 "guarded_game_input_sha256": manifest["source_input_hashes"]["guarded_game"],
-                "composed_game_sha256": manifest["source_input_hashes"]["composed_game"],
+                "composed_game_sha256": manifest["source_input_hashes"]["point_sound_composed_game"],
             }
             outputs["synthetic-chain/api-adapted.dll"].write_bytes(b"changed after producer receipt")
-            with mock.patch.dict(producer.LINEAGE, lineage), self.assertRaisesRegex(ValueError, "manifest hash"):
+            with (
+                mock.patch.dict(producer.LINEAGE, lineage),
+                mock.patch.object(producer, "PREVIOUS_COMPOSED_GAME_SHA256", manifest["source_input_hashes"]["composed_game"]),
+                self.assertRaisesRegex(ValueError, "manifest hash"),
+            ):
                 producer.verify_managed_output_manifest(manifest, root)
+
+    def test_frozen_pipeline_sources_match_the_exact_manifest_pins(self) -> None:
+        for relative, expected in producer.OWNER_SOURCE_HASHES.items():
+            path = producer.SOURCE / relative
+            self.assertTrue(path.is_file(), relative)
+            self.assertEqual(expected, hashlib.sha256(path.read_bytes()).hexdigest(), relative)
+        generator_path = producer.TOOLS / "generate_accepted_request_pin.py"
+        self.assertEqual(producer.REQUEST_PIN_TOOL_SHA256, hashlib.sha256(generator_path.read_bytes()).hexdigest())
+        managed = producer.SOURCE / "managed-producer/produce.py"
+        self.assertEqual(producer.MANAGED_PRODUCER_SHA256, hashlib.sha256(managed.read_bytes()).hexdigest())
 
     def test_request_mode_and_path_escape_are_refused(self) -> None:
         with self.temporary_directory() as temp:
@@ -120,9 +152,12 @@ class ProducerManifestTests(unittest.TestCase):
                 "observed_api_sha256": manifest["source_input_hashes"]["observed_api"],
                 "composed_api_sha256": manifest["source_input_hashes"]["composed_api"],
                 "guarded_game_input_sha256": manifest["source_input_hashes"]["guarded_game"],
-                "composed_game_sha256": manifest["source_input_hashes"]["composed_game"],
+                "composed_game_sha256": manifest["source_input_hashes"]["point_sound_composed_game"],
             }
-            with mock.patch.dict(producer.LINEAGE, lineage):
+            with (
+                mock.patch.dict(producer.LINEAGE, lineage),
+                mock.patch.object(producer, "PREVIOUS_COMPOSED_GAME_SHA256", manifest["source_input_hashes"]["composed_game"]),
+            ):
                 enabled = {**manifest, "request": {"requested": True}}
                 with self.assertRaisesRegex(ValueError, "non-default request state"):
                     producer.verify_managed_output_manifest(enabled, root)

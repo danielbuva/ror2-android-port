@@ -21670,12 +21670,155 @@ point-sound null-site witness. A later playback control must require energy
 in a properly aligned event interval rather than global nonzero samples.
 No game-audio, acoustic, parity or baseline promotion is claimed.
 
+## J872 — Verify the Android bank-path repair and retain the point-sound failure
+
+Date: 2026-10-20.
+
+Hypothesis: J870's Android-only warning-predicate repair removes the invalid
+filesystem warning while preserving original native Init, bank loading and
+ordinary gameplay. It does not address J868's point-sound null references or
+establish audible output. The pinned R2API.Sound engine-initialization/bank-loading
+seam remains the prior-art basis; current original callbacks and device logs
+are authoritative.
+
+Change: full original-audio player from committed source `d31fc02`, using the
+accepted input and unchanged original bank cohort. The actual generated API is
+`d540a226…`, with game `1034a747…`. No point-sound instrumentation or passive
+PCM draft is in this APK. The isolated fixture/capture qualification remains J871.
+
+Build evidence: request `20261021T035449.427900Z-8ba5983754294891adef6b0f27da4870`
+succeeds in 198.168488 s with zero build errors. Frozen candidate:
+`work/experiments/original-game-audio/candidate-20261021T035935.774439Z/`.
+APK SHA-256:
+`417ce85643e877c56c5a963d254a4c7bdb92ae1a40f923366191b1128720818d`.
+Matching symbols ZIP SHA-256:
+`6bee47a002c7cf0de4692312b3e1fd75a5a3efa18eaf6893a1ea5905b2e8bfc1`;
+`libil2cpp` Build ID `cfcaeb10241a43c6f42e1c2d78382b6cc46b9c53`.
+The candidate binds 358 authored inputs, 333 same-request pre-strip assemblies,
+266 frozen payload hashes and all 154 packaged banks (Init plus 153 requested).
+
+Device evidence: explicit primary-device installation and payload sync pass
+with fresh adopted-only capacity/placement checks. Both default checks pass
+with current-build true, empty report failure fields and 13 applied runs:
+
+- Plain: `work/experiments/baseline/20261021T040153.700858Z/`, 35.205719 s
+  on Lakes.
+- One exit: `work/experiments/baseline/20261021T040539.566563Z/`, exactly one
+  transition to Goolake, 151.246490 s total and 12.166351 s in the new stage.
+
+The original startup snapshot records native Init attempted, manager returned,
+153/153 banks complete, Ready true, no-audio false and the catalog lease held.
+This installed implementation captures startup state only; it supplies no live
+later-event or termination assertion. Neither current process has the missing
+SoundBanks path warning. Plain has only the five intentional Windows-bundle
+negative-control error lines. Stage mode additionally records four original
+`PointSoundManager.EmitSoundLocal` null references at offset zero. Its raw log
+also contains earlier-process history; Root's derived qualification filters
+each run by its actual process identity. The raw runner's broad
+`unexpected_unity_error_lines` field is preserved, not accepted as a diagnosis.
+
+Qualification and cleanup:
+`work/coordination/codex-original-game-audio-device-root/r4/root-qualified-current-pids.json`,
+SHA-256 `fee57e276c5809cf03f79ad590a4b11e3d5a2e997b9933bece8b64b201d29dd6`.
+The runner removes its selector, stops the game and sleeps the display;
+terminal evidence confirms process absence and sleep. The new diagnostic is
+installed. The accepted baseline remains J850 `f1550ce0…`; do not promote this
+player or infer audio playback from bank readiness and passing gameplay checks.
+
+First remaining audio failure: original point-sound emission null reference.
+Next: host-validate bounded stage localization and passive actual-game PCM
+observation, then build their committed sources. Preserve this candidate and
+all failed evidence. Revisit playback qualification only with actual-game event
+and output evidence; physical audibility, spatialization and music remain open.
+No reconstruction step or authored runtime source changes in this checkpoint.
+
+## J874 — Stage bounded original point-sound localization through the public producer
+
+Date: 2026-10-20.
+
+Hypothesis: J872's original `PointSoundManager.EmitSoundLocal` null reference
+needs the failing boundary identified before changing gameplay or Wwise behavior.
+The pinned R2API.Sound source's post-engine-Init bank seam confirms that bank
+readiness alone does not identify event posting or output. Current input IL and
+device stacks, rather than a replacement emitter implementation, guide this step.
+
+Change: an authored Cecil transformation adds scalar stage/event observations to
+the exact composed game's existing emitter acquisition, Unity fake-null test,
+transform access, original event-post alternatives and timeout enqueue. It
+preserves original event arguments, calls, branches and exception behavior.
+Only the two pinned original point-sound methods can change. No emitter,
+listener, native engine or alternate playback system is created. The bounded
+Core observer retains no original messages/stacks or Unity objects. Its
+best-effort last-event/stage correlation does not prove native output.
+
+The process audio coordinator owns a per-session Unity log subscription. The
+explicit `pointSoundDiagnosticRequested` selector defaults false and requires
+the integrated route, selected ready audio and an instrumented-callsite build
+pin. Every report save refreshes original-audio and diagnostic snapshots.
+Completion, source-lifecycle recovery and session destruction retire only this
+observer idempotently. Original engine, bank and catalog lifetime ownership stay
+with their named owners. The observer is one selected diagnostic session per
+process; subsequent same-process diagnostic rearming is refused.
+
+Pipeline: the public producer, generated request/provider and stager bind the
+actual instrumented game hash, not just the raw input. API remains
+`d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23`;
+game is `6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc`.
+Current/predecessor validation compares complete API/game pairs, allowing an
+unchanged API with a changed game. The immediately preceding `d540/1034` pair
+upgrades through its owned receipt; `9a3/1034` and the older invalid-IL API remain
+restore-only. Default-off uses the ordinary guarded modules with no injected
+calls and a false callsite pin.
+
+Root's actual public-chain replay exposed and repaired two integration failures
+before accepting this source: an API-only predecessor check rejected the intended
+game-only change, and an isolated intermediate assembly lacked its dependency
+resolution directory when Cecil wrote it. The production transform now receives
+the accepted Managed directory explicitly. Its source and managed-producer pins
+are checked against actual bytes; raw game/API and transformed output pins
+remain exact. New host regressions cover the pair classifier and argument/pin
+binding. Existing Core compile fixtures include the new observer/build pin.
+
+Host evidence: all requested/current stages contain 165 owned outputs. The third
+request reuses a validated generation cache, then default off restores the
+ordinary modules with eight outputs. Root additionally reconstructs the owned
+J872 stage in disposable scratch, upgrades it to the new pair with 165 outputs,
+then restores default off. Evidence:
+`work/coordination/codex-original-audio-host-stage-root/r4/`.
+Cached report SHA-256
+`cf4aac039b589ea65804eda8ae27003db0f96f65e934541cefb7cc13c79720ff`;
+default-off report
+`cd3279f008eedafaa372a014db35b2901b242f77f92ee9d7c597d1f6e12da729`.
+The failed replay logs remain alongside the successful receipts.
+
+Independent integration review:
+`work/coordination/original-game-audio-point-sound-review/r3/review.md`,
+SHA-256 `956065e5ef0ad8de6ec29cf36d6f3d56d75c97c98b2f698af83f8455939f67a4`.
+The full exact-editor host runtime compile passes with 118 source files and 264
+references, no camera overlay and no errors. Receipt:
+`work/coordination/original-audio-point-sound-repair/root-runtime-compile-r1/compile_receipt.json`,
+SHA-256 `5d8d6972b14f8af76a2dc6d6948d891fd2cc67bea3c172ffcfa952b28a0c1eab`.
+All 46 public audio/point-sound contracts pass with the installed toolchain;
+Ruff and diff checks pass. These host results supply no runtime proof. No Unity player build or device qualification is
+claimed for this checkpoint. Installed APK remains J872 `417ce856…`; accepted
+baseline remains J850 `f1550ce0…`.
+
+Provenance/privacy review: only authored transformations, coordinator/observer
+code, synthetic fixtures and summaries are tracked. No original implementation,
+managed binary, bank, SDK or raw capture is published. This changes authored
+runtime sources and generation tools consumed by reconstruction; replay the
+relevant generation steps before the next full build. No new build input reads
+a timestamped experiment output. Next: build committed source, run both default
+checks and an explicitly selected point-sound run; classify the first actual
+failing boundary before proposing a behavior repair. Passive PCM is a separate
+host draft and has no output acceptance here.
 
 ## J873 — Separate direct scene names from SDK wrapper-cache queries
 
 2026-10-20. Hypothesis: an independent exact-editor wrapper-query oracle can
 expose gaps hidden by J869's 42-row authored scene comparison. Start from main
-`d31fc02`/J871 after PR17's accepted merge. Coordinate the separate journal
+`d31fc02`/J871 after PR17's accepted merge; integrate main `d02732f`/J872/J874
+for the final review head. Coordinate the separate journal
 number and wait for main's Android build to finish before acquiring the shared
 mutex. Main retains original gameplay/audio ownership. Route A, IL2CPP ARM64,
 Android rendering and the desktop fallback remain fixed. This is SDK-only

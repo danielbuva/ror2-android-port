@@ -194,13 +194,24 @@ class StageTests(unittest.TestCase):
             self.assertEqual(stage_module.LINEAGE, result["lineage"])
             self.assertNotEqual(previous_hash, hashlib.sha256(previous_path.read_bytes()).hexdigest())
 
-    def test_predecessor_lineage_differs_only_at_declared_composed_api_pin(self):
+    def test_predecessor_lineage_differs_only_at_declared_composed_game_pin(self):
         differences = {key for key in stage_module.LINEAGE if stage_module.LINEAGE[key] != stage_module.PREVIOUS_LINEAGE.get(key)}
-        self.assertEqual({"composed_api_sha256"}, differences)
+        self.assertEqual({"composed_api_sha256", "composed_game_sha256"}, differences)
         self.assertEqual(
-            "9a3f9911697b4ce28a955dff09f618e0f2662083e56eeb28ff5b6ecc02b588f3",
+            "d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23",
             stage_module.PREVIOUS_LINEAGE["composed_api_sha256"],
         )
+
+    def test_9a_lineage_is_restore_only_and_migrates_to_current_default_off(self):
+        with self.temporary_directory() as temp:
+            root = Path(temp)
+            project = root / "project"
+            project.mkdir()
+            self.write_previous_default_off_receipt(project, lineage=stage_module.OLDER_RESTORE_LINEAGE)
+            manifest, _, _ = write_set(root, False)
+            result = stage_module.stage(project, manifest, None, None)
+            self.assertEqual(stage_module.LINEAGE, result["lineage"])
+            self.assertFalse(result["requested"])
 
     def test_legacy_793_is_restore_only_and_cannot_start_new_optin(self):
         self.assertIn(stage_module.LEGACY_RESTORE_API_SHA256, stage_module.ALLOWED_RESTORE_PREIMAGES["restore_api"])

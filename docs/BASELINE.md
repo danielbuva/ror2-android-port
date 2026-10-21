@@ -72,10 +72,10 @@ The plain check and its acceptance criteria remain unchanged.
 
 ## Current baseline (2026-10-20)
 
-J868's later diagnostic APK is installed after both default checks, but is not
+J872's later diagnostic APK is installed after both default checks, but is not
 promoted: current-process audio log errors remain and playback is unqualified.
 See the [current snapshot](../PORTING_STATE.md) for installed identity and
-[J868](PORTING_JOURNAL.md#j868--initialize-the-original-game-audio-owner-and-banks-but-retain-path-point-sound-and-output-failures)
+[J872](PORTING_JOURNAL.md#j872--verify-the-android-bank-path-repair-and-retain-the-point-sound-failure)
 for the single result record. The accepted baseline below remains the rollback.
 
 | Item | Value |
