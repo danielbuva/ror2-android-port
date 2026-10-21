@@ -86,7 +86,8 @@ failures remain under `work/experiments/phone-roots/`; it generates no roots,
 installs no package and performs no editor mutation. Host .NET 10 qualification
 does not establish an Android implementation or native hierarchy completeness.
 
-`phone_registry.py` owns separate experimental static SDK metadata support.
+`phone_registry.py` and `phone_registry_literals.py` own separate experimental
+static SDK metadata support.
 The current `phone-native-registry` action accepts an explicit owner binary,
 requires the pinned SDK hash, and stages an unchanged private copy with the
 standalone standard-library Python reader. Bounded Mach-O symbols/data and
@@ -96,12 +97,19 @@ index is restricted to the declared instruction section. Conservative backwards
 argument slicing uses symbol and branch-derived scan bounds, including incoming branch
 targets, and respects caller clobbers and runtime loads. Direct module arguments
 must agree with the earlier generated-registration subset; no function name is
-substituted for a missing argument. Unknown layouts,
-instructions and calls refuse; absent records/module assignments remain
-unresolved. It neither executes SDK instructions nor supplies an execution
-backend. Source/input hashes, metadata and failures remain under
+substituted for a missing argument. The literal helper reads selected descriptor
+fields from bounded stack stores: definitions must dominate registration, entry
+arguments must be preserved, and partial/conditional overwrites, later backedges,
+frame movement, alias stores and unknown calls refuse. Its only intervening call
+allowance is the exact assertion signature with file-backed literal strings and
+integer arguments, never a passed descriptor. The action stages/hashes both
+authored source files alongside the owner SDK; explicit file loading imports only
+that authored helper under isolated Python. Unknown layouts, instructions,
+arguments and parent identities refuse. It neither executes SDK instructions
+nor supplies an execution backend. Source/input hashes, metadata and failures remain under
 `work/experiments/phone-registry/`; exclusive output creation preserves attempts.
-No build consumes its partial registry, and no editor or game state changes.
+No build consumes its registry or receives project roots from it; no editor or
+game state changes.
 
 `tools/phone-build/host/` is separate experimental **support**. Its Android
 driver owns compilation of authored C/Java/XML, DEX/APK production and disposable

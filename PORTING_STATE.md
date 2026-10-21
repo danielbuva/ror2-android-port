@@ -1,8 +1,8 @@
 # Porting state
 
-Last updated 2026-10-20 after **J856/J855** (the Siren retry reaches Ship
-Graveyard but stops on host clock/schema checks; native audio/camera integration
-continues). f1550ce0 retains both default passes.
+Last updated 2026-10-20 after **J856/J857** (the Siren retry stops on host checks;
+complete pinned SDK native metadata passes on the alpha phone; native audio/
+camera integration continues). f1550ce0 retains both default passes.
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
@@ -15,7 +15,7 @@ content on every update. Results are recorded once in the
 | --- | --- |
 | Accepted input | Steam build 25475991, input id `6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88` |
 | Toolchain | Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan (`environment/toolchain.json`) |
-| Owner-build research | J853/J855 qualify partial static SDK registry extraction and explicit module arguments on Android. Independent linker roots, content/shaders and complete phone-only owner builds remain open; Route A and the desktop fallback stay fixed. No game build or install occurs. |
+| Owner-build research | J857 qualifies complete pinned SDK native-registry metadata extraction on Android. Independent project scene usage/module policy/roots, content/shaders and complete phone-only owner builds remain open; Route A and the desktop fallback stay fixed. No game build or install occurs. |
 | Latest device-verified APK | `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949` — J850, source 1780ea9; both default checks pass on the primary gameplay device; 111 runtime sources, 312 frozen authored inputs, 266 unchanged payload hashes, matching symbols and same-request pre-strip capture. Targeted native visual/Siren behavior remains separate. |
 | Installed now | The primary gameplay device has default-qualified f1550ce0…; its bounded visual and Siren diagnostics have stopped and the display is asleep. J854 records native Invisible state with 12 disabled renderers, completed teardown and session-2 menu return; the runner timed out watching a stale report identity. J845’s owned audio fixture is removed; the game remained 8357db8b… throughout that isolated test. J843’s 089bcf22… is preserved but uninstalled. The spare last retains 107718f8… with earlier automatic checks; no new spare action. The alpha device last retains be26c21c… and is asleep after J849’s phone stripping/converter run; no new alpha gameplay qualification. |
 | Runtime source since verified APK | No new player-runtime change since f1550ce0. J852 replaces the optional editor/host receipt owner with a host-tested Bee collector; that later source is not built or device-qualified. J856 reaches Ship Graveyard with J847’s trigger, but host clock/schema checks stop before recorder samples; J854 records J848’s visual snapshot result, with camera integration and visual acceptance still open. The original-game audio integration is a private host draft; composed audio remains unavailable. |
