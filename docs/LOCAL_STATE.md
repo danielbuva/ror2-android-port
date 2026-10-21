@@ -40,6 +40,13 @@ work root's configuration, keeping the current lab opt-in separate.
 
 ## Isolated phone build support (2026-10-20)
 
+`native-flags-*` selectors, source-bound stages and the retained Android adapter
+under `work/coordination/phone-proof/` select the independent native flag reader
+probe. Sources come from the committed public readers; SDK bytes are selected
+read-only through the existing owned SDK receipt. Fresh device/storage/reserve
+and source/tool/input hashes are required. New reports and refusal controls are
+outputs, never game or phone-build inputs; no timestamped directory is inferred.
+
 `phone_wrapper_oracle.py` generates SDK-only projects under
 `work/rebuild/phone-wrapper-oracle/<attempt>/project/` from its public C# source.
 An explicit check request selects that project; each batch check creates a new

@@ -25,6 +25,8 @@ Scoped managed metadata/forwarding on Android: [J866](PORTING_JOURNAL.md#j866--q
 SDK normal-path wrapper-search metadata: [J869](PORTING_JOURNAL.md#j869--decode-pinned-sdk-wrapper-search-order-on-android).
 Independent desktop wrapper-query oracle:
 [J873](PORTING_JOURNAL.md#j873--separate-direct-scene-names-from-sdk-wrapper-cache-queries).
+Native SDK abstract/sealed/editor flags on Android:
+[J876](PORTING_JOURNAL.md#j876--decode-native-sdk-type-flags-on-android).
 
 **Finding:** this repository has no demonstrated phone-only build path. Many
 preparation and packaging stages have Android-capable open-source building
@@ -56,6 +58,8 @@ SDK's normal-path wrapper-search metadata there. Complete wrapper-cache/mapping
 and scene/manager/dependency usage remain open. J873 adds an independent desktop
 verification oracle and separates direct scene names from inherited cache
 queries; its reports are never phone-build inputs.
+J876 qualifies a separate static native flag reader on Android. Complete cache
+population and extra-type rules remain open.
 These are build-pipeline problems; keep the game runtime
 and desktop fallback while investigating them independently.
 

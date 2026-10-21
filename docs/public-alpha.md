@@ -41,6 +41,8 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       independent producers. Preserve
       [J873's direct-name/cache-query distinction](PORTING_JOURNAL.md#j873--separate-direct-scene-names-from-sdk-wrapper-cache-queries);
       the independent desktop oracle must never become a phone-build input.
+      Extend [J876's native flag metadata](PORTING_JOURNAL.md#j876--decode-native-sdk-type-flags-on-android)
+      through complete cache population and extra-type rules before root production.
 - [ ] Benchmark any alternative pipeline with pinned versions/options/shaders and
       matched device workloads; IL2CPP alone does not prove equivalent performance.
 - [ ] Qualify the isolated owner-build environment; the alpha device is alpha's
