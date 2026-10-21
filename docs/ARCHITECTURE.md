@@ -140,7 +140,9 @@ refuse. Assembly templates and ordered namespaces come from the SDK; repeated
 entries remain distinct. Setup is an explicit owner-binary request and a fresh
 private attempt; teardown releases parsed data and retains reports/failures.
 It executes no SDK function and supplies no cache population, scene roots,
-project dependency closure, editor mutation or game/linker consumer.
+project dependency closure, editor mutation or game/linker consumer. J869
+qualifies this bounded metadata contract on the alpha Android shell; it does
+not qualify normal app hosting or a complete wrapper cache.
 
 `phone_registry.py` and `phone_registry_literals.py` own separate experimental
 static SDK metadata support.

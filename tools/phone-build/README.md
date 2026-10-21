@@ -50,6 +50,9 @@ It extracts assembly/namespace lookup order with bounded argument, branch and
 return checks, including Darwin variadic stack arguments. It reads no earlier
 SDK dump or captured mapping, executes no SDK code and produces no scene roots
 or game input. Output and input drift refuse; failed attempts remain private.
+Its bounded Android shell qualification is recorded in
+[J869](../../docs/PORTING_JOURNAL.md#j869--decode-pinned-sdk-wrapper-search-order-on-android);
+complete wrapper-cache/mapping, scene usage and app hosting remain open.
 
 ```sh
 ./dev prototype --action phone-content-fixture

@@ -21439,3 +21439,114 @@ Raw captures remain private and ignored. Next repair the exact Android path
 probe and missing original point-sound context, then pair ordinary event activity
 with qualified native PCM and device output. Camera and passive-PCM source drafts
 remain unshipped; no new runtime source is introduced by this result checkpoint.
+
+## J869 — Decode pinned SDK wrapper-search order on Android
+
+2026-10-20. Hypothesis: a version-bound static reader can replace J866's manual
+search-order observation with SDK-derived assembly templates and ordered
+namespaces, while preserving the native-name argument and first-nonnull return
+contract. Start after independently accepted PR16/main `474597a`; integrate
+main's `96a178b`/J868 before recording this entry. Preserve its diagnostic player,
+accepted baseline and original-audio findings. Route A, IL2CPP ARM64, Android
+rendering and the desktop fallback remain fixed. No editor action, game build,
+package install, gameplay launch or original-installation change occurs.
+
+**Owner and contract.** `phone_wrapper_search.py` owns current experimental
+read-only support. The `phone-wrapper-search` action accepts an explicit owner
+binary request, requires the existing exact SDK pin, and stages three authored
+Python readers with the unchanged private binary. It consumes no captured root,
+namespace table or earlier instruction dump. Its standalone isolated-Python
+invocation writes a new private report. ARCHITECTURE records setup, teardown
+and boundaries; LOCAL_STATE lists the generated attempt and private device
+orchestration. The action/help/dispatch fixture is current and checked.
+
+The reader bounds the named function by the SDK symbol/code extent and rejects
+backedges, indirect flow, unsupported instructions and multiple normal returns.
+Known register effects and graph dominance prove the original native-name
+argument at each call, preserved global-address definitions, and a common
+nonnull exit for every earlier search. The final fallthrough result and actual
+return operand are checked before later callee-register restoration. Namespace
+and fixed-assembly strings come from file-backed pointer slots; partial/runtime
+loads refuse. The formatter has one supported string substitution, an explicit
+indirect-result buffer and a proven original module argument in its Darwin
+variadic stack slot. Inline/heap selection must refer to that same result
+object, with matching tag comparisons and no intervening alias writes.
+
+Inspect Apple's primary
+[ARM64 calling convention](https://developer.apple.com/documentation/xcode/writing-arm64-code-for-apple-platforms)
+for the stack-passed variadic arguments, and Arm's
+[register model](https://support.arm.com/documentation/100069/0606/Overview-of-AArch64-state/Registers-in-AArch64-state)
+for instruction-dependent SP/zero-register interpretation. These supply ABI/API
+knowledge, not copied SDK implementation. This is generic static SDK metadata
+inspection, not a CPU emulator, new game backend or RoR2-specific reconstruction.
+The qualification covers file-backed metadata and normal return paths, not a
+live editor domain, loader/cache population or project overrides.
+
+**Source, controls and correction.** The first committed reader `3ceb041`
+extracts all 31 searches from the actual SDK. Authored fixtures use different
+registers/layout, synthetic APIs and supplied strings, not SDK instructions or
+tables. Self-review then finds an invalid origin proof: MOV from XZR followed
+by ADD can masquerade as a stack address. Both synthetic inline-pointer and
+indirect-result cases are accepted by that first source. Preserve the original
+stage and `wrapper-search-zero-register-self-review.json`, including the exact
+pre-fix authored fixture snapshot.
+
+`63ef9280cd6bb512f2cd35e862360baafd3eb105` distinguishes MOV's XZR operand from
+SP in memory/immediate-address contexts. Both controls now refuse, and the
+actual SDK report stays byte-identical. Eight authored contracts cover ordered
+scopes/duplicates, retained global addresses, entry arguments, partial
+variadic/pointer writes, string storage/flags, guard width/polarity/destination,
+unknown/backward flow, return/restore timing, zero origins and refusal outputs.
+Dispatch tests pass for the new action. No SDK assembly or function is executed.
+
+**Android result.** Bind the explicitly assigned alpha device, its owned
+workspace, fresh storage/backing/reserve and trusted Python hash. Stage fresh
+committed reader/control sources in a new owned child, verify every hash, and
+select the existing owned SDK copy through its explicit prior receipt. Its
+exact hash is checked before/after; no SDK path/UUID is embedded in public
+source and no additional SDK copy or user-data movement is needed.
+
+The actual Android reader exits 0 in 0.597 seconds of host-observed wall time.
+All 31 ordered records are byte-identical to host output, SHA-256
+`95c053c3c9f27f8b8d6e3b8c7112f4c74acf0a48697ae64c2e4819dc37bb34c6`:
+17 use the SDK's module-format assembly name and 14 use its fixed assembly.
+Repeated namespace entries remain distinct; none is deduplicated or embedded
+as a public constant. All eight authored contracts also run and pass on the
+phone, including both corrected zero-origin controls. Existing-output and
+unknown-SDK controls refuse and preserve the original report/no new negative
+output. Sources, SDK and alpha be26c21c… package are unchanged; the display is
+asleep. These are metadata-tool measurements, not app-host or game-performance
+acceptance. No new APK is produced or installed.
+
+**Bounded comparison and remaining gap.** Only after decoding, compare with the
+preserved manual observation: all values/order agree. A new private comparison
+uses the decoded phone report with J866's scoped inventory and J864's native
+registry, without reading the manual namespace dump. It checks the selected
+SDK file-set boundary and all input hashes, so an arbitrary partial inventory
+cannot establish absent module assemblies. Its existing cache-query parent
+boundary remains an observation; cache population is explicitly unqualified.
+All 42 native scene-row wrapper names, including empty results, match the
+unchanged authored fixture oracle. The separate authored script row is outside
+that native comparison. No scene usage, manager/dependency closure, complete
+native wrapper cache or TypesInScenes.xml producer is established. Raw SDK
+strings/instructions, mappings and comparison rows stay private;
+root_generation_qualified remains false and no game/linker stage consumes them.
+
+Fresh-clone CI on `63ef928` passes 1,314 tests with 59 optional skips, Ruff,
+public audit and documentation checks. Whole-game preflight still refuses the
+isolated worktree's missing inventory/accepted-input/lab bootstrap; this study
+does not advance that gate. `wrapper-search-proof-v2-receipt.json` binds 63
+source/input/output/control/comparison/ABI-reference/CI artifacts, including
+explicit comparison inputs and prerequisite receipts; SHA-256
+`9346d80b1c4bf5a4d69635685ebd5a98d8e7e4d76bf1aa6330a78382a1118b61`.
+The earlier core-only receipt is retained within that proof.
+The source-bound stages and final phone selector preserve the initial reader,
+self-review failure and corrected qualification independently.
+
+**Next gate.** Prove complete wrapper-cache population/extra-type rules and
+native-to-managed mapping, then produce complete fixture scene/manager usage
+and exact linker roots without a desktop capture. General project policy,
+managed game compilation, content/shaders, permitted SDK/tool acquisition,
+normal app hosting, installation/key custody and matched-workload performance
+remain separate gates. Revisit on SDK/symbol/ABI/string-layout/search-schema or
+source drift; keep the working build and desktop fallback.

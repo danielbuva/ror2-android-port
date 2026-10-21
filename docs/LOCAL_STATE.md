@@ -253,6 +253,15 @@ stay private. A phone replay may select an existing hash-verified owner-SDK
 copy through its explicit owned-workspace receipt, stage fresh authored readers
 and write new outputs; no timestamped SDK path is embedded in source. Complete
 wrapper-cache and scene-root inputs remain unsupported.
+`wrapper-search-on-android.py` and its explicit stage/run selectors retain J869's
+fresh owned child, copied committed sources/controls, existing read-only SDK
+receipt selection, fresh capacity, tool/input hashes and refusal results.
+`wrapper-search-zero-register-*` preserves the first source's synthetic
+origin-proof failure and corrected controls. The later
+`wrapper-resolution-observation-v3*` uses the decoded phone search report with
+explicit prior inventory/registry/oracle selectors for comparison only; cache
+population remains unqualified. The versioned proof binds those prerequisite
+inputs and retains the earlier core-only receipt.
 
 `phone_registry.inspect_action` generates
 `work/experiments/phone-registry/<attempt>/` from an explicit JSON request with
