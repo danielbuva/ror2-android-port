@@ -2,6 +2,7 @@ import copy
 import json
 from pathlib import Path
 import struct
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -186,6 +187,19 @@ class PinnedManagerSdkTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "Unknown owner SDK"):
                 manager.inspect(unknown, Path(temporary) / "unknown.json")
             self.assertFalse((Path(temporary) / "unknown.json").exists())
+
+
+class ManagerStandaloneLaunchTests(unittest.TestCase):
+    def test_isolated_cli_loads_authored_siblings_before_refusing_unknown_sdk(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            unknown = Path(temporary) / "unknown-sdk"
+            unknown.write_bytes(b"authored unknown SDK control")
+            output = Path(temporary) / "output.json"
+            result = subprocess.run([sys.executable, "-I", "-S", manager.__file__, str(unknown), str(output)], capture_output=True, text=True, timeout=30)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("Unknown owner SDK", result.stderr)
+            self.assertNotIn("ModuleNotFoundError", result.stderr)
+            self.assertFalse(output.exists())
 
 
 if __name__ == "__main__":

@@ -5,12 +5,15 @@ never supplies project/linker roots or executes an inspected SDK instruction.
 """
 
 import hashlib
+import importlib.util
 import json
 from pathlib import Path
 import struct
 import sys
 
-import phone_wrapper_population as operands
+_spec = importlib.util.spec_from_file_location("_manager_context_operands", Path(__file__).with_name("phone_wrapper_population.py"))
+operands = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(operands)  # Authored sibling tooling only, never SDK code.
 
 registry, literals = operands.registry, operands.literals
 INITIALIZE = "__ZN14ManagerContext17InitializeClassesEv"
