@@ -34,6 +34,10 @@ The authored `phone_managed_types.MetadataUniverse(inventory, group)` helper
 resolves only within one explicit group, with exact identity/version checks,
 forwarding paths and managed inheritance. It refuses missing dependencies and
 ambiguity, and does not produce native identities, scene roots or build inputs.
+Its standalone invocation is
+`python3 -I -S scripts/lab/phone_managed_types.py METADATA.json GROUP NEW_REPORT.json`.
+It requires every forwarding entry in that group to resolve, binds the input
+hash, refuses output overwrite/input drift and keeps root qualification false.
 
 ```sh
 ./dev prototype --action phone-content-fixture

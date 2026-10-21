@@ -123,7 +123,10 @@ every required definition is present. Duplicate assembly/type identities,
 unsupported module exports, cycles and missing dependencies refuse. It never
 fills gaps from another group or substitutes managed bases for native bases.
 Setup is an explicit schema-2 inventory/group; teardown releases the in-memory
-index. No game build or linker stage consumes this helper.
+index. Its standalone metadata/group/new-output invocation verifies every
+forwarding entry, binds the inventory hash, refuses output overwrite or input
+drift, and emits a private observation report. No game build or linker stage
+consumes this helper.
 
 `phone_registry.py` and `phone_registry_literals.py` own separate experimental
 static SDK metadata support.

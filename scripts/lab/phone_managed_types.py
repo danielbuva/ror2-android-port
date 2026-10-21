@@ -106,3 +106,44 @@ class MetadataUniverse:
             if name is None:
                 return False
             identity = self.scope_identity(item["assembly_identity"], definition["base_scope"])
+
+
+def inspect_file(metadata, group, output):
+    """Qualify every forwarding entry in one explicit, immutable inventory."""
+    import hashlib
+    import json
+    from pathlib import Path
+
+    metadata = Path(metadata)
+    data = metadata.read_bytes()
+    universe = MetadataUniverse(json.loads(data), group)
+    resolved = []
+    for identity, name in universe.exports:
+        item = universe.resolve(identity, name)
+        if item is None:
+            raise ValueError("Forwarded definition is missing")
+        resolved.append({"from_assembly": identity, "name": name, "to_assembly": item["assembly_identity"], "hops": len(item["forwarders"])})
+    result = {
+        "schema": 1,
+        "executes_inputs": False,
+        "root_generation_qualified": False,
+        "metadata_sha256": hashlib.sha256(data).hexdigest(),
+        "group": group,
+        "assemblies": len(universe.assemblies),
+        "definitions": len(universe.types),
+        "exported_types": len(universe.exports),
+        "resolved": resolved,
+    }
+    if metadata.read_bytes() != data:
+        raise ValueError("Metadata input changed during inspection")
+    with Path(output).open("x") as stream:
+        stream.write(json.dumps(result, indent=2) + "\n")
+    return result
+
+
+if __name__ == "__main__":
+    import sys
+
+    if len(sys.argv) != 4:
+        raise SystemExit("Expected METADATA.json GROUP NEW_REPORT.json")
+    inspect_file(*sys.argv[1:])

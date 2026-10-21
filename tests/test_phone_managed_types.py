@@ -1,7 +1,13 @@
 import copy
+import json
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
 import unittest
 
-from phone_managed_types import MetadataUniverse
+import phone_managed_types
+from phone_managed_types import MetadataUniverse, inspect_file
 
 
 def identity(name, version="1.0.0.0"):
@@ -41,6 +47,30 @@ def universe(*rows):
 
 
 class ManagedTypeResolutionTests(unittest.TestCase):
+    def test_standalone_report_refuses_overwrite_and_incomplete_dependencies(self):
+        rows = [
+            assembly("Implementation", types=[defined("Fixture.Root")]),
+            assembly("Facade", exports=[exported("Fixture.Root", "Implementation")], references=["Implementation"]),
+        ]
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            metadata, report = root / "metadata.json", root / "report.json"
+            metadata.write_text(json.dumps({"schema": 2, "executes_inputs": False, "assemblies": rows}))
+            command = [sys.executable, "-I", "-S", phone_managed_types.__file__, str(metadata), "selected", str(report)]
+            subprocess.run(command, check=True, capture_output=True)
+            before = report.read_bytes()
+            result = json.loads(before)
+            self.assertEqual(result["exported_types"], 1)
+            self.assertEqual(result["resolved"][0]["to_assembly"], identity("Implementation"))
+            self.assertFalse(result["root_generation_qualified"])
+            self.assertIs(result["executes_inputs"], False)
+            self.assertNotEqual(subprocess.run(command, capture_output=True).returncode, 0)
+            self.assertEqual(report.read_bytes(), before)
+            metadata.write_text(json.dumps({"schema": 2, "executes_inputs": False, "assemblies": rows[1:]}))
+            with self.assertRaisesRegex(ValueError, "Missing exact assembly"):
+                inspect_file(metadata, "selected", root / "missing.json")
+            self.assertFalse((root / "missing.json").exists())
+
     def test_forwarded_nested_type_and_external_base_resolve_by_exact_scope(self):
         target = assembly(
             "Implementation", types=[defined("Fixture.Root"), defined("Fixture.Root/Nested", "Fixture.Root", scope("Implementation", local=True))]
