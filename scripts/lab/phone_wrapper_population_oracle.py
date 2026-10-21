@@ -48,7 +48,7 @@ def run(root, work, editor):
     if base.sha(editor) != base.BINARY_SHA256:
         raise ValueError("Unknown owner SDK")
     sources = {name: base.sha(root / name) for name in SOURCES}
-    destination = work / "rebuild/phone-wrapper-population" / uuid.uuid4().hex
+    destination = work / "rebuild/phone-wrapper-oracle" / ("population-" + uuid.uuid4().hex)
     project = destination / "project"
     base.owned_destination(project, work)
     with base.owned_directory(project, work, create=True, new=True):
@@ -60,7 +60,7 @@ def run(root, work, editor):
     authored.update({"Packages/manifest.json": base.MANIFEST.encode(), "ProjectSettings/ProjectVersion.txt": base.PROJECT_VERSION.encode()})
     for name, data in authored.items():
         base.write_owned(project / name, data, work)
-    inputs = {"source_commit": commit, "sources": sources, "editor_sha256": base.BINARY_SHA256, "game_inputs": False}
+    inputs = {"schema": 1, "generator": SOURCES[0], "source_commit": commit, "sources": sources, "editor_sha256": base.BINARY_SHA256, "game_inputs": False}
     base.write_owned(destination / "inputs.json", (json.dumps(inputs, indent=2) + "\n").encode(), work)
 
     def validate():

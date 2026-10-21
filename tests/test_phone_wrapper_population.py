@@ -3,10 +3,13 @@ import struct
 import subprocess
 import sys
 import tempfile
+from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
 import phone_wrapper_population as population
+import phone_wrapper_population_oracle as oracle
 
 
 class Image:
@@ -73,3 +76,60 @@ class PopulationOriginTests(unittest.TestCase):
             run = subprocess.run([str(mono), str(output)], capture_output=True, text=True, timeout=60)
             self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
             self.assertIn("PASS: abstract", run.stdout)
+
+
+class PopulationStagingTests(unittest.TestCase):
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name).resolve()
+        for name in oracle.SOURCES:
+            path = self.root / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("// authored source fixture\n")
+        subprocess.run(["git", "init", "-q", str(self.root)], check=True)
+        subprocess.run(["git", "add", "."], cwd=self.root, check=True)
+        subprocess.run(["git", "-c", "user.name=Fixture", "-c", "user.email=fixture", "commit", "-qm", "test: fixture"], cwd=self.root, check=True)
+        self.editor = self.root / "Contents/MacOS/AuthoredEditor"
+        self.editor.parent.mkdir(parents=True)
+        self.editor.write_bytes(b"authored non-executable editor substitute")
+        self.work = self.root / "work"
+
+    def invoke(self, execute):
+        proxy = SimpleNamespace(check_output=subprocess.check_output, run=execute, SubprocessError=subprocess.SubprocessError)
+        with patch.object(oracle, "subprocess", proxy), patch.object(oracle.base, "BINARY_SHA256", oracle.base.sha(self.editor)):
+            return oracle.run(self.root, self.work, self.editor)
+
+    def test_actual_staging_uses_guarded_namespace_and_retains_editor_failure(self):
+        calls = []
+
+        def failed(args, **kwargs):
+            calls.append(args)
+            return SimpleNamespace(returncode=7, stdout=b"authored failure", stderr=b"")
+
+        destination, receipt = self.invoke(failed)
+        self.assertEqual(len(calls), 1)
+        self.assertTrue(destination.is_relative_to(self.work / "rebuild/phone-wrapper-oracle"))
+        self.assertFalse(receipt["success"])
+        self.assertEqual(receipt["exit_code"], 7)
+        self.assertEqual((destination / "launch.txt").read_bytes(), b"authored failure")
+        self.assertTrue((destination / "receipt.json").is_file())
+
+    def test_symlinked_parent_refuses_before_any_child_or_outside_write(self):
+        self.work.mkdir()
+        outside = self.root / "outside"
+        outside.mkdir()
+        (self.work / "rebuild").symlink_to(outside, target_is_directory=True)
+        with self.assertRaisesRegex(ValueError, "without links"):
+            self.invoke(lambda *args, **kwargs: self.fail("Editor must not start"))
+        self.assertEqual(list(outside.iterdir()), [])
+
+    def test_foreign_project_asset_refuses_after_child_exit(self):
+        def changed(args, **kwargs):
+            project = Path(args[args.index("-projectPath") + 1])
+            (project / "Assets/foreign.dll").write_bytes(b"authored foreign control")
+            return SimpleNamespace(returncode=0, stdout=b"", stderr=b"")
+
+        _, receipt = self.invoke(changed)
+        self.assertFalse(receipt["success"])
+        self.assertIn("Foreign population oracle asset", receipt["error"])
