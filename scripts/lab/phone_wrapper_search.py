@@ -109,7 +109,9 @@ class SearchReader:
         word = self.words[pc]
         source = move(word)
         if source is not None:
-            return self.stack_offset(pc, source, budget - 1)
+            # ORR/MOV register 31 is XZR. Only memory/immediate-address base
+            # operands use that encoding for SP; zero is not a stack origin.
+            return None if source == 31 else self.stack_offset(pc, source, budget - 1)
         if word & 0xFF000000 in (0x91000000, 0xD1000000):
             base = self.stack_offset(pc, (word >> 5) & 31, budget - 1)
             amount = ((word >> 10) & 4095) << (12 if word & 0x400000 else 0)

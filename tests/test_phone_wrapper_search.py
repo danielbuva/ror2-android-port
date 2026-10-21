@@ -28,9 +28,10 @@ class AuthoredSearch:
     start = 0x1000
     formatter, lookup = 0x5000, 0x6000
 
-    def __init__(self):
+    def __init__(self, *, zero_inline=False, zero_sret=False):
         self.words, self.labels, self.branches = [], {}, []
         self.memory = {}
+        self.zero_inline = zero_inline
         self.emit(0xD10003FF | 160 << 10)  # One fixed frame, deliberately different registers/layout.
         self.emit(pair(24, 25, 96))
         self.emit(pair(21, 22, 112))
@@ -39,7 +40,11 @@ class AuthoredSearch:
         self.mark("module")
         self.emit(0xF90003E1)  # Darwin variadic argument slot: original parameter 1.
         self.mark("sret")
-        self.emit(stack_address(8, 32))
+        if zero_sret:
+            self.emit(mov(8, 31))
+            self.emit(0x91000000 | 32 << 10 | 8 << 5 | 8)
+        else:
+            self.emit(stack_address(8, 32))
         self.address(0, 0x9100)
         self.call(self.formatter)
         self.format_pointer("first")
@@ -103,12 +108,14 @@ class AuthoredSearch:
         self.emit(0x94000000 | ((target - pc) // 4) & 0x3FFFFFF)
 
     def format_pointer(self, label):
+        if self.zero_inline and label == "first":
+            self.emit(mov(12, 31))
         self.mark(label + "_tag")
         self.emit(load(10, 31, 56, 1))
         self.emit(load(9, 31, 32))
         self.mark(label + "_compare")
         self.emit(0x7100001F | 3 << 10 | 10 << 5)
-        self.emit(stack_address(12, 32))
+        self.emit((0x91000000 | 32 << 10 | 12 << 5 | 12) if self.zero_inline and label == "first" else stack_address(12, 32))
         self.mark(label + "_selector")
         self.emit(0x9A800000 | 9 << 16 | 12 << 5)  # EQ, inline vs heap of the same result object.
 
@@ -150,6 +157,11 @@ class AuthoredSearch:
 
 
 class WrapperSearchTests(unittest.TestCase):
+    def test_zero_register_arithmetic_cannot_forge_stack_buffer_origins(self):
+        for kwargs in [{"zero_inline": True}, {"zero_sret": True}]:
+            with self.subTest(kwargs=kwargs), self.assertRaises(ValueError):
+                AuthoredSearch(**kwargs).read()
+
     def test_ordered_scopes_duplicates_and_module_format_come_from_supplied_data(self):
         image = AuthoredSearch()
         report = image.read()
