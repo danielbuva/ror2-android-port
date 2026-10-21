@@ -61,6 +61,37 @@ class LiteralRecordTests(unittest.TestCase):
             {0: ("constant", 0), 16: ("constant", 0x3000), 24: ("constant", 0x3040), 32: ("constant", 0x3080), 80: ("constant", 0x4000)},
         )
 
+    def test_numeric_literal_width_and_little_endian_slices_are_explicit(self):
+        # A synthetic 64-bit scalar supplies two independent 32-bit fields.
+        instructions = (
+            0xD2800006 | (0x1234 << 5),
+            0xF2C00006 | (0x5678 << 5),
+            0xF9000006 | (5 << 10) | (31 << 5),
+        )
+        image = root_fixture(instructions)
+        result = descriptor(image, "construct", image.target, call_argument, fields=((40, 4), (44, 4)))
+        self.assertEqual(result, {40: ("constant", 0x1234), 44: ("constant", 0x5678)})
+        narrow = root_fixture((0x52800006 | (0x1234 << 5), 0xB9000006 | (10 << 10) | (31 << 5)))
+        self.assertEqual(descriptor(narrow, "construct", narrow.target, call_argument, fields=((40, 4),)), {40: ("constant", 0x1234)})
+        with self.assertRaisesRegex(ValueError, "partially"):
+            descriptor(narrow, "construct", narrow.target, call_argument, fields=((40, 8),))
+
+    def test_numeric_field_parameters_and_partial_or_conditional_updates_refuse(self):
+        store_word = 0xB9000000 | (10 << 10) | (31 << 5)
+        image = root_fixture((store_word,))  # Untouched W0 is an explicit caller parameter.
+        self.assertEqual(descriptor(image, "construct", image.target, call_argument, fields=((40, 4),)), {40: ("parameter", 0)})
+        for instructions in (
+            (0x52800020, store_word, 0x79000000 | (21 << 10) | (31 << 5)),
+            (0xB5000047, store_word),
+            (0xB9400000 | (10 << 10) | (31 << 5), store_word),
+        ):
+            image = root_fixture(instructions)
+            with self.subTest(instructions=instructions), self.assertRaises(ValueError):
+                descriptor(image, "construct", image.target, call_argument, fields=((40, 4),))
+        for fields in ((), ((40, 4), (40, 4)), ((41, 4),), ((40, 2),), ((112, 4),)):
+            with self.subTest(fields=fields), self.assertRaises(ValueError):
+                descriptor(image, "construct", image.target, call_argument, fields=fields)
+
     def test_conditional_and_partial_overwrites_cannot_supply_metadata(self):
         for intermediate in ((0xB5000046, 0xF9000BFF), (0xB90017FF,)):
             with self.subTest(intermediate=intermediate), self.assertRaisesRegex(ValueError, "skipped or partially"):

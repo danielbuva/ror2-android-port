@@ -143,7 +143,7 @@ _ENTRIES = (
         "inspect_action",
         {},
         "current",
-        "Experimental read-only metadata support: --target REQUEST.json selects the exact owner SDK binary, stages authored Python readers and reports native registration/module coverage. Executes no SDK code, generates no linker roots and changes no editor, package or runtime.",
+        "Experimental read-only metadata support: --target REQUEST.json selects the exact owner SDK binary, stages authored Python readers and reports native registration/module coverage and persistent class IDs. Executes no SDK code, generates no linker roots and changes no editor, package or runtime.",
         handler=_target,
     ),
     Action(

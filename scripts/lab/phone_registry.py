@@ -128,6 +128,7 @@ def static_records(image):
             "nativeNamespace": namespace,
             "qualifiedName": (namespace + "::" if namespace else "") + name,
             "module": None,
+            "persistentTypeID": struct.unpack("<i", image.at(address + 40, 4))[0],
         }
         pointers[words[10]] = row
         records.append(row)
@@ -138,6 +139,12 @@ def static_records(image):
         row["baseName"] = parent["name"] if parent else None
         row["base_resolved"] = row["parent"] == 0 or parent is not None
     return records
+
+
+def validate_persistent_ids(records):
+    identifiers = [row.get("persistentTypeID") for row in records]
+    if any(type(value) is not int or not 0 <= value <= 0x7FFFFFFF for value in identifiers) or len(set(identifiers)) != len(identifiers):
+        raise ValueError("Invalid or ambiguous persistent native type identities")
 
 
 def signed(value, bits):
@@ -399,6 +406,7 @@ def inspect(binary, output):
     parents = {row["self"]: row for row in records}
     if len(records) != 318 or len(parents) != 318 or len({row["qualifiedName"] for row in records}) != 318:
         raise ValueError("Pinned SDK native registration identity set differs")
+    validate_persistent_ids(records)
     for row in records:
         parent = parents.get(row["parent"])
         row["base_resolved"] = row["parent"] == 0 or parent is not None
@@ -422,6 +430,7 @@ def inspect(binary, output):
             "native_records": len(records),
             "module_resolved": sum(row["module"] is not None for row in records),
             "base_resolved": sum(row["base_resolved"] for row in records),
+            "persistent_id_resolved": len(records),
         },
         "records": records,
     }
