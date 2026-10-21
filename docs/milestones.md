@@ -24,11 +24,11 @@ Status as of 2026-10-16 (J504). Status cells summarise; the journal entries they
 | L7 combat/complete stage | OPEN — original damage and default skills under diagnostic input (J157/J158); normal complete stage open | Enemy/damage → pickup/interactable → director → teleporter; normal complete stage, readable G4 gameplay | L6; authority/effects/simulation |
 | L8 complete offline victory | OPEN | Route transitions/lifetime/finale/victory/results/return menu/profile; normal uninterrupted victory then second stable run | L7/L9; late dependencies/memory |
 | L9 profile | PARTIAL — native Android save, reload and recovery (J436); persistent-stat and event achievements on genuine events (J437, J500–J503); Steam/cloud open | Fresh Android-only foundation before L5; cold reload, interrupted write, update retention, backup/restore by L8 | Path audit; host Steam profile immutable; lawful platform/profile boundary |
-| L10 audio | OPEN — unavailable | Early lawful engine/bank/codec access; later init bank, SFX/music/spatial events/callbacks/shutdown | Authorized compatible engine; banks/authoring |
+| L10 audio | OPEN — composed playback unqualified ([J919](PORTING_JOURNAL.md#j919--measure-the-selected-original-music-output-on-the-r20-player)) | Original SFX/music/spatial events, callbacks and complete shutdown/restart on Android | Authorized runtime and original bank/context compatibility |
 | L11 graphics | PARTIAL — L11-a PASS (J66); integrated source-informed material approximations across stages (J324–J335); PC parity open | Minimum surface/terrain/character/UI/hazard families with L4–L7; G5/G6 parity later | Required scene families; shaders/dummy export |
 | L12 performance | OPEN — 120 Hz, about 116 FPS first stage (J449–J451); crowded later stages below 60 FPS; memory growth and thermals open | Warm stage/combat, transitions, memory and thermals; optimize measured bottleneck, stable 30 FPS first | Meaningful gameplay; final after L8 |
 | L13 transformation | OPEN | Clean ignored regeneration/provenance/cache checks; same accepted input; real second-build compatibility when available | Stable route; update/toolchain |
 
 Replan at L3, L4, L5.5, L6, L7 and L8. No gate advances from a stripped empty build or synthetic
-completion. Moon/finale waits for manual input; audio needs lawful access; sustained 60 FPS,
+completion. Moon/finale waits for manual input; composed audio remains unqualified; sustained 60 FPS,
 distribution and remote services come later.

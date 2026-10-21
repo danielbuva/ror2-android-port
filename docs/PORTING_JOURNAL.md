@@ -25538,3 +25538,63 @@ contract from the desktop Clang 9/BFD path. Preserve raw differences and require
 matched workloads before performance claims. Route A's native IL2CPP/rendering
 architecture and the desktop owner-build fallback stay fixed. Revisit on any
 source/input/tool/fixture/profile or downstream consumer change.
+
+## J924 — Preserve the bounded Siren timeout and ordinary-primary next test
+
+Date: 2026-10-21. Hypothesis: the current integrated player can enter the native
+Siren encounter through its original egg/input path without altering damage,
+tracker range, teams or navigation. Revisit J906's tracker mismatch and J919's
+current-player controls before running. This reuses the existing authored
+continuation and observations; no new gameplay reconstruction is introduced.
+
+Run the frozen J919 diagnostic APK
+`8f33e1a92f60b00fffc4d0b980ab3a1a9d8851207b4ba11627f08384e16d6221`,
+source 5a97f93, after both standard controls pass. Ordinary Huntress selection,
+seed two and Free Play retain the declared invincibility, high damage and fast
+charge assists, without movement/jump boosts or item grants. Exactly three
+natural transitions reach Ship Graveyard through Lakes, Goolake and Wisp
+Graveyard. No Moon entry occurs. Source entry and all twelve exact native
+Listening registrations are observed.
+
+The first failure is the existing 180-second source-stage continuation timeout:
+native encounter start and exact boss identity are not both observed. Encounter
+completion, boss damage and reward remain unproven. Preserve exit 1 and the raw
+failed result. The input summary contains 16,155 target observations, 9,351
+primary requests and 6,804 releases; those counts do not establish egg damage.
+The final input reason is no visible egg, primary released.
+
+One sustained-null tracker sample selects an egg at 174.006 m while the ordinary
+Huntress tracker maximum is 60 m; aim/cone/line-of-sight and the observed enabled,
+alive, bullseye and global-list flags pass in that sample. This explains that
+sample's range exclusion, not every null observation. An earlier mismatched
+cached target remains a separate temporal observation; cached search age is
+unknown. A suspected neutral-team exclusion is rejected by current source:
+the all-team mask includes Neutral. The navigation recorder obtains only one
+paired sample before target change stops it. A path/node/waypoint and applied
+movement are present, but that is insufficient to diagnose a persistent path
+failure. No gameplay change follows these incomplete causal observations.
+
+Applied runs remain thirteen and the single earned/available unlock is stable;
+result application remains false. Final source failure is also retained by the
+late-report gate, separately from transport cleanup. Root removes the selector,
+force-stops its package and sleeps the display. An independent subsequent query
+rechecks installed APK bytes, owned placement, absent process/selector and sleep.
+Force-stop does not establish source scene/listener disposal.
+
+Read-only current-source inspection finds that the continuation admission and
+egg input path do not require Huntress. They forward the ordinary primary input
+to the selected survivor; HuntressTracker is only a read-only witness. A separate
+bounded Commando test is therefore feasible without forcing hits or changing
+skills, tracker, damage or navigation. Bind it to a new candidate and controls,
+report the Huntress-specific witness unavailable, and require native encounter
+identity rather than input counts. J922/J923 observers still await the next
+player and are not credited to this installed APK. Accepted J850 remains fixed.
+
+Private evidence: `work/coordination/original-siren-next-after-r20/r5-root/`,
+including attempt `20261021T213810.577422Z-b03f25f71f65`, independent
+`post-run-query.json`, and `triage-r1/terminal-assessment.md`. Raw result SHA-256
+`1ec4d00068b2033f5cbe9173094fd3728cef42db22c67941849e50c32ea54f7a`;
+final report `1659d35a8f9b50dc3e4f5db18ab55f5c7fbe3f14cd6a5e429cc62946d3487da7`;
+independent query `fe6aa7c6d295f835e940a83669db7e95bc35c562220f3d28c3c5636db8394d6c`.
+Raw game/device evidence remains ignored. Revisit after a separately bounded
+ordinary-primary run records native encounter start and exact boss identity.
