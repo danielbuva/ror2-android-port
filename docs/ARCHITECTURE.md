@@ -188,7 +188,8 @@ reverse registrations distinct. Its standalone invocation selects an owner SDK
 binary, scoped inventory, managed SDK directory, corlib and new private output.
 It binds the complete pinned 84-file managed set, inventory and reader hashes,
 refusing replacement, missing files, mixed inputs and drift. J878 verifies forward
-mappings on Android; reverse-cache and complete-root qualification remain open.
+mappings on Android; J883 matches root-inclusive metadata to native SDK cache
+observations. Emitted caches, consumer semantics and complete roots remain open.
 No game or linker consumer reads it.
 `phone_wrapper_population_oracle.py` and `WrapperPopulationOracle.cs` own a
 separate SDK-only desktop check. The explicit root/work/editor invocation stages
@@ -214,7 +215,7 @@ game or linker inputs. This mode is experimental and requires independent
 cache comparison before any broader qualification. Forward slots use only the
 SDK's observed runtime indices/IDs, with complete registry coverage; zero slots
 remain absent entries. Root membership in native population is inclusive, while
-the separate public wrapper-query collector retains its root exclusion.
+the separate wrapper-query collector retains its root exclusion.
 
 `phone_registry.py` and `phone_registry_literals.py` own separate experimental
 static SDK metadata support.
@@ -592,6 +593,10 @@ offline menu and before selected body activation. It coordinates the existing
 and `AudioManager` retain native initialization, service, focus/pause and
 termination ownership. It adds no second native engine owner. Its bounded
 snapshot refreshes at every session-report save, including teardown observations.
+When original audio is Ready and passive capture is explicitly requested, it also
+reads the managed default-listener count. It retains only a known flag and count;
+default-off, pre-ready and failed reads remain unknown. This read-only census
+does not establish native registration or retain listener objects.
 
 `tools/unity/support/audio/core/` owns admission, readiness and copied lifecycle
 observations. `support/audio/bootstrap/` owns the explicit request, hash-bound
@@ -1220,7 +1225,7 @@ report, read against the journal entry that defines what it must show.
 | Session and entry | `PortSession`, `OfflineApplicationBoundary`, `SessionResourceBoundary`, `ActiveClientBoundary`, `OfflineRunSeedBoundary`, `SurvivorSelectionBoundary` | nested `OfflineRunSeedSession` (`IDisposable`) **own type** holds the cached seed, session id and source; nested `ActiveClientSession` (`IDisposable`) **own type** holds the owned body/master authority identities and client-scene ownership flag; `activeBodyClient`, `activeBodyOwner`, remaining state and `SessionReport r` (including `r.activeClient` and `r.rewards.seedSource`) stay on the coordinator; nested `OfflineApplicationSession` (`IDisposable`) **own types** hold their files' private state | `Start` → `AwaitOfflineRunStart` → `RunSelectedProbe`; `ConnectActiveBodyClient` → `CleanupActiveBodyClient` (calls `Dispose`: remove master then body authority, disconnect then shut down client) → coordinator server shutdown → `FinishActiveClientSceneCleanup`; active-client owner created on first use and retained after cleanup; `CollectPriorSessionGarbage` → `ReclaimCompletedSessionResources`; `SelectOwnedRunSeed` calls session `SelectOwnedRunSeed` (owner created on first use and retained; session id controls refresh; `Dispose` is a no-op with no teardown call) | `AndroidLifecycleHost.cs` |
 | Catalog and resources | `BodyCatalogBoundary`, `WholeCatalogComposed`, `WholeCatalogLoader`, `SpawnStateBoundary`, `OriginalBodyVisualBoundary`, `OriginalGlobalCommonAssetsBoundary`, `TeleportMaterialBoundary`, `BarrierEffectBoundary` | `WholeCatalogComposed` **own type** (static); nested `TeleportMaterialSession` and `BarrierEffectSession` (`IDisposable`) **own types** hold the teleport material (locator, async handle, material, overlays) and the barrier effect (constants, locator, async handle, prefab, effect-slot snapshots, owned material copies); nested `OriginalBodyVisualSession` and `OriginalGlobalCommonAssetsSession` (`IDisposable`) **own types** each hold their native slot snapshots and async handle lists; nested `SpawnStateSession` (`IDisposable`) **own type** holds native state/preload snapshots and spawn delay/sound restoration; `ownsStateCatalog` stays shared on the coordinator; teleport, `r.barrier*` and `r.world` report fields remain coordinator observations; the rest coordinator fields; nested `BodyCatalogSession` (`IDisposable`) **own types** hold their files' private state | `RegisterBodyCatalog` (calls `WholeCatalogComposed.Prepare`) → `CleanupBodyCatalog` (calls `Release`); `PrepareBarrierEffect` → `ObserveBarrierEffect` / `ProbeBarrierEffectLifecycle` → `CleanupBarrierEffect` (awaited coroutine, preserving Start's setup and release order; `Dispose` is a no-op because release requires the coroutine's frame yields); `PrepareOriginalBodyVisualReferences` → `PrepareOriginalGlobalCommonAssets` → `CleanupOriginalGlobalCommonAssets` → `CleanupOriginalBodyVisualReferences` (each cleanup calls its owner's `Dispose`: restore slots, clear snapshots, release handles, clear handles, mark the coordinator report); `PrepareSpawnStateCatalog` forwards to `SpawnStateSession` without changing catalog/config/preload construction order; later `CleanupSpawnConfig` calls `Dispose` (objective, enemy and spine config cleanup, then spawn delay/sound restoration, then `RestoreWholeStateOwnership`); owners created on first use and retained after cleanup | `test_whole_catalog.py`, `test_composed_support.py`, `test_body_visual_map.py`, `test_common_assets_map.py`, `test_stage_variant_graph_roots.py`; `WholeCatalogHost.cs` |
 | Manual Moon boundary (existing config) | `NovaInputBoundary`, `NovaInputBridge`, `IntegratedStageBoundary` | `ManualMoonBoundary` is a pure four-completed-transition gate shared by the automatic input loop and transport entry guard; `NovaInputBridge` applies its diagnostic-only hold at every fixed tick, preserving touch-equipment requests and the physical-controller route when diagnostic input is off. It refuses any subsequent or explicit `moon2` transport while `pauseBeforeMoon` is enabled. The ordinary path and default `false` remain unchanged; the report records stage/count and a fixed-tick witness only after the sink actually runs. | Input-loop gate before transport/producers; transport guard before destination resolution or stage mutation | `SurvivorSkillInputHost.cs` (exact-editor bridge sink contract; no Moon/runtime acceptance) |
-| Input and camera | `NovaInputBoundary`, `NovaInputBridge`, `NovaThirdPersonView`, `AndroidPresentationCamera`, `NovaDiagnosticDisplay` | nested `NovaInputSession` (`IDisposable`) **own type** holds trace cursors and the input iterators with local mapping, landing, camera and loop state; `NovaThirdPersonView` keeps its own camera/orbit state; `worldView` and `worldEquipmentBridge` stay shared on the coordinator; `NovaInputBridge`, `AndroidPresentationCamera`, `NovaDiagnosticDisplay` and opt-in `AndroidNativeSourceSkinLifecycle` (with pure `AndroidNativeSkinActivationPolicy`) remain **own types**; the native-skin owner is attached to the selected source model, retains only its native skin subscription and Android material clones through body lifetime, and writes scalar evidence into `NovaReport`; the per-run `SessionReport` selector defaults false; reports remain coordinator observations | `NovaRawBoundary` / `NovaInputBoundary` forward to the session; input teardown stays in its iterator `finally` in the same order; `NovaInputBridge.OnDisable` neutralises input; owner created on first use and retained after its no-op `Dispose` so final `Save` can flush traces | `test_nova_input_presence.py`, `test_nova_bridge_evidence.py`, `test_input_migration.py` |
+| Input and camera | `NovaInputBoundary`, `NovaInputBridge`, `NovaThirdPersonView`, `AndroidPresentationCamera`, `NovaDiagnosticDisplay`, `AndroidNativeSourceCameraRigOwner` | nested `NovaInputSession` (`IDisposable`) **own type** holds trace cursors and the input iterators with local mapping, landing, camera and loop state; `NovaThirdPersonView` keeps its own camera/orbit state; `worldView` and `worldEquipmentBridge` stay shared on the coordinator; `NovaInputBridge`, `AndroidPresentationCamera`, `NovaDiagnosticDisplay` and opt-in `AndroidNativeSourceSkinLifecycle` (with pure `AndroidNativeSkinActivationPolicy`) remain **own types**; the native-skin owner is attached to the selected source model, retains only its native skin subscription and Android material clones through body lifetime, and writes scalar evidence into `NovaReport`; the per-run `SessionReport` selector defaults false; reports remain coordinator observations | `NovaRawBoundary` / `NovaInputBoundary` forward to the session; input teardown stays in its iterator `finally` in the same order; `NovaInputBridge.OnDisable` neutralises input; owner created on first use and retained after its no-op `Dispose` so final `Save` can flush traces | `test_nova_input_presence.py`, `test_nova_bridge_evidence.py`, `test_input_migration.py` |
 | Settings | `AndroidOfflineSettings`, `OfflineSettingsBoundary` | `AndroidOfflineSettings` **own type**, kept across sessions; nested `OfflineSettingsSession` (`IDisposable`) **own type** holds the saved pause time scale; store reference, visibility and pause flags stay on the coordinator for menu/Nova input | `PrepareOfflineSettings` (calls `OfflineSettingsSession.Prepare`) → `CleanupOfflineSettingsPause` (calls `Dispose`, releases an owned pause only) | — |
 | Progression and profile | `AndroidProgressionBoundary`, `AndroidOfflineProfile`, `AndroidProfileBoundary`, `OfflineLoadoutBoundary` | `AndroidProgressionBoundary` (`IDisposable`), `AndroidOfflineProfile` and nested `AndroidProfileSession` (`IDisposable`) **own types**; session owns loadout preview, catalog snapshots, redirect lease and event/discovery listeners; progression reference, results/save-system state, world references and pending menu loadout stay shared on the coordinator | `ApplyAndroidProfileLoadoutBeforeSpawn` (calls `AndroidProfileSession.ApplyLoadoutBeforeSpawn`) → `PrepareAndroidProfile` (calls session `Prepare`, then `AndroidProgressionBoundary.Prepare`) → `CleanupAndroidProfile` (calls session `Dispose`, including progression `Dispose`); results installs the save system before profile setup and restores it after profile cleanup | `AndroidProgressionHost.cs`, `AndroidDiscoveryHost.cs`, `AndroidProfileHost.cs` |
 | Results | `IntegratedResultsBoundary` (with `AndroidProfileSaveSystem` in `AndroidProfileBoundary`) | nested `IntegratedResultsSession` (`IDisposable`) **own type** holds ending templates/catalog restoration, statistics callbacks and event context, ledger directory, save-system swap/restore and result listeners; serializer guards remain static; `resultsSaveSystem`, `resultsLedger`, `resultsStats` and `resultsRunReport` stay shared on the coordinator; `r.results` remains the coordinator observation | `PrepareResultsKeyItems` may precede `PrepareIntegratedResults` (calls session `Prepare`) → `CleanupIntegratedResults` (calls `Dispose`: profile cleanup precedes save-system restore); owner created on first use and retained after `Dispose` | — |
@@ -2280,3 +2285,32 @@ copies of the exception wrapper (`RunGuarded`, J511); config and report sharing 
 (`SessionConfig` J517, `SessionReport` J541); the coordinator name (`PortSession`, J542);
 command sprawl (`scripts/lab/actions.py`, J512, README table generated J545); Python and C#
 formatting (J518, J544); the flat `tools/unity` folder (J543).
+
+
+### Opt-in native source view camera
+
+`AndroidNativeSourceCameraRigOwner` is a view-only diagnostic gated by the existing
+per-run native-skin request, whose default is false. It instantiates the accepted base
+`Prefabs/Main Camera` asset (GUID `5aa1ab10a641d6f4e836da719179fa20`) and retains its
+original `CameraRigController`, `SceneCamera`, PlayerBasic mode, selected body/team
+target and callback owner. It creates no LocalUser or NetworkUser and changes no input,
+HUD, projection, renderer visibility or materials. Alpha owns input and UI integration.
+Its clone removes Unity AudioListeners. With original audio Ready and the native
+engine initialized, it preserves the exact source default AkAudioListener and
+co-located AkGameObj; default-off removes that pair. Their original Unity callbacks
+own registration and removal. Lost readiness deactivates the staging root, and
+disposal captures exact managed membership before and after deactivation.
+`OriginalWwiseCameraListenerContract.cs` owns the serializable scalar observations;
+the visual report refreshes after disposal and retains the object ID. The original
+wrapper discards native Add/Remove results, so these remain explicitly unobserved.
+Neither managed membership nor this camera establishes spatial playback. The marker
+is compiled into RoR2.dll for exact-profile rig association; the runtime owner
+remains off by default.
+
+The current whole-catalog path restores only an exact prior camera stage result to its guarded 3124 or
+audio-composed 1034 preimage, runs the original-audio producer, then applies the camera
+producer to that immediate result. Destination R8/R9 rebuilds restore a receipt-bound prior camera result when present, then keep their existing audio/build route without applying this current-project camera transform. The accepted profiles are 3124/API 107 to 236fab,
+1034/API d540 to e16e, and PointSound game 6f96 with either the retained d540 profile or the R10 1ced profile. The latter accepts its exact 165-row audio stage receipt for either explicit passive-PCM state (`true` or `false`); camera staging does not depend on enabling the passive PCM diagnostic. It has a separately derived camera output pin, and arbitrary API/game pairs remain refused. The 793 API is restore-only. Cecil reference resolution is
+materialized from the current project plugin DLLs and the exact pinned Unity engine
+modules/Mono BCL. Its receipt is a host type-resolution input, not the full player
+linker/IL2CPP closure or an APK/runtime acceptance record.

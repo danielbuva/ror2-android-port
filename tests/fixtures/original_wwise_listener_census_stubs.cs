@@ -1,0 +1,145 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+
+namespace UnityEngine
+{
+    public class Object
+    {
+        public static implicit operator bool(Object value) => value != null;
+        public static bool operator !(Object value) => value == null;
+        public static void DontDestroyOnLoad(Object value) { }
+        public static T FindObjectOfType<T>() where T : Object => null;
+    }
+    public class Component : Object { }
+    public class MonoBehaviour : Component
+    {
+        protected void StartCoroutine(IEnumerator routine) { }
+    }
+    public sealed class GameObject : Object
+    {
+        public GameObject(string name) { }
+        public T AddComponent<T>() where T : Component, new() => new T();
+    }
+    public enum LogType { Error }
+    public static class Application
+    {
+        public static event Action<string, string, LogType> logMessageReceived;
+    }
+    public static class Time
+    {
+        public static float realtimeSinceStartup;
+    }
+}
+
+public sealed class AkWwiseInitializationSettings { }
+public sealed class AkInitializer : UnityEngine.Object { }
+
+public sealed class AkAudioListener
+{
+    private static readonly DefaultListenerList listeners = new DefaultListenerList();
+    public static int GetterReads;
+    public static bool ThrowOnRead;
+    public static DefaultListenerList DefaultListeners
+    {
+        get
+        {
+            GetterReads++;
+            if (ThrowOnRead) throw new InvalidOperationException("synthetic census read failure");
+            return listeners;
+        }
+    }
+    public sealed class DefaultListenerList
+    {
+        public readonly List<AkAudioListener> ListenerList = new List<AkAudioListener>();
+    }
+}
+
+public interface IGameAudioOriginalPassivePcmCapture
+{
+    bool ArmRequested { get; }
+    float WindowStartRealtimeSinceStartup { get; }
+    ulong WindowStartServiceFrames { get; }
+    bool TerminalStopRequested { get; }
+    string State { get; }
+    string StopReason { get; }
+    string Failure { get; }
+    ulong CallbackCount { get; }
+    ulong FrameCount { get; }
+    ulong SampleCount { get; }
+    ulong FiniteSamples { get; }
+    ulong NonzeroFiniteSamples { get; }
+    ulong NonfiniteSamples { get; }
+    ulong RejectedBuffers { get; }
+    ulong CappedBuffers { get; }
+    bool OutputIdentityObserved { get; }
+    bool RequestGameplayArm();
+    void FinishGameplayWindow();
+    void Tick(float realtimeSinceStartup, bool ownerReady, bool exactControlObserved, ulong successfulOriginalRenderFrames);
+    void BeforeOriginalEngineTerm();
+}
+
+public static class GameAudioOriginalRequestBootstrap
+{
+    public static bool PassivePcmCaptureRequested;
+    public static bool IsConfigured;
+    public static Func<AkWwiseInitializationSettings> OriginalSettingsProvider;
+    public static void ConfigureBeforeOriginalStartup() { }
+}
+
+public static class GameAudioOriginalOwner
+{
+    public static bool PassiveCaptureStopRequested;
+    public static bool OriginalTermsReturned;
+    public static bool Ready;
+    public static bool OriginalManagerInitClaimed;
+    public static string Failure;
+    public static bool StartupSelected;
+    public static bool OptInRequested;
+    public static IGameAudioOriginalPassivePcmCapture PassiveCapture;
+    public static bool PassiveCaptureArmRequested;
+    public static bool NoAudio;
+    public static bool NativeApiCallsAvailable;
+    public static bool NativeInitAttemptObserved;
+    public static bool OriginalManagerInitReturned;
+    public static int RequestedBankCount;
+    public static int CompletedBankCount;
+    public static void ConfigurePointSoundDiagnostic(bool requested) { }
+    public static void DisablePointSoundDiagnostic() { }
+    public static PointSoundDiagnosticObserver.Snapshot CapturePointSoundDiagnosticSnapshot() => null;
+    public static void FinishPassiveCaptureGameplayWindow() { }
+    public static bool ArmPassiveCaptureAtGameplayBoundary(bool requested, bool playableWorldStarted) => false;
+    public static IEnumerator PrepareBeforeOriginalManagerInit() => null;
+    public static void RecordOriginalManagerInitException(string type) { }
+    public static void AbandonPreparationBeforeOriginalInit() { }
+    public static void RecordExistingInitializerConflict() { }
+    public static bool TryBeginOriginalManagerInit() => false;
+    public static void RecordOriginalManagerInitReturned() { }
+    public static bool HasTerminalFailure;
+    public static void RecordStartupTimeout() { }
+    public static void TickPassiveCapture(float realtimeSinceStartup) { }
+}
+
+public static class WholeCatalogComposed
+{
+    public static bool OriginalAudioLeaseHeld;
+    public static string OriginalAudioLeaseIdentity;
+    public static bool IsConfigured;
+    public static string RetainForOriginalAudioOwner(string expectedInputId) => "lease";
+    public static T LoadOwnedContent<T>(string path) => default(T);
+    public static void ReleaseOriginalAudioOwnerLease(string expectedIdentity) { }
+}
+
+public static class PointSoundDiagnosticObserver
+{
+    public sealed class Snapshot { }
+    public static void ObserveUnityLog(string condition, string stackTrace) { }
+}
+
+namespace RoR2
+{
+    public static class WwiseIntegrationManager
+    {
+        public static void Init() { }
+    }
+}

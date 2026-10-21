@@ -22476,3 +22476,305 @@ Next: preflight and committed-source code-only build with strict J880 payload
 reuse, both standard checks and actual arm/callback/output observations. A zero
 sample count cannot establish silence unless capture actually arms. R8/R9 must
 replay the runtime/support producer; no new protected/local build input is added.
+
+
+## J882 — Arm gameplay capture and measure zero output in both standard checks
+
+Date: 2026-10-20.
+
+Hypothesis: J881's actual-world gate will admit the selected passive native
+capture that remained unarmed in J880. Preserve original audio ownership and
+observe the selected output before attributing silence to event or listener
+behavior. Pinned R2API.Sound remains prior art for bank loading after Init,
+not proof of output or native listener registration.
+
+The code-only R8 attempt refuses before Unity with "Content inputs changed;
+code-only bundle reuse rejected". Comparing all 92,012 content inputs finds
+exactly three differences: the Core and Bootstrap support DLLs and their audio
+ownership receipt. The 266 payload files are unchanged. Preserve the strict
+refusal; no gate, cache receipt or device receipt is bypassed. Evidence:
+`work/coordination/codex-original-game-audio-build-root/r8/content-refusal-diff.json`.
+A full R9 retry uses the same committed source `8c1523c`.
+
+Request `20261021T061324.977563Z-0c714001cab2473baa881b6a1a708c7b` succeeds
+in 234.844063 s with zero errors. Frozen candidate:
+`work/experiments/original-game-audio/candidate-20261021T061850.624431Z/`.
+APK SHA-256:
+`f501a40ce5b6d17964836f93642e9e0980083880d88720fa0435f257c99f83e7`;
+symbols ZIP:
+`458bb5c53dc059b00bac1347e80f0e5d3177cb5bd49fb06fcebd532a6e9adb4a`;
+`libil2cpp` Build ID `48540d1ce05dde31c37105b50a6c9b0f371aa839`.
+The freeze binds 366 authored inputs, 333 same-request pre-strip assemblies,
+154 packaged banks and 266 independently frozen payload files. API `1cedc89f…`,
+game `6f96ed83…` and the exact restored SoundEmitter are unchanged. Canonical
+installation queries fresh adopted-only reserve/placement, installs this exact
+APK in place and syncs its own payload.
+
+Both ordinary diagnostic-assist checks pass with current-build true, 13 applied
+runs unchanged and no report error or first failure:
+
+- Plain: `work/experiments/baseline/20261021T062251.165612Z/`,
+  35.215530 s on Lakes.
+- One exit: `work/experiments/baseline/20261021T062639.377701Z/`,
+  exactly one transition to Goolake, 156.328491 s total and 12.596344 s
+  in the destination.
+
+Each current-process log has only the five intentional Windows-bundle
+negative-control error lines. Both have zero observed point-sound exception
+frames and zero bank-path warnings. Original audio remains Ready, no-audio
+false, native Init observed, 153 banks complete and the catalog lease held.
+
+Capture now arms and finishes at the render-frame bound in both runs. Plain
+receives 470 callbacks, 270,720 frames and 541,440 samples; stage mode receives
+457 callbacks, 263,232 frames and 526,464 samples. Output identity is observed,
+every sample is finite, and rejected/capped buffers, nonfinite samples,
+capture failures and terminal-stop requests are zero/absent. Every captured
+sample is zero. This is valid zero output on the observed native output during
+these bounded windows, unlike J880's unarmed measurement. It does not establish
+all events/routes are silent, physical audibility, native default-listener
+registration, music behavior or fidelity. The next integration restores the
+original camera listener lifecycle and observes managed membership; original
+music ownership remains a separate missing integration.
+
+Root qualification:
+`work/coordination/codex-original-game-audio-device-root/r7/root-final-qualification.json`,
+SHA-256 `0dcc1342f7b1beaf2f42d44fd626df013cfa6fcb4fe2f8d94fcb4acd1b028dea`.
+Canonical cleanup and independent post-run queries confirm selector absent,
+process stopped and display asleep; the device claim is released. No other
+device is used. Installed diagnostic is f501a40c; accepted baseline remains
+J850 f1550ce0. Original Term and natural same-process restart remain unqualified.
+This entry changes no reconstruction input; replay J881's runtime/support
+producer to reproduce the source fix. Preserve the R8 refusal and all R9
+receipts, logs, APK and matching symbols.
+
+
+## J884 — Integrate the original source camera and its Wwise listener lifecycle
+
+Date: 2026-10-20.
+
+Hypothesis: the composed route needs the original camera callbacks and source
+listener lifetime, beyond J882's ready engine and zero observed output. Integrate
+those named owners before claiming spatial playback. Prior art: the pinned
+R2API.Sound bank-registration seam follows engine Init; it does not supply a
+camera listener or prove playback. Current accepted input 6af7ed94 and its raw
+game a5f7d83c / Wwise MonoBehaviour f0449ab6 outrank earlier-input notes. The
+accepted Main Camera prefab and current listener callbacks establish the exact
+pair and managed membership behavior. No PC visual comparison is performed in
+this host checkpoint, so visual or camera parity is not claimed.
+
+Change: integrate the reviewed R21 view-only camera producer, exact-profile
+Cecil resolver/marker and runtime owner. The existing native-skin per-run request
+remains default false; an explicit request requires the actual selected source
+model/body/team, source CameraTargetParams and no competing rig for that body.
+The owner retains source CameraRigController/SceneCamera/PlayerBasic behavior,
+without a fabricated LocalUser/NetworkUser, input policy, HUD, material or
+renderer-visibility override. Alpha retains input/UI ownership; the minimal
+NovaInputBoundary change only refreshes the owned report after display disposal.
+
+With original audio Ready and native initialization observed, the inactive clone
+preserves exactly the source camera's default AkAudioListener and co-located
+AkGameObj. Default-off removes them; Unity AudioListeners are removed. Original
+Unity callbacks own their activation and removal, with no manual native Add,
+Remove or SetDefaultListeners call. Lost readiness or native initialization
+retires the staging root. Serialized scalar evidence retains the object ID and
+exact managed membership before/after deactivation. Original wrappers discard
+native results, so Add/Remove success remains explicitly unobserved. A separately
+selected, ready-and-PCM-gated census records only a known flag and managed count;
+unknown is distinct from an observed empty list.
+
+Independent R3 listener review:
+`work/coordination/original-game-audio-listener-review/r3/review.md`, SHA-256
+`5185bdd491ab49b43b932e4e80ce3edd2e2c7d07465b4c75dc37842f6693d5bf`.
+The integrated review catches one live listener read outside the visual
+observer's exception guard. Root initializes an unknown snapshot and moves the
+live read inside the guard; a throwing-getter regression passes. Correction
+review: `work/coordination/original-camera-integration-review/r2/review.md`,
+SHA-256 `088a48d6f6ff5c3ae67e4bc766a4cf338d3aaa1b34c7e352e958418071fb1a53`.
+Public test packaging also fixes the candidate-only ancestor-root lookup and
+fixture filename mismatch before the final host run. A subsequent fresh-clone
+pre-push check catches a test root lookup that depends on ignored
+`work/lab-project`; all three new/updated compiled fixtures now locate the
+tracked repository by their file position, then skip when the compiler is absent.
+The gate is rerun before publishing.
+
+Host evidence:
+
+- Full suite: 1,427 tests pass, five optional skips. Portable compiled fixtures
+  exercise 64 skin/report assertions, 44 listener lifecycle/policy assertions,
+  and actual audio-owner census readiness/default-off/known-empty/failure cases.
+- Full runtime compilation: 121 sources against 264 references; 398 input hashes
+  remain unchanged. Receipt
+  `work/coordination/original-audio-camera-root/r2/compile_receipt.json`,
+  SHA-256 `8cd18e47079f2f510d191471f73ab8b222fab7bfd83e95fd13b0c7a341c99626`;
+  output `b19ac579ae6443ccba0975c405ee0b832c79ac6e8503646ae715c0e943d60d2b`.
+- Actual producer/stager round trip on an independent project:
+  `work/coordination/codex-original-audio-host-stage-root/r8/`. Capture-off/on
+  each verify 165 audio outputs and the camera overlay, then a validated on
+  cache hit; default-off restores eight audio outputs and the default camera
+  profile. SoundEmitter restoration is exact in both directions. Requested
+  camera profiles resolve 139 identities and transform game 6f96 to f6bc with
+  API 1ced. PCM-on audio report SHA-256
+  `19c180a9a7e986a7ebb092c2e68ba4400b34e01caf49599e16255184eb51963d`;
+  camera report `35b130908fa3d47171eb87978bd84f97d86f7a587978e14eeeaee3aaa15b8aed`.
+  This precedes the observer exception-only correction, which changes no IL
+  transform or audio payload and is covered by the final compile/test run.
+- A fresh raw J882 receipt rehearsal verifies all 165 files without recreating
+  receipt bytes. Raw ownership hash 85be0229 differs from the inner source-bank
+  cohort hash 8fe02400; the camera chains the actual ownership receipt to the
+  6f96 preimage and f6bc result. Evidence:
+  `work/coordination/native-visual-camera-review/r22/result.json`, SHA-256
+  `9bc3149af04a0e615cdedac744f08dc36552ec5db85241a6e5bfa0bf83b2d6a4`.
+
+Architecture, local generated-state documentation, explicit 115-source runtime
+selections, first-import identity slots and provenance/privacy recipe audit are
+updated. Only authored adapters, transformations, synthetic fixtures and minimum
+input/hash/GUID relationships are public; protected prefab/assembly/bank bytes
+stay local. R8/R9 reconstruction must replay the runtime/support source staging;
+destination rebuilds restore an owned camera overlay before their existing route,
+without adopting this current-project transform. No new protected input is added.
+
+No new APK, current-player closure, native registration result, camera activation,
+nonzero PCM, spatialization or visual parity is established here. Installed
+f501a40c and accepted f1550ce0 remain unchanged. Next: committed-source preflight,
+full player build with the same-request audio-to-camera-to-pre-strip binding,
+both standard checks, then explicit camera/listener activation evidence. Music
+lifecycle remains a separately reviewed draft; its uncalled pre-Term cleanup is
+not integrated.
+
+
+## J883 — Include the Object root and match Android metadata to native SDK caches
+
+2026-10-20. Hypothesis: an independent snapshot of the exact SDK's native
+reverse cache can test J878's 253 provisional registrations without accepting
+the model as oracle input. Begin from main `8c1523c` after PR20; wait for Main's
+R9 build to finish before acquiring the existing mutex. Main retains original
+gameplay/audio/animation ownership and its separate device. Route A, native
+IL2CPP ARM64, Android rendering and the desktop owner-build fallback stay fixed.
+This experiment adds SDK-only verification and metadata production, not a game
+build, installation or new execution backend.
+
+**Owners and isolation.** `phone_wrapper_reverse.py` derives a private observer
+layout from the pinned SDK as data. `WrapperReverseOracle.cs`, selected by the
+population runner's explicit `--reverse` mode, reads only its own fresh SDK
+process. The guarded project writer, committed-source check and primary mutex
+remain in force. The stage now binds `build_lock.py` and every transitive
+authored reader, addressing J878's review note. Neither MCP editor is attached,
+reused or stopped. The isolated batch exit is teardown; failures and reports
+stay local. ARCHITECTURE and LOCAL_STATE name setup, ownership and retained
+operator selections. No game or linker consumer reads these observations.
+
+Use bounded self-task VM copies, the actual image slide and readable SDK
+segment ranges. The manager slot lies in a zero-fill tail: the unchanged
+file-backed reader correctly refuses it. Runtime VM ranges are a separate
+contract; no SDK file-read guard is relaxed. The native-ID field is explicitly
+pinned to this SDK layout. Five public opaque metadata accessors resolve names,
+nesting and image filenames from the SDK's already loaded, hash-bound Mono
+library. `RTLD_NOLOAD` obtains that existing image only; no runtime is initialized
+or reloaded and no private native SDK function is invoked. Names and assembly
+identities come from the observed cache and SDK images, never the phone model.
+
+Consult the pinned reference-only
+[UnityType API](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Editor/Mono/TypeSystem/UnityType.cs)
+and [registry consumer](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Editor/Mono/BuildPipeline/RuntimeClassMetadata.cs),
+plus the public [Mono class](https://github.com/mono/mono/blob/mono-6.12.0.182/mono/metadata/class.h)
+and [image accessor declarations](https://github.com/mono/mono/blob/mono-6.12.0.182/mono/metadata/image.h)
+for API/ABI knowledge. Local platform headers establish self-task VM-read and
+already-loaded-image flags. This is generic SDK build-tool work; no community
+implementation, SDK instructions or generated mapping table is copied into
+public source. Owner-supplied SDK inspection establishes no redistribution right.
+
+**First native result and failure.** Oracle source
+`105a807370c2e65c1862e8267ed45b7cbd396d66` exits 0 in a fresh SDK-only project.
+Report SHA-256 is
+`060e95a68b61f92909136351364d31793a74aa3dee10fdc28c240e5c26682fa6`.
+The stable reverse vector contains 254 registrations. All 253 J878 model entries
+match their full managed identities and native IDs, but one additional native
+Object-root registration is missing. Preserve that failed comparison. The 305
+supported forward queries still match; their root exclusion cannot establish
+the complete cache population. J878's query result remains valid, while its
+305-entry model is incomplete.
+
+The native range includes its selected base. The pinned managed API's range
+test includes self, and bounded SDK traversal has a header before its first
+array entry. Treating that header offset as exclusion of the base was the wrong
+interpretation. `object_hierarchy` now includes the selected root as well as its
+descendants, refuses missing/cyclic parents and preserves unrelated roots. The
+result is 306 forward and 254 reverse entries, with no hardcoded root mapping.
+The six extra registrations and all 318 direct-name results remain separate.
+Reverse keys are full managed identities; native IDs need not be unique.
+
+**Complete cache observation.** The extended observer reads the native forward
+vector as well. Runtime indices and persistent IDs come only from the SDK's
+complete independently validated registry; zero slots remain absent entries.
+An initial field-prefix expansion correctly refuses a later unsupported shift.
+The accepted layout uses the earlier qualified assignment prefix, preserving
+the original reader's refusal. Stable before/after bounds, manager pointer and
+vector bytes are required. This proves these vector snapshots, not arbitrary
+SDK-object immutability or a globally atomic runtime snapshot.
+
+Committed source `1179e4989e9d79617493682e1cfe7fe69a289170` runs another fresh
+mutex-protected SDK-only batch, exits 0 and releases the lock. Report SHA-256 is
+`675de2120b794fa1f9890ad4aed3266a5a27d6ad9c4da35cde67968092977dd0`.
+All 306 forward and 254 reverse entries match the corrected model's names,
+assembly identities and native IDs, with zero missing/unexpected entries. All
+306 flags match the independent SDK records. The earlier 305 supported queries
+retain their exclusions and all 318 direct names are unchanged. The owner SDK
+binary stays `906123118e45d56c6bcf20f3776ed2373417553042500714023daeb9e53058e8`;
+its already loaded native Mono library stays
+`5d262167de4d3001a48f50baafcc03a55ceebaf817429e0dcc049cb0b0883995`.
+
+**Android result.** Replay that same committed producer on the explicitly
+configured alpha device. Verify the owned workspace/tool/input receipts and
+fresh storage/backing/free reserve; create a fresh child and stage ten authored
+readers/tests. Reuse J864's supplied SDK and J866's phone-produced scoped
+inventory/complete managed file set read-only. No SDK/assembly copy, package
+installation, original-installation edit or data movement is needed. Trusted
+Android Python parses supplied SDK bytes and managed metadata as data.
+
+The producer exits 0 in 14.575 seconds of host-observed wall time. Its entire
+report is byte-identical to host output using the same phone-generated
+inventory, SHA-256
+`9662efb12311043af469af4db1b87bbcf3b6aa260829a09f63df6ef43284fc66`.
+It contains 306 forward entries, including 28 abstract rows, and 254 reverse
+entries. Seven Android contracts pass with no skips. Existing-output, unknown
+native SDK and mixed-corlib controls refuse; existing report bytes survive and
+negative outputs remain absent. Reader and reused input hashes are unchanged.
+The alpha APK remains
+`be26c21c4cd8ff15a8a663528216cf7a69394a51d8b9441a63a1a496f83e98b5`
+before/after and its display is asleep. No gameplay or performance equivalence
+is inferred from metadata-tool timing.
+
+Thirty focused host tests pass. The actual C# collector runs against independent
+authored memory and rejects invalid/excessive bounds, unordered/duplicate class
+keys, duplicate managed identities, foreign native pointers, incomplete runtime
+indices and vector drift. It covers ASLR, zero-fill VM, forward zero slots and
+count mismatch. Fresh-clone CI on actual source passes 1,366 tests with 68
+optional skips, Ruff, public audit and document freshness; both GitHub checks
+pass. Whole-game preflight still refuses this worktree's missing bootstrap
+inventory. Independent review of the original observer accepts its bounded
+scope and independently confirms the preserved first mismatch. Review of the
+expanded source at `1179e49` accepts the bounded metadata claims and rehashes all
+363 artifacts with zero missing files or mismatches. It verifies runtime-index
+binding, inclusive root membership and the native/model comparisons, retaining
+the vector-stability and qualification limits above.
+
+Private `wrapper-reverse-proof-receipt-v2.json` binds 370 source/input/output/
+failure/control/comparison/review/CI/prerequisite artifacts, including the
+reviewed 363-artifact first proof, final source review and J878's unchanged
+260-artifact proof; SHA-256
+`87eaaecc25af343fc9830a7e46b1560630c5c4a161e3663e806230d2e996ed32`.
+Raw SDK observations, cache tables and device/workspace identifiers stay ignored.
+
+**Remaining gate.** The verified contract is Android-produced metadata matching
+desktop SDK cache observations. Complete linker-consumer/root semantics remain
+unqualified; both cache_population_qualified and
+root_generation_qualified stay false. Produce independent project scene,
+manager and dependency usage and exact fixture linker roots next, preserving
+direct scene names and the consumer's separate ID-based/name-based root rules.
+The entire SDK registry is not project usage. General module policy, managed
+game compilation,
+content/shaders, permitted tool delivery, normal app hosting, owner signing and
+installation/update flows and matched-workload performance remain separate
+gates. Revisit on SDK/hash/layout/ABI, managed set, source, consumer or inventory
+drift. No alternative runtime, working-build change or final distribution shell
+is selected.

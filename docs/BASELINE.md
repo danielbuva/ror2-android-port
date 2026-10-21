@@ -72,10 +72,11 @@ The plain check and its acceptance criteria remain unchanged.
 
 ## Current baseline (2026-10-20)
 
-J880's later diagnostic APK is installed after both default checks, but is not
-promoted: its selected PCM window remains unarmed and playback is unqualified.
+J882's later diagnostic APK is installed after both default checks, but is not
+promoted: capture now arms and receives valid finite native output, all zero
+in both observed windows. Audible playback remains unqualified.
 See the [current snapshot](../PORTING_STATE.md) for installed identity and
-[J880](PORTING_JOURNAL.md#j880--remove-the-observed-point-sound-failure-and-identify-the-unarmed-pcm-gate)
+[J882](PORTING_JOURNAL.md#j882--arm-gameplay-capture-and-measure-zero-output-in-both-standard-checks)
 for the single result record. The accepted baseline below remains the rollback.
 
 | Item | Value |

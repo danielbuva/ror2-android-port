@@ -1,0 +1,71 @@
+// Pure fail-closed contract for an opt-in, original-prefab view-only camera.
+public static class AndroidNativeSourceCameraRigContract
+{
+    public struct Evidence
+    {
+        public object expectedTarget, liveTarget, expectedBody, liveBody;
+        public object expectedTeam, liveTeam;
+        public int activeRigsTargetingBody;
+        public bool rigInventoryComplete;
+        public bool rigActive, playerBasicMode, sceneCameraReady, sceneCameraComponentMatchesCamera, sceneCameraOwnsRig, cameraOwnedByRig;
+        public bool sprintParticleOwnerPresent, viewOnlyNoViewer, noHud, originalControlAllowed, originalHudAllowed;
+        public bool audioComponentPolicySatisfied, viewReady, overrideOwned;
+    }
+
+    public static bool ShouldCreate(bool explicitlyRequested, bool selectedSourceModel, bool actualModel)
+    {
+        return explicitlyRequested && selectedSourceModel && actualModel;
+    }
+
+    public static bool CanCreateDedicatedRig(bool explicitlyRequested, bool actualSourceModel, bool audioModeCompatible,
+                                             bool inventoryComplete, int existingActiveRigsForBody)
+    {
+        return explicitlyRequested && actualSourceModel && audioModeCompatible && inventoryComplete &&
+               existingActiveRigsForBody == 0;
+    }
+
+    // Default-off is valid only while the original audio owner has not been
+    // selected. Requested audio must have completed its exact readiness gate;
+    // pending, failed, or terminated audio must not be mistaken for silence.
+    public static bool IsAudioModeCompatible(bool noAudio, bool optInRequested, bool ready,
+                                             bool terminalFailure, bool termsReturned)
+    {
+        if (terminalFailure || termsReturned)
+            return false;
+        if (ready)
+            return optInRequested && !noAudio;
+        return !optInRequested && noAudio;
+    }
+
+    public static bool IsReady(Evidence e, out string failure)
+    {
+        failure = null;
+        if (e.expectedTarget == null || !ReferenceEquals(e.expectedTarget, e.liveTarget))
+            failure = "view-only camera target does not match the selected body object";
+        else if (e.expectedBody == null || !ReferenceEquals(e.expectedBody, e.liveBody))
+            failure = "view-only camera target body does not match the selected source body";
+        else if (e.expectedTeam == null || !Equals(e.expectedTeam, e.liveTeam))
+            failure = "view-only camera target team is not current for the selected body";
+        else if (!e.rigActive)
+            failure = "original prefab view rig is not active";
+        else if (!e.playerBasicMode)
+            failure = "original PlayerBasic camera mode is unavailable";
+        else if (!e.rigInventoryComplete || e.activeRigsTargetingBody != 1)
+            failure = "selected body does not have exactly one fully observed active camera rig";
+        else if (!e.sceneCameraReady || !e.sceneCameraComponentMatchesCamera || !e.sceneCameraOwnsRig || !e.cameraOwnedByRig)
+            failure = "original SceneCamera is not attached to the owned prefab rig";
+        else if (!e.sprintParticleOwnerPresent)
+            failure = "original prefab rig lacks its SceneCamera callback owner";
+        else if (!e.viewOnlyNoViewer || !e.noHud)
+            failure = "view-only rig acquired an unowned viewer or HUD";
+        else if (!e.originalControlAllowed || !e.originalHudAllowed)
+            failure = "view-only provider blocks original control or HUD permission semantics";
+        else if (!e.audioComponentPolicySatisfied)
+            failure = "diagnostic view rig does not satisfy its exact default-off or preserved-source listener policy";
+        else if (!e.overrideOwned)
+            failure = "view-only provider does not exclusively own the rig override";
+        else if (!e.viewReady)
+            failure = "Nova view pose is not configured";
+        return failure == null;
+    }
+}

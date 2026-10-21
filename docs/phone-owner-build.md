@@ -29,6 +29,8 @@ Native SDK abstract/sealed/editor flags on Android:
 [J876](PORTING_JOURNAL.md#j876--decode-native-sdk-type-flags-on-android).
 SDK forward wrapper population on Android:
 [J878](PORTING_JOURNAL.md#j878--reconstruct-sdk-wrapper-population-on-android-with-a-complete-forward-oracle).
+Root-inclusive Android metadata/native SDK cache comparison:
+[J883](PORTING_JOURNAL.md#j883--include-the-object-root-and-match-android-metadata-to-native-sdk-caches).
 
 **Finding:** this repository has no demonstrated phone-only build path. Many
 preparation and packaging stages have Android-capable open-source building
@@ -56,15 +58,16 @@ Project scene usage, general module policy and complete independent linker
 roots remain unproduced.
 J864 independently reads persistent native class IDs as another prerequisite;
 J866 qualifies scoped managed metadata/forwarding on Android; J869 decodes the
-SDK's normal-path wrapper-search metadata there. Complete wrapper-cache/mapping
+SDK's normal-path wrapper-search metadata there. Linker-consumer semantics
 and scene/manager/dependency usage remain open. J873 adds an independent desktop
 verification oracle and separates direct scene names from inherited cache
 queries; its reports are never phone-build inputs.
-J876 qualifies a separate static native flag reader on Android. Complete cache
-population and extra-type rules remain open.
+J876 qualifies a separate static native flag reader on Android.
 J878 verifies forward wrapper mappings on Android against all supported exact-SDK
-queries. Reverse registrations are reconstructed but remain independently
-unverified; direct scene names and complete root production stay separate.
+queries. J883 corrects root membership and matches Android-produced metadata to
+independently observed native forward/reverse caches. Complete
+linker-consumer semantics and root production remain unqualified; direct scene
+names stay separate.
 These are build-pipeline problems; keep the game runtime
 and desktop fallback while investigating them independently.
 

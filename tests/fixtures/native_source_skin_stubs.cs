@@ -51,7 +51,7 @@ namespace UnityEngine
         public Material(Material source) { name = source.name + ".copy"; shader = source.shader; }
     }
     public class Shader : Object { }
-    public struct Vector3 { public float x, y, z; }
+    public struct Vector3 { public float x, y, z; public static Vector3 zero => new Vector3(); }
     public struct Bounds { public Vector3 center, extents; }
     public class Renderer : Behaviour
     {
@@ -71,7 +71,7 @@ namespace UnityEngine
     public class MeshFilter : Component { public Mesh sharedMesh; }
     public class SkinnedMeshRenderer : Renderer { public Mesh sharedMesh; }
     public class Camera : Behaviour { }
-    public class Transform : Component { }
+    public class Transform : Component { public Vector3 position; }
     public class RuntimeAnimatorController : Object { public RuntimeAnimatorController() { name = "runtime controller"; } }
     public class Avatar : Object { public Avatar() { name = "avatar"; } }
     public class Animator : Component
@@ -94,7 +94,7 @@ namespace UnityEngine
 namespace RoR2
 {
     public static class WwiseIntegrationManager { public static bool noAudio; }
-    public class CharacterBody : UnityEngine.MonoBehaviour { public int skinIndex; public ModelLocator modelLocator; }
+    public class CharacterBody : UnityEngine.MonoBehaviour { public int skinIndex; public ModelLocator modelLocator; public CharacterMaster master; }
     public class ModelLocator : UnityEngine.MonoBehaviour { public UnityEngine.Transform modelTransform; }
     public class CharacterModel : UnityEngine.MonoBehaviour
     {
@@ -112,11 +112,46 @@ namespace RoR2
         public int invisibilityCount;
     }
     public enum VisibilityLevel { Invisible, Visible, Untargetable }
-    public class CameraRigController : UnityEngine.MonoBehaviour { }
+    public class CameraRigController : UnityEngine.MonoBehaviour
+    {
+        public static List<CameraRigController> readOnlyInstancesList = new List<CameraRigController>();
+        public UnityEngine.GameObject target, firstPersonTarget;
+        public CharacterBody targetBody;
+        public int targetTeamIndex;
+        public CameraTargetParams targetParams;
+        public NetworkUser viewer;
+        public LocalUser localUserViewer;
+        public bool enableFading, hasOverride;
+        public float fadeStartDistance, fadeEndDistance;
+        public object cameraMode;
+        public UnityEngine.Camera sceneCam;
+        public bool IsOverrideCam(object provider) => false;
+    }
     public class SceneCamera : UnityEngine.MonoBehaviour
     {
+        public static UnityEngine.Camera _camera;
+        public UnityEngine.Camera camera;
         public CameraRigController cameraRigController;
     }
+    public class CameraTargetParams : UnityEngine.MonoBehaviour { }
+    public class CharacterMaster : UnityEngine.MonoBehaviour { public PlayerCharacterMasterController playerCharacterMasterController; }
+    public class PlayerCharacterMasterController : UnityEngine.MonoBehaviour { public NetworkUser networkUser; }
+    public class NetworkUser : UnityEngine.MonoBehaviour
+    {
+        public static List<NetworkUser> readOnlyInstancesList = new List<NetworkUser>();
+        public static List<NetworkUser> readOnlyLocalPlayersList = new List<NetworkUser>();
+        public bool isLocalPlayer;
+        public LocalUser localUser;
+        public CameraRigController cameraRigController;
+    }
+    public class LocalUser
+    {
+        public int id;
+        public NetworkUser currentNetworkUser;
+        public CharacterBody cachedBody;
+        public CameraRigController cameraRigController;
+    }
+    public static class LocalUserManager { public static List<LocalUser> readOnlyLocalUsersList = new List<LocalUser>(); }
     public class ModelSkinController : UnityEngine.MonoBehaviour
     {
         public int currentSkinIndex;
