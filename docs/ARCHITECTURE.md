@@ -256,6 +256,21 @@ context, target support, object retention or project/linker root is qualified;
 no game or build consumer reads the output. Runtime context storage may be
 zero-fill memory and is never treated as file-backed metadata.
 
+`phone_managed_compile.py` owns a current experimental authored compiler fixture.
+Its explicit stage invocation copies hash-pinned owner Roslyn components, their
+unchanged runtime configuration/license, the SDK Unity AOT core library and the
+public `ConverterFixture.cs` into a fresh guarded work directory. It consumes
+no captured response file, compiled player or game source. The standalone run
+selects an explicit SDK or Android build-tool runtime profile, validates the
+complete input set and invokes the same compiler with fixed C# 9, deterministic,
+portable-debug, AnyCPU and development-optimization options. One fixed relative
+output directory and a virtual source path keep fixture comparisons meaningful.
+Setup is committed source and supplied SDK/tool inputs; teardown is the compiler
+child exiting, with logs, runtime identity and failed attempts retained. This
+does not start Unity, build a player, select a game backend or qualify managed
+game compilation, editor-generated type databases or ordinary app hosting.
+Its authored IL remains an input candidate for the existing IL2CPP pipeline.
+
 `phone_registry.py` and `phone_registry_literals.py` own separate experimental
 static SDK metadata support.
 The current `phone-native-registry` action accepts an explicit owner binary,
