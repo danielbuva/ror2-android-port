@@ -15,6 +15,8 @@ using RoR2;
 public sealed class PortSessionOriginalMusicControllerOwner : MonoBehaviour
 {
     const float LoadDeadlineSeconds = 60f;
+    const float MusicObservationIntervalSeconds = 0.5f;
+    const float GlobalRtpcObservationIntervalSeconds = 1.0f;
     const string PrefabPath = OriginalMusicControllerContract.PrefabPath;
     const string ExpectedLegacyKey = OriginalMusicControllerContract.AcceptedLegacyKey;
 
@@ -33,6 +35,12 @@ public sealed class PortSessionOriginalMusicControllerOwner : MonoBehaviour
     float loadStartedAt;
     int unityThreadId;
     FieldInfo apiBeforeEngineTermField;
+    PropertyInfo currentTrackGetter;
+    FieldInfo pickTrackHookField;
+    FieldInfo[] musicRtpcFields;
+    FieldInfo musicRtpcValueField;
+    float nextMusicObservationAt;
+    float nextGlobalRtpcObservationAt;
     static bool processStartupTriggerAttempted;
 
     public bool MayReleaseOriginalAudioCatalogLease
@@ -52,6 +60,23 @@ public sealed class PortSessionOriginalMusicControllerOwner : MonoBehaviour
     [Serializable]
     public sealed class Snapshot
     {
+        [Serializable]
+        public sealed class RtpcObservation
+        {
+            public string name;
+            public bool queryAttempted, resultObserved, valueObserved;
+            public int resultCode, requestedValueType, returnedValueType;
+            public float value, sampleRealtime;
+        }
+
+        [Serializable]
+        public sealed class SourceMusicParameterObservation
+        {
+            public string name;
+            public bool valueObserved;
+            public float value, sampleRealtime;
+        }
+
         public bool requested, sourceAudioReady, noAudio, originalTermsReturned, engineInitialized;
         public bool sourcePrefabKeyVerified, sourcePrefabLoaded, exactSourceComponentsVerified;
         public bool instanceCreated, preloadCalled, staticInstanceMatchesOwnedController;
@@ -65,6 +90,20 @@ public sealed class PortSessionOriginalMusicControllerOwner : MonoBehaviour
         public int outputResultCode, removeOutputResultCode;
         public ulong outputDeviceId, removeOutputDeviceId;
         public bool sceneDefObserved, teleporterObserved, targetCameraInventoryNonempty, targetBodyObserved;
+        public bool teleporterIdleObserved, teleporterIdle;
+        public bool sceneTrackGateObserved, sceneMainTrackPresent, sceneBossTrackPresent;
+        public bool sceneTrackHookObservationKnown, sceneTrackHookPresent;
+        public bool currentTrackGetterAvailable, currentTrackObservationAttempted, currentTrackObserved, currentTrackPresent;
+        public bool musicObservationOwnerAlive, musicObservationAttempted, musicObservationSucceeded;
+        public bool ownedListenerObserved, ownedListenerEnabled, ownedListenerDefault;
+        public bool ownedListenerMembershipObserved, ownedListenerInManagedDefaultList;
+        public bool managedDefaultListenerCountObserved;
+        public int managedDefaultListenerCount, currentTrackInstanceId;
+        public string sceneTrackCandidateKind, sceneTrackCandidateName, currentTrackName;
+        public string musicObservationFailure;
+        public float musicObservationRealtime;
+        public RtpcObservation[] globalRtpcs;
+        public SourceMusicParameterObservation[] sourceMusicParameters;
         public bool introSceneLoadedAfterPreload, nonIntroSceneLoadedAfterPreload;
         public bool preloadAttempted;
         public bool sourceSceneLoadedCallbackRetiredObserved;
@@ -87,7 +126,19 @@ public sealed class PortSessionOriginalMusicControllerOwner : MonoBehaviour
         outputAccepted = false,
         startupTriggerTiming = "adapted_process_start_not_stock_splash_timeline",
         teardownEvidence = "not_observed",
-        limitations = "AddOutput/RemoveOutput result codes are captured only for the exact owned MusicController; accepted output setup, track state/event completion, scene/run ownership, and audible or spatial PCM remain unproven"
+        limitations = "AddOutput/RemoveOutput results belong to the exact owned MusicController; global RTPC queries and original managed track/context values are observations only. Original PostEvent/SetState results are discarded and remain unobserved; none of these observations proves track playback, native listener registration, or audibility",
+        globalRtpcs = new[] {
+            new Snapshot.RtpcObservation { name = "Volume_Master" },
+            new Snapshot.RtpcObservation { name = "Volume_MSX" },
+            new Snapshot.RtpcObservation { name = "Parent_Volume_MSX" }
+        },
+        sourceMusicParameters = new[] {
+            new Snapshot.SourceMusicParameterObservation { name = "playerHealth" },
+            new Snapshot.SourceMusicParameterObservation { name = "enemyValue" },
+            new Snapshot.SourceMusicParameterObservation { name = "teleporterProximity" },
+            new Snapshot.SourceMusicParameterObservation { name = "teleporterDirection" },
+            new Snapshot.SourceMusicParameterObservation { name = "teleporterPlayerStatus" }
+        }
     };
 
     public static PortSessionOriginalMusicControllerOwner StartForReadyAudio(
@@ -176,7 +227,10 @@ public sealed class PortSessionOriginalMusicControllerOwner : MonoBehaviour
             if (GameAudioOriginalOwner.OriginalTermsReturned && !termsReturnHandled)
                 NotifyOriginalTermsReturned();
             TryActivateOriginalStartupTrigger();
+            SampleSourceMusicContextSafely();
         }
+        else
+            ExpireMusicObservationIfOwnerMissing();
         if (CanBeginFailedInstanceCleanup())
         {
             try
@@ -336,6 +390,7 @@ public sealed class PortSessionOriginalMusicControllerOwner : MonoBehaviour
                 !cloneAkGameObjects[0].enabled || cloneListeners[0].gameObject != ownedController.gameObject ||
                 cloneAkGameObjects[0].gameObject != ownedController.gameObject)
                 throw new InvalidOperationException("Instantiated source MusicController listener pair changed");
+            TryBindMusicObservationMembers(typeof(MusicController));
             snapshot.staticInstanceMatchesOwnedController = MusicController.Instance == ownedController;
             snapshot.sourceMusicControllerEnabled = ownedController.isActiveAndEnabled;
             snapshot.sourceMusicSystemEnabled = ownedController.enableMusicSystem;
@@ -366,6 +421,320 @@ public sealed class PortSessionOriginalMusicControllerOwner : MonoBehaviour
             }
             ReleaseLoadHandleIfSafe();
         }
+    }
+
+    void TryBindMusicObservationMembers(Type controllerType)
+    {
+        currentTrackGetter = null;
+        pickTrackHookField = null;
+        musicRtpcFields = null;
+        musicRtpcValueField = null;
+        snapshot.currentTrackGetterAvailable = false;
+        snapshot.sceneTrackHookObservationKnown = false;
+        try
+        {
+            BindMusicObservationMembers(controllerType);
+        }
+        catch (Exception error)
+        {
+            ClearMusicObservation("binding_failed:" + error.GetType().Name);
+        }
+    }
+
+    void BindMusicObservationMembers(Type controllerType)
+    {
+        if (controllerType == null)
+            throw new ArgumentNullException("controllerType");
+        PropertyInfo trackProperty = controllerType.GetProperty("currentTrack",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        MethodInfo getter = trackProperty == null ? null : trackProperty.GetGetMethod(true);
+        currentTrackGetter = getter != null && getter.GetParameters().Length == 0 &&
+            getter.ReturnType == typeof(MusicTrackDef) ? trackProperty : null;
+        snapshot.currentTrackGetterAvailable = currentTrackGetter != null;
+        pickTrackHookField = controllerType.GetField("pickTrackHook", BindingFlags.Static | BindingFlags.NonPublic);
+        snapshot.sceneTrackHookObservationKnown = false;
+
+        var names = new[] {
+            "rtpcPlayerHealthValue", "rtpcEnemyValue", "rtpcTeleporterProximityValue",
+            "rtpcTeleporterDirectionValue", "rtpcTeleporterPlayerStatus"
+        };
+        musicRtpcFields = new FieldInfo[names.Length];
+        for (int i = 0; i < names.Length; i++)
+            musicRtpcFields[i] = controllerType.GetField(names[i], BindingFlags.Instance | BindingFlags.NonPublic);
+        Type setterType = controllerType.Assembly.GetType("RoR2.WwiseUtils.RtpcSetter", false);
+        musicRtpcValueField = setterType == null ? null : setterType.GetField("value", BindingFlags.Instance | BindingFlags.Public);
+        if (musicRtpcValueField != null && musicRtpcValueField.FieldType != typeof(float))
+            musicRtpcValueField = null;
+        nextMusicObservationAt = 0f;
+        nextGlobalRtpcObservationAt = 0f;
+    }
+
+    // Read-only scalar diagnostics. The owner neither calls PickCurrentTrack nor
+    // changes MusicController, Wwise state, volume, event, listener, or output.
+    void SampleSourceMusicContextSafely()
+    {
+        try
+        {
+            ObserveSourceMusicContext();
+        }
+        catch (Exception error)
+        {
+            ClearMusicObservation("sample_failed:" + error.GetType().Name);
+            snapshot.musicObservationAttempted = true;
+            snapshot.musicObservationRealtime = Time.realtimeSinceStartup;
+        }
+    }
+
+    void ExpireMusicObservationIfOwnerMissing()
+    {
+        if (!ownedController && snapshot.musicObservationOwnerAlive)
+            ClearMusicObservation("source_controller_missing_or_destroyed");
+    }
+
+    void ObserveSourceMusicContext()
+    {
+        float now = Time.realtimeSinceStartup;
+        if (now < nextMusicObservationAt)
+            return;
+        nextMusicObservationAt = now + MusicObservationIntervalSeconds;
+        ClearMusicObservation(null);
+        snapshot.musicObservationAttempted = true;
+        snapshot.musicObservationOwnerAlive = ownedController;
+        snapshot.musicObservationRealtime = now;
+        if (!ownedController)
+        {
+            snapshot.currentTrackObservationAttempted = false;
+            snapshot.currentTrackObserved = false;
+            snapshot.sceneTrackGateObserved = false;
+            return;
+        }
+
+        SceneDef scene = SceneCatalog.mostRecentSceneDef;
+        TeleporterInteraction teleporter = TeleporterInteraction.instance;
+        snapshot.sceneDefObserved = scene;
+        snapshot.currentSceneName = scene ? scene.cachedName : null;
+        snapshot.teleporterObserved = teleporter;
+        snapshot.teleporterIdleObserved = teleporter;
+        snapshot.teleporterIdle = teleporter && teleporter.isIdle;
+        snapshot.sceneTrackGateObserved = true;
+        snapshot.sceneMainTrackPresent = scene && scene.mainTrack;
+        snapshot.sceneBossTrackPresent = scene && scene.bossTrack;
+        snapshot.sceneTrackCandidateKind = ClassifySceneTrackCandidate(
+            ownedController.enableMusicSystem, scene, teleporter,
+            teleporter && teleporter.isIdle,
+            snapshot.sceneBossTrackPresent, snapshot.sceneMainTrackPresent);
+        snapshot.sceneTrackCandidateName = snapshot.sceneTrackCandidateKind == "boss_track"
+            ? scene.bossTrack.name
+            : (snapshot.sceneTrackCandidateKind == "main_track" ? scene.mainTrack.name : null);
+        try
+        {
+            snapshot.sceneTrackHookObservationKnown = pickTrackHookField != null;
+            snapshot.sceneTrackHookPresent = pickTrackHookField != null && pickTrackHookField.GetValue(null) != null;
+        }
+        catch
+        {
+            snapshot.sceneTrackHookObservationKnown = false;
+            snapshot.sceneTrackHookPresent = false;
+        }
+
+        snapshot.currentTrackObservationAttempted = true;
+        snapshot.currentTrackObserved = false;
+        snapshot.currentTrackPresent = false;
+        snapshot.currentTrackName = null;
+        snapshot.currentTrackInstanceId = 0;
+        if (currentTrackGetter != null)
+        {
+            try
+            {
+                MusicTrackDef current = currentTrackGetter.GetValue(ownedController, null) as MusicTrackDef;
+                snapshot.currentTrackObserved = true;
+                snapshot.currentTrackPresent = current;
+                snapshot.currentTrackName = current ? current.name : null;
+                snapshot.currentTrackInstanceId = current ? current.GetInstanceID() : 0;
+            }
+            catch
+            {
+                snapshot.currentTrackObserved = false;
+            }
+        }
+
+        ObserveSourceMusicParameters(now);
+        ObserveOwnedListenerMembership();
+        if (now >= nextGlobalRtpcObservationAt)
+        {
+            nextGlobalRtpcObservationAt = now + GlobalRtpcObservationIntervalSeconds;
+            ObserveGlobalRtpcs(now);
+        }
+        snapshot.musicObservationSucceeded = true;
+    }
+
+    void ClearMusicObservation(string failure)
+    {
+        snapshot.musicObservationAttempted = false;
+        snapshot.musicObservationSucceeded = false;
+        snapshot.musicObservationFailure = failure;
+        snapshot.musicObservationRealtime = 0f;
+        snapshot.musicObservationOwnerAlive = ownedController;
+        snapshot.currentTrackObservationAttempted = false;
+        snapshot.currentTrackObserved = false;
+        snapshot.currentTrackPresent = false;
+        snapshot.currentTrackName = null;
+        snapshot.currentTrackInstanceId = 0;
+        snapshot.currentTrackGetterAvailable = currentTrackGetter != null;
+        snapshot.sceneDefObserved = false;
+        snapshot.currentSceneName = null;
+        snapshot.teleporterObserved = false;
+        snapshot.teleporterIdleObserved = false;
+        snapshot.teleporterIdle = false;
+        snapshot.sceneTrackGateObserved = false;
+        snapshot.sceneMainTrackPresent = false;
+        snapshot.sceneBossTrackPresent = false;
+        snapshot.sceneTrackCandidateKind = null;
+        snapshot.sceneTrackCandidateName = null;
+        snapshot.sceneTrackHookObservationKnown = false;
+        snapshot.sceneTrackHookPresent = false;
+        snapshot.ownedListenerObserved = false;
+        snapshot.ownedListenerEnabled = false;
+        snapshot.ownedListenerDefault = false;
+        snapshot.ownedListenerMembershipObserved = false;
+        snapshot.ownedListenerInManagedDefaultList = false;
+        snapshot.managedDefaultListenerCountObserved = false;
+        snapshot.managedDefaultListenerCount = 0;
+        if (snapshot.sourceMusicParameters != null)
+            foreach (Snapshot.SourceMusicParameterObservation item in snapshot.sourceMusicParameters)
+            {
+                item.valueObserved = false;
+                item.value = 0f;
+                item.sampleRealtime = 0f;
+            }
+        if (failure != null && snapshot.globalRtpcs != null)
+            foreach (Snapshot.RtpcObservation item in snapshot.globalRtpcs)
+            {
+                item.queryAttempted = false;
+                item.resultObserved = false;
+                item.valueObserved = false;
+                item.resultCode = 0;
+                item.requestedValueType = -1;
+                item.returnedValueType = -1;
+                item.value = 0f;
+                item.sampleRealtime = 0f;
+            }
+    }
+
+    void ObserveSourceMusicParameters(float now)
+    {
+        if (musicRtpcFields == null || musicRtpcValueField == null || snapshot.sourceMusicParameters == null)
+            return;
+        for (int i = 0; i < snapshot.sourceMusicParameters.Length; i++)
+        {
+            Snapshot.SourceMusicParameterObservation item = snapshot.sourceMusicParameters[i];
+            item.sampleRealtime = now;
+            item.valueObserved = false;
+            item.value = 0f;
+            FieldInfo source = i < musicRtpcFields.Length ? musicRtpcFields[i] : null;
+            if (source == null)
+                continue;
+            try
+            {
+                object setter = source.GetValue(ownedController);
+                if (setter == null)
+                    continue;
+                float value = (float)musicRtpcValueField.GetValue(setter);
+                if (Single.IsNaN(value) || Single.IsInfinity(value))
+                    continue;
+                item.value = value;
+                item.valueObserved = true;
+            }
+            catch
+            {
+                item.valueObserved = false;
+            }
+        }
+    }
+
+    void ObserveOwnedListenerMembership()
+    {
+        AkAudioListener listener = ownedControllerRoot ? ownedControllerRoot.GetComponent<AkAudioListener>() : null;
+        snapshot.ownedListenerObserved = listener;
+        snapshot.ownedListenerEnabled = listener && listener.isActiveAndEnabled;
+        snapshot.ownedListenerDefault = listener && listener.isDefaultListener;
+        snapshot.ownedListenerMembershipObserved = false;
+        snapshot.ownedListenerInManagedDefaultList = false;
+        snapshot.managedDefaultListenerCountObserved = false;
+        snapshot.managedDefaultListenerCount = 0;
+        if (!listener)
+            return;
+        try
+        {
+            var listeners = AkAudioListener.DefaultListeners.ListenerList;
+            if (listeners == null)
+                return;
+            snapshot.managedDefaultListenerCount = listeners.Count;
+            snapshot.managedDefaultListenerCountObserved = true;
+            snapshot.ownedListenerInManagedDefaultList = listeners.Contains(listener);
+            snapshot.ownedListenerMembershipObserved = true;
+        }
+        catch
+        {
+            snapshot.ownedListenerMembershipObserved = false;
+            snapshot.managedDefaultListenerCountObserved = false;
+        }
+    }
+
+    void ObserveGlobalRtpcs(float now)
+    {
+        if (snapshot.globalRtpcs == null)
+            return;
+        foreach (Snapshot.RtpcObservation item in snapshot.globalRtpcs)
+        {
+            item.sampleRealtime = now;
+            item.queryAttempted = false;
+            item.resultObserved = false;
+            item.valueObserved = false;
+            item.resultCode = 0;
+            item.returnedValueType = -1;
+            item.requestedValueType = (int)AkQueryRTPCValue.RTPCValue_Global;
+            item.value = 0f;
+            if (!snapshot.engineInitialized)
+                continue;
+            item.queryAttempted = true;
+            int valueType = item.requestedValueType;
+            float value;
+            try
+            {
+                AKRESULT result = AkSoundEngine.GetRTPCValue(item.name,
+                    AkSoundEngine.AK_INVALID_GAME_OBJECT, AkSoundEngine.AK_INVALID_PLAYING_ID,
+                    out value, ref valueType);
+                item.resultObserved = true;
+                item.resultCode = (int)result;
+                item.returnedValueType = valueType;
+                item.valueObserved = IsSuccessfulGlobalRtpcRead(result, value, valueType);
+                if (item.valueObserved)
+                    item.value = value;
+            }
+            catch
+            {
+                // A diagnostic query failure stays unknown and cannot interrupt the source owner.
+                item.resultObserved = false;
+                item.valueObserved = false;
+            }
+        }
+    }
+
+    internal static string ClassifySceneTrackCandidate(bool musicEnabled, bool sceneObserved,
+        bool teleporterObserved, bool teleporterIsIdle, bool bossTrackPresent, bool mainTrackPresent)
+    {
+        if (!musicEnabled) return "music_disabled";
+        if (!sceneObserved) return "scene_missing";
+        if (teleporterObserved && !teleporterIsIdle && bossTrackPresent) return "boss_track";
+        if (mainTrackPresent) return "main_track";
+        return "no_scene_track";
+    }
+
+    internal static bool IsSuccessfulGlobalRtpcRead(AKRESULT result, float value, int valueType)
+    {
+        return result == AKRESULT.AK_Success && valueType == (int)AkQueryRTPCValue.RTPCValue_Global &&
+            !Single.IsNaN(value) && !Single.IsInfinity(value);
     }
 
     void InstallMusicOutputObserver()
@@ -752,6 +1121,9 @@ public sealed class PortSessionOriginalMusicControllerOwner : MonoBehaviour
             return new Snapshot { phase = "owner_unavailable", teardownEvidence = "not_observed",
                 outputShareSet = OriginalMusicControllerContract.OutputShareSet,
                 limitations = "music owner has not been admitted; output and playback are unobserved" };
+        // Teardown and report saving can share a frame before another Update.
+        // Invalidate live context immediately without sampling or native queries.
+        instance.ExpireMusicObservationIfOwnerMissing();
         return instance.snapshot;
     }
 }

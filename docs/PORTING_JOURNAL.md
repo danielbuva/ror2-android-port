@@ -25363,3 +25363,68 @@ Private evidence roots are `work/coordination/codex-original-game-audio-device-r
 and `work/coordination/original-music-zero-target-output/r2/`.
 Raw reports, logs, screenshots, PCM and device-specific identifiers remain
 local and ignored.
+
+## J923 — Observe the original selected music track and global RTPC context
+
+Date: 2026-10-21. Hypothesis: J919's exact-output zero-sample windows require
+live track/scene/volume observations before changing original music dispatch.
+The camera supplies target/context but does not resolve that window. Consult
+J588/J591/J627/J640's bank/parameter limitations and J891/J917–J919's source
+owner and output evidence before proceeding.
+
+Read pinned R2API.Sound `SoundAPI.cs` at
+`f539511eabf87f02afddb5a83cafd2f4704c85ad`: its native bank load result and
+engine-init hook separate middleware state from managed registration. It does
+not solve Android playback. Inspect the accepted source and same-request API
+metadata locally; no game/community/SDK implementation is copied. Exact captured
+API 1ced exposes the string/UInt64/UInt32/out-float/ref-int query overload;
+its global-scope and success enums both equal one. The captured game retains
+its private current-track getter and source RTPC setter float field. The
+frozen R20 pre/post method comparison remains static evidence only.
+
+Extend `PortSessionOriginalMusicControllerOwner`, the existing process-lifetime
+owner, with read-only observations at 0.5 s cadence: actual current-track
+identity, scene main/boss track presence, teleporter gate, source selection-hook
+presence, five source parameter scalars and exact managed listener membership.
+Keep the scene-branch candidate separate from the actual selected track. At
+1 s cadence, query the three original global master/music/parent-music RTPCs
+only while the existing engine reports initialized. Require native success,
+finite value and returned global scope before marking a value observed; a
+failed/other-scope result is not volume zero. These queries do not measure
+computed effective gain or selected-output playback. Do not choose tracks,
+change volume, invoke events/states again or alter listener/output ownership.
+The original event/state return values remain discarded and unobserved.
+
+Reject the initial R3 proposal: optional reflection/sample failures could escape
+into the source owner, and a reported frozen harness differed from its manifest.
+Preserve that manifest discrepancy. R4 isolates binding/sample failures and
+clears stale known flags; Root then fixes same-frame report capture after
+synchronous controller destruction, before another Update can run. Capture
+invalidates a missing controller without sampling or native queries. Older
+throttled global results retain their own timestamps; failure/destruction clears
+them. Root integrates the exact R4 candidate and portable R5 authored fixtures,
+then applies that reviewed final delta. No private test path or game/API bytes
+are required by the public test.
+
+Three actual-owner host tests pass in 2.083 s, including the existing compile
+and static-class regression plus 42 runtime-harness assertions. They cover
+source gates/track, managed membership, native success/failure/scope/nonfinite
+values, optional reflection and thrown-getter failure containment, recovery,
+throttling, missing-controller invalidation and same-frame capture without a
+native query. Compiler absence skips the class in public CI. Producer cohort,
+cache identity and camera pin contracts are checked separately; Ruff passes.
+Final narrow source review is GO, SHA-256
+`9606b8f2ac1f979a9146416cf29105b71a61035f8c98ef37bbf1a491829a5ff1`.
+It is not a player, native or audibility qualification.
+
+Private proposals/evidence remain under
+`work/coordination/original-music-zero-target-output/r3/`, `r4/` and `r5/`,
+with independent review under
+`work/coordination/original-music-observation-review/`. Public recipe audits
+record the refreshed owner cohort and producer/camera pins together. This
+changes rebuild-staged authored source; regenerate through the committed
+producer before the next player. No native library or exact transformed
+game/API profile changes. Installed J919 stays separate. Next build must pass
+both standard checks and preserve the observation members post-strip before
+interpreting a new device sample. Track selection, original event completion,
+composed playback, whole-process Term/restart and physical audibility remain open.

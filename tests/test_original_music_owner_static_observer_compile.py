@@ -27,7 +27,8 @@ BCL = EDITOR_CONTENTS / "MonoBleedingEdge/lib/mono/4.7.2-api"
 OWNER = ROOT / "tools/unity/runtime/session/PortSessionOriginalMusicControllerOwner.cs"
 CONTRACT = ROOT / "tools/unity/runtime/session/OriginalMusicControllerContract.cs"
 OBSERVER = ROOT / "tools/unity/support/audio/core/OriginalOwnerProbeObserver.cs"
-STUBS = Path(os.environ.get("ORIGINAL_MUSIC_OWNER_STUBS", ROOT / "tests/fixtures/original_music_owner_compile_stubs.cs")).expanduser()
+STUBS = ROOT / "tests/fixtures/original_music_owner_compile_stubs.cs"
+CONTEXT_HARNESS = ROOT / "tests/fixtures/original_music_context_harness.cs"
 
 
 class OriginalMusicOwnerStaticObserverCompileTests(unittest.TestCase):
@@ -37,13 +38,15 @@ class OriginalMusicOwnerStaticObserverCompileTests(unittest.TestCase):
         if missing:
             raise unittest.SkipTest("pinned Unity Mono/Roslyn host tools are unavailable")
 
-    def compile_sources(self, owner_source: Path, output: Path) -> subprocess.CompletedProcess[str]:
+    def compile_sources(
+        self, owner_source: Path, output: Path, target: str = "library", extra_sources: tuple[Path, ...] = ()
+    ) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
             [
                 str(MONO),
                 str(CSC),
                 "-nologo",
-                "-target:library",
+                f"-target:{target}",
                 "-langversion:7.3",
                 f"-out:{output}",
                 f"-r:{BCL / 'mscorlib.dll'}",
@@ -53,6 +56,7 @@ class OriginalMusicOwnerStaticObserverCompileTests(unittest.TestCase):
                 str(OBSERVER),
                 str(CONTRACT),
                 str(owner_source),
+                *(str(source) for source in extra_sources),
             ],
             cwd=ROOT,
             capture_output=True,
@@ -82,6 +86,16 @@ class OriginalMusicOwnerStaticObserverCompileTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0, diagnostics)
             self.assertRegex(diagnostics, r"(?i)(static type|static class|CS0723)")
             self.assertFalse(output.exists())
+
+    def test_read_only_music_context_observation_failure_boundary(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="music-context-observation-") as temp:
+            executable = Path(temp) / "MusicContextObservationHarness.exe"
+            result = self.compile_sources(OWNER, executable, "exe", (CONTEXT_HARNESS,))
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertTrue(executable.is_file())
+            ran = subprocess.run([str(MONO), str(executable)], cwd=temp, capture_output=True, text=True, check=False)
+            self.assertEqual(ran.returncode, 0, ran.stdout + ran.stderr)
+            self.assertIn("PASS: 42 music-context and read-only RTPC assertions", ran.stdout)
 
 
 if __name__ == "__main__":

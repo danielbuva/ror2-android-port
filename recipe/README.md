@@ -1570,3 +1570,16 @@ The owner, synthetic host contracts and compile-only Unity Camera API fixture
 are independently authored; no game, SDK or community implementation, generated
 asset, private device/storage identity or binary is published. The recipe still
 requires legitimate local input and reproduces the staged authored source.
+
+## Original music-context observation audit (J923, 2026-10-21)
+
+Refresh `original-audio-owner-sources.json` for the authored music owner's
+read-only observations and retain the previous cohort as its parent hash.
+Refresh producer/camera source pins together; exact game/API outputs, native
+capture ABI/library, source asset identities and runtime defaults are unchanged.
+The owner, synthetic API-shape fixtures and observation harness are authored
+here. Names/signatures are the minimum interoperation knowledge checked against
+the accepted local API/game assemblies and official local SDK query surface;
+no implementation, SDK/game binary, decompiled source, bank or private identity
+is copied. Generated requests, metadata inspection and device reports remain
+ignored. The normal producer regenerates this staged source from public inputs.

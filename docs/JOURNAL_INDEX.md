@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J923](PORTING_JOURNAL.md#j923--observe-the-original-selected-music-track-and-global-rtpc-context) | 2026-10-21 | Observe the original selected music track and global RTPC context | Date: 2026-10-21. |
 | [J919](PORTING_JOURNAL.md#j919--measure-the-selected-original-music-output-on-the-r20-player) | 2026-10-21 | Measure the selected original music output on the R20 player | Date: 2026-10-21. |
 | [J922](PORTING_JOURNAL.md#j922--bound-the-selected-source-cameras-next-render-observations) | 2026-10-21 | Bound the selected source camera's next render observations | Date: 2026-10-21. |
 | [J920](PORTING_JOURNAL.md#j920--convert-the-android-compiled-and-stripped-fixture-without-relaxing-replay-gates) | 2026-10-21 | Convert the Android-compiled and stripped fixture without relaxing replay gates | Date: 2026-10-21. |

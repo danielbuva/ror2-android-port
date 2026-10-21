@@ -862,6 +862,21 @@ share set, then invokes the original preload path. It supplies no replacement
 Run, camera, user, teleporter or event context. Missing source context remains
 observable rather than synthesized. Default-off starts no music controller.
 
+The same named owner samples the original current-track getter, scene main/boss
+track availability, teleporter gate, source parameter values and exact managed
+listener membership at 0.5 s intervals. It reports a branch candidate separately
+from the observed track; a source hook can change selection. At 1 s intervals,
+while the existing engine reports initialized, it makes three read-only global
+RTPC queries for master, music and parent music volume. Only successful finite
+results with global scope are observed values. These are source/query values,
+not effective gain or playback. Optional binding/sample exceptions clear known
+flags and cannot refuse the source owner. A throttled native query keeps its
+own timestamp; failed samples and missing controllers invalidate stale values.
+`CaptureSnapshot` also invalidates a missing controller before returning, so
+same-frame destruction cannot leave a live-context claim. It never samples or
+calls native middleware from report capture. The existing actual-owner host
+fixture owns these contracts; player/runtime evidence remains separate.
+
 The music owner retains its asynchronous catalog lease and instantiated source
 root through original scene-callback retirement and synchronous source teardown.
 Pending loads, failed preload or unobserved callback retirement prevent unsafe
@@ -900,8 +915,8 @@ a static-class-as-value mutant; it does not model Unity lifecycle execution.
 The completed passive PCM window exposes the callback's full unsigned output ID
 with a separate observed flag and exact decimal-string companion. Known zero
 remains distinct from unknown; a stale slot without a callback in this window
-is unknown. The native main-output capture selector is unchanged. Comparing
-this identity with the exact owned MusicController output requires both
+is unknown. The native capture uses its explicitly selected main or specific-output mode.
+Comparing this identity with the exact owned MusicController output requires both
 observations and successful AddOutput; neither equality nor inequality proves
 playback or physical audibility.
 
