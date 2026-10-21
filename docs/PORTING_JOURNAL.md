@@ -22778,3 +22778,78 @@ installation/update flows and matched-workload performance remain separate
 gates. Revisit on SDK/hash/layout/ABI, managed set, source, consumer or inventory
 drift. No alternative runtime, working-build change or final distribution shell
 is selected.
+
+
+## J885 — Bind the camera player and observe an empty managed listener list
+
+Date: 2026-10-21.
+
+Hypothesis: J884's camera/listener integration can produce a reproducible player
+without regressing the ordinary route, while its read-only census distinguishes
+an empty managed list from missing measurement. Keep the camera's existing
+per-run opt-in off for both standard checks. J884 records source design, current
+input and prior art; J882 records the preceding valid zero-output measurement.
+
+The fresh-clone pre-push gate first refuses the source checkpoint because a
+compiled test locates its root using ignored local project state. The portable
+path correction is committed as `9a238a0`; the rerun passes 1,378 tests with
+71 optional skips, without the editor or `work/`. All source is pushed before
+building. The full build uses source `9a238a02e67228bba2f1af47d748eb68c67c8587`,
+request `20261021T065114.990266Z-89a9142c5ff0485e80728aa12294ece7`,
+and succeeds in 255.101726 s with zero errors. The host mutex is honored and
+Main source remains fixed until the artifact freeze finishes.
+
+Frozen candidate:
+`work/experiments/original-game-audio/candidate-20261021T065732.244383Z/`.
+APK SHA-256:
+`3c72fe0554d25be13af32a4a33265ef23f29d831f33b55f4dd571aaa131bb6e5`;
+symbols ZIP:
+`56f32c691f8f3b72c3ef5f48a08a24977efdb111a46d4ef1fd583787013d68ab`;
+`libil2cpp` Build ID `9350ea1dad022eec187e315868d2e1f3a58f7875`.
+The freeze verifies 377 authored inputs, all 333 same-request pre-strip assembly
+snapshots, 154 packaged banks and 266 independently frozen payload files.
+The audio stage names game 6f96 and API 1ced; the camera receipt chains that
+preimage to exact final game f6bc. Its 139-identity resolver inventory is distinct
+from player inputs. The final project and same-request pre-strip game both hash
+to f6bc; APK, source commit, request, symbols and both packaged raw stage receipts
+bind to that successful build. This proves the build-input chain, not runtime
+camera or prefab closure. Canonical installation uses this exact frozen APK,
+fresh adopted-only reserve/placement checks and its own payload.
+
+Both ordinary diagnostic-assist checks pass, current-build true, 13 applied runs
+unchanged, with no report error or first failure:
+
+- Plain: `work/experiments/baseline/20261021T070010.097156Z/`,
+  35.220535 s on Lakes.
+- One exit: `work/experiments/baseline/20261021T070355.662120Z/`,
+  exactly one transition to Goolake, 156.322968 s total and 13.002625 s
+  in the destination.
+
+Both current-process logs contain only the five intentional Windows-bundle
+negative-control error lines. There are zero observed point-sound exception
+frames and bank-path warnings. Original audio remains Ready, no-audio false,
+153 banks complete and the catalog lease held. The new census is known in both
+reports and observes zero managed default listeners. Native registration is not
+measured; the camera/listener per-run diagnostic is deliberately unrequested.
+
+The native capture arms and reaches its render-frame limit in both cases.
+Plain: 462 callbacks, 266,112 frames, 532,224 finite samples. Stage mode:
+454 callbacks, 261,504 frames, 523,008 finite samples. Output identity is observed,
+all samples are zero, with no nonfinite samples, rejected/capped buffers,
+capture failures or terminal stop. These are valid zero-output windows and a
+known empty managed list, not proof of event posting, native listener failure,
+all-route silence or physical audibility. The point-sound observer is off in
+both standard checks. Next explicitly request the reviewed source camera and
+existing point-sound observer on the source-selected Huntress route.
+
+Root qualification:
+`work/coordination/codex-original-game-audio-device-root/r8/root-final-qualification.json`,
+SHA-256 `2c1f1d7b5f24f0aeeb1f2b1505c6eb8058f66c3ef2014585de1e321e637cfc4b`.
+Canonical cleanup and independent successful queries with explicit absence
+markers confirm selector absent, process stopped and display asleep; the device
+claim is released. Other devices are unused. Installed diagnostic is 3c72fe05;
+accepted baseline remains J850 f1550ce0. Native listener activation/removal,
+original Term, same-process restart, music, visual parity and audible output
+remain unqualified. The later J883 metadata merge preserves the tested runtime
+source and does not change this frozen player. No new reconstruction input is
+introduced; replay J884's source and producer steps for this candidate.

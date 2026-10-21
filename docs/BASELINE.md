@@ -72,11 +72,12 @@ The plain check and its acceptance criteria remain unchanged.
 
 ## Current baseline (2026-10-20)
 
-J882's later diagnostic APK is installed after both default checks, but is not
-promoted: capture now arms and receives valid finite native output, all zero
-in both observed windows. Audible playback remains unqualified.
+J885's later diagnostic APK is installed after both default checks, but is not
+promoted: native output remains finite and all zero, and the managed default
+listener list is observed empty. Source camera activation and audible playback
+remain unqualified.
 See the [current snapshot](../PORTING_STATE.md) for installed identity and
-[J882](PORTING_JOURNAL.md#j882--arm-gameplay-capture-and-measure-zero-output-in-both-standard-checks)
+[J885](PORTING_JOURNAL.md#j885--bind-the-camera-player-and-observe-an-empty-managed-listener-list)
 for the single result record. The accepted baseline below remains the rollback.
 
 | Item | Value |
