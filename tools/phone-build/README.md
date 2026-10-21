@@ -28,6 +28,8 @@ exported types/forwarders. Multiple-module assemblies refuse. The existing
 `phone-root-contract` host action uses the reader for fixture coverage; its
 short-name candidates remain guesses. Default compilation uses host .NET 10
 and the exact supplied SDK's Cecil; this does not qualify Android execution.
+An explicit `MetadataTargetFramework` MSBuild property selects another build-tool
+target when its reference pack is supplied; this never selects a game backend.
 The authored `phone_managed_types.MetadataUniverse(inventory, group)` helper
 resolves only within one explicit group, with exact identity/version checks,
 forwarding paths and managed inheritance. It refuses missing dependencies and
