@@ -25625,8 +25625,13 @@ fixture to reject the forbidden accessor and initialize its synthetic tracks
 through cachedName. Add the compiler mutant to the existing portable owner
 suite, rather than introducing a private preview dependency. Four actual-owner
 host tests pass in 2.647 s, including the existing 42 context assertions and
-rejection of all three restored forbidden accesses. The tests skip without
-the editor's Mono/Roslyn; no game or SDK bytes enter public CI.
+rejection of all three restored forbidden accesses. A subsequent broader
+session compile exposes a second stale synthetic fixture: J923's track/scene
+and typed RTPC declarations were absent from the target-capture fixture. Its
+initial three-test run fails one case. Add only those authored declarations,
+including the forbidden-name contract, and rerun all three unchanged tests:
+they pass. Eight music-controller and two startup-policy tests also pass. The
+tests skip without the editor's Mono/Roslyn; no game or SDK bytes enter public CI.
 
 Independent narrow source review is GO for the three reads. Root verifies the
 final private packet and integrates the portable fixture variant, then refreshes

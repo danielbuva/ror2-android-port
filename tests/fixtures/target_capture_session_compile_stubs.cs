@@ -120,15 +120,29 @@ namespace RoR2
 
     public static class WwiseIntegrationManager { public static bool noAudio; public static void Init() { } }
     public static class CameraRigController { public static List<object> readOnlyInstancesList; }
-    public class TeleporterInteraction : Object { public static TeleporterInteraction instance; }
-    public class SceneDefinition : Object { public string cachedName; }
-    public static class SceneCatalog { public static SceneDefinition mostRecentSceneDef; }
+    public class MusicTrackDef : Object
+    {
+        [Obsolete(".name should not be used. Use .cachedName instead.", true)]
+        public new string name;
+        public string cachedName;
+    }
+    public class TeleporterInteraction : Object { public static TeleporterInteraction instance; public bool isIdle; }
+    public class SceneDef : Object { public string cachedName; public MusicTrackDef mainTrack, bossTrack; }
+    public static class SceneCatalog { public static SceneDef mostRecentSceneDef; }
 }
 
 
 
-public static class AkSoundEngine { public static bool IsInitialized() => false; }
+public static class AkSoundEngine
+{
+    public const ulong AK_INVALID_GAME_OBJECT = ulong.MaxValue;
+    public const uint AK_INVALID_PLAYING_ID = 0;
+    public static bool IsInitialized() => false;
+    public static AKRESULT GetRTPCValue(string name, ulong gameObject, uint playingId, out float value, ref int valueType)
+    { value = 0f; return AKRESULT.AK_Success; }
+}
 public enum AKRESULT { AK_Success = 1 }
+public enum AkQueryRTPCValue { RTPCValue_GameObject = 0, RTPCValue_Global = 1 }
 public sealed class AkAudioListener : UnityEngine.Behaviour
 {
     public bool isDefaultListener;
