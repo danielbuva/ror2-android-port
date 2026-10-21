@@ -863,3 +863,23 @@ decoder; all other method bodies remain unchanged.
 The generator writes new plans/candidates under ignored `work/`; neither SDK
 inputs nor generated candidates enter the default game build. Synthetic test
 scratch stays under ignored `work/tests/wwise-android-abi/`.
+
+
+## Native source view camera Cecil resolver
+
+`work/generated/native-view-camera/resolver-sets/` is generated local state. The
+tracked `scripts/lab/native_view_camera_resolver.py` snapshots the current project's
+managed plugin DLLs and the exact pinned Unity engine-module/Mono mscorlib references
+into a deterministic hash-bound set. The producer verifies source profile, hashes,
+identities and copied bytes; the transform records this resolver inventory separately
+from the current-player linker input inventory. Do not read Bee or timestamped linker
+capture directories as a camera-transform input. This narrow Cecil resolver is not a
+player linker or IL2CPP closure, APK binding, or runtime proof.
+
+
+Destination R8/R9 builds preserve the existing destination-selected work root and
+project route. They restore an old camera result only when an owned receipt exists,
+then do not generate camera resolver/output state. The runtime owner resolves the
+merged marker by exact name and signature at creation; if a destination assembly lacks
+it, explicit camera creation refuses. The standard current-project whole-catalog build
+continues to stage the marker transform.

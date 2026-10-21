@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J884](PORTING_JOURNAL.md#j884--integrate-the-original-source-camera-and-its-wwise-listener-lifecycle) | 2026-10-20 | Integrate the original source camera and its Wwise listener lifecycle | Date: 2026-10-20. |
 | [J882](PORTING_JOURNAL.md#j882--arm-gameplay-capture-and-measure-zero-output-in-both-standard-checks) | 2026-10-20 | Arm gameplay capture and measure zero output in both standard checks | Date: 2026-10-20. |
 | [J881](PORTING_JOURNAL.md#j881--admit-the-observed-world-route-to-the-selected-pcm-window) | 2026-10-20 | Admit the observed world route to the selected PCM window | Date: 2026-10-20. |
 | [J880](PORTING_JOURNAL.md#j880--remove-the-observed-point-sound-failure-and-identify-the-unarmed-pcm-gate) | 2026-10-20 | Remove the observed point-sound failure and identify the unarmed PCM gate | Date: 2026-10-20. |

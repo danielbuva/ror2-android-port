@@ -49,6 +49,8 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
         public ulong passivePcmCallbacks, passivePcmFrames, passivePcmSamples, passivePcmFiniteSamples;
         public ulong passivePcmNonzeroFiniteSamples, passivePcmNonfiniteSamples, passivePcmRejectedBuffers, passivePcmCappedBuffers;
         public bool passivePcmOutputIdentityObserved;
+        public bool managedDefaultListenerCensusKnown;
+        public int managedDefaultListenerCount;
     }
 
     public static IEnumerator EnsureOriginalOwner()
@@ -128,6 +130,26 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
         bool claimed = GameAudioOriginalOwner.OriginalManagerInitClaimed;
         string failure = (host ? host.coordinatorFailure : null) ?? GameAudioOriginalOwner.Failure;
         IGameAudioOriginalPassivePcmCapture pcm = GameAudioOriginalOwner.PassiveCapture;
+        bool managedDefaultListenerCensusKnown = false;
+        int managedDefaultListenerCount = 0;
+        if (ready && GameAudioOriginalRequestBootstrap.PassivePcmCaptureRequested)
+        {
+            try
+            {
+                // This is the Wwise-managed list only. It performs no native
+                // query and does not prove native default-listener registration.
+                int count = AkAudioListener.DefaultListeners.ListenerList.Count;
+                if (count >= 0)
+                {
+                    managedDefaultListenerCount = count;
+                    managedDefaultListenerCensusKnown = true;
+                }
+            }
+            catch
+            {
+                // A census read failure remains unknown and cannot break Save.
+            }
+        }
         return new Snapshot {
             phase = ready ? "ready" : (failure != null ? "failed_closed" : (claimed ? "original_manager_starting" :
                 (GameAudioOriginalOwner.StartupSelected ? "prepared" : (host && host.completed ? "disabled_or_refused" : "starting")))),
@@ -162,7 +184,9 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
             passivePcmNonfiniteSamples = pcm == null ? 0 : pcm.NonfiniteSamples,
             passivePcmRejectedBuffers = pcm == null ? 0 : pcm.RejectedBuffers,
             passivePcmCappedBuffers = pcm == null ? 0 : pcm.CappedBuffers,
-            passivePcmOutputIdentityObserved = pcm != null && pcm.OutputIdentityObserved
+            passivePcmOutputIdentityObserved = pcm != null && pcm.OutputIdentityObserved,
+            managedDefaultListenerCensusKnown = managedDefaultListenerCensusKnown,
+            managedDefaultListenerCount = managedDefaultListenerCount
         };
     }
 

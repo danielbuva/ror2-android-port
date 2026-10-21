@@ -324,13 +324,42 @@ static class AdapterContractTests
         Check(!renderer.enabled && model.visibility == VisibilityLevel.Invisible && report.materialCopiesCreated == originalCopies,
               "capture does not enable renderers, change visibility, or alter material ownership");
 
+        var scene = camera.GetComponent<SceneCamera>();
+        var rig = cameraObject.AddComponent<CameraRigController>();
+        rig.sceneCam = camera;
+        scene.camera = camera;
+        scene.cameraRigController = rig;
+        CameraRigController.readOnlyInstancesList.Clear();
+        CameraRigController.readOnlyInstancesList.Add(rig);
+        var cameraOwner = cameraObject.AddComponent<AndroidNativeSourceCameraRigOwner>();
+        cameraOwner.ready = true;
+        cameraOwner.status = "synthetic ready owner";
+        adapter.CaptureNativeVisualState(camera, animator, cameraOwner);
+        Check(report.visual.nativeCameraOwnerAttached && report.visual.nativeCameraOwnerReady &&
+                  report.visual.nativeCameraOwnerStatus == "synthetic ready owner" && !report.visual.rigOverrideInstalled,
+              "bounded visual report consumes the exact camera-owner readiness/status surface and records override ownership separately");
+        Check(report.visual.originalWwiseCameraListener != null &&
+                  report.visual.originalWwiseCameraListener.evidenceCaptured &&
+                  report.visual.originalWwiseCameraListener.gameObjectId == "987654321" &&
+                  report.visual.originalWwiseCameraListener.managedListContainsExactListener &&
+                  report.visual.originalWwiseCameraListener.nativeAddOutcome.Contains("not_observed"),
+              "skin visual snapshot copies listener lifecycle evidence without inventing native registration");
+
+        cameraOwner.throwListenerActiveRead = true;
+        adapter.CaptureNativeVisualState(camera, animator, cameraOwner);
+        cameraOwner.throwListenerActiveRead = false;
+        Check(!report.visual.captured && report.visual.captureError.Contains("synthetic listener read failure") &&
+                  report.visual.originalWwiseCameraListener != null &&
+                  !report.visual.originalWwiseCameraListener.evidenceCaptured,
+              "a failing Unity listener getter stays a partial unknown report and cannot escape capture");
+
         var slots = new Material[10];
         for (int i = 0; i < slots.Length; i++)
             slots[i] = new Material("slot " + i);
         renderer.sharedMaterials = slots;
         model.baseRendererInfos = new[] { model.baseRendererInfos[0] };
         renderer.getSharedMaterialsCalls = 0;
-        adapter.CaptureNativeVisualState(camera, animator);
+        adapter.CaptureNativeVisualState(camera, animator, cameraOwner);
         Check(!report.visual.renderers[0].materialSlotCountKnown && report.visual.renderers[0].materialSlotCount == -1 &&
                   report.visual.renderers[0].materialsTruncated && report.visual.renderers[0].materialIdentities.Length == 1 &&
                   renderer.getSharedMaterialsCalls == 0,

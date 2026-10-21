@@ -1,0 +1,105 @@
+{
+  "config_selection": {
+    "default": false,
+    "field": "SessionReport.nativeSourceSkinLifecycleDiagnosticRequested",
+    "reason": "existing per-run native selected-skin diagnostic request; camera owner is only created in that explicitly requested source-selected actual-model route and requires the merged current-project marker"
+  },
+  "content_requirements": [
+    {
+      "additional_catalog_root_required": false,
+      "asset_path": "Assets/WholeGame/RoR2/Base/Core/Camera/Main Camera.prefab",
+      "guid": "5aa1ab10a641d6f4e836da719179fa20",
+      "source": "already present in accepted whole-catalog closure"
+    }
+  ],
+  "gate_status": {
+    "accepted": false,
+    "camera_enabled": false,
+    "current_player_closure_verified": false,
+    "default_off": true,
+    "device_tested": false,
+    "full_closure_scan": false,
+    "runtime_dispatch_ready": false,
+    "stage_to_apk_binding": false
+  },
+  "profiles": {
+    "default-game-3124": {
+      "input_relative_path": "Assets/LabLoadingScene/Plugins/RoR2.dll",
+      "input_sha256": "3124a2ed9cf458acee78b1beaf969590b184be452e2b3aa5a8852df82ff95d30",
+      "output_sha256": "236fab2c616b1a017971c316437ec1a9fa9f6b3999563263d4a8ab689a1e59b6"
+    },
+    "post-audio-point-sound-6f96-api-d540": {
+      "input_relative_path": "Assets/LabLoadingScene/Plugins/RoR2.dll",
+      "input_sha256": "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc",
+      "output_sha256": "f6bc1a860e8abe2c82a397a83e55ec2050136e91763ade302ed0e181b320083c"
+    },
+    "post-audio-r10-1ced-game-6f96": {
+      "input_relative_path": "Assets/LabLoadingScene/Plugins/RoR2.dll",
+      "input_sha256": "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc",
+      "output_sha256": "f6bc1a860e8abe2c82a397a83e55ec2050136e91763ade302ed0e181b320083c"
+    },
+    "post-audio-r4-1034-api-d540": {
+      "input_relative_path": "Assets/LabLoadingScene/Plugins/RoR2.dll",
+      "input_sha256": "1034a747e31a3b79554b9cb06f941c7acabaa9e0ee82c2a00abc4b24f9327c1c",
+      "output_sha256": "e16e01bc6545bb6d8248c9196be890b99cf60df721d1b894b8d9871a880c7f91"
+    }
+  },
+  "purpose": "Unaccepted native-view camera module transform producer; exact default 3124/API107, retained composed-audio 1034/API d540, PointSound R4 6f96/API d540, and R10 6f96/API 1ced profiles only. The 1ced profile is independent of the explicit passive-PCM request boolean.",
+  "resolution_note": "Cecil resolution materializes the explicit current project plugin DLL roots, pinned Unity 2021.3.45f2 UnityEngine modules and Mono mscorlib reference. It is limited to transform-required type/signature resolution and is not the pre-strip player-linker or IL2CPP closure. The complete current-player closure scan remains a separate required gate.",
+  "resolver_profiles": {
+    "default-game-3124": {
+      "api_sha256": "107295e478a58ef295a83228111f375c536861bc9081f482d638c59899bf495c",
+      "profile": "current-project-3124-api107-unity-2021.3.45f2"
+    },
+    "post-audio-point-sound-6f96-api-d540": {
+      "api_sha256": "d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23",
+      "profile": "current-project-point-sound-6f96-apid540-unity-2021.3.45f2"
+    },
+    "post-audio-r10-1ced-game-6f96": {
+      "api_sha256": "1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b",
+      "profile": "current-project-point-sound-6f96-api1ced-r10-unity-2021.3.45f2"
+    },
+    "post-audio-r4-1034-api-d540": {
+      "api_sha256": "d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23",
+      "profile": "current-project-1034-apid540-unity-2021.3.45f2"
+    }
+  },
+  "schema": 1,
+  "source_paths": {
+    "build_hook": "scripts/lab/native_view_camera_build_hook.py",
+    "camera_contract": "tools/unity/runtime/input/AndroidNativeSourceCameraRigContract.cs",
+    "camera_owner": "tools/unity/runtime/input/AndroidNativeSourceCameraRigOwner.cs",
+    "listener_contract": "tools/unity/runtime/input/OriginalWwiseCameraListenerContract.cs",
+    "marker": "tools/unity/runtime/input/AndroidNativeSourceViewOnlyRigMarker.cs",
+    "producer": "scripts/lab/native_view_camera_transform.py",
+    "resolver": "scripts/lab/native_view_camera_resolver.py",
+    "skin_lifecycle_audio_camera_merge": "tools/unity/runtime/input/AndroidNativeSourceSkinLifecycle.cs",
+    "transformer": "tools/assembly-transforms/NativeViewCameraCecilTransform.cs",
+    "verifier": "tools/assembly-transforms/VerifyNativeViewCameraTransform.cs",
+    "whole_catalog": "scripts/lab/whole_catalog.py"
+  },
+  "source_sha256": {
+    "build_hook": "31752fb2938f82a0e81986b11aebc676c578f203ebf6f557488ff6b824ebe6b5",
+    "camera_contract": "f31276a3ef620b82db6998257ef86c7d69d9bfee6a05a43ad3fa5d67dfbed202",
+    "camera_owner": "f67b4a2fc6e3dfd04cc5aa0e303252a61ce628420f497a300a45dcd9d08fb7c5",
+    "listener_contract": "e138a103abc56700af610044e833811c8dce4eeb3d205dc3c20fc491bb962a4b",
+    "marker": "3e7c06c8329f7d304233255c3345e00027d8c66318d18e57b61f152bdc316817",
+    "producer": "8d42498ee967c6372444d368cd5014dfca16a87c30af2394770ef7fba7ddf3f0",
+    "resolver": "b00dc10599fa62637e5fcd74a7dcbbf4225eddaf81fb1b6bfcddaa8ff57f12d4",
+    "skin_lifecycle_audio_camera_merge": "a0263efe4c555004d8b6a7cd41526c24f90f3cb2d786eacd0408a724e6015b17",
+    "transformer": "78d8734e77b17e0261e2c016ccf8131fd410a6b61f3cb10d52704664a0ba5d21",
+    "verifier": "2823433b7b1d2edd76363db1720fa7ecd4878db92180a34731fa314a8fa0f04e",
+    "whole_catalog": "20279d06c916531246b0e41bdc09f51b90a5ce9d7c2ad2231377d1d4d69464cd"
+  },
+  "stage_receipt_sha256": "21aeba0fa4e20e70346fdcc6e309d056ea385b63be013726f690b930ba33c05b",
+  "unity_tools_sha256": {
+    "bcl_mscorlib": "7bceaed6ca470413faf8e5b6aa4e9c6d483c490a336c1ce8892dcbb5628d649e",
+    "bcl_system": "5c53e85b75a3cc43f1839b987cc271f6172cfdc3956c2a35f61214f433f10d81",
+    "bcl_system_core": "b18b5dc4b1179545140f17c420c3f3ca1170cc6921c04cbdcbcc4d00fdfc6da2",
+    "cecil": "8b33668cd03b78b7bcaa96eac82488d88c7c89416f82037ecbe2b781ab9642f8",
+    "mcs": "806906c527dbb1c2cb89b1ff6528ab8546bd82050750ebcf56428e44945c7620",
+    "mono": "c2b946f92278147723d6074260c5d091f8f6bd5bef36f11a5999fc7241f313a5",
+    "netstandard": "a5a0274fb4141529c87713489386cc2d52d485569586b8ceea269a672d13a9cf",
+    "unity_core": "b2de8697a8e44aaa3b4ba2662015003c55fe3089ceee6ba8677716214e41c34d"
+  }
+}

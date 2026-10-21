@@ -144,6 +144,13 @@ class UnityRebuildTests(unittest.TestCase):
         self.assertEqual(result["script_audit"]["assets"][0]["missingScripts"], 4)
         self.assertEqual(result["original_audio"], self.audio_stage_result)
         self.assertEqual(
+            result["native_view_camera"],
+            {
+                "staged": False,
+                "reason": "destination rebuilds preserve the off-by-default camera owner but do not run its current-project transform; opt-in camera creation refuses when its merged marker is absent",
+            },
+        )
+        self.assertEqual(
             self.audio_stage_calls,
             [(self.dest, self.work, self.work / "config/original-game-audio/selection.json")],
         )

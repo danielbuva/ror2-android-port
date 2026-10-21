@@ -19,21 +19,24 @@ public sealed class NovaDiagnosticDisplay : IDisposable
     readonly List<Material> ownedSurvivorMaterials = new List<Material>();
     public NovaThirdPersonView thirdPerson;
     public AndroidPresentationCamera presentationCamera;
+    public AndroidPresentationCamera.Report presentationCameraReport = new AndroidPresentationCamera.Report();
     RoR2.AimAnimator nativeAim;
     Animator nativeAnimator;
     AndroidNativeSourceSkinLifecycle nativeSourceSkinLifecycle;
+    AndroidNativeSourceCameraRigOwner nativeCameraRigOwner;
     bool sourceSkinLifecycleDiagnostic;
     AndroidNativeSourceSkinLifecycle.Report sourceSkinReport;
     public bool NativeSourceSkinAssetsReady => sourceSkinLifecycleDiagnostic && nativeSourceSkinLifecycle &&
                                                nativeSourceSkinLifecycle.NativeSelectedSkinReady;
     public bool NativeSourceSkinAnimatorReady => sourceSkinLifecycleDiagnostic && nativeSourceSkinLifecycle &&
                                                  nativeSourceSkinLifecycle.NativeAnimatorInitialized;
+    public bool UsesOriginalLocalCamera => nativeCameraRigOwner;
     public void CaptureNativeSourceSkinReport()
     {
         if (nativeSourceSkinLifecycle)
         {
             nativeSourceSkinLifecycle.CaptureNativeState();
-            nativeSourceSkinLifecycle.CaptureNativeVisualState(camera, nativeAnimator);
+            nativeSourceSkinLifecycle.CaptureNativeVisualState(camera, nativeAnimator, nativeCameraRigOwner);
         }
     }
     public void EnableNativeSourceAnimatorAfterSkinReady()
@@ -79,7 +82,8 @@ public sealed class NovaDiagnosticDisplay : IDisposable
     {
         actualModel = actual;
         bool sourceSelected = !string.IsNullOrEmpty(sourceSurvivor);
-        sourceSkinLifecycleDiagnostic = sourceSelected && actual && nativeSourceSkinLifecycleDiagnostic;
+        sourceSkinLifecycleDiagnostic = AndroidNativeSourceCameraRigContract.ShouldCreate(
+            nativeSourceSkinLifecycleDiagnostic, sourceSelected, actual);
         sourceSkinReport = nativeSourceSkinReport;
         if (nativeSourceSkinLifecycleDiagnostic && (!sourceSkinLifecycleDiagnostic || sourceSkinReport == null))
             throw new InvalidOperationException("Requested native source skin lifecycle requires an actual source-selected model and report");
@@ -252,22 +256,64 @@ public sealed class NovaDiagnosticDisplay : IDisposable
         floorMaterial.mainTextureScale = Vector2.one * 50;
         if (floor)
             floor.GetComponent<Renderer>().sharedMaterial = floorMaterial;
-        camera = new GameObject("Nova diagnostic camera").AddComponent<Camera>();
-        camera.transform.SetParent(root.transform, false);
-        camera.depth = 100;
-        camera.cullingMask = 1 << 30;
-        camera.clearFlags = CameraClearFlags.SolidColor;
-        camera.backgroundColor = new Color(.04f, .05f, .07f);
-        camera.orthographic = true;
-        camera.orthographicSize = 8;
-        camera.nearClipPlane = .01f;
-        camera.farClipPlane = 200;
-        var light = new GameObject("Nova diagnostic light").AddComponent<Light>();
-        light.transform.SetParent(root.transform, false);
-        light.type = LightType.Directional;
-        light.transform.rotation = Quaternion.Euler(45, -30, 0);
-        presentationCamera = camera.gameObject.AddComponent<AndroidPresentationCamera>();
-        presentationCamera.fallbackLight = light;
+        if (sourceSkinLifecycleDiagnostic)
+        {
+            // The composed client boundary has no registered LocalUser/NetworkUser.
+            // This opt-in view-only owner uses the original prefab and a narrowly
+            // guarded null-viewer aim path; it creates no player or HUD identity.
+            try
+            {
+                nativeCameraRigOwner = AndroidNativeSourceCameraRigOwner.Create(root.transform, selectedBody,
+                    nativeSourceSkinLifecycleDiagnostic, sourceSelected, actual, sourceSkinReport);
+            }
+            catch (InvalidOperationException error)
+            {
+                // Retain the diagnostic so it can record the absent original
+                // local-user/camera lifecycle. The fallback preview cannot satisfy
+                // native CharacterModel visibility and is never reported as ready.
+                sourceSkinReport?.Fail(error.Message);
+                if (sourceSkinReport != null)
+                    sourceSkinReport.cameraAdmissionFailure = error.Message;
+                nativeCameraRigOwner = null;
+            }
+            camera = nativeCameraRigOwner ? nativeCameraRigOwner.viewCamera : null;
+        }
+        else
+        {
+            camera = new GameObject("Nova diagnostic camera").AddComponent<Camera>();
+            camera.transform.SetParent(root.transform, false);
+            camera.depth = 100;
+            camera.cullingMask = 1 << 30;
+            camera.clearFlags = CameraClearFlags.SolidColor;
+            camera.backgroundColor = new Color(.04f, .05f, .07f);
+            camera.orthographic = true;
+            camera.orthographicSize = 8;
+            camera.nearClipPlane = .01f;
+            camera.farClipPlane = 200;
+        }
+        if (!camera)
+        {
+            camera = new GameObject("Nova diagnostic camera").AddComponent<Camera>();
+            camera.transform.SetParent(root.transform, false);
+            camera.depth = 100;
+            camera.cullingMask = 1 << 30;
+            camera.clearFlags = CameraClearFlags.SolidColor;
+            camera.backgroundColor = new Color(.04f, .05f, .07f);
+            camera.orthographic = true;
+            camera.orthographicSize = 8;
+            camera.nearClipPlane = .01f;
+            camera.farClipPlane = 200;
+        }
+        if (!nativeCameraRigOwner)
+        {
+            var light = new GameObject("Nova diagnostic light").AddComponent<Light>();
+            light.transform.SetParent(root.transform, false);
+            light.type = LightType.Directional;
+            light.transform.rotation = Quaternion.Euler(45, -30, 0);
+            presentationCamera = camera.gameObject.AddComponent<AndroidPresentationCamera>();
+            presentationCamera.fallbackLight = light;
+            presentationCameraReport = presentationCamera.report;
+        }
         aim = new GameObject("Input aim indicator").AddComponent<LineRenderer>();
         aim.transform.SetParent(root.transform, false);
         aim.gameObject.layer = 30;
@@ -277,7 +323,8 @@ public sealed class NovaDiagnosticDisplay : IDisposable
     }
     public void ConfigureThirdPerson(RoR2.CharacterBody body)
     {
-        thirdPerson = new NovaThirdPersonView(camera, body);
+        thirdPerson = new NovaThirdPersonView(nativeCameraRigOwner ? nativeCameraRigOwner.poseCamera : camera, body);
+        nativeCameraRigOwner?.MarkViewReady();
         aim.enabled = false;
     }
     public void Observe(Vector3 bodyPosition, Vector3 direction)
@@ -287,10 +334,12 @@ public sealed class NovaDiagnosticDisplay : IDisposable
         if (thirdPerson != null)
         {
             thirdPerson.Place();
+            nativeCameraRigOwner?.MarkViewReady();
             return;
         }
         camera.transform.position = new Vector3(bodyPosition.x, bodyPosition.y + 10, bodyPosition.z - 12);
         camera.transform.LookAt(bodyPosition + Vector3.up);
+        nativeCameraRigOwner?.MarkViewReady();
         aim.SetPosition(0, bodyPosition + Vector3.up);
         aim.SetPosition(1, bodyPosition + Vector3.up + direction * 3);
     }
@@ -303,6 +352,11 @@ public sealed class NovaDiagnosticDisplay : IDisposable
             source.gameObject.SetActive(false);
             if (nativeSourceSkinLifecycle)
                 nativeSourceSkinLifecycle.RecordDisplayDeactivated();
+        }
+        if (nativeCameraRigOwner)
+        {
+            nativeCameraRigOwner.DisposeOwnedView();
+            CaptureNativeSourceSkinReport();
         }
         if (root)
             UnityEngine.Object.Destroy(root);

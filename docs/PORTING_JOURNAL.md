@@ -22546,3 +22546,93 @@ J850 f1550ce0. Original Term and natural same-process restart remain unqualified
 This entry changes no reconstruction input; replay J881's runtime/support
 producer to reproduce the source fix. Preserve the R8 refusal and all R9
 receipts, logs, APK and matching symbols.
+
+
+## J884 — Integrate the original source camera and its Wwise listener lifecycle
+
+Date: 2026-10-20.
+
+Hypothesis: the composed route needs the original camera callbacks and source
+listener lifetime, beyond J882's ready engine and zero observed output. Integrate
+those named owners before claiming spatial playback. Prior art: the pinned
+R2API.Sound bank-registration seam follows engine Init; it does not supply a
+camera listener or prove playback. Current accepted input 6af7ed94 and its raw
+game a5f7d83c / Wwise MonoBehaviour f0449ab6 outrank earlier-input notes. The
+accepted Main Camera prefab and current listener callbacks establish the exact
+pair and managed membership behavior. No PC visual comparison is performed in
+this host checkpoint, so visual or camera parity is not claimed.
+
+Change: integrate the reviewed R21 view-only camera producer, exact-profile
+Cecil resolver/marker and runtime owner. The existing native-skin per-run request
+remains default false; an explicit request requires the actual selected source
+model/body/team, source CameraTargetParams and no competing rig for that body.
+The owner retains source CameraRigController/SceneCamera/PlayerBasic behavior,
+without a fabricated LocalUser/NetworkUser, input policy, HUD, material or
+renderer-visibility override. Alpha retains input/UI ownership; the minimal
+NovaInputBoundary change only refreshes the owned report after display disposal.
+
+With original audio Ready and native initialization observed, the inactive clone
+preserves exactly the source camera's default AkAudioListener and co-located
+AkGameObj. Default-off removes them; Unity AudioListeners are removed. Original
+Unity callbacks own their activation and removal, with no manual native Add,
+Remove or SetDefaultListeners call. Lost readiness or native initialization
+retires the staging root. Serialized scalar evidence retains the object ID and
+exact managed membership before/after deactivation. Original wrappers discard
+native results, so Add/Remove success remains explicitly unobserved. A separately
+selected, ready-and-PCM-gated census records only a known flag and managed count;
+unknown is distinct from an observed empty list.
+
+Independent R3 listener review:
+`work/coordination/original-game-audio-listener-review/r3/review.md`, SHA-256
+`5185bdd491ab49b43b932e4e80ce3edd2e2c7d07465b4c75dc37842f6693d5bf`.
+The integrated review catches one live listener read outside the visual
+observer's exception guard. Root initializes an unknown snapshot and moves the
+live read inside the guard; a throwing-getter regression passes. Correction
+review: `work/coordination/original-camera-integration-review/r2/review.md`,
+SHA-256 `088a48d6f6ff5c3ae67e4bc766a4cf338d3aaa1b34c7e352e958418071fb1a53`.
+Public test packaging also fixes the candidate-only ancestor-root lookup and
+fixture filename mismatch before the final host run.
+
+Host evidence:
+
+- Full suite: 1,427 tests pass, five optional skips. Portable compiled fixtures
+  exercise 64 skin/report assertions, 44 listener lifecycle/policy assertions,
+  and actual audio-owner census readiness/default-off/known-empty/failure cases.
+- Full runtime compilation: 121 sources against 264 references; 398 input hashes
+  remain unchanged. Receipt
+  `work/coordination/original-audio-camera-root/r2/compile_receipt.json`,
+  SHA-256 `8cd18e47079f2f510d191471f73ab8b222fab7bfd83e95fd13b0c7a341c99626`;
+  output `b19ac579ae6443ccba0975c405ee0b832c79ac6e8503646ae715c0e943d60d2b`.
+- Actual producer/stager round trip on an independent project:
+  `work/coordination/codex-original-audio-host-stage-root/r8/`. Capture-off/on
+  each verify 165 audio outputs and the camera overlay, then a validated on
+  cache hit; default-off restores eight audio outputs and the default camera
+  profile. SoundEmitter restoration is exact in both directions. Requested
+  camera profiles resolve 139 identities and transform game 6f96 to f6bc with
+  API 1ced. PCM-on audio report SHA-256
+  `19c180a9a7e986a7ebb092c2e68ba4400b34e01caf49599e16255184eb51963d`;
+  camera report `35b130908fa3d47171eb87978bd84f97d86f7a587978e14eeeaee3aaa15b8aed`.
+  This precedes the observer exception-only correction, which changes no IL
+  transform or audio payload and is covered by the final compile/test run.
+- A fresh raw J882 receipt rehearsal verifies all 165 files without recreating
+  receipt bytes. Raw ownership hash 85be0229 differs from the inner source-bank
+  cohort hash 8fe02400; the camera chains the actual ownership receipt to the
+  6f96 preimage and f6bc result. Evidence:
+  `work/coordination/native-visual-camera-review/r22/result.json`, SHA-256
+  `9bc3149af04a0e615cdedac744f08dc36552ec5db85241a6e5bfa0bf83b2d6a4`.
+
+Architecture, local generated-state documentation, explicit 115-source runtime
+selections, first-import identity slots and provenance/privacy recipe audit are
+updated. Only authored adapters, transformations, synthetic fixtures and minimum
+input/hash/GUID relationships are public; protected prefab/assembly/bank bytes
+stay local. R8/R9 reconstruction must replay the runtime/support source staging;
+destination rebuilds restore an owned camera overlay before their existing route,
+without adopting this current-project transform. No new protected input is added.
+
+No new APK, current-player closure, native registration result, camera activation,
+nonzero PCM, spatialization or visual parity is established here. Installed
+f501a40c and accepted f1550ce0 remain unchanged. Next: committed-source preflight,
+full player build with the same-request audio-to-camera-to-pre-strip binding,
+both standard checks, then explicit camera/listener activation evidence. Music
+lifecycle remains a separately reviewed draft; its uncalled pre-Term cleanup is
+not integrated.

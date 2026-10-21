@@ -11,7 +11,7 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
     {
         public bool requested, attached, nativeOwnersActive, selectedSkinReady, animatorInitialized, displayDeactivated, ownerDestroyed;
         public int selectedSkinIndex = -1, currentSkinIndex = -1;
-        public string controllerIdentity, avatarIdentity, firstFailure;
+        public string controllerIdentity, avatarIdentity, firstFailure, cameraAdmissionFailure;
         public int materialCopiesCreated, materialCopiesRetired, materialCopiesReleased;
         public VisualSnapshot visual;
         public void Fail(string reason)
@@ -30,17 +30,47 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
         public string[] materialIdentities;
     }
     [Serializable]
+    public sealed class VisualCameraRigSnapshot
+    {
+        public int rigInstanceId, targetInstanceId, targetBodyInstanceId, targetTeamIndex;
+        public int firstPersonTargetInstanceId, targetParamsInstanceId, sceneCameraInstanceId, sceneCameraRigInstanceId;
+        public int viewerInstanceId, localUserInstanceId, cachedBodyInstanceId, viewerCameraRigInstanceId, localUserCameraRigInstanceId;
+        public bool exists, active, viewerPresent, localUserViewerPresent, cameraEnabled, sceneCameraOwnerMatchesRig;
+        public bool viewerIsLocalPlayer, viewerLocalUserMatches, localUserNetworkUserMatches, cachedBodyMatchesTarget, canonicalRigLinksMatch;
+        public bool enableFading, hasOverride;
+        public string cameraMode;
+        public Vector3 rigPosition, cameraPosition;
+        public float fadeStartDistance, fadeEndDistance;
+    }
+    [Serializable]
     public sealed class VisualSnapshot
     {
         public int captureSequence, frame, modelInstanceId, visibilityValue, invisibilityCount, rendererRecordCount;
         public int capturedRendererCount, omittedRendererCount, cameraInstanceId, sceneCameraInstanceId, rigInstanceId;
+        public int rigTargetInstanceId, rigTargetBodyInstanceId, rigTargetTeamIndex, firstPersonTargetInstanceId;
+        public int rigTargetParamsInstanceId, bodyCameraTargetParamsInstanceId;
+        public int localNetworkUserCount, networkUserCount, registeredLocalUserCount, matchingLocalUserCount;
+        public int selectedBodyMasterInstanceId, selectedBodyPlayerControllerInstanceId, selectedBodyNetworkUserInstanceId;
+        public int selectedBodyLocalUserInstanceId, selectedBodyLocalUserCachedBodyInstanceId, selectedBodyLocalUserCameraRigInstanceId;
+        public int globalSceneCameraInstanceId;
+        public int observedCameraRigCount, capturedCameraRigCount, omittedCameraRigCount, capturedMatchingBodyRigCount;
+        public bool cameraRigInventoryComplete;
+        public VisualCameraRigSnapshot[] cameraRigs;
         public float realtime;
         public bool captured, modelExists, modelActive, modelEnabled, forceUpdate;
         public bool cameraExists, cameraActive, cameraEnabled, cameraHasSceneCamera, sceneCameraEnabled, cameraHasRig;
+        public bool rigActive, sceneCameraOwnerMatchesRig, sceneCameraComponentMatchesCamera;
+        public bool selectedBodyHasMaster, selectedBodyHasPlayerController, selectedBodyNetworkUserIsLocal;
+        public bool localUserContextInventoryComplete, selectedBodyNetworkUserInLocalPlayerList;
+        public bool selectedBodyNetworkUserHasRegisteredLocalUser, selectedBodyLocalUserCachedBodyMatches, selectedBodyCanonicalRigLinksMatch;
+        public bool rigOverrideInstalled, globalSceneCameraIsOwnedView;
+        public bool nativeCameraOwnerAttached, nativeCameraOwnerReady;
+        public OriginalWwiseCameraListenerSnapshot originalWwiseCameraListener;
         public bool animatorExists, animatorActive, animatorEnabled, animatorInitialized, animatorStateCaptured;
         public int animatorInstanceId, animatorLayerZeroStateHash;
         public float animatorLayerZeroNormalizedTime;
-        public string visibility, cameraName, sceneCameraName, animatorControllerIdentity, animatorAvatarIdentity, captureError;
+        public string visibility, cameraName, sceneCameraName, cameraMode, nativeCameraOwnerStatus, animatorControllerIdentity, animatorAvatarIdentity, captureError;
+        public Vector3 viewCameraPosition, rigCameraPosition;
         public VisualRendererSnapshot[] renderers;
     }
     const int MaxVisualRendererRecords = 32;
@@ -223,7 +253,8 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
 
     // Read-only, bounded visual evidence for the selected source model and the
     // Nova-owned camera. Called only at the existing report-save cadence.
-    public void CaptureNativeVisualState(Camera ownedCamera, Animator sourceAnimator)
+    public void CaptureNativeVisualState(Camera ownedCamera, Animator sourceAnimator,
+                                         AndroidNativeSourceCameraRigOwner nativeCameraOwner = null)
     {
         if (report == null)
             return;
@@ -232,21 +263,80 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
         // destroyed native object or an exceptional Unity getter must remain a
         // serializable diagnostic failure, never escape this observer.
         report.visual = snapshot;
+        snapshot.originalWwiseCameraListener = OriginalWwiseCameraListenerContract.CaptureSnapshot(null);
         snapshot.captureSequence = ++visualCaptureSequence;
         try
         {
+            snapshot.originalWwiseCameraListener = OriginalWwiseCameraListenerContract.CaptureSnapshot(nativeCameraOwner);
             snapshot.frame = Time.frameCount;
             snapshot.realtime = Time.realtimeSinceStartup;
             if (!model)
                 throw new InvalidOperationException("Selected source model is unavailable during visual capture");
             snapshot.modelExists = true;
             snapshot.modelInstanceId = model.GetInstanceID();
+            CaptureLocalCameraContext(snapshot, model.body);
             snapshot.modelActive = model.gameObject.activeInHierarchy;
             snapshot.modelEnabled = model.enabled;
             snapshot.visibility = model.visibility.ToString();
             snapshot.visibilityValue = (int)model.visibility;
             snapshot.invisibilityCount = model.invisibilityCount;
             snapshot.forceUpdate = model.forceUpdate;
+            var liveRigs = CameraRigController.readOnlyInstancesList;
+            snapshot.observedCameraRigCount = liveRigs != null ? liveRigs.Count : 0;
+            snapshot.cameraRigInventoryComplete = snapshot.observedCameraRigCount <= 32;
+            int rigCount = Math.Min(snapshot.observedCameraRigCount, 32);
+            snapshot.capturedCameraRigCount = rigCount;
+            snapshot.omittedCameraRigCount = Math.Max(0, snapshot.observedCameraRigCount - rigCount);
+            snapshot.cameraRigs = new VisualCameraRigSnapshot[rigCount];
+            for (int i = 0; i < rigCount; i++)
+            {
+                var rig = liveRigs[i];
+                var item = new VisualCameraRigSnapshot { exists = rig };
+                snapshot.cameraRigs[i] = item;
+                if (!rig)
+                    continue;
+                item.rigInstanceId = rig.GetInstanceID();
+                item.active = rig.isActiveAndEnabled && rig.gameObject.activeInHierarchy;
+                item.targetInstanceId = rig.target ? rig.target.GetInstanceID() : 0;
+                item.targetBodyInstanceId = rig.targetBody ? rig.targetBody.GetInstanceID() : 0;
+                item.targetTeamIndex = (int)rig.targetTeamIndex;
+                if (rig.targetBody == model.body)
+                    snapshot.capturedMatchingBodyRigCount++;
+                item.firstPersonTargetInstanceId = rig.firstPersonTarget ? rig.firstPersonTarget.GetInstanceID() : 0;
+                item.targetParamsInstanceId = rig.targetParams ? rig.targetParams.GetInstanceID() : 0;
+                item.viewerPresent = rig.viewer != null;
+                item.localUserViewerPresent = rig.localUserViewer != null;
+                item.viewerInstanceId = rig.viewer ? rig.viewer.GetInstanceID() : 0;
+                item.localUserInstanceId = rig.localUserViewer != null ? rig.localUserViewer.id : -1;
+                item.viewerIsLocalPlayer = rig.viewer && rig.viewer.isLocalPlayer;
+                item.viewerLocalUserMatches = rig.viewer && rig.viewer.localUser == rig.localUserViewer;
+                item.localUserNetworkUserMatches = rig.localUserViewer != null && rig.localUserViewer.currentNetworkUser == rig.viewer;
+                item.cachedBodyInstanceId = rig.localUserViewer != null && rig.localUserViewer.cachedBody
+                    ? rig.localUserViewer.cachedBody.GetInstanceID() : 0;
+                item.cachedBodyMatchesTarget = rig.localUserViewer != null && rig.localUserViewer.cachedBody == rig.targetBody;
+                item.viewerCameraRigInstanceId = rig.viewer && rig.viewer.cameraRigController
+                    ? rig.viewer.cameraRigController.GetInstanceID() : 0;
+                item.localUserCameraRigInstanceId = rig.localUserViewer != null && rig.localUserViewer.cameraRigController
+                    ? rig.localUserViewer.cameraRigController.GetInstanceID() : 0;
+                item.canonicalRigLinksMatch = item.viewerIsLocalPlayer && item.viewerLocalUserMatches &&
+                                              item.localUserNetworkUserMatches && item.cachedBodyMatchesTarget &&
+                                              item.viewerCameraRigInstanceId == item.rigInstanceId &&
+                                              item.localUserCameraRigInstanceId == item.rigInstanceId;
+                item.enableFading = rig.enableFading;
+                item.fadeStartDistance = rig.fadeStartDistance;
+                item.fadeEndDistance = rig.fadeEndDistance;
+                item.hasOverride = rig.hasOverride;
+                item.cameraMode = rig.cameraMode != null ? ShortText(rig.cameraMode.GetType().FullName, 96) : string.Empty;
+                item.rigPosition = rig.transform.position;
+                var rigCamera = rig.sceneCam;
+                item.cameraEnabled = rigCamera && rigCamera.isActiveAndEnabled;
+                item.cameraPosition = rigCamera ? rigCamera.transform.position : Vector3.zero;
+                item.sceneCameraInstanceId = rigCamera ? rigCamera.GetInstanceID() : 0;
+                var rigSceneCamera = rigCamera ? rigCamera.GetComponent<SceneCamera>() : null;
+                item.sceneCameraRigInstanceId = rigSceneCamera && rigSceneCamera.cameraRigController
+                    ? rigSceneCamera.cameraRigController.GetInstanceID() : 0;
+                item.sceneCameraOwnerMatchesRig = rigSceneCamera && rigSceneCamera.cameraRigController == rig;
+            }
             var records = model.baseRendererInfos;
             snapshot.rendererRecordCount = records != null ? records.Length : 0;
             snapshot.cameraExists = ownedCamera;
@@ -271,7 +361,31 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
                 var rig = sceneCamera ? sceneCamera.cameraRigController : null;
                 snapshot.cameraHasRig = rig;
                 snapshot.rigInstanceId = rig ? rig.GetInstanceID() : 0;
+                if (rig)
+                {
+                    snapshot.nativeCameraOwnerAttached = nativeCameraOwner != null;
+                    snapshot.nativeCameraOwnerReady = nativeCameraOwner != null && nativeCameraOwner.ready;
+                    snapshot.nativeCameraOwnerStatus = nativeCameraOwner != null ? ShortText(nativeCameraOwner.status, 160) : string.Empty;
+                    snapshot.globalSceneCameraInstanceId = SceneCamera._camera ? SceneCamera._camera.GetInstanceID() : 0;
+                    snapshot.globalSceneCameraIsOwnedView = SceneCamera._camera == ownedCamera;
+                    snapshot.rigActive = rig.isActiveAndEnabled && rig.gameObject.activeInHierarchy;
+                    snapshot.sceneCameraOwnerMatchesRig = sceneCamera.cameraRigController == rig && rig.sceneCam == ownedCamera;
+                    snapshot.sceneCameraComponentMatchesCamera = sceneCamera.camera == ownedCamera;
+                    snapshot.rigOverrideInstalled = nativeCameraOwner != null && rig.IsOverrideCam(nativeCameraOwner);
+                    snapshot.rigTargetInstanceId = rig.target ? rig.target.GetInstanceID() : 0;
+                    snapshot.rigTargetBodyInstanceId = rig.targetBody ? rig.targetBody.GetInstanceID() : 0;
+                    snapshot.rigTargetTeamIndex = (int)rig.targetTeamIndex;
+                    snapshot.rigTargetParamsInstanceId = rig.targetParams ? rig.targetParams.GetInstanceID() : 0;
+                    var bodyCameraTargetParams = model.body ? model.body.GetComponent<CameraTargetParams>() : null;
+                    snapshot.bodyCameraTargetParamsInstanceId = bodyCameraTargetParams ? bodyCameraTargetParams.GetInstanceID() : 0;
+                    snapshot.firstPersonTargetInstanceId = rig.firstPersonTarget ? rig.firstPersonTarget.GetInstanceID() : 0;
+                    snapshot.cameraMode = rig.cameraMode != null ? ShortText(rig.cameraMode.GetType().FullName, 96) : string.Empty;
+                    snapshot.viewCameraPosition = ownedCamera.transform.position;
+                    snapshot.rigCameraPosition = rig.transform.position;
+                }
             }
+            if (!nativeCameraOwner)
+                snapshot.nativeCameraOwnerStatus = ShortText(report.cameraAdmissionFailure, 160);
             if (sourceAnimator && sourceAnimator.isInitialized && sourceAnimator.layerCount > 0)
             {
                 var state = sourceAnimator.GetCurrentAnimatorStateInfo(0);
@@ -335,6 +449,62 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
             snapshot.captured = false;
         }
         report.visual = snapshot;
+    }
+
+    static void CaptureLocalCameraContext(VisualSnapshot snapshot, CharacterBody selectedBody)
+    {
+        var allUsers = NetworkUser.readOnlyInstancesList;
+        var localUsers = NetworkUser.readOnlyLocalPlayersList;
+        var registeredLocalUsers = LocalUserManager.readOnlyLocalUsersList;
+        snapshot.networkUserCount = allUsers != null ? allUsers.Count : -1;
+        snapshot.localNetworkUserCount = localUsers != null ? localUsers.Count : -1;
+        snapshot.registeredLocalUserCount = registeredLocalUsers != null ? registeredLocalUsers.Count : -1;
+        snapshot.localUserContextInventoryComplete = allUsers != null && localUsers != null && registeredLocalUsers != null &&
+            allUsers.Count <= 32 && localUsers.Count <= 32 && registeredLocalUsers.Count <= 32;
+        if (!selectedBody)
+            return;
+        var master = selectedBody.master;
+        snapshot.selectedBodyHasMaster = master;
+        snapshot.selectedBodyMasterInstanceId = master ? master.GetInstanceID() : 0;
+        var playerController = master ? master.playerCharacterMasterController : null;
+        snapshot.selectedBodyHasPlayerController = playerController;
+        snapshot.selectedBodyPlayerControllerInstanceId = playerController ? playerController.GetInstanceID() : 0;
+        var bodyUser = playerController ? playerController.networkUser : null;
+        snapshot.selectedBodyNetworkUserInstanceId = bodyUser ? bodyUser.GetInstanceID() : 0;
+        snapshot.selectedBodyNetworkUserIsLocal = bodyUser && bodyUser.isLocalPlayer;
+        if (!bodyUser || registeredLocalUsers == null || registeredLocalUsers.Count > 32)
+            return;
+        var local = bodyUser.localUser;
+        if (localUsers != null && localUsers.Count <= 32)
+            for (int i = 0; i < localUsers.Count; i++)
+                if (localUsers[i] == bodyUser)
+                {
+                    snapshot.selectedBodyNetworkUserInLocalPlayerList = true;
+                    break;
+                }
+        snapshot.selectedBodyLocalUserInstanceId = local != null ? local.id : -1;
+        if (local == null)
+            return;
+        snapshot.selectedBodyLocalUserCachedBodyInstanceId = local.cachedBody ? local.cachedBody.GetInstanceID() : 0;
+        snapshot.selectedBodyLocalUserCameraRigInstanceId = local.cameraRigController ? local.cameraRigController.GetInstanceID() : 0;
+        bool registered = false;
+        for (int i = 0; i < registeredLocalUsers.Count; i++)
+            if (registeredLocalUsers[i] == local)
+            {
+                registered = true;
+                break;
+            }
+        snapshot.selectedBodyNetworkUserHasRegisteredLocalUser = registered && local.currentNetworkUser == bodyUser;
+        snapshot.selectedBodyLocalUserCachedBodyMatches = local.cachedBody == selectedBody;
+        var rig = bodyUser.cameraRigController;
+        snapshot.selectedBodyCanonicalRigLinksMatch = rig && rig.viewer == bodyUser && rig.localUserViewer == local &&
+                                                       local.cameraRigController == rig && rig.targetBody == selectedBody &&
+                                                       rig.target == selectedBody.gameObject;
+        if (registeredLocalUsers.Count <= 32 && localUsers != null && localUsers.Count <= 32)
+            for (int i = 0; i < registeredLocalUsers.Count; i++)
+                if (registeredLocalUsers[i] != null && registeredLocalUsers[i].cachedBody == selectedBody &&
+                    registeredLocalUsers[i].currentNetworkUser)
+                    snapshot.matchingLocalUserCount++;
     }
 
     static string Identity(UnityEngine.Object value)

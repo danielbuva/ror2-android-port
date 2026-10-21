@@ -366,8 +366,8 @@ public sealed partial class PortSession
                                       "Original Animator did not initialize after native selected controller/avatar readiness");
                     display.EnableNativeAimAfterAnimatorReady();
                 }
-                coordinator.r.framePacing = display.presentationCamera.report;
-                if (cfg.stageGeometry)
+                coordinator.r.framePacing = display.presentationCameraReport;
+                if (cfg.stageGeometry && !display.UsesOriginalLocalCamera)
                     display.camera.cullingMask |= LayerIndex.world.mask;
                 if (cfg.combatSpine)
                     coordinator.PrepareCombatScene(body, cfg);
