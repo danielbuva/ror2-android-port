@@ -1847,6 +1847,7 @@ def _build_integration(
         if android_symbols != "none":
             raise RuntimeError("Debugging symbol builds are supported only by the current local whole-catalog build")
         from native_view_camera_build_hook import restore_previous_camera
+        from original_music_output_observer_build_hook import restore as restore_previous_music_output_observer
         from original_game_audio_build_hook import stage_for_build
         from rebuild import safe_destination
 
@@ -1854,6 +1855,7 @@ def _build_integration(
         destination_input_id = read(destination_work / "config/accepted-input.json")["input_id"]
         destination_project = safe_destination(destination, destination_input_id, destination_work)
         restore_previous_camera(destination_project, destination_work)
+        restore_previous_music_output_observer(destination_project, destination_work)
         audio_inputs = stage_for_build(destination_project, WORK, selection_path=destination_work / "config/original-game-audio/selection.json")
         result = build("vulkan", force=True, reuse_payload=code_only, destination=destination, work=work)
         if isinstance(result, dict):
@@ -1884,9 +1886,11 @@ def _build_integration(
     generate_build_maps(io, manifest, contract, source, code_only)
     contract_dir = ROOT / read(out / "contracts-latest.json")["path"]
     from native_view_camera_build_hook import restore_previous_camera, stage_after_audio
+    from original_music_output_observer_build_hook import restore as restore_previous_music_output_observer
     from original_game_audio_build_hook import stage_for_build
 
     restore_previous_camera(project, WORK)
+    restore_previous_music_output_observer(project, WORK)
     audio_inputs = stage_for_build(project, WORK)
     camera_inputs = stage_after_audio(project, WORK, audio_inputs)
     stage_build_sources(io, runtime_sources, manifest, read(contract_dir / "result.json"))

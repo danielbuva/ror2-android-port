@@ -15,6 +15,7 @@ namespace UnityEngine
     public class MonoBehaviour : Component
     {
         protected void StartCoroutine(IEnumerator routine) { }
+        protected T GetComponent<T>() where T : Component => null;
     }
     public sealed class GameObject : Object
     {
@@ -30,6 +31,19 @@ namespace UnityEngine
     {
         public static float realtimeSinceStartup;
     }
+}
+
+
+// The listener-census fixture compiles only the audio owner; its unrelated
+// snapshot member is represented by this shape-only stub. The music owner has
+// its own compiled lifecycle fixture.
+public sealed class PortSessionOriginalMusicControllerOwner : UnityEngine.Component
+{
+    public sealed class Snapshot { }
+    public static Snapshot CaptureSnapshot() => null;
+    public static void StartForReadyAudio(UnityEngine.MonoBehaviour owner, bool explicitlyRequested) { }
+    public void NotifyOriginalTermsReturned() { }
+    public bool MayReleaseOriginalAudioCatalogLease => false;
 }
 
 public sealed class AkWwiseInitializationSettings { }

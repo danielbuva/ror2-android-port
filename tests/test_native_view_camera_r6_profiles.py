@@ -2,11 +2,18 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
 import unittest
 
 CANDIDATE = Path(__file__).resolve().parents[1]
-R6 = CANDIDATE / "work/coordination/original-camera-update-next/r6"
+R6 = Path(os.environ["CAMERA_R6_HISTORICAL_ROOT"]).expanduser().resolve() if os.environ.get("CAMERA_R6_HISTORICAL_ROOT") else None
+R6_RECEIPT_HASHES = {
+    "default-game-3124": "3cc59e969fee9263a7e607dc9de94850dbc3154726bd380f120604d10ab47be3",
+    "post-audio-r4-1034-api-d540": "26e70c8c13f4e4c030da33547b162579c1f702e840131f92a92cb923e0795e1b",
+    "post-audio-point-sound-6f96-api-d540": "09f0b8c2323961288f357c9c84deb840a2753ce77d3e796d2e1930ebd6a60d7f",
+    "post-audio-r10-1ced-game-6f96": "c0924434a05c08d66104d2ee336e84fba73ef7bec1266d6fd13a2d34a95cee9b",
+}
 REPO = next((parent for parent in (CANDIDATE, *CANDIDATE.parents) if (parent / "AGENTS.md").is_file()), CANDIDATE)
 EXPECTED = {
     "default-game-3124": {
@@ -28,6 +35,16 @@ EXPECTED = {
         "input": "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc",
         "api": "1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b",
         "output": "2ae5d92a652d69c7e6fd471448af203d52be3ef9350743a91fc84a5bd2bc1384",
+    },
+    "post-audio-music-observer-6f96-api-d540": {
+        "input": "27340ed60dbfe77f66fa394d028b597d3e4613ee8ea405416c061766fb226eef",
+        "api": "d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23",
+        "output": "a2054dcfc5d14d2fdfba0fd0e61851e4a153b842be6bb6f1c0e1df8ef634762e",
+    },
+    "post-audio-music-observer-r10-1ced": {
+        "input": "27340ed60dbfe77f66fa394d028b597d3e4613ee8ea405416c061766fb226eef",
+        "api": "1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b",
+        "output": "a2054dcfc5d14d2fdfba0fd0e61851e4a153b842be6bb6f1c0e1df8ef634762e",
     },
 }
 RESTORE_ONLY = {
@@ -62,8 +79,9 @@ class NativeViewCameraR6ProfileTests(unittest.TestCase):
                 # R6 receipts are immutable historical evidence from before
                 # EH preservation. Verify their historical output against the
                 # restore-only allowlist, never against current active pins.
-                receipt_path = R6 / f"profile-{name}.json"
-                if receipt_path.is_file():
+                receipt_path = R6 / f"profile-{name}.json" if R6 is not None else None
+                if receipt_path is not None and receipt_path.is_file():
+                    self.assertEqual(digest(receipt_path), R6_RECEIPT_HASHES[name])
                     receipt = json.loads(receipt_path.read_text())
                     self.assertEqual(receipt["input_sha256"], want["input"])
                     self.assertEqual(receipt["api_sha256"], want["api"])

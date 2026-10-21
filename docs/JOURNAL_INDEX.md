@@ -10,6 +10,11 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J908](PORTING_JOURNAL.md#j908--separate-completed-ci-verification-from-temporary-host-volume-cleanup) | 2026-10-21 | Separate completed CI verification from temporary host-volume cleanup | Date: 2026-10-21. |
+| [J907](PORTING_JOURNAL.md#j907--observe-the-original-camera-dispatch-gates-without-changing-admission) | 2026-10-21 | Observe the original camera dispatch gates without changing admission | Date: 2026-10-21. |
+| [J906](PORTING_JOURNAL.md#j906--capture-sustained-null-siren-target-evidence-within-the-existing-budget) | 2026-10-21 | Capture sustained null Siren target evidence within the existing budget | Date: 2026-10-21. |
+| [J904](PORTING_JOURNAL.md#j904--observe-original-music-output-results-without-changing-native-calls) | 2026-10-21 | Observe original music output results without changing native calls | Date: 2026-10-21. |
+| [J903](PORTING_JOURNAL.md#j903--observe-source-skin-and-listener-teardown-retain-the-camera-context-failure) | 2026-10-21 | Observe source skin and listener teardown; retain the camera context failure | Date: 2026-10-21. |
 | [J902](PORTING_JOURNAL.md#j902--compile-the-authored-unity-fixture-with-sdkpackage-derived-references-on-android) | 2026-10-21 | Compile the authored Unity fixture with SDK/package-derived references on Android | Date: 2026-10-21. |
 | [J901](PORTING_JOURNAL.md#j901--build-the-repaired-camera-player-and-pass-both-standard-device-checks) | 2026-10-21 | Build the repaired camera player and pass both standard device checks | Date: 2026-10-21. |
 | [J899](PORTING_JOURNAL.md#j899--compile-an-authored-c-fixture-on-android-and-preserve-cross-host-output-differences) | 2026-10-21 | Compile an authored C# fixture on Android and preserve cross-host output differences | Date: 2026-10-21. |

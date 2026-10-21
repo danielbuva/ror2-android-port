@@ -65,11 +65,22 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
         public bool selectedBodyNetworkUserHasRegisteredLocalUser, selectedBodyLocalUserCachedBodyMatches, selectedBodyCanonicalRigLinksMatch;
         public bool rigOverrideInstalled, globalSceneCameraIsOwnedView;
         public bool nativeCameraOwnerAttached, nativeCameraOwnerReady;
+        public bool cameraGateObservationRequested;
+        public bool cameraGateNextTargetKnown, cameraGateNextTargetMatchesExpected, cameraGateTargetKnown, cameraGateTargetMatchesExpected;
+        public bool cameraGateRigActiveKnown, cameraGateRigActive, cameraGateProviderActiveKnown, cameraGateProviderActive;
+        public bool cameraGateMarkerPresentKnown, cameraGateMarkerPresent, cameraGateMarkerActiveKnown, cameraGateMarkerActive;
+        public bool cameraGateMarkerBindingKnown, cameraGateMarkerBoundToRig, cameraGateMarkerBoundToTarget, cameraGateMarkerBoundToProvider;
+        public bool cameraGateDelegateKnown, cameraGateDelegatePresent, cameraGateContextReadyKnown, cameraGateContextReady;
+        public bool cameraGatePumpCountKnown, cameraGateApplicationKnown, cameraGateApplicationPresent;
+        public bool cameraGateApplicationActiveKnown, cameraGateApplicationActive, cameraGateDeltaTimeKnown, cameraGateDeltaTimeNonzero;
+        public bool cameraGateCutsceneKnown, cameraGateIsCutscene;
+        public int cameraGateExpectedTargetInstanceId, cameraGateNextTargetInstanceId, cameraGateTargetInstanceId, cameraGatePumpCount;
+        public float cameraGateDeltaTime;
         public OriginalWwiseCameraListenerSnapshot originalWwiseCameraListener;
         public bool animatorExists, animatorActive, animatorEnabled, animatorInitialized, animatorStateCaptured;
         public int animatorInstanceId, animatorLayerZeroStateHash;
         public float animatorLayerZeroNormalizedTime;
-        public string visibility, cameraName, sceneCameraName, cameraMode, nativeCameraOwnerStatus, animatorControllerIdentity, animatorAvatarIdentity, captureError;
+        public string visibility, cameraName, sceneCameraName, cameraMode, nativeCameraOwnerStatus, animatorControllerIdentity, animatorAvatarIdentity, captureError, cameraGateCaptureError;
         public Vector3 viewCameraPosition, rigCameraPosition;
         public VisualRendererSnapshot[] renderers;
     }
@@ -386,6 +397,8 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
             }
             if (!nativeCameraOwner)
                 snapshot.nativeCameraOwnerStatus = ShortText(report.cameraAdmissionFailure, 160);
+            else
+                nativeCameraOwner.CaptureUpdateContextObservation(snapshot);
             if (sourceAnimator && sourceAnimator.isInitialized && sourceAnimator.layerCount > 0)
             {
                 var state = sourceAnimator.GetCurrentAnimatorStateInfo(0);

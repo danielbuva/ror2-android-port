@@ -19,6 +19,11 @@ namespace OriginalOwnerProbeObserver
         public static Action CallbackManagerTermReturned;
         public static Action<int> PostCallbacksReturned;
         public static Action<int> RenderAudioReturned;
+        // Optional bounded observation of the original MusicController output
+        // calls. The receiver must join by exact object identity and retain only
+        // scalar results; no Wwise call is made here.
+        public static Action<int, object, ulong> MusicAddOutputReturned;
+        public static Action<int, object, ulong> MusicRemoveOutputReturned;
 
         public static void RecordBeforeEngineInit()
         {
@@ -58,6 +63,21 @@ namespace OriginalOwnerProbeObserver
         public static void RecordCallbackManagerTermReturned() { Safe(() => CallbackManagerTermReturned?.Invoke()); }
         public static void RecordPostCallbacksReturned(int callbackCount) { Safe(() => PostCallbacksReturned?.Invoke(callbackCount)); }
         public static void RecordRenderAudioReturned(int result) { Safe(() => RenderAudioReturned?.Invoke(result)); }
+
+        // These helpers are called only after the original API call returns.
+        // Callback exceptions are contained so the observer cannot replace the
+        // original return or exception path.
+        public static void RecordMusicAddOutputReturned(int result, object sourceOwner, ulong outputId)
+        {
+            try { MusicAddOutputReturned?.Invoke(result, sourceOwner, outputId); }
+            catch { }
+        }
+
+        public static void RecordMusicRemoveOutputReturned(int result, object sourceOwner, ulong outputId)
+        {
+            try { MusicRemoveOutputReturned?.Invoke(result, sourceOwner, outputId); }
+            catch { }
+        }
 
         private static void Safe(Action callback) { try { callback?.Invoke(); } catch { } }
     }

@@ -384,6 +384,14 @@ current path) and **historical** (kept for evidence; not reached by current comm
 
 ## Build pipeline
 
+`scripts/git-hooks/pre-push` delegates committed-source checks to
+`scripts/ci-local.sh` in a fresh clone. Verification retains its original exit
+status. Disposable host-volume cleanup runs separately after verification,
+with phase logs in Git-private `ci-cleanup/` metadata; a failed detach preserves
+the scratch directory rather than deleting a mounted volume. Cleanup never
+opens or stops an editor or uses a device. A blocked cleanup cannot hold a
+completed verification, and failing verification still refuses the push.
+
 The user's legitimate PC installation goes in; an ARM64 IL2CPP APK plus an independently
 synced content payload comes out. Everything game-derived stays under the ignored `work/`.
 
@@ -796,6 +804,14 @@ the API/Core delegate identity. The guard proves its capture callback absent
 before invoking music cleanup; either refusal prevents original Term. After both
 original Term calls return, the music lease can release. Owner destruction that
 loses retirement observation keeps the state unknown and retains references.
+
+The optional source-output observer samples the result of the existing
+MusicController `AddOutput` and `RemoveOutput` calls after they return. A separate
+Cecil transform preserves the original call count, arguments, return and exception
+flow, while the owned session records only exact-instance scalar results. Its
+receipt follows the audio stage; the camera transform consumes its exact 27340
+intermediate only under d540 or 1ced. This observation is not playback or
+audibility evidence.
 
 `recipe/original-audio-owner-sources.json` pins the authored owner cohort and
 runtime membership. Both producer compile modes validate its bytes and source
@@ -1779,7 +1795,11 @@ separates missing, disabled and inactive trackers before reading an active
 tracker; target states distinguish destroyed, unidentified and known targets,
 selected/native ID matches and requested primary. It records live tracker
 settings and current geometry without refreshing native tracking or claiming its last LOS/range/cone
-decision. Two optional, one-shot eligibility snapshots use the first visible
+decision. If only same-egg NoTarget observations occur, a read-only scalar window
+can use the existing delayed slot after 0.5 s of samples with gaps at most
+0.25 s; invalid/discontinuous observations reset it. The two-snapshot stage cap
+stays fixed and this changes no native target behavior. Two optional, one-shot
+eligibility snapshots use the first visible
 primary mismatch and a later null target with the same selected egg. They
 record the held input aim before this frame's write, exact HurtBox registry
 membership with a 4,096-entry cap, current body/team/layer/health/collider data,
@@ -2435,9 +2455,16 @@ removing the override; lost context deactivates and destroys only the owned
 staging root. These are source dependencies and lifecycle contracts only;
 bundle/Unity/runtime readiness remains unproven.
 
+The existing source-skin visual snapshot reads its owned camera marker's binding,
+delegate, pump count and native update gates at the existing report cadence.
+Optional field resolution is independent of camera admission. Typed known flags
+and bounded errors retain unavailable observations as unknown; capture invokes
+no callback and does not change camera or target state.
+
 The current whole-catalog path restores only an exact prior camera stage result
-to its guarded 3124, 1034 or 6f96 preimage, runs the original-audio producer, then
-applies the camera producer to that immediate result. Destination R8/R9 rebuilds
+to its guarded 3124, 1034 or 6f96 preimage, runs the original-audio producer,
+then inserts the source-output observer after the exact 6f96 result when selected,
+and applies the camera producer to that immediate result. Destination R8/R9 rebuilds
 unwind an owned prior camera result and retain their existing build route.
 The active exact profiles are 3124/API 107 to d5fc52, 1034/API d540 to e4aeeb,
 and PointSound game 6f96 with either d540 or 1ced to 2ae5d9. The latter consumes

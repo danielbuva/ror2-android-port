@@ -24169,3 +24169,255 @@ b0f7ae7e snapshot rows are preserved exactly. Both
 remain false. Revisit downstream stripping/conversion with this newly generated
 input, then general defines/generators/packages and complete roots; content,
 shaders, app-host/tool delivery and matched gameplay benchmarks remain open.
+
+
+## J903 — Observe source skin and listener teardown; retain the camera context failure
+
+Date: 2026-10-21. Hypothesis: J900's corrected original camera marker can
+activate the opt-in view with a real body, preserve the source listener, and
+release the source skin and listener when the original session ends. Reuse
+J892/J900's source ownership and community-prior-art contracts. This is a
+selected lifecycle diagnostic, not visual or audio parity acceptance.
+
+**Identity and observation.** Use only J901's frozen diagnostic APK
+`b0f7ae7e2218bb5caa353eb32d2b60ac680e7183b8ec53442d193c0e8af9c45e`
+from source ffe3e63, after both standard checks and their five independently
+pinned qualification proofs. The reviewed one-shot R7 manifest is
+`5e62b53196ab1df8b7ae307584bdd048f42b7c85ed195833786259bf21033e32`.
+No APK, payload, Unity source or editor mutation occurs during the run.
+The live report reaches 35.927536 s of original Huntress play on Lakes,
+with empty error and firstFailure. The original selected skin is ready;
+its native owners are active and its Animator is initialized with the
+Huntress controller and avatar. Five copied materials are live.
+
+The source camera owner attaches, but never reports ready: it waits for
+its owned original CameraRigController update context. Its rig camera is
+disabled, scene camera enabled and visibility Invisible. This is the
+first unresolved camera behavior; it does not establish original camera
+rendering, correct body framing or animation parity. Source-prefab defaults
+remain explicitly reduced fidelity because original Console setup is absent.
+
+**Observed teardown and limits.** The completed report records the same
+process and session, phase complete, cleanup true and 37.116776 world seconds.
+The source skin owner is destroyed, its display deactivated and all five
+copied materials released. The exact source listener is active and present
+in the managed list during play, then inactive and absent after disable;
+the managed listener census falls from two to one. This qualifies those
+managed lifecycle observations only. Native registration outcomes remain
+unobserved because the original wrappers discard AKRESULT. PointSound records
+four requests and no matching NullReferenceException. Passive Wwise capture
+records 434 callbacks and 499,968 finite samples, all zero; native playback
+and physical audibility remain unqualified.
+
+**Independent host observer failure.** After preserving the completed session,
+the runner polls an obsolete short spine filename for the next menu; the
+canonical report identity includes the bringup suffix. That read consumes the
+bounded observation deadline and ends in TimeoutExpired. The wrapper result
+is failed-or-refused-after-dispatch-marker, not a lifecycle acceptance. Preserve
+this first failure and the spent one-shot marker; repair the report-path
+contract in a new host revision before any retry. Do not increase the deadline
+to hide the path mismatch. The camera-context failure independently remains.
+
+Full private runtime reports, both screenshots and summaries are under
+`work/experiments/original-camera-listener-lifecycle/20261021T180022.807986Z/`.
+The failed wrapper is under
+`work/coordination/original-camera-listener-device-plan/r7/attempts/`;
+Root driver and separate terminal query are under
+`work/coordination/codex-original-camera-listener-device-root/r1/`.
+After wrapper cleanup, independently rehash the installed APK and verify its
+owned placement, positive process absence, complete selector-parent listing
+and display sleep. All pass before releasing the exact scoped claim. No other
+device, storage configuration or user data is changed. Accepted baseline
+f1550ce0 stays fixed. Revisit camera context from the exact owned marker
+lifecycle and accepted native update contract, not forced game state.
+
+## J904 — Observe original music output results without changing native calls
+
+Date: 2026-10-21. Hypothesis: return values from the original MusicController
+output calls distinguish output setup failure from the later context/playback
+questions left by J901/J903's finite zero PCM. Reuse the Wwise lifetime prior art
+in community-prior-art.md: R2API.Sound's bank registration/loading contracts
+inform lifetime observation, not Android compatibility. The exact current
+6f96 composed module and accepted native call sites are the authority.
+
+**Change and ownership.** The authored MusicOutputObserverCecilTransform adds
+bounded callbacks immediately after the original Awake AddOutput and OnDestroy
+RemoveOutput return sites. It preserves their arguments, output ID, call count,
+return stack, branches and exception regions. Callback exceptions are contained.
+It makes no extra Wwise calls and changes no native success or failure result.
+The existing process-scoped PortSessionOriginalMusicControllerOwner joins the
+Awake observation after active instantiation using exact controller identity;
+ambiguous observations are flagged and temporary object references cleared.
+Only bounded scalar results remain in its snapshot. The same owner retires its
+exact callbacks during teardown. There is no new experiment-switch behavior.
+
+The generated observer stage is owned by
+`scripts/lab/original_music_output_observer_build_hook.py`. Its receipt binds
+the exact preceding audio receipt, API, observer core and game preimage. It runs
+between audio 6f96 and camera staging: the observer result is 27340e, then the
+EH-correct camera result is a2054d for either pinned d540 or 1ced API. Restore
+unwinds camera, then observer, before replacing audio. No observer receipt is
+an inert restore; a present receipt requires strict lineage and ignored-work
+containment. Existing default-off paths and historical restore-only pairs stay
+separate. The source cohort and transformation recipes are updated; authored
+sources and tracked generators reproduce the generated files locally. Rebuild
+steps that stage these authored sources must be replayed.
+
+**Host evidence and limitations.** The independent R5 review approves the
+source contract and patch on the EH-fixed base. Preserve its reviewed patch at
+`work/coordination/original-music-output-observer-next/r5/`, SHA-256
+`8d550bb1d1fbb570d973d7847d31ed1a4a508f15c92d011c4b8d839095553edb`.
+Root integration evidence is under
+`work/coordination/codex-music-output-observer-integration/r1/`.
+The initial full host suite passes 1,522 tests with six skips, but several
+inherited optional tests still compile private draft copies. Preserve that
+result as draft verification. Correct those tests to compile tracked sources
+with temporary outputs and explicitly selected, hash-bound optional legitimate
+fixtures; the corrected focused suite passes 21 tests in 35.008 s with one skip
+for the absent hash-bound historical core. Both camera API outputs, actual
+transform mutants, copied-fixture stage/restore, callback exception containment
+and current receipt/source contracts pass. Explicit fixture drift fails rather
+than silently skipping. Fresh-clone contracts require no private artifacts;
+unavailable editor/tool-dependent checks skip honestly. Ruff passes.
+
+The preserved historical R8 core lacks the new callback and refuses before
+writes with Sequence contains no matching element; neither its receipt nor its
+staged bytes is altered to hide that incompatibility. Recipe changes contain
+only authored source hashes, minimal type/call identities and transformation
+relationships. Protected assemblies, middleware, banks, original code, fixtures
+and raw logs remain ignored. Doctor with the explicit assigned device and
+preflight pass; an initial doctor without a selector refuses in the multi-device
+configuration and is retained. This checkpoint does not qualify a newly staged
+player, APK, output creation, track selection, playback or audibility. R15 b0f7ae7e
+remains installed; the accepted baseline remains f1550ce0. A matching canonical
+build and both standard checks are required next, with actual stage, closure,
+APK and post-strip identities checked independently.
+
+## J906 — Capture sustained null Siren target evidence within the existing budget
+
+Date: 2026-10-21. Hypothesis: J898's all-null native tracker interval leaves an
+observation gap because the first eligibility snapshot requires an identified
+mismatch. Reuse J815's bounded, read-only tracker/bullseye observation and J886's
+pinned DebugToolkit typed identity technique; neither establishes native target
+eligibility or authorizes changing the tracker. No targeting fix is inferred.
+
+The existing default-off SirenEggDiagnosticInput owner now qualifies an
+observation window only from its already-read NoTarget result, requested primary,
+a live selected egg and the same nonzero selected identity. At least two samples
+must span 0.5 s with every sample gap at most 0.25 s. An identity change,
+nonqualifying observation, larger gap, backwards or nonfinite time resets the
+window; a paused interval is unknown, not a gameplay failure. Counter saturation
+is bounded. The qualified window may consume the existing delayed-null slot
+when no first mismatch snapshot began. The original two-snapshot stage limit
+and no-overwrite rule remain. This adds no search, refresh, target assignment,
+physics query, movement or input; it does not change native target selection.
+
+The source candidate and focused portable test pass independent review. The
+source SHA-256 is
+`ac6a62f26af19e9abd19aef02b6195e75a2e33c89e8217ffe6659e1fdd746138`.
+The portable integration patch is
+`e8183d088c5c1096fca2822021d15884f403322b615fa384c92f8af50c4765b1`.
+Root runs both tests against the actual authored source: the production policy
+is compiled/executed for exact and over-bound timing, resets, identity changes,
+saturation and budget, and the source wiring contract checks observer-only use.
+Both pass in 0.588 s. A separate unavailable-compiler run retains the source
+contract and skips only the compiled policy. Ruff passes. The prior full-owner
+compile is frozen host evidence only; a new composed player remains required.
+
+Private proposal/compile evidence is under
+`work/coordination/siren-null-target-witness-next/r2/`; portable integration and
+Root checks are under
+`work/coordination/siren-null-target-witness-integration/r1/`. Independent review
+is under `work/coordination/siren-null-target-witness-integration-review/r1/`.
+Only authored code, tests and summaries are published. Existing recipe membership
+and importer identity are unchanged; rebuild steps must regenerate the authored
+runtime source bytes. No editor, build, install, game launch or other device
+action occurs for this source checkpoint. Installed b0f7ae7e and accepted
+baseline f1550ce0 stay fixed. The next selected run must establish actual snapshot
+capture and the native egg interaction/encounter result; this host result accepts
+none of those gameplay claims.
+
+## J907 — Observe the original camera dispatch gates without changing admission
+
+Date: 2026-10-21. Hypothesis: J903's active rig with zero target/body identity
+can be narrowed by reading its existing marker binding, delegate and pump state.
+Recheck the exact accepted current a5f7 input and same-request R15 pre-strip
+2ae5d9 module; the old-input decompilation is not current authority. The original
+EarlyUpdate target assignment precedes its time/cutscene gate. Reuse J892/J900's
+source contract and DebugToolkit's typed body identity observation as prior art,
+without its mutating commands. No new camera behavior is justified yet.
+
+AndroidNativeSourceCameraRigOwner now captures bounded scalars through the
+existing AndroidNativeSourceSkinLifecycle visual-report cadence: next/current
+and expected target identities, rig/provider/marker activity, exact binding,
+delegate presence, context latch, raw pump count, application activity,
+finite delta time and cutscene state. It reads existing fields only, invokes
+no callback and adds no pump, state assignment, target search or polling loop.
+Known flags follow successful typed reads; unavailable fields retain unknown
+values with a bounded capture error. No Unity object is added to report state.
+
+Independent review rejects the first draft because diagnostic field checks
+extend the mandatory marker-admission resolver. Preserve that failure. R2 moves
+them to a separate observation-only resolver and leaves the complete original
+admission method unchanged. Root formats the Python test, refreshes the two
+authored source hashes in the camera recipe and runs six focused checks.
+All pass in 1.326 s. The production optional resolver is extracted and compiled
+rather than reimplemented in its host harness; 19 assertions cover correct,
+missing/wrong Action/bool/int fields, null type, cached failures and recovery
+with another type. The existing lifecycle fixture verifies snapshot wiring and
+serialization using a synthetic camera owner; it does not execute the real
+owner's reflection or prove Unity scheduling. The source contract checks that
+admission stays separate and capture contains no reflection invocation/writes.
+Current recipe source/profile contracts pass. Ruff passes.
+
+Private R2 evidence and the frozen 118-source R15 host compile are under
+`work/coordination/original-camera-update-context-observer/r2/`; the actual
+resolver test and Root checks are under the adjacent r3 directory. That frozen
+compile deliberately uses R15's music owner and references; it is not a proof
+of composition with J904's newer callbacks. A current Library metadata read
+under `work/coordination/original-camera-marker-strip-triage/r1/` finds intact
+marker callbacks and matching stripped/IL2CPP-backup bytes, but R15's original
+receipt does not hash those post-strip copies, so it is not independent APK
+callback evidence. The next build must freeze and inspect matching outputs.
+
+Only authored source, tests, minimal field identities and hash pins are tracked.
+Generated code, current-input IL, raw reports and assemblies remain ignored.
+The marker helper and game transformation output profiles are unchanged;
+rebuild steps must regenerate the owner/lifecycle source bytes. No editor,
+player build, device run or installed APK change occurs at this checkpoint.
+Source-camera activation, correct original context, rendering, animation parity
+and next-menu acceptance remain open. Installed b0f7ae7e and accepted baseline
+f1550ce0 remain fixed pending the new composed player and both standard checks.
+
+## J908 — Separate completed CI verification from temporary host-volume cleanup
+
+Date: 2026-10-21. The pre-push check for J904's committed d3d62c3 passes all
+1,455 fresh-clone tests with 87 unavailable-tool/evidence skips, Ruff and audits,
+then blocks in EXIT cleanup of its own temporary case-sensitive host image.
+The volume is already unmounted; detach and subsequent scratch removal stall.
+Preserve the local failure and cleanup investigation under
+`work/coordination/codex-music-output-observer-integration/r1/`. Terminating the
+stalled completed-check wrapper makes that push refuse; no hook is bypassed.
+No Unity editor, shared build lock, Android storage or user data is touched.
+
+The minimal fix moves disposable host cleanup to a redirected background job
+while preserving the original verification status. Private phase logs live
+in Git-private `ci-cleanup/` metadata. A failed detach preserves its scratch directory;
+cleanup does not delete a still-mounted volume. The tracked shell harness
+extracts the actual cleanup function and supplies a blocking fake detach:
+the parent returns before release, status 37 is retained, phase logs are written
+and the mounted sentinel survives detach failure. Its portable Python wrapper
+runs in host CI. The Root check passes in 3.027 s; shell syntax and Ruff pass.
+No real mount or device is used by the test. Existing audits and host-test
+commands stay unchanged, and failures still refuse the push. The next push
+must rerun all checks on the committed fix; the earlier pass does not substitute
+for that run. Preserve pending J904/J906/J907 commits and sync them together
+with this repair when the required hook completes.
+
+The first repaired-hook run executes 1,459 tests with 89 unavailable-tool/evidence
+skips, but refuses the push on the clean-repository fixture: eagerly creating
+`.local/ci-cleanup/` makes that fixture dirty. Preserve the failed hook output
+under `work/coordination/ci-cleanup-background-next/r1/root-push.log`. Move the
+logs to the directory resolved by Git's own private-state path API, so neither
+a primary checkout nor a linked worktree acquires untracked cleanup files.
+The clean-repository regression remains enabled and the next hook reruns it.
