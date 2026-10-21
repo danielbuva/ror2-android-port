@@ -85,6 +85,35 @@ tool analytics. Desktop-generated scene/editor root production remains an input;
 matching output hashes and fresh execution evidence are separate acceptance
 checks. No whole-catalog build or game runtime calls it.
 
+`phone_linker_roots.py` owns the optional SDK-native metadata handoff for that
+authored fixture only. An explicit `native_registry` binary/hash request causes
+staging to omit the captured native table entirely and retain only validated
+project scene/module-policy fields. At the actual Android stripping invocation,
+the staged authored registry readers inspect the pinned SDK as data. The handoff
+checks complete native identities/parents, orders rows by qualified name, and
+creates a new `native-roots/EditorToUnityLinkerData.json` under the owned output.
+UnityLinker receives that generated path; hashes/source/scope receipts bind it
+through the converter boundary. Invalid SDK data, captured table leakage, source
+or output drift and incomplete metadata refuse. Scene usage, TypesInScenes.xml,
+module policy and managed compilation remain captured desktop inputs; complete
+independent editor roots remain unqualified. There is no editor mutation or
+whole-catalog/game consumer. Failure directories and earlier modes remain intact.
+
+`phone_module_policy.py` owns an additional optional fixture-only policy profile.
+With `module_policy: {"profile": "builtin-modules-no-overrides-v1"}` alongside
+`native_registry`, staging omits captured module-policy arrays as well. It
+requires the authored fixture's known source/file set, builtin-only manifest
+and consistent package lock. Pinned editor/Android module data and SDK builtin
+package metadata stay private. At stripping invocation the authored reader
+resolves transitive builtin dependencies and derives disabled/unavailable
+module exclusions from those SDK inputs. It writes `native-roots/module-policy.json`;
+its input hashes, generated policy and reader hash are rechecked downstream.
+Unknown schemas/versions, foreign packages, custom project code, nonstrippable
+exclusions and unsupported profile requests refuse. Custom callbacks/overrides
+are unsupported; this is not general Unity project policy. Scene usage,
+TypesInScenes.xml and managed compilation remain captured desktop inputs.
+The profile adds no editor, game-runtime or whole-catalog consumer.
+
 `phone_roots.py` and `tools/phone-build/metadata/` own experimental read-only
 host support for investigating independent root production. The current
 `phone-root-contract` action binds the authored fixture/capture, inventories
@@ -92,8 +121,55 @@ editor/player SDK managed metadata with supplied pinned Cecil, and separates
 explicit native-class attributes from short-name guesses. It executes only the
 authored reader, never the inspected assemblies. Results/source hashes and
 failures remain under `work/experiments/phone-roots/`; it generates no roots,
-installs no package and performs no editor mutation. Host .NET 10 qualification
-does not establish an Android implementation or native hierarchy completeness.
+installs no package and performs no editor mutation. The original coverage
+action uses host .NET 10. The separate scoped net8.0 reader/resolver has J866's
+Android shell qualification; app hosting and complete roots remain unqualified.
+The metadata reader's schema 2 also records full assembly identities, declared
+references, base-type scopes and exported/forwarded types without resolving or
+executing them. `phone_managed_types.py` owns pure investigation support for an
+explicitly selected metadata group: it resolves exact scopes and forwarding
+chains, including nested exports, and proves managed inheritance only when
+every required definition is present. Duplicate assembly/type identities,
+unsupported module exports, cycles and missing dependencies refuse. It never
+fills gaps from another group or substitutes managed bases for native bases.
+Setup is an explicit schema-2 inventory/group; teardown releases the in-memory
+index. Its standalone metadata/group/new-output invocation verifies every
+forwarding entry, binds the inventory hash, refuses output overwrite or input
+drift, and emits a private observation report. No game build or linker stage
+consumes this helper.
+
+`phone_wrapper_search.py` owns separate current experimental SDK search-order
+support. `phone-wrapper-search --target REQUEST.json` accepts only the pinned
+owner binary and stages that data with the three authored Python readers.
+Its normal-path matcher proves the original native-name argument, Darwin
+stack-passed formatter argument/result storage, file-backed namespace/assembly
+pointer loads, common nonnull exits and preserved return value. Unknown data
+flow, alias stores, loops, incomplete guards or unsupported string selection
+refuse. Assembly templates and ordered namespaces come from the SDK; repeated
+entries remain distinct. Setup is an explicit owner-binary request and a fresh
+private attempt; teardown releases parsed data and retains reports/failures.
+It executes no SDK function and supplies no cache population, scene roots,
+project dependency closure, editor mutation or game/linker consumer. J869
+qualifies this bounded metadata contract on the alpha Android shell; it does
+not qualify normal app hosting or a complete wrapper cache.
+
+`phone_wrapper_oracle.py` and `tools/phone-build/WrapperMetadataOracle.cs` own
+separate current experimental **desktop verification**. The
+`phone-wrapper-oracle` action stages a fresh SDK-only project or checks that
+explicit project with the exact editor under the primary checkout mutex.
+Committed source, project, editor and loaded assembly hashes bind the report.
+Staging checks containment before creating anything and opens directory chains
+and new files through descriptors that refuse symlinks. Every file write
+rechecks scope; configured work-root and staging-parent links refuse before
+outside writes. Foreign assets, drift, existing outputs and lock contention
+also refuse. The C#
+collector validates unique native identities and the complete parent graph
+before querying concrete descendants of native Object. Root, abstract and
+outside-hierarchy rows remain explicitly unqueried; null and empty query
+results remain distinct. Setup is a new generated project/request; teardown is
+the isolated batch process exiting, retaining logs and failed attempts. Neither
+MCP editor is reused or stopped. Its private SDK observations are comparison
+oracles, never phone-build/linker inputs, project scene roots or game behavior.
 
 `phone_registry.py` and `phone_registry_literals.py` own separate experimental
 static SDK metadata support.
@@ -117,8 +193,20 @@ that authored helper under isolated Python. Unknown layouts, instructions,
 arguments and parent identities refuse. It neither executes SDK instructions
 nor supplies an execution backend. Source/input hashes, metadata and failures remain under
 `work/experiments/phone-registry/`; exclusive output creation preserves attempts.
-No build consumes its registry or receives project roots from it; no editor or
-game state changes.
+The same reader reports persistent native class IDs from the pinned descriptor's
+explicit signed 32-bit field. Static data and bounded literal/entry-argument
+origins are kept separate. Numeric literal selection checks exact width and
+little-endian slices; partial/conditional definitions and ambiguous/invalid IDs
+refuse. A scalar argument may reuse a wide-move literal held in an AAPCS64
+callee-saved register only after a bounded CFG proof: its definition dominates
+the use, every intervening instruction has a known register effect, no path
+writes that register and no later backedge can revisit the use. This does not
+select a branch or read runtime memory. ID metadata does not establish managed
+wrapper names, scene usage or
+manager/dependency roots. The six-field native projection remains unchanged.
+Only the explicit authored-fixture SDK-native stripping mode consumes freshly
+generated registry data. No whole-catalog build consumes it or receives complete
+project roots from it; no editor or game state changes.
 
 `tools/phone-build/host/` is separate experimental **support**. Its Android
 driver owns compilation of authored C/Java/XML, DEX/APK production and disposable
@@ -450,7 +538,92 @@ or failure; there is no persistent state. This verifies plugin bytes only, not
 importers, script orders or project initialization. Host contracts:
 `tests/test_assembly_transforms.py`.
 
-Audio remains unavailable in the composed game. Separate native diagnostics
+Composed audio playback remains unqualified; J872 observes original engine/bank
+readiness with the path warning removed and original point-sound failures remaining. The default-off original-owner
+integration uses `runtime/session/PortSessionOriginalAudioOwner.cs` after the
+offline menu and before selected body activation. It coordinates the existing
+`WwiseIntegrationManager.Init` and original prefab callbacks; `AkInitializer`
+and `AudioManager` retain native initialization, service, focus/pause and
+termination ownership. It adds no second native engine owner. Its bounded
+snapshot refreshes at every session-report save, including teardown observations.
+
+`tools/unity/support/audio/core/` owns admission, readiness and copied lifecycle
+observations. `support/audio/bootstrap/` owns the explicit request, hash-bound
+bank preparation, Android platform resolver, Java-first library load and native
+monitor lease. These are separately compiled support assemblies, outside the
+runtime source selection. Generated request and bank pins default to disabled;
+build-time generators must write derived sources to ignored output directories.
+Original audio can be admitted only after all declared preparation succeeds;
+actual engine, bank and event results require device evidence.
+
+`WholeCatalogComposed` supplies the existing GUID-bound settings asset and a
+single process-audio lease over its existing content bundle. Session locators
+and caches still detach normally. Default-off release still unloads the bundle;
+an admitted audio owner defers unload until both original Term calls return.
+Only a refusal before both manager admission and native Init attempt can release
+early. Retained input, attempt and manifest hashes constrain bundle reuse.
+This minimal shared cleanup change serves original audio; its memory impact is
+unmeasured. The historical private composed-audio candidate below is separate.
+
+The current `whole-catalog-build` action invokes
+`scripts/lab/original_game_audio_build_hook.py` under the existing host build
+mutex, before computing project/cache identity. Missing local selection means
+default off. An explicit `work/config/original-game-audio/selection.json`
+binds every protected input; destination builds use their own work selection.
+`original_game_audio_produce.py` compiles the observer, core and bootstrap with
+the pinned editor, Android define and deterministic compiler. The authored
+`support/audio/managed-producer/` transforms the accepted raw API and guarded
+game independently; `support/audio/generators/` produces bank and request pins
+without editing authored sources. Native ABI inspection uses the official
+Release plugin, distinct from the explicitly selected instrumented runtime.
+Generated contracts precede derivative request sources to avoid circular pins.
+Authored .NET helper builds disable SourceLink so changing repository revisions
+does not change their pinned generated metadata (J863).
+The cache binds producer sources, recipes, editor references, compiler/tool
+identities and explicit inputs; cached generations revalidate that receipt.
+`original_game_audio_stage.py` checks exact assembly preimages, GUIDs and owned
+payloads before staging. Requested stages also package the exact bank-cohort
+receipt at `Assets/StreamingAssets/stage-receipt.json`, the URL consumed by
+`GameAudioOriginalPayloadCopy`; the separate `Lab/OriginalGameAudioStageReceipt.json`
+records project ownership. The previous 164-output stage is recognized during
+upgrade; the current 165-output stage owns the added receipt by its exact hash.
+Default-off restores the ordinary guarded assemblies
+and removes only prior receipt-owned audio payloads, preserving Unity metadata
+sidecars. J865 adds one exact predecessor lineage for receipt-verified upgrade
+or restoration; unknown module pairs still refuse. The managed transform checks
+bank-request stack/branch placement before accepting its output. Current owner
+source hashes and the historical ancestor manifest have separate artifact fields.
+J870 preserves the original bank-path calculation while bypassing its filesystem
+existence warning on Android, where StreamingAssets is an APK URI. The transform
+imports the pinned editor's exact platform getter and enum; non-Android keeps
+the original probe. The previous valid API can upgrade in place; the older
+invalid-IL API is accepted only for restoration to default off.
+`core/PointSoundDiagnosticObserver.cs` owns the separately selected point-sound
+localization counters and first matching exception stage. Requested audio builds
+instrument the exact composed game's original pool/prefab, transform, event-post
+and timeout boundaries without changing their calls or exception behavior. The
+producer passes the accepted Managed reference directory explicitly when writing
+the isolated intermediate assembly. The generated request binds the resulting
+game hash and the callsite capability pin; ordinary default-off assemblies retain
+no injected calls. The predecessor and current API/game pairs may share an API
+hash but must differ as complete pairs; unknown pairs refuse.
+
+The per-session `pointSoundDiagnosticRequested` selector defaults false and
+requires the integrated route, ready selected audio and instrumented callsites.
+`PortSessionOriginalAudioOwner` owns the matching Unity log subscription;
+the Core observer stores bounded scalar values only, never raw messages/stacks
+or Unity objects. `PortSession.Save` refreshes its snapshot. Completion, lifecycle
+recovery and `OnDestroy` disable and unsubscribe the observer idempotently,
+without terminating or releasing the original process audio owner. Event/stage
+correlation is best effort and cannot prove native posting or audible output.
+
+The lower-level `original_game_audio.py` is host staging support;
+current Unity project mutation belongs to the mutex-protected build action.
+Use a full bundle build for the first audio candidate: code-only payload reuse
+retains its existing strict contract. J860 records host acceptance only;
+post-strip/player, native bank and composed-game audio remain device gates.
+
+Separate native diagnostics
 use one disposable engine owner for exact bank buffers, listener/emitter,
 event callback, bounded output capture and cumulative monitor; reverse cleanup
 retains uncertain ownership. The private managed owner tests the retained

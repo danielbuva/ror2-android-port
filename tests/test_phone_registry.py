@@ -13,6 +13,7 @@ from phone_registry import (
     inspect_action,
     module_assignments,
     static_records,
+    validate_persistent_ids,
 )
 
 
@@ -54,6 +55,8 @@ def fixture():
         data[offset : offset + len(text)] = text
     struct.pack_into("<14Q", data, 768, vm + 1280, 0, vm + 512, vm + 576, vm + 608, 0, 0, 0, 0, 0, vm + 1152, 0, 0, 0)
     struct.pack_into("<14Q", data, 896, 0, 0, vm + 544, vm + 640, vm + 608, 0, 0, 0, 0, 0, vm + 1280, 0, 0, 0)
+    struct.pack_into("<i", data, 768 + 40, 42)
+    struct.pack_into("<i", data, 896 + 40, 7)
     strings = b"\0"
     for index, (name, address) in enumerate(((b"__ZL32FixtureChild_TypeRegistrationDesc", vm + 768), (b"__ZL33FixtureParent_TypeRegistrationDesc", vm + 896))):
         struct.pack_into("<IBBHQ", data, 2048 + index * 16, len(strings), 0x0E, 1, 0, address)
@@ -162,14 +165,22 @@ class PhoneRegistryTests(unittest.TestCase):
         child = next(row for row in records if row["name"] == "FixtureChild")
         self.assertEqual(child["qualifiedName"], "Native::FixtureChild")
         self.assertEqual(child["baseName"], "FixtureParent")
+        self.assertEqual(child["persistentTypeID"], 42)
         self.assertTrue(child["base_resolved"])
         self.assertIsNone(child["module"])
         parent = next(row for row in records if row["name"] == "FixtureParent")
         self.assertEqual(parent["nativeNamespace"], "")
         self.assertEqual(parent["qualifiedName"], "FixtureParent")
+        self.assertEqual(parent["persistentTypeID"], 7)
         self.assertEqual(image.string(0x100000000 + 576), "Native")
         with self.assertRaises(ValueError):
             image.at(0x100000000 + 4090, 16)
+
+    def test_persistent_id_validation_refuses_duplicate_unknown_and_invalid_ids(self):
+        validate_persistent_ids([{"persistentTypeID": 0}, {"persistentTypeID": 0x7FFFFFFF}])
+        for identifiers in ([1, 1], [None], [-1], [0x80000000], [True], ["42"]):
+            with self.subTest(identifiers=identifiers), self.assertRaises(ValueError):
+                validate_persistent_ids([{"persistentTypeID": value} for value in identifiers])
 
     def test_malformed_header_commands_tables_and_metadata_pointers_refuse(self):
         original = fixture()

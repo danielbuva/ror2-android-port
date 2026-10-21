@@ -27,8 +27,20 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
 - [ ] Present bounded proof findings before changing the working build or choosing
       the final installation experience. Keep other execution backends excluded.
       Extend [J857's complete pinned native metadata](PORTING_JOURNAL.md#j857--recover-the-complete-pinned-native-registry-from-owner-sdk-metadata-literals)
-      through independent project scene usage, module policy and exact root
-      outputs. The SDK registry alone does not establish those project inputs.
+      through independent project scene usage, general module policy and exact root
+      outputs. [J859](PORTING_JOURNAL.md#j859--generate-sdk-native-root-metadata-on-android-and-preserve-strippingconversion)
+      qualifies native-table generation at the stripping boundary;
+      [J862](PORTING_JOURNAL.md#j862--derive-authored-fixture-module-policy-from-owner-sdk-and-package-data-on-android)
+      adds restricted fixture SDK/package-derived module policy. Captured scene
+      roots and managed compilation remain explicit inputs.
+      [J864](PORTING_JOURNAL.md#j864--read-persistent-native-class-ids-from-the-pinned-sdk-on-android)
+      adds class-ID metadata. Following
+      [J866's scoped metadata qualification](PORTING_JOURNAL.md#j866--qualify-scoped-sdk-assembly-metadata-and-forwarding-on-android)
+      and [J869's SDK search metadata](PORTING_JOURNAL.md#j869--decode-pinned-sdk-wrapper-search-order-on-android),
+      qualify complete wrapper-cache/mapping and scene/manager usage with
+      independent producers. Preserve
+      [J873's direct-name/cache-query distinction](PORTING_JOURNAL.md#j873--separate-direct-scene-names-from-sdk-wrapper-cache-queries);
+      the independent desktop oracle must never become a phone-build input.
 - [ ] Benchmark any alternative pipeline with pinned versions/options/shaders and
       matched device workloads; IL2CPP alone does not prove equivalent performance.
 - [ ] Qualify the isolated owner-build environment; the alpha device is alpha's

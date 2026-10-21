@@ -51,12 +51,12 @@ p.add_argument("--debug-symbols", action="store_true", help="Current: opt-in Uni
 p.add_argument(
     "--capture-player-linker-inputs",
     action="store_true",
-    help="Current: opt-in same-request pre-strip UnityLinker input inventory bound to a whole-catalog-code-build APK receipt",
+    help="Current: opt-in same-request pre-strip UnityLinker input inventory for whole-catalog-build or whole-catalog-code-build",
 )
 p.add_argument(
     "--capture-il2cpp-invocation",
     action="store_true",
-    help="Current: additionally capture the same-request IL2CPP input directory for whole-catalog-code-build; requires --capture-player-linker-inputs",
+    help="Current: additionally capture the same-request IL2CPP input directory for either whole-catalog build; requires --capture-player-linker-inputs",
 )
 p.add_argument("--json", action="store_true")
 p.add_argument("--assembly")
@@ -100,12 +100,13 @@ from device_context import set_command_selector
 set_command_selector(a.device, os.environ.get("LAB_DEVICE"))
 if a.host_only and a.command != "preflight":
     p.error("--host-only requires preflight")
-if a.debug_symbols and not (a.command == "build" or (a.command == "prototype" and a.action == "whole-catalog-code-build")):
-    p.error("--debug-symbols requires build or prototype --action whole-catalog-code-build")
-if a.capture_player_linker_inputs and not (a.command == "prototype" and a.action == "whole-catalog-code-build"):
-    p.error("--capture-player-linker-inputs requires prototype --action whole-catalog-code-build")
-if a.capture_il2cpp_invocation and not (a.command == "prototype" and a.action == "whole-catalog-code-build"):
-    p.error("--capture-il2cpp-invocation requires prototype --action whole-catalog-code-build")
+whole_catalog_build = a.command == "prototype" and a.action in {"whole-catalog-build", "whole-catalog-code-build"}
+if a.debug_symbols and not (a.command == "build" or whole_catalog_build):
+    p.error("--debug-symbols requires build or a whole-catalog build action")
+if a.capture_player_linker_inputs and not whole_catalog_build:
+    p.error("--capture-player-linker-inputs requires a whole-catalog build action")
+if a.capture_il2cpp_invocation and not whole_catalog_build:
+    p.error("--capture-il2cpp-invocation requires a whole-catalog build action")
 if a.capture_il2cpp_invocation and not a.capture_player_linker_inputs:
     p.error("--capture-il2cpp-invocation requires --capture-player-linker-inputs for the same-build pre-strip join")
 # Device operations explicitly select the existing local receipt/config tree.

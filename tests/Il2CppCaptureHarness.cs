@@ -59,12 +59,27 @@ public static class CaptureHarness
                 Console.WriteLine("active explicitly disabled request returned without capture");
                 return 0;
             }
-            if (mode != "roundtrip") throw new Exception("unknown host mode");
+            if (mode != "roundtrip" && mode != "post-unknown" && mode != "post-guid-mismatch" && mode != "post-errors" && mode != "post-target")
+                throw new Exception("unknown host mode");
             Fixture(scratch, project, work, true);
             UnityEditor.SessionState.request = "host-request-1";
             string guid = "0123456789abcdef0123456789abcdef";
             capture.OnPreprocessBuild(Report(guid, BuildResult.Unknown, output));
             Check(File.Exists(Path.Combine(work, "lab-build/player-linker-inputs/host-request-1.bee-pre.json")), "opted-in pre receipt missing");
+            if (mode != "roundtrip")
+            {
+                BuildReport rejected = mode == "post-unknown" ? Report(guid, BuildResult.Unknown, output) :
+                    mode == "post-guid-mismatch" ? Report("fedcba9876543210fedcba9876543210", BuildResult.Succeeded, output) :
+                    Report(guid, BuildResult.Succeeded, output);
+                BuildSummary summary = rejected.summary;
+                if (mode == "post-errors") summary.totalErrors = 2;
+                if (mode == "post-target") summary.platform = BuildTarget.StandaloneOSX;
+                rejected.summary = summary;
+                capture.OnPostprocessBuild(rejected);
+                Check(!File.Exists(Path.Combine(work, "lab-build/player-linker-inputs/host-request-1.bee-post.json")), "mismatched BuildReport wrote a postprocess receipt");
+                Console.WriteLine("REJECTED=" + mode);
+                return 0;
+            }
             string logSlice = "Starting: /Unity/bee_backend --profile=\"Library/Bee/backend_profiler0.traceevents\" --stdin-canary --dagfile=\"Library/Bee/Player123.dag\" --continue-on-failure Player\n" +
                 "WorkingDir: " + project + "\nExitCode: 0 Duration: 0s476ms\n";
             File.AppendAllText(Path.Combine(work, "Editor.log"), logSlice);

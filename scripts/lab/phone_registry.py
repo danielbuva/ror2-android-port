@@ -128,6 +128,7 @@ def static_records(image):
             "nativeNamespace": namespace,
             "qualifiedName": (namespace + "::" if namespace else "") + name,
             "module": None,
+            "persistentTypeID": struct.unpack("<i", image.at(address + 40, 4))[0],
         }
         pointers[words[10]] = row
         records.append(row)
@@ -138,6 +139,12 @@ def static_records(image):
         row["baseName"] = parent["name"] if parent else None
         row["base_resolved"] = row["parent"] == 0 or parent is not None
     return records
+
+
+def validate_persistent_ids(records):
+    identifiers = [row.get("persistentTypeID") for row in records]
+    if any(type(value) is not int or not 0 <= value <= 0x7FFFFFFF for value in identifiers) or len(set(identifiers)) != len(identifiers):
+        raise ValueError("Invalid or ambiguous persistent native type identities")
 
 
 def signed(value, bits):
@@ -285,15 +292,21 @@ def argument_block_start(image, pc):
     return block
 
 
-def call_argument(image, pc, register, start=None, budget=128):
+def call_argument(image, pc, register, start=None, budget=128, *, retained=None):
     """Conservative backwards constant slicing within one straight-line block.
 
     A branch, unknown definition/instruction, runtime load or exhausted bound
     yields unknown. Callee-saved constants may cross calls under AAPCS64.
     No control-flow path is selected and no SDK function is executed.
     """
-    if register == 31:
+    if register == 31 or budget <= 0:
         return None
+    if retained and 19 <= register <= 28:
+        known = retained(pc)  # Prove retention at this operand's use, before later restores.
+        if register in known:
+            definition, value = known[register]
+            if definition < pc:
+                return value  # Supplied only by the bounded CFG retention proof.
     if start is None:
         start = argument_block_start(image, pc)
     if start is None or pc < start or pc - start > 65536 or budget <= 0:
@@ -310,7 +323,7 @@ def call_argument(image, pc, register, start=None, budget=128):
                 return (position & ~4095) + immediate * 4096 if word & 0x80000000 else position + immediate
         elif word & 0x7F000000 in (0x11000000, 0x51000000):
             if rd == register:
-                value = call_argument(image, position, rn, start, budget)
+                value = call_argument(image, position, rn, start, budget, retained=retained)
                 if value is None:
                     return None
                 immediate = ((word >> 10) & 4095) << (12 if word & 0x400000 else 0)
@@ -319,7 +332,7 @@ def call_argument(image, pc, register, start=None, budget=128):
         elif word & 0x7FE0FFE0 == 0x2A0003E0:
             if rd == register:
                 rm = (word >> 16) & 31
-                value = 0 if rm == 31 else call_argument(image, position, rm, start, budget)
+                value = 0 if rm == 31 else call_argument(image, position, rm, start, budget, retained=retained)
                 return value if value is None or word & 0x80000000 else value & 0xFFFFFFFF
         elif word & 0x7F800000 in (0x12800000, 0x52800000, 0x72800000):
             if rd == register:
@@ -330,7 +343,7 @@ def call_argument(image, pc, register, start=None, budget=128):
                 elif kind == 0x12800000:
                     value = ~immediate
                 else:
-                    value = call_argument(image, position, register, start, budget)
+                    value = call_argument(image, position, register, start, budget, retained=retained)
                     if value is None:
                         return None
                     value = (value & ~(65535 << shift)) | immediate
@@ -399,6 +412,7 @@ def inspect(binary, output):
     parents = {row["self"]: row for row in records}
     if len(records) != 318 or len(parents) != 318 or len({row["qualifiedName"] for row in records}) != 318:
         raise ValueError("Pinned SDK native registration identity set differs")
+    validate_persistent_ids(records)
     for row in records:
         parent = parents.get(row["parent"])
         row["base_resolved"] = row["parent"] == 0 or parent is not None
@@ -422,6 +436,7 @@ def inspect(binary, output):
             "native_records": len(records),
             "module_resolved": sum(row["module"] is not None for row in records),
             "base_resolved": sum(row["base_resolved"] for row in records),
+            "persistent_id_resolved": len(records),
         },
         "records": records,
     }

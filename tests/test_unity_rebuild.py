@@ -18,6 +18,7 @@ import composition_io
 import rebuild
 import unity_rebuild as r9
 import whole_catalog
+import original_game_audio_build_hook as audio_build_hook
 from common import read, sha, write
 
 
@@ -59,6 +60,15 @@ class UnityRebuildTests(unittest.TestCase):
         self.addCleanup(self.stack.close)
         for module in (r9, rebuild, build, composition_io):
             self.stack.enter_context(patch.object(module, "ROOT", self.root))
+        self.stack.enter_context(patch.object(whole_catalog, "WORK", self.work))
+        self.audio_stage_result = {"variant": "default-off", "producer": {"cached": True}}
+        self.audio_stage_calls = []
+
+        def stage_audio(project, work, *, selection_path=None):
+            self.audio_stage_calls.append((Path(project), Path(work), Path(selection_path)))
+            return self.audio_stage_result
+
+        self.stack.enter_context(patch.object(audio_build_hook, "stage_for_build", side_effect=stage_audio))
         host_lock = self.root / "coordination/unity-build.lock"
         self.stack.enter_context(patch.object(build, "HOST_BUILD_LOCK", host_lock))
         self.stack.enter_context(patch.object(build_lock, "HOST_BUILD_LOCK", host_lock))
@@ -132,6 +142,11 @@ class UnityRebuildTests(unittest.TestCase):
         self.assertEqual(self.methods, ["LabBuild.RepairDestinationPlugins", "LabBuild.BuildDestination"])
         self.assertEqual(result["script_audit"]["missingScripts"], 4)
         self.assertEqual(result["script_audit"]["assets"][0]["missingScripts"], 4)
+        self.assertEqual(result["original_audio"], self.audio_stage_result)
+        self.assertEqual(
+            self.audio_stage_calls,
+            [(self.dest, self.work, self.work / "config/original-game-audio/selection.json")],
+        )
         self.assertTrue(Path(result["payload_directory"]).is_relative_to(self.dest))
         payload = read(Path(result["payload_directory"]) / "whole-catalog.json")
         bootstrap = read(self.dest / "Assets/LabLoadingScene/Resources/WholeCatalogBootstrap.json")
@@ -184,6 +199,8 @@ class UnityRebuildTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "payload reuse"):
                 whole_catalog.build_integration(code_only=True, destination=self.dest, work=self.work)
             execute.assert_not_called()
+        self.assertEqual(self.audio_stage_calls, [])
+        self.assertEqual(self.before, self.snapshot())
 
     def test_manifest_bootstrap_mismatch_fails_both_r9_entry_points_before_unity(self):
         bootstrap = self.dest / "Assets/LabLoadingScene/Resources/WholeCatalogBootstrap.json"

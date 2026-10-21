@@ -57,6 +57,7 @@
   "runtime/session/OfflineApplicationBoundary.cs",
   "runtime/session/OfflineRunSeedBoundary.cs",
   "runtime/session/PortSession.cs",
+  "runtime/session/PortSessionOriginalAudioOwner.cs",
   "runtime/session/RewiredPlatformBoundary.cs",
   "runtime/session/SessionResourceBoundary.cs",
   "runtime/session/SurvivorSelectionBoundary.cs",

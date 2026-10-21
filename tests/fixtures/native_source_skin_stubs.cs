@@ -131,3 +131,11 @@ public static class AndroidMaterialPresentation
     public static void Apply(UnityEngine.Material source, UnityEngine.Material copy) { applyCalls++; }
     public static void Release(UnityEngine.Material material) { releaseCalls++; }
 }
+
+// Host-only representation of the authored audio lifecycle readiness dependency.
+// This does not simulate Wwise; it only lets the source-owner fixture exercise
+// the same no-audio-or-Ready admission boundary used by production.
+public static class GameAudioOriginalOwner
+{
+    public static bool Ready;
+}

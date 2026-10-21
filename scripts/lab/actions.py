@@ -138,12 +138,30 @@ def _repair_reconstruction(function, kwargs, args):
 # Only the selected action's module is imported by dispatch().
 _ENTRIES = (
     Action(
+        "phone-wrapper-oracle",
+        "phone_wrapper_oracle",
+        "stage_action",
+        {},
+        "current",
+        "Experimental desktop verification only: --target REQUEST.json selects stage or check for a fresh SDK-only project. The exact editor reports native metadata and concrete Object-descendant wrapper queries under the shared mutex. No game files, player build, installation or phone-build input; preserves existing editors and refuses lock contention.",
+        handler=_target,
+    ),
+    Action(
+        "phone-wrapper-search",
+        "phone_wrapper_search",
+        "inspect_action",
+        {},
+        "current",
+        "Experimental read-only SDK support: --target REQUEST.json selects the pinned owner SDK binary and extracts normal-path assembly/namespace lookup order with argument, branch and return checks. Executes no SDK code and produces no scene roots, game build, install or editor mutation.",
+        handler=_target,
+    ),
+    Action(
         "phone-native-registry",
         "phone_registry",
         "inspect_action",
         {},
         "current",
-        "Experimental read-only metadata support: --target REQUEST.json selects the exact owner SDK binary, stages authored Python readers and reports native registration/module coverage. Executes no SDK code, generates no linker roots and changes no editor, package or runtime.",
+        "Experimental read-only metadata support: --target REQUEST.json selects the exact owner SDK binary, stages authored Python readers and reports native registration/module coverage and persistent class IDs. Executes no SDK code, generates no linker roots and changes no editor, package or runtime.",
         handler=_target,
     ),
     Action(
@@ -161,7 +179,7 @@ _ENTRIES = (
         "stage_action",
         {},
         "current",
-        "Experimental: --target REQUEST.json binds the authored fixture APK/project and its exact editor callback capture for Android UnityLinker replay. Supplied tools and desktop-generated scene/editor roots remain private inputs. No editor mutation, installation or game build.",
+        "Experimental: --target REQUEST.json binds the authored fixture APK/project and exact callback capture for Android UnityLinker replay. Optional native_registry selects a pinned owner SDK binary/hash. Optional module_policy selects builtin-modules-no-overrides-v1 with SDK/package-derived exclusions. Scene roots remain captured. No editor mutation, installation or game build.",
         handler=_target,
     ),
     Action(
@@ -380,7 +398,15 @@ _ENTRIES = (
     ),
     Action("whole-catalog-host-providers", "whole_catalog", "host_providers", {}, "current", "Run the whole-catalog native-provider host fixture."),
     Action("whole-catalog-repair-bindings", "whole_catalog", "repair_root_bindings", {}, "current", "Repair recorded whole-catalog root bindings."),
-    Action("whole-catalog-build", "whole_catalog", "build_integration", {}, "current", "Compose content and build the whole-catalog player."),
+    Action(
+        "whole-catalog-build",
+        "whole_catalog",
+        "build_integration",
+        {},
+        "current",
+        "Compose content, stage explicit original-audio selection (default off), and build the player. Supports --debug-symbols, --capture-player-linker-inputs and --capture-il2cpp-invocation with the same contracts as whole-catalog-code-build.",
+        handler=_whole_catalog_code_build,
+    ),
     Action(
         "whole-catalog-code-build",
         "whole_catalog",

@@ -25,7 +25,16 @@ public static class WholeCatalogComposed
     static readonly List<WeakReference> releasedLocators = new List<WeakReference>();
     static readonly List<WeakReference> releasedManifests = new List<WeakReference>();
     static WeakReference currentManifest;
+    static string activeInputId;
+    static string activeAttempt;
+    static string activeManifestSha256;
     static int lastDetachedAssetOperations;
+    // The original process Wwise owner can retain the existing bundle which
+    // contains its serialized settings object and both original prefabs. This
+    // is a single-owner lease over the already loaded bundle, never a second
+    // AssetBundle instance or a Resources duplicate.
+    static string originalAudioLeaseIdentity;
+    static bool originalAudioLeaseHeld;
     delegate bool ExtractSubObjectKey(object key, out string mainKey, out string subKey);
     static readonly ExtractSubObjectKey originalSubObjectKey = (ExtractSubObjectKey)Delegate.CreateDelegate(
         typeof(ExtractSubObjectKey),
@@ -40,6 +49,58 @@ public static class WholeCatalogComposed
         if (!asset)
             throw new Exception("Accepted shared content asset is missing: " + path);
         return asset;
+    }
+    public static bool IsConfigured
+    {
+        get { return owned && ownedLocator != null && !String.IsNullOrEmpty(activeInputId) && !String.IsNullOrEmpty(activeAttempt) && !String.IsNullOrEmpty(activeManifestSha256); }
+    }
+    public static string RetainForOriginalAudioOwner(string expectedInputId)
+    {
+        if (!owned || ownedLocator == null || String.IsNullOrEmpty(activeInputId) ||
+            String.IsNullOrEmpty(activeAttempt) || String.IsNullOrEmpty(activeManifestSha256))
+            throw new Exception("Original audio requires the active, already-owned whole catalog bundle");
+        if (activeInputId != expectedInputId)
+            throw new Exception("Original audio whole-catalog input identity mismatch");
+        var descriptorAsset = Resources.Load<TextAsset>("WholeCatalogBootstrap");
+        if (!descriptorAsset)
+            throw new Exception("Original audio whole-catalog descriptor is missing");
+        var descriptor = JObject.Parse(descriptorAsset.text);
+        string attempt = activeAttempt;
+        if ((string)descriptor["input_id"] != expectedInputId ||
+            (string)descriptor["attempt"] != attempt)
+            throw new Exception("Original audio whole-catalog package descriptor mismatch");
+        string manifestPath = Path.Combine(Application.persistentDataPath, "payload", "whole-catalog.json");
+        string manifestSha;
+        using (var sha = System.Security.Cryptography.SHA256.Create())
+            manifestSha = BitConverter.ToString(sha.ComputeHash(File.ReadAllBytes(manifestPath))).Replace("-", "").ToLowerInvariant();
+        if (manifestSha != activeManifestSha256)
+            throw new Exception("Original audio catalog manifest changed after location validation");
+        string identity = expectedInputId + ":" + attempt + ":" + activeManifestSha256;
+        if (originalAudioLeaseHeld && originalAudioLeaseIdentity != identity)
+            throw new Exception("A different whole-catalog identity already has the process audio lease");
+        originalAudioLeaseIdentity = identity;
+        originalAudioLeaseHeld = true;
+        return identity;
+    }
+    public static bool OriginalAudioLeaseHeld { get { return originalAudioLeaseHeld; } }
+    public static string OriginalAudioLeaseIdentity { get { return originalAudioLeaseIdentity; } }
+    public static bool ReleaseOriginalAudioOwnerLease(string expectedIdentity)
+    {
+        if (!originalAudioLeaseHeld || originalAudioLeaseIdentity != expectedIdentity)
+            throw new Exception("Original audio release does not match the retained whole-catalog identity");
+        if (!GameAudioOriginalOwner.CanReleaseCatalogLease(
+            GameAudioOriginalOwner.OriginalManagerInitClaimed,
+            GameAudioOriginalOwner.NativeInitAttemptObserved,
+            GameAudioOriginalOwner.OriginalTermsReturned))
+            throw new Exception("Original audio bundle cannot be released before both original Term calls return");
+        originalAudioLeaseHeld = false;
+        originalAudioLeaseIdentity = null;
+        if (owned && ownedLocator == null)
+        {
+            owned.Unload(true);
+            owned = null;
+        }
+        return true;
     }
     sealed class BorrowedBundle : IAssetBundleResource
     {
@@ -138,7 +199,22 @@ public static class WholeCatalogComposed
         if (!Resources.Load<TextAsset>("WholeCatalogBootstrap"))
             yield break;
         if (owned)
-            throw new Exception("Shared whole-content dependency already owned");
+        {
+            if (!originalAudioLeaseHeld)
+                throw new Exception("Shared whole-content dependency already owned");
+            string manifestPath = Path.Combine(Application.persistentDataPath, "payload", "whole-catalog.json");
+            var manifest = JObject.Parse(File.ReadAllText(manifestPath));
+            string expectedPrefix = (string)manifest["input_id"] + ":" + (string)manifest["attempt"] + ":";
+            if (String.IsNullOrEmpty((string)manifest["input_id"]) ||
+                !originalAudioLeaseIdentity.StartsWith(expectedPrefix, StringComparison.Ordinal))
+                throw new Exception("Retained audio bundle belongs to a different package identity");
+            string actualSha;
+            using (var sha = System.Security.Cryptography.SHA256.Create())
+                actualSha = BitConverter.ToString(sha.ComputeHash(File.ReadAllBytes(manifestPath))).Replace("-", "").ToLowerInvariant();
+            if (!originalAudioLeaseIdentity.EndsWith(":" + actualSha, StringComparison.Ordinal))
+                throw new Exception("Retained audio bundle manifest bytes changed");
+            yield break;
+        }
         string path = Path.Combine(Application.persistentDataPath, "payload", "whole-game-content");
         if (!File.Exists(path))
             throw new Exception("Shared whole-content dependency not synchronized");
@@ -160,6 +236,11 @@ public static class WholeCatalogComposed
         var descriptor = JObject.Parse(Resources.Load<TextAsset>("WholeCatalogBootstrap").text);
         if ((string)manifest["input_id"] != (string)descriptor["input_id"] || (string)manifest["attempt"] != (string)descriptor["attempt"])
             throw new Exception("Composed APK/catalog generation mismatch");
+        string manifestPath = Path.Combine(payload, "whole-catalog.json");
+        using (var sha = System.Security.Cryptography.SHA256.Create())
+            activeManifestSha256 = BitConverter.ToString(sha.ComputeHash(File.ReadAllBytes(manifestPath))).Replace("-", "").ToLowerInvariant();
+        activeInputId = (string)manifest["input_id"];
+        activeAttempt = (string)manifest["attempt"];
         priorLocators = Addressables.ResourceLocators.ToArray();
         borrowedNames = new HashSet<string>(AssetBundle.GetAllLoadedAssetBundles().Select(bundle => bundle.name));
         var providers = Addressables.ResourceManager.ResourceProviders;
@@ -180,6 +261,9 @@ public static class WholeCatalogComposed
             releasedLocators.Add(new WeakReference(ownedLocator));
             releasedManifests.Add(currentManifest);
             currentManifest = null;
+            activeInputId = null;
+            activeAttempt = null;
+            activeManifestSha256 = null;
             Addressables.RemoveResourceLocator(ownedLocator);
             foreach (var locator in priorLocators)
             {
@@ -193,7 +277,7 @@ public static class WholeCatalogComposed
         definitionFamilies.Clear();
         BorrowedAssetProvider.ResetFailures();
         borrowedNames = null;
-        if (owned)
+        if (owned && !originalAudioLeaseHeld)
         {
             owned.Unload(true);
             owned = null;

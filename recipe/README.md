@@ -1315,3 +1315,28 @@ contain authored contracts only, with minimum existing type/asset names and no
 game/community implementation, serialized content, private paths or new protected
 input. J838 records host qualification; R8/R9 must replay the authored sources
 and membership. Device behavior and visual parity remain separate gates.
+
+### Original Wwise process-owner admission (2026-10-20)
+
+`runtime/session/PortSessionOriginalAudioOwner.cs` is authored coordination code
+in the 112-entry runtime selection. Its layout identity starts null under the
+first-import contract. The authored `support/audio/core/` and `bootstrap/`
+sources compile as support assemblies; they preserve original Wwise startup,
+bank callbacks and shutdown rather than reproducing those implementations.
+The catalog change adds one explicitly admitted process-audio bundle lease;
+default-off bundle release is unchanged. Skin activation accepts either the
+silent boundary or observed original-owner readiness.
+
+These sources contain API contracts, minimum asset identities, runtime pins
+and authored observation/admission rules only. They contain no game or SDK
+implementation, serialized asset, soundbank, native binary, credential or
+private device/path data. Generated request/bank pins are disabled placeholders;
+accepted local inputs and protected generated outputs remain ignored. R8/R9
+must replay the source selection and support-assembly producer. Host source
+qualification does not establish a built APK, bank readiness or audible output.
+
+The bank-receipt packaging repair adds only an authored artifact role, the
+runtime copier's required relative path and strict ownership/hash checks.
+The selected cohort receipt and its bank contents remain generated under
+ignored `work/`; no receipt bytes or protected audio are added to this recipe.
+Synthetic staging/ZIP tests check the path contract without game content.

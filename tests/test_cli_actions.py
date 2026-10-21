@@ -156,6 +156,8 @@ class PrototypeActionTests(unittest.TestCase):
                 "phone-linker-fixture",
                 "phone-root-contract",
                 "phone-native-registry",
+                "phone-wrapper-search",
+                "phone-wrapper-oracle",
                 "phone-native-apk-fixture",
                 "assembly-transforms-check",
                 "asset-transforms-check",
@@ -213,6 +215,27 @@ class PrototypeActionTests(unittest.TestCase):
                 self.calls.clear()
                 self.assertEqual(self.cli(*options), (0, "", ""))
                 self.assertEqual(self.calls, self.expected_calls("inspect"))
+
+    def test_full_catalog_build_forwards_symbol_and_capture_options(self):
+        code, _, errors = self.cli(
+            "--action",
+            "whole-catalog-build",
+            "--debug-symbols",
+            "--capture-player-linker-inputs",
+            "--capture-il2cpp-invocation",
+        )
+        self.assertEqual((code, errors), (0, ""))
+        self.assertEqual(
+            self.calls,
+            [
+                {
+                    "module": "whole_catalog",
+                    "function": "build_integration",
+                    "args": (),
+                    "kwargs": {"android_symbols": "debugging", "capture_player_linker_inputs": True, "capture_il2cpp_invocation": True},
+                }
+            ],
+        )
 
     def test_movement_debug_options_are_omitted_unless_truthy(self):
         for name in ("movement-batch-run", "movement-batch-retry"):

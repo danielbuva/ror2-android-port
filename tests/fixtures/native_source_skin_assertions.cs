@@ -36,6 +36,7 @@ static class AdapterContractTests
                 renderer = renderer, defaultMaterial = source, defaultShadowCastingMode = 2, ignoreOverlays = true
             }
         };
+        GameAudioOriginalOwner.Ready = false;
         WwiseIntegrationManager.noAudio = true;
         return AndroidNativeSourceSkinLifecycle.PrepareInactive(gameObject, body,
             new AndroidNativeSourceSkinLifecycle.Report { requested = true });
@@ -71,6 +72,7 @@ static class AdapterContractTests
         animator.avatar = new Avatar();
         cm.baseRendererInfos = new[] { new CharacterModel.RendererInfo { renderer = go.AddComponent<Renderer>(), defaultMaterial = new Material("native") } };
         WwiseIntegrationManager.noAudio = false;
+        GameAudioOriginalOwner.Ready = false;
         bool refused = false;
         var report = new AndroidNativeSourceSkinLifecycle.Report { requested = true };
         try { AndroidNativeSourceSkinLifecycle.PrepareInactive(go, body, report); }
@@ -80,6 +82,28 @@ static class AdapterContractTests
         Check(report.requested && !report.attached && report.firstFailure.Contains("audio/authored-enabled"),
               "refusal is attached to bounded serializable run report");
     }
+    static void TestOriginalAudioReadyBoundaryAllowsOptIn()
+    {
+        var go = new GameObject("audio-ready source model") { activeSelf = false };
+        var model = go.AddComponent<CharacterModel>();
+        var skin = go.AddComponent<ModelSkinController>();
+        var body = go.AddComponent<CharacterBody>();
+        body.modelLocator = go.AddComponent<ModelLocator>();
+        body.modelLocator.modelTransform = go.transform;
+        model.body = body;
+        var animator = go.AddComponent<Animator>();
+        animator.runtimeAnimatorController = new RuntimeAnimatorController();
+        animator.avatar = new Avatar();
+        model.baseRendererInfos = new[] { new CharacterModel.RendererInfo { renderer = go.AddComponent<Renderer>(), defaultMaterial = new Material("native") } };
+        WwiseIntegrationManager.noAudio = false;
+        GameAudioOriginalOwner.Ready = true;
+        var report = new AndroidNativeSourceSkinLifecycle.Report { requested = true };
+        var adapter = AndroidNativeSourceSkinLifecycle.PrepareInactive(go, body, report);
+        Check(adapter && report.attached && !report.nativeOwnersActive,
+              "selected original audio Ready witness permits opt-in source lifecycle without altering native owners");
+        GameAudioOriginalOwner.Ready = false;
+    }
+
     static void TestDisabledAuthoredOwnerIsNeverForceEnabled()
     {
         var go = new GameObject("source-disabled owner") { activeSelf = false };
@@ -345,6 +369,7 @@ static class AdapterContractTests
     {
         TestOptInSelectionPolicy();
         TestRefusalDoesNotMutateOwners();
+        TestOriginalAudioReadyBoundaryAllowsOptIn();
         TestDisabledAuthoredOwnerIsNeverForceEnabled();
         TestNativeSkinEventAndMetadata();
         TestActiveInventoryDisplayOwnerPredicate();

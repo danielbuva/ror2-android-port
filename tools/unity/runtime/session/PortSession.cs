@@ -186,6 +186,9 @@ public sealed partial class PortSession : MonoBehaviour
         public bool diagnosticCaptainSupplyBeacon;
         // Per-run opt-in for the native selected-skin lifecycle diagnostic; absent JSON is false.
         public bool nativeSourceSkinLifecycleDiagnosticRequested;
+        // Per-run request for the separately instrumented point-sound diagnostic build.
+        // Absent selector JSON remains false and ordinary builds have no injected callsites.
+        public bool pointSoundDiagnosticRequested;
         // Explicit source-entry-only mode; omitted attempt JSON remains false.
         public bool sirenSourceEntryDiagnosticAttempt, sirenSourceEntryDiagnosticRegistrationObserved,
             sirenSourceEntryDiagnosticCleanupObserved;
@@ -207,6 +210,9 @@ public sealed partial class PortSession : MonoBehaviour
         public SourceAnimationEventReport sourceAnimationEvents;
         public List<SessionResourceSample> sessionResources = new List<SessionResourceSample>();
         public OfflineSettingsReport settings;
+        // Snapshot contains only bounded primitive values; no Unity objects.
+        public PortSessionOriginalAudioOwner.Snapshot originalAudio;
+        public PointSoundDiagnosticObserver.Snapshot pointSoundDiagnostic;
         public AndroidProfileReport profile;
         public bool originalAimPresentation, recoveredHudEnabled;
         public RecoveredHudPresentation.Observation hud;
@@ -468,6 +474,19 @@ public sealed partial class PortSession : MonoBehaviour
     }
     void Save()
     {
+        if (r != null)
+        {
+            // The original-audio owner is process-lifetime state. Refresh its
+            // bounded value snapshot at each report boundary rather than leaving
+            // the startup-only copy stale during later callbacks and teardown.
+            r.originalAudio = PortSessionOriginalAudioOwner.CaptureSnapshot();
+            if (r.pointSoundDiagnosticRequested)
+            {
+                r.pointSoundDiagnostic = PortSessionOriginalAudioOwner.CapturePointSoundDiagnosticSnapshot();
+                if (r.phase == "complete" || r.sourceStageLifecycleRecoveryRequired)
+                    RetirePointSoundDiagnostic();
+            }
+        }
         var path = System.IO.Path.Combine(Application.persistentDataPath, "movement-batch-" + r.id + ".json");
         var pending = path + ".pending";
         var fullTrace = r.integratedWorld && r.nova != null ? r.nova.observations : null;
@@ -489,6 +508,29 @@ public sealed partial class PortSession : MonoBehaviour
         }
         FlushNovaTrace();
     }
+
+    private void RetirePointSoundDiagnostic()
+    {
+        if (r == null || !r.pointSoundDiagnosticRequested) return;
+        // Capture after disabling so the saved report reflects actual observer
+        // ownership, not merely the state immediately before unsubscription.
+        PortSessionOriginalAudioOwner.DisablePointSoundDiagnostic();
+        r.pointSoundDiagnostic = PortSessionOriginalAudioOwner.CapturePointSoundDiagnosticSnapshot();
+    }
+
+    private void OnDestroy()
+    {
+        // Unexpected session destruction is also a terminal path. Retiring this
+        // report observer never releases the original process-lifetime audio owner.
+        if (r == null || !r.pointSoundDiagnosticRequested) return;
+        try
+        {
+            RetirePointSoundDiagnostic();
+            Save();
+        }
+        catch (Exception) { /* Teardown diagnostics cannot interfere with Unity destruction. */ }
+    }
+
     // MovementBatchProbe is the unchanged resource/file name.
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Init()
@@ -510,6 +552,16 @@ public sealed partial class PortSession : MonoBehaviour
             r = JsonUtility.FromJson<SessionReport>(selectionJson);
             if (r.attempt != config.attempt)
                 yield break;
+            var pointSoundRouteRefusal = PointSoundDiagnosticObserver.RouteRefusal(
+                r.pointSoundDiagnosticRequested, config.integratedWorld);
+            if (pointSoundRouteRefusal != null)
+            {
+                r.phase = "point-sound-diagnostic-refused";
+                r.firstFailure = pointSoundRouteRefusal;
+                r.firstFailurePhase = r.phase;
+                Save();
+                yield break;
+            }
             // The launch selector is untrusted input. Only this coordinator sets the durable flag.
             r.developerSkillVariantAssisted = false;
             r.developerSkillIsolationAssisted = false;
@@ -736,6 +788,36 @@ public sealed partial class PortSession : MonoBehaviour
         var applicationStart = AwaitOfflineRunStart(config);
         while (applicationStart.MoveNext())
             yield return applicationStart.Current;
+        // Establish the original process-lifetime Wwise owner before any selected
+        // body/model activation. It reuses the original manager/prefab/component path.
+        var originalAudio = PortSessionOriginalAudioOwner.EnsureOriginalOwner();
+        while (originalAudio.MoveNext())
+            yield return originalAudio.Current;
+        r.originalAudio = PortSessionOriginalAudioOwner.CaptureSnapshot();
+        if (r.pointSoundDiagnosticRequested)
+        {
+            var pointSoundOwnerRefusal = PointSoundDiagnosticObserver.OwnerRefusal(
+                true, GameAudioOriginalOwner.OptInRequested, r.originalAudio.ready);
+            if (pointSoundOwnerRefusal != null)
+            {
+                r.phase = "point-sound-diagnostic-refused";
+                r.firstFailure = pointSoundOwnerRefusal;
+                r.firstFailurePhase = r.phase;
+                Save();
+                yield break;
+            }
+            var pointSoundBuildRefusal = GameAudioOriginalOwner.PointSoundDiagnosticBuildRefusal(true);
+            if (pointSoundBuildRefusal != null)
+            {
+                r.phase = "point-sound-diagnostic-refused";
+                r.firstFailure = pointSoundBuildRefusal;
+                r.firstFailurePhase = r.phase;
+                Save();
+                yield break;
+            }
+            PortSessionOriginalAudioOwner.ConfigurePointSoundDiagnostic(true);
+            r.pointSoundDiagnostic = PortSessionOriginalAudioOwner.CapturePointSoundDiagnosticSnapshot();
+        }
         var selected = RunSelectedProbe(catalogFixture);
         for (var step = RunGuarded(selected,
                                    e =>

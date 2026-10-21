@@ -72,6 +72,12 @@ The plain check and its acceptance criteria remain unchanged.
 
 ## Current baseline (2026-10-20)
 
+J872's later diagnostic APK is installed after both default checks, but is not
+promoted: current-process audio log errors remain and playback is unqualified.
+See the [current snapshot](../PORTING_STATE.md) for installed identity and
+[J872](PORTING_JOURNAL.md#j872--verify-the-android-bank-path-repair-and-retain-the-point-sound-failure)
+for the single result record. The accepted baseline below remains the rollback.
+
 | Item | Value |
 | --- | --- |
 | APK | `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`, source 1780ea9; 111 runtime sources, 312 frozen authored inputs, 266 payload hashes unchanged, matching symbols and same-request pre-strip capture |

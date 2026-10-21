@@ -10,6 +10,22 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J873](PORTING_JOURNAL.md#j873--separate-direct-scene-names-from-sdk-wrapper-cache-queries) | 2026-10-20 | Separate direct scene names from SDK wrapper-cache queries | 2026-10-20. |
+| [J874](PORTING_JOURNAL.md#j874--stage-bounded-original-point-sound-localization-through-the-public-producer) | 2026-10-20 | Stage bounded original point-sound localization through the public producer | Date: 2026-10-20. |
+| [J872](PORTING_JOURNAL.md#j872--verify-the-android-bank-path-repair-and-retain-the-point-sound-failure) | 2026-10-20 | Verify the Android bank-path repair and retain the point-sound failure | Date: 2026-10-20. |
+| [J871](PORTING_JOURNAL.md#j871--reject-whole-recording-signal-as-proof-of-original-event-playback-capture) | 2026-10-20 | Reject whole-recording signal as proof of original event playback capture | Date: 2026-10-20. |
+| [J869](PORTING_JOURNAL.md#j869--decode-pinned-sdk-wrapper-search-order-on-android) | 2026-10-20 | Decode pinned SDK wrapper-search order on Android | 2026-10-20. |
+| [J870](PORTING_JOURNAL.md#j870--preserve-android-bank-paths-while-removing-an-invalid-filesystem-warning) | 2026-10-20 | Preserve Android bank paths while removing an invalid filesystem warning | Date: 2026-10-20. |
+| [J868](PORTING_JOURNAL.md#j868--initialize-the-original-game-audio-owner-and-banks-but-retain-path-point-sound-and-output-failures) | 2026-10-20 | Initialize the original game audio owner and banks, but retain path, point-sound and output failures | 2026-10-20. |
+| [J866](PORTING_JOURNAL.md#j866--qualify-scoped-sdk-assembly-metadata-and-forwarding-on-android) | 2026-10-20 | Qualify scoped SDK assembly metadata and forwarding on Android | 2026-10-20. |
+| [J867](PORTING_JOURNAL.md#j867--build-the-original-audio-player-preserve-its-receipt-refusal-and-package-the-missing-cohort-witness) | 2026-10-20 | Build the original-audio player, preserve its receipt refusal and package the missing cohort witness | 2026-10-20. |
+| [J865](PORTING_JOURNAL.md#j865--repair-the-first-composed-audio-il2cpp-bank-observer-failure) | 2026-10-20 | Repair the first composed-audio IL2CPP bank-observer failure | 2026-10-20. |
+| [J864](PORTING_JOURNAL.md#j864--read-persistent-native-class-ids-from-the-pinned-sdk-on-android) | 2026-10-20 | Read persistent native class IDs from the pinned SDK on Android | 2026-10-20. |
+| [J863](PORTING_JOURNAL.md#j863--remove-commit-dependent-sourcelink-metadata-from-the-audio-helper) | 2026-10-20 | Remove commit-dependent SourceLink metadata from the audio helper | 2026-10-20. |
+| [J862](PORTING_JOURNAL.md#j862--derive-authored-fixture-module-policy-from-owner-sdk-and-package-data-on-android) | 2026-10-20 | Derive authored fixture module policy from owner SDK and package data on Android | 2026-10-20. |
+| [J861](PORTING_JOURNAL.md#j861--observe-paired-siren-movement-but-retain-the-bounded-encounter-timeout) | 2026-10-20 | Observe paired Siren movement but retain the bounded encounter timeout | 2026-10-20. |
+| [J860](PORTING_JOURNAL.md#j860--integrate-the-original-wwise-process-owner-behind-an-explicit-build-selection) | 2026-10-20 | Integrate the original Wwise process owner behind an explicit build selection | 2026-10-20. |
+| [J859](PORTING_JOURNAL.md#j859--generate-sdk-native-root-metadata-on-android-and-preserve-strippingconversion) | 2026-10-20 | Generate SDK-native root metadata on Android and preserve stripping/conversion | 2026-10-20. |
 | [J858](PORTING_JOURNAL.md#j858--correct-the-siren-recorders-incompatible-launch-selection) | 2026-10-20 | Correct the Siren recorder's incompatible launch selection | 2026-10-20. |
 | [J857](PORTING_JOURNAL.md#j857--recover-the-complete-pinned-native-registry-from-owner-sdk-metadata-literals) | 2026-10-20 | Recover the complete pinned native registry from owner-SDK metadata literals | 2026-10-20. |
 | [J856](PORTING_JOURNAL.md#j856--reach-ship-graveyard-and-correct-siren-recorder-host-observations) | 2026-10-20 | Reach Ship Graveyard and correct Siren recorder host observations | 2026-10-20. |

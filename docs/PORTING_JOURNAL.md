@@ -20579,3 +20579,1369 @@ R4's clock/schema and route/deadline/cleanup guards. Host-test source-owner
 admission before dispatch; do not change gameplay or infer movement behavior
 from the eight unused array slots. No runtime, recipe or APK changes occur as
 part of this experiment; the separate audio source integration is still unbuilt.
+
+
+## J859 — Generate SDK-native root metadata on Android and preserve stripping/conversion
+
+2026-10-20. Hypothesis: J857's independent SDK-native table can replace the
+captured table at the actual Android UnityLinker invocation and preserve the
+qualified stripping/converter outputs. Keep captured project scene usage/module
+policy explicit. Start from accepted main `aa885e9`, then integrate `09e8512`
+before recording this result; preserve the main session's J858 and J860
+reservation. Route A, IL2CPP ARM64, the renderer, working game build and desktop
+fallback remain unchanged. No Unity build, package install or gameplay action.
+
+**Owner and inputs.** `phone_linker_roots.py` owns the optional SDK-native mode
+of `phone-linker-fixture`. An explicit `native_registry` request selects the
+owner SDK binary/hash. Staging copies the pinned SDK and the two unchanged
+registry readers; it omits `inputs/EditorToUnityLinkerData.json` completely.
+Only the four project fields are selected from that captured document:
+serializedTypes, typesInScenes, forceIncludeModules and forceExcludeModules.
+The captured native-table value is never selected. Nonempty serialized-type
+roots need separate qualification; this authored fixture's list is empty.
+TypesInScenes.xml, 43 scene-usage records, 33 forced exclusions, no forced
+inclusions, pre-strip assemblies and their desktop compilation remain inputs.
+SDK/linker tools and implicit descriptor closure remain owner-supplied/private.
+
+At the actual stripping invocation, the authored readers inspect the unchanged
+SDK as data and generate all 318 native records. The new owner verifies native
+identities/parent links, refuses ambiguity/cycles and projects the six native
+fields in qualified-name ordinal order. UnityLinker receives the new owned
+output `native-roots/EditorToUnityLinkerData.json`. Generated data/source/scope
+receipts are revalidated by `stripped_input` before converter staging and again
+at the native C++ handoff. Complete editor-root generation remains false;
+no whole-catalog build or game runtime consumes this mode. ARCHITECTURE and
+LOCAL_STATE name its setup/output/failure ownership and local replay adapters.
+
+**Contracts and frozen source.** Commit `e854a747e6fa101a57189a4400f02aa2dcf183ce`
+before staging/running. Six new authored host contracts cover independent native
+projection/order, ignored captured-table values, unsupported project policy,
+incomplete/ambiguous/cyclic native data, receipt/data binding, forbidden captured
+native staging and generated-path delivery to the linker. An unknown SDK still
+refuses before tool execution even under a self-consistent staged manifest.
+A later test-only checkpoint `ef6aad2` additionally proves downstream converter
+handoff refuses a changed generated native-root artifact. All 11 focused linker
+contracts pass. Fresh-clone CI on `ef6aad2` passes 1,257 tests with 55 optional
+skips, Ruff, audit and documentation checks. No SDK/game data is in a fixture.
+
+**Actual Android stripping.** Stage 596 files / 174,439,356 bytes, then verify
+the configured alpha device, workspace ownership, fresh capacity/backing/reserve,
+Python/.NET hashes and the exact manifest. The native table is absent from the
+staged inputs, and project-root-data.json contains only the four project fields.
+Run once in a new owned child. Metadata generation plus UnityLinker completes
+successfully in 11.931 seconds of Android-driver elapsed time. Actual command
+arguments point to the fresh generated file; no captured native table is present
+for the tool to consume.
+
+The generated SDK report hash equals J857's final report:
+`65a9619d55806f041d3a36a55bc901530d29cfa62f54246e0933113ebe8e1f8a`.
+Generated editor data is
+`713e327c36d143091abe4d9d70998851c3a0ab3b9060f5805d3b9ea36ee81b3e`.
+Only after the run, compare it to the unchanged captured oracle
+`34c3177601e7a31dc24efab295280a13c21c2a306a1f70c7171e78a0041bcf30`:
+all four project fields are equal, all 318 native identities/six-field values
+match, and native array order differs. No captured ordering is reused.
+
+All 36 emitted DLLs and 30 PDBs match the desktop outputs byte for byte.
+The 67-file closure passes the existing strict report comparison: only the
+previously qualified module-array ordering difference is permitted, with raw
+bytes preserved. Its raw UnityLinkerToEditorData.json hash is
+`dff4312e6da36ab6d0be20bf61ee4d04442146971fa32cc831aa860b7250796e`.
+No report, assembly or source output is normalized or edited to obtain the pass.
+
+**Connected converter.** Stage those actual phone outputs through the existing
+explicit linker selector. The full Android converter succeeds in 6.497 seconds.
+All 126 C/C++ files match J849's actual phone outputs byte for byte; both data
+files match, including global-metadata.dat
+`d515a852e565f151c1ea4f6d0ecb96aab93b8d9b095207df4feebf619e69b9b5`.
+`cpp_input` validates nested SDK-root/stripping lineage, copied inputs, actual
+emitted C++ and exact metadata before accepting the native compilation boundary.
+This reaches J842's already compiled/loaded source boundary; no redundant native
+compile or fixture install occurs. These are build-tool timings, not gameplay
+or app-sandbox performance/qualification. Alpha's game remains be26c21c… and
+its display is asleep after both probes; no main/spare device action occurs.
+
+**Evidence and remaining gate.** Raw SDK/root data and logs stay ignored.
+`native-root-linker-stage-selection.json`, `native-root-linker-run-selection.json`
+and `native-root-linker-boundary-comparison.json` bind the first boundary.
+`native-root-converter-stage-selection.json`, its run selector and
+`native-root-native-handoff-check.json` bind the converter/native boundary.
+`native-root-proof-receipt.json` binds 35 source/input/output/comparison/test/CI
+artifacts; SHA-256
+`9721cf23c65ab84fd77f92188b18c5185d621c423445ef5d6623bc2f59d1fa0c`.
+Both real SDK invocations pass on their first attempts. Project scene usage,
+module policy, TypesInScenes.xml and managed compilation remain captured
+workstation inputs. Independent complete roots, target content/shaders, richer
+dependencies, permitted tool delivery and complete owner installation remain
+open. SDK-native metadata no longer requires the captured native table at this
+authored stripping/conversion boundary.
+
+## J860 — Integrate the original Wwise process owner behind an explicit build selection
+
+2026-10-20. Hypothesis: J845's retained Android interface can serve the ordinary
+composed game when its original initializer, bank owners, service and shutdown
+remain authoritative. Read the architecture/ADR, audio prior-art map, J744,
+J759, J770, J794 and J845. Pinned R2API.Sound at f539511e loads banks only after
+native engine initialization; managed registration is insufficient. The accepted
+input and actual callbacks determine this integration, with no community or
+SDK implementation copied.
+
+**Change.** Add the named `PortSessionOriginalAudioOwner` before body activation,
+with separate authored admission/bootstrap/observation assemblies. Preserve the
+original Wwise manager, AkInitializer, AudioManager, nine bank loaders and their
+Init/update/focus/pause/Term contracts. Reuse the existing GUID-bound settings
+asset and content bundle. A single process-audio lease postpones bundle unload
+until both original Term witnesses return; ordinary session locators still detach.
+This minimal shared cleanup change serves original audio; memory effects remain
+unmeasured. Native skin admission accepts observed original audio readiness.
+Default-off retains the silent boundary.
+
+The mutex-protected current whole-catalog build stages audio before hashing
+project inputs. Its optional local selection explicitly names all protected
+inputs; destination builds use a separate selection. Public generators recreate
+ABI adaptation, observers and composed transformations from accepted raw API/game
+assemblies, preserving unrelated guards. Request contracts precede derivatives;
+final manifests bind the derivatives separately. Inspection uses the official
+Release plugin, while the selected instrumented runtime remains J845's exact
+library. Stage ownership checks assembly preimages/GUIDs and bank hashes; restore
+removes only receipt-owned audio payloads and preserves Unity bank sidecars.
+Source, recipe, reference, compiler/tool and input hashes bind cache generations.
+The first player candidate requires a full bundle build; code-only reuse is not
+relaxed. R8/R9 must replay changed authored runtime sources, recipes and support
+assembly production. No new build step edits authored source by text replacement.
+
+**Host result and preserved failures.** The actual public managed producer
+reproduces API `793f2286…` and guarded/composed game `1034a747…` from legitimate
+inputs. Its manifest is
+`work/coordination/game-audio-original-public-producer-root-review/r1/producer-run-4/manifest.json`,
+SHA-256 `ca2b8097c8b30264668b0081b986551a4c15ea05dce3f9d539c417c9d76395b9`.
+The initial scratch stage exposes a missing API artifact-target entry; inspection
+also finds an omitted native payload row. Both are fixed without altering the
+preserved failed generation. Android compilation initially omits UNITY_ANDROID;
+correct it before any player build. The actual Bootstrap IL now includes Java
+loadLibrary on Android and excludes it with UNITY_EDITOR. Native loading is not
+inferred from source text alone.
+
+The actual scratch project passes requested generation/staging (164 owned rows,
+including 154 banks totaling 247,848,826 bytes), a verified cache hit, and restoration
+to API `107295e4…` / game `3124a2ed…`, with native payload and banks absent afterward.
+The original MonoBehaviour assembly remains unchanged. Logs and failed generations
+are retained under `work/coordination/codex-original-audio-host-stage-root/r1/`.
+Twenty-three focused public tests pass, including owner contracts, producer path
+and editor pins, source/tool cache invalidation, payload separation, sidecar
+preservation and compiled Android/Editor branches; Ruff passes. Independent final
+source review is `original-game-audio-staging-review/r4/review.md`, SHA-256
+`73be2337961a1063bd4f8090ca8776295cc83eea64b691752565e6ee1bf52605`.
+The actual public 112-source runtime plus six support sources compiles against
+264 saved exact-editor references, producing
+`original-audio-public-full-runtime/r1/Assembly-CSharp.original-audio.host.dll`,
+SHA-256 `0154501e9522a2af787ab5ba0905ba1ea34e7e4d71e9245486ae57a53989d26a`.
+The original API/Mono type identities are retained.
+The fresh-clone pre-push check then catches five older orchestration fixtures
+which did not mock the newly added staging owner. Add that explicit mock and
+assert its order/result; no production guard is weakened. Extend the existing
+full-build CLI to forward the same optional symbols/pre-strip/Bee capture flags
+already supported by its build function, so this meaningful audio build can
+exercise them without relaxing code-only reuse. A public CLI dispatch test covers
+all three options. This minimal shared build-interface change serves audio.
+
+**Limits and next gate.** No Unity build, APK, install or composed audio device
+result is produced by this checkpoint; APK hash is not applicable. f1550ce0 remains
+the installed, default-qualified player. Source admission, real native Init, each
+bank result, ordinary events/music/spatialization, teardown and audible output
+remain separate gates. Next: committed-source full build with matching symbols,
+pre-strip/Bee receipts, explicit frozen-APK installation on the primary device,
+then both default checks and first-failure audio analysis. No alpha/spare action.
+
+## J861 — Observe paired Siren movement but retain the bounded encounter timeout
+
+2026-10-20. Hypothesis: J858's incompatible selector prevented source-entry
+admission; use the J812/J844-compatible source-entry/continuation selection to
+obtain the existing paired navigation observation before deciding on a gameplay
+change. Read those entries, the pinned navigation prior art and the actual recorder
+contract. No runtime source, APK or movement behavior changes in this attempt.
+
+**Selection and evidence.** The frozen R5 runner keeps diagnostic egg input off
+at launch, selects source entry and native encounter continuation, then arms only
+after the original 12-egg Listening admission. Huntress seed 2 retains diagnostic
+invincibility/high damage/fast charge; movement/jump boosts remain off. APK remains
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`,
+with both J850 default passes. Twenty-four host runner tests and actual prior-report
+replay pass before dispatch. Runner SHA-256 is
+`f0802348c16d0b9f3a494721e8718d07c0810c70ad1a598df6f87b886defc7cc`.
+Local attempt:
+`work/coordination/f155-siren-device-plan/r5/attempts/20261021T005419.177668Z-e2e24f901b8f/`.
+Result SHA-256 is
+`9f6854885f07d156e95abd39053f1deb74ac234812da523ecffc9f79091d21ad`.
+
+Three original stage exits reach Ship Graveyard. All 32 source spawners, 12 nests,
+12 mapped egg bodies and the exact native Listening registration are observed.
+Eight consecutive requested/applied fixed-tick movement samples pair correctly;
+body/motor motion occurs around two nearby waypoints. Every sample has
+requestId 0 and pathRequestAvailable false, despite node/waypoint availability.
+Preserve the raw rows; the conservative classifier does not count them as eight
+fully attributed path samples. This does not establish a pathfinding failure.
+
+The selected egg is about 170.67 units away at observation trigger, beyond the
+observed 60-unit tracker range. Of 6,239 tracker samples, selected matches are 0,
+different matches 163, null 6,074 and destroyed 2. No native encounter start or
+exact boss identity is observed before the existing 180-second source-stage
+budget. That timeout is the first failure; neither boss execution nor encounter
+completion passes. No fatal/crash is found. The run ends on Ship Graveyard after
+three exits and never enters Moon. The assisted profile remains at 13 applied runs.
+
+**Cleanup and decision.** Owned selector removal, force-stop and display sleep
+complete without errors. Root separately verifies process absent, selector absent
+and display asleep in `codex-main-f155-siren-root-r4/terminal-verification.json`,
+then releases the private runtime claim. No alpha/spare action. Independent triage
+is `f155-siren-runtime-triage/r3/findings.md`, SHA-256
+`f95e9adb12a761b2e2406c861bdf53737472e8f960306aec211e636be7a99da2`.
+There is no supported targeting/movement fix from this trace. Revisit only with
+bounded availability observations of the existing request prerequisites, so a
+missing attribution seam can be distinguished from an actual navigation fault.
+The installed default baseline is unchanged; special encounter execution stays open.
+
+## J862 — Derive authored fixture module policy from owner SDK and package data on Android
+
+2026-10-20. Hypothesis: J859's authored fixture can replace its captured module
+policy with values derived from the supplied SDK's module/package metadata and
+the project's builtin-package manifest, then preserve actual phone stripping
+and converter outputs. Sync against origin/main `09e8512` before recording;
+J860/J861 remain reserved for the main session. Source freeze is
+`0cd76da3c5d4ae4aa83384bffac0d8f5244b73bc`. Route A, IL2CPP ARM64, renderer,
+working game build and desktop fallback stay unchanged. No Unity action,
+package install or gameplay launch.
+
+**Scope and source knowledge.** The pinned public
+[ModuleMetadata bindings](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Editor/Mono/ModuleMetadata.bindings.cs)
+expose mutable automatic/include/exclude settings; the
+[package build callback API](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Modules/PackageManager/Editor/Managed/BuildUtilities.cs)
+also permits package-specific decisions. These are scope clues, not a general
+native-policy implementation or license to distribute SDK data. No reference
+implementation is copied. Qualify only the authored fixture's explicit
+`builtin-modules-no-overrides-v1` profile; custom overrides/callbacks and other
+projects require separate work. This is generic build metadata support, not a
+RoR2-specific runtime mechanism.
+
+The exact editor's modules.asset has 67 modules, 34 controlled by builtin
+packages; Android's file has 63 modules, 33 controlled. All 34 editor controlled
+module names map unambiguously to their SDK builtin package identities. Resolve
+requested packages and transitive dependencies from their supplied package.json
+files. Derive exclusions as the union of disabled controlled modules and editor
+modules absent in the target SDK. Do not embed the missing-module list or the
+captured exclusion list. Explicit profile semantics produce no forced inclusions.
+The SDK bytes and all derived rows remain private.
+
+**Named owner and contracts.** `phone_module_policy.py` parses only the observed
+module-data schema, pins both SDK module-file hashes, validates builtin package
+identities/versions/dependencies, resolves closure and refuses nonstrippable
+exclusions. Staging requires the known authored fixture file set and a consistent
+builtin package lock, in addition to the existing source/APK/capture guards.
+Unknown/custom source inputs, non-builtin packages, unknown versions and schema
+changes refuse. The new `module_policy` request requires SDK-native mode.
+ARCHITECTURE names its lifecycle; LOCAL_STATE records generators and replay
+support. Failure directories and older selectors/adapters remain intact.
+
+Staging copies 37 SDK/package/manifest data inputs and the authored reader;
+it omits both captured policy arrays and the captured native table completely.
+`project-root-data.json` contains only serializedTypes and typesInScenes.
+At actual stripping invocation, Android generates `native-roots/module-policy.json`
+and combines its policy with freshly read SDK-native metadata and the captured
+scene roots. Generated input/policy/source hashes are revalidated before the
+converter handoff and again at the native-source boundary. Complete independent
+editor-root generation remains false.
+
+Five new host contracts cover strict YAML/dependency parsing, transitive package
+closure and overlapping exclusion reasons, unsupported versions/packages and
+cyclic/contradictory data, staging eligibility/lock/drift refusal, and omitted
+captured policy with generated-output/source binding. Fixtures use authored
+synthetic data, no copied SDK table. All 16 focused linker/policy tests pass.
+Fresh-clone CI on the frozen source passes 1,262 tests with 55 optional skips,
+Ruff, audit and documentation checks. The ordinary doctor/preflight still refuse
+missing inventory/accepted-input/lab-project state in this isolated worktree;
+that unchanged game-bootstrap gate is separate from the explicitly selected
+fixture, which passes its own source/capture/input guards.
+
+**Phone execution and independent comparison.** Stage 634 files / 174,490,826
+bytes. Verify explicit alpha device/workspace ownership, fresh capacity/backing/
+reserve, supplied Python/.NET hashes and complete staged manifests for each run.
+In a new owned directory, policy/native generation plus UnityLinker passes in
+12.188 seconds of Android-driver time. Actual arguments point to the newly
+generated editor-data file. No captured policy/native input is present for it
+to consume. Only after execution, compare with the unchanged exact-editor oracle:
+33 exclusions, zero inclusions, four enabled packages, 318 native types and
+43 retained scene records agree. The generated editor-data bytes equal J859's
+`713e327c36d143091abe4d9d70998851c3a0ab3b9060f5805d3b9ea36ee81b3e`.
+The policy receipt is
+`5d7440196aba1bed8fe10c656e13faf457d9a2dcf578bc5705f6b38202206dd2`.
+
+All 36 DLLs and 30 PDBs match desktop bytes. The 67-file emitted closure passes
+the existing strict comparison, permitting only the previously qualified report
+module-array ordering difference while preserving raw bytes. The raw report
+hash remains `dff4312e6da36ab6d0be20bf61ee4d04442146971fa32cc831aa860b7250796e`.
+Feed these actual outputs through the explicit linker selector to a new Android
+converter attempt: it passes in 6.292 seconds. All 126 C/C++ files and both data
+files match J859 byte for byte; global-metadata.dat remains
+`d515a852e565f151c1ea4f6d0ecb96aab93b8d9b095207df4feebf619e69b9b5`.
+`cpp_input` validates the nested policy/native/stripping lineage and exact emitted
+boundary. No redundant native compile or fixture install is needed. These are
+tool timings, not game performance or app-sandbox qualification. Both actual
+SDK invocations pass first time. Alpha's game remains be26c21c… and the display
+is asleep after each probe; main/spare devices are untouched.
+
+**Evidence and remaining work.** The ignored proof root retains
+`module-policy-linker-*` and `module-policy-converter-*` requests, adapters,
+stage/run selections and boundary checks; `module-policy-native-*` selects the
+validated final handoff. `module-policy-proof-receipt.json` binds 43 source/input/
+output/comparison/test artifacts, SHA-256
+`ec42b6114069cbd98c6f9960ac0d08a2ec10eb3d6691123acac2c651137699b6`.
+No private SDK data is published. Captured scene usage, TypesInScenes.xml and
+managed compilation remain desktop inputs. General project/module policy,
+independent complete roots, content/shaders, richer dependencies, permitted tool
+delivery, app sandbox execution and complete owner installation remain open.
+Revisit this profile only for a changed contract/input or a concrete regression.
+
+
+## J863 — Remove commit-dependent SourceLink metadata from the audio helper
+
+2026-10-20. Observation: the first real full audio build from synchronized
+`93a95aa` stops in host staging before Unity is queued. The helper DLL no longer
+matches J860's hash even though the authored source, project and generated
+assembly attributes are unchanged. The host mutex releases normally; no APK,
+editor mutation, install or device run occurs. f1550ce0 remains installed and
+default-qualified, stopped with its display asleep.
+
+**Cause and smallest change.** Compare the preserved passing and failed helper
+outputs. Their disassembled IL differs only in module identity; SourceLink JSON
+contains different repository commit URLs. The local .NET SDK 10.0.401 target
+`Microsoft.SourceLink.Common.targets` gates its generation on EnableSourceLink.
+Informational-version revision suppression alone does not disable this metadata.
+Pass `EnableSourceLink=false` to the existing isolated authored .NET builds.
+Deliberately update the helper pin in the producer and its exact Cecil consumer,
+then update the producer source pin. Do not stamp an old MVID or alter original
+input. No game/SDK implementation or new protected input is added.
+
+The helper becomes byte-identical across two output roots and two explicit
+revision values, SHA-256
+`db6dba4c977328bfdb37004fd2a8957a5a627217959835edfd3ded09ed340e62`.
+Its normalized method IL matches the prior helper. The transform copies that IL
+rather than helper debug metadata: observed API `7ec842ee…`, composed API
+`793f2286…` and composed game `1034a747…` remain exactly their reviewed hashes.
+The current public regression invokes the actual producer with the real authored
+project under two roots/revisions and compares DLL bytes; it skips when the optional
+.NET SDK/offline reference package is absent. Existing isolation/output/editor
+contracts remain tested. Ruff passes.
+
+**Evidence and limits.** Preserve the failed build coordinator and logs under
+`work/coordination/codex-original-game-audio-build-root/r1/`, including its
+source snapshot and terminal first failure. The failed immutable generation is
+under `work/original-game-audio-owner/1a1ee094ff717dfc7093f1f4ada352e3a1756f95c805c11c210aaabcf0466641/`.
+Causal comparisons, two-root builds, exact downstream hashes and draft are under
+`work/coordination/original-audio-managed-repro-fix/r1/`; report SHA-256 is
+`13bd7e4853010ebd1659e75c2ebaa70ab5a1dbc227b6250679983c054d8d54a6`.
+Public managed-producer source now hashes to
+`b71899eafd02e8a52f96c7e67aca19eb9a5c6c41554dd86348c2307c7d318e74`.
+APK hash is not applicable. R8/R9 support generation must replay this source fix.
+Next: a fresh immutable generation and full player build from committed source;
+no runtime, audio, bank or physical-audibility acceptance follows from this repair.
+
+## J864 — Read persistent native class IDs from the pinned SDK on Android
+
+2026-10-20. Hypothesis: the supplied SDK's registration metadata can provide
+persistent native class IDs independently of an editor run or captured root
+table. This is a prerequisite for scene-root investigation, not a scene-root
+producer. Start from the frozen J862 branch, integrate accepted main `93a95aa`
+and its `5540fdc` audio metadata fix before recording. J863/J865 belong to the
+main session. Keep Route A, IL2CPP ARM64, Android rendering and the desktop
+fallback fixed. No Unity action, game build, package install or gameplay launch.
+
+**Contract and observations.** The pinned public
+[scene-root producer](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Editor/Mono/BuildPipeline/AssemblyStripper.cs)
+and [class registry](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Editor/Mono/BuildPipeline/RuntimeClassMetadata.cs)
+identify the separate inputs: native classes including managers, persistent
+class IDs, managed wrapper names and per-scene usage. The
+[type transport](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Editor/Mono/TypeSystem/UnityType.bindings.cs)
+includes a signed persistent ID. These references supply API/schema knowledge;
+no implementation is copied. J857's reader does not yet expose this field.
+
+Read the exact owner SDK as data. An initial unqualified field candidate is
+uniformly zero and is discarded. SDK registration diagnostics and native type
+transport agree on the explicit signed 32-bit field at descriptor byte 40.
+Its static descriptors contain 305 unique nonnegative IDs, including all ten
+class IDs in the authored scene's YAML headers. Those headers alone are not
+the complete scene/manager/dependency closure. SDK wrapper lookup separately
+uses a runtime scripting-class cache and parent fallback; wrapper-name
+production remains unqualified. Raw SDK instruction/data views stay ignored.
+An initial disassembler invocation omits its required disassembly option;
+preserve the CLI refusal and correct the invocation. The SDK is never executed.
+
+**Owner, failures and repair.** Extend the existing `phone_registry.py` and
+`phone_registry_literals.py` owners with persistentTypeID metadata and explicit
+4-byte/8-byte field selection. Widths, little-endian slices, dominating literal
+stores and unchanged entry-argument origins remain checked; partial/conditional
+updates and invalid/ambiguous IDs refuse. No native ID table or SDK instruction
+sequence is embedded in public source/tests. The six-field native projection
+used by J859/J862 remains unchanged. No scene-root consumer is added.
+
+Commit `b442af7` before the first staged SDK run. It refuses a non-object numeric
+argument: eleven of the twelve generated registrations use a seed in a
+callee-saved register across conditional assertion paths. Do not infer IDs from
+registration order or names. The authored retention proof uses
+[Arm's pinned AAPCS64 register contract](https://github.com/ARM-software/abi-aa/blob/7485cc1a1240d9143c6c759390469ae0cbe2d02e/aapcs64/aapcs64.rst):
+only registers 19–28 are eligible; a known wide-move definition must dominate
+the operand use, every intervening instruction needs a known register effect,
+no path may write that register and later backedges refuse. No branch is
+selected, SDK function executed or runtime memory read.
+
+The next staged run at `ea78c22` still refuses the final argument: its expression
+is computed before the function restores that saved register. Bind retention
+at each expression operand's actual use, retaining the ordinary backward
+argument reader's block bounds. Self-review also finds that explicitly replacing
+those block bounds could bless a dominating MOVK whose earlier initializer was
+skipped. Preserve the synthetic accepted-before-fix control, restore normal
+branch-derived bounds and add the refusing regression case before any phone
+run. Freeze the corrected actual reader at
+`7275b076e97882e7e8dbcf843685d8215e6b357f`; both original failed stages remain.
+ARCHITECTURE and LOCAL_STATE record the schema, proof limits and replay owner.
+
+Six new authored contracts cover ID validity/uniqueness, numeric widths/slices,
+explicit parameters and partial/conditional stores, branch-join retention,
+overwritten/unknown/looped state and an operand computed before a later restore.
+The skipped-initializer control now refuses. All 24 registry/literal tests and
+40 focused registry/linker/policy tests pass. The linker fixture additionally
+carries authored IDs to prove its six-field projection remains unchanged.
+Fresh-clone CI after main integration at `77136d9` passes 1,288 tests with
+58 optional skips, Ruff, public audit and documentation checks. This does not
+remove the isolated worktree's previously recorded game-bootstrap debt.
+
+**Actual Android result and comparison.** The current `phone-native-registry`
+action stages the frozen authored readers and unchanged pinned SDK without a
+captured table or earlier dump. Verify explicit alpha selection/workspace
+ownership, fresh storage/backing/reserve, supplied Python hash and every staged
+input hash. A fresh owned child completes the actual reader in 10.180 seconds
+of host-observed wall time. Its report is byte-identical to host output:
+`df8c13231a79cff063868b6cfd3431ab71bba7e8e70a825ca567bf323a4404ed`.
+It resolves 318 unique signed IDs: 305 static and 13 literal registrations.
+Unknown SDK and output-overwrite controls refuse; SDK/report/game hashes remain
+unchanged and the alpha display is left asleep. Alpha's APK remains be26c21c…;
+no main/spare action. This is metadata-tool timing, not gameplay performance.
+
+Only after extraction compare with Unity's versioned
+[2021.3 public class-ID reference](https://docs.unity3d.com/2021.3/Documentation/Manual/ClassIDReference.html).
+All 313 documented ID/name pairs match exactly, with zero contradictions;
+five SDK entries are absent from that public reference. It is not an independent
+complete oracle for those five. All 1,908 previously qualified native
+name/namespace/qualified-name/module/base-name/base-module values remain exactly
+J857's final report; no root, stripped assembly or native compilation changes.
+
+**Evidence and next gate.** The ignored proof root retains `scene-root-ids-*`
+requests, failed/final stage selectors, committed-source replay adapter, phone
+selector/results, public-table comparison and six-field regression check.
+`scene-root-ids-proof-receipt.json` binds 53 source/input/output/failure/control/
+comparison/test artifacts, SHA-256
+`f68139c50ba461e6b81efbe5cd143b16f16c378f6e9590957b4163e906e28b08`.
+SDK bytes, IDs/rows, raw logs/contexts and disassembly remain private. Metadata
+completeness is separate from complete editor roots; root_generation_qualified
+remains false. Next qualify explicit native-to-managed wrapper metadata and
+scene/manager/dependency usage independently. Managed compilation, target
+content/shaders, general module policy, permitted tool delivery, app sandbox,
+installation and game-performance equivalence remain open. No new execution
+backend or desktop-only final installation experience is selected.
+
+
+## J865 — Repair the first composed-audio IL2CPP bank-observer failure
+
+2026-10-20. Hypothesis: the J860/J863 original-owner integration can build as a
+full composed player after the metadata repair. Consult the audio prior-art
+map, pinned R2API.Sound initialization/bank-result distinction, original accepted
+AkBankManager metadata, and J845/J860/J863 before the attempt. No community or
+game implementation is copied into the authored transform or public fixtures.
+
+**First real build.** From synchronized source `5540fdc`, doctor and preflight
+pass with fresh primary-device adopted storage queries. The editor is idle on
+exact Unity 2021.3.45f2 before acquiring the normal host build mutex. Full
+content staging succeeds with 154 banks, the unchanged instrumented native
+runtime, original-owner assemblies and same-request symbol/pre-strip/Bee capture
+options. Unity compiles the current 112 runtime sources and builds the content.
+The 102.477117-second player attempt then fails in IL2CPP converting
+`AkBankManager.LoadBankAsync(string, BankCallback)` with `Stack empty`; the
+terminal reports three errors. No new APK is produced or installed, and neither
+default device check is run on a failed candidate. f1550ce0 remains the installed
+baseline, stopped/asleep. The mutex releases normally.
+
+**Cause and smallest repair.** The transform inserts the argument before
+Instructions[0], then inserts the observer call before the newly changed index 0.
+The emitted call therefore precedes its bank-name argument. Preserve the original
+entry anchor for both insertions. Exact control-flow inspection also exposes a
+second attribution bug: the selected TryGetValue false edge creates a new bank
+handle; it is not the existing-bank path. Place the already-loaded observer after
+the original true-path IncRef and before its optional callback check. Preserve
+original locking, callback forwarding, new-bank creation and native results.
+No synthetic native success is introduced.
+
+The production transform now verifies stack heights and exact observer/branch
+placement before accepting output. It rejects the frozen failed stripped method,
+a reversed argument/call mutant, and a wrong-edge result-observer mutant. Root
+review additionally corrects short-leave stack clearing, three-operand pops and
+extra values at return in that verifier. A public optional exact-editor test
+compiles the actual transform with six authored synthetic stack cases; no game
+method implementation or saved experiment input is included. The current API
+becomes `9a3f9911697b4ce28a955dff09f618e0f2662083e56eeb28ff5b6ecc02b588f3`;
+raw/adapted/observed API and composed game `1034a747…` stay unchanged. Update the
+request generator, bootstrap admission and producer pins deliberately.
+
+Recognize only the exact declared 793f2286 predecessor lineage or current lineage
+when upgrading an owned stage. Validate its complete output hashes, API/game pair,
+GUID ownership and native/bank cohort; unknown pairs or drift refuse. Ordinary
+restoration uses the actual validated preimage hashes. Current opt-in artifact
+bytes must match current API/game pins. Portable tests include an actual synthetic
+old-requested-to-new-requested transition and refusal paths. Ancestor R4 manifest
+metadata is now labelled as ancestry; each new artifact manifest records the
+current authored owner source hashes separately.
+
+**Host result and local evidence.** Thirty-two focused test methods pass with
+one optional SDK skip; the six stack cases run against current production source.
+The actual public requested producer/stager succeeds in the scratch project with
+164 owned rows and the new exact API pin; runtime acceptance remains false.
+Ruff passes. Preserve the failed request, result, coordinator logs, 139-file
+stripped closure, hashes and IL2CPP response file under
+`work/coordination/codex-original-game-audio-build-root/r2/`.
+Request identity is `20261021T014840.540946Z-379373f998e6400b8a7b5ad39d07fa19`.
+The frozen failed stripped API hashes to
+`2bcbd5e82f37726df21492e7dadce671b52d173dc95e599c54d9946305801126`.
+All 164 live staged outputs still match their receipt after the failed build.
+Transform/negative-control reports are
+`original-audio-async-bank-il-fix/r1/report.md` (SHA-256
+`788858348fa8e442047a8c026bae62c31fed2b1cfa821b40c74b687760d6057a`)
+and `r2/report.md` (SHA-256
+`ff2ac29a8a7eb116598bb3091f360406b2fd4b3927a04a7f0b640bd4e8b0b5a7`).
+The known-predecessor draft is `original-audio-predecessor-upgrade/r1/`;
+actual public scratch evidence is
+`codex-original-audio-host-stage-root/r1/async-il-fixed-stage.json`.
+
+**Limits and revisit.** APK hash is not applicable. This is a host-verified
+transform repair following a real failed build, not audio/runtime acceptance.
+Commit and sync before retrying the full player with matching symbols and
+same-request captures, then verify packaged banks/library before any installation.
+Both device checks, original bank readiness and composed audio remain open.
+Independent source review is GO in `original-audio-il-upgrade-review/r1/review.md`,
+SHA-256 `37ef80960a6a21c9e608bf0cfbc670964a74e043a568d76a3f4d62a4a9ba156d`;
+its private harness passes 20 focused contract tests and two real transform tests.
+R8/R9 support production must replay this authored transform/pin change. No alpha
+or spare action occurs in this experiment.
+
+## J867 — Build the original-audio player, preserve its receipt refusal and package the missing cohort witness
+
+2026-10-20.
+
+**Hypothesis and prior evidence.** J865's repaired async-bank transform can pass
+IL2CPP in the composed player. Retain J860's original lifecycle ownership and
+pinned R2API.Sound distinction between engine readiness, bank results and actual
+playback. This attempt adds no new game reconstruction or middleware substitute.
+
+**Build and artifact qualification.** Synchronized source `f344441` passes doctor
+and preflight. The full Unity 2021.3.45f2 ARM64 Vulkan player succeeds with zero
+errors in 268.438249 s, request
+`20261021T021320.387933Z-45f3831ff676476690464ac55ac91754`.
+The host command nevertheless exits 1: its optional Bee collector lacks the
+request-owned C# postprocess receipt. The callback logs an
+`InvalidOperationException` without its message. Immutable evidence excludes the
+file/hash/log-range checks, but does not identify the exact remaining BuildReport
+guard; an unfinished callback-time result is a hypothesis, not a finding. Preserve
+that failure and never synthesize its missing witness.
+
+Root independently freezes APK
+`8e71428e4e83bba7aff2f69e0d68b68501eea6723f76282ca409ffa0a21fe91a`,
+debugging symbols
+`015ad16d5d6a9e209cccf61eb4ea7b5bc8229e0da2e36a417990470db0eccf01`
+and matching IL2CPP Build ID `4d08cb2239c605a000ce26d374943ef6c6523aa2`.
+The existing validators bind all 333 same-request pre-strip DLLs to the APK;
+356 frozen authored inputs still match the commit. All 164 staged audio outputs
+match, including current API `9a3f9911…`, game `1034a747…`, native runtime
+`bb5879b4…` and all 154 bank entries inside the APK. Freeze the 266 payload files
+separately. Independent review permits controlled first-failure testing only;
+no normal cache/current-build stamp or Bee/post-strip claim is written.
+
+**Device result and first audio failure.** Install the explicit frozen APK in
+place on the assigned primary device, using fresh adopted-storage/reserve and
+placement checks; sync its own frozen payload. Inspect the current unlock screen
+before its requested A-key action. Both standard checks pass: 35.193253 s on
+Lakes, then exactly one exit and 10.752960 s on Goolake at 146.241196 total world
+seconds. Both have no report/current-process error and keep `appliedRuns` at 13.
+Their `is_current_build` values are false because the normal pointer deliberately
+still names the accepted f1550ce0 baseline.
+
+In both processes, the audio request configures and Java-first native API loading
+is available, but preparation fails at
+`stage_receipt_read_failed:ProtocolError`. Neither manager admission nor native
+Init occurs; the owner records no-audio and releases its early catalog lease.
+The payload copier requests `stage-receipt.json` at the StreamingAssets root.
+The APK contains the banks and the separate project ownership receipt under
+`Lab/`, but omits the request-bound bank-cohort receipt at that URL. No bank,
+engine, PCM, audibility or lifecycle success is established. Both runs finish
+with the selector absent, package stopped and display asleep. Alpha and spare
+are untouched. The diagnostic APK remains installed; f1550ce0 remains the accepted
+baseline/rollback.
+
+**Smallest repair and host checks.** Add one requested producer artifact for the
+exact cohort receipt already validated against the banks, at
+`Assets/StreamingAssets/stage-receipt.json`. The stager binds its target, hash and
+bytes to that same receipt. It recognizes the exact previous 164-output shape
+without granting it ownership of the new path; the new shape has 165 outputs.
+An unowned conflicting file refuses. Default-off removes only the hash-verified,
+receipt-owned copy and preserves Unity metadata. Producer/stager source changes
+invalidate their generation cache normally. This is a minimal audio-required
+packaging change; general alpha packaging is unchanged.
+
+Thirty-five audio host tests pass with one optional SDK skip. A real public
+producer/stager scratch roundtrip upgrades the old stage to 165 outputs, verifies
+the packaged receipt hash `8fe02400…`, reuses its validated cache, and removes the
+owned receipt on default-off. Independent review is GO. Separately improve the
+optional collector's diagnostics with fixed reason tokens and actual/expected
+BuildReport identities, preserving every refusal. Exact Unity host compilation
+passes; the public C# harness checks mismatched result/GUID/target/errors and the
+successful roundtrip. Its stubs now model Unity's value-type BuildSummary and
+GUID. No protected input or generated receipt is published.
+
+**Evidence and revisit.** Full build/failure/frozen qualification evidence is
+`work/coordination/codex-original-game-audio-build-root/r3/`; the frozen candidate
+is `work/experiments/original-game-audio/candidate-20261021T021320-root-qualified/`.
+Device outputs and root qualification are
+`work/coordination/codex-original-game-audio-device-root/r2/`, with baseline runs
+`20261021T022859.125283Z` and `20261021T023325.336297Z`.
+Read-only artifact review is `original-audio-r3-postbuild-review/r1/review.md`
+(SHA-256 `34794c8ff3b9b68eb26503056a529767380bd5ab1b9b5b74d2b86d64d260ef3e`).
+Packaging review is `original-audio-bank-receipt-packaging-review/r1/review.md`
+(SHA-256 `fbac63e8221838931715bc8fbb26804e728824075cdce8e22807b806eec413cb`);
+actual scratch receipts are `codex-original-audio-host-stage-root/r2/`.
+Collector diagnostic source/API proof is `original-audio-r3-postbuild-review/r3/`.
+Commit and sync, then full-build and verify the newly packaged receipt in the APK
+before retrying. Retain symbols and same-request pre-strip capture; optional Bee
+capture remains a separate unresolved diagnostic. R8/R9 support production must
+replay the authored producer/stager and collector changes. No new audio acceptance.
+
+## J866 — Qualify scoped SDK assembly metadata and forwarding on Android
+
+2026-10-20. Hypothesis: explicit assembly identities, reference scopes and type
+forwarders can replace J851's short-name guesses for the managed half of native
+wrapper lookup. Begin from accepted main `f344441`, including PR14 and J865's
+separate audio repair. Integrate main's J867 `e53adf0` before the final record;
+its installed player and original-audio packaging failure remain separate facts.
+Keep Route A, IL2CPP ARM64, Android rendering and the desktop fallback fixed.
+No editor mutation, game build, package install, gameplay launch or original
+installation change occurs. The generic SDK investigation adds no RoR2 runtime.
+
+**Observe and implement.** Two supplied SDK files share the name UnityEditor.dll.
+The root implementation contains 8,587 definitions and no exports; its modular
+facade contains 28 definitions and 5,534 exported entries. The corresponding
+UnityEngine facade contains 71 definitions and 3,107 exported entries, while the
+root implementation has 3,437 definitions and no exports. Selecting the first
+filename or combining both layouts would be unjustified.
+
+The metadata reader's schema 2 records complete assembly identities, declared
+references, module names, base scopes and exported/nested forwarding metadata.
+It uses Cecil metadata APIs without resolving or executing inspected code;
+multiple-module assemblies refuse. Inspect the pinned upstream
+[export metadata](https://github.com/jbevain/cecil/blob/0.11.1/Mono.Cecil/ExportedType.cs)
+and [type scope API](https://github.com/jbevain/cecil/blob/0.11.1/Mono.Cecil/TypeReference.cs)
+for the scope/declaring-type contract, without copying implementation.
+`phone_managed_types.py` owns authored, pure investigation support. It indexes
+one explicitly selected group and resolves exact identity/version references,
+including nested forwarding and managed inheritance. Duplicate assembly/type
+identities, unresolved dependencies/definitions, cycles, foreign local scopes
+and unsupported module exports refuse. A missing dependency never becomes a
+negative match or a lookup in another group. Managed bases remain distinct from
+native bases. The standalone inspector binds its inventory hash, requires every
+exported entry to resolve and refuses overwrite/input drift. It generates no
+scene roots and has no game/linker consumer. ARCHITECTURE names setup/teardown;
+LOCAL_STATE records private manifests, packs, selectors and replay adapters.
+
+**Host and build-tool boundary.** Inventory the two layouts separately, adding
+explicit supplied mscorlib inputs for complete base-reference observation:
+88 input rows in total. The selected modular group has 84 assemblies, 15,237
+definitions and 8,641 exported entries; all exports resolve without a missing
+scope. Seven authored contracts cover ambiguity, exact versions/groups,
+forwarding/nesting, inheritance, malformed/incomplete dependencies, standalone
+output and refusal behavior. The exact supplied-Cecil fixture additionally
+reads an attribute whose constructor throws, emits local/external scopes and
+nested forwarding, and feeds that emitted inventory to the resolver. Its
+constructor is not executed; the integration and overwrite assertions pass.
+
+Implementation checkpoints are `2b20312`, `63bb507` and the frozen phone source
+`232f84889281fc106b8f5f516c27a5a9ef4184d9`. The reader remains a build tool.
+Default compilation is host .NET 10; the explicit MetadataTargetFramework
+property permits net8.0 for the existing supplied Android .NET 8.0.32 host.
+UseAppHost is false. No host-native apphost or replacement gameplay backend is
+introduced. The isolated reference-pack setup uses Microsoft's
+[.NET reference pack 8.0.31](https://www.nuget.org/packages/Microsoft.NETCore.App.Ref/8.0.31)
+and matching ASP.NET reference metadata required by this host SDK's package
+pruning. Verify archives against their official NuGet catalog SHA-512 values;
+all archives, reference DLLs and SDK-derived outputs remain ignored. This does
+not grant redistribution rights for Unity tools or qualify app hosting.
+
+Preserve setup failures: the presumed flat-container SHA-512 sidecar returns
+404; the catalog supplies the actual hash. The initial custom reference root
+lacks SDK pruning metadata; a direct TargetFramework override restores the
+project's default target, and the explicit project property corrects that.
+The net8.0 restore then requires the matching ASP.NET reference pack. The final
+isolated build succeeds, and its host inventory is byte-identical to the net10.0
+inventory, SHA-256
+`936a726c8b98b885c0e007d292b78ea90181ee6de478fbf849d88936d44aacb6`.
+The global SDK and the working game are unchanged.
+
+**Android proof and first-failure classification.** Stage 94 hashed files,
+44,719,815 bytes, from committed sources and supplied SDK inputs. Require the
+assigned alpha device and its existing workspace ownership receipt, fresh
+storage/backing/reserve, trusted tool hashes and all staged hashes. Run only the
+authored metadata reader, supplied Cecil and authored Python inspector in a
+fresh owned child. Inspected SDK assemblies are data, never loaded/executed as
+application code. The existing native SDK binary is used only for separate
+static observations, never executed.
+
+The first run's metadata and forwarding match the host, but the private checker
+incorrectly requires English exception text for the overwrite control. Preserve
+that failed attempt. A targeted investigation records exit 1, no diagnostic
+bytes and unchanged report hash. The corrected private checker uses the same
+observable contract as the host fixture: nonzero retry plus preserved bytes.
+Repeat in another fresh owned child from the same frozen public source.
+
+The final Android reader exits 0 in 0.698 seconds of host-observed wall time;
+forwarding inspection exits 0 in 0.260 seconds. All 88 inventory rows, types,
+attributes, identities, scopes, references and exports equal the host after
+normalizing only explicit staged paths. All 8,641 forwarding results also match.
+Raw phone hashes are metadata
+`76ca13a37acdeaa405f33381739a1039c79993e7ff75c84420f998a48eeff2ca`
+and forwarding
+`35ca195e98259d180faed30abe1cdbbf8ef1e1cd4e2941e3c31b9787ac150218`.
+These raw files are not byte-equal to host files containing different paths/
+input hashes. Both output-overwrite controls refuse and preserve their reports;
+invalid schema refuses before output. All staged bytes and the installed alpha
+be26c21c… game package remain unchanged, and the display is asleep. No new APK
+or gameplay acceptance is inferred. These are shell tool timings, not app-host
+qualification or game-performance measurements.
+
+**Wrapper-search observation, still unqualified.** The pinned public
+[wrapper-name binding](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Editor/Mono/BuildPipeline/RuntimeClassMetadataUtils.bindings.cs)
+locates a native implementation, rather than supplying a managed producer.
+Read-only owner-SDK observation identifies ordered assembly/namespace lookups
+and a cache-query parent boundary. An initial inclusive Object-parent fallback
+contradicts 13 of the authored oracle's 42 native scene rows. Inspection shows
+the query stops before that parent; the corrected private observation matches
+all 42 wrapper names, including empty results. The separate authored script
+row is outside this native comparison. Keep both observations and all SDK
+instructions/strings/derived mappings private. This is a bounded clue, not a
+qualified search-sequence decoder, complete native wrapper cache or independent
+scene/manager/dependency producer. No captured mapping becomes a public constant
+or hidden build input; root_generation_qualified remains false.
+
+Fresh-clone CI on `232f848` passes 1,302 tests with 59 optional skips, Ruff,
+public audit and documentation checks. The actual-Cecil fixture passes locally
+with its additional emitted-inventory integration assertions. Whole-game
+preflight still refuses this isolated worktree's missing inventory/accepted
+input/lab bootstrap; the metadata study does not advance that gate.
+`wrapper-scoped-proof-receipt.json` binds 89 source/input/output/control/setup/
+comparison/test artifacts; SHA-256
+`d07b987f71fae5f647f1fbf8b734c3f4fdf0d885197c40d3ebd22b7450a76fdb`.
+Earlier selectors, failed runs and reference-pack failures remain preserved.
+
+**Next gate.** Qualify a version-bound reader of the SDK search sequence and
+cache population/extra-type rules, then generate complete fixture scene usage,
+manager/dependency closure and TypesInScenes.xml independently. Managed game
+compilation, general project policy, content/shaders, permitted tool delivery,
+app sandbox behavior, installer/key custody and matched-workload benchmarks
+remain open. Revisit on SDK/layout/scope/forwarder/schema or runtime-tool drift.
+
+## J868 — Initialize the original game audio owner and banks, but retain path, point-sound and output failures
+
+2026-10-20.
+
+**Hypothesis and scope.** Packaging J867's exact bank-cohort receipt should let
+the existing original Wwise owner advance past preparation. Retain the pinned
+R2API.Sound distinction between initialized engine, bank callbacks and playback,
+J845's isolated original-event positive evidence, and J860's named lifecycle
+owners. No artificial event, second engine or new game implementation is added.
+
+**Full build and frozen identity.** Synchronized source `e53adf0` passes doctor
+and preflight, then the normal mutex-protected full build and host wrapper.
+Unity reports zero errors in 204.724950 s, request
+`20261021T024255.625958Z-8e544d9de8e24f53a4c5c2c4ae2556e8`.
+Freeze APK `c077ed2ae685251762215580a82e424c4405aa13279a65a9be28209f8fc3c842`,
+symbols `e3a3f06c816097fdd7416e951da42a97f0cf069a1a28695ee75ec8776c076fb3`
+and matching Build ID `b44012b53481abe36b09af183dcfe2b39cd51f7a`.
+Verify the exact packaged cohort receipt `8fe02400…`, all 154 banks and runtime
+`bb5879b4…`; all 165 staged outputs and 356 frozen authored inputs match. Retain
+333 same-request pre-strip DLLs and all 266 payload files. Optional Bee capture
+is not requested; its earlier failure remains unresolved rather than being
+converted into a pass. After freezing, merge the independently reviewed metadata
+PR #16 as `474597a`; that does not change this player's frozen source identity.
+
+**Device gameplay and native readiness.** Install the explicit frozen APK in
+place on the assigned primary device, with fresh adopted placement/capacity
+checks, then sync its own payload. Both standard checks pass with current-build
+true and `appliedRuns` unchanged at 13: 35.193710 s on Lakes; then exactly one
+exit and 12.524078 s on Goolake at 146.262665 total world seconds. The original
+manager admits and returns, native Init is observed, all 153 requested-bank
+callbacks complete successfully, and the owner records Ready with no-audio
+false. Preparation/startup takes 12.102303 s in the first process and 2.923674 s
+with already verified private bank copies in the second. The process-audio
+catalog lease remains held. Forced process stops do not establish original Term
+or same-process session restart acceptance.
+
+**First logged failures.** Standard check success covers its report/gameplay
+contract; it does not override current-process Unity errors. Both processes log
+`WwiseUnity: Could not locate the SoundBanks` while
+`AkBasePathGetter.EvaluateGamePaths` probes the APK StreamingAssets URI. The
+packaged Init and banks were hash-verified and native loading succeeds. Exact
+accepted metadata and the locally supplied official Android integration identify
+a filesystem existence test on a jar URI; the official Android implementation
+explicitly avoids that test. This is a supported, narrow Android path-probe repair
+target, not grounds to whitelist the error or change native search paths blindly.
+
+The second process additionally logs five null references in
+`RoR2.Audio.PointSoundManager.EmitSoundLocal(AkEventIdArg, Vector3)`. Original
+startup context for this newly reachable producer is unestablished. Preserve the
+five occurrences and inspect its original initializer/pool/lifecycle before any
+adapter. Suppressing events or returning fabricated playing IDs is not a repair.
+The root qualifier records 13 unexpected error/stack lines in the first process
+and 28 in the second. The APK remains diagnostic; do not promote it to baseline.
+
+**Bounded device-output observation.** Installed scrcpy 4.1 exposes an audio-only,
+read-only recording mode. Select only the assigned device, disable control,
+clipboard synchronization, video, host playback and power-on; use playback
+capture with duplication so device playback is retained. Start only on a fresh
+same-process world report with Ready and 153 banks. No game event is injected,
+no native capture callback is installed and no game APK is modified.
+The 12-second bounded capture yields 11.733333 s of stereo 48 kHz, signed
+16-bit PCM: 1,126,400 samples, all zero, peak and RMS zero. WAV SHA-256 is
+`536cd3a04f8c855e70414ff2638968d404e8e490be215caf7f778fefb95b5d43`.
+The same process advances from 10.048218 to 25.139923 world seconds and remains
+Ready. Android reports active app OpenSL MEDIA and AAudio GAME tracks with
+advancing frame counters; obvious system mute/ducking does not explain the result.
+Effective playback-capture policy and an event/native PCM witness remain missing,
+so this does not distinguish quiet application output from capture exclusion.
+It is not evidence of audible gameplay or complete bank/effect compatibility.
+
+**Cleanup, evidence and next action.** Both check selectors are absent; the
+package and recorder server are stopped and the primary OLED is asleep. Alpha
+and spare are untouched. c077ed2a is installed; f1550ce0 remains the accepted
+baseline. Full build and freeze receipts are
+`work/coordination/codex-original-game-audio-build-root/r4/`; candidate artifacts
+are `work/experiments/original-game-audio/candidate-20261021T024751.544638Z/`.
+Device evidence is `codex-original-game-audio-device-root/r3/` under coordination,
+with baseline runs `20261021T025117.242134Z` and `20261021T025626.092195Z`.
+Root qualification hashes to
+`0aee17033898872d762847592696bab7ea264816aaf2bc4509ed1a628bcca2d2`.
+Output recording, pre/post reports, Android audio dumps and terminal logs are
+`original-game-audio-device-output-root/r1/`. Independent zero-output triage is
+`original-game-audio-zero-output-triage/r1/triage.md` (SHA-256
+`a52ccbcff4a8ce73f8da0c1cacbe85f9c484c16415286078169136042e8e63c5`).
+Raw captures remain private and ignored. Next repair the exact Android path
+probe and missing original point-sound context, then pair ordinary event activity
+with qualified native PCM and device output. Camera and passive-PCM source drafts
+remain unshipped; no new runtime source is introduced by this result checkpoint.
+
+## J870 — Preserve Android bank paths while removing an invalid filesystem warning
+
+Date: 2026-10-20.
+
+Hypothesis: J868's first missing-SoundBanks error is a diagnostic mismatch:
+Android StreamingAssets uses an APK URI, while the accepted managed API probes
+Init with `File.Exists`. The unchanged native base path already loads Init and
+all 153 requested banks. The authorized matching Integration source explicitly
+omits this filesystem probe on Android. Community prior art remains
+`R2API.Sound/SoundAPI.cs` in the pinned reference checkout: its post-engine-Init
+bank loading seam supports preserving original initialization and bank lifetime,
+not substituting an event renderer or claiming output.
+
+Change: the authored production composed Cecil transform imports the exact
+pinned Unity CoreModule platform getter and enum. Android supplies true only
+to the existing warning predicate; other platforms retain the original
+filesystem call. Original path construction, assignment, native calls and
+bank readiness checks remain intact. The producer, request generator and
+stager bind the actual resulting API, with the previous valid API as the
+sole immediate upgrade predecessor. The earlier invalid-IL API is restore-only
+and must return to default off before a new opt-in. No original input is edited.
+
+Host evidence: exact production transformation yields API
+`d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23`;
+the composed game stays `1034a747…`. A public authored synthetic Cecil fixture
+compiles and invokes the actual production injector/verifier with the pinned
+CoreModule, checks the preserved paths and rejects three altered probes. It
+requires no game files and skips when the optional editor toolchain is absent.
+Root's audio host suite passes 37 tests with one optional skip. Independent
+source/test review is recorded under
+`work/coordination/original-game-audio-basepath-review/r2/`; review SHA-256
+`777c6ecca53963dd4b87b406f774a600558928ccb7f86e0e0bc45e1caee9123d`.
+
+Root also exercised the real build hook in a disposable project under
+`work/coordination/codex-original-audio-host-stage-root/r3/`: requested staging
+has all 165 outputs, a repeated generation is cached, and default off restores
+the ordinary modules and removes only owned audio payload. The cached report
+SHA-256 is `500b1bc502d6b682cd0235d64c8cb9a507abdd9ce407ef074dcd1b77d0b986c9`;
+the default-off report is
+`3c3308923e0d47c6f6e387871cb23a46139a9f5cabfc4545cf4fc2848ee686bf`.
+Ruff and diff checks pass. Public-content review finds authored tooling/tests
+only, with protected SDK/game inputs and generated outputs remaining ignored.
+
+First failure and limits: no candidate APK is built for this checkpoint.
+Installed diagnostic c077ed2a and accepted baseline f1550ce0 remain distinct
+and unchanged. J868's point-sound null references and zero playback capture
+remain unresolved. Its session audio snapshot was captured once at startup;
+later reports do not independently prove continuous readiness. The queued
+observer must refresh the actual report before interpreting late lifecycle
+state. Next build must verify the warning is absent while preserving startup,
+both default checks and truthful later errors. These authored transform changes
+affect reproducible rebuild inputs and must be replayed by the build pipeline.
+
+## J869 — Decode pinned SDK wrapper-search order on Android
+
+2026-10-20. Hypothesis: a version-bound static reader can replace J866's manual
+search-order observation with SDK-derived assembly templates and ordered
+namespaces, while preserving the native-name argument and first-nonnull return
+contract. Start after independently accepted PR16/main `474597a`; integrate
+main's `96a178b`/J868 and the reviewed `59a83e7`/J870 before the final record.
+Preserve its diagnostic player,
+accepted baseline and original-audio findings. Route A, IL2CPP ARM64, Android
+rendering and the desktop fallback remain fixed. No editor action, game build,
+package install, gameplay launch or original-installation change occurs.
+
+**Owner and contract.** `phone_wrapper_search.py` owns current experimental
+read-only support. The `phone-wrapper-search` action accepts an explicit owner
+binary request, requires the existing exact SDK pin, and stages three authored
+Python readers with the unchanged private binary. It consumes no captured root,
+namespace table or earlier instruction dump. Its standalone isolated-Python
+invocation writes a new private report. ARCHITECTURE records setup, teardown
+and boundaries; LOCAL_STATE lists the generated attempt and private device
+orchestration. The action/help/dispatch fixture is current and checked.
+
+The reader bounds the named function by the SDK symbol/code extent and rejects
+backedges, indirect flow, unsupported instructions and multiple normal returns.
+Known register effects and graph dominance prove the original native-name
+argument at each call, preserved global-address definitions, and a common
+nonnull exit for every earlier search. The final fallthrough result and actual
+return operand are checked before later callee-register restoration. Namespace
+and fixed-assembly strings come from file-backed pointer slots; partial/runtime
+loads refuse. The formatter has one supported string substitution, an explicit
+indirect-result buffer and a proven original module argument in its Darwin
+variadic stack slot. Inline/heap selection must refer to that same result
+object, with matching tag comparisons and no intervening alias writes.
+
+Inspect Apple's primary
+[ARM64 calling convention](https://developer.apple.com/documentation/xcode/writing-arm64-code-for-apple-platforms)
+for the stack-passed variadic arguments, and Arm's
+[register model](https://support.arm.com/documentation/100069/0606/Overview-of-AArch64-state/Registers-in-AArch64-state)
+for instruction-dependent SP/zero-register interpretation. These supply ABI/API
+knowledge, not copied SDK implementation. This is generic static SDK metadata
+inspection, not a CPU emulator, new game backend or RoR2-specific reconstruction.
+The qualification covers file-backed metadata and normal return paths, not a
+live editor domain, loader/cache population or project overrides.
+
+**Source, controls and correction.** The first committed reader `3ceb041`
+extracts all 31 searches from the actual SDK. Authored fixtures use different
+registers/layout, synthetic APIs and supplied strings, not SDK instructions or
+tables. Self-review then finds an invalid origin proof: MOV from XZR followed
+by ADD can masquerade as a stack address. Both synthetic inline-pointer and
+indirect-result cases are accepted by that first source. Preserve the original
+stage and `wrapper-search-zero-register-self-review.json`, including the exact
+pre-fix authored fixture snapshot.
+
+`63ef9280cd6bb512f2cd35e862360baafd3eb105` distinguishes MOV's XZR operand from
+SP in memory/immediate-address contexts. Both controls now refuse, and the
+actual SDK report stays byte-identical. Eight authored contracts cover ordered
+scopes/duplicates, retained global addresses, entry arguments, partial
+variadic/pointer writes, string storage/flags, guard width/polarity/destination,
+unknown/backward flow, return/restore timing, zero origins and refusal outputs.
+Dispatch tests pass for the new action. No SDK assembly or function is executed.
+
+**Android result.** Bind the explicitly assigned alpha device, its owned
+workspace, fresh storage/backing/reserve and trusted Python hash. Stage fresh
+committed reader/control sources in a new owned child, verify every hash, and
+select the existing owned SDK copy through its explicit prior receipt. Its
+exact hash is checked before/after; no SDK path/UUID is embedded in public
+source and no additional SDK copy or user-data movement is needed.
+
+The actual Android reader exits 0 in 0.597 seconds of host-observed wall time.
+All 31 ordered records are byte-identical to host output, SHA-256
+`95c053c3c9f27f8b8d6e3b8c7112f4c74acf0a48697ae64c2e4819dc37bb34c6`:
+17 use the SDK's module-format assembly name and 14 use its fixed assembly.
+Repeated namespace entries remain distinct; none is deduplicated or embedded
+as a public constant. All eight authored contracts also run and pass on the
+phone, including both corrected zero-origin controls. Existing-output and
+unknown-SDK controls refuse and preserve the original report/no new negative
+output. Sources, SDK and alpha be26c21c… package are unchanged; the display is
+asleep. These are metadata-tool measurements, not app-host or game-performance
+acceptance. No new APK is produced or installed.
+
+**Bounded comparison and remaining gap.** Only after decoding, compare with the
+preserved manual observation: all values/order agree. A new private comparison
+uses the decoded phone report with J866's scoped inventory and J864's native
+registry, without reading the manual namespace dump. It checks the selected
+SDK file-set boundary and all input hashes, so an arbitrary partial inventory
+cannot establish absent module assemblies. Its existing cache-query parent
+boundary remains an observation; cache population is explicitly unqualified.
+All 42 native scene-row wrapper names, including empty results, match the
+unchanged authored fixture oracle. The separate authored script row is outside
+that native comparison. No scene usage, manager/dependency closure, complete
+native wrapper cache or TypesInScenes.xml producer is established. Raw SDK
+strings/instructions, mappings and comparison rows stay private;
+root_generation_qualified remains false and no game/linker stage consumes them.
+
+Fresh-clone CI on `63ef928` passes 1,314 tests with 59 optional skips, Ruff,
+public audit and documentation checks. Whole-game preflight still refuses the
+isolated worktree's missing inventory/accepted-input/lab bootstrap; this study
+does not advance that gate. `wrapper-search-proof-v2-receipt.json` binds 63
+source/input/output/control/comparison/ABI-reference/CI artifacts, including
+explicit comparison inputs and prerequisite receipts; SHA-256
+`9346d80b1c4bf5a4d69635685ebd5a98d8e7e4d76bf1aa6330a78382a1118b61`.
+The earlier core-only receipt is retained within that proof.
+The source-bound stages and final phone selector preserve the initial reader,
+self-review failure and corrected qualification independently.
+
+**Next gate.** Prove complete wrapper-cache population/extra-type rules and
+native-to-managed mapping, then produce complete fixture scene/manager usage
+and exact linker roots without a desktop capture. General project policy,
+managed game compilation, content/shaders, permitted SDK/tool acquisition,
+normal app hosting, installation/key custody and matched-workload performance
+remain separate gates. Revisit on SDK/symbol/ABI/string-layout/search-schema or
+source drift; keep the working build and desktop fallback.
+
+## J871 — Reject whole-recording signal as proof of original event playback capture
+
+Date: 2026-10-20.
+
+Hypothesis: an unchanged J845 named-event fixture, observed concurrently with
+Android playback-duplicate capture, can distinguish a generally broken recorder
+from J868's zero gameplay recording. The fixture is a necessary control, not
+another gameplay substitute. It uses the already qualified APK
+`d78912a4914c692577d7410cf713567dded3d9a3e4a5825d50394c640b0c7cb8`;
+no Unity build or fixture-source change occurs. J845's managed/native contract
+and the pinned R2API.Sound initialization/bank-lifetime prior art remain the
+applicable knowledge; neither establishes Android loopback capture policy.
+
+Change and evidence: Root creates a fresh one-shot selection for the existing
+fixture and installed diagnostic c077ed2a, independently pins its build closure
+and current game ownership, and runs only the positive named event. The
+canonical runner retains fresh adopted-storage/capacity, package-absence,
+placement, installed-hash and owned-cleanup gates. The host capture starts
+before fixture launch. Initial attempts refuse before fixture installation: a
+normal Homebrew executable symlink, buffered stdout readiness and Root's omitted
+Android environment setup are preserved. Root resolves/verifies the executable,
+uses a host PTY to drain real readiness messages, and sources the pinned
+environment for the fresh successful fixture attempt. A local buffered-child
+test checks PTY readiness/finalization without a device.
+
+The player reports the exact named pickup event, resolved ID 3141848185,
+PlayingID 1, one EndOfEvent, finite nonzero native PCM, returned engine/callback
+Terms and monitor disarm. Callback accounting is 80,640 finite sample values,
+66,806 nonzero. The separately saved native WAV has 35,712 stereo frames at
+48 kHz, 60,306 nonzero sample values, peak 8,710 and RMS about 1,150.7. These
+are different artifacts/counters, not one sample-aligned recording. Raw player
+report SHA-256: `1883272dfcb744159f264852a18c7db6572d77fa38051e32a6cf580b4864313d`.
+
+First failure: the wrapper's broad positive predicate accepts any nonzero
+Android playback sample in the whole recording. Its preserved result says
+passed, but Root's timing audit rejects that as an event-output control. The
+48 kHz stereo PCM16 playback WAV lasts 48.939 s and contains signal overall
+(peak 8,187; RMS about 788.5), yet seconds 21–45 are exactly zero. Available
+file/log timing places fixture audio-open/completion well inside that silence.
+The nonzero sections before/after cannot be attributed to the named event.
+There is no shared sample-time/event-onset receipt, so neither acoustic
+audibility nor a precise capture-policy cause is established.
+
+Playback WAV SHA-256:
+`249f9a881ff4cb35a799b1f66aecd20f7449e82fd2b86672c7f5164aa53bf1a2`.
+The full result is preserved under
+`work/coordination/codex-original-audio-playback-control-root/r4/`;
+Root's separate qualification SHA-256 is
+`6bb63538a5bf3c86ac8306ade20aa372308833588a4485a7b918bad18a72ed91`.
+Read-only interval measurements and their inputs are under
+`work/coordination/original-game-audio-playback-analysis/r1/`; analysis SHA-256
+`666ed1476c31206ab880649a685e2c5aa96aa04a1a5b1337913939054e653fb4`.
+
+Cleanup: only the hash-verified owned fixture is removed. The installed game
+APK and ownership receipt remain unchanged, game/fixture/recorder processes
+are absent, and the display is asleep. Accepted baseline f1550ce0 remains
+separate from installed c077ed2a. No secondary/spare device is used.
+
+Revisit conditions: J868's zero gameplay WAV remains inconclusive. The next
+useful observation is passive native PCM from the actual original game owner,
+with bounded callback lifetime and real pre-Term cleanup, alongside the
+point-sound null-site witness. A later playback control must require energy
+in a properly aligned event interval rather than global nonzero samples.
+No game-audio, acoustic, parity or baseline promotion is claimed.
+
+## J872 — Verify the Android bank-path repair and retain the point-sound failure
+
+Date: 2026-10-20.
+
+Hypothesis: J870's Android-only warning-predicate repair removes the invalid
+filesystem warning while preserving original native Init, bank loading and
+ordinary gameplay. It does not address J868's point-sound null references or
+establish audible output. The pinned R2API.Sound engine-initialization/bank-loading
+seam remains the prior-art basis; current original callbacks and device logs
+are authoritative.
+
+Change: full original-audio player from committed source `d31fc02`, using the
+accepted input and unchanged original bank cohort. The actual generated API is
+`d540a226…`, with game `1034a747…`. No point-sound instrumentation or passive
+PCM draft is in this APK. The isolated fixture/capture qualification remains J871.
+
+Build evidence: request `20261021T035449.427900Z-8ba5983754294891adef6b0f27da4870`
+succeeds in 198.168488 s with zero build errors. Frozen candidate:
+`work/experiments/original-game-audio/candidate-20261021T035935.774439Z/`.
+APK SHA-256:
+`417ce85643e877c56c5a963d254a4c7bdb92ae1a40f923366191b1128720818d`.
+Matching symbols ZIP SHA-256:
+`6bee47a002c7cf0de4692312b3e1fd75a5a3efa18eaf6893a1ea5905b2e8bfc1`;
+`libil2cpp` Build ID `cfcaeb10241a43c6f42e1c2d78382b6cc46b9c53`.
+The candidate binds 358 authored inputs, 333 same-request pre-strip assemblies,
+266 frozen payload hashes and all 154 packaged banks (Init plus 153 requested).
+
+Device evidence: explicit primary-device installation and payload sync pass
+with fresh adopted-only capacity/placement checks. Both default checks pass
+with current-build true, empty report failure fields and 13 applied runs:
+
+- Plain: `work/experiments/baseline/20261021T040153.700858Z/`, 35.205719 s
+  on Lakes.
+- One exit: `work/experiments/baseline/20261021T040539.566563Z/`, exactly one
+  transition to Goolake, 151.246490 s total and 12.166351 s in the new stage.
+
+The original startup snapshot records native Init attempted, manager returned,
+153/153 banks complete, Ready true, no-audio false and the catalog lease held.
+This installed implementation captures startup state only; it supplies no live
+later-event or termination assertion. Neither current process has the missing
+SoundBanks path warning. Plain has only the five intentional Windows-bundle
+negative-control error lines. Stage mode additionally records four original
+`PointSoundManager.EmitSoundLocal` null references at offset zero. Its raw log
+also contains earlier-process history; Root's derived qualification filters
+each run by its actual process identity. The raw runner's broad
+`unexpected_unity_error_lines` field is preserved, not accepted as a diagnosis.
+
+Qualification and cleanup:
+`work/coordination/codex-original-game-audio-device-root/r4/root-qualified-current-pids.json`,
+SHA-256 `fee57e276c5809cf03f79ad590a4b11e3d5a2e997b9933bece8b64b201d29dd6`.
+The runner removes its selector, stops the game and sleeps the display;
+terminal evidence confirms process absence and sleep. The new diagnostic is
+installed. The accepted baseline remains J850 `f1550ce0…`; do not promote this
+player or infer audio playback from bank readiness and passing gameplay checks.
+
+First remaining audio failure: original point-sound emission null reference.
+Next: host-validate bounded stage localization and passive actual-game PCM
+observation, then build their committed sources. Preserve this candidate and
+all failed evidence. Revisit playback qualification only with actual-game event
+and output evidence; physical audibility, spatialization and music remain open.
+No reconstruction step or authored runtime source changes in this checkpoint.
+
+## J874 — Stage bounded original point-sound localization through the public producer
+
+Date: 2026-10-20.
+
+Hypothesis: J872's original `PointSoundManager.EmitSoundLocal` null reference
+needs the failing boundary identified before changing gameplay or Wwise behavior.
+The pinned R2API.Sound source's post-engine-Init bank seam confirms that bank
+readiness alone does not identify event posting or output. Current input IL and
+device stacks, rather than a replacement emitter implementation, guide this step.
+
+Change: an authored Cecil transformation adds scalar stage/event observations to
+the exact composed game's existing emitter acquisition, Unity fake-null test,
+transform access, original event-post alternatives and timeout enqueue. It
+preserves original event arguments, calls, branches and exception behavior.
+Only the two pinned original point-sound methods can change. No emitter,
+listener, native engine or alternate playback system is created. The bounded
+Core observer retains no original messages/stacks or Unity objects. Its
+best-effort last-event/stage correlation does not prove native output.
+
+The process audio coordinator owns a per-session Unity log subscription. The
+explicit `pointSoundDiagnosticRequested` selector defaults false and requires
+the integrated route, selected ready audio and an instrumented-callsite build
+pin. Every report save refreshes original-audio and diagnostic snapshots.
+Completion, source-lifecycle recovery and session destruction retire only this
+observer idempotently. Original engine, bank and catalog lifetime ownership stay
+with their named owners. The observer is one selected diagnostic session per
+process; subsequent same-process diagnostic rearming is refused.
+
+Pipeline: the public producer, generated request/provider and stager bind the
+actual instrumented game hash, not just the raw input. API remains
+`d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23`;
+game is `6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc`.
+Current/predecessor validation compares complete API/game pairs, allowing an
+unchanged API with a changed game. The immediately preceding `d540/1034` pair
+upgrades through its owned receipt; `9a3/1034` and the older invalid-IL API remain
+restore-only. Default-off uses the ordinary guarded modules with no injected
+calls and a false callsite pin.
+
+Root's actual public-chain replay exposed and repaired two integration failures
+before accepting this source: an API-only predecessor check rejected the intended
+game-only change, and an isolated intermediate assembly lacked its dependency
+resolution directory when Cecil wrote it. The production transform now receives
+the accepted Managed directory explicitly. Its source and managed-producer pins
+are checked against actual bytes; raw game/API and transformed output pins
+remain exact. New host regressions cover the pair classifier and argument/pin
+binding. Existing Core compile fixtures include the new observer/build pin.
+
+Host evidence: all requested/current stages contain 165 owned outputs. The third
+request reuses a validated generation cache, then default off restores the
+ordinary modules with eight outputs. Root additionally reconstructs the owned
+J872 stage in disposable scratch, upgrades it to the new pair with 165 outputs,
+then restores default off. Evidence:
+`work/coordination/codex-original-audio-host-stage-root/r4/`.
+Cached report SHA-256
+`cf4aac039b589ea65804eda8ae27003db0f96f65e934541cefb7cc13c79720ff`;
+default-off report
+`cd3279f008eedafaa372a014db35b2901b242f77f92ee9d7c597d1f6e12da729`.
+The failed replay logs remain alongside the successful receipts.
+
+Independent integration review:
+`work/coordination/original-game-audio-point-sound-review/r3/review.md`,
+SHA-256 `956065e5ef0ad8de6ec29cf36d6f3d56d75c97c98b2f698af83f8455939f67a4`.
+The full exact-editor host runtime compile passes with 118 source files and 264
+references, no camera overlay and no errors. Receipt:
+`work/coordination/original-audio-point-sound-repair/root-runtime-compile-r1/compile_receipt.json`,
+SHA-256 `5d8d6972b14f8af76a2dc6d6948d891fd2cc67bea3c172ffcfa952b28a0c1eab`.
+All 46 public audio/point-sound contracts pass with the installed toolchain;
+Ruff and diff checks pass. These host results supply no runtime proof. No Unity player build or device qualification is
+claimed for this checkpoint. Installed APK remains J872 `417ce856…`; accepted
+baseline remains J850 `f1550ce0…`.
+
+Provenance/privacy review: only authored transformations, coordinator/observer
+code, synthetic fixtures and summaries are tracked. No original implementation,
+managed binary, bank, SDK or raw capture is published. This changes authored
+runtime sources and generation tools consumed by reconstruction; replay the
+relevant generation steps before the next full build. No new build input reads
+a timestamped experiment output. Next: build committed source, run both default
+checks and an explicitly selected point-sound run; classify the first actual
+failing boundary before proposing a behavior repair. Passive PCM is a separate
+host draft and has no output acceptance here.
+
+## J873 — Separate direct scene names from SDK wrapper-cache queries
+
+2026-10-20. Hypothesis: an independent exact-editor wrapper-query oracle can
+expose gaps hidden by J869's 42-row authored scene comparison. Start from main
+`d31fc02`/J871 after PR17's accepted merge; integrate main `d02732f`/J872/J874
+for the final review head. Coordinate the separate journal
+number and wait for main's Android build to finish before acquiring the shared
+mutex. Main retains original gameplay/audio ownership. Route A, IL2CPP ARM64,
+Android rendering and the desktop fallback remain fixed. This is SDK-only
+**desktop verification**, not another phone qualification or a build input.
+
+**Owner and isolation.** `phone_wrapper_oracle.py` and
+`tools/phone-build/WrapperMetadataOracle.cs` own the current experimental
+`phone-wrapper-oracle` action. An explicit stage request generates a fresh
+SDK-only project; check selects that project, requires committed sources and
+pinned SDK bytes, and acquires the existing primary checkout mutex with a
+1-second contention timeout. Neither MCP editor is stopped or reused. No game
+files, player build, install or device action is involved. Each check retains
+new logs/report/receipt outputs; drift, foreign assets, links and output
+replacement refuse. The report binds actual editor version, source commit,
+loaded SDK assembly paths/hashes and query scope. Setup/teardown are recorded
+in ARCHITECTURE and generated local state in LOCAL_STATE.
+
+Verify the actual internal API signatures with read-only pinned Unity MCP
+reflection. Consult the same pinned reference-only
+[UnityType API](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Editor/Mono/TypeSystem/UnityType.cs),
+[wrapper binding](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Editor/Mono/BuildPipeline/RuntimeClassMetadataUtils.bindings.cs)
+and [registry consumer](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Editor/Mono/BuildPipeline/RuntimeClassMetadata.cs)
+for API knowledge and the documented possibility of duplicate Object wrapper
+names. No reference implementation, SDK instructions or registry table is copied
+into public source. This is generic SDK build-tool investigation; it introduces
+no RoR2-specific runtime mechanism.
+
+**Exact-editor result.** Committed source
+`b54009a68df2cff3bb7a197aafbb430710abde45` runs in a fresh project using the pinned
+Unity 2021.3.45f2 ARM64 editor, exits 0 and satisfies the independent report
+validator. The owner binary remains SHA-256
+`906123118e45d56c6bcf20f3776ed2373417553042500714023daeb9e53058e8`.
+Report SHA-256 is
+`a686ecb9a2ad9b9849f542ae2d9e7f13534b0dae43a5e324df68a36e5d534507`.
+All 318 native identity/ID/parent records match J864's static registry, with zero
+mismatches. Native flags are additionally observed for all rows; this is not a
+qualified static flag decoder on Android.
+
+The collector validates unique IDs/names and the complete acyclic parent graph
+before making native wrapper queries. It queries 278 concrete Object descendants;
+27 abstract rows, 12 outside-hierarchy rows and the Object root remain explicitly
+unqueried. All supported queries return nonempty strings; none returns null.
+Null and empty remain separate report states. Unqueried rows never manufacture
+an observed wrapper name. These exclusions are part of the scope, not a claim
+that the remaining APIs are unsupported or that the full cache is covered.
+
+**First failure and changed hypothesis.** The unchanged prior scene-oriented
+model matches only 244 of the 278 query results. All 34 differences are model
+empty versus observed UnityEngine.Object. Preserve this first comparison.
+Bounded read-only SDK inspection distinguishes two operations: the separate
+cache query stops recursion before an Object parent, but cache population's
+recursive search examines Object before stopping. Applying the query boundary
+to population loses the inherited Object result. A mis-scoped disassembly
+attempt is retained as hash-verified compressed private evidence; corrected
+bounded observations use the Mach-O symbol-specific option.
+
+A new private observational comparison uses J864's registry, J866's scoped
+metadata/forwarding and J869's actual Android-decoded search report, verifies the
+selected SDK file set and input hashes, and searches the Object row during
+population. It matches all 278 concrete query names. The separate **direct**
+scene-name comparison still matches all 42 native rows, including empty values.
+These are different contracts: do not replace direct scene names with inherited
+cache names merely to make a comparison pass. Keep the original 34 mismatches,
+revised comparison and all prerequisite reports. The revised population rule is
+an observation, not a qualified static control-flow/population decoder or a new
+phone execution. Extra-type registrations and unqueried classes remain open.
+
+**Controls and evidence.** Five focused host tests pass. The compiler fixture
+runs the actual collector against independently authored API substitutes,
+rejects cycles, foreign parents,
+duplicate IDs/names/objects and ambiguous API definitions before native queries,
+and proves root/abstract/nonobject IDs are not queried. A separate live kernel
+flock control refuses promptly while its verified holder remains alive, starts
+no editor and retains a failure receipt. Project/source drift and scope/query
+coverage controls pass. The combined action/host suite passes 218 tests.
+Fresh-clone CI on the actual source passes 1,321 tests with 60 optional skips,
+Ruff, public audit and documentation checks. The exact-editor compiler fixture
+skips when Mono/Roslyn is absent. Whole-game preflight still refuses the alpha
+worktree's missing inventory/bootstrap, so this adds no public-bootstrap claim.
+
+Private `wrapper-oracle-proof-receipt.json` binds 107 source snapshots, staged
+inputs, reports, controls, comparisons, SDK observations, CI logs and prerequisite
+artifacts; SHA-256
+`81bb2a33c67c4979c1127287fad2231b8d28fd62df5f66e7aefdb039a0bca13e`.
+Raw SDK metadata and mappings remain ignored. No APK is produced; the alpha
+be26c21c gameplay qualification remains J869's prior unchanged observation.
+Main's independently built candidate is outside this experiment's acceptance.
+
+**Independent review correction.** Review of `eab62ff` identifies that staging
+creates directories before its later project validator checks ancestor links.
+An owned reproduction with a symlinked rebuild parent redirects four authored
+file writes outside that control's configured work root. Preserve the original
+tree and first refusal gap. No game or SDK is involved in this reproduction.
+
+`f31770cb4724192c186c71621b08b4d7ef40674a` checks lexical/resolved containment
+and ancestor links before the first write. Directory-descriptor traversal and
+exclusive no-follow file creation prevent linked parents/files from redirecting
+writes; each file rechecks scope. Project selection uses the same scope guard.
+New controls cover links at four ancestor depths and replacement of a created
+parent before the first file write, with zero outside additions. The original
+outside files remain unchanged. Seven focused tests plus dispatch pass all
+220 tests; fresh-clone CI on the corrected source passes 1,323 tests with
+60 optional skips.
+
+A new guarded stage and short mutex-protected SDK batch at that commit both
+pass. All 318 report rows, including the same 278 queries, and loaded assembly
+evidence exactly equal the first oracle. Only source identity changes; the
+new report SHA-256 is
+`a7e4aedd8630d914f68fbb87c82d25cbd5ed86059526fa3c6944140aea7a209a`.
+The batch exits 0, releases the mutex and preserves both MCP editors.
+`wrapper-oracle-proof-v2-receipt.json` binds 139 old/new artifacts, including
+the independent review, original reproduction, corrected refusal, source
+snapshots, fresh oracle and CI; SHA-256
+`ea02b991c3750db08297de70703ef2508f13f31ef5320c9dd0b695d3a96afe86`.
+The original receipt, report and comparisons remain intact. This fixes staging
+safety; it changes neither the mapping findings nor their qualification scope.
+
+**Next gate.** Qualify static native flags, cache population and all extra-type
+rules, keeping direct scene-name resolution separate from cache queries. Then
+produce complete authored fixture scene/manager/dependency usage and exact
+linker roots without a desktop capture. General project policy, managed game
+compilation, content/shaders, permitted SDK/tool delivery, normal app hosting,
+installation/key custody and matched-workload performance remain separate gates.
+Both root_generation_qualified and cache_population_qualified remain false.
+Revisit on SDK/API/module/file-set/source or consumer-contract drift; retain
+this independent oracle as verification only.
