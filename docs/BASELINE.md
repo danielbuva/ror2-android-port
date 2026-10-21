@@ -88,10 +88,12 @@ The plain check and its acceptance criteria remain unchanged.
 
 ## Current baseline (2026-10-20)
 
-J917's later diagnostic APK b4d1c191 is installed after both standard checks.
-It remains unpromoted while selected-camera and original-audio playback
-acceptance are open. See the [current snapshot](../PORTING_STATE.md) for the
-installed identity and [J917](PORTING_JOURNAL.md#j917--qualify-the-late-bound-camera-player-and-preserve-its-visual-failure)
+J919's later diagnostic APK 8f33e1a9 is installed after both standard checks.
+It remains unpromoted while selected-camera rendering and original-audio
+playback acceptance are open. Genuine same-process next-menu return is observed;
+the raw selected-run host assertion failure is preserved separately.
+See the [current snapshot](../PORTING_STATE.md) for installed identity and
+[J919](PORTING_JOURNAL.md#j919--measure-the-selected-original-music-output-on-the-r20-player)
 for the single result record. The accepted baseline below remains the rollback.
 
 | Item | Value |

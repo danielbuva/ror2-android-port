@@ -25255,3 +25255,111 @@ outputs and default-off behavior remain unchanged. Next acceptance needs the
 new player, both standard checks, bounded selected-camera evidence and a capture
 whose timing is recorded separately. The cached first-ready frame must not be
 presented as matching an earlier or later screenshot. Visual parity remains open.
+
+## J919 — Measure the selected original music output on the R20 player
+
+Date: 2026-10-21. Hypothesis: J918's exact-output PCM selector can distinguish a
+callback/output identity mismatch from a zero-signal measurement while the two
+standard gameplay checks remain independently qualified. Consult J891/J911/J917
+and J918 for the existing MusicController/output observations and exact-selector
+contract. J588's bank-graph limitation and the R20 post-strip IL review remain
+important boundaries: preserved event/state dispatch and an output callback do
+not establish playback.
+
+Build the committed Main source `5a97f93`. The full Unity build succeeds with
+zero errors in 230.464 s; the frozen package and source manifests are joined to
+the same request. The candidate freezes 391 authored source inputs, 333 captured
+pre-strip managed rows, and 266 payload entries. Its APK SHA-256 is
+`8f33e1a92f60b00fffc4d0b980ab3a1a9d8851207b4ba11627f08384e16d6221`.
+The same-request post-strip qualification is APK-bound and confirms the exact
+music startup callback, typed native-capture imports, and bootstrap guard across
+the inspected pre/post boundary. Its scope is limited to those selected methods,
+imports and bootstrap surface; it does not prove the complete IL2CPP closure or
+playback.
+
+On the assigned test device, both default standard modes pass independently on
+this candidate. Plain reaches 35.215 s on Lakes; the assisted one-exit check
+completes one transition and spends 10.496 s on Goolake (105.772 s total world
+time). Both report no session error or first failure, retain 13 applied runs,
+remove the selector, stop the process, and verify the display asleep. Each
+standard check also records the five known Windows-target AssetBundle negative
+controls; they remain visible in the evidence and are not treated as a game
+session failure.
+
+The selected specific-output capture is observed in both modes: callback output
+identity matches the requested selector and the exact owned MusicController
+output identity. The source output call reports acceptance, preload returns,
+and passive capture records 466 callbacks in plain and 462 in stage-exit. The
+plain window contains 536,832 finite samples; the stage-exit window contains
+532,224. Both have zero non-finite samples and zero nonzero finite samples, with
+no capture failure. The sample predicate therefore fails with
+`no_nonzero_finite_samples`, while the separate callback-identity predicate is a
+known match. PointSound output frames and bank-path warning lines are both zero.
+This is a measured-window result, not proof of silence, event completion, audio
+quality or physical audibility.
+
+The exact startup trigger was requested and its retirement was observed on an
+adapted process-start timeline, not the stock splash timeline. An APK-bound
+read-only IL review found the ten selected MusicController/MusicTrackDef
+selection, lifecycle and state-dispatch bodies unchanged at the inspected
+pre/post representation and found no `noAudio` branch in those bodies. The
+runtime report still does not expose the selected current track, state/event
+return values, or successful completion of the native music path. Static method
+retention narrows one suspected explanation but does not explain the zero PCM
+windows.
+
+A separate bounded source-selected Huntress camera/listener route on this same
+APK reaches 35.218 s on Lakes without runtime error or first failure. It records
+4,478 original camera pumps, exact target/context readiness and the source
+listener active in the managed list. Its matched music output yields 435
+callbacks and 501,120 finite samples, again all zero with no capture failure.
+Supplying this context therefore does not resolve the measured-window failure.
+The screenshot still shows severe artifacts: largely absent environment and
+character geometry, with a large flat gray rectangle and stretched thin shapes.
+No visual parity or animation health is accepted from readiness scalars.
+
+The real completed-session report records clean teardown: all five owned
+material copies released, source skin owner destroyed, view deactivated and the
+exact listener removed from the managed list (census falls from two to one).
+The app returns to the genuine next menu in the same process, with no runtime
+failure and an unchanged profile. J917's old-player menu refusal is not
+reproduced on this player containing J914's dependency-retention repair. A
+healthy second gameplay session is not exercised here.
+
+Preserve the raw selected-run failure and exit 1. Root enabled an obsolete J907
+host predicate requiring the original application instance present/active,
+although this adapted camera pump explicitly operates when that owner is absent
+or inactive. A separate terminal predicate incorrectly requires the animator
+initialized after destroying the owned model. The raw failure list contains
+those two host assertions; it is not rewritten into a passing experiment.
+Read-only triage separates the live ownership/pump predicate from destroyed-owner
+teardown, with nine draft host tests for corrected checks and negative cases.
+No new device retry is hidden. Physical audibility, native listener result codes,
+whole-process Term/restart, visual parity and complete music behavior remain
+unqualified. The accepted J850 baseline remains unchanged.
+
+Root independently rechecks the installed APK hash and owned placement after the
+selected route, and verifies process/selector absence and display asleep. The
+fresh explicitly selected doctor and preflight pass. An unselected
+doctor/preflight refuses the ambiguous multi-device target; the unselected
+historical bootstrap doctor also reports its smoke gate unqualified. Those
+refusals trigger no editor or device mutation.
+
+Revisit when the selected music track/state/native result path is observable and
+a bounded capture records nonzero finite samples, then verify behavior and
+teardown without inferring physical audibility from PCM alone.
+
+Evidence consists of the frozen R20 build receipt, same-request APK-bound
+post-strip qualification, both standard-mode receipts, independent final
+placement/cleanup query, the selected-camera live/completed/raw-result records,
+the independent final post-route query and the separate zero-target-output IL assessment.
+Build receipt SHA-256:
+`bfe0db4e0808923dee8d7dc3f58442251df4ca3a395d6e452110371bc75122c8`;
+post-strip qualification SHA-256:
+`0813ff3c8968ef3ccb8fe1bfbb25568838e901c31540e40dc12b5a27b9b2e009`.
+Private evidence roots are `work/coordination/codex-original-game-audio-device-root/r13/`,
+`work/coordination/original-camera-listener-device-plan/r12/`,
+`work/experiments/original-camera-listener-lifecycle/20261021T211939.522173Z/`
+and `work/coordination/original-music-zero-target-output/r2/`.
+Raw reports, logs, screenshots, PCM and device-specific identifiers remain
+local and ignored.
