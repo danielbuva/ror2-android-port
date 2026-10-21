@@ -72,10 +72,10 @@ The plain check and its acceptance criteria remain unchanged.
 
 ## Current baseline (2026-10-20)
 
-J867's later diagnostic APK is installed after both default checks, but is not
-promoted: its optional build capture failed and original audio refused before
-initialization. See the [current snapshot](../PORTING_STATE.md) for installed
-identity and the [journal](PORTING_JOURNAL.md#j867--build-the-original-audio-player-preserve-its-receipt-refusal-and-package-the-missing-cohort-witness)
+J868's later diagnostic APK is installed after both default checks, but is not
+promoted: current-process audio log errors remain and playback is unqualified.
+See the [current snapshot](../PORTING_STATE.md) for installed identity and
+[J868](PORTING_JOURNAL.md#j868--initialize-the-original-game-audio-owner-and-banks-but-retain-path-point-sound-and-output-failures)
 for the single result record. The accepted baseline below remains the rollback.
 
 | Item | Value |

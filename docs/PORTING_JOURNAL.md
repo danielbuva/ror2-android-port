@@ -21350,3 +21350,92 @@ manager/dependency closure and TypesInScenes.xml independently. Managed game
 compilation, general project policy, content/shaders, permitted tool delivery,
 app sandbox behavior, installer/key custody and matched-workload benchmarks
 remain open. Revisit on SDK/layout/scope/forwarder/schema or runtime-tool drift.
+
+## J868 — Initialize the original game audio owner and banks, but retain path, point-sound and output failures
+
+2026-10-20.
+
+**Hypothesis and scope.** Packaging J867's exact bank-cohort receipt should let
+the existing original Wwise owner advance past preparation. Retain the pinned
+R2API.Sound distinction between initialized engine, bank callbacks and playback,
+J845's isolated original-event positive evidence, and J860's named lifecycle
+owners. No artificial event, second engine or new game implementation is added.
+
+**Full build and frozen identity.** Synchronized source `e53adf0` passes doctor
+and preflight, then the normal mutex-protected full build and host wrapper.
+Unity reports zero errors in 204.724950 s, request
+`20261021T024255.625958Z-8e544d9de8e24f53a4c5c2c4ae2556e8`.
+Freeze APK `c077ed2ae685251762215580a82e424c4405aa13279a65a9be28209f8fc3c842`,
+symbols `e3a3f06c816097fdd7416e951da42a97f0cf069a1a28695ee75ec8776c076fb3`
+and matching Build ID `b44012b53481abe36b09af183dcfe2b39cd51f7a`.
+Verify the exact packaged cohort receipt `8fe02400…`, all 154 banks and runtime
+`bb5879b4…`; all 165 staged outputs and 356 frozen authored inputs match. Retain
+333 same-request pre-strip DLLs and all 266 payload files. Optional Bee capture
+is not requested; its earlier failure remains unresolved rather than being
+converted into a pass. After freezing, merge the independently reviewed metadata
+PR #16 as `474597a`; that does not change this player's frozen source identity.
+
+**Device gameplay and native readiness.** Install the explicit frozen APK in
+place on the assigned primary device, with fresh adopted placement/capacity
+checks, then sync its own payload. Both standard checks pass with current-build
+true and `appliedRuns` unchanged at 13: 35.193710 s on Lakes; then exactly one
+exit and 12.524078 s on Goolake at 146.262665 total world seconds. The original
+manager admits and returns, native Init is observed, all 153 requested-bank
+callbacks complete successfully, and the owner records Ready with no-audio
+false. Preparation/startup takes 12.102303 s in the first process and 2.923674 s
+with already verified private bank copies in the second. The process-audio
+catalog lease remains held. Forced process stops do not establish original Term
+or same-process session restart acceptance.
+
+**First logged failures.** Standard check success covers its report/gameplay
+contract; it does not override current-process Unity errors. Both processes log
+`WwiseUnity: Could not locate the SoundBanks` while
+`AkBasePathGetter.EvaluateGamePaths` probes the APK StreamingAssets URI. The
+packaged Init and banks were hash-verified and native loading succeeds. Exact
+accepted metadata and the locally supplied official Android integration identify
+a filesystem existence test on a jar URI; the official Android implementation
+explicitly avoids that test. This is a supported, narrow Android path-probe repair
+target, not grounds to whitelist the error or change native search paths blindly.
+
+The second process additionally logs five null references in
+`RoR2.Audio.PointSoundManager.EmitSoundLocal(AkEventIdArg, Vector3)`. Original
+startup context for this newly reachable producer is unestablished. Preserve the
+five occurrences and inspect its original initializer/pool/lifecycle before any
+adapter. Suppressing events or returning fabricated playing IDs is not a repair.
+The root qualifier records 13 unexpected error/stack lines in the first process
+and 28 in the second. The APK remains diagnostic; do not promote it to baseline.
+
+**Bounded device-output observation.** Installed scrcpy 4.1 exposes an audio-only,
+read-only recording mode. Select only the assigned device, disable control,
+clipboard synchronization, video, host playback and power-on; use playback
+capture with duplication so device playback is retained. Start only on a fresh
+same-process world report with Ready and 153 banks. No game event is injected,
+no native capture callback is installed and no game APK is modified.
+The 12-second bounded capture yields 11.733333 s of stereo 48 kHz, signed
+16-bit PCM: 1,126,400 samples, all zero, peak and RMS zero. WAV SHA-256 is
+`536cd3a04f8c855e70414ff2638968d404e8e490be215caf7f778fefb95b5d43`.
+The same process advances from 10.048218 to 25.139923 world seconds and remains
+Ready. Android reports active app OpenSL MEDIA and AAudio GAME tracks with
+advancing frame counters; obvious system mute/ducking does not explain the result.
+Effective playback-capture policy and an event/native PCM witness remain missing,
+so this does not distinguish quiet application output from capture exclusion.
+It is not evidence of audible gameplay or complete bank/effect compatibility.
+
+**Cleanup, evidence and next action.** Both check selectors are absent; the
+package and recorder server are stopped and the primary OLED is asleep. Alpha
+and spare are untouched. c077ed2a is installed; f1550ce0 remains the accepted
+baseline. Full build and freeze receipts are
+`work/coordination/codex-original-game-audio-build-root/r4/`; candidate artifacts
+are `work/experiments/original-game-audio/candidate-20261021T024751.544638Z/`.
+Device evidence is `codex-original-game-audio-device-root/r3/` under coordination,
+with baseline runs `20261021T025117.242134Z` and `20261021T025626.092195Z`.
+Root qualification hashes to
+`0aee17033898872d762847592696bab7ea264816aaf2bc4509ed1a628bcca2d2`.
+Output recording, pre/post reports, Android audio dumps and terminal logs are
+`original-game-audio-device-output-root/r1/`. Independent zero-output triage is
+`original-game-audio-zero-output-triage/r1/triage.md` (SHA-256
+`a52ccbcff4a8ce73f8da0c1cacbe85f9c484c16415286078169136042e8e63c5`).
+Raw captures remain private and ignored. Next repair the exact Android path
+probe and missing original point-sound context, then pair ordinary event activity
+with qualified native PCM and device output. Camera and passive-PCM source drafts
+remain unshipped; no new runtime source is introduced by this result checkpoint.
