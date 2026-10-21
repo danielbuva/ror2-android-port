@@ -14,6 +14,7 @@ SPEC = importlib.util.spec_from_file_location("audio_producer", SCRIPT)
 assert SPEC and SPEC.loader
 producer = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(producer)
+producer.LINEAGE["composed_api_sha256"] = "c" * 64
 
 
 def fixture_manifest(root: Path) -> tuple[dict, dict[str, Path]]:
@@ -56,6 +57,22 @@ def fixture_manifest(root: Path) -> tuple[dict, dict[str, Path]]:
 class ProducerManifestTests(unittest.TestCase):
     def temporary_directory(self):
         return tempfile.TemporaryDirectory()
+
+    def test_only_declared_ordinary_previous_and_current_pairs_are_accepted(self):
+        current_api = "c" * 64
+        old_api = producer.PREVIOUS_COMPOSED_API_SHA256
+        game = producer.LINEAGE["composed_game_sha256"]
+        with mock.patch.dict(producer.LINEAGE, {"composed_api_sha256": current_api}):
+            self.assertEqual("ordinary", producer.classify_project_pair(producer.DEFAULT_API_SHA256, producer.DEFAULT_GAME_SHA256))
+            self.assertEqual("previous-audio", producer.classify_project_pair(old_api, game))
+            self.assertEqual("current-audio", producer.classify_project_pair(current_api, game))
+            with self.assertRaisesRegex(ValueError, "neither ordinary guarded"):
+                producer.classify_project_pair("d" * 64, game)
+            with self.assertRaisesRegex(ValueError, "neither ordinary guarded"):
+                producer.classify_project_pair(old_api, "e" * 64)
+        with mock.patch.dict(producer.LINEAGE, {"composed_api_sha256": "ROOT_MUST_FILL_CURRENT_COMPOSED_API_SHA256"}):
+            with self.assertRaisesRegex(ValueError, "pin is unfilled"):
+                producer.classify_project_pair(producer.DEFAULT_API_SHA256, producer.DEFAULT_GAME_SHA256)
 
     def test_all_managed_outputs_join_to_the_accepted_chain(self) -> None:
         with self.temporary_directory() as temp:

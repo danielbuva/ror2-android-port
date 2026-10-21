@@ -18,6 +18,7 @@ internal static class OriginalGameCecilTransform
             if (args.Length == 4 && args[0] == "api") return TransformApi(args[1], args[2], args[3]);
             if (args.Length == 4 && args[0] == "game") return TransformGame(args[1], args[2], args[3], null);
             if (args.Length == 5 && args[0] == "game") return TransformGame(args[1], args[2], args[3], args[4]);
+            if (args.Length == 2 && args[0] == "validate-bank-il") return ValidateBankMethod(args[1]);
             throw new InvalidOperationException("usage: api <7ec-api> <core.dll> <output.dll> | game <current-guarded-RoR2.dll> <core.dll> <output.dll>");
         }
         catch (Exception error) { Console.Error.WriteLine(error.GetType().Name + ": " + error.Message); return 2; }
@@ -49,16 +50,29 @@ internal static class OriginalGameCecilTransform
                 "new-bank callback forwarding site changed");
 
             var loadIl = load.Body.GetILProcessor();
+            var originalEntry = load.Body.Instructions[0];
             var requestName = loadIl.Create(OpCodes.Ldarg_0);
             var requestCall = loadIl.Create(OpCodes.Call, requestRef);
-            loadIl.InsertBefore(load.Body.Instructions[0], requestName);
-            loadIl.InsertBefore(load.Body.Instructions[0], requestCall);
-            var existingBranch = load.Body.Instructions.Single(i => i.OpCode == OpCodes.Brfalse_S && i.Operand is Instruction target &&
-                target.OpCode == OpCodes.Ldarg_0 && target.Next != null && target.Next.OpCode == OpCodes.Ldarg_1);
-            var existingStart = (Instruction)existingBranch.Operand;
-            // The branch target starts with original name/delegate setup while the
-            // lock is held. Insert at its first stack-empty instruction.
-            InsertBankResult(load, existingStart, resultRef, false, true, fromExistingLocals: false);
+            loadIl.InsertBefore(originalEntry, requestName);
+            loadIl.InsertBefore(originalEntry, requestCall);
+            var tryGetValue = load.Body.Instructions.Single(i => IsCall(i,
+                "System.Collections.Generic.Dictionary`2<System.String,AkBankManager/BankHandle>", "TryGetValue"));
+            var existingBranch = tryGetValue.Next;
+            Require(existingBranch != null && existingBranch.OpCode == OpCodes.Brfalse_S,
+                "TryGetValue no longer has the pinned false/new-handle branch");
+            var newHandleStart = (Instruction)existingBranch.Operand;
+            Require(newHandleStart.Next != null && newHandleStart.Next.OpCode == OpCodes.Ldarg_1 &&
+                newHandleStart.Next.Next != null && newHandleStart.Next.Next.OpCode == OpCodes.Newobj,
+                "TryGetValue false edge no longer starts the new-handle path");
+            var incRef = load.Body.Instructions.Single(i => IsCall(i, "AkBankManager/BankHandle", "IncRef"));
+            var existingHandleObserverStart = incRef.Next;
+            Require(existingHandleObserverStart != null && existingHandleObserverStart.OpCode == OpCodes.Ldarg_1 &&
+                existingHandleObserverStart.Next != null && existingHandleObserverStart.Next.OpCode == OpCodes.Brfalse_S,
+                "TryGetValue true edge no longer reaches the existing-handle callback guard after IncRef");
+            // The true edge falls through IncRef and reaches this stack-empty
+            // point. The false edge still branches to newHandleStart and must
+            // never report AK_BankAlreadyLoaded.
+            InsertBankResult(load, existingHandleObserverStart, resultRef, false, true, fromExistingLocals: false);
 
             var callbackFirst = callback.Body.Instructions[0];
             var callbackCast = callbackFirst.Next;
@@ -189,8 +203,8 @@ internal static class OriginalGameCecilTransform
             var initialized = FindMethod(engine, "IsInitialized");
             var rtpc = FindMethod(engine, "SetRTPCValueByPlayingID", "System.String", "System.Single", "System.UInt32");
             var stopPlaying = FindMethod(engine, "StopPlayingID", "System.UInt32");
-            Require(load.Body.Instructions.Count(i => IsOwnerCall(i, "ObserveBankRequest")) == 1, "bank request hook count is not one");
-            Require(load.Body.Instructions.Count(i => IsOwnerCall(i, "ObserveBankResult")) == 1, "existing-handle result hook count is not one");
+            VerifyStackHeights(load);
+            VerifyLoadBankAsyncInstrumentation(load);
             Require(callback.Body.Instructions.Count(i => IsOwnerCall(i, "ObserveBankResult")) == 1, "new-bank result hook count is not one");
             Require(initialized.Body.Instructions.Count(i => IsOwnerCall(i, "get_NativeApiCallsAvailable")) == 1 &&
                 initialized.Body.Instructions.Any(i => i.OpCode == OpCodes.Brtrue && i.Operand is Instruction target &&
@@ -213,6 +227,143 @@ internal static class OriginalGameCecilTransform
                     Require(pair.Value == after[pair.Key], "unexpected Wwise API body change: " + pair.Key);
             }
             Require(api.MainModule.AssemblyReferences.Any(r => r.Name == owner.Name.Name), "API output lacks observer owner reference");
+        }
+    }
+
+    private static int ValidateBankMethod(string path)
+    {
+        using (var assembly = AssemblyDefinition.ReadAssembly(path))
+        {
+            var method = FindMethod(FindType(assembly.MainModule, "AkBankManager"), "LoadBankAsync",
+                "System.String", "AkCallbackManager/BankCallback");
+            VerifyStackHeights(method);
+            VerifyLoadBankAsyncInstrumentation(method);
+        }
+        Console.WriteLine("LoadBankAsync instrumentation and stack heights valid");
+        return 0;
+    }
+
+    private static void VerifyLoadBankAsyncInstrumentation(MethodDefinition load)
+    {
+        var ins = load.Body.Instructions;
+        Require(ins.Count >= 4 && ins[0].OpCode == OpCodes.Ldarg_0 &&
+            IsOwnerCall(ins[1], "ObserveBankRequest") && ins[2].OpCode == OpCodes.Ldnull,
+            "request observer must consume the bank name before the original first instruction");
+        var tryGetValue = ins.Single(i => IsCall(i,
+            "System.Collections.Generic.Dictionary`2<System.String,AkBankManager/BankHandle>", "TryGetValue"));
+        var branch = tryGetValue.Next;
+        Require(branch != null && branch.OpCode == OpCodes.Brfalse_S,
+            "TryGetValue no longer has its false/new-handle branch");
+        var resultCalls = ins.Where(i => IsOwnerCall(i, "ObserveBankResult")).ToArray();
+        Require(resultCalls.Length == 1, "existing-handle result observer count is not one");
+        var result = resultCalls[0];
+        var resultStart = result.Previous?.Previous?.Previous?.Previous?.Previous?.Previous;
+        Require(!ReferenceEquals(branch.Operand, resultStart),
+            "TryGetValue false/new-handle edge must not enter the already-loaded observer");
+        var newHandleStart = (Instruction)branch.Operand;
+        Require(newHandleStart.Next != null && newHandleStart.Next.OpCode == OpCodes.Ldarg_1 &&
+            newHandleStart.Next.Next != null && newHandleStart.Next.Next.OpCode == OpCodes.Newobj,
+            "TryGetValue false edge must still create a new async handle");
+        Require(result.Previous != null && result.Previous.OpCode == OpCodes.Ldc_I4_1 &&
+            result.Previous.Previous?.OpCode == OpCodes.Ldc_I4_0 &&
+            result.Previous.Previous.Previous?.OpCode == OpCodes.Ldc_I4_S &&
+            Convert.ToInt32(result.Previous.Previous.Previous.Operand) == 69,
+            "existing-handle observer argument sequence changed");
+        Require(resultStart != null && resultStart.OpCode == OpCodes.Ldarg_0 &&
+            result.Next != null && result.Next.OpCode == OpCodes.Ldarg_1 &&
+            result.Next.Next != null && result.Next.Next.OpCode == OpCodes.Brfalse_S,
+            "existing-handle observer must run after IncRef and before optional callback handling");
+        var incRef = resultStart.Previous;
+        Require(incRef != null && IsCall(incRef, "AkBankManager/BankHandle", "IncRef"),
+            "existing-handle result observer is not on the TryGetValue true/found path");
+        Require(!ReferenceEquals(branch.Operand, resultStart),
+            "TryGetValue false/new-handle edge must not enter the already-loaded observer");
+        Require(!ins.Any(i => i.Operand is Instruction target && ReferenceEquals(target, resultStart)) &&
+            !ins.Any(i => i.Operand is Instruction[] targets && targets.Any(target => ReferenceEquals(target, resultStart))) &&
+            !load.Body.ExceptionHandlers.Any(handler => ReferenceEquals(handler.TryStart, resultStart) ||
+                ReferenceEquals(handler.TryEnd, resultStart) || ReferenceEquals(handler.HandlerStart, resultStart) ||
+                ReferenceEquals(handler.HandlerEnd, resultStart) || ReferenceEquals(handler.FilterStart, resultStart)),
+            "existing-handle observer point must remain a plain fallthrough within the original exception region");
+        Require(ins.Count(i => IsOwnerCall(i, "ObserveBankRequest")) == 1,
+            "bank request observer count is not one");
+    }
+
+    private static void VerifyStackHeights(MethodDefinition method)
+    {
+        var instructions = method.Body.Instructions;
+        var heights = new System.Collections.Generic.Dictionary<Instruction, int>();
+        var pending = new System.Collections.Generic.Queue<Instruction>();
+        void Seed(Instruction instruction, int height)
+        {
+            if (!heights.TryGetValue(instruction, out var prior))
+            {
+                heights.Add(instruction, height);
+                pending.Enqueue(instruction);
+            }
+            else Require(prior == height, "inconsistent stack height at IL_" + instruction.Offset.ToString("x4"));
+        }
+        Seed(instructions[0], 0);
+        foreach (var handler in method.Body.ExceptionHandlers)
+        {
+            if (handler.HandlerStart != null)
+                Seed(handler.HandlerStart, handler.HandlerType == ExceptionHandlerType.Catch ||
+                    handler.HandlerType == ExceptionHandlerType.Filter ? 1 : 0);
+            if (handler.FilterStart != null) Seed(handler.FilterStart, 1);
+        }
+        while (pending.Count != 0)
+        {
+            var instruction = pending.Dequeue();
+            var before = heights[instruction];
+            var (pop, push) = StackEffect(instruction, method);
+            Require(before >= pop, "stack underflow at IL_" + instruction.Offset.ToString("x4") + " " + instruction.OpCode);
+            var after = instruction.OpCode.Code == Code.Leave || instruction.OpCode.Code == Code.Leave_S
+                ? 0
+                : before - pop + push;
+            if (instruction.OpCode.Code == Code.Ret)
+                Require(after == 0, "return leaves extra stack entries at IL_" + instruction.Offset.ToString("x4"));
+            if (instruction.Operand is Instruction target) Seed(target, after);
+            else if (instruction.Operand is Instruction[] targets)
+                foreach (var item in targets) Seed(item, after);
+            if (instruction.OpCode.FlowControl != FlowControl.Branch &&
+                instruction.OpCode.FlowControl != FlowControl.Return &&
+                instruction.OpCode.FlowControl != FlowControl.Throw && instruction.Next != null)
+                Seed(instruction.Next, after);
+        }
+    }
+
+    private static (int pop, int push) StackEffect(Instruction instruction, MethodDefinition containingMethod)
+    {
+        var op = instruction.OpCode;
+        if (op == OpCodes.Leave || op == OpCodes.Leave_S) return (0, 0);
+        if (op == OpCodes.Call || op == OpCodes.Callvirt || op == OpCodes.Newobj)
+        {
+            var called = (MethodReference)instruction.Operand;
+            var pop = called.Parameters.Count + (op == OpCodes.Newobj || !called.HasThis ? 0 : 1);
+            var push = op == OpCodes.Newobj || called.ReturnType.MetadataType != MetadataType.Void ? 1 : 0;
+            return (pop, push);
+        }
+        if (op == OpCodes.Ret) return (containingMethod.ReturnType.MetadataType == MetadataType.Void ? 0 : 1, 0);
+        var popCount = FixedStackCount(op.StackBehaviourPop, instruction);
+        var pushCount = FixedStackCount(op.StackBehaviourPush, instruction);
+        Require(popCount >= 0 && pushCount >= 0, "unsupported variable stack behavior at IL_" + instruction.Offset.ToString("x4"));
+        return (popCount, pushCount);
+    }
+
+    private static int FixedStackCount(StackBehaviour behavior, Instruction instruction)
+    {
+        switch (behavior)
+        {
+            case StackBehaviour.Pop0: case StackBehaviour.Push0: return 0;
+            case StackBehaviour.Pop1: case StackBehaviour.Popi: case StackBehaviour.Popref:
+            case StackBehaviour.Push1: case StackBehaviour.Pushi: case StackBehaviour.Pushi8:
+            case StackBehaviour.Pushr4: case StackBehaviour.Pushr8: case StackBehaviour.Pushref: return 1;
+            case StackBehaviour.Pop1_pop1: case StackBehaviour.Popi_pop1: case StackBehaviour.Popi_popi:
+            case StackBehaviour.Popi_popi8: case StackBehaviour.Popi_popr4:
+            case StackBehaviour.Popi_popr8: case StackBehaviour.Popref_pop1: case StackBehaviour.Popref_popi:
+            case StackBehaviour.Push1_push1: return 2;
+            case StackBehaviour.Popi_popi_popi: case StackBehaviour.Popref_popi_popi: return 3;
+            case StackBehaviour.Varpop: case StackBehaviour.Varpush: return -1;
+            default: throw new InvalidOperationException("unhandled stack behavior " + behavior + " at " + instruction);
         }
     }
 

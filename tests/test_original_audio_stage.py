@@ -13,6 +13,9 @@ SPEC = importlib.util.spec_from_file_location("audio_stage", SCRIPT)
 assert SPEC and SPEC.loader
 stage_module = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(stage_module)
+TEST_CURRENT_API_SHA256 = "c" * 64
+stage_module.LINEAGE["composed_api_sha256"] = TEST_CURRENT_API_SHA256
+stage_module.ALLOWED_RESTORE_PREIMAGES["restore_api"] = frozenset({stage_module.PREVIOUS_COMPOSED_API_SHA256, TEST_CURRENT_API_SHA256})
 
 ACCEPTED = "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88"
 DEFAULT_ROLES = list(stage_module.DEFAULT_ROLES)
@@ -118,6 +121,136 @@ class StageTests(unittest.TestCase):
     def temporary_directory(self):
         return tempfile.TemporaryDirectory(dir=self.work)
 
+    def write_previous_default_off_receipt(self, project: Path, *, lineage: dict | None = None, ordinary_pair: bool = False) -> Path:
+        outputs = []
+        plugin_guids = {}
+        targets = sorted({target for role, target in stage_module.DEFAULT_TARGETS.items() if role in stage_module.DEFAULT_ROLES})
+        targets += sorted(target + ".meta" for target in targets)
+        for index, target in enumerate(targets):
+            path = project / target
+            path.parent.mkdir(parents=True, exist_ok=True)
+            if target.endswith(".meta"):
+                guid = f"{index + 1:032x}"
+                path.write_text(f"fileFormatVersion: 2\nguid: {guid}\nPluginImporter:\n", encoding="utf-8")
+                plugin_guids[guid] = target
+            else:
+                path.write_bytes(f"old owned support output {index}".encode())
+            outputs.append({"target": target, "sha256": hashlib.sha256(path.read_bytes()).hexdigest(), "status": "staged"})
+        if ordinary_pair:
+            for role in ("api", "game"):
+                target = stage_module.DEFAULT_TARGETS[role]
+                path = project / target
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(f"synthetic ordinary {role}".encode())
+                output_hash = hashlib.sha256(path.read_bytes()).hexdigest()
+                outputs.append({"target": target, "sha256": output_hash, "status": "staged"})
+        receipt_path = project / "Assets/StreamingAssets/Lab/OriginalGameAudioStageReceipt.json"
+        receipt_path.parent.mkdir(parents=True, exist_ok=True)
+        receipt_path.write_text(
+            json.dumps(
+                {
+                    "schema": stage_module.RECEIPT_SCHEMA,
+                    "accepted_input_id": stage_module.LINEAGE["accepted_input_id"],
+                    "lineage": lineage or stage_module.PREVIOUS_LINEAGE,
+                    "requested": False,
+                    "request_id": None,
+                    "request_sha256": None,
+                    "artifact_manifest_sha256": "a" * 64,
+                    "stage_receipt_sha256": None,
+                    "plugin_guids": plugin_guids,
+                    "outputs": outputs,
+                }
+            ),
+            encoding="utf-8",
+        )
+        return receipt_path
+
+    def test_known_old_lineage_owned_support_receipt_upgrades_to_current_generation(self):
+        with self.temporary_directory() as temp:
+            root = Path(temp)
+            project = root / "project"
+            project.mkdir()
+            previous_path = self.write_previous_default_off_receipt(project)
+            previous_hash = hashlib.sha256(previous_path.read_bytes()).hexdigest()
+            manifest, _, _ = write_set(root, False)
+            result = stage_module.stage(project, manifest, None, None)
+            self.assertFalse(result["requested"])
+            self.assertEqual(stage_module.LINEAGE, result["lineage"])
+            self.assertNotEqual(previous_hash, hashlib.sha256(previous_path.read_bytes()).hexdigest())
+
+    def test_predecessor_lineage_differs_only_at_declared_composed_api_pin(self):
+        differences = {key for key in stage_module.LINEAGE if stage_module.LINEAGE[key] != stage_module.PREVIOUS_LINEAGE.get(key)}
+        self.assertEqual({"composed_api_sha256"}, differences)
+        self.assertEqual(
+            "793f22866c85bbcf104f20f5c1f619062eaad9f5414a217b602fe758c71e01b9",
+            stage_module.PREVIOUS_LINEAGE["composed_api_sha256"],
+        )
+
+    def test_owned_requested_predecessor_upgrades_to_current_requested_bytes(self):
+        with self.temporary_directory() as temp:
+            root = Path(temp)
+            old_manifest, old_request, old_banks = write_set(root / "old", True)
+            new_manifest, new_request, new_banks = write_set(root / "new", True)
+            old = json.loads(old_manifest.read_text())
+            new = json.loads(new_manifest.read_text())
+            old_api = next(row for row in old["outputs"] if row["role"] == "api")
+            new_api = next(row for row in new["outputs"] if row["role"] == "api")
+            new_bytes = b"authored current API fixture with repaired observer"
+            (new_manifest.parent / new_api["source"]).write_bytes(new_bytes)
+            new_api["sha256"] = hashlib.sha256(new_bytes).hexdigest()
+            game = next(row["sha256"] for row in old["outputs"] if row["role"] == "game")
+            prior_policy = {**old["lineage"], "composed_api_sha256": old_api["sha256"], "composed_game_sha256": game}
+            current_policy = {**prior_policy, "composed_api_sha256": new_api["sha256"]}
+            old["lineage"] = prior_policy
+            new["lineage"] = current_policy
+            old_manifest.write_text(json.dumps(old))
+            new_manifest.write_text(json.dumps(new))
+            project = root / "project"
+            project.mkdir()
+            with mock.patch.dict(stage_module.LINEAGE, prior_policy, clear=True):
+                stage_module.stage(project, old_manifest, old_request, old_banks)
+            with mock.patch.dict(stage_module.LINEAGE, current_policy, clear=True), mock.patch.dict(stage_module.PREVIOUS_LINEAGE, prior_policy, clear=True):
+                result = stage_module.stage(project, new_manifest, new_request, new_banks)
+            self.assertTrue(result["requested"])
+            self.assertEqual(current_policy, result["lineage"])
+            self.assertEqual(new_bytes, (project / stage_module.DEFAULT_TARGETS["api"]).read_bytes())
+            self.assertEqual(164, len(result["outputs"]))
+
+    def test_old_lineage_default_off_receipt_may_own_only_exact_ordinary_pair(self):
+        with self.temporary_directory() as temp:
+            project = Path(temp) / "project"
+            project.mkdir()
+            # Synthetic fixture bytes stand in for the declared ordinary pair;
+            # production pins remain the existing exact default API/game hashes.
+            receipt_path = self.write_previous_default_off_receipt(project, ordinary_pair=True)
+            receipt = json.loads(receipt_path.read_text())
+            ordinary_hashes = {
+                f"restore_{role}": next(row["sha256"] for row in receipt["outputs"] if row["target"] == stage_module.DEFAULT_TARGETS[role])
+                for role in ("api", "game")
+            }
+            with mock.patch.dict(stage_module.RESTORE_HASHES, ordinary_hashes):
+                previous, removal = stage_module.inspect_previous_stage(project, receipt_path)
+            self.assertEqual(stage_module.PREVIOUS_LINEAGE, previous["lineage"])
+            self.assertFalse(previous["requested"])
+            self.assertEqual([], removal)
+
+    def test_unknown_predecessor_lineage_and_output_drift_refuse_before_upgrade(self):
+        for mutate in ("lineage", "output"):
+            with self.subTest(mutate=mutate), self.temporary_directory() as temp:
+                root = Path(temp)
+                project = root / "project"
+                project.mkdir()
+                receipt_path = self.write_previous_default_off_receipt(project)
+                receipt = json.loads(receipt_path.read_text())
+                if mutate == "lineage":
+                    receipt["lineage"]["observed_api_sha256"] = "f" * 64
+                    receipt_path.write_text(json.dumps(receipt))
+                else:
+                    target = project / receipt["outputs"][0]["target"]
+                    target.write_bytes(b"drift")
+                with self.assertRaises(ValueError):
+                    stage_module.inspect_previous_stage(project, receipt_path)
+
     def test_default_off_stages_compile_owners_without_audio_payload(self) -> None:
         with self.temporary_directory() as temp:
             root = Path(temp)
@@ -139,9 +272,21 @@ class StageTests(unittest.TestCase):
             manifest, request, stage_receipt = write_set(root, True)
             project = root / "project"
             project.mkdir()
-            lineage = json.loads(manifest.read_text())["lineage"]
+            manifest_document = json.loads(manifest.read_text())
+            api_hash = next(row["sha256"] for row in manifest_document["outputs"] if row["role"] == "api")
+            game_hash = next(row["sha256"] for row in manifest_document["outputs"] if row["role"] == "game")
+            manifest_document["lineage"]["composed_api_sha256"] = api_hash
+            manifest_document["lineage"]["composed_game_sha256"] = game_hash
+            manifest.write_text(json.dumps(manifest_document))
+            lineage = manifest_document["lineage"]
             with mock.patch.dict(
-                stage_module.LINEAGE, {"native_library_sha256": lineage["native_library_sha256"], "stage_receipt_sha256": lineage["stage_receipt_sha256"]}
+                stage_module.LINEAGE,
+                {
+                    "native_library_sha256": lineage["native_library_sha256"],
+                    "stage_receipt_sha256": lineage["stage_receipt_sha256"],
+                    "composed_api_sha256": api_hash,
+                    "composed_game_sha256": game_hash,
+                },
             ):
                 receipt = stage_module.stage(project, manifest, request, stage_receipt)
             self.assertTrue(receipt["requested"])
@@ -154,6 +299,13 @@ class StageTests(unittest.TestCase):
             manifest, _, _ = write_set(root, False, [*DEFAULT_ROLES, "native"])
             with self.assertRaisesRegex(ValueError, "opt-in output"):
                 stage_module.read_artifacts(manifest, None, None)
+
+    def test_unfilled_current_api_pin_fails_closed(self) -> None:
+        with self.temporary_directory() as temp:
+            manifest, _, _ = write_set(Path(temp), False)
+            with mock.patch.dict(stage_module.LINEAGE, {"composed_api_sha256": "ROOT_MUST_FILL_CURRENT_COMPOSED_API_SHA256"}):
+                with self.assertRaisesRegex(ValueError, "pin is not finalized"):
+                    stage_module.read_artifacts(manifest, None, None)
 
     def test_default_off_can_restore_only_the_exact_prior_audio_pair(self) -> None:
         with self.temporary_directory() as temp:
@@ -190,7 +342,11 @@ class StageTests(unittest.TestCase):
                 "restore_api": hashlib.sha256((root / "out/restore_api.dll").read_bytes()).hexdigest(),
                 "restore_game": hashlib.sha256((root / "out/restore_game.dll").read_bytes()).hexdigest(),
             }
-            with mock.patch.dict(stage_module.RESTORE_HASHES, restore_hashes):
+            fixture_preimages = {
+                "restore_api": frozenset({hashlib.sha256((project / stage_module.DEFAULT_TARGETS["api"]).read_bytes()).hexdigest()}),
+                "restore_game": frozenset({hashlib.sha256((project / stage_module.DEFAULT_TARGETS["game"]).read_bytes()).hexdigest()}),
+            }
+            with mock.patch.dict(stage_module.RESTORE_HASHES, restore_hashes), mock.patch.dict(stage_module.ALLOWED_RESTORE_PREIMAGES, fixture_preimages):
                 receipt = stage_module.stage(project, manifest_path, None, None)
             self.assertFalse(receipt["requested"])
             for role in ("api", "game"):
@@ -215,14 +371,23 @@ class StageTests(unittest.TestCase):
             requested.write_text(json.dumps(requested_doc))
             project = root / "project"
             project.mkdir()
-            with mock.patch.dict(
-                stage_module.LINEAGE,
-                {
-                    "native_library_sha256": native_hash,
-                    "stage_receipt_sha256": hashlib.sha256(bank_receipt.read_bytes()).hexdigest(),
-                    "composed_api_sha256": api_hash,
-                    "composed_game_sha256": game_hash,
-                },
+            with (
+                mock.patch.dict(
+                    stage_module.LINEAGE,
+                    {
+                        "native_library_sha256": native_hash,
+                        "stage_receipt_sha256": hashlib.sha256(bank_receipt.read_bytes()).hexdigest(),
+                        "composed_api_sha256": api_hash,
+                        "composed_game_sha256": game_hash,
+                    },
+                ),
+                mock.patch.dict(
+                    stage_module.ALLOWED_RESTORE_PREIMAGES,
+                    {
+                        "restore_api": frozenset({api_hash}),
+                        "restore_game": frozenset({game_hash}),
+                    },
+                ),
             ):
                 stage_module.stage(project, requested, request, bank_receipt)
                 sidecar = project / "Assets/StreamingAssets/Audio/GeneratedSoundBanks/Android/Init.bnk.meta"

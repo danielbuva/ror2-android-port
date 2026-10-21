@@ -21047,3 +21047,85 @@ scene/manager/dependency usage independently. Managed compilation, target
 content/shaders, general module policy, permitted tool delivery, app sandbox,
 installation and game-performance equivalence remain open. No new execution
 backend or desktop-only final installation experience is selected.
+
+
+## J865 — Repair the first composed-audio IL2CPP bank-observer failure
+
+2026-10-20. Hypothesis: the J860/J863 original-owner integration can build as a
+full composed player after the metadata repair. Consult the audio prior-art
+map, pinned R2API.Sound initialization/bank-result distinction, original accepted
+AkBankManager metadata, and J845/J860/J863 before the attempt. No community or
+game implementation is copied into the authored transform or public fixtures.
+
+**First real build.** From synchronized source `5540fdc`, doctor and preflight
+pass with fresh primary-device adopted storage queries. The editor is idle on
+exact Unity 2021.3.45f2 before acquiring the normal host build mutex. Full
+content staging succeeds with 154 banks, the unchanged instrumented native
+runtime, original-owner assemblies and same-request symbol/pre-strip/Bee capture
+options. Unity compiles the current 112 runtime sources and builds the content.
+The 102.477117-second player attempt then fails in IL2CPP converting
+`AkBankManager.LoadBankAsync(string, BankCallback)` with `Stack empty`; the
+terminal reports three errors. No new APK is produced or installed, and neither
+default device check is run on a failed candidate. f1550ce0 remains the installed
+baseline, stopped/asleep. The mutex releases normally.
+
+**Cause and smallest repair.** The transform inserts the argument before
+Instructions[0], then inserts the observer call before the newly changed index 0.
+The emitted call therefore precedes its bank-name argument. Preserve the original
+entry anchor for both insertions. Exact control-flow inspection also exposes a
+second attribution bug: the selected TryGetValue false edge creates a new bank
+handle; it is not the existing-bank path. Place the already-loaded observer after
+the original true-path IncRef and before its optional callback check. Preserve
+original locking, callback forwarding, new-bank creation and native results.
+No synthetic native success is introduced.
+
+The production transform now verifies stack heights and exact observer/branch
+placement before accepting output. It rejects the frozen failed stripped method,
+a reversed argument/call mutant, and a wrong-edge result-observer mutant. Root
+review additionally corrects short-leave stack clearing, three-operand pops and
+extra values at return in that verifier. A public optional exact-editor test
+compiles the actual transform with six authored synthetic stack cases; no game
+method implementation or saved experiment input is included. The current API
+becomes `9a3f9911697b4ce28a955dff09f618e0f2662083e56eeb28ff5b6ecc02b588f3`;
+raw/adapted/observed API and composed game `1034a747…` stay unchanged. Update the
+request generator, bootstrap admission and producer pins deliberately.
+
+Recognize only the exact declared 793f2286 predecessor lineage or current lineage
+when upgrading an owned stage. Validate its complete output hashes, API/game pair,
+GUID ownership and native/bank cohort; unknown pairs or drift refuse. Ordinary
+restoration uses the actual validated preimage hashes. Current opt-in artifact
+bytes must match current API/game pins. Portable tests include an actual synthetic
+old-requested-to-new-requested transition and refusal paths. Ancestor R4 manifest
+metadata is now labelled as ancestry; each new artifact manifest records the
+current authored owner source hashes separately.
+
+**Host result and local evidence.** Thirty-two focused test methods pass with
+one optional SDK skip; the six stack cases run against current production source.
+The actual public requested producer/stager succeeds in the scratch project with
+164 owned rows and the new exact API pin; runtime acceptance remains false.
+Ruff passes. Preserve the failed request, result, coordinator logs, 139-file
+stripped closure, hashes and IL2CPP response file under
+`work/coordination/codex-original-game-audio-build-root/r2/`.
+Request identity is `20261021T014840.540946Z-379373f998e6400b8a7b5ad39d07fa19`.
+The frozen failed stripped API hashes to
+`2bcbd5e82f37726df21492e7dadce671b52d173dc95e599c54d9946305801126`.
+All 164 live staged outputs still match their receipt after the failed build.
+Transform/negative-control reports are
+`original-audio-async-bank-il-fix/r1/report.md` (SHA-256
+`788858348fa8e442047a8c026bae62c31fed2b1cfa821b40c74b687760d6057a`)
+and `r2/report.md` (SHA-256
+`ff2ac29a8a7eb116598bb3091f360406b2fd4b3927a04a7f0b640bd4e8b0b5a7`).
+The known-predecessor draft is `original-audio-predecessor-upgrade/r1/`;
+actual public scratch evidence is
+`codex-original-audio-host-stage-root/r1/async-il-fixed-stage.json`.
+
+**Limits and revisit.** APK hash is not applicable. This is a host-verified
+transform repair following a real failed build, not audio/runtime acceptance.
+Commit and sync before retrying the full player with matching symbols and
+same-request captures, then verify packaged banks/library before any installation.
+Both device checks, original bank readiness and composed audio remain open.
+Independent source review is GO in `original-audio-il-upgrade-review/r1/review.md`,
+SHA-256 `37ef80960a6a21c9e608bf0cfbc670964a74e043a568d76a3f4d62a4a9ba156d`;
+its private harness passes 20 focused contract tests and two real transform tests.
+R8/R9 support production must replay this authored transform/pin change. No alpha
+or spare action occurs in this experiment.

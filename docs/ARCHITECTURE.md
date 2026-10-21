@@ -527,7 +527,11 @@ identities and explicit inputs; cached generations revalidate that receipt.
 `original_game_audio_stage.py` checks exact assembly preimages, GUIDs and owned
 payloads before staging. Default-off restores the ordinary guarded assemblies
 and removes only prior receipt-owned audio payloads, preserving Unity metadata
-sidecars. The lower-level `original_game_audio.py` is host staging support;
+sidecars. J865 adds one exact predecessor lineage for receipt-verified upgrade
+or restoration; unknown module pairs still refuse. The managed transform checks
+bank-request stack/branch placement before accepting its output. Current owner
+source hashes and the historical ancestor manifest have separate artifact fields.
+The lower-level `original_game_audio.py` is host staging support;
 current Unity project mutation belongs to the mutex-protected build action.
 Use a full bundle build for the first audio candidate: code-only payload reuse
 retains its existing strict contract. J860 records host acceptance only;
