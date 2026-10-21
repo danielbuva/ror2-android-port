@@ -43,6 +43,7 @@ class EligibilitySnapshotTests(unittest.TestCase):
     def test_production_policy_fake_null_range_cone_unknown_and_budget(self):
         source = SOURCE.read_text()
         membership = declaration(source, "public struct SirenBullseyeMembershipEvidence")
+        window = declaration(source, "public struct SirenNullTargetWitnessWindow")
         policy = declaration(source, "public static class SirenTargetEligibilityWitnessPolicy")
         program = r"""
 namespace UnityEngine
@@ -130,7 +131,7 @@ public static class Program
     }
 }
 """
-        source_text = "using System;\nusing System.Collections.Generic;\nusing UnityEngine;\n" + membership + "\n" + policy + "\n" + program
+        source_text = "using System;\nusing System.Collections.Generic;\nusing UnityEngine;\n" + membership + "\n" + window + "\n" + policy + "\n" + program
         with tempfile.TemporaryDirectory(prefix="target-snapshot-", dir=SCRATCH) as td:
             temp = Path(td)
             cs, exe = temp / "SnapshotPolicy.cs", temp / "SnapshotPolicy.exe"

@@ -1,4 +1,4 @@
-"""Receipt-bound AddOutput/RemoveOutput observation after original audio staging.
+"""Receipt-bound original music native-return observation after audio staging.
 
 This transformation observes the exact source MusicController calls; it makes
 no Wwise calls and does not imply that an accepted output is audible.
@@ -25,7 +25,9 @@ RAW_GAME = "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc"
 ACCEPTED_INPUT_ID = "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88"
 GUARDED_GAME = "3124a2ed9cf458acee78b1beaf969590b184be452e2b3aa5a8852df82ff95d30"
 ACCEPTED_GAME = "a5f7d83c7e6872fdd6099fdc299adb7d4fa03cbf465e526d6f5efcc35c2c281d"
-OBSERVED_GAME = "27340ed60dbfe77f66fa394d028b597d3e4613ee8ea405416c061766fb226eef"
+LEGACY_OBSERVED_GAME = "27340ed60dbfe77f66fa394d028b597d3e4613ee8ea405416c061766fb226eef"
+NATIVE_RESULT_OBSERVED_GAME = "a6385e3166d3950944da8a08f145d7e9be602571a6a75b4afb18279801f44311"
+R10_API = "1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b"
 API_PROFILES = {
     "d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23",
     "1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b",
@@ -122,13 +124,12 @@ def stage(project: Path, work: Path, reference_directory: Path, profile: str) ->
         raise ValueError("previous music observer stage must be restored before replacement")
     audio, audio_receipt_sha = _receipt(project)
     lineage = _generation(project, audio, audio_receipt_sha)
-    expected_profile = (
-        "post-audio-r10-1ced-game-6f96"
-        if lineage["composed_api_sha256"] == "1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b"
-        else "post-audio-point-sound-6f96-api-d540"
-    )
+    expected_profile = "post-audio-r10-1ced-game-6f96"
     if profile != expected_profile:
         raise ValueError("observer transform resolver profile differs from exact audio API")
+    expected_output = NATIVE_RESULT_OBSERVED_GAME
+    if lineage["composed_api_sha256"] != R10_API:
+        raise ValueError("new music observer production result is qualified only for the exact 1ced API")
     camera_pins = json.loads((ROOT / "recipe/native-view-camera-transform.json").read_text(encoding="utf-8"))
     script = ROOT / camera_pins["source_paths"]["producer"]
     import importlib.util
@@ -189,7 +190,7 @@ def stage(project: Path, work: Path, reference_directory: Path, profile: str) ->
     snapshot = output_root / "RoR2.preimage.dll"
     output = output_root / "RoR2.music-output-observed.dll"
     if snapshot.exists() or output.exists():
-        if not snapshot.is_file() or not output.is_file() or sha(snapshot) != RAW_GAME or sha(output) != OBSERVED_GAME:
+        if not snapshot.is_file() or not output.is_file() or sha(snapshot) != RAW_GAME or sha(output) != expected_output:
             raise ValueError("cached observer generation is incomplete or differs from exact immutable hashes")
         transform_log = "reused exact content-addressed observer output"
     else:
@@ -198,7 +199,7 @@ def stage(project: Path, work: Path, reference_directory: Path, profile: str) ->
             raise ValueError("observer input snapshot failed its exact source hash")
         tool_root = output_root / "transform-tool"
         build = subprocess.run(
-            [str(dotnet), "build", str(TRANSFORM_PROJECT), "-p:CecilPath=" + str(cecil), "-o", str(tool_root)],
+            [str(dotnet), "build", str(TRANSFORM_PROJECT), "-p:UseSharedCompilation=false", "-p:CecilPath=" + str(cecil), "-o", str(tool_root)],
             text=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
@@ -221,10 +222,10 @@ def stage(project: Path, work: Path, reference_directory: Path, profile: str) ->
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         )
-        if run.returncode or not output.is_file() or sha(output) != OBSERVED_GAME:
+        if run.returncode or not output.is_file() or sha(output) != expected_output:
             raise RuntimeError("exact music observer transform failed: " + run.stdout)
         transform_log = run.stdout
-    _copy_verified(output, game, OBSERVED_GAME, RAW_GAME)
+    _copy_verified(output, game, expected_output, RAW_GAME)
     receipt = {
         "schema": SCHEMA,
         "accepted": False,
@@ -234,10 +235,10 @@ def stage(project: Path, work: Path, reference_directory: Path, profile: str) ->
         "api_sha256": lineage["composed_api_sha256"],
         "core_observer_sha256": core_hash,
         "input_sha256": RAW_GAME,
-        "output_sha256": OBSERVED_GAME,
+        "output_sha256": expected_output,
         "generation": generation_key,
         "preimage_snapshot": output_root.relative_to(work).as_posix() + "/RoR2.preimage.dll",
-        "limitations": "Only original AddOutput/RemoveOutput return values for the exact owned MusicController are observed; AK_Success does not prove audible music, spatial output, track selection, or completed playback.",
+        "limitations": "Original output, intro PostEvent and selected-track SetState returns are bounded observations; no return proves rendering, event completion, output activity or audibility.",
     }
     receipt_path.parent.mkdir(parents=True, exist_ok=True)
     temporary_receipt = receipt_path.with_name("." + receipt_path.name + ".tmp")
@@ -247,8 +248,8 @@ def stage(project: Path, work: Path, reference_directory: Path, profile: str) ->
         os.replace(temporary_receipt, receipt_path)
     except Exception:
         temporary_receipt.unlink(missing_ok=True)
-        if game.is_file() and sha(game) == OBSERVED_GAME:
-            _copy_verified(snapshot, game, RAW_GAME, OBSERVED_GAME)
+        if game.is_file() and sha(game) == expected_output:
+            _copy_verified(snapshot, game, RAW_GAME, expected_output)
         raise
     return {"receipt": receipt, "receipt_sha256": sha(receipt_path), "transform_log": transform_log}
 
@@ -287,10 +288,17 @@ def restore(project: Path, work: Path) -> dict | None:
         or lineage.get("composed_api_sha256") != receipt.get("api_sha256")
     ):
         raise ValueError("observer receipt is not bound to the exact live audio/API lineage")
-    if receipt.get("input_sha256") != RAW_GAME or receipt.get("output_sha256") != OBSERVED_GAME:
-        raise ValueError("observer receipt names an unknown input/output pair")
+    api_hash = receipt.get("api_sha256")
+    output_hash = receipt.get("output_sha256")
+    allowed_pairs = {
+        ("d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23", LEGACY_OBSERVED_GAME),
+        (R10_API, LEGACY_OBSERVED_GAME),  # exact historical R22 receipt remains unwindable
+        (R10_API, NATIVE_RESULT_OBSERVED_GAME),
+    }
+    if receipt.get("input_sha256") != RAW_GAME or (api_hash, output_hash) not in allowed_pairs:
+        raise ValueError("observer receipt names an unknown exact input/API/output pair")
     game = project / GAME
-    if sha(game) != OBSERVED_GAME:
+    if sha(game) != output_hash:
         raise ValueError("game module differs from the exact observer-owned stage")
     snapshot_rel = receipt.get("preimage_snapshot")
     if (
@@ -307,6 +315,6 @@ def restore(project: Path, work: Path) -> dict | None:
         raise ValueError("observer preimage snapshot is missing or changed")
     if sha(project / API) != receipt.get("api_sha256") or sha(project / CORE) != receipt.get("core_observer_sha256"):
         raise ValueError("observer restore API/core differs from its receipt-bound audio stage")
-    _copy_verified(snapshot, game, RAW_GAME, OBSERVED_GAME)
+    _copy_verified(snapshot, game, RAW_GAME, output_hash)
     path.unlink()
     return {"restored_sha256": RAW_GAME, "audio_stage_receipt_sha256": audio_receipt_sha}

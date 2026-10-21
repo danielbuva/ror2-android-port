@@ -178,6 +178,8 @@ def run(command: list[str], cwd: Path) -> str:
 
 
 def transform(profile: str, supplied_input: Path, resolution_dir: Path, output_path: Path, project: Path, audio_resolver_overlay: Path | None = None) -> dict:
+    if profile in {"post-audio-music-observer-6f96-api-d540", "post-audio-music-observer-r10-1ced"}:
+        raise RuntimeError("legacy 27340 camera profiles are restore-only")
     pins = json.loads(PINS_PATH.read_text())
     for role, expected in pins["source_sha256"].items():
         relative = pins["source_paths"][role]
@@ -185,6 +187,9 @@ def transform(profile: str, supplied_input: Path, resolution_dir: Path, output_p
         if not source.is_file() or sha256(source) != expected:
             raise RuntimeError("reviewed producer source drift: " + relative)
     input_path, input_hash = exact_input(profile, supplied_input, project, pins)
+    expected_output_pin = pins["profiles"][profile].get("output_sha256")
+    if not isinstance(expected_output_pin, str) or len(expected_output_pin) != 64:
+        raise RuntimeError("camera profile output hash is unmeasured; refusing transformation")
     editor_contents, tools = pinned_editor(pins)
     api_path = project / "Assets/LabLoadingScene/Plugins/AK.Wwise.Unity.API.dll"
     game_path = project / "Assets/LabLoadingScene/Plugins/RoR2.dll"
@@ -314,7 +319,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--profile",
-        choices=("default-game-3124", "post-audio-r4-1034-api-d540", "post-audio-music-observer-6f96-api-d540", "post-audio-music-observer-r10-1ced"),
+        choices=("default-game-3124", "post-audio-r4-1034-api-d540", "post-audio-native-music-results-r23-1ced"),
         required=True,
     )
     parser.add_argument("--input", type=Path, required=True)

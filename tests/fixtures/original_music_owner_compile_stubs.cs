@@ -160,18 +160,38 @@ public static class AkSoundEngine
     public static AKRESULT QueryResult = AKRESULT.AK_Success;
     public static bool ReturnUnexpectedType;
     public static bool ReturnNonFinite;
+    public static bool ThrowOnQuery;
+    public static AKRESULT[] QueryResults;
+    public static int[] QueryReturnedTypes;
+    public static float[] QueryValues;
     public static bool IsInitialized() => Initialized;
+    public static void ResetQueryControls()
+    {
+        QueryCalls = 0;
+        QueryResult = AKRESULT.AK_Success;
+        ReturnUnexpectedType = false;
+        ReturnNonFinite = false;
+        ThrowOnQuery = false;
+        QueryResults = null;
+        QueryReturnedTypes = null;
+        QueryValues = null;
+    }
     public static AKRESULT GetRTPCValue(string name, ulong gameObject, uint playingId, out float value, ref int valueType)
     {
         int i = QueryCalls++;
         if (i < QueryNames.Length) QueryNames[i] = name;
         LastGameObject = gameObject; LastPlayingId = playingId;
-        if (ReturnUnexpectedType) valueType = (int)AkQueryRTPCValue.RTPCValue_GameObject;
-        value = ReturnNonFinite ? float.NaN : (name == "Volume_Master" ? 100f : (name == "Volume_MSX" ? 80f : 65f));
-        return QueryResult;
+        if (ThrowOnQuery) throw new InvalidOperationException("fixture query failure");
+        if (QueryReturnedTypes != null && i < QueryReturnedTypes.Length) valueType = QueryReturnedTypes[i];
+        else if (ReturnUnexpectedType) valueType = (int)AkQueryRTPCValue.RTPCValue_GameObject;
+        if (QueryValues != null && i < QueryValues.Length) value = QueryValues[i];
+        else value = name == "Volume_Master" ? 100f : (name == "Volume_MSX" ? 80f : 65f);
+        if (ReturnNonFinite) value = float.NaN;
+        return QueryResults != null && i < QueryResults.Length ? QueryResults[i] : QueryResult;
     }
 }
-public enum AKRESULT { AK_Success = 1, AK_Fail = 2 }
+
+public enum AKRESULT { AK_Success = 1, AK_Fail = 2, AK_IDNotFound = 15 }
 public enum AkQueryRTPCValue { RTPCValue_Default, RTPCValue_Global, RTPCValue_GameObject, RTPCValue_PlayingID, RTPCValue_Unavailable }
 namespace RoR2.WwiseUtils { public struct RtpcSetter { public float value; } }
 public sealed class AkAudioListener : UnityEngine.Behaviour

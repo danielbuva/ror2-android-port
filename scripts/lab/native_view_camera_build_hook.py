@@ -33,7 +33,7 @@ STAGE_SCHEMA = "native-view-camera-project-stage-r1"
 AUDIO_SCHEMA = "original-game-audio-project-stage-r1"
 HASHES = {
     "accepted_input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
-    "r4_manifest_sha256": "55e376626717a7c0ab00fd52bede30addb41492c0b82e200f9669fa2112e1e0e",
+    "r4_manifest_sha256": "720dc2f876ef3afac701230a43ed0f9b47968a06ce8c355e1efc2d4b5cce4b3b",
     "stage_receipt_sha256": "8fe02400a7ab0905ae21b728e702d7ef2c4dcf8646f77f631682a81bda0ab88c",
     "ordinary_api": "107295e478a58ef295a83228111f375c536861bc9081f482d638c59899bf495c",
     "ordinary_game": "3124a2ed9cf458acee78b1beaf969590b184be452e2b3aa5a8852df82ff95d30",
@@ -43,7 +43,9 @@ HASHES = {
     "composed_game": "1034a747e31a3b79554b9cb06f941c7acabaa9e0ee82c2a00abc4b24f9327c1c",
     "point_sound_composed_game": "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc",
     "music_observed_game": "27340ed60dbfe77f66fa394d028b597d3e4613ee8ea405416c061766fb226eef",
+    "native_result_observed_game": "a6385e3166d3950944da8a08f145d7e9be602571a6a75b4afb18279801f44311",
     "music_camera_output": "4bd3b240ce5a9cb620d14ce4041f493ba013b9700d792dc9c99c8666f3af06f0",
+    "native_result_camera_output": "64628a52d443786d7920fc8d6b65215f32886cb3489bf5439c3efaed17e43ccf",
     "camera_default": "494ba9acd8ea34bed17ac56edb9a49eafa8cb5afd2f91466b95ca0d71ce3b8cd",
     "camera_default_previous_restore_only": "236fab2c616b1a017971c316437ec1a9fa9f6b3999563263d4a8ab689a1e59b6",
     "camera_after_audio": "83513fd59e81d84d093a1f9fb6d5eaaafb6382165f060dbd1b96b14990164aeb",
@@ -238,7 +240,11 @@ def _verify_stage_manifest_rows(stage: dict, manifest: dict, project: Path) -> N
         path = project / Path(*PurePosixPath(relative).parts)
         _reject_symlinks(path)
         if not path.is_file() or sha256(path) != expected:
-            if relative == GAME_RELATIVE.as_posix() and expected == HASHES["point_sound_composed_game"] and sha256(path) == HASHES["music_observed_game"]:
+            if (
+                relative == GAME_RELATIVE.as_posix()
+                and expected == HASHES["point_sound_composed_game"]
+                and sha256(path) in {HASHES["music_observed_game"], HASHES["native_result_observed_game"]}
+            ):
                 audio, receipt_sha = _audio_receipt(project)
                 _music_observer_receipt(project, receipt_sha, audio)
                 continue
@@ -282,6 +288,24 @@ def _music_observer_receipt(project: Path, audio_receipt_sha: str, audio: dict) 
     _reject_symlinks(path)
     receipt = json.loads(path.read_text(encoding="utf-8"))
     lineage = audio.get("lineage")
+    api_hash = receipt.get("api_sha256") if isinstance(receipt, dict) else None
+    output_hash = receipt.get("output_sha256") if isinstance(receipt, dict) else None
+    allowed_game_states = {
+        (HASHES["composed_api"], HASHES["music_observed_game"]): {
+            HASHES["music_observed_game"],
+            HASHES["music_camera_output"],
+            HASHES["camera_music_observer_delegate_previous_restore_only"],
+        },
+        (HASHES["pcm_composed_api"], HASHES["music_observed_game"]): {
+            HASHES["music_observed_game"],
+            HASHES["music_camera_output"],
+            HASHES["camera_music_observer_delegate_previous_restore_only"],
+        },
+        (HASHES["pcm_composed_api"], HASHES["native_result_observed_game"]): {
+            HASHES["native_result_observed_game"],
+            HASHES["native_result_camera_output"],
+        },
+    }
     if (
         not isinstance(receipt, dict)
         or receipt.get("schema") != "original-music-output-observer-stage-r1"
@@ -289,19 +313,14 @@ def _music_observer_receipt(project: Path, audio_receipt_sha: str, audio: dict) 
         or receipt.get("runtime_dispatch_ready") is not False
         or receipt.get("audio_stage_receipt_sha256") != audio_receipt_sha
         or receipt.get("input_sha256") != HASHES["point_sound_composed_game"]
-        or receipt.get("output_sha256") != HASHES["music_observed_game"]
+        or (api_hash, output_hash) not in allowed_game_states
         or not isinstance(lineage, dict)
         or lineage.get("composed_game_sha256") != HASHES["point_sound_composed_game"]
-        or receipt.get("api_sha256") != lineage.get("composed_api_sha256")
-        or receipt.get("api_sha256") not in {HASHES["composed_api"], HASHES["pcm_composed_api"]}
+        or api_hash != lineage.get("composed_api_sha256")
     ):
-        raise ValueError("music observer receipt is not bound to the exact preceding PointSound audio receipt")
-    if sha256(project / GAME_RELATIVE) not in {
-        HASHES["music_observed_game"],
-        HASHES["music_camera_output"],
-        HASHES["camera_music_observer_delegate_previous_restore_only"],
-    }:
-        raise ValueError("project game module differs from exact music-observer/camera output lineage")
+        raise ValueError("music observer receipt is not bound to the exact preceding PointSound audio/API/output tuple")
+    if sha256(project / GAME_RELATIVE) not in allowed_game_states[(api_hash, output_hash)]:
+        raise ValueError("project game module differs from the exact observer/API camera lineage")
     snapshot_rel = receipt.get("preimage_snapshot")
     if not isinstance(snapshot_rel, str) or "\\" in snapshot_rel or Path(snapshot_rel).is_absolute() or ".." in Path(snapshot_rel).parts:
         raise ValueError("music observer preimage path is malformed")
@@ -415,8 +434,11 @@ def select_profile(project: Path, audio_build_result: dict | None = None, *, res
         resolver_rows = _audio_resolver_sources(project, generation, manifest, audio)
     elif game_hash == HASHES["music_observed_game"] and api_hash in {HASHES["composed_api"], HASHES["pcm_composed_api"]}:
         _music_observer_receipt(project, receipt_sha, audio)
-        profile = "post-audio-music-observer-6f96-api-d540" if api_hash == HASHES["composed_api"] else "post-audio-music-observer-r10-1ced"
-        output_hash = HASHES["music_camera_output"]
+        raise ValueError("legacy 27340 music-observer camera pair is restore-only")
+    elif game_hash == HASHES["native_result_observed_game"] and api_hash == HASHES["pcm_composed_api"]:
+        _music_observer_receipt(project, receipt_sha, audio)
+        profile = "post-audio-native-music-results-r23-1ced"
+        output_hash = HASHES["native_result_camera_output"]
         resolver_rows = _audio_resolver_sources(project, generation, manifest, audio)
     else:
         raise ValueError("project API/RoR2 pair is not one of the exact reviewed camera profiles")
@@ -484,6 +506,10 @@ def restore_previous_camera(project: Path, work: Path) -> dict | None:
         (HASHES["point_sound_composed_game"], HASHES["pcm_composed_api"]): ("post-audio-r10-1ced-game-6f96", HASHES["camera_after_r10_1ced"]),
         (HASHES["music_observed_game"], HASHES["composed_api"]): ("post-audio-music-observer-6f96-api-d540", HASHES["music_camera_output"]),
         (HASHES["music_observed_game"], HASHES["pcm_composed_api"]): ("post-audio-music-observer-r10-1ced", HASHES["music_camera_output"]),
+        (HASHES["native_result_observed_game"], HASHES["pcm_composed_api"]): (
+            "post-audio-native-music-results-r23-1ced",
+            HASHES["native_result_camera_output"],
+        ),
     }
     profile_entry = camera_profiles.get((expected_input, receipt.get("api_sha256")))
     if profile_entry is None:
@@ -568,7 +594,7 @@ def restore_previous_camera(project: Path, work: Path) -> dict | None:
         if receipt.get("api_sha256") == HASHES["previous_composed_api_restore_only"]:
             if expected_input != HASHES["composed_game"] or audio.get("lineage", {}).get("composed_api_sha256") != HASHES["previous_composed_api_restore_only"]:
                 raise ValueError("predecessor camera receipt is not bound to exact 793 audio lineage")
-        elif expected_input == HASHES["music_observed_game"]:
+        elif expected_input in {HASHES["music_observed_game"], HASHES["native_result_observed_game"]}:
             _music_observer_receipt(project, audio_sha, audio)
             if (
                 audio.get("lineage", {}).get("composed_api_sha256") != expected_api
@@ -642,7 +668,7 @@ def stage_after_audio(project: Path, work: Path, audio_build_result: dict) -> di
     """Observe source output returns, then stage the camera guard after audio."""
     project, work = _canonical_project(project, work)
     initial = select_profile(project, audio_build_result)
-    if initial["profile"] in {"post-audio-point-sound-6f96-api-d540", "post-audio-r10-1ced-game-6f96"}:
+    if initial["profile"] == "post-audio-r10-1ced-game-6f96":
         from original_music_output_observer_build_hook import stage as stage_music_output_observer
 
         resolver_dir = ROOT / "work" / PurePosixPath(initial["resolver_set_directory"])
@@ -654,6 +680,8 @@ def stage_after_audio(project: Path, work: Path, audio_build_result: dict) -> di
     resolution_dir = ROOT / "work" / PurePosixPath(selection["resolver_set_directory"])
     resolution_dir, resolver_receipt = producer.exact_resolution_closure(resolution_dir, pins, selection["profile"], project, producer.pinned_editor(pins)[0])
     producer.pinned_editor(pins)
+    if not isinstance(selection.get("output_sha256"), str) or len(selection["output_sha256"]) != 64:
+        raise ValueError("camera profile output hash is an unmeasured placeholder; staging is disabled")
     input_path = project / pins["profiles"][selection["profile"]]["input_relative_path"]
     if sha256(input_path) != selection["input_sha256"]:
         raise ValueError("profile source file does not match the staged audio-owned DLL")

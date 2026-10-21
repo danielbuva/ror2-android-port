@@ -11,6 +11,9 @@ internal static class MusicOutputObserverCecilTransform
     private const string ExpectedInputSha = "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc";
     private const string ObserverTypeName = "OriginalOwnerProbeObserver.Observer";
     private const string ObserverAssemblyName = "OriginalOwnerProbeObserver";
+    private const int IntroPostEventSite = 1;
+    private const int TrackPlaySetStateSite = 2;
+    private const int TrackStopSetStateSite = 3;
 
     private static int Main(string[] args)
     {
@@ -20,7 +23,9 @@ internal static class MusicOutputObserverCecilTransform
             {
                 using var candidate = AssemblyDefinition.ReadAssembly(args[1]);
                 var music = FindType(candidate.MainModule, "RoR2.MusicController");
-                VerifyShape(candidate.MainModule, FindMethod(music, "Awake"), FindMethod(music, "OnDestroy"), args[2]);
+                var track = FindType(candidate.MainModule, "RoR2.MusicTrackDef");
+                VerifyShape(candidate.MainModule, FindMethod(music, "Awake"), FindMethod(music, "OnDestroy"),
+                    FindMethod(music, "StartIntroMusic"), FindMethod(track, "Play"), FindMethod(track, "Stop"), args[2]);
                 Console.WriteLine("Music output observer structural/stack shape passed");
                 return 0;
             }
@@ -30,9 +35,9 @@ internal static class MusicOutputObserverCecilTransform
                 Console.WriteLine("Music output observer structure, metadata, methods and exception tables passed");
                 return 0;
             }
-            if (args.Length < 5 || args[0] != "transform")
-                throw new InvalidOperationException("usage: transform <exact-6f96-RoR2.dll> <OriginalOwnerProbeObserver.dll> <explicit-reference-directory> <new-output.dll> | verify-shape <output.dll> <observer-assembly-name> | verify-output <exact-6f96-RoR2.dll> <candidate.dll> <observer-assembly-full-identity>");
-            Transform(args[1], args[2], args[3], args[4], args.Skip(5));
+            if (args.Length < 5 || (args[0] != "transform" && args[0] != "transform-fixture"))
+                throw new InvalidOperationException("usage: transform <exact-6f96-RoR2.dll> <OriginalOwnerProbeObserver.dll> <explicit-reference-directory> <new-output.dll> | transform-fixture <synthetic.dll> <OriginalOwnerProbeObserver.dll> <explicit-reference-directory> <new-output.dll> | verify-shape <output.dll> <observer-assembly-name> | verify-output <exact-6f96-RoR2.dll> <candidate.dll> <observer-assembly-full-identity>");
+            Transform(args[1], args[2], args[3], args[4], args.Skip(5), args[0] == "transform-fixture");
             return 0;
         }
         catch (Exception error)
@@ -42,9 +47,11 @@ internal static class MusicOutputObserverCecilTransform
         }
     }
 
-    internal static void Transform(string inputPath, string corePath, string referenceDirectory, string outputPath, IEnumerable<string> extraSearchDirectories)
+    internal static void Transform(string inputPath, string corePath, string referenceDirectory, string outputPath,
+        IEnumerable<string> extraSearchDirectories, bool syntheticFixture = false)
     {
-        Require(Hash(inputPath) == ExpectedInputSha, "music output observer requires the exact 6f96 composed game input");
+        Require(syntheticFixture || Hash(inputPath) == ExpectedInputSha,
+            "music output observer requires the exact 6f96 composed game input");
         Require(!String.Equals(Path.GetFullPath(inputPath), Path.GetFullPath(outputPath), StringComparison.Ordinal),
             "output must be a new file");
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(outputPath))!);
@@ -53,6 +60,8 @@ internal static class MusicOutputObserverCecilTransform
         var observerType = FindType(observer.MainModule, ObserverTypeName);
         var recordAdd = FindMethod(observerType, "RecordMusicAddOutputReturned", "System.Int32", "System.Object", "System.UInt64");
         var recordRemove = FindMethod(observerType, "RecordMusicRemoveOutputReturned", "System.Int32", "System.Object", "System.UInt64");
+        var recordIntro = FindMethod(observerType, "RecordMusicStartIntroPostEventReturned", "System.UInt32", "System.Object");
+        var recordSetState = FindMethod(observerType, "RecordMusicTrackSetStateReturned", "System.Int32", "System.Object", "System.Int32");
 
         using var resolver = new DefaultAssemblyResolver();
         resolver.AddSearchDirectory(Path.GetDirectoryName(Path.GetFullPath(inputPath))!);
@@ -65,13 +74,20 @@ internal static class MusicOutputObserverCecilTransform
         var moduleBefore = ModuleFingerprint(game.MainModule);
         var referencesBefore = game.MainModule.AssemblyReferences.Select(r => r.FullName).OrderBy(x => x, StringComparer.Ordinal).ToArray();
         var music = FindType(game.MainModule, "RoR2.MusicController");
+        var track = FindType(game.MainModule, "RoR2.MusicTrackDef");
         var awake = FindMethod(music, "Awake");
         var destroy = FindMethod(music, "OnDestroy");
+        var startIntro = FindMethod(music, "StartIntroMusic");
+        var play = FindMethod(track, "Play");
+        var stop = FindMethod(track, "Stop");
         Require(awake.ReturnType.FullName == "System.Void" && awake.Parameters.Count == 0 &&
                 destroy.ReturnType.FullName == "System.Void" && destroy.Parameters.Count == 0,
             "MusicController lifecycle signatures changed");
         VerifyAddSite(awake, out var addCall, out var addOutputLocal, out var musicOutputIdField);
         VerifyRemoveSite(destroy, out var removeCall, out var removeOutputIdField);
+        VerifyPostEventSite(startIntro, out var postEventCall);
+        VerifySetStateSite(play, out var playSetStateCall);
+        VerifySetStateSite(stop, out var stopSetStateCall);
         Require(musicOutputIdField.FullName == removeOutputIdField.FullName,
             "AddOutput success field and RemoveOutput argument differ");
 
@@ -95,11 +111,19 @@ internal static class MusicOutputObserverCecilTransform
             game.MainModule, observerAssemblyRef);
         var importedAdd = MakeObserverReference(game.MainModule, observerTypeRef, recordAdd);
         var importedRemove = MakeObserverReference(game.MainModule, observerTypeRef, recordRemove);
+        var importedIntro = MakeObserverReference(game.MainModule, observerTypeRef, recordIntro);
+        var importedSetState = MakeObserverReference(game.MainModule, observerTypeRef, recordSetState);
         InsertAddObserver(awake, addCall, addOutputLocal, importedAdd);
         InsertRemoveObserver(destroy, removeCall, removeOutputIdField, importedRemove);
+        InsertIntroObserver(startIntro, postEventCall, importedIntro);
+        InsertSetStateObserver(play, playSetStateCall, TrackPlaySetStateSite, importedSetState);
+        InsertSetStateObserver(stop, stopSetStateCall, TrackStopSetStateSite, importedSetState);
         game.Write(outputPath);
 
-        VerifyPair(inputPath, outputPath, observer.Name.FullName);
+        if (syntheticFixture)
+            VerifySyntheticPair(inputPath, outputPath, observer.Name.FullName);
+        else
+            VerifyPair(inputPath, outputPath, observer.Name.FullName);
         Console.WriteLine("MusicController AddOutput/RemoveOutput observer verified; output sha256=" + Hash(outputPath));
     }
 
@@ -118,10 +142,14 @@ internal static class MusicOutputObserverCecilTransform
         string moduleBefore, string[] referencesBefore, string observerAssemblyIdentity)
     {
         var music = FindType(result.MainModule, "RoR2.MusicController");
+        var track = FindType(result.MainModule, "RoR2.MusicTrackDef");
         var awake = FindMethod(music, "Awake");
         var destroy = FindMethod(music, "OnDestroy");
+        var startIntro = FindMethod(music, "StartIntroMusic");
+        var play = FindMethod(track, "Play");
+        var stop = FindMethod(track, "Stop");
         var observerAssemblyName = new AssemblyNameReference(observerAssemblyIdentity.Split(',')[0], new Version(0, 0, 0, 0));
-        VerifyShape(result.MainModule, awake, destroy, observerAssemblyName.Name);
+        VerifyShape(result.MainModule, awake, destroy, startIntro, play, stop, observerAssemblyName.Name);
         Require(ModuleFingerprint(result.MainModule) == moduleBefore,
             "module/type/member/layout/resource metadata changed outside the allowed observer reference and method-body edits");
         var expectedReferences = referencesBefore.Contains(observerAssemblyIdentity, StringComparer.Ordinal)
@@ -134,21 +162,14 @@ internal static class MusicOutputObserverCecilTransform
         Require(before.Count == after.Count, "method inventory changed");
         foreach (var pair in before)
         {
-            if (pair.Key == MethodKey(awake))
+            if (pair.Key == MethodKey(awake) || pair.Key == MethodKey(destroy) || pair.Key == MethodKey(startIntro) ||
+                pair.Key == MethodKey(play) || pair.Key == MethodKey(stop))
             {
                 var candidate = after[pair.Key];
                 Require(MethodFingerprintIgnoringObserver(candidate) == MethodFingerprintIgnoringObserver(pair.Value),
-                    "Awake metadata, IL or exception handlers changed outside the return-site observer sequence");
+                    "observed method metadata, IL or exception handlers changed outside exact observer sequences: " + pair.Key);
                 Require(candidate.Body.MaxStackSize == Math.Max(pair.Value.Body.MaxStackSize, 4),
-                    "Awake max stack changed outside the exact observer requirement");
-            }
-            else if (pair.Key == MethodKey(destroy))
-            {
-                var candidate = after[pair.Key];
-                Require(MethodFingerprintIgnoringObserver(candidate) == MethodFingerprintIgnoringObserver(pair.Value),
-                    "OnDestroy metadata, IL or exception handlers changed outside the return-site observer sequence");
-                Require(candidate.Body.MaxStackSize == Math.Max(pair.Value.Body.MaxStackSize, 4),
-                    "OnDestroy max stack changed outside the exact observer requirement");
+                    "observed method max stack changed outside exact observer requirement: " + pair.Key);
             }
             else
                 Require(after.TryGetValue(pair.Key, out var actual) && MethodFingerprint(actual) == MethodFingerprint(pair.Value),
@@ -160,18 +181,45 @@ internal static class MusicOutputObserverCecilTransform
 
     private static MethodReference MakeObserverReference(ModuleDefinition module, TypeReference declaringType, MethodDefinition source)
     {
+        Require(source.ReturnType.FullName == "System.Void", "observer callback return type changed");
         var method = new MethodReference(source.Name, module.TypeSystem.Void, declaringType) { HasThis = false };
-        method.Parameters.Add(new ParameterDefinition(module.TypeSystem.Int32));
-        method.Parameters.Add(new ParameterDefinition(module.TypeSystem.Object));
-        method.Parameters.Add(new ParameterDefinition(module.TypeSystem.UInt64));
+        foreach (var parameter in source.Parameters)
+        {
+            // These exact scalar signatures use the target's existing core
+            // library scope, even when a host fixture was built on modern .NET.
+            TypeReference type = parameter.ParameterType.FullName switch
+            {
+                "System.Int32" => module.TypeSystem.Int32,
+                "System.UInt32" => module.TypeSystem.UInt32,
+                "System.UInt64" => module.TypeSystem.UInt64,
+                "System.Object" => module.TypeSystem.Object,
+                _ => throw new InvalidOperationException("observer callback parameter type changed"),
+            };
+            method.Parameters.Add(new ParameterDefinition(type));
+        }
         return method;
     }
 
-    internal static void VerifyShape(ModuleDefinition module, MethodDefinition awake, MethodDefinition destroy, string coreAssemblyName)
+    private static void VerifySyntheticPair(string inputPath, string outputPath, string observerAssemblyIdentity)
+    {
+        using var baseline = AssemblyDefinition.ReadAssembly(inputPath);
+        using var result = AssemblyDefinition.ReadAssembly(outputPath);
+        var before = AllMethods(baseline.MainModule).ToDictionary(MethodKey, StringComparer.Ordinal);
+        VerifyOutput(result, before, ModuleFingerprint(baseline.MainModule),
+            baseline.MainModule.AssemblyReferences.Select(r => r.FullName).OrderBy(x => x, StringComparer.Ordinal).ToArray(),
+            observerAssemblyIdentity);
+    }
+
+    internal static void VerifyShape(ModuleDefinition module, MethodDefinition awake, MethodDefinition destroy,
+        MethodDefinition startIntro, MethodDefinition play, MethodDefinition stop, string coreAssemblyName)
     {
         VerifyAddObserver(awake);
         VerifyRemoveObserver(destroy);
-        Require(awake.Body.MaxStackSize >= 4 && destroy.Body.MaxStackSize >= 4,
+        VerifyIntroObserver(startIntro);
+        VerifySetStateObserver(play, TrackPlaySetStateSite);
+        VerifySetStateObserver(stop, TrackStopSetStateSite);
+        Require(awake.Body.MaxStackSize >= 4 && destroy.Body.MaxStackSize >= 4 && startIntro.Body.MaxStackSize >= 4 &&
+                play.Body.MaxStackSize >= 4 && stop.Body.MaxStackSize >= 4,
             "instrumented return-site stack maximum is too small");
         Require(module.AssemblyReferences.Count(r => r.Name == coreAssemblyName) == 1,
             "exact owner observer reference must remain unique");
@@ -209,6 +257,74 @@ internal static class MusicOutputObserverCecilTransform
                 call.Previous.Previous?.OpCode == OpCodes.Ldarg_0 && call.Next?.OpCode == OpCodes.Pop,
             "RemoveOutput must retain the original musicListenerId argument and discarded-result shape");
         outputField = (FieldReference)call.Previous.Operand;
+    }
+
+    private static void VerifyPostEventSite(MethodDefinition method, out Instruction call)
+    {
+        Require(method.ReturnType.FullName == "System.Void" && method.Parameters.Count == 0,
+            "MusicController.StartIntroMusic signature changed");
+        var calls = method.Body.Instructions.Where(i => IsCall(i, "AkSoundEngine", "PostEvent",
+            "System.UInt32", "System.String", "UnityEngine.GameObject")).ToArray();
+        Require(calls.Length == 1, "expected exactly one original StartIntroMusic PostEvent(string, GameObject) call");
+        call = calls[0];
+        Require(call.Next?.OpCode == OpCodes.Pop, "StartIntroMusic must continue to discard the original PostEvent result");
+    }
+
+    private static void VerifySetStateSite(MethodDefinition method, out Instruction call)
+    {
+        Require(method.ReturnType.FullName == "System.Void" && method.Parameters.Count == 0,
+            "MusicTrackDef Play/Stop signature changed");
+        var calls = method.Body.Instructions.Where(i => i.OpCode == OpCodes.Call && i.Operand is MethodReference mr &&
+            mr.DeclaringType.Name == "AkSoundEngine" && mr.Name == "SetState" && mr.ReturnType.Name == "AKRESULT" &&
+            mr.Parameters.Select(p => p.ParameterType.FullName).SequenceEqual(new[] { "System.UInt32", "System.UInt32" })).ToArray();
+        Require(calls.Length == 1, "expected exactly one original AkSoundEngine.SetState(uint,uint) call");
+        call = calls[0];
+        Require(call.Next?.OpCode == OpCodes.Pop, "MusicTrackDef must continue to discard the original SetState result");
+    }
+
+    private static void InsertIntroObserver(MethodDefinition method, Instruction call, MethodReference observer)
+    {
+        InsertAfter(method, call, new[] { method.Body.GetILProcessor().Create(OpCodes.Dup),
+            method.Body.GetILProcessor().Create(OpCodes.Ldarg_0), method.Body.GetILProcessor().Create(OpCodes.Call, observer) });
+        if (method.Body.MaxStackSize < 4) method.Body.MaxStackSize = 4;
+    }
+
+    private static void InsertSetStateObserver(MethodDefinition method, Instruction call, int site, MethodReference observer)
+    {
+        var il = method.Body.GetILProcessor();
+        InsertAfter(method, call, new[] { il.Create(OpCodes.Dup), il.Create(OpCodes.Ldarg_0),
+            il.Create(OpCodes.Ldc_I4, site), il.Create(OpCodes.Call, observer) });
+        if (method.Body.MaxStackSize < 4) method.Body.MaxStackSize = 4;
+    }
+
+    private static void VerifyIntroObserver(MethodDefinition method)
+    {
+        var call = method.Body.Instructions.Single(i => IsCall(i, "AkSoundEngine", "PostEvent"));
+        Require(IsCall(call, "AkSoundEngine", "PostEvent", "System.UInt32", "System.String", "UnityEngine.GameObject"),
+            "unexpected PostEvent overload at StartIntroMusic");
+        var seq = new[] { call.Next, call.Next?.Next, call.Next?.Next?.Next, call.Next?.Next?.Next?.Next };
+        Require(seq[0]?.OpCode == OpCodes.Dup && seq[1]?.OpCode == OpCodes.Ldarg_0 &&
+                IsObserverCall(seq[2], "RecordMusicStartIntroPostEventReturned") && seq[3]?.OpCode == OpCodes.Pop,
+            "PostEvent observer must preserve its uint return for the original pop");
+        Require(method.Body.Instructions.Count(i => IsCall(i, "AkSoundEngine", "PostEvent")) == 1,
+            "StartIntroMusic PostEvent call count changed");
+    }
+
+    private static void VerifySetStateObserver(MethodDefinition method, int site)
+    {
+        var call = method.Body.Instructions.Single(i => i.OpCode == OpCodes.Call && i.Operand is MethodReference mr &&
+            mr.DeclaringType.Name == "AkSoundEngine" && mr.Name == "SetState");
+        var seq = new[] { call.Next, call.Next?.Next, call.Next?.Next?.Next, call.Next?.Next?.Next?.Next,
+            call.Next?.Next?.Next?.Next?.Next };
+        Require(call.Operand is MethodReference called && called.ReturnType.Name == "AKRESULT" &&
+                called.Parameters.Select(p => p.ParameterType.FullName).SequenceEqual(new[] { "System.UInt32", "System.UInt32" }) &&
+                seq[0]?.OpCode == OpCodes.Dup && seq[1]?.OpCode == OpCodes.Ldarg_0 &&
+                seq[2]?.OpCode == OpCodes.Ldc_I4 && Convert.ToInt32(seq[2].Operand) == site &&
+                IsObserverCall(seq[3], "RecordMusicTrackSetStateReturned") && seq[4]?.OpCode == OpCodes.Pop,
+            "SetState observer must preserve exact AKRESULT for the original pop and expected site");
+        Require(method.Body.Instructions.Count(i => i.OpCode == OpCodes.Call && i.Operand is MethodReference mr &&
+            mr.DeclaringType.Name == "AkSoundEngine" && mr.Name == "SetState") == 1,
+            "MusicTrackDef SetState call count changed");
     }
 
     private static void InsertAddObserver(MethodDefinition method, Instruction call, VariableDefinition outputId, MethodReference observer)
@@ -284,11 +400,14 @@ internal static class MusicOutputObserverCecilTransform
     private static string MethodFingerprintIgnoringObserver(MethodDefinition method)
     {
         var removed = new HashSet<Instruction>();
-        foreach (var call in method.Body.Instructions.Where(i => IsObserverCall(i, "RecordMusicAddOutputReturned") ||
-                     IsObserverCall(i, "RecordMusicRemoveOutputReturned")))
+        var observerNames = new[] { "RecordMusicAddOutputReturned", "RecordMusicRemoveOutputReturned",
+            "RecordMusicStartIntroPostEventReturned", "RecordMusicTrackSetStateReturned" };
+        foreach (var call in method.Body.Instructions.Where(i => observerNames.Any(name => IsObserverCall(i, name))))
         {
             removed.Add(call);
-            int preceding = ((MethodReference)call.Operand).Name == "RecordMusicAddOutputReturned" ? 3 : 5;
+            int preceding = ((MethodReference)call.Operand).Name == "RecordMusicRemoveOutputReturned" ? 5 :
+                ((MethodReference)call.Operand).Name == "RecordMusicAddOutputReturned" ? 3 :
+                ((MethodReference)call.Operand).Name == "RecordMusicStartIntroPostEventReturned" ? 2 : 3;
             var cursor = call.Previous;
             for (int i = 0; i < preceding; i++)
             {
@@ -406,10 +525,20 @@ internal static class MusicOutputObserverCecilTransform
         AllTypes(module.Types).Single(t => t.FullName == name);
     private static MethodDefinition FindMethod(TypeDefinition type, string name, params string[] parameters) =>
         type.Methods.Single(m => m.Name == name && m.Parameters.Select(p => p.ParameterType.FullName).SequenceEqual(parameters));
-    private static bool IsObserverCall(Instruction? instruction, string name) =>
-        instruction?.Operand is MethodReference mr && mr.DeclaringType.FullName == ObserverTypeName &&
-        mr.Name == name && mr.ReturnType.FullName == "System.Void" && !mr.HasThis &&
-        mr.Parameters.Select(p => p.ParameterType.FullName).SequenceEqual(new[] { "System.Int32", "System.Object", "System.UInt64" });
+    private static bool IsObserverCall(Instruction? instruction, string name)
+    {
+        if (!(instruction?.Operand is MethodReference mr) || mr.DeclaringType.FullName != ObserverTypeName ||
+            mr.Name != name || mr.ReturnType.FullName != "System.Void" || mr.HasThis)
+            return false;
+        string[] expected = name switch {
+            "RecordMusicAddOutputReturned" or "RecordMusicRemoveOutputReturned" =>
+                new[] { "System.Int32", "System.Object", "System.UInt64" },
+            "RecordMusicStartIntroPostEventReturned" => new[] { "System.UInt32", "System.Object" },
+            "RecordMusicTrackSetStateReturned" => new[] { "System.Int32", "System.Object", "System.Int32" },
+            _ => Array.Empty<string>()
+        };
+        return expected.Length > 0 && mr.Parameters.Select(p => p.ParameterType.FullName).SequenceEqual(expected);
+    }
     private static bool IsCall(Instruction instruction, string declaring, string name, params string[] signature) =>
         (instruction.OpCode == OpCodes.Call || instruction.OpCode == OpCodes.Callvirt) &&
         instruction.Operand is MethodReference mr && mr.DeclaringType.Name == declaring && mr.Name == name &&

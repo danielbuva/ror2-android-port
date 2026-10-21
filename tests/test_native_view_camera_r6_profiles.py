@@ -48,6 +48,11 @@ EXPECTED = {
         "output": "4bd3b240ce5a9cb620d14ce4041f493ba013b9700d792dc9c99c8666f3af06f0",
     },
 }
+EXPECTED["post-audio-native-music-results-r23-1ced"] = {
+    "input": "a6385e3166d3950944da8a08f145d7e9be602571a6a75b4afb18279801f44311",
+    "api": "1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b",
+    "output": "64628a52d443786d7920fc8d6b65215f32886cb3489bf5439c3efaed17e43ccf",
+}
 RESTORE_ONLY = {
     ("default-game-3124", "d5fc522e83cb6f6f6845b2a8b7e5de28011031fe2f3b54c0716c52db9679c65c"),
     ("post-audio-r4-1034-api-d540", "e4aeeb5acb7b81922a0a6603d01c1d407c57e9b00852b5e15ef70838e1961e5b"),
@@ -99,6 +104,7 @@ class NativeViewCameraR6ProfileTests(unittest.TestCase):
                     "post-audio-r10-1ced-game-6f96": "camera_after_r10_1ced",
                     "post-audio-music-observer-6f96-api-d540": "music_camera_output",
                     "post-audio-music-observer-r10-1ced": "music_camera_output",
+                    "post-audio-native-music-results-r23-1ced": "native_result_camera_output",
                 }[name]
                 self.assertEqual(hook.HASHES[output_key], want["output"])
                 self.assertEqual(resolver["api_sha256"], want["api"])

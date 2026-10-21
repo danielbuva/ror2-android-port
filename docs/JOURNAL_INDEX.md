@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J928](PORTING_JOURNAL.md#j928--preserve-original-music-call-results-and-resolved-rtpc-observations) | 2026-10-21 | Preserve original music call results and resolved RTPC observations | Date: 2026-10-21. |
 | [J929](PORTING_JOURNAL.md#j929--test-the-authored-app-host-refusal-at-target-sdk-33) | 2026-10-21 | Test the authored app-host refusal at target SDK 33 | 2026-10-21. |
 | [J927](PORTING_JOURNAL.md#j927--qualify-r22-camera-lifecycle-and-preserve-the-premature-render-capture) | 2026-10-21 | Qualify R22 camera lifecycle and preserve the premature render capture | Date: 2026-10-21. |
 | [J926](PORTING_JOURNAL.md#j926--build-r22-and-observe-selected-music-context-through-both-standard-checks) | 2026-10-21 | Build R22 and observe selected music context through both standard checks | Date: 2026-10-21. |

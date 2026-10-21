@@ -142,7 +142,7 @@ public static class AkSoundEngine
     { value = 0f; return AKRESULT.AK_Success; }
 }
 public enum AKRESULT { AK_Success = 1 }
-public enum AkQueryRTPCValue { RTPCValue_GameObject = 0, RTPCValue_Global = 1 }
+public enum AkQueryRTPCValue { RTPCValue_Default = 0, RTPCValue_Global = 1, RTPCValue_GameObject = 2, RTPCValue_PlayingID = 3, RTPCValue_Unavailable = 4 }
 public sealed class AkAudioListener : UnityEngine.Behaviour
 {
     public bool isDefaultListener;

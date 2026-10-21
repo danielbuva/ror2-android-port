@@ -6,6 +6,21 @@ namespace OriginalOwnerProbeObserver
     // All callbacks are observational except the pre-Init latch, which fails closed.
     public static class Observer
     {
+        public static bool IsExactOwnedSource(object source, object expected)
+        {
+            return source != null && expected != null && Object.ReferenceEquals(source, expected);
+        }
+
+        public static bool IsExactSelectedTrackSource(bool contextKnown, object source, object currentTrack)
+        {
+            return contextKnown && IsExactOwnedSource(source, currentTrack);
+        }
+
+        public static int IncrementBoundedCount(int value)
+        {
+            return value >= 1000000 ? 1000000 : (value < 0 ? 0 : value + 1);
+        }
+
         public static Action<int> InitReturned;
         public static Action<int> InitializeMethodReturned;
         public static Action BeforeEngineInit;
@@ -24,6 +39,8 @@ namespace OriginalOwnerProbeObserver
         // scalar results; no Wwise call is made here.
         public static Action<int, object, ulong> MusicAddOutputReturned;
         public static Action<int, object, ulong> MusicRemoveOutputReturned;
+        public static Action<uint, object> MusicStartIntroPostEventReturned;
+        public static Action<int, object, int> MusicTrackSetStateReturned;
 
         public static void RecordBeforeEngineInit()
         {
@@ -76,6 +93,22 @@ namespace OriginalOwnerProbeObserver
         public static void RecordMusicRemoveOutputReturned(int result, object sourceOwner, ulong outputId)
         {
             try { MusicRemoveOutputReturned?.Invoke(result, sourceOwner, outputId); }
+            catch { }
+        }
+
+        // These are post-return observation hooks for the original discarded
+        // values. Their callers leave the original value on the IL stack.
+        public static void RecordMusicStartIntroPostEventReturned(uint playingId, object sourceOwner)
+        {
+            try { MusicStartIntroPostEventReturned?.Invoke(playingId, sourceOwner); }
+            catch { }
+        }
+
+        // AKRESULT is an Int32-backed enum in the accepted API metadata. The
+        // observer receives its unchanged stack representation as an int.
+        public static void RecordMusicTrackSetStateReturned(int result, object sourceTrack, int site)
+        {
+            try { MusicTrackSetStateReturned?.Invoke(result, sourceTrack, site); }
             catch { }
         }
 

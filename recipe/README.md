@@ -1591,3 +1591,16 @@ and the existing portable compile suite checks the regression. Owner cohort,
 producer and camera pins refresh together. No protected implementation, game
 asset, middleware binary, private path or identifier is added. Runtime source
 regeneration is required; this audit does not qualify a player or playback.
+
+
+## Original music native-return and resolved-value audit (J928, 2026-10-21)
+
+Refresh the authored owner cohort, observer transform, camera admission and
+producer pins together. The current exact 1ced API path is 6f96 → a638 → 64628;
+older observer/camera outputs remain receipt-bound restoration inputs. Public
+changes contain authored scalar observers, signatures, tests, hashes and pipeline
+relationships required to reproduce the transformation from legitimate input.
+No original method implementation, decompiled source, game/SDK binary, bank,
+private device identity or raw report is published. The observer does not replay
+native calls or replace their outcomes. Rebuild staging must replay these sources;
+host qualification does not establish a player, playback or audibility.

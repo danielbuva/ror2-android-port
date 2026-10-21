@@ -111,6 +111,7 @@ class NativeViewCameraIntegrationTests(unittest.TestCase):
             music_profiles = {
                 "post-audio-music-observer-6f96-api-d540",
                 "post-audio-music-observer-r10-1ced",
+                "post-audio-native-music-results-r23-1ced",
             }
             music_receipt_required = camera.get("profile") in music_profiles
             if music_receipt.is_file():

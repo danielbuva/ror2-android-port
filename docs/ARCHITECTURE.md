@@ -894,10 +894,12 @@ track availability, teleporter gate, source parameter values and exact managed
 listener membership at 0.5 s intervals. It reports a branch candidate separately
 from the observed track; a source hook can change selection. At 1 s intervals,
 while the existing engine reports initialized, it makes three read-only global
-RTPC queries for master, music and parent music volume. Only successful finite
-results with global scope are observed values. These are source/query values,
-not effective gain or playback. Optional binding/sample exceptions clear known
-flags and cannot refuse the source owner. A throttled native query keeps its
+RTPC queries for master, music and parent music volume. Existing value fields
+require successful finite results with global scope. A separate resolved-value
+pair accepts successful finite Default, Global, GameObject or PlayingID scope,
+retaining the returned scope; unavailable, unknown and failed values stay
+unobserved. These are source/query values, not effective gain or playback.
+Optional binding/sample exceptions clear known flags and cannot refuse the source owner. A throttled native query keeps its
 own timestamp; failed samples and missing controllers invalidate stale values.
 `CaptureSnapshot` also invalidates a missing controller before returning, so
 same-frame destruction cannot leave a live-context claim. It never samples or
@@ -929,14 +931,22 @@ unqualified. The existing original-audio request defaults off. A synchronous
 AddOutput success means queued acceptance; native activation and playback are
 separate device gates.
 
-The optional source-output observer samples the result of the existing
-MusicController `AddOutput` and `RemoveOutput` calls after they return. A separate
-Cecil transform preserves the original call count, arguments, return and exception
-flow, while the owned session records only exact-instance scalar results. Its
-receipt follows the audio stage; the camera transform consumes its exact 27340
-intermediate only under d540 or 1ced. This observation is not playback or
-audibility evidence. The host music-owner compile fixture compiles the actual
-owner, contract and observer against authored API-shape declarations and rejects
+The optional source-call observer samples the original MusicController
+`AddOutput`, `RemoveOutput` and intro `PostEvent` returns, plus the original
+selected MusicTrackDef `Play`/`Stop` state-call returns. Its Cecil transform
+preserves native arguments, call count, return consumption and exception flow.
+The named music owner joins exact controller/selected-track object identities,
+clears temporary instantiation references, and retains bounded cumulative counts
+plus the latest scalar per site. Missing callbacks and unknown identity stay
+unproven. Exact delegates retire with the existing owner teardown. These returns
+do not prove event completion, rendering, output activity or audibility.
+
+The receipt follows audio staging: current API 1ced uses the measured
+6f96 → a638 observer → 64628 camera chain. The old 27340 → 4bd3 camera chain,
+and its older a205 camera output, remain receipt-bound restoration inputs only.
+New staging refuses unknown API/output pairs and mixed observer/camera generations
+before changing the project. The raw d540 camera path skips the new observer.
+The host music-owner compile fixture compiles the actual owner, contract and observer against authored API-shape declarations and rejects
 a static-class-as-value mutant; it does not model Unity lifecycle execution.
 
 The completed passive PCM window exposes the callback's full unsigned output ID

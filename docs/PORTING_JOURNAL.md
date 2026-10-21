@@ -25906,3 +25906,108 @@ and the desktop fallback remain authoritative.
 The same four changed executable/manifest inputs are byte-identical after
 rebasing onto Main J927 `1fb3bd5`; the source checkpoint is now `1458857`.
 The actual device receipts retain their original committed source identities.
+
+
+## J928 — Preserve original music call results and resolved RTPC observations
+
+Date: 2026-10-21. Hypothesis: J926's selected original tracks and zero PCM still
+leave two concrete unknowns: the original intro/state native returns, and the
+finite value returned when a global query resolves to Default scope. Observe
+these facts before changing source dispatch or treating a cleared placeholder
+as muted volume. Revisit J904's post-return observer and J923/J926's bounded
+context contracts. Pinned R2API.Sound SoundAPI.cs at
+f539511eabf87f02afddb5a83cafd2f4704c85ad separates initialized middleware and
+bank/native results from managed registration; it supplies no Android playback
+implementation. The accepted local 6f96 game and 1ced API signatures/enum metadata
+are the authority. No original, SDK or community implementation is copied.
+
+**Change and ownership.** Extend the existing authored Cecil observer in one
+producer pass. It duplicates only the original discarded returns at the single
+intro PostEvent call site and each selected-track Play/Stop SetState site, then
+continues the original return consumption. It preserves arguments, native call
+counts, branches, exception tables and unrelated methods. Native exceptions do
+not manufacture a return observation. Callback exceptions are contained.
+PortSessionOriginalMusicControllerOwner installs and retires exact delegates,
+joins controller/selected-track references, clears synchronous instantiation
+references, and stores bounded counts plus the latest raw scalar per site.
+An intro playing ID, including known zero, is separate from unknown; a raw state
+result is not event completion, rendering or audibility.
+
+The same named owner adds resolvedValueObserved/resolvedValue beside the existing
+global-only fields. Only native success, a finite float and a known returned
+Default/Global/GameObject/PlayingID scope admit that pair. The original Global
+request, three names, native call count and cadence remain unchanged. Failure,
+unknown scope, non-finite values and owner loss clear observations; report capture
+makes no native query. Default scope is never renamed global or effective gain.
+Default-off behavior, native output ownership and the original startup trigger
+remain unchanged.
+
+**Exact host qualification.** Preserve Root's immutable attempts under
+`work/coordination/original-music-native-result-root/`. R1 compiles the authored
+observer with pinned Unity Roslyn and transforms exact 6f96 with 333 rehashed
+R22 linker-input references. The actual observer is e988dc39 and transformed
+game a6385e31. The normalized whole-module verifier passes. R3 applies the exact
+camera transform with API 1ced, producing 64628a52, then passes the existing
+camera verifier: 5,094 original types, only the two established guarded camera
+methods changed, and unrelated bodies unchanged. These are transformation
+contracts, not a complete player closure. Full output hashes are pinned in the
+recipes and private qualification JSON; no guessed hash is admitted.
+
+Preserve failed host preparations: the installed Cecil reference produced
+CS0006 before transform output despite being separately readable; a rehashed
+local copy with shared compilation disabled compiled. An initial helper command
+used the full NetStandard reference and refused duplicate System.Action;
+repeating the canonical producer's Mono facade command passes. No editor,
+SDK configuration, cache purge or device mutation resolves those preparations.
+A later optional actual-game test catches an imported System.Runtime reference
+from the modern host fixture. Map only the exact scalar signatures to the target
+module's existing core-library types; preserve the strict reference verifier.
+That actual-input suite then passes all four tests with output a6385e31. Raise
+the injected intro minimum stack to four to match the existing verifier.
+
+**Pipeline and review.** Advance the current owner recipe with its previous
+55e37662 cohort as parent. The current cohort is 720dc2f8; historical J904 R5
+manifest/patch/rows remain immutable provenance, not current source hashes.
+Refresh producer, transform and camera pins together. Select the new exact
+1ced profile for a638 → 64628. The older 27340 → 4bd3 and a205 paths are strictly
+receipt-bound restoration inputs. Root rejects the first stage draft because
+it excluded historical 1ced/27340 restoration and mixed old/new camera receipts.
+R2 admits only the three exact observer API/output tuples and checks the matching
+camera generation before any unwind write. Distinct synthetic payloads prove
+old/new restoration and cross-generation refusal with unchanged game bytes.
+The ordinary guarded path and existing historical restoration gates remain.
+
+Independent combined-owner review is
+`work/coordination/original-music-combined-review/r1/review.md`, SHA-256
+f3737a46bd943eed74800cfbd498f36010343bfb03ecbcedae481f2cd9e1db61.
+It approves source-only integration. The portable fixtures compile tracked owner,
+contract and observer: four native-result tests and four owner tests, including
+54 context/RTPC assertions, retain the J925 obsolete-name mutant and J923
+same-frame report invalidation checks. Target-capture compilation also passes.
+Five generation contracts and 41 camera tests pass, with three honest unavailable
+fixture skips. Full local validation passes 1,602 tests with nine unavailable
+fixture skips. Its first run found an existing eligibility fixture missing the
+production SirenNullTargetWitnessWindow dependency; add that authored struct to
+the extracted fixture and all three focused tests pass before the full rerun.
+No Siren runtime behavior changes with that fixture repair.
+
+The independent pipeline review first holds a d540 staging regression. Preserve
+the qualified raw d540 camera path by invoking the new observer only for 1ced;
+a production-function regression checks d540, 1ced and ordinary dispatch. The
+actual legacy R22 camera-then-observer restore also passes on a temporary copy.
+Final scoped review is
+`work/coordination/original-music-pipeline-review/r2/review.md`, SHA-256
+4f67d11e164e1683e0b4e7459c93c6978770adc3f93e2237c5af69a8fd4a80f9.
+R4 requalifies the final target-core-library signature mapping with the actual
+Unity-compiled observer and installed pinned Cecil: output remains a6385e31 and
+the complete structural verifier passes. The stage compile disables compiler
+server reuse; it neither stops a shared server nor changes the installed tools.
+Ruff and the recipe/source-pin contracts pass.
+
+**Limits and next gate.** Main still has J926/J927 R22 ac1d2176; its independent
+post-Commando installed-byte/placement/idle query passes. No APK is built from
+this source yet. Original PCM remains all zero and playback is unqualified.
+The next candidate must pass its full build, same-request post-strip contracts,
+both standard device modes and a separately selected route. Rebuild steps that
+stage these authored sources and recipes must be replayed; generated assemblies,
+requests, native middleware, banks and raw evidence stay ignored.

@@ -95,7 +95,7 @@ class OriginalMusicOwnerStaticObserverCompileTests(unittest.TestCase):
             self.assertTrue(executable.is_file())
             ran = subprocess.run([str(MONO), str(executable)], cwd=temp, capture_output=True, text=True, check=False)
             self.assertEqual(ran.returncode, 0, ran.stdout + ran.stderr)
-            self.assertIn("PASS: 42 music-context and read-only RTPC assertions", ran.stdout)
+            self.assertIn("PASS: 54 music-context and read-only RTPC assertions", ran.stdout)
 
     def test_obsolete_track_name_regression_is_rejected_by_compiler(self) -> None:
         source = OWNER.read_text(encoding="utf-8")
