@@ -66,6 +66,19 @@ no cache, scene-root or game-build consumer is selected.
 The bounded Android shell qualification is recorded in
 [J876](../../docs/PORTING_JOURNAL.md#j876--decode-native-sdk-type-flags-on-android).
 
+Current experimental population investigation: `phone_wrapper_population.py`
+exposes an internal reconstruction API only; standalone input binding and phone
+execution remain unqualified. It separates direct names, forward inheritance and
+reverse registrations. The separate desktop verification command is
+`python3 scripts/lab/phone_wrapper_population_oracle.py ROOT WORK EXACT_EDITOR`.
+Use explicit absolute paths for this checkout, its ignored work directory and
+the pinned editor. It creates a new SDK-only project, requires committed sources,
+and takes the existing primary build mutex with a 1-second contention timeout.
+It queries abstract and concrete Object descendants, excludes the native root
+and nonobject IDs, and retains receipts/logs even on failure. It builds no player
+and never reuses or stops an MCP editor. Its output is verification only, never
+an input to phone preparation or a game build.
+
 ```sh
 ./dev prototype --action phone-content-fixture
 ./dev prototype --action phone-content-check --target <generated-project>

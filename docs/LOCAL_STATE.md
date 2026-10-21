@@ -277,6 +277,14 @@ explicit prior inventory/registry/oracle selectors for comparison only; cache
 population remains unqualified. The versioned proof binds those prerequisite
 inputs and retains the earlier core-only receipt.
 
+Current population investigation retains explicit `wrapper-population-*`
+observations under `work/coordination/phone-proof`: bounded owner-SDK inspection,
+prototype output and first failures. These are private experiment evidence, not
+build inputs. `phone_wrapper_population_oracle.py` generates fresh
+`work/rebuild/phone-wrapper-population/<owned-attempt>/` SDK-only projects,
+inputs, logs, reports and receipts from committed authored sources. The explicit
+attempt receipt selects comparison data; no consumer embeds a timestamped path.
+
 `phone_registry.inspect_action` generates
 `work/experiments/phone-registry/<attempt>/` from an explicit JSON request with
 one absolute `binary` path. Only the pinned supplied Unity SDK executable is

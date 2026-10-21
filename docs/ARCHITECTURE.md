@@ -181,6 +181,20 @@ the isolated batch process exiting, retaining logs and failed attempts. Neither
 MCP editor is reused or stopped. Its private SDK observations are comparison
 oracles, never phone-build/linker inputs, project scene roots or game behavior.
 
+`phone_wrapper_population.py` owns the current experimental cache reconstruction
+API. It decodes extra-registration operands from owner SDK data, uses the scoped
+managed metadata universe and keeps direct names, inherited forward entries and
+reverse registrations distinct. Its standalone input binding and phone replay
+are not yet qualified; no game or linker consumer reads it.
+`phone_wrapper_population_oracle.py` and `WrapperPopulationOracle.cs` own a
+separate SDK-only desktop check. The explicit root/work/editor invocation stages
+a fresh project using the guarded directory writer and runs under the existing
+primary mutex. Committed sources, project inputs, SDK bytes and loaded assembly
+hashes are checked. It adds abstract Object-descendant queries to the earlier
+validated collector while retaining root/nonobject exclusions. Reflection-only
+API discovery invokes no candidate method. Teardown is the isolated batch exit;
+logs and failures remain local. Neither MCP editor nor a game project is reused.
+
 `phone_registry.py` and `phone_registry_literals.py` own separate experimental
 static SDK metadata support.
 The current `phone-native-registry` action accepts an explicit owner binary,
