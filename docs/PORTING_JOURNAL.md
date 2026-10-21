@@ -21604,3 +21604,68 @@ managed game compilation, content/shaders, permitted SDK/tool acquisition,
 normal app hosting, installation/key custody and matched-workload performance
 remain separate gates. Revisit on SDK/symbol/ABI/string-layout/search-schema or
 source drift; keep the working build and desktop fallback.
+
+## J871 — Reject whole-recording signal as proof of original event playback capture
+
+Date: 2026-10-20.
+
+Hypothesis: an unchanged J845 named-event fixture, observed concurrently with
+Android playback-duplicate capture, can distinguish a generally broken recorder
+from J868's zero gameplay recording. The fixture is a necessary control, not
+another gameplay substitute. It uses the already qualified APK
+`d78912a4914c692577d7410cf713567dded3d9a3e4a5825d50394c640b0c7cb8`;
+no Unity build or fixture-source change occurs. J845's managed/native contract
+and the pinned R2API.Sound initialization/bank-lifetime prior art remain the
+applicable knowledge; neither establishes Android loopback capture policy.
+
+Change and evidence: Root creates a fresh one-shot selection for the existing
+fixture and installed diagnostic c077ed2a, independently pins its build closure
+and current game ownership, and runs only the positive named event. The
+canonical runner retains fresh adopted-storage/capacity, package-absence,
+placement, installed-hash and owned-cleanup gates. The host capture starts
+before fixture launch. Initial attempts refuse before fixture installation: a
+normal Homebrew executable symlink, buffered stdout readiness and Root's omitted
+Android environment setup are preserved. Root resolves/verifies the executable,
+uses a host PTY to drain real readiness messages, and sources the pinned
+environment for the fresh successful fixture attempt. A local buffered-child
+test checks PTY readiness/finalization without a device.
+
+The player reports the exact named pickup event, resolved ID 3141848185,
+PlayingID 1, one EndOfEvent, finite nonzero native PCM, returned engine/callback
+Terms and monitor disarm. Callback accounting is 80,640 finite sample values,
+66,806 nonzero. The separately saved native WAV has 35,712 stereo frames at
+48 kHz, 60,306 nonzero sample values, peak 8,710 and RMS about 1,150.7. These
+are different artifacts/counters, not one sample-aligned recording. Raw player
+report SHA-256: `1883272dfcb744159f264852a18c7db6572d77fa38051e32a6cf580b4864313d`.
+
+First failure: the wrapper's broad positive predicate accepts any nonzero
+Android playback sample in the whole recording. Its preserved result says
+passed, but Root's timing audit rejects that as an event-output control. The
+48 kHz stereo PCM16 playback WAV lasts 48.939 s and contains signal overall
+(peak 8,187; RMS about 788.5), yet seconds 21–45 are exactly zero. Available
+file/log timing places fixture audio-open/completion well inside that silence.
+The nonzero sections before/after cannot be attributed to the named event.
+There is no shared sample-time/event-onset receipt, so neither acoustic
+audibility nor a precise capture-policy cause is established.
+
+Playback WAV SHA-256:
+`249f9a881ff4cb35a799b1f66aecd20f7449e82fd2b86672c7f5164aa53bf1a2`.
+The full result is preserved under
+`work/coordination/codex-original-audio-playback-control-root/r4/`;
+Root's separate qualification SHA-256 is
+`6bb63538a5bf3c86ac8306ade20aa372308833588a4485a7b918bad18a72ed91`.
+Read-only interval measurements and their inputs are under
+`work/coordination/original-game-audio-playback-analysis/r1/`; analysis SHA-256
+`666ed1476c31206ab880649a685e2c5aa96aa04a1a5b1337913939054e653fb4`.
+
+Cleanup: only the hash-verified owned fixture is removed. The installed game
+APK and ownership receipt remain unchanged, game/fixture/recorder processes
+are absent, and the display is asleep. Accepted baseline f1550ce0 remains
+separate from installed c077ed2a. No secondary/spare device is used.
+
+Revisit conditions: J868's zero gameplay WAV remains inconclusive. The next
+useful observation is passive native PCM from the actual original game owner,
+with bounded callback lifetime and real pre-Term cleanup, alongside the
+point-sound null-site witness. A later playback control must require energy
+in a properly aligned event interval rather than global nonzero samples.
+No game-audio, acoustic, parity or baseline promotion is claimed.
