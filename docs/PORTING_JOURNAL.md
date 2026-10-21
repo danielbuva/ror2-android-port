@@ -22476,3 +22476,73 @@ Next: preflight and committed-source code-only build with strict J880 payload
 reuse, both standard checks and actual arm/callback/output observations. A zero
 sample count cannot establish silence unless capture actually arms. R8/R9 must
 replay the runtime/support producer; no new protected/local build input is added.
+
+
+## J882 — Arm gameplay capture and measure zero output in both standard checks
+
+Date: 2026-10-20.
+
+Hypothesis: J881's actual-world gate will admit the selected passive native
+capture that remained unarmed in J880. Preserve original audio ownership and
+observe the selected output before attributing silence to event or listener
+behavior. Pinned R2API.Sound remains prior art for bank loading after Init,
+not proof of output or native listener registration.
+
+The code-only R8 attempt refuses before Unity with "Content inputs changed;
+code-only bundle reuse rejected". Comparing all 92,012 content inputs finds
+exactly three differences: the Core and Bootstrap support DLLs and their audio
+ownership receipt. The 266 payload files are unchanged. Preserve the strict
+refusal; no gate, cache receipt or device receipt is bypassed. Evidence:
+`work/coordination/codex-original-game-audio-build-root/r8/content-refusal-diff.json`.
+A full R9 retry uses the same committed source `8c1523c`.
+
+Request `20261021T061324.977563Z-0c714001cab2473baa881b6a1a708c7b` succeeds
+in 234.844063 s with zero errors. Frozen candidate:
+`work/experiments/original-game-audio/candidate-20261021T061850.624431Z/`.
+APK SHA-256:
+`f501a40ce5b6d17964836f93642e9e0980083880d88720fa0435f257c99f83e7`;
+symbols ZIP:
+`458bb5c53dc059b00bac1347e80f0e5d3177cb5bd49fb06fcebd532a6e9adb4a`;
+`libil2cpp` Build ID `48540d1ce05dde31c37105b50a6c9b0f371aa839`.
+The freeze binds 366 authored inputs, 333 same-request pre-strip assemblies,
+154 packaged banks and 266 independently frozen payload files. API `1cedc89f…`,
+game `6f96ed83…` and the exact restored SoundEmitter are unchanged. Canonical
+installation queries fresh adopted-only reserve/placement, installs this exact
+APK in place and syncs its own payload.
+
+Both ordinary diagnostic-assist checks pass with current-build true, 13 applied
+runs unchanged and no report error or first failure:
+
+- Plain: `work/experiments/baseline/20261021T062251.165612Z/`,
+  35.215530 s on Lakes.
+- One exit: `work/experiments/baseline/20261021T062639.377701Z/`,
+  exactly one transition to Goolake, 156.328491 s total and 12.596344 s
+  in the destination.
+
+Each current-process log has only the five intentional Windows-bundle
+negative-control error lines. Both have zero observed point-sound exception
+frames and zero bank-path warnings. Original audio remains Ready, no-audio
+false, native Init observed, 153 banks complete and the catalog lease held.
+
+Capture now arms and finishes at the render-frame bound in both runs. Plain
+receives 470 callbacks, 270,720 frames and 541,440 samples; stage mode receives
+457 callbacks, 263,232 frames and 526,464 samples. Output identity is observed,
+every sample is finite, and rejected/capped buffers, nonfinite samples,
+capture failures and terminal-stop requests are zero/absent. Every captured
+sample is zero. This is valid zero output on the observed native output during
+these bounded windows, unlike J880's unarmed measurement. It does not establish
+all events/routes are silent, physical audibility, native default-listener
+registration, music behavior or fidelity. The next integration restores the
+original camera listener lifecycle and observes managed membership; original
+music ownership remains a separate missing integration.
+
+Root qualification:
+`work/coordination/codex-original-game-audio-device-root/r7/root-final-qualification.json`,
+SHA-256 `0dcc1342f7b1beaf2f42d44fd626df013cfa6fcb4fe2f8d94fcb4acd1b028dea`.
+Canonical cleanup and independent post-run queries confirm selector absent,
+process stopped and display asleep; the device claim is released. No other
+device is used. Installed diagnostic is f501a40c; accepted baseline remains
+J850 f1550ce0. Original Term and natural same-process restart remain unqualified.
+This entry changes no reconstruction input; replay J881's runtime/support
+producer to reproduce the source fix. Preserve the R8 refusal and all R9
+receipts, logs, APK and matching symbols.
