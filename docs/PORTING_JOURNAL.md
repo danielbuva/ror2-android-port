@@ -24606,6 +24606,79 @@ them. No new APK, install or device run occurs here: Main retains diagnostic
 b0f7ae7e and accepted baseline f1550ce0. Native music playback, camera readiness,
 normal gameplay and physical audibility remain open.
 
+## J911 — Build the observed original-music player and qualify its capture scope
+
+Date: 2026-10-21. Hypothesis: J909's compile repair and J910's complete capture
+identity can compose J904's music observer, J906's Siren witness and J907's
+camera gates without changing the passed gameplay contract. Retain J904's
+pinned source-lifecycle/R2API.Sound prior art and the official installed SDK's
+output callback contract. The full build uses synchronized source
+`35c95c4279787221291e2e6e72c194b516c23af9`, 390 frozen build-read inputs,
+manifest `e2d343ad47e06b3aff392f40bf9af6e7a66f56e42d20ac2f74a90e0041ce1210`,
+and request `20261021T190522.577569Z-d9121bba1d7044a38b294a118cc79882`.
+Doctor/preflight pass, followed by an exact-editor IL2CPP ARM64 build in
+237.829885 s with zero errors. The shared mutex releases normally.
+
+**Artifact check failure and recovery.** Preserve R18's terminal driver,
+partial frozen candidate and failed checker log under
+`work/coordination/codex-original-game-audio-build-root/r18/` and
+`work/experiments/original-game-audio/candidate-20261021T191102.131625Z/`.
+The private Cecil checker eagerly resolves unrelated metadata and cannot
+find Unity.Postprocessing.Runtime. This is a host inspection failure after a
+successful player build; no install occurs before recovery. Change only its
+reader mode to Deferred: all existing hash, identity, bootstrap, callback and
+camera-marker assertions remain. Root's same-request inspection passes;
+original failure logs remain intact. The independent synthetic regression
+passes with a missing external attribute dependency and rejects a missing
+required camera field. It does not reproduce that exact dependency exception.
+Root reruns those two tests in 4.790 s. Recovery and complete artifact rehash
+are under `r18-inspection-root-r1/`; the independent proposal is under
+`r18-inspection-r2/`. No Unity rebuild, cache clear or editor restart is needed.
+
+The frozen APK is
+`6435f1ff0eafaa7690530ddb76bb2ec7afee84321da7dfa3755beb24c3ad38cc`;
+symbol archive
+`46dda626495d5223f320ee00793c4bdb23f0ae40378c9625573045478a7bc1dd`,
+libil2cpp Build ID `9b1020f25b1c2d144547cfe94df1aa484d97c245`.
+Rehash the 333 same-request pre-strip DLLs, three stripped/IL2CPP-backup pairs,
+390-file source archive, 266 independent payload files, 154 banks and native
+library against the build/APK receipts. The exact audio 6f96 → observer 27340
+→ camera a205 game-module chain and API 1ced remain fixed. Metadata retention
+does not prove callback execution or general linker/IL2CPP closure.
+
+**Device evidence.** Install only this frozen APK in place on Main after fresh
+adopted-storage/reserve queries; sync its own payload and retain canonical
+placement/backing receipts. The first standard check at
+`work/experiments/baseline/20261021T191550.558632Z/` passes 35.230911 s on Lakes.
+The stage-exit check at `work/experiments/baseline/20261021T191940.997897Z/`
+passes one native transition to Goolake, 152.770798 s total world time and
+10.115662 s there. Both bind the current APK, have empty failure lists and
+retain 13 applied runs. Each has only the five expected Windows-bundle
+negative-control error lines; no PointSound stack or bank-path warning occurs.
+Root's separate installed-byte rehash confirms the owned placement, absent
+selector/process and sleeping display. All qualification and cleanup receipts
+are under `work/coordination/codex-original-game-audio-device-root/r11/`;
+final qualification SHA-256
+`36ecc02108fbf0d7e679af998e425fb3af13cf8e5aa2f60196a9d6295c1a7869`.
+
+The original controller's exact owned AddOutput result is now observed in both
+runs: AK_Success with a valid returned ID and no ownership mismatch. The SDK
+specifies asynchronous initialization: this proves source request queueing,
+not native output activation. The existing original preload and callback
+retirement gates pass. Plain/stage-exit captures respectively contain 463/461
+callbacks and 533,376/531,072 finite samples, all zero, with no nonfinite values.
+Both full-width callback IDs are known, agree with their decimal companion,
+and differ from that same run's owned music output. Thus these main-output
+samples do not measure the music output; their zero value cannot establish
+music silence. Captured IDs stay in ignored evidence and are not published.
+Physical audibility, music activation/playback and spatialization remain open.
+
+The exact source queue-result/identity evidence admits a future candidate
+attempt of the original TriggerIntroMusicStart lifecycle. It does not admit
+an audio-success claim. Selected camera readiness, native Siren encounter and
+normal-difficulty/full-run acceptance remain open. Main retains diagnostic
+6435f1ff; accepted baseline f1550ce0 and executable rollbacks stay fixed.
+
 ## J912 — Bound optional host image setup without skipping verification
 
 Date: 2026-10-21. The gameplay checkpoint's pre-push check and Alpha's separate
@@ -24636,3 +24709,8 @@ and fresh-clone environment isolation. Fixtures use fake tools, never real
 volumes. Ruff and shell syntax checks pass. Architecture names the helper's
 support role; it changes no game, build input, Android data or runtime behavior.
 The next normal push reruns the full required verification on this checkpoint.
+
+The normal push on committed 7c9b8f8 exercises the real create-timeout fallback
+without manual intervention. All 1,480 fresh-clone tests pass in 23.329 s with
+91 unavailable-tool/filesystem skips, along with Ruff and audits; Main syncs
+normally. Preserve its complete log in `r2/root-push.log`.

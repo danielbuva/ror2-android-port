@@ -11,6 +11,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
 | [J912](PORTING_JOURNAL.md#j912--bound-optional-host-image-setup-without-skipping-verification) | 2026-10-21 | Bound optional host image setup without skipping verification | Date: 2026-10-21. |
+| [J911](PORTING_JOURNAL.md#j911--build-the-observed-original-music-player-and-qualify-its-capture-scope) | 2026-10-21 | Build the observed original-music player and qualify its capture scope | Date: 2026-10-21. |
 | [J910](PORTING_JOURNAL.md#j910--preserve-the-passive-callbacks-complete-output-identity) | 2026-10-21 | Preserve the passive callback's complete output identity | Date: 2026-10-21. |
 | [J909](PORTING_JOURNAL.md#j909--catch-the-music-observers-static-type-compile-error-before-player-dispatch) | 2026-10-21 | Catch the music observer's static-type compile error before player dispatch | Date: 2026-10-21. |
 | [J908](PORTING_JOURNAL.md#j908--separate-completed-ci-verification-from-temporary-host-volume-cleanup) | 2026-10-21 | Separate completed CI verification from temporary host-volume cleanup | Date: 2026-10-21. |
