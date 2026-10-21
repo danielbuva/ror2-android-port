@@ -1,16 +1,14 @@
 # Porting state
 
-Last updated 2026-10-21 after **J902/J901/J900/J899**. Diagnostic b0f7ae7e
-builds and passes both standard checks after the camera marker's exception
-handler repair. It is installed on Main; process stopped, selector absent and
-display asleep are independently checked. Original music preload is observed,
-but measured PCM remains zero and playback is unqualified. Source-camera
-activation, context, rendering and natural teardown remain unqualified.
-Accepted baseline stays f1550ce0. Siren's native boss start remains open after
-J898. Alpha's bounded SDK/compiler evidence remains separate from gameplay
-and general phone-build readiness. J902 adds SDK/package-derived reference
-selection and authored Unity API compilation on Android; full players remain
-unqualified.
+Last updated 2026-10-21 after **J907/J906/J904/J903/J902/J901/J900/J899/J898**. Diagnostic b0f7ae7e
+passes both standard checks. Its selected lifecycle run initializes the original
+Huntress skin and observes release of all five copied materials plus removal
+of the exact source listener on teardown. The camera still waits for its
+original update context; a separate stale next-menu report path times out.
+Rendering, next-menu acceptance and playback remain unqualified; measured PCM
+is zero. Main retains b0f7ae7e, independently verified stopped, selector absent
+and asleep. Accepted baseline stays f1550ce0. Siren's native boss start remains
+open; Alpha's bounded SDK/compiler evidence remains separate from gameplay.
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
@@ -24,9 +22,9 @@ content on every update. Results are recorded once in the
 | Accepted input | Steam build 25475991, input id `6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88` |
 | Toolchain | Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan (`environment/toolchain.json`) |
 | Owner-build research | J883/J893/J895 qualify bounded SDK wrapper/scene/manager prerequisites; complete roots remain open. J899 runs the SDK compiler on Android; J902 derives the restricted Unity fixture reference closure and compiles its public source there. Generated references and reference DLL match the host; implementation DLL/PDB differ with compiler-host/debug identities. General defines/generators/packages, downstream integration, managed game compilation, live/target retention, complete roots and content/shaders remain open. Route A and the desktop fallback stay fixed. |
-| Latest device-verified APK | J901 diagnostic `b0f7ae7e2218bb5caa353eb32d2b60ac680e7183b8ec53442d193c0e8af9c45e`, source ffe3e63: full build, both standard checks and matching bootstrap post-strip inspection pass; 333 same-request pre-strip DLLs, 385 frozen authored inputs, 266 payload files and matching symbols. Original music preload passes; source-camera activation and playback remain unqualified. Accepted baseline remains J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`, source 1780ea9. |
+| Latest device-verified APK | J901 diagnostic `b0f7ae7e2218bb5caa353eb32d2b60ac680e7183b8ec53442d193c0e8af9c45e`, source ffe3e63: full build, both standard checks and matching bootstrap post-strip inspection pass; 333 same-request pre-strip DLLs, 385 frozen authored inputs, 266 payload files and matching symbols. Original music preload passes. J903 observes source skin/listener teardown; camera context and playback remain unqualified. Accepted baseline remains J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`, source 1780ea9. |
 | Installed now | The primary gameplay device has J901 diagnostic b0f7ae7e. Installed bytes, owned placement, selector absence, stopped process and display sleep are independently checked. Audible playback is unqualified. Other devices are outside this session's current assignment; historical receipts do not establish their present state. |
-| Runtime source since verified APK | No runtime source change after ffe3e63; later J899 tooling is separate. J892/J900 camera prerequisites, update/context ownership and handler-copy repair are in b0f7ae7e, with camera activation off during both J901 controls. J889 music lifecycle and J886 Siren writer correction remain integrated. Selected camera/context/teardown, original effects, composed audio and Siren encounter acceptance remain open; queued host drafts are not installed behavior. |
+| Runtime source since verified APK | J904 adds original MusicController output-return observation, exact stage receipts and camera composition after ffe3e63. J906 also adds a sustained-null Siren observation within the existing two-snapshot budget. J907 adds read-only camera dispatch-gate observations without changing admission. These are host-qualified source pending a new player and are not in installed b0f7ae7e. J903 observes that player's selected source skin/listener teardown. Camera context/rendering, next-menu acceptance, native output/playback and Siren encounter remain open. Queued host drafts are not installed behavior. |
 | Device tooling | J755 verifies discovery, allowlist/profiles, separate ownership/runtime receipts, fresh reserves and idle screens on all three. The secondary test device passes both checks and produces J761's app-scope trace. The spare test device passes J762's automatic game checks and isolated audio; generic physical input remains unverified. Unity builds serialize while selected-device runs overlap. J888 verifies checked observations and teardown in both alpha standard modes. |
 | Executable rollbacks | J840 `8357db8b6ef29f8958c5f4207ad2207f214ee60ae4923cc68f6de55fe55f6770` · J828 `922cfb86e895118285d8c93f588ff57c4052154d15e88688bf7b46f357474112` · J817 `107718f8e318a22a90623ef3895c85ecdd164f4a5f8b3226dd342aaeec9113cb` · J813 `91b0b7c93e03772d5eafb26e059a3f942be7f28563d2a07b98607f43710c7e50` · J809 `4c37596cd5828047a5cb19bc2df8c5c6913333cce01104d3f0b1e4bf748dccb9` · J805 `66c8162dbdc97b86486b7a748b3da26887cf7399571a4724d31704b9c4ca8e66` · J801 `319a39871c3bcf43760b0d2a96a9634d859149699da1c2ca0c9944c40bc881e3` · J797 `40299fc59da8d6553bbd6681a4515ad4281b4ef6bcd33ac75012dce3c7a952b1` · J793 `23916334f598f68b2f3b7e464b709a74c0b54bb222107031d32dbac9f0a18494` · J790 `01654e8187c378e6b26dd6033aa2fac9ce6b7d1b140cb98bf8a0619ea50bf63c` · J788 `be26c21c4cd8ff15a8a663528216cf7a69394a51d8b9441a63a1a496f83e98b5` · J783 `1311f1057275ef2a34a3fc964a6f79e033086243d066deea40775b9178d2bba5` · J776 `bbd1f3c15958ee42d272d58770a8caa2a73e327354bc668d9564bbd595656eb9` · J771 `0dd3f57328883d9dd927362775277b876cbf59ddaa17e0a9d0e719a15094684d` (exact debugging symbols retained) · J767 `2aa936c059331c6a2dcf2a3ef56ef928103707b1f009532dbfaa1c6f6c9697c3` · J764 `d7974718a48c008d83ab0bb411a8ea22093cbc23950a76e7cfffa17297285bfa` · J762 `96006814dd2ba80f65cd24413c50c11c3061060f9d90977296f1e00d71ec7fd1` · J758 `aabf41ab5ece8a34d9ac4b70946dad5d8b827baa40e4dd927afd98e6ff15deee` · J752 `aa732f88948062c43a59378bf7dd53f1a473c828a479adbaee32e976207fb159` · J749 `771fc75282b45197d0dd25d3d537a121112ca35830c8d4dd516711aa7aa813cf` · J745 `caeeb62fe45e7b8bad8a89272390a11a392152b975277660675a75e56a230453` · J737 `12d793593d216ea50d6db400fb4e8f7a3258657acd39a382181f0dc6b18035f8` · J728 `885ea2946869ca8a206739cf74acd9bbf75705651d5f3974c30a56724d93e715` · J724 `b32998b87706977e2945ae3b709e26486b76bf9403894262877a9e3829d80b54` · J707 `d545d80048fbc26b882ada5ecb1e38346239f121d8cdb00266ef3d29be703bee` · J702 `efb0ba9354923c1fbe453d28364018e078627cd15c65fc4813dcc3f0c13d577d` · J698 `fe4dc0de0f70ec70b699e9d54e55e3e657c0a89f1f9efb52ee58411ed0bcc383` · J695 `039bc73d59822801da9258a7f90b5bfa7e77080e0c4d49058f81916a61f0cfbc` · J689 `55dee31826b7ecd545488d601490ba92623d6640a711e9a534fdd2c898ede861` · J680 `e09920fd9df2c5b03416b33766fbdaf4c64f2feeeee9b68eff200435c0716ebc` · J670 `ad84d0cb55bc6a18dabf67e90839c78100abcb846c6feaff13c758a6b8a6fb69` · J663 `6506b99bfa5004960721868b222d15010718a81f4c55f28bd29d153976d97cec` · J657 `86d2542aadcc12dbfdb53fe957d7aedf32ebeb8d38c94fbf4732ef5211ed7d03` · J654 `f57e172b9da1a5717144355266cd2e1a1de93fa775c14233a06c93a3a635e2b8` · J647 `9e7c4224896cd9257d102bef728073db0f142269358b42c244ae4e1ec9ac1f82` · J644 `118540ea2cf3f7b3b26979150e44edc54ee3f87cb79da296ca7df21fce70c717` · J637 `03339547317e8d543f65696ac0e6af412778f6bbb62bbdc2ad31cae96c442648` · J585 `da5e495910a6b6f669389bdfd7184960949a62b469d6bbd78f78384e5364b0c0` · J503 `f567e9f6dc606c6a9eceff8dc54ed798c2645536ea47c2e8da42a8bc3867a76e` · J502 `395385929be5b706a079286738f6e47cf73f7694d990ca6fe02c2696d72a7f6c` · J425 pre-migration gameplay `5a25bb9fe001440a01316bbe79f4e8269ac37e6bf33e91d4c20e91f1f9ae63b0` · J323 paused Moon `893b03c4162a79d4cc9b194fb07b412695e34c1b50439434230902289bd385a9` |
 | Retained old input | Steam 21587608 and Unity 2021.3.33f1 under `work/migrations/steam-21587608` (old rollbacks only) |
@@ -99,7 +97,9 @@ unavailable): [docs/subsystem-coverage.md](docs/subsystem-coverage.md).
   and ordinary difficulty remain open.
 - J887 observes native Huntress selected-skin readiness but source-camera
   activation and end-run failures; repair graphics prerequisites and camera-state
-  lifecycle before promoting the opt-in route. Healthy next-menu/restart, broader
+  lifecycle before promoting the opt-in route. J903 observes skin/listener teardown
+  but retains the camera-context failure and a separate next-menu observer path
+  timeout. Healthy next-menu/restart, broader
   survivors/skins and visual parity remain open.
 - PC visual parity, sustained 60 FPS and thermals, managed-memory growth across
   sessions. J773 releases completed session references. J775 and J787 prune

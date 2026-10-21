@@ -338,6 +338,14 @@ static class AdapterContractTests
         Check(report.visual.nativeCameraOwnerAttached && report.visual.nativeCameraOwnerReady &&
                   report.visual.nativeCameraOwnerStatus == "synthetic ready owner" && !report.visual.rigOverrideInstalled,
               "bounded visual report consumes the exact camera-owner readiness/status surface and records override ownership separately");
+        Check(report.visual.cameraGateObservationRequested && report.visual.cameraGateNextTargetKnown &&
+                  report.visual.cameraGateNextTargetMatchesExpected && report.visual.cameraGateTargetKnown &&
+                  !report.visual.cameraGateTargetMatchesExpected && report.visual.cameraGateMarkerBindingKnown &&
+                  report.visual.cameraGateDelegateKnown && report.visual.cameraGateDelegatePresent &&
+                  report.visual.cameraGateContextReadyKnown && !report.visual.cameraGateContextReady &&
+                  report.visual.cameraGatePumpCountKnown && report.visual.cameraGatePumpCount == -2 &&
+                  report.visual.cameraGateApplicationActive && report.visual.cameraGateDeltaTimeNonzero,
+              "visual snapshot preserves gate inputs, separate current/next target state, and the exact pump count");
         Check(report.visual.originalWwiseCameraListener != null &&
                   report.visual.originalWwiseCameraListener.evidenceCaptured &&
                   report.visual.originalWwiseCameraListener.gameObjectId == "987654321" &&
@@ -352,6 +360,15 @@ static class AdapterContractTests
                   report.visual.originalWwiseCameraListener != null &&
                   !report.visual.originalWwiseCameraListener.evidenceCaptured,
               "a failing Unity listener getter stays a partial unknown report and cannot escape capture");
+        cameraOwner.throwListenerActiveRead = false;
+        cameraOwner.observationFieldsAvailable = false;
+        adapter.CaptureNativeVisualState(camera, animator, cameraOwner);
+        Check(report.visual.captured && report.visual.cameraGateObservationRequested &&
+                  !report.visual.cameraGateDelegateKnown && !report.visual.cameraGateContextReadyKnown &&
+                  !report.visual.cameraGatePumpCountKnown &&
+                  report.visual.cameraGateCaptureError.Contains("optional marker originalEarlyUpdate field missing"),
+              "optional gate field absence stays unknown and bounded without failing the visual capture");
+        cameraOwner.observationFieldsAvailable = true;
 
         var slots = new Material[10];
         for (int i = 0; i < slots.Length; i++)

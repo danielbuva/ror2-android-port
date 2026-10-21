@@ -53,7 +53,7 @@ class NativeSourceSkinLifecycleHostTests(unittest.TestCase):
             self.assertEqual(compiled.returncode, 0, compiled.stdout + compiled.stderr)
             ran = subprocess.run([str(MONO), str(executable)], cwd=temp_path, capture_output=True, text=True)
             self.assertEqual(ran.returncode, 0, ran.stdout + ran.stderr)
-            self.assertIn("PASS: 64 adapter/selection/lifecycle/report assertions", ran.stdout)
+            self.assertIn("PASS: 66 adapter/selection/lifecycle/report assertions", ran.stdout)
 
 
 if __name__ == "__main__":
