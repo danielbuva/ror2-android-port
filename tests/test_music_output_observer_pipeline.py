@@ -44,9 +44,9 @@ class MusicOutputObserverPipelineTests(unittest.TestCase):
 
     def test_observer_profile_and_output_receipts_remain_unaccepted(self) -> None:
         camera = json.loads((CANDIDATE / "recipe/native-view-camera-transform.json").read_text())
-        self.assertEqual(camera["profiles"]["default-game-3124"]["output_sha256"], "d5fc522e83cb6f6f6845b2a8b7e5de28011031fe2f3b54c0716c52db9679c65c")
+        self.assertEqual(camera["profiles"]["default-game-3124"]["output_sha256"], "494ba9acd8ea34bed17ac56edb9a49eafa8cb5afd2f91466b95ca0d71ce3b8cd")
         self.assertEqual(
-            camera["profiles"]["post-audio-music-observer-6f96-api-d540"]["output_sha256"], "a2054dcfc5d14d2fdfba0fd0e61851e4a153b842be6bb6f1c0e1df8ef634762e"
+            camera["profiles"]["post-audio-music-observer-6f96-api-d540"]["output_sha256"], "4bd3b240ce5a9cb620d14ce4041f493ba013b9700d792dc9c99c8666f3af06f0"
         )
         gates = camera["gate_status"]
         for key in (

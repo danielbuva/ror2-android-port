@@ -43,17 +43,23 @@ HASHES = {
     "composed_game": "1034a747e31a3b79554b9cb06f941c7acabaa9e0ee82c2a00abc4b24f9327c1c",
     "point_sound_composed_game": "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc",
     "music_observed_game": "27340ed60dbfe77f66fa394d028b597d3e4613ee8ea405416c061766fb226eef",
-    "music_camera_output": "a2054dcfc5d14d2fdfba0fd0e61851e4a153b842be6bb6f1c0e1df8ef634762e",
-    "camera_default": "d5fc522e83cb6f6f6845b2a8b7e5de28011031fe2f3b54c0716c52db9679c65c",
+    "music_camera_output": "4bd3b240ce5a9cb620d14ce4041f493ba013b9700d792dc9c99c8666f3af06f0",
+    "camera_default": "494ba9acd8ea34bed17ac56edb9a49eafa8cb5afd2f91466b95ca0d71ce3b8cd",
     "camera_default_previous_restore_only": "236fab2c616b1a017971c316437ec1a9fa9f6b3999563263d4a8ab689a1e59b6",
-    "camera_after_audio": "e4aeeb5acb7b81922a0a6603d01c1d407c57e9b00852b5e15ef70838e1961e5b",
+    "camera_after_audio": "83513fd59e81d84d093a1f9fb6d5eaaafb6382165f060dbd1b96b14990164aeb",
     "camera_after_audio_previous_restore_only": "e16e01bc6545bb6d8248c9196be890b99cf60df721d1b894b8d9871a880c7f91",
-    "camera_after_point_sound": "2ae5d92a652d69c7e6fd471448af203d52be3ef9350743a91fc84a5bd2bc1384",
-    "camera_after_r10_1ced": "2ae5d92a652d69c7e6fd471448af203d52be3ef9350743a91fc84a5bd2bc1384",
+    "camera_after_point_sound": "0da94add5e860c6f3dd05f4e69d3019208e9d58294874eb373619d1756b8876d",
+    "camera_after_r10_1ced": "0da94add5e860c6f3dd05f4e69d3019208e9d58294874eb373619d1756b8876d",
     # Restore-only predecessor emitted by the exact older R12 camera receipt.
     # It is never selected by select_profile or stage_after_audio.
     "camera_predecessor_f6bc_restore_only": "f6bc1a860e8abe2c82a397a83e55ec2050136e91763ade302ed0e181b320083c",
     "camera_after_point_sound_previous_restore_only": "41b66d072085f70b6929dcd2a566fffff3f26b9c886d8781624e52ae8ab7e92f",
+    # R18 delegate-bind outputs retained only to unwind receipts created before
+    # the marker-refresh transform. These are never emitted by current staging.
+    "camera_default_delegate_previous_restore_only": "d5fc522e83cb6f6f6845b2a8b7e5de28011031fe2f3b54c0716c52db9679c65c",
+    "camera_after_audio_delegate_previous_restore_only": "e4aeeb5acb7b81922a0a6603d01c1d407c57e9b00852b5e15ef70838e1961e5b",
+    "camera_after_point_sound_delegate_previous_restore_only": "2ae5d92a652d69c7e6fd471448af203d52be3ef9350743a91fc84a5bd2bc1384",
+    "camera_music_observer_delegate_previous_restore_only": "a2054dcfc5d14d2fdfba0fd0e61851e4a153b842be6bb6f1c0e1df8ef634762e",
 }
 
 
@@ -290,7 +296,11 @@ def _music_observer_receipt(project: Path, audio_receipt_sha: str, audio: dict) 
         or receipt.get("api_sha256") not in {HASHES["composed_api"], HASHES["pcm_composed_api"]}
     ):
         raise ValueError("music observer receipt is not bound to the exact preceding PointSound audio receipt")
-    if sha256(project / GAME_RELATIVE) not in {HASHES["music_observed_game"], HASHES["music_camera_output"]}:
+    if sha256(project / GAME_RELATIVE) not in {
+        HASHES["music_observed_game"],
+        HASHES["music_camera_output"],
+        HASHES["camera_music_observer_delegate_previous_restore_only"],
+    }:
         raise ValueError("project game module differs from exact music-observer/camera output lineage")
     snapshot_rel = receipt.get("preimage_snapshot")
     if not isinstance(snapshot_rel, str) or "\\" in snapshot_rel or Path(snapshot_rel).is_absolute() or ".." in Path(snapshot_rel).parts:
@@ -513,8 +523,32 @@ def restore_previous_camera(project: Path, work: Path) -> dict | None:
         and expected_profile in {"post-audio-point-sound-6f96-api-d540", "post-audio-r10-1ced-game-6f96"}
         and receipt.get("output_sha256") == HASHES["camera_after_point_sound_previous_restore_only"]
     )
+    # Exact pre-delegate-bind images are restore-only. Bind the accepted old
+    # output to the complete input/API/profile tuple, independently of the
+    # current output hash which Root may advance after the new transform.
+    prior_delegate_outputs = {
+        (HASHES["ordinary_game"], HASHES["ordinary_api"], "default-game-3124"): {HASHES["camera_default_delegate_previous_restore_only"]},
+        (HASHES["composed_game"], HASHES["composed_api"], "post-audio-r4-1034-api-d540"): {HASHES["camera_after_audio_delegate_previous_restore_only"]},
+        (HASHES["point_sound_composed_game"], HASHES["composed_api"], "post-audio-point-sound-6f96-api-d540"): {
+            HASHES["camera_after_point_sound_delegate_previous_restore_only"]
+        },
+        (HASHES["point_sound_composed_game"], HASHES["pcm_composed_api"], "post-audio-r10-1ced-game-6f96"): {
+            HASHES["camera_after_point_sound_delegate_previous_restore_only"]
+        },
+        (HASHES["music_observed_game"], HASHES["composed_api"], "post-audio-music-observer-6f96-api-d540"): {
+            HASHES["camera_music_observer_delegate_previous_restore_only"]
+        },
+        (HASHES["music_observed_game"], HASHES["pcm_composed_api"], "post-audio-music-observer-r10-1ced"): {
+            HASHES["camera_music_observer_delegate_previous_restore_only"]
+        },
+    }
+    exact_pre_delegate_output = receipt.get("output_sha256") in prior_delegate_outputs.get((expected_input, expected_api, expected_profile), set())
     is_restore_only_predecessor = (
-        (predecessor_profile and receipt.get("output_sha256") == predecessor_output) or exact_prior_default or exact_prior_1034 or exact_r14_broken_point_sound
+        (predecessor_profile and receipt.get("output_sha256") == predecessor_output)
+        or exact_prior_default
+        or exact_prior_1034
+        or exact_r14_broken_point_sound
+        or exact_pre_delegate_output
     )
     if receipt.get("output_sha256") != expected_output and not is_restore_only_predecessor:
         raise ValueError("camera receipt output is outside the exact current or restore-only profile")

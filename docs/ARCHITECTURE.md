@@ -2494,7 +2494,10 @@ and three source-catalog shader roots (Outline Highlight, Vision Limit and
 TranslucentImage DownTent) while the clone is inactive; its exact SceneCamera
 activation scope is released in `finally`. The bound marker pumps the original
 private `EarlyUpdate` only for this owned null-viewer rig while the application
-owner is inactive. It tracks real target/context readiness before installing or
+owner is inactive. Awake attempts binding once; the existing pump retries an
+absent delegate only after the same exact ownership/readiness guard passes.
+Successful binding is reused, and the original callback owns target/context
+assignment. It tracks real target/context readiness before installing or
 removing the override; lost context deactivates and destroys only the owned
 staging root. These are source dependencies and lifecycle contracts only;
 bundle/Unity/runtime readiness remains unproven.
@@ -2510,12 +2513,15 @@ to its guarded 3124, 1034 or 6f96 preimage, runs the original-audio producer,
 then inserts the source-output observer after the exact 6f96 result when selected,
 and applies the camera producer to that immediate result. Destination R8/R9 rebuilds
 unwind an owned prior camera result and retain their existing build route.
-The active exact profiles are 3124/API 107 to d5fc52, 1034/API d540 to e4aeeb,
-and PointSound game 6f96 with either d540 or 1ced to 2ae5d9. The latter consumes
+The active exact profiles are 3124/API 107 to 494ba9, 1034/API d540 to 83513f,
+PointSound game 6f96 with either d540 or 1ced to 0da94a, and its observed-music
+27340 intermediate with either API to 4bd3b2. The PointSound route consumes
 its exact 165-row audio stage receipt for either explicit passive-PCM state;
 camera staging does not enable the PCM diagnostic. Arbitrary API/game pairs
 refuse; the 793 API is restore-only. Historical outputs, including failed
 41b66, require matching camera/audio receipts and preimage bytes for restoration.
+The previous d5fc52/e4aeeb/2ae5d9/a2054 outputs remain restore-only under their
+exact input/API/profile tuple and existing receipt/preimage checks.
 The marker copier preserves exception handlers and maps their types and instruction
 boundaries. Its independent verifier receives the compiled source helper and
 compares the copied handler table before accepting output; a removed-handler

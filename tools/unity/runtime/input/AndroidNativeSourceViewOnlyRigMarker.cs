@@ -51,14 +51,22 @@ namespace RoR2
 
         void Awake()
         {
+            TryBindOriginalEarlyUpdate();
+        }
+
+        bool TryBindOriginalEarlyUpdate()
+        {
+            if (originalEarlyUpdate != null)
+                return true;
             if (!CanPumpOwnedRig())
-                return;
+                return false;
             var callback = typeof(CameraRigController).GetMethod("EarlyUpdate",
                 BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
             if (callback == null || !callback.IsPrivate || callback.IsStatic || callback.ReturnType != typeof(void) ||
                 callback.GetParameters().Length != 0)
                 throw new InvalidOperationException("accepted CameraRigController.EarlyUpdate method shape changed");
             originalEarlyUpdate = (Action)Delegate.CreateDelegate(typeof(Action), rig, callback);
+            return originalEarlyUpdate != null;
         }
 
         // RoR2 normally calls this through RoR2Application.onUpdate. The composed
@@ -72,7 +80,7 @@ namespace RoR2
 
         public bool TryPumpOriginalEarlyUpdate()
         {
-            if (!CanPumpOwnedRig() || originalEarlyUpdate == null)
+            if (!CanPumpOwnedRig() || (originalEarlyUpdate == null && !TryBindOriginalEarlyUpdate()))
             {
                 originalContextReady = false;
                 return false;

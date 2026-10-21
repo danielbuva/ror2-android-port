@@ -24774,3 +24774,112 @@ required by the existing cohort guard. Restore that explicit owner name and
 regenerate the dependent ancestor/hook pins; runtime source bytes and gates
 are unchanged. Preserve the failed check in `r5/root-push.log`. The guard
 stays enabled and the next normal push reruns all required checks.
+
+## J915 — Observe the selected camera's missing delegate and isolate menu failure
+
+Date: 2026-10-21. Hypothesis: J907's read-only dispatch gates can identify
+why the active selected-skin camera never obtains its native update context.
+Reuse J892's exact typed target/owner contract and pinned DebugToolkit
+Code/Util.cs identity observation at `d1e2f0aa4b8ac4747547db0fcd87344953432f06`.
+The accepted current input and same-request player remain authoritative.
+
+Use J911's frozen diagnostic APK
+`6435f1ff0eafaa7690530ddb76bb2ec7afee84321da7dfa3755beb24c3ad38cc`,
+source 35c95c4, after both standard checks and the independent installed-byte
+rehash. The R10 one-shot wrapper observes ordinary Huntress selection and
+35.221 s of Lakes play without a session error or first failure. Selected skin,
+source controller/avatar and Animator initialize; five owned material copies
+are created. The exact source listener is active in the managed list. The
+camera rig, provider and marker are active and exactly bound, and nextTarget
+matches the expected body. The current target is absent, the update delegate
+is known absent and its pump count is zero. Delta time is nonzero, cutscene is
+false and capture has no error. The original application is absent, which is
+the existing fallback's expected condition, not evidence to create an application
+or fabricate camera context. The report cannot identify which predicate was
+unready when Awake ran. Camera readiness/rendering remain unaccepted.
+
+At 36.242 s the completed session reports cleanup without an error: all five
+material copies release, the visual owner is destroyed, the source listener
+deactivates and its exact managed entry is removed. Managed listener census
+falls from two to one. The original native wrapper discards AKRESULT, so native
+listener registration/removal success remains unknown. The bounded main-output
+capture has 433 callbacks and 498,816 finite zero samples, no rejected/capped
+buffers and no capture failure. J911's output-identity limitation still applies;
+this does not establish music silence or physical audibility.
+
+The wrapper then fails at the actual next-menu report, phase
+`original-loadout-initialize`, with first failure
+`Original free survivor choices unavailable`. This is a genuine menu failure,
+not the earlier observer-path timeout. Preserve the whole wrapper as failed
+despite the earlier live and teardown observations. Hand menu dependency-lifetime
+investigation to Alpha; do not weaken survivor, profile or entitlement admission.
+An independent terminal query rehashes installed APK bytes and confirms owned
+placement, absent process/selector and display asleep. Accepted baseline remains
+J850 f1550ce0; installed diagnostic remains 6435f1ff.
+
+Evidence: `work/coordination/original-camera-listener-device-plan/r10/`,
+`work/experiments/original-camera-listener-lifecycle/20261021T193434.868423Z/`
+and `work/coordination/codex-original-camera-listener-device-root/r2/`.
+The live summary SHA-256 is
+`938b73260dd71a1eea474a2783de8933738e19567b0a8db8ba7521e039d331c2`.
+Revisit camera binding with an owned late-readiness repair and a new committed
+player; revisit next-menu acceptance after Alpha's independent repair.
+
+## J916 — Retry exact owned camera binding after activation readiness
+
+Date: 2026-10-21. Hypothesis: the marker's Awake-only delegate binding misses
+a readiness transition that is complete by J915's live report. Root inspects
+the same-request pre-strip and stripped game assemblies: both retain exactly
+one private instance `CameraRigController.EarlyUpdate(): void` with a body.
+This is not a missing-method retention failure. Reuse J892/J900's guarded
+original callback and exception-table contract, J907's observations and the
+pinned typed-identity prior art cited in J915. The precise Awake-time predicate
+remains unobserved.
+
+AndroidNativeSourceViewOnlyRigMarker now shares one binding helper between
+Awake and its existing pump. A pump with no delegate retries only after the
+unchanged exact rig/target/provider ownership and activity guard passes. The
+helper preserves private zero-argument void method validation and creates one
+closed delegate; later pumps reuse it. Original EarlyUpdate alone assigns its
+target and context. No application, LocalUser, target assignment, global update
+dispatch or synthetic context is introduced. Existing exception propagation,
+context clearing, time/cutscene behavior and owned teardown stay intact.
+
+Root's initial canonical producer executions refuse the old expected output
+pins after successful transform/verification, preserving the newly observed
+outputs. All six exact game/API profiles use 139-entry materialized resolver
+snapshots. The observed outputs are 3124 to 494ba9, 1034 to 83513f, 6f96 to
+0da94a and observed-music 27340 to 4bd3b2; paired d540/1ced profiles agree.
+Retain the previous exact outputs as receipt-bound restore-only tuples so a
+current staged player can be unwound before regeneration. Never admit them as
+new outputs or relax API, audio/observer lineage or preimage checks.
+
+The durable authored fixture compiles the actual marker with synthetic API
+shapes. It covers delayed target readiness, inactive owner, later binding,
+single delegate reuse, target mismatch, zero-time context refusal, original
+callback exception/context clearing and recovery. Root catches and corrects
+the draft test's repository-relative root before promotion. Independent review
+finds no source-level blocker. These checks establish host contracts only;
+Unity scheduling, camera context, rendering and visual parity require a new
+player and device run. Default opt-in and runtime acceptance remain false.
+
+Root's canonical replay succeeds for all six profiles with their newly reviewed
+pins. The focused camera suite passes 43 tests in 3.658 s with three unavailable
+optional fixtures skipped; the exact observed-music composition fixture then
+passes three tests in 9.924 s, including incorrect preimage/API refusals.
+Both observer-pipeline tests pass. Root preserves historical fixture hashes,
+updates only their current-output assertions and retains the complete source-pin
+and exact restore-set checks after reviewing the draft. The R19 private
+post-strip inspector's revised retry contract passes its metadata mutant tests;
+the build driver's 14 host tests pass in 3.809 s. Doctor and preflight pass
+with the explicitly assigned device. The initial commands without a selector
+refuse when several devices are attached; no device is guessed.
+
+Private source, review, actual method-retention inspection and generated DLLs
+remain under `work/coordination/original-camera-delegate-binding-next/r1/`,
+`original-camera-delegate-binding-review/r1/` and
+`original-camera-delegate-binding-root/r1/`. Only authored source, fixture,
+recipe and audit notes enter public Git. This changes a source reproduced by
+rebuild staging; replay its canonical transform rather than editing generated
+Unity data. J913's startup trigger is also pending the next player. Installed
+diagnostic 6435f1ff and accepted baseline f1550ce0 remain unchanged.

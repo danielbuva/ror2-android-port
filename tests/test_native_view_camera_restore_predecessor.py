@@ -12,6 +12,7 @@ import unittest
 
 CANDIDATE = Path(__file__).resolve().parents[1]
 ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / ".git").exists())
+SELECTED_CAMERA_OUTPUT = "0da94add5e860c6f3dd05f4e69d3019208e9d58294874eb373619d1756b8876d"
 R12 = ROOT / "work/experiments/original-game-audio/candidate-20261021T085802.632468Z"
 CAMERA_RECEIPT = R12 / "NativeViewCameraStageReceipt.json"
 AUDIO_RECEIPT = R12 / "OriginalGameAudioStageReceipt.json"
@@ -195,7 +196,9 @@ class CameraRestorePredecessorTests(unittest.TestCase):
         audio = json.loads((project / "Assets/StreamingAssets/Lab/OriginalGameAudioStageReceipt.json").read_text())
         profile, next_output = module._select_point_sound_profile(audio, EXPECTED["game"], EXPECTED["api_1ced"])
         self.assertEqual(profile, "post-audio-r10-1ced-game-6f96")
-        self.assertEqual(next_output, EXPECTED["camera_current"])
+        # The immutable fixture is the pre-delegate output; new generation
+        # must select the current marker instead of re-emitting that fixture.
+        self.assertEqual(next_output, SELECTED_CAMERA_OUTPUT)
         self.assertNotEqual(next_output, EXPECTED["camera_old"])
 
     def test_new_camera_output_still_restores_for_current_pair(self):
@@ -278,16 +281,16 @@ class CameraRestorePredecessorTests(unittest.TestCase):
         }
         self.assertEqual(
             module._select_point_sound_profile(source, EXPECTED["game"], EXPECTED["api_1ced"]),
-            ("post-audio-r10-1ced-game-6f96", EXPECTED["camera_current"]),
+            ("post-audio-r10-1ced-game-6f96", SELECTED_CAMERA_OUTPUT),
         )
         source["lineage"]["composed_api_sha256"] = EXPECTED["api_d540"]
         self.assertEqual(
             module._select_point_sound_profile(source, EXPECTED["game"], EXPECTED["api_d540"]),
-            ("post-audio-point-sound-6f96-api-d540", EXPECTED["camera_current"]),
+            ("post-audio-point-sound-6f96-api-d540", SELECTED_CAMERA_OUTPUT),
         )
         self.assertNotEqual(
             module.HASHES["camera_predecessor_f6bc_restore_only"],
-            EXPECTED["camera_current"],
+            SELECTED_CAMERA_OUTPUT,
         )
 
     def test_receipt_profile_api_snapshot_and_bytes_mutants_refuse_without_changes(

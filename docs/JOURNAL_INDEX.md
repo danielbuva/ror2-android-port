@@ -10,6 +10,8 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J916](PORTING_JOURNAL.md#j916--retry-exact-owned-camera-binding-after-activation-readiness) | 2026-10-21 | Retry exact owned camera binding after activation readiness | Date: 2026-10-21. |
+| [J915](PORTING_JOURNAL.md#j915--observe-the-selected-cameras-missing-delegate-and-isolate-menu-failure) | 2026-10-21 | Observe the selected camera's missing delegate and isolate menu failure | Date: 2026-10-21. |
 | [J913](PORTING_JOURNAL.md#j913--admit-one-original-music-startup-component-after-owned-queue-success) | 2026-10-21 | Admit one original music startup component after owned queue success | Date: 2026-10-21. |
 | [J912](PORTING_JOURNAL.md#j912--bound-optional-host-image-setup-without-skipping-verification) | 2026-10-21 | Bound optional host image setup without skipping verification | Date: 2026-10-21. |
 | [J911](PORTING_JOURNAL.md#j911--build-the-observed-original-music-player-and-qualify-its-capture-scope) | 2026-10-21 | Build the observed original-music player and qualify its capture scope | Date: 2026-10-21. |

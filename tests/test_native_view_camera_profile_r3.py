@@ -4,7 +4,7 @@ from pathlib import Path
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-R3_CAMERA_GAME = "2ae5d92a652d69c7e6fd471448af203d52be3ef9350743a91fc84a5bd2bc1384"
+R3_CAMERA_GAME = "0da94add5e860c6f3dd05f4e69d3019208e9d58294874eb373619d1756b8876d"
 
 
 class NativeViewCameraR3ProfileTests(unittest.TestCase):

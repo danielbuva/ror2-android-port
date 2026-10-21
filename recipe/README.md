@@ -1512,7 +1512,7 @@ boundary, including nullable ends. The independent verifier receives the exact
 compiled helper as a third input and compares its handler table to the copied
 marker. A host fixture removes the copied table and must be rejected.
 
-Current exact outputs are 3124/API 107 to `d5fc52...`, 1034/API d540 to
+J900's exact outputs were 3124/API 107 to `d5fc52...`, 1034/API d540 to
 `e4aeeb...`, and 6f96 with d540 or 1ced to `2ae5d9...`. The previous R6
 outputs are now receipt-bound restore-only, including the failed R14 `41b66...`.
 Existing older predecessor restoration remains available. No generated assembly,
@@ -1520,3 +1520,22 @@ helper binary, private receipt or protected source is published. The runtime
 marker's authored source and original-audio owner cohort are unchanged.
 This audit covers the authored copier/verifier, pin updates and host fixtures;
 player, camera activation, rendering and playback still require device evidence.
+
+### Current camera deferred delegate binding
+
+J916 moves the authored marker's reflection/delegate setup into one helper
+shared by Awake and the existing guarded pump. It retries only an absent
+delegate after exact owned rig/provider/target readiness; original source
+callbacks still own target and camera context. No proprietary implementation
+is reproduced. The fixture contains independently authored API shapes and
+tests delayed readiness, single delegate reuse and exception behavior.
+
+Root regenerates all six exact profiles from accepted local input: 3124/API107
+to `494ba9...`, 1034/d540 to `83513f...`, 6f96 with d540 or 1ced to
+`0da94a...`, and the 27340 music-observer intermediate with either API to
+`4bd3b2...`. Previous d5fc52/e4aeeb/2ae5d9/a2054 outputs remain receipt-bound
+restore-only under exact profile/API/input tuples and all existing audio,
+observer, ownership and preimage checks. SDK/game-derived DLLs, resolver
+snapshots, receipts and device reports remain ignored. The source/hash update
+and synthetic fixtures pass the public-content boundary; device camera
+readiness, visual parity and audio acceptance remain separate gates.
