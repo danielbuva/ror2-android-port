@@ -34,6 +34,12 @@ PUBLIC_BRANDING_SHA256 = {
 }
 
 
+# Exact reviewed original launcher art only; see launcher/PROVENANCE.md.
+PUBLIC_LAUNCHER_SHA256 = {
+    "launcher/background.png": "6f73ee2c7a9d6544b5f2972832b12a7aed3f98cf9ba00fc04b218502f65ea4ff",
+}
+
+
 WWISE_ASSET_NAME = re.compile(rb"(?i)Wwise/ScriptableObjects/[A-Za-z]+/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.asset")
 
 
@@ -44,7 +50,8 @@ def violations(path, data):
     if path.startswith("environment/") and path not in PUBLIC_ENVIRONMENT:
         found.append("unreviewed environment capture")
     reviewed_branding = path in PUBLIC_BRANDING_SHA256 and hashlib.sha256(data).hexdigest() == PUBLIC_BRANDING_SHA256[path]
-    if Path(path).suffix.lower() in PRIVATE_SUFFIXES and not reviewed_branding:
+    reviewed_launcher = path in PUBLIC_LAUNCHER_SHA256 and hashlib.sha256(data).hexdigest() == PUBLIC_LAUNCHER_SHA256[path]
+    if Path(path).suffix.lower() in PRIVATE_SUFFIXES and not (reviewed_branding or reviewed_launcher):
         found.append("binary, middleware, or raw capture")
     if path.startswith("recipe/"):
         # Wwise ScriptableObject assets are named by their event or bank GUID. Those file
