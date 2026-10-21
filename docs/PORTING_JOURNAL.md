@@ -24078,3 +24078,63 @@ latest player verified by both checks; accepted baseline f1550ce0 remains the
 rollback. Camera activation, real target/context, rendering, animation parity
 and natural teardown still require the selected lifecycle run. J899's later
 SDK/compiler metadata changes no runtime source in this frozen player.
+
+## J903 — Observe source skin and listener teardown; retain the camera context failure
+
+Date: 2026-10-21. Hypothesis: J900's corrected original camera marker can
+activate the opt-in view with a real body, preserve the source listener, and
+release the source skin and listener when the original session ends. Reuse
+J892/J900's source ownership and community-prior-art contracts. This is a
+selected lifecycle diagnostic, not visual or audio parity acceptance.
+
+**Identity and observation.** Use only J901's frozen diagnostic APK
+`b0f7ae7e2218bb5caa353eb32d2b60ac680e7183b8ec53442d193c0e8af9c45e`
+from source ffe3e63, after both standard checks and their five independently
+pinned qualification proofs. The reviewed one-shot R7 manifest is
+`5e62b53196ab1df8b7ae307584bdd048f42b7c85ed195833786259bf21033e32`.
+No APK, payload, Unity source or editor mutation occurs during the run.
+The live report reaches 35.927536 s of original Huntress play on Lakes,
+with empty error and firstFailure. The original selected skin is ready;
+its native owners are active and its Animator is initialized with the
+Huntress controller and avatar. Five copied materials are live.
+
+The source camera owner attaches, but never reports ready: it waits for
+its owned original CameraRigController update context. Its rig camera is
+disabled, scene camera enabled and visibility Invisible. This is the
+first unresolved camera behavior; it does not establish original camera
+rendering, correct body framing or animation parity. Source-prefab defaults
+remain explicitly reduced fidelity because original Console setup is absent.
+
+**Observed teardown and limits.** The completed report records the same
+process and session, phase complete, cleanup true and 37.116776 world seconds.
+The source skin owner is destroyed, its display deactivated and all five
+copied materials released. The exact source listener is active and present
+in the managed list during play, then inactive and absent after disable;
+the managed listener census falls from two to one. This qualifies those
+managed lifecycle observations only. Native registration outcomes remain
+unobserved because the original wrappers discard AKRESULT. PointSound records
+four requests and no matching NullReferenceException. Passive Wwise capture
+records 434 callbacks and 499,968 finite samples, all zero; native playback
+and physical audibility remain unqualified.
+
+**Independent host observer failure.** After preserving the completed session,
+the runner polls an obsolete short spine filename for the next menu; the
+canonical report identity includes the bringup suffix. That read consumes the
+bounded observation deadline and ends in TimeoutExpired. The wrapper result
+is failed-or-refused-after-dispatch-marker, not a lifecycle acceptance. Preserve
+this first failure and the spent one-shot marker; repair the report-path
+contract in a new host revision before any retry. Do not increase the deadline
+to hide the path mismatch. The camera-context failure independently remains.
+
+Full private runtime reports, both screenshots and summaries are under
+`work/experiments/original-camera-listener-lifecycle/20261021T180022.807986Z/`.
+The failed wrapper is under
+`work/coordination/original-camera-listener-device-plan/r7/attempts/`;
+Root driver and separate terminal query are under
+`work/coordination/codex-original-camera-listener-device-root/r1/`.
+After wrapper cleanup, independently rehash the installed APK and verify its
+owned placement, positive process absence, complete selector-parent listing
+and display sleep. All pass before releasing the exact scoped claim. No other
+device, storage configuration or user data is changed. Accepted baseline
+f1550ce0 stays fixed. Revisit camera context from the exact owned marker
+lifecycle and accepted native update contract, not forced game state.
