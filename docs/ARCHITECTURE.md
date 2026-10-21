@@ -903,7 +903,8 @@ its receipts, membership rules, remaining pins and uncovered provenance are in
 
 `importer_rebuild.py` owns current host step `importer-identities`, after
 `runtime-sources` and before `validate-bindings`/R9. It renders recorded public
-GUIDs and shared importer schemas from `recipe/importer-identities.json`, checks
+GUIDs and shared importer schemas from `recipe/importer-identities.json`, including
+the two music runtime sources (J890), checks
 all selected hashes/sizes before placement and records
 `.rebuild/importer-identities-result.json` plus its completion marker. Folder
 importers are left to Unity at R9 (J575); R9 classifies them and rescans the

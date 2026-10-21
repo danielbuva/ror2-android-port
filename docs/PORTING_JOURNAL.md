@@ -23176,3 +23176,41 @@ The first pre-push full suite refuses two missing recipe audit-table entries;
 the prose audits were present but did not satisfy the repository's enumerated
 recipe contract. Add both rows before retrying synchronization. No Unity or
 device action occurs while that host gate is failing.
+
+
+## J890 — Generate the new music script importer identities before building
+
+Date: 2026-10-21. Hypothesis: the two new authored music sources need their
+recorded importer identities before project-layout validation, through the
+existing importer generator. The R11 full-build request on synchronized source
+`97648b8a188dbea458a654636a1f6e7bc1bcd465` passes doctor/preflight but refuses
+`Project layout missing staged .meta: Assets/LabLoadingScene/OriginalMusicControllerContract.cs.meta`.
+It stops before Unity compilation; no new player, APK hash, install or device
+run exists. Preserve its stdout/stderr and source hashes in
+`work/coordination/codex-original-game-audio-build-root/r11/`.
+
+The J889 project-layout GUIDs are already authored and stable, but its two
+sources are absent from `importer-identities.json`. Add exactly those runtime
+source selections to the current `importer_rebuild.render` owner. Its existing
+shared script importer template supplies the metadata; no new renderer, editor
+import workaround or source-text patch is added. The ordinary reconstruction
+step now includes both sources. For the current already-staged project, render
+and place only the two absent files through the same generator while holding
+the shared build mutex. Refuse conflicting existing bytes and preserve all
+other metadata. This is a minimal build-identity change required by original
+music integration; it adds no launcher or packaging behavior.
+
+Host tests verify both generated GUID lines against project layout and the
+updated 137-script membership. The preceding scratch audio/camera round trip
+has all four modes passing; its 64 source hashes independently match Main and
+report SHA-256 is
+`a2f48d03b32eca0bd2edca6d29b51241b33145bc8c1fe837b9a668cf9817adb0`
+under `work/coordination/original-game-audio-music/r8/attempt-9/`.
+This is host staging evidence only. Update public recipe audit and architecture;
+regenerate the journal index and rerun the public/host gates before retrying.
+This recipe is consumed by reconstruction and must be replayed there.
+
+Installed diagnostic stays 3c72fe05, stopped with selector absent and display
+asleep; accepted baseline stays f1550ce0. Revisit with the next committed build,
+post-strip reflection proof and both standard device checks. Actual music,
+camera and normal-difficulty acceptance remain open.

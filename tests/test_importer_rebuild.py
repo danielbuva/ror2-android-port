@@ -152,9 +152,19 @@ class ImporterRebuildTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "runtime-sources"):
             self.run_step()
 
+    def test_original_music_importers_render_the_recorded_runtime_guids(self):
+        recipe = read(RECIPE / "importer-identities.json")
+        layout = read(RECIPE / "project-layout.json")
+        payload = replay.render(recipe, layout, recipe["input_id"])
+        for name in ("OriginalMusicControllerContract", "PortSessionOriginalMusicControllerOwner"):
+            source = "runtime/session/" + name + ".cs"
+            target = "Assets/LabLoadingScene/" + name + ".cs.meta"
+            self.assertEqual(recipe["scripts"][target], {"runtime_source": source})
+            self.assertIn(("guid: " + layout["runtime_source_guids"][source] + "\n").encode(), payload[target])
+
     def test_public_membership_counts_and_coordinator_order(self):
         recipe = read(RECIPE / "importer-identities.json")
-        self.assertEqual({group: len(recipe[group]) for group in replay.GROUPS}, dict(scripts=135, shaders=175, other=6))
+        self.assertEqual({group: len(recipe[group]) for group in replay.GROUPS}, dict(scripts=137, shaders=175, other=6))
         self.assertNotIn("folders", recipe)
         # J751: Codex's 17 new editor scripts carry explicit GUIDs; runtime sources use the layout.
         self.assertEqual(sum("guid" in row for row in recipe["scripts"].values()), 31)

@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J890](PORTING_JOURNAL.md#j890--generate-the-new-music-script-importer-identities-before-building) | 2026-10-21 | Generate the new music script importer identities before building | Date: 2026-10-21. |
 | [J889](PORTING_JOURNAL.md#j889--integrate-the-original-musiccontroller-with-guarded-process-teardown) | 2026-10-21 | Integrate the original MusicController with guarded process teardown | Date: 2026-10-21. |
 | [J888](PORTING_JOURNAL.md#j888--refuse-unknown-baseline-device-state-and-verify-teardown) | 2026-10-21 | Refuse unknown baseline device state and verify teardown | 2026-10-21. |
 | [J887](PORTING_JOURNAL.md#j887--activate-the-source-camera-listener-and-retain-the-camera-prerequisite-failures) | 2026-10-21 | Activate the source camera listener and retain the camera prerequisite failures | Date: 2026-10-21. |

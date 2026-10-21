@@ -1,12 +1,12 @@
 # Porting state
 
-Last updated 2026-10-21 after **J889/J888/J887/J886/J885**. Diagnostic 3c72fe05 passes
+Last updated 2026-10-21 after **J890/J889/J888/J887/J886/J885**. Diagnostic 3c72fe05 passes
 both standard checks. Its selected source-camera run reaches Huntress play and
 observes one managed default listener, but finite PCM remains all zero. Camera
 activation reports missing graphics prerequisites, then repeated state-dictionary
 errors and failed end-run cleanup. The opt-in route is unaccepted. Accepted
 baseline stays f1550ce0; installed 3c72fe05 is stopped with its selector absent
-and display asleep. Music J889 is integrated and host-qualified but unbuilt; Siren source J886 is unbuilt.
+and display asleep. Music J889 is integrated and host-qualified; its first build refuses missing script metadata before compilation, corrected through the existing importer recipe in J890; Siren source J886 is unbuilt.
 Alpha’s checked baseline runner passes both standard modes on unchanged
 be26c21c with verified teardown (J888).
 This page is the current snapshot only: replace its

@@ -301,6 +301,9 @@
     "Assets/LabLoadingScene/OriginalHealthVisualMap.cs.meta": {
       "guid": "8734f5323eed146d4a1269839d535211"
     },
+    "Assets/LabLoadingScene/OriginalMusicControllerContract.cs.meta": {
+      "runtime_source": "runtime/session/OriginalMusicControllerContract.cs"
+    },
     "Assets/LabLoadingScene/PickupDropletCollisionBoundary.cs.meta": {
       "runtime_source": "runtime/commerce/PickupDropletCollisionBoundary.cs"
     },
@@ -315,6 +318,9 @@
     },
     "Assets/LabLoadingScene/PortSession.cs.meta": {
       "runtime_source": "runtime/session/PortSession.cs"
+    },
+    "Assets/LabLoadingScene/PortSessionOriginalMusicControllerOwner.cs.meta": {
+      "runtime_source": "runtime/session/PortSessionOriginalMusicControllerOwner.cs"
     },
     "Assets/LabLoadingScene/PrimaryFireBoundary.cs.meta": {
       "runtime_source": "runtime/world/PrimaryFireBoundary.cs"
