@@ -129,6 +129,26 @@ def untouched_parameter(words, pc, register):
     return True
 
 
+def known_literal_instruction(word):
+    """Every instruction after literal setup must have a bounded known effect."""
+    return (
+        store(word) is not None
+        or word & 0x9F000000 in (0x10000000, 0x90000000)
+        or word & 0x7F000000 in (0x11000000, 0x51000000)
+        or word & 0x7FE0FFE0 == 0x2A0003E0
+        or word & 0x7F800000 in (0x12800000, 0x52800000, 0x72800000)
+        or word & 0x3FC00000 in (0x39400000, 0x3D400000, 0x3DC00000)
+        or word & 0x3B600000 == 0x38400000
+        and (word >> 10) & 3 == 0
+        or word & 0xFC000000 in (0x14000000, 0x94000000)
+        or word & 0xFF000010 == 0x54000000
+        or word & 0x7E000000 in (0x34000000, 0x36000000)
+        or word & 0xFFFFFC1F == 0xD65F0000
+        or word & 0xFFFFFFE0 == 0x6F00E400
+        or word == 0xD503201F
+    )
+
+
 def descriptor(image, function, target, constant_argument):
     """Read selected pointer fields of one stack literal passed to RegisterType.
 
@@ -173,6 +193,8 @@ def descriptor(image, function, target, constant_argument):
     assertions = image.symbols.get("__Z20AssertImplementationiPKciiS0_", set())
     for pc in range(first, call, 4):
         word = words[pc]
+        if not known_literal_instruction(word):
+            raise ValueError("Unqualified instruction after metadata literal setup")
         if changes_frame(word) or any(step <= pc for step in edges[pc]):
             raise ValueError("Metadata frame or control-flow order changes after literal setup")
         parts = store(word)

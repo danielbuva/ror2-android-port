@@ -67,7 +67,7 @@ class LiteralRecordTests(unittest.TestCase):
                 self.read(root_fixture(intermediate))
 
     def test_frame_change_alias_store_unknown_call_and_indirect_flow_refuse(self):
-        for intermediate in ((0x910043FF,), (0xF9000000,), (branch(0x1024, 0x2800),), (0xD61F00E0,), (0xB5FFFF26,)):
+        for intermediate in ((0x910043FF,), (0xF9000000,), (branch(0x1024, 0x2800),), (0xD61F00E0,), (0xB5FFFF26,), (0,), (0x8B2063FF,)):
             with self.subTest(intermediate=intermediate), self.assertRaises(ValueError):
                 self.read(root_fixture(intermediate))
 
