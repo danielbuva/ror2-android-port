@@ -25,3 +25,18 @@ public interface IGameAudioOriginalPassivePcmCapture
     ulong CappedBuffers { get; }
     bool OutputIdentityObserved { get; }
 }
+
+
+// Pure admission predicate for the passive capture's gameplay-boundary request.
+// The results-profile flag is deliberately absent: gameplay is established by the
+// existing integrated-world phase and finite positive simulation time.
+public static class GameAudioOriginalPassivePcmGameplayGate
+{
+    public static bool ShouldRequestArm(
+        bool captureRequested, bool boundaryAttempted, bool integratedWorld, string phase, float worldSeconds)
+    {
+        return captureRequested && !boundaryAttempted && integratedWorld &&
+            string.Equals(phase, "integrated-world-playing", StringComparison.Ordinal) &&
+            !float.IsNaN(worldSeconds) && !float.IsInfinity(worldSeconds) && worldSeconds > 0f;
+    }
+}

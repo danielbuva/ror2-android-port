@@ -72,10 +72,10 @@ The plain check and its acceptance criteria remain unchanged.
 
 ## Current baseline (2026-10-20)
 
-J875's later diagnostic APK is installed after both default checks, but is not
-promoted: current-process audio log errors remain and playback is unqualified.
+J880's later diagnostic APK is installed after both default checks, but is not
+promoted: its selected PCM window remains unarmed and playback is unqualified.
 See the [current snapshot](../PORTING_STATE.md) for installed identity and
-[J875](PORTING_JOURNAL.md#j875--localize-original-point-sound-failure-to-the-returned-emitters-transform-access)
+[J880](PORTING_JOURNAL.md#j880--remove-the-observed-point-sound-failure-and-identify-the-unarmed-pcm-gate)
 for the single result record. The accepted baseline below remains the rollback.
 
 | Item | Value |

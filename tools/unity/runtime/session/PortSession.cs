@@ -484,10 +484,11 @@ public sealed partial class PortSession : MonoBehaviour
             // producer has reported playable phase and positive simulation time.
             // In particular, body creation while its GameObject is inactive is
             // not evidence that gameplay has begun; this observer never writes r.phase.
-            bool playableWorldObserved = r.integratedWorld && r.integratedResults &&
-                r.phase == "integrated-world-playing" && r.world != null && r.world.seconds > 0f;
-            if (!passivePcmGameplayArmBoundaryAttempted && playableWorldObserved &&
-                PortSessionOriginalAudioOwner.PassivePcmCaptureRequested)
+            bool playableWorldObserved = r.world != null &&
+                GameAudioOriginalPassivePcmGameplayGate.ShouldRequestArm(
+                    PortSessionOriginalAudioOwner.PassivePcmCaptureRequested,
+                    passivePcmGameplayArmBoundaryAttempted, r.integratedWorld, r.phase, r.world.seconds);
+            if (playableWorldObserved)
             {
                 passivePcmGameplayArmBoundaryAttempted = true;
                 if (!PortSessionOriginalAudioOwner.ArmPassivePcmCaptureAtGameplayBoundary(true))

@@ -10,6 +10,8 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J881](PORTING_JOURNAL.md#j881--admit-the-observed-world-route-to-the-selected-pcm-window) | 2026-10-20 | Admit the observed world route to the selected PCM window | Date: 2026-10-20. |
+| [J880](PORTING_JOURNAL.md#j880--remove-the-observed-point-sound-failure-and-identify-the-unarmed-pcm-gate) | 2026-10-20 | Remove the observed point-sound failure and identify the unarmed PCM gate | Date: 2026-10-20. |
 | [J878](PORTING_JOURNAL.md#j878--reconstruct-sdk-wrapper-population-on-android-with-a-complete-forward-oracle) | 2026-10-20 | Reconstruct SDK wrapper population on Android with a complete forward oracle | 2026-10-20. |
 | [J879](PORTING_JOURNAL.md#j879--restore-only-the-accepted-original-soundemitter-component-for-selected-audio) | 2026-10-20 | Restore only the accepted original SoundEmitter component for selected audio | Date: 2026-10-20. |
 | [J877](PORTING_JOURNAL.md#j877--host-qualify-passive-pcm-measurement-of-ordinary-original-gameplay) | 2026-10-20 | Host-qualify passive PCM measurement of ordinary original gameplay | Date: 2026-10-20. |

@@ -69,7 +69,7 @@ ABI_HANDWRITTEN_SOURCE_SHA256 = "7cc79d60937708fd9f34fd67e90a743fe9e03e58c2325bf
 ABI_LLVM_NM_SHA256 = "6ffe6bb8699a354c4699a6cdfcebdb9ec6a2c8d0d89beaac978f629a0fc67ae0"
 OWNER_SOURCE_HASHES = {
     "core/GameAudioOriginalOwner.cs": "66fc16c9948089a09c77ada50a2eaa5a39f917cf943b5357971c73dae0b0e3c6",
-    "../../runtime/session/PortSession.cs": "2689be1a88dd595eb2c0992998fbf447d52527862a35274c3abac8f50c1ebf90",
+    "../../runtime/session/PortSession.cs": "233e40b41b02aa601d110db38bdb738ed35438a91131823d609a2909719e6731",
     "../../runtime/session/PortSessionOriginalAudioOwner.cs": "2cf4f55b577aad96c8d2a52c2b75cc2be271bb466193cb8d8dc7e3a127d2d040",
     "core/PointSoundDiagnosticObserver.cs": "ebd0b2c0089150c4302c00824ee32e7a8e8b1906f26ad2137bdb0cee4cf1b4c7",
     "core/GameAudioOriginalReadiness.cs": "ab7be883932ce975615676882440c74d43b039fce067a9cab0572d7198c4db19",
@@ -82,7 +82,7 @@ OWNER_SOURCE_HASHES = {
     "bootstrap/GameAudioOriginalPreparation.cs": "9894781b7ff0b5cde30b4b67ad0fb9f65a037ba0c124a086fe562c181fa41168",
     "bootstrap/GameAudioOriginalRequestBootstrap.cs": "faff62d15e6b1828a814a55af4a9a25d04b315ba5c462cb4bf6c34f569e8657c",
     "bootstrap/NativeWwiseMonitorLease.cs": "79b234526c893902474bf84317638724ae62b440e2395b4451d55f12ec877e72",
-    "core/GameAudioOriginalPassivePcmContract.cs": "e7398ae3d3f17ad09c4a646ec3a36cbf75b7283855b7879528bf4e2076c1c6c7",
+    "core/GameAudioOriginalPassivePcmContract.cs": "76a1d54f1b679ce1ed160203196ecc2c589d71b081070e3b1dac3517f0e7978d",
     "bootstrap/OriginalGameAudioPassivePcmOwner.cs": "6fbc008ee73b5b65828e4a053cc7d87cc63375235602530ec936bad74fd8a286",
     "bootstrap/PassivePcmCaptureWindow.cs": "2601433feccd7e87fb17023135baf7969ea9b7f26d7db135f86ff3e78c55d78f",
 }

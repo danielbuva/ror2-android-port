@@ -58,9 +58,13 @@ class OriginalAudioPassivePcmHostTests(unittest.TestCase):
         self.assertNotIn('r.phase = "integrated-world-playing"', session)
         self.assertNotIn("playableWorldStarted", session)
         save_body = session.split("    void Save()", 1)[1].split("    private void RetirePointSoundDiagnostic", 1)[0]
-        self.assertIn('r.phase == "integrated-world-playing"', save_body)
-        self.assertIn("r.world.seconds > 0f", save_body)
-        self.assertIn("r.integratedWorld && r.integratedResults", save_body)
+        self.assertIn("GameAudioOriginalPassivePcmGameplayGate.ShouldRequestArm(", save_body)
+        self.assertIn("passivePcmGameplayArmBoundaryAttempted, r.integratedWorld, r.phase, r.world.seconds", save_body)
+        self.assertNotIn("r.integratedResults", save_body)
+        self.assertIn(
+            "!float.IsNaN(worldSeconds) && !float.IsInfinity(worldSeconds)",
+            (Path(__file__).resolve().parents[1] / "tools/unity/support/audio/core/GameAudioOriginalPassivePcmContract.cs").read_text(),
+        )
         self.assertIn("ArmPassivePcmCaptureAtGameplayBoundary(true)", save_body)
         self.assertIn("r.passivePcmCaptureRequested = PortSessionOriginalAudioOwner.PassivePcmCaptureRequested", save_body)
         self.assertIn("r.passivePcmGameplayArmRequested = PortSessionOriginalAudioOwner.PassivePcmGameplayArmRequested", save_body)
@@ -75,6 +79,22 @@ class OriginalAudioPassivePcmHostTests(unittest.TestCase):
         self.assertIn("FinishPassivePcmCaptureGameplayWindow()", owner)
         self.assertIn("playable_session_completed", window)
         self.assertNotIn("while (r.passivePcmCaptureRequested", session)
+
+    def test_gameplay_gate_accepts_actual_world_when_results_profile_is_false(self):
+        core = Path(__file__).resolve().parents[1] / "tools/unity/support/audio/core/GameAudioOriginalPassivePcmContract.cs"
+        fixture = Path(__file__).resolve().parent / "fixtures/original_audio/PassivePcmGameplayGateHarness.cs"
+        with tempfile.TemporaryDirectory(prefix="original-audio-pcm-gate-") as temp_name:
+            executable = Path(temp_name) / "gameplay-gate.exe"
+            compiled = subprocess.run(
+                [str(MONO), str(CSC), "-nologo", "-target:exe", "-out:" + str(executable), str(core), str(fixture)],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(compiled.returncode, 0, compiled.stdout + compiled.stderr)
+            executed = subprocess.run([str(MONO), str(executable)], capture_output=True, text=True, check=False)
+            self.assertEqual(executed.returncode, 0, executed.stdout + executed.stderr)
+            self.assertIn("false-results report", executed.stdout)
 
 
 if __name__ == "__main__":

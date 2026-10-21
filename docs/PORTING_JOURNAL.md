@@ -22361,3 +22361,118 @@ SDK/tool delivery, app hosting, installation/key custody and matched-workload
 performance remain separate gates. Revisit on SDK/managed-set/source/API,
 constructor/layout, consumer or inventory drift. No APK is built or installed,
 and no alternative runtime or final shell/distribution experience is selected.
+
+
+## J880 — Remove the observed point-sound failure and identify the unarmed PCM gate
+
+Date: 2026-10-20.
+
+Hypothesis: restoring J879's exact source SoundEmitter component will remove
+J875's returned-emitter null reference, while J877's selected capture can measure
+ordinary game output. The prior-art boundary remains pinned R2API.Sound's
+post-engine-Init bank seam: readiness alone does not establish event or output
+success. Preserve original point-sound pooling, event posting and timeout logic.
+
+Change: full committed-source build `06b4774`, combining J877/J879, with API
+`1cedc89f…` and unchanged instrumented game `6f96ed83…`. The build receipt confirms
+the exact accepted SoundEmitter form. Request
+`20261021T052718.858857Z-b52d492f7df24609909b49041c34c4a9` succeeds in
+882.032459 s with zero errors. The longer content build is active LZ4-HC archive
+compression, confirmed by a private host stack sample; no editor restart or
+cache clearing occurred. Frozen candidate:
+`work/experiments/original-game-audio/candidate-20261021T054342.712046Z/`.
+APK SHA-256:
+`801efef1e39a97f07812097a0a487d4b7b3e43d06f7eca833d0427f9bb5674ac`;
+symbols ZIP:
+`adf9d009888bc683cf9a60938a3767cc54a5e47b7988bbc9f4a270c3dd3f2700`;
+`libil2cpp` Build ID `c60efa9d9ed707663b0f835012a40560200a5629`.
+The freeze verifies 364 authored inputs, 333 same-request pre-strip assemblies,
+154 packaged banks and 266 independent payload files. The exact APK installs
+in place after fresh adopted-only reserve/placement checks and its frozen
+payload syncs through the canonical tools.
+
+Device evidence, both ordinary diagnostic-assist checks with current-build true,
+13 applied runs unchanged and no report error/first failure:
+
+- Plain: `work/experiments/baseline/20261021T054651.692695Z/`, 35.324158 s on Lakes.
+- One exit: `work/experiments/baseline/20261021T055050.979062Z/`, exactly one
+  transition to Goolake, 156.350937 s total and 12.093811 s in the destination.
+
+Both current-process logs contain only the five intentional Windows-bundle
+negative-control error lines. Neither has a point-sound exception or the old
+bank-path warning. This removes the observed failure over these two runs;
+it does not qualify every event, pooling lifecycle or native playing ID.
+The separately selected point-sound observer is off in both standard checks.
+
+Original audio remains Ready, no-audio false, native Init observed, all 153 banks
+complete and the catalog lease held. PCM is selected but the gameplay arm flag
+is false, state `selected_waiting_for_gameplay_arm`, with no callbacks/samples.
+The report simultaneously has the existing `integrated-world-playing` phase,
+positive world time and `integratedWorld=true`, but `integratedResults=false`.
+J877's Save predicate incorrectly requires that unrelated results-report flag.
+These zero counters are an unarmed measurement, not evidence of silent native
+output. The next change removes that requirement without inventing phase or
+results state, and adds the actual false-results report regression.
+
+Root derived qualification:
+`work/coordination/codex-original-game-audio-device-root/r6/root-final-qualification.json`,
+SHA-256 `44369614ca74093e376e41cac89d62377453cc094ed7744597058127b3e2af07`.
+The canonical checks stop the process, remove selectors and sleep the display;
+independent post-run queries confirm all three. The device claim is released.
+Native PCM, Android playback, physical audibility, original Term and natural
+same-process restart remain unqualified. Installed diagnostic is now 801efef1;
+accepted baseline remains J850 f1550ce0 and retained rollbacks are untouched.
+Other devices were not used. This entry changes no reconstruction input; R8/R9
+must replay the runtime/support and prefab-selection changes recorded in
+J877/J879. A subsequent code-only build may reuse this verified content payload
+when its strict payload checks pass.
+
+
+## J881 — Admit the observed world route to the selected PCM window
+
+Date: 2026-10-20.
+
+Hypothesis: J880's selected but unarmed capture is caused by the Save predicate's
+`integratedResults` requirement, rather than native silence. The ordinary world
+report has that flag false while its actual integrated-world phase and positive
+simulation time are present. Results-profile state is not a gameplay-start
+witness; do not fabricate it to make capture run.
+
+Change: a pure gate in `GameAudioOriginalPassivePcmContract.cs` admits only a
+requested, not-yet-attempted integrated-world boundary with the existing
+`integrated-world-playing` phase and finite positive simulation time.
+`PortSession.Save` calls it when the world snapshot exists, then preserves the
+one-shot arm attempt and primary-failure reporting. The gate has no results
+input and never writes phase. Native capture, pre-Term guard, callback teardown,
+API and game IL remain unchanged. Exact producer source pins are refreshed.
+This minimal shared session change serves original audio measurement only;
+no menu, control, settings or result behavior changes.
+
+Root host evidence: 64 audio/point-sound tests pass without skips, including a
+compiled helper regression with J880's false-results report shape, default-off,
+repeat attempts, absent world phase and invalid times. Log
+`work/coordination/original-game-audio-passive-pcm/r12/root-host-tests.log`,
+SHA-256 `eefb6b190229abb26c24eb2973bfbd16d56f14d4839b237db3ae4f3cf8392897`.
+Independent source review:
+`work/coordination/original-game-audio-passive-pcm-review/r9/review.md`,
+SHA-256 `7a2556709e372028e73e39ad9cb3957e8015a1bdf9a617fff486ed7745452c8d`.
+Actual producer/stager evidence:
+`work/coordination/codex-original-audio-host-stage-root/r7/` verifies upgrade
+from the exact J880-owned stage, PCM-off/on each with 165 outputs, a validated
+165-output PCM-on cache hit, then eight-output default-off restoration.
+API remains `1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b`;
+game remains `6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc`.
+Source SoundEmitter selection remains exact in both directions. The PCM-on
+receipt SHA-256 is
+`e0a0d00dfb390c5029cb61f97bb9fde14c1c8075efe7de81e2754d90482a9154`.
+
+Full runtime host compile passes 118 sources against 264 references, with 395
+unchanged inputs. Receipt:
+`work/coordination/original-audio-pcm-root/r3/compile_receipt.json`, SHA-256
+`cdb91eeac7bc7f2ed9bd94f6679ab66c76bec3e6ade3af04ef18b7bc2a469159`; output SHA-256 `5d8b22d4e1918f64dd906a6cc3d2a21d4ba92aff7180f0da70beef3cd63a0619`.
+Python Ruff format/check pass. No player/device result exists for this source
+fix. Installed APK remains J880 801efef1, and accepted baseline remains f1550ce0.
+Next: preflight and committed-source code-only build with strict J880 payload
+reuse, both standard checks and actual arm/callback/output observations. A zero
+sample count cannot establish silence unless capture actually arms. R8/R9 must
+replay the runtime/support producer; no new protected/local build input is added.

@@ -661,8 +661,12 @@ This adds no game callsite or change to the instrumented game DLL.
 The explicit build selection binds its flag through the generated request;
 the owner shares the existing native monitor lease and creates no engine or
 events. `PortSession.Save` arms once after observing the existing playable-world
-phase and positive simulation time. The callback counts bounded finite/nonzero
-samples with stop thresholds of 10 s or 600 successful render frames, checked
+phase and positive simulation time.
+The pure `GameAudioOriginalPassivePcmGameplayGate` consumes requested/one-shot
+state, the existing integrated-world phase and finite positive simulation time;
+the unrelated results-report flag is not an admission input. The callback counts
+bounded finite/nonzero samples with stop thresholds of 10 s or 600 successful
+render frames, checked
 on the next owner Update tick. Completion, unwind
 and destruction close the window idempotently without delaying gameplay.
 The exact transformed API guards both original Term paths before native teardown;
