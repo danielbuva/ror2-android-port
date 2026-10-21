@@ -144,6 +144,24 @@ project dependency closure, editor mutation or game/linker consumer. J869
 qualifies this bounded metadata contract on the alpha Android shell; it does
 not qualify normal app hosting or a complete wrapper cache.
 
+`phone_wrapper_oracle.py` and `tools/phone-build/WrapperMetadataOracle.cs` own
+separate current experimental **desktop verification**. The
+`phone-wrapper-oracle` action stages a fresh SDK-only project or checks that
+explicit project with the exact editor under the primary checkout mutex.
+Committed source, project, editor and loaded assembly hashes bind the report.
+Staging checks containment before creating anything and opens directory chains
+and new files through descriptors that refuse symlinks. Every file write
+rechecks scope; configured work-root and staging-parent links refuse before
+outside writes. Foreign assets, drift, existing outputs and lock contention
+also refuse. The C#
+collector validates unique native identities and the complete parent graph
+before querying concrete descendants of native Object. Root, abstract and
+outside-hierarchy rows remain explicitly unqueried; null and empty query
+results remain distinct. Setup is a new generated project/request; teardown is
+the isolated batch process exiting, retaining logs and failed attempts. Neither
+MCP editor is reused or stopped. Its private SDK observations are comparison
+oracles, never phone-build/linker inputs, project scene roots or game behavior.
+
 `phone_registry.py` and `phone_registry_literals.py` own separate experimental
 static SDK metadata support.
 The current `phone-native-registry` action accepts an explicit owner binary,

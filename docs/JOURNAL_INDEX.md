@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J873](PORTING_JOURNAL.md#j873--separate-direct-scene-names-from-sdk-wrapper-cache-queries) | 2026-10-20 | Separate direct scene names from SDK wrapper-cache queries | 2026-10-20. |
 | [J874](PORTING_JOURNAL.md#j874--stage-bounded-original-point-sound-localization-through-the-public-producer) | 2026-10-20 | Stage bounded original point-sound localization through the public producer | Date: 2026-10-20. |
 | [J872](PORTING_JOURNAL.md#j872--verify-the-android-bank-path-repair-and-retain-the-point-sound-failure) | 2026-10-20 | Verify the Android bank-path repair and retain the point-sound failure | Date: 2026-10-20. |
 | [J871](PORTING_JOURNAL.md#j871--reject-whole-recording-signal-as-proof-of-original-event-playback-capture) | 2026-10-20 | Reject whole-recording signal as proof of original event playback capture | Date: 2026-10-20. |

@@ -138,6 +138,15 @@ def _repair_reconstruction(function, kwargs, args):
 # Only the selected action's module is imported by dispatch().
 _ENTRIES = (
     Action(
+        "phone-wrapper-oracle",
+        "phone_wrapper_oracle",
+        "stage_action",
+        {},
+        "current",
+        "Experimental desktop verification only: --target REQUEST.json selects stage or check for a fresh SDK-only project. The exact editor reports native metadata and concrete Object-descendant wrapper queries under the shared mutex. No game files, player build, installation or phone-build input; preserves existing editors and refuses lock contention.",
+        handler=_target,
+    ),
+    Action(
         "phone-wrapper-search",
         "phone_wrapper_search",
         "inspect_action",

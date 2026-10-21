@@ -21812,3 +21812,136 @@ a timestamped experiment output. Next: build committed source, run both default
 checks and an explicitly selected point-sound run; classify the first actual
 failing boundary before proposing a behavior repair. Passive PCM is a separate
 host draft and has no output acceptance here.
+
+## J873 — Separate direct scene names from SDK wrapper-cache queries
+
+2026-10-20. Hypothesis: an independent exact-editor wrapper-query oracle can
+expose gaps hidden by J869's 42-row authored scene comparison. Start from main
+`d31fc02`/J871 after PR17's accepted merge; integrate main `d02732f`/J872/J874
+for the final review head. Coordinate the separate journal
+number and wait for main's Android build to finish before acquiring the shared
+mutex. Main retains original gameplay/audio ownership. Route A, IL2CPP ARM64,
+Android rendering and the desktop fallback remain fixed. This is SDK-only
+**desktop verification**, not another phone qualification or a build input.
+
+**Owner and isolation.** `phone_wrapper_oracle.py` and
+`tools/phone-build/WrapperMetadataOracle.cs` own the current experimental
+`phone-wrapper-oracle` action. An explicit stage request generates a fresh
+SDK-only project; check selects that project, requires committed sources and
+pinned SDK bytes, and acquires the existing primary checkout mutex with a
+1-second contention timeout. Neither MCP editor is stopped or reused. No game
+files, player build, install or device action is involved. Each check retains
+new logs/report/receipt outputs; drift, foreign assets, links and output
+replacement refuse. The report binds actual editor version, source commit,
+loaded SDK assembly paths/hashes and query scope. Setup/teardown are recorded
+in ARCHITECTURE and generated local state in LOCAL_STATE.
+
+Verify the actual internal API signatures with read-only pinned Unity MCP
+reflection. Consult the same pinned reference-only
+[UnityType API](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Editor/Mono/TypeSystem/UnityType.cs),
+[wrapper binding](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Editor/Mono/BuildPipeline/RuntimeClassMetadataUtils.bindings.cs)
+and [registry consumer](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Editor/Mono/BuildPipeline/RuntimeClassMetadata.cs)
+for API knowledge and the documented possibility of duplicate Object wrapper
+names. No reference implementation, SDK instructions or registry table is copied
+into public source. This is generic SDK build-tool investigation; it introduces
+no RoR2-specific runtime mechanism.
+
+**Exact-editor result.** Committed source
+`b54009a68df2cff3bb7a197aafbb430710abde45` runs in a fresh project using the pinned
+Unity 2021.3.45f2 ARM64 editor, exits 0 and satisfies the independent report
+validator. The owner binary remains SHA-256
+`906123118e45d56c6bcf20f3776ed2373417553042500714023daeb9e53058e8`.
+Report SHA-256 is
+`a686ecb9a2ad9b9849f542ae2d9e7f13534b0dae43a5e324df68a36e5d534507`.
+All 318 native identity/ID/parent records match J864's static registry, with zero
+mismatches. Native flags are additionally observed for all rows; this is not a
+qualified static flag decoder on Android.
+
+The collector validates unique IDs/names and the complete acyclic parent graph
+before making native wrapper queries. It queries 278 concrete Object descendants;
+27 abstract rows, 12 outside-hierarchy rows and the Object root remain explicitly
+unqueried. All supported queries return nonempty strings; none returns null.
+Null and empty remain separate report states. Unqueried rows never manufacture
+an observed wrapper name. These exclusions are part of the scope, not a claim
+that the remaining APIs are unsupported or that the full cache is covered.
+
+**First failure and changed hypothesis.** The unchanged prior scene-oriented
+model matches only 244 of the 278 query results. All 34 differences are model
+empty versus observed UnityEngine.Object. Preserve this first comparison.
+Bounded read-only SDK inspection distinguishes two operations: the separate
+cache query stops recursion before an Object parent, but cache population's
+recursive search examines Object before stopping. Applying the query boundary
+to population loses the inherited Object result. A mis-scoped disassembly
+attempt is retained as hash-verified compressed private evidence; corrected
+bounded observations use the Mach-O symbol-specific option.
+
+A new private observational comparison uses J864's registry, J866's scoped
+metadata/forwarding and J869's actual Android-decoded search report, verifies the
+selected SDK file set and input hashes, and searches the Object row during
+population. It matches all 278 concrete query names. The separate **direct**
+scene-name comparison still matches all 42 native rows, including empty values.
+These are different contracts: do not replace direct scene names with inherited
+cache names merely to make a comparison pass. Keep the original 34 mismatches,
+revised comparison and all prerequisite reports. The revised population rule is
+an observation, not a qualified static control-flow/population decoder or a new
+phone execution. Extra-type registrations and unqueried classes remain open.
+
+**Controls and evidence.** Five focused host tests pass. The compiler fixture
+runs the actual collector against independently authored API substitutes,
+rejects cycles, foreign parents,
+duplicate IDs/names/objects and ambiguous API definitions before native queries,
+and proves root/abstract/nonobject IDs are not queried. A separate live kernel
+flock control refuses promptly while its verified holder remains alive, starts
+no editor and retains a failure receipt. Project/source drift and scope/query
+coverage controls pass. The combined action/host suite passes 218 tests.
+Fresh-clone CI on the actual source passes 1,321 tests with 60 optional skips,
+Ruff, public audit and documentation checks. The exact-editor compiler fixture
+skips when Mono/Roslyn is absent. Whole-game preflight still refuses the alpha
+worktree's missing inventory/bootstrap, so this adds no public-bootstrap claim.
+
+Private `wrapper-oracle-proof-receipt.json` binds 107 source snapshots, staged
+inputs, reports, controls, comparisons, SDK observations, CI logs and prerequisite
+artifacts; SHA-256
+`81bb2a33c67c4979c1127287fad2231b8d28fd62df5f66e7aefdb039a0bca13e`.
+Raw SDK metadata and mappings remain ignored. No APK is produced; the alpha
+be26c21c gameplay qualification remains J869's prior unchanged observation.
+Main's independently built candidate is outside this experiment's acceptance.
+
+**Independent review correction.** Review of `eab62ff` identifies that staging
+creates directories before its later project validator checks ancestor links.
+An owned reproduction with a symlinked rebuild parent redirects four authored
+file writes outside that control's configured work root. Preserve the original
+tree and first refusal gap. No game or SDK is involved in this reproduction.
+
+`f31770cb4724192c186c71621b08b4d7ef40674a` checks lexical/resolved containment
+and ancestor links before the first write. Directory-descriptor traversal and
+exclusive no-follow file creation prevent linked parents/files from redirecting
+writes; each file rechecks scope. Project selection uses the same scope guard.
+New controls cover links at four ancestor depths and replacement of a created
+parent before the first file write, with zero outside additions. The original
+outside files remain unchanged. Seven focused tests plus dispatch pass all
+220 tests; fresh-clone CI on the corrected source passes 1,323 tests with
+60 optional skips.
+
+A new guarded stage and short mutex-protected SDK batch at that commit both
+pass. All 318 report rows, including the same 278 queries, and loaded assembly
+evidence exactly equal the first oracle. Only source identity changes; the
+new report SHA-256 is
+`a7e4aedd8630d914f68fbb87c82d25cbd5ed86059526fa3c6944140aea7a209a`.
+The batch exits 0, releases the mutex and preserves both MCP editors.
+`wrapper-oracle-proof-v2-receipt.json` binds 139 old/new artifacts, including
+the independent review, original reproduction, corrected refusal, source
+snapshots, fresh oracle and CI; SHA-256
+`ea02b991c3750db08297de70703ef2508f13f31ef5320c9dd0b695d3a96afe86`.
+The original receipt, report and comparisons remain intact. This fixes staging
+safety; it changes neither the mapping findings nor their qualification scope.
+
+**Next gate.** Qualify static native flags, cache population and all extra-type
+rules, keeping direct scene-name resolution separate from cache queries. Then
+produce complete authored fixture scene/manager/dependency usage and exact
+linker roots without a desktop capture. General project policy, managed game
+compilation, content/shaders, permitted SDK/tool delivery, normal app hosting,
+installation/key custody and matched-workload performance remain separate gates.
+Both root_generation_qualified and cache_population_qualified remain false.
+Revisit on SDK/API/module/file-set/source or consumer-contract drift; retain
+this independent oracle as verification only.
