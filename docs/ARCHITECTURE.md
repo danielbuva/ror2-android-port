@@ -509,6 +509,8 @@ game independently; `support/audio/generators/` produces bank and request pins
 without editing authored sources. Native ABI inspection uses the official
 Release plugin, distinct from the explicitly selected instrumented runtime.
 Generated contracts precede derivative request sources to avoid circular pins.
+Authored .NET helper builds disable SourceLink so changing repository revisions
+does not change their pinned generated metadata (J863).
 The cache binds producer sources, recipes, editor references, compiler/tool
 identities and explicit inputs; cached generations revalidate that receipt.
 `original_game_audio_stage.py` checks exact assembly preimages, GUIDs and owned

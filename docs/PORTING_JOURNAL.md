@@ -20900,3 +20900,47 @@ managed compilation remain desktop inputs. General project/module policy,
 independent complete roots, content/shaders, richer dependencies, permitted tool
 delivery, app sandbox execution and complete owner installation remain open.
 Revisit this profile only for a changed contract/input or a concrete regression.
+
+
+## J863 — Remove commit-dependent SourceLink metadata from the audio helper
+
+2026-10-20. Observation: the first real full audio build from synchronized
+`93a95aa` stops in host staging before Unity is queued. The helper DLL no longer
+matches J860's hash even though the authored source, project and generated
+assembly attributes are unchanged. The host mutex releases normally; no APK,
+editor mutation, install or device run occurs. f1550ce0 remains installed and
+default-qualified, stopped with its display asleep.
+
+**Cause and smallest change.** Compare the preserved passing and failed helper
+outputs. Their disassembled IL differs only in module identity; SourceLink JSON
+contains different repository commit URLs. The local .NET SDK 10.0.401 target
+`Microsoft.SourceLink.Common.targets` gates its generation on EnableSourceLink.
+Informational-version revision suppression alone does not disable this metadata.
+Pass `EnableSourceLink=false` to the existing isolated authored .NET builds.
+Deliberately update the helper pin in the producer and its exact Cecil consumer,
+then update the producer source pin. Do not stamp an old MVID or alter original
+input. No game/SDK implementation or new protected input is added.
+
+The helper becomes byte-identical across two output roots and two explicit
+revision values, SHA-256
+`db6dba4c977328bfdb37004fd2a8957a5a627217959835edfd3ded09ed340e62`.
+Its normalized method IL matches the prior helper. The transform copies that IL
+rather than helper debug metadata: observed API `7ec842ee…`, composed API
+`793f2286…` and composed game `1034a747…` remain exactly their reviewed hashes.
+The current public regression invokes the actual producer with the real authored
+project under two roots/revisions and compares DLL bytes; it skips when the optional
+.NET SDK/offline reference package is absent. Existing isolation/output/editor
+contracts remain tested. Ruff passes.
+
+**Evidence and limits.** Preserve the failed build coordinator and logs under
+`work/coordination/codex-original-game-audio-build-root/r1/`, including its
+source snapshot and terminal first failure. The failed immutable generation is
+under `work/original-game-audio-owner/1a1ee094ff717dfc7093f1f4ada352e3a1756f95c805c11c210aaabcf0466641/`.
+Causal comparisons, two-root builds, exact downstream hashes and draft are under
+`work/coordination/original-audio-managed-repro-fix/r1/`; report SHA-256 is
+`13bd7e4853010ebd1659e75c2ebaa70ab5a1dbc227b6250679983c054d8d54a6`.
+Public managed-producer source now hashes to
+`b71899eafd02e8a52f96c7e67aca19eb9a5c6c41554dd86348c2307c7d318e74`.
+APK hash is not applicable. R8/R9 support generation must replay this source fix.
+Next: a fresh immutable generation and full player build from committed source;
+no runtime, audio, bank or physical-audibility acceptance follows from this repair.

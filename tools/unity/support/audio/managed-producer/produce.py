@@ -27,7 +27,7 @@ EXPECTED = {
     "guarded_game": "3124a2ed9cf458acee78b1beaf969590b184be452e2b3aa5a8852df82ff95d30",
     "composed_game": "1034a747e31a3b79554b9cb06f941c7acabaa9e0ee82c2a00abc4b24f9327c1c",
     "owner_api_observer_source": "83f04c419ca68e1bdf9ae670c842e44cba367d377c7a9c78808b6057b92982e3",
-    "owner_api_observer_dll": "e98c8d66b9a85b219f01d6475dcde110ff5db2ea7f944ede6a8c259b3ece2357",
+    "owner_api_observer_dll": "db6dba4c977328bfdb37004fd2a8957a5a627217959835edfd3ded09ed340e62",
     "unity_reference_count": 195,
 }
 
@@ -160,6 +160,7 @@ def build_dotnet(project: Path, output: Path, cecil: Path, dotnet: Path, out: Pa
             "-p:BaseIntermediateOutputPath=" + str(obj) + "/",
             "-p:RestoreConfigFile=" + str(out / "NuGet.Config"),
             "-p:UseSharedCompilation=false",
+            "-p:EnableSourceLink=false",
         ],
         cwd=ROOT,
         env=env,
