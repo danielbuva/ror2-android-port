@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J888](PORTING_JOURNAL.md#j888--refuse-unknown-baseline-device-state-and-verify-teardown) | 2026-10-21 | Refuse unknown baseline device state and verify teardown | 2026-10-21. |
 | [J887](PORTING_JOURNAL.md#j887--activate-the-source-camera-listener-and-retain-the-camera-prerequisite-failures) | 2026-10-21 | Activate the source camera listener and retain the camera prerequisite failures | Date: 2026-10-21. |
 | [J886](PORTING_JOURNAL.md#j886--give-the-selected-siren-diagnostic-one-route-writer-and-one-clock) | 2026-10-21 | Give the selected Siren diagnostic one route writer and one clock | Date: 2026-10-21. |
 | [J885](PORTING_JOURNAL.md#j885--bind-the-camera-player-and-observe-an-empty-managed-listener-list) | 2026-10-21 | Bind the camera player and observe an empty managed listener list | Date: 2026-10-21. |

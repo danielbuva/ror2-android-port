@@ -22991,3 +22991,94 @@ Bootstrap and reports LAB READY. No install, source change, build or storage
 change occurs. Installed diagnostic remains 3c72fe05; accepted baseline remains
 J850 f1550ce0. Revisit after an authored, host-checked prerequisite/lifecycle
 repair, a committed reproducible build and both standard checks.
+
+
+## J888 — Refuse unknown baseline device state and verify teardown
+
+2026-10-21. Hypothesis: the standard baseline runner can reject transport
+failures and incomplete observations before they become apparent selector or
+process absence, and verify teardown before accepting a run. Root's private
+scenario review identifies unchecked empty-output handling; inspect the same
+pattern in `baseline.py`. Work only in the isolated alpha worktree and on its
+explicitly assigned device. Main retains gameplay/audio/animation ownership.
+This is host playtest tooling, with Route A, IL2CPP ARM64, Android rendering,
+the desktop fallback and the installed game unchanged.
+
+**First failure and authored controls.** Freeze the original runner from
+`565aac5` and a separate authored device-protocol fixture. The original runner
+reports success in four controls: a failed selector observation permits
+overwriting an existing selector; failed removal leaves the selector present;
+failed force-stop leaves the process running; and a false display-sleep result
+is ignored. These reproduce unsafe acceptance without ADB or a real device.
+Preserve the original source, exact fixture bytes and failed control receipts.
+This is generic ADB/shell work, not a new RoR2 runtime mechanism.
+
+**Owner and contract.** `baseline.py` remains the named standard-check owner.
+Before runtime writes, a checked directory listing must contain its normal
+directory entries and positively exclude the selector. Existing selectors,
+failed commands and incomplete observations refuse. Checked process replies
+distinguish `pidof`'s no-match status with empty combined output from errors,
+unexpected output and ambiguous PIDs. Report absence and a partial live JSON
+write remain retryable; a failed read is an error. The final report must belong
+to the launched process.
+
+Teardown attempts selector removal, force-stop and the configured sleep policy
+even after another failure or a remotely successful push followed by a local
+timeout. Selector removal and process exit are positively rechecked. Any
+unknown or failed teardown prevents success, and the result records the verified
+states. A primary operation error survives an additional cleanup error. Existing
+APK-embedded attempt binding from J679, device ownership/storage gates, gameplay
+criteria, diagnostic assists and progression exclusion remain intact.
+
+The first live precheck refuses this worktree's missing local ownership receipt
+before launch or runtime writes. The existing canonical assigned-device receipt,
+retained APK and exact live Lab APK bytes all agree. Verify placement, serial
+and runtime backing, restore only local installed/runtime/sync receipts through
+the canonical APIs, and preserve the exact install counter and source originals.
+A private inspection initially uses a fixture helper's default package; correct
+it to the explicit Lab package before any restoration. No unknown installation
+is adopted and no package is installed or replaced. LOCAL_STATE records this
+required local ownership state.
+
+The isolated worktree also has no local build pointer. Its owned-APK check now
+records `is_current_build: false` without inventing `current-build.json`.
+Other build-pointer read/JSON errors still propagate. Source setup/teardown and
+the current interface remain documented in ARCHITECTURE and BASELINE.
+
+**Host result.** Committed source
+`9d552c7c8e4aad50093052ace6cb7b89e45f8cc2` passes 36 focused tests. The actual
+POSIX process-status script runs against an authored `pidof` executable,
+covering a PID, expected no-match, empty success, command failure, stderr,
+multiple PIDs and unknown replies. Runner fixtures cover both modes, initial
+selector/transport refusal, read failure, stale final PID, ineffective or failed
+teardown, a partial push, first-error preservation and missing/matching/different
+build pointers. Fresh-clone pre-push CI passes 1,394 tests with 73 optional skips,
+Ruff, public audit and documentation checks. No runtime source is changed.
+
+**Assigned-device result.** The committed runner's directory and process
+protocols first pass read-only checks. Both standard modes then run on unchanged
+APK `be26c21c4cd8ff15a8a663528216cf7a69394a51d8b9441a63a1a496f83e98b5`.
+The plain check reaches 35.074203 s of Lakes world play. The one-exit check
+records one original transition and 11.791870 s of Goolake world play, at
+155.528366 s total world time. Both have empty report errors/first failures,
+unchanged zero applied profile runs and `is_current_build: false`. The initial
+catalog startup is slow but completes within the existing standard deadlines;
+no deadline or gameplay acceptance criterion is relaxed.
+
+Each run positively verifies selector absence, process exit and display sleep.
+Independent post-run queries confirm those states and the unchanged APK bytes.
+Canonical source receipts and the preserved install counter remain unchanged.
+No new build, install, payload sync, input mapping or source game modification is
+performed. These are bounded automatic assisted controls on the alpha device,
+not normal-difficulty, physical-input, audio, camera or public-alpha acceptance.
+
+Private evidence lives under `work/coordination/baseline-adb-refusals/`, with
+explicit terminal result selectors for the two `work/experiments/baseline/`
+attempts. `proof-receipt-v1.json` binds 41 frozen source, fixture, control,
+ownership, host/CI and device artifacts; SHA-256
+`54fd7bc6d10ed7501c7f71e247919f4fb331a63147080ea5ef2054537e5140f3`.
+Raw logs, screenshots, receipts, paths and device identifiers stay ignored.
+Revisit on transport/protocol, APK/report schema, ownership/storage or display
+policy drift. Broader private runners and ordinary user playtests still need
+the same checked-observation discipline; the public-input bootstrap and phone
+owner-build gates remain open.

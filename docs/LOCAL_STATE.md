@@ -614,6 +614,14 @@ individual scoped device trees.
 
 Current baseline, survivor and completed-session checks additionally read the
 exact APK artifact named by the selected `installed.json` ownership receipt.
+An isolated worktree needs its own selected-device installed/runtime/sync
+receipts. An existing canonical receipt may be restored through the receipt API
+only after checking the same authorized serial, package placement, retained and
+live APK bytes and current runtime backing. Preserve the canonical originals and
+the exact install-counter bytes; a missing local receipt is not permission to
+adopt an unknown package. The restoration's private provenance record stays with
+the check evidence. A baseline check needs no synthetic `current-build.json`:
+without that local build pointer it records `is_current_build: false`.
 Its `apk` path is written by `./dev install` from the generated/preserved lab
 APK; `apk_sha256` binds its bytes. `installed_attempt.py` parses the embedded
 authored config from that verified byte snapshot instead of the mutable project
