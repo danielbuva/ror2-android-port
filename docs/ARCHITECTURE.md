@@ -217,6 +217,26 @@ SDK's observed runtime indices/IDs, with complete registry coverage; zero slots
 remain absent entries. Root membership in native population is inclusive, while
 the separate wrapper-query collector retains its root exclusion.
 
+`phone_scene_usage_oracle.py` and `SceneUsageOracle.cs` own a current experimental
+desktop verification step for the authored content fixture. An explicit
+root/work/exact-editor invocation stages a fresh SDK-only project through the
+existing guarded writer and claims the primary checkout's build mutex. The
+collector creates a default scene with the authored `ContentFixture`, compiles
+its Android player scripts into a fresh type database, and observes scene and
+global-manager dependencies through the SDK content-build APIs. Loaded scene
+objects, referenced objects and usage-tag objects remain separate groups;
+included types and global usage fields remain separate observations. Unresolved
+objects have no claimed support result, and null type responses stay distinct
+from empty arrays. The receipt binds committed transitive source, the SDK,
+staged inputs, scene and observed assemblies. Teardown disposes the type
+database and usage sets and exits only this new batch process; failures and logs
+remain local. No player is built, no MCP editor or game project is reused, and
+no report supplies phone-build/linker inputs. Complete root production remains
+unqualified. API knowledge comes from the pinned Unity reference source
+[`ContentBuildInterface`](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Modules/BuildPipeline/Editor/Managed/ContentBuildInterface.bindings.cs)
+and [`PlayerBuildInterface`](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Modules/BuildPipeline/Editor/Managed/PlayerBuildInterface.bindings.cs);
+no reference implementation is copied.
+
 `phone_registry.py` and `phone_registry_literals.py` own separate experimental
 static SDK metadata support.
 The current `phone-native-registry` action accepts an explicit owner binary,
