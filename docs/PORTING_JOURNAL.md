@@ -22778,3 +22778,307 @@ installation/update flows and matched-workload performance remain separate
 gates. Revisit on SDK/hash/layout/ABI, managed set, source, consumer or inventory
 drift. No alternative runtime, working-build change or final distribution shell
 is selected.
+
+
+## J885 — Bind the camera player and observe an empty managed listener list
+
+Date: 2026-10-21.
+
+Hypothesis: J884's camera/listener integration can produce a reproducible player
+without regressing the ordinary route, while its read-only census distinguishes
+an empty managed list from missing measurement. Keep the camera's existing
+per-run opt-in off for both standard checks. J884 records source design, current
+input and prior art; J882 records the preceding valid zero-output measurement.
+
+The fresh-clone pre-push gate first refuses the source checkpoint because a
+compiled test locates its root using ignored local project state. The portable
+path correction is committed as `9a238a0`; the rerun passes 1,378 tests with
+71 optional skips, without the editor or `work/`. All source is pushed before
+building. The full build uses source `9a238a02e67228bba2f1af47d748eb68c67c8587`,
+request `20261021T065114.990266Z-89a9142c5ff0485e80728aa12294ece7`,
+and succeeds in 255.101726 s with zero errors. The host mutex is honored and
+Main source remains fixed until the artifact freeze finishes.
+
+Frozen candidate:
+`work/experiments/original-game-audio/candidate-20261021T065732.244383Z/`.
+APK SHA-256:
+`3c72fe0554d25be13af32a4a33265ef23f29d831f33b55f4dd571aaa131bb6e5`;
+symbols ZIP:
+`56f32c691f8f3b72c3ef5f48a08a24977efdb111a46d4ef1fd583787013d68ab`;
+`libil2cpp` Build ID `9350ea1dad022eec187e315868d2e1f3a58f7875`.
+The freeze verifies 377 authored inputs, all 333 same-request pre-strip assembly
+snapshots, 154 packaged banks and 266 independently frozen payload files.
+The audio stage names game 6f96 and API 1ced; the camera receipt chains that
+preimage to exact final game f6bc. Its 139-identity resolver inventory is distinct
+from player inputs. The final project and same-request pre-strip game both hash
+to f6bc; APK, source commit, request, symbols and both packaged raw stage receipts
+bind to that successful build. This proves the build-input chain, not runtime
+camera or prefab closure. Canonical installation uses this exact frozen APK,
+fresh adopted-only reserve/placement checks and its own payload.
+
+Both ordinary diagnostic-assist checks pass, current-build true, 13 applied runs
+unchanged, with no report error or first failure:
+
+- Plain: `work/experiments/baseline/20261021T070010.097156Z/`,
+  35.220535 s on Lakes.
+- One exit: `work/experiments/baseline/20261021T070355.662120Z/`,
+  exactly one transition to Goolake, 156.322968 s total and 13.002625 s
+  in the destination.
+
+Both current-process logs contain only the five intentional Windows-bundle
+negative-control error lines. There are zero observed point-sound exception
+frames and bank-path warnings. Original audio remains Ready, no-audio false,
+153 banks complete and the catalog lease held. The new census is known in both
+reports and observes zero managed default listeners. Native registration is not
+measured; the camera/listener per-run diagnostic is deliberately unrequested.
+
+The native capture arms and reaches its render-frame limit in both cases.
+Plain: 462 callbacks, 266,112 frames, 532,224 finite samples. Stage mode:
+454 callbacks, 261,504 frames, 523,008 finite samples. Output identity is observed,
+all samples are zero, with no nonfinite samples, rejected/capped buffers,
+capture failures or terminal stop. These are valid zero-output windows and a
+known empty managed list, not proof of event posting, native listener failure,
+all-route silence or physical audibility. The point-sound observer is off in
+both standard checks. Next explicitly request the reviewed source camera and
+existing point-sound observer on the source-selected Huntress route.
+
+Root qualification:
+`work/coordination/codex-original-game-audio-device-root/r8/root-final-qualification.json`,
+SHA-256 `2c1f1d7b5f24f0aeeb1f2b1505c6eb8058f66c3ef2014585de1e321e637cfc4b`.
+Canonical cleanup and independent successful queries with explicit absence
+markers confirm selector absent, process stopped and display asleep; the device
+claim is released. Other devices are unused. Installed diagnostic is 3c72fe05;
+accepted baseline remains J850 f1550ce0. Native listener activation/removal,
+original Term, same-process restart, music, visual parity and audible output
+remain unqualified. The later J883 metadata merge preserves the tested runtime
+source and does not change this frozen player. No new reconstruction input is
+introduced; replay J884's source and producer steps for this candidate.
+
+
+## J886 — Give the selected Siren diagnostic one route writer and one clock
+
+Date: 2026-10-21.
+
+Hypothesis: J861's alternating approach samples cannot attribute a native
+navigation failure because general world input and the Siren egg adapter write
+the same PathFollower, using run-relative and stage-relative request clocks.
+The reader samples after general input but before the Siren write. All eight
+saved pairs have unavailable path requests. This is an authored ownership and
+observation defect; it does not establish why the native encounter times out.
+Preserve the 180-second bound and the source Huntress tracker, range, team,
+line-of-sight, egg and encounter behavior.
+
+Prior art: consult the community map and pinned DebugToolkit `Code/Util.cs`
+at `d1e2f0aa4b8ac4747547db0fcd87344953432f06`. Its typed body/master/target
+queries distinguish semantic identity from object labels; it does not provide
+Android route ownership. J815's native tracker witness and J402/J403's original
+HLAPI registration constraints remain applicable. Current accepted 6af7ed94
+input and J861's measured source/listener state govern this correction; no
+community or protected game implementation is copied.
+
+Change: `SirenNavigationObservationPolicy.SirenOwnsInputFrame` admits the
+selected automated route only with an assisted run, owned diagnostic bridge,
+no manual takeover, the exact source scene/owner/native mission listener active
+and no nearby hostile combat owner. `NovaInputBoundary` then skips the competing
+general world stimulus for that frame, retaining its diagnostic marker evidence.
+All other frames keep the existing general route. The Siren adapter performs
+its existing navigation write before reading the pending observation, and
+queues the next request afterward. Writer and reader now see the same
+stage-relative clock. No path follower is replaced, movement speed changes,
+teleport occurs, target is injected, or egg/boss completion is fabricated.
+
+The shared input-file change is limited to the original Siren gameplay diagnostic;
+player controls, touch, rebinding, menus and settings are unchanged. Nearby combat,
+manual takeover and normal/inactive routes keep their existing ownership.
+Source entry, exact Listening admission, native damage/targeting and the bounded
+stage stop remain unchanged.
+
+Host evidence: 30 Siren tests pass, including the new compiled ownership-policy
+and paired-recorder cases plus existing source/target witnesses. Log:
+`work/coordination/siren-gameplay-integration-root/r1/root-siren-tests.log`.
+Full current-runtime compilation passes 121 sources against 264 references,
+with 399 pinned inputs unchanged. It binds the actual J885 final game f6bc in
+both the same-request pre-strip snapshot and live project, separately from its
+6f96 audio preimage and API 1ced. Receipt:
+`work/coordination/siren-gameplay-integration-root/r1/compile_receipt.retry1.json`,
+SHA-256 `22e4982a09ad959632cba226752903453e8438714f886206fef1dbcb920e530c`;
+output `d7e098a3d7f2ece5ad9169c3cbc1d2294bbc6bbff3e41a3823411c291278c5c1`.
+The retained first host attempt has a private harness typo; the corrected retry
+has no compiler errors. Independent source review:
+`work/coordination/siren-gameplay-next-review/r1/review.md`, SHA-256
+`651e8a5ca0be9728a4dc409aa255fe0c2b365607aa5087f95c63e0c999742d58`.
+Python Ruff format/check pass; portable tests locate tracked sources directly
+and skip the exact compiler fixture when unavailable.
+
+Architecture names the route decision and read/write ordering. No new build
+input or runtime file is introduced; R8/R9 must replay the three changed authored
+runtime sources. No Unity build or device run occurs for this source checkpoint.
+Installed 3c72fe05 and accepted f1550ce0 remain unchanged. The fix does not prove
+egg reachability, native tracker selection, boss start, rewards or cleanup. Next
+build committed sources and pass both defaults before repeating the bounded
+Siren continuation; the frozen J885 camera experiment may run independently.
+
+
+## J887 — Activate the source camera listener and retain the camera prerequisite failures
+
+Date: 2026-10-21.
+
+Hypothesis: explicitly enabling J884's source camera and its original listener,
+with the existing point-sound observer, can distinguish the empty managed list
+in J885 from a missing listener lifecycle. Use exactly J885's frozen diagnostic
+APK `3c72fe0554d25be13af32a4a33265ef23f29d831f33b55f4dd571aaa131bb6e5`,
+source `9a238a02e67228bba2f1af47d748eb68c67c8587`, after both standard checks.
+J884 records the current-input source contract and prior art. This changes only
+the private run selection; J886's later Siren source is not installed.
+
+The independently reviewed R2 runner binds the actual baseline results,
+reports, logs, build receipt and APK. Its reviewed manifest SHA-256 is
+`10e41c701e234b0ada61ad14ac4e7cbf67a4ef04d4dbffe8a2b40c9059d5be4e`.
+Root dispatches once under a fresh exclusive gameplay-device claim, with no
+editor operations and a separate final cleanup reserve. The ordinary selected
+Huntress first-stage route uses invincibility assistance, the source-skin/camera
+opt-in and point-sound observation. No second Start, Moon route or other device
+is used. The one-shot marker is retained; the failed outcome is not retried.
+
+Evidence:
+`work/experiments/original-camera-listener-lifecycle/20261021T073157.302243Z/`
+and
+`work/coordination/original-camera-listener-device-plan/r2/attempts/20261021T073138.220500Z-40ebc1e6b400/`.
+The private Root qualification binds the raw report/log, screenshot, selection,
+exception and cleanup observations:
+`work/coordination/original-camera-listener-device-root/r2/root-qualification.json`,
+SHA-256 `e3e1a80da6d3254400f7ce0f096d97fd7c5552a55e9fd238cf1126496a1a8a61`.
+The last report SHA-256 is
+`2794d7f9daa0610f50eae3e5afb33c8ef423c5171775f646751f1b94d882eccd`.
+Raw evidence remains private.
+
+Live play reaches the bounded stop; the final world observation is 36.989609 s.
+The selected skin and Animator initialize. The exact preserved source listener
+is active in the managed default list, its object ID is valid, and the census
+is known with count one. Original audio remains Ready, no-audio false, all
+153 banks complete and the catalog lease held. Native capture arms and reaches
+its render-frame limit: 431 callbacks, 248,256 frames and 496,512 finite samples,
+all zero, with output identity observed and no nonfinite/rejected/capped buffers
+or capture failure. The point-sound observer records four requests, last event
+ID zero and stage one, without an emitter-alive observation or matching null
+reference. This does not establish a successful nonzero event post, native
+listener Add/Remove results, spatial output or physical audibility.
+
+First observed non-control failure is earlier than the final report's error:
+the current-process Unity log reports a null reference in
+`SceneCamera.ConfigureGraphicsSettings` during camera activation, followed by
+`SobelCommandBuffer.OnEnable` and missing Outline Highlight, VisionLimit and
+TranslucentImage shaders. It later contains 5,411 `KeyNotFoundException` headers
+for the camera-rig state dictionary. The saved view shows a wall/ground with no
+visible selected character. The last visual snapshot has no rig target/body,
+owner readiness false and a disabled source camera. Those late scalars are not
+synchronized evidence for the earlier screenshot and do not alone identify the
+pose defect.
+
+The final report records `CameraModeBase.MatchState` through `SetOverrideCam`
+and `RemoveOwnedOverride` during session abandonment. The runner times out
+waiting for the completed-session report; neither that report nor a healthy
+next menu is captured. Listener deactivation/removal and original Term return
+are unobserved. This candidate is not accepted for the opt-in camera route.
+Investigate the source graphics prerequisites and camera-state registration
+before changing pose or suppressing the cleanup exception.
+
+The runner performs cleanup. Subsequent independent successful-shell queries
+explicitly prove selector absent, game process absent and display asleep;
+Root releases the device claim. An unselected `./dev doctor` first refuses
+multiple attached devices; rerunning with the explicit gameplay selector passes
+Bootstrap and reports LAB READY. No install, source change, build or storage
+change occurs. Installed diagnostic remains 3c72fe05; accepted baseline remains
+J850 f1550ce0. Revisit after an authored, host-checked prerequisite/lifecycle
+repair, a committed reproducible build and both standard checks.
+
+
+## J888 — Refuse unknown baseline device state and verify teardown
+
+2026-10-21. Hypothesis: the standard baseline runner can reject transport
+failures and incomplete observations before they become apparent selector or
+process absence, and verify teardown before accepting a run. Root's private
+scenario review identifies unchecked empty-output handling; inspect the same
+pattern in `baseline.py`. Work only in the isolated alpha worktree and on its
+explicitly assigned device. Main retains gameplay/audio/animation ownership.
+This is host playtest tooling, with Route A, IL2CPP ARM64, Android rendering,
+the desktop fallback and the installed game unchanged.
+
+**First failure and authored controls.** Freeze the original runner from
+`565aac5` and a separate authored device-protocol fixture. The original runner
+reports success in four controls: a failed selector observation permits
+overwriting an existing selector; failed removal leaves the selector present;
+failed force-stop leaves the process running; and a false display-sleep result
+is ignored. These reproduce unsafe acceptance without ADB or a real device.
+Preserve the original source, exact fixture bytes and failed control receipts.
+This is generic ADB/shell work, not a new RoR2 runtime mechanism.
+
+**Owner and contract.** `baseline.py` remains the named standard-check owner.
+Before runtime writes, a checked directory listing must contain its normal
+directory entries and positively exclude the selector. Existing selectors,
+failed commands and incomplete observations refuse. Checked process replies
+distinguish `pidof`'s no-match status with empty combined output from errors,
+unexpected output and ambiguous PIDs. Report absence and a partial live JSON
+write remain retryable; a failed read is an error. The final report must belong
+to the launched process.
+
+Teardown attempts selector removal, force-stop and the configured sleep policy
+even after another failure or a remotely successful push followed by a local
+timeout. Selector removal and process exit are positively rechecked. Any
+unknown or failed teardown prevents success, and the result records the verified
+states. A primary operation error survives an additional cleanup error. Existing
+APK-embedded attempt binding from J679, device ownership/storage gates, gameplay
+criteria, diagnostic assists and progression exclusion remain intact.
+
+The first live precheck refuses this worktree's missing local ownership receipt
+before launch or runtime writes. The existing canonical assigned-device receipt,
+retained APK and exact live Lab APK bytes all agree. Verify placement, serial
+and runtime backing, restore only local installed/runtime/sync receipts through
+the canonical APIs, and preserve the exact install counter and source originals.
+A private inspection initially uses a fixture helper's default package; correct
+it to the explicit Lab package before any restoration. No unknown installation
+is adopted and no package is installed or replaced. LOCAL_STATE records this
+required local ownership state.
+
+The isolated worktree also has no local build pointer. Its owned-APK check now
+records `is_current_build: false` without inventing `current-build.json`.
+Other build-pointer read/JSON errors still propagate. Source setup/teardown and
+the current interface remain documented in ARCHITECTURE and BASELINE.
+
+**Host result.** Committed source
+`9d552c7c8e4aad50093052ace6cb7b89e45f8cc2` passes 36 focused tests. The actual
+POSIX process-status script runs against an authored `pidof` executable,
+covering a PID, expected no-match, empty success, command failure, stderr,
+multiple PIDs and unknown replies. Runner fixtures cover both modes, initial
+selector/transport refusal, read failure, stale final PID, ineffective or failed
+teardown, a partial push, first-error preservation and missing/matching/different
+build pointers. Fresh-clone pre-push CI passes 1,394 tests with 73 optional skips,
+Ruff, public audit and documentation checks. No runtime source is changed.
+
+**Assigned-device result.** The committed runner's directory and process
+protocols first pass read-only checks. Both standard modes then run on unchanged
+APK `be26c21c4cd8ff15a8a663528216cf7a69394a51d8b9441a63a1a496f83e98b5`.
+The plain check reaches 35.074203 s of Lakes world play. The one-exit check
+records one original transition and 11.791870 s of Goolake world play, at
+155.528366 s total world time. Both have empty report errors/first failures,
+unchanged zero applied profile runs and `is_current_build: false`. The initial
+catalog startup is slow but completes within the existing standard deadlines;
+no deadline or gameplay acceptance criterion is relaxed.
+
+Each run positively verifies selector absence, process exit and display sleep.
+Independent post-run queries confirm those states and the unchanged APK bytes.
+Canonical source receipts and the preserved install counter remain unchanged.
+No new build, install, payload sync, input mapping or source game modification is
+performed. These are bounded automatic assisted controls on the alpha device,
+not normal-difficulty, physical-input, audio, camera or public-alpha acceptance.
+
+Private evidence lives under `work/coordination/baseline-adb-refusals/`, with
+explicit terminal result selectors for the two `work/experiments/baseline/`
+attempts. `proof-receipt-v1.json` binds 41 frozen source, fixture, control,
+ownership, host/CI and device artifacts; SHA-256
+`54fd7bc6d10ed7501c7f71e247919f4fb331a63147080ea5ef2054537e5140f3`.
+Raw logs, screenshots, receipts, paths and device identifiers stay ignored.
+Revisit on transport/protocol, APK/report schema, ownership/storage or display
+policy drift. Broader private runners and ordinary user playtests still need
+the same checked-observation discipline; the public-input bootstrap and phone
+owner-build gates remain open.

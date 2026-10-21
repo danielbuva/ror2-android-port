@@ -1689,7 +1689,14 @@ Snapshot data survives the existing stop/disposal path; no engine reference
 is retained by the report. `test_siren_target_eligibility_witness.py` executes
 the authored membership, geometry-policy and getter-rethrow contracts.
 `SirenNavigationObservation.cs` is the same world's bounded, read-only
-approach recorder. After the same selected egg remains outside the active
+approach recorder and pure input-ownership policy. On an assisted diagnostic
+frame with the exact source scene, owner and native mission listener active,
+`NovaInputBoundary` gives the Siren adapter the sole automated route write.
+Manual takeover or nearby hostile combat retains the existing general route.
+The Siren adapter writes its route before reading the pending sample, then
+queues the next request; writer and reader use the same stage-relative clock.
+No player control mapping or native target/encounter rule changes.
+After the same selected egg remains outside the active
 native tracker range for 0.5 seconds, it pairs a previous owned
 bridge request with a later bridge fixed tick. At most eight samples over eight
 seconds record copied input-bank movement, motor/position, source path node and

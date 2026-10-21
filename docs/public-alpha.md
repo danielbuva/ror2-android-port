@@ -101,6 +101,8 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       report preview/export and explicit attachment consent. Obtain approval
       before public issue-template or tracker changes.
 - [ ] Provide a short owner-build/install/playtest checklist with artifact
-      identity, known limits, rollback and consented feedback steps.
+      identity, known limits, rollback and consented feedback steps. Retain
+      [J888's checked device observations and teardown](PORTING_JOURNAL.md#j888--refuse-unknown-baseline-device-state-and-verify-teardown)
+      when extending the standard checks.
 - [ ] Obtain explicit user approval for outward-facing pushes/PRs, releases,
       repository settings and issue templates after preparing reviewable changes.

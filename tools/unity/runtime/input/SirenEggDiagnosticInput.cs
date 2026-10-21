@@ -719,6 +719,17 @@ public sealed class SirenEggDiagnosticInput : IDisposable
         Vector3 point = visible ? visiblePoint : nearestPoint;
         var identity = egg.GetComponent<UnityEngine.Networking.NetworkIdentity>();
         uint selectedEggNetworkId = identity ? identity.netId.Value : 0;
+        float selectedEggDistance, trackerMaximumDistance;
+        if (context.TryReadNavigationTrigger(player, egg, out selectedEggDistance, out trackerMaximumDistance))
+            navigationObservation.ObserveTrigger(true, true, selectedEggNetworkId, selectedEggDistance, trackerMaximumDistance,
+                                                  context.NavigationObjectiveStalledSeconds, Time.realtimeSinceStartup);
+        else
+            navigationObservation.ResetTriggerContinuity();
+
+        context.NavigateWorldInput(player, bridge, egg.transform.position, StopDistance, "Original Vulture egg", stageElapsed);
+        // Read after the selected Siren route has updated the shared PathFollower
+        // and request clock. NovaInputBoundary suppresses the competing general
+        // route only while this exact native owner holds the diagnostic frame.
         if (navigationObservation.report.started && !navigationObservation.report.completed)
         {
             if (!OwnsDiagnosticInput(player, bridge))
@@ -729,14 +740,6 @@ public sealed class SirenEggDiagnosticInput : IDisposable
             navigationObservation.ObservePending(selectedEggNetworkId, Time.realtimeSinceStartup, OwnsDiagnosticInput(player, bridge),
                                                   bridge.fixedTicks, context.CreateNavigationObservationReader(player, bridge));
         }
-        float selectedEggDistance, trackerMaximumDistance;
-        if (context.TryReadNavigationTrigger(player, egg, out selectedEggDistance, out trackerMaximumDistance))
-            navigationObservation.ObserveTrigger(true, true, selectedEggNetworkId, selectedEggDistance, trackerMaximumDistance,
-                                                  context.NavigationObjectiveStalledSeconds, Time.realtimeSinceStartup);
-        else
-            navigationObservation.ResetTriggerContinuity();
-
-        context.NavigateWorldInput(player, bridge, egg.transform.position, StopDistance, "Original Vulture egg", stageElapsed);
         ObserveNativeHuntressTarget(player, egg, selectedEggNetworkId, visible, point);
         Vector3 aim = point - player.inputBank.aimOrigin;
         bridge.aim = new Vector2(aim.x, aim.z).normalized;
