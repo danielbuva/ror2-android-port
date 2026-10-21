@@ -8,7 +8,8 @@ from pathlib import Path
 import shutil
 
 
-PROJECT_FIELDS = ("serializedTypes", "typesInScenes", "forceIncludeModules", "forceExcludeModules")
+SCENE_PROJECT_FIELDS = ("serializedTypes", "typesInScenes")
+PROJECT_FIELDS = (*SCENE_PROJECT_FIELDS, "forceIncludeModules", "forceExcludeModules")
 SCENE_FIELDS = {"managedAssemblyName", "nativeClass", "fullManagedTypeName", "moduleName", "usedInScenes"}
 NATIVE_FIELDS = ("name", "qualifiedName", "nativeNamespace", "module", "baseName", "baseModule")
 EDITOR_DATA = "native-roots/EditorToUnityLinkerData.json"
@@ -18,18 +19,12 @@ def sha(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
-def project_subset(value):
-    """Select project fields without reading the captured native-table value."""
-    if not isinstance(value, dict) or set(value) not in (set(PROJECT_FIELDS), set(PROJECT_FIELDS) | {"allNativeTypes"}):
+def scene_subset(value):
+    """Select only scene fields; captured module-policy/native values are not read."""
+    if not isinstance(value, dict) or set(value) not in (set(SCENE_PROJECT_FIELDS), set(PROJECT_FIELDS), set(PROJECT_FIELDS) | {"allNativeTypes"}):
         raise ValueError("Unknown captured project-root schema")
     if value["serializedTypes"] != []:
         raise ValueError("Nonempty serialized-type roots need separate qualification")
-    for name in ("forceIncludeModules", "forceExcludeModules"):
-        modules = value[name]
-        if not isinstance(modules, list) or any(not isinstance(m, str) or not m for m in modules) or len(set(modules)) != len(modules):
-            raise ValueError("Malformed captured module policy")
-    if set(value["forceIncludeModules"]) & set(value["forceExcludeModules"]):
-        raise ValueError("Conflicting captured module policy")
     if not isinstance(value["typesInScenes"], list) or not value["typesInScenes"]:
         raise ValueError("Missing captured scene usage")
     for row in value["typesInScenes"]:
@@ -41,7 +36,22 @@ def project_subset(value):
             raise ValueError("Empty captured scene type identity")
         if not isinstance(row["usedInScenes"], list) or any(not isinstance(scene, str) for scene in row["usedInScenes"]):
             raise ValueError("Malformed captured scene names")
-    return {name: deepcopy(value[name]) for name in PROJECT_FIELDS}
+    return {name: deepcopy(value[name]) for name in SCENE_PROJECT_FIELDS}
+
+
+def project_subset(value):
+    """Select project fields without reading the captured native-table value."""
+    if not isinstance(value, dict) or set(value) not in (set(PROJECT_FIELDS), set(PROJECT_FIELDS) | {"allNativeTypes"}):
+        raise ValueError("Unknown captured project-root schema")
+    result = scene_subset(value)
+    for name in ("forceIncludeModules", "forceExcludeModules"):
+        modules = value[name]
+        if not isinstance(modules, list) or any(not isinstance(m, str) or not m for m in modules) or len(set(modules)) != len(modules):
+            raise ValueError("Malformed captured module policy")
+        result[name] = deepcopy(modules)
+    if set(value["forceIncludeModules"]) & set(value["forceExcludeModules"]):
+        raise ValueError("Conflicting captured module policy")
+    return result
 
 
 def native_types(registry):
@@ -88,7 +98,7 @@ def compose(project, registry):
     return result
 
 
-def stage_support(destination, request, captured, source_root):
+def stage_support(destination, request, captured, source_root, *, module_configuration=None):
     """Stage SDK bytes and authored readers, never an extracted native table."""
     from phone_registry import BINARY_SHA256, PROFILE
 
@@ -105,7 +115,7 @@ def stage_support(destination, request, captured, source_root):
         raise ValueError("Unqualified SDK registry binary")
     if (destination / "inputs/EditorToUnityLinkerData.json").exists():
         raise ValueError("Captured native table must not be staged")
-    project = project_subset(captured)
+    project = scene_subset(captured) if module_configuration is not None else project_subset(captured)
     (destination / "registry").mkdir()
     for name in ("phone_registry.py", "phone_registry_literals.py"):
         shutil.copyfile(source_root / "scripts/lab" / name, destination / "registry" / name)
@@ -121,7 +131,31 @@ def stage_support(destination, request, captured, source_root):
         "native_order": "qualifiedName-ordinal",
         "project_roots_from_desktop": True,
         "captured_native_table_staged": False,
+        **({"module_policy": module_configuration} if module_configuration is not None else {}),
     }
+
+
+def project_data(stage, configuration):
+    project = json.loads((stage / "project-root-data.json").read_text())
+    fields = SCENE_PROJECT_FIELDS if "module_policy" in configuration else PROJECT_FIELDS
+    if set(project) != set(fields):
+        raise ValueError("Staged project fields include foreign/native/policy data")
+    policy = None
+    if "module_policy" in configuration:
+        specification = importlib.util.spec_from_file_location("_linker_module_policy", stage / "phone_module_policy.py")
+        reader = importlib.util.module_from_spec(specification)
+        specification.loader.exec_module(reader)  # Authored tool, not SDK code.
+        policy = reader.evaluate_stage(stage / "module-policy")
+        expected = {
+            "profile": reader.PROFILE,
+            "captured_policy_staged": False,
+            "package_closure_validated": True,
+            "enabled_package_count": len(policy["enabledPackages"]),
+        }
+        if configuration["module_policy"] != expected:
+            raise ValueError("Unqualified module-policy configuration")
+        project = scene_subset(project) | {name: policy[name] for name in PROJECT_FIELDS[2:]}
+    return project_subset(project), policy
 
 
 def generate(stage, output, configuration):
@@ -129,9 +163,7 @@ def generate(stage, output, configuration):
     stage, output = map(Path, (stage, output))
     if (stage / "inputs/EditorToUnityLinkerData.json").exists():
         raise ValueError("Captured native table present in the SDK-native mode")
-    project = json.loads((stage / "project-root-data.json").read_text())
-    if set(project) != set(PROJECT_FIELDS):
-        raise ValueError("Staged project fields include foreign/native data")
+    project, policy = project_data(stage, configuration)
     specification = importlib.util.spec_from_file_location("_linker_registry_reader", stage / "registry/phone_registry.py")
     reader = importlib.util.module_from_spec(specification)
     specification.loader.exec_module(reader)  # Authored Python tool, not SDK code.
@@ -141,6 +173,7 @@ def generate(stage, output, configuration):
         "native_order": "qualifiedName-ordinal",
         "project_roots_from_desktop": True,
         "captured_native_table_staged": False,
+        **({"module_policy": configuration["module_policy"]} if policy is not None else {}),
     }
     if configuration != expected:
         raise ValueError("Unqualified native-root configuration")
@@ -148,6 +181,9 @@ def generate(stage, output, configuration):
     destination.mkdir(parents=True, exist_ok=False)
     registry = reader.inspect(stage / "registry/owner-sdk", destination / "sdk-registry.json")
     generated = compose(project, registry)
+    if policy is not None:
+        with (destination / "module-policy.json").open("x") as stream:
+            stream.write(json.dumps(policy, indent=2) + "\n")
     with (destination / "EditorToUnityLinkerData.json").open("x") as stream:
         stream.write(json.dumps(generated, indent=2) + "\n")
     result = {
@@ -158,6 +194,11 @@ def generate(stage, output, configuration):
         "registry_sha256": sha(destination / "sdk-registry.json"),
         "editor_data_sha256": sha(destination / "EditorToUnityLinkerData.json"),
         "counts": {"native_types": len(generated["allNativeTypes"]), "types_in_scenes": len(project["typesInScenes"])},
+        **(
+            {"module_policy_sha256": sha(destination / "module-policy.json"), "module_policy_reader_sha256": sha(stage / "phone_module_policy.py")}
+            if policy is not None
+            else {}
+        ),
     }
     with (destination / "receipt.json").open("x") as stream:
         stream.write(json.dumps(result, indent=2) + "\n")
@@ -196,7 +237,13 @@ def verify(stage, output, result):
         stage / "registry/phone_registry_literals.py"
     ):
         raise ValueError("Native-root decoder source drift")
-    project = json.loads((stage / "project-root-data.json").read_text())
+    project, policy = project_data(stage, configuration)
+    if policy is not None and (
+        result.get("module_policy_sha256") != sha(destination / "module-policy.json")
+        or result.get("module_policy_reader_sha256") != sha(stage / "phone_module_policy.py")
+        or policy != json.loads((destination / "module-policy.json").read_text())
+    ):
+        raise ValueError("Generated module-policy data/source drift")
     generated = compose(project, registry)
     if result["counts"] != {"native_types": len(generated["allNativeTypes"]), "types_in_scenes": len(project["typesInScenes"])}:
         raise ValueError("Native-root receipt counts differ")

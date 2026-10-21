@@ -45,6 +45,19 @@ converter action and owned Android execution. `native-root-native-selection.json
 and `native-root-native-handoff-check.json` bind the validated C++/metadata
 boundary; no native compile or game build reads an unselected run directory.
 
+The optional `module_policy` request selects the explicit
+`builtin-modules-no-overrides-v1` fixture profile alongside `native_registry`.
+`phone_module_policy.stage_support` copies unchanged pinned editor/target
+`modules.asset`, project manifest and SDK builtin package JSON into private
+`module-policy/`; the known fixture file set and builtin package lock are checked
+for eligibility. No captured policy array is staged: `project-root-data.json`
+contains only serializedTypes/typesInScenes. The authored policy reader generates
+`native-roots/module-policy.json` at actual stripping invocation; input/source/
+output hashes bind its generated arrays through the downstream handoff.
+The `module-policy-*` selectors and retained `module-policy-linker-on-android.py`
+under the proof root select new owned runs with the same device/tool/capacity
+guards. Earlier adapters/selectors stay intact. No game build reads this state.
+
 `work/coordination/phone-proof/` retains J832's private execution adapters,
 hash-bound tool/package manifests, original failed attempts and collected device
 evidence. The `converter-host.py`, `converter-android.py`,

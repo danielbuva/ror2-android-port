@@ -108,7 +108,9 @@ def stage_action(request):
     from phone_content import validate_linker_capture
     from phone_native import fixture_request
 
-    value, project = fixture_request(request, optional_fields=("capture", "native_registry"))
+    value, project = fixture_request(request, optional_fields=("capture", "native_registry", "module_policy"))
+    if "module_policy" in value and "native_registry" not in value:
+        raise ValueError("Module policy requires SDK-native metadata mode")
     attempt = Path(value["capture"]).resolve()
     if attempt.parent != project.parent or not attempt.name.startswith("editor-build-"):
         raise ValueError("Select the same fixture's owned editor attempt")
@@ -136,9 +138,19 @@ def stage_action(request):
     if "native_registry" in value:
         from phone_linker_roots import EDITOR_DATA, stage_support
 
+        module_configuration = None
+        if "module_policy" in value:
+            from phone_module_policy import stage_support as stage_policy
+
+            module_configuration = stage_policy(destination / "module-policy", value["module_policy"], project, editor, android)
+            shutil.copyfile(ROOT / "scripts/lab/phone_module_policy.py", destination / "phone_module_policy.py")
         shutil.copytree(capture / "inputs", destination / "inputs", ignore=shutil.ignore_patterns("EditorToUnityLinkerData.json"))
         native_configuration = stage_support(
-            destination, value["native_registry"], json.loads((capture / "inputs/EditorToUnityLinkerData.json").read_text()), ROOT
+            destination,
+            value["native_registry"],
+            json.loads((capture / "inputs/EditorToUnityLinkerData.json").read_text()),
+            ROOT,
+            module_configuration=module_configuration,
         )
         plan = [
             {"output": EDITOR_DATA, "prefix": item["prefix"]} if isinstance(item, dict) and item.get("prefix") == "--editor-data-file=" else item
