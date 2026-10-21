@@ -58,6 +58,7 @@ PASSIVE_WINDOW = Path(
         SOURCE_ROOT / "tools/unity/support/audio/bootstrap/PassivePcmCaptureWindow.cs",
     )
 ).resolve()
+PASSIVE_CONTRACT = (SOURCE_ROOT / "tools/unity/support/audio/core/GameAudioOriginalPassivePcmContract.cs").resolve()
 
 
 def method_body(source: str, signature: str) -> str:
@@ -204,6 +205,23 @@ class OriginalMusicControllerTests(unittest.TestCase):
             hashlib.sha256(PASSIVE_WINDOW.read_bytes()).hexdigest(),
         )
 
+    def test_passive_output_identity_sources_are_bound_by_producer(self) -> None:
+        producer = ast.parse(PRODUCER.read_text())
+        source_hashes = None
+        for node in producer.body:
+            if isinstance(node, ast.Assign) and any(isinstance(target, ast.Name) and target.id == "OWNER_SOURCE_HASHES" for target in node.targets):
+                source_hashes = ast.literal_eval(node.value)
+                break
+        self.assertIsNotNone(source_hashes, "producer does not pin owner source hashes")
+        changed_inputs = {
+            "../../runtime/session/PortSessionOriginalAudioOwner.cs": SOURCE_ROOT / "tools/unity/runtime/session/PortSessionOriginalAudioOwner.cs",
+            "bootstrap/OriginalGameAudioPassivePcmOwner.cs": SOURCE_ROOT / "tools/unity/support/audio/bootstrap/OriginalGameAudioPassivePcmOwner.cs",
+            "bootstrap/PassivePcmCaptureWindow.cs": PASSIVE_WINDOW,
+            "core/GameAudioOriginalPassivePcmContract.cs": PASSIVE_CONTRACT,
+        }
+        for role, source in changed_inputs.items():
+            self.assertEqual(source_hashes[role], hashlib.sha256(source.read_bytes()).hexdigest(), role)
+
     def test_music_contract_mutants_against_authored_contract(self) -> None:
         if not MONO.is_file() or not CSC.is_file():
             self.skipTest("pinned Unity Mono/Roslyn is unavailable")
@@ -242,6 +260,7 @@ class OriginalMusicControllerTests(unittest.TestCase):
                     "-target:exe",
                     f"-out:{output}",
                     f"-r:{CORE_MODULE}",
+                    str(PASSIVE_CONTRACT),
                     str(BOOTSTRAP),
                     str(TESTS / "BootstrapPreservationDependencyFixture.cs"),
                     str(TESTS / "PreservedBootstrapReflectionHarness.cs"),

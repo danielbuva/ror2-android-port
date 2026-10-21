@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 
 internal sealed class FakePcmApi : INativeWwiseDiagApi
 {
@@ -131,12 +132,60 @@ internal static class PassivePcmCaptureWindowHarness
         Check(window.Report.SampleCount == 0, "unknown snapshot is not promoted to a successful PCM report");
     }
 
+    private static PassivePcmCaptureReport CaptureIdentity(ulong outputId, bool callback)
+    {
+        var api = new FakePcmApi();
+        api.Values[18] = unchecked((long)outputId);
+        var lease = ReadyLease(api);
+        Action ownedGuard = null;
+        var window = new PassivePcmCaptureWindow(lease, true,
+            delegate(Action value) { ownedGuard = value; }, delegate { return ownedGuard; }, null);
+        Check(window.RequestGameplayArm(), "identity fixture gameplay arm accepted");
+        Check(window.Start(1f, true, true, true, 1), "identity fixture capture starts");
+        if (callback)
+        {
+            api.AddPcm();
+            api.Values[18] = unchecked((long)outputId);
+            window.Tick(1.1f, true, true, 2);
+        }
+        window.FinishGameplayWindow();
+        return window.Report;
+    }
+
+    private static void FullWidthOutputIdsSurviveSnapshotAndDecimalEncoding()
+    {
+        const ulong highBit = 0xF123456789ABCDEFUL;
+        const ulong maximum = ulong.MaxValue;
+        var highReport = CaptureIdentity(highBit, true);
+        Check(highReport.CaptureOutputDeviceIdObserved && highReport.CaptureOutputDeviceId == highBit,
+            "slot 18 high-bit output identity remains an exact unsigned 64-bit value");
+        string highDecimal = GameAudioOriginalPassivePcmIdentity.ToDecimalString(highReport.CaptureOutputDeviceId);
+        Check(highDecimal == "17375808098319191535" && ulong.Parse(highDecimal, CultureInfo.InvariantCulture) == highBit,
+            "high-bit companion decimal string round-trips without floating-point conversion");
+
+        var maximumReport = CaptureIdentity(maximum, true);
+        Check(maximumReport.CaptureOutputDeviceIdObserved && maximumReport.CaptureOutputDeviceId == maximum,
+            "slot 18 preserves ulong.MaxValue bit-for-bit");
+        string maximumDecimal = GameAudioOriginalPassivePcmIdentity.ToDecimalString(maximumReport.CaptureOutputDeviceId);
+        Check(maximumDecimal == "18446744073709551615" && ulong.Parse(maximumDecimal, CultureInfo.InvariantCulture) == maximum,
+            "maximum unsigned ID has an exact decimal JSON companion");
+
+        var zeroReport = CaptureIdentity(0, true);
+        Check(zeroReport.CaptureOutputDeviceIdObserved && zeroReport.CaptureOutputDeviceId == 0,
+            "zero is retained as a known callback value rather than treated as unknown");
+
+        var staleReport = CaptureIdentity(maximum, false);
+        Check(!staleReport.CaptureOutputDeviceIdObserved && staleReport.CaptureOutputDeviceId == 0,
+            "a nonzero stale slot without a callback in this window remains unknown");
+    }
+
     private static int Main()
     {
         NoOpGuardRefusesBeforeRegistration();
         DefaultOffNeverCallsNativeCapture();
         BoundedCaptureRemovesBeforeTerm();
         UnknownSnapshotUsesOneCleanupOnlyUnregister();
+        FullWidthOutputIdsSurviveSnapshotAndDecimalEncoding();
         Console.WriteLine("PASS PCM owner guard, bounded counters, and unknown-outcome cleanup contract");
         return 0;
     }

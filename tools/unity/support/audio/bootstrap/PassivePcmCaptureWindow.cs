@@ -313,7 +313,8 @@ internal sealed class PassivePcmCaptureWindow
     private PassivePcmCaptureReport CreateReport()
     {
         if (baseline == null || latest == null || (state != "captured" && state != "captured_before_term"))
-            return new PassivePcmCaptureReport(state, stopReason, failure, 0, 0, 0, 0, 0, 0, 0, 0, false);
+            return new PassivePcmCaptureReport(state, stopReason, failure, 0, 0, 0, 0, 0, 0, 0, 0, false, false, 0);
+        bool outputDeviceIdObserved = latest.CaptureCallbacks > baseline.CaptureCallbacks;
         return new PassivePcmCaptureReport(state, stopReason, failure,
             latest.CaptureCallbacks - baseline.CaptureCallbacks,
             latest.CaptureFrames - baseline.CaptureFrames,
@@ -323,11 +324,14 @@ internal sealed class PassivePcmCaptureWindow
             latest.NonfiniteSamples - baseline.NonfiniteSamples,
             latest.RejectedBuffers - baseline.RejectedBuffers,
             latest.CappedBuffers - baseline.CappedBuffers,
-            latest.CaptureOutputId != 0);
+            latest.CaptureOutputId != 0,
+            outputDeviceIdObserved,
+            outputDeviceIdObserved ? latest.CaptureOutputId : 0);
     }
 }
 
-// Bounded counters only. No sample bytes, filenames, event IDs, or device ID.
+// Bounded counters and the callback's opaque output identity only. No sample
+// bytes, filenames, event IDs, or external device metadata.
 internal sealed class PassivePcmCaptureReport
 {
     internal readonly string State;
@@ -336,15 +340,20 @@ internal sealed class PassivePcmCaptureReport
     internal readonly ulong CallbackCount, FrameCount, SampleCount, FiniteSamples;
     internal readonly ulong NonzeroFiniteSamples, NonfiniteSamples, RejectedBuffers, CappedBuffers;
     internal readonly bool OutputIdentityObserved;
+    internal readonly bool CaptureOutputDeviceIdObserved;
+    internal readonly ulong CaptureOutputDeviceId;
 
     internal PassivePcmCaptureReport(string state, string stopReason, string failure,
         ulong callbacks, ulong frames, ulong samples, ulong finite, ulong nonzero,
-        ulong nonfinite, ulong rejected, ulong capped, bool outputIdentityObserved)
+        ulong nonfinite, ulong rejected, ulong capped, bool outputIdentityObserved,
+        bool captureOutputDeviceIdObserved, ulong captureOutputDeviceId)
     {
         State = state; StopReason = stopReason; Failure = failure;
         CallbackCount = callbacks; FrameCount = frames; SampleCount = samples;
         FiniteSamples = finite; NonzeroFiniteSamples = nonzero; NonfiniteSamples = nonfinite;
         RejectedBuffers = rejected; CappedBuffers = capped;
         OutputIdentityObserved = outputIdentityObserved;
+        CaptureOutputDeviceIdObserved = captureOutputDeviceIdObserved;
+        CaptureOutputDeviceId = captureOutputDeviceIdObserved ? captureOutputDeviceId : 0;
     }
 }

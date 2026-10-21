@@ -111,6 +111,8 @@ internal sealed class OriginalGameAudioPassivePcmOwner : IGameAudioOriginalPassi
     public ulong RejectedBuffers { get { return CurrentReport.RejectedBuffers; } }
     public ulong CappedBuffers { get { return CurrentReport.CappedBuffers; } }
     public bool OutputIdentityObserved { get { return CurrentReport.OutputIdentityObserved; } }
+    public bool CaptureOutputDeviceIdObserved { get { return CurrentReport.CaptureOutputDeviceIdObserved; } }
+    public ulong CaptureOutputDeviceId { get { return CurrentReport.CaptureOutputDeviceId; } }
     internal string TerminalFailure { get { return terminalFailure; } }
     internal string CaptureState { get { return window.State; } }
     internal PassivePcmCaptureReport Report { get { return window.Report; } }

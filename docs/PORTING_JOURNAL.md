@@ -24293,6 +24293,88 @@ remains installed; the accepted baseline remains f1550ce0. A matching canonical
 build and both standard checks are required next, with actual stage, closure,
 APK and post-strip identities checked independently.
 
+## J905 — Feed the Android-compiled Unity fixture into a separate stripping handoff
+
+Date: 2026-10-21. Hypothesis: J902's actual Android compiler outputs can feed
+the existing authored fixture stripper without changing the earlier exact
+replay contract or requiring desktop-compiled fixture bytes. Retain Route A,
+the renderer, desktop fallback and explicit captured scene/editor roots.
+
+**Prior knowledge and boundary.** Reuse J862's qualified SDK/module-policy
+stripping template and J902's fixed public Unity API source/compiler profile.
+The new reference assembly matches the independent SDK fixture. Read-only
+metadata/IL observations also match six authored types, 32 fields and fourteen
+method signatures/raw bodies against both retained SDK fixtures. This is one
+fixed source, not arbitrary source semantics or player execution. The existing
+`phone_linker.stripped_input` requires the prior stripped bytes; leave that
+replay gate and all accepted stages/receipts unchanged.
+
+**Named owner and provenance.** `scripts/lab/phone_compiled_linker.py` owns a
+separate restricted producer/handoff. Source
+`ead656f17dad6ba23feecfcbdce340c8e7ca1636` verifies the completed compiler
+input/output receipts and pinned J862 template, then generates a fresh guarded
+641-input stage. Of the 634 original inputs, only `Assembly-CSharp.dll` and its
+PDB are replaced with actual J902 Android products. The other seven files add
+the original manifest, actual compiler/reference/source evidence and the
+handoff driver. Neither a historical manifest nor authored source is patched.
+
+Known compiler code/data/reference fingerprints exclude only the recorded Git
+commit field, permitting identical code/SDK inputs after unrelated commits.
+Keep every raw receipt byte, actual source commit and actual serialized hash;
+this creates no normalized compiler output. Fixed Android artifact hashes and
+the complete SDK/source descriptor remain qualification pins. A changed source,
+SDK component or profile needs new qualification. The generated provenance
+states `desktop_editor_roots: true` and
+`desktop_compiled_fixture_input: false`; SDK target libraries remain supplied.
+This does not generate independent scene usage, serialized roots or TypeDB.
+
+The standalone driver validates staged inputs before and after its bounded
+linker child. Python isolation and disabled bytecode writes preserve exact
+membership. A separate `handoff-result.json` binds the original child result and
+actual stripped outputs without rewriting that result. Sibling outputs must be
+fresh and owned; replay refuses. Seven host contracts pass, covering unchanged
+historical inputs, unknown/drifting compiler/template inputs, scope mismatch,
+foreign files/links, unrelated-commit provenance, child failure/input mutation
+and immutable output replay. Ruff and staged/manual public provenance checks
+pass before source is committed and staging begins.
+
+**Device result and comparison.** Reuse only Alpha's receipt/hash-bound SDK tool
+workspace, with fresh storage/backing/reserve checks before copying inputs.
+The new Android handoff succeeds in 12.168199 s, emitting 36 DLLs, 30 PDBs and
+one linker report. The retained replay has exactly the same 67 members:
+65 remain byte-identical, including the linker report. Only the authored DLL
+and its PDB differ. A read-only post-strip comparison still matches all six
+types, 32 fields, fourteen signatures and raw method bodies for this fixture.
+Raw DLL/PDB equality remains failed; no output is normalized or substituted.
+This measures a tooling stage, not gameplay performance or full equivalence.
+
+Replay refusal preserves all 641 inputs, stripped bytes and both result
+receipts. The original 634-input template is reverified and unchanged. The
+handoff receipt SHA-256 is
+`99ae4906a703def715cd4cd97c58db4174683d9cbe52b53d96beaab76b572e15`.
+Private selectors, source snapshot, controls, raw logs/outputs and comparisons
+remain under `work/coordination/phone-proof/compiled-linker-*` and generated
+`work/rebuild/phone-managed-compile/linker-*` stages. The private proof receipt
+binds 1,472 artifacts, SHA-256
+`ad33496224b30b7f2ee1f27e89324129838cb2eedd979783cc0966ad2d42d4d7`.
+SDK/generated material remains ignored. Alpha's host preflight retains its
+missing accepted game inventory refusal; the fixture uses its own source/SDK
+and owned-workspace gates, with no full-game build attempted.
+
+**Disposition.** No Unity editor, APK build/install, payload sync or game launch
+occurs. Alpha's owned be26c21c APK stays byte-identical; process absence, selector
+absence and display sleep are checked. Main/spare resources and Root's R17
+source/artifact freeze are untouched. Preserve Main's latest five snapshot
+rows and all gameplay journal evidence when integrating. This qualifies the
+fixed authored compiler-to-stripper connection only. Conversion/native loading
+with the newly compiled input, general source/defines/generators/packages,
+complete independent roots, content/shaders, app-host/tool delivery and matched
+gameplay benchmarks remain open. `managed_game_compilation_qualified` remains
+false; the prior converter/native proof still consumes its original qualified
+stripped artifacts. Add an explicit new downstream contract rather than
+weakening its replay checks.
+
+
 ## J906 — Capture sustained null Siren target evidence within the existing budget
 
 Date: 2026-10-21. Hypothesis: J898's all-null native tracker interval leaves an
@@ -24422,83 +24504,104 @@ logs to the directory resolved by Git's own private-state path API, so neither
 a primary checkout nor a linked worktree acquires untracked cleanup files.
 The clean-repository regression remains enabled and the next hook reruns it.
 
-## J905 — Feed the Android-compiled Unity fixture into a separate stripping handoff
+## J909 — Catch the music observer's static-type compile error before player dispatch
 
-Date: 2026-10-21. Hypothesis: J902's actual Android compiler outputs can feed
-the existing authored fixture stripper without changing the earlier exact
-replay contract or requiring desktop-compiled fixture bytes. Retain Route A,
-the renderer, desktop fallback and explicit captured scene/editor roots.
+Date: 2026-10-21. Hypothesis: the committed output observer, Siren witness and
+camera gate snapshot can be composed into the next exact-editor player. R17
+pins synchronized source `1871e933944cb8f8e31945e6a0a9808af4ec7454`, 389
+build-read sources and final source manifest
+`6ba46b831d9a1e8026fa52fa160e1fca83303ecc03e05c8749d0c55936e19a0b`.
+Its independent build-driver review and eight host shape/manifest checks pass;
+doctor and preflight pass. The shared Unity mutex is acquired and released
+normally. Keep the exact accepted current input, editor, original banks,
+Wwise library and J904's prior-art/output-lifetime contract unchanged.
 
-**Prior knowledge and boundary.** Reuse J862's qualified SDK/module-policy
-stripping template and J902's fixed public Unity API source/compiler profile.
-The new reference assembly matches the independent SDK fixture. Read-only
-metadata/IL observations also match six authored types, 32 fields and fourteen
-method signatures/raw bodies against both retained SDK fixtures. This is one
-fixed source, not arbitrary source semantics or player execution. The existing
-`phone_linker.stripped_input` requires the prior stripped bytes; leave that
-replay gate and all accepted stages/receipts unchanged.
+**First failure.** Staging reaches the expected audio 6f96, observed 27340 and
+camera a205 module chain, but Unity C# compilation fails in the two new
+InstallMusicOutputObserver/DetachMusicOutputObserver methods. The expression
+`var observer = OriginalOwnerProbeObserver.Observer` treats a static class as
+a value; CS0119/CS0723 and subsequent CS0176 diagnostics identify the fault.
+The editor guard refuses stale player dispatch. No player build, new APK,
+installation or device run occurs. The Root integration/review missed a
+straightforward C# error; the prior host suite compiled the callback core and
+lifecycle policies, not this whole owner. It cannot stand in for that check.
 
-**Named owner and provenance.** `scripts/lab/phone_compiled_linker.py` owns a
-separate restricted producer/handoff. Source
-`ead656f17dad6ba23feecfcbdce340c8e7ca1636` verifies the completed compiler
-input/output receipts and pinned J862 template, then generates a fresh guarded
-641-input stage. Of the 634 original inputs, only `Assembly-CSharp.dll` and its
-PDB are replaced with actual J902 Android products. The other seven files add
-the original manifest, actual compiler/reference/source evidence and the
-handoff driver. Neither a historical manifest nor authored source is patched.
+Preserve terminal logs and status under
+`work/coordination/codex-original-game-audio-build-root/r17/`. Its
+`pre-player-stage/` snapshot retains nine source/assembly/receipt inputs,
+including the failing staged owner, plus the first compiler diagnostics and
+hash ledger. Do not mutate that evidence or its spent execution directory.
+The mutex is released at terminal failure; no editor is stopped/restarted and
+no cache is cleared. Main retains J901's b0f7ae7e player, stopped/asleep with
+no new device action. Accepted baseline remains f1550ce0.
 
-Known compiler code/data/reference fingerprints exclude only the recorded Git
-commit field, permitting identical code/SDK inputs after unrelated commits.
-Keep every raw receipt byte, actual source commit and actual serialized hash;
-this creates no normalized compiler output. Fixed Android artifact hashes and
-the complete SDK/source descriptor remain qualification pins. A changed source,
-SDK component or profile needs new qualification. The generated provenance
-states `desktop_editor_roots: true` and
-`desktop_compiled_fixture_input: false`; SDK target libraries remain supplied.
-This does not generate independent scene usage, serialized roots or TypeDB.
+**Smallest repair and regression.** Qualify the static observer's existing
+fields directly in both methods, keeping callback ownership checks and exact
+delegate removal unchanged. Update the authored owner manifest, producer and
+camera source pins. Neither original native call sites nor game transform
+output hashes change. The new portable host test compiles the actual tracked
+music owner, contract and observer against minimal authored Unity/game API-shape
+declarations; it also requires the former static-as-value mutant to fail
+compilation. This is a compile contract, not Unity behavior or audio evidence.
+The test skips when the exact-editor Mono/Roslyn tools are absent. Root's
+20-test focused suite passes in 3.288 s, including current source/recipe pins.
+Ruff passes. Protected code, original assemblies and generated outputs remain
+ignored; fixtures contain authored declarations only.
 
-The standalone driver validates staged inputs before and after its bounded
-linker child. Python isolation and disabled bytecode writes preserve exact
-membership. A separate `handoff-result.json` binds the original child result and
-actual stripped outputs without rewriting that result. Sibling outputs must be
-fresh and owned; replay refuses. Seven host contracts pass, covering unchanged
-historical inputs, unknown/drifting compiler/template inputs, scope mismatch,
-foreign files/links, unrelated-commit provenance, child failure/input mutation
-and immutable output replay. Ruff and staged/manual public provenance checks
-pass before source is committed and staging begins.
+The source fix and host fixture evidence are under
+`work/coordination/original-music-static-observer-fix/r1/`. Rebuild steps that
+stage the authored owner must regenerate it. A new committed/synchronized
+source, preflight, canonical build and matching artifact freeze are required
+before any install or both standard checks. Output acceptance, native playback,
+camera readiness and gameplay acceptance remain open.
 
-**Device result and comparison.** Reuse only Alpha's receipt/hash-bound SDK tool
-workspace, with fresh storage/backing/reserve checks before copying inputs.
-The new Android handoff succeeds in 12.168199 s, emitting 36 DLLs, 30 PDBs and
-one linker report. The retained replay has exactly the same 67 members:
-65 remain byte-identical, including the linker report. Only the authored DLL
-and its PDB differ. A read-only post-strip comparison still matches all six
-types, 32 fields, fourteen signatures and raw method bodies for this fixture.
-Raw DLL/PDB equality remains failed; no output is normalized or substituted.
-This measures a tooling stage, not gameplay performance or full equivalence.
+## J910 — Preserve the passive callback's complete output identity
 
-Replay refusal preserves all 641 inputs, stripped bytes and both result
-receipts. The original 634-input template is reverified and unchanged. The
-handoff receipt SHA-256 is
-`99ae4906a703def715cd4cd97c58db4174683d9cbe52b53d96beaab76b572e15`.
-Private selectors, source snapshot, controls, raw logs/outputs and comparisons
-remain under `work/coordination/phone-proof/compiled-linker-*` and generated
-`work/rebuild/phone-managed-compile/linker-*` stages. The private proof receipt
-binds 1,472 artifacts, SHA-256
-`ad33496224b30b7f2ee1f27e89324129838cb2eedd979783cc0966ad2d42d4d7`.
-SDK/generated material remains ignored. Alpha's host preflight retains its
-missing accepted game inventory refusal; the fixture uses its own source/SDK
-and owned-workspace gates, with no full-game build attempted.
+Date: 2026-10-21. Hypothesis: the composed player's zero PCM cannot qualify
+all original music output when the monitor's main-output selector and the
+source MusicController's separate output have not been joined by identity.
+Keep J904's exact source-call observer, the official SDK callback contract and
+pinned R2API.Sound initialization/lifetime prior art from
+`docs/community-prior-art.md`. The accepted input and native library remain
+fixed; no community or game implementation is copied.
 
-**Disposition.** No Unity editor, APK build/install, payload sync or game launch
-occurs. Alpha's owned be26c21c APK stays byte-identical; process absence, selector
-absence and display sleep are checked. Main/spare resources and Root's R17
-source/artifact freeze are untouched. Preserve Main's latest five snapshot
-rows and all gameplay journal evidence when integrating. This qualifies the
-fixed authored compiler-to-stripper connection only. Conversion/native loading
-with the newly compiled input, general source/defines/generators/packages,
-complete independent roots, content/shaders, app-host/tool delivery and matched
-gameplay benchmarks remain open. `managed_game_compilation_qualified` remains
-false; the prior converter/native proof still consumes its original qualified
-stripped artifacts. Add an explicit new downstream contract rather than
-weakening its replay checks.
+The existing native callback records its unsigned output ID in slot 18.
+Expose that full 64-bit value through the completed passive window, bootstrap
+contract and session snapshot, with an explicit observed flag and an invariant
+decimal-string companion. Known zero is valid observation; failed/incomplete
+windows and stale slots without a callback in this window stay unknown.
+Preserve the legacy nonzero boolean for compatibility. No native call,
+registration selector, callback lifetime or audio behavior changes.
+
+Preserve the cumulative reviewed draft, source hashes and host logs under
+`work/coordination/original-music-output-capture-identity-next/r2/`; its patch
+SHA-256 is `966d2e7560b874200c90123eb4f551530804617ef97d854a37449c1b25befaa7`.
+The independent R1 behavior review remains under
+`work/coordination/original-music-output-capture-identity-review/r1/`.
+Root reviews R2's compile-fixture closure: the preservation and listener tests
+now compile the actual shared contract instead of duplicate declarations.
+Four changed runtime sources, the owner recipe, producer and camera ancestor
+pins are synchronized. The focused Root suite passes 14 tests in 6.300 s,
+including whole music-owner compilation and its static-type regression;
+unsigned high-bit/max-value round trips, known zero and stale/no-callback
+refusal pass. Ruff passes. These authored declarations and tests contain no
+original assemblies or protected implementation.
+
+The broader local stage-copy fixture initially omits the newly required
+music-observer receipt while copying a current observed-camera stage. Preserve
+that host failure in `r2/root-pin-tests.log`; complete the fixture's faithful
+receipt/preimage copy without weakening production lineage checks.
+The corrected scratch fixture copies the optional observer receipt and its
+safe local preimage; missing local evidence skips explicitly. Root reruns the
+20-test producer/camera suite: it passes in 0.663 s with two expected profile
+skips, and the actual 165-row staged cohort check passes. Production lineage
+and symlink checks remain enabled.
+
+This is source-only instrumentation. A new committed player must confirm Unity
+serialization and compare both observed IDs from the same run, requiring the
+exact owned controller's successful AddOutput and no ownership mismatch.
+Missing prerequisites remain unknown; matching output IDs alone still do not
+qualify playback. Rebuild steps that stage these authored owners must regenerate
+them. No new APK, install or device run occurs here: Main retains diagnostic
+b0f7ae7e and accepted baseline f1550ce0. Native music playback, camera readiness,
+normal gameplay and physical audibility remain open.
