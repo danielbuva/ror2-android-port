@@ -10,6 +10,8 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J861](PORTING_JOURNAL.md#j861--observe-paired-siren-movement-but-retain-the-bounded-encounter-timeout) | 2026-10-20 | Observe paired Siren movement but retain the bounded encounter timeout | 2026-10-20. |
+| [J860](PORTING_JOURNAL.md#j860--integrate-the-original-wwise-process-owner-behind-an-explicit-build-selection) | 2026-10-20 | Integrate the original Wwise process owner behind an explicit build selection | 2026-10-20. |
 | [J858](PORTING_JOURNAL.md#j858--correct-the-siren-recorders-incompatible-launch-selection) | 2026-10-20 | Correct the Siren recorder's incompatible launch selection | 2026-10-20. |
 | [J857](PORTING_JOURNAL.md#j857--recover-the-complete-pinned-native-registry-from-owner-sdk-metadata-literals) | 2026-10-20 | Recover the complete pinned native registry from owner-SDK metadata literals | 2026-10-20. |
 | [J856](PORTING_JOURNAL.md#j856--reach-ship-graveyard-and-correct-siren-recorder-host-observations) | 2026-10-20 | Reach Ship Graveyard and correct Siren recorder host observations | 2026-10-20. |

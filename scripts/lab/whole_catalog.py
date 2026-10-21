@@ -1805,9 +1805,13 @@ def _build_integration(
         # R1–R8 already supplied the host products. Share the Unity half only.
         if android_symbols != "none":
             raise RuntimeError("Debugging symbol builds are supported only by the current local whole-catalog build")
+        from original_game_audio_build_hook import stage_for_build
+
+        audio_inputs = stage_for_build(Path(destination), WORK, selection_path=Path(work or WORK) / "config/original-game-audio/selection.json")
         result = build("vulkan", force=True, reuse_payload=code_only, destination=destination, work=work)
         if isinstance(result, dict):
             result["source"] = source_identity
+            result["original_audio"] = audio_inputs
         return result
     io = StageIO(WORK)
     project = io.project
@@ -1828,6 +1832,9 @@ def _build_integration(
         raise RuntimeError("Original body visual references belong to another accepted input")
     generate_build_maps(io, manifest, contract, source, code_only)
     contract_dir = ROOT / read(out / "contracts-latest.json")["path"]
+    from original_game_audio_build_hook import stage_for_build
+
+    audio_inputs = stage_for_build(project, WORK)
     stage_build_sources(io, runtime_sources, manifest, read(contract_dir / "result.json"))
     generate_build_bootstrap(io, manifest, read(out / "reconciled-closure.json"))
     write(WORK / "whole-catalog-build.json", dict(manifest=str(attempt / "manifest.json")))
@@ -1859,6 +1866,8 @@ def _build_integration(
             source=source_identity,
             android_symbols=android_symbols,
         )
+    if isinstance(result, dict):
+        result["original_audio"] = audio_inputs
     write(attempt / "build.json", result)
     if not code_only:
         freeze_whole_payload(project, result)

@@ -207,6 +207,8 @@ public sealed partial class PortSession : MonoBehaviour
         public SourceAnimationEventReport sourceAnimationEvents;
         public List<SessionResourceSample> sessionResources = new List<SessionResourceSample>();
         public OfflineSettingsReport settings;
+        // Snapshot contains only bounded primitive values; no Unity objects.
+        public PortSessionOriginalAudioOwner.Snapshot originalAudio;
         public AndroidProfileReport profile;
         public bool originalAimPresentation, recoveredHudEnabled;
         public RecoveredHudPresentation.Observation hud;
@@ -736,6 +738,12 @@ public sealed partial class PortSession : MonoBehaviour
         var applicationStart = AwaitOfflineRunStart(config);
         while (applicationStart.MoveNext())
             yield return applicationStart.Current;
+        // Establish the original process-lifetime Wwise owner before any selected
+        // body/model activation. It reuses the original manager/prefab/component path.
+        var originalAudio = PortSessionOriginalAudioOwner.EnsureOriginalOwner();
+        while (originalAudio.MoveNext())
+            yield return originalAudio.Current;
+        r.originalAudio = PortSessionOriginalAudioOwner.CaptureSnapshot();
         var selected = RunSelectedProbe(catalogFixture);
         for (var step = RunGuarded(selected,
                                    e =>

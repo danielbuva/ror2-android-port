@@ -1,0 +1,35 @@
+using System;
+
+namespace OriginalOwnerProbeObserver
+{
+    // Compatibility adapter for the source-pinned R4 exact-site Cecil transform.
+    // All callbacks are observational except the pre-Init latch, which fails closed.
+    public static class Observer
+    {
+        public static Action<int> InitReturned;
+        public static Action<int> InitializeMethodReturned;
+        public static Action BeforeEngineInit;
+        public static Action<int, uint> InitBankReturned;
+        public static Action EngineTermReturned;
+        public static Action CallbackManagerTermReturned;
+        public static Action<int> PostCallbacksReturned;
+        public static Action<int> RenderAudioReturned;
+
+        public static void RecordBeforeEngineInit()
+        {
+            if (BeforeEngineInit == null) throw new InvalidOperationException("Native pre-Init monitor arm is not configured.");
+            BeforeEngineInit();
+        }
+
+        public static void RecordInitResult(int result) { Safe(() => InitReturned?.Invoke(result)); }
+        public static void RecordInitializeMethodReturned(int result) { Safe(() => InitializeMethodReturned?.Invoke(result)); }
+        public static void RecordInitBankResult(int result, uint bankId) { Safe(() => InitBankReturned?.Invoke(result, bankId)); }
+        public static void RecordInitFailureTermReturned() { Safe(() => EngineTermReturned?.Invoke()); }
+        public static void RecordEngineTermReturned() { Safe(() => EngineTermReturned?.Invoke()); }
+        public static void RecordCallbackManagerTermReturned() { Safe(() => CallbackManagerTermReturned?.Invoke()); }
+        public static void RecordPostCallbacksReturned(int callbackCount) { Safe(() => PostCallbacksReturned?.Invoke(callbackCount)); }
+        public static void RecordRenderAudioReturned(int result) { Safe(() => RenderAudioReturned?.Invoke(result)); }
+
+        private static void Safe(Action callback) { try { callback?.Invoke(); } catch { } }
+    }
+}

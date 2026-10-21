@@ -441,7 +441,56 @@ or failure; there is no persistent state. This verifies plugin bytes only, not
 importers, script orders or project initialization. Host contracts:
 `tests/test_assembly_transforms.py`.
 
-Audio remains unavailable in the composed game. Separate native diagnostics
+Audio remains unavailable in the composed game. The default-off original-owner
+integration uses `runtime/session/PortSessionOriginalAudioOwner.cs` after the
+offline menu and before selected body activation. It coordinates the existing
+`WwiseIntegrationManager.Init` and original prefab callbacks; `AkInitializer`
+and `AudioManager` retain native initialization, service, focus/pause and
+termination ownership. It adds no second native engine owner. Its bounded
+snapshot is attached to the session report.
+
+`tools/unity/support/audio/core/` owns admission, readiness and copied lifecycle
+observations. `support/audio/bootstrap/` owns the explicit request, hash-bound
+bank preparation, Android platform resolver, Java-first library load and native
+monitor lease. These are separately compiled support assemblies, outside the
+runtime source selection. Generated request and bank pins default to disabled;
+build-time generators must write derived sources to ignored output directories.
+Original audio can be admitted only after all declared preparation succeeds;
+actual engine, bank and event results require device evidence.
+
+`WholeCatalogComposed` supplies the existing GUID-bound settings asset and a
+single process-audio lease over its existing content bundle. Session locators
+and caches still detach normally. Default-off release still unloads the bundle;
+an admitted audio owner defers unload until both original Term calls return.
+Only a refusal before both manager admission and native Init attempt can release
+early. Retained input, attempt and manifest hashes constrain bundle reuse.
+This minimal shared cleanup change serves original audio; its memory impact is
+unmeasured. The historical private composed-audio candidate below is separate.
+
+The current `whole-catalog-build` action invokes
+`scripts/lab/original_game_audio_build_hook.py` under the existing host build
+mutex, before computing project/cache identity. Missing local selection means
+default off. An explicit `work/config/original-game-audio/selection.json`
+binds every protected input; destination builds use their own work selection.
+`original_game_audio_produce.py` compiles the observer, core and bootstrap with
+the pinned editor, Android define and deterministic compiler. The authored
+`support/audio/managed-producer/` transforms the accepted raw API and guarded
+game independently; `support/audio/generators/` produces bank and request pins
+without editing authored sources. Native ABI inspection uses the official
+Release plugin, distinct from the explicitly selected instrumented runtime.
+Generated contracts precede derivative request sources to avoid circular pins.
+The cache binds producer sources, recipes, editor references, compiler/tool
+identities and explicit inputs; cached generations revalidate that receipt.
+`original_game_audio_stage.py` checks exact assembly preimages, GUIDs and owned
+payloads before staging. Default-off restores the ordinary guarded assemblies
+and removes only prior receipt-owned audio payloads, preserving Unity metadata
+sidecars. The lower-level `original_game_audio.py` is host staging support;
+current Unity project mutation belongs to the mutex-protected build action.
+Use a full bundle build for the first audio candidate: code-only payload reuse
+retains its existing strict contract. J860 records host acceptance only;
+post-strip/player, native bank and composed-game audio remain device gates.
+
+Separate native diagnostics
 use one disposable engine owner for exact bank buffers, listener/emitter,
 event callback, bounded output capture and cumulative monitor; reverse cleanup
 retains uncertain ownership. The private managed owner tests the retained
