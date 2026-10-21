@@ -88,10 +88,10 @@ The plain check and its acceptance criteria remain unchanged.
 
 ## Current baseline (2026-10-20)
 
-J891's later diagnostic APK is installed after both default checks, but remains
-unpromoted while composed audio and source-camera acceptance are open.
-See the [current snapshot](../PORTING_STATE.md) for installed identity and
-[J891](PORTING_JOURNAL.md#j891--bind-the-music-player-and-observe-original-controller-preload-on-device)
+J901's later diagnostic APK b0f7ae7e is installed after both standard checks,
+but remains unpromoted while source-camera and composed-audio acceptance are
+open. See the [current snapshot](../PORTING_STATE.md) for installed identity and
+[J901](PORTING_JOURNAL.md#j901--build-the-repaired-camera-player-and-pass-both-standard-device-checks)
 for the single result record. The accepted baseline below remains the rollback.
 
 | Item | Value |
@@ -109,8 +109,8 @@ target updates/Siren execution, indicator rendering/teardown and special
 first-stage recovery remain open; the default checks do not qualify them. J801's observer and strict cleanup failures remain
 evidence on that player. J790's earlier native
 offhand activation and J795's bounded native Siren registration/cleanup remain
-evidence on their recorded APKs. [J894](PORTING_JOURNAL.md#j894--reach-sirens-call-and-retain-the-early-native-registration-admission-stop)
-records the latest fae79734 Siren admission stop; encounter execution remains open.
+evidence on their recorded APKs. [J898](PORTING_JOURNAL.md#j898--observe-siren-registration-and-five-ordered-navigation-pairs-without-a-boss-start)
+records the later bounded fae79734 Siren observation; encounter execution remains open.
 
 The default checks keep native diagnostic flags off. Native first-stage defeat,
 strict cleanup and healthy same-process restart previously pass on J752's APK
