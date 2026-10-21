@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J920](PORTING_JOURNAL.md#j920--convert-the-android-compiled-and-stripped-fixture-without-relaxing-replay-gates) | 2026-10-21 | Convert the Android-compiled and stripped fixture without relaxing replay gates | Date: 2026-10-21. |
 | [J918](PORTING_JOURNAL.md#j918--bind-passive-pcm-capture-to-the-owned-original-music-output) | 2026-10-21 | Bind passive PCM capture to the owned original music output | Date: 2026-10-21. |
 | [J917](PORTING_JOURNAL.md#j917--qualify-the-late-bound-camera-player-and-preserve-its-visual-failure) | 2026-10-21 | Qualify the late-bound camera player and preserve its visual failure | Date: 2026-10-21. |
 | [J914](PORTING_JOURNAL.md#j914--retain-the-declared-audio-content-dependencies-across-session-cleanup) | 2026-10-21 | Retain the declared audio content dependencies across session cleanup | Date: 2026-10-21. |

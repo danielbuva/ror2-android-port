@@ -304,6 +304,23 @@ teardown is the linker child exiting, with failed stages and outputs retained.
 Captured desktop scene/editor roots remain required. A passing stripper does
 not qualify conversion, a player, game semantics or ordinary app hosting.
 
+`phone_compiled_converter.py` owns the separate current experimental consumer
+for that authored Android compiler/stripper profile. Setup requires committed
+source, the pinned converter template and explicit successful stripping
+stage/output selections. It copies and revalidates the complete supplier stage
+and its raw receipts, then supplies the actual stripped closure to an unchanged
+converter driver in a fresh stage. The nested converter plan and all retained
+SDK inputs remain pinned; neither original replay consumer is relaxed. This
+deliberately retains upstream proof inputs, with additional staging/storage
+cost. Its standalone runner bounds the converter child, verifies immutable
+inputs before and afterward, and records raw generated source/data hashes in a
+separate `handoff-result.json`. Teardown is the child exiting; preserve failures
+and receipts. Captured desktop scene/editor roots remain prerequisites. A
+passing conversion alone does not qualify native compilation, metadata/player
+loading, performance, game compilation or final tool distribution.
+J920 qualifies this fixed authored conversion profile; the native/player
+consumer remains a separate gate.
+
 `phone_registry.py` and `phone_registry_literals.py` own separate experimental
 static SDK metadata support.
 The current `phone-native-registry` action accepts an explicit owner binary,
