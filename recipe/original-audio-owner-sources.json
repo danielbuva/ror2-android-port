@@ -1,11 +1,11 @@
 {
   "base_commit": "565aac5513ca8c969f7424bb246e59b30d4f5672",
-  "integration": "R7 exact installed passive-window Term callback lifecycle for the original MusicController plus exact source AddOutput/RemoveOutput result observation. Default-off remains selected unless current request opts in.",
+  "integration": "Original process music lifecycle with passive pre-Term participation, exact AddOutput/RemoveOutput return observation and a one-shot original startup trigger after exact owned queue success. Default off unless the current request opts in.",
   "owner_source_hashes": {
-    "../../runtime/session/OriginalMusicControllerContract.cs": "5ce24197048654448e3a5444b883339c86777754521cb638b461399291833212",
+    "../../runtime/session/OriginalMusicControllerContract.cs": "bd8f78977722a276409623cea4909b0e41065fda6c195a6b0dee94ef8bb8b485",
     "../../runtime/session/PortSession.cs": "233e40b41b02aa601d110db38bdb738ed35438a91131823d609a2909719e6731",
     "../../runtime/session/PortSessionOriginalAudioOwner.cs": "79701337eacf5267259a909b7d01dfe6ad3fe881840198115252b5b5546645c0",
-    "../../runtime/session/PortSessionOriginalMusicControllerOwner.cs": "5e578fb654e898864cc3ba497b06f3acba5bf6d92230a9b47b50032fa45ec2ec",
+    "../../runtime/session/PortSessionOriginalMusicControllerOwner.cs": "dd8c38d9658cd57733043857eac7b109d78e5be7c014197aee76d7d11864cb40",
     "bootstrap/GameAudioOriginalAcceptedRequestProvider.cs": "72e2fc997ad80ee3e86cee428c3857b7be035070483007b24d929039aa0aa7e1",
     "bootstrap/GameAudioOriginalAndroidNativeBootstrap.cs": "bea349d5c344f43293abeca65508790971305e4d38c60050fc956fa956205d20",
     "bootstrap/GameAudioOriginalGeneratedRequestPin.cs": "24e560195c4350aefe717b3acbc78697871effa88b70e23be07225c6487545d4",

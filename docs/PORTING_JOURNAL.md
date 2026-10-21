@@ -24714,3 +24714,56 @@ The normal push on committed 7c9b8f8 exercises the real create-timeout fallback
 without manual intervention. All 1,480 fresh-clone tests pass in 23.329 s with
 91 unavailable-tool/filesystem skips, along with Ruff and audits; Main syncs
 normally. Preserve its complete log in `r2/root-push.log`.
+
+## J913 — Admit one original music startup component after owned queue success
+
+Date: 2026-10-21. Hypothesis: the direct game route omits the original splash
+activation of TriggerIntroMusicStart, so preserving the original controller's
+preload alone cannot start the music system. J911 now observes the exact
+owned source AddOutput queue success and valid ID without ownership mismatch,
+meeting this candidate's admission gate. Retain J904's pinned R2API.Sound
+lifetime prerequisite and J588's wwiser limits from community prior art.
+The current-input dataflow investigation under
+`work/coordination/original-music-current-input-dataflow/r2/` identifies the
+original fieldless component and its OnEnable → MusicController.StartIntroMusic
+relationship, separate from MusicTrackDef preload/state work. The original
+splash timeline activates it later; this adapter explicitly uses adapted
+process-start timing. No stock intro timing or correct stage music is inferred.
+
+The named process music owner creates an inactive child, adds the original
+trigger type, then activates it once after the current owner, singleton,
+preload, engine readiness, queued result and ID gates pass. Failure, no-audio,
+cleanup, stop and Term states refuse. The process-lifetime claim is latched
+before activation, including exceptions, preventing duplicate attempts on
+re-entry. The original component owns its callback and event submission. The
+adapter immediately deactivates the component and schedules the child for
+destruction; its retirement scalar proves inactive state, not synchronous
+destruction or native completion. This uses the existing original-audio
+opt-in, which remains default off. Menu/run/profile ownership stays unchanged.
+
+The pure admission/one-shot policy is in the existing
+OriginalMusicControllerContract. Both authored runtime sources retain their
+existing membership, importer identities and layout; refresh their owner,
+producer and camera recipe/ancestor hashes. No new runtime file is introduced.
+Rebuild steps that stage these sources must regenerate them. Preserve the R5
+durable-test draft under `work/coordination/original-music-startup-owner-next/r5/`,
+patch SHA-256 `aff4ebac22f3f5766a3bc1c47c74375cf0ef48a07e16d8ad66228c8bdad47d69`.
+The earlier R3/R4 source and asynchronous-output reviews are under
+`work/coordination/original-music-startup-owner-review/`.
+
+Root's focused suite passes 27 tests in 3.446 s, including full actual owner,
+contract and observer compilation, rejection of the static-type compiler
+mutant, the actual contract's 27 policy assertions and recipe/source pins.
+Compile stubs declare an empty trigger type and Unity API shapes only;
+they do not model the original callback or establish Unity lifecycle behavior.
+Ruff passes. No protected implementation, source prefab, SDK or bank bytes
+are added to public source.
+
+This is source-only integration pending a committed new build, retained source
+trigger closure, both standard checks and event/output evidence. AK_Success
+admits an attempt because the original source also treats it as queue success;
+the official SDK requires separate evidence for asynchronous device activation.
+The current PCM monitor's output differs from the music output, as J911 shows.
+Playback, actual music content, spatialization and physical audibility remain
+unqualified. Installed diagnostic 6435f1ff and accepted baseline f1550ce0 stay
+fixed until new artifact/device evidence exists.

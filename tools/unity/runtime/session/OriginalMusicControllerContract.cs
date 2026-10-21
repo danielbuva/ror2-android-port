@@ -60,4 +60,36 @@ public static class OriginalMusicControllerContract
         return controllerReady && sceneTrackResolved && trackPlayResultObserved &&
             relevantNativeEventObserved && outputAccepted && matchingRuntimeAudioCaptured;
     }
+    // Adapted original TriggerIntroMusicStart lifecycle gate. A successful
+    // AddOutput result means the source request was queued; it does not establish
+    // native output activation, event completion, playback, or audibility.
+    public static bool MayActivate(bool explicitlyRequested, bool ownerAlive,
+        bool sourceAudioReady, bool noAudio, bool engineInitialized,
+        bool termsReturned, bool stopRequested, bool ownerFailed,
+        bool ownerCleanupRequested, bool sourcePreloadReturned,
+        bool sameOwnedControllerIsSingleton, bool sourceControllerActive,
+        bool sourceAddOutputExpected, bool outputResultObserved,
+        bool outputAccepted, int outputResultCode, int successResultCode,
+        bool outputDeviceIdValid, bool outputObservationOwnerMismatch,
+        bool outputBelongsToSameOwnedController, bool activationAlreadyAttempted)
+    {
+        return explicitlyRequested && ownerAlive && sourceAudioReady && !noAudio &&
+            engineInitialized && !termsReturned && !stopRequested && !ownerFailed &&
+            !ownerCleanupRequested && sourcePreloadReturned &&
+            sameOwnedControllerIsSingleton && sourceControllerActive &&
+            sourceAddOutputExpected && outputResultObserved && outputAccepted &&
+            outputResultCode == successResultCode && outputDeviceIdValid &&
+            !outputObservationOwnerMismatch && outputBelongsToSameOwnedController &&
+            !activationAlreadyAttempted;
+    }
+
+    // The process-lifetime claim is latched before touching Unity lifecycle,
+    // so re-entry or an exception cannot dispatch a second source trigger.
+    public static bool TryClaimActivation(ref bool activationAttempted, bool gatesPass)
+    {
+        if (activationAttempted || !gatesPass)
+            return false;
+        activationAttempted = true;
+        return true;
+    }
 }

@@ -22,6 +22,8 @@ public sealed class PortSessionOriginalMusicControllerOwner : MonoBehaviour
     AsyncOperationHandle<GameObject> prefabHandle;
     MusicController ownedController;
     GameObject ownedControllerRoot;
+    TriggerIntroMusicStart startupMusicTrigger;
+    GameObject startupMusicTriggerRoot;
     bool started, loadCompleted, stopRequested, termsReturnHandled, preloadCalled, preloadAttempted;
     bool sourcePreloadReturned, sourceSceneCallbackObserverAttached, failedInstanceCleanupPending;
     bool outputObserverInstalled, awaitingInstantiationAwake;
@@ -31,6 +33,7 @@ public sealed class PortSessionOriginalMusicControllerOwner : MonoBehaviour
     float loadStartedAt;
     int unityThreadId;
     FieldInfo apiBeforeEngineTermField;
+    static bool processStartupTriggerAttempted;
 
     public bool MayReleaseOriginalAudioCatalogLease
     {
@@ -55,6 +58,8 @@ public sealed class PortSessionOriginalMusicControllerOwner : MonoBehaviour
         public bool sourcePrefabWasActiveAtInstantiation;
         public bool sourceMusicControllerEnabled, sourceMusicSystemEnabled;
         public bool sourceAddOutputLifecycleExpected, outputResultObserved, outputAccepted;
+        public bool startupTriggerAttempted, startupTriggerActivationRequested, startupTriggerRetiredObserved;
+        public string startupTriggerTiming;
         public bool outputDeviceIdValid, removeOutputResultObserved, removeOutputDeviceIdValid;
         public bool outputObservationOwnerMismatch;
         public int outputResultCode, removeOutputResultCode;
@@ -80,6 +85,7 @@ public sealed class PortSessionOriginalMusicControllerOwner : MonoBehaviour
         outputShareSet = OriginalMusicControllerContract.OutputShareSet,
         outputResultObserved = false,
         outputAccepted = false,
+        startupTriggerTiming = "adapted_process_start_not_stock_splash_timeline",
         teardownEvidence = "not_observed",
         limitations = "AddOutput/RemoveOutput result codes are captured only for the exact owned MusicController; accepted output setup, track state/event completion, scene/run ownership, and audible or spatial PCM remain unproven"
     };
@@ -169,6 +175,7 @@ public sealed class PortSessionOriginalMusicControllerOwner : MonoBehaviour
             snapshot.currentSceneName = SceneCatalog.mostRecentSceneDef ? SceneCatalog.mostRecentSceneDef.cachedName : null;
             if (GameAudioOriginalOwner.OriginalTermsReturned && !termsReturnHandled)
                 NotifyOriginalTermsReturned();
+            TryActivateOriginalStartupTrigger();
         }
         if (CanBeginFailedInstanceCleanup())
         {
@@ -184,6 +191,71 @@ public sealed class PortSessionOriginalMusicControllerOwner : MonoBehaviour
                 snapshot.teardownEvidence = "failed instance remains owned because synchronous Unity destruction was not observed";
             }
         }
+    }
+
+    // Attempt the original component lifecycle only after the existing owner
+    // joins a successful source AddOutput queue result to this exact controller.
+    // Queue acceptance does not prove native activation or playback. This adapter
+    // does not call StartIntroMusic or any Wwise API directly.
+    void TryActivateOriginalStartupTrigger()
+    {
+        bool sameOwnedSingleton = ownedController && MusicController.Instance == ownedController;
+        bool ownerFailed = !String.IsNullOrEmpty(snapshot.firstFailure) ||
+            failedInstanceCleanupPending || snapshot.sourceCallbackRetirementUnknown;
+        bool mayActivate = OriginalMusicControllerContract.MayActivate(
+            snapshot.requested, instance == this && this && isActiveAndEnabled,
+            GameAudioOriginalOwner.Ready, WwiseIntegrationManager.noAudio,
+            AkSoundEngine.IsInitialized(), GameAudioOriginalOwner.OriginalTermsReturned,
+            stopRequested, ownerFailed, snapshot.ownerCleanupRequested,
+            sourcePreloadReturned && preloadCalled, sameOwnedSingleton,
+            ownedController && ownedController.isActiveAndEnabled,
+            snapshot.sourceAddOutputLifecycleExpected,
+            snapshot.outputResultObserved, snapshot.outputAccepted,
+            snapshot.outputResultCode, (int)AKRESULT.AK_Success,
+            snapshot.outputDeviceIdValid, snapshot.outputObservationOwnerMismatch,
+            snapshot.staticInstanceMatchesOwnedController,
+            processStartupTriggerAttempted);
+
+        if (!OriginalMusicControllerContract.TryClaimActivation(
+                ref processStartupTriggerAttempted, mayActivate))
+            return;
+        snapshot.startupTriggerAttempted = true;
+        try
+        {
+            var triggerRoot = new GameObject("OriginalMusicStartupTrigger");
+            startupMusicTriggerRoot = triggerRoot;
+            triggerRoot.SetActive(false);
+            triggerRoot.transform.SetParent(transform, false);
+            startupMusicTrigger = triggerRoot.AddComponent<TriggerIntroMusicStart>();
+            snapshot.startupTriggerActivationRequested = true;
+            triggerRoot.SetActive(true); // Runs the original component's OnEnable.
+            startupMusicTrigger.enabled = false;
+            triggerRoot.SetActive(false);
+            snapshot.startupTriggerRetiredObserved = !startupMusicTrigger.isActiveAndEnabled;
+            snapshot.startupTriggerTiming = "adapted_process_start_not_stock_splash_timeline";
+            RetireOriginalStartupTrigger();
+        }
+        catch (Exception error)
+        {
+            Refuse("original_music_startup_trigger_activation_failed:" + error.GetType().Name);
+            RetireOriginalStartupTrigger();
+        }
+    }
+
+    void RetireOriginalStartupTrigger()
+    {
+        if (startupMusicTrigger)
+            startupMusicTrigger.enabled = false;
+        if (startupMusicTriggerRoot)
+        {
+            if (startupMusicTriggerRoot.activeSelf)
+                startupMusicTriggerRoot.SetActive(false);
+            UnityEngine.Object.Destroy(startupMusicTriggerRoot);
+            startupMusicTriggerRoot = null;
+        }
+        if (startupMusicTrigger)
+            snapshot.startupTriggerRetiredObserved = !startupMusicTrigger.isActiveAndEnabled;
+        startupMusicTrigger = null;
     }
 
     void OnPrefabLoadCompleted(AsyncOperationHandle<GameObject> handle)
@@ -656,6 +728,7 @@ public sealed class PortSessionOriginalMusicControllerOwner : MonoBehaviour
 
     void OnDestroy()
     {
+        RetireOriginalStartupTrigger();
         DetachMusicOutputObserver();
         if (sourceSceneCallbackObserverAttached)
         {

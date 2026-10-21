@@ -824,6 +824,21 @@ before invoking music cleanup; either refusal prevents original Term. After both
 original Term calls return, the music lease can release. Owner destruction that
 loses retirement observation keeps the state unknown and retains references.
 
+The process owner can activate the original `TriggerIntroMusicStart` component
+once after its exact owned controller's observed successful AddOutput queue
+result, valid output identity, completed preload and live singleton checks.
+`OriginalMusicControllerContract` owns the pure admission and one-shot policy.
+Failure, cleanup, no-audio, stop and Term states refuse admission. The owner
+creates an inactive child, adds the original component and activates it once;
+that component performs its original startup callback. It then deactivates the
+component and schedules the child for destruction. The snapshot records
+activation requested and inactive retirement, not synchronous destruction or
+event completion. The static claim survives same-process owner re-entry.
+Timing is explicitly adapted process start; stock splash/intro timing remains
+unqualified. The existing original-audio request defaults off. A synchronous
+AddOutput success means queued acceptance; native activation and playback are
+separate device gates.
+
 The optional source-output observer samples the result of the existing
 MusicController `AddOutput` and `RemoveOutput` calls after they return. A separate
 Cecil transform preserves the original call count, arguments, return and exception

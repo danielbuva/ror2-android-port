@@ -1414,6 +1414,15 @@ cohort and ancestor hash are recorded in
 `recipe/original-audio-owner-sources.json`; changing runtime source membership
 invalidates the current stage/ancestor receipt and requires re-generation.
 
+J913's startup adapter adds the original fieldless trigger component by type
+after exact owned queue-result admission. Its policy remains in the existing
+contract file and both source files retain their authored membership/importer
+identities. Public fixtures contain empty API declarations and a pure-policy
+harness; the original callback implementation remains in the user's ignored
+game assembly. No splash asset, bank, SDK code or binary is published. The
+adapter's timing is labelled as adapted and source queue acceptance does not
+qualify playback.
+
 J910 extends only authored passive-capture reports with an observed flag and
 full unsigned output ID plus exact decimal serialization. Runtime values remain
 in ignored local reports; no captured identifier or additional native/SDK code

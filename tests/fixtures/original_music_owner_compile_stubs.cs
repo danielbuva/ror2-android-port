@@ -14,6 +14,7 @@ namespace UnityEngine
         public static T FindObjectOfType<T>() where T : Object => null;
         public static T Instantiate<T>(T original, Transform parent, bool worldPositionStays) where T : Object => original;
         public static void DestroyImmediate(Object value) { }
+        public static void Destroy(Object value) { }
     }
 
     public class Component : Object
@@ -31,14 +32,18 @@ namespace UnityEngine
 
     public class MonoBehaviour : Behaviour { }
 
-    public class Transform : Component { }
+    public class Transform : Component { public void SetParent(Transform parent, bool worldPositionStays) { } }
 
     public class GameObject : Object
     {
+        public GameObject() { }
+        public GameObject(string objectName) { name = objectName; }
+        public bool activeSelf;
         public Transform transform = new Transform();
         public T GetComponent<T>() where T : Component => null;
         public T AddComponent<T>() where T : Component => null;
         public T[] GetComponents<T>() where T : Component => Array.Empty<T>();
+        public void SetActive(bool active) { activeSelf = active; }
     }
 
     public static class Time { public static float realtimeSinceStartup; }
@@ -82,6 +87,8 @@ namespace RoR2
 {
     using UnityEngine;
     using UnityEngine.ResourceManagement.AsyncOperations;
+
+    public sealed class TriggerIntroMusicStart : MonoBehaviour { }
 
     public class MusicController : MonoBehaviour
     {
