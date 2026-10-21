@@ -24767,3 +24767,10 @@ The current PCM monitor's output differs from the music output, as J911 shows.
 Playback, actual music content, spatialization and physical audibility remain
 unqualified. Installed diagnostic 6435f1ff and accepted baseline f1550ce0 stay
 fixed until new artifact/device evidence exists.
+
+The first mandatory push on 6ef7b95 refuses after 1,482 tests because the
+updated recipe description omits the literal MusicController owner name
+required by the existing cohort guard. Restore that explicit owner name and
+regenerate the dependent ancestor/hook pins; runtime source bytes and gates
+are unchanged. Preserve the failed check in `r5/root-push.log`. The guard
+stays enabled and the next normal push reruns all required checks.

@@ -1,6 +1,6 @@
 {
   "base_commit": "565aac5513ca8c969f7424bb246e59b30d4f5672",
-  "integration": "Original process music lifecycle with passive pre-Term participation, exact AddOutput/RemoveOutput return observation and a one-shot original startup trigger after exact owned queue success. Default off unless the current request opts in.",
+  "integration": "Original MusicController process lifecycle with passive pre-Term participation, exact AddOutput/RemoveOutput return observation and a one-shot original startup trigger after exact owned queue success. Default off unless the current request opts in.",
   "owner_source_hashes": {
     "../../runtime/session/OriginalMusicControllerContract.cs": "bd8f78977722a276409623cea4909b0e41065fda6c195a6b0dee94ef8bb8b485",
     "../../runtime/session/PortSession.cs": "233e40b41b02aa601d110db38bdb738ed35438a91131823d609a2909719e6731",
