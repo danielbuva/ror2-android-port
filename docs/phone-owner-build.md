@@ -20,6 +20,7 @@ Explicit static-record module completion: [J855](PORTING_JOURNAL.md#j855--resolv
 Complete pinned native-registry metadata: [J857](PORTING_JOURNAL.md#j857--recover-the-complete-pinned-native-registry-from-owner-sdk-metadata-literals).
 SDK-native metadata into stripping/conversion: [J859](PORTING_JOURNAL.md#j859--generate-sdk-native-root-metadata-on-android-and-preserve-strippingconversion).
 Restricted fixture module policy into stripping/conversion: [J862](PORTING_JOURNAL.md#j862--derive-authored-fixture-module-policy-from-owner-sdk-and-package-data-on-android).
+Persistent native class-ID prerequisite: [J864](PORTING_JOURNAL.md#j864--read-persistent-native-class-ids-from-the-pinned-sdk-on-android).
 
 **Finding:** this repository has no demonstrated phone-only build path. Many
 preparation and packaging stages have Android-capable open-source building
@@ -45,6 +46,8 @@ J862 additionally derives the restricted builtin/no-overrides fixture's module
 policy from supplied SDK/package data, without staging captured policy arrays.
 Project scene usage, general module policy and complete independent linker
 roots remain unproduced.
+J864 independently reads persistent native class IDs as another prerequisite;
+managed wrapper mapping and complete scene/manager/dependency usage remain open.
 These are build-pipeline problems; keep the game runtime
 and desktop fallback while investigating them independently.
 

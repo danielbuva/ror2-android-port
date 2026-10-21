@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J864](PORTING_JOURNAL.md#j864--read-persistent-native-class-ids-from-the-pinned-sdk-on-android) | 2026-10-20 | Read persistent native class IDs from the pinned SDK on Android | 2026-10-20. |
 | [J863](PORTING_JOURNAL.md#j863--remove-commit-dependent-sourcelink-metadata-from-the-audio-helper) | 2026-10-20 | Remove commit-dependent SourceLink metadata from the audio helper | 2026-10-20. |
 | [J862](PORTING_JOURNAL.md#j862--derive-authored-fixture-module-policy-from-owner-sdk-and-package-data-on-android) | 2026-10-20 | Derive authored fixture module policy from owner SDK and package data on Android | 2026-10-20. |
 | [J861](PORTING_JOURNAL.md#j861--observe-paired-siren-movement-but-retain-the-bounded-encounter-timeout) | 2026-10-20 | Observe paired Siren movement but retain the bounded encounter timeout | 2026-10-20. |
