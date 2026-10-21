@@ -157,6 +157,7 @@ class PrototypeActionTests(unittest.TestCase):
                 "phone-root-contract",
                 "phone-native-registry",
                 "phone-wrapper-search",
+                "phone-wrapper-oracle",
                 "phone-native-apk-fixture",
                 "assembly-transforms-check",
                 "asset-transforms-check",

@@ -122,6 +122,7 @@ by hand. Regenerate with `python3 scripts/readme-actions.py`; CI checks freshnes
 
 | Command | What it does |
 | --- | --- |
+| `./dev prototype --action phone-wrapper-oracle` | Experimental desktop verification only: --target REQUEST.json selects stage or check for a fresh SDK-only project. The exact editor reports native metadata and concrete Object-descendant wrapper queries under the shared mutex. No game files, player build, installation or phone-build input; preserves existing editors and refuses lock contention. |
 | `./dev prototype --action phone-wrapper-search` | Experimental read-only SDK support: --target REQUEST.json selects the pinned owner SDK binary and extracts normal-path assembly/namespace lookup order with argument, branch and return checks. Executes no SDK code and produces no scene roots, game build, install or editor mutation. |
 | `./dev prototype --action phone-native-registry` | Experimental read-only metadata support: --target REQUEST.json selects the exact owner SDK binary, stages authored Python readers and reports native registration/module coverage and persistent class IDs. Executes no SDK code, generates no linker roots and changes no editor, package or runtime. |
 | `./dev prototype --action phone-root-contract` | Experimental read-only host contract: --target REQUEST.json binds an authored fixture/capture and inventories SDK native-type metadata without executing inspected assemblies. Reports explicit matches separately from name guesses; produces no roots, game build, install or editor mutation. |

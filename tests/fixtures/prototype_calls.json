@@ -1,4 +1,5 @@
 {
+  "phone-wrapper-oracle": {"calls": [{"module": "phone_wrapper_oracle", "function": "stage_action", "args": ["lab"], "kwargs": {}}], "effects": [], "stdout": "", "exit": null},
   "inherited-store-capture": {"calls": [{"args": [], "function": "capture_action", "kwargs": {}, "module": "inherited_state"}], "effects": [], "exit": null, "stdout": ""},
   "assembly-transforms-check": {"calls": [{"module": "assembly_transforms", "function": "check_action", "args": [], "kwargs": {}}], "effects": [], "stdout": "", "exit": null},
   "inherited-state-check": {"calls": [{"args": [], "function": "check_action", "kwargs": {}, "module": "inherited_state"}], "effects": [], "exit": null, "stdout": ""},
