@@ -79,7 +79,7 @@
     "whole_catalog": "scripts/lab/whole_catalog.py"
   },
   "source_sha256": {
-    "build_hook": "31752fb2938f82a0e81986b11aebc676c578f203ebf6f557488ff6b824ebe6b5",
+    "build_hook": "81c6803ac1e00ba2785b25f7672138f157224e8e0f9e2c3964803b59a7ea2992",
     "camera_contract": "f31276a3ef620b82db6998257ef86c7d69d9bfee6a05a43ad3fa5d67dfbed202",
     "camera_owner": "f67b4a2fc6e3dfd04cc5aa0e303252a61ce628420f497a300a45dcd9d08fb7c5",
     "listener_contract": "e138a103abc56700af610044e833811c8dce4eeb3d205dc3c20fc491bb962a4b",

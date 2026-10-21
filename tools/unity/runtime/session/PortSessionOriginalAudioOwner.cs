@@ -51,6 +51,7 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
         public bool passivePcmOutputIdentityObserved;
         public bool managedDefaultListenerCensusKnown;
         public int managedDefaultListenerCount;
+        public PortSessionOriginalMusicControllerOwner.Snapshot originalMusicController;
     }
 
     public static IEnumerator EnsureOriginalOwner()
@@ -186,7 +187,8 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
             passivePcmCappedBuffers = pcm == null ? 0 : pcm.CappedBuffers,
             passivePcmOutputIdentityObserved = pcm != null && pcm.OutputIdentityObserved,
             managedDefaultListenerCensusKnown = managedDefaultListenerCensusKnown,
-            managedDefaultListenerCount = managedDefaultListenerCount
+            managedDefaultListenerCount = managedDefaultListenerCount,
+            originalMusicController = PortSessionOriginalMusicControllerOwner.CaptureSnapshot()
         };
     }
 
@@ -292,6 +294,8 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
                 GameAudioOriginalOwner.RecordStartupTimeout();
                 GameAudioOriginalOwner.AbandonPreparationBeforeOriginalInit();
             }
+            if (GameAudioOriginalOwner.Ready && GameAudioOriginalOwner.OptInRequested)
+                PortSessionOriginalMusicControllerOwner.StartForReadyAudio(this, explicitlyRequested: true);
         }
         finally
         {
@@ -311,7 +315,16 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
     {
         GameAudioOriginalOwner.TickPassiveCapture(Time.realtimeSinceStartup);
         if (catalogLeaseAcquired && GameAudioOriginalOwner.OriginalTermsReturned)
+        {
+            var music = GetComponent<PortSessionOriginalMusicControllerOwner>();
+            if (music)
+            {
+                music.NotifyOriginalTermsReturned();
+                if (!music.MayReleaseOriginalAudioCatalogLease)
+                    return; // Retain track banks while source callbacks/controller ownership remain live.
+            }
             ReleaseCatalogLease();
+        }
     }
 
     private void ReleaseCatalogLease()

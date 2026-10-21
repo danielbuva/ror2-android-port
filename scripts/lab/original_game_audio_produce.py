@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Produce the default-off Wwise owner assemblies from authored R5 sources.
+"""Produce the default-off Wwise owner assemblies from authored R7 source pins.
 
 The opt-in branch is intentionally a separate operation because it consumes
 licensed native and bank inputs. This producer contains no implicit lookup of
@@ -22,7 +22,14 @@ import sys
 import tempfile
 
 
-ROOT = Path(__file__).resolve().parents[2]
+def find_root() -> Path:
+    for parent in Path(__file__).resolve().parents:
+        if (parent / "AGENTS.md").is_file():
+            return parent
+    raise RuntimeError("repository root not found")
+
+
+ROOT = find_root()
 SOURCE = ROOT / "tools/unity/support/audio"
 TOOLS = SOURCE / "generators"
 DEFAULT_API_SHA256 = "107295e478a58ef295a83228111f375c536861bc9081f482d638c59899bf495c"
@@ -59,7 +66,7 @@ META_GUIDS = {
 NATIVE_META_GUID = "a2a09e81876b46f2a202e62f96644331"
 NATIVE_TARGET = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so"
 NATIVE_META = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so.meta"
-OWNER_ANCESTOR_MANIFEST_SHA256 = "7737ea90e3ae4b980d56e4aea3fa540f6ea49c1c7e2929430d324dd662ed8471"
+OWNER_ANCESTOR_MANIFEST_SHA256 = "f4347e3139ed6603228681fe2c89754cf4bc306cdc3fbd20cd28f69154361859"
 STAGE_PIN_TOOL_SHA256 = "82e9a3dd9ab6057d2fba086337504bc3381f289e13fe29403d3825f0b99e13ce"
 REQUEST_PIN_TOOL_SHA256 = "b60ff6013a1e6cecf2e730cdc29a57d5b36e8228a5134c35fce028ed471d5113"
 MANAGED_PRODUCER_SHA256 = "12c1aaed5fca694657c2c841c57e6ead399352e58b1cd0e7662dec75e2749421"
@@ -68,12 +75,10 @@ ABI_GENERATED_SOURCE_SHA256 = "511f5e1ee552a874850a1fab5f613eeb51e7b6bc706a07bb5
 ABI_HANDWRITTEN_SOURCE_SHA256 = "7cc79d60937708fd9f34fd67e90a743fe9e03e58c2325bf0f9e9dbbf8be327e6"
 ABI_LLVM_NM_SHA256 = "6ffe6bb8699a354c4699a6cdfcebdb9ec6a2c8d0d89beaac978f629a0fc67ae0"
 OWNER_SOURCE_HASHES = {
-    "core/GameAudioOriginalOwner.cs": "66fc16c9948089a09c77ada50a2eaa5a39f917cf943b5357971c73dae0b0e3c6",
+    "../../runtime/session/OriginalMusicControllerContract.cs": "5ce24197048654448e3a5444b883339c86777754521cb638b461399291833212",
     "../../runtime/session/PortSession.cs": "233e40b41b02aa601d110db38bdb738ed35438a91131823d609a2909719e6731",
-    "../../runtime/session/PortSessionOriginalAudioOwner.cs": "557b5fe64a91e98380454353bd3a4b93f2dcec354e5808365aef97a02768eded",
-    "core/PointSoundDiagnosticObserver.cs": "ebd0b2c0089150c4302c00824ee32e7a8e8b1906f26ad2137bdb0cee4cf1b4c7",
-    "core/GameAudioOriginalReadiness.cs": "ab7be883932ce975615676882440c74d43b039fce067a9cab0572d7198c4db19",
-    "core/OriginalOwnerProbeObserver.cs": "c3cc7450ac5a5b3d6ea269a713a2629df9396714e672357d874ab9e670ea17fa",
+    "../../runtime/session/PortSessionOriginalAudioOwner.cs": "1c9d79ee1e407c3ad08143722855393dc580565fc7cbef8732a9b6a018161436",
+    "../../runtime/session/PortSessionOriginalMusicControllerOwner.cs": "d242bfe7669743234302642b5953072e39f54de15c2de9239cc62c10a11cf1ed",
     "bootstrap/GameAudioOriginalAcceptedRequestProvider.cs": "72e2fc997ad80ee3e86cee428c3857b7be035070483007b24d929039aa0aa7e1",
     "bootstrap/GameAudioOriginalAndroidNativeBootstrap.cs": "bea349d5c344f43293abeca65508790971305e4d38c60050fc956fa956205d20",
     "bootstrap/GameAudioOriginalGeneratedRequestPin.cs": "24e560195c4350aefe717b3acbc78697871effa88b70e23be07225c6487545d4",
@@ -82,9 +87,13 @@ OWNER_SOURCE_HASHES = {
     "bootstrap/GameAudioOriginalPreparation.cs": "9894781b7ff0b5cde30b4b67ad0fb9f65a037ba0c124a086fe562c181fa41168",
     "bootstrap/GameAudioOriginalRequestBootstrap.cs": "faff62d15e6b1828a814a55af4a9a25d04b315ba5c462cb4bf6c34f569e8657c",
     "bootstrap/NativeWwiseMonitorLease.cs": "79b234526c893902474bf84317638724ae62b440e2395b4451d55f12ec877e72",
+    "bootstrap/OriginalGameAudioPassivePcmOwner.cs": "455ee0b6626c890ace15cd6cdff34ee6b6afa506a5f03ee7ed23c89c21f1f42d",
+    "bootstrap/PassivePcmCaptureWindow.cs": "dff4ec06fb252bcd3c1eb60ee80c69050411af026a62047133e6e8939525e99c",
+    "core/GameAudioOriginalOwner.cs": "66fc16c9948089a09c77ada50a2eaa5a39f917cf943b5357971c73dae0b0e3c6",
     "core/GameAudioOriginalPassivePcmContract.cs": "76a1d54f1b679ce1ed160203196ecc2c589d71b081070e3b1dac3517f0e7978d",
-    "bootstrap/OriginalGameAudioPassivePcmOwner.cs": "6fbc008ee73b5b65828e4a053cc7d87cc63375235602530ec936bad74fd8a286",
-    "bootstrap/PassivePcmCaptureWindow.cs": "2601433feccd7e87fb17023135baf7969ea9b7f26d7db135f86ff3e78c55d78f",
+    "core/GameAudioOriginalReadiness.cs": "ab7be883932ce975615676882440c74d43b039fce067a9cab0572d7198c4db19",
+    "core/OriginalOwnerProbeObserver.cs": "c3cc7450ac5a5b3d6ea269a713a2629df9396714e672357d874ab9e670ea17fa",
+    "core/PointSoundDiagnosticObserver.cs": "ebd0b2c0089150c4302c00824ee32e7a8e8b1906f26ad2137bdb0cee4cf1b4c7",
 }
 
 
@@ -103,6 +112,17 @@ def reject_symlink_components(path: Path) -> None:
         cursor /= part
         if cursor.exists() and cursor.is_symlink():
             raise ValueError(f"symlink path component refused: {cursor}")
+
+
+def validate_owner_source_manifest() -> None:
+    """Bind both compile modes to the public owner cohort recipe."""
+    manifest = ROOT / "recipe/original-audio-owner-sources.json"
+    reject_symlink_components(manifest)
+    if not manifest.is_file() or sha256(manifest) != OWNER_ANCESTOR_MANIFEST_SHA256:
+        raise ValueError("owner source recipe differs from pinned manifest")
+    data = json.loads(manifest.read_text(encoding="utf-8"))
+    if data.get("owner_source_hashes") != OWNER_SOURCE_HASHES:
+        raise ValueError("owner source recipe differs from producer cohort")
 
 
 def validate_toolchain(project: Path, unity_contents: Path, mono: Path, csc: Path) -> dict:
@@ -192,7 +212,13 @@ def classify_project_pair(api_sha256: str, game_sha256: str) -> str:
 
 
 def run(label: str, command: list[str], log: Path) -> None:
-    proc = subprocess.run(command, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
+    proc = subprocess.run(
+        command,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=False,
+    )
     log.write_text(proc.stdout, encoding="utf-8")
     if proc.returncode:
         raise RuntimeError(f"{label} failed with exit {proc.returncode}; see {log}")
@@ -233,10 +259,11 @@ def compile_library(
 
 def compile_default_off(project: Path, unity_contents: Path, mono: Path, csc: Path, output: Path) -> dict:
     """Compile only the named owner cohort against ordinary guarded outputs."""
+    validate_owner_source_manifest()
     for relative, expected in OWNER_SOURCE_HASHES.items():
         source = SOURCE / relative
         if not source.is_file() or source.is_symlink() or sha256(source) != expected:
-            raise ValueError(f"integrated owner source differs from frozen R5 input: {relative}")
+            raise ValueError(f"integrated owner source differs from frozen R7 input: {relative}")
     toolchain = validate_toolchain(project, unity_contents, mono, csc)
     reject_symlink_components(output)
     if output.exists() or output.is_symlink() or not output.resolve(strict=False).is_relative_to((ROOT / "work").resolve()):
@@ -298,7 +325,16 @@ def compile_default_off(project: Path, unity_contents: Path, mono: Path, csc: Pa
     )
     bootstrap_sources = sorted((SOURCE / "bootstrap").glob("*.cs"))
     compile_api = restored.get("AK.Wwise.Unity.API.dll", api)
-    compile_library("compile_bootstrap", mono, csc, bootstrap, bootstrap_sources, options, [core, compile_api, observer], output)
+    compile_library(
+        "compile_bootstrap",
+        mono,
+        csc,
+        bootstrap,
+        bootstrap_sources,
+        options,
+        [core, compile_api, observer],
+        output,
+    )
     files = {"observer": observer, "core": core, "bootstrap": bootstrap}
     artifacts = []
     for role, source in files.items():
@@ -324,8 +360,18 @@ def compile_default_off(project: Path, unity_contents: Path, mono: Path, csc: Pa
         )
     if audio_variant:
         for role, source, target, preimage in (
-            ("restore_api", restored["AK.Wwise.Unity.API.dll"], ASSEMBLY_TARGETS["api"], project_api_sha),
-            ("restore_game", restored["RoR2.dll"], ASSEMBLY_TARGETS["game"], project_game_sha),
+            (
+                "restore_api",
+                restored["AK.Wwise.Unity.API.dll"],
+                ASSEMBLY_TARGETS["api"],
+                project_api_sha,
+            ),
+            (
+                "restore_game",
+                restored["RoR2.dll"],
+                ASSEMBLY_TARGETS["game"],
+                project_game_sha,
+            ),
         ):
             artifacts.append(
                 {
@@ -370,7 +416,11 @@ def compile_default_off(project: Path, unity_contents: Path, mono: Path, csc: Pa
             str(path.relative_to(unity_contents)) if path.is_relative_to(unity_contents) else path.name: sha256(path) for path in references
         },
         "reference_count": len(references),
-        "outputs": {"observer": sha256(observer), "core": sha256(core), "bootstrap": sha256(bootstrap)},
+        "outputs": {
+            "observer": sha256(observer),
+            "core": sha256(core),
+            "bootstrap": sha256(bootstrap),
+        },
         "files": {
             "observer": str(observer),
             "core": str(core),
@@ -412,13 +462,21 @@ def compile_requested(
     adapter owns the request-derived Bootstrap sources, Unity compilation,
     and the complete hash-checked staging manifest.
     """
+    validate_owner_source_manifest()
     for relative, expected in OWNER_SOURCE_HASHES.items():
         source = SOURCE / relative
         if not source.is_file() or source.is_symlink() or sha256(source) != expected:
-            raise ValueError(f"integrated owner source differs from frozen R4 input: {relative}")
+            raise ValueError(f"integrated owner source differs from frozen R7 input: {relative}")
     project_plugin = project / "Assets/LabLoadingScene/Plugins"
-    pair_kind = classify_project_pair(sha256(project_plugin / "AK.Wwise.Unity.API.dll"), sha256(project_plugin / "RoR2.dll"))
-    if pair_kind in {"legacy-restore-only", "older-restore-only", "previous-audio-restore-only"}:
+    pair_kind = classify_project_pair(
+        sha256(project_plugin / "AK.Wwise.Unity.API.dll"),
+        sha256(project_plugin / "RoR2.dll"),
+    )
+    if pair_kind in {
+        "legacy-restore-only",
+        "older-restore-only",
+        "previous-audio-restore-only",
+    }:
         raise ValueError("declared predecessor API lineage is restore-only; restore default-off before requesting audio")
     toolchain = validate_toolchain(project, unity_contents, mono, csc)
     for label, path in (
@@ -816,7 +874,10 @@ def verify_managed_output_manifest(manifest: dict, work_root: Path) -> dict[str,
     for filename, expected_sha in (
         ("api-instrumented-composed.dll", LINEAGE["composed_api_sha256"]),
         ("game-original-owner-composed.dll", OLDER_PREVIOUS_GAME_SHA256),
-        ("game-original-owner-point-sound-composed.dll", LINEAGE["composed_game_sha256"]),
+        (
+            "game-original-owner-point-sound-composed.dll",
+            LINEAGE["composed_game_sha256"],
+        ),
     ):
         matches = [path for key, path in paths.items() if Path(key).name == filename]
         if len(matches) != 1 or sha256(matches[0]) != expected_sha:

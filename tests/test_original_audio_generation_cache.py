@@ -71,6 +71,14 @@ def make_fake_source_bundle(root: Path) -> None:
         "environment/toolchain.json",
         "recipe/assembly-transforms.json",
         "recipe/wwise-android-abi.json",
+        "recipe/runtime-sources.json",
+        "recipe/runtime-sources.native-view-camera.json",
+        "recipe/project-layout.json",
+        "recipe/original-audio-owner-sources.json",
+        "tools/unity/runtime/session/PortSession.cs",
+        "tools/unity/runtime/session/PortSessionOriginalAudioOwner.cs",
+        "tools/unity/runtime/session/OriginalMusicControllerContract.cs",
+        "tools/unity/runtime/session/PortSessionOriginalMusicControllerOwner.cs",
         "tools/unity/support/audio/managed-producer/produce.py",
         "tools/assembly-transforms/pin.cs",
         "tools/wwise-android-abi/pin.csproj",
@@ -220,6 +228,14 @@ class GenerationCacheTests(unittest.TestCase):
             "environment/toolchain.json",
             "recipe/assembly-transforms.json",
             "recipe/wwise-android-abi.json",
+            "recipe/runtime-sources.json",
+            "recipe/runtime-sources.native-view-camera.json",
+            "recipe/project-layout.json",
+            "recipe/original-audio-owner-sources.json",
+            "tools/unity/runtime/session/PortSession.cs",
+            "tools/unity/runtime/session/PortSessionOriginalAudioOwner.cs",
+            "tools/unity/runtime/session/OriginalMusicControllerContract.cs",
+            "tools/unity/runtime/session/PortSessionOriginalMusicControllerOwner.cs",
             "tools/unity/support/audio/generators/generate_accepted_request_pin.py",
         }
         self.assertTrue(required.issubset(bundle))
@@ -258,13 +274,24 @@ class GenerationCacheTests(unittest.TestCase):
                 self.assertEqual("8.0.414\n8.0.414\n", marker.read_text(encoding="utf-8"))
 
                 sdk = dotnet.parent / "sdk/8.0.414"
-                mutable_tools = (dotnet, sdk / "Roslyn/bincore/csc.dll", sdk / "MSBuild.dll", llvm_nm)
+                runtime_sources = tuple(
+                    root / relative
+                    for relative in (
+                        "tools/unity/runtime/session/PortSession.cs",
+                        "tools/unity/runtime/session/PortSessionOriginalAudioOwner.cs",
+                        "tools/unity/runtime/session/OriginalMusicControllerContract.cs",
+                        "tools/unity/runtime/session/PortSessionOriginalMusicControllerOwner.cs",
+                    )
+                )
+                mutable_tools = (dotnet, sdk / "Roslyn/bincore/csc.dll", sdk / "MSBuild.dll", llvm_nm, *runtime_sources)
                 for index, tool in enumerate(mutable_tools, start=1):
-                    tool.write_bytes(tool.read_bytes() + f"\n# mutation {index}\n".encode())
+                    original_bytes = tool.read_bytes()
+                    tool.write_bytes(original_bytes + f"\n# mutation {index}\n".encode())
                     with self.assertRaisesRegex(RuntimeError, "requested cache miss compiled"):
                         invoke()
                     self.assertEqual(index, len(producer.compile_outputs))
                     self.assertNotEqual(output, producer.compile_outputs[-1])
+                    tool.write_bytes(original_bytes)
                 self.assertEqual(1, stager.stages)
 
     def test_cache_receipt_must_match_current_key_and_payload(self) -> None:

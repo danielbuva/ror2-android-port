@@ -1,10 +1,14 @@
 using System;
 using System.Reflection;
 using System.Linq;
+using UnityEngine.Scripting;
 
 // Process-lifetime owner for the optional diagnostic capture callback only.
+// The game assembly binds this type and two members by reflection, so preserve
+// only that exact reflected surface through UnityLinker.
 // It shares the original bootstrap's NativeWwiseMonitorLease and never creates,
 // initializes, services, or terminates a Wwise engine.
+[Preserve]
 internal sealed class OriginalGameAudioPassivePcmOwner : IGameAudioOriginalPassivePcmCapture
 {
     private static readonly object Sync = new object();
@@ -17,6 +21,7 @@ internal sealed class OriginalGameAudioPassivePcmOwner : IGameAudioOriginalPassi
     private readonly FieldInfo apiBeforeEngineTermField;
     private readonly Action<string> requestCoordinatorStop;
     private readonly object gate = new object();
+    private Action installedBeforeTermGuard;
     private bool gameplayArmRequested;
     private bool started;
     private bool terminalRefusal;
@@ -60,7 +65,28 @@ internal sealed class OriginalGameAudioPassivePcmOwner : IGameAudioOriginalPassi
     // The static reference intentionally retains the window, exact delegate,
     // existing native lease, and stop callback through scene/session teardown.
     internal static OriginalGameAudioPassivePcmOwner ProcessLifetimeOwner
-    { get { lock (Sync) return processOwner; } }
+    {
+        [Preserve]
+        get { lock (Sync) return processOwner; }
+    }
+
+    // Keep the already-installed passive-capture guard as the single callback
+    // owner. The music participant is appended to that owner, never installed
+    // over its API/Core delegate.
+    [Preserve]
+    internal static bool RegisterMusicBeforeTerm(Action handler)
+    {
+        if (handler == null) throw new ArgumentNullException(nameof(handler));
+        lock (Sync)
+        {
+            if (processOwner == null) return false;
+            Action current = processOwner.ReadBeforeEngineTermGuard();
+            if (!Object.ReferenceEquals(current, processOwner.installedBeforeTermGuard) || current == null)
+                throw new InvalidOperationException("The existing passive pre-Term guard no longer matches its API/Core owner.");
+            processOwner.window.RegisterBeforeEngineTermParticipant(handler);
+            return true;
+        }
+    }
 
 #if GAME_AUDIO_HOST_TEST
     internal static void ResetForHostTest()
@@ -207,11 +233,13 @@ internal sealed class OriginalGameAudioPassivePcmOwner : IGameAudioOriginalPassi
         {
             apiBeforeEngineTermField.SetValue(null, handler);
             OriginalOwnerProbeObserver.Observer.BeforeEngineTerm = handler;
+            installedBeforeTermGuard = handler;
         }
         catch
         {
             apiBeforeEngineTermField.SetValue(null, null);
             OriginalOwnerProbeObserver.Observer.BeforeEngineTerm = null;
+            installedBeforeTermGuard = null;
             throw;
         }
     }

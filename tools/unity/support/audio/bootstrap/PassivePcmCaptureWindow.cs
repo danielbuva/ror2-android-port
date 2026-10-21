@@ -26,6 +26,8 @@ internal sealed class PassivePcmCaptureWindow
     private bool registrationMayHaveReachedNative;
     private bool registrationOwned;
     private bool closed;
+    private Action beforeTermParticipant;
+    private bool beforeTermParticipantCompleted;
     private string state;
     private string stopReason;
     private string failure;
@@ -71,6 +73,16 @@ internal sealed class PassivePcmCaptureWindow
     internal float WindowStartRealtimeSinceStartup { get { return startedAt; } }
     internal ulong WindowStartServiceFrames { get { return startServiceFrames; } }
     internal bool RegistrationOwned { get { return registrationOwned; } }
+
+    // A later lifecycle owner may join this already-installed guard, but may
+    // not replace the exact delegate that the API/Core readback verified.
+    internal void RegisterBeforeEngineTermParticipant(Action participant)
+    {
+        if (participant == null) throw new ArgumentNullException(nameof(participant));
+        if (!beforeTermGuardInstalled || beforeTermParticipant != null || closed)
+            throw new InvalidOperationException("The passive Term guard cannot accept another participant.");
+        beforeTermParticipant = participant;
+    }
 
     internal bool RequestGameplayArm()
     {
@@ -205,10 +217,15 @@ internal sealed class PassivePcmCaptureWindow
     // Term so the callback cannot outlive its engine.
     internal void BeforeOriginalEngineTerm()
     {
-        if (!requested) return;
+        if (!requested)
+        {
+            RunBeforeTermParticipant();
+            return;
+        }
         if (!lease.CaptureRegisterAttempted)
         {
             closed = true;
+            RunBeforeTermParticipant();
             return;
         }
         if (lease.CaptureRegisterResultKnown && !lease.CaptureRegisterCallSucceeded)
@@ -217,6 +234,7 @@ internal sealed class PassivePcmCaptureWindow
             // own a callback on this path.
             closed = true;
             state = "start_refused";
+            RunBeforeTermParticipant();
             return;
         }
         if (!lease.CaptureUnregisterCallSucceeded)
@@ -253,6 +271,14 @@ internal sealed class PassivePcmCaptureWindow
             throw refusal;
         }
         closed = true;
+        RunBeforeTermParticipant();
+    }
+
+    private void RunBeforeTermParticipant()
+    {
+        if (beforeTermParticipant == null || beforeTermParticipantCompleted) return;
+        beforeTermParticipant();
+        beforeTermParticipantCompleted = true;
     }
 
     private void Stop(string reason, bool beforeTerm)

@@ -101,6 +101,29 @@ class NativeViewCameraIntegrationTests(unittest.TestCase):
         if len(matches) != 1:
             self.skipTest("matching immutable artifact manifest is unavailable")
         manifest = json.loads(matches[0].read_text())
+        camera_receipt = project / self.hook.CAMERA_STAGE_RELATIVE
+        if camera_receipt.is_file():
+            # Validate the audio stage before its later, receipt-owned camera
+            # overlay, using scratch copies only. The live project stays intact.
+            work_copy = self.root / "work"
+            project_copy = work_copy / "project-stage"
+            for relative in [row["target"] for row in stage["outputs"]] + [
+                self.hook.CAMERA_STAGE_RELATIVE.as_posix(),
+                stage_path.relative_to(project).as_posix(),
+            ]:
+                target = project_copy / relative
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(project / relative, target)
+            camera = json.loads(camera_receipt.read_text())
+            snapshot = camera["preimage_snapshot"]
+            snapshot_path = Path(snapshot)
+            self.assertFalse(snapshot_path.is_absolute())
+            self.assertNotIn("..", snapshot_path.parts)
+            target = work_copy / snapshot
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(REPOSITORY / "work" / snapshot, target)
+            self.hook.restore_previous_camera(project_copy, work_copy)
+            project = project_copy
         self.hook._verify_stage_manifest_rows(stage, manifest, project)
         self.assertEqual(len(stage["outputs"]), 165)
         self.assertFalse(stage["runtime_accepted"])

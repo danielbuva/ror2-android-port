@@ -705,6 +705,35 @@ scalar measurements, not audio data. Nonzero native PCM alone cannot establish
 Android playback or physical audibility. Host fixtures check capture bounds,
 ownership, default-off behavior and both actual pre-Term injection branches.
 
+`runtime/session/PortSessionOriginalMusicControllerOwner.cs` owns the accepted
+original MusicController prefab for the admitted process audio lifetime.
+`OriginalMusicControllerContract.cs` defines its pure admission and retirement
+rules. The audio owner starts it once after the explicit original-audio request
+becomes Ready; `PortSession.Save` copies its bounded scalar snapshot. The owner
+checks the exact legacy key, source component/listener pair and music output
+share set, then invokes the original preload path. It supplies no replacement
+Run, camera, user, teleporter or event context. Missing source context remains
+observable rather than synthesized. Default-off starts no music controller.
+
+The music owner retains its asynchronous catalog lease and instantiated source
+root through original scene-callback retirement and synchronous source teardown.
+Pending loads, failed preload or unobserved callback retirement prevent unsafe
+release. `OriginalGameAudioPassivePcmOwner.RegisterMusicBeforeTerm` registers one
+participant on the actual installed `PassivePcmCaptureWindow` guard, preserving
+the API/Core delegate identity. The guard proves its capture callback absent
+before invoking music cleanup; either refusal prevents original Term. After both
+original Term calls return, the music lease can release. Owner destruction that
+loses retirement observation keeps the state unknown and retains references.
+
+`recipe/original-audio-owner-sources.json` pins the authored owner cohort and
+runtime membership. Both producer compile modes validate its bytes and source
+map; camera staging requires the same ancestor pin. Cache identity includes the
+owner, source-selection and layout recipes. The narrow reflection surface in
+`recipe/music-reflection-preservation.json` retains the bootstrap owner type,
+process-owner getter and registration method. Portable synthetic contracts live
+in `tests/test_original_music_controller.py`; actual post-strip metadata,
+original callback behavior and playback remain separate build/device gates.
+
 The lower-level `original_game_audio.py` is host staging support;
 current Unity project mutation belongs to the mutex-protected build action.
 Use a full bundle build for the first audio candidate: code-only payload reuse

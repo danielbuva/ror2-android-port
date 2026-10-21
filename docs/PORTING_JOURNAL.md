@@ -23082,3 +23082,92 @@ Revisit on transport/protocol, APK/report schema, ownership/storage or display
 policy drift. Broader private runners and ordinary user playtests still need
 the same checked-observation discipline; the public-input bootstrap and phone
 owner-build gates remain open.
+
+## J889 — Integrate the original MusicController with guarded process teardown
+
+Date: 2026-10-21. Hypothesis: the existing accepted original MusicController
+prefab can supply its original music decisions, listener and output lifecycle
+once the admitted original audio owner is Ready. It may expose the next missing
+source context without inventing a Run, camera, user, teleporter or event stream.
+J885/J887 retain finite zero PCM and no accepted composed playback. This entry
+records authored integration and host qualification only; no APK is built or
+installed for it.
+
+**Prior art and owner.** Consult `docs/community-prior-art.md` and the pinned
+R2API Sound source at `f539511eabf87f02afddb5a83cafd2f4704c85ad`:
+`R2API.Sound/SoundAPI.cs` places bank loading after original engine initialization
+and exposes the original music-track state/event seam. This is API and ordering
+knowledge, not an Android lifecycle or playback proof; no community or game
+implementation is copied. Inspect the accepted local prefab key and original
+preload/callback lifecycle independently. The existing runtime manifest already
+contains MusicController as an exported root, so no new content closure is
+inferred or added.
+
+`PortSessionOriginalMusicControllerOwner` is a named process owner, separate
+from experiment selection. `OriginalMusicControllerContract` defines pure start,
+load-completion and cleanup admission. The original-audio owner starts it once
+under the existing explicit request and readiness gate. It verifies the accepted
+prefab key, one source controller, its source listener pair and music output
+share set before original preload. The source controller owns subsequent music
+behavior. Session reports copy scalar phase, source-context and retirement
+observations. Missing context remains unknown or absent; output and audibility
+are not asserted from preload.
+
+**Teardown correction.** Preserve the asynchronous catalog lease and instantiated
+root until the source scene callback retires and synchronous source destruction
+completes. Failed preload and lost retirement observation retain ownership.
+Review catches an earlier draft that composed music with an unwired callback:
+register the participant on the actual installed PassivePcmCaptureWindow guard.
+Keep its identical API/Core delegate, close and prove the capture callback
+absent first, then invoke music cleanup. Either refusal prevents original Term.
+An owner destroyed before witnessing retirement marks that state unknown before
+detaching its observer. Narrow Preserve attributes retain only the bootstrap
+owner type, process-owner getter and registration method; actual stripped-player
+inspection remains required.
+
+**Reproducible integration.** Promote exact reviewed R7 runtime sources through
+a Root-generated cumulative mapping; the author's R7 diff is only an R6-to-R7
+delta. Omit generated Python cache files. Add the two authored runtime sources
+to both source manifests and project layout. The tracked owner-cohort recipe
+SHA-256 is `f4347e3139ed6603228681fe2c89754cf4bc306cdc3fbd20cd28f69154361859`.
+Both compile modes validate its bytes and map; producer and camera staging pin
+the same recipe. The first Root integration tests catch stale predecessor pins
+and a missing cache fixture input. Independent review also catches cache reuse
+that did not hash four runtime/session sources. Include all four actual source
+files in generation identity; mutate each separately to require a cache miss.
+Update the camera source hash after its ancestor-pin change. The optional local
+stage test unwinds a verified later camera overlay on scratch copies before
+checking all audio rows; it never changes the working Unity project.
+
+This changes authored runtime and recipes consumed by reconstruction steps;
+replay those steps when reconstructing this checkpoint. No new local runtime
+input, timestamped-run dependency, experiment-switch behavior or public command
+is introduced. Protected prefab, banks, SDK/native and generated assembly bytes
+remain ignored. Public additions are authored adapters, minimal identifiers,
+hash recipes and synthetic fixtures; manual provenance/privacy review and the
+staged public audit apply before committing.
+
+**Host qualification.** The frozen R7 lifecycle review is GO for source integration:
+`work/coordination/original-game-audio-music-review/r9/review.md`. Its actual
+installed-guard fixture verifies callback order, identical delegate retention,
+duplicate refusal, music refusal and idempotent completion. Six private tests
+and seven portable tests pass; the full pinned compile covers 123 sources and
+267 references, output SHA-256
+`d4a1625dc95a4e48467f6ec22b5db3fed3f8a24510cbe0901604c4476c641911`.
+Root's promoted-source checks pass 58 audio tests (two optional skips), 15 camera
+tests (two optional skips), seven music tests and 14 runtime-source tests, plus
+Ruff and documentation checks. Independent integration review r2 is GO after
+closing cache drift; review SHA-256
+`cff7e56e39b6e532c0b1f64613abd3e4c5d62b1fdab1cdacc7d4f920145ce9ea`,
+under `work/coordination/original-game-audio-music-integration-review/r2/`.
+Root test logs and source mapping live under
+`work/coordination/original-game-audio-music-integration-root/r1/`.
+
+Installed diagnostic remains J885/J887
+`3c72fe0554d25be13af32a4a33265ef23f29d831f33b55f4dd571aaa131bb6e5`,
+stopped with selector absent and display asleep. Accepted baseline remains
+J850 f1550ce0. The camera repair is a separate unpromoted draft. Revisit this
+music hypothesis with the committed full player, same-request post-strip
+reflection proof, both standard checks and actual source-controller/output
+observations. Original output creation/removal, track context, audible playback
+and normal-difficulty game acceptance remain open.

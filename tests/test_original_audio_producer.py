@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import importlib.util
+import json
 from pathlib import Path
 import tempfile
 import unittest
@@ -143,6 +144,31 @@ class ProducerManifestTests(unittest.TestCase):
         self.assertEqual(producer.REQUEST_PIN_TOOL_SHA256, hashlib.sha256(generator_path.read_bytes()).hexdigest())
         managed = producer.SOURCE / "managed-producer/produce.py"
         self.assertEqual(producer.MANAGED_PRODUCER_SHA256, hashlib.sha256(managed.read_bytes()).hexdigest())
+
+    def test_owner_recipe_matches_both_producer_and_camera_pins(self) -> None:
+        recipe = ROOT / "recipe/original-audio-owner-sources.json"
+        digest = hashlib.sha256(recipe.read_bytes()).hexdigest()
+        camera_spec = importlib.util.spec_from_file_location("camera_owner_recipe_contract", ROOT / "scripts/lab/native_view_camera_build_hook.py")
+        assert camera_spec and camera_spec.loader
+        camera = importlib.util.module_from_spec(camera_spec)
+        camera_spec.loader.exec_module(camera)
+        self.assertEqual(digest, producer.OWNER_ANCESTOR_MANIFEST_SHA256)
+        self.assertEqual(digest, camera.HASHES["r4_manifest_sha256"])
+        self.assertEqual(json.loads(recipe.read_text())["owner_source_hashes"], producer.OWNER_SOURCE_HASHES)
+        producer.validate_owner_source_manifest()
+
+    def test_owner_recipe_refuses_changed_bytes_or_mismatched_cohort(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            recipe = root / "recipe/original-audio-owner-sources.json"
+            recipe.parent.mkdir()
+            recipe.write_text(json.dumps({"owner_source_hashes": {"changed.cs": "wrong"}}))
+            with mock.patch.object(producer, "ROOT", root):
+                with self.assertRaisesRegex(ValueError, "pinned manifest"):
+                    producer.validate_owner_source_manifest()
+                with mock.patch.object(producer, "OWNER_ANCESTOR_MANIFEST_SHA256", producer.sha256(recipe)):
+                    with self.assertRaisesRegex(ValueError, "producer cohort"):
+                        producer.validate_owner_source_manifest()
 
     def test_request_mode_and_path_escape_are_refused(self) -> None:
         with self.temporary_directory() as temp:

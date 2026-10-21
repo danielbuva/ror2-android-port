@@ -55,6 +55,14 @@ def source_bundle_hashes() -> dict[str, str]:
             "environment/toolchain.json",
             "recipe/assembly-transforms.json",
             "recipe/wwise-android-abi.json",
+            "recipe/runtime-sources.json",
+            "recipe/runtime-sources.native-view-camera.json",
+            "recipe/project-layout.json",
+            "recipe/original-audio-owner-sources.json",
+            "tools/unity/runtime/session/PortSession.cs",
+            "tools/unity/runtime/session/PortSessionOriginalAudioOwner.cs",
+            "tools/unity/runtime/session/OriginalMusicControllerContract.cs",
+            "tools/unity/runtime/session/PortSessionOriginalMusicControllerOwner.cs",
         )
     )
     for directory in (

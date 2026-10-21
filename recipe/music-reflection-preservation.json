@@ -1,0 +1,37 @@
+{
+  "assembly": "GameAudioOriginalBootstrap",
+  "reflection_surface": [
+    {
+      "kind": "property",
+      "name": "ProcessLifetimeOwner",
+      "static": true,
+      "type": "OriginalGameAudioPassivePcmOwner",
+      "visibility": "nonpublic"
+    },
+    {
+      "kind": "method",
+      "name": "RegisterMusicBeforeTerm",
+      "parameters": [
+        "System.Action"
+      ],
+      "return_type": "System.Boolean",
+      "static": true,
+      "visibility": "nonpublic"
+    }
+  ],
+  "retention": {
+    "api_documentation_member": "T:UnityEngine.Scripting.PreserveAttribute",
+    "attribute": "UnityEngine.Scripting.PreserveAttribute",
+    "scope": "The owner type, its ProcessLifetimeOwner getter, and RegisterMusicBeforeTerm only.",
+    "source": "UnityEngine.CoreModule.xml",
+    "unity_version": "2021.3.45f2 (88f88f591b2e)"
+  },
+  "schema": "original-music-reflection-preservation-r1",
+  "scope": "The bootstrap owner type, ProcessLifetimeOwner getter, and RegisterMusicBeforeTerm method only. Registration appends a participant to the already installed PassivePcmCaptureWindow guard and does not replace the API/Core delegate.",
+  "type": "OriginalGameAudioPassivePcmOwner",
+  "verification": {
+    "host_test": "tests/PreservedBootstrapReflectionHarness.cs",
+    "host_test_scope": "Compiles the authored owner source with local dependency declarations and verifies exact reflected metadata.",
+    "post_strip_member_inspection": "required before runtime integration; the host test is not an IL2CPP/linker-output proof"
+  }
+}
