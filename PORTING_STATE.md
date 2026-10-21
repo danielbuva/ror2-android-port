@@ -1,12 +1,13 @@
 # Porting state
 
-Last updated 2026-10-21 after **J891/J890/J889**. Diagnostic fae79734 passes
+Last updated 2026-10-21 after **J893/J891/J890/J889**. Diagnostic fae79734 passes
 both standard checks. The original MusicController preloads with its guarded
 lifecycle and one observed managed default listener. Source camera/body context
 is absent and captured PCM remains all zero; playback is unqualified. Main has
 fae79734 installed, stopped with selector absent and display asleep. Accepted
 baseline stays f1550ce0. J886's Siren route fix is now installed but unmeasured;
-the separate camera repair remains a reviewed private draft.
+the separate camera repair remains a reviewed private draft. J893 adds isolated
+SDK scene/manager observations; independent phone roots remain unqualified.
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
@@ -19,7 +20,7 @@ content on every update. Results are recorded once in the
 | --- | --- |
 | Accepted input | Steam build 25475991, input id `6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88` |
 | Toolchain | Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan (`environment/toolchain.json`) |
-| Owner-build research | J862 connects restricted fixture policy/native metadata to stripping/conversion; J864/J866/J869 qualify SDK IDs, scoped metadata and search order on Android. J873 separates direct scene names from inherited queries; J876 adds native flags; J878 verifies supported forward queries. J883 includes the Object root and matches Android metadata to independent native SDK forward/reverse caches. Project scene/manager/dependency roots, managed game compilation, general policy and content/shaders remain open. Route A and the desktop fallback stay fixed; metadata probes change no game build or install. |
+| Owner-build research | J883 matches root-inclusive Android metadata to independent native SDK forward/reverse caches. J893 adds a fresh authored desktop scene/manager oracle and bounded linker-name comparison. Native project usage identities, scene labels, complete independent roots, managed game compilation, general policy and content/shaders remain open. SDK observations are comparison evidence only. Route A and the desktop fallback stay fixed; no game build or install changes. |
 | Latest device-verified APK | J891 diagnostic `fae79734107d07d7c9a8af838961ccf82b4e6fa530e4f1a6238b17eda3a44b1d`, source c02013b: full build, both default checks and same-build bootstrap post-strip reflection pass; 333 same-request pre-strip DLLs, 382 frozen authored inputs, 266 payload files and matching symbols. Original music preload and guard registration pass; source camera/body context and playback remain unqualified. Accepted baseline remains J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`, source 1780ea9. |
 | Installed now | The primary gameplay device has diagnostic fae79734 after both J891 default checks; selector absent, process stopped and display asleep, independently queried. Audible playback is unqualified. The spare retains 107718f8… with earlier automatic checks; no new spare action. The alpha device retains unchanged be26c21c… after both J888 standard assisted checks; no new alpha device action by this session. |
 | Runtime source since verified APK | No later committed runtime change than c02013b. J889 music lifecycle and J886 Siren route-writer/clock correction are in installed fae79734. Siren encounter qualification is pending. The camera/listener owner remains opt-in; J887 retains its graphics/lifecycle failure, and the reviewed repair is still private. Later SDK metadata work does not alter this player. |

@@ -47,7 +47,10 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       verifies supported forward queries.
       [J883](PORTING_JOURNAL.md#j883--include-the-object-root-and-match-android-metadata-to-native-sdk-caches)
       matches root-inclusive Android metadata to native SDK cache observations;
-      exact linker roots and scene/manager usage remain open.
+      [J893](PORTING_JOURNAL.md#j893--observe-authored-scene-and-manager-dependencies-without-conflating-native-identities)
+      adds separate desktop scene/manager observations and bounded type-name
+      comparison. Produce native usage identities, scene labels and exact linker
+      roots independently; keep SDK oracle reports out of phone generation.
 - [ ] Benchmark any alternative pipeline with pinned versions/options/shaders and
       matched device workloads; IL2CPP alone does not prove equivalent performance.
 - [ ] Qualify the isolated owner-build environment; the alpha device is alpha's

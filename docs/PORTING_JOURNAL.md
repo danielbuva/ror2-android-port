@@ -23298,3 +23298,102 @@ measured. Revisit with source camera/body context, native output/event evidence,
 nonzero composed capture and separately observed teardown behavior. The source
 changes consumed by reconstruction are recorded in J889/J890; this entry adds
 no runtime source change.
+
+## J893 — Observe authored scene and manager dependencies without conflating native identities
+
+Date: 2026-10-21. Hypothesis: a fresh exact-SDK project can separate live
+scene objects, referenced assets, usage tags and global managers before a
+phone-independent native-usage producer is attempted. J883 qualifies SDK
+wrapper metadata; its cache contents alone do not establish project usage.
+The retained fixture has 42 native usage rows and one user row. No such rows
+or earlier scene are inputs to this new oracle.
+
+**Prior art and scope.** Consult `docs/community-prior-art.md`; this experiment
+is generic Unity build-pipeline observation, with no new RoR2 loader or runtime.
+Pinned UnityCsReference `b052b1fe38b45d5aefa609a115c626ed2e74f3a6` documents
+`ContentBuildInterface`, `PlayerBuildInterface`, `ObjectIdentifier`, the usage
+sets and `RuntimeClassRegistry`. Its APIs distinguish scene/manager dependencies
+and asset identifiers. Its registry projects native IDs through wrapper names;
+shared Object wrappers are explicitly deduplicated by that consumer. Use this
+API/consumer knowledge only; copy no reference implementation. Actual SDK
+metadata inspection and compilation verify the available signatures.
+
+**Change and guards.** `phone_scene_usage_oracle.py` stages committed authored
+`SceneUsageOracle.cs` and the existing `ContentFixture.cs` into a new SDK-only
+project. It uses the descriptor-based scoped writer, refuses source/SDK/input
+or foreign-asset drift, and acquires the existing primary build mutex. Only a
+fresh batch process is launched; no MCP editor or game project is reused.
+The collector makes a default scene, compiles Android player scripts for a
+fresh type database and calls the public scene/manager dependency APIs.
+Dispose the type database and both usage sets on exit; retain failed attempts.
+No BuildPlayer, APK, installation, payload sync or device action occurs.
+
+The alpha worktree's doctor/preflight still refuse its absent game inventory
+and bootstrap state. That remains an owner-build blocker. This isolated SDK
+probe consumes no game inventory and does not claim to pass that bootstrap.
+Main releases its editor after R12 artifact freeze; Alpha reports each oracle's
+terminal state and releases the shared mutex before Main's next work.
+
+**Retained first failures.** Source `cfa2afba6814aa1a16cd79cbee1b24e77e1b3104`
+stops before script compilation because the observer wrongly requires a saved
+live scene object to have an asset ObjectIdentifier. Correct that contract in
+`6d84ffc2ded04a2c1f81cde03a0adb93ad473b6e`: live instance/type/support observations
+are distinct, with unavailable asset IDs explicit. The SDK then completes,
+but the Python validator wrongly rejects repeated wrapper identities. Preserve
+the raw arrays and correct that assumption in
+`c11b04f8131f29be5b6b048605ddf084b3257483`; native types can share Object wrappers.
+Neither correction fabricates IDs or removes observed multiplicity.
+
+**Exact-SDK result.** The fresh c11b04f attempt passes source, SDK, project,
+scene and observed assembly hashes. Settings are Android/IL2CPP/ARM64/Vulkan,
+Low stripping, engine stripping off, development/assertion script options and
+development content flags. Player-script compilation produces the authored
+Assembly-CSharp and a type database. Observe 10 live scene objects: all are
+supported, none supplies an asset ObjectIdentifier. SDK included-type arrays
+contain 10 scene entries with nine distinct wrapper identities, and 16 manager
+entries with 12 identities. There are four scene references, 13 manager objects,
+44 manager references, and one usage-tag object in each of the scene and manager
+sets. All dependency identifiers within each group are distinct; all resolve.
+These counts describe this authored default scene only.
+
+The SDK report SHA-256 is
+`9ab7aef5bbd0cff4ab422f0236c487bf5644796877098b553d246783675e20f6`.
+Selectors, three complete attempts, source snapshots, failures and comparison
+scripts are retained under `work/coordination/phone-proof/scene-usage-*`.
+`scene-usage-proof-receipt-v1.json` binds 76 artifacts, SHA-256
+`1888e59c6171492d79a6f36244f9cda6901afd0e85b0733f2cd175b604524b38`.
+Raw SDK data, generated assemblies/scenes, paths and logs remain ignored.
+
+**Independent comparison and limits.** Revalidate the earlier fixture's
+340-file linker capture by its explicit receipt. Fresh dependency/live
+observations cover 24 of its 29 engine XML type names and its one user name.
+Walking exact scoped managed ancestry adds six names. It covers every expected
+engine name but overreaches with the managed ProjectSettingsBase ancestor;
+retain that failed equality. An independent comparison restricted to J883's
+registered forward-wrapper identities excludes that unregistered ancestor and
+matches all 29 engine names, with no missing or additional names. User-name
+projection also matches. Preserve assembly identities throughout; this is a
+comparison to the XML's virtual engine-name group, not assembly-file equality.
+The first analysis also refuses when it walks beyond UnityEngine.Object into
+an unsupplied BCL dependency; stop at the proven requested base rather than
+cross-filling metadata.
+
+This bounded name projection does not produce the 42 native usage identities,
+their scene labels, serialized user-type roots or complete linker inputs.
+Manager/native settings sharing Object remain ambiguous. Managed ancestry alone
+is insufficient, and native cache emission is not introduced as a requirement.
+Reports remain desktop verification only, never phone-generation inputs.
+`root_generation_qualified` stays false. Android-independent object retention,
+scene/manager/dependency usage and complete root outputs remain the next gates.
+
+**Validation and disposition.** Eight host checks pass, including actual
+collector compilation against the optional exact SDK, guarded staging, lock
+contention/timeout retention, source/asset drift, false scope/type/support
+results and shared-wrapper multiplicity. The compiler check skips when the SDK
+is absent. Ruff and the staged public audit pass; manual review finds only
+original tooling, synthetic host fixtures and authored summaries. No new APK
+exists: Alpha retains J888's unchanged be26c21c player; Main's separately
+qualified fae79734 and accepted f1550ce0 baseline remain J891 facts. Route A,
+working game sources and desktop fallback are unchanged. Revisit with an
+independent native-identity/usage producer and exact root comparisons; this
+oracle, its name equality and host checks establish no gameplay readiness.
