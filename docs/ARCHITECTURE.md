@@ -112,8 +112,9 @@ editor/player SDK managed metadata with supplied pinned Cecil, and separates
 explicit native-class attributes from short-name guesses. It executes only the
 authored reader, never the inspected assemblies. Results/source hashes and
 failures remain under `work/experiments/phone-roots/`; it generates no roots,
-installs no package and performs no editor mutation. Host .NET 10 qualification
-does not establish an Android implementation or native hierarchy completeness.
+installs no package and performs no editor mutation. The original coverage
+action uses host .NET 10. The separate scoped net8.0 reader/resolver has J866's
+Android shell qualification; app hosting and complete roots remain unqualified.
 The metadata reader's schema 2 also records full assembly identities, declared
 references, base-type scopes and exported/forwarded types without resolving or
 executing them. `phone_managed_types.py` owns pure investigation support for an

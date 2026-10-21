@@ -27,7 +27,9 @@ full assembly identities, declared references, local/external base scopes and
 exported types/forwarders. Multiple-module assemblies refuse. The existing
 `phone-root-contract` host action uses the reader for fixture coverage; its
 short-name candidates remain guesses. Default compilation uses host .NET 10
-and the exact supplied SDK's Cecil; this does not qualify Android execution.
+and the exact supplied SDK's Cecil. The separate scoped net8.0 reader/resolver
+has [J866's Android shell proof](../../docs/PORTING_JOURNAL.md#j866--qualify-scoped-sdk-assembly-metadata-and-forwarding-on-android);
+app-host policy and complete root production remain separate gates.
 An explicit `MetadataTargetFramework` MSBuild property selects another build-tool
 target when its reference pack is supplied; this never selects a game backend.
 The authored `phone_managed_types.MetadataUniverse(inventory, group)` helper

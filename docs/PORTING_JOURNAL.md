@@ -21129,3 +21129,133 @@ SHA-256 `37ef80960a6a21c9e608bf0cfbc670964a74e043a568d76a3f4d62a4a9ba156d`;
 its private harness passes 20 focused contract tests and two real transform tests.
 R8/R9 support production must replay this authored transform/pin change. No alpha
 or spare action occurs in this experiment.
+
+## J866 — Qualify scoped SDK assembly metadata and forwarding on Android
+
+2026-10-20. Hypothesis: explicit assembly identities, reference scopes and type
+forwarders can replace J851's short-name guesses for the managed half of native
+wrapper lookup. Begin from accepted main `f344441`, including PR14 and J865's
+separate audio repair. The main session reserves J867 for its player result.
+Keep Route A, IL2CPP ARM64, Android rendering and the desktop fallback fixed.
+No editor mutation, game build, package install, gameplay launch or original
+installation change occurs. The generic SDK investigation adds no RoR2 runtime.
+
+**Observe and implement.** Two supplied SDK files share the name UnityEditor.dll.
+The root implementation contains 8,587 definitions and no exports; its modular
+facade contains 28 definitions and 5,534 exported entries. The corresponding
+UnityEngine facade contains 71 definitions and 3,107 exported entries, while the
+root implementation has 3,437 definitions and no exports. Selecting the first
+filename or combining both layouts would be unjustified.
+
+The metadata reader's schema 2 records complete assembly identities, declared
+references, module names, base scopes and exported/nested forwarding metadata.
+It uses Cecil metadata APIs without resolving or executing inspected code;
+multiple-module assemblies refuse. Inspect the pinned upstream
+[export metadata](https://github.com/jbevain/cecil/blob/0.11.1/Mono.Cecil/ExportedType.cs)
+and [type scope API](https://github.com/jbevain/cecil/blob/0.11.1/Mono.Cecil/TypeReference.cs)
+for the scope/declaring-type contract, without copying implementation.
+`phone_managed_types.py` owns authored, pure investigation support. It indexes
+one explicitly selected group and resolves exact identity/version references,
+including nested forwarding and managed inheritance. Duplicate assembly/type
+identities, unresolved dependencies/definitions, cycles, foreign local scopes
+and unsupported module exports refuse. A missing dependency never becomes a
+negative match or a lookup in another group. Managed bases remain distinct from
+native bases. The standalone inspector binds its inventory hash, requires every
+exported entry to resolve and refuses overwrite/input drift. It generates no
+scene roots and has no game/linker consumer. ARCHITECTURE names setup/teardown;
+LOCAL_STATE records private manifests, packs, selectors and replay adapters.
+
+**Host and build-tool boundary.** Inventory the two layouts separately, adding
+explicit supplied mscorlib inputs for complete base-reference observation:
+88 input rows in total. The selected modular group has 84 assemblies, 15,237
+definitions and 8,641 exported entries; all exports resolve without a missing
+scope. Seven authored contracts cover ambiguity, exact versions/groups,
+forwarding/nesting, inheritance, malformed/incomplete dependencies, standalone
+output and refusal behavior. The exact supplied-Cecil fixture additionally
+reads an attribute whose constructor throws, emits local/external scopes and
+nested forwarding, and feeds that emitted inventory to the resolver. Its
+constructor is not executed; the integration and overwrite assertions pass.
+
+Implementation checkpoints are `2b20312`, `63bb507` and the frozen phone source
+`232f84889281fc106b8f5f516c27a5a9ef4184d9`. The reader remains a build tool.
+Default compilation is host .NET 10; the explicit MetadataTargetFramework
+property permits net8.0 for the existing supplied Android .NET 8.0.32 host.
+UseAppHost is false. No host-native apphost or replacement gameplay backend is
+introduced. The isolated reference-pack setup uses Microsoft's
+[.NET reference pack 8.0.31](https://www.nuget.org/packages/Microsoft.NETCore.App.Ref/8.0.31)
+and matching ASP.NET reference metadata required by this host SDK's package
+pruning. Verify archives against their official NuGet catalog SHA-512 values;
+all archives, reference DLLs and SDK-derived outputs remain ignored. This does
+not grant redistribution rights for Unity tools or qualify app hosting.
+
+Preserve setup failures: the presumed flat-container SHA-512 sidecar returns
+404; the catalog supplies the actual hash. The initial custom reference root
+lacks SDK pruning metadata; a direct TargetFramework override restores the
+project's default target, and the explicit project property corrects that.
+The net8.0 restore then requires the matching ASP.NET reference pack. The final
+isolated build succeeds, and its host inventory is byte-identical to the net10.0
+inventory, SHA-256
+`936a726c8b98b885c0e007d292b78ea90181ee6de478fbf849d88936d44aacb6`.
+The global SDK and the working game are unchanged.
+
+**Android proof and first-failure classification.** Stage 94 hashed files,
+44,719,815 bytes, from committed sources and supplied SDK inputs. Require the
+assigned alpha device and its existing workspace ownership receipt, fresh
+storage/backing/reserve, trusted tool hashes and all staged hashes. Run only the
+authored metadata reader, supplied Cecil and authored Python inspector in a
+fresh owned child. Inspected SDK assemblies are data, never loaded/executed as
+application code. The existing native SDK binary is used only for separate
+static observations, never executed.
+
+The first run's metadata and forwarding match the host, but the private checker
+incorrectly requires English exception text for the overwrite control. Preserve
+that failed attempt. A targeted investigation records exit 1, no diagnostic
+bytes and unchanged report hash. The corrected private checker uses the same
+observable contract as the host fixture: nonzero retry plus preserved bytes.
+Repeat in another fresh owned child from the same frozen public source.
+
+The final Android reader exits 0 in 0.698 seconds of host-observed wall time;
+forwarding inspection exits 0 in 0.260 seconds. All 88 inventory rows, types,
+attributes, identities, scopes, references and exports equal the host after
+normalizing only explicit staged paths. All 8,641 forwarding results also match.
+Raw phone hashes are metadata
+`76ca13a37acdeaa405f33381739a1039c79993e7ff75c84420f998a48eeff2ca`
+and forwarding
+`35ca195e98259d180faed30abe1cdbbf8ef1e1cd4e2941e3c31b9787ac150218`.
+These raw files are not byte-equal to host files containing different paths/
+input hashes. Both output-overwrite controls refuse and preserve their reports;
+invalid schema refuses before output. All staged bytes and the installed alpha
+be26c21c… game package remain unchanged, and the display is asleep. No new APK
+or gameplay acceptance is inferred. These are shell tool timings, not app-host
+qualification or game-performance measurements.
+
+**Wrapper-search observation, still unqualified.** The pinned public
+[wrapper-name binding](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Editor/Mono/BuildPipeline/RuntimeClassMetadataUtils.bindings.cs)
+locates a native implementation, rather than supplying a managed producer.
+Read-only owner-SDK observation identifies ordered assembly/namespace lookups
+and a cache-query parent boundary. An initial inclusive Object-parent fallback
+contradicts 13 of the authored oracle's 42 native scene rows. Inspection shows
+the query stops before that parent; the corrected private observation matches
+all 42 wrapper names, including empty results. The separate authored script
+row is outside this native comparison. Keep both observations and all SDK
+instructions/strings/derived mappings private. This is a bounded clue, not a
+qualified search-sequence decoder, complete native wrapper cache or independent
+scene/manager/dependency producer. No captured mapping becomes a public constant
+or hidden build input; root_generation_qualified remains false.
+
+Fresh-clone CI on `232f848` passes 1,302 tests with 59 optional skips, Ruff,
+public audit and documentation checks. The actual-Cecil fixture passes locally
+with its additional emitted-inventory integration assertions. Whole-game
+preflight still refuses this isolated worktree's missing inventory/accepted
+input/lab bootstrap; the metadata study does not advance that gate.
+`wrapper-scoped-proof-receipt.json` binds 89 source/input/output/control/setup/
+comparison/test artifacts; SHA-256
+`d07b987f71fae5f647f1fbf8b734c3f4fdf0d885197c40d3ebd22b7450a76fdb`.
+Earlier selectors, failed runs and reference-pack failures remain preserved.
+
+**Next gate.** Qualify a version-bound reader of the SDK search sequence and
+cache population/extra-type rules, then generate complete fixture scene usage,
+manager/dependency closure and TypesInScenes.xml independently. Managed game
+compilation, general project policy, content/shaders, permitted tool delivery,
+app sandbox behavior, installer/key custody and matched-workload benchmarks
+remain open. Revisit on SDK/layout/scope/forwarder/schema or runtime-tool drift.

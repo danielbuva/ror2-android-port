@@ -6,6 +6,8 @@ import subprocess
 import tempfile
 import unittest
 
+from phone_managed_types import MetadataUniverse
+
 
 class SdkMetadataInventoryHostTests(unittest.TestCase):
     def test_metadata_reader_does_not_execute_throwing_attribute_constructor(self):
@@ -89,6 +91,9 @@ class SdkMetadataInventoryHostTests(unittest.TestCase):
             self.assertEqual(exported["Parent/Nested"]["declaring_type"], "Parent")
             self.assertEqual(exported["Parent/Nested"]["scope"], exported["Parent"]["scope"])
             self.assertEqual(exported["Parent"]["scope"]["assembly_identity"], inventory["assembly_identity"])
+            resolver = MetadataUniverse(report, "fixture")
+            self.assertEqual(resolver.resolve(forwarding["assembly_identity"], "Parent/Nested")["assembly_identity"], inventory["assembly_identity"])
+            self.assertTrue(resolver.derives_from(forwarding["assembly_identity"], "ExternalChild", inventory["assembly_identity"], "Parent"))
             original = (root / "report.json").read_bytes()
             self.assertNotEqual(call(command, check=False).returncode, 0)
             self.assertEqual((root / "report.json").read_bytes(), original)

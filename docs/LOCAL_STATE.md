@@ -217,6 +217,29 @@ evidence, not a qualified root generator or build input. Their supplied editor
 binary and SDK-derived rows must not be copied into public tooling. A later
 decoder needs its own generator/contract before consuming those observations.
 
+`work/experiments/phone-managed-metadata/<attempt>/` retains J866's explicit
+SDK-only input manifests, schema-2 metadata, supplied-Cecil tool builds and
+receipts. `wrapper-scoped-*-selection.json` selects the separate SDK layouts;
+they are observation inputs, not a redistributable type mapping. The isolated
+`.local/phone-build-metadata-net8/` reference packs come from pinned official
+NuGet packages with catalog-hash receipts; its host-reference links support
+SDK package-pruning data without changing the global SDK. The final tool build
+is selected by `wrapper-net8-build-v4-selection.json`; earlier setup failures
+stay preserved. `wrapper-phone-stage-selection.json` binds the copied public
+reader/resolver, supplied SDK assemblies, input manifest and expected host
+reports. No current game build reads these files.
+
+`wrapper-metadata-on-android-v2.py` is private local orchestration for the
+explicit alpha device, owned workspace, fresh capacity, committed sources,
+tool/input hashes, inspection, negative controls and unchanged game/idle state.
+`wrapper-phone-run-v2-selection.json` selects its final fresh child; the first
+failed checker/run and overwrite investigation remain immutable. The public
+metadata reader and standalone `phone_managed_types.py` generate the reports.
+The `wrapper-resolution-observation*` adapters/reports additionally retain
+private SDK search-sequence/cache observations and bounded oracle comparisons.
+Those observations are unqualified research, never build inputs or public
+constants. A later SDK decoder needs its own version-bound producer/contract.
+
 `phone_registry.inspect_action` generates
 `work/experiments/phone-registry/<attempt>/` from an explicit JSON request with
 one absolute `binary` path. Only the pinned supplied Unity SDK executable is
