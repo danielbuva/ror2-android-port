@@ -15,9 +15,24 @@ python="$root/.local/lab-venv/bin/python"
 [ -x "$python" ] || python=python3
 scratch=$(mktemp -d "${TMPDIR:-/tmp}/ci-local.XXXXXX")
 volume="$scratch/case-sensitive"
+cleanup_log="$root/.local/ci-cleanup/$(basename "$scratch").log"
+mkdir -p "$(dirname "$cleanup_log")"
 cleanup() {
-  if [ -d "$volume" ]; then hdiutil detach "$volume" -quiet 2>/dev/null || true; fi
-  rm -rf "$scratch"
+  local status=$?
+  trap - EXIT
+  (
+    echo "cleanup: started"
+    if [ -d "$volume" ] && ! hdiutil detach "$volume" -quiet; then
+      echo "cleanup: detach failed; preserving $scratch"
+      exit 0
+    fi
+    if rm -rf "$scratch"; then
+      echo "cleanup: scratch removed"
+    else
+      echo "cleanup: scratch removal failed"
+    fi
+  ) </dev/null >>"$cleanup_log" 2>&1 &
+  exit "$status"
 }
 trap cleanup EXIT
 

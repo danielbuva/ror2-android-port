@@ -24296,3 +24296,28 @@ player build, device run or installed APK change occurs at this checkpoint.
 Source-camera activation, correct original context, rendering, animation parity
 and next-menu acceptance remain open. Installed b0f7ae7e and accepted baseline
 f1550ce0 remain fixed pending the new composed player and both standard checks.
+
+## J908 — Separate completed CI verification from temporary host-volume cleanup
+
+Date: 2026-10-21. The pre-push check for J904's committed d3d62c3 passes all
+1,455 fresh-clone tests with 87 unavailable-tool/evidence skips, Ruff and audits,
+then blocks in EXIT cleanup of its own temporary case-sensitive host image.
+The volume is already unmounted; detach and subsequent scratch removal stall.
+Preserve the local failure and cleanup investigation under
+`work/coordination/codex-music-output-observer-integration/r1/`. Terminating the
+stalled completed-check wrapper makes that push refuse; no hook is bypassed.
+No Unity editor, shared build lock, Android storage or user data is touched.
+
+The minimal fix moves disposable host cleanup to a redirected background job
+while preserving the original verification status. Private phase logs live
+under `.local/ci-cleanup/`. A failed detach preserves its scratch directory;
+cleanup does not delete a still-mounted volume. The tracked shell harness
+extracts the actual cleanup function and supplies a blocking fake detach:
+the parent returns before release, status 37 is retained, phase logs are written
+and the mounted sentinel survives detach failure. Its portable Python wrapper
+runs in host CI. The Root check passes in 3.027 s; shell syntax and Ruff pass.
+No real mount or device is used by the test. Existing audits and host-test
+commands stay unchanged, and failures still refuse the push. The next push
+must rerun all checks on the committed fix; the earlier pass does not substitute
+for that run. Preserve pending J904/J906/J907 commits and sync them together
+with this repair when the required hook completes.

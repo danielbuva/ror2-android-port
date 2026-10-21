@@ -369,6 +369,14 @@ current path) and **historical** (kept for evidence; not reached by current comm
 
 ## Build pipeline
 
+`scripts/git-hooks/pre-push` delegates committed-source checks to
+`scripts/ci-local.sh` in a fresh clone. Verification retains its original exit
+status. Disposable host-volume cleanup runs separately after verification,
+with phase logs under ignored `.local/ci-cleanup/`; a failed detach preserves
+the scratch directory rather than deleting a mounted volume. Cleanup never
+opens or stops an editor or uses a device. A blocked cleanup cannot hold a
+completed verification, and failing verification still refuses the push.
+
 The user's legitimate PC installation goes in; an ARM64 IL2CPP APK plus an independently
 synced content payload comes out. Everything game-derived stays under the ignored `work/`.
 
