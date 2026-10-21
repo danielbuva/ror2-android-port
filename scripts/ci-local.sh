@@ -15,6 +15,7 @@ python="$root/.local/lab-venv/bin/python"
 [ -x "$python" ] || python=python3
 scratch=$(mktemp -d "${TMPDIR:-/tmp}/ci-local.XXXXXX")
 volume="$scratch/case-sensitive"
+preserve_scratch=0
 cleanup_dir=$(git -C "$root" rev-parse --path-format=absolute --git-path ci-cleanup)
 cleanup_log="$cleanup_dir/$(basename "$scratch").log"
 mkdir -p "$cleanup_dir"
@@ -23,6 +24,10 @@ cleanup() {
   trap - EXIT
   (
     echo "cleanup: started"
+    if [ "${preserve_scratch:-0}" -eq 1 ]; then
+      echo "cleanup: attach timed out with uncertain mount state; preserving $scratch"
+      exit 0
+    fi
     if [ -d "$volume" ] && ! hdiutil detach "$volume" -quiet; then
       echo "cleanup: detach failed; preserving $scratch"
       exit 0
@@ -50,9 +55,14 @@ cd "$scratch/repo"
 "$python" scripts/readme-actions.py --check
 
 tmp="$scratch/tmp"
-if hdiutil create -size 2g -fs "Case-sensitive APFS" -volname ci-local -type SPARSE "$scratch/volume.sparseimage" -quiet \
-  && hdiutil attach "$scratch/volume.sparseimage" -mountpoint "$volume" -nobrowse -quiet; then
+setup_status=0
+"$python" "$root/scripts/ci-hdiutil-volume.py" 30 "$scratch/volume.sparseimage" "$volume" || setup_status=$?
+if [ "$setup_status" -eq 0 ]; then
   tmp="$volume/tmp"
+elif [ "$setup_status" -eq 2 ]; then
+  # hdiutil may have mounted before its CLI timed out. Do not detach or remove the
+  # image/volume on this ambiguous outcome; the cleanup trap preserves the scratch.
+  preserve_scratch=1
 else
   echo "ci-local: no case-sensitive volume; temporary files stay case-insensitive" >&2
 fi

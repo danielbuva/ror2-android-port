@@ -22,6 +22,7 @@ class CiLocalHookEnvironmentTests(unittest.TestCase):
                 "import unittest\nclass Fixture(unittest.TestCase):\n    def test_fixture(self):\n        self.assertTrue(True)\n"
             )
             shutil.copy2(source, scripts / "ci-local.sh")
+            shutil.copy2(source.parents[1] / "scripts/ci-hdiutil-volume.py", scripts / "ci-hdiutil-volume.py")
             for name in ("ruff-committed", "audit-public", "journal-index", "readme-actions"):
                 (scripts / f"{name}.py").write_text("print('fixture check passed')\n")
             env = os.environ.copy()

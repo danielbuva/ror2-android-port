@@ -24605,3 +24605,34 @@ qualify playback. Rebuild steps that stage these authored owners must regenerate
 them. No new APK, install or device run occurs here: Main retains diagnostic
 b0f7ae7e and accepted baseline f1550ce0. Native music playback, camera readiness,
 normal gameplay and physical audibility remain open.
+
+## J912 — Bound optional host image setup without skipping verification
+
+Date: 2026-10-21. The gameplay checkpoint's pre-push check and Alpha's separate
+check both stall in optional temporary case-sensitive image setup. Root's
+exact owned create caller remains sleeping beyond 90 s; terminating only that
+caller activates the hook's existing ordinary-directory fallback. The complete
+SDK-hidden fresh-clone suite then passes and the normal push succeeds.
+Preserve Root's process/scratch proof and hook log under
+`work/coordination/original-music-output-capture-identity-next/r2/`.
+No shared image helper, service, mounted volume, editor or device is stopped.
+
+The authored support helper requests a 30 s timeout for each create/attach
+subprocess, killing and reaping only its own caller on timeout. It preserves
+all fresh-clone, SDK-hidden, audit, Ruff and host-test commands. A timed-out
+attach has uncertain mount state: preserve its scratch image and skip detach
+and removal. Other setup failures retain the existing fallback. The timeout
+request is not an absolute guarantee against an uninterruptible kernel task.
+The cleanup flag defaults safely when the existing source-extraction fixture
+runs under an unset-variable shell. Verification failures still refuse push;
+no check, approval hook or result is bypassed.
+
+Preserve reviewed cumulative draft R2 under
+`work/coordination/ci-volume-setup-timeout-next/r2/`, patch SHA-256
+`5b501c9936c2ce88c4368315cc39df352c4fbcb8ceee0c5ca6aec04b48bbccec`.
+Root's seven host tests pass in 6.333 s: blocked create/attach, normal success
+and failure, uncertain-attach preservation, existing cleanup status handling
+and fresh-clone environment isolation. Fixtures use fake tools, never real
+volumes. Ruff and shell syntax checks pass. Architecture names the helper's
+support role; it changes no game, build input, Android data or runtime behavior.
+The next normal push reruns the full required verification on this checkpoint.
