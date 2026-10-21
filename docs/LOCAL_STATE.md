@@ -243,6 +243,17 @@ private SDK search-sequence/cache observations and bounded oracle comparisons.
 Those observations are unqualified research, never build inputs or public
 constants. A later SDK decoder needs its own version-bound producer/contract.
 
+`phone_wrapper_search.inspect_action` generates
+`work/experiments/phone-wrapper-search/<attempt>/` from an explicit pinned
+owner-binary request. The unchanged private SDK, authored search/registry/
+literal readers, input hashes, `search.json` and result/log files form the
+attempt. This report reads SDK bytes directly; it consumes no earlier search
+observation, captured root row or game file. The SDK and resulting literals
+stay private. A phone replay may select an existing hash-verified owner-SDK
+copy through its explicit owned-workspace receipt, stage fresh authored readers
+and write new outputs; no timestamped SDK path is embedded in source. Complete
+wrapper-cache and scene-root inputs remain unsupported.
+
 `phone_registry.inspect_action` generates
 `work/experiments/phone-registry/<attempt>/` from an explicit JSON request with
 one absolute `binary` path. Only the pinned supplied Unity SDK executable is

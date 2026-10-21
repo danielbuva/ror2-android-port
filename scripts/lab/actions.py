@@ -138,6 +138,15 @@ def _repair_reconstruction(function, kwargs, args):
 # Only the selected action's module is imported by dispatch().
 _ENTRIES = (
     Action(
+        "phone-wrapper-search",
+        "phone_wrapper_search",
+        "inspect_action",
+        {},
+        "current",
+        "Experimental read-only SDK support: --target REQUEST.json selects the pinned owner SDK binary and extracts normal-path assembly/namespace lookup order with argument, branch and return checks. Executes no SDK code and produces no scene roots, game build, install or editor mutation.",
+        handler=_target,
+    ),
+    Action(
         "phone-native-registry",
         "phone_registry",
         "inspect_action",

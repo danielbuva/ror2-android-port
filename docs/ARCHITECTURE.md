@@ -129,6 +129,19 @@ forwarding entry, binds the inventory hash, refuses output overwrite or input
 drift, and emits a private observation report. No game build or linker stage
 consumes this helper.
 
+`phone_wrapper_search.py` owns separate current experimental SDK search-order
+support. `phone-wrapper-search --target REQUEST.json` accepts only the pinned
+owner binary and stages that data with the three authored Python readers.
+Its normal-path matcher proves the original native-name argument, Darwin
+stack-passed formatter argument/result storage, file-backed namespace/assembly
+pointer loads, common nonnull exits and preserved return value. Unknown data
+flow, alias stores, loops, incomplete guards or unsupported string selection
+refuse. Assembly templates and ordered namespaces come from the SDK; repeated
+entries remain distinct. Setup is an explicit owner-binary request and a fresh
+private attempt; teardown releases parsed data and retains reports/failures.
+It executes no SDK function and supplies no cache population, scene roots,
+project dependency closure, editor mutation or game/linker consumer.
+
 `phone_registry.py` and `phone_registry_literals.py` own separate experimental
 static SDK metadata support.
 The current `phone-native-registry` action accepts an explicit owner binary,
