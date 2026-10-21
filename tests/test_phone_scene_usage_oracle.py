@@ -91,7 +91,17 @@ class SceneUsageOracleTests(unittest.TestCase):
             loaded_assemblies=[dict(path=str(loaded), sha256=oracle.guard.sha(loaded))],
             scene_types=[dict(assembly="Authored, Version=1.0.0.0", name="Fixture")],
             manager_types=[],
-            groups=[dict(name=name, objects=[copy.deepcopy(object_row)] if name == "scene_loaded" else []) for name in sorted(oracle.GROUPS)],
+            loaded_scene=[
+                dict(
+                    instance_id=321,
+                    name="Authored",
+                    supported=True,
+                    identifier_available=False,
+                    types=[dict(assembly="Authored", name="LiveSceneObject")],
+                    identifiers=[],
+                )
+            ],
+            groups=[dict(name=name, objects=[copy.deepcopy(object_row)] if name == "scene_references" else []) for name in sorted(oracle.GROUPS)],
             global_usage=[dict(name=name, fields=[dict(name="authoredField", value="False")]) for name in ("scene", "graphics", "managers")],
         )
 
@@ -199,6 +209,9 @@ class SceneUsageOracleTests(unittest.TestCase):
             lambda r: r["compiled_assemblies"][0].update(path=str(self.editor)),
             lambda r: r["loaded_assemblies"][0].update(sha256="0" * 64),
             lambda r: r["global_usage"][0]["fields"].append(dict(name="otherLayout", value="0")),
+            lambda r: r["loaded_scene"][0].update(identifier_available=True),
+            lambda r: r["loaded_scene"][0].update(types=[]),
+            lambda r: r.update(loaded_scene=r["loaded_scene"] * 2),
         ]
         for change in changes:
             with self.subTest(change=change):

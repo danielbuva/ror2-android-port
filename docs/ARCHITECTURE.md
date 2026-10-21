@@ -224,7 +224,8 @@ existing guarded writer and claims the primary checkout's build mutex. The
 collector creates a default scene with the authored `ContentFixture`, compiles
 its Android player scripts into a fresh type database, and observes scene and
 global-manager dependencies through the SDK content-build APIs. Loaded scene
-objects, referenced objects and usage-tag objects remain separate groups;
+objects remain separate from asset identifiers, referenced objects and usage-tag
+objects; a live object without an asset identifier remains explicitly observed.
 included types and global usage fields remain separate observations. Unresolved
 objects have no claimed support result, and null type responses stay distinct
 from empty arrays. The receipt binds committed transitive source, the SDK,

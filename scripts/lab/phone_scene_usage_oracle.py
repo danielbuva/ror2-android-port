@@ -29,7 +29,7 @@ MANIFEST = (
     )
     + "\n"
 )
-GROUPS = {"scene_loaded", "scene_references", "scene_usage", "manager_objects", "manager_references", "manager_usage"}
+GROUPS = {"scene_references", "scene_usage", "manager_objects", "manager_references", "manager_usage"}
 
 
 def stage(root, work, editor):
@@ -153,7 +153,17 @@ def validate_report(report, inputs, destination, editor):
     groups = report["groups"]
     if len(groups) != len(GROUPS) or {row["name"] for row in groups} != GROUPS:
         raise ValueError("Missing or repeated scene/manager observation group")
-    for group in groups:
+    live = report["loaded_scene"]
+    if not live or len({row["instance_id"] for row in live}) != len(live):
+        raise ValueError("Missing or repeated live scene object")
+    for row in live:
+        if type(row["instance_id"]) is not int or not row["instance_id"] or not isinstance(row["name"], str):
+            raise ValueError("Incomplete live scene identity")
+        if type(row["supported"]) is not bool or type(row["identifier_available"]) is not bool:
+            raise ValueError("Unknown live scene observation state")
+        if len(type_rows(row["types"])) != 1 or len(row["identifiers"]) != int(row["identifier_available"]):
+            raise ValueError("Invented live scene type or asset identifier")
+    for group in [*groups, *(dict(objects=row["identifiers"]) for row in live)]:
         keys = []
         for row in group["objects"]:
             if (
@@ -175,8 +185,6 @@ def validate_report(report, inputs, destination, editor):
                 raise ValueError("Invented object type result")
         if len(set(keys)) != len(keys):
             raise ValueError("Repeated object identifier in an observation group")
-    if not next(group["objects"] for group in groups if group["name"] == "scene_loaded"):
-        raise ValueError("No authored scene objects observed")
     usage = report["global_usage"]
     if len(usage) != 3 or {row["name"] for row in usage} != {"scene", "graphics", "managers"}:
         raise ValueError("Missing global usage observation")

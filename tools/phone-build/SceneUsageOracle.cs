@@ -25,6 +25,14 @@ public static class SceneUsageOracle
         public TypeRow[] types, loaded_types;
     }
     [Serializable] public sealed class Group { public string name; public ObjectRow[] objects; }
+    [Serializable] public sealed class LiveObjectRow
+    {
+        public int instance_id;
+        public string name;
+        public bool supported, identifier_available;
+        public TypeRow[] types;
+        public ObjectRow[] identifiers;
+    }
     [Serializable] public sealed class FieldRow { public string name, value; }
     [Serializable] public sealed class Usage { public string name; public FieldRow[] fields; }
     [Serializable] public sealed class Settings
@@ -43,6 +51,7 @@ public static class SceneUsageOracle
         public Settings settings;
         public FileRow[] compiled_assemblies, loaded_assemblies;
         public TypeRow[] scene_types, manager_types;
+        public LiveObjectRow[] loaded_scene;
         public Group[] groups;
         public Usage[] global_usage;
     }
@@ -78,6 +87,17 @@ public static class SceneUsageOracle
     static Group Objects(string name, IEnumerable<ObjectIdentifier> values)
     {
         return new Group { name = name, objects = values.Select(Observe).ToArray() };
+    }
+    static LiveObjectRow LiveObject(UnityEngine.Object target)
+    {
+        ObjectIdentifier id;
+        bool available = ObjectIdentifier.TryGetObjectIdentifier(target, out id);
+        return new LiveObjectRow {
+            instance_id = target.GetInstanceID(), name = target.name,
+            supported = ContentBuildInterface.ObjectIsSupportedInBuild(target),
+            identifier_available = available, types = new[] { TypeInput(target.GetType()) },
+            identifiers = available ? new[] { Observe(id) } : new ObjectRow[0]
+        };
     }
     static Usage UsageFields(string name, BuildUsageTagGlobal value)
     {
@@ -135,15 +155,14 @@ public static class SceneUsageOracle
             report.scene = "Assets/Fixture.unity";
             if (!EditorSceneManager.SaveScene(scene, report.scene)) throw new InvalidOperationException("Authored scene was not saved");
             report.scene_sha256 = Sha(report.scene);
-            var loaded = new List<ObjectIdentifier>();
+            var loaded = new List<LiveObjectRow>();
             foreach (var root in scene.GetRootGameObjects())
             foreach (var transform in root.GetComponentsInChildren<Transform>(true))
             foreach (var target in new UnityEngine.Object[] { transform.gameObject }.Concat(transform.GetComponents<Component>().Cast<UnityEngine.Object>()))
             {
-                ObjectIdentifier id;
-                if (!ObjectIdentifier.TryGetObjectIdentifier(target, out id)) throw new InvalidOperationException("Saved scene object has no identifier");
-                loaded.Add(id);
+                loaded.Add(LiveObject(target));
             }
+            report.loaded_scene = loaded.ToArray();
             report.phase = "compile-player-scripts";
             Directory.CreateDirectory(scripts);
             var compiled = PlayerBuildInterface.CompilePlayerScripts(new ScriptCompilationSettings {
@@ -169,7 +188,7 @@ public static class SceneUsageOracle
                 report.manager_types = Types(managers.includedTypes);
                 report.phase = "object-observations";
                 report.groups = new[] {
-                    Objects("scene_loaded", loaded), Objects("scene_references", dependencies.referencedObjects),
+                    Objects("scene_references", dependencies.referencedObjects),
                     Objects("scene_usage", sceneUsage.GetObjectIdentifiers()), Objects("manager_objects", managers.managerObjects),
                     Objects("manager_references", managers.referencedObjects), Objects("manager_usage", managerUsage.GetObjectIdentifiers())
                 };
