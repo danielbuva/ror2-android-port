@@ -41,6 +41,16 @@ public static class SirenNavigationObservationPolicy
     public const int MaximumSamples = 8;
     public static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
 
+    // The Siren input may exclusively own automated navigation only after the
+    // native source listener is live. Ordinary stage routing and manual input
+    // remain with their existing owners until then.
+    public static bool SirenOwnsInputFrame(bool selected, bool diagnosticInput, bool assisted, bool manualTakeover,
+                                           bool sourceSceneActive, bool sourceOwnerAttached, bool nativeListenerActive)
+    {
+        return selected && diagnosticInput && assisted && !manualTakeover && sourceSceneActive && sourceOwnerAttached &&
+               nativeListenerActive;
+    }
+
     public static bool ShouldStart(bool selected, uint eggId, float distance, float maxDistance, float rangeAge)
     {
         return selected && eggId != 0 && Finite(distance) && Finite(maxDistance) && maxDistance >= 0 && distance > maxDistance &&

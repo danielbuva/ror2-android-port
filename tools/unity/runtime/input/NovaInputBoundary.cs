@@ -664,7 +664,24 @@ public sealed partial class PortSession
                             !(coordinator.r.results != null && coordinator.r.results.persisted))
                         {
                             coordinator.PrepareSirenEggDiagnosticInputFrame(body, bridge);
-                            coordinator.IntegratedWorldStimulus(body, bridge, elapsed);
+                            bool sirenOwnsWorldInput = SirenNavigationObservationPolicy.SirenOwnsInputFrame(
+                                coordinator.SirenEggInputSelected, bridge.diagnosticInput, coordinator.IsRunAssisted(),
+                                coordinator.worldManualTakeover, coordinator.SirenDiagnosticSceneActive,
+                                coordinator.SirenDiagnosticOwnerAttached, coordinator.SirenDiagnosticListenerActive) &&
+                                !coordinator.HasNearbyHostileDirectorThreat(body);
+                            if (sirenOwnsWorldInput)
+                            {
+                                if (!coordinator.r.world.diagnosticInputEver)
+                                {
+                                    coordinator.Check(coordinator.r.debugAcceleration != null,
+                                                     "Unattended input has no owned diagnostic evidence");
+                                    coordinator.DebugToggle("diagnosticInput", true, "unattended route");
+                                }
+                                coordinator.r.world.diagnosticInput = true;
+                                coordinator.r.world.diagnosticInputEver = true;
+                            }
+                            else
+                                coordinator.IntegratedWorldStimulus(body, bridge, elapsed);
                             coordinator.EarnedFeatherInput(body, bridge, elapsed);
                             coordinator.ApplySirenEggDiagnosticInput(body, bridge);
                         }

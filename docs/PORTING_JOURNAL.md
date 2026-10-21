@@ -22853,3 +22853,67 @@ original Term, same-process restart, music, visual parity and audible output
 remain unqualified. The later J883 metadata merge preserves the tested runtime
 source and does not change this frozen player. No new reconstruction input is
 introduced; replay J884's source and producer steps for this candidate.
+
+
+## J886 — Give the selected Siren diagnostic one route writer and one clock
+
+Date: 2026-10-21.
+
+Hypothesis: J861's alternating approach samples cannot attribute a native
+navigation failure because general world input and the Siren egg adapter write
+the same PathFollower, using run-relative and stage-relative request clocks.
+The reader samples after general input but before the Siren write. All eight
+saved pairs have unavailable path requests. This is an authored ownership and
+observation defect; it does not establish why the native encounter times out.
+Preserve the 180-second bound and the source Huntress tracker, range, team,
+line-of-sight, egg and encounter behavior.
+
+Prior art: consult the community map and pinned DebugToolkit `Code/Util.cs`
+at `d1e2f0aa4b8ac4747547db0fcd87344953432f06`. Its typed body/master/target
+queries distinguish semantic identity from object labels; it does not provide
+Android route ownership. J815's native tracker witness and J402/J403's original
+HLAPI registration constraints remain applicable. Current accepted 6af7ed94
+input and J861's measured source/listener state govern this correction; no
+community or protected game implementation is copied.
+
+Change: `SirenNavigationObservationPolicy.SirenOwnsInputFrame` admits the
+selected automated route only with an assisted run, owned diagnostic bridge,
+no manual takeover, the exact source scene/owner/native mission listener active
+and no nearby hostile combat owner. `NovaInputBoundary` then skips the competing
+general world stimulus for that frame, retaining its diagnostic marker evidence.
+All other frames keep the existing general route. The Siren adapter performs
+its existing navigation write before reading the pending observation, and
+queues the next request afterward. Writer and reader now see the same
+stage-relative clock. No path follower is replaced, movement speed changes,
+teleport occurs, target is injected, or egg/boss completion is fabricated.
+
+The shared input-file change is limited to the original Siren gameplay diagnostic;
+player controls, touch, rebinding, menus and settings are unchanged. Nearby combat,
+manual takeover and normal/inactive routes keep their existing ownership.
+Source entry, exact Listening admission, native damage/targeting and the bounded
+stage stop remain unchanged.
+
+Host evidence: 30 Siren tests pass, including the new compiled ownership-policy
+and paired-recorder cases plus existing source/target witnesses. Log:
+`work/coordination/siren-gameplay-integration-root/r1/root-siren-tests.log`.
+Full current-runtime compilation passes 121 sources against 264 references,
+with 399 pinned inputs unchanged. It binds the actual J885 final game f6bc in
+both the same-request pre-strip snapshot and live project, separately from its
+6f96 audio preimage and API 1ced. Receipt:
+`work/coordination/siren-gameplay-integration-root/r1/compile_receipt.retry1.json`,
+SHA-256 `22e4982a09ad959632cba226752903453e8438714f886206fef1dbcb920e530c`;
+output `d7e098a3d7f2ece5ad9169c3cbc1d2294bbc6bbff3e41a3823411c291278c5c1`.
+The retained first host attempt has a private harness typo; the corrected retry
+has no compiler errors. Independent source review:
+`work/coordination/siren-gameplay-next-review/r1/review.md`, SHA-256
+`651e8a5ca0be9728a4dc409aa255fe0c2b365607aa5087f95c63e0c999742d58`.
+Python Ruff format/check pass; portable tests locate tracked sources directly
+and skip the exact compiler fixture when unavailable.
+
+Architecture names the route decision and read/write ordering. No new build
+input or runtime file is introduced; R8/R9 must replay the three changed authored
+runtime sources. No Unity build or device run occurs for this source checkpoint.
+Installed 3c72fe05 and accepted f1550ce0 remain unchanged. The fix does not prove
+egg reachability, native tracker selection, boss start, rewards or cleanup. Next
+build committed sources and pass both defaults before repeating the bounded
+Siren continuation; the frozen J885 camera experiment may run independently.

@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J886](PORTING_JOURNAL.md#j886--give-the-selected-siren-diagnostic-one-route-writer-and-one-clock) | 2026-10-21 | Give the selected Siren diagnostic one route writer and one clock | Date: 2026-10-21. |
 | [J885](PORTING_JOURNAL.md#j885--bind-the-camera-player-and-observe-an-empty-managed-listener-list) | 2026-10-21 | Bind the camera player and observe an empty managed listener list | Date: 2026-10-21. |
 | [J883](PORTING_JOURNAL.md#j883--include-the-object-root-and-match-android-metadata-to-native-sdk-caches) | 2026-10-20 | Include the Object root and match Android metadata to native SDK caches | 2026-10-20. |
 | [J884](PORTING_JOURNAL.md#j884--integrate-the-original-source-camera-and-its-wwise-listener-lifecycle) | 2026-10-20 | Integrate the original source camera and its Wwise listener lifecycle | Date: 2026-10-20. |
