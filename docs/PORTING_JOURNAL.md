@@ -22238,3 +22238,126 @@ reuse cannot qualify the changed asset. Revisit after both default checks and
 the current-process point-sound/PCM observations. R8/R9 must replay the changed
 build hook. No legitimate installation, device receipt or protected public
 payload is changed by this host checkpoint.
+
+## J878 — Reconstruct SDK wrapper population on Android with a complete forward oracle
+
+2026-10-20. Hypothesis: J873/J876's registry, scoped metadata, search order and
+native flags can produce the pinned SDK's forward wrapper cache on Android,
+while recovering all extra reverse-registration operands from supplied SDK data.
+Begin after PR19's accepted merge `5b3eec1`; keep Route A, native IL2CPP ARM64,
+Android rendering and the desktop owner-build fallback. Main owns J877/J879 and
+its separate audio build. No main device or working game project is involved.
+
+**Contract and owners.** `phone_wrapper_population.py` owns separate current
+experimental reconstruction. Explicit inputs are the owner SDK binary, scoped
+inventory, managed SDK directory, corlib and a new private report. The complete
+84-file managed set is pinned by one name/hash manifest digest; each inventory
+identity/hash must match that set, allowing relocation without treating a
+partial inventory as proof that an assembly is absent. Reader/input hashes are
+checked before and after inspection. Existing outputs, unknown or mixed SDKs,
+missing metadata dependencies, ambiguous operands and drift refuse. No game or
+linker step consumes this helper.
+
+`phone_wrapper_population_oracle.py` and `WrapperPopulationOracle.cs` own an
+independent SDK-only desktop verification. The existing graph-validating
+collector retains its root/nonobject exclusions and established concrete
+queries; the new collector additionally queries abstract Object descendants.
+The independent compiler fixture rejects an unsafe-ID query and proves graph
+refusal precedes queries. Reflection-only API discovery invokes no candidate
+method. Setup/teardown, source ownership and private replay state are named in
+ARCHITECTURE and LOCAL_STATE. No MCP editor is reused or stopped.
+
+Consult the pinned reference-only [UnityType metadata](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Editor/Mono/TypeSystem/UnityType.cs), native
+wrapper binding and [RuntimeClassRegistry consumer](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Editor/Mono/BuildPipeline/RuntimeClassMetadata.cs) from J873. The consumer's
+forward ID-to-name lookup and duplicate wrapper names are distinct from a
+managed-to-native registration table. This is generic SDK build-tool work;
+no community/game implementation, SDK instructions or registry/mapping table is
+copied into public source. All SDK observations and generated mappings stay
+private. Parsing supplied SDK data does not establish tool-delivery rights.
+
+**First observations and corrections.** Bounded SDK inspection shows that the
+population call selects all descendants, including abstract types, while the
+native Object root remains outside that iteration. Recursive population can
+resolve Object itself before terminating. Direct scene-name resolution remains
+separate. The six extra registrations extend the reverse mapping; one targets
+an already populated native class, so they are not six additional forward IDs.
+Their source expressions come from two ordinary searches, three corlib field
+assignments and one optional proxy initialization. No captured list substitutes
+for decoding those operands.
+
+The prior whole-function matcher correctly refuses corlib setup's late indirect
+call. The new reader qualifies only the needed assignment prefixes, retaining
+that refusal. A first model also omits static module assignments and fails on an
+unresolved module; the corrected model requires agreement between all existing
+SDK module-registration readers. It reconstructs 305 forward and 253 reverse
+entries, preserving all 318 direct-name results. All 278 earlier concrete
+queries still match. Reverse managed identities are unique in this SDK; an
+ambiguous identity refuses rather than choosing a native class by guessed order.
+
+The first new editor stage is refused before launch because its path is outside
+the existing guarded namespace. Preserve the empty first output and refusal
+receipt. The corrected runner uses a fresh population-prefixed child inside the
+existing namespace; directory scope/link guards are unchanged. Added host
+controls cover actual staging, a linked parent with no outside writes, foreign
+assets and retained editor failures.
+
+**Exact-editor result.** Committed oracle source
+`f0cc642f671b175fc0b1fb1a5b960d03a3f2130a` runs a fresh SDK-only project under
+the existing primary mutex, exits 0 and releases it. The actual editor remains
+Unity 2021.3.45f2 ARM64 and loaded assembly paths/hashes are checked. Report
+SHA-256 `8aee39221796983bd1c4abd8b77c0fb4bcb0df9222c16ff7a16db838a2801157`.
+All 305 supported forward query names and flags match the model, including all
+27 abstract rows, with zero mismatches. The 12 outside-hierarchy rows and native
+Object root remain explicitly unqueried. Reflection-only discovery finds no
+matching core Type-to-native-ID API; it does not validate reverse registrations.
+
+**Android result.** Actual source
+`dd0eaa0ea52e43476210fc7340aa9a5427cac00e` reuses J864's receipt-bound SDK copy
+and J866's phone-generated scoped inventory/managed files read-only. Select only
+the configured alpha device, verify the owned workspace/tool/input hashes and
+fresh storage/backing/capacity reserve, then create a fresh private child and
+stage nine committed authored readers/tests. No new SDK/assembly copy, package
+install, data movement or original-installation edit is performed. Trusted
+Android Python parses the supplied Mach-O and managed metadata as data; it does
+not execute SDK instructions or inspected assemblies.
+
+The producer exits 0 in 14.488 seconds of host-observed wall time. Its entire
+report is byte-identical to host output using that same phone-generated
+inventory, SHA-256
+`b67c3ead8b2331d9a5e8c9ad556e2f65fb966fd6e752aa21f9d976cae0571690`.
+Counts are 305 forward entries, 253 provisional reverse entries and 27 abstract
+forward entries. A separate comparison verifies all 305 phone forward names and
+flags against the independent exact-editor oracle, with zero mismatches. Six
+selected Android operand/input contracts pass with no skips. The desktop-only
+compiler/staging fixtures remain host tests. Existing-output, unknown native
+SDK and mixed managed-SDK controls refuse; existing report bytes are preserved
+and negative reports remain absent. Readers, prior SDK/inventory and the alpha
+APK remain unchanged. The alpha APK is
+`be26c21c4cd8ff15a8a663528216cf7a69394a51d8b9441a63a1a496f83e98b5`,
+and its display is asleep. Metadata timing is not a game-performance benchmark.
+
+Ten focused host tests pass. Fresh-clone CI on actual phone source passes
+1,348 tests with 64 optional skips, Ruff, public audit and document freshness.
+Whole-game preflight still refuses this worktree's missing inventory/bootstrap;
+the SDK fixture does not repair that gate. Private
+`wrapper-population-proof-receipt-v2.json` binds 260 old/new source, input,
+output, failure/control, SDK-observation, comparison and CI artifacts; SHA-256
+`da8eb2189fd21291aa6baa789303c30aadc1a6cdef5634909ea8c774cfaf0be9`.
+
+**Independent review and remaining gate.**
+Review of `dd0eaa0` rehashes all 250 original artifacts with no mismatches and
+accepts the bounded forward/phone claims. The extended proof retains that
+review and an explicit replay of the whole-corlib refusal. Before extending
+the oracle, bind its imported build-lock helper in the stage source identity.
+
+ The full forward model is verified
+on this pinned SDK; the 253 reverse entries are host/phone-equal but lack an
+independent native observation. Keep cache_population_qualified and
+root_generation_qualified false. Determine which reverse consumers are required
+and verify the actual cache, retaining direct scene names separately. Then
+produce independent scene/manager/dependency usage and exact fixture roots.
+General module policy, managed game compilation, content/shaders, permitted
+SDK/tool delivery, app hosting, installation/key custody and matched-workload
+performance remain separate gates. Revisit on SDK/managed-set/source/API,
+constructor/layout, consumer or inventory drift. No APK is built or installed,
+and no alternative runtime or final shell/distribution experience is selected.

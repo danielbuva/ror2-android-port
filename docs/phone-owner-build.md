@@ -27,6 +27,8 @@ Independent desktop wrapper-query oracle:
 [J873](PORTING_JOURNAL.md#j873--separate-direct-scene-names-from-sdk-wrapper-cache-queries).
 Native SDK abstract/sealed/editor flags on Android:
 [J876](PORTING_JOURNAL.md#j876--decode-native-sdk-type-flags-on-android).
+SDK forward wrapper population on Android:
+[J878](PORTING_JOURNAL.md#j878--reconstruct-sdk-wrapper-population-on-android-with-a-complete-forward-oracle).
 
 **Finding:** this repository has no demonstrated phone-only build path. Many
 preparation and packaging stages have Android-capable open-source building
@@ -60,6 +62,9 @@ verification oracle and separates direct scene names from inherited cache
 queries; its reports are never phone-build inputs.
 J876 qualifies a separate static native flag reader on Android. Complete cache
 population and extra-type rules remain open.
+J878 verifies forward wrapper mappings on Android against all supported exact-SDK
+queries. Reverse registrations are reconstructed but remain independently
+unverified; direct scene names and complete root production stay separate.
 These are build-pipeline problems; keep the game runtime
 and desktop fallback while investigating them independently.
 
