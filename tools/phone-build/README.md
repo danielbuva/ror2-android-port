@@ -65,8 +65,10 @@ Its explicit request is either `{"operation":"stage"}` or
 `{"operation":"check","project":"<absolute generated project>"}`. Stage writes
 a fresh SDK-only project from `WrapperMetadataOracle.cs`; check requires its
 committed source and the exact owner SDK, and promptly refuses a contended
-primary checkout mutex. It preserves both existing MCP editors. Reports bind
-actual version, source and loaded assembly hashes, and validate the complete
+primary checkout mutex. It preserves both existing MCP editors.
+Staging checks containment before writing and refuses symlinks in the work or
+destination ancestor chain; directory-descriptor writes never follow links.
+Reports bind actual version, source and loaded assembly hashes, and validate the complete
 native parent graph before querying only concrete native Object descendants.
 Root, abstract and other native rows remain unqueried. Null query results are
 recorded separately from empty strings. Raw reports stay private; no phone

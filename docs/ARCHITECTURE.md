@@ -148,8 +148,12 @@ not qualify normal app hosting or a complete wrapper cache.
 separate current experimental **desktop verification**. The
 `phone-wrapper-oracle` action stages a fresh SDK-only project or checks that
 explicit project with the exact editor under the primary checkout mutex.
-Committed source, project, editor and loaded assembly hashes bind the report;
-foreign assets, drift, existing outputs and lock contention refuse. The C#
+Committed source, project, editor and loaded assembly hashes bind the report.
+Staging checks containment before creating anything and opens directory chains
+and new files through descriptors that refuse symlinks. Every file write
+rechecks scope; configured work-root and staging-parent links refuse before
+outside writes. Foreign assets, drift, existing outputs and lock contention
+also refuse. The C#
 collector validates unique native identities and the complete parent graph
 before querying concrete descendants of native Object. Root, abstract and
 outside-hierarchy rows remain explicitly unqueried; null and empty query

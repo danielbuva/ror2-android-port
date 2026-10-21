@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import subprocess
 import uuid
+from contextlib import contextmanager
 
 from phone_registry import BINARY_SHA256
 
@@ -20,16 +21,65 @@ def sha(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
-def stage(destination, root):
+def owned_destination(path, work):
+    """Check the lexical scope and every existing ancestor before any write."""
+    path, work = Path(path).absolute(), Path(work).absolute()
+    base = work / "rebuild/phone-wrapper-oracle"
+    if not path.is_relative_to(base) or path == base or path != path.resolve() or work != work.resolve():
+        raise ValueError("Select an owned isolated wrapper-oracle destination without links")
+    if any(parent.is_symlink() for parent in (path, *path.parents)):
+        raise ValueError("Oracle destination ancestor links are unsupported")
+    return path, work
+
+
+@contextmanager
+def owned_directory(path, work, *, create=False, new=False):
+    """Walk with directory descriptors; never follow a substituted ancestor link."""
+    path, work = owned_destination(path, work)
+    flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+    fd = os.open(path.anchor, flags)
+    current = Path(path.anchor)
+    try:
+        for name in path.parts[1:]:
+            current /= name
+            if create and current.is_relative_to(work):
+                try:
+                    os.mkdir(name, dir_fd=fd)
+                except FileExistsError:
+                    if new and current == path:
+                        raise
+            child = os.open(name, flags, dir_fd=fd)
+            os.close(fd)
+            fd = child
+        owned_destination(path, work)
+        yield fd
+    finally:
+        os.close(fd)
+
+
+def write_owned(path, data, work):
+    path, work = owned_destination(path, work)
+    with owned_directory(path.parent, work) as directory:
+        fd = os.open(path.name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600, dir_fd=directory)
+        with os.fdopen(fd, "wb") as output:
+            output.write(data)
+
+
+def stage(destination, root, work=None):
     """Generate a fresh SDK-only project. Earlier projects are never overwritten."""
-    destination, root = Path(destination), Path(root)
-    destination.mkdir(parents=True, exist_ok=False)
-    (destination / "Assets/Editor").mkdir(parents=True)
-    (destination / "Assets/Editor/WrapperMetadataOracle.cs").write_bytes((root / READER).read_bytes())
-    (destination / "Packages").mkdir()
-    (destination / "Packages/manifest.json").write_text(MANIFEST)
-    (destination / "ProjectSettings").mkdir()
-    (destination / "ProjectSettings/ProjectVersion.txt").write_text(PROJECT_VERSION)
+    root = Path(root)
+    destination, work = owned_destination(destination, root / "work" if work is None else work)
+    with owned_directory(destination, work, create=True, new=True):
+        pass
+    for name in ("Assets/Editor", "Packages", "ProjectSettings"):
+        with owned_directory(destination / name, work, create=True):
+            pass
+    for name, data in (
+        ("Assets/Editor/WrapperMetadataOracle.cs", (root / READER).read_bytes()),
+        ("Packages/manifest.json", MANIFEST.encode()),
+        ("ProjectSettings/ProjectVersion.txt", PROJECT_VERSION.encode()),
+    ):
+        write_owned(destination / name, data, work)
     receipt = {
         "schema": 1,
         "unity": VERSION,
@@ -39,14 +89,13 @@ def stage(destination, root):
         "sources": {name: sha(root / name) for name in SOURCES},
         "source_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip(),
     }
-    (destination / "oracle-inputs.json").write_text(json.dumps(receipt, indent=2) + "\n")
+    write_owned(destination / "oracle-inputs.json", (json.dumps(receipt, indent=2) + "\n").encode(), work)
     return receipt
 
 
 def validate_project(project, root, work):
-    project, root = Path(project).absolute(), Path(root)
-    if project != project.resolve() or not project.is_relative_to((Path(work) / "rebuild/phone-wrapper-oracle").resolve()):
-        raise ValueError("Select an owned isolated wrapper-oracle project")
+    project, _ = owned_destination(project, work)
+    root = Path(root)
     if project.is_symlink() or any(p.is_symlink() for p in project.rglob("*")):
         raise ValueError("Oracle project links are unsupported")
     receipt = json.loads((project / "oracle-inputs.json").read_text())
@@ -184,7 +233,7 @@ def stage_action(request_path):
     request = json.loads(Path(request_path).read_text())
     if request == {"operation": "stage"}:
         project = WORK / "rebuild/phone-wrapper-oracle" / uuid.uuid4().hex / "project"
-        result = {"project": str(project), **stage(project, ROOT)}
+        result = {"project": str(project), **stage(project, ROOT, WORK)}
     elif set(request) == {"operation", "project"} and request["operation"] == "check":
         result = run_editor(request["project"], ROOT, WORK)
     else:

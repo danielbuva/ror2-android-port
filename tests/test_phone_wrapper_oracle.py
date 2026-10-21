@@ -38,6 +38,36 @@ class WrapperOracleTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Foreign oracle asset"):
             oracle.validate_project(self.project, self.root, self.work)
 
+    def test_stage_refuses_symlinked_ancestors_before_outside_writes(self):
+        for depth in range(4):
+            with self.subTest(depth=depth):
+                work = self.root / ("redirected-work-" + str(depth))
+                outside = self.root / ("outside-" + str(depth))
+                outside.mkdir()
+                chain = [work, work / "rebuild", work / "rebuild/phone-wrapper-oracle", work / "rebuild/phone-wrapper-oracle/attempt"]
+                target = chain[depth]
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.symlink_to(outside, target_is_directory=True)
+                with self.assertRaisesRegex(ValueError, "without links"):
+                    oracle.stage(chain[-1] / "project", self.root, work)
+                self.assertEqual(list(outside.iterdir()), [])
+
+    def test_stage_rechecks_created_parent_before_writing_each_file(self):
+        project = self.work / "rebuild/phone-wrapper-oracle/replaced-parent/project"
+        outside = self.root / "outside-replaced-parent"
+        outside.mkdir()
+        original = oracle.write_owned
+
+        def replace_then_write(path, data, work):
+            parent = project / "Assets/Editor"
+            parent.rmdir()
+            parent.symlink_to(outside, target_is_directory=True)
+            original(path, data, work)
+
+        with patch.object(oracle, "write_owned", replace_then_write), self.assertRaisesRegex(ValueError, "without links"):
+            oracle.stage(project, self.root, self.work)
+        self.assertEqual(list(outside.iterdir()), [])
+
     def test_source_drift_and_project_escape_refuse(self):
         (self.root / oracle.SOURCES[0]).write_text("changed")
         with self.assertRaisesRegex(ValueError, "source drift"):
