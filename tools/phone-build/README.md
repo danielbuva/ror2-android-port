@@ -20,6 +20,19 @@ IL2CPP converter. A build-tool .NET host is independent of the game's native
 IL2CPP runtime. Compare all generated C++ and metadata against the desktop
 baseline. A shell test does not qualify an app sandbox or a complete player.
 
+`metadata/` is a current experimental metadata-only reader. It takes an explicit
+JSON list of `{group, path}` assembly inputs and a new output filename, hashes
+each input before/after, and never executes inspected code. Schema 2 preserves
+full assembly identities, declared references, local/external base scopes and
+exported types/forwarders. Multiple-module assemblies refuse. The existing
+`phone-root-contract` host action uses the reader for fixture coverage; its
+short-name candidates remain guesses. Default compilation uses host .NET 10
+and the exact supplied SDK's Cecil; this does not qualify Android execution.
+The authored `phone_managed_types.MetadataUniverse(inventory, group)` helper
+resolves only within one explicit group, with exact identity/version checks,
+forwarding paths and managed inheritance. It refuses missing dependencies and
+ambiguity, and does not produce native identities, scene roots or build inputs.
+
 ```sh
 ./dev prototype --action phone-content-fixture
 ./dev prototype --action phone-content-check --target <generated-project>
