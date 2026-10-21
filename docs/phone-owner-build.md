@@ -16,6 +16,7 @@ Authored input capture and Android stripping: [J846](PORTING_JOURNAL.md#j846--ca
 Connected stripping/converter boundary: [J849](PORTING_JOURNAL.md#j849--feed-actual-phone-stripping-output-into-the-exact-converter).
 Independent-root contract inventory: [J851](PORTING_JOURNAL.md#j851--measure-sdk-metadata-coverage-and-identify-the-native-registry-gap).
 Partial native-registry extraction on Android: [J853](PORTING_JOURNAL.md#j853--read-partial-owner-sdk-native-registration-metadata-on-android).
+Explicit static-record module completion: [J855](PORTING_JOURNAL.md#j855--resolve-static-sdk-modules-from-explicit-registration-call-arguments).
 
 **Finding:** this repository has no demonstrated phone-only build path. Many
 preparation and packaging stages have Android-capable open-source building
@@ -34,7 +35,7 @@ compilation/linking passes with either supplied desktop-generated C++ or the
 hash-bound phone converter output; that does not recreate missing content or
 editor-generated stripping roots.
 J851 measures why managed SDK metadata alone cannot replace those roots and
-J853 qualifies partial native SDK metadata extraction on Android. A complete
+J853/J855 qualify partial native SDK metadata extraction on Android. A complete
 native hierarchy, project scene usage and module policy remain unproduced.
 These are build-pipeline problems; keep the game runtime
 and desktop fallback while investigating them independently.

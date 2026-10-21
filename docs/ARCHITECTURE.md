@@ -91,7 +91,12 @@ The current `phone-native-registry` action accepts an explicit owner binary,
 requires the pinned SDK hash, and stages an unchanged private copy with the
 standalone standard-library Python reader. Bounded Mach-O symbols/data and
 straight-line ARM64 constant propagation identify partial registration records,
-parent pointers and generated module-registration arguments. Unknown layouts,
+parent pointers and generated module-registration arguments. A direct-call
+index is restricted to the declared instruction section. Conservative backwards
+argument slicing uses symbol and branch-derived scan bounds, including incoming branch
+targets, and respects caller clobbers and runtime loads. Direct module arguments
+must agree with the earlier generated-registration subset; no function name is
+substituted for a missing argument. Unknown layouts,
 instructions and calls refuse; absent records/module assignments remain
 unresolved. It neither executes SDK instructions nor supplies an execution
 backend. Source/input hashes, metadata and failures remain under

@@ -3,7 +3,17 @@ import struct
 import tempfile
 import unittest
 
-from phone_registry import MachO, constant_calls, inspect, inspect_action, module_assignments, static_records
+from phone_registry import (
+    MachO,
+    call_argument,
+    constant_calls,
+    direct_calls,
+    direct_module_assignments,
+    inspect,
+    inspect_action,
+    module_assignments,
+    static_records,
+)
 
 
 class Instructions:
@@ -12,6 +22,8 @@ class Instructions:
     def __init__(self, words, extra_symbols=None):
         self.start = 0x1000
         self.code = struct.pack("<" + "I" * len(words), *words)
+        self.data = self.code
+        self.sections = [(self.start, len(self.code), 0)]
         self.symbols = {"function": {self.start}, "end": {self.start + len(self.code)}} | (extra_symbols or {})
 
     def symbol(self, name):
@@ -51,6 +63,60 @@ def fixture():
 
 
 class PhoneRegistryTests(unittest.TestCase):
+    def test_declared_instruction_section_is_bounded_and_address_mapped(self):
+        data = bytearray(fixture())
+        vm = 0x100000000
+        struct.pack_into("<I", data, 20, 176)
+        struct.pack_into("<I", data, 36, 152)
+        struct.pack_into("<I", data, 96, 1)
+        struct.pack_into("<16s16sQQIIIIIIII", data, 104, b"__text", b"__TEXT", vm + 1536, 8, 1536, 2, 0, 0, 0x80000400, 0, 0, 0)
+        struct.pack_into("<IIIIII", data, 184, 2, 24, 2048, 2, 2080, 256)
+        struct.pack_into("<II", data, 1536, 0x94000002, 0xD65F03C0)
+        image = MachO(bytes(data))
+        self.assertEqual(image.sections, [(vm + 1536, 8, 1536)])
+        self.assertEqual(direct_calls(image, {vm + 1544}), [(vm + 1536, vm + 1544)])
+        for offset, value, fmt in ((104 + 40, 4096, "Q"), (104 + 48, 1537, "I"), (96, 2, "I")):
+            damaged = bytearray(data)
+            struct.pack_into("<" + fmt, damaged, offset, value)
+            with self.subTest(offset=offset), self.assertRaises(ValueError):
+                MachO(bytes(damaged))
+
+    def test_backward_arguments_match_forward_constants_and_call_clobbers(self):
+        image = Instructions([0xD0000013, 0x91000260, 0xD28000E1, 0x94000400, 0xAA1303E0, 0xA8C24FF4, 0x94000400, 0xAA1303E0, 0x14000400])
+        calls = constant_calls(image, "function")
+        for call in calls:
+            for register in (0, 1):
+                self.assertEqual(call_argument(image, call["pc"], register), call["arguments"][register])
+
+    def test_incoming_branch_and_loop_join_cannot_supply_skipped_constants(self):
+        # A conditional can bypass the apparent definition immediately before a call.
+        conditional = Instructions([0xB5000042, 0xD28000E0, 0x94000400, 0xD65F03C0])
+        self.assertIsNone(call_argument(conditional, 0x1008, 0))
+        # A later loop backedge can reach the call without repeating its definition.
+        loop = Instructions([0xD28000E0, 0x94000400, 0xD503201F, 0xB5FFFFC2, 0xD65F03C0])
+        self.assertIsNone(call_argument(loop, 0x1004, 0))
+        self.assertIsNone(call_argument(Instructions([0, 0x94000400, 0xD65F03C0]), 0x1004, 0))
+
+    def test_direct_branch_index_excludes_identical_words_outside_code_section(self):
+        image = Instructions([0x94000400, 0xD65F03C0])
+        image.data += struct.pack("<I", 0x940003FE)
+        self.assertEqual(direct_calls(image, {0x2000}), [(0x1000, 0x2000)])
+        image.sections = []
+        with self.assertRaises(ValueError):
+            direct_calls(image, {0x2000})
+
+    def test_non_generated_registration_calls_resolve_only_explicit_arguments(self):
+        callee = "__Z18RegisterUnityClassI12FixtureClassEvPKc"
+        rtti = "__ZN13TypeContainerI12FixtureClassE4rttiE"
+        image = Instructions([0xD0000000, 0x14000400], {callee: {0x2004}, rtti: {0x4000}})
+        self.assertEqual(direct_module_assignments(image), ({0x4000: "Fixture"}, []))
+        image.code = struct.pack("<II", 0xD503201F, 0x14000400)
+        image.data = image.code
+        self.assertEqual(direct_module_assignments(image), ({}, [0x1004]))
+        image.symbols["__Z18RegisterUnityClassI12OtherFixtureEvPKc"] = {0x2004}
+        with self.assertRaisesRegex(ValueError, "Ambiguous"):
+            direct_module_assignments(image)
+
     def test_constant_arguments_preserve_callee_saved_and_clear_caller_saved(self):
         image = Instructions(
             [

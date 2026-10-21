@@ -20290,3 +20290,74 @@ non-generated module registration and complete base identity, then scene usage
 and project module policy. Unknown data must remain unresolved. Content/shaders,
 managed compilation, richer dependencies, permitted tool delivery and measured
 whole-game performance remain separate work.
+
+## J855 — Resolve static SDK modules from explicit registration call arguments
+
+2026-10-20. Hypothesis: J853's 70 unresolved module assignments are present as
+explicit arguments to non-generated native registration calls, rather than
+requiring inferred module names or a captured table. Continue from main
+`f1bb8f6` after PR #9's independent review/merge, and reserve J856 for the main
+session. Route A, game runtime/renderer, desktop fallback and existing game
+builds stay unchanged. This is the same generic static SDK metadata subsystem,
+using J853's format/ABI sources; no RoR2-specific runtime machinery is added.
+
+**Change and boundary.** Extend `phone_registry.py` to validate the Mach-O
+instruction section and index direct branch/call targets only inside that
+section. The pinned SDK has 305 direct typed registration call sites, one per
+static record. All 70 previously unresolved rows have such a call. Names of
+surrounding functions identify investigation locations; they never substitute
+for a module argument.
+
+A backwards constant slice recovers the actual argument at a call. It is bounded
+by symbols, instruction budget and basic-block boundaries, including incoming
+conditional targets and later loop backedges. Caller clobbers, runtime loads,
+unknown instructions/definitions and exhausted bounds yield unknown. A path that
+can skip a constant definition cannot supply that value. No branch is taken and
+no SDK function/instruction is executed. The extracted direct mapping must
+cover exactly the static self-pointer set and agree with all 235 earlier
+generated-registration mappings, or the complete inspection refuses.
+The reader still creates a partial registry and never emits a linker root.
+
+Development first catches a section-size variable shadowing the total load-
+command size; correct that before committing the reader. The new authored
+section-table/bounds fixture prevents that regression. Four other authored
+contracts also cover identical branch words outside code, backwards versus
+forward constants, caller clobbers, skipped definitions, loop joins, unknown
+arguments and ambiguous typed callees. All 12 focused reader tests pass.
+
+**Independent host/Android result.** Commit source first at
+`50dfc528e3875f1f5f55efb5993542298cbd60be`. The unchanged action stages only
+the same pinned owner SDK and the standalone reader into a fresh private
+attempt. Neither the earlier observation maps nor an editor oracle is an input.
+The reader hash is
+`21d6e0e4613d6f16334ad59595a0590c2f8248d30007cf219e1f293eb46cba45`.
+Verify the selected alpha device/workspace, fresh storage/backing/reserve,
+Python and staged input hashes, then run the reader in a new owned child.
+The Android invocation completes in 6.029 seconds of host-observed wall time
+and produces a byte-identical host report, SHA-256
+`3906ec65bbb01e84f78603ee2bf99e3236a62621532d6fac5fa5bee3e5e3ae39`.
+Unknown-SDK and overwrite controls both refuse; the existing report and supplied
+SDK hashes remain unchanged. No app install/launch occurs. The alpha game
+remains J853's be26c21c… APK unchanged and the display is left asleep.
+This timing is a metadata-tool measurement, not a game-performance comparison.
+
+Only after extraction, compare against the unchanged J846/J853 exact-editor
+oracle. All 305 class/namespace/qualified names, all 305 module assignments,
+280 base names and all 280 available base modules match, without contradictions
+among resolved fields. This closes the module-assignment gap for the existing
+static subset. Thirteen native records and 25 parent links still remain outside
+it; `root_generation_qualified` stays false. No inferred base or default module
+fills those gaps.
+
+Fresh-clone CI on `50dfc52` passes 1,244 tests with 55 optional skips, Ruff,
+public audit and documentation freshness. Preserve J853's original attempts;
+new `native-registry-direct-stage-selection.json` and
+`native-registry-direct-run-selection.json` select this host/phone run. The
+post-extraction comparison is `native-registry-direct-oracle-comparison.json`.
+`native-registry-direct-proof-receipt.json` binds 20 source/input/output/control/
+comparison/test/CI artifacts; SHA-256
+`1c44ebc635076c2cf200af3cb224a88594cf751b8628fdaa6e494feb005a8b69`.
+All SDK-derived rows, source binary, instruction views and call-site indexes stay
+ignored. Continue with non-static native registrations and the root record,
+then exact scene usage/module policy. Complete target-content production,
+permitted tool delivery and the full owner-build/install experience remain open.
