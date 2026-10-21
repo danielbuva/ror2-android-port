@@ -14,7 +14,7 @@ open `http://127.0.0.1:8080/launcher/`. Serve locally, not on a public interface
 Run `node --test launcher/tests/*.test.js` (Node 18 or newer).
 Open `http://127.0.0.1:8080/launcher/tests/view.html` for browser regression checks
 against the real frontend: pending Prepare/Pause, action and navigation focus,
-and modal focus during background updates. All four results must read PASS.
+view navigation and modal focus during background updates. All five results must read PASS.
 No dependencies, build step, external fonts, analytics or remote requests.
 
 - `index.html`: safe disconnected default, setup and diagnostics routes.

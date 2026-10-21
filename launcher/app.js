@@ -42,7 +42,7 @@ document.addEventListener('click', event => {
   if (button.dataset.view) location.hash = button.dataset.view;
   if (button.dataset.action) void controller.invoke(button.dataset.action);
 });
-window.addEventListener('hashchange', () => { focusKey = null; render(); main.focus(); });
+window.addEventListener('hashchange', () => { render(); focusKey = null; main.focus(); });
 document.querySelector('#about').onclick = showAbout;
 document.querySelector('#close-about').onclick = () => dialog.close();
 // Explicit local host integration; there is no postMessage, network or automatic bridge.

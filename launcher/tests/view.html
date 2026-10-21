@@ -64,6 +64,13 @@ await check('Navigation focus survives background state updates', async () => {
   adapter.emit(snapshot());
   assert(doc.activeElement?.dataset.view === 'diagnostics', 'Navigation focus lost');
 });
+await check('View navigation keeps its main focus during later state updates', async () => {
+  const adapter = await fixture(); await route('setup');
+  doc.querySelector('[data-action="selectFiles"]').focus();
+  await route('home'); await route('setup');
+  adapter.emit(snapshot());
+  assert(doc.activeElement === doc.querySelector('main'), 'An old action stole the new view focus');
+});
 await check('Background updates do not steal focus from the About dialog', async () => {
   const adapter = await fixture();
   doc.querySelector('#about').click();
