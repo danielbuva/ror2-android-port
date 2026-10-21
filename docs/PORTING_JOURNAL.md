@@ -24001,3 +24001,80 @@ source semantics and downstream stripping/conversion, while retaining the raw
 inequality. App-host policy, tool acquisition/delivery, complete roots,
 content/shader generation and matched gameplay benchmarks remain separate
 open gates. Keep the desktop owner-build fallback.
+
+## J901 — Build the repaired camera player and pass both standard device checks
+
+Date: 2026-10-21. Hypothesis: J900's complete exception-handler copy removes
+J897's IL2CPP failure while preserving the ordinary integrated route. The
+selected source-camera lifecycle remains a separate gate. Reuse J892/J900's
+source ownership and prior-art contracts; no new gameplay or service adapter
+is introduced.
+
+**Build and frozen identity.** Build synchronized commit
+`ffe3e63544d212d78fdc1bd92ef4656662c4ee64` with the exact editor, one shared
+build lock and no source mutation through terminal artifact freezing. Doctor
+and preflight pass. The clean-clone pre-push check passes 1,440 tests with
+83 unavailable-tool/evidence skips. Request
+`20261021T173546.415058Z-4a5570bc98764205ba1979a0e4d38673` succeeds in
+247.757864 s with zero errors. The previous marker stack-analysis error does
+not recur. The source game stage is 6f96 and its corrected camera output is
+2ae5d9, matching the independently qualified profile.
+
+APK SHA-256 is
+`b0f7ae7e2218bb5caa353eb32d2b60ac680e7183b8ec53442d193c0e8af9c45e`.
+Its source snapshot binds 385 authored inputs; 333 same-request pre-strip
+assemblies, 154 original banks and 266 payload files are hash-verified.
+Symbols SHA-256 is
+`67268e5b45795498d88eb30b3d8d226bdc1f86c228d32c1b57a64caff28fee17`;
+libil2cpp Build ID is `96e8b3ba9d09d8ff9bd71b919c68df48e77f0d9f`.
+The actual matching stripped bootstrap and IL2CPP managed backup agree at
+`3463bf2ee1d1bf6d9907a4f4fb094dac7b6f84482710056372b0c54b99ca5f0d`.
+Its reflected ProcessLifetimeOwner getter and RegisterMusicBeforeTerm(Action)
+members pass inspection after the build terminal, not from a prior player.
+
+Preserve driver/source hashes under
+`work/coordination/codex-original-game-audio-build-root/r15/` and the independent
+artifact freeze under
+`work/experiments/original-game-audio/candidate-20261021T174148.908229Z/`.
+The lock records normal release; no editor is stopped or restarted.
+
+**Installation and device controls.** Install that exact frozen APK in place
+on the assigned adopted-storage gameplay device, after fresh placement, backing
+and reserve checks. Sync only its frozen payload through the canonical tools.
+No other device, storage configuration or existing user data is changed.
+The plain check reaches 35.215179 s on Lakes. The stage-exit check reaches
+151.057648 s total, with exactly one original exit to Goolake and 11.839142 s
+of next-stage play. Both report current-build true, empty failures/error/
+firstFailure and appliedRuns unchanged at 13. Their five current-process
+Unity error lines are the existing intentional Windows-bundle negative
+control; no additional current-process Unity error is observed.
+
+The exact run records are
+`work/experiments/baseline/20261021T174508.177116Z/` and
+`work/experiments/baseline/20261021T174854.151207Z/`. Root qualification and
+separate post-run queries are under
+`work/coordination/codex-original-game-audio-device-root/r10/`. Derived
+qualification SHA-256 is
+`6c664c008f0574324c1084f13d34a793d67d4864a71b3b1093b37680233038e4`.
+Installed APK bytes are independently rehashed; owned package placement,
+selector absence, stopped process and display sleep all pass. A read of the
+report between the two modes finds no report yet; the next current-process
+log confirms catalog startup, not a runtime failure. Retain that operator
+observation separately from terminal check results.
+
+**Audio and camera limits.** Original music preload, the composed pre-Term
+guard, original scene callback retirement and the known managed default
+listener census of one are observed in both modes. SceneDef and teleporter
+context are present; source body/camera context is absent with the source
+camera diagnostic off. AddOutput/RemoveOutput return values remain unobserved.
+Passive capture records 453 callbacks/521,856 finite samples in the plain
+check and 456 callbacks/525,312 samples in stage-exit; all measured samples
+are zero, with no nonfinite samples or capture failure. This does not qualify
+playback or physical audibility.
+
+**Disposition.** The authored IL-copy defect is closed through a real player
+build and both standard controls. Diagnostic b0f7ae7e is installed and is the
+latest player verified by both checks; accepted baseline f1550ce0 remains the
+rollback. Camera activation, real target/context, rendering, animation parity
+and natural teardown still require the selected lifecycle run. J899's later
+SDK/compiler metadata changes no runtime source in this frozen player.
