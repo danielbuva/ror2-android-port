@@ -22917,3 +22917,77 @@ Installed 3c72fe05 and accepted f1550ce0 remain unchanged. The fix does not prov
 egg reachability, native tracker selection, boss start, rewards or cleanup. Next
 build committed sources and pass both defaults before repeating the bounded
 Siren continuation; the frozen J885 camera experiment may run independently.
+
+
+## J887 — Activate the source camera listener and retain the camera prerequisite failures
+
+Date: 2026-10-21.
+
+Hypothesis: explicitly enabling J884's source camera and its original listener,
+with the existing point-sound observer, can distinguish the empty managed list
+in J885 from a missing listener lifecycle. Use exactly J885's frozen diagnostic
+APK `3c72fe0554d25be13af32a4a33265ef23f29d831f33b55f4dd571aaa131bb6e5`,
+source `9a238a02e67228bba2f1af47d748eb68c67c8587`, after both standard checks.
+J884 records the current-input source contract and prior art. This changes only
+the private run selection; J886's later Siren source is not installed.
+
+The independently reviewed R2 runner binds the actual baseline results,
+reports, logs, build receipt and APK. Its reviewed manifest SHA-256 is
+`10e41c701e234b0ada61ad14ac4e7cbf67a4ef04d4dbffe8a2b40c9059d5be4e`.
+Root dispatches once under a fresh exclusive gameplay-device claim, with no
+editor operations and a separate final cleanup reserve. The ordinary selected
+Huntress first-stage route uses invincibility assistance, the source-skin/camera
+opt-in and point-sound observation. No second Start, Moon route or other device
+is used. The one-shot marker is retained; the failed outcome is not retried.
+
+Evidence:
+`work/experiments/original-camera-listener-lifecycle/20261021T073157.302243Z/`
+and
+`work/coordination/original-camera-listener-device-plan/r2/attempts/20261021T073138.220500Z-40ebc1e6b400/`.
+The private Root qualification binds the raw report/log, screenshot, selection,
+exception and cleanup observations:
+`work/coordination/original-camera-listener-device-root/r2/root-qualification.json`,
+SHA-256 `e3e1a80da6d3254400f7ce0f096d97fd7c5552a55e9fd238cf1126496a1a8a61`.
+The last report SHA-256 is
+`2794d7f9daa0610f50eae3e5afb33c8ef423c5171775f646751f1b94d882eccd`.
+Raw evidence remains private.
+
+Live play reaches the bounded stop; the final world observation is 36.989609 s.
+The selected skin and Animator initialize. The exact preserved source listener
+is active in the managed default list, its object ID is valid, and the census
+is known with count one. Original audio remains Ready, no-audio false, all
+153 banks complete and the catalog lease held. Native capture arms and reaches
+its render-frame limit: 431 callbacks, 248,256 frames and 496,512 finite samples,
+all zero, with output identity observed and no nonfinite/rejected/capped buffers
+or capture failure. The point-sound observer records four requests, last event
+ID zero and stage one, without an emitter-alive observation or matching null
+reference. This does not establish a successful nonzero event post, native
+listener Add/Remove results, spatial output or physical audibility.
+
+First observed non-control failure is earlier than the final report's error:
+the current-process Unity log reports a null reference in
+`SceneCamera.ConfigureGraphicsSettings` during camera activation, followed by
+`SobelCommandBuffer.OnEnable` and missing Outline Highlight, VisionLimit and
+TranslucentImage shaders. It later contains 5,411 `KeyNotFoundException` headers
+for the camera-rig state dictionary. The saved view shows a wall/ground with no
+visible selected character. The last visual snapshot has no rig target/body,
+owner readiness false and a disabled source camera. Those late scalars are not
+synchronized evidence for the earlier screenshot and do not alone identify the
+pose defect.
+
+The final report records `CameraModeBase.MatchState` through `SetOverrideCam`
+and `RemoveOwnedOverride` during session abandonment. The runner times out
+waiting for the completed-session report; neither that report nor a healthy
+next menu is captured. Listener deactivation/removal and original Term return
+are unobserved. This candidate is not accepted for the opt-in camera route.
+Investigate the source graphics prerequisites and camera-state registration
+before changing pose or suppressing the cleanup exception.
+
+The runner performs cleanup. Subsequent independent successful-shell queries
+explicitly prove selector absent, game process absent and display asleep;
+Root releases the device claim. An unselected `./dev doctor` first refuses
+multiple attached devices; rerunning with the explicit gameplay selector passes
+Bootstrap and reports LAB READY. No install, source change, build or storage
+change occurs. Installed diagnostic remains 3c72fe05; accepted baseline remains
+J850 f1550ce0. Revisit after an authored, host-checked prerequisite/lifecycle
+repair, a committed reproducible build and both standard checks.
