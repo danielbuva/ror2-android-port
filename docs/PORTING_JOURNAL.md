@@ -21747,7 +21747,7 @@ phone execution. Extra-type registrations and unqueried classes remain open.
 runs the actual collector against independently authored API substitutes,
 rejects cycles, foreign parents,
 duplicate IDs/names/objects and ambiguous API definitions before native queries,
-and prove root/abstract/nonobject IDs are not queried. A separate live kernel
+and proves root/abstract/nonobject IDs are not queried. A separate live kernel
 flock control refuses promptly while its verified holder remains alive, starts
 no editor and retains a failure receipt. Project/source drift and scope/query
 coverage controls pass. The combined action/host suite passes 218 tests.
@@ -21763,6 +21763,35 @@ artifacts; SHA-256
 Raw SDK metadata and mappings remain ignored. No APK is produced; the alpha
 be26c21c gameplay qualification remains J869's prior unchanged observation.
 Main's independently built candidate is outside this experiment's acceptance.
+
+**Independent review correction.** Review of `eab62ff` identifies that staging
+creates directories before its later project validator checks ancestor links.
+An owned reproduction with a symlinked rebuild parent redirects four authored
+file writes outside that control's configured work root. Preserve the original
+tree and first refusal gap. No game or SDK is involved in this reproduction.
+
+`f31770cb4724192c186c71621b08b4d7ef40674a` checks lexical/resolved containment
+and ancestor links before the first write. Directory-descriptor traversal and
+exclusive no-follow file creation prevent linked parents/files from redirecting
+writes; each file rechecks scope. Project selection uses the same scope guard.
+New controls cover links at four ancestor depths and replacement of a created
+parent before the first file write, with zero outside additions. The original
+outside files remain unchanged. Seven focused tests plus dispatch pass all
+220 tests; fresh-clone CI on the corrected source passes 1,323 tests with
+60 optional skips.
+
+A new guarded stage and short mutex-protected SDK batch at that commit both
+pass. All 318 report rows, including the same 278 queries, and loaded assembly
+evidence exactly equal the first oracle. Only source identity changes; the
+new report SHA-256 is
+`a7e4aedd8630d914f68fbb87c82d25cbd5ed86059526fa3c6944140aea7a209a`.
+The batch exits 0, releases the mutex and preserves both MCP editors.
+`wrapper-oracle-proof-v2-receipt.json` binds 139 old/new artifacts, including
+the independent review, original reproduction, corrected refusal, source
+snapshots, fresh oracle and CI; SHA-256
+`ea02b991c3750db08297de70703ef2508f13f31ef5320c9dd0b695d3a96afe86`.
+The original receipt, report and comparisons remain intact. This fixes staging
+safety; it changes neither the mapping findings nor their qualification scope.
 
 **Next gate.** Qualify static native flags, cache population and all extra-type
 rules, keeping direct scene-name resolution separate from cache queries. Then
