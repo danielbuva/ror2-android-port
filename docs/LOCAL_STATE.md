@@ -325,6 +325,14 @@ explicit terminal receipt. These reports are comparison evidence only, with
 root generation unqualified; no game or phone build reads them. Failed attempts
 remain available, including their first failing phase when the collector ran.
 
+`phone_manager_context.py OWNER_SDK_BINARY NEW_PRIVATE_REPORT` generates static
+manager registration declarations directly from the pinned owner SDK. No saved
+context-name table, native usage list, scene or oracle report is an input.
+Private `manager-context-*` and `manager-family-*` selectors, comparisons and
+qualification logs under `work/coordination/phone-proof/` are investigation
+evidence only. They supply no game-build input. Context indices describe
+declarations; live state and target/object retention remain separate gates.
+
 `phone_registry.inspect_action` generates
 `work/experiments/phone-registry/<attempt>/` from an explicit JSON request with
 one absolute `binary` path. Only the pinned supplied Unity SDK executable is
