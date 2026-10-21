@@ -25745,3 +25745,83 @@ both-control derived qualification:
 independent final query:
 `88a27419621b055b06b17e0a0806e30e86b6892ca2519d4e356a9aa87de1ca89`.
 Raw logs, captures, middleware, input material and device identifiers stay local.
+
+
+## J927 — Qualify R22 camera lifecycle and preserve the premature render capture
+
+Date: 2026-10-21. Hypothesis: J926's player can collect J922's bounded rendering
+facts while repeating J919's selected source-camera lifecycle with corrected
+phase-specific host predicates. Read J919/J922 and pinned DebugToolkit body
+observation prior art; this reuses the existing owner and report, adding no
+source reconstruction or runtime behavior change.
+
+Bind the exact J926 APK ac1d2176, source 75bd53f, both standard receipts,
+post-strip contracts and fresh idle query. The Main-only route retains its
+600-second claim, 480-second total window, 35-second world observation,
+12-second pause and reserved cleanup. Ordinary Huntress selection stays
+assisted and does not grant permanent progress. The raw run and wrapper pass:
+35.226 s live without report error/first failure, source camera/context ready,
+4,464 original camera pumps, original listener in the managed census, and
+unchanged profile bytes/applied runs. Genuine same-process next-menu return is
+observed. A second gameplay run is not tested.
+
+Completed-session evidence records source owner destruction, display
+deactivation, all five owned material copies released and Animator no longer
+initialized after destruction. Exact managed listener removal is observed,
+with the census returning from two to one. Native Add/Remove return values
+remain discarded by the original wrapper. This qualifies the selected lifecycle
+and menu boundary only; raw animation and stage-to-APK acceptance flags remain
+false. It does not establish complete animation semantics, native listener
+success, whole-process Term/restart or visual parity.
+
+Preserve a host capture failure separately from those passing route predicates.
+The first-ready screenshot is successfully captured, but its associated nested
+render-evidence object has frame/time/camera count zero and no known inventory.
+The host helper accepted an unpopulated serialized object before the producer
+captured a real sample. The image therefore does not establish first-ready
+render evidence. Keep the raw screenshot, timing and passed route unchanged;
+a separate host-only validator proposal rejects those default objects and
+checks producer-shaped arrays/counters. Five synthetic tests pass, including
+valid partial/unknown inventories. No retry or runtime change is hidden here.
+
+The later live report does contain real cached render evidence: frame 2,134,
+realtime 173.107 s, two cameras and twelve renderer records with complete counts.
+Its containing visual report is frame 5,475/realtime 203.326 s, about 30.219 s
+later. The base camera has full viewport, clear mode 2, depth zero and all-layer
+mask; the owned camera has full viewport, clear mode 1, depth 100 and layers zero
+plus thirty. Both target the main display without a target texture. Renderer
+bounds and projections are available, including central projected records and
+one off-screen record. Cached first-shared-material names are unsampled; this
+does not prove persistent missing materials, and later renderer facts must be
+kept distinct. Camera compositing, material availability and transforms remain
+hypotheses requiring separate causal work.
+
+Root views the early and 35-second screenshots. Both retain severe artifacts:
+absent/incomplete character and environment geometry, misplaced or stretched
+shapes and material failures. They are different frames and the cached sample
+is not contemporaneous with either. Existing PC references lack a matched
+scene/camera/survivor receipt, so no visual parity comparison is accepted.
+The output identity still matches; 435 callbacks contain 501,120 finite samples,
+all zero, with no capture failure. Context/lifecycle success does not establish
+playback or explain this sample window.
+
+After the route, an independent query rechecks installed APK bytes and owned
+placement, absent process/selector and display asleep. Its execution context
+joins this route's result and claim; its identical boolean payload to the older
+default query is not used alone as temporal evidence. Release the device claim.
+Main retains diagnostic ac1d2176; accepted J850 stays unchanged. Next: assess
+camera/material facts without conflating timestamps, and observe ordinary
+Commando primary through the separately bounded Siren route. No Moon entry.
+
+Private evidence is under
+`work/experiments/original-camera-listener-lifecycle/20261021T223113.510255Z/`
+and `work/coordination/original-camera-listener-device-plan/r16-root/packet/`.
+Raw result SHA-256:
+`41c0af02a05c4643151288e0149fc603b2628e78438970d7ea5a71557953b020`;
+live report `28b82e315ce64c152f5fa6bffd110bdc7a7d2c5a775559d7b4804bc21734dbc0`;
+completed report `62eedf0ea1742a99df712fe7c4b337d300ee2b8a6b8f2e70c11867398184853b`;
+independent query context
+`384cccf096c93e31ba04d8cfb0dfee06933ccace731d8fd389c36aee692961d2`.
+The host-trigger correction remains local at
+`work/coordination/original-camera-listener-device-plan/render-capture-contract-r2/`.
+Raw images, logs, runtime identities and proprietary data remain ignored.
