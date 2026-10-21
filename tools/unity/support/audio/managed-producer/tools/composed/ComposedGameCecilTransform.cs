@@ -15,16 +15,17 @@ internal static class OriginalGameCecilTransform
     {
         try
         {
-            if (args.Length == 4 && args[0] == "api") return TransformApi(args[1], args[2], args[3]);
+            if (args.Length == 5 && args[0] == "api") return TransformApi(args[1], args[2], args[3], args[4]);
             if (args.Length == 4 && args[0] == "game") return TransformGame(args[1], args[2], args[3], null);
             if (args.Length == 5 && args[0] == "game") return TransformGame(args[1], args[2], args[3], args[4]);
             if (args.Length == 2 && args[0] == "validate-bank-il") return ValidateBankMethod(args[1]);
-            throw new InvalidOperationException("usage: api <7ec-api> <core.dll> <output.dll> | game <current-guarded-RoR2.dll> <core.dll> <output.dll>");
+            if (args.Length == 3 && args[0] == "validate-android-probe") return ValidateAndroidProbe(args[1], args[2]);
+            throw new InvalidOperationException("usage: api <7ec-api> <core.dll> <output.dll> <UnityEngine.CoreModule.dll> | game <current-guarded-RoR2.dll> <core.dll> <output.dll>");
         }
         catch (Exception error) { Console.Error.WriteLine(error.GetType().Name + ": " + error.Message); return 2; }
     }
 
-    private static int TransformApi(string input, string ownerPath, string output)
+    private static int TransformApi(string input, string ownerPath, string output, string unityCorePath)
     {
         Require(Hash(input) == ApiObserverInputSha, "API must be the exact R4 instrumented candidate based on accepted raw 564");
         using (var owner = AssemblyDefinition.ReadAssembly(ownerPath))
@@ -114,13 +115,137 @@ internal static class OriginalGameCecilTransform
                 initialized, 102);
             GuardUnavailableNativeMethod(api.MainModule,
                 FindMethod(engine, "StopPlayingID", "System.UInt32"), initialized, null);
+
+            // Android Application.streamingAssetsPath is a jar:file URI. The
+            // accepted Wwise File.Exists diagnostic therefore cannot establish
+            // whether Init.bnk is present. Keep the exact original filesystem
+            // probe off Android; on Android use the upstream Wwise policy and
+            // leave SoundBankBasePath and every native path untouched.
+            var basePathGetter = FindType(api.MainModule, "AkBasePathGetter");
+            var evaluatePaths = FindMethod(basePathGetter, "EvaluateGamePaths");
+            InsertAndroidJarProbe(api.MainModule, evaluatePaths, unityCorePath);
             api.Write(output);
             VerifyApi(output, ownerPath, apiBefore, new[] { load.FullName, callback.FullName,
                 initialized.FullName, FindMethod(engine, "SetRTPCValueByPlayingID", "System.String", "System.Single", "System.UInt32").FullName,
-                FindMethod(engine, "StopPlayingID", "System.UInt32").FullName });
+                FindMethod(engine, "StopPlayingID", "System.UInt32").FullName, evaluatePaths.FullName }, unityCorePath);
             Console.WriteLine("bank request and result observers injected into exact existing-handle/new-callback paths: " + Hash(output));
         }
         return 0;
+    }
+
+    private static int ValidateAndroidProbe(string path, string unityCorePath)
+    {
+        using (var assembly = AssemblyDefinition.ReadAssembly(path))
+        {
+            var method = FindMethod(FindType(assembly.MainModule, "AkBasePathGetter"), "EvaluateGamePaths");
+            VerifyAndroidJarProbe(assembly.MainModule, method, unityCorePath);
+            VerifyStackHeights(method);
+        }
+        Console.WriteLine("Android-only Init probe contract and stack/control-flow verified");
+        return 0;
+    }
+
+    private static void InsertAndroidJarProbe(ModuleDefinition module, MethodDefinition method, string unityCorePath)
+    {
+        var fileSites = method.Body.Instructions.Where(i => IsCall(i, "System.IO.File", "Exists") &&
+            i.Operand is MethodReference called && called.Parameters.Count == 1 &&
+            called.Parameters[0].ParameterType.FullName == "System.String" && called.ReturnType.FullName == "System.Boolean").ToArray();
+        Require(fileSites.Length == 1, "accepted EvaluateGamePaths must contain exactly one File.Exists(string) probe");
+        var fileProbe = fileSites[0];
+        Require(!method.Body.Instructions.Any(i => i.Operand is Instruction target && ReferenceEquals(target, fileProbe) ||
+            i.Operand is Instruction[] targets && targets.Any(target => ReferenceEquals(target, fileProbe))) &&
+            !method.Body.ExceptionHandlers.Any(h => ReferenceEquals(h.TryStart, fileProbe) || ReferenceEquals(h.TryEnd, fileProbe) ||
+                ReferenceEquals(h.HandlerStart, fileProbe) || ReferenceEquals(h.HandlerEnd, fileProbe) || ReferenceEquals(h.FilterStart, fileProbe)),
+            "File.Exists probe is a branch/EH entry; refusing to splice the platform guard");
+        MethodReference getter;
+        int androidValue;
+        using (var core = AssemblyDefinition.ReadAssembly(unityCorePath))
+        {
+            Require(core.Name.Name == "UnityEngine.CoreModule", "Unity platform API must come from the pinned CoreModule");
+            var application = core.MainModule.Types.Single(t => t.FullName == "UnityEngine.Application");
+            var platform = core.MainModule.Types.Single(t => t.FullName == "UnityEngine.RuntimePlatform");
+            var platformGetter = application.Methods.Single(m => m.Name == "get_platform" &&
+                m.IsStatic && m.Parameters.Count == 0 && m.ReturnType.FullName == platform.FullName);
+            Require(platform.IsEnum && platform.IsValueType && platformGetter.ReturnType.IsValueType,
+                "RuntimePlatform must retain its exact enum/value-type metadata");
+            getter = module.ImportReference(platformGetter);
+            var android = platform.Fields.Single(f => f.Name == "Android" && f.IsStatic && f.IsLiteral && f.HasConstant);
+            androidValue = Convert.ToInt32(android.Constant);
+        }
+        var il = method.Body.GetILProcessor();
+        var nonAndroid = il.Create(OpCodes.Pop);
+        var join = il.Create(OpCodes.Nop);
+        var sequence = new[]
+        {
+            il.Create(OpCodes.Dup),
+            il.Create(OpCodes.Call, getter),
+            il.Create(OpCodes.Ldc_I4, androidValue),
+            il.Create(OpCodes.Bne_Un, nonAndroid),
+            il.Create(OpCodes.Pop),
+            il.Create(OpCodes.Pop),
+            il.Create(OpCodes.Ldc_I4_1),
+            il.Create(OpCodes.Br, join),
+            nonAndroid,
+        };
+        foreach (var instruction in sequence) il.InsertBefore(fileProbe, instruction);
+        il.InsertAfter(fileProbe, join);
+        method.Body.MaxStackSize = Math.Max(method.Body.MaxStackSize, 3);
+        VerifyAndroidJarProbe(module, method, unityCorePath);
+        VerifyStackHeights(method);
+    }
+
+    private static int ResolveAndroidPlatformValue(string unityCorePath, string expectedAssembly)
+    {
+        using (var core = AssemblyDefinition.ReadAssembly(unityCorePath))
+        {
+            Require(core.Name.Name == expectedAssembly, "Unity CoreModule differs from Application.platform's assembly scope");
+            var platform = core.MainModule.Types.Single(t => t.FullName == "UnityEngine.RuntimePlatform");
+            var android = platform.Fields.Single(f => f.Name == "Android" && f.IsStatic && f.IsLiteral && f.HasConstant);
+            return Convert.ToInt32(android.Constant);
+        }
+    }
+
+    private static void VerifyAndroidJarProbe(ModuleDefinition module, MethodDefinition method, string unityCorePath)
+    {
+        var instructions = method.Body.Instructions;
+        using (var core = AssemblyDefinition.ReadAssembly(unityCorePath))
+        {
+            var platform = core.MainModule.Types.Single(t => t.FullName == "UnityEngine.RuntimePlatform");
+            var application = core.MainModule.Types.Single(t => t.FullName == "UnityEngine.Application");
+            var exactGetter = application.Methods.Single(m => m.Name == "get_platform" && m.IsStatic &&
+                m.Parameters.Count == 0 && m.ReturnType.FullName == platform.FullName);
+            Require(platform.IsEnum && platform.IsValueType && exactGetter.ReturnType.IsValueType,
+                "pinned Unity CoreModule must define the exact RuntimePlatform enum getter");
+        }
+        var fileProbe = instructions.Single(i => IsCall(i, "System.IO.File", "Exists") &&
+            i.Operand is MethodReference called && called.Parameters.Count == 1 && called.Parameters[0].ParameterType.FullName == "System.String");
+        var platformCalls = instructions.Where(i => IsCall(i, "UnityEngine.Application", "get_platform")).ToArray();
+        Require(platformCalls.Length == 1 && platformCalls[0].OpCode == OpCodes.Call &&
+            platformCalls[0].Operand is MethodReference platformGetter && platformGetter.Parameters.Count == 0 &&
+            platformGetter.ReturnType.FullName == "UnityEngine.RuntimePlatform" && platformGetter.ReturnType.IsValueType &&
+            platformGetter.ReturnType.Scope.Name == "UnityEngine.CoreModule" &&
+            platformGetter.DeclaringType.FullName == "UnityEngine.Application" &&
+            platformGetter.DeclaringType.Scope.Name == "UnityEngine.CoreModule",
+            "Android probe must use the exact enum-returning CoreModule Application.platform getter once");
+        var nonAndroid = fileProbe.Previous;
+        Require(nonAndroid != null && nonAndroid.OpCode == OpCodes.Pop &&
+            instructions.Count(i => i.OpCode == OpCodes.Bne_Un && i.Operand is Instruction target && ReferenceEquals(target, nonAndroid)) == 1,
+            "non-Android arm must retain the original filesystem probe");
+        var branch = instructions.Single(i => i.OpCode == OpCodes.Bne_Un && i.Operand is Instruction target && ReferenceEquals(target, nonAndroid));
+        var androidValue = ResolveAndroidPlatformValue(unityCorePath, platformCalls[0].Operand is MethodReference getter ? getter.DeclaringType.Scope.Name : "");
+        Require(branch.Previous?.OpCode == OpCodes.Ldc_I4 && Convert.ToInt32(branch.Previous.Operand) == androidValue &&
+            branch.Previous.Previous != null && ReferenceEquals(branch.Previous.Previous, platformCalls[0]),
+            "branch comparison must use pinned RuntimePlatform.Android metadata");
+        Require(nonAndroid.Next == fileProbe && fileProbe.Next?.OpCode == OpCodes.Nop,
+            "non-Android arm must call the original File.Exists then join");
+        var androidArm = branch.Next;
+        Require(androidArm != null && androidArm.OpCode == OpCodes.Pop && androidArm.Next?.OpCode == OpCodes.Pop &&
+            androidArm.Next.Next?.OpCode == OpCodes.Ldc_I4_1 && androidArm.Next.Next.Next?.OpCode == OpCodes.Br &&
+            androidArm.Next.Next.Next.Operand is Instruction targetJoin && ReferenceEquals(targetJoin, fileProbe.Next),
+            "Android arm must discard jar URI and provide true only to the existing warning predicate");
+        Require(instructions.Count(i => IsCall(i, "AkBasePathGetter", "GetPlatformBasePath")) == 1 &&
+            instructions.Count(i => IsCall(i, "AkBasePathGetter", "set_SoundBankBasePath")) == 1,
+            "platform branch must preserve the original bank path calculation and single base-path assignment");
     }
 
     private static void GuardUnavailableNativeMethod(ModuleDefinition module, MethodDefinition method,
@@ -189,7 +314,7 @@ internal static class OriginalGameCecilTransform
     }
 
     private static void VerifyApi(string output, string ownerPath,
-        System.Collections.Generic.Dictionary<string, string> before, string[] changedMethods)
+        System.Collections.Generic.Dictionary<string, string> before, string[] changedMethods, string unityCorePath)
     {
         using (var owner = AssemblyDefinition.ReadAssembly(ownerPath))
         using (var resolver = Resolver(output, ownerPath))
@@ -203,6 +328,9 @@ internal static class OriginalGameCecilTransform
             var initialized = FindMethod(engine, "IsInitialized");
             var rtpc = FindMethod(engine, "SetRTPCValueByPlayingID", "System.String", "System.Single", "System.UInt32");
             var stopPlaying = FindMethod(engine, "StopPlayingID", "System.UInt32");
+            var evaluatePaths = FindMethod(FindType(api.MainModule, "AkBasePathGetter"), "EvaluateGamePaths");
+            VerifyAndroidJarProbe(api.MainModule, evaluatePaths, unityCorePath);
+            VerifyStackHeights(evaluatePaths);
             VerifyStackHeights(load);
             VerifyLoadBankAsyncInstrumentation(load);
             Require(callback.Body.Instructions.Count(i => IsOwnerCall(i, "ObserveBankResult")) == 1, "new-bank result hook count is not one");
@@ -361,7 +489,8 @@ internal static class OriginalGameCecilTransform
             case StackBehaviour.Popi_popi8: case StackBehaviour.Popi_popr4:
             case StackBehaviour.Popi_popr8: case StackBehaviour.Popref_pop1: case StackBehaviour.Popref_popi:
             case StackBehaviour.Push1_push1: return 2;
-            case StackBehaviour.Popi_popi_popi: case StackBehaviour.Popref_popi_popi: return 3;
+            case StackBehaviour.Popi_popi_popi: case StackBehaviour.Popref_popi_popi:
+            case StackBehaviour.Popref_popi_popref: return 3;
             case StackBehaviour.Varpop: case StackBehaviour.Varpush: return -1;
             default: throw new InvalidOperationException("unhandled stack behavior " + behavior + " at " + instruction);
         }

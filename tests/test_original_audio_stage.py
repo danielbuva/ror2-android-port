@@ -16,7 +16,9 @@ stage_module = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(stage_module)
 TEST_CURRENT_API_SHA256 = "c" * 64
 stage_module.LINEAGE["composed_api_sha256"] = TEST_CURRENT_API_SHA256
-stage_module.ALLOWED_RESTORE_PREIMAGES["restore_api"] = frozenset({stage_module.PREVIOUS_COMPOSED_API_SHA256, TEST_CURRENT_API_SHA256})
+stage_module.ALLOWED_RESTORE_PREIMAGES["restore_api"] = frozenset(
+    {stage_module.LEGACY_RESTORE_API_SHA256, stage_module.PREVIOUS_COMPOSED_API_SHA256, TEST_CURRENT_API_SHA256}
+)
 
 ACCEPTED = "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88"
 DEFAULT_ROLES = list(stage_module.DEFAULT_ROLES)
@@ -196,9 +198,24 @@ class StageTests(unittest.TestCase):
         differences = {key for key in stage_module.LINEAGE if stage_module.LINEAGE[key] != stage_module.PREVIOUS_LINEAGE.get(key)}
         self.assertEqual({"composed_api_sha256"}, differences)
         self.assertEqual(
-            "793f22866c85bbcf104f20f5c1f619062eaad9f5414a217b602fe758c71e01b9",
+            "9a3f9911697b4ce28a955dff09f618e0f2662083e56eeb28ff5b6ecc02b588f3",
             stage_module.PREVIOUS_LINEAGE["composed_api_sha256"],
         )
+
+    def test_legacy_793_is_restore_only_and_cannot_start_new_optin(self):
+        self.assertIn(stage_module.LEGACY_RESTORE_API_SHA256, stage_module.ALLOWED_RESTORE_PREIMAGES["restore_api"])
+        self.assertNotIn("e" * 64, stage_module.ALLOWED_RESTORE_PREIMAGES["restore_api"])
+        with self.temporary_directory() as temp:
+            root = Path(temp)
+            project = root / "project"
+            project.mkdir()
+            previous = {"lineage": stage_module.LEGACY_RESTORE_LINEAGE}
+            with (
+                mock.patch.object(stage_module, "read_artifacts", return_value=({}, [], {"requested": True})),
+                mock.patch.object(stage_module, "inspect_previous_stage", return_value=(previous, [])),
+            ):
+                with self.assertRaisesRegex(ValueError, "legacy 793 API lineage must be restored"):
+                    stage_module.stage(project, root / "unused-manifest.json", None, None)
 
     def test_owned_requested_predecessor_upgrades_to_current_requested_bytes(self):
         with self.temporary_directory() as temp:

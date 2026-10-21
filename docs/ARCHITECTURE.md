@@ -551,6 +551,11 @@ sidecars. J865 adds one exact predecessor lineage for receipt-verified upgrade
 or restoration; unknown module pairs still refuse. The managed transform checks
 bank-request stack/branch placement before accepting its output. Current owner
 source hashes and the historical ancestor manifest have separate artifact fields.
+J870 preserves the original bank-path calculation while bypassing its filesystem
+existence warning on Android, where StreamingAssets is an APK URI. The transform
+imports the pinned editor's exact platform getter and enum; non-Android keeps
+the original probe. The previous valid API can upgrade in place; the older
+invalid-IL API is accepted only for restoration to default off.
 The lower-level `original_game_audio.py` is host staging support;
 current Unity project mutation belongs to the mutex-protected build action.
 Use a full bundle build for the first audio candidate: code-only payload reuse

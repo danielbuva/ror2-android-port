@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import hashlib
 import importlib.util
-import json
 from pathlib import Path
 import tempfile
 import unittest
@@ -66,6 +65,7 @@ class ProducerManifestTests(unittest.TestCase):
             self.assertEqual("ordinary", producer.classify_project_pair(producer.DEFAULT_API_SHA256, producer.DEFAULT_GAME_SHA256))
             self.assertEqual("previous-audio", producer.classify_project_pair(old_api, game))
             self.assertEqual("current-audio", producer.classify_project_pair(current_api, game))
+            self.assertEqual("legacy-restore-only", producer.classify_project_pair(producer.LEGACY_RESTORE_API_SHA256, game))
             with self.assertRaisesRegex(ValueError, "neither ordinary guarded"):
                 producer.classify_project_pair("d" * 64, game)
             with self.assertRaisesRegex(ValueError, "neither ordinary guarded"):

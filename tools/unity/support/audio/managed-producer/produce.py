@@ -22,7 +22,7 @@ EXPECTED = {
     "raw_api": "564b74ec232e81af8fa4b65c17537a4d05890d9181281eab0bc28bd441a3a781",
     "adapted_api": "2bd973178c99bfcb4d20510e2d1eac7efa9dd6d698237f2edfa486171bc2f272",
     "observed_api": "7ec842ee2244590f9227c44280ebbb4a0debf9b83ad1958c045d68dec47e0af9",
-    "composed_api": "9a3f9911697b4ce28a955dff09f618e0f2662083e56eeb28ff5b6ecc02b588f3",
+    "composed_api": "d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23",
     "raw_game": "a5f7d83c7e6872fdd6099fdc299adb7d4fa03cbf465e526d6f5efcc35c2c281d",
     "guarded_game": "3124a2ed9cf458acee78b1beaf969590b184be452e2b3aa5a8852df82ff95d30",
     "composed_game": "1034a747e31a3b79554b9cb06f941c7acabaa9e0ee82c2a00abc4b24f9327c1c",
@@ -339,7 +339,15 @@ def main() -> None:
     composed_tool = composed_tool_out / "ComposedGameCecilTransform.dll"
     composed_api = out / "api-instrumented-composed.dll"
     run(
-        [str(args.dotnet.resolve(strict=True)), str(composed_tool), "api", str(observed_api), str(core), str(composed_api)],
+        [
+            str(args.dotnet.resolve(strict=True)),
+            str(composed_tool),
+            "api",
+            str(observed_api),
+            str(core),
+            str(composed_api),
+            str(editor.parent.parent / "Managed/UnityEngine/UnityEngine.CoreModule.dll"),
+        ],
         cwd=ROOT,
         env=env,
         log=out / "logs/composed-api.log",
