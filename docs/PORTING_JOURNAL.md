@@ -26232,3 +26232,69 @@ independent roots. Next requires independently verified target/state semantics
 and native-usage equality; the J895 failed 38-versus-42 comparison is retained.
 J929's app-host refusal remains failed. Keep Route A, the working Android
 pipeline and desktop fallback; no gameplay or installer readiness is established.
+
+
+## J933 — Preserve Siren admission and observe the stock Commando targeting timeout
+
+Date: 2026-10-21. Hypothesis: J930's later partial live-ID projection must not
+invalidate an already proved initial registration when the exact source census,
+controller, encounter and stage identity remain fixed. Consult J930 and the
+receipt-bound original Listening metadata; pinned R2API.Director scene-name
+knowledge remains supporting prior art. The registered slots retain Unity-null
+objects while the diagnostic projects live objects. A subset alone does not
+prove egg deaths. Do not relax native boss identity or completion acceptance.
+
+**Change and controls.** Independently review the host-only R3 observation
+contract under `work/coordination/original-siren-r22-commando-triage/r3/` and
+`review-r3/`; 70 host tests pass. Root binds its separate
+`work/coordination/original-siren-next-after-r20/commando-root-r4/` copy to the
+unchanged J926 R22 APK
+ac1d2176717b526ed70c1b836e55b0dda8e27cc2066c9823f8f642ceffc33195,
+source 75bd53f, and both passing standard controls. This changes host
+observation only, with no new runtime source, rebuild input or APK. Require an
+exact initial 12-ID match before recording an immutable admission baseline.
+Thereafter a unique positive live subset may continue only with the same owner,
+source census and 12 registered slots; foreign/replacement identities refuse.
+Retain at most 64 copied scalar/ID poll receipts and count excess polls. Keep the
+three-transition, 180 s source-stage, 900 s observation and cleanup bounds.
+Moon/transition four remains refused. Stock Commando/default skills use the
+existing invincibility/high-damage/fast-charge diagnostic assists, with no
+developer survivor/loadout selection or movement/jump override.
+
+**Evidence and first failure.** Preserve
+`attempts/20261021T231518.146897Z-06a552803669/result.json` under that Root copy;
+SHA-256 is
+deff9a985aaad14df0e647464026d445fa43cf3c1da4e5f19bfa1bd8abeb3c3a.
+Commando again completes Lakes → Goolake → Wisp Graveyard → Ship Graveyard
+through three original boss/charge/reward/exit paths. The immutable baseline
+contains the exact 12 source/native IDs. Two retained admission polls share a
+stage age of 1.9564 s; repeated host polls are not two distinct game frames.
+The 64 retained receipts contain one pending, two admitted and 61 valid
+post-admission subset observations; 83 additional polls are counted as truncated.
+The last retained receipt, about 76.54 s after entry, projects ten live IDs from
+12 registered slots. Do not describe unretained polls as independently
+reconstructable, or these missing IDs as proven kills.
+
+The original 180 s stage budget expires without native encounter start, exact
+boss identity or completion. Final world time is about 523.09 s. The egg input
+reports 3,679 primary-request samples and 2,061 requested fixed ticks; its last
+selected target remains an original egg, but the last request is released with
+`source-aim-occluded` / `no-visible-egg-primary-released`. The separate navigation
+recorder never starts, so it supplies no path samples. These observations do
+not prove damage delivery, death cause, or the geometry responsible for the
+stall. The first failure is the native encounter/identity timeout. The late
+cleanup report also retains an original-audio lifecycle error after passive
+capture stop. Profile comparison reports no difference. This is failed assisted
+gameplay evidence, not ordinary-difficulty, controller or Siren acceptance.
+
+**Cleanup and next action.** Preserve the late failure rather than accepting
+force-stop as in-game teardown. The runner removes its selector, stops the
+process and requests sleep. A separate Root query rehashes installed bytes,
+verifies owned placement and confirms absent process/selector plus the asleep
+display. Its `post-run-query-context.json` SHA-256 is
+3f375fa886d7cce986a823aa5bd0e51a9813a82dd353b243ca4e206a3a98b389.
+Release the device claim only after that query passes. Accepted baseline stays
+J850; Main retains diagnostic R22. Investigate exact selected-target occlusion
+and source navigation evidence before changing gameplay input. Continue the
+already reviewed music/camera source through the next full build; neither this
+host predicate repair nor a missing live ID establishes audio or visual success.
