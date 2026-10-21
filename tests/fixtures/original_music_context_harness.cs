@@ -41,8 +41,8 @@ internal static class MusicObservationHarness
         Check(!PortSessionOriginalMusicControllerOwner.IsSuccessfulGlobalRtpcRead(AKRESULT.AK_Success, float.NaN, (int)AkQueryRTPCValue.RTPCValue_Global), "non-finite query is unknown");
         Check(!PortSessionOriginalMusicControllerOwner.IsSuccessfulGlobalRtpcRead(AKRESULT.AK_Success, 80f, (int)AkQueryRTPCValue.RTPCValue_GameObject), "non-global resolved type is not reported as global");
 
-        var main = new MusicTrackDef { name = "main-track" };
-        var boss = new MusicTrackDef { name = "boss-track" };
+        var main = new MusicTrackDef { cachedName = "main-track" };
+        var boss = new MusicTrackDef { cachedName = "boss-track" };
         SceneCatalog.mostRecentSceneDef = new SceneDef { name = "test-scene", cachedName = "test-scene", mainTrack = main, bossTrack = boss };
         TeleporterInteraction.instance = new TeleporterInteraction { isIdle = false };
         var controller = new MusicController { name = "source-controller", enableMusicSystem = true };

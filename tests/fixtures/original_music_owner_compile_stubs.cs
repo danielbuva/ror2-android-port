@@ -112,7 +112,12 @@ namespace RoR2
         public void PreloadForCutsceneStart() { }
     }
 
-    public class MusicTrackDef : Object { }
+    public class MusicTrackDef : Object
+    {
+        [Obsolete(".name should not be used. Use .cachedName instead.", true)]
+        public new string name;
+        public string cachedName;
+    }
 
     public static class LegacyResourcesAPI
     {

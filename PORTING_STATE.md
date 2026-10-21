@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-21 after **J924/J921/J923/J922/J920/J919**. Diagnostic 8f33e1a9
+Last updated 2026-10-21 after **J925/J924/J921/J923/J922/J920/J919**. Diagnostic 8f33e1a9
 passes both standard checks. Its exact music-output identity matches the selector
 and callback, but all three bounded PCM windows contain only zero samples.
 The selected source camera supplies context and cleans up its owned skin/listener;
@@ -9,6 +9,8 @@ menu is observed; a second run is untested. The raw selected-run host assertion
 failure remains preserved separately. Main retains 8f33e1a9, independently
 rehashed, stopped, selector absent and asleep. Accepted baseline stays f1550ce0.
 J922's render observer and J923's read-only music context await the next player.
+R21 refused player dispatch on an obsolete track-name API; J925 repairs the
+three reads and strengthens the host compiler fixture. R22 is next.
 J924 reaches Siren through three natural transitions, but the native encounter
 and exact boss identity time out; ordinary Commando primary is the next test.
 This page is the current snapshot only: replace its

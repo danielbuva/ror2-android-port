@@ -1583,3 +1583,11 @@ the accepted local API/game assemblies and official local SDK query surface;
 no implementation, SDK/game binary, decompiled source, bank or private identity
 is copied. Generated requests, metadata inspection and device reports remain
 ignored. The normal producer regenerates this staged source from public inputs.
+
+
+J925 changes three authored music-track identity observations to the current
+cached-name API. The synthetic host fixture now rejects the obsolete accessor,
+and the existing portable compile suite checks the regression. Owner cohort,
+producer and camera pins refresh together. No protected implementation, game
+asset, middleware binary, private path or identifier is added. Runtime source
+regeneration is required; this audit does not qualify a player or playback.

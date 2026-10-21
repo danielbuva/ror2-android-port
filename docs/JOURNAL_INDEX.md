@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J925](PORTING_JOURNAL.md#j925--repair-the-current-musictrackdef-cached-name-compiler-contract) | 2026-10-21 | Repair the current MusicTrackDef cached-name compiler contract | Date: 2026-10-21. |
 | [J924](PORTING_JOURNAL.md#j924--preserve-the-bounded-siren-timeout-and-ordinary-primary-next-test) | 2026-10-21 | Preserve the bounded Siren timeout and ordinary-primary next test | Date: 2026-10-21. |
 | [J921](PORTING_JOURNAL.md#j921--construct-and-load-the-authored-player-from-actual-android-compilerstripperconverter-outputs) | 2026-10-21 | Construct and load the authored player from actual Android compiler/stripper/converter outputs | Date: 2026-10-21. |
 | [J923](PORTING_JOURNAL.md#j923--observe-the-original-selected-music-track-and-global-rtpc-context) | 2026-10-21 | Observe the original selected music track and global RTPC context | Date: 2026-10-21. |

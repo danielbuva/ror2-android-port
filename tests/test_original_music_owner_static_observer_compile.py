@@ -97,6 +97,25 @@ class OriginalMusicOwnerStaticObserverCompileTests(unittest.TestCase):
             self.assertEqual(ran.returncode, 0, ran.stdout + ran.stderr)
             self.assertIn("PASS: 42 music-context and read-only RTPC assertions", ran.stdout)
 
+    def test_obsolete_track_name_regression_is_rejected_by_compiler(self) -> None:
+        source = OWNER.read_text(encoding="utf-8")
+        for supported, obsolete in (
+            ("scene.bossTrack.cachedName", "scene.bossTrack.name"),
+            ("scene.mainTrack.cachedName", "scene.mainTrack.name"),
+            ("current.cachedName", "current.name"),
+        ):
+            self.assertEqual(source.count(supported), 1)
+            source = source.replace(supported, obsolete)
+        with tempfile.TemporaryDirectory(prefix="music-track-name-mutant-") as temp:
+            mutated_owner = Path(temp) / OWNER.name
+            mutated_owner.write_text(source, encoding="utf-8")
+            output = Path(temp) / "ShouldNotCompile.dll"
+            result = self.compile_sources(mutated_owner, output)
+            diagnostics = result.stdout + result.stderr
+            self.assertNotEqual(result.returncode, 0, diagnostics)
+            self.assertGreaterEqual(diagnostics.count("CS0619"), 3, diagnostics)
+            self.assertFalse(output.exists())
+
 
 if __name__ == "__main__":
     unittest.main()

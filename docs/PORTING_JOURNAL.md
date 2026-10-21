@@ -25598,3 +25598,56 @@ final report `1659d35a8f9b50dc3e4f5db18ab55f5c7fbe3f14cd6a5e429cc62946d3487da7`;
 independent query `fe6aa7c6d295f835e940a83669db7e95bc35c562220f3d28c3c5636db8394d6c`.
 Raw game/device evidence remains ignored. Revisit after a separately bounded
 ordinary-primary run records native encounter start and exact boss identity.
+
+
+## J925 — Repair the current MusicTrackDef cached-name compiler contract
+
+Date: 2026-10-21. Hypothesis: J922/J923's observers can be built without changing
+original music or rendering behavior. Freeze source c276dbf with 393 authored
+inputs after J924 and the independently reviewed J921 merge. Explicit doctor
+and preflight pass. Preserve the R21 attempt and its terminal failure instead
+of retrying inside that evidence directory.
+
+The full-build workflow stages the committed source and requests refresh, but
+the editor's current-compilation guard refuses stale player dispatch. A fresh
+pinned-MCP inspection identifies three CS0619 errors in the authored music
+observer: current MusicTrackDef forbids its name accessor and requires
+cachedName. No new player is dispatched or frozen, no APK is installed, and
+J919 remains the separately verified installed diagnostic. The shared build
+mutex releases normally; no cache clearing or editor restart is required for
+this source error. This is a real compiler-contract failure missed by J923's
+simplified host fixture, not a music playback result.
+
+Use cachedName at precisely the scene main/boss candidate-name and actual
+selected-track-name reads. Preserve null handling, sampling/failure boundaries,
+source track dispatch, volume queries and lifecycle. Tighten the authored
+fixture to reject the forbidden accessor and initialize its synthetic tracks
+through cachedName. Add the compiler mutant to the existing portable owner
+suite, rather than introducing a private preview dependency. Four actual-owner
+host tests pass in 2.647 s, including the existing 42 context assertions and
+rejection of all three restored forbidden accesses. The tests skip without
+the editor's Mono/Roslyn; no game or SDK bytes enter public CI.
+
+Independent narrow source review is GO for the three reads. Root verifies the
+final private packet and integrates the portable fixture variant, then refreshes
+the owner cohort, producer and camera pins together. Nine producer, two cohort
+and nine generation-cache host tests pass; Ruff passes for all changed Python.
+J923's prior-art/API knowledge remains applicable; this changes only an observed
+current-input API contract, adding no middleware workaround or reconstruction.
+The new owner SHA-256 is
+`4240cce62ab829d8cfc0b83fce2c6eecbc358fba3c9e661870121b9fc0387356`;
+owner cohort manifest
+`55e376626717a7c0ab00fd52bede30addb41492c0b82e200f9669fa2112e1e0e`.
+This changes rebuild-staged authored source and requires producer regeneration.
+
+Private evidence: `work/coordination/codex-original-game-audio-build-root/r21/`
+(including terminal failure and root-failure-triage), and
+`work/coordination/original-music-track-name-fix/` (proposal and independent
+review). Final proposal manifest SHA-256
+`280eb90ec830dce706e8d7821c04b190f1be7cf079a9814b476ca914dde45c60`;
+failed driver terminal receipt
+`a21dc6fecd03299aa688d77575463aa77033b85f750826d330ac96ea56cad7af`.
+Revisit by building a separate R22 attempt, retaining the versioned R21
+post-strip metadata contract, and qualifying its actual same-request observer
+members before both default controls and targeted interpretation. Compilation,
+post-strip retention, runtime behavior and physical audibility remain distinct.

@@ -524,8 +524,8 @@ public sealed class PortSessionOriginalMusicControllerOwner : MonoBehaviour
             teleporter && teleporter.isIdle,
             snapshot.sceneBossTrackPresent, snapshot.sceneMainTrackPresent);
         snapshot.sceneTrackCandidateName = snapshot.sceneTrackCandidateKind == "boss_track"
-            ? scene.bossTrack.name
-            : (snapshot.sceneTrackCandidateKind == "main_track" ? scene.mainTrack.name : null);
+            ? scene.bossTrack.cachedName
+            : (snapshot.sceneTrackCandidateKind == "main_track" ? scene.mainTrack.cachedName : null);
         try
         {
             snapshot.sceneTrackHookObservationKnown = pickTrackHookField != null;
@@ -549,7 +549,7 @@ public sealed class PortSessionOriginalMusicControllerOwner : MonoBehaviour
                 MusicTrackDef current = currentTrackGetter.GetValue(ownedController, null) as MusicTrackDef;
                 snapshot.currentTrackObserved = true;
                 snapshot.currentTrackPresent = current;
-                snapshot.currentTrackName = current ? current.name : null;
+                snapshot.currentTrackName = current ? current.cachedName : null;
                 snapshot.currentTrackInstanceId = current ? current.GetInstanceID() : 0;
             }
             catch
