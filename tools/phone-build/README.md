@@ -20,6 +20,27 @@ IL2CPP converter. A build-tool .NET host is independent of the game's native
 IL2CPP runtime. Compare all generated C++ and metadata against the desktop
 baseline. A shell test does not qualify an app sandbox or a complete player.
 
+`metadata/` is a current experimental metadata-only reader. It takes an explicit
+JSON list of `{group, path}` assembly inputs and a new output filename, hashes
+each input before/after, and never executes inspected code. Schema 2 preserves
+full assembly identities, declared references, local/external base scopes and
+exported types/forwarders. Multiple-module assemblies refuse. The existing
+`phone-root-contract` host action uses the reader for fixture coverage; its
+short-name candidates remain guesses. Default compilation uses host .NET 10
+and the exact supplied SDK's Cecil. The separate scoped net8.0 reader/resolver
+has [J866's Android shell proof](../../docs/PORTING_JOURNAL.md#j866--qualify-scoped-sdk-assembly-metadata-and-forwarding-on-android);
+app-host policy and complete root production remain separate gates.
+An explicit `MetadataTargetFramework` MSBuild property selects another build-tool
+target when its reference pack is supplied; this never selects a game backend.
+The authored `phone_managed_types.MetadataUniverse(inventory, group)` helper
+resolves only within one explicit group, with exact identity/version checks,
+forwarding paths and managed inheritance. It refuses missing dependencies and
+ambiguity, and does not produce native identities, scene roots or build inputs.
+Its standalone invocation is
+`python3 -I -S scripts/lab/phone_managed_types.py METADATA.json GROUP NEW_REPORT.json`.
+It requires every forwarding entry in that group to resolve, binds the input
+hash, refuses output overwrite/input drift and keeps root qualification false.
+
 ```sh
 ./dev prototype --action phone-content-fixture
 ./dev prototype --action phone-content-check --target <generated-project>

@@ -34,8 +34,10 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       adds restricted fixture SDK/package-derived module policy. Captured scene
       roots and managed compilation remain explicit inputs.
       [J864](PORTING_JOURNAL.md#j864--read-persistent-native-class-ids-from-the-pinned-sdk-on-android)
-      adds class-ID metadata; managed wrapper mapping and complete scene/manager
-      usage still need independent producers.
+      adds class-ID metadata. Following
+      [J866's scoped metadata qualification](PORTING_JOURNAL.md#j866--qualify-scoped-sdk-assembly-metadata-and-forwarding-on-android),
+      qualify SDK wrapper-search decoding and complete scene/manager usage with
+      independent producers.
 - [ ] Benchmark any alternative pipeline with pinned versions/options/shaders and
       matched device workloads; IL2CPP alone does not prove equivalent performance.
 - [ ] Qualify the isolated owner-build environment; the alpha device is alpha's

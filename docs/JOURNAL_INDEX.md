@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J866](PORTING_JOURNAL.md#j866--qualify-scoped-sdk-assembly-metadata-and-forwarding-on-android) | 2026-10-20 | Qualify scoped SDK assembly metadata and forwarding on Android | 2026-10-20. |
 | [J867](PORTING_JOURNAL.md#j867--build-the-original-audio-player-preserve-its-receipt-refusal-and-package-the-missing-cohort-witness) | 2026-10-20 | Build the original-audio player, preserve its receipt refusal and package the missing cohort witness | 2026-10-20. |
 | [J865](PORTING_JOURNAL.md#j865--repair-the-first-composed-audio-il2cpp-bank-observer-failure) | 2026-10-20 | Repair the first composed-audio IL2CPP bank-observer failure | 2026-10-20. |
 | [J864](PORTING_JOURNAL.md#j864--read-persistent-native-class-ids-from-the-pinned-sdk-on-android) | 2026-10-20 | Read persistent native class IDs from the pinned SDK on Android | 2026-10-20. |

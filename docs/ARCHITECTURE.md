@@ -112,8 +112,22 @@ editor/player SDK managed metadata with supplied pinned Cecil, and separates
 explicit native-class attributes from short-name guesses. It executes only the
 authored reader, never the inspected assemblies. Results/source hashes and
 failures remain under `work/experiments/phone-roots/`; it generates no roots,
-installs no package and performs no editor mutation. Host .NET 10 qualification
-does not establish an Android implementation or native hierarchy completeness.
+installs no package and performs no editor mutation. The original coverage
+action uses host .NET 10. The separate scoped net8.0 reader/resolver has J866's
+Android shell qualification; app hosting and complete roots remain unqualified.
+The metadata reader's schema 2 also records full assembly identities, declared
+references, base-type scopes and exported/forwarded types without resolving or
+executing them. `phone_managed_types.py` owns pure investigation support for an
+explicitly selected metadata group: it resolves exact scopes and forwarding
+chains, including nested exports, and proves managed inheritance only when
+every required definition is present. Duplicate assembly/type identities,
+unsupported module exports, cycles and missing dependencies refuse. It never
+fills gaps from another group or substitutes managed bases for native bases.
+Setup is an explicit schema-2 inventory/group; teardown releases the in-memory
+index. Its standalone metadata/group/new-output invocation verifies every
+forwarding entry, binds the inventory hash, refuses output overwrite or input
+drift, and emits a private observation report. No game build or linker stage
+consumes this helper.
 
 `phone_registry.py` and `phone_registry_literals.py` own separate experimental
 static SDK metadata support.
