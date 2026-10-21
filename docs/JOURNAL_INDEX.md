@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J869](PORTING_JOURNAL.md#j869--decode-pinned-sdk-wrapper-search-order-on-android) | 2026-10-20 | Decode pinned SDK wrapper-search order on Android | 2026-10-20. |
 | [J870](PORTING_JOURNAL.md#j870--preserve-android-bank-paths-while-removing-an-invalid-filesystem-warning) | 2026-10-20 | Preserve Android bank paths while removing an invalid filesystem warning | Date: 2026-10-20. |
 | [J868](PORTING_JOURNAL.md#j868--initialize-the-original-game-audio-owner-and-banks-but-retain-path-point-sound-and-output-failures) | 2026-10-20 | Initialize the original game audio owner and banks, but retain path, point-sound and output failures | 2026-10-20. |
 | [J866](PORTING_JOURNAL.md#j866--qualify-scoped-sdk-assembly-metadata-and-forwarding-on-android) | 2026-10-20 | Qualify scoped SDK assembly metadata and forwarding on Android | 2026-10-20. |

@@ -22,6 +22,7 @@ SDK-native metadata into stripping/conversion: [J859](PORTING_JOURNAL.md#j859--g
 Restricted fixture module policy into stripping/conversion: [J862](PORTING_JOURNAL.md#j862--derive-authored-fixture-module-policy-from-owner-sdk-and-package-data-on-android).
 Persistent native class-ID prerequisite: [J864](PORTING_JOURNAL.md#j864--read-persistent-native-class-ids-from-the-pinned-sdk-on-android).
 Scoped managed metadata/forwarding on Android: [J866](PORTING_JOURNAL.md#j866--qualify-scoped-sdk-assembly-metadata-and-forwarding-on-android).
+SDK normal-path wrapper-search metadata: [J869](PORTING_JOURNAL.md#j869--decode-pinned-sdk-wrapper-search-order-on-android).
 
 **Finding:** this repository has no demonstrated phone-only build path. Many
 preparation and packaging stages have Android-capable open-source building
@@ -48,8 +49,9 @@ policy from supplied SDK/package data, without staging captured policy arrays.
 Project scene usage, general module policy and complete independent linker
 roots remain unproduced.
 J864 independently reads persistent native class IDs as another prerequisite;
-J866 qualifies scoped managed metadata/forwarding on Android. SDK wrapper-search
-decoding and complete scene/manager/dependency usage remain open.
+J866 qualifies scoped managed metadata/forwarding on Android; J869 decodes the
+SDK's normal-path wrapper-search metadata there. Complete wrapper-cache/mapping
+and scene/manager/dependency usage remain open.
 These are build-pipeline problems; keep the game runtime
 and desktop fallback while investigating them independently.
 

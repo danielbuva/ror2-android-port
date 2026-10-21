@@ -41,6 +41,19 @@ Its standalone invocation is
 It requires every forwarding entry in that group to resolve, binds the input
 hash, refuses output overwrite/input drift and keeps root qualification false.
 
+`phone-wrapper-search` is current experimental SDK metadata support. Its
+explicit `{binary}` request stages the pinned owner SDK as data and the authored
+`phone_wrapper_search.py`, `phone_registry.py` and `phone_registry_literals.py`
+readers. The standalone command is
+`python3 -I -S phone_wrapper_search.py OWNER_SDK_BINARY NEW_PRIVATE_REPORT.json`.
+It extracts assembly/namespace lookup order with bounded argument, branch and
+return checks, including Darwin variadic stack arguments. It reads no earlier
+SDK dump or captured mapping, executes no SDK code and produces no scene roots
+or game input. Output and input drift refuse; failed attempts remain private.
+Its bounded Android shell qualification is recorded in
+[J869](../../docs/PORTING_JOURNAL.md#j869--decode-pinned-sdk-wrapper-search-order-on-android);
+complete wrapper-cache/mapping, scene usage and app hosting remain open.
+
 ```sh
 ./dev prototype --action phone-content-fixture
 ./dev prototype --action phone-content-check --target <generated-project>

@@ -35,8 +35,9 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       roots and managed compilation remain explicit inputs.
       [J864](PORTING_JOURNAL.md#j864--read-persistent-native-class-ids-from-the-pinned-sdk-on-android)
       adds class-ID metadata. Following
-      [J866's scoped metadata qualification](PORTING_JOURNAL.md#j866--qualify-scoped-sdk-assembly-metadata-and-forwarding-on-android),
-      qualify SDK wrapper-search decoding and complete scene/manager usage with
+      [J866's scoped metadata qualification](PORTING_JOURNAL.md#j866--qualify-scoped-sdk-assembly-metadata-and-forwarding-on-android)
+      and [J869's SDK search metadata](PORTING_JOURNAL.md#j869--decode-pinned-sdk-wrapper-search-order-on-android),
+      qualify complete wrapper-cache/mapping and scene/manager usage with
       independent producers.
 - [ ] Benchmark any alternative pipeline with pinned versions/options/shaders and
       matched device workloads; IL2CPP alone does not prove equivalent performance.

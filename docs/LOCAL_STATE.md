@@ -243,6 +243,26 @@ private SDK search-sequence/cache observations and bounded oracle comparisons.
 Those observations are unqualified research, never build inputs or public
 constants. A later SDK decoder needs its own version-bound producer/contract.
 
+`phone_wrapper_search.inspect_action` generates
+`work/experiments/phone-wrapper-search/<attempt>/` from an explicit pinned
+owner-binary request. The unchanged private SDK, authored search/registry/
+literal readers, input hashes, `search.json` and result/log files form the
+attempt. This report reads SDK bytes directly; it consumes no earlier search
+observation, captured root row or game file. The SDK and resulting literals
+stay private. A phone replay may select an existing hash-verified owner-SDK
+copy through its explicit owned-workspace receipt, stage fresh authored readers
+and write new outputs; no timestamped SDK path is embedded in source. Complete
+wrapper-cache and scene-root inputs remain unsupported.
+`wrapper-search-on-android.py` and its explicit stage/run selectors retain J869's
+fresh owned child, copied committed sources/controls, existing read-only SDK
+receipt selection, fresh capacity, tool/input hashes and refusal results.
+`wrapper-search-zero-register-*` preserves the first source's synthetic
+origin-proof failure and corrected controls. The later
+`wrapper-resolution-observation-v3*` uses the decoded phone search report with
+explicit prior inventory/registry/oracle selectors for comparison only; cache
+population remains unqualified. The versioned proof binds those prerequisite
+inputs and retains the earlier core-only receipt.
+
 `phone_registry.inspect_action` generates
 `work/experiments/phone-registry/<attempt>/` from an explicit JSON request with
 one absolute `binary` path. Only the pinned supplied Unity SDK executable is

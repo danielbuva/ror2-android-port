@@ -361,6 +361,21 @@
     "stdout": "",
     "exit": null
   },
+  "phone-wrapper-search": {
+    "calls": [
+      {
+        "module": "phone_wrapper_search",
+        "function": "inspect_action",
+        "args": [
+          "lab"
+        ],
+        "kwargs": {}
+      }
+    ],
+    "effects": [],
+    "stdout": "",
+    "exit": null
+  },
   "phone-native-registry": {
     "calls": [
       {
