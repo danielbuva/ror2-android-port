@@ -24421,3 +24421,84 @@ under `work/coordination/ci-cleanup-background-next/r1/root-push.log`. Move the
 logs to the directory resolved by Git's own private-state path API, so neither
 a primary checkout nor a linked worktree acquires untracked cleanup files.
 The clean-repository regression remains enabled and the next hook reruns it.
+
+## J905 — Feed the Android-compiled Unity fixture into a separate stripping handoff
+
+Date: 2026-10-21. Hypothesis: J902's actual Android compiler outputs can feed
+the existing authored fixture stripper without changing the earlier exact
+replay contract or requiring desktop-compiled fixture bytes. Retain Route A,
+the renderer, desktop fallback and explicit captured scene/editor roots.
+
+**Prior knowledge and boundary.** Reuse J862's qualified SDK/module-policy
+stripping template and J902's fixed public Unity API source/compiler profile.
+The new reference assembly matches the independent SDK fixture. Read-only
+metadata/IL observations also match six authored types, 32 fields and fourteen
+method signatures/raw bodies against both retained SDK fixtures. This is one
+fixed source, not arbitrary source semantics or player execution. The existing
+`phone_linker.stripped_input` requires the prior stripped bytes; leave that
+replay gate and all accepted stages/receipts unchanged.
+
+**Named owner and provenance.** `scripts/lab/phone_compiled_linker.py` owns a
+separate restricted producer/handoff. Source
+`ead656f17dad6ba23feecfcbdce340c8e7ca1636` verifies the completed compiler
+input/output receipts and pinned J862 template, then generates a fresh guarded
+641-input stage. Of the 634 original inputs, only `Assembly-CSharp.dll` and its
+PDB are replaced with actual J902 Android products. The other seven files add
+the original manifest, actual compiler/reference/source evidence and the
+handoff driver. Neither a historical manifest nor authored source is patched.
+
+Known compiler code/data/reference fingerprints exclude only the recorded Git
+commit field, permitting identical code/SDK inputs after unrelated commits.
+Keep every raw receipt byte, actual source commit and actual serialized hash;
+this creates no normalized compiler output. Fixed Android artifact hashes and
+the complete SDK/source descriptor remain qualification pins. A changed source,
+SDK component or profile needs new qualification. The generated provenance
+states `desktop_editor_roots: true` and
+`desktop_compiled_fixture_input: false`; SDK target libraries remain supplied.
+This does not generate independent scene usage, serialized roots or TypeDB.
+
+The standalone driver validates staged inputs before and after its bounded
+linker child. Python isolation and disabled bytecode writes preserve exact
+membership. A separate `handoff-result.json` binds the original child result and
+actual stripped outputs without rewriting that result. Sibling outputs must be
+fresh and owned; replay refuses. Seven host contracts pass, covering unchanged
+historical inputs, unknown/drifting compiler/template inputs, scope mismatch,
+foreign files/links, unrelated-commit provenance, child failure/input mutation
+and immutable output replay. Ruff and staged/manual public provenance checks
+pass before source is committed and staging begins.
+
+**Device result and comparison.** Reuse only Alpha's receipt/hash-bound SDK tool
+workspace, with fresh storage/backing/reserve checks before copying inputs.
+The new Android handoff succeeds in 12.168199 s, emitting 36 DLLs, 30 PDBs and
+one linker report. The retained replay has exactly the same 67 members:
+65 remain byte-identical, including the linker report. Only the authored DLL
+and its PDB differ. A read-only post-strip comparison still matches all six
+types, 32 fields, fourteen signatures and raw method bodies for this fixture.
+Raw DLL/PDB equality remains failed; no output is normalized or substituted.
+This measures a tooling stage, not gameplay performance or full equivalence.
+
+Replay refusal preserves all 641 inputs, stripped bytes and both result
+receipts. The original 634-input template is reverified and unchanged. The
+handoff receipt SHA-256 is
+`99ae4906a703def715cd4cd97c58db4174683d9cbe52b53d96beaab76b572e15`.
+Private selectors, source snapshot, controls, raw logs/outputs and comparisons
+remain under `work/coordination/phone-proof/compiled-linker-*` and generated
+`work/rebuild/phone-managed-compile/linker-*` stages. The private proof receipt
+binds 1,472 artifacts, SHA-256
+`ad33496224b30b7f2ee1f27e89324129838cb2eedd979783cc0966ad2d42d4d7`.
+SDK/generated material remains ignored. Alpha's host preflight retains its
+missing accepted game inventory refusal; the fixture uses its own source/SDK
+and owned-workspace gates, with no full-game build attempted.
+
+**Disposition.** No Unity editor, APK build/install, payload sync or game launch
+occurs. Alpha's owned be26c21c APK stays byte-identical; process absence, selector
+absence and display sleep are checked. Main/spare resources and Root's R17
+source/artifact freeze are untouched. Preserve Main's latest five snapshot
+rows and all gameplay journal evidence when integrating. This qualifies the
+fixed authored compiler-to-stripper connection only. Conversion/native loading
+with the newly compiled input, general source/defines/generators/packages,
+complete independent roots, content/shaders, app-host/tool delivery and matched
+gameplay benchmarks remain open. `managed_game_compilation_qualified` remains
+false; the prior converter/native proof still consumes its original qualified
+stripped artifacts. Add an explicit new downstream contract rather than
+weakening its replay checks.

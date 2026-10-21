@@ -59,6 +59,10 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       stripping/conversion. [J902](PORTING_JOURNAL.md#j902--compile-the-authored-unity-fixture-with-sdkpackage-derived-references-on-android)
       derives the restricted fixture's references and compiles its Unity API
       source on Android; broader packages/player compilation remain open.
+      [J905](PORTING_JOURNAL.md#j905--feed-the-android-compiled-unity-fixture-into-a-separate-stripping-handoff)
+      separately strips those actual Android outputs. Connect their conversion
+      and player loading while keeping captured scene roots explicit and the
+      earlier exact-replay gate intact.
       Preserve the observed desktop/Android implementation DLL/PDB inequality
       and compiler-host distinction; a matching reference assembly alone does
       not establish equivalent behavior or performance.

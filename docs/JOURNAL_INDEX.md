@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J905](PORTING_JOURNAL.md#j905--feed-the-android-compiled-unity-fixture-into-a-separate-stripping-handoff) | 2026-10-21 | Feed the Android-compiled Unity fixture into a separate stripping handoff | Date: 2026-10-21. |
 | [J908](PORTING_JOURNAL.md#j908--separate-completed-ci-verification-from-temporary-host-volume-cleanup) | 2026-10-21 | Separate completed CI verification from temporary host-volume cleanup | Date: 2026-10-21. |
 | [J907](PORTING_JOURNAL.md#j907--observe-the-original-camera-dispatch-gates-without-changing-admission) | 2026-10-21 | Observe the original camera dispatch gates without changing admission | Date: 2026-10-21. |
 | [J906](PORTING_JOURNAL.md#j906--capture-sustained-null-siren-target-evidence-within-the-existing-budget) | 2026-10-21 | Capture sustained null Siren target evidence within the existing budget | Date: 2026-10-21. |
