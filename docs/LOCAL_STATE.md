@@ -431,6 +431,14 @@ and preserve game hashes/idle state. Both refuse optimized Python before device
 access. The host report is comparison evidence only; the Android reader derives
 its own report from the supplied SDK bytes.
 
+`phone_preload_inputs.py OWNER_SDK NEW_PRIVATE_REPORT` generates static preload
+assignment operand bindings from the pinned SDK and its authored sibling
+readers. Private `preload-*` and `target-record-input-*` prototypes, mutation
+controls, disassembly, stages and reports under the phone proof root are local
+investigation evidence, never generator inputs. SDK call-memory effects,
+indirect aliases, full record values and target/module availability stay
+unqualified; neither this report nor an SDK oracle supplies linker roots.
+
 `phone_target_key_oracle.py ROOT WORK EXACT_EDITOR` generates fresh
 `work/rebuild/phone-wrapper-oracle/target-<attempt>/` projects and private
 metadata/query/source receipts, SDK observations, exact comparisons and logs.

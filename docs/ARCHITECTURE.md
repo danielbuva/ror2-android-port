@@ -319,6 +319,19 @@ barriers around insertion. Setup is committed reader/helpers and the pinned
 owner SDK; teardown creates one new private JSON and retains failed attempts.
 No SDK instruction executes, and no game build or root generator consumes it.
 
+`phone_preload_inputs.py` with `phone_preload_flow.py` owns current experimental
+preload assignment operand bindings. Sparse backward definitions include all
+normal predecessors, out-of-line storage paths and backedges. GPR and SIMD
+namespaces stay separate. The reader links fixed-frame aliases, literal/scalar/
+vector fragments, explicit direct-stack store sources, terminators and mode
+length writes to an input at each preload insertion site. Other unresolved grow
+receivers remain listed. Direct-stack source links do not evaluate call-memory
+effects or indirect-store aliases; complete record values, container behavior,
+live target/module availability and independent roots remain unqualified.
+Setup is committed source plus the pinned supplied SDK; teardown creates one new
+private report and retains failures. No SDK instruction executes. No game build,
+root generator or phone production pipeline consumes this report.
+
 `phone_target_key_oracle.py` / `TargetKeyOracle.cs` own separate current desktop
 observations of the SDK's public numeric-name API and internal reverse-name API.
 The runner stages a fresh SDK-only project, with separate numeric/string query
