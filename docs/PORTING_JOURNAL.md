@@ -28115,3 +28115,121 @@ under `work/coordination/original-native-visual-reference/` in the named
 `two-shader-compile-fixture-draft-r6/` packets. Public pattern and manual source
 review include only authored generator changes, recipes, synthetic tests and
 summaries.
+
+## J962 — Verify the saved original-output waveform across a fresh menu process
+
+**Correction and result.** J960's cold-only reader now records an exact process
+query immediately before its current-menu Quit tap and persists the full bounded
+exit poll before validating the pair. Any foreign positive PID immediately
+refuses; only known first-query states, zero transport timeouts and successful
+absence can pass. A fast first-query absence also requires the fresh pre-Quit
+identity witness. The shared historical warm call remains compatible. Seventy
+host contracts pass, including identity replacement, unknown status, transport
+failure, persistence ordering and byte caps. Root reviews the changes before
+binding the exact J954 APK; this changes no runtime code or device receipt.
+
+The fresh default-menu process validates its exact report identity, attempt,
+session, current process and reported Quit geometry. Six post-Quit queries
+retain that same process identity and then observe absence, with zero timeouts.
+Normal-shell readback before and after launch matches both J959 saved files
+byte-for-byte: raw SHA-256 `5b823427e5c3ba667372020232377e24889c6dfcc73c2cd9517bfa1fff854e45`,
+sidecar SHA-256 `0db867419840e490ac20fc1d849cefb6afb07817185ed36a2ff07288f1af6e6f`.
+The terminal query verifies unchanged profile count 13, owned placement,
+process absence and display sleep. Root's independent read-only query also
+rehashes the installed APK and verifies process/selector absence and sleep.
+No gameplay world or selector is created, no capture files are removed, and no
+force-stop is needed on this successful continuation.
+
+**Scope.** Root qualifies cold-readback persistence only. The original automatic
+J959 route stays failed/acceptance-invalidated, and J960's failed continuation
+is preserved. The saved original Term/disarm witnesses and truncated PCM remain
+valid separate facts. Event attribution, physical audibility, continuous audio
+and general original-lifecycle fidelity are not established. The installed APK
+and accepted baseline do not change. Evidence is
+`work/experiments/original-game-audio-pcm/r26-cold-readback-root-20261022T0635/`;
+reviewed source is `work/coordination/original-game-audio-pcm/r26-waveform-path-readback-draft-r6/`;
+Root binding/qualification is `r26-cold-readback-root-r3/`, and independent
+terminal evidence is `r26-cold-pass-query-root-r1/` under that coordination area.
+
+## J963 — Preserve RampFog import progress and repair Outline's measured mask syntax
+
+J961's R2 candidates reach an actual exact-editor import under the host mutex.
+RampFog retains its expected name and one-pass topology with no ShaderUtil
+messages or errors. Outline instead reports a ShaderLab parse error at line 12:
+numeric `ColorMask 15` is not accepted where Unity expects a color-mask token.
+Its name/topology refusal is secondary to that parse error. No bundle or player
+success is accepted. The corrected fixture preserves both shaders' diagnostics,
+performs exact-owned structured cleanup, verifies folder/metadata absence and
+proves Unity idle before releasing the mutex. Receipt and raw MCP traces remain
+under `work/editor/shader-candidate-compile-fixtures/b08f2fc57706a3db5d317047/`
+and `work/coordination/original-native-visual-reference/two-shader-compile-fixture-root-r7/`.
+
+The accepted source records all-channel mask 15 for both Outline passes. Emit
+ShaderLab `RGBA` for that explicit measured mapping; refuse unmeasured or
+symbolic masks on this route. Generic render-state callers retain their prior
+numeric conversion when no mapping is supplied. This repairs serialization,
+not source blend, depth, stencil, program math or color behavior. The shared
+helper digest is refreshed in both public recipes and both publish to new
+versioned R3 paths, preserving every prior candidate. Root regenerates the
+accepted-input candidates: Outline source SHA-256
+`f37794d85f4e64d1064583d3cce6ecbe68daf59c722be00d36852516c101cace`;
+RampFog source remains `ad31d2e326ccbc64eae993d9ac0928f7b0c5f396b90d5053b1991f1d8efe86f9`.
+All 78 shader host contracts and Ruff pass. A fresh fixture must still build
+their Android bundles; neither shader is selected in the runtime catalog yet.
+The pinned recovery prior art remains J956/J961's source/program/interface
+contract. This changes future generated shader inputs, with no installed APK,
+original installation or runtime assembly mutation. The corrected private
+packet is `work/coordination/original-native-visual-reference/outline-renderstate-fix-draft-r2/`.
+
+## J964 — Join original music queries to the exact bounded PCM observation window
+
+**Hypothesis and prior art.** J959/J962 establish saved original-output samples,
+while the old music report is not clock-joined to that window. The pinned
+wwiser/vgmstream/event-graph prior art in `docs/community-prior-art.md` supplies
+source relationships, not runtime attribution. Use the accepted managed API's
+read-only event, segment and state queries with the already-returned original
+playing ID; do not post an event, reconstruct music or replace its lifecycle.
+
+**Authored change and ownership.** The existing
+`PortSessionOriginalMusicControllerOwner` owns the new `MusicPcmJoinObserver`
+and `AkMusicPcmJoinQueryAdapter`. Only the requested capture's active, exact
+selected/observed/owned music output and live singleton permit queries. At most
+24 scalar rows at 0.5 s cadence bracket event/segment/global-state reads with
+realtime and existing callback/frame counters. Finite monotonic clocks and a
+representable next deadline are required. Failed queries remain unknown;
+segment values require AK_Success, and temporary AkSegmentInfo is disposed.
+Window-boundary observations and missing-end state remain distinct. The source
+owner publishes these rows in its existing snapshot and owns their lifetime.
+No PCM bytes, Unity object references, new native symbols or callback/lifecycle
+changes are introduced. Event-attribution and audibility flags stay false.
+
+Both runtime membership lists, stable script metadata/layout, source cohort and
+build-hook inputs include the helpers. Root derives the actual owner digests,
+retains the prior cohort as parent, and refreshes the camera cohort's changed
+owner/build-hook pins. Existing CoreObserver and RoR2 transformation profiles
+remain unchanged; future generated request, managed output and APK hashes must
+come from the actual build. This changes authored runtime and recipe inputs
+consumed by reconstruction, so replay those steps for a future candidate.
+
+**Checks and first failures.** Independent review catches the first draft's
+public snapshot exposing an internal row type; the successor makes the row
+public/serializable and compiles the whole owner. It also refuses non-finite or
+backward clocks. Root's broader fixture run catches missing helper membership
+in older full-owner compile lists and missing helper files in synthetic cache
+roots. Add those exact dependencies and include helper mutations in cache
+invalidation tests. Root verifies 41 music tests, 109 audio tests with two expected skips,
+42 camera tests with three expected skips, the exact accepted API compile,
+full-owner fixtures and the
+source cohort contract. An independent offline Roslyn compile against current
+Bee Unity/game references also passes. The shared SDK compiler separately
+refuses an existing Cecil file; the same tool build succeeds with shared
+compilation disabled. Preserve both host logs; no Unity restart or toolchain
+replacement is used. Public pre-push checks remain mandatory.
+
+The reviewed source/integration packet is
+`work/coordination/original-game-audio-pcm/r27-music-pcm-join-integration-r1/`,
+with independent `r27-music-pcm-join-review-r2/` and fixture corrections at
+`r27-music-join-existing-fixtures-r1/`. Root focused logs share the
+`r27-*-root-tests*.log` names in that coordination area. No new APK, stripping,
+Android query, output-event attribution or speaker result is accepted by this
+source checkpoint; J954 remains installed and J850 remains the rollback.

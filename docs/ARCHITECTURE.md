@@ -1014,6 +1014,23 @@ share set, then invokes the original preload path. It supplies no replacement
 Run, camera, user, teleporter or event context. Missing source context remains
 observable rather than synthesized. Default-off starts no music controller.
 
+The same owner uses `MusicPcmJoinObserver.cs` and
+`AkMusicPcmJoinQueryAdapter.cs` for a bounded read-only correlation record.
+Only the requested passive capture's exact owned music output admits sampling;
+capture, selector and controller output identities must agree and cleanup must
+not have started. At most 24 rows, spaced by 0.5 s, query the playing ID already
+returned by the original intro call, its event/segment information and the two
+source music state groups. Existing callback/frame counters and finite monotonic
+realtime bracket each row and the observed window boundaries. The temporary
+`AkSegmentInfo` is disposed. Query failures, missing clocks and owner loss stay
+unknown; an unobserved window end remains unknown. Rows retain scalars only, and
+the helper has no independent lifecycle or callback registration. It never
+posts events, sets state/RTPC values, changes track/output/capture behavior, or
+claims output-event attribution or audibility. The existing owner owns setup,
+snapshot publication and teardown. Runtime source/layout recipes and the audio
+source cohort bind both helpers; synthetic owner fixtures and an optional exact
+local API compile check the off-device contract.
+
 The same named owner samples the original current-track getter, scene main/boss
 track availability, teleporter gate, source parameter values and exact managed
 listener membership at 0.5 s intervals. It reports a branch candidate separately
@@ -2681,8 +2698,10 @@ shader or runtime presentation behavior (J953).
 public `recipe/shader-outline-candidate.json` binds the accepted catalog,
 serialized object, four executable records, measured layouts, pass state and
 authored helper/tool hashes. It generates only ignored local evidence beneath
-`work/generated-shader-candidates/outline-highlight-r2/<input_id>/`; unchanged
-inputs may reuse identical output, while drift refuses overwrite. Vertex and
+`work/generated-shader-candidates/outline-highlight-r3/<input_id>/`; unchanged
+inputs may reuse identical output, while drift refuses overwrite. R3 maps the
+measured all-channel mask value 15 to ShaderLab `RGBA`; unmeasured numeric or
+symbolic masks refuse, and the previous R2 candidate is left intact. Vertex and
 fragment interfaces remain distinct so the measured fragment-position
 interpolation survives. It has no runtime setup or teardown and no build
 consumer. Exact-editor compilation and Android appearance are separate gates.
@@ -2691,7 +2710,10 @@ consumer. Exact-editor compilation and Android appearance are separate gates.
 action. It reads only the fixed public `recipe/shader-ramp-fog-candidate.json`
 and the user's accepted input, checks the exact serialized object, native
 programs and tool/helper pins, then writes a no-overwrite candidate under
-`work/generated-shader-candidates/ramp-fog-r2/<input_id>/`. The output is ignored
+`work/generated-shader-candidates/ramp-fog-r3/<input_id>/`. This output version
+also preserves the R2 candidate because the shared render-state helper pin
+changed; RampFog's measured render-state serialization stays on its existing
+numeric path. The output is ignored
 local ShaderLab/DXBC evidence; no build, composition, or runtime path consumes
 it. A separate exact-editor fixture must qualify the ShaderLab before any
 project use, and Android rendering remains a device gate.

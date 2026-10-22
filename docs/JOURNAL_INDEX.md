@@ -10,6 +10,9 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J964](PORTING_JOURNAL.md#j964--join-original-music-queries-to-the-exact-bounded-pcm-observation-window) | 2026-10-21 | Join original music queries to the exact bounded PCM observation window | **Hypothesis and prior art.** |
+| [J963](PORTING_JOURNAL.md#j963--preserve-rampfog-import-progress-and-repair-outlines-measured-mask-syntax) | 2026-10-21 | Preserve RampFog import progress and repair Outline's measured mask syntax | J961's R2 candidates reach an actual exact-editor import under the host mutex. |
+| [J962](PORTING_JOURNAL.md#j962--verify-the-saved-original-output-waveform-across-a-fresh-menu-process) | 2026-10-21 | Verify the saved original-output waveform across a fresh menu process | **Correction and result.** |
 | [J961](PORTING_JOURNAL.md#j961--repair-recovered-shader-declaration-order-after-exact-editor-import-failure) | 2026-10-21 | Repair recovered shader declaration order after exact-editor import failure | **Hypothesis and prior art.** |
 | [J960](PORTING_JOURNAL.md#j960--preserve-the-corrected-cold-menu-readbacks-identity-refusal) | 2026-10-21 | Preserve the corrected cold-menu readback's identity refusal | The J959 continuation uses the independently reviewed R11 reader, with its correct default-menu report identity and a fresh Root binding. |
 | [J959](PORTING_JOURNAL.md#j959--preserve-original-output-pcm-after-native-shutdown-and-qualify-its-limits) | 2026-10-21 | Preserve original output PCM after native shutdown and qualify its limits | **Hypothesis and prior art.** |
