@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J943](PORTING_JOURNAL.md#j943--read-the-native-siren-listening-state-without-accepting-encounter-start) | 2026-10-21 | Read the native Siren Listening state without accepting encounter start | **Hypothesis and change.** |
 | [J942](PORTING_JOURNAL.md#j942--preserve-a-bounded-camera-failure-and-observe-the-null-material-cache) | 2026-10-21 | Preserve a bounded camera failure and observe the null material cache | **Hypothesis and change.** |
 | [J941](PORTING_JOURNAL.md#j941--verify-r24-streamed-media-delivery-and-first-nonzero-composed-pcm) | 2026-10-21 | Verify R24 streamed-media delivery and first nonzero composed PCM | **Hypothesis and change.** |
 | [J940](PORTING_JOURNAL.md#j940--stage-the-complete-original-streamed-media-closure-before-wwise-init) | 2026-10-21 | Stage the complete original streamed-media closure before Wwise Init | Date: 2026-10-22 UTC. |

@@ -26900,3 +26900,61 @@ an already valid cache and refusing malformed/unknown state. It will not replay
 all startup callbacks or allocate a replacement cache. Initializer success and
 renderer restoration still require a new APK and device evidence. The accepted
 J850 baseline and J941's two passing default controls remain unchanged.
+
+
+## J943 — Read the native Siren Listening state without accepting encounter start
+
+**Hypothesis and change.** J933's twelve admitted eggs and later ten-live-ID
+projection need their native Listening context before choosing a gameplay
+change. Exercise J937's read-only observer on J941's unchanged R24 APK
+1b616b7eb479da3361978b62ce4915bfb90fffe3c4d5b6fe31d44c4597cef593.
+The stock Commando route retains the existing assisted combat, seed, default
+loadout, source entry and 180-second target-stage input budget. It adds no
+Siren movement, damage, encounter or input helper. J937 records the pinned
+prior-art and native-field contract. Root binds the immutable build, both
+standard controls and fresh independent installed-byte/idle query before the
+single attempt. The reviewed packet is under
+`work/coordination/original-siren-native-listening/r24-root-r1/`.
+
+**First failure.** Three original transitions reach Ship Graveyard. The source
+stage starts at world time 295.905 seconds; the final live report is at
+475.900 seconds, giving 179.995 seconds. The existing budget expires without
+native encounter start, completion or exact boss identity. The route is
+unsuccessful; its deadline is not extended and it is not retried. Evidence is
+under that packet's `attempts/20261022T012433.878509Z-e900270778f1/`;
+`result.json` SHA-256 is
+7f29f5ce85619d72b00b1a90632b69e5ca45cd59bcbd56d915d73e812ac22861.
+
+The final native snapshot is fresh and valid. The owner is still in Listening;
+its original list reference and twelve slots remain intact. Two original
+references are Unity-null; the other ten have matching identities and known
+health 1.0. The source counter is known as two, against threshold six, with
+countdown inactive. Unknown health on the null slots is not a zero-health
+observation. The live registration projection is an admitted subset with
+consumption unknown. Neither the counter nor the null references establishes
+player-caused egg deaths. The available victim-damage observer retains zero
+correlated facts. A contemporaneous input sample requests primary against a
+visible live slot whose known health remains 1.0; this does not prove a hit.
+The navigation recorder has not started and contains no samples.
+
+The registration observer has 145 polls, 64 retained receipts and 81 truncated
+receipts. Its last retained receipt is earlier than the separate final native
+snapshot; repeated receipts are not distinct-frame evidence. J933's conclusion
+is unchanged, but managed references, Unity-null state, health availability and
+native counter/countdown are now distinguished. No new causal gameplay fix is
+justified. The exact before/after profile fields remain at thirteen applied
+runs without a new result grant.
+
+**Separate cleanup and next gate.** The final report also records an original
+audio lifecycle refusal after passive capture stop. This is separate from the
+Siren timeout and does not prove composed natural audio teardown. Root retains
+it, removes the selector, force-stops the owned process and sleeps the display.
+The independent `post-siren-query/post-run-query.json` then rehashes installed
+APK bytes, verifies owned placement and confirms process absent, selector absent
+and display asleep. Force-stop is not native lifecycle acceptance. Local
+host-only interpretation is under `r24-actual-triage-r1/`, findings SHA-256
+7a4715a5411db95e7aa2a854b534681313b031b8bd6f28e7d97e84ff11c29c61.
+Any future observation needs bounded time-series context or a separately
+measured interaction change, not a conclusion from the two null slots. No
+runtime or rebuild-produced source changes here; J850 remains accepted and
+J941 remains the latest passing default-control APK.
