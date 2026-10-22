@@ -194,7 +194,13 @@ def _validated_shader_overrides(io, closure, metadata, mapped, export, project, 
         if source.get("input_id") != closure["input_id"]:
             raise RuntimeError("Shader override candidate belongs to a different accepted input")
         if candidate_kind == "outline-highlight":
-            if manifest.get("success") is not True or manifest.get("object_path_id") != object_path_id or source.get("shader_name") != shader_name:
+            if (
+                manifest.get("success") is not True
+                or manifest.get("object_path_id") != object_path_id
+                or source.get("catalog_key") != guid
+                or source.get("catalog_location") != location_id
+                or source.get("asset_path") != source_path
+            ):
                 raise RuntimeError("Outline candidate identity or completion changed")
         elif (
             manifest.get("kind") != "local-source-bound-ramp-fog-candidate"
@@ -207,6 +213,8 @@ def _validated_shader_overrides(io, closure, metadata, mapped, export, project, 
             raise RuntimeError("Shader override candidate output differs from its manifest: " + candidate_kind)
         if __import__("hashlib").sha256(candidate_bytes).hexdigest() != manifest.get("generated_shader_sha256"):
             raise RuntimeError("Shader override candidate changed while it was being read: " + candidate_kind)
+        if not re.match(rb"\s*Shader\s+" + re.escape(json.dumps(shader_name).encode()) + rb"\s*\{", candidate_bytes):
+            raise RuntimeError("Shader override candidate declaration changed: " + candidate_kind)
         if manifest.get("semantic_equivalence_proven") is not False:
             raise RuntimeError("Shader override may not claim semantic equivalence")
         if candidate_kind == "outline-highlight" and (

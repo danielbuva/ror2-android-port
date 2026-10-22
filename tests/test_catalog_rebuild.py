@@ -242,7 +242,7 @@ class CatalogRebuildTests(unittest.TestCase):
             template = next(row for row in selection["rows"] if row["location_id"] == loc)
             template.update(generator_sha256=generator_hash, generator_recipe_sha256=generator_recipe_hash)
             root = self.work / f"generated-shader-candidates/{kind}-r3/{self.input_id}"
-            shader = b'Shader "Synthetic/Candidate" {}\n'
+            shader = ('Shader "' + name + '" {}\n').encode()
             self.put(root / shader_rel, shader.decode())
             if kind == "outline-highlight":
                 doc = dict(
@@ -250,7 +250,7 @@ class CatalogRebuildTests(unittest.TestCase):
                     success=True,
                     generator_sha256=generator_hash,
                     recipe_sha256=generator_recipe_hash,
-                    source=dict(input_id=self.input_id, shader_name=name),
+                    source=dict(input_id=self.input_id, catalog_key=guid, catalog_location=loc, asset_path=source_path),
                     object_path_id=object_id,
                     generated_shader_path=shader_rel,
                     generated_shader_sha256=hashlib.sha256(shader).hexdigest(),
@@ -300,7 +300,7 @@ class CatalogRebuildTests(unittest.TestCase):
         staging.flush()
         for loc, guid, key, source_path, kind, name, object_id, *_ in specs:
             target = "Assets/WholeGame/" + source_path.removeprefix("Assets/")
-            self.assertEqual((self.dest / target).read_bytes(), b'Shader "Synthetic/Candidate" {}\n')
+            self.assertEqual((self.dest / target).read_bytes(), ('Shader "' + name + '" {}\n').encode())
             self.assertEqual((self.dest / (target + ".meta")).read_text(), "guid: " + guid + "\n")
         staged_manifest = read(next((self.dest / ".rebuild/catalog-inputs").glob("integration-*/manifest.json")))
         for loc, guid, key, source_path, kind, name, object_id, *_ in specs:
@@ -313,6 +313,34 @@ class CatalogRebuildTests(unittest.TestCase):
         self.assertTrue(all(row["preserved_meta_sha256"] for row in evidence["rows"]))
         imported = read(next((self.dest / ".rebuild/catalog-inputs").glob("integration-*/import-receipt.json")))
         self.assertEqual(imported["shader_overrides"]["sha256"], sha(next((self.dest / ".rebuild/catalog-inputs").glob("integration-*/shader-overrides.json"))))
+
+    def test_outline_generator_identity_uses_catalog_fields_without_shader_name(self):
+        specs = self.install_shader_candidates()
+        root = self.work / f"generated-shader-candidates/{specs[0][4]}-r3/{self.input_id}"
+        manifest = read(root / "manifest.json")
+        self.assertNotIn("shader_name", manifest["source"])
+        self.assertTrue(whole_catalog.prepare_integration(self.staging())["enabled"])
+
+    def test_outline_wrong_catalog_identity_refuses_before_shader_writes(self):
+        specs = self.install_shader_candidates()
+        root = self.work / f"generated-shader-candidates/{specs[0][4]}-r3/{self.input_id}"
+        manifest = read(root / "manifest.json")
+        manifest["source"]["catalog_key"] = "f" * 32
+        write(root / "manifest.json", manifest)
+        with self.assertRaisesRegex(RuntimeError, "Outline candidate identity"):
+            whole_catalog.prepare_integration(self.staging())
+        self.assertFalse((self.dest / "Assets/WholeGame" / Path(specs[0][3]).relative_to("Assets")).exists())
+
+    def test_changed_shader_declaration_refuses_even_with_updated_manifest_hash(self):
+        specs = self.install_shader_candidates()
+        root = self.work / f"generated-shader-candidates/{specs[0][4]}-r3/{self.input_id}"
+        shader = root / specs[0][11]
+        shader.write_text('Shader "Synthetic/WrongIdentity" {}\n')
+        manifest = read(root / "manifest.json")
+        manifest["generated_shader_sha256"] = sha(shader)
+        write(root / "manifest.json", manifest)
+        with self.assertRaisesRegex(RuntimeError, "candidate declaration changed"):
+            whole_catalog.prepare_integration(self.staging())
 
     def test_shader_candidate_drift_refuses_without_flushing_project(self):
         specs = self.install_shader_candidates()

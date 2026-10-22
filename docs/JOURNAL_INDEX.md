@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J967](PORTING_JOURNAL.md#j967--correct-the-catalog-consumer-to-the-real-outline-generator-schema) | 2026-10-22 | Correct the catalog consumer to the real Outline generator schema | The first source-frozen R27 preparation on 6cc2e91 refuses with `Outline candidate identity or completion changed`. |
 | [J966](PORTING_JOURNAL.md#j966--add-an-input-bound-catalog-consumer-for-the-two-recovered-shader-sources) | 2026-10-22 | Add an input-bound catalog consumer for the two recovered shader sources | **Change and ownership.** |
 | [J965](PORTING_JOURNAL.md#j965--compile-both-recovered-shaders-into-isolated-android-bundles) | 2026-10-22 | Compile both recovered shaders into isolated Android bundles | **Hypothesis and prior art.** |
 | [J964](PORTING_JOURNAL.md#j964--join-original-music-queries-to-the-exact-bounded-pcm-observation-window) | 2026-10-21 | Join original music queries to the exact bounded PCM observation window | **Hypothesis and prior art.** |

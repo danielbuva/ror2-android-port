@@ -28291,3 +28291,29 @@ recipe audit covers only authored metadata. The camera recipe's changed staging
 source pin is refreshed. This alters reconstruction inputs and requires replay
 and a full content/player build. No new APK, runtime appearance or visual parity
 is accepted; J954 remains installed and J850 remains the accepted rollback.
+
+## J967 — Correct the catalog consumer to the real Outline generator schema
+
+The first source-frozen R27 preparation on 6cc2e91 refuses with `Outline candidate
+identity or completion changed`. Root verifies the actual R3 manifest and its
+public generator: Outline publishes `catalog_key`, `catalog_location` and
+`asset_path` in `source`, plus top-level object identity; it does not publish
+`source.shader_name`. The synthetic catalog fixture had invented that field.
+No shader override write, Unity build or device install is accepted. Root retains
+the failed attempt and verifies the editor idle before releasing the host mutex.
+Evidence is `work/coordination/original-game-audio-r27-build-root-r1/`.
+
+Validate those actual catalog fields and the exact emitted ShaderLab declaration
+instead. Apply the declaration check to both candidates, retaining all existing
+source/recipe/manifest digests and pre-write validation. Correct the inert fixture
+to the generator's schema and add wrong-catalog and changed-declaration refusals,
+including a changed declaration with a recomputed manifest hash. All 43 catalog,
+18 prior rebuild, seven camera-hook and three recipe-audit contracts pass; Ruff
+passes and the camera staging pin is refreshed. Generated shader bodies and
+original metadata remain unchanged. Reconstruction must replay this consumer.
+
+The mandatory clean-clone push gate separately catches the missing audit-table
+row for the new public allowlist, despite its existing prose audit. Add that row
+and retain the failed push log `work/coordination/root-push-r27-catalog.log`.
+No hook bypass is used. A fresh committed attempt is required; no R27 APK exists
+yet, J954 remains installed and J850 remains the accepted rollback.

@@ -173,7 +173,9 @@ def shader_override_rows(receipt, input_id, expected, provenance, candidate_work
             candidate_identity_matches = (
                 candidate_manifest.get("success") is True
                 and candidate_manifest.get("object_path_id") == object_path_id
-                and candidate_manifest.get("source", {}).get("shader_name") == shader_name_value
+                and candidate_manifest.get("source", {}).get("catalog_key") == guid
+                and candidate_manifest.get("source", {}).get("catalog_location") == location_id
+                and candidate_manifest.get("source", {}).get("asset_path") == source_path
             )
         else:
             candidate_identity_matches = (
@@ -181,6 +183,8 @@ def shader_override_rows(receipt, input_id, expected, provenance, candidate_work
                 and candidate_manifest.get("source", {}).get("shader_path_id") == object_path_id
                 and candidate_manifest.get("source", {}).get("shader_name") == shader_name_value
             )
+        if not re.match(rb"\s*Shader\s+" + re.escape(json.dumps(shader_name_value).encode()) + rb"\s*\{", shader_path.read_bytes()):
+            raise RuntimeError("Shader override candidate declaration changed")
         if not candidate_identity_matches:
             raise RuntimeError("Shader override candidate identity changed")
         result[target] = row
