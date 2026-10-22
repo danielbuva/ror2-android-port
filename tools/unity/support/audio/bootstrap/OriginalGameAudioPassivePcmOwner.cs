@@ -44,7 +44,9 @@ internal sealed class OriginalGameAudioPassivePcmOwner : IGameAudioOriginalPassi
         apiBeforeEngineTermField = ResolveApiBeforeEngineTermField();
         window = new PassivePcmCaptureWindow(existingMonitorLease, true,
             InstallBeforeEngineTermGuard,
-            ReadBeforeEngineTermGuard, RecordTermRefusal);
+            ReadBeforeEngineTermGuard, RecordTermRefusal,
+            new PcmWaveformCaptureFinalizerV1(new NativePcmWaveformReadbackApiV1(),
+                () => bootstrap.CapturePrivatePersistentDataRoot));
     }
 
     // Called exactly once from the accepted process-lifetime preparation. A
@@ -115,6 +117,11 @@ internal sealed class OriginalGameAudioPassivePcmOwner : IGameAudioOriginalPassi
     public ulong NonfiniteSamples { get { return CurrentReport.NonfiniteSamples; } }
     public ulong RejectedBuffers { get { return CurrentReport.RejectedBuffers; } }
     public ulong CappedBuffers { get { return CurrentReport.CappedBuffers; } }
+    public string WaveformReadbackState { get { return CurrentReport.WaveformReadbackState; } }
+    public string WaveformReadbackFailure { get { return CurrentReport.WaveformReadbackFailure; } }
+    public bool WaveformRawPersisted { get { return CurrentReport.WaveformRawPersisted; } }
+    public ulong WaveformGeneration { get { return CurrentReport.WaveformGeneration; } }
+    public uint WaveformStoredSamples { get { return CurrentReport.WaveformStoredSamples; } }
     public bool OutputIdentityObserved { get { return CurrentReport.OutputIdentityObserved; } }
     public bool CaptureOutputDeviceIdObserved { get { return CurrentReport.CaptureOutputDeviceIdObserved; } }
     public ulong CaptureOutputDeviceId { get { return CurrentReport.CaptureOutputDeviceId; } }
@@ -205,6 +212,48 @@ internal sealed class OriginalGameAudioPassivePcmOwner : IGameAudioOriginalPassi
     public void BeforeOriginalEngineTerm()
     {
         lock (gate) window.BeforeOriginalEngineTerm();
+    }
+
+    internal static void FinalizeAfterReturnedTermsSafely()
+    {
+        OriginalGameAudioPassivePcmOwner owner = null;
+        try
+        {
+            owner = ProcessLifetimeOwner;
+            if (owner == null) return;
+            owner.PersistWaveformAfterOriginalTerms();
+        }
+        catch (Exception error)
+        {
+            try { owner?.RecordUnexpectedWaveformReadbackFailure(error); }
+            catch { /* waveform evidence must never escape into original Term */ }
+        }
+    }
+
+    internal static void RecordUnverifiedTermDisarmSafely()
+    {
+        OriginalGameAudioPassivePcmOwner owner = null;
+        try
+        {
+            owner = ProcessLifetimeOwner;
+            if (owner == null) return;
+            lock (owner.gate) owner.window.RecordUnverifiedPostTermDisarm();
+        }
+        catch (Exception error)
+        {
+            try { owner?.RecordUnexpectedWaveformReadbackFailure(error); }
+            catch { /* waveform evidence must never escape into original Term */ }
+        }
+    }
+
+    private void RecordUnexpectedWaveformReadbackFailure(Exception error)
+    {
+        lock (gate) window.RecordUnexpectedWaveformReadbackFailure(error);
+    }
+
+    public void PersistWaveformAfterOriginalTerms()
+    {
+        lock (gate) window.PersistWaveformAfterOriginalTerms();
     }
 
     private static FieldInfo ResolveApiBeforeEngineTermField()

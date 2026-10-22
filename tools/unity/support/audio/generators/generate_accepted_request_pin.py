@@ -22,7 +22,7 @@ EXPECTED = {
     "adapted_api_sha256": "2bd973178c99bfcb4d20510e2d1eac7efa9dd6d698237f2edfa486171bc2f272",
     "observed_api_sha256": "a2914ace8e2a7338010f8e9a9515911d68489bf0ad467bc7f73f4de293a19fe9",
     "instrumented_api_sha256": "1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b",
-    "native_library_sha256": "4f309b9df05392b7b78ea51c53955225f27400a83810e260441f65dfdc335498",
+    "native_library_sha256": "9075b5a4d3718a209eb244760d2b251a59ef2f5c486a2d2fc0e83b90240cbba3",
     "current_bank_index_sha256": "f1d41954cb78c582a6c8a5fbbca58148057a120b01e4bb09cd47f8f107d66326",
     "wwise_global_prefab_sha256": "7f074267744a3f7652349572f4aa88f48cd3d43328ba629f686288f08c4be6af",
     "init_adaptation_receipt_sha256": "3b274de411fe2128bffd43de117baf9156e58e75ebcd0f0cb2a5379b1f22260f",

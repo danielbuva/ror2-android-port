@@ -48,7 +48,7 @@ LINEAGE = {
     "observed_api_sha256": "a2914ace8e2a7338010f8e9a9515911d68489bf0ad467bc7f73f4de293a19fe9",
     "composed_api_sha256": "1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b",
     "composed_game_sha256": "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc",
-    "native_library_sha256": "4f309b9df05392b7b78ea51c53955225f27400a83810e260441f65dfdc335498",
+    "native_library_sha256": "9075b5a4d3718a209eb244760d2b251a59ef2f5c486a2d2fc0e83b90240cbba3",
     "stage_receipt_sha256": "8fe02400a7ab0905ae21b728e702d7ef2c4dcf8646f77f631682a81bda0ab88c",
 }
 ASSEMBLY_TARGETS = {
@@ -66,9 +66,9 @@ META_GUIDS = {
 NATIVE_META_GUID = "a2a09e81876b46f2a202e62f96644331"
 NATIVE_TARGET = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so"
 NATIVE_META = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so.meta"
-OWNER_ANCESTOR_MANIFEST_SHA256 = "723479615e06533f4152290d05847b7a2bf1693a0a6076aa6545a3edac862330"
+OWNER_ANCESTOR_MANIFEST_SHA256 = "32a2c710ec8eff41890454576d55f523499523bb5eea4902257011498f220f4b"
 STAGE_PIN_TOOL_SHA256 = "6e12acb9b58a570aa3a869f9f0880ddbd56ba4da0c806188c1124164211d0102"
-REQUEST_PIN_TOOL_SHA256 = "771b52c82622d73183ad59b6c405f995c8c80f9655f254ddcd5fa50b1befa577"
+REQUEST_PIN_TOOL_SHA256 = "16ad12a1d017e5db9b39b745719e3bb21f4f92a9e4e44215c8d672a3f8716c9e"
 MANAGED_PRODUCER_SHA256 = "12c1aaed5fca694657c2c841c57e6ead399352e58b1cd0e7662dec75e2749421"
 ABI_NATIVE_PLUGIN_SHA256 = "cfec01cb3aab87edbde3db38e3c0bbe6a1d18ffea2a1f831a59cf64a5526daca"
 ABI_GENERATED_SOURCE_SHA256 = "511f5e1ee552a874850a1fab5f613eeb51e7b6bc706a07bb57418c03e75df242"
@@ -77,20 +77,21 @@ ABI_LLVM_NM_SHA256 = "6ffe6bb8699a354c4699a6cdfcebdb9ec6a2c8d0d89beaac978f629a0f
 OWNER_SOURCE_HASHES = {
     "../../runtime/session/OriginalMusicControllerContract.cs": "bd8f78977722a276409623cea4909b0e41065fda6c195a6b0dee94ef8bb8b485",
     "../../runtime/session/PortSession.cs": "233e40b41b02aa601d110db38bdb738ed35438a91131823d609a2909719e6731",
-    "../../runtime/session/PortSessionOriginalAudioOwner.cs": "6cc2da1d17c4169b153eaba2fa6a770e0d16b6bd3005b66ca80c5f4d8c81f638",
+    "../../runtime/session/PortSessionOriginalAudioOwner.cs": "2f010562de8cbac3a5c6e2453f0a1c3db571ee6e45c4633fb877e6a5636d1992",
     "../../runtime/session/PortSessionOriginalMusicControllerOwner.cs": "e817c7265fc792a45494f2217ad9430bc7acb60d31437d5fe770cc7dc67f7f9c",
-    "bootstrap/GameAudioOriginalAcceptedRequestProvider.cs": "640f4cf1420457d2233138c06ae889312a6f0b669181bd225814cffc75cd3485",
-    "bootstrap/GameAudioOriginalAndroidNativeBootstrap.cs": "ea46a876fa82ccbe0b2ab748435b62061d68718665abfe3092cd0335ee8bfc75",
+    "bootstrap/GameAudioOriginalAcceptedRequestProvider.cs": "d9b61ad5d5e207f0c01860dfeb12a377f18f460905f3d4c7bde05dbd70d9c44a",
+    "bootstrap/GameAudioOriginalAndroidNativeBootstrap.cs": "fdce9ba21e249c7c9a8d2eed788c7561907a5327f9e9b8dc28ce23334e71ee70",
     "bootstrap/GameAudioOriginalGeneratedRequestPin.cs": "f41a033141c7ed1b4c33f9f7ce6337a4a7b247c6ba96d93f514c0a37178ac4a9",
     "bootstrap/GameAudioOriginalGeneratedStagePin.cs": "d54d445d05712432559a5e332457af0b20200c93895bd79374c42b6280bd07a4",
     "bootstrap/GameAudioOriginalPayloadCopy.cs": "9de47c952298994c1c37920c51158b30bf843bcfe24bbc85a3734ccdd8b5fbc2",
     "bootstrap/GameAudioOriginalPreparation.cs": "9894781b7ff0b5cde30b4b67ad0fb9f65a037ba0c124a086fe562c181fa41168",
     "bootstrap/GameAudioOriginalRequestBootstrap.cs": "d8adaa8a8aa7c035a5a4dfe102c736555effae3de9708fc4bfe0834ab724c2de",
     "bootstrap/NativeWwiseMonitorLease.cs": "4fa40d608ba54dc33474fa23a01069fa71ae2e62997f56555929800f3d1fbed6",
-    "bootstrap/OriginalGameAudioPassivePcmOwner.cs": "6921d90f7aecd474c032351730e4c7df67e52accca4c718378687566cc4a7e93",
-    "bootstrap/PassivePcmCaptureWindow.cs": "d23dd383e75dff9e67e9008b887e62797e131ce0eebc6892094be0dbd1c9c364",
+    "bootstrap/OriginalGameAudioPassivePcmOwner.cs": "7ed0a10cfa49cfc02ccbf253e8d3b7d1e32eaba9e8f47794590d154de8ec1d72",
+    "bootstrap/PassivePcmCaptureWindow.cs": "dd16664b0a8491c03491777a81befbfcfda063e6ae159b8fd541df2cc7004673",
+    "bootstrap/PcmWaveformReadbackV1.cs": "df72c75edbb2bf3007c6d8c7c5fc9597a85a177a2b13e9a34d8957c103efb218",
     "core/GameAudioOriginalOwner.cs": "7a837190ee8a02b01e0cce5883869c125ca7f9938c415be4559dc577bb72a647",
-    "core/GameAudioOriginalPassivePcmContract.cs": "fc1a621277c26017e03625b797557415509faab37de990ab1aaaaea9e0c668a7",
+    "core/GameAudioOriginalPassivePcmContract.cs": "0ae9ab3d57770c0f7d4f8cbc14eb557a0e9fd699355fb54f29f823cffb63371e",
     "core/GameAudioOriginalReadiness.cs": "ab7be883932ce975615676882440c74d43b039fce067a9cab0572d7198c4db19",
     "core/OriginalOwnerProbeObserver.cs": "06616139b12dec7f13561249dc4d979739e66a1df925cfae6793c94bff186dfa",
     "core/PointSoundDiagnosticObserver.cs": "ebd0b2c0089150c4302c00824ee32e7a8e8b1906f26ad2137bdb0cee4cf1b4c7",

@@ -13,6 +13,7 @@ public interface IGameAudioOriginalPassivePcmCapture
     ulong WindowStartServiceFrames { get; }
     void Tick(float realtimeSinceStartup, bool ownerReady, bool exactControlObserved, ulong successfulOriginalRenderFrames);
     void BeforeOriginalEngineTerm();
+    void PersistWaveformAfterOriginalTerms();
     bool TerminalStopRequested { get; }
     string State { get; }
     string StopReason { get; }
@@ -25,6 +26,11 @@ public interface IGameAudioOriginalPassivePcmCapture
     ulong NonfiniteSamples { get; }
     ulong RejectedBuffers { get; }
     ulong CappedBuffers { get; }
+    string WaveformReadbackState { get; }
+    string WaveformReadbackFailure { get; }
+    bool WaveformRawPersisted { get; }
+    ulong WaveformGeneration { get; }
+    uint WaveformStoredSamples { get; }
     bool OutputIdentityObserved { get; }
     bool CaptureOutputDeviceIdObserved { get; }
     ulong CaptureOutputDeviceId { get; }

@@ -17,6 +17,10 @@ internal sealed class NativeWwiseMonitorLease
     internal bool CaptureRegistered { get; set; }
     internal bool CaptureSafeBeforeEngineTerm { get; set; } = true;
     internal bool OutcomeUnknown { get; set; }
+    internal bool EngineTermReturnedState { get; set; }
+    internal bool CallbackManagerTermReturnedState { get; set; }
+    internal bool DisarmAttempted { get; set; }
+    internal ulong ArmedState { get; set; }
     internal NativeWwiseDiagSnapshot ObserveSnapshot() { throw new InvalidOperationException("unexpected capture snapshot"); }
     internal NativeWwiseDiagSnapshot RegisterCaptureCallback(GameAudioOriginalPassivePcmCaptureSelection selection) { throw new InvalidOperationException("unexpected capture registration"); }
     internal int UnregisterCalls { get; private set; }

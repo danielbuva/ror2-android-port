@@ -48,23 +48,44 @@ Schema `original-game-audio-build-selection-r2` retains those inputs and adds
 the optional boolean `passive_pcm_capture_requested`, default false. R1 remains
 accepted with capture disabled; it rejects the new field. The flag is included
 in generation/cache identity and the generated process request. It selects a
-bounded observation of ordinary gameplay output, with no test event or saved
-audio. The optional R2 boolean `passive_pcm_capture_music_output_requested` defaults
+bounded observation of ordinary gameplay output, with no test event. The V1
+readback can persist a private raw prefix only after verified original shutdown. The optional R2 boolean `passive_pcm_capture_music_output_requested` defaults
 false and requires passive capture. It selects the exact ready original music
 output dynamically at gameplay admission; no output identity is configured on
 the host. Both flags enter cache/request/staging identity. R1 rejects these
-new fields. J918's matching native runtime is an explicit licensed local input:
-`work/coordination/original-music-target-capture-native-build-root/r1/`
-`root-native-target-capture-r1/libs/arm64-v8a/libAkSoundEngine.so`, SHA-256
-`4f309b9df05392b7b78ea51c53955225f27400a83810e260441f65dfdc335498`.
+new fields. The current waveform-capable native library is an explicit licensed local input:
+`work/coordination/original-game-audio-pcm-waveform/r26-native-build-draft-r3/`
+`native-waveform-r26/libs/arm64-v8a/libAkSoundEngine.so`, SHA-256
+`9075b5a4d3718a209eb244760d2b251a59ef2f5c486a2d2fc0e83b90240cbba3`.
 Its adjacent `build-record.json` binds the authorized SDK sources/archives,
-exact NDK r25c tools and authored adapter. Those protected inputs and the private
-SDK-derived bridge remain required local state; public source cannot distribute
-them. This library changes the custom capture ABI and must be selected with
-the corresponding committed managed producer. It is not a Release ABI-inspection
-replacement. The selection names this exact artifact explicitly; no timestamped
-run is searched or read implicitly. The new artifact's local compilation and
-static qualification do not establish Android loading or playback.
+NDK r25c, exact isolated four-file extension and authored adapter; the matching
+`source-waveform-r26-stage.json` binds the exact written record bytes. Required
+private source is the sibling `source-waveform-r26/` tree, including the SDK-derived
+bridge, Android build list and bounded V1 ring. Reproduce it through the retained
+hash-bound build adapter/plan and explicit Root clearance in that R3 directory,
+from the preserved R1 target-capture source and the reviewed private native delta.
+Protected integration source, SDK archives and resulting native binaries cannot
+be published; these remain required licensed local state. The static audit and
+its raw/translated record bindings are under
+`work/coordination/original-game-audio-pcm-waveform/r26-native-static-audit-root-r2/`;
+it proves host ELF closure only, not Android loading or playback. Keep J918's
+previous native 4f309b9d and its source/receipts under
+`work/coordination/original-music-target-capture-native-build-root/r1/` for R25
+and older rollback receipts. The selection must name an exact library explicitly;
+no timestamped run or mutable current-build pointer is searched implicitly.
+
+The private waveform transport is `lab-original-audio-pcm/` below the selected
+app's actual Unity persistent-data root, never a configured SD path. Each raw
+float/JSON pair is create-new, named with an opaque capture ID and native
+generation, and written only after both original Terms plus verified monitor
+disarm. Existing files are retained. Root copies the exact new closed pair into
+an ignored evidence directory after shutdown; package ownership, process exit,
+APK identity and actual data backing remain device-run gates. Raw audio and
+exported WAVs stay ignored. The current host exporter is
+`python3 scripts/lab/original_audio_pcm_waveform.py --help`; it consumes explicit
+raw/metadata/output paths under `work/` and writes a separate hash-bound WAV
+receipt. It does not read a timestamped run implicitly, post events or operate a
+device. Public tests use authored synthetic float samples only.
 
 The SoundEmitter restorer also reads the existing accepted-input,
 reconstruction and project-input receipts and the accepted export's prefab/meta;

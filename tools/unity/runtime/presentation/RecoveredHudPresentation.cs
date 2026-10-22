@@ -35,7 +35,7 @@ public sealed partial class RecoveredHudPresentation : MonoBehaviour
         public int frames, items, skillSlots, pickupIconBindings, loadedPickupIcons, survivorRosterCount, survivorSelectableCount;
         public float health, shield, barrier, level, bossHealth, charge;
         public uint money;
-        public float menuStartX, menuStartY;
+        public float menuStartX, menuStartY, menuQuitX, menuQuitY;
         public int screenWidth, screenHeight;
         public string stage, objective, menuDifficulty,
             scope =

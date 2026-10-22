@@ -60,7 +60,7 @@ class ProducerManifestTests(unittest.TestCase):
 
     def test_new_native_output_pin_replaces_old_pin_for_producer_artifacts(self):
         self.assertEqual(
-            "4f309b9df05392b7b78ea51c53955225f27400a83810e260441f65dfdc335498",
+            "9075b5a4d3718a209eb244760d2b251a59ef2f5c486a2d2fc0e83b90240cbba3",
             producer.LINEAGE["native_library_sha256"],
         )
         self.assertNotEqual(

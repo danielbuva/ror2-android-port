@@ -120,6 +120,12 @@ public sealed partial class PortSession
             var point = RectTransformUtility.WorldToScreenPoint(null, rect.TransformPoint(rect.rect.center));
             coordinator.r.hud.menuStartX = point.x;
             coordinator.r.hud.menuStartY = Screen.height - point.y;
+            // Observe the existing Quit target for guarded original-audio
+            // shutdown checks; the button still owns Application.Quit.
+            var quitRect = (RectTransform)coordinator.recoveredMenu.quitButton.transform;
+            var quitPoint = RectTransformUtility.WorldToScreenPoint(null, quitRect.TransformPoint(quitRect.rect.center));
+            coordinator.r.hud.menuQuitX = quitPoint.x;
+            coordinator.r.hud.menuQuitY = Screen.height - quitPoint.y;
             coordinator.r.hud.screenWidth = Screen.width;
             coordinator.r.hud.screenHeight = Screen.height;
             coordinator.r.hud.menuVisible = true;

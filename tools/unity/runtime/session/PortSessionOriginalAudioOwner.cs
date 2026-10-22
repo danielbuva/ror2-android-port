@@ -49,6 +49,11 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
         public string passivePcmFailure;
         public ulong passivePcmCallbacks, passivePcmFrames, passivePcmSamples, passivePcmFiniteSamples;
         public ulong passivePcmNonzeroFiniteSamples, passivePcmNonfiniteSamples, passivePcmRejectedBuffers, passivePcmCappedBuffers;
+        public string passivePcmWaveformReadbackState;
+        public string passivePcmWaveformReadbackFailure;
+        public bool passivePcmWaveformRawPersisted;
+        public ulong passivePcmWaveformGeneration;
+        public uint passivePcmWaveformStoredSamples;
         public bool passivePcmOutputIdentityObserved;
         public bool passivePcmCaptureOutputDeviceIdObserved;
         public ulong passivePcmCaptureOutputDeviceId;
@@ -213,6 +218,11 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
             passivePcmNonfiniteSamples = pcm == null ? 0 : pcm.NonfiniteSamples,
             passivePcmRejectedBuffers = pcm == null ? 0 : pcm.RejectedBuffers,
             passivePcmCappedBuffers = pcm == null ? 0 : pcm.CappedBuffers,
+            passivePcmWaveformReadbackState = pcm == null ? "not_requested" : pcm.WaveformReadbackState,
+            passivePcmWaveformReadbackFailure = pcm == null ? null : pcm.WaveformReadbackFailure,
+            passivePcmWaveformRawPersisted = pcm != null && pcm.WaveformRawPersisted,
+            passivePcmWaveformGeneration = pcm == null ? 0UL : pcm.WaveformGeneration,
+            passivePcmWaveformStoredSamples = pcm == null ? 0U : pcm.WaveformStoredSamples,
             passivePcmOutputIdentityObserved = pcm != null && pcm.OutputIdentityObserved,
             passivePcmCaptureOutputDeviceIdObserved = pcm != null && pcm.CaptureOutputDeviceIdObserved,
             passivePcmCaptureOutputDeviceId = pcm == null ? 0UL : pcm.CaptureOutputDeviceId,
@@ -356,6 +366,11 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
     private void Update()
     {
         GameAudioOriginalOwner.TickPassiveCapture(Time.realtimeSinceStartup);
+        if (GameAudioOriginalOwner.OriginalTermsReturned)
+        {
+            try { GameAudioOriginalOwner.PassiveCapture?.PersistWaveformAfterOriginalTerms(); }
+            catch { /* optional waveform evidence cannot become an audio lifecycle failure */ }
+        }
         if (catalogLeaseAcquired && GameAudioOriginalOwner.OriginalTermsReturned)
         {
             var music = GetComponent<PortSessionOriginalMusicControllerOwner>();

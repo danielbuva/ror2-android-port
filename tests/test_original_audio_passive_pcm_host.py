@@ -42,6 +42,7 @@ class OriginalAudioPassivePcmHostTests(unittest.TestCase):
                     "-out:" + str(executable),
                     str(AUDIO / "NativeWwiseMonitorLease.cs"),
                     str(AUDIO / "PassivePcmCaptureWindow.cs"),
+                    str(AUDIO / "PcmWaveformReadbackV1.cs"),
                     str(ROOT / "tools/unity/support/audio/core/GameAudioOriginalPassivePcmContract.cs"),
                     str(FIXTURE),
                 ],

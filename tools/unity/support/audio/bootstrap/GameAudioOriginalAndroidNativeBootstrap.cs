@@ -17,9 +17,29 @@ internal sealed class GameAudioOriginalAndroidNativeBootstrap : IGameAudioOrigin
     private bool resolverInstalled;
     private bool originalInitAttemptCommitted;
     private bool preInitAbandonAttempted;
+#if GAME_AUDIO_HOST_TEST
+    private readonly Action hostTermFinalizer;
+    private readonly Action hostTermEvidenceFailure;
+#endif
 
     internal NativeWwiseMonitorLease MonitorLease { get { return monitor; } }
     internal bool OwnsMonitorLease(NativeWwiseMonitorLease lease) { return object.ReferenceEquals(monitor, lease); }
+
+    // Unity supplies this per-app private persistent root. It is not a device
+    // identifier or a remembered storage path. The export owner captures it
+    // before Term and defers all file writes until both original Terms return.
+    internal string CapturePrivatePersistentDataRoot
+    {
+        get
+        {
+            if (!resolverInstalled)
+                throw new InvalidOperationException("The accepted Android app-private root is unavailable before resolver selection.");
+            string path = Application.persistentDataPath;
+            if (String.IsNullOrWhiteSpace(path) || !Path.IsPathRooted(path))
+                throw new InvalidOperationException("Unity app-private persistent storage root is unavailable.");
+            return Path.GetFullPath(path);
+        }
+    }
 
     internal IGameAudioOriginalPassivePcmCapture CreatePassivePcmCaptureOwner(bool requested,
         bool specificOutputRequested)
@@ -36,6 +56,16 @@ internal sealed class GameAudioOriginalAndroidNativeBootstrap : IGameAudioOrigin
     {
         monitor = lease ?? throw new ArgumentNullException(nameof(lease));
     }
+
+#if GAME_AUDIO_HOST_TEST
+    internal GameAudioOriginalAndroidNativeBootstrap(NativeWwiseMonitorLease lease,
+        Action termFinalizer, Action termEvidenceFailure)
+        : this(lease)
+    {
+        hostTermFinalizer = termFinalizer;
+        hostTermEvidenceFailure = termEvidenceFailure;
+    }
+#endif
 
     public bool EnsureNativeLibraryLoaded
     {
@@ -230,7 +260,33 @@ internal sealed class GameAudioOriginalAndroidNativeBootstrap : IGameAudioOrigin
     {
         if (!monitor.EngineTermReturnedState || monitor.CallbackManagerTermReturnedState) return;
         monitor.RecordCallbackManagerTermReturned();
-        monitor.DisarmAfterReturnedTerms();
+        try { monitor.DisarmAfterReturnedTerms(); }
+        finally
+        {
+            // The original callback-manager Term has returned and the exact
+            // lease has recorded both Term witnesses. Finalize synchronously
+            // here because ApplicationQuit may have no later Unity Update.
+            // The owner contains every readback/persistence failure on its
+            // dedicated waveform-evidence channel.
+            PcmWaveformTermFinalizerV1.RunAfterVerifiedTerms(monitor,
+                SelectTermFinalizer(), SelectTermEvidenceFailure());
+        }
+    }
+
+    private Action SelectTermFinalizer()
+    {
+#if GAME_AUDIO_HOST_TEST
+        if (hostTermFinalizer != null) return hostTermFinalizer;
+#endif
+        return OriginalGameAudioPassivePcmOwner.FinalizeAfterReturnedTermsSafely;
+    }
+
+    private Action SelectTermEvidenceFailure()
+    {
+#if GAME_AUDIO_HOST_TEST
+        if (hostTermEvidenceFailure != null) return hostTermEvidenceFailure;
+#endif
+        return OriginalGameAudioPassivePcmOwner.RecordUnverifiedTermDisarmSafely;
     }
 
     private static void RequireUncachedSettings()

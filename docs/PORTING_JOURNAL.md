@@ -27502,3 +27502,103 @@ Final integration preserves Main's complete J949 journal prefix and all snapshot
 rows except Alpha research. The private `target-record-rebase-equality-v2.json`
 separately binds the original/rebased source equality; the original Android
 report and 72-artifact proof remain unchanged.
+
+
+## J950 — Integrate bounded waveform readback with verified original shutdown
+
+**Hypothesis and ownership.** J946/J947 observe nonzero samples but retain no
+waveform, so counters cannot qualify audio content. Add bounded readback to the
+existing explicitly requested capture owner, preserving original Wwise engine,
+streaming, music and Term ownership. The installed authorized Wwise
+2023.1.8.8601 headers establish interleaved float callback and channel contracts;
+J918's exact native integration is the predecessor. The prior-art review in
+community-prior-art and J591/J713 distinguishes event/engine semantics from clip
+decoding: this observes native output without recreating event graphs. No source
+event, bank, content, gain or registration retry is invented.
+
+**Native implementation and build.** Root alone builds a fresh isolated copy
+of the retained licensed integration: four native paths change (bridge, build
+list, new bounded ring header/source), all other 332-source predecessor rows
+remain exact. The composed input set has 554 rows, 32 SDK archives and eleven
+toolchain rows, using NDK r25c/API 21/ARM64 without replacing Unity's pinned NDK.
+The callback has no allocation, blocking lock, file I/O or managed invocation.
+A preallocated 1 MiB prefix retains at most 262,144 float32 samples; malformed,
+nonfinite, foreign-output, concurrent or drifting data invalidates readback.
+Exact successful callback unregister and native quiescence precede metadata
+and one sample copy, before either original Term. The old monitor keeps eleven
+imports and schema 3 / 24 slots; two new imports use a separate V1 ABI.
+
+One production native compilation succeeds. Its library SHA-256 is
+9075b5a4d3718a209eb244760d2b251a59ef2f5c486a2d2fc0e83b90240cbba3
+(4,002,896 bytes). Full ELF comparison preserves 1,280 wrapper exports, all 480
+reviewed extras and the old native diagnostic family, adding exactly two
+defined V1 functions for fourteen diagnostics. All seven Android dependencies
+remain exact. The actual import set has 183 rows: the predecessor 182 plus only
+calloc@LIBC, resolved by the pinned API-21 libc provider. The compiled ring
+object's sole calloc call relocation is inside Initialize, before callback
+registration; it results from the allocation/zero-fill path, not callback work.
+No unresolved imports remain. Raw build and translated auditor records bind
+the same artifact and exact link command, and the translated source-manifest
+hash binds the raw receipt. Static qualification does not establish Android
+loading, playback or valid device samples.
+
+**Managed implementation.** The existing passive owner/window owns the new
+PcmWaveformReadbackV1 helper; no experiment-switch case or engine owner is added.
+After verified unregister it validates/copies the bounded prefix and retains
+only managed samples plus Unity's actual private persistent root. File writes
+wait for both original Term-return markers and verified post-Term disarm:
+DisarmAttempted, state three and known outcome. The existing callback-manager
+Term-return observer persists synchronously; quit cannot depend on a later
+Update. The Update fallback uses the same gate. Failed disarm or evidence
+writing stays in passivePcmWaveformReadbackFailure and cannot replace original
+exceptions, engine/capture failure or teardown ownership. Successful private
+create-new raw/sidecar pairs carry a capture nonce, independent native
+generation, sample hash and all three actual Term/disarm witnesses. Repeated
+process generations preserve older pairs. Managed samples are discarded after
+persistence; native release follows the existing safe post-Term disarm path.
+
+The current host-only original_audio_pcm_waveform.py exporter validates pair
+names, hashes, lifecycle witnesses, identity, layout, counts, finite data and
+meters before creating a float WAV and separate receipt. CLI capture paths must
+resolve beneath ignored work; raw size is checked before opening and sample
+reads remain bounded. It never operates a device or infers event attribution
+or speaker audibility. Two read-only recovered-menu Quit-coordinate fields are
+the minimal UI-area dependency for this original-audio shutdown test: the
+existing RectTransform supplies the target and its existing button still owns
+Application.Quit. Alpha confirms no overlapping UI work.
+
+**Host checks and integration.** The frozen private R6 proposal passes 23 tests,
+including actual bootstrap-observer invocation with a fake native API, no later
+Update, early/repeated callbacks, successful disarm, failed disarm preserving its
+exception, writer failure and repeated-generation separation. Seventeen applied
+waveform/export contracts pass, including bounded sidecar reads and WAV-rate
+overflow refusal before output creation. The broader audio suite passes 106 with two
+expected skips; music passes 39; camera passes 42 with three expected skips.
+Existing preservation fixtures compile the added dependency. Host-only preflight,
+Ruff and diff checks pass. The owner recipe now binds twenty sources, including
+the helper through the existing bootstrap glob; runtime membership/GUIDs stay
+unchanged. Producer, native request/provider pins, generator hash and camera
+cohort pin agree. Explicit pre-waveform and older native staging lineages retain
+their original pins. ARCHITECTURE names state/teardown/export ownership;
+LOCAL_STATE lists protected native inputs and their exact retained build recipe.
+These authored runtime/support/recipe changes affect rebuild-produced outputs
+and must be replayed. No generated audio, asset, SDK source or binary is public.
+
+**Evidence and next gate.** Ignored source/build/audit packets live under
+`work/coordination/original-game-audio-pcm-waveform/`. Raw native build receipt:
+8d761f1df871781a0f1439a5b2bac27a6d48a7244b827acfebc598aa158112ba;
+source-stage receipt:
+c0d4d3815456c1d3cbd67062ad5caa7dda3d8c9d15181c28634414a0e20f1075;
+Root static qualification:
+5a5ce3462cd880d42333a359727e4e1d15b48264212e65f596fad837a86fe92e;
+independent static review:
+fe6fd043e5596f789b44210c67498b7fac3092eff7bb34a97f871e890768129c;
+R6 proposal manifest:
+94dff8504110d81987fddbe50273b9a3330247d11c03c01bf8fd90d39830c189;
+R6 review:
+0b5ce70436f108c7c20804b4c0a649b4b4a20c9174ff104aef03be9b0d821d00.
+No Unity player or device run is performed by this source checkpoint. Next
+freeze the committed combined source, rebuild J949's complete catalog and the
+player, inspect actual retained code/bundle/ABI joins, run both standard controls
+and then test original menu Quit with verified private waveform retrieval.
+Force-stop is not Term evidence. R25 remains installed; J850 stays accepted.

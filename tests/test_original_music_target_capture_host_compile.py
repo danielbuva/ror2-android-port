@@ -97,6 +97,7 @@ class OriginalMusicTargetCaptureCompileTests(unittest.TestCase):
             bootstrap / "GameAudioOriginalPreparation.cs",
             bootstrap / "NativeWwiseMonitorLease.cs",
             bootstrap / "PassivePcmCaptureWindow.cs",
+            bootstrap / "PcmWaveformReadbackV1.cs",
             bootstrap / "GameAudioOriginalAndroidNativeBootstrap.cs",
             bootstrap / "OriginalGameAudioPassivePcmOwner.cs",
             REPO / "tests/fixtures/point_sound/PointSoundBuildPin.cs",

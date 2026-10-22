@@ -61,10 +61,13 @@ LINEAGE = {
     "observed_api_sha256": "a2914ace8e2a7338010f8e9a9515911d68489bf0ad467bc7f73f4de293a19fe9",
     "composed_api_sha256": "1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b",
     "composed_game_sha256": "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc",
-    "native_library_sha256": "4f309b9df05392b7b78ea51c53955225f27400a83810e260441f65dfdc335498",
+    "native_library_sha256": "9075b5a4d3718a209eb244760d2b251a59ef2f5c486a2d2fc0e83b90240cbba3",
     "stage_receipt_sha256": "8fe02400a7ab0905ae21b728e702d7ef2c4dcf8646f77f631682a81bda0ab88c",
 }
-R23_LINEAGE = dict(LINEAGE)  # exact predecessor; do not spread the new R2 stage hash into this record
+R23_LINEAGE = {
+    **LINEAGE,
+    "native_library_sha256": "4f309b9df05392b7b78ea51c53955225f27400a83810e260441f65dfdc335498",
+}  # Exact pre-waveform predecessor; retain its R1 bank receipt.
 PREVIOUS_NATIVE_LIBRARY_SHA256 = "bb5879b4eb38b81dc3830a1662ba467b60b595e7fedb88a1301d3161f8ab9304"
 OLD_CURRENT_LINEAGE = {**R23_LINEAGE, "native_library_sha256": PREVIOUS_NATIVE_LIBRARY_SHA256}
 PREVIOUS_COMPOSED_API_SHA256 = "d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23"

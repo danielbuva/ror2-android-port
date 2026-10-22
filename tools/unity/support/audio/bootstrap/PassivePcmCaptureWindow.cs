@@ -15,6 +15,7 @@ internal sealed class PassivePcmCaptureWindow
     private readonly bool requested;
     private readonly bool beforeTermGuardInstalled;
     private readonly Action<Exception> onTermRefusal;
+    private readonly PcmWaveformCaptureFinalizerV1 waveformFinalizer;
     private NativeWwiseDiagSnapshot baseline;
     private NativeWwiseDiagSnapshot latest;
     private float startedAt;
@@ -37,11 +38,12 @@ internal sealed class PassivePcmCaptureWindow
 
     internal PassivePcmCaptureWindow(NativeWwiseMonitorLease lease, bool requested,
         Action<Action> installBeforeEngineTermHandler, Func<Action> readBeforeEngineTermHandler,
-        Action<Exception> onTermRefusal)
+        Action<Exception> onTermRefusal, PcmWaveformCaptureFinalizerV1 waveformFinalizer = null)
     {
         this.lease = lease ?? throw new ArgumentNullException(nameof(lease));
         this.requested = requested;
         this.onTermRefusal = onTermRefusal;
+        this.waveformFinalizer = waveformFinalizer;
         state = requested ? "selected_waiting_for_gameplay_arm" : "disabled";
         if (!requested) return;
         if (installBeforeEngineTermHandler == null || readBeforeEngineTermHandler == null)
@@ -287,6 +289,25 @@ internal sealed class PassivePcmCaptureWindow
         RunBeforeTermParticipant();
     }
 
+    // Called from the persistent owner only after both original Term-return
+    // witnesses. Persistence errors stay inside the finalizer and do not alter
+    // the completed native lifecycle.
+    internal void PersistWaveformAfterOriginalTerms()
+    {
+        if (waveformFinalizer == null) return;
+        waveformFinalizer.PersistAfterOriginalTerms(lease);
+    }
+
+    internal void RecordUnverifiedPostTermDisarm()
+    {
+        waveformFinalizer?.AbandonAfterOriginalTerms(lease);
+    }
+
+    internal void RecordUnexpectedWaveformReadbackFailure(Exception error)
+    {
+        waveformFinalizer?.RecordUnexpectedReadbackFailure(error);
+    }
+
     private void RunBeforeTermParticipant()
     {
         if (beforeTermParticipant == null || beforeTermParticipantCompleted) return;
@@ -318,6 +339,29 @@ internal sealed class PassivePcmCaptureWindow
             if (lease.CaptureUnregisterCallSucceeded) registrationOwned = false;
             // Otherwise retain ownership and let the pre-Term gate refuse Term.
             closed = true;
+            return;
+        }
+        // This is the first point at which the old lease has both AK's
+        // successful exact unregister and its fresh absent snapshot. Native
+        // readback is bounded and exception-contained; persistence is deferred
+        // until after original Term returns. Its failure cannot change capture
+        // ownership or replace the existing Term cleanup path.
+        if (waveformFinalizer != null)
+        {
+            bool outputObserved = latest.CaptureCallbacks > baseline.CaptureCallbacks;
+            ulong outputId = outputObserved ? latest.CaptureOutputId : 0UL;
+            if (!captureSelectionFrozen || !captureSelection.IsWellFormed)
+                outputId = 0UL;
+            else if (captureSelection.Mode == GameAudioOriginalPassivePcmCaptureSelectorMode.SpecificOutput &&
+                (!captureSelection.SpecificOutputIdKnown ||
+                 captureSelection.SpecificOutputId != outputId))
+                outputId = 0UL;
+            try
+            {
+                waveformFinalizer.ReadBeforeOriginalTerm(requested,
+                    lease.CaptureUnregisterCallSucceeded, latest.CaptureRegistered == 0, outputId);
+            }
+            catch (Exception error) { waveformFinalizer.RecordUnexpectedReadbackFailure(error); }
         }
     }
 
@@ -325,9 +369,16 @@ internal sealed class PassivePcmCaptureWindow
 
     private PassivePcmCaptureReport CreateReport()
     {
+        string waveformState = waveformFinalizer == null
+            ? (requested ? "readback_owner_unavailable" : "not_requested") : waveformFinalizer.State;
+        string waveformFailure = waveformFinalizer == null ? null : waveformFinalizer.Failure;
+        bool waveformRawPersisted = waveformFinalizer != null && waveformFinalizer.RawPersisted;
+        ulong waveformGeneration = waveformFinalizer == null ? 0UL : waveformFinalizer.Generation;
+        uint waveformStoredSamples = waveformFinalizer == null ? 0U : waveformFinalizer.StoredSamples;
         if (baseline == null || latest == null || (state != "captured" && state != "captured_before_term"))
             return new PassivePcmCaptureReport(state, stopReason, failure, 0, 0, 0, 0, 0, 0, 0, 0,
-                false, false, 0, captureSelectionFrozen, captureSelection);
+                false, false, 0, captureSelectionFrozen, captureSelection,
+                waveformState, waveformFailure, waveformRawPersisted, waveformGeneration, waveformStoredSamples);
         bool outputDeviceIdObserved = latest.CaptureCallbacks > baseline.CaptureCallbacks;
         return new PassivePcmCaptureReport(state, stopReason, failure,
             latest.CaptureCallbacks - baseline.CaptureCallbacks,
@@ -340,7 +391,8 @@ internal sealed class PassivePcmCaptureWindow
             latest.CappedBuffers - baseline.CappedBuffers,
             latest.CaptureOutputId != 0,
             outputDeviceIdObserved,
-            outputDeviceIdObserved ? latest.CaptureOutputId : 0, captureSelectionFrozen, captureSelection);
+            outputDeviceIdObserved ? latest.CaptureOutputId : 0, captureSelectionFrozen, captureSelection,
+            waveformState, waveformFailure, waveformRawPersisted, waveformGeneration, waveformStoredSamples);
     }
 }
 
@@ -358,12 +410,18 @@ internal sealed class PassivePcmCaptureReport
     internal readonly ulong CaptureOutputDeviceId;
     internal readonly bool CaptureSelectorObserved;
     internal readonly GameAudioOriginalPassivePcmCaptureSelection CaptureSelection;
+    internal readonly string WaveformReadbackState, WaveformReadbackFailure;
+    internal readonly bool WaveformRawPersisted;
+    internal readonly ulong WaveformGeneration;
+    internal readonly uint WaveformStoredSamples;
 
     internal PassivePcmCaptureReport(string state, string stopReason, string failure,
         ulong callbacks, ulong frames, ulong samples, ulong finite, ulong nonzero,
         ulong nonfinite, ulong rejected, ulong capped, bool outputIdentityObserved,
         bool captureOutputDeviceIdObserved, ulong captureOutputDeviceId,
-        bool captureSelectorObserved, GameAudioOriginalPassivePcmCaptureSelection captureSelection)
+        bool captureSelectorObserved, GameAudioOriginalPassivePcmCaptureSelection captureSelection,
+        string waveformReadbackState, string waveformReadbackFailure, bool waveformRawPersisted,
+        ulong waveformGeneration, uint waveformStoredSamples)
     {
         State = state; StopReason = stopReason; Failure = failure;
         CallbackCount = callbacks; FrameCount = frames; SampleCount = samples;
@@ -374,5 +432,10 @@ internal sealed class PassivePcmCaptureReport
         CaptureOutputDeviceId = captureOutputDeviceIdObserved ? captureOutputDeviceId : 0;
         CaptureSelectorObserved = captureSelectorObserved;
         CaptureSelection = captureSelectorObserved ? captureSelection : GameAudioOriginalPassivePcmCaptureSelection.MainOutput();
+        WaveformReadbackState = waveformReadbackState;
+        WaveformReadbackFailure = waveformReadbackFailure;
+        WaveformRawPersisted = waveformRawPersisted;
+        WaveformGeneration = waveformGeneration;
+        WaveformStoredSamples = waveformStoredSamples;
     }
 }

@@ -90,7 +90,7 @@ produce the file from the input, prefer tracking the generator.
 | `content.json` | Public selection in ignored `work/scene-probe-build.json`; generated at whole-catalog build entry | Accepted input `6af7ed94…` (Steam build 25475991); 14 current build fields, 4,304 path strings, values and array order unchanged. | J548 permits these minimal selectors; no asset bodies, private paths or device/storage identities. Includes 61 Wwise asset UUID filenames, not middleware or banks. All fields retained; audit below, 2026-10-17. | `build.py` validates after runtime config on the accepted-input-gated whole-catalog path, before cache lookup/editor invocation. Build-entry generation replaces the work file from this recipe before validation. |
 | `native-view-camera-transform.json` | Exact, default-off native view-camera transform producer | Four existing camera pairs plus two exact music-observer intermediate pairs, authored output/tool/source hashes, disabled-by-default request gate, and minimum base-prefab path/GUID. | Minimum identifiers only; no serialized content, IL, game implementation, protected assembly/prefab, private path, device/account data, or third-party code. The operator supplies legitimate local input. Audited 2026-10-21. | `native_view_camera_transform.py` and `native_view_camera_build_hook.py` validate source and profile hashes; generated assemblies/resolver files remain under ignored `work/`. Player closure, APK binding and runtime acceptance are separate gates. |
 | `music-reflection-preservation.json` | Original MusicController bootstrap reflection contract | Authored assembly/type/member names and narrow preservation requirements for the pinned editor. | No implementation, game data, SDK code, binary, private path or device/account identifier. Audited 2026-10-21. | Synthetic metadata fixtures verify the declaration; same-build post-strip inspection is required before runtime qualification. |
-| `original-audio-owner-sources.json` | Exact authored original-audio owner cohort | Repository source hashes, source membership, authored script identities and historical ancestor hash. | Authored code identifiers and hashes only; no game implementation, content, SDK code, binary, private path or device/account data. Audited 2026-10-21. | Both producer modes validate the recipe and owner hashes; camera staging pins the same recipe, and actual owner bytes participate in generation cache identity. |
+| `original-audio-owner-sources.json` | Exact authored original-audio owner and bounded waveform cohort | Repository source hashes, source membership, authored script identities and historical ancestor hash. | Authored code identifiers and hashes only; no game implementation, content, SDK code, binary, private path or device/account data. Audited 2026-10-21. | Both producer modes validate the recipe and owner hashes; camera staging pins the same recipe, and actual owner bytes participate in generation cache identity. |
 
 `runtime-sources.json` lists paths relative to `tools/unity`, staged at
 `Assets/LabLoadingScene` by basename. Basename collisions (including generated sources)
@@ -1684,3 +1684,23 @@ Provenance/privacy review: accepted input and exact conversion are local; pinned
 EditorKit registration informs discovery only. Audited 2026-10-22. Regenerate
 the full catalog to obtain the new root; Android program/pass support and visual
 acceptance remain separate gates.
+
+
+### Bounded original-output waveform evidence (J950)
+
+The owner cohort retains the existing process audio and original model-cache
+contracts and adds only authored V1 sample readback/finalization. The bootstrap
+helper is compiled by the existing support-source glob; runtime-source membership
+and Unity script identities remain unchanged. Source hashes and the historical
+parent manifest are refreshed together in the producer and camera hook. The
+accepted native pin now names the separately built, audited waveform extension;
+predecessor native and staging lineages remain exact rollback inputs.
+
+Public material contains authored C#/Python, synthetic host fixtures, ABI names
+and hashes. It contains no samples, banks, asset bytes, SDK source or native
+binary. Required protected integration inputs and their local generator/receipts
+are documented in LOCAL_STATE. The current host exporter writes generated audio
+only beneath ignored work. The two read-only Quit-coordinate report fields are
+the minimal existing-menu diagnostic dependency for original audio shutdown;
+button behavior is unchanged. Provenance/privacy audit: 2026-10-22. Android
+waveform capture, content attribution and audibility remain separate gates.

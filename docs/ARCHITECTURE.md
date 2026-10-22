@@ -949,6 +949,42 @@ scalar measurements, not audio data. Nonzero native PCM alone cannot establish
 Android playback or physical audibility. Host fixtures check capture bounds,
 ownership, default-off behavior and both actual pre-Term injection branches.
 
+`bootstrap/PcmWaveformReadbackV1.cs` owns optional bounded waveform evidence
+within that same capture request. The separate V1 metadata/copy API adds two
+imports while `NativeWwiseMonitorLease` retains its eleven imports and schema
+3 / 24-slot snapshot. The licensed native bridge preallocates a 1 MiB prefix
+before registration; its callback does bounded copying without allocation or
+file I/O. After successful exact unregister and native callback quiescence, the
+window copies/validates at most 262,144 float32 samples before either original
+Term. The finalizer keeps only that bounded managed copy and the Unity-reported
+private persistent root. Neither the session profile nor public reports carry
+audio bytes or paths.
+
+The original callback-manager Term-return observer finalizes synchronously after
+both recorded Term returns and verified monitor disarm (`DisarmAttempted`, state
+3, known outcome). The owner Update is only an idempotent fallback with the same
+gate; quit does not depend on a later frame. Unverified disarm, malformed data,
+or write failure stays in `passivePcmWaveformReadbackFailure`, independent of
+engine/capture failure and original teardown exceptions. Create-new raw/sidecar
+pairs use a private capture nonce plus the independent native generation, so
+later processes preserve older evidence. The sidecar records the three verified
+Term/disarm witnesses and a raw-file hash. Successful persistence discards the
+managed sample array; native buffer release follows the existing post-Term
+monitor disarm. A busy callback retains native storage instead of unsafe release.
+
+`scripts/lab/original_audio_pcm_waveform.py` is the current host-only exporter.
+It validates the closed raw/sidecar pair, exact output identity, lifecycle
+witnesses, layout/counts, finite samples and meters before writing an IEEE-float
+WAV and receipt with create-new semantics. Its CLI requires all capture paths
+under ignored `work/`; sample reads are capped before allocation. Explicit APK
+identity is a host receipt binding, not an embedded sample attribution. Raw
+persistence, WAV generation, event attribution and physical audibility are
+separate facts. The existing recovered menu reports its measured Quit target
+alongside Start, solely so an owned audio shutdown check can invoke the existing
+`Application.Quit` button. Menu/input behavior is unchanged. Host fixtures compile
+the actual bootstrap observer with a fake native API and cover failed disarm,
+writer failure, no subsequent Update, and repeated-generation output separation.
+
 The optional R2 build selection
 `passive_pcm_capture_music_output_requested` selects the original music output
 instead of main. It requires the existing passive-capture flag and is bound by

@@ -9,7 +9,15 @@ namespace UnityEngine.Scripting
 internal sealed class GameAudioOriginalAndroidNativeBootstrap
 {
     internal NativeWwiseMonitorLease MonitorLease { get; set; }
+    internal string CapturePrivatePersistentDataRoot { get { return "/fixture-private-root"; } }
     internal bool OwnsMonitorLease(NativeWwiseMonitorLease lease) { return Object.ReferenceEquals(MonitorLease, lease); }
+}
+
+internal interface IPcmWaveformReadbackApiV1 { }
+internal sealed class NativePcmWaveformReadbackApiV1 : IPcmWaveformReadbackApiV1 { }
+internal sealed class PcmWaveformCaptureFinalizerV1
+{
+    internal PcmWaveformCaptureFinalizerV1(IPcmWaveformReadbackApiV1 api, Func<string> rootProvider) { }
 }
 
 internal sealed class NativeWwiseMonitorLease
@@ -27,12 +35,17 @@ internal sealed class PassivePcmCaptureReport
     internal ulong CaptureOutputDeviceId;
     internal bool CaptureSelectorObserved;
     internal GameAudioOriginalPassivePcmCaptureSelection CaptureSelection;
+    internal string WaveformReadbackState, WaveformReadbackFailure;
+    internal bool WaveformRawPersisted;
+    internal ulong WaveformGeneration;
+    internal uint WaveformStoredSamples;
 }
 
 internal sealed class PassivePcmCaptureWindow
 {
     internal PassivePcmCaptureWindow(NativeWwiseMonitorLease lease, bool requested,
-        Action<Action> install, Func<Action> read, Action<Exception> refuse) { }
+        Action<Action> install, Func<Action> read, Action<Exception> refuse,
+        PcmWaveformCaptureFinalizerV1 finalizer = null) { }
     internal float WindowStartRealtimeSinceStartup { get; set; }
     internal ulong WindowStartServiceFrames { get; set; }
     internal string State { get; set; }
@@ -46,6 +59,9 @@ internal sealed class PassivePcmCaptureWindow
     internal void Tick(float time, bool ownerReady, bool exactControlObserved, ulong frames) { }
     internal void RegisterBeforeEngineTermParticipant(Action participant) { }
     internal void BeforeOriginalEngineTerm() { }
+    internal void PersistWaveformAfterOriginalTerms() { }
+    internal void RecordUnverifiedPostTermDisarm() { }
+    internal void RecordUnexpectedWaveformReadbackFailure(Exception error) { }
 }
 
 internal static class GameAudioOriginalOwner

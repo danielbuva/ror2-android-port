@@ -244,9 +244,12 @@ class StageTests(unittest.TestCase):
             {item["native_library_sha256"] for item in old_lineages},
         )
         self.assertEqual(
-            "4f309b9df05392b7b78ea51c53955225f27400a83810e260441f65dfdc335498",
+            "9075b5a4d3718a209eb244760d2b251a59ef2f5c486a2d2fc0e83b90240cbba3",
             stage_module.LINEAGE["native_library_sha256"],
         )
+
+    def test_pre_waveform_lineage_retains_its_exact_native_pin(self):
+        self.assertEqual("4f309b9df05392b7b78ea51c53955225f27400a83810e260441f65dfdc335498", stage_module.R23_LINEAGE["native_library_sha256"])
 
     def test_old_current_requested_receipt_upgrades_directly_to_new_native(self):
         with self.temporary_directory() as temp:
