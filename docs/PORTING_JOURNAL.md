@@ -26534,3 +26534,45 @@ R23 and is independently verified idle/asleep; accepted J850 remains unchanged.
 No device/editor action is part of this source integration. Next observe the
 native slot/countdown facts on a source-bound Siren route before changing
 ordinary aim/navigation or encounter logic.
+
+
+## J938 — Observe original material-cache and dirty state at the source callback
+
+Date: 2026-10-22 UTC. Hypothesis: J936's matched camera/model sample rules out
+missing dispatch and tracker membership, but not the CharacterModel material
+cache initialized in its distinct PostProgressBar phase. Consult J932/J936,
+the exact accepted CharacterModel startup/getter methods and pinned EditorKit
+prior art: shader registration does not implement source renderer startup.
+
+**Change.** Extend the existing default-off AndroidNativeSourceSkinLifecycle
+one-shot source-camera snapshot with guarded read-only static cache null/length
+and bucket-shape observations plus the original public GetMaterialsDirty
+getter. Scan at most 16 buckets, retaining lengths/scalars only, with explicit
+unknown, null and truncation states. The report keeps the same callback
+identity/frame/time. It retains no cache or Material references, calls no
+initializer and writes no renderer/material/cache state. A missing/wrong-type
+field or failed read reports unknown with an exception type, never the
+suppressed original renderer-update exception. Root uses exception types only
+to avoid retaining arbitrary exception text. The current visual defects remain
+open until a new source-bound player supplies this evidence.
+
+**Validation and provenance.** Private proposal
+`work/coordination/original-camera-material-initialization/r3/` receives an
+independent source-only GO under `review-r3/` (review manifest SHA-256
+8925d5f28dddc74ab133718949cf475de071070bfbec3d6bda0117570d6ab14c).
+The host fixture compiles the actual authored observation body and DTOs with
+inert authored model/material types; two tests pass across valid, missing and
+wrong-type field variants, null/cache truncation and a throwing dirty getter.
+Forty-one camera host tests pass with three unavailable fixtures skipped. Ruff
+passes. Refresh the source recipe's owner/build-hook hashes; prior push refusal
+also exposed the stale build-hook hash, which is corrected rather than bypassed.
+No original source, asset, SDK or raw report is published.
+
+The existing lifecycle owner and Architecture entry remain authoritative; the
+recipe provenance adds this scalar observation. This changes reproduced
+runtime source and requires rebuilding from this checkpoint. Main remains on
+R23, with its prior idle/asleep query and accepted J850 rollback unchanged.
+Host tests do not establish stripping retention, cache state on Android,
+material initialization, rendering or animation acceptance. Next build with
+the complete streamed-media fix, pass both ordinary controls, and inspect the
+same selected-camera sample before attempting a startup restoration.

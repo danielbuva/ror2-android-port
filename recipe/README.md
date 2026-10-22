@@ -1632,3 +1632,13 @@ The existing cleanup/refusal owner is unchanged. Host coverage exercises the
 listener-exit lifecycle and source seams, but Unity import and device behavior
 remain unverified. This provenance note adds no private build input or text
 replacement.
+
+
+### Source camera material-state observation (2026-10-22)
+
+The existing authored `AndroidNativeSourceSkinLifecycle` callback now reads
+bounded scalar cache shape and the original public material-dirty getter.
+It retains no original cache or material references and changes no renderer
+state. The authored host fixture extracts the actual observation body and
+report types against inert stubs; no protected source or private evidence is
+required to reproduce it. The same runtime source recipe stages this owner.

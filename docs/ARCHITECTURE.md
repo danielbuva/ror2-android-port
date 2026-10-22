@@ -1540,6 +1540,9 @@ The same selected-model owner subscribes once to the exact owned source
 SceneCamera pre-render event after its camera/rig/body identity gate. Its first
 matching callback records a separate scalar snapshot: frame/time, model state,
 at most 12 renderer samples and a bounded 256-entry exact InstanceTracker join.
+The same sample reads the static shared-material cache shape (at most 16
+buckets, scalar lengths only) and the original material-dirty getter, preserving
+unknown/null/truncation states without initializing or changing either.
 A complete miss is known-negative; an over-cap miss or accessor failure is unknown.
 Later callbacks do not recapture. OnDestroy removes the exact delegate before
 existing cleanup. This observes one subscriber boundary and does not prove the

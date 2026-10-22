@@ -23,6 +23,11 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
         public bool requested, subscriptionActive, callbackObserved, identityMatched, modelStateKnown, rendererJoinKnown;
         public bool modelActive, modelEnabled, forceUpdate;
         public bool trackedModelCountKnown, trackedModelMembershipKnown, trackedModelContainsSelected, trackedModelScanTruncated;
+        public bool sharedMaterialCacheKnown, sharedMaterialCacheIsNull, sharedMaterialCacheBucketsComplete;
+        public bool materialDirtyKnown, materialDirty;
+        public int sharedMaterialCacheOuterLength = -1, sharedMaterialCacheBucketsScanned, sharedMaterialCacheNullBucketCount;
+        public int[] sharedMaterialCacheBucketLengths;
+        public string materialObservationError;
         public SceneCameraCallbackRendererSample[] renderers;
     }
     [Serializable]
@@ -647,6 +652,7 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
             sceneCameraCallback.renderers = samples;
             sceneCameraCallback.sampledRendererCount = count;
             sceneCameraCallback.rendererJoinKnown = records != null;
+            CaptureCharacterModelMaterialState(sceneCameraCallback);
             sceneCameraCallback.status = "captured";
         }
         catch
@@ -655,6 +661,73 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
             sceneCameraCallback.modelStateKnown = false;
             sceneCameraCallback.rendererJoinKnown = false;
             sceneCameraCallback.renderers = null;
+        }
+    }
+
+    // Bounded, read-only source-state evidence. Never retain the cache or its Material references.
+    void CaptureCharacterModelMaterialState(SceneCameraCallbackSnapshot snapshot)
+    {
+        if (snapshot == null || !model)
+            return;
+
+        try
+        {
+            var cacheField = typeof(CharacterModel).GetField("sharedMaterialArrays",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            if (cacheField == null || cacheField.FieldType != typeof(Material[][]))
+            {
+                snapshot.materialObservationError = "shared material cache field missing or wrong type";
+            }
+            else
+            {
+                var cache = cacheField.GetValue(null) as Material[][];
+                snapshot.sharedMaterialCacheKnown = true;
+                snapshot.sharedMaterialCacheIsNull = cache == null;
+                if (cache != null)
+                {
+                    const int maxBuckets = 16;
+                    int count = Math.Min(cache.Length, maxBuckets);
+                    var lengths = new int[count];
+                    int nullBuckets = 0;
+                    for (int i = 0; i < count; i++)
+                    {
+                        var bucket = cache[i];
+                        if (bucket == null)
+                        {
+                            lengths[i] = -1;
+                            nullBuckets++;
+                        }
+                        else
+                        {
+                            lengths[i] = bucket.Length;
+                        }
+                    }
+                    snapshot.sharedMaterialCacheOuterLength = cache.Length;
+                    snapshot.sharedMaterialCacheBucketLengths = lengths;
+                    snapshot.sharedMaterialCacheBucketsScanned = count;
+                    snapshot.sharedMaterialCacheNullBucketCount = nullBuckets;
+                    snapshot.sharedMaterialCacheBucketsComplete = count == cache.Length;
+                }
+            }
+        }
+        catch (Exception error)
+        {
+            snapshot.sharedMaterialCacheKnown = false;
+            if (string.IsNullOrEmpty(snapshot.materialObservationError))
+            {
+                snapshot.materialObservationError = "shared material cache read failed: " + error.GetType().Name;
+            }
+        }
+
+        try
+        {
+            snapshot.materialDirty = model.GetMaterialsDirty();
+            snapshot.materialDirtyKnown = true;
+        }
+        catch (Exception error)
+        {
+            if (string.IsNullOrEmpty(snapshot.materialObservationError))
+                snapshot.materialObservationError = "material dirty read failed: " + error.GetType().Name;
         }
     }
 

@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J938](PORTING_JOURNAL.md#j938--observe-original-material-cache-and-dirty-state-at-the-source-callback) | 2026-10-21 | Observe original material-cache and dirty state at the source callback | Date: 2026-10-22 UTC. |
 | [J937](PORTING_JOURNAL.md#j937--add-bounded-native-siren-listening-observations-to-the-existing-owner) | 2026-10-21 | Add bounded native Siren Listening observations to the existing owner | Date: 2026-10-22 UTC. |
 | [J936](PORTING_JOURNAL.md#j936--observe-source-camera-dispatch-while-selected-renderers-stay-disabled) | 2026-10-21 | Observe source camera dispatch while selected renderers stay disabled | Date: 2026-10-22 UTC. |
 | [J935](PORTING_JOURNAL.md#j935--verify-r23-controls-and-identify-unstaged-streamed-music-media) | 2026-10-21 | Verify R23 controls and identify unstaged streamed music media | Date: 2026-10-21; standard controls finish on 2026-10-22 UTC. |
