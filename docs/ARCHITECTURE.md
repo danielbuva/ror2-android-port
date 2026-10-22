@@ -10,6 +10,9 @@ Documentation entry points: [project home](../README.md) and
 [player guide](PLAYER_GUIDE.md) explain availability for players.
 [DEVELOPING.md](DEVELOPING.md) owns contributor setup, the repository map and
 command reference, including the generated prototype-action table.
+[PLAYTESTING.md](PLAYTESTING.md) owns the prepared-lab desktop fallback checklist:
+matching build receipts, selected-device installation, assisted checks, manual
+playtest limits and reviewed feedback. It introduces no installer or runtime step.
 [Branding notes](assets/branding/README.md) record the two repository-only
 promotional graphics and their sources; they are not part of the runtime pipeline.
 

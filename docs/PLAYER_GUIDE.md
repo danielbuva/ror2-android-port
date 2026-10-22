@@ -14,6 +14,10 @@ The current builds are part of a developer testing setup. The build and install
 commands in the developer guide depend on that setup and are not player
 installation instructions. A release date is not established here.
 
+Contributors with an already prepared laboratory can use the
+[owner-build playtest checklist](PLAYTESTING.md). It covers the desktop fallback
+and assisted checks; it does not establish the final player installation flow.
+
 ## What is this project?
 
 The aim is to run Risk of Rain 2 directly on Android. The tools adapt the original

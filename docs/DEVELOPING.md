@@ -24,6 +24,10 @@ For a reviewed report from an existing standard check, use the
 [local baseline feedback preview](BASELINE_FEEDBACK.md). It selects fixed facts
 and can include a manual issue-draft URL; settings integration remains open.
 
+For an already prepared laboratory, the [owner-build playtest checklist](PLAYTESTING.md)
+connects build identity, selected-device installation, assisted checks and reviewed
+feedback. Fresh public-input setup and the final player installer remain open.
+
 For tooling changes, use the [validation tiers](#validation-tiers) and
 [testing strategy](testing-strategy.md). Review staged files and run the public
 repository audit before committing; never include game-derived outputs or private

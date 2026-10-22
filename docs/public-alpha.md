@@ -143,8 +143,10 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       before public issue-template or tracker changes. The separate
       [host baseline preview](BASELINE_FEEDBACK.md) selects fixed facts for manual
       review; settings, arbitrary-log redaction and attachment export remain open.
-- [ ] Provide a short owner-build/install/playtest checklist with artifact
-      identity, known limits, rollback and consented feedback steps. Retain
+- [ ] Qualify the [prepared-lab owner-build/install/playtest checklist](PLAYTESTING.md)
+      on fresh public inputs, then establish final player installation, ordinary
+      controls and update/rollback steps. Artifact identity, known limits and
+      reviewed feedback are documented; those acceptance gates remain open. Retain
       [J888's checked device observations and teardown](PORTING_JOURNAL.md#j888--refuse-unknown-baseline-device-state-and-verify-teardown)
       when extending the standard checks.
 - [ ] Obtain explicit user approval for outward-facing pushes/PRs, releases,
