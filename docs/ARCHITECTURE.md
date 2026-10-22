@@ -1590,6 +1590,25 @@ the last complete pre-disposal sample without retaining Unity object references;
 teardown observations remain separate. The production-owner synthetic host
 contract covers boundedness, read failures and preservation of native state.
 
+`runtime/input/CharacterModelMaterialCacheOwner.cs` owns the process-lifetime
+material-cache prerequisite for this original selected-model path.
+`AndroidNativeSourceSkinLifecycle.PrepareInactive` calls it after the existing
+model/body, audio and source-enabled gates and before adding the lifecycle
+component or activating the model. It validates the exact private static source
+field/method contract and bounded cache shape. A valid existing cache is
+preserved; a null cache invokes only the retained original
+`CharacterModel.InitSharedMaterialsArrays` method and verifies its result.
+Malformed state or an uncertain invocation is terminal and is not retried.
+The owner retains types and immutable outcomes, without Unity object references.
+Session teardown leaves the original static cache intact. Its detached public-field
+DTO is recorded in `nativeSourceSkinLifecycle.materialCacheInitialization`;
+`initializerAttempted` is process-lifetime invocation-attempt evidence, including
+failed calls, and does not claim that an exceptional target method completed.
+The owner does not replay the broad startup phase or implement renderer updates.
+`test_character_model_material_cache_host.py` exercises source-preservation,
+single invocation, malformed-contract, partial-failure and DTO contracts against
+authored inert fixtures; device rendering remains a separate gate.
+
 `AutomaticSpawnBoundary` captures the owned body's live, source-enabled root
 state machines before callback isolation. Only integrated-world startup restores
 those machines after the existing selected-skill setup, counting newly enabled

@@ -35,6 +35,7 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
     {
         public SceneCameraCallbackSnapshot sceneCameraCallback;
         public bool requested, attached, nativeOwnersActive, selectedSkinReady, animatorInitialized, displayDeactivated, ownerDestroyed;
+        public CharacterModelMaterialCacheOwner.Report materialCacheInitialization;
         public int selectedSkinIndex = -1, currentSkinIndex = -1;
         public string controllerIdentity, avatarIdentity, firstFailure, cameraAdmissionFailure;
         public int materialCopiesCreated, materialCopiesRetired, materialCopiesReleased;
@@ -209,6 +210,16 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
         // Do not force-enable a source-disabled callback.
         if (!AndroidNativeSkinActivationPolicy.ShouldActivate(true, true, audioLifecycleSafeBoundary, model.enabled, skin.enabled))
             throw Refuse(report, "Opt-in source skin lifecycle refused by source/audio/authored-enabled gate");
+
+        // Initialize only this retained original cache after source/catalog/audio gates and
+        // before adding/enabling the lifecycle owner or activating the selected model.
+        var cacheInitialization = CharacterModelMaterialCacheOwner.EnsureInitialized(
+            typeof(CharacterModel), typeof(Material[][]));
+        report.materialCacheInitialization = CharacterModelMaterialCacheOwner.CaptureReport(cacheInitialization);
+        if (cacheInitialization.outcome != CharacterModelMaterialCacheOwner.Outcome.Initialized &&
+            cacheInitialization.outcome != CharacterModelMaterialCacheOwner.Outcome.AlreadyInitialized)
+            throw Refuse(report, "Original CharacterModel shared-material cache initialization failed");
+
         var lifecycle = modelObject.GetComponent<AndroidNativeSourceSkinLifecycle>();
         if (!lifecycle)
             lifecycle = modelObject.AddComponent<AndroidNativeSourceSkinLifecycle>();

@@ -13,6 +13,7 @@ EDITOR = Path(os.environ.get("UNITY_EDITOR_PATH", "/Applications/Unity/Hub/Edito
 MONO = EDITOR / "MonoBleedingEdge/bin/mono"
 CSC = EDITOR / "MonoBleedingEdge/lib/mono/msbuild/Current/bin/Roslyn/csc.exe"
 OWNER = REPO / "tools/unity/runtime/input/AndroidNativeSourceSkinLifecycle.cs"
+CACHE_OWNER = REPO / "tools/unity/runtime/input/CharacterModelMaterialCacheOwner.cs"
 DISPATCH = REPO / "tools/unity/runtime/input/AndroidNativeItemDisplayDispatch.cs"
 POLICY = REPO / "tools/unity/runtime/input/AndroidNativeSkinActivationPolicy.cs"
 LISTENER_CONTRACT = REPO / "tools/unity/runtime/input/OriginalWwiseCameraListenerContract.cs"
@@ -26,7 +27,7 @@ class NativeSourceSkinLifecycleHostTests(unittest.TestCase):
     def test_actual_runtime_owner_and_policy_against_synthetic_contracts(self) -> None:
         if not MONO.is_file() or not CSC.is_file():
             self.skipTest("pinned Unity 2021.3.45f2 Mono/Roslyn host compiler is unavailable")
-        for source in (OWNER, DISPATCH, POLICY, STUBS, CAMERA_OWNER_CONTRACT, LISTENER_CONTRACT, ASSERTIONS):
+        for source in (OWNER, CACHE_OWNER, DISPATCH, POLICY, STUBS, CAMERA_OWNER_CONTRACT, LISTENER_CONTRACT, ASSERTIONS):
             self.assertTrue(source.is_file(), f"missing host contract source: {source}")
         with tempfile.TemporaryDirectory(prefix="native-source-skin-host-") as temp:
             temp_path = Path(temp)
@@ -41,6 +42,7 @@ class NativeSourceSkinLifecycleHostTests(unittest.TestCase):
                     f"-out:{executable}",
                     str(STUBS),
                     str(OWNER),
+                    str(CACHE_OWNER),
                     str(DISPATCH),
                     str(POLICY),
                     str(CAMERA_OWNER_CONTRACT),

@@ -1,6 +1,6 @@
 {
-  "base_commit": "f676d2f661f993895bb811a88798a67382991a2f",
-  "integration": "Original MusicController process lifecycle with passive pre-Term participation, exact original output/PostEvent/SetState return observation and a one-shot original startup trigger after exact owned queue success. Default off unless requested. Read-only track/context and scope-qualified resolved RTPC observations expose unknown failures without changing source dispatch. Streamed media is generated from the accepted full inventory and metadata and copied to the qualified original Android IO root before initialization; playback remains unqualified.",
+  "base_commit": "215caf2bc32a71beb1658cada427a63c004be342",
+  "integration": "Original MusicController process lifecycle with passive pre-Term participation, exact original output/PostEvent/SetState return observation and a one-shot original startup trigger after exact owned queue success. Default off unless requested. Read-only track/context and scope-qualified resolved RTPC observations expose unknown failures without changing source dispatch. Streamed media is generated from the accepted full inventory and metadata and copied to the qualified original Android IO root before initialization; playback remains unqualified. The native source-skin lifecycle validates its original CharacterModel material cache through the retained source initializer before activation; this is a prerequisite, not visual acceptance.",
   "owner_source_hashes": {
     "../../runtime/session/OriginalMusicControllerContract.cs": "bd8f78977722a276409623cea4909b0e41065fda6c195a6b0dee94ef8bb8b485",
     "../../runtime/session/PortSession.cs": "233e40b41b02aa601d110db38bdb738ed35438a91131823d609a2909719e6731",
@@ -22,7 +22,7 @@
     "core/OriginalOwnerProbeObserver.cs": "06616139b12dec7f13561249dc4d979739e66a1df925cfae6793c94bff186dfa",
     "core/PointSoundDiagnosticObserver.cs": "ebd0b2c0089150c4302c00824ee32e7a8e8b1906f26ad2137bdb0cee4cf1b4c7"
   },
-  "parent_manifest_sha256": "9b5ba201439610feb1d2f81aac3b1ad6f7b03e81b7e13caeaaef94b25f51f22a",
+  "parent_manifest_sha256": "71803bf6cdff01aa60f78f76600bda6bd6338b96d4ba9dfa54afc5388b0cc73d",
   "project_layout_source_guids": {
     "experiments/LabExperiments.cs": "3051aa0f6c5904ab3bb2f61d84b261dd",
     "runtime/catalog/BarrierEffectBoundary.cs": "6851d6c1d59a641fcaab9f12638c6315",
@@ -57,6 +57,7 @@
     "runtime/input/AndroidNativeSourceSkinLifecycle.cs": "5123a8ca9049f4e389834c35429e8c9e",
     "runtime/input/AndroidOfflineSettings.cs": "66a562b7a60954d15b7fd42fa573e597",
     "runtime/input/AndroidPresentationCamera.cs": "d4a46649b8851464ca49e269f75fa517",
+    "runtime/input/CharacterModelMaterialCacheOwner.cs": null,
     "runtime/input/NovaDiagnosticDisplay.cs": "5daf75ba9ec1543c8b38ee0934ea5b65",
     "runtime/input/NovaInputBoundary.cs": "0a72c8e587e854867ab7cb874639a1a0",
     "runtime/input/NovaInputBridge.cs": "8cc417d3d71fb490e9bf29e4c14c27dd",
@@ -179,6 +180,7 @@
     "runtime/input/AndroidNativeSourceSkinLifecycle.cs",
     "runtime/input/AndroidOfflineSettings.cs",
     "runtime/input/AndroidPresentationCamera.cs",
+    "runtime/input/CharacterModelMaterialCacheOwner.cs",
     "runtime/input/NovaDiagnosticDisplay.cs",
     "runtime/input/NovaInputBoundary.cs",
     "runtime/input/NovaInputBridge.cs",

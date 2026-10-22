@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import Counter
 import hashlib
 import importlib.util
 import json
@@ -87,7 +88,7 @@ class NativeViewCameraIntegrationTests(unittest.TestCase):
             with self.subTest(rows=len(mutant)), self.assertRaises(ValueError):
                 self.hook._verify_stage_manifest_rows({"outputs": mutant}, {"outputs": manifest_rows}, project)
 
-    def test_actual_current_audio_stage_matches_all_165_artifact_rows(self):
+    def test_actual_current_audio_stage_matches_receipt_bound_artifact_roles(self):
         project = REPOSITORY / "work/lab-project"
         stage_path = project / "Assets/StreamingAssets/Lab/OriginalGameAudioStageReceipt.json"
         if not stage_path.is_file():
@@ -158,7 +159,21 @@ class NativeViewCameraIntegrationTests(unittest.TestCase):
             self.hook.restore_previous_camera(project_copy, work_copy)
             project = project_copy
         self.hook._verify_stage_manifest_rows(stage, manifest, project)
-        self.assertEqual(len(stage["outputs"]), 165)
+        bank_receipts = [row for row in manifest["outputs"] if row["role"] == "bank_receipt"]
+        self.assertEqual(len(bank_receipts), 1)
+        cohort = json.loads((project / bank_receipts[0]["target"]).read_text())
+        self.assertIn(cohort["schema"], {"original-game-wwise-bank-cohort-r1", "original-game-wwise-bank-cohort-r2"})
+        media_validator = load("camera_test_media_contract", REPOSITORY / "scripts/lab/original_game_audio_stage.py")
+        media = media_validator.validate_streamed_media_rows(cohort)
+        roles = Counter(row["role"] for row in manifest["outputs"])
+        self.assertEqual(
+            roles,
+            Counter(banks=154, streamed_media=len(media), metadata=4, observer=1, core=1, bootstrap=1, api=1, game=1, native=1, bank_receipt=1),
+        )
+        expected_media = {("Assets/StreamingAssets/" + cohort["output_relative_directory"] + "/" + row["relative_path"], row["sha256"]) for row in media}
+        actual_media = {(row["target"], row["sha256"]) for row in manifest["outputs"] if row["role"] == "streamed_media"}
+        self.assertEqual(actual_media, expected_media)
+        self.assertEqual(len(stage["outputs"]), 165 + len(media))
         self.assertFalse(stage["runtime_accepted"])
         self.assertFalse(stage["audible"])
         for mutate in ("missing", "duplicate", "hash"):

@@ -26958,3 +26958,60 @@ Any future observation needs bounded time-series context or a separately
 measured interaction change, not a conclusion from the two null slots. No
 runtime or rebuild-produced source changes here; J850 remains accepted and
 J941 remains the latest passing default-control APK.
+
+
+## J944 — Initialize the original material cache before native model activation
+
+**Hypothesis and prior art.** J942 directly observes a null source-owned
+shared-material cache with dirty state true at the selected camera callback.
+The exact retained original `CharacterModel.InitSharedMaterialsArrays` method
+and its private fields are present in R24. J938 reviews the original startup
+boundary and pinned EditorKit source (4128710f74ffbd90bfebc523812e7155fa7bdee3);
+its shader lookup knowledge does not supply the missing source initializer.
+Call this one original prerequisite before activating the opt-in selected model,
+then measure rendering separately. This does not explain J942's host timeout.
+
+**Implementation and ownership.** Authored
+`tools/unity/runtime/input/CharacterModelMaterialCacheOwner.cs` validates the
+exact private static field and no-argument nongeneric void-method contract.
+It preserves a valid existing jagged cache. A null cache invokes the original
+initializer once and verifies the bounded outer and bucket dimensions; malformed,
+refused or partially failed state is terminal for that type in this process.
+No replacement cache or broad startup replay is implemented. The owner stores
+types and immutable outcomes without Unity object references. Session teardown
+leaves the source-owned static cache intact. Its serializable detached report
+records the invocation attempt and outcome without claiming exceptional calls
+completed. `AndroidNativeSourceSkinLifecycle.PrepareInactive` calls it after
+existing source/audio/model gates and before adding the lifecycle component or
+activating the model. ARCHITECTURE names its setup, state and lifetime.
+
+Both runtime source lists, layout and owner-cohort maps add this authored file;
+the audio producer and camera hook use the same updated cohort pin. The camera
+integration test now joins streamed-media roles to the checked bank receipt,
+including target/hash closure, instead of assuming the historical 165-row stage.
+The current R2 stage has 285 rows. Missing, duplicate and changed-hash refusals
+remain tested. No new ignored build input, exact-text source replacement,
+input/UI behavior or game-derived public content is added. These runtime-source
+and recipe changes are reproduced by their existing rebuild steps.
+
+**Host validation and next gate.** Root runs the new synthetic cache fixture,
+the full native-skin lifecycle fixture (87 assertions), source layout and audio
+producer contracts: 29 tests pass. The first run exposes a missing authored
+`GetMaterialsDirty` fixture stub and a stale cohort pin; both are corrected.
+The camera suite passes 41 tests with three appropriate local-profile skips
+after the receipt-aware test correction. Pinned Mono/Roslyn fixtures skip when
+the editor toolchain is absent. Changed Python passes Ruff format/check;
+`./dev doctor` and selected-device `./dev preflight` pass. Evidence is under
+`work/coordination/original-camera-material-initialization/`, including
+`root-applied-host-tests-r2.log`, `root-camera-tests-r2.log`,
+`root-doctor-r1.log` and `root-preflight-r1.log`. Independent applied-source
+review is `repair-applied-review-r1/review.md`, SHA-256
+3cfda783c8b197996b6ca1e4f5737dae80609348a4ea494829fc4244126115ec.
+Recipe provenance review records authored contracts only, with no original
+initializer body, game assets or SDK source published.
+
+This is a committed build prerequisite, not Android initialization, rendering,
+animation or visual-parity acceptance. Next build a frozen R25 candidate,
+qualify its retained initializer/owner and exact artifacts, run both standard
+controls, then use the separately bounded selected-camera route. The installed
+player and latest passing controls remain J941 R24; J850 remains accepted.

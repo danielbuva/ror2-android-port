@@ -1658,3 +1658,17 @@ cache identity change together. Synthetic fixtures contain only authored bytes,
 metadata, API stubs and copier-contract tests. No authored runtime source is
 changed by a build-time text replacement. Native IO path knowledge is recorded
 as a compatibility requirement; no SDK code is copied into the recipe.
+
+### Original material-cache prerequisite (2026-10-22)
+
+The authored `runtime/input/CharacterModelMaterialCacheOwner.cs` and its small
+integration in the existing inactive source-skin lifecycle call the original
+retained cache initializer through its exact field/method contract. The owner
+does not reproduce that initializer's implementation or a broader game startup
+phase. It preserves existing source-owned cache state and records a detached
+process-lifetime report. Synthetic C# fixtures implement inert contracts only;
+no game assembly, decompiled body, asset, SDK source or private evidence is added.
+Both runtime source lists and their layout/owner-cohort maps include the new
+path with a null script GUID until import. Producer/camera recipe pins change
+together. No new ignored build input or build-time source replacement is added.
+The host contracts do not establish Android rendering or visual parity.

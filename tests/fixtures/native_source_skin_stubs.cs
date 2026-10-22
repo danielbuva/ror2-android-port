@@ -164,6 +164,17 @@ namespace RoR2
     public class ModelLocator : UnityEngine.MonoBehaviour { public UnityEngine.Transform modelTransform; }
     public class CharacterModel : UnityEngine.MonoBehaviour
     {
+        private static int maxMaterials = 2;
+        private static UnityEngine.Material[][] sharedMaterialArrays;
+        private static void InitSharedMaterialsArrays()
+        {
+            sharedMaterialArrays = new[]
+            {
+                new UnityEngine.Material[0],
+                new UnityEngine.Material[1],
+                new UnityEngine.Material[2]
+            };
+        }
         public struct RendererInfo
         {
             public UnityEngine.Renderer renderer;
@@ -176,6 +187,7 @@ namespace RoR2
         public bool forceUpdate;
         public VisibilityLevel visibility = VisibilityLevel.Visible;
         public int invisibilityCount;
+        public bool GetMaterialsDirty() { return true; }
     }
     public enum VisibilityLevel { Invisible, Visible, Untargetable }
     public class CameraRigController : UnityEngine.MonoBehaviour

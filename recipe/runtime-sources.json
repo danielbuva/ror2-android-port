@@ -32,6 +32,7 @@
   "runtime/input/AndroidNativeSourceSkinLifecycle.cs",
   "runtime/input/AndroidOfflineSettings.cs",
   "runtime/input/AndroidPresentationCamera.cs",
+  "runtime/input/CharacterModelMaterialCacheOwner.cs",
   "runtime/input/NovaDiagnosticDisplay.cs",
   "runtime/input/NovaInputBoundary.cs",
   "runtime/input/NovaInputBridge.cs",
