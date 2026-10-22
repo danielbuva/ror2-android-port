@@ -1,6 +1,7 @@
 """R3/R4 synthetic replay, including the real builders and original write paths."""
 
 import contextlib
+import hashlib
 import io
 import json
 from pathlib import Path
@@ -9,7 +10,9 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
+REPO_ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "scripts/lab/common.py").is_file())
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
+sys.path.insert(1, str(REPO_ROOT / "scripts/lab"))
 import catalog_analysis
 import catalog_rebuild
 import composition_io
@@ -21,6 +24,37 @@ from composition_io import StageIO
 
 
 class CatalogRebuildTests(unittest.TestCase):
+    def test_default_shader_selection_pins_current_r3_generators_and_roots(self):
+        candidate_root = Path(__file__).resolve().parents[1]
+        selection = read(candidate_root / "recipe/shader-catalog-overrides.json")
+        self.assertFalse(selection["enabled"])
+        expected = {
+            16022: (
+                "scripts/lab/shader_outline.py",
+                "recipe/shader-outline-candidate.json",
+                "7cd674a8f0081a5e47669810c65e69c86349e91d280c1e4129c73111ec3ad608",
+                "902c375c54a7fe5c75cc254c7cabbe0ef1290282eeccdcc5ed83448e2a4c4576",
+                "generated-shader-candidates/outline-highlight-r3/{input_id}",
+            ),
+            15950: (
+                "scripts/lab/shader_ramp_fog.py",
+                "recipe/shader-ramp-fog-candidate.json",
+                "5c50fca86cdd1092edfbc3de97a3e30f25baec359dc512a6be26a96e1065482a",
+                "63880fafec3b170c7899d8da0b04971cf764d2678fdee00a7417a6e134b622aa",
+                "generated-shader-candidates/ramp-fog-r3/{input_id}",
+            ),
+        }
+        self.assertEqual({row["location_id"] for row in selection["rows"]}, set(expected))
+        for row in selection["rows"]:
+            script, recipe_path, script_hash, recipe_hash, stable_output = expected[row["location_id"]]
+            self.assertEqual(row["generator"], Path(script).name)
+            self.assertEqual(row["generator_recipe"], recipe_path)
+            self.assertEqual(row["generator_sha256"], script_hash)
+            self.assertEqual(row["generator_recipe_sha256"], recipe_hash)
+            self.assertEqual(sha(REPO_ROOT / script), script_hash)
+            self.assertEqual(sha(REPO_ROOT / recipe_path), recipe_hash)
+            self.assertEqual(read(REPO_ROOT / recipe_path)["stable_output"], stable_output)
+
     def setUp(self):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
@@ -42,6 +76,9 @@ class CatalogRebuildTests(unittest.TestCase):
         write(self.work / "experiments/whole-catalog/latest.json", dict(path="work/catalog"))
         write(self.work / "config/composition-migration.json", dict(input_id=self.input_id, evidence="work/evidence"))
         write(self.recipes / "hud-ui-remaps.json", dict(input_id=self.input_id, rows=[dict(**{"from": "old-ui", "to": "new-ui"})]))
+        selection = json.loads((Path(__file__).resolve().parents[1] / "recipe/shader-catalog-overrides.json").read_text())
+        selection["input_id"] = self.input_id
+        write(self.recipes / "shader-catalog-overrides.json", selection)
         write(
             self.catalog / "reconciled-closure.json",
             dict(input_id=self.input_id, files=[self.source], roots=[1], converted={"1": dict(source=self.source)}, source_catalog_sha256="c" * 64),
@@ -100,6 +137,7 @@ class CatalogRebuildTests(unittest.TestCase):
         for module in (composition_io, whole_catalog, composition_migration):
             stack.enter_context(patch.object(module, "ROOT", self.root))
             stack.enter_context(patch.object(module, "WORK", self.work))
+        stack.enter_context(patch.object(catalog_rebuild, "ROOT", self.root))
         for module in (catalog_rebuild, whole_catalog, composition_migration):
             stack.enter_context(patch.object(module, "RECIPE", self.recipes))
         stack.enter_context(patch.object(whole_catalog, "game", return_value=self.work / "game"))
@@ -139,6 +177,370 @@ class CatalogRebuildTests(unittest.TestCase):
 
     def staging(self):
         return catalog_rebuild.CatalogIO(self.work, self.dest, self.input_id)
+
+    def install_shader_candidates(self):
+        selection = read(self.recipes / "shader-catalog-overrides.json")
+        selection["enabled"] = False
+        write(
+            self.work / "config/shader-catalog-overrides.json",
+            dict(schema="whole-catalog-shader-overrides-activation-r1", input_id=self.input_id, enabled=True),
+        )
+        metadata = read(self.catalog / "source-catalog.json")
+        closure = read(self.catalog / "reconciled-closure.json")
+        index = read(self.catalog / "source-guid-index.json")
+        specs = [
+            (
+                16022,
+                "41e90cbc5ad198a438128b019f8d8553",
+                "RoR2/Base/Shaders/HGOutlineHighlight.shader",
+                "Assets/RoR2/Base/Shaders/PostProcess/HGOutlineHighlight.shader",
+                "outline-highlight",
+                "Hopoo Games/Internal/Outline Highlight",
+                -5736718617091362218,
+                "shader_outline.py",
+                "recipe/shader-outline-candidate.json",
+                "private-outline-highlight-generated-candidate-r1",
+                "manifest.json",
+                "sources/OutlineHighlightCandidate.shader",
+                "generated_shader_path",
+            ),
+            (
+                15950,
+                "c14b6abb309b8c246add9e94a6920d7f",
+                "RoR2/Base/Shaders/RampFog.shader",
+                "Assets/RoR2/Base/Shaders/CustomPostProcess/RampFog.shader",
+                "ramp-fog",
+                "Hidden/PostProcess/RampFog",
+                2910825169780710437,
+                "shader_ramp_fog.py",
+                "recipe/shader-ramp-fog-candidate.json",
+                1,
+                "candidate.json",
+                "sources/RampFogCandidate.shader",
+                "generated_shader",
+            ),
+        ]
+        rows = []
+        for loc, guid, key, source_path, kind, name, object_id, generator, gen_recipe, schema, manifest_name, shader_rel, manifest_field in specs:
+            old = closure["converted"][str(loc)]["source"]
+            (self.export / old).unlink()
+            (self.export / (old + ".meta")).unlink()
+            self.put(self.export / source_path, 'Shader "Synthetic/Original" {}\n')
+            self.put(self.export / (source_path + ".meta"), "guid: " + guid + "\n")
+            closure["converted"][str(loc)] = dict(source=source_path, resolution="exact")
+            index.pop(f"{loc:032x}", None)
+            index[guid] = source_path
+            asset = next(row for row in metadata["locations"] if row["id"] == loc)
+            asset["primaryKey"] = key
+            key_row = next(row for row in metadata["keys"] if row["locations"] == [loc])
+            key_row["key"] = guid
+            # Hash-pinned helper source/recipe are inert synthetic bytes for this host contract.
+            self.put(self.root / "scripts/lab" / generator, "synthetic generator source\n")
+            self.put(self.root / gen_recipe, json.dumps({"stable_output": f"generated-shader-candidates/{kind}-r3/{{input_id}}"}))
+            generator_hash = sha(self.root / "scripts/lab" / generator)
+            generator_recipe_hash = sha(self.root / gen_recipe)
+            template = next(row for row in selection["rows"] if row["location_id"] == loc)
+            template.update(generator_sha256=generator_hash, generator_recipe_sha256=generator_recipe_hash)
+            root = self.work / f"generated-shader-candidates/{kind}-r3/{self.input_id}"
+            shader = ('Shader "' + name + '" {}\n').encode()
+            self.put(root / shader_rel, shader.decode())
+            if kind == "outline-highlight":
+                doc = dict(
+                    schema=schema,
+                    success=True,
+                    generator_sha256=generator_hash,
+                    recipe_sha256=generator_recipe_hash,
+                    source=dict(input_id=self.input_id, catalog_key=guid, catalog_location=loc, asset_path=source_path),
+                    object_path_id=object_id,
+                    generated_shader_path=shader_rel,
+                    generated_shader_sha256=hashlib.sha256(shader).hexdigest(),
+                    semantic_equivalence_proven=False,
+                    android_compile_or_render_tested=False,
+                    appearance_parity_proven=False,
+                )
+                write(root / manifest_name, doc)
+            else:
+                doc = dict(
+                    schema=1,
+                    kind="local-source-bound-ramp-fog-candidate",
+                    generator_sha256=generator_hash,
+                    recipe_sha256=generator_recipe_hash,
+                    source=dict(input_id=self.input_id, shader_path_id=object_id, shader_name=name, bundle_sha256="bundle"),
+                    generated_shader=shader_rel,
+                    generated_shader_sha256=hashlib.sha256(shader).hexdigest(),
+                    semantic_equivalence_proven=False,
+                )
+                write(root / manifest_name, doc)
+                write(
+                    root / "receipt.json",
+                    dict(
+                        success=True,
+                        generated_shader_sha256=doc["generated_shader_sha256"],
+                        input_id=self.input_id,
+                        bundle_sha256="bundle",
+                        source_bundle_unchanged=True,
+                        unity_compiled=False,
+                        android_shader_acceptance=False,
+                        visual_parity_proven=False,
+                    ),
+                )
+            rows.append(template)
+        write(self.catalog / "source-catalog.json", metadata)
+        write(self.catalog / "reconciled-closure.json", closure)
+        write(self.catalog / "source-guid-index.json", index)
+        selection["rows"] = rows
+        write(self.recipes / "shader-catalog-overrides.json", selection)
+        self.pin()
+        return specs
+
+    def test_two_shader_candidates_override_only_exact_catalog_sources_and_preserve_meta(self):
+        specs = self.install_shader_candidates()
+        staging = self.staging()
+        whole_catalog.prepare_integration(staging)
+        staging.flush()
+        for loc, guid, key, source_path, kind, name, object_id, *_ in specs:
+            target = "Assets/WholeGame/" + source_path.removeprefix("Assets/")
+            self.assertEqual((self.dest / target).read_bytes(), ('Shader "' + name + '" {}\n').encode())
+            self.assertEqual((self.dest / (target + ".meta")).read_text(), "guid: " + guid + "\n")
+        staged_manifest = read(next((self.dest / ".rebuild/catalog-inputs").glob("integration-*/manifest.json")))
+        for loc, guid, key, source_path, kind, name, object_id, *_ in specs:
+            target = "Assets/WholeGame/" + source_path.removeprefix("Assets/")
+            location = next(row for row in staged_manifest["locations"] if row["id"] == loc)
+            self.assertEqual(location["path"], target)
+            self.assertEqual(location["primaryKey"], key)
+        evidence = read(next((self.dest / ".rebuild/catalog-inputs").glob("integration-*/shader-overrides.json")))
+        self.assertEqual([row["location_id"] for row in evidence["rows"]], [16022, 15950])
+        self.assertTrue(all(row["preserved_meta_sha256"] for row in evidence["rows"]))
+        imported = read(next((self.dest / ".rebuild/catalog-inputs").glob("integration-*/import-receipt.json")))
+        self.assertEqual(imported["shader_overrides"]["sha256"], sha(next((self.dest / ".rebuild/catalog-inputs").glob("integration-*/shader-overrides.json"))))
+
+    def test_outline_generator_identity_uses_catalog_fields_without_shader_name(self):
+        specs = self.install_shader_candidates()
+        root = self.work / f"generated-shader-candidates/{specs[0][4]}-r3/{self.input_id}"
+        manifest = read(root / "manifest.json")
+        self.assertNotIn("shader_name", manifest["source"])
+        self.assertTrue(whole_catalog.prepare_integration(self.staging())["enabled"])
+
+    def test_outline_wrong_catalog_identity_refuses_before_shader_writes(self):
+        specs = self.install_shader_candidates()
+        root = self.work / f"generated-shader-candidates/{specs[0][4]}-r3/{self.input_id}"
+        manifest = read(root / "manifest.json")
+        manifest["source"]["catalog_key"] = "f" * 32
+        write(root / "manifest.json", manifest)
+        with self.assertRaisesRegex(RuntimeError, "Outline candidate identity"):
+            whole_catalog.prepare_integration(self.staging())
+        self.assertFalse((self.dest / "Assets/WholeGame" / Path(specs[0][3]).relative_to("Assets")).exists())
+
+    def test_changed_shader_declaration_refuses_even_with_updated_manifest_hash(self):
+        specs = self.install_shader_candidates()
+        root = self.work / f"generated-shader-candidates/{specs[0][4]}-r3/{self.input_id}"
+        shader = root / specs[0][11]
+        shader.write_text('Shader "Synthetic/WrongIdentity" {}\n')
+        manifest = read(root / "manifest.json")
+        manifest["generated_shader_sha256"] = sha(shader)
+        write(root / "manifest.json", manifest)
+        with self.assertRaisesRegex(RuntimeError, "candidate declaration changed"):
+            whole_catalog.prepare_integration(self.staging())
+
+    def test_shader_candidate_drift_refuses_without_flushing_project(self):
+        specs = self.install_shader_candidates()
+        source = self.work / f"generated-shader-candidates/{specs[1][4]}-r3/{self.input_id}/{specs[1][11]}"
+        source.write_text("changed")
+        with self.assertRaisesRegex(RuntimeError, "output differs from its manifest"):
+            whole_catalog.prepare_integration(self.staging())
+        first_target = "Assets/WholeGame/" + specs[0][3].removeprefix("Assets/")
+        second_target = "Assets/WholeGame/" + specs[1][3].removeprefix("Assets/")
+        self.assertFalse((self.dest / first_target).exists())
+        self.assertFalse((self.dest / second_target).exists())
+
+    def test_shader_override_requires_exact_two_selection_rows(self):
+        self.install_shader_candidates()
+        selection = read(self.recipes / "shader-catalog-overrides.json")
+        selection["rows"] = selection["rows"][:1]
+        write(self.recipes / "shader-catalog-overrides.json", selection)
+        with self.assertRaisesRegex(RuntimeError, "exactly the two"):
+            whole_catalog.prepare_integration(self.staging())
+        self.assertFalse((self.dest / "Assets/WholeGame/RoR2/Base/Shaders/PostProcess/HGOutlineHighlight.shader").exists())
+
+    def test_shader_candidate_recipe_path_traversal_is_refused_before_staging(self):
+        specs = self.install_shader_candidates()
+        row = read(self.recipes / "shader-catalog-overrides.json")["rows"][0]
+        recipe_path = self.root / row["generator_recipe"]
+        write(recipe_path, {"stable_output": "../../outside/{input_id}"})
+        row["generator_recipe_sha256"] = sha(recipe_path)
+        selection = read(self.recipes / "shader-catalog-overrides.json")
+        selection["rows"][0] = row
+        write(self.recipes / "shader-catalog-overrides.json", selection)
+        with self.assertRaisesRegex(RuntimeError, "work-relative"):
+            whole_catalog.prepare_integration(self.staging())
+        target = "Assets/WholeGame/" + specs[0][3].removeprefix("Assets/")
+        self.assertFalse((self.dest / target).exists())
+
+    def test_shader_override_selection_is_default_off_and_stale_enabled_receipt_refuses(self):
+        staging = self.staging()
+        self.assertIsNone(whole_catalog.prepare_integration(staging))
+        staging.flush()
+        self.assertFalse((self.dest / ".rebuild/catalog-shader-overrides.json").exists())
+        self.put(self.dest / ".rebuild/catalog-shader-overrides.json", "stale")
+        with self.assertRaisesRegex(RuntimeError, "prior shader override receipt"):
+            whole_catalog.prepare_integration(self.staging())
+
+    def test_local_shader_selector_is_strict_and_absence_is_default_off(self):
+        staging = self.staging()
+        self.assertIsNone(whole_catalog.prepare_integration(staging))
+        selector = self.work / "config/shader-catalog-overrides.json"
+        for malformed in (
+            {"schema": "whole-catalog-shader-overrides-activation-r1", "input_id": self.input_id, "enabled": 1},
+            {"schema": "whole-catalog-shader-overrides-activation-r1", "input_id": self.input_id, "enabled": True, "rows": []},
+            {"schema": "whole-catalog-shader-overrides-activation-r1", "input_id": "f" * 64, "enabled": True},
+            {"schema": "unknown", "input_id": self.input_id, "enabled": True},
+        ):
+            write(selector, malformed)
+            with self.assertRaisesRegex(RuntimeError, "Local shader override selector"):
+                whole_catalog.prepare_integration(self.staging())
+        selector.write_text("{ malformed json")
+        with self.assertRaisesRegex(RuntimeError, "selector is malformed"):
+            whole_catalog.prepare_integration(self.staging())
+        self.assertFalse((self.dest / ".rebuild/catalog-shader-overrides.json").exists())
+
+    def test_shader_selector_digest_is_joined_and_disable_requires_clean_destination(self):
+        specs = self.install_shader_candidates()
+        staged = whole_catalog.prepare_integration(self.staging())
+        self.assertEqual(staged["selector_path"], "work/config/shader-catalog-overrides.json")
+        selector_path = self.work / "config/shader-catalog-overrides.json"
+        self.assertEqual(staged["selector_sha256"], sha(selector_path))
+        expected, provenance = self.shader_override_provenance(specs)
+        catalog_rebuild.catalog_closure(self.dest, self.work, self.input_id, expected, provenance)
+        marker = read(self.dest / ".rebuild/catalog-shader-overrides.json")
+        self.assertEqual(marker["selector_sha256"], sha(selector_path))
+        changed = read(selector_path)
+        changed["enabled"] = False
+        write(selector_path, changed)
+        with self.assertRaisesRegex(RuntimeError, "does not match the current local selector|prior shader override receipt"):
+            rebuild.compare(self.dest, self.work / "lab-project", set(), {}, lambda _path: False, work=self.work)
+        with self.assertRaisesRegex(RuntimeError, "prior shader override receipt"):
+            whole_catalog.prepare_integration(self.staging())
+
+    def test_current_project_stage_persists_disable_guard_and_receipt_mirror(self):
+        self.install_shader_candidates()
+        io = StageIO(self.work)
+        write(self.work / "experiments/whole-catalog/latest.json", dict(path="work/catalog"))
+        staged = whole_catalog.prepare_integration(io)
+        self.assertTrue(staged["enabled"])
+        project = self.work / "lab-project"
+        marker_path = project / ".rebuild/catalog-shader-overrides.json"
+        mirror_path = project / ".rebuild/catalog-shader-overrides-receipt.json"
+        marker = read(marker_path)
+        self.assertTrue(mirror_path.is_file())
+        self.assertEqual(marker["receipt_path"], ".rebuild/catalog-shader-overrides-receipt.json")
+        self.assertEqual(marker["receipt_sha256"], sha(mirror_path))
+        selector = read(self.work / "config/shader-catalog-overrides.json")
+        selector["enabled"] = False
+        write(self.work / "config/shader-catalog-overrides.json", selector)
+        latest_path = self.catalog / "integration-latest.json"
+        latest_before = latest_path.read_bytes()
+        next_io = StageIO(self.work)
+        write(self.work / "experiments/whole-catalog/latest.json", dict(path="work/catalog"))
+        with self.assertRaisesRegex(RuntimeError, "prior shader override receipt"):
+            whole_catalog.prepare_integration(next_io)
+        self.assertEqual(latest_path.read_bytes(), latest_before)
+
+    def test_compare_without_override_marker_does_not_require_work_config_and_rejects_dangling_marker(self):
+        marker = self.dest / ".rebuild/catalog-shader-overrides.json"
+        marker.parent.mkdir(parents=True, exist_ok=True)
+        work_without_config = self.root / "work-without-config"
+        work_without_config.mkdir()
+        result = rebuild.compare(self.dest, self.work / "lab-project", set(), {}, lambda _path: False, work=work_without_config)
+        self.assertEqual(result["different"], [])
+        self.assertEqual(result["missing"], [])
+        marker.symlink_to(self.root / "missing-marker-target")
+        with self.assertRaisesRegex(RuntimeError, "marker is not a regular file"):
+            rebuild._catalog_shader_override_rows(self.dest, self.work / "lab-project", work_without_config, set(), {})
+
+    def shader_override_provenance(self, specs):
+        expected, provenance = set(), {}
+        oracle = self.work / "lab-project"
+        for loc, guid, key, source_path, kind, name, object_id, *_ in specs:
+            target = "Assets/WholeGame/" + source_path.removeprefix("Assets/")
+            original = self.export / source_path
+            meta = self.export / (source_path + ".meta")
+            self.put(oracle / target, original.read_text())
+            self.put(oracle / (target + ".meta"), meta.read_text())
+            expected.update((target, target + ".meta"))
+            provenance[target] = dict(
+                sha256=sha(original),
+                size=original.stat().st_size,
+                producer="repo-builder",
+                evidence=[dict(function="whole_catalog.prepare_integration")],
+            )
+            provenance[target + ".meta"] = dict(sha256=sha(meta), size=meta.stat().st_size, producer="repo-builder", evidence=[])
+        return expected, provenance
+
+    def compare_provenance_with_destination_inventory(self, provenance):
+        result = dict(provenance)
+        for path in self.dest.rglob("*"):
+            if path.is_file():
+                relative = path.relative_to(self.dest).as_posix()
+                result.setdefault(relative, dict(sha256=sha(path), size=path.stat().st_size, producer="repo-builder", evidence=[]))
+        return result
+
+    def test_shader_override_full_catalog_verification_and_compare_are_receipt_backed(self):
+        specs = self.install_shader_candidates()
+        expected, provenance = self.shader_override_provenance(specs)
+        catalog_rebuild.catalog_closure(self.dest, self.work, self.input_id, expected, provenance)
+        self.assertTrue((self.dest / ".rebuild/catalog-shader-overrides.json").is_file())
+        catalog_rebuild.dependencies(self.dest, self.work, self.input_id, expected, provenance)
+        compare_provenance = self.compare_provenance_with_destination_inventory(provenance)
+        result = rebuild.compare(self.dest, self.work / "lab-project", expected, compare_provenance, lambda path: path in expected, work=self.work)
+        self.assertTrue(result["equal"], result)
+        target = "Assets/WholeGame/" + specs[0][3].removeprefix("Assets/")
+        candidate = self.dest / target
+        before = candidate.read_bytes()
+        candidate.write_bytes(before + b"\n// unreceipted drift\n")
+        compare_provenance = self.compare_provenance_with_destination_inventory(provenance)
+        drift = rebuild.compare(self.dest, self.work / "lab-project", expected, compare_provenance, lambda path: path in expected, work=self.work)
+        self.assertIn(target, drift["different"])
+
+    def test_shader_override_without_provenance_uses_exact_export_and_receipt(self):
+        specs = self.install_shader_candidates()
+        expected, provenance = self.shader_override_provenance(specs)
+        targets = ["Assets/WholeGame/" + spec[3].removeprefix("Assets/") for spec in specs]
+        for target in targets:
+            provenance.pop(target)
+            provenance.pop(target + ".meta")
+            (self.work / "lab-project" / target).unlink()
+            (self.work / "lab-project" / (target + ".meta")).unlink()
+        catalog_rebuild.catalog_closure(self.dest, self.work, self.input_id, expected, provenance)
+        catalog_rebuild.dependencies(self.dest, self.work, self.input_id, expected, provenance)
+        compare_provenance = self.compare_provenance_with_destination_inventory(provenance)
+        for target in targets:
+            compare_provenance.pop(target, None)
+            compare_provenance.pop(target + ".meta", None)
+        result = rebuild.compare(self.dest, self.work / "lab-project", expected, compare_provenance, lambda path: path in expected, work=self.work)
+        self.assertTrue(result["equal"], result)
+        self.assertTrue(set(targets).issubset(result["identical"]))
+        self.assertTrue({target + ".meta" for target in targets}.issubset(result["identical"]))
+        original = self.export / specs[0][3]
+        original.write_bytes(original.read_bytes() + b"\n// accepted export drift\n")
+        receipt = catalog_rebuild.read_shader_override_receipt(self.dest, self.input_id, self.work)
+        with self.assertRaisesRegex(RuntimeError, "does not match its exact builder receipt"):
+            catalog_rebuild.verify_outputs(StageIO(self.work, self.dest), expected, provenance, receipt, self.input_id)
+
+    def test_shader_override_compare_refuses_receipt_or_preserved_meta_drift(self):
+        specs = self.install_shader_candidates()
+        expected, provenance = self.shader_override_provenance(specs)
+        catalog_rebuild.catalog_closure(self.dest, self.work, self.input_id, expected, provenance)
+        meta = self.dest / ("Assets/WholeGame/" + specs[1][3].removeprefix("Assets/") + ".meta")
+        meta.write_text("guid: " + "f" * 32 + "\n")
+        compare_provenance = self.compare_provenance_with_destination_inventory(provenance)
+        with self.assertRaisesRegex(RuntimeError, "did not preserve its exact source or .meta"):
+            rebuild.compare(self.dest, self.work / "lab-project", expected, compare_provenance, lambda path: path in expected, work=self.work)
+        meta.write_text((self.work / "lab-project" / meta.relative_to(self.dest)).read_text())
+        marker = read(self.dest / ".rebuild/catalog-shader-overrides.json")
+        receipt = self.dest / marker["receipt_path"]
+        receipt.write_text(receipt.read_text() + " ")
+        with self.assertRaisesRegex(RuntimeError, "receipt is missing or changed"):
+            rebuild.compare(self.dest, self.work / "lab-project", expected, compare_provenance, lambda path: path in expected, work=self.work)
 
     def test_import_remaps_ui_and_flushes_only_destination(self):
         before = {p: p.read_bytes() for p in self.work.rglob("*") if p.is_file()}
@@ -335,7 +737,7 @@ class CatalogRebuildTests(unittest.TestCase):
             write(config, dict(prefabAssets=[self.target], scenes=[scene]))
         write(self.dest / ".rebuild/catalog-closure-complete.json", dict(input_id=self.input_id))
         later = dict(producer="repo-builder", evidence=[dict(function="source_scene_candidate.prepare")])
-        with patch.object(catalog_rebuild, "verify_outputs", side_effect=lambda staging, *_: staging.flush()):
+        with patch.object(catalog_rebuild, "verify_outputs", side_effect=lambda staging, *_, **__: staging.flush()):
             catalog_rebuild.dependencies(self.dest, self.work, self.input_id, set(), {scene: later})
         receipt = read(next((self.dest / ".rebuild/composition/rebuild-dependencies").glob("dependency-stage-*/receipt.json")))
         self.assertEqual(receipt["deferred_to_later_steps"], [scene])

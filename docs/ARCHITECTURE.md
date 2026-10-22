@@ -2709,8 +2709,9 @@ inputs may reuse identical output, while drift refuses overwrite. R3 maps the
 measured all-channel mask value 15 to ShaderLab `RGBA`; unmeasured numeric or
 symbolic masks refuse, and the previous R2 candidate is left intact. Vertex and
 fragment interfaces remain distinct so the measured fragment-position
-interpolation survives. It has no runtime setup or teardown and no build
-consumer. Exact-editor compilation and Android appearance are separate gates.
+interpolation survives. It has no runtime setup or teardown. The optional
+catalog consumer below stages this generated source; J965 qualifies the isolated
+exact-editor Android bundle fixture. Android appearance remains a separate gate.
 
 `scripts/lab/shader_ramp_fog.py` owns the one-shader `shader-ramp-fog` host
 action. It reads only the fixed public `recipe/shader-ramp-fog-candidate.json`
@@ -2720,9 +2721,25 @@ programs and tool/helper pins, then writes a no-overwrite candidate under
 also preserves the R2 candidate because the shared render-state helper pin
 changed; RampFog's measured render-state serialization stays on its existing
 numeric path. The output is ignored
-local ShaderLab/DXBC evidence; no build, composition, or runtime path consumes
-it. A separate exact-editor fixture must qualify the ShaderLab before any
-project use, and Android rendering remains a device gate.
+local ShaderLab/DXBC evidence. J965 qualifies its isolated exact-editor Android
+bundle fixture; the optional catalog consumer below stages its source. Android
+rendering remains a device gate.
+
+`whole_catalog.prepare_integration` owns the optional two-shader catalog override
+(J966). The public `recipe/shader-catalog-overrides.json` is a default-off exact
+identity allowlist. Ignored `work/config/shader-catalog-overrides.json` explicitly
+activates it for one accepted input. Before either write, staging validates both
+current generator/recipe chains, candidate source/metadata receipts and original
+catalog GUID/source relationships. Only the two generated shader bodies replace
+the original catalog files; existing `.meta` bytes stay identical. The attempt
+receipt and project `.rebuild` mirror/marker bind the selector digest.
+`catalog_rebuild` and `rebuild.compare` validate those exact exceptions and retain
+ordinary provenance comparison elsewhere. Both current-project and destination
+staging persist the marker; disabling an already-staged override refuses before
+catalog writes and requires a clean destination. The generator owns candidate
+creation; catalog staging owns setup and receipts; there is no runtime owner or
+teardown. This changes content and requires a full bundle/player build, not a
+code-only build. No Android appearance or visual parity is implied.
 
 ## Known structural debt
 

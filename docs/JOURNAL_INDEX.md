@@ -10,7 +10,10 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
-| [J965](PORTING_JOURNAL.md#j965--explicit-named-evidence-for-historical-input-update-guard-review) | 2026-10-22 | Explicit named evidence for historical input-update guard review | User authorizes isolated build-tool cleanup while the other development sessions are paused, preserving behavior and rollbacks. |
+| [J968](PORTING_JOURNAL.md#j968--explicit-named-evidence-for-historical-input-update-guard-review) | 2026-10-22 | Explicit named evidence for historical input-update guard review | User authorizes isolated build-tool cleanup while the other development sessions are paused, preserving behavior and rollbacks. |
+| [J967](PORTING_JOURNAL.md#j967--correct-the-catalog-consumer-to-the-real-outline-generator-schema) | 2026-10-22 | Correct the catalog consumer to the real Outline generator schema | The first source-frozen R27 preparation on 6cc2e91 refuses with `Outline candidate identity or completion changed`. |
+| [J966](PORTING_JOURNAL.md#j966--add-an-input-bound-catalog-consumer-for-the-two-recovered-shader-sources) | 2026-10-22 | Add an input-bound catalog consumer for the two recovered shader sources | **Change and ownership.** |
+| [J965](PORTING_JOURNAL.md#j965--compile-both-recovered-shaders-into-isolated-android-bundles) | 2026-10-22 | Compile both recovered shaders into isolated Android bundles | **Hypothesis and prior art.** |
 | [J964](PORTING_JOURNAL.md#j964--join-original-music-queries-to-the-exact-bounded-pcm-observation-window) | 2026-10-21 | Join original music queries to the exact bounded PCM observation window | **Hypothesis and prior art.** |
 | [J963](PORTING_JOURNAL.md#j963--preserve-rampfog-import-progress-and-repair-outlines-measured-mask-syntax) | 2026-10-21 | Preserve RampFog import progress and repair Outline's measured mask syntax | J961's R2 candidates reach an actual exact-editor import under the host mutex. |
 | [J962](PORTING_JOURNAL.md#j962--verify-the-saved-original-output-waveform-across-a-fresh-menu-process) | 2026-10-21 | Verify the saved original-output waveform across a fresh menu process | **Correction and result.** |

@@ -198,12 +198,92 @@ def safe_destination(destination, input_id, work):
 UNITY_OWNED = frozenset(("Library", "Temp", "Logs", "UserSettings"))
 
 
-def compare(destination, project, expected, provenance, owns, producers=None):
+def _catalog_shader_override_rows(destination, project, work, expected, provenance):
+    work = Path(work)
+    marker_path = Path(destination) / ".rebuild/catalog-shader-overrides.json"
+    if marker_path.is_symlink():
+        raise RuntimeError("Catalog shader override marker is not a regular file")
+    if not marker_path.exists():
+        return {}
+    input_id = read(work / "config/accepted-input.json")["input_id"]
+    from catalog_rebuild import read_shader_override_receipt, shader_override_rows
+
+    receipt = read_shader_override_receipt(destination, input_id, work)
+    if receipt is None:
+        return {}
+    overrides = shader_override_rows(receipt, input_id, expected, provenance, candidate_work=work)
+    from composition_io import StageIO
+
+    reconstruction = read(Path(work) / "config/reconstruction.json")
+    projects = reconstruction.get("projects")
+    if not isinstance(projects, list) or len(projects) != 1 or not isinstance(projects[0], str):
+        raise RuntimeError("Shader override comparison requires the exact accepted export root")
+    export = StageIO(work).resolve(projects[0])
+    for path, row in overrides.items():
+        if row.get("_meta_only"):
+            continue
+        source = export / row["source_asset_path"]
+        source_meta = export / (row["source_asset_path"] + ".meta")
+        target_meta = destination / (path + ".meta")
+        if (
+            source.is_symlink()
+            or source_meta.is_symlink()
+            or target_meta.is_symlink()
+            or not source.is_file()
+            or not source_meta.is_file()
+            or not target_meta.is_file()
+            or sha(source) != row["original_source_sha256"]
+            or sha(source_meta) != row["original_meta_sha256"]
+            or sha(target_meta) != row["preserved_meta_sha256"]
+        ):
+            raise RuntimeError("Catalog shader override did not preserve its exact source or .meta: " + path)
+    return overrides
+
+
+def compare(destination, project, expected, provenance, owns, producers=None, work=None):
     result = {status: [] for status in ("identical", "different", "missing", "extra")}
+    work = Path(work or WORK)
+    overrides = _catalog_shader_override_rows(destination, project, work, expected, provenance)
+    expected = set(expected) | set(overrides)
+    export = None
+    if overrides:
+        from composition_io import StageIO
+
+        reconstruction = read(work / "config/reconstruction.json")
+        projects = reconstruction.get("projects")
+        if not isinstance(projects, list) or len(projects) != 1 or not isinstance(projects[0], str):
+            raise RuntimeError("Project comparison requires the exact accepted export root")
+        export = StageIO(work).resolve(projects[0])
     # Deep comparison reads actual bytes, never shallow stat/mtime equality.
     for path in sorted(expected):
         target, oracle = destination / path, project / path
-        if not target.is_file() or not oracle.is_file():
+        if path in overrides:
+            override = overrides[path]
+            if override.get("_meta_only"):
+                source_oracle = export / (override["source_asset_path"] + ".meta")
+                matches = (
+                    target.is_file()
+                    and not target.is_symlink()
+                    and source_oracle.is_file()
+                    and not source_oracle.is_symlink()
+                    and sha(target) == override["preserved_meta_sha256"]
+                    and sha(source_oracle) == override["original_meta_sha256"]
+                )
+            else:
+                source_oracle = export / override["source_asset_path"]
+                matches = (
+                    target.is_file()
+                    and not target.is_symlink()
+                    and source_oracle.is_file()
+                    and not source_oracle.is_symlink()
+                    and sha(target) == override["candidate_shader_sha256"]
+                    and sha(source_oracle) == override["original_source_sha256"]
+                )
+            if matches:
+                result["identical"].append(path)
+            else:
+                result["different"].append(path)
+        elif not target.is_file() or not oracle.is_file():
             result["missing"].append({"path": path, "destination": not target.is_file(), "project": not oracle.is_file()})
         else:
             # filecmp caches by stat; clear it so repeated comparisons also see
@@ -216,7 +296,9 @@ def compare(destination, project, expected, provenance, owns, producers=None):
             # R9's editor caches are not project inputs and belong to no step.
             if path == ".port-input.json" or path.startswith(".rebuild/") or path.split("/", 1)[0] in UNITY_OWNED:
                 continue
-            if path not in provenance or (owns(path) and path not in expected and (producers is None or provenance[path]["producer"] in producers)):
+            if path not in overrides and (
+                path not in provenance or (owns(path) and path not in expected and (producers is None or provenance[path]["producer"] in producers))
+            ):
                 result["extra"].append(path)
     result["counts"] = {status: len(result[status]) for status in ("identical", "different", "missing", "extra")}
     result["equal"] = not any(result[status] for status in ("different", "missing", "extra"))
@@ -263,7 +345,7 @@ def rebuild_step(step, dest=None, compare_only=False, work=None):
         destination.mkdir(parents=True, exist_ok=True)
         build_result = owner.build(destination, work, input_id, expected, provenance)
     result = compare(
-        destination, work / "lab-project", expected, provenance, (lambda path: path in expected) if owner.evidence else owner.owns, owner.producers
+        destination, work / "lab-project", expected, provenance, (lambda path: path in expected) if owner.evidence else owner.owns, owner.producers, work=work
     )
     if not compare_only and build_result is not None:
         result["replay"] = build_result
