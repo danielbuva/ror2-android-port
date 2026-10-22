@@ -1,13 +1,14 @@
 # Porting state
 
-Last updated 2026-10-22 UTC after **J969/J968/J965/J964/J962/J954**. R26
+Last updated 2026-10-22 UTC after **J970/J969/J965/J964/J962/J954**. R26
 6dc44d98 passes both controls and exact installed-media/APK readbacks. Separate
 salvage verifies Term/disarm witnesses and finite nonzero original-output PCM;
 J962 verifies byte-identical persistence across a fresh menu launch and normal
 Quit. The original automatic route stays failed. Event attribution and speaker
 output remain open. Both recovered R3 shaders pass the isolated exact-editor Android bundle fixture.
-Catalog staging exposed distinct generator and importer identity contracts;
-J967/J969 correct the consumer and fixtures. A fresh full build/device rendering is open.
+Both recovered shader sources now stage with original metadata preserved.
+J970 fixes the nested host-lock handoff exposed before editor refresh.
+A fresh full build/device rendering remains open.
 J964 adds bounded same-window source queries, not yet built or device-qualified.
 Accepted baseline stays f1550ce0.
 This page is the current snapshot only: replace its

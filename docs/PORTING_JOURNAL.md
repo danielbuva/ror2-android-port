@@ -28370,3 +28370,34 @@ prior-art contracts remain J965/J966's. Replay catalog reconstruction for the
 next committed full build. J954 remains installed and J850 remains accepted.
 The private correction/review is
 `work/coordination/original-native-visual-reference/catalog-export-guid-fix-root-r1/`.
+
+## J970 — Retain the shared host build lock across nested CLI subprocesses
+
+**Observed progress and first failure.** The corrected catalog preparation on
+25079fd passes: 43,715 mapped files, 7,462 roots and 30,326 mapped locations.
+Both generated shader source hashes match J965, and their original exporter
+metadata bytes are preserved. The input-bound selector, attempt receipt and
+project mirror/marker join. The shader receipt SHA-256 is
+`5f37d710448ce26db80e8e33f797bdbb9b5ff5996dbc0305dbaa61355b7b75a9`.
+This is staging evidence only. The following refresh fails before editor
+mutation because its nested client loses the inherited lock descriptor.
+Root verifies Unity idle and releases the mutex; no build or APK is accepted.
+The full failed attempt remains at
+`work/coordination/original-game-audio-r27-build-root-r3/`.
+
+**Correction.** Root's outer coordinator hands the locked open descriptor to the
+public CLI. That CLI validates inherited ownership but has no in-process registry
+entry; its subsequent `active_lock_handoff` returned an empty descriptor list.
+The editor subprocess retained the environment variable while closing its actual
+FD. Extend the existing owner helper to validate and forward the exact inherited
+descriptor when no current-thread registry owner exists. Preserve registered-owner
+behavior, kernel locking, persistent inode and invalid/released-state refusals.
+This generic host fix introduces no editor/device operation or private build input.
+
+Sixteen host lock contracts pass, including two real subprocess hops, competing
+un-inherited process refusal, invalid FD refusal, released owner refusal and the
+existing lifecycle contracts. Ruff format/check passes. Root reviews the short
+production change and synthetic tests before integration. The private proposal
+is `work/coordination/build-lock-inheritance-fix-draft-r1/`; Architecture names the
+nested handoff contract. Re-run preparation/host/build from a fresh committed
+source freeze. J954 remains installed and J850 remains the accepted rollback.

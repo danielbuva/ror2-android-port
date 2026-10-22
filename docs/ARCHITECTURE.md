@@ -691,7 +691,10 @@ refusals and replacement during parsing; runner fixtures keep project and
 installed attempts different.
 
 `scripts/lab/build_lock.py` owns a persistent advisory kernel lock and owner diagnostics.
-It is reentrant in one thread and hands its open descriptor to the editor client. Build
+It is reentrant in one thread and hands its open descriptor to the editor client.
+A child using an inherited descriptor validates and forwards that same descriptor
+through further subprocess hops; its empty in-process registry does not drop the
+parent lock. Invalid descriptors and released owner receipts refuse (J970). Build
 coordinators retain it through staging, Unity completion and result publication; editor
 actions share it and refuse an outstanding player build. Bootstrap batch builds use the
 same path. Device runs do not acquire it. Direct editor player-build dispatch requires

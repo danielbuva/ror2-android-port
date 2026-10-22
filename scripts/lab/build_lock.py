@@ -96,10 +96,19 @@ def assert_build_unblocked(blocker_path: str | os.PathLike[str] | None = None) -
 
 def active_lock_handoff() -> tuple[dict[str, str], tuple[int, ...]]:
     """Return env/pass_fds for a child process that must share this lock."""
-    state = _state_for(HOST_BUILD_LOCK.resolve())
-    if state.fd is None or state.depth <= 0 or state.owner_thread != threading.get_ident():
-        return {}, ()
-    return {INHERITED_FD_ENV: str(state.fd)}, (state.fd,)
+    lock_path = HOST_BUILD_LOCK.resolve()
+    state = _state_for(lock_path)
+    if state.fd is not None and state.depth > 0 and state.owner_thread == threading.get_ident():
+        fd = state.fd
+    else:
+        inherited = os.environ.get(INHERITED_FD_ENV)
+        if inherited is None:
+            return {}, ()
+        # A nested CLI process has no local registry entry for its parent-owned
+        # descriptor. Validate and forward that exact open file description;
+        # malformed, stale, or unrelated descriptors fail closed.
+        fd = _validate_inherited_fd(lock_path, inherited)
+    return {INHERITED_FD_ENV: str(fd)}, (fd,)
 
 
 def assert_host_build_lock_held(lock_path: str | os.PathLike[str]) -> None:
