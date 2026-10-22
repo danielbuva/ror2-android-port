@@ -26298,3 +26298,116 @@ J850; Main retains diagnostic R22. Investigate exact selected-target occlusion
 and source navigation evidence before changing gameplay input. Continue the
 already reviewed music/camera source through the next full build; neither this
 host predicate repair nor a missing live ID establishes audio or visual success.
+
+
+## J935 — Verify R23 controls and identify unstaged streamed music media
+
+Date: 2026-10-21; standard controls finish on 2026-10-22 UTC. Hypothesis:
+J928's original-call return and resolved RTPC observations distinguish missing
+music control calls from a silent output, while J932's passive camera contract
+survives stripping. Review J926/J928/J932, the pinned Audiokinetic API contracts
+and J588/J591 audio inventory before changing engine behavior. This experiment
+keeps original event/state/output/volume calls and the bank data unchanged.
+
+**Build and retention.** Freeze source 5b572ef with 394 authored inputs and a
+fresh audio-selection UUID, distinct from the Unity build request. Doctor,
+preflight and exact-editor MCP inspection pass. The full build takes 246.266247 s
+with zero errors. Candidate
+`work/experiments/original-game-audio/candidate-20261021T234014.859148Z/`
+contains APK
+32150e8b93dec714b1a7049c100064a8fd1fefef656b7a3b52edf0ccc4c119a4,
+symbol ZIP
+8aad83799c92b8bc147d0d3f653d8d008b7e2fd857f45b2215e78120b1bc88ee,
+and native build ID c1f7ca0091ca256efafe3b35dddfbce36d275229.
+Its build-receipt SHA-256 is
+cb9d990a5382a045707868e6f14ec3e494c904e13c5787d20e90395289bab27a.
+The same-request inventory rehashes all 333 linker-input DLLs, 154 bank rows and
+266 payload files. The exact managed chain is 6f96 → a638 → 64628 with API 1ced
+and native 4f309; J928 records those source-owned transformations and recipes.
+
+The primary post-strip contract retains the three native music-return sites,
+existing output/capture/bootstrap surfaces and request joins. A separate
+required visual contract checks the owned event subscription/removal, exact
+tracker generic and complete serialized model snapshot in pre/post-strip
+assemblies. Its qualification SHA-256 is
+fc8ef7485dfbaf459fcd561d3edca6ae1eab8031f360ded17543cfc8b8140274.
+Root independently freezes pre-strip, stripped and IL2CPP-backup copies before
+releasing the editor. The supplemental three-assembly/six-hash contract also
+checks 11 exact bootstrap native imports and the callback export in the actual
+APK ELF without loading it; qualification SHA-256 is
+2ab8f27428a4478b7ec7a308c92fabade2ef741620e2cc8331bcef588e38ec7a.
+These are bounded metadata contracts, not complete closure or runtime proof.
+
+Preserve the host-only wrapper failures under
+`work/coordination/original-runtime-observation-poststrip/r23-root-r1/` and
+`r23-root-r2/`. The first wrapper incorrectly resolves work-relative linker
+snapshots from the repository root; the corrected R2 draft and fixture use
+`work/`, with 15 passing synthetic tests and independent review. The second
+attempt refuses the absent convenience input copies before inspection. Root
+creates independently rehashed copies from its immutable input freeze, then
+`r23-root-r3/` passes actual metadata qualification. No failed invocation is
+relabelled as passing. The build wrapper has 34 host tests plus two focused
+required-string consumer checks; the device wrapper has 36 host tests including
+optimized-Python guard/import tripwires. All device actions remain Root-only.
+
+**Device controls.** Install this exact APK in place on the configured primary
+adopted-storage device after fresh placement/reserve checks; synchronize its
+266-file payload. Preserve wrapper results under
+`work/coordination/codex-original-game-audio-device-root/r17-root/`.
+The plain control is
+`work/experiments/baseline/20261021T235223.725463Z/`: 35.201 s on Lakes,
+selected `muSong_LakesGameplay`, no report error/first failure. The one-exit
+control is `work/experiments/baseline/20261021T235614.030639Z/`: one natural
+transition to Goolake, 11.873 s destination age and 156.255 s total world time,
+selected `muSong05`, no report error/first failure. Both keep profile count 13.
+Each current-process log retains five intentional Windows-bundle negative
+controls; neither has a point-sound frame or bank-path warning. Do not claim a
+generically error-free log. The derived qualification SHA-256 is
+56632626608c172d378f6bda2f2a8b17438032ea4d367fb76504187f79732da7.
+
+**Audio observations.** Both controls observe one source-matched intro
+`PostEvent` return with playing ID 1. Selected-track Play/Stop native return
+counts are 5/3 in plain and 13/11 in one-exit, with latest results 1. Installed
+SDK documentation describes PostEvent as asynchronous and ID-based SetState as
+returning success regardless of eventual processing; these values do not prove
+an active voice or rendering. Master and music RTPC queries resolve to finite
+100 at Default scope. The older Global-only fields remain cleared/unknown;
+Parent_Volume_MSX is not a source-produced native RTPC. No volume replay or
+state/output adjustment is justified by those older zeros.
+
+The exact requested/selected/callback MusicController output identities match.
+Plain collects 460 callbacks / 529,920 finite samples; one-exit collects
+468 callbacks / 539,136 finite samples. Both have zero nonzero and zero
+nonfinite samples. Capture is not capped/rejected and reports no capture
+failure. Both standard controls pass independently of this silent PCM result;
+playback, physical audibility and same-process audio teardown remain unqualified.
+
+**Concrete media gap.** Follow-up read-only bank/content analysis in
+`work/coordination/original-music-media-placement/r1/assessment.md` binds the
+Lakes asset to the original Gameplay / DLC2_Song07 branch. Its two
+PrefetchStreaming media IDs, 196909729 and 835872541, have full legitimate
+external files of 7,423,324 and 4,771,113 bytes, while Music.bnk contains only
+12,339 and 12,086-byte prefetch chunks. The APK includes the accepted Music.bnk
+but no .wem entries; the stage receipt likewise contains no .wem outputs.
+This is a missing content-placement prerequisite consistent with silent music,
+not proof that copying two files will complete audio. J845's successful pickup
+uses embedded non-streamed media and does not test this route. Inventory the
+complete selected-bank streamed-media closure and the actual Android IO path,
+stage original bytes reproducibly, then test unchanged banks again before
+adding control or mixing workarounds. No original media is published.
+
+A separate native-volume note initially interpreted scaled parser endpoints as
+literal dB; its R2 correction withdraws that conclusion. Raw scaled curve
+values, resolved RTPC input values and effective output gain are distinct.
+The current 100 observations do not prove effective gain or sound.
+
+**Cleanup and status.** Both controls remove their selector, stop the process
+and sleep the display. A separate query rehashes installed bytes and verifies
+owned placement plus absent process/selector and asleep display; its freshness
+context SHA-256 is
+a25a6a5ba1eeb55ec082f2e4941bf71f8b9b1027838bb9f11401522b0e3a0ebd.
+Release that claim before a separately armed selected-camera observation.
+Main now has diagnostic R23; accepted J850 f1550ce0 remains unchanged.
+Camera execution, material restoration, streamed music and broader audio remain
+open. The current player includes J928/J932; later source changes require a new
+source checkpoint and APK. No Moon/finale or other-device action is performed.

@@ -88,11 +88,11 @@ The plain check and its acceptance criteria remain unchanged.
 
 ## Current baseline (2026-10-20)
 
-J926's later diagnostic APK ac1d2176 is installed after both standard checks
-and an independent final installed/cleanup query. It remains unpromoted while
+J935's later diagnostic APK 32150e8b is installed after both standard controls
+and an independent installed/cleanup query. It remains unpromoted while
 selected-camera rendering and original-audio playback acceptance are open.
 See the [current snapshot](../PORTING_STATE.md) for installed identity and
-[J926](PORTING_JOURNAL.md#j926--build-r22-and-observe-selected-music-context-through-both-standard-checks)
+[J935](PORTING_JOURNAL.md#j935--verify-r23-controls-and-identify-unstaged-streamed-music-media)
 for the single result record. The accepted baseline below remains the rollback.
 
 | Item | Value |

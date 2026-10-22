@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J935](PORTING_JOURNAL.md#j935--verify-r23-controls-and-identify-unstaged-streamed-music-media) | 2026-10-21 | Verify R23 controls and identify unstaged streamed music media | Date: 2026-10-21; standard controls finish on 2026-10-22 UTC. |
 | [J933](PORTING_JOURNAL.md#j933--preserve-siren-admission-and-observe-the-stock-commando-targeting-timeout) | 2026-10-21 | Preserve Siren admission and observe the stock Commando targeting timeout | Date: 2026-10-21. |
 | [J931](PORTING_JOURNAL.md#j931--read-manager-write-dispatch-bindings-on-android-without-evaluating-retention) | 2026-10-21 | Read manager write dispatch bindings on Android without evaluating retention | 2026-10-21. |
 | [J932](PORTING_JOURNAL.md#j932--join-the-owned-source-camera-callback-to-exact-model-membership) | 2026-10-21 | Join the owned source camera callback to exact model membership | Date: 2026-10-21. |
