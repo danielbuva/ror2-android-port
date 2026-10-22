@@ -121,7 +121,7 @@ def validate_report(report, inputs, declaration, queries):
         raise ValueError("Feature API oracle identity or completion differs")
     if any(report.get(key) is not False for key in ("game_inputs", "player_built", "phone_generation_input", "root_generation_qualified")):
         raise ValueError("Feature oracle scope differs")
-    if (report.get("target"), report.get("target_value"), report.get("platform_define")) != ("Android", 19, "PLATFORM_ANDROID") or report.get(
+    if (report.get("target"), report.get("target_value"), report.get("platform_define")) != ("Android", 13, "PLATFORM_ANDROID") or report.get(
         "query_sha256"
     ) != inputs["query_sha256"]:
         raise ValueError("Android API/query identity differs")
