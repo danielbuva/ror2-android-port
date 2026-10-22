@@ -26839,3 +26839,64 @@ and native Siren Listening observers. Detailed local triage is under
 `work/coordination/original-game-audio-r24-triage/actual-plain-r1/` and
 `actual-stage-exit-r1/`. This checkpoint changes no runtime source; J940 remains
 the rebuild-produced implementation.
+
+
+## J942 — Preserve a bounded camera failure and observe the null material cache
+
+**Hypothesis and change.** Exercise J938's cache/dirty observer on the J941 R24
+player before choosing an initialization change. This uses the same selected
+Huntress/native-skin camera route as J936, with exact R24 build, both-defaults,
+terminal and installed-byte proofs. There is no APK or runtime source change.
+The Root-bound host packet lives under
+`work/coordination/original-camera-listener-device-plan/r18-root/packet/`.
+Before dispatch, review closes the direct-runner bypass, enforces the actual
+13-run profile and corrects a copied parent-runner digest. Actual host
+validation passes. Draft tests remain tests of the unbound packet; two copied
+Root fixtures still expect null bindings/the draft manifest and are not claimed
+as passing bound-packet tests.
+
+**Failure and separate observations.** The bounded run fails its survival gate:
+`work/experiments/original-camera-listener-lifecycle/20261022T011328.137092Z/`.
+It does not reach the required 35 seconds, capture a completed-session cleanup
+report, or return to the next menu. The optional first render screenshot
+refuses the early zero render frame and is not retried. The persisted early
+world sample is at world time zero; it is not proof that the world never
+advanced. Root's separate later same-process report records 20.114 seconds and
+2,292 world frames. Both samples are preserved, and neither passes the route.
+The existing host 180-second combined loading/survival window starts at the
+owned menu click. It includes world preparation rather than measuring only
+playable-world observation. A future host correction separates these phases
+while retaining an absolute overall bound; no retry or deadline change is
+claimed in this result.
+
+The later report is
+`work/coordination/original-camera-listener-device-plan/r18-root/packet/attempts/20261022T011309.586020Z-3b5b5414edfa/last-report.json`,
+SHA-256
+313d77d2267be35052796dc4920ae83d689c345e5a5a182688d2a955146058d0.
+Its one-shot source-camera callback is frame 2,123 at realtime 192.979 seconds.
+It joins the exact selected model, with one tracked model scanned, selected
+membership known and no truncation. The model is active/enabled, visibility is
+Visible and invisibility count is zero. The private shared-material cache is
+known null; the source dirty getter is known true, without an observation error.
+All 12 joined renderers are disabled with known-null first shared materials.
+This is a valid bounded cache observation from a failed route, not visual
+acceptance or an explanation of the survival shortfall.
+
+**Cleanup and next change.** The profile's exact before/after digest is
+unchanged. Root preserves the wrapper result and current-process log, then
+independently rehashes the installed R24 APK, verifies owned placement and
+confirms process absent, selector absent and display asleep. Query evidence is
+under the Root packet's sibling `post-camera-query/`. Force-stop cleanup does
+not prove native model/listener/material teardown, which this attempt did not
+observe. Known shader-target and missing-shader errors also occur in J936;
+there is no measured new cache exception to report.
+
+The exact source retains private static `CharacterModel.InitSharedMaterialsArrays`
+and the expected cache fields after stripping. J938's startup/prior-art review
+identifies its original PostProgressBar boundary; the composed path uses its
+own catalog startup. The next candidate will invoke that one original cache
+initializer through a named owner before native model activation, preserving
+an already valid cache and refusing malformed/unknown state. It will not replay
+all startup callbacks or allocate a replacement cache. Initializer success and
+renderer restoration still require a new APK and device evidence. The accepted
+J850 baseline and J941's two passing default controls remain unchanged.
