@@ -52,7 +52,7 @@ class ShaderRampFogCandidateTests(unittest.TestCase):
             module = load_isolated_module(root)
             self.assertEqual(module.RECIPE_PATH, root.resolve() / "recipe/shader-ramp-fog-candidate.json")
             self.assertEqual(module.RECIPE["target"], "ramp-fog")
-            self.assertEqual(module.RECIPE["stable_output"], "generated-shader-candidates/ramp-fog/{input_id}")
+            self.assertEqual(module.RECIPE["stable_output"], "generated-shader-candidates/ramp-fog-r2/{input_id}")
             self.assertFalse(module.RECIPE["generation_limits"]["unity_compiled"])
 
     def test_output_is_stable_input_scoped_and_work_contained(self) -> None:
@@ -61,7 +61,7 @@ class ShaderRampFogCandidateTests(unittest.TestCase):
             work.mkdir()
             module = load_isolated_module(Path(temp) / "repo")
             output = module.output_path(work, module.SOURCE["input_id"])
-            self.assertEqual(output, work.resolve() / "generated-shader-candidates/ramp-fog" / module.SOURCE["input_id"])
+            self.assertEqual(output, work.resolve() / "generated-shader-candidates/ramp-fog-r2" / module.SOURCE["input_id"])
             with self.assertRaisesRegex(RuntimeError, "fixed RampFog recipe"):
                 module.output_path(work, "another-input")
             module.RECIPE["stable_output"] = "../outside/{input_id}"
@@ -120,6 +120,67 @@ class ShaderRampFogCandidateTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "already exists"):
                 module._publish_staging(second, destination, bundle, digest)
             self.assertEqual((destination / "candidate.json").read_text(encoding="utf-8"), "first")
+
+    def test_generated_calls_follow_the_recovered_definitions(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="ramp-fog-order-root-") as temp:
+            module = load_isolated_module(Path(temp))
+            self._assert_calls_follow_definitions(module)
+
+    def _assert_calls_follow_definitions(self, module) -> None:
+        import types
+
+        fake_source = types.ModuleType("shader_source")
+        functions = {
+            1: "void native_1(float4 p : POSITION0, out precise float4 q : SV_POSITION0, out precise float4 uv : TEXCOORD0) { q=p; uv=p; }",
+            2: "void native_2(float4 uv : TEXCOORD0, out precise float4 color : SV_Target0) { color=uv; }",
+        }
+        params = {
+            1: [
+                {"out": False, "semantic": "POSITION0", "columns": 4},
+                {"out": True, "semantic": "SV_POSITION0", "columns": 4},
+                {"out": True, "semantic": "TEXCOORD0", "columns": 4},
+            ],
+            2: [
+                {"out": False, "semantic": "TEXCOORD0", "columns": 4},
+                {"out": True, "semantic": "SV_Target0", "columns": 4},
+            ],
+        }
+
+        def bind_hlsl(_source, _layout, entry):
+            index = int(entry.rsplit("_", 1)[1])
+            return functions[index], params[index], {}, [], []
+
+        fake_source.bind_hlsl = bind_hlsl
+        fake_source.properties = lambda _tree: ""
+        fake_deferred = types.ModuleType("shader_deferred")
+        fake_deferred.render_state = lambda _state: "Cull Off"
+        old_source = sys.modules.get("shader_source")
+        old_deferred = sys.modules.get("shader_deferred")
+        sys.modules["shader_source"] = fake_source
+        sys.modules["shader_deferred"] = fake_deferred
+        try:
+            module.SOURCE = {"shader_name": "Hidden/Test/RampFog"}
+            state = {"lighting": False, "fogMode": -1, "zClip": {"val": 1}, "alphaToMask": {"val": 0}}
+            tree = {"m_ParsedForm": {"m_PropInfo": {"m_Props": []}, "m_SubShaders": [{"m_Passes": [{"m_State": state}], "m_LOD": 100, "m_Tags": {"tags": []}}]}}
+            signatures = {
+                1: {"ISGN": [("POSITION0", 0, "xyzw")], "OSGN": [("SV_POSITION0", 0, "xyzw"), ("TEXCOORD0", 1, "xyzw")]},
+                2: {"ISGN": [("TEXCOORD0", 0, "xyzw")], "OSGN": [("SV_Target0", 0, "xyzw")]},
+            }
+            layouts = {1: {"buffers": [], "textures": []}, 2: {"buffers": [], "textures": []}}
+            output = module._shaderlab_candidate(tree, {1: "", 2: ""}, layouts, signatures)
+        finally:
+            if old_source is None:
+                sys.modules.pop("shader_source", None)
+            else:
+                sys.modules["shader_source"] = old_source
+            if old_deferred is None:
+                sys.modules.pop("shader_deferred", None)
+            else:
+                sys.modules["shader_deferred"] = old_deferred
+        self.assertLess(output.index(functions[1]), output.index("Varyings vert("))
+        self.assertLess(output.index(functions[2]), output.index("float4 frag("))
+        self.assertIn(functions[1], output)
+        self.assertIn(functions[2], output)
 
     def test_action_is_current_and_describes_qualification_limits(self) -> None:
         spec = importlib.util.spec_from_file_location("ramp_fog_actions", INTEGRATION / "scripts/lab/actions.py")

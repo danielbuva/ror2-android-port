@@ -358,13 +358,16 @@ def _shaderlab_candidate(tree: dict, sources: dict[int, str], layouts: dict[int,
         + "\n"
         + struct("Varyings", vertex_outputs)
         + "\n"
-        + vertex_entry
-        + "\n"
-        + fragment_entry
-        + "\n"
+        # Emit the recovered function definitions before wrappers that call
+        # them. Some Unity shader backends reject a call to a later undeclared
+        # function even though the HLSL bodies and arguments are otherwise valid.
         + native[1][0]
         + "\n"
         + native[2][0]
+        + "\n"
+        + vertex_entry
+        + "\n"
+        + fragment_entry
         + "\nENDHLSL\n}\n}\n}\n"
     )
 

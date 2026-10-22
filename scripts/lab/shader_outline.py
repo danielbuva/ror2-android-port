@@ -306,7 +306,9 @@ def _shaderlab(tree: dict, native: dict[int, tuple[str, list[dict], dict, list[s
             f"{state}"
             f"{extra_state}\n"
             'HLSLPROGRAM\n#pragma target 4.0\n#pragma vertex vert\n#pragma fragment frag\n#include "UnityCG.cginc"\n'
-            f"{constant_decls}\n{texture_decls}\n{wrapper}\n{code}\nENDHLSL\n}}"
+            # The recovered functions are called by the wrappers below. Keep
+            # those definitions first for backends that reject later declarations.
+            f"{constant_decls}\n{texture_decls}\n{code}\n{wrapper}\nENDHLSL\n}}"
         )
     return (
         f"Shader {json.dumps(EXPECTED['shader_name'])} {{\n"

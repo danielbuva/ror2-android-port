@@ -124,5 +124,5 @@
     "revision": "a292206a15daf0723d945a475c6254413eda8551",
     "binary_sha256": "5d966831f2bf711b23ba1958819444f28e3b071148d62914223b86e7f902f800"
   },
-  "stable_output": "generated-shader-candidates/outline-highlight/{input_id}"
+  "stable_output": "generated-shader-candidates/outline-highlight-r2/{input_id}"
 }

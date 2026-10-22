@@ -27,7 +27,7 @@ public_recipe = {
     "schema": 1,
     "target": "synthetic",
     "source": {"input_id": "synthetic-input"},
-    "stable_output": "generated-shader-candidates/outline-highlight/{input_id}",
+    "stable_output": "generated-shader-candidates/outline-highlight-r2/{input_id}",
     "programs": [],
     "helpers": {"shader_source.py": hashlib.sha256((TEST_ROOT / "scripts/lab/shader_source.py").read_bytes()).hexdigest()},
     "d3dasm": {"revision": "synthetic", "binary_sha256": "0" * 64},
@@ -53,6 +53,55 @@ class GeneratorContractTests(unittest.TestCase):
         self.assertEqual(generator.RECIPE_PATH, TEST_ROOT / "recipe/shader-outline-candidate.json")
         self.assertFalse((TEST_ROOT / "scripts/lab/recipe_candidate.json").exists())
         self.assertNotIn("normalized_catalog_reference", generator.EXPECTED)
+
+    def test_each_pass_emits_native_definitions_before_wrapper_calls(self) -> None:
+        original_validate = generator._validate_state
+        original_properties = generator.properties_text
+        original_expected = generator.EXPECTED
+        try:
+            generator._validate_state = lambda _state, _index: "Cull Off\n"
+            generator.properties_text = lambda _tree: ""
+            generator.EXPECTED = {"shader_name": "Hidden/Test/Outline"}
+            tree = {
+                "m_ParsedForm": {
+                    "m_PropInfo": {"m_Props": []},
+                    "m_SubShaders": [
+                        {
+                            "m_Passes": [{"m_State": {}}, {"m_State": {}}],
+                            "m_LOD": 100,
+                            "m_Tags": {"tags": {}},
+                        }
+                    ],
+                }
+            }
+            params = {
+                "v": [
+                    {"out": False, "name": "position", "semantic": "POSITION0", "columns": 4},
+                    {"out": False, "name": "uv", "semantic": "TEXCOORD0", "columns": 2},
+                    {"out": True, "name": "clip", "semantic": "SV_POSITION0", "columns": 4},
+                    {"out": True, "name": "coord", "semantic": "TEXCOORD1", "columns": 2},
+                ],
+                "f": [
+                    {"out": False, "name": "clip", "semantic": "SV_POSITION0", "columns": 4, "interpolation": "noperspective"},
+                    {"out": False, "name": "coord", "semantic": "TEXCOORD1", "columns": 2},
+                    {"out": True, "name": "target", "semantic": "SV_Target0", "columns": 4},
+                ],
+            }
+            native = {}
+            for index in (1, 5):
+                native[index] = (f"void native_{index}() {{ /* exact synthetic body {index} */ }}", params["v"], {}, [])
+            for index in (3, 7):
+                native[index] = (f"void native_{index}() {{ /* exact synthetic body {index} */ }}", params["f"], {}, [])
+            output = generator._shaderlab(tree, native)
+        finally:
+            generator._validate_state = original_validate
+            generator.properties_text = original_properties
+            generator.EXPECTED = original_expected
+        for index in (1, 3, 5, 7):
+            definition = f"void native_{index}()"
+            call = f"    native_{index}("
+            self.assertLess(output.index(definition), output.index(call))
+            self.assertIn(f"/* exact synthetic body {index} */", output)
 
     def test_binder_retains_only_measured_interpolation_metadata(self) -> None:
         source = "void main(noperspective float4 p : SV_POSITION0) { }"
@@ -173,7 +222,7 @@ class GeneratorContractTests(unittest.TestCase):
                 with self.assertRaises(RuntimeError):
                     generator.generate("lab")
                 first = generator.generate("outline-highlight")
-                final = work / "generated-shader-candidates/outline-highlight" / generator.EXPECTED["input_id"]
+                final = work / "generated-shader-candidates/outline-highlight-r2" / generator.EXPECTED["input_id"]
                 before = (final / "sources/OutlineHighlightCandidate.shader").read_bytes()
                 with self.assertRaisesRegex(RuntimeError, "already exists"):
                     generator.generate("outline-highlight")

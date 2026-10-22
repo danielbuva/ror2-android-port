@@ -28057,3 +28057,61 @@ complete natural-exit observation before validating it and verify the exact
 current process before Quit. Positive absence must still come from a successful
 query, with bounded transport and explicit identity checks. No runtime,
 reconstruction recipe, device receipt or storage configuration is changed.
+
+## J961 — Repair recovered shader declaration order after exact-editor import failure
+
+**Hypothesis and prior art.** J956's source-bound Outline Highlight and RampFog
+candidates retain the original native-program expressions and interfaces, but
+need an exact-editor import before whole-catalog selection. The pinned recovery
+sources and Unity 2021.3 shader declarations described in
+`docs/community-prior-art.md` and `docs/shader-recovery.md` inform this existing
+translation boundary; no new shader mechanism or appearance is invented.
+
+**First failures.** The initial fixture attempt fails before asset import; its
+exception wrapper loses the nested tool response. A later frozen R4 fixture
+records an exact pre-staging error: its Outline optional receipt is a JSON null
+token, which the C# check incorrectly compares by object reference. Correct
+that fixture check. R5 then imports the candidates in Unity 2021.3.45f2,
+Android/Vulkan selected, and exposes RampFog's first compiler error:
+`undeclared identifier 'native_1'` at line 40, reported by the Metal import
+backend. Outline fails its name/pass-topology check before its full diagnostic
+set is collected. No Android bundle or player result is accepted. The wrapper
+also mistakes the successful outer MCP envelope for the nested false
+preliminary compile receipt and skips cleanup. Root separately rechecks the
+exact owned four-file hash inventory, requests structured deletion of only that
+fixture generation, verifies folder and metadata absence, and proves Unity idle
+while holding the host build mutex. No safety checks are disabled and the editor
+is not stopped or restarted. Preserve all failed receipts and raw MCP responses
+under `work/editor/shader-candidate-compile-fixtures/` and
+`work/coordination/original-native-visual-reference/two-shader-compile-fixture-root-r5/`;
+the latter includes `root-owned-cleanup.json`.
+
+**Smallest source correction.** Both authored generators emitted the recovered
+function definitions after their wrapper callers. Emit the definitions first;
+retain the same native function bodies, arguments, bindings, interfaces and pass
+state. The public recipes now select new versioned, accepted-input-scoped paths
+under `work/generated-shader-candidates/{outline-highlight-r2,ramp-fog-r2}/`.
+The failed original candidates are preserved at their old paths. No build
+selects these candidates yet. This changes generator output for a future
+catalog import; it does not change an authored runtime source, installed APK
+or accepted rollback.
+
+**Host result and revisit gate.** Ten Outline and seven RampFog contracts pass
+on the actual checkout, including emitted definition-before-call checks with
+synthetic functions; Ruff format/check passes. Root regenerates both against the
+accepted input, retaining native program roundtrip/signature checks. New source
+hashes are Outline
+`c6dca319b7a128e4ba297b58f056a04b9bb780eafecb55a2d61a7cf3d3e1771a`
+and RampFog
+`ad31d2e326ccbc64eae993d9ac0928f7b0c5f396b90d5053b1991f1d8efe86f9`.
+An independent Root extraction compares all four Outline and two RampFog
+function definitions with the prior candidates: each body is byte-identical.
+Generated shader bodies stay ignored. Rebind a fresh fixture to these actual
+outputs; its receipt must retain both compiler diagnostics and owned cleanup
+on a failed compile. Import, Android bundle compilation, runtime loading and
+PC visual parity remain separate, unpassed gates. Draft/review material remains
+under `work/coordination/original-native-visual-reference/` in the named
+`outline-generator-fix-draft-r1/`, `ramp-fog-generator-fix-draft-r1/` and
+`two-shader-compile-fixture-draft-r6/` packets. Public pattern and manual source
+review include only authored generator changes, recipes, synthetic tests and
+summaries.

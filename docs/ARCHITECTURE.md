@@ -2681,7 +2681,7 @@ shader or runtime presentation behavior (J953).
 public `recipe/shader-outline-candidate.json` binds the accepted catalog,
 serialized object, four executable records, measured layouts, pass state and
 authored helper/tool hashes. It generates only ignored local evidence beneath
-`work/generated-shader-candidates/outline-highlight/<input_id>/`; unchanged
+`work/generated-shader-candidates/outline-highlight-r2/<input_id>/`; unchanged
 inputs may reuse identical output, while drift refuses overwrite. Vertex and
 fragment interfaces remain distinct so the measured fragment-position
 interpolation survives. It has no runtime setup or teardown and no build
@@ -2691,7 +2691,7 @@ consumer. Exact-editor compilation and Android appearance are separate gates.
 action. It reads only the fixed public `recipe/shader-ramp-fog-candidate.json`
 and the user's accepted input, checks the exact serialized object, native
 programs and tool/helper pins, then writes a no-overwrite candidate under
-`work/generated-shader-candidates/ramp-fog/<input_id>/`. The output is ignored
+`work/generated-shader-candidates/ramp-fog-r2/<input_id>/`. The output is ignored
 local ShaderLab/DXBC evidence; no build, composition, or runtime path consumes
 it. A separate exact-editor fixture must qualify the ShaderLab before any
 project use, and Android rendering remains a device gate.
