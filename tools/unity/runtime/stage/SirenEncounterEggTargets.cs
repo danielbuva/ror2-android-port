@@ -66,6 +66,7 @@ public sealed partial class SirenEncounterSession
         var current = stateMachine ? stateMachine.state as EntityStates.Missions.SuperRoboBallEncounter.Listening : null;
         if (!ReferenceEquals(current, observedNativeListeningState))
         {
+            ObserveNativeListeningStateChange(current);
             observedNativeListeningState = current;
             observedNativeEggList = null;
             nativeEggRegistrationObserved = false;
@@ -263,6 +264,7 @@ public sealed partial class SirenEncounterSession
 
     public void ClearDiagnosticEggCandidates()
     {
+        ReleaseNativeListeningSnapshotBaseline();
         diagnosticSourceEggCache.Clear();
         originalEggBodyPrefab = null;
         originalEggBodyIndex = BodyIndex.None;

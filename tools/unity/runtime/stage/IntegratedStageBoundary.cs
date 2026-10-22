@@ -716,7 +716,10 @@ public sealed partial class PortSession
         public void TickOriginalStage()
         {
             if (!transportingStage)
-                sirenEncounter?.Observe();
+                sirenEncounter?.Observe(force: false,
+                    input: coordinator.r != null ? coordinator.r.sirenEggInput : null,
+                    combat: coordinator.r != null && coordinator.r.world != null
+                        ? coordinator.r.world.survivorCombatOutputs : null);
             if (ownsOriginalStage)
                 return; // Active source prefab receives Unity's own Update.
             if (coordinator.r == null || !coordinator.r.teleporterLoop || !coordinator.objectiveStage || transportingStage ||

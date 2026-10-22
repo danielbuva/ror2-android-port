@@ -26475,3 +26475,60 @@ process/selector-absence and asleep-display query passes; its context SHA-256 is
 Release the Main claim only after that query. Main retains diagnostic R23;
 accepted J850 f1550ce0 remains unchanged. Streamed music, visual restoration,
 broader survivor animation and the Siren encounter remain open.
+
+
+## J937 — Add bounded native Siren Listening observations to the existing owner
+
+Date: 2026-10-22 UTC. Hypothesis: J933's disappearing live network IDs do not
+establish the native Listening state's destroyed-egg count or countdown. Read
+J930/J933 and the exact accepted Listening field/type contracts. Consult the
+pinned DebugToolkit Util/NetworkManager prior art for semantic user/body and
+network identity observations; its commands and hooks are not encounter
+acceptance. Add only the observation still absent on Android, through the
+existing SirenEncounterSession owner and its 0.5 s cadence.
+
+**Change.** Integrate the independently reviewed private R3 proposal from
+`work/coordination/original-siren-native-listening-observation/integration-r3/`.
+The new authored `SirenNativeListeningSnapshotPolicy` and
+`SirenNativeListeningSnapshotReader` capture an exact initial 12-slot native
+list/source identity baseline, then report separate CLR-reference, Unity-null,
+network identity and finite health observations. Native registration flag,
+threshold, previous destroyed count and countdown are read with exact guarded
+field/type checks. A bounded timestamped input observation joins existing
+selected-target/visibility/primary-request facts; the existing 32-fact damage
+ring supplies victim-ID correlation. No new damage callback, egg-list mutation,
+input behavior, native state transition or encounter threshold is introduced.
+The pre-existing source-entry cleanup/refusal remains unchanged.
+
+The owner releases private Unity/list references on listener exit and cleanup.
+A marked last-observed scalar snapshot retains its original frame/time after
+listener exit; it cannot become a fresh native-state reading. A distinct
+Listening instance resets the snapshot. Aborted samples clear partially read
+native values/rows; missing optional input/combat context remains unknown.
+Tick forwarding is null-safe at the existing call position. Root removes the
+private draft's test-path branching and candidate comments before integration.
+
+**Validation.** The actual reader/policy and lifecycle helper compile with the
+pinned Roslyn/Mono against inert authored stubs; both focused tests pass,
+including injected read failure/recovery, exact cohort refusal, timestamped
+exit retention, reference release, post-exit polling and new-listener reset.
+All 34 Siren host tests pass. Source seam checks bind owner hooks, optional
+report guards, sorted/equal
+runtime selectors, exact project-layout keys and unchanged source-entry
+refusal. Ruff formatting/checks pass. The applied-source independent review is
+`work/coordination/original-siren-native-listening-observation/root-integration-review-r1/review.md`,
+SHA-256 a5b517133035de5a4b73a0582d409026228f553c4d20de6aace2e1a467d01972.
+These host checks do not establish full Unity owner compilation or device
+behavior; those require the next source-bound APK and ordinary controls.
+
+**Ownership and reproducibility.** Architecture names the existing owner and
+new files; both runtime source selectors and project-layout include them, with
+null initial script GUIDs until import. Recipe provenance records authored
+code only; no private timestamped output is a build input. This changes source
+reproduced by rebuild steps; replay them from this source checkpoint rather
+than editing generated content. The audio-specific source-selection recipe
+must be reconciled before the next audio player build. Main still has J935/J936
+R23 and is independently verified idle/asleep; accepted J850 remains unchanged.
+No device/editor action is part of this source integration. Next observe the
+native slot/countdown facts on a source-bound Siren route before changing
+ordinary aim/navigation or encounter logic.

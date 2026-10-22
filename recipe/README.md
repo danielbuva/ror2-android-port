@@ -1615,3 +1615,20 @@ and result notes are published; no original implementation, asset, raw capture,
 private identity or SDK binary is copied. The same source generator stages the
 owner; no timestamped private evidence becomes a build input. Host contracts do
 not establish visual parity, callback completion or source animation acceptance.
+
+### Passive native Siren `Listening` snapshot observer (2026-10-21)
+
+`runtime/stage/SirenNativeListeningSnapshotPolicy.cs` and
+`runtime/stage/SirenNativeListeningSnapshotReader.cs` are authored diagnostic
+runtime sources. The default and native-view-camera runtime source selections
+include both paths; `project-layout.json` carries null GUIDs until their first
+Unity import assigns authored script metadata. The observer reads only the
+existing Siren owner cadence and stores bounded scalar values plus a bounded
+slot array. Listener exit releases retained Unity references while preserving
+an explicitly marked, timestamped last-observed snapshot; the next distinct
+native `Listening` instance begins with a fresh report. No protected game
+implementation, assets, serialized content, or third-party source is added.
+The existing cleanup/refusal owner is unchanged. Host coverage exercises the
+listener-exit lifecycle and source seams, but Unity import and device behavior
+remain unverified. This provenance note adds no private build input or text
+replacement.

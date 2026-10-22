@@ -117,6 +117,8 @@
     "runtime/stage/MoonMissionBoundary.cs": "32d9e4a34983c4ba0af378210a5090c1",
     "runtime/stage/SirenEncounterBoundary.cs": "b35a031b36c02438a956aa4649c2ec9d",
     "runtime/stage/SirenEncounterEggTargets.cs": "85b1e67d47fff477b814189c5cf9c936",
+    "runtime/stage/SirenNativeListeningSnapshotPolicy.cs": null,
+    "runtime/stage/SirenNativeListeningSnapshotReader.cs": null,
     "runtime/stage/SirenSourceEntrySession.cs": null,
     "runtime/stage/SourceStageIdentityLifecycle.cs": "fd349b21ad9a6455bad30c28e9c64457",
     "runtime/stage/StageGeometryBoundary.cs": "7b8d65172b667442f9929d8a03c70978",

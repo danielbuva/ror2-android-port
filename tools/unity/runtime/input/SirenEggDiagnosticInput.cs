@@ -118,6 +118,9 @@ public sealed class SirenEggInputReport
     public string stopReason;
     public uint lastTargetNetworkId;
     public string lastTargetScene, lastTargetBody;
+    public int lastTargetSampleFrame;
+    public float lastTargetSampleRealtime;
+    public bool lastTargetSampleKnown, lastTargetVisible, lastTargetPrimaryRequested;
 
     // Read-only witness of the native HuntressTracker target at the same input
     // owner's sample. These counters intentionally distinguish an absent
@@ -598,6 +601,7 @@ public sealed class SirenEggDiagnosticInput : IDisposable
     // Called last, after the existing world and earned-feather producers.
     public bool Apply(CharacterBody player, NovaInputBridge bridge, bool producerFrameFresh)
     {
+        report.lastTargetSampleKnown = false;
         if (disposed || terminal)
             return false;
         if (ownedBridge && ownedBridge != bridge)
@@ -799,6 +803,11 @@ public sealed class SirenEggDiagnosticInput : IDisposable
         report.lastTargetScene = egg.gameObject.scene.name;
         report.lastTargetBody = egg.name;
         report.lastTargetNetworkId = selectedEggNetworkId;
+        report.lastTargetSampleFrame = Time.frameCount;
+        report.lastTargetSampleRealtime = Time.realtimeSinceStartup;
+        report.lastTargetVisible = visible;
+        report.lastTargetPrimaryRequested = visible;
+        report.lastTargetSampleKnown = true;
         lastSubmittedPrimary = visible;
         report.stopReason = visible ? "ordinary-primary-requested" : "source-aim-occluded";
         return true;

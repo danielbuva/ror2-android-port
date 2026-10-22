@@ -198,6 +198,7 @@ public sealed partial class PortSession
             retiredProbeMastersRequested;
         public uint identitySceneId, networkId;
         public uint[] sourceEntryEggNetworkIds, nativeRegisteredEggNetworkIds;
+        public SirenNativeListeningSnapshot nativeListeningSnapshot = new SirenNativeListeningSnapshot();
         public string cleanupError;
     }
 }
@@ -488,7 +489,8 @@ public sealed partial class SirenEncounterSession : IDisposable
     /// source Listener's name-based population observation; it does not infer
     /// eggs destroyed, encounter eligibility, or encounter completion.
     /// </summary>
-    public void Observe(bool force = false)
+    public void Observe(bool force = false, SirenEggInputReport input = null,
+                        SurvivorCombatOutputObserver.Report combat = null)
     {
         if (disposed || cleanupStarted || !encounterObject || !encounterObject.activeInHierarchy)
             return;
@@ -525,6 +527,7 @@ public sealed partial class SirenEncounterSession : IDisposable
                     : "native-listener-state-and-live-vulture-egg-bodies-observed; encounter-start-unproven";
         else if (!Report.nativeEncounterCompleted)
             Report.observation = "native-scripted-encounter-start-observed; boss-group-completion-unobserved";
+        CaptureNativeListeningSnapshot(input, combat);
     }
 
     void Release()
