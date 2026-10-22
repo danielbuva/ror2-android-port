@@ -271,6 +271,29 @@ the virtual methods nor evaluates live manager state, target support, exception
 flow, serialized retention or final native usage. No build consumes its output;
 all live/state/target/native-usage/root qualifications stay false.
 
+`phone_platform_features.py` owns current experimental SDK Android feature
+declaration support. It binds the comparison stub through Mach-O imported-symbol
+and library metadata, identifies literal selector headers, and reads only the
+closed Android append body. Literal addresses must be file-backed C strings;
+output/selector/capacity receivers must preserve the entry parameters. Overflow
+diagnostics, growth calls and their continuations have bounded known forms;
+foreign entries, clobbers, aliases and unknown executed shapes refuse. A separate
+generated-function extent bound leaves the earlier small-function readers
+unchanged. No SDK instruction executes and no captured table supplies an input.
+Setup is the exact supplied SDK and a new private report; teardown releases
+parsed bytes and retains source/input hashes. Other platforms, target discovery,
+module inclusion, state retention, native usage and roots remain unqualified.
+
+`phone_platform_feature_oracle.py` and `PlatformFeatureOracle.cs` own separate
+desktop verification. The runner creates a fresh SDK-only project and an authored
+query request with no expected answers, then serializes its batch process under
+the primary checkout's persistent Unity mutex. The collector observes the SDK's
+Android discovery label and invokes its exact feature API; setup/teardown touches
+only that new project and process. Hashes bind the source, SDK, queries and loaded
+assemblies, and failures retain their attempt. These API answers are comparison
+evidence only: neither a phone generator nor a game build reads the oracle report.
+No player, scene or canonical game-build pointer is created or changed.
+
 `phone_managed_compile.py` owns a current experimental authored compiler fixture.
 Its explicit stage invocation copies hash-pinned owner Roslyn components, their
 unchanged runtime configuration/license, the SDK Unity AOT core library and the

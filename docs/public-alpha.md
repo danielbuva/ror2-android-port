@@ -54,6 +54,9 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       Extend [J895's manager declaration metadata](PORTING_JOURNAL.md#j895--read-sdk-manager-registration-declarations-on-android-and-preserve-retention-boundaries)
       through target/state-dependent serialization and native scene retention;
       asset-dependency exclusions alone do not determine class usage.
+      [J934's Android feature declarations](PORTING_JOURNAL.md#j934--read-android-sdk-feature-declarations-and-compare-independent-api-observations)
+      supply another static prerequisite; qualify target discovery, module
+      inclusion and live state independently before claiming target retention.
 - [ ] Extend [J899's authored compiler fixture](PORTING_JOURNAL.md#j899--compile-an-authored-c-fixture-on-android-and-preserve-cross-host-output-differences)
       through general defines/generators, real source semantics and downstream
       stripping/conversion. [J902](PORTING_JOURNAL.md#j902--compile-the-authored-unity-fixture-with-sdkpackage-derived-references-on-android)

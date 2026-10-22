@@ -365,6 +365,24 @@ copy committed sources unchanged and reuse the receipt/hash-bound SDK/Python
 workspace with explicit Alpha selection, fresh capacity and unchanged-game
 guards. No SDK code, editor or player executes; no game-build input is generated.
 
+`phone_platform_features.py OWNER_SDK NEW_PRIVATE_REPORT` generates the Android
+declaration report directly from the same hash-pinned owner SDK. The private
+`target-support-*` observations, source snapshots and failures under the phone
+proof directory are research evidence, never captured inputs to this reader.
+No SDK token table or disassembly is published. The separate
+`phone_platform_feature_oracle.py ROOT WORK EXACT_EDITOR` generates
+`work/rebuild/phone-wrapper-oracle/feature-<attempt>/` with its fresh project,
+reader-derived query names, source/input receipts, SDK API observations and logs.
+Its tracked generators own every staged input. The report is desktop comparison
+evidence only; no phone or game build consumes it.
+The local `stage-target-support-v1.py` and
+`target-support-on-android-v1.py` adapters under the private proof root copy
+committed reader/test sources unchanged into a fresh owned Alpha workspace.
+They reuse receipt/hash-bound SDK and Python bytes, compare the independently
+generated host report locally, and enforce explicit device selection, fresh
+capacity and unchanged-game checks. Neither adapter accepts optimized Python;
+SDK oracle answers are never staged to Android.
+
 `phone_managed_compile.py stage ROOT OWNER_SDK_CONTENTS WORK` generates a fresh
 `work/rebuild/phone-managed-compile/<owned-attempt>/` from the exact supplied SDK
 and tracked arithmetic fixture. Its manifest binds the original compiler/config,
