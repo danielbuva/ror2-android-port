@@ -57,6 +57,8 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       [J934's Android feature declarations](PORTING_JOURNAL.md#j934--read-android-sdk-feature-declarations-and-compare-independent-api-observations)
       supply another static prerequisite; qualify target discovery, module
       inclusion and live state independently before claiming target retention.
+      Preserve [J939's static-input/API-lookup distinction](PORTING_JOURNAL.md#j939--read-sdk-target-key-input-bindings-on-android-and-preserve-lookup-mismatches)
+      while proving constructor results, map consumers and live availability.
 - [ ] Extend [J899's authored compiler fixture](PORTING_JOURNAL.md#j899--compile-an-authored-c-fixture-on-android-and-preserve-cross-host-output-differences)
       through general defines/generators, real source semantics and downstream
       stripping/conversion. [J902](PORTING_JOURNAL.md#j902--compile-the-authored-unity-fixture-with-sdkpackage-derived-references-on-android)

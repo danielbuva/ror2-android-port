@@ -389,6 +389,26 @@ generated host report locally, and enforce explicit device selection, fresh
 capacity and unchanged-game checks. Neither adapter accepts optimized Python;
 SDK oracle answers are never staged to Android.
 
+`phone_target_keys.py OWNER_SDK NEW_PRIVATE_REPORT` generates static target-key
+input bindings from the pinned SDK and authored sibling readers. Its private
+`target-discovery-*` prototypes, failed controls, source observations and reports
+under the phone proof root are investigation evidence. The tracked reader does
+not consume them. No SDK target table, instruction listing, generated game data
+or private API observation is a production input; constructor results, map
+population and target support remain unqualified.
+`phone_target_key_oracle.py ROOT WORK EXACT_EDITOR` generates fresh
+`work/rebuild/phone-wrapper-oracle/target-<attempt>/` projects and private
+metadata/query/source receipts, SDK observations, exact comparisons and logs.
+The tracked Python/C# generators own every staged input. Queries contain no
+expected mapping; a completed observation is not necessarily an equivalent
+mapping. These SDK answers remain comparison evidence only.
+The private `stage-target-discovery-v1.py` and
+`target-discovery-on-android-v1.py` adapters preserve the committed
+`scripts/lab/` and `tests/` layout in a fresh owned Alpha workspace. They reuse
+receipt/hash-bound SDK and Python bytes, refuse optimized Python before device
+access, and enforce explicit device selection, fresh capacity and unchanged-game
+guards. No SDK API observation is staged to the phone.
+
 `phone_managed_compile.py stage ROOT OWNER_SDK_CONTENTS WORK` generates a fresh
 `work/rebuild/phone-managed-compile/<owned-attempt>/` from the exact supplied SDK
 and tracked arithmetic fixture. Its manifest binds the original compiler/config,

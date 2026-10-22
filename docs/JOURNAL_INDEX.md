@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J939](PORTING_JOURNAL.md#j939--read-sdk-target-key-input-bindings-on-android-and-preserve-lookup-mismatches) | 2026-10-21 | Read SDK target-key input bindings on Android and preserve lookup mismatches | Date: 2026-10-22 UTC. |
 | [J946](PORTING_JOURNAL.md#j946--pass-r25-controls-and-retain-the-recurring-lightningstake-defect) | 2026-10-21 | Pass R25 controls and retain the recurring LightningStake defect | **Hypothesis and setup.** |
 | [J945](PORTING_JOURNAL.md#j945--freeze-r25-with-the-original-material-cache-prerequisite-retained) | 2026-10-21 | Freeze R25 with the original material-cache prerequisite retained | **Hypothesis and build.** |
 | [J944](PORTING_JOURNAL.md#j944--initialize-the-original-material-cache-before-native-model-activation) | 2026-10-21 | Initialize the original material cache before native model activation | **Hypothesis and prior art.** |
