@@ -1,0 +1,128 @@
+{
+  "schema": 1,
+  "target": "outline-highlight",
+  "source": {
+    "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+    "build_id": "25475991",
+    "catalog_sha256": "1cbe89b05987d14cba0809ab8455fd492c0dbfdad0c502529a59c3bb02631c78",
+    "bundle_hash_in_catalog": "45ab8c24dd5dcd99e5cb60900de0231b",
+    "bundle_sha256": "bd1acda75caf15bcb9014dc14e7a0fc5680419e39d61cf24baca429509c12906",
+    "object_sha256": "09090b3fc83fd3025f35637116d070868089d321302742fd9b088497300b8f68",
+    "asset_key": "41e90cbc5ad198a438128b019f8d8553",
+    "asset_location": 16022,
+    "asset_path": "Assets/RoR2/Base/Shaders/PostProcess/HGOutlineHighlight.shader",
+    "asset_path_id": -5736718617091362218,
+    "shader_name": "Hopoo Games/Internal/Outline Highlight"
+  },
+  "programs": [
+    {
+      "index": 1,
+      "pass": 0,
+      "stage": "progVertex",
+      "sha256": "4c52d05e5055779cedfb588a94c817c617592b969862534cccbd4e1398e44bff",
+      "layout_sha256": "444e93728cff83a0798848c3107d87f3ad6994149340ef87a3afb74801d24b3d"
+    },
+    {
+      "index": 3,
+      "pass": 0,
+      "stage": "progFragment",
+      "sha256": "5c94c2491f5969856228739b3ef097ec2125ce210c27350e2a7d0d1ba96e1f3b",
+      "layout_sha256": "b407e71577e5e68988b79b58136fda854a989e6a07d08201eecd63bff7388467"
+    },
+    {
+      "index": 5,
+      "pass": 1,
+      "stage": "progVertex",
+      "sha256": "3d618cd3050096736e64b83519ca3891cf5eca2ef7b2a25e681d06709a798af5",
+      "layout_sha256": "b320a401066f63c53874ece99eb62a76fd009e77280796c38fba2905550e6d81"
+    },
+    {
+      "index": 7,
+      "pass": 1,
+      "stage": "progFragment",
+      "sha256": "c295b63f5194df588bc3e0c53dbe0f43c4df5c08c17d9a602131e45350764bcc",
+      "layout_sha256": "03badf500fe31b040cbbade5392fe164c71fb8b8aee4f9656decf468cb5c46f5"
+    }
+  ],
+  "pass_state": [
+    {
+      "zClip": 1,
+      "zTest": 3,
+      "zWrite": 0,
+      "culling": 0,
+      "conservative": 0,
+      "alphaToMask": 0,
+      "stencilRef": 0,
+      "stencilReadMask": 255,
+      "stencilWriteMask": 255,
+      "offsetFactor": 0,
+      "offsetUnits": 0,
+      "blend": {
+        "srcBlend": 1,
+        "destBlend": 0,
+        "srcBlendAlpha": 1,
+        "destBlendAlpha": 0,
+        "blendOp": 0,
+        "blendOpAlpha": 0,
+        "colMask": 15
+      },
+      "stencil": {
+        "comp": 8,
+        "pass": 0,
+        "fail": 0,
+        "zFail": 0
+      }
+    },
+    {
+      "zClip": 1,
+      "zTest": 8,
+      "zWrite": 0,
+      "culling": 0,
+      "conservative": 0,
+      "alphaToMask": 0,
+      "stencilRef": 0,
+      "stencilReadMask": 255,
+      "stencilWriteMask": 255,
+      "offsetFactor": 0,
+      "offsetUnits": 0,
+      "blend": {
+        "srcBlend": 1,
+        "destBlend": 0,
+        "srcBlendAlpha": 1,
+        "destBlendAlpha": 0,
+        "blendOp": 0,
+        "blendOpAlpha": 0,
+        "colMask": 15
+      },
+      "stencil": {
+        "comp": 8,
+        "pass": 0,
+        "fail": 0,
+        "zFail": 0
+      }
+    }
+  ],
+  "serialized_platform_codes": [
+    4
+  ],
+  "pass_platform_codes": [
+    [
+      4
+    ],
+    [
+      4
+    ]
+  ],
+  "helpers": {
+    "shader_source.py": "34dc1ff1c73be3115820adac1908fa873859f880d09b24524636b9e931177938",
+    "shader_segments.py": "a0906e1abe38b5a18f6dc8f9e902acb3def0123368ef7344f5427d2e03aeff58",
+    "shader_recovery.py": "f5829fb5086e231a5eabb041c0446f4a75883806a72691b73d7e3953a822f142",
+    "shader_deferred.py": "547434c095f560a89379a2c9153eb40dbf25ec4122300116f1a54bfe8d5a24e3"
+  },
+  "d3dasm": {
+    "path": "reference-repos/coconutbird__d3dasm",
+    "revision": "a292206a15daf0723d945a475c6254413eda8551",
+    "binary_sha256": "5d966831f2bf711b23ba1958819444f28e3b071148d62914223b86e7f902f800"
+  },
+  "stable_output": "generated-shader-candidates/outline-highlight/{input_id}"
+}

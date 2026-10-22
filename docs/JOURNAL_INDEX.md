@@ -10,6 +10,8 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J956](PORTING_JOURNAL.md#j956--add-reproducible-local-outline-highlight-and-rampfog-candidates) | 2026-10-21 | Add reproducible local Outline Highlight and RampFog candidates | **Hypothesis and prior art.** |
+| [J955](PORTING_JOURNAL.md#j955--preserve-failed-r26-natural-shutdown-attempts-and-current-animation-evidence) | 2026-10-21 | Preserve failed R26 natural shutdown attempts and current animation evidence | **Hypothesis.** |
 | [J954](PORTING_JOURNAL.md#j954--pass-r26-controls-and-verify-the-installed-media-and-apk) | 2026-10-21 | Pass R26 controls and verify the installed media and APK | **Hypothesis and setup.** |
 | [J953](PORTING_JOURNAL.md#j953--preserve-the-measured-pixel-position-interpolation-qualifier) | 2026-10-21 | Preserve the measured pixel-position interpolation qualifier | **Hypothesis and evidence.** |
 | [J952](PORTING_JOURNAL.md#j952--build-and-freeze-the-combined-original-waveform-and-rampfog-candidate) | 2026-10-21 | Build and freeze the combined original waveform and RampFog candidate | **Hypothesis and source.** |

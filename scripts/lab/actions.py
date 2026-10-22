@@ -71,6 +71,10 @@ def _target(function, kwargs, args):
     return function(args.target, **kwargs)
 
 
+def _target_json_result(function, kwargs, args):
+    print(json.dumps(function(args.target, **kwargs), indent=2))
+
+
 def _survivor_target(function, kwargs, args):
     path = getattr(args, "skill_variants", None)
     slot = getattr(args, "skill_slot", None)
@@ -418,6 +422,24 @@ _ENTRIES = (
     ),
     Action("whole-catalog-run", "whole_catalog", "run_integration", {}, "current", "Install, sync and run the catalog-registration check."),
     Action("shader-recovery", "shader_recovery", "recover", {}, "historical", "Recover shaders for --target.", handler=_target),
+    Action(
+        "shader-outline-candidate",
+        "shader_outline",
+        "generate",
+        {},
+        "current",
+        "Host-only: --target outline-highlight generates the original two-pass shader candidate at a stable ignored path; editor compilation and Android appearance remain unverified.",
+        handler=_target_json_result,
+    ),
+    Action(
+        "shader-ramp-fog",
+        "shader_ramp_fog",
+        "generate",
+        {},
+        "current",
+        "Generate one accepted-input-bound RampFog ShaderLab candidate under ignored work/generated-shader-candidates/. Host-only; refuses input/helper/tool drift or an existing output. Unity compilation, Android acceptance, and visual equivalence remain separate checks.",
+        handler=_json_result,
+    ),
     Action("shader-source", "shader_source", "generate", {}, "historical", "Generate recovered shader sources."),
     Action("shader-source-deferred", "shader_deferred", "generate", {}, "historical", "Generate deferred shader sources."),
     Action("shader-source-materials", "shader_materials", "generate", {}, "historical", "Generate material shader sources."),

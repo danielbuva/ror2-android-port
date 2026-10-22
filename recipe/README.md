@@ -65,6 +65,8 @@ produce the file from the input, prefer tracking the generator.
 | `inherited-rebuild-package.json` | Three remaining TMP include bodies | Existing TMP 3.0.6 package/archive pins, three source selectors/hashes and inherited GUIDs. | Unity Companion License, authorized local editor package; no third-party bytes tracked. | Existing `unity_package_additions.generate_pairs`, isolated R2 replay only. |
 | `rebuild-r9-obligations.json` | Two previously unknown producers | Public PlayerSettings/editor callback identities and authored setup notes. | No private settings, reflected game type lists or XML content. | Coverage and validate-bindings report explicit editor obligations with local target hashes. |
 | `shader-rebuild-inputs.json` | Explicit shader recovery/census/fallback dependencies and selections | Accepted input ID, work-relative hashes, output basenames and topology; no recovered content. | Private bodies remain ignored; no account/device data, credentials or new licensed code. Audited 2026-10-18. | `shader_rebuild` validates all 46 pins; retained recovery remains a blocker (63 retained records including R3–R8). |
+| `shader-outline-candidate.json` | Two-pass local Outline Highlight candidate | Accepted input/catalog/bundle/object identities, four program/layout digests, pass metadata and pinned helper/tool identities. | Minimum reconstruction selectors only; no shader program, HLSL, serialized asset body, private path, or executable. Audited 2026-10-22. | `scripts/lab/shader_outline.py` reads this fixed public recipe and reconstructs ignored input-scoped evidence; no build/runtime consumer. |
+| `shader-ramp-fog-candidate.json` | One input-gated local RampFog source candidate | Accepted input ID, minimum asset-bundle path/hash, shader path ID/name, record indices/stages and exact program/blob digests; pinned authored helper and disassembler identities. | Metadata and reconstruction policy only; no DXBC, HLSL, ShaderLab body, serialized asset body, private path or tool binary. Audited 2026-10-22. | `scripts/lab/shader_ramp_fog.py` reads this fixed public recipe and the user's accepted local input, then writes only ignored work output. No fallback/private recipe and no build/runtime consumer. |
 | `project-inputs.json` | Remaining independently authored project inputs and original geometry identity | Public smoke/editor source identities, exact public Git commits, original bundle/mesh/hash identities. | No original geometry or private settings bodies; archived templates are our own public source. Audited 2026-10-18. | `project_input_rebuild` renders/stages/exports and hash-gates 26 complete files, including Burst defaults and authored Android graphics tiers. |
 | `build-entry-inputs.json` | R7/R8 inputs: the bootstrap attempt name, the decompiled sources R7 regenerates, and one retained contract result | Accepted input ID, attempt name, assembly name/SHA-256, decompiler pin, three output paths/SHA-256, and one work-relative path/SHA-256. | No decompiled bodies, catalog data, binaries, private roots, credentials or account/device identifiers. Audited 2026-10-18; revised J597. | `build_entry_rebuild.BuildEntryIO` gates the contract result; `BuildEntryIO.decompiled` regenerates and hash-gates the sources. Only the contract result is a blocker. |
 | `rebuild-binding-targets.json` | J565 final binding membership | Accepted input ID and 104 minimum project asset identities from the regenerated R2 guard. | Identifiers only, no serialized content, private roots or device/account data. Audited 2026-10-18. | Final validation requires all identifiers in both the regenerated R2 receipt and destination; R4 deferred targets are checked too. |
@@ -1704,3 +1706,42 @@ only beneath ignored work. The two read-only Quit-coordinate report fields are
 the minimal existing-menu diagnostic dependency for original audio shutdown;
 button behavior is unchanged. Provenance/privacy audit: 2026-10-22. Android
 waveform capture, content attribution and audibility remain separate gates.
+
+### Local RampFog candidate recipe (2026-10-22)
+
+`shader-ramp-fog-candidate.json` contains the accepted input identifier, one
+source bundle path/hash, shader path ID/name, serialized-blob digest, program
+record identities/digests, helper source hashes, and pinned external-tool
+revision/binary hashes. Those are the minimum selectors needed to reconstruct
+the user's local shader candidate. ShaderLab, DXBC, HLSL, serialized pass data,
+tool binaries, private installation path and device evidence stay under
+ignored `work/`. `shader_ramp_fog.py` reads only this fixed public recipe; it
+does not search for an adjacent or private fallback recipe. Its output is a
+stable input-keyed local candidate and has no build/runtime consumer.
+
+Prior art: `docs/community-prior-art.md` and `docs/shader-recovery.md`,
+especially J329 and J364/J365, record the exporter limitation and why exact
+native program bytes, tool roundtrips and independent interface reads are
+useful while insufficient for equivalence. This candidate retains measured
+native pass metadata and uses the repository's authored HLSL/resource/state
+helpers. The translated program math is generated locally and is not published
+in the recipe. No source-code or asset content is substituted for ownership.
+Unity compilation, Android backend support and rendered appearance remain
+separate checks; the current candidate does not claim any of them. Audited
+2026-10-22.
+
+### Local Outline Highlight candidate recipe (2026-10-22)
+
+`shader-outline-candidate.json` records minimum source selectors, hashes and
+measured pass/interface metadata for locally reconstructing the accepted
+installation's two-pass shader. Protected native programs, translated math,
+serialized objects and generated ShaderLab remain ignored. The authored action
+checks the fixed public recipe, original catalog/bundle/object identity and
+pinned helpers/tools; no private fallback recipe is used. Independent shader
+recovery prior art is documented in `docs/community-prior-art.md` and
+`docs/shader-recovery.md`. In particular, the pinned d3dasm interpolation
+handling informed preservation of the measured pixel-position qualifier.
+No upstream implementation is copied into this recipe or generator. The host
+result establishes reconstruction provenance and topology only. Compilation,
+resource timing, backend behavior and original appearance require separate
+qualification. Provenance/privacy audit: 2026-10-22.

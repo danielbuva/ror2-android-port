@@ -2676,6 +2676,26 @@ measured non-output `noperspective SV_POSITION0` inputs. Other qualified
 interfaces refuse until measured; this support alone selects no replacement
 shader or runtime presentation behavior (J953).
 
+`scripts/lab/shader_outline.py` owns the current
+`shader-outline-candidate --target outline-highlight` host action. Its fixed
+public `recipe/shader-outline-candidate.json` binds the accepted catalog,
+serialized object, four executable records, measured layouts, pass state and
+authored helper/tool hashes. It generates only ignored local evidence beneath
+`work/generated-shader-candidates/outline-highlight/<input_id>/`; unchanged
+inputs may reuse identical output, while drift refuses overwrite. Vertex and
+fragment interfaces remain distinct so the measured fragment-position
+interpolation survives. It has no runtime setup or teardown and no build
+consumer. Exact-editor compilation and Android appearance are separate gates.
+
+`scripts/lab/shader_ramp_fog.py` owns the one-shader `shader-ramp-fog` host
+action. It reads only the fixed public `recipe/shader-ramp-fog-candidate.json`
+and the user's accepted input, checks the exact serialized object, native
+programs and tool/helper pins, then writes a no-overwrite candidate under
+`work/generated-shader-candidates/ramp-fog/<input_id>/`. The output is ignored
+local ShaderLab/DXBC evidence; no build, composition, or runtime path consumes
+it. A separate exact-editor fixture must qualify the ShaderLab before any
+project use, and Android rendering remains a device gate.
+
 ## Known structural debt
 
 First verified against `af2e101`; status updated after J597. Each step was its own commit with

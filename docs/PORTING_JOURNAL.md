@@ -27766,3 +27766,100 @@ menu Quit, requiring original engine/callback Terms, post-Term disarm and exact
 bounded private waveform/cold readback. Preserve the known stale historical
 visual predicates as failed evidence and correct only their current-report
 interpretation before the new audio route.
+
+
+## J955 — Preserve failed R26 natural shutdown attempts and current animation evidence
+
+**Hypothesis.** J954's control-verified R26 player should reach the original
+menu Quit after bounded source-camera gameplay and persist J950's waveform only
+when original engine/callback Terms and post-Term disarm are witnessed. The APK
+remains 6dc44d98af45ebf262a2fdaea0251879f39c6ab0c066c423b5e1559cc2efc79d,
+source bc8296a. Only the assigned adopted-storage device is used. No baseline
+promotion, profile award, storage change or shared-editor mutation occurs.
+
+**First attempt.** The corrected current-report interpretation reaches
+35.210159 s of source-camera Huntress gameplay with 433 PCM callbacks and a
+262,144-sample bounded buffer validated but waiting for original Terms. The
+host then refuses an evidence filename collision: adapter and orchestrator both
+create the same screenshot path. End-run/Quit is not attempted. Failure-only
+force-stop invalidates natural-shutdown acceptance. Preserve the failed files;
+rename only the adapter staging files for the next host runner.
+
+A read-only animation comparison joins the same process/session/body/model,
+animator/controller/avatar across the first and final reports. The native state
+hash changes from -1321493430 to 1967941053. Cross-state normalized times are
+not comparable; this is evidence of state change, not visual motion or fidelity.
+The captured source-camera image still has severe pink/lavender/gray material
+and fog artifacts. Neither pose readiness nor animation state proves parity.
+
+**Second attempt and first failure.** Separate screenshot staging permits both
+world evidence files and subsequent menu return. The next host failure is an
+uncaught ADB process-query TimeoutExpired on the post-Quit path. The evidence
+does not prove that the full natural-exit window elapsed, that the final PID
+was positively alive, or that original Terms ran. The bounded Unity log includes
+an onPause and a 2,000 ms engine-pause timeout. A shutdown stall is plausible,
+not established. The last report is the same-process offline menu with empty
+failure fields, no original-Term witness and no persisted waveform. Independent
+read-only listing reports the capture directory absent. Failure-only force-stop
+succeeds; independent readback verifies exact installed APK bytes, owned
+placement, process/selector absence and display sleep. Profile count remains 13.
+
+**Evidence and revisit.** The two immutable attempts are
+`work/experiments/original-game-audio-pcm/r26-natural-quit-root-20261022T0503/`
+and `work/experiments/original-game-audio-pcm/r26-natural-quit-root-20261022T0508/`.
+Independent terminal queries remain under
+`work/coordination/original-game-audio-pcm/r26-failed-attempt-query-r1/` and
+`r26-second-attempt-query-r1/`. The animation comparator and six host contracts
+are retained beneath
+`work/coordination/original-native-visual-reference/animation-report-comparison-r1/`.
+Next runner must preserve menu/tap/protocol evidence and retry only timed-out
+queries within the unchanged 30 s exit window; only a successful explicit
+process-absence response can pass. Collect bounded shutdown diagnostics before
+failure cleanup. Original Terms, raw waveform persistence, attribution and
+physical audibility remain unqualified. No runtime source change is justified
+by a transport exception alone.
+
+## J956 — Add reproducible local Outline Highlight and RampFog candidates
+
+**Hypothesis and prior art.** Current dummy shaders cannot implement the
+original two-pass Outline caller or RampFog. Use the accepted installation's
+measured native programs, pass state and interfaces rather than inventing
+replacement shading. Consult `docs/community-prior-art.md`,
+`docs/shader-recovery.md`, the pinned d3dasm interpolation handling and independent
+DXBC signature reader. These supply reconstruction and observation techniques;
+no upstream implementation or original shader program is published.
+
+**Authored change.** Add two current host actions with fixed public recipes:
+`shader-outline-candidate --target outline-highlight` and `shader-ramp-fog`.
+Named owners and local output policies are in ARCHITECTURE and LOCAL_STATE.
+They bind accepted input/catalog/bundle/object identities, executable records,
+measured layouts/state and exact helper/tool hashes, then write only stable,
+input-scoped ignored candidates. Private recipe fallbacks, path escape,
+symlinked output parents, source drift and unexpected overwrite refuse. The
+Outline interface preserves J953's measured fragment-position interpolation
+without inventing an unused vertex varying. RampFog retains the measured packed
+texture-coordinate interface. No build or runtime consumer is changed.
+
+**Checks and result.** All 72 public shader host contracts and changed-file Ruff
+checks pass. Root executes both installed actions against the actual accepted
+input. Outline reconstructs four executable programs and two passes; generated
+ShaderLab SHA-256 is
+f31efa8eac8751e002b63151a572457e5e7c4e74bd76b32cb031bb0391998d87.
+RampFog reconstructs two executable programs and one pass; generated ShaderLab
+SHA-256 is
+4b8ce911e6de62180c302b1161a56eb0a7d15203aedda51a6a4f1fca7b0fbc51.
+Both native program roundtrips match exactly. RampFog's independent native and
+assembly signature readers agree. A reviewed mini-root run exercises the actual
+fixed public recipe; synthetic tests alone are not treated as that proof.
+
+**Evidence and next gate.** Stable generated evidence lives under
+`work/generated-shader-candidates/{outline-highlight,ramp-fog}/` keyed by accepted
+input. Reviewed drafts and host replay evidence remain under
+`work/coordination/original-native-visual-reference/outline-generator-draft-r3/`
+and `ramp-fog-recovery-draft-r2/`. Independent reviews authorize the next exact
+editor compile fixture only. No Unity compilation, Android rendering or visual
+equivalence is yet claimed. This host checkpoint adds reproducible generators
+and metadata, not a runtime substitution or rebuild step. A future explicit
+presentation selection must qualify and bind its own source/payload changes.
+Protected programs/math/assets and all raw evidence remain ignored. J954's
+installed R26 player and accepted J850 baseline are unchanged.

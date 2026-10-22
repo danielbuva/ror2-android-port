@@ -1,0 +1,137 @@
+"""Public-safe contracts for the accepted-input-scoped RampFog action."""
+
+from __future__ import annotations
+
+import importlib.util
+import json
+import shutil
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+INTEGRATION = next(parent for parent in Path(__file__).resolve().parents if (parent / "scripts/lab/shader_ramp_fog.py").is_file())
+REPO = INTEGRATION
+PROJECT_ROOT = next(parent for parent in (INTEGRATION, *INTEGRATION.parents) if (parent / "scripts/lab/common.py").is_file())
+SOURCE_MODULE = INTEGRATION / "scripts/lab/shader_ramp_fog.py"
+PUBLIC_RECIPE = INTEGRATION / "recipe/shader-ramp-fog-candidate.json"
+
+
+def load_isolated_module(root: Path):
+    lab = root / "scripts/lab"
+    (lab).mkdir(parents=True)
+    (root / "recipe").mkdir()
+    for name in ("common.py", "shader_segments.py", "shader_ramp_fog.py"):
+        source = PROJECT_ROOT / "scripts/lab" / name if name != "shader_ramp_fog.py" else SOURCE_MODULE
+        shutil.copy2(source, lab / name)
+    shutil.copy2(PUBLIC_RECIPE, root / "recipe/shader-ramp-fog-candidate.json")
+    # A stale/private adjacent recipe must never shadow the fixed public recipe.
+    (lab / "recipe_candidate.json").write_text("not-json", encoding="utf-8")
+    spec = importlib.util.spec_from_file_location(f"shader_ramp_fog_{id(root)}", lab / "shader_ramp_fog.py")
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    old_path = list(sys.path)
+    old_modules = {name: sys.modules.pop(name, None) for name in ("common", "shader_segments")}
+    sys.path.insert(0, str(lab))
+    try:
+        spec.loader.exec_module(module)
+    finally:
+        sys.path[:] = old_path
+        for name, previous in old_modules.items():
+            sys.modules.pop(name, None)
+            if previous is not None:
+                sys.modules[name] = previous
+    return module
+
+
+class ShaderRampFogCandidateTests(unittest.TestCase):
+    def test_module_reads_only_fixed_public_recipe(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="ramp-fog-mini-root-") as temp:
+            root = Path(temp)
+            module = load_isolated_module(root)
+            self.assertEqual(module.RECIPE_PATH, root.resolve() / "recipe/shader-ramp-fog-candidate.json")
+            self.assertEqual(module.RECIPE["target"], "ramp-fog")
+            self.assertEqual(module.RECIPE["stable_output"], "generated-shader-candidates/ramp-fog/{input_id}")
+            self.assertFalse(module.RECIPE["generation_limits"]["unity_compiled"])
+
+    def test_output_is_stable_input_scoped_and_work_contained(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="ramp-fog-path-test-") as temp:
+            work = Path(temp) / "work"
+            work.mkdir()
+            module = load_isolated_module(Path(temp) / "repo")
+            output = module.output_path(work, module.SOURCE["input_id"])
+            self.assertEqual(output, work.resolve() / "generated-shader-candidates/ramp-fog" / module.SOURCE["input_id"])
+            with self.assertRaisesRegex(RuntimeError, "fixed RampFog recipe"):
+                module.output_path(work, "another-input")
+            module.RECIPE["stable_output"] = "../outside/{input_id}"
+            with self.assertRaisesRegex(RuntimeError, "escapes work"):
+                module.output_path(work, module.SOURCE["input_id"])
+
+    def test_symlinked_output_parent_refuses(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="ramp-fog-symlink-test-") as temp:
+            root = Path(temp) / "repo"
+            work = Path(temp) / "work"
+            work.mkdir()
+            module = load_isolated_module(root)
+            outside = Path(temp) / "outside"
+            outside.mkdir()
+            (work / "generated-shader-candidates").symlink_to(outside, target_is_directory=True)
+            with self.assertRaisesRegex(RuntimeError, "symlink|outside work"):
+                module.output_path(work, module.SOURCE["input_id"])
+
+    def test_bundle_drift_refuses_before_stable_publication(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="ramp-fog-drift-test-") as temp:
+            root = Path(temp) / "repo"
+            work = Path(temp) / "work"
+            work.mkdir()
+            module = load_isolated_module(root)
+            staging = work / ".staging"
+            staging.mkdir()
+            (staging / "candidate.json").write_text("synthetic candidate", encoding="utf-8")
+            bundle = work / "source.bundle"
+            bundle.write_bytes(b"original source bytes")
+            initial_hash = module.sha_file(bundle)
+            bundle.write_bytes(b"changed during generation")
+            destination = module.output_path(work, module.SOURCE["input_id"])
+            with self.assertRaisesRegex(RuntimeError, "changed during RampFog generation"):
+                module._publish_staging(staging, destination, bundle, initial_hash)
+            self.assertFalse(destination.exists())
+            self.assertTrue((staging / "candidate.json").is_file())
+
+    def test_exclusive_publish_and_overwrite_refusal(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="ramp-fog-publish-test-") as temp:
+            root = Path(temp) / "repo"
+            work = Path(temp) / "work"
+            work.mkdir()
+            module = load_isolated_module(root)
+            bundle = work / "source.bundle"
+            bundle.write_bytes(b"stable source")
+            digest = module.sha_file(bundle)
+            staging = work / ".staging"
+            staging.mkdir()
+            (staging / "candidate.json").write_text("first", encoding="utf-8")
+            destination = module.output_path(work, module.SOURCE["input_id"])
+            module._publish_staging(staging, destination, bundle, digest)
+            self.assertEqual((destination / "candidate.json").read_text(encoding="utf-8"), "first")
+            second = work / ".staging-second"
+            second.mkdir()
+            (second / "candidate.json").write_text("second", encoding="utf-8")
+            with self.assertRaisesRegex(RuntimeError, "already exists"):
+                module._publish_staging(second, destination, bundle, digest)
+            self.assertEqual((destination / "candidate.json").read_text(encoding="utf-8"), "first")
+
+    def test_action_is_current_and_describes_qualification_limits(self) -> None:
+        spec = importlib.util.spec_from_file_location("ramp_fog_actions", INTEGRATION / "scripts/lab/actions.py")
+        assert spec is not None and spec.loader is not None
+        actions = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(actions)
+        action = actions.ACTIONS["shader-ramp-fog"]
+        self.assertEqual(action.status, "current")
+        self.assertEqual((action.module, action.function), ("shader_ramp_fog", "generate"))
+        self.assertIn("Host-only", action.help)
+        self.assertIn("visual equivalence", action.help)
+
+
+if __name__ == "__main__":
+    unittest.main()

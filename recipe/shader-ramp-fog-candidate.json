@@ -1,0 +1,63 @@
+{
+  "generation_limits": {
+    "android_shader_acceptance": false,
+    "semantic_equivalence_proven": false,
+    "unity_compiled": false,
+    "visual_parity_proven": false
+  },
+  "schema": 1,
+  "scope": "Local host candidate generator only; never consumed by the whole-catalog build or treated as runtime acceptance.",
+  "source": {
+    "build_id": "25475991",
+    "bundle_path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-shaders_shader_assets_all_45ab8c24dd5dcd99e5cb60900de0231b.bundle",
+    "bundle_sha256": "bd1acda75caf15bcb9014dc14e7a0fc5680419e39d61cf24baca429509c12906",
+    "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+    "passes_per_subshader": [
+      1
+    ],
+    "platform_codes": [
+      4
+    ],
+    "records": [
+      {
+        "index": 0,
+        "kind": "parameters"
+      },
+      {
+        "gpu_type": 15,
+        "index": 1,
+        "keywords": [],
+        "kind": "program",
+        "stage": "progVertex"
+      },
+      {
+        "gpu_type": 17,
+        "index": 2,
+        "keywords": [],
+        "kind": "program",
+        "stage": "progFragment"
+      }
+    ],
+    "serialized_blob_sha256": "79a63347642dd7c2de48893257876f3891eb73ee18696b2ec47ca0beaa75500a",
+    "shader_name": "Hidden/PostProcess/RampFog",
+    "shader_path_id": 2910825169780710437,
+    "subshader_count": 1
+  },
+  "stable_output": "generated-shader-candidates/ramp-fog/{input_id}",
+  "target": "ramp-fog",
+  "tools": {
+    "d3dasm": {
+      "binary_sha256": "5d966831f2bf711b23ba1958819444f28e3b071148d62914223b86e7f902f800",
+      "path": "reference-repos/coconutbird__d3dasm",
+      "revision": "a292206a15daf0723d945a475c6254413eda8551"
+    },
+    "dxbc_spirv": {
+      "disassembler_sha256": "56e0fe3adbf76b33d086dc148085824b4e80be89dba594876de19e7a950a51c0",
+      "path": "reference-repos/doitsujin__dxbc-spirv",
+      "revision": "c7f069701227dcb800a01bd93e42f8001b7543e7"
+    },
+    "shader_deferred_sha256": "547434c095f560a89379a2c9153eb40dbf25ec4122300116f1a54bfe8d5a24e3",
+    "shader_segments_sha256": "a0906e1abe38b5a18f6dc8f9e902acb3def0123368ef7344f5427d2e03aeff58",
+    "shader_source_sha256": "34dc1ff1c73be3115820adac1908fa873859f880d09b24524636b9e931177938"
+  }
+}

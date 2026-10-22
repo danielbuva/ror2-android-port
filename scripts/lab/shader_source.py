@@ -49,7 +49,10 @@ def bind_hlsl(source, layout, entry):
         semantic = match[5].upper() if match[5].upper() == "SV_POSITION0" else match[5]
         if match[2] and (match[1] or semantic != "SV_POSITION0"):
             raise RuntimeError("Unmeasured noperspective I/O contract")
-        parameters.append({"out": bool(match[1]), "name": match[4], "semantic": semantic, "columns": int(match[3])})
+        row = {"out": bool(match[1]), "name": match[4], "semantic": semantic, "columns": int(match[3])}
+        if match[2]:
+            row["interpolation"] = "noperspective"
+        parameters.append(row)
     body = source[source.index("{", signature.end()) :]
     buffers = {b["slot"]: b for b in layout["buffers"]}
     used = []
