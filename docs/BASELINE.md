@@ -88,14 +88,14 @@ The plain check and its acceptance criteria remain unchanged.
 
 ## Current baseline (2026-10-20)
 
-J946's diagnostic APK d1255bf9 is installed after both standard controls,
-media readback and an independent installed/cleanup query. It stays unpromoted:
-LightningStake collider errors recur, J947 selected-camera rendering retains
-missing RampFog/artifacts, and broader audio acceptance remains open. See the
-[current snapshot](../PORTING_STATE.md) for installed identity and
-[J946](PORTING_JOURNAL.md#j946--pass-r25-controls-and-retain-the-recurring-lightningstake-defect)
-for the controls and [J947](PORTING_JOURNAL.md#j947--observe-the-initialized-original-model-and-isolate-missing-rampfog)
-for selected-model lifecycle evidence. The accepted baseline below remains the rollback.
+J954's diagnostic APK 6dc44d98 is installed after both standard controls,
+exact runtime-media readback and independent APK-byte/placement/idle verification.
+It stays unpromoted: original shutdown/waveform, selected-camera visual parity and
+broader audio acceptance remain open. The recurring Windows shader-bundle errors
+remain. No LightningStake error appears in these bounded controls; the intermittent
+defect is not considered fixed. See the [current snapshot](../PORTING_STATE.md) and
+[J954](PORTING_JOURNAL.md#j954--pass-r26-controls-and-verify-the-installed-media-and-apk).
+The accepted baseline below remains the rollback.
 
 | Item | Value |
 | --- | --- |

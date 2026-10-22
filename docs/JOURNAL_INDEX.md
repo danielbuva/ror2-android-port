@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J954](PORTING_JOURNAL.md#j954--pass-r26-controls-and-verify-the-installed-media-and-apk) | 2026-10-21 | Pass R26 controls and verify the installed media and APK | **Hypothesis and setup.** |
 | [J953](PORTING_JOURNAL.md#j953--preserve-the-measured-pixel-position-interpolation-qualifier) | 2026-10-21 | Preserve the measured pixel-position interpolation qualifier | **Hypothesis and evidence.** |
 | [J952](PORTING_JOURNAL.md#j952--build-and-freeze-the-combined-original-waveform-and-rampfog-candidate) | 2026-10-21 | Build and freeze the combined original waveform and RampFog candidate | **Hypothesis and source.** |
 | [J950](PORTING_JOURNAL.md#j950--integrate-bounded-waveform-readback-with-verified-original-shutdown) | 2026-10-21 | Integrate bounded waveform readback with verified original shutdown | **Hypothesis and ownership.** |

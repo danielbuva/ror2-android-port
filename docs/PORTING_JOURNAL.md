@@ -27711,3 +27711,58 @@ the new source input must pass its own reconstruction and device gates.
 Protected recovery evidence stays beneath
 `work/coordination/original-native-visual-reference/`. No original shader math,
 program, asset or third-party implementation is committed.
+
+## J954 — Pass R26 controls and verify the installed media and APK
+
+**Hypothesis and setup.** J952's frozen full player should preserve both standard
+controls before testing J950's original shutdown path. Root installs its explicit
+APK 6dc44d98 on the assigned adopted-storage device and syncs only its frozen
+payload through the normal ownership, fresh placement and capacity checks.
+The exact source remains bc8296a; subsequent host-only source support is not
+part of this player. No other device or shared editor is used.
+
+**Device results.** Installation and sync succeed, with process/selector absence
+and display sleep verified. The plain control reaches 35.202469 s on Lakes.
+The second control completes exactly one original exit to Goolake, with
+142.558182 s of world time and 10.099213 s in the destination. Both canonical
+results report success, current APK identity, empty player failure fields,
+assisted execution and exactly 13 applied profile runs. Their canonical cleanup
+passes. Neither result establishes an unassisted run or normal difficulty.
+
+Both current-PID qualifications retain the same five Windows shader-bundle
+compatibility errors seen in J946. No LightningStake error occurs in either
+captured set; its earlier intermittent defect is not declared fixed. The plain
+run observes 469 original-output callbacks and 540,288 finite nonzero samples,
+with no rejected, nonfinite or capped buffers. Its specific callback identity
+matches the accepted original music output. The frame-limited waveform state
+is validated but waiting for original Terms. Baseline force-stop supplies no
+shutdown or waveform-persistence proof, and counters do not establish audio
+content, fidelity or physical audibility.
+
+The actual Unity runtime data path contains all 120 streamed-media files:
+585,814,167 bytes, with every hash and size matching the frozen R2 receipt.
+An independent read-only query rehashes the installed APK, confirms its owned
+package placement and verifies process absence, selector absence and display
+sleep. No receipt, storage configuration or existing data is changed manually.
+
+**Evidence.** APK SHA-256:
+6dc44d98af45ebf262a2fdaea0251879f39c6ab0c066c423b5e1559cc2efc79d.
+Canonical control evidence:
+`work/experiments/baseline/20261022T044309.230672Z/` and
+`work/experiments/baseline/20261022T044723.122160Z/`.
+Root's full qualification and readbacks remain under
+`work/coordination/codex-original-game-audio-device-root/r19-r26-root-r1/`.
+Derived qualification SHA-256:
+87a08334f0a309651191ef09d765a60984c5b7f7c9d96b375f6dc41b2d62cdb2;
+runtime-media proof:
+6a19c5b4b7ff1cde8a7f6b9e90003b7e52a8c71e5926facd7e77264c3c1df9e0;
+independent terminal query:
+3c7f8be8810f2cbd8ba69aad059f3735c0ddaa756784018b7fe55b64f28914ce.
+The filtered error list is retained separately from the bounded captured log;
+the latter does not contain every earlier line. Public evidence is authored
+summary only. J850 remains the accepted baseline; R26 is the latest installed,
+control-verified diagnostic. Next test actual source-camera gameplay and normal
+menu Quit, requiring original engine/callback Terms, post-Term disarm and exact
+bounded private waveform/cold readback. Preserve the known stale historical
+visual predicates as failed evidence and correct only their current-report
+interpretation before the new audio route.
