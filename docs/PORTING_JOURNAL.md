@@ -27167,3 +27167,115 @@ world preparation and survival phases. Original cache initialization and
 rendering still need that opt-in run. J850 stays accepted; R25 is installed and
 the latest default-control-verified diagnostic. No further runtime or
 rebuild-produced source changes in this checkpoint.
+
+
+## J939 — Read SDK target-key input bindings on Android and preserve lookup mismatches
+
+Date: 2026-10-22 UTC. Hypothesis: J934's target-discovery prerequisite can advance
+by reconstructing the pinned SDK's static key-input declarations independently
+on Android. These are input bindings, not evidence of constructed strings,
+populated trees, current module availability or native retention. Root reserved
+J939. Read J895/J931/J934 before extending this generic SDK metadata subsystem;
+no RoR2 reconstruction, runtime, renderer or execution backend changes occur.
+Rebase/check against 88fcc84 preserves Root's complete J945 journal prefix and
+snapshot before changing only Alpha's owner-build row.
+
+**Knowledge and authored change.** The pinned Unity reference's
+[BuildPipeline bindings](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Editor/Mono/BuildPipeline.bindings.cs)
+and [BuildTarget enum](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Editor/Mono/BuildTarget.cs)
+provide API knowledge only; no reference implementation is copied. Direct SDK
+assembly metadata confirms the public numeric-name and internal reverse-name
+methods. Live read-only MCP reflection confirms the public signature. Retain
+stale editor-state telemetry as stale, not a passing readiness check. Mach-O
+format/import knowledge remains J934's prerequisite. Raw SDK instruction/data
+observations remain private; tests contain authored operand/interval/payload
+fixtures and an optional exact-SDK check which skips when the SDK is absent.
+
+`phone_target_constructor.py`, `phone_target_geometry.py` and
+`phone_target_keys.py` form a named static-input reader. It links constructor
+key/string-copy operands, terminators and mode-dependent length writes; derives
+list base/span/stride from setup and iteration operands; rejects overlapping
+constructor footprints; and requires one distinct typed-call or inline-copy
+input per consumed slot. Prove definitions dominate their uses and refuse
+unknown effects, skipped definitions, clobbered/aliased receivers, incomplete
+bytes and zero-register values. The runtime tree is zero-fill storage, not
+file-backed metadata. No SDK instruction executes and no captured table supplies
+an input to this reader. The earlier SDK readers/pins remain unchanged.
+
+**First failures and controls.** Preserve the initial scoped extraction and
+candidate observations. Eight typed constructor forms share a 46-instruction
+normal path. A first private operand prototype incorrectly accepts reversal
+of the inline/heap length condition; add the tag/branch/continuation contract
+before promotion. Mixed typed/inline controls later expose seven accepted
+zero-register key variants: an immediate encoded for the architectural zero
+register is not a stored key value. Refuse that source explicitly. Preserve
+both failed prototype control reports. Committed public components pass all
+96 constructor, 18 geometry and 38 mixed-source mutations, with the SDK binary
+unchanged. A shorter consumer interval derives 33 slots in the geometry-only
+component, then refuses in the complete reader because one source slot is
+outside it; count 34 is not forced by a captured table.
+
+**Host and independent SDK observations.** Actual source is
+c4a87af14706e1585218f91d9129663e0560ae12. Public rebased source
+5da8293074e6b3a837f492e759bc4733dabcb7d4 has identical qualified inputs. Fourteen focused host/protocol tests,
+changed-file Ruff, public scan and manual authored-source review pass. The
+reader derives a 1,904-byte interval within a 2,096-byte frame, 56-byte stride
+and 56-byte constructor write extent. It binds 34 distinct numeric keys across
+28 typed calls and six inline-copy paths. Those statements do not qualify
+constructor results or container behavior.
+
+The separate `TargetKeyOracle.cs` / `phone_target_key_oracle.py` runs in a fresh
+SDK-only project under the primary persistent Unity mutex. Separate numeric
+and string query lists contain no expected pairs. Exact SDK/version/Android,
+source, request and loaded-assembly identities are checked; no scene, player,
+game input or canonical build pointer is changed. The process exits zero and
+observes 34 queries in each direction without per-query errors. Exact mapping
+comparison is **false**: numeric-name API results match zero declaration
+spellings exactly; all 34 differ in casing. Lowercasing is diagnostic only and
+is not converted into a pass. Reverse lookup maps 19 names to the declared
+numeric key and returns NoTarget (-2) for 15 other historical entries. Android's
+lowercase key maps to 13 while the public name is Android. Static declarations,
+public names and reverse lookup are separate interfaces, not interchangeable
+availability evidence. SDK report SHA-256:
+36402c8d6eff4f1a32c8f5446e0dc22f36b252be119477a5670d05a71cf7b03e;
+exact-comparison SHA-256:
+7cbb2e5f79d9eb9f2f350d0e76050f3794eb693343b161692f06b72d73c3c9dd.
+The mutex releases naturally. These answers never become phone-build inputs.
+
+**Android evidence.** Stage only 12 committed reader/helper sources and one
+authored test file, preserving their repository layout. Explicitly select Alpha,
+revalidate owned SDK/Python receipts and hashes, and query current backing,
+capacity and reserve before transfer. The reader emits its 34-slot report in
+about 1.201 s. Host and Android bytes match SHA-256
+40d1f1a8672e0822fc3487d2ce3eaf6442d860497e18f2aa0bda08586de714ac.
+Nine portable contracts pass without skips. Overwrite and unknown-SDK controls
+refuse without replacing the accepted report. Four local adapter -O/-OO
+controls refuse before imports/device access. All staged source and SDK bytes
+remain unchanged. Zero installs and game launches occur; owned Alpha be26c21c
+bytes are unchanged, process/selector absent and display asleep. Game preflight
+still refuses clone-local inventory debt; this metadata result does not qualify
+a game build. No APK is produced by the Alpha experiment.
+
+**Receipt and disposition.** Private device result:
+`work/coordination/phone-proof/target-discovery-phone-2fc1dbb27e6e459597f7c4529af25f5f/result.json`.
+`target-discovery-proof-receipt-v1.json` under that proof root binds 137 artifacts,
+including failed prototypes, public control replays, source stages, SDK/API
+comparisons, host/device reports and rebase equality; SHA-256
+54e1daa39c01feab33f9bf2cbc5cfdf14955ca5e11e74cf76169a5f62188ab50.
+SDK bytes/tables/disassembly, generated assemblies, identifiers and logs remain
+ignored. Named owners and generated/private replay inputs are documented.
+
+`constructor_result_qualified`, `tree_population_qualified`,
+`target_support_qualified`, `target_discovery_qualified`,
+`module_inclusion_qualified`, `native_usage_qualified` and
+`root_generation_qualified` remain false. Next requires explicit constructor/
+container-consumer semantics and independent target-record/module/state/native
+usage joins; retain J895's mismatch and the failed exact API comparison.
+J929's app-host refusal stays failed. Keep Route A, the working Android renderer
+and desktop owner-build fallback. Neither full phone-only installation,
+performance equivalence nor public-alpha game readiness is established.
+
+Final integration rebase onto d183a3c preserves Root J946 and the complete
+preceding journal prefix, plus every snapshot row except Alpha research.
+Reader/helper/test/collector bytes and the original 137-artifact proof remain
+unchanged; exact API lookup equivalence stays failed.

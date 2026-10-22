@@ -93,6 +93,10 @@ actual target/state decisions and independent root production remain open.
 qualifies a separate Android feature-declaration reader against SDK API
 observations; module inclusion, live state and native usage remain separate
 requirements before independent root production.
+[J939](PORTING_JOURNAL.md#j939--read-sdk-target-key-input-bindings-on-android-and-preserve-lookup-mismatches)
+qualifies static target-key input bindings on Android while preserving SDK API
+lookup mismatches. These declarations do not establish constructed maps or
+current target/module availability.
 J899 runs the SDK's actual Roslyn compiler and unchanged runtime configuration
 on Android for one authored arithmetic library. Android repeats its own outputs
 exactly, but its DLL/PDB bytes differ from the desktop control. The observed

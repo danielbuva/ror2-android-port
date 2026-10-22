@@ -402,6 +402,12 @@ metadata/query/source receipts, SDK observations, exact comparisons and logs.
 The tracked Python/C# generators own every staged input. Queries contain no
 expected mapping; a completed observation is not necessarily an equivalent
 mapping. These SDK answers remain comparison evidence only.
+The private `stage-target-discovery-v1.py` and
+`target-discovery-on-android-v1.py` adapters preserve the committed
+`scripts/lab/` and `tests/` layout in a fresh owned Alpha workspace. They reuse
+receipt/hash-bound SDK and Python bytes, refuse optimized Python before device
+access, and enforce explicit device selection, fresh capacity and unchanged-game
+guards. No SDK API observation is staged to the phone.
 
 `phone_managed_compile.py stage ROOT OWNER_SDK_CONTENTS WORK` generates a fresh
 `work/rebuild/phone-managed-compile/<owned-attempt>/` from the exact supplied SDK
