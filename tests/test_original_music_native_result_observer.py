@@ -16,6 +16,9 @@ FIXTURE_PROJECT = HERE / "observer-fixtures/MusicNativeResultFixture.csproj"
 OWNER = ROOT / "tools/unity/runtime/session/PortSessionOriginalMusicControllerOwner.cs"
 CONTRACT = ROOT / "tools/unity/runtime/session/OriginalMusicControllerContract.cs"
 OBSERVER = ROOT / "tools/unity/support/audio/core/OriginalOwnerProbeObserver.cs"
+PCM_CAPTURE_CONTRACT = ROOT / "tools/unity/support/audio/core/GameAudioOriginalPassivePcmContract.cs"
+JOIN_OBSERVER = ROOT / "tools/unity/runtime/session/MusicPcmJoinObserver.cs"
+JOIN_ADAPTER = ROOT / "tools/unity/runtime/session/AkMusicPcmJoinQueryAdapter.cs"
 OWNER_STUBS = HERE / "fixtures/original_music_owner_compile_stubs.cs"
 OWNER_HARNESS = HERE / "fixtures/original_music_native_result_harness.cs"
 CECL_SHA256 = "8b33668cd03b78b7bcaa96eac82488d88c7c89416f82037ecbe2b781ab9642f8"
@@ -167,8 +170,11 @@ class NativeResultObserverTransformTests(unittest.TestCase):
                 f"-r:{bcl / 'System.dll'}",
                 f"-r:{bcl / 'System.Core.dll'}",
                 str(OWNER_STUBS),
+                str(PCM_CAPTURE_CONTRACT),
                 str(OBSERVER),
                 str(CONTRACT),
+                str(JOIN_OBSERVER),
+                str(JOIN_ADAPTER),
                 str(OWNER),
                 str(OWNER_HARNESS),
             ],

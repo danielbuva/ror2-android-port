@@ -80,6 +80,8 @@ def make_fake_source_bundle(root: Path) -> None:
         "tools/unity/runtime/session/PortSessionOriginalAudioOwner.cs",
         "tools/unity/runtime/session/OriginalMusicControllerContract.cs",
         "tools/unity/runtime/session/PortSessionOriginalMusicControllerOwner.cs",
+        "tools/unity/runtime/session/MusicPcmJoinObserver.cs",
+        "tools/unity/runtime/session/AkMusicPcmJoinQueryAdapter.cs",
         "tools/unity/support/audio/managed-producer/produce.py",
         "tools/assembly-transforms/pin.cs",
         "tools/wwise-android-abi/pin.csproj",
@@ -268,6 +270,8 @@ class GenerationCacheTests(unittest.TestCase):
             "tools/unity/runtime/session/PortSessionOriginalAudioOwner.cs",
             "tools/unity/runtime/session/OriginalMusicControllerContract.cs",
             "tools/unity/runtime/session/PortSessionOriginalMusicControllerOwner.cs",
+            "tools/unity/runtime/session/MusicPcmJoinObserver.cs",
+            "tools/unity/runtime/session/AkMusicPcmJoinQueryAdapter.cs",
             "tools/unity/support/audio/generators/generate_accepted_request_pin.py",
         }
         self.assertTrue(required.issubset(bundle))
@@ -313,6 +317,8 @@ class GenerationCacheTests(unittest.TestCase):
                         "tools/unity/runtime/session/PortSessionOriginalAudioOwner.cs",
                         "tools/unity/runtime/session/OriginalMusicControllerContract.cs",
                         "tools/unity/runtime/session/PortSessionOriginalMusicControllerOwner.cs",
+                        "tools/unity/runtime/session/MusicPcmJoinObserver.cs",
+                        "tools/unity/runtime/session/AkMusicPcmJoinQueryAdapter.cs",
                     )
                 )
                 mutable_tools = (dotnet, sdk / "Roslyn/bincore/csc.dll", sdk / "MSBuild.dll", llvm_nm, *runtime_sources)

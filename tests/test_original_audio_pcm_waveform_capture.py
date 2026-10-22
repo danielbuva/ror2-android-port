@@ -26,6 +26,7 @@ BOOTSTRAP = AUDIO / "bootstrap"
 CORE = AUDIO / "core"
 SESSION = SOURCE_ROOT / "tools/unity/runtime/session"
 HARNESS = SOURCE_ROOT / "tests/PcmWaveformCaptureFinalizerHarness.cs"
+TARGET_CAPTURE_STUBS = ROOT / "tests/fixtures/target_capture_session_compile_stubs.cs"
 
 
 class PcmWaveformCaptureIntegrationTests(unittest.TestCase):
@@ -48,7 +49,7 @@ class PcmWaveformCaptureIntegrationTests(unittest.TestCase):
             BOOTSTRAP / "OriginalGameAudioPassivePcmOwner.cs",
             BOOTSTRAP / "PcmWaveformReadbackV1.cs",
             ROOT / "tests/fixtures/point_sound/PointSoundBuildPin.cs",
-            ROOT / "tests/fixtures/target_capture_session_compile_stubs.cs",
+            TARGET_CAPTURE_STUBS,
             HARNESS,
         ]
         with tempfile.TemporaryDirectory(prefix="pcm-finalizer-host-", dir=ROOT) as temp_name:
@@ -93,7 +94,7 @@ class PcmWaveformCaptureIntegrationTests(unittest.TestCase):
             BOOTSTRAP / "OriginalGameAudioPassivePcmOwner.cs",
             BOOTSTRAP / "PcmWaveformReadbackV1.cs",
             ROOT / "tests/fixtures/point_sound/PointSoundBuildPin.cs",
-            ROOT / "tests/fixtures/target_capture_session_compile_stubs.cs",
+            TARGET_CAPTURE_STUBS,
         ]
         session = [
             CORE / "GameAudioOriginalPassivePcmContract.cs",
@@ -104,9 +105,11 @@ class PcmWaveformCaptureIntegrationTests(unittest.TestCase):
             BOOTSTRAP / "GameAudioOriginalPreparation.cs",
             SESSION / "OriginalMusicControllerContract.cs",
             SESSION / "PortSessionOriginalMusicControllerOwner.cs",
+            SESSION / "MusicPcmJoinObserver.cs",
+            SESSION / "AkMusicPcmJoinQueryAdapter.cs",
             SESSION / "PortSessionOriginalAudioOwner.cs",
             ROOT / "tests/fixtures/point_sound/PointSoundBuildPin.cs",
-            ROOT / "tests/fixtures/target_capture_session_compile_stubs.cs",
+            TARGET_CAPTURE_STUBS,
         ]
         with tempfile.TemporaryDirectory(prefix="pcm-owner-compile-", dir=ROOT) as temp_name:
             temp = Path(temp_name)

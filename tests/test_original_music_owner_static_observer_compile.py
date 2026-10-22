@@ -27,6 +27,9 @@ BCL = EDITOR_CONTENTS / "MonoBleedingEdge/lib/mono/4.7.2-api"
 OWNER = ROOT / "tools/unity/runtime/session/PortSessionOriginalMusicControllerOwner.cs"
 CONTRACT = ROOT / "tools/unity/runtime/session/OriginalMusicControllerContract.cs"
 OBSERVER = ROOT / "tools/unity/support/audio/core/OriginalOwnerProbeObserver.cs"
+PCM_CONTRACT = ROOT / "tools/unity/support/audio/core/GameAudioOriginalPassivePcmContract.cs"
+JOIN_OBSERVER = ROOT / "tools/unity/runtime/session/MusicPcmJoinObserver.cs"
+JOIN_ADAPTER = ROOT / "tools/unity/runtime/session/AkMusicPcmJoinQueryAdapter.cs"
 STUBS = ROOT / "tests/fixtures/original_music_owner_compile_stubs.cs"
 CONTEXT_HARNESS = ROOT / "tests/fixtures/original_music_context_harness.cs"
 
@@ -53,8 +56,11 @@ class OriginalMusicOwnerStaticObserverCompileTests(unittest.TestCase):
                 f"-r:{BCL / 'System.dll'}",
                 f"-r:{BCL / 'System.Core.dll'}",
                 str(STUBS),
+                str(PCM_CONTRACT),
                 str(OBSERVER),
                 str(CONTRACT),
+                str(JOIN_OBSERVER),
+                str(JOIN_ADAPTER),
                 str(owner_source),
                 *(str(source) for source in extra_sources),
             ],

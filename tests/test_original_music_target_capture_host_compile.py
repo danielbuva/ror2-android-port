@@ -69,6 +69,8 @@ class OriginalMusicTargetCaptureCompileTests(unittest.TestCase):
             SOURCE / "tools/unity/support/audio/bootstrap/GameAudioOriginalPreparation.cs",
             session / "OriginalMusicControllerContract.cs",
             session / "PortSessionOriginalMusicControllerOwner.cs",
+            session / "MusicPcmJoinObserver.cs",
+            session / "AkMusicPcmJoinQueryAdapter.cs",
             session / "PortSessionOriginalAudioOwner.cs",
             REPO / "tests/fixtures/point_sound/PointSoundBuildPin.cs",
             fixture,

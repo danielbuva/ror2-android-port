@@ -63,6 +63,8 @@ def source_bundle_hashes() -> dict[str, str]:
             "tools/unity/runtime/session/PortSessionOriginalAudioOwner.cs",
             "tools/unity/runtime/session/OriginalMusicControllerContract.cs",
             "tools/unity/runtime/session/PortSessionOriginalMusicControllerOwner.cs",
+            "tools/unity/runtime/session/AkMusicPcmJoinQueryAdapter.cs",
+            "tools/unity/runtime/session/MusicPcmJoinObserver.cs",
         )
     )
     for directory in (

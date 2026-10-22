@@ -49,6 +49,11 @@ public sealed class PortSessionOriginalMusicControllerOwner : MonoBehaviour
     float nextMusicObservationAt;
     float nextGlobalRtpcObservationAt;
     static bool processStartupTriggerAttempted;
+    readonly MusicPcmJoinObserver musicPcmJoinObserver = new MusicPcmJoinObserver();
+    readonly AkMusicPcmJoinQueryAdapter musicPcmJoinQuery = new AkMusicPcmJoinQueryAdapter();
+    bool musicPcmJoinWindowWasActive;
+    int musicPcmJoinLastReportedCount = -1;
+    bool musicPcmJoinStartReported, musicPcmJoinEndReported;
 
     public bool MayReleaseOriginalAudioCatalogLease
     {
@@ -124,6 +129,14 @@ public sealed class PortSessionOriginalMusicControllerOwner : MonoBehaviour
         public RtpcObservation[] globalRtpcs;
         public SourceMusicParameterObservation[] sourceMusicParameters;
         public bool introSceneLoadedAfterPreload, nonIntroSceneLoadedAfterPreload;
+        public bool musicPcmJoinRequested;
+        public bool musicPcmJoinWindowStartObserved, musicPcmJoinWindowEndObserved;
+        public float musicPcmJoinWindowStartRealtime, musicPcmJoinWindowEndRealtime;
+        public ulong musicPcmJoinWindowStartCallbacks, musicPcmJoinWindowStartFrames;
+        public ulong musicPcmJoinWindowEndCallbacks, musicPcmJoinWindowEndFrames;
+        public MusicPcmJoinRow[] musicPcmJoinRows;
+        public bool musicPcmJoinEventAttributed, musicPcmJoinAudibilityObserved;
+        public string musicPcmJoinFailure;
         public bool preloadAttempted;
         public bool sourceSceneLoadedCallbackRetiredObserved;
         public bool sourceCallbackRetirementUnknown, sourcePreloadReturned, failedInstanceCleanupPending;
@@ -229,6 +242,7 @@ public sealed class PortSessionOriginalMusicControllerOwner : MonoBehaviour
         snapshot.noAudio = WwiseIntegrationManager.noAudio;
         snapshot.originalTermsReturned = GameAudioOriginalOwner.OriginalTermsReturned;
         snapshot.engineInitialized = AkSoundEngine.IsInitialized();
+        snapshot.musicPcmJoinRequested = GameAudioOriginalRequestBootstrap.PassivePcmCaptureMusicOutputRequested;
         if (started && !loadCompleted && !stopRequested && snapshot.loadElapsedSeconds > LoadDeadlineSeconds)
             Refuse("original_music_prefab_load_deadline_exceeded; lease_retained_until_completion");
         if (ownedController)
@@ -247,6 +261,7 @@ public sealed class PortSessionOriginalMusicControllerOwner : MonoBehaviour
                 NotifyOriginalTermsReturned();
             TryActivateOriginalStartupTrigger();
             SampleSourceMusicContextSafely();
+            SampleMusicPcmJoinSafely();
         }
         else
             ExpireMusicObservationIfOwnerMissing();
@@ -489,6 +504,74 @@ public sealed class PortSessionOriginalMusicControllerOwner : MonoBehaviour
             musicRtpcValueField = null;
         nextMusicObservationAt = 0f;
         nextGlobalRtpcObservationAt = 0f;
+    }
+
+    void SampleMusicPcmJoinSafely()
+    {
+        try
+        {
+            snapshot.musicPcmJoinRequested = GameAudioOriginalRequestBootstrap.PassivePcmCaptureMusicOutputRequested;
+            var capture = GameAudioOriginalOwner.PassiveCapture;
+            bool active = capture != null && capture.State == "capturing";
+            bool exactOwner = ownedController && MusicController.Instance == ownedController &&
+                snapshot.outputAccepted && snapshot.outputDeviceIdValid &&
+                !snapshot.ownerCleanupRequested && !snapshot.controllerDestroyedObserved &&
+                !snapshot.removeOutputResultObserved;
+            bool eligible = MusicPcmJoinObserver.IsExactWindowEligible(active, snapshot.engineInitialized,
+                GameAudioOriginalRequestBootstrap.PassivePcmCaptureMusicOutputRequested,
+                capture != null && capture.CaptureSelectorObserved,
+                capture != null && capture.CaptureSelection.Mode == GameAudioOriginalPassivePcmCaptureSelectorMode.SpecificOutput &&
+                    capture.CaptureSelection.SpecificOutputIdKnown,
+                capture == null ? 0UL : capture.CaptureSelection.SpecificOutputId,
+                capture != null && capture.CaptureOutputDeviceIdObserved,
+                capture == null ? 0UL : capture.CaptureOutputDeviceId,
+                snapshot.outputDeviceIdValid, snapshot.outputDeviceId, exactOwner,
+                snapshot.ownerCleanupRequested || snapshot.controllerDestroyedObserved || snapshot.removeOutputResultObserved);
+            if (eligible)
+            {
+                if (!musicPcmJoinWindowWasActive)
+                    musicPcmJoinObserver.ObserveWindowStart(musicPcmJoinQuery);
+                musicPcmJoinWindowWasActive = true;
+                bool playingObserved = snapshot.introPostEventReturnObserved;
+                musicPcmJoinObserver.TrySample(eligible, playingObserved,
+                    snapshot.introPostEventPlayingId, musicPcmJoinQuery);
+            }
+            else if (musicPcmJoinWindowWasActive)
+            {
+                musicPcmJoinObserver.ObserveWindowEnd(musicPcmJoinQuery);
+                musicPcmJoinWindowWasActive = false;
+            }
+            snapshot.musicPcmJoinWindowStartObserved = musicPcmJoinObserver.WindowStartObserved;
+            snapshot.musicPcmJoinWindowEndObserved = musicPcmJoinObserver.WindowEndObserved;
+            snapshot.musicPcmJoinWindowStartRealtime = musicPcmJoinObserver.WindowStartRealtime;
+            snapshot.musicPcmJoinWindowEndRealtime = musicPcmJoinObserver.WindowEndRealtime;
+            snapshot.musicPcmJoinWindowStartCallbacks = musicPcmJoinObserver.WindowStartCallbacks;
+            snapshot.musicPcmJoinWindowStartFrames = musicPcmJoinObserver.WindowStartFrames;
+            snapshot.musicPcmJoinWindowEndCallbacks = musicPcmJoinObserver.WindowEndCallbacks;
+            snapshot.musicPcmJoinWindowEndFrames = musicPcmJoinObserver.WindowEndFrames;
+            if (musicPcmJoinLastReportedCount != musicPcmJoinObserver.Count ||
+                musicPcmJoinStartReported != musicPcmJoinObserver.WindowStartObserved ||
+                musicPcmJoinEndReported != musicPcmJoinObserver.WindowEndObserved)
+            {
+                snapshot.musicPcmJoinRows = musicPcmJoinObserver.Rows;
+                musicPcmJoinLastReportedCount = musicPcmJoinObserver.Count;
+                musicPcmJoinStartReported = musicPcmJoinObserver.WindowStartObserved;
+                musicPcmJoinEndReported = musicPcmJoinObserver.WindowEndObserved;
+            }
+            // These remain false: correlation is observational, not proof of event
+            // attribution at the output or human audibility.
+            snapshot.musicPcmJoinEventAttributed = false;
+            snapshot.musicPcmJoinAudibilityObserved = false;
+            if (musicPcmJoinObserver.ClockFailureObserved && snapshot.musicPcmJoinFailure == null)
+                snapshot.musicPcmJoinFailure = "music_pcm_join_clock_unknown:" + musicPcmJoinObserver.ClockFailure;
+        }
+        catch (Exception error)
+        {
+            snapshot.musicPcmJoinEventAttributed = false;
+            snapshot.musicPcmJoinAudibilityObserved = false;
+            snapshot.musicPcmJoinFailure = snapshot.musicPcmJoinFailure ??
+                "music_pcm_join_unknown:" + error.GetType().Name;
+        }
     }
 
     // Read-only scalar diagnostics. The owner neither calls PickCurrentTrack nor

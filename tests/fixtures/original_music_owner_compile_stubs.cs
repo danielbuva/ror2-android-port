@@ -145,6 +145,11 @@ public static class GameAudioOriginalOwner
 {
     public static bool Ready;
     public static bool OriginalTermsReturned;
+    public static IGameAudioOriginalPassivePcmCapture PassiveCapture;
+}
+public static class GameAudioOriginalRequestBootstrap
+{
+    public static bool PassivePcmCaptureMusicOutputRequested;
 }
 
 public sealed class PortSessionOriginalAudioOwner : UnityEngine.MonoBehaviour { }
@@ -161,6 +166,7 @@ public static class AkSoundEngine
     public static bool ReturnUnexpectedType;
     public static bool ReturnNonFinite;
     public static bool ThrowOnQuery;
+    public static bool FailJoinQueries;
     public static AKRESULT[] QueryResults;
     public static int[] QueryReturnedTypes;
     public static float[] QueryValues;
@@ -176,6 +182,12 @@ public static class AkSoundEngine
         QueryReturnedTypes = null;
         QueryValues = null;
     }
+    public static uint GetEventIDFromPlayingID(uint playingId)
+    { if (FailJoinQueries) throw new InvalidOperationException("fixture event query failure"); return 3260968109u; }
+    public static AKRESULT GetPlayingSegmentInfo(uint playingId, AkSegmentInfo segment)
+    { if (FailJoinQueries) throw new InvalidOperationException("fixture segment query failure"); segment.iCurrentPosition=10; segment.iActiveDuration=20; segment.iRemainingLookAheadTime=3; return AKRESULT.AK_Success; }
+    public static AKRESULT GetState(uint groupId, out uint stateId)
+    { if (FailJoinQueries) throw new InvalidOperationException("fixture state query failure"); stateId=groupId; return AKRESULT.AK_Success; }
     public static AKRESULT GetRTPCValue(string name, ulong gameObject, uint playingId, out float value, ref int valueType)
     {
         int i = QueryCalls++;
@@ -192,6 +204,11 @@ public static class AkSoundEngine
 }
 
 public enum AKRESULT { AK_Success = 1, AK_Fail = 2, AK_IDNotFound = 15 }
+public sealed class AkSegmentInfo : IDisposable
+{
+    public int iCurrentPosition, iActiveDuration, iRemainingLookAheadTime;
+    public void Dispose() { }
+}
 public enum AkQueryRTPCValue { RTPCValue_Default, RTPCValue_Global, RTPCValue_GameObject, RTPCValue_PlayingID, RTPCValue_Unavailable }
 namespace RoR2.WwiseUtils { public struct RtpcSetter { public float value; } }
 public sealed class AkAudioListener : UnityEngine.Behaviour

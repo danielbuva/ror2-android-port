@@ -138,10 +138,18 @@ public static class AkSoundEngine
     public const ulong AK_INVALID_GAME_OBJECT = ulong.MaxValue;
     public const uint AK_INVALID_PLAYING_ID = 0;
     public static bool IsInitialized() => false;
+    public static uint GetEventIDFromPlayingID(uint playingId) => 1u;
+    public static AKRESULT GetPlayingSegmentInfo(uint playingId, AkSegmentInfo segment) => AKRESULT.AK_Success;
+    public static AKRESULT GetState(uint groupId, out uint stateId) { stateId = 0; return AKRESULT.AK_Success; }
     public static AKRESULT GetRTPCValue(string name, ulong gameObject, uint playingId, out float value, ref int valueType)
     { value = 0f; return AKRESULT.AK_Success; }
 }
 public enum AKRESULT { AK_Success = 1 }
+public sealed class AkSegmentInfo : IDisposable
+{
+    public int iCurrentPosition, iActiveDuration, iRemainingLookAheadTime;
+    public void Dispose() { }
+}
 public enum AkQueryRTPCValue { RTPCValue_Default = 0, RTPCValue_Global = 1, RTPCValue_GameObject = 2, RTPCValue_PlayingID = 3, RTPCValue_Unavailable = 4 }
 public sealed class AkAudioListener : UnityEngine.Behaviour
 {
