@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J972](PORTING_JOURNAL.md#j972--bind-the-music-observer-to-the-canonical-deterministic-core-artifact) | 2026-10-22 | Bind the music observer to the canonical deterministic Core artifact | The R6 attempt passes preparation, refresh and typed imports, then the music observer refuses its exact source/API/Core tuple. |
 | [J971](PORTING_JOURNAL.md#j971--restore-the-prior-audio-cohort-and-fix-uncached-music-resolver-materialization) | 2026-10-22 | Restore the prior audio cohort and fix uncached music resolver materialization | The next frozen build attempt passes preparation, inherited-lock refresh and all typed catalog imports, then audio generation refuses its declared predecessor… |
 | [J970](PORTING_JOURNAL.md#j970--retain-the-shared-host-build-lock-across-nested-cli-subprocesses) | 2026-10-22 | Retain the shared host build lock across nested CLI subprocesses | **Observed progress and first failure.** |
 | [J969](PORTING_JOURNAL.md#j969--preserve-exporter-metadata-separately-from-addressables-shader-keys) | 2026-10-22 | Preserve exporter metadata separately from Addressables shader keys | The next committed R27 preparation reaches metadata validation and refuses `Shader override would not preserve its exact catalog GUID`. |

@@ -866,6 +866,13 @@ The current `whole-catalog-build` action invokes
 mutex, before computing project/cache identity. Missing local selection means
 default off. An explicit `work/config/original-game-audio/selection.json`
 binds every protected input; destination builds use their own work selection.
+The original-audio producer's standalone observer compiler is shared by its
+requested and default-off variants. Its exact deterministic output is qualified
+against the music observer's active game/API/Core tuple; prior Core artifacts
+remain restoration inputs only. The portable host contract skips when the pinned
+Unity Mono/Roslyn is absent and otherwise reproduces the current output from two
+source/output roots (J972).
+
 `original_game_audio_produce.py` compiles the observer, core and bootstrap with
 the pinned editor, Android define and deterministic compiler. The authored
 `support/audio/managed-producer/` transforms the accepted raw API and guarded

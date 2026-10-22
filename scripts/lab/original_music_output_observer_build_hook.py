@@ -28,7 +28,8 @@ ACCEPTED_GAME = "a5f7d83c7e6872fdd6099fdc299adb7d4fa03cbf465e526d6f5efcc35c2c281
 LEGACY_OBSERVED_GAME = "27340ed60dbfe77f66fa394d028b597d3e4613ee8ea405416c061766fb226eef"
 NATIVE_RESULT_OBSERVED_GAME = "a6385e3166d3950944da8a08f145d7e9be602571a6a75b4afb18279801f44311"
 R3_POINT_SOUND_GAME = "594282cfa617ac58eda6965e0a48e6958438f345cbb98bfb7cb49b9130efad1d"
-R3_CORE_OBSERVER = "b543483bd7ae59dbf5da3aad92e3b19ba5fed8046db903d5aff95d3fb0991019"
+R3_CORE_OBSERVER = "df90e9c9c5a69b80d0e95358f1e5b7841a1c970c59678650158c51a8e3b16ac1"
+R3_CORE_PREDECESSOR_RESTORE_ONLY = "b543483bd7ae59dbf5da3aad92e3b19ba5fed8046db903d5aff95d3fb0991019"
 R3_NATIVE_RESULT_OBSERVED_GAME = "619af38a62b19fdfcd6ef1408548aecedbda3e0830be7982cc4f96cd6b000523"
 R3_PROFILE = "post-audio-r10-1ced-game-lightning-r3"
 R10_API = "1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b"
@@ -336,7 +337,7 @@ def restore(project: Path, work: Path) -> dict | None:
         raise ValueError("observer preimage snapshot is missing or changed")
     if sha(project / API) != api_hash or sha(project / CORE) != receipt.get("core_observer_sha256"):
         raise ValueError("observer restore API/core differs from its receipt-bound audio stage")
-    if raw_game == R3_POINT_SOUND_GAME and receipt.get("core_observer_sha256") != R3_CORE_OBSERVER:
+    if raw_game == R3_POINT_SOUND_GAME and receipt.get("core_observer_sha256") not in {R3_CORE_OBSERVER, R3_CORE_PREDECESSOR_RESTORE_ONLY}:
         raise ValueError("R3 observer restore core differs from the exact R3 output")
     _copy_verified(snapshot, game, raw_game, output_hash)
     path.unlink()

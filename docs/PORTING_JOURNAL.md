@@ -28432,3 +28432,42 @@ remain unchanged. Reconstruction must replay the corrected hook. R4/R5 evidence
 is preserved under the matching
 `work/coordination/original-game-audio-r27-build-root-r4/` and `-r5/` folders.
 Neither attempt produces an APK; J954 remains installed and J850 accepted.
+
+## J972 — Bind the music observer to the canonical deterministic Core artifact
+
+The R6 attempt passes preparation, refresh and typed imports, then the music
+observer refuses its exact source/API/Core tuple. Current canonical game/API
+hashes are 594282cf/1cedc89f, but its staged Core observer is
+`df90e9c9c5a69b80d0e95358f1e5b7841a1c970c59678650158c51a8e3b16ac1`
+while J957's host continuation pin names b543483b. Root preserves the failed
+attempt and verifies the editor idle. No Unity player build or APK is accepted.
+
+**Investigation.** The current and J957 authored observer source bytes are
+identical (236a01f7). Pinned Mono/Roslyn deterministic compiles reproduce df90e9c9
+across two independent source/output roots, with and without path mapping. Path
+dependence is ruled out. The managed-chain's separate nondeterministic observer
+subcompile is a different artifact from the canonical top-level staged observer;
+its hashes must not be substituted for that stage. The source, compiler/toolchain,
+exact current stage and generation records bind the canonical df90e9c9 output.
+Root independently reproduces that output and replays the exact music transform
+with game 594282cf, API 1cedc89f and Core df90e9c9. It emits the unchanged qualified
+619af38a game hash; structure, metadata, methods and exception-table verification
+passes. No game-method or observer-source behavior changes.
+
+**Correction and checks.** Make df90e9c9 the exact active R3 Core pin and retain
+b543483b solely for receipt-bound restoration. Active selection rejects the old
+artifact. Share the existing identical deterministic compiler arguments through
+one producer helper for both requested and default-off branches; no compiler or
+path-map policy changes. A real compiler host contract reproduces the active
+pin from two source/output roots and skips when the exact Mono/Roslyn is absent.
+That test, nine producer tests, five receipt contracts and four music/camera
+pipeline tests pass. Three broader music tests pass with one expected skip;
+Ruff passes. Refresh the camera recipe's music-stage source pin. Rebuild inputs
+must replay this producer/hook; installed J954 and accepted J850 stay unchanged.
+
+Evidence is `work/coordination/original-game-audio-r27-build-root-r6/`,
+`work/coordination/original-game-audio-pcm/r27-core-observer-lineage-review-r1/`,
+`r27-core-observer-normalized-root-r1/` and
+`r27-current-core-music-replay-root-r1/`. These are host qualifications only;
+no Android callback, original music playback attribution or visual acceptance
+is established.

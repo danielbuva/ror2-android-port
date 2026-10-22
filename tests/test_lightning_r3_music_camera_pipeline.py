@@ -80,6 +80,8 @@ class LightningR3MusicCameraPipelineTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             music._observer_output_profile(music.R3_POINT_SOUND_GAME, music.R10_API, "0" * 64)
         with self.assertRaises(ValueError):
+            music._observer_output_profile(music.R3_POINT_SOUND_GAME, music.R10_API, music.R3_CORE_PREDECESSOR_RESTORE_ONLY)
+        with self.assertRaises(ValueError):
             music._observer_output_profile(music.R3_POINT_SOUND_GAME, "0" * 64, music.R3_CORE_OBSERVER)
         with self.assertRaises(ValueError):
             music._observer_output_profile("0" * 64, music.R10_API, music.R3_CORE_OBSERVER)

@@ -1784,3 +1784,11 @@ joins the selector digest in its receipts. J965's isolated Android bundle compil
 passes; full player rendering and PC parity remain separate gates. Prior-art
 provenance remains the shader recovery contracts described above. Public source,
 privacy and provenance audit: 2026-10-22.
+
+J972 refreshes the camera recipe's authored music-stage source pin after the
+canonical deterministic Core artifact is qualified. The active exact tuple and
+receipt-bound predecessor restoration remain separate. Only authored producer,
+synthetic compiler contracts, identities and hashes are published; observer/game
+binaries, raw replay records and private paths stay ignored. The C# observer source
+and game transformation outputs are unchanged. Provenance/privacy audit:
+2026-10-22.

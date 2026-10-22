@@ -234,6 +234,15 @@ def run(label: str, command: list[str], log: Path) -> None:
         raise RuntimeError(f"{label} failed with exit {proc.returncode}; see {log}")
 
 
+def compile_observer(mono: Path, csc: Path, output: Path, log: Path) -> None:
+    """Compile the standalone observer identically in both audio variants."""
+    run(
+        "compile_observer",
+        [str(mono), str(csc), "-target:library", "-deterministic+", "-out:" + str(output), str(SOURCE / "core/OriginalOwnerProbeObserver.cs")],
+        log,
+    )
+
+
 def compile_library(
     label: str,
     mono: Path,
@@ -299,18 +308,7 @@ def compile_default_off(project: Path, unity_contents: Path, mono: Path, csc: Pa
     observer = output / "OriginalOwnerProbeObserver.dll"
     core = output / "GameAudioOriginalCore.dll"
     bootstrap = output / "GameAudioOriginalBootstrap.dll"
-    run(
-        "compile_observer",
-        [
-            str(mono),
-            str(csc),
-            "-target:library",
-            "-deterministic+",
-            "-out:" + str(observer),
-            str(SOURCE / "core/OriginalOwnerProbeObserver.cs"),
-        ],
-        output / "observer.log",
-    )
+    compile_observer(mono, csc, observer, output / "observer.log")
     point_sound_build_pin = output / "GameAudioOriginalPointSoundBuildPin.cs"
     point_sound_build_pin.write_text(
         "// Default-off artifact: the game assembly has no diagnostic callsites.\n"
@@ -659,18 +657,7 @@ def compile_requested(
     observer = output / "OriginalOwnerProbeObserver.dll"
     core = output / "GameAudioOriginalCore.dll"
     bootstrap = output / "GameAudioOriginalBootstrap.dll"
-    run(
-        "compile_observer",
-        [
-            str(mono),
-            str(csc),
-            "-target:library",
-            "-deterministic+",
-            "-out:" + str(observer),
-            str(SOURCE / "core/OriginalOwnerProbeObserver.cs"),
-        ],
-        output / "observer.log",
-    )
+    compile_observer(mono, csc, observer, output / "observer.log")
     point_sound_build_pin = output / "GameAudioOriginalPointSoundBuildPin.cs"
     point_sound_build_pin.write_text(
         "// Requested artifact: the paired RoR2.dll contains the bounded diagnostic callsites.\n"
