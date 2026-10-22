@@ -387,7 +387,9 @@ def stage_for_build(project: Path, work: Path, *, selection_path: Path | None = 
         payload["passive_pcm_capture_requested"] = selection["passive_pcm_capture_requested"]
         payload["passive_pcm_capture_music_output_requested"] = selection["passive_pcm_capture_music_output_requested"]
         payload["input_sha256"] = {key: file_sha(path) for key, path in sorted(resolved.items()) if key != "stage_root"}
-        payload["receipt_bound_payload"] = json.loads(resolved["stage_receipt"].read_text(encoding="utf-8"))["outputs"]
+        bank_receipt = json.loads(resolved["stage_receipt"].read_text(encoding="utf-8"))
+        payload["receipt_bound_payload"] = bank_receipt["outputs"]
+        payload["receipt_bound_streamed_media"] = bank_receipt.get("streamed_media", [])
     sound_emitter = synchronize_sound_emitter(project, work, requested=variant == "requested", resolved=resolved)
     generation_key = hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
     output_parent = project.parent / "original-game-audio-owner"

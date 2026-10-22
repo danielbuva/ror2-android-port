@@ -19,8 +19,14 @@ are J744's required private metadata adaptation inputs. Their current receipts
 remain required local state until that separate generator is promoted.
 
 `tools/unity/support/audio/generators/stage_original_game_banks.py` produces
-the selected stage root/receipt from those explicit inputs; 153 original banks
-and the adapted Init stay ignored. The build hook never searches an analysis
+the selected stage root/receipt from those explicit inputs and an explicit
+`--soundbanks-info` path to the accepted installation's metadata. The current
+R2 receipt contains 153 original banks, adapted Init and the complete 120-file
+streamed-media closure with original bytes; all stay ignored. The pure
+`original_media_plan.py` planner binds metadata and full-inventory hashes,
+rejecting missing files, inconsistent modes, aliases and changed bytes.
+The old bank-only R1 stage remains a historical rollback input, not a complete
+current audio selection. Do not reuse its receipt for an R2 build. The build hook never searches an analysis
 run for inputs. Its authored managed producer requires the locally supplied
 .NET SDK (currently 10) and cached NETStandard.Library.Ref 2.1.0, plus the pinned
 Unity Mono/Roslyn/Cecil and bundled Android NDK `llvm-nm`. Protected SDK source,
@@ -30,7 +36,7 @@ native libraries and generated game assemblies are never public dependencies.
 directories adjacent to the selected project under `original-game-audio-owner/`.
 These contain compiler response files/logs, transformed assemblies, generated
 request/contract/pins, artifact manifest and generation receipt. The project
-ownership receipt records exactly staged files; Unity-created bank metadata
+ownership receipt records exactly staged files; Unity-created bank/media metadata
 sidecars are preserved. Requested staging copies the selected bank-cohort receipt
 to `Assets/StreamingAssets/stage-receipt.json` for the runtime payload copier;
 the project ownership receipt under `StreamingAssets/Lab/` is a separate output.

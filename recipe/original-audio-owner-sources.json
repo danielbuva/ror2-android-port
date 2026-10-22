@@ -1,6 +1,6 @@
 {
-  "base_commit": "65cfcc359fdd2e8905e1690c41f6aeaaabc4aa52",
-  "integration": "Original MusicController process lifecycle with passive pre-Term participation, exact original output/PostEvent/SetState return observation and a one-shot original startup trigger after exact owned queue success. Default off unless requested. Read-only track/context and scope-qualified resolved RTPC observations expose unknown failures without changing source dispatch.",
+  "base_commit": "f676d2f661f993895bb811a88798a67382991a2f",
+  "integration": "Original MusicController process lifecycle with passive pre-Term participation, exact original output/PostEvent/SetState return observation and a one-shot original startup trigger after exact owned queue success. Default off unless requested. Read-only track/context and scope-qualified resolved RTPC observations expose unknown failures without changing source dispatch. Streamed media is generated from the accepted full inventory and metadata and copied to the qualified original Android IO root before initialization; playback remains unqualified.",
   "owner_source_hashes": {
     "../../runtime/session/OriginalMusicControllerContract.cs": "bd8f78977722a276409623cea4909b0e41065fda6c195a6b0dee94ef8bb8b485",
     "../../runtime/session/PortSession.cs": "233e40b41b02aa601d110db38bdb738ed35438a91131823d609a2909719e6731",
@@ -10,7 +10,7 @@
     "bootstrap/GameAudioOriginalAndroidNativeBootstrap.cs": "ea46a876fa82ccbe0b2ab748435b62061d68718665abfe3092cd0335ee8bfc75",
     "bootstrap/GameAudioOriginalGeneratedRequestPin.cs": "f41a033141c7ed1b4c33f9f7ce6337a4a7b247c6ba96d93f514c0a37178ac4a9",
     "bootstrap/GameAudioOriginalGeneratedStagePin.cs": "d54d445d05712432559a5e332457af0b20200c93895bd79374c42b6280bd07a4",
-    "bootstrap/GameAudioOriginalPayloadCopy.cs": "1be21165d6ad8b1df1ab7513016da6ad78ad62350977550c376179f44f48e05f",
+    "bootstrap/GameAudioOriginalPayloadCopy.cs": "9de47c952298994c1c37920c51158b30bf843bcfe24bbc85a3734ccdd8b5fbc2",
     "bootstrap/GameAudioOriginalPreparation.cs": "9894781b7ff0b5cde30b4b67ad0fb9f65a037ba0c124a086fe562c181fa41168",
     "bootstrap/GameAudioOriginalRequestBootstrap.cs": "d8adaa8a8aa7c035a5a4dfe102c736555effae3de9708fc4bfe0834ab724c2de",
     "bootstrap/NativeWwiseMonitorLease.cs": "4fa40d608ba54dc33474fa23a01069fa71ae2e62997f56555929800f3d1fbed6",
@@ -22,7 +22,7 @@
     "core/OriginalOwnerProbeObserver.cs": "06616139b12dec7f13561249dc4d979739e66a1df925cfae6793c94bff186dfa",
     "core/PointSoundDiagnosticObserver.cs": "ebd0b2c0089150c4302c00824ee32e7a8e8b1906f26ad2137bdb0cee4cf1b4c7"
   },
-  "parent_manifest_sha256": "720dc2f876ef3afac701230a43ed0f9b47968a06ce8c355e1efc2d4b5cce4b3b",
+  "parent_manifest_sha256": "9b5ba201439610feb1d2f81aac3b1ad6f7b03e81b7e13caeaaef94b25f51f22a",
   "project_layout_source_guids": {
     "experiments/LabExperiments.cs": "3051aa0f6c5904ab3bb2f61d84b261dd",
     "runtime/catalog/BarrierEffectBoundary.cs": "6851d6c1d59a641fcaab9f12638c6315",

@@ -9,9 +9,10 @@ import tempfile
 import unittest
 from unittest import mock
 
-PATCH = Path(__file__).resolve().parents[1]
+PATCH = next(parent for parent in Path(__file__).resolve().parents if (parent / "AGENTS.md").is_file())
 PRODUCER_PATH = PATCH / "scripts/lab/original_game_audio_produce.py"
 GENERATOR_PATH = PATCH / "tools/unity/support/audio/generators/generate_accepted_request_pin.py"
+RUNTIME_GENERATOR_PATH = PATCH / "tools/unity/support/audio/generators/generate_runtime_stage_pin.py"
 MANAGED_PRODUCER_PATH = PATCH / "tools/unity/support/audio/managed-producer/produce.py"
 COMPOSED_TRANSFORM_PATH = PATCH / "tools/unity/support/audio/managed-producer/tools/composed/ComposedGameCecilTransform.cs"
 
@@ -88,7 +89,8 @@ class RequestPipelineTests(unittest.TestCase):
             names = {row["filename"] for row in stage_outputs}
             self.assertEqual(154, len(names))
             stage_doc = {
-                "schema": "original-game-wwise-bank-cohort-r1",
+                "schema": "original-game-wwise-bank-cohort-r2",
+                "soundbanks_info_sha256": "2b8430716d15c1ac9f78e1cc7625dc2206df6b5081b06b54c8048979d99b6407",
                 "accepted_input_id": "accepted",
                 "requested_banks": 153,
                 "runtime_private_copy_required": True,
@@ -102,6 +104,16 @@ class RequestPipelineTests(unittest.TestCase):
                 "init_adaptation_candidate_sha256": init_sha,
                 "global_accepted_original_sha256": global_sha,
                 "outputs": stage_outputs,
+                "streamed_media": [
+                    {
+                        "media_id": i + 1,
+                        "relative_path": f"Media/{i + 1}.wem",
+                        "sha256": hashlib.sha256(f"media:{i}".encode()).hexdigest(),
+                        "size_bytes": 1,
+                        "referenced_by": ["Global"],
+                    }
+                    for i in range(120)
+                ],
             }
             values = {}
             roles = generator.CONTRACT_ROLES
@@ -227,10 +239,12 @@ class RequestPipelineTests(unittest.TestCase):
             self.assertIs(request["passive_pcm_capture_music_output_requested"], True)
             generator.ROOT = root
             generator.WORK = work
+            generator.streamed_media_rows = lambda receipt: receipt["streamed_media"]
             generator.EXPECTED = expected
             generator.CONTRACT_ROLES = roles
             validated = generator.validate(request_path, contract_path, stage_path)
             self.assertEqual(request["request_id"], validated["request"]["request_id"])
+            self.assertEqual(120, validated["streamed_media_count"])
             generated_pin = work / "generated-pin.cs"
             generator.emit(request_path, contract_path, stage_path, generated_pin)
             generated_text = generated_pin.read_text()
@@ -241,6 +255,88 @@ class RequestPipelineTests(unittest.TestCase):
             request_path.write_text(json.dumps(tampered))
             with self.assertRaisesRegex(ValueError, "accepted source pin mismatch: composed_game_sha256"):
                 generator.validate(request_path, contract_path, stage_path)
+
+    def test_runtime_stage_pin_checks_all_streamed_media_bytes_and_paths(self) -> None:
+        runtime = load(RUNTIME_GENERATOR_PATH, "private_runtime_stage_pin")
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp).resolve()
+            work = root / "work"
+            work.mkdir()
+            runtime.ROOT = root
+            runtime.WORK = work
+            prefab = work / "global.prefab"
+            bank_index = work / "bank-index.json"
+            init_file = work / "Init.bnk"
+            init_receipt = work / "init-receipt.json"
+            write(prefab, b"prefab")
+            write(bank_index, b"index")
+            write(init_file, b"init")
+            write(init_receipt, b"receipt")
+            runtime.PREFAB_SHA256 = hashlib.sha256(b"prefab").hexdigest()
+            runtime.BANK_INDEX_SHA256 = hashlib.sha256(b"index").hexdigest()
+            runtime.INIT_SHA256 = hashlib.sha256(b"init").hexdigest()
+            runtime.INIT_RECEIPT_SHA256 = hashlib.sha256(b"receipt").hexdigest()
+            runtime.STAGER_SHA256 = "unused-under-fixture"
+            plan = []
+            outputs = []
+            stage_root = work / "stage"
+            output_dir = stage_root / "Audio/GeneratedSoundBanks/Android"
+            for index in range(153):
+                name = f"Bank{index:03}"
+                data = f"bank:{index}".encode()
+                digest = write(output_dir / f"{name}.bnk", data)
+                plan.append({"output_filename": f"{name}.bnk", "requested_name": name, "source_sha256": digest, "size_bytes": len(data)})
+                outputs.append({"filename": f"{name}.bnk", "requested_name": name, "sha256": digest, "size_bytes": len(data)})
+            write(output_dir / "Init.bnk", b"init")
+            outputs.append({"filename": "Init.bnk", "sha256": hashlib.sha256(b"init").hexdigest(), "size_bytes": 4})
+            media_rows = []
+            for index in range(120):
+                media_id = index + 1
+                data = f"wem:{media_id}".encode()
+                digest = write(output_dir / "Media" / f"{media_id}.wem", data)
+                media_rows.append(
+                    {"media_id": media_id, "relative_path": f"Media/{media_id}.wem", "sha256": digest, "size_bytes": len(data), "referenced_by": ["Bank000"]}
+                )
+            inventory_sha = write(work / "inventory/files.json", b"inventory")
+            receipt = {
+                "schema": "original-game-wwise-bank-cohort-r2",
+                "accepted_input_id": runtime.INPUT_ID,
+                "requested_banks": 153,
+                "runtime_private_copy_required": True,
+                "runtime_copy_complete": False,
+                "runtime_bank_ready": False,
+                "output_relative_directory": "Audio/GeneratedSoundBanks/Android",
+                "accepted_inventory_sha256": inventory_sha,
+                "current_bank_index_sha256": runtime.BANK_INDEX_SHA256,
+                "wwise_global_prefab_sha256": runtime.PREFAB_SHA256,
+                "init_adaptation_receipt_sha256": runtime.INIT_RECEIPT_SHA256,
+                "init_adaptation_candidate_sha256": runtime.INIT_SHA256,
+                "global_accepted_original_sha256": runtime.GLOBAL_SHA256,
+                "soundbanks_info_sha256": runtime.SOUNDBANKS_INFO_SHA256,
+                "outputs": outputs,
+                "streamed_media": media_rows,
+            }
+            receipt_path = work / "stage-receipt.json"
+            receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
+            runtime.source_plan = lambda *args: plan
+            runtime.streamed_media_rows = lambda value: value["streamed_media"]
+            output = work / "generated/StagePin.cs"
+            result = runtime.generate(receipt_path, stage_root, output, prefab, bank_index, init_file, init_receipt)
+            self.assertEqual(153, result["bank_count"])
+            self.assertEqual(120, result["streamed_media_count"])
+            self.assertEqual(153, output.read_text(encoding="utf-8").count('"Bank'))
+
+            output.unlink()
+            media_file = output_dir / "Media/120.wem"
+            media_file.write_bytes(b"drift")
+            with self.assertRaisesRegex(ValueError, "streamed media bytes do not match"):
+                runtime.generate(receipt_path, stage_root, output, prefab, bank_index, init_file, init_receipt)
+
+            media_file.write_bytes(b"wem:120")
+            output_dir.joinpath("Media").rename(output_dir / "Media-original")
+            (output_dir / "Media").symlink_to(output_dir / "Media-original", target_is_directory=True)
+            with self.assertRaisesRegex(ValueError, "cannot traverse symlinks"):
+                runtime.generate(receipt_path, stage_root, output, prefab, bank_index, init_file, init_receipt)
 
 
 if __name__ == "__main__":

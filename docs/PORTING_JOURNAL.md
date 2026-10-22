@@ -26678,3 +26678,85 @@ Final integration rebase onto f676d2f preserves Root J935–J938 and all other
 snapshot rows. Reader, tests and collector bytes remain identical to the
 qualified source; the independent review of the original head found no
 blocking guard or control-flow issue.
+
+
+## J940 — Stage the complete original streamed-media closure before Wwise Init
+
+Date: 2026-10-22 UTC. Hypothesis: J935's valid original control returns with
+zero music PCM are consistent with a missing streaming prerequisite: the APK
+contains prefetch bank chunks but none of their full external files. Follow
+J588/J591/J935 and the pinned R2API.Sound source (original initialization,
+AddBasePath and bank-lifetime seams). That prior art does not supply Android
+media placement or runtime compatibility. Inspect the exact accepted API and
+licensed native bridge's resolver before choosing the Android target.
+
+**Change.** The authored media planner compares both directions of bank-index
+and SoundbanksInfo streaming/location metadata against full accepted inventory
+rows and rehashed legitimate input bytes. Prefetch streaming still requires its
+full external WEM; embedded-only memory media stays in banks. Missing, duplicate,
+contradictory, aliased, symlinked or drifting inputs refuse. The bank generator
+retains its existing four-argument bank-plan API and adds an explicit metadata
+input to generate an R2 receipt: the existing 154 bank rows plus a separate
+120-row media closure. The stager/producer/request generators bind every
+media ID/path/reference/hash/size, distinct artifact roles, actual staged bytes
+and exact receipt SHA. Request/cache/source hashes change together; historical
+bank-only ownership and restoration remain distinct.
+
+The existing payload-copy owner validates that packaged receipt and preflights
+existing destinations, conflicts and filesystem capacity. It copies allowed
+media through verified temporary siblings under the original persistent bank
+root before allowing the existing owner to initialize Wwise. It refuses
+pre-existing temporary paths, revalidates existing media at the actual skip
+point and removes only its own incomplete temporary copies. It never changes
+storage configuration, relocates data or overwrites conflicts. Peak copy-space
+checks use StatFs on the actual persistent filesystem; fresh device placement
+and configured install reserves remain the host install gate.
+
+**Native path contract.** Exact accepted/composed API inspection preserves the
+settings-derived persistent bank path. The pinned 4f309 native resolver maps
+streamed IDs to Media files, with AddBasePath registering the app persistent
+root as a POSIX location. The accepted Android bank subfolder is empty, so the
+copy root matches that search location. SetBasePath alone does not qualify a
+new POSIX subfolder: the copier explicitly refuses a different bank root.
+Read-only source assessment is
+`work/coordination/original-music-streamed-media-staging/io-contract-r1/assessment.md`,
+SHA-256 0282db5c16a99484a37b8baadde1e1be92e4c20a8c7d776c0f5c26cc94e8ede4.
+This is source-backed lookup behavior, not an observed Android file open.
+
+**Validation and evidence.** Private R2/R3 drafts and review failures remain
+preserved. R4 fixes asymmetric metadata comparison, stale existing-file checks,
+temporary-path ownership and source-ancestor symlinks. Root's applied review
+also catches and fixes the zero-ID boundary, with a matching compiled fixture.
+Root updates public test paths and refreshes all helper/tool/owner/recipe pins.
+The applied review GO is
+`work/coordination/original-music-streamed-media-staging/applied-review-r2/review.md`,
+SHA-256 d758809c7a39af3e39abe17fece7dfc4939c47f686d5cbbc6c983b78db16333a.
+Ninety audio host tests pass (two unavailable fixtures skipped), both request-pin
+suites pass eight tests, and 41 camera tests pass (three skipped). The compiled
+authored copier harness checks receipt shape, ID zero, metadata/hash conflicts,
+existing-file revalidation, temp ownership and qualified-root refusal. The R4
+private generator test still selects R2 source, so Root separately loads the
+actual integrated generator/helper against accepted inputs rather than
+presenting that inherited test as R4 generator proof. Ruff and preflight pass.
+Historical camera restoration remains accepted, while a historical audio receipt
+is refused for a new current-generation camera selection.
+
+Root generates a new ignored local stage at
+`work/experiments/original-game-audio/bank-cohort-root-r2/`; its receipt SHA-256 is
+db1969babb2db2f4201ebdb6c971b084c5ab9336fff5623187555dfcc7b18978.
+It contains 154 banks and 120 WEM files totaling 585,814,167 media bytes.
+The all-missing media copy peak is 602,603,591 bytes. The shared validator accepts
+this exact current closure. Source bank/media bytes remain unchanged; Init
+retains only the separately accepted J744 metadata adaptation. No original
+media or source metadata is published.
+
+**Status and next gate.** Architecture, local-state inventory and recipe
+provenance name these existing owners and the new pure planner. This changes
+rebuild-produced source and requires replay from this checkpoint. No timestamped
+run is newly hardcoded into a build input. This is host/content integration only:
+no new APK, Android stream-open, PCM, physical audibility or complete playback
+claim follows. Main still has independently verified idle R23 and the accepted
+J850 rollback. Next build R24 from committed source, verify every bank/media
+entry in its APK, install on the primary adopted-storage device with fresh
+reserves, and pass both standard controls before assessing matched music PCM
+and the source-camera material cache. J939 remains reserved for Alpha.

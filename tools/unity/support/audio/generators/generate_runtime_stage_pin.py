@@ -14,13 +14,15 @@ import stat
 ROOT = Path(__file__).resolve().parents[5]
 WORK = (ROOT / "work").resolve()
 STAGER = Path(__file__).resolve().parent / "stage_original_game_banks.py"
-STAGER_SHA256 = "38298a82431e8b58a05298e64b6f93f3fdf24c3d7ce2bbfaba1e011b3e5bf5e2"
+STAGER_SHA256 = "ecc8889a12935870bb69f1914b6f3d855199fb245c527ac32dcf54b0977f5d01"
 INPUT_ID = "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88"
 PREFAB_SHA256 = "7f074267744a3f7652349572f4aa88f48cd3d43328ba629f686288f08c4be6af"
 BANK_INDEX_SHA256 = "f1d41954cb78c582a6c8a5fbbca58148057a120b01e4bb09cd47f8f107d66326"
 INIT_SHA256 = "618d1c5d534af10fc4cc30a1bacd193bf6871dab3e63992ebedd92a92576fb90"
 INIT_RECEIPT_SHA256 = "3b274de411fe2128bffd43de117baf9156e58e75ebcd0f0cb2a5379b1f22260f"
 GLOBAL_SHA256 = "37756450a0a08a0e3d79ed42926c4de062f67c01dbfef590db1c4af1130485e4"
+SOUNDBANKS_INFO_SHA256 = "2b8430716d15c1ac9f78e1cc7625dc2206df6b5081b06b54c8048979d99b6407"
+STREAMED_MEDIA_COUNT = 120
 HASH = re.compile(r"^[0-9a-f]{64}$")
 
 
@@ -46,6 +48,45 @@ def checked_work_file(path: Path, label: str) -> Path:
         cursor /= part
         if stat.S_ISLNK(cursor.lstat().st_mode):
             raise ValueError(f"{label} cannot traverse symlinks")
+    return resolved
+
+
+def streamed_media_rows(receipt: dict) -> list[dict]:
+    validator_path = ROOT / "scripts/lab/original_game_audio_stage.py"
+    spec = importlib.util.spec_from_file_location("original_audio_stage_validator", validator_path)
+    if spec is None or spec.loader is None:
+        raise ValueError("shared streamed-media receipt validator unavailable")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    validator = getattr(module, "validate_streamed_media_rows", None)
+    if not callable(validator):
+        raise ValueError("shared streamed-media receipt validator unavailable")
+    rows = validator(receipt)
+    if not isinstance(rows, list) or len(rows) != STREAMED_MEDIA_COUNT:
+        raise ValueError("R2 receipt must validate exactly 120 streamed media rows")
+    return rows
+
+
+def checked_staged_file(path: Path, label: str) -> Path:
+    lexical = path.absolute()
+    try:
+        relative = lexical.relative_to(WORK)
+    except ValueError as error:
+        raise ValueError(f"{label} must remain under work/") from error
+    cursor = WORK
+    for part in relative.parts:
+        cursor /= part
+        try:
+            if stat.S_ISLNK(cursor.lstat().st_mode):
+                raise ValueError(f"{label} cannot traverse symlinks")
+        except FileNotFoundError as error:
+            raise ValueError(f"{label} is missing") from error
+    info = lexical.lstat()
+    if not stat.S_ISREG(info.st_mode):
+        raise ValueError(f"{label} must be a regular file")
+    resolved = lexical.resolve(strict=True)
+    if not resolved.is_relative_to(WORK):
+        raise ValueError(f"{label} must resolve under work/")
     return resolved
 
 
@@ -77,8 +118,9 @@ def generate(receipt_path: Path, stage_root: Path, output: Path, prefab: Path, b
     receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
     if (
         not isinstance(receipt, dict)
-        or receipt.get("schema") != "original-game-wwise-bank-cohort-r1"
+        or receipt.get("schema") != "original-game-wwise-bank-cohort-r2"
         or receipt.get("accepted_input_id") != INPUT_ID
+        or receipt.get("soundbanks_info_sha256") != SOUNDBANKS_INFO_SHA256
         or receipt.get("requested_banks") != 153
         or receipt.get("runtime_private_copy_required") is not True
         or receipt.get("runtime_copy_complete") is not False
@@ -97,6 +139,7 @@ def generate(receipt_path: Path, stage_root: Path, output: Path, prefab: Path, b
     }.items():
         if receipt.get(key) != expected:
             raise ValueError(f"stage receipt source pin mismatch: {key}")
+    media_rows = streamed_media_rows(receipt)
     plan = source_plan(prefab, bank_index, adapted_init, init_receipt)
     expected = {row["output_filename"]: row for row in plan}
     expected["Init.bnk"] = {"source_sha256": INIT_SHA256, "size_bytes": adapted_init.stat().st_size}
@@ -121,10 +164,16 @@ def generate(receipt_path: Path, stage_root: Path, output: Path, prefab: Path, b
                 raise ValueError(f"stage filename/name mapping differs: {name}")
             names.append(requested)
         output_path = stage_root / receipt["output_relative_directory"] / name
-        if not output_path.is_file() or output_path.is_symlink() or output_path.stat().st_size != row["size_bytes"] or sha_file(output_path) != row["sha256"]:
+        output_path = checked_staged_file(output_path, f"staged output {name}")
+        if output_path.stat().st_size != row["size_bytes"] or sha_file(output_path) != row["sha256"]:
             raise ValueError(f"staged output bytes do not match receipt: {name}")
     if seen != set(expected) or len(names) != 153 or len(set(names)) != 153:
         raise ValueError("stage receipt does not bind the exact current cohort")
+    media_dir = stage_root / receipt["output_relative_directory"]
+    for row in media_rows:
+        media_path = checked_staged_file(media_dir / row["relative_path"], f"staged media {row['media_id']}")
+        if media_path.stat().st_size != row["size_bytes"] or sha_file(media_path) != row["sha256"]:
+            raise ValueError(f"staged streamed media bytes do not match receipt: {row['media_id']}")
     absolute = output.absolute()
     if not absolute.resolve(strict=False).is_relative_to(WORK) or absolute.exists():
         raise ValueError("generated source must be a new file under work/")
@@ -144,6 +193,8 @@ def generate(receipt_path: Path, stage_root: Path, output: Path, prefab: Path, b
         "source_sha256": sha_file(absolute),
         "output": str(absolute.relative_to(ROOT)),
         "bank_count": len(names),
+        "streamed_media_count": len(media_rows),
+        "soundbanks_info_sha256": SOUNDBANKS_INFO_SHA256,
         "init_sha256": INIT_SHA256,
         "global_sha256": GLOBAL_SHA256,
         "runtime_copy_complete": False,

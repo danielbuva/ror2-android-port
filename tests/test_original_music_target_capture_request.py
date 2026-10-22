@@ -18,10 +18,7 @@ def find_repository_root() -> Path:
 
 
 REPOSITORY_ROOT = find_repository_root()
-SOURCE_ROOT = next(
-    (parent for parent in Path(__file__).resolve().parents if (parent / "tools/unity/support/audio/generators/generate_accepted_request_pin.py").is_file()),
-    REPOSITORY_ROOT,
-)
+SOURCE_ROOT = REPOSITORY_ROOT
 GENERATOR = SOURCE_ROOT / "tools/unity/support/audio/generators/generate_accepted_request_pin.py"
 
 
@@ -52,6 +49,19 @@ class AcceptedRequestTargetCaptureTests(unittest.TestCase):
         self.request_path = self.work / "request.json"
         self.output_path = self.work / "generated/RequestPin.cs"
         self._write_inputs()
+        self.module.streamed_media_rows = self._fixture_media_rows
+
+    def _fixture_media_rows(self, receipt: dict) -> list[dict]:
+        return [
+            {
+                "media_id": i + 1,
+                "relative_path": f"Media/{i + 1}.wem",
+                "sha256": hashlib.sha256(f"media:{i}".encode()).hexdigest(),
+                "size_bytes": 1,
+                "referenced_by": ["Bank000"],
+            }
+            for i in range(120)
+        ]
 
     def _write_inputs(self) -> None:
         rows = []
@@ -90,7 +100,8 @@ class AcceptedRequestTargetCaptureTests(unittest.TestCase):
             encoding="utf-8",
         )
         stage = {
-            "schema": "original-game-wwise-bank-cohort-r1",
+            "schema": "original-game-wwise-bank-cohort-r2",
+            "soundbanks_info_sha256": "2b8430716d15c1ac9f78e1cc7625dc2206df6b5081b06b54c8048979d99b6407",
             "accepted_input_id": self.expected["accepted_input_id"],
             "requested_banks": 153,
             "runtime_private_copy_required": True,
@@ -108,6 +119,7 @@ class AcceptedRequestTargetCaptureTests(unittest.TestCase):
                 for i in range(153)
             ]
             + [{"filename": "Init.bnk", "sha256": self.expected["adapted_init_sha256"], "size_bytes": 1}],
+            "streamed_media": self._fixture_media_rows({}),
         }
         self.stage_path.write_text(json.dumps(stage), encoding="utf-8")
         self.base_request = {
@@ -143,6 +155,30 @@ class AcceptedRequestTargetCaptureTests(unittest.TestCase):
         self.request_path.write_text(json.dumps(request), encoding="utf-8")
         with self.assertRaisesRegex(ValueError, "requires passive PCM capture"):
             self.module.validate(self.request_path, self.contract_path, self.stage_path)
+
+    def test_streamed_media_closure_must_have_exact_count(self) -> None:
+        self.request_path.write_text(json.dumps(self.base_request), encoding="utf-8")
+        self.module.streamed_media_rows = lambda receipt: []
+        with self.assertRaisesRegex(ValueError, "exactly 120"):
+            self.module.validate(self.request_path, self.contract_path, self.stage_path)
+
+    def test_r1_schema_and_wrong_soundbanks_hash_are_refused(self) -> None:
+        original_stage = json.loads(self.stage_path.read_text(encoding="utf-8"))
+        for key, value in (
+            ("schema", "original-game-wwise-bank-cohort-r1"),
+            ("soundbanks_info_sha256", "0" * 64),
+        ):
+            with self.subTest(key=key):
+                changed_stage = {**original_stage, key: value}
+                self.stage_path.write_text(json.dumps(changed_stage), encoding="utf-8")
+                request = {
+                    **self.base_request,
+                    "stage_receipt_sha256": hashlib.sha256(self.stage_path.read_bytes()).hexdigest(),
+                }
+                self.request_path.write_text(json.dumps(request), encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "outside the accepted 153-bank runtime contract"):
+                    self.module.validate(self.request_path, self.contract_path, self.stage_path)
+        self.stage_path.write_text(json.dumps(original_stage), encoding="utf-8")
 
     def test_new_flag_rejects_non_boolean_values(self) -> None:
         for invalid in (1, "true", None, []):

@@ -843,8 +843,24 @@ Wwise components remain unchanged; no replacement emitter is introduced.
 payloads before staging. Requested stages also package the exact bank-cohort
 receipt at `Assets/StreamingAssets/stage-receipt.json`, the URL consumed by
 `GameAudioOriginalPayloadCopy`; the separate `Lab/OriginalGameAudioStageReceipt.json`
-records project ownership. The previous 164-output stage is recognized during
-upgrade; the current 165-output stage owns the added receipt by its exact hash.
+records project ownership. Historical 164/165-output bank-only stages remain
+recognized for exact owned upgrades. Current R2 bank receipts keep 154 bank rows
+and add a separate 120-row streamed-media closure; the artifact/project receipt
+owns canonical `Media/<id>.wem` targets as a distinct role. The shared validator
+binds source metadata, exact paths, IDs, references, hashes and sizes before writes.
+`generators/original_media_plan.py` owns the pure selected-bank media plan,
+checking both bank-index and SoundbanksInfo modes against the full accepted
+inventory. `stage_original_game_banks.py` snapshots original media bytes as well
+as banks into a new ignored stage root; no source game input is modified.
+`GameAudioOriginalPayloadCopy` validates the request-bound receipt, checks existing
+payloads and available bytes on the actual persistent filesystem, then copies
+through verified temporary siblings before original Wwise initialization.
+Its Android IO contract currently requires the bank root to equal the app's
+persistent root; a nonempty bank subfolder refuses. It never changes native
+paths or deletes conflicting data. New metadata/ownership and synthetic host
+contracts are covered by `test_original_audio_media_plan.py`,
+`test_original_audio_payload_copy_receipt.py` and the existing staging/pin tests.
+These owners qualify content placement only; playback remains a device gate.
 Default-off restores the ordinary guarded assemblies
 and removes only prior receipt-owned audio payloads, preserving Unity metadata
 sidecars. J865 adds one exact predecessor lineage for receipt-verified upgrade

@@ -66,9 +66,9 @@ META_GUIDS = {
 NATIVE_META_GUID = "a2a09e81876b46f2a202e62f96644331"
 NATIVE_TARGET = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so"
 NATIVE_META = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so.meta"
-OWNER_ANCESTOR_MANIFEST_SHA256 = "9b5ba201439610feb1d2f81aac3b1ad6f7b03e81b7e13caeaaef94b25f51f22a"
-STAGE_PIN_TOOL_SHA256 = "82e9a3dd9ab6057d2fba086337504bc3381f289e13fe29403d3825f0b99e13ce"
-REQUEST_PIN_TOOL_SHA256 = "cfec7590ac45b63e140cbe66b93689143489516830582a6fa99b48b2fd2dafb6"
+OWNER_ANCESTOR_MANIFEST_SHA256 = "71803bf6cdff01aa60f78f76600bda6bd6338b96d4ba9dfa54afc5388b0cc73d"
+STAGE_PIN_TOOL_SHA256 = "6e12acb9b58a570aa3a869f9f0880ddbd56ba4da0c806188c1124164211d0102"
+REQUEST_PIN_TOOL_SHA256 = "771b52c82622d73183ad59b6c405f995c8c80f9655f254ddcd5fa50b1befa577"
 MANAGED_PRODUCER_SHA256 = "12c1aaed5fca694657c2c841c57e6ead399352e58b1cd0e7662dec75e2749421"
 ABI_NATIVE_PLUGIN_SHA256 = "cfec01cb3aab87edbde3db38e3c0bbe6a1d18ffea2a1f831a59cf64a5526daca"
 ABI_GENERATED_SOURCE_SHA256 = "511f5e1ee552a874850a1fab5f613eeb51e7b6bc706a07bb57418c03e75df242"
@@ -83,7 +83,7 @@ OWNER_SOURCE_HASHES = {
     "bootstrap/GameAudioOriginalAndroidNativeBootstrap.cs": "ea46a876fa82ccbe0b2ab748435b62061d68718665abfe3092cd0335ee8bfc75",
     "bootstrap/GameAudioOriginalGeneratedRequestPin.cs": "f41a033141c7ed1b4c33f9f7ce6337a4a7b247c6ba96d93f514c0a37178ac4a9",
     "bootstrap/GameAudioOriginalGeneratedStagePin.cs": "d54d445d05712432559a5e332457af0b20200c93895bd79374c42b6280bd07a4",
-    "bootstrap/GameAudioOriginalPayloadCopy.cs": "1be21165d6ad8b1df1ab7513016da6ad78ad62350977550c376179f44f48e05f",
+    "bootstrap/GameAudioOriginalPayloadCopy.cs": "9de47c952298994c1c37920c51158b30bf843bcfe24bbc85a3734ccdd8b5fbc2",
     "bootstrap/GameAudioOriginalPreparation.cs": "9894781b7ff0b5cde30b4b67ad0fb9f65a037ba0c124a086fe562c181fa41168",
     "bootstrap/GameAudioOriginalRequestBootstrap.cs": "d8adaa8a8aa7c035a5a4dfe102c736555effae3de9708fc4bfe0834ab724c2de",
     "bootstrap/NativeWwiseMonitorLease.cs": "4fa40d608ba54dc33474fa23a01069fa71ae2e62997f56555929800f3d1fbed6",
@@ -772,6 +772,26 @@ def compile_requested(
                 "requires_request": True,
             }
         )
+    media_validator = load_module(ROOT / "scripts/lab/original_game_audio_stage.py", "audio_media_stage_contract")
+    media_rows = media_validator.validate_streamed_media_rows(stage_document)
+    for row in media_rows:
+        media_path = stage_root / stage_document["output_relative_directory"] / row["relative_path"]
+        reject_symlink_components(media_path)
+        if not media_path.is_file() or media_path.stat().st_size != row["size_bytes"] or sha256(media_path) != row["sha256"]:
+            raise ValueError(f"streamed media bytes fail receipt validation: {row['relative_path']}")
+        outputs.append(
+            {
+                "role": "streamed_media",
+                "source": str(media_path.resolve().relative_to(ROOT / "work")),
+                "target": "Assets/StreamingAssets/" + stage_document["output_relative_directory"] + "/" + row["relative_path"],
+                "relative_path": row["relative_path"],
+                "media_id": row["media_id"],
+                "referenced_by": row["referenced_by"],
+                "sha256": row["sha256"],
+                "size_bytes": row["size_bytes"],
+                "requires_request": True,
+            }
+        )
     outputs.append(
         {
             "role": "bank_receipt",
@@ -792,7 +812,7 @@ def compile_requested(
             "request_pin_generator_sha256": REQUEST_PIN_TOOL_SHA256,
             "stage_pin_generator_sha256": STAGE_PIN_TOOL_SHA256,
         },
-        "lineage": LINEAGE,
+        "lineage": {**LINEAGE, "stage_receipt_sha256": sha256(stage_receipt_path)},
         "artifact_set_id": hashlib.sha256(
             (request_result["source_sha256"] + stage_result["source_sha256"] + "\n".join(row["sha256"] for row in outputs)).encode()
         ).hexdigest(),

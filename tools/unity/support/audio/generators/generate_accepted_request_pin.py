@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.util
 import json
 from pathlib import Path
 import re
@@ -27,6 +28,7 @@ EXPECTED = {
     "init_adaptation_receipt_sha256": "3b274de411fe2128bffd43de117baf9156e58e75ebcd0f0cb2a5379b1f22260f",
     "global_accepted_original_sha256": "37756450a0a08a0e3d79ed42926c4de062f67c01dbfef590db1c4af1130485e4",
 }
+SOUNDBANKS_INFO_SHA256 = "2b8430716d15c1ac9f78e1cc7625dc2206df6b5081b06b54c8048979d99b6407"
 HASH_RE = re.compile(r"^[0-9a-f]{64}$")
 CONTRACT_SCHEMA = "game-audio-original-build-input-contract-r1"
 REQUEST_SCHEMA = "game-audio-original-runtime-request-r3"
@@ -105,6 +107,22 @@ def validate_input_contract(path: Path) -> str:
     return hashlib.sha256(raw).hexdigest()
 
 
+def streamed_media_rows(receipt: dict) -> list[dict]:
+    validator_path = ROOT / "scripts/lab/original_game_audio_stage.py"
+    spec = importlib.util.spec_from_file_location("original_audio_stage_validator", validator_path)
+    if spec is None or spec.loader is None:
+        raise ValueError("shared streamed-media receipt validator unavailable")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    validator = getattr(module, "validate_streamed_media_rows", None)
+    if not callable(validator):
+        raise ValueError("shared streamed-media receipt validator unavailable")
+    rows = validator(receipt)
+    if not isinstance(rows, list) or len(rows) != 120:
+        raise ValueError("R2 receipt must validate exactly 120 streamed media rows")
+    return rows
+
+
 def validate(request_path: Path, manifest_path: Path, stage_path: Path) -> dict:
     request_path = checked_work_file(request_path, "opt-in request")
     stage_path = checked_work_file(stage_path, "stage receipt")
@@ -145,8 +163,9 @@ def validate(request_path: Path, manifest_path: Path, stage_path: Path) -> dict:
         if request.get(field) != value:
             raise ValueError(f"accepted source pin mismatch: {field}")
     if (
-        stage.get("schema") != "original-game-wwise-bank-cohort-r1"
+        stage.get("schema") != "original-game-wwise-bank-cohort-r2"
         or stage.get("accepted_input_id") != EXPECTED["accepted_input_id"]
+        or stage.get("soundbanks_info_sha256") != SOUNDBANKS_INFO_SHA256
         or stage.get("requested_banks") != 153
         or stage.get("runtime_private_copy_required") is not True
         or stage.get("output_relative_directory") != "Audio/GeneratedSoundBanks/Android"
@@ -198,11 +217,18 @@ def validate(request_path: Path, manifest_path: Path, stage_path: Path) -> dict:
         names.add(name)
     if not found_init or len(names) != 153:
         raise ValueError("stage receipt must bind the exact 153-name set plus Init")
+    media_rows = streamed_media_rows(stage)
+    if len(media_rows) != 120:
+        raise ValueError("stage receipt must validate exactly 120 streamed media rows")
+    if any(not set(row["referenced_by"]).issubset(names) for row in media_rows):
+        raise ValueError("streamed media references do not match the exact staged bank names")
     return {
         "request": request,
         "request_receipt_sha256": hashlib.sha256(raw).hexdigest(),
         "build_input_contract_sha256": contract_sha,
         "stage_receipt_sha256": stage_sha,
+        "streamed_media_count": len(media_rows),
+        "soundbanks_info_sha256": SOUNDBANKS_INFO_SHA256,
     }
 
 

@@ -165,6 +165,7 @@ def expected_payload(project: Path, work: Path, selection_path: Path, dotnet: Pa
         "passive_pcm_capture_music_output_requested": selection["passive_pcm_capture_music_output_requested"],
         "input_sha256": {name: hook.file_sha(path) for name, path in sorted(resolved.items()) if name != "stage_root"},
         "receipt_bound_payload": json.loads(resolved["stage_receipt"].read_text(encoding="utf-8"))["outputs"],
+        "receipt_bound_streamed_media": json.loads(resolved["stage_receipt"].read_text(encoding="utf-8")).get("streamed_media", []),
     }
 
 

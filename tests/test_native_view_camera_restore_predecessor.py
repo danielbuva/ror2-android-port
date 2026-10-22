@@ -191,9 +191,12 @@ class CameraRestorePredecessorTests(unittest.TestCase):
         self.assertFalse(camera_path.exists())
         self.assertEqual(digest(OLD_CAMERA_DLL), EXPECTED["camera_old"])
         self.assertEqual(digest(PREIMAGE_DLL), EXPECTED["game"])
-        # The already-staged exact audio receipt remains the input to the next
-        # camera operation; selection must use the current output, not f6bc.
+        # Restoration accepts the exact historical receipt. Current opt-in
+        # selection requires the newly bound bank/media generation.
         audio = json.loads((project / "Assets/StreamingAssets/Lab/OriginalGameAudioStageReceipt.json").read_text())
+        with self.assertRaises(ValueError):
+            module._select_point_sound_profile(audio, EXPECTED["game"], EXPECTED["api_1ced"])
+        audio["stage_receipt_sha256"] = module.HASHES["stage_receipt_sha256"]
         profile, next_output = module._select_point_sound_profile(audio, EXPECTED["game"], EXPECTED["api_1ced"])
         self.assertEqual(profile, "post-audio-r10-1ced-game-6f96")
         # The immutable fixture is the pre-delegate output; new generation
@@ -274,6 +277,7 @@ class CameraRestorePredecessorTests(unittest.TestCase):
         module, *_ = self.new_module_and_project()
         source = json.loads(AUDIO_RECEIPT.read_text())
         source["passive_pcm_capture_requested"] = False
+        source["stage_receipt_sha256"] = module.HASHES["stage_receipt_sha256"]
         source["outputs"] = [{"target": module.GAME_RELATIVE.as_posix(), "sha256": EXPECTED["game"]}]
         source["lineage"] = {
             "composed_game_sha256": EXPECTED["game"],

@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J940](PORTING_JOURNAL.md#j940--stage-the-complete-original-streamed-media-closure-before-wwise-init) | 2026-10-21 | Stage the complete original streamed-media closure before Wwise Init | Date: 2026-10-22 UTC. |
 | [J934](PORTING_JOURNAL.md#j934--read-android-sdk-feature-declarations-and-compare-independent-api-observations) | 2026-10-21 | Read Android SDK feature declarations and compare independent API observations | Date: 2026-10-22 UTC. |
 | [J938](PORTING_JOURNAL.md#j938--observe-original-material-cache-and-dirty-state-at-the-source-callback) | 2026-10-21 | Observe original material-cache and dirty state at the source callback | Date: 2026-10-22 UTC. |
 | [J937](PORTING_JOURNAL.md#j937--add-bounded-native-siren-listening-observations-to-the-existing-owner) | 2026-10-21 | Add bounded native Siren Listening observations to the existing owner | Date: 2026-10-22 UTC. |

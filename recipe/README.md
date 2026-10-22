@@ -1642,3 +1642,19 @@ It retains no original cache or material references and changes no renderer
 state. The authored host fixture extracts the actual observation body and
 report types against inert stubs; no protected source or private evidence is
 required to reproduce it. The same runtime source recipe stages this owner.
+
+
+### Complete original streamed-media staging (2026-10-22)
+
+The authored `support/audio/generators/original_media_plan.py` planner and
+extended bank generator derive the complete selected-bank external-media
+closure from the user's accepted full inventory, bank index and SoundbanksInfo.
+The R2 receipt separates banks and media and binds source pins, canonical paths,
+IDs, references, sizes and hashes. Only generated ignored stages contain banks,
+WEMs or their private row inventories; no media, XML or SDK implementation is
+published. The existing authored stager, request-pin generators and runtime
+payload-copy owner consume the exact receipt. Their source/recipe pins and
+cache identity change together. Synthetic fixtures contain only authored bytes,
+metadata, API stubs and copier-contract tests. No authored runtime source is
+changed by a build-time text replacement. Native IO path knowledge is recorded
+as a compatibility requirement; no SDK code is copied into the recipe.
