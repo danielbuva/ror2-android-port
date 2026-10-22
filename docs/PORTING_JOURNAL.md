@@ -26526,8 +26526,10 @@ new files; both runtime source selectors and project-layout include them, with
 null initial script GUIDs until import. Recipe provenance records authored
 code only; no private timestamped output is a build input. This changes source
 reproduced by rebuild steps; replay them from this source checkpoint rather
-than editing generated content. The audio-specific source-selection recipe
-must be reconciled before the next audio player build. Main still has J935/J936
+than editing generated content. The audio-specific source-selection recipe is reconciled with both new
+runtime paths and GUID keys, and its producer digest is updated. The first
+push is refused by a stale 118-source test; replace that brittle size check
+with exact sorted source-set and GUID equality, retaining music membership. Main still has J935/J936
 R23 and is independently verified idle/asleep; accepted J850 remains unchanged.
 No device/editor action is part of this source integration. Next observe the
 native slot/countdown facts on a source-bound Siren route before changing

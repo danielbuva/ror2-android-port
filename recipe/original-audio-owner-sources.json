@@ -1,5 +1,5 @@
 {
-  "base_commit": "565aac5513ca8c969f7424bb246e59b30d4f5672",
+  "base_commit": "65cfcc359fdd2e8905e1690c41f6aeaaabc4aa52",
   "integration": "Original MusicController process lifecycle with passive pre-Term participation, exact original output/PostEvent/SetState return observation and a one-shot original startup trigger after exact owned queue success. Default off unless requested. Read-only track/context and scope-qualified resolved RTPC observations expose unknown failures without changing source dispatch.",
   "owner_source_hashes": {
     "../../runtime/session/OriginalMusicControllerContract.cs": "bd8f78977722a276409623cea4909b0e41065fda6c195a6b0dee94ef8bb8b485",
@@ -22,7 +22,7 @@
     "core/OriginalOwnerProbeObserver.cs": "06616139b12dec7f13561249dc4d979739e66a1df925cfae6793c94bff186dfa",
     "core/PointSoundDiagnosticObserver.cs": "ebd0b2c0089150c4302c00824ee32e7a8e8b1906f26ad2137bdb0cee4cf1b4c7"
   },
-  "parent_manifest_sha256": "55e376626717a7c0ab00fd52bede30addb41492c0b82e200f9669fa2112e1e0e",
+  "parent_manifest_sha256": "720dc2f876ef3afac701230a43ed0f9b47968a06ce8c355e1efc2d4b5cce4b3b",
   "project_layout_source_guids": {
     "experiments/LabExperiments.cs": "3051aa0f6c5904ab3bb2f61d84b261dd",
     "runtime/catalog/BarrierEffectBoundary.cs": "6851d6c1d59a641fcaab9f12638c6315",
@@ -103,6 +103,8 @@
     "runtime/stage/MoonMissionBoundary.cs": "32d9e4a34983c4ba0af378210a5090c1",
     "runtime/stage/SirenEncounterBoundary.cs": "b35a031b36c02438a956aa4649c2ec9d",
     "runtime/stage/SirenEncounterEggTargets.cs": "85b1e67d47fff477b814189c5cf9c936",
+    "runtime/stage/SirenNativeListeningSnapshotPolicy.cs": null,
+    "runtime/stage/SirenNativeListeningSnapshotReader.cs": null,
     "runtime/stage/SirenSourceEntrySession.cs": null,
     "runtime/stage/SourceStageIdentityLifecycle.cs": "fd349b21ad9a6455bad30c28e9c64457",
     "runtime/stage/StageGeometryBoundary.cs": "7b8d65172b667442f9929d8a03c70978",
@@ -223,6 +225,8 @@
     "runtime/stage/MoonMissionBoundary.cs",
     "runtime/stage/SirenEncounterBoundary.cs",
     "runtime/stage/SirenEncounterEggTargets.cs",
+    "runtime/stage/SirenNativeListeningSnapshotPolicy.cs",
+    "runtime/stage/SirenNativeListeningSnapshotReader.cs",
     "runtime/stage/SirenSourceEntrySession.cs",
     "runtime/stage/SourceStageIdentityLifecycle.cs",
     "runtime/stage/StageGeometryBoundary.cs",

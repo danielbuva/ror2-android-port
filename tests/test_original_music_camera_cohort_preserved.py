@@ -26,9 +26,11 @@ class OriginalMusicCameraCohortTests(unittest.TestCase):
         self.assertIn(helper, runtime)
         self.assertIn(helper, camera)
         self.assertIn(helper, owner["runtime_sources"])
-        self.assertEqual(len(runtime), 118)
-        self.assertEqual(len(camera), 118)
-        self.assertEqual(len(owner["runtime_sources"]), 118)
+        self.assertEqual(runtime, sorted(set(runtime)))
+        self.assertEqual(camera, runtime)
+        self.assertEqual(owner["runtime_sources"], runtime)
+        for source in runtime:
+            self.assertEqual(owner["project_layout_source_guids"][source], layout["runtime_source_guids"][source])
         self.assertIn(helper, layout["runtime_source_guids"])
         for source in music:
             self.assertIn(source, layout["runtime_source_guids"])
