@@ -27602,3 +27602,81 @@ freeze the committed combined source, rebuild J949's complete catalog and the
 player, inspect actual retained code/bundle/ABI joins, run both standard controls
 and then test original menu Quit with verified private waveform retrieval.
 Force-stop is not Term evidence. R25 remains installed; J850 stays accepted.
+
+## J952 — Build and freeze the combined original waveform and RampFog candidate
+
+**Hypothesis and source.** Build J949's exact missing shader root together with
+J950's bounded original-output waveform owner, preserving the original audio
+engine and all existing gameplay owners. Source bc8296a binds 407 authored
+inputs; the source manifest SHA-256 is
+bb433da7aa65997d57db5daa3613fdc09d7fcd06ef642b1d0bbc295fa3f42235.
+The installed diagnostic predecessor is J947's d1255bf9; J850 remains accepted.
+The prior-art and licensed header contracts are recorded in J949/J950. This
+entry qualifies the build and retained metadata, not Android runtime behavior.
+
+**Build and first failure.** The first full attempt refuses the newly added
+RampFog row because the working catalog preparation still predates J949.
+Preserve that failed request and result. Replaying the existing prepare and
+host steps copies one input and reuses 43,714; the typed host loads all 7,462
+roots with 526 mesh aliases and zero failures. The subsequent single full
+player build succeeds on the exact pinned Unity editor in 834.666059 s, with
+zero errors, IL2CPP ARM64 and Vulkan. No cache deletion, editor restart or
+concurrent editor mutation is needed. These authored inputs affect the existing
+rebuild-produced outputs; J949/J950 must be replayed in a clean reconstruction.
+
+The resulting APK SHA-256 is
+6dc44d98af45ebf262a2fdaea0251879f39c6ab0c066c423b5e1559cc2efc79d;
+its build receipt is
+b453a4fc2d698f3a2cf7236d9663481d586b0d170f31adfcd1e611503fe934eb.
+The libil2cpp build ID is 696150e3d169195fd5b7c47c2c7f5c141b4bafe6;
+the preserved symbols archive SHA-256 is
+1dd1ea2939d99965c27b093ae6678f2d33baa959c3337716fb61193a420ca8c5.
+The frozen player has the exact J950 native library, 154 banks, 120 streamed
+media files, 285 audio output rows and 266 payload files. RampFog belongs to an
+existing generated bundle, so its root does not add a payload file. Its source
+row, typed built catalog, bundle and payload hashes join exactly.
+
+**Artifact verification.** Initial private validators incorrectly compare a
+raw source-catalog hash with a normalized analysis hash, assume linker literal
+fields survive stripping, and put recovered-menu geometry in the game assembly.
+Correct these host assumptions against the actual artifacts: bind both catalog
+forms to the accepted input, require typed pre-strip constants and unchanged
+normalized method IL after stripping, and inspect the menu owner in
+Assembly-CSharp. A missing inspector copy is then supplied from the exact
+Root-compiled tool. No further player build is performed for these corrections.
+All refused partial artifact directories remain preserved.
+
+The supplemental freeze also encounters real cached-producer and capture schema
+differences. The authentic producer contains a generation key, not request or
+manifest fields; bind it through the actual audio stage, exact generated request
+and hash-verified generation/artifact manifests. Raw linker capture carries the
+Unity report GUID; the normalized final capture carries APK identity and its
+canonical self-hash. Join their common fields and all 333 file rows, then verify
+the GUID and APK separately against the successful build. Never alter the
+original receipts to invent missing fields. Seven actual-input/refusal tests and
+independent review pass. The Root-derived qualifier invocation explicitly binds
+the reviewed Root inspector and final artifact driver; the earlier draft argv is
+preserved without execution.
+
+Four pre-strip/stripped/IL2CPP-backup assembly sets are frozen under the normal
+host build lock. All three runtime observation pairs, the original native-call
+observer, legacy eleven-import contract, separate waveform ABI, shutdown gate,
+source-camera/model prerequisites, measured Quit geometry and typed RampFog
+joins pass. Supplemental qualification SHA-256:
+80901c2d8a2339ec3c9d5915bca4e6145e53928d0d23f96577f36cacec045aec.
+The input freeze SHA-256 is
+58f4cbe738d22aa1dc4321b23bafd5ae3e2da330f008c0915db44d9fa24ff073.
+The actual-candidate device adapter passes 52 host tests and Root's full
+read-only candidate validation. Explicit-device doctor and preflight pass.
+
+**Evidence and next gate.** Protected artifacts remain beneath
+`work/experiments/original-game-audio/candidate-20261022T042841.928613Z/`;
+failed and successful drivers remain under
+`work/coordination/original-game-audio-pcm-waveform/` and supplemental proofs
+under `work/coordination/original-runtime-observation-poststrip/`.
+No protected code, bank, media, SDK material, raw log or device identity is
+published. Root now installs the explicit APK and frozen payload on its assigned
+device, then runs both standard controls before the bounded original-menu Quit
+capture. Metadata success proves neither Android loading nor speaker output;
+force-stop cannot supply original Term evidence. Device results belong in the
+next entry, and no baseline promotion is made here.
