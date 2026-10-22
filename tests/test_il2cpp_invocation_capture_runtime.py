@@ -77,6 +77,17 @@ class Il2CppInvocationCaptureRuntimeTests(unittest.TestCase):
                 self.assertIn("expectedGuid=0123456789abcdef0123456789abcdef", result.stderr)
                 self.assertIn("REJECTED=" + mode, result.stdout)
 
+    def test_pre_receipt_and_log_prefix_drift_refuse_completion(self):
+        for mode in ("post-prehash-drift", "post-log-prefix-drift"):
+            with self.subTest(mode=mode):
+                completed = self.run_mode(mode)
+                self.assertEqual(completed.returncode, 0, completed.stderr)
+                self.assertIn(
+                    "Bee IL2CPP capture post-build witness unavailable: InvalidOperationException",
+                    completed.stderr,
+                )
+                self.assertIn("REJECTED=" + mode, completed.stdout)
+
     def test_csharp_json_receipts_join_to_python_host_capture_and_full_toolchain_pin(
         self,
     ) -> None:

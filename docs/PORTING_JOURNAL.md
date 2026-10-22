@@ -28567,3 +28567,55 @@ and `work/coordination/original-game-audio-r27-runtime-meta-recovery-root-r1/`.
 The reviewed recovery script remains separate from this source correction.
 J954 stays installed and J850 accepted; Android Lightning behavior, music
 attribution, shader rendering and visual/animation parity remain open.
+
+## J975 — Complete the optional build witness from the returned BuildReport
+
+**Observed progress.** At committed source bcd77c4, Root executes J974's reviewed
+three-file metadata recovery under the shared host mutex. Exact preimages and
+generated GUID references are checked before moving only those sidecars into
+preserved evidence. The committed staging owner seeds their fixed authored
+metadata; full layout validation passes and all 124 other destination C# sidecars
+remain byte-identical. The editor is positively idle before release. This is
+owned failed-import recovery, not a general metadata replacement policy.
+
+R27 R10 then passes preparation, refresh and catalog validation. The full Android
+Unity player build succeeds with zero errors and matching debugging symbols,
+but the CLI correctly refuses the missing request-owned post-build witness.
+The actual postprocess callback sees `BuildResult.Unknown` for the same GUID
+whose final returned report later says `Succeeded`. Its old `finally` clears
+the pre-build witness before the caller receives that final report. The first
+failure is capture completion timing, not player compilation. The preserved APK
+is `dd2439409a619f5e533fcd25ba09af552653b979130850db3a88ab08e23d2f88`;
+symbols are `8e7196c8fc383c028ef1bb74147f6813597886ef3ef45456f770fcce466fc8ad`.
+Neither is accepted, installed or used to synthesize a replacement receipt.
+
+**Correction.** The existing optional capture owner leaves its pre-build witness
+pending during Unity's postprocess callback. Immediately after its own
+`BuildPipeline.BuildPlayer` returns, `LabBuild.Build` explicitly completes the
+capture from that exact report, only for the opted-in request. Android target,
+same GUID, successful result, zero errors, pre-receipt hash and unchanged editor
+log prefix remain mandatory. Finalization clears state; the next pre-build also
+resets it. Missing/throwing builds still provide no accepted receipt. The Python
+collector, schema, default-off behavior and original audio/gameplay stay fixed.
+This minimal shared build-evidence correction is needed for the gameplay/audio
+candidate; it adds no packaging or alpha feature. Rebuilds stage the committed
+editor sources through the existing owner, with no generated-source substitution.
+
+**Host evidence.** Four real C# capture harness contracts and nine Bee collector
+contracts pass. The successful roundtrip first invokes an `Unknown` callback,
+asserts no post receipt exists, then completes from a successful returned report
+and verifies the C# JSON through the unchanged Python collector. Wrong target,
+GUID, result, error count, pre-receipt drift and log-prefix drift refuse. Inactive
+and explicitly disabled capture remain inert. Ruff passes. These are host
+contracts; the corrected finalization still needs a fresh exact-editor build.
+
+Private evidence is
+`work/coordination/original-game-audio-r27-runtime-meta-recovery-root-r1/`
+(`recovery-receipt.json`),
+`work/coordination/original-game-audio-r27-build-root-r10/`
+(`execution/status.json` and `failed-build-artifacts/preservation.json`), and
+`work/coordination/original-game-audio-r27-capture-completion-draft-r1/`.
+R10 reaches positive editor idle before releasing the mutex. No device action
+occurs; J954 remains installed, J850 remains accepted, and Android music,
+Lightning, animation and visual acceptance remain open. Revisit capture only
+with a fresh committed, request-bound build; never promote R10 post hoc.

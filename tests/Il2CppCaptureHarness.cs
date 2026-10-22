@@ -59,13 +59,19 @@ public static class CaptureHarness
                 Console.WriteLine("active explicitly disabled request returned without capture");
                 return 0;
             }
-            if (mode != "roundtrip" && mode != "post-unknown" && mode != "post-guid-mismatch" && mode != "post-errors" && mode != "post-target")
+            if (mode != "roundtrip" && mode != "post-unknown" && mode != "post-guid-mismatch" && mode != "post-errors" && mode != "post-target" && mode != "post-prehash-drift" && mode != "post-log-prefix-drift")
                 throw new Exception("unknown host mode");
             Fixture(scratch, project, work, true);
             UnityEditor.SessionState.request = "host-request-1";
             string guid = "0123456789abcdef0123456789abcdef";
             capture.OnPreprocessBuild(Report(guid, BuildResult.Unknown, output));
             Check(File.Exists(Path.Combine(work, "lab-build/player-linker-inputs/host-request-1.bee-pre.json")), "opted-in pre receipt missing");
+            capture.OnPostprocessBuild(Report(guid, BuildResult.Unknown, output));
+            string prePath = Path.Combine(work, "lab-build/player-linker-inputs/host-request-1.bee-pre.json");
+            string postPath = Path.Combine(work, "lab-build/player-linker-inputs/host-request-1.bee-post.json");
+            Check(!File.Exists(postPath), "Unity postprocess callback finalized before BuildPlayer returned");
+            if (mode == "post-prehash-drift") File.AppendAllText(prePath, "drift");
+            if (mode == "post-log-prefix-drift") File.WriteAllText(Path.Combine(work, "Editor.log"), "changed prefix\n");
             if (mode != "roundtrip")
             {
                 BuildReport rejected = mode == "post-unknown" ? Report(guid, BuildResult.Unknown, output) :
@@ -75,8 +81,8 @@ public static class CaptureHarness
                 if (mode == "post-errors") summary.totalErrors = 2;
                 if (mode == "post-target") summary.platform = BuildTarget.StandaloneOSX;
                 rejected.summary = summary;
-                capture.OnPostprocessBuild(rejected);
-                Check(!File.Exists(Path.Combine(work, "lab-build/player-linker-inputs/host-request-1.bee-post.json")), "mismatched BuildReport wrote a postprocess receipt");
+                Il2CppInvocationCapture.CompleteAfterBuild(rejected);
+                Check(!File.Exists(postPath), "mismatched BuildReport wrote a postprocess receipt");
                 Console.WriteLine("REJECTED=" + mode);
                 return 0;
             }
@@ -84,8 +90,8 @@ public static class CaptureHarness
                 "WorkingDir: " + project + "\nExitCode: 0 Duration: 0s476ms\n";
             File.AppendAllText(Path.Combine(work, "Editor.log"), logSlice);
             File.WriteAllBytes(output, new byte[] { 1, 2, 3, 4 });
-            capture.OnPostprocessBuild(Report(guid, BuildResult.Succeeded, output));
-            Check(File.Exists(Path.Combine(work, "lab-build/player-linker-inputs/host-request-1.bee-post.json")), "opted-in post receipt missing");
+            Il2CppInvocationCapture.CompleteAfterBuild(Report(guid, BuildResult.Succeeded, output));
+            Check(File.Exists(postPath), "opted-in post receipt missing");
             Console.WriteLine("PROJECT=" + project);
             Console.WriteLine("WORK=" + work);
             Console.WriteLine("APK=" + output);

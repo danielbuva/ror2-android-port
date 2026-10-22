@@ -401,6 +401,7 @@ public static class LabBuild {
    EditorSceneManager.SaveScene(scene,"Assets/Lab.unity");EditorUserBuildSettings.buildAppBundle=false;
    result.apk=Path.Combine(artifactDir,"lab-"+api+".apk");result.backend="IL2CPP ARM64 "+api;
    var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{scenes=new[]{"Assets/Lab.unity"},locationPathName=result.apk,target=BuildTarget.Android,options=BuildOptions.Development});
+   if(currentRequest.captureIl2CppInvocation)Il2CppInvocationCapture.CompleteAfterBuild(report);
    result.build_report_guid=report.summary.guid.ToString();
    result.result=report.summary.result.ToString();result.errors=(int)report.summary.totalErrors;result.success=report.summary.result==BuildResult.Succeeded&&result.errors==0;
    if(result.success&&symbolsMode=="debugging"){var symbolZips=Directory.GetFiles(artifactDir,"*.zip");if(symbolZips.Length!=1)throw new InvalidOperationException("Expected exactly one Unity Android symbols ZIP");result.symbolPackage=Path.GetFullPath(symbolZips[0]);}

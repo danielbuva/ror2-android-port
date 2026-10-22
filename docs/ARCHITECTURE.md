@@ -604,11 +604,15 @@ refuse.
 
 The additional `--capture-il2cpp-invocation` opt-in requires
 `--capture-player-linker-inputs` and remains false by default.
-`Il2CppInvocationCapture.cs` owns its editor pre/post-build boundaries: bind the
+`Il2CppInvocationCapture.cs` owns its editor pre-build/final-report boundaries: bind the
 active exact-version editor process, source/input/request and BuildReport GUID;
 inventory Bee files and record the editor-log byte boundary before building;
 then retain the unchanged prefix hash and new log slice for that same successful
-BuildReport. Ordinary builds return before capture setup.
+BuildReport. `LabBuild.Build` completes the witness from the exact report returned
+by `BuildPipeline.BuildPlayer`; the Unity postprocess callback leaves it pending
+because its summary can still be `Unknown` (J975). Finalization retains strict
+success, error-count and GUID checks and clears pending state. Ordinary builds
+return before capture setup.
 
 `bee_codegen_capture.py` owns the host verifier. It joins that fresh log slice
 to the Player Bee graph, response-file metadata, changed conversion trace,
@@ -622,7 +626,8 @@ raw build outputs. No cache is cleared merely to obtain a receipt.
 
 This is generic same-build evidence, not an exact argv vector, transformed-audio
 stage equivalence or runtime acceptance. J852 qualifies host contracts only;
-the native Unity serializer/callback and owning build remain unverified.
+J975 records the actual Android callback's premature result and the corrected
+host contract. A fresh owning build must qualify final-report completion.
 `player_il2cpp_receipt.py` retains the historical J843 legacy-log verifier and
 its tests; the current build no longer calls that legacy collector.
 

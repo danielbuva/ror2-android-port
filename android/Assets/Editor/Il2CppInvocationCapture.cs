@@ -101,6 +101,13 @@ public sealed class Il2CppInvocationCapture : IPreprocessBuildWithReport, IPostp
 
     public void OnPostprocessBuild(BuildReport report)
     {
+        // Unity may invoke this callback before BuildPipeline.BuildPlayer returns,
+        // while its summary still reports Unknown. LabBuild owns finalization from
+        // the BuildReport returned by BuildPlayer. Keep the pre-build witness alive.
+    }
+
+    public static void CompleteAfterBuild(BuildReport report)
+    {
         if (String.IsNullOrEmpty(requestId)) return;
         try
         {
