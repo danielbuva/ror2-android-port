@@ -2014,12 +2014,78 @@ def generate_build_maps(io, manifest, contract, source, code_only=False):
         io.write(project / "Assets/LabLoadingScene/Resources/WholeStageContexts.json", stage_contexts)
 
 
+def stage_runtime_sources(io, runtime_sources):
+    """Stage runtime C# and seed only missing Unity metadata from authored sidecars."""
+    layout = io.read(RECIPE / "project-layout.json")
+    guids = layout.get("runtime_source_guids") if isinstance(layout, dict) else None
+    if not isinstance(guids, dict) or set(guids) != set(runtime_sources):
+        raise RuntimeError("Runtime metadata must match the exact project-layout source/GUID map")
+
+    runtime = io.project / "Assets/LabLoadingScene"
+    sources = []
+    missing_metas = []
+    basenames = set()
+    for filename in runtime_sources:
+        basename = Path(filename).name
+        if basename in basenames:
+            raise RuntimeError("Runtime source staging has a basename collision: " + basename)
+        basenames.add(basename)
+        source = ROOT / "tools/unity" / filename
+        source_meta = Path(str(source) + ".meta")
+        target = runtime / basename
+        target_meta = Path(str(target) + ".meta")
+        if source.is_symlink() or not source.is_file():
+            raise RuntimeError("Runtime source is absent or symlinked: " + filename)
+        expected = guids.get(filename)
+        if expected is not None and (not isinstance(expected, str) or re.fullmatch(r"[0-9a-f]{32}", expected) is None):
+            raise RuntimeError("Runtime source has an invalid project-layout GUID: " + filename)
+        if target.is_symlink():
+            raise RuntimeError("Runtime source destination refuses symlinks: " + str(target))
+        if target_meta.is_symlink():
+            raise RuntimeError("Runtime metadata destination refuses symlinks: " + str(target_meta))
+        if target_meta.exists() and not target_meta.is_file():
+            raise RuntimeError("Runtime metadata destination is not a regular file: " + str(target_meta))
+
+        sources.append((filename, source, target))
+        has_source_meta = source_meta.exists() or source_meta.is_symlink()
+        if expected is None:
+            # Null GUIDs are intentional for first-import sources without authored
+            # sidecars. A sidecar with a null recipe identity is a mismatch, not a bypass.
+            if has_source_meta:
+                raise RuntimeError("Null project-layout GUID conflicts with authored runtime metadata: " + filename)
+            continue
+
+        if has_source_meta:
+            if source_meta.is_symlink() or not source_meta.is_file():
+                raise RuntimeError("Authored runtime metadata is not a regular file: " + filename)
+            try:
+                lines = source_meta.read_text(encoding="utf-8").splitlines()
+            except (OSError, UnicodeError) as error:
+                raise RuntimeError("Cannot read authored runtime metadata: " + filename) from error
+            guid_lines = [line for line in lines if line.startswith("guid:")]
+            if len(guid_lines) != 1 or re.fullmatch(r"guid: [0-9a-f]{32}", guid_lines[0]) is None or guid_lines[0][6:] != expected:
+                raise RuntimeError("Authored runtime metadata GUID differs from project-layout.json: " + filename)
+        elif not io.is_file(target_meta):
+            raise RuntimeError("Missing runtime metadata has no regular authored sidecar: " + filename)
+
+        if io.is_file(target_meta):
+            # Preserve Unity-owned metadata. The existing build layout validator
+            # remains responsible for checking its GUID against the tracked recipe.
+            continue
+        missing_metas.append((filename, source_meta, target_meta))
+
+    # Validate the whole cohort before staging any C# source, so a bad/missing
+    # sidecar cannot leave a partially updated runtime selection in the project.
+    for _filename, source, target in sources:
+        io.apply(target, copy=source, catalog=True)
+    for _filename, source_meta, target_meta in missing_metas:
+        io.apply(target_meta, copy=source_meta, catalog=True)
+
+
 def stage_build_sources(io, runtime_sources, manifest, contracts):
     project = io.project
     # Stage the tracked runtime selection; keep existing Unity-owned .meta files.
-    runtime = project / "Assets/LabLoadingScene"
-    for filename in runtime_sources:
-        io.apply(runtime / Path(filename).name, copy=ROOT / "tools/unity" / filename, catalog=True)
+    stage_runtime_sources(io, runtime_sources)
     # Exact-editor host fixtures; stage together so none goes stale in the project.
     for filename in [
         "AndroidProgressionHost.cs",

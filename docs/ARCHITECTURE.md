@@ -2654,8 +2654,12 @@ generated project): `AudioAssetProbe`, `CharacterMotorOrderProbe`,
 and `TeleporterTimelineLink.xml`. `ReconstructionProbe.cs` is support: `./dev
 export-project` wires it into the exported project. Current whole-catalog C# source
 membership is the audited `recipe/runtime-sources.json` selection, read by `build.py`
-and staged by `whole_catalog.build_integration`. Existing Unity-owned `.meta` files
-are retained; source and metadata paths remain player-only payload exceptions.
+and staged by `whole_catalog.build_integration`. Its `stage_runtime_sources`
+helper validates the selected source/metadata cohort before writing, then seeds
+absent metadata from authored sidecars with matching fixed project-layout GUIDs.
+Existing Unity-owned `.meta` files are retained. Intentional null-GUID sources
+without sidecars retain first-import behavior. Source and metadata paths remain
+player-only payload exceptions (J973).
 `build.py` declares the three generated visual maps separately and rejects missing
 authored sources or unlisted staged C# files. `test_runtime_sources.py` checks the
 selection and its independence from generated-project history.

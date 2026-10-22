@@ -28471,3 +28471,45 @@ Evidence is `work/coordination/original-game-audio-r27-build-root-r6/`,
 `r27-current-core-music-replay-root-r1/`. These are host qualifications only;
 no Android callback, original music playback attribution or visual acceptance
 is established.
+
+## J973 — Stage authored metadata for newly added runtime observers
+
+**First failure and hypothesis.** R27 attempt R7 at source 69b2b18 passes catalog
+preparation, refresh and typed imports, including the corrected audio/music/camera
+staging chain. Before a Unity player build, strict project-layout validation
+refuses the missing `AkMusicPcmJoinQueryAdapter.cs.meta`. The same inspection finds
+missing metadata for `MusicPcmJoinObserver` and `LightningStakeSourceCallObserver`.
+All three already have authored sidecars and fixed GUIDs in the public layout
+recipe. The current source loop copies C# only, so adding fixed identities before
+first import exposes a staging omission rather than a runtime failure. The editor
+is positively idle; no APK or device result is produced.
+
+**Correction.** The existing whole-catalog source owner now prevalidates the
+selected source/metadata cohort, then seeds only absent metadata from matching
+authored sidecars through StageIO. It retains existing destination metadata and
+leaves strict layout validation in place. Mismatched or malformed authored GUIDs,
+missing fixed-GUID sidecars and redirected destinations refuse. Intentional
+null-GUID rows without authored sidecars retain their established first-import
+behavior; the three new fixed identities are not relaxed. No original game,
+observer behavior, generated receipt or device data changes. Rebuild inputs must
+replay the corrected whole-catalog staging helper.
+
+**Host checks.** Nine synthetic contracts pass: missing metadata creation,
+byte-preserved existing metadata, prewrite mismatch refusal across the cohort,
+fixed-GUID/sidecar and null-GUID boundaries, and destination pending/flush behavior.
+The 14 runtime-source, 13 project-layout, 26 whole-catalog and 43 catalog-rebuild
+contracts pass; Ruff and independent review pass. Root replays all 124 selected
+sources in a temporary project, preserving 121 existing metadata files byte for
+byte and seeding precisely the three missing authored sidecars; full layout
+validation passes without modifying the live project. This establishes host
+staging only; Android execution, music attribution,
+shader rendering and animation parity remain open.
+
+Evidence is `work/coordination/original-game-audio-r27-build-root-r7/`
+(`execution/status.json`, `execution/build.log`, `runtime-metadata-gap.json`,
+`runtime-metadata-cohort-replay.json`),
+`work/coordination/original-game-audio-pcm/r27-runtime-meta-stage-draft-r1/`
+and its independent `r27-runtime-meta-stage-review-r1/` review. The terminal status
+hash is `23d7bf78a7fe6de5151787886e532ce3fae28659c1456bd495a1037233c9aea7`.
+J954 remains installed and J850 accepted. A fresh committed build must qualify the
+correction before any new player or device claim.
