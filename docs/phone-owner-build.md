@@ -101,6 +101,10 @@ current target/module availability.
 qualifies a separate static record-copy/insertion/consumer field alignment on
 Android. Node selection, container semantics, constructed records and live
 target/module/state decisions remain open; the report is not a root input.
+[J951](PORTING_JOURNAL.md#j951--bind-sdk-preload-platform-assignment-operands-on-android)
+binds static platform-assignment operands across preload insertion sites on
+Android. Other growth receivers, call-memory/indirect aliases, complete record
+values and live target/module decisions remain unqualified.
 J899 runs the SDK's actual Roslyn compiler and unchanged runtime configuration
 on Android for one authored arithmetic library. Android repeats its own outputs
 exactly, but its DLL/PDB bytes differ from the desktop control. The observed

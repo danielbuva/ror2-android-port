@@ -61,6 +61,9 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       while proving constructor results, map consumers and live availability.
       [J948's field operand alignment](PORTING_JOURNAL.md#j948--link-sdk-target-record-copy-and-consumer-operands-on-android)
       leaves node selection, container semantics and those live decisions open.
+      [J951's preload operand bindings](PORTING_JOURNAL.md#j951--bind-sdk-preload-platform-assignment-operands-on-android)
+      retain unresolved receivers, memory effects and complete record values as
+      separate prerequisites.
 - [ ] Extend [J899's authored compiler fixture](PORTING_JOURNAL.md#j899--compile-an-authored-c-fixture-on-android-and-preserve-cross-host-output-differences)
       through general defines/generators, real source semantics and downstream
       stripping/conversion. [J902](PORTING_JOURNAL.md#j902--compile-the-authored-unity-fixture-with-sdkpackage-derived-references-on-android)

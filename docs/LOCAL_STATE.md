@@ -438,6 +438,12 @@ controls, disassembly, stages and reports under the phone proof root are local
 investigation evidence, never generator inputs. SDK call-memory effects,
 indirect aliases, full record values and target/module availability stay
 unqualified; neither this report nor an SDK oracle supplies linker roots.
+Private `stage-preload-inputs-v1.py` and `preload-inputs-on-android-v1.py`
+adapters stage committed inputs in their repository layout and compare a fresh
+Android-derived report to the host. They revalidate owned SDK/Python receipts,
+explicit device selection, fresh capacity/backing, source hashes and unchanged
+idle game state, and refuse optimized Python before device access. No API
+observation or captured SDK table is staged as a generator input.
 
 `phone_target_key_oracle.py ROOT WORK EXACT_EDITOR` generates fresh
 `work/rebuild/phone-wrapper-oracle/target-<attempt>/` projects and private
