@@ -90,11 +90,12 @@ The plain check and its acceptance criteria remain unchanged.
 
 J946's diagnostic APK d1255bf9 is installed after both standard controls,
 media readback and an independent installed/cleanup query. It stays unpromoted:
-LightningStake collider errors recur, selected-camera rendering is unmeasured,
-and broader audio acceptance remains open. See the
+LightningStake collider errors recur, J947 selected-camera rendering retains
+missing RampFog/artifacts, and broader audio acceptance remains open. See the
 [current snapshot](../PORTING_STATE.md) for installed identity and
 [J946](PORTING_JOURNAL.md#j946--pass-r25-controls-and-retain-the-recurring-lightningstake-defect)
-for the result record. The accepted baseline below remains the rollback.
+for the controls and [J947](PORTING_JOURNAL.md#j947--observe-the-initialized-original-model-and-isolate-missing-rampfog)
+for selected-model lifecycle evidence. The accepted baseline below remains the rollback.
 
 | Item | Value |
 | --- | --- |

@@ -27279,3 +27279,87 @@ Final integration rebase onto d183a3c preserves Root J946 and the complete
 preceding journal prefix, plus every snapshot row except Alpha research.
 Reader/helper/test/collector bytes and the original 137-artifact proof remain
 unchanged; exact API lookup equivalence stays failed.
+
+
+## J947 — Observe the initialized original model and isolate missing RampFog
+
+**Hypothesis and setup.** Exercise J944's original material-cache prerequisite
+on J945's frozen R25 APK after J946's two standard controls. The source remains
+0a4e09b; APK SHA-256 is
+d1255bf9156240ee21091ea920e436615517c892dc6ba1bc9d0b45ed0bb8665b.
+J938/J944 already inspect the pinned EditorKit shader-lookup prior art
+(4128710f74ffbd90bfebc523812e7155fa7bdee3) and distinguish it from original
+model initialization. No runtime source changes or additional build occur here.
+The private Root packet at
+`work/coordination/original-camera-listener-device-plan/r25-root-r1/`
+binds exact candidate, three-assembly/six-hash runtime qualification, separate
+visual qualification, both controls, profile thirteen and terminal proofs.
+Fifteen host tests and independent review pass before Root arms its frozen
+descendant. Menu, world preparation and survival have separate bounded phases
+within 480 seconds overall and the 600-second claim. Camera qualification
+remains explicitly disabled: route completion is an observation result.
+
+**Device result.** The selected Huntress route reaches 35.222 seconds on Lakes,
+then completes owned teardown and returns to the next offline menu. The result
+is success with no report failure or cleanup error; profile bytes remain
+identical with thirteen applied runs. The original initializer is attempted
+once and reports Initialized, maximum seven and outer length eight. At the
+exact selected-model camera callback, frame 2,143/realtime 193.760, the cache
+is known non-null and complete across eight buckets, with zero null buckets.
+All twelve renderer components are enabled, four objects active and three
+records visible; all twelve shared-material identities are known. Dirty state
+is known false. The original camera handler runs before the observer but
+suppresses its exceptions, so this does not prove successful UpdateMaterials.
+
+The later visual snapshot is frame 5,469/realtime 223.939. Its Huntress animator
+is initialized, active and enabled with captured state. One normalized-time
+value is not animation fidelity or measured advancement. Laboratory shader
+identities remain substitutions. The screenshot visibly contains Huntress,
+but retains a large cyan object and broad gray/pink artifacts. The earlier
+render-evidence record is frame 2,142; these records are not simultaneous.
+The optional first-ready screenshot helper refuses frame zero before capture;
+the later screenshot does not repair that missing evidence. J936 is only a
+qualitative Android comparator, with disabled/null-material renderers then.
+No matching stock-PC reference or visual-parity acceptance is obtained.
+
+**First retained visual failure.** The current-process terminal log contains
+4,051 missing Hidden/PostProcess/RampFog exceptions and 8,102 invalid Graphics.Blit
+pass messages, across 52,663 Unity error lines including stacks/blank lines.
+Its earliest retained error is RampFog lookup through LegacyShaderAPI.Find and
+RampFogRenderer.Render. The retained buffer begins late in the run; this is
+not a complete startup log or proof of the first process-wide error. The same
+RampFog/invalid-pass pattern is present in retained J936/J942 logs, so it is not
+newly attributed to the cache initializer. No NRE or NaN line is observed in
+that retained window. The structural route passes
+despite this rendering failure; restore the source post-process contract next
+rather than treating the screenshot as accepted graphics.
+
+**Audio and cleanup.** The selected music/capture output identities agree;
+433 callbacks contain 498,816 finite, nonzero samples, with zero nonfinite,
+rejected or capped buffers. The bounded capture stops at the render-frame
+limit. There is no waveform, event attribution, audibility or original Term
+acceptance. Completed teardown destroys the skin owner, deactivates its native
+owners and releases all five owned material copies. The exact listener is
+observed in the managed list before disable and absent afterward; native
+Add/Remove AKRESULT remains unobserved. An independent post-run query verifies
+installed APK bytes/owned placement, process absent, selector absent and display
+asleep. Root releases its device claim afterward.
+
+**Evidence and disposition.** Local experiment:
+`work/experiments/original-camera-listener-lifecycle/20261022T023926.266091Z/`.
+Result SHA-256:
+b17024547ed622e9621cd656a664110e094947ccb7ef6bbceb5ada4c3d7f353a;
+live report:
+9608aa8e737eac10e0608ddf57283db212a573b4861b72e28d08fbee34a4b9cb;
+completed report:
+1718e425265f2312d42bbe970f9f21c3fd29bd84a28973c39c2abf44d25bbbca;
+live screenshot:
+f8a098acc1be6adc51632b2f9abbf03bd64bd0a4c2736317ef5eed9507bd20ab.
+Root wrapper result SHA-256:
+25db8c8a585c3c5d43bc1f003e9234bced832cea2c1411cf7a5b0fc3a955fc49;
+independent query SHA-256:
+d912d0747156b3a344d6c7701c2c55582ae7b17ccee8298fe86c29c2946c9e68.
+The prerequisite and bounded selected-model lifecycle now have device evidence;
+shader/material fidelity, healthy second-run play and other survivors remain
+open. R25 stays installed and diagnostic; J850 stays accepted. No runtime or
+rebuild-produced source changes in this checkpoint.
