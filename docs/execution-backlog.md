@@ -63,4 +63,5 @@ Open:
       (host only, about 25 min, J750).
 - [ ] Have `Start` call `GameSession` directly instead of selecting the session by id.
 - [ ] Replace the hard-coded run folders in historical actions with named receipts, or retire
-      those actions.
+      those actions. The input-update optional-guard dependency now uses an explicit
+      hash-pinned named receipt; scene preparation/audio/teleport dependencies remain.

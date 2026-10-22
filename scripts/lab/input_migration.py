@@ -73,14 +73,20 @@ def guard_comparison(before, after, receipt):
 
 
 def check_update():
-    from inventory import inspect
-    from boundaries import probe_tool
+    import historical_receipts
+    from historical_receipts import NAME, resolve
 
     preserved = read(WORK / "inputs/latest-preserved.json")
     baseline = Path(preserved["path"])
     receipt = read(baseline / "receipt.json")
     if not receipt["success"] or receipt["input_id"] != preserved["input_id"]:
         raise RuntimeError("Verified preserved Steam input required")
+    old_inventory = read(baseline / "metadata/files.json")
+    original = next(x["sha256"] for x in old_inventory["files"] if x["path"] == "Risk of Rain 2_Data/Managed/RoR2.dll")
+    guards, guard_selection = resolve(NAME, root=ROOT, original_sha256=original)
+    from inventory import inspect
+    from boundaries import probe_tool
+
     out = WORK / "experiments/input-migration" / now()
     out.mkdir(parents=True)
     # Use a separate inventory: accepted files, reconstruction selection and live
@@ -89,7 +95,6 @@ def check_update():
     original_inventory = sha(WORK / "inventory/files.json")
     inspect(full=True, base=game(), out=out / "inventory")
     new_inventory = read(out / "inventory/files.json")
-    old_inventory = read(baseline / "metadata/files.json")
     a, b = ({x["path"]: x for x in r["files"]} for r in (old_inventory, new_inventory))
     changed = [n for n in sorted(a.keys() & b.keys()) if a[n]["sha256"] != b[n]["sha256"]]
     command = probe_tool()
@@ -107,8 +112,7 @@ def check_update():
     write(out / "managed-comparison.json", comparison)
     # This receipt identifies the exact optional transformations used by the
     # retained integrated composition, rather than all changed game methods.
-    guards = WORK / "experiments/scene-runtime/20261008T163328.528634Z/optional-presentation-transformation.json"
-    guard_rows = guard_comparison(*surfaces, read(guards))
+    guard_rows = guard_comparison(*surfaces, guards)
     write(out / "optional-guard-comparison.json", guard_rows)
     native_old = {x["path"]: x for x in read(baseline / "metadata/native.json")}
     native_new = {x["path"]: x for x in read(out / "inventory/native.json")}
@@ -150,8 +154,9 @@ def check_update():
         game_changes={k: len(ror2[k]) for k in ("added_types", "removed_types", "changed_fields", "added_methods", "removed_methods", "changed_method_bodies")},
         unchanged_optional_guards=sum(x["same_contract"] and x["same_body"] for x in guard_rows),
         optional_guards=len(guard_rows),
+        optional_guard_receipt=guard_selection,
         editor_pin_matches=new_inventory["unity_versions"] == [toolchain()["unity_version"]],
-        tool_sources={p.name: sha(p) for p in [ROOT / "tools/assembly-transforms/MigrationSurface.cs", Path(__file__)]},
+        tool_sources={p.name: sha(p) for p in [ROOT / "tools/assembly-transforms/MigrationSurface.cs", Path(__file__), Path(historical_receipts.__file__)]},
     )
     write(out / "result.json", summary)
     write(out.parent / "latest.json", dict(path=str(out.relative_to(ROOT)), success=True))

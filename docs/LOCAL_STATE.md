@@ -1139,3 +1139,35 @@ and generated candidates, and are read by catalog verification and rebuild
 comparison. A prior marker prevents disabling in place; use a clean destination.
 Stable generated candidate paths are listed above; no build reads a timestamped
 experiment folder as shader source.
+
+## Named historical optional-guard evidence
+
+Historical `./dev input-update-check` resolves
+`work/config/historical-receipts/input-migration-optional-guards.json` before
+creating an experiment or inspecting the live game. This is a selection of
+retained evidence, not input acceptance or a new transformation. Its source
+receipt must retain the original optional-guard method list, original/output
+assembly hashes and successful preservation contracts. The original hash must
+match `RoR2.dll` in the preserved baseline inventory. The source is read once
+and SHA-256 checked; the result records the selected name, path and hash.
+
+To migrate the old implicit J425 dependency, independently review and hash the
+retained `optional-presentation-transformation.json` beneath the J425 source
+root documented in [historical retention](history-retention.md), then explicitly
+register it (replace both placeholders):
+
+```sh
+python3 scripts/lab/historical_receipts.py input-migration-optional-guards \
+  work/RETAINED_EVIDENCE/optional-presentation-transformation.json \
+  --sha256 REVIEWED_RECEIPT_SHA256
+```
+
+The generator refuses existing selections, unknown names, invalid contracts,
+hash mismatches, symlinks and paths outside ignored `work/`. It does not discover
+or trust a "latest" candidate, copy game data, modify original evidence, restore
+retired trees or replace rollbacks. If an intentional selection change is needed,
+preserve the old selection separately before registering the reviewed replacement.
+Missing source evidence must be restored specifically using the retention policy;
+do not fabricate it. No selection is shipped in Git. Once preserved baseline metadata is available,
+a missing selection fails with registration guidance rather than silently
+picking historical input. A fully fresh clone must first supply that baseline.
