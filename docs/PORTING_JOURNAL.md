@@ -28522,3 +28522,48 @@ and its independent `r27-runtime-meta-stage-review-r1/` review. The terminal sta
 hash is `23d7bf78a7fe6de5151787886e532ce3fae28659c1456bd495a1037233c9aea7`.
 J954 remains installed and J850 accepted. A fresh committed build must qualify the
 correction before any new player or device claim.
+
+## J974 — Preserve the original damage-force vector in the Lightning diagnostic
+
+**First failure.** R27 R9 at source 5343363 passes preparation and refresh, then
+typed catalog validation refuses because current scripts failed compilation.
+The first Unity error is CS0029 at `LightningStakeSourceCallObserver.cs:103`:
+`DamageInfo.force` is `UnityEngine.Vector3`, while the report field and synthetic
+API fixture incorrectly treat it as a scalar. The editor is verified idle; no
+player build or APK is produced. J957's pinned Starstorm2 prior art informs
+subscription ownership and teardown, not this field's type; the accepted current
+RoR2 assembly and exact-editor compiler establish the API contract.
+
+**Correction.** Record the full force through the existing invariant vector
+formatter and make the observation field a string triplet, as with position and
+velocity. Retain the existing vector finite check; `FireProjectileInfo.force`
+remains a scalar. Correct the synthetic game fixture and assert both an ordinary
+three-axis value and a nonfinite component. No original method, projectile
+operand, original call order, Cecil transform, or observer selection changes.
+Refresh the exact owner-source cohort and its producer/camera bindings, plus the
+Lightning owner recipe digest. Rebuild inputs must replay these authored sources
+and refreshed recipes; old generation receipts do not qualify the correction.
+
+**Host evidence.** All five Lightning contracts pass, including original-call
+preservation, malformed-source refusal, bounded capture/teardown, vector/nonfinite
+capture and compilation of the actual owner against the exact current
+RoR2/Unity assemblies. That last contract disables the fixture's synthetic game
+and Unity types, retains only its report scaffold, and skips when local references
+or the pinned compiler are absent. This avoids a duplicate report fixture and
+prevents a scalar game stub from hiding the mismatch. Nine producer contracts,
+42 camera contracts (three expected skips), four music/camera pipeline contracts,
+Ruff and independent source review pass. This is source/host evidence only.
+
+R9's refresh also generates temporary metadata for the three new C# files left by
+the earlier failed staging attempt. Their generated GUIDs differ from the fixed
+public identities and occur only in their own sidecars. Root preserves exact
+preimages and prepares a separately reviewed, hash-bound recovery of that owned
+three-file cohort before a subsequent refresh. It has not executed at this
+checkpoint; existing destination metadata must never be broadly overwritten.
+
+Evidence is `work/coordination/original-game-audio-r27-build-root-r9/`,
+`work/coordination/original-gameplay-breadth/lightning-force-vector-fix-draft-r1/`
+and `work/coordination/original-game-audio-r27-runtime-meta-recovery-root-r1/`.
+The reviewed recovery script remains separate from this source correction.
+J954 stays installed and J850 accepted; Android Lightning behavior, music
+attribution, shader rendering and visual/animation parity remain open.

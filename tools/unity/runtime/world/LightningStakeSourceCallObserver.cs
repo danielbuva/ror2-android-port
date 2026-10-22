@@ -100,7 +100,7 @@ internal sealed class LightningStakeSourceCallObserver : IDisposable
                 ownerVelocity = Position(ownerVelocity),
                 hitPosition = Position(hitPosition),
                 damageInfoDamage = damageInfo.damage,
-                damageInfoForce = damageInfo.force,
+                damageInfoForce = Position(damageInfo.force),
                 damageInfoProcCoefficient = damageInfo.procCoefficient,
                 projectileDamage = projectileInfo.damage,
                 projectileForce = projectileInfo.force,

@@ -2905,5 +2905,9 @@ projectile call, preserving its receiver, source struct local and original
 call. The observer stores at most eight scalar-only rows; it retains no game
 objects and changes no projectile operands. Producer, music-return observer
 and native-camera profiles bind the resulting managed chain separately.
+`DamageInfo.force` is observed as an invariant vector triplet string with a
+separate finite flag; projectile force remains the source scalar. The host
+contract optionally compiles this owner against the exact current game/Unity
+assemblies with synthetic game types disabled (J974).
 Historical exact profiles remain available. This diagnostic identifies source
 operands; it is not a projectile repair or gameplay acceptance.

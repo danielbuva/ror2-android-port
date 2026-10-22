@@ -147,6 +147,37 @@ class LightningSourceCallTransformTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("PASS actual observer source captures scalar context", result.stdout)
 
+    def test_owner_compiles_against_exact_current_game_api_without_synthetic_game_types(self) -> None:
+        import hashlib
+
+        plugins = ROOT / "work/lab-project/Assets/LabLoadingScene/Plugins"
+        references = {
+            plugins / "RoR2.dll": "15a92aa6f513e2271ce7240c33a205b0376fff37200089987f0cb54944c3382c",
+            UNITY.parent / "Managed/UnityEngine/UnityEngine.CoreModule.dll": "b2de8697a8e44aaa3b4ba2662015003c55fe3089ceee6ba8677716214e41c34d",
+            UNITY.parent / "Managed/UnityEngine/UnityEngine.PhysicsModule.dll": "273dc7ef4525dcfa59d2f8232aa9fa4334ada763111dc01e99fbe3dc41a06696",
+            plugins / "com.unity.multiplayer-hlapi.Runtime.dll": "76d55b3e90e5fe6c0f8738302b01d54141e5a07931fa4cfa370f6a20832d37cf",
+            plugins / "KinematicCharacterController.dll": "6dd60790be77b211aaabd70815265894c3b3247c554fd1818f5d7e571abc1b85",
+            UNITY / "lib/mono/4.7.1-api/Facades/netstandard.dll": "37cec563a56657fcbfd5ba1f2e555f7b6ff998091fa64deb48f7dc362d080926",
+        }
+        if any(not path.is_file() for path in references):
+            self.skipTest("current staged game/Unity compile references are unavailable")
+        for path, expected in references.items():
+            self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(), expected, path.name)
+        self.compile(
+            [
+                str(CSC),
+                "-nologo",
+                "-langversion:9",
+                "-target:library",
+                "-define:LIGHTNING_OWNER_REAL_API_REFERENCES",
+                f"-out:{self.out / 'LightningOwnerRealApi.dll'}",
+                *(f"-r:{path}" for path in references),
+                str(BRIDGE),
+                str(OWNER),
+                str(OWNER_STUBS),
+            ]
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

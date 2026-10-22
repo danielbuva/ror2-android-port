@@ -39,7 +39,7 @@ internal static class LightningStakeOwnerHostContracts
         var prefab = new GameObject("LightningStake");
         var hit = new GameObject("hit") { transform = new Transform { position = new Vector3(6, 7, 8) } };
         var damage = new DamageInfo {
-            attacker = attacker, position = new Vector3(1, 2, 3), damage = 12.5f, force = 9f,
+            attacker = attacker, position = new Vector3(1, 2, 3), damage = 12.5f, force = new Vector3(9f, 10f, 11f),
             procCoefficient = 0.75f, crit = true, rejected = false
         };
         var info = new FireProjectileInfo {
@@ -56,8 +56,9 @@ internal static class LightningStakeOwnerHostContracts
                 row.damageAttackerInstance == attacker.GetInstanceID() && row.projectileOwnerInstance == attacker.GetInstanceID() &&
                 row.damageAttackerNetworkId == 17 && row.projectileOwnerNetworkId == 17 && row.ownerBodyNetworkId == 18 &&
                 row.attackerMatchesProjectileOwner && row.ownerPosition == "0,0,0" && row.ownerVelocity == "3,4,0" &&
-                row.hitPosition == "6,7,8" && row.damageInfoDamage == 12.5f && row.damageInfoForce == 9f &&
-                row.projectileDamage == 25f && row.projectileForce == 0f && row.finiteDamagePosition && row.finiteProjectilePosition,
+                row.hitPosition == "6,7,8" && row.damageInfoDamage == 12.5f && row.damageInfoForce == "9,10,11" &&
+                row.projectileDamage == 25f && row.projectileForce == 0f && row.finiteDamagePosition && row.finiteProjectilePosition &&
+                row.finiteDamageInfoForce,
                 "captured scalar source context did not preserve owner, source, finite flags, and computed projectile arguments");
         for (int i = 1; i < 9; i++) Send(damage, hit, info);
         Require(report.sourceCallCount == 9 && report.sourceCalls.Count == 8 && report.historyCapped,
@@ -71,8 +72,10 @@ internal static class LightningStakeOwnerHostContracts
         {
             var badPosition = damage;
             badPosition.position = new Vector3(float.NaN, 0, 0);
+            badPosition.force = new Vector3(float.PositiveInfinity, 1, 2);
             Send(badPosition, hit, info);
-            Require(nonfiniteReport.sourceCalls.Count == 1 && !nonfiniteReport.sourceCalls[0].finiteDamagePosition,
+            Require(nonfiniteReport.sourceCalls.Count == 1 && !nonfiniteReport.sourceCalls[0].finiteDamagePosition &&
+                    !nonfiniteReport.sourceCalls[0].finiteDamageInfoForce && nonfiniteReport.sourceCalls[0].damageInfoForce == "Infinity,1,2",
                 "nonfinite source input was lost or marked finite");
         }
         Require(nonfiniteReport.detached, "nonfinite capture owner failed teardown");

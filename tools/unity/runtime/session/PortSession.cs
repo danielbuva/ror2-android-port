@@ -162,7 +162,8 @@ public sealed partial class PortSession : MonoBehaviour
         public int projectilePrefabInstance, projectileCatalogIndex;
         public uint damageAttackerNetworkId, projectileOwnerNetworkId, ownerBodyNetworkId;
         public string projectilePrefabName, damagePosition, projectilePosition, ownerPosition, ownerVelocity, hitPosition;
-        public float damageInfoDamage, damageInfoForce, damageInfoProcCoefficient, projectileDamage, projectileForce;
+        public float damageInfoDamage, damageInfoProcCoefficient, projectileDamage, projectileForce;
+        public string damageInfoForce;
         public bool damageInfoCrit, projectileCrit, damageInfoRejected, attackerMatchesProjectileOwner;
         public bool hasOwnerBody, hasAttackerNetworkIdentity, hasProjectileOwnerNetworkIdentity, hasOwnerBodyNetworkIdentity,
             hasProjectilePrefab, isLightningStakeName;

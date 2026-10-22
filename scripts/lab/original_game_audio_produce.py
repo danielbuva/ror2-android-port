@@ -69,7 +69,7 @@ META_GUIDS = {
 NATIVE_META_GUID = "a2a09e81876b46f2a202e62f96644331"
 NATIVE_TARGET = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so"
 NATIVE_META = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so.meta"
-OWNER_ANCESTOR_MANIFEST_SHA256 = "f295d05ea28c4c3e03741bbe2d11323dc09fbfedf882c5cf0d98dca271ebcdb6"
+OWNER_ANCESTOR_MANIFEST_SHA256 = "868ad03107d2211e78d9e7c2ebd738ee11718b33994391370b110adc07d955ee"
 STAGE_PIN_TOOL_SHA256 = "6e12acb9b58a570aa3a869f9f0880ddbd56ba4da0c806188c1124164211d0102"
 REQUEST_PIN_TOOL_SHA256 = "844e57ef264c56fa2d2adbacfeba893a30f684fa1ad5e203cdb5a5ffb8be3b96"
 MANAGED_PRODUCER_SHA256 = "e5cfc952843cd247d5c96690a11d7a56650f0777c85f7aef2c4bc673bbe0bb85"
@@ -79,7 +79,7 @@ ABI_HANDWRITTEN_SOURCE_SHA256 = "7cc79d60937708fd9f34fd67e90a743fe9e03e58c2325bf
 ABI_LLVM_NM_SHA256 = "6ffe6bb8699a354c4699a6cdfcebdb9ec6a2c8d0d89beaac978f629a0fc67ae0"
 OWNER_SOURCE_HASHES = {
     "../../runtime/session/OriginalMusicControllerContract.cs": "bd8f78977722a276409623cea4909b0e41065fda6c195a6b0dee94ef8bb8b485",
-    "../../runtime/session/PortSession.cs": "1a2d40c1822bbb075aa138c7115d272bff4ce3a09ed6f67bf8980ccf5e047f0d",
+    "../../runtime/session/PortSession.cs": "8bab33e12eb12e4a280c26457b8625f7734a3fcbea3e738c69deb9ddce955158",
     "../../runtime/session/PortSessionOriginalAudioOwner.cs": "2f010562de8cbac3a5c6e2453f0a1c3db571ee6e45c4633fb877e6a5636d1992",
     "../../runtime/session/PortSessionOriginalMusicControllerOwner.cs": "15272167e3c416edb863797bf35dcbe8ef6704ecac805fdbe38186f4d73d41b0",
     "../../runtime/session/AkMusicPcmJoinQueryAdapter.cs": "ae116b7912efda498d6c1a1ecb0ddc4be1ec2dd6df223e0fff53426a37204ef8",
@@ -101,7 +101,7 @@ OWNER_SOURCE_HASHES = {
     "core/OriginalOwnerProbeObserver.cs": "236a01f7fb24ee0a6799f0f41196579683505e8255d18d0d1a4d1ef19537da02",
     "core/PointSoundDiagnosticObserver.cs": "ebd0b2c0089150c4302c00824ee32e7a8e8b1906f26ad2137bdb0cee4cf1b4c7",
     "../../runtime/world/IntegratedWorldBoundary.cs": "71f47d64170e5a084da1512b6854e7c3a54bdb5bc1f4276664a5e59699518a6d",
-    "../../runtime/world/LightningStakeSourceCallObserver.cs": "8dac5dd26a8c96120d0fc515e96519c07ee30fe3086f1ec85fd78b58a37c72b0",
+    "../../runtime/world/LightningStakeSourceCallObserver.cs": "0792b3d7b40423e1b98ce2397a72917c73d20ab58ad555fac948d5b19146caf6",
 }
 
 

@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-22 UTC after **J973/J972/J971/J965/J964/J954**. R26
+Last updated 2026-10-22 UTC after **J974/J973/J972/J965/J964/J954**. R26
 6dc44d98 passes both controls and exact installed-media/APK readbacks. Separate
 salvage verifies Term/disarm witnesses and finite nonzero original-output PCM;
 J962 verifies byte-identical persistence across a fresh menu launch and normal
@@ -10,7 +10,9 @@ Both recovered shader sources now stage with original metadata preserved.
 J970 verifies nested host-lock refresh; J971 restores the prior audio cohort
 and repairs uncached music resolver materialization. J972 qualifies the canonical
 Core artifact through the unchanged music transform. J973 repairs missing authored
-observer metadata staging before layout validation. A fresh full build/device
+observer metadata staging before layout validation. J974 corrects the Lightning
+diagnostic's force-vector API contract after exact-editor compilation refuses it.
+A fresh full build/device
 rendering remains open.
 J964 adds bounded same-window source queries, not yet built or device-qualified.
 Accepted baseline stays f1550ce0.

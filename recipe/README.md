@@ -1798,3 +1798,11 @@ metadata staging. It changes no camera transform output or protected input.
 Only authored staging code, synthetic metadata contracts and its source digest
 are published; generated project metadata and build evidence remain ignored.
 Provenance/privacy audit: 2026-10-22.
+
+J974 refreshes the original-audio owner cohort and Lightning diagnostic source
+identity after correcting a vector-valued API observation. Only authored report,
+observer, fixture and producer/binding changes are published. Original game and
+middleware binaries, generated metadata and raw compiler records remain ignored;
+no original gameplay method or protected content is reproduced. The camera
+recipe refresh binds the reviewed authored hook to the new owner cohort.
+Provenance/privacy audit: 2026-10-22.

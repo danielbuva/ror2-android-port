@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 
+#if !LIGHTNING_OWNER_REAL_API_REFERENCES
 namespace UnityEngine
 {
     public class Object
@@ -48,7 +49,8 @@ namespace RoR2
     {
         public GameObject attacker;
         public Vector3 position;
-        public float damage, force, procCoefficient;
+        public float damage, procCoefficient;
+        public Vector3 force;
         public bool crit, rejected;
     }
     public sealed class CharacterMotor : Object { public Vector3 velocity; }
@@ -74,6 +76,8 @@ namespace RoR2.Projectile
     }
 }
 
+#endif
+
 public sealed partial class PortSession
 {
     [Serializable]
@@ -83,7 +87,8 @@ public sealed partial class PortSession
         public int projectilePrefabInstance, projectileCatalogIndex;
         public uint damageAttackerNetworkId, projectileOwnerNetworkId, ownerBodyNetworkId;
         public string projectilePrefabName, damagePosition, projectilePosition, ownerPosition, ownerVelocity, hitPosition;
-        public float damageInfoDamage, damageInfoForce, damageInfoProcCoefficient, projectileDamage, projectileForce;
+        public float damageInfoDamage, damageInfoProcCoefficient, projectileDamage, projectileForce;
+        public string damageInfoForce;
         public bool damageInfoCrit, projectileCrit, damageInfoRejected, attackerMatchesProjectileOwner;
         public bool hasOwnerBody, hasAttackerNetworkIdentity, hasProjectileOwnerNetworkIdentity, hasOwnerBodyNetworkIdentity,
             hasProjectilePrefab, isLightningStakeName;

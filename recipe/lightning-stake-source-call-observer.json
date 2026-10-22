@@ -10,7 +10,7 @@
     "changes_original_call_operands": false,
     "max_rows": 8,
     "owner_source": "tools/unity/runtime/world/LightningStakeSourceCallObserver.cs",
-    "owner_source_sha256": "8dac5dd26a8c96120d0fc515e96519c07ee30fe3086f1ec85fd78b58a37c72b0",
+    "owner_source_sha256": "0792b3d7b40423e1b98ce2397a72917c73d20ab58ad555fac948d5b19146caf6",
     "repairs_or_clamps_gameplay": false,
     "retains_unity_objects": false
   },
