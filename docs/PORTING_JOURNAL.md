@@ -27680,3 +27680,34 @@ device, then runs both standard controls before the bounded original-menu Quit
 capture. Metadata success proves neither Android loading nor speaker output;
 force-stop cannot supply original Term evidence. Device results belong in the
 next entry, and no baseline promotion is made here.
+
+## J953 — Preserve the measured pixel-position interpolation qualifier
+
+**Hypothesis and evidence.** The current original outline shader contains two
+native passes, while the converted dummy exposes one. Its recovered second
+pixel program uses a noperspective system-position input, which the existing
+source binder refuses. The pinned d3dasm interpolation printer and independent
+HLSLDecompiler mode handling corroborate that qualifier; their revisions and
+licenses remain in shader-recovery.md. Current accepted-input records and
+byte-identical program roundtrips, rather than the older input's shader row,
+supply the measured interface. No recovered expression is added to public code.
+
+**Change and checks.** Extend the existing shader_source.bind_hlsl owner to
+accept that qualifier only on a non-output SV_POSITION0 parameter and retain
+the recovered signature. Qualified outputs, other varyings and unmeasured
+interpolation modes still refuse. Five public synthetic contracts cover those
+boundaries; all 57 shader host tests and Ruff pass. Separate ignored checks
+bind the four actual native records and preserve the unused second-pass
+varying as unused. No vertex output is invented. The private draft manifest
+is 063236febdb7fd7b96ca900cf0e8ad0e875c7a1350e71de4349115e87b476d7c.
+
+**Scope and next gate.** This is source-generation support only. The authored
+source-bound two-pass generator, exact-editor compilation, original Sobel
+resource/timing contract and Android appearance remain open. No shader or
+runtime owner is replaced, no Unity build or device action belongs to this
+checkpoint, and R26's already frozen source remains bc8296a. Regenerating an
+existing shader from unchanged supported input retains its previous binding;
+the new source input must pass its own reconstruction and device gates.
+Protected recovery evidence stays beneath
+`work/coordination/original-native-visual-reference/`. No original shader math,
+program, asset or third-party implementation is committed.

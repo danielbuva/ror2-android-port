@@ -39,15 +39,17 @@ def bind_hlsl(source, layout, entry):
         raise RuntimeError("Unexpected recovered entry signature")
     parameters = []
     for item in re.split(r"\s*,\s*", signature[1].strip()):
-        match = re.fullmatch(r"(out (?:precise )?)?float([1-4]) (\w+) : (\w+)", item.strip())
+        match = re.fullmatch(r"(out (?:precise )?)?(noperspective )?float([1-4]) (\w+) : (\w+)", item.strip())
         if not match:
             face = re.fullmatch(r"uint (\w+) : SV_IsFrontFace0", item.strip())
             if not face:
                 raise RuntimeError("Unmeasured shader I/O shape")
             parameters.append({"out": False, "name": face[1], "semantic": "SV_IsFrontFace0", "columns": 1, "type": "uint"})
             continue
-        semantic = match[4].upper() if match[4].upper() == "SV_POSITION0" else match[4]
-        parameters.append({"out": bool(match[1]), "name": match[3], "semantic": semantic, "columns": int(match[2])})
+        semantic = match[5].upper() if match[5].upper() == "SV_POSITION0" else match[5]
+        if match[2] and (match[1] or semantic != "SV_POSITION0"):
+            raise RuntimeError("Unmeasured noperspective I/O contract")
+        parameters.append({"out": bool(match[1]), "name": match[4], "semantic": semantic, "columns": int(match[3])})
     body = source[source.index("{", signature.end()) :]
     buffers = {b["slot"]: b for b in layout["buffers"]}
     used = []

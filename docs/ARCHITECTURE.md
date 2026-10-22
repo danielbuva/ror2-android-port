@@ -2671,6 +2671,11 @@ and provider/cache restoration. Generated initialization files remain under
 `work/tests/merc-evis-impact-effect/addressables-init/` for the initialized
 locator's lifetime. This fixture does not prove device effect presentation.
 
+The existing `shader_source.bind_hlsl` resource/interface binder preserves
+measured non-output `noperspective SV_POSITION0` inputs. Other qualified
+interfaces refuse until measured; this support alone selects no replacement
+shader or runtime presentation behavior (J953).
+
 ## Known structural debt
 
 First verified against `af2e101`; status updated after J597. Each step was its own commit with
