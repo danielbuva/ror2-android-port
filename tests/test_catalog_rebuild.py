@@ -226,7 +226,7 @@ class CatalogRebuildTests(unittest.TestCase):
             (self.export / old).unlink()
             (self.export / (old + ".meta")).unlink()
             self.put(self.export / source_path, 'Shader "Synthetic/Original" {}\n')
-            self.put(self.export / (source_path + ".meta"), "guid: " + guid + "\n")
+            self.put(self.export / (source_path + ".meta"), "guid: " + ("e" if loc == 16022 else "f") * 32 + "\n")
             closure["converted"][str(loc)] = dict(source=source_path, resolution="exact")
             index.pop(f"{loc:032x}", None)
             index[guid] = source_path
@@ -301,7 +301,7 @@ class CatalogRebuildTests(unittest.TestCase):
         for loc, guid, key, source_path, kind, name, object_id, *_ in specs:
             target = "Assets/WholeGame/" + source_path.removeprefix("Assets/")
             self.assertEqual((self.dest / target).read_bytes(), ('Shader "' + name + '" {}\n').encode())
-            self.assertEqual((self.dest / (target + ".meta")).read_text(), "guid: " + guid + "\n")
+            self.assertEqual((self.dest / (target + ".meta")).read_text(), "guid: " + ("e" if loc == 16022 else "f") * 32 + "\n")
         staged_manifest = read(next((self.dest / ".rebuild/catalog-inputs").glob("integration-*/manifest.json")))
         for loc, guid, key, source_path, kind, name, object_id, *_ in specs:
             target = "Assets/WholeGame/" + source_path.removeprefix("Assets/")
@@ -531,7 +531,7 @@ class CatalogRebuildTests(unittest.TestCase):
         expected, provenance = self.shader_override_provenance(specs)
         catalog_rebuild.catalog_closure(self.dest, self.work, self.input_id, expected, provenance)
         meta = self.dest / ("Assets/WholeGame/" + specs[1][3].removeprefix("Assets/") + ".meta")
-        meta.write_text("guid: " + "f" * 32 + "\n")
+        meta.write_text("guid: " + "0" * 32 + "\n")
         compare_provenance = self.compare_provenance_with_destination_inventory(provenance)
         with self.assertRaisesRegex(RuntimeError, "did not preserve its exact source or .meta"):
             rebuild.compare(self.dest, self.work / "lab-project", expected, compare_provenance, lambda path: path in expected, work=self.work)

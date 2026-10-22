@@ -243,8 +243,8 @@ def _validated_shader_overrides(io, closure, metadata, mapped, export, project, 
         meta_hash_before = io.sha(meta)
         meta_bytes_before = len(io.read_bytes(meta))
         meta_text = io.read_text(meta)
-        if re.findall(r"^guid:\s*([a-f0-9]{32})", meta_text, re.M) != [guid]:
-            raise RuntimeError("Shader override would not preserve its exact catalog GUID: " + target_relative)
+        if len(re.findall(r"^guid:[ \t]*([a-f0-9]{32})[ \t]*$", meta_text, re.M)) != 1:
+            raise RuntimeError("Shader override requires one original exporter GUID: " + target_relative)
         original_source_hash = io.sha(export / source_path)
         source_meta = export / (source_path + ".meta")
         if source_meta.is_symlink() or not source_meta.is_file():

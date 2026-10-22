@@ -28345,3 +28345,28 @@ whitespace checks pass. The macOS local pre-push wrapper and `./dev doctor`
 were not runnable in this Linux clone (no configured clone-local venv/toolchain);
 these are host checks, not a private retained-receipt replay or Unity/device test.
 No APK, gameplay, audio, alpha-readiness or runtime architecture claim changes.
+
+## J969 — Preserve exporter metadata separately from Addressables shader keys
+
+The next committed R27 preparation reaches metadata validation and refuses
+`Shader override would not preserve its exact catalog GUID`. Read-only comparison
+shows both project `.meta` files are byte-identical to their original accepted
+exports. Their Unity importer GUIDs differ from the Addressables GUID keys, which
+are separate identities. The consumer had incorrectly equated them. No shader
+override, Unity build or device install is accepted. Preserve the failed source
+freeze, logs and positive editor-idle reconciliation at
+`work/coordination/original-game-audio-r27-build-root-r2/`.
+
+Keep the exact catalog key/location/path and candidate provenance checks. Require
+one complete valid importer GUID line, then preserve the original export `.meta`
+bytes through the existing source/project hash equality and downstream receipt
+checks. Do not rewrite either GUID. The synthetic fixtures now deliberately use
+different catalog and importer identities. Independent review verifies that the
+metadata byte contracts remain intact and catches a test mutation that became
+identical to the new fixture value; change it to a distinct value. Root repeats
+43 catalog and 18 rebuild contracts successfully, with Ruff passing and the
+camera staging source pin refreshed. The public/private recipe boundary and
+prior-art contracts remain J965/J966's. Replay catalog reconstruction for the
+next committed full build. J954 remains installed and J850 remains accepted.
+The private correction/review is
+`work/coordination/original-native-visual-reference/catalog-export-guid-fix-root-r1/`.

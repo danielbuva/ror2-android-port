@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J969](PORTING_JOURNAL.md#j969--preserve-exporter-metadata-separately-from-addressables-shader-keys) | 2026-10-22 | Preserve exporter metadata separately from Addressables shader keys | The next committed R27 preparation reaches metadata validation and refuses `Shader override would not preserve its exact catalog GUID`. |
 | [J968](PORTING_JOURNAL.md#j968--explicit-named-evidence-for-historical-input-update-guard-review) | 2026-10-22 | Explicit named evidence for historical input-update guard review | User authorizes isolated build-tool cleanup while the other development sessions are paused, preserving behavior and rollbacks. |
 | [J967](PORTING_JOURNAL.md#j967--correct-the-catalog-consumer-to-the-real-outline-generator-schema) | 2026-10-22 | Correct the catalog consumer to the real Outline generator schema | The first source-frozen R27 preparation on 6cc2e91 refuses with `Outline candidate identity or completion changed`. |
 | [J966](PORTING_JOURNAL.md#j966--add-an-input-bound-catalog-consumer-for-the-two-recovered-shader-sources) | 2026-10-22 | Add an input-bound catalog consumer for the two recovered shader sources | **Change and ownership.** |
