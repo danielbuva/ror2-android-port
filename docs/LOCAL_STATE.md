@@ -396,6 +396,14 @@ under the phone proof root are investigation evidence. The tracked reader does
 not consume them. No SDK target table, instruction listing, generated game data
 or private API observation is a production input; constructor results, map
 population and target support remain unqualified.
+`phone_target_records.py OWNER_SDK NEW_PRIVATE_REPORT` generates a separate
+static record-copy/insertion/consumer alignment report from the pinned SDK.
+Private `target-record-*` disassemblies, prototypes, source stages and mutation
+controls under the phone proof root are investigation evidence only; the tracked
+reader does not read them. Its positive field alignment is not node selection,
+constructed strings, populated containers or target/module availability. Raw
+SDK observations remain ignored and are never redistributed as phone inputs.
+
 `phone_target_key_oracle.py ROOT WORK EXACT_EDITOR` generates fresh
 `work/rebuild/phone-wrapper-oracle/target-<attempt>/` projects and private
 metadata/query/source receipts, SDK observations, exact comparisons and logs.
