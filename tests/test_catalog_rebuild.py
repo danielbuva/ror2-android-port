@@ -50,7 +50,7 @@ class CatalogRebuildTests(unittest.TestCase):
         write(self.catalog / "source-guid-repairs.json", [])
         write(self.catalog / "native-conversions.json", dict(issues=[]))
         write(self.catalog / "source-catalog.json", dict(locations=[dict(id=1, type="UnityEngine.GameObject", primaryKey="test")], keys=[], providers=[]))
-        # The real catalog builder now requires the original camera's three
+        # The real catalog builder now requires the original camera's explicit
         # shader dependencies. Supply authored stand-ins to keep this replay
         # exercising its normal identity and copying paths.
         metadata = read(self.catalog / "source-catalog.json")

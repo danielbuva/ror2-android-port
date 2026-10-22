@@ -2698,10 +2698,15 @@ is compiled into RoR2.dll for exact-profile rig association; the runtime owner
 remains off by default. When Console is absent, an activation scope guards only
 the owned cloned `SceneCamera` from its Console-dependent graphics configuration;
 the owner explicitly reports reduced fidelity using source prefab defaults.
-`AndroidNativeSourceCameraPrerequisites.cs` resolves the original Sobel shader
-and three source-catalog shader roots (Outline Highlight, Vision Limit and
-TranslucentImage DownTent) while the clone is inactive; its exact SceneCamera
-activation scope is released in `finally`. The bound marker pumps the original
+`AndroidNativeSourceCameraPrerequisites.cs` resolves the original Sobel shader,
+Outline Highlight, Vision Limit and TranslucentImage DownTent while the clone is
+inactive; its exact SceneCamera activation scope is released in `finally`.
+The narrow catalog root set also retains RampFog for the original post-process
+renderer. `whole_catalog.py` validates each exact address key, typed location and
+accepted source conversion; `WholeCatalogBuild.cs` verifies its bundle owner and
+built bundle before emitting the runtime catalog. Adding a root requires full
+catalog generation; a code-only build reuses the previous payload. Discovery is
+separate from supported Android shader programs and pass behavior. The bound marker pumps the original
 private `EarlyUpdate` only for this owned null-viewer rig while the application
 owner is inactive. Awake attempts binding once; the existing pump retries an
 absent delegate only after the same exact ownership/readiness guard passes.

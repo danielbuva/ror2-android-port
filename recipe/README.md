@@ -1672,3 +1672,15 @@ Both runtime source lists and their layout/owner-cohort maps include the new
 path with a null script GUID until import. Producer/camera recipe pins change
 together. No new ignored build input or build-time source replacement is added.
 The host contracts do not establish Android rendering or visual parity.
+
+
+### Original camera RampFog catalog root (J949)
+
+The camera recipe adds only the minimum Shader location, GUID and accepted
+source-path relationship required to reconstruct RampFog locally. The Python
+root generator, Unity catalog validator and recipe agree on the exact four
+roots. No shader source, serialized content, IL or generated bundle is included.
+Provenance/privacy review: accepted input and exact conversion are local; pinned
+EditorKit registration informs discovery only. Audited 2026-10-22. Regenerate
+the full catalog to obtain the new root; Android program/pass support and visual
+acceptance remain separate gates.

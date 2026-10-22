@@ -1,4 +1,6 @@
 import importlib.util
+import json
+import re
 import sys
 import unittest
 from pathlib import Path
@@ -21,11 +23,20 @@ class CameraShaderRootsTests(unittest.TestCase):
         }
         self.closure = {"converted": {str(location_id): {"resolution": "exact", "source": f"Assets/Original/{location_id}.shader"} for location_id in expected}}
 
-    def test_three_exact_shader_rows_are_added_as_source_paths(self):
+    def test_four_exact_shader_rows_are_added_as_source_paths(self):
         self.assertEqual(
             whole_catalog.camera_shader_roots(self.metadata, self.closure),
-            {"Assets/Original/16022.shader", "Assets/Original/16025.shader", "Assets/Original/2537.shader"},
+            {"Assets/Original/16022.shader", "Assets/Original/16025.shader", "Assets/Original/15950.shader", "Assets/Original/2537.shader"},
         )
+
+    def test_generator_recipe_and_unity_builder_agree_on_exact_shader_roots(self):
+        recipe = json.loads((ROOT / "recipe/native-view-camera-transform.json").read_text())["camera_shader_roots"]
+        rows = {row["catalog_id"]: (row["address_key"], row["primary_key"]) for row in recipe["entries"]}
+        self.assertEqual(rows, whole_catalog.CAMERA_SHADER_ROOTS)
+        builder = (ROOT / "tools/catalog/WholeCatalogBuild.cs").read_text()
+        block = builder.split("cameraShaderLocations = new Dictionary<int, string>", 1)[1].split("};", 1)[0]
+        builder_rows = {int(location): guid for location, guid in re.findall(r'\{\s*(\d+),\s*"([0-9a-f]{32})"\s*\}', block)}
+        self.assertEqual(builder_rows, {location: guid for location, (guid, _) in rows.items()})
 
     def test_missing_filtered_row_refuses_instead_of_emitting_broken_guid(self):
         self.metadata["locations"].pop(0)

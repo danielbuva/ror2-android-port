@@ -55,6 +55,7 @@ public static class WholeCatalogBuild
     {
         { 16022, "41e90cbc5ad198a438128b019f8d8553" }, // HGOutlineHighlight
         { 16025, "5e246b703e2090148a761d52af19744b" }, // HGVisionLimit
+        { 15950, "c14b6abb309b8c246add9e94a6920d7f" }, // RampFog
         { 2537, "e4abd95960ed75f4a9f59cac7c40bd9d" },  // TranslucentImage DownTent
     };
     const string ShaderLocationType = "UnityEngine.Shader, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null";

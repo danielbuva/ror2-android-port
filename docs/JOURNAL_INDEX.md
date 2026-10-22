@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J949](PORTING_JOURNAL.md#j949--retain-the-exact-original-rampfog-catalog-root) | 2026-10-21 | Retain the exact original RampFog catalog root | **Hypothesis and source evidence.** |
 | [J947](PORTING_JOURNAL.md#j947--observe-the-initialized-original-model-and-isolate-missing-rampfog) | 2026-10-21 | Observe the initialized original model and isolate missing RampFog | **Hypothesis and setup.** |
 | [J939](PORTING_JOURNAL.md#j939--read-sdk-target-key-input-bindings-on-android-and-preserve-lookup-mismatches) | 2026-10-21 | Read SDK target-key input bindings on Android and preserve lookup mismatches | Date: 2026-10-22 UTC. |
 | [J946](PORTING_JOURNAL.md#j946--pass-r25-controls-and-retain-the-recurring-lightningstake-defect) | 2026-10-21 | Pass R25 controls and retain the recurring LightningStake defect | **Hypothesis and setup.** |

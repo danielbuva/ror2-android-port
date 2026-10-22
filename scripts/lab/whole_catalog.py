@@ -8,10 +8,11 @@ import re
 
 # The original Main Camera prefab's current opt-in overlay calls these shaders
 # during activation. Keep the runtime key -> typed location identities intact;
-# this is a three-asset profile extension, not a broad shader-catalog import.
+# this is a narrow profile extension, not a broad shader-catalog import.
 CAMERA_SHADER_ROOTS = {
     16022: ("41e90cbc5ad198a438128b019f8d8553", "RoR2/Base/Shaders/HGOutlineHighlight.shader"),
     16025: ("5e246b703e2090148a761d52af19744b", "RoR2/Base/Shaders/HGVisionLimit.shader"),
+    15950: ("c14b6abb309b8c246add9e94a6920d7f", "RoR2/Base/Shaders/RampFog.shader"),
     2537: ("e4abd95960ed75f4a9f59cac7c40bd9d", "TranslucentImage/DownTent.shader"),
 }
 SHADER_LOCATION_TYPE = "UnityEngine.Shader, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"

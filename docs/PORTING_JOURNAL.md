@@ -27363,3 +27363,55 @@ The prerequisite and bounded selected-model lifecycle now have device evidence;
 shader/material fidelity, healthy second-run play and other survivors remain
 open. R25 stays installed and diagnostic; J850 stays accepted. No runtime or
 rebuild-produced source changes in this checkpoint.
+
+
+## J949 — Retain the exact original RampFog catalog root
+
+**Hypothesis and source evidence.** J947's retained rendering failure is an
+unresolved original shader lookup before backend/pass acceptance. Its current
+payload catalog retains RampFog's GUID key and primary key, both targeting
+location 15,950, but omits that location row. WholeCatalogLoader filters keys
+whose target locations are absent. The accepted input's typed Shader location
+and exact reconciled conversion resolve to the original RampFog.shader. The
+existing explicit camera-root list contains only Outline Highlight, Vision
+Limit and DownTent. Pinned EditorKit 4128710f74ffbd90bfebc523812e7155fa7bdee3
+provides shader-registration/discovery knowledge; it supplies no Android shader
+translation. Current source and device evidence narrow this to one missing
+root. The already-rooted Outline Highlight invalid-pass failure is separate.
+
+**Smallest change.** Add the exact RampFog ID/GUID pair to the existing Python
+root generator and Unity catalog validator, plus its minimum source relationship
+in the camera recipe. Retain exact type/key/source-conversion checks and built
+bundle ownership validation. No shader program, material, renderer, pass or
+post-process is rewritten or disabled. The existing source-copy/build path
+owns the generated asset; no new owner, private build input or exact-text source
+replacement is introduced. ARCHITECTURE records full catalog regeneration as
+the required step: code-only builds reuse the older frozen payload. These
+changes affect rebuild-produced catalog/bundle outputs and need replay later.
+
+**Host validation and limits.** Six shader-root contracts pass, including a new
+cross-owner check that the generator, recipe and Unity validator agree. The
+existing catalog-rebuild fixture passes with synthetic versions of all four
+roots; missing rows, changed keys/types and inexact/unsafe source conversions
+still refuse. The broader camera suite passes 42 contracts with three expected
+editor-fixture skips; its current generator hash and four-root expectation are
+refreshed together. Private accepted-input checks also confirm the exact RampFog
+source and the dangling R25 key. Host-only preflight, Python Ruff format/check
+and diff checks pass. No Unity build or device action occurs for this source checkpoint. The next
+full build must prove the emitted typed row, key, root bit, actual bundle and
+backend/pass behavior; discovery alone cannot establish visual parity or remove
+all J947 artifacts. R25 stays installed; J850 stays accepted.
+
+**Evidence.** Private authored draft and pinned source evidence:
+`work/coordination/original-native-visual-reference/ramp-fog-draft-r1/`.
+Draft patch SHA-256:
+f5893e5af1380be615ce6990e44599835031b9ce873d84547f69eadb80956357.
+The R25 emitted catalog SHA-256 is
+44f3450e155c9be2a9b6f3a209e372cb5991cb001c5920c8c9978497662969f3;
+accepted metadata is
+7987bc49327a3efd90f0585787fa45fc0596cf61bf2ba68511d227bc687bafa3;
+exact reconciled closure is
+c5174a60338d8e41a6e21b43440acdba305d212699fda65faf51e2f112d31008.
+Applied-delta review SHA-256:
+3aa9a24fe1dfecdc764ef4ae81c3af5151d2164d306f80583ff33f6131407263.
+Generated content and raw logs remain local.
