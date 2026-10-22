@@ -10,6 +10,8 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J960](PORTING_JOURNAL.md#j960--preserve-the-corrected-cold-menu-readbacks-identity-refusal) | 2026-10-21 | Preserve the corrected cold-menu readback's identity refusal | The J959 continuation uses the independently reviewed R11 reader, with its correct default-menu report identity and a fresh Root binding. |
+| [J959](PORTING_JOURNAL.md#j959--preserve-original-output-pcm-after-native-shutdown-and-qualify-its-limits) | 2026-10-21 | Preserve original output PCM after native shutdown and qualify its limits | **Hypothesis and prior art.** |
 | [J958](PORTING_JOURNAL.md#j958--repair-complete-host-suite-source-and-receipt-contracts) | 2026-10-21 | Repair complete host-suite source and receipt contracts | **First failure.** |
 | [J957](PORTING_JOURNAL.md#j957--integrate-a-bounded-observer-at-the-original-lightningstake-call) | 2026-10-21 | Integrate a bounded observer at the original LightningStake call | **Hypothesis and prior art.** |
 | [J956](PORTING_JOURNAL.md#j956--add-reproducible-local-outline-highlight-and-rampfog-candidates) | 2026-10-21 | Add reproducible local Outline Highlight and RampFog candidates | **Hypothesis and prior art.** |

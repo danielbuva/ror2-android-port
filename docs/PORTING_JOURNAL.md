@@ -27959,3 +27959,101 @@ All pass. A fresh pre-push run remains mandatory; no hook is bypassed.
 The frozen corrective packet and full overlay log remain at
 `work/coordination/lightning-full-ci-fix-r1/`. This changes source identity
 metadata and tests only, with no new runtime behavior or APK.
+
+## J959 — Preserve original output PCM after native shutdown and qualify its limits
+
+**Hypothesis and prior art.** J950's bounded waveform owner should persist the
+selected original music output only after both original Wwise termination calls
+return and the diagnostic callback is disarmed. The accepted bank graph and
+pinned wwiser/vgmstream investigation in `docs/community-prior-art.md` distinguish
+media content from event, routing and playback semantics. Retain that distinction;
+no clip fallback, replacement audio or new engine lifecycle is introduced.
+
+**Device result and first failure.** On J954's exact diagnostic APK
+`6dc44d98af45ebf262a2fdaea0251879f39c6ab0c066c423b5e1559cc2efc79d`
+(source bc8296a), the third bounded run reaches 35.310013 s, returns to the
+menu and selects its reported Quit geometry. All 33 bounded process queries
+succeed; the original process becomes absent within the 30 s exit window.
+The subsequent automatic `run-as` file query refuses the adopted-storage path's
+ownership. Preserve this route as failed and acceptance-invalidated; its later
+force-stop is failure cleanup after the observed natural absence, not a
+successful readback or shutdown substitute. The two earlier J955 failures remain
+unchanged. Evidence: `work/experiments/original-game-audio-pcm/` under
+`r26-natural-quit-root-20261022T0538/`; the reviewed R8 runner and Root binding
+are under `work/coordination/original-game-audio-pcm/r26-device-runner-root-r4/`.
+
+**Separate read-only salvage.** Normal selected-device shell access against the
+current runtime receipt's actual persistent-data path retrieves one fresh raw
+PCM/sidecar pair. No guessed storage path, storage mutation or `run-as` bypass
+is used. Device/local hashes and byte counts agree: raw 1,048,576 bytes, SHA-256
+`5b823427e5c3ba667372020232377e24889c6dfcc73c2cd9517bfa1fff854e45`;
+sidecar 922 bytes, SHA-256
+`0db867419840e490ac20fc1d849cefb6afb07817185ed36a2ff07288f1af6e6f`.
+The exact selected output is 4129766362. Its sidecar records both original Term
+returns, verified post-Term disarm and raw persistence. There are 449 callbacks
+and 517,248 finite, nonzero scalar samples overall; the bounded stored prefix
+contains 262,144 scalar samples, or 2.730667 s at 48 kHz stereo. An independent
+raw scan verifies every stored value finite and nonzero, peak 0.4949709 and
+RMS 0.0900863. Truncation is explicit. Exact installed APK bytes, owned placement,
+process/selector absence and display sleep are independently verified.
+The frozen query, raw statistics and qualification remain under
+`work/coordination/original-game-audio-pcm/r26-third-attempt-readback-root-r1/`.
+This qualifies those salvage facts; it does not change the failed automatic
+route to a pass.
+
+**Content comparison and limits.** Offline decoding and comparison against the
+accepted selected-song media finds a strong match to the original FULL stem:
+10 ms stereo-RMS-envelope correlation 0.954977 at 91.06 s, and resampled waveform
+correlation 0.698179 left/0.586414 right near that offset. The separate BEACON
+stem scores 0.537996 by envelope; a simple sum barely improves the FULL score.
+The search spans long media and multiple offsets; no unrelated-media
+false-match control is available. This supports content similarity, not a
+statistical identity guarantee. The source controller/intro playing-ID report
+is not clock-joined to this capture. Event attribution, spatial behavior,
+physical audibility and complete audio fidelity remain unqualified. Analysis
+and independent review are under
+`work/coordination/original-game-audio-pcm/r26-waveform-attribution-r1/` and
+`r26-waveform-attribution-review-r1/`. Raw samples and decoded game audio stay
+ignored and private.
+
+**Continuation.** The first separate cold-menu readback also fails: its host
+reader waits for the assisted bring-up filename while the fresh unassisted
+process writes the default menu report. A subsequent read-only query finds a
+healthy current-process `offline-start-menu` report with empty failure fields,
+then confirms exact APK bytes and idle state. This is a diagnostic path error;
+no menu/runtime change is required. Preserve that failed attempt at
+`work/experiments/original-game-audio-pcm/r26-cold-readback-root-20261022T0558/`
+and its independent query at
+`work/coordination/original-game-audio-pcm/r26-cold-failure-query-root-r1/`.
+The corrected R11 cold-only reader retains exact report ID, fresh PID/session,
+byte caps, hashes, ownership, natural-exit and terminal idle/profile gates;
+58 host tests and independent review pass. A frozen successor corrects an
+advisory adapter digest without changing that reviewed source. The next device
+result will be recorded separately. No APK, baseline, runtime source or rebuild
+step changes in this experiment.
+
+## J960 — Preserve the corrected cold-menu readback's identity refusal
+
+The J959 continuation uses the independently reviewed R11 reader, with its
+correct default-menu report identity and a fresh Root binding. The new process
+reaches its own `offline-start-menu`; report ID, attempt, PID, session and empty
+failure fields pass, and the current reported Quit geometry is recorded before
+the tap. The reader returns from its natural-exit wait and rereads the saved
+pair, but its final contract refuses
+`cold_process_absence_not_bound_to_fresh_pid`. The poll's full result was not
+persisted on this cold-only path, so neither a timeout count nor the missing
+last-positive-PID cause can be retrospectively asserted. Preserve the refusal
+and successful failure-only cleanup; do not promote the original failed route
+or cold continuation. The subsequent independent read-only query verifies exact
+installed APK bytes, process/selector absence and display sleep. No new player
+or gameplay world is used, and the accepted baseline stays unchanged.
+
+Evidence: `work/experiments/original-game-audio-pcm/` under
+`r26-cold-readback-root-20261022T0619/`; the immutable reviewed draft is
+`work/coordination/original-game-audio-pcm/r26-waveform-path-readback-draft-r4/`,
+its Root binding is `r26-cold-readback-root-r2/`, and the terminal query is
+`r26-second-cold-failure-query-root-r1/`. Before another attempt, persist the
+complete natural-exit observation before validating it and verify the exact
+current process before Quit. Positive absence must still come from a successful
+query, with bounded transport and explicit identity checks. No runtime,
+reconstruction recipe, device receipt or storage configuration is changed.
