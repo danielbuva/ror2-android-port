@@ -26411,3 +26411,67 @@ Main now has diagnostic R23; accepted J850 f1550ce0 remains unchanged.
 Camera execution, material restoration, streamed music and broader audio remain
 open. The current player includes J928/J932; later source changes require a new
 source checkpoint and APK. No Moon/finale or other-device action is performed.
+
+
+## J936 — Observe source camera dispatch while selected renderers stay disabled
+
+Date: 2026-10-22 UTC. Hypothesis: J932's passive source-camera callback and
+exact model-tracker join separate missing dispatch or membership from a later
+material/renderer failure. Consult J927/J932/J935, the pinned EditorKit shader
+registration distinction in community prior art, and the accepted original
+CharacterModel startup/render methods before changing visibility or materials.
+Use J935's diagnostic APK
+32150e8b93dec714b1a7049c100064a8fd1fefef656b7a3b52edf0ccc4c119a4,
+source 5b572ef, with its two passed standard controls and distinct required
+runtime/visual metadata receipts. No new APK or source mutation is performed.
+
+**Execution and evidence.** Root binds and independently validates the reviewed
+R17 camera wrapper, acquires an exclusive primary-device claim and runs the
+selected Huntress route with original camera/skin diagnostics. Preserve
+`work/coordination/original-camera-listener-device-plan/r17-root/packet/attempts/20261022T000605.433741Z-544b4f6ec77b/`
+and `work/experiments/original-camera-listener-lifecycle/20261022T000623.098534Z/`.
+The wrapper result SHA-256 is
+499d42dd8a2dc7ccae6fcd98b3f6b29b44618dfcb17971dfacfc54079f716713.
+It passes its bounded world, settings-pause, source-owned cleanup and genuine
+menu-return checks with no reported first failure or cleanup error. The
+profile hash and applied-run count 13 are unchanged. This assisted route is not
+unassisted gameplay acceptance.
+
+**Renderer observation.** The first matched source-camera callback records
+frame 2140 / realtime 173.566 s and one exact selected-model tracker member:
+count/scanned 1, membership known true, no truncation. The model is active and
+enabled, forceUpdate false, visibility value 5 and invisibility count zero.
+All 12 joined renderer records are disabled and not visible; their first
+shared material is observed null. Four renderer GameObjects are active and
+eight inactive. Thus absent callback delivery and tracker exclusion do not
+explain this specific sample. The selected native skin and animator are ready,
+with five owned material copies. The sample is timestamped once; retaining it
+through cleanup does not establish subsequent renderer state.
+
+Root inspects the separately captured 35.193 s world screenshot (SHA-256
+9b760acb12c2e350a0d15d6aebfc32a52926c632ddac13084a5111beb0e049af):
+severe missing scene/character rendering remains. It is not a simultaneous
+capture of the earlier callback sample. The optional early render capture is
+refused before capture because `visual.renderEvidence.frame` is zero; preserve
+that host evidence failure. The wrapper's lifecycle pass does not qualify
+visual parity, animation appearance or this absent early capture.
+
+Read-only exact-source analysis identifies a separate PostProgressBar startup
+phase for the CharacterModel shared-material array cache, distinct from
+SystemInitializer. The current callback does not observe that cache or a
+suppressed renderer-update exception. Missing initialization is therefore a
+hypothesis, not an established runtime cause. Next read the exact cache/dirty
+state passively at the matched callback before restoring a measured startup
+dependency; do not force renderer visibility or substitute materials.
+
+**Teardown.** The source listener is observed removed from its managed list
+and inactive after disable; the census falls from two to one. Original native
+listener wrapper return outcomes remain unobserved. All five owned skin
+material copies are released, the skin owner is destroyed, and source-camera
+owners deactivate. Force-stop cleanup is recorded separately from these
+source-owned observations. A fresh independent installed-byte, owned-placement,
+process/selector-absence and asleep-display query passes; its context SHA-256 is
+9777982b2f556de7de472345bd2084d4d5cc7a822d0f793913c53a160c4fc7f6.
+Release the Main claim only after that query. Main retains diagnostic R23;
+accepted J850 f1550ce0 remains unchanged. Streamed music, visual restoration,
+broader survivor animation and the Siren encounter remain open.
