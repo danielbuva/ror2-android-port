@@ -52,7 +52,26 @@ def load_analysis(path, identity, shader, work=WORK, root=ROOT):
     return tree, raw, records, programs, receipt
 
 
-def render_state(state, ui=False):
+def color_mask_text(mask, allowed_numeric_names=None):
+    """Render a measured ShaderLab color mask without inventing enum labels."""
+    allowed_numeric_names = allowed_numeric_names or {}
+    name = mask.get("name")
+    if name not in ["", "<noninit>"]:
+        if allowed_numeric_names:
+            raise RuntimeError("Symbolic color-mask parameter was not measured for this pass")
+        return "[" + name + "]"
+    raw_value = mask.get("val")
+    if allowed_numeric_names:
+        if type(raw_value) is not int:
+            raise RuntimeError("Mapped native color-mask value is not an integer")
+        if raw_value not in allowed_numeric_names:
+            raise RuntimeError("Unmeasured native color mask")
+        return allowed_numeric_names[raw_value]
+    # Preserve the existing generic numeric fallback for non-Outline callers.
+    return str(int(raw_value))
+
+
+def render_state(state, ui=False, color_mask_names=None):
     def value(field, names):
         v = state[field]
         if v["name"] not in ["", "<noninit>"]:
@@ -106,8 +125,7 @@ def render_state(state, ui=False):
         raise RuntimeError("Separate native stencil faces require measurement")
     op = state["stencilOp"] if ui else state["stencilOpFront"]
     if ui:
-        mask = b["colMask"]
-        text += "ColorMask " + ("[" + mask["name"] + "]" if mask["name"] not in ["", "<noninit>"] else str(int(mask["val"]))) + "\n"
+        text += "ColorMask " + color_mask_text(b["colMask"], color_mask_names) + "\n"
         operations = {0: "Keep", 1: "Zero", 2: "Replace", 3: "IncrSat", 4: "DecrSat", 5: "Invert", 6: "IncrWrap", 7: "DecrWrap"}
 
         def stencil(k, names):

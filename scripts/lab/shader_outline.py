@@ -204,7 +204,7 @@ def _validate_state(state: dict, pass_index: int) -> str:
         stencil = state[face]
         if any(stencil[name]["val"] != value for name, value in expected["stencil"].items()):
             raise RuntimeError("Native stencil state drift")
-    return render_state(state, ui=True) + "BlendOp Add\n"
+    return render_state(state, ui=True, color_mask_names={15: "RGBA"}) + "BlendOp Add\n"
 
 
 def _field(params: list[dict], *, output: bool) -> dict[str, dict]:

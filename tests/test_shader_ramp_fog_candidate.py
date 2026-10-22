@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import hashlib
 import json
 import shutil
 import sys
@@ -52,8 +53,11 @@ class ShaderRampFogCandidateTests(unittest.TestCase):
             module = load_isolated_module(root)
             self.assertEqual(module.RECIPE_PATH, root.resolve() / "recipe/shader-ramp-fog-candidate.json")
             self.assertEqual(module.RECIPE["target"], "ramp-fog")
-            self.assertEqual(module.RECIPE["stable_output"], "generated-shader-candidates/ramp-fog-r2/{input_id}")
+            self.assertEqual(module.RECIPE["stable_output"], "generated-shader-candidates/ramp-fog-r3/{input_id}")
             self.assertFalse(module.RECIPE["generation_limits"]["unity_compiled"])
+            helper_hash = hashlib.sha256((INTEGRATION / "scripts/lab/shader_deferred.py").read_bytes()).hexdigest()
+            self.assertEqual(module.RECIPE["tools"]["shader_deferred_sha256"], helper_hash)
+            self.assertEqual(module.RECIPE["stable_output"], "generated-shader-candidates/ramp-fog-r3/{input_id}")
 
     def test_output_is_stable_input_scoped_and_work_contained(self) -> None:
         with tempfile.TemporaryDirectory(prefix="ramp-fog-path-test-") as temp:
@@ -61,7 +65,7 @@ class ShaderRampFogCandidateTests(unittest.TestCase):
             work.mkdir()
             module = load_isolated_module(Path(temp) / "repo")
             output = module.output_path(work, module.SOURCE["input_id"])
-            self.assertEqual(output, work.resolve() / "generated-shader-candidates/ramp-fog-r2" / module.SOURCE["input_id"])
+            self.assertEqual(output, work.resolve() / "generated-shader-candidates/ramp-fog-r3" / module.SOURCE["input_id"])
             with self.assertRaisesRegex(RuntimeError, "fixed RampFog recipe"):
                 module.output_path(work, "another-input")
             module.RECIPE["stable_output"] = "../outside/{input_id}"

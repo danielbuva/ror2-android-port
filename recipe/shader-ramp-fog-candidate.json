@@ -43,7 +43,7 @@
     "shader_path_id": 2910825169780710437,
     "subshader_count": 1
   },
-  "stable_output": "generated-shader-candidates/ramp-fog-r2/{input_id}",
+  "stable_output": "generated-shader-candidates/ramp-fog-r3/{input_id}",
   "target": "ramp-fog",
   "tools": {
     "d3dasm": {
@@ -56,7 +56,7 @@
       "path": "reference-repos/doitsujin__dxbc-spirv",
       "revision": "c7f069701227dcb800a01bd93e42f8001b7543e7"
     },
-    "shader_deferred_sha256": "547434c095f560a89379a2c9153eb40dbf25ec4122300116f1a54bfe8d5a24e3",
+    "shader_deferred_sha256": "f877d0a93bb628b3d351630ac2a6f8c82efc5f2990b6ca816efd93c419f4a541",
     "shader_segments_sha256": "a0906e1abe38b5a18f6dc8f9e902acb3def0123368ef7344f5427d2e03aeff58",
     "shader_source_sha256": "34dc1ff1c73be3115820adac1908fa873859f880d09b24524636b9e931177938"
   }

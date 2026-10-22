@@ -19,7 +19,7 @@ atexit.register(_stage.cleanup)
 TEST_ROOT = Path(_stage.name).resolve()
 (TEST_ROOT / "scripts/lab").mkdir(parents=True)
 (TEST_ROOT / "recipe").mkdir()
-for module in ("common.py", "shader_segments.py"):
+for module in ("common.py", "shader_segments.py", "shader_deferred.py", "shader_recovery.py"):
     shutil.copy2(REPO / "scripts/lab" / module, TEST_ROOT / "scripts/lab" / module)
 for module in ("shader_outline.py", "shader_source.py"):
     shutil.copy2(REPO / "scripts/lab" / module, TEST_ROOT / "scripts/lab" / module)
@@ -27,9 +27,12 @@ public_recipe = {
     "schema": 1,
     "target": "synthetic",
     "source": {"input_id": "synthetic-input"},
-    "stable_output": "generated-shader-candidates/outline-highlight-r2/{input_id}",
+    "stable_output": "generated-shader-candidates/outline-highlight-r3/{input_id}",
     "programs": [],
-    "helpers": {"shader_source.py": hashlib.sha256((TEST_ROOT / "scripts/lab/shader_source.py").read_bytes()).hexdigest()},
+    "helpers": {
+        "shader_source.py": hashlib.sha256((TEST_ROOT / "scripts/lab/shader_source.py").read_bytes()).hexdigest(),
+        "shader_deferred.py": hashlib.sha256((TEST_ROOT / "scripts/lab/shader_deferred.py").read_bytes()).hexdigest(),
+    },
     "d3dasm": {"revision": "synthetic", "binary_sha256": "0" * 64},
 }
 (TEST_ROOT / "recipe/shader-outline-candidate.json").write_text(json.dumps(public_recipe), encoding="utf-8")
@@ -39,6 +42,8 @@ generator = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = generator
 assert spec.loader is not None
 spec.loader.exec_module(generator)
+from shader_deferred import color_mask_text
+
 sys.path[:] = _path_before_import
 sys.path.insert(0, str(REPO / "scripts/lab"))
 from shader_source import bind_hlsl
@@ -49,6 +54,10 @@ def spec_for(pass_index: int, stage: str, data: bytes) -> dict:
 
 
 class GeneratorContractTests(unittest.TestCase):
+    def test_recipe_pins_modified_shared_render_state_helper(self) -> None:
+        helper = TEST_ROOT / "scripts/lab/shader_deferred.py"
+        self.assertEqual(generator.MODULE_PINS["shader_deferred.py"], hashlib.sha256(helper.read_bytes()).hexdigest())
+
     def test_production_recipe_is_fixed_public_path_without_private_fallback(self) -> None:
         self.assertEqual(generator.RECIPE_PATH, TEST_ROOT / "recipe/shader-outline-candidate.json")
         self.assertFalse((TEST_ROOT / "scripts/lab/recipe_candidate.json").exists())
@@ -102,6 +111,21 @@ class GeneratorContractTests(unittest.TestCase):
             call = f"    native_{index}("
             self.assertLess(output.index(definition), output.index(call))
             self.assertIn(f"/* exact synthetic body {index} */", output)
+
+    def test_measured_outline_color_mask_15_serializes_as_shaderlab_rgba(self) -> None:
+        self.assertEqual(color_mask_text({"name": "<noninit>", "val": 15}, {15: "RGBA"}), "RGBA")
+        self.assertIn('color_mask_names={15: "RGBA"}', (TEST_ROOT / "scripts/lab/shader_outline.py").read_text())
+
+    def test_unconfigured_color_mask_preserves_existing_numeric_fallback(self) -> None:
+        self.assertEqual(color_mask_text({"name": "<noninit>", "val": 15}), "15")
+
+    def test_outline_color_mask_refuses_unmeasured_masks_and_symbolic_names(self) -> None:
+        with self.assertRaisesRegex(RuntimeError, "Unmeasured native color mask"):
+            color_mask_text({"name": "<noninit>", "val": 7}, {15: "RGBA"})
+        with self.assertRaisesRegex(RuntimeError, "Symbolic color-mask parameter"):
+            color_mask_text({"name": "_ColorMask", "val": 15}, {15: "RGBA"})
+        with self.assertRaisesRegex(RuntimeError, "not an integer"):
+            color_mask_text({"name": "<noninit>", "val": True}, {15: "RGBA"})
 
     def test_binder_retains_only_measured_interpolation_metadata(self) -> None:
         source = "void main(noperspective float4 p : SV_POSITION0) { }"
@@ -222,7 +246,7 @@ class GeneratorContractTests(unittest.TestCase):
                 with self.assertRaises(RuntimeError):
                     generator.generate("lab")
                 first = generator.generate("outline-highlight")
-                final = work / "generated-shader-candidates/outline-highlight-r2" / generator.EXPECTED["input_id"]
+                final = work / "generated-shader-candidates/outline-highlight-r3" / generator.EXPECTED["input_id"]
                 before = (final / "sources/OutlineHighlightCandidate.shader").read_bytes()
                 with self.assertRaisesRegex(RuntimeError, "already exists"):
                     generator.generate("outline-highlight")
