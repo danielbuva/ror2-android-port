@@ -28233,3 +28233,61 @@ with independent `r27-music-pcm-join-review-r2/` and fixture corrections at
 `r27-*-root-tests*.log` names in that coordination area. No new APK, stripping,
 Android query, output-event attribution or speaker result is accepted by this
 source checkpoint; J954 remains installed and J850 remains the rollback.
+
+## J965 — Compile both recovered shaders into isolated Android bundles
+
+**Hypothesis and prior art.** Following J961/J963's native-program recovery and
+measured mask correction, the unchanged R3 candidates should import and compile
+in the pinned editor. The prior-art and source-interface contracts remain those
+recorded in J956/J961; this fixture checks backend acceptance, not visual parity.
+
+Root binds the exact generated Outline source
+`f37794d85f4e64d1064583d3cce6ecbe68daf59c722be00d36852516c101cace`
+and RampFog source
+`ad31d2e326ccbc64eae993d9ac0928f7b0c5f396b90d5053b1991f1d8efe86f9`.
+Under the persistent host mutex, Unity 2021.3.45f2 imports their expected names
+and two-pass/one-pass topologies without ShaderUtil errors or messages, then
+builds isolated StrictMode Android bundles with Vulkan configured. Bundle hashes
+are respectively `f6ffbde7c2bb0e6d408ab3fd1427dbbc64f1b9511f866f9e180d3af6d9c816a4`
+and `7b45526a407eea035cea2e54190b804b8d6538f2fdd32912274c26c7886334e4`.
+The fixture records successful compilation and verified owned cleanup; Root
+separately saves and removes the remaining exact empty fixture parent/metadata,
+verifies absence and observes the editor idle before releasing the mutex.
+
+Evidence is `work/editor/shader-candidate-compile-fixtures/e1bac7aed17985e29f3f3e33/`
+and `work/coordination/original-native-visual-reference/two-shader-compile-fixture-root-r8/`.
+The reviewed fixture packet is `two-shader-compile-fixture-draft-r8/` in that
+coordination area. Its 29 host contracts, Ruff and offline exact-reference compile
+pass. Failed prior fixtures remain preserved. This is an isolated compile gate:
+no full player, installed APK, runtime shader behavior or PC parity changes.
+
+## J966 — Add an input-bound catalog consumer for the two recovered shader sources
+
+**Change and ownership.** J965 clears the isolated compile prerequisite. Extend
+existing `whole_catalog.prepare_integration`, `catalog_rebuild` and rebuild
+comparison with an optional exact-identity override for Outline Highlight and
+RampFog. The public default-off allowlist contains only source relationships and
+authored generator/recipe pins. Ignored input-bound configuration activates the
+consumer. Validate both candidate/manifest/source/metadata chains before writing,
+preserve original `.meta` bytes and join the selector digest in the per-attempt
+receipt, project receipt mirror and marker. Comparison admits only these exact
+shader exceptions and retains ordinary provenance checks elsewhere.
+
+**First failure and correction.** Review finds that the first activation draft
+persists its marker only for destination rebuilds. A later disabled current-project
+stage could retain overrides silently. The successor writes the receipt mirror
+and marker for both StageIO modes and checks disabled stale state before any
+catalog writes. Generic comparisons without a marker need no accepted-input
+configuration; dangling markers and malformed, foreign or changed selectors
+refuse. Independent review verifies the corrected packet and all 40 catalog
+contracts; Root repeats those and 18 rebuild contracts, with Ruff passing.
+
+The final private proposal is
+`work/coordination/original-native-visual-reference/two-shader-catalog-integration-draft-r5/`
+(manifest `f04b87751b1353268c6beb44da12b7853eaabf5fa6c020237ed6a6dfdfe7d537`),
+with independent `two-shader-catalog-integration-review-r5/`. Architecture and
+local-state documentation name setup, receipt ownership and disable refusal;
+recipe audit covers only authored metadata. The camera recipe's changed staging
+source pin is refreshed. This alters reconstruction inputs and requires replay
+and a full content/player build. No new APK, runtime appearance or visual parity
+is accepted; J954 remains installed and J850 remains the accepted rollback.

@@ -1,0 +1,41 @@
+{
+  "enabled": false,
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "rows": [
+    {
+      "candidate_kind": "outline-highlight",
+      "candidate_schema": "private-outline-highlight-generated-candidate-r1",
+      "generator": "shader_outline.py",
+      "generator_recipe": "recipe/shader-outline-candidate.json",
+      "generator_recipe_sha256": "902c375c54a7fe5c75cc254c7cabbe0ef1290282eeccdcc5ed83448e2a4c4576",
+      "generator_sha256": "7cd674a8f0081a5e47669810c65e69c86349e91d280c1e4129c73111ec3ad608",
+      "guid": "41e90cbc5ad198a438128b019f8d8553",
+      "location_id": 16022,
+      "manifest": "manifest.json",
+      "manifest_path_field": "generated_shader_path",
+      "primary_key": "RoR2/Base/Shaders/HGOutlineHighlight.shader",
+      "shader": "sources/OutlineHighlightCandidate.shader",
+      "shader_name": "Hopoo Games/Internal/Outline Highlight",
+      "source_asset_path": "Assets/RoR2/Base/Shaders/PostProcess/HGOutlineHighlight.shader",
+      "type": "UnityEngine.Shader, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"
+    },
+    {
+      "candidate_kind": "ramp-fog",
+      "candidate_schema": 1,
+      "generator": "shader_ramp_fog.py",
+      "generator_recipe": "recipe/shader-ramp-fog-candidate.json",
+      "generator_recipe_sha256": "63880fafec3b170c7899d8da0b04971cf764d2678fdee00a7417a6e134b622aa",
+      "generator_sha256": "5c50fca86cdd1092edfbc3de97a3e30f25baec359dc512a6be26a96e1065482a",
+      "guid": "c14b6abb309b8c246add9e94a6920d7f",
+      "location_id": 15950,
+      "manifest": "candidate.json",
+      "manifest_path_field": "generated_shader",
+      "primary_key": "RoR2/Base/Shaders/RampFog.shader",
+      "shader": "sources/RampFogCandidate.shader",
+      "shader_name": "Hidden/PostProcess/RampFog",
+      "source_asset_path": "Assets/RoR2/Base/Shaders/CustomPostProcess/RampFog.shader",
+      "type": "UnityEngine.Shader, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"
+    }
+  ],
+  "schema": "whole-catalog-shader-overrides-r1"
+}

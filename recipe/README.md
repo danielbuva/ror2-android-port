@@ -66,8 +66,8 @@ produce the file from the input, prefer tracking the generator.
 | `rebuild-r9-obligations.json` | Two previously unknown producers | Public PlayerSettings/editor callback identities and authored setup notes. | No private settings, reflected game type lists or XML content. | Coverage and validate-bindings report explicit editor obligations with local target hashes. |
 | `shader-rebuild-inputs.json` | Explicit shader recovery/census/fallback dependencies and selections | Accepted input ID, work-relative hashes, output basenames and topology; no recovered content. | Private bodies remain ignored; no account/device data, credentials or new licensed code. Audited 2026-10-18. | `shader_rebuild` validates all 46 pins; retained recovery remains a blocker (63 retained records including R3–R8). |
 | `lightning-stake-source-call-observer.json` | Default-off observation before one original projectile call | Accepted source fingerprint, original call identity, selector policy and authored owner/transform hashes. | Minimal reconstruction identities only; no protected method body, game binary, private replay path or device evidence. Audited 2026-10-22. | The composed Cecil producer and named runtime observer preserve original operands and call; Android behavior remains unqualified. |
-| `shader-outline-candidate.json` | Two-pass local Outline Highlight candidate | Accepted input/catalog/bundle/object identities, four program/layout digests, pass metadata and pinned helper/tool identities. R3 maps the measured all-channel mask (15) to ShaderLab `RGBA`; unmeasured masks refuse. | Minimum reconstruction selectors only; no shader program, HLSL, serialized asset body, private path, or executable. Audited 2026-10-22. | `scripts/lab/shader_outline.py` reads this fixed public recipe and reconstructs ignored input-scoped evidence; no build/runtime consumer. |
-| `shader-ramp-fog-candidate.json` | One input-gated local RampFog source candidate | Accepted input ID, minimum asset-bundle path/hash, shader path ID/name, record indices/stages and exact program/blob digests; pinned authored helper and disassembler identities. R3 preserves the prior candidate after the shared helper pin changes; its numeric render state is unchanged. | Metadata and reconstruction policy only; no DXBC, HLSL, ShaderLab body, serialized asset body, private path or tool binary. Audited 2026-10-22. | `scripts/lab/shader_ramp_fog.py` reads this fixed public recipe and the user's accepted local input, then writes only ignored work output. No fallback/private recipe and no build/runtime consumer. |
+| `shader-outline-candidate.json` | Two-pass local Outline Highlight candidate | Accepted input/catalog/bundle/object identities, four program/layout digests, pass metadata and pinned helper/tool identities. R3 maps the measured all-channel mask (15) to ShaderLab `RGBA`; unmeasured masks refuse. | Minimum reconstruction selectors only; no shader program, HLSL, serialized asset body, private path, or executable. Audited 2026-10-22. | `scripts/lab/shader_outline.py` reads this fixed public recipe and reconstructs ignored input-scoped evidence; optional exact-identity catalog consumer (J966); Android appearance remains unqualified. |
+| `shader-ramp-fog-candidate.json` | One input-gated local RampFog source candidate | Accepted input ID, minimum asset-bundle path/hash, shader path ID/name, record indices/stages and exact program/blob digests; pinned authored helper and disassembler identities. R3 preserves the prior candidate after the shared helper pin changes; its numeric render state is unchanged. | Metadata and reconstruction policy only; no DXBC, HLSL, ShaderLab body, serialized asset body, private path or tool binary. Audited 2026-10-22. | `scripts/lab/shader_ramp_fog.py` reads this fixed public recipe and the user's accepted local input, then writes only ignored work output. No fallback/private recipe and optional exact-identity catalog consumer (J966); Android appearance remains unqualified. |
 | `project-inputs.json` | Remaining independently authored project inputs and original geometry identity | Public smoke/editor source identities, exact public Git commits, original bundle/mesh/hash identities. | No original geometry or private settings bodies; archived templates are our own public source. Audited 2026-10-18. | `project_input_rebuild` renders/stages/exports and hash-gates 26 complete files, including Burst defaults and authored Android graphics tiers. |
 | `build-entry-inputs.json` | R7/R8 inputs: the bootstrap attempt name, the decompiled sources R7 regenerates, and one retained contract result | Accepted input ID, attempt name, assembly name/SHA-256, decompiler pin, three output paths/SHA-256, and one work-relative path/SHA-256. | No decompiled bodies, catalog data, binaries, private roots, credentials or account/device identifiers. Audited 2026-10-18; revised J597. | `build_entry_rebuild.BuildEntryIO` gates the contract result; `BuildEntryIO.decompiled` regenerates and hash-gates the sources. Only the contract result is a blocker. |
 | `rebuild-binding-targets.json` | J565 final binding membership | Accepted input ID and 104 minimum project asset identities from the regenerated R2 guard. | Identifiers only, no serialized content, private roots or device/account data. Audited 2026-10-18. | Final validation requires all identifiers in both the regenerated R2 receipt and destination; R4 deferred targets are checked too. |
@@ -1718,7 +1718,8 @@ the user's local shader candidate. ShaderLab, DXBC, HLSL, serialized pass data,
 tool binaries, private installation path and device evidence stay under
 ignored `work/`. `shader_ramp_fog.py` reads only this fixed public recipe; it
 does not search for an adjacent or private fallback recipe. Its output is a
-stable input-keyed local candidate and has no build/runtime consumer.
+stable input-keyed local candidate, optionally consumed by the exact-identity
+catalog override (J966).
 
 Prior art: `docs/community-prior-art.md` and `docs/shader-recovery.md`,
 especially J329 and J364/J365, record the exporter limitation and why exact
@@ -1767,3 +1768,18 @@ nonfinite gameplay values. Prior-art lifecycle guidance comes from the pinned
 Starstorm2 SwiftSkateboard subscription/teardown pattern, documented in the
 community prior-art map; no implementation is copied. Provenance/privacy audit:
 2026-10-22. Android behavior requires its own built-player evidence.
+
+
+### Two-shader catalog override allowlist (2026-10-22)
+
+`shader-catalog-overrides.json` names exactly the existing Outline Highlight and
+RampFog catalog locations, original GUIDs, keys and source paths, plus current
+public generator/recipe hashes. These identifiers are the minimum relationships
+needed to reconstruct and stage the user's legitimate local content. No shader
+body, program, binary, device data or private path is published. The public
+allowlist stays default-off; activation is separate input-bound ignored state.
+Staging preserves original metadata, records generated candidate provenance and
+joins the selector digest in its receipts. J965's isolated Android bundle compile
+passes; full player rendering and PC parity remain separate gates. Prior-art
+provenance remains the shader recovery contracts described above. Public source,
+privacy and provenance audit: 2026-10-22.

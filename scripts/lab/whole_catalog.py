@@ -45,6 +45,273 @@ def camera_shader_roots(metadata, closure):
     return paths
 
 
+def _shader_candidate_root(io, relative):
+    path = Path(relative)
+    if path.is_absolute() or not path.parts or path.parts[0] != "work" or ".." in path.parts:
+        raise RuntimeError("Shader override candidate path must be work-relative")
+    root = io.work.joinpath(*path.parts[1:])
+    if not root.resolve().is_relative_to(io.work.resolve()):
+        raise RuntimeError("Shader override candidate escapes work/")
+    cursor = io.work
+    for part in path.parts[1:]:
+        cursor = cursor / part
+        if cursor.is_symlink():
+            raise RuntimeError("Shader override candidate path contains a symlink")
+    return root
+
+
+def _validated_shader_overrides(io, closure, metadata, mapped, export, project, destination):
+    """Apply only the two explicit, generator-owned candidates at existing typed mappings."""
+    recipe_path = RECIPE / "shader-catalog-overrides.json"
+    selection = io.read(recipe_path)
+    if set(selection) != {"schema", "input_id", "enabled", "rows"} or selection.get("schema") != "whole-catalog-shader-overrides-r1":
+        raise RuntimeError("Unknown shader override selection schema")
+    if selection.get("enabled") is not False:
+        raise RuntimeError("Public shader override identity allowlist must remain default-off")
+    if selection.get("input_id") != closure["input_id"]:
+        raise RuntimeError("Shader override selection belongs to a different accepted input")
+    from catalog_rebuild import read_local_shader_override_selector
+
+    local_selector = read_local_shader_override_selector(io.work, closure["input_id"])
+    if local_selector is None or local_selector["enabled"] is not True:
+        stale_marker = project / ".rebuild/catalog-shader-overrides.json"
+        if stale_marker.is_symlink() or io.is_file(stale_marker):
+            raise RuntimeError("Destination has a prior shader override receipt; rebuild it from a clean destination before disabling overrides")
+        return None
+
+    expected = [
+        (
+            16022,
+            "41e90cbc5ad198a438128b019f8d8553",
+            "RoR2/Base/Shaders/HGOutlineHighlight.shader",
+            "Assets/RoR2/Base/Shaders/PostProcess/HGOutlineHighlight.shader",
+            "outline-highlight",
+            "shader_outline.py",
+            "recipe/shader-outline-candidate.json",
+            "private-outline-highlight-generated-candidate-r1",
+            "manifest.json",
+            "sources/OutlineHighlightCandidate.shader",
+            "generated_shader_path",
+            "Hopoo Games/Internal/Outline Highlight",
+            -5736718617091362218,
+        ),
+        (
+            15950,
+            "c14b6abb309b8c246add9e94a6920d7f",
+            "RoR2/Base/Shaders/RampFog.shader",
+            "Assets/RoR2/Base/Shaders/CustomPostProcess/RampFog.shader",
+            "ramp-fog",
+            "shader_ramp_fog.py",
+            "recipe/shader-ramp-fog-candidate.json",
+            1,
+            "candidate.json",
+            "sources/RampFogCandidate.shader",
+            "generated_shader",
+            "Hidden/PostProcess/RampFog",
+            2910825169780710437,
+        ),
+    ]
+    rows = selection.get("rows")
+    if not isinstance(rows, list) or len(rows) != len(expected):
+        raise RuntimeError("Shader override selection must contain exactly the two qualified roots")
+    locations = {int(row["id"]): row for row in metadata["locations"]}
+    keys = {row["key"]: row for row in metadata["keys"] if row.get("keyType", "System.String") == "System.String"}
+    output_rows = []
+    prepared = []
+    for row, spec in zip(rows, expected, strict=True):
+        (
+            location_id,
+            guid,
+            primary_key,
+            source_path,
+            candidate_kind,
+            generator,
+            generator_recipe,
+            candidate_schema,
+            manifest_name,
+            shader_rel,
+            manifest_path_field,
+            shader_name,
+            object_path_id,
+        ) = spec
+        target_relative = mapped.get(source_path)
+        expected_target = "Assets/WholeGame/" + source_path.removeprefix("Assets/")
+        if target_relative != expected_target:
+            raise RuntimeError("Shader override requires its original WholeGame catalog destination: " + str(location_id))
+        exact = {
+            "location_id": location_id,
+            "guid": guid,
+            "primary_key": primary_key,
+            "type": SHADER_LOCATION_TYPE,
+            "source_asset_path": source_path,
+            "candidate_kind": candidate_kind,
+            "generator": generator,
+            "generator_recipe": generator_recipe,
+            "manifest": manifest_name,
+            "shader": shader_rel,
+            "manifest_path_field": manifest_path_field,
+            "candidate_schema": candidate_schema,
+            "shader_name": shader_name,
+        }
+        if set(row) != set(exact) | {"generator_sha256", "generator_recipe_sha256"} or any(row.get(key) != value for key, value in exact.items()):
+            raise RuntimeError("Shader override selection identity or generator mapping changed: " + str(location_id))
+        if row.get("generator_sha256") != sha(ROOT / "scripts/lab" / generator):
+            raise RuntimeError("Shader override generator source changed: " + generator)
+        if row.get("generator_recipe_sha256") != sha(ROOT / generator_recipe):
+            raise RuntimeError("Shader override generator recipe changed: " + generator_recipe)
+        catalog_row = locations.get(location_id)
+        key_row = keys.get(guid)
+        conversion = closure["converted"].get(str(location_id))
+        if (
+            not catalog_row
+            or catalog_row.get("type") != SHADER_LOCATION_TYPE
+            or catalog_row.get("primaryKey") != primary_key
+            or not key_row
+            or key_row.get("locations") != [location_id]
+            or not conversion
+            or conversion.get("resolution") != "exact"
+            or conversion.get("source") != source_path
+            or mapped.get(source_path) != target_relative
+        ):
+            raise RuntimeError("Shader override no longer matches the validated catalog mapping: " + str(location_id))
+        generator_recipe_data = io.read(ROOT / generator_recipe)
+        stable_output = generator_recipe_data.get("stable_output")
+        if not isinstance(stable_output, str) or "{input_id}" not in stable_output:
+            raise RuntimeError("Shader candidate recipe lacks its input-bound stable output root: " + candidate_kind)
+        candidate_directory = _shader_candidate_root(io, "work/" + stable_output.format(input_id=closure["input_id"]))
+        manifest_path = candidate_directory / manifest_name
+        shader_path = candidate_directory / shader_rel
+        if manifest_path.is_symlink() or shader_path.is_symlink() or not manifest_path.is_file() or not shader_path.is_file():
+            raise RuntimeError("Shader override candidate files are absent or linked: " + candidate_kind)
+        manifest = io.read(manifest_path)
+        if (
+            manifest.get("schema") != candidate_schema
+            or manifest.get("generator_sha256") != row["generator_sha256"]
+            or manifest.get("recipe_sha256") != row["generator_recipe_sha256"]
+        ):
+            raise RuntimeError("Shader override candidate provenance differs from the current generators: " + candidate_kind)
+        source = manifest.get("source", {})
+        if source.get("input_id") != closure["input_id"]:
+            raise RuntimeError("Shader override candidate belongs to a different accepted input")
+        if candidate_kind == "outline-highlight":
+            if manifest.get("success") is not True or manifest.get("object_path_id") != object_path_id or source.get("shader_name") != shader_name:
+                raise RuntimeError("Outline candidate identity or completion changed")
+        elif (
+            manifest.get("kind") != "local-source-bound-ramp-fog-candidate"
+            or source.get("shader_path_id") != object_path_id
+            or source.get("shader_name") != shader_name
+        ):
+            raise RuntimeError("RampFog candidate identity changed")
+        candidate_bytes = io.read_bytes(shader_path)
+        if manifest.get(manifest_path_field) != shader_rel or manifest.get("generated_shader_sha256") != sha(shader_path):
+            raise RuntimeError("Shader override candidate output differs from its manifest: " + candidate_kind)
+        if __import__("hashlib").sha256(candidate_bytes).hexdigest() != manifest.get("generated_shader_sha256"):
+            raise RuntimeError("Shader override candidate changed while it was being read: " + candidate_kind)
+        if manifest.get("semantic_equivalence_proven") is not False:
+            raise RuntimeError("Shader override may not claim semantic equivalence")
+        if candidate_kind == "outline-highlight" and (
+            manifest.get("android_compile_or_render_tested") is not False or manifest.get("appearance_parity_proven") is not False
+        ):
+            raise RuntimeError("Outline candidate must retain its unqualified status")
+        if candidate_kind == "ramp-fog":
+            ramp_receipt_path = candidate_directory / "receipt.json"
+            if ramp_receipt_path.is_symlink() or not ramp_receipt_path.is_file():
+                raise RuntimeError("RampFog generator receipt is absent or linked")
+            ramp_receipt = io.read(ramp_receipt_path)
+            if (
+                ramp_receipt.get("success") is not True
+                or ramp_receipt.get("input_id") != closure["input_id"]
+                or ramp_receipt.get("bundle_sha256") != source.get("bundle_sha256")
+                or ramp_receipt.get("generated_shader_sha256") != manifest["generated_shader_sha256"]
+                or ramp_receipt.get("source_bundle_unchanged") is not True
+                or ramp_receipt.get("unity_compiled") is not False
+                or ramp_receipt.get("android_shader_acceptance") is not False
+                or ramp_receipt.get("visual_parity_proven") is not False
+            ):
+                raise RuntimeError("RampFog generator receipt is incomplete or inconsistent")
+        if not target_relative:
+            raise RuntimeError("Shader override has no validated project mapping")
+        meta = project / (target_relative + ".meta")
+        meta_hash_before = io.sha(meta)
+        meta_bytes_before = len(io.read_bytes(meta))
+        meta_text = io.read_text(meta)
+        if re.findall(r"^guid:\s*([a-f0-9]{32})", meta_text, re.M) != [guid]:
+            raise RuntimeError("Shader override would not preserve its exact catalog GUID: " + target_relative)
+        original_source_hash = io.sha(export / source_path)
+        source_meta = export / (source_path + ".meta")
+        if source_meta.is_symlink() or not source_meta.is_file():
+            raise RuntimeError("Shader override source .meta is missing or linked: " + source_path)
+        original_meta_hash = io.sha(source_meta)
+        if original_meta_hash != meta_hash_before:
+            raise RuntimeError("Shader override source and project .meta bytes differ: " + target_relative)
+        prepared.append(
+            dict(
+                project_path=project / target_relative,
+                meta_path=meta,
+                candidate_bytes=candidate_bytes,
+                meta_hash=meta_hash_before,
+                receipt_row=dict(
+                    location_id=location_id,
+                    guid=guid,
+                    type=SHADER_LOCATION_TYPE,
+                    primary_key=primary_key,
+                    source_asset_path=source_path,
+                    target=target_relative,
+                    original_source_sha256=original_source_hash,
+                    original_meta_sha256=original_meta_hash,
+                    generator=generator,
+                    generator_sha256=row["generator_sha256"],
+                    generator_recipe=generator_recipe,
+                    generator_recipe_sha256=row["generator_recipe_sha256"],
+                    candidate_manifest_path="work/" + (Path(stable_output.format(input_id=closure["input_id"])) / manifest_name).as_posix(),
+                    candidate_shader_path="work/" + (Path(stable_output.format(input_id=closure["input_id"])) / shader_rel).as_posix(),
+                    candidate_manifest_sha256=sha(manifest_path),
+                    candidate_shader_sha256=manifest["generated_shader_sha256"],
+                    candidate_shader_bytes=len(candidate_bytes),
+                    preserved_meta_sha256=meta_hash_before,
+                    preserved_meta_bytes=meta_bytes_before,
+                ),
+            )
+        )
+    # Validate both complete candidate/identity/meta chains before the first write.
+    selector_path = io.work / "config/shader-catalog-overrides.json"
+    if sha(selector_path) != local_selector["sha256"]:
+        raise RuntimeError("Local shader override selector changed during staging")
+    for candidate in prepared:
+        io.apply(candidate["project_path"], data=candidate["candidate_bytes"])
+        if io.sha(candidate["meta_path"]) != candidate["meta_hash"]:
+            raise RuntimeError("Shader override changed the original catalog .meta")
+        output_rows.append(candidate["receipt_row"])
+    receipt = dict(
+        schema="whole-catalog-shader-override-receipt-r2",
+        input_id=closure["input_id"],
+        enabled=True,
+        selector_path="work/config/shader-catalog-overrides.json",
+        selector_sha256=local_selector["sha256"],
+        unity_compiled=False,
+        android_accepted=False,
+        visual_parity_proven=False,
+        rows=output_rows,
+    )
+    receipt_path = destination / "shader-overrides.json"
+    io.write(receipt_path, receipt)
+    receipt_result = dict(receipt, path=io.label(receipt_path), sha256=io.sha(receipt_path))
+    # Keep the per-attempt receipt immutable, and always mirror the active receipt
+    # into the selected project so current-project StageIO gets the same disable guard.
+    receipt_mirror = project / ".rebuild/catalog-shader-overrides-receipt.json"
+    io.write(receipt_mirror, receipt)
+    marker = dict(
+        schema="whole-catalog-shader-override-marker-r2",
+        input_id=closure["input_id"],
+        receipt_path=receipt_mirror.relative_to(project).as_posix(),
+        receipt_sha256=io.sha(receipt_mirror),
+        selector_path="work/config/shader-catalog-overrides.json",
+        selector_sha256=local_selector["sha256"],
+    )
+    io.write(project / ".rebuild/catalog-shader-overrides.json", marker)
+    return receipt_result
+
+
 def copy_catalog_asset(source, target):
     """Bulk imports must not launch one subprocess for every asset and meta file."""
     import ctypes
@@ -1237,6 +1504,13 @@ def prepare_integration(io=None, *, attempt=None):
     closure = io.read(out / "reconciled-closure.json")
     if closure["input_id"] != io.read(io.work / "config/accepted-input.json")["input_id"]:
         raise RuntimeError("Whole catalog belongs to different input")
+    from catalog_rebuild import read_local_shader_override_selector
+
+    current_selector = read_local_shader_override_selector(io.work, closure["input_id"])
+    marker_path = io.project / ".rebuild/catalog-shader-overrides.json"
+    if current_selector is None or current_selector["enabled"] is not True:
+        if marker_path.is_symlink() or io.is_file(marker_path):
+            raise RuntimeError("Destination has a prior shader override receipt; rebuild it from a clean destination before disabling overrides")
     metadata = read_catalog(catalog_path(out))
     native = io.read(out / "native-conversions.json")
     mesh_subobjects, unresolved_mesh_subobjects = source_mesh_subobjects(export, closure, metadata, native)
@@ -1302,6 +1576,7 @@ def prepare_integration(io=None, *, attempt=None):
         mapped[relative] = target_relative
         owners[guid] = target_relative
         copies.append(dict(source=relative, target=target_relative, sha256=io.sha(target), meta_sha256=io.sha(Path(str(target) + ".meta"))))
+    override_receipt = _validated_shader_overrides(io, closure, metadata, mapped, export, project, destination)
     if not io.rebuilding:
         repair_support_source(export, mapped, project, destination, io)
     for copied in copies:
@@ -1343,7 +1618,10 @@ def prepare_integration(io=None, *, attempt=None):
             scope="Exact original serialized GUID/name/type and native container/export identity; unresolved refs stay explicit",
         ),
     )
-    io.write(destination / "import-receipt.json", dict(copied=copies, reused=len(mapped) - len(copies), files=len(mapped), roots=len(roots)))
+    io.write(
+        destination / "import-receipt.json",
+        dict(copied=copies, reused=len(mapped) - len(copies), files=len(mapped), roots=len(roots), shader_overrides=override_receipt),
+    )
     io.write(out / "integration-latest.json", dict(path=io.label(destination)))
     if not io.rebuilding:
         copy_catalog_asset(ROOT / "tools/unity/runtime/catalog/WholeCatalogLoader.cs", project / "Assets/LabLoadingScene/WholeCatalogLoader.cs")
@@ -1360,6 +1638,7 @@ def prepare_integration(io=None, *, attempt=None):
             )
         )
     )
+    return override_receipt
 
 
 def host_integration():
