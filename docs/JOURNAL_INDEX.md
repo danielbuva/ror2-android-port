@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J941](PORTING_JOURNAL.md#j941--verify-r24-streamed-media-delivery-and-first-nonzero-composed-pcm) | 2026-10-21 | Verify R24 streamed-media delivery and first nonzero composed PCM | **Hypothesis and change.** |
 | [J940](PORTING_JOURNAL.md#j940--stage-the-complete-original-streamed-media-closure-before-wwise-init) | 2026-10-21 | Stage the complete original streamed-media closure before Wwise Init | Date: 2026-10-22 UTC. |
 | [J934](PORTING_JOURNAL.md#j934--read-android-sdk-feature-declarations-and-compare-independent-api-observations) | 2026-10-21 | Read Android SDK feature declarations and compare independent API observations | Date: 2026-10-22 UTC. |
 | [J938](PORTING_JOURNAL.md#j938--observe-original-material-cache-and-dirty-state-at-the-source-callback) | 2026-10-21 | Observe original material-cache and dirty state at the source callback | Date: 2026-10-22 UTC. |

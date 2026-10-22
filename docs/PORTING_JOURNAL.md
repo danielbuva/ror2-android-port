@@ -26760,3 +26760,82 @@ J850 rollback. Next build R24 from committed source, verify every bank/media
 entry in its APK, install on the primary adopted-storage device with fresh
 reserves, and pass both standard controls before assessing matched music PCM
 and the source-camera material cache. J939 remains reserved for Alpha.
+
+
+## J941 — Verify R24 streamed-media delivery and first nonzero composed PCM
+
+**Hypothesis and change.** J935's missing external media prevents the selected
+original banks from rendering into the owned music output. Build J940's complete
+media closure together with J937's native Listening observations and J938's
+camera material-cache observations. Music events, states, mixing values,
+original media bytes and diagnostic input policy are unchanged. Init retains
+J744's separately accepted adaptation. Prior-art and source contracts remain
+J935/J937/J938/J940; no new reconstruction is introduced.
+
+**Build and host evidence.** Exact-editor R24 from committed source ce82253
+succeeds in 256.059 seconds with zero build errors. Frozen candidate:
+`work/experiments/original-game-audio/candidate-20261022T004750.837647Z/`.
+APK SHA-256
+1b616b7eb479da3361978b62ce4915bfb90fffe3c4d5b6fe31d44c4597cef593
+(918,413,335 bytes); symbols SHA-256
+d654326d44fb38f3edb10e511f9484efcd1d40c510a1ff9943521d28740b64c8;
+libil2cpp build ID 3dd03e0325ff2fa52cf6959f5ef4098cfeff8e64.
+The freeze contains 399 authored inputs, 333 same-request linker-input DLLs,
+285 audio outputs and 266 payload files. All 154 bank and 120 canonical WEM APK
+members match receipt hashes and sizes. Separate two-assembly camera/Siren and
+three-assembly runtime metadata checks pass, including the 11 retained native
+imports and callback export. These are metadata checks, not runtime acceptance.
+
+The first supplemental qualifier refuses the actual main post-strip record
+because it requires an explicit false acceptance field that this older record
+omits. Root preserves that refusal in
+`work/coordination/original-runtime-observation-poststrip/r24-root-r1/`.
+The reviewed successor accepts only absence or exact boolean false, rejects
+true/null/0, and emits explicit false. Source and compiled-inspector hashes are
+checked separately. The upstream 22 tests and five targeted predicate cases
+pass. Actual frozen inputs qualify under the candidate's
+`runtime-observation/qualification-r24-r2/`. No frozen record or APK is edited to
+satisfy the consumer. The device adapter's 40 host tests pass before Root binds
+and arms its exact candidate.
+
+**Device and first failure.** Root updates its own package in place on the
+primary adopted-storage device using the explicit selector and frozen APK.
+Fresh reserves, placement and payload sync pass. Both standard modes pass:
+
+| Mode | Evidence under `work/experiments/baseline/` | Result |
+| --- | --- | --- |
+| Plain | `20261022T005926.712931Z/` | Lakes, 35.273 seconds of world play; profile count 13 |
+| Stage exit | `20261022T010341.181911Z/` | One original exit to Goolake; 126.188 seconds total world play and 10.103 seconds in the destination; profile count 13 |
+
+Both modes remove the selector, stop the process and verify display sleep.
+Root independently rehashes installed APK bytes and verifies owned placement
+and idle state. A separate read-only query hashes and sizes all 120 copied WEM
+files at the current runtime data path: all 585,814,167 bytes match R2. It writes
+or moves no device data. Complete controls and queries are under
+`work/coordination/codex-original-game-audio-device-root/r18-root/`;
+`runtime-media-verification.json` SHA-256 is
+894325f1d9c34797548f46ccefb613f6bb9ff30435973e03285429b38454579a.
+
+Both reports have the audio owner ready with 153 of 153 requested content banks,
+observed Init and no owner failure. Plain records 446 callbacks and 513,792
+finite samples; stage-exit records 460 callbacks and 529,920 finite samples.
+Every counted finite sample is nonzero, with zero nonfinite samples, rejected
+buffers or capped buffers. Both joins identify the exact selected and owned
+`Music_Audio_Device` output. J935's corresponding windows contained zero nonzero
+samples. Source intro/state return observations remain bounded: the later track
+snapshot changes from Lakes gameplay to muSong05. Both logs have zero bank-path
+warning lines and PointSound exception frames, but retain the same five Windows
+shader-bundle target-error lines as R23. This is an existing negative, not a
+clean graphics result.
+
+**Limits and next gate.** Capture stops at `render_frame_limit` in the first-stage
+window. The later Goolake track snapshot does not prove Goolake PCM or continuous
+scene audio. No waveform is retained: counters do not identify a particular
+event, establish musical fidelity or prove speaker audibility. Wider effects,
+spatial audio, volume/pause behavior, composed natural Term/restart and visual
+parity remain open. Device checks have no new first failure; accepted J850 stays
+the rollback and R24 remains diagnostic. Next use the already-built camera-cache
+and native Siren Listening observers. Detailed local triage is under
+`work/coordination/original-game-audio-r24-triage/actual-plain-r1/` and
+`actual-stage-exit-r1/`. This checkpoint changes no runtime source; J940 remains
+the rebuild-produced implementation.

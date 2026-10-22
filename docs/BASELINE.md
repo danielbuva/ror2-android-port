@@ -88,12 +88,12 @@ The plain check and its acceptance criteria remain unchanged.
 
 ## Current baseline (2026-10-20)
 
-J935's later diagnostic APK 32150e8b is installed after both standard controls
-and an independent installed/cleanup query. It remains unpromoted while
-selected-camera rendering and original-audio playback acceptance are open.
+J941's diagnostic APK 1b616b7e is installed after both standard controls,
+media readback and an independent installed/cleanup query. It stays unpromoted
+while selected-camera rendering and broader audio acceptance remain open.
 See the [current snapshot](../PORTING_STATE.md) for installed identity and
-[J935](PORTING_JOURNAL.md#j935--verify-r23-controls-and-identify-unstaged-streamed-music-media)
-for the single result record. The accepted baseline below remains the rollback.
+[J941](PORTING_JOURNAL.md#j941--verify-r24-streamed-media-delivery-and-first-nonzero-composed-pcm)
+for the result record. The accepted baseline below remains the rollback.
 
 | Item | Value |
 | --- | --- |
