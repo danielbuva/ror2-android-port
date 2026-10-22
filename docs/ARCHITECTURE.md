@@ -294,6 +294,20 @@ assemblies, and failures retain their attempt. These API answers are comparison
 evidence only: neither a phone generator nor a game build reads the oracle report.
 No player, scene or canonical game-build pointer is created or changed.
 
+`phone_target_keys.py` with `phone_target_constructor.py` and
+`phone_target_geometry.py` owns current experimental SDK target-key input
+metadata. It derives an initializer's stack interval and consumer stride,
+checks constructor write extents, and requires each typed-call or inline-copy
+input to cover one distinct slot. Bounded operand proofs retain the key/string
+arguments, byte/null coverage and mode-specific length continuations; unknown
+effects, skipped definitions, zero-register values, aliases and incomplete
+coverage refuse. The runtime tree's zero-fill address is an identity, never
+file-backed content. Setup takes the exact supplied SDK and a fresh private
+report; teardown releases parsed bytes and retains SDK/source hashes.
+No SDK instruction executes and no captured table is an input. Constructor
+results, populated maps, discovered target availability, module inclusion,
+native usage and roots remain unqualified. No game build consumes this report.
+
 `phone_managed_compile.py` owns a current experimental authored compiler fixture.
 Its explicit stage invocation copies hash-pinned owner Roslyn components, their
 unchanged runtime configuration/license, the SDK Unity AOT core library and the
