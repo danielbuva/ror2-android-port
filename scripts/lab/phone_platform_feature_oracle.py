@@ -47,7 +47,7 @@ def stage(root, work, editor):
     if subprocess.check_output(["git", "status", "--porcelain", "--", *SOURCES], cwd=root):
         raise ValueError("Commit feature reader/oracle sources before staging")
     commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
-    destination = work / "rebuild/phone-platform-feature-oracle" / uuid.uuid4().hex
+    destination = new_destination(work)
     project = destination / "project"
     with guard.owned_directory(project, work, create=True, new=True):
         pass
@@ -79,6 +79,11 @@ def stage(root, work, editor):
     )
     guard.write_owned(destination / "inputs.json", (json.dumps(inputs, indent=2) + "\n").encode(), work)
     return destination, inputs
+
+
+def new_destination(work):
+    """Keep fresh feature attempts inside the established isolated-oracle scope."""
+    return Path(work) / "rebuild/phone-wrapper-oracle" / ("feature-" + uuid.uuid4().hex)
 
 
 def validate_project(root, work, editor, destination, inputs):

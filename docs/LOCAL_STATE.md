@@ -371,7 +371,7 @@ declaration report directly from the same hash-pinned owner SDK. The private
 proof directory are research evidence, never captured inputs to this reader.
 No SDK token table or disassembly is published. The separate
 `phone_platform_feature_oracle.py ROOT WORK EXACT_EDITOR` generates
-`work/rebuild/phone-platform-feature-oracle/<attempt>/` with its fresh project,
+`work/rebuild/phone-wrapper-oracle/feature-<attempt>/` with its fresh project,
 reader-derived query names, source/input receipts, SDK API observations and logs.
 Its tracked generators own every staged input. The report is desktop comparison
 evidence only; no phone or game build consumes it.

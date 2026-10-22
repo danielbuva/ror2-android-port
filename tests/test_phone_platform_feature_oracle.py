@@ -3,6 +3,7 @@
 import copy
 from pathlib import Path
 import sys
+import tempfile
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
@@ -10,6 +11,18 @@ import phone_platform_feature_oracle as oracle
 
 
 class PlatformFeatureOracleTests(unittest.TestCase):
+    def test_fresh_destination_satisfies_actual_owned_directory_guard(self):
+        with tempfile.TemporaryDirectory() as directory:
+            work = Path(directory).resolve() / "work"
+            destination = oracle.new_destination(work)
+            project = destination / "project"
+            with oracle.guard.owned_directory(project, work, create=True, new=True):
+                self.assertTrue(project.is_dir())
+            with self.assertRaises(FileExistsError):
+                with oracle.guard.owned_directory(project, work, create=True, new=True):
+                    self.fail("An existing oracle must not be reused")
+            self.assertNotEqual(destination, oracle.new_destination(work))
+
     def fixture(self):
         declaration = dict(
             profile="android-platform-feature-declarations-v1",
