@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J971](PORTING_JOURNAL.md#j971--restore-the-prior-audio-cohort-and-fix-uncached-music-resolver-materialization) | 2026-10-22 | Restore the prior audio cohort and fix uncached music resolver materialization | The next frozen build attempt passes preparation, inherited-lock refresh and all typed catalog imports, then audio generation refuses its declared predecessor… |
 | [J970](PORTING_JOURNAL.md#j970--retain-the-shared-host-build-lock-across-nested-cli-subprocesses) | 2026-10-22 | Retain the shared host build lock across nested CLI subprocesses | **Observed progress and first failure.** |
 | [J969](PORTING_JOURNAL.md#j969--preserve-exporter-metadata-separately-from-addressables-shader-keys) | 2026-10-22 | Preserve exporter metadata separately from Addressables shader keys | The next committed R27 preparation reaches metadata validation and refuses `Shader override would not preserve its exact catalog GUID`. |
 | [J968](PORTING_JOURNAL.md#j968--explicit-named-evidence-for-historical-input-update-guard-review) | 2026-10-22 | Explicit named evidence for historical input-update guard review | User authorizes isolated build-tool cleanup while the other development sessions are paused, preserving behavior and rollbacks. |

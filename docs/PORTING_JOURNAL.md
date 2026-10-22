@@ -28401,3 +28401,34 @@ production change and synthetic tests before integration. The private proposal
 is `work/coordination/build-lock-inheritance-fix-draft-r1/`; Architecture names the
 nested handoff contract. Re-run preparation/host/build from a fresh committed
 source freeze. J954 remains installed and J850 remains the accepted rollback.
+
+## J971 — Restore the prior audio cohort and fix uncached music resolver materialization
+
+The next frozen build attempt passes preparation, inherited-lock refresh and
+all typed catalog imports, then audio generation refuses its declared predecessor
+API/game pair. This is an intentional restore-only guard. Root retains the
+failed R4 attempt and verifies the editor idle. Under the host mutex, use the
+existing default-off producer/stager with an explicitly absent alternate selector
+to restore the exact ordinary pair from the prior owned receipt. The actual
+requested selector's bytes remain unchanged. Only receipt-owned generated host
+payload is removed/replaced; original game input, device data and APK rollbacks
+are untouched. The restoration receipt SHA-256 is
+`a253f5fd56cc9fc814ed3b38f3e21cf339b1e4cf559327848e8179a74d1a0cee`.
+
+R5 then regenerates the requested current audio cohort and passes preparation,
+refresh and typed imports, but camera staging raises a KeyError for the dedicated
+`post-audio-r10-1ced-game-lightning-r3` resolver profile. `_ensure_resolver_set`
+accepts that exact profile through `music_observer_resolver_profiles`, validates
+its input, then incorrectly re-indexes only the camera `profiles` table while
+materializing an uncached resolver. Use the already-validated profile input in
+that call. No camera output profile, API/game hash, transformation or runtime
+behavior changes. The camera hook's recipe source pin is refreshed.
+
+Four music/camera pipeline contracts and 42 camera tests (three expected skips)
+pass, with Ruff passing. The new uncached-path fixture supplies only a dedicated
+music resolver entry, verifies the original exact input/API arguments, and proves
+source drift refuses before materialization. The named camera/resolver owners
+remain unchanged. Reconstruction must replay the corrected hook. R4/R5 evidence
+is preserved under the matching
+`work/coordination/original-game-audio-r27-build-root-r4/` and `-r5/` folders.
+Neither attempt produces an APK; J954 remains installed and J850 accepted.

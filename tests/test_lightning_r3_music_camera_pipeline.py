@@ -8,6 +8,8 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import Mock, patch
+from types import SimpleNamespace
 
 
 TEST_ROOT = Path(__file__).resolve().parents[1]
@@ -37,6 +39,35 @@ camera = load_module("r4_camera_hook", "scripts/lab/native_view_camera_build_hoo
 
 
 class LightningR3MusicCameraPipelineTests(unittest.TestCase):
+    def test_uncached_music_resolver_profile_materializes_without_camera_output_profile(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            source = root / "RoR2.dll"
+            source.write_bytes(b"synthetic audio-owned module")
+            source_hash = hashlib.sha256(source.read_bytes()).hexdigest()
+            profile = "post-audio-r10-1ced-game-lightning-r3"
+            api_hash = "a" * 64
+            pins = {
+                "profiles": {},
+                "music_observer_resolver_profiles": {profile: {"input_sha256": source_hash}},
+            }
+            resolver_set = {"profile": "synthetic-resolver"}
+            materialize = Mock()
+            module = SimpleNamespace(source_rows=Mock(return_value=[]), materialize=materialize)
+            with patch.object(camera, "_resolver_module", return_value=module):
+                result = camera._ensure_resolver_set(root / "resolvers", resolver_set, root, source, api_hash, profile, pins, root / "editor")
+            materialize.assert_called_once()
+            args = materialize.call_args.args
+            self.assertEqual(args[:4], (profile, root, source, root / "editor"))
+            self.assertEqual(args[-2:], (source_hash, api_hash))
+            self.assertEqual(result, args[4] / "assemblies")
+            materialize.reset_mock()
+            source.write_bytes(b"drifted audio-owned module")
+            with patch.object(camera, "_resolver_module", return_value=module):
+                with self.assertRaisesRegex(ValueError, "exact source input"):
+                    camera._ensure_resolver_set(root / "resolvers", resolver_set, root, source, api_hash, profile, pins, root / "editor")
+            materialize.assert_not_called()
+
     def test_observer_profile_requires_exact_r3_game_api_and_core(self):
         self.assertEqual(
             music._observer_output_profile(music.R3_POINT_SOUND_GAME, music.R10_API, music.R3_CORE_OBSERVER),

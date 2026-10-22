@@ -200,7 +200,7 @@ def _ensure_resolver_set(
             input_path,
             editor_contents,
             destination,
-            pins["profiles"][profile]["input_sha256"],
+            profile_pins["input_sha256"],
             api_hash,
         )
     else:
