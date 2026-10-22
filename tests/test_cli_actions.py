@@ -137,14 +137,32 @@ class PrototypeActionTests(unittest.TestCase):
                 code = ended.code
         return code, output.getvalue(), errors.getvalue()
 
+    def test_shader_candidate_dispatch_preserves_target_and_prints_result(self):
+        for name, module_name, target, expected_args in (
+            ("shader-outline-candidate", "shader_outline", "outline-highlight", ("outline-highlight",)),
+            ("shader-ramp-fog", "shader_ramp_fog", "lab", ()),
+        ):
+            with self.subTest(action=name):
+                module = ModuleType(module_name)
+                module.generate = Mock(return_value={"success": True, "unity_compiled": False})
+                self.modules[module_name] = module
+                code, output = self.dispatch(name, target=target)
+                module.generate.assert_called_once_with(*expected_args)
+                self.assertEqual(json.loads(output), {"success": True, "unity_compiled": False})
+                self.assertIsNone(code)
+
     def test_registry_names_and_current_status_match_documented_contract(self):
-        # New rebuild action has its own argument/dispatch contracts in test_rebuild.
-        self.assertEqual(set(actions.ACTIONS) - {"rebuild-step"}, set(EXPECTED) - {"inspect"})
+        # Added actions have separate dispatch contracts rather than changing
+        # the historical pre-registry snapshot.
+        added = {"rebuild-step", "shader-outline-candidate", "shader-ramp-fog"}
+        self.assertEqual(set(actions.ACTIONS) - added, set(EXPECTED) - {"inspect"})
         self.assertEqual(len(actions._ENTRIES), len(actions.ACTIONS))
         self.assertEqual(
             {name for name, entry in actions.ACTIONS.items() if entry.status == "current"},
             {
                 "rebuild-step",
+                "shader-outline-candidate",
+                "shader-ramp-fog",
                 "phone-content-fixture",
                 "phone-content-check",
                 "phone-content-build",
@@ -189,7 +207,7 @@ class PrototypeActionTests(unittest.TestCase):
                 self.assertIn(entry.status, ("current", "historical"))
                 self.assertTrue(entry.help)
                 self.assertNotIn("\n", entry.help)
-                if name == "rebuild-step":
+                if name in added:
                     continue
                 primary = EXPECTED[name]["calls"][0]
                 self.assertEqual((entry.module, entry.function, entry.kwargs), (primary["module"], primary["function"], primary["kwargs"]))
