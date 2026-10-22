@@ -28233,3 +28233,31 @@ with independent `r27-music-pcm-join-review-r2/` and fixture corrections at
 `r27-*-root-tests*.log` names in that coordination area. No new APK, stripping,
 Android query, output-event attribution or speaker result is accepted by this
 source checkpoint; J954 remains installed and J850 remains the rollback.
+
+## J965 — Explicit named evidence for historical input-update guard review
+
+User authorizes isolated build-tool cleanup while the other development sessions
+are paused, preserving behavior and rollbacks. Replace the historical
+`input-update-check` action's hard-coded J425 run folder with the named
+`input-migration-optional-guards` selection. The support resolver checks the
+reviewed receipt's exact SHA-256, original/output hashes, preservation contracts
+and distinct method list, then binds its original assembly hash to the preserved
+baseline inventory before any live inventory, probe import or experiment output.
+The result records the selection and hashes the resolver among its tool sources.
+Registration is explicit, exclusive and local-only; missing evidence never falls
+back to a latest run. Original evidence, accepted input and rollback data are
+untouched. Local setup is documented in `LOCAL_STATE.md`; other historical scene
+paths remain open work.
+
+Synthetic host fixtures verify non-timestamp selection, unchanged source bytes,
+missing evidence, pre-work refusal, hash/input drift, malformed contracts,
+selection identity mismatch, overwrite refusal and path/symlink rejection.
+Nine new fixtures and four existing input-migration tests pass. The complete
+host suite passes **1,665 tests, 116 skipped** with the existing cloud Python
+3.12 lab environment. An initial system-Python run lacked UnityPy/lz4 (40 import
+or dependency errors); the dependency-equipped rerun resolves those errors.
+Changed-file Ruff format/check, public audit, journal/action checks and diff
+whitespace checks pass. The macOS local pre-push wrapper and `./dev doctor`
+were not runnable in this Linux clone (no configured clone-local venv/toolchain);
+these are host checks, not a private retained-receipt replay or Unity/device test.
+No APK, gameplay, audio, alpha-readiness or runtime architecture claim changes.

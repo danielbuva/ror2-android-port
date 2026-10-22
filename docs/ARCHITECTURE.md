@@ -516,6 +516,12 @@ current path) and **historical** (kept for evidence; not reached by current comm
 
 ## Build pipeline
 
+Historical `input-update-check` uses `scripts/lab/historical_receipts.py` to
+resolve an explicitly registered, hash-pinned optional-guard receipt against the
+preserved original assembly before inventory/probe work. This support owner has
+no runtime or build-selection side effects; its registration and local-state
+contract are in [LOCAL_STATE.md](LOCAL_STATE.md#named-historical-optional-guard-evidence).
+
 `scripts/git-hooks/pre-push` delegates committed-source checks to
 `scripts/ci-local.sh` in a fresh clone. Its support helper
 `scripts/ci-hdiutil-volume.py` requests a 30 s timeout for each optional image
