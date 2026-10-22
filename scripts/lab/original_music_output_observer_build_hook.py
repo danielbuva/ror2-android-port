@@ -27,6 +27,10 @@ GUARDED_GAME = "3124a2ed9cf458acee78b1beaf969590b184be452e2b3aa5a8852df82ff95d30
 ACCEPTED_GAME = "a5f7d83c7e6872fdd6099fdc299adb7d4fa03cbf465e526d6f5efcc35c2c281d"
 LEGACY_OBSERVED_GAME = "27340ed60dbfe77f66fa394d028b597d3e4613ee8ea405416c061766fb226eef"
 NATIVE_RESULT_OBSERVED_GAME = "a6385e3166d3950944da8a08f145d7e9be602571a6a75b4afb18279801f44311"
+R3_POINT_SOUND_GAME = "594282cfa617ac58eda6965e0a48e6958438f345cbb98bfb7cb49b9130efad1d"
+R3_CORE_OBSERVER = "b543483bd7ae59dbf5da3aad92e3b19ba5fed8046db903d5aff95d3fb0991019"
+R3_NATIVE_RESULT_OBSERVED_GAME = "619af38a62b19fdfcd6ef1408548aecedbda3e0830be7982cc4f96cd6b000523"
+R3_PROFILE = "post-audio-r10-1ced-game-lightning-r3"
 R10_API = "1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b"
 API_PROFILES = {
     "d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23",
@@ -76,20 +80,29 @@ def _generation(project: Path, audio: dict, receipt_sha: str) -> Path:
         or lineage.get("accepted_input_id") != ACCEPTED_INPUT_ID
         or lineage.get("accepted_game_sha256") != ACCEPTED_GAME
         or lineage.get("guarded_game_input_sha256") != GUARDED_GAME
-        or lineage.get("composed_game_sha256") != RAW_GAME
+        or lineage.get("composed_game_sha256") not in {RAW_GAME, R3_POINT_SOUND_GAME}
         or lineage.get("composed_api_sha256") not in API_PROFILES
     ):
-        raise ValueError("audio stage is outside exact 6f96/d540-or-1ced observer profiles")
-    if sha(project / GAME) != RAW_GAME or sha(project / API) != lineage["composed_api_sha256"]:
+        raise ValueError("audio stage is outside exact 6f96/d540-or-1ced historical R10 or Lightning R3 observer profiles")
+    if sha(project / GAME) != lineage["composed_game_sha256"] or sha(project / API) != lineage["composed_api_sha256"]:
         raise ValueError("staged game/API bytes differ from the exact original-audio pair")
     rows = audio.get("outputs")
     game_rows = [row for row in rows if isinstance(row, dict) and row.get("target") == GAME.as_posix()] if isinstance(rows, list) else []
     core_rows = [row for row in rows if isinstance(row, dict) and row.get("target") == CORE_TARGET] if isinstance(rows, list) else []
-    if len(game_rows) != 1 or game_rows[0].get("sha256") != RAW_GAME:
+    if len(game_rows) != 1 or game_rows[0].get("sha256") != lineage["composed_game_sha256"]:
         raise ValueError("audio stage does not own exactly the expected raw PointSound game module")
     if len(core_rows) != 1 or not (project / CORE).is_file() or sha(project / CORE) != core_rows[0].get("sha256"):
         raise ValueError("observer assembly differs from its exact preceding audio stage row")
     return lineage
+
+
+def _observer_output_profile(input_game: str, api_hash: str, core_hash: str) -> tuple[str, str]:
+    """Bind an observer output to the exact incoming game/API/core tuple."""
+    if input_game == RAW_GAME and api_hash == R10_API:
+        return "post-audio-r10-1ced-game-6f96", NATIVE_RESULT_OBSERVED_GAME
+    if input_game == R3_POINT_SOUND_GAME and api_hash == R10_API and core_hash == R3_CORE_OBSERVER:
+        return R3_PROFILE, R3_NATIVE_RESULT_OBSERVED_GAME
+    raise ValueError("music observer source/core/API tuple is not a reviewed exact profile")
 
 
 def _copy_verified(source: Path, destination: Path, expected: str, replace: str) -> None:
@@ -124,12 +137,16 @@ def stage(project: Path, work: Path, reference_directory: Path, profile: str) ->
         raise ValueError("previous music observer stage must be restored before replacement")
     audio, audio_receipt_sha = _receipt(project)
     lineage = _generation(project, audio, audio_receipt_sha)
-    expected_profile = "post-audio-r10-1ced-game-6f96"
+    input_game = lineage["composed_game_sha256"]
+    core = project / CORE
+    if not core.is_file() or core.is_symlink():
+        raise ValueError("staged observer assembly is absent or unsafe")
+    core_hash = sha(core)
+    expected_profile, expected_output = _observer_output_profile(input_game, lineage["composed_api_sha256"], core_hash)
     if profile != expected_profile:
-        raise ValueError("observer transform resolver profile differs from exact audio API")
-    expected_output = NATIVE_RESULT_OBSERVED_GAME
+        raise ValueError("observer transform resolver profile differs from exact source/core/API lineage")
     if lineage["composed_api_sha256"] != R10_API:
-        raise ValueError("new music observer production result is qualified only for the exact 1ced API")
+        raise ValueError("native music result observer is qualified only for the exact 1ced API")
     camera_pins = json.loads((ROOT / "recipe/native-view-camera-transform.json").read_text(encoding="utf-8"))
     script = ROOT / camera_pins["source_paths"]["producer"]
     import importlib.util
@@ -141,10 +158,6 @@ def stage(project: Path, work: Path, reference_directory: Path, profile: str) ->
     spec.loader.exec_module(producer)
     editor_contents, _ = producer.pinned_editor(camera_pins)
     reference_directory, _ = producer.exact_resolution_closure(reference_directory, camera_pins, profile, project, editor_contents)
-    core = project / CORE
-    if not core.is_file() or core.is_symlink():
-        raise ValueError("staged observer assembly is absent or unsafe")
-    core_hash = sha(core)
     toolchain = json.loads((ROOT / "environment/toolchain.json").read_text(encoding="utf-8"))
     editor = Path(os.environ.get("UNITY_EDITOR", "")).expanduser()
     if not editor.is_absolute() or not editor.is_file():
@@ -179,7 +192,7 @@ def stage(project: Path, work: Path, reference_directory: Path, profile: str) ->
         raise ValueError("music output observer transform source/project differs from its exact recipe pin")
     generation_key = hashlib.sha256(
         json.dumps(
-            {"audio_receipt": audio_receipt_sha, "input": RAW_GAME, "api": lineage["composed_api_sha256"], "core": core_hash, "transform": sha(TRANSFORM)},
+            {"audio_receipt": audio_receipt_sha, "input": input_game, "api": lineage["composed_api_sha256"], "core": core_hash, "transform": sha(TRANSFORM)},
             sort_keys=True,
             separators=(",", ":"),
         ).encode()
@@ -190,12 +203,12 @@ def stage(project: Path, work: Path, reference_directory: Path, profile: str) ->
     snapshot = output_root / "RoR2.preimage.dll"
     output = output_root / "RoR2.music-output-observed.dll"
     if snapshot.exists() or output.exists():
-        if not snapshot.is_file() or not output.is_file() or sha(snapshot) != RAW_GAME or sha(output) != expected_output:
+        if not snapshot.is_file() or not output.is_file() or sha(snapshot) != input_game or sha(output) != expected_output:
             raise ValueError("cached observer generation is incomplete or differs from exact immutable hashes")
         transform_log = "reused exact content-addressed observer output"
     else:
         shutil.copyfile(game, snapshot)
-        if sha(snapshot) != RAW_GAME:
+        if sha(snapshot) != input_game:
             raise ValueError("observer input snapshot failed its exact source hash")
         tool_root = output_root / "transform-tool"
         build = subprocess.run(
@@ -225,16 +238,17 @@ def stage(project: Path, work: Path, reference_directory: Path, profile: str) ->
         if run.returncode or not output.is_file() or sha(output) != expected_output:
             raise RuntimeError("exact music observer transform failed: " + run.stdout)
         transform_log = run.stdout
-    _copy_verified(output, game, expected_output, RAW_GAME)
+    _copy_verified(output, game, expected_output, input_game)
     receipt = {
         "schema": SCHEMA,
+        "profile": expected_profile,
         "accepted": False,
         "runtime_dispatch_ready": False,
         "audio_stage_receipt_sha256": audio_receipt_sha,
-        "audio_stage_input_game_sha256": RAW_GAME,
+        "audio_stage_input_game_sha256": input_game,
         "api_sha256": lineage["composed_api_sha256"],
         "core_observer_sha256": core_hash,
-        "input_sha256": RAW_GAME,
+        "input_sha256": input_game,
         "output_sha256": expected_output,
         "generation": generation_key,
         "preimage_snapshot": output_root.relative_to(work).as_posix() + "/RoR2.preimage.dll",
@@ -249,16 +263,12 @@ def stage(project: Path, work: Path, reference_directory: Path, profile: str) ->
     except Exception:
         temporary_receipt.unlink(missing_ok=True)
         if game.is_file() and sha(game) == expected_output:
-            _copy_verified(snapshot, game, RAW_GAME, expected_output)
+            _copy_verified(snapshot, game, input_game, expected_output)
         raise
     return {"receipt": receipt, "receipt_sha256": sha(receipt_path), "transform_log": transform_log}
 
 
 def restore(project: Path, work: Path) -> dict | None:
-    # A destination project without an observer receipt has nothing owned by
-    # this hook to restore. Keep that common case inert before requiring the
-    # canonical ignored-work root; a present receipt still takes the strict
-    # lineage and containment path below.
     project = Path(project)
     path = project / STAGE
     _safe(path, missing=True)
@@ -277,6 +287,9 @@ def restore(project: Path, work: Path) -> dict | None:
     if receipt.get("schema") != SCHEMA or receipt.get("audio_stage_receipt_sha256") != audio_receipt_sha:
         raise ValueError("observer receipt is not bound to current audio stage")
     lineage = audio.get("lineage")
+    raw_game = receipt.get("input_sha256")
+    api_hash = receipt.get("api_sha256")
+    output_hash = receipt.get("output_sha256")
     if (
         audio.get("requested") is not True
         or audio.get("accepted_input_id") != ACCEPTED_INPUT_ID
@@ -284,18 +297,26 @@ def restore(project: Path, work: Path) -> dict | None:
         or lineage.get("accepted_input_id") != ACCEPTED_INPUT_ID
         or lineage.get("accepted_game_sha256") != ACCEPTED_GAME
         or lineage.get("guarded_game_input_sha256") != GUARDED_GAME
-        or lineage.get("composed_game_sha256") != RAW_GAME
-        or lineage.get("composed_api_sha256") != receipt.get("api_sha256")
+        or lineage.get("composed_game_sha256") != raw_game
+        or lineage.get("composed_api_sha256") != api_hash
+        or receipt.get("audio_stage_input_game_sha256") != raw_game
     ):
         raise ValueError("observer receipt is not bound to the exact live audio/API lineage")
-    api_hash = receipt.get("api_sha256")
-    output_hash = receipt.get("output_sha256")
-    allowed_pairs = {
-        ("d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23", LEGACY_OBSERVED_GAME),
-        (R10_API, LEGACY_OBSERVED_GAME),  # exact historical R22 receipt remains unwindable
-        (R10_API, NATIVE_RESULT_OBSERVED_GAME),
-    }
-    if receipt.get("input_sha256") != RAW_GAME or (api_hash, output_hash) not in allowed_pairs:
+    if raw_game == RAW_GAME:
+        allowed = {
+            ("d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23", LEGACY_OBSERVED_GAME),
+            (R10_API, LEGACY_OBSERVED_GAME),
+            (R10_API, NATIVE_RESULT_OBSERVED_GAME),
+        }
+        if receipt.get("profile") not in (None, "post-audio-r10-1ced-game-6f96"):
+            raise ValueError("historical observer profile label is unknown")
+    elif raw_game == R3_POINT_SOUND_GAME:
+        allowed = {(R10_API, R3_NATIVE_RESULT_OBSERVED_GAME)}
+        if receipt.get("profile") != R3_PROFILE:
+            raise ValueError("R3 observer receipt omits its exact profile identity")
+    else:
+        raise ValueError("observer receipt names an unknown exact source image")
+    if (api_hash, output_hash) not in allowed:
         raise ValueError("observer receipt names an unknown exact input/API/output pair")
     game = project / GAME
     if sha(game) != output_hash:
@@ -311,10 +332,12 @@ def restore(project: Path, work: Path) -> dict | None:
     ):
         raise ValueError("observer preimage path is not a canonical work-relative path")
     snapshot = (work / snapshot_rel).resolve(strict=True)
-    if not snapshot.is_relative_to(work) or sha(snapshot) != RAW_GAME:
+    if not snapshot.is_relative_to(work) or sha(snapshot) != raw_game:
         raise ValueError("observer preimage snapshot is missing or changed")
-    if sha(project / API) != receipt.get("api_sha256") or sha(project / CORE) != receipt.get("core_observer_sha256"):
+    if sha(project / API) != api_hash or sha(project / CORE) != receipt.get("core_observer_sha256"):
         raise ValueError("observer restore API/core differs from its receipt-bound audio stage")
-    _copy_verified(snapshot, game, RAW_GAME, output_hash)
+    if raw_game == R3_POINT_SOUND_GAME and receipt.get("core_observer_sha256") != R3_CORE_OBSERVER:
+        raise ValueError("R3 observer restore core differs from the exact R3 output")
+    _copy_verified(snapshot, game, raw_game, output_hash)
     path.unlink()
-    return {"restored_sha256": RAW_GAME, "audio_stage_receipt_sha256": audio_receipt_sha}
+    return {"restored_sha256": raw_game, "audio_stage_receipt_sha256": audio_receipt_sha}

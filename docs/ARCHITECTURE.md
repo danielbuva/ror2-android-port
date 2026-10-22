@@ -2830,3 +2830,21 @@ mutant checks this boundary. Cecil reference resolution is
 materialized from the current project plugin DLLs and the exact pinned Unity engine
 modules/Mono BCL. Its receipt is a host type-resolution input, not the full player
 linker/IL2CPP closure or an APK/runtime acceptance record.
+
+
+## LightningStake source-call observer
+
+`runtime/world/LightningStakeSourceCallObserver.cs` owns opt-in bounded
+pre-projectile snapshots. `PortSession` validates the selector before setup and
+accepts only the two existing Nova source-selected integrated-world routes with
+a selected survivor. `IntegratedWorldSession` creates the observer after the
+world report exists, saves changed counts through its existing observation
+cadence, and detaches the exact bridge delegate during teardown. An ownership
+conflict marks session failure while remaining world cleanup continues.
+The Cecil producer inserts a default-off branch immediately before the original
+projectile call, preserving its receiver, source struct local and original
+call. The observer stores at most eight scalar-only rows; it retains no game
+objects and changes no projectile operands. Producer, music-return observer
+and native-camera profiles bind the resulting managed chain separately.
+Historical exact profiles remain available. This diagnostic identifies source
+operands; it is not a projectile repair or gameplay acceptance.

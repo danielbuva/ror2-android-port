@@ -156,6 +156,29 @@ public sealed partial class PortSession : MonoBehaviour
         public SurvivorSkillObserver.SkillVariantInventoryReport skillVariantInventory;
     }
     [Serializable]
+    public sealed class LightningStakeSourceCallObservation
+    {
+        public int frame, damageAttackerInstance, projectileOwnerInstance, ownerBodyInstance, hitObjectInstance;
+        public int projectilePrefabInstance, projectileCatalogIndex;
+        public uint damageAttackerNetworkId, projectileOwnerNetworkId, ownerBodyNetworkId;
+        public string projectilePrefabName, damagePosition, projectilePosition, ownerPosition, ownerVelocity, hitPosition;
+        public float damageInfoDamage, damageInfoForce, damageInfoProcCoefficient, projectileDamage, projectileForce;
+        public bool damageInfoCrit, projectileCrit, damageInfoRejected, attackerMatchesProjectileOwner;
+        public bool hasOwnerBody, hasAttackerNetworkIdentity, hasProjectileOwnerNetworkIdentity, hasOwnerBodyNetworkIdentity,
+            hasProjectilePrefab, isLightningStakeName;
+        public bool finiteDamagePosition, finiteProjectilePosition, finiteOwnerPosition, finiteOwnerVelocity, finiteHitPosition,
+            finiteDamageInfoDamage, finiteDamageInfoForce, finiteProjectileDamage, finiteProjectileForce;
+    }
+    [Serializable]
+    public sealed class LightningStakeSourceCallReport
+    {
+        public string status;
+        public int sourceCallCount, captureFailures;
+        public string firstCaptureFailureType;
+        public bool historyCapped, detached;
+        public List<LightningStakeSourceCallObservation> sourceCalls = new List<LightningStakeSourceCallObservation>();
+    }
+    [Serializable]
     public class SessionReport
     {
         public PerformanceReport performance;
@@ -189,6 +212,9 @@ public sealed partial class PortSession : MonoBehaviour
         // Per-run request for the separately instrumented point-sound diagnostic build.
         // Absent selector JSON remains false and ordinary builds have no injected callsites.
         public bool pointSoundDiagnosticRequested;
+        // Default-off per-run observation of the original blue-elite LightningStake
+        // source call. Absent selector JSON never installs the observer delegate.
+        public bool lightningStakeSourceCallDiagnosticRequested;
         // Explicit source-entry-only mode; omitted attempt JSON remains false.
         public bool sirenSourceEntryDiagnosticAttempt, sirenSourceEntryDiagnosticRegistrationObserved,
             sirenSourceEntryDiagnosticCleanupObserved;
@@ -736,6 +762,16 @@ public sealed partial class PortSession : MonoBehaviour
         {
             r.phase = "native-source-skin-lifecycle-refused";
             r.firstFailure = "Native source skin lifecycle request requires the integrated Nova source-selected player route";
+            r.firstFailurePhase = r.phase;
+            Save();
+            yield break;
+        }
+        string lightningSourceCallRefusal = LightningStakeSourceCallObserver.ValidateSelector(
+            r.lightningStakeSourceCallDiagnosticRequested, config.integratedWorld, r.id, r.selectedSurvivor);
+        if (lightningSourceCallRefusal != null)
+        {
+            r.phase = "lightning-stake-source-call-refused";
+            r.firstFailure = lightningSourceCallRefusal;
             r.firstFailurePhase = r.phase;
             Save();
             yield break;

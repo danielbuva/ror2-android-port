@@ -55,7 +55,7 @@ class RequestPipelineTests(unittest.TestCase):
             managed_producer.EXPECTED["composed_transform_source"],
         )
         self.assertEqual(
-            "53e732cbdf507e79bb0c9581acdf138c8e3b028efac20d8adcfd8a73dc5e5aba",
+            "a158d1fea576c87f1b0d71df583861a8c1b5a73731d61bb9315d3f2dc0c84126",
             managed_producer.EXPECTED["composed_transform_source"],
         )
 

@@ -74,8 +74,13 @@ class ProducerManifestTests(unittest.TestCase):
         predecessor_api = producer.PREVIOUS_COMPOSED_API_SHA256
         predecessor_game = producer.PREVIOUS_COMPOSED_GAME_SHA256
         self.assertNotEqual(predecessor_api, current_api)
-        self.assertEqual(predecessor_game, current_game)
+        self.assertNotEqual(predecessor_game, current_game)
         self.assertEqual("current-audio", producer.classify_project_pair(current_api, current_game))
+        self.assertEqual(
+            "previous-audio-restore-only",
+            producer.classify_project_pair(current_api, producer.PREVIOUS_R10_GAME_SHA256),
+        )
+        self.assertEqual("previous-audio-restore-only", producer.classify_project_pair(current_api, producer.PREVIOUS_R10_GAME_SHA256))
         self.assertEqual("previous-audio", producer.classify_project_pair(predecessor_api, predecessor_game))
         self.assertEqual("older-previous-audio", producer.classify_project_pair(predecessor_api, producer.OLDER_PREVIOUS_GAME_SHA256))
         with self.assertRaisesRegex(ValueError, "neither ordinary guarded"):
@@ -93,6 +98,10 @@ class ProducerManifestTests(unittest.TestCase):
             self.assertEqual("older-previous-audio", producer.classify_project_pair(predecessor_api, producer.OLDER_PREVIOUS_GAME_SHA256))
             self.assertEqual("older-previous-audio", producer.classify_project_pair(predecessor_api, old_game))
             self.assertEqual("current-audio", producer.classify_project_pair(current_api, game))
+            self.assertEqual(
+                "previous-audio-restore-only",
+                producer.classify_project_pair(current_api, producer.PREVIOUS_R10_GAME_SHA256),
+            )
             self.assertEqual("legacy-restore-only", producer.classify_project_pair(producer.LEGACY_RESTORE_API_SHA256, old_game))
             with self.assertRaisesRegex(ValueError, "neither ordinary guarded"):
                 producer.classify_project_pair("d" * 64, game)
@@ -117,7 +126,7 @@ class ProducerManifestTests(unittest.TestCase):
             }
             with (
                 mock.patch.dict(producer.LINEAGE, lineage),
-                mock.patch.object(producer, "OLDER_PREVIOUS_GAME_SHA256", manifest["source_input_hashes"]["composed_game"]),
+                mock.patch.object(producer, "CURRENT_COMPOSED_GAME_SHA256", manifest["source_input_hashes"]["composed_game"]),
             ):
                 joined = producer.verify_managed_output_manifest(manifest, root)
             self.assertEqual(set(outputs), set(joined))
@@ -140,7 +149,7 @@ class ProducerManifestTests(unittest.TestCase):
             outputs["synthetic-chain/api-adapted.dll"].write_bytes(b"changed after producer receipt")
             with (
                 mock.patch.dict(producer.LINEAGE, lineage),
-                mock.patch.object(producer, "OLDER_PREVIOUS_GAME_SHA256", manifest["source_input_hashes"]["composed_game"]),
+                mock.patch.object(producer, "CURRENT_COMPOSED_GAME_SHA256", manifest["source_input_hashes"]["composed_game"]),
                 self.assertRaisesRegex(ValueError, "manifest hash"),
             ):
                 producer.verify_managed_output_manifest(manifest, root)
@@ -195,7 +204,7 @@ class ProducerManifestTests(unittest.TestCase):
             }
             with (
                 mock.patch.dict(producer.LINEAGE, lineage),
-                mock.patch.object(producer, "OLDER_PREVIOUS_GAME_SHA256", manifest["source_input_hashes"]["composed_game"]),
+                mock.patch.object(producer, "CURRENT_COMPOSED_GAME_SHA256", manifest["source_input_hashes"]["composed_game"]),
             ):
                 enabled = {**manifest, "request": {"requested": True}}
                 with self.assertRaisesRegex(ValueError, "non-default request state"):

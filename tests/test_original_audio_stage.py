@@ -215,16 +215,35 @@ class StageTests(unittest.TestCase):
             self.assertEqual(stage_module.LINEAGE, result["lineage"])
             self.assertNotEqual(previous_hash, hashlib.sha256(previous_path.read_bytes()).hexdigest())
 
+    def test_r26_r2_bank_lineage_can_upgrade_owned_support_to_new_source(self):
+        with self.temporary_directory() as temp:
+            root = Path(temp)
+            project = root / "project"
+            project.mkdir()
+            previous = {**stage_module.R10_PREVIOUS_GAME_LINEAGE, "stage_receipt_sha256": stage_module.R2_BANK_RECEIPT_SHA256}
+            self.write_previous_default_off_receipt(project, lineage=previous)
+            manifest, _, _ = write_set(root, False)
+            result = stage_module.stage(project, manifest, None, None)
+            self.assertEqual(stage_module.LINEAGE, result["lineage"])
+            self.assertFalse(result["requested"])
+
     def test_r6_immediate_predecessor_lineage_is_exact_and_older_pairs_do_not_cross(self):
         self.assertEqual("d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23", stage_module.PREVIOUS_LINEAGE["composed_api_sha256"])
         self.assertEqual("6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc", stage_module.PREVIOUS_LINEAGE["composed_game_sha256"])
+        self.assertEqual("594282cfa617ac58eda6965e0a48e6958438f345cbb98bfb7cb49b9130efad1d", stage_module.LINEAGE["composed_game_sha256"])
+        self.assertEqual("1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b", stage_module.R10_PREVIOUS_GAME_LINEAGE["composed_api_sha256"])
+        self.assertEqual("6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc", stage_module.R10_PREVIOUS_GAME_LINEAGE["composed_game_sha256"])
+        self.assertIn(
+            ("1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b", stage_module.PREVIOUS_COMPOSED_GAME_SHA256),
+            stage_module.ALLOWED_RESTORE_PREIMAGE_PAIRS,
+        )
         self.assertEqual("1034a747e31a3b79554b9cb06f941c7acabaa9e0ee82c2a00abc4b24f9327c1c", stage_module.OLDER_PREVIOUS_LINEAGE["composed_game_sha256"])
         self.assertNotIn((stage_module.OLDER_RESTORE_API_SHA256, stage_module.PREVIOUS_COMPOSED_GAME_SHA256), stage_module.ALLOWED_RESTORE_PREIMAGE_PAIRS)
         self.assertNotIn((stage_module.LEGACY_RESTORE_API_SHA256, stage_module.PREVIOUS_COMPOSED_GAME_SHA256), stage_module.ALLOWED_RESTORE_PREIMAGE_PAIRS)
 
     def test_predecessor_lineage_differs_only_at_declared_composed_game_pin(self):
         differences = {key for key in stage_module.LINEAGE if stage_module.LINEAGE[key] != stage_module.PREVIOUS_LINEAGE.get(key)}
-        self.assertEqual({"observed_api_sha256", "composed_api_sha256", "native_library_sha256"}, differences)
+        self.assertEqual({"observed_api_sha256", "composed_api_sha256", "composed_game_sha256", "native_library_sha256"}, differences)
         self.assertEqual(
             "d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23",
             stage_module.PREVIOUS_LINEAGE["composed_api_sha256"],

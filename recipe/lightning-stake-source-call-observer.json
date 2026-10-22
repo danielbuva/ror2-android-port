@@ -1,0 +1,44 @@
+{
+  "accepted_input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "guarded_ror2_sha256": "3124a2ed9cf458acee78b1beaf969590b184be452e2b3aa5a8852df82ff95d30",
+  "observation": {
+    "bridge_attach": "TryAttachLightningStakeSourceCall",
+    "bridge_detach": "TryDetachLightningStakeSourceCall",
+    "bridge_type": "OriginalOwnerProbeObserver.Observer",
+    "callback": "RecordLightningStakeSourceCall",
+    "calls_original_projectile_api_again": false,
+    "changes_original_call_operands": false,
+    "max_rows": 8,
+    "owner_source": "tools/unity/runtime/world/LightningStakeSourceCallObserver.cs",
+    "owner_source_sha256": "8dac5dd26a8c96120d0fc515e96519c07ee30fe3086f1ec85fd78b58a37c72b0",
+    "repairs_or_clamps_gameplay": false,
+    "retains_unity_objects": false
+  },
+  "schema": "lightning-stake-source-call-observer-r1",
+  "selection": {
+    "accepted_route_ids": [
+      "body-state-spawn-state-auto-nova-spine",
+      "body-state-spawn-state-auto-nova-spine-bringup"
+    ],
+    "default": false,
+    "field": "lightningStakeSourceCallDiagnosticRequested",
+    "requires_integrated_world": true,
+    "requires_nonempty_selected_survivor": true
+  },
+  "source_method": {
+    "call_identity": "RoR2.Projectile.ProjectileManager.FireProjectile(RoR2.Projectile.FireProjectileInfo):System.Void",
+    "current_r26_poststrip_sha256": "63721819e48b32d603eceda61d9cbe40a28138630223ccad477c181c3ab59db3",
+    "current_r26_prestrip_sha256": "64628a52d443786d7920fc8d6b65215f32886cb3489bf5439c3efaed17e43ccf",
+    "fire_projectile_info_call_count": 1,
+    "guarded_input_fingerprint_sha256": "c6090a6ca1e2a42240b48cc4c0a9fa9b932ddffedfaf0d8589559f6dd2cdf2ec",
+    "identity": "System.Void RoR2.GlobalEventManager::OnHitAllProcess(RoR2.DamageInfo,UnityEngine.GameObject)",
+    "instruction_count": 229,
+    "lightning_stake_prefab_path_count": 1
+  },
+  "status": "draft; default-off; source-call observation only; Android runtime not qualified",
+  "transform": {
+    "source": "tools/unity/support/audio/managed-producer/tools/composed/ComposedGameCecilTransform.cs",
+    "source_sha256": "a158d1fea576c87f1b0d71df583861a8c1b5a73731d61bb9315d3f2dc0c84126",
+    "verification": "one source-path literal, one original call, selector branch immediately before call, exact receiver and FireProjectileInfo local reloaded on original path"
+  }
+}

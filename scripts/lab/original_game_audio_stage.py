@@ -60,12 +60,13 @@ LINEAGE = {
     "adapted_api_sha256": "2bd973178c99bfcb4d20510e2d1eac7efa9dd6d698237f2edfa486171bc2f272",
     "observed_api_sha256": "a2914ace8e2a7338010f8e9a9515911d68489bf0ad467bc7f73f4de293a19fe9",
     "composed_api_sha256": "1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b",
-    "composed_game_sha256": "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc",
+    "composed_game_sha256": "594282cfa617ac58eda6965e0a48e6958438f345cbb98bfb7cb49b9130efad1d",
     "native_library_sha256": "9075b5a4d3718a209eb244760d2b251a59ef2f5c486a2d2fc0e83b90240cbba3",
     "stage_receipt_sha256": "8fe02400a7ab0905ae21b728e702d7ef2c4dcf8646f77f631682a81bda0ab88c",
 }
 R23_LINEAGE = {
     **LINEAGE,
+    "composed_game_sha256": "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc",
     "native_library_sha256": "4f309b9df05392b7b78ea51c53955225f27400a83810e260441f65dfdc335498",
 }  # Exact pre-waveform predecessor; retain its R1 bank receipt.
 PREVIOUS_NATIVE_LIBRARY_SHA256 = "bb5879b4eb38b81dc3830a1662ba467b60b595e7fedb88a1301d3161f8ab9304"
@@ -73,6 +74,7 @@ OLD_CURRENT_LINEAGE = {**R23_LINEAGE, "native_library_sha256": PREVIOUS_NATIVE_L
 PREVIOUS_COMPOSED_API_SHA256 = "d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23"
 OLDER_RESTORE_API_SHA256 = "9a3f9911697b4ce28a955dff09f618e0f2662083e56eeb28ff5b6ecc02b588f3"
 PREVIOUS_COMPOSED_GAME_SHA256 = "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc"
+R10_PREVIOUS_GAME_LINEAGE = {**LINEAGE, "composed_game_sha256": PREVIOUS_COMPOSED_GAME_SHA256}
 OLDER_PREVIOUS_GAME_SHA256 = "1034a747e31a3b79554b9cb06f941c7acabaa9e0ee82c2a00abc4b24f9327c1c"
 LEGACY_RESTORE_API_SHA256 = "793f22866c85bbcf104f20f5c1f619062eaad9f5414a217b602fe758c71e01b9"
 PREVIOUS_LINEAGE = {
@@ -98,6 +100,7 @@ ALLOWED_RESTORE_PREIMAGE_PAIRS = frozenset(
     {
         (PREVIOUS_COMPOSED_API_SHA256, PREVIOUS_COMPOSED_GAME_SHA256),
         (PREVIOUS_COMPOSED_API_SHA256, OLDER_PREVIOUS_GAME_SHA256),
+        (LINEAGE["composed_api_sha256"], PREVIOUS_COMPOSED_GAME_SHA256),
         (OLDER_RESTORE_API_SHA256, OLDER_PREVIOUS_GAME_SHA256),
         (LEGACY_RESTORE_API_SHA256, OLDER_PREVIOUS_GAME_SHA256),
         (LINEAGE["composed_api_sha256"], LINEAGE["composed_game_sha256"]),
@@ -601,6 +604,8 @@ def inspect_previous_stage(project: Path, receipt_path: Path) -> tuple[dict | No
             {**R23_LINEAGE, "stage_receipt_sha256": R2_BANK_RECEIPT_SHA256},
             OLD_CURRENT_LINEAGE,
             PREVIOUS_LINEAGE,
+            R10_PREVIOUS_GAME_LINEAGE,
+            {**R10_PREVIOUS_GAME_LINEAGE, "stage_receipt_sha256": R2_BANK_RECEIPT_SHA256},
             OLDER_PREVIOUS_LINEAGE,
             OLDER_RESTORE_LINEAGE,
             LEGACY_RESTORE_LINEAGE,

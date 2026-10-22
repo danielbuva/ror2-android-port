@@ -33,7 +33,7 @@ STAGE_SCHEMA = "native-view-camera-project-stage-r1"
 AUDIO_SCHEMA = "original-game-audio-project-stage-r1"
 HASHES = {
     "accepted_input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
-    "r4_manifest_sha256": "32a2c710ec8eff41890454576d55f523499523bb5eea4902257011498f220f4b",
+    "r4_manifest_sha256": "bde00d0bd79f73afb51e8e9475bc171c5aa68271af05adc0c616ffa26b66b247",
     "stage_receipt_sha256": "db1969babb2db2f4201ebdb6c971b084c5ab9336fff5623187555dfcc7b18978",
     "ordinary_api": "107295e478a58ef295a83228111f375c536861bc9081f482d638c59899bf495c",
     "ordinary_game": "3124a2ed9cf458acee78b1beaf969590b184be452e2b3aa5a8852df82ff95d30",
@@ -44,6 +44,9 @@ HASHES = {
     "point_sound_composed_game": "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc",
     "music_observed_game": "27340ed60dbfe77f66fa394d028b597d3e4613ee8ea405416c061766fb226eef",
     "native_result_observed_game": "a6385e3166d3950944da8a08f145d7e9be602571a6a75b4afb18279801f44311",
+    "lightning_r3_point_sound_composed_game": "594282cfa617ac58eda6965e0a48e6958438f345cbb98bfb7cb49b9130efad1d",
+    "lightning_r3_native_result_observed_game": "619af38a62b19fdfcd6ef1408548aecedbda3e0830be7982cc4f96cd6b000523",
+    "lightning_r3_native_result_camera_output": "15a92aa6f513e2271ce7240c33a205b0376fff37200089987f0cb54944c3382c",
     "music_camera_output": "4bd3b240ce5a9cb620d14ce4041f493ba013b9700d792dc9c99c8666f3af06f0",
     "native_result_camera_output": "64628a52d443786d7920fc8d6b65215f32886cb3489bf5439c3efaed17e43ccf",
     "camera_default": "494ba9acd8ea34bed17ac56edb9a49eafa8cb5afd2f91466b95ca0d71ce3b8cd",
@@ -184,7 +187,10 @@ def _ensure_resolver_set(
     resolver_root: Path, resolver_set: dict, project: Path, input_path: Path, api_hash: str, profile: str, pins: dict, editor_contents: Path
 ) -> Path:
     module = _resolver_module()
-    rows = module.source_rows(project, editor_contents, pins["profiles"][profile]["input_sha256"], api_hash)
+    profile_pins = pins["profiles"].get(profile) or pins.get("music_observer_resolver_profiles", {}).get(profile)
+    if not isinstance(profile_pins, dict) or profile_pins.get("input_sha256") != sha256(input_path):
+        raise ValueError("resolver-only profile does not match its exact source input")
+    rows = module.source_rows(project, editor_contents, profile_pins["input_sha256"], api_hash)
     inventory_hash = hashlib.sha256(json.dumps(rows, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
     destination = resolver_root / (resolver_set["profile"] + "-" + inventory_hash[:16])
     if not (destination / "resolver-set.json").is_file():
@@ -242,8 +248,14 @@ def _verify_stage_manifest_rows(stage: dict, manifest: dict, project: Path) -> N
         if not path.is_file() or sha256(path) != expected:
             if (
                 relative == GAME_RELATIVE.as_posix()
-                and expected == HASHES["point_sound_composed_game"]
-                and sha256(path) in {HASHES["music_observed_game"], HASHES["native_result_observed_game"]}
+                and expected in {HASHES["point_sound_composed_game"], HASHES["lightning_r3_point_sound_composed_game"]}
+                and sha256(path)
+                in {
+                    HASHES["music_observed_game"],
+                    HASHES["native_result_observed_game"],
+                    HASHES["lightning_r3_native_result_observed_game"],
+                    HASHES["lightning_r3_native_result_camera_output"],
+                }
             ):
                 audio, receipt_sha = _audio_receipt(project)
                 _music_observer_receipt(project, receipt_sha, audio)
@@ -252,9 +264,28 @@ def _verify_stage_manifest_rows(stage: dict, manifest: dict, project: Path) -> N
 
 
 def _select_point_sound_profile(audio: dict, game_hash: str, api_hash: str) -> tuple[str, str]:
-    """Select the exact PointSound d540 or R10 1ced pair, independent of PCM state."""
+    """Select a receipt-bound exact PointSound lineage, independent of PCM state."""
+    if game_hash == HASHES["lightning_r3_point_sound_composed_game"]:
+        if api_hash != HASHES["pcm_composed_api"]:
+            raise ValueError("R3 PointSound continuation requires the exact 1ced API")
+        lineage = audio.get("lineage")
+        output_rows = audio.get("outputs")
+        game_rows = (
+            [row for row in output_rows if isinstance(row, dict) and row.get("target") == GAME_RELATIVE.as_posix()] if isinstance(output_rows, list) else []
+        )
+        if (
+            audio.get("requested") is not True
+            or audio.get("stage_receipt_sha256") != HASHES["stage_receipt_sha256"]
+            or not isinstance(lineage, dict)
+            or lineage.get("composed_game_sha256") != game_hash
+            or lineage.get("composed_api_sha256") != api_hash
+            or len(game_rows) != 1
+            or game_rows[0].get("sha256") != game_hash
+        ):
+            raise ValueError("R3 PointSound camera profile requires its exact accepted source lineage")
+        return "post-audio-r10-1ced-game-lightning-r3", HASHES["lightning_r3_native_result_observed_game"]
     if game_hash != HASHES["point_sound_composed_game"]:
-        raise ValueError("PointSound camera profile requires the exact 6f96 game image")
+        raise ValueError("PointSound camera profile requires an exact accepted composed game image")
     if api_hash == HASHES["composed_api"]:
         profile = "post-audio-point-sound-6f96-api-d540"
         output_hash = HASHES["camera_after_point_sound"]
@@ -305,6 +336,10 @@ def _music_observer_receipt(project: Path, audio_receipt_sha: str, audio: dict) 
             HASHES["native_result_observed_game"],
             HASHES["native_result_camera_output"],
         },
+        (HASHES["pcm_composed_api"], HASHES["lightning_r3_native_result_observed_game"]): {
+            HASHES["lightning_r3_native_result_observed_game"],
+            HASHES["lightning_r3_native_result_camera_output"],
+        },
     }
     if (
         not isinstance(receipt, dict)
@@ -312,13 +347,23 @@ def _music_observer_receipt(project: Path, audio_receipt_sha: str, audio: dict) 
         or receipt.get("accepted") is not False
         or receipt.get("runtime_dispatch_ready") is not False
         or receipt.get("audio_stage_receipt_sha256") != audio_receipt_sha
-        or receipt.get("input_sha256") != HASHES["point_sound_composed_game"]
+        or receipt.get("input_sha256")
+        != (
+            HASHES["lightning_r3_point_sound_composed_game"]
+            if output_hash in {HASHES["lightning_r3_native_result_observed_game"], HASHES["lightning_r3_native_result_camera_output"]}
+            else HASHES["point_sound_composed_game"]
+        )
         or (api_hash, output_hash) not in allowed_game_states
         or not isinstance(lineage, dict)
-        or lineage.get("composed_game_sha256") != HASHES["point_sound_composed_game"]
+        or lineage.get("composed_game_sha256") != receipt.get("input_sha256")
         or api_hash != lineage.get("composed_api_sha256")
     ):
         raise ValueError("music observer receipt is not bound to the exact preceding PointSound audio/API/output tuple")
+    if (
+        output_hash in {HASHES["lightning_r3_native_result_observed_game"], HASHES["lightning_r3_native_result_camera_output"]}
+        and receipt.get("profile") != "post-audio-r10-1ced-game-lightning-r3"
+    ):
+        raise ValueError("R3 observer receipt omits its exact source profile identity")
     if sha256(project / GAME_RELATIVE) not in allowed_game_states[(api_hash, output_hash)]:
         raise ValueError("project game module differs from the exact observer/API camera lineage")
     snapshot_rel = receipt.get("preimage_snapshot")
@@ -326,12 +371,18 @@ def _music_observer_receipt(project: Path, audio_receipt_sha: str, audio: dict) 
         raise ValueError("music observer preimage path is malformed")
     snapshot = (ROOT / "work" / snapshot_rel).resolve(strict=True)
     work = (ROOT / "work").resolve(strict=True)
-    if not snapshot.is_relative_to(work) or sha256(snapshot) != HASHES["point_sound_composed_game"]:
-        raise ValueError("music observer preimage snapshot differs from exact 6f96 input")
+    if not snapshot.is_relative_to(work) or sha256(snapshot) != receipt.get("input_sha256"):
+        raise ValueError("music observer preimage snapshot differs from its exact audio-stage input")
     return receipt
 
 
-def select_profile(project: Path, audio_build_result: dict | None = None, *, resolver_root: Path | None = None) -> dict:
+def select_profile(
+    project: Path,
+    audio_build_result: dict | None = None,
+    *,
+    resolver_root: Path | None = None,
+    allow_music_observer_input: bool = False,
+) -> dict:
     """Select only the exact default-off, R4, PointSound, or R10 game/API profiles."""
     pins = json.loads(CAMERA_PINS.read_text(encoding="utf-8"))
     audio, receipt_sha = _audio_receipt(project)
@@ -432,6 +483,12 @@ def select_profile(project: Path, audio_build_result: dict | None = None, *, res
     elif game_hash == HASHES["point_sound_composed_game"] and api_hash in {HASHES["composed_api"], HASHES["pcm_composed_api"]}:
         profile, output_hash = _select_point_sound_profile(audio, game_hash, api_hash)
         resolver_rows = _audio_resolver_sources(project, generation, manifest, audio)
+    elif game_hash == HASHES["lightning_r3_point_sound_composed_game"] and api_hash == HASHES["pcm_composed_api"]:
+        if not allow_music_observer_input:
+            raise ValueError("Lightning R3 point-sound input is music-observer-only and has no measured camera output")
+        profile, output_hash = _select_point_sound_profile(audio, game_hash, api_hash)
+        output_hash = None
+        resolver_rows = _audio_resolver_sources(project, generation, manifest, audio)
     elif game_hash == HASHES["music_observed_game"] and api_hash in {HASHES["composed_api"], HASHES["pcm_composed_api"]}:
         _music_observer_receipt(project, receipt_sha, audio)
         raise ValueError("legacy 27340 music-observer camera pair is restore-only")
@@ -440,16 +497,22 @@ def select_profile(project: Path, audio_build_result: dict | None = None, *, res
         profile = "post-audio-native-music-results-r23-1ced"
         output_hash = HASHES["native_result_camera_output"]
         resolver_rows = _audio_resolver_sources(project, generation, manifest, audio)
+    elif game_hash == HASHES["lightning_r3_native_result_observed_game"] and api_hash == HASHES["pcm_composed_api"]:
+        _music_observer_receipt(project, receipt_sha, audio)
+        profile = "post-audio-native-music-results-lightning-r3-1ced"
+        output_hash = HASHES["lightning_r3_native_result_camera_output"]
+        resolver_rows = _audio_resolver_sources(project, generation, manifest, audio)
     else:
         raise ValueError("project API/RoR2 pair is not one of the exact reviewed camera profiles")
-    resolver_set = pins["resolver_profiles"][profile]
+    music_observer_source = profile in pins.get("music_observer_resolver_profiles", {})
+    resolver_set = (pins["music_observer_resolver_profiles"] if music_observer_source else pins["resolver_profiles"])[profile]
     resolver_base = resolver_root or ROOT / "work/generated/native-view-camera/resolver-sets"
     producer = _producer_module()
     editor_contents, _ = producer.pinned_editor(pins)
     resolver_directory = _ensure_resolver_set(resolver_base, resolver_set, project, game, api_hash, profile, pins, editor_contents)
     _, resolver_receipt = producer.exact_resolution_closure(resolver_directory, pins, profile, project, editor_contents)
     resolver_inventory_sha256 = hashlib.sha256(json.dumps(resolver_receipt, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
-    return {
+    result = {
         "profile": profile,
         "resolver_set_profile": resolver_set["profile"],
         "resolver_set_directory": resolver_directory.relative_to(ROOT / "work").as_posix(),
@@ -466,6 +529,9 @@ def select_profile(project: Path, audio_build_result: dict | None = None, *, res
         "resolver_rows": resolver_rows if profile != "default-game-3124" else [],
         "resolver_effective_assembly_identity_count": resolver_receipt["count"],
     }
+    if music_observer_source:
+        result["music_observer_source_only"] = True
+    return result
 
 
 def restore_previous_camera(project: Path, work: Path) -> dict | None:
@@ -509,6 +575,10 @@ def restore_previous_camera(project: Path, work: Path) -> dict | None:
         (HASHES["native_result_observed_game"], HASHES["pcm_composed_api"]): (
             "post-audio-native-music-results-r23-1ced",
             HASHES["native_result_camera_output"],
+        ),
+        (HASHES["lightning_r3_native_result_observed_game"], HASHES["pcm_composed_api"]): (
+            "post-audio-native-music-results-lightning-r3-1ced",
+            HASHES["lightning_r3_native_result_camera_output"],
         ),
     }
     profile_entry = camera_profiles.get((expected_input, receipt.get("api_sha256")))
@@ -594,13 +664,14 @@ def restore_previous_camera(project: Path, work: Path) -> dict | None:
         if receipt.get("api_sha256") == HASHES["previous_composed_api_restore_only"]:
             if expected_input != HASHES["composed_game"] or audio.get("lineage", {}).get("composed_api_sha256") != HASHES["previous_composed_api_restore_only"]:
                 raise ValueError("predecessor camera receipt is not bound to exact 793 audio lineage")
-        elif expected_input in {HASHES["music_observed_game"], HASHES["native_result_observed_game"]}:
+        elif expected_input in {HASHES["music_observed_game"], HASHES["native_result_observed_game"], HASHES["lightning_r3_native_result_observed_game"]}:
             _music_observer_receipt(project, audio_sha, audio)
-            if (
-                audio.get("lineage", {}).get("composed_api_sha256") != expected_api
-                or audio.get("lineage", {}).get("composed_game_sha256") != HASHES["point_sound_composed_game"]
+            if audio.get("lineage", {}).get("composed_api_sha256") != expected_api or audio.get("lineage", {}).get("composed_game_sha256") != (
+                HASHES["lightning_r3_point_sound_composed_game"]
+                if expected_input == HASHES["lightning_r3_native_result_observed_game"]
+                else HASHES["point_sound_composed_game"]
             ):
-                raise ValueError("music-camera receipt is not bound to its raw 6f96 audio lineage")
+                raise ValueError("music-camera receipt is not bound to its exact PointSound audio lineage")
         elif audio.get("lineage", {}).get("composed_api_sha256") != expected_api or audio.get("lineage", {}).get("composed_game_sha256") != expected_input:
             raise ValueError("current camera receipt is not bound to exact d540 audio lineage")
     if receipt.get("api_sha256") not in expected_apis or sha256(api) != receipt.get("api_sha256"):
@@ -667,8 +738,8 @@ def _producer_module():
 def stage_after_audio(project: Path, work: Path, audio_build_result: dict) -> dict:
     """Observe source output returns, then stage the camera guard after audio."""
     project, work = _canonical_project(project, work)
-    initial = select_profile(project, audio_build_result)
-    if initial["profile"] == "post-audio-r10-1ced-game-6f96":
+    initial = select_profile(project, audio_build_result, allow_music_observer_input=True)
+    if initial.get("music_observer_source_only") or initial["profile"] == "post-audio-r10-1ced-game-6f96":
         from original_music_output_observer_build_hook import stage as stage_music_output_observer
 
         resolver_dir = ROOT / "work" / PurePosixPath(initial["resolver_set_directory"])

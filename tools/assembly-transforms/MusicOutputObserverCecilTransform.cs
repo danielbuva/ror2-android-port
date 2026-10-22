@@ -8,7 +8,7 @@ using Mono.Cecil.Cil;
 
 internal static class MusicOutputObserverCecilTransform
 {
-    private const string ExpectedInputSha = "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc";
+    private const string ExpectedInputSha = "594282cfa617ac58eda6965e0a48e6958438f345cbb98bfb7cb49b9130efad1d";
     private const string ObserverTypeName = "OriginalOwnerProbeObserver.Observer";
     private const string ObserverAssemblyName = "OriginalOwnerProbeObserver";
     private const int IntroPostEventSite = 1;
@@ -36,7 +36,7 @@ internal static class MusicOutputObserverCecilTransform
                 return 0;
             }
             if (args.Length < 5 || (args[0] != "transform" && args[0] != "transform-fixture"))
-                throw new InvalidOperationException("usage: transform <exact-6f96-RoR2.dll> <OriginalOwnerProbeObserver.dll> <explicit-reference-directory> <new-output.dll> | transform-fixture <synthetic.dll> <OriginalOwnerProbeObserver.dll> <explicit-reference-directory> <new-output.dll> | verify-shape <output.dll> <observer-assembly-name> | verify-output <exact-6f96-RoR2.dll> <candidate.dll> <observer-assembly-full-identity>");
+                throw new InvalidOperationException("usage: transform <exact-R3-PointSound-RoR2.dll> <OriginalOwnerProbeObserver.dll> <explicit-reference-directory> <new-output.dll> | transform-fixture <synthetic.dll> <OriginalOwnerProbeObserver.dll> <explicit-reference-directory> <new-output.dll> | verify-shape <output.dll> <observer-assembly-name> | verify-output <exact-R3-PointSound-RoR2.dll> <candidate.dll> <observer-assembly-full-identity>");
             Transform(args[1], args[2], args[3], args[4], args.Skip(5), args[0] == "transform-fixture");
             return 0;
         }
@@ -51,7 +51,7 @@ internal static class MusicOutputObserverCecilTransform
         IEnumerable<string> extraSearchDirectories, bool syntheticFixture = false)
     {
         Require(syntheticFixture || Hash(inputPath) == ExpectedInputSha,
-            "music output observer requires the exact 6f96 composed game input");
+            "music output observer requires the exact R3 PointSound composed game input");
         Require(!String.Equals(Path.GetFullPath(inputPath), Path.GetFullPath(outputPath), StringComparison.Ordinal),
             "output must be a new file");
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(outputPath))!);
@@ -92,10 +92,10 @@ internal static class MusicOutputObserverCecilTransform
             "AddOutput success field and RemoveOutput argument differ");
 
         var observerReferences = game.MainModule.AssemblyReferences.Where(r => r.Name == observer.Name.Name).ToArray();
-        Require(observerReferences.Length <= 1, "6f96 input has ambiguous owner observer references");
+        Require(observerReferences.Length <= 1, "R3 input has ambiguous owner observer references");
         var observerAssemblyRef = observerReferences.Length == 1 ? observerReferences[0] : null;
         Require(observerAssemblyRef == null || observerAssemblyRef.FullName == observer.Name.FullName,
-            "6f96 input references a different owner observer assembly identity");
+            "R3 input references a different owner observer assembly identity");
         if (observerAssemblyRef == null)
         {
             observerAssemblyRef = new AssemblyNameReference(observer.Name.Name, observer.Name.Version)
@@ -129,7 +129,7 @@ internal static class MusicOutputObserverCecilTransform
 
     internal static void VerifyPair(string inputPath, string outputPath, string observerAssemblyIdentity)
     {
-        Require(Hash(inputPath) == ExpectedInputSha, "full comparison requires the exact 6f96 composed game input");
+        Require(Hash(inputPath) == ExpectedInputSha, "full comparison requires the exact R3 PointSound composed game input");
         using var baseline = AssemblyDefinition.ReadAssembly(inputPath);
         using var result = AssemblyDefinition.ReadAssembly(outputPath);
         var before = AllMethods(baseline.MainModule).ToDictionary(MethodKey, StringComparer.Ordinal);

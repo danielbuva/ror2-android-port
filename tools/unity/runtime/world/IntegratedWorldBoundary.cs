@@ -132,6 +132,7 @@ public sealed partial class PortSession
         public List<BlueEliteHitObservation> blueEliteHits = new List<BlueEliteHitObservation>();
         public List<LightningStakeObservation> lightningStakes = new List<LightningStakeObservation>();
         public string lightningStakeObserverStatus;
+        public PortSession.LightningStakeSourceCallReport lightningStakeSourceCall;
         public int lightningStakeIdentitiesObserved;
         public int earlyHurtCaches;
         public List<string> earlyHurtBodies = new List<string>();
@@ -496,6 +497,8 @@ public sealed partial class PortSession
         CharacterBody.JumpDelegate worldFeatherJumped;
         bool worldWispEffectEligible;
         LightningStakeDiagnosticObserver lightningStakeObserver;
+        LightningStakeSourceCallObserver lightningStakeSourceCallObserver;
+        int savedLightningStakeSourceCallCount;
         Action<CharacterBody> earlyHurtCacheHandler;
         static readonly FieldInfo hurtDurationCache =
             typeof(SetStateOnHurt).GetField("buffDurationControllers", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -552,15 +555,26 @@ public sealed partial class PortSession
         }
         public void ObserveLightningStakes()
         {
-            if (coordinator.r.world == null || lightningStakeObserver == null)
+            if (coordinator.r.world == null)
                 return;
-            bool changed = lightningStakeObserver.Observe(coordinator.r.world.seconds);
-            string status = lightningStakeObserver.SetupStatus;
-            bool statusChanged = coordinator.r.world.lightningStakeObserverStatus != status;
-            coordinator.r.world.lightningStakeObserverStatus = status;
-            coordinator.r.world.lightningStakeIdentitiesObserved =
-                Math.Max(coordinator.r.world.lightningStakeIdentitiesObserved, lightningStakeObserver.DiscoveredCount);
-            if (changed || statusChanged)
+            bool changed = false;
+            if (lightningStakeObserver != null)
+            {
+                changed = lightningStakeObserver.Observe(coordinator.r.world.seconds);
+                string status = lightningStakeObserver.SetupStatus;
+                bool statusChanged = coordinator.r.world.lightningStakeObserverStatus != status;
+                coordinator.r.world.lightningStakeObserverStatus = status;
+                coordinator.r.world.lightningStakeIdentitiesObserved =
+                    Math.Max(coordinator.r.world.lightningStakeIdentitiesObserved, lightningStakeObserver.DiscoveredCount);
+                changed |= statusChanged;
+            }
+            if (lightningStakeSourceCallObserver != null && coordinator.r.world.lightningStakeSourceCall != null &&
+                savedLightningStakeSourceCallCount != coordinator.r.world.lightningStakeSourceCall.sourceCallCount)
+            {
+                savedLightningStakeSourceCallCount = coordinator.r.world.lightningStakeSourceCall.sourceCallCount;
+                changed = true;
+            }
+            if (changed)
                 coordinator.Save();
         }
         static readonly PropertyInfo worldNativeLootReferenceCount =
@@ -991,6 +1005,21 @@ public sealed partial class PortSession
             {
                 coordinator.r.world.lightningStakeObserverStatus = "setup-error: " + observerError.GetBaseException().Message;
                 lightningStakeObserver = null;
+            }
+            if (coordinator.r.lightningStakeSourceCallDiagnosticRequested)
+            {
+                coordinator.r.world.lightningStakeSourceCall = new PortSession.LightningStakeSourceCallReport { status = "requested" };
+                try
+                {
+                    lightningStakeSourceCallObserver = new LightningStakeSourceCallObserver(coordinator.r.world.lightningStakeSourceCall);
+                }
+                catch (Exception sourceObserverError)
+                {
+                    coordinator.r.world.lightningStakeSourceCall.status = "setup-error";
+                    coordinator.r.world.lightningStakeSourceCall.firstCaptureFailureType =
+                        sourceObserverError.GetBaseException().GetType().FullName;
+                    lightningStakeSourceCallObserver = null;
+                }
             }
             coordinator.worldPlayer = player;
             if (coordinator.r.selectedSurvivor == "Engi")
@@ -3030,6 +3059,34 @@ public sealed partial class PortSession
         }
         public void CleanupIntegratedWorld()
         {
+            if (lightningStakeSourceCallObserver != null)
+            {
+                try
+                {
+                    lightningStakeSourceCallObserver.Dispose();
+                    lightningStakeSourceCallObserver = null;
+                }
+                catch (Exception error)
+                {
+                    var report = coordinator.r?.world?.lightningStakeSourceCall;
+                    if (report != null)
+                    {
+                        report.status = "teardown-error";
+                        if (String.IsNullOrEmpty(report.firstCaptureFailureType))
+                            report.firstCaptureFailureType = error.GetBaseException().GetType().FullName;
+                    }
+                    if (coordinator.r != null)
+                    {
+                        coordinator.r.success = false;
+                        if (String.IsNullOrEmpty(coordinator.r.firstFailure))
+                        {
+                            coordinator.r.firstFailure = "LightningStake source-call observer did not detach its exact owned callback";
+                            coordinator.r.firstFailurePhase = "integrated-world-cleanup";
+                        }
+                    }
+                }
+                coordinator.Save();
+            }
             if (coordinator.r.sourceStageLifecycleRecoveryRequired)
                 return;
             sirenEggDiagnosticInput?.Dispose();

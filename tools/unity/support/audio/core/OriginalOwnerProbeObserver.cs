@@ -41,6 +41,9 @@ namespace OriginalOwnerProbeObserver
         public static Action<int, object, ulong> MusicRemoveOutputReturned;
         public static Action<uint, object> MusicStartIntroPostEventReturned;
         public static Action<int, object, int> MusicTrackSetStateReturned;
+        // Default-off exact bridge for the original LightningStake source-call site.
+        public static Action<object, object, object> LightningStakeSourceCall;
+        public static int LightningStakeSourceCallCallbackFailures;
 
         public static void RecordBeforeEngineInit()
         {
@@ -110,6 +113,31 @@ namespace OriginalOwnerProbeObserver
         {
             try { MusicTrackSetStateReturned?.Invoke(result, sourceTrack, site); }
             catch { }
+        }
+
+        public static bool HasLightningStakeSourceCallObserver()
+        {
+            return LightningStakeSourceCall != null;
+        }
+
+        public static bool TryAttachLightningStakeSourceCall(Action<object, object, object> callback)
+        {
+            if (callback == null || LightningStakeSourceCall != null) return false;
+            LightningStakeSourceCall = callback;
+            return Object.ReferenceEquals(LightningStakeSourceCall, callback);
+        }
+
+        public static bool TryDetachLightningStakeSourceCall(Action<object, object, object> callback)
+        {
+            if (callback == null || !Object.ReferenceEquals(LightningStakeSourceCall, callback)) return false;
+            LightningStakeSourceCall = null;
+            return true;
+        }
+
+        public static void RecordLightningStakeSourceCall(object damageInfo, object hitObject, object projectileInfo)
+        {
+            try { LightningStakeSourceCall?.Invoke(damageInfo, hitObject, projectileInfo); }
+            catch { LightningStakeSourceCallCallbackFailures = IncrementBoundedCount(LightningStakeSourceCallCallbackFailures); }
         }
 
         private static void Safe(Action callback) { try { callback?.Invoke(); } catch { } }

@@ -38,6 +38,33 @@ namespace OriginalOwnerProbeObserver
         public static int PostCallbacksLastReturnedCount;
         public static int RenderAudioCallCount;
         public static int RenderAudioLastResult;
+        // Per-session source-call diagnostic bridge; null is ordinary operation.
+        public static Action<object, object, object> LightningStakeSourceCall;
+
+        public static bool HasLightningStakeSourceCallObserver()
+        {
+            return LightningStakeSourceCall != null;
+        }
+
+        public static bool TryAttachLightningStakeSourceCall(Action<object, object, object> callback)
+        {
+            if (callback == null || LightningStakeSourceCall != null) return false;
+            LightningStakeSourceCall = callback;
+            return Object.ReferenceEquals(LightningStakeSourceCall, callback);
+        }
+
+        public static bool TryDetachLightningStakeSourceCall(Action<object, object, object> callback)
+        {
+            if (callback == null || !Object.ReferenceEquals(LightningStakeSourceCall, callback)) return false;
+            LightningStakeSourceCall = null;
+            return true;
+        }
+
+        public static void RecordLightningStakeSourceCall(object damageInfo, object hitObject, object projectileInfo)
+        {
+            try { LightningStakeSourceCall?.Invoke(damageInfo, hitObject, projectileInfo); }
+            catch { ObserverCallbackFailures++; }
+        }
 
         public static void Reset()
         {
@@ -72,6 +99,7 @@ namespace OriginalOwnerProbeObserver
             PostCallbacksLastReturnedCount = 0;
             RenderAudioCallCount = 0;
             RenderAudioLastResult = 0;
+            LightningStakeSourceCall = null;
         }
 
         public static void RecordInitializeMethodReturned(int result)

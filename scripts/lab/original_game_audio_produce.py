@@ -37,6 +37,9 @@ DEFAULT_GAME_SHA256 = "3124a2ed9cf458acee78b1beaf969590b184be452e2b3aa5a8852df82
 PREVIOUS_COMPOSED_API_SHA256 = "d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23"
 OLDER_RESTORE_API_SHA256 = "9a3f9911697b4ce28a955dff09f618e0f2662083e56eeb28ff5b6ecc02b588f3"
 PREVIOUS_COMPOSED_GAME_SHA256 = "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc"
+CURRENT_COMPOSED_GAME_SHA256 = "30c1cff3c18729bc509b522bb2f23d2a7c54e2f3883b926a29a3cb0fba3cf4a3"
+PREVIOUS_R10_GAME_SHA256 = PREVIOUS_COMPOSED_GAME_SHA256
+LIGHTNING_R3_POINT_SOUND_GAME_SHA256 = "594282cfa617ac58eda6965e0a48e6958438f345cbb98bfb7cb49b9130efad1d"
 OLDER_PREVIOUS_GAME_SHA256 = "1034a747e31a3b79554b9cb06f941c7acabaa9e0ee82c2a00abc4b24f9327c1c"
 LEGACY_RESTORE_API_SHA256 = "793f22866c85bbcf104f20f5c1f619062eaad9f5414a217b602fe758c71e01b9"
 LINEAGE = {
@@ -47,7 +50,7 @@ LINEAGE = {
     "adapted_api_sha256": "2bd973178c99bfcb4d20510e2d1eac7efa9dd6d698237f2edfa486171bc2f272",
     "observed_api_sha256": "a2914ace8e2a7338010f8e9a9515911d68489bf0ad467bc7f73f4de293a19fe9",
     "composed_api_sha256": "1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b",
-    "composed_game_sha256": "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc",
+    "composed_game_sha256": LIGHTNING_R3_POINT_SOUND_GAME_SHA256,
     "native_library_sha256": "9075b5a4d3718a209eb244760d2b251a59ef2f5c486a2d2fc0e83b90240cbba3",
     "stage_receipt_sha256": "8fe02400a7ab0905ae21b728e702d7ef2c4dcf8646f77f631682a81bda0ab88c",
 }
@@ -66,20 +69,20 @@ META_GUIDS = {
 NATIVE_META_GUID = "a2a09e81876b46f2a202e62f96644331"
 NATIVE_TARGET = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so"
 NATIVE_META = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so.meta"
-OWNER_ANCESTOR_MANIFEST_SHA256 = "32a2c710ec8eff41890454576d55f523499523bb5eea4902257011498f220f4b"
+OWNER_ANCESTOR_MANIFEST_SHA256 = "bde00d0bd79f73afb51e8e9475bc171c5aa68271af05adc0c616ffa26b66b247"
 STAGE_PIN_TOOL_SHA256 = "6e12acb9b58a570aa3a869f9f0880ddbd56ba4da0c806188c1124164211d0102"
-REQUEST_PIN_TOOL_SHA256 = "16ad12a1d017e5db9b39b745719e3bb21f4f92a9e4e44215c8d672a3f8716c9e"
-MANAGED_PRODUCER_SHA256 = "12c1aaed5fca694657c2c841c57e6ead399352e58b1cd0e7662dec75e2749421"
+REQUEST_PIN_TOOL_SHA256 = "844e57ef264c56fa2d2adbacfeba893a30f684fa1ad5e203cdb5a5ffb8be3b96"
+MANAGED_PRODUCER_SHA256 = "e5cfc952843cd247d5c96690a11d7a56650f0777c85f7aef2c4bc673bbe0bb85"
 ABI_NATIVE_PLUGIN_SHA256 = "cfec01cb3aab87edbde3db38e3c0bbe6a1d18ffea2a1f831a59cf64a5526daca"
 ABI_GENERATED_SOURCE_SHA256 = "511f5e1ee552a874850a1fab5f613eeb51e7b6bc706a07bb57418c03e75df242"
 ABI_HANDWRITTEN_SOURCE_SHA256 = "7cc79d60937708fd9f34fd67e90a743fe9e03e58c2325bf0f9e9dbbf8be327e6"
 ABI_LLVM_NM_SHA256 = "6ffe6bb8699a354c4699a6cdfcebdb9ec6a2c8d0d89beaac978f629a0fc67ae0"
 OWNER_SOURCE_HASHES = {
     "../../runtime/session/OriginalMusicControllerContract.cs": "bd8f78977722a276409623cea4909b0e41065fda6c195a6b0dee94ef8bb8b485",
-    "../../runtime/session/PortSession.cs": "233e40b41b02aa601d110db38bdb738ed35438a91131823d609a2909719e6731",
+    "../../runtime/session/PortSession.cs": "1a2d40c1822bbb075aa138c7115d272bff4ce3a09ed6f67bf8980ccf5e047f0d",
     "../../runtime/session/PortSessionOriginalAudioOwner.cs": "2f010562de8cbac3a5c6e2453f0a1c3db571ee6e45c4633fb877e6a5636d1992",
     "../../runtime/session/PortSessionOriginalMusicControllerOwner.cs": "e817c7265fc792a45494f2217ad9430bc7acb60d31437d5fe770cc7dc67f7f9c",
-    "bootstrap/GameAudioOriginalAcceptedRequestProvider.cs": "d9b61ad5d5e207f0c01860dfeb12a377f18f460905f3d4c7bde05dbd70d9c44a",
+    "bootstrap/GameAudioOriginalAcceptedRequestProvider.cs": "18f1013b76f534ca6b21b4c9e328e05bf3f3b85e870e8b946a392cee641701b8",
     "bootstrap/GameAudioOriginalAndroidNativeBootstrap.cs": "fdce9ba21e249c7c9a8d2eed788c7561907a5327f9e9b8dc28ce23334e71ee70",
     "bootstrap/GameAudioOriginalGeneratedRequestPin.cs": "f41a033141c7ed1b4c33f9f7ce6337a4a7b247c6ba96d93f514c0a37178ac4a9",
     "bootstrap/GameAudioOriginalGeneratedStagePin.cs": "d54d445d05712432559a5e332457af0b20200c93895bd79374c42b6280bd07a4",
@@ -93,8 +96,10 @@ OWNER_SOURCE_HASHES = {
     "core/GameAudioOriginalOwner.cs": "7a837190ee8a02b01e0cce5883869c125ca7f9938c415be4559dc577bb72a647",
     "core/GameAudioOriginalPassivePcmContract.cs": "0ae9ab3d57770c0f7d4f8cbc14eb557a0e9fd699355fb54f29f823cffb63371e",
     "core/GameAudioOriginalReadiness.cs": "ab7be883932ce975615676882440c74d43b039fce067a9cab0572d7198c4db19",
-    "core/OriginalOwnerProbeObserver.cs": "06616139b12dec7f13561249dc4d979739e66a1df925cfae6793c94bff186dfa",
+    "core/OriginalOwnerProbeObserver.cs": "236a01f7fb24ee0a6799f0f41196579683505e8255d18d0d1a4d1ef19537da02",
     "core/PointSoundDiagnosticObserver.cs": "ebd0b2c0089150c4302c00824ee32e7a8e8b1906f26ad2137bdb0cee4cf1b4c7",
+    "../../runtime/world/IntegratedWorldBoundary.cs": "71f47d64170e5a084da1512b6854e7c3a54bdb5bc1f4276664a5e59699518a6d",
+    "../../runtime/world/LightningStakeSourceCallObserver.cs": "8dac5dd26a8c96120d0fc515e96519c07ee30fe3086f1ec85fd78b58a37c72b0",
 }
 
 
@@ -203,6 +208,8 @@ def classify_project_pair(api_sha256: str, game_sha256: str) -> str:
         return "current-audio"
     if pair == (PREVIOUS_COMPOSED_API_SHA256, PREVIOUS_COMPOSED_GAME_SHA256):
         return "previous-audio"
+    if pair == (LINEAGE["composed_api_sha256"], PREVIOUS_R10_GAME_SHA256):
+        return "previous-audio-restore-only"
     if pair == (PREVIOUS_COMPOSED_API_SHA256, OLDER_PREVIOUS_GAME_SHA256):
         return "older-previous-audio"
     if pair == (OLDER_RESTORE_API_SHA256, OLDER_PREVIOUS_GAME_SHA256):
@@ -873,7 +880,7 @@ def verify_managed_output_manifest(manifest: dict, work_root: Path) -> dict[str,
         "observed_api": LINEAGE["observed_api_sha256"],
         "composed_api": LINEAGE["composed_api_sha256"],
         "guarded_game": LINEAGE["guarded_game_input_sha256"],
-        "composed_game": OLDER_PREVIOUS_GAME_SHA256,
+        "composed_game": CURRENT_COMPOSED_GAME_SHA256,
         "point_sound_composed_game": LINEAGE["composed_game_sha256"],
     }
     source_hashes = manifest.get("source_input_hashes")
@@ -908,7 +915,7 @@ def verify_managed_output_manifest(manifest: dict, work_root: Path) -> dict[str,
         raise ValueError("managed transform manifest omits a required intermediate in the accepted chain")
     for filename, expected_sha in (
         ("api-instrumented-composed.dll", LINEAGE["composed_api_sha256"]),
-        ("game-original-owner-composed.dll", OLDER_PREVIOUS_GAME_SHA256),
+        ("game-original-owner-composed.dll", CURRENT_COMPOSED_GAME_SHA256),
         (
             "game-original-owner-point-sound-composed.dll",
             LINEAGE["composed_game_sha256"],

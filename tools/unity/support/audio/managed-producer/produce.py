@@ -25,11 +25,11 @@ EXPECTED = {
     "composed_api": "1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b",
     "raw_game": "a5f7d83c7e6872fdd6099fdc299adb7d4fa03cbf465e526d6f5efcc35c2c281d",
     "guarded_game": "3124a2ed9cf458acee78b1beaf969590b184be452e2b3aa5a8852df82ff95d30",
-    "composed_game": "1034a747e31a3b79554b9cb06f941c7acabaa9e0ee82c2a00abc4b24f9327c1c",
-    "composed_transform_source": "53e732cbdf507e79bb0c9581acdf138c8e3b028efac20d8adcfd8a73dc5e5aba",
-    "point_sound_composed_game": "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc",
-    "owner_api_observer_source": "96faf7b479af9733dffe434fc24ffae6e6ef41408dd7b3a85c8dea6d52f18477",
-    "owner_api_observer_dll": "21c797a5f098a2de9ef5b723558693eb110a30011412bc87f2a2f3ad368279cf",
+    "composed_transform_source": "a158d1fea576c87f1b0d71df583861a8c1b5a73731d61bb9315d3f2dc0c84126",
+    "composed_game": "30c1cff3c18729bc509b522bb2f23d2a7c54e2f3883b926a29a3cb0fba3cf4a3",
+    "point_sound_composed_game": "594282cfa617ac58eda6965e0a48e6958438f345cbb98bfb7cb49b9130efad1d",
+    "owner_api_observer_source": "1b23636afe0e5f9bc6fec7a369d045364d940674c52ac3dd0df6b428ba8b878f",
+    "owner_api_observer_dll": "f4036a6eae0c6c04ab59072f9f8d5fbb79adfa76b130b112068a946502ae5a36",
     "unity_reference_count": 195,
 }
 
@@ -244,6 +244,9 @@ def main() -> None:
     accepted = json.loads((WORK / "config/accepted-input.json").read_text(encoding="utf-8"))
     require(accepted.get("input_id") == EXPECTED["input_id"], "accepted input identity changed")
     composed_transform_source = HERE / "tools/composed/ComposedGameCecilTransform.cs"
+    lightning_owner_source = ROOT / "tools/unity/runtime/world/LightningStakeSourceCallObserver.cs"
+    if not lightning_owner_source.is_file():
+        lightning_owner_source = HERE.parents[2] / "runtime/world/LightningStakeSourceCallObserver.cs"
     require(
         sha(composed_transform_source) == EXPECTED["composed_transform_source"],
         "composed Cecil transform source pin changed",
@@ -347,6 +350,8 @@ def main() -> None:
     )
 
     # Compile and apply the pre-init observer authored from the accepted API contract.
+    owner_observer_source = HERE / "source/owner-api/OriginalOwnerProbeObserver.cs"
+    require(sha(owner_observer_source) == EXPECTED["owner_api_observer_source"], "owner API observer source pin changed")
     owner_observer_project = HERE / "source/owner-api/OriginalOwnerProbeObserver.csproj"
     owner_observer_out = out / "compiled/owner-api-observer"
     build_dotnet(
@@ -358,10 +363,7 @@ def main() -> None:
         env,
     )
     owner_observer = owner_observer_out / "OriginalOwnerProbeObserver.dll"
-    require(
-        sha(owner_observer) == EXPECTED["owner_api_observer_dll"],
-        "pre-init observer helper differs from its path-mapped source build pin",
-    )
+    require(sha(owner_observer) == EXPECTED["owner_api_observer_dll"], "owner API observer helper pin changed")
     owner_tool_project = HERE / "tools/owner-api/OwnerApiCecilTransform.csproj"
     owner_tool_out = out / "compiled/owner-api-transform"
     build_dotnet(
@@ -487,8 +489,8 @@ def main() -> None:
         env=env,
         log=out / "logs/composed-game.log",
     )
-    require(sha(composed_game) == EXPECTED["composed_game"], "composed game output differs from the qualified byte pin")
 
+    require(sha(composed_game) == EXPECTED["composed_game"], "composed game output differs from its exact R3 source pin")
     point_sound_game = out / "game-original-owner-point-sound-composed.dll"
     run(
         [
@@ -510,11 +512,8 @@ def main() -> None:
         env=env,
         log=out / "logs/point-sound-validation.log",
     )
-    require(
-        sha(point_sound_game) == EXPECTED["point_sound_composed_game"],
-        "point-sound transform output differs from its exact accepted pin",
-    )
 
+    require(sha(point_sound_game) == EXPECTED["point_sound_composed_game"], "point-sound composed output differs from its exact R3 source pin")
     manifest = {
         "schema": "game-audio-original-public-producer-r1",
         "accepted_input_id": accepted["input_id"],
@@ -536,7 +535,7 @@ def main() -> None:
             "llvm_nm": sha(args.llvm_nm.resolve(strict=True)),
         },
         "transformation_source_hashes": {
-            str(path.relative_to(ROOT)): sha(path)
+            (str(path.relative_to(ROOT)) if path.is_relative_to(ROOT) else "tools/unity/runtime/world/LightningStakeSourceCallObserver.cs"): sha(path)
             for path in (
                 ROOT / "tools/wwise-android-abi/generate.py",
                 ROOT / "scripts/lab/assembly_transforms.py",
@@ -551,6 +550,7 @@ def main() -> None:
                 HERE.parent / "core/PointSoundDiagnosticObserver.cs",
                 HERE / "tools/owner-api/OwnerApiCecilTransform.cs",
                 HERE / "tools/owner-api/OwnerApiCecilTransform.csproj",
+                lightning_owner_source,
                 HERE / "tools/composed/ComposedGameCecilTransform.cs",
                 HERE / "tools/composed/ComposedGameCecilTransform.csproj",
             )

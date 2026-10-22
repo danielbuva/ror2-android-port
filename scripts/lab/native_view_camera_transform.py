@@ -94,8 +94,11 @@ def exact_resolution_closure(supplied: Path, pins: dict, profile: str, project: 
     if manifest_path.is_symlink() or not manifest_path.is_file():
         raise RuntimeError("resolver set generation receipt is missing or unsafe")
     generation = json.loads(manifest_path.read_text(encoding="utf-8"))
-    profile_pin = pins["profiles"][profile]
-    api_hash = pins["resolver_profiles"][profile]["api_sha256"]
+    profile_pin = pins["profiles"].get(profile) or pins.get("music_observer_resolver_profiles", {}).get(profile)
+    resolver_pin = pins.get("resolver_profiles", {}).get(profile) or pins.get("music_observer_resolver_profiles", {}).get(profile)
+    if not isinstance(profile_pin, dict) or not isinstance(resolver_pin, dict):
+        raise RuntimeError("resolver profile is not declared as a camera transform or music-observer-only input")
+    api_hash = resolver_pin["api_sha256"]
     rows = generation.get("files", [])
     expected_files = {row.get("path"): row for row in rows if isinstance(row, dict)}
     if (
@@ -319,7 +322,12 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--profile",
-        choices=("default-game-3124", "post-audio-r4-1034-api-d540", "post-audio-native-music-results-r23-1ced"),
+        choices=(
+            "default-game-3124",
+            "post-audio-r4-1034-api-d540",
+            "post-audio-native-music-results-r23-1ced",
+            "post-audio-native-music-results-lightning-r3-1ced",
+        ),
         required=True,
     )
     parser.add_argument("--input", type=Path, required=True)

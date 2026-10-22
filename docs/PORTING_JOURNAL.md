@@ -27863,3 +27863,71 @@ and metadata, not a runtime substitution or rebuild step. A future explicit
 presentation selection must qualify and bind its own source/payload changes.
 Protected programs/math/assets and all raw evidence remain ignored. J954's
 installed R26 player and accepted J850 baseline are unchanged.
+
+
+## J957 — Integrate a bounded observer at the original LightningStake call
+
+**Hypothesis and prior art.** J946 first observes already nonfinite projectile
+instances, without a joined source damage/spawn witness. Preserve original
+simulation and observe the exact original blue-elite projectile call before
+changing values. Review `docs/community-prior-art.md` and the pinned Starstorm2
+SwiftSkateboard lifecycle: its owned subscription and teardown inform ownership
+only; no mod implementation is copied.
+
+**Change.** Add the named default-off LightningStakeSourceCallObserver under
+IntegratedWorldSession. A validated per-run selector accepts only existing
+integrated Nova source-selected routes with a selected survivor. The accepted
+Cecil source method and fingerprint gate insertion immediately before its one
+original FireProjectile call. The original receiver, struct local and call are
+preserved. The bridge catches observer exceptions. Reports retain at most eight
+scalar-only rows, including source positions, owner/hit identity and finiteness;
+no Unity object is retained. Exact delegate teardown refuses ownership changes
+while recording session failure and continuing remaining world cleanup.
+
+The reproducible producer includes the new owner/GUID in both source inventories
+and its source-hash cohort. Native music-result and camera profiles distinguish
+the new managed bytes from historical exact profiles. The private full-chain
+replay yields PointSound 594282cf, music observer 619af38a, and camera 15a92aa6.
+The camera verifier reports only its two intended method changes and unchanged
+unrelated method bodies. Replay metadata and original assemblies remain ignored;
+no production path reads a timestamped experiment folder.
+
+**Host qualification and limits.** Independent R4 review verifies the complete
+managed continuation and private resolver inventory. Synthetic public contracts
+compile the real authored owner, bridge and Cecil transform against minimal
+authored stubs: default-off dispatch, single original call and operands, incoming
+branch routing, malformed/ambiguous site refusal, callback exception containment,
+eight-row bounds, selector refusal and exact teardown. These skip when Unity's
+Mono/Roslyn/Cecil host tools are absent. Music/camera profile contracts remain
+separate. Source changes are committed before a new Unity player build; R26's
+installed APK is unaffected. No Android behavior, successful projectile spawn,
+corruption fix, camera parity or audio acceptance is claimed.
+
+Broader host checks catch incomplete camera-profile metadata and stale producer
+lineage before building. The current chain now distinguishes composed 30c1cff3
+and PointSound 594282cf from historical 1034a747/6f96ed83 assemblies. Existing
+1ced/6f96 and d540/6f96 pairs remain exact restoration paths. Root also checks
+the actual frozen R26 receipt and retains its R2-bank lineage explicitly, with
+a synthetic owned-support upgrade regression. Only the measured
+619af38a-to-15a92aa6 camera pair is an active new camera output; its preceding
+PointSound assembly is a resolver input for music staging, not an invented
+camera output. Source pins follow the final Ruff-formatted producers. The
+isolated camera/audio host suite passes 170 contracts with nine expected
+missing-tool skips; the public synthetic observer/pipeline suite separately
+passes eight tests against the applied authored sources. Root then runs 171
+focused contracts on the actual checkout with five expected skips; all pass.
+After adding the exact R26 R2-bank restoration regression, all 35 staging
+contracts pass.
+
+**Evidence and reproducibility.** Reviewed draft and complete Cecil replay:
+`work/coordination/original-gameplay-breadth/lightning-spawn-integration-r4/`;
+independent review:
+`work/coordination/original-gameplay-breadth/lightning-spawn-integration-review-r4/`.
+The replay record SHA-256 is
+8f901636d159f651c76f7ee2ce49f9f010eeffaa6c766852178b164bab7037ae.
+The public recipe contains minimum source identities and policy only, with
+private producer-output paths removed. These changes alter authored runtime,
+managed producer and source recipes reproduced by rebuild steps; their next
+replay must use this source cohort and derive fresh player/strip receipts.
+Next build and both standard controls precede targeted blue-elite source-call
+capture. Until then the intermittent source corruption remains unresolved.

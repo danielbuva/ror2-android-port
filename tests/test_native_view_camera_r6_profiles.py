@@ -53,6 +53,11 @@ EXPECTED["post-audio-native-music-results-r23-1ced"] = {
     "api": "1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b",
     "output": "64628a52d443786d7920fc8d6b65215f32886cb3489bf5439c3efaed17e43ccf",
 }
+EXPECTED["post-audio-native-music-results-lightning-r3-1ced"] = {
+    "input": "619af38a62b19fdfcd6ef1408548aecedbda3e0830be7982cc4f96cd6b000523",
+    "api": "1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b",
+    "output": "15a92aa6f513e2271ce7240c33a205b0376fff37200089987f0cb54944c3382c",
+}
 RESTORE_ONLY = {
     ("default-game-3124", "d5fc522e83cb6f6f6845b2a8b7e5de28011031fe2f3b54c0716c52db9679c65c"),
     ("post-audio-r4-1034-api-d540", "e4aeeb5acb7b81922a0a6603d01c1d407c57e9b00852b5e15ef70838e1961e5b"),
@@ -105,6 +110,7 @@ class NativeViewCameraR6ProfileTests(unittest.TestCase):
                     "post-audio-music-observer-6f96-api-d540": "music_camera_output",
                     "post-audio-music-observer-r10-1ced": "music_camera_output",
                     "post-audio-native-music-results-r23-1ced": "native_result_camera_output",
+                    "post-audio-native-music-results-lightning-r3-1ced": "lightning_r3_native_result_camera_output",
                 }[name]
                 self.assertEqual(hook.HASHES[output_key], want["output"])
                 self.assertEqual(resolver["api_sha256"], want["api"])
@@ -112,7 +118,7 @@ class NativeViewCameraR6ProfileTests(unittest.TestCase):
                 # EH preservation. Verify their historical output against the
                 # restore-only allowlist, never against current active pins.
                 receipt_path = R6 / f"profile-{name}.json" if R6 is not None else None
-                if receipt_path is not None and receipt_path.is_file():
+                if receipt_path is not None and receipt_path.is_file() and name in R6_RECEIPT_HASHES:
                     self.assertEqual(digest(receipt_path), R6_RECEIPT_HASHES[name])
                     receipt = json.loads(receipt_path.read_text())
                     self.assertEqual(receipt["input_sha256"], want["input"])
@@ -122,6 +128,10 @@ class NativeViewCameraR6ProfileTests(unittest.TestCase):
                     generated = R6 / "isolated-repo" / receipt["output_relative_path"]
                     if generated.is_file():
                         self.assertEqual(digest(generated), historical)
+        music_only = pins["music_observer_resolver_profiles"]["post-audio-r10-1ced-game-lightning-r3"]
+        self.assertEqual(music_only["input_sha256"], "594282cfa617ac58eda6965e0a48e6958438f345cbb98bfb7cb49b9130efad1d")
+        self.assertEqual(music_only["api_sha256"], "1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b")
+        self.assertNotIn("output_sha256", music_only)
 
     def test_pre_r6_outputs_are_restore_only_and_not_active_generation_pins(self):
         pins = json.loads((REPO / "recipe/native-view-camera-transform.json").read_text())

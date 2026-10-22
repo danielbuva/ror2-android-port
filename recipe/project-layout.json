@@ -139,6 +139,7 @@
     "runtime/world/EngineerNativeOutputObserver.cs": "01d926c3af9e747629384a7a2a2ee690",
     "runtime/world/IntegratedWorldBoundary.cs": "ac04f47c69a324f909780e41d20711ac",
     "runtime/world/LightningStakeDiagnosticObserver.cs": "73ad1ed52d23847899ff9814fa3ced41",
+    "runtime/world/LightningStakeSourceCallObserver.cs": "e8c64f893bd14940a2ad9ac40d734a51",
     "runtime/world/PlayerDefeatBoundary.cs": "3e35d508f0b8d4b3bb325b276da1dec7",
     "runtime/world/PrimaryFireBoundary.cs": "6556087584415469fa03afea093f5cc6",
     "runtime/world/RunClockBoundary.cs": "621bdfec1760b42cbb7cba3af0fe16b3",

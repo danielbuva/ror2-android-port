@@ -1745,3 +1745,24 @@ No upstream implementation is copied into this recipe or generator. The host
 result establishes reconstruction provenance and topology only. Compilation,
 resource timing, backend behavior and original appearance require separate
 qualification. Provenance/privacy audit: 2026-10-22.
+
+
+### LightningStake source-call observer (2026-10-22)
+
+`lightning-stake-source-call-observer.json` records the accepted guarded source
+fingerprint, one original call identity, branch/operand contract, default-off
+selector and authored owner/transform hashes. Source lists and the project-layout
+recipe include its authored GUID. The composed producer's provenance includes
+the owner and changed integration sources. No protected implementation, game
+assembly, project content or raw device evidence is published. Private producer
+output locations and replay results are excluded from this recipe. Public
+metadata supplies the minimum identities for local reproduction.
+
+The exact local chain continues through the native music-return observer and
+native-camera transform. Their profile pins distinguish new source from
+historical lineages and remain default-off. The original call and operands stay
+on the original route. The observer does not assert a successful spawn or repair
+nonfinite gameplay values. Prior-art lifecycle guidance comes from the pinned
+Starstorm2 SwiftSkateboard subscription/teardown pattern, documented in the
+community prior-art map; no implementation is copied. Provenance/privacy audit:
+2026-10-22. Android behavior requires its own built-player evidence.

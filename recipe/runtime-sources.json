@@ -100,6 +100,7 @@
   "runtime/world/EngineerNativeOutputObserver.cs",
   "runtime/world/IntegratedWorldBoundary.cs",
   "runtime/world/LightningStakeDiagnosticObserver.cs",
+  "runtime/world/LightningStakeSourceCallObserver.cs",
   "runtime/world/PlayerDefeatBoundary.cs",
   "runtime/world/PrimaryFireBoundary.cs",
   "runtime/world/RunClockBoundary.cs",

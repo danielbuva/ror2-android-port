@@ -9,6 +9,7 @@ internal static class OriginalGameCecilTransform
 {
     private const string ApiObserverInputSha = "a2914ace8e2a7338010f8e9a9515911d68489bf0ad467bc7f73f4de293a19fe9";
     private const string AcceptedRoR2Sha = "3124a2ed9cf458acee78b1beaf969590b184be452e2b3aa5a8852df82ff95d30";
+    private const string AcceptedOnHitAllProcessFingerprintSha = "c6090a6ca1e2a42240b48cc4c0a9fa9b932ddffedfaf0d8589559f6dd2cdf2ec";
     private const string OwnerType = "GameAudioOriginalOwner";
 
     private static int Main(string[] args)
@@ -22,6 +23,10 @@ internal static class OriginalGameCecilTransform
             if (args.Length == 5 && args[0] == "point-sound") return TransformPointSound(args[1], args[2], args[3], args[4]);
             if (args.Length == 2 && args[0] == "validate-point-sound") return ValidatePointSound(args[1]);
             if (args.Length == 3 && args[0] == "validate-android-probe") return ValidateAndroidProbe(args[1], args[2]);
+            if (args.Length == 2 && args[0] == "inspect-lightning-source") return InspectLightningSource(args[1]);
+#if LIGHTNING_STAKE_HOST_TEST
+            if (args.Length == 5 && args[0] == "lightning-fixture") return TransformLightningFixture(args[1], args[2], args[3], args[4]);
+#endif
             throw new InvalidOperationException("usage: api <7ec-api> <core.dll> <output.dll> <UnityEngine.CoreModule.dll> | game <current-guarded-RoR2.dll> <core.dll> <output.dll> | point-sound <1034-game.dll> <core.dll> <output.dll> <managed-reference-directory>");
         }
         catch (Exception error) { Console.Error.WriteLine(error.GetType().Name + ": " + error.Message); return 2; }
@@ -29,8 +34,8 @@ internal static class OriginalGameCecilTransform
 
     private static int TransformPointSound(string input, string observerPath, string output, string referenceDirectory)
     {
-        const string expectedInput = "1034a747e31a3b79554b9cb06f941c7acabaa9e0ee82c2a00abc4b24f9327c1c";
-        Require(Hash(input) == expectedInput, "point-sound diagnostic requires exact composed game 1034 input");
+        const string expectedInput = "30c1cff3c18729bc509b522bb2f23d2a7c54e2f3883b926a29a3cb0fba3cf4a3";
+        Require(Hash(input) == expectedInput, "point-sound diagnostic requires exact LightningStake-composed game input");
         using (var observer = AssemblyDefinition.ReadAssembly(observerPath))
         using (var resolver = Resolver(input, observerPath, referenceDirectory))
         using (var game = AssemblyDefinition.ReadAssembly(input, new ReaderParameters { AssemblyResolver = resolver }))
@@ -707,7 +712,21 @@ internal static class OriginalGameCecilTransform
             var coreType = FindType(core.MainModule, OwnerType);
             var noAudioRef = game.MainModule.ImportReference(FindMethod(coreType, "get_NoAudio"));
             var skipManagerRef = game.MainModule.ImportReference(FindMethod(coreType, "ShouldSkipOriginalManagerInit"));
-            var manager = FindType(game.MainModule, "RoR2.WwiseIntegrationManager");
+            var bridgeName = core.MainModule.AssemblyReferences.Single(r => r.Name == "OriginalOwnerProbeObserver");
+            using (var bridge = resolver.Resolve(bridgeName))
+            {
+                var bridgeType = FindType(bridge.MainModule, "OriginalOwnerProbeObserver.Observer");
+                var hasSourceObserverRef = game.MainModule.ImportReference(FindMethod(bridgeType, "HasLightningStakeSourceCallObserver"));
+                var recordSourceCallRef = game.MainModule.ImportReference(FindMethod(bridgeType, "RecordLightningStakeSourceCall",
+                    "System.Object", "System.Object", "System.Object"));
+                var onHit = FindMethod(FindType(game.MainModule, "RoR2.GlobalEventManager"), "OnHitAllProcess",
+                    "RoR2.DamageInfo", "UnityEngine.GameObject");
+                var beforeSource = Fingerprint(onHit);
+                Require(Sha256Text(beforeSource) == AcceptedOnHitAllProcessFingerprintSha,
+                    "current guarded source OnHitAllProcess body changed");
+                InjectLightningStakeSourceCall(onHit, hasSourceObserverRef, recordSourceCallRef);
+                var expectedOnHit = Fingerprint(onHit);
+                var manager = FindType(game.MainModule, "RoR2.WwiseIntegrationManager");
             var noAudioGetter = FindMethod(manager, "get_noAudio");
             Require(noAudioGetter.ReturnType.FullName == "System.Boolean" && noAudioGetter.Body.Instructions.Count == 2 &&
                 noAudioGetter.Body.Instructions[0].OpCode == OpCodes.Ldc_I4_1 && noAudioGetter.Body.Instructions[1].OpCode == OpCodes.Ret,
@@ -728,13 +747,14 @@ internal static class OriginalGameCecilTransform
             noAudioGetter.Body.GetILProcessor().Append(Instruction.Create(OpCodes.Ret));
             gateCalls[0].Operand = skipManagerRef;
             game.Write(output);
-            VerifyGame(output, ownerPath, before, referenceDirectory);
-            Console.WriteLine("guarded game owner/noAudio and correctly-polarized original manager admission hooks injected: " + Hash(output));
+            VerifyGame(output, ownerPath, before, referenceDirectory, expectedOnHit);
+            Console.WriteLine("guarded game owner/noAudio and default-off LightningStake source-call observation injected: " + Hash(output));
+            }
         }
         return 0;
     }
 
-    private static void VerifyGame(string output, string corePath, System.Collections.Generic.Dictionary<string, string> before, string referenceDirectory)
+    private static void VerifyGame(string output, string corePath, System.Collections.Generic.Dictionary<string, string> before, string referenceDirectory, string expectedOnHit)
     {
         using (var core = AssemblyDefinition.ReadAssembly(corePath))
         using (var resolver = Resolver(output, corePath, referenceDirectory))
@@ -757,11 +777,178 @@ internal static class OriginalGameCecilTransform
                 "original manager resource requests must remain in place");
             var after = AllMethods(game.MainModule).ToDictionary(m => m.FullName, Fingerprint);
             Require(before.Count == after.Count && before.Keys.All(after.ContainsKey), "game transform changed method identities");
+            var onHit = FindMethod(FindType(game.MainModule, "RoR2.GlobalEventManager"), "OnHitAllProcess",
+                "RoR2.DamageInfo", "UnityEngine.GameObject");
             foreach (var pair in before)
-                if (pair.Key != getter.FullName && pair.Key != init.FullName)
+                if (pair.Key != getter.FullName && pair.Key != init.FullName && pair.Key != onHit.FullName)
                     Require(pair.Value == after[pair.Key], "unexpected non-audio method-body change: " + pair.Key);
+            Require(Fingerprint(onHit) == expectedOnHit, "LightningStake source-call observation differs from its verified in-memory result");
+            VerifyLightningStakeSourceCall(onHit);
             Require(game.MainModule.AssemblyReferences.Any(r => r.Name == core.Name.Name), "transformed game lacks Core reference");
         }
+    }
+
+#if LIGHTNING_STAKE_HOST_TEST
+    private static int TransformLightningFixture(string input, string bridgePath, string output, string mode)
+    {
+        using (var bridge = AssemblyDefinition.ReadAssembly(bridgePath))
+        using (var game = AssemblyDefinition.ReadAssembly(input))
+        {
+            var method = FindMethod(FindType(game.MainModule, "RoR2.GlobalEventManager"), "OnHitAllProcess",
+                "RoR2.DamageInfo", "UnityEngine.GameObject");
+            var original = method.Body.Instructions.Single(i => IsCall(i, "RoR2.Projectile.ProjectileManager", "FireProjectile"));
+            if (mode == "bypass")
+                method.Body.GetILProcessor().InsertBefore(original, Instruction.Create(OpCodes.Br, original));
+            else if (mode == "duplicate")
+            {
+                var getter = method.Body.Instructions.Single(i => i.Operand is MethodReference mr &&
+                    mr.DeclaringType.FullName == "RoR2.Projectile.ProjectileManager" && mr.Name == "get_instance");
+                var info = LoadedLocal(method, original.Previous);
+                Require(info != null, "synthetic source local missing");
+                var processor = method.Body.GetILProcessor();
+                var extraCall = new[] { processor.Create(OpCodes.Call, (MethodReference)getter.Operand),
+                    processor.Create(OpCodes.Ldloc, info), processor.Create(OpCodes.Callvirt, (MethodReference)original.Operand) };
+                foreach (var instruction in extraCall) processor.InsertAfter(original, instruction);
+            }
+            else if (mode == "changed-string")
+                method.Body.Instructions.Single(i => i.OpCode == OpCodes.Ldstr &&
+                    Equals(i.Operand, "Prefabs/Projectiles/LightningStake")).Operand = "Prefabs/Projectiles/Other";
+            else if (mode == "eh-boundary")
+                method.Body.ExceptionHandlers.Add(new ExceptionHandler(ExceptionHandlerType.Finally) {
+                    TryStart = original, TryEnd = method.Body.Instructions.Last(),
+                    HandlerStart = method.Body.Instructions.Last(), HandlerEnd = null
+                });
+            else if (mode != "normal") throw new InvalidOperationException("unknown lightning fixture mutation");
+            var observer = FindType(bridge.MainModule, "OriginalOwnerProbeObserver.Observer");
+            var has = game.MainModule.ImportReference(FindMethod(observer, "HasLightningStakeSourceCallObserver"));
+            var record = game.MainModule.ImportReference(FindMethod(observer, "RecordLightningStakeSourceCall",
+                "System.Object", "System.Object", "System.Object"));
+            InjectLightningStakeSourceCall(method, has, record);
+            VerifyLightningStakeSourceCall(method);
+            game.Write(output);
+        }
+        return 0;
+    }
+#endif
+
+    private static int InspectLightningSource(string input)
+    {
+        using (var game = AssemblyDefinition.ReadAssembly(input))
+        {
+            var method = FindMethod(FindType(game.MainModule, "RoR2.GlobalEventManager"), "OnHitAllProcess",
+                "RoR2.DamageInfo", "UnityEngine.GameObject");
+            Console.WriteLine("sha256=" + Sha256Text(Fingerprint(method)));
+            Console.WriteLine("method=" + method.FullName);
+            Console.WriteLine("instructions=" + method.Body.Instructions.Count);
+            Console.WriteLine("fire-projectile-call-count=" + method.Body.Instructions.Count(i => IsCall(i, "RoR2.Projectile.ProjectileManager", "FireProjectile")));
+            Console.WriteLine("fire-projectile-info-path-count=" + method.Body.Instructions.Count(i => i.OpCode == OpCodes.Ldstr && Equals(i.Operand, "Prefabs/Projectiles/LightningStake")));
+            foreach (var handler in method.Body.ExceptionHandlers)
+                Console.WriteLine("eh=" + handler.HandlerType + ":" + handler.TryStart + ":" + handler.TryEnd + ":" + handler.HandlerStart + ":" + handler.HandlerEnd + ":" + handler.FilterStart);
+            return 0;
+        }
+    }
+
+    private static void InjectLightningStakeSourceCall(MethodDefinition method, MethodReference hasObserver, MethodReference recordCall)
+    {
+        Require(method.FullName == "System.Void RoR2.GlobalEventManager::OnHitAllProcess(RoR2.DamageInfo,UnityEngine.GameObject)",
+            "source method identity changed");
+        var strings = method.Body.Instructions.Where(i => i.OpCode == OpCodes.Ldstr &&
+            Equals(i.Operand, "Prefabs/Projectiles/LightningStake")).ToArray();
+        var calls = method.Body.Instructions.Where(i => IsCall(i, "RoR2.Projectile.ProjectileManager", "FireProjectile")).ToArray();
+        Require(strings.Length == 1 && calls.Length == 1 && calls[0].OpCode == OpCodes.Callvirt,
+            "expected one original LightningStake source construction and one FireProjectile call");
+        var call = calls[0];
+        Require(call.Operand is MethodReference fire && fire.ReturnType.FullName == "System.Void" && fire.Parameters.Count == 1 &&
+            fire.Parameters[0].ParameterType.FullName == "RoR2.Projectile.FireProjectileInfo" &&
+            fire.DeclaringType.FullName == "RoR2.Projectile.ProjectileManager" && fire.HasThis,
+            "original FireProjectile call signature changed");
+        var infoLoad = call.Previous;
+        if (infoLoad != null && infoLoad.OpCode.FlowControl == FlowControl.Branch && infoLoad.Operand is Instruction target && target == call)
+            infoLoad = infoLoad.Previous;
+        var infoLocal = infoLoad == null ? null : LoadedLocal(method, infoLoad);
+        Require(infoLoad != null && infoLoad.OpCode.Name.StartsWith("ldloc", StringComparison.OrdinalIgnoreCase) &&
+            infoLocal != null && infoLocal.VariableType.FullName == "RoR2.Projectile.FireProjectileInfo",
+            "source FireProjectileInfo local load changed");
+        int callIndex = method.Body.Instructions.IndexOf(call);
+        Require(method.Body.Instructions.IndexOf(strings[0]) < callIndex && method.Body.Instructions.Take(callIndex).Any(i => i.OpCode == OpCodes.Stfld &&
+            i.Operand is FieldReference field && field.DeclaringType.FullName == "RoR2.Projectile.FireProjectileInfo" && field.Name == "projectilePrefab"),
+            "LightningStake prefab is not populated into the FireProjectileInfo at the selected call");
+        Require(!method.Body.ExceptionHandlers.Any(e => e.TryStart == call || e.TryEnd == call || e.HandlerStart == call ||
+            e.HandlerEnd == call || e.FilterStart == call), "source call intersects an exception-region boundary");
+        var module = method.Module;
+        Require(hasObserver.ReturnType.FullName == "System.Boolean" && hasObserver.Parameters.Count == 0 &&
+            recordCall.ReturnType.FullName == "System.Void" && recordCall.Parameters.Select(p => p.ParameterType.FullName)
+                .SequenceEqual(new[] { "System.Object", "System.Object", "System.Object" }),
+            "observer bridge callback API changed");
+        var processor = method.Body.GetILProcessor();
+        var info = new VariableDefinition(module.ImportReference(infoLocal.VariableType));
+        var receiverType = module.ImportReference(((MethodReference)call.Operand).DeclaringType);
+        var receiver = new VariableDefinition(receiverType);
+        method.Body.Variables.Add(receiver);
+        method.Body.Variables.Add(info);
+        var injectedStart = processor.Create(OpCodes.Call, hasObserver);
+        var skipObserver = processor.Create(OpCodes.Brfalse, call);
+        var storeInfo = processor.Create(OpCodes.Stloc, info);
+        var storeReceiver = processor.Create(OpCodes.Stloc, receiver);
+        var loadDamage = processor.Create(OpCodes.Ldarg_1);
+        var boxDamage = processor.Create(OpCodes.Box, module.ImportReference(method.Parameters[0].ParameterType));
+        var loadHitObject = processor.Create(OpCodes.Ldarg_2);
+        var loadInfo = processor.Create(OpCodes.Ldloc, info);
+        var boxInfo = processor.Create(OpCodes.Box, module.ImportReference(info.VariableType));
+        var callObserver = processor.Create(OpCodes.Call, recordCall);
+        var loadReceiver = processor.Create(OpCodes.Ldloc, receiver);
+        var reloadInfo = processor.Create(OpCodes.Ldloc, info);
+        var sequence = new[] { injectedStart, skipObserver, storeInfo, storeReceiver, loadDamage, boxDamage,
+            loadHitObject, loadInfo, boxInfo, callObserver, loadReceiver, reloadInfo };
+        foreach (var instruction in sequence) processor.InsertBefore(call, instruction);
+        RetargetIncomingBranches(method, call, injectedStart, skipObserver);
+    }
+
+    private static VariableDefinition LoadedLocal(MethodDefinition method, Instruction instruction)
+    {
+        if (instruction == null) return null;
+        if (instruction.Operand is VariableDefinition variable) return variable;
+        int index = instruction.OpCode == OpCodes.Ldloc_0 ? 0 : instruction.OpCode == OpCodes.Ldloc_1 ? 1 :
+            instruction.OpCode == OpCodes.Ldloc_2 ? 2 : instruction.OpCode == OpCodes.Ldloc_3 ? 3 : -1;
+        return index >= 0 && index < method.Body.Variables.Count ? method.Body.Variables[index] : null;
+    }
+
+    private static void RetargetIncomingBranches(MethodDefinition method, Instruction oldTarget, Instruction newTarget, Instruction ownedSkip)
+    {
+        foreach (var instruction in method.Body.Instructions)
+        {
+            if (instruction == ownedSkip) continue;
+            if (instruction.Operand is Instruction target && target == oldTarget) instruction.Operand = newTarget;
+            else if (instruction.Operand is Instruction[] targets)
+                for (int i = 0; i < targets.Length; i++) if (targets[i] == oldTarget) targets[i] = newTarget;
+        }
+        foreach (var handler in method.Body.ExceptionHandlers)
+            Require(handler.TryStart != oldTarget && handler.TryEnd != oldTarget && handler.HandlerStart != oldTarget &&
+                handler.HandlerEnd != oldTarget && handler.FilterStart != oldTarget,
+                "source call is an exception-region boundary");
+    }
+
+    private static void VerifyLightningStakeSourceCall(MethodDefinition method)
+    {
+        var calls = method.Body.Instructions.Where(i => IsCall(i, "RoR2.Projectile.ProjectileManager", "FireProjectile")).ToArray();
+        var has = method.Body.Instructions.Where(i => IsCall(i, "OriginalOwnerProbeObserver.Observer", "HasLightningStakeSourceCallObserver")).ToArray();
+        var record = method.Body.Instructions.Where(i => IsCall(i, "OriginalOwnerProbeObserver.Observer", "RecordLightningStakeSourceCall")).ToArray();
+        var directEdgesToSourceCall = method.Body.Instructions.Where(i => i.Operand is Instruction target && target == calls.Single()).ToArray();
+        var switchEdgesToSourceCall = method.Body.Instructions.Where(i => i.Operand is Instruction[] targets && targets.Contains(calls.Single())).ToArray();
+        Require(calls.Length == 1 && has.Length == 1 && record.Length == 1 && has[0].Next.OpCode == OpCodes.Brfalse &&
+            has[0].Next.Operand == calls[0] && record[0].Next.OpCode.Name.StartsWith("ldloc", StringComparison.OrdinalIgnoreCase) &&
+            record[0].Next.Next.OpCode.Name.StartsWith("ldloc", StringComparison.OrdinalIgnoreCase) &&
+            record[0].Next.Next.Next == calls[0] && directEdgesToSourceCall.Length == 1 &&
+            directEdgesToSourceCall[0] == has[0].Next && switchEdgesToSourceCall.Length == 0,
+            "observer must be default-off, direct pre-call, reload original operands, and own every incoming call edge");
+        Require(!method.Body.Instructions.TakeWhile(i => i != calls[0]).Any(i => i.OpCode == OpCodes.Callvirt &&
+            IsCall(i, "RoR2.Projectile.ProjectileManager", "FireProjectile")), "original native source call moved or duplicated");
+    }
+
+    private static string Sha256Text(string value)
+    {
+        using (var sha = SHA256.Create())
+            return BitConverter.ToString(sha.ComputeHash(System.Text.Encoding.UTF8.GetBytes(value))).Replace("-", "").ToLowerInvariant();
     }
 
     private static System.Collections.Generic.IEnumerable<MethodDefinition> AllMethods(ModuleDefinition module) =>

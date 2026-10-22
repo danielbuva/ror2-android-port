@@ -1,12 +1,12 @@
 {
   "base_commit": "e0df10d0bd5c7d8bcf3ae9bcab2ccf6a0ecfe7f4",
-  "integration": "Original MusicController process lifecycle with passive pre-Term participation, exact original output/PostEvent/SetState return observation and a one-shot original startup trigger after exact owned queue success. Default off unless requested. Read-only track/context and scope-qualified resolved RTPC observations expose unknown failures without changing source dispatch. Streamed media is generated from the accepted full inventory and metadata and copied to the qualified original Android IO root before initialization; playback remains unqualified. The native source-skin lifecycle validates its original CharacterModel material cache through the retained source initializer before activation; this is a prerequisite, not visual acceptance. Bounded V1 waveform readback is separate from the retained schema-3 monitor ABI. It reads only after verified exact callback unregister/quiescence before Term, and persists private raw data synchronously after both returned Terms and verified monitor disarm; optional evidence failures do not replace original lifecycle failures.",
+  "integration": "Original MusicController process lifecycle with passive pre-Term participation, exact original output/PostEvent/SetState return observation and a one-shot original startup trigger after exact owned queue success. Default off unless requested. Read-only track/context and scope-qualified resolved RTPC observations expose unknown failures without changing source dispatch. Streamed media is generated from the accepted full inventory and metadata and copied to the qualified original Android IO root before initialization; playback remains unqualified. The native source-skin lifecycle validates its original CharacterModel material cache through the retained source initializer before activation; this is a prerequisite, not visual acceptance. Bounded V1 waveform readback is separate from the retained schema-3 monitor ABI. It reads only after verified exact callback unregister/quiescence before Term, and persists private raw data synchronously after both returned Terms and verified monitor disarm; optional evidence failures do not replace original lifecycle failures. A separately selected, default-off LightningStake source-call observer snapshots bounded original pre-FireProjectile operands on the accepted integrated Nova routes; it does not change projectile behavior.",
   "owner_source_hashes": {
     "../../runtime/session/OriginalMusicControllerContract.cs": "bd8f78977722a276409623cea4909b0e41065fda6c195a6b0dee94ef8bb8b485",
-    "../../runtime/session/PortSession.cs": "233e40b41b02aa601d110db38bdb738ed35438a91131823d609a2909719e6731",
+    "../../runtime/session/PortSession.cs": "1a2d40c1822bbb075aa138c7115d272bff4ce3a09ed6f67bf8980ccf5e047f0d",
     "../../runtime/session/PortSessionOriginalAudioOwner.cs": "2f010562de8cbac3a5c6e2453f0a1c3db571ee6e45c4633fb877e6a5636d1992",
     "../../runtime/session/PortSessionOriginalMusicControllerOwner.cs": "e817c7265fc792a45494f2217ad9430bc7acb60d31437d5fe770cc7dc67f7f9c",
-    "bootstrap/GameAudioOriginalAcceptedRequestProvider.cs": "d9b61ad5d5e207f0c01860dfeb12a377f18f460905f3d4c7bde05dbd70d9c44a",
+    "bootstrap/GameAudioOriginalAcceptedRequestProvider.cs": "18f1013b76f534ca6b21b4c9e328e05bf3f3b85e870e8b946a392cee641701b8",
     "bootstrap/GameAudioOriginalAndroidNativeBootstrap.cs": "fdce9ba21e249c7c9a8d2eed788c7561907a5327f9e9b8dc28ce23334e71ee70",
     "bootstrap/GameAudioOriginalGeneratedRequestPin.cs": "f41a033141c7ed1b4c33f9f7ce6337a4a7b247c6ba96d93f514c0a37178ac4a9",
     "bootstrap/GameAudioOriginalGeneratedStagePin.cs": "d54d445d05712432559a5e332457af0b20200c93895bd79374c42b6280bd07a4",
@@ -20,8 +20,10 @@
     "core/GameAudioOriginalOwner.cs": "7a837190ee8a02b01e0cce5883869c125ca7f9938c415be4559dc577bb72a647",
     "core/GameAudioOriginalPassivePcmContract.cs": "0ae9ab3d57770c0f7d4f8cbc14eb557a0e9fd699355fb54f29f823cffb63371e",
     "core/GameAudioOriginalReadiness.cs": "ab7be883932ce975615676882440c74d43b039fce067a9cab0572d7198c4db19",
-    "core/OriginalOwnerProbeObserver.cs": "06616139b12dec7f13561249dc4d979739e66a1df925cfae6793c94bff186dfa",
-    "core/PointSoundDiagnosticObserver.cs": "ebd0b2c0089150c4302c00824ee32e7a8e8b1906f26ad2137bdb0cee4cf1b4c7"
+    "core/OriginalOwnerProbeObserver.cs": "236a01f7fb24ee0a6799f0f41196579683505e8255d18d0d1a4d1ef19537da02",
+    "core/PointSoundDiagnosticObserver.cs": "ebd0b2c0089150c4302c00824ee32e7a8e8b1906f26ad2137bdb0cee4cf1b4c7",
+    "../../runtime/world/IntegratedWorldBoundary.cs": "71f47d64170e5a084da1512b6854e7c3a54bdb5bc1f4276664a5e59699518a6d",
+    "../../runtime/world/LightningStakeSourceCallObserver.cs": "8dac5dd26a8c96120d0fc515e96519c07ee30fe3086f1ec85fd78b58a37c72b0"
   },
   "parent_manifest_sha256": "723479615e06533f4152290d05847b7a2bf1693a0a6076aa6545a3edac862330",
   "project_layout_source_guids": {
@@ -145,7 +147,8 @@
     "runtime/world/WorldItemBehaviorBoundary.cs": "716fa24be63144be184c15b902d48d0d",
     "runtime/world/WorldItemDisplayBoundary.cs": "19ba9eb50e3704089bd6f9446de6a72b",
     "runtime/world/WorldLegendaryItemsBoundary.cs": "deb3889fd7a39471091c182358424fe9",
-    "runtime/world/WorldProcContentBoundary.cs": "4ca22b1270e4b49a3b4e55b4238bd17d"
+    "runtime/world/WorldProcContentBoundary.cs": "4ca22b1270e4b49a3b4e55b4238bd17d",
+    "runtime/world/LightningStakeSourceCallObserver.cs": "e8c64f893bd14940a2ad9ac40d734a51"
   },
   "runtime_sources": [
     "experiments/LabExperiments.cs",
@@ -249,6 +252,7 @@
     "runtime/world/EngineerNativeOutputObserver.cs",
     "runtime/world/IntegratedWorldBoundary.cs",
     "runtime/world/LightningStakeDiagnosticObserver.cs",
+    "runtime/world/LightningStakeSourceCallObserver.cs",
     "runtime/world/PlayerDefeatBoundary.cs",
     "runtime/world/PrimaryFireBoundary.cs",
     "runtime/world/RunClockBoundary.cs",

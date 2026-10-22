@@ -81,7 +81,7 @@ class PointSoundDiagnosticTests(unittest.TestCase):
 
     def test_transform_has_exact_input_gate_and_mutation_rejection_contract(self) -> None:
         source = COMPOSED.read_text(encoding="utf-8")
-        self.assertIn("point-sound diagnostic requires exact composed game 1034 input", source)
+        self.assertIn("point-sound diagnostic requires exact LightningStake-composed game input", source)
         self.assertIn("RequireNoIncomingControlEdge", source)
         self.assertIn("ShortBranchCount(resultRequest) == requestShortBranchCount", source)
         self.assertIn("ShortBranchCount(resultEmit) == emitShortBranchCount", source)
@@ -107,7 +107,7 @@ class PointSoundDiagnosticTests(unittest.TestCase):
     def test_requested_producer_and_exact_predecessor_are_pinned(self) -> None:
         producer = (PATCH / "tools/unity/support/audio/managed-producer/produce.py").read_text(encoding="utf-8")
         adapter = (PATCH / "scripts/lab/original_game_audio_produce.py").read_text(encoding="utf-8")
-        self.assertIn('"point_sound_composed_game": "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc"', producer)
+        self.assertIn('"point_sound_composed_game": "594282cfa617ac58eda6965e0a48e6958438f345cbb98bfb7cb49b9130efad1d"', producer)
         self.assertIn('"point_sound_composed_game": LINEAGE["composed_game_sha256"]', adapter)
         self.assertIn('Path(key).name == "game-original-owner-point-sound-composed.dll"', adapter)
         self.assertIn("if pair == current_pair:", adapter)

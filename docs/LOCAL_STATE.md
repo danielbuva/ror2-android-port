@@ -1108,3 +1108,16 @@ then do not generate camera resolver/output state. The runtime owner resolves th
 merged marker by exact name and signature at creation; if a destination assembly lacks
 it, explicit camera creation refuses. The standard current-project whole-catalog build
 continues to stage the marker transform.
+
+
+## LightningStake source-call observation
+
+The observer has no new game-derived local input. Its only selection is the
+existing default-off `lightningStakeSourceCallDiagnosticRequested` session
+boolean. The accepted-input Cecil producer adds the runtime owner path and its
+source hash to `transformation_source_hashes`; both the baseline and native
+view-camera runtime source selections include the owner and its authored `.meta`
+GUID. The next build must derive fresh composed/prestrip/poststrip hashes from
+the replayed producer receipt; old camera/audio hashes do not identify these
+new bytes. No runtime result or Android qualification is implied by a host
+replay.

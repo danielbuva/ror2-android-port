@@ -75,6 +75,11 @@
       "input_sha256": "27340ed60dbfe77f66fa394d028b597d3e4613ee8ea405416c061766fb226eef",
       "output_sha256": "4bd3b240ce5a9cb620d14ce4041f493ba013b9700d792dc9c99c8666f3af06f0"
     },
+    "post-audio-native-music-results-lightning-r3-1ced": {
+      "input_relative_path": "Assets/LabLoadingScene/Plugins/RoR2.dll",
+      "input_sha256": "619af38a62b19fdfcd6ef1408548aecedbda3e0830be7982cc4f96cd6b000523",
+      "output_sha256": "15a92aa6f513e2271ce7240c33a205b0376fff37200089987f0cb54944c3382c"
+    },
     "post-audio-native-music-results-r23-1ced": {
       "input_relative_path": "Assets/LabLoadingScene/Plugins/RoR2.dll",
       "input_sha256": "a6385e3166d3950944da8a08f145d7e9be602571a6a75b4afb18279801f44311",
@@ -96,7 +101,7 @@
       "output_sha256": "83513fd59e81d84d093a1f9fb6d5eaaafb6382165f060dbd1b96b14990164aeb"
     }
   },
-  "purpose": "Exact default-off native camera transform with receipt-bound original music output observation intermediates; the measured R23 1ced profile is distinct from all historical observer profiles and runtime acceptance remains disabled.",
+  "purpose": "Exact default-off native camera transform with R3 original-music return observer and LightningStake source-call observer lineage; runtime acceptance remains disabled.",
   "resolution_note": "Cecil resolution materializes the explicit current project plugin DLL roots, pinned Unity 2021.3.45f2 UnityEngine modules and Mono mscorlib reference. It is limited to transform-required type/signature resolution and is not the pre-strip player-linker or IL2CPP closure. The complete current-player closure scan remains a separate required gate.",
   "resolver_profiles": {
     "default-game-3124": {
@@ -110,6 +115,10 @@
     "post-audio-music-observer-r10-1ced": {
       "api_sha256": "1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b",
       "profile": "post-audio-music-observer-r10-1ced-unity-2021.3.45f2"
+    },
+    "post-audio-native-music-results-lightning-r3-1ced": {
+      "api_sha256": "1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b",
+      "profile": "post-audio-native-music-results-lightning-r3-1ced-unity-2021.3.45f2"
     },
     "post-audio-native-music-results-r23-1ced": {
       "api_sha256": "1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b",
@@ -256,21 +265,21 @@
     "whole_catalog": "scripts/lab/whole_catalog.py"
   },
   "source_sha256": {
-    "build_hook": "583a4b6f8322da0aa6dd793bbba758533a476d415c4d44bcd9fe9b8e7ff20f9b",
+    "build_hook": "44e47661d8eaa64d5ec4c9012a8989dcb16c5347b82f612f2ab3ae696dc20eca",
     "camera_contract": "f31276a3ef620b82db6998257ef86c7d69d9bfee6a05a43ad3fa5d67dfbed202",
     "camera_owner": "f121923d5a354469a1512d5accdb419503c34d24d22386accb0b0760e0a2b884",
     "camera_prerequisites": "dc8539bd7935bc7357dd298c7c89b63af7f1f6e253ca55423bc0edbb3c333214",
     "listener_contract": "e138a103abc56700af610044e833811c8dce4eeb3d205dc3c20fc491bb962a4b",
     "marker": "7d86f674c0f6dde711916fe3105b8a88b2e91c39d1351d83ee77f0e2deea8f9f",
     "music_controller_owner": "e817c7265fc792a45494f2217ad9430bc7acb60d31437d5fe770cc7dc67f7f9c",
-    "music_observer_core": "06616139b12dec7f13561249dc4d979739e66a1df925cfae6793c94bff186dfa",
-    "music_observer_stage": "50a66bfaf4e28d5f04efa159bc3b135df15b8314a2ba82a8134d50e8ccc7c728",
-    "music_observer_transform": "55c687362195ea63728b3a89d6ec117c0e72424d25222f581d4ea8572b25d1cd",
+    "music_observer_core": "236a01f7fb24ee0a6799f0f41196579683505e8255d18d0d1a4d1ef19537da02",
+    "music_observer_stage": "675230f1987bc8bac75c74dc38f38de145095764492d7040889f45e3df4c5758",
+    "music_observer_transform": "c94e64eda96e1d969087272d0684ce1a809a00b2e18eed30e35a0a5825a77b95",
     "music_observer_transform_project": "bfca91b1984488e25dd1849433c319c1288fff37630b0279c6684cec140a012b",
-    "producer": "c552953e7634add884d71829c9193fe088a2f12a85e60d06c383c36a78ecaf7d",
+    "producer": "3c181934e808c74dfebe2212e0c663275c1cee97a9a4d7effc6ea6508483fda0",
     "resolver": "b00dc10599fa62637e5fcd74a7dcbbf4225eddaf81fb1b6bfcddaa8ff57f12d4",
     "skin_lifecycle_audio_camera_merge": "6bc20e1dd305a35646e434728457be8502cacb7cae109e833aa3a31a040a64ea",
-    "transformer": "5b4056aea96a2baad3945de27a3ed2a9055bd76e0177906bfd579f531503c6a1",
+    "transformer": "612e1f374e6381e48aec33e902505953e47d1f4df765df646ea02284c7d16598",
     "verifier": "f9047828a437fc650dbc30e68c81585a80b3f38ed87cc81427b32314b6cf9b91",
     "whole_catalog": "116645a4c3f219f2fce388b2d4e4cbf4a95cef3e29cece2f88e65a18fc5f0873"
   },
@@ -284,5 +293,12 @@
     "mono": "c2b946f92278147723d6074260c5d091f8f6bd5bef36f11a5999fc7241f313a5",
     "netstandard": "a5a0274fb4141529c87713489386cc2d52d485569586b8ceea269a672d13a9cf",
     "unity_core": "b2de8697a8e44aaa3b4ba2662015003c55fe3089ceee6ba8677716214e41c34d"
+  },
+  "music_observer_resolver_profiles": {
+    "post-audio-r10-1ced-game-lightning-r3": {
+      "input_sha256": "594282cfa617ac58eda6965e0a48e6958438f345cbb98bfb7cb49b9130efad1d",
+      "api_sha256": "1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b",
+      "profile": "current-project-point-sound-lightning-r3-api1ced-unity-2021.3.45f2"
+    }
   }
 }

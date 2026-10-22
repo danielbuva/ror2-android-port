@@ -10,7 +10,7 @@ internal static class GameAudioOriginalAcceptedRequestProvider
 {
     private const string AcceptedInputId = "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88";
     private const string AcceptedGameAssemblySha256 = "a5f7d83c7e6872fdd6099fdc299adb7d4fa03cbf465e526d6f5efcc35c2c281d";
-    private const string AcceptedComposedGameSha256 = "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc";
+    private const string AcceptedComposedGameSha256 = "594282cfa617ac58eda6965e0a48e6958438f345cbb98bfb7cb49b9130efad1d";
     private const string AcceptedRawApiSha256 = "564b74ec232e81af8fa4b65c17537a4d05890d9181281eab0bc28bd441a3a781";
     private const string AcceptedAdaptedApiSha256 = "2bd973178c99bfcb4d20510e2d1eac7efa9dd6d698237f2edfa486171bc2f272";
     private const string AcceptedObservedApiSha256 = "a2914ace8e2a7338010f8e9a9515911d68489bf0ad467bc7f73f4de293a19fe9";
