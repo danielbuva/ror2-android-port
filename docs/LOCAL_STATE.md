@@ -403,6 +403,12 @@ controls under the phone proof root are investigation evidence only; the tracked
 reader does not read them. Its positive field alignment is not node selection,
 constructed strings, populated containers or target/module availability. Raw
 SDK observations remain ignored and are never redistributed as phone inputs.
+Private `stage-target-record-v1.py` and `target-record-on-android-v1.py` adapters
+stage the committed sources in their repository layout, select Alpha explicitly,
+revalidate the existing owned SDK/Python workspace, query fresh capacity/backing
+and preserve game hashes/idle state. Both refuse optimized Python before device
+access. The host report is comparison evidence only; the Android reader derives
+its own report from the supplied SDK bytes.
 
 `phone_target_key_oracle.py ROOT WORK EXACT_EDITOR` generates fresh
 `work/rebuild/phone-wrapper-oracle/target-<attempt>/` projects and private

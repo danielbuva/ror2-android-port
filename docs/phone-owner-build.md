@@ -97,6 +97,10 @@ requirements before independent root production.
 qualifies static target-key input bindings on Android while preserving SDK API
 lookup mismatches. These declarations do not establish constructed maps or
 current target/module availability.
+[J948](PORTING_JOURNAL.md#j948--link-sdk-target-record-copy-and-consumer-operands-on-android)
+qualifies a separate static record-copy/insertion/consumer field alignment on
+Android. Node selection, container semantics, constructed records and live
+target/module/state decisions remain open; the report is not a root input.
 J899 runs the SDK's actual Roslyn compiler and unchanged runtime configuration
 on Android for one authored arithmetic library. Android repeats its own outputs
 exactly, but its DLL/PDB bytes differ from the desktop control. The observed
