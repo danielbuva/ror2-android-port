@@ -27015,3 +27015,81 @@ animation or visual-parity acceptance. Next build a frozen R25 candidate,
 qualify its retained initializer/owner and exact artifacts, run both standard
 controls, then use the separately bounded selected-camera route. The installed
 player and latest passing controls remain J941 R24; J850 remains accepted.
+
+
+## J945 — Freeze R25 with the original material-cache prerequisite retained
+
+**Hypothesis and build.** Build J944's named cache prerequisite without changing
+original audio, Siren behavior or the opt-in native-camera policy. Root freezes
+commit 0a4e09b6b7399f76a533ee07e21749d6251dea60 and all 400 canonical build-source
+hashes (manifest SHA-256
+d32dab9f0a0c7e74c7b610a99a4b002bd896e8b17d0814f6295ba3b88426251b).
+Doctor/preflight and the pinned editor idle check pass. Independent review
+catches an inherited APK inventory gap: unknown uppercase-extension bank/media
+entries escaped the namespace membership sets. The private build verifier now
+classifies extensions case-insensitively while comparing exact canonical full
+names. Both new refusal cases and the remaining packet contracts pass: 24 tests.
+No production audio or gameplay source changes after J944.
+
+The first attempt stops in host ABI generation before Unity player compilation:
+.NET reports CS0006 for the existing pinned Cecil reference. Root preserves
+`r25-root-r1/` and the failed producer output, reproduces the error, then obtains
+successful non-shared compilation and ordinary forced rebuild after shutting
+down the host compiler server. This identifies a recovered host compilation
+failure, not a proven source defect. A separate `r25-root-r2/` execution uses a
+fresh exact audio request and the same committed source; no cache purge or
+editor restart is performed.
+
+**Frozen artifacts and metadata.** The full Unity build succeeds in 224.413
+seconds with zero build errors and matching debugging symbols. Candidate:
+`work/experiments/original-game-audio/candidate-20261022T015936.548688Z/`.
+
+| Artifact | SHA-256 or identity |
+| --- | --- |
+| APK, 951,083,247 bytes | d1255bf9156240ee21091ea920e436615517c892dc6ba1bc9d0b45ed0bb8665b |
+| Symbols | a62848a53f1f1663c482f65a34012b3f0f90d4008e1362994fbdcd8a077f4762 |
+| libil2cpp BuildID | 602aee3785a48bb360f6d2c2267f52c7007cbc51 |
+| Build receipt | de89e64ac6797646768ed74c6e3a3c3655f75b00d611392593b5cddcc401e277 |
+| Main post-strip qualification | b87f81af3baf416b8573388ec522b7cbd0aeb476083b17fdc2e1cfd634bfe486 |
+| Visual/Siren qualification | c0fc1f9667afeaf847493ca42b64b2e727132d481f0cc6c2d3acff1c30462a4d |
+| Supplemental runtime qualification | 5c0d5f6ea882537e1a8b913124db5bb0e7c71f9f5f059843227400cc39717452 |
+
+The same-request inventory contains 333 captured managed assemblies, 285 audio
+roles, 154 banks, 120 streamed media files and 266 payload files. Complete bank
+and media byte/hash checks pass in the APK. The native/API/audio/camera module
+chain is unchanged from J941. The R25 metadata gate verifies the original
+private initializer and cache fields, exact serializable five-field owner
+report, and the retained call/report-store before lifecycle addition and source
+model activation. Pre-strip and stripped owner contracts match. Root freezes
+four independent pre-strip/stripped/IL2CPP-backup assembly triples, then runs
+the reviewed supplemental qualifier against the exact candidate: three runtime
+assembly pairs and the separate eleven-import native bootstrap contract pass.
+These remain metadata-only results with runtime acceptance false.
+
+Root execution evidence is under
+`work/coordination/codex-original-game-audio-build-root/r25-root-r2/`;
+supplemental evidence is under
+`work/coordination/original-runtime-observation-poststrip/r25-root-r1/`.
+Independent actual-artifact review SHA-256 is
+1ca4935737b9e3eb021a3b0d81d6b74785080084e6cf44a2d3c741032cb43500.
+The persistent Unity mutex releases naturally after the terminal build.
+
+**Limits and next gate.** R25 is not installed or device-qualified at this
+checkpoint. J941 R24 remains installed and the latest passing standard controls;
+J850 stays accepted. Next install this exact frozen APK through fresh placement
+and reserve checks, run both standard controls, independently verify cleanup,
+then observe original cache initialization and selected-model rendering. No
+rendered pixels, animation correctness, natural audio teardown, speaker
+frequency response or visual parity is inferred from compilation or metadata.
+
+A separate host reading of J943's final report narrows its cleanup wording:
+`sourceStageLifecycleRecoveryRequired` alone enters the shared retention branch
+in `PortSession.RunSelectedProbe`; its generic fallback message names audio when
+no audio failure exists. The bounded PCM state is captured with empty stop
+failure and no terminal-stop request. The message therefore does not establish
+an audio unregister failure. Preserve the refusal and require a separate
+natural teardown measurement; no audio lifecycle behavior change follows.
+Local interpretation is `work/coordination/original-audio-lifecycle-r24/triage-r1/`,
+findings SHA-256
+c3c044140f4ef6bb09f2c1cdf3d35f3c88541e0bb43b3a3986818526e171a998.
+This checkpoint adds no further rebuild-produced runtime source.

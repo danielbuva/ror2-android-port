@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J945](PORTING_JOURNAL.md#j945--freeze-r25-with-the-original-material-cache-prerequisite-retained) | 2026-10-21 | Freeze R25 with the original material-cache prerequisite retained | **Hypothesis and build.** |
 | [J944](PORTING_JOURNAL.md#j944--initialize-the-original-material-cache-before-native-model-activation) | 2026-10-21 | Initialize the original material cache before native model activation | **Hypothesis and prior art.** |
 | [J943](PORTING_JOURNAL.md#j943--read-the-native-siren-listening-state-without-accepting-encounter-start) | 2026-10-21 | Read the native Siren Listening state without accepting encounter start | **Hypothesis and change.** |
 | [J942](PORTING_JOURNAL.md#j942--preserve-a-bounded-camera-failure-and-observe-the-null-material-cache) | 2026-10-21 | Preserve a bounded camera failure and observe the null material cache | **Hypothesis and change.** |
