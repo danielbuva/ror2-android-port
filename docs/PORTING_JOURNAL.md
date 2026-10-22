@@ -27093,3 +27093,77 @@ Local interpretation is `work/coordination/original-audio-lifecycle-r24/triage-r
 findings SHA-256
 c3c044140f4ef6bb09f2c1cdf3d35f3c88541e0bb43b3a3986818526e171a998.
 This checkpoint adds no further rebuild-produced runtime source.
+
+
+## J946 — Pass R25 controls and retain the recurring LightningStake defect
+
+**Hypothesis and setup.** Verify J945's frozen R25 player before exercising its
+new opt-in original material-cache prerequisite. Root installs its exact APK
+d1255bf9156240ee21091ea920e436615517c892dc6ba1bc9d0b45ed0bb8665b and syncs the
+266-file frozen payload through normal fresh reserve, adopted-placement and
+ownership checks. The source is J944 commit 0a4e09b. No device receipt is edited
+manually. The private packet is
+`work/coordination/codex-original-game-audio-device-root/r19-r25-root-r1/`.
+Host review closes a missing profile gate: both raw control records and their
+Root evidence joins now require exactly integer thirteen. Forty-two draft
+contracts pass; actual frozen-candidate validation passes separately. The exact
+Root entrypoint bytes and claim are frozen before dispatch.
+
+**Device controls.** Both standard modes pass on the same installed R25 bytes:
+
+| Mode | Evidence under `work/experiments/baseline/` | Observed bound |
+| --- | --- | --- |
+| Plain | `20261022T021110.351683Z/` | 35.218 seconds on Lakes |
+| Stage exit | `20261022T021526.470165Z/` | One original exit to Goolake; 121.811 seconds total and 10.100 seconds in the destination |
+
+Both retain thirteen applied profile rows and verify process absent, selector
+absent and display asleep. A separate post-run query rehashes installed APK
+bytes and verifies owned placement and idle state. A read-only runtime query
+checks all 120 WEM files at the current reported data path: all 585,814,167 bytes
+match R2. It writes or moves no device data. Root releases its active device
+claim only after those independent checks complete.
+
+**Audio observations and limits.** Both audio owners are ready with 153 of 153
+requested content banks and no owner failure. Plain records 462 callbacks and
+532,224 finite samples; stage-exit records 463 callbacks and 533,376 finite
+samples. Every counted finite sample is nonzero; nonfinite samples, capped
+buffers and rejected buffers are zero. Exact selected capture and owned music
+output identities match in both modes. Intro PostEvent returns playing ID one
+once; source Play/Stop SetState observations return raw code one, with counts
+five/three in plain and thirteen/eleven in stage-exit. These are separate source
+return observations, not sample attribution. Both capture windows stop at the
+first-stage render-frame limit. The later Goolake/muSong05 snapshot does not
+prove destination-stage PCM. No waveform, particular event, musical fidelity,
+speaker audibility or natural engine Term is qualified. Force-stop cleanup
+remains separate from original audio lifecycle acceptance.
+
+**Known gameplay defect reproduced.** The structural controls do not require
+an entirely clean Unity log. Current-process filtering finds five known Windows
+shader bundle error lines in each mode, plus 74 LightningStake nonfinite
+collider-transform lines in plain and 224 in stage-exit. No NRE or fatal/native
+crash is observed. This reproduces the unresolved J623/J634/J667 defect class;
+the native-skin opt-in and new cache initializer were not requested here.
+The plain observer first sees the bad stake already NaN at frame 3,932/world
+21.637 seconds; stage-exit first sees three affected blue-elite-Wisp stakes
+already NaN at frame 3,886/world 21.901 seconds. Both are explicitly
+first-observed, not spawn observations: there is no finite predecessor,
+known spawn time or joined damage-position witness. No causal source fix or
+transform clamp follows. The defect remains open and prevents a clean gameplay
+claim; these controls do not promote R25 to the accepted baseline.
+
+**Evidence and next gate.** Root final qualification SHA-256 is
+b367233f87d913ed354a8000f76acad7610d41157ba4aa8f3d02fd1bb74ffd9e;
+independent post-query SHA-256 is
+d912d0747156b3a344d6c7701c2c55582ae7b17ccee8298fe86c29c2946c9e68;
+runtime media verification SHA-256 is
+1e6ed8cd10bf4c5e952202fe9aaf708daf5a449f8dc201003a5b297593ef7061.
+Authored host readings are under
+`work/coordination/original-game-audio-r25-triage/` and
+`work/coordination/original-gameplay-breadth/r25-lightning-stake-r1/`;
+the latter assessment SHA-256 is
+a5bc5d427f6c8408979ab5fd3a977d133d75b5b7bca9297629c189c5c70d5efd.
+Next use the reviewed session-bound selected-camera route with separate bounded
+world preparation and survival phases. Original cache initialization and
+rendering still need that opt-in run. J850 stays accepted; R25 is installed and
+the latest default-control-verified diagnostic. No further runtime or
+rebuild-produced source changes in this checkpoint.

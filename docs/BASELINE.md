@@ -88,11 +88,12 @@ The plain check and its acceptance criteria remain unchanged.
 
 ## Current baseline (2026-10-20)
 
-J941's diagnostic APK 1b616b7e is installed after both standard controls,
-media readback and an independent installed/cleanup query. It stays unpromoted
-while selected-camera rendering and broader audio acceptance remain open.
-See the [current snapshot](../PORTING_STATE.md) for installed identity and
-[J941](PORTING_JOURNAL.md#j941--verify-r24-streamed-media-delivery-and-first-nonzero-composed-pcm)
+J946's diagnostic APK d1255bf9 is installed after both standard controls,
+media readback and an independent installed/cleanup query. It stays unpromoted:
+LightningStake collider errors recur, selected-camera rendering is unmeasured,
+and broader audio acceptance remains open. See the
+[current snapshot](../PORTING_STATE.md) for installed identity and
+[J946](PORTING_JOURNAL.md#j946--pass-r25-controls-and-retain-the-recurring-lightningstake-defect)
 for the result record. The accepted baseline below remains the rollback.
 
 | Item | Value |
