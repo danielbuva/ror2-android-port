@@ -308,6 +308,17 @@ No SDK instruction executes and no captured table is an input. Constructor
 results, populated maps, discovered target availability, module inclusion,
 native usage and roots remain unqualified. No game build consumes this report.
 
+`phone_target_records.py` owns a separate current experimental SDK operand-link
+report. It reads string-copy source/destination offsets, pair value placement,
+the insertion block's local node/key displacement and the platform-define
+consumer's inline/heap field choice. Its only positive qualification is static
+field alignment; it does not select a node, execute a constructor, evaluate hash
+container semantics, populate a map or resolve a target. Renderer checks,
+conditional module handling and record reset are recorded as unevaluated
+barriers around insertion. Setup is committed reader/helpers and the pinned
+owner SDK; teardown creates one new private JSON and retains failed attempts.
+No SDK instruction executes, and no game build or root generator consumes it.
+
 `phone_target_key_oracle.py` / `TargetKeyOracle.cs` own separate current desktop
 observations of the SDK's public numeric-name API and internal reverse-name API.
 The runner stages a fresh SDK-only project, with separate numeric/string query

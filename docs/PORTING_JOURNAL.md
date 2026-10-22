@@ -27415,3 +27415,90 @@ c5174a60338d8e41a6e21b43440acdba305d212699fda65faf51e2f112d31008.
 Applied-delta review SHA-256:
 3aa9a24fe1dfecdc764ef4ae81c3af5151d2164d306f80583ff33f6131407263.
 Generated content and raw logs remain local.
+
+## J948 — Link SDK target-record copy and consumer operands on Android
+
+**Hypothesis and scope.** J939 separates static key inputs from public API names
+and live reverse lookup. The next small prerequisite is an independently derived
+link between copied record fields, pair placement and the platform-define
+consumer. This generic SDK metadata experiment does not reconstruct RoR2 or
+change a runtime, renderer, scene, player or installed game. Main reserves J948;
+final rebase onto 0a3ab81 preserves its complete J949 journal and current snapshot
+before changing only Alpha's research row. Read J895/J931/J934/J939 first.
+
+**Authored change and boundaries.** `phone_target_records.py` reads the pinned
+owner SDK as Mach-O data through the existing bounded readers. It traces seven
+string-copy source/destination operands, matching offsets 0 through 288 in
+48-byte steps. The pair constructor passes its record destination at offset 48;
+the insertion block passes that pair at a local node displacement of 8. The
+consumer's string field at 200 therefore aligns with copied record field 144.
+Its mode byte lies 32 bytes into that string, and its local branch selects the
+inline address or the heap pointer from the same field. These are operand
+relationships, not executed constructors, field-name/layout assumptions from
+managed reflection or evaluated container behavior. No captured SDK instruction
+listing, table or API answer supplies an input to the reader.
+
+Require matching receivers and sources, dominating definitions/copy calls,
+ordered and distinct copy offsets, pair value/memory-label arguments, the same
+node-relative header write, and the exact local mode comparison/continuations.
+Record the unevaluated insertion barriers: renderer checking, flag-bit-dependent
+module handling, name-list pointer loading, insertion and subsequent record
+reset. Unknown/skipped/misaligned operands refuse. Node selection, hash
+lookup/insertion/duplicate semantics, full record initialization, preload writes,
+later registrations and live module availability remain open. In particular,
+this does not prove Android's default record or a usable Android target.
+
+**Controls and host result.** Actual committed source is
+241c799b0a3f2ef1adab6ad8667bdfb324b48a8d; public rebased source
+d851b96dccbb2b6cdff509df8f382bd3229856c3 has identical reader/helper/test
+bytes. Nine focused tests and all 23 related
+host tests pass; the exact-SDK data test skips when that owner SDK is absent.
+Public fixtures contain authored operand shapes, including a different field
+spacing/count/displacement, not captured SDK code. Changed-file Ruff and the
+public scan pass; manual source/provenance review finds authored tooling and
+minimal symbol identities only. The initial private mutation harness uses fixed
+positions preceding copy calls: six accepted mutations actually touch unrelated
+initialization/spill stores. Preserve that result rather than infer constructor
+correctness. Correct the harness to mutate reaching argument definitions; all
+32 targeted SDK operand mutations then refuse. SDK bytes remain unchanged.
+Doctor/preflight still fail Alpha's missing clone-local inventory, accepted input
+and generated game project; no game build is attempted or qualified.
+
+**Android result.** Stage 11 committed reader/helper sources and one authored
+test file into a fresh owned Alpha workspace after explicit device, ownership,
+SDK/Python hash, current storage/backing, capacity and reserve checks. Run the
+reader under isolated Python without executing SDK instructions. It completes in
+about 0.744 s; host and Android report bytes match SHA-256
+08c541af8986b22563423efac79ed781df4586e1d22f9a0c7024a11e9e2b097c.
+Eight portable contracts pass without skips. Unknown-SDK and output-overwrite
+controls refuse while preserving the accepted output. Four local adapter
+-O/-OO controls refuse before imports/device access. All staged sources and the
+supplied SDK remain unchanged. Zero installs and game launches occur; Alpha's
+owned be26c21c game bytes are unchanged, process/selector absent, display asleep.
+No SDK editor process, shared build mutex, Main device or canonical game-build
+pointer is used. No APK is produced by this experiment.
+
+**Evidence and disposition.** Private result:
+`work/coordination/phone-proof/target-record-phone-6609dd51156d459fb79b7c35f71f0070/result.json`.
+`target-record-proof-receipt-v2.json` under that proof root binds 72 artifacts,
+including private observations/disassembly, both mutation attempts, source stages,
+SDK/host/Android reports, tests, guards and source equality; SHA-256
+2c4e40b34882b02c1a61d8463baf79225870ef100e1efa57bca9e8af172bc48b.
+Named ownership and generated/private inputs are documented. Raw SDK material,
+identifiers and logs stay ignored; no game/root generator consumes this report.
+
+Only `field_operand_alignment_qualified` is true. `node_selection_qualified`,
+`hash_container_semantics_qualified`, `constructor_result_qualified`,
+`tree_population_qualified`, `target_support_qualified`,
+`target_discovery_qualified`, `module_inclusion_qualified`,
+`native_usage_qualified` and `root_generation_qualified` remain false. Next must
+qualify complete record/preload writes, container/lookup and module/state joins
+independently before using a target record for native retention. Preserve J939's
+failed exact API equivalence and J929's failed app-host refusal. Route A, the
+working Android renderer and desktop owner-build fallback remain fixed; full
+phone installation, matched performance and alpha game readiness remain open.
+
+Final integration preserves Main's complete J949 journal prefix and all snapshot
+rows except Alpha research. The private `target-record-rebase-equality-v2.json`
+separately binds the original/rebased source equality; the original Android
+report and 72-artifact proof remain unchanged.

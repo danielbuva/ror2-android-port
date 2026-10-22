@@ -59,6 +59,8 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       inclusion and live state independently before claiming target retention.
       Preserve [J939's static-input/API-lookup distinction](PORTING_JOURNAL.md#j939--read-sdk-target-key-input-bindings-on-android-and-preserve-lookup-mismatches)
       while proving constructor results, map consumers and live availability.
+      [J948's field operand alignment](PORTING_JOURNAL.md#j948--link-sdk-target-record-copy-and-consumer-operands-on-android)
+      leaves node selection, container semantics and those live decisions open.
 - [ ] Extend [J899's authored compiler fixture](PORTING_JOURNAL.md#j899--compile-an-authored-c-fixture-on-android-and-preserve-cross-host-output-differences)
       through general defines/generators, real source semantics and downstream
       stripping/conversion. [J902](PORTING_JOURNAL.md#j902--compile-the-authored-unity-fixture-with-sdkpackage-derived-references-on-android)
