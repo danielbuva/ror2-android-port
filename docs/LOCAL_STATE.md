@@ -375,6 +375,13 @@ No SDK token table or disassembly is published. The separate
 reader-derived query names, source/input receipts, SDK API observations and logs.
 Its tracked generators own every staged input. The report is desktop comparison
 evidence only; no phone or game build consumes it.
+The local `stage-target-support-v1.py` and
+`target-support-on-android-v1.py` adapters under the private proof root copy
+committed reader/test sources unchanged into a fresh owned Alpha workspace.
+They reuse receipt/hash-bound SDK and Python bytes, compare the independently
+generated host report locally, and enforce explicit device selection, fresh
+capacity and unchanged-game checks. Neither adapter accepts optimized Python;
+SDK oracle answers are never staged to Android.
 
 `phone_managed_compile.py stage ROOT OWNER_SDK_CONTENTS WORK` generates a fresh
 `work/rebuild/phone-managed-compile/<owned-attempt>/` from the exact supplied SDK

@@ -26576,3 +26576,105 @@ Host tests do not establish stripping retention, cache state on Android,
 material initialization, rendering or animation acceptance. Next build with
 the complete streamed-media fix, pass both ordinary controls, and inspect the
 same selected-camera sample before attempting a startup restoration.
+
+
+## J934 — Read Android SDK feature declarations and compare independent API observations
+
+Date: 2026-10-22 UTC. Hypothesis: J931's target-support prerequisite can advance
+by reading the pinned owner's SDK as data on Android, while preserving separate
+module-inclusion, state-retention and native-usage gates. Root reserved J934;
+rebase onto 868a8be preserves its complete J935 journal prefix and snapshot
+before changing only Alpha's owner-build row. Read J895/J931 before extending
+this generic SDK build-metadata subsystem. No RoR2 reconstruction, gameplay,
+rendering, middleware or execution backend changes are involved.
+
+**API/format knowledge and change.** Consult the pinned Unity reference's
+[feature API declaration](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Editor/Mono/BuildPipeline.bindings.cs),
+[target-discovery declaration](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Editor/Mono/BuildTargetDiscovery.bindings.cs)
+and [BuildTarget enum](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Editor/Mono/BuildTarget.cs).
+The reference-only license is retained as a boundary: use API knowledge, copy
+no implementation. Direct SDK assembly metadata confirms the internal static
+feature method; the MCP public-reflection omission does not establish absence.
+Apple's installed Mach-O format header supplies section/stub/indirect-symbol
+field knowledge, with no copied implementation or header in this repository.
+
+`phone_platform_features.py` reads the original hash-pinned SDK without invoking
+its instructions. It binds the comparison import through symbol/stub/library
+metadata, proves entry-parameter receivers, walks literal selector headers and
+accepts only the closed Android append body with bounded overflow/growth/return
+forms. Require file-backed C-string literals and refuse unknown instructions,
+clobbers, aliases, foreign entries or changed continuations. One skipped header
+has a bounded hoisted literal pair; it cannot clobber the comparison result.
+The generated function is 100,820 bytes, beyond the older small-function bound;
+its separate reader leaves legacy bounds and source pins unchanged. Neither a
+captured token table nor disassembly is an input. Tests use authored metadata
+and instruction fixtures, including individual append-word mutations.
+
+The separate `phone_platform_feature_oracle.py` / `PlatformFeatureOracle.cs`
+verification owner creates a fresh SDK-only project under the established
+isolated-oracle scope. Under the primary persistent Unity mutex it observes
+Android's discovery label and calls the exact SDK feature API with names only,
+without supplying expected answers. Bind source, SDK, request and loaded
+assembly hashes. No BuildPlayer, scene, game project, canonical current-build
+pointer or phone generator consumes its output. The pinned MCP lab instance
+was idle with compilation/reload inactive before the isolated batch.
+
+**First failures and controls.** Preserve the initial oversized-reader refusal
+and bounded-parser development attempts. The first oracle staging attempt
+refuses an output root outside the existing guard before launching Unity;
+correct only the new runner's destination and test the actual guard, including
+existing-project refusal. The first completed SDK oracle returns successfully
+but fails validation: my numeric target pin was 19, while the SDK and pinned
+reference define Android as 13. Correct the validator, retain 19 as a negative
+control and rerun from committed source in a new project. Neither failure
+qualifies a result by itself. `./dev doctor` and game preflight still refuse
+missing clone-local inventory/accepted input/project state; the isolated SDK
+and metadata guards do not qualify a game build.
+
+**Qualified observations.** Actual oracle and Android source is
+892dbfc9a7935c463712e829584af7cc6304466a; the rebase preserves all reader/test/
+collector bytes. Public rebased source
+91464ebc1cac11912a83f263e6ddc3612df73407 has identical qualified inputs.
+Thirteen focused host tests pass. The fresh exact-editor
+oracle observes 65 queries: 62 supported and three unsupported, all agreeing
+with the independent declaration reader. The SDK observes Android/13 and
+PLATFORM_ANDROID. Native consumer probe names include audio, cloth, physics,
+movies and cluster input; the unknown authored probe also refuses. API report
+SHA-256 is 839502f1cbaa00c6983bb5e309e75f43ceb41383953f3d045f059ef3d07b9844.
+These answers remain private comparison evidence, never phone-build inputs.
+
+On explicitly selected Alpha, the unchanged reader decodes 62 unique Android
+feature declarations across 21 selector headers in about 0.943 s. Host and
+Android report bytes match SHA-256
+aed116b291755ef12b8a17e5e2590265a4df2edce6ed2a55da604b172a855a6e.
+Nine portable contracts pass without skips. Overwrite and unknown-SDK controls
+refuse, preserving the accepted output. Four local adapter controls refuse
+`-O`/`-OO` before imports or device access. Fresh storage/capacity, Python/SDK
+hashes and every staged source are checked. SDK and source hashes remain
+unchanged. Zero installs and zero game launches occur; owned be26c21c bytes are
+unchanged, process/selector absent and display asleep. No APK is produced.
+
+**Evidence and disposition.** Private Android result:
+`work/coordination/phone-proof/target-support-phone-58890e1c2e5b4bc6a89b24672ed3c458/result.json`.
+`target-support-proof-receipt-v1.json` under the same proof root binds 99
+artifacts, including original refusals, source stages, both completed SDK
+attempts, host/phone reports, guard controls and rebase equality; SHA-256
+490ecab1f1f284c075c9814ed6eb517bf27526d793dcb3bdece9916dff2bbf05.
+SDK bytes, raw tables/disassembly, generated assemblies, identifiers and logs
+stay ignored. Changed-file Ruff, public scan and manual authored-source review
+pass. Named owners and generated/private replay inputs are documented.
+
+`executes_sdk`, `other_platforms_qualified`, `target_discovery_qualified`,
+`module_include_qualified`, `state_retention_qualified`,
+`native_usage_qualified` and `root_generation_qualified` remain false in the
+metadata report. A desktop discovery observation does not qualify an Android
+producer. Next requires independent target discovery/module membership,
+state-dependent manager serialization and native-usage equality, including the
+retained J895 mismatch. Keep J929's failed app-host refusal, Route A, the working
+Android game pipeline and desktop owner-build fallback. This is a bounded
+build-metadata result, not phone-only installation or game readiness.
+
+Final integration rebase onto f676d2f preserves Root J935–J938 and all other
+snapshot rows. Reader, tests and collector bytes remain identical to the
+qualified source; the independent review of the original head found no
+blocking guard or control-flow issue.
