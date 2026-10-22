@@ -75,7 +75,7 @@ class ProfileWiringTests(unittest.TestCase):
         self.assertEqual(camera.HASHES["native_result_camera_output"], pins["profiles"][name]["output_sha256"])
         self.assertEqual(camera.HASHES["music_observed_game"], "27340ed60dbfe77f66fa394d028b597d3e4613ee8ea405416c061766fb226eef")
 
-    def test_observer_restore_accepts_exact_historical_and_new_r10_pairs_only(self):
+    def test_observer_restore_accepts_exact_historical_r10_and_lightning_r3_pairs_only(self):
         observer = load(OBSERVER_PATH, "r23_observer_restore_test")
         old_api = "d540a22693ca7a149cdb2344ce5f61936c2c998a9d82f0bdf66b5492edb18e23"
         r10_api = observer.R10_API
@@ -92,6 +92,9 @@ class ProfileWiringTests(unittest.TestCase):
             for name in (
                 "ROOT",
                 "RAW_GAME",
+                "R3_POINT_SOUND_GAME",
+                "R3_NATIVE_RESULT_OBSERVED_GAME",
+                "R3_CORE_OBSERVER",
                 "ACCEPTED_GAME",
                 "GUARDED_GAME",
                 "ACCEPTED_INPUT_ID",
@@ -116,7 +119,7 @@ class ProfileWiringTests(unittest.TestCase):
                 observer.LEGACY_OBSERVED_GAME = output_hashes["legacy-observer"]
                 observer.NATIVE_RESULT_OBSERVED_GAME = output_hashes["native-result"]
 
-                def run_case(api_hash: str, output_name: str, should_restore: bool):
+                def run_case(api_hash: str, output_name: str, should_restore: bool, profile: str | None = None):
                     game = project / observer.GAME
                     game.parent.mkdir(parents=True, exist_ok=True)
                     game.write_bytes(outputs[output_name])
@@ -149,9 +152,12 @@ class ProfileWiringTests(unittest.TestCase):
                         "api_sha256": api_hash,
                         "core_observer_sha256": digest(core_path.read_bytes()),
                         "input_sha256": raw_hash,
+                        "audio_stage_input_game_sha256": raw_hash,
                         "output_sha256": output_hashes[output_name],
                         "preimage_snapshot": "snapshots/raw.dll",
                     }
+                    if profile is not None:
+                        receipt["profile"] = profile
                     stage_path.write_text(json.dumps(receipt), encoding="utf-8")
                     real_sha = observer.sha
 
@@ -180,6 +186,13 @@ class ProfileWiringTests(unittest.TestCase):
                 run_case(old_api, "legacy-observer", True)
                 run_case(old_api, "native-result", False)
                 run_case(r10_api, "unknown", False)
+
+                # Exercise the Lightning R3 branch independently of the legacy 6f96 profile.
+                observer.RAW_GAME = "e" * 64
+                observer.R3_POINT_SOUND_GAME = raw_hash
+                observer.R3_NATIVE_RESULT_OBSERVED_GAME = output_hashes["native-result"]
+                observer.R3_CORE_OBSERVER = digest(b"synthetic core")
+                run_case(r10_api, "native-result", True, observer.R3_PROFILE)
         finally:
             for name, value in original.items():
                 setattr(observer, name, value)

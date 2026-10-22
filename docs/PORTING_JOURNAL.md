@@ -27931,3 +27931,31 @@ managed producer and source recipes reproduced by rebuild steps; their next
 replay must use this source cohort and derive fresh player/strip receipts.
 Next build and both standard controls precede targeted blue-elite source-call
 capture. Until then the intermittent source corruption remains unresolved.
+
+
+## J958 — Repair complete host-suite source and receipt contracts
+
+**First failure.** The full pre-push suite refuses J957 before publication:
+AssemblyProbe's closed source inventory still pins the prior music/camera
+Cecil tools. That first refusal cascades into reconstruction contracts. A
+historical observer test omits the source-image witness now required by the
+receipt contract, a native-tool diagnostic assertion names its prior source,
+and the recipe audit table omits the new observer recipe despite its prose
+entry. Root's complete workstation run preserves all 28 errors and two failures
+under `work/coordination/root-full-host-8a50b93.log`; the public-style CI run skips
+the extra native-tool case when Unity is absent. No device, input or player
+state is changed by these failures.
+
+**Correction and checks.** Refresh only the two changed authored tool digests
+in `recipe/assembly-transforms.json`, retain the existing source-drift refusal,
+add the observer receipt's exact source-image witness to the synthetic fixture,
+exercise the new R3 restoration branch explicitly, and update the changed
+refusal text and recipe audit table. Root surveys all 12 retained actual
+observer receipts: each already has that explicit source witness, so this does
+not fabricate or rewrite historical evidence. The isolated complete overlay
+passes 1,724 tests with 12 expected skips; Root separately runs all 23 affected
+assembly, observer, native-result and recipe-audit tests on the actual checkout.
+All pass. A fresh pre-push run remains mandatory; no hook is bypassed.
+The frozen corrective packet and full overlay log remain at
+`work/coordination/lightning-full-ci-fix-r1/`. This changes source identity
+metadata and tests only, with no new runtime behavior or APK.

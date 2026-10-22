@@ -144,7 +144,7 @@ class NativeResultObserverTransformTests(unittest.TestCase):
             check=False,
         )
         self.assertNotEqual(result.returncode, 0, result.stdout)
-        self.assertIn("exact 6f96 composed game input", result.stdout)
+        self.assertIn("exact R3 PointSound composed game input", result.stdout)
         self.assertFalse(output.exists())
 
     def test_copied_runtime_owner_compiles_and_joins_exact_identity_then_detaches(self) -> None:

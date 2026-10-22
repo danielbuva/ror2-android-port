@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J958](PORTING_JOURNAL.md#j958--repair-complete-host-suite-source-and-receipt-contracts) | 2026-10-21 | Repair complete host-suite source and receipt contracts | **First failure.** |
 | [J957](PORTING_JOURNAL.md#j957--integrate-a-bounded-observer-at-the-original-lightningstake-call) | 2026-10-21 | Integrate a bounded observer at the original LightningStake call | **Hypothesis and prior art.** |
 | [J956](PORTING_JOURNAL.md#j956--add-reproducible-local-outline-highlight-and-rampfog-candidates) | 2026-10-21 | Add reproducible local Outline Highlight and RampFog candidates | **Hypothesis and prior art.** |
 | [J955](PORTING_JOURNAL.md#j955--preserve-failed-r26-natural-shutdown-attempts-and-current-animation-evidence) | 2026-10-21 | Preserve failed R26 natural shutdown attempts and current animation evidence | **Hypothesis.** |
