@@ -20,6 +20,10 @@ Check the [open backlog](execution-backlog.md) before choosing work, and use the
 [journal index](JOURNAL_INDEX.md) to avoid repeating an experiment. Keep changes
 focused and distinguish host-test results from device-verified gameplay.
 
+For a reviewed report from an existing standard check, use the
+[local baseline feedback preview](BASELINE_FEEDBACK.md). It selects fixed facts
+and can include a manual issue-draft URL; settings integration remains open.
+
 For tooling changes, use the [validation tiers](#validation-tiers) and
 [testing strategy](testing-strategy.md). Review staged files and run the public
 repository audit before committing; never include game-derived outputs or private

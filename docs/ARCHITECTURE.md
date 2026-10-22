@@ -565,6 +565,13 @@ verifies the resulting absence states and records them in `result.json`.
 An unknown observation or failed cleanup refuses acceptance. Setup retains the
 selected-device ownership/storage gates and APK-embedded attempt identity;
 teardown handles a push that succeeded remotely before a local timeout.
+`baseline_feedback.py` owns the separate host-only feedback projection: read one
+explicit baseline result, validate typed facts and teardown claims, and create
+one new local preview. Its fixed tokenless issue-draft URL is optional and never
+opened automatically. Raw errors, paths and unknown fields are omitted; no device
+or attachment collection occurs. Setup, exclusive output, process teardown and
+review limits are in [BASELINE_FEEDBACK.md](BASELINE_FEEDBACK.md). Settings
+integration remains open.
 The exact editor is started with `./dev editor --target lab --action open`; send it one
 mutation at a time. Device acceptance is always the real device, never the editor.
 

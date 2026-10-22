@@ -137,7 +137,9 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       failure, sustained performance and thermals on supported hardware.
 - [ ] Add tokenless feedback from settings: browser issue draft, separate redacted
       report preview/export and explicit attachment consent. Obtain approval
-      before public issue-template or tracker changes.
+      before public issue-template or tracker changes. The separate
+      [host baseline preview](BASELINE_FEEDBACK.md) selects fixed facts for manual
+      review; settings, arbitrary-log redaction and attachment export remain open.
 - [ ] Provide a short owner-build/install/playtest checklist with artifact
       identity, known limits, rollback and consented feedback steps. Retain
       [J888's checked device observations and teardown](PORTING_JOURNAL.md#j888--refuse-unknown-baseline-device-state-and-verify-teardown)
