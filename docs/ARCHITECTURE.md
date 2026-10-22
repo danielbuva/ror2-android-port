@@ -308,6 +308,16 @@ No SDK instruction executes and no captured table is an input. Constructor
 results, populated maps, discovered target availability, module inclusion,
 native usage and roots remain unqualified. No game build consumes this report.
 
+`phone_target_key_oracle.py` / `TargetKeyOracle.cs` own separate current desktop
+observations of the SDK's public numeric-name API and internal reverse-name API.
+The runner stages a fresh SDK-only project, with separate numeric/string query
+lists and no expected pairs. Every batch uses the primary persistent Unity
+mutex. Setup/teardown changes only that project and child process. Bind source,
+SDK, query and loaded-assembly hashes. Observation completion is separate from
+the saved exact-comparison result: spelling aliases, exceptions and mismatches
+remain evidence, never normalized into a pass. SDK answers are not phone/game
+inputs, and no scene, player or canonical build pointer is created or changed.
+
 `phone_managed_compile.py` owns a current experimental authored compiler fixture.
 Its explicit stage invocation copies hash-pinned owner Roslyn components, their
 unchanged runtime configuration/license, the SDK Unity AOT core library and the

@@ -396,6 +396,12 @@ under the phone proof root are investigation evidence. The tracked reader does
 not consume them. No SDK target table, instruction listing, generated game data
 or private API observation is a production input; constructor results, map
 population and target support remain unqualified.
+`phone_target_key_oracle.py ROOT WORK EXACT_EDITOR` generates fresh
+`work/rebuild/phone-wrapper-oracle/target-<attempt>/` projects and private
+metadata/query/source receipts, SDK observations, exact comparisons and logs.
+The tracked Python/C# generators own every staged input. Queries contain no
+expected mapping; a completed observation is not necessarily an equivalent
+mapping. These SDK answers remain comparison evidence only.
 
 `phone_managed_compile.py stage ROOT OWNER_SDK_CONTENTS WORK` generates a fresh
 `work/rebuild/phone-managed-compile/<owned-attempt>/` from the exact supplied SDK
