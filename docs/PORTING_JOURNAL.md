@@ -28505,6 +28505,15 @@ validation passes without modifying the live project. This establishes host
 staging only; Android execution, music attribution,
 shader rendering and animation parity remain open.
 
+The first pre-push CI run refuses publication: the synthetic build-entry fixture
+does not yet supply the newly consumed layout/sidecar contract, and the camera
+recipe still pins the previous whole-catalog source hash. Update that fixture
+to exercise its own fixed GUID and authored sidecar, patch its recipe boundary,
+and refresh only the authored whole-catalog source pin. The 12 build-entry
+contracts and 42 camera contracts pass (three expected exact-toolchain skips).
+The failed pre-push log remains `j973-push.log`; the required hook must pass on
+the corrected commit before publication or another build.
+
 Evidence is `work/coordination/original-game-audio-r27-build-root-r7/`
 (`execution/status.json`, `execution/build.log`, `runtime-metadata-gap.json`,
 `runtime-metadata-cohort-replay.json`),

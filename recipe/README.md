@@ -1792,3 +1792,9 @@ synthetic compiler contracts, identities and hashes are published; observer/game
 binaries, raw replay records and private paths stay ignored. The C# observer source
 and game transformation outputs are unchanged. Provenance/privacy audit:
 2026-10-22.
+
+J973 refreshes the camera recipe's whole-catalog source pin for authored runtime
+metadata staging. It changes no camera transform output or protected input.
+Only authored staging code, synthetic metadata contracts and its source digest
+are published; generated project metadata and build evidence remain ignored.
+Provenance/privacy audit: 2026-10-22.

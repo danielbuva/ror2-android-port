@@ -107,6 +107,8 @@ class BuildEntryTests(unittest.TestCase):
         write(self.recipe / "content.json", dict(prefabAssets=["Assets/Example.asset"]))
         write(self.recipe / "runtime-sources.json", ["runtime/Session.cs"])
         self.put(self.root / "tools/unity/runtime/Session.cs", "class Session {}")
+        write(self.recipe / "project-layout.json", dict(runtime_source_guids={"runtime/Session.cs": "b" * 32}))
+        self.put(self.root / "tools/unity/runtime/Session.cs.meta", "fileFormatVersion: 2\nguid: " + "b" * 32 + "\n")
         for name in (
             "AndroidProgressionHost",
             "AndroidDiscoveryHost",
@@ -145,7 +147,7 @@ class BuildEntryTests(unittest.TestCase):
         analysis = self.dest / ".rebuild/catalog-inputs"
         write(analysis / "integration-latest.json", dict(path="destination/.rebuild/catalog-inputs/integration-generated"))
         write(analysis / "integration-generated/manifest.json", self.manifest)
-        for module in (build, replay, catalog_rebuild):
+        for module in (build, replay, catalog_rebuild, whole_catalog):
             self.start(patch.object(module, "RECIPE", self.recipe))
         for module in (build, whole_catalog):
             self.start(patch.object(module, "ROOT", self.root))
