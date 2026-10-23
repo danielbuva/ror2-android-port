@@ -125,6 +125,33 @@ def patch(data, wire):
     if resources[exported] not in (0, 0x01010010):
         raise ValueError("exported attribute resource differs")
     resources[exported] = 0x01010010
+
+    # The public launcher must not permit a cold explicit Unity launch to bypass
+    # preparation. Preserve every other original activity attribute/value.
+    original = activities[0]["start"]
+    node_header = struct.unpack_from("<H", original, 2)[0]
+    relative, stride, count = struct.unpack_from("<HHH", original, node_header + 8)
+    offset = node_header + relative
+    existing = [(i, original[offset + i * stride : offset + (i + 1) * stride]) for i in range(count)]
+    value = struct.pack("<IIIHBBI", android, exported, NONE, 8, 0, 0x12, 0)
+    exported_rows = [i for i, raw in existing if struct.unpack_from("<II", raw) == (android, exported)]
+    if len(exported_rows) > 1:
+        raise ValueError("duplicate Unity export attribute")
+    if exported_rows:
+        existing = [(i, value if i in exported_rows else raw) for i, raw in existing]
+    else:
+        existing.append((-1, value))
+    existing.sort(key=lambda item: resources[struct.unpack_from("<I", item[1], 4)[0]] if struct.unpack_from("<I", item[1], 4)[0] < len(resources) else 0)
+    prefix = bytearray(original[:offset])
+    struct.pack_into("<H", prefix, node_header + 12, len(existing))
+    for special in (node_header + 14, node_header + 16, node_header + 18):
+        previous = struct.unpack_from("<H", prefix, special)[0]
+        if previous:
+            position = next(i + 1 for i, item in enumerate(existing) if item[0] == previous - 1)
+            struct.pack_into("<H", prefix, special, position)
+    changed = prefix + b"".join(raw for _, raw in existing) + original[offset + count * stride :]
+    struct.pack_into("<I", changed, 4, len(changed))
+    activities[0]["start"] = bytes(changed)
     pool = string_pool(strings, bool(struct.unpack_from("<I", data, start + 16)[0] & 0x100))
     resource_map = struct.pack("<HHI", 0x180, 8, 8 + 4 * len(resources)) + struct.pack("<" + "I" * len(resources), *resources)
 

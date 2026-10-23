@@ -40,6 +40,7 @@ public final class PayloadBootstrapActivity extends Activity {
     private WebView web;
     private Backend backend;
     private AlertDialog reviewDialog;
+    private boolean handingOff;
 
     @Override public void onCreate(Bundle saved) {
         super.onCreate(saved);
@@ -87,14 +88,23 @@ public final class PayloadBootstrapActivity extends Activity {
         if (backend.status.equals("idle")) backend.start(backend.previous);
     }
 
-    @Override protected void onDestroy() {
-        if (reviewDialog != null) reviewDialog.dismiss();
+    private void releaseWebView() {
         if (web != null) {
             web.removeJavascriptInterface("OwnerPayload");
             web.stopLoading();
             web.destroy();
             web = null;
         }
+    }
+
+    @Override protected void onPause() {
+        if (handingOff) releaseWebView();
+        super.onPause();
+    }
+
+    @Override protected void onDestroy() {
+        if (reviewDialog != null) reviewDialog.dismiss();
+        releaseWebView();
         super.onDestroy();
     }
 
@@ -119,7 +129,7 @@ public final class PayloadBootstrapActivity extends Activity {
             if ("retry".equals(action)) {
                 Map<String, String> observed;
                 synchronized (backend) {
-                    if (!backend.status.equals("error") || backend.reviewPending) return false;
+                    if (!backend.status.equals("error") || backend.reviewPending || backend.unityRequested) return false;
                     observed = backend.drift;
                     if (observed != null) backend.reviewPending = true;
                 }
@@ -156,6 +166,7 @@ public final class PayloadBootstrapActivity extends Activity {
         volatile String status = "idle";
         volatile boolean reviewPending;
         volatile boolean pause;
+        volatile boolean unityRequested;
         String message = "Checking prepared game files.";
         Integer percent;
         boolean copied;
@@ -203,7 +214,7 @@ public final class PayloadBootstrapActivity extends Activity {
                 JSONObject caps = new JSONObject();
                 caps.put("pause", status.equals("preparing") && running && !launching && !pause);
                 caps.put("resume", status.equals("paused"));
-                caps.put("retry", status.equals("error") && !reviewPending);
+                caps.put("retry", status.equals("error") && !reviewPending && !unityRequested);
                 caps.put("launch", status.equals("ready"));
                 JSONObject value = new JSONObject();
                 value.put("status", status).put("progress", percent == null ? JSONObject.NULL : percent)
@@ -213,7 +224,7 @@ public final class PayloadBootstrapActivity extends Activity {
         }
 
         synchronized void start(Map<String, String> reviewed) {
-            if (running) return;
+            if (running || unityRequested) return;
             running = true;
             launching = false;
             accepted = reviewed;
@@ -264,7 +275,7 @@ public final class PayloadBootstrapActivity extends Activity {
             return true;
         }
         synchronized boolean resume() { if (!status.equals("paused")) return false; start(accepted); return true; }
-        synchronized boolean retry() { if (!status.equals("error") || drift != null) return false; start(accepted); return true; }
+        synchronized boolean retry() { if (!status.equals("error") || drift != null || unityRequested) return false; start(accepted); return true; }
         synchronized boolean launch(WeakReference<PayloadBootstrapActivity> activity) {
             if (!status.equals("ready") || running) return false;
             running = true; launching = true;
@@ -279,17 +290,22 @@ public final class PayloadBootstrapActivity extends Activity {
                             synchronized (this) { running = false; status = "ready"; percent = 100; message = "Game files are ready."; }
                             return;
                         }
+                        boolean hadGame = unityRequested;
                         try {
                             Intent intent = new Intent().setClassName(context.getPackageName(), "com.unity3d.player.UnityPlayerActivity");
+                            unityRequested = true;
+                            target.handingOff = true;
                             target.startActivity(intent);
                             synchronized (this) { running = false; status = "ready"; percent = 100; message = "Game files are ready."; }
                             target.finish();
                         } catch (Exception failure) {
-                            synchronized (this) { running = false; status = "error"; percent = null; message = "The game could not be started. Retry preparation."; }
+                            unityRequested = hadGame;
+                            target.handingOff = false;
+                            synchronized (this) { running = false; status = "error"; percent = null; message = hadGame ? "The game could not be resumed. Exit and restart it." : "The game could not be started. Retry preparation."; }
                         }
                     });
                 } catch (Exception failure) {
-                    synchronized (this) { running = false; status = "error"; percent = null; message = "Prepared files changed. Retry preparation."; }
+                    synchronized (this) { running = false; status = "error"; percent = null; message = unityRequested ? "Prepared files changed. Exit and restart the game before preparing them." : "Prepared files changed. Retry preparation."; }
                 }
             }, "OwnerPayloadLaunchCheck");
             worker.start();

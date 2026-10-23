@@ -16,8 +16,9 @@ Android [provides this app-specific location without storage permission](https:/
 
 The native IL2CPP libraries, original DEX files, game resources and all payload
 contents retain their hashes. Binary manifest structure editing moves only the
-original MAIN/LAUNCHER filter into the new authored activity; resource indices
-and other original activity/application attributes remain intact. No Unity
+original MAIN/LAUNCHER filter into the new authored activity and makes the
+original Unity entry private to prevent bypassing preparation. Resource indices
+and all other original activity/application attributes remain intact. No Unity
 project, source text replacement, stripping, game compilation, runtime backend,
 shader mechanism or replacement content loader is introduced.
 
@@ -32,6 +33,10 @@ shader mechanism or replacement content loader is introduced.
   receipt, native update consent, launch verification and WebView lifecycle.
   A process restart rechecks actual files; a receipt alone never makes it ready.
   Completed files survive pause/restart, and failed stages/backups are retained.
+  After Unity is requested, this process cannot prepare replacement data. The
+  WebView is released before handing off to Unity. The lab's old direct exported-Unity
+  launch helper is not the candidate's public entry; exercise its bootstrap/Play
+  path rather than changing the shared helper for this experiment.
 - `owner-host.js` connects the approved frontend's adapter v1 to fixed native
   actions. It exposes no paths, account state, arbitrary JavaScript/shell or file
   access. Polling/subscription teardown does not cancel preparation. Only bundled

@@ -141,7 +141,7 @@ public final class PayloadStore {
             if (accepted == null || !row.getValue().equals(accepted.get(row.getKey())))
                 throw new Drift(drift);
         }
-        if (source.availableBytes() < required + RESERVE + 16L * 1024 * 1024)
+        if (!pending.isEmpty() && source.availableBytes() < required + RESERVE + 16L * 1024 * 1024)
             throw new IOException("Insufficient free storage for preparation and reserve");
         File stage = null, backup = null;
         if (!pending.isEmpty()) {
