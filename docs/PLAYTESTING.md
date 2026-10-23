@@ -83,12 +83,17 @@ Follow the approved run's owned cleanup and verify its idle/selector state.
 
 Keep the APK hash/receipt and failed-run directory. For a report, write short
 reproduction steps, expected/actual behavior, build identity and assistance used.
+For a selected standard-check result, the
+[local baseline feedback preview](BASELINE_FEEDBACK.md) can select fixed fields
+for review and an optional manual issue-draft URL. It does not collect arbitrary
+logs, attach files or submit an issue. Keep the original evidence private.
 Review every field before submitting through the
 [repository's Issues page](https://github.com/danielbuva/ror2-android-port/issues/new).
 Remove account/session details, private paths, device/storage identifiers and
 signing data. Do not submit game files, generated packages or raw logs. Preview
 and explicitly consent to any attachment. No automated upload or embedded token
-is needed; settings integration and a redacted exporter remain open work.
+is needed; settings integration, arbitrary-log redaction and attachment export
+remain open work.
 
 Rollback requires a reviewed same-owner package/payload/profile-compatible set.
 Keep that set rather than uninstalling or forcing a downgrade to bypass a

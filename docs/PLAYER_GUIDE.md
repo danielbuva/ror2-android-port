@@ -37,8 +37,9 @@ players will obtain, prepare and install that build are still being worked out.
 
 A phone-only process is being investigated, with a desktop build path as a
 fallback. Small test programs have proved parts of that research, but there is
-no demonstrated complete phone-only game build. There is no launcher or finished
-installation sequence to recommend yet.
+no demonstrated complete phone-only game build. The [launcher frontend](../launcher/README.md)
+is an early integration boundary; its Android backend and installation sequence
+are not ready.
 
 Before a player guide can give reliable installation steps, the project still
 needs to settle and verify:
@@ -64,7 +65,7 @@ normal-difficulty playthrough.
 
 Important work remains:
 
-- In-game audio is unavailable.
+- Audible music and sound effects are not yet verified in normal play.
 - A full unassisted run, the Moon finale and escape are not verified.
 - Touch controls, physical controllers and ordinary player navigation still need
   qualification; automated test input does not prove those experiences work.
