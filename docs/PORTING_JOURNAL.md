@@ -29321,3 +29321,77 @@ staged, built or installed. The next full player must retain the report fields,
 pass both standard controls and exercise the original Loader/network-effect
 route with actual catalog observations. J983 remains installed; J850 remains
 the accepted rollback, and Main is idle/asleep.
+
+## J993 — Build the native catalog candidate and preserve its pre-world refusal
+
+**Build and exact artifact.** Root builds committed J988/J991 source ced979c
+under the shared Unity mutex after selected-device doctor and preflight pass.
+Clean-clone pre-push CI passes 1,700 tests with 119 optional skips. Preparation,
+refresh and full catalog host validation pass. Unity 2021.3.45f2 produces APK
+`217d1a4fc9b3265f4f6dd5c2b6454e8d3fe9256b2f22aed3dc00df6befca7ed9`
+in 223.81296 s with zero errors. The wrapper verifies a fresh same-request
+conversion trace and editor idle before releasing the lock. The immutable
+freeze binds 333 pre-strip and 93 post-strip assembly rows, symbols, stage
+receipts and 266 payload files. A separate read-only metadata check verifies
+all 14 catalog Snapshot fields, serialization, coordinator/session call sites
+and retained original catalog APIs in the exact captured pre/post pair. This
+is metadata evidence, not runtime acceptance.
+
+Build/freeze evidence is
+`work/coordination/original-game-audio-r28-build-root-r1/`. The candidate is
+`work/experiments/original-game-audio/r27-20261023T030330.882450Z-00f8eb9cc0c74002941ed77a29955511-217d1a4fc9b3/`;
+the retained R27 freezer wire format does not change this R28 source identity.
+Build receipt SHA-256 is
+`55d169ad25bdce6e282edb09c53b661634b86cca297f21803459ca413869a88b`;
+source freeze is `fad801700a973c3716f1ebdffabdb7ea78cfc4f77876eb88a15ff67112a4dc02`.
+The extra post-strip check is in
+`work/coordination/original-game-audio-pcm/r28-network-catalog-poststrip-check-root-r1/`.
+
+**Actual first failure.** Installation of the explicit frozen APK and payload
+sync succeed on Main in its existing adopted storage. The plain standard check
+stops before world entry on
+`original_network_sound_catalog_refused:complete-original-definition-family-invalid`.
+The session report records the explicit refusal phase, first failure and error;
+the nested catalog snapshot survives stripping/serialization and observes both
+native pre/post counts as zero, no setter call and no readiness. Its default
+sourceDefinitionCount zero is not an observation of an empty source family:
+that assignment occurs after the rejecting predicate. Native audio itself is
+ready with noAudio false, no returned Term and its catalog bundle lease held.
+The stage-exit mode is not run after this first failure. Neither standard
+acceptance nor the J988 context is qualified by this candidate.
+
+The baseline report's zero appliedRuns is also an uninitialized pre-world
+profile DTO, not evidence that the persistent profile was erased. Independent
+read-only terminal queries verify 13 actual applied runs, process/selector
+absence, display sleep, installed APK bytes and owned package placement.
+Owned cleanup reports no errors. Root archives and clears its completed device
+claim; no editor or device job remains live.
+
+**Source classification and next change.** Offline review identifies exactly
+four referenced definitions in the complete 65-entry provider family with empty
+eventName strings and unique definition names. The original setter consumes
+the full ordered family without this authored whitespace precondition. Removing
+rows, inventing event names or substituting Invalid would change native index
+semantics. The next repair must compare source values/membership with legitimate
+input, preserve all original definitions and separate empty-name observations
+from actual native ID results. A nonzero empty-string hash cannot establish an
+authored bank event. Any actual native error or zero-ID failure stays visible;
+no playback claim follows from this static classification.
+
+The control attempt is
+`work/coordination/original-game-audio-r27-device-controls/attempts/root-r3-r28/`;
+its plain baseline is `work/experiments/baseline/20261023T031510.764686Z/`.
+Root preparation, refused pre-dispatch path check, corrected exact invocation
+and independent terminal/profile query are in
+`work/coordination/original-game-audio-r28-device-controls-root-r1/`.
+The old copied harness receipt path is corrected to the already measured
+inputs/source-freeze.json location before any device command. Family review
+and follow-up are under the ignored audio coordination parent in
+`r28-network-catalog-definition-review-r1/` and
+`r28-network-catalog-definition-triage-r1/`.
+
+**Current state.** APK 217d1a4f remains installed as a failed diagnostic; it is
+not promoted. J983 9feef7e9 remains the latest passing diagnostic, and J850
+f1550ce0 remains the accepted rollback. Both are preserved. The source-context
+and catalog candidate are built, but composed world/audio acceptance remains
+open. Main is asleep; the other devices are untouched.
