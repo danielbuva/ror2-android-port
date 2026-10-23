@@ -79,6 +79,63 @@ await check('Background updates do not steal focus from the About dialog', async
   assert(doc.activeElement === close, 'Dialog focus stolen');
   close.click();
 });
+function enter(key, value) {
+  const field = doc.querySelector(`[data-note="${key}"]`);
+  field.value = value; field.dispatchEvent(new win.Event('input', {bubbles:true}));
+  return field;
+}
+function previewDraft() { doc.querySelector('[data-feedback-form]').requestSubmit(); }
+await check('Feedback preview is literal, survives host updates and requires review before copy', async () => {
+  const adapter = await fixture(); await route('diagnostics');
+  doc.querySelector('[data-view="feedback"]').click(); await tick();
+  const actual = enter('actual', '<b>user note</b>'); actual.focus(); actual.setSelectionRange(2, 5);
+  adapter.emit(snapshot('preparing', {pause:true}));
+  assert(doc.activeElement === actual && actual.selectionStart === 2 && actual.selectionEnd === 5, 'Host update replaced draft/focus');
+  previewDraft();
+  const output = doc.querySelector('#feedback-preview');
+  assert(output.value.includes('<b>user note</b>') && !doc.querySelector('.feedback b'), 'Notes interpreted as HTML');
+  const copy = doc.querySelector('[data-feedback-copy]');
+  assert(copy.disabled, 'Copy enabled before review');
+  const original = Object.getOwnPropertyDescriptor(win.navigator, 'clipboard');
+  const writes = [];
+  Object.defineProperty(win.navigator, 'clipboard', {configurable:true, value:{writeText:async value => { writes.push(value); }}});
+  try {
+    doc.querySelector('[data-feedback-consent]').click(); copy.click(); await tick();
+    assert(writes.length === 1 && writes[0] === output.value, 'Copy did not use the reviewed preview');
+    assert(doc.querySelector('[data-feedback-status]').textContent.includes('Draft copied'), 'Copy completion missing');
+    adapter.emit(snapshot());
+    assert(doc.querySelector('#feedback-preview') === output && output.value === writes[0], 'Host update changed reviewed text');
+    enter('actual', 'Revised note');
+    assert(copy.disabled && output.value === '' && doc.querySelector('[data-feedback-preview]').hidden, 'Edited draft allowed stale copy');
+  } finally {
+    if (original) Object.defineProperty(win.navigator, 'clipboard', original); else delete win.navigator.clipboard;
+  }
+});
+await check('Feedback refuses raw/invalid metadata without exposing it or retaining an old preview', async () => {
+  await route('feedback'); enter('actual', 'A check failed'); previewDraft();
+  enter('metadata', '{"error":"PRIVATE_SENTINEL"}'); previewDraft();
+  assert(doc.querySelector('[data-feedback-preview]').hidden && doc.querySelector('[data-feedback-copy]').disabled, 'Invalid metadata accepted');
+  assert(doc.querySelector('#feedback-preview').value === '', 'Old draft retained');
+  assert(!doc.querySelector('[data-feedback-error]').textContent.includes('PRIVATE_SENTINEL'), 'Raw error leaked');
+  enter('metadata', '');
+});
+await check('Clipboard refusal offers manual copy; navigation retains notes until reload', async () => {
+  await route('feedback'); enter('actual', 'Preserved note'); previewDraft();
+  const original = Object.getOwnPropertyDescriptor(win.navigator, 'clipboard');
+  Object.defineProperty(win.navigator, 'clipboard', {configurable:true, value:{writeText:async () => { throw new Error('PRIVATE_SENTINEL'); }}});
+  try {
+    doc.querySelector('[data-feedback-consent]').click(); doc.querySelector('[data-feedback-copy]').click(); await tick();
+    const output = doc.querySelector('#feedback-preview');
+    assert(doc.activeElement === output && output.selectionEnd === output.value.length, 'Manual copy not selectable');
+    const status = doc.querySelector('[data-feedback-status]').textContent;
+    assert(status.includes('Clipboard unavailable') && !status.includes('PRIVATE_SENTINEL'), 'Clipboard failure leaked or claimed success');
+    await route('home'); await route('feedback');
+    assert(doc.querySelector('[data-note="actual"]').value === 'Preserved note', 'Navigation lost notes');
+    assert(doc.querySelector('[data-feedback-preview]').hidden, 'Navigation retained sharing consent');
+  } finally {
+    if (original) Object.defineProperty(win.navigator, 'clipboard', original); else delete win.navigator.clipboard;
+  }
+});
 document.title = document.querySelector('#results').textContent.includes('FAIL:')
   ? 'FAIL · Launcher browser checks' : 'PASS · Launcher browser checks';
 </script></html>

@@ -14,11 +14,14 @@ open `http://127.0.0.1:8080/launcher/`. Serve locally, not on a public interface
 Run `node --test launcher/tests/*.test.js` (Node 18 or newer).
 Open `http://127.0.0.1:8080/launcher/tests/view.html` for browser regression checks
 against the real frontend: pending Prepare/Pause, action and navigation focus,
-view navigation and modal focus during background updates. All five results must read PASS.
+view navigation, modal focus and feedback preview/copy during background updates.
+All eight results must read PASS.
 No dependencies, build step, external fonts, analytics or remote requests.
 
 - `index.html`: safe disconnected default, setup and diagnostics routes.
 - `app.js`: view rendering, hash navigation, modal and accessibility wiring.
+- `feedback.js`: page-memory notes, a schema 1 sanitized-preview consumer, exact
+  plain-text preview, review consent and clipboard copy; no host/device operations.
 - `controller.js`: versioned state/action boundary; owns connection, subscription,
   per-action pending requests and stale-response rejection. `disconnect()` or page exit
   tears down the subscription; no preparation is canceled implicitly.
@@ -26,6 +29,26 @@ No dependencies, build step, external fonts, analytics or remote requests.
 - `demo/`: explicitly separate, simulated click-through. No route or flag enables
   it in the real frontend. Its state and progress reset on reload.
 - `PROVENANCE.md`: developer-facing source and asset-review record.
+
+## Feedback draft
+
+Open **Diagnostics → Write feedback draft**, enter notes and choose **Preview
+draft**. Optionally paste the JSON preview from the existing
+[local baseline feedback tool](../docs/BASELINE_FEEDBACK.md). The form accepts
+only schema 1 previews with typed, bounded check facts and verified teardown;
+it constructs a new allowlisted object, ignoring unknown fields and draft URLs.
+Raw run reports are refused. Imported facts are unauthenticated runner claims;
+they never establish the currently installed build or game readiness.
+
+Review the exact plain-text preview, check the review box, then choose **Copy
+reviewed draft**. Editing any input invalidates the preview and consent. When
+clipboard access fails, the preview is selected for manual copy. Notes remain
+in page memory across navigation and background host updates, and clear on
+reload or close. No storage API, clipboard read, network posting, automatic
+issue navigation or attachment collection is used. User-entered notes are not
+automatically redacted; review them and each later attachment before sharing.
+The preparation backend remains absent by default, and the separate demo is
+unchanged. Native settings integration and device acceptance remain open.
 
 ## Host adapter v1
 
