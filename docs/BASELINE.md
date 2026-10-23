@@ -88,16 +88,16 @@ The plain check and its acceptance criteria remain unchanged.
 
 ## Current baseline (2026-10-23)
 
-J1017's diagnostic APK 197101a8 is installed after both standard controls,
-strict log replay and independent installed-byte/placement/idle verification.
-The first stage-exit attempt missed the unchanged deadline; one identical repeat
-passes both modes. The camera, native sound mapping and three highlight
-assignments are ready without J1013's null-prefab exception. J1021's separate
-Loader observation adds all four native callbacks and Hook/Pylon observations;
-full-kit semantics and the intermittent blue-elite event remain open.
-First-sample JSON, natural teardown, composed audio and
-rendered parity remain unresolved. See the [current snapshot](../PORTING_STATE.md)
-and [J1017](PORTING_JOURNAL.md#j1017--verify-the-equipment-highlight-owner-and-six-row-shader-payload-on-android).
+J1022's diagnostic APK 098646f6 is installed after both standard controls,
+strict process-log qualification and independent installed-byte/placement/idle
+verification. MainOutput retains ready camera/context, native sound mapping and
+all three highlight assignments. The native callback reports finite nonzero
+samples; original Term and persisted waveform readback remain unqualified.
+J1024 records a separate R33 source-view startup timeout and default-menu Quit
+pass; it supplies no new rendering evidence. Loader's full-kit semantics,
+first-sample JSON, composed audio and visual parity remain open. See the
+[current snapshot](../PORTING_STATE.md) and
+[J1022](PORTING_JOURNAL.md#j1022--build-and-verify-the-mainoutput-audio-candidate-with-both-controls).
 The accepted baseline below remains the rollback.
 
 | Item | Value |

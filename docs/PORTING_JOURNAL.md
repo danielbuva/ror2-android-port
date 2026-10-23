@@ -31394,3 +31394,187 @@ finishes and does not reach native compilation. App execution policy, complete
 export,
 Android content/shader/player construction, permitted tool delivery and matched
 game performance remain open. Route A and the desktop fallback stay fixed.
+
+## J1022 — Build and verify the MainOutput audio candidate with both controls
+
+**Hypothesis and existing contract.** Select the existing passive MainOutput
+capture mode while preserving original audio, MusicController sampling, camera
+admission and native catalog ownership. This reuses J918/J959/J983's native
+capture and lifecycle contracts, not a new event renderer. MainOutput uses the
+SDK's default selector zero; an observed callback output identity remains a
+separate fact. Music-specific PCM correlation is disabled. No authored runtime
+owner, transform recipe or native library changes in this experiment.
+
+**Preserved refusal and build.** A new local request changes the compiled
+`GameAudioOriginalGeneratedRequestPin.cs` and bootstrap DLL relative to R33.
+The first public code-only action refuses content reuse before a player build.
+Independent full fingerprint comparisons agree: 92,270 files, no additions or
+removals, and four changed inputs—the bootstrap DLL and audio/camera/music
+StreamingAssets receipts. These are real content changes. Preserve the refusal;
+do not amend the base receipt, widen reuse exceptions or clear caches.
+
+Use the normal public full-catalog action with symbols and both managed-linker
+and IL2CPP captures under the shared build lock. Source is
+`5724dd72fee7ddf5529b430f1ef03ef44fe2fa89`; the 185 authored source inputs match
+the recorded commit. Request `fa90af10a8ac449382341ab48157c641` selects passive
+capture with music-output capture false. Its generation was created by the
+refused attempt and is legitimately cached on the full-build retry. Its exact
+request, generated pin, bootstrap and cache hashes remain unchanged across that
+retry; they differ from R33. No request is regenerated to avoid a cache hit.
+
+Unity succeeds in 215.460231 seconds with zero errors. Build request
+`20261023T115319.072464Z-68c41282e37f45158b2691147f84d938` produces APK
+`098646f6cc931c2a8d01d91fe4dfdcf5f54c58d9fc6ad01137695992e58588bd`.
+The host freeze binds all 266 payload files, 333 pre-strip managed assemblies,
+93 post-strip assemblies and one fresh same-request IL2CPP conversion event.
+Bootstrap and observer stage outputs match their captured assembly hashes.
+A direct exact-editor MCP query after command completion confirms compilation,
+updating, play and building are all idle. Metadata inspections remain retention
+proofs; they do not invoke gameplay or establish playback.
+
+**Both device controls.** Install the explicit frozen APK in place through the
+selected-device placement checks and synchronize its explicit frozen payload.
+The plain check passes at 35.218491 world seconds. The assisted stage-exit check
+passes at 152.587387 total world seconds, including 10.093536 seconds on Goolake.
+Each exact-current-process report has ready camera/context admission, all
+65 native network-sound mappings available, and all three named original
+highlight fields assigned. The four empty source event names remain source
+metadata. Each full retained control log has five recognized Windows-bundle
+negative-control lines and zero unexplained current-process errors.
+
+Both checks retain thirteen applied profile runs and use diagnostic assists;
+neither establishes ordinary difficulty or general gameplay acceptance. Their
+cleanup and a separate read-only terminal query independently confirm the
+installed APK bytes, owned adopted placement, selector/process absence,
+unchanged profile and sleeping display. Main now holds this diagnostic APK;
+accepted rollback J850 remains unchanged. R33's separate startup and menu-Quit
+observations are recorded once in J1024.
+
+**Bounded PCM observation.** The plain report selects MainOutput zero with no
+specific selected-output identity, while separately observing a nonzero callback
+output identity. It reports 461 callbacks and 531,072 finite samples, including
+13,632 nonzero finite samples, with zero nonfinite samples or rejected buffers.
+Capture stops at the existing render-frame bound. The general original music
+owner remains requested while its music-specific PCM join is false; those flags
+have different purposes. This is native callback evidence, not attribution to
+a particular event, music track, complete mix or physical audibility.
+
+The standard control force-stops the app. Original Term has not returned in its
+last report, raw persistence is false and readback remains
+`validated_waiting_for_original_terms`. Do not turn successful control cleanup
+into natural engine-teardown or waveform-readback acceptance. The separately
+reviewed targeted natural-Quit route remains unarmed at this checkpoint.
+
+**Evidence and limits.** Private build/refusal evidence is under
+`work/coordination/original-game-audio-r34-build-root-r1/`,
+`work/coordination/original-game-audio-r34-code-reuse-refusal-triage-r1/` and
+`work/coordination/original-game-audio-r34-build-root-r2/`. The immutable candidate
+is under
+`work/experiments/original-game-audio/r34-20261023T115319.072464Z-68c41282e37f45158b2691147f84d938-098646f6cc93/`.
+Host freeze report SHA-256 is
+`7807f629d2dcc3001cd4fbcc3f4003df4ac6a123957c440a58a8506bbf051463`;
+manifest SHA-256 is
+`c813b295c67a3de6a1e87c7e72a55bf0c3a137a47b03468f55283efe18c637f5`;
+Unity receipt SHA-256 is
+`b905f97acf22e183e4d8257df1765b33a8acd2d031ff3c640e245332344ec714`.
+
+Controls are under
+`work/coordination/original-game-audio-r27-device-controls/attempts/root-r10-r34/`;
+legacy directory/schema names are compatibility labels, while the receipt names
+revision R34. Plain and stage-exit qualifications have SHA-256
+`11aa8ead083a91aa0ea735c89b8dda6e75f610d33d94a53b4f9c56f151e3e6f5`
+and `a3735b25fd0596b2847b96d9caeb2138696ed564048eeed7510e722ce5939b86`.
+The combined terminal SHA-256 is
+`f059e4283c97a17059365ee876a35bb0f0d016d68859d1b75bd36e12ba87d630`;
+independent query SHA-256 is
+`b3f17f9bbce53a2cef6810ef8dac6f036f830fc7170949a9578c7d50235c3aa7`.
+The final reviewed host freezer's 29 tests and control contract's 20 tests pass,
+including replay of both R33 controls. Two Root wrapper manifest-shape mistakes
+refuse before device access; their logs remain preserved. The corrected wrapper
+passes an explicit host-only full-candidate validation before dispatch.
+
+**Revisit.** A new natural-Quit run must bind this exact APK and controls, show
+fresh same-process context, verify zero-timeout process absence, original Term,
+verified disarm, persisted bytes and a separate cold readback. Any request,
+source, bank/native or payload change needs its own receipt and controls.
+First-sample JSON, ordinary gameplay, complete audio behavior, source rendering
+and visual parity remain open.
+
+## J1024 — Distinguish a cold-menu Quit pass from a failed source-view startup
+
+**Scope and player.** Use the frozen J1017 APK
+`197101a8f5e511334ac577b77b09f2295df59559eb9467bc80941b204f8c3fc3`
+(source `edb120f66df94571be6e8e22fdec662cfe49d39c`, request
+`20261023T090053.178974Z-1df50984431b4623ab2c9f09d500591f`) for two
+separate bounded observations: a source-view/Huntress bring-up and a cold
+menu-only natural-Quit query. Both were diagnostic-only. The source-view
+attempt uses the `body-state-spawn-state-auto-nova-spine-bringup` selection;
+the menu-only query leaves the start selector absent and observes the default
+offline menu. Do not combine these as one route or infer that the menu-only
+probe exercised a world.
+
+**Source-view first failure.** The startup observation reaches its 180-second
+startup deadline before it receives any valid runtime report. It never selects
+menu Start, enters no world phase, and writes no completed-session report. The Root post-cleanup
+report-capture file contains zero returned stdout bytes; this does not prove
+that an empty report file existed on device. The poller treats an empty or
+incomplete JSON read as no report and continues until the startup deadline; it
+does not preserve every unreadable intermediate response, so a report-write
+problem remains possible. The exact-current-process
+log has no unexplained errors. It records Unity activity startup, `JNI_OnLoad`,
+resume callbacks and `SetWindow`, then no further Unity/runtime markers. This
+places the observable failure after Java/Unity activity launch but before a
+usable managed session report. It does not distinguish a Unity/app startup
+stall from a report-write problem and does not prove a crash.
+
+**Cold-menu Quit result.** In a separate menu-only operation on the same APK,
+the exact cold-menu report (`body-state-spawn-state-auto-nova-spine`, session
+1) becomes current after about 30.713 seconds. The report progresses through
+body-handling presets, body-catalog initialization/registration and loadout
+initialization before binding `offline-start-menu`; the observed menu report is
+128,016 bytes and has SHA-256
+`2ec4688f78e34d61ee78bed7ef201ac39dee78a9f59d5221483ee2d4a8e7281e`.
+A fresh pre-Quit query witnesses the exact package PID; the menu's observed
+Quit geometry is tapped once. The first post-Quit query reports that same PID,
+and the seventh post-Quit query reports explicit absence. All seven post-Quit
+queries finish within the 30-second window, with zero transport timeouts or
+query errors; the slowest takes 2.542 seconds, within the 3-second command cap.
+The process is absent about 7.446 seconds after the tap command returns. The
+runner's natural-absence gate passes. A separate read-only terminal query
+rehashes the same installed APK, confirms owned placement, unchanged thirteen
+profile runs, selector/process absence and a sleeping display.
+
+**Interpretation and limits.** The cold-menu result shows that this APK can
+initialize far enough to publish a current offline-menu report and complete the
+observed natural-Quit path. J1017's final same-APK plain and stage-exit controls also
+pass their bounded gameplay checks after its retained initial stage-exit timeout; J947 previously reached a source-camera
+world on an older APK. These are distinct runs and paths. They do not explain
+why the source-view/Huntress bring-up reached no report, nor establish a
+repeatable route-specific defect. Preserve the failed startup and successful
+menu query as separate evidence. Neither observation establishes gameplay,
+source-camera rendering, equipment-highlight behavior, audio/PCM capture,
+event attribution, audibility or visual parity.
+
+**Evidence.** Source-view attempt result SHA-256 is
+`3eb68260fc9afff17969e792228e95d4ccce211d9592d276301efb4edcd81f06`; its
+Root wrapper result SHA-256 is
+`bb3155da12369a095310b4da7e70db35ca7b3a97c8a53dc2c1ac28f7f2f32acb`.
+The Root report-capture metadata records zero returned bytes and their empty
+SHA-256, with the readback limitation above. The source-view triage is retained under
+`work/coordination/original-game-visual-r33-source-view-triage-r1/`.
+The menu-only result SHA-256 is
+`4d26de8ee43d24e3dbeafa5fb7a8cec4faae597ee8f79a0330045fb3dac7f67c`;
+its progress record SHA-256 is
+`e2b9a4dff68e85525076bbe1904aad57ebab854b23c8b2041beb3f5d4f3aa480`.
+The independent terminal-query result SHA-256 is
+`b172d59930780741ae27ed49db221691e39779deb038a35a127495a0d666e1fd`.
+Detailed private evidence remains under
+`work/experiments/original-camera-listener-lifecycle/20261023T120110.946041Z/`,
+`work/coordination/original-game-visual-r33-source-view-root-r1/`,
+`work/experiments/original-game-audio-r33-quit-query/root-r1/` and
+`work/coordination/original-game-audio-r33-menu-query-root-r1/`;
+no runtime-source or recipe change is made here.
+
+**Revisit.** A new source-view attempt needs a specific startup hypothesis and
+independent review of its diagnostics. Do not increase the startup deadline or
+repeat the unchanged route solely because the menu-only operation passed.

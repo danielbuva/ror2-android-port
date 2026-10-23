@@ -10,6 +10,8 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1024](PORTING_JOURNAL.md#j1024--distinguish-a-cold-menu-quit-pass-from-a-failed-source-view-startup) | 2026-10-23 | Distinguish a cold-menu Quit pass from a failed source-view startup | **Scope and player.** |
+| [J1022](PORTING_JOURNAL.md#j1022--build-and-verify-the-mainoutput-audio-candidate-with-both-controls) | 2026-10-23 | Build and verify the MainOutput audio candidate with both controls | **Hypothesis and existing contract.** |
 | [J1023](PORTING_JOURNAL.md#j1023--qualify-an-authored-android-nativeaot-build-tool-fixture) | 2026-10-23 | Qualify an authored Android NativeAOT build-tool fixture | **Question and prior art.** |
 | [J984](PORTING_JOURNAL.md#j984--generate-the-owner-assembly-prefix-without-a-project-oracle) | 2026-10-22 | Generate the owner assembly prefix without a project oracle | 2026-10-23 UTC. |
 | [J1020](PORTING_JOURNAL.md#j1020--test-deferred-serialized-object-reads-on-android) | 2026-10-23 | Test deferred serialized-object reads on Android | **Hypothesis and prior art.** |
