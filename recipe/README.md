@@ -1908,3 +1908,12 @@ original implementation, protected metadata body, middleware, generated game
 content, private identifier or raw report is published. Existing runtime-source
 reconstruction must replay this source cohort. Provenance/privacy audit:
 2026-10-23. Editor serialization passes; player behavior remains a device gate.
+
+J1033 adds the authored existing-material observation policy to the runtime and
+project-layout memberships and synchronizes the original-audio producer/camera
+owner-manifest pins. It publishes only authored ownership/report code, synthetic
+host fixtures, exact source digests and the minimum current Outline field/shader
+relationship. No original implementation, shader body, generated asset,
+proprietary middleware, private path or raw device evidence is included.
+Reconstruction must replay this source cohort. Provenance/privacy audit:
+2026-10-23. Runtime material identity and rendering remain unverified.

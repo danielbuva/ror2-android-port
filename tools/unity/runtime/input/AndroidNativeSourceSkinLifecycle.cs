@@ -31,9 +31,26 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
         public SceneCameraCallbackRendererSample[] renderers;
     }
     [Serializable]
+    public sealed class OutlinePassObservation
+    {
+        public bool requested, subscribed, ownedOutlineComponentKnown, ownedOutlineComponentPresent;
+        public bool materialFieldKnown, materialFieldTypeMatches;
+        public bool cameraPreRenderObserved, cameraIdentityMatched, outlineComponentPresentAtPreRender, outlineComponentIdentityMatched;
+        public bool materialReadObserved, materialPresent, shaderReadObserved, shaderPresent, shaderNameKnown;
+        public bool shaderNameMatchesExpected, shaderSupportedKnown, shaderSupported, passCountKnown;
+        public bool realtimeKnown, realtimeValid, sourceBlitInvocationObserved, sourceBlitObservationAvailable;
+        public int requiredSourcePassIndex = AndroidNativeSourceOutlinePassObservationPolicy.RequiredSourcePassIndex;
+        public int acceptedSourcePassCount = AndroidNativeSourceOutlinePassObservationPolicy.AcceptedSourcePassCount;
+        public int cameraPreRenderFrame, materialPassCount = -1;
+        public float cameraPreRenderRealtime;
+        public string state = "not_requested", expectedShaderName = AndroidNativeSourceOutlinePassObservationPolicy.ExpectedShaderName;
+        public string shaderName, failureType;
+    }
+    [Serializable]
     public sealed class Report
     {
         public SceneCameraCallbackSnapshot sceneCameraCallback;
+        public OutlinePassObservation outlinePassObservation;
         public bool requested, attached, nativeOwnersActive, selectedSkinReady, animatorInitialized, displayDeactivated, ownerDestroyed;
         public CharacterModelMaterialCacheOwner.Report materialCacheInitialization;
         public int selectedSkinIndex = -1, currentSkinIndex = -1;

@@ -74,6 +74,10 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
     CachedMusicAdmissionSnapshot audioContextCachedMusicSnapshot;
     bool audioContextReleaseStarted;
     Component sourceDefaultListener, sourceAkGameObject;
+    AndroidNativeSourceSkinLifecycle.Report sourceSkinReport;
+    OutlineHighlight ownedOutlineHighlight;
+    FieldInfo outlineMaterialField;
+    bool outlinePassObserverSubscribed;
     bool sourceDefaultListenerPreserved;
     public bool managedSourceDefaultListenerObserved { get; private set; }
     public ulong sourceDefaultListenerGameObjectId { get; private set; }
@@ -260,6 +264,10 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
 
             owner.Bind(staging, body, rig, scene, camera, pose, marker, cameraOffset, cameraRotationOffset);
             owner.audioContextOnly = audioContextOnly;
+            owner.sourceSkinReport = sourceReport;
+            if (!audioContextOnly && explicitlyRequested && selectedSourceModel && actualModel &&
+                sourceReport != null && sourceReport.requested)
+                owner.TryAttachOutlinePassObserver();
             owner.audioContextAdmissionDeadline = Time.realtimeSinceStartup + 5f;
             owner.audioComponentPolicyVerified = preserveSourceListener
                 ? TryGetExactSourceDefaultListenerPair(clone, camera, out _, out _, out listenerCount,
@@ -305,7 +313,10 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
         catch (Exception exception)
         {
             if (owner)
+            {
+                owner.DetachOutlinePassObserver();
                 owner.RestoreGlobalSceneCameraPointer();
+            }
             if (staging)
                 UnityEngine.Object.DestroyImmediate(staging);
             sourceReport?.Fail(exception.Message);
@@ -532,6 +543,178 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
                 IsOriginalWwiseComponent(component, "AkGameObj"))
                 UnityEngine.Object.DestroyImmediate(component);
         }
+    }
+
+    void TryAttachOutlinePassObserver()
+    {
+        var observation = new AndroidNativeSourceSkinLifecycle.OutlinePassObservation
+        {
+            requested = true,
+            state = "resolving_owned_outline_component"
+        };
+        sourceSkinReport.outlinePassObservation = observation;
+        try
+        {
+            ownedOutlineHighlight = viewCamera ? viewCamera.GetComponent<OutlineHighlight>() : null;
+            observation.ownedOutlineComponentKnown = true;
+            observation.ownedOutlineComponentPresent = ownedOutlineHighlight;
+            if (!ownedOutlineHighlight)
+            {
+                observation.state = "owned_outline_component_missing";
+                return;
+            }
+
+            outlineMaterialField = typeof(OutlineHighlight).GetField("highlightMaterial",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            observation.materialFieldKnown = outlineMaterialField != null;
+            observation.materialFieldTypeMatches = AndroidNativeSourceOutlinePassObservationPolicy.HasExactMaterialField(
+                outlineMaterialField, typeof(OutlineHighlight), typeof(Material));
+            if (!observation.materialFieldTypeMatches)
+            {
+                observation.state = "outline_material_field_contract_unknown";
+                return;
+            }
+
+            // Do not subscribe to OutlineHighlight.onPreRenderOutlineHighlight:
+            // current accepted NeedsHighlight() treats a non-null delegate as
+            // a request and that subscription would force the blit path.
+            Camera.onPreRender += CaptureOwnedOutlinePassObservation;
+            outlinePassObserverSubscribed = true;
+            observation.subscribed = true;
+            observation.state = "awaiting_owned_camera_pre_render";
+        }
+        catch (Exception exception)
+        {
+            observation.state = "observer_setup_error";
+            observation.failureType = AndroidNativeSourceOutlinePassObservationPolicy.BoundedFailureType(exception);
+        }
+    }
+
+    void CaptureOwnedOutlinePassObservation(Camera callbackCamera)
+    {
+        var observation = sourceSkinReport == null ? null : sourceSkinReport.outlinePassObservation;
+        if (observation == null || !callbackCamera || observation.cameraPreRenderObserved)
+            return;
+        if (!ReferenceEquals(callbackCamera, viewCamera))
+            return;
+
+        bool capturedPreviously = observation.cameraPreRenderObserved;
+        observation.cameraPreRenderObserved = true;
+        observation.cameraIdentityMatched = true;
+        observation.cameraPreRenderFrame = Time.frameCount;
+        observation.cameraPreRenderRealtime = Time.realtimeSinceStartup;
+        observation.realtimeKnown = true;
+        observation.realtimeValid = !float.IsNaN(observation.cameraPreRenderRealtime) && !float.IsInfinity(observation.cameraPreRenderRealtime);
+        if (!observation.realtimeValid)
+            observation.cameraPreRenderRealtime = 0f;
+
+        try
+        {
+            SceneCamera callbackScene = callbackCamera.GetComponent<SceneCamera>();
+            OutlineHighlight callbackOutline = callbackCamera.GetComponent<OutlineHighlight>();
+            CameraRigController callbackRig = callbackScene ? callbackScene.cameraRigController : null;
+            if (!AndroidNativeSourceOutlinePassObservationPolicy.ShouldCapture(
+                observation.requested, capturedPreviously,
+                callbackCamera, viewCamera,
+                callbackOutline, ownedOutlineHighlight,
+                callbackScene, sceneCamera,
+                callbackRig, cameraRig))
+            {
+                observation.state = callbackOutline ? "owned_camera_context_or_outline_identity_mismatch"
+                    : "owned_outline_component_missing_at_camera_pre_render";
+                observation.ownedOutlineComponentPresent = callbackOutline;
+                return;
+            }
+            observation.outlineComponentPresentAtPreRender = true;
+            observation.outlineComponentIdentityMatched = true;
+
+            if (!AndroidNativeSourceOutlinePassObservationPolicy.HasExactMaterialField(
+                outlineMaterialField, typeof(OutlineHighlight), typeof(Material)))
+            {
+                observation.state = "outline_material_field_contract_unknown";
+                return;
+            }
+
+            Material material;
+            try
+            {
+                material = outlineMaterialField.GetValue(callbackOutline) as Material;
+                observation.materialReadObserved = true;
+                observation.materialPresent = material != null;
+            }
+            catch (Exception exception)
+            {
+                observation.state = "outline_material_read_error";
+                observation.failureType = AndroidNativeSourceOutlinePassObservationPolicy.BoundedFailureType(exception);
+                return;
+            }
+            if (material == null)
+            {
+                observation.state = "outline_material_null";
+                return;
+            }
+
+            try
+            {
+                observation.materialPassCount = material.passCount;
+                observation.passCountKnown = true;
+            }
+            catch (Exception exception)
+            {
+                observation.failureType = AndroidNativeSourceOutlinePassObservationPolicy.BoundedFailureType(exception);
+                observation.state = "outline_pass_count_read_error";
+            }
+            try
+            {
+                Shader shader = material.shader;
+                observation.shaderReadObserved = true;
+                observation.shaderPresent = shader != null;
+                if (shader != null)
+                {
+                    observation.shaderName = AndroidNativeSourceOutlinePassObservationPolicy.BoundedShaderName(shader.name);
+                    observation.shaderNameKnown = true;
+                    observation.shaderNameMatchesExpected = string.Equals(observation.shaderName,
+                        AndroidNativeSourceOutlinePassObservationPolicy.ExpectedShaderName, StringComparison.Ordinal);
+                    observation.shaderSupported = shader.isSupported;
+                    observation.shaderSupportedKnown = true;
+                }
+            }
+            catch (Exception exception)
+            {
+                if (string.IsNullOrEmpty(observation.failureType))
+                    observation.failureType = AndroidNativeSourceOutlinePassObservationPolicy.BoundedFailureType(exception);
+                if (observation.state == "awaiting_owned_camera_pre_render")
+                    observation.state = "outline_shader_read_error";
+            }
+            if (observation.state == "awaiting_owned_camera_pre_render")
+                observation.state = observation.passCountKnown && observation.shaderNameKnown && observation.shaderSupportedKnown
+                    ? "captured_material_state_blit_unobserved" : "partial_material_capture_blit_unobserved";
+        }
+        catch (Exception exception)
+        {
+            observation.state = "camera_pre_render_observation_error";
+            observation.failureType = AndroidNativeSourceOutlinePassObservationPolicy.BoundedFailureType(exception);
+        }
+        finally
+        {
+            // This is a single observation. Remove the static delegate immediately
+            // after the owned camera callback so it cannot retain the owner.
+            DetachOutlinePassObserver();
+        }
+    }
+
+    void DetachOutlinePassObserver()
+    {
+        if (outlinePassObserverSubscribed)
+        {
+            Camera.onPreRender -= CaptureOwnedOutlinePassObservation;
+            outlinePassObserverSubscribed = false;
+        }
+        if (sourceSkinReport != null && sourceSkinReport.outlinePassObservation != null &&
+            sourceSkinReport.outlinePassObservation.state == "awaiting_owned_camera_pre_render")
+            sourceSkinReport.outlinePassObservation.state = "detached_before_owned_camera_pre_render";
+        ownedOutlineHighlight = null;
+        outlineMaterialField = null;
     }
 
     void Bind(GameObject staging, CharacterBody body, CameraRigController rig, SceneCamera nativeScene,
@@ -1235,6 +1418,7 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
 
     public void DisposeOwnedView()
     {
+        DetachOutlinePassObserver();
         if (!sourceListenerTeardownStarted && sourceDefaultListenerPreserved)
         {
             sourceListenerTeardownStarted = true;
@@ -1310,8 +1494,14 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
         capturedGlobalSceneCamera = false;
     }
 
+    void OnDisable()
+    {
+        DetachOutlinePassObserver();
+    }
+
     void OnDestroy()
     {
+        DetachOutlinePassObserver();
         if (!sourceListenerTeardownStarted)
             DisposeOwnedView();
         ready = false;

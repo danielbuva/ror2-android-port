@@ -283,9 +283,9 @@
     "whole_catalog": "scripts/lab/whole_catalog.py"
   },
   "source_sha256": {
-    "build_hook": "d5024fa3e1c79f81d336cd4a1fc3fe085ee8ada4bc689a6b06d79fe708e69b8d",
+    "build_hook": "c12472714bb62e3450961f9c08bf65d89cfc5b422162a07480ce9cbd9587b42f",
     "camera_contract": "259463fea059fb40f84ff8dd3bfc027efc70635ce7b81320725a177c78f5bf73",
-    "camera_owner": "8eaf3952583aaa2ee682a6c72b0249dc79301f713b566e810422863068df7fc6",
+    "camera_owner": "49adec4560582184a979baa534716b8fb3e50d25ea0a1e289a684ffb10b0e91b",
     "camera_prerequisites": "7d726175b0f93d9d4e83d032b7244cd9f9cd9df49d0ec1bd57d73df63587d18a",
     "listener_contract": "e138a103abc56700af610044e833811c8dce4eeb3d205dc3c20fc491bb962a4b",
     "marker": "7d86f674c0f6dde711916fe3105b8a88b2e91c39d1351d83ee77f0e2deea8f9f",
@@ -296,7 +296,7 @@
     "music_observer_transform_project": "bfca91b1984488e25dd1849433c319c1288fff37630b0279c6684cec140a012b",
     "producer": "3c181934e808c74dfebe2212e0c663275c1cee97a9a4d7effc6ea6508483fda0",
     "resolver": "b00dc10599fa62637e5fcd74a7dcbbf4225eddaf81fb1b6bfcddaa8ff57f12d4",
-    "skin_lifecycle_audio_camera_merge": "6bc20e1dd305a35646e434728457be8502cacb7cae109e833aa3a31a040a64ea",
+    "skin_lifecycle_audio_camera_merge": "60c7294363a3e5593b622799b3ac2871c87e75a308b7d4171b37d114c5c530f9",
     "transformer": "612e1f374e6381e48aec33e902505953e47d1f4df765df646ea02284c7d16598",
     "verifier": "f9047828a437fc650dbc30e68c81585a80b3f38ed87cc81427b32314b6cf9b91",
     "whole_catalog": "3ae2af85bc99e18c5d2b087b9c63b3461462b7005180e3ca9978313fd7beb7b6"

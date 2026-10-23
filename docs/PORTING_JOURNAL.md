@@ -31932,11 +31932,12 @@ persistence result; it does not repair or replace the failed warm-route acceptan
 **Bound run.** The run used the unchanged R34 APK
 `098646f6cc931c2a8d01d91fe4dfdcf5f54c58d9fc6ad01137695992e58588bd` and the reviewed
 cold-only runner. It performed no gameplay selector operation and no new capture
-request. The cold process reached the offline start menu in session 1. An exact
-pre-Quit PID witness matched the current report. During a 30 s exit window, across
-six post-Quit process queries, the first still found the owned process and a later
-query confirmed natural absence; natural absence was observed after 6.948160 s, with
-zero query errors or timeouts.
+request. The cold process reached the offline start menu in session 1. That menu had
+no original-audio request or initialized banks; its Quit does not exercise the warm
+run's initialized Wwise shutdown. An exact pre-Quit PID witness matched the current
+report. During a 30 s exit window, across six post-Quit process queries, the first
+still found the owned process and a later query confirmed natural absence; natural
+absence was observed after 6.948160 s, with zero query errors or timeouts.
 
 **Persistence result.** The capture-directory inventory contained the same eight
 entries before and after the cold readback. The selected existing raw/sidecar pair
@@ -32043,3 +32044,80 @@ separate facts. A newly built player must pass both controls and retain the
 first sample in its current-process Android reports before that player gate
 passes. This result establishes neither camera readiness nor audio/visual
 acceptance and changes no game content or native audio implementation.
+
+## J1033 — Observe the existing Outline material without requesting highlights
+
+**Question and prior art.** J1026 retains an unresolved pass-1 Blit error but
+identifies no material. J965 and the shader-recovery ledger establish exact
+source/pass relationships, not Android rendering or a material-to-log join.
+The current accepted input's Outline component makes a nonempty Outline event
+subscription itself a reason to render. An older source inspection belonged to
+the retained pre-migration input and cannot govern this version. Consult the
+community prior-art map and current source before choosing an observation
+point; no original implementation is copied or shader pass synthesized here.
+
+**Authored owner and boundaries.** The explicitly selected source-skin visual
+owner samples only its existing Outline material, once on the exact owned
+camera's Unity pre-render callback. Exact camera, SceneCamera, rig, component
+and private-field contracts gate access. The report retains bounded scalar
+shader name/support and material pass count with known flags and a finite time.
+Foreign callbacks do not consume the observation. The first owned callback,
+construction failure, disable, destruction and owned release detach the exact
+static delegate. The pure policy is a named helper of the existing camera
+owner; ARCHITECTURE records its setup, report and limits.
+
+It does not subscribe to the original Outline event, request a highlight,
+create or replace a material, invoke a render/Blit callback or alter pass
+selection. The original visual diagnostic remains default-off; ordinary audio
+camera creation never attaches this observer. Source-Blit observation flags
+remain false. A material inventory cannot establish that the logged error came
+from that material or that its rendering matches the PC.
+
+**Rejected draft and meaningful regression.** The R2 proposal marks the camera
+callback captured before passing that same flag to the policy's already-captured
+gate. Root's integration review identifies that the first owned callback would
+always reject itself. Preserve that draft and its rescinded review; no player
+was built from it. R3 supplies the prior flag value to the same gate. Its host
+fixture executes the actual production callback/setup/detach and lifecycle
+method bodies against narrow authored Unity stubs. The frozen R2 callback
+compiles but fails the first valid material-read assertion; the corrected
+callback passes 19 assertions for owned/foreign/repeated/mismatched callbacks,
+missing components, disable and destruction. No callback algorithm is
+reimplemented in the test.
+
+The proposal's separate wrapper test also relied on a retained temporary
+source directory. Root does not accept that as reproducible evidence. The
+integrated public test reads the actual tracked source and fails for missing
+production files; only unavailable pinned Mono/Roslyn tools cause a skip.
+Root independently verifies its successful canonical run and its explicit
+missing-source refusal using a fresh empty source root.
+
+**Source closure and validation.** Add the authored policy to both runtime
+source selections, the project-layout null-GUID membership and the original
+audio-owner source manifest. Refresh the producer's exact owner map and manifest
+pin, the camera hook's matching owner-manifest pin, and camera recipe source
+hashes. The existing producer test catches the initially stale camera-hook pin;
+the reconciled source closure passes. This updates authored reconstruction
+inputs, so runtime/source reconstruction must replay the new cohort. No new
+protected local input, binary, bank, shader or generated game data is published.
+
+Root's integrated checks pass: one composed callback test with 19 assertions,
+nine producer checks, 14 runtime-source checks, 26 catalog checks and 57 camera
+checks with four skips. Changed Python passes Ruff; host-only preflight passes.
+The pinned Unity API compile from the frozen proposal supports the material and
+shader getters, but this entry contains no editor/device observation or player
+build. Ignored preparation/reviews remain under
+`work/coordination/original-native-visual-reference/r34-outline-runtime-pass-observer-draft-r3/`
+and adjacent review folders. Root's independent source hashes, test logs and
+negative-control result are in
+`work/coordination/original-native-visual-reference/r34-outline-runtime-pass-observer-root-r1/`.
+The host-integration receipt SHA-256 is
+`a6945f747e4a53fc4cc5fd0fe9fbe725720ced036495a1f010978c7405cd4ad4`.
+
+**Next gate.** Build the committed source through the normal coordinator, then
+pass both standard controls on that exact APK. A separately selected visual run
+must show whether its exact owned material is available and which pass/shader
+metadata it actually retains. Preserve unknown states and the original error;
+do not whitelist the error, infer a source-Blit invocation or claim visual
+parity from this source/host result. Main still has R34 098646f6 with its earlier
+controls and J1031 persistence result; no installed bytes change in this entry.

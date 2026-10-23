@@ -2929,6 +2929,13 @@ the owner explicitly reports reduced fidelity using source prefab defaults.
 `AndroidNativeSourceCameraPrerequisites.cs` resolves the original Sobel shader,
 Outline Highlight, Vision Limit and TranslucentImage DownTent while the clone is
 inactive; its exact SceneCamera activation scope is released in `finally`.
+For the explicitly requested visual source-skin diagnostic, the owner may attach
+`AndroidNativeSourceOutlinePassObservationPolicy` and sample the already-created
+private Outline material once at the exact owned camera's `Camera.onPreRender`.
+It does not subscribe to the Outline callback (which changes `NeedsHighlight`),
+request highlights, create/replace a material or invoke a blit. Its scalar report
+records only camera/component identity and existing material pass/shader metadata;
+it does not show that pass 1 ran or explain an unknown-material log.
 The narrow catalog root set also retains RampFog for the original post-process
 renderer. `whole_catalog.py` validates each exact address key, typed location and
 accepted source conversion; `WholeCatalogBuild.cs` verifies its bundle owner and

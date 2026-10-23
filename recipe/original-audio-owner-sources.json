@@ -4,6 +4,7 @@
   "owner_source_hashes": {
     "../../runtime/catalog/BodyCatalogBoundary.cs": "188c8fffe6214bf8557dd421556e8a7f09ac4756c9d9af52fcd667136b0dea15",
     "../../runtime/catalog/OriginalEquipmentHighlightAssetsBoundary.cs": "f1249d463ee86e53c3ad8242b1366b303e3fff975b31acab71b542d4cab1270f",
+    "../../runtime/input/AndroidNativeSourceOutlinePassObservationPolicy.cs": "6bca11a41705541793ff08eca604a3f0074be4ef2533a3fae62fa8ee92c241b0",
     "../../runtime/session/AkMusicPcmJoinQueryAdapter.cs": "ae116b7912efda498d6c1a1ecb0ddc4be1ec2dd6df223e0fff53426a37204ef8",
     "../../runtime/session/MusicPcmJoinObserver.cs": "3c8ceaf8a8ce9ce07c76282adb70f63f8f9487f0682d33056ea6aeaa2139cef9",
     "../../runtime/session/OriginalMusicControllerContract.cs": "bd8f78977722a276409623cea4909b0e41065fda6c195a6b0dee94ef8bb8b485",
@@ -63,6 +64,7 @@
     "runtime/input/AndroidNativeSourceCameraPrerequisites.cs": null,
     "runtime/input/AndroidNativeSourceCameraRigContract.cs": null,
     "runtime/input/AndroidNativeSourceCameraRigOwner.cs": null,
+    "runtime/input/AndroidNativeSourceOutlinePassObservationPolicy.cs": null,
     "runtime/input/AndroidNativeSourceSkinLifecycle.cs": "5123a8ca9049f4e389834c35429e8c9e",
     "runtime/input/AndroidOfflineSettings.cs": "66a562b7a60954d15b7fd42fa573e597",
     "runtime/input/AndroidPresentationCamera.cs": "d4a46649b8851464ca49e269f75fa517",
@@ -191,6 +193,7 @@
     "runtime/input/AndroidNativeSourceCameraPrerequisites.cs",
     "runtime/input/AndroidNativeSourceCameraRigContract.cs",
     "runtime/input/AndroidNativeSourceCameraRigOwner.cs",
+    "runtime/input/AndroidNativeSourceOutlinePassObservationPolicy.cs",
     "runtime/input/AndroidNativeSourceSkinLifecycle.cs",
     "runtime/input/AndroidOfflineSettings.cs",
     "runtime/input/AndroidPresentationCamera.cs",
