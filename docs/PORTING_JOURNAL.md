@@ -32121,3 +32121,72 @@ metadata it actually retains. Preserve unknown states and the original error;
 do not whitelist the error, infer a source-Blit invocation or claim visual
 parity from this source/host result. Main still has R34 098646f6 with its earlier
 controls and J1031 persistence result; no installed bytes change in this entry.
+
+
+## J1034 — build R35 and verify both controls with the selected music output
+
+**Hypothesis and change.** The committed J1032 nonrecursive admission-report
+schema and J1033 bounded Outline material observer can coexist with original
+world gameplay and the existing MusicController-owned output capture. Build
+source `919e72aa06e68387056b041c160537b9a88d0c14` through the normal full-catalog
+coordinator, with the existing specific-music-output request enabled. The
+native audio library and original bank cohort are unchanged. This build replays
+authored runtime sources and their public source/recipe closure; it does not
+change gameplay, shaders, material passes or the original audio event graph.
+J1032/J1033 record the prior-art and implementation contracts.
+
+**Build and preserved artifacts.** Doctor and preflight pass. The pinned Unity
+2021.3.45f2 ARM64 editor completes the full player build with zero errors. APK
+SHA-256 is
+`47d14cb855ce8fefdf2406d55591d13165665c4a160ab7d71f435c6469faba6e`.
+The shared build mutex releases and a direct MCP query verifies the editor idle.
+Root preserves the emitted build receipt without adding derived audio/camera
+fields, along with the exact APK, symbols, 266 payload entries, 333 captured
+pre-strip files, 93 post-strip assemblies and the copied project-stage receipts.
+All copied payload/APK/symbol/capture files match their recorded hashes. The
+post-strip metadata check retains the new admission schema and Outline observer;
+this proves retention, not rendering. Install updates the owned package in place
+on the live adopted volume. Payload sync transfers no changed runtime files.
+
+**Device result.** Both unchanged standard checks pass on that exact APK:
+
+- Plain: 35.225098 s of original Lakes gameplay.
+- Stage exit: exactly one original transition to Goolake, 156.207703 s total
+  world time and 11.131470 s in the destination stage.
+
+Both reports retain 13 applied runs, ready camera/context ownership, the
+65-entry network sound catalog and all three equipment-highlight dependencies.
+Strict qualification finds five known Windows negative diagnostics and zero
+unexplained errors from each current game process. Both cleanups verify selector
+absence, process exit and display sleep.
+
+Android now serializes `firstAdmissionSample` in the production report. Both
+first samples have sequence 1, with latest sequences 3,426 and 8,939 respectively;
+the typed finite scalar and ordering checks pass. Both reports select the same
+output owned by the original MusicController and retain nine bounded music/PCM
+join rows. Plain captures 457 callbacks and 526,464 finite nonzero samples;
+stage-exit captures 458 callbacks and 527,616 finite nonzero samples. Neither
+window has nonfinite samples or rejected buffers. These bounded observations
+do not establish event attribution, speaker audibility, destination-stage
+continuous output, natural audio termination or whole-game audio acceptance.
+The standard checks force-stop by design and do not persist the raw waveform.
+
+**Independent terminal observation.** Root rehashes the installed APK bytes and
+verifies the owned adopted placement and runtime backing. The saved profile is
+byte-identical to the previous 13-run profile. Process and selector are absent;
+the display is asleep, with no additional cleanup. R35 becomes the latest
+standard-control-verified diagnostic. Accepted J850 remains the rollback.
+
+**Evidence and first failure.** The build/source snapshots are under
+`work/coordination/original-game-audio-r35-build-root-r1/`; the fixed candidate
+and its artifact manifest are under
+`work/experiments/original-game-audio/r35-20261023T143019.532168Z-68e9318f71b4430584cf72384d20c203-47d14cb855ce/`.
+The standard runs are
+`work/experiments/baseline/20261023T180233.775352Z/` and
+`work/experiments/baseline/20261023T180709.097794Z/`.
+Root's command outputs, additional report/log qualification and independent
+terminal readback are under
+`work/coordination/original-game-audio-r35-final-verification-root-r1/`.
+No first failure occurs in either standard control. The separately prepared
+natural-Quit/Term/persistence route and opt-in visual material observation remain
+the next gates; no additional player build is needed for those observations.

@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1034](PORTING_JOURNAL.md#j1034--build-r35-and-verify-both-controls-with-the-selected-music-output) | 2026-10-23 | build R35 and verify both controls with the selected music output | **Hypothesis and change.** |
 | [J1033](PORTING_JOURNAL.md#j1033--observe-the-existing-outline-material-without-requesting-highlights) | 2026-10-23 | Observe the existing Outline material without requesting highlights | **Question and prior art.** |
 | [J1032](PORTING_JOURNAL.md#j1032--preserve-first-admission-samples-with-an-acyclic-report-schema) | 2026-10-23 | Preserve first admission samples with an acyclic report schema | **Measured defect and prior art.** |
 | [J1031](PORTING_JOURNAL.md#j1031--verify-cold-process-persistence-of-the-bounded-pcm-pair) | 2026-10-23 | Verify cold-process persistence of the bounded PCM pair | **Question and scope.** |
