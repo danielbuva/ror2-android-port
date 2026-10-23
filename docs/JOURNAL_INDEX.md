@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J989](PORTING_JOURNAL.md#j989--stop-loader-on-the-original-network-effect-sound-catalog-lookup) | 2026-10-22 | Stop Loader on the original network-effect sound catalog lookup | **Hypothesis and source-bound runner.** |
 | [J988](PORTING_JOURNAL.md#j988--integrate-a-candidate-source-camera-context-for-original-audio) | 2026-10-22 | Integrate a candidate source camera context for original audio | **Observed gap and prior art.** |
 | [J987](PORTING_JOURNAL.md#j987--keep-loader-startup-observations-separate-from-gameplay-acceptance) | 2026-10-22 | Keep Loader startup observations separate from gameplay acceptance | **Hypothesis and route.** |
 | [J985](PORTING_JOURNAL.md#j985--preserve-two-failed-natural-quit-witnesses-and-test-idle-query-latency) | 2026-10-22 | Preserve two failed natural-Quit witnesses and test idle query latency | **Hypothesis and unchanged route.** |

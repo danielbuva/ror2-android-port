@@ -29193,3 +29193,60 @@ Exact player compilation, ordinary world context, manager effects, listener tear
 controls remain required. This is authored candidate source only; it has not
 been staged, built or installed. J983 remains the installed diagnostic and J850
 remains the accepted rollback.
+
+## J989 — Stop Loader on the original network-effect sound catalog lookup
+
+**Hypothesis and source-bound runner.** J987's startup-classification corrections
+should allow a real Loader/Lakes observation without changing gameplay or
+waiving runtime errors. Root uses the retained J983 APK
+`9feef7e96d470bf34f787988f444dcd2fc21f922eb5d4cfa43d80e3516ac87d9`,
+source fa24292, with the same explicit Main/own-candidate controls, native audio,
+J957 source-call request and invincibility-only diagnostic selection. The R7
+runner distinguishes the source results-setup save from actual ending state.
+Root and independent review pass 39 host tests; an additional 38 ending/type/
+post-world mutants refuse. No new source, install, input or forced spawn is
+part of this run. The unbuilt J988 camera-context candidate is not exercised.
+
+**Actual first failure.** Loader reaches `integrated-world-playing`; two bounded
+observations survive, the last at world time 3.8102874755859375 s. Current-PID
+Unity logs then report `IndexOutOfRangeException` from
+`NetworkSoundEventCatalog.GetAkIdFromNetworkSoundEventIndex`, called by the
+original `EffectManager.SpawnEffect` through the original client message
+handler. The runner stops on that error. `client/52` identifies the network
+message, not the sound-event index; that index and the native catalog count were
+not recorded. No report success or later callback can erase this failure.
+
+The source-call observer is attached with zero captured calls, zero capture
+failures and no history cap. No LightningStake or blue-elite-hit observation
+exists in this bounded sample. It neither reproduces nor fixes the intermittent
+stake defect, and it does not qualify a full kit or the intended 60-second window.
+Original audio readiness/native initialization and its catalog lease are observed,
+so this is a real enabled-audio dependency failure rather than the deliberate
+Windows bundle control or an unavailable-audio decoder result.
+
+**First source classification and prior art.** J474 already identifies the
+network sound-definition/catalog boundary for the historical no-audio path.
+Current accepted source confirms that a non-Invalid effect sound index enters
+this getter directly; the explicit current `WholeCatalogLoader` catalog list
+omits native network-sound initialization. The shipped setter clones and sorts
+definitions by ordinal name, assigns indices/native IDs and builds lookup maps;
+the private initializer also announces availability. Pinned R2API.Sound f539511e
+requires definitions before native catalog initialization and rejects late additions.
+This supports investigating missing/incomplete initialization, but the absent
+runtime count does not by itself prove that this attempt's array was empty.
+Do not substitute Invalid, clamp the index or suppress the original effect error.
+A candidate must establish the complete current family and native mapping before
+source producers emit indices, preserve the no-audio decoder, and report actual
+pre/post counts and failure state.
+
+**Terminal state and evidence.** Owned cleanup and independent terminal queries
+pass: adopted placement, unchanged 13 applied runs, process/selector absence
+and display sleep. No editor or build runs during this attempt. Evidence is
+`work/coordination/original-gameplay-breadth/r28-loader-runner-root-r4/attempts/root-r1/`;
+the parent binds exact runner, review, APK and control hashes, and
+`root-terminal-evidence-hashes.json` inventories the retained files. The actual
+first-error receipt, last live report and two observations remain unchanged.
+Native-catalog investigation and draft are under
+`work/coordination/original-game-audio-pcm/r28-network-sound-catalog-draft-r1/`.
+Root holds the queued J988 build until this concrete dependency is reviewed;
+Main is asleep. J983 remains installed and J850 remains the accepted rollback.
