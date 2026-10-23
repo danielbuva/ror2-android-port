@@ -32190,3 +32190,160 @@ terminal readback are under
 No first failure occurs in either standard control. The separately prepared
 natural-Quit/Term/persistence route and opt-in visual material observation remain
 the next gates; no additional player build is needed for those observations.
+
+
+## J1037 — save nonzero music-output PCM while preserving the failed warm Quit
+
+**Hypothesis and setup.** J1034's verified R35 APK can complete the existing
+MusicController-output capture through original Wwise termination, verified
+monitor disarm and saved-file readback. Reuse the diagnostic Commando/Lakes
+route, with the source-view and point-sound options off, on APK
+`47d14cb855ce8fefdf2406d55591d13165665c4a160ab7d71f435c6469faba6e`,
+source `919e72aa06e68387056b041c160537b9a88d0c14`. Both standard controls
+remain passed. J959/J962 and the current original-audio owners provide the
+existing termination/persistence contract; this experiment changes no runtime
+source, native library, banks, audio ordering or gameplay behavior.
+
+**Host timing corrections.** The first attempt retains an early world-ready
+report whose typed admission DTO is correctly unobserved, followed by a valid
+positive first admission sample in the 35-second report. Requiring future
+admission evidence in that earlier snapshot incorrectly refuses the run before
+Quit. The corrected host flow preserves its identity/route checks and requires
+the strict positive admission evidence in the current audio-ready report.
+The next attempt reaches music capture and a genuine next menu, but its
+1.5-second process-query cap times out. The wrapper also hides TimeoutExpired
+inside a generic error, leaving the outer timeout counter inaccurate. A third
+host revision uses the intended 3-second query bound and preserves the timeout
+type/counter. The absolute 30-second exit window and zero-timeout acceptance
+rule remain unchanged. The focused host suite passes 18 checks. These changes
+are local experiment-runner corrections; they require no player rebuild.
+
+**Current capture and first runtime failure.** The final attempt reaches
+35.211792 s of original world play. It observes 466 callbacks and 536,832 finite
+nonzero samples from the same selected MusicController-owned output, with no
+nonfinite samples. Current camera/context, 65-entry network catalog, three
+highlight dependencies, admission DTO and process-log qualification pass.
+The run returns to the next offline menu and binds Quit to its current report,
+geometry and exact launched process.
+
+Natural Quit remains failed. The poll makes 25 queries, records one actual
+3-second transport timeout, and stops on a later malformed/ambiguous process
+observation at 16.546719 s within the 30-second window. It never establishes
+natural process absence. A fresh diagnostic PID differs from the launched PID,
+so the optional debugger capture refuses that identity. That observation does
+not establish an app restart or explain the ambiguity. Failure-only force-stop
+cleanup succeeds and invalidates route acceptance.
+
+Android independently records a matching focus-loss ANR for this activity:
+a focus event waits 5 seconds. The same-run log records Unity's 2-second pause
+and primary-window-detach warnings. Exit history records the subsequent owned
+force-stop; the crash buffer contains older unrelated records. The retrieved
+ANR evidence has waiting-channel observations, without an actionable managed or
+native stack. These results establish an application lifecycle failure, not
+its audio or rendering cause.
+
+**Post-failure saved-pair result.** Independent readback finds one new capture
+pair. Both files retain stable device size/hash before and after transfer. The
+sidecar joins the live selected output, callback count and sample counts. It
+records both original engine-Term and callback-manager-Term returns, verified
+post-Term disarm and raw persistence. The raw prefix is 1 MiB, holding 262,144
+finite nonzero float samples: stereo 48 kHz, 2.730667 seconds. Its RMS is
+0.09053731 and range is approximately -0.456084 to 0.466264. The prefix is
+explicitly truncated from the bounded capture window. Raw SHA-256 is
+`e2a99e31535292359395fb871bd183aade666ec055734c7f782a2c0dd92efd52`;
+the 921-byte sidecar SHA-256 is
+`9cd6c35d467e22b2d4316e18dbaf5e132b6238be7a103e49eebfb5111e0b3ed3`.
+The existing host-only exporter validates the pair and creates a private WAV.
+This qualifies the observed inner Term/disarm/persist path after a failed
+natural-Quit protocol. It does not repair that failure, prove event attribution,
+speaker audibility, fresh-process persistence or a cold Wwise restart.
+
+**Terminal state and evidence.** Independent readback rehashes the installed
+R35 APK, verifies adopted placement/runtime backing, the byte-identical 13-run
+profile, selector/process absence and sleeping display, with no extra cleanup.
+The capture directory grows from eight files to ten; prior captures remain.
+The protocol attempts are
+`work/experiments/original-game-audio/r35-lifecycle-root-r1/`,
+`work/experiments/original-game-audio/r35-lifecycle-root-r2/` and
+`work/experiments/original-game-audio/r35-lifecycle-root-r3/`.
+Their corresponding host packets are under
+`work/coordination/original-game-audio-pcm/`, named
+`r35-music-owned-lifecycle-root-r1`, `r35-music-owned-lifecycle-root-r2`
+and `r35-music-owned-lifecycle-root-r3`. Command outputs, matched ANR records,
+terminal readback and the saved pair are under
+`work/coordination/original-game-audio-r35-final-verification-root-r1/`.
+The WAV/export receipt is under
+`work/experiments/original-game-audio/r35-saved-music-waveform-root-r1/`.
+
+**Next gate.** Diagnose the warm application Quit/ANR without inferring an
+unobserved native call or changing teardown order speculatively. Existing source
+review finds no proven missing Term owner or ordering violation. The saved pair
+already supplies both Term returns, so additional entry tracing is not needed
+to establish those returns. Keep natural Quit, fresh-process audio restart,
+wider effects/spatial behavior, event attribution and audible output separate
+from this bounded capture result. R35's two standard-control passes remain
+unchanged; accepted J850 remains the rollback.
+
+
+## J1038 — observe the owned two-pass Outline material and named Bloom failures
+
+**Hypothesis and route.** J1033's read-only material observation can determine
+whether the exact owned Outline material has lost the pass used by the accepted
+source. Reuse J1034's R35 APK
+`47d14cb855ce8fefdf2406d55591d13165665c4a160ab7d71f435c6469faba6e`,
+source `919e72aa06e68387056b041c160537b9a88d0c14`, with diagnostic Huntress
+selection and source-skin lifecycle enabled. Point-sound is off. The compiled
+music/PCM request remains configured, but this visual observation imposes no
+readiness requirement on the deliberately deferred audio-only camera owner.
+No runtime source, shader, material, pass or gameplay mechanism is changed.
+The accepted source and pinned shader-recovery prior art are recorded in
+J1033 and the static source notes below.
+
+**First failure and live evidence.** The first live world report still says the
+Outline observer is awaiting its owned camera callback. The current-process log
+then stops the run on unexplained rendering errors. Its before-screen snapshot
+contains 1,000 errors requesting Graphics.Blit pass 1 from an unnamed one-pass
+material, plus three named `Hidden/PostProcessing/Bloom` DrawMesh errors for
+passes 1, 3 and 5. These are retained as failures. The log and screenshot are
+bracketed by the exact live process. The image is predominantly flat brown with
+character/object silhouettes; neither appearance nor PC parity is accepted.
+
+**Later retained report.** Reading the last completed runtime report after
+cleanup returns the same launched process and attempt, at 5.000626 s of world
+play. This is retained runtime evidence, not a new live-process qualification.
+It records the owned Outline component/material at the matching owned camera's
+pre-render callback, frame 1,580. Material and shader reads are observed; shader
+name is the expected `Hopoo Games/Internal/Outline Highlight`, shader support is
+true, and material pass count is two. Scalar times are known/finite. The
+observer does not observe a source Blit invocation. This rules out a one-pass
+Outline material at that captured callback; it does not identify the unnamed
+Blit caller or prove the material stayed unchanged later. Adding a dummy Outline
+pass, changing the original call or suppressing the error is unjustified.
+
+**Source comparison and next fix.** Current static input confirms that the
+accepted Outline call uses pass 1 and its generated candidate already supplies
+two passes. The named Bloom errors provide a separate concrete post-processing
+contract to repair. Inspect the current post-processing runtime, matching shader
+source and generator/import selection before changing it. Preserve the original
+pass semantics and use the matching implementation, then rebuild and verify
+both controls plus this source-view route. A generic one-pass substitute does
+not satisfy that contract.
+
+**Cleanup and evidence.** The host runner uses the existing installed-attempt,
+selection, report, process and cleanup helpers. It binds the owned R35 artifact,
+queries live adopted placement and preserves the original source-view opt-in.
+Cleanup verifies selector/process absence and sleeping display. The persisted
+profile remains byte-identical with 13 applied runs. Root's post-stop read
+rechecks the same owned APK receipt and process absence. R35's standard controls
+remain passed; the opt-in visual route remains failed.
+
+Device evidence is under
+`work/experiments/original-camera-listener-lifecycle/20261023T184542.250863Z/`.
+Root's driver, exact later report and observation summary are under
+`work/coordination/original-native-visual-reference/r35-source-view-root-r1/`.
+The later report SHA-256 is
+`600b8643204f2080538bf6ab9087282adbf23ee79991a2fe22dfe124eef7e065`.
+Static pass/source inventories are under
+`work/coordination/original-native-visual-reference/r35-current-camera-pass-call-audit-r1/`
+and `work/coordination/original-native-visual-reference/r35-outline-reconstruction-r1/`.
+No player build or installed-byte change occurs in this experiment.

@@ -95,9 +95,13 @@ readback. Plain reaches 35.225098 s on Lakes; stage-exit completes one original
 transition and 11.131470 s on Goolake. Both retain 13 applied runs and observe
 finite nonzero PCM from the selected MusicController-owned output. Production
 Android JSON now retains the typed first admission sample. These checks do not
-qualify natural audio shutdown, persisted capture, event attribution, speaker
-audibility or visual parity. The bounded Outline observer survives stripping but
-still needs its opt-in device observation.
+qualify natural audio shutdown, event attribution, speaker audibility or visual
+parity. [J1037](PORTING_JOURNAL.md#j1037--save-nonzero-music-output-pcm-while-preserving-the-failed-warm-quit)
+separately verifies a saved nonzero prefix after both Term returns and disarm,
+while the natural-Quit protocol fails with a focus-loss ANR.
+[J1038](PORTING_JOURNAL.md#j1038--observe-the-owned-two-pass-outline-material-and-named-bloom-failures)
+observes the expected supported two-pass Outline material; source-view rendering
+still fails with named Bloom and unnamed Blit pass errors.
 
 R34's scoped MainOutput windows, failed warm Quit and separate cold-menu
 persistence remain recorded in J1022/J1028/J1031. Loader's full-kit semantics

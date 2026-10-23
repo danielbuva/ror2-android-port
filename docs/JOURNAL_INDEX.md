@@ -10,6 +10,8 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1038](PORTING_JOURNAL.md#j1038--observe-the-owned-two-pass-outline-material-and-named-bloom-failures) | 2026-10-23 | observe the owned two-pass Outline material and named Bloom failures | **Hypothesis and route.** |
+| [J1037](PORTING_JOURNAL.md#j1037--save-nonzero-music-output-pcm-while-preserving-the-failed-warm-quit) | 2026-10-23 | save nonzero music-output PCM while preserving the failed warm Quit | **Hypothesis and setup.** |
 | [J1034](PORTING_JOURNAL.md#j1034--build-r35-and-verify-both-controls-with-the-selected-music-output) | 2026-10-23 | build R35 and verify both controls with the selected music output | **Hypothesis and change.** |
 | [J1033](PORTING_JOURNAL.md#j1033--observe-the-existing-outline-material-without-requesting-highlights) | 2026-10-23 | Observe the existing Outline material without requesting highlights | **Question and prior art.** |
 | [J1032](PORTING_JOURNAL.md#j1032--preserve-first-admission-samples-with-an-acyclic-report-schema) | 2026-10-23 | Preserve first admission samples with an acyclic report schema | **Measured defect and prior art.** |
