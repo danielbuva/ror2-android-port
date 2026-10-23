@@ -27,6 +27,9 @@ materialization/export remains open.
 qualifies an authored NativeAOT build-tool graph and records the stock exporter's
 unavailable Bionic ASP.NET runtime pack. It establishes neither a memory
 improvement nor complete export.
+[J1025](PORTING_JOURNAL.md#j1025--run-the-pinned-importer-through-an-android-nativeaot-console)
+passes a separate console's authored importer control without the web frontend;
+complete accepted-input processing/export and memory behavior stay unqualified.
 Native fixture compile/link/loading: [J839](PORTING_JOURNAL.md#j839--compile-and-link-the-authored-il2cpp-native-library-on-android).
 Full authored converter/native/device closure: [J842](PORTING_JOURNAL.md#j842--run-the-full-authored-converter-and-load-its-phone-compiled-native-output).
 Authored input capture and Android stripping: [J846](PORTING_JOURNAL.md#j846--capture-authored-stripping-inputs-and-replay-unitylinker-on-android).

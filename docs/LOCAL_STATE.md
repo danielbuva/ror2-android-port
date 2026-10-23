@@ -175,6 +175,13 @@ selection JSON identifies each fresh attempt; no consumer infers a timestamped
 path. Failed/earlier attempts stay preserved. These are tool-host observations,
 not inputs to a game build or a complete installer. The process-local linker
 adapter does not replace the Unity game NDK.
+The same root retains J1025's self-test-only `assetripper-console-v1/`,
+`assetripper-console-aot-v1/` and `assetripper-console-managed-v1/`, explicit
+authored parser-input versions, `parser-proof-v1.json` and phone selection.
+`build-assetripper-console-aot-v1.py`, its managed counterpart,
+`run-phone-parser-v1.py` and `phone_parser_v1.py` are required local replay
+support; the unchanged pinned upstream source supplies the importer library.
+These experimental files remain outside every current game-build consumer.
 
 `work/coordination/phone-proof/` retains J832's private execution adapters,
 hash-bound tool/package manifests, original failed attempts and collected device

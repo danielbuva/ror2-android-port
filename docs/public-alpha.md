@@ -28,6 +28,9 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       [J1023's authored NativeAOT tool fixture](PORTING_JOURNAL.md#j1023--qualify-an-authored-android-nativeaot-build-tool-fixture)
       does not pass the complete-export gate; qualify an actual exporter tool
       and resolve its frontend/platform requirements before comparing capacity.
+      [J1025's importer-console control](PORTING_JOURNAL.md#j1025--run-the-pinned-importer-through-an-android-nativeaot-console)
+      passes only authored objects; qualify full-input configuration/lifecycle
+      and complete processing/export before making a capacity claim.
 - [ ] Resolve the editor-equivalent Android content/shader production gate without
       consuming desktop-generated game data as a hidden prerequisite; extend
       [J832's precursor](PORTING_JOURNAL.md#j832--run-the-exact-converter-on-android-and-load-content-built-without-a-template)

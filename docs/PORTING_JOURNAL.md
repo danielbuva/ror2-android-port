@@ -31578,3 +31578,84 @@ no runtime-source or recipe change is made here.
 **Revisit.** A new source-view attempt needs a specific startup hypothesis and
 independent review of its diagnostics. Do not increase the startup deadline or
 repeat the unchanged route solely because the menu-only operation passed.
+
+## J1025 — Run the pinned importer through an Android NativeAOT console
+
+**Question and prior art.** J1023's stock web frontend cannot resolve an ASP.NET
+Bionic runtime pack. Test the pinned importer library separately through its
+public API before attributing that frontend constraint to asset parsing.
+Consulted the community extraction map and pinned
+[GameFileLoader](https://github.com/AssetRipper/AssetRipper/blob/1ac666f47d8e9dedf96afb0b914c70d7656151ea/Source/AssetRipper.GUI.Web/GameFileLoader.cs),
+[GameBundle](https://github.com/AssetRipper/AssetRipper/blob/1ac666f47d8e9dedf96afb0b914c70d7656151ea/Source/AssetRipper.Assets/Bundles/GameBundle.cs)
+and GameAssetFactory APIs. Upstream already separates public importer/exporter
+calls from web UI. The authored console references only AssetRipper.Import and
+its ordinary dependencies; unchanged upstream source remains pinned at
+1ac666f47d8e9dedf96afb0b914c70d7656151ea. No game, original assembly or prior export
+is a build or control input.
+
+**Isolated source and build.** The console accepts only `--self-test` plus an
+explicit authored-input directory; it has no game-input or export mode. A
+counting wrapper delegates to the unmodified factory and checks both actual
+objects, source class IDs 49/142, total factory bytes and absence of UnknownObject
+or UnreadableObject. The process owns the bundle and assembly manager and
+disposes both. This is a tool-host adapter, not a new parser or game runtime.
+Its authored Program SHA-256 is
+`b6a98e474e98ef3da8c54d256e34877fdc310bb123fc04b454e53eb589ada9b7`;
+project SHA-256 is
+`4ca35bc2b16a99df87e13d6c7b617605f51e67a5266147089650807eb9acc671`.
+
+The existing isolated linker profile produces a 68,465,888-byte Android ARM64
+ELF, SHA-256
+`f42bd1023fe50349e8b66c964f7e06df764ff35c5da1e5b874df3cb4d7ae610a`.
+Its direct shared-library dependencies are libdl, libz, liblog, libm and libc.
+Separate supplied support remains available; this is not a complete dependency
+or redistribution audit. Native publication succeeds in 221.05 s, with sampled
+process-family peak RSS 3,405,283,328 bytes. It retains two workers, a 3 GiB managed
+compiler request, independent 5 GiB family RSS guard, 8 GiB free-disk reserve,
+15 percent host free-memory floor and 600 s deadline. It starts after Main's
+full build, preserves the existing editor and stops if the Unity build mutex
+becomes busy. A separate managed publication succeeds and passes the control on
+the desktop. Neither build edits the supplied Unity NDK or upstream source.
+
+**Exact authored input.** The public phone-bundle writer's default produces
+208 object bytes; an independent UnityPy check catches that mismatch before any
+parser run. The selected control retains the earlier two-asset/204-byte shape
+with an explicit authored 25-byte payload, `native-parser-control-v1` plus LF.
+UnityPy independently reports 152 AssetBundle bytes and 52 TextAsset bytes.
+Selected bundle SHA-256 is
+`63fe3c9da16a7860bd26ed0f76fea8b114cddc916317c91d4fd29626a33e9ac2`.
+The generator source, explicit payload, object sizes and exact bundle hash are
+bound in its local control receipt; no output is silently overwritten.
+
+**Android result and limits.** The same source passes on the Alpha phone using
+both the existing Mono-based .NET 10.0.13 tool host and the NativeAOT 10.0.12
+executable. Each reports two successful factory calls, 204 input bytes and two
+accepted typed objects, exits 0 and is absent at terminal readback. The complete
+staged control/tool manifests match. The NativeAOT process exits before useful
+retained-RSS sampling; its short-run samples are underresolved and cannot
+support a memory or performance comparison. The controller retains its 512 MiB
+RSS guard, 1 GiB RAM/scratch reserves and 30 s deadline. No capacity, full input,
+dependency initialization, export/project equivalence or game-performance gate
+passes from this control. The temporary console is not a complete exporter and
+is not adopted into the current build pipeline.
+
+**Evidence and next gate.** Ignored evidence under
+`work/coordination/phone-proof/nativeaot-tool-host-r1/` retains the exact console,
+both publications, authored input versions, source/control bindings, private
+Android adapter and terminal logs. `parser-proof-v1.json` is 3,239 bytes,
+SHA-256
+`a832f6e45cb3f2184939aa56a56124f530ec33d3b65061fd1a33b96b6cda28ff`.
+All 614 baseline tool-file hashes match before and after. Alpha retains APK
+be26c21c4cd8ff15a8a663528216cf7a69394a51d8b9441a63a1a496f83e98b5,
+idle with no selector and the display asleep. Zero installs, game launches or
+editor actions occur. Main's checkout, editor and device remain untouched.
+Private changed replay scripts pass Ruff; the independent lab still has no
+staged game project and does not pass repository game preflight.
+
+A later full-input console needs explicit configuration and original platform/
+assembly initialization, bounded lifecycle observations and a preserved failure
+packet before any capacity conclusion. Complete processing/export adds further
+native dependency and output-comparison gates. Preserve the failed stock
+frontend attempts and both authored input versions. App security/delivery,
+permitted tools, complete Android content/shader/player production and matched
+performance remain open; Route A and the desktop fallback stay fixed.
