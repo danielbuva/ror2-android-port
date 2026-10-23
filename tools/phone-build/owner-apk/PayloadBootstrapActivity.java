@@ -56,6 +56,17 @@ public final class PayloadBootstrapActivity extends Activity {
             setContentView(failure);
             return;
         }
+        // A normal launcher re-entry in the same process resumes the already
+        // prepared Unity activity, without rebuilding a second WebView or
+        // writing data while the game may still be using it.
+        if (backend.unityRequested && backend.status.equals("ready")) {
+            try {
+                handingOff = true;
+                startActivity(new Intent().setClassName(getPackageName(), "com.unity3d.player.UnityPlayerActivity"));
+                finish();
+                return;
+            } catch (Exception failure) { handingOff = false; }
+        }
         web = new WebView(this);
         web.getSettings().setJavaScriptEnabled(true);
         web.getSettings().setAllowFileAccess(false);

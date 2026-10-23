@@ -34,7 +34,8 @@ shader mechanism or replacement content loader is introduced.
   A process restart rechecks actual files; a receipt alone never makes it ready.
   Completed files survive pause/restart, and failed stages/backups are retained.
   After Unity is requested, this process cannot prepare replacement data. The
-  WebView is released before handing off to Unity. The lab's old direct exported-Unity
+  WebView is released before handing off to Unity. A same-process launcher
+  re-entry resumes the already prepared Unity activity directly. The lab's old direct exported-Unity
   launch helper is not the candidate's public entry; exercise its bootstrap/Play
   path rather than changing the shared helper for this experiment.
 - `owner-host.js` connects the approved frontend's adapter v1 to fixed native

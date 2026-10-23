@@ -72,6 +72,7 @@ def build(request_path, output):
             for n in ("PayloadStore.java", "PayloadBootstrapActivity.java", "index.html", "owner-host.js", "binary_manifest.py", "build_owner_apk.py")
         ]
         tracked += [roots["frontend"] / n for n in ("app.js", "controller.js", "style.css", "background.png")]
+        tracked += [Path(PACKET.__file__), Path(ASSEMBLY.__file__)]
         tracked += [roots[k] for k in ("java", "android_jar", "d8_jar", "wire_helper", "manifest")]
         result["inputs"] = {str(p): {"bytes": p.stat().st_size, "sha256": sha(p)} for p in tracked}
 
