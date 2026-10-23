@@ -31974,3 +31974,72 @@ Full ignored evidence is under
 `work/experiments/original-game-audio-r34-cold-persistence/root-r1/` and
 `work/coordination/original-game-audio-pcm/r34-cold-persistence-root-r1/`. Raw PCM
 and device-specific identifiers remain private.
+
+## J1032 — Preserve first admission samples with an acyclic report schema
+
+**Measured defect and prior art.** J1005 requires independent first/latest
+admission operands without changing the source camera's readiness decisions.
+J1006 and the actual imported-type fixture in J1030 show the first sample is
+missing from JSON. The existing community prior-art map supplies no applicable
+report-serialization workaround; no community or game implementation is copied.
+This change addresses that authored report contract only.
+
+**Change and ownership.** Keep the full
+`AndroidNativeAudioCameraAdmissionEvidence` type name and its 141 public scalar
+field names/types. Move those scalars and observation methods into a
+serializable base, with separate concrete evidence and sample DTOs. Only the
+evidence owns `firstAdmissionSample`; the sample has no nested edge. Explicit
+scalar copying retains independent first/latest values, unknown/value pairs and
+finite-float projections. The source-camera owner changes only its existing
+first-sample assignment to `CopyAsFirstSample`. Setup, cadence, admission,
+retirement and teardown predicates are unchanged. ARCHITECTURE names the schema
+and optional exact-editor fixture; the existing camera recipe pins both changed
+sources. Runtime-source reconstruction must replay the authored source cohort.
+
+**Host and exact-editor validation.** The focused camera suite passes 57 tests
+with four skips. Its pure production-contract fixture exercises all scalar
+copies, independent bounded samples, known-versus-unknown state and nonfinite
+sanitization. The optional serializer fixture compiles directly against the
+candidate's actual imported `Assembly-CSharp`, SHA-256
+`cc94a32eeee0a9d9e7ecfa74494943aa7b2bb0f6ee42bc94fb2b29e42d1aba2b`,
+and runs from the separate imported `Assembly-CSharp-Editor` under the normal
+host mutex. The pinned Unity editor is 2021.3.45f2; no player build, scene load,
+Play Mode or device operation occurs in this fixture.
+
+The first candidate fixture (R3) returns false because its authored latest-sample
+setup calls `BeginAdmissionObservation`, which clears the per-sample evaluation
+and input-known flags, without setting them again before requiring true. Its
+raw JSON already retains the first and latest values. Preserve that failed
+result, SHA-256
+`a5e05d8dbdbeb19c954cd8955bc2ef7b9b46804782ef10204bf7cbd6f0147558`.
+R4 corrects the setup and asserts both samples' contract before serialization;
+it does not weaken the readback predicate or change production source.
+
+R4 passes every component: actual production type identities, positive report
+sentinels, unobserved zero values including normalized empty strings, one-sample
+round-trip, distinct first/latest samples, independent bounded copies, exact
+scalar schema and explicit first-member raw JSON. No serialization warning is
+recorded. Its 433,636-byte result has SHA-256
+`7138d9fc0750e198deb41d99bfb59a5caee959baa130168a34a16d7a4b1856ee`;
+fixture source is
+`4c084b4a65344901c02374d9f33c4be68532547fac1c55ad89ee3b1a036451c2`.
+The zero case retains no observed sample; the two-sample case retains sequence
+1 at 21.25 s and sequence 2 at 22.5 s with distinct decisions and context values.
+
+**Cleanup and remaining gate.** Remove only the hash-verified temporary Editor
+fixture and its generated metadata; retain its authored replay source under
+`tests/fixtures/`. The runtime source inventory changes only the two intended
+camera files. The runtime assembly hash remains the candidate hash through
+fixture compilation/removal. Direct MCP readback confirms the exact editor idle
+and no compilation errors, then the normal host mutex is released. Ignored
+Root evidence is under
+`work/coordination/original-native-visual-reference/first-admission-nonrecursive-fixture-root-r1/`,
+with R4 output under `r4/`. The frozen R4 preparation manifest is
+`3fd90bfca14df1232f7068a1857be703fe355c1d9d9d5be6204553e6ada32420`.
+
+This establishes the editor serialization shape only. Main still has R34 APK
+098646f6; both standard controls and J1031's cold-persistence result remain
+separate facts. A newly built player must pass both controls and retain the
+first sample in its current-process Android reports before that player gate
+passes. This result establishes neither camera readiness nor audio/visual
+acceptance and changes no game content or native audio implementation.

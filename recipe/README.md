@@ -1900,3 +1900,11 @@ J1015 supplies that authored script's MonoImporter sidecar using the existing
 recipe GUID. It contains generic importer settings and an authored identity
 only; no exported game metadata or protected content. The identity and source
 cohort are unchanged. Provenance/privacy audit: 2026-10-23.
+
+J1032 refreshes the camera recipe's authored contract and owner source digests
+for the nonrecursive admission-report schema. The scalar fields, copy logic,
+synthetic host checks and optional exact-editor fixture are authored here; no
+original implementation, protected metadata body, middleware, generated game
+content, private identifier or raw report is published. Existing runtime-source
+reconstruction must replay this source cohort. Provenance/privacy audit:
+2026-10-23. Editor serialization passes; player behavior remains a device gate.

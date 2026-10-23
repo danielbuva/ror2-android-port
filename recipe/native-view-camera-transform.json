@@ -284,8 +284,8 @@
   },
   "source_sha256": {
     "build_hook": "d5024fa3e1c79f81d336cd4a1fc3fe085ee8ada4bc689a6b06d79fe708e69b8d",
-    "camera_contract": "488a6dadc47347df0abf301247d45c41ce4f47a97054bfdf339f0e12602e1812",
-    "camera_owner": "60ddd8517319a172c2811ea6e35223db03079d50967a380c606594315b437ed9",
+    "camera_contract": "259463fea059fb40f84ff8dd3bfc027efc70635ce7b81320725a177c78f5bf73",
+    "camera_owner": "8eaf3952583aaa2ee682a6c72b0249dc79301f713b566e810422863068df7fc6",
     "camera_prerequisites": "7d726175b0f93d9d4e83d032b7244cd9f9cd9df49d0ec1bd57d73df63587d18a",
     "listener_contract": "e138a103abc56700af610044e833811c8dce4eeb3d205dc3c20fc491bb962a4b",
     "marker": "7d86f674c0f6dde711916fe3105b8a88b2e91c39d1351d83ee77f0e2deea8f9f",

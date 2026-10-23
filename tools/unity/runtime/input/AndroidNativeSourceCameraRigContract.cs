@@ -79,7 +79,7 @@ public static class AndroidNativeSourceCameraRigContract
 // false sample could otherwise be confused with a value that was never read.
 // This DTO contains no Unity or game-object references and does not affect gates.
 [Serializable]
-public sealed class AndroidNativeAudioCameraAdmissionEvidence
+public class AndroidNativeAudioCameraAdmissionScalars
 {
     public bool startWindowSampleKnown;
     public int startWindowSampleCount;
@@ -147,20 +147,151 @@ public sealed class AndroidNativeAudioCameraAdmissionEvidence
     public bool admissionInputsKnown, previousReady;
     public bool admissionEvaluationObserved;
     public string admissionDecision;
-    // The outer instance is the last actual admission evaluation. This frozen,
-    // bounded nested copy is the first one; it never points back to itself.
-    public AndroidNativeAudioCameraAdmissionEvidence firstAdmissionSample;
 
-    public AndroidNativeAudioCameraAdmissionEvidence Copy()
+
+    protected void CopyScalarsTo(AndroidNativeAudioCameraAdmissionScalars target)
     {
-        var copy = (AndroidNativeAudioCameraAdmissionEvidence)MemberwiseClone();
-        if (firstAdmissionSample != null)
-        {
-            copy.firstAdmissionSample = (AndroidNativeAudioCameraAdmissionEvidence)firstAdmissionSample.MemberwiseClone();
-            copy.firstAdmissionSample.SanitizeFloats();
-        }
-        copy.SanitizeFloats();
-        return copy;
+        target.startWindowSampleKnown = startWindowSampleKnown;
+        target.startWindowSampleCount = startWindowSampleCount;
+        target.startWindowFirstRealtime = startWindowFirstRealtime;
+        target.startWindowLastRealtime = startWindowLastRealtime;
+        target.startWindowFirstRealtimeValid = startWindowFirstRealtimeValid;
+        target.startWindowLastRealtimeValid = startWindowLastRealtimeValid;
+        target.startWindowFirstActivityKnown = startWindowFirstActivityKnown;
+        target.startWindowFirstActiveAndEnabled = startWindowFirstActiveAndEnabled;
+        target.startWindowFirstActiveInHierarchy = startWindowFirstActiveInHierarchy;
+        target.startWindowFirstModeKnown = startWindowFirstModeKnown;
+        target.startWindowFirstModeIsNull = startWindowFirstModeIsNull;
+        target.startWindowFirstModeIsPlayerBasic = startWindowFirstModeIsPlayerBasic;
+        target.startWindowFirstWaitObserved = startWindowFirstWaitObserved;
+        target.startWindowFirstWaitRealtime = startWindowFirstWaitRealtime;
+        target.startWindowFirstWaitRealtimeValid = startWindowFirstWaitRealtimeValid;
+        target.startWindowFirstPlayerBasicObserved = startWindowFirstPlayerBasicObserved;
+        target.startWindowFirstPlayerBasicRealtime = startWindowFirstPlayerBasicRealtime;
+        target.startWindowFirstPlayerBasicRealtimeValid = startWindowFirstPlayerBasicRealtimeValid;
+        target.startWindowLastActivityKnown = startWindowLastActivityKnown;
+        target.startWindowLastActiveAndEnabled = startWindowLastActiveAndEnabled;
+        target.startWindowLastActiveInHierarchy = startWindowLastActiveInHierarchy;
+        target.startWindowLastModeKnown = startWindowLastModeKnown;
+        target.startWindowLastModeIsNull = startWindowLastModeIsNull;
+        target.startWindowLastModeIsPlayerBasic = startWindowLastModeIsPlayerBasic;
+        target.startWindowLastClockKnown = startWindowLastClockKnown;
+        target.startWindowLastClockValid = startWindowLastClockValid;
+        target.startWindowLastDeadlineExpired = startWindowLastDeadlineExpired;
+        target.startWindowLastAdmissionEvaluationObserved = startWindowLastAdmissionEvaluationObserved;
+        target.startWindowLastStep = startWindowLastStep;
+        target.activationRealtime = activationRealtime;
+        target.admissionDeadlineRealtime = admissionDeadlineRealtime;
+        target.activationRealtimeValid = activationRealtimeValid;
+        target.admissionDeadlineRealtimeValid = admissionDeadlineRealtimeValid;
+        target.admissionSampleKnown = admissionSampleKnown;
+        target.admissionSampleSequence = admissionSampleSequence;
+        target.admissionSampleRealtime = admissionSampleRealtime;
+        target.admissionDeadlineRemainingSeconds = admissionDeadlineRemainingSeconds;
+        target.admissionSampleRealtimeValid = admissionSampleRealtimeValid;
+        target.admissionDeadlineRemainingSecondsValid = admissionDeadlineRemainingSecondsValid;
+        target.admissionClockKnown = admissionClockKnown;
+        target.admissionClockValid = admissionClockValid;
+        target.admissionDeadlineExpired = admissionDeadlineExpired;
+        target.noRenderStateKnown = noRenderStateKnown;
+        target.sourceCameraDisabled = sourceCameraDisabled;
+        target.poseCameraAbsent = poseCameraAbsent;
+        target.overrideAbsent = overrideAbsent;
+        target.rigInventoryKnown = rigInventoryKnown;
+        target.rigInventoryCount = rigInventoryCount;
+        target.soleOwnedRigIndexZeroKnown = soleOwnedRigIndexZeroKnown;
+        target.soleOwnedRigIndexZero = soleOwnedRigIndexZero;
+        target.exactRigKnown = exactRigKnown;
+        target.exactRig = exactRig;
+        target.rigActiveKnown = rigActiveKnown;
+        target.rigActiveAndEnabled = rigActiveAndEnabled;
+        target.rigActiveInHierarchy = rigActiveInHierarchy;
+        target.playerBasicModeKnown = playerBasicModeKnown;
+        target.playerBasicMode = playerBasicMode;
+        target.viewerNullKnown = viewerNullKnown;
+        target.viewerNull = viewerNull;
+        target.localUserViewerNullKnown = localUserViewerNullKnown;
+        target.localUserViewerNull = localUserViewerNull;
+        target.hudAbsentKnown = hudAbsentKnown;
+        target.hudAbsent = hudAbsent;
+        target.nextTargetKnown = nextTargetKnown;
+        target.nextTargetMatchesBody = nextTargetMatchesBody;
+        target.rigSceneCameraMatchesViewKnown = rigSceneCameraMatchesViewKnown;
+        target.rigSceneCameraMatchesView = rigSceneCameraMatchesView;
+        target.sceneCameraKnown = sceneCameraKnown;
+        target.sceneCameraActive = sceneCameraActive;
+        target.sceneCameraMatchesView = sceneCameraMatchesView;
+        target.sceneCameraOwnsRig = sceneCameraOwnsRig;
+        target.bodyTeamKnown = bodyTeamKnown;
+        target.bodyTeamPresent = bodyTeamPresent;
+        target.targetTeamMatchesBody = targetTeamMatchesBody;
+        target.targetReadyKnown = targetReadyKnown;
+        target.targetReady = targetReady;
+        target.originalContextProbeAvailable = originalContextProbeAvailable;
+        target.originalContextResultKnown = originalContextResultKnown;
+        target.originalContextReady = originalContextReady;
+        target.markerObservationRequested = markerObservationRequested;
+        target.markerPresentKnown = markerPresentKnown;
+        target.markerPresent = markerPresent;
+        target.markerActiveKnown = markerActiveKnown;
+        target.markerActive = markerActive;
+        target.markerBindingKnown = markerBindingKnown;
+        target.markerBoundToRig = markerBoundToRig;
+        target.markerBoundToTarget = markerBoundToTarget;
+        target.markerBoundToProvider = markerBoundToProvider;
+        target.markerDelegateKnown = markerDelegateKnown;
+        target.markerDelegatePresent = markerDelegatePresent;
+        target.markerContextLatchKnown = markerContextLatchKnown;
+        target.markerContextLatchReady = markerContextLatchReady;
+        target.markerPumpCountKnown = markerPumpCountKnown;
+        target.markerPumpCount = markerPumpCount;
+        target.markerCaptureErrorObserved = markerCaptureErrorObserved;
+        target.markerCaptureError = markerCaptureError;
+        target.providerActiveKnown = providerActiveKnown;
+        target.providerActive = providerActive;
+        target.applicationKnown = applicationKnown;
+        target.applicationPresent = applicationPresent;
+        target.applicationActiveKnown = applicationActiveKnown;
+        target.applicationActive = applicationActive;
+        target.deltaTimeKnown = deltaTimeKnown;
+        target.deltaTimeNonzero = deltaTimeNonzero;
+        target.deltaTime = deltaTime;
+        target.deltaTimeValid = deltaTimeValid;
+        target.cutsceneKnown = cutsceneKnown;
+        target.cutscene = cutscene;
+        target.listenerPreservedKnown = listenerPreservedKnown;
+        target.listenerPreserved = listenerPreserved;
+        target.listenerComponentKnown = listenerComponentKnown;
+        target.listenerComponentPresent = listenerComponentPresent;
+        target.listenerBehaviourActiveKnown = listenerBehaviourActiveKnown;
+        target.listenerBehaviourActive = listenerBehaviourActive;
+        target.listenerActiveKnown = listenerActiveKnown;
+        target.listenerActive = listenerActive;
+        target.listenerMembershipKnown = listenerMembershipKnown;
+        target.listenerMembership = listenerMembership;
+        target.musicSnapshotKnown = musicSnapshotKnown;
+        target.musicSnapshotRefreshObserved = musicSnapshotRefreshObserved;
+        target.musicRequested = musicRequested;
+        target.musicSourceAudioReady = musicSourceAudioReady;
+        target.musicEngineInitialized = musicEngineInitialized;
+        target.musicNoAudio = musicNoAudio;
+        target.musicTermsReturned = musicTermsReturned;
+        target.musicStaticInstanceMatches = musicStaticInstanceMatches;
+        target.musicObservationOwnerAlive = musicObservationOwnerAlive;
+        target.musicObservationSucceeded = musicObservationSucceeded;
+        target.musicTargetCameraInventoryNonempty = musicTargetCameraInventoryNonempty;
+        target.musicTargetBodyObserved = musicTargetBodyObserved;
+        target.musicObservationRealtime = musicObservationRealtime;
+        target.musicObservationAgeSeconds = musicObservationAgeSeconds;
+        target.musicObservationRealtimeValid = musicObservationRealtimeValid;
+        target.musicObservationAgeSecondsValid = musicObservationAgeSecondsValid;
+        target.musicFreshKnown = musicFreshKnown;
+        target.musicFresh = musicFresh;
+        target.musicTargetObserved = musicTargetObserved;
+        target.admissionInputsKnown = admissionInputsKnown;
+        target.previousReady = previousReady;
+        target.admissionEvaluationObserved = admissionEvaluationObserved;
+        target.admissionDecision = admissionDecision;
     }
 
     static bool IsFinite(float value)
@@ -181,7 +312,7 @@ public sealed class AndroidNativeAudioCameraAdmissionEvidence
         return valid ? value : 0f;
     }
 
-    void SanitizeFloats()
+    internal void SanitizeFloats()
     {
         startWindowFirstRealtime = Sanitize(startWindowFirstRealtime, ref startWindowFirstRealtimeValid);
         startWindowLastRealtime = Sanitize(startWindowLastRealtime, ref startWindowLastRealtimeValid);
@@ -385,6 +516,47 @@ public sealed class AndroidNativeAudioCameraAdmissionEvidence
         previousReady = false;
         admissionEvaluationObserved = false;
         admissionDecision = "not_evaluated";
+    }
+}
+
+
+// A first sample shares the exact public scalar schema but cannot contain another
+// sample. Unity JsonUtility therefore sees a finite object graph instead of a
+// recursively self-typed field. Keep these concrete DTO names stable for reports.
+[Serializable]
+public sealed class AndroidNativeAudioCameraAdmissionSample : AndroidNativeAudioCameraAdmissionScalars
+{
+    public AndroidNativeAudioCameraAdmissionSample Copy()
+    {
+        var copy = new AndroidNativeAudioCameraAdmissionSample();
+        CopyScalarsTo(copy);
+        copy.SanitizeFloats();
+        return copy;
+    }
+}
+
+[Serializable]
+public sealed class AndroidNativeAudioCameraAdmissionEvidence : AndroidNativeAudioCameraAdmissionScalars
+{
+    // Bounded first sample; the sample DTO intentionally has no nested sample field.
+    public AndroidNativeAudioCameraAdmissionSample firstAdmissionSample;
+
+    public AndroidNativeAudioCameraAdmissionSample CopyAsFirstSample()
+    {
+        var sample = new AndroidNativeAudioCameraAdmissionSample();
+        CopyScalarsTo(sample);
+        sample.SanitizeFloats();
+        return sample;
+    }
+
+    public AndroidNativeAudioCameraAdmissionEvidence Copy()
+    {
+        var copy = new AndroidNativeAudioCameraAdmissionEvidence();
+        CopyScalarsTo(copy);
+        if (firstAdmissionSample != null)
+            copy.firstAdmissionSample = firstAdmissionSample.Copy();
+        copy.SanitizeFloats();
+        return copy;
     }
 }
 

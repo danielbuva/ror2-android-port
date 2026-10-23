@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1032](PORTING_JOURNAL.md#j1032--preserve-first-admission-samples-with-an-acyclic-report-schema) | 2026-10-23 | Preserve first admission samples with an acyclic report schema | **Measured defect and prior art.** |
 | [J1031](PORTING_JOURNAL.md#j1031--verify-cold-process-persistence-of-the-bounded-pcm-pair) | 2026-10-23 | Verify cold-process persistence of the bounded PCM pair | **Question and scope.** |
 | [J1030](PORTING_JOURNAL.md#j1030--check-the-actual-production-camera-admission-json-shape) | 2026-10-23 | Check the actual production camera-admission JSON shape | **Question and prior findings.** |
 | [J1028](PORTING_JOURNAL.md#j1028--measure-default-route-pcm-and-preserve-the-natural-quit-failure) | 2026-10-23 | Measure default-route PCM and preserve the natural-Quit failure | **Hypothesis and prior art.** |

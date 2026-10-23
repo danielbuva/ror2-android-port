@@ -15,7 +15,7 @@ CSC = EDITOR_CONTENTS / "MonoBleedingEdge/lib/mono/msbuild/Current/bin/Roslyn/cs
 
 
 class CameraAdmissionEvidenceTests(unittest.TestCase):
-    def test_actual_production_dto_contract_and_bounded_samples(self) -> None:
+    def test_actual_production_dto_copy_contract(self) -> None:
         if not MONO.is_file() or not CSC.is_file():
             self.skipTest("pinned Unity 2021.3.45f2 Mono/Roslyn host tools are unavailable")
         if not CONTRACT.is_file() or not FIXTURE.is_file():
@@ -48,7 +48,7 @@ class CameraAdmissionEvidenceTests(unittest.TestCase):
                 check=False,
             )
             self.assertEqual(ran.returncode, 0, ran.stdout + ran.stderr)
-            self.assertIn("R31 camera admission DTO contract checks passed", ran.stdout)
+            self.assertIn("Nonrecursive camera admission DTO contract checks passed", ran.stdout)
 
 
 if __name__ == "__main__":

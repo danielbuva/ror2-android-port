@@ -1044,7 +1044,7 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
         evidence.admissionDecision = step.ToString();
         evidence.startWindowLastAdmissionEvaluationObserved = true;
         if (evidence.firstAdmissionSample == null)
-            evidence.firstAdmissionSample = evidence.Copy();
+            evidence.firstAdmissionSample = evidence.CopyAsFirstSample();
         if (step == AndroidNativeAudioContextStep.Retire)
         {
             string reason = !exactRig

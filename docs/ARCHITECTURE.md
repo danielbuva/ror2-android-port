@@ -2972,9 +2972,23 @@ The DTO retains no Unity objects and is released with its world report.
 with pinned Unity Mono/Roslyn, skipping when those tools are unavailable. These
 observations establish neither readiness nor audio/rendering acceptance.
 J1006 verifies the latest sample on Android but finds that its recursively
-typed first-sample field is absent from JSON despite metadata retention. First
-sample serialization remains unqualified until an actual JsonUtility fixture
-and device evidence verify a nonrecursive shape.
+typed first-sample field is absent from JSON despite metadata retention.
+J1030 confirms that omission using the imported production report types.
+J1032 moves the 141 existing scalars into serializable
+`AndroidNativeAudioCameraAdmissionScalars`, preserving the evidence type's full
+name and fields. Its concrete first-sample DTO inherits the same scalar schema
+and has no further sample edge. The existing owner snapshots it once through
+`CopyAsFirstSample`; report copies independently retain that bounded sample and
+sanitize floats without changing readiness or observation cadence.
+`tests/fixtures/CameraAdmissionJsonExactEditorFixture.cs` is an optional
+exact-editor fixture, outside the player source selection. Under the shared
+editor mutex, stage it temporarily as an Editor source after recipe-driven
+runtime staging/import, invoke its `Run` method from `Assembly-CSharp-Editor`,
+preserve its JSON, then remove only that owned fixture and generated metadata
+before releasing the editor. It directly checks the actual five production
+report/DTO types in `Assembly-CSharp`; it loads no scene and enters no Play Mode.
+J1032 passes zero/one/two-sample serialization and raw JSON checks in the pinned
+editor. Android report serialization remains a separate device gate.
 
 `AndroidNativeSourceSkinLifecycle` also owns one cached render-evidence snapshot
 at the first ready selected-skin/camera observation. It records at most 12 camera
