@@ -2798,21 +2798,27 @@ only new ignored evidence under
 Input/tool drift, symlinked output roots, unknown metadata and colliding output
 paths refuse before publication. The generator retains EfficientBlur's two
 source passes/shared fragment and QuickDumbBlur's measured `FLIP_V` axis.
-It has no runtime setup or teardown, and no catalog consumer selects these four
-candidates yet. Exact-editor compilation, Android rendering and matched PC
-appearance remain separate gates; J997's placeholder catalog bodies stay in use.
+It has no runtime setup or teardown. J1009 verifies isolated Android/Vulkan
+compilation and cleanup. J1012 adds catalog consumption; the installed player
+still has J997's placeholder blur bodies until a new content build is verified.
+Android rendering and matched PC appearance remain separate gates.
 
-`whole_catalog.prepare_integration` owns the optional two-shader catalog override
-(J966). The public `recipe/shader-catalog-overrides.json` is a default-off exact
-identity allowlist. Ignored `work/config/shader-catalog-overrides.json` explicitly
-activates it for one accepted input. Before either write, staging validates both
+`whole_catalog.prepare_integration` owns the optional shader catalog override
+(J966/J1012). The public `recipe/shader-catalog-overrides.json` is a default-off
+exact identity allowlist for Outline Highlight, RampFog and the four Translucent
+candidates. Ignored `work/config/shader-catalog-overrides.json` explicitly
+activates it for one accepted input. Before writing, staging validates all
 current generator/recipe chains, candidate source/metadata receipts and original
-catalog GUID/source relationships. Only the two generated shader bodies replace
-the original catalog files; existing `.meta` bytes stay identical. The attempt
+catalog relationships. For the four new rows it validates the catalog address
+GUID and distinct original exporter metadata GUID independently, plus source
+path/object identity, pass count and keyword shape. Only generated shader bodies
+replace their catalog files; existing `.meta` bytes stay identical. The attempt
 receipt and project `.rebuild` mirror/marker bind the selector digest.
 `catalog_rebuild` and `rebuild.compare` validate those exact exceptions and retain
-ordinary provenance comparison elsewhere. Both current-project and destination
-staging persist the marker; disabling an already-staged override refuses before
+ordinary provenance comparison elsewhere. Historical exact two-row receipts
+remain supported; current staging selects all six rows and rejects partial
+cohorts. Both current-project and destination staging persist the marker;
+disabling an already-staged override refuses before
 catalog writes and requires a clean destination. The generator owns candidate
 creation; catalog staging owns setup and receipts; there is no runtime owner or
 teardown. This changes content and requires a full bundle/player build, not a

@@ -15,8 +15,37 @@ SHADER_OVERRIDE_ROWS = (
         "41e90cbc5ad198a438128b019f8d8553",
         "RoR2/Base/Shaders/HGOutlineHighlight.shader",
         "Assets/RoR2/Base/Shaders/PostProcess/HGOutlineHighlight.shader",
+        None,
     ),
-    (15950, "c14b6abb309b8c246add9e94a6920d7f", "RoR2/Base/Shaders/RampFog.shader", "Assets/RoR2/Base/Shaders/CustomPostProcess/RampFog.shader"),
+    (15950, "c14b6abb309b8c246add9e94a6920d7f", "RoR2/Base/Shaders/RampFog.shader", "Assets/RoR2/Base/Shaders/CustomPostProcess/RampFog.shader", None),
+    (
+        2537,
+        "e4abd95960ed75f4a9f59cac7c40bd9d",
+        "TranslucentImage/DownTent.shader",
+        "Assets/Le Tai's Asset/TranslucentImage/FormerResources/DownTent.shader",
+        "b950b7b50f8e9734e8b26f23f8409418",
+    ),
+    (
+        2538,
+        "12e87e7c7fde8e74db9f75172456c5c3",
+        "TranslucentImage/EfficientBlur.shader",
+        "Assets/Le Tai's Asset/TranslucentImage/FormerResources/EfficientBlur.shader",
+        "f7022f9f8b1c05f45b0e69d890d31534",
+    ),
+    (
+        2539,
+        "d996ab4381100014d99e25e68e9aac84",
+        "TranslucentImage/FillCrop.shader",
+        "Assets/Le Tai's Asset/TranslucentImage/FormerResources/FillCrop.shader",
+        "89c413d50c7159d42a05c19230c43769",
+    ),
+    (
+        2540,
+        "b12e02e9a9b684543a286089a03cb04b",
+        "TranslucentImage/QuickDumbBlur.shader",
+        "Assets/Le Tai's Asset/TranslucentImage/FormerResources/QuickDumbBlur.shader",
+        "e5c4572c0a575514bb041a5a82e33cea",
+    ),
 )
 SHADER_OVERRIDE_GENERATORS = {
     16022: (
@@ -29,6 +58,46 @@ SHADER_OVERRIDE_GENERATORS = {
         "Hopoo Games/Internal/Outline Highlight",
         -5736718617091362218,
     ),
+    2537: (
+        "shader_translucent.py",
+        "recipe/shader-translucent-candidate.json",
+        "local-source-bound-translucent-wrapper-candidate-r1",
+        "manifests/DownTent.json",
+        "sources/DownTent.shader",
+        "generated_shader_path",
+        "Hidden/DownTent",
+        8446615176080386013,
+    ),
+    2538: (
+        "shader_translucent.py",
+        "recipe/shader-translucent-candidate.json",
+        "local-source-bound-translucent-wrapper-candidate-r1",
+        "manifests/EfficientBlur.json",
+        "sources/EfficientBlur.shader",
+        "generated_shader_path",
+        "Hidden/EfficientBlur",
+        6370232586618374777,
+    ),
+    2539: (
+        "shader_translucent.py",
+        "recipe/shader-translucent-candidate.json",
+        "local-source-bound-translucent-wrapper-candidate-r1",
+        "manifests/FillCrop.json",
+        "sources/FillCrop.shader",
+        "generated_shader_path",
+        "Hidden/FillCrop",
+        5721449320467667425,
+    ),
+    2540: (
+        "shader_translucent.py",
+        "recipe/shader-translucent-candidate.json",
+        "local-source-bound-translucent-wrapper-candidate-r1",
+        "manifests/QuickDumbBlur.json",
+        "sources/QuickDumbBlur.shader",
+        "generated_shader_path",
+        "UI/QuickDumbBlur",
+        -5627814109785558414,
+    ),
     15950: (
         "shader_ramp_fog.py",
         "recipe/shader-ramp-fog-candidate.json",
@@ -40,6 +109,47 @@ SHADER_OVERRIDE_GENERATORS = {
         2910825169780710437,
     ),
 }
+
+
+def translucent_candidate_identity_matches(manifest, recipe, location_id, catalog_key, source_path, path_id, shader_name):
+    """Match the four exact source identities and their measured pass/keyword shape."""
+    source = manifest.get("source", {})
+    shader_spec = next((row for row in recipe.get("shaders", []) if row.get("catalog_location") == location_id), None)
+    if (
+        shader_spec is None
+        or manifest.get("schema") != recipe.get("candidate_schema")
+        or manifest.get("success") is not True
+        or source.get("bundle_sha256") != recipe.get("source", {}).get("bundle_sha256")
+        or source.get("catalog_key") != catalog_key
+        or source.get("catalog_location") != location_id
+        or source.get("asset_path") != source_path
+        or type(source.get("shader_path_id")) is not int
+        or source.get("shader_path_id") != path_id
+        or source.get("shader_name") != shader_name
+        or shader_spec.get("catalog_key") != catalog_key
+        or shader_spec.get("source_asset_path") != source_path
+        or shader_spec.get("path_id") != path_id
+        or shader_spec.get("serialized_name") != shader_name
+        or manifest.get("semantic_equivalence_proven") is not False
+        or any(
+            manifest.get(field) is not False
+            for field in ("android_compile_or_render_tested", "appearance_parity_proven", "unity_compiled", "android_accepted", "visual_parity_proven")
+        )
+    ):
+        return False
+    mapping = manifest.get("pass_mapping")
+    if not isinstance(mapping, list) or len(mapping) != shader_spec.get("pass_count"):
+        return False
+    axes = shader_spec.get("keyword_axes", [])
+    expected_variants = [[], list(axes)] if axes else [[]]
+    return all(
+        isinstance(row, dict)
+        and row.get("pass_index") == index
+        and row.get("keyword_variants") == expected_variants
+        and isinstance(row.get("programs"), dict)
+        and bool(row["programs"])
+        for index, row in enumerate(mapping)
+    )
 
 
 def read_local_shader_override_selector(work, input_id):
@@ -69,7 +179,7 @@ def read_local_shader_override_selector(work, input_id):
 
 
 def shader_override_rows(receipt, input_id, expected, provenance, candidate_work=None):
-    """Validate the only two authored shader exceptions to byte-identical replay."""
+    """Validate the exact default shader exceptions to byte-identical replay."""
     if receipt is None:
         return {}
     candidate_work = Path(candidate_work or ROOT / "work")
@@ -91,10 +201,11 @@ def shader_override_rows(receipt, input_id, expected, provenance, candidate_work
     ):
         raise RuntimeError("Shader override receipt is not a qualified source-only receipt")
     rows = receipt.get("rows")
-    if not isinstance(rows, list) or len(rows) != len(SHADER_OVERRIDE_ROWS):
-        raise RuntimeError("Shader override receipt must contain exactly the two qualified roots")
+    if not isinstance(rows, list) or len(rows) not in (2, len(SHADER_OVERRIDE_ROWS)):
+        raise RuntimeError("Shader override receipt must contain exactly the two historical roots or all six qualified roots")
+    expected_rows = SHADER_OVERRIDE_ROWS[:2] if len(rows) == 2 else SHADER_OVERRIDE_ROWS
     result = {}
-    for row, (location_id, guid, primary_key, source_path) in zip(rows, SHADER_OVERRIDE_ROWS, strict=True):
+    for row, (location_id, guid, primary_key, source_path, exporter_guid) in zip(rows, expected_rows, strict=True):
         target = "Assets/WholeGame/" + source_path.removeprefix("Assets/")
         generator, generator_recipe, schema, manifest_name, shader_name, manifest_path_field, shader_name_value, object_path_id = SHADER_OVERRIDE_GENERATORS[
             location_id
@@ -105,6 +216,7 @@ def shader_override_rows(receipt, input_id, expected, provenance, candidate_work
             or row.get("type") != "UnityEngine.Shader, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"
             or row.get("primary_key") != primary_key
             or row.get("source_asset_path") != source_path
+            or (exporter_guid is not None and row.get("exporter_guid") != exporter_guid)
             or row.get("target") != target
             or not isinstance(row.get("candidate_shader_sha256"), str)
             or row.get("generator") != generator
@@ -126,6 +238,8 @@ def shader_override_rows(receipt, input_id, expected, provenance, candidate_work
         meta_provenance = provenance.get(target + ".meta")
         if meta_provenance is not None and meta_provenance.get("sha256") != row.get("original_meta_sha256"):
             raise RuntimeError("Shader override metadata provenance conflicts with its receipt: " + target + ".meta")
+        if exporter_guid is not None and row.get("exporter_guid") != exporter_guid:
+            raise RuntimeError("Shader override exporter metadata GUID differs from its exact recipe: " + str(location_id))
         for field in (
             "original_source_sha256",
             "original_meta_sha256",
@@ -176,6 +290,13 @@ def shader_override_rows(receipt, input_id, expected, provenance, candidate_work
                 and candidate_manifest.get("source", {}).get("catalog_key") == guid
                 and candidate_manifest.get("source", {}).get("catalog_location") == location_id
                 and candidate_manifest.get("source", {}).get("asset_path") == source_path
+            )
+        elif location_id in (2537, 2538, 2539, 2540):
+            candidate_identity_matches = (
+                translucent_candidate_identity_matches(
+                    candidate_manifest, read(ROOT / generator_recipe), location_id, guid, source_path, object_path_id, shader_name_value
+                )
+                and row.get("exporter_guid") == exporter_guid
             )
         else:
             candidate_identity_matches = (

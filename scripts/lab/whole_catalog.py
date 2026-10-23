@@ -64,7 +64,7 @@ def _shader_candidate_root(io, relative):
 
 
 def _validated_shader_overrides(io, closure, metadata, mapped, export, project, destination):
-    """Apply only the two explicit, generator-owned candidates at existing typed mappings."""
+    """Apply only the exact generator-owned shader candidates at existing typed mappings."""
     recipe_path = RECIPE / "shader-catalog-overrides.json"
     selection = io.read(recipe_path)
     if set(selection) != {"schema", "input_id", "enabled", "rows"} or selection.get("schema") != "whole-catalog-shader-overrides-r1":
@@ -73,7 +73,7 @@ def _validated_shader_overrides(io, closure, metadata, mapped, export, project, 
         raise RuntimeError("Public shader override identity allowlist must remain default-off")
     if selection.get("input_id") != closure["input_id"]:
         raise RuntimeError("Shader override selection belongs to a different accepted input")
-    from catalog_rebuild import read_local_shader_override_selector
+    from catalog_rebuild import read_local_shader_override_selector, translucent_candidate_identity_matches
 
     local_selector = read_local_shader_override_selector(io.work, closure["input_id"])
     if local_selector is None or local_selector["enabled"] is not True:
@@ -97,6 +97,7 @@ def _validated_shader_overrides(io, closure, metadata, mapped, export, project, 
             "generated_shader_path",
             "Hopoo Games/Internal/Outline Highlight",
             -5736718617091362218,
+            None,
         ),
         (
             15950,
@@ -112,11 +113,77 @@ def _validated_shader_overrides(io, closure, metadata, mapped, export, project, 
             "generated_shader",
             "Hidden/PostProcess/RampFog",
             2910825169780710437,
+            None,
+        ),
+        (
+            2537,
+            "e4abd95960ed75f4a9f59cac7c40bd9d",
+            "TranslucentImage/DownTent.shader",
+            "Assets/Le Tai's Asset/TranslucentImage/FormerResources/DownTent.shader",
+            "translucent-camera",
+            "shader_translucent.py",
+            "recipe/shader-translucent-candidate.json",
+            "local-source-bound-translucent-wrapper-candidate-r1",
+            "manifests/DownTent.json",
+            "sources/DownTent.shader",
+            "generated_shader_path",
+            "Hidden/DownTent",
+            8446615176080386013,
+            "b950b7b50f8e9734e8b26f23f8409418",
+        ),
+        (
+            2538,
+            "12e87e7c7fde8e74db9f75172456c5c3",
+            "TranslucentImage/EfficientBlur.shader",
+            "Assets/Le Tai's Asset/TranslucentImage/FormerResources/EfficientBlur.shader",
+            "translucent-camera",
+            "shader_translucent.py",
+            "recipe/shader-translucent-candidate.json",
+            "local-source-bound-translucent-wrapper-candidate-r1",
+            "manifests/EfficientBlur.json",
+            "sources/EfficientBlur.shader",
+            "generated_shader_path",
+            "Hidden/EfficientBlur",
+            6370232586618374777,
+            "f7022f9f8b1c05f45b0e69d890d31534",
+        ),
+        (
+            2539,
+            "d996ab4381100014d99e25e68e9aac84",
+            "TranslucentImage/FillCrop.shader",
+            "Assets/Le Tai's Asset/TranslucentImage/FormerResources/FillCrop.shader",
+            "translucent-camera",
+            "shader_translucent.py",
+            "recipe/shader-translucent-candidate.json",
+            "local-source-bound-translucent-wrapper-candidate-r1",
+            "manifests/FillCrop.json",
+            "sources/FillCrop.shader",
+            "generated_shader_path",
+            "Hidden/FillCrop",
+            5721449320467667425,
+            "89c413d50c7159d42a05c19230c43769",
+        ),
+        (
+            2540,
+            "b12e02e9a9b684543a286089a03cb04b",
+            "TranslucentImage/QuickDumbBlur.shader",
+            "Assets/Le Tai's Asset/TranslucentImage/FormerResources/QuickDumbBlur.shader",
+            "translucent-camera",
+            "shader_translucent.py",
+            "recipe/shader-translucent-candidate.json",
+            "local-source-bound-translucent-wrapper-candidate-r1",
+            "manifests/QuickDumbBlur.json",
+            "sources/QuickDumbBlur.shader",
+            "generated_shader_path",
+            "UI/QuickDumbBlur",
+            -5627814109785558414,
+            "e5c4572c0a575514bb041a5a82e33cea",
         ),
     ]
     rows = selection.get("rows")
-    if not isinstance(rows, list) or len(rows) != len(expected):
-        raise RuntimeError("Shader override selection must contain exactly the two qualified roots")
+    if not isinstance(rows, list) or len(rows) not in (2, len(expected)):
+        raise RuntimeError("Shader override selection must contain exactly the two historical roots or all six qualified roots")
+    expected = expected[:2] if len(rows) == 2 else expected
     locations = {int(row["id"]): row for row in metadata["locations"]}
     keys = {row["key"]: row for row in metadata["keys"] if row.get("keyType", "System.String") == "System.String"}
     output_rows = []
@@ -136,6 +203,7 @@ def _validated_shader_overrides(io, closure, metadata, mapped, export, project, 
             manifest_path_field,
             shader_name,
             object_path_id,
+            exporter_guid,
         ) = spec
         target_relative = mapped.get(source_path)
         expected_target = "Assets/WholeGame/" + source_path.removeprefix("Assets/")
@@ -156,6 +224,8 @@ def _validated_shader_overrides(io, closure, metadata, mapped, export, project, 
             "candidate_schema": candidate_schema,
             "shader_name": shader_name,
         }
+        if exporter_guid is not None:
+            exact["exporter_guid"] = exporter_guid
         if set(row) != set(exact) | {"generator_sha256", "generator_recipe_sha256"} or any(row.get(key) != value for key, value in exact.items()):
             raise RuntimeError("Shader override selection identity or generator mapping changed: " + str(location_id))
         if row.get("generator_sha256") != sha(ROOT / "scripts/lab" / generator):
@@ -205,6 +275,9 @@ def _validated_shader_overrides(io, closure, metadata, mapped, export, project, 
                 or source.get("asset_path") != source_path
             ):
                 raise RuntimeError("Outline candidate identity or completion changed")
+        elif candidate_kind == "translucent-camera":
+            if not translucent_candidate_identity_matches(manifest, generator_recipe_data, location_id, guid, source_path, object_path_id, shader_name):
+                raise RuntimeError("Translucent camera candidate identity, pass map, or qualification changed")
         elif (
             manifest.get("kind") != "local-source-bound-ramp-fog-candidate"
             or source.get("shader_path_id") != object_path_id
@@ -246,8 +319,9 @@ def _validated_shader_overrides(io, closure, metadata, mapped, export, project, 
         meta_hash_before = io.sha(meta)
         meta_bytes_before = len(io.read_bytes(meta))
         meta_text = io.read_text(meta)
-        if len(re.findall(r"^guid:[ \t]*([a-f0-9]{32})[ \t]*$", meta_text, re.M)) != 1:
-            raise RuntimeError("Shader override requires one original exporter GUID: " + target_relative)
+        meta_guids = re.findall(r"^guid:[ \t]*([a-f0-9]{32})[ \t]*$", meta_text, re.M)
+        if len(meta_guids) != 1 or (exporter_guid is not None and meta_guids[0] != exporter_guid):
+            raise RuntimeError("Shader override requires its exact original exporter GUID: " + target_relative)
         original_source_hash = io.sha(export / source_path)
         source_meta = export / (source_path + ".meta")
         if source_meta.is_symlink() or not source_meta.is_file():
@@ -264,6 +338,7 @@ def _validated_shader_overrides(io, closure, metadata, mapped, export, project, 
                 receipt_row=dict(
                     location_id=location_id,
                     guid=guid,
+                    **({"exporter_guid": exporter_guid} if exporter_guid is not None else {}),
                     type=SHADER_LOCATION_TYPE,
                     primary_key=primary_key,
                     source_asset_path=source_path,

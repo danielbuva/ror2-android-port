@@ -44,8 +44,25 @@ class CatalogRebuildTests(unittest.TestCase):
                 "generated-shader-candidates/ramp-fog-r4/{input_id}",
             ),
         }
+        translucent = read(REPO_ROOT / "recipe/shader-translucent-candidate.json")
+        translucent_generator = sha(REPO_ROOT / "scripts/lab/shader_translucent.py")
+        translucent_recipe = sha(REPO_ROOT / "recipe/shader-translucent-candidate.json")
+        for shader in translucent["shaders"]:
+            expected[shader["catalog_location"]] = (
+                "scripts/lab/shader_translucent.py",
+                "recipe/shader-translucent-candidate.json",
+                translucent_generator,
+                translucent_recipe,
+                translucent["stable_output"],
+            )
         self.assertEqual({row["location_id"] for row in selection["rows"]}, set(expected))
+        self.assertEqual(len(selection["rows"]), 6)
         for row in selection["rows"]:
+            if 2537 <= row["location_id"] <= 2540:
+                recipe_shader = next(item for item in translucent["shaders"] if item["catalog_location"] == row["location_id"])
+                self.assertEqual(row["guid"], recipe_shader["catalog_key"])
+                self.assertEqual(row["exporter_guid"], recipe_shader["guid"])
+                self.assertNotEqual(row["guid"], row["exporter_guid"])
             script, recipe_path, script_hash, recipe_hash, stable_output = expected[row["location_id"]]
             self.assertEqual(row["generator"], Path(script).name)
             self.assertEqual(row["generator_recipe"], recipe_path)
@@ -178,7 +195,7 @@ class CatalogRebuildTests(unittest.TestCase):
     def staging(self):
         return catalog_rebuild.CatalogIO(self.work, self.dest, self.input_id)
 
-    def install_shader_candidates(self):
+    def install_shader_candidates(self, include_translucent=False):
         selection = read(self.recipes / "shader-catalog-overrides.json")
         selection["enabled"] = False
         write(
@@ -288,10 +305,112 @@ class CatalogRebuildTests(unittest.TestCase):
         write(self.catalog / "source-catalog.json", metadata)
         write(self.catalog / "reconciled-closure.json", closure)
         write(self.catalog / "source-guid-index.json", index)
+        if include_translucent:
+            rows.extend(row for row in selection["rows"] if row["location_id"] in (2537, 2538, 2539, 2540))
         selection["rows"] = rows
         write(self.recipes / "shader-catalog-overrides.json", selection)
         self.pin()
         return specs
+
+    def install_translucent_candidates(self):
+        selection = read(self.recipes / "shader-catalog-overrides.json")
+        metadata = read(self.catalog / "source-catalog.json")
+        closure = read(self.catalog / "reconciled-closure.json")
+        index = read(self.catalog / "source-guid-index.json")
+        generator_source = REPO_ROOT / "scripts/lab/shader_translucent.py"
+        recipe_source = REPO_ROOT / "recipe/shader-translucent-candidate.json"
+        self.put(self.root / "scripts/lab/shader_translucent.py", generator_source.read_text())
+        self.put(self.recipes / "shader-translucent-candidate.json", recipe_source.read_text())
+        recipe = read(self.recipes / "shader-translucent-candidate.json")
+        generator_hash = sha(self.root / "scripts/lab/shader_translucent.py")
+        recipe_hash = sha(self.recipes / "shader-translucent-candidate.json")
+        specs = []
+        for source_spec in recipe["shaders"]:
+            location = source_spec["catalog_location"]
+            catalog_key = source_spec["catalog_key"]
+            exporter_guid = source_spec["guid"]
+            source_path = source_spec["source_asset_path"]
+            target = "Assets/WholeGame/" + source_path.removeprefix("Assets/")
+            old = closure["converted"][str(location)]["source"]
+            (self.export / old).unlink()
+            (self.export / (old + ".meta")).unlink()
+            self.put(self.export / source_path, 'Shader "Synthetic/Original" {}\n')
+            self.put(self.export / (source_path + ".meta"), "guid: " + exporter_guid + "\n")
+            self.put(self.dest / (target + ".meta"), "guid: " + exporter_guid + "\n")
+            closure["converted"][str(location)] = dict(source=source_path, resolution="exact")
+            index.pop(f"{location:032x}", None)
+            index[exporter_guid] = source_path
+            row = next(item for item in metadata["locations"] if item["id"] == location)
+            row["primaryKey"] = source_spec["primary_key"]
+            key_row = next(item for item in metadata["keys"] if item["locations"] == [location])
+            key_row["key"] = catalog_key
+            generator_recipe = "recipe/shader-translucent-candidate.json"
+            stable = recipe["stable_output"].format(input_id=self.input_id)
+            manifest_path = self.work / stable / source_spec["manifest"]
+            shader_path = self.work / stable / source_spec["output"]
+            shader = ('Shader "' + source_spec["serialized_name"] + '" {}\n').encode()
+            self.put(shader_path, shader.decode())
+            axes = source_spec.get("keyword_axes", [])
+            variants = [[], axes] if axes else [[]]
+            manifest = dict(
+                schema=recipe["candidate_schema"],
+                success=True,
+                generator_sha256=generator_hash,
+                recipe_sha256=recipe_hash,
+                source=dict(
+                    input_id=self.input_id,
+                    bundle_sha256=recipe["source"]["bundle_sha256"],
+                    asset_path=source_path,
+                    catalog_key=catalog_key,
+                    catalog_location=location,
+                    shader_path_id=source_spec["path_id"],
+                    shader_name=source_spec["serialized_name"],
+                ),
+                generated_shader_path=source_spec["output"],
+                generated_shader_sha256=hashlib.sha256(shader).hexdigest(),
+                semantic_equivalence_proven=False,
+                android_compile_or_render_tested=False,
+                appearance_parity_proven=False,
+                unity_compiled=False,
+                android_accepted=False,
+                visual_parity_proven=False,
+                pass_mapping=[dict(pass_index=i, keyword_variants=variants, programs={"1": {"stage": "progVertex"}}) for i in range(source_spec["pass_count"])],
+            )
+            self.put(manifest_path, json.dumps(manifest, sort_keys=True) + "\n")
+            template = next(item for item in selection["rows"] if item["location_id"] == location)
+            template.update(generator_sha256=generator_hash, generator_recipe_sha256=recipe_hash)
+            specs.append((location, catalog_key, source_spec["primary_key"], source_path, exporter_guid, source_spec["serialized_name"], target))
+        write(self.catalog / "source-catalog.json", metadata)
+        write(self.catalog / "reconciled-closure.json", closure)
+        write(self.catalog / "source-guid-index.json", index)
+        write(self.recipes / "shader-catalog-overrides.json", selection)
+        self.pin()
+        return specs
+
+    def test_six_shader_stage_keeps_catalog_and_exporter_guid_domains_distinct(self):
+        specs = self.install_shader_candidates(include_translucent=True)
+        translucent = self.install_translucent_candidates()
+        staging = self.staging()
+        staged = whole_catalog.prepare_integration(staging)
+        staging.flush()
+        self.assertTrue(staged["enabled"])
+        self.assertEqual(len(staged["rows"]), 6)
+        for location, catalog_key, primary_key, source_path, exporter_guid, name, target in translucent:
+            self.assertEqual((self.dest / target).read_text(), 'Shader "' + name + '" {}\n')
+            self.assertEqual((self.dest / (target + ".meta")).read_text(), "guid: " + exporter_guid + "\n")
+            row = next(row for row in staged["rows"] if row["location_id"] == location)
+            self.assertEqual(row["guid"], catalog_key)
+            self.assertEqual(row["exporter_guid"], exporter_guid)
+            self.assertNotEqual(row["guid"], row["exporter_guid"])
+
+    def test_translucent_wrong_exporter_meta_guid_refuses_before_any_shader_write(self):
+        self.install_shader_candidates(include_translucent=True)
+        translucent = self.install_translucent_candidates()
+        _, _, _, source_path, _, _, target = translucent[0]
+        self.put(self.export / (source_path + ".meta"), "guid: " + "f" * 32 + "\n")
+        with self.assertRaisesRegex(RuntimeError, "exact original exporter GUID"):
+            whole_catalog.prepare_integration(self.staging())
+        self.assertFalse((self.dest / target).exists())
 
     def test_two_shader_candidates_override_only_exact_catalog_sources_and_preserve_meta(self):
         specs = self.install_shader_candidates()

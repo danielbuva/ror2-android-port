@@ -30289,3 +30289,47 @@ This checkpoint has not built or installed the correction. Main retains J1006
 rollback. Both standard controls and strict camera admission must be repeated
 on the new exact player before Loader is armed. J1010's JSON proposal and the
 four blur content overrides remain unintegrated. No Alpha-owned behavior changes.
+
+
+## J1012 — Stage the four source camera blur candidates through exact catalog identities
+
+**Scope and prior art.** J1003 reproduces the four source-bound candidates and
+J1009 qualifies isolated Android/Vulkan compilation plus owned fixture cleanup.
+Integrate the independently reviewed consumer into the existing catalog staging
+and rebuild comparison owners. The J364 prior-art method remains applicable:
+actual native program/parameter records and independently checked disassembly
+govern reconstruction. Catalog keys and exporter metadata identities have
+different roles; neither is inferred from a visual resemblance. No recovered
+shader program, game implementation or third-party source enters public Git.
+
+**Setup, verification and retention.** The default-off public allowlist now has
+six exact rows: historical Outline Highlight/RampFog plus DownTent, EfficientBlur,
+FillCrop and QuickDumbBlur. The existing input-bound ignored selector activates
+the current full cohort; historical exact two-row receipts remain valid, while
+partial cohorts refuse. Before any shader write, validate accepted input, typed
+catalog location/address key, original source path/object/name, public generator
+and recipe digests, generated manifest/source hashes, pass and keyword shape,
+and the four distinct original exporter metadata GUIDs. Preserve `.meta` bytes
+and join the existing selector digest in staging/rebuild receipts. Candidate
+manifest acceptance flags remain false; isolated compile evidence is separate.
+
+Synthetic end-to-end staging executes actual prepare_integration with all six
+rows and verifies that catalog and exporter GUID domains remain distinct. Wrong
+exporter metadata refuses before a shader write; historical two-row tests
+remain. The catalog, Translucent generator and camera-hook suites pass 71 tests.
+An initial test command names a nonexistent generator test module; preserve that
+invocation error, then run the correct suite without production changes. Changed
+Python passes Ruff. Refresh only the camera recipe's whole-catalog source digest.
+
+Evidence is under
+`work/coordination/original-native-visual-reference/translucent-catalog-consumer-draft-r1/`,
+`translucent-catalog-consumer-review-r1/` and
+`translucent-catalog-consumer-integration-root-r1/` in the same parent.
+The reviewed integration patch SHA-256 is
+`f20551432954f3b00987f9923d870869b3e22703351d008a02fbb1c75b79367c`.
+No new local input is required: the public generator owns the stable candidate
+paths documented in LOCAL_STATE. A full content/player build must replay this
+staging change; code-only reuse cannot qualify new shader bodies. The running
+R32 controls use their separate frozen two-row payload, not this source update.
+No new player has these four bodies yet. Android rendering, original pass
+behavior and PC visual parity remain open; no Alpha-owned behavior changes.
