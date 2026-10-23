@@ -72,6 +72,8 @@ class OriginalMusicTargetCaptureCompileTests(unittest.TestCase):
             session / "MusicPcmJoinObserver.cs",
             session / "AkMusicPcmJoinQueryAdapter.cs",
             session / "PortSessionOriginalAudioOwner.cs",
+            session / "OriginalNetworkSoundEventCatalogOwner.cs",
+            TESTS / "fixtures/original_audio/network_sound/NetworkSoundApiCompileStubs.cs",
             REPO / "tests/fixtures/point_sound/PointSoundBuildPin.cs",
             fixture,
         ]

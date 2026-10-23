@@ -202,5 +202,6 @@ public static class WholeCatalogComposed
     public static bool IsConfigured;
     public static string RetainForOriginalAudioOwner(string input) => "lease";
     public static T LoadOwnedContent<T>(string path) => default(T);
+    public static T[] DefinitionFamily<T>(System.Collections.Generic.IEnumerable<T> selected) => Array.Empty<T>();
     public static void ReleaseOriginalAudioOwnerLease(string identity) { }
 }

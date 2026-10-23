@@ -65,7 +65,17 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
         public string passivePcmCaptureSelectedOutputIdDecimal;
         public bool managedDefaultListenerCensusKnown;
         public int managedDefaultListenerCount;
+        public OriginalNetworkSoundEventCatalogOwner.Snapshot networkSoundEventCatalog;
         public PortSessionOriginalMusicControllerOwner.Snapshot originalMusicController;
+    }
+
+    public static string StartupFailure
+    {
+        get
+        {
+            lock (Sync)
+                return ReferenceEquals(instance, null) ? null : instance.coordinatorFailure;
+        }
     }
 
     public static IEnumerator EnsureOriginalOwner()
@@ -184,7 +194,7 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
             }
         }
         return new Snapshot {
-            phase = ready ? "ready" : (failure != null ? "failed_closed" : (claimed ? "original_manager_starting" :
+            phase = failure != null ? "failed_closed" : (ready ? "ready" : (claimed ? "original_manager_starting" :
                 (GameAudioOriginalOwner.StartupSelected ? "prepared" : (host && host.completed ? "disabled_or_refused" : "starting")))),
             failure = failure,
             requestConfigured = GameAudioOriginalRequestBootstrap.IsConfigured,
@@ -240,6 +250,7 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
                 ? GameAudioOriginalPassivePcmIdentity.ToDecimalString(pcm.CaptureSelection.SpecificOutputId) : null,
             managedDefaultListenerCensusKnown = managedDefaultListenerCensusKnown,
             managedDefaultListenerCount = managedDefaultListenerCount,
+            networkSoundEventCatalog = OriginalNetworkSoundEventCatalogOwner.CaptureSnapshot(),
             originalMusicController = PortSessionOriginalMusicControllerOwner.CaptureSnapshot()
         };
     }
@@ -347,7 +358,29 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
                 GameAudioOriginalOwner.AbandonPreparationBeforeOriginalInit();
             }
             if (GameAudioOriginalOwner.Ready && GameAudioOriginalOwner.OptInRequested)
+            {
+                if (!RoR2.WwiseIntegrationManager.noAudio)
+                {
+                    try
+                    {
+                        OriginalNetworkSoundEventCatalogOwner.InitializeBeforeWorld(
+                            explicitlyRequested: true,
+                            noAudio: RoR2.WwiseIntegrationManager.noAudio,
+                            originalAudioReady: GameAudioOriginalOwner.Ready,
+                            originalTermsReturned: GameAudioOriginalOwner.OriginalTermsReturned,
+                            nativeEngineInitialized: AkSoundEngine.IsInitialized(),
+                            originalCatalogLeaseHeld: WholeCatalogComposed.OriginalAudioLeaseHeld);
+                    }
+                    catch
+                    {
+                        var catalog = OriginalNetworkSoundEventCatalogOwner.CaptureSnapshot();
+                        coordinatorFailure = "original_network_sound_catalog_refused:" +
+                            (catalog.failure ?? "initializer-threw");
+                        throw; // Preserve the exception; PortSession records the explicit startup refusal.
+                    }
+                }
                 PortSessionOriginalMusicControllerOwner.StartForReadyAudio(this, explicitlyRequested: true);
+            }
         }
         finally
         {

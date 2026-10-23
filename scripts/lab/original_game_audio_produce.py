@@ -69,7 +69,7 @@ META_GUIDS = {
 NATIVE_META_GUID = "a2a09e81876b46f2a202e62f96644331"
 NATIVE_TARGET = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so"
 NATIVE_META = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so.meta"
-OWNER_ANCESTOR_MANIFEST_SHA256 = "c8045557471af9e6cb417d33ccc46ceb2ec76ebec73edb1ae38d2312683a7cc8"
+OWNER_ANCESTOR_MANIFEST_SHA256 = "79ac3a57c6b777f35c73fd178365b73dd6461254eefdcf5622de47c1399edee4"
 STAGE_PIN_TOOL_SHA256 = "6e12acb9b58a570aa3a869f9f0880ddbd56ba4da0c806188c1124164211d0102"
 REQUEST_PIN_TOOL_SHA256 = "844e57ef264c56fa2d2adbacfeba893a30f684fa1ad5e203cdb5a5ffb8be3b96"
 MANAGED_PRODUCER_SHA256 = "e5cfc952843cd247d5c96690a11d7a56650f0777c85f7aef2c4bc673bbe0bb85"
@@ -78,9 +78,10 @@ ABI_GENERATED_SOURCE_SHA256 = "511f5e1ee552a874850a1fab5f613eeb51e7b6bc706a07bb5
 ABI_HANDWRITTEN_SOURCE_SHA256 = "7cc79d60937708fd9f34fd67e90a743fe9e03e58c2325bf0f9e9dbbf8be327e6"
 ABI_LLVM_NM_SHA256 = "6ffe6bb8699a354c4699a6cdfcebdb9ec6a2c8d0d89beaac978f629a0fc67ae0"
 OWNER_SOURCE_HASHES = {
+    "../../runtime/session/OriginalNetworkSoundEventCatalogOwner.cs": "aec921ba7f48c834e9cd787e7b113235183a9f454d34fdb94f82ff8179565a05",
     "../../runtime/session/OriginalMusicControllerContract.cs": "bd8f78977722a276409623cea4909b0e41065fda6c195a6b0dee94ef8bb8b485",
-    "../../runtime/session/PortSession.cs": "8bab33e12eb12e4a280c26457b8625f7734a3fcbea3e738c69deb9ddce955158",
-    "../../runtime/session/PortSessionOriginalAudioOwner.cs": "2f010562de8cbac3a5c6e2453f0a1c3db571ee6e45c4633fb877e6a5636d1992",
+    "../../runtime/session/PortSession.cs": "ee5257e7d44365169b00f77b4cb9f532647a818af537453d2970863d897d1657",
+    "../../runtime/session/PortSessionOriginalAudioOwner.cs": "d51ab8137ab58eab42e5bbe7bc31e2b1da04203a15a4d2ef8fb41a3b9628a805",
     "../../runtime/session/PortSessionOriginalMusicControllerOwner.cs": "15272167e3c416edb863797bf35dcbe8ef6704ecac805fdbe38186f4d73d41b0",
     "../../runtime/session/AkMusicPcmJoinQueryAdapter.cs": "ae116b7912efda498d6c1a1ecb0ddc4be1ec2dd6df223e0fff53426a37204ef8",
     "../../runtime/session/MusicPcmJoinObserver.cs": "3c8ceaf8a8ce9ce07c76282adb70f63f8f9487f0682d33056ea6aeaa2139cef9",

@@ -265,7 +265,7 @@
     "whole_catalog": "scripts/lab/whole_catalog.py"
   },
   "source_sha256": {
-    "build_hook": "3ccbc3c207aa425336a82aada746728908ecc1e6b260a5ec75c2364f55a87751",
+    "build_hook": "7e1d193e0e78799bbf4a624fe071b705d1fcb1d78f50b5cb19402e6c38437fcd",
     "camera_contract": "89c628d05aada562c6fe635ffb80f42530c6300b4c1003734d78372fb51136da",
     "camera_owner": "d984e609d4757b4e7cd1033433f68024774a09121824e5c7cb30f383ac208604",
     "camera_prerequisites": "dc8539bd7935bc7357dd298c7c89b63af7f1f6e253ca55423bc0edbb3c333214",

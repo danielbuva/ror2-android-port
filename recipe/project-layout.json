@@ -103,6 +103,7 @@
     "runtime/session/OfflineApplicationBoundary.cs": "dc5ef4018312240e2ae1a635593a9d88",
     "runtime/session/OfflineRunSeedBoundary.cs": "52ceeccedc9ce4953a076034db6249a8",
     "runtime/session/OriginalMusicControllerContract.cs": "29694aa4fd3c5fee97db1d3d3e35da2c",
+    "runtime/session/OriginalNetworkSoundEventCatalogOwner.cs": null,
     "runtime/session/PortSession.cs": "e278bd80452dd40bdb7943cae9c70403",
     "runtime/session/PortSessionOriginalAudioOwner.cs": null,
     "runtime/session/PortSessionOriginalMusicControllerOwner.cs": "cdc25ab936495181a50478cf28c5ae35",

@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J991](PORTING_JOURNAL.md#j991--admit-original-network-sound-mappings-before-world-activation) | 2026-10-22 | Admit original network sound mappings before world activation | **Failure, hypothesis and prior art.** |
 | [J989](PORTING_JOURNAL.md#j989--stop-loader-on-the-original-network-effect-sound-catalog-lookup) | 2026-10-22 | Stop Loader on the original network-effect sound catalog lookup | **Hypothesis and source-bound runner.** |
 | [J988](PORTING_JOURNAL.md#j988--integrate-a-candidate-source-camera-context-for-original-audio) | 2026-10-22 | Integrate a candidate source camera context for original audio | **Observed gap and prior art.** |
 | [J987](PORTING_JOURNAL.md#j987--keep-loader-startup-observations-separate-from-gameplay-acceptance) | 2026-10-22 | Keep Loader startup observations separate from gameplay acceptance | **Hypothesis and route.** |

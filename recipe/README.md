@@ -1799,6 +1799,16 @@ Only authored staging code, synthetic metadata contracts and its source digest
 are published; generated project metadata and build evidence remain ignored.
 Provenance/privacy audit: 2026-10-22.
 
+J991 extends the original-audio source cohort and both runtime source selections
+with the authored network-sound catalog admission owner. The project-layout
+entry awaits its first Unity import. Updated coordinator/session hashes and
+producer/cache identities bind the exact authored source; the prior cohort is
+retained as parent. Only public API names, authored admission/report code and
+controlled test observations are tracked. No original setter implementation,
+definition contents, event inventory, game/middleware binary, device identity or
+private path is included. Generated content still requires accepted legitimate
+input. Provenance/privacy audit: 2026-10-23.
+
 J974 refreshes the original-audio owner cohort and Lightning diagnostic source
 identity after correcting a vector-valued API observation. Only authored report,
 observer, fixture and producer/binding changes are published. Original game and

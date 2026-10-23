@@ -64,6 +64,7 @@
   "runtime/session/OfflineApplicationBoundary.cs",
   "runtime/session/OfflineRunSeedBoundary.cs",
   "runtime/session/OriginalMusicControllerContract.cs",
+  "runtime/session/OriginalNetworkSoundEventCatalogOwner.cs",
   "runtime/session/PortSession.cs",
   "runtime/session/PortSessionOriginalAudioOwner.cs",
   "runtime/session/PortSessionOriginalMusicControllerOwner.cs",

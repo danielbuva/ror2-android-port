@@ -78,6 +78,7 @@ def make_fake_source_bundle(root: Path) -> None:
         "recipe/original-audio-owner-sources.json",
         "tools/unity/runtime/session/PortSession.cs",
         "tools/unity/runtime/session/PortSessionOriginalAudioOwner.cs",
+        "tools/unity/runtime/session/OriginalNetworkSoundEventCatalogOwner.cs",
         "tools/unity/runtime/session/OriginalMusicControllerContract.cs",
         "tools/unity/runtime/session/PortSessionOriginalMusicControllerOwner.cs",
         "tools/unity/runtime/session/MusicPcmJoinObserver.cs",
@@ -268,6 +269,7 @@ class GenerationCacheTests(unittest.TestCase):
             "recipe/original-audio-owner-sources.json",
             "tools/unity/runtime/session/PortSession.cs",
             "tools/unity/runtime/session/PortSessionOriginalAudioOwner.cs",
+            "tools/unity/runtime/session/OriginalNetworkSoundEventCatalogOwner.cs",
             "tools/unity/runtime/session/OriginalMusicControllerContract.cs",
             "tools/unity/runtime/session/PortSessionOriginalMusicControllerOwner.cs",
             "tools/unity/runtime/session/MusicPcmJoinObserver.cs",
@@ -315,6 +317,7 @@ class GenerationCacheTests(unittest.TestCase):
                     for relative in (
                         "tools/unity/runtime/session/PortSession.cs",
                         "tools/unity/runtime/session/PortSessionOriginalAudioOwner.cs",
+                        "tools/unity/runtime/session/OriginalNetworkSoundEventCatalogOwner.cs",
                         "tools/unity/runtime/session/OriginalMusicControllerContract.cs",
                         "tools/unity/runtime/session/PortSessionOriginalMusicControllerOwner.cs",
                         "tools/unity/runtime/session/MusicPcmJoinObserver.cs",

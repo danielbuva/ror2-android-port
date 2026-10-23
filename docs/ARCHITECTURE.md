@@ -844,6 +844,23 @@ reads the managed default-listener count. It retains only a known flag and count
 default-off, pre-ready and failed reads remain unknown. This read-only census
 does not establish native registration or retain listener objects.
 
+`runtime/session/OriginalNetworkSoundEventCatalogOwner.cs` owns process-scoped
+native network-sound catalog admission after original engine/bank readiness and
+before selected-world activation. It obtains the complete original definition
+family through `WholeCatalogComposed`, delegates index assignment to the shipped
+setter, and verifies count, exact definition references, indices and nonzero
+native name hashes before announcing original catalog availability. A nonempty
+foreign table is refused rather than overwritten. Nonzero hashes do not prove
+bank-event presence or playback. Serializable bounded observations distinguish
+unknown counts from measured zero and retain zero-ID ordinals. `PortSession`
+records missing or failed admission as its primary failure before starting the
+selected probe. Default-off/no-audio decoding remains under its existing owner.
+Definitions remain rooted with process audio; session/stage teardown does not
+clear native global indices. The existing audio lease and original Term witnesses
+continue to govern bundle release. Host admission/failure contracts live in
+`tests/test_original_audio_network_sound_host.py`; Android mapping and effect
+playback remain separate device gates.
+
 `tools/unity/support/audio/core/` owns admission, readiness and copied lifecycle
 observations. `support/audio/bootstrap/` owns the explicit request, hash-bound
 bank preparation, Android platform resolver, Java-first library load and native

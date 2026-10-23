@@ -860,6 +860,20 @@ public sealed partial class PortSession : MonoBehaviour
         while (originalAudio.MoveNext())
             yield return originalAudio.Current;
         r.originalAudio = PortSessionOriginalAudioOwner.CaptureSnapshot();
+        string originalAudioStartupFailure = PortSessionOriginalAudioOwner.StartupFailure;
+        if (!OriginalNetworkSoundEventCatalogOwner.MayEnterSelectedProbe(
+                GameAudioOriginalOwner.OptInRequested, WwiseIntegrationManager.noAudio, originalAudioStartupFailure,
+                r.originalAudio.networkSoundEventCatalog != null && r.originalAudio.networkSoundEventCatalog.attempted,
+                r.originalAudio.networkSoundEventCatalog != null && r.originalAudio.networkSoundEventCatalog.ready))
+        {
+            r.phase = "original-audio-catalog-refused";
+            RecordPrimarySessionFailure(r, new InvalidOperationException(
+                String.IsNullOrEmpty(originalAudioStartupFailure)
+                    ? "Original network-sound catalog admission did not become ready."
+                    : originalAudioStartupFailure));
+            Save();
+            yield break; // Keep process audio/catalog ownership until the original Term witnesses.
+        }
         if (r.pointSoundDiagnosticRequested)
         {
             var pointSoundOwnerRefusal = PointSoundDiagnosticObserver.OwnerRefusal(

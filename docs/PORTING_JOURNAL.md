@@ -29250,3 +29250,74 @@ Native-catalog investigation and draft are under
 `work/coordination/original-game-audio-pcm/r28-network-sound-catalog-draft-r1/`.
 Root holds the queued J988 build until this concrete dependency is reviewed;
 Main is asleep. J983 remains installed and J850 remains the accepted rollback.
+
+## J991 — Admit original network sound mappings before world activation
+
+**Failure, hypothesis and prior art.** J989 stops the original Loader effect
+handler on a native network-sound index lookup. The missing runtime count/index
+prevents claiming that the failing table was empty. Current accepted source
+and the explicit catalog initializer list instead establish a missing startup
+contract: original catalog assignment and availability are not invoked by this
+route. Pinned R2API.Sound f539511e requires definitions before catalog startup.
+A bounded source audit finds gameplay index reads after the proposed hook;
+earlier EffectCatalog registration retains sound names rather than caching
+network-sound indices. This justifies restoring the original catalog contract
+before source producers activate, without replacing the failing effect or
+changing packet indices.
+
+**Authored change and ownership.** The new process-scoped
+`OriginalNetworkSoundEventCatalogOwner` obtains the existing complete
+manifest-backed definition family after original native audio readiness and
+catalog-lease acquisition. It invokes the original public setter only for an
+empty table; a preexisting table must match exact source references, count and
+assigned indices. It checks nonzero native name hashes before calling original
+availability, allows event-name aliases, and records explicitly observed
+pre/post counts and bounded zero-ID ordinals. Hashes are not bank-event presence,
+posting, playback or audibility evidence. The availability field means that
+the call returned and its flag was observed; a throwing callback can leave its
+underlying flag true without that observation, while startup still refuses.
+Definitions stay rooted with process
+audio; no stage/session teardown clears the native global mapping. The existing
+original Term witnesses and catalog lease retain release ownership.
+
+The coordinator records catalog exceptions and exposes the serializable nested
+snapshot. Its phase gives failure priority over engine readiness. PortSession
+records the primary startup failure, saves and stops before selected-world
+activation. Native audio requires an observed, successful admission even when
+no failure string exists. A failed attempt cannot be bypassed by a later
+no-audio flag. The existing unrequested/unavailable-audio decoder is unchanged.
+This is a minimal session startup gate required by original gameplay/audio;
+no alpha-owned menu, control, settings or delivery behavior changes.
+
+**Review and host evidence.** R1 review rejects missing serialization,
+availability and startup propagation; R2 resolves those but an independent
+review finds the missing-attempt/null-failure gate hole. Root corrects that gate
+and executes its negative and positive cases. The production owner harness
+covers eight isolated scenarios, including foreign-table refusal, aliases,
+zero-ID refusal before availability and observed post-count after setter failure.
+The complete audio host suite passes 112 tests with two expected skips; camera
+contracts pass 42 with three expected skips, music contracts pass 41, and
+source/layout membership checks pass 27. Initial additive compiler/cache fixtures correctly fail for the new
+source dependency; Root extends their API/source inventories and reruns them.
+A full 143-source host Assembly-CSharp compile against the preserved pinned
+Unity Android response catches two unqualified namespace references. After
+qualification it exits zero with 72 existing warnings and no errors. This is
+API evidence against preserved project references, not Unity or Android execution.
+
+Drafts and independent reviews are under
+`work/coordination/original-game-audio-pcm/r28-network-sound-catalog-{draft-r2,review-r2,integrated-review-r1}/`.
+The integrated review preserves the failed full compile and corrected second
+attempt separately. Root audio/camera/music/membership logs use the
+`r28-network-catalog-` prefix in the same coordination parent. The startup/index
+source audit is in `r28-startup-dependency-audit-r1/` there. Raw source, compiler
+outputs and device evidence remain ignored.
+
+**Reconstruction and remaining gates.** Both runtime source lists and the
+project-layout map include the new source (GUID awaits first import). The owner
+cohort retains its prior recipe as parent; producer/cache and camera-hook pins
+bind the current authored sources. Future generation must replay these changes;
+no build step substitutes text into authored source. This candidate is not
+staged, built or installed. The next full player must retain the report fields,
+pass both standard controls and exercise the original Loader/network-effect
+route with actual catalog observations. J983 remains installed; J850 remains
+the accepted rollback, and Main is idle/asleep.

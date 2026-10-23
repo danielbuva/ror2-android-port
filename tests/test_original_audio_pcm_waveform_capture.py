@@ -108,6 +108,8 @@ class PcmWaveformCaptureIntegrationTests(unittest.TestCase):
             SESSION / "MusicPcmJoinObserver.cs",
             SESSION / "AkMusicPcmJoinQueryAdapter.cs",
             SESSION / "PortSessionOriginalAudioOwner.cs",
+            SESSION / "OriginalNetworkSoundEventCatalogOwner.cs",
+            ROOT / "tests/fixtures/original_audio/network_sound/NetworkSoundApiCompileStubs.cs",
             ROOT / "tests/fixtures/point_sound/PointSoundBuildPin.cs",
             TARGET_CAPTURE_STUBS,
         ]
