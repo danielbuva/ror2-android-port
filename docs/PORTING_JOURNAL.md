@@ -32854,3 +32854,74 @@ packet manifest, Root corrections, integrated checks and push log are under
 `work/coordination/original-native-visual-reference/r36-remaining-rendering-draft-r1/`.
 The next inactive selector and ordered build plan are under
 `work/coordination/source-camera-uber-integration-root-r1/`.
+
+## J1045 — Native source-stage cleanup and restart pass on R36
+
+**Hypothesis and scope.** J730's corrected native shrine lease and source-stage
+retirement can still compose with the current R36 player and original audio.
+The backlog's instruction to resolve J710 with J716 is stale: J726/J730 already
+fixed and device-qualified the measured release-order defect. Revalidate the
+existing native first-stage UI-abandon/restart contract on R36 rather than
+changing that ordering or adding a diagnostic. Prior art remains J726/J730's
+pinned Addressables operation/lease and source-table retirement contracts.
+
+No build, install, payload sync, runtime or editor change occurs. The frozen
+R36 APK is
+`bda30f33a62d62176cd45fd9cc0bd50ed5fe4e12d325ddc7ef19e948ec0fd3e7`,
+source `1428fdfca065f637c899ff159c9cacfe0b54e97b`. Before launch, Root verifies
+its frozen bytes, actual installed APK, matching runner/stage-owner source,
+selector/process absence and the exact retained profile. Doctor and preflight
+pass. The existing runner receives only the existing explicit native-stage
+selector. It uses ordinary Commando/default loadout, seed 2 and Normal; all
+five gameplay acceleration options are false. Automatic input and native
+lifecycle selection still mark the run assisted, excluding permanent awards
+and normal-game acceptance. The original 600 s host deadline is unchanged.
+The feedback owner retains the separate editor window throughout.
+
+**Device result.** The check passes with no first failure, runtime errors or
+collector failures. Session 1 reaches 67.621948 s of native Lakes play and one
+original server Stage-begin, then uses Settings/End Run. Its completed report
+has success/cleanup true, empty errors and recovery-required false. Existing
+strict source-owner disposal/IsSafeToUnload checks complete; combat observers
+detach and clean up. The report does not serialize a raw Stage network ID or a
+before/after source-table dump, so no such direct observation is claimed.
+
+The same process presents the next menu and starts a fresh body/master in
+session 2, reaching 4.995422 s of healthy native play with another original
+Stage-begin, a freshly attached healthy observer and recovery false. The
+boss-shrine operation witness preserves the same successful owned operation,
+version and result at purchase and final reconciliation: baseline reference
+count 1, current count 2, delta 1. Cleanup returns the one acquired effect loan.
+This revalidates the specific J710/J726 lifetime correction on R36 without
+claiming effect rendering.
+
+**Reward and audio limits.** A native chance-shrine purchase at 41.049927 s
+records its success message; at 42.588729 s the existing pickup-message observer
+resolves ArmorPlate x1 to the player master, whose inventory contains one.
+These are co-occurring native outcomes, without a unique purchase-to-pickup
+causal token. No boss is defeated, objective reward messages remain zero,
+reward-collected/left-behind are false, and no stage transition completes.
+Natural teleporter/boss rewards, exit and native transport remain open.
+
+Both terminal session reports retain all 153 requested audio banks ready and
+noAudio false. The existing music-output window records 834 callbacks and
+960,768 finite nonzero scalars, zero nonfinite/rejected buffers. Those counters
+are unchanged across restart, so they prove only the bounded first capture,
+not second-session continuity. Original Term has not returned on this End Run
+path. Full effects, speaker audibility and natural app Quit remain separate.
+
+**Terminal state and evidence.** Profile snapshots remain 13 applied runs and
+one earned/available unlock. Independent post-run reads verify the installed
+APK and exact profile bytes unchanged, selector/process absent and display
+asleep, without additional cleanup. No receipt is edited by hand and no other
+device is used. Host observations are 174.822609 s from launch return to first
+world, 28.513868 s from End Run to validated cleanup, and 349.455169 s to healthy
+session 2; these are polling wall times, not CPU/FPS measurements.
+
+Raw result/reports and logs remain under
+`work/device/<serial>/experiments/session-cleanup/20261023T210428.196209Z/`.
+Root's frozen binding, driver, before/after readback, terminal validation and
+host interpretation are under
+`work/coordination/source-stage-lifecycle-next-r1/`. No new build input or
+rebuild step is introduced. J1043/J1044's inactive source changes still await
+one full build after editor handback; accepted J850 and R36 remain intact.

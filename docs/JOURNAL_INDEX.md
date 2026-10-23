@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1045](PORTING_JOURNAL.md#j1045--native-source-stage-cleanup-and-restart-pass-on-r36) | 2026-10-23 | Native source-stage cleanup and restart pass on R36 | **Hypothesis and scope.** |
 | [J1044](PORTING_JOURNAL.md#j1044--restore-the-source-camera-uber-composite-contract-on-the-host) | 2026-10-23 | Restore the source-camera Uber composite contract on the host | **Hypothesis and change.** |
 | [J1040](PORTING_JOURNAL.md#j1040--restore-bloom-and-the-source-cameras-copystd-pass-contracts) | 2026-10-23 | Restore Bloom and the source camera's CopyStd pass contracts | **Hypothesis and change.** |
 | [J1042](PORTING_JOURNAL.md#j1042--reconstruct-the-complete-accepted-output-on-android) | 2026-10-23 | Reconstruct the complete accepted output on Android | 2026-10-23. |

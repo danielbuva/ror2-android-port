@@ -100,6 +100,10 @@ Color/background visibility improves, but washed-out rendering and PC parity
 remain open. These checks do not qualify full audio or natural Quit; J1037's
 saved music prefix and failed warm-Quit result remain separate evidence.
 
+J1045 additionally passes the existing native first-stage UI-abandon/restart
+contract on this same R36 APK, with strict source-owner cleanup and unchanged
+profile/installed bytes. Natural boss rewards and transport remain open.
+
 J1043's default-off MainOutput capture timing and J1044's source-camera Uber
 composite source are not in R36. Both await the next full build and device
 qualification after the shared editor handback.

@@ -14,10 +14,10 @@ result in the journal.
 - [ ] Complete default and alternate ability semantics for the base survivors.
       Callback coverage is broader than complete effects; continue with the exact
       live variant inventories and output owners (J673, J684, J685).
-- [ ] Finish the opt-in source-stage lifecycle: validate native source rewards and
-      completed-session identity/table teardown before extending transport. Resolve
-      J710's effect-reference attribution using J716's operation witness; retain
-      exact source-table restoration and generated identity-binding checks.
+- [ ] Finish the opt-in source-stage lifecycle: observe natural teleporter/boss
+      rewards and exit before extending transport and its table/identity turnover.
+      Preserve the strict source retirement and effect-reference guards; current
+      native UI-abandon/restart passes in J1045 (J726/J730 resolve J710).
 - [ ] Identify the intermittent LightningStake nonfinite transition across projectile
       identity turnover; retain native elite behavior while collecting evidence (J667).
 - [ ] Play the nine staged DLC scenes once a truthful expansion-availability path exists (J488).
