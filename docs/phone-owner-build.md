@@ -44,6 +44,8 @@ Android-compiled fixture inputs through a separate stripping handoff:
 [J905](PORTING_JOURNAL.md#j905--feed-the-android-compiled-unity-fixture-into-a-separate-stripping-handoff).
 Private owner-transform candidate compiled and run on Android:
 [J986](PORTING_JOURNAL.md#j986--compile-owner-assembly-transforms-on-android-with-a-public-compiler).
+Unmodified owner-transform source with public compiler/provider/reference inputs:
+[J990](PORTING_JOURNAL.md#j990--build-unchanged-owner-transforms-on-android-from-public-tool-inputs).
 
 **Finding:** this repository has no demonstrated phone-only build path. Many
 preparation and packaging stages have Android-capable open-source building
@@ -131,7 +133,7 @@ not proof that reimplementation is impossible. Owners: [ARCHITECTURE](ARCHITECTU
 | --- | --- | --- |
 | Acquisition, inventory, acceptance (`inventory.py`) | No | File/ZIP import, hashing and version checks are portable. Owned-account downloads need Guard, entitlement and accepted-version tests; no offline authentication substitute. |
 | Decompile/export (`recovery.py`, ILSpy, AssetRipper) | No editor API; supplied tools are desktop builds | Public source permits investigating Android tool hosts and dependency ports. AssetRipper exports a project, not final Android content. |
-| Assembly transforms/R1 (`assembly_transforms.py`, `AssemblyProbe`) | No | J986 compiles and runs a private compatibility candidate on Android with recipe-identical outputs. SDK Cecil/reference delivery, integration and broader transform modes remain open; the working producer is unchanged. |
+| Assembly transforms/R1 (`assembly_transforms.py`, `AssemblyProbe`) | No | J990 builds unchanged authored tool source on Android from public compiler, Cecil source and framework references with recipe-identical outputs. Owner-build integration, phone acquisition/app delivery and broader modes remain open; the working producer is unchanged. |
 | R2–R6 composition, catalog, dependency and scene transforms | Mostly host code after export | Port candidates. Python, native texture/compression libraries, C# helpers and process/path assumptions all need qualification. A phone Python interpreter alone is insufficient. |
 | Shader recovery/HLSL generation (`shader_recovery.py`, `shader_programs.py`) | Not inherently editor-bound | Pinned native tools and a CrossOver/Wine fallback remain; 46 local analysis inputs still need producers. Android-native replacements are unresolved. No Windows emulation route is selected. |
 | HUD/inherited assets (`RecoveredHudBuilder`) | **Yes, existing producer** | AssetDatabase, prefab, font/material and asset-saving APIs are used. Fourteen inherited-store files remain bootstrap debt; generated game assets cannot be shipped to conceal this dependency. |

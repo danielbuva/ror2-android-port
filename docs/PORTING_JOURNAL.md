@@ -29511,3 +29511,133 @@ full source transforms, content/shader production, independent editor roots,
 complete player construction and matched runtime performance remain open. The
 desktop owner-build process remains the fallback; this result selects no new
 runtime or final installation architecture.
+
+## J990 — Build unchanged owner transforms on Android from public tool inputs
+
+2026-10-23 UTC.
+
+**Hypothesis and scope.** Public Cecil source and framework targeting references
+may remove J986's SDK-binary dependency while preserving the owner-assembly
+recipe outputs. Matching the existing Android build-tool runtime may also
+remove the private .NET 6 source workaround. This is an isolated build-tool
+trial under Route A. The working transform producer, accepted recipes, native
+IL2CPP ARM64 game runtime, renderer and desktop fallback remain unchanged.
+
+The authored cohort is the same 14 source/project files at `3e6ce440` and
+documentation base `5151930a`; 12 are C# compilation inputs. Reuses the existing
+assembly-processing prior art and exact-output contract cited in J986. No new
+RoR2 transformation behavior or copied community implementation is introduced.
+Private outputs and raw evidence stay ignored.
+
+**Source/provider discovery.** Read the pinned SDK Mono tool's version metadata:
+its reported source commit resolves to public Unity-Technologies/mono
+`7c55ef821d12f12c0f9933e0bf7abedf245d7c9a`. That tree's
+[Cecil submodule](https://github.com/Unity-Technologies/mono/tree/7c55ef821d12f12c0f9933e0bf7abedf245d7c9a/external/cecil)
+pins [mono/cecil `8021f3fbe75715a1762e725594d8c00cce3679d8`](https://github.com/mono/cecil/tree/8021f3fbe75715a1762e725594d8c00cce3679d8).
+Its project declares version 0.11.1.0 and the
+[MIT license](https://github.com/mono/cecil/blob/8021f3fbe75715a1762e725594d8c00cce3679d8/LICENSE.txt).
+This is a source-lineage candidate, not proof of the SDK DLL's exact build.
+The separately inspected Unity-Technologies/cecil default fork declares
+0.10.0.0-beta6 and is not assumed to match this SDK.
+
+The scoped metadata reader confirms different SDK/NuGet signing identities
+despite their shared version; matching public type counts alone establish no
+behavioral equivalence. An initial broad attribute reader fails in GAC enum
+resolution. Its failed run is retained; a separate reader scopes known string
+attributes. J986's signature-failed NuGet Cecil DLLs remain data-only throughout.
+
+Fetched the pinned source archive, selected only the project's 132 declared C#
+inputs plus license/build metadata, and verified every selected file against
+its Git blob ID and SHA-256. No signing key is extracted or used; no upstream
+project script or package restore runs. Root MIT text is retained; selected
+source headers include MIT/X11 notices.
+
+**Intermediate .NET 6 control.** Built an unsigned `NET_CORE` Cecil library from
+those unmodified public sources using the already verified Roslyn 4.8 compiler
+and owner SDK .NET 6 implementation references. Recompiled J986's prepared
+private tool candidate against it. On the host, the three golden DLLs and full
+98-entry assembly/importer manifest match. Android independently compiles the
+source provider and candidate, then matches the same three golden DLLs. Each
+transform process records the actual loaded provider's location, identity and
+SHA-256 through an additional authored build-tool witness; it is the generated
+unsigned provider, not SDK Cecil. That runner takes 13.12 seconds. SDK framework
+references and the private hash-helper change remain inputs to this control.
+
+**Public references and unmodified-source trial.** Downloaded official
+[Microsoft.NETCore.App.Ref 8.0.32](https://www.nuget.org/packages/Microsoft.NETCore.App.Ref/8.0.32),
+archive SHA-256
+`6088b3ebfe5af44511eaf8d592e029e1ef870da01b1fcb80aa790a6536bc14db`.
+Explicit subprocess recording confirms `dotnet nuget verify --all` exits 0.
+The package declares MIT and dotnet/runtime source
+`b9a49e4a6d3a444a3685e318c74a7892d01873f7`; its license and third-party notices
+are retained. Extracted 163 design-time reference DLLs. These are compiler
+references only; none is copied into the tool's runtime directory or executed.
+This is not an application `PackageReference` or a runtime-library replacement.
+
+The first signature shell wrapper did not preserve the verifier's exit code;
+its printed status is not used as qualification. A second explicit subprocess
+receipt supplies the status above. An initial nuspec read assumed the wrong XML
+namespace; the corrected reader verifies actual package identity, version,
+license and source metadata before this trial. Both preliminary records remain
+in the evidence.
+
+Compiled public Cecil against those references, then compiled all 12 original
+authored C# files against that provider and the same references. All 14 original
+source/project bytes remain unchanged, including
+`MusicOutputObserverCecilTransform.cs`; its stream-hash overload is available
+in this target profile. The only extra authored files are ordinary SDK-equivalent
+global imports and the build-tool provider witness. The build driver reads
+source; it performs no exact-text replacement. The net10.0 project itself is
+not changed or used as an MSBuild producer in this direct-compiler trial.
+
+The host runs this net8.0 trial under installed public .NET 10.0.12 with explicit
+major roll-forward; both process witnesses verify that actual runtime. All three
+outputs match the existing public recipe hashes, and the full 49-DLL/49-importer
+manifest matches the earlier desktop result. All 146 original and copied Managed
+DLLs remain unchanged. This component reads no Unity SDK Cecil or framework
+reference binary.
+
+**Android result.** A fresh Alpha-owned workspace carries 526 hash-bound files:
+verified public compiler payload, pinned public Cecil source, public reference
+DLLs/notices, unmodified authored sources and private legitimate game metadata.
+Fresh storage/backing/capacity checks preserve the configured reserve; all 276
+reused build-tool runtime files and the Python executable match their receipts.
+
+Android .NET 8.0.32 compiles Cecil in 3.27 seconds and the tool in 3.48 seconds.
+The runner completes in 12.49 seconds including input checks. Both process
+witnesses record runtime 8.0.32 and the generated unsigned Cecil DLL's exact
+location/identity/hash. All three transformed DLL hashes match J986's existing
+golden table and independently match after pull. All 526 staged inputs remain
+unchanged. No SDK Cecil, SDK framework reference or private hash-helper patch is
+used. This establishes the two owner-recipe modes, not every tool mode.
+
+The generated provider and tool DLLs differ between host and Android compiles;
+they are retained without normalization. Only the three transformed game-metadata
+outputs have exact cross-host equality. Component timings do not establish
+installation speed, complete build cost, runtime behavior or performance.
+
+No APK is built/installed, no game is launched and no editor action occurs.
+The existing Alpha APK
+`be26c21c4cd8ff15a8a663528216cf7a69394a51d8b9441a63a1a496f83e98b5`
+reads back unchanged. Its process and diagnostic selector are absent afterward;
+the display is verified asleep. No Main device operation occurs.
+
+**Evidence and revisit conditions.** Private source-lineage/reader evidence:
+`work/coordination/phone-proof/cecil-fork-source-r1/`, 42-artifact receipt
+`c695aeb868a48a0ea9536d648843937327fb4ac0f0d0cf82828b88665075b45f`.
+Public-source/.NET 6 control:
+`work/coordination/phone-proof/cecil-source-build-r1/`, 902-artifact receipt
+`51d42289d12e940c6f8b044a99535833e142b362e11dbbd9d711582c2d015f83`.
+Unmodified-source/public-reference trial:
+`work/coordination/phone-proof/cecil-public-inputs-r1/`, including
+`host-public-inputs-v1/`, `phone-public-run-selection-v1.json`, the selected
+Android run's retained outputs/witnesses and `comparison-summary-v1.json`.
+Its 944-artifact `proof-receipt-v1.json` SHA-256 is
+`32d86365b4d2be8f3f93d3197c1ae7684f67f6d687554a1d2934cff737af16ec`.
+
+Integrate a reviewed public-input profile through the owner-build interface
+before promoting this prototype. Phone-side acquisition and verification,
+native dependency delivery, launcher/app sandbox hosting, broader tool modes,
+full reconstruction/content/shaders, independent editor roots, complete player
+construction and matched performance remain open. No current SDK pin is
+replaced, and no game runtime or final installation architecture is selected.

@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J990](PORTING_JOURNAL.md#j990--build-unchanged-owner-transforms-on-android-from-public-tool-inputs) | 2026-10-22 | Build unchanged owner transforms on Android from public tool inputs | 2026-10-23 UTC. |
 | [J986](PORTING_JOURNAL.md#j986--compile-owner-assembly-transforms-on-android-with-a-public-compiler) | 2026-10-22 | Compile owner assembly transforms on Android with a public compiler | 2026-10-23 UTC. |
 | [J993](PORTING_JOURNAL.md#j993--build-the-native-catalog-candidate-and-preserve-its-pre-world-refusal) | 2026-10-22 | Build the native catalog candidate and preserve its pre-world refusal | **Build and exact artifact.** |
 | [J991](PORTING_JOURNAL.md#j991--admit-original-network-sound-mappings-before-world-activation) | 2026-10-22 | Admit original network sound mappings before world activation | **Failure, hypothesis and prior art.** |
