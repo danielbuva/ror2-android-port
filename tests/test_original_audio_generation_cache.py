@@ -10,6 +10,7 @@ import unittest
 from unittest import mock
 
 REPO = Path(__file__).resolve().parents[1]
+HOST_REPO = next((parent for parent in Path(__file__).resolve().parents if (parent / "AGENTS.md").is_file()), REPO)
 HOOK_PATH = REPO / "scripts/lab/original_game_audio_build_hook.py"
 SPEC = importlib.util.spec_from_file_location("original_audio_build_hook_under_test", HOOK_PATH)
 assert SPEC and SPEC.loader
@@ -40,7 +41,7 @@ class FakeProducer:
         return [], []
 
     def compile_requested(self, *args: object) -> None:
-        output = args[-4]
+        output = args[-5]
         assert isinstance(output, Path)
         self.compile_outputs.append(output)
         self.last_compile_args = args
@@ -93,7 +94,12 @@ def make_fake_source_bundle(root: Path) -> None:
         path.write_text(f"fixture source {relative}\n", encoding="utf-8")
 
 
-def make_fixture(root: Path, *, music_output_requested: bool = False) -> tuple[Path, Path, Path, Path, Path, Path]:
+def make_fixture(
+    root: Path,
+    *,
+    music_output_requested: bool = False,
+    after_authority_skill_requested: bool = False,
+) -> tuple[Path, Path, Path, Path, Path, Path]:
     root = root.resolve()
     root.mkdir(parents=True, exist_ok=True)
     work = root / "work"
@@ -145,6 +151,9 @@ def make_fixture(root: Path, *, music_output_requested: bool = False) -> tuple[P
     if music_output_requested:
         selection["passive_pcm_capture_requested"] = True
         selection["passive_pcm_capture_music_output_requested"] = True
+    if after_authority_skill_requested:
+        selection["passive_pcm_capture_requested"] = True
+        selection["passive_pcm_capture_after_authority_skill_requested"] = True
     selection_path.write_text(json.dumps(selection), encoding="utf-8")
     return work, project, editor, dotnet, llvm_nm, selection_path
 
@@ -166,6 +175,7 @@ def expected_payload(project: Path, work: Path, selection_path: Path, dotnet: Pa
         "request_id": selection["request_id"],
         "passive_pcm_capture_requested": selection["passive_pcm_capture_requested"],
         "passive_pcm_capture_music_output_requested": selection["passive_pcm_capture_music_output_requested"],
+        "passive_pcm_capture_after_authority_skill_requested": selection["passive_pcm_capture_after_authority_skill_requested"],
         "input_sha256": {name: hook.file_sha(path) for name, path in sorted(resolved.items()) if name != "stage_root"},
         "receipt_bound_payload": json.loads(resolved["stage_receipt"].read_text(encoding="utf-8"))["outputs"],
         "receipt_bound_streamed_media": json.loads(resolved["stage_receipt"].read_text(encoding="utf-8")).get("streamed_media", []),
@@ -192,6 +202,7 @@ class GenerationCacheTests(unittest.TestCase):
             self.assertEqual(hook.SELECTION_SCHEMA, selection["schema"])
             self.assertIs(selection["passive_pcm_capture_requested"], False)
             self.assertIs(selection["passive_pcm_capture_music_output_requested"], False)
+            self.assertIs(selection["passive_pcm_capture_after_authority_skill_requested"], False)
 
     def test_r1_rejects_diagnostic_field_and_unknown_schema(self) -> None:
         with tempfile.TemporaryDirectory() as temp_name:
@@ -217,6 +228,7 @@ class GenerationCacheTests(unittest.TestCase):
             selection_path.write_text(json.dumps(selection), encoding="utf-8")
             migrated, _, _ = hook.read_selection(work, selection_path)
             self.assertIs(migrated["passive_pcm_capture_requested"], True)
+            self.assertIs(migrated["passive_pcm_capture_after_authority_skill_requested"], False)
             selection["passive_pcm_capture_requested"] = 1
             selection_path.write_text(json.dumps(selection), encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "boolean"):
@@ -231,6 +243,23 @@ class GenerationCacheTests(unittest.TestCase):
             selection_path.write_text(json.dumps(selection), encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "boolean"):
                 hook.read_selection(work, selection_path)
+            selection["passive_pcm_capture_music_output_requested"] = False
+            selection["passive_pcm_capture_after_authority_skill_requested"] = "true"
+            selection_path.write_text(json.dumps(selection), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "boolean"):
+                hook.read_selection(work, selection_path)
+            selection["passive_pcm_capture_after_authority_skill_requested"] = False
+            selection["passive_pcm_capture_requested"] = False
+            selection["passive_pcm_capture_after_authority_skill_requested"] = True
+            selection_path.write_text(json.dumps(selection), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "requires MainOutput"):
+                hook.read_selection(work, selection_path)
+            selection["passive_pcm_capture_requested"] = True
+            selection["passive_pcm_capture_music_output_requested"] = True
+            selection_path.write_text(json.dumps(selection), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "requires MainOutput"):
+                hook.read_selection(work, selection_path)
+            selection["passive_pcm_capture_after_authority_skill_requested"] = False
             selection["passive_pcm_capture_music_output_requested"] = False
             selection["unrecognized"] = False
             selection_path.write_text(json.dumps(selection), encoding="utf-8")
@@ -251,8 +280,26 @@ class GenerationCacheTests(unittest.TestCase):
             self.assertIs(selected_payload["passive_pcm_capture_music_output_requested"], True)
             self.assertNotEqual(key_for(ordinary_payload), key_for(selected_payload))
 
+    def test_activity_deferred_selection_has_its_own_cache_identity(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            make_fake_source_bundle(root)
+            immediate = make_fixture(root / "immediate")
+            deferred = make_fixture(root / "deferred", after_authority_skill_requested=True)
+            producer = FakeProducer()
+            with mock.patch.object(hook, "ROOT", root):
+                immediate_payload = expected_payload(immediate[1], immediate[0], immediate[5], immediate[3], immediate[4], producer)
+                deferred_payload = expected_payload(deferred[1], deferred[0], deferred[5], deferred[3], deferred[4], producer)
+            self.assertIs(immediate_payload["passive_pcm_capture_after_authority_skill_requested"], False)
+            self.assertIs(deferred_payload["passive_pcm_capture_after_authority_skill_requested"], True)
+            self.assertNotEqual(key_for(immediate_payload), key_for(deferred_payload))
+
     def test_source_bundle_lists_public_audio_and_transform_inputs(self) -> None:
-        bundle = hook.source_bundle_hashes()
+        # This verifies the pinned input list against the repository tree. In
+        # the private overlay, use the existing tree as the host-side source
+        # inventory; after integration these roots resolve to the same path.
+        with mock.patch.object(hook, "ROOT", HOST_REPO):
+            bundle = hook.source_bundle_hashes()
         required = {
             "scripts/lab/original_game_audio.py",
             "scripts/lab/original_game_audio_build_hook.py",
@@ -278,7 +325,7 @@ class GenerationCacheTests(unittest.TestCase):
         }
         self.assertTrue(required.issubset(bundle))
         for relative in required:
-            self.assertEqual(hook.file_sha(REPO / relative), bundle[relative])
+            self.assertEqual(hook.file_sha(HOST_REPO / relative), bundle[relative])
 
     def test_requested_cache_hit_resolves_tools_and_tool_byte_changes_miss_cache(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -335,11 +382,11 @@ class GenerationCacheTests(unittest.TestCase):
                     tool.write_bytes(original_bytes)
                 self.assertEqual(1, stager.stages)
 
-    def test_build_hook_forwards_music_output_selection_to_producer(self) -> None:
+    def test_build_hook_forwards_all_pcm_timing_selections_to_producer(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             make_fake_source_bundle(root)
-            work, project, editor, dotnet, llvm_nm, selection_path = make_fixture(root, music_output_requested=True)
+            work, project, editor, dotnet, llvm_nm, selection_path = make_fixture(root, after_authority_skill_requested=True)
             producer, stager = FakeProducer(), FakeStager()
             with mock.patch.object(hook, "ROOT", root):
                 with (
@@ -350,7 +397,8 @@ class GenerationCacheTests(unittest.TestCase):
                     self.assertRaisesRegex(RuntimeError, "requested cache miss compiled"),
                 ):
                     hook.stage_for_build(project, work, selection_path=selection_path)
-            self.assertIs(producer.last_compile_args[-2], True)
+            self.assertIs(producer.last_compile_args[-3], True)
+            self.assertIs(producer.last_compile_args[-2], False)
             self.assertIs(producer.last_compile_args[-1], True)
 
     def test_cache_receipt_must_match_current_key_and_payload(self) -> None:

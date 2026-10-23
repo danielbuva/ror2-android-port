@@ -150,6 +150,7 @@ def verify_request(manifest: dict, request_path: Path | None) -> dict:
             "requested": False,
             "passive_pcm_capture_requested": False,
             "passive_pcm_capture_music_output_requested": False,
+            "passive_pcm_capture_after_authority_skill_requested": False,
             "request_sha256": None,
         }
     if request_path is None:
@@ -162,11 +163,15 @@ def verify_request(manifest: dict, request_path: Path | None) -> dict:
         or value.get("schema") != "game-audio-original-runtime-request-r3"
         or type(value.get("passive_pcm_capture_requested")) is not bool
         or type(value.get("passive_pcm_capture_music_output_requested", False)) is not bool
+        or type(value.get("passive_pcm_capture_after_authority_skill_requested", False)) is not bool
     ):
         raise ValueError("unsupported runtime request schema")
     music_output_requested = value.get("passive_pcm_capture_music_output_requested", False)
     if music_output_requested and not value["passive_pcm_capture_requested"]:
         raise ValueError("specific-output PCM selection requires passive PCM capture")
+    activity_deferred = value.get("passive_pcm_capture_after_authority_skill_requested", False)
+    if activity_deferred and (not value["passive_pcm_capture_requested"] or music_output_requested):
+        raise ValueError("skill-deferred PCM selection requires MainOutput passive capture")
     if value.get("requested") is not True:
         raise ValueError("request file must explicitly opt in")
     if value.get("request_id") != request.get("request_id"):
@@ -175,6 +180,8 @@ def verify_request(manifest: dict, request_path: Path | None) -> dict:
         raise ValueError("passive PCM diagnostic selection differs from compiled artifact set")
     if music_output_requested != request.get("passive_pcm_capture_music_output_requested", False):
         raise ValueError("specific-output PCM selection differs from compiled artifact set")
+    if activity_deferred != request.get("passive_pcm_capture_after_authority_skill_requested", False):
+        raise ValueError("skill-deferred PCM selection differs from compiled artifact set")
     if value.get("build_input_contract_sha256") != request.get("build_input_contract_sha256"):
         raise ValueError("request build-input contract differs from compiled artifact set")
     if not HASH.fullmatch(str(request.get("build_input_contract_sha256", ""))):
@@ -183,6 +190,7 @@ def verify_request(manifest: dict, request_path: Path | None) -> dict:
         "requested": True,
         "passive_pcm_capture_requested": value["passive_pcm_capture_requested"],
         "passive_pcm_capture_music_output_requested": music_output_requested,
+        "passive_pcm_capture_after_authority_skill_requested": activity_deferred,
         "request_sha256": hashlib.sha256(raw).hexdigest(),
     }
 
@@ -806,6 +814,7 @@ def stage(
         "requested": pins["requested"],
         "passive_pcm_capture_requested": pins["passive_pcm_capture_requested"],
         "passive_pcm_capture_music_output_requested": pins["passive_pcm_capture_music_output_requested"],
+        "passive_pcm_capture_after_authority_skill_requested": pins["passive_pcm_capture_after_authority_skill_requested"],
         "request_id": manifest.get("request", {}).get("request_id") if pins["requested"] else None,
         "request_sha256": pins["request_sha256"],
         "artifact_manifest_sha256": pins["artifact_manifest_sha256"],

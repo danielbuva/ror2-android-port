@@ -7,6 +7,8 @@ internal static class GameAudioOriginalGeneratedRequestPin
     // Default is the legacy main-output selector. Specific-output capture is
     // a separate explicit profile and remains false for ordinary requests.
     internal const bool PassivePcmCaptureMusicOutputRequested = false;
+    // Timing-only MainOutput option; generated default remains off.
+    internal const bool PassivePcmCaptureAfterAuthoritySkillRequested = false;
     internal const string RequestId = "";
     internal const string RequestReceiptSha256 = "";
     internal const string BuildInputContractSha256 = "";

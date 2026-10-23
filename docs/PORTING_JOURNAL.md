@@ -32389,3 +32389,47 @@ No APK is built or installed for this host checkpoint. Main remains stopped
 with R35 `47d14cb8` and the unchanged 13-run profile. Verify the next integrated
 player through both standard controls; ordinary positive unlock acceptance
 still requires a genuine unassisted qualifying event.
+
+## J1043 — Schedule MainOutput capture after genuine authoritative skill activity
+
+**Hypothesis and change.** J1028's zero MainOutput samples cover an early bounded
+window without a joined skill activation. J1037 separately proves a nonzero
+MusicController-output prefix; it does not qualify ordinary effects. Add one
+optional, default-false build selector that waits for a recognized activation
+from the existing authoritative player's `SurvivorSkillObserver` during the
+existing playable-world phase and positive simulation time. `PortSession` owns
+the one-shot policy and invokes the unchanged passive-capture owner. Early or
+unmatched callbacks do not arm; the attempt is claimed before the owner call to
+block reentrancy. World cleanup closes scheduling before recovery returns, and
+observer disposal removes the callback. Immediate capture remains the default;
+the new timing option refuses the separate MusicController-output mode.
+
+The selector is bound through request generation, staging and generation/cache
+identity. Existing R2 selections omit it as false. No native library, Wwise
+event, output/listener routing, RTPC, bank, gameplay input or ability behavior
+changes. The existing R2API.Sound lifecycle prior art at `f539511e` and the
+accepted original authority callback remain the relevant boundaries; no
+community or game implementation is copied. The current source/selection
+assessment is under
+`work/coordination/original-game-audio-next-integration-r1/`. The timing change
+does not prove that a skill emitted sound or identify its samples.
+
+**Host result.** The 26 integrated selector/policy/cache tests pass. Of 49 broader owner,
+staging and reproducibility checks, 48 pass and one catches the stale pin
+described below. After correction, all 13 selected camera/producer checks pass
+(two historical-profile cases explicitly skip).
+A broader owner-cohort check catches a stale camera hook manifest pin; Root
+refreshes that pin and the camera recipe's corresponding source digest. The
+corrected camera/producer pin checks pass, with optional historical-profile
+cases explicitly skipped. Ruff format/check and staged privacy/provenance
+review pass. Existing authored owners and request generation must be replayed
+through R8 and the normal audio build staging; no new private input or build
+step is introduced. Full integrated Unity compilation and MainOutput device
+qualification remain pending the shared editor handback. This host checkpoint
+is separate from R36's installed graphics player and does not qualify playback.
+
+**Evidence.** Candidate, source manifest and integrated test logs are under
+`work/coordination/original-game-audio-next-integration-r1/`; the original
+host-only packet is `gameplay-window-draft/`. R36 remains installed; the local
+build selection still requests its existing MusicController output. A later
+explicit MainOutput selection and player build are required to use the new mode.

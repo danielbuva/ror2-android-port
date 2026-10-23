@@ -1305,7 +1305,9 @@ public sealed partial class PortSession
             coordinator.r.world.authority =
                 player.networkIdentity.hasAuthority && coordinator.activeBodyClient.isConnected && coordinator.activeBodyOwner.isReady;
             coordinator.Check(coordinator.r.world.authority, "Integrated local authority missing");
-            survivorSkills = new SurvivorSkillObserver(player);
+            Action skillActivity = PortSessionOriginalAudioOwner.PassivePcmCaptureAfterAuthoritySkillRequested
+                ? new Action(coordinator.OnRecognizedAuthoritySkillForPassivePcm) : null;
+            survivorSkills = new SurvivorSkillObserver(player, skillActivity);
             if (coordinator.r.diagnosticSkillCoverage || coordinator.r.developerSkillVariantOverride != null)
                 survivorSkills.report.skillVariantInventory = SurvivorSkillObserver.CaptureSkillVariantInventory(
                     player.gameObject, player.master.loadout, "native-master-loadout-live");
@@ -3341,6 +3343,11 @@ public sealed partial class PortSession
 
         public void CleanupIntegratedWorld()
         {
+            // Close the one-shot scheduling policy before any cleanup branch
+            // can return early for source-stage recovery. The observer may be
+            // intentionally retained across that recovery, but it must not arm
+            // a gameplay capture after world teardown has begun.
+            coordinator.ClosePassivePcmActivityArmPolicy();
             CancelPendingOriginalAudioCameraContextCreationForCleanup();
             ReleaseOriginalAudioCameraContext();
             if (lightningStakeSourceCallObserver != null)
@@ -3385,6 +3392,7 @@ public sealed partial class PortSession
                 survivorCombatOutputs = null;
             survivorSkills?.Dispose();
             survivorSkills = null;
+            coordinator.ClosePassivePcmActivityArmPolicy();
             nextSurvivorSkillSample = 0;
             coordinator.CleanupRecoveredHud();
             coordinator.CleanupIntegratedResults();

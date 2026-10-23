@@ -30,6 +30,10 @@ internal static class GameAudioOriginalAcceptedRequestProvider
         var native = new GameAudioOriginalAndroidNativeBootstrap(monitor);
         bool captureRequested = GameAudioOriginalGeneratedRequestPin.PassivePcmCaptureRequested;
         bool musicOutputRequested = GameAudioOriginalGeneratedRequestPin.PassivePcmCaptureMusicOutputRequested;
+        bool afterAuthoritySkill = GameAudioOriginalGeneratedRequestPin.PassivePcmCaptureAfterAuthoritySkillRequested;
+        if (afterAuthoritySkill && (!captureRequested || musicOutputRequested))
+            return new GameAudioOriginalRequest(true, RefusalNames(),
+                new RefusedPreparation("skill_deferred_capture_requires_main_output"));
         if (musicOutputRequested && !captureRequested)
             return new GameAudioOriginalRequest(true, RefusalNames(),
                 new RefusedPreparation("music_output_capture_without_passive_capture_request"));
@@ -39,7 +43,7 @@ internal static class GameAudioOriginalAcceptedRequestProvider
             new GameAudioOriginalPreparation(Application.streamingAssetsPath,
                 GameAudioOriginalGeneratedStagePin.BankNames,
                 GameAudioOriginalGeneratedStagePin.ReceiptSha256, native),
-            captureRequested, passiveCapture, musicOutputRequested);
+            captureRequested, passiveCapture, musicOutputRequested, afterAuthoritySkill);
     }
 
     internal static IGameAudioOriginalStartupPreparation Refused(string reason) => new RefusedPreparation(reason);

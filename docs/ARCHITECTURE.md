@@ -1008,6 +1008,16 @@ The explicit build selection binds its flag through the generated request;
 the owner shares the existing native monitor lease and creates no engine or
 events. `PortSession.Save` arms once after observing the existing playable-world
 phase and positive simulation time.
+The optional build selector
+`passive_pcm_capture_after_authority_skill_requested` instead waits for a
+recognized activation from the existing authoritative player's
+`SurvivorSkillObserver`. `PortSession` owns the one-shot
+`GameAudioOriginalPassivePcmActivityArmPolicy`;
+setup-time callbacks are ignored, and integrated-world cleanup closes the
+policy before any recovery return. Observer disposal removes the callback.
+The selector defaults false and requires passive MainOutput capture; it refuses
+the separate MusicController-output mode. It changes capture timing only and
+does not establish that the skill emitted sound or caused the captured samples.
 The pure `GameAudioOriginalPassivePcmGameplayGate` consumes requested/one-shot
 state, the existing integrated-world phase and finite positive simulation time;
 the unrelated results-report flag is not an admission input. The callback counts

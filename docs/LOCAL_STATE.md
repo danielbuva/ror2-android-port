@@ -52,7 +52,12 @@ bounded observation of ordinary gameplay output, with no test event. The V1
 readback can persist a private raw prefix only after verified original shutdown. The optional R2 boolean `passive_pcm_capture_music_output_requested` defaults
 false and requires passive capture. It selects the exact ready original music
 output dynamically at gameplay admission; no output identity is configured on
-the host. Both flags enter cache/request/staging identity. R1 rejects these
+the host. The optional R2 boolean
+`passive_pcm_capture_after_authority_skill_requested` also defaults false;
+omission is normalized to false. It requires passive MainOutput capture and
+refuses the MusicController-output selector. It waits for the existing owned
+authority-skill callback during playable-world time without issuing an audio
+event. All three flags enter cache/request/staging identity. R1 rejects these
 new fields. The current waveform-capable native library is an explicit licensed local input:
 `work/coordination/original-game-audio-pcm-waveform/r26-native-build-draft-r3/`
 `native-waveform-r26/libs/arm64-v8a/libAkSoundEngine.so`, SHA-256

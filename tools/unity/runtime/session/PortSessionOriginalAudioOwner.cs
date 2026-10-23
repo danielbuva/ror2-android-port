@@ -126,6 +126,9 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
     public static bool PassivePcmCaptureRequested
     { get { return GameAudioOriginalRequestBootstrap.PassivePcmCaptureRequested; } }
 
+    public static bool PassivePcmCaptureAfterAuthoritySkillRequested
+    { get { return GameAudioOriginalRequestBootstrap.PassivePcmCaptureAfterAuthoritySkillRequested; } }
+
     public static bool PassivePcmGameplayArmRequested
     { get { return GameAudioOriginalOwner.PassiveCaptureArmRequested; } }
 

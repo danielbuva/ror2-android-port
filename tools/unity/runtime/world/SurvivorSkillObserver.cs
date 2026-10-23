@@ -67,6 +67,7 @@ public sealed class SurvivorSkillObserver : IDisposable
 
     CharacterBody body;
     SkillLocator locator;
+    Action onRecognizedAuthoritySkill;
     readonly GenericSkill[] skills;
     readonly SkillDef[] definitions;
     readonly List<SkillComponentEntry> componentEntries = new List<SkillComponentEntry>();
@@ -203,12 +204,13 @@ public sealed class SurvivorSkillObserver : IDisposable
         return inventory;
     }
 
-    public SurvivorSkillObserver(CharacterBody player)
+    public SurvivorSkillObserver(CharacterBody player, Action onRecognizedAuthoritySkill = null)
     {
         if (!player || !player.skillLocator)
             throw new ArgumentException("Original player skill locator missing", nameof(player));
         body = player;
         locator = player.skillLocator;
+        this.onRecognizedAuthoritySkill = onRecognizedAuthoritySkill;
         skills = new[] { locator.primary, locator.secondary, locator.utility, locator.special };
         definitions = new SkillDef[skills.Length];
         var names = new[] { "primary", "secondary", "utility", "special" };
@@ -227,16 +229,17 @@ public sealed class SurvivorSkillObserver : IDisposable
 
     void AuthorityActivated(GenericSkill skill)
     {
-        Record(skill, true);
+        if (Record(skill, true) && body && body.networkIdentity && body.networkIdentity.hasAuthority)
+            onRecognizedAuthoritySkill?.Invoke();
     }
     void ServerActivated(GenericSkill skill)
     {
         Record(skill, false);
     }
-    void Record(GenericSkill skill, bool authority)
+    bool Record(GenericSkill skill, bool authority)
     {
         if (report.cleaned || !skill)
-            return;
+            return false;
         // Toolbot can replace the locator's slot components. Use the native
         // lookup at activation time, including its precedence for aliased slots.
         int index = locator ? (int)locator.FindSkillSlot(skill) : -1;
@@ -263,12 +266,13 @@ public sealed class SurvivorSkillObserver : IDisposable
             component = FindComponent(skill);
         }
         if (component == null)
-            return;
+            return index >= 0 && index < skills.Length;
         if (authority)
             component.report.authorityActivations++;
         else
             component.report.serverActivations++;
         SampleComponent(component);
+        return true;
     }
 
     void RefreshSlots()
@@ -489,6 +493,7 @@ public sealed class SurvivorSkillObserver : IDisposable
         }
         body = null;
         locator = null;
+        onRecognizedAuthoritySkill = null;
         Array.Clear(skills, 0, skills.Length);
         Array.Clear(definitions, 0, definitions.Length);
         foreach (var entry in componentEntries)

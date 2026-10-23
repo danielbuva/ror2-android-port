@@ -240,6 +240,8 @@ public sealed partial class PortSession : MonoBehaviour
         // Default-off passive PCM measurement for naturally rendered gameplay.
         // These are per-run observations; capture starts only after the integrated world is playable.
         public bool passivePcmCaptureRequested, passivePcmGameplayArmRequested;
+        public bool passivePcmCaptureAfterAuthoritySkillRequested;
+        public bool passivePcmPlayableWorldObserved, passivePcmAuthoritySkillObserved;
         // Snapshot contains only bounded primitive values; no Unity objects.
         public OriginalEquipmentHighlightAssetsReport originalEquipmentHighlightAssets;
         public PortSessionOriginalAudioOwner.Snapshot originalAudio;
@@ -446,6 +448,7 @@ public sealed partial class PortSession : MonoBehaviour
     SessionReport r;
     GameObject host, obstacle, eventHost, artifactHost;
     bool passivePcmGameplayArmBoundaryAttempted;
+    GameAudioOriginalPassivePcmActivityArmPolicy passivePcmActivityArmPolicy;
     readonly List<object> retainedNativeLifecycleObjects = new List<object>();
     void RetainNativeLifecycleObject(object value)
     {
@@ -504,6 +507,51 @@ public sealed partial class PortSession : MonoBehaviour
     {
         obj.GetType().GetMethod(method, BindingFlags.NonPublic | BindingFlags.Instance).Invoke(obj, args);
     }
+    GameAudioOriginalPassivePcmActivityArmPolicy GetPassivePcmActivityArmPolicy()
+    {
+        // Earlier setup saves can precede original-audio request configuration.
+        // Do not cache the default false values as this session's selection.
+        if (!GameAudioOriginalRequestBootstrap.IsConfigured)
+            return null;
+        if (passivePcmActivityArmPolicy == null)
+            passivePcmActivityArmPolicy = new GameAudioOriginalPassivePcmActivityArmPolicy(
+                PortSessionOriginalAudioOwner.PassivePcmCaptureRequested,
+                PortSessionOriginalAudioOwner.PassivePcmCaptureAfterAuthoritySkillRequested,
+                GameAudioOriginalRequestBootstrap.PassivePcmCaptureMusicOutputRequested);
+        return passivePcmActivityArmPolicy;
+    }
+
+    void RequestPassivePcmGameplayArm()
+    {
+        passivePcmGameplayArmBoundaryAttempted = true;
+        if (!PortSessionOriginalAudioOwner.ArmPassivePcmCaptureAtGameplayBoundary(true))
+            RecordPrimarySessionFailure(r, new InvalidOperationException(
+                "Passive PCM capture arm was refused at the selected playable-world activity boundary."));
+    }
+
+    // Called only by the existing local player's recognized authority-skill callback.
+    // It schedules the existing MainOutput window; it does not issue a Wwise event.
+    internal void ClosePassivePcmActivityArmPolicy()
+    {
+        passivePcmActivityArmPolicy?.Close();
+    }
+
+    internal void OnRecognizedAuthoritySkillForPassivePcm()
+    {
+        if (r == null || !PortSessionOriginalAudioOwner.PassivePcmCaptureAfterAuthoritySkillRequested)
+            return;
+        var policy = GetPassivePcmActivityArmPolicy();
+        if (policy == null) return;
+        bool validWorld = r.world != null && GameAudioOriginalPassivePcmGameplayGate.ShouldRequestArm(
+            PortSessionOriginalAudioOwner.PassivePcmCaptureRequested,
+            passivePcmGameplayArmBoundaryAttempted, r.integratedWorld, r.phase, r.world.seconds);
+        if (!policy.ObserveAuthoritySkill(true, validWorld))
+            return;
+        r.passivePcmPlayableWorldObserved = true;
+        r.passivePcmAuthoritySkillObserved = true;
+        RequestPassivePcmGameplayArm();
+    }
+
     void Save()
     {
         if (r != null)
@@ -516,17 +564,18 @@ public sealed partial class PortSession : MonoBehaviour
                 GameAudioOriginalPassivePcmGameplayGate.ShouldRequestArm(
                     PortSessionOriginalAudioOwner.PassivePcmCaptureRequested,
                     passivePcmGameplayArmBoundaryAttempted, r.integratedWorld, r.phase, r.world.seconds);
+            var activityPolicy = GetPassivePcmActivityArmPolicy();
             if (playableWorldObserved)
             {
-                passivePcmGameplayArmBoundaryAttempted = true;
-                if (!PortSessionOriginalAudioOwner.ArmPassivePcmCaptureAtGameplayBoundary(true))
-                    RecordPrimarySessionFailure(r, new InvalidOperationException(
-                        "Passive PCM capture arm was refused at an observed playable-world save boundary."));
+                r.passivePcmPlayableWorldObserved = true;
+                if (activityPolicy != null && activityPolicy.ObservePlayableWorld(true))
+                    RequestPassivePcmGameplayArm();
             }
 
             // Report selection/arm state from the owning process-lifetime audio
             // owner, never from serialized fields that default to false.
             r.passivePcmCaptureRequested = PortSessionOriginalAudioOwner.PassivePcmCaptureRequested;
+            r.passivePcmCaptureAfterAuthoritySkillRequested = PortSessionOriginalAudioOwner.PassivePcmCaptureAfterAuthoritySkillRequested;
             r.passivePcmGameplayArmRequested = PortSessionOriginalAudioOwner.PassivePcmGameplayArmRequested;
             r.originalAudio = PortSessionOriginalAudioOwner.CaptureSnapshot();
             if (!string.IsNullOrEmpty(r.originalAudio.passivePcmFailure))
@@ -572,6 +621,8 @@ public sealed partial class PortSession : MonoBehaviour
 
     private void OnDestroy()
     {
+        // Close scheduling before teardown so a late callback cannot arm.
+        passivePcmActivityArmPolicy?.Close();
         // Unexpected session destruction is terminal for an explicitly armed PCM
         // window too. Finish is idempotent; default-off runs never call native capture.
         if (r == null) return;
@@ -1133,6 +1184,7 @@ public sealed partial class PortSession : MonoBehaviour
                 r.phase = catalogFixture ? "catalog-cleanup-pending" : "complete";
                 Save();
             }
+            passivePcmActivityArmPolicy?.Close();
         }
     }
     // The shipped game: both playable-spine ids (IsPlayableSpine) run the original body

@@ -111,6 +111,47 @@ public struct GameAudioOriginalPassivePcmCaptureSelection
 
 // JSON number consumers implemented with IEEE-754 doubles cannot preserve all
 // AkOutputDeviceID values. Keep the companion representation decimal and exact.
+// One-shot scheduler for the existing passive PCM owner. Skill-deferred mode is
+// limited to MainOutput; it does not observe or synthesize audio.
+public sealed class GameAudioOriginalPassivePcmActivityArmPolicy
+{
+    readonly bool requested;
+    readonly bool waitForAuthoritySkill;
+    bool armAttempted;
+    bool closed;
+
+    public GameAudioOriginalPassivePcmActivityArmPolicy(bool captureRequested,
+        bool waitForSkill, bool musicOutputRequested)
+    {
+        if (waitForSkill && (!captureRequested || musicOutputRequested))
+            throw new ArgumentException("Skill-deferred capture requires requested MainOutput capture.");
+        requested = captureRequested;
+        waitForAuthoritySkill = waitForSkill;
+    }
+
+    public bool ArmAttempted { get { return armAttempted; } }
+    public bool Closed { get { return closed; } }
+
+    public bool ObservePlayableWorld(bool validPlayableWorld)
+    {
+        return validPlayableWorld && !waitForAuthoritySkill && ClaimArm();
+    }
+
+    public bool ObserveAuthoritySkill(bool recognizedOwnedSkill, bool validPlayableWorld)
+    {
+        return recognizedOwnedSkill && validPlayableWorld && waitForAuthoritySkill && ClaimArm();
+    }
+
+    bool ClaimArm()
+    {
+        if (!requested || closed || armAttempted) return false;
+        armAttempted = true; // Set before owner call to block reentrancy.
+        return true;
+    }
+
+    public void Close() { closed = true; }
+}
+
 public static class GameAudioOriginalPassivePcmIdentity
 {
     public static string ToDecimalString(ulong outputDeviceId)

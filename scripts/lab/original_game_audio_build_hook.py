@@ -189,6 +189,8 @@ def read_selection(work: Path, selection_path: Path) -> tuple[dict, dict[str, Pa
                 selection_keys.add("passive_pcm_capture_requested")
             if "passive_pcm_capture_music_output_requested" in selection:
                 selection_keys.add("passive_pcm_capture_music_output_requested")
+            if "passive_pcm_capture_after_authority_skill_requested" in selection:
+                selection_keys.add("passive_pcm_capture_after_authority_skill_requested")
         if set(selection) != selection_keys:
             raise ValueError("requested audio selection has unexpected fields")
         passive_pcm_requested = selection.get("passive_pcm_capture_requested", False)
@@ -201,6 +203,12 @@ def read_selection(work: Path, selection_path: Path) -> tuple[dict, dict[str, Pa
         if music_output_requested and not passive_pcm_requested:
             raise ValueError("specific-output PCM selection requires passive PCM capture")
         selection["passive_pcm_capture_music_output_requested"] = music_output_requested
+        activity_deferred = selection.get("passive_pcm_capture_after_authority_skill_requested", False)
+        if type(activity_deferred) is not bool:
+            raise ValueError("skill-deferred PCM timing selection must be a boolean")
+        if activity_deferred and (not passive_pcm_requested or music_output_requested):
+            raise ValueError("skill-deferred PCM requires MainOutput passive capture")
+        selection["passive_pcm_capture_after_authority_skill_requested"] = activity_deferred
         paths = selection.get("inputs")
         if not isinstance(paths, dict) or set(paths) != set(REQUESTED_PATHS):
             raise ValueError("requested audio selection must provide the exact explicit input path set")
@@ -389,6 +397,7 @@ def stage_for_build(project: Path, work: Path, *, selection_path: Path | None = 
         payload["request_id"] = selection["request_id"]
         payload["passive_pcm_capture_requested"] = selection["passive_pcm_capture_requested"]
         payload["passive_pcm_capture_music_output_requested"] = selection["passive_pcm_capture_music_output_requested"]
+        payload["passive_pcm_capture_after_authority_skill_requested"] = selection["passive_pcm_capture_after_authority_skill_requested"]
         payload["input_sha256"] = {key: file_sha(path) for key, path in sorted(resolved.items()) if key != "stage_root"}
         bank_receipt = json.loads(resolved["stage_receipt"].read_text(encoding="utf-8"))
         payload["receipt_bound_payload"] = bank_receipt["outputs"]
@@ -451,6 +460,7 @@ def stage_for_build(project: Path, work: Path, *, selection_path: Path | None = 
             selection["request_id"],
             selection["passive_pcm_capture_requested"],
             selection["passive_pcm_capture_music_output_requested"],
+            selection["passive_pcm_capture_after_authority_skill_requested"],
         )
         record_generation(output, generation_key, payload)
         receipt = stager.stage(

@@ -12,8 +12,11 @@ import uuid
 
 def find_repository_root() -> Path:
     for parent in Path(__file__).resolve().parents:
-        if (parent / "AGENTS.md").is_file():
+        if (parent / "tools/unity/support/audio/generators/generate_accepted_request_pin.py").is_file():
             return parent
+        canonical = parent / "canonical"
+        if (canonical / "tools/unity/support/audio/generators/generate_accepted_request_pin.py").is_file():
+            return canonical
     raise RuntimeError("repository root not found")
 
 
@@ -185,7 +188,33 @@ class AcceptedRequestTargetCaptureTests(unittest.TestCase):
             with self.subTest(invalid=invalid):
                 request = {**self.base_request, "passive_pcm_capture_music_output_requested": invalid}
                 self.request_path.write_text(json.dumps(request), encoding="utf-8")
-                with self.assertRaisesRegex(ValueError, "explicit opted-in runtime request"):
+                with self.assertRaisesRegex(ValueError, "PCM selector/timing flags must be explicit booleans"):
+                    self.module.validate(self.request_path, self.contract_path, self.stage_path)
+
+    def test_skill_deferred_option_is_default_off_and_main_output_only(self) -> None:
+        source = self._emit(dict(self.base_request))
+        self.assertIn("PassivePcmCaptureAfterAuthoritySkillRequested = false;", source)
+
+        request = {**self.base_request, "passive_pcm_capture_after_authority_skill_requested": True}
+        source = self._emit(request)
+        self.assertIn("PassivePcmCaptureAfterAuthoritySkillRequested = true;", source)
+        request["passive_pcm_capture_music_output_requested"] = True
+        self.request_path.write_text(json.dumps(request), encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "requires requested MainOutput"):
+            self.module.validate(self.request_path, self.contract_path, self.stage_path)
+
+    def test_skill_deferred_option_requires_capture_and_exact_boolean(self) -> None:
+        request = {**self.base_request, "passive_pcm_capture_after_authority_skill_requested": True}
+        request["passive_pcm_capture_requested"] = False
+        self.request_path.write_text(json.dumps(request), encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "requires requested MainOutput passive PCM capture"):
+            self.module.validate(self.request_path, self.contract_path, self.stage_path)
+
+        for invalid in (1, "true", None, []):
+            with self.subTest(invalid=invalid):
+                request = {**self.base_request, "passive_pcm_capture_after_authority_skill_requested": invalid}
+                self.request_path.write_text(json.dumps(request), encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "PCM selector/timing flags must be explicit booleans"):
                     self.module.validate(self.request_path, self.contract_path, self.stage_path)
 
 
