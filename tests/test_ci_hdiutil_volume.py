@@ -24,23 +24,29 @@ class HdiutilVolumeTests(unittest.TestCase):
         self.log = self.root / "commands.log"
         fake = self.bin / "hdiutil"
         fake.write_text(
-            "#!/usr/bin/env python3\n"
-            "import os, pathlib, sys, time\n"
-            "args = sys.argv[1:]\n"
-            "with open(os.environ['HDIUTIL_LOG'], 'a') as f: f.write(' '.join(args) + '\\n')\n"
-            "phase = args[0]\n"
-            "if phase == 'create' and os.environ.get('HDIUTIL_MODE') == 'create-timeout':\n"
-            "  pathlib.Path(os.environ['CHILD_PID']).write_text(str(os.getpid()))\n"
-            "  time.sleep(30)\n"
-            "if phase == 'create' and os.environ.get('HDIUTIL_MODE') == 'create-fail': sys.exit(17)\n"
-            "if phase == 'attach':\n"
-            "  mount = pathlib.Path(args[args.index('-mountpoint') + 1])\n"
-            "  mount.mkdir(parents=True, exist_ok=True)\n"
-            "  (mount / 'mounted-sentinel').write_text('preserve')\n"
-            "  if os.environ.get('HDIUTIL_MODE') == 'attach-timeout':\n"
-            "    pathlib.Path(os.environ['CHILD_PID']).write_text(str(os.getpid()))\n"
-            "    time.sleep(30)\n"
-            "  if os.environ.get('HDIUTIL_MODE') == 'attach-fail': sys.exit(19)\n"
+            "#!/bin/sh\n"
+            'printf \'%s\\n\' "$*" >> "$HDIUTIL_LOG"\n'
+            'phase="$1"\n'
+            'if [ "$phase" = create ]; then\n'
+            '  case "$HDIUTIL_MODE" in\n'
+            '    create-timeout) printf \'%s\' "$$" > "$CHILD_PID"; exec sleep 30 ;;\n'
+            "    create-fail) exit 17 ;;\n"
+            "  esac\n"
+            "fi\n"
+            'if [ "$phase" = attach ]; then\n'
+            "  shift\n"
+            "  mount=''\n"
+            "  while [ $# -gt 0 ]; do\n"
+            '    if [ "$1" = -mountpoint ]; then shift; mount="$1"; break; fi\n'
+            "    shift\n"
+            "  done\n"
+            '  mkdir -p "$mount"\n'
+            "  printf 'preserve' > \"$mount/mounted-sentinel\"\n"
+            '  case "$HDIUTIL_MODE" in\n'
+            '    attach-timeout) printf \'%s\' "$$" > "$CHILD_PID"; exec sleep 30 ;;\n'
+            "    attach-fail) exit 19 ;;\n"
+            "  esac\n"
+            "fi\n"
         )
         fake.chmod(0o755)
         self.env = os.environ.copy()
