@@ -582,6 +582,18 @@ never a timestamped run path. Process/result receipts and successful/failed
 outputs are retained local evidence; no current game build reads them. See
 [setup/lifecycle](../tools/phone-build/accepted-output/README.md) and J1042.
 
+The owner-APK bootstrap candidate consumes an explicit ignored request selecting
+the accepted private packet manifest and verified reconstructed target root,
+public frontend/wire-helper sources and supplied Java/Android/D8 tools.
+`tools/phone-build/owner-apk/build_owner_apk.py` generates the authored DEX,
+patched binary manifest, embedded payload index, unsigned owner APK and private
+source/tool/hash result. These are reproducible post-reconstruction outputs,
+not new original-game input producers. The device activity generates its own
+private completion receipt and app-owned payload stage/backup directories;
+failed stages remain evidence and no other app's files are used for output.
+No current game build reads a timestamped owner-APK run directory. See the
+[candidate lifecycle and gates](../tools/phone-build/owner-apk/README.md).
+
 > **Dated snapshot.** This is a static audit taken on 2026-10-16. Line numbers drift as code
 > changes; regenerate or re-audit it before relying on a specific `file:line`. The current
 > map is [ARCHITECTURE.md](ARCHITECTURE.md).

@@ -51,6 +51,19 @@ path. The packet's target information stays private; independent owner-input
 production, ordinary app execution, owner signing/alignment, install/update and
 public distribution of any game-bearing packet remain separate gates.
 
+`tools/phone-build/owner-apk/` owns a separate experimental owner-APK bootstrap
+candidate after reconstruction. `build_owner_apk.py` and `binary_manifest.py`
+compile only authored Java, preserve original code/content bytes and move the
+binary manifest's launcher filter to `PayloadBootstrapActivity`. `PayloadStore`
+streams/hash-checks embedded runtime payload into the calling app's own external
+files location, stages replacements, retains backups and gates launch of the
+unchanged Unity activity. The activity owns worker/receipt/UI setup, pause/retry,
+launch verification and teardown; the approved frontend connects through fixed
+adapter-v1 actions. No existing Unity/game build consumes it and it is not a
+selected final distribution architecture. [Setup and device gates](../tools/phone-build/owner-apk/README.md)
+include ZIP size, duplicate storage cost, unknown-file acceptance and retained
+user data. All APKs and embedded game data stay ignored/private.
+
 Phone build **support**: `scripts/lab/phone_bundle.py` writes the isolated authored
 TextAsset bundle with only Python's standard library; its versioned native
 schemas consume no class database or generated asset. `phone_content.py` owns
