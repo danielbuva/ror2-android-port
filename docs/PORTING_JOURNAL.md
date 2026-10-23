@@ -32996,6 +32996,98 @@ R36 remains installed/stopped/asleep, J850 remains the accepted rollback, and
 J1043/J1044 still await the shared editor handback for their full build. No new
 build input, architecture owner or rebuild step is introduced.
 
+## J1049 — Assemble and sign the complete private owner APK bootstrap candidate
+
+2026-10-23. Host qualification only; no installation or device execution.
+
+**Hypothesis and scope.** J1042 reproduces all accepted output on Android, but
+its unsigned archive and separate payload are not an ordinary installation
+experience. Android 11's app-specific storage restrictions prevent an unrelated
+launcher from reproducing ADB's writes into the game's external files directory.
+A private owner-built APK can instead carry the owner's verified payload and
+prepare its own existing `payload` location before starting the unchanged Unity
+player. This tests an installation candidate within Route A/Architecture C;
+it does not adopt a final distribution architecture or solve PC-input-only
+production of the game-bearing target information.
+
+**Prior art and existing contract.** Consulted `community-prior-art.md` and
+pinned BepInEx.Android.Launcher `fd1a4023` README/Fusion exports. Its injection
+and runtime-container hooks are excluded; no implementation is copied. Existing
+`Device.sync` and `WholeCatalogComposed` define the measured payload location and
+manifest contract. Android's documented app-specific directory contract supplies
+the permitted same-app output location. Those original contracts remain the
+content-loading authority.
+
+**Change and ownership.** The separate public `tools/phone-build/owner-apk/`
+producer compiles authored `PayloadStore` and `PayloadBootstrapActivity` to a
+new DEX. It structurally edits binary manifest XML to move the MAIN/LAUNCHER
+filter to the bootstrap, preserving existing string/resource identities and
+making the original Unity activity private. The activity hosts the approved
+launcher frontend through adapter v1 and fixed native actions. No demo is
+packaged. It streams embedded payload into its own app-specific files, verifies
+actual bytes, reserves fresh capacity, retains failed stages and backups, and
+requires reviewed observed hashes before replacing unfamiliar existing files.
+It releases its WebView before handing off to the original Unity activity;
+warm launcher re-entry resumes that activity without recreating the frontend.
+Completed files are reused after restart; partial-file resume is not qualified.
+No Unity project build, game compilation, stripping, original DEX/IL2CPP change,
+shader change, replacement loader or runtime migration occurs. The current lab
+build does not consume this candidate.
+
+**Complete host result.** Source checkpoint `1526bd51` (rebased without source
+changes to `a358cc09`) builds the full private accepted profile in 115.4504 seconds.
+The unsigned APK contains 713 verified entries: 570 original entries remain
+byte-identical, with only the original manifest changed; a separate authored DEX
+and 134 runtime payload files are added. Payload totals 2,265,941,767 bytes. The
+unsigned APK is 1,995,909,048 bytes, SHA-256
+`7c04a7c58c3d0190dc1aa34273172c194afe9d1762f7842242e9e9583bddcdca`.
+Canonical AAPT accepts its manifest and launchable activity. Canonical zipalign
+passes before and after signing, with the uncompressed aligned resource table.
+The existing private lab key is read only and retains its hash; no key is
+transferred to Android. The signer matches accepted J850. APK v1/v2/v3 signature
+verification passes. Signed output is 1,995,994,448 bytes, SHA-256
+`57dcd67442a5cc4f6f6a7ede0b0f15076d23a2b6659e813c0b29477aff1c96e7`.
+Independent full readback verifies all 713 non-signature entries against the
+unsigned output. These checks establish archive/signature/content contracts,
+not Android installation, rendering, game behavior or performance.
+
+**Contracts and first failures.** Authored binary-XML tests cover both string
+encodings, non-BMP Unicode, resource/attribute retention, launcher routing and
+ambiguous/unknown/truncated input refusal. A compiled Java harness exercises the
+actual payload store's streaming, hashes, reuse, unknown-file refusal, reviewed
+backup, corruption, post-review mutation, free-space admission, pause/restart,
+symlink containment and unsafe/duplicate names. This finds an initial admission
+error: a fully verified existing payload was refused solely for low free space.
+Reserve admission now applies when new data is required; existing bytes still
+must pass complete verification. All 15 owner-related and 11 accepted-output
+host tests pass. Ruff passes the changed Python. The isolated worktree's doctor
+reports absent configured legitimate-input/project/checkpoint state; this
+source-only packaging worktree does not claim to be a game build workspace.
+
+**Evidence and terminal state.** Private evidence lives in
+`work/coordination/owner-apk-integration/`: explicit `request-v1.json`, source-bound
+invocations, SDK compile results, `full-owner-apk-v3/` (unsigned/signed APKs,
+input/output hashes, canonical manifests/alignment/signatures and independent
+content readback), and `host-proof-v1.json`, SHA-256
+`fe0e63d7839d7e40b7929bff6722ac1d7961fed031d866e9038112e047cca973`.
+Superseded successful generated APKs have source snapshots, retained receipts
+and scoped retirement markers. Failed runs, authoritative reconstruction packet,
+verified reconstructed targets and accepted game rollbacks remain preserved.
+No device commands, installs, launches, editor actions or original-input changes
+occur in this case. Alpha remains leased to the feedback session pending its
+explicit handback; Main's device/editor/game sources are untouched.
+
+**Remaining gates and revisit conditions.** This candidate doubles payload
+storage between APK and prepared files. Measure actual installation peak,
+placement/backing, preparation, pause/restart, update consent/backup, save/profile
+retention and normal launcher/Unity lifecycle on the authorized device. Compare
+ordinary game behavior and performance to accepted output. Phone-side signing,
+normal installer/update flow, tool acquisition and independent PC-input-only
+production remain open. J1042's large private target-bearing packet stays private;
+this APK is not approved for publication. Do not change the working build or
+final architecture on these host results. Retain desktop owner builds as fallback.
+
+
 ## J1050 — Measure exact data reuse across every PC and accepted Android bundle
 
 2026-10-23. Read-only host assessment; no converter, game build or device action.
