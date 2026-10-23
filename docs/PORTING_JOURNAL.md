@@ -32121,3 +32121,47 @@ metadata it actually retains. Preserve unknown states and the original error;
 do not whitelist the error, infer a source-Blit invocation or claim visual
 parity from this source/host result. Main still has R34 098646f6 with its earlier
 controls and J1031 persistence result; no installed bytes change in this entry.
+
+## J1035 — Add a local launcher feedback preview and explicit copy
+
+**Hypothesis and scope.** The existing sanitized baseline-preview producer
+(PR40) can support a usable frontend feedback draft without a preparation
+backend, device access or a second report producer. J829 and the current
+launcher/public-alpha boundaries remain unchanged. Alpha delegated this
+frontend slice while retaining phone-build research; gameplay owns its editor
+and devices. Work is isolated on `dani/launcher-feedback-draft`.
+
+**Change.** `launcher/feedback.js` consumes the existing schema 1 preview by
+projecting typed, bounded public facts into a fresh object, including nested
+cleanup facts. Unknown fields and optional issue URLs never enter the draft.
+The Diagnostics route accepts manual notes and optional pasted preview JSON,
+shows the exact plain-text draft, and requires review consent before explicit
+clipboard copy. Any edit clears the old preview and consent; clipboard refusal
+selects the text for manual copy. Navigation removes listeners while retaining
+notes in page memory; reload clears them. Background host updates preserve the
+form, caret and preview. Notes are explicitly not automatically redacted.
+There is no posting, automatic issue navigation, persistence, clipboard read,
+attachment collection, raw-receipt reader or device operation. The separate
+demo and host producer are unchanged. The named owner and lifecycle are in
+ARCHITECTURE and the launcher README.
+
+**Evidence and checks.** Source commit `1e324d5` passes all 12 focused Node
+tests and all eight real-browser checks in `launcher/tests/view.html`, including
+literal HTML-looking notes, review/copy identity, background-update retention,
+invalid replacement metadata, stale-copy refusal, clipboard rejection and
+navigation. Private host output is retained under
+`work/coordination/launcher-feedback/node-tests.txt` in the isolated worktree.
+The local launcher form and readonly preview were inspected visually. An
+independent focused source review found no actionable findings. The staged
+public audit and whitespace check pass. No Python source changed. Primary
+`./dev preflight --host-only` passes; the unselected `./dev doctor` correctly
+refuses to guess among multiple attached devices, so no bootstrap/device
+readiness is inferred.
+
+**First failure and limits.** No frontend contract failure remains in the
+focused checks. This is host/browser-only evidence: there is no new APK, APK
+hash, build, install, game readiness or Android clipboard/settings acceptance.
+Imported facts remain unauthenticated runner claims; manual notes and later
+attachments need human privacy review. Current installed/runtime facts remain
+owned by the gameplay snapshot. Revisit when the alpha owner selects native
+settings integration, or if producer schema/lifecycle contracts change.
