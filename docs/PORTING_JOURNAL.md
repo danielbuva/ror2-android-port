@@ -30654,3 +30654,121 @@ standard controls and strict current-process log qualification. Main still
 holds J1013 diagnostic 4b1a7969, accepted rollback remains J850 f1550ce0, and
 J1014's original highlight materialization/lifecycle and J1012's blur rendering
 remain unverified on Android.
+
+## J1016 — Separate raw retention from incomplete Android asset materialization
+
+**Question and scope.** J1008 qualifies Android tool startup but does not
+localize the full-import failure. Distinguish raw-file retention from typed
+asset creation before choosing another change. These are isolated build-tool
+experiments with accepted input 6af7ed94, not a replacement game runtime. The
+working exporter, canonical raw export, exact Unity version, IL2CPP ARM64
+renderer and desktop owner-build fallback are unchanged.
+
+**Source contract and observations.** Inspected the same pinned
+[AssetRipper source](https://github.com/AssetRipper/AssetRipper/tree/1ac666f47d8e9dedf96afb0b914c70d7656151ea).
+Its [GameStructure](https://github.com/AssetRipper/AssetRipper/blob/1ac666f47d8e9dedf96afb0b914c70d7656151ea/Source/AssetRipper.Import/Structure/GameStructure.cs)
+initializes assemblies before creating the file collection.
+[GameBundle.FromPaths](https://github.com/AssetRipper/AssetRipper/blob/1ac666f47d8e9dedf96afb0b914c70d7656151ea/Source/AssetRipper.Assets/Bundles/GameBundle.FromPaths.cs)
+loads and retains the raw files/dependencies before materializing their assets;
+[ObjectInfo](https://github.com/AssetRipper/AssetRipper/blob/1ac666f47d8e9dedf96afb0b914c70d7656151ea/Source/AssetRipper.IO.Files/SerializedFiles/Parser/ObjectInfo.cs)
+reads each object's bytes into an array. Consulted J1008's pinned extraction
+prior art and existing temporary-stream mechanism; no new content parser,
+serializer, game adapter or renderer is introduced.
+
+An authored wrapper subscribes to the actual Logger.OnStatusChanged and invokes
+the unchanged WebApplicationLauncher.Launch. It records bounded phase and
+managed-memory samples. Marker/unsubscribe controls pass on the host and Alpha.
+The original 120-file publish, dependency graph and runtime configuration are
+preserved. Later controls additionally hash the actual loaded IO/Web assemblies
+and verify their paths/bytes against the selected private manifest. Both profiles
+pass those controls on Android. This remains a shell tool host, not a launcher
+or app-security result.
+
+The unchanged exporter reaches assembly completion and file-collection creation
+at about 38 MB managed memory. It then reaches 4,194,680,624 sampled managed bytes
+with 350 major collections and terminates with native SIGABRT/exit 255. Sampled
+peak RSS is 4,359,622,656 bytes; total attempt time is 66.20 s. Thus the previous
+last ordinary assembly log does not identify the failing assembly operation.
+The trace still does not distinguish every call inside collection creation.
+
+**Individual-file byte and backing comparison.** An authored diagnostic uses the
+unchanged SchemeReader APIs on one selected initial platform file at a time,
+then disposes it. It does not retain the complete import or create typed assets.
+Authored UnityFS/serialized-object and resource controls pass on host/Android;
+UnityPy independently confirms the two authored object sizes, 152 and 52 bytes.
+An initial host control had an incorrect expected resource length, 29 instead of
+30 bytes; its failed receipt is preserved and the corrected control checks the
+source file length. SHA-256's standard authored test vector also passes on both
+Android profiles before data comparison.
+
+Both scans complete all 1,726 unique initial platform paths without a failed
+file: 1,831 serialized files, 3,419,985 objects / 2,646,844,899 object-data bytes,
+and 1,062 resources / 4,335,211,875 stream bytes. The candidate changes only the
+previously tested 50 MiB/30 MiB thresholds to 1 MiB/512 KiB. Only its IO DLL and
+matching PDB replace the baseline components. Resource stream classification is
+read from the existing public SmartStream.StreamType property:
+
+| Profile | Memory-backed resource count / logical bytes | File-backed resource count / logical bytes | Sampled peak RSS | Time |
+| --- | --- | --- | ---: | ---: |
+| Baseline | 1,048 / 2,601,206,435 | 14 / 1,734,005,440 | 238,055,424 bytes | 55.69 s |
+| Candidate | 666 / 100,598,067 | 396 / 4,234,613,808 | 190,947,328 bytes | 54.38 s |
+
+Every per-file payload digest matches. The aggregate framed payload digest is
+`d23b01ff13ac61ce3653544425ab23d357d219cd3f10005f81512adadaee0ae8`.
+It covers object bytes and resource bytes with file/type/name/length framing;
+it is not a complete metadata or exported-project equivalence test. Stream
+lengths are logical backing observations, not a measurement of unique physical
+allocation. These diagnostic timings are not game-performance benchmarks.
+
+**Retained raw-loading boundary.** A separate pinned-ABI probe invokes the actual
+private GameBundle.LoadFilesAndDependencies method, with the original
+MonoManager initialization and actual internal StructureDependencyProvider.
+It preserves the normal initial path order and stops before typed asset-object
+creation. Its authored control passes on host and Android. With the candidate
+IO component, 146 assemblies and the dependency closure, the real-input probe
+returns 1,728 files: 1,833 serialized files, 3,420,110 objects /
+2,652,011,889 object-data bytes, unchanged resource totals and zero failed files.
+The two extra files are dependency expansion, not a changed accepted input.
+
+Raw return takes 99.61 s after assembly initialization. Keeping that raw graph
+alive through a forced full collection leaves 3,774,442,328 managed bytes;
+sampled peak RSS is 3,916,783,616 bytes. Teardown/input verification brings the
+attempt to 110.25 s. This qualifies that isolated raw-loading boundary with this
+profile; it does not qualify the following typed graph or export.
+
+**Complete-import controls remain failed.** Combining the candidate thresholds
+with the verified collector-setting mechanism still terminates natively before
+load completion. A subsequent test gives typed materialization more managed
+headroom because retained raw loading already occupies most of the 4 GiB cap.
+The independent 6 GiB RSS guard, 1 GiB available-RAM reserve, 2 GiB scratch reserve
+and request deadlines are unchanged in both trials:
+
+| Requested managed maximum / soft limit | Sampled peak managed / RSS bytes | Time | Terminal result |
+| --- | --- | ---: | --- |
+| 4 GiB / 2 GiB | 4,184,568,024 / 4,471,709,696 | 128.24 s | SIGABRT / exit 255 during collection creation |
+| 5 GiB / 2 GiB | 5,238,059,160 / 5,305,688,064 | 181.14 s | SIGABRT / exit 255 during collection creation |
+
+The 4 GiB attempt retains a managed stack in PhysicalFilesWatcher.OnError and
+ConcurrentDictionary.GetKeys. That is an observed callback, not a proven root
+cause. Neither trace proves where the import thread was at the fatal instant.
+No load or export is accepted, and no candidate replaces the working producer.
+Do not keep widening limits without another discriminating observation.
+
+**Evidence and terminal state.** All source/driver snapshots, manifests, controls,
+failed runs and receipts stay ignored under
+`work/coordination/phone-proof/assetripper-portability-r1/`. The authored
+`proof-v3.json` is 5,695 bytes, SHA-256
+`7e9e64ad4c425c666c5af14609a301ee19ebaa6cae1b26c1a06a83dfac613bf1`.
+It links the immutable earlier packets, comparison, retained-raw result and
+5 GiB trial. Each actual-input attempt verifies all 2,749 supplied files before
+and at terminal readback; selected tool bytes also match. Every owned process
+is absent. Alpha's installed game remains
+be26c21c4cd8ff15a8a663528216cf7a69394a51d8b9441a63a1a496f83e98b5,
+with no game process/selector and the display asleep. There are zero editor
+actions, installs and game launches; Main's work/device remain untouched.
+
+Next: inspect raw/typed ownership and materialization overlap with the exact
+upstream APIs. Complete project output and its comparison to the desktop oracle,
+phone-only publisher/acquisition, app security, lawful delivery, Android
+content/shader/player production and matched native game performance remain
+open. Retain Route A and the desktop fallback.

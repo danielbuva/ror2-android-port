@@ -16,8 +16,9 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
 - [ ] Complete accepted-input export on Android within explicit resource limits
       and compare actual project outputs. Follow
       [J1008's failed full-import evidence](PORTING_JOURNAL.md#j1008--bound-android-assetripper-startup-and-full-input-import-failures)
-      with precise loading-phase/native-fault diagnosis before another whole-input
-      retry; tool startup and isolated assembly loading do not pass this gate.
+      with [J1016's raw/materialization distinction](PORTING_JOURNAL.md#j1016--separate-raw-retention-from-incomplete-android-asset-materialization).
+      Resolve complete graph ownership and the native failure; the isolated
+      raw-loading result does not pass this gate.
 - [ ] Resolve the editor-equivalent Android content/shader production gate without
       consuming desktop-generated game data as a hidden prerequisite; extend
       [J832's precursor](PORTING_JOURNAL.md#j832--run-the-exact-converter-on-android-and-load-content-built-without-a-template)
