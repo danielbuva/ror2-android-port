@@ -30035,3 +30035,138 @@ before choosing a repair. Loader remains unarmed. No current readiness, playback
 audibility, shader fidelity or new baseline is accepted by host tests. Main
 still has J1000 diagnostic bda75e37 stopped/asleep with 13 applied runs; J850
 remains the accepted rollback. No Alpha-owned behavior is changed.
+
+## J1006 — Isolate stale music admission after verified camera and listener readiness
+
+**Committed player and preserved preparation failures.** Build J1005 source
+289f37799ecbc11179af43775c5d84a21e46d5d0 with the pinned Unity 2021.3.45f2
+editor and shared host mutex. The first code-only attempt correctly refuses
+payload reuse: five generated content inputs changed (the audio bootstrap,
+catalog bootstrap JSON and three stage receipts). No reuse gate is bypassed.
+The second attempt builds a full player with zero errors in 224.511193 s, but
+its capture verifier refuses three Player DAG runs: input-signature regeneration,
+generated-C++ directory regeneration, then success. A fresh same-source request
+builds in 111.341058 s but skips unchanged conversion; the strict freshness check
+correctly refuses its unchanged trace. Neither unqualified APK is installed.
+Preserve both APK/symbol outputs, request-owned pre/post receipts, log slices,
+source freezes and first-failure records in the R31 Root R1–R3 folders below.
+
+**Bounded producer rebuild and qualified artifacts.** Inspect the actual Bee
+graph: the conversion trace is the IL2CPP_CodeGen node's unique declared output,
+also bound by its annotation, profiler output and response file. With editor
+idle and the ordinary mutex held, Root preserves and hash-verifies only that
+generated trace, then removes that one output to let Bee rebuild its producer.
+No other cache output, generated C++, authored source or original input is
+removed. The new request must pass the existing capture checks and an additional
+canonical trace verification against the preserved pre-invalidation hash; a
+missing pre-scan row is not used as a substitute for the old/new comparison.
+
+Request `20261023T061952.699917Z-c02c163ab53740c4b4ff7cb737f87f19`
+passes in 84.935227 s with zero errors and one complete fresh IL2CPP event.
+The trace changes from
+`1a39d1a3285a85922f577a2b8194858a6ed87ba84042608642099bedd2e5df61`
+to `152aeefe762a2764c2bfa5fd2e77f4621551b436926016a96a5e08b1a180ac55`.
+Root verifies editor idle and normal mutex release. Freeze APK
+`88ecfc8cad36b9ee5c2bfa9b027047fae4a48ea0969ed8179e99aca4dfd0da15`,
+matching symbols, same-request pre/post-strip assemblies and 266 payload files.
+The camera checker retains its 14 required world fields and all 142 admission
+fields/types in both assemblies; the separate network-sound checker also passes.
+Metadata retention is not JSON serialization or runtime acceptance.
+
+Build/freeze evidence is under
+`work/coordination/original-game-audio-r31-build-root-r1/` through
+`work/coordination/original-game-audio-r31-build-root-r4/`.
+R4 contains the preserved producer output and explicit old/new qualification.
+The exact frozen candidate is
+`work/experiments/original-game-audio/r27-20261023T061952.699917Z-c02c163ab53740c4b4ff7cb737f87f19-88ecfc8cad36/`.
+R27 remains only the freezer wire schema; the recorded source/request are R31.
+
+**Both standard device controls pass.** Root installs the explicit frozen APK
+in place on Main after fresh adopted-only storage checks and syncs only its
+matching frozen payload. Plain reaches 37.481674 s on Lakes. The other process
+completes one original exit to Goolake and stays there for 13.227234 s
+(151.131256 s total world time). Both report the exact current APK, no report
+error/firstFailure and 13 unchanged applied runs. The terminal wrapper verifies
+installed bytes, owned placement, process/selector absence and display sleep.
+A separate read-only query repeats those checks and reads the unchanged profile.
+Root archives/releases only its completed claim; other devices are untouched.
+
+Controls are
+`work/coordination/original-game-audio-r27-device-controls/attempts/root-r6-r31/`;
+independent verification and strict startup replay are in
+`work/coordination/original-game-audio-r31-device-controls-root-r1/`.
+Canonical evidence is
+`work/experiments/baseline/20261023T062641.452556Z/` and
+`work/experiments/baseline/20261023T063102.540409Z/`.
+Their final-report SHA-256 values are
+`9cf7b5806e7d97b53e9c7358f941d6b440edc287c649e75fe58661c4890f9e06`
+and `2472e0154ca80538fc9cb2e1d3f5ad276d44bf5711e1f6600416372c41bf380d`;
+their Unity-log SHA-256 values are
+`7eb9b0c62b58fba5121478599e8485444ff1a2db1415793f492c7b53b3056514`
+and `c963a3e87a2770e37e9ea259fa771126e5b8e5729828dca705415a0dc4247b8d`.
+
+**Actual remaining admission operand.** Both strict current-process log replays
+have zero unexplained errors, and the complete 65-entry network sound catalog
+still passes. Each report retains the latest actual admission sample (sequence
+6). Exact rig, target/body, original update context, marker latch/delegate and
+active managed listener membership are all observed true. The music snapshot
+used by that sample has a nonempty camera inventory but no target body and is
+stale: its age is 3.101059 s in plain and 3.064140 s in stage-exit. Other sampled
+music owner/engine/source readiness predicates are true. No new camera, listener
+or music success is forced.
+
+The latest inner evaluations occur with 0.676208 s and about 0.779 s left in the
+five-second window. The next retained outer samples are post-deadline and did
+not evaluate the inner predicate. Those later observations cannot establish
+whether a fresh music target was available then. A false body value in the stale
+snapshot likewise does not prove the live target was still absent. The source
+creates this camera before remaining world setup; audit that lifecycle and
+source sampling before choosing a correction. Do not simply lengthen the timer.
+
+**Serialization limit and next gate.** Despite Cecil retention and host copy
+tests, neither device report emits `firstAdmissionSample`; only the 141 latest
+scalar fields appear. There is no matching serialization warning. The recursive
+field shape is a hypothesis, not a proven cause. Qualify a nonrecursive shape
+with actual pinned-editor JsonUtility before claiming first-sample retention.
+The current latest sample does isolate the music conjunction that J1000 lost.
+Host triage is in
+`work/coordination/original-game-audio-pcm/r32-music-camera-admission-triage-r1/`.
+
+Loader stays unarmed because strict camera readiness remains false. Standard
+controls do not establish full audio, event attribution, audibility, natural Quit,
+ordinary gameplay or PC visual parity. The four blur candidates remain
+unselected. J1005 is now built/installed with these limits; Main is stopped/asleep
+and J850 remains the accepted rollback. No new runtime source is introduced by
+this result checkpoint and no Alpha-owned behavior is changed.
+
+## J1007 — Verify primitive shader receipt transport without recompiling shaders
+
+**J1004 follow-up and source evidence.** The actual object-return failures omit
+the internal error. Inspect the pinned MCP C# serializer, dispatcher and Python
+normalizer/service; the project PackageCache matches the inspected source.
+Nonprimitive serialization has its own catch/fallback, and the normalizer
+already recognizes the outer success response. Thus neither an inner
+`success:false` confusion nor a particular serializer exception is established
+as the cause. Primitive strings have an explicit supported return path.
+
+**Small live check.** Under a fresh editor-only claim and ordinary host mutex,
+Root first returns a fixed JSON string containing inner `success:false`.
+The outer tool response succeeds. A second read-only call reads the exact
+hash-bound existing preliminary receipt and returns its 7,167 UTF-8 bytes as
+a primitive string. Root verifies byte SHA-256 and type-preserving canonical
+parsed equality, then editor idle and normal lock release. No asset is staged,
+shader recompiled, receipt flag changed or earlier automation result reclassified.
+This verifies the observed string readback path, not a new complete compile and
+cleanup route or Android rendering behavior.
+
+Evidence is
+`work/coordination/original-native-visual-reference/translucent-primitive-readback-root-r1/`;
+result SHA-256 is
+`18ebb9ce6de6bfbae86d91e00716c9800d5404f7ca0d1734c28da8c6ee343596`.
+The read receipt retains J1004's hash
+`a504f87ced0e0c300e45c0b1cc8365098ce721098cbca13d55694df4fb842e0e`
+and its original overall failure/pending-cleanup flags; separate owned cleanup
+evidence remains authoritative. The underlying object-return failure is still
+unknown. A corrected fixture is host-reviewed and queued; it must keep generic
+idle responses separate from strict primitive receipt parsing. No new player or
+device behavior follows from this transport check.

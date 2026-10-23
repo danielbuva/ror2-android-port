@@ -10,6 +10,8 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1007](PORTING_JOURNAL.md#j1007--verify-primitive-shader-receipt-transport-without-recompiling-shaders) | 2026-10-22 | Verify primitive shader receipt transport without recompiling shaders | **J1004 follow-up and source evidence.** |
+| [J1006](PORTING_JOURNAL.md#j1006--isolate-stale-music-admission-after-verified-camera-and-listener-readiness) | 2026-10-22 | Isolate stale music admission after verified camera and listener readiness | **Committed player and preserved preparation failures.** |
 | [J1005](PORTING_JOURNAL.md#j1005--preserve-actual-audio-camera-admission-operands-through-retirement) | 2026-10-22 | Preserve actual audio camera admission operands through retirement | **First failure and prior art.** |
 | [J1004](PORTING_JOURNAL.md#j1004--retain-camera-blur-compile-artifacts-while-refusing-ambiguous-automation) | 2026-10-22 | Retain camera blur compile artifacts while refusing ambiguous automation | **Hypothesis and scope.** |
 | [J1003](PORTING_JOURNAL.md#j1003--reconstruct-source-camera-blur-candidates-from-accepted-input) | 2026-10-22 | Reconstruct source camera blur candidates from accepted input | **Source requirement and prior art.** |

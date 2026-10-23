@@ -88,14 +88,16 @@ The plain check and its acceptance criteria remain unchanged.
 
 ## Current baseline (2026-10-23)
 
-J1000's diagnostic APK bda75e37 is installed after both standard controls and
+J1006's diagnostic APK 88ecfc8c is installed after both standard controls and
 independent APK-byte/placement/idle verification. The complete original network
-sound catalog initializes, and the source camera no longer logs the missing
-EfficientBlur shader. Its rig reaches PlayerBasic and index zero, but separate
-bounded audio-context admission still fails. Passing the standard checks does
-not qualify that context or broader audio. J985's targeted natural-Quit failures
-remain unresolved. See the [current snapshot](../PORTING_STATE.md) and
-[J1000](PORTING_JOURNAL.md#j1000--remove-the-source-camera-shader-exception-and-preserve-its-admission-timeout).
+sound catalog initializes. Its retained admission sample verifies the exact
+source rig, target, update context and managed listener membership, but the
+music snapshot has no target body and is stale. Bounded audio-context admission
+still fails. First-sample JSON retention is also unqualified. Passing the
+standard checks qualifies neither that context nor broader audio. J985's targeted
+natural-Quit failures remain unresolved. See the
+[current snapshot](../PORTING_STATE.md) and
+[J1006](PORTING_JOURNAL.md#j1006--isolate-stale-music-admission-after-verified-camera-and-listener-readiness).
 The accepted baseline below remains the rollback.
 
 | Item | Value |

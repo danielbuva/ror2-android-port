@@ -2928,6 +2928,10 @@ The DTO retains no Unity objects and is released with its world report.
 `test_camera_admission_evidence.py` compiles/runs the pure production contract
 with pinned Unity Mono/Roslyn, skipping when those tools are unavailable. These
 observations establish neither readiness nor audio/rendering acceptance.
+J1006 verifies the latest sample on Android but finds that its recursively
+typed first-sample field is absent from JSON despite metadata retention. First
+sample serialization remains unqualified until an actual JsonUtility fixture
+and device evidence verify a nonrecursive shape.
 
 `AndroidNativeSourceSkinLifecycle` also owns one cached render-evidence snapshot
 at the first ready selected-skin/camera observation. It records at most 12 camera
