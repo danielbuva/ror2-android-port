@@ -105,6 +105,14 @@ this is not a one-to-one bundle mapping. No complete raw object record matched
 within that scoped pair. Unchanged vertex, image, animation or other subranges
 were not exhaustively measured and may still be reusable.
 
+[J1050's complete decompressed-range census](PORTING_JOURNAL.md#j1050--measure-exact-data-reuse-across-every-pc-and-accepted-android-bundle)
+now establishes substantial reuse across all PC/accepted payload bundles. It
+supersedes the scoped raw-record comparison as the coverage assessment, while
+leaving that experiment's observations intact. Exact ranges are useful inputs,
+not serialized-object producers; the remaining code/content/shader construction
+and public-input conversion gates stay open. Do not read chunk coverage as a
+completed-conversion percentage or a public-patch size/rights result.
+
 These observations rule out treating a platform flag edit or archive repack as
 the accepted conversion. They do not prove that full Unity import is required.
 [Unity documents platform-specific bundle assets](https://docs.unity3d.com/es/2021.1/ScriptReference/AssetBundle.html),
