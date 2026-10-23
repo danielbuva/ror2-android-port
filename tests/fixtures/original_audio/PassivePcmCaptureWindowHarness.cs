@@ -131,6 +131,55 @@ internal static class PassivePcmCaptureWindowHarness
         Check(lease.CaptureSafeBeforeEngineTerm, "original Term guard accepts only confirmed removal");
     }
 
+
+    private static void ActiveWindowReportExposesValidatedCachedIdentityForJoin()
+    {
+        const ulong outputId = 4129766362UL;
+        var api = new FakePcmApi();
+        var lease = ReadyLease(api);
+        Action ownedGuard = null;
+        var window = new PassivePcmCaptureWindow(lease, true,
+            delegate(Action value) { ownedGuard = value; }, delegate { return ownedGuard; }, null);
+        GameAudioOriginalPassivePcmCaptureSelection selection;
+        Check(GameAudioOriginalPassivePcmCaptureSelection.TrySpecificOutput(true, true, true, outputId, out selection),
+            "specific output selector is valid");
+        Check(window.RequestGameplayArm(selection), "active identity fixture arms");
+        Check(window.Start(10f, true, true, true, 1), "active identity fixture starts from exact live lease");
+        var initial = window.Report;
+        Check(initial.State == "capturing" && initial.CallbackCount == 0 &&
+            !initial.CaptureOutputDeviceIdObserved,
+            "active state alone does not invent callback identity before its first observation");
+        api.AddPcm();
+        api.Values[18] = unchecked((long)outputId);
+        window.Tick(11.1f, true, true, 2); // Existing periodic ObserveSnapshot refreshes latest.
+        var report = window.Report; // This is the report forwarded by OriginalGameAudioPassivePcmOwner.
+        Check(report.State == "capturing", "active report preserves the active state");
+        Check(report.CallbackCount == 2 && report.FrameCount == 2 && report.SampleCount == 8,
+            "active report exposes only counters from the latest validated cached lease snapshot");
+        Check(report.CaptureSelectorObserved && report.CaptureOutputDeviceIdObserved && report.CaptureOutputDeviceId == outputId,
+            "active report exposes exact frozen selector and observed callback identity");
+        Check(MusicPcmJoinObserver.IsExactWindowEligible(
+            report.State == "capturing", true, true, report.CaptureSelectorObserved,
+            report.CaptureSelection.Mode == GameAudioOriginalPassivePcmCaptureSelectorMode.SpecificOutput &&
+                report.CaptureSelection.SpecificOutputIdKnown, report.CaptureSelection.SpecificOutputId,
+            report.CaptureOutputDeviceIdObserved, report.CaptureOutputDeviceId,
+            true, outputId, true, false),
+            "the unchanged exact-output join eligibility gate admits the truthful active snapshot");
+        Check(api.RegisterCalls == 1 && api.UnregisterCalls == 0,
+            "reading an active report does not add native calls or stop the capture");
+        window.FinishGameplayWindow();
+        var stopped = window.Report;
+        Check(stopped.State == "captured" && stopped.CaptureOutputDeviceIdObserved && stopped.CaptureOutputDeviceId == outputId,
+            "normal stop still produces the terminal report without changing active semantics");
+        Check(!MusicPcmJoinObserver.IsExactWindowEligible(
+            stopped.State == "capturing", true, true, stopped.CaptureSelectorObserved,
+            true, outputId, stopped.CaptureOutputDeviceIdObserved, stopped.CaptureOutputDeviceId,
+            true, outputId, true, false),
+            "retained terminal output identity cannot admit a query after capture stops");
+        Check(api.RegisterCalls == 1 && api.UnregisterCalls == 1,
+            "only the normal owner stop unregisters the callback");
+    }
+
     private static void UnknownSnapshotUsesOneCleanupOnlyUnregister()
     {
         var api = new FakePcmApi();
@@ -139,9 +188,14 @@ internal static class PassivePcmCaptureWindowHarness
         var window = new PassivePcmCaptureWindow(lease, true, delegate(Action value) { ownedGuard = value; }, delegate { return ownedGuard; }, null);
         Check(window.RequestGameplayArm(), "gameplay arm accepted");
         Check(window.Start(0f, true, true, true, 1), "capture starts before injected snapshot failure");
+        api.AddPcm();
+        window.Tick(1.1f, true, true, 2); // A valid cached live sample precedes the injected unknown result.
+        Check(window.Report.SampleCount == 8, "the latest validated active snapshot is visible before failure");
         api.ThrowSnapshot = true;
-        window.Tick(1.1f, true, true, 2);
+        window.Tick(2.2f, true, true, 3);
         Check(window.State == "outcome_unknown" && !lease.CaptureSafeBeforeEngineTerm, "snapshot failure retains an unknown live registration");
+        Check(window.Report.SampleCount == 0 && !window.Report.CaptureOutputDeviceIdObserved,
+            "unknown registration/removal state does not expose the last active snapshot as current telemetry");
         api.ThrowSnapshot = false;
         ownedGuard();
         Check(api.UnregisterCalls == 1 && lease.CaptureSafeBeforeEngineTerm, "pre-Term cleanup performs one reverse call without resnapshot");
@@ -289,12 +343,13 @@ internal static class PassivePcmCaptureWindowHarness
         NoOpGuardRefusesBeforeRegistration();
         DefaultOffNeverCallsNativeCapture();
         BoundedCaptureRemovesBeforeTerm();
+        ActiveWindowReportExposesValidatedCachedIdentityForJoin();
         UnknownSnapshotUsesOneCleanupOnlyUnregister();
         FullWidthOutputIdsSurviveSnapshotAndDecimalEncoding();
         SpecificOutputPreservesFullWidthPairThroughRemoval();
         InvalidOrFailedSpecificOutputNeverFallsBackToMain();
         UnregisterPairFailureKeepsTermFailClosed();
-        Console.WriteLine("PASS PCM guard, bounded counters, main/specific selector pairing, full-width IDs, and fail-closed cleanup");
+        Console.WriteLine("PASS PCM guard, bounded counters, active exact-output join eligibility, selector pairing, full-width IDs, and fail-closed cleanup");
         return 0;
     }
 }

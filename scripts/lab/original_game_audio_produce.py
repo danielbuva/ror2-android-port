@@ -69,7 +69,7 @@ META_GUIDS = {
 NATIVE_META_GUID = "a2a09e81876b46f2a202e62f96644331"
 NATIVE_TARGET = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so"
 NATIVE_META = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so.meta"
-OWNER_ANCESTOR_MANIFEST_SHA256 = "868ad03107d2211e78d9e7c2ebd738ee11718b33994391370b110adc07d955ee"
+OWNER_ANCESTOR_MANIFEST_SHA256 = "1851ac104aa8aee6bfb4fd5510c37eb22d035407d5cedf4170a2b2e247cba426"
 STAGE_PIN_TOOL_SHA256 = "6e12acb9b58a570aa3a869f9f0880ddbd56ba4da0c806188c1124164211d0102"
 REQUEST_PIN_TOOL_SHA256 = "844e57ef264c56fa2d2adbacfeba893a30f684fa1ad5e203cdb5a5ffb8be3b96"
 MANAGED_PRODUCER_SHA256 = "e5cfc952843cd247d5c96690a11d7a56650f0777c85f7aef2c4bc673bbe0bb85"
@@ -93,7 +93,7 @@ OWNER_SOURCE_HASHES = {
     "bootstrap/GameAudioOriginalRequestBootstrap.cs": "d8adaa8a8aa7c035a5a4dfe102c736555effae3de9708fc4bfe0834ab724c2de",
     "bootstrap/NativeWwiseMonitorLease.cs": "4fa40d608ba54dc33474fa23a01069fa71ae2e62997f56555929800f3d1fbed6",
     "bootstrap/OriginalGameAudioPassivePcmOwner.cs": "7ed0a10cfa49cfc02ccbf253e8d3b7d1e32eaba9e8f47794590d154de8ec1d72",
-    "bootstrap/PassivePcmCaptureWindow.cs": "dd16664b0a8491c03491777a81befbfcfda063e6ae159b8fd541df2cc7004673",
+    "bootstrap/PassivePcmCaptureWindow.cs": "30f68421ba6e6985534ad2f3ed6e94f8f10adf48ebafe5dd327301635a3c61b5",
     "bootstrap/PcmWaveformReadbackV1.cs": "df72c75edbb2bf3007c6d8c7c5fc9597a85a177a2b13e9a34d8957c103efb218",
     "core/GameAudioOriginalOwner.cs": "7a837190ee8a02b01e0cce5883869c125ca7f9938c415be4559dc577bb72a647",
     "core/GameAudioOriginalPassivePcmContract.cs": "0ae9ab3d57770c0f7d4f8cbc14eb557a0e9fd699355fb54f29f823cffb63371e",

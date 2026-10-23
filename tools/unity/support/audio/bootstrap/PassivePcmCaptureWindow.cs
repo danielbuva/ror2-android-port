@@ -375,7 +375,8 @@ internal sealed class PassivePcmCaptureWindow
         bool waveformRawPersisted = waveformFinalizer != null && waveformFinalizer.RawPersisted;
         ulong waveformGeneration = waveformFinalizer == null ? 0UL : waveformFinalizer.Generation;
         uint waveformStoredSamples = waveformFinalizer == null ? 0U : waveformFinalizer.StoredSamples;
-        if (baseline == null || latest == null || (state != "captured" && state != "captured_before_term"))
+        if (baseline == null || latest == null ||
+            (state != "capturing" && state != "captured" && state != "captured_before_term"))
             return new PassivePcmCaptureReport(state, stopReason, failure, 0, 0, 0, 0, 0, 0, 0, 0,
                 false, false, 0, captureSelectionFrozen, captureSelection,
                 waveformState, waveformFailure, waveformRawPersisted, waveformGeneration, waveformStoredSamples);

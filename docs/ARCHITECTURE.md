@@ -974,7 +974,11 @@ on the next owner Update tick. Completion, unwind
 and destruction close the window idempotently without delaying gameplay.
 The exact transformed API guards both original Term paths before native teardown;
 uncertain callback removal retains roots and refuses termination. Reports contain
-scalar measurements, not audio data. Nonzero native PCM alone cannot establish
+scalar measurements, not audio data. During `capturing`, the report exposes
+only its latest validated cached counters and callback output identity, retaining
+the active state; they are not a quiescent or atomic PCM-frame proof. Unknown
+states remain masked and terminal finalization keeps its fresh unregister check
+(J982). Nonzero native PCM alone cannot establish
 Android playback or physical audibility. Host fixtures check capture bounds,
 ownership, default-off behavior and both actual pre-Term injection branches.
 

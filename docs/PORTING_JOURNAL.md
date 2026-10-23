@@ -28886,3 +28886,52 @@ under `work/coordination/original-native-visual-reference/` in
 a source-bound successor with host regression coverage, a successful build,
 both fresh standard controls and the unchanged strict targeted route. J850
 remains accepted; J979 remains the installed diagnostic checkpoint.
+
+## J982 — Expose the validated active capture snapshot to the strict music join
+
+**Hypothesis and prior art.** J981 identifies a contradictory report contract,
+not a missing native query or wrong selected output. Keep J964's exact-output
+music admission unchanged and expose the existing validated snapshot while its
+capture state is active. Pinned R2API.Sound at f539511e, re-inspected for J981,
+requires actual engine/bank lifecycle; its hooks do not establish callback or
+output attribution. This fix belongs to the existing authored capture owner.
+
+**Change and ownership.** `PassivePcmCaptureWindow.CreateReport` now permits
+`capturing` alongside its two existing terminal states when baseline and latest
+validated snapshots exist. It keeps state `capturing`, uses the same bounded
+cached deltas and requires callbacks newer than baseline to expose output
+identity. No snapshot, registration, event, native call or scheduling change is
+added. Unknown/error states retain zero/unknown measurements; final stop still
+requires exact successful unregister and a fresh coherent absent snapshot before
+waveform readback. Live counters are cached observations and do not claim
+quiescent cross-counter coherence. The music observer's output equality,
+ownership, active-window and cleanup requirements stay fixed.
+
+The public source cohort pins the new source and retains the prior cohort as
+its parent. The producer and camera-stage recipe consume the new cohort digest;
+the camera hook's authored source pin is refreshed. Existing generation keys
+invalidate changed source inputs. This changes authored reconstruction inputs:
+replay the ordinary audio producer and downstream music/camera staging before a
+new build; never copy a prior generated Bootstrap or rewrite a receipt.
+
+**Host evidence.** Independent review passes the candidate and recompiles the
+same fixture against the old source, which fails the new active-counter
+assertion. Root integrates the case into the existing public C# capture harness
+and compiles canonical sources including the real strict music predicate.
+The fixture checks pre-callback unknown identity, active exact-output eligibility,
+normal one-time removal, ineligible post-stop reports, and masking after a later
+unknown snapshot. Existing full-width selector/default-off/Term refusal cases
+remain. Root passes 110 audio tests (two expected skips), 41 music tests and
+42 camera tests (three expected skips); Ruff passes on all changed Python.
+These host checks do not qualify Android queries or original audio fidelity.
+
+Draft and independent review are
+`work/coordination/original-game-audio-pcm/r27-active-window-report-fix-draft-r1/`
+and `r27-active-window-report-review-r1/`. Root logs are the
+`r28-{audio,music,camera}-host-root-r1.log` files in that coordination area.
+The preliminary unselected doctor refuses ambiguous attached devices and its
+historical bootstrap-smoke requirement; neither is evidence to bypass device
+selection or rerun a pre-existing smoke package. All actual installs/runs keep
+explicit Main selection. J979's APK remains installed, J981 remains failed,
+Main remains asleep and J850 remains accepted. Revisit with a committed-source
+build, both fresh standard controls and the strict targeted route.
