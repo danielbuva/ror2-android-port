@@ -1600,6 +1600,9 @@ def prepare_integration(io=None, *, attempt=None):
     from shader_postprocessing_bloom import check_staging_activation
 
     check_staging_activation(io, closure["input_id"])
+    from shader_postprocessing_uber import check_staging_activation as check_uber_activation
+
+    check_uber_activation(io, closure["input_id"])
     metadata = read_catalog(catalog_path(out))
     native = io.read(out / "native-conversions.json")
     mesh_subobjects, unresolved_mesh_subobjects = source_mesh_subobjects(export, closure, metadata, native)
@@ -1669,6 +1672,9 @@ def prepare_integration(io=None, *, attempt=None):
     from shader_postprocessing_bloom import stage as stage_postprocessing_bloom
 
     bloom_receipt = stage_postprocessing_bloom(io, export=export, mapped=mapped, owners=owners, destination=destination, input_id=closure["input_id"])
+    from shader_postprocessing_uber import stage as stage_postprocessing_uber
+
+    uber_receipt = stage_postprocessing_uber(io, export=export, mapped=mapped, owners=owners, destination=destination, input_id=closure["input_id"])
     if not io.rebuilding:
         repair_support_source(export, mapped, project, destination, io)
     for copied in copies:
@@ -1719,6 +1725,7 @@ def prepare_integration(io=None, *, attempt=None):
             roots=len(roots),
             shader_overrides=override_receipt,
             postprocessing_bloom=bloom_receipt,
+            postprocessing_uber=uber_receipt,
         ),
     )
     io.write(out / "integration-latest.json", dict(path=io.label(destination)))

@@ -2908,6 +2908,24 @@ generated, hash-checked candidate and refuses to create it in live inputs.
 It requires a full content/player
 build; Android rendering and PC appearance remain separate gates.
 
+`scripts/lab/shader_postprocessing_uber.py` owns a separate default-off Uber
+shader batch for the exact `Main Camera` → `PostProcessResources_53.uber`
+reference. It pins the accepted export's camera, resource, shader metadata and
+`ppRunBase` Bloom/effect settings, then generates the official Post Processing
+2.3.0 Uber shader and its 17-file HLSL include closure from the locally pinned
+archive. The generated closure is the Uber shader plus 17 HLSL includes. That
+archive is a compatible source reference, not proof of the game's shipped
+package version. `PostProcessLayer.RenderBuiltins` selects pass 0 of the
+three-pass source shader. The ignored
+`work/config/postprocessing-uber.json` selector is independently input-bound;
+the stage marker and receipt use a separate schema so existing Bloom/CopyStd
+receipts remain readable. Preparation validates selectors before writing
+catalog assets; stage preserves source `.meta`, resource and camera bytes and
+refuses unknown candidate preimages. Catalog verification and rebuild
+comparison replay only the exact receipt-bound files and includes. The normal
+whole-catalog preparation path is the build owner; this has no runtime state
+or teardown and makes no Android appearance claim.
+
 ## Known structural debt
 
 First verified against `af2e101`; status updated after J597. Each step was its own commit with

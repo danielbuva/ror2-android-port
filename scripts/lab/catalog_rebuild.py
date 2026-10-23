@@ -579,6 +579,228 @@ def postprocessing_bloom_rows(receipt, input_id, expected, provenance, candidate
     return result
 
 
+def read_postprocessing_uber_receipt(project, input_id, work, io=None):
+    """Read the independent source-camera Uber receipt, if locally enabled."""
+    from shader_postprocessing_uber import MARKER_SCHEMA, read_activation
+
+    project, work = Path(project), Path(work)
+    is_file = io.is_file if io is not None else Path.is_file
+    read_json = io.read if io is not None else read
+    digest = io.sha if io is not None else sha
+    marker_path = project / ".rebuild/postprocessing-uber.json"
+    if any(path.is_symlink() for path in (marker_path, *marker_path.parents)):
+        raise RuntimeError("Uber batch marker may not be a symlink")
+    activation = read_activation(work, input_id)
+    if not is_file(marker_path):
+        if activation is not None and activation.get("enabled") is True:
+            raise RuntimeError("Uber batch is enabled but no staging receipt exists")
+        return None
+    marker = read_json(marker_path)
+    if (
+        set(marker) != {"schema", "input_id", "receipt_path", "receipt_sha256", "activation_path", "activation_sha256"}
+        or marker.get("schema") != MARKER_SCHEMA
+        or marker.get("input_id") != input_id
+        or activation is None
+        or activation.get("enabled") is not True
+        or marker.get("activation_path") != "work/config/postprocessing-uber.json"
+        or marker.get("activation_sha256") != activation["sha256"]
+    ):
+        raise RuntimeError("Uber marker does not match the current input-bound activation")
+    relative = Path(marker["receipt_path"])
+    if relative.is_absolute() or ".." in relative.parts or "\\" in str(relative):
+        raise RuntimeError("Uber batch receipt path is unsafe")
+    receipt_path = project / relative
+    if (
+        not receipt_path.resolve().is_relative_to(project.resolve())
+        or any(path.is_symlink() for path in (receipt_path, *receipt_path.parents))
+        or not is_file(receipt_path)
+        or digest(receipt_path) != marker.get("receipt_sha256")
+    ):
+        raise RuntimeError("Uber batch receipt is missing or changed")
+    return read_json(receipt_path)
+
+
+def postprocessing_uber_rows(receipt, input_id, expected, provenance, candidate_work=None):
+    """Validate the separate Uber batch receipt without changing Bloom receipts."""
+    if receipt is None:
+        return {}
+    from shader_postprocessing_uber import RECEIPT_SCHEMA, SCHEMA, candidate_root, parse_guid, read_activation
+
+    candidate_work = Path(candidate_work or ROOT / "work")
+    activation = read_activation(candidate_work, input_id)
+    recipe = read(RECIPE / "shader-postprocessing-uber-candidate.json")
+    generator_path = ROOT / "scripts/lab/shader_postprocessing_uber.py"
+    generator_sha, recipe_sha = sha(generator_path), sha(RECIPE / "shader-postprocessing-uber-candidate.json")
+    if (
+        activation is None
+        or activation.get("enabled") is not True
+        or receipt.get("schema") != RECEIPT_SCHEMA
+        or receipt.get("input_id") != input_id
+        or receipt.get("activation_sha256") != activation["sha256"]
+        or receipt.get("recipe_sha256") != recipe_sha
+        or receipt.get("generator_sha256") != generator_sha
+        or receipt.get("unity_compiled") is not False
+        or receipt.get("android_accepted") is not False
+        or receipt.get("visual_parity_proven") is not False
+    ):
+        raise RuntimeError("Uber receipt does not match current activation and authored generator")
+    expected_manifest = "work/" + recipe["stable_output"].format(input_id=input_id) + "/manifest.json"
+    if receipt.get("candidate_manifest_path") != expected_manifest:
+        raise RuntimeError("Uber candidate manifest path differs from recipe")
+    manifest_path = candidate_work / Path(expected_manifest).relative_to("work")
+    if (
+        any(p.is_symlink() for p in (manifest_path, *manifest_path.parents))
+        or not manifest_path.is_file()
+        or sha(manifest_path) != receipt.get("candidate_manifest_sha256")
+    ):
+        raise RuntimeError("Uber candidate manifest is absent or changed")
+    manifest = read(manifest_path)
+    if (
+        manifest.get("schema") != SCHEMA
+        or manifest.get("input_id") != input_id
+        or manifest.get("recipe_sha256") != recipe_sha
+        or manifest.get("generator_sha256") != generator_sha
+        or manifest.get("package_sha256") != recipe.get("package_sha256")
+        or manifest.get("pass_count") != recipe.get("source_pass_count")
+        or manifest.get("selected_pass") != recipe.get("selected_pass")
+        or manifest.get("unity_compiled") is not False
+        or manifest.get("android_accepted") is not False
+        or manifest.get("visual_parity_proven") is not False
+    ):
+        raise RuntimeError("Uber candidate manifest has stale provenance or qualification state")
+    contract = recipe["camera_contract"]
+    shader_path = contract["shader"]
+    target = "Assets/WholeGame/" + shader_path.removeprefix("Assets/")
+    candidate_rel = "sources/Hidden_PostProcessing_Uber_53.shader"
+    candidate = candidate_root(candidate_work, input_id, recipe) / candidate_rel
+    identity = manifest.get("source_identity", {})
+    if (
+        receipt.get("shader_target") != target
+        or receipt.get("source_sha256") != contract["shader_sha256"]
+        or receipt.get("candidate_sha256") != manifest.get("shader_candidate_sha256")
+        or receipt.get("resource_target") != "Assets/WholeGame/" + contract["resource"].removeprefix("Assets/")
+        or receipt.get("resource_sha256") != contract["resource_sha256"]
+        or receipt.get("resource_meta_sha256") != contract["resource_meta_sha256"]
+        or receipt.get("camera_target") != "Assets/WholeGame/" + contract["source_camera_prefab"].removeprefix("Assets/")
+        or receipt.get("camera_sha256") != contract["source_camera_prefab_sha256"]
+        or receipt.get("camera_meta_sha256") != contract["source_camera_prefab_meta_sha256"]
+        or identity.get("shader") != shader_path
+        or identity.get("shader_sha256") != contract["shader_sha256"]
+        or identity.get("shader_meta_sha256") != contract["shader_meta_sha256"]
+        or identity.get("shader_meta_guid") != contract["shader_guid"]
+        or identity.get("resource") != contract["resource"]
+        or identity.get("resource_sha256") != contract["resource_sha256"]
+        or identity.get("resource_meta_sha256") != contract["resource_meta_sha256"]
+        or identity.get("resource_meta_guid") != contract["resource_asset_guid"]
+        or identity.get("source_camera_prefab") != contract["source_camera_prefab"]
+        or identity.get("source_camera_prefab_sha256") != contract["source_camera_prefab_sha256"]
+        or identity.get("source_camera_prefab_meta_sha256") != contract["source_camera_prefab_meta_sha256"]
+        or identity.get("profile") != contract["profile"]
+        or identity.get("profile_sha256") != contract["profile_sha256"]
+        or identity.get("profile_meta_sha256") != contract["profile_meta_sha256"]
+        or manifest.get("shader_candidate_sha256") is None
+        or not candidate.is_file()
+        or any(p.is_symlink() for p in (candidate, *candidate.parents))
+        or sha(candidate) != manifest["shader_candidate_sha256"]
+    ):
+        raise RuntimeError("Uber candidate does not match the exact source-camera contract")
+    source_provenance = provenance.get(target)
+    if source_provenance is not None and source_provenance.get("sha256") != contract["shader_sha256"]:
+        raise RuntimeError("Uber source conflicts with project provenance")
+    common = {
+        "source_asset_path": shader_path,
+        "resource_asset_path": contract["resource"],
+        "source_camera_prefab_path": contract["source_camera_prefab"],
+        "original_source_sha256": contract["shader_sha256"],
+        "original_meta_sha256": contract["shader_meta_sha256"],
+        "resource_sha256": contract["resource_sha256"],
+        "resource_meta_sha256": contract["resource_meta_sha256"],
+        "source_camera_prefab_sha256": contract["source_camera_prefab_sha256"],
+        "source_camera_prefab_meta_sha256": contract["source_camera_prefab_meta_sha256"],
+    }
+    result = {
+        target: {
+            **common,
+            "candidate_path": candidate_rel,
+            "candidate_shader_sha256": manifest["shader_candidate_sha256"],
+            "candidate_shader_bytes": candidate.stat().st_size,
+            "_uber_candidate": True,
+        }
+    }
+    result[target + ".meta"] = {
+        **common,
+        "preserved_meta_sha256": contract["shader_meta_sha256"],
+        "preserved_meta_bytes": receipt["shader_meta_bytes"],
+        "_meta_only": True,
+    }
+    includes = receipt.get("includes")
+    generated = manifest.get("includes")
+    if not isinstance(includes, list) or not isinstance(generated, list) or len(includes) != len(generated):
+        raise RuntimeError("Uber receipt has incomplete include closure")
+    for row, item in zip(includes, generated, strict=True):
+        rel = PurePosixPath(recipe["include_target_prefix"]) / PurePosixPath(item["package_path"])
+        candidate_path = item["candidate_path"]
+        candidate_file = candidate_root(candidate_work, input_id, recipe) / candidate_path
+        meta_candidate = Path(str(candidate_file) + ".meta")
+        if (
+            row.get("target") != rel.as_posix()
+            or row.get("candidate_path") != candidate_path
+            or row.get("sha256") != item.get("sha256")
+            or row.get("meta_sha256") != item.get("meta_sha256")
+            or not candidate_file.is_file()
+            or not meta_candidate.is_file()
+            or sha(candidate_file) != item["sha256"]
+            or sha(meta_candidate) != item["meta_sha256"]
+            or row.get("meta_target") != rel.as_posix() + ".meta"
+            or row.get("guid") != parse_guid(meta_candidate)
+        ):
+            raise RuntimeError("Uber include row differs from stable candidate")
+        result[rel.as_posix()] = {
+            **row,
+            "candidate_path": candidate_path,
+            "candidate_sha256": item["sha256"],
+            "_generated_only": True,
+            "_uber_generated": True,
+        }
+        result[rel.as_posix() + ".meta"] = {
+            **row,
+            "candidate_path": candidate_path + ".meta",
+            "candidate_sha256": item["meta_sha256"],
+            "_generated_only": True,
+            "_uber_generated": True,
+            "_uber_meta": True,
+        }
+    return result
+
+
+def merge_postprocessing_rows(bloom_rows, uber_rows):
+    """Merge exact shared generated includes while retaining the legacy Bloom row."""
+    merged = dict(bloom_rows)
+    for path, uber in uber_rows.items():
+        bloom = merged.get(path)
+        if bloom is None:
+            merged[path] = uber
+            continue
+        bloom_meta = bloom.get("_generated_meta") is True
+        uber_meta = uber.get("_uber_meta") is True
+        bloom_digest = bloom.get("candidate_meta_sha256") if bloom_meta else bloom.get("candidate_sha256")
+        uber_digest = uber.get("candidate_sha256")
+        if (
+            not (bloom.get("_generated_only") or bloom.get("_generated_meta"))
+            or not uber.get("_uber_generated")
+            or bloom_meta != uber_meta
+            or bloom_digest != uber_digest
+            or bloom.get("guid") != uber.get("guid")
+            or bloom.get("target") != uber.get("target")
+            or bloom.get("meta_target") != uber.get("meta_target")
+        ):
+            raise RuntimeError("Post-processing shader batches claim unequal shared generated content: " + path)
+        # Bloom's historical row schema and replay semantics remain canonical
+        # for shared include paths. The independent Uber receipt still has to
+        # prove identical bytes and GUID before the duplicate is collapsed.
+    return merged
+
+
 def bootstrap_identity(work, input_id):
     """The historical generation identity, recorded publicly in the build-entry recipe (J597)."""
     recipe = read(RECIPE / "build-entry-inputs.json")
@@ -618,12 +840,14 @@ class CatalogIO(StageIO):
         return self.analysis
 
 
-def verify_outputs(io, expected, provenance, shader_overrides=None, input_id=None, postprocessing_bloom=None):
+def verify_outputs(io, expected, provenance, shader_overrides=None, input_id=None, postprocessing_bloom=None, postprocessing_uber=None):
     overrides = shader_override_rows(shader_overrides, input_id, expected, provenance, candidate_work=io.work)
     bloom_overrides = postprocessing_bloom_rows(postprocessing_bloom, input_id, expected, provenance, candidate_work=io.work)
-    if set(overrides) & set(bloom_overrides):
-        raise RuntimeError("Bloom and shader-catalog overrides claim the same project path")
+    uber_overrides = postprocessing_uber_rows(postprocessing_uber, input_id, expected, provenance, candidate_work=io.work)
+    if set(overrides) & set(bloom_overrides) or set(overrides) & set(uber_overrides):
+        raise RuntimeError("Shader batch receipts claim the same project path")
     overrides.update(bloom_overrides)
+    overrides = merge_postprocessing_rows(overrides, uber_overrides)
     expected = set(expected) | set(overrides)
     export = None
     if overrides:
@@ -673,6 +897,66 @@ def verify_outputs(io, expected, provenance, shader_overrides=None, input_id=Non
             )
         ):
             raise RuntimeError("Bloom source, metadata, or serialized resource changed during replay: " + path)
+    for path, row in uber_overrides.items():
+        if row.get("_meta_only") or row.get("_generated_only"):
+            continue
+        source = export / row["source_asset_path"]
+        source_meta = export / (row["source_asset_path"] + ".meta")
+        resource = export / row["resource_asset_path"]
+        resource_meta = export / (row["resource_asset_path"] + ".meta")
+        camera = export / row["source_camera_prefab_path"]
+        camera_meta = Path(str(camera) + ".meta")
+        target_meta = io.project / (path + ".meta")
+        resource_target = io.project / ("Assets/WholeGame/" + row["resource_asset_path"].removeprefix("Assets/"))
+        resource_target_meta = Path(str(resource_target) + ".meta")
+        camera_target = io.project / ("Assets/WholeGame/" + row["source_camera_prefab_path"].removeprefix("Assets/"))
+        camera_target_meta = Path(str(camera_target) + ".meta")
+        if (
+            any(
+                p.is_symlink()
+                for p in (
+                    source,
+                    source_meta,
+                    resource,
+                    resource_meta,
+                    camera,
+                    camera_meta,
+                    target_meta,
+                    resource_target,
+                    resource_target_meta,
+                    camera_target,
+                    camera_target_meta,
+                )
+            )
+            or any(
+                not p.is_file()
+                for p in (
+                    source,
+                    source_meta,
+                    resource,
+                    resource_meta,
+                    camera,
+                    camera_meta,
+                    target_meta,
+                    resource_target,
+                    resource_target_meta,
+                    camera_target,
+                    camera_target_meta,
+                )
+            )
+            or sha(source) != row["original_source_sha256"]
+            or sha(source_meta) != row["original_meta_sha256"]
+            or sha(resource) != row["resource_sha256"]
+            or sha(resource_meta) != row["resource_meta_sha256"]
+            or sha(camera) != row["source_camera_prefab_sha256"]
+            or sha(camera_meta) != row["source_camera_prefab_meta_sha256"]
+            or io.sha(resource_target) != row["resource_sha256"]
+            or io.sha(resource_target_meta) != row["resource_meta_sha256"]
+            or io.sha(camera_target) != row["source_camera_prefab_sha256"]
+            or io.sha(camera_target_meta) != row["source_camera_prefab_meta_sha256"]
+            or io.sha(target_meta) != row["original_meta_sha256"]
+        ):
+            raise RuntimeError("Uber source/resource/camera identity changed during replay: " + path)
     for path in sorted(expected):
         target = io.project / path
         row = provenance.get(path, {})
@@ -683,7 +967,7 @@ def verify_outputs(io, expected, provenance, shader_overrides=None, input_id=Non
             if override.get("_meta_only"):
                 if data is None or io.sha(target) != override["preserved_meta_sha256"] or len(data) != override["preserved_meta_bytes"]:
                     raise RuntimeError("Qualified shader override metadata differs from its exact receipt: " + path)
-            elif override.get("_generated_only") or override.get("_generated_meta"):
+            elif (override.get("_generated_only") or override.get("_generated_meta")) and not override.get("_uber_generated"):
                 recipe = read(RECIPE / "shader-postprocessing-bloom-candidate.json")
                 from shader_postprocessing_bloom import candidate_root
 
@@ -706,6 +990,25 @@ def verify_outputs(io, expected, provenance, shader_overrides=None, input_id=Non
                     or sha(candidate) != override["candidate_shader_sha256"]
                 ):
                     raise RuntimeError("Bloom replacement shader differs from its exact candidate: " + path)
+            elif override.get("_uber_candidate"):
+                recipe = read(RECIPE / "shader-postprocessing-uber-candidate.json")
+                from shader_postprocessing_uber import candidate_root
+
+                candidate = candidate_root(io.work, input_id, recipe) / override["candidate_path"]
+                if (
+                    data is None
+                    or not candidate.is_file()
+                    or io.sha(target) != override["candidate_shader_sha256"]
+                    or sha(candidate) != override["candidate_shader_sha256"]
+                ):
+                    raise RuntimeError("Uber replacement shader differs from its exact candidate: " + path)
+            elif override.get("_uber_generated"):
+                recipe = read(RECIPE / "shader-postprocessing-uber-candidate.json")
+                from shader_postprocessing_uber import candidate_root
+
+                candidate = candidate_root(io.work, input_id, recipe) / override["candidate_path"]
+                if data is None or not candidate.is_file() or io.sha(target) != override["candidate_sha256"] or sha(candidate) != override["candidate_sha256"]:
+                    raise RuntimeError("Uber generated include differs from its exact candidate: " + path)
             else:
                 source = export / override["source_asset_path"]
                 source_meta = export / (override["source_asset_path"] + ".meta")
@@ -738,7 +1041,10 @@ def catalog_closure(destination, work, input_id, expected, provenance):
     io = CatalogIO(work, destination, input_id)
     override_receipt = prepare_integration(io, attempt=attempt)
     bloom_receipt = read_postprocessing_bloom_receipt(destination, input_id, work, io=io)
-    verify_outputs(io, expected, provenance, shader_overrides=override_receipt, input_id=input_id, postprocessing_bloom=bloom_receipt)
+    uber_receipt = read_postprocessing_uber_receipt(destination, input_id, work, io=io)
+    verify_outputs(
+        io, expected, provenance, shader_overrides=override_receipt, input_id=input_id, postprocessing_bloom=bloom_receipt, postprocessing_uber=uber_receipt
+    )
     io.write(destination / ".rebuild/catalog-closure-complete.json", dict(input_id=input_id))
     io.flush()
 
@@ -765,6 +1071,9 @@ def dependencies(destination, work, input_id, expected, provenance):
     stage_missing_sources(io)
     override_receipt = read_shader_override_receipt(destination, input_id, work)
     bloom_receipt = read_postprocessing_bloom_receipt(destination, input_id, work, io=io)
-    verify_outputs(io, expected, provenance, shader_overrides=override_receipt, input_id=input_id, postprocessing_bloom=bloom_receipt)
+    uber_receipt = read_postprocessing_uber_receipt(destination, input_id, work, io=io)
+    verify_outputs(
+        io, expected, provenance, shader_overrides=override_receipt, input_id=input_id, postprocessing_bloom=bloom_receipt, postprocessing_uber=uber_receipt
+    )
     io.write(destination / ".rebuild/dependencies-complete.json", dict(input_id=input_id))
     io.flush()

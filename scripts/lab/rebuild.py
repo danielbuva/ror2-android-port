@@ -11,7 +11,7 @@ from typing import Callable
 
 import assembly_transforms
 from composition_io import composition
-from catalog_rebuild import catalog_closure, dependencies
+from catalog_rebuild import catalog_closure, dependencies, merge_postprocessing_rows
 from scene_rebuild import stage_variants, source_scenes
 from build_entry_rebuild import build_entries, runtime_sources, validate_bindings
 from project_input_rebuild import PROJECT_INPUT_PATHS, project_inputs
@@ -331,14 +331,80 @@ def _catalog_postprocessing_bloom_rows(destination, project, work, expected, pro
     return rows
 
 
+def _catalog_postprocessing_uber_rows(destination, project, work, expected, provenance):
+    work = Path(work)
+    marker = Path(destination) / ".rebuild/postprocessing-uber.json"
+    if marker.is_symlink():
+        raise RuntimeError("Uber batch marker is not a regular file")
+    if not marker.exists():
+        return {}
+    from catalog_rebuild import postprocessing_uber_rows, read_postprocessing_uber_receipt
+
+    input_id = read(work / "config/accepted-input.json")["input_id"]
+    receipt = read_postprocessing_uber_receipt(destination, input_id, work)
+    rows = postprocessing_uber_rows(receipt, input_id, expected, provenance, candidate_work=work)
+    if not rows:
+        return rows
+    from composition_io import StageIO
+
+    reconstruction = read(work / "config/reconstruction.json")
+    projects = reconstruction.get("projects")
+    if not isinstance(projects, list) or len(projects) != 1 or not isinstance(projects[0], str):
+        raise RuntimeError("Uber comparison requires the exact accepted export root")
+    export = StageIO(work).resolve(projects[0])
+    for path, row in rows.items():
+        if row.get("_meta_only") or row.get("_generated_only"):
+            continue
+        source, meta = export / row["source_asset_path"], export / (row["source_asset_path"] + ".meta")
+        resource, resource_meta = export / row["resource_asset_path"], export / (row["resource_asset_path"] + ".meta")
+        camera, camera_meta = export / row["source_camera_prefab_path"], export / (row["source_camera_prefab_path"] + ".meta")
+        target_meta = Path(project) / (path + ".meta")
+        resource_target = Path(project) / ("Assets/WholeGame/" + row["resource_asset_path"].removeprefix("Assets/"))
+        resource_target_meta = Path(str(resource_target) + ".meta")
+        camera_target = Path(project) / ("Assets/WholeGame/" + row["source_camera_prefab_path"].removeprefix("Assets/"))
+        camera_target_meta = Path(str(camera_target) + ".meta")
+        paths = (
+            source,
+            meta,
+            resource,
+            resource_meta,
+            camera,
+            camera_meta,
+            target_meta,
+            resource_target,
+            resource_target_meta,
+            camera_target,
+            camera_target_meta,
+        )
+        if (
+            any(p.is_symlink() for p in paths)
+            or any(not p.is_file() for p in paths)
+            or sha(source) != row["original_source_sha256"]
+            or sha(meta) != row["original_meta_sha256"]
+            or sha(resource) != row["resource_sha256"]
+            or sha(resource_meta) != row["resource_meta_sha256"]
+            or sha(camera) != row["source_camera_prefab_sha256"]
+            or sha(camera_meta) != row["source_camera_prefab_meta_sha256"]
+            or sha(target_meta) != row["original_meta_sha256"]
+            or sha(resource_target) != row["resource_sha256"]
+            or sha(resource_target_meta) != row["resource_meta_sha256"]
+            or sha(camera_target) != row["source_camera_prefab_sha256"]
+            or sha(camera_target_meta) != row["source_camera_prefab_meta_sha256"]
+        ):
+            raise RuntimeError("Uber batch source/resource identity changed during comparison: " + path)
+    return rows
+
+
 def compare(destination, project, expected, provenance, owns, producers=None, work=None):
     result = {status: [] for status in ("identical", "different", "missing", "extra")}
     work = Path(work or WORK)
     overrides = _catalog_shader_override_rows(destination, project, work, expected, provenance)
     bloom_overrides = _catalog_postprocessing_bloom_rows(destination, project, work, expected, provenance)
-    if set(overrides) & set(bloom_overrides):
-        raise RuntimeError("Bloom and shader-catalog override receipts claim the same path")
+    uber_overrides = _catalog_postprocessing_uber_rows(destination, project, work, expected, provenance)
+    if set(overrides) & set(bloom_overrides) or set(overrides) & set(uber_overrides):
+        raise RuntimeError("Shader batch receipts claim the same path")
     overrides.update(bloom_overrides)
+    overrides = merge_postprocessing_rows(overrides, uber_overrides)
     expected = set(expected) | set(overrides)
     export = None
     if overrides:
@@ -364,7 +430,7 @@ def compare(destination, project, expected, provenance, owns, producers=None, wo
                     and sha(target) == override["preserved_meta_sha256"]
                     and sha(source_oracle) == override["original_meta_sha256"]
                 )
-            elif override.get("_generated_only") or override.get("_generated_meta"):
+            elif (override.get("_generated_only") or override.get("_generated_meta")) and not override.get("_uber_generated"):
                 recipe = read(RECIPE / "shader-postprocessing-bloom-candidate.json")
                 from shader_postprocessing_bloom import candidate_root
 
@@ -384,6 +450,30 @@ def compare(destination, project, expected, provenance, owns, producers=None, wo
                     and not source_oracle.is_symlink()
                     and sha(source_oracle) == override["original_source_sha256"]
                     and sha(target) == override["candidate_shader_sha256"]
+                )
+            elif override.get("_uber_candidate"):
+                recipe = read(RECIPE / "shader-postprocessing-uber-candidate.json")
+                from shader_postprocessing_uber import candidate_root
+
+                candidate = candidate_root(work, read(work / "config/accepted-input.json")["input_id"], recipe) / override["candidate_path"]
+                matches = (
+                    target.is_file()
+                    and not target.is_symlink()
+                    and candidate.is_file()
+                    and sha(target) == override["candidate_shader_sha256"]
+                    and sha(candidate) == override["candidate_shader_sha256"]
+                )
+            elif override.get("_uber_generated"):
+                recipe = read(RECIPE / "shader-postprocessing-uber-candidate.json")
+                from shader_postprocessing_uber import candidate_root
+
+                candidate = candidate_root(work, read(work / "config/accepted-input.json")["input_id"], recipe) / override["candidate_path"]
+                matches = (
+                    target.is_file()
+                    and not target.is_symlink()
+                    and candidate.is_file()
+                    and sha(target) == override["candidate_sha256"]
+                    and sha(candidate) == override["candidate_sha256"]
                 )
             else:
                 source_oracle = export / override["source_asset_path"]
