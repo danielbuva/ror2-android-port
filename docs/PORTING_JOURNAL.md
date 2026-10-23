@@ -35886,3 +35886,176 @@ phone-only installation remain separate gates. Revisit on original input,
 target schema/order, recipe, reader or interpreter changes. Architecture and
 LOCAL_STATE name the producer and lifecycle; no game runtime owner or `./dev`
 action is added.
+
+## J1027 — Bind explicit importer configuration and reject drift on Android
+
+**Question and prior art.** J1025 qualifies an authored control in a separate
+NativeAOT importer console. Before a real-input call, make its configuration and
+refusal behavior explicit. Re-inspected the pinned public
+[CoreConfiguration](https://github.com/AssetRipper/AssetRipper/blob/1ac666f47d8e9dedf96afb0b914c70d7656151ea/Source/AssetRipper.Import/Configuration/CoreConfiguration.cs),
+ImportSettings and GameStructure.Load APIs, following the community extraction
+map. The unchanged importer separates file/assembly initialization from export.
+A host-only probe confirms Level2 script metadata, Extract streaming assets,
+zero default/target versions and script import enabled. This describes input
+metadata parsing; the game remains native IL2CPP ARM64.
+
+**Separate prototype and explicit contract.** The new private console retains
+the authored two-asset control and adds strict configuration checking plus an
+unexecuted import mode. Configuration accepts only its seven known fields,
+profile `default-import-v1`, the observed defaults and a 146-assembly contract.
+It hashes the actual configuration bytes and checks current upstream defaults
+before continuing. No export mode exists. Its import path uses the public
+GameStructure.Load API, bounded status/error observations and one disposable
+bundle/assembly-manager lifetime. This is not a current build consumer.
+Program SHA-256 is
+`3ed6c1b5db6e3477a2b4578bda890983979e859c11e67acb2d2def624743e830`;
+configuration SHA-256 is
+`b727e7bb017e5e06e8ea1bb25564a6407a615d53b8e667b5ea125c6cda632e90`.
+The original self-test-only console and J1025 evidence remain intact.
+
+**Host compilation boundaries.** Two initial authored-helper compiles fail on
+missing UnknownObject/UnreadableObject namespace imports; preserved source
+versions identify these wrapper errors. Referencing the public AssetCreation
+types resolves them without changing the importer. The first native compile
+then fails with an explicit OutOfMemoryException in ILCompiler.ObjectWriter's
+StringTableBuilder/MemoryStream growth under the 3 GiB compiler request:
+217.05 s, sampled family RSS 3,546,005,504 bytes. This is a host compiler failure,
+not a phone importer allocation or game result.
+
+A 4 GiB compiler retry first skips compilation because the failed object file
+looks current, then fails linking its absent export map. The pinned SDK's
+IlcCompile target lists only the native object as its incremental output. Hash
+and move this prototype's three failed native intermediates into the retained
+failed case, then regenerate that target. No shared cache is cleared. The next
+4 GiB compile succeeds in 213.07 s with sampled family RSS 3,937,222,656 bytes.
+All retries retain the independent 5 GiB family RSS guard, 8 GiB disk reserve,
+15 percent free-memory floor, two workers, 600 s deadline and busy-Unity-mutex
+stop. No phone memory budget, Unity game toolchain or upstream source changes.
+The 78,974,336-byte Android ELF has SHA-256
+`829acd0ff17143f648847f5cbf872766d30323ca9983913713bb0554bc038f0c`.
+
+**Host and Android controls.** The host passes configuration, the same two
+accepted typed assets / 204 input bytes, and export-mode refusal. Five invalid
+configurations refuse: unknown field, script level, streaming mode, target
+version flag and assembly count. On Android, both the existing Mono-based tool
+host and NativeAOT executable pass authored input and configuration, then refuse
+all five invalid configurations with exit 2. All 14 processes are absent at
+readback. Both configuration observations bind the exact same SHA-256 above.
+Short process lifetimes still leave retained-RSS/performance comparisons
+unqualified. The control runner keeps its 512 MiB RSS guard, RAM/scratch
+reserves and 30 s per-process deadline.
+
+**Input-verifier controls and pending trial.** The copied accepted-input manifest
+has an input ID and a nested path-to-size/hash map. Pre-run checks catch two
+new harness comparisons that incorrectly assumed a flat map/hash value; no
+actual-input process starts. The corrected reader is tested on 2,749 authored
+files: valid input passes; same-size hash mutation, size mutation and symlinks
+refuse. A separate host comparison confirms the copied manifest's 2,749
+size/hash rows and 4,121,244,593 bytes match the current accepted inventory.
+That comparison does not rehash the phone's real files in this experiment.
+The concrete actual-input trial is source/hash bound and pending peer review;
+its parser mode, dependency initialization and lifecycle remain unexecuted.
+
+**Peer-review correction before execution.** Static review finds that the
+proposed runners dynamically trust the current artifact manifest/control
+receipt instead of enforcing the reviewed pair. Pin the entire 62-row artifact
+manifest and 14-case control receipt at host admission, and pin the expected
+artifact/input digests on phone before/after. Joint artifact/manifest drift
+now refuses; the phone result also retains the input identity and both digests.
+The runnable authored `native_import_verifier_test_v3.py` passes four host tests,
+including the valid 2,749-file case, hash/size/symlink mutations, joint artifact/
+manifest replacement and control-receipt replacement. No native rebuild or
+real-input call occurs for this correction. Review packet v3 supersedes v1/v2.
+
+**Evidence and boundaries.** Source variants, failed intermediates, successful
+publications, synthetic verifier checks, exact configuration, 14 phone controls
+and review packet stay ignored under
+`work/coordination/phone-proof/nativeaot-tool-host-r1/`.
+`configuration-proof-v1.json` is 4,007 bytes, SHA-256
+`3e5046fbaadeeacb4574f354d5a6a4bac4cf3454e8859435384dcbcd3b6ef58c`.
+The source/guard successor `configuration-proof-v2.json` is 726 bytes,
+SHA-256 `ca46c03ef9f3899899bfae95530176fc285636cffdf0f50cb46f8efa7cc879d5`.
+All 614 baseline tool hashes match before/after each phone control attempt.
+Alpha retains APK
+be26c21c4cd8ff15a8a663528216cf7a69394a51d8b9441a63a1a496f83e98b5,
+with no game process/selector and the display asleep. Zero installs, game
+launches or editor actions occur; Main's resources remain untouched. Changed
+private drivers pass Ruff. Complete accepted-input import, processing/export,
+output comparison, permitted distribution, app policy and matched game
+performance remain open. Route A and the desktop fallback stay fixed.
+
+## J1029 — Preserve a native importer failure during raw loading
+
+**Hypothesis and qualified setup.** After J1027's explicit configuration,
+authored input and refusal controls, test whether the pinned NativeAOT importer
+returns the complete accepted input within the existing 5 GiB managed request
+and independent 6 GiB RSS guard. This is a separate build-tool process, not a
+game runtime. Peer review of the source-bound v3 runner closes its reviewed
+manifest/control-receipt pinning issue before dispatch. The launch rehashes the
+review packet, both drivers, runnable tests and exact native executable.
+
+**One actual-input attempt.** The supplied copy matches accepted input
+6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88.
+All 2,749 copied file sizes/hashes and all 62 selected artifact rows pass before
+and after. Initial available RAM is 9,858,334,720 bytes and owned scratch free
+space is 6,933,774,336 bytes. The 8 GiB initial RAM, 3 GiB initial scratch,
+continuous 1 GiB RAM / 2 GiB scratch reserves, 1,200 s deadline, two CPUs and
+64 MiB log bound remain enforced. No device budget is increased.
+
+The native process exits 2 through a caught OutOfMemoryException. The controller
+exits 1 and preserves failure; total attempt time, including verification, is
+34.13 s. Sampled peak process RSS is 5,286,301,696 bytes and the largest managed
+sample is 5,289,737,256 bytes. The last status is
+`loading_step_create_file_collection`; no bundle-return or complete event exists.
+Actual returned assembly/asset counts and dependency-initialization success are
+unobserved. The independent RSS/RAM/disk guard does not trigger this failure.
+
+**First observed allocation and source boundary.** The stack is Array.Resize
+inside the pinned .NET NativeAOT runtime's
+[ComputeLdftnReverseLookup_InvokeMap](https://github.com/dotnet/runtime/blob/v10.0.12/src/coreclr/nativeaot/System.Private.Reflection.Execution/src/Internal/Reflection/Execution/ExecutionEnvironmentImplementation.MappingTables.cs),
+then method-name/stack-trace construction and Exception.ToString, called by
+[GameBundle.LoadFilesAndDependencies](https://github.com/AssetRipper/AssetRipper/blob/1ac666f47d8e9dedf96afb0b914c70d7656151ea/Source/AssetRipper.Assets/Bundles/GameBundle.FromPaths.cs).
+That source catches a read/decompression exception and stores its formatted
+stack in FailedFile before returning the raw file stack. Typed collection
+materialization happens afterward. This identifies a secondary allocation
+failure while describing an earlier read error; it does not identify that
+original error, prove a general formatter defect or measure typed-asset
+retention. Do not attribute this run to J1020's later typed-materialization
+boundary merely because managed memory is near the requested limit.
+
+**Small authored diagnostic.** Truncate the selected authored bundle by 64 bytes
+in a new ignored control. The same managed and NativeAOT console reject it with
+exit 2, zero accepted objects and no OOM text. Sampled RSS is 35,287,040 and
+28,610,560 bytes respectively. Both use a 256 MiB managed request and independent
+512 MiB RSS guard. This control does not reproduce the real-input OOM or prove
+that its original exception path is identical. It supports no broader
+exception-rendering, capacity or performance conclusion.
+
+**Terminal evidence.** The actual process and both diagnostic processes are
+absent. Alpha retains APK
+be26c21c4cd8ff15a8a663528216cf7a69394a51d8b9441a63a1a496f83e98b5,
+with no selector/game process and the display asleep. Actual-input scratch free
+space is 5,635,444,736 bytes at terminal readback; preserve the owned failed
+case, logs and temporary outputs. There are zero installs, game launches or
+editor actions, and no operation on Main's device/editor.
+
+Evidence remains under
+`work/coordination/phone-proof/nativeaot-tool-host-r1/`, selected explicitly by
+`native-import-selection-v1.json` and
+`phone-malformed-exception-selection-v1.json`. `actual-import-proof-v1.json` is
+1,167 bytes, SHA-256
+`88013510c8e36eeedc658c9be4ff3b32ae01a2d7992266d06140ae6c1404e6b3`.
+It binds the exact reviewed packet and terminal result/events/stdout/control
+hashes. No game-derived content or raw device logs are published.
+
+**Next discriminating gate.** Preserve this failure and identify the original
+read exception or reduce raw-loading overlap without increasing phone limits.
+J1016 already compares every initial-file payload under two smaller existing
+temporary-stream thresholds. A separate pinned upstream source copy with only
+those two constants changed is prepared, not built or adopted. Its 1,312-byte
+patch SHA-256 is
+`b594e3de9a246e7609dc5ef022284be4339146c6abb7f7c70c39a7165ae3a69d`.
+Requalify exact native output, authored controls and read-byte behavior before
+another actual-input attempt. Complete import, processing/export, metadata and
+project equivalence, permitted distribution, app security and matched game
+performance remain open. Route A and the desktop fallback remain fixed.

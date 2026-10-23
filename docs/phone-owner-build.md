@@ -50,6 +50,12 @@ Separate positive managed build-tool app host:
 [J999](PORTING_JOURNAL.md#j999--host-the-existing-managed-build-tools-from-read-only-app-native-libraries).
 The earlier refusal/security gate remains open; this fixture supplies no
 complete app bootstrap or game-build acceptance.
+[J1027](PORTING_JOURNAL.md#j1027--bind-explicit-importer-configuration-and-reject-drift-on-android)
+qualifies explicit importer configuration and refusal controls on Android;
+actual-input initialization/lifecycle and complete export remain open.
+[J1029](PORTING_JOURNAL.md#j1029--preserve-a-native-importer-failure-during-raw-loading)
+fails the first real-input native call before typed materialization; the observed
+OOM formats an earlier read exception, whose identity remains unknown.
 Native fixture compile/link/loading: [J839](PORTING_JOURNAL.md#j839--compile-and-link-the-authored-il2cpp-native-library-on-android).
 Full authored converter/native/device closure: [J842](PORTING_JOURNAL.md#j842--run-the-full-authored-converter-and-load-its-phone-compiled-native-output).
 Authored input capture and Android stripping: [J846](PORTING_JOURNAL.md#j846--capture-authored-stripping-inputs-and-replay-unitylinker-on-android).

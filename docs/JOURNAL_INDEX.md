@@ -10,6 +10,8 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1029](PORTING_JOURNAL.md#j1029--preserve-a-native-importer-failure-during-raw-loading) | 2026-10-24 | Preserve a native importer failure during raw loading | **Hypothesis and qualified setup.** |
+| [J1027](PORTING_JOURNAL.md#j1027--bind-explicit-importer-configuration-and-reject-drift-on-android) | 2026-10-24 | Bind explicit importer configuration and reject drift on Android | **Question and prior art.** |
 | [J1075](PORTING_JOURNAL.md#j1075--produce-every-accepted-avatar-from-original-pc-bundles-on-android) | 2026-10-24 | Produce every accepted Avatar from original PC bundles on Android | 2026-10-24 UTC. |
 | [J1074](PORTING_JOURNAL.md#j1074--qualify-the-integrated-public-transform-tools-inside-the-android-app-host) | 2026-10-24 | Qualify the integrated public transform tools inside the Android app host | 2026-10-24 UTC. |
 | [J1001](PORTING_JOURNAL.md#j1001--run-the-unchanged-public-transform-producer-inside-the-android-app-host) | 2026-10-24 | Run the unchanged public transform producer inside the Android app host | 2026-10-23 UTC. |

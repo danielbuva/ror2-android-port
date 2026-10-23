@@ -246,6 +246,22 @@ authored parser-input versions, `parser-proof-v1.json` and phone selection.
 `run-phone-parser-v1.py` and `phone_parser_v1.py` are required local replay
 support; the unchanged pinned upstream source supplies the importer library.
 These experimental files remain outside every current game-build consumer.
+J1027 adds private `assetripper-import-v2/` with explicit configuration, bounded
+status/error observations and separate authored/configuration/import modes.
+The versioned managed/native build adapters generate fresh publications; failed
+compiler/source variants and moved partial native intermediates stay preserved.
+`phone_import_refusals_v2.py` and `run-phone-import-refusals-v2.py` replay the
+14 control cases through explicit owned selections. `configuration-proof-v1.json`
+binds those controls. The source-bound `native-import-review-v3.json` selects
+`run-native-import-v1.py` and `native_import_phone_v1.py` for the subsequently executed J1029
+actual-input trial; v1/v2 are superseded. These local adapters are required replay
+support, not a public installer or game-build input.
+J1029 adds explicit `native-import-selection-v1.json` and malformed-control
+selections with retained terminal result/events/stdout, actual input/tool
+readbacks and `actual-import-proof-v1.json`. Failed scratch content remains in
+its owned case. `lowmem-thresholds-v1.patch` and its source-binding receipt
+select a separate pinned upstream source with only the prior temporary-stream
+threshold changes; this candidate is not a current build input or native result.
 
 `work/coordination/phone-proof/` retains J832's private execution adapters,
 hash-bound tool/package manifests, original failed attempts and collected device
