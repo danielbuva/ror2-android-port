@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J983](PORTING_JOURNAL.md#j983--verify-the-active-pcm-report-fix-in-a-fresh-player-and-both-device-controls) | 2026-10-22 | Verify the active PCM report fix in a fresh player and both device controls | **Hypothesis and generation.** |
 | [J982](PORTING_JOURNAL.md#j982--expose-the-validated-active-capture-snapshot-to-the-strict-music-join) | 2026-10-22 | Expose the validated active capture snapshot to the strict music join | **Hypothesis and prior art.** |
 | [J981](PORTING_JOURNAL.md#j981--refuse-the-r27-music-window-route-and-identify-masked-active-capture-data) | 2026-10-22 | Refuse the R27 music-window route and identify masked active capture data | **Observation and first failure.** |
 | [J979](PORTING_JOURNAL.md#j979--pass-both-standard-controls-on-the-frozen-r27-candidate) | 2026-10-22 | Pass both standard controls on the frozen R27 candidate | **Hypothesis and setup.** |

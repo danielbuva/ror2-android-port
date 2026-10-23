@@ -28935,3 +28935,77 @@ selection or rerun a pre-existing smoke package. All actual installs/runs keep
 explicit Main selection. J979's APK remains installed, J981 remains failed,
 Main remains asleep and J850 remains accepted. Revisit with a committed-source
 build, both fresh standard controls and the strict targeted route.
+
+## J983 — Verify the active PCM report fix in a fresh player and both device controls
+
+**Hypothesis and generation.** J982's report correction should permit the
+unchanged music-query admission while retaining the standard original-world
+routes. Root runs doctor and preflight with explicit Main selection; both pass.
+The ordinary whole-catalog hook unwinds the receipted camera/music stages to
+the accepted audio pair, regenerates the source-bound Bootstrap and reapplies
+those stages. No default-off restore, native SDK rebuild, event-call change or
+selection change is needed. API, game and native-library lineage stays fixed;
+new owner and downstream receipts come from the producer. Authored reconstruction
+steps must replay this updated cohort for future builds.
+
+**Build and host qualification.** The shared-lock build at source
+`fa24292b046b30386165d459a6f782fb4c284ea9` passes preparation, refresh, catalog
+validation and the full Android CLI. Unity succeeds with zero errors in
+209.123592 s. The new source naturally produces a fresh qualifying conversion
+trace; no prior-trace preservation or cache clearing is used. Root positively
+verifies editor idle before releasing the mutex. The freezer verifies the APK,
+symbols, 266 payload files, native/media/shader joins, 333 pre-strip rows and
+93 declared stripped inputs through the same strict receipt and metadata gates.
+
+APK SHA-256 is
+`9feef7e96d470bf34f787988f444dcd2fc21f922eb5d4cfa43d80e3516ac87d9`;
+source freeze is
+`bb80a6cdd083ff74e2f862f85cbc3c5020cb64833bd33073092788939a97ca87`;
+build receipt is
+`26a5b4e26fd01670b569b10d9c28dccfd95b20a73a79d4dd8193d344173397e8`.
+The frozen host report is
+`6130294d28bb416c56aaddc2b16052c7724810fc9db76acb13e9168e3b58bf16`;
+its complete file manifest is
+`f3d6029c1e2a5e5360ed0ca57413b01618b5a9e4860e3f06a031169581e042c6`.
+
+**Device controls.** Root installs the exact frozen APK in place on Main's
+current adopted volume, after fresh storage/placement/reserve queries, and syncs
+its frozen payload. Plain mode passes at 35.187896728515625 s. Stage mode passes
+with exactly one exit to Goolake and 10.994964599609375 s there, at world time
+131.1201171875 s. Both report current-build true and the unchanged 13 applied
+runs. Each verifies selector/process absence and sleep. Independent terminal
+readback rehashes the installed APK, verifies owned placement and the receipted
+runtime path, then confirms process/selector absence and display sleep. No
+primary or cleanup error occurs. These remain assisted diagnostics, not
+ordinary progression, full-kit or normal-difficulty acceptance.
+
+**New query evidence and limits.** The plain report now has both music-window
+boundaries and ten finite ordered rows at approximately 0.5 s cadence. The
+same original returned playing ID resolves to `Play_Music_System`; both state
+queries succeed and resolve through matching accepted bank metadata to Gameplay
+and DLC2_Song07. The exact selected, callback and owned music-output identities
+agree. The query window brackets advancing cached callback/frame observations
+consistent with the native output rate. The report has 535,680 finite nonzero
+samples, but no post-Term persisted waveform: the standard control force-stops.
+Every segment-position query returns AK_Fail; no position or segment progression
+is inferred. The original StartIntroMusic no-flags PostEvent overload does not
+request playback-position tracking, so do not change/repost that original event
+merely to make this diagnostic succeed. Later track observations are not
+retrospectively inserted into the earlier query window. This verifies the J982
+active-report repair on device and temporally corroborates native queries/PCM;
+it does not attribute the waveform to a particular event or prove audibility.
+Prior-art scope remains J964/J981/J982's source and bank-lifecycle boundary.
+
+**Evidence and next gate.** Build/freeze evidence is
+`work/coordination/original-game-audio-r27-build-root-r13/`; its frozen candidate
+is `work/experiments/original-game-audio/r27-20261023T005719.574575Z-35779b7c9d8b4e54975d04b6257f9e0d-9feef7e96d47/`.
+Control evidence is
+`work/coordination/original-game-audio-r27-device-controls/attempts/root-r2/`,
+with raw modes at `work/experiments/baseline/20261023T010604.199929Z/` and
+`work/experiments/baseline/20261023T011014.181507Z/`. The terminal receipt hash is
+`dcb87fffaa22ffdb88f24e49302de76b12167ccd5e02b6d51c4118735e782756`.
+The offline interpretation is
+`work/coordination/original-game-audio-pcm/r28-plain-query-analysis-r1/`.
+Root starts a separate bounded Huntress/source-camera natural-Quit route only
+after these controls, using fresh bindings and its own Main claim. Its result
+is pending here. J981 stays failed and preserved; J850 stays accepted.
