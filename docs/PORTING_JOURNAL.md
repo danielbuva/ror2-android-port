@@ -30620,3 +30620,37 @@ standard Main controls and classify strict current-process logs. Require all
 three typed slots ready and no recurrence before promoting the highlight fix
 or dispatching Loader. The queued J1012 blur bodies will also enter that player;
 neither shader parity nor full audio is accepted by these host tests.
+
+## J1015 — Supply the equipment-highlight owner's authored importer sidecar
+
+**First failure.** The source-frozen R33 attempt at 54cb007 passes catalog
+preparation, editor refresh and catalog-host checks. Before player compilation,
+runtime staging refuses `Missing runtime metadata has no regular authored
+sidecar: runtime/catalog/OriginalEquipmentHighlightAssetsBoundary.cs`.
+J1014 added the fixed source GUID and importer recipe but omitted its authored
+`.meta`. J973 already defines the correct behavior: seed missing metadata from
+a matching authored sidecar and refuse rather than invent a new identity.
+The refusal is a staging error, not Android gameplay evidence. No APK is
+produced or installed; the editor is independently idle and the normal shared
+build mutex is released.
+
+**Small correction.** Add the authored MonoImporter sidecar with exactly
+J1014's existing script GUID. The production stager, recipe identity and runtime
+behavior are unchanged. A new host regression stages the actual owner and
+sidecar into a fresh temporary project through `stage_runtime_sources`, proving
+the copied source bytes and metadata identity. The 48 focused metadata,
+owner-lifecycle, source-layout and importer tests pass; Ruff format/check pass.
+The current project is not edited by hand to bypass its metadata gate.
+
+Failure logs, source freeze and preserved conversion output remain under
+`work/coordination/original-game-audio-r33-build-root-r1/`; correction tests are
+in `work/coordination/original-game-equipment-highlights-r33-root-r1/metadata-sidecar-host-tests.log`.
+Rebuild staging must replay this sidecar. The authored recipe/privacy audit is
+recorded in [recipe notes](../recipe/README.md).
+
+Commit this correction before a fresh build attempt. Preserve the failed
+directory; require a new exact source/build receipt, frozen payload, both
+standard controls and strict current-process log qualification. Main still
+holds J1013 diagnostic 4b1a7969, accepted rollback remains J850 f1550ce0, and
+J1014's original highlight materialization/lifecycle and J1012's blur rendering
+remain unverified on Android.

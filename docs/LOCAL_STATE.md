@@ -1141,6 +1141,8 @@ runtime-source manifests stage the owner with the GUID in `project-layout.json`.
 cohort and camera hook bind the updated sources. Replaying runtime-source and
 importer staging reconstructs this dependency; no timestamped diagnostic output
 is read by the runtime or build.
+J1015 supplies the matching authored `.cs.meta` sidecar so current-project
+staging can seed its fixed identity before first import, as required by J973.
 
 
 ### Optional catalog shader activation (J966)

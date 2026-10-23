@@ -1895,3 +1895,8 @@ no original implementation, prefab, serialized data, middleware, generated
 binary, private path or device identifier is included. Existing reconstruction
 steps must replay the updated runtime and importer recipes. Provenance/privacy
 audit: 2026-10-23. Android loading and original highlighting remain unaccepted.
+
+J1015 supplies that authored script's MonoImporter sidecar using the existing
+recipe GUID. It contains generic importer settings and an authored identity
+only; no exported game metadata or protected content. The identity and source
+cohort are unchanged. Provenance/privacy audit: 2026-10-23.

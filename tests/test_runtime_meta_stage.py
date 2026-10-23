@@ -51,6 +51,23 @@ class RuntimeMetaStageTests(unittest.TestCase):
         self.assertEqual(meta_target.read_bytes(), self.meta_bytes)
         self.assertEqual(io.pending, {})
 
+    def test_equipment_owner_seeds_its_pinned_sidecar_in_a_fresh_project(self):
+        filename = "runtime/catalog/OriginalEquipmentHighlightAssetsBoundary.cs"
+        authored = REPO / "tools/unity" / filename
+        metadata = Path(str(authored) + ".meta").read_bytes()
+        guid = json.loads((REPO / "recipe/project-layout.json").read_text())["runtime_source_guids"][filename]
+        source = self.root / "tools/unity" / filename
+        source.parent.mkdir(parents=True)
+        source.write_bytes(authored.read_bytes())
+        Path(str(source) + ".meta").write_bytes(metadata)
+        (self.recipe / "project-layout.json").write_text(json.dumps({"runtime_source_guids": {filename: guid}}))
+        io = self.stage(names=[filename])
+        target = self.runtime / Path(filename).name
+        self.assertEqual(target.read_bytes(), authored.read_bytes())
+        self.assertEqual(Path(str(target) + ".meta").read_bytes(), metadata)
+        self.assertIn(f"guid: {guid}\n".encode(), metadata)
+        self.assertEqual(io.pending, {})
+
     def test_existing_unity_metadata_is_preserved_byte_for_byte(self):
         source_target = self.runtime / Path(self.filename).name
         meta_target = Path(str(source_target) + ".meta")

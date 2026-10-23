@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1015](PORTING_JOURNAL.md#j1015--supply-the-equipment-highlight-owners-authored-importer-sidecar) | 2026-10-23 | Supply the equipment-highlight owner's authored importer sidecar | **First failure.** |
 | [J1014](PORTING_JOURNAL.md#j1014--own-the-original-equipment-highlight-dependencies-before-body-activation) | 2026-10-23 | Own the original equipment-highlight dependencies before body activation | **Hypothesis and prior art.** |
 | [J1008](PORTING_JOURNAL.md#j1008--bound-android-assetripper-startup-and-full-input-import-failures) | 2026-10-23 | Bound Android AssetRipper startup and full-input import failures | **Hypothesis and scope.** |
 | [J1013](PORTING_JOURNAL.md#j1013--admit-the-original-audio-camera-and-expose-a-missing-equipment-highlight-dependency) | 2026-10-23 | Admit the original audio camera and expose a missing equipment highlight dependency | **Hypothesis and exact player.** |

@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-23 UTC after **J1014 (source only)**. R32 diagnostic 4b1a7969 passes
+Last updated 2026-10-23 UTC after **J1015 (source only)**. R32 diagnostic 4b1a7969 passes
 both standard controls, exact installed/placement/idle readbacks and the original
 audio-camera contract on Lakes and after one exit to Goolake. The timing fix now
 admits a fresh music target without changing the five-second window or gates.
@@ -10,7 +10,8 @@ playback, physical audibility and PC visual parity remain unqualified. The first
 nested admission sample is still absent from JSON. Main is stopped/asleep with
 13 applied runs intact. Accepted rollback stays J850 f1550ce0. J1014 now owns
 the missing highlight dependency in source; it and J1012's four blur catalog
-overrides are not built or installed.
+overrides are not built or installed. The first R33 attempt refused a missing
+authored script sidecar before player compilation; J1015 supplies it for retry.
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
