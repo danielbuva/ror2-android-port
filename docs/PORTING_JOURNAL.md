@@ -32433,3 +32433,84 @@ is separate from R36's installed graphics player and does not qualify playback.
 host-only packet is `gameplay-window-draft/`. R36 remains installed; the local
 build selection still requests its existing MusicController output. A later
 explicit MainOutput selection and player build are required to use the new mode.
+
+## J1036 — Assess fixed-target reconstruction of the accepted Android build
+
+2026-10-23. **Question:** can an owner's legitimate PC installation reproduce
+the accepted Android APK/payload directly, using the final build as a validation
+target instead of reconstructing/importing a Unity project on the phone?
+The user requests one complete feasibility assessment before another large
+pipeline. Architecture C, Route A, IL2CPP ARM64, the existing renderer, original
+game semantics, ownership boundaries and the desktop fallback remain fixed.
+Rebase onto Main `c6a556d` precedes this entry; Main's R35 state is preserved.
+
+**Method and source knowledge.** Read ADR-001/002, the architecture/rebuild/local
+state maps, the community extraction guidance, J586's complete rebuild
+comparison, J832/J842/J921's connected authored-player construction, J984's
+owner-assembly prefix and J1016/J1020's raw/typed input distinction. Inspect
+the current bundle builder, assembly/shader recipes and exact supplied Android
+module. UnityPy 1.25.3's existing parser reads serialized headers, raw object
+records, texture enums and shader platform arrays. No new RoR2 converter, loader,
+shader implementation or runtime diagnostic is implemented. Current official
+Unity IL2CPP/bundle documentation and Unity/game/Audiokinetic terms inform the
+separate technical and rights assessment; primary links are in the design note.
+
+**Frozen census.** J850 source `1780ea9545f1597c033a8d32e08074b03c7f38c8`,
+APK `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`,
+is independently rehashed. Read all 574 entries: 222,167,613 uncompressed bytes.
+Read and hash all 266 receipt-selected payload files: 2,272,394,833 bytes,
+133 UnityFS files, 132 text manifests and the catalog JSON. Initial use of the
+mutable payload correctly refuses its changed root manifest. Five changed
+members are located in retained attempts and each matches the frozen digest;
+the other 261 match in the current directory. No mutable bytes are accepted
+under the old target identity. Compared with the accepted 2,749-file PC
+inventory's whole-file digests, zero APK entries and zero payload members match.
+This does not determine subfile overlap, delta size or the difficulty of a
+transform, and is not a new live hash scan of every original installation file.
+
+The target `libunity.so` (60,927,416 bytes) and `libmain.so` (13,312 bytes)
+exactly match SDK IL2CPP/Development/ARM64 files. The 4,222,168-byte default
+resource file also matches. These are technically reusable generic SDK outputs,
+subject to their exact grants/acquisition. Game-derived `libil2cpp.so`
+(98,203,920 bytes), matching metadata (17,756,092 bytes), Burst and imported
+player data remain separate owner-generation/provenance boundaries.
+
+**Scoped content comparison.** Rehash the selected original Commando bundle
+against its accepted geometry provenance. It has 1,619 objects, DXT1/DXT5
+textures and Windows platform 19. Its accepted Android prefab bundle has
+75,378 objects including its broader dependencies, ETC2_RGBA8/ETC_RGB4 and
+RGB24/RGBA32 textures, Android platform 13, and 24 platform-18 Vulkan shaders.
+No entire raw object record matches within this pair. No complete subresource
+reuse percentage or whole-game conversion coverage follows. The existing
+source shader inventory records 1,425 compiled platform-4 D3D11 shaders and
+zero source-bearing shader objects. The current shader replay still names
+46 private analysis inputs and a native/CrossOver fallback.
+
+**Evidence.** Private read-only census, inspection sources, results, selected
+target receipt and SDK comparison are under
+`work/coordination/accepted-build-reconstruction/` in the isolated feasibility
+worktree. Result bindings:
+
+- `census.json`: SHA-256
+  `6170383cb6413a5c01b3c0044982a50892be30f2787a363c9cb14a1195b2fa07`.
+- `content-inspection.json`: SHA-256
+  `a6a6a6208b498259a4d5f33bbd9984d46f2a0fa1b822f4af915588fc3a155e9f`.
+
+Original/SDK bytes, raw paths, captures, device identities and signing material
+stay ignored. No build, install, game launch, device mutation or Editor action
+occurs. The separate Alpha doctor reports valid input/dependency pins but a
+missing local lab project/generation/checkpoint and unavailable bootstrap
+readiness; it is not a new lab-ready claim. Its private receipt is retained.
+
+**Decision scope.** The [complete assessment](accepted-build-reconstruction.md)
+classifies all output cohorts, proposes the fixed-target owner-input flow,
+compares it with project reconstruction and cache import, and identifies missing
+code/content producers, phone execution/resources, component grants and
+determinism/performance boundaries. Full Unity project/export reconstruction is
+not established as necessary. Arbitrary binary deltas are not established as
+redistributable or sufficient. Recommend evaluating the narrower direct design;
+do not claim an operational phone converter or implement a second large pipeline
+before complete producer coverage is credible. The alpha checklist now states
+the complete product gates instead of treating general export and static probes
+as mandatory product stages. Revisit with a complete output-producer map,
+permitted tools and an end-to-end reconstruction of this frozen target.

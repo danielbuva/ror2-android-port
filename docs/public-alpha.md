@@ -13,106 +13,30 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
 
 ## Decision and reproducibility
 
-- [ ] Complete accepted-input export on Android within explicit resource limits
-      and compare actual project outputs. Follow
-      [J1008's failed full-import evidence](PORTING_JOURNAL.md#j1008--bound-android-assetripper-startup-and-full-input-import-failures)
-      with [J1016's raw/materialization distinction](PORTING_JOURNAL.md#j1016--separate-raw-retention-from-incomplete-android-asset-materialization).
-      [J1018's direct-API/reference-release controls](PORTING_JOURNAL.md#j1018--test-consumed-buffer-ownership-during-android-asset-materialization)
-      still fail complete materialization. Use the planned partial graph to test
-      loading overlap; complete graph ownership and the native failure remain
-      open. Partial-graph, narrow ownership or raw-loading results do not pass
-      this gate.
-      [J1020's deferred-read comparison](PORTING_JOURNAL.md#j1020--test-deferred-serialized-object-reads-on-android)
-      preserves payload bytes but remains incomplete at the full API boundary;
-      inspect retained-object/tool-host memory behavior before increasing limits.
-      [J1023's authored NativeAOT tool fixture](PORTING_JOURNAL.md#j1023--qualify-an-authored-android-nativeaot-build-tool-fixture)
-      does not pass the complete-export gate; qualify an actual exporter tool
-      and resolve its frontend/platform requirements before comparing capacity.
-      [J1025's importer-console control](PORTING_JOURNAL.md#j1025--run-the-pinned-importer-through-an-android-nativeaot-console)
-      passes only authored objects; qualify full-input configuration/lifecycle
-      and complete processing/export before making a capacity claim.
-- [ ] Resolve the editor-equivalent Android content/shader production gate without
-      consuming desktop-generated game data as a hidden prerequisite; extend
-      [J832's precursor](PORTING_JOURNAL.md#j832--run-the-exact-converter-on-android-and-load-content-built-without-a-template)
-      to the full rendered/script-bound fixture; phone-side TextAsset generation
-      is qualified in [J833](PORTING_JOURNAL.md#j833--generate-content-and-sign-increasing-fixture-updates-on-android).
-- [ ] Establish permitted acquisition and Android execution of the exact IL2CPP
-      tools beyond the authored converter proof; extend
-      [J842’s converter/native fixture proof](PORTING_JOURNAL.md#j842--run-the-full-authored-converter-and-load-its-phone-compiled-native-output)
-      through [J849's connected stripping/conversion](PORTING_JOURNAL.md#j849--feed-actual-phone-stripping-output-into-the-exact-converter), editor-root production and the complete accepted game,
-      app sandbox execution (including [J836’s unresolved refusal control](PORTING_JOURNAL.md#j836--build-an-authored-apk-on-android-and-test-app-host-execution)), complete packaging, durable owner signing-key
-      custody and user-mediated installer/update flows beyond the fixture proof.
-- [ ] Present bounded proof findings before changing the working build or choosing
-      the final installation experience. Keep other execution backends excluded.
-      Extend [J857's complete pinned native metadata](PORTING_JOURNAL.md#j857--recover-the-complete-pinned-native-registry-from-owner-sdk-metadata-literals)
-      through independent project scene usage, general module policy and exact root
-      outputs. [J859](PORTING_JOURNAL.md#j859--generate-sdk-native-root-metadata-on-android-and-preserve-strippingconversion)
-      qualifies native-table generation at the stripping boundary;
-      [J862](PORTING_JOURNAL.md#j862--derive-authored-fixture-module-policy-from-owner-sdk-and-package-data-on-android)
-      adds restricted fixture SDK/package-derived module policy. Captured scene
-      roots and managed compilation remain explicit inputs.
-      [J864](PORTING_JOURNAL.md#j864--read-persistent-native-class-ids-from-the-pinned-sdk-on-android)
-      adds class-ID metadata. Following
-      [J866's scoped metadata qualification](PORTING_JOURNAL.md#j866--qualify-scoped-sdk-assembly-metadata-and-forwarding-on-android)
-      and [J869's SDK search metadata](PORTING_JOURNAL.md#j869--decode-pinned-sdk-wrapper-search-order-on-android),
-      qualify wrapper-metadata consumer semantics and scene/manager usage with
-      independent producers. Preserve
-      [J873's direct-name/cache-query distinction](PORTING_JOURNAL.md#j873--separate-direct-scene-names-from-sdk-wrapper-cache-queries);
-      the independent desktop oracle must never become a phone-build input.
-      Extend [J876's native flag metadata](PORTING_JOURNAL.md#j876--decode-native-sdk-type-flags-on-android)
-      through complete cache-consumer semantics before root production.
-      [J878](PORTING_JOURNAL.md#j878--reconstruct-sdk-wrapper-population-on-android-with-a-complete-forward-oracle)
-      verifies supported forward queries.
-      [J883](PORTING_JOURNAL.md#j883--include-the-object-root-and-match-android-metadata-to-native-sdk-caches)
-      matches root-inclusive Android metadata to native SDK cache observations;
-      [J893](PORTING_JOURNAL.md#j893--observe-authored-scene-and-manager-dependencies-without-conflating-native-identities)
-      adds separate desktop scene/manager observations and bounded type-name
-      comparison. Produce native usage identities, scene labels and exact linker
-      roots independently; keep SDK oracle reports out of phone generation.
-      Extend [J895's manager declaration metadata](PORTING_JOURNAL.md#j895--read-sdk-manager-registration-declarations-on-android-and-preserve-retention-boundaries)
-      through target/state-dependent serialization and native scene retention;
-      asset-dependency exclusions alone do not determine class usage.
-      [J934's Android feature declarations](PORTING_JOURNAL.md#j934--read-android-sdk-feature-declarations-and-compare-independent-api-observations)
-      supply another static prerequisite; qualify target discovery, module
-      inclusion and live state independently before claiming target retention.
-      Preserve [J939's static-input/API-lookup distinction](PORTING_JOURNAL.md#j939--read-sdk-target-key-input-bindings-on-android-and-preserve-lookup-mismatches)
-      while proving constructor results, map consumers and live availability.
-      [J948's field operand alignment](PORTING_JOURNAL.md#j948--link-sdk-target-record-copy-and-consumer-operands-on-android)
-      leaves node selection, container semantics and those live decisions open.
-- [ ] Extend [J899's authored compiler fixture](PORTING_JOURNAL.md#j899--compile-an-authored-c-fixture-on-android-and-preserve-cross-host-output-differences)
-      through general defines/generators, real source semantics and downstream
-      stripping/conversion. [J902](PORTING_JOURNAL.md#j902--compile-the-authored-unity-fixture-with-sdkpackage-derived-references-on-android)
-      derives the restricted fixture's references and compiles its Unity API
-      source on Android; broader packages/player compilation remain open.
-      [J905](PORTING_JOURNAL.md#j905--feed-the-android-compiled-unity-fixture-into-a-separate-stripping-handoff)
-      separately strips those actual Android outputs.
-      [J920](PORTING_JOURNAL.md#j920--convert-the-android-compiled-and-stripped-fixture-without-relaxing-replay-gates)
-      converts them on Android with matching raw source/data outputs.
-      [J921](PORTING_JOURNAL.md#j921--construct-and-load-the-authored-player-from-actual-android-compilerstripperconverter-outputs)
-      connects the separate native/player consumer through device load/update
-      checks. Extend beyond the fixed fixture while keeping captured scene
-      roots explicit and the earlier exact-replay gate intact.
-      Preserve the observed desktop/Android implementation DLL/PDB inequality
-      and compiler-host distinction; a matching reference assembly alone does
-      not establish equivalent behavior or performance.
-- [ ] Benchmark any alternative pipeline with pinned versions/options/shaders and
-      matched device workloads; IL2CPP alone does not prove equivalent performance.
-- [ ] Qualify the isolated owner-build environment; the alpha device is alpha's
-      exclusive device per [J818](PORTING_JOURNAL.md#j818--qualify-thor-and-preserve-the-siren-guard-across-device-reassignment).
-      Select it explicitly and install only an explicit alpha-built APK.
-- [ ] Complete a public-input bootstrap with no private recipes, inherited
-      workstation-only assets or analysis receipts
-      ([structural blockers](execution-backlog.md#structural-cleanup),
-      [J586](PORTING_JOURNAL.md#j586--r9-rerun-no-new-reimport-errors-one-gate-file-and-one-apk-shader-left)).
-      The [owner assembly prefix](OWNER_ASSEMBLIES.md) separates initial DLL/importer
-      generation from the private project oracle
-      ([J984](PORTING_JOURNAL.md#j984--generate-the-owner-assembly-prefix-without-a-project-oracle));
-      the rest of bootstrap remains open.
-- [ ] Bind builds to committed source, accepted input and toolchain receipts
-      ([J738](PORTING_JOURNAL.md#j738--whole-catalog-builds-stage-only-committed-sources-and-record-the-commit));
-      qualify fresh owner-generated outputs on the alpha device.
-- [ ] Audit public artifacts for game-derived material and separately licensed
-      dependencies; keep all owner-generated content private.
+- [ ] Deliver complete PC-input-to-Android conversion on the phone, preserving
+      Architecture C. Evaluate the [fixed accepted-build design](accepted-build-reconstruction.md)
+      against the full target before implementing another large pipeline.
+      Full Unity-project reconstruction or AssetRipper export is not an assumed
+      requirement. Every protected APK/payload output needs an owner-input
+      producer; the accepted build supplies validation, never hidden target bytes.
+- [ ] Resolve permitted tool acquisition and Android app execution, complete
+      game AOT/metadata construction, Android content/shader production, durable
+      owner signing and user-mediated installation/update as one complete flow.
+      The [existing stage evidence](phone-owner-build.md) and
+      [J921's connected authored-player chain](PORTING_JOURNAL.md#j921--construct-and-load-the-authored-player-from-actual-android-compilerstripperconverter-outputs)
+      are reusable ingredients, not completion of the game converter.
+- [ ] Complete public-input bootstrap without private generated assets or
+      workstation analysis receipts ([structural blockers](execution-backlog.md#structural-cleanup)).
+      Reuse the [owner assembly prefix](OWNER_ASSEMBLIES.md); resolve the remaining
+      shader/inherited-content producers and all component distribution grants.
+- [ ] Qualify the complete owner-generated output on the explicitly selected
+      alpha device, with committed source/input/toolchain receipts, normal
+      installer/update behavior and matched performance. Preserve the original
+      game installation, Main's editor/build mutex/device and the desktop fallback.
+      IL2CPP alone does not prove equivalent performance.
+- [ ] Present findings before adopting a replacement build pipeline or final
+      installation architecture. Keep other gameplay execution backends excluded;
+      audit public artifacts and keep owner-generated game content private.
 
 ## Packaging and acquisition
 

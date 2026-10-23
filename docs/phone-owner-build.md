@@ -1,5 +1,12 @@
 # Phone-only owner-build assessment
 
+Current design recommendation: [fixed accepted-build reconstruction](accepted-build-reconstruction.md)
+assesses the complete APK/payload as a destination contract. It can avoid a
+general Unity project/export workflow, but still lacks complete game-code and
+Android content/shader producers. Full AssetRipper export is not assumed to be a
+product prerequisite. The stage evidence below remains useful input, not a
+mandate to reproduce every desktop Editor step on the phone.
+
 2026-10-23 UTC. Scope: build/distribution engineering under
 [ADR-002](ADR-002-public-alpha-distribution.md), keeping the IL2CPP ARM64 game
 and Android renderer fixed. This combines source/tool inspection and isolated

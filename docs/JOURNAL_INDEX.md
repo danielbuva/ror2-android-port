@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1036](PORTING_JOURNAL.md#j1036--assess-fixed-target-reconstruction-of-the-accepted-android-build) | 2026-10-23 | Assess fixed-target reconstruction of the accepted Android build | 2026-10-23. |
 | [J1043](PORTING_JOURNAL.md#j1043--schedule-mainoutput-capture-after-genuine-authoritative-skill-activity) | 2026-10-23 | Schedule MainOutput capture after genuine authoritative skill activity | **Hypothesis and change.** |
 | [J1039](PORTING_JOURNAL.md#j1039--retry-genuine-achievement-events-after-a-failed-profile-transaction) | 2026-10-23 | Retry genuine achievement events after a failed profile transaction | **Hypothesis and change.** |
 | [J1038](PORTING_JOURNAL.md#j1038--observe-the-owned-two-pass-outline-material-and-named-bloom-failures) | 2026-10-23 | observe the owned two-pass Outline material and named Bloom failures | **Hypothesis and route.** |

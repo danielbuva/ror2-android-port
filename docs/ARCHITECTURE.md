@@ -33,6 +33,12 @@ for phone-only delivery while retaining the desktop workflow as fallback; no
 replacement game runtime or working build pipeline is selected. Public-input bootstrap,
 performance equivalence and device acceptance remain open.
 
+[Accepted-build reconstruction](accepted-build-reconstruction.md) owns the current
+feasibility comparison between a fixed-target owner converter and general
+Unity-project reconstruction. It adds no build step or runtime owner. The
+accepted APK/payload are validation oracles; the proposed public converter must
+derive protected output locally rather than distribute those oracle bytes.
+
 Phone build **support**: `scripts/lab/phone_bundle.py` writes the isolated authored
 TextAsset bundle with only Python's standard library; its versioned native
 schemas consume no class database or generated asset. `phone_content.py` owns
