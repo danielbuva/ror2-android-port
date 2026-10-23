@@ -35,7 +35,12 @@ performance equivalence and device acceptance remain open.
 
 [Accepted-build reconstruction](accepted-build-reconstruction.md) compares a
 fixed-target owner converter, private delta/frame replay and general Unity-project
-reconstruction. `tools/phone-build/accepted-output/phone_decode.py` owns current
+reconstruction. `tools/phone-build/accepted-output/package.py` owns explicit private-packet
+reproduction and framed emission. It verifies supplied target/profile/PC/SDK
+inputs without generating independent Android target information. `assemble.py`
+owns hash-bound unsigned APK assembly and required uncompressed/aligned resource
+storage; canonical alignment and owner signing follow separately.
+`phone_decode.py` in that directory owns current
 experimental **support**, not game runtime: explicit new owned workspace, pinned
 private package and verified PC/SDK inputs produce complete target files and an
 unsigned APK. The process owns setup, bounded codec children, hashes/progress,

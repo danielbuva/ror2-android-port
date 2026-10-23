@@ -58,16 +58,80 @@ No existing package/data is deleted or installed.
 
 The output includes all 840 target files and a deterministic **unsigned** APK
 with obsolete signatures removed. It verifies the 571 remaining APK entry
-hashes. ZIP compression/alignment, owner signing, installation/update and an
-ordinary Android app host are separate, unqualified steps. In particular,
-`resources.arsc` compression and resource/native-library alignment must be
-resolved before presenting this experimental archive as installable.
+hashes. This initial archive is not install-ready: it compresses `resources.arsc`.
+Use the separate assembly step below before alignment/signing. Ordinary Android
+app execution and installation/update remain unqualified.
 
 The public source differs from the phone-tested source only by repository Ruff
 formatting; their complete ASTs match. Exact source hashes and the alias receipt
 are retained with the private experiment evidence. The host contracts exercise
 real receiver path and stream functions with authored fixtures; they do not
 qualify Android process admission or game readiness.
+
+## Reproduce and stream a private packet
+
+`package.py create` reproduces every compressed frame from explicit accepted
+output files, an existing pinned private profile, owner PC files, supplied SDK
+and the pinned upstream encoder. It verifies the entire declared PC inventory
+before and after creation, refuses input/output overlap and existing output,
+and requires every produced frame to match the qualified frame hash. It copies
+the exact manifest bytes; timing goes into a separate creation receipt. This
+reproduces a packet, not the original Android target's independent derivation.
+The profile and accepted output files remain required private local inputs.
+
+```sh
+python3 -I -S tools/phone-build/accepted-output/package.py create \
+  --manifest PRIVATE_PROFILE --manifest-sha256 PROFILE_SHA256 \
+  --targets OWNER_TARGET_ROOT --pc ORIGINAL_INPUT_ROOT --sdk OWNER_SDK_ROOT \
+  --codec PINNED_ZSTD_ENCODER --output NEW_PRIVATE_PACKET
+python3 -I -S tools/phone-build/accepted-output/package.py stream \
+  --package PRIVATE_PACKET --manifest-sha256 PROFILE_SHA256 --sdk OWNER_SDK_ROOT \
+  > PRIVATE_STREAM
+```
+
+`stream` verifies all inputs before writing the header, then checks each file
+again as it emits the receiver protocol. It writes only binary protocol bytes to
+stdout. A caller may pipe this directly to the owned receiver without saving
+another packet copy. Keep pipeline failure propagation enabled and retain both
+producer and receiver results. A transport's exit alone does not prove decoding.
+The encoder is a separate supplied host tool pinned by the private profile;
+it is not the Android decoder binary. Authored host integration fixtures cover
+SDK copies, original-file deltas, independent frames, exact framing, roundtrip
+content, damaged-frame refusal and preserved inputs/outputs.
+
+## Assemble, align and sign
+
+`assemble.py` rebuilds the same hash-bound non-signature APK entries into a new
+archive, storing `resources.arsc` uncompressed on a verified 4-byte local-data
+boundary. Android [requires that storage/alignment for target API 30+](https://developer.android.com/about/versions/11/behavior-changes-11#compressed-resource-file).
+It preserves all entry contents, refuses output/input overlap and existing
+output, removes stale v1 signatures and independently reopens/hashes its result.
+Native libraries retain the qualified profile's compressed packaging policy;
+this is not a general manifest/native-page-size migration tool.
+
+```sh
+python3 -I -S tools/phone-build/accepted-output/assemble.py \
+  --manifest PRIVATE_PROFILE --manifest-sha256 PROFILE_SHA256 \
+  --targets RECONSTRUCTED_TARGET_ROOT --output NEW_UNSIGNED_APK
+```
+
+Run supplied `zipalign -p -v 4 NEW_UNSIGNED_APK NEW_ALIGNED_APK`, then supplied
+`apksigner` with a private, persistent owner key. [Alignment precedes signing](https://developer.android.com/tools/zipalign).
+Enable v1 **and** v2/v3 to cover the accepted manifest's declared older API
+range and current Android requirements; disabling v1 makes default verification
+fail for that full range even though newer signature blocks exist. Pass key
+passwords through an environment or protected interactive input, never source,
+command literals or published logs. Run `apksigner verify --verbose` and
+`zipalign -c -p -v 4` on the final signed file, then independently verify all
+non-signature entry hashes. Freshly generated signature entries are expected.
+Never reuse a repository author's key for a public owner's install, and retain
+the owner's signing identity across updates.
+
+The complete target has passed host assembly, canonical alignment and v1/v2/v3
+signature verification with the existing local lab identity read-only; no key
+was sent to Android. This qualifies the packaging mechanism on the host, not
+phone-side signing, normal installation/update, 16 KiB device support or game
+behavior/performance. The accepted game code and rendering content stay intact.
 
 ## Reproduce the Android codec
 

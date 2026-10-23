@@ -572,11 +572,11 @@ Accepted-output replay requires explicit private state, not a captured timestamp
 folder inferred by public code: an owner-input root and accepted input manifest;
 a target manifest plus private compressed frames produced from that owner's
 accepted APK/payload; permitted exact Unity SDK copy inputs; supplied Android
-Python; and the source-built Zstandard codec. The current local encoder/relay
-and hash-bound selections under
-`work/coordination/accepted-build-reconstruction/` generate the qualified package
-and wire stream. They remain required local orchestration with no generic public
-producer yet. Their raw target information, original files, SDKs and outputs stay
+Python; and the source-built Zstandard codec. The public `tools/phone-build/accepted-output/package.py` reproduces a packet
+from those explicit target/profile inputs and emits its verified wire stream.
+The original local encoder/relay and hash-bound selections under
+`work/coordination/accepted-build-reconstruction/` remain provenance and device
+orchestration; profile selection/planning is still required private state. Their raw target information, original files, SDKs and outputs stay
 ignored. The public receiver accepts explicit argument roots and a pinned stream,
 never a timestamped run path. Process/result receipts and successful/failed
 outputs are retained local evidence; no current game build reads them. See

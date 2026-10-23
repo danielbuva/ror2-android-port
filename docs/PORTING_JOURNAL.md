@@ -32624,6 +32624,46 @@ the separate settings-feedback chat; Main's checkout/editor/device are untouched
 The isolated worktree's `./dev doctor` correctly reports missing local game
 configuration/project/checkpoint state; it is not a game build workspace.
 
+**Complete package and APK follow-through.** The public `package.py` now
+reproduces the full packet from explicit owner target/profile/PC/SDK inputs,
+without the original workstation-bound encoder. All 840 targets and 837
+compressed frames match in 375.6670 seconds, including full original inventory
+checks before/after. The exact manifest is preserved. The public emitter's
+1,955,405,048-byte wire stream has SHA-256
+`b8bd71f51143abc1a76d6c6951af4da4787082a2928e44d08055436e00ebb899`;
+an independent reader of the original qualified packet/SDK produces the same
+stream digest/count. No second full stream file is stored. This is packet
+reproducibility, not independent production of the Android target information.
+
+The separate public `assemble.py` corrects the initial archive's compressed
+resource table without changing entry content. All 571 non-signature entries
+pass independent readback; `resources.arsc` is stored at 4-byte-aligned local
+data offset 40,786,700. The corrected unsigned SHA is
+`e6b26ff74de0ab27d541c02684dd6e3deacb074bbb2fa1f2a7886e3397b89cdf`.
+Canonical supplied SDK `zipalign` passes before and after signing. The first
+v1-disabled signing attempt fails default verification with missing
+`META-INF/MANIFEST.MF`, because the manifest's complete declared older API range
+also needs v1 coverage. Preserve that failed candidate; enabling v1 alongside
+v2/v3 passes all three signature checks. The existing local lab key is used
+read-only, with no key transfer to Android and no new public signing identity.
+Signed candidate SHA is
+`c0b78163d5b00425592f271b49519ba01c9f8d16164368afc796af58b9d12026`;
+its signer matches accepted J850 and all 571 content hashes still pass. These
+are host packaging/signing results, not phone signing or an installation test.
+Ten authored host contracts now cover the receiver, producer/stream integration
+and actual ZIP storage/alignment/unchanged content; all pass with Ruff.
+
+Additional private evidence: `reproduced-package-v1/`,
+`reproduced-stream-result-v1.json`, `reproduce-package-invocation-v1.json`,
+`apk-finalization-v1/` (resource correction and failed first signature check),
+and `apk-finalization-v2/` (complete passing signature/alignment/content result).
+`full-reconstruction-proof-v2.json` binds these results and public source hashes;
+its SHA-256 is
+`eea3368e4fc1d4ad991731638fa3df63312983d799fcfb69b0b27645ea2b6a40`.
+The original v1 proof remains unchanged. The complete public source and
+setup/lifecycle documents carry no packet, target bytes or key. Device/installed
+game state is unchanged throughout this host follow-through.
+
 **Classification and next work.** Complete private snapshot/delta reconstruction
 on Android passes. This resolves the immediate technical question: a Unity
 Editor/game rebuild is not required when a private packet supplies the target
@@ -32632,7 +32672,8 @@ remain fixed. It does not prove independent PC-input-only production, a public
 packet distribution grant, ordinary app execution, signing/alignment,
 installation/update, current-game compatibility or matched performance. Legal
 uncertainty did not stop the local implementation; the assessment distinguishes
-actual package rights from independent tools and local owner work. Continue
-reproducible package creation, owner signing and approved launcher integration;
+actual package rights from independent tools and local owner work. Packet reproduction and corrected host assembly/alignment/signing now pass.
+Continue phone-side owner signing, approved launcher integration and device
+installation/update qualification;
 revisit independent code/content producers if packet delivery cannot supply the
 required bytes. Do not declare game/alpha readiness from file equality alone.

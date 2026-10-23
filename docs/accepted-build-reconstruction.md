@@ -230,7 +230,7 @@ and matched performance remain required before adopting a new producer.
 | --- | --- | --- |
 | General Unity-project reconstruction on phone | Reuses much existing desktop orchestration if all tools/importers become available | Global export/import memory, editor/native importer equivalents, shader tooling, build roots, tool rights and app execution. This is the broadest effort. |
 | Fixed-target independent derivation | Removes general project authoring, editor settling and unrelated input discovery; permits compatible data-range copies, streaming and a stable output manifest | Full game AOT inputs/build and target content/shader producers, app execution, component grants and complete acceptance. Target hashes alone cannot supply the bytes. |
-| Private accepted-output delta/frame replay (J1042) | Complete phone reconstruction avoids Editor, import, shader compilation and game compilation; native/code/content bytes match the accepted target | Requires a 1.89 GB game-bearing private package plus supplied SDK bytes. Reproducible package creation, alignment/signing, ordinary app/launcher execution, update/install and any public package distribution remain open. It does not independently derive the target from PC files alone. |
+| Private accepted-output delta/frame replay (J1042) | Complete phone reconstruction avoids Editor, import, shader compilation and game compilation; native/code/content bytes match the accepted target | Requires a 1.89 GB game-bearing private package plus supplied SDK bytes. Public packet/profile acquisition, phone-side signing, ordinary app/launcher execution, update/install and any public package distribution remain open; host packet reproduction and aligned/signed assembly pass. It does not independently derive the target from PC files alone. |
 | Owner-supplied converted cache plus phone packaging | Avoids regeneration of that owner's existing code/content; strongest near-term reuse | Initial cache is external to the phone. Useful fallback/import mode, not PC-to-Android phone conversion. |
 | Authorized prebuilt game code/shaders | Would remove major conversion stages | Requires rights not established here; cannot be the baseline assumption. Remaining owner content and acceptance still apply. |
 
@@ -249,11 +249,12 @@ frames do not use a PC dictionary; this is neither an optimal all-source delta
 search nor proof that a small independently distributable patch exists.
 
 **Continue the narrow replay implementation before another large exporter:**
-make package creation reproducible, resolve APK storage/alignment and durable
-owner signing, connect an ordinary Android host to the approved launcher adapter,
-and qualify normal installation/update and performance on device. The current
-unsigned archive is not install-ready. Keep private owner-generated packages as
-a usable local route while evaluating the actual contents and applicable rights
+use the reproducible packet producer and corrected resource-storage assembler;
+finish phone-side durable owner signing, connect an ordinary Android host to the
+approved launcher adapter, and qualify normal installation/update and performance
+on device. The initial phone-produced archive needs the corrected assembly step.
+The resulting host-aligned/signed candidate is ready for device qualification; no
+installation is inferred. Keep private owner-generated packages as a usable local route while evaluating the actual contents and applicable rights
 of any proposed public package; uncertainty did not stop the local implementation.
 
 If the public delivery path cannot supply those frames under applicable rights,
