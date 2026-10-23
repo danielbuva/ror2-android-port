@@ -31182,3 +31182,92 @@ complete export/project comparison, Android content/shader/player generation
 and matched game performance remain open. The isolated checkout's repository
 preflight still refuses its missing staged lab source/input generation; these
 support-tool checks do not qualify a game build.
+
+## J984 — Generate the owner assembly prefix without a project oracle
+
+2026-10-23 UTC. Hypothesis: the audited original-assembly and transform recipes
+already define the initial DLL/importer cohort, so a separate owner-side producer
+can generate it without a previous project or private provenance map. Preserve
+Route A, IL2CPP ARM64, the Android renderer and desktop fallback. This is a host
+preparation prefix; no complete project, phone execution or game runtime is
+qualified.
+
+**First failure and input review.** The isolated alpha tree initially lacks its
+input inventory. Run the existing `./dev inspect --full` against the legitimate
+external installation. All 2,749 paths, hashes and sizes match the already
+approved Steam 25475991 input
+`6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88`.
+Record the existing approval locally for exactly that identity; accept no new
+version or drift. Host preflight advances to the missing lab generation. The
+smallest ordinary rebuild action then refuses the absent
+`work/receipts/provenance-map.json` before creating a destination. Preserve this
+refusal; do not fabricate a map or copy the working project.
+
+A private candidate invokes the existing public recipe generators and produces
+49 DLLs, including the three pinned transforms, and 49 importers. All DLL hashes
+match the public contracts; an independent safe YAML parser checks importer
+GUIDs, timestamps and execution orders. This demonstrates the generation subset,
+not the rest of public-input bootstrap. The reusable public entry point is the
+remaining change for this experiment.
+
+**Prior art and owner.** Inspect pinned ThunderKit
+`95a6236df08b0e4bbd5350dd4afdb0927cb7fb6a`:
+`Editor/Core/Config/Common/ManagedAssemblyPatcher.cs` invokes the separate
+`PackageHelper.WriteAssemblyMetaData` API. Its metadata helper derives default
+identity from the filename. Retain the lab's audited GUID/execution-order recipe
+and existing transform implementation; copy or install no community code.
+See [the source reference and stage contract](OWNER_ASSEMBLIES.md).
+
+`rebuild.assembly_payload` now owns recipe generation independently of the
+working-project oracle. R1's existing wrapper still checks provenance membership,
+hashes and sizes before project writes. The new current
+`owner_assemblies.py` / `owner-assembly-prefix` owner validates reviewed inventory,
+current source stats, public recipe membership, original/transform hashes,
+generator source pins and the existing 10 GiB host reserve. It requires a new
+isolated destination. The preserved `attempt/` holds tool inputs and intermediate
+outputs; `project/` contains only the prefix. A manifest binds output paths,
+sizes and hashes. The receipt moves from `preparing` to `complete` or `failed`;
+failed attempts remain. Recheck inputs/source and read back outputs before
+success. No lab generation marker, current-build pointer, editor action or
+device operation is added. Existing SDK Mono.Cecil and .NET dependencies remain
+owner-provided; no SDK or game binary is published.
+
+**Committed result.** Actual source
+`12364e8725a2bf2ecfb913683a367422a2a131f7` runs through the public `./dev` action
+using the freshly reviewed alpha input tree. All 98 output paths, sizes and
+hashes equal the independently generated private candidate. An independent
+Psych 5.3.1 safe parser verifies all 49 importer identities. Receipt source is
+clean; complete-project, phone-build and runtime qualification are false.
+Rebase onto Main `79c6cc72` produces source alias
+`1429a7c11689db368c8a3d89bf5d585e8998f9d6`; all 26 recorded generator source files
+remain byte-identical.
+
+Six current-CLI controls refuse an existing destination, an outside destination,
+an unknown approval in ordinary/`-O`/`-OO` Python and source-stat drift in a copied
+inventory. Existing successful output and actual input receipts remain unchanged.
+The real legacy R1 command still refuses the missing map before creating output.
+The initial authored fixture and refusal-reader failures remain in private
+evidence; the required fixture filename and stderr error channel are corrected
+without relaxing a production gate.
+
+Twelve new owner contracts, 18 legacy R1 contracts, 11 transform contracts,
+214 registry contracts and 10 documentation contracts pass. Ruff, public audit,
+link/shell checks and generated-document checks pass. Mandatory fresh-clone CI
+passes 1,710 tests with 117 optional skips; its case-sensitive-volume creation
+uses the existing ordinary-temp fallback after timeout. No APK is built,
+installed or launched, and no new device evidence is claimed. The original
+installation and working build are unchanged by this work.
+
+Private input/prototype evidence is under
+`work/coordination/public-input-bootstrap-r1/` in the alpha input tree. Current
+CLI, refusal, source-equality, independent metadata and host/CI evidence is under
+`work/coordination/owner-assembly-prefix-r1/` in the isolated host tree.
+`proof-receipt-v1.json` binds 68 artifacts; SHA-256
+`c568268379b77304c92661b8315343e945cd1da662e1fa6ee2aa4486e18333ee`.
+Generated DLLs, importers, input metadata and raw logs remain ignored locally.
+
+Revisit on recipe/input/compiler/source changes or when connecting a later
+bootstrap producer. Full content/shader/package reconstruction, private-state
+removal from later steps, native usage/linker roots, phone hosting and matched
+performance remain open. Do not treat this prefix as a playable project or
+change the working build's consumers based on the host result.

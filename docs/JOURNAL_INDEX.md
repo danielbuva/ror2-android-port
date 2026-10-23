@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J984](PORTING_JOURNAL.md#j984--generate-the-owner-assembly-prefix-without-a-project-oracle) | 2026-10-23 | Generate the owner assembly prefix without a project oracle | 2026-10-23 UTC. |
 | [J1020](PORTING_JOURNAL.md#j1020--test-deferred-serialized-object-reads-on-android) | 2026-10-23 | Test deferred serialized-object reads on Android | **Hypothesis and prior art.** |
 | [J1021](PORTING_JOURNAL.md#j1021--observe-loaders-four-default-callbacks-through-the-existing-input-owner) | 2026-10-23 | Observe Loader's four default callbacks through the existing input owner | **Hypothesis and scope.** |
 | [J1019](PORTING_JOURNAL.md#j1019--observe-loader-without-a-blue-elite-lightningstake-source-event) | 2026-10-23 | Observe Loader without a blue-elite LightningStake source event | **Scope and prior art.** |
