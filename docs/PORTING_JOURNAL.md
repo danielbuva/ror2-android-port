@@ -33199,3 +33199,83 @@ lab-project receipts) and other worktrees are untouched pending owner review.
 **Revisit.** If an old candidate is needed, rebuild it from its recorded
 source commit. If free space falls below 100 GB again, inspect `work/rebuild`
 and extra worktrees next.
+
+## J1051 — Acquire exact generic Android SDK inputs without installing the Editor
+
+2026-10-23. Complete host acquisition/extraction case; Android execution remains
+unqualified. No installer, Unity Editor, game compiler or device is run.
+
+**Hypothesis and actual source.** J1036/J1042 identify three SDK-copy inputs that
+match the accepted player, but earlier proofs obtain them from an installed
+workstation toolchain. An owner should be able to obtain those same inputs from
+the provider's component without installing the desktop Editor. Unity's official
+release page and release API identify 2021.3.45f2 / revision `88f88f591b2e`, released
+2025-10-03, and publish a standalone Android support PKG. This is owner-direct
+acquisition, not redistribution of Unity tools or runtime data by this project.
+
+**Change and lifecycle.** Public `accepted-output/sdk_inputs.py` owns the pinned
+component check, bounded standard-library XAR/gzip/CPIO reader, exact member
+selection, new private destination and terminal receipt. It reads PackageInfo's
+component identity/root and writes only the three SDK files already selected by
+the accepted profile. It never runs package scripts or an installer. Unknown or
+redirected components, malformed/truncated data, traversing paths, redirected
+destinations, duplicate/missing selected members, selected symlinks and output
+hash differences refuse. Failed new outputs remain evidence; no existing file
+or original game installation is overwritten. No current game build or launcher
+calls this support path. The existing replay/packet producer can consume the
+resulting explicitly supplied SDK root without changing its byte contract.
+
+**Complete result.** The official 586,545,150-byte component downloads in
+41.5567 seconds, with published MD5 `7b1b4fa435c689615ba53751cdd6a053` and
+SHA-256 `0e4476332c902ab8800bafbb521f5893ec706daedbb639da07a8fe43e6e9bc49`.
+The final public helper reads all 733 members / 2,038,836,736 uncompressed archive
+bytes and independently verifies the three selected outputs in 2.3660 seconds.
+Their total is 65,162,896 bytes: Development IL2CPP ARM64 `libunity.so`,
+`libmain.so` and `unity default resources`. Every hash matches both the pinned
+SDK-copy profile and the accepted J850 output. Only those files plus the private
+receipt are written; the approximately 2 GB archive expansion is streamed,
+not materialized. No desktop Editor installation is needed for this source path.
+That is not a claim of phone extraction or of acquiring the complete compiler.
+
+**First failure and contracts.** The initial private selection expects the
+installed `PlaybackEngines/AndroidPlayer` prefix inside the archive and refuses
+an incomplete selection. The actual PackageInfo declares that install root;
+the payload itself is component-relative. Preserve the failed source/result;
+selection now matches exact component-relative paths and emits the established
+SDK-root layout. Four authored tests exercise both supported CPIO encodings,
+real XAR/gzip traversal, complete content/readback, no script execution/extraction,
+unknown input, existing output, missing/duplicate members, traversing paths,
+selected symlinks, wrong hashes, truncation and an outside-destination sentinel.
+All pass, with Ruff. The complete official component then passes the final
+public implementation. Neither those host cases nor compilation proves Android
+sandbox execution or game readiness.
+
+**Terms precision and working policy.** The official August 2025 terms define
+Unity Toolkits as prefab/C# API extensions, not compilers generally. Their
+internal-use, service/distribution and conditional runtime grants are distinct;
+prior-terms continuation depends on the owner's entitlement records, which were
+not inspected. The June 2026 update must not automatically substitute for that
+historical contract. This corrects an overbroad classification, not a grant to
+bundle IL2CPP or proof that every owner-only invocation is forbidden. Continue
+private owner workflows while keeping proprietary SDK/compiler bytes out of Git.
+The official component's public availability is a technical acquisition result,
+not permission to redistribute its contents or the game's compiled code.
+
+**Evidence and remaining work.** Private release metadata, historical terms,
+verified component, container metadata, initial failure, exact source, complete
+extraction receipts and source-bound proof live under
+`work/coordination/owner-tool-acquisition-v1/`. `proof.json` retains the initial
+private acquisition case; `proof-v2.json` binds the final public implementation,
+SHA-256 `3c7290832da725bf9eb5a8f9436417503981b23973e8425f5d17b629d369c2fe`.
+The package and extracted files remain private. Main's game/editor/device and
+Alpha's feedback lease are untouched. Full managed compiler/tool acquisition,
+phone execution, game AOT/metadata and content/shader production, durable signing,
+normal install/update and matched performance remain open. This is one usable
+SDK acquisition owner within Route A/Architecture C, not a second converter or
+an adopted final installation architecture; retain the desktop fallback.
+
+Primary sources:
+[exact release](https://unity.com/releases/editor/whats-new/2021.3.45f2),
+[official release API](https://services.api.unity.com/unity/editor/release/v1/releases?version=2021.3.45f2),
+[August 2025 terms](https://github.com/Unity-Technologies/TermsOfService/blob/bf4037bac93a0a716cff7621a796436954656b0c/Unity%20Software%20Additional%20Terms.md),
+[current terms](https://unity.com/legal/editor-terms-of-service/software).

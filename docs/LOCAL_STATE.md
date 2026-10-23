@@ -582,6 +582,13 @@ never a timestamped run path. Process/result receipts and successful/failed
 outputs are retained local evidence; no current game build reads them. See
 [setup/lifecycle](../tools/phone-build/accepted-output/README.md) and J1042.
 
+An owner-downloaded exact Unity Android support component is an alternative
+explicit SDK-copy input source. Public `sdk_inputs.py` validates it and generates
+a new SDK-root layout plus complete/failed receipt; original packages, outputs
+and failed attempts remain private. This does not source the full compiler or
+introduce a timestamped build dependency. See the
+[acquisition lifecycle](../tools/phone-build/accepted-output/README.md#acquire-the-three-sdk-copy-inputs).
+
 The owner-APK bootstrap candidate consumes an explicit ignored request selecting
 the accepted private packet manifest and verified reconstructed target root,
 public frontend/wire-helper sources and supplied Java/Android/D8 tools.

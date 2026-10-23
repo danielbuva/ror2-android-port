@@ -40,6 +40,13 @@ reproduction and framed emission. It verifies supplied target/profile/PC/SDK
 inputs without generating independent Android target information. `assemble.py`
 owns hash-bound unsigned APK assembly and required uncompressed/aligned resource
 storage; canonical alignment and owner signing follow separately.
+`sdk_inputs.py` owns current experimental owner-direct component extraction:
+an explicitly supplied, pinned provider archive yields only the three exact
+SDK-copy files in a new private root, with bounded parsing, readback and terminal
+receipt. It runs no installer/Editor or download and retains failed outputs.
+[Setup/lifecycle](../tools/phone-build/accepted-output/README.md#acquire-the-three-sdk-copy-inputs)
+keeps this acquisition owner separate from compiler/content production and
+phone execution; no current game build consumes it.
 `phone_decode.py` in that directory owns current
 experimental **support**, not game runtime: explicit new owned workspace, pinned
 private package and verified PC/SDK inputs produce complete target files and an

@@ -72,6 +72,33 @@ retain identical ASTs; the added startup guard has authored host coverage and
 awaits device qualification. Exact versions and receipts remain private. These
 host contracts do not establish game readiness.
 
+## Acquire the three SDK-copy inputs
+
+`sdk_inputs.py` is current experimental acquisition support for an owner's exact
+[2021.3.45f2 Android support component](https://unity.com/releases/editor/whats-new/2021.3.45f2).
+Obtain it directly from the provider under the owner's applicable terms. The
+helper performs no download or license acceptance and includes no SDK binaries.
+It requires the fixed component size/SHA-256 declared in its source, validates
+container identity, streams the component and writes only the three pinned
+SDK-copy files under `PlaybackEngines/AndroidPlayer/` in a new private root:
+
+```sh
+python3 -I -S tools/phone-build/accepted-output/sdk_inputs.py \
+  --component OWNER_DOWNLOADED_ANDROID_SUPPORT.pkg --output NEW_PRIVATE_SDK_ROOT
+```
+
+Use Python 3.11+ and an existing private parent directory outside the original
+game installation. Keep the output and receipt ignored. Success independently
+rehashes every selected file; failure retains the new attempt. Existing output,
+unknown input, unsafe paths, selected symlinks, duplicate/missing members and
+content drift refuse. The process exits after its complete/failed receipt;
+there is no service, installer-script execution or current game-build mutation.
+
+[J1051](../../../docs/PORTING_JOURNAL.md#j1051--acquire-exact-generic-android-sdk-inputs-without-installing-the-editor)
+records the complete host component case. Android execution is unqualified.
+The directory can supply `package.py`'s explicit SDK root; it is not the complete
+compiler, game/content producer, Android converter or public SDK distribution.
+
 ## Reproduce and stream a private packet
 
 `package.py create` reproduces every compressed frame from explicit accepted

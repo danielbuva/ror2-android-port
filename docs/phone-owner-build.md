@@ -206,6 +206,19 @@ host; wider dependencies, editor-root production,
 subprocesses and app sandbox execution remain open.
 The build-tool host is separate from the IL2CPP game runtime.
 
+[J1051](PORTING_JOURNAL.md#j1051--acquire-exact-generic-android-sdk-inputs-without-installing-the-editor)
+qualifies direct owner acquisition of the three exact runtime/resource SDK-copy
+inputs from the provider's pinned component, without installing the Editor.
+The public [extractor](../tools/phone-build/accepted-output/README.md#acquire-the-three-sdk-copy-inputs)
+does not download, accept terms or redistribute SDK content. Phone execution and
+complete compiler acquisition remain separate gates.
+
+The [historical official terms](https://github.com/Unity-Technologies/TermsOfService/blob/bf4037bac93a0a716cff7621a796436954656b0c/Unity%20Software%20Additional%20Terms.md)
+define Unity Toolkits specifically as prefab/C# extensions. Do not classify
+IL2CPP under that clause merely because it is a tool. Owner internal use and
+our redistribution are different questions; applicable accepted terms and the
+actual component grant matter. This is no blanket prohibition on owner builds.
+
 No permission to redistribute Unity editor/compiler components as an Android
 tool bundle is established here. Review the applicable [Unity terms][unity-terms]
 and exact component grants; owner download access and available runtime source
@@ -217,8 +230,10 @@ this assessment is not legal clearance.
 Original/stripped DLLs, generated game C++, global-metadata.dat, game-derived
 libil2cpp.so, shader programs and bundles stay owner-generated/private. A
 prebuilt game library hidden in a patch/archive/download is not an owner build.
-Authorized Android middleware is a separate dependency from PC game ownership;
-the current game's audio remains unavailable.
+Authorized Android middleware is a separate dependency from PC game ownership.
+Current audio observations and remaining gates are owned by
+[PORTING_STATE](../PORTING_STATE.md); earlier no-audio fixtures do not describe
+all later game builds.
 
 ## Blockers and existing debt
 
