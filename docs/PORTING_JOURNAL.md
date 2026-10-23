@@ -31747,3 +31747,175 @@ post-stop readback record
 post-stop filtered log `d3bd4c80d977a8488de036f3b1f2e9bad9d150ff875a3f30cabf63351d4dc627`;
 independent terminal query
 `6f445e046fc58d006b0565d407e62a53d791dcc7c593462066bf47d2f8e91a38`.
+
+## J1028 — Measure default-route PCM and preserve the natural-Quit failure
+
+**Hypothesis and prior art.** J959 and J962 distinguish captured PCM persistence
+from event attribution, physical audibility, and a successful natural shutdown.
+This bounded follow-up uses the existing R34 waveform path with the default
+Commando selection and no source-skin or point-sound diagnostic. It asks whether
+the selected default output produces nonzero samples during the already bounded
+world window, then checks the existing Quit path without changing audio events,
+output routing, or gameplay.
+
+**Build and controls.** The run uses the R34 APK
+`098646f6cc931c2a8d01d91fe4dfdcf5f54c58d9fc6ad01137695992e58588bd` (source
+`5724dd72fee7ddf5529b430f1ef03ef44fe2fa89`) and generated request
+`fa90af10a8ac449382341ab48157c641`. The selector uses the existing Lakes
+Commando route, seed 2, free play, and invincibility as its only assist; movement,
+jump, fast-charge, high-damage, source-skin, and point-sound diagnostics are off.
+The reviewed R7 runner manifest is SHA-256
+`6514716077c27fca844116da441f698f0931f5fe0c1fc219f7631fc883eb7cf2` and its
+45 host tests passed. Both same-APK standard controls passed, with 13 applied
+runs unchanged. These are diagnostic-assisted controls, not ordinary gameplay
+acceptance.
+
+**World and bounded PCM result.** The owned report reaches
+`integrated-world-playing` for 35.2221069 s on Lakes with empty `error` and
+`firstFailure`. The original audio owner is ready with all 153 requested banks
+completed. The audio-camera admission evidence reports original context ready;
+the network-sound catalog observes 65 definitions and 65 native entries, with
+availability and ID mapping ready, zero null definitions, zero null event names,
+and zero zero-valued native IDs. Four event names are empty. All three original
+equipment-highlight fields are assigned and ready.
+
+The existing main-output PCM callback window contains 470 callbacks and
+541,440 scalar samples. All 541,440 are finite, and all are exactly zero;
+there are no nonfinite samples, rejected buffers, or capped buffers. The window is 48 kHz,
+stereo, and explicitly marked as truncated for persistence: its retained prefix
+is 262,144 samples (1 MiB), also all zero. The exact raw prefix SHA-256 is
+`30e14955ebf1352266dc2ff8067e68104607e750abb9d3b36582b8af909fcb58`; its
+sidecar SHA-256 is
+`f4f6fa8f4047dc863ab8d4129a5f33d15b422ae80524e75be571711fdfe99d1b`. This is
+bounded callback evidence only. The capture selector mode is `main`; the
+default selector is observed as numeric zero, while the specific selected-output
+ID is not known. The callback reports a distinct output ID; no source event is
+joined to these samples. It does not establish that the whole game was silent, prove
+speaker audibility, or qualify the complete audio mix. At the 35-second report,
+raw persistence was still waiting for original Term; the later failure-side
+readback supplies the distinct Term and persistence witnesses below.
+
+**First failure and readback.** The runner ends the run through the existing
+settings flow, returns to the offline menu, and requests Quit there. The
+pre-Quit query positively matches the launched PID. After 20 process queries,
+the final query returns status 52 about 16.5 s into the 30 s exit window, with
+zero command timeouts and about 13.5 s remaining. The pinned query script uses
+52 to refuse empty or nonnumeric `pidof` output; it does not retain the raw
+output and status needed to identify that refusal's cause. This is not evidence
+of an ADB transport failure or a complete 30 s timeout. The last positive PID
+remains recorded, but the final failed query leaves current process state
+unknown. Natural process absence is not accepted. The runner invalidates
+acceptance and uses failure-only force-stop cleanup; that cleanup succeeds
+without turning Quit into a pass.
+
+After failure cleanup, a separate read-only query found the exact owned capture
+pair. It verified the 1 MiB raw prefix against the sidecar, 262,144 stored
+samples, all-zero RMS/peak, original engine Term return, callback-manager Term
+return, post-Term disarm, and raw persistence. The file verifier accepts its hashes, layout and lifecycle witnesses, while
+the stricter full-route validator refuses `capture_contains_no_nonzero_finite_samples`.
+This establishes persisted waveform bytes and lifecycle witnesses only. It does not establish natural process
+absence: `natural_process_absence_accepted` remains false. Cold readback remains
+unqualified. A later independent terminal query confirms the same APK bytes,
+owned placement, profile count 13, selector/process absence, and asleep display;
+it performs no additional cleanup and does not change the failed run result.
+
+**Evidence and limits.** The full attempt is under
+`work/experiments/original-game-audio-r34-main-pcm-default-route/root-r1/`;
+the Root join, saved-pair verification, and terminal query are under
+`work/coordination/original-game-audio-pcm/r34-main-pcm-default-route-root-r1/`.
+The current-process log qualification is
+`f684292bd7c8904537c8063f16e7bad6f631ade67b8d38723bdcb6b39ef82cb5` and
+records five allowed known Windows errors, zero fatal errors, and zero
+unexplained errors. The Root run binding is
+`b6fbbbd256f25f9fa4a0aeebb57ab95c69749c7fd45b4434ac432622f6f184a5`.
+The world report SHA-256 is
+`f1afc02c929ea42f012c182bebe37a7c416ae51c8da7413c02152b63f7739b0d`; the
+failure receipt is `fd626f76ead3bbe1318d791d49c54f858ac12acfdf32ffac790f6d881aeae1ac`;
+the natural-Quit poll is
+`fef5cfde0eb276640becd3125ef3739081242a6e41aae5f7d226258f1ea74ad9`; the
+Root pair readback is
+`a900bd962df43e1ee8e313622df2e6d3907cd57fba30e5025a4d77b17eca8f63`; the
+failure readback is
+`a75d73a174467650920cef4b3024be117b2e2cf1c0579aa7ed961504fd279d27`; and the
+independent terminal query is
+`947273f956fa11b24b11d155970978ae823b638da72a1862d1e2ac9aca99590a`. Raw
+PCM and raw device logs remain ignored.
+
+**Continuation.** Preserve the standard-control result and the saved-pair
+readback independently. Do not promote this run to a natural-Quit pass, cold
+readback pass, event-attribution result, playback result, or audio acceptance.
+A future cold-readback attempt must bind a fresh process/session report and
+prove natural process absence before claiming a cold-readback lifecycle. The
+captured zero window can be revisited with a separately justified source/output
+join; this run supplies no event identity or reason for the zero samples.
+
+## J1030 — Check the actual production camera-admission JSON shape
+
+**Question and prior findings.**
+
+J1006 retained the actual latest admission scalars on Android but did not serialize
+`firstAdmissionSample`. J1010 could not distinguish field-shape behavior because its
+dynamically loaded fixture emitted only `{}`. This fixture asks whether the exact
+production report and evidence types, compiled into the pinned editor's
+`Assembly-CSharp`, can serialize the zero, one, and two-sample cases through Unity
+`JsonUtility`.
+
+**Exact fixture and result.**
+
+Root invoked the authored Editor fixture against the already compiled production
+assembly. The editor reported Unity `2021.3.45f2 (88f88f591b2e)`,
+compiling/updating/playing/building all false. The runtime assembly was
+`Assembly-CSharp`, with DLL SHA-256
+`22628f5c549468fa8afe72f359346fb3f97296d0771dc44e5350a74f2858e0a5`. The fixture
+result JSON has SHA-256
+`2a76bb0be6c379a6483e4c8ae937cebbf8536606d5d1b0f4efae5a92f0f4fa3e`.
+
+The fixture confirms that a positive top-level sentinel serializes and that the
+actual `SessionReport`, `WorldReport`, and
+`AndroidNativeAudioCameraAdmissionEvidence` identities are used. In zero, one, and
+two-sample serializations, nested evidence scalar fields appear. For one and two
+samples, the latest `admissionDecision` round-trips as `one-sample` and
+`latest-sample`; the `firstAdmissionSample` field is absent from every emitted
+evidence object. The C# copy check reports the first copy as independent and
+bounded, and the serialized DTO remains scalar-only. Unity emitted no serialization
+warnings.
+
+The fixture's overall `passed` flag is false. Its zero-sample oracle also expected a
+null `admissionDecision`; Unity serialized the unset public string as `""`. That is
+a fixture expectation mismatch, not a production defect. Separately, the
+first-sample omission is directly visible in the JSON and is not explained by that
+zero-string mismatch.
+
+**Interpretation and limits.**
+
+This is an exact production-type serialization result for the pinned editor fixture,
+stronger than the J1010 dynamic-type result. It shows that the current self-typed
+`firstAdmissionSample` member is absent from these `JsonUtility` outputs even when
+the production `Copy()` method populates a bounded, distinct sample. It does not
+identify Unity's internal reason for omitting the field, and it does not establish
+the contents of any Android player JSON. The latest scalar sample remains
+serialized, but it cannot substitute for the first evaluation when determining
+startup ordering.
+
+The fixture did not load a scene or enter Play Mode, and no player build or device action
+occurred. The installed R34 APK and its standard-control results are unchanged. The
+fixture source and copied generated `.meta` were removed after the invocation;
+cleanup records both absent. The before/after authored-source inventories have the
+same SHA-256 `572b7428dea35a94dbb76a1e9590e805c80013822a12bdaeaed250966641cf0f`. The
+production runtime assembly was unchanged at fixture time.
+
+**Next gate.**
+
+If first-sample JSON is still needed, use a distinct nonrecursive serializable DTO
+(or flattened scalar fields), then repeat an exact imported-production-type
+`JsonUtility` fixture with zero, one, and distinct first/latest samples. Correct the
+zero-string oracle to accept the observed empty string for an unset string. Do not
+change runtime admission gates based on this fixture; a later device report is still
+needed to verify the player serialization path and report contents.
+
+**Evidence paths.**
+
+- Fixture: `work/coordination/original-native-visual-reference/first-admission-production-fixture-root-r1/`
+- Prior findings: J1006 and J1010 in `docs/PORTING_JOURNAL.md`
+- Production source field/copy: `tools/unity/runtime/input/AndroidNativeSourceCameraRigContract.cs`
+- Production report fields: `tools/unity/runtime/world/IntegratedWorldBoundary.cs`

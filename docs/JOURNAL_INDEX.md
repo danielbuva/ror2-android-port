@@ -10,6 +10,8 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1030](PORTING_JOURNAL.md#j1030--check-the-actual-production-camera-admission-json-shape) | 2026-10-23 | Check the actual production camera-admission JSON shape | **Question and prior findings.** |
+| [J1028](PORTING_JOURNAL.md#j1028--measure-default-route-pcm-and-preserve-the-natural-quit-failure) | 2026-10-23 | Measure default-route PCM and preserve the natural-Quit failure | **Hypothesis and prior art.** |
 | [J1026](PORTING_JOURNAL.md#j1026--preserve-the-mainoutput-camera-gate-when-visual-ownership-defers-it) | 2026-10-23 | Preserve the MainOutput camera gate when visual ownership defers it | **Hypothesis and prior contract.** |
 | [J1025](PORTING_JOURNAL.md#j1025--run-the-pinned-importer-through-an-android-nativeaot-console) | 2026-10-23 | Run the pinned importer through an Android NativeAOT console | **Question and prior art.** |
 | [J1024](PORTING_JOURNAL.md#j1024--distinguish-a-cold-menu-quit-pass-from-a-failed-source-view-startup) | 2026-10-23 | Distinguish a cold-menu Quit pass from a failed source-view startup | **Scope and player.** |

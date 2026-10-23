@@ -88,18 +88,18 @@ The plain check and its acceptance criteria remain unchanged.
 
 ## Current baseline (2026-10-23)
 
-J1022's diagnostic APK 098646f6 is installed after both standard controls,
-strict process-log qualification and independent installed-byte/placement/idle
-verification. MainOutput retains ready camera/context, native sound mapping and
-all three highlight assignments. The native callback reports finite nonzero
-samples; original Term and persisted waveform readback remain unqualified.
-J1024 records a separate R33 source-view startup timeout and default-menu Quit
-pass; it supplies no new rendering evidence. J1026's combined source-view/PCM
-test stops at the deliberately deferred audio-camera context; its failed
-natural-Quit attempt does not change either standard-control result. Loader's
-full-kit semantics, first-sample JSON, composed audio and visual parity remain open. See the
-[current snapshot](../PORTING_STATE.md) and
-[J1022](PORTING_JOURNAL.md#j1022--build-and-verify-the-mainoutput-audio-candidate-with-both-controls).
+J1022's diagnostic APK 098646f6 retains both standard controls, strict
+process-log qualification and installed-byte/placement/idle verification.
+J1028 separately verifies a persisted all-zero MainOutput prefix and original
+Term/disarm witnesses after its natural-Quit query fails; this does not revise
+J1022's observed nonzero window or its standard-control passes. Natural Quit,
+cold readback, event attribution and audibility remain open.
+J1024 records a separate R33 source-view startup timeout and menu-Quit pass.
+J1026's combined source-view/PCM setup stops at the deliberately deferred
+audio-camera context before Quit. Loader's full-kit semantics, first-sample JSON
+and visual parity remain open. See the [current snapshot](../PORTING_STATE.md),
+[J1022](PORTING_JOURNAL.md#j1022--build-and-verify-the-mainoutput-audio-candidate-with-both-controls)
+and [J1028](PORTING_JOURNAL.md#j1028--measure-default-route-pcm-and-preserve-the-natural-quit-failure).
 The accepted baseline below remains the rollback.
 
 | Item | Value |
