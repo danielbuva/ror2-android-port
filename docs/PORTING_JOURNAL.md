@@ -33279,3 +33279,91 @@ Primary sources:
 [official release API](https://services.api.unity.com/unity/editor/release/v1/releases?version=2021.3.45f2),
 [August 2025 terms](https://github.com/Unity-Technologies/TermsOfService/blob/bf4037bac93a0a716cff7621a796436954656b0c/Unity%20Software%20Additional%20Terms.md),
 [current terms](https://unity.com/legal/editor-terms-of-service/software).
+
+## J1052 — Trace the full player managed closure and reproduce its raw audio API input
+
+2026-10-23. Complete host provenance/producer case; no Editor, game runtime or
+phone is executed. Route A and Architecture C remain unchanged.
+
+**Hypothesis and prior art.** Independent owner conversion should reuse the
+existing assembly producers before building another compiler pipeline. J984's
+owner-assembly recipe and the existing raw audio producer already separate
+original inputs from project outputs. The pinned ThunderKit source
+`95a6236df08b0e4bbd5350dd4afdb0927cb7fb6a`,
+`Editor/Core/Utilities/PackageHelper.cs`, distinguishes assembly bytes from
+Unity importer/GUID metadata; that distinction informs the census, without
+copying its implementation. Main supplied the fresh J978/R27 player capture
+and current producer ownership. Captured assemblies are comparison oracles,
+never independent input suppliers.
+
+**Full scope and controls.** Revalidate the complete R27 build receipt, capture
+binding, all 333 pre-strip DLLs, all 93 declared code-generation DLLs and all four
+captured Bee/response/trace metadata files. The build is source `2f81ab1`, APK
+`213228ad3b6b70505f49c9002e08f841d254a5c2bf4cc075e0c78fb968fb0c2e`,
+accepted input `6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88`.
+Hash the current legitimate PC providers and 4,746 candidate SDK DLLs; do not
+infer provenance from filenames. The complete census takes 9.4612 seconds.
+The first local attempt incorrectly looks for captured metadata beside managed
+DLLs; the corrected reader uses their recorded metadata directory. Both initial
+source/log and final result remain private. No capture or shared project changes.
+
+The initial pre-strip classification is 48 exact PC files, 272 exact SDK DLLs,
+one published owner transformation and 12 requiring finer producer mapping.
+For the 93 stripped inputs, their corresponding pre-strip origins are 30 PC,
+51 SDK, one transformation and 11 still requiring mapping. These are origin
+counts: stripping changes bytes, and finding a pre-strip provider does not
+reproduce the stripped file or establish owner-direct SDK acquisition.
+
+**Actual isolated production.** Execute the existing
+`tools/unity/support/audio/managed-producer/produce.py` in a new private output
+root using legitimate raw PC assemblies, owner-supplied Android API sources and
+native SDK plugin, and the pinned host SDK tools. Generate the guarded input
+fresh; supply neither a modified project assembly nor captured game output.
+The Unity executable is an identity input only and is not launched. Host
+Mono/Roslyn/.NET are build tools, with no change to the IL2CPP game backend.
+The standalone invocation succeeds in 23.8919 seconds; independently rehash all
+249 declared files, including tool/support outputs. This is not 249 player
+assemblies. Its composed `AK.Wwise.Unity.API.dll` exactly matches the frozen R27
+pre-strip input, SHA-256
+`1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b`.
+The producer remains request-disabled and has no full-player/APK binding.
+An own-worktree `./dev preflight --host-only` refuses the absent generated lab
+project after input checks; no game build is dispatched or claimed to pass.
+
+**Remaining concrete producers.** Newtonsoft matches the pinned package's AOT
+DLL. Four retained package assemblies instead require source compilation:
+Burst 1.8.11, Collections 1.2.4, Mathematics 1.2.1 and UGUI 1.0.0. Keep their
+accepted versions and behavior. A read-only current C# graph identifies their
+source cohorts and IL post-processing; it is explicitly not the frozen R27
+graph and cannot establish fresh R27 compile inputs. The current authored
+Assembly-CSharp cohort contains 145 source files: 128 match public source,
+three are generated visual maps and 14 are selected original game support
+sources. Existing generators and the local export/staging recipes explain
+these dependencies; original/decompiled source stays private. Bare Roslyn
+compilation alone omits the observed IL post-processing contract.
+
+The other full-player work includes the later RoR2 transformation chain and
+three separately authored audio/observer assemblies, independently produced
+scene/serialization roots, package compilation/post-processing, and exact
+linker options. The frozen linker action names scene/type descriptors, Burst
+and authored preservation descriptors, SDK module data and editor-to-linker
+metadata; the four captured Bee metadata files do not contain those root
+producers. Do not substitute current Temp files or captured outputs and call
+that independence. Native AOT/metadata, Burst native output, serialized content
+and shaders remain separate unsolved production/qualification gates.
+
+**Evidence and recommendation.** Private sources, invocation/input bindings,
+failed attempt, full census, source graph observations, complete producer
+outputs and seal live under `work/coordination/full-owner-managed-v1/`.
+`proof-v1.json` SHA-256
+`4d1ebc2818de7d6afb47587550ce11e8050b474cba1099a5ea71aefd1630533a`
+binds the evidence and all 249 declared output hashes. No current game build
+reads this research directory. Main's project/editor and the feedback device
+lease are untouched. Reuse the existing raw-input producer and published
+assembly recipes in a full independent producer; do not start another raw audio
+implementation or claim that a full Editor rebuild is inherently required.
+The completed result narrows the missing code-production contracts, but is not
+full-game conversion, Android tool execution, performance acceptance or public
+redistribution clearance. The private accepted-output replay and desktop
+owner-build/cache fallback remain the usable bounded routes while those
+producers and ordinary phone installation are completed.

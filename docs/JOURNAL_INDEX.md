@@ -10,7 +10,8 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
-| [J1051](PORTING_JOURNAL.md#j1051--acquire-exact-generic-android-sdk-inputs-without-installing-the-editor) | 2026-10-24 | Acquire exact generic Android SDK inputs without installing the Editor | 2026-10-23. |
+| [J1052](PORTING_JOURNAL.md#j1052--trace-the-full-player-managed-closure-and-reproduce-its-raw-audio-api-input) | 2026-10-24 | Trace the full player managed closure and reproduce its raw audio API input | 2026-10-23. |
+| [J1051](PORTING_JOURNAL.md#j1051--acquire-exact-generic-android-sdk-inputs-without-installing-the-editor) | 2026-10-23 | Acquire exact generic Android SDK inputs without installing the Editor | 2026-10-23. |
 | [J1051](PORTING_JOURNAL.md#j1051--host-storage-pruning-and-a-mandatory-agent-cleanup-rule) | 2026-10-23 | Host storage pruning and a mandatory agent cleanup rule | **Hypothesis.** |
 | [J1050](PORTING_JOURNAL.md#j1050--measure-exact-data-reuse-across-every-pc-and-accepted-android-bundle) | 2026-10-23 | Measure exact data reuse across every PC and accepted Android bundle | 2026-10-23. |
 | [J1049](PORTING_JOURNAL.md#j1049--assemble-and-sign-the-complete-private-owner-apk-bootstrap-candidate) | 2026-10-23 | Assemble and sign the complete private owner APK bootstrap candidate | 2026-10-23. |

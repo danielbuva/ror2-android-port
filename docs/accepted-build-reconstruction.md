@@ -138,6 +138,13 @@ a prior project. R2-R9 and the exporter are useful derivation knowledge, not a
 finished binary-content converter. Existing inherited assets and private analysis
 inputs also remain public-bootstrap debt in the desktop workflow.
 
+The [complete managed-input case (J1052)](PORTING_JOURNAL.md#j1052--trace-the-full-player-managed-closure-and-reproduce-its-raw-audio-api-input)
+traces the real full-player closure and executes the existing raw-input producer
+without the Editor or modified project assemblies. It identifies concrete source,
+post-processing and linker-root dependencies rather than treating an Editor
+rebuild as inevitable. Its host result is not full-player or phone qualification;
+reuse these existing producers instead of starting a second raw audio pipeline.
+
 ## Binary patches and retained artifacts
 
 | Candidate shortcut | Assessment |
