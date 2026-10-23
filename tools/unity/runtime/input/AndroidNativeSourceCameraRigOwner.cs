@@ -26,6 +26,18 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
     public bool audioContextOnly { get; private set; }
     public bool audioContextReady { get; private set; }
     public int audioContextRigIndex { get; private set; } = -1;
+    public bool audioContextRigActiveAndEnabledObserved { get; private set; }
+    public bool audioContextRigActiveAndEnabled { get; private set; }
+    public bool audioContextRigActiveInHierarchyObserved { get; private set; }
+    public bool audioContextRigActiveInHierarchy { get; private set; }
+    public bool audioContextCameraModeObserved { get; private set; }
+    public bool audioContextCameraModeIsNull { get; private set; }
+    public bool audioContextCameraModeIsPlayerBasic { get; private set; }
+    public bool audioContextOriginalStartWaitObserved { get; private set; }
+    public bool audioContextStartupClockObserved { get; private set; }
+    public bool audioContextStartupClockValid { get; private set; }
+    public bool audioContextStartupDeadlineExpired { get; private set; }
+    public string audioContextCameraStartGateState { get; private set; } = "not_observed";
     public bool damageNumberManagerPreActivationObserved { get; private set; }
     public bool damageNumberManagerPresentBeforeActivation { get; private set; }
     public bool damageNumberManagerPostActivationObserved { get; private set; }
@@ -674,8 +686,57 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
             Refuse("owned original view-only rig or source body was destroyed");
             return;
         }
-        if (!cameraRig.isActiveAndEnabled || !cameraRig.gameObject.activeInHierarchy ||
-            cameraRig.cameraMode != CameraModePlayerBasic.playerBasic)
+        bool rigActiveAndEnabled = cameraRig.isActiveAndEnabled;
+        bool rigActiveInHierarchy = cameraRig.gameObject.activeInHierarchy;
+        var cameraMode = cameraRig.cameraMode;
+        bool cameraModeIsNull = ReferenceEquals(cameraMode, null);
+        bool cameraModeIsPlayerBasic = !cameraModeIsNull && cameraMode == CameraModePlayerBasic.playerBasic;
+        if (audioContextOnly)
+        {
+            audioContextRigActiveAndEnabledObserved = true;
+            audioContextRigActiveAndEnabled = rigActiveAndEnabled;
+            audioContextRigActiveInHierarchyObserved = true;
+            audioContextRigActiveInHierarchy = rigActiveInHierarchy;
+            audioContextCameraModeObserved = true;
+            audioContextCameraModeIsNull = cameraModeIsNull;
+            audioContextCameraModeIsPlayerBasic = cameraModeIsPlayerBasic;
+            float startupNow = Time.realtimeSinceStartup;
+            audioContextStartupClockObserved = true;
+            audioContextStartupClockValid = AndroidNativeAudioCameraContextContract.IsValidStartupClock(
+                startupNow, audioContextActivatedAt, audioContextAdmissionDeadline);
+            audioContextStartupDeadlineExpired = audioContextStartupClockValid &&
+                startupNow >= audioContextAdmissionDeadline;
+            var startStep = AndroidNativeAudioCameraContextContract.EvaluateOriginalStartWindow(
+                true, rigActiveAndEnabled, rigActiveInHierarchy, cameraModeIsNull,
+                cameraModeIsPlayerBasic, audioContextReady, startupNow,
+                audioContextActivatedAt, audioContextAdmissionDeadline);
+            if (startStep == AndroidNativeAudioCameraStartStep.WaitForOriginalStart)
+            {
+                audioContextOriginalStartWaitObserved = true;
+                audioContextCameraStartGateState = "waiting_for_original_CameraRigController_Start";
+                status = "audio context waiting for original CameraRigController.Start to assign PlayerBasic; rig active/enabled and in hierarchy";
+                return;
+            }
+            audioContextCameraStartGateState = startStep == AndroidNativeAudioCameraStartStep.Continue
+                ? "original_PlayerBasic_observed" : "original_camera_start_refused";
+            if (startStep == AndroidNativeAudioCameraStartStep.Retire)
+            {
+                string reason = !rigActiveAndEnabled || !rigActiveInHierarchy
+                    ? "audio-only source rig became inactive before source context admission"
+                    : !audioContextStartupClockValid
+                        ? "audio-only source startup clock was invalid or moved before activation"
+                        : cameraModeIsPlayerBasic
+                        ? "original audio camera context did not reach readiness before its initial admission deadline"
+                        : cameraModeIsNull
+                        ? audioContextReady
+                            ? "audio-only source rig lost its original camera mode after admission"
+                            : "original CameraRigController.Start did not assign PlayerBasic before the bounded startup deadline"
+                        : "audio-only source rig has a non-PlayerBasic original camera mode";
+                Refuse(reason);
+                return;
+            }
+        }
+        else if (!rigActiveAndEnabled || !rigActiveInHierarchy || !cameraModeIsPlayerBasic)
         {
             Refuse("owned prefab rig is not active in the original PlayerBasic camera mode");
             return;
@@ -819,7 +880,7 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
             musicObservationAge >= 0f && musicObservationAge <= 1.5f &&
             audioContextMusicObservationRealtime >= audioContextActivatedAt;
         bool musicTarget = audioContextMusicTargetObserved && musicFresh;
-        bool deadlineExpired = Time.realtimeSinceStartup > audioContextAdmissionDeadline;
+        bool deadlineExpired = Time.realtimeSinceStartup >= audioContextAdmissionDeadline;
         var step = AndroidNativeAudioCameraContextContract.EvaluateObservation(
             exactRig, contextAndListenerReady, musicTarget, audioContextReady, deadlineExpired);
         if (step == AndroidNativeAudioContextStep.Retire)

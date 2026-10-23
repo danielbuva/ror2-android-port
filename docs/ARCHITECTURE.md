@@ -2964,6 +2964,13 @@ must be sole index zero, target the selected body and supply a fresh source
 MusicController observation under a bounded readiness wait. The lifecycle
 contract in `AndroidNativeSourceCameraRigContract.cs` separates waiting,
 admission and retirement. Invalid context retires only its owned staging root.
+J998 allows only an active audio-only rig with an initially unset mode to wait
+for original Start initialization. Finite clock checks and a five-second
+initial-admission deadline bound both mode and context readiness. It never
+assigns the source mode; inactive/foreign state, post-ready loss and invalid
+clocks retire the owner. Reports distinguish sampled activity/mode values from
+known/unknown flags. The separate visual diagnostic retains its immediate
+mode gate.
 
 The source Camera stays disabled with no pose camera or provider override.
 Original global camera/spectation/listener callbacks remain active and may

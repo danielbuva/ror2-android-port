@@ -77,21 +77,86 @@ public enum AndroidNativeAudioContextStep
     Retire
 }
 
+public enum AndroidNativeAudioCameraStartStep
+{
+    WaitForOriginalStart,
+    Continue,
+    Retire
+}
+
+public struct AndroidNativeAudioCameraStartObservation
+{
+    public bool rigActivityObserved, rigActiveAndEnabled, rigActiveInHierarchy;
+    public bool cameraModeObserved, cameraModeIsNull, cameraModeIsPlayerBasic;
+    public bool originalStartWaitObserved;
+    public string gateState;
+}
+
 // Shared decisions used by the source owner and exercised by host fixtures.
 // Observations themselves remain owned by the Unity-facing source component.
 public static class AndroidNativeAudioCameraContextContract
 {
+    public static bool IsValidStartupClock(float nowRealtime, float activationRealtime, float deadlineRealtime)
+    {
+        return IsFinite(nowRealtime) && IsFinite(activationRealtime) && IsFinite(deadlineRealtime) &&
+            nowRealtime >= activationRealtime && deadlineRealtime >= activationRealtime;
+    }
+
+    public static AndroidNativeAudioCameraStartStep EvaluateOriginalStartWindow(
+        bool audioContextOnly, bool rigActiveAndEnabled, bool rigActiveInHierarchy,
+        bool cameraModeIsNull, bool cameraModeIsPlayerBasic, bool previouslyReady,
+        float nowRealtime, float activationRealtime, float deadlineRealtime)
+    {
+        if (!audioContextOnly)
+            return rigActiveAndEnabled && rigActiveInHierarchy && cameraModeIsPlayerBasic
+                ? AndroidNativeAudioCameraStartStep.Continue : AndroidNativeAudioCameraStartStep.Retire;
+        if (!IsValidStartupClock(nowRealtime, activationRealtime, deadlineRealtime))
+            return AndroidNativeAudioCameraStartStep.Retire;
+        if (cameraModeIsNull && cameraModeIsPlayerBasic)
+            return AndroidNativeAudioCameraStartStep.Retire;
+        if (!rigActiveAndEnabled || !rigActiveInHierarchy)
+            return AndroidNativeAudioCameraStartStep.Retire;
+        if (cameraModeIsPlayerBasic)
+            return !previouslyReady && nowRealtime >= deadlineRealtime
+                ? AndroidNativeAudioCameraStartStep.Retire : AndroidNativeAudioCameraStartStep.Continue;
+        if (!cameraModeIsNull || previouslyReady || nowRealtime >= deadlineRealtime)
+            return AndroidNativeAudioCameraStartStep.Retire;
+        return AndroidNativeAudioCameraStartStep.WaitForOriginalStart;
+    }
+
+    public static AndroidNativeAudioCameraStartObservation CreateStartObservation(
+        bool rigActiveAndEnabledObserved, bool rigActiveAndEnabled,
+        bool rigActiveInHierarchyObserved, bool rigActiveInHierarchy,
+        bool cameraModeObserved, bool cameraModeIsNull, bool cameraModeIsPlayerBasic,
+        bool originalStartWaitObserved, string gateState)
+    {
+        return new AndroidNativeAudioCameraStartObservation {
+            rigActivityObserved = rigActiveAndEnabledObserved && rigActiveInHierarchyObserved,
+            rigActiveAndEnabled = rigActiveAndEnabled,
+            rigActiveInHierarchy = rigActiveInHierarchy,
+            cameraModeObserved = cameraModeObserved,
+            cameraModeIsNull = cameraModeIsNull,
+            cameraModeIsPlayerBasic = cameraModeIsPlayerBasic,
+            originalStartWaitObserved = originalStartWaitObserved,
+            gateState = gateState,
+        };
+    }
+
+    static bool IsFinite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
+
     public static AndroidNativeAudioContextStep EvaluateObservation(
         bool exactOwnedRig, bool targetContextAndListenerReady, bool freshMusicTarget,
         bool previouslyReady, bool startupDeadlineExpired)
     {
         if (!exactOwnedRig)
             return AndroidNativeAudioContextStep.Retire;
-        if (targetContextAndListenerReady && freshMusicTarget)
-            return AndroidNativeAudioContextStep.Ready;
-        return previouslyReady || startupDeadlineExpired
-            ? AndroidNativeAudioContextStep.Retire
-            : AndroidNativeAudioContextStep.Wait;
+        if (previouslyReady)
+            return targetContextAndListenerReady && freshMusicTarget
+                ? AndroidNativeAudioContextStep.Ready : AndroidNativeAudioContextStep.Retire;
+        if (startupDeadlineExpired)
+            return AndroidNativeAudioContextStep.Retire;
+        return targetContextAndListenerReady && freshMusicTarget
+            ? AndroidNativeAudioContextStep.Ready : AndroidNativeAudioContextStep.Wait;
     }
 
     public static bool MustRetireOnRefusal(bool audioContextOnly) => audioContextOnly;

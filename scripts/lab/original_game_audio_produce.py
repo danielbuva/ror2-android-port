@@ -69,7 +69,7 @@ META_GUIDS = {
 NATIVE_META_GUID = "a2a09e81876b46f2a202e62f96644331"
 NATIVE_TARGET = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so"
 NATIVE_META = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so.meta"
-OWNER_ANCESTOR_MANIFEST_SHA256 = "19067fb17de27257ef4929cb2b6107a2b86fa3321d56646eb2228bdf667336b5"
+OWNER_ANCESTOR_MANIFEST_SHA256 = "ad5d813fe615e0c8ee84c385e485b61a785bd32404cebeb0914c6ecd0c6055ae"
 STAGE_PIN_TOOL_SHA256 = "6e12acb9b58a570aa3a869f9f0880ddbd56ba4da0c806188c1124164211d0102"
 REQUEST_PIN_TOOL_SHA256 = "844e57ef264c56fa2d2adbacfeba893a30f684fa1ad5e203cdb5a5ffb8be3b96"
 MANAGED_PRODUCER_SHA256 = "e5cfc952843cd247d5c96690a11d7a56650f0777c85f7aef2c4bc673bbe0bb85"
@@ -101,7 +101,7 @@ OWNER_SOURCE_HASHES = {
     "core/GameAudioOriginalReadiness.cs": "ab7be883932ce975615676882440c74d43b039fce067a9cab0572d7198c4db19",
     "core/OriginalOwnerProbeObserver.cs": "236a01f7fb24ee0a6799f0f41196579683505e8255d18d0d1a4d1ef19537da02",
     "core/PointSoundDiagnosticObserver.cs": "ebd0b2c0089150c4302c00824ee32e7a8e8b1906f26ad2137bdb0cee4cf1b4c7",
-    "../../runtime/world/IntegratedWorldBoundary.cs": "d0c4c97ca6f8af0deb11ba6d7895452522fe2624fe77c9e00dec7296f5fa0588",
+    "../../runtime/world/IntegratedWorldBoundary.cs": "47289f3e9e8a02d65194eae41aaf72275af6aa464b0c8a0999acac77c6e73ced",
     "../../runtime/world/LightningStakeSourceCallObserver.cs": "0792b3d7b40423e1b98ce2397a72917c73d20ab58ad555fac948d5b19146caf6",
 }
 

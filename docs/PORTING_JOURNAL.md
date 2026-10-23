@@ -29608,3 +29608,66 @@ repair alone does not prove camera readiness. Fresh build, retained complete
 catalog/bundle membership, both standard controls, error-free source activation
 and actual camera/listener context remain required. Loader and composed audio
 remain unqualified; J850 stays the accepted rollback.
+
+## J998 — Bound initial original camera-mode readiness without replacing Start
+
+**Evidence and hypothesis.** J996's combined active/PlayerBasic refusal does
+not identify its failing operand. Accepted CameraRigController source assigns
+PlayerBasic in Start, after installing its original update subscription and
+performing source setup. An owner LateUpdate in the activation frame can
+therefore inspect an initially unset mode before that callback. This is a
+source-backed ordering hypothesis, not measured callback order or proof that
+the shader exception caused the mode failure. J997 independently handles the
+known shader lookup dependency. J988's accepted source camera/pinned
+R2API.Sound boundaries still apply; no new middleware or camera algorithm is
+introduced.
+
+**Named owner and smallest correction.** The audio-only mode of
+AndroidNativeSourceCameraRigOwner now waits only when its exact rig is active
+and enabled, in the active hierarchy, with a null mode before first admission.
+It leaves mode assignment and callbacks to original Start. Nonnull foreign
+mode, missing/inactive objects, null mode after readiness, invalid/non-finite
+time, time before activation or deadline expiry retire the owned context.
+PlayerBasic alone still cannot bypass target/team, original update context,
+listener membership or fresh MusicController evidence. The inclusive initial
+five-second cutoff also refuses late first readiness; already admitted valid
+context may continue after that startup window. Rendering remains disabled,
+with no pose camera or view override; visual diagnostic behavior is retained.
+
+The existing world report records activity/mode/clock observations separately
+from their sampled values, plus whether initial waiting occurred. This lets
+the next player distinguish inactive state, unset or wrong mode, and timeout.
+Host review rejects the first draft's false activity projection and unbounded
+NaN comparison; the integrated second draft keeps those distinctions truthful.
+Unknown state is not reported as observed inactivity or activity. Neither a
+mode observation nor a wait proves Start or native listener acceptance.
+
+**Host validation and reconstruction.** Root verifies exact source/test
+preimages and integrates the independently reviewed R2 proposal byte-for-byte.
+The production contract executes 31 timing, state and report-projection
+assertions, including false sampled values with true observed flags,
+non-finite/backward clocks, initial null mode, late first readiness,
+post-ready loss and the unchanged visual gate. The existing actual release
+body fixture still runs. Both public host tests pass. The broad original-audio
+suite passes 113 tests with two optional skips, native-camera contracts pass
+44 with three optional skips, and changed Python passes Ruff.
+An independent full 143-source/247-reference host compile has zero errors and
+72 warnings; it establishes API coherence, not editor or device behavior.
+
+The authored owner cohort refreshes its world-source hash, retains manifest
+`19067fb17de27257ef4929cb2b6107a2b86fa3321d56646eb2228bdf667336b5`
+as parent, and updates producer, camera hook and camera-source pins. Future
+reconstruction must replay this change. Runtime membership and local build
+inputs are unchanged; no build step edits authored source by replacement.
+Only authored code, synthetic fixtures and hashes are public.
+
+Evidence is under `work/coordination/original-game-audio-pcm/` in
+`r30-audio-camera-context-draft-r2/` (manifest
+`a3e5ed7b26d575b7319c4e6a7330bb714975e54beb612e8afded541e922dda56`),
+`r30-audio-camera-context-review-r2/`, and
+`r30-start-window-{audio,camera}-host-root-r1.log`.
+The rejected R1 packet/review remain intact. No device or editor action is
+performed for this source checkpoint. Main retains J996 0d984b01, asleep with
+13 applied runs. A fresh full build, metadata retention, both standard checks,
+source callback/log/context observations and targeted gameplay remain required.
+No camera, audio, natural-Quit or Loader acceptance is claimed.

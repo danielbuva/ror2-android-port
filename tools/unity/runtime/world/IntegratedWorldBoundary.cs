@@ -119,11 +119,20 @@ public sealed partial class PortSession
         public bool originalAudioCameraContextRenderCameraDisabled, originalAudioCameraContextOverrideAbsent;
         public bool originalAudioCameraContextSourceRigAtIndexZero, originalAudioCameraContextManagedListenerObserved;
         public bool originalAudioCameraContextManagedListenerRemovalObserved;
+        public bool originalAudioCameraContextRigActivityObserved;
+        public bool originalAudioCameraContextRigActiveAndEnabledObserved,
+            originalAudioCameraContextRigActiveInHierarchyObserved;
+        public bool originalAudioCameraContextRigActiveAndEnabled, originalAudioCameraContextRigActiveInHierarchy;
+        public bool originalAudioCameraContextCameraModeObserved, originalAudioCameraContextCameraModeIsNull,
+            originalAudioCameraContextCameraModeIsPlayerBasic, originalAudioCameraContextOriginalStartWaitObserved;
+        public bool originalAudioCameraContextStartupClockObserved,
+            originalAudioCameraContextStartupClockValid, originalAudioCameraContextStartupDeadlineExpired;
         public bool originalAudioCameraContextDamageNumberManagerBeforeCaptured, originalAudioCameraContextDamageNumberManagerBefore;
         public bool originalAudioCameraContextDamageNumberManagerAfterCaptured, originalAudioCameraContextDamageNumberManagerAfter;
         public int originalAudioCameraContextRigIndex = -1;
         public string originalAudioCameraContextState, originalAudioCameraContextScope,
-            originalAudioCameraContextAdmissionFailure, originalAudioCameraContextAdmissionFailureDetail;
+            originalAudioCameraContextAdmissionFailure, originalAudioCameraContextAdmissionFailureDetail,
+            originalAudioCameraContextCameraStartGateState;
         public ObjectiveCombatInputFailureReport objectiveCombatInputFailure;
         public int tableLoadedCount, barrels, chests, openedBarrels, openedChests, pickups, droplets, pickupMessages, coinMessages,
             xpMessages, frames, kills, liveEnemies;
@@ -626,6 +635,34 @@ public sealed partial class PortSession
             report.originalAudioCameraContextManagedListenerRemovalObserved =
                 originalAudioCameraContext.managedSourceDefaultListenerPresentAfterDisableCaptured &&
                 !originalAudioCameraContext.managedSourceDefaultListenerPresentAfterDisable;
+            var startObservation = AndroidNativeAudioCameraContextContract.CreateStartObservation(
+                originalAudioCameraContext.audioContextRigActiveAndEnabledObserved,
+                originalAudioCameraContext.audioContextRigActiveAndEnabled,
+                originalAudioCameraContext.audioContextRigActiveInHierarchyObserved,
+                originalAudioCameraContext.audioContextRigActiveInHierarchy,
+                originalAudioCameraContext.audioContextCameraModeObserved,
+                originalAudioCameraContext.audioContextCameraModeIsNull,
+                originalAudioCameraContext.audioContextCameraModeIsPlayerBasic,
+                originalAudioCameraContext.audioContextOriginalStartWaitObserved,
+                originalAudioCameraContext.audioContextCameraStartGateState);
+            report.originalAudioCameraContextRigActivityObserved = startObservation.rigActivityObserved;
+            report.originalAudioCameraContextRigActiveAndEnabledObserved =
+                originalAudioCameraContext.audioContextRigActiveAndEnabledObserved;
+            report.originalAudioCameraContextRigActiveInHierarchyObserved =
+                originalAudioCameraContext.audioContextRigActiveInHierarchyObserved;
+            report.originalAudioCameraContextRigActiveAndEnabled = startObservation.rigActiveAndEnabled;
+            report.originalAudioCameraContextRigActiveInHierarchy = startObservation.rigActiveInHierarchy;
+            report.originalAudioCameraContextCameraModeObserved = startObservation.cameraModeObserved;
+            report.originalAudioCameraContextCameraModeIsNull = startObservation.cameraModeIsNull;
+            report.originalAudioCameraContextCameraModeIsPlayerBasic = startObservation.cameraModeIsPlayerBasic;
+            report.originalAudioCameraContextOriginalStartWaitObserved = startObservation.originalStartWaitObserved;
+            report.originalAudioCameraContextCameraStartGateState = startObservation.gateState;
+            report.originalAudioCameraContextStartupClockObserved =
+                originalAudioCameraContext.audioContextStartupClockObserved;
+            report.originalAudioCameraContextStartupClockValid =
+                originalAudioCameraContext.audioContextStartupClockValid;
+            report.originalAudioCameraContextStartupDeadlineExpired =
+                originalAudioCameraContext.audioContextStartupDeadlineExpired;
             report.originalAudioCameraContextDamageNumberManagerBeforeCaptured =
                 originalAudioCameraContext.damageNumberManagerPreActivationObserved;
             report.originalAudioCameraContextDamageNumberManagerBefore =

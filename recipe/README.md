@@ -1836,3 +1836,10 @@ The camera recipe refreshes authored prerequisite/catalog source digests.
 Exact exported paths do not prove shader fidelity: these blur/crop exports use
 placeholder bodies, and actual rendering semantics remain unqualified.
 Provenance/privacy audit: 2026-10-23.
+
+J998 refreshes the authored source camera lifecycle and world-report cohort,
+retaining the prior owner manifest as parent. Only authored bounded admission,
+scalar observations, producer/hook pins and synthetic host fixtures are
+published. Native camera/game/middleware implementations and compiler outputs
+stay ignored. No new content or required local input is added; source Start
+assignment and callbacks remain original. Provenance/privacy audit: 2026-10-23.

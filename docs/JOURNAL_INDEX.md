@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J998](PORTING_JOURNAL.md#j998--bound-initial-original-camera-mode-readiness-without-replacing-start) | 2026-10-22 | Bound initial original camera-mode readiness without replacing Start | **Evidence and hypothesis.** |
 | [J997](PORTING_JOURNAL.md#j997--root-the-original-camera-components-complete-blur-shader-dependencies) | 2026-10-22 | Root the original camera component's complete blur shader dependencies | **First failure and source identity.** |
 | [J996](PORTING_JOURNAL.md#j996--verify-the-complete-network-sound-catalog-and-classify-camera-startup-failures) | 2026-10-22 | Verify the complete network sound catalog and classify camera startup failures | **Hypothesis and reproducible player.** |
 | [J994](PORTING_JOURNAL.md#j994--preserve-original-empty-name-sound-definitions-in-the-complete-catalog) | 2026-10-22 | Preserve original empty-name sound definitions in the complete catalog | **Source-backed cause.** |

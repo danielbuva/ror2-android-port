@@ -12,6 +12,20 @@ MONO = EDITOR / "MonoBleedingEdge/bin/mono"
 CSC = EDITOR / "MonoBleedingEdge/lib/mono/msbuild/Current/bin/Roslyn/csc.exe"
 
 
+def extract_method(source, signature):
+    start = source.index(signature)
+    opening = source.index("{", start)
+    depth = 0
+    for index in range(opening, len(source)):
+        if source[index] == "{":
+            depth += 1
+        elif source[index] == "}":
+            depth -= 1
+            if depth == 0:
+                return source[start : index + 1]
+    raise AssertionError(f"unterminated method: {signature}")
+
+
 def extract_release(source):
     start = source.index("    public void ReleaseAudioContext()")
     opening = source.index("{", start)
@@ -92,6 +106,27 @@ class ProductionRelease
             ran = subprocess.run([str(MONO), str(executable)], capture_output=True, text=True, timeout=30)
             self.assertEqual(ran.returncode, 0, ran.stdout + ran.stderr)
             self.assertIn("production release checks", ran.stdout)
+            self.assertIn("31 camera Start-window decisions and report projections", ran.stdout)
+
+    def test_start_window_and_report_are_wired_to_live_sampled_operands(self):
+        owner = (ROOT / "tools/unity/runtime/input/AndroidNativeSourceCameraRigOwner.cs").read_text()
+        late = extract_method(owner, "    void LateUpdate()")
+        self.assertIn("bool rigActiveAndEnabled = cameraRig.isActiveAndEnabled", late)
+        self.assertIn("bool rigActiveInHierarchy = cameraRig.gameObject.activeInHierarchy", late)
+        self.assertIn("bool cameraModeIsPlayerBasic = !cameraModeIsNull &&", late)
+        self.assertIn("audioContextRigActiveAndEnabled = rigActiveAndEnabled", late)
+        self.assertIn("audioContextRigActiveInHierarchy = rigActiveInHierarchy", late)
+        self.assertIn("IsValidStartupClock(", late)
+        self.assertIn("audioContextStartupDeadlineExpired =", late)
+        world = (ROOT / "tools/unity/runtime/world/IntegratedWorldBoundary.cs").read_text()
+        observe = extract_method(world, "        void ObserveOriginalAudioCameraContext()")
+        self.assertIn("CreateStartObservation(", observe)
+        self.assertIn("startObservation.rigActiveAndEnabled", observe)
+        self.assertIn("startObservation.rigActiveInHierarchy", observe)
+        self.assertIn("audioContextStartupClockValid", observe)
+        self.assertIn("audioContextStartupDeadlineExpired", observe)
+        self.assertIn("audioContextRigActiveAndEnabledObserved", observe)
+        self.assertIn("audioContextRigActiveInHierarchyObserved", observe)
 
 
 if __name__ == "__main__":
