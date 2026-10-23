@@ -16,7 +16,7 @@ def receiver_functions():
     # The receiver has Android-only startup. Compile its real pure boundaries,
     # leaving device admission and the executable module body unexecuted.
     tree = ast.parse(SCRIPT.read_text())
-    names = {"safe", "read_exact", "copy_stream"}
+    names = {"owned_paths", "safe", "read_exact", "copy_stream"}
     functions = [n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name in names]
     if {n.name for n in functions} != names:
         raise AssertionError("receiver stream boundaries missing")
@@ -26,6 +26,51 @@ def receiver_functions():
 
 
 class AcceptedOutputStreamTests(unittest.TestCase):
+    def test_startup_admits_only_canonical_owned_existing_roots(self):
+        functions = receiver_functions()
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary).resolve()
+            owner = base / "owned"
+            owner.mkdir()
+            work, inputs = (owner / name for name in ("run", "inputs"))
+            work.mkdir()
+            inputs.mkdir()
+            manifest = owner / "input.json"
+            manifest.write_text("authored manifest")
+            outside = base / "outside"
+            outside.mkdir()
+            sentinel = outside / "sentinel"
+            sentinel.write_text("untouched")
+            original_listing = sorted(str(p.relative_to(base)) for p in base.rglob("*"))
+            self.assertEqual(functions["owned_paths"](work, inputs, manifest, owner), (work, inputs, manifest, owner))
+            # Every argument role must reject lexical traversal, including paths
+            # that happen to resolve back inside the workspace.
+            valid = (work, inputs, manifest, owner)
+            for index, paths in enumerate(
+                (
+                    (owner / ".." / "outside", outside, owner / "inputs" / ".." / "run"),
+                    (owner / ".." / "outside", outside),
+                    (owner / ".." / "outside" / "sentinel", sentinel),
+                    (owner / ".." / "owned",),
+                )
+            ):
+                for selected in paths:
+                    args = list(valid)
+                    args[index] = selected
+                    with self.subTest(role=index, selected=selected), self.assertRaises(ValueError):
+                        functions["owned_paths"](*args)
+            link = owner / "linked"
+            link.symlink_to(outside, target_is_directory=True)
+            with self.assertRaisesRegex(ValueError, "symlink"):
+                functions["owned_paths"](link, inputs, manifest, owner)
+            link.unlink()
+            with self.assertRaisesRegex(ValueError, "absent"):
+                functions["owned_paths"](owner / "missing", inputs, manifest, owner)
+            self.assertEqual(sentinel.read_text(), "untouched")
+            self.assertEqual(sorted(str(p.relative_to(base)) for p in base.rglob("*")), original_listing)
+            self.assertFalse((outside / "process.json").exists())
+            self.assertFalse((outside / "output").exists())
+
     def test_paths_refuse_escape_and_symlinks_without_touching_external_data(self):
         functions = receiver_functions()
         with tempfile.TemporaryDirectory() as temporary:

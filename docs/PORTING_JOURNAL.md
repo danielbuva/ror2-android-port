@@ -32664,6 +32664,22 @@ The original v1 proof remains unchanged. The complete public source and
 setup/lifecycle documents carry no packet, target bytes or key. Device/installed
 game state is unchanged throughout this host follow-through.
 
+**Final review containment correction.** Main's r3 review at a5ecd5c finds a
+real startup boundary defect: lexical `Path.is_relative_to(owner)` accepts a
+selected root containing `..`, allowing output beyond the receipt-owned tree.
+The receiver now rejects parent components and symlinks in every argument role,
+strictly resolves the owner/roots, validates canonical ancestry and existing
+file/directory roles, then opens output. The authored startup contract covers
+traversal both outside and back inside the owner, canonical external roots,
+symlink/missing roots and unchanged external sentinel/trees. All 11 focused host
+contracts and Ruff pass. `review-containment-fix-v1.json` binds the corrected
+source and scope: every original function and the full reconstruction body keep
+identical ASTs; only startup admission is hardened. The original full phone
+proof remains tied to its exact earlier source; new admission is host-qualified,
+with device qualification pending the explicit Alpha handback. No new device
+claim or runtime change is inferred from this fix. The r3 hold is returned to
+Main for exact corrected-source review before merge.
+
 **Classification and next work.** Complete private snapshot/delta reconstruction
 on Android passes. This resolves the immediate technical question: a Unity
 Editor/game rebuild is not required when a private packet supplies the target

@@ -31,18 +31,35 @@ MAX_SECONDS = 900
 started = time.monotonic()
 last_guard = 0
 child = None
+
+
+def owned_paths(work, inputs, input_manifest, owner):
+    """Admit canonical receipt-owned paths before opening any output."""
+    paths = (work, inputs, input_manifest, owner)
+    for path in paths:
+        if not path.is_absolute() or ".." in path.parts:
+            raise ValueError("noncanonical owned path refused")
+        for component in (path, *path.parents):
+            if component.is_symlink():
+                raise ValueError("symlink path refused")
+    try:
+        canonical_owner = owner.resolve(strict=True)
+        canonical = tuple(path.resolve(strict=True) for path in paths[:3])
+    except FileNotFoundError:
+        raise ValueError("selected roots absent") from None
+    if any(not path.is_relative_to(canonical_owner) for path in canonical):
+        raise ValueError("path outside owned workspace")
+    work, inputs, input_manifest = canonical
+    if not canonical_owner.is_dir() or not work.is_dir() or not inputs.is_dir() or not input_manifest.is_file():
+        raise ValueError("selected roots absent or wrong type")
+    return work, inputs, input_manifest, canonical_owner
+
+
 resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
 work, inputs, input_manifest, owner = [Path(x) for x in sys.argv[1:5]]
 if not re.fullmatch(r"/data/local/tmp/ror2-phone-proof-[0-9a-f]{32}", str(owner)):
     raise ValueError("unexpected owned workspace")
-for p in [work, inputs, input_manifest]:
-    if not p.is_relative_to(owner):
-        raise ValueError("path outside owned workspace")
-    for component in [p, *p.parents]:
-        if component.is_symlink():
-            raise ValueError("symlink path refused")
-if not work.is_dir() or not inputs.is_dir() or not input_manifest.is_file():
-    raise ValueError("selected roots absent")
+work, inputs, input_manifest, owner = owned_paths(work, inputs, input_manifest, owner)
 result = {
     "schema": 1,
     "success": False,

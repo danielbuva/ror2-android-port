@@ -62,11 +62,15 @@ hashes. This initial archive is not install-ready: it compresses `resources.arsc
 Use the separate assembly step below before alignment/signing. Ordinary Android
 app execution and installation/update remain unqualified.
 
-The public source differs from the phone-tested source only by repository Ruff
-formatting; their complete ASTs match. Exact source hashes and the alias receipt
-are retained with the private experiment evidence. The host contracts exercise
-real receiver path and stream functions with authored fixtures; they do not
-qualify Android process admission or game readiness.
+The initial public source differs from the phone-tested source only by Ruff
+formatting, with an identical AST and retained alias receipt. Final review then
+found and fixed a startup containment defect: lexical ancestry accepted `..`.
+The current receiver rejects parent components/symlinks, resolves every existing
+root strictly and checks canonical receipt-owned ancestry before opening output.
+All original stream/reconstruction functions and the full reconstruction body
+retain identical ASTs; the added startup guard has authored host coverage and
+awaits device qualification. Exact versions and receipts remain private. These
+host contracts do not establish game readiness.
 
 ## Reproduce and stream a private packet
 
