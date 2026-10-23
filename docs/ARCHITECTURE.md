@@ -21,6 +21,14 @@ original background and dependency-free frontend. `controller.js` owns the
 versioned host state/action adapter, subscription teardown and pending-action
 guard; `app.js` owns views and navigation. No backend is connected by default.
 The separate `demo/` is simulated and is never loaded by the frontend. This
+package's `feedback.js` owns page-memory notes, explicit consumption of schema 1
+sanitized baseline previews, an exact plain-text preview, review consent and
+clipboard copy with manual fallback. Setup is the Diagnostics feedback route;
+navigation removes listeners and retains notes in page memory, reload clears
+them, and background host updates preserve the form. It projects typed,
+bounded public facts into a new object and ignores unknown keys and draft URLs.
+No raw receipt, log, device, storage, network or attachment access is added.
+The notes are user-authored and require manual privacy review. The launcher
 package is a public-alpha integration boundary, not an Android shell, new
 build pipeline or runtime owner. Setup, lifecycle and acceptance gates are in
 its README; the existing owner-built delivery route remains unchanged.
