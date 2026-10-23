@@ -29954,3 +29954,84 @@ acceptance. The four catalog placeholder bodies remain selected. No new APK or
 runtime source is introduced; Main remains J1000 bda75e37 stopped/asleep, with
 J850 as the accepted rollback. The independent camera admission observation
 change can proceed without selecting these shader candidates.
+
+## J1005 — Preserve actual audio camera admission operands through retirement
+
+**First failure and prior art.** J1000's final report proves source Start/mode
+progress but loses the earlier false conjunct when bounded admission retires.
+Revisit the exact accepted owner, original camera marker and music snapshot
+contracts before changing behavior. Pinned R2API.Sound at f539511e distinguishes
+native engine/bank lifecycle from managed readiness; it provides no replacement
+camera context. J988/J998's original callback and bounded Start rules remain
+authoritative. This change adds observations only, not a longer deadline or
+forced camera, target, listener, event or music success.
+
+**Named owners and lifecycle.** The existing pure camera contract now owns a
+serializable scalar DTO for first/latest actual admission inputs.
+`AndroidNativeSourceCameraRigOwner` records outer Start-window activity/mode
+transitions separately from inner exact-rig, target/body/team, original update
+context, managed listener membership and cached music operands. Its marker
+snapshot uses the existing read-only helper. Music snapshots keep the original
+0.5 s capture cadence, source timestamp, refresh flag and current age. Each
+actual sample clears unknown/value pairs before early returns. All projected
+times are finite and carry validity flags; unchanged raw values drive the
+existing admission contract.
+
+The first sample is a bounded independent copy. The latest outer sample says
+whether an inner evaluation followed it, so deadline retirement cannot imply a
+same-frame predicate evaluation. `IntegratedWorldBoundary` copies the evidence
+into its existing world report during observation and before/after release.
+The historical observations survive teardown without retaining Unity objects
+or claiming live readiness. There is no new runtime source membership or
+timestamped local build input. Refresh the camera recipe and original-audio
+source cohort, retaining its previous manifest as parent; reconstruction must
+replay those authored sources/pins.
+
+**Host review and validation.** Root integrates the three exact independently
+reviewed R4 source postimages. Earlier private reviews reject unknown context
+being reported as known, non-finite JSON fields and stale per-sample operands;
+R4 resolves them. The public fixture compiles and runs the actual pure production
+contract, testing early-return reset, unknown versus observed false, first-copy
+independence, cached timestamp/age, all float projections and unchanged gate
+decisions. It skips when the pinned Unity Mono/Roslyn tools are absent. It
+copies no implementation and uses no source-string assertions.
+
+The focused camera/audio/music suites pass 206 tests with 6 tool/profile skips.
+An initial suite records one existing Cecil compiler setup failure despite the
+referenced file being present. Its isolated four-test retry and complete focused
+suite then pass without source or tool changes; preserve the initial failure.
+Changed Python passes Ruff and explicit Main doctor/preflight pass.
+No R31 player or post-strip metadata pair exists at this checkpoint.
+
+A separate full host compile copies all 143 runtime inputs and substitutes
+the three integrated canonical postimages against hash-bound R30 references.
+It passes with zero errors and 72 warnings; every copied source/reference
+rehashes unchanged afterward. Output DLL SHA-256 is
+`3098de83216e354d92c232efe13fddf0e3060093691a8b3680f7f26461a9b7ee`.
+The saved Bee response has 245 explicit reference arguments, although its older
+manifest reports 247; this checkpoint reports the observed 245 and preserves
+that discrepancy. Frozen evidence is
+`r31-full-runtime-compile-preparation-r1/` under the same coordination parent,
+with manifest SHA-256
+`194f5887965bb615c19e943b31d76eb9260746dd3c8a929e2fc1ec33e6bfcee9`.
+This is host API/source coherence, not a Unity player or linker test.
+
+Evidence is under `work/coordination/original-game-audio-pcm/` in
+`r31-camera-admission-operands-draft-r4/`,
+`r31-camera-admission-operands-review-r4/`,
+`r31-public-contract-test-draft-r1/`,
+`r31-public-contract-test-review-r1/` and
+`r31-camera-integration-root-r1/`.
+Integrated contract/owner/world SHA-256 values are
+`488a6dadc47347df0abf301247d45c41ce4f47a97054bfdf339f0e12602e1812`,
+`60ddd8517319a172c2811ea6e35223db03079d50967a380c606594315b437ed9`
+and `e0648f2e60d645284a3bdcae6c9e6af707b893e1430faf20a3a3a0cb27f807a5`.
+
+**Next gate and limits.** Commit before staging/building a player. The reviewed
+private metadata checker must verify all 142 DTO fields/types and the world
+report field in that build's own pre/post-strip pair. Run both standard controls
+on Root's exact APK/payload, then inspect the retained actual admission operands
+before choosing a repair. Loader remains unarmed. No current readiness, playback,
+audibility, shader fidelity or new baseline is accepted by host tests. Main
+still has J1000 diagnostic bda75e37 stopped/asleep with 13 applied runs; J850
+remains the accepted rollback. No Alpha-owned behavior is changed.

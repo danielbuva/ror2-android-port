@@ -1,3 +1,5 @@
+using System;
+
 // Pure fail-closed contract for an opt-in, original-prefab view-only camera.
 public static class AndroidNativeSourceCameraRigContract
 {
@@ -67,6 +69,322 @@ public static class AndroidNativeSourceCameraRigContract
         else if (!e.viewReady)
             failure = "Nova view pose is not configured";
         return failure == null;
+    }
+}
+
+
+
+// Last scalar admission sample for the explicitly selected audio-only source
+// camera owner. Every value is paired with an observation/known flag where a
+// false sample could otherwise be confused with a value that was never read.
+// This DTO contains no Unity or game-object references and does not affect gates.
+[Serializable]
+public sealed class AndroidNativeAudioCameraAdmissionEvidence
+{
+    public bool startWindowSampleKnown;
+    public int startWindowSampleCount;
+    public float startWindowFirstRealtime, startWindowLastRealtime;
+    public bool startWindowFirstRealtimeValid, startWindowLastRealtimeValid;
+    public bool startWindowFirstActivityKnown, startWindowFirstActiveAndEnabled, startWindowFirstActiveInHierarchy;
+    public bool startWindowFirstModeKnown, startWindowFirstModeIsNull, startWindowFirstModeIsPlayerBasic;
+    public bool startWindowFirstWaitObserved;
+    public float startWindowFirstWaitRealtime;
+    public bool startWindowFirstWaitRealtimeValid;
+    public bool startWindowFirstPlayerBasicObserved;
+    public float startWindowFirstPlayerBasicRealtime;
+    public bool startWindowFirstPlayerBasicRealtimeValid;
+    public bool startWindowLastActivityKnown, startWindowLastActiveAndEnabled, startWindowLastActiveInHierarchy;
+    public bool startWindowLastModeKnown, startWindowLastModeIsNull, startWindowLastModeIsPlayerBasic;
+    public bool startWindowLastClockKnown, startWindowLastClockValid, startWindowLastDeadlineExpired;
+    public bool startWindowLastAdmissionEvaluationObserved;
+    public string startWindowLastStep;
+    public float activationRealtime, admissionDeadlineRealtime;
+    public bool activationRealtimeValid, admissionDeadlineRealtimeValid;
+
+    public bool admissionSampleKnown;
+    public int admissionSampleSequence;
+    public float admissionSampleRealtime, admissionDeadlineRemainingSeconds;
+    public bool admissionSampleRealtimeValid, admissionDeadlineRemainingSecondsValid;
+    public bool admissionClockKnown, admissionClockValid, admissionDeadlineExpired;
+    public bool noRenderStateKnown, sourceCameraDisabled, poseCameraAbsent, overrideAbsent;
+    public bool rigInventoryKnown;
+    public int rigInventoryCount;
+    public bool soleOwnedRigIndexZeroKnown, soleOwnedRigIndexZero;
+    public bool exactRigKnown, exactRig;
+    public bool rigActiveKnown, rigActiveAndEnabled, rigActiveInHierarchy;
+    public bool playerBasicModeKnown, playerBasicMode;
+    public bool viewerNullKnown, viewerNull, localUserViewerNullKnown, localUserViewerNull;
+    public bool hudAbsentKnown, hudAbsent;
+    public bool nextTargetKnown, nextTargetMatchesBody, rigSceneCameraMatchesViewKnown, rigSceneCameraMatchesView;
+    public bool sceneCameraKnown, sceneCameraActive, sceneCameraMatchesView, sceneCameraOwnsRig;
+    public bool bodyTeamKnown, bodyTeamPresent, targetTeamMatchesBody;
+    public bool targetReadyKnown, targetReady;
+    public bool originalContextProbeAvailable, originalContextResultKnown, originalContextReady;
+    public bool markerObservationRequested, markerPresentKnown, markerPresent, markerActiveKnown, markerActive;
+    public bool markerBindingKnown, markerBoundToRig, markerBoundToTarget, markerBoundToProvider;
+    public bool markerDelegateKnown, markerDelegatePresent;
+    public bool markerContextLatchKnown, markerContextLatchReady, markerPumpCountKnown;
+    public int markerPumpCount;
+    public bool markerCaptureErrorObserved;
+    public string markerCaptureError;
+    public bool providerActiveKnown, providerActive, applicationKnown, applicationPresent;
+    public bool applicationActiveKnown, applicationActive, deltaTimeKnown, deltaTimeNonzero;
+    public float deltaTime;
+    public bool deltaTimeValid;
+    public bool cutsceneKnown, cutscene;
+    public bool listenerPreservedKnown, listenerPreserved;
+    public bool listenerComponentKnown, listenerComponentPresent;
+    public bool listenerBehaviourActiveKnown, listenerBehaviourActive;
+    public bool listenerActiveKnown, listenerActive;
+    public bool listenerMembershipKnown, listenerMembership;
+    public bool musicSnapshotKnown, musicSnapshotRefreshObserved;
+    public bool musicRequested, musicSourceAudioReady, musicEngineInitialized, musicNoAudio, musicTermsReturned;
+    public bool musicStaticInstanceMatches, musicObservationOwnerAlive, musicObservationSucceeded;
+    public bool musicTargetCameraInventoryNonempty, musicTargetBodyObserved;
+    public float musicObservationRealtime, musicObservationAgeSeconds;
+    public bool musicObservationRealtimeValid, musicObservationAgeSecondsValid;
+    public bool musicFreshKnown, musicFresh, musicTargetObserved;
+    public bool admissionInputsKnown, previousReady;
+    public bool admissionEvaluationObserved;
+    public string admissionDecision;
+    // The outer instance is the last actual admission evaluation. This frozen,
+    // bounded nested copy is the first one; it never points back to itself.
+    public AndroidNativeAudioCameraAdmissionEvidence firstAdmissionSample;
+
+    public AndroidNativeAudioCameraAdmissionEvidence Copy()
+    {
+        var copy = (AndroidNativeAudioCameraAdmissionEvidence)MemberwiseClone();
+        if (firstAdmissionSample != null)
+        {
+            copy.firstAdmissionSample = (AndroidNativeAudioCameraAdmissionEvidence)firstAdmissionSample.MemberwiseClone();
+            copy.firstAdmissionSample.SanitizeFloats();
+        }
+        copy.SanitizeFloats();
+        return copy;
+    }
+
+    static bool IsFinite(float value)
+    {
+        return !float.IsNaN(value) && !float.IsInfinity(value);
+    }
+
+    static float ProjectFinite(float value, out bool valid)
+    {
+        valid = IsFinite(value);
+        return valid ? value : 0f;
+    }
+
+    static float Sanitize(float value, ref bool valid)
+    {
+        bool finite = IsFinite(value);
+        valid = valid && finite;
+        return valid ? value : 0f;
+    }
+
+    void SanitizeFloats()
+    {
+        startWindowFirstRealtime = Sanitize(startWindowFirstRealtime, ref startWindowFirstRealtimeValid);
+        startWindowLastRealtime = Sanitize(startWindowLastRealtime, ref startWindowLastRealtimeValid);
+        startWindowFirstWaitRealtime = Sanitize(startWindowFirstWaitRealtime, ref startWindowFirstWaitRealtimeValid);
+        startWindowFirstPlayerBasicRealtime = Sanitize(startWindowFirstPlayerBasicRealtime, ref startWindowFirstPlayerBasicRealtimeValid);
+        activationRealtime = Sanitize(activationRealtime, ref activationRealtimeValid);
+        admissionDeadlineRealtime = Sanitize(admissionDeadlineRealtime, ref admissionDeadlineRealtimeValid);
+        admissionSampleRealtime = Sanitize(admissionSampleRealtime, ref admissionSampleRealtimeValid);
+        admissionDeadlineRemainingSeconds = Sanitize(admissionDeadlineRemainingSeconds, ref admissionDeadlineRemainingSecondsValid);
+        deltaTime = Sanitize(deltaTime, ref deltaTimeValid);
+        musicObservationRealtime = Sanitize(musicObservationRealtime, ref musicObservationRealtimeValid);
+        musicObservationAgeSeconds = Sanitize(musicObservationAgeSeconds, ref musicObservationAgeSecondsValid);
+    }
+
+    public void RecordStartWindowSample(float now, bool activeAndEnabled, bool activeInHierarchy,
+        bool modeIsNull, bool modeIsPlayerBasic, bool clockValid, bool deadlineExpired,
+        AndroidNativeAudioCameraStartStep step, float activation, float deadline)
+    {
+        if (!startWindowSampleKnown)
+        {
+            startWindowFirstRealtime = ProjectFinite(now, out startWindowFirstRealtimeValid);
+            startWindowFirstActivityKnown = true;
+            startWindowFirstActiveAndEnabled = activeAndEnabled;
+            startWindowFirstActiveInHierarchy = activeInHierarchy;
+            startWindowFirstModeKnown = true;
+            startWindowFirstModeIsNull = modeIsNull;
+            startWindowFirstModeIsPlayerBasic = modeIsPlayerBasic;
+        }
+        startWindowSampleKnown = true;
+        startWindowSampleCount++;
+        startWindowLastRealtime = ProjectFinite(now, out startWindowLastRealtimeValid);
+        startWindowLastActivityKnown = true;
+        startWindowLastActiveAndEnabled = activeAndEnabled;
+        startWindowLastActiveInHierarchy = activeInHierarchy;
+        startWindowLastModeKnown = true;
+        startWindowLastModeIsNull = modeIsNull;
+        startWindowLastModeIsPlayerBasic = modeIsPlayerBasic;
+        startWindowLastClockKnown = true;
+        startWindowLastClockValid = clockValid;
+        startWindowLastDeadlineExpired = deadlineExpired;
+        startWindowLastStep = step.ToString();
+        startWindowLastAdmissionEvaluationObserved = false;
+        activationRealtime = ProjectFinite(activation, out activationRealtimeValid);
+        admissionDeadlineRealtime = ProjectFinite(deadline, out admissionDeadlineRealtimeValid);
+        if (step == AndroidNativeAudioCameraStartStep.WaitForOriginalStart && !startWindowFirstWaitObserved)
+        {
+            startWindowFirstWaitObserved = true;
+            startWindowFirstWaitRealtime = ProjectFinite(now, out startWindowFirstWaitRealtimeValid);
+        }
+        if (modeIsPlayerBasic && !startWindowFirstPlayerBasicObserved)
+        {
+            startWindowFirstPlayerBasicObserved = true;
+            startWindowFirstPlayerBasicRealtime = ProjectFinite(now, out startWindowFirstPlayerBasicRealtimeValid);
+        }
+    }
+
+    public void RecordOriginalContextResult(bool probeAvailable, bool result)
+    {
+        originalContextProbeAvailable = probeAvailable;
+        originalContextResultKnown = probeAvailable;
+        originalContextReady = probeAvailable && result;
+    }
+
+    public void RecordAdmissionEvaluationTimes(float realtime, float activation, float deadline, float deadlineRemaining)
+    {
+        admissionSampleRealtime = ProjectFinite(realtime, out admissionSampleRealtimeValid);
+        activationRealtime = ProjectFinite(activation, out activationRealtimeValid);
+        admissionDeadlineRealtime = ProjectFinite(deadline, out admissionDeadlineRealtimeValid);
+        admissionDeadlineRemainingSeconds = ProjectFinite(deadlineRemaining, out admissionDeadlineRemainingSecondsValid);
+    }
+
+    public void RecordMusicObservationTimes(float observationRealtime, float observationAge, bool observationKnown)
+    {
+        musicObservationRealtime = ProjectFinite(observationRealtime, out musicObservationRealtimeValid);
+        musicObservationAgeSeconds = ProjectFinite(observationAge, out musicObservationAgeSecondsValid);
+        musicObservationRealtimeValid = musicObservationRealtimeValid && observationKnown;
+        musicObservationAgeSecondsValid = musicObservationAgeSecondsValid && observationKnown;
+        if (!musicObservationRealtimeValid) musicObservationRealtime = 0f;
+        if (!musicObservationAgeSecondsValid) musicObservationAgeSeconds = 0f;
+    }
+
+    public void RecordMusicSnapshot(bool snapshotKnown, bool refreshed, bool requested,
+        bool sourceAudioReady, bool engineInitialized, bool noAudio, bool termsReturned,
+        bool staticInstanceMatches, bool observationOwnerAlive, bool observationSucceeded,
+        bool targetCameraInventoryNonempty, bool targetBodyObserved,
+        float observationRealtime, float observationAge, bool observationTimeKnown)
+    {
+        musicSnapshotKnown = snapshotKnown;
+        musicSnapshotRefreshObserved = refreshed;
+        musicRequested = requested;
+        musicSourceAudioReady = sourceAudioReady;
+        musicEngineInitialized = engineInitialized;
+        musicNoAudio = noAudio;
+        musicTermsReturned = termsReturned;
+        musicStaticInstanceMatches = staticInstanceMatches;
+        musicObservationOwnerAlive = observationOwnerAlive;
+        musicObservationSucceeded = observationSucceeded;
+        musicTargetCameraInventoryNonempty = targetCameraInventoryNonempty;
+        musicTargetBodyObserved = targetBodyObserved;
+        RecordMusicObservationTimes(observationRealtime, observationAge, observationTimeKnown);
+    }
+
+    public void RecordDeltaTime(float value, bool known)
+    {
+        deltaTimeKnown = known;
+        deltaTime = ProjectFinite(value, out deltaTimeValid);
+        deltaTimeValid = deltaTimeValid && known;
+        if (!deltaTimeValid)
+            deltaTime = 0f;
+    }
+
+    public void BeginAdmissionObservation(int sequence, float realtime, float activation, float deadline)
+    {
+        admissionSampleKnown = true;
+        admissionSampleSequence = sequence;
+        admissionSampleRealtime = ProjectFinite(realtime, out admissionSampleRealtimeValid);
+        activationRealtime = ProjectFinite(activation, out activationRealtimeValid);
+        admissionDeadlineRealtime = ProjectFinite(deadline, out admissionDeadlineRealtimeValid);
+        admissionDeadlineRemainingSeconds = ProjectFinite(deadline - realtime, out admissionDeadlineRemainingSecondsValid);
+        deltaTimeKnown = false;
+        deltaTimeNonzero = false;
+        deltaTime = 0f;
+        deltaTimeValid = false;
+        admissionClockKnown = false;
+        admissionClockValid = false;
+        admissionDeadlineExpired = false;
+        startWindowLastAdmissionEvaluationObserved = false;
+        noRenderStateKnown = false;
+        sourceCameraDisabled = false;
+        poseCameraAbsent = false;
+        overrideAbsent = false;
+        rigInventoryKnown = false;
+        rigInventoryCount = -1;
+        soleOwnedRigIndexZeroKnown = false;
+        soleOwnedRigIndexZero = false;
+        exactRigKnown = false;
+        exactRig = false;
+        rigActiveKnown = false;
+        rigActiveAndEnabled = false;
+        rigActiveInHierarchy = false;
+        playerBasicModeKnown = false;
+        playerBasicMode = false;
+        viewerNullKnown = false;
+        viewerNull = false;
+        localUserViewerNullKnown = false;
+        localUserViewerNull = false;
+        hudAbsentKnown = false;
+        hudAbsent = false;
+        nextTargetKnown = false;
+        nextTargetMatchesBody = false;
+        rigSceneCameraMatchesViewKnown = false;
+        rigSceneCameraMatchesView = false;
+        sceneCameraKnown = false;
+        sceneCameraActive = false;
+        sceneCameraMatchesView = false;
+        sceneCameraOwnsRig = false;
+        bodyTeamKnown = false;
+        bodyTeamPresent = false;
+        targetTeamMatchesBody = false;
+        targetReadyKnown = false;
+        targetReady = false;
+        originalContextProbeAvailable = false;
+        originalContextResultKnown = false;
+        originalContextReady = false;
+        markerObservationRequested = false;
+        markerPresentKnown = markerActiveKnown = false;
+        markerPresent = markerActive = false;
+        markerBindingKnown = markerBoundToRig = markerBoundToTarget = markerBoundToProvider = false;
+        providerActiveKnown = providerActive = false;
+        applicationKnown = applicationPresent = applicationActiveKnown = applicationActive = false;
+        deltaTimeKnown = deltaTimeNonzero = cutsceneKnown = cutscene = false;
+        deltaTime = 0f;
+        deltaTimeValid = false;
+        markerDelegateKnown = false;
+        markerDelegatePresent = false;
+        markerContextLatchKnown = false;
+        markerContextLatchReady = false;
+        markerPumpCountKnown = false;
+        markerPumpCount = 0;
+        markerCaptureErrorObserved = false;
+        markerCaptureError = null;
+        listenerPreservedKnown = listenerComponentKnown = listenerBehaviourActiveKnown = false;
+        listenerPreserved = listenerComponentPresent = listenerBehaviourActive = false;
+        listenerActiveKnown = false;
+        listenerActive = false;
+        listenerMembershipKnown = false;
+        listenerMembership = false;
+        musicSnapshotKnown = false;
+        musicSnapshotRefreshObserved = false;
+        musicRequested = musicSourceAudioReady = musicEngineInitialized = musicNoAudio = musicTermsReturned = false;
+        musicStaticInstanceMatches = musicObservationOwnerAlive = musicObservationSucceeded = false;
+        musicTargetCameraInventoryNonempty = musicTargetBodyObserved = false;
+        musicObservationRealtime = 0f;
+        musicObservationRealtimeValid = false;
+        musicFreshKnown = false;
+        musicFresh = false;
+        musicObservationAgeSeconds = 0f;
+        musicObservationAgeSecondsValid = false;
+        musicTargetObserved = false;
+        admissionInputsKnown = false;
+        previousReady = false;
+        admissionEvaluationObserved = false;
+        admissionDecision = "not_evaluated";
     }
 }
 

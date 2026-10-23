@@ -112,6 +112,7 @@ public sealed partial class PortSession
         public SurvivorCombatOutputObserver.Report survivorCombatOutputs;
         public bool ready, authority, lootReady, interactionReady, cleaned, diagnosticInput, diagnosticInputEver;
         public bool originalAudioCameraContextRequested, originalAudioCameraContextReady;
+        public AndroidNativeAudioCameraAdmissionEvidence originalAudioCameraContextLastAdmissionEvidence;
         public bool originalAudioCameraContextCreated, originalAudioCameraContextReleaseVerified;
         public bool originalAudioCameraContextDestroyRequested, originalAudioCameraContextDestroyObservationCaptured,
             originalAudioCameraContextDestroyObserved;
@@ -623,6 +624,9 @@ public sealed partial class PortSession
                 return;
             }
             report.originalAudioCameraContextReady = originalAudioCameraContext.audioContextReady;
+            var admissionEvidence = originalAudioCameraContext.audioContextAdmissionEvidence;
+            report.originalAudioCameraContextLastAdmissionEvidence = admissionEvidence == null
+                ? null : admissionEvidence.Copy();
             report.originalAudioCameraContextRigIndex = originalAudioCameraContext.audioContextRigIndex;
             report.originalAudioCameraContextSourceRigAtIndexZero =
                 originalAudioCameraContext.audioContextReady && originalAudioCameraContext.audioContextRigIndex == 0;
@@ -687,10 +691,16 @@ public sealed partial class PortSession
                 report.originalAudioCameraContextReady = false;
             try
             {
+                var admissionEvidence = originalAudioCameraContext.audioContextAdmissionEvidence;
+                if (report != null && admissionEvidence != null)
+                    report.originalAudioCameraContextLastAdmissionEvidence = admissionEvidence.Copy();
                 originalAudioCameraContext.ReleaseAudioContext();
                 if (report != null)
                 {
                     report.originalAudioCameraContextReady = false;
+                    admissionEvidence = originalAudioCameraContext.audioContextAdmissionEvidence;
+                    if (admissionEvidence != null)
+                        report.originalAudioCameraContextLastAdmissionEvidence = admissionEvidence.Copy();
                     report.originalAudioCameraContextRenderCameraDisabled =
                         originalAudioCameraContext.viewCamera && !originalAudioCameraContext.viewCamera.enabled;
                     report.originalAudioCameraContextOverrideAbsent =

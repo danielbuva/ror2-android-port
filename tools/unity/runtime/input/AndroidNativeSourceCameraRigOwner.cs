@@ -12,6 +12,15 @@ using UnityEngine;
 [DefaultExecutionOrder(-10000)]
 public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraStateProvider, IOriginalWwiseCameraListenerState
 {
+    struct CachedMusicAdmissionSnapshot
+    {
+        public bool known, requested, sourceAudioReady, engineInitialized, noAudio, termsReturned;
+        public bool staticInstanceMatches, observationOwnerAlive, observationSucceeded;
+        public bool targetCameraInventoryNonempty, targetBodyObserved, targetObserved;
+        public bool observationTimeKnown;
+        public float observationRealtime;
+    }
+
     const string MainCameraPath = "Prefabs/Main Camera";
     const int DisplayLayer = 30;
 
@@ -25,6 +34,11 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
     // explicit ordinary-audio integration mode, not a visual-ready signal.
     public bool audioContextOnly { get; private set; }
     public bool audioContextReady { get; private set; }
+    // Retained scalar-only last admission inputs survive source-context retirement.
+    public AndroidNativeAudioCameraAdmissionEvidence audioContextAdmissionEvidence { get; private set; }
+    int audioContextAdmissionSampleSequence;
+    readonly AndroidNativeSourceSkinLifecycle.VisualSnapshot audioAdmissionMarkerSnapshot =
+        new AndroidNativeSourceSkinLifecycle.VisualSnapshot();
     public int audioContextRigIndex { get; private set; } = -1;
     public bool audioContextRigActiveAndEnabledObserved { get; private set; }
     public bool audioContextRigActiveAndEnabled { get; private set; }
@@ -54,8 +68,10 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
     float audioContextAdmissionDeadline;
     float nextMusicContextObservationAt;
     float audioContextMusicObservationRealtime;
+    bool audioContextMusicObservationKnown;
     float audioContextActivatedAt;
     bool audioContextMusicTargetObserved;
+    CachedMusicAdmissionSnapshot audioContextCachedMusicSnapshot;
     bool audioContextReleaseStarted;
     Component sourceDefaultListener, sourceAkGameObject;
     bool sourceDefaultListenerPreserved;
@@ -710,6 +726,9 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
                 true, rigActiveAndEnabled, rigActiveInHierarchy, cameraModeIsNull,
                 cameraModeIsPlayerBasic, audioContextReady, startupNow,
                 audioContextActivatedAt, audioContextAdmissionDeadline);
+            RetainAudioContextStartWindowSample(startupNow, rigActiveAndEnabled, rigActiveInHierarchy,
+                cameraModeIsNull, cameraModeIsPlayerBasic, audioContextStartupClockValid,
+                audioContextStartupDeadlineExpired, startStep);
             if (startStep == AndroidNativeAudioCameraStartStep.WaitForOriginalStart)
             {
                 audioContextOriginalStartWaitObserved = true;
@@ -830,59 +849,202 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
             : "original prefab SceneCamera and PlayerBasic view active; default-off audio components remain isolated; spatial PCM is not claimed");
     }
 
+    void RetainAudioContextStartWindowSample(float now, bool activeAndEnabled, bool activeInHierarchy,
+        bool modeIsNull, bool modeIsPlayerBasic, bool clockValid, bool deadlineExpired,
+        AndroidNativeAudioCameraStartStep step)
+    {
+        if (audioContextAdmissionEvidence == null)
+            audioContextAdmissionEvidence = new AndroidNativeAudioCameraAdmissionEvidence();
+        audioContextAdmissionEvidence.RecordStartWindowSample(now, activeAndEnabled, activeInHierarchy,
+            modeIsNull, modeIsPlayerBasic, clockValid, deadlineExpired, step,
+            audioContextActivatedAt, audioContextAdmissionDeadline);
+    }
+
     void ObserveAudioContextOnly()
     {
+        if (audioContextAdmissionEvidence == null)
+            audioContextAdmissionEvidence = new AndroidNativeAudioCameraAdmissionEvidence();
+        var evidence = audioContextAdmissionEvidence;
+        evidence.BeginAdmissionObservation(++audioContextAdmissionSampleSequence,
+            Time.realtimeSinceStartup, audioContextActivatedAt, audioContextAdmissionDeadline);
+        evidence.noRenderStateKnown = true;
+        evidence.sourceCameraDisabled = viewCamera && !viewCamera.enabled;
+        evidence.poseCameraAbsent = !poseCamera;
+        evidence.overrideAbsent = !overrideInstalled && (!cameraRig || !cameraRig.hasOverride);
         if (viewCamera.enabled || poseCamera || overrideInstalled || (cameraRig && cameraRig.hasOverride))
         {
+            evidence.admissionDecision = "retire_unexpected_render_state";
             RetireOwnedView("audio-only source context unexpectedly acquired rendering, pose, or camera-provider state");
             return;
         }
         var rigs = CameraRigController.readOnlyInstancesList;
-        if (rigs == null || rigs.Count > 32)
+        evidence.rigInventoryKnown = rigs != null && rigs.Count <= 32;
+        if (!evidence.rigInventoryKnown)
         {
+            evidence.admissionDecision = "retire_rig_inventory_unknown_or_over_capacity";
             RetireOwnedView("audio-only source camera inventory became unavailable or exceeded its bounded capacity");
             return;
         }
-        if (rigs.Count != 1 || rigs[0] != cameraRig)
+        evidence.rigInventoryCount = rigs.Count;
+        evidence.soleOwnedRigIndexZeroKnown = true;
+        evidence.soleOwnedRigIndexZero = rigs.Count == 1 && rigs[0] == cameraRig;
+        if (!evidence.soleOwnedRigIndexZero)
         {
+            evidence.admissionDecision = "retire_not_sole_owned_index_zero_rig";
             RetireOwnedView("audio-only source rig is no longer the sole MusicController index-zero camera");
             return;
         }
         audioContextRigIndex = 0;
-        bool exactRig = cameraRig && cameraRig.isActiveAndEnabled && cameraRig.gameObject.activeInHierarchy &&
-            cameraRig.cameraMode == CameraModePlayerBasic.playerBasic && cameraRig.viewer == null &&
-            cameraRig.localUserViewer == null && !cameraRig.createHud && !cameraRig.uiCam && !cameraRig.hud &&
-            cameraRig.nextTarget == expectedBody.gameObject && cameraRig.sceneCam == viewCamera && sceneCamera &&
-            sceneCamera.isActiveAndEnabled && sceneCamera.camera == viewCamera &&
-            sceneCamera.cameraRigController == cameraRig && expectedBody.teamComponent &&
-            cameraRig.targetTeamIndex == expectedBody.teamComponent.teamIndex;
+        bool rigActive = cameraRig && cameraRig.isActiveAndEnabled;
+        bool rigInHierarchy = cameraRig && cameraRig.gameObject.activeInHierarchy;
+        bool modeIsPlayerBasic = cameraRig && cameraRig.cameraMode == CameraModePlayerBasic.playerBasic;
+        bool viewerNull = cameraRig && cameraRig.viewer == null;
+        bool localUserViewerNull = cameraRig && cameraRig.localUserViewer == null;
+        bool hudAbsent = cameraRig && !cameraRig.createHud && !cameraRig.uiCam && !cameraRig.hud;
+        bool nextTargetMatchesBody = cameraRig && expectedBody && cameraRig.nextTarget == expectedBody.gameObject;
+        bool sceneCameraActive = sceneCamera && sceneCamera.isActiveAndEnabled;
+        bool sceneCameraMatchesView = sceneCamera && sceneCamera.camera == viewCamera;
+        bool sceneCameraOwnsRig = sceneCamera && sceneCamera.cameraRigController == cameraRig;
+        bool bodyTeamPresent = expectedBody && expectedBody.teamComponent;
+        bool targetTeamMatchesBody = bodyTeamPresent && cameraRig.targetTeamIndex == expectedBody.teamComponent.teamIndex;
+        bool exactRig = rigActive && rigInHierarchy && modeIsPlayerBasic && viewerNull && localUserViewerNull &&
+            hudAbsent && nextTargetMatchesBody && cameraRig.sceneCam == viewCamera && sceneCamera &&
+            sceneCameraActive && sceneCameraMatchesView && sceneCameraOwnsRig && bodyTeamPresent && targetTeamMatchesBody;
         bool targetReady = cameraRig.target == expectedBody.gameObject && cameraRig.targetBody == expectedBody;
-        bool originalContextReady = markerContextReadyMethod != null && guardMarker &&
-            (bool)markerContextReadyMethod.Invoke(guardMarker,
-                new object[] { cameraRig, expectedBody.gameObject, (ICameraStateProvider)this });
+        bool contextProbeAvailable = markerContextReadyMethod != null && guardMarker;
+        evidence.rigActiveKnown = evidence.playerBasicModeKnown = evidence.viewerNullKnown = true;
+        evidence.rigActiveAndEnabled = rigActive;
+        evidence.rigActiveInHierarchy = rigInHierarchy;
+        evidence.playerBasicMode = modeIsPlayerBasic;
+        evidence.viewerNull = viewerNull;
+        evidence.localUserViewerNullKnown = evidence.hudAbsentKnown = evidence.nextTargetKnown = true;
+        evidence.localUserViewerNull = localUserViewerNull;
+        evidence.hudAbsent = hudAbsent;
+        evidence.nextTargetMatchesBody = nextTargetMatchesBody;
+        evidence.rigSceneCameraMatchesViewKnown = true;
+        evidence.rigSceneCameraMatchesView = cameraRig.sceneCam == viewCamera;
+        evidence.sceneCameraKnown = true;
+        evidence.sceneCameraActive = sceneCameraActive;
+        evidence.sceneCameraMatchesView = sceneCameraMatchesView;
+        evidence.sceneCameraOwnsRig = sceneCameraOwnsRig;
+        evidence.bodyTeamKnown = true;
+        evidence.bodyTeamPresent = bodyTeamPresent;
+        evidence.targetTeamMatchesBody = targetTeamMatchesBody;
+        evidence.exactRigKnown = true;
+        evidence.exactRig = exactRig;
+        evidence.targetReadyKnown = true;
+        evidence.targetReady = targetReady;
+        var markerSnapshot = audioAdmissionMarkerSnapshot;
+        ResetAdmissionMarkerSnapshot(markerSnapshot);
+        CaptureUpdateContextObservation(markerSnapshot);
+        evidence.markerObservationRequested = markerSnapshot.cameraGateObservationRequested;
+        evidence.markerPresentKnown = markerSnapshot.cameraGateMarkerPresentKnown;
+        evidence.markerPresent = markerSnapshot.cameraGateMarkerPresent;
+        evidence.markerActiveKnown = markerSnapshot.cameraGateMarkerActiveKnown;
+        evidence.markerActive = markerSnapshot.cameraGateMarkerActive;
+        evidence.markerBindingKnown = markerSnapshot.cameraGateMarkerBindingKnown;
+        evidence.markerBoundToRig = markerSnapshot.cameraGateMarkerBoundToRig;
+        evidence.markerBoundToTarget = markerSnapshot.cameraGateMarkerBoundToTarget;
+        evidence.markerBoundToProvider = markerSnapshot.cameraGateMarkerBoundToProvider;
+        evidence.providerActiveKnown = markerSnapshot.cameraGateProviderActiveKnown;
+        evidence.providerActive = markerSnapshot.cameraGateProviderActive;
+        evidence.applicationKnown = markerSnapshot.cameraGateApplicationKnown;
+        evidence.applicationPresent = markerSnapshot.cameraGateApplicationPresent;
+        evidence.applicationActiveKnown = markerSnapshot.cameraGateApplicationActiveKnown;
+        evidence.applicationActive = markerSnapshot.cameraGateApplicationActive;
+        evidence.RecordDeltaTime(markerSnapshot.cameraGateDeltaTime, markerSnapshot.cameraGateDeltaTimeKnown);
+        evidence.deltaTimeNonzero = markerSnapshot.cameraGateDeltaTimeNonzero;
+        evidence.cutsceneKnown = markerSnapshot.cameraGateCutsceneKnown;
+        evidence.cutscene = markerSnapshot.cameraGateIsCutscene;
+        evidence.markerDelegateKnown = markerSnapshot.cameraGateDelegateKnown;
+        evidence.markerDelegatePresent = markerSnapshot.cameraGateDelegatePresent;
+        evidence.markerContextLatchKnown = markerSnapshot.cameraGateContextReadyKnown;
+        evidence.markerContextLatchReady = markerSnapshot.cameraGateContextReady;
+        evidence.markerPumpCountKnown = markerSnapshot.cameraGatePumpCountKnown;
+        evidence.markerPumpCount = markerSnapshot.cameraGatePumpCount;
+        evidence.markerCaptureError = markerSnapshot.cameraGateCaptureError;
+        evidence.markerCaptureErrorObserved = !string.IsNullOrEmpty(evidence.markerCaptureError);
+        evidence.listenerPreservedKnown = true;
+        evidence.listenerPreserved = sourceDefaultListenerPreserved;
+        evidence.listenerComponentKnown = true;
+        evidence.listenerComponentPresent = sourceDefaultListener;
+        evidence.listenerBehaviourActiveKnown = true;
+        evidence.listenerBehaviourActive = sourceDefaultListener && sourceDefaultListener is Behaviour observedListener && observedListener.isActiveAndEnabled;
         bool listenerActive = sourceDefaultListenerPreserved && sourceDefaultListener &&
             sourceDefaultListener is Behaviour listenerBehaviour && listenerBehaviour.isActiveAndEnabled;
+        evidence.listenerActiveKnown = true;
+        evidence.listenerActive = listenerActive;
         bool listenerMembershipKnown = TryReadExactManagedListenerMembership(out bool listenerMember);
+        evidence.listenerMembershipKnown = listenerMembershipKnown;
+        evidence.listenerMembership = listenerMember;
+        bool originalContextReady = contextProbeAvailable &&
+            (bool)markerContextReadyMethod.Invoke(guardMarker,
+                new object[] { cameraRig, expectedBody.gameObject, (ICameraStateProvider)this });
+        evidence.RecordOriginalContextResult(contextProbeAvailable, originalContextReady);
         bool contextAndListenerReady = targetReady && originalContextReady && listenerActive &&
             listenerMembershipKnown && listenerMember;
+        bool musicSnapshotRefreshed = false;
         if (Time.realtimeSinceStartup >= nextMusicContextObservationAt)
         {
             nextMusicContextObservationAt = Time.realtimeSinceStartup + .5f;
             var music = PortSessionOriginalMusicControllerOwner.CaptureSnapshot();
+            musicSnapshotRefreshed = true;
             audioContextMusicObservationRealtime = music != null ? music.musicObservationRealtime : 0f;
-            audioContextMusicTargetObserved = music != null && music.requested && music.sourceAudioReady &&
+            audioContextMusicObservationKnown = music != null && music.musicObservationAttempted;
+            audioContextCachedMusicSnapshot.known = music != null;
+            audioContextCachedMusicSnapshot.requested = music != null && music.requested;
+            audioContextCachedMusicSnapshot.sourceAudioReady = music != null && music.sourceAudioReady;
+            audioContextCachedMusicSnapshot.engineInitialized = music != null && music.engineInitialized;
+            audioContextCachedMusicSnapshot.noAudio = music != null && music.noAudio;
+            audioContextCachedMusicSnapshot.termsReturned = music != null && music.originalTermsReturned;
+            audioContextCachedMusicSnapshot.staticInstanceMatches = music != null && music.staticInstanceMatchesOwnedController;
+            audioContextCachedMusicSnapshot.observationOwnerAlive = music != null && music.musicObservationOwnerAlive;
+            audioContextCachedMusicSnapshot.observationSucceeded = music != null && music.musicObservationSucceeded;
+            audioContextCachedMusicSnapshot.targetCameraInventoryNonempty = music != null && music.targetCameraInventoryNonempty;
+            audioContextCachedMusicSnapshot.targetBodyObserved = music != null && music.targetBodyObserved;
+            audioContextCachedMusicSnapshot.observationRealtime = audioContextMusicObservationRealtime;
+            audioContextCachedMusicSnapshot.observationTimeKnown = audioContextMusicObservationKnown;
+            audioContextCachedMusicSnapshot.targetObserved = music != null && music.requested && music.sourceAudioReady &&
                 music.engineInitialized && !music.noAudio && !music.originalTermsReturned &&
                 music.staticInstanceMatchesOwnedController && music.musicObservationOwnerAlive &&
                 music.musicObservationSucceeded && music.targetCameraInventoryNonempty && music.targetBodyObserved;
+            audioContextMusicTargetObserved = audioContextCachedMusicSnapshot.targetObserved;
         }
         float musicObservationAge = Time.realtimeSinceStartup - audioContextMusicObservationRealtime;
         bool musicFresh = !float.IsNaN(musicObservationAge) && !float.IsInfinity(musicObservationAge) &&
             musicObservationAge >= 0f && musicObservationAge <= 1.5f &&
             audioContextMusicObservationRealtime >= audioContextActivatedAt;
         bool musicTarget = audioContextMusicTargetObserved && musicFresh;
-        bool deadlineExpired = Time.realtimeSinceStartup >= audioContextAdmissionDeadline;
+        evidence.RecordMusicSnapshot(audioContextCachedMusicSnapshot.known, musicSnapshotRefreshed,
+            audioContextCachedMusicSnapshot.requested, audioContextCachedMusicSnapshot.sourceAudioReady,
+            audioContextCachedMusicSnapshot.engineInitialized, audioContextCachedMusicSnapshot.noAudio,
+            audioContextCachedMusicSnapshot.termsReturned, audioContextCachedMusicSnapshot.staticInstanceMatches,
+            audioContextCachedMusicSnapshot.observationOwnerAlive, audioContextCachedMusicSnapshot.observationSucceeded,
+            audioContextCachedMusicSnapshot.targetCameraInventoryNonempty,
+            audioContextCachedMusicSnapshot.targetBodyObserved, audioContextCachedMusicSnapshot.observationRealtime,
+            musicObservationAge, audioContextCachedMusicSnapshot.observationTimeKnown);
+        float admissionNow = Time.realtimeSinceStartup;
+        bool deadlineExpired = admissionNow >= audioContextAdmissionDeadline;
+        evidence.RecordAdmissionEvaluationTimes(admissionNow, audioContextActivatedAt,
+            audioContextAdmissionDeadline, audioContextAdmissionDeadline - admissionNow);
+        evidence.admissionClockKnown = true;
+        evidence.admissionClockValid = AndroidNativeAudioCameraContextContract.IsValidStartupClock(
+            admissionNow, audioContextActivatedAt, audioContextAdmissionDeadline);
+        evidence.admissionDeadlineExpired = deadlineExpired;
+        evidence.RecordMusicObservationTimes(audioContextMusicObservationRealtime, musicObservationAge,
+            audioContextMusicObservationKnown);
+        evidence.musicFreshKnown = true;
+        evidence.musicFresh = musicFresh;
+        evidence.musicTargetObserved = musicTarget;
+        evidence.previousReady = audioContextReady;
+        evidence.admissionInputsKnown = true;
+        evidence.admissionEvaluationObserved = true;
         var step = AndroidNativeAudioCameraContextContract.EvaluateObservation(
             exactRig, contextAndListenerReady, musicTarget, audioContextReady, deadlineExpired);
+        evidence.admissionDecision = step.ToString();
+        evidence.startWindowLastAdmissionEvaluationObserved = true;
+        if (evidence.firstAdmissionSample == null)
+            evidence.firstAdmissionSample = evidence.Copy();
         if (step == AndroidNativeAudioContextStep.Retire)
         {
             string reason = !exactRig
@@ -904,6 +1066,46 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
         }
         audioContextReady = true;
         status = "source camera/body context and managed source listener observed; source camera callbacks and global camera effects are active; rendering and view override remain disabled; native listener registration and audible output are unobserved";
+    }
+
+    static void ResetAdmissionMarkerSnapshot(AndroidNativeSourceSkinLifecycle.VisualSnapshot snapshot)
+    {
+        snapshot.cameraGateObservationRequested = false;
+        snapshot.cameraGateExpectedTargetInstanceId = 0;
+        snapshot.cameraGateNextTargetInstanceId = 0;
+        snapshot.cameraGateTargetInstanceId = 0;
+        snapshot.cameraGateNextTargetMatchesExpected = false;
+        snapshot.cameraGateNextTargetKnown = false;
+        snapshot.cameraGateTargetMatchesExpected = false;
+        snapshot.cameraGateTargetKnown = false;
+        snapshot.cameraGateRigActive = false;
+        snapshot.cameraGateRigActiveKnown = false;
+        snapshot.cameraGateProviderActive = false;
+        snapshot.cameraGateProviderActiveKnown = false;
+        snapshot.cameraGateCutsceneKnown = false;
+        snapshot.cameraGateIsCutscene = false;
+        snapshot.cameraGateApplicationPresent = false;
+        snapshot.cameraGateApplicationKnown = false;
+        snapshot.cameraGateApplicationActive = false;
+        snapshot.cameraGateApplicationActiveKnown = false;
+        snapshot.cameraGateDeltaTime = 0f;
+        snapshot.cameraGateDeltaTimeNonzero = false;
+        snapshot.cameraGateDeltaTimeKnown = false;
+        snapshot.cameraGateMarkerPresent = false;
+        snapshot.cameraGateMarkerPresentKnown = false;
+        snapshot.cameraGateMarkerActive = false;
+        snapshot.cameraGateMarkerActiveKnown = false;
+        snapshot.cameraGateMarkerBindingKnown = false;
+        snapshot.cameraGateMarkerBoundToRig = false;
+        snapshot.cameraGateMarkerBoundToTarget = false;
+        snapshot.cameraGateMarkerBoundToProvider = false;
+        snapshot.cameraGateDelegateKnown = false;
+        snapshot.cameraGateDelegatePresent = false;
+        snapshot.cameraGateContextReadyKnown = false;
+        snapshot.cameraGateContextReady = false;
+        snapshot.cameraGatePumpCountKnown = false;
+        snapshot.cameraGatePumpCount = 0;
+        snapshot.cameraGateCaptureError = null;
     }
 
     public bool IsOwnedNullViewerRig(CameraRigController candidate, GameObject target)
@@ -968,6 +1170,8 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
     {
         if (terminallyRetired)
             return;
+        // Keep audioContextAdmissionEvidence intact: it is the last observed
+        // gate input, not a claim that the retired source context is currently ready.
         status = WithCameraFidelity(reason);
         audioContextReady = false;
         terminallyRetired = true;

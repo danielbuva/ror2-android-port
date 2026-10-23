@@ -1866,3 +1866,12 @@ source evidence remain ignored. No original content, middleware, credential,
 private root or raw device evidence is published. No catalog selection or
 runtime/rendering acceptance follows from generation. Provenance/privacy
 audit: 2026-10-23.
+
+J1005 refreshes the authored world-report/audio owner cohort and camera source
+pins for bounded first/latest admission observations. Its pure C# host fixture
+tests the actual authored DTO, finite projections, unknown values and preserved
+gate outcomes. Only authored support, synthetic fixture inputs and metadata
+digests are published. Original camera/game/middleware implementations,
+generated reports and raw evidence remain ignored. No new content recipe or
+local input is added; reconstruction must replay the updated source cohort.
+Provenance/privacy audit: 2026-10-23.

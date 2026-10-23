@@ -2916,6 +2916,19 @@ Optional field resolution is independent of camera admission. Typed known flags
 and bounded errors retain unavailable observations as unknown; capture invokes
 no callback and does not change camera or target state.
 
+For ordinary requested audio, the same owner retains bounded first/latest
+admission inputs in `AndroidNativeAudioCameraAdmissionEvidence` (J1005).
+`IntegratedWorldBoundary` copies this scalar-only DTO into its world report
+during observation and on both sides of owned release, so retirement cannot
+erase the earlier false operand. Each sample resets known/value pairs before
+early returns. Cached music fields retain their source timestamp and refresh
+flag at the existing 0.5 s snapshot cadence. Timing projections are finite with
+explicit validity flags; raw source values still feed the unchanged gates.
+The DTO retains no Unity objects and is released with its world report.
+`test_camera_admission_evidence.py` compiles/runs the pure production contract
+with pinned Unity Mono/Roslyn, skipping when those tools are unavailable. These
+observations establish neither readiness nor audio/rendering acceptance.
+
 `AndroidNativeSourceSkinLifecycle` also owns one cached render-evidence snapshot
 at the first ready selected-skin/camera observation. It records at most 12 camera
 records and 32 renderer records, including camera clear/depth/clip/mask settings
