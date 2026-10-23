@@ -30333,3 +30333,89 @@ staging change; code-only reuse cannot qualify new shader bodies. The running
 R32 controls use their separate frozen two-row payload, not this source update.
 No new player has these four bodies yet. Android rendering, original pass
 behavior and PC visual parity remain open; no Alpha-owned behavior changes.
+
+
+## J1013 — Admit the original audio camera and expose a missing equipment highlight dependency
+
+**Hypothesis and exact player.** Build J1011 source
+8c526ed1eee8b8d91c2a7dec220d674fe86d5140 with unchanged shader selection and
+unchanged production JSON shape. Deferring creation to the actual playing loop
+should leave the source five-second admission window available after world
+preparation. The ordinary shared mutex, accepted input and exact editor remain
+in force. Catalog prepare/refresh/host checks pass, and the full player builds
+with zero errors in 237.152514 s. Strict capture and a separate old/new trace
+comparison pass: one complete fresh IL2CPP event changes the trace from
+`152aeefe762a2764c2bfa5fd2e77f4621551b436926016a96a5e08b1a180ac55`
+to `2f0786af43b1dc74ffc3060b3022bb4569ede8fdfa802a3399eb0b75106a1d97`.
+The prebuild trace is preserved; no trace or cache output is removed.
+
+Request `20261023T071021.561301Z-1bb6d96e840b46dbb9d029a0c5cb73c3`
+produces APK
+`4b1a7969d75238c647147956a3a32e160ba14fbed9f62751cb53edf5b99e1135`.
+Freeze the exact APK, 266 payload files, matching symbols and same-request
+pre/post-strip inputs. Symbol archive SHA-256 is
+`4d160532c2a42204ad0b59ea87635a177228e745f03b8474c52e845d0ab84e5c`.
+The unchanged camera checker verifies 14 world fields and all 142 DTO fields;
+the separate network checker also passes. Camera manifest SHA-256 is
+`64f9d940e1b747314ced5742098031affa852f06be95ef3bf1a914263c1c58ad`.
+Build/freeze evidence is
+`work/coordination/original-game-audio-r32-build-root-r1/` and
+`work/experiments/original-game-audio/r27-20261023T071021.561301Z-1bb6d96e840b46dbb9d029a0c5cb73c3-4b1a7969d752/`.
+The R27 directory/receipt label remains the freezer wire schema only.
+
+**Both standard controls and independent terminal checks.** After fresh
+adopted-only capacity/placement checks, Root updates only Main in place using
+the exact frozen APK and payload. A first host-authorization validation refuses
+because its command omitted explicit device/coordination environment values;
+no device action occurs. The corrected explicitly selected command passes
+without weakening that guard. Plain reaches 35.206451 s on Lakes. Stage-exit
+completes exactly one original exit and observes 11.701355 s on Goolake
+(156.302948 s total world time). Both report no error/firstFailure and 13
+unchanged applied runs. The terminal wrapper and a separate read-only query
+verify installed bytes, owned adopted placement, process/selector absence,
+sleeping display and unchanged profile. Root archives/releases only its claim;
+other devices are untouched.
+
+Canonical controls are
+`work/experiments/baseline/20261023T072023.503642Z/` and
+`work/experiments/baseline/20261023T072433.025328Z/`.
+Final-report SHA-256 values are
+`4a752e1035644ea61ddb5c63d581d7b50d1fbfed63a598e05e48e9ad20d88292`
+and `89553543025b72b209ff8fdeb6edaad1927390b5a45e288287ce47a2c545272e`;
+Unity-log SHA-256 values are
+`8bafdd6441141c3e217e17e9f9119fb891f99be3bde5cb38425ea4e9d1851f22`
+and `de38672e0c06d9e7459068ca363756167ec6ecd910ca2bda9f490cb2cd082968`.
+Root wrappers, independent query and strict replay are under
+`work/coordination/original-game-audio-r32-device-controls-root-r1/` and
+`work/coordination/original-game-audio-r27-device-controls/attempts/root-r7-r32/`.
+
+**The lifecycle hypothesis passes its actual camera gate.** Both retained
+reports now satisfy the strict existing audio-camera contract, including the
+Goolake destination: exact source rig at index zero, target, original context,
+managed listener membership and fresh original music target-body observations.
+Latest music ages are 0.487808 s in plain and 0.093262 s in stage-exit. These
+are continuing Ready samples; a deadline-expired clock after admission does
+not claim the inner predicate was first evaluated after its deadline. No gate,
+listener/native return or music success was forced. This verifies bounded
+managed source-camera admission on these two routes; native listener return
+codes, routing, composed playback and physical audibility remain separate.
+FirstAdmissionSample is still absent from device JSON, as expected with the
+unchanged unqualified report shape.
+
+**Stricter log replay finds the next real failure.** The plain current-process
+log has zero unexplained errors. Stage-exit has one new exception group despite
+passing the standard report-based control: original HighlightRect.CreateHighlight
+tries to instantiate a null prefab during CharacterModel's equipment-highlight
+coroutine. Preserve its stack as the first failure rather than calling both
+logs clean or suppressing it. Complete network-sound mapping and camera
+admission still pass in that report. Inspect the exact original prefab/cache
+initialization and existing content owners before changing behavior. Loader
+remains unarmed pending this strict-log dependency correction.
+
+The reviewed host-only gameplay runner successor separates audio-camera
+observations from Loader callback admission while retaining the demonstrated
+original audio/catalog dependency and all PID/error/ownership/route bounds.
+That scope review is not permission to overlook this current-process error.
+J1012's later shader consumer source is not in this APK; its four bodies remain
+unbuilt. Main is stopped/asleep on 4b1a7969, J850 remains the accepted rollback,
+and ordinary gameplay, full audio and PC visual parity remain open.

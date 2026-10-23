@@ -88,16 +88,15 @@ The plain check and its acceptance criteria remain unchanged.
 
 ## Current baseline (2026-10-23)
 
-J1006's diagnostic APK 88ecfc8c is installed after both standard controls and
-independent APK-byte/placement/idle verification. The complete original network
-sound catalog initializes. Its retained admission sample verifies the exact
-source rig, target, update context and managed listener membership, but the
-music snapshot has no target body and is stale. Bounded audio-context admission
-still fails. First-sample JSON retention is also unqualified. Passing the
-standard checks qualifies neither that context nor broader audio. J985's targeted
-natural-Quit failures remain unresolved. See the
+J1013's diagnostic APK 4b1a7969 is installed after both standard controls and
+independent APK-byte/placement/idle verification. Original network-sound mapping
+and audio-camera admission pass on Lakes and after one exit to Goolake. The
+strict stage log nevertheless records an original equipment-highlight null
+prefab; plain has no unexplained current-process errors. Hold further targeted
+runs until that dependency is corrected. First-sample JSON retention, composed
+audio and J985's natural-Quit failures remain unresolved. See the
 [current snapshot](../PORTING_STATE.md) and
-[J1006](PORTING_JOURNAL.md#j1006--isolate-stale-music-admission-after-verified-camera-and-listener-readiness).
+[J1013](PORTING_JOURNAL.md#j1013--admit-the-original-audio-camera-and-expose-a-missing-equipment-highlight-dependency).
 The accepted baseline below remains the rollback.
 
 | Item | Value |

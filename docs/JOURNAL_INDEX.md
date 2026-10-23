@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1013](PORTING_JOURNAL.md#j1013--admit-the-original-audio-camera-and-expose-a-missing-equipment-highlight-dependency) | 2026-10-23 | Admit the original audio camera and expose a missing equipment highlight dependency | **Hypothesis and exact player.** |
 | [J1012](PORTING_JOURNAL.md#j1012--stage-the-four-source-camera-blur-candidates-through-exact-catalog-identities) | 2026-10-23 | Stage the four source camera blur candidates through exact catalog identities | **Scope and prior art.** |
 | [J1011](PORTING_JOURNAL.md#j1011--start-audio-camera-admission-at-the-playable-world-boundary) | 2026-10-23 | Start audio camera admission at the playable world boundary | **Measured ordering hypothesis and prior art.** |
 | [J1010](PORTING_JOURNAL.md#j1010--refuse-an-uninformative-dynamically-loaded-json-fixture) | 2026-10-23 | Refuse an uninformative dynamically loaded JSON fixture | **Question and reviewed fixture.** |
