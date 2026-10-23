@@ -63,7 +63,12 @@ def bind_hlsl(source, layout, entry):
         start = index * 16
         if slot not in buffers:
             raise RuntimeError("Unbound original constant buffer")
+        buffer_size = buffers[slot]["size"]
+        if type(buffer_size) is not int or buffer_size <= 0 or start < 0 or start + 16 > buffer_size:
+            raise RuntimeError("Constant register exceeds measured native buffer bounds")
         variables = buffers[slot]["variables"]
+        if any(type(variable["offset"]) is not int or variable["offset"] < 0 for variable in variables):
+            raise RuntimeError("Invalid native constant byte offset metadata")
         lanes = []
         for lane in range(4):
             offset = start + lane * 4
@@ -116,9 +121,31 @@ def bind_hlsl(source, layout, entry):
                 "_LightProjectionParams",
                 "_WorldSpaceLightPos0",
             ]:
+                array_suffix = ""
+                if type(v["array_size"]) is not int or v["array_size"] < 0:
+                    raise RuntimeError("Invalid native constant array length metadata")
+                if type(v["type"]) is not int:
+                    raise RuntimeError("Invalid native constant type metadata")
                 if v["array_size"]:
-                    raise RuntimeError("Non-builtin array declarations need a separate measured contract")
-                declarations[name] = "float4x4" if v["matrix"] else ("int" if v["type"] == 1 else "float") + (str(v["columns"]) if v["columns"] > 1 else "")
+                    if (
+                        v["matrix"] is not False
+                        or v["array_size"] <= 0
+                        or type(v["offset"]) is not int
+                        or v["offset"] < 0
+                        or v["offset"] % 16 != 0
+                        or type(v["columns"]) is not int
+                        or v["columns"] != 4
+                        or v["type"] != 0
+                        or type(v["rows"]) is not int
+                        or v["rows"] != 1
+                    ):
+                        raise RuntimeError("Unmeasured non-builtin constant array shape")
+                    if type(buffers[slot]["size"]) is not int or v["offset"] + 16 * v["array_size"] > buffers[slot]["size"]:
+                        raise RuntimeError("Measured constant array exceeds native buffer bounds")
+                    array_suffix = f"[{v['array_size']}]"
+                declarations[name] = (
+                    "float4x4" if v["matrix"] else ("int" if v["type"] == 1 else "float") + (str(v["columns"]) if v["columns"] > 1 else "")
+                ) + array_suffix
         used.append({"slot": slot, "register": index, "lanes": lanes})
         return "(float4(" + ",".join(lanes) + "))"
 

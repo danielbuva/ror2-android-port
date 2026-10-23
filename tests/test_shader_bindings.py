@@ -25,7 +25,8 @@ class ShaderBindingTests(unittest.TestCase):
         self.assertNotIsInstance(captured.exception, NativeVariantUnavailable)
 
     def layout(self, variables, textures=()):
-        return {"buffers": [{"slot": 0, "variables": variables}], "textures": textures}
+        size = max([16] + [v["offset"] + (64 if v["matrix"] else 16) * max(1, v["array_size"]) for v in variables])
+        return {"buffers": [{"slot": 0, "size": size, "variables": variables}], "textures": textures}
 
     def variable(self, name, columns=4, matrix=False):
         return {"name": name, "columns": columns, "rows": 4 if matrix else 1, "matrix": matrix, "array_size": 0, "type": 0, "offset": 0}
@@ -35,6 +36,67 @@ class ShaderBindingTests(unittest.TestCase):
         bound, _, _, _, reads = bind_hlsl(body, self.layout([self.variable("unity_TestMatrix", matrix=True)]), "mapped")
         self.assertEqual(reads[0]["lanes"], ["transpose(unity_TestMatrix)[2]." + c for c in "xyzw"])
         self.assertIn("* v0.zzzz;", bound)
+
+    def test_fixed_float4_array_uses_measured_first_and_last_elements(self):
+        variable = dict(self.variable("Samples"), offset=16, array_size=3)
+        body = "void main(out float4 o0 : SV_Target0) { o0 = cb0[1] + cb0[3]; }"
+        bound, _, declarations, _, reads = bind_hlsl(body, self.layout([variable]), "mapped")
+        self.assertEqual(declarations, {"Samples": "float4[3]"})
+        self.assertEqual(reads[0]["lanes"], ["Samples[0]." + c for c in "xyzw"])
+        self.assertEqual(reads[1]["lanes"], ["Samples[2]." + c for c in "xyzw"])
+        self.assertIn("Samples[2].w", bound)
+
+    def test_fixed_array_refuses_unmeasured_shape_and_extent(self):
+        body = "void main(out float4 o0 : SV_Target0) { o0 = cb0[0]; }"
+        variable = dict(self.variable("Samples"), array_size=3)
+        mutations = (
+            {"matrix": True},
+            {"matrix": 0},
+            {"columns": 2},
+            {"columns": 4.0},
+            {"rows": 2},
+            {"rows": True},
+            {"type": 1},
+            {"type": False},
+            {"type": 0.0},
+            {"offset": -16},
+            {"offset": 4},
+            {"offset": False},
+            {"offset": 0.0},
+            {"array_size": 3.5},
+            {"array_size": True},
+        )
+        for mutation in mutations:
+            layout = self.layout([dict(variable, **mutation)])
+            # Keep the buffer contract independently valid while varying its variable.
+            layout["buffers"][0]["size"] = 64
+            with self.subTest(mutation=mutation), self.assertRaises(RuntimeError):
+                bind_hlsl(body, layout, "mapped")
+        layout = self.layout([variable])
+        layout["buffers"][0]["size"] = 32
+        with self.assertRaisesRegex(RuntimeError, "array exceeds native buffer bounds"):
+            bind_hlsl(body, layout, "mapped")
+
+    def test_falsey_array_metadata_is_not_a_scalar_marker(self):
+        body = "void main(out float4 o0 : SV_Target0) { o0 = cb0[0]; }"
+        for field, value in (("array_size", False), ("array_size", 0.0), ("array_size", -1), ("type", False), ("type", 0.0)):
+            variable = dict(self.variable("Samples"), **{field: value})
+            with self.subTest(field=field, value=value), self.assertRaises(RuntimeError):
+                bind_hlsl(body, self.layout([variable]), "mapped")
+        _, _, declarations, *_ = bind_hlsl(body, self.layout([self.variable("Samples")]), "mapped")
+        self.assertEqual(declarations, {"Samples": "float4"})
+
+    def test_register_read_must_fit_exact_native_buffer_size(self):
+        variable = self.variable("Samples")
+        body = "void main(out float4 o0 : SV_Target0) { o0 = cb0[0]; }"
+        for size in (False, 16.0, 0, -16, 15):
+            layout = self.layout([variable])
+            layout["buffers"][0]["size"] = size
+            with self.subTest(size=size), self.assertRaisesRegex(RuntimeError, "exceeds measured native buffer bounds"):
+                bind_hlsl(body, layout, "mapped")
+        variable["array_size"] = 3
+        with self.assertRaisesRegex(RuntimeError, "exceeds measured native buffer bounds"):
+            bind_hlsl("void main(out float4 o0 : SV_Target0) { o0 = cb0[3]; }", self.layout([variable]), "mapped")
 
     def test_rejects_unclassified_consumed_lane(self):
         body = "void main(out precise float4 o0 : SV_Target0)\n{ o0 = cb0[0]; }"
@@ -146,7 +208,7 @@ class ShaderBindingTests(unittest.TestCase):
             layout = selected_layout(tree, raw, record)
         self.assertEqual(layout["buffers"][0]["variables"], [])
         self.assertEqual(layout["omitted_common_variables"][0]["name"], "_FixtureUnused")
-        with self.assertRaisesRegex(RuntimeError, "no measured binding"):
+        with self.assertRaisesRegex(RuntimeError, "exceeds measured native buffer bounds"):
             bind_hlsl("void main(out float4 o0 : SV_Target0) {o0=cb0[1];}", layout, "mapped")
 
     def test_partial_common_uniform_cannot_cross_native_extent(self):

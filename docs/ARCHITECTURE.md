@@ -2754,15 +2754,23 @@ measured non-output `noperspective SV_POSITION0` inputs. Other qualified
 interfaces refuse until measured; this support alone selects no replacement
 shader or runtime presentation behavior (J953).
 
+The same binder admits only measured fixed-size non-builtin `float4` arrays
+(J1002). Register reads must fit the native buffer; lengths, types, offsets and
+array shapes are validated before output. Array declarations retain their
+extent for the consuming wrapper to place after the variable name. Unknown
+shapes refuse. This host support has no runtime state or teardown and does not
+activate a replacement shader.
+
 `scripts/lab/shader_outline.py` owns the current
 `shader-outline-candidate --target outline-highlight` host action. Its fixed
 public `recipe/shader-outline-candidate.json` binds the accepted catalog,
 serialized object, four executable records, measured layouts, pass state and
 authored helper/tool hashes. It generates only ignored local evidence beneath
-`work/generated-shader-candidates/outline-highlight-r3/<input_id>/`; unchanged
+`work/generated-shader-candidates/outline-highlight-r4/<input_id>/`; unchanged
 inputs may reuse identical output, while drift refuses overwrite. R3 maps the
 measured all-channel mask value 15 to ShaderLab `RGBA`; unmeasured numeric or
-symbolic masks refuse, and the previous R2 candidate is left intact. Vertex and
+symbolic masks refuse. R4 refreshes the bounded-array helper pin while preserving
+both R3 and R2 outputs; the generated shader bytes are unchanged. Vertex and
 fragment interfaces remain distinct so the measured fragment-position
 interpolation survives. It has no runtime setup or teardown. The optional
 catalog consumer below stages this generated source; J965 qualifies the isolated
@@ -2772,10 +2780,10 @@ exact-editor Android bundle fixture. Android appearance remains a separate gate.
 action. It reads only the fixed public `recipe/shader-ramp-fog-candidate.json`
 and the user's accepted input, checks the exact serialized object, native
 programs and tool/helper pins, then writes a no-overwrite candidate under
-`work/generated-shader-candidates/ramp-fog-r3/<input_id>/`. This output version
-also preserves the R2 candidate because the shared render-state helper pin
-changed; RampFog's measured render-state serialization stays on its existing
-numeric path. The output is ignored
+`work/generated-shader-candidates/ramp-fog-r4/<input_id>/`. R4 refreshes the
+bounded-array helper pin and preserves R3 and R2 outputs. Its generated shader
+bytes are unchanged; RampFog's measured render-state serialization stays on its
+existing numeric path. The output is ignored
 local ShaderLab/DXBC evidence. J965 qualifies its isolated exact-editor Android
 bundle fixture; the optional catalog consumer below stages its source. Android
 rendering remains a device gate.

@@ -29768,3 +29768,67 @@ R2API.Sound boundaries still apply. No new runtime source is introduced by this
 result checkpoint. J997/J998 are now built and installed, with these explicit
 limits; J850 remains the accepted rollback. Full audio, original network-effect
 gameplay, natural Quit and visual parity remain open.
+
+## J1002 — Admit measured fixed-vector shader arrays and preserve existing outputs
+
+**Source requirement and prior art.** The source camera blur family needs a
+fixed vector array that the current binder deliberately refuses. Reuse the
+existing native-program/resource pipeline rather than write new blur math.
+Root consults the shader-recovery prior-art ledger, pinned d3dasm
+`render/interface.rs` and `render/value.rs`, native parameter records and the
+pinned editor's UnityShaderVariables declarations. They distinguish native
+constant registers, array extents and HLSL declaration placement; the shipped
+program/parameter bytes remain authoritative. No upstream or original shader
+implementation is copied into tracked source.
+
+**Small authored change.** `shader_source.bind_hlsl` admits only fixed-size
+non-builtin float4 arrays with exact integer length/type/layout metadata,
+one row, no matrix, aligned nonnegative offset and a full extent within the
+measured native buffer. Each referenced register must fit that buffer.
+Malformed boolean/fractional metadata and unsupported shapes refuse; existing
+builtin matrix arrays remain supported. Array extents are returned to the
+wrapper as declaration metadata, so wrappers must place them after the name.
+
+Independent private review rejects earlier wrapper declaration placement,
+ambiguous multiple-keyword dispatch and a stale proposed patch that differed
+from the tested implementation. The final reviewed binder patch is integrated
+as authored source. Root's additional fractional-offset fixture exposes an
+earlier indexing TypeError, so byte offsets are checked before lane arithmetic.
+That refusal happens before output and preserves the strict metadata contract.
+The future four-shader generator and catalog integration remain separate drafts.
+
+**Host validation and preserved lineage.** All 31 canonical binding tests and
+32 independent exact-source probes pass. The broader shader suite passes
+82 tests, and catalog replay passes 43. Changed Python passes Ruff. Existing
+synthetic buffers now supply measured padded extents; a partial-buffer fixture
+expects the stronger earlier bounds refusal rather than weakening the check.
+
+Changing the helper hash changes both existing generator recipe digests. Refresh
+their pins and public override recipe hashes, and generate into new R4 stable
+paths instead of rewriting R3 evidence. Root runs both existing prototype actions
+against the configured accepted legitimate installation. Outline remains
+`f37794d85f4e64d1064583d3cce6ecbe68daf59c722be00d36852516c101cace`;
+RampFog remains
+`ad31d2e326ccbc64eae993d9ac0928f7b0c5f396b90d5053b1991f1d8efe86f9`.
+Both match R3 byte-for-byte, whose manifests, receipts and shaders are independently
+rehash-verified unchanged. New manifests bind the current recipes/helper.
+The public activation allowlist stays default-off; the existing private switch
+is untouched. Reconstruction must replay the new recipe/output lineage.
+
+Evidence is under `work/coordination/original-native-visual-reference/` in
+`r31-binder-integration-root-r1/`, `r31-binder-integration-review-r1/` and
+`r31-shader-pin-refresh-plan-r1/`. The integrated helper SHA-256 is
+`d712407d715c37e79806207bd763bf2dc7d502a861366af2784ae8e63e3c026c`.
+The new stable outputs are
+`work/generated-shader-candidates/outline-highlight-r4/<input_id>/` and
+`work/generated-shader-candidates/ramp-fog-r4/<input_id>/`; Architecture and
+Local State identify their existing generators and preserved predecessors.
+Only authored support, generic fixtures and audited recipe metadata are public.
+
+**Acceptance limits.** This host checkpoint selects no new shader body and
+performs no editor or device action. J965's isolated compilation evidence belongs
+to the same unchanged shader bytes; it proves no new rendered behavior or PC
+parity. Four recovered Translucent candidates still need a source-bound public
+generator, exact-editor compilation and matched rendering observations. Main
+retains J1000 diagnostic bda75e37, asleep with 13 applied runs; its camera
+admission failure remains, and J850 is still the accepted rollback.

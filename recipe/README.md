@@ -1843,3 +1843,14 @@ scalar observations, producer/hook pins and synthetic host fixtures are
 published. Native camera/game/middleware implementations and compiler outputs
 stay ignored. No new content or required local input is added; source Start
 assignment and callbacks remain original. Provenance/privacy audit: 2026-10-23.
+
+J1002 extends the authored shader binder only for measured fixed `float4`
+arrays and validates native buffer extents and byte offsets. Synthetic fixtures
+contain invented names and layouts; no recovered program math is tracked.
+Outline and RampFog recipes refresh the helper digest and select new R4 output
+directories, preserving the R3 candidates. Regenerated shader bytes are
+unchanged. Only authored support, metadata pins and generic host fixtures are
+published; source programs, generated ShaderLab/DXBC and raw tool evidence stay
+ignored. The public two-shader activation allowlist stays default-off. No new
+shader body, catalog exception or device capability is accepted by this helper
+checkpoint. Provenance/privacy audit: 2026-10-23.

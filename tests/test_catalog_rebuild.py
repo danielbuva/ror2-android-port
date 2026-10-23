@@ -33,15 +33,15 @@ class CatalogRebuildTests(unittest.TestCase):
                 "scripts/lab/shader_outline.py",
                 "recipe/shader-outline-candidate.json",
                 "7cd674a8f0081a5e47669810c65e69c86349e91d280c1e4129c73111ec3ad608",
-                "902c375c54a7fe5c75cc254c7cabbe0ef1290282eeccdcc5ed83448e2a4c4576",
-                "generated-shader-candidates/outline-highlight-r3/{input_id}",
+                "4bd0c22e770f4baeb2c938303d0306841b9f26795adc8dcf1fe850eaf0d2021f",
+                "generated-shader-candidates/outline-highlight-r4/{input_id}",
             ),
             15950: (
                 "scripts/lab/shader_ramp_fog.py",
                 "recipe/shader-ramp-fog-candidate.json",
                 "5c50fca86cdd1092edfbc3de97a3e30f25baec359dc512a6be26a96e1065482a",
-                "63880fafec3b170c7899d8da0b04971cf764d2678fdee00a7417a6e134b622aa",
-                "generated-shader-candidates/ramp-fog-r3/{input_id}",
+                "665ea6955a9dafb57e4b96b8dc2570e5bded0bc91c483969eaae629944ac0a00",
+                "generated-shader-candidates/ramp-fog-r4/{input_id}",
             ),
         }
         self.assertEqual({row["location_id"] for row in selection["rows"]}, set(expected))

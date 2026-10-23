@@ -27,7 +27,7 @@ public_recipe = {
     "schema": 1,
     "target": "synthetic",
     "source": {"input_id": "synthetic-input"},
-    "stable_output": "generated-shader-candidates/outline-highlight-r3/{input_id}",
+    "stable_output": "generated-shader-candidates/outline-highlight-r4/{input_id}",
     "programs": [],
     "helpers": {
         "shader_source.py": hashlib.sha256((TEST_ROOT / "scripts/lab/shader_source.py").read_bytes()).hexdigest(),
@@ -246,7 +246,7 @@ class GeneratorContractTests(unittest.TestCase):
                 with self.assertRaises(RuntimeError):
                     generator.generate("lab")
                 first = generator.generate("outline-highlight")
-                final = work / "generated-shader-candidates/outline-highlight-r3" / generator.EXPECTED["input_id"]
+                final = work / "generated-shader-candidates/outline-highlight-r4" / generator.EXPECTED["input_id"]
                 before = (final / "sources/OutlineHighlightCandidate.shader").read_bytes()
                 with self.assertRaisesRegex(RuntimeError, "already exists"):
                     generator.generate("outline-highlight")
