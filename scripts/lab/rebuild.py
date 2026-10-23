@@ -45,7 +45,8 @@ def importer(row):
     )
 
 
-def assemblies(destination, work, input_id, expected, provenance):
+def assembly_payload(work, input_id, temporary, expected):
+    """Produce the recipe cohort independently of the working-project oracle."""
     recipe = read(RECIPE / "original-assemblies.json")
     transforms = assembly_transforms.load_recipe()
     if recipe["schema"] != 1 or recipe["input_id"] != input_id or transforms["input_id"] != input_id:
@@ -74,14 +75,19 @@ def assemblies(destination, work, input_id, expected, provenance):
     by_name = {row["source"]: row for row in rows}
     if any(name not in by_name or by_name[name]["sha256"] != value for name, value in transform_inputs.items()):
         raise RuntimeError("Assembly transform input membership/hash drift")
-    # Prepare and hash-gate the entire cohort before placing any project files.
+    transformed = assembly_transforms.generate(managed, temporary, transforms)
+    payload = {}
+    for row in rows:
+        path, name = row["path"], row["source"]
+        payload[path] = transformed[name].read_bytes() if name in transformed else originals[name]
+        payload[path + ".meta"] = metadata[path]
+    return payload
+
+
+def assemblies(destination, work, input_id, expected, provenance):
+    # The R1 comparison gate still checks the whole cohort before placing files.
     with tempfile.TemporaryDirectory(prefix=".assemblies-", dir=destination) as scratch:
-        transformed = assembly_transforms.generate(managed, Path(scratch), transforms)
-        payload = {}
-        for row in rows:
-            path, name = row["path"], row["source"]
-            payload[path] = transformed[name].read_bytes() if name in transformed else originals[name]
-            payload[path + ".meta"] = metadata[path]
+        payload = assembly_payload(work, input_id, Path(scratch), expected)
         for path, content in payload.items():
             if hashlib.sha256(content).hexdigest() != provenance[path]["sha256"] or len(content) != provenance[path]["size"]:
                 raise RuntimeError("Rebuilt assembly/importer differs from provenance: " + path)

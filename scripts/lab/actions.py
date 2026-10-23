@@ -28,6 +28,10 @@ def _rebuild_step(function, kwargs, args):
     return function(step=args.step, dest=args.dest, compare_only=args.compare_only, work=args.work_dir, **kwargs)
 
 
+def _owner_assemblies(function, kwargs, args):
+    return function(dest=args.dest, work=args.work_dir, **kwargs)
+
+
 def _capture(function, kwargs, args):
     from common import WORK, now, write
 
@@ -274,6 +278,15 @@ _ENTRIES = (
         "current",
         "Rebuild --step assemblies|shader-pipeline|composition|project-inputs|catalog-closure|dependencies|stage-variants|source-scenes|build-entries|runtime-sources|importer-identities|validate-bindings|unity-build in order under work/rebuild/<input_id>/lab-project (--dest overrides); --compare-only reads an existing destination.",
         handler=_rebuild_step,
+    ),
+    Action(
+        "owner-assembly-prefix",
+        "owner_assemblies",
+        "stage_action",
+        {},
+        "current",
+        "Generate only the owner DLL/importer prefix from reviewed input and public recipes, without a project/provenance oracle. Requires a new --dest under this clone's work/rebuild/; --work-dir selects inputs. Host-only; no complete Unity project or phone/game qualification.",
+        handler=_owner_assemblies,
     ),
     Action(
         "assembly-transforms-check",

@@ -1298,6 +1298,14 @@ working-project staging must hold the host editor lock and batch asset editing,
 verify the prior plugin/generation hashes, and update the local generation marker.
 
 Incremental project rebuild (`scripts/lab/rebuild.py`, current, R0–R9):
+`assembly_payload` owns the shared recipe-only DLL/importer generation. R1's
+`assemblies` wrapper retains provenance membership/hash/size comparison before
+project writes. The separate current `owner_assemblies.py` action uses that
+producer with public output contracts and an exclusive new workspace: typed
+input/source checks, preserved `attempt/`, a `project/` prefix, manifest and
+`preparing`/`complete`/`failed` receipt. It reads no project oracle and writes no
+lab generation/current-build marker. Setup, teardown and incomplete-project
+limits are in [OWNER_ASSEMBLIES.md](OWNER_ASSEMBLIES.md).
 `unity_rebuild.py` owns R9 `unity-build` after `validate-bindings`: destination-only
 host preflight, an exclusive operation lock, exact-editor batch invocation through
 `whole_catalog.build_integration(destination=...)` → `build.build(destination=...)`

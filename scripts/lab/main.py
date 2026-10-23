@@ -33,13 +33,16 @@ p.add_argument(
 )
 p.add_argument(
     "--work-dir",
-    help="Current: read-only inputs for rebuild/check actions and destination preflight; install/sync-data/run/check-baseline use this work tree for device receipts (default: work/)",
+    help="Current: read-only inputs for rebuild/check actions, owner-assembly-prefix and destination preflight; install/sync-data/run/check-baseline use this work tree for device receipts (default: work/)",
 )
 p.add_argument(
     "--step",
     help="Current: rebuild-step name (assemblies, shader-pipeline, composition, project-inputs, catalog-closure, dependencies, stage-variants, source-scenes, build-entries, runtime-sources, importer-identities, validate-bindings, unity-build)",
 )
-p.add_argument("--dest", help="Current: rebuild-step or isolated preflight destination beneath this clone's work/rebuild/")
+p.add_argument(
+    "--dest",
+    help="Current: rebuild-step, owner-assembly-prefix or isolated preflight destination beneath this clone's work/rebuild/; owner prefix requires a new directory",
+)
 p.add_argument("--compare-only", action="store_true", help="Current: compare an existing rebuild-step destination without writing")
 p.add_argument("--apk", help="Current: install this APK through the existing device safety/placement checks; preserves current-build")
 p.add_argument("--payload-dir", help="Current: sync-data from this payload directory; preserves the shared generated payload")
@@ -128,14 +131,19 @@ if (
     a.work_dir
     and not is_destination_preflight
     and a.command not in {"install", "sync-data", "run", "check-baseline"}
-    and (a.command != "prototype" or a.action not in {"inherited-state-check", "assembly-transforms-check", "rebuild-step"})
+    and (a.command != "prototype" or a.action not in {"inherited-state-check", "assembly-transforms-check", "rebuild-step", "owner-assembly-prefix"})
 ):
-    p.error("--work-dir requires prototype --action inherited-state-check, assembly-transforms-check or rebuild-step")
+    p.error("--work-dir requires prototype --action inherited-state-check, assembly-transforms-check, rebuild-step or owner-assembly-prefix")
 is_rebuild = a.command == "prototype" and a.action == "rebuild-step"
+is_owner_assemblies = a.command == "prototype" and a.action == "owner-assembly-prefix"
 if is_rebuild and not a.step:
     p.error("rebuild-step requires --step NAME")
-if (a.step or a.compare_only or (a.dest and not is_destination_preflight)) and not is_rebuild:
-    p.error("--step, --dest and --compare-only require prototype --action rebuild-step")
+if is_owner_assemblies and not a.dest:
+    p.error("owner-assembly-prefix requires a new --dest")
+if (a.step or a.compare_only) and not is_rebuild:
+    p.error("--step and --compare-only require prototype --action rebuild-step")
+if a.dest and not (is_destination_preflight or is_rebuild or is_owner_assemblies):
+    p.error("--dest requires rebuild-step, owner-assembly-prefix or isolated preflight")
 if a.stage_exit and a.command != "check-baseline":
     p.error("--stage-exit requires check-baseline")
 if a.skill_variants and (a.command != "prototype" or a.action not in {"survivor-kit-check", "session-cleanup-check", "session-abandon-check"}):

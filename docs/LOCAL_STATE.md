@@ -606,6 +606,17 @@ require historical copies. Status, usage and cross-tabulated counts are reported
 usage evidence remains a reviewed census, not recomputed by the integrity check.
 Review it after changing content, manifests or runtime loads.
 
+## Owner assembly prefix (current)
+
+The separate current [owner assembly prefix](OWNER_ASSEMBLIES.md) needs only the
+reviewed local input configuration, accepted-input receipt and inventory, plus
+the documented toolchain. `owner_assemblies.py` generates its new
+`work/rebuild/<chosen-prefix>/project/`, manifest and receipt;
+`assembly_transforms.generate` generates the adjacent `attempt/` copies, tool
+sources, restore configuration and transformed DLLs. These game-derived outputs
+stay ignored. No existing build reads this prefix, and no private provenance map
+or previous project is an input to this action.
+
 ## Named inherited store (current)
 
 `work/inherited-store/<input_id>/Assets/LabLoadingScene/**` is the **one required
