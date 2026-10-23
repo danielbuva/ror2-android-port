@@ -29671,3 +29671,101 @@ performed for this source checkpoint. Main retains J996 0d984b01, asleep with
 13 applied runs. A fresh full build, metadata retention, both standard checks,
 source callback/log/context observations and targeted gameplay remain required.
 No camera, audio, natural-Quit or Loader acceptance is claimed.
+
+
+## J999 — Host the existing managed build tools from read-only app native libraries
+
+2026-10-23 UTC. Hypothesis: the existing Android .NET build-tool framework
+can run a compiler under a separate app UID when native executable/shared
+libraries are installed by PackageManager and managed framework/compiler
+inputs remain data. This is a positive hosting/layout experiment. J929's
+failed writable-execution refusal is retained; security qualification remains
+false. Route A, IL2CPP ARM64, Android rendering and the desktop fallback stay
+fixed. No game assembly, Unity tool or game content enters this fixture.
+
+**Prior art and first boundary.** Read the exact public dotnet/runtime
+[v8.0.32 hostfxr header](https://github.com/dotnet/runtime/blob/v8.0.32/src/native/corehost/hostfxr.h)
+and [Microsoft's framework-dependent hosting contract](https://learn.microsoft.com/en-us/dotnet/core/tutorials/netcore-hosting).
+The command-line ABI accepts a managed application plus its arguments and
+explicit host/framework-root parameters; SDK commands are outside this API.
+Inspect the supplied Android ELF dependencies without executing them. Hostfxr
+and hostpolicy link only public Android C/math/loader libraries. The supplied
+build-tool `libcoreclr.so` also links log/zlib and exports Mono hosting symbols;
+its implementation is not a proposed game backend. Some native libraries retain
+Termux search paths. Static dependency inspection alone proves no app loading.
+
+`tools/phone-build/native-host/` now owns the separate authored fixture and its
+phone builder; setup and lifecycle are in its README and ARCHITECTURE. A small
+PIE shim calls the existing hostfxr initialization/run/close functions and
+records actual UID, context, exits and mappings. The target-33 activity checks
+PackageManager-installed native hashes/nonwritability, copies hash-bound data
+assets into a fresh private directory, and links framework/OpenSSL native names
+to the installed files. It runs the supplied Roslyn compiler, builds authored
+`Hello.cs` against public .NET references, and runs that program's SHA-256
+check. It uses no permissions or networking. The builder creates a separate
+APK with an encrypted disposable signing key and ephemeral password, preserves
+failure receipts and verifies signing/alignment. No native ELF is placed in
+writable asset data; no security policy, target SDK or existing refusal probe
+is weakened.
+
+**Preserved first failures.** The ordinary alpha preflight still refuses its
+missing complete lab project/local state; this isolated fixture consumes
+explicit supplied tools rather than that project. The first phone attempt
+compiles the native shim but javac refuses a lambda against the SDK API-30
+boot classpath. Replace it with an anonymous Runnable; retain target 33. The
+next phone build succeeds. An initial install adapter lacks the existing
+`UNITY_ANDROID_ROOT` environment and refuses before installation. Source
+`scripts/env.sh` and retry with a new selector; do not change the device or
+validation. Both failed directories remain intact.
+
+**Device result.** Phone-built APK SHA-256
+`dbb1f0be73835fd9937d74e74b3ffa173cfde75fdb39bd3440b29df215fb3176`
+is 21,403,779 bytes. Fresh ownership, storage/backing, capacity/reserve and
+stopped-game guards pass. The bound 646-input manifest covers staged sources
+and jars, the supplied framework/material and OpenSSL files; it is checked
+before and after building. Other native compiler/JDK/packaging hosts remain
+supplied tools, not newly qualified delivery closures.
+
+Two cold app launches use distinct new data directories. Each verifies 359
+data files and 12 installed native hashes, reports Roslyn
+`4.8.0-7.23558.1 (e0917286)`, compiles the authored program and runs it with
+.NET 8.0.32 and the expected SHA-256 marker. Independent log checks require
+child/app UID and `untrusted_app` context equality, successful hostfxr and
+managed exits, and mappings for the actual shim/hostfxr/hostpolicy/framework.
+All observed file-backed native-library mappings resolve to hash-bound
+PackageManager native files or Android system roots. No executable file mapping
+comes from writable app data. Anonymous JIT code is not classified as a native
+file mapping or a security-policy proof.
+
+The caller records actual package placement and app-data backing, removes only
+the installed APK matching its local ownership receipt, and verifies absence.
+Alpha's game remains `be26c21c`, stopped with no selection file; display sleep
+is independently checked. No game launch or editor action occurs. No new game
+APK is built or installed. Main's installed/runtime facts remain untouched.
+
+**Source and evidence.** Published source checkpoint `6c6ca78` contains the four
+C/Java/C#/manifest files byte-identical to the successful phone stage. Ruff's
+formatting of the builder preserves its complete Python AST. Authored Linux
+host ABI tests cover argument/root forwarding, actual host-path resolution,
+missing library/symbol refusal, failed initialization and managed exit/context
+closure; macOS explicitly skips the Linux `/proc` executable fixture. The
+manifest scope check passes locally. These contracts complement the actual
+Android observation; they do not infer gameplay readiness.
+
+Private evidence is under
+`work/coordination/phone-proof/native-tool-host-r1/`: versioned build/install
+selectors, source stages, failure/success receipts, package ownership, native
+mapping/child logs and terminal readbacks. `proof-receipt-v1.json` binds 814
+artifacts; SHA-256
+`2c0cca76f3af40f4f34849a5a9ed65361380317320debe050f82079b47371ac5`.
+Public source-equality evidence remains in the isolated host tree under
+`work/coordination/native-tool-apphost-r1/`; raw paths and device identifiers
+remain ignored. Only authored source and this summary are published.
+
+Revisit on tool/ABI/source changes or when connecting an actual public transform
+or Unity build step inside the app. The debug fixture, ADB-assisted staging and
+supplied tools do not establish production bootstrap, public tool redistribution,
+Python/JDK/Clang app hosting, cancellation/resume, complete native dependencies,
+full game construction or matched performance. J929's security refusal stays
+failed. Do not select a final installer or change the working game build from
+this positive component result.

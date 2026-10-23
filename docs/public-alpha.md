@@ -94,6 +94,11 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
 
 ## Packaging and acquisition
 
+- [ ] Connect the separately qualified positive build-tool app host to a
+  production acquisition/bootstrap flow while retaining the failed security
+  refusal gate and testing other tool hosts. See
+  [J999](PORTING_JOURNAL.md#j999--host-the-existing-managed-build-tools-from-read-only-app-native-libraries).
+
 - [ ] Decide release package identity, increasing version code, private signing
       custody and update/rollback policy; prove profile/settings update retention.
 - [ ] Implement approved local-file validation and, if selected, owned-account

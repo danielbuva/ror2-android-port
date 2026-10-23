@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J999](PORTING_JOURNAL.md#j999--host-the-existing-managed-build-tools-from-read-only-app-native-libraries) | 2026-10-22 | Host the existing managed build tools from read-only app native libraries | 2026-10-23 UTC. |
 | [J998](PORTING_JOURNAL.md#j998--bound-initial-original-camera-mode-readiness-without-replacing-start) | 2026-10-22 | Bound initial original camera-mode readiness without replacing Start | **Evidence and hypothesis.** |
 | [J997](PORTING_JOURNAL.md#j997--root-the-original-camera-components-complete-blur-shader-dependencies) | 2026-10-22 | Root the original camera component's complete blur shader dependencies | **First failure and source identity.** |
 | [J996](PORTING_JOURNAL.md#j996--verify-the-complete-network-sound-catalog-and-classify-camera-startup-failures) | 2026-10-22 | Verify the complete network sound catalog and classify camera startup failures | **Hypothesis and reproducible player.** |
