@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-23 UTC after **J1003/J1000**. R30 diagnostic APK bda75e37
+Last updated 2026-10-23 UTC after **J1004/J1000**. R30 diagnostic APK bda75e37
 passes both standard device controls and retains the complete original 65-entry
 network sound catalog. The missing camera-shader exception is gone; the active
 source rig reaches PlayerBasic and index zero, but its separate audio context
@@ -8,7 +8,9 @@ still misses bounded admission. Its final snapshot does not isolate the earlier
 false readiness operand. Loader and composed audio remain unqualified. Main has
 the exact diagnostic installed in adopted storage and is independently asleep
 with 13 applied runs intact. Accepted rollback remains J850 f1550ce0. J997/J998
-are built and installed; full audio and visual parity remain open.
+are built and installed; full audio and visual parity remain open. J1004 retains
+four isolated shader compile artifacts, but both automation routes refuse the
+actual MCP response. Independent owned cleanup passes; no new shader is selected.
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the

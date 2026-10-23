@@ -29898,3 +29898,59 @@ exact-editor fixture is ready for Root execution before catalog activation.
 No device/editor action or new APK occurs in this checkpoint. Main remains
 J1000 bda75e37, stopped/asleep with 13 applied runs; camera admission and composed
 audio remain unqualified, and J850 stays the accepted rollback.
+
+## J1004 — Retain camera blur compile artifacts while refusing ambiguous automation
+
+**Hypothesis and scope.** J1003's four source-bound shader candidates should
+import with their measured names/pass counts and build as isolated Android
+bundles in the pinned Unity 2021.3.45f2 Vulkan project. Reuse J965's isolated
+compile technique and J1003's native-program prior art. Root claims only the
+editor, holds the shared host mutex, and stages four exact candidate shaders
+plus a QuickDumbBlur material enabling the measured FLIP_V variant. No player,
+catalog selection, graphics settings or device is changed.
+
+**Compile artifacts; failed automation.** Both fresh attempts report zero
+ShaderUtil errors, expected shader/pass contracts and successful StrictMode
+Android bundle creation. Their on-disk preliminary receipts retain
+`compile_success: true` and `success: false`, pending verified owned cleanup.
+The first attempt returns a dictionary; the second uses an anonymous
+`fixtureReceipt` wrapper after independent review and 40 passing host tests.
+The actual MCP bridge collapses both returns to `success: false` with null data.
+The strict host refuses both before deletion. The second attempt demonstrates
+that the proposed wrapper alone does not repair the actual bridge contract.
+Neither complete fixture route passes, and neither receipt is rewritten as a
+success. Diagnose the actual bridge before another compile attempt.
+
+Attempts are
+`work/editor/shader-candidate-compile-fixtures/89c1ebfcf97db44901f94e8e/`
+and
+`work/editor/shader-candidate-compile-fixtures/d58357070dbe7f2786f07cd9/`.
+Their preliminary receipt SHA-256 values are
+`d3caaffcc8ec6513b4881d0e2a642d9b58c067a67e741824b9761c274bf47f32`
+and `a504f87ced0e0c300e45c0b1cc8365098ce721098cbca13d55694df4fb842e0e`.
+Exact MCP responses, requests, diagnostics and bundle hashes remain in those
+ignored attempts. Root execution and independent cleanup evidence are under
+`work/coordination/original-native-visual-reference/` in
+`translucent-compile-fixture-root-r1/` and
+`translucent-compile-fixture-root-r2/`.
+
+**Independent cleanup.** Root reacquires the ordinary host mutex, verifies each
+request and exact owned file/hash inventory, rehashes every produced bundle,
+then uses structured Unity asset deletion for only that generation. Folder and
+sidecar absence are checked; the dedicated empty parent is deleted only after
+an empty-directory check and preservation of its metadata. Editor idle is
+verified before releasing the mutex; both preliminary receipts remain unchanged.
+An initial second-attempt cleanup adapter applies the fixture-only parser to a
+valid generic idle response. Root preserves its trace, verifies actual editor
+idle, stops only that known host driver, then uses a correct generic-idle parser
+for the separately verified cleanup. Unity is never stopped or restarted; the
+persistent shared lock file is never deleted. The final second-attempt cleanup
+receipt SHA-256 is
+`81720e1b23ef49ea60934a09f1609e2db108ee5204625fc562b57bc22cc6874b`.
+
+**Limits and next gate.** These artifacts support scoped import/compiler
+progress, not runtime loading, pixel behavior, PC parity or complete automation
+acceptance. The four catalog placeholder bodies remain selected. No new APK or
+runtime source is introduced; Main remains J1000 bda75e37 stopped/asleep, with
+J850 as the accepted rollback. The independent camera admission observation
+change can proceed without selecting these shader candidates.

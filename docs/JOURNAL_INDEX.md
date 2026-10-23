@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1004](PORTING_JOURNAL.md#j1004--retain-camera-blur-compile-artifacts-while-refusing-ambiguous-automation) | 2026-10-22 | Retain camera blur compile artifacts while refusing ambiguous automation | **Hypothesis and scope.** |
 | [J1003](PORTING_JOURNAL.md#j1003--reconstruct-source-camera-blur-candidates-from-accepted-input) | 2026-10-22 | Reconstruct source camera blur candidates from accepted input | **Source requirement and prior art.** |
 | [J1002](PORTING_JOURNAL.md#j1002--admit-measured-fixed-vector-shader-arrays-and-preserve-existing-outputs) | 2026-10-22 | Admit measured fixed-vector shader arrays and preserve existing outputs | **Source requirement and prior art.** |
 | [J1000](PORTING_JOURNAL.md#j1000--remove-the-source-camera-shader-exception-and-preserve-its-admission-timeout) | 2026-10-22 | Remove the source camera shader exception and preserve its admission timeout | **Reproducible full player.** |
