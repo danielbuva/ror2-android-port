@@ -32995,3 +32995,81 @@ reads and terminal validation are under
 R36 remains installed/stopped/asleep, J850 remains the accepted rollback, and
 J1043/J1044 still await the shared editor handback for their full build. No new
 build input, architecture owner or rebuild step is introduced.
+
+## J1050 — Measure exact data reuse across every PC and accepted Android bundle
+
+2026-10-23. Read-only host assessment; no converter, game build or device action.
+
+**Hypothesis and scope.** J1036 compares raw whole files and one Commando object
+cohort; those misses do not establish that owner files cannot supply large data
+ranges after bundle decompression. Measure all legitimate-input UnityFS bundles
+against all frozen accepted J850 UnityFS payloads before choosing a second large
+conversion implementation. This is a lower-bound reuse census, not construction
+of the missing data or an optimal delta search.
+
+**Prior art and method.** Consulted `community-prior-art.md` and the installed
+pinned UnityPy `BundleFile.read_fs` and `CompressionHelper` implementations.
+Their block-info-at-end, header/data alignment, compression and directory records
+supply the format contract. A private bounded reader decompresses blocks into a
+native content-defined chunk analyzer without loading a global object graph or
+writing decompressed game data. Chunks range from 2 KiB to 64 KiB, with SHA-256
+and length as their identity. The index is capped at 2 million entries. All
+source bundles are indexed before target comparison; target matches never add
+new dictionary entries. This prevents repeated Android content from being
+counted as PC-derived reuse. Each selected compressed file must match its pinned
+inventory/accepted hash before reading, and its hash and file stats are checked
+again afterward. The original installation is never changed.
+
+**First failure and controls.** The initial version-7-only reader refuses the
+observed PC version 8 before the census starts. Preserve that source/failure;
+the corrected reader accepts observed versions 7/8 using UnityPy's same
+version-at-least-7 alignment contract. Independent pinned-parser controls match
+all decompressed bytes for one selected PC and one selected Android bundle.
+The chunk controls recover every byte of identical input, recover 1,038,476 of
+1,048,590 bytes after a leading insertion, report zero matches for independent
+random input, and separately account for all-zero chunk reuse. Source/parser/
+executable hashes are retained in the receipt. These are measured comparison
+controls, not game-runtime tests.
+
+**Complete result.** All 1,721 PC bundles and all 133 accepted Android UnityFS
+payloads complete in 79.1058 seconds, producing 1,854 per-file records:
+
+| Cohort | Compressed file bytes | Decompressed stream bytes |
+| --- | ---: | ---: |
+| Legitimate PC UnityFS bundles | 2,865,273,795 | 7,290,790,764 |
+| Accepted Android UnityFS payloads | 2,241,080,891 | 5,503,897,674 |
+
+Exact source chunks match **1,981,313,427 target bytes (35.9984%)**, of which only
+3,866,624 bytes are all-zero chunks. Nonzero matches total 1,977,446,803 bytes;
+128 of 133 target bundles have some matches. The largest target,
+`whole-game-content`, has 3,103,913,119 decompressed bytes and 546,541,709 matched
+bytes. Its bounded processing does not allocate that full decompressed stream.
+Target byte coverage counts repeated target ranges where present; it is not a
+measure of unique assets or independently writable serialized objects.
+
+**Interpretation and next decision.** The result establishes substantial exact
+owner-input data reuse beyond J1036's scoped whole-object misses. A direct
+converter should use those input ranges rather than treat every bundle byte as
+new information. The unmatched 3,522,584,247 bytes are not proven irreducible:
+other chunk boundaries, encodings or genuine transformations may derive more.
+Conversely, a matching chunk does not supply structural edits, reference/schema
+repair, Android texture/shader production, canonical bundle recompression,
+matching game AOT/metadata or the other APK/startup outputs. No source-reference
+recipe or reconstructed output is generated in this case. This is not a
+percentage of completed conversion, a public-patch size estimate, permission to
+redistribute unmatched literals, or qualification of PC-input-only conversion.
+Retain the fixed-target reconstruction direction, the existing private replay
+and desktop fallback; do not default back to general Editor/AssetRipper import
+or build another converter based solely on this coverage number.
+
+**Evidence and terminal state.** Private source, native executable, first
+refusal, controls, full per-file hashes/counts and terminal result are under
+`work/coordination/accepted-build-reconstruction/full-content-reuse-v1/`.
+The aggregate `proof.json` has SHA-256
+`7bbd67ec79df3bfcb6509951d9093f5096b54c06dbf9e0c1520c7a58ee575593`.
+The analyzer terminates successfully with its index released; no new game
+output, editor mutation, installation, device command or runtime source change
+occurs. Alpha's existing feedback lease and Main's working build are preserved.
+Only this authored summary is published. Any actual converter must still
+produce all required outputs and pass ordinary phone installation/execution and
+matched behavior/performance before adoption.

@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1050](PORTING_JOURNAL.md#j1050--measure-exact-data-reuse-across-every-pc-and-accepted-android-bundle) | 2026-10-23 | Measure exact data reuse across every PC and accepted Android bundle | 2026-10-23. |
 | [J1046](PORTING_JOURNAL.md#j1046--native-defeat-and-restart-compose-with-r36-original-audio) | 2026-10-23 | Native defeat and restart compose with R36 original audio | **Hypothesis and scope.** |
 | [J1045](PORTING_JOURNAL.md#j1045--native-source-stage-cleanup-and-restart-pass-on-r36) | 2026-10-23 | Native source-stage cleanup and restart pass on R36 | **Hypothesis and scope.** |
 | [J1044](PORTING_JOURNAL.md#j1044--restore-the-source-camera-uber-composite-contract-on-the-host) | 2026-10-23 | Restore the source-camera Uber composite contract on the host | **Hypothesis and change.** |
