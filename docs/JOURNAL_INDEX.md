@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1021](PORTING_JOURNAL.md#j1021--observe-loaders-four-default-callbacks-through-the-existing-input-owner) | 2026-10-23 | Observe Loader's four default callbacks through the existing input owner | **Hypothesis and scope.** |
 | [J1019](PORTING_JOURNAL.md#j1019--observe-loader-without-a-blue-elite-lightningstake-source-event) | 2026-10-23 | Observe Loader without a blue-elite LightningStake source event | **Scope and prior art.** |
 | [J1017](PORTING_JOURNAL.md#j1017--verify-the-equipment-highlight-owner-and-six-row-shader-payload-on-android) | 2026-10-23 | Verify the equipment-highlight owner and six-row shader payload on Android | **Hypothesis and build.** |
 | [J1018](PORTING_JOURNAL.md#j1018--test-consumed-buffer-ownership-during-android-asset-materialization) | 2026-10-23 | Test consumed-buffer ownership during Android asset materialization | **Question and prior art.** |

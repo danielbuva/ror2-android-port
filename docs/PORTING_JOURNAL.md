@@ -31018,3 +31018,74 @@ with the exact runner/binding and independent query in its parent packet.
 Host source/coverage analysis is in
 `work/coordination/original-gameplay-breadth/r33-loader-zero-call-triage-r1/`.
 No runtime/build recipe changed; J1017 remains the APK/control qualification.
+
+## J1021 — Observe Loader's four default callbacks through the existing input owner
+
+**Hypothesis and scope.** J1019's ordinary melee route left Utility unused.
+The existing `SurvivorSkillInputCoverage` all-four mode should supply the
+missing ordinary input pulses while retaining original native skill execution.
+Use the same J1017 APK
+`197101a8f5e511334ac577b77b09f2295df59559eb9467bc80941b204f8c3fc3`,
+source edb120f, frozen payload and both strict controls. No build or runtime
+source changes. Doctor and selected preflight pass.
+
+The only launch differences from J1019 are `diagnosticSkillCoverage=true` and
+an empty `diagnosticSkillIsolationSlot`. The existing owner samples native
+CanExecute and overlays bounded input requests after the ordinary producer;
+it does not directly execute a skill, change stock/cooldowns or force damage,
+projectiles or an elite event. Developer Loader selection and invincibility
+remain explicit assists. Prior art remains J634/J957/J989 and the pinned
+Starstorm2 skill-activation subscription/teardown example in the community
+ledger; the accepted game's native API remains authoritative.
+
+**Host contract.** A private wrapper reuses the exact J1019 runner, preserves
+its first-failure, audio-owner/network-sound, PID/log, profile and duration
+gates, and retains the original skill/input/combat-output reports. Review
+catches a first-draft selector check bypass at the successful stage-age limit.
+The successor checks the selector at that boundary while preserving earlier
+failures. Nine host tests and independent review pass. Freeze both drafts and
+bind the exact successor, source pins, request bytes, controls and a fresh
+single-device Root claim before dispatch.
+
+**Device result.** The bounded observation finishes on Lakes at 60.381638 world
+seconds, with 13 observation snapshots, 49 current-process log snapshots and
+82 playing reports. No report failure or unexplained current-process error is
+observed; the existing platform annotation and Windows-bundle negative control
+remain separately classified. The all-four input owner completes at 12.277191
+elapsed seconds after three requests. Final native authority/server callback
+counts agree for each original default definition:
+
+| Slot | Definition | Authority / server activations |
+| --- | --- | --- |
+| Primary | SwingFist | 35 / 35 |
+| Secondary | FireHook | 3 / 3 |
+| Utility | ChargeFist | 1 / 1 |
+| Special | ThrowPylon | 2 / 2 |
+
+The original combat observer records 18 body-attributed damage events and
+three projectile identities: one LoaderHook and two LoaderPylons, with one
+Pylon still live at the final sample. Projectile-attributed damage and
+owned-summon damage remain zero. Callback/output co-occurrence does not prove
+each ability's damage, movement, grapple behavior or complete semantics.
+The separate LightningStake observer remains attached with zero capture
+failures and zero calls; no blue-elite hit occurs. The intermittent defect is
+not reproduced or fixed. Camera/network-sound context and all three equipment
+highlight assignments remain ready; this is no audio or visual acceptance.
+
+**Terminal state and limits.** The bounded runner intentionally uses owned
+failure-style force-stop cleanup. Cleanup and independent terminal checks pass;
+natural Quit, observer detach and asset/audio release remain unqualified.
+A separate guarded query rehashes the installed APK, verifies owned adopted
+placement, unchanged 13 applied runs, selector/process absence and display
+sleep. Archive and release the completed Root claim. Other devices and editors
+remain untouched. J1017 remains the diagnostic APK/control qualification and
+J850 remains the accepted rollback. No runtime recipe changed.
+
+Evidence is retained in
+`work/coordination/original-gameplay-breadth/r33-loader-gameplay-catalog-root-r1/attempts/root-r2-all-four/`.
+Root's frozen request, arm record and independent terminal query are under
+`work/coordination/original-gameplay-breadth/r33-loader-four-slot-root-r1/`;
+the reviewed successor and its host tests are under
+`work/coordination/original-gameplay-breadth/r33-loader-four-slot-draft-r2/`.
+Full ability semantics, alternate kits, natural teardown and a real blue-elite
+source-event observation remain separate follow-up work.

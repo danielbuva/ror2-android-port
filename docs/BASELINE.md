@@ -92,9 +92,10 @@ J1017's diagnostic APK 197101a8 is installed after both standard controls,
 strict log replay and independent installed-byte/placement/idle verification.
 The first stage-exit attempt missed the unchanged deadline; one identical repeat
 passes both modes. The camera, native sound mapping and three highlight
-assignments are ready without J1013's null-prefab exception. J1019's separate
-Loader observation does not qualify full-kit semantics or the intermittent
-blue-elite event. First-sample JSON, natural teardown, composed audio and
+assignments are ready without J1013's null-prefab exception. J1021's separate
+Loader observation adds all four native callbacks and Hook/Pylon observations;
+full-kit semantics and the intermittent blue-elite event remain open.
+First-sample JSON, natural teardown, composed audio and
 rendered parity remain unresolved. See the [current snapshot](../PORTING_STATE.md)
 and [J1017](PORTING_JOURNAL.md#j1017--verify-the-equipment-highlight-owner-and-six-row-shader-payload-on-android).
 The accepted baseline below remains the rollback.
