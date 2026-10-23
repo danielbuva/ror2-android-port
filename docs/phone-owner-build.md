@@ -16,6 +16,9 @@ Raw-export tool-host investigation:
 Complete accepted-input export remains an open gate.
 [J1016](PORTING_JOURNAL.md#j1016--separate-raw-retention-from-incomplete-android-asset-materialization) narrows the raw-retention and
 materialization boundary; complete export remains unqualified.
+[J1018](PORTING_JOURNAL.md#j1018--test-consumed-buffer-ownership-during-android-asset-materialization)
+qualifies narrow consumed-buffer ownership controls; direct-API imports still
+terminate before bundle return.
 Native fixture compile/link/loading: [J839](PORTING_JOURNAL.md#j839--compile-and-link-the-authored-il2cpp-native-library-on-android).
 Full authored converter/native/device closure: [J842](PORTING_JOURNAL.md#j842--run-the-full-authored-converter-and-load-its-phone-compiled-native-output).
 Authored input capture and Android stripping: [J846](PORTING_JOURNAL.md#j846--capture-authored-stripping-inputs-and-replay-unitylinker-on-android).

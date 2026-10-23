@@ -30772,3 +30772,92 @@ upstream APIs. Complete project output and its comparison to the desktop oracle,
 phone-only publisher/acquisition, app security, lawful delivery, Android
 content/shader/player production and matched native game performance remain
 open. Retain Route A and the desktop fallback.
+
+## J1018 — Test consumed-buffer ownership during Android asset materialization
+
+**Question and prior art.** J1016's file-watcher stack does not identify the
+import thread's failing operation. Invoke the actual pinned GameBundle.FromPaths
+API without the web host, then test whether releasing consumed raw references
+allows its typed graph to complete within the existing limits. Re-inspected
+[AssetRipper 2.0.0 source](https://github.com/AssetRipper/AssetRipper/tree/1ac666f47d8e9dedf96afb0b914c70d7656151ea)
+and [upstream memory PR 2396](https://github.com/AssetRipper/AssetRipper/pull/2396),
+head 0781320a889b382478c90f231637b7ddc4feb61c. That proposal is closed and
+unmerged; its measurements on another game are not our evidence. Its
+SerializedFile.ReleaseObjectData and SerializedAssetCollection.ReadData changes
+provide the reference-release experiment. The proposed forced-collection
+setting, fallback-buffer reuse and out-of-memory retry changes are excluded.
+
+**Isolated profiles and controls.** Both real-input profiles retain J1016's
+1 MiB/512 KiB temporary-stream thresholds, original dependency/runtime
+configuration, normal path order, actual MonoManager initialization and actual
+GameInitializer. An authored delegating AssetFactoryBase observes successful
+ReadAsset returns while GameAssetFactory performs the reads unchanged. The
+candidate additionally releases each consumed ObjectData reference after its
+asset is read and added. Only IO/Assets DLLs and their matching PDBs replace
+components in the original 120-file publish; adding the observer yields 122
+files. The candidate's loaded IO, Assets and Import paths/hashes match the
+selected manifest on Android. No canonical exporter or recovery cache is changed.
+
+Both profiles pass the authored two-asset GameBundle control on host and Android:
+class IDs 49/142, 204 input bytes and no UnknownObject/UnreadableObject. Three
+additional ownership cases pass on both hosts and both Android profiles:
+
+- Ordinary successful reads retain both assets and release only consumed raw
+  references in the candidate.
+- Null-returning reads add no asset but still release the consumed references.
+- An authored exception during the second read preserves the current failed
+  input; only the first completed read is released.
+
+Captured original byte segments and slices held by actual UnloadedStructure
+instances remain equal after a forced collection. This checks retained-byte
+ownership, not every real MonoBehaviour's later deserialization. The first host
+fixture wrongly expected a null public getter; ObjectInfo.ObjectData exposes an
+empty array after release. Its failed receipt is preserved, and the corrected
+control checks empty versus retained nonempty data. An earlier manifest staging
+attempt also refused locale directories before any device trial; the corrected
+manifest enumerates files recursively. Upstream tests pass: 57 Assets tests and
+16 SmartStream/FileStream tests. Changed private Python drivers pass Ruff.
+
+**Real-input results.** Both direct-API trials use accepted input 6af7ed94 and the
+same requested 5 GiB managed maximum / 2 GiB soft limit, independent 6 GiB RSS
+guard, 1 GiB available-RAM reserve, 2 GiB scratch reserve and 1,200 s deadline.
+Neither hosts ASP.NET or its file watcher. These are diagnostic timings, not
+performance-equivalence benchmarks.
+
+| Direct API profile | Last sampled successful reads / input bytes | Sampled peak managed / RSS bytes | Total attempt | Result |
+| --- | --- | --- | ---: | --- |
+| Existing temporary-stream profile | 1,540,096 / 826,328,630 | 5,232,715,032 / 5,332,434,944 | 227.60 s | Native SIGABRT / exit 255; no bundle return |
+| Add consumed-buffer reference release | 1,540,096 / 826,328,630 | 5,230,843,832 / 5,384,056,832 | 228.49 s | Native SIGABRT / exit 255; no bundle return |
+
+Counts are sampled lower bounds, not the exact failing object. No useful managed
+exception identifies the native termination. A web file-watcher callback is
+therefore not necessary for the failure. The ownership change passes its narrow
+contracts but does not qualify complete materialization or export. The repeated
+heap-limit vicinity does not by itself prove a managed OutOfMemoryException,
+the precise allocation, or a specific asset as the root cause. Do not widen
+budgets or adopt the candidate from these results.
+
+**Evidence and terminal state.** Immutable sources, manifests, controls and both
+failed trials remain ignored under
+`work/coordination/phone-proof/assetripper-portability-r1/`. The authored
+`proof-v4.json` is 2,394 bytes, SHA-256
+`8fb659a03b4854e763181a8a601a790ceae66f7ccd65274b5b0726b7baa9cad5`.
+It binds the earlier packet, direct-API result and ownership candidate. The
+candidate source patch SHA-256 is
+`30663fe28d4d9f98e083838109d048877321732d1bfa0fb40c5665eb6c687f28`;
+its terminal result SHA-256 is
+`5c99c6e92e956a368e9dd3f0c24472ee301f7d6a87feb4e10c13cc646267062e`.
+All 2,749 supplied input hashes and selected tool bytes match before and at
+terminal readback; owned processes are absent. Alpha's installed game remains
+be26c21c4cd8ff15a8a663528216cf7a69394a51d8b9441a63a1a496f83e98b5,
+with no game process/selector and the display asleep. There are zero installs,
+game launches and editor actions. Main's checkout/device are untouched.
+
+The isolated Alpha checkout's repository doctor/preflight still refuses its
+missing staged lab project/input generation. No game/Unity build is attempted;
+these separate tool-profile builds and checks do not satisfy that bootstrap
+gate. Keep native IL2CPP ARM64, the Android renderer and desktop owner-build
+fallback. Next: observe the current asset/allocation boundary and live graph
+before another import change. Complete output comparison, phone-only tool
+publishing/acquisition, app security, permitted distribution, Android
+content/shader/player production and matched game performance remain open.

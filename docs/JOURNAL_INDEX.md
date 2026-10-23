@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1018](PORTING_JOURNAL.md#j1018--test-consumed-buffer-ownership-during-android-asset-materialization) | 2026-10-23 | Test consumed-buffer ownership during Android asset materialization | **Question and prior art.** |
 | [J1016](PORTING_JOURNAL.md#j1016--separate-raw-retention-from-incomplete-android-asset-materialization) | 2026-10-23 | Separate raw retention from incomplete Android asset materialization | **Question and scope.** |
 | [J1015](PORTING_JOURNAL.md#j1015--supply-the-equipment-highlight-owners-authored-importer-sidecar) | 2026-10-23 | Supply the equipment-highlight owner's authored importer sidecar | **First failure.** |
 | [J1014](PORTING_JOURNAL.md#j1014--own-the-original-equipment-highlight-dependencies-before-body-activation) | 2026-10-23 | Own the original equipment-highlight dependencies before body activation | **Hypothesis and prior art.** |
