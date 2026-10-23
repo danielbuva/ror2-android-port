@@ -1,6 +1,6 @@
 # Phone-only owner-build assessment
 
-2026-10-21. Scope: build/distribution engineering under
+2026-10-23 UTC. Scope: build/distribution engineering under
 [ADR-002](ADR-002-public-alpha-distribution.md), keeping the IL2CPP ARM64 game
 and Android renderer fixed. This combines source/tool inspection and isolated
 authored probes, not a complete phone build or gameplay proof.
@@ -11,6 +11,9 @@ Phone generation/update checkpoint:
 Storage/oracle review qualification: [J834](PORTING_JOURNAL.md#j834--bind-phone-fixture-paths-and-the-exact-editor-oracle-after-review).
 Authored phone-app build and unresolved sandbox control: [J836](PORTING_JOURNAL.md#j836--build-an-authored-apk-on-android-and-test-app-host-execution).
 Target-33 follow-up: [J929](PORTING_JOURNAL.md#j929--test-the-authored-app-host-refusal-at-target-sdk-33).
+Raw-export tool-host investigation:
+[J1008](PORTING_JOURNAL.md#j1008--bound-android-assetripper-startup-and-full-input-import-failures).
+Complete accepted-input export remains an open gate.
 Native fixture compile/link/loading: [J839](PORTING_JOURNAL.md#j839--compile-and-link-the-authored-il2cpp-native-library-on-android).
 Full authored converter/native/device closure: [J842](PORTING_JOURNAL.md#j842--run-the-full-authored-converter-and-load-its-phone-compiled-native-output).
 Authored input capture and Android stripping: [J846](PORTING_JOURNAL.md#j846--capture-authored-stripping-inputs-and-replay-unitylinker-on-android).
@@ -128,7 +131,7 @@ not proof that reimplementation is impossible. Owners: [ARCHITECTURE](ARCHITECTU
 | Stage / owner | Desktop Unity required today? | Android assessment |
 | --- | --- | --- |
 | Acquisition, inventory, acceptance (`inventory.py`) | No | File/ZIP import, hashing and version checks are portable. Owned-account downloads need Guard, entitlement and accepted-version tests; no offline authentication substitute. |
-| Decompile/export (`recovery.py`, ILSpy, AssetRipper) | No editor API; supplied tools are desktop builds | Public source permits investigating Android tool hosts and dependency ports. AssetRipper exports a project, not final Android content. |
+| Decompile/export (`recovery.py`, ILSpy, AssetRipper) | No editor API; supplied tools are desktop builds | [J1008](PORTING_JOURNAL.md#j1008--bound-android-assetripper-startup-and-full-input-import-failures) bounds managed AssetRipper hosting and failed full-input imports. Complete export, tool acquisition/app delivery and output equivalence remain open. An exported project still needs Android content production. |
 | Assembly transforms/R1 (`assembly_transforms.py`, `AssemblyProbe`) | No | Cecil-based IL/metadata transforms are port candidates. Preserve exact DLL hashes/type identity. An Android build-tool host is unproven; it does not run gameplay. |
 | R2–R6 composition, catalog, dependency and scene transforms | Mostly host code after export | Port candidates. Python, native texture/compression libraries, C# helpers and process/path assumptions all need qualification. A phone Python interpreter alone is insufficient. |
 | Shader recovery/HLSL generation (`shader_recovery.py`, `shader_programs.py`) | Not inherently editor-bound | Pinned native tools and a CrossOver/Wine fallback remain; 46 local analysis inputs still need producers. Android-native replacements are unresolved. No Windows emulation route is selected. |

@@ -30419,3 +30419,127 @@ That scope review is not permission to overlook this current-process error.
 J1012's later shader consumer source is not in this APK; its four bodies remain
 unbuilt. Main is stopped/asleep on 4b1a7969, J850 remains the accepted rollback,
 and ordinary gameplay, full audio and PC visual parity remain open.
+
+## J1008 — Bound Android AssetRipper startup and full-input import failures
+
+**Hypothesis and scope.** The current owner's raw export stage uses AssetRipper
+2.0.0+1ac666f without an editor API. Publishing its exact public source as a
+framework-dependent managed tool might enable that prerequisite on Android.
+This tests build tooling only. Route A's IL2CPP ARM64 game, renderer, exact Unity
+pin, current exporter and desktop owner-build fallback remain unchanged. No APK
+is built or installed, no game is launched, and neither editor is used.
+
+**Prior art and source contract.** Consulted the extraction section of
+[community prior art](community-prior-art.md) and the pinned
+[R2Wiki extraction page](https://github.com/risk-of-thunder/R2Wiki/blob/0eefb7ab1c96393cd19e13e140a42c401f5d76e4/docs/Mod-Creation/Assets/Extraction.md):
+its post-SOTS dummy-shader guidance is a version clue, not an Android shader
+producer. Existing accepted export settings, including dummy shaders, are kept.
+The exact [AssetRipper tag](https://github.com/AssetRipper/AssetRipper/tree/1ac666f47d8e9dedf96afb0b914c70d7656151ea)
+targets net10.0; GUI.Free defaults to NativeAOT and GUI.Web requires
+Microsoft.AspNetCore.App. The installed macOS executable is a native desktop
+binary, not a portable managed bundle. Its source permits a distinct managed
+publish experiment; this does not reproduce its native executable bytes.
+
+**Managed publisher and Android startup.** Published that unchanged tag with
+host SDK 10.0.401, Release, `--self-contained false`, `PublishAot=false` and
+`UseAppHost=false`, using isolated CLI/package directories and the upstream
+public NuGet feeds. Tracked source remains unchanged. The resulting 120 files
+occupy 184,269,770 bytes. Four separately pinned Termux packages supply host,
+hostfxr, Core and ASP.NET runtimes 10.0.13. The 494 runtime files are identical
+between the two staged profiles. Baseline payload: 614 files, 269,141,482 bytes;
+every supplied file is hash-verified before/after execution. Runtime listing,
+exact exporter version and help exit zero. A separately owned headless process
+binds loopback only; its root and settings endpoints return HTTP 200, and owned
+teardown proves process absence. This is an Android shell result, not an
+application sandbox or launcher result.
+
+The package bytes match their SHA-256/size entries in the downloaded HTTPS
+index, and that index matches the Release file. APT signatures were **not**
+verified. This is a pinned research acquisition, not a qualified public delivery
+chain. The [Termux recipe](https://github.com/termux/termux-packages/blob/ad385215e41a2f2ef9fb29c997db346ee1178607/packages/dotnet10.0/build.sh)
+selects a Mono-based build-tool host. The game remains IL2CPP. GPL/source
+obligations, dependency licenses, authenticated acquisition and app hosting
+still need a complete distribution audit. The supplied Linux ARM64 Capstone
+asset is glibc-linked and is not qualified as an Android native dependency.
+
+**Full accepted input, explicit refusals.** Copied the existing accepted input
+6af7ed94 (2,749 files, 4,121,244,593 bytes) into a new owned Alpha workspace.
+All original files match the accepted inventory before transfer and at the
+terminal host verification. Remote extracted bytes also match. Each attempt
+checks current storage/backing, available capacity and owned game identity/idle
+state. The exporter receives the existing public settings through its actual
+loopback reset/settings/load endpoints. No export endpoint is accepted because
+loading never completes:
+
+| Attempt | Tool/configuration | Sampled peak RSS | First failure |
+| --- | --- | ---: | --- |
+| v1 | Unchanged source; requested CoreCLR 2 GiB limit; 3.5 GiB RSS guard | 3,821,404,160 bytes | Owned RSS guard, loading, 35.01 s |
+| v2 | Same tool; 6 GiB RSS guard | 6,520,422,400 bytes | Owned RSS guard, loading, 82.52 s |
+| v3 | Separate lower-stream-threshold candidate; same 6 GiB guard | 6,536,491,008 bytes | Owned RSS guard, loading, 78.86 s |
+| v4 | Unchanged source; Mono maximum 4 GiB/soft 2 GiB request; same guard | 4,336,467,968 bytes | Native SIGABRT, exit 255, loading, 60.58 s |
+
+The first three are deliberate resource refusals, not proof that Android export
+is impossible. The fourth stdout reports a native runtime/library failure; it
+does **not** establish an out-of-memory cause. Its own-PID Android log buffers
+supply no explanatory native stack. Preserve that uncertainty. Later attempts
+also retain 1 GiB available-RAM and 2 GiB scratch reserves. No whole-input memory
+or performance acceptance follows from the startup result.
+
+**Discriminating controls.** The existing
+[upstream temporary-stream mechanism](https://github.com/AssetRipper/AssetRipper/blob/1ac666f47d8e9dedf96afb0b914c70d7656151ea/Source/AssetRipper.IO.Files/BundleFiles/FileStream/BundleFileBlockReader.cs)
+and its [memory issue](https://github.com/AssetRipper/AssetRipper/issues/1953)
+motivated v3. In a separate source worktree, only its two thresholds change:
+50 MiB to 1 MiB and 30 MiB to 512 KiB. Sixteen upstream SmartStream/FileStream
+tests pass. Authored LZ4 cases at 512 KiB, 1 MiB, 1 MiB + 1 byte and 1.5 MiB
+retain identical hashes and stream lifetime after reader disposal; only the two
+larger candidate streams switch to files. This candidate still fails full
+loading and is not selected by the working exporter.
+
+A separate authored allocation control establishes why the CoreCLR request
+cannot be treated as a working limit for this tool host. With that 128 MiB
+request, 256 MiB retained bytes complete at about 286 MiB sampled RSS. Adding
+`MONO_GC_PARAMS=max-heap-size=128m,soft-heap-limit=96m` produces a caught managed
+allocation failure after 120 MiB retained bytes. A transient case using the same
+settings completes 1.5 GiB cumulative allocation, retaining 16 MiB, at
+77,926,400 bytes sampled RSS. All three processes exit zero and are absent.
+The collector's [parameter parser](https://github.com/dotnet/runtime/blob/v10.0.0/src/mono/mono/sgen/sgen-gc.c)
+is inspected. This bounded control supports trying the collector-specific v4
+request; it does not prove a 4 GiB bound on every allocation in the exporter.
+The first control harness had an exit/status sampling race; its failed receipt
+is preserved. The corrected harness recognizes process exit without requiring
+a resident-memory field from an already exiting process.
+
+The last ordinary import log mentions 146 assemblies, but it does not identify
+the failing call. A separate probe initializes the actual upstream MonoManager
+with the supplied corlib, then loads the remaining original assemblies through
+its public `Load` API. All 146 complete on the host and Android. Android takes
+1.69 s with 56,692,736 bytes sampled peak RSS; all input hashes remain exact and
+the process is absent. No original game method is executed. This excludes that
+isolated assembly-loading sequence as the observed reproducer; it does not
+qualify the full GameStructure/asset-collection path or localize its failure.
+
+**Evidence, terminal state and revisit.** Private selectors, scripts, source
+worktrees, package/source hashes, failed outputs/logs, allocation controls and
+receipts remain under
+`work/coordination/phone-proof/assetripper-portability-r1/`. The authored
+`proof-v1.json` is 10,668 bytes, SHA-256
+`1e19628afaae4886706362cb968595ef7ce5a15a0c2d70625b36f270c1862bc6`.
+It binds the per-attempt reports, tool manifests, source patch, test results,
+controls and terminal inventory. Raw evidence and all game/tool binaries stay
+ignored. A read-only manifest of the existing desktop raw export covers 150,158
+files / 17,508,835,762 bytes; no completed phone export exists to compare with it.
+
+Every full attempt proves owned exporter absence and unchanged installed Alpha
+game be26c21c4cd8ff15a8a663528216cf7a69394a51d8b9441a63a1a496f83e98b5,
+no game process/selector, and display sleep. The later API probe independently
+retains those facts. Main's device, editor and gameplay/audio work are untouched.
+Doctor confirms the Alpha input/inventory/acceptance but refuses its absent
+isolated lab project/checkpoint; no laboratory bootstrap or player build is
+claimed. No new APK/hash or game baseline is produced.
+
+Next: identify the precise full-import loading phase and native fault, then
+prove a bounded complete export and compare actual outputs before advancing
+bootstrap. Do not raise memory budgets without a discriminating hypothesis.
+Phone-only compilation/acquisition of this tool, app execution/security,
+complete content/shader/player production, lawful delivery and matched game
+performance remain open. The existing desktop build stays the fallback.
