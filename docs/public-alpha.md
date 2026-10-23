@@ -18,9 +18,10 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       [J1008's failed full-import evidence](PORTING_JOURNAL.md#j1008--bound-android-assetripper-startup-and-full-input-import-failures)
       with [J1016's raw/materialization distinction](PORTING_JOURNAL.md#j1016--separate-raw-retention-from-incomplete-android-asset-materialization).
       [J1018's direct-API/reference-release controls](PORTING_JOURNAL.md#j1018--test-consumed-buffer-ownership-during-android-asset-materialization)
-      still fail complete materialization. Resolve the current allocation/live
-      graph boundary and native failure; narrow ownership or raw-loading results
-      do not pass this gate.
+      still fail complete materialization. Use the planned partial graph to test
+      loading overlap; complete graph ownership and the native failure remain
+      open. Partial-graph, narrow ownership or raw-loading results do not pass
+      this gate.
 - [ ] Resolve the editor-equivalent Android content/shader production gate without
       consuming desktop-generated game data as a hidden prerequisite; extend
       [J832's precursor](PORTING_JOURNAL.md#j832--run-the-exact-converter-on-android-and-load-content-built-without-a-template)

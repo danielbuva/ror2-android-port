@@ -30837,12 +30837,35 @@ heap-limit vicinity does not by itself prove a managed OutOfMemoryException,
 the precise allocation, or a specific asset as the root cause. Do not widen
 budgets or adopt the candidate from these results.
 
-**Evidence and terminal state.** Immutable sources, manifests, controls and both
-failed trials remain ignored under
+**Planned-stop typed-graph boundary.** A separate probe retains the actual root
+and every typed collection observed by the delegating factory, including a
+current container that has not yet been attached to the root. It intentionally
+stops before read 1,048,577. A non-inlined call boundary unwinds raw-loading
+frames before forced collection; the retained asset count must still equal all
+successful factory returns. The existing temporary-stream IO profile is used,
+without the consumed-buffer candidate. The original initializer is forwarded.
+Host and Android controls stop after one authored class-142 asset / 152 bytes,
+retain it through collection and verify the planned-stop result explicitly.
+
+The accepted-input trial completes its planned stop with exit 0 in 188.01 s.
+All 1,048,576 read assets remain in 423 retained collections, with zero observed
+UnknownObject/UnreadableObject instances. Successful input bytes total
+604,194,590. Sampled peak managed memory / RSS is 4,800,647,008 / 5,060,972,544
+bytes; after raw-frame unwind and forced collection, retained managed memory is
+1,883,489,440 bytes. Selected loaded components and all input hashes match.
+The decrease includes raw loading and other transient garbage; it is not an
+allocation-by-allocation attribution. Dependency initialization, deferred script
+structure loading, the remaining assets and export are not completed. This is
+an intentionally partial graph, not a successful full import. It gives a bounded
+reason to investigate loading overlap before increasing limits.
+
+**Evidence and terminal state.** Immutable sources, manifests, controls, both
+failed imports and the planned-stop trial remain ignored under
 `work/coordination/phone-proof/assetripper-portability-r1/`. The authored
-`proof-v4.json` is 2,394 bytes, SHA-256
-`8fb659a03b4854e763181a8a601a790ceae66f7ccd65274b5b0726b7baa9cad5`.
-It binds the earlier packet, direct-API result and ownership candidate. The
+`proof-v5.json` is 1,204 bytes, SHA-256
+`02a3a31a53368165df79874f7450b46c5d8a262672df747b1128416da27eda30`.
+It binds the earlier packet, direct-API result, ownership candidate and planned
+partial graph. The
 candidate source patch SHA-256 is
 `30663fe28d4d9f98e083838109d048877321732d1bfa0fb40c5665eb6c687f28`;
 its terminal result SHA-256 is
@@ -30857,7 +30880,7 @@ The isolated Alpha checkout's repository doctor/preflight still refuses its
 missing staged lab project/input generation. No game/Unity build is attempted;
 these separate tool-profile builds and checks do not satisfy that bootstrap
 gate. Keep native IL2CPP ARM64, the Android renderer and desktop owner-build
-fallback. Next: observe the current asset/allocation boundary and live graph
-before another import change. Complete output comparison, phone-only tool
+fallback. Next: inspect raw-byte loading and deferred ownership before testing
+another bounded loading profile. Complete output comparison, phone-only tool
 publishing/acquisition, app security, permitted distribution, Android
 content/shader/player production and matched game performance remain open.
