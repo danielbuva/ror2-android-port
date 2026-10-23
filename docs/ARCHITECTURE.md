@@ -619,6 +619,11 @@ to the Player Bee graph, response-file metadata, changed conversion trace,
 managed input closure and final APK/BuildReport identity, then copies and
 rehashes the managed snapshot under request-owned ignored storage. Multiline
 trace parsing rejects malformed separators and extra conversion/Player records.
+Player invocation parsing admits one explicitly evidenced exit-4 timestamp
+invalidation followed by successful same-editor Android DAG regeneration and
+one successful retry on the same DAG and working directory (J977). Unsupported
+failures, missing or ambiguous regeneration witnesses and multiple successes
+still refuse; this does not relax conversion-trace freshness.
 The toolchain's version and revision fields form the exact editor pin.
 `build.py` calls this owner only for the explicit opt-in. Missing, unchanged or
 inconsistent execution evidence refuses the enriched receipt while preserving

@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-23 UTC after **J976/J975/J974/J973/J972/J965/J964/J954**. R26
+Last updated 2026-10-23 UTC after **J977/J976/J975/J974/J973/J972/J965/J964/J954**. R26
 6dc44d98 passes both controls and exact installed-media/APK readbacks. Separate
 salvage verifies Term/disarm witnesses and finite nonzero original-output PCM;
 J962 verifies byte-identical persistence across a fresh menu launch and normal
@@ -15,7 +15,8 @@ diagnostic's force-vector API contract after exact-editor compilation refuses it
 J975 records the successful owned metadata recovery and a full Unity player
 build whose CLI refuses premature post-build capture. The final-report timing
 correction passes host tests. J976 verifies the corrected final-report receipt
-on the exact editor, then refuses an unchanged prior conversion trace. A fresh
+on the exact editor, then refuses an unchanged prior conversion trace. J977
+host-tests the separately observed, bounded Bee DAG-regeneration retry. A fresh
 accepted build and device rendering remain open.
 J964 adds bounded same-window source queries, not yet built or device-qualified.
 Accepted baseline stays f1550ce0.

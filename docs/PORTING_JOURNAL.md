@@ -28663,3 +28663,48 @@ qualified; same-request fresh conversion, Android behavior and broader port
 acceptance remain open. Next investigate a narrowly scoped conversion rerun
 under the existing mutex, preserving prior outputs and avoiding broad cache
 clears or meaningless runtime edits.
+
+## J977 — Bind the observed Bee DAG retry without admitting arbitrary failures
+
+**Prior evidence and hypothesis.** R10's retained request log shows a Player
+attempt exiting 4, an explicit input FileSignature timestamp invalidation and
+Tundra rerun, successful AndroidPlayerBuildProgram graph regeneration, then a
+successful retry on the same DAG and working directory. The original parser
+rejects the first exit before considering that sequence. R11 has a single
+successful Player attempt and independently fails conversion-trace freshness;
+these are distinct contracts. J976's byte-identical graph/trace is consistent
+with incremental reuse, not independent proof that the converter did not run.
+
+**Change.** The existing Bee collector parser accepts either one successful
+Player invocation or exactly the evidenced two-attempt sequence. The retry
+requires exit 4 followed by exit 0, matching DAG and working directory, exactly
+one correctly ordered timestamp-rebuild/Tundra witness and successful matching
+Android build-program invocation. Parse the pinned rendered `netcorerun`
+wrapper, exact program/context paths under the same editor root, DAG/input
+arguments and profile path. This is rendered log metadata, not an argv-vector
+claim. An unmatched extra program start, decoy basename, foreign wrapper/root,
+failed regeneration, missing witness, wrong exit or multiple success refuses.
+All request/report/source/input, graph/response, output freshness and managed
+snapshot checks stay fixed. Default builds do not invoke the optional collector.
+
+**Host evidence.** Ten collector tests pass, including the independently authored
+retry fixture and refusal variants, quoted paths with spaces and the ordinary
+single-success path. Four C# receipt/collector roundtrip contracts and Ruff pass.
+Root also parses the retained R10 sequence and the exact R11 log slice read-only:
+each resolves its one final successful Player invocation. No post receipt is
+invented and neither failed build is accepted. The initial draft's program-name
+substring match fails independent review on a decoy; the integrated successor
+uses the actual wrapper structure and rejects that case. Only the new parser
+functions/import and regression method are integrated, avoiding unrelated draft
+formatting. Rebuilds use the committed collector through the existing pipeline.
+
+Evidence is
+`work/coordination/original-game-audio-r27-capture-next-gate-analysis-r1/`,
+`work/coordination/original-game-audio-r27-bee-retry-draft-r{1,2}/`,
+`work/coordination/original-game-audio-r27-bee-retry-review-r1/` and
+`work/coordination/original-game-audio-r27-bee-retry-integration-root-r1/`.
+The separate fresh-CodeGen analysis retains the old trace and proposes a
+reviewed one-output preservation trial under the mutex; it has not executed at
+this checkpoint. There is no global cache clear, runtime edit or device action.
+J954 stays installed and J850 accepted. A new successful capture and both device
+controls are required before any R27 runtime claim.

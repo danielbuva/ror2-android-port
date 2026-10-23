@@ -386,6 +386,133 @@ class BeeCodegenCaptureTests(unittest.TestCase):
             with self.assertRaises(CaptureError):
                 parse_player_invocation(text.replace("--profile=", "--no-profile="))
 
+    def test_player_invocation_accepts_only_the_evidenced_single_dag_retry(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            root = str(project / "Unity Project With Spaces")
+            dag = "Library/Bee/Player123.dag"
+            first = (
+                'Starting: /Unity/bee_backend --profile="Library/Bee/backend_profiler0.traceevents" '
+                f'--stdin-canary --dagfile="{dag}" --continue-on-failure Player\n'
+                f"WorkingDir: {root}\nExitCode: 4 Duration: 0s1ms\n"
+            )
+            editor_root = "/Applications/Unity Hub/Editor/2021.3.45f2"
+            runner = f"{editor_root}/Unity.app/Contents/Tools/netcorerun/netcorerun"
+            program = f"{editor_root}/PlaybackEngines/AndroidPlayer/AndroidPlayerBuildProgram.exe"
+            context = f"{editor_root}/PlaybackEngines/AndroidPlayer/Bee:{editor_root}/Unity.app/Contents/Tools/BuildPipeline"
+            program_start = (
+                f'Starting: "{runner}" "{program}" "{context}" '
+                f'"{dag}.json" "{dag.removesuffix(".dag")}-inputdata.json" '
+                '"Library/Bee/buildprogram0.traceevents"\n'
+            )
+            rebuild = (
+                f"Rebuilding DAG because FileSignature timestamp changed: {dag.removesuffix('.dag')}-inputdata.json\n"
+                "*** Tundra requires additional run (0.03 seconds), 0 items updated, 0 evaluated\n"
+                + program_start
+                + f"WorkingDir: {root}\nExitCode: 0 Duration: 0s1ms\n"
+            )
+            final = (
+                'Starting: /Unity/bee_backend --profile="Library/Bee/backend_profiler1.traceevents" '
+                f'--stdin-canary --dagfile="{dag}" --continue-on-failure --dagfilejson="{dag}.json" Player\n'
+                f"WorkingDir: {root}\nExitCode: 0 Duration: 1s\n"
+            )
+            parsed = parse_player_invocation(first + rebuild + final)
+            direct_root = "/Applications/Unity/Hub/Editor/2021.3.45f2"
+            direct_rebuild = rebuild.replace(editor_root, direct_root)
+            direct_runner = f"{direct_root}/Unity.app/Contents/Tools/netcorerun/netcorerun"
+            direct_program = f"{direct_root}/PlaybackEngines/AndroidPlayer/AndroidPlayerBuildProgram.exe"
+            direct_rebuild = direct_rebuild.replace(f'"{direct_runner}"', direct_runner)
+            direct_rebuild = direct_rebuild.replace(f'"{direct_program}"', direct_program)
+            self.assertEqual(parse_player_invocation(first + direct_rebuild + final), parsed)
+            unquoted_program = rebuild.replace(f'"{program}"', program)
+            with self.assertRaises(CaptureError):
+                parse_player_invocation(first + unquoted_program + final)
+            self.assertEqual(
+                parsed,
+                {
+                    "dag": dag,
+                    "profile": "Library/Bee/backend_profiler1.traceevents",
+                    "working_directory": root,
+                    "exit_code": 0,
+                },
+            )
+
+            refused = (
+                (first + final, "missing retry witness"),
+                (
+                    first + rebuild.replace("Tundra requires additional run", "Tundra skipped rerun") + final,
+                    "missing Tundra witness",
+                ),
+                (
+                    first + rebuild.replace("Player123.dag.json", "Other.dag.json") + final,
+                    "mismatched BuildProgram DAG",
+                ),
+                (
+                    first + rebuild.replace(f"WorkingDir: {root}", "WorkingDir: /other", 1) + final,
+                    "mismatched retry cwd",
+                ),
+                (
+                    first + rebuild + final.replace(dag, "Library/Bee/Other.dag"),
+                    "mismatched final DAG",
+                ),
+                (
+                    first + rebuild + final.replace(f"WorkingDir: {root}", "WorkingDir: /other"),
+                    "mismatched final cwd",
+                ),
+                (
+                    first.replace("ExitCode: 4", "ExitCode: 2") + rebuild + final,
+                    "unsupported failed exit",
+                ),
+                (first + rebuild + final + final, "two successful Player attempts"),
+                (
+                    first + rebuild.replace("ExitCode: 0 Duration: 0s1ms", "ExitCode: 1 Duration: 0s1ms") + final,
+                    "failed BuildProgram retry",
+                ),
+                (
+                    first
+                    + rebuild.replace(
+                        program,
+                        program.replace(
+                            "AndroidPlayerBuildProgram.exe",
+                            "NotAndroidPlayerBuildProgram.exe",
+                        ),
+                    )
+                    + final,
+                    "prefixed executable decoy",
+                ),
+                (
+                    first
+                    + rebuild.replace(
+                        program,
+                        program.replace(
+                            "AndroidPlayerBuildProgram.exe",
+                            "AndroidPlayerBuildProgram.exe.wrapper",
+                        ),
+                    )
+                    + final,
+                    "suffixed executable decoy",
+                ),
+                (
+                    first + rebuild.replace(program, "/Other/Unity/AndroidPlayerBuildProgram.exe") + final,
+                    "program from different Unity root",
+                ),
+                (
+                    first + rebuild.replace(runner, "/usr/bin/env") + final,
+                    "foreign wrapper executable",
+                ),
+                (
+                    first + rebuild.replace("/AndroidPlayer/Bee:", "/AndroidPlayer/Other:") + final,
+                    "mismatched Unity context",
+                ),
+                (
+                    first + rebuild + rebuild.replace("Player123.dag.json", "Other.dag.json") + final,
+                    "additional unmatched build-program start",
+                ),
+            )
+            for candidate, reason in refused:
+                with self.subTest(reason=reason), self.assertRaises(CaptureError):
+                    parse_player_invocation(candidate)
+
 
 if __name__ == "__main__":
     unittest.main()

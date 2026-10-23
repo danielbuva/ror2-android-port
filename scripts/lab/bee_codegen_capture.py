@@ -11,6 +11,7 @@ import json
 import math
 import re
 import shutil
+import shlex
 from pathlib import Path
 
 EDITOR_VERSION = "2021.3.45f2 (88f88f591b2e)"
@@ -116,41 +117,126 @@ def player_dag_from_log(log_segment: str) -> str:
     return parse_player_invocation(log_segment)["dag"]
 
 
+def _validated_player_attempt(lines: list[str], index: int) -> dict:
+    line = lines[index]
+    dag = _PLAYER_DAG.search(line)
+    if not dag:
+        raise CaptureError("Bee Player invocation has an unsupported DAG command")
+    profile = _PLAYER_PROFILE.search(line)
+    if not profile or not re.fullmatch(r"Library/Bee/backend_profiler[0-9]+\.traceevents", profile.group(1)):
+        raise CaptureError("Bee Player invocation lacks its backend profile path")
+    if index + 2 >= len(lines):
+        raise CaptureError("Bee Player invocation lacks working-directory/exit rows")
+    working = re.fullmatch(r"WorkingDir: (.+)", lines[index + 1])
+    exited = re.fullmatch(r"ExitCode: (-?[0-9]+) Duration: .+", lines[index + 2])
+    if not working or not exited:
+        raise CaptureError("Bee Player invocation lacks working-directory/exit rows")
+    return {
+        "dag": dag.group(1),
+        "profile": profile.group(1),
+        "working_directory": working.group(1),
+        "exit_code": int(exited.group(1)),
+        "start_index": index,
+        "exit_index": index + 2,
+    }
+
+
+def _is_supported_player_build_program(line: str, dag: str, input_path: str) -> bool:
+    """Match the observed netcorerun wrapper and its Unity-local BuildProgram."""
+    if not line.startswith("Starting: "):
+        return False
+    try:
+        command = shlex.split(line[len("Starting: ") :], posix=True)
+    except ValueError:
+        return False
+    if len(command) != 6:
+        return False
+    runner = Path(command[0])
+    if (
+        runner.name != "netcorerun"
+        or runner.parent.name != "netcorerun"
+        or runner.parent.parent.name != "Tools"
+        or runner.parent.parent.parent.name != "Contents"
+        or runner.parent.parent.parent.parent.name != "Unity.app"
+    ):
+        return False
+    editor_root = runner.parents[4]
+    if editor_root.name != EDITOR_VERSION.split(" ", 1)[0]:
+        return False
+    android_player = editor_root / "PlaybackEngines" / "AndroidPlayer"
+    expected_program = android_player / "AndroidPlayerBuildProgram.exe"
+    expected_context = str(android_player / "Bee") + ":" + str(editor_root / "Unity.app" / "Contents" / "Tools" / "BuildPipeline")
+    return (
+        command[1] == str(expected_program)
+        and command[2] == expected_context
+        and command[3] == dag + ".json"
+        and command[4] == input_path
+        and re.fullmatch(r"Library/Bee/buildprogram[0-9]+\.traceevents", command[5]) is not None
+    )
+
+
+def _has_supported_dag_retry(lines: list[str], failed: dict, next_start: int) -> bool:
+    """Accept only the observed exit-4 → FileSignature rebuild → Tundra rerun chain."""
+    dag = failed["dag"]
+    input_path = dag.removesuffix(".dag") + "-inputdata.json"
+    expected_rebuild = "Rebuilding DAG because FileSignature timestamp changed: " + input_path
+    segment = lines[failed["exit_index"] + 1 : next_start]
+    rebuild_rows = [i for i, line in enumerate(segment) if line == expected_rebuild]
+    tundra_rows = [
+        i
+        for i, line in enumerate(segment)
+        if re.fullmatch(
+            r"\*\*\* Tundra requires additional run \([^)]*\), [0-9]+ items updated, [0-9]+ evaluated",
+            line,
+        )
+    ]
+    # Treat every line naming this executable as a candidate, including malformed
+    # or decoy commands; none may be silently ignored when counting the witness.
+    build_program_rows = [i for i, line in enumerate(segment) if line.startswith("Starting:") and "AndroidPlayerBuildProgram.exe" in line]
+    build_rows = [i for i in build_program_rows if _is_supported_player_build_program(segment[i], dag, input_path)]
+    if len(rebuild_rows) != 1 or len(tundra_rows) != 1 or len(build_program_rows) != 1 or len(build_rows) != 1:
+        return False
+    rebuild_index, tundra_index, build_index = (
+        rebuild_rows[0],
+        tundra_rows[0],
+        build_rows[0],
+    )
+    if not rebuild_index < tundra_index < build_index or build_index + 2 >= len(segment):
+        return False
+    build_working = re.fullmatch(r"WorkingDir: (.+)", segment[build_index + 1])
+    build_exit = re.fullmatch(r"ExitCode: (-?[0-9]+) Duration: .+", segment[build_index + 2])
+    return bool(build_working and build_working.group(1) == failed["working_directory"] and build_exit and build_exit.group(1) == "0")
+
+
 def parse_player_invocation(log_segment: str) -> dict:
-    """Bind one Bee Player invocation to its adjacent working-directory and exit rows."""
+    """Bind one successful Player run, allowing one evidenced DAG-invalidation retry."""
     lines = log_segment.splitlines()
-    found = []
+    attempts = []
     for index, line in enumerate(lines):
         if "Starting:" not in line or "bee_backend" not in line:
             continue
         # A malformed Player invocation must not disappear while another
         # well-formed invocation satisfies the exactly-one check.
-        player_intended = bool(re.search(r"\bPlayer\b", line))
-        dag = _PLAYER_DAG.search(line)
-        if not dag:
-            if player_intended:
-                raise CaptureError("Bee Player invocation has an unsupported DAG command")
+        if not re.search(r"\bPlayer\b", line):
             continue
-        profile = _PLAYER_PROFILE.search(line)
-        if not profile or not re.fullmatch(r"Library/Bee/backend_profiler[0-9]+\.traceevents", profile.group(1)):
-            raise CaptureError("Bee Player invocation lacks its backend profile path")
-        if index + 2 >= len(lines):
-            raise CaptureError("Bee Player invocation lacks working-directory/exit rows")
-        working = re.fullmatch(r"WorkingDir: (.+)", lines[index + 1])
-        exited = re.fullmatch(r"ExitCode: (-?[0-9]+) Duration: .+", lines[index + 2])
-        if not working or not exited or exited.group(1) != "0":
+        attempts.append(_validated_player_attempt(lines, index))
+    if len(attempts) == 1:
+        attempt = attempts[0]
+        if attempt["exit_code"] != 0:
             raise CaptureError("Bee Player invocation lacks a successful scoped exit")
-        found.append(
-            {
-                "dag": dag.group(1),
-                "profile": profile.group(1),
-                "working_directory": working.group(1),
-                "exit_code": 0,
-            }
-        )
-    if len(found) != 1:
-        raise CaptureError("request log must contain exactly one successful Bee Player invocation")
-    return found[0]
+        return {key: attempt[key] for key in ("dag", "profile", "working_directory", "exit_code")}
+    if len(attempts) != 2:
+        raise CaptureError("request log must contain one successful Player run or one bounded DAG retry")
+    failed, succeeded = attempts
+    if (
+        failed["exit_code"] != 4
+        or succeeded["exit_code"] != 0
+        or failed["dag"] != succeeded["dag"]
+        or failed["working_directory"] != succeeded["working_directory"]
+        or not _has_supported_dag_retry(lines, failed, succeeded["start_index"])
+    ):
+        raise CaptureError("Player attempts do not form the supported scoped DAG-invalidation retry")
+    return {key: succeeded[key] for key in ("dag", "profile", "working_directory", "exit_code")}
 
 
 def validate_build_result(

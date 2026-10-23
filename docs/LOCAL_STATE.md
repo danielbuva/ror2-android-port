@@ -1025,6 +1025,15 @@ response files, SDK/game-derived assemblies and real traces stay ignored.
 The tracked multiline trace test is independently authored synthetic data.
 Old legacy invocation witnesses remain historical evidence.
 
+`work/coordination/original-game-audio-r27-trace-preservation-root-r{1,2}/`
+retains a reviewed, one-use experiment helper for preserving the exact prior
+graph-declared CodeGen trace before a fresh capture attempt. Root's isolated
+driver supplies its pinned helper and retained request-evidence hashes under
+the host mutex after positive editor idle. This is required local diagnostic
+support for that explicit trial, not a normal build dependency or a generic
+cache-clear action. Preserve its plan, prior trace, receipt and any failure;
+no game input, assembly or other cache is removed by the experiment.
+
 ## Isolated Wwise diagnostic inputs
 
 The optional J740/J742 native fixtures and fresh Unity managed-readiness
