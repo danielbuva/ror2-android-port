@@ -31089,3 +31089,96 @@ the reviewed successor and its host tests are under
 `work/coordination/original-gameplay-breadth/r33-loader-four-slot-draft-r2/`.
 Full ability semantics, alternate kits, natural teardown and a real blue-elite
 source-event observation remain separate follow-up work.
+
+## J1020 — Test deferred serialized-object reads on Android
+
+**Hypothesis and prior art.** J1018 separates an intentionally partial typed
+graph from retained raw loading. Test whether deferring each raw object's byte
+array until its first actual read reduces their overlap without changing the
+accepted input or parser schema. Consulted the community extraction prior-art
+map and the same pinned
+[AssetRipper source](https://github.com/AssetRipper/AssetRipper/tree/1ac666f47d8e9dedf96afb0b914c70d7656151ea).
+Its ObjectInfo.Read eagerly copies every payload; ResourceFile uses
+SmartStream.CreateReference to retain backing streams. Closed, unmerged [PR 2396](https://github.com/AssetRipper/AssetRipper/pull/2396)
+provides the previously tested consumed-reference release. Its other collection,
+fallback-buffer and retry proposals remain excluded.
+
+**Separate opt-in tool profile.** A new ignored source profile combines those
+existing temporary-stream thresholds and consumed-reference release with an
+opt-in deferred-object-data setting. Default is off. Metadata records validated
+stream offsets/lengths; each descriptor caches its byte array at first access.
+Copied descriptors share that cached array until a setter detaches its copy.
+The backing source retains an existing SmartStream reference, preserves its
+position during reads and closes its reference after the descriptors cease to
+retain it. No parser grammar, game type, original input, canonical exporter,
+recovery cache or game runtime is changed. Only the IO/Assets DLLs and matching
+PDBs replace components of the original 120-file managed publish; the observer
+adds two files. Actual loaded IO, Assets and Import paths/hashes are witnessed.
+
+**Controls.** Authored host and Android controls pass: initially unread payloads;
+byte-identical eager/deferred serialized output; copied-array identity and shared
+mutation; independent setters; unread descriptor access after owner disposal
+and collection; concurrent cached reads; five invalid ranges refused and two
+valid ranges accepted. All four control backing sources finalize. Existing
+success/null-return/failed-second-read and UnloadedStructure-slice controls also
+pass, as does the two-asset/204-byte real factory control. The final observer
+checks UnknownObject/UnreadableObject counts and reports backing-source cleanup.
+Upstream host checks pass 57 Assets and 101 serialized-file/stream tests with
+the default setting off. Changed private Python drivers pass Ruff.
+
+**Complete initial-file payload comparison.** The Android per-file scan completes
+all 1,726 unique initial paths, with zero failed files. Every individual framed
+payload digest and aggregate
+`d23b01ff13ac61ce3653544425ab23d357d219cd3f10005f81512adadaee0ae8`
+matches J1016's temporary-stream profile: 1,831 serialized files, 3,419,985 objects /
+2,646,844,899 object-data bytes, and 1,062 resources / 4,335,211,875 logical stream
+bytes. Backing classifications remain 666 memory resources / 100,598,067 bytes
+and 396 file resources / 4,234,613,808 bytes. All 1,831 deferred sources finalize.
+Sampled RSS is 227,110,912 bytes; total time is 58.46 s. This is byte/backing
+comparison, not complete metadata/project equivalence or a performance benchmark.
+
+**Complete API trials.** The first new trial retains the 5 GiB managed maximum,
+2 GiB soft limit, independent 6 GiB RSS guard, 1 GiB available-RAM reserve,
+2 GiB scratch reserve and 1,200 s deadline. The table records its terminal
+boundary alongside the later capacity trials.
+
+The later trials retain the identical 122-file profile, input order, collector
+soft limit and deadline. The 6 GiB managed request increases the independent RSS
+guard to 7 GiB only after requiring at least 8 GiB available RAM at startup.
+The last trial changes only the managed maximum to 7 GiB; that physical RSS guard
+and continuous 1 GiB RAM / 2 GiB scratch reserves remain fixed. Initial available
+RAM is 9,930,776,576 and 9,910,542,336 bytes respectively.
+
+| Requested managed maximum / RSS guard | Last sampled successful reads / input bytes | Sampled peak managed / RSS bytes | Total attempt | Result |
+| --- | --- | --- | ---: | --- |
+| 5 GiB / 6 GiB | 2,457,600 / 1,499,212,337 | 5,231,732,904 / 5,466,394,624 | 327.73 s | Native SIGABRT / exit 255; no bundle return |
+| 6 GiB / 7 GiB | 2,916,352 / 2,004,779,965 | 6,274,704,552 / 6,081,359,872 | 550.43 s | Native SIGABRT / exit 255; no bundle return |
+| 7 GiB / 7 GiB | 3,276,800 / 2,504,888,975 | 7,325,501,936 / 7,265,882,112 | 812.32 s | Native SIGABRT / exit 255; no bundle return |
+
+These counts are sampled lower bounds, not exact failing objects. The increased
+progress supports an overlap/capacity effect; it does not prove the precise
+allocation or native termination cause. No attempt qualifies dependency
+initialization, complete materialization or export. Keep these failed directories
+and do not promote the candidate or increase limits again without a new
+discriminating observation of retained objects or tool-host memory behavior.
+
+**Evidence and boundaries.** Raw source, patch, controls, manifests and failed
+attempts remain ignored under
+`work/coordination/phone-proof/assetripper-portability-r1/`. The source patch
+SHA-256 is
+`804968164fbe837619ec1af9ed2f932ad45e0fd5aa98f75da5dacad84be475c1`.
+The authored `proof-v6.json` is 3,201 bytes, SHA-256
+`fbd96887736a0c0ea4c662f264da6875505db92b7fd2bf251783637c7c2f2927`.
+It binds the previous packet, exact selected components, controls, raw-byte
+comparison and all three terminal result hashes. Each real-input trial verifies
+all 2,749 copied input hashes and selected tool bytes before and at terminal
+readback. Owned processes are absent; Alpha retains game APK
+be26c21c4cd8ff15a8a663528216cf7a69394a51d8b9441a63a1a496f83e98b5,
+with no game process/selector and the display asleep. There are zero installs,
+game launches or editor actions; Main's checkout/device remain untouched.
+The canonical exporter, exact Unity editor, IL2CPP ARM64 renderer and desktop
+owner-build fallback remain fixed. App delivery/security, permitted acquisition,
+complete export/project comparison, Android content/shader/player generation
+and matched game performance remain open. The isolated checkout's repository
+preflight still refuses its missing staged lab source/input generation; these
+support-tool checks do not qualify a game build.

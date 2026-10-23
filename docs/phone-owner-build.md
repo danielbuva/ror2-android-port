@@ -20,6 +20,9 @@ materialization boundary; complete export remains unqualified.
 qualifies narrow consumed-buffer controls and an intentional partial typed graph
 after raw-frame unwind; complete direct-API imports still terminate before
 bundle return.
+[J1020](PORTING_JOURNAL.md#j1020--test-deferred-serialized-object-reads-on-android)
+matches deferred-read payloads and bounds later capacity failures; complete
+materialization/export remains open.
 Native fixture compile/link/loading: [J839](PORTING_JOURNAL.md#j839--compile-and-link-the-authored-il2cpp-native-library-on-android).
 Full authored converter/native/device closure: [J842](PORTING_JOURNAL.md#j842--run-the-full-authored-converter-and-load-its-phone-compiled-native-output).
 Authored input capture and Android stripping: [J846](PORTING_JOURNAL.md#j846--capture-authored-stripping-inputs-and-replay-unitylinker-on-android).

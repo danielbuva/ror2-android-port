@@ -22,6 +22,9 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       loading overlap; complete graph ownership and the native failure remain
       open. Partial-graph, narrow ownership or raw-loading results do not pass
       this gate.
+      [J1020's deferred-read comparison](PORTING_JOURNAL.md#j1020--test-deferred-serialized-object-reads-on-android)
+      preserves payload bytes but remains incomplete at the full API boundary;
+      inspect retained-object/tool-host memory behavior before increasing limits.
 - [ ] Resolve the editor-equivalent Android content/shader production gate without
       consuming desktop-generated game data as a hidden prerequisite; extend
       [J832's precursor](PORTING_JOURNAL.md#j832--run-the-exact-converter-on-android-and-load-content-built-without-a-template)
