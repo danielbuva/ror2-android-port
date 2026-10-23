@@ -31290,3 +31290,107 @@ bootstrap producer. Full content/shader/package reconstruction, private-state
 removal from later steps, native usage/linker roots, phone hosting and matched
 performance remain open. Do not treat this prefix as a playable project or
 change the working build's consumers based on the host result.
+
+## J1023 — Qualify an authored Android NativeAOT build-tool fixture
+
+**Question and prior art.** J1020 leaves complete Android materialization open
+near the requested managed capacity limits. Before another capacity increase,
+test a separate build-tool host using a wholly authored graph. The pinned
+[AssetRipper source](https://github.com/AssetRipper/AssetRipper/blob/1ac666f47d8e9dedf96afb0b914c70d7656151ea/Source/AssetRipper.GUI.Free/AssetRipper.GUI.Free.csproj)
+already publishes its desktop executable with NativeAOT, server GC and size
+optimization. Consulted the community extraction map, the [.NET 10.0.12 Bionic
+source guide](https://github.com/dotnet/runtime/blob/v10.0.12/src/coreclr/nativeaot/docs/android-bionic.md)
+and [upstream issue 116327](https://github.com/dotnet/runtime/issues/116327).
+This is build/distribution research; the game remains native IL2CPP ARM64.
+
+**Preserved first failures.** The isolated .NET 10.0.401 / runtime 10.0.12
+cross-publish first fails because the existing Clang 9 / LLD cannot read the
+runtime's generated `OVERWRITE_SECTIONS` linker script. A process-local modern
+LLD adapter then exposes Darwin-target arguments during the compiler version
+probe. An explicit Android ARM64/API 21 target removes that ambiguity but
+leaves 11 unresolved ARM64 atomic helpers, including `__aarch64_cas16_acq_rel`.
+Adding the already supplied public LLVM 21.1.8 compiler-builtins archive resolves
+those helpers. The final linker is LLD 22.1.8. This temporary mixed tool profile
+is an experiment, not an adopted toolchain or redistribution proof. No installed
+NDK, game compiler setting or authored source is rewritten by the build.
+
+**Authored control and source binding.** The first small fixture checks only
+a subset of retained fields; preserve its success as ABI smoke, not a graph or
+memory comparison. Its successor traverses every stored node ID, name, payload
+byte, parent reference and ordered child reference. It checks an authored
+SHA-256 constant and reports a scalar graph witness independently recomputed
+in Python. Both 4,096-node and 262,144-node cases pass on the host and both
+Android build-tool hosts. Three invalid desktop argument forms exit 3.
+
+The final phone repeat is built from the committed public
+`tools/phone-build/tool-host-fixture/` sources. Program SHA-256 is
+`e880d6edc446ef0bb5928e54ffc725c356033a1c36bd1915f5ae38a05b4c1267`;
+project SHA-256 is
+`71824619eb210ffa59b498d4c62a1908656e8defe45c4141aaae683185eafaab`.
+Both publications use those exact same source/project bytes. The resulting
+1,484,456-byte Android ELF executable has SHA-256
+`18c5b4c9dac276cf11886f20e66d2ce2a117c3f130be45458ccd5d1147c2eee0`.
+It links libc, libdl and libm; the existing separately supplied crypto support
+is retained for SHA-256. This proves neither a self-contained dependency set
+nor a complete authenticated/license-reviewed delivery package.
+
+**Bounded Android result.** The final repeat passes the same source in the
+existing Mono-based .NET 10.0.13 build-tool host and NativeAOT 10.0.12 executable.
+The stored ID sums are 8,386,560 and 34,359,607,296; complete graph witnesses are
+43,753,216 and 87,382,695,748. Every process exits 0 and is absent at readback.
+The graph remains live through the two-second external sampling window.
+
+| Tool host / nodes | Reported live managed bytes | Sampled peak RSS bytes |
+| --- | ---: | ---: |
+| Mono / 4,096 | 5,308,272 | 32,768,000 |
+| NativeAOT / 4,096 | 998,136 | 12,156,928 |
+| Mono / 262,144 | 71,321,400 | 103,849,984 |
+| NativeAOT / 262,144 | 63,914,608 | 123,031,552 |
+
+These are observations, not an AssetRipper or game-performance benchmark.
+The runtime patches differ, Mono reports workstation GC while NativeAOT reports
+server GC, and only Mono receives its 256 MiB maximum / 192 MiB soft request.
+Both are bounded independently by a 512 MiB RSS guard, 1 GiB available-RAM and
+scratch reserves, a 30 s deadline and 50 ms sampling. The larger fixture has
+lower reported live bytes but higher sampled RSS on NativeAOT. No memory win,
+complete parser equivalence, complete import or export is established. Do not
+raise J1020's limits on the strength of this fixture.
+
+**Pinned stock exporter attempt.** Two separate upstream-source cross-publish
+attempts are preserved. The first incorrectly applies global PublishAot to
+netstandard source-generator projects and stops with NETSDK1207. Removing that
+command-line property lets the existing GUI.Free project own its NativeAOT
+setting. The next attempt stops in SDK framework resolution with NETSDK1082:
+no Microsoft.AspNetCore.App runtime pack for `linux-bionic-arm64`. It exits 1
+after 8.13 s with 406,224,896 sampled process-family RSS bytes; no complete tool
+executable is produced. The upstream source stays unchanged. This is a stock
+web-frontend/tool-platform constraint, not proof that its parser libraries cannot
+run in an authored Bionic console frontend. A separate console adapter would
+need its own source binding, parser controls and full-input/export qualification.
+
+**Evidence and next discriminating step.** Versioned sources, failed links,
+public tool bindings, independent expected witnesses, build logs and three
+phone selections stay ignored under
+`work/coordination/phone-proof/nativeaot-tool-host-r1/`. The final authored
+`proof-v1.json` is 4,121 bytes, SHA-256
+`480125f47b9c0078cbfe6b592dafbb692ee7f32a61bb7003f411983baade41fa`.
+Its final selection binds complete source/output/controller hashes and terminal
+reports. The later `proof-v2.json` binds that packet and both stock-publish
+failures: 964 bytes, SHA-256
+`df845e0db21571e65219cccf048b9446a29da4689fefffecebff0623bbf7c711`.
+All 614 existing tool-file hashes match before and after; copied
+fixture inputs are verified separately. Alpha's installed game stays
+be26c21c4cd8ff15a8a663528216cf7a69394a51d8b9441a63a1a496f83e98b5,
+idle with no selector and the display asleep. Zero installs, game launches or
+editor actions occur. Main's checkout/device/editor remain untouched.
+
+The isolated checkout's doctor/preflight still refuse its absent staged lab
+project/input generation; these support checks do not qualify a game build.
+A separately built pinned AssetRipper Bionic executable, authored parser
+controls and bounded real-input comparison are required before assessing that
+tool-host option. Heavy cross-compilation is coordinated with Main and bounded
+by host resource reserves; the stock attempt above starts only after its full build
+finishes and does not reach native compilation. App execution policy, complete
+export,
+Android content/shader/player construction, permitted tool delivery and matched
+game performance remain open. Route A and the desktop fallback stay fixed.

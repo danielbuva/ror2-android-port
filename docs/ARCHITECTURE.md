@@ -45,6 +45,15 @@ actions stage/check/build only this fixture under the primary checkout mutex.
 See [probe setup and boundaries](../tools/phone-build/README.md). No game-runtime
 owner or whole-catalog build calls this support path.
 
+`tools/phone-build/tool-host-fixture/Program.cs` owns a separate current
+experimental .NET build-tool graph fixture (J1023). Its project selects the tool
+framework only; explicit arguments select one of two authored graph sizes. The
+process owns graph setup, complete stored-field checks, scalar reporting and
+release at exit. It reads no game/SDK input and is never staged into the Unity
+project. Its README names invocation and independent expected witnesses; raw
+Android execution and linker adapters remain ignored local qualification state.
+It adds no game runtime owner or current build consumer.
+
 `scripts/lab/phone_apk.py` is separate packaging **support** for that authored
 fixture only. Its standard-library parser increases a literal Android manifest
 version code after checking the fixed package identity, substitutes the authored

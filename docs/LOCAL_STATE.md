@@ -163,6 +163,19 @@ The `module-policy-*` selectors and retained `module-policy-linker-on-android.py
 under the proof root select new owned runs with the same device/tool/capacity
 guards. Earlier adapters/selectors stay intact. No game build reads this state.
 
+`work/coordination/phone-proof/nativeaot-tool-host-r1/` retains J1023's
+versioned authored fixture publications, pinned upstream-source worktree,
+failed stock-exporter publications, public dependency archives, local linker
+adapter, exact input/output manifests and terminal phone reports. The public
+fixture sources live in `tools/phone-build/tool-host-fixture/`; local
+`build-fixture-v3.py`, `run-phone-fixture-v3.py` and `phone_fixture_v2.py` are
+required replay support for the explicit owned Alpha shell workspace, fresh
+capacity checks and hash-bound supplied tool/crypto support. Explicit versioned
+selection JSON identifies each fresh attempt; no consumer infers a timestamped
+path. Failed/earlier attempts stay preserved. These are tool-host observations,
+not inputs to a game build or a complete installer. The process-local linker
+adapter does not replace the Unity game NDK.
+
 `work/coordination/phone-proof/` retains J832's private execution adapters,
 hash-bound tool/package manifests, original failed attempts and collected device
 evidence. The `converter-host.py`, `converter-android.py`,

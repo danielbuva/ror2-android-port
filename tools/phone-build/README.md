@@ -15,6 +15,11 @@ target API 30. It uses public APIs and expects writable execution to be refused.
 This tests neither an interpreter host nor the game. See `host/README.md` for
 inputs and invocation.
 
+`tool-host-fixture/` is separate current experimental support for authored
+managed/NativeAOT build-tool graph checks. Its standalone project reads no game
+or Unity SDK data. See its README for setup, complete-field witnesses and memory
+measurement limits. It does not select the game backend or provide an installer.
+
 `ConverterFixture.cs` supplies a small arithmetic assembly for the exact local
 IL2CPP converter. A build-tool .NET host is independent of the game's native
 IL2CPP runtime. Compare all generated C++ and metadata against the desktop

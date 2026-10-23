@@ -23,6 +23,10 @@ bundle return.
 [J1020](PORTING_JOURNAL.md#j1020--test-deferred-serialized-object-reads-on-android)
 matches deferred-read payloads and bounds later capacity failures; complete
 materialization/export remains open.
+[J1023](PORTING_JOURNAL.md#j1023--qualify-an-authored-android-nativeaot-build-tool-fixture)
+qualifies an authored NativeAOT build-tool graph and records the stock exporter's
+unavailable Bionic ASP.NET runtime pack. It establishes neither a memory
+improvement nor complete export.
 Native fixture compile/link/loading: [J839](PORTING_JOURNAL.md#j839--compile-and-link-the-authored-il2cpp-native-library-on-android).
 Full authored converter/native/device closure: [J842](PORTING_JOURNAL.md#j842--run-the-full-authored-converter-and-load-its-phone-compiled-native-output).
 Authored input capture and Android stripping: [J846](PORTING_JOURNAL.md#j846--capture-authored-stripping-inputs-and-replay-unitylinker-on-android).
