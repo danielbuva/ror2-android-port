@@ -1,6 +1,6 @@
 # Phone-only owner-build assessment
 
-2026-10-21. Scope: build/distribution engineering under
+2026-10-23. Scope: build/distribution engineering under
 [ADR-002](ADR-002-public-alpha-distribution.md), keeping the IL2CPP ARM64 game
 and Android renderer fixed. This combines source/tool inspection and isolated
 authored probes, not a complete phone build or gameplay proof.
@@ -42,6 +42,8 @@ SDK/package-derived Unity API fixture compilation on Android:
 [J902](PORTING_JOURNAL.md#j902--compile-the-authored-unity-fixture-with-sdkpackage-derived-references-on-android).
 Android-compiled fixture inputs through a separate stripping handoff:
 [J905](PORTING_JOURNAL.md#j905--feed-the-android-compiled-unity-fixture-into-a-separate-stripping-handoff).
+Private owner-transform candidate compiled and run on Android:
+[J986](PORTING_JOURNAL.md#j986--compile-owner-assembly-transforms-on-android-with-a-public-compiler).
 
 **Finding:** this repository has no demonstrated phone-only build path. Many
 preparation and packaging stages have Android-capable open-source building
@@ -129,7 +131,7 @@ not proof that reimplementation is impossible. Owners: [ARCHITECTURE](ARCHITECTU
 | --- | --- | --- |
 | Acquisition, inventory, acceptance (`inventory.py`) | No | File/ZIP import, hashing and version checks are portable. Owned-account downloads need Guard, entitlement and accepted-version tests; no offline authentication substitute. |
 | Decompile/export (`recovery.py`, ILSpy, AssetRipper) | No editor API; supplied tools are desktop builds | Public source permits investigating Android tool hosts and dependency ports. AssetRipper exports a project, not final Android content. |
-| Assembly transforms/R1 (`assembly_transforms.py`, `AssemblyProbe`) | No | Cecil-based IL/metadata transforms are port candidates. Preserve exact DLL hashes/type identity. An Android build-tool host is unproven; it does not run gameplay. |
+| Assembly transforms/R1 (`assembly_transforms.py`, `AssemblyProbe`) | No | J986 compiles and runs a private compatibility candidate on Android with recipe-identical outputs. SDK Cecil/reference delivery, integration and broader transform modes remain open; the working producer is unchanged. |
 | R2–R6 composition, catalog, dependency and scene transforms | Mostly host code after export | Port candidates. Python, native texture/compression libraries, C# helpers and process/path assumptions all need qualification. A phone Python interpreter alone is insufficient. |
 | Shader recovery/HLSL generation (`shader_recovery.py`, `shader_programs.py`) | Not inherently editor-bound | Pinned native tools and a CrossOver/Wine fallback remain; 46 local analysis inputs still need producers. Android-native replacements are unresolved. No Windows emulation route is selected. |
 | HUD/inherited assets (`RecoveredHudBuilder`) | **Yes, existing producer** | AssetDatabase, prefab, font/material and asset-saving APIs are used. Fourteen inherited-store files remain bootstrap debt; generated game assets cannot be shipped to conceal this dependency. |

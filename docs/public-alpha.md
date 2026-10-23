@@ -86,6 +86,9 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       workstation-only assets or analysis receipts
       ([structural blockers](execution-backlog.md#structural-cleanup),
       [J586](PORTING_JOURNAL.md#j586--r9-rerun-no-new-reimport-errors-one-gate-file-and-one-apk-shader-left)).
+      Extend [J986's private Android transform candidate](PORTING_JOURNAL.md#j986--compile-owner-assembly-transforms-on-android-with-a-public-compiler)
+      through reviewed source compatibility, permitted Cecil/reference delivery
+      and integration without weakening the existing exact-output gates.
 - [ ] Bind builds to committed source, accepted input and toolchain receipts
       ([J738](PORTING_JOURNAL.md#j738--whole-catalog-builds-stage-only-committed-sources-and-record-the-commit));
       qualify fresh owner-generated outputs on the alpha device.

@@ -29395,3 +29395,119 @@ not promoted. J983 9feef7e9 remains the latest passing diagnostic, and J850
 f1550ce0 remains the accepted rollback. Both are preserved. The source-context
 and catalog candidate are built, but composed world/audio acceptance remains
 open. Main is asleep; the other devices are untouched.
+
+## J986 — Compile owner assembly transforms on Android with a public compiler
+
+2026-10-23 UTC.
+
+**Hypothesis and scope.** The existing public owner-assembly transform recipe
+may run in the retained Android build-tool environment while preserving its
+exact output hashes. This is build-tool portability research under Route A;
+the native IL2CPP ARM64 game runtime and renderer remain fixed. Source cohort
+`3e6ce44066822d5afcb18a54865097cec8366b71` has the same 14 pinned transform
+source/project files as documentation base `4eb7bbca`. All game-derived inputs,
+candidate source copies, binaries and raw evidence remain ignored. No working
+tool, recipe, project, package or runtime source is changed.
+
+Prior-art review reuses the assembly-processing/importer separation in pinned
+ThunderKit `95a6236df08b0e4bbd5350dd4afdb0927cb7fb6a`,
+`ManagedAssemblyPatcher.cs` and `PackageHelper.cs`, as recorded in
+[community prior art](community-prior-art.md). The experiment retains the
+existing authored Cecil transforms and public exact-output recipe rather than
+introducing new RoR2 transformation behavior. No community code is copied.
+
+**Public provider inspection.** Downloaded the official
+[Microsoft.Net.Compilers.Toolset 4.8.0](https://www.nuget.org/packages/Microsoft.Net.Compilers.Toolset/4.8.0)
+and [Mono.Cecil 0.11.1](https://www.nuget.org/packages/Mono.Cecil/0.11.1)
+packages into private research storage. The compiler package declares MIT,
+pins Roslyn source `e091728607ca0fc9efca55ccfb3e59259c6b5a0a`, and its core
+compiler configuration targets .NET 6 with major-version roll-forward.
+`dotnet nuget verify --all` passes for that package on this host; extracted
+compiler members are hash-bound to the verified archive. Retained its third-party
+notices and the [pinned Roslyn MIT license](https://github.com/dotnet/roslyn/blob/e091728607ca0fc9efca55ccfb3e59259c6b5a0a/License.txt).
+
+Neither public Cecil DLL matches the existing owner SDK pin
+`8b33668cd03b78b7bcaa96eac82488d88c7c89416f82037ecbe2b781ab9642f8`.
+The inspected net40 and netstandard2.0 DLL hashes are respectively
+`5b39caf5c7e489336a1c9585cfa89adfa12682887b799cc3e21e10ce9484e57d`
+and `834ac6087cc340f72dcd5fea0772683bf7d41ba5778b13b48990cd9db59bc7ca`.
+Cecil package signature validation exits 1 here, including NU3018 revocation
+status, NU3037 expired repository signature and NU3028 timestamp-chain
+ExplicitDistrust diagnostics. Its DLLs remain data-only; none is executed or
+substituted. This is a preserved validation failure on this host, not evidence
+that public Cecil source is unusable. Its
+[MIT license](https://github.com/jbevain/cecil/blob/0.11.1/LICENSE.txt)
+does not establish compatibility with the pinned SDK binary or permission to
+redistribute unrelated SDK components.
+
+**First failure and smallest candidate.** Verified Roslyn reports
+`4.8.0-7.23558.1 (e0917286)` under the existing SDK .NET 6.0.21 host. Compiling
+all 12 unchanged C# files against 165 SDK framework implementation references
+and pinned SDK Cecil fails with CS1503 at
+`MusicOutputObserverCecilTransform.cs:549`: `SHA256.HashData(stream)` has no
+matching stream overload in those references. The persistent `net6-tool-v1`
+attempt is retained. The ordinary lab preflight also remains blocked by this
+clone's unrecorded lab-project generation; no game build is attempted.
+
+Prepared a separate private `net6-tool-v2` source copy. Only that hash helper
+changes, to `SHA256.Create()` followed by `ComputeHash(stream)`; the other
+source/project bytes remain pinned. An authored additional global-usings file
+supplies the project's usual SDK imports. The compile driver reads these
+prepared sources; it performs no exact-text source rewrite. All 12 files then
+compile on .NET 6, including the current music and camera transform sources.
+The working net10.0 project and public source hashes remain unchanged. This
+does not qualify execution of every transform mode or the music hash helper.
+
+The candidate runs the two existing recipe modes against copied legitimate
+inputs on the host. All three output DLLs match their public recipe SHA-256;
+the combined 49-DLL/49-importer manifest also equals the earlier desktop
+owner-prefix result. All 146 original and copied Managed DLLs remain unchanged.
+
+**Android observation.** Used only the explicitly selected Alpha device and its
+receipted, previously qualified shell workspace. Fresh adopted-storage,
+workspace-backing and capacity observations precede transfer; the configured
+reserve is preserved. Verified all 276 reused .NET runtime files, plus the
+Python executable. A fresh exclusive stage carries 386 hash-bound inputs,
+including the verified public compiler, prepared source cohort, SDK framework
+references, pinned owner-provided SDK Cecil and private copied game metadata.
+The public Cecil candidate is excluded.
+
+Android .NET 8.0.32 compiles the candidate in 3.61 seconds and runs both recipe
+modes. The tool runner completes in 9.32 seconds including the Android-side
+input checks. These are component timings, not installation or game-performance
+benchmarks. Output hashes match exactly:
+
+| Output | SHA-256 |
+| --- | --- |
+| `RoR2.dll` | `3124a2ed9cf458acee78b1beaf969590b184be452e2b3aa5a8852df82ff95d30` |
+| `AK.Wwise.Unity.API.dll` | `107295e478a58ef295a83228111f375c536861bc9081f482d638c59899bf495c` |
+| `AK.Wwise.Unity.MonoBehaviour.dll` | `c06f9ed168fd51bb064602ce9ca88a1868d62655192e20ae8d4e68b677cd0d89` |
+
+Pulled outputs independently match those hashes. All staged inputs remain
+unchanged. The authored tool's own DLL/PDB bytes differ between the host and
+Android compiles; binary identity of the compiler outputs is not claimed.
+Only the three transformed game-metadata outputs have exact cross-host equality.
+No inspected game assembly is executed as gameplay.
+
+No APK is built or installed, no game is launched and no editor action occurs.
+The existing Alpha APK
+`be26c21c4cd8ff15a8a663528216cf7a69394a51d8b9441a63a1a496f83e98b5`
+reads back unchanged; its process is absent, diagnostic selection is absent and
+the display is verified asleep afterward. No Main device action occurs.
+
+**Evidence and revisit conditions.** Private evidence is under
+`work/coordination/phone-proof/cecil-open-provider-r1/`, including package
+downloads/metadata/signature logs, both persistent compile attempts,
+`net6-transform-replay-v2/`, `phone-run-selection-v1.json`, the selected Android
+run's logs/results/outputs and `comparison-summary-v1.json`.
+`proof-receipt-v1.json` binds 713 artifacts with receipt SHA-256
+`c69f55c420827b9359ab44802a3722eb741216cb19d0a9163167fff0f566d04a`.
+
+Review any source compatibility change with the music-tool owner before
+integration. Qualify a permitted, compatible Cecil provider and framework
+reference delivery, then reproduce this exact-output gate through the current
+owner-build interface. SDK-independent tool delivery, launcher sandbox hosting,
+full source transforms, content/shader production, independent editor roots,
+complete player construction and matched runtime performance remain open. The
+desktop owner-build process remains the fallback; this result selects no new
+runtime or final installation architecture.
