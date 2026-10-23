@@ -29671,3 +29671,100 @@ performed for this source checkpoint. Main retains J996 0d984b01, asleep with
 13 applied runs. A fresh full build, metadata retention, both standard checks,
 source callback/log/context observations and targeted gameplay remain required.
 No camera, audio, natural-Quit or Loader acceptance is claimed.
+
+## J1000 — Remove the source camera shader exception and preserve its admission timeout
+
+**Reproducible full player.** Root builds committed J997/J998 source
+b11893dc9835abe2c7e140052f7ab225f7c8b2eb with the shared Unity mutex.
+The pinned Unity 2021.3.45f2 editor finishes the fresh full-content build in
+850.268877 s with zero build errors. Request
+`20261023T042730.468474Z-ec791f9d0f2a4651b614467d0c09e725` produces APK
+`bda75e3708b8f6dfa94d89e9cf07821d775375da3934d6702f7a74c9ccce62e0`.
+Root freezes the exact APK, matching symbols, captured pre/post-strip assemblies,
+266 payload files, source/build receipts and unchanged native audio artifact.
+The host driver verifies editor idle and releases its mutex normally.
+
+Build/freeze evidence is
+`work/coordination/original-game-audio-r30-build-root-r2/`; build receipt
+SHA-256 is `1712c54fef4313412e527877ee64cf2dc24d7dfe6e2778b6fdf8990040482e63`
+and source freeze is
+`6290ff9a1e1890e556879ca85390cbc0999c1ee98bec3f47740de3b61a711a38`.
+The frozen candidate is
+`work/experiments/original-game-audio/r27-20261023T042730.468474Z-ec791f9d0f2a4651b614467d0c09e725-bda75e3708b8/`.
+R27 is the retained freezer wire schema, not the source revision.
+
+**Host retention and preparation limits.** Independent metadata tools verify
+all 22 network-sound snapshot fields and all 13 new serializable camera startup
+observation fields in the same-request pre/post-strip Assembly-CSharp pair.
+The hash-bound actual build catalog retains all four source TranslucentImage
+shader locations as typed roots. These are retention and membership results,
+not device callback, shader-fidelity or playback evidence.
+
+A preserved first host-driver attempt uses a Python interpreter without the MCP
+package and dispatches no build/editor steps. Root terminates only that known
+failed host driver, preserving its evidence and shared lock file, then uses
+the pinned MCP server interpreter for the successful attempt. Unity is never
+stopped or restarted to bypass another build. The failed preparation is
+`work/coordination/original-game-audio-r30-build-root-r1/`.
+
+**Both standard controls and independent teardown pass.** Root installs its
+explicit frozen APK in place after fresh adopted-storage checks and syncs only
+its matching frozen payload. Plain reaches 35.218506 s on Lakes. The second
+process completes one original exit to Goolake and remains there for
+13.226074 s (166.442581 s total world time). Both report the exact current APK,
+no report error/firstFailure, diagnostic assists and 13 unchanged applied runs.
+The terminal wrapper verifies owned placement, installed bytes, selector/process
+absence and display sleep. A separate read-only query repeats the installed
+hash/placement/idle checks and reads the unchanged 13-run profile. Root archives
+and releases only its completed device claim; other devices are untouched.
+
+Controls are
+`work/coordination/original-game-audio-r27-device-controls/attempts/root-r5-r30/`.
+Canonical evidence is
+`work/experiments/baseline/20261023T045131.461265Z/` and
+`work/experiments/baseline/20261023T045550.546420Z/`.
+Final-report hashes are
+`67dcd8aff82f456b369c2434532b1b9f3389ef762124d97e86b9bc0ebafd5597` and
+`204f8f09da1144111edaa3b233bc0f7c4c85dc228857b764b6f5ac6136437305`;
+Unity-log hashes are
+`9eb62f06f82e00319e101e279b5f44e2c13aef8ecadd52070d154d23d6883722` and
+`bff27d2d405e562a38a073fa4b2e1259adac243abc5c3e2540c592b43fa34613`.
+Independent query, archived claim and strict startup analysis are in
+`work/coordination/original-game-audio-r30-device-controls-root-r1/`.
+
+**Progress and retained first failure.** Both strict current-process log replays
+have zero unexplained errors; J996's missing EfficientBlur activation exception
+is absent. The four shader bodies still have J997's documented placeholder
+semantics, so lookup success is not blur fidelity. Both reports retain the
+complete ready 65-entry network sound catalog, four empty names and zero
+null-definition/name or zero-ID entries. Original audio/source-music and bounded
+finite nonzero PCM observations remain separate from event attribution,
+persisted waveform acceptance and audibility.
+
+The new camera fields observe an active/enabled rig in the active hierarchy,
+initial null-mode waiting, then original PlayerBasic and rig index zero.
+The startup clock is valid and expires while context readiness remains false.
+The owner retires at that bounded gate. DamageNumberManager is absent before
+activation and present afterward; this is compatible with source startup, not
+a complete callback trace. These observations advance beyond J996's combined
+activity/mode refusal, but the paired shader/lifecycle changes do not isolate
+which change explains that progress.
+
+The final report does not preserve the earlier admission conjuncts: exact
+rig/target/body, original EarlyUpdate context, active managed listener membership,
+and a fresh MusicController camera/body observation must coincide. Index zero
+shows the inner observer ran, but deadline retirement replaces its pending
+reason. Listener recapture during retirement can clear its observed flag, and
+terminal music fields can likewise be post-retirement. Neither identifies the
+original false operand. Host triage is under the ignored audio coordination
+parent in `r30-controls-host-triage-r1/`.
+
+**Next gate and scope.** The reviewed Loader predicates reject both actual
+reports for camera-context refusal despite standard-check success, and the
+runner stays unarmed. Preserve a bounded pre-retirement admission observation
+before choosing a correction; do not extend the deadline or force native mode,
+target, listener or music success. J988/J998's source lifecycle and pinned
+R2API.Sound boundaries still apply. No new runtime source is introduced by this
+result checkpoint. J997/J998 are now built and installed, with these explicit
+limits; J850 remains the accepted rollback. Full audio, original network-effect
+gameplay, natural Quit and visual parity remain open.

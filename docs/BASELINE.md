@@ -88,14 +88,14 @@ The plain check and its acceptance criteria remain unchanged.
 
 ## Current baseline (2026-10-23)
 
-J996's diagnostic APK 0d984b01 is installed after both standard controls and
-independent APK-byte/placement/idle verification. The original network sound
-catalog now initializes, including the four original empty-name entries.
-The separate audio camera context retires before readiness, and its source
-prefab logs a missing EfficientBlur shader during activation. Passing the
-standard checks does not qualify that context or broader audio. J985's targeted
-natural-Quit failures remain unresolved. See the [current snapshot](../PORTING_STATE.md) and
-[J996](PORTING_JOURNAL.md#j996--verify-the-complete-network-sound-catalog-and-classify-camera-startup-failures).
+J1000's diagnostic APK bda75e37 is installed after both standard controls and
+independent APK-byte/placement/idle verification. The complete original network
+sound catalog initializes, and the source camera no longer logs the missing
+EfficientBlur shader. Its rig reaches PlayerBasic and index zero, but separate
+bounded audio-context admission still fails. Passing the standard checks does
+not qualify that context or broader audio. J985's targeted natural-Quit failures
+remain unresolved. See the [current snapshot](../PORTING_STATE.md) and
+[J1000](PORTING_JOURNAL.md#j1000--remove-the-source-camera-shader-exception-and-preserve-its-admission-timeout).
 The accepted baseline below remains the rollback.
 
 | Item | Value |
