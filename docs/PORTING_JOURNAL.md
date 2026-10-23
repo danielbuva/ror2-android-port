@@ -31919,3 +31919,58 @@ needed to verify the player serialization path and report contents.
 - Prior findings: J1006 and J1010 in `docs/PORTING_JOURNAL.md`
 - Production source field/copy: `tools/unity/runtime/input/AndroidNativeSourceCameraRigContract.cs`
 - Production report fields: `tools/unity/runtime/world/IntegratedWorldBoundary.cs`
+
+## J1031 — Verify cold-process persistence of the bounded PCM pair
+
+**Question and scope.** J1028's warm default-route run retained a verified capture
+pair after original Term and disarm, but its natural-Quit query failed and cold
+readback was still unqualified. This continuation checks whether that
+already-existing pair remains byte-identical across a fresh app process lifecycle
+without starting a world or requesting another capture. It is a component
+persistence result; it does not repair or replace the failed warm-route acceptance.
+
+**Bound run.** The run used the unchanged R34 APK
+`098646f6cc931c2a8d01d91fe4dfdcf5f54c58d9fc6ad01137695992e58588bd` and the reviewed
+cold-only runner. It performed no gameplay selector operation and no new capture
+request. The cold process reached the offline start menu in session 1. An exact
+pre-Quit PID witness matched the current report. During a 30 s exit window, across
+six post-Quit process queries, the first still found the owned process and a later
+query confirmed natural absence; natural absence was observed after 6.948160 s, with
+zero query errors or timeouts.
+
+**Persistence result.** The capture-directory inventory contained the same eight
+entries before and after the cold readback. The selected existing raw/sidecar pair
+was read through the ordinary app-readable path, validated, and matched
+byte-for-byte against the Root's independently saved pair. The raw prefix is 1 MiB
+(262,144 float samples), SHA-256
+`30e14955ebf1352266dc2ff8067e68104607e750abb9d3b36582b8af909fcb58`; its 870-byte
+sidecar is SHA-256
+`f4f6fa8f4047dc863ab8d4129a5f33d15b422ae80524e75be571711fdfe99d1b`. The sidecar
+describes 470 callbacks and 541,440 finite samples, of which zero are nonzero; no
+samples are nonfinite. It records both original Term returns, verified post-Term
+disarm and raw persistence. The retained prefix and the complete counted window are
+all zero. This confirms persistence and lifecycle metadata across a cold process
+only.
+
+The warm route's natural-process-absence failure and invalidated acceptance remain
+preserved. The cold-only result does not establish successful full-route acceptance,
+a nonzero playback window, event/output attribution, audible game content, or sound
+at the speaker. The pair's all-zero samples remain a strict full-route refusal
+(`capture_contains_no_nonzero_finite_samples`). J1022's separate nonzero window
+remains unchanged and is not joined to this pair.
+
+**Final independent state.** A separate terminal query rehashed the installed APK
+and verified the owned adopted placement, selector absence, process absence, asleep
+display and profile count 13; it performed no additional cleanup. No runtime source
+or APK changed for this run. Standard-control results remain those already recorded
+for this APK.
+
+**Evidence.** Cold result SHA-256
+`65bc5de817b4e164a7ac3f77c59aa6dabe8dc3eddbb004379b28e89a11a76d31`; independent
+terminal query SHA-256
+`e989450e8d84b04c656bb3ca9e49adc6272d03dc3cb5f8f3bac5b0b76f9061ed`; Root command
+receipt SHA-256 `d0333b67481ccef6321fffa44c05aa4f7cc39e543f29a272ee09f68ccf3c540a`.
+Full ignored evidence is under
+`work/experiments/original-game-audio-r34-cold-persistence/root-r1/` and
+`work/coordination/original-game-audio-pcm/r34-cold-persistence-root-r1/`. Raw PCM
+and device-specific identifiers remain private.

@@ -92,14 +92,16 @@ J1022's diagnostic APK 098646f6 retains both standard controls, strict
 process-log qualification and installed-byte/placement/idle verification.
 J1028 separately verifies a persisted all-zero MainOutput prefix and original
 Term/disarm witnesses after its natural-Quit query fails; this does not revise
-J1022's observed nonzero window or its standard-control passes. Natural Quit,
-cold readback, event attribution and audibility remain open.
+J1022's observed nonzero window or its standard-control passes. J1031 separately qualifies byte-identical persistence across a fresh menu
+process and its natural Quit. The failed warm Quit, event attribution and
+audibility remain open.
 J1024 records a separate R33 source-view startup timeout and menu-Quit pass.
 J1026's combined source-view/PCM setup stops at the deliberately deferred
 audio-camera context before Quit. Loader's full-kit semantics, first-sample JSON
 and visual parity remain open. See the [current snapshot](../PORTING_STATE.md),
 [J1022](PORTING_JOURNAL.md#j1022--build-and-verify-the-mainoutput-audio-candidate-with-both-controls)
-and [J1028](PORTING_JOURNAL.md#j1028--measure-default-route-pcm-and-preserve-the-natural-quit-failure).
+[J1028](PORTING_JOURNAL.md#j1028--measure-default-route-pcm-and-preserve-the-natural-quit-failure)
+and [J1031](PORTING_JOURNAL.md#j1031--verify-cold-process-persistence-of-the-bounded-pcm-pair).
 The accepted baseline below remains the rollback.
 
 | Item | Value |
