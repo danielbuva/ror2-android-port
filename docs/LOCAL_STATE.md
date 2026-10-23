@@ -568,6 +568,20 @@ The public scaffold and its generators are described in
 [tools/phone-build](../tools/phone-build/README.md). No current game build reads
 these support paths, and no compiler/editor redistribution grant is inferred.
 
+Accepted-output replay requires explicit private state, not a captured timestamped
+folder inferred by public code: an owner-input root and accepted input manifest;
+a target manifest plus private compressed frames produced from that owner's
+accepted APK/payload; permitted exact Unity SDK copy inputs; supplied Android
+Python; and the source-built Zstandard codec. The current local encoder/relay
+and hash-bound selections under
+`work/coordination/accepted-build-reconstruction/` generate the qualified package
+and wire stream. They remain required local orchestration with no generic public
+producer yet. Their raw target information, original files, SDKs and outputs stay
+ignored. The public receiver accepts explicit argument roots and a pinned stream,
+never a timestamped run path. Process/result receipts and successful/failed
+outputs are retained local evidence; no current game build reads them. See
+[setup/lifecycle](../tools/phone-build/accepted-output/README.md) and J1042.
+
 > **Dated snapshot.** This is a static audit taken on 2026-10-16. Line numbers drift as code
 > changes; regenerate or re-audit it before relying on a specific `file:line`. The current
 > map is [ARCHITECTURE.md](ARCHITECTURE.md).

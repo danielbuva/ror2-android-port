@@ -1,9 +1,16 @@
 # Isolated phone build probes
 
-These authored fixtures test build stages for ADR-002. They read no game files
-and do not change the working Android project. Generated outputs, supplied
+These authored fixtures test build stages for ADR-002. The fixtures described
+below read no game files and do not change the working Android project. Generated outputs, supplied
 Unity tools, dependency archives, signing material and raw evidence stay ignored.
 This is experimental tooling, not a supported phone installer.
+
+`accepted-output/` is separate current experimental whole-output replay support.
+It **does** read explicitly supplied legitimate game inputs and a private
+accepted-output package. Its Android receiver reproduces the pinned native
+IL2CPP/data bytes without Unity Editor or game compilation. See its
+[README](accepted-output/README.md) for acquisition, stream protocol, lifecycle,
+limits and the unresolved signing/install/public-distribution boundaries.
 
 `host/` is a separate current experimental app-sandbox fixture. Its Android
 driver compiles authored C/Java, packages DEX/resources and aligns/signs an APK

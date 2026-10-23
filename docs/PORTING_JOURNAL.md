@@ -32525,3 +32525,114 @@ tools from the actual contents of a publicly distributed patch. No blanket
 Proceed with private reconstruction feasibility; do not mistake silence for
 public-distribution clearance or bypass DRM. Primary citations and the precise
 limits of these comparisons live in the assessment.
+
+## J1042 — Reconstruct the complete accepted output on Android
+
+2026-10-23. **Hypothesis:** a known accepted IL2CPP Android output can be
+reconstructed as a bounded stream of exact SDK copies and private compressed
+frames/deltas, avoiding Unity Editor, a general exporter and game compilation.
+This tests whole-output replay, not independent production from PC files alone.
+J1036 supplies the frozen cohort and component/rights assessment. Existing
+`phone_apk.py` supplies the packaging precedent; upstream Zstandard 1.5.7's raw
+prefix dictionaries supply the delta mechanism. This generic archive/stream
+work adds no RoR2 loader, serialization repair or gameplay mechanism.
+
+**Target and change.** The immutable oracle remains accepted J850 source
+`1780ea9545f1597c033a8d32e08074b03c7f38c8`, APK
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`,
+with input `6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88`.
+The encoder reads that owner's accepted APK/payload once to produce a private
+packet. Its manifest SHA-256 is
+`93789f88d8fff178e31e1a4b78bc5cf735bb63f6e17d8bfd4518474dbff99d4a`.
+Three SDK copies supply 65,162,896 bytes; 837 Zstandard frames/deltas supply
+1,889,206,312 compressed bytes. Fifteen targets use 13 unique original PC files
+as dictionaries; 822 frames do not use a PC dictionary. References were selected
+by existing file/bundle names, not an exhaustive all-source delta search.
+Compressed size measures packet cost, not protected-expression quantity or
+redistribution permission. Most target information is carried in the packet.
+
+The open `tools/phone-build/accepted-output/phone_decode.py` owns the receiver
+process, codec child, new owned output, hash checks and terminal result. Its
+README specifies setup, stream protocol, sampled limits and teardown;
+ARCHITECTURE and LOCAL_STATE name the owner and required private orchestration.
+The code reads explicit argument roots, not an inferred timestamped directory.
+The exact phone-tested source SHA is
+`9ecdbb050b55a4289d8b54547b32344c0291a36fdac5c82a0e8367e908044eaf`;
+the published copy differs only by Ruff formatting, with an identical complete
+AST and a retained source-alias receipt. No protected data is added to Git.
+
+**Host evidence.** The independent decoder runs under an explicit deny-oracle
+sandbox: target APK, payload, build cache and analysis/oracle files are denied.
+Six denial controls and three legitimate-source controls pass. All 840 target
+files (2,494,562,446 bytes), including all 266 payload files, match. Rebuilding
+without the three obsolete v1 signature entries verifies all 571 remaining APK
+entry hashes. Decoder time is 39.2894 seconds; an external watchdog samples peak
+process-family RSS of 117,637,120 bytes. It is external because the sandbox
+refuses the host's SUID `ps`. The full original inventory is verified before and
+after encoding; decoding checks every consumed PC file before and after use.
+This is input integrity, never entitlement/authentication success.
+
+**Android evidence.** Build upstream Zstandard 1.5.7's `zstd-decompress` with the
+existing bundled NDK 21.3/Clang 9, API 21 ARM64, no source edits, BSD-3-Clause
+option and retained notice. The source archive hash, command, ELF and output
+pin are documented with the receiver. This compiles a build utility only.
+The device executes the complete receiver with supplied Python 3.14 and streams
+1,954,369,208 bytes including the SDK copies, without storing the compressed
+packet. All **840 target files**, **266 payload files** and **571 unsigned APK
+entries** match in **146.6791 seconds**. Peak sampled receiver/codec RSS is
+**130,359,296 bytes**; minimum free scratch is **2,901,987,328 bytes** and minimum
+available RAM is **9,498,869,760 bytes**. The configured limits are 512 MiB family
+RSS, 512 MiB available RAM, 2 GiB disk reserve and 900 seconds. These are sampled
+limits, not an OS hard memory quota. A separate process reopens and independently
+hashes all 840 actual files. All 13 consumed original PC files remain unchanged.
+
+Host and phone produce the same unsigned archive SHA-256:
+`4ee7f5ece2c22147a73ea7dbc82be54f7cb00ab47f6aa23100a6124e9b3b9ee0`.
+Its uncompressed entry content matches; its ZIP compression/alignment policy is
+not yet install-qualified. In particular, `resources.arsc` storage/alignment and
+native-library requirements must be resolved before signing/installing. No
+owner signing key was transferred. This is not an install-ready APK claim.
+
+**Actual failures retained.** The first isolated host decoder fails at sandboxed
+`ps`; moving observation to the external watchdog resolves that boundary. The
+next attempt fails before output because a local codec-argument variable shadows
+parsed arguments; explicit output selection fixes it. The first Android attempt
+stalls before input because `adb exec-out` is unidirectional. Its owned ADB client
+is canceled, scoped remote process absence is confirmed and failed transport
+receipts are retained; its final remote result was not recovered. The successful
+attempt uses raw bidirectional `adb shell -T` with one safely quoted command.
+The independent readback uses the same corrected transport. No importer or
+Editor retry is added. Five meaningful host contracts exercise real receiver
+functions: path escape/symlink refusals, exact frame boundaries/truncation,
+multiple-chunk content/hash integrity, no overwrite/input consumption, and
+retained complete chunks on truncated output. Ruff and those contracts pass.
+
+**Evidence and terminal state.** Private evidence is under
+`work/coordination/accepted-build-reconstruction/`: `full-roundtrip-v1/` retains
+encoder, manifest, sandbox, controls, failed runs and complete supervised result;
+`android-zstd-v1/` retains source/license/build/ELF receipts;
+`phone-roundtrip-v1/` retains selections, exact drivers, failed transport and
+successful phone/result/independent readback. The hash-bound aggregate
+`full-reconstruction-proof-v1.json` has SHA-256
+`7dbb7d76b34fe93070ab74d628efd0926b8221c2c21f96fdfbcbae249d0d5a6c`.
+The target census/content receipts from J1036 are unchanged. The selected Alpha
+installation stays byte-identical
+`be26c21c4cd8ff15a8a663528216cf7a69394a51d8b9441a63a1a496f83e98b5`,
+stopped with no selector and the display asleep. There are zero game installs,
+game launches, Editor actions or runtime-source changes. Alpha is returned to
+the separate settings-feedback chat; Main's checkout/editor/device are untouched.
+The isolated worktree's `./dev doctor` correctly reports missing local game
+configuration/project/checkpoint state; it is not a game build workspace.
+
+**Classification and next work.** Complete private snapshot/delta reconstruction
+on Android passes. This resolves the immediate technical question: a Unity
+Editor/game rebuild is not required when a private packet supplies the target
+information. Architecture C, IL2CPP ARM64, rendering bytes and desktop fallback
+remain fixed. It does not prove independent PC-input-only production, a public
+packet distribution grant, ordinary app execution, signing/alignment,
+installation/update, current-game compatibility or matched performance. Legal
+uncertainty did not stop the local implementation; the assessment distinguishes
+actual package rights from independent tools and local owner work. Continue
+reproducible package creation, owner signing and approved launcher integration;
+revisit independent code/content producers if packet delivery cannot supply the
+required bytes. Do not declare game/alpha readiness from file equality alone.

@@ -1,12 +1,19 @@
 # Reconstruct the accepted Android build from owner inputs
 
-Assessment: 2026-10-23. **A fixed-target converter is a credible, narrower design
-than reproducing Unity's project/editor workflow on Android. It is not currently
-an operational phone converter.** Existing results establish several ingredients,
-but neither a complete game-code build nor the Android content producer exists
-without desktop-generated inputs. The accepted APK is an oracle, not a permitted
-input to a public installer. Do not start another general exporter or change the
-working runtime on the strength of this assessment.
+Assessment and implementation evidence: 2026-10-23. **Complete private
+accepted-output reconstruction now works on Android without Unity Editor or game
+compilation.** A pinned delta/frame package plus verified owner PC and SDK inputs
+reproduces every file of the frozen target. This is a practical narrow replay
+architecture; it is not yet an independent PC-input-only converter or a signed,
+installable launcher product. The package carries substantial game-derived
+output information and stays private. No new execution backend is needed.
+
+The complete host/Android result is recorded once in
+[J1042](PORTING_JOURNAL.md#j1042--reconstruct-the-complete-accepted-output-on-android).
+The open [receiver and its setup](../tools/phone-build/accepted-output/README.md)
+preserve the proven stream implementation. The earlier census and producer
+assessment below remain useful, but their missing-producer findings apply to
+**independent derivation**, not to replaying a supplied private target package.
 
 Keep Architecture C, Unity 2021.3.45f2, IL2CPP ARM64, the current renderer and
 original gameplay implementations. ADR-002's Route A is its owner-build delivery
@@ -76,13 +83,14 @@ orchestration with explicit, audited inputs:
    align, owner-sign and use Android's normal user-mediated installation flow.
 
 The accepted build fixes the destination contract, graph, layouts and comparison
-hashes. It cannot supply protected destination bytes to the public converter.
+hashes. Supplying destination bytes through a patch is a different distribution choice
+from deriving them independently; evaluate that actual artifact and its rights.
 Public recipes may contain the audited minimum identifiers and transformation
 logic needed to derive them. Captured editor files must be reviewed or regenerated,
 not assumed publishable wholesale.
 
-The code side therefore still needs compilation, **not necessarily an Editor or
-a reconstructed Unity project**. The content side still needs target-data
+For independent owner-input derivation, the code side still needs compilation,
+**not necessarily an Editor or a reconstructed Unity project**. The content side still needs target-data
 production, **not necessarily Unity's import/export workflow**. Neither statement
 establishes a complete replacement toolchain today.
 
@@ -149,10 +157,11 @@ An installer needs a permitted Android app/tool execution design. A Termux/ADB
 proof is not that design. General AssetRipper imports have exceeded bounded
 phone memory without returning a graph; a sequential raw scan succeeds at about
 227 MB sampled RSS. That makes bounded direct reconstruction attractive, not
-already implemented. The 4.12 GB PC input plus 2.27 GB target payload already
+a reason to require full project import. J1042 instead completes bounded replay
+using a private package. The 4.12 GB PC input plus 2.27 GB target payload already
 consume about 6.39 GB before SDKs, generated native sources/objects, APKs,
-temporary data and retained rollback space. No complete phone peak-cost result
-or completion estimate is available.
+temporary data and retained rollback space. J1042 measures complete replay cost; the cost of independent code/content
+production remains unmeasured.
 
 **Rights:** [Unity's terms](https://unity.com/legal/editor-terms-of-service/software)
 provide conditional integrated-runtime distribution rights and distinguish
@@ -220,7 +229,8 @@ and matched performance remain required before adopting a new producer.
 | Route | What it saves | What still prevents a complete phone product |
 | --- | --- | --- |
 | General Unity-project reconstruction on phone | Reuses much existing desktop orchestration if all tools/importers become available | Global export/import memory, editor/native importer equivalents, shader tooling, build roots, tool rights and app execution. This is the broadest effort. |
-| Fixed accepted-build reconstruction | Removes general project authoring, editor settling and unrelated input discovery; permits compatible data-range copies, streaming and a stable output manifest | Full game AOT inputs/build and target content/shader producers, app execution, component grants and complete acceptance. These cannot be replaced with target hashes. |
+| Fixed-target independent derivation | Removes general project authoring, editor settling and unrelated input discovery; permits compatible data-range copies, streaming and a stable output manifest | Full game AOT inputs/build and target content/shader producers, app execution, component grants and complete acceptance. Target hashes alone cannot supply the bytes. |
+| Private accepted-output delta/frame replay (J1042) | Complete phone reconstruction avoids Editor, import, shader compilation and game compilation; native/code/content bytes match the accepted target | Requires a 1.89 GB game-bearing private package plus supplied SDK bytes. Reproducible package creation, alignment/signing, ordinary app/launcher execution, update/install and any public package distribution remain open. It does not independently derive the target from PC files alone. |
 | Owner-supplied converted cache plus phone packaging | Avoids regeneration of that owner's existing code/content; strongest near-term reuse | Initial cache is external to the phone. Useful fallback/import mode, not PC-to-Android phone conversion. |
 | Authorized prebuilt game code/shaders | Would remove major conversion stages | Requires rights not established here; cannot be the baseline assumption. Remaining owner content and acceptance still apply. |
 
@@ -230,17 +240,25 @@ Unity Editor workflow or continue tuning general AssetRipper imports by default.
 This is a proposed build/distribution implementation within Architecture C; it
 does not select a new execution backend or alter the accepted game build.
 
-The implementation decision should be based on **one complete frozen-target
-coverage map and end-to-end owner-input reconstruction**, reusing the existing
-transforms and tool stages. Every required output must be either a permitted
-generic component or have an owner-input producer, with no private target-byte
-fallback. The present assessment identifies the two largest missing producers
-(game-scale code and baked content/shaders); it does not establish a small patch
-that closes them. Until they have a credible implementation and permitted tool
-delivery, launching a second large converter would repeat the earlier mistake.
+The complete J1042 experiment answers the immediate feasibility question: an
+Editor rebuild is **not technically required when the required target information
+is supplied in a delta/frame package**. This path reconstructs all native code,
+metadata, resources and bundles, without altering their runtime architecture.
+The private package is about 75.73% of the total uncompressed target size. Most
+frames do not use a PC dictionary; this is neither an optimal all-source delta
+search nor proof that a small independently distributable patch exists.
 
-The simplest working experience available now is importing an owner's existing
-converted cache and packaging/installing it, backed by the desktop owner build.
-The simplest credible **phone-only first-build architecture** is the fixed-target
-converter above. It is narrower than a Unity rebuild, but is not up and running
-and is not yet demonstrated practical as a complete product.
+**Continue the narrow replay implementation before another large exporter:**
+make package creation reproducible, resolve APK storage/alignment and durable
+owner signing, connect an ordinary Android host to the approved launcher adapter,
+and qualify normal installation/update and performance on device. The current
+unsigned archive is not install-ready. Keep private owner-generated packages as
+a usable local route while evaluating the actual contents and applicable rights
+of any proposed public package; uncertainty did not stop the local implementation.
+
+If the public delivery path cannot supply those frames under applicable rights,
+independent producers are still needed for the game-scale AOT and baked
+content/shader cohorts. J1042 does not solve that separate information-source
+problem by compression. The desktop owner-build/cache fallback remains available
+while the phone product is completed. No final distribution architecture is
+adopted solely from byte-reconstruction success.

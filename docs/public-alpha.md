@@ -16,6 +16,9 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
 - [ ] Deliver complete PC-input-to-Android conversion on the phone, preserving
       Architecture C. Evaluate the [fixed accepted-build design](accepted-build-reconstruction.md)
       against the full target before implementing another large pipeline.
+      [J1042](PORTING_JOURNAL.md#j1042--reconstruct-the-complete-accepted-output-on-android)
+      completes private delta/frame replay; independent input-only production and
+      a signed/installable launcher flow remain open.
       Full Unity-project reconstruction or AssetRipper export is not an assumed
       requirement. Every protected APK/payload output needs an owner-input
       producer; the accepted build supplies validation, never hidden target bytes.
