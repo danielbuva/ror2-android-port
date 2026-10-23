@@ -469,6 +469,18 @@ observed app UID/context agreement and an actual writable-copy permission denial
 Optional unprivileged enforcement reads can remain unknown. Failed controls
 retain their file metadata/backing and owned cleanup evidence.
 
+`tools/phone-build/native-host/` owns a separate positive build-tool hosting
+fixture. Its `NativeToolHost.c` calls the existing public hostfxr command-line
+ABI; `ToolHostActivity` owns fresh data directories, asset/native hash checks,
+read-only native links, bounded compiler/managed children and private reports.
+`build_fixture.py` owns phone compilation, packaging, disposable signing and
+input/failure receipts. Caller-owned installation/teardown requires explicit
+device selection, fresh storage and an exact installed-APK ownership receipt.
+Setup and unqualified boundaries are in its
+[README](../tools/phone-build/native-host/README.md). This support path has no
+game, launcher or whole-catalog consumer and adds no `./dev` action. It never
+changes the existing refusal probe or reports security qualification.
+
 `phone_native.py` owns experimental **support** for replaying the authored
 content fixture's native graph. `phone-native-fixture` verifies an explicit
 project/APK request, copies supplied runtime/NDK and generated source inputs

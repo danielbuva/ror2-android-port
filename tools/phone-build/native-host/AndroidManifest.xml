@@ -1,0 +1,8 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="dev.ror2lab.phonebuildhostfixture" android:versionCode="1" android:versionName="0.1">
+  <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="33" />
+  <application android:label="Private build-tool fixture" android:debuggable="true" android:allowBackup="false" android:extractNativeLibs="true">
+    <activity android:name=".ToolHostActivity" android:exported="true">
+      <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+    </activity>
+  </application>
+</manifest>

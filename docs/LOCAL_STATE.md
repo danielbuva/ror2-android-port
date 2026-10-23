@@ -212,6 +212,19 @@ committed sources, verifies the explicitly configured device/owned workspace,
 fresh capacity and unchanged stopped game, and invokes the tracked driver with
 target 33. Its separate selector preserves the original J836 attempts.
 
+The positive native build-tool fixture stages public
+`tools/phone-build/native-host/` sources with the same supplied SDK jars and
+the already verified .NET 8.0.32, Roslyn, reference and native-dependency
+inputs described in its README. These are required local tools, not public
+repository contents. Private `build_on_alpha.py` and `install_on_alpha.py`
+under `work/coordination/phone-proof/native-tool-host-r1/` bind source/tool
+hashes, explicit device/workspace ownership, fresh capacity and the stopped
+game; their versioned selectors preserve each failed and successful attempt.
+The tracked builder generates each new APK and data/native hash manifest.
+Reports, raw mapping paths, source stages, disposable signing material and
+`proof-receipt-v1.json` stay under that ignored evidence root. No game build
+reads these private adapters, their timestamped outputs or the fixture APK.
+
 `phone_native.stage_action` generates `work/rebuild/phone-native/<attempt>/`
 from an explicit authored fixture project/APK/hash request. It copies supplied
 SDK/runtime source, the NDK target headers/libraries, generated C++ and its build
