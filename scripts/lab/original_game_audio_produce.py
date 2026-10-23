@@ -69,7 +69,7 @@ META_GUIDS = {
 NATIVE_META_GUID = "a2a09e81876b46f2a202e62f96644331"
 NATIVE_TARGET = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so"
 NATIVE_META = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so.meta"
-OWNER_ANCESTOR_MANIFEST_SHA256 = "ab67e99b51682597414659be55a66491c095af551a676fb935428108198d9947"
+OWNER_ANCESTOR_MANIFEST_SHA256 = "70fc34d6cfa435b6beff18f127283283fa0bd96ffaaac807034b188fb3c0e2a0"
 STAGE_PIN_TOOL_SHA256 = "6e12acb9b58a570aa3a869f9f0880ddbd56ba4da0c806188c1124164211d0102"
 REQUEST_PIN_TOOL_SHA256 = "844e57ef264c56fa2d2adbacfeba893a30f684fa1ad5e203cdb5a5ffb8be3b96"
 MANAGED_PRODUCER_SHA256 = "e5cfc952843cd247d5c96690a11d7a56650f0777c85f7aef2c4bc673bbe0bb85"
@@ -78,9 +78,11 @@ ABI_GENERATED_SOURCE_SHA256 = "511f5e1ee552a874850a1fab5f613eeb51e7b6bc706a07bb5
 ABI_HANDWRITTEN_SOURCE_SHA256 = "7cc79d60937708fd9f34fd67e90a743fe9e03e58c2325bf0f9e9dbbf8be327e6"
 ABI_LLVM_NM_SHA256 = "6ffe6bb8699a354c4699a6cdfcebdb9ec6a2c8d0d89beaac978f629a0fc67ae0"
 OWNER_SOURCE_HASHES = {
+    "../../runtime/catalog/BodyCatalogBoundary.cs": "188c8fffe6214bf8557dd421556e8a7f09ac4756c9d9af52fcd667136b0dea15",
+    "../../runtime/catalog/OriginalEquipmentHighlightAssetsBoundary.cs": "f1249d463ee86e53c3ad8242b1366b303e3fff975b31acab71b542d4cab1270f",
     "../../runtime/session/OriginalNetworkSoundEventCatalogOwner.cs": "ca692357d4d6e635136c59529aaf89745f219e5227d4ea7b48be56cdd7fd455f",
     "../../runtime/session/OriginalMusicControllerContract.cs": "bd8f78977722a276409623cea4909b0e41065fda6c195a6b0dee94ef8bb8b485",
-    "../../runtime/session/PortSession.cs": "ee5257e7d44365169b00f77b4cb9f532647a818af537453d2970863d897d1657",
+    "../../runtime/session/PortSession.cs": "edf808111a103b404d2eb647ed49d864a6a852f7ca2d8c6bf458f4f4c019533d",
     "../../runtime/session/PortSessionOriginalAudioOwner.cs": "d51ab8137ab58eab42e5bbe7bc31e2b1da04203a15a4d2ef8fb41a3b9628a805",
     "../../runtime/session/PortSessionOriginalMusicControllerOwner.cs": "15272167e3c416edb863797bf35dcbe8ef6704ecac805fdbe38186f4d73d41b0",
     "../../runtime/session/AkMusicPcmJoinQueryAdapter.cs": "ae116b7912efda498d6c1a1ecb0ddc4be1ec2dd6df223e0fff53426a37204ef8",

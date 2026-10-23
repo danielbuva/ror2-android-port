@@ -241,6 +241,7 @@ public sealed partial class PortSession : MonoBehaviour
         // These are per-run observations; capture starts only after the integrated world is playable.
         public bool passivePcmCaptureRequested, passivePcmGameplayArmRequested;
         // Snapshot contains only bounded primitive values; no Unity objects.
+        public OriginalEquipmentHighlightAssetsReport originalEquipmentHighlightAssets;
         public PortSessionOriginalAudioOwner.Snapshot originalAudio;
         public PointSoundDiagnosticObserver.Snapshot pointSoundDiagnostic;
         public AndroidProfileReport profile;
@@ -2498,6 +2499,13 @@ public sealed partial class PortSession : MonoBehaviour
             }
             if (cfg.integratedWorld && Resources.Load<TextAsset>("WholeCatalogBootstrap"))
             {
+                Check(body && !body.gameObject.activeInHierarchy,
+                      "Original equipment highlights must be ready before body activation");
+                var equipmentHighlights = PrepareOriginalEquipmentHighlightAssets();
+                while (equipmentHighlights.MoveNext())
+                    yield return equipmentHighlights.Current;
+                Check(r.originalEquipmentHighlightAssets != null && r.originalEquipmentHighlightAssets.ready,
+                      "Original equipment-highlight preparation did not complete");
                 var wholeArtifacts =
                     WholeCatalogComposed.CategoryFamily(RoR2.ContentManagement.AddressablesLabels.artifactDef,
                                                         Enumerable.Range(0, ArtifactCatalog.artifactCount)

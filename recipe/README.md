@@ -1885,3 +1885,13 @@ compile/device evidence stay ignored. The source cohort update in J1011 likewise
 publishes only authored lifecycle code and source digests, with unchanged
 membership. No proprietary body, private identifier or runtime acceptance is
 added. Provenance/privacy audit: 2026-10-23.
+
+J1014 adds one authored equipment-highlight asset owner to the runtime-source,
+script GUID and importer memberships and refreshes its exact audio/camera
+source cohort. It publishes only the minimum three source field/key/prefab
+relationships needed to load the user's reconstructed content. Ownership,
+cancellation and teardown logic and synthetic host fixtures are authored here;
+no original implementation, prefab, serialized data, middleware, generated
+binary, private path or device identifier is included. Existing reconstruction
+steps must replay the updated runtime and importer recipes. Provenance/privacy
+audit: 2026-10-23. Android loading and original highlighting remain unaccepted.

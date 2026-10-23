@@ -1134,6 +1134,15 @@ new bytes. No runtime result or Android qualification is implied by a host
 replay.
 
 
+J1014's equipment-highlight owner adds no manually authored private input. Its
+three source-key/path relationships are authored runtime metadata, and both
+runtime-source manifests stage the owner with the GUID in `project-layout.json`.
+`importer-identities.json` regenerates that script's importer. The audio owner
+cohort and camera hook bind the updated sources. Replaying runtime-source and
+importer staging reconstructs this dependency; no timestamped diagnostic output
+is read by the runtime or build.
+
+
 ### Optional catalog shader activation (J966)
 
 `work/config/shader-catalog-overrides.json` is optional required local state for

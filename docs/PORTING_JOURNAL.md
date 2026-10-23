@@ -30543,3 +30543,80 @@ bootstrap. Do not raise memory budgets without a discriminating hypothesis.
 Phone-only compilation/acquisition of this tool, app execution/security,
 complete content/shader/player production, lawful delivery and matched game
 performance remain open. The existing desktop build stays the fallback.
+
+## J1014 — Own the original equipment-highlight dependencies before body activation
+
+**Hypothesis and prior art.** J1013's strict stage log records original
+`HighlightRect.CreateHighlight` receiving a null prefab on diagnostic APK
+4b1a7969. The accepted source initializes three equipment-highlight fields in
+`EquipmentCatalog.Init`, while this integrated route calls `SetEquipmentDefs`
+without that initializer. The optional whole-catalog bootstrap is selected by
+a different entry file and does not initialize this route. The exact original
+initializer and J714's catalog identity contract outrank neighboring asset-name
+lookups. Consulted the Addressables section of
+[community prior art](community-prior-art.md#addressablescatalogs-what-is-already-solved)
+and its pinned R2API `AddressReferencedAsset<T>` source: location lookup, typed
+load completion and retained handle lifetime are separate contracts. No
+community or original implementation is copied into the authored owner.
+
+**Smallest integration.** Add the named
+`OriginalEquipmentHighlightAssetsSession` in
+`runtime/catalog/OriginalEquipmentHighlightAssetsBoundary.cs`. After the
+existing equipment-definition setter, `OriginalStats` waits for the three
+original typed prefab locations before any automatic body activation. Each
+source key must resolve uniquely in the active captured composed locator, with
+the exact prefab type, primary key and converted path. Loads use those exact
+locations; all three must succeed with live results within 60 s before any
+static assignment. No equipment reindexing, prefab replacement, source callback
+suppression, camera-gate change or UI-screen change is added. This is a minimal
+gameplay presentation dependency in the alpha-owned UI namespace.
+
+One-shot setup, cancellation checks and a final readiness check prevent a
+cancelled or duplicate preparation from admitting gameplay. This route requires
+empty managed static slots; prepopulated, destroyed or competing values refuse.
+It does not silently adopt another initializer's handle/callback lifetime.
+Retain the three owned handles through stage turnover. `CleanupBodyCatalog`
+first requires the owned body, detached model and world player to be destroyed,
+then restores only this owner's exact assignments. Any remaining foreign slot
+blocks catalog retirement. Restoration/release errors are aggregated and
+remain failed across retries; required handles and the bundle stay retained.
+Successful cleanup clears readiness and retained locator/operation references
+before existing bundle release. The primitive report is on `SessionReport`,
+so an early setup refusal remains visible before `WorldReport` exists.
+
+**Reconstruction and validation.** Both runtime-source manifests, the script
+GUID/importer recipe, audio owner cohort and camera hook pins include the new
+owner and changed call sites. Replay runtime-source and importer staging before
+rebuilding. No private generated input is added. Authored recipe metadata is
+audited in [recipe notes](../recipe/README.md).
+
+The production owner compiled and executed against authored lifecycle and
+Addressables doubles. Cases cover exact locations, missing/ambiguous/wrong
+metadata, failed/null loads, timeouts, partial request failure, cancellation,
+duplicate setup, foreign and same-result concurrent writes, live-body cleanup
+refusal, exact restoration, release failures and repeated cleanup. The focused
+65-test suite passes, including importer/runtime membership and audio/camera
+cohort checks. The initial suite correctly detected the new importer count;
+its pinned script membership is now 138. Ruff format/check, explicit Main
+doctor and preflight pass. Independent lifecycle review accepts the final
+strict-ownership source for the next compile/integration step.
+
+Private source/call-graph triage, the frozen draft and independent review are
+under `work/coordination/original-game-audio-pcm/r33-equipment-highlight-triage-r1/`.
+The final owner SHA-256 is
+`f1249d463ee86e53c3ad8242b1366b303e3fff975b31acab71b542d4cab1270f`;
+the source-cohort recipe is
+`70fc34d6cfa435b6beff18f127283283fa0bd96ffaaac807034b188fb3c0e2a0`.
+The separate `r33-highlight-catalog-assets-review-r1` audit joins the exact
+initializer keys to Equipment 16056, Lunar 16057 and Boss 16055 root locations
+and their actual frozen bundle listing. That is membership evidence only.
+Root test/doctor/preflight logs are retained under
+`work/coordination/original-game-equipment-highlights-r33-root-r1/`.
+
+**Limit and next gate.** This checkpoint has no new APK or device runtime
+result. Main retains J1013's diagnostic 4b1a7969; accepted rollback stays J850
+f1550ce0. Build the committed source, freeze its exact APK/payload, run both
+standard Main controls and classify strict current-process logs. Require all
+three typed slots ready and no recurrence before promoting the highlight fix
+or dispatching Loader. The queued J1012 blur bodies will also enter that player;
+neither shader parity nor full audio is accepted by these host tests.

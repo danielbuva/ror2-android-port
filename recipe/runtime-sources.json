@@ -3,6 +3,7 @@
   "runtime/catalog/BarrierEffectBoundary.cs",
   "runtime/catalog/BodyCatalogBoundary.cs",
   "runtime/catalog/OriginalBodyVisualBoundary.cs",
+  "runtime/catalog/OriginalEquipmentHighlightAssetsBoundary.cs",
   "runtime/catalog/OriginalGlobalCommonAssetsBoundary.cs",
   "runtime/catalog/SpawnStateBoundary.cs",
   "runtime/catalog/TeleportMaterialBoundary.cs",

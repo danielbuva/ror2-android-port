@@ -292,6 +292,9 @@
     "Assets/LabLoadingScene/OriginalBodyVisualMap.cs.meta": {
       "guid": "3dfa98c48e8ed46c29597757ba539210"
     },
+    "Assets/LabLoadingScene/OriginalEquipmentHighlightAssetsBoundary.cs.meta": {
+      "runtime_source": "runtime/catalog/OriginalEquipmentHighlightAssetsBoundary.cs"
+    },
     "Assets/LabLoadingScene/OriginalGlobalCommonAssetMap.cs.meta": {
       "guid": "836bc2496b77f46dfa404b3182161f45"
     },

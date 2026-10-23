@@ -42,6 +42,7 @@
     "runtime/catalog/BarrierEffectBoundary.cs": "6851d6c1d59a641fcaab9f12638c6315",
     "runtime/catalog/BodyCatalogBoundary.cs": "33e47e3caf4fd4e428a6708a099f298a",
     "runtime/catalog/OriginalBodyVisualBoundary.cs": "58c73f808aced459c998eafba8d6da63",
+    "runtime/catalog/OriginalEquipmentHighlightAssetsBoundary.cs": "02d5a57c20437a22964b2b82e1dd0341",
     "runtime/catalog/OriginalGlobalCommonAssetsBoundary.cs": "1fdb1b592359444e3b44da0e8e82b4bf",
     "runtime/catalog/SpawnStateBoundary.cs": "d6c8f4b26b45b4029ac14784fb7c5889",
     "runtime/catalog/TeleportMaterialBoundary.cs": "97e0549a0410044b3af283ae93d928f7",

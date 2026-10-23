@@ -26,6 +26,7 @@ public sealed partial class PortSession
     void CleanupBodyCatalog()
     {
         Check(LegacyResourcesAPI.ActiveCount == 0, "Refuse teardown with pending portrait callbacks");
+        CleanupOriginalEquipmentHighlightAssets();
         CleanupOriginalSkins();
         CleanupLoadoutTables();
         RestoreCatalogBodyTemplates();
