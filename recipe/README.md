@@ -1816,3 +1816,12 @@ middleware binaries, generated metadata and raw compiler records remain ignored;
 no original gameplay method or protected content is reproduced. The camera
 recipe refresh binds the reviewed authored hook to the new owner cohort.
 Provenance/privacy audit: 2026-10-22.
+
+
+J994 refreshes the authored catalog-owner cohort and dependent producer/hook
+hashes after preserving original empty-name definition rows. Public fixtures
+use synthetic names/values and controlled API observations. Only authored
+admission/report behavior and hashes are published; source asset values,
+provider inventories, original or middleware code/binaries and raw evidence
+remain ignored. Runtime source membership and local inputs are unchanged.
+Provenance/privacy audit: 2026-10-23.

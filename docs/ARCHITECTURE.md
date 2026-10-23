@@ -861,6 +861,13 @@ continue to govern bundle release. Host admission/failure contracts live in
 `tests/test_original_audio_network_sound_host.py`; Android mapping and effect
 playback remain separate device gates.
 
+The complete source family includes original definitions with empty event-name
+strings. Admission preserves every row and forwards those strings unchanged to
+the original setter; removing them would change index identity. Null strings
+refuse before native mapping. The snapshot separately records whether source
+length was observed and bounded sorted empty/null ordinals. Empty-string hashes
+remain distinct from authored event or bank presence evidence.
+
 `tools/unity/support/audio/core/` owns admission, readiness and copied lifecycle
 observations. `support/audio/bootstrap/` owns the explicit request, hash-bound
 bank preparation, Android platform resolver, Java-first library load and native

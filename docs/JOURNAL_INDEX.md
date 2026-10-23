@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J994](PORTING_JOURNAL.md#j994--preserve-original-empty-name-sound-definitions-in-the-complete-catalog) | 2026-10-22 | Preserve original empty-name sound definitions in the complete catalog | **Source-backed cause.** |
 | [J993](PORTING_JOURNAL.md#j993--build-the-native-catalog-candidate-and-preserve-its-pre-world-refusal) | 2026-10-22 | Build the native catalog candidate and preserve its pre-world refusal | **Build and exact artifact.** |
 | [J991](PORTING_JOURNAL.md#j991--admit-original-network-sound-mappings-before-world-activation) | 2026-10-22 | Admit original network sound mappings before world activation | **Failure, hypothesis and prior art.** |
 | [J989](PORTING_JOURNAL.md#j989--stop-loader-on-the-original-network-effect-sound-catalog-lookup) | 2026-10-22 | Stop Loader on the original network-effect sound catalog lookup | **Hypothesis and source-bound runner.** |

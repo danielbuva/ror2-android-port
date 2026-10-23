@@ -17,7 +17,15 @@ public static class OriginalNetworkSoundEventCatalogOwner
         public int nativeEntryCountBefore;
         public bool postCountObserved;
         public int nativeEntryCountAfter;
+        public bool sourceDefinitionCountObserved;
         public int sourceDefinitionCount;
+        public int nullDefinitionCount;
+        public int nullEventNameCount;
+        public int[] nullEventNameIndices = Array.Empty<int>();
+        public bool nullEventNameIndicesTruncated;
+        public int emptyEventNameCount;
+        public int[] emptyEventNameIndices = Array.Empty<int>();
+        public bool emptyEventNameIndicesTruncated;
         public bool availabilityMadeAvailable;
         // Nonzero GetIDFromString results prove only a mapped nonzero hash;
         // they do not prove that an event exists in a bank or is audible.
@@ -43,7 +51,15 @@ public static class OriginalNetworkSoundEventCatalogOwner
             nativeEntryCountBefore = snapshot.nativeEntryCountBefore,
             postCountObserved = snapshot.postCountObserved,
             nativeEntryCountAfter = snapshot.nativeEntryCountAfter,
+            sourceDefinitionCountObserved = snapshot.sourceDefinitionCountObserved,
             sourceDefinitionCount = snapshot.sourceDefinitionCount,
+            nullDefinitionCount = snapshot.nullDefinitionCount,
+            nullEventNameCount = snapshot.nullEventNameCount,
+            nullEventNameIndices = (int[])snapshot.nullEventNameIndices.Clone(),
+            nullEventNameIndicesTruncated = snapshot.nullEventNameIndicesTruncated,
+            emptyEventNameCount = snapshot.emptyEventNameCount,
+            emptyEventNameIndices = (int[])snapshot.emptyEventNameIndices.Clone(),
+            emptyEventNameIndicesTruncated = snapshot.emptyEventNameIndicesTruncated,
             availabilityMadeAvailable = snapshot.availabilityMadeAvailable,
             nativeIdMappingReady = snapshot.nativeIdMappingReady,
             zeroNativeIdCount = snapshot.zeroNativeIdCount,
@@ -71,15 +87,36 @@ public static class OriginalNetworkSoundEventCatalogOwner
 
         ObservePreCount();
         var source = WholeCatalogComposed.DefinitionFamily(Array.Empty<NetworkSoundEventDef>());
-        if (source == null || source.Length == 0 || source.Any(definition => !definition) ||
-            source.Any(definition => String.IsNullOrWhiteSpace(definition.name) ||
-                                     String.IsNullOrWhiteSpace(definition.eventName)) ||
-            source.Select(definition => definition.name).Distinct(StringComparer.Ordinal).Count() != source.Length)
+        snapshot.sourceDefinitionCountObserved = source != null;
+        snapshot.sourceDefinitionCount = source == null ? 0 : source.Length;
+        if (source == null || source.Length == 0)
             return Refuse("complete-original-definition-family-invalid");
 
+        snapshot.nullDefinitionCount = source.Count(definition => !definition);
+        if (snapshot.nullDefinitionCount != 0)
+            return Refuse("complete-original-definition-family-invalid");
+
+        var sorted = source.OrderBy(definition => definition.name, StringComparer.Ordinal).ToArray();
+        if (sorted.Any(definition => String.IsNullOrWhiteSpace(definition.name)) ||
+            sorted.Select(definition => definition.name).Distinct(StringComparer.Ordinal).Count() != sorted.Length)
+            return Refuse("complete-original-definition-family-invalid");
+
+        var nullEventNames = sorted.Select((definition, index) => new { definition, index })
+            .Where(item => item.definition.eventName == null).ToArray();
+        snapshot.nullEventNameCount = nullEventNames.Length;
+        snapshot.nullEventNameIndicesTruncated = nullEventNames.Length > 8;
+        snapshot.nullEventNameIndices = nullEventNames.Take(8).Select(item => item.index).ToArray();
+
+        var emptyEventNames = sorted.Select((definition, index) => new { definition, index })
+            .Where(item => item.definition.eventName == String.Empty).ToArray();
+        snapshot.emptyEventNameCount = emptyEventNames.Length;
+        snapshot.emptyEventNameIndicesTruncated = emptyEventNames.Length > 8;
+        snapshot.emptyEventNameIndices = emptyEventNames.Take(8).Select(item => item.index).ToArray();
+        if (snapshot.nullEventNameCount != 0)
+            return Refuse("original-definition-event-name-null");
+
         // Keep source references alive while the native static index mapping is in use.
-        retainedDefinitions = source.OrderBy(definition => definition.name, StringComparer.Ordinal).ToArray();
-        snapshot.sourceDefinitionCount = retainedDefinitions.Length;
+        retainedDefinitions = sorted;
 
         if (snapshot.nativeEntryCountBefore == 0)
         {

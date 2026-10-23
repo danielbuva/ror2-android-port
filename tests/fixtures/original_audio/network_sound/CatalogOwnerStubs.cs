@@ -35,6 +35,7 @@ namespace RoR2.Audio
         static RoR2.NetworkSoundEventDef[] entries = Array.Empty<RoR2.NetworkSoundEventDef>();
         public static int networkSoundCount => entries.Length;
         public static int setCalls;
+        public static int mappedEventNameCount;
         public static bool throwAfterSet;
         public static string zeroEventName;
         public static RoR2.ResourceAvailability availability;
@@ -44,9 +45,11 @@ namespace RoR2.Audio
             setCalls++;
             entries = (RoR2.NetworkSoundEventDef[])values.Clone();
             Array.Sort(entries, (a, b) => String.CompareOrdinal(a.name, b.name));
+            mappedEventNameCount = 0;
             for (int i = 0; i < entries.Length; i++)
             {
                 entries[i].index = (NetworkSoundEventIndex)i;
+                mappedEventNameCount++;
                 uint mapped = 2166136261u;
                 foreach (char character in entries[i].eventName) mapped = (mapped ^ character) * 16777619u;
                 entries[i].akId = entries[i].eventName == zeroEventName ? 0u : mapped;
@@ -56,7 +59,8 @@ namespace RoR2.Audio
         public static void Reset(RoR2.NetworkSoundEventDef[] values = null)
         {
             entries = values ?? Array.Empty<RoR2.NetworkSoundEventDef>(); setCalls = 0;
-            throwAfterSet = false; zeroEventName = null; availability = default(RoR2.ResourceAvailability);
+            mappedEventNameCount = 0; throwAfterSet = false; zeroEventName = null;
+            availability = default(RoR2.ResourceAvailability);
         }
     }
 }

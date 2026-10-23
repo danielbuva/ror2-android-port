@@ -14,6 +14,18 @@ class CatalogOwnerHarness
         new NetworkSoundEventDef { name = "alias-a", eventName = "shared-event" },
         new NetworkSoundEventDef { name = "alias-b", eventName = "shared-event" }
     };
+    static NetworkSoundEventDef[] FullDefs(bool includeNullName = false)
+    {
+        var values = new NetworkSoundEventDef[65];
+        for (int i = 0; i < values.Length; i++)
+            values[i] = new NetworkSoundEventDef { name = "definition-" + i.ToString("D2"), eventName = "event-" + i };
+        values[0].eventName = String.Empty;
+        values[64].eventName = String.Empty;
+        values[32].eventName = "   "; // Every non-null source value must reach the original setter unchanged.
+        Array.Reverse(values); // The owner and native setter must agree on ordinal definition-name ordering.
+        if (includeNullName) values[32].eventName = null;
+        return values;
+    }
     static bool Refused(Action action, string message)
     {
         try { action(); } catch (InvalidOperationException) { return true; }
@@ -119,14 +131,103 @@ class CatalogOwnerHarness
                   NetworkSoundEventCatalog.GetNetworkSoundEventDef((NetworkSoundEventIndex)1).akId,
                 "event-name aliases may resolve to the same mapping hash");
         }
+        else if (scenario == "empty-family")
+        {
+            NetworkSoundEventCatalog.Reset();
+            WholeCatalogComposed.Definitions = FullDefs();
+            var ready = OriginalNetworkSoundEventCatalogOwner.InitializeBeforeWorld(true, false, true, false, true, true);
+            Check(ready.ready && ready.sourceDefinitionCountObserved && ready.sourceDefinitionCount == 65,
+                "the complete 65-entry source family must be observed and admitted");
+            Check(ready.emptyEventNameCount == 2 && ready.emptyEventNameIndices.SequenceEqual(new[] { 0, 64 }) &&
+                  !ready.emptyEventNameIndicesTruncated,
+                "empty-event telemetry must use sorted catalog ordinals and retain both edge entries");
+            Check(NetworkSoundEventCatalog.setCalls == 1 && NetworkSoundEventCatalog.mappedEventNameCount == 65,
+                "every family member, including empty values, must reach the original setter");
+            Check(NetworkSoundEventCatalog.GetNetworkSoundEventDef((NetworkSoundEventIndex)0).eventName == String.Empty &&
+                  NetworkSoundEventCatalog.GetNetworkSoundEventDef((NetworkSoundEventIndex)64).eventName == String.Empty &&
+                  NetworkSoundEventCatalog.GetNetworkSoundEventDef((NetworkSoundEventIndex)32).eventName == "   ",
+                "the setter must receive exact empty and whitespace values without rewriting");
+            Check(NetworkSoundEventCatalog.GetNetworkSoundEventDef((NetworkSoundEventIndex)64).name == "definition-64" &&
+                  NetworkSoundEventCatalog.GetNetworkSoundEventDef((NetworkSoundEventIndex)0).index == (NetworkSoundEventIndex)0 &&
+                  NetworkSoundEventCatalog.GetNetworkSoundEventDef((NetworkSoundEventIndex)64).index == (NetworkSoundEventIndex)64,
+                "stable ordinal names and native index assignments must remain unchanged");
+        }
+        else if (scenario == "empty-truncation")
+        {
+            NetworkSoundEventCatalog.Reset();
+            var values = FullDefs();
+            foreach (var definition in values.Where(definition => definition.name.CompareTo("definition-07") <= 0))
+                definition.eventName = String.Empty;
+            WholeCatalogComposed.Definitions = values;
+            var ready = OriginalNetworkSoundEventCatalogOwner.InitializeBeforeWorld(true, false, true, false, true, true);
+            Check(ready.ready && ready.emptyEventNameCount == 9,
+                "full count must remain accurate when ordinal details exceed the bounded list");
+            Check(ready.emptyEventNameIndices.SequenceEqual(Enumerable.Range(0, 8)) && ready.emptyEventNameIndicesTruncated,
+                "bounded empty ordinals must keep the first eight sorted indices and flag truncation");
+            Check(NetworkSoundEventCatalog.mappedEventNameCount == 65,
+                "truncated telemetry must not truncate definitions passed to the native setter");
+        }
+        else if (scenario == "null-event-name")
+        {
+            NetworkSoundEventCatalog.Reset();
+            WholeCatalogComposed.Definitions = FullDefs(true);
+            Refused(() => OriginalNetworkSoundEventCatalogOwner.InitializeBeforeWorld(true, false, true, false, true, true),
+                "null event name must be refused separately before native mapping");
+            var rejected = OriginalNetworkSoundEventCatalogOwner.CaptureSnapshot();
+            Check(rejected.sourceDefinitionCountObserved && rejected.sourceDefinitionCount == 65 &&
+                  rejected.nullEventNameCount == 1 && rejected.nullEventNameIndices.SequenceEqual(new[] { 32 }),
+                "null-event refusal must report observed family size and sorted null ordinal");
+            Check(rejected.failure == "original-definition-event-name-null" && NetworkSoundEventCatalog.setCalls == 0 &&
+                  NetworkSoundEventCatalog.mappedEventNameCount == 0,
+                "null string cannot be replaced with a fabricated name or sent to native mapping");
+            Check(rejected.emptyEventNameCount == 2 && rejected.emptyEventNameIndices.SequenceEqual(new[] { 0, 64 }),
+                "empty source strings remain separately counted even when another member refuses the family");
+        }
+        else if (scenario == "null-definition")
+        {
+            NetworkSoundEventCatalog.Reset();
+            var values = FullDefs();
+            values[0] = null;
+            WholeCatalogComposed.Definitions = values;
+            Refused(() => OriginalNetworkSoundEventCatalogOwner.InitializeBeforeWorld(true, false, true, false, true, true),
+                "null definition must fail before sorting or native calls");
+            var rejected = OriginalNetworkSoundEventCatalogOwner.CaptureSnapshot();
+            Check(rejected.sourceDefinitionCountObserved && rejected.sourceDefinitionCount == 65 &&
+                  rejected.nullDefinitionCount == 1 && NetworkSoundEventCatalog.setCalls == 0,
+                "null definition refusal must be explicit and preserve the observed source count");
+        }
+        else if (scenario == "null-source")
+        {
+            NetworkSoundEventCatalog.Reset();
+            WholeCatalogComposed.Definitions = null;
+            Refused(() => OriginalNetworkSoundEventCatalogOwner.InitializeBeforeWorld(true, false, true, false, true, true),
+                "null family result must refuse");
+            var rejected = OriginalNetworkSoundEventCatalogOwner.CaptureSnapshot();
+            Check(!rejected.sourceDefinitionCountObserved && rejected.sourceDefinitionCount == 0,
+                "null family has no observed array length and differs from an empty array");
+            Check(NetworkSoundEventCatalog.setCalls == 0, "null family must not reach the native setter");
+        }
+        else if (scenario == "empty-source")
+        {
+            NetworkSoundEventCatalog.Reset();
+            WholeCatalogComposed.Definitions = Array.Empty<NetworkSoundEventDef>();
+            Refused(() => OriginalNetworkSoundEventCatalogOwner.InitializeBeforeWorld(true, false, true, false, true, true),
+                "empty family must refuse");
+            var rejected = OriginalNetworkSoundEventCatalogOwner.CaptureSnapshot();
+            Check(rejected.sourceDefinitionCountObserved && rejected.sourceDefinitionCount == 0,
+                "empty family must report an observed zero length");
+            Check(NetworkSoundEventCatalog.setCalls == 0, "empty family must not reach the native setter");
+        }
         else if (scenario == "preexisting")
         {
-            WholeCatalogComposed.Definitions = Defs();
+            WholeCatalogComposed.Definitions = FullDefs();
             NetworkSoundEventCatalog.Reset();
             NetworkSoundEventCatalog.SetNetworkSoundEvents(WholeCatalogComposed.Definitions.OrderBy(d => d.name, StringComparer.Ordinal).ToArray());
             NetworkSoundEventCatalog.setCalls = 0;
             var ready = OriginalNetworkSoundEventCatalogOwner.InitializeBeforeWorld(true, false, true, false, true, true);
-            Check(ready.ready && !ready.initializedByOwner && ready.nativeEntryCountBefore == 2,
+            Check(ready.ready && !ready.initializedByOwner && ready.nativeEntryCountBefore == 65 &&
+                  ready.sourceDefinitionCountObserved && ready.sourceDefinitionCount == 65 &&
+                  ready.emptyEventNameCount == 2,
                 "exact source-matching preexisting catalog is accepted without replacing it");
             Check(NetworkSoundEventCatalog.setCalls == 0 && ready.availabilityMadeAvailable,
                 "preexisting catalog is not reassigned and native availability is established");

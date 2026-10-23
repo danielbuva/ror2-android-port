@@ -44,6 +44,12 @@ class OriginalAudioNetworkSoundHostTests(unittest.TestCase):
                 "startup-gate": 6,
                 "aliases": 3,
                 "preexisting": 2,
+                "empty-family": 5,
+                "empty-truncation": 3,
+                "null-event-name": 3,
+                "null-definition": 1,
+                "null-source": 2,
+                "empty-source": 2,
             }.items():
                 with self.subTest(scenario=scenario):
                     ran = subprocess.run([str(MONO), str(executable), scenario], capture_output=True, text=True, timeout=30)

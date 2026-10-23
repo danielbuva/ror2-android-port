@@ -29395,3 +29395,55 @@ not promoted. J983 9feef7e9 remains the latest passing diagnostic, and J850
 f1550ce0 remains the accepted rollback. Both are preserved. The source-context
 and catalog candidate are built, but composed world/audio acceptance remains
 open. Main is asleep; the other devices are untouched.
+
+## J994 — Preserve original empty-name sound definitions in the complete catalog
+
+**Source-backed cause.** J993 refuses before the original setter. The offline
+census joins the accepted catalog/provider roots, generated bundle objects and
+retained source/project exports. All 65 NetworkSoundEventDef definitions belong
+to those roots; four referenced DLC definitions have exact empty eventName
+strings at sorted ordinals 0, 1, 7 and 64. There are no null event names or
+ambiguous definition identities. Those values match source export and generated
+content. Pinned R2API.Sound's before-catalog definition rule and the accepted
+original setter remain authoritative: it sorts/assigns every row without this
+new authored whitespace precondition. Filtering rows would change indices.
+
+**Small correction and ownership.** The process owner now passes every nonnull
+event-name string unchanged to the original setter, including empty strings.
+Null strings refuse separately before native mapping. A source-count observed
+flag and early length capture distinguish a null/unavailable family from an
+observed empty array. Bounded sorted empty/null ordinals and truncation flags
+expose source values separately from native results. Existing exact-family,
+foreign-table, zero native ID, availability, process lease and pre-world refusal
+gates remain. There is no replacement event name, ID, dictionary or Invalid
+index. A nonzero empty-string hash still proves no authored event or sound;
+actual native behavior must be measured in the next player.
+
+**Host evidence and reconstruction.** Independent review verifies the source
+census, candidate hashes and corrected startup-gate preimage. Fourteen executed
+production-owner scenarios cover full-family forwarding, exact empty/whitespace
+values, ordinal edges, null rejection before the setter, truthful count flags,
+bounded truncation and existing failure gates. The actual owner also compiles
+against the retained accepted 265-reference closure. Root integrates it
+byte-for-byte; the complete audio suite passes 112 tests with two optional skips,
+camera contracts pass 42 with three optional skips, and changed Python passes
+Ruff. Runtime membership is unchanged. The owner cohort retains its previous
+recipe as parent and refreshes producer/cache and camera-hook pins; subsequent
+reconstruction must replay this authored correction. No build step edits
+authored source by text replacement.
+
+Evidence is under `work/coordination/original-game-audio-pcm/` in
+`r28-network-catalog-definition-triage-r1/`,
+`r28-network-catalog-empty-name-review-r3/`,
+`r28-network-sound-catalog-draft-r3/` and Root's
+`r29-empty-source-{audio,camera}-host-root-r1.log`. Only authored code, synthetic
+fixtures and hashes are published; source assets, provider inventories and
+compiler outputs stay ignored. No new local build input is introduced.
+
+**Remaining gates.** This correction is not built or installed. J993 APK
+217d1a4f remains the failed installed diagnostic; Main is asleep with 13 applied
+runs intact. J983 remains the latest passing diagnostic and J850 the accepted
+rollback. A fresh full player, retained report fields, both standard controls
+and original network-effect gameplay remain required. Native empty-string ID
+behavior, bank-event presence, playback, spatial behavior and natural Quit
+remain unqualified.
