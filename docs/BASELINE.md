@@ -100,8 +100,9 @@ Color/background visibility improves, but washed-out rendering and PC parity
 remain open. These checks do not qualify full audio or natural Quit; J1037's
 saved music prefix and failed warm-Quit result remain separate evidence.
 
-J1043's later default-off MainOutput capture timing source is not in R36 and
-awaits its own player build/device qualification.
+J1043's default-off MainOutput capture timing and J1044's source-camera Uber
+composite source are not in R36. Both await the next full build and device
+qualification after the shared editor handback.
 
 R34's scoped MainOutput windows, failed warm Quit and separate cold-menu
 persistence remain recorded in J1022/J1028/J1031. Loader's full-kit semantics

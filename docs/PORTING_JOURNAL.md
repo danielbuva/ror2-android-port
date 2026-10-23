@@ -32796,3 +32796,61 @@ The source-view run is
 `work/experiments/original-camera-listener-lifecycle/20261023T202033.337163Z/`;
 its same-protocol driver is under
 `work/coordination/original-native-visual-reference/r36-source-view-root-r1/`.
+
+## J1044 — Restore the source-camera Uber composite contract on the host
+
+**Hypothesis and change.** The exact accepted Main Camera references
+`PostProcessResources_53.uber`; its exported shader is a one-pass,
+constant-white placeholder. The accepted `PostProcessLayer.RenderBuiltins`
+selects pass 0, and its Bloom renderer supplies the same sheet's Bloom inputs.
+This is a concrete source-contract gap. It does not establish that this shader
+alone causes J1040's washed-out image. The new default-off, input-bound Uber
+batch generates the complete three-pass official Post Processing 2.3.0 shader
+and its 17 HLSL includes from the pinned local archive. That package remains a
+compatible source reference, not proof of the game's shipped version.
+
+Prior art remains J1040's inspected R2Wiki dummy-export caveat and
+RoR2ImportExtensions' single-owner Post Processing assembly exclusion; the
+accepted runtime/resource/profile join governs this batch. The generator
+preserves the source shader metadata, camera, resource and run profile. It
+adds no runtime package or invented lighting/fog values. Authored tooling and
+minimum reconstruction identities are public; upstream and generated shader
+source stay ignored. Architecture and local-state ownership are documented.
+
+Whole-catalog preparation owns staging. Separate activation/marker/receipt
+schemas bind the exact generator, recipe, accepted input and stable candidate.
+Disabled prior staging refuses before catalog writes; unknown shader preimages
+and changed candidates refuse. Import replay and destination comparison validate
+the exact exceptions without creating live candidate inputs. This changes R3/R4
+catalog replay and requires preparation, typed host import and a full content
+build before device use. The camera recipe's whole-catalog source pin is updated.
+
+**Host result.** Review catches a real composition conflict: Bloom and Uber use
+identical package includes in a shared namespace. Replay now dispatches by an
+explicit Uber row tag and merges only independently validated, matching include
+hashes, metadata, GUIDs and targets. Existing Bloom row schemas remain readable;
+unequal ownership refuses. Root also corrects the legacy metadata-row flag in
+the regression fixture and restores the fixture's temporary module replacement,
+which otherwise poisons subsequent suites. The final integrated run has
+75 passes and two explicit historical-profile skips. The official local archive
+also generates the exact accepted-input candidate: three passes, selected pass
+0, 18 source files including Uber. Ruff, staged privacy/provenance review and
+the full fresh-clone pre-push CI pass at
+`c712bf58b899aff2b77a5ab83a86edfeac4b6c3d` (1,791 tests, 127 skips).
+That source checkpoint is pushed.
+
+**Current boundary and next gate.** No Unity/editor or device action occurs in
+this checkpoint. The shared editor remains released to the feedback owner.
+Both the Uber activation and J1043's skill-timed MainOutput selection are
+prepared but inactive. R36 remains installed, stopped and asleep; its profile
+and device receipts are untouched. After editor handback, activate both and
+run preparation → typed host import → preflight → full build. Freeze this
+session's own APK/payload before installing, then run both standard controls
+and the bounded source-view/audio observations. Android compilation, rendered
+appearance, full audio and PC parity remain unqualified by this host result.
+
+**Evidence.** The host-only draft, accepted-input source assessment, immutable
+packet manifest, Root corrections, integrated checks and push log are under
+`work/coordination/original-native-visual-reference/r36-remaining-rendering-draft-r1/`.
+The next inactive selector and ordered build plan are under
+`work/coordination/source-camera-uber-integration-root-r1/`.
