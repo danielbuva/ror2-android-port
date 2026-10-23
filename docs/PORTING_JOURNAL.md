@@ -33352,13 +33352,33 @@ producers. Do not substitute current Temp files or captured outputs and call
 that independence. Native AOT/metadata, Burst native output, serialized content
 and shaders remain separate unsolved production/qualification gates.
 
+**Direct source regeneration follow-up.** Reuse the pinned J597/J03
+`recovery.ilspy_project` command and CSharp9 language setting against the full
+original Assembly-CSharp and RoR2 assemblies in new isolated private roots.
+Assembly-CSharp decompilation succeeds in 0.8837 seconds, producing 23 source
+files and all 14 required original support source names. Eleven required files
+match the current staged bytes exactly. One differs only by the existing
+`repair_support_source` Event alias. Two retain decompiler syntax differences
+(anonymous delegate versus lambda, and implicit versus explicit enum values);
+no compilation/IL equivalence is claimed for those two. All 146 legitimate
+managed input hashes remain unchanged around this support-source run.
+The RoR2 run succeeds in 13.1628 seconds and reproduces all three map-source
+inputs at the exact published `recipe/build-entry-inputs.json` hashes. It does
+not generate the maps or their catalog/contract dependencies. No protected
+source is published, no staging recipe is changed and no project is imported.
+This establishes direct source availability without a general AssetRipper
+project export; exact source/compile compatibility remains to qualify.
+
 **Evidence and recommendation.** Private sources, invocation/input bindings,
 failed attempt, full census, source graph observations, complete producer
 outputs and seal live under `work/coordination/full-owner-managed-v1/`.
 `proof-v1.json` SHA-256
 `4d1ebc2818de7d6afb47587550ce11e8050b474cba1099a5ea71aefd1630533a`
-binds the evidence and all 249 declared output hashes. No current game build
-reads this research directory. Main's project/editor and the feedback device
+binds the evidence and all 249 declared output hashes. `proof-v2.json`, SHA-256
+`1dc1d6f649b3f80dfe1bf775fcaf49ec247e686662dbc16e6b1e34a03c9764a0`,
+binds that reviewed case plus the complete source regeneration follow-up,
+source comparisons and retained differences. No current game build reads this
+research directory. Main's project/editor and the feedback device
 lease are untouched. Reuse the existing raw-input producer and published
 assembly recipes in a full independent producer; do not start another raw audio
 implementation or claim that a full Editor rebuild is inherently required.
