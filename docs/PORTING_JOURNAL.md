@@ -31282,6 +31282,8 @@ as do Ruff and public/generated-document audits. No device or editor is used.
 After Main's later 5724dd7 documentation checkpoint, source alias
 97891e92a4f0b31c7b2d0260e7ed46eebb37317c preserves all 26 recorded generator
 source-file hashes and the latest Main journal prefix/non-owner snapshot rows.
+The final landing rebase onto 0a9a7c8 retains J1020 and all 26 hashes;
+code/tests are byte-identical to Main-reviewed head 582b283.
 
 Revisit on recipe/input/compiler/source changes or when connecting a later
 bootstrap producer. Full content/shader/package reconstruction, private-state
