@@ -1,15 +1,16 @@
 # Porting state
 
-Last updated 2026-10-23 UTC after **J1040/J1045 (device), J1043/J1044 (host) and J1036/J1042 (owner-build assessment/private replay)**.
+Last updated 2026-10-23 UTC after **J1040/J1045/J1046 (device), J1043/J1044 (host) and J1036/J1042 (owner-build assessment/private replay)**.
 R36 diagnostic bda30f33 passes both standard controls, strict current-process
 log checks and independent installed-byte/profile/placement readback. The
 source-camera route now reaches its bounded Outline observation without the
 previous Bloom or Blit pass errors, with more visible color/background detail.
 Rendering remains washed out and PC parity is open. Existing music-output
 capture remains finite/nonzero; full audio and the failed warm Quit remain open.
-J1045 also passes native first-stage UI-abandon/restart on R36, retaining the
-strict source-owner retirement and effect-loan guards. Main is stopped/asleep
-with the exact unchanged 13-run profile. J1043's
+J1045/J1046 also pass native first-stage UI-abandon and actual defeat/restart
+on R36, retaining strict source retirement and effect-loan guards with original
+audio ready. Main is stopped/asleep with the exact unchanged 13-run profile.
+J1043's
 skill-timed MainOutput capture and J1044's source-camera Uber composite batch
 are host-qualified, default off and queued for one full build after the shared
 editor handback. Accepted rollback stays J850 f1550ce0.
@@ -27,7 +28,7 @@ content on every update. Results are recorded once in the
 | Toolchain | Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan (`environment/toolchain.json`) |
 | Owner-build research | [J1042](docs/PORTING_JOURNAL.md#j1042--reconstruct-the-complete-accepted-output-on-android) completes private accepted-output replay on Android: all 840 target files and 571 unsigned APK entries match, without Editor/game compilation or installation. The [open receiver](tools/phone-build/accepted-output/README.md) uses a large private target-bearing package plus verified PC/SDK inputs. Packet reproduction and corrected host assembly/alignment/signing also pass. Independent PC-input-only production, app execution, phone owner signing, installation/update, public packet delivery and matched performance remain open. [The assessment](docs/accepted-build-reconstruction.md) compares these paths; Route A, Architecture C, the working game build and desktop fallback stay fixed. |
 | Latest device-verified APK | J1040/R36 diagnostic `bda30f33a62d62176cd45fd9cc0bd50ed5fe4e12d325ddc7ef19e948ec0fd3e7`, source 1428fdf: full content/player build, both strict standard controls and independent terminal readback. The bounded source-view route no longer records the previous pass errors, while washed-out rendering remains. Existing selected-music-output PCM stays finite/nonzero. Full audio, natural Quit and visual acceptance remain open. Accepted J850 stays `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`, source 1780ea9. |
-| Installed now | Main has J1040/R36 bda30f33 in adopted storage. J1045 independently rehashes installed bytes and the exact unchanged profile after native source-stage abandon/restart, with selector/process absent and display asleep. Placement/backing remain owned and verified; no install or sync occurred in this run. Other devices remain outside this assignment. |
+| Installed now | Main has J1040/R36 bda30f33 in adopted storage. J1046 independently rehashes installed bytes and the exact unchanged profile after native source-stage defeat/restart, with selector/process absent and display asleep. Placement/backing remain owned and verified; no install or sync occurred in this run. Other devices remain outside this assignment. |
 | Runtime source since verified APK | J1043/8497bda adds default-off MainOutput capture timing through the authoritative skill observer. J1044/c712bf5 restores the exact source-camera Uber composite contract through an independently selected generator and catalog replay. Host contracts, pins and clean-clone CI pass; neither change is in R36. Both selectors remain inactive pending the shared editor handback and one full content/player build. The active audio selection still requests the existing MusicController output. |
 | Previous diagnostic rollback | J1034/R35 `47d14cb855ce8fefdf2406d55591d13165665c4a160ab7d71f435c6469faba6e`, source 919e72a, retains both controls and J1037's saved nonzero music prefix/failed warm Quit. J1022/R34 `098646f6cc931c2a8d01d91fe4dfdcf5f54c58d9fc6ad01137695992e58588bd`, source 5724dd7, retains both strict controls and J1028/J1031's scoped PCM/persistence evidence. J1017/R33 `197101a8f5e511334ac577b77b09f2295df59559eb9467bc80941b204f8c3fc3`, source edb120f, retains both strict controls; J1024 records its separate failed source-view startup and passing default-menu Quit. J1013/R32 `4b1a7969d75238c647147956a3a32e160ba14fbed9f62751cb53edf5b99e1135`, source 8c526ed, retains both controls with the strict highlight null-prefab failure. J1006/R31 `88ecfc8cad36b9ee5c2bfa9b027047fae4a48ea0969ed8179e99aca4dfd0da15`, source 289f377, retains both controls with failed camera admission. J1000/R30 `bda75e3708b8f6dfa94d89e9cf07821d775375da3934d6702f7a74c9ccce62e0`, source b11893d, retains both standard controls. J979/R27 `213228ad3b6b70505f49c9002e08f841d254a5c2bf4cc075e0c78fb968fb0c2e`, source 2f81ab1, retains both controls and the J981 failed target route. J954/R26 `6dc44d98af45ebf262a2fdaea0251879f39c6ab0c066c423b5e1559cc2efc79d`, source bc8296a, retains J959/J962 PCM salvage and cold-persistence evidence. |
 | Device tooling | J755 verifies discovery, allowlist/profiles, separate ownership/runtime receipts, fresh reserves and idle screens on all three. The secondary test device passes both checks and produces J761's app-scope trace. The spare test device passes J762's automatic game checks and isolated audio; generic physical input remains unverified. Unity builds serialize while selected-device runs overlap. J888 verifies checked observations and teardown in both alpha standard modes. |
@@ -109,11 +110,11 @@ unavailable): [docs/subsystem-coverage.md](docs/subsystem-coverage.md).
   effect-loan return and healthy same-process restart on R36. A chance-shrine
   success co-occurs with a player Armor Plate pickup; natural boss/teleporter
   reward and exit remain unobserved. No full stage-clear acceptance follows.
-- Native first-stage loss/restart passes on J752's APK in J753, including genuine
-  defeat, strict cleanup and a healthy same-process second session. J798's current
-  native Normal attempt remains live without error at its 900 s host deadline;
-  no defeat or restart is accepted. Native stage transport, repeated long sessions
-  and ordinary difficulty remain open.
+- J1046 passes native Normal defeat/restart on R36 with original audio ready:
+  one original Commando DeathState, corpse/ragdoll/effect witnesses, strict
+  cleanup and healthy same-process second play. It remains assisted, not
+  ordinary-difficulty acceptance. Native stage transport, repeated long sessions
+  and unassisted combat remain open.
 - J887 observes native Huntress selected-skin readiness but source-camera
   activation and end-run failures; repair graphics fidelity and camera-state
   lifecycle before promoting the opt-in route. J915 observes skin/listener teardown

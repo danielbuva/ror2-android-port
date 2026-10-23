@@ -17,7 +17,7 @@ result in the journal.
 - [ ] Finish the opt-in source-stage lifecycle: observe natural teleporter/boss
       rewards and exit before extending transport and its table/identity turnover.
       Preserve the strict source retirement and effect-reference guards; current
-      native UI-abandon/restart passes in J1045 (J726/J730 resolve J710).
+      native UI-abandon/defeat and restart pass in J1045/J1046 (J726/J730 resolve J710).
 - [ ] Identify the intermittent LightningStake nonfinite transition across projectile
       identity turnover; retain native elite behavior while collecting evidence (J667).
 - [ ] Play the nine staged DLC scenes once a truthful expansion-availability path exists (J488).

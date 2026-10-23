@@ -32925,3 +32925,73 @@ host interpretation are under
 `work/coordination/source-stage-lifecycle-next-r1/`. No new build input or
 rebuild step is introduced. J1043/J1044's inactive source changes still await
 one full build after editor handback; accepted J850 and R36 remain intact.
+
+## J1046 — Native defeat and restart compose with R36 original audio
+
+**Hypothesis and scope.** R36's enabled original audio and native source owners
+can survive the actual death/effect path, beyond J1045's UI-abandon cleanup.
+J753's earlier player accepted native loss; J798's different player remained
+alive at its deadline. Neither qualifies this current composition. Use the
+existing native loss/restart runner on frozen R36 with its original 600 s bound;
+no forced death, timeout extension, runtime change or new observer is added.
+The existing J748/J753 exact effect-callback/frame fence and pinned ownership
+prior art remain authoritative. The check does not infer why previous runs
+survived longer.
+
+APK remains
+`bda30f33a62d62176cd45fd9cc0bd50ed5fe4e12d325ddc7ef19e948ec0fd3e7`,
+source `1428fdfca065f637c899ff159c9cacfe0b54e97b`, whose two standard controls
+and J1045 native abandonment already pass. Before launch, Root rechecks its
+frozen and actual installed bytes, exact retained profile, selector/process
+absence and matching runner/stage-owner source. Ordinary Commando/default
+loadout and Normal are observed, seed 2 and all five gameplay acceleration
+options remain unchanged/off. Automatic input and explicit native lifecycle
+selection remain assisted and excluded from permanent progression. No editor,
+build, install, sync, other device or Moon action occurs.
+
+**Device result.** The existing loss/restart contract passes with no collector
+failure or unexplained current-process error. Session 1 reaches 182.431442 s of
+native Lakes play and an original StandardLoss. Its death witness records one
+`EntityStates.Commando.DeathState` event, health -9, 14 ragdoll bodies, observed
+corpse, matching/destroyed death effect, destroyed player body and retained
+master. Original client ending/report persistence completes. This is a native
+death-path witness, not animation appearance acceptance or unassisted combat.
+
+The completed session has success/cleanup true, one original Stage-begin and
+recovery-required false. The existing strict source-owner retirement succeeds.
+Native death and summon listener counts each retire 1 → 0 synchronously with
+the server active. The callback/frame fence returns 25 owned effect loans;
+that count is returned loans, not a claimed residual or a weakened equality.
+The first combat observer is cleaned/detached. The loss restart input leads
+through guarded cleanup to the same PID's session 2, with a fresh healthy
+observer, another original
+Stage-begin, positive full health and 4.993500 s of native world play, empty
+errors and recovery false. No UI-abandon or fabricated ending is used.
+
+**Audio and acceptance boundary.** Both session reports retain all 153 requested
+banks ready and noAudio false, with session entries advancing from one to two.
+The existing selected-music-output window records 834 callbacks / 960,768
+finite nonzero scalars and no nonfinite/rejected samples. Counters are the same
+in the restarted report: they establish the bounded first capture only, not
+second-session output continuity. Original Term has not returned; this does
+not repair J1037's warm app-Quit failure, prove ordinary SFX/spatial behavior,
+or qualify speaker audibility. Native transport/boss rewards, full animation
+appearance and ordinary unassisted play remain separate gates.
+
+**Terminal state.** All three profile snapshots remain 13 applied runs and one
+earned/available unlock, with assisted result application excluded. Separate
+post-run device reads verify the exact installed APK and profile bytes
+unchanged, selector/process absence and display asleep without extra cleanup.
+Host observations are 180.301572 s from launch return to first world,
+367.950584 s to the loss restart tap, and 473.372342 s to healthy second play;
+these are polling wall times, not CPU/FPS measurements. The 600 s deadline is
+not reached. No source fix or repeat is needed for this passing contract.
+
+**Evidence.** Raw result, first-live/completed/restarted reports and logs are in
+`work/device/<serial>/experiments/session-cleanup/20261023T212107.500397Z/`.
+Root's frozen binding, unchanged-deadline driver, hypothesis, before/after
+reads and terminal validation are under
+`work/coordination/r36-native-loss-original-audio-root-r1/`.
+R36 remains installed/stopped/asleep, J850 remains the accepted rollback, and
+J1043/J1044 still await the shared editor handback for their full build. No new
+build input, architecture owner or rebuild step is introduced.
