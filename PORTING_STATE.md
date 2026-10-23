@@ -1,12 +1,11 @@
 # Porting state
 
-Last updated 2026-10-23 UTC after **J983/J982**. The source-bound report-fix
-APK 9feef7e9 passes both standard controls and independent installed-byte,
-placement and idle readbacks. Its active capture now supplies ten bounded music
-query rows with valid event/state lookups and advancing PCM counters. Segment
-position, event attribution, speaker output and visual parity remain open.
-A separate natural-Quit/readback route is running. Accepted baseline stays
-J850 f1550ce0; earlier failed routes remain failed.
+Last updated 2026-10-23 UTC after **J985/J983**. The source-bound report-fix
+APK 9feef7e9 passes both standard controls and supplies bounded active music
+queries. Two targeted natural-Quit routes fail the strict process-query timeout
+gate; later Term/PCM readbacks do not repair those failures. Idle query controls
+pass, leaving an intermittent or exit-specific issue unresolved. Main is asleep.
+Accepted baseline stays J850 f1550ce0; full audio and visual parity remain open.
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
@@ -21,7 +20,7 @@ content on every update. Results are recorded once in the
 | Toolchain | Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan (`environment/toolchain.json`) |
 | Owner-build research | J899/J902/J905/J920/J921 connect the authored phone compile/strip/convert/native/package/load chain. J931/J934 qualify static manager bindings and Android feature declarations. J939 target-key/API lookup equivalence remains failed. J948 qualifies static record-copy/insertion/consumer field alignment on Android. Node selection, container semantics, constructor results, populated maps, live target/module/state decisions, native usage and independent roots remain unqualified. J929 app hosting still fails its writable-execution refusal. Game compilation, content/shaders, permitted tool delivery and matched performance remain open. Route A and the desktop fallback stay fixed. |
 | Latest device-verified APK | J983 diagnostic `9feef7e96d470bf34f787988f444dcd2fc21f922eb5d4cfa43d80e3516ac87d9`, source fa24292: fresh full build, both standard controls, active music-query window and independent installed/placement/idle readbacks pass. Targeted shutdown/readback and visual parity remain open. Accepted J850 stays `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`, source 1780ea9. |
-| Installed now | Main has J983 diagnostic 9feef7e9 in adopted storage, with exact installed-byte readback. The separate bounded Huntress audio/source-camera natural-Quit route is running after standard-control cleanup. Other devices remain outside this assignment; historical receipts do not establish their present state. |
+| Installed now | Main has J983 diagnostic 9feef7e9 in adopted storage, with exact installed-byte readback. Both separate Huntress audio/source-camera natural-Quit routes failed the strict timeout gate. Independent terminal queries confirm process/selector absence and display sleep. Other devices remain outside this assignment; historical receipts do not establish their present state. |
 | Runtime source since verified APK | No runtime source change since fa24292. J982 exposes validated active capture telemetry; J983 verifies its query admission on device. The default-off Lightning observer and optional recovered shader path are included, with their full behavior still separate gates. |
 | Previous diagnostic rollback | J979/R27 `213228ad3b6b70505f49c9002e08f841d254a5c2bf4cc075e0c78fb968fb0c2e`, source 2f81ab1, retains both controls and the J981 failed target route. J954/R26 `6dc44d98af45ebf262a2fdaea0251879f39c6ab0c066c423b5e1559cc2efc79d`, source bc8296a, retains J959/J962 PCM salvage and cold-persistence evidence. |
 | Device tooling | J755 verifies discovery, allowlist/profiles, separate ownership/runtime receipts, fresh reserves and idle screens on all three. The secondary test device passes both checks and produces J761's app-scope trace. The spare test device passes J762's automatic game checks and isolated audio; generic physical input remains unverified. Unity builds serialize while selected-device runs overlap. J888 verifies checked observations and teardown in both alpha standard modes. |

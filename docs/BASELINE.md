@@ -90,9 +90,9 @@ The plain check and its acceptance criteria remain unchanged.
 
 J983's diagnostic APK 9feef7e9 is installed after both standard controls and
 independent APK-byte/placement/idle verification. Its active PCM report now
-admits the bounded original music-query window. The separate targeted natural
-Quit/readback result is pending; visual parity and broader audio acceptance
-remain open. See the [current snapshot](../PORTING_STATE.md) and
+admits the bounded original music-query window. Both targeted natural-Quit
+routes fail the strict process-query timeout gate (J985); independent terminal
+queries confirm sleep. Visual parity and broader audio acceptance remain open. See the [current snapshot](../PORTING_STATE.md) and
 [J983](PORTING_JOURNAL.md#j983--verify-the-active-pcm-report-fix-in-a-fresh-player-and-both-device-controls).
 The accepted baseline below remains the rollback.
 

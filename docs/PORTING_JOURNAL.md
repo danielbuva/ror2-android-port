@@ -29009,3 +29009,61 @@ The offline interpretation is
 Root starts a separate bounded Huntress/source-camera natural-Quit route only
 after these controls, using fresh bindings and its own Main claim. Its result
 is pending here. J981 stays failed and preserved; J850 stays accepted.
+
+## J985 — Preserve two failed natural-Quit witnesses and test idle query latency
+
+**Hypothesis and unchanged route.** After J983's two passing controls, the same
+source-bound APK and exact-output music query can be observed through original
+Quit and bounded post-Term readback. Root arms two separate attempts on the same
+frozen candidate; the second follows independent triage of the first timeout.
+Both retain the strict three-second command cap, exact witnessed process identity,
+30-second exit window and zero-timeout requirement. No runtime, event, native
+library, shader, source-camera or selection behavior changes between attempts.
+J964/J981/J982's source and bank-lifecycle prior-art boundary still applies.
+
+**First failure in both attempts.** Each reaches the bounded world observation,
+returns through its live menu and issues the original Quit tap after an exact
+pre-Quit process witness. In each, process query seven raises a transport timeout
+at the three-second cap. Later successful queries still identify the same
+witnessed process, followed by explicit absence before the exit deadline. Both
+routes correctly refuse `natural_process_absence_has_transport_timeout`; later
+absence cannot repair that failed observation. Failure cleanup succeeds. Preserve
+both raw attempts and do not repeat unchanged gameplay to seek a passing sample.
+This is an unresolved exit-query reliability problem, not evidence that natural
+Quit, full audio or original rendering passed.
+
+**Independent terminal and saved-signal evidence.** Root separately confirms
+installed APK bytes, adopted placement, the unchanged 13 applied runs, process
+and selector absence, and sleeping display after each failure. Readback copies
+match remote hashes. The second attempt's six-file inventory contains the two
+previously known pairs plus a distinct third pair. All three pass the public
+bounded F32/sidecar validator for the exact selected output. The distinct pair
+reports 506,880 finite nonzero scalar samples and original engine Term,
+callback-manager Term, post-Term disarm and persistence witnesses. The first
+attempt's distinct pair reports 504,576 samples with those same lifecycle
+witnesses. These are saved numerical signals, not event attribution or physical
+audibility. Prelaunch inventories retained counts rather than full names, so
+freshness and whole-route acceptance stay false; known older pairs are not
+counted as new output.
+
+**Idle diagnostic and classification.** Root then releases the completed run
+claim and takes a separate read-only Main claim. With the app absent and display
+asleep, eight neutral shell controls and sixteen repetitions of the exact
+package-process query all return successfully under the unchanged three-second
+cap. Maximum elapsed times are 0.107232 s and 0.172931 s respectively. No launch,
+input, selector or device-data change occurs. Independent before/after checks
+confirm process/selector absence and sleep. This narrows investigation toward
+an intermittent or exit-specific condition; it does not establish its cause or
+validate a replacement identity predicate. The strict exit gate remains fixed.
+
+**Evidence and revisit conditions.** Failed routes and independent readbacks are
+`work/experiments/original-game-audio-pcm/r27-root-capture-r2/` and
+`r27-root-capture-r3/`; their exact Root bindings are retained under
+`work/coordination/original-game-audio-pcm/r27-runtime-driver-root-r2/` and
+`r27-runtime-driver-root-r3/`. Interpretation is in that coordination area's
+`r28-targeted-postfailure-analysis-r1/`, `r28-quit-timeout-recurrence-r1/` and
+`r28-idle-query-latency-root-r1/`. The latter preserves exact commands, claim and
+helper hashes, monotonic timings, bounded output, terminal observations and
+saved-pair validation. Revisit natural-Quit observation only after query-path
+analysis justifies a concrete change or a distinct measurement. J983 remains
+the latest standard-control diagnostic APK; J850 remains the accepted rollback.
