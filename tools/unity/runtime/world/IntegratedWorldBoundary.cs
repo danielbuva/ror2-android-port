@@ -460,12 +460,42 @@ public sealed partial class PortSession
         EngiShieldHitGuardTemplateLease engiShieldGuard;
         AndroidNativeSourceCameraRigOwner originalAudioCameraContext;
         bool originalAudioCameraContextAttempted;
+        readonly OriginalAudioCameraContextCreationSchedule originalAudioCameraContextCreationSchedule =
+            new OriginalAudioCameraContextCreationSchedule();
         float nextSurvivorSkillSample;
         int lastTransientWindowRequestCount;
         public IntegratedWorldSession(PortSession coordinator)
         {
             this.coordinator = coordinator;
         }
+
+        // The finite source-camera admission window must start only after this
+        // session is servicing the actual integrated-world playing loop.
+        // This policy performs no Unity or native work and consumes a queued
+        // creation exactly once at that lifecycle boundary.
+        internal sealed class OriginalAudioCameraContextCreationSchedule
+        {
+            internal enum BeginResult { NotPending, Deferred, Begin, Refused }
+            bool pending;
+            public bool IsPending => pending;
+            public void Schedule() { pending = true; }
+            public void Reset() { pending = false; }
+            public bool CancelPending()
+            {
+                bool wasPending = pending;
+                pending = false;
+                return wasPending;
+            }
+            public BeginResult Begin(bool integratedWorldPlaying, object updatePlayer, object ownedWorldPlayer, bool alreadyAttempted)
+            {
+                if (!pending) return BeginResult.NotPending;
+                if (!integratedWorldPlaying) return BeginResult.Deferred;
+                pending = false;
+                return !alreadyAttempted && updatePlayer != null && ReferenceEquals(updatePlayer, ownedWorldPlayer)
+                    ? BeginResult.Begin : BeginResult.Refused;
+            }
+        }
+
         float nextWorldPickupSnapshot;
         string worldPickupRegistryStage;
         bool worldPickupRegistryFallback;
@@ -565,10 +595,11 @@ public sealed partial class PortSession
                     previousCreated, previousReleasePrepared),
                 "Previous original audio camera-context owner was not released before preparing another world");
             originalAudioCameraContextAttempted = false;
+            originalAudioCameraContextCreationSchedule.Reset();
             originalAudioCameraContext = null;
         }
 
-        void PrepareOriginalAudioCameraContext(CharacterBody player)
+        void PrepareOriginalAudioCameraContext(CharacterBody player, bool createAtIntegratedWorldUpdate = false)
         {
             var report = coordinator.r.world;
             if (report == null)
@@ -590,6 +621,12 @@ public sealed partial class PortSession
             if (originalAudioCameraContextAttempted)
             {
                 report.originalAudioCameraContextState = "duplicate_world_context_creation_refused";
+                return;
+            }
+            if (!createAtIntegratedWorldUpdate)
+            {
+                originalAudioCameraContextCreationSchedule.Schedule();
+                report.originalAudioCameraContextState = "deferred_until_first_integrated_world_update";
                 return;
             }
             originalAudioCameraContextAttempted = true;
@@ -2060,7 +2097,22 @@ public sealed partial class PortSession
         }
         public void ObserveIntegratedWorld(CharacterBody player, float elapsed)
         {
-            ObserveOriginalAudioCameraContext();
+            var cameraCreation = originalAudioCameraContextCreationSchedule.Begin(
+                true, player, coordinator.worldPlayer, originalAudioCameraContextAttempted);
+            if (cameraCreation == OriginalAudioCameraContextCreationSchedule.BeginResult.Begin)
+                PrepareOriginalAudioCameraContext(player, createAtIntegratedWorldUpdate: true);
+            else if (cameraCreation == OriginalAudioCameraContextCreationSchedule.BeginResult.Refused)
+            {
+                originalAudioCameraContextAttempted = true;
+                var report = coordinator.r?.world;
+                if (report != null)
+                {
+                    report.originalAudioCameraContextState = "refused_closed: world_player_lifecycle_mismatch";
+                    report.originalAudioCameraContextAdmissionFailure = "world_player_lifecycle_mismatch";
+                }
+            }
+            else
+                ObserveOriginalAudioCameraContext();
             coordinator.ObserveSourceAnimationEvents(player, elapsed);
             if (elapsed >= nextSurvivorSkillSample)
             {
@@ -3279,8 +3331,17 @@ public sealed partial class PortSession
             next.skipOfflineMenu = !coordinator.returnToOfflineMenu;
             PortSession.Destroy(coordinator.gameObject);
         }
+        void CancelPendingOriginalAudioCameraContextCreationForCleanup()
+        {
+            bool cancelled = originalAudioCameraContextCreationSchedule.CancelPending();
+            var report = coordinator.r?.world;
+            if (cancelled && report != null && !report.originalAudioCameraContextCreated)
+                report.originalAudioCameraContextState = "deferred_creation_cancelled_by_world_cleanup";
+        }
+
         public void CleanupIntegratedWorld()
         {
+            CancelPendingOriginalAudioCameraContextCreationForCleanup();
             ReleaseOriginalAudioCameraContext();
             if (lightningStakeSourceCallObserver != null)
             {

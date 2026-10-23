@@ -2916,6 +2916,15 @@ Optional field resolution is independent of camera admission. Typed known flags
 and bounded errors retain unavailable observations as unknown; capture invokes
 no callback and does not change camera or target state.
 
+For ordinary requested audio, `IntegratedWorldSession` queues its audio-only
+camera request during world preparation. `ObserveIntegratedWorld` consumes it
+once at the first exact-owned-body playing update, after the preparation
+coroutine completes. The original owner starts the same five-second admission
+window there; opt-in, visual-diagnostic exclusion and source readiness gates are
+unchanged. World cleanup cancels pending creation before ordinary owner release,
+without claiming an uncreated context was released. The production schedule and
+cleanup helper execute in `test_deferred_audio_camera_creation.py` (J1011).
+
 For ordinary requested audio, the same owner retains bounded first/latest
 admission inputs in `AndroidNativeAudioCameraAdmissionEvidence` (J1005).
 `IntegratedWorldBoundary` copies this scalar-only DTO into its world report

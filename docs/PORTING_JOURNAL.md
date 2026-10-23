@@ -30170,3 +30170,122 @@ evidence remains authoritative. The underlying object-return failure is still
 unknown. A corrected fixture is host-reviewed and queued; it must keep generic
 idle responses separate from strict primitive receipt parsing. No new player or
 device behavior follows from this transport check.
+
+
+## J1009 — Complete isolated camera blur compilation and owned cleanup
+
+**Hypothesis and source.** J1007 verifies primitive string transport, while
+J1004's complete fixture routes remain failed. Run the reviewed R3 successor
+against J1003's unchanged generated sources and accepted input. The pinned
+native-program/disassembly method in community prior art remains authoritative;
+this fixture adds no recovered shader body to Git or new rendering claim.
+
+Root copies the frozen packet, applies the independently reviewed manifest-name
+and strict-envelope corrections, and passes all 54 host tests. Under the normal
+shared mutex, the pinned 2021.3.45f2 editor imports all four exact shader names
+with pass counts 1/1/2/1 and no shader messages. Strict Android/Vulkan bundle
+compilation includes the QuickDumbBlur FLIP_V material variant. Primitive receipt
+readback, exact source/metadata ownership checks and generation-scoped deletion
+all pass. Root separately verifies the empty owned fixture parent, preserves its
+metadata, removes it through manage_asset, and verifies parent/sidecar absence
+and editor idle. There is no device action or project setting change.
+
+The generation is `06763bded59a9d4245618870`. Its final compile/cleanup receipt
+SHA-256 is `c4ffa5e1395aae9bb62a6e05d7308cf4f94ee7baaba86b31b13a98000c0fba7e`.
+Evidence is under
+`work/coordination/original-native-visual-reference/translucent-compile-fixture-root-r3/`
+and `work/editor/shader-candidate-compile-fixtures/06763bded59a9d4245618870/`.
+J1004's prior failures remain unchanged. The four sources remain unselected in
+the gameplay catalog. Runtime rendering, semantic equivalence and PC visual
+parity remain unproven; the next content integration must retain their exact
+source identities and repeat device checks.
+
+## J1010 — Refuse an uninformative dynamically loaded JSON fixture
+
+**Question and reviewed fixture.** J1006 loses the first nested camera sample
+from device JSON. Host copies and metadata retention cannot establish Unity
+serialization. Review the proposed nonrecursive scalar-base shape and a fixture
+that calls actual pinned-editor JsonUtility with production copy methods, zero,
+one and distinct first/latest samples. Review first rejects a null-identity
+assertion: Unity's inline default objects must remain unobserved rather than
+being required to retain CLR null. The successor retains raw JSON and warning
+observations; host tests pass. Its response-size claim is not accepted as a
+strict byte bound because message and exception paths remain insufficiently
+bounded.
+
+Under a fresh editor-only claim and ordinary host mutex, Root hash-checks and
+loads the exact two offline-compiled authored DLLs, invokes their primitive-string
+fixture entry points, then verifies the editor is idle. Both the legacy and
+candidate wrappers produce `{}` for zero, one and multiple samples (2 bytes
+each), with no serialization warnings. Both fail their distinct-value
+round-trip checks. No asset is imported, scene loaded, player built or device
+accessed. These results do not distinguish recursive from nonrecursive fields:
+the dynamically loaded nested types do not provide a usable serializer oracle
+in this setup. The underlying type-discovery cause remains unproven.
+
+The R3 packet is
+`work/coordination/original-game-audio-pcm/r32-admission-json-contract-draft-r3/`,
+manifest SHA-256
+`1a587c5c6d2ff799dc262aa6764abf2c6918794aaa7cccca2048fdc1b365074b`.
+Root evidence is
+`work/coordination/original-game-audio-pcm/r32-admission-json-exact-editor-root-r2/`,
+result SHA-256
+`8388f1bbfcfc03d12677d66a06dbfb9e7d028441d85240266848b282ffc745fe`.
+Do not integrate or qualify the proposed report shape from this experiment.
+Use actual Unity-imported project report types, then a real player's retained
+JSON, for any later serialization decision. Current production shape is unchanged.
+
+## J1011 — Start audio camera admission at the playable world boundary
+
+**Measured ordering hypothesis and prior art.** J1006 observes valid rig,
+target, context and listener operands but a stale music snapshot near the end
+of its finite startup window. Inspect the current world lifecycle: camera
+creation starts that window during PrepareIntegratedWorld, before remaining
+presentation, connection and model setup. NovaInputBoundary enters its playing
+loop only after that coroutine finishes. Revisit pinned R2API.Sound/SoundAPI.cs
+at f539511e: native initialization and original music-track event/state seams
+are separate from managed bank registration. That prior art supplies no Android
+camera replacement or reason to extend the timer. Current source ordering and
+device observations govern this narrow correction; the stale snapshot alone
+does not prove why the original target was absent.
+
+**Existing owner, changed start boundary.** IntegratedWorldSession queues the
+opt-in audio-only camera during preparation and consumes that request once on
+its first playing update. It requires the update body to be the exact owned
+world body and refuses missing, foreign or duplicate attempts. The existing
+CreateAudioContextOnly path starts its unchanged five-second window then.
+Explicit visual-source diagnostics retain their existing separate ownership;
+default-off remains a no-op. Source callbacks, listener ownership, music sampling,
+readiness predicates and post-ready retirement are unchanged. Cleanup cancels a
+pending request before the existing release path, recording cancellation only
+when no context was created. Review caught and corrected the first draft's
+uncanceled pre-update request.
+
+The public host fixture extracts and executes the actual production schedule
+and cleanup helper with synthetic objects, covering deferred phases, exact-body
+one-shot admission, foreign and duplicate refusal, reset, cleanup cancellation
+and truthful existing-owner status. Focused camera/audio/cohort tests pass 22
+checks. Changed Python passes Ruff. A separate full compile correctly refuses
+an older R30 reference lock because its project bootstrap DLL changed after the
+R31 build; that failed attempt is preserved and is not counted as a compile
+success. The next pinned-editor player build must compile current inputs.
+
+The reviewed world postimage SHA-256 is
+`35dfbdfed52bac952f6783872e12ff4811596617007e83d358ff6b79c96131f7`.
+Refresh the original-audio source cohort and producer/camera staging pins;
+new cohort SHA-256 is
+`ab67e99b51682597414659be55a66491c095af551a676fb935428108198d9947`,
+with J1005's cohort retained as parent. Runtime membership is unchanged.
+Reconstruction must replay this authored world source and refreshed recipes.
+No new timestamped build input or exact-text build patch is introduced.
+
+Evidence under `work/coordination/original-game-audio-pcm/` includes
+`r32-deferred-audio-camera-creation-draft-r2/`,
+`r32-deferred-audio-camera-review-r2/`,
+`r32-deferred-public-test-draft-r2/`, `r32-camera-integration-root-r1/`
+and `r32-full-runtime-compile-root-r1/`.
+This checkpoint has not built or installed the correction. Main retains J1006
+88ecfc8c, stopped/asleep with 13 applied runs, and J850 remains the accepted
+rollback. Both standard controls and strict camera admission must be repeated
+on the new exact player before Loader is armed. J1010's JSON proposal and the
+four blur content overrides remain unintegrated. No Alpha-owned behavior changes.
