@@ -31266,6 +31266,20 @@ CLI, refusal, source-equality, independent metadata and host/CI evidence is unde
 `c568268379b77304c92661b8315343e945cd1da662e1fa6ee2aa4486e18333ee`.
 Generated DLLs, importers, input metadata and raw logs remain ignored locally.
 
+**Current-main integration repeat.** Rebase onto Main 6bb3ddf preserves its full
+journal prefix and all non-owner snapshot rows. The action registry retains the
+newer shader action alongside this producer; generated indexes are refreshed.
+Source 8a8137697555967a48eac45bba6b99662eab2424 runs the public action again
+against the same reviewed input tree. All 98 output files pass actual readback;
+the source receipt is clean and all three broad qualification flags stay false.
+The manifest SHA-256 is
+`bd52330f02ed7ff64296d46666e13624585d7e0987fa2b051de2298b156c0d37`;
+receipt SHA-256 is
+`a61d30b87822782ac9eab5be873a3593112691e6be6b6e50e9e1211850f8c9bb`.
+Private repeat evidence is under `work/coordination/pr41-refresh-r1/` in the
+isolated host tree. The 12 owner, 18 rebuild and 215 registry contracts pass,
+as do Ruff and public/generated-document audits. No device or editor is used.
+
 Revisit on recipe/input/compiler/source changes or when connecting a later
 bootstrap producer. Full content/shader/package reconstruction, private-state
 removal from later steps, native usage/linker roots, phone hosting and matched
