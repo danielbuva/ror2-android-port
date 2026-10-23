@@ -29641,3 +29641,124 @@ native dependency delivery, launcher/app sandbox hosting, broader tool modes,
 full reconstruction/content/shaders, independent editor roots, complete player
 construction and matched performance remain open. No current SDK pin is
 replaced, and no game runtime or final installation architecture is selected.
+
+## J992 — Connect phone-acquired public tools to owner assembly transforms
+
+2026-10-23 UTC.
+
+**Hypothesis and scope.** J990's three public archive inputs may be acquired and
+verified directly on the phone, then consumed there for the same exact owner
+transforms. This addresses an acquisition boundary left open by host-staged
+tool dependencies. It does not bootstrap the native Python/.NET hosts or build
+a full player. Route A, the working SDK-based producer and desktop fallback
+remain unchanged.
+
+Reuses J990's pinned public compiler, Cecil source, reference package and the
+existing authored transform recipe. No new RoR2 transformation or runtime
+adapter is introduced. ADB supplies the public authored sources, manifests and
+private legitimate Managed input copies, and coordinates the trial. Only the
+three archive downloads, dependency extraction, source compilation and metadata
+transforms are phone-side observations.
+
+**First failure.** A fresh Alpha-owned workspace attempts HTTPS acquisition
+using the staged Python interpreter's default TLS context. The first request
+fails with `CERTIFICATE_VERIFY_FAILED` / self-signed certificate in the chain.
+The recorded default CA locations do not exist in this relocated tool tree and
+the context contains zero CA certificates. Certificate verification remains
+required and hostname checking remains enabled; no archive is accepted and no
+downloaded code runs. This failed case is retained, not relabelled as a platform
+limitation or retried with verification disabled.
+
+The [Python SSL API](https://docs.python.org/3.14/library/ssl.html#ssl.SSLContext.load_verify_locations)
+supports loading CA material into a context. Android's
+[Conscrypt store implementation](https://android.googlesource.com/platform/external/conscrypt/+/c006ec00f9a6c677ebaf73b64df5f5087f9623f7/platform/src/main/java/org/conscrypt/TrustedCertificateStore.java)
+identifies system and updatable certificate directories. Read-only observation
+finds the system directory on this device, with 125 certificate files; the
+updatable directory is absent.
+
+**Scoped TLS correction and acquisition.** A new driver loads those existing
+system certificate files into its process-local default SSL context. No device
+certificate store, global configuration or user certificate is modified. All
+125 inputs are hash-recorded privately. Hostname checking stays true and
+verification stays `CERT_REQUIRED`. This raw-file bridge does not implement or
+qualify Android TrustManager policy, removed/user certificates or a production
+launcher network stack.
+
+A new exclusive workspace downloads all three pinned archives over HTTPS.
+Only the allowlisted public endpoints and HTTPS redirects are accepted; names,
+sizes, duration and SHA-256 are bounded. An archive is promoted from its partial
+file only after its pinned size/hash match. Total download size is 40,694,712
+bytes; the three transfers and checks complete in 7.01 seconds. The downloaded
+compiler and reference package match the archives whose signatures were
+verified on the host in J986/J990. This step checks those published pins on the
+phone; it does not run NuGet signature verification there.
+
+| Phone-acquired archive | SHA-256 |
+| --- | --- |
+| Compiler toolset 4.8.0 | `37333f4f1e2ce55e621355d6da651dc23d4cb5f94a8f76b9478816e87f110ad9` |
+| Cecil source `8021f3fb` | `7b85fd10af20c0e98cf88660c0fb97f5d6d9dace1c788b0a63af6c58aefadc28` |
+| .NET reference package 8.0.32 | `6088b3ebfe5af44511eaf8d592e029e1ef870da01b1fcb80aa790a6536bc14db` |
+
+The acquisition run executes no downloaded code. Pulled copies independently
+match each archive pin. Its source files, installed game and idle state are
+preserved.
+
+**Connected consumer.** A separate fresh case receives 172 static inputs:
+unmodified public tool source, manifests/notices and private legitimate Managed
+metadata. It receives no compiler/provider/reference payload from the host.
+Instead, it reads the successful phone acquisition receipt and those exact
+archive files in place, verifies their identity/size/hash again, then extracts
+only pinned members. Cecil sources also match their Git blob IDs. Duplicate,
+unsafe or unexpected selected members refuse; upstream project scripts and
+package restore never run. Existing notices/licenses are retained.
+
+The consumer extracts 358 dependency files, including 132 Cecil C# sources and
+163 design-time reference DLLs. The reference DLLs are compiler inputs, not
+runtime libraries. It executes the extracted verified compiler, compiles the
+public source provider and all 12 original authored C# files, then runs the two
+owner-recipe modes under the reused Android .NET 8.0.32 host. All 14 original
+source/project files remain unchanged; no private hash-helper patch or Unity
+SDK Cecil/reference binary is used.
+
+Provider compilation takes 3.59 seconds, tool compilation 3.58 seconds, and the
+connected runner 13.14 seconds including validation/extraction. Both transform
+processes witness the generated unsigned provider's actual location/identity/hash
+and runtime 8.0.32. All three output DLLs match J986's existing golden hashes and
+independently match after pull. All 172 static inputs, 358 extracted dependency
+files and three acquired archives remain unchanged. Timings are component
+observations, not a complete installation, build-cost or runtime benchmark.
+
+**Refusal control.** Copies the three public archives into a new owned control
+directory and flips one byte only in the copied reference archive. The same
+qualified extractor refuses `Acquired archive hash differs` before creating its
+dependency directory or executing a downloaded compiler. All acquired original
+archive hashes remain unchanged. The corrupted copy and result are retained.
+
+Every transfer/consumer/control checks current selected-device ownership,
+storage, workspace backing and the configured reserve. Existing Python and,
+for the connected consumer, all 276 reused .NET runtime files match their
+receipts. No APK is built/installed, no game is launched and no editor action
+occurs. The existing Alpha APK
+`be26c21c4cd8ff15a8a663528216cf7a69394a51d8b9441a63a1a496f83e98b5`
+reads back unchanged; its process and diagnostic selector are absent and the
+display is verified asleep after each case. No Main device operation occurs.
+
+**Evidence and revisit conditions.** Private acquisition evidence is
+`work/coordination/phone-proof/public-tool-acquisition-r1/`, including both
+drivers, failed default-trust case, successful scoped-trust case, archive copies
+and `run-selection-v1.json` / `run-selection-v2.json`. Its 32-artifact
+`proof-receipt-v1.json` SHA-256 is
+`751d9b9cb98a5fbd5f3e57e5a5719c66bf2f20b40822e1ceecaa0e8dc0c593a9`.
+The connected consumer and corruption control are in
+`work/coordination/phone-proof/acquired-tool-transform-r1/`, with selectors,
+source/manifests, extracted outputs/witnesses and `connected-summary-v1.json`.
+Its 589-artifact receipt SHA-256 is
+`e398682a4faa66638801a5a25fa5d3ed8be7cd3c27e0c21dbcdd3be47b46db48`.
+
+Promote a reviewed reusable owner-build profile before treating this as shipped
+behavior. Native Python/.NET and dependent-library acquisition/delivery, source
+checkout and legitimate-input import, native Android networking/trust policy,
+app-host execution/permissions, cancellation/resume and broader tool modes
+remain open. Content/shaders, independent editor roots, complete game/player
+construction and matched performance remain separate gates. No working build,
+SDK pin, game runtime or final installation architecture is changed.
