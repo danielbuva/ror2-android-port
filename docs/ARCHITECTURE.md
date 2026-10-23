@@ -33,6 +33,24 @@ for phone-only delivery while retaining the desktop workflow as fallback; no
 replacement game runtime or working build pipeline is selected. Public-input bootstrap,
 performance equivalence and device acceptance remain open.
 
+[Accepted-build reconstruction](accepted-build-reconstruction.md) compares a
+fixed-target owner converter, private delta/frame replay and general Unity-project
+reconstruction. `tools/phone-build/accepted-output/package.py` owns explicit private-packet
+reproduction and framed emission. It verifies supplied target/profile/PC/SDK
+inputs without generating independent Android target information. `assemble.py`
+owns hash-bound unsigned APK assembly and required uncompressed/aligned resource
+storage; canonical alignment and owner signing follow separately.
+`phone_decode.py` in that directory owns current
+experimental **support**, not game runtime: explicit new owned workspace, pinned
+private package and verified PC/SDK inputs produce complete target files and an
+unsigned APK. The process owns setup, bounded codec children, hashes/progress,
+result state and child teardown at failure/exit; it retains failed outputs.
+[Its README](../tools/phone-build/accepted-output/README.md) specifies the stream,
+limits, tool build and lifecycle. No `./dev` game build or launcher consumes this
+path. The packet's target information stays private; independent owner-input
+production, ordinary app execution, owner signing/alignment, install/update and
+public distribution of any game-bearing packet remain separate gates.
+
 Phone build **support**: `scripts/lab/phone_bundle.py` writes the isolated authored
 TextAsset bundle with only Python's standard library; its versioned native
 schemas consume no class database or generated asset. `phone_content.py` owns
