@@ -29447,3 +29447,101 @@ rollback. A fresh full player, retained report fields, both standard controls
 and original network-effect gameplay remain required. Native empty-string ID
 behavior, bank-event presence, playback, spatial behavior and natural Quit
 remain unqualified.
+
+## J996 — Verify the complete network sound catalog and classify camera startup failures
+
+**Hypothesis and reproducible player.** Preserving J994's complete source family
+should let the original setter initialize its native mapping without changing
+indices or inventing events. Root builds committed source b3c6178 with the
+shared Unity mutex, then freezes its own APK, symbols, source/build receipts,
+333 pre-strip and 93 post-strip assemblies, and 266 payload files. Unity
+2021.3.45f2 finishes in 202.553076 s with zero build errors. The fresh build
+request is `20261023T034153.169596Z-fc9aecd6fdb4401188561db8057c0540`;
+APK SHA-256 is
+`0d984b0120cdb9cc0efda06239841922439ffb2be2844d590aa014fcd34f7112`.
+The pinned native library is unchanged. A separately compiled metadata checker
+verifies all 22 serialized catalog snapshot fields and retained coordinator,
+session and original API calls in the same-request captured assemblies.
+That check establishes retention, not runtime behavior.
+
+Build/freeze evidence is
+`work/coordination/original-game-audio-r29-build-root-r1/`; build receipt
+SHA-256 is `624751c1eacadbc7aa7be33523e3467f33bb56b37b149a74a9c6ab0f2a7617f3`,
+and source freeze is
+`fcfbf9a5412b974c061ff5470c62acf32a38670800dda7f142378fca392a59b6`.
+The frozen candidate is
+`work/experiments/original-game-audio/r27-20261023T034153.169596Z-fc9aecd6fdb4401188561db8057c0540-0d984b0120cd/`.
+R27 remains only the freezer wire format; source identity is the fresh R29 build.
+Metadata evidence is under the ignored audio coordination parent in
+`r29-network-catalog-poststrip-check-root-r1/`.
+
+**Both standard controls pass.** The explicit frozen APK updates Main in place
+on its freshly checked adopted storage; the matching frozen payload syncs.
+The plain check reaches 35.209335 s on Lakes. The second process completes one
+original exit to Goolake and remains there for 10.631409 s. Both record the
+exact current APK, no report error or first failure, diagnostic assists and
+13 unchanged applied runs. Cleanup verifies process/selector absence and
+display sleep. A separate read-only terminal query rehashes installed bytes,
+checks owned placement and the persistent profile, and confirms idle sleep.
+Root archives and clears its completed claim. The other devices are untouched.
+
+Controls are
+`work/coordination/original-game-audio-r27-device-controls/attempts/root-r4-r29/`;
+canonical baseline evidence is
+`work/experiments/baseline/20261023T035253.388348Z/` and
+`work/experiments/baseline/20261023T035714.641197Z/`.
+Their final-report hashes are
+`ab005daa39b1d3ec4ad6dd0b358ed96ccfa331767e12a380efafe2a37d519953` and
+`86fcd7a78ff60b263aad84a5169a8db19e2060e386bcee952419d7071a31d8c8`.
+Independent terminal/installed/profile evidence and the archived claim are in
+`work/coordination/original-game-audio-r29-device-controls-root-r1/`.
+
+**Catalog result and limits.** Both final reports observe source count 65,
+native count zero before and 65 after, original setter initialization,
+availability publication and ready native mapping. They retain the four exact
+empty-name ordinals 0, 1, 7 and 64; null definitions/names and zero-ID counts
+are zero. The audio owner remains ready with noAudio false, no returned Term
+and its bundle lease held. This qualifies complete-family startup in these
+two assisted runs, not every event's bank presence or playback.
+
+Read-only disassembly of the exact linked native artifact separately predicts
+the nonnull empty-string hash `2166136261`; null and uninitialized paths differ.
+The device snapshot observes zero failed IDs but does not expose each returned
+value, so it does not measure that exact hash. The four empty rows are not
+distinct event identities. Static evidence is in
+`work/coordination/original-game-audio-pcm/r29-empty-name-native-static-review-r1/`.
+Original source-call and nonzero finite output PCM observations remain bounded;
+event attribution, persisted raw waveform, spatial behavior and audibility
+are not established by these controls.
+
+**Separate first failure and next change.** The baseline assessor does not
+qualify audio camera readiness or classify every Unity log error. Both final
+reports show the requested context created but not ready, rig index -1 and
+no observed managed listener; the owner reports retirement at its combined
+active/PlayerBasic predicate. The plain process also logs a concrete activation
+exception: original TranslucentImageSource cannot resolve
+`TranslucentImage/EfficientBlur`. No admission exception is recorded because
+Unity logs the callback failure while the factory returns. Listener removal
+does not prove earlier listener readiness, and release/destruction remain
+unverified in these snapshots.
+
+Accepted source assigns PlayerBasic and subscribes its update callback in
+CameraRigController.Start. Early owner inspection could precede that callback,
+but the combined predicate does not identify the failing operand. This is a
+source-backed hypothesis, not measured callback ordering. The next candidate
+must resolve the source prefab's exact shader dependency before activation,
+distinguish structural invalidity from bounded initial null-mode waiting, and
+retain the native Start, update, target, listener and music-context contracts.
+Do not force a mode or fabricate readiness. J988 and its pinned R2API.Sound
+prior-art boundary remain applicable; no replacement audio engine or bank
+conversion follows from these observations.
+
+The reviewed Loader runner's host validators reject this actual plain report
+for camera-context refusal and unexplained current-process shader errors.
+It stays unarmed even though both standard controls pass. Host analyses are in
+the ignored audio coordination parent under
+`r29-plain-report-analysis-r1/` and
+`r30-audio-camera-context-independent-triage-r1/`.
+The new APK is the latest standard-check diagnostic, with these explicit
+failures; J850 remains the accepted rollback. Full audio, original network-effect
+gameplay, natural Quit and visual parity stay open.

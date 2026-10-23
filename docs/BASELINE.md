@@ -88,12 +88,14 @@ The plain check and its acceptance criteria remain unchanged.
 
 ## Current baseline (2026-10-23)
 
-J983's diagnostic APK 9feef7e9 is installed after both standard controls and
-independent APK-byte/placement/idle verification. Its active PCM report now
-admits the bounded original music-query window. Both targeted natural-Quit
-routes fail the strict process-query timeout gate (J985); independent terminal
-queries confirm sleep. Visual parity and broader audio acceptance remain open. See the [current snapshot](../PORTING_STATE.md) and
-[J983](PORTING_JOURNAL.md#j983--verify-the-active-pcm-report-fix-in-a-fresh-player-and-both-device-controls).
+J996's diagnostic APK 0d984b01 is installed after both standard controls and
+independent APK-byte/placement/idle verification. The original network sound
+catalog now initializes, including the four original empty-name entries.
+The separate audio camera context retires before readiness, and its source
+prefab logs a missing EfficientBlur shader during activation. Passing the
+standard checks does not qualify that context or broader audio. J985's targeted
+natural-Quit failures remain unresolved. See the [current snapshot](../PORTING_STATE.md) and
+[J996](PORTING_JOURNAL.md#j996--verify-the-complete-network-sound-catalog-and-classify-camera-startup-failures).
 The accepted baseline below remains the rollback.
 
 | Item | Value |
