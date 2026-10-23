@@ -30884,3 +30884,137 @@ fallback. Next: inspect raw-byte loading and deferred ownership before testing
 another bounded loading profile. Complete output comparison, phone-only tool
 publishing/acquisition, app security, permitted distribution, Android
 content/shader/player production and matched game performance remain open.
+
+
+## J1017 — Verify the equipment-highlight owner and six-row shader payload on Android
+
+**Hypothesis and build.** J1014/J1015 supplies the three source highlight
+prefabs before body activation; a fresh player should remove J1013's null
+prefab exception while retaining camera and network-sound readiness. J1012 also
+requires a full catalog rebuild to include its four blur/crop shader sources.
+Prior-art and source relationships remain those audited in J1014 and J1012;
+this experiment adds no runtime machinery or new build input.
+
+Doctor and selected preflight pass before the retry. Build committed source
+edb120f66df94571be6e8e22fdec662cfe49d39c with the pinned Unity editor,
+IL2CPP ARM64 and Vulkan. Request
+20261023T090053.178974Z-1df50984431b4623ab2c9f09d500591f succeeds in
+845.20 s with zero errors. APK SHA-256:
+`197101a8f5e511334ac577b77b09f2295df59559eb9467bc80941b204f8c3fc3`.
+The previous conversion trace remains preserved; the new same-request trace
+contains one complete conversion event with a different digest. No other cache
+output is removed. This is the successful retry after J1015's importer refusal.
+
+**Host closure.** The inherited private freezer first refuses its obsolete
+exact-two-shader rule before creating a candidate directory. Preserve that
+failure. A separately reviewed successor accepts only the exact historical
+pair or complete six-row cohort, verifies typed catalog roots and one GUID plus
+one primary-key alias per root, and retains all source/request/APK/native and
+payload checks. All 23 private freezer tests pass. Freeze the exact APK,
+symbols, 266 payload hashes and same-request managed evidence; no latest pointer
+selects artifacts. Both pre/post-strip checks retain the 14 camera fields,
+142 admission fields, new five-field highlight report and 22-field audio
+catalog snapshot. These are metadata checks, not playback or rendering proof.
+
+**First device attempt.** Update the owned gameplay package in place on its
+freshly queried adopted storage and sync only the frozen payload. Plain passes
+35.303894 s on Lakes. The one-exit check fails its unchanged 370 s host deadline
+at 166.328171 s of world time, still on Lakes with zero transitions. The native
+boss is defeated, charge is complete and the reward is collected. Exit begins
+in ExtractExp at 163.695236 s, only 2.632935 s before cutoff. The accepted source
+requires a four-second TeleportOut phase after money collection, followed by
+the check's ten destination-stage seconds. Compare J629's distinct earlier
+deadline failure; neither failure establishes its timing cause.
+
+Both current-process logs contain zero unexplained errors. The camera and
+complete 65-entry native network-sound mapping are ready, and all three
+highlight fields are assigned and ready. Preserve the failed attempt and its
+independent installed-byte/placement/profile/idle query. Do not lengthen the
+check, force the exit or reinterpret this first attempt as passed.
+
+**One unchanged repeat.** Repeat both standard modes once with the same frozen
+APK, payload, source, selectors, assists and deadline. Plain passes 35.245850 s
+on Lakes; stage-exit passes on Goolake at 151.134842 total world seconds and
+12.814117 destination-stage seconds. Both raw results identify the current APK,
+keep 13 applied profile runs and pass teardown. Strict current-process replay
+finds zero unexplained errors in each, with only the existing Windows-bundle
+negative control. Both reports retain the original camera/listener context,
+complete native sound mapping and all three ready highlight assignments.
+J1013's highlight null-prefab exception is absent. This repeat demonstrates
+passing bounded checks and timing variability; it does not resolve the first
+attempt's timing cause or establish reliable cold-start performance.
+
+Independent readback rehashes the installed APK, verifies owned adopted
+placement, unchanged profile, selector/process absence and display sleep. The
+accepted rollback remains J850. These force-stop checks do not observe natural
+highlight-handle release or Wwise shutdown. First-admission nested JSON remains
+absent. The complete six-row payload is installed, but Android appearance,
+matched PC parity, composed playback and physical audibility remain unqualified.
+
+**Evidence and replay.** Preserve build execution, the first freezer refusal,
+reviewed successor invocation and metadata under
+`work/coordination/original-game-audio-r33-build-root-r2/`. The immutable
+candidate is
+`work/experiments/original-game-audio/r27-20261023T090053.178974Z-1df50984431b4623ab2c9f09d500591f-197101a8f5e5/`;
+its retained R27 wire name does not identify an older APK. Failed and repeated
+controls are `root-r8-r33` and `root-r9-r33` under
+`work/coordination/original-game-audio-r27-device-controls/attempts/`.
+Strict replay, first-attempt triage and both independent terminal queries are
+under `work/coordination/original-game-audio-r33-device-controls-root-r1/` and
+`work/coordination/original-game-audio-r33-stage-exit-triage-r1/`.
+The authored recipe changes to replay remain J1012/J1014/J1015; no new
+runtime source or reconstruction exception is introduced here.
+
+## J1019 — Observe Loader without a blue-elite LightningStake source event
+
+**Scope and prior art.** Resume the held J981/J989 Loader observation on J1017's
+same frozen APK
+`197101a8f5e511334ac577b77b09f2295df59559eb9467bc80941b204f8c3fc3`,
+source edb120f, after both strict standard controls and independent terminal
+verification. Retain J974's bounded source-call observer and the original
+blue-elite projectile boundary. The reviewed host runner requires original
+audio-owner and complete network-sound mapping readiness because J989 failed
+there. Camera state is observed separately; removing it as a host admission
+prerequisite changes no runtime gate, source callback or projectile operand.
+
+Use the existing developer Loader selection on Lakes, with invincibility as
+the only enabled acceleration. There is no forced damage, projectile, elite
+hit, destination, stage transition or menu tap. Bind the exact raw generated
+request to the frozen stage receipt's request digest, distinct control PIDs,
+APK/source/build identity and a fresh single-device Root claim. The unchanged
+reviewed runner has 60 passing host tests and remains separately staged from
+runtime source; its R32 wire labels are retained for this R33 artifact.
+
+**Result.** The runner reaches its 60 s stage limit at 60.412796 world seconds,
+with 14 bounded observation snapshots and 49 current-process log snapshots.
+There is no report failure or unexplained current-process error; the known
+platform annotation and Windows-bundle negative control remain separate.
+Camera context is reported ready and source rendering stays disabled.
+
+The source-call observer is attached with zero capture failures, but records
+zero LightningStake calls or identities. No blue-elite hit is recorded in this
+window. This is not a repaired intermittent defect or a positive projectile
+exercise. The original skill observer independently records Primary 27,
+Secondary 3 and Special 2 authority/server activations; the Special is the
+original ThrowPylon definition, distinct from the blue-elite event. Utility
+has zero activations. Source review attributes that coverage gap to the
+existing automatic combat route: its evade utility pulse excludes a melee
+primary. No input or skill implementation is changed from this observation.
+
+**Terminal state and next action.** Owned failure-style force-stop cleanup is
+intentional for this bounded observation and invalidates natural-quit
+acceptance. Cleanup, independent process/selector/display checks and terminal
+placement/profile checks pass. A separate guarded query rehashes the installed
+APK and confirms the same 13 applied runs. Main is stopped/asleep and its
+completed Root claim is archived and released; other devices and editors are
+untouched. Gameplay acceptance, full-kit semantics, natural teardown and the
+intermittent LightningStake defect remain open. Use the existing all-four
+SurvivorSkillInputCoverage route for broader kit coverage; do not add another
+instrumentation probe or fabricate the missing elite event.
+
+Evidence is retained under
+`work/coordination/original-gameplay-breadth/r33-loader-gameplay-catalog-root-r1/attempts/root-r1/`,
+with the exact runner/binding and independent query in its parent packet.
+Host source/coverage analysis is in
+`work/coordination/original-gameplay-breadth/r33-loader-zero-call-triage-r1/`.
+No runtime/build recipe changed; J1017 remains the APK/control qualification.

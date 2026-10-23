@@ -88,15 +88,15 @@ The plain check and its acceptance criteria remain unchanged.
 
 ## Current baseline (2026-10-23)
 
-J1013's diagnostic APK 4b1a7969 is installed after both standard controls and
-independent APK-byte/placement/idle verification. Original network-sound mapping
-and audio-camera admission pass on Lakes and after one exit to Goolake. The
-strict stage log nevertheless records an original equipment-highlight null
-prefab; plain has no unexplained current-process errors. Hold further targeted
-runs until that dependency is corrected. First-sample JSON retention, composed
-audio and J985's natural-Quit failures remain unresolved. See the
-[current snapshot](../PORTING_STATE.md) and
-[J1013](PORTING_JOURNAL.md#j1013--admit-the-original-audio-camera-and-expose-a-missing-equipment-highlight-dependency).
+J1017's diagnostic APK 197101a8 is installed after both standard controls,
+strict log replay and independent installed-byte/placement/idle verification.
+The first stage-exit attempt missed the unchanged deadline; one identical repeat
+passes both modes. The camera, native sound mapping and three highlight
+assignments are ready without J1013's null-prefab exception. J1019's separate
+Loader observation does not qualify full-kit semantics or the intermittent
+blue-elite event. First-sample JSON, natural teardown, composed audio and
+rendered parity remain unresolved. See the [current snapshot](../PORTING_STATE.md)
+and [J1017](PORTING_JOURNAL.md#j1017--verify-the-equipment-highlight-owner-and-six-row-shader-payload-on-android).
 The accepted baseline below remains the rollback.
 
 | Item | Value |

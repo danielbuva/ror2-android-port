@@ -2807,9 +2807,9 @@ Input/tool drift, symlinked output roots, unknown metadata and colliding output
 paths refuse before publication. The generator retains EfficientBlur's two
 source passes/shared fragment and QuickDumbBlur's measured `FLIP_V` axis.
 It has no runtime setup or teardown. J1009 verifies isolated Android/Vulkan
-compilation and cleanup. J1012 adds catalog consumption; the installed player
-still has J997's placeholder blur bodies until a new content build is verified.
-Android rendering and matched PC appearance remain separate gates.
+compilation and cleanup. J1012 adds catalog consumption; J1017 installs the
+complete six-row payload after a full catalog/player build. Android rendering
+and matched PC appearance remain separate gates.
 
 `whole_catalog.prepare_integration` owns the optional shader catalog override
 (J966/J1012). The public `recipe/shader-catalog-overrides.json` is a default-off
@@ -3046,7 +3046,8 @@ but its context retires before readiness and a source-prefab shader lookup fails
 separate qualification gates. J997 makes the source TranslucentImageSource
 Start dependency set explicit in the catalog roots and preactivation checks:
 QuickDumbBlur, DownTent, EfficientBlur and FillCrop. The existing exact typed
-location/conversion and built-bundle ownership checks cover all four. Their
-current exported shader bodies are placeholders, so this restores lookup
-dependencies and does not recover blur/crop rendering semantics. This
-correction awaits a fresh player and does not qualify camera or audio readiness.
+location/conversion and built-bundle ownership checks cover all four. J997
+restores lookup dependencies from placeholder exports; J1012 adds the recovered
+blur/crop sources through the six-row catalog consumer. J1017 installs that
+payload and separately verifies bounded camera readiness. Rendering, native
+listener outcome and audible playback remain unqualified.
