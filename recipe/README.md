@@ -1825,3 +1825,14 @@ admission/report behavior and hashes are published; source asset values,
 provider inventories, original or middleware code/binaries and raw evidence
 remain ignored. Runtime source membership and local inputs are unchanged.
 Provenance/privacy audit: 2026-10-23.
+
+J997 adds the source camera component's exact EfficientBlur and FillCrop
+Addressables roots and makes its already-present QuickDumbBlur dependency
+explicit alongside DownTent. Only minimum source names, keys, typed catalog
+locations and authored preactivation/validation code are published. Shader
+bodies, source component code, generated catalogs/bundles and raw device
+evidence stay ignored; accepted legitimate input supplies the original content.
+The camera recipe refreshes authored prerequisite/catalog source digests.
+Exact exported paths do not prove shader fidelity: these blur/crop exports use
+placeholder bodies, and actual rendering semantics remain unqualified.
+Provenance/privacy audit: 2026-10-23.

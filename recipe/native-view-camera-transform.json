@@ -20,14 +20,32 @@
         "primary_key": "TranslucentImage/DownTent.shader"
       },
       {
+        "address_key": "12e87e7c7fde8e74db9f75172456c5c3",
+        "bundle": "must_be_present_in_built_manifest",
+        "catalog_id": 2538,
+        "primary_key": "TranslucentImage/EfficientBlur.shader"
+      },
+      {
+        "address_key": "d996ab4381100014d99e25e68e9aac84",
+        "bundle": "must_be_present_in_built_manifest",
+        "catalog_id": 2539,
+        "primary_key": "TranslucentImage/FillCrop.shader"
+      },
+      {
+        "address_key": "b12e02e9a9b684543a286089a03cb04b",
+        "bundle": "must_be_present_in_built_manifest",
+        "catalog_id": 2540,
+        "primary_key": "TranslucentImage/QuickDumbBlur.shader"
+      },
+      {
         "address_key": "c14b6abb309b8c246add9e94a6920d7f",
         "bundle": "must_be_present_in_built_manifest",
         "catalog_id": 15950,
         "primary_key": "RoR2/Base/Shaders/RampFog.shader"
       }
     ],
-    "schema": "exact-original-camera-shader-roots-r2",
-    "source_resolution": "whole_catalog.py resolves each key and exact converted source path from the accepted local inventory; WholeCatalogBuild validates bundle ownership and built bundle presence before writing the prepared manifest. RampFog location 15950 is an explicit narrow root because the runtime key references an otherwise filtered location.",
+    "schema": "exact-original-camera-shader-roots-r3",
+    "source_resolution": "whole_catalog.py resolves each key and exact converted source path from the accepted local inventory; WholeCatalogBuild validates bundle ownership and built bundle presence before writing the prepared manifest. RampFog location 15950 is an explicit narrow root because the runtime key references an otherwise filtered location. The complete four-shader TranslucentImageSource.Start lookup set is explicit; EfficientBlur and FillCrop were missing in J996.",
     "type": "UnityEngine.Shader, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"
   },
   "config_selection": {
@@ -268,7 +286,7 @@
     "build_hook": "92ba34b39e4fd30693fa4e3127f3edcf3735c1723bb86af5a5dc671e308513e3",
     "camera_contract": "89c628d05aada562c6fe635ffb80f42530c6300b4c1003734d78372fb51136da",
     "camera_owner": "d984e609d4757b4e7cd1033433f68024774a09121824e5c7cb30f383ac208604",
-    "camera_prerequisites": "dc8539bd7935bc7357dd298c7c89b63af7f1f6e253ca55423bc0edbb3c333214",
+    "camera_prerequisites": "7d726175b0f93d9d4e83d032b7244cd9f9cd9df49d0ec1bd57d73df63587d18a",
     "listener_contract": "e138a103abc56700af610044e833811c8dce4eeb3d205dc3c20fc491bb962a4b",
     "marker": "7d86f674c0f6dde711916fe3105b8a88b2e91c39d1351d83ee77f0e2deea8f9f",
     "music_controller_owner": "15272167e3c416edb863797bf35dcbe8ef6704ecac805fdbe38186f4d73d41b0",
@@ -281,7 +299,7 @@
     "skin_lifecycle_audio_camera_merge": "6bc20e1dd305a35646e434728457be8502cacb7cae109e833aa3a31a040a64ea",
     "transformer": "612e1f374e6381e48aec33e902505953e47d1f4df765df646ea02284c7d16598",
     "verifier": "f9047828a437fc650dbc30e68c81585a80b3f38ed87cc81427b32314b6cf9b91",
-    "whole_catalog": "f650ab6274196b8240f7f4889bec5d184d394bdc6223126d89b32a673b050c06"
+    "whole_catalog": "cf95377a8a8c5441dcae08596a52da3efa3db2ba9eda646037088a566d57fbca"
   },
   "stage_receipt_sha256": "21aeba0fa4e20e70346fdcc6e309d056ea385b63be013726f690b930ba33c05b",
   "unity_tools_sha256": {

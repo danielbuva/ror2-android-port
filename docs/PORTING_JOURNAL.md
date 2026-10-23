@@ -29545,3 +29545,66 @@ the ignored audio coordination parent under
 The new APK is the latest standard-check diagnostic, with these explicit
 failures; J850 remains the accepted rollback. Full audio, original network-effect
 gameplay, natural Quit and visual parity stay open.
+
+## J997 — Root the original camera component's complete blur shader dependencies
+
+**First failure and source identity.** Both J996 processes log the same original
+TranslucentImageSource.OnEnable/Start failure resolving EfficientBlur during
+camera activation. Root verifies the accepted source caller's four lookups and
+the agent's hash-bound catalog/conversion evidence: QuickDumbBlur, DownTent,
+EfficientBlur and FillCrop. The generated catalog already contains the first
+two, but omits EfficientBlur location 2538 and FillCrop location 2539. The
+latter is the source's next lookup, so adding only the observed first missing
+key would leave another known dependency missing.
+
+**Small correction and prior art.** The existing Python catalog roots, Unity
+builder validation table and camera recipe now explicitly name all four
+dependencies. Runtime camera preparation checks all four exact source shader
+names before activating the staged prefab. The exact type, address key,
+primary key, conversion and bundle ownership checks remain in force. Only two
+additional output assets are needed; QuickDumbBlur's existing membership is
+made explicit. Original components and callbacks are retained, using the
+existing locally converted shader assets. No new shader implementation,
+swallowed exception or Wwise behavior is introduced.
+
+Independent inspection finds DummyShaderTextExporter pass-through bodies in
+both newly rooted exports, as in the existing DownTent/QuickDumbBlur exports.
+Exact conversion here proves path/catalog identity, not original blur/crop
+semantics. This candidate restores lookup dependencies only; shader behavior
+is an approximation and remains a visual restoration task. The audio-context
+camera stays non-rendering. Successful lookup must not be reported as faithful
+source rendering, and later source-view work must revisit these shader bodies.
+
+The prior-art Addressables section's key/location/provider identity discipline
+and J364–J366's source shader/catalog authority apply. Root re-inspects pinned
+R2API.Sound's initialized-engine/bank lifecycle boundary; it offers no shader
+or camera lifecycle workaround. Accepted source and the actual logged lookup
+outrank assumptions about prefab dependency collection. No new reconstruction
+mechanism is needed: the accepted conversion map already marks both missing
+shader source paths exact.
+
+**Host evidence and reproducibility.** The production root validator resolves
+all seven camera shader roots against the actual accepted source catalog and
+conversion map. Eight focused contracts include missing source conversions,
+key/type drift, Python/recipe/Unity identity agreement and the complete source
+component lookup set. The broader native-camera suite passes 44 tests with
+three optional skips; changed Python passes Ruff. The camera recipe refreshes
+the prerequisite and whole-catalog source hashes. Reconstruction must replay
+the root/prerequisite change before the next build. Runtime source membership
+and required local state are unchanged; no build step rewrites authored source.
+
+Evidence is under `work/coordination/original-game-audio-pcm/` in
+`r30-efficient-blur-dependency-draft-r1/`,
+`r30-efficient-blur-dependency-review-root-r1/`,
+`r30-shader-exact-roots-root-r1.json` and
+`r30-shader-camera-host-root-r1.log`. Only authored identifiers, validation and
+synthetic fixtures are published; no source shader/component body, generated
+catalog/bundle, protected middleware or raw device evidence is included.
+
+**Remaining gates.** The correction is host-tested, not built or installed.
+Main retains J996 diagnostic 0d984b01, independently idle/asleep with 13 applied
+runs. Its separate combined active/PlayerBasic predicate still refuses; shader
+repair alone does not prove camera readiness. Fresh build, retained complete
+catalog/bundle membership, both standard controls, error-free source activation
+and actual camera/listener context remain required. Loader and composed audio
+remain unqualified; J850 stays the accepted rollback.

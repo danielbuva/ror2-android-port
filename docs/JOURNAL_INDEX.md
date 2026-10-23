@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J997](PORTING_JOURNAL.md#j997--root-the-original-camera-components-complete-blur-shader-dependencies) | 2026-10-22 | Root the original camera component's complete blur shader dependencies | **First failure and source identity.** |
 | [J996](PORTING_JOURNAL.md#j996--verify-the-complete-network-sound-catalog-and-classify-camera-startup-failures) | 2026-10-22 | Verify the complete network sound catalog and classify camera startup failures | **Hypothesis and reproducible player.** |
 | [J994](PORTING_JOURNAL.md#j994--preserve-original-empty-name-sound-definitions-in-the-complete-catalog) | 2026-10-22 | Preserve original empty-name sound definitions in the complete catalog | **Source-backed cause.** |
 | [J993](PORTING_JOURNAL.md#j993--build-the-native-catalog-candidate-and-preserve-its-pre-world-refusal) | 2026-10-22 | Build the native catalog candidate and preserve its pre-world refusal | **Build and exact artifact.** |

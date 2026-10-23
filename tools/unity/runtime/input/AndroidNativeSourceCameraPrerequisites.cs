@@ -16,6 +16,9 @@ public static class AndroidNativeSourceCameraPrerequisites
         "Hopoo Games/Internal/SobelBuffer",
         "Hopoo Games/Internal/VisionLimit",
         "TranslucentImage/DownTent",
+        "TranslucentImage/QuickDumbBlur",
+        "TranslucentImage/EfficientBlur",
+        "TranslucentImage/FillCrop",
     };
 
     static readonly FieldInfo SobelShaderField = typeof(SobelCommandBuffer).GetField(

@@ -23,11 +23,26 @@ class CameraShaderRootsTests(unittest.TestCase):
         }
         self.closure = {"converted": {str(location_id): {"resolution": "exact", "source": f"Assets/Original/{location_id}.shader"} for location_id in expected}}
 
-    def test_four_exact_shader_rows_are_added_as_source_paths(self):
+    def test_exact_camera_and_source_blur_shader_rows_are_added_as_source_paths(self):
         self.assertEqual(
             whole_catalog.camera_shader_roots(self.metadata, self.closure),
-            {"Assets/Original/16022.shader", "Assets/Original/16025.shader", "Assets/Original/15950.shader", "Assets/Original/2537.shader"},
+            {f"Assets/Original/{i}.shader" for i in (16022, 16025, 15950, 2537, 2538, 2539, 2540)},
         )
+
+    def test_source_blur_dependencies_cannot_be_filtered_or_missing(self):
+        for location_id in (2537, 2538, 2539, 2540):
+            with self.subTest(location=location_id):
+                source = self.closure["converted"].pop(str(location_id))
+                try:
+                    with self.assertRaisesRegex(RuntimeError, "not exact"):
+                        whole_catalog.camera_shader_roots(self.metadata, self.closure)
+                finally:
+                    self.closure["converted"][str(location_id)] = source
+
+    def test_prefab_activation_checks_all_four_source_start_shader_lookups(self):
+        source = (ROOT / "tools/unity/runtime/input/AndroidNativeSourceCameraPrerequisites.cs").read_text()
+        names = set(re.findall(r'"(TranslucentImage/[^"\n]+)"', source))
+        self.assertEqual(names, {"TranslucentImage/QuickDumbBlur", "TranslucentImage/DownTent", "TranslucentImage/EfficientBlur", "TranslucentImage/FillCrop"})
 
     def test_generator_recipe_and_unity_builder_agree_on_exact_shader_roots(self):
         recipe = json.loads((ROOT / "recipe/native-view-camera-transform.json").read_text())["camera_shader_roots"]

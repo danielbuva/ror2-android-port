@@ -14,6 +14,9 @@ CAMERA_SHADER_ROOTS = {
     16025: ("5e246b703e2090148a761d52af19744b", "RoR2/Base/Shaders/HGVisionLimit.shader"),
     15950: ("c14b6abb309b8c246add9e94a6920d7f", "RoR2/Base/Shaders/RampFog.shader"),
     2537: ("e4abd95960ed75f4a9f59cac7c40bd9d", "TranslucentImage/DownTent.shader"),
+    2538: ("12e87e7c7fde8e74db9f75172456c5c3", "TranslucentImage/EfficientBlur.shader"),
+    2539: ("d996ab4381100014d99e25e68e9aac84", "TranslucentImage/FillCrop.shader"),
+    2540: ("b12e02e9a9b684543a286089a03cb04b", "TranslucentImage/QuickDumbBlur.shader"),
 }
 SHADER_LOCATION_TYPE = "UnityEngine.Shader, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"
 

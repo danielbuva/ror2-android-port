@@ -2972,5 +2972,12 @@ manager without acquiring or destroying it. World cleanup observes exact owned
 root inactivity and managed listener removal, restores the scene camera pointer
 and separately records a deferred destroy request; actual destruction remains
 unobserved. Native listener outcome, spatial correctness and audibility remain
-separate gates. This authored candidate still requires a fresh player build and
-device qualification; J988 is host evidence only.
+separate gates. J996 builds this candidate and passes both standard controls,
+but its context retires before readiness and a source-prefab shader lookup fails. These remain
+separate qualification gates. J997 makes the source TranslucentImageSource
+Start dependency set explicit in the catalog roots and preactivation checks:
+QuickDumbBlur, DownTent, EfficientBlur and FillCrop. The existing exact typed
+location/conversion and built-bundle ownership checks cover all four. Their
+current exported shader bodies are placeholders, so this restores lookup
+dependencies and does not recover blur/crop rendering semantics. This
+correction awaits a fresh player and does not qualify camera or audio readiness.
