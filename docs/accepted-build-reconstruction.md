@@ -169,6 +169,39 @@ assets. The newer audio branch's Android Wwise SDK/runtime adds its own grant:
 These are concrete unresolved grants, not a finding that every local conversion
 is unlawful or that purchasing the PC game grants an Android SDK license.
 
+**Deeper rights research and working policy.** Rights uncertainty is not a
+blanket stop on local owner-only feasibility work, nor a reason to discard
+independently authored conversion recipes. [Hopoo's published modding statement](https://store.steampowered.com/news/posts/?appids=632360&enddate=1567203681&feed=steam_community_announcements)
+encourages the modding community and describes its intended EULA purpose. This
+is favorable evidence for mod tools, but a historical community statement is
+not a specific grant to redistribute a later Android game build.
+
+There are legal paths that do not require a new permission letter for every
+tool. [17 U.S.C. §117(a)](https://www.copyright.gov/title17/92chap1.html#117)
+provides a conditional owner-copy/adaptation exception; eligibility and the
+proposed use matter, while §117(b) separately restricts transfers of adaptations.
+[Sony v. Connectix](https://law.justia.com/cases/federal/appellate-courts/F3/203/596/474793/)
+protects the particular intermediate reverse-engineering use considered there.
+Neither is a universal approval or prohibition of this local port.
+[Galoob](https://law.justia.com/cases/federal/appellate-courts/F2/964/965/341457/)
+also rejects a blanket infringement theory for the Game Genie, while
+[Micro Star](https://law.justia.com/cases/federal/appellate-courts/F3/154/1107/625110/)
+finds infringement for the different fixed map-file product before it. These
+different outcomes require examining the actual tool/patch and protected
+expression; neither the word "patch" nor absence of embedded source text settles
+the question.
+
+Accordingly, proceed with private owner-generated reconstruction and patch
+feasibility under the existing no-DRM-bypass scope. Do not classify every derived
+byte as automatically forbidden. Evaluate any proposed public patch's actual
+data and applicable grants/exceptions; absence of a port-specific prohibition
+alone is not affirmative public-distribution clearance. The explicit game-EULA
+restrictions, statutory transfer restriction and conditional SDK grants are
+evidence to resolve for that particular distributed artifact, not an excuse to
+leave the technical reconstruction uninvestigated. No conclusive determination
+that the proposed independently authored owner-only converter is unlawful was
+established by this research.
+
 No proposed converter may bypass DRM, authentication, ownership or DLC checks.
 Local file verification must continue to be described as local input verification.
 

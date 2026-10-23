@@ -32514,3 +32514,14 @@ before complete producer coverage is credible. The alpha checklist now states
 the complete product gates instead of treating general export and static probes
 as mandatory product stages. Revisit with a complete output-producer map,
 permitted tools and an end-to-end reconstruction of this frozen target.
+
+The user additionally directs that uncertain permissions not stall feasibility.
+Further primary research finds Hopoo's favorable historical modding statement,
+the conditional §117 owner-adaptation exception and its separate adaptation
+transfer restriction, and different results in Connectix/Galoob/Micro Star.
+The assessment distinguishes owner-only local work and independently authored
+tools from the actual contents of a publicly distributed patch. No blanket
+"derived means unlawful" finding or port-specific prohibition is established.
+Proceed with private reconstruction feasibility; do not mistake silence for
+public-distribution clearance or bypass DRM. Primary citations and the precise
+limits of these comparisons live in the assessment.
