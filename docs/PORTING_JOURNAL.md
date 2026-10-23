@@ -31279,6 +31279,9 @@ receipt SHA-256 is
 Private repeat evidence is under `work/coordination/pr41-refresh-r1/` in the
 isolated host tree. The 12 owner, 18 rebuild and 215 registry contracts pass,
 as do Ruff and public/generated-document audits. No device or editor is used.
+After Main's later 5724dd7 documentation checkpoint, source alias
+97891e92a4f0b31c7b2d0260e7ed46eebb37317c preserves all 26 recorded generator
+source-file hashes and the latest Main journal prefix/non-owner snapshot rows.
 
 Revisit on recipe/input/compiler/source changes or when connecting a later
 bootstrap producer. Full content/shader/package reconstruction, private-state
