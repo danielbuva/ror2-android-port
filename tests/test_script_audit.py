@@ -93,9 +93,10 @@ class ScriptAuditTests(unittest.TestCase):
         body = SOURCE.read_bytes().split(b" public static void Build(){", 1)[1].split(b" [Serializable] class SceneProbeConfig", 1)[0]
         # The script-audit change preserved this body. J763 adds the separately
         # reviewed, request-scoped symbols mode. The later audio-provenance
-        # addition records only report.summary.guid after BuildPlayer returns;
-        # keep destination audits from silently changing this build path.
-        self.assertEqual(hashlib.sha256(body).hexdigest(), "c4bb4715ddc9a4a46553a75f35e7794211f8fdb97d0f598f78a06bd49b80b964")
+        # addition records report.summary.guid after BuildPlayer returns. J975
+        # also finalizes its optional capture witness from that returned report;
+        # keep destination audits from silently changing this reviewed path.
+        self.assertEqual(hashlib.sha256(body).hexdigest(), "de48d2fd893748012f06819020df8296990ee5dfa2afa9edd1a1109db5d2be7e")
 
     def test_destination_gates_before_calling_unchanged_build_and_never_filters_messages(self):
         source = SOURCE.read_text()

@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J976](PORTING_JOURNAL.md#j976--verify-final-report-completion-and-refuse-reused-conversion-evidence) | 2026-10-22 | Verify final-report completion and refuse reused conversion evidence | **Hypothesis and change.** |
 | [J975](PORTING_JOURNAL.md#j975--complete-the-optional-build-witness-from-the-returned-buildreport) | 2026-10-22 | Complete the optional build witness from the returned BuildReport | **Observed progress.** |
 | [J974](PORTING_JOURNAL.md#j974--preserve-the-original-damage-force-vector-in-the-lightning-diagnostic) | 2026-10-22 | Preserve the original damage-force vector in the Lightning diagnostic | **First failure.** |
 | [J973](PORTING_JOURNAL.md#j973--stage-authored-metadata-for-newly-added-runtime-observers) | 2026-10-22 | Stage authored metadata for newly added runtime observers | **First failure and hypothesis.** |

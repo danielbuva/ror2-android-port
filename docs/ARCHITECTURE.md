@@ -627,7 +627,8 @@ raw build outputs. No cache is cleared merely to obtain a receipt.
 This is generic same-build evidence, not an exact argv vector, transformed-audio
 stage equivalence or runtime acceptance. J852 qualifies host contracts only;
 J975 records the actual Android callback's premature result and the corrected
-host contract. A fresh owning build must qualify final-report completion.
+host contract. J976 qualifies final-report receipt completion on the exact editor;
+its unchanged conversion trace still refuses a fresh execution claim.
 `player_il2cpp_receipt.py` retains the historical J843 legacy-log verifier and
 its tests; the current build no longer calls that legacy collector.
 

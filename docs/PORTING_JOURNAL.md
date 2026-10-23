@@ -28619,3 +28619,47 @@ R10 reaches positive editor idle before releasing the mutex. No device action
 occurs; J954 remains installed, J850 remains accepted, and Android music,
 Lightning, animation and visual acceptance remain open. Revisit capture only
 with a fresh committed, request-bound build; never promote R10 post hoc.
+
+## J976 — Verify final-report completion and refuse reused conversion evidence
+
+**Hypothesis and change.** A full build from committed source bffd434 should
+write J975's optional post-build receipt after the exact returned report becomes
+successful. Root runs preflight and the serialized full-catalog path without
+changing its committed source during execution. Preparation, refresh and catalog
+validation pass. The player succeeds with zero errors in 82.676334 s; its new
+post receipt has the same request/source/input/GUID as its pre receipt, a successful
+Android result and an unchanged, bounded editor-log slice.
+
+**First failure.** The CLI advances beyond the corrected timing boundary and
+refuses `Bee conversion trace is unchanged or has an invalid pre-build hash`.
+The one successful Player invocation reuses the prior IL2CPP conversion output.
+A new APK and successful player report do not prove a new conversion invocation.
+Keep the freshness check; do not accept the old trace or fabricate a new one.
+This differs from R10's separately observed exit-4 DAG regeneration sequence,
+which requires its own bounded parser contract if encountered again.
+
+The unaccepted APK is
+`4bab40a5c5b7cc4f62360900956e2c3dad546875c77b0cb9ba935dd2668b6c1a`;
+its symbols remain
+`8e7196c8fc383c028ef1bb74147f6813597886ef3ef45456f770fcce466fc8ad`.
+Root preserves the exact pre/post receipts, log slice, declared graph/response
+file/trace, stage receipts and all 93 currently declared managed node inputs.
+The latter are a snapshot of present graph inputs, explicitly not proof of fresh
+conversion. The editor reaches positive idle before the shared mutex is released.
+No device action occurs. Evidence is
+`work/coordination/original-game-audio-r27-build-root-r11/`, particularly
+`failed-build-artifacts/preservation.json` and `execution/status.json`.
+
+**Host CI correction.** J975's first push is refused by the mandatory fresh-clone
+hook because `test_script_audit` still pins the pre-J975 build-body digest. The
+only reviewed body addition is its guarded completion call. Update that digest
+and its explanatory comment; no destination audit, build body or acceptance gate
+is changed here. Focused script-audit tests and Ruff pass before retrying the
+normal push. Preserve the failed push log under
+`work/coordination/original-game-audio-r27-capture-completion-draft-r1/`.
+
+J954 remains installed and J850 accepted. Final-report timing is exact-editor
+qualified; same-request fresh conversion, Android behavior and broader port
+acceptance remain open. Next investigate a narrowly scoped conversion rerun
+under the existing mutex, preserving prior outputs and avoiding broad cache
+clears or meaningless runtime edits.
