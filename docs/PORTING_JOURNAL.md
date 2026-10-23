@@ -32320,6 +32320,15 @@ Outline material at that captured callback; it does not identify the unnamed
 Blit caller or prove the material stayed unchanged later. Adding a dummy Outline
 pass, changing the original call or suppressing the error is unjustified.
 
+The same attempt's first and retained reports show the selected Huntress
+Animator active, enabled and initialized with its source controller/avatar.
+Its layer-zero state changes and normalized time advances from zero to 53.39;
+the model becomes visible with all 12 renderer records captured. This argues
+against a never-advancing Animator, but neither active clip identity nor bone
+motion is observed. No animation setup change is justified by these reports.
+The host comparison is under
+`work/coordination/original-native-visual-reference/r35-animation-integration-next-r1/`.
+
 **Source comparison and next fix.** Current static input confirms that the
 accepted Outline call uses pass 1 and its generated candidate already supplies
 two passes. The named Bloom errors provide a separate concrete post-processing

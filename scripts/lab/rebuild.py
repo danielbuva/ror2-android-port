@@ -246,10 +246,99 @@ def _catalog_shader_override_rows(destination, project, work, expected, provenan
     return overrides
 
 
+def _catalog_postprocessing_bloom_rows(destination, project, work, expected, provenance):
+    work = Path(work)
+    marker_path = Path(destination) / ".rebuild/postprocessing-bloom.json"
+    if marker_path.is_symlink():
+        raise RuntimeError("Bloom batch marker is not a regular file")
+    if not marker_path.exists():
+        return {}
+    from catalog_rebuild import postprocessing_bloom_rows, read_postprocessing_bloom_receipt
+
+    input_id = read(work / "config/accepted-input.json")["input_id"]
+    receipt = read_postprocessing_bloom_receipt(destination, input_id, work)
+    rows = postprocessing_bloom_rows(receipt, input_id, expected, provenance, candidate_work=work)
+    if not rows:
+        return rows
+    from composition_io import StageIO
+
+    reconstruction = read(work / "config/reconstruction.json")
+    projects = reconstruction.get("projects")
+    if not isinstance(projects, list) or len(projects) != 1 or not isinstance(projects[0], str):
+        raise RuntimeError("Bloom batch comparison requires the exact accepted export root")
+    export = StageIO(work).resolve(projects[0])
+    for path, row in rows.items():
+        if row.get("_meta_only") or row.get("_generated_only") or row.get("_generated_meta"):
+            continue
+        source = export / row["source_asset_path"]
+        source_meta = export / (row["source_asset_path"] + ".meta")
+        resource = export / row["resource_asset_path"]
+        resource_meta = export / (row["resource_asset_path"] + ".meta")
+        source_target_meta = Path(project) / (path + ".meta")
+        resource_target = Path(project) / ("Assets/WholeGame/" + row["resource_asset_path"].removeprefix("Assets/"))
+        resource_target_meta = Path(str(resource_target) + ".meta")
+        camera_prefab = export / row["source_camera_prefab_path"] if "source_camera_prefab_path" in row else None
+        camera_prefab_meta = Path(str(camera_prefab) + ".meta") if camera_prefab is not None else None
+        camera_target = Path(project) / ("Assets/WholeGame/" + row["source_camera_prefab_path"].removeprefix("Assets/")) if camera_prefab is not None else None
+        camera_target_meta = Path(str(camera_target) + ".meta") if camera_target is not None else None
+        if (
+            any(
+                item is not None and item.is_symlink()
+                for item in (
+                    source,
+                    source_meta,
+                    resource,
+                    source_target_meta,
+                    resource_target,
+                    resource_meta,
+                    resource_target_meta,
+                    camera_prefab,
+                    camera_prefab_meta,
+                    camera_target,
+                    camera_target_meta,
+                )
+            )
+            or not source.is_file()
+            or not source_meta.is_file()
+            or not resource.is_file()
+            or not source_target_meta.is_file()
+            or not resource_target.is_file()
+            or ("resource_meta_sha256" in row and (not resource_meta.is_file() or not resource_target_meta.is_file()))
+            or (
+                camera_prefab is not None
+                and (not camera_prefab.is_file() or not camera_target.is_file() or not camera_prefab_meta.is_file() or not camera_target_meta.is_file())
+            )
+            or sha(source) != row["original_source_sha256"]
+            or sha(source_meta) != row["original_meta_sha256"]
+            or sha(resource) != row["resource_sha256"]
+            or sha(source_target_meta) != row["preserved_meta_sha256"]
+            or sha(resource_target) != row["resource_sha256"]
+            or (
+                "resource_meta_sha256" in row
+                and (sha(resource_meta) != row["resource_meta_sha256"] or sha(resource_target_meta) != row["resource_meta_sha256"])
+            )
+            or (
+                camera_prefab is not None
+                and (
+                    sha(camera_prefab) != row["source_camera_prefab_sha256"]
+                    or sha(camera_target) != row["source_camera_prefab_sha256"]
+                    or sha(camera_prefab_meta) != row["source_camera_prefab_meta_sha256"]
+                    or sha(camera_target_meta) != row["source_camera_prefab_meta_sha256"]
+                )
+            )
+        ):
+            raise RuntimeError("Bloom batch source/resource identity changed during comparison: " + path)
+    return rows
+
+
 def compare(destination, project, expected, provenance, owns, producers=None, work=None):
     result = {status: [] for status in ("identical", "different", "missing", "extra")}
     work = Path(work or WORK)
     overrides = _catalog_shader_override_rows(destination, project, work, expected, provenance)
+    bloom_overrides = _catalog_postprocessing_bloom_rows(destination, project, work, expected, provenance)
+    if set(overrides) & set(bloom_overrides):
+        raise RuntimeError("Bloom and shader-catalog override receipts claim the same path")
+    overrides.update(bloom_overrides)
     expected = set(expected) | set(overrides)
     export = None
     if overrides:
@@ -274,6 +363,27 @@ def compare(destination, project, expected, provenance, owns, producers=None, wo
                     and not source_oracle.is_symlink()
                     and sha(target) == override["preserved_meta_sha256"]
                     and sha(source_oracle) == override["original_meta_sha256"]
+                )
+            elif override.get("_generated_only") or override.get("_generated_meta"):
+                recipe = read(RECIPE / "shader-postprocessing-bloom-candidate.json")
+                from shader_postprocessing_bloom import candidate_root
+
+                candidate_root_path = candidate_root(work, read(work / "config/accepted-input.json")["input_id"], recipe)
+                candidate_rel = override["candidate_meta_path"] if override.get("_generated_meta") else override["candidate_path"]
+                candidate = candidate_root_path / candidate_rel
+                candidate_sha = override["candidate_meta_sha256"] if override.get("_generated_meta") else override["candidate_sha256"]
+                matches = (
+                    target.is_file() and not target.is_symlink() and candidate.is_file() and sha(target) == candidate_sha and sha(candidate) == candidate_sha
+                )
+            elif override.get("_bloom_candidate"):
+                source_oracle = export / override["source_asset_path"]
+                matches = (
+                    target.is_file()
+                    and not target.is_symlink()
+                    and source_oracle.is_file()
+                    and not source_oracle.is_symlink()
+                    and sha(source_oracle) == override["original_source_sha256"]
+                    and sha(target) == override["candidate_shader_sha256"]
                 )
             else:
                 source_oracle = export / override["source_asset_path"]

@@ -1,6 +1,6 @@
 """Host-only R3/R4 replay over the catalog analysis regenerated in the destination (J725)."""
 
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import hashlib
 import json
 import re
@@ -356,6 +356,229 @@ def read_shader_override_receipt(project, input_id, work):
     return receipt
 
 
+def read_postprocessing_bloom_receipt(project, input_id, work, io=None):
+    """Read the Bloom batch's independent marker/receipt chain, if enabled."""
+    from shader_postprocessing_bloom import MARKER_SCHEMA, read_activation
+
+    project, work = Path(project), Path(work)
+    is_file = io.is_file if io is not None else Path.is_file
+    read_json = io.read if io is not None else read
+    digest = io.sha if io is not None else sha
+    marker_path = project / ".rebuild/postprocessing-bloom.json"
+    if marker_path.is_symlink():
+        raise RuntimeError("Bloom batch marker may not be a symlink")
+    activation = read_activation(work, input_id)
+    if not is_file(marker_path):
+        if activation is not None and activation.get("enabled") is True:
+            raise RuntimeError("Bloom batch is enabled but no staging receipt exists")
+        return None
+    if any(path.is_symlink() for path in (marker_path, *marker_path.parents)) or not is_file(marker_path):
+        raise RuntimeError("Bloom batch marker is not a regular file")
+    marker = read_json(marker_path)
+    if (
+        set(marker) != {"schema", "input_id", "receipt_path", "receipt_sha256", "activation_path", "activation_sha256"}
+        or marker.get("schema") != MARKER_SCHEMA
+        or marker.get("input_id") != input_id
+    ):
+        raise RuntimeError("Bloom batch marker belongs to another input or schema")
+    if (
+        activation is None
+        or activation.get("enabled") is not True
+        or marker.get("activation_path") != "work/config/postprocessing-bloom.json"
+        or marker.get("activation_sha256") != activation["sha256"]
+    ):
+        raise RuntimeError("Bloom batch marker does not match the current local activation")
+    relative = Path(marker.get("receipt_path", ""))
+    if relative.is_absolute() or ".." in relative.parts or "\\" in str(relative):
+        raise RuntimeError("Bloom batch receipt path is unsafe")
+    receipt_path = project / relative
+    if (
+        not receipt_path.resolve().is_relative_to(project.resolve())
+        or any(path.is_symlink() for path in (receipt_path, *receipt_path.parents))
+        or not is_file(receipt_path)
+        or digest(receipt_path) != marker.get("receipt_sha256")
+    ):
+        raise RuntimeError("Bloom batch receipt is missing or changed")
+    return read_json(receipt_path)
+
+
+def postprocessing_bloom_rows(receipt, input_id, expected, provenance, candidate_work=None):
+    """Validate Bloom's input-bound batch exception without changing six-row shader selection."""
+    if receipt is None:
+        return {}
+    from shader_postprocessing_bloom import RECEIPT_SCHEMA, SCHEMA, candidate_root, load_recipe, read_activation
+
+    candidate_work = Path(candidate_work or ROOT / "work")
+    activation = read_activation(candidate_work, input_id)
+    recipe = load_recipe(input_id)
+    generator_sha = sha(ROOT / "scripts/lab/shader_postprocessing_bloom.py")
+    recipe_sha = sha(RECIPE / "shader-postprocessing-bloom-candidate.json")
+    if (
+        activation is None
+        or activation.get("enabled") is not True
+        or receipt.get("schema") != RECEIPT_SCHEMA
+        or receipt.get("input_id") != input_id
+        or receipt.get("activation_sha256") != activation["sha256"]
+        or receipt.get("recipe_sha256") != recipe_sha
+        or receipt.get("generator_sha256") != generator_sha
+        or receipt.get("unity_compiled") is not False
+        or receipt.get("android_accepted") is not False
+        or receipt.get("visual_parity_proven") is not False
+    ):
+        raise RuntimeError("Bloom batch receipt does not match the accepted activation and authored generator")
+    manifest_rel = receipt.get("candidate_manifest_path")
+    expected_root = "work/" + recipe["stable_output"].format(input_id=input_id)
+    if manifest_rel != expected_root + "/manifest.json":
+        raise RuntimeError("Bloom candidate manifest path differs from its recipe")
+    manifest_path = candidate_work / Path(manifest_rel).relative_to("work")
+    if (
+        any(path.is_symlink() for path in (manifest_path, *manifest_path.parents))
+        or not manifest_path.is_file()
+        or sha(manifest_path) != receipt.get("candidate_manifest_sha256")
+    ):
+        raise RuntimeError("Bloom candidate manifest is absent or changed")
+    manifest = read(manifest_path)
+    if (
+        manifest.get("schema") != SCHEMA
+        or manifest.get("input_id") != input_id
+        or manifest.get("recipe_sha256") != recipe_sha
+        or manifest.get("generator_sha256") != generator_sha
+        or manifest.get("package_sha256") != recipe["package_sha256"]
+        or manifest.get("unity_compiled") is not False
+        or manifest.get("android_accepted") is not False
+        or manifest.get("visual_parity_proven") is not False
+    ):
+        raise RuntimeError("Bloom candidate manifest has stale provenance or qualification state")
+    rows, manifest_rows = receipt.get("rows"), manifest.get("rows")
+    if not isinstance(rows, list) or len(rows) != len(recipe["expected_members"]) or not isinstance(manifest_rows, list) or len(manifest_rows) != len(rows):
+        raise RuntimeError("Bloom batch receipt does not contain the exact shader membership")
+    result = {}
+    output = candidate_root(candidate_work, input_id, recipe)
+    for row, generated, identity in zip(rows, manifest_rows, recipe["expected_members"], strict=True):
+        source = identity["shader"]
+        target = "Assets/WholeGame/" + source.removeprefix("Assets/")
+        candidate_rel = generated.get("candidate_path")
+        candidate = output / candidate_rel
+        if (
+            generated.get("source_asset_path") != source
+            or generated.get("resource_asset_path") != identity["resource"]
+            or generated.get("guid") != identity["guid"]
+            or generated.get("original_source_sha256") != identity["shader_sha256"]
+            or generated.get("original_meta_sha256") != identity["meta_sha256"]
+            or generated.get("resource_sha256") != identity["resource_sha256"]
+            or generated.get("candidate_shader_sha256") != recipe["candidate_bloom_shader_sha256"]
+            or row.get("source_asset_path") != source
+            or row.get("resource_asset_path") != identity["resource"]
+            or row.get("guid") != identity["guid"]
+            or row.get("target") != target
+            or row.get("original_source_sha256") != identity["shader_sha256"]
+            or row.get("original_meta_sha256") != identity["meta_sha256"]
+            or row.get("resource_sha256") != identity["resource_sha256"]
+            or row.get("candidate_path") != candidate_rel
+            or row.get("candidate_shader_sha256") != generated.get("candidate_shader_sha256")
+            or not candidate.is_file()
+            or any(path.is_symlink() for path in (candidate, *candidate.parents))
+            or sha(candidate) != generated.get("candidate_shader_sha256")
+        ):
+            raise RuntimeError("Bloom batch member differs from its exact source/resource/candidate identity")
+        source_provenance = provenance.get(target)
+        if source_provenance is not None and source_provenance.get("sha256") != identity["shader_sha256"]:
+            raise RuntimeError("Bloom batch source conflicts with project provenance")
+        result[target] = {
+            **row,
+            "_bloom_candidate": True,
+            "candidate_shader_sha256": generated["candidate_shader_sha256"],
+            "candidate_shader_bytes": candidate.stat().st_size,
+        }
+        result[target + ".meta"] = {**row, "_meta_only": True}
+    copy_row, generated_copy = receipt.get("copy_std"), manifest.get("copy_std")
+    copy_identity = recipe.get("companion_copy_std")
+    if not isinstance(copy_row, dict) or not isinstance(generated_copy, dict) or not isinstance(copy_identity, dict):
+        raise RuntimeError("Bloom batch lacks its exact source-camera CopyStd companion")
+    copy_target = "Assets/WholeGame/" + copy_identity["shader"].removeprefix("Assets/")
+    copy_candidate = output / copy_identity["candidate_path"]
+    if (
+        any(generated_copy.get(key) != value for key, value in copy_identity.items())
+        or generated_copy.get("shader") != copy_identity["shader"]
+        or generated_copy.get("resource") != copy_identity["resource"]
+        or generated_copy.get("guid") != copy_identity["guid"]
+        or generated_copy.get("shader_sha256") != copy_identity["shader_sha256"]
+        or generated_copy.get("meta_sha256") != copy_identity["meta_sha256"]
+        or generated_copy.get("resource_sha256") != copy_identity["resource_sha256"]
+        or generated_copy.get("candidate_path") != copy_identity["candidate_path"]
+        or generated_copy.get("package_shader_sha256") != recipe["package_copy_std_shader_sha256"]
+        or generated_copy.get("candidate_sha256") != recipe["package_copy_std_shader_sha256"]
+        or any(copy_row.get(key) != value for key, value in copy_identity.items())
+        or copy_row.get("target") != copy_target
+        or copy_row.get("candidate_path") != generated_copy.get("candidate_path")
+        or copy_row.get("guid") != copy_identity["guid"]
+        or copy_row.get("candidate_sha256") != generated_copy.get("candidate_sha256")
+        or copy_row.get("candidate_sha256") != recipe["package_copy_std_shader_sha256"]
+        or copy_row.get("preserved_meta_sha256") != copy_identity["meta_sha256"]
+        or not copy_candidate.is_file()
+        or any(path.is_symlink() for path in (copy_candidate, *copy_candidate.parents))
+        or sha(copy_candidate) != generated_copy.get("candidate_sha256")
+    ):
+        raise RuntimeError("Source-camera CopyStd companion differs from its exact package/source/resource identity")
+    copy_provenance = provenance.get(copy_target)
+    if copy_provenance is not None and copy_provenance.get("sha256") != copy_identity["shader_sha256"]:
+        raise RuntimeError("CopyStd source conflicts with project provenance")
+    result[copy_target] = {
+        **copy_row,
+        "source_asset_path": copy_identity["shader"],
+        "resource_asset_path": copy_identity["resource"],
+        "original_source_sha256": copy_identity["shader_sha256"],
+        "original_meta_sha256": copy_identity["meta_sha256"],
+        "resource_sha256": copy_identity["resource_sha256"],
+        "resource_meta_sha256": copy_identity["resource_meta_sha256"],
+        "source_camera_prefab_path": copy_identity["source_camera_prefab"]["path"],
+        "source_camera_prefab_sha256": copy_identity["source_camera_prefab"]["sha256"],
+        "source_camera_prefab_meta_sha256": copy_identity["source_camera_prefab"]["meta_sha256"],
+        "candidate_shader_sha256": generated_copy["candidate_sha256"],
+        "candidate_shader_bytes": copy_candidate.stat().st_size,
+        "_bloom_candidate": True,
+    }
+    result[copy_target + ".meta"] = {
+        **copy_row,
+        "source_asset_path": copy_identity["shader"],
+        "original_meta_sha256": copy_identity["meta_sha256"],
+        "preserved_meta_sha256": copy_identity["meta_sha256"],
+        "_meta_only": True,
+    }
+    includes, generated_includes = receipt.get("includes"), manifest.get("includes")
+    expected_hlsl_count = sum(name.endswith(".hlsl") for name in recipe["expected_package_include_sha256"])
+    if (
+        not isinstance(includes, list)
+        or len(includes) != expected_hlsl_count
+        or not isinstance(generated_includes, list)
+        or len(includes) != len(generated_includes)
+    ):
+        raise RuntimeError("Bloom batch receipt does not contain the exact include closure")
+    for row, generated in zip(includes, generated_includes, strict=True):
+        target = recipe["include_target_prefix"] + PurePosixPath(generated["candidate_path"]).relative_to("includes").as_posix()
+        meta_target = target + ".meta"
+        source_path = output / generated["candidate_path"]
+        source_meta = output / generated["candidate_meta_path"]
+        if (
+            row.get("target") != target
+            or row.get("meta_target") != meta_target
+            or row.get("candidate_path") != generated.get("candidate_path")
+            or row.get("candidate_meta_path") != generated.get("candidate_meta_path")
+            or row.get("candidate_sha256") != generated.get("candidate_sha256")
+            or row.get("candidate_meta_sha256") != generated.get("candidate_meta_sha256")
+            or row.get("guid") != generated.get("guid")
+            or not source_path.is_file()
+            or not source_meta.is_file()
+            or any(path.is_symlink() for path in (source_path, source_meta, *source_path.parents, *source_meta.parents))
+            or sha(source_path) != generated.get("candidate_sha256")
+            or sha(source_meta) != generated.get("candidate_meta_sha256")
+        ):
+            raise RuntimeError("Bloom package include closure differs from its candidate receipt")
+        result[target] = {**row, "_generated_only": True}
+        result[meta_target] = {**row, "_generated_meta": True}
+    return result
+
+
 def bootstrap_identity(work, input_id):
     """The historical generation identity, recorded publicly in the build-entry recipe (J597)."""
     recipe = read(RECIPE / "build-entry-inputs.json")
@@ -395,8 +618,12 @@ class CatalogIO(StageIO):
         return self.analysis
 
 
-def verify_outputs(io, expected, provenance, shader_overrides=None, input_id=None):
+def verify_outputs(io, expected, provenance, shader_overrides=None, input_id=None, postprocessing_bloom=None):
     overrides = shader_override_rows(shader_overrides, input_id, expected, provenance, candidate_work=io.work)
+    bloom_overrides = postprocessing_bloom_rows(postprocessing_bloom, input_id, expected, provenance, candidate_work=io.work)
+    if set(overrides) & set(bloom_overrides):
+        raise RuntimeError("Bloom and shader-catalog overrides claim the same project path")
+    overrides.update(bloom_overrides)
     expected = set(expected) | set(overrides)
     export = None
     if overrides:
@@ -405,6 +632,47 @@ def verify_outputs(io, expected, provenance, shader_overrides=None, input_id=Non
         if not isinstance(projects, list) or len(projects) != 1 or not isinstance(projects[0], str):
             raise RuntimeError("Shader override verification requires the exact accepted export root")
         export = io.resolve(projects[0])
+    for path, row in bloom_overrides.items():
+        if row.get("_meta_only") or row.get("_generated_only") or row.get("_generated_meta"):
+            continue
+        source = export / row["source_asset_path"]
+        source_meta = export / (row["source_asset_path"] + ".meta")
+        resource = export / row["resource_asset_path"]
+        resource_meta = export / (row["resource_asset_path"] + ".meta")
+        camera_prefab = export / row["source_camera_prefab_path"] if "source_camera_prefab_path" in row else None
+        camera_prefab_meta = Path(str(camera_prefab) + ".meta") if camera_prefab is not None else None
+        camera_target = io.project / ("Assets/WholeGame/" + row["source_camera_prefab_path"].removeprefix("Assets/")) if camera_prefab is not None else None
+        camera_target_meta = Path(str(camera_target) + ".meta") if camera_target is not None else None
+        resource_target = io.project / ("Assets/WholeGame/" + row["resource_asset_path"].removeprefix("Assets/"))
+        resource_target_meta = Path(str(resource_target) + ".meta")
+        target_meta = io.project / (path + ".meta")
+        if (
+            not source.is_file()
+            or source.is_symlink()
+            or not source_meta.is_file()
+            or source_meta.is_symlink()
+            or not resource.is_file()
+            or resource.is_symlink()
+            or not io.is_file(target_meta)
+            or not io.is_file(resource_target)
+            or ("resource_meta_sha256" in row and (not resource_meta.is_file() or not io.is_file(resource_target_meta)))
+            or (camera_prefab is not None and (not camera_prefab.is_file() or sha(camera_prefab) != row["source_camera_prefab_sha256"]))
+            or (camera_prefab_meta is not None and (not camera_prefab_meta.is_file() or sha(camera_prefab_meta) != row["source_camera_prefab_meta_sha256"]))
+            or (camera_target is not None and (not io.is_file(camera_target) or io.sha(camera_target) != row["source_camera_prefab_sha256"]))
+            or (
+                camera_target_meta is not None and (not io.is_file(camera_target_meta) or io.sha(camera_target_meta) != row["source_camera_prefab_meta_sha256"])
+            )
+            or sha(source) != row["original_source_sha256"]
+            or sha(source_meta) != row["original_meta_sha256"]
+            or sha(resource) != row["resource_sha256"]
+            or io.sha(target_meta) != row["preserved_meta_sha256"]
+            or io.sha(resource_target) != row["resource_sha256"]
+            or (
+                "resource_meta_sha256" in row
+                and (sha(resource_meta) != row["resource_meta_sha256"] or io.sha(resource_target_meta) != row["resource_meta_sha256"])
+            )
+        ):
+            raise RuntimeError("Bloom source, metadata, or serialized resource changed during replay: " + path)
     for path in sorted(expected):
         target = io.project / path
         row = provenance.get(path, {})
@@ -415,6 +683,29 @@ def verify_outputs(io, expected, provenance, shader_overrides=None, input_id=Non
             if override.get("_meta_only"):
                 if data is None or io.sha(target) != override["preserved_meta_sha256"] or len(data) != override["preserved_meta_bytes"]:
                     raise RuntimeError("Qualified shader override metadata differs from its exact receipt: " + path)
+            elif override.get("_generated_only") or override.get("_generated_meta"):
+                recipe = read(RECIPE / "shader-postprocessing-bloom-candidate.json")
+                from shader_postprocessing_bloom import candidate_root
+
+                output = candidate_root(io.work, input_id, recipe)
+                candidate_rel = override["candidate_meta_path"] if override.get("_generated_meta") else override["candidate_path"]
+                candidate = output / candidate_rel
+                expected_sha = override["candidate_meta_sha256"] if override.get("_generated_meta") else override["candidate_sha256"]
+                if data is None or not candidate.is_file() or io.sha(target) != expected_sha or sha(candidate) != expected_sha:
+                    raise RuntimeError("Bloom generated include differs from its exact candidate: " + path)
+            elif override.get("_bloom_candidate"):
+                recipe = read(RECIPE / "shader-postprocessing-bloom-candidate.json")
+                from shader_postprocessing_bloom import candidate_root
+
+                output = candidate_root(io.work, input_id, recipe)
+                candidate = output / override["candidate_path"]
+                if (
+                    data is None
+                    or not candidate.is_file()
+                    or io.sha(target) != override["candidate_shader_sha256"]
+                    or sha(candidate) != override["candidate_shader_sha256"]
+                ):
+                    raise RuntimeError("Bloom replacement shader differs from its exact candidate: " + path)
             else:
                 source = export / override["source_asset_path"]
                 source_meta = export / (override["source_asset_path"] + ".meta")
@@ -446,7 +737,8 @@ def catalog_closure(destination, work, input_id, expected, provenance):
     attempt = bootstrap_identity(work, input_id)
     io = CatalogIO(work, destination, input_id)
     override_receipt = prepare_integration(io, attempt=attempt)
-    verify_outputs(io, expected, provenance, shader_overrides=override_receipt, input_id=input_id)
+    bloom_receipt = read_postprocessing_bloom_receipt(destination, input_id, work, io=io)
+    verify_outputs(io, expected, provenance, shader_overrides=override_receipt, input_id=input_id, postprocessing_bloom=bloom_receipt)
     io.write(destination / ".rebuild/catalog-closure-complete.json", dict(input_id=input_id))
     io.flush()
 
@@ -472,6 +764,7 @@ def dependencies(destination, work, input_id, expected, provenance):
         raise RuntimeError("Dependencies require destination composition config from R2")
     stage_missing_sources(io)
     override_receipt = read_shader_override_receipt(destination, input_id, work)
-    verify_outputs(io, expected, provenance, shader_overrides=override_receipt, input_id=input_id)
+    bloom_receipt = read_postprocessing_bloom_receipt(destination, input_id, work, io=io)
+    verify_outputs(io, expected, provenance, shader_overrides=override_receipt, input_id=input_id, postprocessing_bloom=bloom_receipt)
     io.write(destination / ".rebuild/dependencies-complete.json", dict(input_id=input_id))
     io.flush()

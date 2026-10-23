@@ -1597,6 +1597,9 @@ def prepare_integration(io=None, *, attempt=None):
     if current_selector is None or current_selector["enabled"] is not True:
         if marker_path.is_symlink() or io.is_file(marker_path):
             raise RuntimeError("Destination has a prior shader override receipt; rebuild it from a clean destination before disabling overrides")
+    from shader_postprocessing_bloom import check_staging_activation
+
+    check_staging_activation(io, closure["input_id"])
     metadata = read_catalog(catalog_path(out))
     native = io.read(out / "native-conversions.json")
     mesh_subobjects, unresolved_mesh_subobjects = source_mesh_subobjects(export, closure, metadata, native)
@@ -1663,6 +1666,9 @@ def prepare_integration(io=None, *, attempt=None):
         owners[guid] = target_relative
         copies.append(dict(source=relative, target=target_relative, sha256=io.sha(target), meta_sha256=io.sha(Path(str(target) + ".meta"))))
     override_receipt = _validated_shader_overrides(io, closure, metadata, mapped, export, project, destination)
+    from shader_postprocessing_bloom import stage as stage_postprocessing_bloom
+
+    bloom_receipt = stage_postprocessing_bloom(io, export=export, mapped=mapped, owners=owners, destination=destination, input_id=closure["input_id"])
     if not io.rebuilding:
         repair_support_source(export, mapped, project, destination, io)
     for copied in copies:
@@ -1706,7 +1712,14 @@ def prepare_integration(io=None, *, attempt=None):
     )
     io.write(
         destination / "import-receipt.json",
-        dict(copied=copies, reused=len(mapped) - len(copies), files=len(mapped), roots=len(roots), shader_overrides=override_receipt),
+        dict(
+            copied=copies,
+            reused=len(mapped) - len(copies),
+            files=len(mapped),
+            roots=len(roots),
+            shader_overrides=override_receipt,
+            postprocessing_bloom=bloom_receipt,
+        ),
     )
     io.write(out / "integration-latest.json", dict(path=io.label(destination)))
     if not io.rebuilding:

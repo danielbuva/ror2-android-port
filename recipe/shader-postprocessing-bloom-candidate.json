@@ -1,0 +1,496 @@
+{
+  "activation_path": "work/config/postprocessing-bloom.json",
+  "candidate_bloom_shader_sha256": "7b34ddc2c90170fd52e9d2de14ec66db2fe4f47f0ec0a2ace30ec1f87f28dc57",
+  "companion_copy_std": {
+    "candidate_path": "sources/Hidden_PostProcessing_CopyStd_53.shader",
+    "guid": "cc67eef583181c642a17a6ebc4844dd2",
+    "meta_sha256": "e7f9dcc921b2d6fdebeae073880e6aa47c4724e5f27763b2fd091501e4bfac3e",
+    "resource": "Assets/MonoBehaviour/PostProcessResources_53.asset",
+    "resource_asset_guid": "7f1a20332c99b644fa8eac633085ced7",
+    "resource_meta_sha256": "a14853f121d3f357efda10f56c94201852bd8dc2e43e22b3fcdafeb784582bd5",
+    "resource_sha256": "fed2fe600a7dd9f24984d972c6ad6c4aa08b2fe514061779ccf6784228311598",
+    "runtime_passes": [
+      "Copy",
+      "Copy + NaN killer"
+    ],
+    "selected_pass": 1,
+    "shader": "Assets/Shader/Hidden_PostProcessing_CopyStd_53.shader",
+    "shader_name": "Hidden/PostProcessing/CopyStd",
+    "shader_sha256": "1015dde07450846618a84f63905ea061f5ae32e191a49a093c874a51c42dbd01",
+    "source_camera_prefab": {
+      "meta_sha256": "76efe772e060939a6a0034f089c898e3eaaccc3f0d89df2a2d09d5fd59a6bb07",
+      "path": "Assets/RoR2/Base/Core/Camera/Main Camera.prefab",
+      "resources_guid": "7f1a20332c99b644fa8eac633085ced7",
+      "sha256": "48adeb44a2bbcc80521c389fad57aca9893cd41d610d56d7f16f83b9fc3152e3",
+      "stopNaNPropagation": 1
+    }
+  },
+  "companion_scope": "Exact source-camera PostProcessResources_53 copyStd join; no Copy/per-eye variants",
+  "enabled_by_default": false,
+  "expected_members": [
+    {
+      "guid": "4224a6e2cffe83e4a878256cc5f0907e",
+      "meta_sha256": "742e42e1719350fcc192d8515539847f1358d6867e5fb18c51ef3ed1e6133347",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_1.asset",
+      "resource_sha256": "9aec1874ce53241ce65b2039e95c173230bc4059c9783b4f43a60b553a122ef3",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_1.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "f2204a775e5c9534ebeca1a529987508",
+      "meta_sha256": "1fffb7a15dcdc92fdc599ee50eea40e622b166e7a796586ddcfc072dacfb7aff",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_10.asset",
+      "resource_sha256": "382a5e0085960cb97a40f76d60b1233af1db77c3c3012b8f8826ecc68af2a818",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_10.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "622550dc8b462b94fbd3ebf7595ec835",
+      "meta_sha256": "ed0ca0ea21ade980e6a1f084dc915948edcbb95510144d279bb4c74e2aed2ea2",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_13.asset",
+      "resource_sha256": "0d371ac55e8a3ea15f8699fb3a7411ade55edd272f45f91a63f5c6cea4741344",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_13.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "ca0bd0385d5f7ad4192b53921d0a2f4f",
+      "meta_sha256": "ea96b1fd35cd21db19502f28c665bf5d0c07d1818ca241fe10549b8db1a93bb0",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_14.asset",
+      "resource_sha256": "390a1855dde6262ff022abfc6509f7a0c27b9fa9fd28dad01a17afb049b47eff",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_14.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "acaa3c0009c6ade4f8574eb7eff82cb7",
+      "meta_sha256": "c0b214daee4d75d3444a381fc3499daf01def09e8e8e4b2235076a329cdcc79b",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_15.asset",
+      "resource_sha256": "3e08628b1b764365b73841fc02675b9a19360e4eb446f5bc080201d5e264644f",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_15.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "f10a93ad95b6d5a4a9b76197419f6e6f",
+      "meta_sha256": "0a5afa0cb89f7834090ac4a42b50781c5f3ec0af79f7af035b8e758c43015072",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_16.asset",
+      "resource_sha256": "c946054e1e20f82d496d59043c79f3b6e9db7f23aeb22daf15acfc622693f105",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_16.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "2642e92bafd488b41a1913d452dfbf06",
+      "meta_sha256": "0b421deafab1d7f4466be73a7c7bcff35991d36d787e6bfd2e83c4b4d6de4862",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_17.asset",
+      "resource_sha256": "3c85a8e0ee0e856784a19eb00ee60e56f0f39e00d60bc74ad4027c809c56e9d2",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_17.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "fac0c29a05f2a504dac36e5942c953d5",
+      "meta_sha256": "3a603f0004bc77163777c7cc9cae7bf36db141ab43ae0648dbf510de9a5cbf27",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_18.asset",
+      "resource_sha256": "1cbacd35569b9ace94201c6be4b7a70bca836923c37497339c030723a10d80b5",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_18.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "1d060417a10fceb43ac353cd1f81fdbe",
+      "meta_sha256": "ab887bfe87b616cd6c7ad667319a7ac2b6f7a72bcfb5e0e7e5bb9db152a6dacf",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_19.asset",
+      "resource_sha256": "0bbe6555a6dc9ebfb75e13f4b50aaa1436d1bce3cde5ba4de4d0c49b1b6c5014",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_19.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "6722e65d2f5ea6f4db88e75fd22fe1a5",
+      "meta_sha256": "c93d494d935ff9f8bbdd3f64105e802fdb09f3fdd9ba7aebba90bd595b9bf126",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_20.asset",
+      "resource_sha256": "be2a19757ca86be5669274fa16eaa095043e24199c6399d1cf4c41809db621fe",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_20.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "be3dd251c63386449a51ecba6444cff3",
+      "meta_sha256": "1398754768af6cc005951bfe49d0d078cb3198a6b96d2adf61b6e06f2f99a4a4",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_21.asset",
+      "resource_sha256": "05863fb5167e1dfd112d1aa55e390d49b95ff3ea6c3acdb2b6688bc9820ed96b",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_21.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "de3a7cf3d3b4f7748ba2a2c00ef733b5",
+      "meta_sha256": "7455e35794d56954df770fc350cff0d017a25aeff54b42c2cb221cc9d85fb4f0",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_22.asset",
+      "resource_sha256": "20e1d5b8388795dee60b38f166e7cfd4c93ea98f66de2262fa91f0ecc3d7ee1b",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_22.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "1b9b8b7e1a05870498bf5b70f86ca060",
+      "meta_sha256": "210c44a5cb57a24cca0b76c711cad3b1b7adb7aa187c8b21098e5d3ec4da300c",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_23.asset",
+      "resource_sha256": "1a78e03c6f0b907e4567c910c2f172f6937a331760c45f40e6501a0e8659aac2",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_23.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "eba312c0451beaa45a6c41aaf7f5cbd9",
+      "meta_sha256": "56347efc1818d14628fca5ff904b9e3699ebedca3be1c418c7ef13de23eecc17",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_24.asset",
+      "resource_sha256": "428add804aae5e6b1c5ae2a0e0ac4e3c3a7eaa4d8244e13281ceb74f269e86ab",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_24.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "e5b7e3596f025a449b907fbd19b40a6d",
+      "meta_sha256": "e5e16593448dfd56913c5435a9735b5c6c4edbbca2b1ec29956a69977826bb71",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_25.asset",
+      "resource_sha256": "8452ba2e90bc2bf4e572bb0061fe0504121d83c873cb7c53b24ffc6461745a6a",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_25.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "30247d23428a5064b8aadaf6e123cf92",
+      "meta_sha256": "d64a824ea951efb1c5d85dcecf8e2975d5d8e2a7b1265d3c9e68d7024d9dc5c3",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_26.asset",
+      "resource_sha256": "878b9d1ee8d899986741e9b17c999fb6999ac93b126a3ae8da75c156b6f0a3a6",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_26.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "3198d71688918354a86bee71591c26bc",
+      "meta_sha256": "9ba74dcce9bb995cbd60d736d28a8f20064ef0ec1b9490166418addb59bf4fe7",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_27.asset",
+      "resource_sha256": "f8e70e6f0cc05974779fb1b9268122e548bc009d854b959b7a59df037225c37a",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_27.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "47b900da8c81f6c4c93e502e8fc8f468",
+      "meta_sha256": "ab5f6c36d87eb0988eb6a3a72de38303f4f9d5a5f86f5ab74a02b75f8477dce9",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_28.asset",
+      "resource_sha256": "599a4d3858d009e1802db640455143da794b5d0799c8779bac18f51e5b640f18",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_28.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "3cc82e4de33f6ce4cbe683d232f02306",
+      "meta_sha256": "22f09e13cb4f0e11be75b08aa0b09bcfa5edfefcf68a91d8e24fb4fb056be7ba",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_29.asset",
+      "resource_sha256": "da704877eccfb57d1b0f61f672704efa8b63224668bff897cba0dde430fc5ed8",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_29.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "b882b26f3d16a4340a394f57d1dc174f",
+      "meta_sha256": "3494f6de41e7262416207aeb796710aaa348b9d84afb8bcf9f27c9ed2940074a",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_30.asset",
+      "resource_sha256": "061c5eaa3ab35f992a1634bebb6fb245cd5aa773025bf25f1267a1936c2a55df",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_30.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "0399beb76cc4709438f133e294ca98fc",
+      "meta_sha256": "fdc0e7a40e1da01758e27c912844126896695aa38b4fcefd324ad5cc3dfe524c",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_31.asset",
+      "resource_sha256": "01fec6d231adc44fb1a96a9fc203b5e197219d44864c38718c4789dfa69b0681",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_31.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "b55d86387f9ffdf4192baac07c0fb074",
+      "meta_sha256": "540b512eec04e1620dfa91c6e7e67b36241634dd2d831e007259061ad70d3e8d",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_32.asset",
+      "resource_sha256": "add1a62c27da3e512329e9750e90bff36f6f5e6bdcacaac326748499f181d4cd",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_32.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "9b87f3b91fa3bd241a64e3734999b383",
+      "meta_sha256": "1fd2333312050262a9761759a0e2036740c5e397f39a83e4f2dda2e8e4b5a0a3",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_33.asset",
+      "resource_sha256": "36d13a3265dccd2aec3a02c40c65567b49d8ed4918afc9482c83f110305a26af",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_33.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "d383d52bfbd8fea4dbd97765ff3581d0",
+      "meta_sha256": "9fe0dc0da06af33327837f455f8bd3338c106b8c363033dace9c95fd3c541ad4",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_34.asset",
+      "resource_sha256": "bb0f0a87666f53672df6a0522d1b2493f0a6a4473a062f4a781ea28d493dcb5d",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_34.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "dc3ec069026b86a4e87cf7d7e29f0a01",
+      "meta_sha256": "b8478f7313f2934cdd7962cf5ad8a5f677d97c5d9ad7d90c1b1abcd4c6e59077",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_37.asset",
+      "resource_sha256": "cfd95a55c59ec5cb1c907ba4b592fa7521a703d6bc6b1392185534604903844d",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_37.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "8401f2a0b5f0be549bccee2074ee8270",
+      "meta_sha256": "7117b1939ad6f2cfaa0ba7a740dce545876eeb01fbef28ba596b6b1db1bc381f",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_38.asset",
+      "resource_sha256": "5786bafcd756c34c5125d20a3c6e28dc2912e470c2654ce3fcba9379eab233c3",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_38.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "46cb7f618f03b2448b4a6edd7a2a69b6",
+      "meta_sha256": "9c0ebaef953ad3ced3ee4b3ec70de9db0760c795f20a6780df7093ee28fac076",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_39.asset",
+      "resource_sha256": "311a4df8a5845b782f02d042b422770c1db2d6a6fd06fe43f23d483dc47975d4",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_39.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "77810c8b95688aa44b740f6c9c4d98cd",
+      "meta_sha256": "aa0402078c65ce08a09fe2f16f04b02606009447f392cfec6bb732bea83fd8b1",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_4.asset",
+      "resource_sha256": "1d6843fe0647215880880d751600e3b3d851db1c5d783daa666945629eeffba9",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_4.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "d61d56e36fe5bc44499731933d1cf8de",
+      "meta_sha256": "3ba1f23c4b4772c1acf90fb47421002ad4739dbe6b91af4266edc6f8e81096a4",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_40.asset",
+      "resource_sha256": "a9f639d411b7162b913fac39bb53fc1bb6ba08def56cde32dec33d78e5819ab8",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_40.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "d32e64fc98fcca04fb020c8676eddc77",
+      "meta_sha256": "48170b5053a4551fe2a5efa258f5fc9df90f3a91ceeda835c8f80e3c63a994d8",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_41.asset",
+      "resource_sha256": "cc5dcc02675a9481a64d7f40e7fc4908ac6402548462e1a847e582f33f58fd66",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_41.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "02d1cce6e3172ad4189196278f655ee7",
+      "meta_sha256": "df2151918afd9a817790fd9a0362af9ce40e5b42785e9ba735fef82273050d44",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_42.asset",
+      "resource_sha256": "ee8a6d87f939ee2b7b76aed979380e964add3af1ae5483867b7712060d4e8d1c",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_42.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "ffc56e96b7be45447a65eb69ccba0355",
+      "meta_sha256": "46e196a4acb29327dc1844fe719be5a1b9ad1c5de1561e772b8f2a6310efddf0",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_43.asset",
+      "resource_sha256": "ee1017b78037e7ed789d536c071f71cd79a903a645493348c4feeacbc76b4d34",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_43.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "1d5611773eeb4164ebfbf5a158f0cf29",
+      "meta_sha256": "3a11221e71a4ba66133343295db3ebc4528bfaa9921cf97bf7512a9b25f79065",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_44.asset",
+      "resource_sha256": "c1127f889d7bec8595f174b7053bdbbac7682291510c0ec26fafb5c3f1b8b656",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_44.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "49b7577cde0962740897bfc7dfc9961b",
+      "meta_sha256": "c8fba27d691d6c3448c1971c05af0cb0682167c6fd92030f7cb1fe2600b21eb5",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_45.asset",
+      "resource_sha256": "5f017839e3473780e5bfb4e99abe12b0b1a86fd9a7116a01e8544af862cdc15d",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_45.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "bae7edd87ec234042ad2ec957ff118f4",
+      "meta_sha256": "9fd2b460c7245543b6973c0e016d5a9414ba2cf4aa1e341ff3eac1dabb098372",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_46.asset",
+      "resource_sha256": "4da9bcb3eb700714cd837b42428388f2942a63523a0f18bbc6e73b736037e36d",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_46.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "f416c777c5ef3e94681e7f753415d053",
+      "meta_sha256": "77841fa25844d0161f77feb0498729a86e77efed0a64e30a0e0e543cfcec0a1b",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_47.asset",
+      "resource_sha256": "68fcddc3bbe4da827e61750367005752526fdf30aeca4a1c6a3e4d2e5864d088",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_47.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "35a3c5286bd6b3342bee6d1df69cca63",
+      "meta_sha256": "a953154ff8a486915cd7c74204c06de35891e8fd7c2b539a37cc06b98b1dd0e8",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_48.asset",
+      "resource_sha256": "cffd1783474075af186c3a6f52877f928c64b103a398e6e56d1131599d9db83e",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_48.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "e67389ee4db3abd48b87e1a285fc4609",
+      "meta_sha256": "d1bde86d7e4a2bf7a9cdd1e40506b27252cf4c577dba89168133df522b86a078",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_49.asset",
+      "resource_sha256": "95566f3abff75feba434047bb311005e189f871c38cbf56ce3e979c7ccee4357",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_49.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "bd7e7972ff370dd4b9881a0b368065f6",
+      "meta_sha256": "ed027f8e91683ea6ebaf42dfc147536314a23bafffd4db286ab681b5f7f2433d",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_5.asset",
+      "resource_sha256": "5e9b848270a5d08735f34888b0d7b66267fcbe61053b1885a3c658c666283127",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_5.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "2ca42ba896ab7ab45849d1663a611007",
+      "meta_sha256": "5e95441168c4f64a9df6917c8c2da875b8324f6b66f60b9f4239ec5719c8c41b",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_50.asset",
+      "resource_sha256": "bb8e66ff5b3dcf2975728aea26d1fbc2431f91e11fa69be0dee16c65b29340be",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_50.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "fcdaa9aba59684044852a8d59deffb02",
+      "meta_sha256": "3bbf088714c3794ad15bd6ff6b6ee5cb61afa936be2b8ad5b6cf5dbd31055ba5",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_51.asset",
+      "resource_sha256": "5b8f569067053aa33036c8dd6077295efb84f4d8117a83acbefc4a5693983d61",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_51.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "47cc8f428b92acc4a8747e1b4be565ca",
+      "meta_sha256": "fae940de52a118bb7e3f5a855bebc25e15f6085585c8af55715462d666ee6da7",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_52.asset",
+      "resource_sha256": "ae6266f9f6b956513faec04c23612941a45219ca95334ede92b100cbc1db14fa",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_52.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "3480a8ad572c9da4f8e9f09070b78ff1",
+      "meta_sha256": "a1ff2248a075d31cc845a2d5a2fc5ec3a15e375c5db8d7fb195971816f8e86ab",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_53.asset",
+      "resource_sha256": "fed2fe600a7dd9f24984d972c6ad6c4aa08b2fe514061779ccf6784228311598",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_53.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "028af3a739dd0394d97ee04bcd220748",
+      "meta_sha256": "ed1576578be669dc382990e988b8b797f5a995bb5eb6880c570423d79e68cbd2",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_54.asset",
+      "resource_sha256": "f48e208fde12ce91ec739bbbf89e7a4da4c955bbdae42d7d1ff92e3d84c4a81d",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_54.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "3c754ed6057e270489a1287ab1a036cd",
+      "meta_sha256": "d6d27b10dd0e50ee58a4b2784ca475c3184d9f8d5ebe0800cba87610045ac2aa",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_55.asset",
+      "resource_sha256": "3be218665b2b798619987c0eadcbf05fdaada4157cc706aec2662bb8727f232f",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_55.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "992fd4d423bee9c439b01a0f714fab16",
+      "meta_sha256": "1f94f5425de98faed35b390ce691ada8f99d293fc2462acd86ce1624f58fc20d",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_56.asset",
+      "resource_sha256": "185e3f1b9b3d22a48a0357e2d986a1bcfa89c6b18b16d77ae811d547519f1da7",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_56.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "728e5f856686cfa4ea38a407ce358938",
+      "meta_sha256": "980f0a751332d9b2a1971d1dd1453791305f95fb9f91b2e327c1fb3faf022cc2",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_6.asset",
+      "resource_sha256": "72543752fd625698e6afb0ce8bb813100e3e966cc0bcc63281a85b0638e3e42b",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_6.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "65651a2684231a04b86215e4e0ae5cef",
+      "meta_sha256": "fd81123d2465504f21425c2b71fd793041f22e5fcf8e6a365594fcefac7ed578",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_7.asset",
+      "resource_sha256": "a4e0d72eed945972e5a63e5feac5da0923bf5ce7549ee55a93b599ca9681bd04",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_7.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "a9aff3dc0e9d97041a75e721607fbc03",
+      "meta_sha256": "96262c05281103789afb55c889efb87887e25d1ce9f3b65e789d5ebbd0e5975b",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_8.asset",
+      "resource_sha256": "6c9f89800481e61e71defc49a924f448f3bf3238d04b61f60d188da088b899cc",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_8.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    },
+    {
+      "guid": "03d9280ddc1495b47847925dcd8552be",
+      "meta_sha256": "22bdd4f25f94690e9711878181dedc66acccbb4269a83de5f1aa91ebc1fd821b",
+      "resource": "Assets/MonoBehaviour/PostProcessResources_9.asset",
+      "resource_sha256": "ca991fb936a4ccfe2ba17a1d5ea43bb3fb0f3a482959779009c81fefed87760e",
+      "shader": "Assets/Shader/Hidden_PostProcessing_Bloom_9.shader",
+      "shader_sha256": "d63c66c222fcffda13183d5074d31718b31c5b6b45a4831c20504f6d540ddebf"
+    }
+  ],
+  "expected_package_include_sha256": {
+    "ACES.hlsl": "72b537444f44e69d5b00c111ae758610b74b59b39c1ec0bff8372851c02b3a6a",
+    "ACES.hlsl.meta": "f31301a0e7c14e018654a441942d3c955998449f272f84180f51621a86eb235c",
+    "API/D3D11.hlsl": "70e1e376125130146efafb9f7c7ceb591b348fd208b225450ada297f2791fd1a",
+    "API/D3D11.hlsl.meta": "090cc8a7e7cb4c8ae59647d2a3633fea965bdb246c9372acee657eea4269559f",
+    "API/D3D12.hlsl": "70e1e376125130146efafb9f7c7ceb591b348fd208b225450ada297f2791fd1a",
+    "API/D3D12.hlsl.meta": "46c963645fd4a164659c3289c6d8f3c87b0f1db3d1eae62272b465790758aafc",
+    "API/D3D9.hlsl": "34850cdc0fe48f6a837acee8a86c924bfda0a859ce8bf094170a2319c1ecd2dd",
+    "API/D3D9.hlsl.meta": "a1547c26a4948c2cd68cee59ffa92bf5f5d5da474f4a20563c54a8da1ef4958a",
+    "API/Metal.hlsl": "bc3be50205038c7bbe663a613ecc7696c82e92c6dfa2e1a3973a23b476021f9f",
+    "API/Metal.hlsl.meta": "d423fb0a77f55747ae4e39b5b894800aadbbde6c603dc954291b19009858fed0",
+    "API/OpenGL.hlsl": "f438ed7f7a0e73940f5597b57453eb2caec423509d0574e1518da947aa5e266d",
+    "API/OpenGL.hlsl.meta": "4dccb2336f79449c26c2bfd13ae14f10b3bde3baf9d0b97c65579c61634098ec",
+    "API/PSP2.hlsl": "482b1506ecb47e4179ac812364ae9701db9401600dec6102d2d3a4b4629f0c83",
+    "API/PSP2.hlsl.meta": "b22da4b4cb5fdaa7ddf5a3b9016b6d97b8a5abe112febf87e6fac88275a0d63a",
+    "API/PSSL.hlsl": "6db874bd195454bea57521591f40010d412a9e4313dcf0c7ecdf61c74f2ac88a",
+    "API/PSSL.hlsl.meta": "9c37ad706958fc7f14cfb34393516da9234c147e2ce387586005c21d910f9d7b",
+    "API/Switch.hlsl": "7a015df55eb5e5c4374c4f8f5bf30c974ec5d41c880e98088e5d7ca593f7e43c",
+    "API/Switch.hlsl.meta": "25a0d2868035b377fa43552871f5d8415c721378f63a2c92bb76a60e257f3469",
+    "API/Vulkan.hlsl": "70e1e376125130146efafb9f7c7ceb591b348fd208b225450ada297f2791fd1a",
+    "API/Vulkan.hlsl.meta": "3598183ec615074a7ff572ee9da042b2ee0c1469c9a5787283156909b3ed11ea",
+    "API/XboxOne.hlsl": "70e1e376125130146efafb9f7c7ceb591b348fd208b225450ada297f2791fd1a",
+    "API/XboxOne.hlsl.meta": "3c57fa920851a4f7be5ae21f2b605d46e1fa7f0abdc5b2bbb096a183e0d4621b",
+    "Colors.hlsl": "4a8676498fe9a4fb8a374e66460752935cc62ca9e14ccff593291ca414a67110",
+    "Colors.hlsl.meta": "bf6145763b636c59c18720386dea6a20013942fabb1032d5db6ca5d48808ad2c",
+    "Sampling.hlsl": "39ca3060c2e58410fccb51c0227951811037aa9cc46e7ee4f36e8f75eae062f3",
+    "Sampling.hlsl.meta": "ba7482f94cb731e3748a7d0c17810ad1da511a1ff63c5d3c61d78247a662740d",
+    "StdLib.hlsl": "b15ca0357e236eb499b4e531fade18375d8f16d07e6d26fc4f9657b3dd4f8f04",
+    "StdLib.hlsl.meta": "26a6d8e74e2115cc69ba7702405dc878ab9ce07d70b998cc9266391bdd8b192b",
+    "xRLib.hlsl": "cd375cd6f75a7b87664c4588075cde9aa63050c7a9a7af96955e63fc49c423f9",
+    "xRLib.hlsl.meta": "c2400c9b3c38f2f8cd2e316912ecded24f3a36cd4612979fbc41fac0c32cac6a"
+  },
+  "include_target_prefix": "Assets/WholeGame/Shader/PostProcessing/",
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "package_archive": "work/packages/com.unity.postprocessing-2.3.0.tgz",
+  "package_bloom_renderer_sha256": "ccb6b9eb5da41f78ba59ba725cf86d36ca30a27e04736ad1fbc3351db50e4fe8",
+  "package_bloom_shader_sha256": "976b584a3276358b0db24e2f87fa7d38a03c3f9f582d07b9b1be6f543f33109e",
+  "package_copy_std_shader_sha256": "f45c16d48b68d71a7cb4f5de871184331ae6c0d8f938b5c4b1eee491aca637c7",
+  "package_license": "Unity Companion License",
+  "package_license_path": "package/LICENSE.md",
+  "package_license_sha256": "15f0ed0e23aecc2a337eab96b397d2663665683fc22129b40d0f4f36a97b8fb9",
+  "package_sha256": "e073d47579d5b2278964853e584829c3c967ab69563a0d163c993cd163b6aaaf",
+  "package_version": "2.3.0",
+  "package_url": "https://packages.unity.com/com.unity.postprocessing/-/com.unity.postprocessing-2.3.0.tgz",
+  "pass_names": [
+    "Prefilter 13 taps",
+    "Prefilter 4 taps",
+    "Downsample 13 taps",
+    "Downsample 4 taps",
+    "Upsample tent filter",
+    "Upsample box filter",
+    "Debug overlay (threshold)",
+    "Debug overlay (tent filter)",
+    "Debug overlay (box filter)"
+  ],
+  "runtime_selected_passes": [
+    1,
+    3,
+    5
+  ],
+  "schema": "whole-catalog-postprocessing-bloom-candidate-r2",
+  "shader_name": "Hidden/PostProcessing/Bloom",
+  "shader_target_prefix": "Assets/WholeGame/Shader/",
+  "stable_output": "generated-shader-candidates/postprocessing-bloom-r2/{input_id}"
+}

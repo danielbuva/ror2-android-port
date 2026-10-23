@@ -2859,6 +2859,27 @@ creation; catalog staging owns setup and receipts; there is no runtime owner or
 teardown. This changes content and requires a full bundle/player build, not a
 code-only build. No Android appearance or visual parity is implied.
 
+`scripts/lab/shader_postprocessing_bloom.py` owns the separately selected
+Post Processing Bloom source batch and its source-camera CopyStd companion.
+The fixed public `recipe/shader-postprocessing-bloom-candidate.json` pins Unity's
+Post Processing 2.3.0 archive, license and nine-pass Bloom/two-pass CopyStd
+contracts. This version is a compatible source reference, not an identification of the game's package
+version. The ignored input-bound `work/config/postprocessing-bloom.json`
+activates generation during whole-catalog preparation. The generator preserves
+each source shader's metadata and its exact `PostProcessResources.bloom`
+reference while replacing the one-pass exported placeholders with complete
+shaders and transitive includes. CopyStd is limited to the exact resource of
+the original Main Camera, whose enabled NaN-propagation guard requires pass 1.
+This source incompatibility does not identify the caller of an unnamed runtime
+Blit error. Upstream source stays under ignored `work/`; no Post Processing
+runtime package is installed alongside the existing game
+assembly. Catalog staging owns the batch receipt and drift checks; replay
+comparison accepts only its recorded source exceptions. This is a build-time
+owner with no runtime state or teardown. Isolated replay reads a previously
+generated, hash-checked candidate and refuses to create it in live inputs.
+It requires a full content/player
+build; Android rendering and PC appearance remain separate gates.
+
 ## Known structural debt
 
 First verified against `af2e101`; status updated after J597. Each step was its own commit with
