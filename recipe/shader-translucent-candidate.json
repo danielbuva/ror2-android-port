@@ -1,0 +1,93 @@
+{
+  "acceptance": {
+    "android_accepted": false,
+    "semantic_equivalence_proven": false,
+    "unity_compiled": false,
+    "visual_parity_proven": false
+  },
+  "candidate_schema": "local-source-bound-translucent-wrapper-candidate-r1",
+  "schema": 1,
+  "scope": "Host-only candidate generation from the configured accepted game installation; no shader bodies or generated programs are published. Unity compilation, Android acceptance, semantics, and visual parity remain false until separately measured.",
+  "shaders": [
+    {
+      "catalog_key": "e4abd95960ed75f4a9f59cac7c40bd9d",
+      "catalog_location": 2537,
+      "guid": "b950b7b50f8e9734e8b26f23f8409418",
+      "manifest": "manifests/DownTent.json",
+      "name": "DownTent",
+      "output": "sources/DownTent.shader",
+      "pass_count": 1,
+      "path_id": 8446615176080386013,
+      "primary_key": "TranslucentImage/DownTent.shader",
+      "serialized_name": "Hidden/DownTent",
+      "source_asset_path": "Assets/Le Tai's Asset/TranslucentImage/FormerResources/DownTent.shader"
+    },
+    {
+      "catalog_key": "12e87e7c7fde8e74db9f75172456c5c3",
+      "catalog_location": 2538,
+      "guid": "f7022f9f8b1c05f45b0e69d890d31534",
+      "manifest": "manifests/EfficientBlur.json",
+      "name": "EfficientBlur",
+      "output": "sources/EfficientBlur.shader",
+      "pass_count": 2,
+      "path_id": 6370232586618374777,
+      "primary_key": "TranslucentImage/EfficientBlur.shader",
+      "serialized_name": "Hidden/EfficientBlur",
+      "source_asset_path": "Assets/Le Tai's Asset/TranslucentImage/FormerResources/EfficientBlur.shader"
+    },
+    {
+      "catalog_key": "d996ab4381100014d99e25e68e9aac84",
+      "catalog_location": 2539,
+      "guid": "89c413d50c7159d42a05c19230c43769",
+      "manifest": "manifests/FillCrop.json",
+      "name": "FillCrop",
+      "output": "sources/FillCrop.shader",
+      "pass_count": 1,
+      "path_id": 5721449320467667425,
+      "primary_key": "TranslucentImage/FillCrop.shader",
+      "serialized_name": "Hidden/FillCrop",
+      "source_asset_path": "Assets/Le Tai's Asset/TranslucentImage/FormerResources/FillCrop.shader"
+    },
+    {
+      "catalog_key": "b12e02e9a9b684543a286089a03cb04b",
+      "catalog_location": 2540,
+      "guid": "e5c4572c0a575514bb041a5a82e33cea",
+      "keyword_axes": [
+        "FLIP_V"
+      ],
+      "manifest": "manifests/QuickDumbBlur.json",
+      "name": "QuickDumbBlur",
+      "output": "sources/QuickDumbBlur.shader",
+      "pass_count": 1,
+      "path_id": -5627814109785558414,
+      "primary_key": "TranslucentImage/QuickDumbBlur.shader",
+      "serialized_name": "UI/QuickDumbBlur",
+      "source_asset_path": "Assets/Le Tai's Asset/TranslucentImage/FormerResources/QuickDumbBlur.shader"
+    }
+  ],
+  "source": {
+    "build_id": "25475991",
+    "bundle_path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/translucentimage_shader_assets_all_e047e7a8b87bfe680ee207a3f02be2ce.bundle",
+    "bundle_sha256": "e10aaf15affd3058e0f3da79e49ec52bd22ddabd460cbf507a34107e73f87861",
+    "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88"
+  },
+  "stable_output": "generated-shader-candidates/translucent-camera-r1/{input_id}",
+  "target": "translucent-image-camera-shaders",
+  "tools": {
+    "authored_helpers": {
+      "shader_deferred.py": "f877d0a93bb628b3d351630ac2a6f8c82efc5f2990b6ca816efd93c419f4a541",
+      "shader_ramp_fog.py": "5c50fca86cdd1092edfbc3de97a3e30f25baec359dc512a6be26a96e1065482a",
+      "shader_segments.py": "a0906e1abe38b5a18f6dc8f9e902acb3def0123368ef7344f5427d2e03aeff58",
+      "shader_source.py": "d712407d715c37e79806207bd763bf2dc7d502a861366af2784ae8e63e3c026c"
+    },
+    "d3dasm": {
+      "binary_sha256": "5d966831f2bf711b23ba1958819444f28e3b071148d62914223b86e7f902f800",
+      "path": "reference-repos/coconutbird__d3dasm",
+      "revision": "a292206a15daf0723d945a475c6254413eda8551"
+    },
+    "dxbc_spirv": {
+      "disassembler_sha256": "56e0fe3adbf76b33d086dc148085824b4e80be89dba594876de19e7a950a51c0",
+      "path": "reference-repos/doitsujin__dxbc-spirv/builddir/tools/dxbc_disasm"
+    }
+  }
+}

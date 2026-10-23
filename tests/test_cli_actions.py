@@ -151,10 +151,19 @@ class PrototypeActionTests(unittest.TestCase):
                 self.assertEqual(json.loads(output), {"success": True, "unity_compiled": False})
                 self.assertIsNone(code)
 
+    def test_translucent_candidate_dispatch_is_host_only_and_prints_result(self):
+        module = ModuleType("shader_translucent")
+        module.main = Mock(return_value={"unity_compiled": False, "android_accepted": False})
+        self.modules["shader_translucent"] = module
+        code, output = self.dispatch("shader-translucent")
+        module.main.assert_called_once_with()
+        self.assertEqual(json.loads(output), {"unity_compiled": False, "android_accepted": False})
+        self.assertIsNone(code)
+
     def test_registry_names_and_current_status_match_documented_contract(self):
         # Added actions have separate dispatch contracts rather than changing
         # the historical pre-registry snapshot.
-        added = {"rebuild-step", "shader-outline-candidate", "shader-ramp-fog"}
+        added = {"rebuild-step", "shader-outline-candidate", "shader-ramp-fog", "shader-translucent"}
         self.assertEqual(set(actions.ACTIONS) - added, set(EXPECTED) - {"inspect"})
         self.assertEqual(len(actions._ENTRIES), len(actions.ACTIONS))
         self.assertEqual(
@@ -163,6 +172,7 @@ class PrototypeActionTests(unittest.TestCase):
                 "rebuild-step",
                 "shader-outline-candidate",
                 "shader-ramp-fog",
+                "shader-translucent",
                 "phone-content-fixture",
                 "phone-content-check",
                 "phone-content-build",

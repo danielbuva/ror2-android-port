@@ -29832,3 +29832,69 @@ parity. Four recovered Translucent candidates still need a source-bound public
 generator, exact-editor compilation and matched rendering observations. Main
 retains J1000 diagnostic bda75e37, asleep with 13 applied runs; its camera
 admission failure remains, and J850 is still the accepted rollback.
+
+## J1003 — Reconstruct source camera blur candidates from accepted input
+
+**Source requirement and prior art.** J997 restores exact lookups while clearly
+retaining dummy exporter bodies. Reuse J364–J366/J1002's existing native-program
+recovery rather than invent blur math. Pinned d3dasm register/interface output,
+independent DXBC disassembly/signatures and the accepted Unity parameter/pass
+records supply the source contracts. The community prior-art ledger distinguishes
+dummy exports from recovered programs and keeps the original PC draw as the
+behavioral oracle. A separately investigated shader decompiler expects a text
+format absent from the accepted export, so no new converter is adopted.
+
+**Named authored owner.** Add `shader_translucent.py` and the current host-only
+`shader-translucent` prototype action. Its audited public recipe binds the
+accepted input/build, configured installation's bundle, inventory row, four
+serialized shader objects, distinct catalog and exporter metadata identities,
+pass/variant topology and pinned authored/native tools. Resolve no timestamped
+run or AssetRipper directory. The generator imports the canonical binder directly
+and writes new ignored input-scoped candidates; it never edits authored source
+at build time. Unknown states/variants, input/tool drift, linked work roots and
+colliding shader/manifest/evidence paths refuse.
+
+The recovered wrappers retain DownTent, FillCrop and QuickDumbBlur's one-pass
+shape, EfficientBlur's two distinct vertex programs sharing its original fragment
+program, and QuickDumbBlur's normal/FLIP_V pair. Native program round trips and
+independent interfaces agree. Program expressions and serialized source bodies
+are generated only beneath ignored work; no original shader implementation is
+tracked. There is no new catalog exception or runtime selector change.
+
+**Review and host evidence.** Private R1 review rejects linked work-root resolution,
+output collisions and missing helper pins, with full source/exporter identity
+binding required before catalog use. The integrated R2 closes those cases.
+Its 12 production contracts and 40 independent refusal probes pass, and all nine
+wrapper function ASTs retain the reviewed source recovery. Root adds seven
+public synthetic contracts for declaration placement, complete/unsupported
+keyword axes, pass metadata and shared fragment references. All 19 public
+contracts and Ruff pass. Existing J1002 binder tests remain separate.
+
+Root runs the new public action against the accepted configured installation.
+All four ShaderLab files match the independently reviewed private R4 candidates
+byte-for-byte. In DownTent, EfficientBlur, FillCrop, QuickDumbBlur order, hashes are
+`810c7cb1b02bd05173cb9c1911f1116f81880ac784b8c1f738856b40936876ed`,
+`5928b55918a1c3731bc4d8e6de07352711d655ed59ac4d6bcd2d2758660b628d`,
+`d08df6a46d151b65c49f1f35718f4e334ef85404e0035d007c5d0e6b22e8647c`,
+and `dcdd923cab69f04fb328952fc85c2cee53765454c6c372982dd384a1ac55640e`.
+The source bundle remains unchanged. Current manifest SHA-256 is
+`67decc5901c2535a5f6b6f194b7c2309f2b7aa88ea97f70ee4c2a06000c793ba`.
+
+Evidence is under `work/coordination/original-native-visual-reference/` in
+`r30-translucent-production-draft-r2/`,
+`r30-translucent-production-review-r2/`,
+`r30-translucent-wrapper-review-r4/` and
+`r31-translucent-generator-integration-root-r1/`.
+The stable generated output is
+`work/generated-shader-candidates/translucent-camera-r1/<input_id>/`.
+Architecture names setup/output ownership, Local State records the public
+producer, and the generated developer action table states its current host-only
+scope. The recipe audit covers minimum reconstruction metadata only.
+
+**Remaining gates.** Generation is not Unity compilation, valid Android pipeline
+creation, runtime loading, original effect semantics or PC visual parity. The
+four existing catalog placeholder bodies remain selected. A reviewed isolated
+exact-editor fixture is ready for Root execution before catalog activation.
+No device/editor action or new APK occurs in this checkpoint. Main remains
+J1000 bda75e37, stopped/asleep with 13 applied runs; camera admission and composed
+audio remain unqualified, and J850 stays the accepted rollback.

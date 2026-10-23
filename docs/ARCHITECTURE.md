@@ -2788,6 +2788,20 @@ local ShaderLab/DXBC evidence. J965 qualifies its isolated exact-editor Android
 bundle fixture; the optional catalog consumer below stages its source. Android
 rendering remains a device gate.
 
+`scripts/lab/shader_translucent.py` owns the current host-only
+`shader-translucent` action (J1003). Its fixed public
+`recipe/shader-translucent-candidate.json` binds the accepted installation,
+inventory, four source shader identities, pass counts, keyword axes and exact
+authored/native tool pins. It imports the repository binder directly and writes
+only new ignored evidence under
+`work/generated-shader-candidates/translucent-camera-r1/<input_id>/`.
+Input/tool drift, symlinked output roots, unknown metadata and colliding output
+paths refuse before publication. The generator retains EfficientBlur's two
+source passes/shared fragment and QuickDumbBlur's measured `FLIP_V` axis.
+It has no runtime setup or teardown, and no catalog consumer selects these four
+candidates yet. Exact-editor compilation, Android rendering and matched PC
+appearance remain separate gates; J997's placeholder catalog bodies stay in use.
+
 `whole_catalog.prepare_integration` owns the optional two-shader catalog override
 (J966). The public `recipe/shader-catalog-overrides.json` is a default-off exact
 identity allowlist. Ignored `work/config/shader-catalog-overrides.json` explicitly

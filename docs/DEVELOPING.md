@@ -161,6 +161,7 @@ by hand. Regenerate with `python3 scripts/readme-actions.py`; CI checks freshnes
 | `./dev prototype --action whole-catalog-run` | Install, sync and run the catalog-registration check. |
 | `./dev prototype --action shader-outline-candidate` | Host-only: --target outline-highlight generates the original two-pass shader candidate at a stable ignored path; editor compilation and Android appearance remain unverified. |
 | `./dev prototype --action shader-ramp-fog` | Generate one accepted-input-bound RampFog ShaderLab candidate under ignored work/generated-shader-candidates/. Host-only; refuses input/helper/tool drift or an existing output. Unity compilation, Android acceptance, and visual equivalence remain separate checks. |
+| `./dev prototype --action shader-translucent` | Host-only: generate four source-bound camera blur/crop shader candidates under ignored work/. Refuses input, tool, helper or output drift. No catalog activation, Unity compilation, Android rendering or visual parity is implied. |
 
 <!-- prototype-actions:end -->
 
