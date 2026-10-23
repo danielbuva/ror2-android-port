@@ -94,8 +94,10 @@ verification. MainOutput retains ready camera/context, native sound mapping and
 all three highlight assignments. The native callback reports finite nonzero
 samples; original Term and persisted waveform readback remain unqualified.
 J1024 records a separate R33 source-view startup timeout and default-menu Quit
-pass; it supplies no new rendering evidence. Loader's full-kit semantics,
-first-sample JSON, composed audio and visual parity remain open. See the
+pass; it supplies no new rendering evidence. J1026's combined source-view/PCM
+test stops at the deliberately deferred audio-camera context; its failed
+natural-Quit attempt does not change either standard-control result. Loader's
+full-kit semantics, first-sample JSON, composed audio and visual parity remain open. See the
 [current snapshot](../PORTING_STATE.md) and
 [J1022](PORTING_JOURNAL.md#j1022--build-and-verify-the-mainoutput-audio-candidate-with-both-controls).
 The accepted baseline below remains the rollback.

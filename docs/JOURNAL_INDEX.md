@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1026](PORTING_JOURNAL.md#j1026--preserve-the-mainoutput-camera-gate-when-visual-ownership-defers-it) | 2026-10-23 | Preserve the MainOutput camera gate when visual ownership defers it | **Hypothesis and prior contract.** |
 | [J1025](PORTING_JOURNAL.md#j1025--run-the-pinned-importer-through-an-android-nativeaot-console) | 2026-10-23 | Run the pinned importer through an Android NativeAOT console | **Question and prior art.** |
 | [J1024](PORTING_JOURNAL.md#j1024--distinguish-a-cold-menu-quit-pass-from-a-failed-source-view-startup) | 2026-10-23 | Distinguish a cold-menu Quit pass from a failed source-view startup | **Scope and player.** |
 | [J1022](PORTING_JOURNAL.md#j1022--build-and-verify-the-mainoutput-audio-candidate-with-both-controls) | 2026-10-23 | Build and verify the MainOutput audio candidate with both controls | **Hypothesis and existing contract.** |

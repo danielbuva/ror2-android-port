@@ -31659,3 +31659,91 @@ native dependency and output-comparison gates. Preserve the failed stock
 frontend attempts and both authored input versions. App security/delivery,
 permitted tools, complete Android content/shader/player production and matched
 performance remain open; Route A and the desktop fallback stay fixed.
+
+## J1026 — Preserve the MainOutput camera gate when visual ownership defers it
+
+**Hypothesis and prior contract.** The existing Huntress source-view route
+can retain ready audio-camera context while the R34 MainOutput capture proceeds
+to natural Quit and cold readback. This uses J959/J962's existing lifecycle
+and readback contracts and the camera ownership described in ARCHITECTURE; it
+adds no runtime mechanism. The result below rejects the combined test setup.
+
+**First failure.** Use the frozen R34 APK
+`098646f6cc931c2a8d01d91fe4dfdcf5f54c58d9fc6ad01137695992e58588bd`, source
+`5724dd72fee7ddf5529b430f1ef03ef44fe2fa89`, and the existing MainOutput request.
+The selected attempt uses Huntress with both
+`nativeSourceSkinLifecycleDiagnosticRequested` and
+`pointSoundDiagnosticRequested` enabled. It reaches integrated world play at
+35.194931 seconds. Audio reports ready, no `noAudio` condition, 153 of 153
+banks complete and 438 passive capture callbacks containing 504,576 finite
+samples, including 126,528 nonzero finite samples. No nonfinite samples are
+reported. Raw PCM is not persisted and original Term has not returned.
+
+Before attempting Quit, the runner stops because the current world report
+does not have an admitted audio camera context. That report says
+`originalAudioCameraContextRequested=true`, `Created=false`, `Ready=false`,
+`Deferred=true`, with state
+`deferred_existing_visual_source_camera_diagnostic_owns_source_rig`. The
+source in `tools/unity/runtime/world/IntegratedWorldBoundary.cs` returns
+explicitly from `PrepareOriginalAudioCameraContext` when
+`nativeSourceSkinLifecycleDiagnosticRequested` is true; the nearby scope
+string records that the audio context activates the same accepted source
+`CameraRigController` and listener. The combined test setup selected the visual owner while requiring readiness
+from the deferred audio-only owner. The unchanged admission gate correctly
+refused this conflicting selection. It does not show
+that the native audio setup failed or that either production owner is broken.
+
+**Cleanup and status.** The runner used its failure-only force-stop path; that
+cleanup reports success with no cleanup errors. A separate terminal query
+rehashes the same APK and verifies owned adopted placement, the unchanged
+13-run profile,
+selector and process absence, and sleeping display. The query record has
+command return code 2 and reports no additional cleanup or idle errors. A
+read-only post-stop readback returns the retained report and filtered log; it
+explicitly marks current-PID bracketing unqualified, so that log is not treated
+as live-run error qualification. It retains 2,993 identical Unity errors:
+`Invalid pass number (1) for Graphics.Blit` on a material with one pass. These
+are unresolved source-view errors and match none of the known Windows-bundle
+negative controls; do not whitelist them or infer their material identity.
+This is not a natural Quit: native Term, verified disarm, raw waveform
+persistence and cold readback remain unqualified.
+The R34 plain and stage-exit standard controls remain separately passed in
+J1022; this targeted natural-Quit attempt does not revise their result. The reviewed R6 runner passes 42 host tests; doctor and preflight pass with
+explicit Main selection. No authored runtime source or recipe change was made; accepted rollback J850 remains unchanged.
+
+**Next experiment.** Rerun the same MainOutput natural-Quit capture with the
+existing baseline Commando selection and both the source-skin lifecycle and
+point-sound diagnostic options disabled. Keep the audio-camera readiness gate
+unchanged. This isolates the already observed source-camera ownership
+interaction without changing either owner or accepting a missing camera
+context. If the default selection still defers or fails admission, stop at
+that first report and classify the new state before changing the setup. Do not
+claim music attribution, rendered output, physical audibility, natural Term
+completion or persisted readback from this failed attempt.
+
+**Evidence.** The frozen build is documented in J1022. The exact selection and
+bounded reports are under
+`work/experiments/original-game-audio-r34-main-pcm/root-r1/`; the summarized
+first-failure record and independent terminal query are under
+`work/coordination/original-game-audio-pcm/r34-main-pcm-root-r1/`. The
+selection enabled the visual source-skin diagnostic. The latest retained world
+report is `animation-report-06.json` at 35.194931 seconds; its report-retention
+manifest records the seven ordered snapshots. The report states that it is
+retention evidence only and establishes no animation, pose, rendering or
+parity result.
+
+Key hashes: failed-run summary
+`a3c3bf0b770e5cdd7a29af34195e50c83e0a09bbd310ccbf002aee2dee26bbd3`;
+runner failure record
+`6b5ddaf768dc4e3943914c0e2bd0c0a9696f2659bc00d6b159babb9f4290fec3`;
+selected request
+`7fea3680a8cd114890dfacb0f4fb33bcf24b9148f6ba1e968cefac78e048c302`;
+world report
+`d24b5bfc80df681cdf5fc97c1bd3a056ca2807a00ffdd0662c27992e923cb8fe`;
+retention manifest
+`336a8fc0dd0354303f6922374637e6ca69d19ef0d5f001f12ec23018fa87def9`;
+post-stop readback record
+`a40a8b872e7ad18db9b2fa885c52a33a0c4a6e91d24454498efdeb5698528283`;
+post-stop filtered log `d3bd4c80d977a8488de036f3b1f2e9bad9d150ff875a3f30cabf63351d4dc627`;
+independent terminal query
+`6f445e046fc58d006b0565d407e62a53d791dcc7c593462066bf47d2f8e91a38`.
