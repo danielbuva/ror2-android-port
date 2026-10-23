@@ -1739,6 +1739,13 @@ report, read against the journal entry that defines what it must show.
 | Shaders and presentation | `AndroidMaterialPresentation`, `AndroidNativeDeferredPresentation`, `Android*Presentation.shader` (18 files) | **own types** (static) | `Begin` → `Finish` | `test_shader_bindings.py`, `test_shader_metadata.py`, `test_pc_draw_export.py` |
 | Developer controls | `DebugAccelerationBoundary` ([debug-acceleration.md](debug-acceleration.md)) | nested `DebugAccelerationSession` (`IDisposable`) **own type** holds the body, saved god mode, ownership flag, charge scan/callback set and grant inventory; `debugPanel` stays shared with IntegratedWorld's graphics button; sticky "assisted" flags stay in the coordinator report | `PrepareDebugAcceleration` (calls `DebugAccelerationSession.Prepare`) → `CleanupDebugAcceleration` (calls `Dispose`; owner retained) | `test_debug_acceleration.py` |
 
+`AndroidProfileSession` reserves each original achievement event before its
+detached profile transaction, suppressing reentrant and duplicate delivery.
+A thrown transaction releases only that event reservation for a later genuine
+callback; successful refusal and post-transaction reporting failures retain it.
+Session disposal clears the set. The extracted production-method fixture in
+`tests/test_offline_achievement_event_retry.py` checks this host contract (J1039).
+
 For the explicitly selected native-skin diagnostic only,
 `NovaDiagnosticDisplay.CaptureNativeSourceSkinReport` asks the existing lifecycle
 owner for a read-only visual sample at the five-second report-save cadence.

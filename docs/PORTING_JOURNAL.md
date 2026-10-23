@@ -32347,3 +32347,36 @@ Static pass/source inventories are under
 `work/coordination/original-native-visual-reference/r35-current-camera-pass-call-audit-r1/`
 and `work/coordination/original-native-visual-reference/r35-outline-reconstruction-r1/`.
 No player build or installed-byte change occurs in this experiment.
+
+## J1039 — Retry genuine achievement events after a failed profile transaction
+
+**Hypothesis and change.** The original-event owner reserved an identifier
+before its detached award transaction, but retained that reservation if the
+candidate evaluator or commit threw. A later genuine callback in the same
+session could therefore never retry. `AndroidProfileSession` now removes the
+reservation only when `AwardObservedEvent` throws. It keeps the reservation
+during evaluation to suppress reentrant callbacks, and after a successful
+decision, including refusal or later reporting failure. Disposal still clears
+the session's set. Native event predicates, profile persistence, original grant
+logic and all four assisted-source exclusions are unchanged.
+
+This integrates the isolated `fd7a6b5` gameplay fix after source review. Prior
+art remains the pinned Starstorm2 `FieldAcceleratorAchievement` actual-body
+server-event/grant boundary and ProperSave's isolated local-filesystem policy,
+inspected for J501/J503/J652; neither supplies a platform identity or replaces
+this project's detached transaction. No community or game implementation is
+copied. The existing authored runtime source must be replayed by R8; no rebuild
+output or local content input is edited.
+
+**Host result and limits.** Seven extracted-production-method cases pass:
+candidate failure/retry, pre-commit failure/retry, reentrant and duplicate
+delivery, four assistance sources, successful refusal, and observation/report
+failures after commit. Ruff format/check pass. The fixture models transaction
+collaborators; it does not establish native eligibility, Unity filesystem
+behavior or positive gameplay grants. Review and integrated-test evidence are
+under `work/coordination/progression-event-retry-review-root-r1/`.
+
+No APK is built or installed for this host checkpoint. Main remains stopped
+with R35 `47d14cb8` and the unchanged 13-run profile. Verify the next integrated
+player through both standard controls; ordinary positive unlock acceptance
+still requires a genuine unassisted qualifying event.

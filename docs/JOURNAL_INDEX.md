@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1039](PORTING_JOURNAL.md#j1039--retry-genuine-achievement-events-after-a-failed-profile-transaction) | 2026-10-23 | Retry genuine achievement events after a failed profile transaction | **Hypothesis and change.** |
 | [J1038](PORTING_JOURNAL.md#j1038--observe-the-owned-two-pass-outline-material-and-named-bloom-failures) | 2026-10-23 | observe the owned two-pass Outline material and named Bloom failures | **Hypothesis and route.** |
 | [J1037](PORTING_JOURNAL.md#j1037--save-nonzero-music-output-pcm-while-preserving-the-failed-warm-quit) | 2026-10-23 | save nonzero music-output PCM while preserving the failed warm Quit | **Hypothesis and setup.** |
 | [J1034](PORTING_JOURNAL.md#j1034--build-r35-and-verify-both-controls-with-the-selected-music-output) | 2026-10-23 | build R35 and verify both controls with the selected music output | **Hypothesis and change.** |

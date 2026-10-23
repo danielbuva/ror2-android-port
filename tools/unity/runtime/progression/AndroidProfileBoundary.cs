@@ -608,13 +608,24 @@ public sealed partial class PortSession
             else
             {
                 report = null;
-                var awarded = coordinator.resultsSaveSystem.local.AwardObservedEvent(
-                    candidate =>
-                    {
-                        report = coordinator.androidProgression.ApplyObservedEventCandidate(candidate, identifier);
-                        report.eventSource = eventSource;
-                        return report.granted;
-                    });
+                bool awarded;
+                try
+                {
+                    awarded = coordinator.resultsSaveSystem.local.AwardObservedEvent(
+                        candidate =>
+                        {
+                            report = coordinator.androidProgression.ApplyObservedEventCandidate(candidate, identifier);
+                            report.eventSource = eventSource;
+                            return report.granted;
+                        });
+                }
+                catch
+                {
+                    // The reservation blocked reentrant callbacks during the transaction.
+                    // A failed transaction must allow a later genuine event to retry.
+                    profileObservedEvents.Remove(identifier);
+                    throw;
+                }
                 coordinator.Check(report != null && awarded == report.granted,
                                   "Original event award transaction disagrees with committed profile");
                 coordinator.resultsSaveSystem.userProfile = coordinator.resultsSaveSystem.local.profile;
