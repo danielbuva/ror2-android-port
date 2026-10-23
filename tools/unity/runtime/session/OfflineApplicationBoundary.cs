@@ -234,6 +234,13 @@ public sealed partial class PortSession
         }
         public void ObserveOfflineApplicationInput()
         {
+            // Settings owns this frame even if its Back action closes the screen.
+            // Hidden start-menu controls must not consume the same A/stick input.
+            if (coordinator.offlineSettingsVisible)
+            {
+                coordinator.ObserveOfflineSettingsControllerInput();
+                return;
+            }
             if (coordinator.offlineStartVisible)
             {
                 if (offlineMenuMapping != null && OfflineUiControllerPresent())

@@ -115,7 +115,8 @@ public sealed partial class PortSession
     }
     void OnGUI()
     {
-        DrawOfflineSettings();
+        if (DrawOfflineSettings())
+            return;
         if (DrawOfflineStart())
             return;
         if (r != null && r.results != null && r.results.reportGenerated)

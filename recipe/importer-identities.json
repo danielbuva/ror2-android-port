@@ -115,6 +115,12 @@
     "Assets/LabLoadingScene/ActiveClientBoundary.cs.meta": {
       "runtime_source": "runtime/session/ActiveClientBoundary.cs"
     },
+    "Assets/LabLoadingScene/AndroidFeedbackDraft.cs.meta": {
+      "runtime_source": "runtime/input/AndroidFeedbackDraft.cs"
+    },
+    "Assets/LabLoadingScene/AndroidFeedbackScreen.cs.meta": {
+      "runtime_source": "runtime/input/AndroidFeedbackScreen.cs"
+    },
     "Assets/LabLoadingScene/AndroidMaterialPresentation.cs.meta": {
       "runtime_source": "runtime/shaders/AndroidMaterialPresentation.cs"
     },

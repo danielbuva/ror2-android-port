@@ -25,6 +25,8 @@
   "runtime/commerce/PickupDropletLoadBoundary.cs",
   "runtime/commerce/WorldChestBreadthBoundary.cs",
   "runtime/commerce/WorldCommerceBoundary.cs",
+  "runtime/input/AndroidFeedbackDraft.cs",
+  "runtime/input/AndroidFeedbackScreen.cs",
   "runtime/input/AndroidNativeItemDisplayDispatch.cs",
   "runtime/input/AndroidNativeSkinActivationPolicy.cs",
   "runtime/input/AndroidNativeSourceCameraPrerequisites.cs",

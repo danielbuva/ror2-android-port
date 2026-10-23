@@ -37,9 +37,9 @@ public sealed partial class PortSession
     {
         offlineSettingsSession?.ObserveControllerInput();
     }
-    void DrawOfflineSettings()
+    bool DrawOfflineSettings()
     {
-        offlineSettingsSession?.Draw();
+        return offlineSettingsSession != null && offlineSettingsSession.Draw();
     }
     void CleanupOfflineSettingsPause()
     {
@@ -51,6 +51,7 @@ public sealed partial class PortSession
     sealed class OfflineSettingsSession : IDisposable
     {
         readonly PortSession coordinator;
+        readonly AndroidFeedbackScreen feedback = new AndroidFeedbackScreen();
         float offlineSettingsTimeScale;
         public OfflineSettingsSession(PortSession coordinator)
         {
@@ -90,6 +91,8 @@ public sealed partial class PortSession
                 return;
             if (show == coordinator.offlineSettingsVisible)
                 return;
+            if (!show)
+                feedback.Close();
             if (show && coordinator.worldPause && coordinator.worldPlayer && coordinator.worldPlayer.healthComponent.alive)
             {
                 coordinator.Check(PauseStopController.instance && !PauseStopController.instance.isPaused && Time.timeScale > 0,
@@ -125,6 +128,11 @@ public sealed partial class PortSession
             // adapter's menu/back action; it does not alter the original input bank.
             if (UnityEngine.Input.GetKeyDown(KeyCode.Joystick1Button1))
             {
+                if (feedback.Visible)
+                {
+                    feedback.Close();
+                    return;
+                }
                 if (coordinator.offlineSettingsVisible)
                 {
                     coordinator.r.settings.controllerCloses++;
@@ -136,7 +144,7 @@ public sealed partial class PortSession
                     Show(true);
                 }
             }
-            if (coordinator.offlineSettingsVisible && coordinator.r.nova != null && coordinator.r.nova.physicalInputAvailable &&
+            if (!feedback.Visible && coordinator.offlineSettingsVisible && coordinator.r.nova != null && coordinator.r.nova.physicalInputAvailable &&
                 coordinator.r.nova.mapping != null &&
                 UnityEngine.Input.GetKeyDown((KeyCode)((int)KeyCode.Joystick1Button0 + coordinator.r.nova.mapping.jump)))
             {
@@ -148,18 +156,24 @@ public sealed partial class PortSession
                 Show(false);
             }
         }
-        public void Draw()
+        public bool Draw()
         {
             if (coordinator.offlineSettings == null)
-                return;
+                return false;
+            if (feedback.Visible)
+            {
+                feedback.Draw();
+                // Keep the GUI event owned even when Back closes the feedback.
+                return true;
+            }
             var button = new Rect(Screen.width - 205, 10, 185, 40);
             coordinator.r.settings.buttonX = button.center.x;
             coordinator.r.settings.buttonY = button.center.y;
             if (GUI.Button(button, coordinator.offlineSettingsVisible ? "Close settings" : "Settings / pause"))
                 Show(!coordinator.offlineSettingsVisible);
             if (!coordinator.offlineSettingsVisible)
-                return;
-            GUI.Box(new Rect(Screen.width * .5f - 240, Screen.height * .5f - 200, 480, 400),
+                return false;
+            GUI.Box(new Rect(Screen.width * .5f - 240, Screen.height * .5f - 200, 480, 465),
                     coordinator.UsesDiagnosticWithoutPhysicalInput()
                         ? "Android offline settings · touch controls"
                         : "Android offline input settings · B back · A save");
@@ -194,17 +208,21 @@ public sealed partial class PortSession
                 GUI.Label(new Rect(x, y + 302, 420, 44), "Android profile · " + coordinator.r.profile.appliedRuns + " genuine results · " +
                                                              coordinator.r.profile.kills +
                                                              " kills\nSteam/cloud and Rewired maps unavailable");
+            if (GUI.Button(new Rect(x, y + 356, 420, 45), "Send feedback"))
+                feedback.Open();
             Observe();
             if (coordinator.offlineSettingsPaused && Event.current.type == EventType.Repaint && Time.frameCount % 30 == 0)
             {
                 coordinator.r.settings.observations++;
                 coordinator.Save();
             }
+            return feedback.Visible;
         }
         // Cleanup may run between sessions. Only an owned pause is released; the
         // store and an unpaused visible screen keep their existing lifetime.
         public void Dispose()
         {
+            feedback.Close();
             if (coordinator.offlineSettingsPaused)
                 Show(false);
         }

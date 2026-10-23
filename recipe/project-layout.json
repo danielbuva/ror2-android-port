@@ -64,6 +64,8 @@
     "runtime/commerce/PickupDropletLoadBoundary.cs": "19df9535963e44b1fb04dfc962bffcab",
     "runtime/commerce/WorldChestBreadthBoundary.cs": "7c11bf3c561274bfd972fe670972fa8a",
     "runtime/commerce/WorldCommerceBoundary.cs": "b7508373f768140b6b471276b69cdcda",
+    "runtime/input/AndroidFeedbackDraft.cs": "ba29c712a3554bac91c65b7fc61fd5cc",
+    "runtime/input/AndroidFeedbackScreen.cs": "1aed05c48e71408cb30bee16c80c15df",
     "runtime/input/AndroidNativeItemDisplayDispatch.cs": "d498d2296d529424b898895a7aa85c78",
     "runtime/input/AndroidNativeSkinActivationPolicy.cs": "1d9126d632420438c92e9bb7bbaf4fdb",
     "runtime/input/AndroidNativeSourceCameraPrerequisites.cs": null,
