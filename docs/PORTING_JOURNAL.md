@@ -32416,8 +32416,8 @@ does not prove that a skill emitted sound or identify its samples.
 
 **Host result.** The 26 integrated selector/policy/cache tests pass. Of 49 broader owner,
 staging and reproducibility checks, 48 pass and one catches the stale pin
-described below. After correction, all 13 selected camera/producer checks pass
-(two historical-profile cases explicitly skip).
+described below. After correction, the selected camera/producer run reports 11 passes and
+two explicit historical-profile skips.
 A broader owner-cohort check catches a stale camera hook manifest pin; Root
 refreshes that pin and the camera recipe's corresponding source digest. The
 corrected camera/producer pin checks pass, with optional historical-profile
@@ -32693,3 +32693,106 @@ Continue phone-side owner signing, approved launcher integration and device
 installation/update qualification;
 revisit independent code/content producers if packet delivery cannot supply the
 required bytes. Do not declare game/alpha readiness from file equality alone.
+
+## J1040 — Restore Bloom and the source camera's CopyStd pass contracts
+
+**Hypothesis and change.** J1038's named Bloom pass 1/3/5 failures match
+one-pass exported placeholders rather than the unchanged original runtime's
+nine-pass contract. The exact original Main Camera also enables its NaN guard
+and references a one-pass CopyStd shader where that guard needs pass 1. An
+input-bound, default-off generator now replaces all 50 Bloom shader bodies and
+only that source camera's CopyStd body using pinned Unity Post Processing 2.3.0
+source. This is a compatible contract reference, not a determination of the
+game's package version. The generator preserves every original shader meta and
+resource reference, stages the 15 transitive HLSL includes, and records a
+separate candidate, activation and project receipt. Public Git contains authored
+tooling, hashes and minimum reconstruction identities; upstream source remains
+ignored. No duplicate Post Processing runtime assembly is installed.
+
+Prior art remains the pinned R2Wiki dummy-shader export caveat and
+RoR2ImportExtensions' single-owner post-processing assembly exclusion, inspected
+for the earlier shader recovery. The accepted original runtime and exact camera
+resource join govern this change. Outline already has its expected two passes
+and is unchanged. The unnamed one-pass Blit errors in J1038 remain unattributed;
+this CopyStd correction is justified by its source contract, not a guessed log
+caller. Static joins are under
+`work/coordination/original-native-visual-reference/r35-copy-resource-join-r1/`
+and `r35-postprocess-blit-call-audit-r1/`.
+
+**Host and pipeline result.** The normal preparation hook, isolated replay and
+receipt comparison pass 73 focused tests. A concrete review finding moved the
+disable-after-staging refusal ahead of catalog writes. Additional integrated
+checks catch pending StageIO receipts and refuse candidate drift; isolated replay
+cannot create live candidate inputs. The first push's camera source pin and
+recipe audit-table omissions are corrected, and the clean-clone pre-push CI
+passes at source `1428fdfca065f637c899ff159c9cacfe0b54e97b`.
+This content change must be replayed by catalog preparation/rebuild comparison;
+J1039's original achievement retry also enters this integrated player through R8.
+The audio library, banks, capture selection and original music output are unchanged.
+
+The first full player build completes on already prepared content, before the
+new content-preparation step is run. Missing Bloom project receipts refuse its
+artifact freeze, catching this ordering error before any device install. The
+unused APK is preserved with its raw receipt. Root then runs the documented
+`whole-catalog-prepare` and `whole-catalog-host` sequence. All 7,465 roots pass
+the typed import, the separate Bloom/CopyStd receipt is present, and preflight
+passes before the corrected full build. Vulkan compilation emits Bloom's nine
+unique programs. A passive host sample identifies the longer bundle phase as
+active LZ4HC compression; no editor restart or build-lock bypass occurs.
+
+**Build and device result.** The corrected full build succeeds with zero
+errors at source `1428fdfca065f637c899ff159c9cacfe0b54e97b`, request
+`20261023T194800.215567Z-54c8f1ece4014034864fcbcaf9735ee8`. Its APK is
+`bda30f33a62d62176cd45fd9cc0bd50ed5fe4e12d325ddc7ef19e948ec0fd3e7`.
+Root verifies all 275 frozen artifact files, including the raw build receipt,
+APK, symbols, 266 payload entries and source/selection receipts. There are 101
+changed payload hashes and no membership changes. Sync transfers 51 runtime
+files; manifest sidecars are not device inputs. The pinned editor is directly
+verified idle before handing the shared editor to the feedback owner.
+
+Install updates the owned Main package in place on the live adopted volume.
+Both standard controls pass on the frozen artifact: 35.188797 s on Lakes, then
+exactly one original exit with 136.051575 s total world time and 13.503845 s on
+Goolake. Both retain 13 applied runs and report all 153 requested runtime banks
+ready. Strict current-process log checks find zero unexplained errors. The
+unchanged selected music output records 459 callbacks / 528,768 finite nonzero
+samples in plain mode and 460 / 529,920 in stage mode, with no nonfinite samples
+or rejected buffers. These controls do not qualify ordinary effects, event
+attribution, speaker audibility or natural audio termination.
+
+**Source-view result and remaining gap.** The same bounded Huntress source-view
+protocol now reaches 5.005615 s of live world play and captures the exact owned
+Outline material at its matching camera callback: supported shader, two passes,
+matching identities. It still does not observe the source Outline Blit call.
+The screenshot is bracketed by the same live process; both log snapshots have
+zero unexplained errors. The previous named Bloom and unnamed one-pass Blit
+failures are absent in this observed window. This does not retrospectively
+identify the unnamed caller or establish longer-run behavior.
+
+The image now shows more character/object color and visible background mountain
+shapes, rather than the previous predominantly brown silhouettes. Terrain and
+fog remain flat/washed out. This is visible progress, not original-PC parity;
+no matched original-PC capture is available here. Keep the source-view route
+opt-in and continue the remaining shader/material/fog contracts from source.
+No Outline pass or animation behavior is changed.
+
+**Terminal state.** All three run cleanups verify selector/process absence and
+sleeping display. Independent final readback hashes the installed APK bytes,
+queries the current adopted placement and runtime backing, verifies the exact
+unchanged 13-run profile, and confirms selector/process absence and display
+sleep without additional cleanup. R36 becomes the latest standard-control-
+verified diagnostic; accepted J850 remains the rollback. J1043's later audio
+timing source is not in this APK.
+
+**Evidence.** Build logs, failed-freeze ordering note, focused host checks,
+source review resolution, corrected request and immutable artifact manifest are
+under `work/coordination/postprocessing-bloom-integration-root-r1/`.
+The frozen artifact is under
+`work/experiments/original-game-audio/r36-20261023T194800.215567Z-54c8f1ece4014034864fcbcaf9735ee8-bda30f33a62d/`.
+Standard run directories are
+`work/experiments/baseline/20261023T201014.017096Z/` and
+`work/experiments/baseline/20261023T201433.217799Z/`.
+The source-view run is
+`work/experiments/original-camera-listener-lifecycle/20261023T202033.337163Z/`;
+its same-protocol driver is under
+`work/coordination/original-native-visual-reference/r36-source-view-root-r1/`.

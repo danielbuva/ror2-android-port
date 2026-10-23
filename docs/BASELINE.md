@@ -88,20 +88,20 @@ The plain check and its acceptance criteria remain unchanged.
 
 ## Current baseline (2026-10-23)
 
-[J1034](PORTING_JOURNAL.md#j1034--build-r35-and-verify-both-controls-with-the-selected-music-output)
-qualifies diagnostic APK 47d14cb8, source 919e72a, through both standard controls,
-strict process-log qualification and independent installed-byte/placement/profile
-readback. Plain reaches 35.225098 s on Lakes; stage-exit completes one original
-transition and 11.131470 s on Goolake. Both retain 13 applied runs and observe
-finite nonzero PCM from the selected MusicController-owned output. Production
-Android JSON now retains the typed first admission sample. These checks do not
-qualify natural audio shutdown, event attribution, speaker audibility or visual
-parity. [J1037](PORTING_JOURNAL.md#j1037--save-nonzero-music-output-pcm-while-preserving-the-failed-warm-quit)
-separately verifies a saved nonzero prefix after both Term returns and disarm,
-while the natural-Quit protocol fails with a focus-loss ANR.
-[J1038](PORTING_JOURNAL.md#j1038--observe-the-owned-two-pass-outline-material-and-named-bloom-failures)
-observes the expected supported two-pass Outline material; source-view rendering
-still fails with named Bloom and unnamed Blit pass errors.
+[J1040](PORTING_JOURNAL.md#j1040--restore-bloom-and-the-source-cameras-copystd-pass-contracts)
+qualifies diagnostic R36 APK bda30f33, source 1428fdf, through both standard
+controls, strict current-process log checks and independent installed-byte,
+placement, backing and profile readback. Plain reaches 35.188797 s on Lakes;
+stage-exit completes one original transition and 13.503845 s on Goolake. Both
+retain 13 applied runs and finite nonzero samples from the existing selected
+MusicController output. The bounded source-view route now reaches its expected
+two-pass Outline observation without the previous Bloom or Blit pass errors.
+Color/background visibility improves, but washed-out rendering and PC parity
+remain open. These checks do not qualify full audio or natural Quit; J1037's
+saved music prefix and failed warm-Quit result remain separate evidence.
+
+J1043's later default-off MainOutput capture timing source is not in R36 and
+awaits its own player build/device qualification.
 
 R34's scoped MainOutput windows, failed warm Quit and separate cold-menu
 persistence remain recorded in J1022/J1028/J1031. Loader's full-kit semantics
