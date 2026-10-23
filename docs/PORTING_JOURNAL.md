@@ -28708,3 +28708,181 @@ reviewed one-output preservation trial under the mutex; it has not executed at
 this checkpoint. There is no global cache clear, runtime edit or device action.
 J954 stays installed and J850 accepted. A new successful capture and both device
 controls are required before any R27 runtime claim.
+
+## J978 — Freeze R27 after a preserved, targeted CodeGen output rerun
+
+**Hypothesis and intervention.** R11's pinned Player DAG declares one unique
+CodeGen output: the prior profiler trace. Preserving only that generated output
+should make Bee recreate it, without clearing unrelated caches or changing the
+game's runtime merely to defeat caching. Root reviews the one-use helper,
+corrects its initial assertion/path guards, and passes six synthetic contracts
+including optimized-Python and path-escape refusals. Under the existing shared
+mutex and positive editor idle, the final helper requires R11's exact retained
+manifest, DAG, response file, trace and 93 distinct managed input hashes. It moves
+only the trace into new preserved evidence, verifies its bytes and absence at
+the original path, and rechecks the DAG, response file and all managed inputs.
+No assembly, original game input or other cache is removed. The helper's source
+and retained-input hashes are bound in the new attempt's local-input manifest.
+
+**Build result.** R27 R12 at committed source
+`2f81ab1502957d5bd60a8fe42e6f62092ef09184` passes preparation, refresh, catalog
+validation and the full Android build CLI. Unity reports success with zero
+errors in 92.346477 s. The declared trace is recreated with changed bytes and
+one qualifying complete converter event; the unchanged freshness verifier and
+all request/source/input/report/graph/response joins pass. The prior trace is
+preserved, not edited or restored as new evidence. Terminal editor idle is
+positively verified before releasing the mutex. This qualifies the narrowly
+scoped preservation trial; it is not a global cache-clear policy or a claim that
+all native compilation work was rerun.
+
+The frozen APK is
+`213228ad3b6b70505f49c9002e08f841d254a5c2bf4cc075e0c78fb968fb0c2e`;
+symbols are
+`8e7196c8fc383c028ef1bb74147f6813597886ef3ef45456f770fcce466fc8ad`.
+The source-freeze digest is
+`ac30a90d21747ea26a62706a25c4b69057a314a1acaeaaaba34b857c0cfb7d90`.
+The new trace is
+`2144611370f0f2efecfa75f809e0e2d2e189c55a9b02846ab214065b2fa58fa6`;
+its preserved predecessor is
+`3eb349de4a03fcea78e04ce3ae5ec1164dc7e4fe4b55121219359c0b37a83a62`.
+
+**Artifact qualification.** The host freezer seals the exact APK, symbols,
+266-file external payload, source/local-input manifests and stage receipts.
+All staged bank/WEM rows and the native library match APK bytes. Both recovered
+shader roots join the selected catalog locations and their external payload
+bundle hashes. The 333 pre-strip rows and 93 same-request declared stripped
+inputs are bound to the successful build. The pinned metadata inspector verifies
+the original Lightning projectile call/default-off observer, vector report,
+bounded music-row snapshot retention and exact Wwise query API after stripping.
+These are artifact and metadata checks, not Android invocation, event playback,
+audibility, animation or visual-parity acceptance.
+
+The private freezer initially assumes the wrong request-ID shape, short editor
+version and managed snapshot directory. Root checks the actual producers and
+retained receipts, then uses a successor with the timestamp/UUID request, full
+editor pin and `managed/` child. The next refusal exposes a separate digest
+assumption: the producer hashes the normalized linker inventory before adding
+its independently checked APK hash. The final successor uses that exact digest
+definition and retains the separate APK join. Eleven freezer contracts pass,
+and the real capture matches the public verifier. No successful receipt is
+rewritten or fabricated to make the freezer pass. The copied control validator
+also uses the freezer's actual `inputs/source-freeze.json` location; its ten
+host contracts pass and its own manifest is refreshed before arming.
+
+Private evidence is
+`work/coordination/original-game-audio-r27-build-root-r12/`,
+`work/coordination/original-game-audio-r27-trace-preservation-root-r2/`,
+`work/coordination/original-game-audio-r27-freeze-draft-r5/` and
+`work/experiments/original-game-audio/r27-20261023T001458.349025Z-27bd0384b1e847c68c404bbef4a638ad-213228ad3b6b/`.
+The frozen report hash is
+`41e89a1eb5e2787dacfdf19107497138d317a6221a26369641b9987a4e706fad`;
+its file manifest is
+`0a46a902509fd710dd6d3212045acef8a367e2432afb76615c02f53a7d632348`.
+The R10/R11 failure directories remain intact. Rebuild inputs are the committed
+J957/J964/J966/J972–J977 owners/recipes plus documented local activation and
+diagnostic support. J850 remains the accepted rollback. Device installation,
+standard controls and targeted audio/visual behavior require their own evidence;
+this entry makes no device acceptance claim.
+
+## J979 — Pass both standard controls on the frozen R27 candidate
+
+**Hypothesis and setup.** J978's exact frozen candidate should retain the
+standard original-world path before targeted audio/source-camera testing.
+Root validates the entire frozen file inventory, binds that APK/request/source
+and a fresh Main-only resource claim, then uses explicit APK and payload paths
+for the in-place install and sync. The installer queries current adopted storage
+and reserves; placement remains adopted. Matching payload files are reused and
+changed files are synced from the same frozen manifest. No other device is used.
+
+**Device result.** Both canonical modes pass on J978's APK 213228ad at source
+2f81ab1, each with current-build true and no final report error/first failure.
+Plain mode stops at 35.225433349609375 s of world play. Stage mode completes
+exactly one transition and observes 10.540802001953125 s on Goolake, at world
+time 141.0587158203125 s. Each reports 13 applied profile runs. These are
+assisted diagnostics, not normal-difficulty, ordinary progression or complete
+ability acceptance. Plain mode's captured log has no RampFog invalid-pass or
+LightningStake exception; that bounded absence does not resolve intermittent
+Lightning behavior or prove the recovered rendering is faithful.
+
+Both modes verify selector/process absence and requested display sleep. The
+coordinator's final independent query rehashes the installed APK bytes against
+the frozen candidate, verifies the owned package placement and receipted runtime
+data path, then confirms process/selector absence and display sleep. There is
+no primary or cleanup error. Its exact terminal receipt binds the same build
+request/source/APK and both separate qualifications. This establishes the new
+device-verified diagnostic checkpoint; the accepted J850 rollback stays fixed
+pending broader audio/visual acceptance.
+
+Evidence is
+`work/coordination/original-game-audio-r27-device-controls/attempts/root-r1/`
+and the Root-bound runner under
+`work/coordination/original-game-audio-r27-device-controls-root-r1/`.
+The plain evidence is `work/experiments/baseline/20261023T002531.077904Z/`;
+stage-exit evidence is `work/experiments/baseline/20261023T002959.841861Z/`.
+The coordinator terminal SHA-256 is
+`444653b33e93bf833417d8d1a036402bd3e5533510f393b01b64d59ecf56c421`.
+The next run uses the existing bounded Huntress route for original music/PCM,
+source-camera and optional already-read animation report retention. Its result
+and natural-Quit evidence remain separate; these standard checks do not qualify
+those opt-in behaviors.
+
+## J981 — Refuse the R27 music-window route and identify masked active capture data
+
+**Observation and first failure.** After J979's two standard controls, Root
+runs the existing bounded source-selected Huntress/Lakes route on the exact
+frozen APK `213228ad3b6b70505f49c9002e08f841d254a5c2bf4cc075e0c78fb968fb0c2e`
+at source 2f81ab1. The run refuses at
+`music_pcm_join_window_start_not_observed`, before settings pause or natural
+Quit. No automatic route, shutdown pair, music attribution or physical speaker
+result is accepted. Failure-only force-stop cleanup succeeds. A separate
+terminal query verifies installed bytes, adopted placement, process and selector
+absence, display sleep and the unchanged 13 applied runs. The Main device is
+idle; no other device is used.
+
+The final passive capture reports 441 callbacks, 254,016 frames and 508,032
+samples, with finite nonzero content and the selected output identity observed.
+Capture stopped at its render-frame bound. Native audio readiness and the
+original music output/PostEvent return observations are present, but join rows
+and both query-window boundaries are absent. These measurements establish
+bounded original-output PCM, not its particular event source or audibility.
+
+**Static cause and next hypothesis.** The music sampler requires an active
+`capturing` window and an observed callback output matching the exact selected
+and owned output. `PassivePcmCaptureWindow.CreateReport` exposes counters and
+that identity only after entering a terminal capture state. The owner forwards
+this report, so the two requirements cannot hold together. The next candidate
+will expose the already validated cached snapshot during capture, retaining its
+active state and every exact-output admission and teardown guard. This is a
+report availability correction, not permission to sample after capture ends.
+The pinned R2API.Sound source at f539511e separates initialized engine/bank
+lifecycle from registration; J964's query and event-graph prior art supplies no
+output attribution. The actual owner/report contract governs this correction.
+
+**Other bounded observations.** All eight retained animation reports are
+verified against their manifest, and all seven adjacent pairs are compared.
+Object/controller/avatar identities remain stable and clocks advance. One pair
+changes layer state; four same-state pairs advance normalized time and two
+same-state pairs decrease it. Re-entry or looping remains possible: these
+scalars do not establish visible motion, a broken pose or PC parity. The last
+world report is identical to sample seven, not an additional sample.
+
+The source-camera capture shows a largely flat fog-colored view and poor scene
+readability; it is unaccepted. The earlier reference camera differs in position
+and orientation. Static inspection finds no proven uniform/pass contract
+mismatch for the recovered Outline/RampFog sources. Neither unmatched pictures
+nor successful shader compilation justify invented fog properties or a
+rendering-parity claim. A matched view or actual runtime binding evidence is
+needed before changing those shaders.
+
+**Evidence and revisit.** The failed route and independent terminal query live
+at `work/experiments/original-game-audio-pcm/r27-root-capture-r1/`; its driver is
+`work/coordination/original-game-audio-pcm/r27-runtime-driver-root-r1/`.
+Offline triage and the proposed report correction are under
+`work/coordination/original-game-audio-pcm/r27-window-start-triage-r1/` and
+`r27-active-window-report-fix-draft-r1/`. Animation and visual assessments live
+under `work/coordination/original-native-visual-reference/` in
+`r27-actual-animation-analysis-r1/`, `r27-actual-visual-triage-r1/` and
+`r27-shader-property-contract-review-r1/`. Preserve this failure. Retry only on
+a source-bound successor with host regression coverage, a successful build,
+both fresh standard controls and the unchanged strict targeted route. J850
+remains accepted; J979 remains the installed diagnostic checkpoint.

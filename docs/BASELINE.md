@@ -86,15 +86,16 @@ turn the display off in `finally`, including if collection fails. Stage-mode res
 `mode`, `transitions`, `scene` and `stage_world_seconds` to the usual evidence receipt.
 The plain check and its acceptance criteria remain unchanged.
 
-## Current baseline (2026-10-20)
+## Current baseline (2026-10-23)
 
-J954's diagnostic APK 6dc44d98 is installed after both standard controls,
-exact runtime-media readback and independent APK-byte/placement/idle verification.
-It stays unpromoted: original shutdown/waveform, selected-camera visual parity and
-broader audio acceptance remain open. The recurring Windows shader-bundle errors
-remain. No LightningStake error appears in these bounded controls; the intermittent
-defect is not considered fixed. See the [current snapshot](../PORTING_STATE.md) and
-[J954](PORTING_JOURNAL.md#j954--pass-r26-controls-and-verify-the-installed-media-and-apk).
+J979's diagnostic APK 213228ad is installed after both standard controls and
+independent APK-byte/placement/idle verification. J978 binds its media, native
+library, recovered shader bundles and managed metadata on the host. It stays
+unpromoted: J981 refuses the targeted music window before pause/Quit.
+Source-camera visual parity and broader audio acceptance remain open. No LightningStake error appears in these bounded
+controls; the intermittent defect is not considered fixed. See the
+[current snapshot](../PORTING_STATE.md) and
+[J979](PORTING_JOURNAL.md#j979--pass-both-standard-controls-on-the-frozen-r27-candidate).
 The accepted baseline below remains the rollback.
 
 | Item | Value |

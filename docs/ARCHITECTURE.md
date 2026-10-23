@@ -633,7 +633,9 @@ This is generic same-build evidence, not an exact argv vector, transformed-audio
 stage equivalence or runtime acceptance. J852 qualifies host contracts only;
 J975 records the actual Android callback's premature result and the corrected
 host contract. J976 qualifies final-report receipt completion on the exact editor;
-its unchanged conversion trace still refuses a fresh execution claim.
+its unchanged conversion trace still refuses a fresh execution claim. J978
+qualifies a fresh owning build after preserving only the exact prior graph-declared
+trace output under the shared mutex; all other cache inputs remain intact.
 `player_il2cpp_receipt.py` retains the historical J843 legacy-log verifier and
 its tests; the current build no longer calls that legacy collector.
 

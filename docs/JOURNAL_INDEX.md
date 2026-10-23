@@ -10,6 +10,9 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J981](PORTING_JOURNAL.md#j981--refuse-the-r27-music-window-route-and-identify-masked-active-capture-data) | 2026-10-22 | Refuse the R27 music-window route and identify masked active capture data | **Observation and first failure.** |
+| [J979](PORTING_JOURNAL.md#j979--pass-both-standard-controls-on-the-frozen-r27-candidate) | 2026-10-22 | Pass both standard controls on the frozen R27 candidate | **Hypothesis and setup.** |
+| [J978](PORTING_JOURNAL.md#j978--freeze-r27-after-a-preserved-targeted-codegen-output-rerun) | 2026-10-22 | Freeze R27 after a preserved, targeted CodeGen output rerun | **Hypothesis and intervention.** |
 | [J977](PORTING_JOURNAL.md#j977--bind-the-observed-bee-dag-retry-without-admitting-arbitrary-failures) | 2026-10-22 | Bind the observed Bee DAG retry without admitting arbitrary failures | **Prior evidence and hypothesis.** |
 | [J976](PORTING_JOURNAL.md#j976--verify-final-report-completion-and-refuse-reused-conversion-evidence) | 2026-10-22 | Verify final-report completion and refuse reused conversion evidence | **Hypothesis and change.** |
 | [J975](PORTING_JOURNAL.md#j975--complete-the-optional-build-witness-from-the-returned-buildreport) | 2026-10-22 | Complete the optional build witness from the returned BuildReport | **Observed progress.** |
