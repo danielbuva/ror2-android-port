@@ -2928,3 +2928,25 @@ contract optionally compiles this owner against the exact current game/Unity
 assemblies with synthetic game types disabled (J974).
 Historical exact profiles remain available. This diagnostic identifies source
 operands; it is not a projectile repair or gameplay acceptance.
+
+
+### Original audio source camera context candidate
+
+`IntegratedWorldSession` owns setup, reporting and release of the non-rendering
+original-audio mode in `AndroidNativeSourceCameraRigOwner` (J988). Selected ready
+audio uses the original Main Camera prefab and exact source listener; unrequested
+audio and the explicit source-view diagnostic do not enter this mode. The rig
+must be sole index zero, target the selected body and supply a fresh source
+MusicController observation under a bounded readiness wait. The lifecycle
+contract in `AndroidNativeSourceCameraRigContract.cs` separates waiting,
+admission and retirement. Invalid context retires only its owned staging root.
+
+The source Camera stays disabled with no pose camera or provider override.
+Original global camera/spectation/listener callbacks remain active and may
+initialize the source global damage-number manager. The owner observes that
+manager without acquiring or destroying it. World cleanup observes exact owned
+root inactivity and managed listener removal, restores the scene camera pointer
+and separately records a deferred destroy request; actual destruction remains
+unobserved. Native listener outcome, spatial correctness and audibility remain
+separate gates. This authored candidate still requires a fresh player build and
+device qualification; J988 is host evidence only.

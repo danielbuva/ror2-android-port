@@ -10,6 +10,8 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J988](PORTING_JOURNAL.md#j988--integrate-a-candidate-source-camera-context-for-original-audio) | 2026-10-22 | Integrate a candidate source camera context for original audio | **Observed gap and prior art.** |
+| [J987](PORTING_JOURNAL.md#j987--keep-loader-startup-observations-separate-from-gameplay-acceptance) | 2026-10-22 | Keep Loader startup observations separate from gameplay acceptance | **Hypothesis and route.** |
 | [J985](PORTING_JOURNAL.md#j985--preserve-two-failed-natural-quit-witnesses-and-test-idle-query-latency) | 2026-10-22 | Preserve two failed natural-Quit witnesses and test idle query latency | **Hypothesis and unchanged route.** |
 | [J983](PORTING_JOURNAL.md#j983--verify-the-active-pcm-report-fix-in-a-fresh-player-and-both-device-controls) | 2026-10-22 | Verify the active PCM report fix in a fresh player and both device controls | **Hypothesis and generation.** |
 | [J982](PORTING_JOURNAL.md#j982--expose-the-validated-active-capture-snapshot-to-the-strict-music-join) | 2026-10-22 | Expose the validated active capture snapshot to the strict music join | **Hypothesis and prior art.** |

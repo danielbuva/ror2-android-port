@@ -69,3 +69,52 @@ public static class AndroidNativeSourceCameraRigContract
         return failure == null;
     }
 }
+
+public enum AndroidNativeAudioContextStep
+{
+    Wait,
+    Ready,
+    Retire
+}
+
+// Shared decisions used by the source owner and exercised by host fixtures.
+// Observations themselves remain owned by the Unity-facing source component.
+public static class AndroidNativeAudioCameraContextContract
+{
+    public static AndroidNativeAudioContextStep EvaluateObservation(
+        bool exactOwnedRig, bool targetContextAndListenerReady, bool freshMusicTarget,
+        bool previouslyReady, bool startupDeadlineExpired)
+    {
+        if (!exactOwnedRig)
+            return AndroidNativeAudioContextStep.Retire;
+        if (targetContextAndListenerReady && freshMusicTarget)
+            return AndroidNativeAudioContextStep.Ready;
+        return previouslyReady || startupDeadlineExpired
+            ? AndroidNativeAudioContextStep.Retire
+            : AndroidNativeAudioContextStep.Wait;
+    }
+
+    public static bool MustRetireOnRefusal(bool audioContextOnly) => audioContextOnly;
+
+    public static string ShortFailureDetail(string message)
+    {
+        if (string.IsNullOrEmpty(message))
+            return string.Empty;
+        if (message.IndexOf('/') >= 0 || message.IndexOf('\\') >= 0)
+            return "detail_omitted_path_like_text";
+        return message.Length <= 180 ? message : message.Substring(0, 180);
+    }
+
+    public static bool CanResetAttempt(bool previousAttempted, bool previousOwnerReferenceIsClrNull,
+                                       bool previousReportKnown, bool previousCreationReturnedOwner,
+                                       bool previousReleasePrepared)
+    {
+        if (!previousOwnerReferenceIsClrNull)
+            return false;
+        if (!previousAttempted)
+            return true;
+        if (!previousReportKnown)
+            return false;
+        return !previousCreationReturnedOwner || previousReleasePrepared;
+    }
+}

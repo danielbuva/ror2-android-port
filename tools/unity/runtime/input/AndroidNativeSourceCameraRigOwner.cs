@@ -20,6 +20,18 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
     public CameraRigController cameraRig { get; private set; }
     public string status { get; private set; }
     public bool ready { get; private set; }
+    // This mode retains the accepted source CameraRigController and Wwise
+    // listener context while leaving its rendering Camera disabled. It is an
+    // explicit ordinary-audio integration mode, not a visual-ready signal.
+    public bool audioContextOnly { get; private set; }
+    public bool audioContextReady { get; private set; }
+    public int audioContextRigIndex { get; private set; } = -1;
+    public bool damageNumberManagerPreActivationObserved { get; private set; }
+    public bool damageNumberManagerPresentBeforeActivation { get; private set; }
+    public bool damageNumberManagerPostActivationObserved { get; private set; }
+    public bool damageNumberManagerPresentAfterActivation { get; private set; }
+    public bool audioContextReleasePreparedForDestroy { get; private set; }
+    public bool audioContextDestroyRequested { get; private set; }
 
     CharacterBody expectedBody;
     SceneCamera sceneCamera;
@@ -27,6 +39,12 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
     GameObject stagingRoot;
     Camera previousGlobalSceneCamera;
     bool capturedGlobalSceneCamera, viewReady, overrideInstalled, audioComponentPolicyVerified, terminallyRetired;
+    float audioContextAdmissionDeadline;
+    float nextMusicContextObservationAt;
+    float audioContextMusicObservationRealtime;
+    float audioContextActivatedAt;
+    bool audioContextMusicTargetObserved;
+    bool audioContextReleaseStarted;
     Component sourceDefaultListener, sourceAkGameObject;
     bool sourceDefaultListenerPreserved;
     public bool managedSourceDefaultListenerObserved { get; private set; }
@@ -73,7 +91,28 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
                                                             bool explicitlyRequested, bool selectedSourceModel, bool actualModel,
                                                             AndroidNativeSourceSkinLifecycle.Report sourceReport)
     {
-        if (!AndroidNativeSourceCameraRigContract.ShouldCreate(explicitlyRequested, selectedSourceModel, actualModel))
+        return CreateCore(ownerRoot, body, explicitlyRequested, selectedSourceModel, actualModel, sourceReport, false);
+    }
+
+    // Called only by IntegratedWorldSession after the process-scoped original
+    // audio owner is Ready. This deliberately restores source camera callbacks,
+    // global rig membership, and the source default listener even though the
+    // Camera remains disabled. Those effects are part of the source behavior;
+    // this method does not claim they are inert or visually acceptable.
+    public static AndroidNativeSourceCameraRigOwner CreateAudioContextOnly(Transform ownerRoot, CharacterBody body)
+    {
+        if (!GameAudioOriginalOwner.OptInRequested || !GameAudioOriginalOwner.Ready ||
+            GameAudioOriginalOwner.HasTerminalFailure || GameAudioOriginalOwner.OriginalTermsReturned ||
+            WwiseIntegrationManager.noAudio || !AkSoundEngine.IsInitialized())
+            throw new InvalidOperationException("audio camera context requires the explicitly selected, initialized original audio owner");
+        return CreateCore(ownerRoot, body, true, true, true, null, true);
+    }
+
+    static AndroidNativeSourceCameraRigOwner CreateCore(Transform ownerRoot, CharacterBody body,
+                                                          bool explicitlyRequested, bool selectedSourceModel, bool actualModel,
+                                                          AndroidNativeSourceSkinLifecycle.Report sourceReport, bool audioContextOnly)
+    {
+        if (!audioContextOnly && !AndroidNativeSourceCameraRigContract.ShouldCreate(explicitlyRequested, selectedSourceModel, actualModel))
             throw Refuse(sourceReport, "view-only native camera requires an explicit request for the selected actual source model");
         if (!ownerRoot || !body || !body.teamComponent || !body.GetComponent<CameraTargetParams>())
             throw Refuse(sourceReport, "view-only native camera requires the exact source body, team, and original camera parameters");
@@ -83,6 +122,8 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
 
         var currentRigs = CameraRigController.readOnlyInstancesList;
         bool inventoryComplete = currentRigs != null && currentRigs.Count <= 32;
+        if (audioContextOnly && (!inventoryComplete || currentRigs.Count != 0))
+            throw Refuse(sourceReport, "audio camera context requires a complete empty source rig inventory so the owned rig is MusicController index zero");
         int existingRigsForBody = CountActiveRigsForBody(body);
         if (!AndroidNativeSourceCameraRigContract.CanCreateDedicatedRig(explicitlyRequested, actualModel,
                                                                          audioModeCompatible,
@@ -177,15 +218,21 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
             var marker = AddAndBindOptionalMarker(rig.gameObject, rig, body.gameObject, owner);
             if (!marker)
                 throw new InvalidOperationException("current RoR2 module does not contain the exact merged view-only rig marker; destination rebuilds keep camera opt-in unavailable");
-            var pose = new GameObject("Nova native view pose").AddComponent<Camera>();
-            pose.transform.SetParent(staging.transform, false);
-            pose.enabled = false;
-            pose.cullingMask = 1 << DisplayLayer;
-            pose.orthographic = false;
-            pose.nearClipPlane = .05f;
-            pose.farClipPlane = 600f;
+            Camera pose = null;
+            if (!audioContextOnly)
+            {
+                pose = new GameObject("Nova native view pose").AddComponent<Camera>();
+                pose.transform.SetParent(staging.transform, false);
+                pose.enabled = false;
+                pose.cullingMask = 1 << DisplayLayer;
+                pose.orthographic = false;
+                pose.nearClipPlane = .05f;
+                pose.farClipPlane = 600f;
+            }
 
             owner.Bind(staging, body, rig, scene, camera, pose, marker, cameraOffset, cameraRotationOffset);
+            owner.audioContextOnly = audioContextOnly;
+            owner.audioContextAdmissionDeadline = Time.realtimeSinceStartup + 5f;
             owner.audioComponentPolicyVerified = preserveSourceListener
                 ? TryGetExactSourceDefaultListenerPair(clone, camera, out _, out _, out listenerCount,
                     out gameObjectCount, out listenerIsDefault, out sameCameraObject) && !HasUnityAudioListeners(clone)
@@ -194,10 +241,17 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
                 throw new InvalidOperationException("camera audio-component policy could not be verified before activation");
             owner.previousGlobalSceneCamera = SceneCamera._camera;
             owner.capturedGlobalSceneCamera = true;
+            if (audioContextOnly)
+            {
+                owner.damageNumberManagerPresentBeforeActivation = DamageNumberManager.instance;
+                owner.damageNumberManagerPreActivationObserved = true;
+            }
             var activationScope = AndroidNativeSourceCameraPrerequisites.BeginOwnedViewActivation(preparedCamera);
             try
             {
                 staging.SetActive(true);
+                if (audioContextOnly)
+                    owner.audioContextActivatedAt = Time.realtimeSinceStartup;
             }
             finally
             {
@@ -216,6 +270,8 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
                 : "waiting for original PlayerBasic target/team and configured native view pose; default-off audio components are isolated; audio spatialization is outside this view-only diagnostic");
             if (!preserveSourceListener)
                 owner.sourceDefaultListenerLifecycleState = "not_preserved_default_off";
+            if (audioContextOnly)
+                owner.status = "audio context staged; original rig callbacks, global camera consumers, and source listener may affect ordinary gameplay; waiting for source target and MusicController observation";
             return owner;
         }
         catch (Exception exception)
@@ -585,6 +641,11 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
     {
         if (terminallyRetired)
             return;
+        if (audioContextOnly)
+        {
+            damageNumberManagerPostActivationObserved = true;
+            damageNumberManagerPresentAfterActivation = DamageNumberManager.instance;
+        }
         bool audioModeCompatible = IsOriginalAudioModeCompatible();
         if (sourceDefaultListenerPreserved)
         {
@@ -622,6 +683,11 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
         // The source wrapper owns native Add/Remove calls. Re-read only its
         // managed list here; never issue a second native registration.
         CaptureManagedSourceListenerState();
+        if (audioContextOnly)
+        {
+            ObserveAudioContextOnly();
+            return;
+        }
         if (cameraRig.hasOverride && !cameraRig.IsOverrideCam(this))
         {
             Refuse("another original camera provider owns the view rig");
@@ -703,6 +769,82 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
             : "original prefab SceneCamera and PlayerBasic view active; default-off audio components remain isolated; spatial PCM is not claimed");
     }
 
+    void ObserveAudioContextOnly()
+    {
+        if (viewCamera.enabled || poseCamera || overrideInstalled || (cameraRig && cameraRig.hasOverride))
+        {
+            RetireOwnedView("audio-only source context unexpectedly acquired rendering, pose, or camera-provider state");
+            return;
+        }
+        var rigs = CameraRigController.readOnlyInstancesList;
+        if (rigs == null || rigs.Count > 32)
+        {
+            RetireOwnedView("audio-only source camera inventory became unavailable or exceeded its bounded capacity");
+            return;
+        }
+        if (rigs.Count != 1 || rigs[0] != cameraRig)
+        {
+            RetireOwnedView("audio-only source rig is no longer the sole MusicController index-zero camera");
+            return;
+        }
+        audioContextRigIndex = 0;
+        bool exactRig = cameraRig && cameraRig.isActiveAndEnabled && cameraRig.gameObject.activeInHierarchy &&
+            cameraRig.cameraMode == CameraModePlayerBasic.playerBasic && cameraRig.viewer == null &&
+            cameraRig.localUserViewer == null && !cameraRig.createHud && !cameraRig.uiCam && !cameraRig.hud &&
+            cameraRig.nextTarget == expectedBody.gameObject && cameraRig.sceneCam == viewCamera && sceneCamera &&
+            sceneCamera.isActiveAndEnabled && sceneCamera.camera == viewCamera &&
+            sceneCamera.cameraRigController == cameraRig && expectedBody.teamComponent &&
+            cameraRig.targetTeamIndex == expectedBody.teamComponent.teamIndex;
+        bool targetReady = cameraRig.target == expectedBody.gameObject && cameraRig.targetBody == expectedBody;
+        bool originalContextReady = markerContextReadyMethod != null && guardMarker &&
+            (bool)markerContextReadyMethod.Invoke(guardMarker,
+                new object[] { cameraRig, expectedBody.gameObject, (ICameraStateProvider)this });
+        bool listenerActive = sourceDefaultListenerPreserved && sourceDefaultListener &&
+            sourceDefaultListener is Behaviour listenerBehaviour && listenerBehaviour.isActiveAndEnabled;
+        bool listenerMembershipKnown = TryReadExactManagedListenerMembership(out bool listenerMember);
+        bool contextAndListenerReady = targetReady && originalContextReady && listenerActive &&
+            listenerMembershipKnown && listenerMember;
+        if (Time.realtimeSinceStartup >= nextMusicContextObservationAt)
+        {
+            nextMusicContextObservationAt = Time.realtimeSinceStartup + .5f;
+            var music = PortSessionOriginalMusicControllerOwner.CaptureSnapshot();
+            audioContextMusicObservationRealtime = music != null ? music.musicObservationRealtime : 0f;
+            audioContextMusicTargetObserved = music != null && music.requested && music.sourceAudioReady &&
+                music.engineInitialized && !music.noAudio && !music.originalTermsReturned &&
+                music.staticInstanceMatchesOwnedController && music.musicObservationOwnerAlive &&
+                music.musicObservationSucceeded && music.targetCameraInventoryNonempty && music.targetBodyObserved;
+        }
+        float musicObservationAge = Time.realtimeSinceStartup - audioContextMusicObservationRealtime;
+        bool musicFresh = !float.IsNaN(musicObservationAge) && !float.IsInfinity(musicObservationAge) &&
+            musicObservationAge >= 0f && musicObservationAge <= 1.5f &&
+            audioContextMusicObservationRealtime >= audioContextActivatedAt;
+        bool musicTarget = audioContextMusicTargetObserved && musicFresh;
+        bool deadlineExpired = Time.realtimeSinceStartup > audioContextAdmissionDeadline;
+        var step = AndroidNativeAudioCameraContextContract.EvaluateObservation(
+            exactRig, contextAndListenerReady, musicTarget, audioContextReady, deadlineExpired);
+        if (step == AndroidNativeAudioContextStep.Retire)
+        {
+            string reason = !exactRig
+                ? "audio-only source rig changed PlayerBasic, null-viewer, HUD, or exact target configuration"
+                : !contextAndListenerReady
+                    ? audioContextReady
+                        ? "previously admitted audio camera context lost its source target, update context, or managed listener"
+                        : "audio camera context did not reach the source target/listener context before its bounded startup deadline"
+                    : "original MusicController did not retain a fresh source-camera/body observation";
+            RetireOwnedView(reason);
+            return;
+        }
+        if (step == AndroidNativeAudioContextStep.Wait)
+        {
+            status = !contextAndListenerReady
+                ? "audio context waiting for original EarlyUpdate target/context and managed source-listener membership"
+                : "audio context waiting for a fresh successful original MusicController camera/body observation";
+            return;
+        }
+        audioContextReady = true;
+        status = "source camera/body context and managed source listener observed; source camera callbacks and global camera effects are active; rendering and view override remain disabled; native listener registration and audible output are unobserved";
+    }
+
     public bool IsOwnedNullViewerRig(CameraRigController candidate, GameObject target)
     {
         return candidate && expectedBody && cameraRig == candidate && viewCamera && sceneCamera && guardMarker &&
@@ -744,6 +886,11 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
 
     void Refuse(string reason)
     {
+        if (AndroidNativeAudioCameraContextContract.MustRetireOnRefusal(audioContextOnly))
+        {
+            RetireOwnedView(reason + "; retiring owned source context because its body or rig state is no longer valid");
+            return;
+        }
         if (cameraRig && cameraRig.IsOverrideCam(this) && !HasOriginalUpdateContext())
         {
             RetireOwnedView(reason + "; retiring owned rig because its original context is unavailable");
@@ -761,8 +908,17 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
         if (terminallyRetired)
             return;
         status = WithCameraFidelity(reason);
+        audioContextReady = false;
         terminallyRetired = true;
         DisposeOwnedView();
+        if (audioContextOnly)
+        {
+            // Keep the inactive owned root until IntegratedWorldSession's
+            // cleanup boundary can serialize the failure and request destroy.
+            // The source listener and rig have already run their native
+            // OnDisable path, so no source context remains active meanwhile.
+            return;
+        }
         // SetActive(false) above runs the original listener's OnDisable and
         // captures managed membership before destruction. The rig, marker, and
         // provider are all descendants of this one owned staging root, so
@@ -822,6 +978,7 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
             managedSourceDefaultListenerPresentBeforeDisable = managedSourceDefaultListenerReferencePresent;
         }
         ready = false;
+        audioContextReady = false;
         audioComponentPolicyVerified = false;
         if (viewCamera)
             viewCamera.enabled = false;
@@ -847,6 +1004,36 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
                 : "deactivation_not_observed";
             CaptureManagedSourceListenerState();
         }
+    }
+
+    // Per-world owner teardown calls this before destroying the selected body
+    // or entering native stage/Run cleanup. Source OnDisable remains the only
+    // listener removal path; this method never calls Wwise directly.
+    public void ReleaseAudioContext()
+    {
+        if (!audioContextOnly)
+            throw new InvalidOperationException("only the explicitly owned audio-context rig can use this release path");
+        if (audioContextReleaseStarted)
+            return;
+        audioContextReleaseStarted = true;
+        audioContextReady = false;
+        if (!terminallyRetired)
+        {
+            terminallyRetired = true;
+            DisposeOwnedView();
+        }
+        GameObject retiredRoot = stagingRoot;
+        if (retiredRoot)
+        {
+            Destroy(retiredRoot);
+            audioContextDestroyRequested = true;
+        }
+        bool afterDisablePresent;
+        bool membershipCaptured = TryReadExactManagedListenerMembership(out afterDisablePresent);
+        audioContextReleasePreparedForDestroy = audioContextDestroyRequested && retiredRoot && !retiredRoot.activeSelf && viewCamera && !viewCamera.enabled &&
+            (!cameraRig || !cameraRig.hasOverride) && !capturedGlobalSceneCamera && sourceDefaultListenerTeardownObserved &&
+            managedSourceDefaultListenerPresentAfterDisableCaptured && !managedSourceDefaultListenerPresentAfterDisable &&
+            membershipCaptured && !afterDisablePresent;
     }
 
     void RestoreGlobalSceneCameraPointer()

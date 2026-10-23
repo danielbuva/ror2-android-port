@@ -111,6 +111,19 @@ public sealed partial class PortSession
         public EngineerNativeOutputObserver.Report engiNativeOutputs;
         public SurvivorCombatOutputObserver.Report survivorCombatOutputs;
         public bool ready, authority, lootReady, interactionReady, cleaned, diagnosticInput, diagnosticInputEver;
+        public bool originalAudioCameraContextRequested, originalAudioCameraContextReady;
+        public bool originalAudioCameraContextCreated, originalAudioCameraContextReleaseVerified;
+        public bool originalAudioCameraContextDestroyRequested, originalAudioCameraContextDestroyObservationCaptured,
+            originalAudioCameraContextDestroyObserved;
+        public bool originalAudioCameraContextDeferredForVisualDiagnostic;
+        public bool originalAudioCameraContextRenderCameraDisabled, originalAudioCameraContextOverrideAbsent;
+        public bool originalAudioCameraContextSourceRigAtIndexZero, originalAudioCameraContextManagedListenerObserved;
+        public bool originalAudioCameraContextManagedListenerRemovalObserved;
+        public bool originalAudioCameraContextDamageNumberManagerBeforeCaptured, originalAudioCameraContextDamageNumberManagerBefore;
+        public bool originalAudioCameraContextDamageNumberManagerAfterCaptured, originalAudioCameraContextDamageNumberManagerAfter;
+        public int originalAudioCameraContextRigIndex = -1;
+        public string originalAudioCameraContextState, originalAudioCameraContextScope,
+            originalAudioCameraContextAdmissionFailure, originalAudioCameraContextAdmissionFailureDetail;
         public ObjectiveCombatInputFailureReport objectiveCombatInputFailure;
         public int tableLoadedCount, barrels, chests, openedBarrels, openedChests, pickups, droplets, pickupMessages, coinMessages,
             xpMessages, frames, kills, liveEnemies;
@@ -435,6 +448,8 @@ public sealed partial class PortSession
         EngineerNativeOutputObserver engiNativeOutputs;
         SurvivorSkillInputCoverage skillInputCoverage;
         EngiShieldHitGuardTemplateLease engiShieldGuard;
+        AndroidNativeSourceCameraRigOwner originalAudioCameraContext;
+        bool originalAudioCameraContextAttempted;
         float nextSurvivorSkillSample;
         int lastTransientWindowRequestCount;
         public IntegratedWorldSession(PortSession coordinator)
@@ -528,6 +543,163 @@ public sealed partial class PortSession
             foreach (var body in CharacterBody.readOnlyInstancesList.ToArray())
                 PrepareEarlyHurtCache(body);
             PrepareEarlyHurtCache(player);
+        }
+        void ResetOriginalAudioCameraContextAttemptForWorld()
+        {
+            var previousReport = coordinator.r?.world;
+            bool previousCreated = previousReport != null && previousReport.originalAudioCameraContextCreated;
+            bool previousReleasePrepared = previousReport != null && previousReport.originalAudioCameraContextReleaseVerified;
+            bool ownerReferenceIsClrNull = ReferenceEquals(originalAudioCameraContext, null);
+            coordinator.Check(AndroidNativeAudioCameraContextContract.CanResetAttempt(
+                    originalAudioCameraContextAttempted, ownerReferenceIsClrNull, previousReport != null,
+                    previousCreated, previousReleasePrepared),
+                "Previous original audio camera-context owner was not released before preparing another world");
+            originalAudioCameraContextAttempted = false;
+            originalAudioCameraContext = null;
+        }
+
+        void PrepareOriginalAudioCameraContext(CharacterBody player)
+        {
+            var report = coordinator.r.world;
+            if (report == null)
+                return;
+            report.originalAudioCameraContextScope =
+                "When explicitly selected original Wwise audio is Ready, this mode activates the accepted source CameraRigController and its exact default listener with the selected body at index zero, but leaves the source Camera disabled and installs no view override. The source rig joins global camera membership/events and makes its target spectated to original queries; source Start may load/instantiate the global DamageNumberManager if absent. These are intentional native source effects, not an inert audio helper. Native listener registration, event routing, PCM attribution, and physical audibility remain unobserved.";
+            if (!GameAudioOriginalOwner.OptInRequested)
+            {
+                report.originalAudioCameraContextState = "original_audio_not_requested_default_off";
+                return;
+            }
+            report.originalAudioCameraContextRequested = true;
+            if (coordinator.r.nativeSourceSkinLifecycleDiagnosticRequested)
+            {
+                report.originalAudioCameraContextDeferredForVisualDiagnostic = true;
+                report.originalAudioCameraContextState = "deferred_existing_visual_source_camera_diagnostic_owns_source_rig";
+                return;
+            }
+            if (originalAudioCameraContextAttempted)
+            {
+                report.originalAudioCameraContextState = "duplicate_world_context_creation_refused";
+                return;
+            }
+            originalAudioCameraContextAttempted = true;
+            try
+            {
+                originalAudioCameraContext = AndroidNativeSourceCameraRigOwner.CreateAudioContextOnly(
+                    coordinator.transform, player);
+                report.originalAudioCameraContextCreated = true;
+                report.originalAudioCameraContextState = "staged_waiting_for_native_source_context";
+                ObserveOriginalAudioCameraContext();
+            }
+            catch (Exception error)
+            {
+                var cause = error.GetBaseException();
+                report.originalAudioCameraContextState = "refused_closed: " + cause.GetType().Name;
+                report.originalAudioCameraContextAdmissionFailure = cause.GetType().Name;
+                report.originalAudioCameraContextAdmissionFailureDetail = AndroidNativeAudioCameraContextContract.ShortFailureDetail(cause.Message);
+            }
+        }
+        void ObserveOriginalAudioCameraContext()
+        {
+            var report = coordinator.r?.world;
+            if (report == null)
+                return;
+            if (!originalAudioCameraContext)
+            {
+                if (originalAudioCameraContextAttempted && report.originalAudioCameraContextReady)
+                {
+                    report.originalAudioCameraContextReady = false;
+                    report.originalAudioCameraContextState = "source_context_owner_destroyed_after_admission";
+                }
+                return;
+            }
+            report.originalAudioCameraContextReady = originalAudioCameraContext.audioContextReady;
+            report.originalAudioCameraContextRigIndex = originalAudioCameraContext.audioContextRigIndex;
+            report.originalAudioCameraContextSourceRigAtIndexZero =
+                originalAudioCameraContext.audioContextReady && originalAudioCameraContext.audioContextRigIndex == 0;
+            report.originalAudioCameraContextRenderCameraDisabled =
+                originalAudioCameraContext.viewCamera && !originalAudioCameraContext.viewCamera.enabled;
+            report.originalAudioCameraContextOverrideAbsent =
+                originalAudioCameraContext.cameraRig && !originalAudioCameraContext.cameraRig.hasOverride;
+            report.originalAudioCameraContextManagedListenerObserved =
+                originalAudioCameraContext.managedSourceDefaultListenerObserved;
+            report.originalAudioCameraContextManagedListenerRemovalObserved =
+                originalAudioCameraContext.managedSourceDefaultListenerPresentAfterDisableCaptured &&
+                !originalAudioCameraContext.managedSourceDefaultListenerPresentAfterDisable;
+            report.originalAudioCameraContextDamageNumberManagerBeforeCaptured =
+                originalAudioCameraContext.damageNumberManagerPreActivationObserved;
+            report.originalAudioCameraContextDamageNumberManagerBefore =
+                originalAudioCameraContext.damageNumberManagerPresentBeforeActivation;
+            report.originalAudioCameraContextDamageNumberManagerAfterCaptured =
+                originalAudioCameraContext.damageNumberManagerPostActivationObserved;
+            report.originalAudioCameraContextDamageNumberManagerAfter =
+                originalAudioCameraContext.damageNumberManagerPresentAfterActivation;
+            report.originalAudioCameraContextState = originalAudioCameraContext.status;
+        }
+        void ReleaseOriginalAudioCameraContext()
+        {
+            var report = coordinator.r?.world;
+            if (!originalAudioCameraContext)
+            {
+                if (report != null && report.originalAudioCameraContextCreated &&
+                    !report.originalAudioCameraContextReleaseVerified)
+                    FailOriginalAudioCameraContextCleanup(report);
+                return;
+            }
+            if (report != null)
+                report.originalAudioCameraContextReady = false;
+            try
+            {
+                originalAudioCameraContext.ReleaseAudioContext();
+                if (report != null)
+                {
+                    report.originalAudioCameraContextReady = false;
+                    report.originalAudioCameraContextRenderCameraDisabled =
+                        originalAudioCameraContext.viewCamera && !originalAudioCameraContext.viewCamera.enabled;
+                    report.originalAudioCameraContextOverrideAbsent =
+                        !originalAudioCameraContext.cameraRig || !originalAudioCameraContext.cameraRig.hasOverride;
+                    report.originalAudioCameraContextManagedListenerObserved =
+                        originalAudioCameraContext.managedSourceDefaultListenerPresentAfterDisableCaptured &&
+                        !originalAudioCameraContext.managedSourceDefaultListenerPresentAfterDisable;
+                    report.originalAudioCameraContextManagedListenerRemovalObserved =
+                        report.originalAudioCameraContextManagedListenerObserved;
+                    report.originalAudioCameraContextReleaseVerified =
+                        originalAudioCameraContext.audioContextReleasePreparedForDestroy;
+                    report.originalAudioCameraContextDestroyRequested =
+                        originalAudioCameraContext.audioContextDestroyRequested;
+                    report.originalAudioCameraContextDestroyObservationCaptured = false;
+                    report.originalAudioCameraContextDestroyObserved = false;
+                    report.originalAudioCameraContextState =
+                        originalAudioCameraContext.audioContextReleasePreparedForDestroy
+                            ? "owned_root_inactive_source_listener_deactivated_exact_managed_membership_removed_destroy_requested_not_observed"
+                            : "release_incomplete_source_listener_teardown_unobserved";
+                    report.originalAudioCameraContextDamageNumberManagerAfterCaptured =
+                        originalAudioCameraContext.damageNumberManagerPostActivationObserved;
+                    report.originalAudioCameraContextDamageNumberManagerAfter =
+                        originalAudioCameraContext.damageNumberManagerPresentAfterActivation;
+                }
+                if (report != null && !originalAudioCameraContext.audioContextReleasePreparedForDestroy)
+                    FailOriginalAudioCameraContextCleanup(report);
+                originalAudioCameraContext = null;
+            }
+            catch (Exception error)
+            {
+                if (report != null)
+                    report.originalAudioCameraContextState = "release-error: " + error.GetBaseException().GetType().Name;
+                FailOriginalAudioCameraContextCleanup(report);
+            }
+        }
+        void FailOriginalAudioCameraContextCleanup(WorldReport report)
+        {
+            coordinator.r.success = false;
+            coordinator.r.cleanup = false;
+            if (report != null)
+                report.originalAudioCameraContextReleaseVerified = false;
+            if (string.IsNullOrEmpty(coordinator.r.firstFailure))
+            {
+                coordinator.r.firstFailure = "Original audio camera-context cleanup was not verified";
+                coordinator.r.firstFailurePhase = "integrated-world-cleanup";
+            }
         }
         public static bool Finite(float value)
         {
@@ -978,6 +1150,7 @@ public sealed partial class PortSession
         }
         public IEnumerator PrepareIntegratedWorld(CharacterBody player, SessionConfig cfg)
         {
+            ResetOriginalAudioCameraContextAttemptForWorld();
             survivorCombatOutputs?.Dispose();
             if (survivorCombatOutputs != null && survivorCombatOutputs.report.cleaned)
                 survivorCombatOutputs = null;
@@ -1022,6 +1195,7 @@ public sealed partial class PortSession
                 }
             }
             coordinator.worldPlayer = player;
+            PrepareOriginalAudioCameraContext(player);
             if (coordinator.r.selectedSurvivor == "Engi")
             {
                 // Population setup may replace a catalog template with its
@@ -1839,6 +2013,7 @@ public sealed partial class PortSession
         }
         public void ObserveIntegratedWorld(CharacterBody player, float elapsed)
         {
+            ObserveOriginalAudioCameraContext();
             coordinator.ObserveSourceAnimationEvents(player, elapsed);
             if (elapsed >= nextSurvivorSkillSample)
             {
@@ -3059,6 +3234,7 @@ public sealed partial class PortSession
         }
         public void CleanupIntegratedWorld()
         {
+            ReleaseOriginalAudioCameraContext();
             if (lightningStakeSourceCallObserver != null)
             {
                 try

@@ -29067,3 +29067,129 @@ helper hashes, monotonic timings, bounded output, terminal observations and
 saved-pair validation. Revisit natural-Quit observation only after query-path
 analysis justifies a concrete change or a distinct measurement. J983 remains
 the latest standard-control diagnostic APK; J850 remains the accepted rollback.
+
+## J987 — Keep Loader startup observations separate from gameplay acceptance
+
+**Hypothesis and route.** The source-bound J983 diagnostic APK can run a bounded
+Loader/Lakes window with J957's existing opt-in pre-projectile observer. Root
+uses its own exact frozen APK, both prior controls, explicit Main ownership and
+fresh storage/profile checks. The existing developer survivor override bypasses
+the menu; no invented menu tap, player input, projectile, teleport or stage jump
+is introduced. Invincibility is the only assist. The target is 60 seconds of
+actual stage time, with separate startup/world host bounds and first-failure
+stops. This is diagnostic coverage, not ordinary unlock or difficulty acceptance.
+
+**Host review and first two stops.** Successor runners replace the brittle
+startup whitelist with passive PRE_WORLD waiting, preserve strict post-world
+phase regression, and classify bounded current-PID logs before retention
+truncation. Root and independent review exercise the actual pinned authorization
+and adversarial log-prefix cases. The first attempt stops on the exact framework
+`SurfaceSyncer` missing-sync diagnostic before world setup. A pinned AOSP source
+review supports retaining that exact message as a separate annotation, without
+claiming it harmless. The next attempt stops on the five-line deliberately
+incompatible Windows shader-bundle control already accepted by J613. Both
+attempts remain failed observations and both clean up successfully.
+
+Before another attempt, complete passing plain and stage-exit logs are replayed:
+each contains the same five Windows-control lines and zero unexpected errors
+under the existing canonical `nova_bridge.current_errors`. Root corrects the
+new runner to reuse that pinned function as an additional predicate, restricts
+its exemption to the observed Unity emitter, and retains fatal/unknown errors.
+Independent review catches and Root fixes a wrong-emitter exemption; all
+36 host tests then pass, including altered AndroidRuntime/tag regressions.
+The original negative control stays intact. Raw annotations remain preserved;
+counts represent repeated polling observations, not distinct events.
+
+**Third stop and classification.** The corrected run observes 17 genuine nested
+startup phases and an attached, empty source-call observer, then stops at
+`integrated-results-context` before the first playing-world report. No report
+error or ending is present. Source inspection identifies this phase as the
+results owner's ordinary setup save, not an actual run ending. The runner's
+terminal-phase classification is wrong; this is neither a Loader gameplay
+failure nor evidence that LightningStake is fixed. No 60-second gameplay window
+or source-call occurrence is accepted. A successor must distinguish that setup
+save from actual ending/report-generation state and replay this retained report
+on the host before another device attempt.
+
+**Terminal and optional process observation.** All three attempts positively
+verify owned cleanup, adopted placement, unchanged profile, process/selector
+absence and sleep. During the third owned process, Root separately performs two
+bounded read-only `/proc` start-time reads bracketed by exact package-PID checks.
+Both succeed, with the slowest read taking 0.061733 s. This proves positive
+visibility for that process only. Missing-path versus permission policy, kernel
+contract and the proposed alternative Quit protocol remain unqualified; J985's
+strict failed exit results are unchanged.
+
+Evidence is `work/coordination/original-gameplay-breadth/` under
+`r28-loader-runner-root-r1/`, `r28-loader-runner-root-r2/` and
+`r28-loader-runner-root-r3/`, each with an immutable `attempts/root-r1/`.
+Draft/review predecessors remain adjacent. Root's actual-log replay is in the
+second packet; positive process-read evidence is
+`work/coordination/original-game-audio-pcm/r28-owned-stat-read-root-r1/`.
+One unarmed pre-dispatch refusal in the second packet is preserved separately
+from its actual invocation. No runtime source, install or gameplay change is
+part of these runner corrections. J983 remains installed; Main is asleep.
+
+## J988 — Integrate a candidate source camera context for original audio
+
+**Observed gap and prior art.** J983's ordinary original-music owner has a live
+managed default listener but no body/camera context. Accepted MusicController
+source selects original camera index zero and uses that rig and its target in
+music parameters. Root re-inspects pinned R2API.Sound f539511e: its original
+engine-init hook and bank lifetime are useful boundaries, but do not provide an
+Android camera/listener adapter or establish playback. Accepted source and
+J987's separate runtime observations remain authoritative. No new listener
+algorithm, bank conversion or event dispatch is justified.
+
+**Candidate ownership.** `IntegratedWorldSession` now requests a non-rendering
+mode of the existing `AndroidNativeSourceCameraRigOwner` for selected, ready
+original audio. It uses the exact source Main Camera prefab, body/PlayerBasic
+context, existing bound original update pump and source Wwise listener callbacks.
+Admission requires an empty complete rig inventory; the owner must remain sole
+index zero with the exact selected body. It waits a bounded interval for original
+update/listener context and a fresh original MusicController observation.
+Explicit source-view diagnostics retain their existing separate owner path.
+The new mode creates no pose camera, installs no provider override and keeps
+the source render Camera disabled. Default-off audio remains unchanged.
+
+The source rig is intentionally not inert: it enters original global camera
+membership/events and spectation queries, may initialize the source global
+damage-number manager, and adds the prefab's default listener. These original
+callbacks are retained and their bounded observations are reported. No authored
+controls, settings, menu or input flow changes. The existing fallback view and
+aim path stay owned by their current components. Source body/context readiness
+does not establish correct listener orientation relative to that view, native
+listener acceptance, spatial routing, waveform attribution or audible output.
+
+**Teardown and evidence scope.** Invalid body/rig/readiness retires the owned
+context and clears readiness. World cleanup deactivates the exact owned root,
+observes source-listener managed-list removal, restores the saved camera pointer
+and requests destruction. Actual destruction is explicitly unobserved rather
+than inferred from that request. No foreign rig or global manager is destroyed;
+no manual native Add/Remove listener call is introduced. Retained session reset
+requires the previous returned owner to have qualified its release preparation.
+Bounded admission reasons remain available for first-failure classification.
+
+**Host evidence and reconstruction.** Independent source review approves an
+isolated candidate, with full compilation/device gates still open. Root integrates
+three authored runtime files and adds an executed fixture for the production
+lifecycle helper and extracted production release body. The fixture checks
+startup waiting, admission/loss/deadline refusal, reset safety, inactive/listener
+release requirements, idempotence and clearing stale readiness before deferred
+destruction. It skips without the pinned Mono/Roslyn. Source membership is
+unchanged; the existing contract file contains the new decisions. Root refreshes
+the world-source/owner-cohort and camera-source/hook pins, preserving the prior
+cohort as parent. Future generation must replay these authored changes; no staged
+source or receipt is patched by text substitution.
+
+Drafts/reviews are under `work/coordination/original-game-audio-pcm/` in
+`r28-audio-camera-context-draft-r3/` and `r28-audio-camera-context-review-r3/`.
+Root host logs use `r28-context-{audio,camera,music,producer}-host-root-*` there.
+An initial host pin failure catches the producer's stale world-source digest;
+Root corrects it and reruns that contract. The complete audio host suite passes
+111 tests (two expected skips), camera contracts pass 44 tests (three expected
+skips), and music contracts pass 41 tests; changed Python passes Ruff.
+Exact player compilation, ordinary world context, manager effects, listener teardown/restart and both fresh standard
+controls remain required. This is authored candidate source only; it has not
+been staged, built or installed. J983 remains the installed diagnostic and J850
+remains the accepted rollback.

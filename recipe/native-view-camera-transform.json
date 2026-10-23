@@ -265,9 +265,9 @@
     "whole_catalog": "scripts/lab/whole_catalog.py"
   },
   "source_sha256": {
-    "build_hook": "9ea963bd36969c6f22be7e73500e3b4f30635617a1abea8fb5ed1d887b1ef5c2",
-    "camera_contract": "f31276a3ef620b82db6998257ef86c7d69d9bfee6a05a43ad3fa5d67dfbed202",
-    "camera_owner": "f121923d5a354469a1512d5accdb419503c34d24d22386accb0b0760e0a2b884",
+    "build_hook": "3ccbc3c207aa425336a82aada746728908ecc1e6b260a5ec75c2364f55a87751",
+    "camera_contract": "89c628d05aada562c6fe635ffb80f42530c6300b4c1003734d78372fb51136da",
+    "camera_owner": "d984e609d4757b4e7cd1033433f68024774a09121824e5c7cb30f383ac208604",
     "camera_prerequisites": "dc8539bd7935bc7357dd298c7c89b63af7f1f6e253ca55423bc0edbb3c333214",
     "listener_contract": "e138a103abc56700af610044e833811c8dce4eeb3d205dc3c20fc491bb962a4b",
     "marker": "7d86f674c0f6dde711916fe3105b8a88b2e91c39d1351d83ee77f0e2deea8f9f",
