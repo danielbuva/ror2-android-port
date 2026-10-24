@@ -51,6 +51,7 @@ def generated_pin_source(expected: dict[str, str], native_override: str | None =
             "requested": "true",
             "passive_pcm_capture_requested": "false",
             "passive_pcm_capture_music_output_requested": "false",
+            "passive_pcm_capture_after_authority_skill_requested": "false",
             "request_id": "0123456789abcdef0123456789abcdef",
             "request_receipt_sha256": "a" * 64,
             "build_input_contract_sha256": "b" * 64,
@@ -63,6 +64,7 @@ def generated_pin_source(expected: dict[str, str], native_override: str | None =
         "Requested": request["requested"],
         "PassivePcmCaptureRequested": request["passive_pcm_capture_requested"],
         "PassivePcmCaptureMusicOutputRequested": request["passive_pcm_capture_music_output_requested"],
+        "PassivePcmCaptureAfterAuthoritySkillRequested": request["passive_pcm_capture_after_authority_skill_requested"],
         "RequestId": request["request_id"],
         "RequestReceiptSha256": request["request_receipt_sha256"],
         "BuildInputContractSha256": request["build_input_contract_sha256"],
@@ -78,7 +80,7 @@ def generated_pin_source(expected: dict[str, str], native_override: str | None =
     }
     literals = []
     for name, value in names.items():
-        if name in {"Requested", "PassivePcmCaptureRequested", "PassivePcmCaptureMusicOutputRequested"}:
+        if name in {"Requested", "PassivePcmCaptureRequested", "PassivePcmCaptureMusicOutputRequested", "PassivePcmCaptureAfterAuthoritySkillRequested"}:
             literals.append(f"    internal const bool {name} = {value};")
         else:
             literals.append(f'    internal const string {name} = "{value}";')

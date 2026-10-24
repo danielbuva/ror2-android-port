@@ -220,6 +220,7 @@ public sealed partial class PortSession
     public readonly TeleporterWorldSession teleporter;
     public PortSession() { teleporter = new TeleporterWorldSession(this); }
     void CleanupOriginalSkins() { }
+    void CleanupOriginalEquipmentHighlightAssets() { }
     void CleanupLoadoutTables() { }
     void RestoreCatalogBodyTemplates() { }
     void CleanupRecoveredText() { }
