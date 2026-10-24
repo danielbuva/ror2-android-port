@@ -800,6 +800,11 @@ Full staging retires predecessor-only authored C# copies through
 exact source bytes and pinned GUID must match before removal. A private
 `work/coordination/staging-retirements/` receipt records that reproducible owner.
 Edited/unknown files and code-only membership changes continue to refuse.
+The three generated `StreamingAssets/Lab/*StageReceipt.json` files (camera,
+original audio and music observer, plus their metadata) are APK-only provenance.
+Code-only builds may regenerate those exact files while external bundle inputs,
+audio bytes and all other StreamingAssets remain frozen. This uses the existing
+`whole_player_inputs` contract, not a general StreamingAssets exception.
 Host contracts: `test_iteration_apk.py`, `test_install_transport.py`,
 `test_build_snapshots.py`. Build/experiment artifact snapshots use APFS clones
 with an independent-copy fallback; snapshot verification can be requested while

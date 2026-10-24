@@ -234,6 +234,39 @@ class BuildTimingTests(unittest.TestCase):
 
 
 class IterationPayloadReceiptTests(unittest.TestCase):
+    def test_apk_provenance_can_change_but_audio_and_unknown_streaming_data_remain_frozen(self):
+        with tempfile.TemporaryDirectory() as directory:
+            work = Path(directory)
+            project = work / "lab-project"
+            for relative in build.WHOLE_APK_RECEIPTS:
+                path = project / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(b"original authored receipt")
+            audio = project / "Assets/StreamingAssets/Audio/authored.bnk"
+            audio.parent.mkdir(parents=True)
+            audio.write_bytes(b"synthetic audio bytes")
+            unknown = project / "Assets/StreamingAssets/unknown.json"
+            unknown.write_bytes(b"unknown frozen input")
+            (work / "generated-android-data").mkdir()
+            with patch.object(build, "WORK", work):
+                build.freeze_whole_payload(project, {"payload": {}, "key": "authored"})
+                # Upgrade an older receipt: these exact APK-only paths used to
+                # be incorrectly included in the frozen external-bundle set.
+                base = common.read(work / "whole-catalog-code-base.json")
+                base["allowed"] = sorted(set(base["allowed"]) - build.WHOLE_APK_RECEIPTS)
+                base["files"].update({name: common.sha(project / name) for name in build.WHOLE_APK_RECEIPTS})
+                common.write(work / "whole-catalog-code-base.json", base)
+                for name in build.WHOLE_APK_RECEIPTS:
+                    (project / name).write_bytes(b"new authored receipt")
+                build.validate_whole_payload_reuse(project)
+                audio.write_bytes(b"different synthetic audio")
+                with self.assertRaisesRegex(RuntimeError, "Content inputs changed"):
+                    build.validate_whole_payload_reuse(project)
+                audio.write_bytes(b"synthetic audio bytes")
+                unknown.write_bytes(b"different unknown input")
+                with self.assertRaisesRegex(RuntimeError, "Content inputs changed"):
+                    build.validate_whole_payload_reuse(project)
+
     def exercise(self, changed):
         with tempfile.TemporaryDirectory() as directory:
             work = Path(directory).resolve()

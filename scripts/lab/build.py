@@ -209,6 +209,11 @@ def editor(target="lab", action="inspect"):
 
 
 WHOLE_GENERATED_RUNTIME_SOURCES = {"OriginalBodyVisualMap.cs", "OriginalHealthVisualMap.cs", "OriginalGlobalCommonAssetMap.cs"}
+WHOLE_APK_RECEIPTS = {
+    "Assets/StreamingAssets/Lab/" + name + suffix
+    for name in ("NativeViewCameraStageReceipt", "OriginalGameAudioStageReceipt", "OriginalMusicOutputObserverStageReceipt")
+    for suffix in (".json", ".json.meta")
+}
 
 
 def runtime_sources():
@@ -243,6 +248,9 @@ def whole_player_inputs():
         "Assets/LabLoadingScene/WholeCatalogPreservation/link.xml",
         "Assets/LabLoadingScene/WholeCatalogPreservation/link.xml.meta",
     }
+    # These authored build provenance receipts are copied raw into the APK,
+    # never consumed by the external asset-bundle builds.
+    inputs.update(WHOLE_APK_RECEIPTS)
     # APK-only consumers of unchanged converted assets; retain Unity-owned metadata.
     inputs.update(
         "Assets/LabLoadingScene/" + name + suffix
@@ -335,7 +343,9 @@ def validate_whole_payload_reuse(project):
     receipt = read(WORK / "whole-catalog-code-base.json")
     previous_allowed = set(receipt["allowed"])
     added = WHOLE_PLAYER_INPUTS - previous_allowed
-    if previous_allowed - WHOLE_PLAYER_INPUTS or any(not p.startswith("Assets/LabLoadingScene/") or not p.endswith((".cs", ".cs.meta")) for p in added):
+    if previous_allowed - WHOLE_PLAYER_INPUTS or any(
+        p not in WHOLE_APK_RECEIPTS and (not p.startswith("Assets/LabLoadingScene/") or not p.endswith((".cs", ".cs.meta"))) for p in added
+    ):
         raise RuntimeError("Unexpected code-only content exception")
     current = whole_payload_inputs(project)
     expected = {path: value for path, value in receipt["files"].items() if path not in added}

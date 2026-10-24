@@ -2264,7 +2264,7 @@ def build_integration(
     assert_build_unblocked()
     with (
         host_build_lock(HOST_BUILD_LOCK, operation="whole-catalog staging and build"),
-        cached_hashes(cache_path=WORK / "build-hash-cache.json", reuse=bool(iteration_mode)),
+        cached_hashes(cache_path=None if destination is not None else WORK / "build-hash-cache.json", reuse=bool(iteration_mode)),
     ):
         assert_build_unblocked()
         # Stage and build only committed sources, and record the commit (J738).
