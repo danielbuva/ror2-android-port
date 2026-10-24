@@ -103,7 +103,7 @@ from device_context import set_command_selector
 set_command_selector(a.device, os.environ.get("LAB_DEVICE"))
 if a.host_only and a.command != "preflight":
     p.error("--host-only requires preflight")
-whole_catalog_build = a.command == "prototype" and a.action in {"whole-catalog-build", "whole-catalog-code-build"}
+whole_catalog_build = a.command == "prototype" and a.action in {"whole-catalog-build", "whole-catalog-code-build", "shared-catalog-code-build"}
 if a.debug_symbols and not (a.command == "build" or whole_catalog_build):
     p.error("--debug-symbols requires build or a whole-catalog build action")
 if a.capture_player_linker_inputs and not whole_catalog_build:

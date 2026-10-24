@@ -433,6 +433,15 @@ _ENTRIES = (
         "Build player code while verifying and reusing the frozen payload. Optional --debug-symbols retains matching Unity IL2CPP symbols for this exact APK. --capture-player-linker-inputs opts into the request/source/input-bound pre-strip UnityLinker inventory. Add --capture-il2cpp-invocation to capture the same request's pre-launch rendered IL2CPP line and input directory; it requires --capture-player-linker-inputs and does not claim exact argv or composed-audio stage equivalence.",
         handler=_whole_catalog_code_build,
     ),
+    Action(
+        "shared-catalog-code-build",
+        "shared_checkout_build",
+        "build_shared_checkout",
+        {},
+        "current",
+        "Build this clean committed worktree through the primary checkout/editor under the shared mutex, then restore its branch. No project copies or device actions. Supports the ordinary code-build capture/symbol flags; refuses concurrent source edits.",
+        handler=_whole_catalog_code_build,
+    ),
     Action("whole-catalog-run", "whole_catalog", "run_integration", {}, "current", "Install, sync and run the catalog-registration check."),
     Action("shader-recovery", "shader_recovery", "recover", {}, "historical", "Recover shaders for --target.", handler=_target),
     Action(

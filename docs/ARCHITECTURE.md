@@ -3059,6 +3059,22 @@ comparison replay only the exact receipt-bound files and includes. The normal
 whole-catalog preparation path is the build owner; this has no runtime state
 or teardown and makes no Android appearance claim.
 
+## Shared worktree build ownership
+
+`scripts/lab/shared_checkout_build.py` owns the current
+`./dev prototype --action shared-catalog-code-build` action. A linked worker
+checkout selects its clean committed HEAD in the clean primary checkout only
+while holding the primary Unity mutex. The ordinary primary `./dev` host
+preflight, source staging and code build run with that same inherited lock.
+The action copies no Unity project and performs no device operation. Its
+private receipt records the selected commit and restoration outcome.
+
+Teardown restores the original primary branch/commit after success or failure.
+Unexpected edits or moved refs refuse restoration and preserve those files for
+recovery; no stash, reset or authored-source patch is used. Workers must keep
+primary source edits serialized with this operation. Run generated-output
+pruning after the build, as for the ordinary build actions.
+
 ## Known structural debt
 
 First verified against `af2e101`; status updated after J597. Each step was its own commit with
