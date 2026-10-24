@@ -17,6 +17,8 @@ CAMERA_SHADER_ROOTS = {
     2538: ("12e87e7c7fde8e74db9f75172456c5c3", "TranslucentImage/EfficientBlur.shader"),
     2539: ("d996ab4381100014d99e25e68e9aac84", "TranslucentImage/FillCrop.shader"),
     2540: ("b12e02e9a9b684543a286089a03cb04b", "TranslucentImage/QuickDumbBlur.shader"),
+    16024: ("780f79b2a62a0df439dedf59c533eee6", "RoR2/Base/Shaders/HGSobelBuffer.shader"),
+    15952: ("7d6541fe01591cd418caf48d3c099e52", "RoR2/Base/Shaders/SobelOutline.shader"),
 }
 SHADER_LOCATION_TYPE = "UnityEngine.Shader, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"
 
@@ -195,9 +197,41 @@ def _validated_shader_overrides(io, closure, metadata, mapped, export, project, 
             916309824485114785,
             "ed4a1bae3abd8f34b905b509b4ff70e0",
         ),
+        (
+            16024,
+            "780f79b2a62a0df439dedf59c533eee6",
+            "RoR2/Base/Shaders/HGSobelBuffer.shader",
+            "Assets/RoR2/Base/Shaders/PostProcess/HGSobelBuffer.shader",
+            "sobel-buffer",
+            "shader_ramp_fog.py",
+            "recipe/shader-sobel-buffer-candidate.json",
+            1,
+            "candidate.json",
+            "sources/SobelBufferCandidate.shader",
+            "generated_shader",
+            "Hopoo Games/Internal/SobelBuffer",
+            -583016510457714391,
+            "6d9e1738bf3095e42a34d9feb449ad3b",
+        ),
+        (
+            15952,
+            "7d6541fe01591cd418caf48d3c099e52",
+            "RoR2/Base/Shaders/SobelOutline.shader",
+            "Assets/RoR2/Base/Shaders/CustomPostProcess/SobelOutline.shader",
+            "sobel-outline",
+            "shader_ramp_fog.py",
+            "recipe/shader-sobel-outline-candidate.json",
+            1,
+            "candidate.json",
+            "sources/SobelOutlineCandidate.shader",
+            "generated_shader",
+            "Hidden/PostProcess/SobelOutline",
+            2831377250017133402,
+            "0af91730b526684408399853ee967ce8",
+        ),
     ]
     rows = selection.get("rows")
-    if not isinstance(rows, list) or len(rows) not in (2, 6, len(expected)):
+    if not isinstance(rows, list) or len(rows) not in (2, 6, 7, len(expected)):
         raise RuntimeError("Shader override selection must contain a historical two/six-root profile or the complete current profile")
     expected = expected[: len(rows)]
     locations = {int(row["id"]): row for row in metadata["locations"]}
@@ -313,7 +347,7 @@ def _validated_shader_overrides(io, closure, metadata, mapped, export, project, 
             manifest.get("android_compile_or_render_tested") is not False or manifest.get("appearance_parity_proven") is not False
         ):
             raise RuntimeError("Outline candidate must retain its unqualified status")
-        if candidate_kind in {"ramp-fog", "screen-damage"}:
+        if candidate_kind in {"ramp-fog", "screen-damage", "sobel-buffer", "sobel-outline"}:
             ramp_receipt_path = candidate_directory / "receipt.json"
             if ramp_receipt_path.is_symlink() or not ramp_receipt_path.is_file():
                 raise RuntimeError("Native post-process generator receipt is absent or linked")

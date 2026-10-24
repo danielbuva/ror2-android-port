@@ -138,16 +138,18 @@ class PrototypeActionTests(unittest.TestCase):
         return code, output.getvalue(), errors.getvalue()
 
     def test_shader_candidate_dispatch_preserves_target_and_prints_result(self):
-        for name, module_name, target, expected_args in (
-            ("shader-outline-candidate", "shader_outline", "outline-highlight", ("outline-highlight",)),
-            ("shader-ramp-fog", "shader_ramp_fog", "lab", ()),
+        for name, module_name, target, expected_args, expected_kwargs in (
+            ("shader-outline-candidate", "shader_outline", "outline-highlight", ("outline-highlight",), {}),
+            ("shader-ramp-fog", "shader_ramp_fog", "lab", (), {"target": "ramp-fog"}),
+            ("shader-ramp-fog", "shader_ramp_fog", "sobel-buffer", (), {"target": "sobel-buffer"}),
+            ("shader-ramp-fog", "shader_ramp_fog", "sobel-outline", (), {"target": "sobel-outline"}),
         ):
             with self.subTest(action=name):
                 module = ModuleType(module_name)
                 module.generate = Mock(return_value={"success": True, "unity_compiled": False})
                 self.modules[module_name] = module
                 code, output = self.dispatch(name, target=target)
-                module.generate.assert_called_once_with(*expected_args)
+                module.generate.assert_called_once_with(*expected_args, **expected_kwargs)
                 self.assertEqual(json.loads(output), {"success": True, "unity_compiled": False})
                 self.assertIsNone(code)
 

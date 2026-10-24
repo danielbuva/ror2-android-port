@@ -125,6 +125,42 @@
       "shader_name": "Hopoo Games/Post Process/Screen Damage",
       "source_asset_path": "Assets/RoR2/Base/Core/CameraEffects/HGScreenDamage.shader",
       "type": "UnityEngine.Shader, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"
+    },
+    {
+      "candidate_kind": "sobel-buffer",
+      "candidate_schema": 1,
+      "generator": "shader_ramp_fog.py",
+      "generator_recipe": "recipe/shader-sobel-buffer-candidate.json",
+      "generator_recipe_sha256": "281653e4427e4432ddb695511d354f2348e1cf4e25a34245d999d51c5a231da6",
+      "generator_sha256": "b4abb3000c0370140e8376912145a39df849f35f079a0d56862c86257ba58640",
+      "guid": "780f79b2a62a0df439dedf59c533eee6",
+      "exporter_guid": "6d9e1738bf3095e42a34d9feb449ad3b",
+      "location_id": 16024,
+      "manifest": "candidate.json",
+      "manifest_path_field": "generated_shader",
+      "primary_key": "RoR2/Base/Shaders/HGSobelBuffer.shader",
+      "shader": "sources/SobelBufferCandidate.shader",
+      "shader_name": "Hopoo Games/Internal/SobelBuffer",
+      "source_asset_path": "Assets/RoR2/Base/Shaders/PostProcess/HGSobelBuffer.shader",
+      "type": "UnityEngine.Shader, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"
+    },
+    {
+      "candidate_kind": "sobel-outline",
+      "candidate_schema": 1,
+      "generator": "shader_ramp_fog.py",
+      "generator_recipe": "recipe/shader-sobel-outline-candidate.json",
+      "generator_recipe_sha256": "0e3216c9793c7977818ac811f8051d9fb27141d0cca0a2dde10428dd3e6409cc",
+      "generator_sha256": "b4abb3000c0370140e8376912145a39df849f35f079a0d56862c86257ba58640",
+      "guid": "7d6541fe01591cd418caf48d3c099e52",
+      "exporter_guid": "0af91730b526684408399853ee967ce8",
+      "location_id": 15952,
+      "manifest": "candidate.json",
+      "manifest_path_field": "generated_shader",
+      "primary_key": "RoR2/Base/Shaders/SobelOutline.shader",
+      "shader": "sources/SobelOutlineCandidate.shader",
+      "shader_name": "Hidden/PostProcess/SobelOutline",
+      "source_asset_path": "Assets/RoR2/Base/Shaders/CustomPostProcess/SobelOutline.shader",
+      "type": "UnityEngine.Shader, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"
     }
   ],
   "schema": "whole-catalog-shader-overrides-r1"
