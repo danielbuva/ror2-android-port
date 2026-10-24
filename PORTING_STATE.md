@@ -1,6 +1,6 @@
 # Porting state
 
-Updated 2026-10-24 UTC after **J1083**, **J1080** and **J1079**.
+Updated 2026-10-24 UTC after **J1084**, **J1080** and **J1079**.
 Main's latest qualified R44 preserves original stage audio clients after native readiness and
 passes both assisted controls, confirmed End Run, original Term/disarm, two
 application-owned Quits and a fresh-process audio restart. Observed exits take
@@ -17,10 +17,10 @@ through the [index](docs/JOURNAL_INDEX.md).
 | Accepted input | Steam 25475991; input `6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88` |
 | Toolchain | Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan; `environment/toolchain.json` |
 | Latest Main diagnostic | J1080/R44 `3d012ee9783e900117a10718d442582a3e6e6ecc1f444a48c316db7f043d4467`, build source `4c950513`: both standard controls, loaded source-audio clients on Lakes/Goolake, original Term/disarm, application-owned Quit and fresh-process restart. Full mix and PC appearance remain open. |
-| Pending rendering candidate | J1083/R47 normal `ef3ba8b699ce6b9327da5437e27a9bca17c30f97e03f8e3ca4c00dc705309950`, source `4a72b630`, reconstructs the source Sobel path and binds setup to the loaded stage. Normal build and host contracts pass; it is not installed or device-qualified. |
+| Pending rendering candidate | J1084/R48 normal `1578bc0d8cad458967341e58a629459c2ee631d358d845d1bab96215d3440bec`, source `498ef5e3`, restores both original startup graphics profiles with owned AO/LUT resources and the J1083 source Sobel path. Actual editor imports/kernel contracts and normal full build pass; it is not installed or device-qualified. Earlier R47 remains frozen locally. |
 | Latest UI feature | J1066 Thor `299445f72267f216b23c7c4c2610364329445625396d8cd536bab01c07747ead`, source `bf40428f`, qualifies application screen lifetime and strict native abandon/restart. Preceding modal-corrected `c17a0ccc2947ac4b7c02cf43c183170ff866f88b03e90629c70a96121c1d18bb`, source `e8600060`, qualifies native keyboard/preview/consent/copy/browser return and confirmation/cancel. Automatic gameplay diagnostics do not qualify complete physical/touch play. |
 | Installed now | Main was updated to R45 `43a8c0ffd5e98fd7f04e7030df3c3e29e765ebfe06a50a647231c7d3103a8d7a`, source `70f44151`, in adopted storage. Install/sync and independent byte/profile checks pass; the first control loses the assigned ADB transport before producing a report. Cleanup/process/selector/display state is unverified while unreachable. R44/J1080 remains the latest qualified diagnostic. J1072 restored Thor's 299445f7 in internal storage at handoff, with exact installed hash, runtime backing, selector/process absence and both panels OFF verified. Its shared lease was released; later owners may advance the receipts. Never infer installation from Git HEAD. |
-| Runtime source since those APKs | The explicit-stage Sobel correction is compiled in uninstalled R46 fast/R47 normal candidates. R44 stage audio and J1078 tooling remain inherited. Shared-editor build pointers can move independently of device bytes. |
+| Runtime source since those APKs | The explicit-stage Sobel correction and original global AO/grading role are compiled in uninstalled R48 normal. Original settings are preserved; compatible public programs do not establish exact original shader or PC appearance parity. R44 stage audio and J1078 tooling remain inherited. Shared-editor build pointers can move independently of device bytes. |
 | Developer iteration | J1072: current fresh-Data pre-Gradle splice and explicit ScriptsOnly actions; [operation](docs/fast-iteration.md). Normal verification APK `00b5813ce4faa860b3f2094a2daeab15849bcd181c5e120964c09a8d7b50b603`, source `0f0fab22`; fast verification APK `3375a6514e2092f5908f880e06675104bf6451a23ec9e52afb4982751a95fdf7`, source `20c3dbd7`. These are separate from the installed/accepted rollbacks. Streaming stays default after the matched transport check. |
 | Parallel build infrastructure | J1078: isolated APFS lanes pass concurrent code/full builds, private Gradle teardown and explicit iteration-only uncompressed reuse. [Commands](docs/build-lanes.md). Normal host control `1935024b8f290c456044c83cd1b6fb069a8179be40fedc3d6f5ba1367e1d0d94`, source `0b1e048c`, is retained for host comparison; it is not device-verified or installed. Acceptance compression stays LZ4. |
 | Accepted rollback | J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`, source `1780ea9`; scope in [BASELINE.md](docs/BASELINE.md). |
@@ -48,7 +48,8 @@ observed, but appearance remains flat/desaturated and PC parity is unaccepted.
 
 The next gameplay work is:
 
-1. Compare source-view output with a matched PC reference and resolve a measured
+1. Device-qualify frozen R48 when an authorized device is available, compare
+   source-view output with a matched PC reference and resolve the measured
    remaining rendering difference without arbitrary lighting/exposure tuning.
 2. Complete original audio mix/spatial/audibility and reduce Quit latency while
    preserving original Term/disarm ownership.
