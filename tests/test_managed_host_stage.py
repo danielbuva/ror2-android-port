@@ -50,6 +50,15 @@ class ManagedHostStageTests(unittest.TestCase):
             stage.stage(self.profile, self.sdk, self.destination, root=self.root)
         self.assertFalse(self.destination.exists())
 
+    def test_owner_backend_retains_repository_marker_for_existing_owners(self):
+        (self.root / "AGENTS.md").write_text("# Fixture repository marker\n")
+        (self.root / "dev").write_text("# Fixture entry point\n")
+        with mock.patch.object(stage.subprocess, "check_output", return_value=b"AGENTS.md\0dev\0") as git:
+            stage.stage(self.profile, self.sdk, self.destination, root=self.root, owner_backend=True)
+        self.assertIn("AGENTS.md", git.call_args.args[0])
+        self.assertEqual((self.destination / "repo/AGENTS.md").read_bytes(), (self.root / "AGENTS.md").read_bytes())
+        self.assertEqual((self.destination / "repo/dev").read_bytes(), (self.root / "dev").read_bytes())
+
     def test_ancestor_link_in_public_source_refuses(self):
         target = self.profile / "source.py"
         link = self.profile / "alias"

@@ -74,7 +74,9 @@ def stage(profile_source, sdk, destination, *, root=ROOT, owner_backend=False):
             raise ValueError("Public transform source drift: " + name)
     if owner_backend:
         names = (
-            subprocess.check_output(["git", "ls-files", "-z", "--", "scripts", "tools", "recipe", "environment", ".gitignore"], cwd=root).decode().split("\0")
+            subprocess.check_output(["git", "ls-files", "-z", "--", "scripts", "tools", "recipe", "environment", ".gitignore", "AGENTS.md", "dev"], cwd=root)
+            .decode()
+            .split("\0")
         )
         for name in filter(None, names):
             bind(root / name, "repo/" + name)
