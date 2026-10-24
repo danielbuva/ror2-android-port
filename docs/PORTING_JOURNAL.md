@@ -37425,3 +37425,78 @@ separately named Nova case/installation receipts, especially
 `nova-recovery-20261024T141308.974283Z/`. Raw device logs/screenshots, vendor
 inspection and all game-derived outputs remain private. Cleanup runs the
 generated-output pruner, leaves displays asleep and releases owned leases.
+
+## J1086 — Complete twelve native sessions on the internal device without accepting a memory bound
+
+2026-10-24. Hypothesis: J787's remaining managed growth may reach a limit on the
+constrained internal-storage Nova, or expose a reproducible failure that the
+shorter series missed. J1069's extended Thor attempt stopped on the known
+LightningStake error after three completed sessions. Run the existing memory
+owner/strict native-abandon contracts on the separately qualified R44/touch
+cohort, preserving all failures and original gameplay/ownership semantics.
+
+**Artifact and method.** APK
+`d211c7fa1f355381522e18fd93895b699a3b78de55755a20d87f2cc01c766e2e`,
+build source `437caf70`, installed/matching-payload scope in J1071. Start Commando
+through the native offline menu, observe at least 60 s of ready first-stage play,
+then use the actual two-step End Run controls. Every completed world must pass
+the strict cleanup/profile-count contract before starting the next. Automatic
+input is diagnostic; all five gameplay assistance options are OFF. No native
+heap capture or static-root walk runs in this series, and no original result or
+permanent progression is fabricated.
+
+**Result.** All 12 requested sessions complete, reaching menu 13 in the same
+process. The runner stops at `repeated-sessions-observed`; first failure is null,
+failures and actual-PID runtime errors are empty. This case contains no recurrence
+of J1069's native error; it does not fix or disprove that separate failure.
+
+| Completed session | Managed after collection (MiB) | Next-menu PSS (MiB) |
+| --- | ---: | ---: |
+| 1 | 176.68 | 3298.57 |
+| 2 | 225.97 | 3220.43 |
+| 3 | 275.81 | 3958.52 |
+| 4 | 321.82 | 3113.27 |
+| 5 | 366.61 | 3540.08 |
+| 6 | 416.46 | 3780.92 |
+| 7 | 463.75 | 3869.10 |
+| 8 | 507.42 | 3439.49 |
+| 9 | 555.36 | 3966.36 |
+| 10 | 600.68 | 4979.45 |
+| 11 | 646.68 | 3943.77 |
+| 12 | 697.23 | 3806.91 |
+
+The existing least-squares fit over sessions 2–12 is **49,043,009 managed bytes
+per session** (46.77 MiB), **83,624 KiB PSS per session** (81.66 MiB), and 933,404
+reserved bytes per session. PSS fluctuates substantially; its fit is not a
+monotonic rise or an indefinite-memory forecast. Managed usage grows from
+176.68 to 697.23 MiB. `GC.GetTotalMemory(false)` matches the profiler's managed
+value in sampled sessions 1, 6 and 12; collection counts advance from 246 to
+1,482. No managed plateau or retaining root is established.
+
+At the final menu, live completed coordinators/reports are both zero. Reclaimed
+world object counts remain around 34,555 (34,558 at the end), textures 1,577 and
+bundles 4. The final next-menu setup has 1,582 textures; these are distinct sample
+phases. The existing destroyed-registry pruning and original callback counts
+remain observed, not a new cache purge. Stable counted objects do not account
+for the growing managed bytes.
+
+**Cleanup and next discriminating check.** The owned selector is absent, process
+stopped and OLED asleep. Before the retained-data handoff, installed APK bytes
+are independently rehashed and match the candidate. The generated-output pruner
+runs from the primary checkout. No other package/profile/payload data or storage
+configuration is removed or changed.
+
+Compare native/managed heap snapshots after completed sessions 1 and 3 using
+the newly opt-in resource owner and the pinned public Unity analysis tool. Native
+handles, closed generic statics and conservative roots are not exhaustively
+covered by the previous enumerable-root walk. Capture allocation/pauses belong
+to a separate attribution case, never this uninstrumented growth measurement.
+Ordinary hardware input, a long uninterrupted normal run, sustained thermals and
+the memory bound remain open.
+
+Private evidence:
+`work/device/<serial>/experiments/session-memory/20261024T164502.466160Z/`
+contains the frozen selection, 12 completed reports, final menu, current-process
+log and result. The wrapper's result/prune and independently verified handoff are
+under `work/coordination/alpha-touch-acceptance-20261024/`. Raw identifiers,
+profile data, logs and later heap bytes remain private.
