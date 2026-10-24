@@ -10,6 +10,11 @@ Reading order: `PORTING_STATE.md` (current snapshot) → `docs/ARCHITECTURE.md` 
 - The lab must be reproducible from public source, the documented toolchain and the user's legitimate installation. Recipes (authored transformations, configuration, reproducible build steps) are tracked in `recipe/` after a provenance, privacy, licensing and sensitive-content audit recorded in `recipe/README.md`; generated game-derived content, private configuration and protected third-party material stay ignored. Recipes may name the minimum game asset paths, GUIDs, catalog names and relationships needed to reconstruct content locally; they must never reproduce protected content or substitute for owning the game.
 - Exact editor: Unity **2021.3.45f2 (88f88f591b2e), macOS ARM64** (user-approved Steam migration; retain 2021.3.33f1 for old rollbacks). Use bundled SDK/NDK/OpenJDK through scripts/env.sh. Canonical ADB is `/opt/homebrew/bin/adb`.
 - Require the explicitly configured authorized device serial. Query current adopted storage and free space every install. Physical internal storage is nearly full. Never format, repartition, erase, change storage configuration, or remove/move existing games/data to make space.
+- Displays: every test device has an OLED panel. Keep displays asleep whenever a device is not
+  actively under test (the device tooling's `sleep_display_when_idle` profiles do this; never leave a
+  device awake after a run). The Ayn Thor has two panels: test only on the top 16:9 panel (display 0,
+  1920x1080) and keep the bottom panel ("Screen-2") off during tests, restoring the user's
+  dual-screen setting afterwards.
 - Never hardcode a portable SD path or remembered adopted UUID. Record package placement and runtime data backing after installation. The disposable lab package is `dev.ror2lab.arm64`; reset requires its local ownership receipt. Bootstrap smoke uses a separate package and refuses pre-existing installs.
 
 ## Storage hygiene (mandatory)
