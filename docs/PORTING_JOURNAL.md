@@ -33634,6 +33634,9 @@ hint preserves `y: -0` and `z: -0`. Five authored tests cover independent hash
 vectors, whole-graph value/reference preservation, unknown graph/script refusal,
 explicit external binding and scalar/sign behavior. Ruff passes. The final
 readback-qualified public run is `public-production-v3`; earlier attempts remain.
+The first mandatory fresh-clone check catches a missing recipe audit-table row
+despite the detailed audit section. Add that required catalog entry; the focused
+recipe audit passes without changing producer behavior, metadata or test policy.
 
 **Evidence and remaining work.** Original-input hashes/type-tree observations,
 lookup comparisons, initial errors, complete private/public-source invocations,
