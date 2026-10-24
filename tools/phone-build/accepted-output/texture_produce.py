@@ -6,6 +6,7 @@ import hashlib
 import importlib.util
 import json
 import math
+import os
 from pathlib import Path
 import resource
 import shutil
@@ -205,7 +206,7 @@ def body_output(body, fields, pixels, target, operation):
     }
     if operation in {"dxt1-rgb", "dxt1-rgb-jpeg"}:
         replacements["m_TextureFormat"] = struct.pack("<i", 3)
-    elif operation == "alpha8-etc2":
+    elif operation in {"alpha8-etc2", "sdk-rgba"}:
         replacements["m_TextureFormat"] = struct.pack("<i", 47)
     elif operation == "etc1":
         replacements["m_TextureFormat"] = struct.pack("<i", 34)
@@ -228,7 +229,27 @@ def body_output(body, fields, pixels, target, operation):
     return bytes(result)
 
 
-def pixels_input(bundle, body, selected, jpeg_codec=None, etc_codec=None):
+def sdk_inputs(path, pin, pc):
+    if path is None or pin is None or BUNDLE.sha(path) != pin:
+        raise ValueError("pinned SDK texture toolchain required or drifted")
+    value = json.loads(path.read_text())
+    if set(value) != {"command", "environment", "pixels", "inputs"} or not value["inputs"]:
+        raise ValueError("unknown SDK texture toolchain")
+    command = value["command"]
+    if not isinstance(command, list) or len(command) < 2 or any(not isinstance(s, str) or not s or "\0" in s for s in command):
+        raise ValueError("invalid explicit SDK texture command")
+    if not isinstance(value["environment"], dict) or set(value["environment"]) - {"LD_LIBRARY_PATH"}:
+        raise ValueError("unknown SDK texture environment")
+    for name, expected in value["inputs"].items():
+        item = Path(name)
+        if not item.is_absolute() or not item.is_file() or item.resolve(strict=True).is_relative_to(pc) or BUNDLE.sha(item) != expected:
+            raise ValueError("SDK texture tool input drift or overlap with original input")
+    if any(name not in value["inputs"] for name in (command[0], command[-1], value["pixels"])):
+        raise ValueError("SDK texture executable/library/decoder is not pinned")
+    return value
+
+
+def pixels_input(bundle, body, selected, jpeg_codec=None, etc_codec=None, sdk=None):
     location = selected["pixels"]
     if location["member"] is None:
         start = location["offset"]
@@ -244,6 +265,36 @@ def pixels_input(bundle, body, selected, jpeg_codec=None, etc_codec=None):
     operation = selected["operation"]
     if operation == "copy":
         return pixels
+    if operation == "sdk-rgba":
+        if sdk is None:
+            raise ValueError("pinned SDK texture toolchain required")
+        width, height = selected["width"], selected["height"]
+        fmt = struct.unpack("<i", field(body, selected["fields"], "m_TextureFormat"))[0]
+        if fmt == 25:
+            top_bytes = ((width + 3) // 4) * ((height + 3) // 4) * 16
+            if len(pixels) < top_bytes:
+                raise ValueError("truncated BC7 top mip")
+            decoded = subprocess.run([sdk["pixels"], str(width), str(height)], input=pixels[:top_bytes], capture_output=True, timeout=120)
+            if decoded.returncode or len(decoded.stdout) != width * height * 4:
+                raise ValueError("public BC7 decoder failed or returned a different extent")
+            rgba = decoded.stdout
+        else:
+            rgba = rgba_source(pixels, width, height, fmt)
+        if 0 in rgba[3::4]:
+            dilated = subprocess.run([sdk["pixels"], str(width), str(height), "dilate"], input=rgba, capture_output=True, timeout=120)
+            if dilated.returncode or len(dilated.stdout) != width * height * 4:
+                raise ValueError("native pixel dilation failed or returned a different extent")
+            rgba = dilated.stdout
+        encoded = subprocess.run(
+            [*sdk["command"], str(width), str(height), "2", "0"],
+            env={**os.environ, **sdk["environment"]},
+            input=rgba,
+            capture_output=True,
+            timeout=120,
+        )
+        if encoded.returncode or len(encoded.stdout) != width * height:
+            raise ValueError("SDK texture codec failed or returned a different extent")
+        return encoded.stdout
     if operation in {"alpha8-etc2", "etc1"}:
         if etc_codec is None:
             raise ValueError("pinned public ETC codec required")
@@ -281,13 +332,26 @@ def pixels_input(bundle, body, selected, jpeg_codec=None, etc_codec=None):
     raise ValueError("unqualified texture operation")
 
 
-def produce(profile_path, profile_sha256, pc, output, jpeg_codec=None, jpeg_codec_sha256=None, etc_codec=None, etc_codec_sha256=None):
+def produce(
+    profile_path,
+    profile_sha256,
+    pc,
+    output,
+    jpeg_codec=None,
+    jpeg_codec_sha256=None,
+    etc_codec=None,
+    etc_codec_sha256=None,
+    sdk_toolchain=None,
+    sdk_toolchain_sha256=None,
+):
     if BUNDLE.sha(profile_path) != profile_sha256:
         raise ValueError("texture profile drift")
     profile = json.loads(profile_path.read_text())
     if set(profile) != {"input_id", "bundles"} or profile["input_id"] != MESH.INPUT_ID:
         raise ValueError("unknown texture input")
     pc = pc.resolve(strict=True)
+    needs_sdk = any(texture["operation"] == "sdk-rgba" for bundle in profile["bundles"] for member in bundle["members"] for texture in member["textures"])
+    sdk = sdk_inputs(sdk_toolchain, sdk_toolchain_sha256, pc) if needs_sdk or sdk_toolchain is not None or sdk_toolchain_sha256 is not None else None
     needs_jpeg = any(
         texture["operation"] in {"rgb-jpeg", "dxt1-rgb-jpeg"} or (texture["operation"] == "etc1" and texture["jpeg"])
         for bundle in profile["bundles"]
@@ -313,6 +377,8 @@ def produce(profile_path, profile_sha256, pc, output, jpeg_codec=None, jpeg_code
     output = parent / output.name
     if output.name in ("", ".", "..") or output.exists() or output.is_symlink() or parent.is_relative_to(pc) or pc.is_relative_to(output):
         raise ValueError("texture output must be new and outside original input")
+    if sdk and any(Path(name).is_relative_to(output) for name in sdk["inputs"]):
+        raise ValueError("texture output overlaps SDK toolchain")
     expected = sum(
         target["bytes"] + (target["pixel_bytes"] if not target["inline"] else 0)
         for bundle in profile["bundles"]
@@ -329,6 +395,8 @@ def produce(profile_path, profile_sha256, pc, output, jpeg_codec=None, jpeg_code
         receipt["jpeg_codec_sha256"] = jpeg_codec_sha256
     if etc_codec is not None:
         receipt["etc_codec_sha256"] = etc_codec_sha256
+    if sdk is not None:
+        receipt["sdk_toolchain_sha256"] = sdk_toolchain_sha256
     try:
         with (output / "objects.bin").open("xb") as objects, (output / "resources.bin").open("xb") as resources, (output / "index.jsonl").open("x") as index:
             for selected_bundle in profile["bundles"]:
@@ -344,7 +412,7 @@ def produce(profile_path, profile_sha256, pc, output, jpeg_codec=None, jpeg_code
                         body = BUNDLE.exact(member, selected["bytes"])
                         if hashlib.sha256(body).hexdigest() != selected["sha256"]:
                             raise ValueError("original texture body drift")
-                        pixels = pixels_input(bundle, body, selected, jpeg_codec, etc_codec)
+                        pixels = pixels_input(bundle, body, selected, jpeg_codec, etc_codec, sdk)
                         pixel_sha = hashlib.sha256(pixels).hexdigest()
                         for target in selected["outputs"]:
                             if pixel_sha != target["pixel_sha256"] or len(pixels) != target["pixel_bytes"]:
@@ -384,6 +452,8 @@ def produce(profile_path, profile_sha256, pc, output, jpeg_codec=None, jpeg_code
             raise ValueError("public JPEG codec changed during production")
         if etc_codec is not None and BUNDLE.sha(etc_codec) != etc_codec_sha256:
             raise ValueError("public ETC codec changed during production")
+        if sdk is not None and sdk_inputs(sdk_toolchain, sdk_toolchain_sha256, pc) != sdk:
+            raise ValueError("SDK texture toolchain changed during production")
         receipt["outputs"] = {
             name: {"bytes": (output / name).stat().st_size, "sha256": BUNDLE.sha(output / name)} for name in ("objects.bin", "resources.bin", "index.jsonl")
         }
@@ -408,8 +478,21 @@ def main():
     parser.add_argument("--jpeg-codec-sha256")
     parser.add_argument("--etc-codec", type=Path)
     parser.add_argument("--etc-codec-sha256")
+    parser.add_argument("--sdk-toolchain", type=Path)
+    parser.add_argument("--sdk-toolchain-sha256")
     args = parser.parse_args()
-    produce(args.profile, args.profile_sha256, args.pc, args.output, args.jpeg_codec, args.jpeg_codec_sha256, args.etc_codec, args.etc_codec_sha256)
+    produce(
+        args.profile,
+        args.profile_sha256,
+        args.pc,
+        args.output,
+        args.jpeg_codec,
+        args.jpeg_codec_sha256,
+        args.etc_codec,
+        args.etc_codec_sha256,
+        args.sdk_toolchain,
+        args.sdk_toolchain_sha256,
+    )
 
 
 if __name__ == "__main__":

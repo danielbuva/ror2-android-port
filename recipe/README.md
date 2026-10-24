@@ -164,6 +164,7 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 | `owner-uncompressed-textures.json` | Private replay uncompressed texture bodies/pixels | Original/destination selectors, source extents, generic import/placement metadata and hashes; copy, BC1, source-coordinate dilation and public JPEG policy. | No pixels, palettes, target literals/patches, native SDK implementation or image/library bytes; full audit above, 2026-10-24. All 399 records qualify on host/Android in J1079. | Explicit PC-input-only `texture_produce.py` and separately built public JPEG tool; no current game-build consumer. |
 | `owner-alpha-textures.json` | Private replay source Alpha8/single-mip texture cohort (J1082) | Canonical original/destination selectors, source/field extents, import/storage settings and hashes. | No alpha samples, encoded blocks, target byte frames, protected source or private identifiers; full audit below, 2026-10-24. | Original-PC-input-only `texture_produce.py` plus separately built public codec; no game-build consumer. |
 | `owner-rgb-textures.json` | Complete ETC1/single-mip target cohort | Original/destination selectors, field/pixel extents, hashes and source JPEG policy; composition aliases reuse original Warp/Elite ramps. | No colors, normal vectors, palettes, encoded blocks or target byte frames; audit below, 2026-10-24. | Original-input-only `texture_produce.py` and public ETC/JPEG tools; J1088 qualifies all 281 records on Android. |
+| `owner-rgba-textures.json` | Complete non-Alpha8 ETC2 RGBA/single-mip target cohort | Original/destination selectors, byte/field extents, hashes and canonical source relationships. | No pixels, palettes, encoded blocks, SDK implementation, private paths or target byte frames; audit below, 2026-10-24. | Existing source-only texture owner plus separately supplied SDK codec and public BC7 decoder; full phone qualification pending. |
 | `owner-avatars.json` | Private replay Avatar bodies (J1075) | Minimum original/destination identities, hashes, source extents and source-entry permutations. | No strings, poses, rig/geometry values, target literals or byte frames; full audit above, 2026-10-24. | Explicit PC-input-only `avatar_produce.py`; no current game-build consumer. |
 | `owner-meshes.json` | Protected mesh bodies in the private replay packet, for the included cohort only (J1070) | Original bundle/object/resource selectors, destination identities/hashes and authored import/conversion settings. | No geometry arrays, collision data, target byte frames or float literals; full audit above, 2026-10-24. Two cases remain excluded. | Explicit original-input-only `mesh_produce.py`; no current game-build consumer. |
 | `shader-postprocessing-bloom-candidate.json` | Exported one-pass Bloom and exact source-camera CopyStd placeholders | Accepted-input source/meta/resource identities, official Unity package/license hashes and pass contracts; authored camera staging pin refreshed without changing camera transforms. | Authored selection metadata only; upstream source and generated content stay local under Unity Companion License. Manual audit 2026-10-23 described above. | `shader_postprocessing_bloom`, whole-catalog preparation and catalog replay comparison; default off. |
@@ -2548,3 +2549,30 @@ scale generate four corners and two triangles; no target vector, geometry or
 byte template is in the profile. Its separately checked source/output extents
 are required because this generated body changes size. All 64 standalone Sprites
 qualify in J1117; original image/texture providers remain separate.
+## SDK-assisted RGBA texture production
+
+`owner-rgba-textures.json` contains only original/destination identities, byte
+extents, hashes and importer/storage relationships for the 1,333 non-Alpha8
+ETC2 RGBA/single-mip records. Canonicalization preserves original pixel hashes
+and every unchanged field hash. Seven duplicated basenames select their exact
+original object identities. All output pixels are derived from the owner's PC
+bundles through decoding and the existing authored transparency transform;
+no accepted pixel, encoded block or target byte frame is stored in the recipe.
+
+The separately owner-supplied Unity SDK codec remains private under its provider
+terms. Only the authored C ABI/pipe adapter and reproducible build instructions
+are tracked; neither SDK implementation nor SDK binary is distributed. The
+standalone Linux tool uses the separately acquired public QEMU/GNU runtime,
+without an Editor/project workflow or game emulation. Local toolchain commands,
+paths and dependency pins are generated in ignored output, not committed.
+
+`tools/phone-build/accepted-output/third_party/bcdec/` contains unchanged public
+bcdec source from `80859ed3b7afb1c527a2a99d70c61457bea72d0c` under its MIT
+alternative, retaining the complete upstream license. The generic codec's
+standard tables are public upstream material, not game or SDK-derived bytes.
+The authored bounded `texture_pixels.c` pipe adapter uses its existing BC7 API.
+Provider identities and license selection are documented beside the header.
+Provenance, licensing, privacy and sensitive-content audit: 2026-10-24. This
+source/recipe audit grants no game/SDK redistribution rights or ownership,
+authentication or entitlement success. Generated packs and raw evidence stay
+ignored; whole-cohort phone qualification is separate.
