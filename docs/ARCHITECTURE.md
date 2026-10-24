@@ -3360,7 +3360,19 @@ are in [build lanes](build-lanes.md#iteration-bundle-compression).
 `LAB_LANE=NAME` build dispatch. Each detached checkout has an APFS clone of
 prepared inputs, private writable editor/Gradle state, its own MCP port and a
 persistent lock outside the removable tree. Creation snapshots under the
-canonical mutex; later source selection/builds use only the lane lock. Completed
+canonical mutex; later source selection/builds use only the lane lock. Creation
+and every build/editor-open restage authored inputs from the selected checkout
+through `build.restage_lane_sources`, `whole_catalog` runtime/editor staging and
+the ordinary Android/audio owners. Extra C# is retired only after matching a
+predecessor Git blob, with source/metadata hashes and a removal receipt. Unknown
+or edited files refuse. `original_game_audio_build_hook.restage_authored_for_lane`
+uses a small APFS reference clone to unwind camera/music without changing live
+content; the producer selects the checkout's own generation.
+`original_game_audio_stage` owns the three-DLL refresh and verified preimages in
+`work/lane-authored-audio`; its pending receipt preserves full audio/overlay
+bindings. Ordinary whole-catalog composition restores those preimages before
+its existing overlay/audio staging. Lane teardown deletes this private state.
+Generated content, game inputs and canonical staging are untouched. Completed
 artifacts are cloned/verified into canonical cache without changing current-build
 pointers. Teardown verifies process identities, stops private Gradle daemons
 through their own registry, retains logs/receipts, removes

@@ -55,6 +55,7 @@ class BuildLaneTests(unittest.TestCase):
             patch.object(lanes.sys, "platform", "darwin"),
             patch.object(lanes, "check_space", return_value=200 * 1024**3),
             patch.object(lanes, "clone", side_effect=self.clone),
+            patch.object(lanes, "restage"),
         ]
         for p in self.patches:
             p.start()
@@ -79,6 +80,8 @@ class BuildLaneTests(unittest.TestCase):
 
     def test_clone_retains_library_but_not_live_editor_or_device_state(self):
         facts = self.create()
+        lanes.restage.assert_called_once_with(facts)
+        self.assertEqual(facts["canonical_source_commit"], self.git("rev-parse", "HEAD"))
         work = Path(facts["checkout"]) / "work"
         self.assertEqual((work / "lab-project/Library/cache").read_text(), "authored cache")
         self.assertFalse((work / "lab-project/Temp").exists())
@@ -94,11 +97,14 @@ class BuildLaneTests(unittest.TestCase):
 
     def test_dispatch_passes_only_its_lock_while_canonical_is_held(self):
         facts = self.create()
+        lanes.restage.reset_mock()
         original_run = subprocess.run
         calls = []
 
         def invoke(args, **kwargs):
             if str(args[0]) == str(Path(facts["checkout"]) / "dev"):
+                lanes.restage.assert_called_once_with(facts)
+                self.assertEqual(lanes.git(Path(facts["checkout"]), "rev-parse", "HEAD"), self.git("rev-parse", "HEAD"))
                 calls.append((args, kwargs))
                 (fd,) = kwargs["pass_fds"]
                 self.assertEqual(os.fstat(fd).st_ino, Path(facts["lock"]).stat().st_ino)

@@ -2350,3 +2350,13 @@ No upstream implementation or captured heap bytes are included. J1091 records
 31 passing tests and actual-file decode/export; the provider's Unity Companion
 License/notices stay with the private checkout and outputs. Provenance/privacy
 audit: 2026-10-24; no runtime/content redistribution grant changes.
+
+### Lane source-restaging audit
+
+The camera recipe's `whole_catalog.py` source digest is refreshed for extracting
+its existing Editor source selection into a shared staging owner and restoring
+receipted authored audio preimages before the ordinary composition steps. The
+selected sources, camera transform and runtime behavior are unchanged. The
+change contains authored tooling only, with no protected content or new public
+identifiers. Lane staging uses the same runtime/editor/plugin owners and keeps
+generated assets, original files and canonical staging outside its write set.
