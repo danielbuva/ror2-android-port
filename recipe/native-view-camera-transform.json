@@ -46,12 +46,14 @@
       {
         "catalog_id": 16024,
         "address_key": "780f79b2a62a0df439dedf59c533eee6",
-        "primary_key": "RoR2/Base/Shaders/HGSobelBuffer.shader"
+        "primary_key": "RoR2/Base/Shaders/HGSobelBuffer.shader",
+        "bundle": "must_be_present_in_built_manifest"
       },
       {
         "catalog_id": 15952,
         "address_key": "7d6541fe01591cd418caf48d3c099e52",
-        "primary_key": "RoR2/Base/Shaders/SobelOutline.shader"
+        "primary_key": "RoR2/Base/Shaders/SobelOutline.shader",
+        "bundle": "must_be_present_in_built_manifest"
       }
     ],
     "schema": "exact-original-camera-shader-roots-r3",
