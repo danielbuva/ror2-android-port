@@ -3031,3 +3031,12 @@ game source, protected assets, device identifiers or private paths are tracked.
 The source camera and original audio transformations retain their existing
 ownership and behavior. Provenance/privacy audit: 2026-10-24; device impact
 acceptance remains separate.
+
+
+PR #68 integration refreshes the actual authored owner and camera source pins
+after combining current main's touch/settings, idle heap capture and diagnostic
+retention with source rendering, Siren lifecycle and collision-policy changes.
+The existing editor-source staging and audio restoration owners remain in use.
+No original input, protected bytes, middleware selection, account entitlement
+or ownership boundary changes. Audit: 2026-10-24; a newly built normal player
+and device checks remain required for the integrated source.
