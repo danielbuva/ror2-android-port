@@ -34006,3 +34006,60 @@ public reproducible bootstrap. Full Burst provenance/production, serialized
 content/shaders, Android tool hosting, installation and matched device/gameplay
 performance remain open. Architecture C, the working build and desktop fallback
 remain current; PR #55 keeps its device/adoption hold.
+
+
+## J1060 — Remove the captured native graph from the public owner stage
+
+2026-10-24. Public-source promotion of J1059's same native policy, host planning
+and refusal contracts only. No compiler, Editor, device, original installation,
+working APK or runtime architecture change.
+
+**Hypothesis and change.** The qualified complete native build does not require
+a captured Bee DAG at execution time. Extract only its six argument profiles,
+SDK-relative source/include-lump relationships, generated translation-unit
+filename membership and exact compile/link order into audited
+`recipe/owner-native-arm64.json`. The new named native owner accepts explicit
+owner state, SDK, successful converter receipt/source providers and matching
+metadata. It creates only a new private output, reuses the original Clang 9/BFD
+ARM64 policy, and retains source bounds/hash checks, conservative capacity,
+process-group cleanup, logs, object receipts and terminal failures. It never
+reads a project or historical graph. This is generic SDK/native configuration
+engineering, not a new gameplay, content or middleware workaround; J1059's
+existing include-wrapper policy is retained.
+
+**Provenance and source boundaries.** The recipe contains only flags, relative
+identities, link relationships and a portable aggregate SDK digest. No source
+body, serialized value, SDK registration table, captured graph body, compiled
+byte or private path is published. Generated translation-unit names are fixed
+current-target configuration and cannot replace original game ownership or
+code generation. Recipe README records the audit and required table entry.
+Setup, output ownership, retention and teardown are documented under the named
+owner; no working build selects it. This native stage does not claim to produce
+upstream assemblies, roots or content by itself.
+
+**Review corrections.** Independent Main review finds two input-receipt gaps
+in the first draft: compiler/objcopy/source bindings omit implicit NDK inputs,
+and the final provider check recomputes hashes without comparing its result
+to the initial provider map. Pin the full NDK tree, including BFD, headers,
+CRT objects, libraries and compiler runtime; the complete SDK cohort now has
+12,250 files. Compare both final converter-provider and metadata records to
+the initial binding. Use a bounded explicit tool environment and restore signal
+handlers after killing/reaping an interrupted child. Seven focused host tests
+pass, including actual linker/header mutation refusal, source-provider mutation
+after planning, same-converter metadata mismatch, bounded gzip expansion,
+path/output escape and terminal tool failure. The lab doctor still refuses the
+absent isolated lab project; no lab readiness or admission is fabricated.
+
+**Complete comparison and limits.** The public entry plans all 825 tasks from
+explicit owner inputs. Compare every compile argument, the entire link argument
+sequence and all 67 SDK-only lump member lists to J1059 after explicit owned
+output/source relocation: all match exactly. Initial v1 and final v2 planning
+attempts remain private under `work/coordination/owner-code-producer-v1/`.
+`native-promotion-verification-v2.json` binds the final source/profile and public
+plan. Main independently reviews source/configuration provenance and complete
+argument equivalence. No native compilation is rerun here; J1059 remains the
+actual full native execution evidence. Public-entry full execution, remaining
+single-command managed/root/converter integration, Burst/content/shaders,
+Android hosting, installation/update and matched gameplay/performance remain
+open. PR #55 retains its device/adoption hold. Architecture C and the existing
+desktop fallback stay current.

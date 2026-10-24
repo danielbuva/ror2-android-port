@@ -1,0 +1,6806 @@
+{
+  "schema": 1,
+  "kind": "owner-native-arm64-development-configuration",
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "unity": "2021.3.45f2",
+  "revision": "88f88f591b2e",
+  "ndk": "21.3.6528147",
+  "scope": "Original SDK Clang 9/BFD, Android API 22, ARMv8-a, Os/development, incremental GC; fixed current player translation-unit membership. Build configuration only. Android tool hosting and runtime equivalence unqualified.",
+  "compiler": "PlaybackEngines/AndroidPlayer/NDK/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++",
+  "objcopy": "PlaybackEngines/AndroidPlayer/NDK/toolchains/llvm/prebuilt/darwin-x86_64/aarch64-linux-android/bin/objcopy",
+  "sdk_files": 12250,
+  "sdk_digest": "426d49af22fbcde919dfbf3f52b598f90b7f1286e848b78f6d1432e53185668b",
+  "arguments": [
+    [
+      "-march=armv8-a",
+      "-D__ANDROID_API__=22",
+      "-DANDROID",
+      "-DHAVE_INTTYPES_H",
+      "-no-canonical-prefixes",
+      "-funwind-tables",
+      "-fstack-protector",
+      "-fdiagnostics-format=msvc",
+      "-fomit-frame-pointer",
+      "-Wswitch",
+      "-Wno-trigraphs",
+      "-Wno-tautological-compare",
+      "-Wno-invalid-offsetof",
+      "-Wno-implicitly-unsigned-literal",
+      "-Wno-integer-overflow",
+      "-Wno-shift-negative-value",
+      "-Wno-unknown-attributes",
+      "-Wno-implicit-function-declaration",
+      "-Wno-null-conversion",
+      "-Wno-missing-declarations",
+      "-Wno-unused-value",
+      "-Wno-pragma-once-outside-header",
+      "-fvisibility=hidden",
+      "-fexceptions",
+      "-g",
+      "-Os",
+      "-fPIC",
+      "-fno-strict-overflow",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-fmessage-length=0",
+      "-pipe",
+      "-DGC_NOT_DLL",
+      "-DIL2CPP_ENABLE_WRITE_BARRIERS=1",
+      "-DIL2CPP_INCREMENTAL_TIME_SLICE=3",
+      "-DHAVE_BOEHM_GC",
+      "-DDEFAULT_GC_NAME=BDWGC",
+      "-DALL_INTERIOR_POINTERS=1",
+      "-DGC_GCJ_SUPPORT=1",
+      "-DJAVA_FINALIZATION=1",
+      "-DNO_EXECUTE_PERMISSION=1",
+      "-DGC_NO_THREADS_DISCOVERY=1",
+      "-DIGNORE_DYNAMIC_LOADING=1",
+      "-DGC_DONT_REGISTER_MAIN_STATIC_DATA=1",
+      "-DGC_VERSION_MAJOR=7",
+      "-DGC_VERSION_MINOR=7",
+      "-DGC_VERSION_MICRO=0",
+      "-DGC_THREADS=1",
+      "-DUSE_MMAP=1",
+      "-DUSE_MUNMAP=1",
+      "-DNDEBUG",
+      {
+        "root": "output",
+        "path": ".",
+        "prefix": "-I"
+      },
+      {
+        "root": "sdk",
+        "path": "Unity.app/Contents/il2cpp/external/bdwgc/libatomic_ops/src",
+        "prefix": "-I"
+      },
+      {
+        "root": "sdk",
+        "path": "Unity.app/Contents/il2cpp/external/bdwgc/include",
+        "prefix": "-I"
+      },
+      "-o",
+      "OBJECT",
+      "-fcolor-diagnostics",
+      "-target",
+      "aarch64-linux-android22",
+      "-fstrict-aliasing",
+      "-fdiagnostics-format=msvc",
+      "-c",
+      "-x",
+      "c",
+      "SOURCE"
+    ],
+    [
+      "-march=armv8-a",
+      "-D__ANDROID_API__=22",
+      "-DANDROID",
+      "-DHAVE_INTTYPES_H",
+      "-no-canonical-prefixes",
+      "-funwind-tables",
+      "-fstack-protector",
+      "-fdiagnostics-format=msvc",
+      "-fomit-frame-pointer",
+      "-Wswitch",
+      "-Wno-trigraphs",
+      "-Wno-tautological-compare",
+      "-Wno-invalid-offsetof",
+      "-Wno-implicitly-unsigned-literal",
+      "-Wno-integer-overflow",
+      "-Wno-shift-negative-value",
+      "-Wno-unknown-attributes",
+      "-Wno-implicit-function-declaration",
+      "-Wno-null-conversion",
+      "-Wno-missing-declarations",
+      "-Wno-unused-value",
+      "-Wno-pragma-once-outside-header",
+      "-fvisibility=hidden",
+      "-fno-exceptions",
+      "-g",
+      "-Os",
+      "-fPIC",
+      "-fno-strict-overflow",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-fmessage-length=0",
+      "-pipe",
+      "-DNDEBUG",
+      {
+        "root": "output",
+        "path": ".",
+        "prefix": "-I"
+      },
+      "-o",
+      "OBJECT",
+      "-fcolor-diagnostics",
+      "-target",
+      "aarch64-linux-android22",
+      "-fstrict-aliasing",
+      "-fdiagnostics-format=msvc",
+      "-c",
+      "-x",
+      "c",
+      "SOURCE"
+    ],
+    [
+      "-march=armv8-a",
+      "-D__ANDROID_API__=22",
+      "-DANDROID",
+      "-DHAVE_INTTYPES_H",
+      "-no-canonical-prefixes",
+      "-funwind-tables",
+      "-fstack-protector",
+      "-fdiagnostics-format=msvc",
+      "-fomit-frame-pointer",
+      "-std=c++11",
+      "-Wswitch",
+      "-Wno-trigraphs",
+      "-Wno-tautological-compare",
+      "-Wno-invalid-offsetof",
+      "-Wno-implicitly-unsigned-literal",
+      "-Wno-integer-overflow",
+      "-Wno-shift-negative-value",
+      "-Wno-unknown-attributes",
+      "-Wno-implicit-function-declaration",
+      "-Wno-null-conversion",
+      "-Wno-missing-declarations",
+      "-Wno-unused-value",
+      "-Wno-pragma-once-outside-header",
+      "-fvisibility=hidden",
+      "-fexceptions",
+      "-fno-rtti",
+      "-g",
+      "-Os",
+      "-fPIC",
+      "-fno-strict-overflow",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-fmessage-length=0",
+      "-pipe",
+      "-DBASELIB_INLINE_NAMESPACE=il2cpp_baselib",
+      "-DIL2CPP_MONO_DEBUGGER_DISABLED",
+      "-DRUNTIME_IL2CPP",
+      "-DTARGET_ARM64",
+      "-DIL2CPP_ENABLE_WRITE_BARRIERS=1",
+      "-DIL2CPP_INCREMENTAL_TIME_SLICE=3",
+      "-DGC_NOT_DLL",
+      "-DIL2CPP_DEFAULT_DATA_DIR_PATH=Data",
+      "-DNDEBUG",
+      {
+        "root": "output",
+        "path": ".",
+        "prefix": "-I"
+      },
+      {
+        "root": "sdk",
+        "path": "Unity.app/Contents/il2cpp/libil2cpp/pch",
+        "prefix": "-I"
+      },
+      {
+        "root": "sdk",
+        "path": "Unity.app/Contents/il2cpp/libil2cpp",
+        "prefix": "-I"
+      },
+      {
+        "root": "sdk",
+        "path": "Unity.app/Contents/il2cpp/external/baselib/Include",
+        "prefix": "-I"
+      },
+      {
+        "root": "sdk",
+        "path": "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/brotli/include",
+        "prefix": "-I"
+      },
+      {
+        "root": "sdk",
+        "path": "Unity.app/Contents/il2cpp/external/baselib/Platforms/Android/Include",
+        "prefix": "-I"
+      },
+      {
+        "root": "sdk",
+        "path": "Unity.app/Contents/il2cpp/external/bdwgc/include",
+        "prefix": "-I"
+      },
+      "-o",
+      "OBJECT",
+      "-fcolor-diagnostics",
+      "-target",
+      "aarch64-linux-android22",
+      "-fstrict-aliasing",
+      "-fdiagnostics-format=msvc",
+      "-c",
+      "-x",
+      "c++",
+      "SOURCE"
+    ],
+    [
+      "-march=armv8-a",
+      "-D__ANDROID_API__=22",
+      "-DANDROID",
+      "-DHAVE_INTTYPES_H",
+      "-no-canonical-prefixes",
+      "-funwind-tables",
+      "-fstack-protector",
+      "-fdiagnostics-format=msvc",
+      "-fomit-frame-pointer",
+      "-Wswitch",
+      "-Wno-trigraphs",
+      "-Wno-tautological-compare",
+      "-Wno-invalid-offsetof",
+      "-Wno-implicitly-unsigned-literal",
+      "-Wno-integer-overflow",
+      "-Wno-shift-negative-value",
+      "-Wno-unknown-attributes",
+      "-Wno-implicit-function-declaration",
+      "-Wno-null-conversion",
+      "-Wno-missing-declarations",
+      "-Wno-unused-value",
+      "-Wno-pragma-once-outside-header",
+      "-fvisibility=hidden",
+      "-fexceptions",
+      "-g",
+      "-Os",
+      "-fPIC",
+      "-fno-strict-overflow",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-fmessage-length=0",
+      "-pipe",
+      "-DBASELIB_INLINE_NAMESPACE=il2cpp_baselib",
+      "-DIL2CPP_MONO_DEBUGGER_DISABLED",
+      "-DRUNTIME_IL2CPP",
+      "-DTARGET_ARM64",
+      "-DIL2CPP_ENABLE_WRITE_BARRIERS=1",
+      "-DIL2CPP_INCREMENTAL_TIME_SLICE=3",
+      "-DGC_NOT_DLL",
+      "-DIL2CPP_DEFAULT_DATA_DIR_PATH=Data",
+      "-DNDEBUG",
+      {
+        "root": "output",
+        "path": ".",
+        "prefix": "-I"
+      },
+      {
+        "root": "sdk",
+        "path": "Unity.app/Contents/il2cpp/libil2cpp/pch",
+        "prefix": "-I"
+      },
+      {
+        "root": "sdk",
+        "path": "Unity.app/Contents/il2cpp/libil2cpp",
+        "prefix": "-I"
+      },
+      {
+        "root": "sdk",
+        "path": "Unity.app/Contents/il2cpp/external/baselib/Include",
+        "prefix": "-I"
+      },
+      {
+        "root": "sdk",
+        "path": "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/brotli/include",
+        "prefix": "-I"
+      },
+      {
+        "root": "sdk",
+        "path": "Unity.app/Contents/il2cpp/external/baselib/Platforms/Android/Include",
+        "prefix": "-I"
+      },
+      {
+        "root": "sdk",
+        "path": "Unity.app/Contents/il2cpp/external/bdwgc/include",
+        "prefix": "-I"
+      },
+      "-o",
+      "OBJECT",
+      "-fcolor-diagnostics",
+      "-target",
+      "aarch64-linux-android22",
+      "-fstrict-aliasing",
+      "-fdiagnostics-format=msvc",
+      "-c",
+      "-x",
+      "c",
+      "SOURCE"
+    ],
+    [
+      "-march=armv8-a",
+      "-D__ANDROID_API__=22",
+      "-DANDROID",
+      "-DHAVE_INTTYPES_H",
+      "-no-canonical-prefixes",
+      "-funwind-tables",
+      "-fstack-protector",
+      "-fdiagnostics-format=msvc",
+      "-fomit-frame-pointer",
+      "-std=c++11",
+      "-Wswitch",
+      "-Wno-trigraphs",
+      "-Wno-tautological-compare",
+      "-Wno-invalid-offsetof",
+      "-Wno-implicitly-unsigned-literal",
+      "-Wno-integer-overflow",
+      "-Wno-shift-negative-value",
+      "-Wno-unknown-attributes",
+      "-Wno-implicit-function-declaration",
+      "-Wno-null-conversion",
+      "-Wno-missing-declarations",
+      "-Wno-unused-value",
+      "-Wno-pragma-once-outside-header",
+      "-fvisibility=hidden",
+      "-fexceptions",
+      "-fno-rtti",
+      "-g",
+      "-Os",
+      "-fPIC",
+      "-fno-strict-overflow",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-fmessage-length=0",
+      "-pipe",
+      "-DBASELIB_INLINE_NAMESPACE=il2cpp_baselib",
+      "-DIL2CPP_MONO_DEBUGGER_DISABLED",
+      "-DRUNTIME_IL2CPP",
+      "-DTARGET_ARM64",
+      "-DIL2CPP_ENABLE_WRITE_BARRIERS=1",
+      "-DIL2CPP_INCREMENTAL_TIME_SLICE=3",
+      "-DHAVE_BDWGC_GC",
+      "-DNDEBUG",
+      {
+        "root": "output",
+        "path": ".",
+        "prefix": "-I"
+      },
+      {
+        "root": "cpp",
+        "path": ".",
+        "prefix": "-I"
+      },
+      {
+        "root": "sdk",
+        "path": "Unity.app/Contents/il2cpp/libil2cpp/pch",
+        "prefix": "-I"
+      },
+      {
+        "root": "sdk",
+        "path": "Unity.app/Contents/il2cpp/libil2cpp",
+        "prefix": "-I"
+      },
+      {
+        "root": "sdk",
+        "path": "Unity.app/Contents/il2cpp/external/baselib/Include",
+        "prefix": "-I"
+      },
+      {
+        "root": "sdk",
+        "path": "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/brotli/include",
+        "prefix": "-I"
+      },
+      {
+        "root": "sdk",
+        "path": "Unity.app/Contents/il2cpp/external/baselib/Platforms/Android/Include",
+        "prefix": "-I"
+      },
+      "-o",
+      "OBJECT",
+      "-fcolor-diagnostics",
+      "-target",
+      "aarch64-linux-android22",
+      "-fstrict-aliasing",
+      "-fdiagnostics-format=msvc",
+      "-c",
+      "-x",
+      "c++",
+      "SOURCE"
+    ],
+    [
+      "-march=armv8-a",
+      "-D__ANDROID_API__=22",
+      "-DANDROID",
+      "-DHAVE_INTTYPES_H",
+      "-no-canonical-prefixes",
+      "-funwind-tables",
+      "-fstack-protector",
+      "-fdiagnostics-format=msvc",
+      "-fomit-frame-pointer",
+      "-Wswitch",
+      "-Wno-trigraphs",
+      "-Wno-tautological-compare",
+      "-Wno-invalid-offsetof",
+      "-Wno-implicitly-unsigned-literal",
+      "-Wno-integer-overflow",
+      "-Wno-shift-negative-value",
+      "-Wno-unknown-attributes",
+      "-Wno-implicit-function-declaration",
+      "-Wno-null-conversion",
+      "-Wno-missing-declarations",
+      "-Wno-unused-value",
+      "-Wno-pragma-once-outside-header",
+      "-fvisibility=hidden",
+      "-fexceptions",
+      "-g",
+      "-Os",
+      "-fPIC",
+      "-fno-strict-overflow",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-fmessage-length=0",
+      "-pipe",
+      "-DBASELIB_INLINE_NAMESPACE=il2cpp_baselib",
+      "-DIL2CPP_MONO_DEBUGGER_DISABLED",
+      "-DRUNTIME_IL2CPP",
+      "-DTARGET_ARM64",
+      "-DIL2CPP_ENABLE_WRITE_BARRIERS=1",
+      "-DIL2CPP_INCREMENTAL_TIME_SLICE=3",
+      "-DHAVE_BDWGC_GC",
+      "-DNDEBUG",
+      {
+        "root": "output",
+        "path": ".",
+        "prefix": "-I"
+      },
+      {
+        "root": "cpp",
+        "path": ".",
+        "prefix": "-I"
+      },
+      {
+        "root": "sdk",
+        "path": "Unity.app/Contents/il2cpp/libil2cpp/pch",
+        "prefix": "-I"
+      },
+      {
+        "root": "sdk",
+        "path": "Unity.app/Contents/il2cpp/libil2cpp",
+        "prefix": "-I"
+      },
+      {
+        "root": "sdk",
+        "path": "Unity.app/Contents/il2cpp/external/baselib/Include",
+        "prefix": "-I"
+      },
+      {
+        "root": "sdk",
+        "path": "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/brotli/include",
+        "prefix": "-I"
+      },
+      {
+        "root": "sdk",
+        "path": "Unity.app/Contents/il2cpp/external/baselib/Platforms/Android/Include",
+        "prefix": "-I"
+      },
+      "-o",
+      "OBJECT",
+      "-fcolor-diagnostics",
+      "-target",
+      "aarch64-linux-android22",
+      "-fstrict-aliasing",
+      "-fdiagnostics-format=msvc",
+      "-c",
+      "-x",
+      "c",
+      "SOURCE"
+    ]
+  ],
+  "jobs": [
+    {
+      "arguments": 0,
+      "sdk": "Unity.app/Contents/il2cpp/external/bdwgc/extra/gc.c"
+    },
+    {
+      "arguments": 0,
+      "sdk": "Unity.app/Contents/il2cpp/external/bdwgc/extra/krait_signal_handler.c"
+    },
+    {
+      "arguments": 1,
+      "sdk": "Unity.app/Contents/il2cpp/external/zlib/inflate.c"
+    },
+    {
+      "arguments": 1,
+      "sdk": "Unity.app/Contents/il2cpp/external/zlib/deflate.c"
+    },
+    {
+      "arguments": 1,
+      "sdk": "Unity.app/Contents/il2cpp/external/zlib/gzread.c"
+    },
+    {
+      "arguments": 1,
+      "sdk": "Unity.app/Contents/il2cpp/external/zlib/crc32.c"
+    },
+    {
+      "arguments": 1,
+      "sdk": "Unity.app/Contents/il2cpp/external/zlib/infback.c"
+    },
+    {
+      "arguments": 1,
+      "sdk": "Unity.app/Contents/il2cpp/external/zlib/zutil.c"
+    },
+    {
+      "arguments": 1,
+      "sdk": "Unity.app/Contents/il2cpp/external/zlib/gzlib.c"
+    },
+    {
+      "arguments": 1,
+      "sdk": "Unity.app/Contents/il2cpp/external/zlib/inftrees.c"
+    },
+    {
+      "arguments": 1,
+      "sdk": "Unity.app/Contents/il2cpp/external/zlib/uncompr.c"
+    },
+    {
+      "arguments": 1,
+      "sdk": "Unity.app/Contents/il2cpp/external/zlib/gzwrite.c"
+    },
+    {
+      "arguments": 1,
+      "sdk": "Unity.app/Contents/il2cpp/external/zlib/trees.c"
+    },
+    {
+      "arguments": 1,
+      "sdk": "Unity.app/Contents/il2cpp/external/zlib/gzclose.c"
+    },
+    {
+      "arguments": 1,
+      "sdk": "Unity.app/Contents/il2cpp/external/zlib/inffast.c"
+    },
+    {
+      "arguments": 1,
+      "sdk": "Unity.app/Contents/il2cpp/external/zlib/adler32.c"
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/UnityAdsStubs.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/char-conversions.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/il2cpp-api.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/il2cpp-benchmark-support.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/il2cpp-mono-api.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/il2cpp-runtime-stats.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/utils/Output.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/utils/Runtime.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/utils/mono-structs.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/utils/sha1.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/utils/Exception.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/utils/Il2CppError.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/utils/Logging.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/utils/Memory.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/utils/MemoryMappedFile.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/utils/MemoryPool.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/utils/MemoryRead.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/utils/DirectoryUtils.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/utils/Environment.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/utils/MarshalingUtils.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/utils/MemoryPoolAddressSanitizer.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/utils/PathUtils.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/utils/StringUtils.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/vm-utils/BlobReader.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm-utils/DebugSymbolReader.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm-utils/Debugger.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm-utils/Finally.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm-utils/NativeSymbol.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm-utils/VmStringUtils.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm-utils/VmThreadUtils.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/codegen/il2cpp-codegen-common.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/codegen/il2cpp-codegen-il2cpp.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/codegen/il2cpp-codegen-tiny.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/ClassInlines.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/ComObjectBase.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/Module.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/Path.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/String.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/VisualizerHelpers.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/WindowsRuntime.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/Array.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/Assembly.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/MarshalAlloc.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/Object.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/PlatformInvoke.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/Reflection.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/WaitHandle.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/WeakReference.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/COM.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/COMEntryPoints.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/Enum.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/Exception.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/InternalCalls.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/Liveness.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/MetadataAlloc.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/Profiler.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/RCW.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/AndroidRuntime.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/CCW.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/ClassLibraryPAL.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/Domain.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/GlobalMetadata.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/LastError.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/MemoryInformation.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/Method.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/Monitor.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/Random.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/ScopedThreadAttacher.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/Thread.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/AssemblyName.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/CCWBase.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/GenericClass.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/GenericContainer.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/Image.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/Parameter.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/Property.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/Type.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/Field.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/Il2CppHStringReference.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/MetadataLoader.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/Runtime.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/StackTrace.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/ThreadPoolMs.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/Class.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/Event.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm/MetadataCache.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/mono/MonoPosixHelper.cpp"
+    },
+    {
+      "arguments": 2,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/debugger/il2cpp-api-debugger.cpp"
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/gc/BoehmGC.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/gc/GCHandle.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/gc/GarbageCollector.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/gc/NullGC.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/gc/WriteBarrier.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/gc/WriteBarrierValidation.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/os/CrashHelpers.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Error.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Event.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/FastReaderReaderWriterLock.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/LibraryLoader.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Messages.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Semaphore.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Thread.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/os/ConditionVariable.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Image.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Mutex.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Path.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/ReaderWriterLock.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Socket.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/StackTrace.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/metadata/CustomAttributeCreator.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/metadata/CustomAttributeDataReader.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/metadata/FieldLayout.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/metadata/GenericMetadata.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/metadata/GenericSharing.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/metadata/Il2CppGenericContextCompare.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/metadata/Il2CppGenericMethodHash.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/metadata/Il2CppSignature.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/metadata/ArrayMetadata.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/metadata/GenericMethod.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/metadata/Il2CppGenericContextHash.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/metadata/Il2CppGenericMethodCompare.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/metadata/Il2CppTypeCompare.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/metadata/Il2CppGenericClassCompare.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/metadata/Il2CppGenericClassHash.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/metadata/Il2CppGenericInstCompare.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/metadata/Il2CppGenericInstHash.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/metadata/Il2CppTypeHash.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/Interop.cpp"
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/mono/ThreadPool/ThreadPoolMonitorThread.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/mono/ThreadPool/ThreadPoolWorkerThread.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/mono/ThreadPool/threadpool-ms-io-poll.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/mono/ThreadPool/threadpool-ms-io.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/mono/ThreadPool/threadpool-ms.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Posix/CrashHelpers.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Posix/Error.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Posix/EventImpl.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Posix/File.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Posix/LibraryLoader.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Posix/Console.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Posix/Encoding.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Posix/Image.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Posix/Locale.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Posix/Path.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Posix/PosixWaitObject.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Posix/Cryptography.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Posix/Directory.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Posix/FileSystemWatcher.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Posix/MemoryMappedFile.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Posix/NativeMethods.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Posix/Process.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Posix/SystemCertificates.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Posix/Thread.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Posix/MarshalAlloc.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Posix/Memory.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Posix/MutexImpl.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Posix/SemaphoreImpl.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Posix/SocketImpl.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Posix/StackTrace.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Posix/ThreadImpl.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Posix/ConditionVariableImpl.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Posix/CpuInfo.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Posix/Environment.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Posix/LastError.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Posix/PosixHelpers.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Posix/Time.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Posix/TimeZone.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/pal_errno.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/pal_io.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/pal_networking.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/pal_random.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/pal_sizecheck.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/pal_time.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/pal_uid.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/pal_unused.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Lumin/Automation.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Lumin/Debug.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Lumin/Environment.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Lumin/File.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Lumin/Initialize.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Lumin/Lifecycle.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Lumin/Process.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Lumin/StackTrace.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/os/OSX/Image.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/OSX/Process.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/OSX/SystemCertificates.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/OSX/Thread.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/os/Std/ThreadImpl.cpp"
+    },
+    {
+      "arguments": 2,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/os/WindowsGames/Win32ApiWindowsGamesEmulation.cpp"
+    },
+    {
+      "arguments": 2,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/os/Emscripten/SocketBridge.cpp"
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/os/WinRT/Cryptography.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/WinRT/File.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/WinRT/Initialize.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/WinRT/Locale.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/WinRT/Win32ApiSharedEmulation.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/os/WinRT/BrokeredFileSystem.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/WinRT/Environment.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/WinRT/MarshalAlloc.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/WinRT/Process.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/WinRT/Win32ApiWinRTEmulation.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Android/ConsoleExtension.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Android/Initialize.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Android/Locale.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Android/StackTrace.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Generic/BrokeredFileSystem.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Generic/Initialize.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Generic/Assert.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Generic/CpuInfo.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Generic/Debug.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Generic/Handle.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Generic/LibraryLoader.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Generic/MemoryMappedFile.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Generic/SystemCertificates.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Generic/Thread.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Generic/WindowsRuntime.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Generic/COM.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Generic/CrashHelpers.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Generic/Environment.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Generic/File.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Generic/MarshalStringAlloc.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Generic/SocketBridge.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Generic/SocketImpl.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/Assert.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/CrashHelpers.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/EventImpl.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/File.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/LibraryLoader.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/MarshalStringAlloc.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/Console.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/Encoding.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/Image.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/Locale.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/Path.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/COM.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/Cryptography.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/Debug.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/Directory.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/DllMain.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/FileSystemWatcher.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/Initialize.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/MemoryMappedFile.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/NativeMethods.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/Process.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/SystemCertificates.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/Thread.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/WindowsHelpers.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/MarshalAlloc.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/Memory.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/MutexImpl.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/SemaphoreImpl.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/SocketImpl.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/StackTrace.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/ThreadImpl.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/WindowsRuntime.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/ConditionVariableImpl.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/CpuInfo.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/Environment.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/Handle.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/LastError.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/SynchronizationContext.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/Time.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/Win32/TimeZone.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/CultureInfo.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/Error.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/Locale.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/Semaphore.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/Thread.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/COM.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/Directory.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/Socket.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/SystemCertificates.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/CpuInfo.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/Cryptography.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/Event.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/File.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/Handle.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/LibraryLoader.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/MemoryMappedFile.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/Messages.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/ThreadLocalValue.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/Allocator.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/ConditionVariable.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/Console.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/Debug.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/Environment.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/Memory.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/Mutex.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/NativeMethods.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/Path.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/Process.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/Time.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/icalls/System.Core/System.IO.MemoryMappedFiles/MemoryMapImpl.cpp"
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Reflection/Assembly.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Reflection/CustomAttributeData.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Reflection/EventInfo.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Reflection/ParameterInfo.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Reflection/RuntimeMethodInfo.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Reflection/AssemblyName.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Reflection/FieldInfo.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Reflection/Module.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Reflection/MonoMethodInfo.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Reflection/RuntimeAssembly.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Reflection/RuntimeEventInfo.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Reflection/RuntimeModule.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Reflection/RuntimeParameterInfo.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Reflection/MethodBase.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Reflection/MonoMethod.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Reflection/RuntimeConstructorInfo.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Reflection/RuntimeFieldInfo.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Reflection/RuntimePropertyInfo.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Globalization/CalendarData.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Globalization/CompareInfo.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Globalization/CultureData.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Globalization/CultureInfo.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Globalization/RegionInfo.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Security.Principal/WindowsIdentity.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Security.Principal/WindowsImpersonationContext.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Security.Principal/WindowsPrincipal.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Runtime/RuntimeImports.cpp"
+    },
+    {
+      "arguments": 2,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Runtime.Remoting/RemotingServices.cpp"
+    },
+    {
+      "arguments": 2,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/Mono.Security.Cryptography/KeyPairPersistence.cpp"
+    },
+    {
+      "arguments": 2,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Runtime.Remoting.Activation/ActivationServices.cpp"
+    },
+    {
+      "arguments": 2,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Runtime.Remoting.Contexts/Context.cpp"
+    },
+    {
+      "arguments": 2,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Runtime.Remoting.Proxies/RealProxy.cpp"
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.IO/BrokeredFileSystem.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.IO/DriveInfo.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.IO/MonoIO.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.IO/Path.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/Mono.Unity/UnityTls.cpp"
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Runtime.Remoting.Messaging/AsyncResult.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Runtime.Remoting.Messaging/MonoMethodMessage.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Security.Policy/Evidence.cpp"
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System/ArgIterator.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System/RuntimeFieldHandle.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System/Type.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System/AppDomain.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System/Array.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System/CurrentSystemTimeZone.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System/DateTime.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System/NumberFormatter.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System/Object.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System/RuntimeMethodHandle.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System/Buffer.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System/GC.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System/MonoCustomAttrs.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System/RuntimeType.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System/RuntimeTypeHandle.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System/CLRConfig.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System/ConsoleDriver.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System/Delegate.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System/Enum.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System/Environment.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System/Exception.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System/Number.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System/String.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System/TypedReference.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System/ValueType.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Runtime.Versioning/VersioningHelper.cpp"
+    },
+    {
+      "arguments": 2,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/Microsoft.Win32/NativeMethods.cpp"
+    },
+    {
+      "arguments": 2,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Runtime.CompilerServices/RuntimeHelpers.cpp"
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Text/EncodingHelper.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Text/Normalization.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/Mono/Runtime.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/Mono/RuntimeClassHandle.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/Mono/RuntimeGPtrArrayHandle.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/Mono/RuntimeMarshal.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/Mono/SafeStringMarshal.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Threading/InternalThread.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Threading/Monitor.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Threading/Mutex.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Threading/NativeEventCalls.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Threading/OSSpecificSynchronizationContext.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Threading/Thread.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Threading/Timer.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Threading/WaitHandle.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Diagnostics/Debugger.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Diagnostics/StackFrame.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Diagnostics/StackTrace.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Security.Cryptography/RNGCryptoServiceProvider.cpp"
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Runtime.InteropServices/GCHandle.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Runtime.InteropServices/Marshal.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/mscorlib/System.Runtime.InteropServices/RuntimeInformation.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/icalls/System/System.Net/Dns.cpp"
+    },
+    {
+      "arguments": 2,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/icalls/System/System.IO/FileSystemWatcher.cpp"
+    },
+    {
+      "arguments": 2,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/icalls/System/Microsoft.Win32/NativeMethods.cpp"
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/System/System.Net.Sockets/Socket.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/System/System.Net.Sockets/SocketException.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/icalls/System/System.Threading/Semaphore.cpp"
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/System/System.Diagnostics/DefaultTraceListener.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/System/System.Diagnostics/FileVersionInfo.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/System/System.Diagnostics/Process.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/System/System.Diagnostics/Stopwatch.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/System/System.Net.NetworkInformation/LinuxNetworkInterface.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/icalls/System/System.Net.NetworkInformation/MacOsIPInterfaceProperties.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/icalls/System/Mono.Net.Security/MonoTlsProviderFactory.cpp"
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/tests/ConditionVariableTests.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/tests/ConsoleTests.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/tests/DebugTests.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/tests/EnvironmentTests.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/tests/MemoryTests.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/tests/MutexTests.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/tests/NativeMethodsTests.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/tests/PathTests.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/tests/ProcessTests.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/tests/TimeTests.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/tests/CpuInfoTests.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/tests/CryptographyTests.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/tests/EventTests.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/tests/FileTests.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/tests/LibraryLoaderTests.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/tests/MainTestRunner.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/tests/MemoryMappedFileTests.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/tests/MessagesTests.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/tests/ThreadLocalValueTests.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/tests/COMTests.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/tests/DirectoryTests.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/tests/SocketTests.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/tests/ErrorTests.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/tests/LocaleTests.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/tests/SemaphoreTests.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/os/c-api/tests/ThreadTests.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "lump": [
+        "Unity.app/Contents/il2cpp/libil2cpp/vm-utils/icalls/mscorlib/System/Math.cpp",
+        "Unity.app/Contents/il2cpp/libil2cpp/vm-utils/icalls/mscorlib/System/MathF.cpp"
+      ]
+    },
+    {
+      "arguments": 2,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/vm-utils/icalls/mscorlib/System.Threading/Interlocked.cpp"
+    },
+    {
+      "arguments": 3,
+      "sdk": "Unity.app/Contents/il2cpp/external/xamarin-android/xamarin_getifaddrs.c"
+    },
+    {
+      "arguments": 3,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/brotli/enc/dictionary_hash.c"
+    },
+    {
+      "arguments": 3,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/brotli/enc/backward_references_hq.c"
+    },
+    {
+      "arguments": 3,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/brotli/enc/histogram.c"
+    },
+    {
+      "arguments": 3,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/brotli/enc/memory.c"
+    },
+    {
+      "arguments": 3,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/brotli/enc/entropy_encode.c"
+    },
+    {
+      "arguments": 3,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/brotli/enc/compress_fragment_two_pass.c"
+    },
+    {
+      "arguments": 3,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/brotli/enc/block_splitter.c"
+    },
+    {
+      "arguments": 3,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/brotli/enc/command.c"
+    },
+    {
+      "arguments": 3,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/brotli/enc/encode.c"
+    },
+    {
+      "arguments": 3,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/brotli/enc/encoder_dict.c"
+    },
+    {
+      "arguments": 3,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/brotli/enc/cluster.c"
+    },
+    {
+      "arguments": 3,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/brotli/enc/backward_references.c"
+    },
+    {
+      "arguments": 3,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/brotli/enc/utf8_util.c"
+    },
+    {
+      "arguments": 3,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/brotli/enc/compress_fragment.c"
+    },
+    {
+      "arguments": 3,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/brotli/enc/fast_log.c"
+    },
+    {
+      "arguments": 3,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/brotli/enc/brotli_bit_stream.c"
+    },
+    {
+      "arguments": 3,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/brotli/enc/bit_cost.c"
+    },
+    {
+      "arguments": 3,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/brotli/enc/static_dict.c"
+    },
+    {
+      "arguments": 3,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/brotli/enc/literal_cost.c"
+    },
+    {
+      "arguments": 3,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/brotli/enc/metablock.c"
+    },
+    {
+      "arguments": 3,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/brotli/common/dictionary.c"
+    },
+    {
+      "arguments": 3,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/brotli/common/constants.c"
+    },
+    {
+      "arguments": 3,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/brotli/common/transform.c"
+    },
+    {
+      "arguments": 3,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/brotli/common/platform.c"
+    },
+    {
+      "arguments": 3,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/brotli/common/context.c"
+    },
+    {
+      "arguments": 3,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/brotli/dec/state.c"
+    },
+    {
+      "arguments": 3,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/brotli/dec/decode.c"
+    },
+    {
+      "arguments": 3,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/brotli/dec/huffman.c"
+    },
+    {
+      "arguments": 3,
+      "sdk": "Unity.app/Contents/il2cpp/libil2cpp/os/ClassLibraryPAL/brotli/dec/bit_reader.c"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__28.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__14.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__83.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__97.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__40.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__54.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Il2CppCCalculateFieldValues5.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__68.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__2.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__106.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.UnityAnalyticsModule.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__112.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System__4.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.UIElementsModule__1.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Rewired_Core__18.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Rewired_Core__19.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__1.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System__5.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__113.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__107.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__69.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__3.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Il2CppCCalculateFieldValues4.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__55.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__41.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Unity.ProBuilder.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__96.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__82.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Newtonsoft.Json__4.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__15.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__29.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__17.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__108.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Il2CppCCTypeValuesTable.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Unity.Collections.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__94.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "AK.Wwise.Unity.API.WwiseTypes.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__80.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__57.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Il2CppInteropDataTable.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__43.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__1.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Il2CppCCalculateFieldValues6.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__111.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__105.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__139.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Assembly-CSharp__9.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System__7.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__3.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Decalicious.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.UIElementsModule__2.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System.Core__4.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.UIElementsModule__3.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.TerrainPhysicsModule.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Assembly-CSharp__8.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__2.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System__6.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__138.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System.Xml.Linq.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__104.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__110.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__42.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__56.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__81.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__95.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__109.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__16.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__12.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System.Xml__9.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Newtonsoft.Json__3.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__91.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__85.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__4.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Il2CppCCalculateFieldValues3.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__52.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__46.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__128.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "KinematicCharacterController.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.TextCoreTextEngineModule__1.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__114.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__100.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System__2.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__6.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Unity.Timeline__1.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.UIElementsModule__11.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.UIElementsModule__7.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System.Core__1.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GenericIK.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.UIElementsModule__6.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.UIElementsModule__10.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__7.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System__3.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__101.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__115.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__129.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__47.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__53.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Il2CppCCalculateFieldValues2.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__5.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__84.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__90.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "EOS__1.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Assembly-CSharp.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Newtonsoft.Json__2.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Zio.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System.Xml__8.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__13.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__11.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "LegacyResourcesAPI__1.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__39.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "HGUnityUtils.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.SpriteShapeModule.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.TextRenderingModule.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "ModLoader.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__86.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__92.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__79.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__7.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__45.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System.Net.Http.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__51.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Rewired_Core__8.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__103.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.TextCoreTextEngineModule__2.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__117.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System__1.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__5.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.UIElementsModule__12.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.UIElementsModule__4.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Rewired_Core__21.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System.Configuration.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System.Core__2.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System.Core__3.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Rewired_Core__20.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Il2CppCodeRegistration.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.UIElementsModule__5.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__4.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Unity.ResourceManager.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__116.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.TextCoreTextEngineModule__3.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__102.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Rewired_Core__9.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__50.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__44.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__6.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Il2CppCCalculateFieldValues1.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__78.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__93.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "__Generated.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__87.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Newtonsoft.Json__1.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__38.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__10.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__63.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__77.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__88.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Facepunch.Steamworks.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "HGSignup.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__23.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__37.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "mscorlib__10.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GenericMethods__21.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Assembly-CSharp__13.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Facepunch.Steamworks__5.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Il2CppCCalculateTypeValues.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Il2CppCCalculateFieldValues.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.AudioModule.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.XRModule.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Unity.ZombieObjectDetector.Runtime.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "com.unity.multiplayer-hlapi.Runtime.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "mscorlib__1.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Facepunch.Steamworks__4.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Assembly-CSharp__12.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GenericMethods__34.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GenericMethods__20.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "mscorlib__11.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__36.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__22.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.AnimationModule.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System.Data__1.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__89.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__76.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__62.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__48.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "AK.Wwise.Unity.API.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__74.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__60.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System.Data__3.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System.Runtime.Serialization.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__34.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__20.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.UI__4.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "mscorlib__13.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GenericMethods__22.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Assembly-CSharp__10.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Unity.Burst.Unsafe.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Rewired_Windows__5.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "AsyncManagement.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "mscorlib__3.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Facepunch.Steamworks__6.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Facepunch.Steamworks__7.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.AssetBundleModule.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "mscorlib__2.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Rewired_Windows__4.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Assembly-CSharp__11.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GenericMethods__23.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "mscorlib__12.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__21.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__35.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Tayx.Graphy.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "OriginalOwnerProbeObserver.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System.Data__2.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__61.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__75.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__49.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__71.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__65.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__59.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System.Data__6.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.UI__1.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__19.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__31.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__25.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Assembly-CSharp__15.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GenericMethods__33.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "mscorlib__16.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GenericMethods__27.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "mscorlib__6.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Facepunch.Steamworks__3.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Rewired_Windows__1.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Facepunch.Steamworks__2.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "mscorlib__7.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "mscorlib.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GenericMethods__26.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "mscorlib__17.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GenericMethods__32.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Assembly-CSharp__14.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__24.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__30.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__18.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Unity.TextMeshPro.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System.Data__7.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__58.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__64.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.DirectorModule.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__70.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__66.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__72.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Unity.Postprocessing.Runtime.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__99.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System.Data__5.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.UI__2.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Rewired_Core.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GenericMethods__9.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__26.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__32.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GenericMethods__18.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Assembly-CSharp__16.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__148.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "mscorlib__15.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GenericMethods__24.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GenericMethods__30.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "mscorlib__5.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Rewired_Windows__3.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.InputModule.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Rewired_Windows__2.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Unity.Addressables.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "mscorlib__4.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.VFXModule.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Facepunch.Steamworks__1.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.InputLegacyModule.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GenericMethods__31.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GenericMethods__25.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "mscorlib__14.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Assembly-CSharp__17.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__149.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GenericMethods__19.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__33.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__27.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GenericMethods__8.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.UI__3.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System.Data__4.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__98.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.IMGUIModule__1.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__73.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__67.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__42.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__56.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__81.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__95.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GenericMethods__5.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__16.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__144.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__150.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GenericMethods__14.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Assembly-CSharp__26.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "mscorlib__19.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GenericMethods__28.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.UI.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Rewired_CSharp__2.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "mscorlib__9.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System.Xml__12.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.UIModule.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System.Xml__13.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "mscorlib__8.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Rewired_CSharp.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GameAudioOriginalBootstrap.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GenericMethods__29.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "mscorlib__18.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__151.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GenericMethods__15.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__145.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__17.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GenericMethods__4.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__94.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__80.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System.Data__8.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.UIElementsModule.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__57.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__43.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Unity.Mathematics.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__69.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__55.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__41.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__96.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__82.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.UnityWebRequestAssetBundleModule.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__15.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GenericMethods__6.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__29.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.TextCoreTextEngineModule.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GenericMethods__17.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__153.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__147.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Assembly-CSharp__19.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Assembly-CSharp__25.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Rewired_CSharp__1.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System.Xml__11.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.Physics2DModule.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System.Xml__10.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "EOS.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Assembly-CSharp__24.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__146.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Assembly-CSharp__18.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GenericMethods__16.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__152.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__28.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GenericMethods__7.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__14.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__83.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__97.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__40.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__54.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__68.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__50.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__44.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__78.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__93.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__87.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Grumpy.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.SharedInternalsModule.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__38.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__10.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GenericMethods__3.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Assembly-CSharp__20.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "mscorlib__23.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GenericMethods__12.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__142.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Unity.RenderPipelines.Core.Runtime.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System.Xml__14.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System.Data.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "HGCSharpUtils.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System.Xml__15.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__143.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Mono.Security.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GenericMethods__13.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "mscorlib__22.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Assembly-CSharp__21.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GenericMethods__2.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__11.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__39.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.JSONSerializeModule.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__86.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__92.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__79.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__45.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__51.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__47.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__53.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__84.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__90.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.VRModule.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "AK.Wwise.Unity.MonoBehaviour.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__13.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Assembly-CSharp__23.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__141.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "mscorlib__20.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GenericMethods__11.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.GridModule.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Rewired_Windows.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Facepunch.Steamworks__9.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.TerrainModule.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GameAudioOriginalBootstrap__1.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Facepunch.Steamworks__8.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System.Xml__16.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Il2CppReversePInvokeWrapperTable.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Newtonsoft.Json.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GenericMethods__10.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "mscorlib__21.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__140.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Assembly-CSharp__22.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Unity.Burst.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__12.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GenericMethods__1.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.UIElementsNativeModule.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__91.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__85.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__52.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__46.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Il2CppCCalculateTypeValues2.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__21.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System.Xml__6.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__35.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Il2CppInvokerTable.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__102.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.ScreenCaptureModule.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__61.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__75.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__49.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__127.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Rewired_Core__4.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__133.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Unity.TextMeshPro__3.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Assembly-CSharp__3.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__9.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Rewired_Core__11.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.UIElementsModule__8.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.SubsystemsModule.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.CoreModule.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.UIElementsModule__9.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Rewired_Core__10.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Assembly-CSharp__2.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System.Xml.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__8.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Unity.TextMeshPro__2.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__132.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__126.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System.Numerics.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Rewired_Core__5.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__48.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__74.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__60.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__103.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__34.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.PhysicsModule.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "SimpleJSON.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System.Xml__7.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__20.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Il2CppCCalculateTypeValues3.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Il2CppCCalculateTypeValues1.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System__10.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__36.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__22.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System.Xml__5.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.TextCoreFontEngineModule.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__101.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__89.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__76.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__8.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__62.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__130.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Rewired_Core__7.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Rewired_Windows_Functions.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__124.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__118.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Rewired_Core__12.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.VehiclesModule.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.TilemapModule.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.ParticleSystemModule.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "LegacyResourcesAPI.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Rewired_Core__13.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Il2CppCCFieldValuesTable.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Assembly-CSharp__1.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.ImageConversionModule.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Unity.TextMeshPro__1.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__119.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Rewired_Core__6.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__125.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__131.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__9.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__63.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__77.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__88.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__100.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System.Xml__4.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__23.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__37.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System__11.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Unity.Timeline.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GenericMethods.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__33.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__27.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Mono.Security__1.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__110.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__104.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "GameAudioOriginalCore.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__98.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__73.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__67.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnresolvedVirtualCallStubs.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__109.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.VideoModule.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__135.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__121.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Rewired_Core__2.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Assembly-CSharp__5.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Unity.TextMeshPro__5.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "com.unity.multiplayer-hlapi.Runtime__3.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Rewired_Core__17.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.CoreModule__3.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.CoreModule__2.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.IMGUIModule.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Rewired_Core__16.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "com.unity.multiplayer-hlapi.Runtime__2.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System.Core.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Unity.TextMeshPro__4.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Unity.Postprocessing.Runtime__1.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Assembly-CSharp__4.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__120.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Rewired_Core__3.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__134.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__108.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__66.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__72.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__99.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__105.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "AK.Wwise.Unity.API__1.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__111.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.AIModule.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System.Xml__1.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__26.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__32.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__24.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System.Xml__3.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__30.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__18.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__107.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.UNETModule.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__58.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.AndroidJNIModule.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__64.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__70.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Rewired_Core__1.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__122.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__136.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System__8.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Assembly-CSharp__6.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Unity.TextMeshPro__6.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System.Drawing.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Rewired_Core__14.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.CoreModule__1.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "com.unity.multiplayer-hlapi.Runtime__1.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Rewired_Core__15.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Unity.Postprocessing.Runtime__2.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System__9.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Assembly-CSharp__7.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__137.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__123.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__71.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "UnityEngine.UnityWebRequestModule.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__65.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__59.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "RoR2__106.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "AK.Wwise.Unity.API__2.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__19.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__31.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "System.Xml__2.cpp"
+    },
+    {
+      "arguments": 4,
+      "generated": "Generics__25.cpp"
+    },
+    {
+      "arguments": 5,
+      "generated": "Il2CppGenericAdjustorThunkTable.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "Il2CppGenericMethodTable.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.VRModule_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "Grumpy_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "LegacyResourcesAPI_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "System.Xml_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.Physics2DModule_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.JSONSerializeModule_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.VFXModule_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "EOS_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.UIElementsNativeModule_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "Unity.ResourceManager_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.TextCoreFontEngineModule_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.PhysicsModule_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.AndroidJNIModule_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.UI_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "__Generated_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "AK.Wwise.Unity.MonoBehaviour_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "System.Net.Http_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.TerrainPhysicsModule_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "com.unity.multiplayer-hlapi.Runtime_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "System.Drawing_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "GenericIK_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.UIElementsModule_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.DirectorModule_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "System.Data_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "Tayx.Graphy_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "Zio_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "Il2CppGenericMethodPointerTable.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.UnityWebRequestAssetBundleModule_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.CoreModule_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.AnimationModule_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.VideoModule_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.TextRenderingModule_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "AsyncManagement_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "Rewired_CSharp_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "Unity.Mathematics_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "Unity.Burst_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "Rewired_Core_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.XRModule_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.InputModule_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "HGUnityUtils_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "ModLoader_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.UnityWebRequestModule_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "Newtonsoft.Json_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "Unity.Addressables_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "GameAudioOriginalBootstrap_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "Il2CppRgctxTable.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "AK.Wwise.Unity.API.WwiseTypes_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "Unity.ProBuilder_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "GameAudioOriginalCore_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "OriginalOwnerProbeObserver_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "HGSignup_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.SpriteShapeModule_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "Unity.Burst.Unsafe_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.IMGUIModule_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.ImageConversionModule_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.VehiclesModule_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "Il2CppTypeDefinitions.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "System_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "Rewired_Windows_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "Rewired_Windows_Functions_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.SharedInternalsModule_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "mscorlib_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "Il2CppMetadataRegistration.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "Facepunch.Steamworks_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "Il2CppGenericMethodDefinitions.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "System.Runtime.Serialization_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.AIModule_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "Decalicious_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.UIModule_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "System.Configuration_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.TextCoreTextEngineModule_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.SubsystemsModule_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "Il2CppMetadataUsage.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "HGCSharpUtils_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "Unity.Postprocessing.Runtime_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "KinematicCharacterController_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "Mono.Security_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.TerrainModule_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.AssetBundleModule_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "Il2CppGenericClassTable.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.GridModule_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.UNETModule_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "Il2CppGenericInstDefinitions.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "SimpleJSON_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "Unity.RenderPipelines.Core.Runtime_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.UnityAnalyticsModule_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "Unity.Collections_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "AK.Wwise.Unity.API_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "System.Core_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.TilemapModule_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "RoR2_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.ScreenCaptureModule_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.InputLegacyModule_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "Unity.Timeline_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.ParticleSystemModule_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "Assembly-CSharp_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "System.Numerics_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "UnityEngine.AudioModule_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "Unity.ZombieObjectDetector.Runtime_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "System.Xml.Linq_CodeGen.c"
+    },
+    {
+      "arguments": 5,
+      "generated": "Unity.TextMeshPro_CodeGen.c"
+    },
+    {
+      "arguments": 4,
+      "generated": "Assembly-CSharp__27.cpp"
+    }
+  ],
+  "link": [
+    "-march=armv8-a",
+    "-D__ANDROID_API__=22",
+    "-DANDROID",
+    "-DHAVE_INTTYPES_H",
+    "-no-canonical-prefixes",
+    "-funwind-tables",
+    "-fstack-protector",
+    "-fdiagnostics-format=msvc",
+    "-fomit-frame-pointer",
+    "-std=c++11",
+    "-Wswitch",
+    "-Wno-trigraphs",
+    "-Wno-tautological-compare",
+    "-Wno-invalid-offsetof",
+    "-Wno-implicitly-unsigned-literal",
+    "-Wno-integer-overflow",
+    "-Wno-shift-negative-value",
+    "-Wno-unknown-attributes",
+    "-Wno-implicit-function-declaration",
+    "-Wno-null-conversion",
+    "-Wno-missing-declarations",
+    "-Wno-unused-value",
+    "-Wno-pragma-once-outside-header",
+    "-fvisibility=hidden",
+    "-fexceptions",
+    "-fno-rtti",
+    "-g",
+    "-Os",
+    "-fPIC",
+    "-fno-strict-overflow",
+    "-ffunction-sections",
+    "-fdata-sections",
+    "-fmessage-length=0",
+    "-pipe",
+    "-o",
+    "LIBRARY",
+    "-fcolor-diagnostics",
+    "-target",
+    "aarch64-linux-android22",
+    "-fstrict-aliasing",
+    "-fdiagnostics-format=msvc",
+    {
+      "object": 138
+    },
+    {
+      "object": 139
+    },
+    {
+      "object": 140
+    },
+    {
+      "object": 141
+    },
+    {
+      "object": 142
+    },
+    {
+      "object": 143
+    },
+    {
+      "object": 144
+    },
+    {
+      "object": 145
+    },
+    {
+      "object": 146
+    },
+    {
+      "object": 147
+    },
+    {
+      "object": 148
+    },
+    {
+      "object": 149
+    },
+    {
+      "object": 150
+    },
+    {
+      "object": 151
+    },
+    {
+      "object": 152
+    },
+    {
+      "object": 153
+    },
+    {
+      "object": 154
+    },
+    {
+      "object": 155
+    },
+    {
+      "object": 156
+    },
+    {
+      "object": 157
+    },
+    {
+      "object": 158
+    },
+    {
+      "object": 159
+    },
+    {
+      "object": 160
+    },
+    {
+      "object": 161
+    },
+    {
+      "object": 162
+    },
+    {
+      "object": 163
+    },
+    {
+      "object": 164
+    },
+    {
+      "object": 165
+    },
+    {
+      "object": 166
+    },
+    {
+      "object": 167
+    },
+    {
+      "object": 168
+    },
+    {
+      "object": 169
+    },
+    {
+      "object": 170
+    },
+    {
+      "object": 171
+    },
+    {
+      "object": 172
+    },
+    {
+      "object": 173
+    },
+    {
+      "object": 174
+    },
+    {
+      "object": 175
+    },
+    {
+      "object": 176
+    },
+    {
+      "object": 177
+    },
+    {
+      "object": 178
+    },
+    {
+      "object": 179
+    },
+    {
+      "object": 180
+    },
+    {
+      "object": 181
+    },
+    {
+      "object": 182
+    },
+    {
+      "object": 183
+    },
+    {
+      "object": 184
+    },
+    {
+      "object": 185
+    },
+    {
+      "object": 186
+    },
+    {
+      "object": 187
+    },
+    {
+      "object": 188
+    },
+    {
+      "object": 189
+    },
+    {
+      "object": 190
+    },
+    {
+      "object": 191
+    },
+    {
+      "object": 192
+    },
+    {
+      "object": 193
+    },
+    {
+      "object": 194
+    },
+    {
+      "object": 195
+    },
+    {
+      "object": 196
+    },
+    {
+      "object": 197
+    },
+    {
+      "object": 198
+    },
+    {
+      "object": 199
+    },
+    {
+      "object": 200
+    },
+    {
+      "object": 201
+    },
+    {
+      "object": 202
+    },
+    {
+      "object": 203
+    },
+    {
+      "object": 204
+    },
+    {
+      "object": 205
+    },
+    {
+      "object": 206
+    },
+    {
+      "object": 207
+    },
+    {
+      "object": 208
+    },
+    {
+      "object": 209
+    },
+    {
+      "object": 210
+    },
+    {
+      "object": 211
+    },
+    {
+      "object": 212
+    },
+    {
+      "object": 213
+    },
+    {
+      "object": 214
+    },
+    {
+      "object": 215
+    },
+    {
+      "object": 216
+    },
+    {
+      "object": 217
+    },
+    {
+      "object": 218
+    },
+    {
+      "object": 219
+    },
+    {
+      "object": 220
+    },
+    {
+      "object": 221
+    },
+    {
+      "object": 222
+    },
+    {
+      "object": 223
+    },
+    {
+      "object": 224
+    },
+    {
+      "object": 225
+    },
+    {
+      "object": 226
+    },
+    {
+      "object": 227
+    },
+    {
+      "object": 228
+    },
+    {
+      "object": 229
+    },
+    {
+      "object": 230
+    },
+    {
+      "object": 231
+    },
+    {
+      "object": 232
+    },
+    {
+      "object": 233
+    },
+    {
+      "object": 234
+    },
+    {
+      "object": 235
+    },
+    {
+      "object": 236
+    },
+    {
+      "object": 237
+    },
+    {
+      "object": 238
+    },
+    {
+      "object": 239
+    },
+    {
+      "object": 240
+    },
+    {
+      "object": 241
+    },
+    {
+      "object": 242
+    },
+    {
+      "object": 243
+    },
+    {
+      "object": 244
+    },
+    {
+      "object": 245
+    },
+    {
+      "object": 246
+    },
+    {
+      "object": 247
+    },
+    {
+      "object": 248
+    },
+    {
+      "object": 249
+    },
+    {
+      "object": 250
+    },
+    {
+      "object": 251
+    },
+    {
+      "object": 252
+    },
+    {
+      "object": 253
+    },
+    {
+      "object": 254
+    },
+    {
+      "object": 255
+    },
+    {
+      "object": 256
+    },
+    {
+      "object": 257
+    },
+    {
+      "object": 258
+    },
+    {
+      "object": 259
+    },
+    {
+      "object": 260
+    },
+    {
+      "object": 261
+    },
+    {
+      "object": 262
+    },
+    {
+      "object": 263
+    },
+    {
+      "object": 264
+    },
+    {
+      "object": 265
+    },
+    {
+      "object": 266
+    },
+    {
+      "object": 267
+    },
+    {
+      "object": 268
+    },
+    {
+      "object": 269
+    },
+    {
+      "object": 270
+    },
+    {
+      "object": 271
+    },
+    {
+      "object": 272
+    },
+    {
+      "object": 273
+    },
+    {
+      "object": 274
+    },
+    {
+      "object": 275
+    },
+    {
+      "object": 276
+    },
+    {
+      "object": 277
+    },
+    {
+      "object": 278
+    },
+    {
+      "object": 279
+    },
+    {
+      "object": 280
+    },
+    {
+      "object": 281
+    },
+    {
+      "object": 282
+    },
+    {
+      "object": 283
+    },
+    {
+      "object": 284
+    },
+    {
+      "object": 285
+    },
+    {
+      "object": 286
+    },
+    {
+      "object": 287
+    },
+    {
+      "object": 288
+    },
+    {
+      "object": 289
+    },
+    {
+      "object": 290
+    },
+    {
+      "object": 291
+    },
+    {
+      "object": 292
+    },
+    {
+      "object": 293
+    },
+    {
+      "object": 294
+    },
+    {
+      "object": 295
+    },
+    {
+      "object": 296
+    },
+    {
+      "object": 297
+    },
+    {
+      "object": 298
+    },
+    {
+      "object": 299
+    },
+    {
+      "object": 300
+    },
+    {
+      "object": 301
+    },
+    {
+      "object": 302
+    },
+    {
+      "object": 303
+    },
+    {
+      "object": 304
+    },
+    {
+      "object": 305
+    },
+    {
+      "object": 306
+    },
+    {
+      "object": 307
+    },
+    {
+      "object": 308
+    },
+    {
+      "object": 309
+    },
+    {
+      "object": 310
+    },
+    {
+      "object": 311
+    },
+    {
+      "object": 312
+    },
+    {
+      "object": 313
+    },
+    {
+      "object": 314
+    },
+    {
+      "object": 315
+    },
+    {
+      "object": 316
+    },
+    {
+      "object": 317
+    },
+    {
+      "object": 318
+    },
+    {
+      "object": 319
+    },
+    {
+      "object": 320
+    },
+    {
+      "object": 321
+    },
+    {
+      "object": 322
+    },
+    {
+      "object": 323
+    },
+    {
+      "object": 324
+    },
+    {
+      "object": 325
+    },
+    {
+      "object": 326
+    },
+    {
+      "object": 327
+    },
+    {
+      "object": 328
+    },
+    {
+      "object": 329
+    },
+    {
+      "object": 330
+    },
+    {
+      "object": 331
+    },
+    {
+      "object": 332
+    },
+    {
+      "object": 333
+    },
+    {
+      "object": 334
+    },
+    {
+      "object": 335
+    },
+    {
+      "object": 336
+    },
+    {
+      "object": 337
+    },
+    {
+      "object": 338
+    },
+    {
+      "object": 339
+    },
+    {
+      "object": 340
+    },
+    {
+      "object": 341
+    },
+    {
+      "object": 342
+    },
+    {
+      "object": 343
+    },
+    {
+      "object": 344
+    },
+    {
+      "object": 345
+    },
+    {
+      "object": 346
+    },
+    {
+      "object": 347
+    },
+    {
+      "object": 348
+    },
+    {
+      "object": 349
+    },
+    {
+      "object": 350
+    },
+    {
+      "object": 351
+    },
+    {
+      "object": 352
+    },
+    {
+      "object": 353
+    },
+    {
+      "object": 354
+    },
+    {
+      "object": 355
+    },
+    {
+      "object": 356
+    },
+    {
+      "object": 357
+    },
+    {
+      "object": 358
+    },
+    {
+      "object": 359
+    },
+    {
+      "object": 360
+    },
+    {
+      "object": 361
+    },
+    {
+      "object": 362
+    },
+    {
+      "object": 363
+    },
+    {
+      "object": 364
+    },
+    {
+      "object": 365
+    },
+    {
+      "object": 366
+    },
+    {
+      "object": 367
+    },
+    {
+      "object": 368
+    },
+    {
+      "object": 369
+    },
+    {
+      "object": 370
+    },
+    {
+      "object": 371
+    },
+    {
+      "object": 372
+    },
+    {
+      "object": 373
+    },
+    {
+      "object": 374
+    },
+    {
+      "object": 375
+    },
+    {
+      "object": 376
+    },
+    {
+      "object": 377
+    },
+    {
+      "object": 378
+    },
+    {
+      "object": 379
+    },
+    {
+      "object": 380
+    },
+    {
+      "object": 381
+    },
+    {
+      "object": 382
+    },
+    {
+      "object": 383
+    },
+    {
+      "object": 384
+    },
+    {
+      "object": 385
+    },
+    {
+      "object": 386
+    },
+    {
+      "object": 387
+    },
+    {
+      "object": 388
+    },
+    {
+      "object": 389
+    },
+    {
+      "object": 390
+    },
+    {
+      "object": 391
+    },
+    {
+      "object": 392
+    },
+    {
+      "object": 393
+    },
+    {
+      "object": 394
+    },
+    {
+      "object": 395
+    },
+    {
+      "object": 396
+    },
+    {
+      "object": 397
+    },
+    {
+      "object": 398
+    },
+    {
+      "object": 399
+    },
+    {
+      "object": 400
+    },
+    {
+      "object": 401
+    },
+    {
+      "object": 402
+    },
+    {
+      "object": 403
+    },
+    {
+      "object": 404
+    },
+    {
+      "object": 405
+    },
+    {
+      "object": 406
+    },
+    {
+      "object": 407
+    },
+    {
+      "object": 408
+    },
+    {
+      "object": 409
+    },
+    {
+      "object": 410
+    },
+    {
+      "object": 411
+    },
+    {
+      "object": 412
+    },
+    {
+      "object": 413
+    },
+    {
+      "object": 414
+    },
+    {
+      "object": 415
+    },
+    {
+      "object": 416
+    },
+    {
+      "object": 417
+    },
+    {
+      "object": 418
+    },
+    {
+      "object": 419
+    },
+    {
+      "object": 420
+    },
+    {
+      "object": 421
+    },
+    {
+      "object": 422
+    },
+    {
+      "object": 423
+    },
+    {
+      "object": 424
+    },
+    {
+      "object": 425
+    },
+    {
+      "object": 426
+    },
+    {
+      "object": 427
+    },
+    {
+      "object": 428
+    },
+    {
+      "object": 429
+    },
+    {
+      "object": 430
+    },
+    {
+      "object": 431
+    },
+    {
+      "object": 432
+    },
+    {
+      "object": 433
+    },
+    {
+      "object": 434
+    },
+    {
+      "object": 435
+    },
+    {
+      "object": 436
+    },
+    {
+      "object": 437
+    },
+    {
+      "object": 438
+    },
+    {
+      "object": 439
+    },
+    {
+      "object": 440
+    },
+    {
+      "object": 441
+    },
+    {
+      "object": 442
+    },
+    {
+      "object": 443
+    },
+    {
+      "object": 444
+    },
+    {
+      "object": 445
+    },
+    {
+      "object": 446
+    },
+    {
+      "object": 447
+    },
+    {
+      "object": 448
+    },
+    {
+      "object": 449
+    },
+    {
+      "object": 450
+    },
+    {
+      "object": 451
+    },
+    {
+      "object": 452
+    },
+    {
+      "object": 453
+    },
+    {
+      "object": 454
+    },
+    {
+      "object": 455
+    },
+    {
+      "object": 456
+    },
+    {
+      "object": 457
+    },
+    {
+      "object": 458
+    },
+    {
+      "object": 459
+    },
+    {
+      "object": 460
+    },
+    {
+      "object": 461
+    },
+    {
+      "object": 462
+    },
+    {
+      "object": 463
+    },
+    {
+      "object": 464
+    },
+    {
+      "object": 465
+    },
+    {
+      "object": 466
+    },
+    {
+      "object": 467
+    },
+    {
+      "object": 468
+    },
+    {
+      "object": 469
+    },
+    {
+      "object": 470
+    },
+    {
+      "object": 471
+    },
+    {
+      "object": 472
+    },
+    {
+      "object": 473
+    },
+    {
+      "object": 474
+    },
+    {
+      "object": 475
+    },
+    {
+      "object": 476
+    },
+    {
+      "object": 477
+    },
+    {
+      "object": 478
+    },
+    {
+      "object": 479
+    },
+    {
+      "object": 480
+    },
+    {
+      "object": 481
+    },
+    {
+      "object": 482
+    },
+    {
+      "object": 483
+    },
+    {
+      "object": 484
+    },
+    {
+      "object": 485
+    },
+    {
+      "object": 486
+    },
+    {
+      "object": 487
+    },
+    {
+      "object": 488
+    },
+    {
+      "object": 489
+    },
+    {
+      "object": 490
+    },
+    {
+      "object": 491
+    },
+    {
+      "object": 492
+    },
+    {
+      "object": 493
+    },
+    {
+      "object": 494
+    },
+    {
+      "object": 495
+    },
+    {
+      "object": 496
+    },
+    {
+      "object": 497
+    },
+    {
+      "object": 498
+    },
+    {
+      "object": 499
+    },
+    {
+      "object": 500
+    },
+    {
+      "object": 501
+    },
+    {
+      "object": 502
+    },
+    {
+      "object": 503
+    },
+    {
+      "object": 504
+    },
+    {
+      "object": 505
+    },
+    {
+      "object": 506
+    },
+    {
+      "object": 507
+    },
+    {
+      "object": 508
+    },
+    {
+      "object": 509
+    },
+    {
+      "object": 510
+    },
+    {
+      "object": 511
+    },
+    {
+      "object": 512
+    },
+    {
+      "object": 513
+    },
+    {
+      "object": 514
+    },
+    {
+      "object": 515
+    },
+    {
+      "object": 516
+    },
+    {
+      "object": 517
+    },
+    {
+      "object": 518
+    },
+    {
+      "object": 519
+    },
+    {
+      "object": 520
+    },
+    {
+      "object": 521
+    },
+    {
+      "object": 522
+    },
+    {
+      "object": 523
+    },
+    {
+      "object": 524
+    },
+    {
+      "object": 525
+    },
+    {
+      "object": 526
+    },
+    {
+      "object": 527
+    },
+    {
+      "object": 528
+    },
+    {
+      "object": 529
+    },
+    {
+      "object": 530
+    },
+    {
+      "object": 531
+    },
+    {
+      "object": 532
+    },
+    {
+      "object": 533
+    },
+    {
+      "object": 534
+    },
+    {
+      "object": 535
+    },
+    {
+      "object": 536
+    },
+    {
+      "object": 537
+    },
+    {
+      "object": 538
+    },
+    {
+      "object": 539
+    },
+    {
+      "object": 540
+    },
+    {
+      "object": 541
+    },
+    {
+      "object": 542
+    },
+    {
+      "object": 543
+    },
+    {
+      "object": 544
+    },
+    {
+      "object": 545
+    },
+    {
+      "object": 546
+    },
+    {
+      "object": 547
+    },
+    {
+      "object": 548
+    },
+    {
+      "object": 549
+    },
+    {
+      "object": 550
+    },
+    {
+      "object": 551
+    },
+    {
+      "object": 552
+    },
+    {
+      "object": 553
+    },
+    {
+      "object": 554
+    },
+    {
+      "object": 555
+    },
+    {
+      "object": 556
+    },
+    {
+      "object": 557
+    },
+    {
+      "object": 558
+    },
+    {
+      "object": 559
+    },
+    {
+      "object": 560
+    },
+    {
+      "object": 561
+    },
+    {
+      "object": 562
+    },
+    {
+      "object": 563
+    },
+    {
+      "object": 564
+    },
+    {
+      "object": 565
+    },
+    {
+      "object": 566
+    },
+    {
+      "object": 567
+    },
+    {
+      "object": 568
+    },
+    {
+      "object": 569
+    },
+    {
+      "object": 570
+    },
+    {
+      "object": 571
+    },
+    {
+      "object": 572
+    },
+    {
+      "object": 573
+    },
+    {
+      "object": 574
+    },
+    {
+      "object": 575
+    },
+    {
+      "object": 576
+    },
+    {
+      "object": 577
+    },
+    {
+      "object": 578
+    },
+    {
+      "object": 579
+    },
+    {
+      "object": 580
+    },
+    {
+      "object": 581
+    },
+    {
+      "object": 582
+    },
+    {
+      "object": 583
+    },
+    {
+      "object": 584
+    },
+    {
+      "object": 585
+    },
+    {
+      "object": 586
+    },
+    {
+      "object": 587
+    },
+    {
+      "object": 588
+    },
+    {
+      "object": 589
+    },
+    {
+      "object": 590
+    },
+    {
+      "object": 591
+    },
+    {
+      "object": 592
+    },
+    {
+      "object": 593
+    },
+    {
+      "object": 594
+    },
+    {
+      "object": 595
+    },
+    {
+      "object": 596
+    },
+    {
+      "object": 597
+    },
+    {
+      "object": 598
+    },
+    {
+      "object": 599
+    },
+    {
+      "object": 600
+    },
+    {
+      "object": 601
+    },
+    {
+      "object": 602
+    },
+    {
+      "object": 603
+    },
+    {
+      "object": 604
+    },
+    {
+      "object": 605
+    },
+    {
+      "object": 606
+    },
+    {
+      "object": 607
+    },
+    {
+      "object": 608
+    },
+    {
+      "object": 609
+    },
+    {
+      "object": 610
+    },
+    {
+      "object": 611
+    },
+    {
+      "object": 612
+    },
+    {
+      "object": 613
+    },
+    {
+      "object": 614
+    },
+    {
+      "object": 615
+    },
+    {
+      "object": 616
+    },
+    {
+      "object": 617
+    },
+    {
+      "object": 618
+    },
+    {
+      "object": 619
+    },
+    {
+      "object": 620
+    },
+    {
+      "object": 621
+    },
+    {
+      "object": 622
+    },
+    {
+      "object": 623
+    },
+    {
+      "object": 624
+    },
+    {
+      "object": 625
+    },
+    {
+      "object": 626
+    },
+    {
+      "object": 627
+    },
+    {
+      "object": 628
+    },
+    {
+      "object": 629
+    },
+    {
+      "object": 630
+    },
+    {
+      "object": 631
+    },
+    {
+      "object": 632
+    },
+    {
+      "object": 633
+    },
+    {
+      "object": 634
+    },
+    {
+      "object": 635
+    },
+    {
+      "object": 636
+    },
+    {
+      "object": 637
+    },
+    {
+      "object": 638
+    },
+    {
+      "object": 639
+    },
+    {
+      "object": 640
+    },
+    {
+      "object": 641
+    },
+    {
+      "object": 642
+    },
+    {
+      "object": 643
+    },
+    {
+      "object": 644
+    },
+    {
+      "object": 645
+    },
+    {
+      "object": 646
+    },
+    {
+      "object": 647
+    },
+    {
+      "object": 648
+    },
+    {
+      "object": 649
+    },
+    {
+      "object": 650
+    },
+    {
+      "object": 651
+    },
+    {
+      "object": 652
+    },
+    {
+      "object": 653
+    },
+    {
+      "object": 654
+    },
+    {
+      "object": 655
+    },
+    {
+      "object": 656
+    },
+    {
+      "object": 657
+    },
+    {
+      "object": 658
+    },
+    {
+      "object": 659
+    },
+    {
+      "object": 660
+    },
+    {
+      "object": 661
+    },
+    {
+      "object": 662
+    },
+    {
+      "object": 663
+    },
+    {
+      "object": 664
+    },
+    {
+      "object": 665
+    },
+    {
+      "object": 666
+    },
+    {
+      "object": 667
+    },
+    {
+      "object": 668
+    },
+    {
+      "object": 669
+    },
+    {
+      "object": 670
+    },
+    {
+      "object": 671
+    },
+    {
+      "object": 672
+    },
+    {
+      "object": 673
+    },
+    {
+      "object": 674
+    },
+    {
+      "object": 675
+    },
+    {
+      "object": 676
+    },
+    {
+      "object": 677
+    },
+    {
+      "object": 678
+    },
+    {
+      "object": 679
+    },
+    {
+      "object": 680
+    },
+    {
+      "object": 681
+    },
+    {
+      "object": 682
+    },
+    {
+      "object": 683
+    },
+    {
+      "object": 684
+    },
+    {
+      "object": 685
+    },
+    {
+      "object": 686
+    },
+    {
+      "object": 687
+    },
+    {
+      "object": 688
+    },
+    {
+      "object": 689
+    },
+    {
+      "object": 690
+    },
+    {
+      "object": 691
+    },
+    {
+      "object": 692
+    },
+    {
+      "object": 693
+    },
+    {
+      "object": 694
+    },
+    {
+      "object": 695
+    },
+    {
+      "object": 696
+    },
+    {
+      "object": 697
+    },
+    {
+      "object": 698
+    },
+    {
+      "object": 699
+    },
+    {
+      "object": 700
+    },
+    {
+      "object": 701
+    },
+    {
+      "object": 702
+    },
+    {
+      "object": 703
+    },
+    {
+      "object": 704
+    },
+    {
+      "object": 705
+    },
+    {
+      "object": 706
+    },
+    {
+      "object": 707
+    },
+    {
+      "object": 708
+    },
+    {
+      "object": 709
+    },
+    {
+      "object": 710
+    },
+    {
+      "object": 711
+    },
+    {
+      "object": 712
+    },
+    {
+      "object": 713
+    },
+    {
+      "object": 714
+    },
+    {
+      "object": 715
+    },
+    {
+      "object": 716
+    },
+    {
+      "object": 717
+    },
+    {
+      "object": 718
+    },
+    {
+      "object": 719
+    },
+    {
+      "object": 720
+    },
+    {
+      "object": 721
+    },
+    {
+      "object": 722
+    },
+    {
+      "object": 723
+    },
+    {
+      "object": 724
+    },
+    {
+      "object": 725
+    },
+    {
+      "object": 726
+    },
+    {
+      "object": 727
+    },
+    {
+      "object": 728
+    },
+    {
+      "object": 729
+    },
+    {
+      "object": 730
+    },
+    {
+      "object": 731
+    },
+    {
+      "object": 732
+    },
+    {
+      "object": 733
+    },
+    {
+      "object": 734
+    },
+    {
+      "object": 735
+    },
+    {
+      "object": 736
+    },
+    {
+      "object": 737
+    },
+    {
+      "object": 738
+    },
+    {
+      "object": 739
+    },
+    {
+      "object": 740
+    },
+    {
+      "object": 741
+    },
+    {
+      "object": 742
+    },
+    {
+      "object": 743
+    },
+    {
+      "object": 744
+    },
+    {
+      "object": 745
+    },
+    {
+      "object": 746
+    },
+    {
+      "object": 747
+    },
+    {
+      "object": 748
+    },
+    {
+      "object": 749
+    },
+    {
+      "object": 750
+    },
+    {
+      "object": 751
+    },
+    {
+      "object": 752
+    },
+    {
+      "object": 753
+    },
+    {
+      "object": 754
+    },
+    {
+      "object": 755
+    },
+    {
+      "object": 756
+    },
+    {
+      "object": 757
+    },
+    {
+      "object": 758
+    },
+    {
+      "object": 759
+    },
+    {
+      "object": 760
+    },
+    {
+      "object": 761
+    },
+    {
+      "object": 762
+    },
+    {
+      "object": 763
+    },
+    {
+      "object": 764
+    },
+    {
+      "object": 765
+    },
+    {
+      "object": 766
+    },
+    {
+      "object": 767
+    },
+    {
+      "object": 768
+    },
+    {
+      "object": 769
+    },
+    {
+      "object": 770
+    },
+    {
+      "object": 771
+    },
+    {
+      "object": 772
+    },
+    {
+      "object": 773
+    },
+    {
+      "object": 774
+    },
+    {
+      "object": 775
+    },
+    {
+      "object": 776
+    },
+    {
+      "object": 777
+    },
+    {
+      "object": 778
+    },
+    {
+      "object": 779
+    },
+    {
+      "object": 780
+    },
+    {
+      "object": 781
+    },
+    {
+      "object": 782
+    },
+    {
+      "object": 783
+    },
+    {
+      "object": 784
+    },
+    {
+      "object": 785
+    },
+    {
+      "object": 786
+    },
+    {
+      "object": 787
+    },
+    {
+      "object": 788
+    },
+    {
+      "object": 789
+    },
+    {
+      "object": 790
+    },
+    {
+      "object": 791
+    },
+    {
+      "object": 792
+    },
+    {
+      "object": 793
+    },
+    {
+      "object": 794
+    },
+    {
+      "object": 795
+    },
+    {
+      "object": 796
+    },
+    {
+      "object": 797
+    },
+    {
+      "object": 798
+    },
+    {
+      "object": 799
+    },
+    {
+      "object": 800
+    },
+    {
+      "object": 801
+    },
+    {
+      "object": 802
+    },
+    {
+      "object": 803
+    },
+    {
+      "object": 804
+    },
+    {
+      "object": 805
+    },
+    {
+      "object": 806
+    },
+    {
+      "object": 807
+    },
+    {
+      "object": 808
+    },
+    {
+      "object": 809
+    },
+    {
+      "object": 810
+    },
+    {
+      "object": 811
+    },
+    {
+      "object": 812
+    },
+    {
+      "object": 813
+    },
+    {
+      "object": 814
+    },
+    {
+      "object": 815
+    },
+    {
+      "object": 816
+    },
+    {
+      "object": 817
+    },
+    {
+      "object": 818
+    },
+    {
+      "object": 819
+    },
+    {
+      "object": 820
+    },
+    {
+      "object": 821
+    },
+    {
+      "object": 822
+    },
+    {
+      "object": 823
+    },
+    {
+      "object": 50
+    },
+    {
+      "object": 36
+    },
+    {
+      "object": 30
+    },
+    {
+      "object": 81
+    },
+    {
+      "object": 28
+    },
+    {
+      "object": 111
+    },
+    {
+      "object": 121
+    },
+    {
+      "object": 115
+    },
+    {
+      "object": 55
+    },
+    {
+      "object": 79
+    },
+    {
+      "object": 42
+    },
+    {
+      "object": 56
+    },
+    {
+      "object": 61
+    },
+    {
+      "object": 108
+    },
+    {
+      "object": 37
+    },
+    {
+      "object": 117
+    },
+    {
+      "object": 22
+    },
+    {
+      "object": 135
+    },
+    {
+      "object": 125
+    },
+    {
+      "object": 31
+    },
+    {
+      "object": 120
+    },
+    {
+      "object": 62
+    },
+    {
+      "object": 74
+    },
+    {
+      "object": 43
+    },
+    {
+      "object": 45
+    },
+    {
+      "object": 23
+    },
+    {
+      "object": 136
+    },
+    {
+      "object": 101
+    },
+    {
+      "object": 123
+    },
+    {
+      "object": 71
+    },
+    {
+      "object": 46
+    },
+    {
+      "object": 114
+    },
+    {
+      "object": 77
+    },
+    {
+      "object": 102
+    },
+    {
+      "object": 17
+    },
+    {
+      "object": 131
+    },
+    {
+      "object": 63
+    },
+    {
+      "object": 76
+    },
+    {
+      "object": 24
+    },
+    {
+      "object": 52
+    },
+    {
+      "object": 78
+    },
+    {
+      "object": 128
+    },
+    {
+      "object": 112
+    },
+    {
+      "object": 69
+    },
+    {
+      "object": 87
+    },
+    {
+      "object": 70
+    },
+    {
+      "object": 103
+    },
+    {
+      "object": 25
+    },
+    {
+      "object": 66
+    },
+    {
+      "object": 97
+    },
+    {
+      "object": 129
+    },
+    {
+      "object": 92
+    },
+    {
+      "object": 21
+    },
+    {
+      "object": 39
+    },
+    {
+      "object": 34
+    },
+    {
+      "object": 99
+    },
+    {
+      "object": 130
+    },
+    {
+      "object": 67
+    },
+    {
+      "object": 44
+    },
+    {
+      "object": 72
+    },
+    {
+      "object": 40
+    },
+    {
+      "object": 124
+    },
+    {
+      "object": 100
+    },
+    {
+      "object": 32
+    },
+    {
+      "object": 47
+    },
+    {
+      "object": 118
+    },
+    {
+      "object": 41
+    },
+    {
+      "object": 16
+    },
+    {
+      "object": 51
+    },
+    {
+      "object": 133
+    },
+    {
+      "object": 119
+    },
+    {
+      "object": 82
+    },
+    {
+      "object": 80
+    },
+    {
+      "object": 109
+    },
+    {
+      "object": 110
+    },
+    {
+      "object": 20
+    },
+    {
+      "object": 113
+    },
+    {
+      "object": 86
+    },
+    {
+      "object": 33
+    },
+    {
+      "object": 57
+    },
+    {
+      "object": 83
+    },
+    {
+      "object": 137
+    },
+    {
+      "object": 96
+    },
+    {
+      "object": 116
+    },
+    {
+      "object": 85
+    },
+    {
+      "object": 58
+    },
+    {
+      "object": 126
+    },
+    {
+      "object": 107
+    },
+    {
+      "object": 84
+    },
+    {
+      "object": 91
+    },
+    {
+      "object": 93
+    },
+    {
+      "object": 75
+    },
+    {
+      "object": 18
+    },
+    {
+      "object": 64
+    },
+    {
+      "object": 95
+    },
+    {
+      "object": 59
+    },
+    {
+      "object": 98
+    },
+    {
+      "object": 73
+    },
+    {
+      "object": 106
+    },
+    {
+      "object": 89
+    },
+    {
+      "object": 104
+    },
+    {
+      "object": 60
+    },
+    {
+      "object": 19
+    },
+    {
+      "object": 134
+    },
+    {
+      "object": 65
+    },
+    {
+      "object": 26
+    },
+    {
+      "object": 53
+    },
+    {
+      "object": 48
+    },
+    {
+      "object": 88
+    },
+    {
+      "object": 35
+    },
+    {
+      "object": 105
+    },
+    {
+      "object": 132
+    },
+    {
+      "object": 49
+    },
+    {
+      "object": 68
+    },
+    {
+      "object": 122
+    },
+    {
+      "object": 127
+    },
+    {
+      "object": 90
+    },
+    {
+      "object": 94
+    },
+    {
+      "object": 27
+    },
+    {
+      "object": 29
+    },
+    {
+      "object": 54
+    },
+    {
+      "object": 38
+    },
+    {
+      "object": 1
+    },
+    {
+      "object": 0
+    },
+    {
+      "object": 13
+    },
+    {
+      "object": 5
+    },
+    {
+      "object": 14
+    },
+    {
+      "object": 4
+    },
+    {
+      "object": 6
+    },
+    {
+      "object": 7
+    },
+    {
+      "object": 10
+    },
+    {
+      "object": 12
+    },
+    {
+      "object": 11
+    },
+    {
+      "object": 15
+    },
+    {
+      "object": 8
+    },
+    {
+      "object": 2
+    },
+    {
+      "object": 3
+    },
+    {
+      "object": 9
+    },
+    {
+      "object": 824
+    },
+    "-Wl,--wrap,sigaction",
+    "-Wl,--wrap,sigaction",
+    "-fuse-ld=bfd",
+    "-Wl,--gc-sections",
+    "-Wl,--fatal-warnings",
+    "-Wl,-soname=libil2cpp.so",
+    "-Wl,--no-undefined",
+    "-Wl,--build-id",
+    "-Wl,-z,noexecstack",
+    "-shared",
+    "-rdynamic",
+    "-static-libstdc++",
+    "-Wl,-z,relro",
+    {
+      "root": "sdk",
+      "path": "PlaybackEngines/AndroidPlayer/Variations/il2cpp/Development/StaticLibs/arm64-v8a/baselib.a"
+    },
+    "-llog"
+  ]
+}

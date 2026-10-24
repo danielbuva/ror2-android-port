@@ -102,6 +102,19 @@ then completes native construction using the original SDK compiler policy.
 These experiments have no current game-build consumer; public orchestration,
 content production and Android execution remain separate gates.
 
+`tools/phone-build/owner-code/native.py` owns the current experimental standalone
+native stage of that same Editor-free chain. Audited
+`recipe/owner-native-arm64.json` replaces the captured DAG with typed argument,
+SDK-source/lump, translation-unit and link configuration. Explicit accepted
+owner state, SDK, converter receipt, source providers and matching metadata
+are checked before new private output setup and again at termination. The
+owner keeps commands, tool logs, object receipts and terminal state; failures
+retain their output. [Setup and teardown](../tools/phone-build/owner-code/README.md)
+cover source-frame expansion, input immutability, child cleanup and capacity.
+There is no shared project, Editor, device or current game-build consumer.
+The public entry has complete plan equivalence evidence; its full execution
+and the remaining chain's single-command integration stay unqualified.
+
 `scripts/lab/owner_audio_prefab.py` owns current experimental bounded host
 reconstruction of one source audio prefab from the owner's original bundles.
 `recipe/owner-audio-prefab.json` holds audited minimum identities and one clearly

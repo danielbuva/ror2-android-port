@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1060](PORTING_JOURNAL.md#j1060--remove-the-captured-native-graph-from-the-public-owner-stage) | 2026-10-23 | Remove the captured native graph from the public owner stage | 2026-10-24. |
 | [J1059](PORTING_JOURNAL.md#j1059--build-the-complete-native-arm64-game-library-without-unity-editor) | 2026-10-23 | Build the complete native ARM64 game library without Unity Editor | 2026-10-24. |
 | [J1058](PORTING_JOURNAL.md#j1058--strip-and-convert-the-complete-player-with-fixed-target-root-configuration) | 2026-10-23 | Strip and convert the complete player with fixed target root configuration | 2026-10-24. |
 | [J1057](PORTING_JOURNAL.md#j1057--compile-the-complete-gameplay-source-cohort-directly-from-owner-inputs) | 2026-10-23 | Compile the complete gameplay source cohort directly from owner inputs | 2026-10-24. |

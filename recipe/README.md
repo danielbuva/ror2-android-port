@@ -123,6 +123,7 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 | `native-view-camera-transform.json` | Exact, default-off native view-camera transform producer | Four existing camera pairs plus two exact music-observer intermediate pairs, authored output/tool/source hashes, disabled-by-default request gate, and minimum base-prefab path/GUID. | Minimum identifiers only; no serialized content, IL, game implementation, protected assembly/prefab, private path, device/account data, or third-party code. The operator supplies legitimate local input. Audited 2026-10-21. | `native_view_camera_transform.py` and `native_view_camera_build_hook.py` validate source and profile hashes; generated assemblies/resolver files remain under ignored `work/`. Player closure, APK binding and runtime acceptance are separate gates. |
 | `music-reflection-preservation.json` | Original MusicController bootstrap reflection contract | Authored assembly/type/member names and narrow preservation requirements for the pinned editor. | No implementation, game data, SDK code, binary, private path or device/account identifier. Audited 2026-10-21. | Synthetic metadata fixtures verify the declaration; same-build post-strip inspection is required before runtime qualification. |
 | `original-audio-owner-sources.json` | Exact authored original-audio owner, bounded waveform and music-query cohort | Repository source hashes, source membership, authored script identities and historical ancestor hash. | Authored code identifiers and hashes only; no game implementation, content, SDK code, binary, private path or device/account data. Audited 2026-10-21. | Both producer modes validate the recipe and owner hashes; camera staging pins the same recipe, and actual owner bytes participate in generation cache identity. |
+| `owner-native-arm64.json` | J1059 native build configuration | SDK-relative selectors, six flag templates, translation-unit identities/link ordering and a portable SDK cohort hash. | No source bodies, game data, compiled bytes, captured graph, private paths or account/device data. Audited 2026-10-24. | Explicit accepted input, source/converter/metadata binding; no Editor/project or device consumer. |
 
 `runtime-sources.json` lists paths relative to `tools/unity`, staged at
 `Assets/LabLoadingScene` by basename. Basename collisions (including generated sources)
@@ -1980,3 +1981,23 @@ AssetRipper.Primitives 3.2.0 identity reference was inspected only for API
 knowledge; no third-party implementation is vendored. The private complete
 9,560-byte comparison and initial quoting/signed-zero mismatch remain ignored.
 The generic authored fixtures contain no original bank selections or asset data.
+
+## Editor-free native owner configuration
+
+`owner-native-arm64.json` extracts configuration from the qualified J1059 native
+build: six argument templates, the original SDK-relative source/include-lump
+relationships, fixed generated translation-unit filename membership and exact
+compile/link ordering. The SDK/tool cohort is pinned by one portable aggregate
+of relative paths and SHA-256 hashes, including the original objcopy tool and the complete NDK tree (linker, implicit
+headers, CRT objects, system libraries and compiler runtime).
+There are no source bodies, implementation snippets, serialized game values,
+SDK registration tables, compiled game or SDK bytes, captured DAG nodes,
+private absolute paths, device/account identifiers, credentials or keys.
+The generated filenames identify the minimum translation-unit/link membership;
+they cannot supply game code or replace ownership. The consuming native owner
+requires the reviewed legitimate input and an explicit successful converter
+receipt with all source hashes and matching metadata. Source is read only from
+owner-supplied SDK and converter providers. No SDK grant or runtime equivalence
+is inferred from this configuration. Manual provenance, privacy, licensing and
+sensitive-content audit: 2026-10-24. Host compiler policy is preserved; Android
+hosting and game acceptance remain open.

@@ -1409,3 +1409,27 @@ local source state until the candidate is promoted or specifically retired;
 never treat them as disposable cache. SDK/runtime source is read from the
 explicit owner install and remains unmodified. Failed compilation keeps its
 source and logs; successful source expansion can be restored from the frames.
+
+
+## Public native owner inputs
+
+The current experimental `tools/phone-build/owner-code/native.py` reads only
+explicit absolute paths from a private owner request; it does not discover an
+experiment or timestamped build. Required local state is the reviewed owner
+inventory/configuration, the exact owner-supplied SDK (including its full NDK),
+a successful converter result and its hash, all matching source files or gzip
+frames, and that same converter's metadata. These protected/generated inputs
+remain private because they cannot be supplied by the public repository.
+The upstream converter generates source and metadata; `native.py` generates
+all wrappers, commands, expansions, logs, object receipts, libraries and
+terminal results in a new owner-work output. [Setup and lifecycle](../tools/phone-build/owner-code/README.md)
+name each request field and explicit teardown. The current game build consumes
+none of this state.
+
+`work/coordination/owner-code-producer-v1/` retains the private configuration
+normalization audit and complete public-source native planning comparison.
+Its requests explicitly select the J1058 converter and J1059 source frames as
+qualification providers; no tracked tool names those research paths. The
+initial plan and later complete-NDK/provider-drift revision remain separate.
+This is planning/migration evidence, not another native compilation or a
+public-input bootstrap claim.
