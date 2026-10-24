@@ -38,7 +38,7 @@ from session_cleanup_check import (
 
 DEFAULT_SESSIONS = 5
 MIN_SESSIONS = 3
-MAX_SESSIONS = 8
+MAX_SESSIONS = 32
 SESSION_BUDGET_SECONDS = 300
 SAMPLE_FIELDS = (
     "phase",

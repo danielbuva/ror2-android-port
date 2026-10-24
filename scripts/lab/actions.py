@@ -120,6 +120,8 @@ def _session_memory(function, kwargs, args):
         raise SystemExit("session-memory-check uses the ordinary Commando menu start; omit --target")
     expected_apk_sha256 = getattr(args, "expected_apk_sha256", None)
     selected = kwargs if expected_apk_sha256 is None else dict(kwargs, expected_apk_sha256=expected_apk_sha256)
+    if getattr(args, "sessions", None) is not None:
+        selected = dict(selected, sessions=args.sessions)
     return _json_result(function, selected, args, indent=2)
 
 
@@ -405,7 +407,7 @@ _ENTRIES = (
         "check_session_memory",
         {},
         "current",
-        "Repeat five ordinary Commando menu-start, 60 s ready Lakes play and UI-abandon sessions in one process; each completed session must pass the session-abandon contract. Reports existing runtime resource samples and per-menu PSS as observations, not a leak fix or normal-game acceptance. Requires --expected-apk-sha256 bound to the selected device's ownership receipt.",
+        "Repeat ordinary Commando menu-start, 60 s ready Lakes play and UI-abandon sessions in one process (five by default, --sessions 3 to 32); each completed session must pass the session-abandon contract. Reports existing runtime resource samples and per-menu PSS as observations, not a leak fix or normal-game acceptance. Requires --expected-apk-sha256 bound to the selected device's ownership receipt.",
         handler=_session_memory,
     ),
     Action(
