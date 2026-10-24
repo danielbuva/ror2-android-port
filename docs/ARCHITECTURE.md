@@ -3719,7 +3719,7 @@ additional programs use deterministic lab GUIDs in the existing loading scene's
 Resources directory; original resource, compute assets and camera bytes stay
 unchanged. Their original resource slots, kernel names and thread groups are
 pinned in the recipe. `WholeCatalogBuild.ValidateSourceCameraPrograms` exercises
-the actual imports and all 22 kernels in host initialization and full builds. That
+the actual imports and all 22 kernels before full content builds. That
 archive is a compatible source reference, not proof of the game's shipped
 package version. `PostProcessLayer.RenderBuiltins` selects pass 0 of the
 three-pass source shader. The ignored
