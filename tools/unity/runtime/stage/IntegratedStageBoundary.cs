@@ -81,7 +81,7 @@ public sealed partial class PortSession
             nativeToggleTargetsRestored;
         public uint controllerSceneId, controllerNetworkId;
         public int sourceEggSpawnerCount, nativeActivationChoiceCount, selectedNestCount, observedSpawnerDisableCount,
-            mappedEggCount, retiredEggCount, multicastSubscriberCount, nativeToggleTargetCount;
+            mappedEggCount, retiredEggCount, naturallyRetiredEggCount, multicastSubscriberCount, nativeToggleTargetCount;
         public uint[] mappedEggNetworkIds;
         public int[] mappedSpawnerInstanceIds;
     }
@@ -468,7 +468,7 @@ public sealed partial class PortSession
             coordinator.Check(source.name == "Stage" && sourceIdentity && source.GetComponent<Stage>() &&
                                   source.GetComponents<Component>().Length == 3,
                               "Original Stage prefab contract changed");
-            if (coordinator.r.sirenSourceEntryDiagnosticAttempt && coordinator.stageGeometryScene.name == SirenEncounterContract.SceneName)
+            if (coordinator.stageGeometryScene.name == SirenEncounterContract.SceneName)
             {
                 coordinator.Check(sirenSourceEntry != null && coordinator.stageSourceObjects &&
                                       ReferenceEquals(Stage.instance, coordinator.objectiveStage) && coordinator.automaticDirectorHost &&
@@ -776,7 +776,7 @@ public sealed partial class PortSession
                               "Configured manual Moon boundary refused further original stage transport");
             var next = integratedStageConfig.integratedStages.SingleOrDefault(x => x.name == coordinator.pendingStage);
             coordinator.Check(next != null, "Original next destination has no accepted converted content: " + coordinator.pendingStage);
-            bool sirenSourceEntryAttempt = coordinator.r.sirenSourceEntryDiagnosticAttempt && next.name == SirenEncounterContract.SceneName;
+            bool sirenSourceEntryRequired = next.name == SirenEncounterContract.SceneName;
             var report = coordinator.r.stageProgress;
             var run = Run.instance;
             var body = coordinator.worldPlayer;
@@ -1033,7 +1033,7 @@ public sealed partial class PortSession
                                                              else
                                                                  coordinator.RecordDirectorActor(obj, coordinator.worldPlayer);
                                                          });
-            if (!sirenSourceEntryAttempt)
+            if (!sirenSourceEntryRequired)
             {
                 coordinator.automaticDirectorHost.SetActive(true);
                 coordinator.Check(
@@ -1096,8 +1096,8 @@ public sealed partial class PortSession
                         yield return objective.Current;
                     coordinator.PrepareWorldCommerce(integratedStageConfig, origin);
                 }
-                bool observeSirenTransport = sirenSourceEntryAttempt;
-                if (observeSirenTransport)
+                bool observeSirenTransport = sirenSourceEntryRequired && coordinator.r.sirenSourceEntryDiagnosticAttempt;
+                if (sirenSourceEntryRequired)
                 {
                     coordinator.Check(coordinator.stageSourceObjects && ReferenceEquals(Stage.instance, coordinator.objectiveStage) &&
                                           coordinator.automaticDirectorHost && !coordinator.automaticDirectorHost.activeSelf &&
@@ -1288,10 +1288,9 @@ public sealed partial class PortSession
                 return;
             coordinator.Check(sirenEncounter == null && coordinator.stageSourceObjects,
                               "Siren encounter needs its original source scene and a fresh owner");
-            if (coordinator.r.sirenSourceEntryDiagnosticAttempt)
-                coordinator.Check(sirenSourceEntry != null &&
-                                      sirenSourceEntry.CanAdmitOriginalEncounter(coordinator.r.diagnosticSirenEggInput),
-                                  "Siren source-entry diagnostic refuses ID-10 admission until exact eggs map, queues drain, and egg input is off");
+            coordinator.Check(sirenSourceEntry != null &&
+                                  sirenSourceEntry.CanAdmitOriginalEncounter(coordinator.r.diagnosticSirenEggInput),
+                              "Siren source entry refuses ID-10 admission until exact eggs map, queues drain, and egg input is off");
             sirenEncounter = SirenEncounterSession.Attach(coordinator.stageGeometryScene,
                                                           selected => coordinator.r.stageProgress.sirenEncounters.Add(selected),
                                                           retained => sirenEncounter = retained,
@@ -1299,7 +1298,7 @@ public sealed partial class PortSession
                                                           {
                                                               MarkSirenCleanupRecoveryRequired();
                                                           },
-                                                          sirenSourceEntry != null ? sirenSourceEntry.CapturedEggIdentities.ToArray() : null);
+                                                          sirenSourceEntry.CapturedEggIdentities.ToArray());
         }
         void CleanupSirenEncounter()
         {
