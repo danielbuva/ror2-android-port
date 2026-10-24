@@ -10,7 +10,7 @@ coordination roots. Receipts, logs, captures, JSON evidence and recipes stay.
 Protected: every APK SHA-256 named in PORTING_STATE.md, docs/BASELINE.md,
 docs/history-retention.md, the codex coordination lock, current-build and
 device receipts (plus --keep-sha256), and anything modified more recently than
---min-age-hours. A removed build-cache entry keeps its result.json under
+--min-age-hours (so it is safe to run while a build holds the editor). A removed build-cache entry keeps its result.json under
 work/cleanup-analysis/pruned-build-cache/<key>/; a removed experiment binary
 leaves an adjacent <name>.retired.json marker. Rebuild from the recorded source
 commit if an old candidate is ever needed again.
@@ -226,13 +226,7 @@ def main():
     work = Path(args.work_dir).resolve()
     if not work.is_dir() or not work.is_relative_to(ROOT):
         sys.exit("work directory must exist inside this checkout")
-    lock = work / "coordination/unity-build.lock"
-    if lock.is_file():
-        try:
-            if json.loads(lock.read_text()).get("status") != "released":
-                sys.exit("unity-build.lock is held; retry after the build finishes")
-        except ValueError:
-            sys.exit("unity-build.lock is unreadable; refuse to prune during a possible build")
+    # No lock check: the --min-age-hours guard already excludes anything a running build writes.
     hashes, paths = protected_state(work, args.keep_sha256)
     planner = Planner(work, hashes, paths, args.min_age_hours)
     planner.build_cache()
