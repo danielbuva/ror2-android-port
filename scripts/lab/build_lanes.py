@@ -17,7 +17,7 @@ import sys
 import time
 import urllib.request
 
-from common import ROOT, read, write, copy_file_clone, sha, now
+from common import ROOT, read, write, copy_file_clone, sha, now, toolchain
 from build_lock import host_build_lock, active_lock_handoff
 from shared_checkout_build import clean, git
 
@@ -274,17 +274,47 @@ def remove(name, root=ROOT):
                     if time.monotonic() > deadline:
                         raise RuntimeError("Lane process did not stop; lane retained")
                     time.sleep(0.2)
+        gradle_home = checkout / ".local/gradle"
+        if gradle_home.is_dir():
+            android = Path(
+                os.environ.get("UNITY_ANDROID_ROOT", "/Applications/Unity/Hub/Editor/" + toolchain()["unity_version"] + "/PlaybackEngines/AndroidPlayer")
+            )
+            (launcher,) = (android / "Tools/gradle/lib").glob("gradle-launcher-*.jar")
+            # Gradle's registry and stop RPC are scoped to this private home.
+            stopped = subprocess.run(
+                [
+                    str(android / "OpenJDK/bin/java"),
+                    "-classpath",
+                    str(launcher),
+                    "org.gradle.launcher.GradleMain",
+                    "--gradle-user-home",
+                    str(gradle_home),
+                    "--stop",
+                ],
+                cwd=root,
+                env=dict(os.environ, GRADLE_USER_HOME=str(gradle_home)),
+                capture_output=True,
+                text=True,
+                timeout=60,
+                check=True,
+            )
+            write(lane / "gradle-stop.json", dict(output=stopped.stdout))
         evidence = canonical / "coordination/build-lanes" / (name + "-" + now())
         work = checkout / "work"
         for folder in ("config", "editor", "logs", "lab-build"):
             for source in (work / folder).rglob("*"):
                 if source.is_file() and not source.is_symlink() and source.suffix in {".json", ".log", ".txt"}:
                     copy_file_clone(source, evidence / source.relative_to(work))
-        if (lane / "latest-build.json").is_file():
-            copy_file_clone(lane / "latest-build.json", evidence / "latest-build.json")
-        if checkout.exists():
+        for source in lane.iterdir():
+            if source.is_file() and not source.is_symlink() and source.suffix in {".json", ".log", ".txt"}:
+                copy_file_clone(source, evidence / source.name)
+        if (checkout / ".git").is_file():
             clean(checkout)
-            subprocess.run(["git", "worktree", "remove", "--force", str(checkout)], cwd=root, check=True)
+            removed = subprocess.run(["git", "worktree", "remove", "--force", str(checkout)], cwd=root, capture_output=True, text=True)
+            if removed.returncode and (checkout / ".git").exists():
+                raise RuntimeError("Git worktree removal failed; preserve the lane: " + removed.stderr)
+        # Git may remove its registration before reporting residual registry
+        # files. Recovery must not run Git in the primary ancestor checkout.
         shutil.rmtree(lane)
         write(evidence / "removed.json", dict(facts, removed=True, free_after_remove=shutil.disk_usage(primary(root)).free))
     return dict(removed=True, evidence=str(evidence / "removed.json"))

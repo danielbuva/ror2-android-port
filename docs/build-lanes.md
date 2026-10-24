@@ -44,8 +44,9 @@ canonical install/sync commands. OLED and storage rules remain unchanged.
 ```
 
 Removal refuses a busy lane or a device receipt still referencing its checkout.
-It stops only receipt-matched editor/server processes, retains configuration,
-logs and receipts under canonical `work/coordination/build-lanes/`, then deletes
+It stops receipt-matched editor/server processes and Gradle daemons through
+the lane's private Gradle home. It retains configuration, MCP/editor logs and
+receipts under canonical `work/coordination/build-lanes/`, then deletes
 the checkout/work clone. Published artifacts remain. Persistent locks live
 outside deleted lanes so removal/recreation cannot split contenders. The pruner
 uses this same teardown for old stopped lanes; active/recent lanes are retained.
@@ -76,3 +77,6 @@ their existing frozen-payload checks and refuse an uncompressed payload. No
 compression option is accepted in the canonical context or destination rebuild.
 Bundle timing and bounded start/end log markers identify the measured phase;
 they do not claim that all bundle serialization time is compression.
+Repeated normal builds can also vary serialized records; the journal records
+the measured comparison limits. The uncompressed option adds no device or
+byte-equivalence acceptance claim.

@@ -169,7 +169,7 @@
     "recipe/assembly-transforms.json": "f6ed66e4cc324f7888a270b601882710d5f9f7d60da38068540d6121d031265b",
     "recipe/owner-public-tools.json": "1f4b333652fbb38174f8e2f7c54366369171b543789a4fbfe54fd8db4cc2fec1",
     "scripts/lab/assembly_transforms.py": "9e30fa8771789a6b5a47cb81231aba38219cb13ce1ed74d7a8c88700f3843ec4",
-    "scripts/lab/common.py": "6fbc71e09717a471040766f94b66cf6c62aaafb76a6da61db3afd68c3fcf4b76",
+    "scripts/lab/common.py": "b4fff18bbb88573494e9189f7349a9f0f204dcd9bbe221d3b86891c89d156d55",
     "scripts/lab/public_transform_tools.py": "f79c9cb79a56f6bd8d41b3fcaf4d47d456a3b052db0f3d47340d47bb607394d9",
     "tools/assembly-transforms/AssemblyProbe.csproj": "72af7a71d7476ab4633780e2f76b54de5aaacbc202e5b26dd0780633986f330e",
     "tools/assembly-transforms/AudioGuard.cs": "ac5d6dd4e08786d54346bc14c69f640785e04f98d8a104da9c39c86c6a00ffd6",

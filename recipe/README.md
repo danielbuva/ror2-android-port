@@ -2227,3 +2227,9 @@ source digest. It adds only a private-lane uncompressed output choice and a
 separate exact-input/payload reuse receipt. Acceptance compression and all
 camera transformations remain unchanged. Provenance/privacy audit: 2026-10-24;
 authored tooling only, no generated game content or private identifiers.
+
+Build lanes also refresh the app-host profile's authored `common.py` digest.
+The addition is a host workspace configuration lookup; it adds no import,
+changes no shared transformation/copy function, and is unused by the phone
+producer. This is a transitive source-pin audit, not a new Android qualification.
+No native/package selection or redistribution approval changes. Audit: 2026-10-24.

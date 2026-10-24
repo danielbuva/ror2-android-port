@@ -3260,7 +3260,8 @@ prepared inputs, private writable editor/Gradle state, its own MCP port and a
 persistent lock outside the removable tree. Creation snapshots under the
 canonical mutex; later source selection/builds use only the lane lock. Completed
 artifacts are cloned/verified into canonical cache without changing current-build
-pointers. Teardown verifies process identities, retains logs/receipts, removes
+pointers. Teardown verifies process identities, stops private Gradle daemons
+through their own registry, retains logs/receipts, removes
 the checkout/work clone and preserves published artifacts. The pruner delegates
 old stopped lane removal to this owner. Lane device access refuses before ADB;
 device operations remain canonical. `BootstrapMcp` owns per-editor connection

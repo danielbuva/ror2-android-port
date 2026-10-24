@@ -7,6 +7,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from contextlib import nullcontext
 from unittest.mock import patch
@@ -116,6 +117,8 @@ class BuildLaneTests(unittest.TestCase):
 
     def test_device_dispatch_refuses_and_teardown_preserves_canonical_and_lock(self):
         facts = self.create()
+        server_log = lanes.location("second", self.root) / "mcp-server.log"
+        server_log.write_text("authored server evidence")
         for arguments in (["install"], ["preflight"], ["prototype", "--action", "whole-catalog-run"], ["prototype", "--action"]):
             with self.subTest(arguments=arguments), self.assertRaises(RuntimeError):
                 lanes.dispatch("second", arguments, root=self.root)
@@ -125,6 +128,7 @@ class BuildLaneTests(unittest.TestCase):
         self.assertTrue(Path(facts["lock"]).exists())
         self.assertEqual((self.work / "lab-project/Temp/UnityLockfile").read_text(), "live canonical editor")
         self.assertEqual(json.loads(Path(result["evidence"]).read_text())["seed_commit"], facts["seed_commit"])
+        self.assertEqual((Path(result["evidence"]).parent / "mcp-server.log").read_text(), "authored server evidence")
         self.assertNotIn(facts["checkout"], self.git("worktree", "list"))
 
     def test_names_ports_and_existing_lane_refuse_without_overwriting(self):
@@ -140,6 +144,51 @@ class BuildLaneTests(unittest.TestCase):
             self.create("duplicate-port")
         self.assertFalse(lanes.read_lane("duplicate-port", self.root)["complete"])
         lanes.remove("duplicate-port", self.root)
+
+    def test_teardown_recovers_an_unregistered_partial_tree_without_primary_git_operations(self):
+        facts = self.create()
+        checkout = Path(facts["checkout"])
+        original = self.git("rev-parse", "HEAD")
+        self.git("worktree", "remove", "--force", str(checkout))
+        checkout.mkdir()
+        (checkout / "residual-registry").write_text("authored daemon residue")
+        lanes.remove("second", self.root)
+        self.assertFalse(checkout.exists())
+        self.assertEqual(self.git("rev-parse", "HEAD"), original)
+        self.assertTrue((self.work / "lab-project/Temp/UnityLockfile").is_file())
+
+    def test_optional_pinned_gradle_daemon_stops_before_lane_deletion(self):
+        android = Path("/Applications/Unity/Hub/Editor") / lanes.toolchain()["unity_version"] / "PlaybackEngines/AndroidPlayer"
+        launchers = list((android / "Tools/gradle/lib").glob("gradle-launcher-*.jar"))
+        java = android / "OpenJDK/bin/java"
+        if not java.is_file() or len(launchers) != 1:
+            self.skipTest("optional pinned Gradle/OpenJDK is unavailable")
+        facts = self.create()
+        checkout = Path(facts["checkout"])
+        home = checkout / ".local/gradle"
+        project = checkout / "work/gradle-fixture"
+        project.mkdir()
+        (project / "build.gradle").write_text("// authored empty Gradle lifecycle fixture\n")
+        command = [str(java), "-classpath", str(launchers[0]), "org.gradle.launcher.GradleMain", "--gradle-user-home", str(home)]
+        try:
+            subprocess.run(command + ["-p", str(project), "help", "--daemon"], check=True, capture_output=True, timeout=60)
+            (log,) = home.glob("daemon/*/daemon-*.out.log")
+            pid = int(log.name.split("-")[1].split(".")[0])
+            os.kill(pid, 0)
+            lanes.remove("second", self.root)
+            self.assertFalse(checkout.exists())
+            deadline = time.monotonic() + 5
+            while time.monotonic() < deadline:
+                try:
+                    os.kill(pid, 0)
+                except ProcessLookupError:
+                    break
+                time.sleep(0.1)
+            else:
+                self.fail("private Gradle daemon survived owned teardown")
+        finally:
+            if home.exists():
+                subprocess.run(command + ["--stop"], capture_output=True, timeout=60)
 
     def test_published_artifact_survives_lane_teardown_without_changing_current_pointer(self):
         facts = self.create()
