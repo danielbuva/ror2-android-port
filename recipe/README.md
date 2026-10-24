@@ -2416,3 +2416,11 @@ existing audited link sequence; it changes no recipe/source/tool bytes or compil
 options. Its synthetic regression contains authored path/argument witnesses only.
 Accepted ELF/symbol bytes are private comparison evidence, never build inputs.
 Provenance/privacy/licensing and sensitive-content audit: 2026-10-24.
+The J1091 diagnostic-retention correction changes authored `LabDiagnostics`
+publication and the existing completed-session resource owner only. Fresh file
+snapshots and startup discovery remain; periodic JSON is not sent to the original
+console. Accepted-input field knowledge identifies the returned bullet-hit pool's
+stale destroyed target. The bounded cleanup contains no copied original method
+body and changes no hit result, live actor or pool storage. Host peers are authored
+synthetic fixtures. Provenance/privacy audit: 2026-10-24; no game or snapshot bytes
+are included and ownership/distribution boundaries remain unchanged.
