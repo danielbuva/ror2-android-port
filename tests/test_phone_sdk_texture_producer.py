@@ -67,6 +67,22 @@ class SdkTextureTests(unittest.TestCase):
             result = subprocess.run([str(self.decoder), "4", "4"], input=data, capture_output=True, timeout=10)
             self.assertNotEqual(result.returncode, 0)
 
+    def test_native_bc3_matches_byte_palette_alpha_and_cropping(self):
+        import struct
+
+        for first, second in ((231, 17), (17, 231), (73, 73)):
+            selectors = sum((i % 8) << (3 * i) for i in range(16))
+            colours = sum((i % 4) << (2 * i) for i in range(16))
+            block = bytes((first, second)) + selectors.to_bytes(6, "little") + struct.pack("<HHI", 0x1083, 0xE7DA, colours)
+            for width, height in ((4, 4), (1, 3), (7, 5)):
+                data = block * (((width + 3) // 4) * ((height + 3) // 4))
+                result = subprocess.run([str(self.decoder), str(width), str(height), "bc3"], input=data, capture_output=True, timeout=10)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(result.stdout, T.rgba_source(data, width, height, 12))
+        for data in (block[:-1], block + b"x"):
+            result = subprocess.run([str(self.decoder), "4", "4", "bc3"], input=data, capture_output=True, timeout=10)
+            self.assertNotEqual(result.returncode, 0)
+
     def test_native_dilation_matches_seed_coordinates_and_ties(self):
         for width, height in ((1, 1), (7, 5), (37, 19)):
             for empty in (False, True):
