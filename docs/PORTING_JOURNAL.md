@@ -34836,3 +34836,143 @@ are under `work/experiments/original-game-audio/`, prefixed
 current-process ANR/timeout, original Term/disarm failure or fresh-start audio
 regression occurs. Broader audio and rendered appearance require their own
 remaining gates; no raw audio, game output or device identifiers are published.
+
+## J1072 — Qualify timed pre-Gradle APK iteration and install transports
+
+2026-10-24 UTC. **Hypothesis.** Authored C# iteration can retain the accepted
+Development IL2CPP ARM64 pipeline and frozen external content while avoiding
+bundle regeneration, Gradle packaging, debug ZIPs and duplicate artifact copies.
+A fresh normal build remains the acceptance gate. This is host developer tooling;
+it does not implement the phone-only owner converter or change Architecture C.
+
+**Prior art and ownership.** J506/J584 supply the content/stripping and code-only
+contracts; J763 supplies opt-in symbol packaging. The existing shared-checkout
+owner from J1066/PR #54 is extended, rather than cloning a Unity project. This
+is generic Unity/ADB packaging, with no new RoR2 reconstruction, loader or
+middleware mechanism. Inspected the pinned editor's Android processor/callback
+API locally and used the public Unity 2021.3 BuildScriptsOnly, StrictMode and
+IPostGenerateGradleAndroidProject contracts. SDK implementation observations
+remain private. [Unity PatchPackage](https://docs.unity3d.com/2021.3/Documentation/ScriptReference/BuildOptions.PatchPackage.html)
+deploys through the editor-selected device service; it cannot preserve the
+lab's explicit selected-device placement/ownership receipts, so it is not
+activated. [ADB incremental installation](https://android.googlesource.com/platform/packages/modules/adb/+/HEAD/docs/dev/incremental-install.md)
+uses blocks of a newly installed APK, rather than reusing unchanged members of
+the previous package.
+
+**Implementation.** Current `whole-catalog-fast-build` runs normal Bee native
+compilation and fresh player Data, then a final owned callback stops before
+Gradle. StrictMode is required. Only the current request's cancellation marker
+and at most one generic Unity failure summary qualify; unrelated build errors
+or any Gradle task refuse. The original failed packaging BuildReport is retained
+separately from successful iteration export. `iteration_apk.py` replaces every
+changed generated assets/native member, removes obsolete members and preserves
+unchanged compressed records verbatim. Java/manifest/resource/input drift refuses.
+The output is zipaligned, signed with the existing lab key and certificate-checked;
+v4 sidecars are generated. Immutable normal anchors bind member hashes, packaging
+inputs, signer and a verified payload reference. C#-only scripts mode is explicit;
+fresh Data remains the general action because serialized changes need it.
+
+Build receipts record composition staging, validation/hashing, editor refresh,
+Unity inclusive steps, request-bounded Bee work/active intervals, Gradle, symbols,
+copy/hash and payload freeze/reference. Install/sync receipts separately record
+storage, hashing and transfers. Ordinary builds rehash; explicit iteration may
+reuse digests only while device/inode/size/mtime/ctime match. APFS clones now
+cover APK/payload/symbol/project copies and camera/music atomic preimages; their
+fallback remains independent copies. Debug ZIPs remain opt-in. Exact generated
+APK-only stage receipts no longer invalidate external bundle reuse; audio bytes
+and unknown StreamingAssets still do. Full staging retires only predecessor-owned
+C# files with matching prior Git blobs/GUIDs. No build reads a timestamped run
+folder or edits authored source through text replacement.
+
+**Measured baseline and controlled warm loop.** Seconds are wall durations;
+Unity nested steps and parallel Bee work must not be summed. Private evidence
+root: `work/coordination/fast-iteration/`; complete receipts retain all subphases.
+
+| Build | Pipeline | Composition | Unity total | Bundle | Player | Gradle task |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Initial normal full, 822234d9 | 266.279 | 72.599 | 145.785 | 37.442 | 105.996 | 12.639 |
+| Controlled normal code-only, 4099f3f5 | 105.047 | 32.261 | 29.066 | reused | 27.001 | 7.052 |
+| Controlled fresh-Data splice, same source | 82.374 | 32.086 | 20.364 | reused | 18.309 | skipped |
+| Controlled ScriptsOnly splice, same source | 72.465 | 31.885 | 14.476 | reused | 13.398 | skipped |
+| Final rebased normal full, 0f0fab22 | 289.821 | 76.878 | 150.997 | 39.530 | 108.811 | 12.133 |
+| Final fresh-Data splice, 20c3dbd7 | 118.851 | 47.189 | 39.477 | reused | 37.411 | skipped |
+
+The warm comparison is a contiguous mutex-held window, not a cold/full versus
+warm/code-only claim: 22% less total time for fresh Data, 31% for ScriptsOnly.
+Both splice variants produced the same signed APK in that window. Changing
+other workers' prepared source between runs causes real linker/native work;
+the final rebased pair is not the controlled speed ratio. The final normal
+receipt observes UnityLinker 19.255 s, IL2CPP codegen 8.204 s, C++ active 19.609 s
+(109.271 worker-seconds over 114 jobs), native link 19.554 s. APK clone 0.006 s,
+APK hash 0.490 s, payload clone/hash 2.322 s; host symbol ZIP work 0 s. Final
+splice/alignment/signature validation takes 7.391 s. Its 951 MB APK contains
+274 uncompressed bank/media members totaling 833,662,993 bytes.
+
+**Byte equivalence for an actual C# change.** The authored change adds the
+pinned `Application.unityVersion` to `LabDiagnostics.Snapshot`. The earlier
+normal anchor is `b1e7604436886510dc6c1db795ab9593130d424ed46b25baa9dff089c187a8b7`.
+The new native library and metadata match the independent normal oracle. Under
+the same mutex, replaying that normal build's fresh export into the older anchor
+produces `847e10c8f5c267300bee50a3d9e45867f608d96f97e13b0ba175049ca894b009`:
+**850/850 unsigned members exactly equal** to the normal APK, with no normalized
+or excluded Data members (`exact-oracle-replay.json`, `oracle-replay-result.json`).
+Independent Unity invocations in the contiguous window differ in three Data
+members: globalgamemanagers, level0 and unity_app_guid. They are retained as
+real differences, not silently called equivalent. Final source pairs additionally
+differ in three generated provenance receipts; native/metadata remain identical.
+`apk-member-compare` requires matching source/input/API and unchanged receipt-bound
+APKs, and reports every difference. This proves the splice transformation;
+it does not assert deterministic Unity serialization across invocations.
+
+**Device and install result.** Thor was acquired through its shared lease, with
+current storage queried on each install. Normal full APK
+`00b5813ce4faa860b3f2094a2daeab15849bcd181c5e120964c09a8d7b50b603`
+(source 0f0fab22) passes plain baseline at 35.062 s. Fast APK
+`3375a6514e2092f5908f880e06675104bf6451a23ec9e52afb4982751a95fdf7`
+(source 20c3dbd7; differences from the normal source are test-only) passes plain baseline at 35.109 s and one original stage exit with 13.665 s of
+next-stage play on Goolake.
+Both runtime snapshots report Unity 2021.3.45f2. These are assisted diagnostics;
+profile run count stays zero, and no ordinary physical/touch-play claim follows.
+Normal and fast payload sync verify 134 files with zero transfers, taking 11.927
+and 13.326 s respectively. Full frozen caches also retain bundle manifest files.
+
+The same 951 MB fast APK streams in 24.827 s and installs through v4/IncFS in
+24.805 s; full receipts take 25.854/25.933 s. Independent installed-file readback
+matches the exact hash, taking another 0.642/1.484 s. Streaming stays default:
+there is no measured large-APK gain or cross-update byte reuse. An earlier
+114 MB retained APK measured 3.767 versus 2.380 s, which does not generalize to
+this artifact. Its v4 re-sign preserves all 571 unsigned members; SDK 34 refuses
+newer `--v4-signing-enabled only`, so a separate cache output was signed instead.
+APK splits would change base/split manifests and Unity/Wwise asset lookup;
+`install-multiple` alone cannot delta-update the existing monolith. No such
+unqualified runtime/layout migration is introduced.
+
+**First failures and verification limits.** Non-strict callback cancellation
+initially continued into Gradle; those timings are rejected. The first strict
+attempt rejected Unity's extra generic failure summary; the bounded qualifier
+was corrected and is exercised against the pinned SDK API. A worker test-only
+commit moved HEAD during the final full build: the shared coordinator correctly
+marked its own operation failed and restored primary source, while the immutable
+player receipt records a successful unchanged 0f0fab22 build. The first normal
+runtime check reached world play but collection failed because selected local
+state lay outside the source checkout. `Device.collect` now uses the selected
+work root; the complete repeated baseline passes. Original failed evidence is
+preserved. Synthetic ZIP/export/signature/content/hash/clone/transport/retirement
+contracts and clean-clone CI pass; optional SDK tests skip without the editor.
+All generated and original/SDK-derived content remains ignored. Public audit
+and manual provenance/privacy review find authored tooling/metadata only.
+
+**Evidence and terminal state.** `baseline-result.json`, `window-*-result.json`,
+`window-{fresh,scripts}-vs-normal.json`, `final-{normal,fast}-result.json` and
+`final-normal-vs-fast-members.json` retain measurements and exact source/APK joins.
+`work/logs/fast-iteration-final-{normal-baseline-retry,fast-baseline,fast-stage-exit}.json`
+name the complete per-process run directories and captures. Final install,
+readback, sync and restoration receipts share that log/evidence prefix.
+The original J1066 APK `299445f7` was restored, its complete installed SHA-256
+and runtime backing reverified, canonical ownership/counter/runtime/sync receipts
+updated, diagnostic selector absent, process stopped and both panels OFF. The
+Thor lease was released (`final-thor-terminal.json`). Pruning ran from primary
+after build/run work; no APK/project was copied into review evidence. Revisit ScriptsOnly for each serialization-affecting
+change; refresh the normal anchor for content/Java/package drift. Delta updates
+need a separately accepted split/content distribution design. Full game,
+phone-only production, audio/rendering parity and ordinary play remain separate.

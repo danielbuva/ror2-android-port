@@ -3,7 +3,8 @@
 These are current developer actions for the existing IL2CPP ARM64 lab. They do
 not change Architecture C, the ownership checks or the normal full-build
 acceptance gate. Generated APKs, keys, receipts and logs stay under ignored local
-state. Measurements and device findings belong in the journal.
+state. Measurements, exact-member proof and device findings are recorded once in
+[J1072](PORTING_JOURNAL.md#j1072--qualify-timed-pre-gradle-apk-iteration-and-install-transports).
 
 After a normal `./dev prototype --action whole-catalog-build`, authored C#
 changes can use:
