@@ -33641,9 +33641,11 @@ recipe audit passes without changing producer behavior, metadata or test policy.
 **Evidence and remaining work.** Original-input hashes/type-tree observations,
 lookup comparisons, initial errors, complete private/public-source invocations,
 all output bytes and graph comparisons remain under
-`work/coordination/owner-wwise-prefab-v1/`. `public-proof-v1.json`, SHA-256
-`587ef6e25c1d4f149dc7a5870bafeaac8634e572e359656982a93d1a77f83338`,
-binds source `ac94a08`, all final artifact hashes and public source/recipe bindings.
+`work/coordination/owner-wwise-prefab-v1/`. `public-proof-v1.json` binds the original source checkpoint `ac94a08`. Final
+`public-proof-v2.json`, SHA-256
+`4fa83972707dcd2be96c164ed57967385e820750bffb657df9a472b3e42c8834`,
+binds the unchanged producer bytes, all artifact/public bindings and the corrected
+audit catalog at `08a3ac2`.
 Only authored code, minimum audited metadata and synthetic tests are tracked;
 all original type trees and generated prefabs stay ignored. No current stage,
 request or runtime pin is changed; this exact source input now has a bounded
