@@ -2464,7 +2464,8 @@ are included and ownership/distribution boundaries remain unchanged.
 
 The authored `LabPendingWriteStop` and its host case observe a native settings
 pending transaction without changing player code or supplying file contents.
-SDK APIs provide the observer/normal shell package stop; no Android source or
+SDK APIs provide the observer and same-UID signal for the PID/UID-bound writer;
+standard debug `run-as` selects that UID and refuses an unavailable grant. No Android source or
 SDK binary is copied. Its DEX and unique temporary markers are generated from
 tracked source, hash-verified and removed by the existing SDK tool workflow.
 Raw pending files and recovery evidence stay private. Provenance/privacy audit:

@@ -11,7 +11,7 @@ import settings_write_interrupt_check as check  # noqa: E402
 
 
 class InterruptedWriteEvidenceTests(unittest.TestCase):
-    witness = dict(success=True, createObserved=True, pendingPresentAfterStop=True)
+    witness = dict(success=True, createObserved=True, writerExited=True, pendingPresentBeforeStop=True, pendingPresentAfterStop=True)
 
     def test_observer_uses_the_actual_device_timeout_transport(self):
         device = object.__new__(check.Device)
@@ -42,7 +42,16 @@ class InterruptedWriteEvidenceTests(unittest.TestCase):
             self.assertEqual(pending.read_text(), '{"version":')
 
     def test_synthetic_or_failed_observer_reports_cannot_qualify_real_interruption(self):
-        for witness in (None, {}, dict(self.witness, success=False), dict(self.witness, createObserved=1), dict(self.witness, pendingPresentAfterStop=False)):
+        for witness in (
+            None,
+            {},
+            dict(self.witness, success=False),
+            dict(self.witness, createObserved=1),
+            dict(self.witness, pendingPresentAfterStop=False),
+            dict(self.witness, writerExited=False),
+            dict(self.witness, writerExited=1),
+            dict(self.witness, pendingPresentBeforeStop=False),
+        ):
             with self.subTest(witness=witness), self.assertRaisesRegex(RuntimeError, "No successful native"):
                 check.interrupted_transaction("old", "old", dict(state="file"), witness)
 

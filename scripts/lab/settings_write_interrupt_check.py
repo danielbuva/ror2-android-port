@@ -1,4 +1,4 @@
-"""Current: observe a genuine pending-file transaction, stop its owned writer, cold-recover.
+"""Current: observe a genuine pending-file transaction, terminate its owned writer, cold-recover.
 
 No injected store bytes, player hooks, power-cut or ENOSPC claim. Refuse a missed
 pre-commit window. The native store performs both ordinary saves and recovery.
@@ -25,6 +25,8 @@ def interrupted_transaction(before, after, pending, observed):
         not isinstance(observed, dict)
         or observed.get("success") is not True
         or observed.get("createObserved") is not True
+        or observed.get("writerExited") is not True
+        or observed.get("pendingPresentBeforeStop") is not True
         or observed.get("pendingPresentAfterStop") is not True
     ):
         raise RuntimeError("No successful native pending-create/stop witness")
@@ -59,7 +61,7 @@ def check_settings_write_interrupt(expected_apk_sha256=None):
         success=False,
         apk_sha256=expected,
         attempt=attempt,
-        scope="Observed native pending transaction interrupted by owned-package force-stop; no power-cut/ENOSPC claim",
+        scope="Observed native pending transaction interrupted by same-UID writer termination; no power-cut/ENOSPC claim",
     )
     pid = None
     remote = []
@@ -132,7 +134,7 @@ def check_settings_write_interrupt(expected_apk_sha256=None):
         # A retained newly-created pending file distinguishes interruption from commit.
         write(out / "native-settings-before-save.json", report)
         dex = compile_tool(ROOT / "tools/android-write-interruption/LabPendingWriteStop.java")
-        prefix = "/data/local/tmp/ror2lab-write-" + uuid.uuid4().hex
+        prefix = runtime + "/ror2lab-write-" + uuid.uuid4().hex
         targets = [prefix + ".dex", prefix + ".ready"]
         if any(_remote_path_state(device, path) != "absent" for path in targets):
             raise RuntimeError("Temporary observer target exists; preserve it")
@@ -141,6 +143,8 @@ def check_settings_write_interrupt(expected_apk_sha256=None):
         matches = re.findall(r"^package:" + re.escape(PACKAGE) + r" uid:([0-9]+)$", packages, re.M)
         if len(matches) != 1 or int(matches[0]) < 10000:
             raise RuntimeError("Owned package UID is ambiguous")
+        if device.sh("run-as", PACKAGE, "id", "-u").strip() != matches[0]:
+            raise RuntimeError("Requires the owned Development package debug UID")
         write(
             out / "observer-binding.json",
             dict(
@@ -154,7 +158,9 @@ def check_settings_write_interrupt(expected_apk_sha256=None):
         device.cmd("push", str(dex), remote[0])
         if device.sh("sha256sum", remote[0]).split()[0] != sha(dex):
             raise RuntimeError("Observer DEX transfer hash differs")
-        command = shlex.join(["env", "CLASSPATH=" + remote[0], "app_process", "/system/bin", "LabPendingWriteStop", directory, remote[1], pid, matches[0]])
+        command = shlex.join(
+            ["run-as", PACKAGE, "env", "CLASSPATH=" + remote[0], "app_process", "/system/bin", "LabPendingWriteStop", directory, remote[1], pid, matches[0]]
+        )
         with ThreadPoolExecutor(max_workers=1) as pool:
             future = pool.submit(pending_observer, device, command)
             deadline = time.monotonic() + 10
@@ -182,6 +188,7 @@ def check_settings_write_interrupt(expected_apk_sha256=None):
                 raise
             (out / "observer.stdout").write_text(raw)
             observed = json.loads(raw)
+        result["interruption_observer"] = observed
         stopped_pid = pid
         capture_owned_errors("interrupted-process")
         deadline = time.monotonic() + 10

@@ -1284,7 +1284,10 @@ The current `settings-write-interrupt-check` host diagnostic uses
 `settings_write_interrupt_check.py` and the authored `LabPendingWriteStop` SDK
 actor. It requires an idle, owned APK and a matched diagnostic menu selector,
 saves the existing native values, observes the actual pending-file creation,
-then requests normal shell-authorized package stop for the bound PID/UID. An
+then terminates that writer through same-UID signalling from the owned
+Development package via standard `run-as`. Both SDK and host require its exit.
+The normal package-stop command remains failure teardown; no root or permission
+changes are used. An
 unchanged primary and retained pending transaction are required before cold
 recovery/resave can qualify; a missed window refuses acceptance. The original
 store performs every save. Teardown removes only its selector and unique SDK

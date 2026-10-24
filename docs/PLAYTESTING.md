@@ -145,8 +145,10 @@ completed session. A runtime error stops the case; incomplete series and old
 archived reports do not establish a growth bound. Native heap captures are a
 separate opt-in attribution case and must not be mixed with this measurement.
 
-The settings case observes a native pending-file creation and requests an owned
-package stop, preserving the existing preference values. It accepts recovery
+The settings case observes a native pending-file creation and terminates only
+the bound writer from its own Development-package UID, preserving the existing
+preference values. It requires standard debug `run-as` access; ordinary package
+stop remains failure teardown. It accepts recovery
 only after proving that the old primary and an actual uncommitted pending file
 survived, including a hash-verified private copy of the initial primary. The
 SDK actor has a bounded lifetime independent of Android observer threads;
