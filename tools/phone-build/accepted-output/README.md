@@ -72,6 +72,48 @@ retain identical ASTs; the added startup guard has authored host coverage and
 awaits device qualification. Exact versions and receipts remain private. These
 host contracts do not establish game readiness.
 
+## Produce meshes directly from original PC bundles
+
+`mesh_produce.py`, `unity_bundle.py` and `unity_mesh.py` own current experimental
+PC-input-only mesh production. They use Python 3.11+ standard-library modules
+on the host and Android, with no Editor, UnityPy, SDK or target-content input:
+
+```sh
+python3 -I -S -B tools/phone-build/accepted-output/mesh_produce.py \
+  --profile recipe/owner-meshes.json --profile-sha256 RECIPE_SHA256 \
+  --pc ORIGINAL_PC_ROOT --output NEW_PRIVATE_OUTPUT
+```
+
+Stage those three sibling Python files and the audited recipe on Android using
+the owner's permitted interpreter acquisition path. Explicitly select the
+authorized device and receipt-owned workspace for lab staging. The original PC
+root is read-only; the output must be new and separate. File hashes identify
+the accepted input and make no ownership or authentication claim.
+
+The recipe selects 652 original bundles and produces 13,231 of 13,233 accepted
+mesh records. Two tangent/importer cases are explicitly excluded. Operations
+preserve original field bytes except declared import flags, collision-cache
+removal, names/resource references, vertex stream inlining, channel dimension
+normalization and float normal/tangent half conversion. Half conversion rounds
+halfway away from zero. Source schema controls field extents, including nested
+alignment. The reader qualifies little-endian serialized v22 and UnityFS 7/8
+from Unity 2021.3 with raw/LZ4 compression; other compression is refused.
+
+The process checks every selected original file before/after use, bounds reads
+and decompressed blocks to 64 MiB, retains two blocks and requires all generated
+object hashes to match. It writes `objects.bin`, `resources.bin`, their
+`index.jsonl` and a terminal complete/failed `result.json`. All persisted extents
+are re-read; failed outputs are retained. It requires expected object capacity
+plus 2 GiB free before starting. Peak RSS uses the platform's native
+`resource.getrusage` units. Exit tears down the only producer process.
+
+These game-derived packs remain private. They are inputs for a future bundle
+assembler, not UnityFS bundles, a replacement private replay packet, or an APK.
+[J1070](../../../docs/PORTING_JOURNAL.md#j1070--produce-the-accepted-mesh-cohort-from-original-pc-bundles-on-android)
+records host and phone qualification. Remaining meshes, non-mesh content,
+bundle assembly, native game-code phone production and the complete owner
+installation remain separate gates. No current game build consumes this path.
+
 ## Acquire the three SDK-copy inputs
 
 `sdk_inputs.py` is current experimental acquisition support for an owner's exact

@@ -648,6 +648,16 @@ and failed attempts remain private. This does not source the full compiler or
 introduce a timestamped build dependency. See the
 [acquisition lifecycle](../tools/phone-build/accepted-output/README.md#acquire-the-three-sdk-copy-inputs).
 
+Independent mesh production instead reads only the original PC root and tracked
+`recipe/owner-meshes.json`, through public `mesh_produce.py`; it requires no
+private target/discovery snapshot. Private packs, complete/failed receipts and
+raw verification evidence stay under explicitly selected ignored output roots.
+The accepted target is an independent local verification oracle, not a producer
+input. Android lab staging additionally requires the existing explicit-device
+workspace ownership receipt and permitted Python interpreter. No timestamped
+run path is embedded in the producer or a current build; see its
+[setup/lifecycle](../tools/phone-build/accepted-output/README.md#produce-meshes-directly-from-original-pc-bundles).
+
 The owner-APK bootstrap candidate consumes an explicit ignored request selecting
 the accepted private packet manifest and verified reconstructed target root,
 public frontend/wire-helper sources and supplied Java/Android/D8 tools.

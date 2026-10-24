@@ -122,6 +122,15 @@ not serialized-object producers; the remaining code/content/shader construction
 and public-input conversion gates stay open. Do not read chunk coverage as a
 completed-conversion percentage or a public-patch size/rights result.
 
+[J1070](PORTING_JOURNAL.md#j1070--produce-the-accepted-mesh-cohort-from-original-pc-bundles-on-android)
+adds an independent source-only producer for 13,231 accepted mesh records,
+with two tangent/importer cases excluded. Its tracked recipe contains selectors,
+hashes and authored operations; no target geometry, byte deltas or target float
+literals are supplied. The output is a private object/resource pack rather
+than assembled bundles, so it does not replace the replay packet or establish
+a whole-content conversion percentage. See the
+[producer setup](../tools/phone-build/accepted-output/README.md#produce-meshes-directly-from-original-pc-bundles).
+
 These observations rule out treating a platform flag edit or archive repack as
 the accepted conversion. They do not prove that full Unity import is required.
 [Unity documents platform-specific bundle assets](https://docs.unity3d.com/es/2021.1/ScriptReference/AssetBundle.html),

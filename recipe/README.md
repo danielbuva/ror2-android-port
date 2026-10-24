@@ -57,6 +57,22 @@ produce the file from the input, prefer tracking the generator.
 
 ## Audit record
 
+`owner-meshes.json` selects original bundle hashes, embedded member/object
+identities and source vertex-resource extents, then names accepted destination
+identities, sizes and verification hashes. Its only operations are authored
+import settings, cache removal, minimal name/reference relocation, stream
+inlining and float normal/tangent conversion. It contains no vertex/index
+arrays, collision data, compressed target frames, arbitrary byte patches or
+target float literals. Source content is required for every generated mesh.
+The two unresolved tangent/importer records are explicitly excluded. The
+minimum asset identifiers and relationships locate/reconstruct the owner's
+content under the existing recipe boundary; they do not establish ownership.
+Manual provenance, privacy, licensing and sensitive-content review: 2026-10-24.
+Format knowledge was checked against pinned UnityPy 1.25.3 and the upstream
+LZ4 block specification; no upstream implementation, game data or proprietary
+SDK code was copied. Generated packs and raw discovery/device evidence remain
+ignored. Qualification and limits are recorded in J1070.
+
 `shader-postprocessing-bloom-candidate.json` pins a default-off, input-bound
 replacement of the exported one-pass Bloom placeholders and the exact original
 Main Camera's CopyStd placeholder using official Unity Post Processing 2.3.0
