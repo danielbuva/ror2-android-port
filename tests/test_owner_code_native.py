@@ -18,6 +18,42 @@ SPEC.loader.exec_module(NATIVE)
 
 
 class OwnerCodeNativeTests(unittest.TestCase):
+    def test_android_link_keeps_original_target_and_explicit_static_runtime(self):
+        tools = {"clang": "/installed/libclang.so", "linker": "/installed/liblld.so", "resource_dir": "/tools/clang/21"}
+        sdk = Path("/owner/sdk")
+        args = ["host-clang", "-target", "aarch64-linux-android22", "-Os", "-fuse-ld=bfd", "-static-libstdc++", "-Wl,--no-undefined", "source.o"]
+        command = NATIVE.android_command(args, sdk, tools, link=True)
+        self.assertEqual(command[0], tools["clang"])
+        self.assertIn("-fintegrated-cc1", command)
+        self.assertIn("aarch64-linux-android22", command)
+        self.assertIn("-Os", command)
+        self.assertIn("-Wl,--no-undefined", command)
+        self.assertNotIn("-fuse-ld=bfd", command)
+        self.assertNotIn("-static-libstdc++", command)
+        self.assertIn("--ld-path=/installed/liblld.so", command)
+        self.assertIn("--unwindlib=none", command)
+        self.assertTrue(any(v.startswith(str(sdk)) and v.endswith("libc++_static.a") for v in command))
+        self.assertTrue(any(v.startswith(str(sdk)) and v.endswith("libgcc.a") for v in command))
+
+    def test_android_resource_inputs_are_bound_and_incomplete_selection_refuses(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            tools = {}
+            for name in ("dotnet", "clang", "linker", "objcopy"):
+                path = root / name
+                path.write_bytes(b"authored tool stand-in")
+                tools[name] = str(path)
+            resources = root / "resources"
+            resources.mkdir()
+            header = resources / "fixture.h"
+            header.write_text("// independent header")
+            tools["resource_dir"] = str(resources)
+            before = NATIVE.android_tool_state(tools)
+            header.write_text("// changed header")
+            self.assertNotEqual(NATIVE.android_tool_state(tools), before)
+            with self.assertRaisesRegex(ValueError, "explicit Android"):
+                NATIVE.android_tool_state({})
+
     def test_source_expansion_is_bounded_and_hash_checked(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve()

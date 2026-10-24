@@ -142,7 +142,45 @@ def arguments(items, roots, *, source=None, obj=None, library=None):
     return result
 
 
-def plan(profile, sdk, output):
+def android_tool_state(tools):
+    """Bind explicitly supplied Android tools; original SDK data stay pinned."""
+    if set(tools) != {"dotnet", "clang", "linker", "objcopy", "resource_dir"}:
+        raise ValueError("explicit Android compiler, linker, stripper, runtime and resources required")
+    paths = {name: canonical(value) for name, value in tools.items()}
+    if not paths["resource_dir"].is_dir() or any(not path.is_file() for name, path in paths.items() if name != "resource_dir"):
+        raise ValueError("invalid Android tool kind")
+    return {
+        str(path): sha(path) for path in [*[p for n, p in paths.items() if n != "resource_dir"], *sorted(paths["resource_dir"].rglob("*"))] if path.is_file()
+    }
+
+
+def android_command(argv, sdk, tools, *, link=False):
+    """J921's explicit Clang/LLD policy, with original target headers/libraries."""
+    ndk = sdk / "PlaybackEngines/AndroidPlayer/NDK/toolchains/llvm/prebuilt/darwin-x86_64"
+    sysroot = ndk / "sysroot"
+    result = [tools["clang"], "--driver-mode=g++", "-fintegrated-cc1", "--sysroot=" + str(sysroot), "-resource-dir=" + tools["resource_dir"]]
+    if link or "-std=c++11" in argv:
+        result += ["-nostdinc++", "-isystem", str(sysroot / "usr/include/c++/v1")]
+    result += [value for value in argv[1:] if value != "-fuse-ld=bfd" and not (link and value == "-static-libstdc++")]
+    if link:
+        arch = sysroot / "usr/lib/aarch64-linux-android"
+        gcc = ndk / "lib/gcc/aarch64-linux-android/4.9.x"
+        result += [
+            "--ld-path=" + tools["linker"],
+            "-B" + str(arch / "22"),
+            "-L" + str(arch / "22"),
+            "-L" + str(arch),
+            "-L" + str(gcc),
+            "-nostdlib++",
+            "--unwindlib=none",
+            str(arch / "libc++_static.a"),
+            str(arch / "libc++abi.a"),
+            str(gcc / "libgcc.a"),
+        ]
+    return result
+
+
+def plan(profile, sdk, output, android_tools=None):
     roots = {"sdk": sdk, "output": output, "cpp": output / "cpp"}
     jobs, wrappers = [], {}
     for index, item in enumerate(profile["jobs"]):
@@ -163,8 +201,12 @@ def plan(profile, sdk, output):
             raise ValueError("invalid native job declaration")
         obj = output / "objects" / (str(index) + ".o")
         argv = [str(sdk / profile["compiler"]), *arguments(profile["arguments"][item["arguments"]], roots, source=source, obj=obj)]
+        if android_tools:
+            argv = android_command(argv, sdk, android_tools)
         jobs.append({"source": str(source), "output": str(obj), "kind": kind, "argv": argv})
     link = [str(sdk / profile["compiler"]), *arguments(profile["link"], roots, library=output / "libil2cpp.unstripped.so")]
+    if android_tools:
+        link = android_command(link, sdk, android_tools, link=True)
     objects = [str(j["output"]) for j in jobs]
     linked = [v for v in link if v.endswith(".o")]
     if len(linked) != len(objects) or set(linked) != set(objects) or len(set(objects)) != len(objects):
@@ -172,7 +214,7 @@ def plan(profile, sdk, output):
     return {"schema": 1, "jobs": jobs, "wrappers": wrappers, "link": link, "library": str(output / "libil2cpp.unstripped.so")}
 
 
-def invoke(argv, output, name):
+def invoke(argv, output, name, *, env=None):
     started = time.monotonic()
     record = {"argv": argv, "exit_code": None}
 
@@ -187,7 +229,7 @@ def invoke(argv, output, name):
             child = subprocess.Popen(
                 argv,
                 cwd=output,
-                env={"PATH": "/usr/bin:/bin", "LC_ALL": "C", "TMPDIR": str(output / "tmp")},
+                env=env if env is not None else {"PATH": "/usr/bin:/bin", "LC_ALL": "C", "TMPDIR": str(output / "tmp")},
                 stdout=log,
                 stderr=subprocess.STDOUT,
                 start_new_session=True,
@@ -227,7 +269,7 @@ def expand(row, destination):
 
 def run(request, *, plan_only=False):
     required = {"owner_work", "sdk_install", "converter_receipt", "converter_receipt_sha256", "sources", "sources_compressed", "metadata", "output"}
-    if set(request) != required or not isinstance(request["sources_compressed"], bool):
+    if set(request) - {"android_tools"} != required or not isinstance(request["sources_compressed"], bool):
         raise ValueError("explicit native request fields required")
     work, sdk, receipt, sources, metadata = [canonical(request[n]) for n in ("owner_work", "sdk_install", "converter_receipt", "sources", "metadata")]
     output = Path(request["output"])
@@ -242,7 +284,10 @@ def run(request, *, plan_only=False):
         raise ValueError("unqualified legitimate input")
     sdk_state = sdk_files(sdk, profile)
     providers, metadata_row = converter_inputs(receipt, request["converter_receipt_sha256"], sources, metadata, profile, request["sources_compressed"])
-    value = plan(profile, sdk, output)
+    android_tools = request.get("android_tools")
+    tool_state = android_tool_state(android_tools) if android_tools else None
+    environment = dict(os.environ, TMPDIR=str(output / "tmp")) if android_tools else None
+    value = plan(profile, sdk, output, android_tools)
     output.mkdir(mode=0o700)
     result = {
         "schema": 1,
@@ -267,6 +312,7 @@ def run(request, *, plan_only=False):
                 "converter_receipt_sha256": request["converter_receipt_sha256"],
                 "sources": providers,
                 "metadata": metadata_row,
+                "android_tools": tool_state,
             },
         )
         for target, members in value["wrappers"].items():
@@ -281,7 +327,7 @@ def run(request, *, plan_only=False):
                 if job["kind"] == "generated":
                     expand(providers[source.name], source)
                 before = sha(source)
-                invoke(job["argv"], output, str(index))
+                invoke(job["argv"], output, str(index), env=environment)
                 if sha(source) != before:
                     raise ValueError("native input changed during compilation")
                 obj = Path(job["output"])
@@ -292,9 +338,10 @@ def run(request, *, plan_only=False):
             size = sum(Path(j["output"]).stat().st_size for j in value["jobs"])
             if shutil.disk_usage(output).free < size + 1536 * 1024**2:
                 raise RuntimeError("native link reserve unavailable; objects retained")
-            invoke(value["link"], output, "link")
+            invoke(value["link"], output, "link", env=environment)
             target = output / "libil2cpp.so"
-            invoke([str(sdk / profile["objcopy"]), "--strip-all", value["library"], str(target)], output, "strip")
+            stripper = android_tools["objcopy"] if android_tools else str(sdk / profile["objcopy"])
+            invoke([stripper, "--strip-all", value["library"], str(target)], output, "strip", env=environment)
             with target.open("rb") as stream:
                 header = stream.read(64)
             if len(header) != 64 or header[:6] != b"\x7fELF\x02\x01" or struct.unpack_from("<HH", header, 16) != (3, 183):
@@ -302,6 +349,8 @@ def run(request, *, plan_only=False):
             result.update(library_sha256=sha(target), library_bytes=target.stat().st_size)
         if sdk_files(sdk, profile) != sdk_state or input_state(work) != (identity, game, inventory):
             raise ValueError("owner SDK or game input state changed")
+        if android_tools and android_tool_state(android_tools) != tool_state:
+            raise ValueError("Android tool inputs changed")
         if converter_inputs(receipt, request["converter_receipt_sha256"], sources, metadata, profile, request["sources_compressed"]) != (
             providers,
             metadata_row,

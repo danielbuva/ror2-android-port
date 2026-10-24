@@ -10,6 +10,7 @@ import argparse
 import gzip
 import importlib.util
 import json
+import os
 from pathlib import Path
 import re
 import shutil
@@ -72,11 +73,18 @@ def configuration(profile, sdk, output):
     return {p.name: native.sha(p) for p in config.iterdir() if p.is_file()}
 
 
-def linker_command(sdk, output, profile):
+def tool_command(sdk, output, name, android_tools=None):
+    folder = sdk / "Unity.app/Contents/il2cpp/build/deploy"
+    if android_tools:
+        return [android_tools["dotnet"], "exec", "--runtimeconfig", str(output / "configuration/android.runtimeconfig.json"), str(folder / (name + ".dll"))]
+    return [str(folder / name)]
+
+
+def linker_command(sdk, output, profile, android_tools=None):
     inputs = output / "managed"
     config = output / "configuration"
     android = sdk / "PlaybackEngines/AndroidPlayer"
-    command = [str(sdk / "Unity.app/Contents/il2cpp/build/deploy/UnityLinker"), "--search-directory=" + str(inputs), "--out=" + str(output / "stripped")]
+    command = tool_command(sdk, output, "UnityLinker", android_tools) + ["--search-directory=" + str(inputs), "--out=" + str(output / "stripped")]
     command += ["--include-link-xml=" + str(config / name) for name in XML_ORDER]
     command += [
         "--include-link-xml=" + str(android / "Tools/AndroidNativeLink.xml"),
@@ -96,9 +104,9 @@ def linker_command(sdk, output, profile):
     return command + ["--print-command-line"]
 
 
-def converter_command(sdk, output, profile):
+def converter_command(sdk, output, profile, android_tools=None):
     converter = output / "converter"
-    command = [str(sdk / "Unity.app/Contents/il2cpp/build/deploy/il2cpp"), "--convert-to-cpp"]
+    command = tool_command(sdk, output, "il2cpp", android_tools) + ["--convert-to-cpp"]
     command += ["--assembly=" + str(output / "stripped" / n) for n in profile["converter_assemblies"]]
     command += [
         "--emit-null-checks",
@@ -214,7 +222,7 @@ def source_run(request, *, stop_after_conversion=False):
 def run(request, *, stop_after_conversion=False):
     if "source_inputs" in request:
         return source_run(request, stop_after_conversion=stop_after_conversion)
-    if set(request) != {"owner_work", "sdk_install", "managed", "output"}:
+    if set(request) - {"android_tools"} != {"owner_work", "sdk_install", "managed", "output"}:
         raise ValueError("explicit owner backend request required")
     work, sdk = [native.canonical(request[k]) for k in ("owner_work", "sdk_install")]
     output = Path(request["output"])
@@ -225,6 +233,8 @@ def run(request, *, stop_after_conversion=False):
     if state[0] != profile["input_id"]:
         raise ValueError("unsupported legitimate game input")
     before = providers(request["managed"], profile)
+    android_tools = request.get("android_tools")
+    android_state = native.android_tool_state(android_tools) if android_tools else None
     if not output.is_relative_to(work) or output == work:
         raise ValueError("owner backend output must be inside owner work")
     native.disjoint(output, [sdk, state[1], work / "config", work / "inventory", *[Path(r["path"]) for r in before.values()]])
@@ -248,15 +258,32 @@ def run(request, *, stop_after_conversion=False):
             (output / name).mkdir()
         native.write(output / "inputs.json", {"providers": before, "sdk_tools": sdk_state, "owner_state": state[2]})
         configs = configuration(profile, sdk, output)
+        if android_tools:
+            native.write(
+                output / "configuration/android.runtimeconfig.json",
+                {
+                    "runtimeOptions": {
+                        "tfm": "net8.0",
+                        "framework": {"name": "Microsoft.NETCore.App", "version": "8.0.32"},
+                        "configProperties": {"System.GC.Server": True},
+                    }
+                },
+            )
+            configs["android.runtimeconfig.json"] = native.sha(output / "configuration/android.runtimeconfig.json")
+            native.write(output / "android-tools.json", android_state)
         for name, row in before.items():
             target = output / "managed" / name
             with Path(row["path"]).open("rb") as incoming, target.open("xb") as outgoing:
                 shutil.copyfileobj(incoming, outgoing, 1024 * 1024)
             if native.sha(target) != row["sha256"]:
                 raise ValueError("managed input copy changed")
-        native.write(output / "commands.json", {"linker": linker_command(sdk, output, profile), "converter": converter_command(sdk, output, profile)})
+        environment = dict(os.environ, TMPDIR=str(output / "tmp")) if android_tools else None
+        native.write(
+            output / "commands.json",
+            {"linker": linker_command(sdk, output, profile, android_tools), "converter": converter_command(sdk, output, profile, android_tools)},
+        )
         result["phase"] = "stripping"
-        native.invoke(linker_command(sdk, output, profile), output, "linker")
+        native.invoke(linker_command(sdk, output, profile, android_tools), output, "linker", env=environment)
         verify_inputs(request, profile, sdk, sdk_state, before, work, state, output, configs)
         stripped = file_map(output / "stripped")
         if {n for n in stripped if n.endswith(".dll")} != set(profile["converter_assemblies"]):
@@ -265,7 +292,7 @@ def run(request, *, stop_after_conversion=False):
         result["phase"] = "conversion"
         if shutil.disk_usage(output).free < 2 * 1024**3:
             raise RuntimeError("converter output reserve unavailable; prior outputs retained")
-        native.invoke(converter_command(sdk, output, profile), output, "converter")
+        native.invoke(converter_command(sdk, output, profile, android_tools), output, "converter", env=environment)
         converter = output / "converter"
         files = {folder + "/" + n: row for folder in ("cpp", "data") for n, row in file_map(converter / folder).items()}
         if {"cpp/" + j["generated"] for j in json.loads(native.PROFILE.read_text())["jobs"] if "generated" in j} != {
@@ -291,10 +318,14 @@ def run(request, *, stop_after_conversion=False):
             "metadata": str(converter / "data/Metadata/global-metadata.dat"),
             "output": str(output / "native"),
         }
+        if android_tools:
+            native_request["android_tools"] = android_tools
         native.write(output / "native-request.json", native_request)
         result["phase"] = "native-planning" if stop_after_conversion else "native-production"
         native_result = native.run(native_request, plan_only=stop_after_conversion)
         verify_inputs(request, profile, sdk, sdk_state, before, work, state, output, configs)
+        if android_tools and native.android_tool_state(android_tools) != android_state:
+            raise ValueError("Android backend tools changed")
         result.update(
             success=True,
             phase="converted-native-planned" if stop_after_conversion else "native-built",
