@@ -108,9 +108,17 @@ public sealed class AndroidTouchInput
     }
     public void Suspend()
     {
+        // Opening pause must retain the pointer's GUI ownership through its UP.
+        // Otherwise that same tap closes the newly opened settings button.
+        bool guiOwned = OwnsGuiMouse;
         ClearCaptures();
+        OwnsGuiMouse = guiOwned;
         waitingForLift = true;
         Publish();
+    }
+    public void ObserveSuspendedTouches(int touchCount)
+    {
+        if (touchCount == 0) OwnsGuiMouse = false;
     }
     // The frame/pointer API also lets the host exercise real capture ownership
     // without an Android input device. Runtime uses only Input.GetTouch below.

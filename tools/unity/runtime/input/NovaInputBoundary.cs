@@ -155,7 +155,7 @@ public sealed partial class PortSession
     }
     void ConsumeTouchGameplayGuiEvent()
     {
-        if (offlineSettingsVisible || worldPlayer == null || Event.current == null)
+        if (worldPlayer == null || Event.current == null)
             return;
         var bridge = worldPlayer.GetComponent<NovaInputBridge>();
         if (bridge != null && bridge.OwnsTouchGuiMouse &&

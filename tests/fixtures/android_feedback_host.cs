@@ -392,8 +392,13 @@ public static class AndroidFeedbackHost
         Check(session.SettingsVisible && session.Paused, "unclaimed UI touch was swallowed");
         NovaInputBridge.ownGuiMouse = true;
         Event.current = new Event { type = EventType.MouseDown };
+        GUI.click = "Close settings"; session.Render();
+        Check(Event.current.type == EventType.Used && session.SettingsVisible && session.Paused,
+              "opening gameplay pointer toggled the new modal closed");
+        NovaInputBridge.ownGuiMouse = false;
+        Event.current = new Event { type = EventType.MouseDown };
         GUI.click = "Resume"; session.Render();
-        Check(!session.SettingsVisible && !session.Paused, "gameplay ownership swallowed modal controls");
+        Check(!session.SettingsVisible && !session.Paused, "fresh modal tap was swallowed after the opening pointer lifted");
     }
     static void EndRunConfirmation()
     {

@@ -125,6 +125,17 @@ static class AndroidTouchInputHost
         Check(!input.HasInput && !input.OwnsGuiMouse, "reserved native UI strip became gameplay input");
         input.BeginFrame(0); input.EndFrame();
         input.BeginFrame(1); input.Pointer(1, pause, true, false, false, true); input.EndFrame();
+        input.Suspend();
+        Check(input.OwnsGuiMouse && !input.HasInput, "opening pause lost the captured GUI pointer");
+        input.ObserveSuspendedTouches(1); input.Suspend();
+        Check(input.OwnsGuiMouse, "paused neutralization leaked the held opening tap");
+        input.ObserveSuspendedTouches(1);
+        Check(input.OwnsGuiMouse, "opening tap release leaked into the modal");
+        input.ObserveSuspendedTouches(0); input.Suspend();
+        input.ObserveSuspendedTouches(1);
+        Check(!input.OwnsGuiMouse, "fresh modal tap was captured after the opening pointer lifted");
+        input.BeginFrame(0); input.EndFrame();
+        input.BeginFrame(1); input.Pointer(1, pause, true, false, false, true); input.EndFrame();
         input.BeginFrame(1); input.Pointer(1, pause, false, true, false, true); input.EndFrame();
         Check(input.OwnsGuiMouse, "owned release event reached native GUI after touch ended");
     }

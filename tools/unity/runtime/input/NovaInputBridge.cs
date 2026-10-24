@@ -293,6 +293,7 @@ public sealed class NovaInputBridge : MonoBehaviour
                 presence?.Suspend();
                 SetManualMoonAutomaticHold(false);
                 Neutral();
+                touchControls?.ObserveSuspendedTouches(Input.touchCount);
                 return;
             }
             if (touchControls != null && !diagnosticInput)
