@@ -57,6 +57,16 @@ produce the file from the input, prefer tracking the generator.
 
 ## Audit record
 
+`owner-j850-code.json` additionally names the 69 legitimate debug-symbol
+companions required by the fixed target's managed closure. These are SDK or
+freshly produced package/gameplay PDB inputs, kept private and verified before
+and after stripping. No symbol bytes, protected implementation, device identity
+or private path is recorded. Their presence affects stripped PE sizes and the
+unchanged SDK converter's size-based assembly ordering. Manual provenance,
+privacy, licensing and sensitive-content review: 2026-10-24. This extends the
+existing source-only target recipe; accepted metadata is used for comparison.
+
+
 The requested-audio source-scene transformation preserves original Wwise/RTPC
 blocks from the owner's accepted local export through the existing generator.
 The public change contains authored selection/lifecycle logic and synthetic

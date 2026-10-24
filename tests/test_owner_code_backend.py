@@ -69,6 +69,28 @@ class OwnerCodeBackendTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "relative"):
                 BACKEND.providers({"../Fixture.dll": request["Fixture.dll"]}, {"managed_assemblies": ["../Fixture.dll"]})
 
+    def test_fixed_target_requires_immutable_colocated_symbol_companions(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            dll = root / "Fixture.dll"
+            dll.write_bytes(b"independent assembly witness")
+            request = {dll.name: {"path": str(dll), "sha256": BACKEND.native.sha(dll)}}
+            profile = {"managed_assemblies": [dll.name], "symbol_assemblies": [dll.name]}
+            with self.assertRaisesRegex(ValueError, "symbol companion missing"):
+                BACKEND.providers(request, profile)
+            pdb = dll.with_suffix(".pdb")
+            pdb.write_bytes(b"independent debug symbol witness")
+            before = BACKEND.providers(request, profile)
+            self.assertEqual(set(before), {dll.name, pdb.name})
+            pdb.write_bytes(b"changed symbols")
+            self.assertNotEqual(BACKEND.providers(request, profile), before)
+            pdb.unlink()
+            elsewhere = root / "elsewhere.pdb"
+            elsewhere.write_bytes(b"redirected symbols")
+            pdb.symlink_to(elsewhere)
+            with self.assertRaisesRegex(ValueError, "redirected"):
+                BACKEND.providers(request, profile)
+
     def test_policy_keeps_whole_closure_and_original_checks(self):
         profile = json.loads(BACKEND.PROFILE.read_text())
         self.assertEqual(BACKEND.native.sha(BACKEND.PROFILE), BACKEND.PROFILE_SHA)

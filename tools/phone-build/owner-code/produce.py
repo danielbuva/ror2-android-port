@@ -75,6 +75,13 @@ def providers(request, profile):
         if not re.fullmatch(r"[a-f0-9]{64}", row["sha256"]) or native.sha(source) != row["sha256"]:
             raise ValueError("managed provider drift: " + name)
         result[name] = {"path": str(source), "sha256": row["sha256"], "bytes": source.stat().st_size}
+    # Fixed-target Unity stripping preserves symbols. Omitting them changes PE
+    # sizes, which changes the SDK converter's size-based assembly ordering.
+    for name in profile.get("symbol_assemblies", []):
+        source = Path(result[name]["path"]).with_suffix(".pdb")
+        if not source.is_file() or source != source.resolve(strict=True):
+            raise ValueError("required managed symbol companion missing or redirected: " + name)
+        result[source.name] = {"path": str(source), "sha256": native.sha(source), "bytes": source.stat().st_size}
     return result
 
 
