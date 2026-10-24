@@ -783,6 +783,13 @@ after packaging. The anchor is replaced only by another normal build.
 it is not an acceptance build. `apk-member-compare` compares hash-bound builds
 of the same source without hiding build metadata differences. Normal full-build
 acceptance remains required. Commands and limits: [fast iteration](fast-iteration.md).
+`shared_checkout_build.py` reuses the existing shared-editor worktree coordinator:
+clean committed source is temporarily selected in the primary checkout while
+the mutex covers preflight, the ordinary build action and source restoration.
+Unexpected edits/ref movement are preserved and refuse restoration. Its current
+`shared-catalog-code-build` (`--full` for content), `shared-catalog-fast-build`
+and `shared-catalog-scripts-build` actions copy no project and select no device.
+Setup and restoration receipts stay under `work/coordination/shared-builds/`.
 Host contracts: `test_iteration_apk.py`, `test_install_transport.py`,
 `test_build_snapshots.py`. Build/experiment artifact snapshots use APFS clones
 with an independent-copy fallback; snapshot verification can be requested while

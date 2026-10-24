@@ -34,7 +34,9 @@ def invoke(root, arguments, *, env, pass_fds):
     subprocess.run([str(root / "dev"), *arguments], cwd=root, env=env, pass_fds=pass_fds, check=True)
 
 
-def build_shared_checkout(code_only=True, android_symbols="none", capture_player_linker_inputs=False, capture_il2cpp_invocation=False, root=None):
+def build_shared_checkout(
+    code_only=True, android_symbols="none", capture_player_linker_inputs=False, capture_il2cpp_invocation=False, root=None, iteration_mode=""
+):
     """Temporarily select this exact HEAD in the clean primary working tree.
 
     Refuse concurrent source edits rather than overwriting them. The primary
@@ -48,6 +50,12 @@ def build_shared_checkout(code_only=True, android_symbols="none", capture_player
         raise RuntimeError("Shared build requires a normal primary checkout in the same repository")
     if android_symbols not in {"none", "debugging"} or capture_il2cpp_invocation and not capture_player_linker_inputs:
         raise ValueError("Invalid shared build options")
+    if (
+        iteration_mode not in {"", "export-splice", "scripts-only"}
+        or iteration_mode
+        and (not code_only or android_symbols != "none" or capture_player_linker_inputs)
+    ):
+        raise ValueError("Invalid shared iteration build options")
     target = git(root, "rev-parse", "HEAD")
     lock = primary / "work/coordination/unity-build.lock"
     with host_build_lock(lock, operation="shared committed-source build " + target):
@@ -81,6 +89,8 @@ def build_shared_checkout(code_only=True, android_symbols="none", capture_player
                 git(primary, "switch", "--detach", target)
             invoke(primary, ["preflight", "--host-only"], env=environment, pass_fds=descriptors)
             options = ["prototype", "--action", "whole-catalog-code-build" if code_only else "whole-catalog-build"]
+            if iteration_mode:
+                options = ["prototype", "--action", "whole-catalog-fast-build" if iteration_mode == "export-splice" else "whole-catalog-scripts-build"]
             if android_symbols == "debugging":
                 options.append("--debug-symbols")
             if capture_player_linker_inputs:

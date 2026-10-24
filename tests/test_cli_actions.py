@@ -194,6 +194,8 @@ class PrototypeActionTests(unittest.TestCase):
         added = {
             "shared-catalog-code-build",
             "whole-catalog-fast-build",
+            "shared-catalog-fast-build",
+            "shared-catalog-scripts-build",
             "whole-catalog-scripts-build",
             "apk-member-compare",
             "rebuild-step",
@@ -208,6 +210,9 @@ class PrototypeActionTests(unittest.TestCase):
             {name for name, entry in actions.ACTIONS.items() if entry.status == "current"},
             {
                 "whole-catalog-fast-build",
+                "shared-catalog-code-build",
+                "shared-catalog-fast-build",
+                "shared-catalog-scripts-build",
                 "whole-catalog-scripts-build",
                 "apk-member-compare",
                 "rebuild-step",
