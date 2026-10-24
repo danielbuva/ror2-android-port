@@ -9,7 +9,9 @@ import argparse
 import hashlib
 import importlib.util
 import json
+import os
 from pathlib import Path
+import secrets
 import shutil
 import struct
 import subprocess
@@ -39,6 +41,127 @@ MANIFEST = module("_owner_manifest", SOURCE / "binary_manifest.py")
 def sha(path):
     with Path(path).open("rb") as stream:
         return hashlib.file_digest(stream, "sha256").hexdigest()
+
+
+def sign(request_path, output):
+    """Align/sign on the owner host, retaining one private key across builds."""
+    request = json.loads(Path(request_path).read_text())
+    if set(request) != {"unsigned", "java", "zipalign", "apksigner_jar", "key_directory"}:
+        raise ValueError("explicit owner signing inputs required")
+    inputs = {name: Path(request[name]).resolve(strict=True) for name in ("unsigned", "java", "zipalign", "apksigner_jar")}
+    keys = Path(request["key_directory"])
+    output = Path(output).absolute()
+    if not keys.is_absolute() or keys != keys.resolve() or output.resolve().is_relative_to(keys) or keys.is_relative_to(output.resolve()):
+        raise ValueError("canonical durable key directory separate from build output required")
+    if shutil.disk_usage(output.parent).free < 2 * inputs["unsigned"].stat().st_size + 2 * 1024**3:
+        raise RuntimeError("owner signing storage reserve unavailable")
+    keys.mkdir(mode=0o700, exist_ok=True)
+    if keys.stat().st_mode & 0o077:
+        raise ValueError("owner key directory must be private")
+    key, password = keys / "owner.p12", keys / "password"
+    if key.is_symlink() or password.is_symlink() or (key.exists() and not password.is_file()):
+        raise ValueError("owner signing key/password state differs")
+    output.mkdir(mode=0o700)
+    before = {name: sha(path) for name, path in inputs.items()}
+    result = {"success": False, "signed": False, "new_owner_key": not key.exists(), "installs": 0}
+    started = time.monotonic()
+    try:
+        if not password.exists():
+            with password.open("xb") as stream:
+                os.chmod(password, 0o600)
+                stream.write(secrets.token_urlsafe(40).encode())
+        if password.stat().st_mode & 0o077 or not password.read_bytes():
+            raise ValueError("owner password must be a nonempty private file")
+        environment = dict(os.environ, ROR2_OWNER_SIGNING_PASSWORD=password.read_text())
+
+        def run(label, command):
+            with (output / (label + ".log")).open("xb") as log:
+                subprocess.run(
+                    list(map(str, command)), env=environment, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT, check=True, timeout=600
+                )
+
+        keytool = inputs["java"].with_name("keytool")
+        credentials = ["-keystore", key, "-storepass:env", "ROR2_OWNER_SIGNING_PASSWORD"]
+        if not key.exists():
+            run(
+                "create-key",
+                [
+                    keytool,
+                    "-genkeypair",
+                    "-alias",
+                    "owner",
+                    "-dname",
+                    "CN=Local Owner",
+                    "-storetype",
+                    "PKCS12",
+                    *credentials,
+                    "-keypass:env",
+                    "ROR2_OWNER_SIGNING_PASSWORD",
+                    "-keyalg",
+                    "RSA",
+                    "-keysize",
+                    "2048",
+                    "-validity",
+                    "3650",
+                    "-noprompt",
+                ],
+            )
+            os.chmod(key, 0o600)
+        if key.stat().st_mode & 0o077:
+            raise ValueError("owner keystore must be private")
+        run("check-key", [keytool, "-list", "-alias", "owner", *credentials])
+        key_before, password_before = sha(key), sha(password)
+        aligned, signed = output / "aligned.apk", output / "signed.apk"
+        run("align", [inputs["zipalign"], "-P", "16", "4", inputs["unsigned"], aligned])
+        run(
+            "sign",
+            [
+                inputs["java"],
+                "-jar",
+                inputs["apksigner_jar"],
+                "sign",
+                "--ks",
+                key,
+                "--ks-key-alias",
+                "owner",
+                "--ks-pass",
+                "env:ROR2_OWNER_SIGNING_PASSWORD",
+                "--key-pass",
+                "env:ROR2_OWNER_SIGNING_PASSWORD",
+                "--v4-signing-enabled",
+                "false",
+                "--out",
+                signed,
+                aligned,
+            ],
+        )
+        run("verify-signature", [inputs["java"], "-jar", inputs["apksigner_jar"], "verify", "--verbose", "--print-certs", signed])
+        run("verify-alignment", [inputs["zipalign"], "-c", "-P", "16", "4", signed])
+
+        def entries(apk):
+            with zipfile.ZipFile(apk) as archive:
+                rows = {}
+                for item in archive.infolist():
+                    if ASSEMBLY.obsolete_signature(item.filename):
+                        continue
+                    if item.filename in rows:
+                        raise ValueError("duplicate APK entry")
+                    with archive.open(item) as stream:
+                        rows[item.filename] = (item.file_size, hashlib.file_digest(stream, "sha256").hexdigest())
+                return rows
+
+        if entries(inputs["unsigned"]) != entries(signed):
+            raise ValueError("owner signing changed an APK content entry")
+        if before != {name: sha(path) for name, path in inputs.items()} or key_before != sha(key) or password_before != sha(password):
+            raise ValueError("owner signing input/key changed")
+        result.update(success=True, signed=True, apk_sha256=sha(signed), apk_bytes=signed.stat().st_size)
+        return result
+    except Exception as error:
+        result.update(error_type=type(error).__name__, error=str(error))
+        raise
+    finally:
+        result["seconds"] = time.monotonic() - started
+        (output / "result.json").write_text(json.dumps(result, indent=2) + "\n")
 
 
 def build(request_path, output):
@@ -224,10 +347,12 @@ def build(request_path, output):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--request", required=True)
+    selection = parser.add_mutually_exclusive_group(required=True)
+    selection.add_argument("--request")
+    selection.add_argument("--sign-request")
     parser.add_argument("--output", required=True)
     args = parser.parse_args()
-    print(json.dumps(build(args.request, args.output)))
+    print(json.dumps(sign(args.sign_request, args.output) if args.sign_request else build(args.request, args.output)))
 
 
 if __name__ == "__main__":

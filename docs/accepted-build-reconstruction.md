@@ -363,7 +363,8 @@ search nor proof that a small independently distributable patch exists.
 
 **Continue the narrow replay implementation before another large exporter:**
 use the reproducible packet producer and corrected resource-storage assembler;
-finish phone-side durable owner signing, connect an ordinary Android host to the
+integrate [J1095 durable signing](PORTING_JOURNAL.md#j1095--retain-one-on-device-owner-key-across-separate-apk-signing-builds)
+into the full-player path, connect an ordinary Android host to the
 approved launcher adapter, and qualify normal installation/update and performance
 on device. The initial phone-produced archive needs the corrected assembly step.
 The resulting host-aligned/signed candidate is ready for device qualification; no
