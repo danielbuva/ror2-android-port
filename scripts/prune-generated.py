@@ -10,7 +10,9 @@ rebuild roots. Receipts, logs, captures, JSON evidence and recipes stay.
 Protected: every APK SHA-256 named in PORTING_STATE.md, docs/BASELINE.md,
 docs/history-retention.md, the codex coordination lock, current-build, iteration-base and
 device receipts (plus --keep-sha256), and anything modified more recently than
---min-age-hours (so it is safe to run while a build holds the editor). A removed build-cache entry keeps its result.json under
+--min-age-hours (so it is safe to run while a build holds the editor), and
+anything inside a directory containing a `.prune-keep` file (for costly
+private oracles or packets you still need). A removed build-cache entry keeps its result.json under
 work/cleanup-analysis/pruned-build-cache/<key>/; a removed experiment binary
 leaves an adjacent <name>.retired.json marker. Rebuild from the recorded source
 commit if an old candidate is ever needed again.
@@ -37,6 +39,7 @@ BINARY_SUFFIXES = (".apk", ".aab", ".obb")
 BULKY_DIRS = {"payload", "il2cppOutput", "Bee"}
 LARGE_BINARY = 32 * 1024 * 1024
 SCAN_ROOTS = ("experiments", "coordination", "rebuild")
+KEEP_MARKER = ".prune-keep"
 
 
 def tree_size(path):
@@ -94,6 +97,16 @@ def protected_state(work, extra):
     return hashes, paths
 
 
+def kept(path, work):
+    """A `.prune-keep` file in a directory (or any parent under work/) protects it."""
+    current = path if path.is_dir() else path.parent
+    while current.is_relative_to(work) and current != work:
+        if (current / KEEP_MARKER).exists():
+            return True
+        current = current.parent
+    return False
+
+
 def is_protected_path(path, paths):
     resolved = path.resolve()
     return any(resolved == p or resolved.is_relative_to(p) or p.is_relative_to(resolved) for p in paths)
@@ -149,6 +162,9 @@ class Planner:
             self.add(lane, "build lane", name=lane.name)
 
     def add(self, path, kind, **extra):
+        if kept(path, self.work):
+            self.keep(path, KEEP_MARKER)
+            return
         self.items.append({"path": path, "kind": kind, "bytes": tree_size(path), **extra})
 
     def build_cache(self):

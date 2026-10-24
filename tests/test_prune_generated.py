@@ -139,6 +139,14 @@ class PruneGeneratedTests(unittest.TestCase):
         self.assertEqual(plan[0]["skipped"], "lane became active after planning")
         self.assertTrue(lane.exists())
 
+    def test_prune_keep_marker_protects_a_directory_tree(self):
+        run = self.work / "coordination/oracle/packet"
+        (run / "payload").mkdir(parents=True)
+        (run / "payload/whole-game-content").write_bytes(b"x")
+        (self.work / "coordination/oracle/.prune-keep").write_text("costly private oracle\n")
+        age(self.work / "coordination")
+        self.assertEqual(self.plan().items, [])
+
 
 if __name__ == "__main__":
     unittest.main()

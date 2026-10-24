@@ -34,7 +34,8 @@ The host disk is shared by every agent; unchecked build copies once filled
   unavoidable. Review checkouts and scratch Unity projects are deleted when the
   review ends.
 - Pin an APK you still need by naming its hash in `PORTING_STATE.md` or the
-  coordination lock; everything else is disposable after 24 h.
+  coordination lock; protect a costly private oracle or packet directory by putting a
+  `.prune-keep` file in it; everything else is disposable after 24 h.
 - Before starting a full build, check `df -h /System/Volumes/Data`; below 100 GB
   free, prune first and report if that does not restore it.
 - Device scratch counts too: workspaces you create on a phone (`/data/local/tmp/...`, app
