@@ -21,7 +21,7 @@ WIRE = load("owner_manifest_wire", ROOT / "scripts/lab/phone_apk.py")
 NONE = 0xFFFFFFFF
 
 
-def authored_manifest(utf8=True, unity=PATCH.UNITY, duplicate=False):
+def authored_manifest(utf8=True, unity=PATCH.UNITY, duplicate=False, version_kind=0x10, duplicate_version=False, omit_version=False):
     strings = [
         "manifest",
         "application",
@@ -69,7 +69,8 @@ def authored_manifest(utf8=True, unity=PATCH.UNITY, duplicate=False):
     intent = node(3, [], node(4, [attribute(10, 15)]) + node(5, [attribute(10, 16)]))
     marker = node(6, [attribute(10, 17), attribute(12, 18)])
     activity = node(2, [attribute(10, 14), attribute(11, 0x700, 0x10)], intent * (2 if duplicate else 1) + marker)
-    xml = node(0, [attribute(7, 13, namespace=NONE), attribute(8, 7, 0x10)], node(1, [], activity))
+    versions = [] if omit_version else [attribute(8, 7, version_kind)] * (2 if duplicate_version else 1)
+    xml = node(0, [attribute(7, 13, namespace=NONE), *versions], node(1, [], activity))
     return struct.pack("<HHI", 3, 8, 8 + len(pool) + len(resource_map) + len(xml)) + pool + resource_map + xml
 
 
@@ -131,3 +132,21 @@ class OwnerBinaryManifestTests(unittest.TestCase):
         for data in (authored_manifest(unity="dev.owner.OtherActivity"), authored_manifest(duplicate=True), authored_manifest()[:-1]):
             with self.subTest(size=len(data)), self.assertRaises(ValueError):
                 PATCH.patch(data, WIRE)
+
+    def test_owner_upgrade_changes_only_version_among_original_manifest_attributes(self):
+        for utf8 in (True, False):
+            with self.subTest(utf8=utf8):
+                original = authored_manifest(utf8=utf8)
+                _, _, before = read(original)
+                _, _, after = read(PATCH.patch(original, WIRE, version_code=8))
+                expected = dict(before[0]["attributes"])
+                expected[(PATCH.ANDROID, "versionCode")] = 8
+                self.assertEqual(after[0]["attributes"], expected)
+
+    def test_owner_upgrade_refuses_nonincreasing_invalid_and_ambiguous_versions(self):
+        for version in (0, -1, True, 7, 6, 2147483648, "8"):
+            with self.subTest(version=version), self.assertRaises(ValueError):
+                PATCH.patch(authored_manifest(), WIRE, version_code=version)
+        for options in ({"version_kind": 3}, {"duplicate_version": True}, {"omit_version": True}):
+            with self.subTest(options=options), self.assertRaises(ValueError):
+                PATCH.patch(authored_manifest(**options), WIRE, version_code=8)

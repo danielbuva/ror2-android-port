@@ -40,7 +40,9 @@ def string_pool(strings, utf8):
     )
 
 
-def patch(data, wire):
+def patch(data, wire, *, version_code=None):
+    if version_code is not None and (type(version_code) is not int or not 1 <= version_code <= 2147483647):
+        raise ValueError("owner version code must be a positive Android integer")
     if len(data) < 8 or struct.unpack_from("<HHI", data) != (3, 8, len(data)):
         raise ValueError("invalid complete binary Android manifest")
     chunks = list(wire._chunks(data, 8, len(data)))
@@ -99,8 +101,26 @@ def patch(data, wire):
     manifests = [n for n in roots if isinstance(n, dict) and n["tag"] == "manifest"]
     applications = [n for m in manifests for n in m["children"] if isinstance(n, dict) and n["tag"] == "application"]
     activities = [n for app in applications for n in app["children"] if isinstance(n, dict) and n["tag"] == "activity" and n["attrs"].get("name") == UNITY]
-    if len(applications) != 1 or len(activities) != 1:
+    if len(manifests) != 1 or len(applications) != 1 or len(activities) != 1:
         raise ValueError("expected one original Unity activity")
+    if version_code is not None:
+        original = manifests[0]["start"]
+        node_header = struct.unpack_from("<H", original, 2)[0]
+        relative, stride, count = struct.unpack_from("<HHH", original, node_header + 8)
+        versions = []
+        for i in range(count):
+            position = node_header + relative + i * stride
+            ns, key, _, _, _, kind, value = struct.unpack_from("<IIIHBBI", original, position)
+            if ns == android and strings[key] == "versionCode":
+                if kind not in (0x10, 0x11):
+                    raise ValueError("expected a literal owner version code")
+                versions.append((position, value))
+        if len(versions) != 1 or version_code <= versions[0][1]:
+            raise ValueError("owner version code must increase one original version")
+        changed = bytearray(original)
+        struct.pack_into("<I", changed, versions[0][0] + 8, NONE)
+        struct.pack_into("<I", changed, versions[0][0] + 16, version_code)
+        manifests[0]["start"] = bytes(changed)
     filters = []
     for child in activities[0]["children"]:
         if not isinstance(child, dict) or child["tag"] != "intent-filter":

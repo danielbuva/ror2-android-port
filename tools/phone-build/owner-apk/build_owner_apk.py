@@ -44,8 +44,11 @@ def sha(path):
 def build(request_path, output):
     request = json.loads(Path(request_path).read_text())
     fields = {"manifest", "manifest_sha256", "targets", "frontend", "java", "android_jar", "d8_jar", "wire_helper"}
-    if set(request) != fields or request["manifest_sha256"] != PROFILE:
+    if set(request) - {"version_code"} != fields or request["manifest_sha256"] != PROFILE:
         raise ValueError("unsupported owner APK request/profile")
+    version_code = request.get("version_code")
+    if "version_code" in request and (type(version_code) is not int or not 1 <= version_code <= 2147483647):
+        raise ValueError("owner version code must be a positive Android integer")
     roots = {key: Path(request[key]).resolve(strict=True) for key in fields - {"manifest_sha256"}}
     output = Path(output).absolute()
     for selected in (roots["targets"], roots["frontend"], SOURCE):
@@ -124,7 +127,7 @@ def build(request_path, output):
             raise ValueError("bootstrap requires exactly one authored DEX")
         apk_rows = {r["path"][4:]: r for r in profile["targets"] if r["path"].startswith("apk/") and not ASSEMBLY.obsolete_signature(r["path"][4:])}
         manifest_row = apk_rows["AndroidManifest.xml"]
-        patched = MANIFEST.patch(PACKET.verify(roots["targets"], manifest_row).read_bytes(), wire)
+        patched = MANIFEST.patch(PACKET.verify(roots["targets"], manifest_row).read_bytes(), wire, version_code=version_code)
         (output / "AndroidManifest.xml").write_bytes(patched)
         payload = [r for r in profile["targets"] if r["path"].startswith("payload/") and not r["path"].endswith(".manifest")]
         index = {"schema": 1, "profile": PROFILE, "files": [{"name": r["path"][8:], "bytes": r["bytes"], "sha256": r["sha256"]} for r in payload]}
@@ -208,6 +211,7 @@ def build(request_path, output):
             il2cpp_or_original_dex_changed=False,
             signed=False,
             device_qualified=False,
+            requested_version_code=version_code,
         )
         return result
     except Exception as error:
