@@ -80,6 +80,8 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
     public sealed class VisualCameraSnapshot
     {
         public int instanceId, clearFlags, cullingMask, targetDisplay;
+        public int renderingPath, actualRenderingPath, depthTextureMode, activeColorSpace;
+        public bool allowHDR;
         public bool exists, ownedSourceCamera, active, enabled, orthographic, targetTexturePresent, scalarValuesFinite;
         public float depth, nearClip, farClip, fieldOfView, rectX, rectY, rectWidth, rectHeight;
         public Vector3 position;
@@ -978,6 +980,11 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
             depth = camera.depth,
             clearFlags = (int)camera.clearFlags,
             cullingMask = camera.cullingMask,
+            renderingPath = (int)camera.renderingPath,
+            actualRenderingPath = (int)camera.actualRenderingPath,
+            depthTextureMode = (int)camera.depthTextureMode,
+            activeColorSpace = (int)QualitySettings.activeColorSpace,
+            allowHDR = camera.allowHDR,
             nearClip = camera.nearClipPlane,
             farClip = camera.farClipPlane,
             fieldOfView = camera.fieldOfView,

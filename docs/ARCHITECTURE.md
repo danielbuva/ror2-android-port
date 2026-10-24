@@ -2135,6 +2135,16 @@ routing or gameplay value is synthesized. Setup clones only the reload
 configuration; disposal restores captured statics and destroys that owned clone.
 The production setup/exclusion/disposal host fixture covers both modes.
 
+For selected PCM diagnostics, the first observed original pistol state records
+one read-only source sound/registration/native-voice/global-SFX-volume sample
+with a realtime stamp. Voice arrays retain at most eight IDs; failed queries
+keep their raw result and never invent active IDs. The sample performs no event,
+registration, enable, routing or volume mutation and retains no Unity reference.
+It joins existing PCM timing without attributing samples or proving audibility.
+The existing source-camera render evidence also reports requested/actual path,
+HDR, depth mode and active color space to distinguish pipeline state from a
+visual-parity claim.
+
 `PrimaryFireSession` reuses one scalar operand snapshot during observation and
 freezes a separate first-failure snapshot only on refusal or accessor exception.
 It captures the live body, locator, primary slot, state machine and state in
