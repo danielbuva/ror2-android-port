@@ -564,7 +564,9 @@ python3 -I -S -B tools/phone-build/accepted-output/texture_produce.py \
 
 The existing producer owns source decoding, transparency dilation, field
 projection, capacity reservation and every produced/persisted body/pixel check.
-BC7 uses the bounded native decoder; BC3/RGBA use the existing qualified paths.
+BC3 and BC7 use the bounded native decoder; RGBA retains the existing copy path.
+The authored BC3 decoder preserves the qualified byte expansion and integer
+color/alpha interpolation, including logical edge cropping.
 The same native pixel helper performs the existing integer transparency
 dilation, keeping coordinate buffers outside the Python parent and freeing them
 before pipe output. Its authored seed/tie controls match the standard-library

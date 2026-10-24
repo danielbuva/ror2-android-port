@@ -270,13 +270,15 @@ def pixels_input(bundle, body, selected, jpeg_codec=None, etc_codec=None, sdk=No
             raise ValueError("pinned SDK texture toolchain required")
         width, height = selected["width"], selected["height"]
         fmt = struct.unpack("<i", field(body, selected["fields"], "m_TextureFormat"))[0]
-        if fmt == 25:
+        if fmt in (12, 25):
             top_bytes = ((width + 3) // 4) * ((height + 3) // 4) * 16
             if len(pixels) < top_bytes:
-                raise ValueError("truncated BC7 top mip")
-            decoded = subprocess.run([sdk["pixels"], str(width), str(height)], input=pixels[:top_bytes], capture_output=True, timeout=120)
+                raise ValueError("truncated BC top mip")
+            decoded = subprocess.run(
+                [sdk["pixels"], str(width), str(height), *(["bc3"] if fmt == 12 else [])], input=pixels[:top_bytes], capture_output=True, timeout=120
+            )
             if decoded.returncode or len(decoded.stdout) != width * height * 4:
-                raise ValueError("public BC7 decoder failed or returned a different extent")
+                raise ValueError("native BC decoder failed or returned a different extent")
             rgba = decoded.stdout
         else:
             rgba = rgba_source(pixels, width, height, fmt)

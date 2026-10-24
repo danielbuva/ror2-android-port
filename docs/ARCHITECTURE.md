@@ -107,7 +107,7 @@ with `--etc-codec` admission for both profiles. Setup/state/teardown and source/
 persisted-output verification stay with the existing owners. J1088 qualifies
 all 281 records on Android, the shared codec build and complete 5,006-record
 RGB/Alpha8/uncompressed regression case. Mips and complete bundles remain open.
-`build_texture_sdk.py` owns the current experimental SDK pipe/BC7 helper build.
+`build_texture_sdk.py` owns the current experimental SDK pipe/pixel helper build.
 It accepts explicit native/compiler/provider roots, retains source/license/build
 receipts and generates a private `sdk-tools.json` containing command, environment,
 pixel tool and dependency pins. The existing texture owner admits it through

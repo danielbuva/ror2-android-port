@@ -1,4 +1,4 @@
-"""Build current SDK pipe/BC7 tools from explicit owner and public providers."""
+"""Build current SDK pipe/pixel tools from explicit owner and public providers."""
 
 import argparse
 import hashlib

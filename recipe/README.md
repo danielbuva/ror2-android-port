@@ -2423,7 +2423,8 @@ paths and dependency pins are generated in ignored output, not committed.
 bcdec source from `80859ed3b7afb1c527a2a99d70c61457bea72d0c` under its MIT
 alternative, retaining the complete upstream license. The generic codec's
 standard tables are public upstream material, not game or SDK-derived bytes.
-The authored bounded `texture_pixels.c` pipe adapter uses its existing BC7 API.
+The authored bounded `texture_pixels.c` pipe adapter uses its existing BC7 API
+and independently implements the already qualified integer BC3 interpolation.
 Provider identities and license selection are documented beside the header.
 Provenance, licensing, privacy and sensitive-content audit: 2026-10-24. This
 source/recipe audit grants no game/SDK redistribution rights or ownership,

@@ -62,6 +62,37 @@ static int dilate(int width, int height) {
     return result;
 }
 
+/* Same byte expansion and integer interpolation as the qualified Python decoder. */
+static void bc3(const unsigned char *block, unsigned char *rgba) {
+    unsigned char palette[4][3], alpha[8];
+    for (int endpoint = 0; endpoint < 2; endpoint++) {
+        unsigned value = block[8 + endpoint * 2] | (unsigned)block[9 + endpoint * 2] << 8;
+        unsigned r = value >> 11, g = (value >> 5) & 63, b = value & 31;
+        palette[endpoint][0] = (r << 3) | (r >> 2);
+        palette[endpoint][1] = (g << 2) | (g >> 4);
+        palette[endpoint][2] = (b << 3) | (b >> 2);
+    }
+    for (int c = 0; c < 3; c++) {
+        palette[2][c] = (2 * palette[0][c] + palette[1][c]) / 3;
+        palette[3][c] = (palette[0][c] + 2 * palette[1][c]) / 3;
+    }
+    alpha[0] = block[0]; alpha[1] = block[1];
+    if (alpha[0] > alpha[1]) {
+        for (int i = 1; i < 7; i++) alpha[i + 1] = ((7 - i) * alpha[0] + i * alpha[1]) / 7;
+    } else {
+        for (int i = 1; i < 5; i++) alpha[i + 1] = ((5 - i) * alpha[0] + i * alpha[1]) / 5;
+        alpha[6] = 0; alpha[7] = 255;
+    }
+    uint32_t colours = 0;
+    uint64_t alphas = 0;
+    for (int i = 0; i < 4; i++) colours |= (uint32_t)block[12 + i] << (8 * i);
+    for (int i = 0; i < 6; i++) alphas |= (uint64_t)block[2 + i] << (8 * i);
+    for (int i = 0; i < 16; i++) {
+        memcpy(rgba + i * 4, palette[(colours >> (2 * i)) & 3], 3);
+        rgba[i * 4 + 3] = alpha[(alphas >> (3 * i)) & 7];
+    }
+}
+
 int main(int argc, char **argv) {
     if (argc != 3 && argc != 4)
         return 64;
@@ -72,7 +103,8 @@ int main(int argc, char **argv) {
     long height = strtol(argv[2], &end, 10);
     if (*end || height < 1 || height > 8192 || width * height * 4 > 64 * 1024 * 1024)
         return 65;
-    if (argc == 4)
+    int is_bc3 = argc == 4 && !strcmp(argv[3], "bc3");
+    if (argc == 4 && !is_bc3)
         return strcmp(argv[3], "dilate") ? 65 : dilate((int)width, (int)height);
     unsigned char *rows = malloc(width * 16);
     if (!rows)
@@ -83,7 +115,8 @@ int main(int argc, char **argv) {
             unsigned char decoded[64];
             if (fread(block, 1, 16, stdin) != 16)
                 return 67;
-            bcdec_bc7(block, decoded, 16);
+            if (is_bc3) bc3(block, decoded);
+            else bcdec_bc7(block, decoded, 16);
             int columns = width - bx < 4 ? width - bx : 4;
             for (int y = 0; y < 4 && by + y < height; y++)
                 memcpy(rows + (y * width + bx) * 4, decoded + y * 16, columns * 4);
