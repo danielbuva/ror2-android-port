@@ -1433,3 +1433,26 @@ qualification providers; no tracked tool names those research paths. The
 initial plan and later complete-NDK/provider-drift revision remain separate.
 This is planning/migration evidence, not another native compilation or a
 public-input bootstrap claim.
+
+
+## Combined owner code backend
+
+`tools/phone-build/owner-code/produce.py` consumes explicit private owner work,
+SDK and a complete 332-entry basename/provider-path/SHA-256 map. The independently
+produced managed cohort remains required local state until upstream orchestration
+is integrated. It is not supplied by a project/captured build, and the current
+game build reads none of these outputs. The tracked producer/profile and SDK
+registry reader generate every new managed copy, root file, stripping output,
+C++/metadata file, retained source frame, native request and terminal result.
+[Setup and lifecycle](../tools/phone-build/owner-code/README.md#combined-whole-player-backend)
+describe all explicit providers and exclusive private outputs.
+
+`work/coordination/owner-code-producer-v1/public-backend-v1/` retains the initial
+complete public-source host execution. `public-backend-v2/` is the final same
+case with explicit interstage input checks. Both retain all 687 generated sources
+as hash-verified gzip frames plus ledgers and data/metadata; the expanded owned
+C/C++ copies were removed only after complete restore/hash verification. No
+failed case or required input was retired. The generator does not read these
+research paths implicitly. The final sealed proof covers the current source,
+configuration, actual outputs and comparison to J1058. Native execution remains
+J1059; these new attempts stop after native planning, not native compilation.

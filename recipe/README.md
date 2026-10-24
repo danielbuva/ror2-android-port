@@ -124,6 +124,7 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 | `music-reflection-preservation.json` | Original MusicController bootstrap reflection contract | Authored assembly/type/member names and narrow preservation requirements for the pinned editor. | No implementation, game data, SDK code, binary, private path or device/account identifier. Audited 2026-10-21. | Synthetic metadata fixtures verify the declaration; same-build post-strip inspection is required before runtime qualification. |
 | `original-audio-owner-sources.json` | Exact authored original-audio owner, bounded waveform and music-query cohort | Repository source hashes, source membership, authored script identities and historical ancestor hash. | Authored code identifiers and hashes only; no game implementation, content, SDK code, binary, private path or device/account data. Audited 2026-10-21. | Both producer modes validate the recipe and owner hashes; camera staging pins the same recipe, and actual owner bytes participate in generation cache identity. |
 | `owner-native-arm64.json` | J1059 native build configuration | SDK-relative selectors, six flag templates, translation-unit identities/link ordering and a portable SDK cohort hash. | No source bodies, game data, compiled bytes, captured graph, private paths or account/device data. Audited 2026-10-24. | Explicit accepted input, source/converter/metadata binding; no Editor/project or device consumer. |
+| `owner-player-code.json` | Current target root/retention and SDK linker/converter policy | Minimum scene/type/member identities, preservation flags, assembly order and tool hashes. | No method body, serialized object value, native registration table, binary, private path or account/device data. Audited 2026-10-24. | Full reviewed owner input and explicit hash-bound managed providers; exact SDK tools and derived native identities. |
 
 `runtime-sources.json` lists paths relative to `tools/unity`, staged at
 `Assets/LabLoadingScene` by basename. Basename collisions (including generated sources)
@@ -2001,3 +2002,28 @@ owner-supplied SDK and converter providers. No SDK grant or runtime equivalence
 is inferred from this configuration. Manual provenance, privacy, licensing and
 sensitive-content audit: 2026-10-24. Host compiler policy is preserved; Android
 hosting and game acceptance remain open.
+
+## Fixed target roots and code-generation configuration
+
+`owner-player-code.json` records the qualified current target's 471 scene/type
+identity relationships, empty serialized-type JSON set, explicit module policy,
+six preservation XML documents, 332 managed provider identities, 11 root
+assemblies, 93 converter assembly identities/order and 309 SDK tool/config file
+hashes. Its XML contains selector elements and attributes only: type/member names,
+preservation/serialization flags and relationships, never method bodies or
+serialized object values. The original current XML bytes are retained to avoid
+unexamined selector changes. In particular, the four inherited Burst selectors
+are preserved as observed configuration, not asserted to resolve to all intended
+members. The runtime's existing source behavior is unchanged.
+
+The captured SDK native table is deliberately absent. The public existing static
+reader derives its 318 identities from the owner's exact SDK binary at execution.
+No SDK implementation, game method body, generated game code/data, native table,
+compiled binary, captured response/DAG, private path, account/device identity,
+credential or key is included. This is fixed R36-era target configuration with
+original conservative Android IL2CPP policy, not a claim of independently inferred
+scene semantics or accepted-output parity. It can only configure reconstruction
+from the complete explicit owner-supplied provider cohort and reviewed legitimate
+input. Main independently checked the six XMLs against prior configuration and
+confirmed selector-only contents and exact project-field equality. Manual
+provenance, privacy, licensing and sensitive-content audit: 2026-10-24.

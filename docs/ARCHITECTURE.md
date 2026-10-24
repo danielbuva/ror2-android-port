@@ -115,6 +115,18 @@ There is no shared project, Editor, device or current game-build consumer.
 The public entry has complete plan equivalence evidence; its full execution
 and the remaining chain's single-command integration stay unqualified.
 
+`tools/phone-build/owner-code/produce.py` owns the current experimental combined
+whole-player backend: explicit hash-bound managed providers, audited target
+roots, SDK-derived native identities, exact SDK stripping/conversion, verified
+source-frame retention and the native stage above. It adds no runtime owner.
+`recipe/owner-player-code.json` holds minimum fixed target identities/retention,
+assembly order and tool hashes; no captured native table or response is read.
+[Setup and lifecycle](../tools/phone-build/owner-code/README.md#combined-whole-player-backend)
+name input setup, exclusive outputs, interstage drift checks, failed-state
+retention and teardown. J1061 verifies its complete stripping/conversion through
+native planning; upstream managed production is still explicitly supplied.
+No shared project, Editor, device or current build consumer is involved.
+
 `scripts/lab/owner_audio_prefab.py` owns current experimental bounded host
 reconstruction of one source audio prefab from the owner's original bundles.
 `recipe/owner-audio-prefab.json` holds audited minimum identities and one clearly

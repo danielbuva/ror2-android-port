@@ -34063,3 +34063,66 @@ single-command managed/root/converter integration, Burst/content/shaders,
 Android hosting, installation/update and matched gameplay/performance remain
 open. PR #55 retains its device/adoption hold. Architecture C and the existing
 desktop fallback stay current.
+
+
+## J1061 — Compose the public whole-player stripping and conversion backend
+
+2026-10-24. Execute the same qualified whole-player chain through a public named
+owner with explicit managed providers and audited target configuration. This
+is host stripping/conversion and complete native planning, not a new native
+compiler execution, Editor build, phone conversion or gameplay acceptance.
+
+**Change and provenance.** `tools/phone-build/owner-code/produce.py` joins fixed
+target roots, the existing static SDK registry reader/root composer, exact SDK
+UnityLinker, IL2CPP conversion, verified source-frame preservation and J1060's
+public native owner. Default execution continues through native construction;
+`--stop-after-conversion` explicitly limits qualification to native planning.
+The new `owner-player-code.json` contains 471 scene/type relationships, module
+policy, six retention XML documents, 332 provider names, 11 root assemblies,
+93 converter assembly identities/order and 309 SDK tool/config hashes. It
+contains no method body, serialized object value, SDK implementation, native
+registration table, game binary, captured response/DAG or private identifier.
+Recipe README records the full audit/table. This is configuration/pipeline
+engineering using J1058/J1059's existing mechanisms, not a new gameplay or
+middleware workaround. The four inherited Burst selectors remain literal;
+there is no assertion that they all bind intended members.
+
+**Execution and guards.** Supply the exact independent J1058 managed providers
+as explicit path/hash records; no tracked tool discovers a historical output
+or project. Derive all 318 native registration identities from the owner's SDK
+binary at execution. No Editor is run. Generate the target roots, copy/recheck
+all managed inputs, run conservative whole-player stripping and complete IL2CPP
+conversion with original null/array checks and ordered assemblies. Verify owner,
+SDK, provider, staged DLL and root state between expensive stages and at the end.
+Every generated translation unit is compressed, fully restored/hash-verified
+against its same-converter receipt, then its owned expanded copy can be removed.
+Cross-source includes refuse qualification. Source frames, metadata, logs,
+commands, receipts and terminal failures remain private. No current build,
+original installation or device state changes.
+
+**Complete result.** Initial v1 and final interstage-guard v2 runs succeed. Both
+produce all 94 stripped outputs (93 DLLs plus linker data) and all 691 converter
+C++/data/metadata output records byte-identical to J1058. Independently decompress
+and hash all 687 new source frames against those converter records. The native
+owner then plans all 825 tasks using its audited public configuration and exact
+same converter metadata, SHA-256
+`bcf048d4be9ef6d1cd2930134f84c357867ed82bfe60046bbec94d7f9ff1a5d7`.
+The full prior source content and native policy already have J1059 execution
+and J1060 plan-equivalence evidence; do not rerun that compiler as another
+feasibility experiment. A default full invocation through the new public
+controller remains unqualified. No runtime/performance parity follows.
+
+**Evidence and review.** Private `work/coordination/owner-code-producer-v1/`
+retains both actual attempts, explicit requests and `backend-proof-v2.json`
+with complete output/source/profile bindings and old/new comparisons. Main
+independently checks all six XML documents as selectors/attributes only and
+exact prior configuration text, project fields without a captured native table,
+and literal preservation of Burst selectors. Six focused host tests verify
+provider membership/hash refusal, interstage staged-DLL/root mutation refusal,
+exact checked source retirement/restoration, source include/hash refusal and
+whole closure/compiler policy. Public audits and normal fresh-clone CI are
+required before push. This removes private root/response/graph execution
+suppliers from the downstream owner chain. Upstream managed orchestration,
+licensed native input production, Burst/content/shaders, Android hosting,
+installation/update and matched gameplay/performance remain open. Architecture C,
+working build, desktop fallback and PR #55 device/adoption hold are unchanged.
