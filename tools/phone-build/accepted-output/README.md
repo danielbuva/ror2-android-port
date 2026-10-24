@@ -175,6 +175,9 @@ packs require a later complete bundle assembler and do not qualify other
 texture formats, game execution or the full phone-only owner installation.
 No current game build consumes this path.
 
+The complete host/phone case and explicit exclusions are recorded in
+[J1076](../../../docs/PORTING_JOURNAL.md#j1076--produce-a-qualified-uncompressed-texture-cohort-from-pc-bundles-on-android).
+
 ## Acquire the three SDK-copy inputs
 
 `sdk_inputs.py` is current experimental acquisition support for an owner's exact

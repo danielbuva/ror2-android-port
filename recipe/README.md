@@ -71,6 +71,7 @@ Pinned UnityPy 1.25.3 field/resource observations and Microsoft's public BC1
 format documentation inform the authored reader/decoder; no upstream or game
 implementation is copied. Discovery, generated packs and raw evidence remain
 ignored. This audit does not qualify complete bundles or an owner installation.
+J1076 records the qualified host/phone cohort and explicit exclusions.
 
 `owner-avatars.json` contains original bundle/member/object identities, hashes,
 source body and table extents, destination identities/hashes and permutations

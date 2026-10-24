@@ -36163,3 +36163,115 @@ this research is not a dependency of the accepted-target owner converter.
 General preload/target discovery remains unqualified and can be revisited from
 that preserved branch if a future target requires it. Closing the PR does not
 claim its unresolved record, alias or module semantics are solved.
+
+## J1076 — Produce a qualified uncompressed texture cohort from PC bundles on Android
+
+2026-10-24 UTC. **Result:** 356 accepted Texture2D records, 17,415,104 object
+bytes and 249,096,031 external pixel bytes, are reproduced exactly on host and
+assigned phone using original PC bundles and audited metadata. The complete
+399-record uncompressed cohort was checked: 43 pixel-postprocessing cases are
+excluded. Other texture formats, complete bundles and phone-only installation
+remain open. No APK is built, installed or launched in this case.
+
+**Hypothesis, reuse and prior art.** Read the community content-loader map and
+J1050/J1070/J1075 before extending the existing bounded source-range producer.
+Pinned UnityPy 1.25.3 type-tree/resource observations identify original bodies
+and pixel extents. Microsoft's [BC1 specification](https://learn.microsoft.com/en-us/windows/win32/direct3d10/d3d10-graphics-programming-guide-resources-block-compression#bc1)
+defines the authored endpoint/selector decoder and logical edge cropping.
+Pinned AssetRipper `TextureConverter.cs` at
+`1ac666f47d8e9dedf96afb0b914c70d7656151ea` supplies preprocessing/version clues,
+not implementation. Original bytes, actual typed fields and golden hashes
+outrank assumptions about importer defaults. No community implementation or
+protected content is copied into public source.
+
+**Complete cohort and scope.** The private source/target discovery checks all
+399 accepted Texture2D records in formats RGB24, RGBA32 and ARGB32, including
+60 export-suffixed names. All 399 metadata bodies can be reconstructed; 356
+also reproduce every pixel byte. The qualified public profile selects 64 PC
+bundles: 287 output records reuse original raw pixels/mips and 69 decode BC1
+top mips to RGB. Names, image size/format, alpha/usage settings and inline/
+resource placement are explicit generic serialization/import configuration.
+No pixel array, palette, target byte frame/patch or target float literal is
+tracked. The 43 exclusions remain named in private discovery, not silently
+accepted or filled with target data.
+
+**Implementation and evidence.** Public source checkpoint `db9a89e5` adds
+`texture_produce.py`, the audited `owner-uncompressed-textures.json` and three
+independently authored contracts. It reuses existing source-path and UnityFS
+owners, requires a separate new output with expected capacity plus 2 GiB
+reserve, validates every original bundle before/after, verifies every produced
+object/pixel hash and rereads every persisted extent. Complete/failed receipts
+retain outputs. It uses Python standard-library modules only; there is no
+Editor, UnityPy, image library, SDK, target/discovery input or runtime owner.
+Private evidence is under
+`work/coordination/accepted-build-reconstruction/media-source-v1/`:
+
+- `uncompressed-candidates-v4.jsonl` and `uncompressed-result-v4.json` bind the
+  full discovery result and source/target rechecks. Host discovery takes
+  65.211 seconds and peaks at 655,818,752 bytes; this diagnostic parser is not
+  the Android producer or its memory claim.
+- `texture-public-host-v1/result.json` records the public producer's complete
+  qualified cohort in 14.961 seconds, peak RSS 91,881,472 bytes. Recipe SHA-256
+  is `253554050ace7eff8b2eac65ddf3e47bc278c399f2c902fa5d18f874f779044e`.
+- `device-texture-v1/driver-result.json` records the same committed sources,
+  recipe and original-PC copy under the existing owned Android workspace and
+  pinned isolated Python 3.14.8. Production takes 25.170 seconds, peak RSS
+  52,662,272 bytes. No target game bytes are transferred to supply output.
+- Actual independent OS SHA-256 readbacks match the host packs:
+  `objects.bin` is
+  `d729c10b8a5ccb548f92b8e06f84ed89ba9e5d14cdebb7d570d08764fee7523a`;
+  `resources.bin` is
+  `85bf76d817d1398eb1c5237759775498c864cca8b2de490698e09f4fe14816dc`;
+  133,449-byte `index.jsonl` is
+  `5503317d3604e689f71dac574bbd6b0e07814e0f3c31b7050d6c0937f47d04e8`.
+- Three authored host and Android contracts pass: BC1 palettes/selectors and
+  logical-edge cropping; source-only external/inline pack persistence and
+  profile/input/pixel drift/existing-output refusal; and field/inline-source
+  bounds. Their fixture data is independently authored, not a game capture.
+- Independent installed-game hash remains
+  `4960fba8ed5e727639c4f156e2f08cf92a6b6486790bb0ab295925e9bd212de0`.
+  Package path is unchanged, process absent and OLED asleep. Fresh volumes/
+  storage observations are retained; no storage configuration or unrelated
+  data changes. The device lease is released and host generated-output prune
+  runs after the task.
+
+`device-texture-v1/proof-receipt.json` binds 33 artifacts, SHA-256
+`05e13ef2bcbc53d55ffb358291066cb41aed90e25182abc054feb05ab0a54bd3`.
+`texture-source-alias.json` verifies actual producer/test/recipe bytes remain
+identical after the integration rebase. No produced game data, raw device
+record, tool binary or private path is published.
+
+**First failures and unresolved preprocessing.** Private v1 discovery assumes
+every empty inline field has an external stream and stops on an empty dynamic
+font texture. Explicit zero-size handling repairs that diagnostic assumption.
+The v2 attempt is interrupted by provider capacity after partial logs; it is
+not a complete cohort result. The successor persists individual rows and
+reuses bounded source/target readers. V3 stops on an omitted generic usage
+setting; review adds that named import setting rather than arbitrary bytes.
+V4 completes the whole cohort without weakening a hash gate. Public host and
+phone production have no failure in the qualified profile.
+
+Separate retained ETC diagnostics use public Google Etc2Comp commit
+`39422c1aa2f4889d636db5790af1d0be6ff3a226` and Ericsson ETCPACK 2.74 commit
+`14a64d9d19318fb9f81ce339b7103ffa0f1781d7`, with their notices kept locally.
+Etc2Comp's tested presets do not reproduce the eight scoped top mips. ETCPACK
+fast/perceptual reproduces two complete RGB top mips and all 4,096 alpha blocks
+across four RGBA samples; colour differences remain. This is diagnostic codec
+evidence, not an ETC producer or permission to redistribute a tool or texture.
+Retained JPEG settings identify quality 90 and 4:2:0, but the tested encode/
+decode candidate does not reproduce the target and is not adopted.
+
+Two uncompressed RGBA failures change only RGB at zero-alpha pixels; alpha is
+identical. Three larger-image controls confirm that pattern but simple local
+fill hypotheses do not match every pixel. Correct colour dilation, JPEG and
+normal-map/mip preprocessing remain work. No hidden target colour literal or
+approximate result is admitted.
+
+**Remaining/revisit.** Revisit on source/schema/recipe, reader or interpreter
+changes and when resolving those 43 pixel cases. ETC/cubemap and other content,
+two mesh cases, animation, shaders, complete bundle metadata/reference assembly,
+full-player Android compiler/native production, licensed native input, durable
+owner signing and ordinary install/update remain open. These private packs
+have no current game-build consumer and establish no gameplay or performance
+acceptance. ARCHITECTURE and LOCAL_STATE name setup, teardown and ownership;
+no `./dev` action is added.
