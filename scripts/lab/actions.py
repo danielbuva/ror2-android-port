@@ -53,6 +53,8 @@ def _compare(function, kwargs, args):
 
 def _whole_catalog_code_build(function, kwargs, args):
     selected = dict(kwargs)
+    if getattr(args, "bundle_compression", None):
+        selected["bundle_compression"] = args.bundle_compression
     if getattr(args, "debug_symbols", False):
         selected["android_symbols"] = "debugging"
     if getattr(args, "capture_player_linker_inputs", False):

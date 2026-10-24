@@ -77,6 +77,11 @@ p.add_argument("--host-only", action="store_true", help="Current: preflight host
 p.add_argument("--force", action="store_true")
 p.add_argument("--debug-symbols", action="store_true", help="Current: opt-in Unity Android Debugging symbols for the exact main APK build")
 p.add_argument(
+    "--bundle-compression",
+    choices=("uncompressed",),
+    help="Current iteration only: whole-catalog-build in LAB_LANE with uncompressed bundles and verified unchanged-payload reuse; default acceptance setting stays chunked LZ4",
+)
+p.add_argument(
     "--capture-player-linker-inputs",
     action="store_true",
     help="Current: opt-in same-request pre-strip UnityLinker input inventory for whole-catalog-build or whole-catalog-code-build",
@@ -130,6 +135,8 @@ set_command_selector(a.device, os.environ.get("LAB_DEVICE"))
 if a.host_only and a.command != "preflight":
     p.error("--host-only requires preflight")
 whole_catalog_build = a.command == "prototype" and a.action in {"whole-catalog-build", "whole-catalog-code-build", "shared-catalog-code-build"}
+if a.bundle_compression and not (a.command == "prototype" and a.action == "whole-catalog-build" and lane_config()):
+    p.error("--bundle-compression requires whole-catalog-build in an isolated LAB_LANE")
 if a.debug_symbols and not (a.command == "build" or whole_catalog_build):
     p.error("--debug-symbols requires build or a whole-catalog build action")
 if a.capture_player_linker_inputs and not whole_catalog_build:

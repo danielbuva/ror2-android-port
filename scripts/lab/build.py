@@ -329,15 +329,16 @@ def whole_payload_inputs(project):
     }
 
 
-def freeze_whole_payload(project, result):
+def freeze_whole_payload(project, result, receipt=None):
     write(
-        WORK / "whole-catalog-code-base.json",
+        receipt or WORK / "whole-catalog-code-base.json",
         dict(files=whole_payload_inputs(project), allowed=sorted(WHOLE_PLAYER_INPUTS), payload=result["payload"], build_key=result["key"]),
     )
 
 
-def validate_whole_payload_reuse(project):
-    receipt = read(WORK / "whole-catalog-code-base.json")
+def validate_whole_payload_reuse(project, receipt_path=None):
+    receipt_path = receipt_path or WORK / "whole-catalog-code-base.json"
+    receipt = read(receipt_path)
     previous_allowed = set(receipt["allowed"])
     added = WHOLE_PLAYER_INPUTS - previous_allowed
     if previous_allowed - WHOLE_PLAYER_INPUTS or any(
@@ -352,7 +353,18 @@ def validate_whole_payload_reuse(project):
     if current_payload != receipt["payload"]:
         raise RuntimeError("Frozen whole-catalog payload identity changed")
     if added:
-        write(WORK / "whole-catalog-code-base.json", dict(receipt, files=current, allowed=sorted(WHOLE_PLAYER_INPUTS)))
+        write(receipt_path, dict(receipt, files=current, allowed=sorted(WHOLE_PLAYER_INPUTS)))
+
+
+def reuse_uncompressed_payload(project):
+    receipt = WORK / "whole-catalog-uncompressed-base.json"
+    if not receipt.is_file():
+        return False
+    try:
+        validate_whole_payload_reuse(project, receipt)
+    except RuntimeError:
+        return False
+    return True
 
 
 def validate_project_layout(project):
@@ -563,8 +575,19 @@ def build(
     capture_player_linker_inputs=False,
     capture_il2cpp_invocation=False,
     iteration_mode="",
+    bundle_compression="",
 ):
     timing = PhaseTiming()
+    if bundle_compression and (
+        bundle_compression != "uncompressed"
+        or not lane_config()
+        or iteration_mode
+        or destination
+        or reuse_payload
+        or android_symbols != "none"
+        or capture_player_linker_inputs
+    ):
+        raise RuntimeError("Uncompressed bundles require an isolated full iteration build without symbols/captures")
     if api not in ["gles", "vulkan", "lab"]:
         raise RuntimeError("Build target must be gles or vulkan")
     if android_symbols not in {"none", "debugging"}:
@@ -617,9 +640,13 @@ def build(
         validate_staged_runtime_sources(project)
         # Keep staging, editor work and receipt collection in one host-wide critical section.
         stage_android_assets(project)
+        if bundle_compression:
+            reuse_payload = reuse_uncompressed_payload(project)
         if reuse_payload:
-            validate_whole_payload_reuse(project)
+            validate_whole_payload_reuse(project, WORK / "whole-catalog-uncompressed-base.json" if bundle_compression else None)
         key = build_cache_key(project, api) if android_symbols == "none" else build_cache_key(project, api, android_symbols)
+        if bundle_compression:
+            key = digest({"build": key, "bundle_compression": bundle_compression})
         if iteration_mode:
             key = digest({"build": key, "iteration_mode": iteration_mode, "request": request_id})
         if capture_player_linker_inputs:
@@ -656,6 +683,8 @@ def build(
         if result.exists():
             result.rename(result.with_name("previous-" + now() + ".json"))
         request = {"request_id": request_id, "api": api, "reusePayload": reuse_payload}
+        if bundle_compression:
+            request["bundleCompression"] = bundle_compression
         if iteration_mode:
             request["iterationMode"] = iteration_mode
         if capture_player_linker_inputs:
@@ -697,6 +726,8 @@ def build(
         if not r["success"] or r.get("errors", 0) > 0:
             raise RuntimeError(r["result"] + "; build errors=" + str(r.get("errors", 0)))
         key = build_cache_key(project, api) if android_symbols == "none" else build_cache_key(project, api, android_symbols)
+        if bundle_compression:
+            key = digest({"build": key, "bundle_compression": bundle_compression})
         if iteration_mode:
             key = digest({"build": key, "iteration_mode": iteration_mode, "request": request_id})
         if capture_player_linker_inputs:
@@ -807,7 +838,13 @@ def build(
             r["payload_directory"] = str(payload)
         from iteration_apk import write_anchor
 
-        if not iteration_mode:
+        if bundle_compression:
+            r["iteration"] = {
+                "bundle_compression": bundle_compression,
+                "payload_reused": reuse_payload,
+                "acceptance": "iteration only; normal full build required",
+            }
+        if not iteration_mode and not bundle_compression:
             with timing.phase("iteration_anchor"):
                 write_anchor(WORK, project, r)
         r["timing"] = timing.report()
