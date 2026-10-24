@@ -13,6 +13,7 @@ import uuid
 
 from common import ROOT, WORK, now, sha, write
 from device import Device, PACKAGE
+from nova_bridge import current_errors
 from installed_attempt import attempt_from_installed, bind_installed_apk, validate_expected_apk_sha256
 from session_cleanup_check import SPINE_ID, _read_json, _read_raw, _remote_path_state, matches_run, selection, selector_action
 from touch_gesture import compile_tool, run as gesture
@@ -90,6 +91,14 @@ def check_settings_write_interrupt(expected_apk_sha256=None):
         )
         return gesture(request, expected)
 
+    def capture_owned_errors(name):
+        logs = device.sh("logcat", "-d", "--pid=" + pid, "-v", "epoch", "Unity:I", "AndroidRuntime:E", "*:S")
+        (out / (name + ".log")).write_text(logs)
+        errors = current_errors(logs, pid)
+        result.setdefault("runtime_errors", []).extend(errors)
+        if errors:
+            raise RuntimeError("Actual-PID runtime error during native persistence case")
+
     def protected_hashes():
         roots = [runtime + "/" + name for name in ("android-profile-v1", "offline-run-results-v1")]
         value = device.sh("find", *roots, "-type", "f", "-exec", "sha256sum", "{}", "+", check=False)
@@ -149,6 +158,7 @@ def check_settings_write_interrupt(expected_apk_sha256=None):
             (out / "observer.stdout").write_text(raw)
             observed = json.loads(raw)
         stopped_pid = pid
+        capture_owned_errors("interrupted-process")
         deadline = time.monotonic() + 10
         while device.sh("pidof", PACKAGE, check=False).strip() and time.monotonic() < deadline:
             time.sleep(0.1)
@@ -181,6 +191,7 @@ def check_settings_write_interrupt(expected_apk_sha256=None):
         after_profile = protected_hashes()
         if not before_profile or after_profile != before_profile:
             raise RuntimeError("Existing native profile/results changed")
+        capture_owned_errors("recovered-process")
         result.update(success=True, protected_files=len(before_profile), recovered_pid=pid, interrupted_pid=stopped_pid)
         write(out / "native-resave.json", report)
     except Exception as error:
