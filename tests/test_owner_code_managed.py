@@ -13,6 +13,24 @@ SPEC.loader.exec_module(MANAGED)
 
 
 class OwnerCodeManagedTests(unittest.TestCase):
+    def test_postprocessor_only_sees_selected_providers_from_each_reference_root(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            sdk, original = root / "sdk", root / "original"
+            sdk.mkdir()
+            original.mkdir()
+            selected = sdk / "netstandard.dll"
+            selected.write_bytes(b"authored selected provider")
+            (original / selected.name).write_bytes(b"authored conflicting sibling")
+            game = original / "Game.dll"
+            game.write_bytes(b"authored game-reference fixture")
+            staged = MANAGED.postprocessor_references([selected, game], root / "references")
+            self.assertEqual({p.name for p in staged}, {selected.name, game.name})
+            self.assertEqual(staged[0].read_bytes(), selected.read_bytes())
+            self.assertEqual(staged[1].read_bytes(), game.read_bytes())
+            self.assertEqual({p.parent for p in staged}, {root / "references"})
+            self.assertEqual((original / selected.name).read_bytes(), b"authored conflicting sibling")
+
     def test_source_profile_has_no_historical_or_generated_supplier(self):
         self.assertEqual(MANAGED.native.sha(MANAGED.PROFILE), MANAGED.PROFILE_SHA)
         profile = json.loads(MANAGED.PROFILE.read_text())

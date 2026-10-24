@@ -242,6 +242,17 @@ def audio_assemblies(out, sdk, work, inputs, raw, ordinary, staged, prefab, bank
     return {p.name: p for p in (observer, core, bootstrap)}
 
 
+def postprocessor_references(references, directory):
+    """Expose only selected providers, not conflicting siblings in their roots."""
+    directory.mkdir()
+    result = []
+    for source in references:
+        path = directory / source.name
+        path.symlink_to(source)
+        result.append(path)
+    return result
+
+
 def gameplay(out, sdk, inputs, original, ordinary, raw, package_output, audio_outputs, maps, support, *, source_root=None, android_tools=None):
     destination = out / "gameplay"
     destination.mkdir()
@@ -308,6 +319,7 @@ def gameplay(out, sdk, inputs, original, ordinary, raw, package_output, audio_ou
     ]
     processor = package_output / "compiled/Unity.Burst.CodeGen.dll"
     bound.update(source_hashes([*references, processor, assembly]))
+    references = postprocessor_references(references, destination / "ilpp-references")
     args = ["-assembly", str(assembly), "-outputDir", str(post), "-processors", str(processor)]
     for path in references:
         args += ["-assemblyReferences", str(path)]
