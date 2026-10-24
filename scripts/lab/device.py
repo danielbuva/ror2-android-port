@@ -499,7 +499,7 @@ class Device:
                 (out / "native-maps.txt").write_text(
                     self.sh("run-as", PACKAGE, "cat", "/proc/" + self.sh("pidof", PACKAGE, check=False).strip() + "/maps", check=False)
                 )
-        return {"artifacts": str(out.relative_to(ROOT))}
+        return {"artifacts": str(out.relative_to(self.work_root.parent))}
 
     def reset(self):
         if not self.exists():

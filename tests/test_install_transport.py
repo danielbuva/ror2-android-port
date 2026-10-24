@@ -64,6 +64,16 @@ class InstallTransportTests(unittest.TestCase):
         self.assertEqual(result["transport"], "incremental")
         self.assertEqual(len(result["v4_idsig_sha256"]), 64)
 
+    def test_collection_uses_selected_work_root_outside_source_checkout(self):
+        d = device.Device.__new__(device.Device)
+        d._work_root = self.root / "selected-work"
+        d.sh = Mock(return_value="123")
+        d.cmd = Mock(return_value="authored log")
+        out = d.work_root / "experiments/capture"
+        result = d.collect("logs", out)
+        self.assertEqual(result, {"artifacts": "selected-work/experiments/capture"})
+        self.assertEqual((out / "unity.log").read_text(), "authored log")
+
     def test_failed_install_writes_attempt_timing_without_replacing_ownership(self):
         self.d.cmd.side_effect = RuntimeError("authored install refusal")
         with self.assertRaisesRegex(RuntimeError, "refusal"):

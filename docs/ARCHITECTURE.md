@@ -789,13 +789,7 @@ payload copy, and bind its previously verified signing certificate.
 it is not an acceptance build. `apk-member-compare` compares hash-bound builds
 of the same source without hiding build metadata differences. Normal full-build
 acceptance remains required. Commands and limits: [fast iteration](fast-iteration.md).
-`shared_checkout_build.py` reuses the existing shared-editor worktree coordinator:
-clean committed source is temporarily selected in the primary checkout while
-the mutex covers preflight, the ordinary build action and source restoration.
-Unexpected edits/ref movement are preserved and refuse restoration. Its current
-`shared-catalog-code-build` (`--full` for content), `shared-catalog-fast-build`
-and `shared-catalog-scripts-build` actions copy no project and select no device.
-Setup and restoration receipts stay under `work/coordination/shared-builds/`.
+Linked worktrees use the [shared build owner](#shared-worktree-build-ownership).
 Full staging retires predecessor-only authored C# copies through
 `build.retire_staged_runtime_sources`: the previous successful build commit,
 exact source bytes and pinned GUID must match before removal. A private
@@ -3159,12 +3153,15 @@ or teardown and makes no Android appearance claim.
 ## Shared worktree build ownership
 
 `scripts/lab/shared_checkout_build.py` owns the current
-`./dev prototype --action shared-catalog-code-build` action. A linked worker
+`./dev prototype --action shared-catalog-code-build` (`--full` for content),
+`shared-catalog-fast-build` and `shared-catalog-scripts-build` actions. A linked worker
 checkout selects its clean committed HEAD in the clean primary checkout only
 while holding the primary Unity mutex. The ordinary primary `./dev` host
-preflight, source staging and code build run with that same inherited lock.
+preflight, source staging and selected ordinary build action run with that same
+inherited lock.
 The action copies no Unity project and performs no device operation. Its
-private receipt records the selected commit and restoration outcome.
+private receipt under `work/coordination/shared-builds/` records the selected
+commit and restoration outcome.
 
 Teardown restores the original primary branch/commit after success or failure.
 Unexpected edits or moved refs refuse restoration and preserve those files for
