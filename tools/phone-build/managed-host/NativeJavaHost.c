@@ -18,6 +18,12 @@ int main(int argc, char **argv) {
     asprintf(&home, "-Djava.home=%s", home_path);
     JavaVMOption options[argc + 8];
     int n = 0, index = 1, mode = 1;
+    // HotSpot's alternate-VM launcher support resolves the module image from
+    // JAVA_HOME before normal properties are parsed. Native files stay in the
+    // read-only PackageManager directory; home/lib contains verified links.
+    if (setenv("JAVA_HOME", home_path, 1))
+        return 2;
+    options[n++] = (JavaVMOption){"-Dsun.java.launcher.is_altjvm=true", 0};
     options[n++] = (JavaVMOption){home, 0};
     options[n++] = (JavaVMOption){"-Xmx512m", 0};
     options[n++] = (JavaVMOption){"-XX:ActiveProcessorCount=2", 0};

@@ -142,7 +142,11 @@ JDK. The phone builder compiles `NativeJavaHost.c` against its JNI headers and
 installs javac, keytool and java entry points plus the headless VM dependency
 closure as read-only PackageManager native files. Modules, security policy and
 configuration are hash-verified tool data. The JNI launcher uses the explicit
-VM path and Java home; it never loads ART as the build VM. Existing SDK JARs
+VM path and Java home; it never loads ART as the build VM. HotSpot's existing
+alternate-VM launcher property and `JAVA_HOME` select the initial module image
+before ordinary property parsing, as implemented by OpenJDK
+[`os::jvm_path`](https://github.com/openjdk/jdk21u/blob/master/src/hotspot/os/linux/os_linux.cpp)
+and `Arguments::process_sun_java_launcher_properties`; no VM binary is patched. Existing SDK JARs
 provide javac's Android reference surface, D8 and apksigner. The caller's extra
 native plan must include the JDK's Android spawn and shared-memory dependencies.
 
