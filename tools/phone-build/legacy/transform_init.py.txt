@@ -1,0 +1,434 @@
+"""Strict private Wwise-150 Init metadata candidate for an isolated fixture.
+
+This is a narrow lab candidate, not an SDK-supported converter. It accepts only
+one exact legitimate input hash and rewrites only the serialized output-device
+metadata needed by a standalone Android sink fixture. It is not approved for
+the retained game's managed runtime. All bytes remain under ignored work/.
+"""
+from __future__ import annotations
+
+from dataclasses import dataclass
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+import stat
+import subprocess
+import struct
+
+INPUT_SHA256 = "3182093b59cf48034b2715b224f3f217b34eaecf104d10940528ea20c4baffc6"
+EXPECTED_SIZE = 6319
+BANK_ID_INIT = 1355168291
+SYSTEM_DEVICE = 3859886410
+CONTROLLER_DEVICE_IDS = (568423566, 1334442663)
+CONTROLLER_BUS_MAP = {
+    1290445532: 568423566,  # Master Controller Speaker Splitscreen Bus
+    1803403060: 1334442663, # Master Controller Speaker Bus
+}
+ROOT_BUS_MAP = {
+    3803692087: 3859886410,  # Master Audio Bus
+    48433064: 4129766362,   # Master Music Bus
+    805203703: 3859886410,  # Master Secondary Bus
+    1290445532: 568423566, # Master Controller Speaker Splitscreen Bus
+    1803403060: 1334442663,# Master Controller Speaker Bus
+}
+PLUGIN_ENTRIES = (
+    (6881283, "AkParametricEQ"),
+    (7208963, "AkPeakLimiter"),
+    (7733251, "AkRoomVerb"),
+    (8257539, "AkGuitarDistortion"),
+    (8454147, "AkSoundEngineDLL"),
+    (8847363, "AkStereoDelay"),
+    (9043971, "AkHarmonizer"),
+    (11403271, ""),   # System sink, statically supplied by Android SDK.
+    (11730951, ""),   # Controller Speaker, absent from Android SDK.
+    (11862023, ""),   # No Output, present in Android SDK.
+)
+DEVICE_EFFECTS = {
+    2317455096: 11862023,
+    3859886410: 11403271,
+    4129766362: 11403271,
+    568423566: 11730951,
+    1334442663: 11730951,
+}
+EXPECTED_TAGS = (b"BKHD", b"INIT", b"STMG", b"HIRC", b"ENVS", b"PLAT")
+
+
+class Refusal(ValueError):
+    pass
+
+
+def _repository_root() -> Path:
+    return Path(__file__).resolve().parents[3]
+
+
+def _is_within(path: Path, parent: Path) -> bool:
+    try:
+        path.relative_to(parent)
+        return True
+    except ValueError:
+        return False
+
+
+def _reject_symlink_components(path: Path) -> None:
+    absolute = Path(os.path.abspath(path))
+    cursor = Path(absolute.anchor)
+    for component in absolute.parts[1:]:
+        cursor /= component
+        try:
+            mode = cursor.lstat().st_mode
+        except FileNotFoundError:
+            continue
+        if stat.S_ISLNK(mode):
+            raise Refusal(f"output path contains a symlink: {cursor}")
+
+
+def validate_output_paths(source: Path, destination: Path, receipt_path: Path | None = None,
+                          *, repository_root: Path | None = None) -> tuple[Path, Path | None]:
+    """Require new output paths under ignored repository work, before any reads/writes."""
+    repository_root = (repository_root or _repository_root()).resolve(strict=True)
+    work_root = repository_root / "work"
+    if work_root.is_symlink() or not work_root.is_dir():
+        raise Refusal("repository work output root is absent or a symlink")
+    work_root = work_root.resolve(strict=True)
+
+    source_real = source.resolve(strict=True)
+    outputs = [("destination", destination)]
+    if receipt_path is not None:
+        outputs.append(("receipt", receipt_path))
+    resolved: dict[str, Path] = {}
+    for name, path in outputs:
+        absolute = Path(os.path.abspath(path))
+        _reject_symlink_components(absolute)
+        canonical = absolute.resolve(strict=False)
+        if not _is_within(canonical, work_root):
+            raise Refusal(f"{name} must resolve inside repository ignored work")
+        if canonical == source_real:
+            raise Refusal(f"{name} must not be the source file")
+        if canonical.exists() or canonical.is_symlink():
+            raise Refusal(f"refusing to overwrite existing {name}")
+        parent = canonical.parent
+        if not parent.is_dir():
+            raise Refusal(f"{name} parent directory must already exist")
+        if not _is_within(parent.resolve(strict=True), work_root):
+            raise Refusal(f"{name} parent resolves outside repository work")
+        relative = canonical.relative_to(repository_root).as_posix()
+        ignored = subprocess.run(
+            ["git", "check-ignore", "--quiet", "--no-index", "--", relative],
+            cwd=repository_root, check=False).returncode == 0
+        if not ignored:
+            raise Refusal(f"{name} is not ignored by Git")
+        resolved[name] = canonical
+    if receipt_path is not None and resolved["destination"] == resolved["receipt"]:
+        raise Refusal("destination and receipt must be different paths")
+    return resolved["destination"], resolved.get("receipt")
+
+
+def _write_new_file(path: Path, data: bytes) -> None:
+    """Create exclusively so a late path collision cannot replace user data."""
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    try:
+        with os.fdopen(fd, "wb") as stream:
+            stream.write(data)
+    except BaseException:
+        try:
+            path.unlink()
+        except FileNotFoundError:
+            pass
+        raise
+
+
+@dataclass(frozen=True)
+class Contract:
+    bank_id: int
+    plugin_entries: tuple[tuple[int, str], ...]
+    device_effects: dict[int, int]
+    root_bus_map: dict[int, int]
+    controller_bus_map: dict[int, int]
+    system_device: int
+    remove_plugin: int
+    remove_devices: tuple[int, ...]
+    expected_tags: tuple[bytes, ...] = EXPECTED_TAGS
+
+
+def production_contract() -> Contract:
+    return Contract(BANK_ID_INIT, PLUGIN_ENTRIES, DEVICE_EFFECTS,
+                    ROOT_BUS_MAP, CONTROLLER_BUS_MAP, SYSTEM_DEVICE, 11730951,
+                    CONTROLLER_DEVICE_IDS)
+
+
+def _u32(data: bytes, at: int) -> int:
+    if at < 0 or at + 4 > len(data):
+        raise Refusal("truncated uint32 field")
+    return struct.unpack_from("<I", data, at)[0]
+
+
+def _put_u32(data: bytearray, at: int, value: int) -> None:
+    if at < 0 or at + 4 > len(data):
+        raise Refusal("truncated uint32 write")
+    struct.pack_into("<I", data, at, value)
+
+
+def _chunks(data: bytes, expected_tags: tuple[bytes, ...]) -> list[tuple[bytes, bytes]]:
+    result = []
+    at = 0
+    while at < len(data):
+        if at + 8 > len(data):
+            raise Refusal("truncated top-level bank chunk header")
+        tag = data[at:at + 4]
+        size = _u32(data, at + 4)
+        end = at + 8 + size
+        if end > len(data):
+            raise Refusal(f"chunk {tag!r} overruns bank")
+        result.append((tag, data[at + 8:end]))
+        at = end
+    tags = tuple(tag for tag, _ in result)
+    if tags != expected_tags:
+        raise Refusal(f"unexpected top-level chunk sequence: {tags!r}")
+    if len({tag for tag, _ in result}) != len(result):
+        raise Refusal("duplicate top-level bank chunk")
+    return result
+
+
+def _encode_chunk(tag: bytes, payload: bytes) -> bytes:
+    if len(tag) != 4 or len(payload) > 0xFFFFFFFF:
+        raise Refusal("invalid chunk serialization")
+    return tag + struct.pack("<I", len(payload)) + payload
+
+
+def _parse_plugin_chunk(payload: bytes) -> tuple[list[tuple[int, str, bytes]], bytes]:
+    if len(payload) < 4:
+        raise Refusal("truncated INIT plugin list")
+    count = _u32(payload, 0)
+    at = 4
+    entries = []
+    for _ in range(count):
+        if at + 4 > len(payload):
+            raise Refusal("truncated INIT plugin ID")
+        plugin_id = _u32(payload, at)
+        end = payload.find(b"\0", at + 4)
+        if end < 0:
+            raise Refusal("unterminated INIT plugin library name")
+        raw_name = payload[at + 4:end]
+        try:
+            name = raw_name.decode("ascii")
+        except UnicodeDecodeError as exc:
+            raise Refusal("non-ASCII plugin library name") from exc
+        entry_bytes = payload[at:end + 1]
+        entries.append((plugin_id, name, entry_bytes))
+        at = end + 1
+    if at != len(payload):
+        raise Refusal("unexpected trailing bytes in INIT plugin list")
+    return entries, payload[:4]
+
+
+def _parse_hirc(payload: bytes) -> list[tuple[int, bytes]]:
+    if len(payload) < 4:
+        raise Refusal("truncated HIRC payload")
+    count = _u32(payload, 0)
+    at = 4
+    records = []
+    for _ in range(count):
+        if at + 5 > len(payload):
+            raise Refusal("truncated HIRC object header")
+        kind = payload[at]
+        section_size = _u32(payload, at + 1)
+        end = at + 5 + section_size
+        if end > len(payload):
+            raise Refusal("HIRC object overruns chunk")
+        records.append((kind, payload[at:end]))
+        at = end
+    if at != len(payload):
+        raise Refusal("unexpected trailing HIRC bytes")
+    return records
+
+
+def _record_id(kind: int, record: bytes) -> int:
+    if len(record) < 9:
+        raise Refusal("HIRC record too small to contain ID")
+    return _u32(record, 5)
+
+
+def _rewrite_plugin_chunk(payload: bytes, contract: Contract) -> bytes:
+    entries, count_bytes = _parse_plugin_chunk(payload)
+    observed = tuple((plugin_id, name) for plugin_id, name, _ in entries)
+    if observed != contract.plugin_entries:
+        raise Refusal("INIT plugin inventory differs from pinned source contract")
+    removed = [entry for entry in entries if entry[0] == contract.remove_plugin]
+    if len(removed) != 1 or removed[0][1] != "":
+        raise Refusal("expected exactly one empty-name unsupported sink entry")
+    kept = [entry for entry in entries if entry[0] != contract.remove_plugin]
+    return struct.pack("<I", len(kept)) + b"".join(entry[2] for entry in kept)
+
+
+def _rewrite_hirc(payload: bytes, contract: Contract) -> bytes:
+    records = _parse_hirc(payload)
+    device_records: dict[int, int] = {}
+    top_bus_records: dict[int, int] = {}
+    bus_sharesets: dict[int, int] = {}
+
+    for index, (kind, record) in enumerate(records):
+        body = record[5:]
+        if kind == 21:  # Wwise 150 CAkAudioDevice, per pinned wwiser parser.
+            device_id = _record_id(kind, record)
+            if len(body) < 8:
+                raise Refusal("truncated CAkAudioDevice record")
+            plugin_id = _u32(body, 4)
+            if device_id in device_records:
+                raise Refusal("duplicate CAkAudioDevice ID")
+            device_records[device_id] = plugin_id
+        elif kind == 8:  # CAkBus. idDeviceShareset is present on top-level buses.
+            bus_id = _record_id(kind, record)
+            if bus_id in top_bus_records:
+                raise Refusal("duplicate CAkBus ID")
+            if len(body) < 8:
+                raise Refusal("truncated CAkBus prefix")
+            override_bus = _u32(body, 4)
+            if override_bus == 0:
+                if len(body) < 12:
+                    raise Refusal("truncated top-level CAkBus shareset")
+                top_bus_records[bus_id] = index
+                bus_sharesets[bus_id] = _u32(body, 8)
+
+    if device_records != contract.device_effects:
+        raise Refusal("CAkAudioDevice identities/effects differ from pinned source contract")
+    if set(contract.root_bus_map) - set(top_bus_records):
+        raise Refusal("one or more target Controller Speaker buses are absent or not top-level")
+    if len(top_bus_records) != len(bus_sharesets) or set(top_bus_records) != set(contract.root_bus_map):
+        raise Refusal("top-level bus inventory differs from pinned source contract")
+    if bus_sharesets != contract.root_bus_map:
+        raise Refusal("top-level bus-to-device relationships differ from pinned source contract")
+    for old_device in contract.remove_devices:
+        if sum(1 for value in bus_sharesets.values() if value == old_device) != 1:
+            raise Refusal("removed device must have exactly one top-level bus route")
+
+    remove = set(contract.remove_devices)
+    new_records = []
+    removed_ids = []
+    for index, (kind, record) in enumerate(records):
+        object_id = _record_id(kind, record)
+        if kind == 21 and object_id in remove:
+            body = record[5:]
+            if _u32(body, 4) != contract.remove_plugin or len(body) != 20 or body[8:] != bytes(12):
+                raise Refusal("target Controller CAkAudioDevice has unexpected serialized parameters")
+            removed_ids.append(object_id)
+            continue
+        if kind == 8 and object_id in contract.root_bus_map and object_id in contract.controller_bus_map:
+            patched = bytearray(record)
+            _put_u32(patched, 5 + 8, contract.system_device)
+            record = bytes(patched)
+        new_records.append((kind, record))
+
+    if set(removed_ids) != remove or len(removed_ids) != len(remove):
+        raise Refusal("not all exact target CAkAudioDevice records were removed")
+    # Check the transformed structural graph before serialization.
+    remaining_devices = {device_id: plugin_id for device_id, plugin_id in device_records.items()
+                         if device_id not in remove}
+    if any(plugin_id == contract.remove_plugin for plugin_id in remaining_devices.values()):
+        raise Refusal("unsupported plugin still referenced by a remaining audio device")
+    output_top_bus = dict(bus_sharesets)
+    for bus_id in contract.root_bus_map:
+        if bus_id in contract.controller_bus_map:
+            output_top_bus[bus_id] = contract.system_device
+    if any(output_top_bus[bus_id] != contract.system_device for bus_id in contract.controller_bus_map):
+        raise Refusal("target bus did not resolve to System device")
+    return struct.pack("<I", len(new_records)) + b"".join(record for _, record in new_records)
+
+
+def rewrite_bank(data: bytes, contract: Contract) -> bytes:
+    chunks = _chunks(data, contract.expected_tags)
+    by_tag = dict(chunks)
+    header = by_tag[b"BKHD"]
+    if len(header) != 48 or _u32(header, 0) != 150 or _u32(header, 4) != contract.bank_id:
+        raise Refusal("unexpected format-150 bank header")
+    rewritten = []
+    for tag, payload in chunks:
+        if tag == b"INIT":
+            payload = _rewrite_plugin_chunk(payload, contract)
+        elif tag == b"HIRC":
+            payload = _rewrite_hirc(payload, contract)
+        rewritten.append(_encode_chunk(tag, payload))
+    result = b"".join(rewritten)
+    # Reparse the entire output and verify counts/relationships against the same
+    # structural constraints, with the adapted inventory expected explicitly.
+    verify = _chunks(result, contract.expected_tags)
+    output = dict(verify)
+    out_plugins, _ = _parse_plugin_chunk(output[b"INIT"])
+    if any(entry[0] == contract.remove_plugin for entry in out_plugins):
+        raise Refusal("unsupported plugin entry remains in output")
+    out_records = _parse_hirc(output[b"HIRC"])
+    if any(kind == 21 and _u32(record, 9) == contract.remove_plugin for kind, record in out_records):
+        raise Refusal("unsupported plugin remains in output HIRC")
+    output_devices = {}
+    output_buses = {}
+    for kind, record in out_records:
+        body = record[5:]
+        if kind == 21:
+            output_devices[_record_id(kind, record)] = _u32(body, 4)
+        elif kind == 8 and _u32(body, 4) == 0:
+            output_buses[_record_id(kind, record)] = _u32(body, 8)
+    expected_devices = {device: plugin for device, plugin in contract.device_effects.items()
+                        if device not in contract.remove_devices}
+    expected_buses = dict(contract.root_bus_map)
+    for bus_id in contract.controller_bus_map:
+        expected_buses[bus_id] = contract.system_device
+    if output_devices != expected_devices or output_buses != expected_buses:
+        raise Refusal("output device/bus relationship check failed")
+    for tag in (b"BKHD", b"STMG", b"ENVS", b"PLAT"):
+        if output[tag] != by_tag[tag]:
+            raise Refusal(f"unexpected change to preserved {tag.decode('ascii')} chunk")
+    return result
+
+
+def transform_file(source: Path, destination: Path, receipt_path: Path | None = None) -> dict:
+    destination, receipt_path = validate_output_paths(source, destination, receipt_path)
+    data = source.read_bytes()
+    digest = hashlib.sha256(data).hexdigest()
+    if digest != INPUT_SHA256 or len(data) != EXPECTED_SIZE:
+        raise Refusal("input is not the exact accepted Init.bnk in the pinned contract")
+    contract = production_contract()
+    output = rewrite_bank(data, contract)
+    output_sha = hashlib.sha256(output).hexdigest()
+    receipt = {
+        "candidate": "fixture-only Controller Speaker omission plus System bus routing",
+        "transform_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "input_sha256": digest,
+        "input_size_bytes": len(data),
+        "output_sha256": output_sha,
+        "output_size_bytes": len(output),
+        "format_version": 150,
+        "bank_id": BANK_ID_INIT,
+        "removed_plugin_id": contract.remove_plugin,
+        "removed_audio_device_ids": list(contract.remove_devices),
+        "retained_bus_ids": sorted(contract.root_bus_map),
+        "rewritten_controller_bus_ids": sorted(CONTROLLER_BUS_MAP),
+        "retargeted_device_shareset": SYSTEM_DEVICE,
+        "untouched_chunks": ["BKHD", "STMG", "ENVS", "PLAT"],
+        "scope": "standalone native fixture metadata candidate only; not approved for retained managed game runtime; original bank and Global bank unchanged; no controller sink fidelity, event routing, PCM, or runtime-load claim",
+    }
+    _write_new_file(destination, output)
+    if receipt_path is not None:
+        try:
+            _write_new_file(receipt_path, (json.dumps(receipt, indent=2) + "\n").encode("utf-8"))
+        except Exception:
+            destination.unlink()
+            raise
+    return receipt
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("source", type=Path)
+    parser.add_argument("destination", type=Path)
+    parser.add_argument("--receipt", type=Path, required=True)
+    args = parser.parse_args()
+    try:
+        receipt = transform_file(args.source, args.destination, args.receipt)
+    except (OSError, Refusal) as exc:
+        parser.error(str(exc))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

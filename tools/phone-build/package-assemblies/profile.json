@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "profile": "retained-android-package-assemblies-v1",
+  "unity_version": "2021.3.45f2",
+  "packages": {
+    "com.unity.burst": "1.8.11",
+    "com.unity.collections": "1.2.4",
+    "com.unity.mathematics": "1.2.1",
+    "com.unity.ugui": "1.0.0"
+  },
+  "groups": {
+    "UnityEngine.UI": {
+      "source_count": 85,
+      "input_count": 87,
+      "aggregate_sha256": "2f07d0c93cfbba78d3d4dda2cdac32b1cb232fac271cf2c2808035b4635d348b"
+    },
+    "Unity.Burst": {
+      "source_count": 53,
+      "input_count": 57,
+      "aggregate_sha256": "d8ebfa04711f71b0c493d014d051f31a8b77083c70069711a3df00f914213050"
+    },
+    "Unity.Mathematics": {
+      "source_count": 88,
+      "input_count": 90,
+      "aggregate_sha256": "89ce2803fbea4f967a3836afe824603f6f8c9376aaf1fa96c5c9581657da79cf"
+    },
+    "Unity.Collections": {
+      "source_count": 56,
+      "input_count": 59,
+      "aggregate_sha256": "3722520f6e137a3e91eb81a0b9c875c5770dbdc01be2f31ee2bc57554aae4b90"
+    },
+    "Unity.Burst.CodeGen": {
+      "source_count": 7,
+      "input_count": 13,
+      "aggregate_sha256": "abec5ae750a5e10a53e5fe939ae9f3cbacc6d2a9c402f2d8b442a5ac21f0102c"
+    }
+  },
+  "toolchain": {
+    "input_count": 429,
+    "aggregate_sha256": "a3237f7d2362c09404925bc05193202fd05b0abf47cfbe1736041970d8c29530"
+  },
+  "builtin_packages": {
+    "input_count": 57,
+    "aggregate_sha256": "8327a350b34a51b1b7cc7b33815e2f8fda53c06606e2141dece3aaf7b67a0f2a"
+  }
+}

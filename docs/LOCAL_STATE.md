@@ -1,5 +1,64 @@
 # Local state dependency inventory
 
+## Independent source audio prefab
+
+`owner_audio_prefab.py` reads explicit owner work configuration, accepted input
+and reviewed inventory plus the four original bundle paths named by the audited
+`recipe/owner-audio-prefab.json`. No exported asset, lab project or historical
+source catalog is a supplier. The tracked generator creates all new prefab and
+terminal receipt files; the single export-GUID relationship is configuration,
+not serialized data. [Setup](phone-owner-build.md#bounded-source-audio-prefab)
+describes ownership/refusal/lifecycle. Current game builds select none of these
+new outputs automatically.
+
+`work/coordination/owner-wwise-prefab-v1/` retains original-input inspection,
+lookup comparisons, complete private/public-source reconstruction attempts and
+the first quoting/signed-zero difference. All original type trees and generated
+prefab content stay private. No new source consumes a timestamped experiment.
+
+## Independent source audio index
+
+The current source bank owner entry reads explicitly supplied owner work state:
+`config/local.json`, `config/accepted-input.json` and `inventory/files.json`.
+It uses the original PC XML/banks from the configured installation, never a
+captured Android output or `lab-project/.port-input.json`. An explicitly requested
+metadata qualification additionally needs the owner's `vgmstream-cli` executable;
+default source-only indexing does not run it. The tracked parser/entry produces
+all new index/receipt files. [Setup](phone-owner-build.md#source-audio-inputs-without-a-project)
+describes new-output ownership, inventory checks and optional tool execution.
+
+`work/coordination/source-audio-inputs-v1/` retains the complete private source
+case, metadata-only control on an owned bank copy, exact pinned-index comparison
+and final public entry outputs. A byte-identical research copy of the historical
+Init transformer remains under
+`work/coordination/wwise-init-android-platform-metadata/transform_init.py`, source
+SHA-256 `91c72d254ba9473d93ffb18c4be2233be1781b6072b08571aed7f607e76e9b37`.
+It remains a private historical comparison artifact. The separately audited
+readable template and full-inventory-gated `owner-code/legacy_init.py` now
+reproduce that exact historical bank/receipt from public authored source; this
+private source copy is no longer a required producer input. The public
+`wwise_init_platform.py` remains the preferred generator for new bank/receipt
+execution. All event/media names and generated index data stay ignored. The current game build reads none of this research state and no
+existing runtime stage/request pin is changed.
+
+## Retained package producer inputs
+
+The experimental `tools/phone-build/package-assemblies/produce.py` reads an
+explicit private request with `sdk_install`, `packages` and new `output` paths.
+An owner may store that request under `work/config/`; it is not discovered
+implicitly. The exact SDK and provider package sources/precompiled helpers are
+required owner-supplied local state because they are not distributed in Git.
+[Setup and pinned versions](../tools/phone-build/package-assemblies/README.md)
+describe acquisition and layout. The tracked producer/profile generate every
+compile response, the managed post-processor and all four output DLLs; they do
+not require captured project responses or precompiled player outputs.
+
+`work/coordination/package-assemblies-v1/` retains the complete private host case:
+provider metadata/archives, extracted SDK/package inputs, initial attempts,
+final public-source invocation, complete outputs and captured-player comparison.
+The current game build reads none of this research state. No tool selects a
+timestamped run or copies an output into the shared project automatically.
+
 ## Original game audio build selection (2026-10-20)
 
 The current whole-catalog build reads the optional ignored
@@ -581,6 +640,28 @@ ignored. The public receiver accepts explicit argument roots and a pinned stream
 never a timestamped run path. Process/result receipts and successful/failed
 outputs are retained local evidence; no current game build reads them. See
 [setup/lifecycle](../tools/phone-build/accepted-output/README.md) and J1042.
+
+An owner-downloaded exact Unity Android support component is an alternative
+explicit SDK-copy input source. Public `sdk_inputs.py` validates it and generates
+a new SDK-root layout plus complete/failed receipt; original packages, outputs
+and failed attempts remain private. This does not source the full compiler or
+introduce a timestamped build dependency. See the
+[acquisition lifecycle](../tools/phone-build/accepted-output/README.md#acquire-the-three-sdk-copy-inputs).
+
+The owner-APK bootstrap candidate consumes an explicit ignored request selecting
+the accepted private packet manifest and verified reconstructed target root,
+public frontend/wire-helper sources and supplied Java/Android/D8 tools.
+Optional `version_code` is owner-selected revision configuration, not generated
+game input; it selects an increasing package version while retaining the same
+private signing identity. Omission retains the frozen input version.
+`tools/phone-build/owner-apk/build_owner_apk.py` generates the authored DEX,
+patched binary manifest, embedded payload index, unsigned owner APK and private
+source/tool/hash result. These are reproducible post-reconstruction outputs,
+not new original-game input producers. The device activity generates its own
+private completion receipt and app-owned payload stage/backup directories;
+failed stages remain evidence and no other app's files are used for output.
+No current game build reads a timestamped owner-APK run directory. See the
+[candidate lifecycle and gates](../tools/phone-build/owner-apk/README.md).
 
 > **Dated snapshot.** This is a static audit taken on 2026-10-16. Line numbers drift as code
 > changes; regenerate or re-audit it before relying on a specific `file:line`. The current
@@ -1250,3 +1331,184 @@ Missing source evidence must be restored specifically using the retention policy
 do not fabricate it. No selection is shipped in Git. Once preserved baseline metadata is available,
 a missing selection fails with registration guidance rather than silently
 picking historical input. A fully fresh clone must first supply that baseline.
+
+## Standalone requested-audio support evidence (J1056)
+
+Ignored `work/coordination/owner-audio-stage-v1/` retains explicit planning/staging
+invocations, ordinary assembly-transform scratch, strict generated request/stage
+pins, supplied-native provenance and fresh observer/core/bootstrap outputs.
+Its input producers are J1052, J1054 and J1055; source tools are the existing
+`stage_original_game_banks.py`, `original_game_audio_produce.py` lower-level
+compiler functions and request/stage generators. All three plugin references
+are explicit; no Unity project or current selection is created. The private
+instrumented native input remains the licensed local product documented above.
+
+Setup uses the accepted original inventory, generated prefab/index/Init inputs,
+pinned SDK compiler/reference tools and an explicit new ignored output root.
+Teardown changes no shared state. The reviewed 274 generated stage payload
+copies were retired after full readback; `staged-v1.retired.json` binds their
+complete ledger, exact public generator/invocation and retained receipt. Restage
+into a new explicit root before any future use; this evidence path is not a
+live build input. Failed attempts, compiled outputs and all receipts remain.
+
+## Standalone gameplay source evidence (J1057)
+
+Ignored `work/coordination/owner-player-assemblies-v1/` retains the complete PC
+contract/catalog read, exact three generated maps, fourteen recovered support
+sources, all 145-source/243-reference manifests, official Newtonsoft package
+acquisition, compiler/processor runs and compressed comparison reports.
+Setup uses the accepted inventory, J1052's independently regenerated source,
+J1053/J1056's outputs, original plugin recipes and explicit pinned SDK tools.
+All support membership is specified separately from source/binary providers.
+No project, runtime selection or device is created; teardown changes no shared
+state. Source/output/hash proof and failed attempts remain private evidence.
+
+The named generators are existing `CatalogContract`, `catalog_reader`,
+`body_visual_map`, `common_assets_map`, the current public runtime recipe and
+the existing compiler/reference/package owners. The final matching-SDK output
+and fresh-processor output are separate from the earlier Mono compiler result.
+These are experimental host artifacts, not current game-build inputs or proof
+of full player/native equivalence. No protected source or compiled output is
+published.
+
+## Whole-player fixed-root feasibility evidence (J1058)
+
+Ignored `work/coordination/owner-player-roots-v1/` retains a current R36-era root
+snapshot explicitly labeled as comparison/configuration evidence, not R27 roots.
+The fixture does not provide those full-player root files. Setup uses the
+accepted original inventory, J1052/J1053/J1056/J1057 independent providers and
+the exact owner SDK. Existing registry/metadata readers validate the input
+identities; `phone_linker_roots` composes supplied project configuration with
+SDK-native metadata. The current TypesInScenes/SerializedTypes, authored
+preservation/Burst descriptors and module policy remain explicit required local
+configuration until a minimum-identity publication audit and reproducible
+configuration owner are integrated. No protected root table is embedded in code.
+
+The standalone whole-linker input/provider manifest records all 332 DLLs and the
+MCP developer-runtime exclusion. Its 93 stripped DLLs are the sole game-code
+inputs to the whole-converter run. Generated C++/metadata, full SDK tool hashes,
+commands, failed validations, exact-consumer observations and raw comparisons
+stay private. SDK-derived decompiler snippets are protected research inputs and
+must not be published. Setup/teardown neither reads a mutable current build
+pointer nor changes the shared project/editor/device. None of these experimental
+output paths is a current whole-catalog build input. Preserve the complete case
+and proof before any specifically scoped source compression/retirement.
+
+## Whole native-player feasibility workspace
+
+Ignored `work/coordination/owner-native-player-v1/` owns the next experimental
+native build from J1058's actual generated source, with explicit frozen native
+command policy and exact supplied SDK compiler. It is not a Unity project or a
+current game-build input. The generated native plan and retained SDK-source
+hashes bind all commands/providers; only owned output paths may be written.
+
+J1058's reviewed C/C++ source is now individually compressed under this
+workspace's `source-store/`. `source-store-manifest.json` preserves every original
+path/hash/size/mode/mtime and each gzip hash. The adjacent J1058
+`whole-converter-v1/cpp.retired.json` points to that restore ledger. All 687 source
+frames were decompressed and hash-verified before expanded copies were retired;
+metadata, failed cases and all historical receipts stay intact. The private
+native replay adapter restores one exact translation unit at a time and retains
+verified object receipts. These frames and their restore ledger are required
+local source state until the candidate is promoted or specifically retired;
+never treat them as disposable cache. SDK/runtime source is read from the
+explicit owner install and remains unmodified. Failed compilation keeps its
+source and logs; successful source expansion can be restored from the frames.
+
+
+## Public native owner inputs
+
+The current experimental `tools/phone-build/owner-code/native.py` reads only
+explicit absolute paths from a private owner request; it does not discover an
+experiment or timestamped build. Required local state is the reviewed owner
+inventory/configuration, the exact owner-supplied SDK (including its full NDK),
+a successful converter result and its hash, all matching source files or gzip
+frames, and that same converter's metadata. These protected/generated inputs
+remain private because they cannot be supplied by the public repository.
+The upstream converter generates source and metadata; `native.py` generates
+all wrappers, commands, expansions, logs, object receipts, libraries and
+terminal results in a new owner-work output. [Setup and lifecycle](../tools/phone-build/owner-code/README.md)
+name each request field and explicit teardown. The current game build consumes
+none of this state.
+
+`work/coordination/owner-code-producer-v1/` retains the private configuration
+normalization audit and complete public-source native planning comparison.
+Its requests explicitly select the J1058 converter and J1059 source frames as
+qualification providers; no tracked tool names those research paths. The
+initial plan and later complete-NDK/provider-drift revision remain separate.
+This is planning/migration evidence, not another native compilation or a
+public-input bootstrap claim.
+
+
+## Combined owner code backend
+
+`tools/phone-build/owner-code/produce.py` consumes explicit private owner work,
+SDK and a complete 332-entry basename/provider-path/SHA-256 map. The independently
+produced managed cohort remains required local state until upstream orchestration
+is integrated. It is not supplied by a project/captured build, and the current
+game build reads none of these outputs. The tracked producer/profile and SDK
+registry reader generate every new managed copy, root file, stripping output,
+C++/metadata file, retained source frame, native request and terminal result.
+[Setup and lifecycle](../tools/phone-build/owner-code/README.md#combined-whole-player-backend)
+describe all explicit providers and exclusive private outputs.
+
+`work/coordination/owner-code-producer-v1/public-backend-v1/` retains the initial
+complete public-source host execution. `public-backend-v2/` is the final same
+case with explicit interstage input checks. Both retain all 687 generated sources
+as hash-verified gzip frames plus ledgers and data/metadata; the expanded owned
+C/C++ copies were removed only after complete restore/hash verification. No
+failed case or required input was retired. The generator does not read these
+research paths implicitly. The final sealed proof covers the current source,
+configuration, actual outputs and comparison to J1058. Native execution remains
+J1059; these new attempts stop after native planning, not native compilation.
+
+
+## Historical Init source compatibility owner
+
+`tools/phone-build/owner-code/legacy_init.py` reads this checkout's explicit
+owner `work` root, accepted inventory/configuration and the configured original
+Init bank. Its exact authored source supplier is the audited tracked readable
+`tools/phone-build/legacy/transform_init.py.txt`; no private experiment supplies
+code. The wrapper generates a byte-identical private tool under
+`work/legacy-init-tools/<owned-run>/transform_init.py`, preserving the historical
+source-root lookup depth, and owns bank/receipt/log/result generation under an
+explicit new private output. The materialized source path is recorded in that
+output's result. [Setup/refusal/teardown](../tools/phone-build/legacy/README.md)
+cover the fixed layout and both private output locations; retain failed cases.
+
+`work/coordination/owner-code-producer-v1/public-legacy-init-v1/` records actual
+public-wrapper execution and exact legacy output/receipt comparisons. The old
+private source remains historical evidence only. No current runtime build reads
+this new state automatically, and no archived SDK/game body is added.
+
+
+## Original-input player-code owner
+
+The `source_inputs` request mode of `tools/phone-build/owner-code/produce.py`
+uses this checkout's reviewed canonical `work` state and original installation,
+plus explicitly supplied SDK, package/tool and authorized Wwise inputs. Its
+[ten-field setup](../tools/phone-build/owner-code/README.md#original-input-command)
+includes the complete NETStandard reference package; no ambient framework cache
+is needed by this mode. The raw producer retains its prior default for existing
+callers. The instrumented native SDK product is a required explicit local input
+because independent public production is still open; it is not a captured game
+binary or claimed distributable artifact.
+
+The tracked managed owner and existing called generators produce every raw
+transform, package DLL, bank index, prefab, adapted Init/receipt, staged payload,
+audio contract/pin/assembly, original decompilation, visual map, gameplay assembly
+and full provider manifest. The existing backend produces all further code and
+metadata outputs. No input code is read from a historical run implicitly. All
+source/frame/receipt/log outputs remain ignored, and current game builds consume
+none of this state automatically. Remove only explicitly owned outputs after
+preserving required evidence; failed cases stay retained.
+
+`work/coordination/owner-full-code-v1/` retains the initial nine-input host case,
+then the explicit NETStandard-package/accepted-catalog guard revision. Both are
+complete source-driven runs through native planning; their actual DLL/metadata
+bytes differ with generated request/path identities. All source providers and
+commands are recorded rather than normalized to an old build. A separate detached
+qualification checkout may use another host volume for the full default native
+run; it uses the same committed source and newly generated owner work, never a
+shared Unity project. Its private location and ownership are recorded locally;
+no device or storage configuration is changed.

@@ -4,8 +4,11 @@ Assessment and implementation evidence: 2026-10-23. **Complete private
 accepted-output reconstruction now works on Android without Unity Editor or game
 compilation.** A pinned delta/frame package plus verified owner PC and SDK inputs
 reproduces every file of the frozen target. This is a practical narrow replay
-architecture; it is not yet an independent PC-input-only converter or a signed,
-installable launcher product. The package carries substantial game-derived
+architecture; independent PC-input-only conversion and a phone installation
+product remain open. [J1065](PORTING_JOURNAL.md#j1065--qualify-private-owner-apk-preparation-upgrade-and-unity-lifecycle)
+qualifies the private host-built/signed bootstrap candidate's device
+preparation, upgrade, Unity lifecycle and assisted standard controls.
+The package carries substantial game-derived
 output information and stays private. No new execution backend is needed.
 
 The complete host/Android result is recorded once in
@@ -63,6 +66,12 @@ linking. Our J842/J921 authored-player results already connect phone-generated
 code to fresh native compilation, replacement in a fixed player and actual
 Android load/update checks. They retain desktop scene roots and base content;
 they are not a game build.
+
+[J1063](PORTING_JOURNAL.md#j1063--complete-the-source-input-host-native-owner-build) completes one public source-input host command through fresh managed
+production, stripping, IL2CPP conversion and native linking, without an Editor
+project or captured native graph. Explicit authorized SDK products remain inputs.
+The static loader contract passes; byte, performance and device equivalence
+remain unqualified. Phone hosting and complete content production stay open.
 
 For a **single pinned game/input/build profile**, a converter can replace editor
 orchestration with explicit, audited inputs:
@@ -138,6 +147,60 @@ a prior project. R2-R9 and the exporter are useful derivation knowledge, not a
 finished binary-content converter. Existing inherited assets and private analysis
 inputs also remain public-bootstrap debt in the desktop workflow.
 
+The [complete managed-input case (J1052)](PORTING_JOURNAL.md#j1052--trace-the-full-player-managed-closure-and-reproduce-its-raw-audio-api-input)
+traces the real full-player closure and executes the existing raw-input producer
+without the Editor or modified project assemblies. It identifies concrete source,
+post-processing and linker-root dependencies rather than treating an Editor
+rebuild as inevitable. Its host result is not full-player or phone qualification;
+reuse these existing producers instead of starting a second raw audio pipeline.
+
+The [complete retained-package producer (J1053)](PORTING_JOURNAL.md#j1053--produce-all-four-retained-package-assemblies-without-the-editor)
+now compiles all four retained package assemblies and their required managed
+post-processor from explicit owner SDK/package inputs without the Editor.
+This closes their host production dependency; DLL bytes still differ from the
+capture, the declared managed projection is bounded, and Android execution,
+full-player/native integration and performance remain unqualified.
+
+The [complete source-audio input case (J1054)](PORTING_JOURNAL.md#j1054--reproduce-the-complete-source-bank-index-without-a-lab-project)
+reproduces the exact full bank index from legitimate PC files without a project,
+and reproduces Init bytes with the existing public transformation. The historical
+receipt is reproduced by actually executing its retained producer; its separate
+public-source audit remains open. No stage/request guard changes. These concrete
+input results do not complete the requested-audio assemblies or the game build.
+
+The [complete source prefab producer (J1055)](PORTING_JOURNAL.md#j1055--reconstruct-the-complete-source-audio-prefab-directly-from-pc-bundles)
+derives all bytes of the required WwiseGlobal prefab from four original bundles,
+existing script identity and one explicitly audited export-GUID binding. It
+executes neither Editor nor exporter and consumes no target asset. This resolves
+another whole source input without general import; Android execution and the
+remaining game/player/native/content producers are still open.
+
+The [complete requested-audio support case (J1056)](PORTING_JOURNAL.md#j1056--stage-and-compile-the-complete-requested-audio-support-closure-without-the-editor)
+now stages all 274 payload files to the exact existing receipt and compiles the
+observer/core/bootstrap through existing lower-level owners without a project
+or Editor. Strict request/stage generators accept the independent input chain;
+the instrumented native library remains supplied licensed local state.
+Whole-player/native/device equivalence remains open, and existing project/runtime
+admissions are unchanged.
+
+The [complete gameplay source case (J1057)](PORTING_JOURNAL.md#j1057--compile-the-complete-gameplay-source-cohort-directly-from-owner-inputs)
+produces all three exact visual maps from PC DLLs/catalog and compiles the full
+145-source current gameplay cohort with 243 independent references. The matching
+SDK compiler and fresh retained Burst processor run without a project or Editor;
+all sixteen selected support types match the declared R27 target projection.
+Full assembly/native/gameplay equivalence and independent player roots remain
+open. Captured game DLLs are comparison oracles only.
+
+The [whole-player fixed-root case (J1058)](PORTING_JOURNAL.md#j1058--strip-and-convert-the-complete-player-with-fixed-target-root-configuration)
+now runs the complete host chain: 332 independent DLL providers → 93 stripped
+DLLs → 691 generated C++/metadata files. It reuses supplied, explicitly labeled
+current target root/preservation configuration and generates the SDK-native table
+from owner SDK bytes. General Editor root discovery is unnecessary for that
+candidate, but the configuration is not independently inferred scene semantics
+or an audited public bootstrap. Stripped DLLs match only 45/93 frozen R27 hashes;
+no whole-output/native equivalence is claimed. Full native/Burst, content/shader
+production, Android execution and installation remain open.
+
 ## Binary patches and retained artifacts
 
 | Candidate shortcut | Assessment |
@@ -151,13 +214,13 @@ inputs also remain public-bootstrap debt in the desktop workflow.
 
 ## Genuine blockers and their scope
 
-**Missing producers:** complete game/player managed compilation and roots;
-matching code/metadata construction at game scale; the full target serialized
-content and shader producer; Burst and current Android middleware integration.
-These are absent implementations/qualifications, not proof that the Editor is
-mathematically indispensable. A frozen destination removes general editor
-authoring and asset discovery requirements, but does not remove their output
-semantics.
+**Missing producers/qualification:** independent licensed native SDK product
+production/acquisition, the full target serialized content and shader producer,
+Burst and Android integration. [J1063](PORTING_JOURNAL.md#j1063--complete-the-source-input-host-native-owner-build) completes public source-input
+host game-code orchestration through the native library. Remaining missing
+implementations/qualifications do not prove the Editor is mathematically
+indispensable. A frozen destination removes general authoring and discovery
+requirements, but does not remove their output semantics.
 
 **Phone execution and resources:** the shell fixture chain works, while the
 ordinary target-33 app-host path still fails its writable-execution restriction.

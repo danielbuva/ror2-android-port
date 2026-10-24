@@ -238,6 +238,7 @@ def main() -> None:
         default=Path(os.environ["UNITY_EDITOR"]) if os.environ.get("UNITY_EDITOR") else None,
     )
     parser.add_argument("--dotnet", type=Path, default=Path(shutil.which("dotnet")) if shutil.which("dotnet") else None)
+    parser.add_argument("--netstandard-ref", type=Path, help="explicit NETStandard.Library.Ref 2.1.0 package; default retains the existing host cache")
     parser.add_argument("--output-dir", required=True, type=Path)
     args = parser.parse_args()
 
@@ -301,12 +302,12 @@ def main() -> None:
     # from the current Python process environment as well as child processes.
     os.environ["UNITY_EDITOR"] = str(editor)
     # The isolated NuGet cache prevents compiler output from escaping this
-    # preview tree. Seed the one framework-reference package needed by the
-    # netstandard observer from the existing host cache; never restore from a
-    # network feed during this producer run.
-    installed_netstandard = Path.home() / ".nuget/packages/netstandard.library.ref/2.1.0"
+    # preview tree. Seed the framework-reference package from explicit owner
+    # input or the retained default host cache. Never restore from a network
+    # feed during this producer run.
+    installed_netstandard = args.netstandard_ref if args.netstandard_ref is not None else Path.home() / ".nuget/packages/netstandard.library.ref/2.1.0"
     isolated_netstandard = out / ".nuget/packages/netstandard.library.ref/2.1.0"
-    require(installed_netstandard.is_dir(), "host cache lacks NETStandard.Library.Ref 2.1.0")
+    require(installed_netstandard.is_dir(), "NETStandard.Library.Ref 2.1.0 input is missing")
     isolated_netstandard.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(installed_netstandard, isolated_netstandard)
     nuget = out / "NuGet.Config"

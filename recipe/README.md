@@ -86,6 +86,8 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 | `shader-postprocessing-bloom-candidate.json` | Exported one-pass Bloom and exact source-camera CopyStd placeholders | Accepted-input source/meta/resource identities, official Unity package/license hashes and pass contracts; authored camera staging pin refreshed without changing camera transforms. | Authored selection metadata only; upstream source and generated content stay local under Unity Companion License. Manual audit 2026-10-23 described above. | `shader_postprocessing_bloom`, whole-catalog preparation and catalog replay comparison; default off. |
 | `shader-postprocessing-uber-candidate.json` | Exact source-camera `PostProcessResources.uber` one-pass constant-white placeholder | Accepted-input Main Camera/resource/shader/profile identities, official archive/license/source hashes, pass-0 call contract and 18-file include closure. | Reconstruction metadata only; official shader/includes and generated candidates stay ignored under Unity Companion License. Package 2.3.0 is a compatible reference, not a shipped-version claim. Audited 2026-10-23. | `shader_postprocessing_uber`, whole-catalog preparation and catalog replay comparison; independent default-off activation. |
 | `wwise-init-android.json` | Private fixture-only Init metadata generator constants (J744) | Minimum source-bank path, format/identity/size and plugin/device/bus relationships; generated bank bodies remain local. | Authored parsing/serialization and metadata only; accepted full inventory plus explicit source hash required, exclusive ignored outputs, no SDK/media/implementation/private identifiers. Audit details below. | `wwise_init_platform.py`, explicitly invoked support tool; no current game-build dependency. |
+| `tools/phone-build/legacy/transform_init.py.txt` | Exact authored historical Init transformer source | Bounded parsing/serialization and minimum format/plugin/device/bus identities, retained byte-exact for truthful historical receipts. | No bank/media bytes, SDK or wwiser implementation, private path, binary, credential or account/device identifier. Audited 2026-10-24. | Formatted owner wrapper checks full accepted inventory and configured bank before materializing/executing exact source; outputs remain ignored. |
+| `owner-audio-prefab.json` | One exported source audio prefab as a local analysis input (J1055) | Four accepted bundle identities, minimum root/script/reference metadata and one explicit generated export-GUID binding; values come from original type trees. | Authored derivation and metadata only; no serialized asset/template bodies, game/SDK source, media, personal/device/account identifiers or secrets. Full audit below. | `owner_audio_prefab.py`, current experimental host support; no automatic game-build consumer. |
 | `wwise-android-abi.json` | Explicit support-mode Wwise managed ABI candidate generator | Exact accepted input ID; retained API hash; official Android declaration and OS-string helper source hashes; ARM64 Release plugin identity/export hashes; minimal import/parameter rewrites, one exact-signature OS-string helper call-operand rewrite and unavailable import names. | Authored transformation policy and metadata identifiers only; authorized local Integration source inspected read-only. No SDK code, binary, managed assembly, private path, account/device data, bank or audio content is copied. The 11 unavailable imports and `enable_production_audio: false` remain explicit. Audited 2026-10-20. | `tools/wwise-android-abi/generate.py` validates the exact local profile and writes new ignored plan/candidate outputs; its strict Cecil writer and synthetic tests verify the declared changes and preservation. Explicit support tool, separate from default builds. |
 | `inherited-rebuild.json` | One texture-importer host input | Accepted input, minimum export metadata identity/hash, inherited GUID and creation-time parameter. | No texture/importer body or private identifiers; accepted local export only. | `inherited_rebuild` gates source and final ledger hashes. |
 | `inherited-rebuild-package.json` | Three remaining TMP include bodies | Existing TMP 3.0.6 package/archive pins, three source selectors/hashes and inherited GUIDs. | Unity Companion License, authorized local editor package; no third-party bytes tracked. | Existing `unity_package_additions.generate_pairs`, isolated R2 replay only. |
@@ -122,6 +124,9 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 | `native-view-camera-transform.json` | Exact, default-off native view-camera transform producer | Four existing camera pairs plus two exact music-observer intermediate pairs, authored output/tool/source hashes, disabled-by-default request gate, and minimum base-prefab path/GUID. | Minimum identifiers only; no serialized content, IL, game implementation, protected assembly/prefab, private path, device/account data, or third-party code. The operator supplies legitimate local input. Audited 2026-10-21. | `native_view_camera_transform.py` and `native_view_camera_build_hook.py` validate source and profile hashes; generated assemblies/resolver files remain under ignored `work/`. Player closure, APK binding and runtime acceptance are separate gates. |
 | `music-reflection-preservation.json` | Original MusicController bootstrap reflection contract | Authored assembly/type/member names and narrow preservation requirements for the pinned editor. | No implementation, game data, SDK code, binary, private path or device/account identifier. Audited 2026-10-21. | Synthetic metadata fixtures verify the declaration; same-build post-strip inspection is required before runtime qualification. |
 | `original-audio-owner-sources.json` | Exact authored original-audio owner, bounded waveform and music-query cohort | Repository source hashes, source membership, authored script identities and historical ancestor hash. | Authored code identifiers and hashes only; no game implementation, content, SDK code, binary, private path or device/account data. Audited 2026-10-21. | Both producer modes validate the recipe and owner hashes; camera staging pins the same recipe, and actual owner bytes participate in generation cache identity. |
+| `owner-native-arm64.json` | J1059 native build configuration | SDK-relative selectors, six flag templates, translation-unit identities/link ordering and a portable SDK cohort hash. | No source bodies, game data, compiled bytes, captured graph, private paths or account/device data. Audited 2026-10-24. | Explicit accepted input, source/converter/metadata binding; no Editor/project or device consumer. |
+| `owner-player-code.json` | Current target root/retention and SDK linker/converter policy | Minimum scene/type/member identities, preservation flags, assembly order and tool hashes. | No method body, serialized object value, native registration table, binary, private path or account/device data. Audited 2026-10-24. | Full reviewed owner input and explicit hash-bound managed providers; exact SDK tools and derived native identities. |
+| `owner-managed-code.json` | Current owner managed-provider/source configuration | 48 original and 272 SDK relative providers/hashes, 12 produced identities, 14 support selectors, generic tool/package identities. | No game/SDK implementation, generated source/DLL, private path, account/device identifier or credential. Audited 2026-10-24. | Accepted full original inventory; explicit tools/packages/authorized SDK inputs; existing strict transforms/contracts. |
 
 `runtime-sources.json` lists paths relative to `tools/unity`, staged at
 `Assets/LabLoadingScene` by basename. Basename collisions (including generated sources)
@@ -1943,3 +1948,140 @@ relationship. No original implementation, shader body, generated asset,
 proprietary middleware, private path or raw device evidence is included.
 Reconstruction must replay this source cohort. Provenance/privacy audit:
 2026-10-23. Runtime material identity and rendering remain unverified.
+
+## Source WwiseGlobal prefab identity audit (2026-10-24)
+
+`owner-audio-prefab.json` is a minimal input/identity recipe for one source
+prefab, not a serialized asset or target-bearing patch. It contains the accepted
+input ID, four necessary original bundle paths/hashes/sizes, parser version,
+root/collection/object identities, required component/script counts and one
+external source-object to export-GUID relationship. The target size/hash is a
+validation contract and supplies no output bytes. These identifiers are the
+minimum lookup/relationship information needed by the bounded reconstruction.
+
+The external InitializationSettings GUID is explicitly **export configuration**:
+the pinned export collection allocates a GUID; it is not a PC catalog GUID or
+an independently derived original identity. The recipe binds that configured
+identity to the actual original collection/object/class/script, which the
+producer validates. All serialized names, bank selections, values and original
+object relationships are read from the legitimate input bundles, never stored
+in this recipe or copied from an exported prefab. Existing audited assembly
+GUIDs and `script_identity` supply script-pointer identity. No SDK/game source,
+serialized object body, bank/media data, private path, account/device/storage
+identifier, credential or signing material is included. The fixed input and
+source hashes refuse unknown versions; this does not substitute for owning the
+game or perform entitlement/authentication checks.
+
+Prior art: inspected AssetRipper `1ac666f47d8e9dedf96afb0b914c70d7656151ea`,
+`ExportIdHandler`, `Project/AssetsExportCollection`, `AssetExportCollection` and
+`Processing/Editor/EditorFormatConverterAsync`, plus the identity-root behavior
+of `Numerics/QuaternionExtensions`. These establish exporter ID allocation,
+configuration GUID origin and editor-only metadata/sign rules. The authored
+serializer uses mathematical empty-input XXH64 behavior, existing audited MD4
+script identity and versioned Unity YAML schema; no upstream implementation or
+exported YAML/template content is copied. The local MIT-licensed
+AssetRipper.Primitives 3.2.0 identity reference was inspected only for API
+knowledge; no third-party implementation is vendored. The private complete
+9,560-byte comparison and initial quoting/signed-zero mismatch remain ignored.
+The generic authored fixtures contain no original bank selections or asset data.
+
+## Editor-free native owner configuration
+
+`owner-native-arm64.json` extracts configuration from the qualified J1059 native
+build: six argument templates, the original SDK-relative source/include-lump
+relationships, fixed generated translation-unit filename membership and exact
+compile/link ordering. The SDK/tool cohort is pinned by one portable aggregate
+of relative paths and SHA-256 hashes, including the original objcopy tool and the complete NDK tree (linker, implicit
+headers, CRT objects, system libraries and compiler runtime).
+There are no source bodies, implementation snippets, serialized game values,
+SDK registration tables, compiled game or SDK bytes, captured DAG nodes,
+private absolute paths, device/account identifiers, credentials or keys.
+The generated filenames identify the minimum translation-unit/link membership;
+they cannot supply game code or replace ownership. The consuming native owner
+requires the reviewed legitimate input and an explicit successful converter
+receipt with all source hashes and matching metadata. Source is read only from
+owner-supplied SDK and converter providers. No SDK grant or runtime equivalence
+is inferred from this configuration. Manual provenance, privacy, licensing and
+sensitive-content audit: 2026-10-24. Host compiler policy is preserved; Android
+hosting and game acceptance remain open.
+
+## Fixed target roots and code-generation configuration
+
+`owner-player-code.json` records the qualified current target's 471 scene/type
+identity relationships, empty serialized-type JSON set, explicit module policy,
+six preservation XML documents, 332 managed provider identities, 11 root
+assemblies, 93 converter assembly identities/order and 309 SDK tool/config file
+hashes. Its XML contains selector elements and attributes only: type/member names,
+preservation/serialization flags and relationships, never method bodies or
+serialized object values. The original current XML bytes are retained to avoid
+unexamined selector changes. In particular, the four inherited Burst selectors
+are preserved as observed configuration, not asserted to resolve to all intended
+members. The runtime's existing source behavior is unchanged.
+
+The captured SDK native table is deliberately absent. The public existing static
+reader derives its 318 identities from the owner's exact SDK binary at execution.
+No SDK implementation, game method body, generated game code/data, native table,
+compiled binary, captured response/DAG, private path, account/device identity,
+credential or key is included. This is fixed R36-era target configuration with
+original conservative Android IL2CPP policy, not a claim of independently inferred
+scene semantics or accepted-output parity. It can only configure reconstruction
+from the complete explicit owner-supplied provider cohort and reviewed legitimate
+input. Main independently checked the six XMLs against prior configuration and
+confirmed selector-only contents and exact project-field equality. Manual
+provenance, privacy, licensing and sensitive-content audit: 2026-10-24.
+
+
+## Historical authored Init source compatibility
+
+`tools/phone-build/legacy/transform_init.py.txt` is the exact 18,170-byte authored
+source from the J740/J744 experiment, SHA-256
+`91c72d254ba9473d93ffb18c4be2233be1781b6072b08571aed7f607e76e9b37`.
+Full readable source review finds bounded chunk/HIRC parsing, serialization and
+exclusive ignored-output handling, with only minimum accepted-bank, plugin,
+format, device and bus identities/relationships. It contains no bank/media body,
+SDK implementation, vendored wwiser code, credentials, private path or account
+identifier. Existing J744 provenance records pinned wwiser as an observation aid,
+not copied implementation or a runtime dependency. Main independently reviewed
+this origin and all source/receipt bindings. Audit: 2026-10-24.
+
+The archive retains its original source bytes, formatting and historical scope
+text. Like existing readable C# source templates, it is a versioned source
+artifact explicitly consumed by a formatted current wrapper; it is not a Ruff
+exemption for current Python. `owner-code/legacy_init.py` first validates full
+accepted owner state and the configured original bank, then materializes the
+exact artifact under ignored work at the original root-relative depth and runs
+it. The real source reads its own bytes for its receipt. No new execution is
+assigned a historical digest: output and receipt result from actual byte-exact
+source execution. The wrapper checks source/input/output/receipt bindings again
+afterwards, and retains failures/source for review. Only minimum metadata is
+tracked; all generated banks, receipts, tool materializations and logs stay local.
+
+Use current `wwise_init_platform.py` and a truthful fresh receipt for new callers.
+This archival compatibility owner exists for unchanged historical receipt pins;
+it grants no new middleware, game-media or controller-output rights and claims
+no broader routing, audible, retained-runtime or phone acceptance. It changes no
+current game-build selector or runtime request/stage admission.
+
+
+## Original-input managed owner configuration
+
+`owner-managed-code.json` contains the minimum relative identities and hashes
+for 48 original PC and 272 generic SDK providers, the 12 DLL identities that the
+existing producers must generate or acquire from an official generic package,
+and the selected 14 original support source identities. It also pins the
+qualified decompiler version and generic Newtonsoft/decoder identities. The
+support identities select fresh decompilation from the owner's original DLL;
+no decompiled body or generated assembly is tracked. No method implementation,
+asset/media value, SDK body, binary, captured source/graph/response, private path,
+credential or account/device identity is included. Audit: 2026-10-24.
+
+The new source owner composes existing transformations, original catalog readers,
+map generators, package/gameplay compilers and audio contract/pin owners rather
+than adding gameplay or middleware mechanisms. Accepted inventory and provider
+hashes gate every original/SDK lookup. All generated content remains ignored.
+The archive-based Init compatibility source is separately audited above. Licensed
+Wwise inputs remain explicit required inputs, not independently reproduced or
+approved for redistribution. Current source compilation uses the exact qualified
+host SDK policy and diagnostic target configuration; no runtime change, original
+installation mutation, fabricated project admission or phone/performance claim
+is introduced.

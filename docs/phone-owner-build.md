@@ -145,6 +145,12 @@ Desktop scene roots and base engine/content remain inputs.
 These are build-pipeline problems; keep the game runtime
 and desktop fallback while investigating them independently.
 
+[J1065](PORTING_JOURNAL.md#j1065--qualify-private-owner-apk-preparation-upgrade-and-unity-lifecycle)
+qualifies the separate private owner-APK candidate's device preparation,
+increasing-version update, Unity lifecycle and assisted standard controls.
+It consumes reconstructed target files; independent PC-input production,
+phone-side signing and ordinary Android installer UX remain open.
+
 ## Stage map
 
 "Port candidate" means a public tool/source mechanism exists; it does not mean
@@ -206,6 +212,19 @@ host; wider dependencies, editor-root production,
 subprocesses and app sandbox execution remain open.
 The build-tool host is separate from the IL2CPP game runtime.
 
+[J1064](PORTING_JOURNAL.md#j1064--acquire-exact-generic-android-sdk-inputs-without-installing-the-editor)
+qualifies direct owner acquisition of the three exact runtime/resource SDK-copy
+inputs from the provider's pinned component, without installing the Editor.
+The public [extractor](../tools/phone-build/accepted-output/README.md#acquire-the-three-sdk-copy-inputs)
+does not download, accept terms or redistribute SDK content. Phone execution and
+complete compiler acquisition remain separate gates.
+
+The [historical official terms](https://github.com/Unity-Technologies/TermsOfService/blob/bf4037bac93a0a716cff7621a796436954656b0c/Unity%20Software%20Additional%20Terms.md)
+define Unity Toolkits specifically as prefab/C# extensions. Do not classify
+IL2CPP under that clause merely because it is a tool. Owner internal use and
+our redistribution are different questions; applicable accepted terms and the
+actual component grant matter. This is no blanket prohibition on owner builds.
+
 No permission to redistribute Unity editor/compiler components as an Android
 tool bundle is established here. Review the applicable [Unity terms][unity-terms]
 and exact component grants; owner download access and available runtime source
@@ -217,8 +236,10 @@ this assessment is not legal clearance.
 Original/stripped DLLs, generated game C++, global-metadata.dat, game-derived
 libil2cpp.so, shader programs and bundles stay owner-generated/private. A
 prebuilt game library hidden in a patch/archive/download is not an owner build.
-Authorized Android middleware is a separate dependency from PC game ownership;
-the current game's audio remains unavailable.
+Authorized Android middleware is a separate dependency from PC game ownership.
+Current audio observations and remaining gates are owned by
+[PORTING_STATE](../PORTING_STATE.md); earlier no-audio fixtures do not describe
+all later game builds.
 
 ## Blockers and existing debt
 
@@ -306,3 +327,115 @@ does not advance them or certify a build pipeline ready.
 [android-exec]: https://developer.android.com/about/versions/10/behavior-changes-10#execute-permission
 [unity-terms]: https://unity.com/legal/editor-terms-of-service/software
 [sdk-terms]: https://developer.android.com/studio/terms
+
+
+## Source audio inputs without a project
+
+The current experimental host path in `scripts/lab/wwise_bank_index.py` derives
+the complete source bank index from a verified owner installation. It uses the
+same parser as the existing lab action; it does not generate a Unity project,
+claim editor readiness or alter the original game. Supply canonical absolute
+paths to an owner work root with reviewed `config/local.json`,
+`config/accepted-input.json` and `inventory/files.json`, and a new output
+directory inside that work root:
+
+```sh
+python3 scripts/lab/wwise_bank_index.py --owner-work "$OWNER_WORK" --output "$NEW_OUTPUT"
+```
+
+This mode executes no decoder. Add `--verify-decoder` explicitly when the
+complete index requires the existing metadata diagnostic. That step runs
+`vgmstream-cli -m -I` against a temporary copy of the deterministically selected
+bank, checks media identity and original/copy hashes, and exports no audio.
+The caller supplies that tool; no download or installation is performed.
+Its actual executable hash is retained. Android execution remains unqualified.
+
+`parse_source_banks(root, input_id)` is the shared read-only parser; an input-id
+argument alone does not verify ownership or an input inventory. The public owner
+entry validates the complete accepted inventory/configuration before and after
+indexing and binds every selected bank/XML hash. It refuses existing outputs,
+redirected roots, source/output overlap and input drift. Its private
+`bank-index.json` and `result.json` retain detailed data, provenance and terminal
+state; failed new outputs remain evidence. It writes no lab/current pointer.
+The existing `index()` lab generation gate, optional decoder and output/current
+pointer remain in place. No current game build automatically selects an owner
+output, and no runtime stage/request guard is changed.
+
+This is an input producer for the larger requested-audio assembly path, not
+bank playback, bank conversion, a full game build or a selected installation
+architecture. Protected bank/media/index data stay private. Preserve native
+IL2CPP and the desktop fallback while the remaining producers are completed.
+
+## Bounded source audio prefab
+
+Current experimental host support in `scripts/lab/owner_audio_prefab.py` derives
+one complete WwiseGlobal source prefab directly from four original PC bundles.
+It uses the accepted inventory and the pinned UnityPy version already documented
+by the lab; no Editor, AssetRipper process or exported prefab is an input.
+
+```sh
+.local/lab-venv/bin/python scripts/lab/owner_audio_prefab.py --owner-work "$OWNER_WORK" --output "$NEW_OUTPUT"
+```
+
+Both paths are explicit/canonical and output must be new inside owner work,
+separate from the original installation. The owner/profile bind the complete
+accepted inventory, all four bundle hashes, root/collection identity, component
+order, script identities and the one external reference. Unknown graphs, script
+fields, references, parser versions or complete output hashes refuse. The
+serializer supports only this validated identity-root profile; it is not a
+general prefab converter. Its editor-only defaults and signed-zero behavior
+preserve the qualified format. All source values come from the original bundles.
+
+The [audited identity recipe](../recipe/README.md#source-wwiseglobal-prefab-identity-audit-2026-10-24)
+explicitly labels the one assigned export GUID as configuration rather than a
+PC GUID. It ships no serialized game data. The producer owns source validation,
+new-output setup, serialization/readback, final input revalidation and terminal
+receipt. It runs no child process and writes no project/current pointer; failed
+new roots remain evidence. `WwiseGlobal.prefab`, raw reports and receipts stay
+private. No current game build or selector consumes a new output automatically.
+Phone execution, complete audio staging, requested-audio assembly compilation,
+player/native integration and performance remain separate gates.
+
+## Complete requested-audio host support
+
+[J1056](PORTING_JOURNAL.md#j1056--stage-and-compile-the-complete-requested-audio-support-closure-without-the-editor)
+reuses the existing bank stager, request/stage generators and lower-level audio
+compiler owners with independently reproduced source inputs. All 274 staged
+payloads match the exact receipt; observer/core/bootstrap compile without a
+project or Editor. The instrumented native library is an explicit supplied
+licensed product. Top-level project admissions and runtime gates remain intact.
+This is host support production, with full-player/native/device qualification
+still open. Setup and retained evidence are in LOCAL_STATE; the journal owns the
+complete result.
+
+## Complete gameplay source host support
+
+[J1057](PORTING_JOURNAL.md#j1057--compile-the-complete-gameplay-source-cohort-directly-from-owner-inputs)
+uses the existing PC catalog/IL readers, map generators, runtime recipe, SDK
+compiler/reference owner and retained Burst processor. All three maps reproduce
+exactly and the complete current 145-source gameplay cohort compiles without a
+project or Editor. Fourteen recovered support roots and two nested types match
+the declared frozen-target projection. Complete player roots, native/content
+production and Android execution remain open. LOCAL_STATE records the private
+case; the journal owns its full result.
+
+## Whole-player fixed-root host chain
+
+[J1058](PORTING_JOURNAL.md#j1058--strip-and-convert-the-complete-player-with-fixed-target-root-configuration)
+connects the complete independent managed inputs to actual UnityLinker and
+IL2CPP converter execution. It treats current target retention identities as
+explicit supplied configuration and independently extracts the SDK-native table.
+This removes general Editor root discovery from that host candidate without
+claiming independent scene semantics. Public configuration audit, native/Burst
+builds, content/shader production and Android execution remain open. No existing
+working game build or installation architecture adopts the candidate.
+
+## Complete host native game-code construction
+
+[J1063](PORTING_JOURNAL.md#j1063--complete-the-source-input-host-native-owner-build) executes the public source-input command through all managed production,
+stripping, conversion, 825 native compilations, linking and stripping on the host.
+It retains fresh paired metadata and a statically checked native library; see the
+journal for independent evidence and comparison limits. Explicit licensed native
+SDK input, full Burst/content/shader production, Android tool hosting, install/
+update and matched device behavior/performance remain gates. The working game
+and desktop fallback stay unchanged.

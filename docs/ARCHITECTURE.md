@@ -40,6 +40,13 @@ reproduction and framed emission. It verifies supplied target/profile/PC/SDK
 inputs without generating independent Android target information. `assemble.py`
 owns hash-bound unsigned APK assembly and required uncompressed/aligned resource
 storage; canonical alignment and owner signing follow separately.
+`sdk_inputs.py` owns current experimental owner-direct component extraction:
+an explicitly supplied, pinned provider archive yields only the three exact
+SDK-copy files in a new private root, with bounded parsing, readback and terminal
+receipt. It runs no installer/Editor or download and retains failed outputs.
+[Setup/lifecycle](../tools/phone-build/accepted-output/README.md#acquire-the-three-sdk-copy-inputs)
+keeps this acquisition owner separate from compiler/content production and
+phone execution; no current game build consumes it.
 `phone_decode.py` in that directory owns current
 experimental **support**, not game runtime: explicit new owned workspace, pinned
 private package and verified PC/SDK inputs produce complete target files and an
@@ -50,6 +57,110 @@ limits, tool build and lifecycle. No `./dev` game build or launcher consumes thi
 path. The packet's target information stays private; independent owner-input
 production, ordinary app execution, owner signing/alignment, install/update and
 public distribution of any game-bearing packet remain separate gates.
+
+`tools/phone-build/owner-apk/` owns a separate experimental owner-APK bootstrap
+candidate after reconstruction. `build_owner_apk.py` and `binary_manifest.py`
+compile only authored Java, preserve original code/content bytes and move the
+binary manifest's launcher filter to `PayloadBootstrapActivity`, with the
+original Unity entry private to enforce preparation. An optional owner-selected
+`version_code` changes only the original typed version attribute in addition
+to routing; it must increase and updates retain the same private signer.
+`PayloadStore`
+streams/hash-checks embedded runtime payload into the calling app's own external
+files location, stages replacements, retains backups and gates launch of the
+unchanged Unity activity. The activity owns worker/receipt/UI setup, pause/retry,
+launch verification and teardown; the approved frontend connects through fixed
+adapter-v1 actions. No existing Unity/game build consumes it and it is not a
+selected final distribution architecture. [Setup and device gates](../tools/phone-build/owner-apk/README.md)
+include ZIP size, duplicate storage cost, unknown-file acceptance and retained
+user data. All APKs and embedded game data stay ignored/private.
+
+`tools/phone-build/package-assemblies/` owns a separate current experimental
+host producer for the four retained Unity package assemblies and their required
+Burst managed post-processing. It validates explicit owner SDK/package inputs,
+generates compilation requests, compiles the processor, bounds/reaps children,
+retains failures and writes input/output receipts in a new private root.
+[Setup and lifecycle](../tools/phone-build/package-assemblies/README.md) describe
+the fixed profile and exclusions. No captured project/player inputs or current
+game build consume this owner; phone execution and full-player qualification
+remain separate gates. Package versions and the native IL2CPP runtime stay fixed.
+
+`scripts/lab/wwise_bank_index.py` owns the shared source bank/XML parser and a
+current experimental owner-input entry independent of a lab project. Default
+owner indexing executes no decoder; explicit metadata qualification shares the
+legacy temporary-copy helper and never exports audio or writes original banks.
+The owner entry binds accepted inventory before/after, owns a new private output
+and terminal receipt, and retains failures without updating lab/current state.
+[Setup and lifecycle](phone-owner-build.md#source-audio-inputs-without-a-project)
+keep the original lab gate and runtime stage/request guards intact. No game build
+automatically selects this source-only input path; Android execution is open.
+
+[J1058's whole-player host case](PORTING_JOURNAL.md#j1058--strip-and-convert-the-complete-player-with-fixed-target-root-configuration)
+reuses the named metadata/SDK registry/root-composition owners and exact SDK
+UnityLinker/IL2CPP tools with independent DLL providers. Current target root and
+preservation identities are explicit supplied configuration, not independently
+derived scene semantics. LOCAL_STATE records setup, retained inputs and teardown.
+[J1059](PORTING_JOURNAL.md#j1059--build-the-complete-native-arm64-game-library-without-unity-editor)
+then completes native construction using the original SDK compiler policy.
+These experiments have no current game-build consumer; public orchestration,
+content production and Android execution remain separate gates.
+
+`tools/phone-build/owner-code/native.py` owns the current experimental standalone
+native stage of that same Editor-free chain. Audited
+`recipe/owner-native-arm64.json` replaces the captured DAG with typed argument,
+SDK-source/lump, translation-unit and link configuration. Explicit accepted
+owner state, SDK, converter receipt, source providers and matching metadata
+are checked before new private output setup and again at termination. The
+owner keeps commands, tool logs, object receipts and terminal state; failures
+retain their output. [Setup and teardown](../tools/phone-build/owner-code/README.md)
+cover source-frame expansion, input immutability, child cleanup and capacity.
+There is no shared project, Editor, device or current game-build consumer.
+J1063 qualifies the complete source-input host command through native execution.
+Independent content/Burst/shader production, licensed native input production
+and full-player Android construction remain open.
+
+`tools/phone-build/owner-code/produce.py` owns the current experimental combined
+whole-player backend: explicit hash-bound managed providers, audited target
+roots, SDK-derived native identities, exact SDK stripping/conversion, verified
+source-frame retention and the native stage above. It adds no runtime owner.
+`recipe/owner-player-code.json` holds minimum fixed target identities/retention,
+assembly order and tool hashes; no captured native table or response is read.
+[Setup and lifecycle](../tools/phone-build/owner-code/README.md#combined-whole-player-backend)
+name input setup, exclusive outputs, interstage drift checks, failed-state
+retention and teardown. J1061 verifies the explicit-managed-input mode through
+native planning; J1063 qualifies the complete source-input mode, including fresh
+managed production and native linking.
+No shared project, Editor, device or current build consumer is involved.
+
+`tools/phone-build/owner-code/managed.py` owns current experimental original-input
+managed production under the same `produce.py` entry. Audited
+`recipe/owner-managed-code.json` names 320 original/SDK providers and the minimum
+fresh support-source selection; all other game assemblies are generated by
+existing owners. Explicit tool/package/authorized SDK inputs replace prepared
+game DLLs and decompiled-source suppliers. [Setup/lifecycle](../tools/phone-build/owner-code/README.md#original-input-command)
+cover fixed owner-work admission, exclusive outputs, immutable provider checks,
+retention and teardown. Native products, bank/prefab data, decompiled sources,
+managed artifacts and receipts stay private; no current game build selects them.
+The original audio upper-level admissions and runtime owners are unchanged.
+
+`tools/phone-build/owner-code/legacy_init.py` owns current experimental
+historical Init-receipt compatibility. It requires the full accepted owner
+inventory and exact configured source bank before materializing/executing the
+byte-bound authored archive in `tools/phone-build/legacy/`. It retains the exact
+historical source and receipt scope; there is no synthetic old hash on new code.
+[Setup/lifecycle](../tools/phone-build/legacy/README.md) document the fixed private
+source-root depth, exclusive outputs, refusal/failure retention and teardown.
+The current public Init producer remains preferred for new callers; no shared
+runtime owner, selector or build admission changes.
+
+`scripts/lab/owner_audio_prefab.py` owns current experimental bounded host
+reconstruction of one source audio prefab from the owner's original bundles.
+`recipe/owner-audio-prefab.json` holds audited minimum identities and one clearly
+labeled export-GUID configuration relationship. The owner validates source and
+script/reference graphs, serializes the qualified profile, revalidates inputs
+and retains terminal state in a new private output root. [Setup/lifecycle](phone-owner-build.md#bounded-source-audio-prefab)
+requires no Editor/exported asset and adds no current game-build consumer or
+runtime owner. Unknown shapes and hashes refuse; phone qualification remains open.
 
 Phone build **support**: `scripts/lab/phone_bundle.py` writes the isolated authored
 TextAsset bundle with only Python's standard library; its versioned native

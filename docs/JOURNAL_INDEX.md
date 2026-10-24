@@ -10,8 +10,23 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1065](PORTING_JOURNAL.md#j1065--qualify-private-owner-apk-preparation-upgrade-and-unity-lifecycle) | 2026-10-24 | Qualify private owner APK preparation, upgrade and Unity lifecycle | 2026-10-24. |
+| [J1063](PORTING_JOURNAL.md#j1063--complete-the-source-input-host-native-owner-build) | 2026-10-23 | Complete the source-input host native owner build | **Hypothesis and scope.** |
+| [J1062](PORTING_JOURNAL.md#j1062--replace-the-private-historical-init-source-with-an-audited-owner-tool) | 2026-10-23 | Replace the private historical Init source with an audited owner tool | 2026-10-24. |
+| [J1061](PORTING_JOURNAL.md#j1061--compose-the-public-whole-player-stripping-and-conversion-backend) | 2026-10-23 | Compose the public whole-player stripping and conversion backend | 2026-10-24. |
+| [J1060](PORTING_JOURNAL.md#j1060--remove-the-captured-native-graph-from-the-public-owner-stage) | 2026-10-23 | Remove the captured native graph from the public owner stage | 2026-10-24. |
+| [J1059](PORTING_JOURNAL.md#j1059--build-the-complete-native-arm64-game-library-without-unity-editor) | 2026-10-23 | Build the complete native ARM64 game library without Unity Editor | 2026-10-24. |
+| [J1058](PORTING_JOURNAL.md#j1058--strip-and-convert-the-complete-player-with-fixed-target-root-configuration) | 2026-10-23 | Strip and convert the complete player with fixed target root configuration | 2026-10-24. |
+| [J1057](PORTING_JOURNAL.md#j1057--compile-the-complete-gameplay-source-cohort-directly-from-owner-inputs) | 2026-10-23 | Compile the complete gameplay source cohort directly from owner inputs | 2026-10-24. |
+| [J1056](PORTING_JOURNAL.md#j1056--stage-and-compile-the-complete-requested-audio-support-closure-without-the-editor) | 2026-10-23 | Stage and compile the complete requested-audio support closure without the Editor | 2026-10-24. |
+| [J1055](PORTING_JOURNAL.md#j1055--reconstruct-the-complete-source-audio-prefab-directly-from-pc-bundles) | 2026-10-23 | Reconstruct the complete source audio prefab directly from PC bundles | 2026-10-24. |
+| [J1054](PORTING_JOURNAL.md#j1054--reproduce-the-complete-source-bank-index-without-a-lab-project) | 2026-10-23 | Reproduce the complete source bank index without a lab project | 2026-10-24. |
+| [J1053](PORTING_JOURNAL.md#j1053--produce-all-four-retained-package-assemblies-without-the-editor) | 2026-10-23 | Produce all four retained package assemblies without the Editor | 2026-10-24. |
+| [J1052](PORTING_JOURNAL.md#j1052--trace-the-full-player-managed-closure-and-reproduce-its-raw-audio-api-input) | 2026-10-23 | Trace the full player managed closure and reproduce its raw audio API input | 2026-10-23. |
+| [J1064](PORTING_JOURNAL.md#j1064--acquire-exact-generic-android-sdk-inputs-without-installing-the-editor) | 2026-10-24 | Acquire exact generic Android SDK inputs without installing the Editor | 2026-10-23. |
 | [J1051](PORTING_JOURNAL.md#j1051--host-storage-pruning-and-a-mandatory-agent-cleanup-rule) | 2026-10-23 | Host storage pruning and a mandatory agent cleanup rule | **Hypothesis.** |
 | [J1050](PORTING_JOURNAL.md#j1050--measure-exact-data-reuse-across-every-pc-and-accepted-android-bundle) | 2026-10-23 | Measure exact data reuse across every PC and accepted Android bundle | 2026-10-23. |
+| [J1049](PORTING_JOURNAL.md#j1049--assemble-and-sign-the-complete-private-owner-apk-bootstrap-candidate) | 2026-10-23 | Assemble and sign the complete private owner APK bootstrap candidate | 2026-10-23. |
 | [J1046](PORTING_JOURNAL.md#j1046--native-defeat-and-restart-compose-with-r36-original-audio) | 2026-10-23 | Native defeat and restart compose with R36 original audio | **Hypothesis and scope.** |
 | [J1045](PORTING_JOURNAL.md#j1045--native-source-stage-cleanup-and-restart-pass-on-r36) | 2026-10-23 | Native source-stage cleanup and restart pass on R36 | **Hypothesis and scope.** |
 | [J1044](PORTING_JOURNAL.md#j1044--restore-the-source-camera-uber-composite-contract-on-the-host) | 2026-10-23 | Restore the source-camera Uber composite contract on the host | **Hypothesis and change.** |

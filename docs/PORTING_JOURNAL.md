@@ -32996,6 +32996,98 @@ R36 remains installed/stopped/asleep, J850 remains the accepted rollback, and
 J1043/J1044 still await the shared editor handback for their full build. No new
 build input, architecture owner or rebuild step is introduced.
 
+## J1049 — Assemble and sign the complete private owner APK bootstrap candidate
+
+2026-10-23. Host qualification only; no installation or device execution.
+
+**Hypothesis and scope.** J1042 reproduces all accepted output on Android, but
+its unsigned archive and separate payload are not an ordinary installation
+experience. Android 11's app-specific storage restrictions prevent an unrelated
+launcher from reproducing ADB's writes into the game's external files directory.
+A private owner-built APK can instead carry the owner's verified payload and
+prepare its own existing `payload` location before starting the unchanged Unity
+player. This tests an installation candidate within Route A/Architecture C;
+it does not adopt a final distribution architecture or solve PC-input-only
+production of the game-bearing target information.
+
+**Prior art and existing contract.** Consulted `community-prior-art.md` and
+pinned BepInEx.Android.Launcher `fd1a4023` README/Fusion exports. Its injection
+and runtime-container hooks are excluded; no implementation is copied. Existing
+`Device.sync` and `WholeCatalogComposed` define the measured payload location and
+manifest contract. Android's documented app-specific directory contract supplies
+the permitted same-app output location. Those original contracts remain the
+content-loading authority.
+
+**Change and ownership.** The separate public `tools/phone-build/owner-apk/`
+producer compiles authored `PayloadStore` and `PayloadBootstrapActivity` to a
+new DEX. It structurally edits binary manifest XML to move the MAIN/LAUNCHER
+filter to the bootstrap, preserving existing string/resource identities and
+making the original Unity activity private. The activity hosts the approved
+launcher frontend through adapter v1 and fixed native actions. No demo is
+packaged. It streams embedded payload into its own app-specific files, verifies
+actual bytes, reserves fresh capacity, retains failed stages and backups, and
+requires reviewed observed hashes before replacing unfamiliar existing files.
+It releases its WebView before handing off to the original Unity activity;
+warm launcher re-entry resumes that activity without recreating the frontend.
+Completed files are reused after restart; partial-file resume is not qualified.
+No Unity project build, game compilation, stripping, original DEX/IL2CPP change,
+shader change, replacement loader or runtime migration occurs. The current lab
+build does not consume this candidate.
+
+**Complete host result.** Source checkpoint `1526bd51` (rebased without source
+changes to `a358cc09`) builds the full private accepted profile in 115.4504 seconds.
+The unsigned APK contains 713 verified entries: 570 original entries remain
+byte-identical, with only the original manifest changed; a separate authored DEX
+and 134 runtime payload files are added. Payload totals 2,265,941,767 bytes. The
+unsigned APK is 1,995,909,048 bytes, SHA-256
+`7c04a7c58c3d0190dc1aa34273172c194afe9d1762f7842242e9e9583bddcdca`.
+Canonical AAPT accepts its manifest and launchable activity. Canonical zipalign
+passes before and after signing, with the uncompressed aligned resource table.
+The existing private lab key is read only and retains its hash; no key is
+transferred to Android. The signer matches accepted J850. APK v1/v2/v3 signature
+verification passes. Signed output is 1,995,994,448 bytes, SHA-256
+`57dcd67442a5cc4f6f6a7ede0b0f15076d23a2b6659e813c0b29477aff1c96e7`.
+Independent full readback verifies all 713 non-signature entries against the
+unsigned output. These checks establish archive/signature/content contracts,
+not Android installation, rendering, game behavior or performance.
+
+**Contracts and first failures.** Authored binary-XML tests cover both string
+encodings, non-BMP Unicode, resource/attribute retention, launcher routing and
+ambiguous/unknown/truncated input refusal. A compiled Java harness exercises the
+actual payload store's streaming, hashes, reuse, unknown-file refusal, reviewed
+backup, corruption, post-review mutation, free-space admission, pause/restart,
+symlink containment and unsafe/duplicate names. This finds an initial admission
+error: a fully verified existing payload was refused solely for low free space.
+Reserve admission now applies when new data is required; existing bytes still
+must pass complete verification. All 15 owner-related and 11 accepted-output
+host tests pass. Ruff passes the changed Python. The isolated worktree's doctor
+reports absent configured legitimate-input/project/checkpoint state; this
+source-only packaging worktree does not claim to be a game build workspace.
+
+**Evidence and terminal state.** Private evidence lives in
+`work/coordination/owner-apk-integration/`: explicit `request-v1.json`, source-bound
+invocations, SDK compile results, `full-owner-apk-v3/` (unsigned/signed APKs,
+input/output hashes, canonical manifests/alignment/signatures and independent
+content readback), and `host-proof-v1.json`, SHA-256
+`fe0e63d7839d7e40b7929bff6722ac1d7961fed031d866e9038112e047cca973`.
+Superseded successful generated APKs have source snapshots, retained receipts
+and scoped retirement markers. Failed runs, authoritative reconstruction packet,
+verified reconstructed targets and accepted game rollbacks remain preserved.
+No device commands, installs, launches, editor actions or original-input changes
+occur in this case. Alpha remains leased to the feedback session pending its
+explicit handback; Main's device/editor/game sources are untouched.
+
+**Remaining gates and revisit conditions.** This candidate doubles payload
+storage between APK and prepared files. Measure actual installation peak,
+placement/backing, preparation, pause/restart, update consent/backup, save/profile
+retention and normal launcher/Unity lifecycle on the authorized device. Compare
+ordinary game behavior and performance to accepted output. Phone-side signing,
+normal installer/update flow, tool acquisition and independent PC-input-only
+production remain open. J1042's large private target-bearing packet stays private;
+this APK is not approved for publication. Do not change the working build or
+final architecture on these host results. Retain desktop owner builds as fallback.
+
+
 ## J1050 — Measure exact data reuse across every PC and accepted Android bundle
 
 2026-10-23. Read-only host assessment; no converter, game build or device action.
@@ -33107,3 +33199,1178 @@ lab-project receipts) and other worktrees are untouched pending owner review.
 **Revisit.** If an old candidate is needed, rebuild it from its recorded
 source commit. If free space falls below 100 GB again, inspect `work/rebuild`
 and extra worktrees next.
+
+## J1064 — Acquire exact generic Android SDK inputs without installing the Editor
+
+2026-10-23. Complete host acquisition/extraction case; Android execution remains
+unqualified. No installer, Unity Editor, game compiler or device is run.
+
+**Hypothesis and actual source.** J1036/J1042 identify three SDK-copy inputs that
+match the accepted player, but earlier proofs obtain them from an installed
+workstation toolchain. An owner should be able to obtain those same inputs from
+the provider's component without installing the desktop Editor. Unity's official
+release page and release API identify 2021.3.45f2 / revision `88f88f591b2e`, released
+2025-10-03, and publish a standalone Android support PKG. This is owner-direct
+acquisition, not redistribution of Unity tools or runtime data by this project.
+
+**Change and lifecycle.** Public `accepted-output/sdk_inputs.py` owns the pinned
+component check, bounded standard-library XAR/gzip/CPIO reader, exact member
+selection, new private destination and terminal receipt. It reads PackageInfo's
+component identity/root and writes only the three SDK files already selected by
+the accepted profile. It never runs package scripts or an installer. Unknown or
+redirected components, malformed/truncated data, traversing paths, redirected
+destinations, duplicate/missing selected members, selected symlinks and output
+hash differences refuse. Failed new outputs remain evidence; no existing file
+or original game installation is overwritten. No current game build or launcher
+calls this support path. The existing replay/packet producer can consume the
+resulting explicitly supplied SDK root without changing its byte contract.
+
+**Complete result.** The official 586,545,150-byte component downloads in
+41.5567 seconds, with published MD5 `7b1b4fa435c689615ba53751cdd6a053` and
+SHA-256 `0e4476332c902ab8800bafbb521f5893ec706daedbb639da07a8fe43e6e9bc49`.
+The final public helper reads all 733 members / 2,038,836,736 uncompressed archive
+bytes and independently verifies the three selected outputs in 2.3660 seconds.
+Their total is 65,162,896 bytes: Development IL2CPP ARM64 `libunity.so`,
+`libmain.so` and `unity default resources`. Every hash matches both the pinned
+SDK-copy profile and the accepted J850 output. Only those files plus the private
+receipt are written; the approximately 2 GB archive expansion is streamed,
+not materialized. No desktop Editor installation is needed for this source path.
+That is not a claim of phone extraction or of acquiring the complete compiler.
+
+**First failure and contracts.** The initial private selection expects the
+installed `PlaybackEngines/AndroidPlayer` prefix inside the archive and refuses
+an incomplete selection. The actual PackageInfo declares that install root;
+the payload itself is component-relative. Preserve the failed source/result;
+selection now matches exact component-relative paths and emits the established
+SDK-root layout. Four authored tests exercise both supported CPIO encodings,
+real XAR/gzip traversal, complete content/readback, no script execution/extraction,
+unknown input, existing output, missing/duplicate members, traversing paths,
+selected symlinks, wrong hashes, truncation and an outside-destination sentinel.
+All pass, with Ruff. The complete official component then passes the final
+public implementation. Neither those host cases nor compilation proves Android
+sandbox execution or game readiness.
+
+**Terms precision and working policy.** The official August 2025 terms define
+Unity Toolkits as prefab/C# API extensions, not compilers generally. Their
+internal-use, service/distribution and conditional runtime grants are distinct;
+prior-terms continuation depends on the owner's entitlement records, which were
+not inspected. The June 2026 update must not automatically substitute for that
+historical contract. This corrects an overbroad classification, not a grant to
+bundle IL2CPP or proof that every owner-only invocation is forbidden. Continue
+private owner workflows while keeping proprietary SDK/compiler bytes out of Git.
+The official component's public availability is a technical acquisition result,
+not permission to redistribute its contents or the game's compiled code.
+
+**Evidence and remaining work.** Private release metadata, historical terms,
+verified component, container metadata, initial failure, exact source, complete
+extraction receipts and source-bound proof live under
+`work/coordination/owner-tool-acquisition-v1/`. `proof.json` retains the initial
+private acquisition case; `proof-v2.json` binds the final public implementation,
+SHA-256 `3c7290832da725bf9eb5a8f9436417503981b23973e8425f5d17b629d369c2fe`.
+The package and extracted files remain private. Main's game/editor/device and
+Alpha's feedback lease are untouched. Full managed compiler/tool acquisition,
+phone execution, game AOT/metadata and content/shader production, durable signing,
+normal install/update and matched performance remain open. This is one usable
+SDK acquisition owner within Route A/Architecture C, not a second converter or
+an adopted final installation architecture; retain the desktop fallback.
+
+Primary sources:
+[exact release](https://unity.com/releases/editor/whats-new/2021.3.45f2),
+[official release API](https://services.api.unity.com/unity/editor/release/v1/releases?version=2021.3.45f2),
+[August 2025 terms](https://github.com/Unity-Technologies/TermsOfService/blob/bf4037bac93a0a716cff7621a796436954656b0c/Unity%20Software%20Additional%20Terms.md),
+[current terms](https://unity.com/legal/editor-terms-of-service/software).
+
+## J1052 — Trace the full player managed closure and reproduce its raw audio API input
+
+2026-10-23. Complete host provenance/producer case; no Editor, game runtime or
+phone is executed. Route A and Architecture C remain unchanged.
+
+**Hypothesis and prior art.** Independent owner conversion should reuse the
+existing assembly producers before building another compiler pipeline. J984's
+owner-assembly recipe and the existing raw audio producer already separate
+original inputs from project outputs. The pinned ThunderKit source
+`95a6236df08b0e4bbd5350dd4afdb0927cb7fb6a`,
+`Editor/Core/Utilities/PackageHelper.cs`, distinguishes assembly bytes from
+Unity importer/GUID metadata; that distinction informs the census, without
+copying its implementation. Main supplied the fresh J978/R27 player capture
+and current producer ownership. Captured assemblies are comparison oracles,
+never independent input suppliers.
+
+**Full scope and controls.** Revalidate the complete R27 build receipt, capture
+binding, all 333 pre-strip DLLs, all 93 declared code-generation DLLs and all four
+captured Bee/response/trace metadata files. The build is source `2f81ab1`, APK
+`213228ad3b6b70505f49c9002e08f841d254a5c2bf4cc075e0c78fb968fb0c2e`,
+accepted input `6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88`.
+Hash the current legitimate PC providers and 4,746 candidate SDK DLLs; do not
+infer provenance from filenames. The complete census takes 9.4612 seconds.
+The first local attempt incorrectly looks for captured metadata beside managed
+DLLs; the corrected reader uses their recorded metadata directory. Both initial
+source/log and final result remain private. No capture or shared project changes.
+
+The initial pre-strip classification is 48 exact PC files, 272 exact SDK DLLs,
+one published owner transformation and 12 requiring finer producer mapping.
+For the 93 stripped inputs, their corresponding pre-strip origins are 30 PC,
+51 SDK, one transformation and 11 still requiring mapping. These are origin
+counts: stripping changes bytes, and finding a pre-strip provider does not
+reproduce the stripped file or establish owner-direct SDK acquisition.
+
+**Actual isolated production.** Execute the existing
+`tools/unity/support/audio/managed-producer/produce.py` in a new private output
+root using legitimate raw PC assemblies, owner-supplied Android API sources and
+native SDK plugin, and the pinned host SDK tools. Generate the guarded input
+fresh; supply neither a modified project assembly nor captured game output.
+The Unity executable is an identity input only and is not launched. Host
+Mono/Roslyn/.NET are build tools, with no change to the IL2CPP game backend.
+The standalone invocation succeeds in 23.8919 seconds; independently rehash all
+249 declared files, including tool/support outputs. This is not 249 player
+assemblies. Its composed `AK.Wwise.Unity.API.dll` exactly matches the frozen R27
+pre-strip input, SHA-256
+`1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b`.
+The producer remains request-disabled and has no full-player/APK binding.
+An own-worktree `./dev preflight --host-only` refuses the absent generated lab
+project after input checks; no game build is dispatched or claimed to pass.
+
+**Remaining concrete producers.** Newtonsoft matches the pinned package's AOT
+DLL. Four retained package assemblies instead require source compilation:
+Burst 1.8.11, Collections 1.2.4, Mathematics 1.2.1 and UGUI 1.0.0. Keep their
+accepted versions and behavior. A read-only current C# graph identifies their
+source cohorts and IL post-processing; it is explicitly not the frozen R27
+graph and cannot establish fresh R27 compile inputs. The current authored
+Assembly-CSharp cohort contains 145 source files: 128 match public source,
+three are generated visual maps and 14 are selected original game support
+sources. Existing generators and the local export/staging recipes explain
+these dependencies; original/decompiled source stays private. Bare Roslyn
+compilation alone omits the observed IL post-processing contract.
+
+The other full-player work includes the later RoR2 transformation chain and
+three separately authored audio/observer assemblies, independently produced
+scene/serialization roots, package compilation/post-processing, and exact
+linker options. The frozen linker action names scene/type descriptors, Burst
+and authored preservation descriptors, SDK module data and editor-to-linker
+metadata; the four captured Bee metadata files do not contain those root
+producers. Do not substitute current Temp files or captured outputs and call
+that independence. Native AOT/metadata, Burst native output, serialized content
+and shaders remain separate unsolved production/qualification gates.
+
+**Direct source regeneration follow-up.** Reuse the pinned J597/J03
+`recovery.ilspy_project` command and CSharp9 language setting against the full
+original Assembly-CSharp and RoR2 assemblies in new isolated private roots.
+Assembly-CSharp decompilation succeeds in 0.8837 seconds, producing 23 source
+files and all 14 required original support source names. Eleven required files
+match the current staged bytes exactly. One differs only by the existing
+`repair_support_source` Event alias. Two retain decompiler syntax differences
+(anonymous delegate versus lambda, and implicit versus explicit enum values);
+no compilation/IL equivalence is claimed for those two. All 146 legitimate
+managed input hashes remain unchanged around this support-source run.
+The RoR2 run succeeds in 13.1628 seconds and reproduces all three map-source
+inputs at the exact published `recipe/build-entry-inputs.json` hashes. It does
+not generate the maps or their catalog/contract dependencies. No protected
+source is published, no staging recipe is changed and no project is imported.
+This establishes direct source availability without a general AssetRipper
+project export; exact source/compile compatibility remains to qualify.
+
+**Evidence and recommendation.** Private sources, invocation/input bindings,
+failed attempt, full census, source graph observations, complete producer
+outputs and seal live under `work/coordination/full-owner-managed-v1/`.
+`proof-v1.json` SHA-256
+`4d1ebc2818de7d6afb47587550ce11e8050b474cba1099a5ea71aefd1630533a`
+binds the evidence and all 249 declared output hashes. `proof-v2.json`, SHA-256
+`1dc1d6f649b3f80dfe1bf775fcaf49ec247e686662dbc16e6b1e34a03c9764a0`,
+binds that reviewed case plus the complete source regeneration follow-up,
+source comparisons and retained differences. No current game build reads this
+research directory. Main's project/editor and the feedback device
+lease are untouched. Reuse the existing raw-input producer and published
+assembly recipes in a full independent producer; do not start another raw audio
+implementation or claim that a full Editor rebuild is inherently required.
+The completed result narrows the missing code-production contracts, but is not
+full-game conversion, Android tool execution, performance acceptance or public
+redistribution clearance. The private accepted-output replay and desktop
+owner-build/cache fallback remain the usable bounded routes while those
+producers and ordinary phone installation are completed.
+
+## J1053 — Produce all four retained package assemblies without the Editor
+
+2026-10-24. Complete host package-source compilation and managed post-processing
+case. No game input, captured assembly or project response is a producer input;
+no Editor, device, shared project or game build is changed.
+
+**Hypothesis and prior art.** J1052 identifies four retained source-compiled
+package assemblies as a concrete full-player dependency. Produce the whole
+cohort from owner SDK/provider sources, including the actual required IL
+post-processing, before attempting another game compiler implementation.
+The pinned RoR2ThunderBurster `9cbfd8c807e887111227b98f2803991c653d4717`,
+`Editor/Core/DependencyInstaller.cs`, supplies a package-version/dependency clue,
+not an Android producer. Its newer tuple is not adopted; retain Burst 1.8.11,
+Collections 1.2.4, Mathematics 1.2.1 and UGUI 1.0.0. Unity's assembly-definition
+schema explains version defines, references and platform/source membership.
+
+**Owner inputs and independent request.** Acquire the three exact provider
+archives from Unity's registry and verify their published SHA-1 checksums.
+Archive SHA-256 values are Burst
+`b478606a13d033f1782b42f603ff6be31e0062806045c3cbe3826a2a44d0837c`,
+Collections `507e94c8bf7ab636035789b3744f900f2e55262778573864cf7962251bd5686e`
+and Mathematics
+`3fb6ebcaccefc535c1a99197cca0c539b40ebd0f509c5d38c2bd9e9ee7081d77`.
+UGUI sources come from the owner's exact SDK builtin package. Select 282 runtime
+sources plus seven Burst.CodeGen sources using package assembly definitions,
+nested same-assembly references, ignored-folder rules and case-insensitive source
+order. Version defines derive from the fixed profile and supplied SDK packages.
+The existing independently pinned SDK selector supplies 186 references; required
+package helpers and the 429-file host compiler/post-processor toolchain are hash
+bound. No earlier compiled package, captured response file, game DLL or project
+is needed. Captured responses remain separate read-only comparison evidence.
+
+**Tracked owner and complete execution.**
+`tools/phone-build/package-assemblies/produce.py` and its pinned `profile.json`
+accept explicit canonical SDK/package roots and a new separate output root.
+They generate all responses, compile all four runtime assemblies plus
+Burst.CodeGen, then run that freshly compiled processor on the four runtime
+outputs. Compiler servers are disabled; bounded children are killed/reaped on
+interruption or timeout. Inputs are not edited. Logs, requests, partial outputs
+and terminal failure state remain private; existing runs are never overwritten.
+ARCHITECTURE and LOCAL_STATE name setup, teardown, provenance and state. No
+current game build or launcher consumes this experimental host owner.
+
+The final public-source run completes all nine child stages successfully,
+4.4780 seconds summed child time, excluding acquisition, validation and comparison.
+It revalidates all 981 declared original input hashes at completion. Runtime
+source counts are UGUI 85, Burst 53, Mathematics 88 and Collections 56. Collections'
+managed post-processor materially changes the DLL, so bare Roslyn output is not
+a substitute. The complete four-package case, rather than another authored
+fixture, is the tested input-production scope. Five independent host contract
+tests cover source boundaries/order, redirected inputs/output overlap, version
+defines, quoted owner paths and retained process failures; Ruff passes.
+
+**Comparison and first failures.** Independently rehash the frozen R27/J978
+pre-strip DLLs before comparing. Final generated outputs match the declared
+read-only Cecil projection for all 686 types: UGUI 202, Burst 88, Mathematics 97
+and Collections 299. That projection includes declared field order, all method
+IL with bit-preserved floating constants, custom attributes, generic constraints,
+layout, property/event bindings and interop/marshal data. It excludes MVID,
+PE headers/timestamps, PDB/debug information, metadata token identities/order
+outside the declared field/method collections, security declarations/resources
+and individual referenced-type scope identity beyond assembly-reference names.
+Do not promote this bounded projection to complete binary or native equivalence.
+All four DLL byte hashes differ from the captured inputs and remain recorded.
+
+The initial source selector incorrectly excludes Burst's nested same-assembly
+reference folder; the corrected producer retains it. A comparison-reader attempt
+refuses JSON infinity values; the corrected reader preserves float bit patterns.
+The first complete source-order comparison exposes Burst member-order/IL
+mismatches and two Collections attribute-order mismatches. Case-insensitive source
+ordering resolves those actual differences in the complete cohort. Initial
+sources, outputs, errors and negative comparisons remain evidence. None of these
+failures is hidden by changing the accepted package versions or normalizing away
+a differing instruction, field order or attribute.
+
+**Evidence and remaining work.** Private registry metadata, archives, acquisition
+receipts, initial cases, final explicit request and public-source outputs,
+comparison reader/reports and all byte differences live under
+`work/coordination/package-assemblies-v1/`. `proof-v1.json` SHA-256
+`65351f521aebe598c6cc678ad676ea6715d71b3c08cf63aa8222d3c5a4f353ec`
+binds the first public-source case at `4d54c65`. Final `proof-v2.json`, SHA-256
+`252be8de183b236da0019771db37880edfe82ba23b5f1f173ad2e8a9f10855b2`,
+binds source `ee9e19d` and the complete final output/report comparison, including
+an actual package root containing spaces. The final contract additionally pins
+the 57 SDK builtin package metadata files used to derive version symbols.
+Main review finds a path-map response quoting bug; the corrected producer and
+focused regression preserve spaced owner paths through actual compilation. Owner SDK/package material and raw outputs stay ignored. Public
+availability is not a redistribution grant; no SDK binaries are committed.
+The first mandatory fresh-clone check refuses the existing packet test because
+host free space falls below its 8 GiB reserve. Three superseded successful
+comparison-report sets are preserved in fully rehashed compressed archives with
+adjacent restoration markers; failed cases, source, logs, current evidence and
+all executable rollbacks remain untouched. The unchanged packet tests then pass.
+Production reserves and test expectations are not lowered.
+
+This supplies a reusable host producer for four package inputs within Route A
+and Architecture C. It does not generate the remaining game/authored assemblies,
+independent maps/catalog contracts, serialization/linker roots, native AOT or
+Burst output, Android serialized content/shaders, or a phone installer. The
+macOS host toolchain closure and its app-host execution still need an Android
+acquisition/execution solution; do not relabel this as a phone-qualified producer.
+Native/game behavior and matched performance require the remaining full pipeline
+and actual device evidence. The working game and desktop fallback remain fixed.
+
+Primary schema reference:
+[Unity 2021.3 assembly-definition file format](https://docs.unity3d.com/2021.3/Documentation/Manual/AssemblyDefinitionFileFormat.html).
+
+## J1054 — Reproduce the complete source bank index without a lab project
+
+2026-10-24. Complete host owner-input indexing case, with separate Init/receipt
+reproduction controls. No Editor, shared project, device, audio playback or
+current game-build selection is used or changed.
+
+**Hypothesis and prior art.** The remaining requested-audio assemblies require
+an accepted source bank index. Existing `wwise_bank_index.index()` couples its
+parser to lab generation even though the underlying inputs are ordinary files
+in the legitimate installation. J496 establishes that decoder metadata must use
+a temporary bank copy, never the original. J588's pinned R2API.Sound/wwiser
+observations distinguish bank metadata, media references and native lifecycle;
+J744 already supplies the public structural Init transformation. Reuse those
+owners rather than implement another parser or disable requested audio.
+
+**Tracked change and lifecycle.** Extract the existing bank/XML parser into
+`parse_source_banks(root, input_id)`, which reads no lab state and executes no
+decoder. The input-id argument alone is not input or ownership validation.
+The existing `index()` still requires the accepted lab generation and preserves
+its schema, optional decoder and lab/current-pointer behavior. Share the existing
+metadata-only decoder step through a helper that checks original/copy hashes.
+The new explicit owner entry validates real accepted inventory/configuration
+before and after the whole scan, verifies every selected XML/bank hash, and owns
+only a new private output root separate from original inputs. Default owner mode
+is decoder-free; `--verify-decoder` explicitly requests the metadata-only step
+on a temporary copy. Failed new outputs/terminal receipts remain; existing
+outputs refuse and no lab/current pointer is written. Setup and state are named
+in ARCHITECTURE, phone-owner-build and LOCAL_STATE. No runtime request/stage pin
+or existing consumer is relaxed or redirected.
+
+**Complete original-input result.** Accepted input
+`6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88`
+yields all 247 version-150 banks, 11,876 embedded media entries and 3,318 events:
+1,157 single-media, 1,687 multi-media and 474 without direct media references.
+All 248 selected bank/XML hashes are independently rechecked against the reviewed
+inventory. No lab project or generation marker is created. The default index
+matches every substantive field of the current pinned index; its sole difference
+is the intentionally absent `decoder_sample`.
+
+A separate existing metadata procedure on an owned sample-bank copy reproduces
+that field in 0.0528 seconds, with no WAV export and unchanged original/copy
+hashes. The final tracked complete owner invocation reproduces the entire index
+byte-for-byte, SHA-256
+`f1d41954cb78c582a6c8a5fbbca58148057a120b01e4bb09cd47f8f107d66326`.
+The actual decoder executable hash is
+`c8d11572ee6cb42ed30b4a99be4a2a5ad6d254e6ad5c23b7de6e0097d57d56ab`.
+This resolves that source-input dependency without asserting a new audio runtime.
+Eight authored tests cover the original bank/header/media contracts, parser
+independence, traversal/version/media refusals, the legacy generation gate,
+temporary-copy decoder identity, full owner inventory flow and same-stat content
+drift. Ruff passes; Main independently reviews source and the exact full output.
+
+**Init and historical provenance follow-up.** Execute the unchanged public
+`wwise_init_platform.py` against the legitimate Init bank: it reproduces required
+bank SHA-256
+`618d1c5d534af10fc4cc30a1bacd193bf6871dab3e63992ebedd92a92576fb90`
+in 0.0912 seconds with original bytes unchanged. Its fresh receipt correctly
+differs from the historical pinned receipt in `transform_sha256` and the added
+`input_relative_path`; do not falsify either field. Main locates the exact
+historical authored transformer, source SHA-256
+`91c72d254ba9473d93ffb18c4be2233be1781b6072b08571aed7f607e76e9b37`.
+A byte-identical copy under the equivalent owned private layout actually executes
+against the same legitimate input and new outputs, reproducing both the bank and
+historical receipt SHA-256
+`3b274de411fe2128bffd43de117baf9156e58e75ebcd0f0cb2a5379b1f22260f`.
+This is honest historical reproduction, not a compatibility substitute or a
+claim that the old producer is now public. That source remains local research
+state pending its separate provenance audit; the public transformer remains the
+preferred new-execution owner. Original bank and existing stage guards stay fixed.
+
+**Evidence and remaining work.** Private whole-cohort outputs, inventory bindings,
+source comparisons, metadata-only control, public Init result and actual historical
+source/receipt reproduction live under `work/coordination/source-audio-inputs-v1/`.
+`proof-v2.json` SHA-256
+`55492ae6c6cd266192cbdfe13c08c5d1109bec57a4d00d8700373fb0275dbc99`
+binds source commit `3a79c39`, retained sources/results and all selected source
+hashes; the exact historical source copy is listed in LOCAL_STATE. No game data,
+raw index, bank/media or private historical source is committed. This closes the
+complete host bank-index producer and establishes the exact bank/receipt controls;
+it does not close all requested-audio inputs, the remaining game/authored DLLs,
+independent linker roots, native AOT/Burst, serialized content/shaders, phone tool
+hosting, installation or matched performance. Keep Route A, Architecture C and
+the desktop fallback; continue from these existing producers without claiming
+that a Unity Editor rebuild is inherently necessary.
+
+## J1055 — Reconstruct the complete source audio prefab directly from PC bundles
+
+2026-10-24. Complete host source-prefab case; no Editor, AssetRipper process,
+full import, shared project, device or current build selection is used.
+
+**Hypothesis and source lookup.** J1054 reproduces the source bank index and
+Init controls, while requested-audio staging still requires the original
+WwiseGlobal prefab. Main supplies catalog lookup clues, not production bytes:
+`RoR2/Base/Core/Audio/WwiseGlobal.prefab` is in the original core-audio bundle.
+Validate the four required original bundles against accepted input
+`6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88`.
+They total 278,418 bytes; the primary bundle is 10,885 bytes. Its 50 objects have
+readable type trees, and the selected rooted prefab contains 13 objects. General
+whole-game import and Editor authoring are unnecessary for this source input.
+
+**Prior art and configuration boundary.** Inspect pinned AssetRipper
+`1ac666f47d8e9dedf96afb0b914c70d7656151ea` export-ID allocation, prefab collection,
+script identity and editor-format conversion rules. All 13 local export IDs
+reproduce from class prefixes and empty-input XXH64 ordinal values. All 11 script
+pointers use the existing audited assembly GUID recipe and J597's MD4 file-ID
+rule. One external InitializationSettings GUID was assigned during export; it is
+not a PC identity or a missing serialized value. Record only the minimum
+source-object to existing export-GUID relationship in
+`recipe/owner-audio-prefab.json`, with source collection/object/class/script
+validation. The recipe/README provenance/privacy/IP audit distinguishes that
+configuration from data read from the legitimate bundles. No upstream exporter
+implementation, target YAML/template, serialized values or game source is copied.
+
+**Tracked owner and lifecycle.** `scripts/lab/owner_audio_prefab.py` accepts an
+explicit canonical owner-work root and new private output. It binds the reviewed
+inventory, parser/profile/assembly recipe, four bundle hashes, source root,
+component order and script/reference graph. It reads every serialized value from
+the original type trees, adds only the versioned editor-format schema/defaults,
+and serializes the qualified identity-root profile. Unknown objects, references,
+script fields, parser versions and complete output hashes refuse. Original input
+and inventory/configuration hashes are checked again; written output is rehashed
+before success. New failed roots/terminal receipts remain, with no current/project
+pointer, child process, runtime owner or source-input mutation. ARCHITECTURE and
+LOCAL_STATE name setup, teardown and state. The serializer is bounded support,
+not a general Unity prefab/content converter.
+
+**Complete result and first failure.** The final public-source invocation yields
+all 9,560 bytes exactly, SHA-256
+`7f074267744a3f7652349572f4aa88f48cd3d43328ba629f686288f08c4be6af`,
+including all source values, component relationships and script identities.
+Original bundle hashes remain unchanged. Exported prefab content is a comparison
+oracle only and is not supplied to the producer. The first complete prototype
+is 22 bytes too long: it quotes GUID scalars and loses the editor Euler hint's
+negative-zero signs. Correct those versioned format rules rather than normalize
+away the differences; retain the mismatched source/output/diff. The identity-root
+hint preserves `y: -0` and `z: -0`. Five authored tests cover independent hash
+vectors, whole-graph value/reference preservation, unknown graph/script refusal,
+explicit external binding and scalar/sign behavior. Ruff passes. The final
+readback-qualified public run is `public-production-v3`; earlier attempts remain.
+The first mandatory fresh-clone check catches a missing recipe audit-table row
+despite the detailed audit section. Add that required catalog entry; the focused
+recipe audit passes without changing producer behavior, metadata or test policy.
+
+**Evidence and remaining work.** Original-input hashes/type-tree observations,
+lookup comparisons, initial errors, complete private/public-source invocations,
+all output bytes and graph comparisons remain under
+`work/coordination/owner-wwise-prefab-v1/`. `public-proof-v1.json` binds the original source checkpoint `ac94a08`. Final
+`public-proof-v2.json`, SHA-256
+`4fa83972707dcd2be96c164ed57967385e820750bffb657df9a472b3e42c8834`,
+binds the unchanged producer bytes, all artifact/public bindings and the corrected
+audit catalog at `08a3ac2`.
+Only authored code, minimum audited metadata and synthetic tests are tracked;
+all original type trees and generated prefabs stay ignored. No current stage,
+request or runtime pin is changed; this exact source input now has a bounded
+host producer. Android execution, remaining requested-audio staging and game/
+authored assembly production, roots, native AOT/Burst, content/shaders,
+installation and matched performance remain open. Retain Architecture C and the
+desktop fallback; do not infer player readiness from this complete file result.
+
+## J1056 — Stage and compile the complete requested-audio support closure without the Editor
+
+2026-10-24. Complete host support case through existing producers; no new
+runtime, Unity project, Editor process, build selection or device operation.
+
+**Hypothesis and prior art.** J1052–J1055 independently reproduce the managed
+transform chain, bank index, Init inputs and source prefab. The existing audio
+stager and strict request/stage generators should accept that complete closure
+without a general Unity import. Inspect pinned R2API.Sound/SoundAPI.cs at
+`f539511eabf87f02afddb5a83cafd2f4704c85ad`: bank loading occurs after the original
+engine initialization hook. A staged bank or compiled bootstrap therefore does
+not establish playback. Reuse the existing compiler owners rather than implement
+a second audio pipeline. Main explicitly supplies the licensed native input and
+its retained source/build provenance for this isolated compile/request case.
+
+**Complete staging.** The unchanged explicit-input stager accepts all independently
+reproduced source inputs. Its read-only full plan succeeds in 10.4817 seconds.
+Actual staging succeeds in 22.7770 seconds, with independent size/SHA-256
+readback of all 274 files: 153 original banks, the adapted Init and 120 streamed
+media, totaling 833,662,993 bytes. Receipt SHA-256 is exactly
+`db1969babb2db2f4201ebdb6c971b084c5ab9336fff5623187555dfcc7b18978`.
+Three bank filenames require the existing case normalization. Original bytes and
+accepted input remain unchanged. Runtime copy/readiness flags remain false.
+
+**Actual requested compilation.** Execute the existing three-assembly transform
+recipe in separate scratch; all declared output hashes match, including the
+Wwise MonoBehaviour reference. Revalidate all 249 files in J1052's raw-producer
+manifest. Supply the current instrumented Wwise native product explicitly,
+SHA-256 `9075b5a4d3718a209eb244760d2b251a59ef2f5c486a2d2fc0e83b90240cbba3`,
+with Main's authorization and hashes of its actual build record, stage record,
+adapter and build plan. This supplied SDK-derived library is not independently
+reproduced by this case and is not published.
+
+The existing contract generator creates a fresh requested=true request, selecting
+passive music-output PCM. The unchanged strict request/stage generators accept
+all exact input pins and the full staged cohort. Compile the standalone observer,
+five core sources and eleven bootstrap sources with the pinned SDK Mono/Roslyn.
+All three plugin references are explicit independently produced overrides;
+no fallback project exists. Do not call or relax the top-level
+`compile_requested` project/reference/request admission. Current owner-source
+pins and every compiler/reference hash are verified before and after execution.
+The complete final run succeeds in 3.1392 seconds.
+
+Observer bytes exactly match frozen R27:
+`df90e9c9c5a69b80d0e95358f1e5b7841a1c970c59678650158c51a8e3b16ac1`.
+Fresh core is `4a1fc5d10a560b6172a1840a31bff49d06dd1b4c9a4bc67366e0a0b1de1a25fd`;
+fresh bootstrap is
+`59f32de63c5e7a1d3205424a2cd5ac91f105e0c9636d5f9590d183bcffc56a2d`.
+These latter bytes differ from R27; the current passive-PCM source and fresh
+request identity/contract differ. No matching IL, stripped/native equivalence,
+whole-player integration or playback claim follows from successful compilation.
+The first compile attempt used an incorrect Roslyn path; preserve its source,
+request outputs and failure, then use the existing producer's exact SDK path.
+
+**Evidence and independent review.** Private case
+`work/coordination/owner-audio-stage-v1/`, proof `proof-v1.json`, SHA-256
+`5da56ff7bcc5817dcab1e42103cf7382a39a38ed76f123854ffa2b7652f076ee`,
+binds 520 artifacts, source/reference hashes, all payloads and fresh assemblies.
+Main independently verifies the complete proof and invocation and returns GO
+for this host support scope. After that review, rehash and retire only the
+274 reproducible staged payload copies to restore host CI headroom. Retain their
+complete hash ledger, exact stager/invocation binding, stage receipt, original
+inputs, supplied native provenance, both compile attempts and all compiled
+outputs. The adjacent retirement marker requires a new explicit output root
+for restaging; the old stage is no longer a live build input. No failed run,
+original installation, Main state or rollback is removed.
+
+**Result and remaining work.** General Editor import is unnecessary for this
+complete host audio-support closure. Existing strict runtime/build gates stay
+unchanged. Independent Assembly-CSharp/maps, full linker roots, native AOT/Burst,
+serialized content/shaders, Android tool hosting and actual owner installation
+remain open. The instrumented native producer remains a separate licensed-input
+requirement. PR #55 keeps its real-device hold; Architecture C and the desktop
+fallback remain current.
+
+## J1057 — Compile the complete gameplay source cohort directly from owner inputs
+
+2026-10-24. Complete host source/compile/post-processing case. No Unity project,
+Editor, runtime selection or device is created or changed.
+
+**Hypothesis and prior art.** J1052 identifies 145 gameplay sources but leaves
+three maps and two recovered support-source syntax differences unqualified.
+Reuse existing readers/generators and the complete public runtime manifest.
+Inspect pinned R2API AddressReferencedAsset.cs at
+`f539511eabf87f02afddb5a83cafd2f4704c85ad`: address membership and successful
+runtime catalog/handle initialization are distinct. Original catalog membership
+can supply a source-map input without pretending converted content is ready.
+The observed player graph specifies the selected fourteen support filenames;
+it supplies no game source, map or compiled production bytes.
+
+**All three source maps.** Execute the existing CatalogContract and catalog-name
+readers against accepted PC RoR2/LegacyResourcesAPI DLLs. Parse the legitimate
+original catalog with the existing host reader, then invoke the existing body,
+health and common-asset generators with J1052's exact freshly decompiled source
+inputs. All three generated files match their observed target hashes exactly:
+body `2c25b90de43d29b97a0fcce7255c5f741e2abdeee1b4fc8acde32a356f36c5b0`,
+health `f6fef2f41f48e16c8e66ba5a8a2fb176ff30c1003d0ab47e39771011b8e2d478`,
+common `938a1d59a4d809517ba0adf117609eafa0cb9df9e0910e8da2bda5ba36569cca`.
+The complete map run takes 9.4984 seconds. Body reports one unlocated source
+field; health reports none; common retains its expected two missing fields.
+These reports do not assert Android asset availability. No captured map or
+exported project is an input.
+
+**Complete independent compilation.** Select all 127 public runtime sources from
+the current recipe plus public LabDiagnostics, fourteen freshly decompiled
+original support files and the three fresh maps: 145 sources. The existing
+AffixBead Event alias is qualified by reading the original two field types.
+All game/API references come from accepted PC inputs or the earlier independent
+owner transforms; the four package references are J1053's produced outputs and
+the three audio references are J1056's fresh outputs. Complete SDK reference
+membership is hash-bound through the existing reference owner. The resulting
+set has 243 references.
+
+The first source lookup assumes namespace directories rather than ILSpy's dotted
+namespace layout; retain the failure and correct only that lookup. The next
+compiler run identifies the missing Newtonsoft LINQ reference. Acquire the exact
+`com.unity.nuget.newtonsoft-json` 3.2.1 archive from Unity's registry, verify its
+registry SHA-1 and record archive/member SHA-256. The supplied package's AOT DLL
+exactly matches the frozen player input
+`a56146202232958f46bd6a28b5a7da166aea123ee0d646735a46e5c341dfbf1f`.
+No captured project DLL substitutes for it. With that reference, the complete
+Mono/Roslyn compilation succeeds in 2.3704 seconds.
+
+Then qualify the actual matching player compiler: the pinned SDK's
+DotNetSdkRoslyn/csc.dll and NetCoreRuntime host, explicit no-stdlib/no-config
+references, Android IL2CPP development symbol profile and portable debug output.
+All actual source conditional directives reference only UNITY_ANDROID and
+UNITY_EDITOR; unrelated captured engine feature flags are not production inputs.
+All source/reference hashes are checked before and after. Compilation succeeds
+in 1.7843 seconds, producing 2,118,144 bytes, SHA-256
+`64839477c920b91427d7c64c472dc140961e5fa438801c97d358759432df058a`.
+Run J1053's freshly compiled Burst.CodeGen through the existing SDK IL
+post-processor over the complete assembly and explicit references. The first
+attempt lacks the invocation owner's required temporary directory; retain its
+CoreCLR failure. Creating the normal private temporary directory resolves it.
+Final processing succeeds in 0.3294 seconds and leaves assembly bytes unchanged.
+
+**Support behavior qualification.** Compare all fourteen selected support root
+types and their two nested types using the complete existing declared Cecil
+projection, with compressed raw reports retained. Direct PC-original comparison
+matches only 2 of 16 types; release/debug lowering, field ordering and recovered
+source differ, so no original-byte/IL equality is asserted. The separate frozen
+R27 target comparison matches all 16 of 16 types exactly. This qualifies the two
+previously unqualified decompiler syntax differences against the actual target.
+The R27 DLL is only a hash-verified comparison oracle. The per-type projection
+excludes whole-assembly attributes/reference semantics, PE/MVID/debug data and
+the existing projection's resource/security/scope limitations. Full authored
+assembly, native performance and original-gameplay equivalence remain open.
+
+**Evidence and result.** Private
+`work/coordination/owner-player-assemblies-v1/proof-v1.json`, SHA-256
+`9a8de54855aca1ef2f6ef748713db07942293817e28fb36fc550daeb538c1ea5`,
+binds 118 artifacts, thirteen public tool/recipe bindings, complete source and
+reference hashes, original input hashes, registry acquisition, failed attempts,
+matching compiler/processor runs and both complete comparison reports. This
+proves the complete current gameplay source cohort can be produced and compiled
+without Editor/project import. Main independently verifies all 118 artifacts,
+145 sources and 243 references, and recomputes both 16/16 target and 2/16 PC
+comparisons before returning GO for this host support scope. The first required fresh-clone hook fails only the packet fixture's unchanged
+8 GiB reserve as host margin falls. Preserve that failed hook log. Compress the
+eight already-reviewed successful J1053 comparison reports into a hash-verified,
+fully restorable archive, retaining result, source, failed cases and individual
+retirement markers. No game/SDK input or rollback is deleted and no reserve or
+test is relaxed. The unchanged packet fixture then passes all three tests.
+Full independent player stripping/roots, native
+AOT/Burst, serialized content/shaders, Android tool hosting and install/runtime
+qualification remain separate requirements. No current game build is replaced;
+Architecture C and the desktop owner-build fallback remain authoritative.
+
+## J1058 — Strip and convert the complete player with fixed target root configuration
+
+2026-10-24. Complete host UnityLinker → IL2CPP converter feasibility case.
+No Editor process, Unity project mutation, device operation or runtime adoption.
+
+**Hypothesis and fixed-target simplification.** The user's known-final-state
+approach does not require rediscovering every general Editor root-selection
+algorithm. Type/module/scene identities and preservation choices can instead be
+explicit target configuration, subject to minimum-identity provenance/privacy
+and publication audit. This case tests that route privately; it does not claim
+independent scene semantics or publish a root recipe. J857/J859 already produce
+the SDK-native registration table from owner SDK bytes, so do not vendor or use
+a captured SDK table. The pinned R2API address/initialization distinction from
+J1057 still applies: root metadata is not content or runtime readiness.
+
+**Actual target evidence.** Main finds no preserved R27 scene/root snapshots;
+its four sealed command/DAG/trace files remain the only R27 metadata evidence.
+Hash and copy explicitly labeled current R36-era TypesInScenes.xml,
+SerializedTypes.xml and EditorToUnityLinkerData.json. They contain 458 XML type
+rows in fourteen assemblies, 37 serialized XML rows in six assemblies, 471 JSON
+scene/type relationships, empty JSON serializedTypes, four module exclusions
+and no forced inclusions. They are supplied configuration, not R27 roots or
+PC-derived serialized content. Current authored whole-catalog/item-behavior
+preservation descriptors and Burst link configuration are also explicit inputs.
+All method bodies, SDK source excerpts and raw reports remain private.
+
+**Independent providers and SDK metadata.** Reuse J1057's actual current
+145-source assembly, J1056's authored audio outputs, J1053's package outputs,
+J1052's game/API transformations, accepted original PC DLLs and exact owner SDK
+DLLs. The full staged pre-strip set has 332 assemblies. The developer-only
+MCP runtime is explicitly excluded; it is not a selected game root/reference.
+The command/provider manifest records that choice instead of claiming the
+historical 333-file capture was reproduced verbatim. Captured DLLs supply no
+production bytes. Copies and original providers are hash-checked before/after.
+
+The existing metadata inventory reads 244 independent providers without executing
+them. Of 966 XML/JSON checks, 946 resolve directly through managed forwarding
+or native name/module identity. The other twenty are ten UnityEditor.* names
+repeated across XML and JSON; all ten have exact SDK-native class/module matches.
+Inspect the pinned UnityLinker consumer: IsEditorType recognizes that namespace,
+and ProcessTypeInSceneData routes those engine-module records through native
+dependency/base registration rather than ordinary managed type lookup. Keep the
+original missing-managed-definition report and explicit native classification;
+do not invent managed wrappers or drop roots. The SDK registry reader generates
+all 318 native records from the unchanged owner binary. Its complete value map
+matches the supplied target, while canonical table order differs. The first
+candidate's strict full-JSON equality assertion exposes that ordering difference;
+preserve it and compare project fields and native values separately. This is
+not an order-independent equality claim.
+
+**Complete stripping.** Invoke the pinned SDK UnityLinker directly with the same
+conservative Android/IL2CPP development policy and eleven root assemblies as the
+R27 command specification. Use only the new staged independent DLLs, supplied
+fixed current root/preservation configuration, generated SDK-native JSON and
+explicit SDK module/native-link data. Relocate every output into the isolated
+case and omit tool analytics. No live project or captured game assembly is an
+input. Actual execution succeeds in 18.5380 seconds: 93 stripped DLLs plus the
+linker-to-editor report. All providers remain unchanged. The generated table's
+order is accepted in this complete run; output parity is still separate.
+A direct byte comparison with frozen R27 matches 45 of 93 DLLs; 48 differ.
+Current source/configuration and independently rebuilt packages are different
+inputs. No digest normalization or stripping equivalence is asserted.
+
+**Complete IL2CPP conversion.** Preserve the original R27 response's complete
+93-assembly order and conversion/checking policy as specification only. Bind
+all actual assembly inputs to this run's freshly stripped outputs. Execute the
+supplied exact IL2CPP converter directly, with relocated data/C++/symbols/profiler
+paths and analytics disabled. It succeeds in 19.6431 seconds and generates 691
+C++/metadata files totaling 1,141,507,738 bytes. Every output is rehashed and all
+93 input hashes stay unchanged. This is actual whole-player conversion rather
+than an authored fixture, but no native compilation, metadata-byte parity,
+performance, content production or device loading follows from it.
+
+**Deterministic host contracts.** Large private output exposes the tiny packet
+unit fixture's incidental dependence on actual host free space. Change only that
+fixture's advertised capacity to exactly the unchanged production reserve;
+real Zstd encoding, files and stream/damage assertions remain. Add explicit
+reserve-minus-one refusal, exact-reserve admission and deadline-with-sufficient-
+capacity refusal, checking failed receipts and zero payload processing. Production
+reserve/deadline code is unchanged. Preserve and correct the two initial test
+errors (receipt filename and clock-mock receipt read). Ruff and all five focused
+tests pass; Main independently reviews this test delta GO. This fixes host test
+determinism without changing production admission or discarding evidence to
+satisfy a kilobyte-sized test.
+
+**Evidence and remaining gates.** Private
+`work/coordination/owner-player-roots-v1/proof-v2.json`, SHA-256
+`c0bc086aa0d172ea6132c5b9354fb290220abbf5f4628824fdd92260b304a691`,
+binds 1,214 artifacts, 307 SDK tool files, source/metadata/command bindings,
+complete inputs/outputs, first failures, supplied-current-root provenance and
+all comparisons. Main independently verifies the complete proof, all 332 source
+and staged providers, all 93 stripped outputs and all 691 generated files, with
+a separate boundary review finding no issue. GO is for this explicit host scope.
+Production source is c668a29a; checkpoint 8ab0e777 adds only the reviewed
+deterministic packet tests. A fixed-root configuration route is feasible
+through complete host stripping/conversion without general Editor import.
+Audited public configuration/bootstrap, full native/Burst production, serialized
+content/shaders, Android tool hosting, ownership-preserving installation and
+matched performance remain open. Working APKs, Architecture C and the desktop
+fallback stay unchanged; PR #55 keeps its device/adoption hold.
+
+## J1059 — Build the complete native ARM64 game library without Unity Editor
+
+2026-10-24. Complete host C++ → native IL2CPP library feasibility case, using
+J1058's actual freshly generated source and metadata. No Editor, working APK,
+SDK source, original PC input or device state is changed.
+
+**Hypothesis and native policy.** J1058 supplies the complete real player C++
+cohort. Reuse the frozen native graph as compiler/link configuration, never as a
+game-code provider. Its original NDK 21.3.6528147 Clang 9/BFD policy uses ARMv8-a,
+Android API 22, Os/development flags and the existing incremental-GC definitions.
+Do not substitute the qualified fixture's Clang 21/LLD profile and infer parity.
+The public native replay owner already explains SDK-relative include wrappers;
+reuse that authored include parser and preserve all SDK source bytes. This is
+generic native build engineering, with no new gameplay/runtime mechanism.
+
+**Complete coverage.** The frozen graph specifies 824 compilation tasks, including
+67 SDK-only lumps. Every recorded generated source exists in the fresh output.
+One additional fresh file, Assembly-CSharp__27.cpp, gets an explicit compilation
+and link slot with the identical original assembly policy. The actual complete
+set is 825 tasks: 138 SDK/wrapper tasks and 687 fresh generated translation units.
+The native plan records compiler, source/graph/store/wrapper bindings and the
+full relocated argument vectors. Only owned output paths are writable; captured
+original game C++, native objects and compiled game libraries supply no bytes.
+A host-only lab preflight still refuses the absent generated lab project; no lab
+or Unity build is dispatched or represented as passing. This separately bounded
+standalone SDK/compiler case has explicit independent input/output guards.
+
+**Source preservation and resource use.** All 687 generated C/C++ files have no
+source-to-source includes. Before building, compress the successful independently
+reviewed J1058 sources into individual gzip frames. Verify every decompressed
+SHA-256 against the actual converter receipt before expanded copies are retired.
+The complete ledger preserves original path, size, hash, mode and mtime plus each
+compressed hash. It retains 1,123,083,820 source bytes in 198,523,391 archive bytes,
+saving about 930 MB. The adjacent cpp.retired.json points to the restore ledger;
+J1058's proof records the historical verification before this preservation step.
+No failed case, metadata, known-good APK/rollback, SDK source or original game
+file is removed. Each active translation unit is restored byte-for-byte; success
+keeps a verified object receipt and can retire that expansion. Failure keeps its
+source/logs. One compiler process runs at a time, with output/link reserves and
+bounded child lifetime; no shared editor/build lock or device is used.
+
+**Full native result.** All 825 compilations and the original BFD link succeed in
+1,173.9786 seconds, producing 1,952,743,816 bytes of verified objects. The actual
+unstripped library is 825,080,360 bytes, SHA-256
+`646421a4d5a9a7adddd45f246f64aac7b626725e433a0261b5a8bd00eca69204`.
+All explicitly bound SDK/source inputs remain unchanged. Preserve the complete
+objects, per-job hashes, compiler logs, original plan and all source frames;
+this is the full game-source cohort, not the authored native fixture.
+
+Use the original SDK objcopy strip operation into a separate output. The final
+library is 98,903,576 bytes, SHA-256
+`04f8f762781254ac185b8fada145dc7280500220d6cb54dc78aafd7e57ef4aa0`.
+It is ELF64 little-endian ET_DYN/AArch64 with SONAME libil2cpp.so. All 2,359 dynamic
+export names exactly match the accepted J850 reference set, with no added or
+missing names. Both require libc, libdl, liblog and libm. Those are static loader
+checks, not complete calling-convention, memory-layout or gameplay acceptance.
+
+Explicitly bind the matching converter-produced global metadata:
+17,967,184 bytes, version 31, SHA-256
+`bcf048d4be9ef6d1cd2930134f84c357867ed82bfe60046bbec94d7f9ff1a5d7`.
+The final verifier rehashes all 825 objects, native libraries and actual converter
+metadata, and checks metadata magic and the original converter receipt. Current
+source/fixed roots differ from J850/R27, so no library, metadata or performance
+parity is asserted. No APK is replaced and no game is loaded on a device.
+
+**Evidence and remaining integration.** Private
+`work/coordination/owner-native-player-v1/proof-v1.json`, SHA-256
+`ae551cd30ce00ff880151278501cf407700804c52dc50c789728d43861efc06e`,
+binds 3,264 artifacts, source frames, commands, objects, static ELF observations
+and matching metadata. Main independently verifies all artifact hashes, all 687
+decompressed source hashes and the exact 825 compile-output/link-input set.
+A separate boundary review confirms the original policies and no captured game
+source/object provider. Both return GO for this explicit host scope. Production source is 55b23fb7; 7f24032b records the required
+native workspace/source-store setup. The full game-code path now runs from
+owner inputs through managed production, stripping, C++/metadata generation and
+native compilation without Editor import. It still uses explicit private native
+command/current-root configuration. Promote this same validated chain into one
+public input-gated owner with audited declarative profiles before claiming a
+public reproducible bootstrap. Full Burst provenance/production, serialized
+content/shaders, Android tool hosting, installation and matched device/gameplay
+performance remain open. Architecture C, the working build and desktop fallback
+remain current; PR #55 keeps its device/adoption hold.
+
+
+## J1060 — Remove the captured native graph from the public owner stage
+
+2026-10-24. Public-source promotion of J1059's same native policy, host planning
+and refusal contracts only. No compiler, Editor, device, original installation,
+working APK or runtime architecture change.
+
+**Hypothesis and change.** The qualified complete native build does not require
+a captured Bee DAG at execution time. Extract only its six argument profiles,
+SDK-relative source/include-lump relationships, generated translation-unit
+filename membership and exact compile/link order into audited
+`recipe/owner-native-arm64.json`. The new named native owner accepts explicit
+owner state, SDK, successful converter receipt/source providers and matching
+metadata. It creates only a new private output, reuses the original Clang 9/BFD
+ARM64 policy, and retains source bounds/hash checks, conservative capacity,
+process-group cleanup, logs, object receipts and terminal failures. It never
+reads a project or historical graph. This is generic SDK/native configuration
+engineering, not a new gameplay, content or middleware workaround; J1059's
+existing include-wrapper policy is retained.
+
+**Provenance and source boundaries.** The recipe contains only flags, relative
+identities, link relationships and a portable aggregate SDK digest. No source
+body, serialized value, SDK registration table, captured graph body, compiled
+byte or private path is published. Generated translation-unit names are fixed
+current-target configuration and cannot replace original game ownership or
+code generation. Recipe README records the audit and required table entry.
+Setup, output ownership, retention and teardown are documented under the named
+owner; no working build selects it. This native stage does not claim to produce
+upstream assemblies, roots or content by itself.
+
+**Review corrections.** Independent Main review finds two input-receipt gaps
+in the first draft: compiler/objcopy/source bindings omit implicit NDK inputs,
+and the final provider check recomputes hashes without comparing its result
+to the initial provider map. Pin the full NDK tree, including BFD, headers,
+CRT objects, libraries and compiler runtime; the complete SDK cohort now has
+12,250 files. Compare both final converter-provider and metadata records to
+the initial binding. Use a bounded explicit tool environment and restore signal
+handlers after killing/reaping an interrupted child. Seven focused host tests
+pass, including actual linker/header mutation refusal, source-provider mutation
+after planning, same-converter metadata mismatch, bounded gzip expansion,
+path/output escape and terminal tool failure. The lab doctor still refuses the
+absent isolated lab project; no lab readiness or admission is fabricated.
+
+**Complete comparison and limits.** The public entry plans all 825 tasks from
+explicit owner inputs. Compare every compile argument, the entire link argument
+sequence and all 67 SDK-only lump member lists to J1059 after explicit owned
+output/source relocation: all match exactly. Initial v1 and final v2 planning
+attempts remain private under `work/coordination/owner-code-producer-v1/`.
+`native-promotion-verification-v2.json` binds the final source/profile and public
+plan. Main independently reviews source/configuration provenance and complete
+argument equivalence. No native compilation is rerun here; J1059 remains the
+actual full native execution evidence. Public-entry full execution, remaining
+single-command managed/root/converter integration, Burst/content/shaders,
+Android hosting, installation/update and matched gameplay/performance remain
+open. PR #55 retains its device/adoption hold. Architecture C and the existing
+desktop fallback stay current.
+
+
+## J1061 — Compose the public whole-player stripping and conversion backend
+
+2026-10-24. Execute the same qualified whole-player chain through a public named
+owner with explicit managed providers and audited target configuration. This
+is host stripping/conversion and complete native planning, not a new native
+compiler execution, Editor build, phone conversion or gameplay acceptance.
+
+**Change and provenance.** `tools/phone-build/owner-code/produce.py` joins fixed
+target roots, the existing static SDK registry reader/root composer, exact SDK
+UnityLinker, IL2CPP conversion, verified source-frame preservation and J1060's
+public native owner. Default execution continues through native construction;
+`--stop-after-conversion` explicitly limits qualification to native planning.
+The new `owner-player-code.json` contains 471 scene/type relationships, module
+policy, six retention XML documents, 332 provider names, 11 root assemblies,
+93 converter assembly identities/order and 309 SDK tool/config hashes. It
+contains no method body, serialized object value, SDK implementation, native
+registration table, game binary, captured response/DAG or private identifier.
+Recipe README records the full audit/table. This is configuration/pipeline
+engineering using J1058/J1059's existing mechanisms, not a new gameplay or
+middleware workaround. The four inherited Burst selectors remain literal;
+there is no assertion that they all bind intended members.
+
+**Execution and guards.** Supply the exact independent J1058 managed providers
+as explicit path/hash records; no tracked tool discovers a historical output
+or project. Derive all 318 native registration identities from the owner's SDK
+binary at execution. No Editor is run. Generate the target roots, copy/recheck
+all managed inputs, run conservative whole-player stripping and complete IL2CPP
+conversion with original null/array checks and ordered assemblies. Verify owner,
+SDK, provider, staged DLL and root state between expensive stages and at the end.
+Every generated translation unit is compressed, fully restored/hash-verified
+against its same-converter receipt, then its owned expanded copy can be removed.
+Cross-source includes refuse qualification. Source frames, metadata, logs,
+commands, receipts and terminal failures remain private. No current build,
+original installation or device state changes.
+
+**Complete result.** Initial v1 and final interstage-guard v2 runs succeed. Both
+produce all 94 stripped outputs (93 DLLs plus linker data) and all 691 converter
+C++/data/metadata output records byte-identical to J1058. Independently decompress
+and hash all 687 new source frames against those converter records. The native
+owner then plans all 825 tasks using its audited public configuration and exact
+same converter metadata, SHA-256
+`bcf048d4be9ef6d1cd2930134f84c357867ed82bfe60046bbec94d7f9ff1a5d7`.
+The full prior source content and native policy already have J1059 execution
+and J1060 plan-equivalence evidence; do not rerun that compiler as another
+feasibility experiment. A default full invocation through the new public
+controller remains unqualified. No runtime/performance parity follows.
+
+**Evidence and review.** Private `work/coordination/owner-code-producer-v1/`
+retains both actual attempts, explicit requests and `backend-proof-v2.json`
+with complete output/source/profile bindings and old/new comparisons. Main
+independently checks all six XML documents as selectors/attributes only and
+exact prior configuration text, project fields without a captured native table,
+and literal preservation of Burst selectors. Six focused host tests verify
+provider membership/hash refusal, interstage staged-DLL/root mutation refusal,
+exact checked source retirement/restoration, source include/hash refusal and
+whole closure/compiler policy. Public audits and normal fresh-clone CI are
+required before push. This removes private root/response/graph execution
+suppliers from the downstream owner chain. Upstream managed orchestration,
+licensed native input production, Burst/content/shaders, Android hosting,
+installation/update and matched gameplay/performance remain open. Architecture C,
+working build, desktop fallback and PR #55 device/adoption hold are unchanged.
+
+
+## J1062 — Replace the private historical Init source with an audited owner tool
+
+2026-10-24. Host owner-input/source compatibility only. No source bank, SDK,
+current runtime, game build, original input or device state is modified.
+
+**Problem and provenance.** J1054 reproduces exact historical Init bytes and
+receipt through real execution, but its authored historical source remains a
+private dependency. Main reviews all of that 18,170-byte source and its J740/J744
+provenance: bounded authored chunk/HIRC parsing/serialization, exclusive ignored
+outputs and minimum format/plugin/device/bus identities; no bank/media data,
+SDK implementation or copied wwiser implementation. Existing prior-art/recipe
+audit records pinned wwiser as an observation aid, not vendored code. Promote
+the byte-exact source as a readable archival template, following the existing
+`.cs.txt` tool-source precedent. Recipe README contains the separate full audit
+and table row. Current wrapper/test Python passes Ruff; the archive preserves
+its historical bytes and formatting because its real source digest is part of
+the unchanged accepted receipt contract.
+
+**Named owner and execution.** `owner-code/legacy_init.py` requires the complete
+reviewed owner inventory and exact configured original bank before creating
+outputs or materializing any code. It writes exact authored source into its
+owned ignored tool directory at the original root-relative depth, rehashes it,
+and invokes its real CLI. The historical source's own exact-bank, ignored-output
+and exclusive-write guards remain. Preserve source and scope strings literally;
+never assign a historical transform digest to modified code. Recheck source,
+input state, bank and receipt after execution. All outputs/failures stay private;
+other work roots refuse the legacy layout before execution. Current
+`wwise_init_platform.py` remains preferred for callers accepting fresh receipts.
+No shared audio owner or request/stage gate is altered.
+
+**Result.** Actual execution from the new public wrapper produces bank SHA-256
+`618d1c5d534af10fc4cc30a1bacd193bf6871dab3e63992ebedd92a92576fb90`
+and receipt SHA-256
+`3b274de411fe2128bffd43de117baf9156e58e75ebcd0f0cb2a5379b1f22260f`,
+exactly the unchanged historical pins. The invoked materialized source and
+readable template both hash to
+`91c72d254ba9473d93ffb18c4be2233be1781b6072b08571aed7f607e76e9b37`.
+Private `work/coordination/owner-code-producer-v1/public-legacy-init-v1/` keeps
+the real process command, exit 0, bank, receipt and terminal result; the generated
+source is recorded under the new tool owner's directory. No private historical
+source folder supplies any execution input. Four focused tests verify exact
+readable-source identity, full-inventory admission, wrong-bank refusal before
+output creation and exact-source/failure retention.
+
+**Independent review and limits.** Main rehashes the template and actual invoked
+source, verifies process receipt/argv/exit and both output pins, and returns GO
+for truthful source/receipt reproduction. This resolves an upstream source
+supplier, not middleware/media redistribution, controller-output fidelity,
+retained managed runtime, phone hosting or completed audio acceptance. Public
+source scan supplements the full manual provenance/privacy review. Architecture C,
+working build, existing admissions, desktop fallback and device hold remain.
+
+
+## J1063 — Complete the source-input host native owner build
+
+**Hypothesis and scope.** Compose the existing public managed, audio, stripping,
+conversion and native owners into one original-input command, without an Editor
+project, captured command graph or prepared game outputs. Architecture C and the
+working Android build remain unchanged. Existing pinned subsystem/prior-art
+knowledge and unchanged audio admissions are reused; no second runtime or
+content pipeline is introduced.
+
+**Named owner and inputs.** `owner-code/managed.py` supplies the existing
+`produce.py` backend. Audited `recipe/owner-managed-code.json` records 320 minimum
+original/SDK provider identities plus 12 produced/acquired identities and 14
+support-source selectors. The request supplies the reviewed legitimate input,
+exact SDK and ten explicit generic/package/authorized middleware tool paths.
+The instrumented licensed native SDK product remains supplied, not independently
+produced. Explicit compiler, reference-package and decoder options preserve
+existing caller defaults. The raw managed producer's actual source pin is
+`603f3d5db75acfa6423536268249e192f51abc7a003d13c41eeca6a15ff7b65a`.
+No admission is relaxed, fake project supplied, network restore performed or
+original installation modified. Setup, state and teardown are documented in
+ARCHITECTURE, LOCAL_STATE and the owner README.
+
+**Execution and result.** Initial source cases v1/v2 complete managed production
+through native planning only; v2 supplies all ten dependencies explicitly. Their
+metadata hashes are respectively `137435c5f44ec88c73c4ccaca6fb9a6e7e0b00cd836dfc08b7b16c9a169ba093`
+and `b2101719c4d17c0db848c14a17a11b49c86a4ea56c8f65eac5819728809f7cf9`.
+The complete default run uses committed source `65b1816bffe43de5e0c5c92af5b76f749f68ede5`
+in a clean detached checkout on an existing external host volume, retaining
+outputs and internal free-space reserves. It consumes no prepared game DLL,
+decompiled source tree, Editor project or historical native graph. All 332
+providers, 145 gameplay sources, 93 stripped DLLs, 691 converter outputs and 687
+fully restored source frames feed 825 actual native compilations, link and strip.
+The command exits 0 with phase `native-built`; phone/runtime qualification stays
+false. All 274 staged audio payloads (833,662,993 bytes) are hash/size checked.
+
+The stripped library is 98,903,576 bytes, SHA-256
+`4ad4c24c0129c4781af3742ae7e45513a5a29b74fc592d089bdac7d5eb6dcc93`.
+The unstripped library is 824,664,504 bytes, SHA-256
+`748bc853d8301ba5f744eb7681e2eb833dba58ba032171a016566f580124e75d`.
+Its same-converter metadata is 17,967,184 bytes, version 31, SHA-256
+`5476df811354239bfaa7edc4613731ae97e56665a9bdd728638aec40a621e6f8`.
+Every actual process argv matches its plan and exits 0. The 825 objects total
+1,952,299,560 bytes. Summed compile process wall time is 1,047.354 seconds;
+link 67.126 seconds and strip 2.077 seconds. These are host tool times, not total
+conversion duration or game performance.
+
+**Independent checks.** The ELF is AArch64 ELF64 ET_DYN, SONAME `libil2cpp.so`,
+with exactly libc, libdl, liblog and libm dependencies. Its 2,359 defined dynamic
+export names equal the accepted library's set. This does not prove full ABI,
+layout, gameplay or performance parity. Of 332 providers, 326 are byte-identical
+to J1058. Complete declared projections of all 806 gameplay and 686 package
+types match. Bootstrap differs only in three generated request constants
+(BuildInputContractSha256, RequestId, RequestReceiptSha256) and their three
+matching ldstr operands. Actual changed bytes remain distinct. This projection
+excludes MVID/PE/PDB, security declarations, resources, exported-type scope and
+complete reference-resolution semantics.
+
+Private `work/coordination/owner-full-code-v1/` retains the external qualification
+locator, source v1/v2 proofs, default native verification and managed projection.
+`default-proof-v1.json` seals 10,532 artifacts (4,215,377,394 bytes), SHA-256
+`1e0945715cbd422359e1caea083c79678f1e57e783bf2ccae6a14fc42d87e3da`.
+Main independently rehashes every artifact, all 825 process/object receipts,
+link closure, 687 decompressed frame joins, 332 providers, 274 payload bindings
+and static native contract, returning GO for this bounded host result. All raw
+receipts, game-derived outputs and private paths remain ignored.
+
+**Checkpoint and remaining gates.** Complete source-input host game-code
+construction is now implemented and executed through fresh native output.
+Independent licensed native-product production/acquisition, Burst, full content
+and shaders, Android tool hosting, owner installation/update and matched device
+behavior/performance remain open. No APK is replaced or installed; no Editor or
+ADB command runs. The unused Alpha device lease is returned through Main.
+Desktop fallback, existing runtime, working build and PR device/adoption hold
+remain. Pause here at the human's requested checkpoint; do not claim phone
+conversion or public-alpha completion from this host success.
+
+## J1065 — Qualify private owner APK preparation, upgrade and Unity lifecycle
+
+2026-10-24. **Hypothesis and scope.** J1049's complete signed owner APK can
+prepare the accepted J850 content from its own embedded files, launch the
+unchanged IL2CPP player through its public bootstrap, and retain user data
+through an increasing-version update. The resumed assignment explicitly owns
+the former Alpha device. This closes the bounded J1049 device hold; independent
+PC-input-only content/code production and the public installation product remain
+separate gates. Architecture C and Main's game/editor/device remain unchanged.
+
+**Inputs and prior art.** Reuse J1049's owners and its pinned
+BepInEx.Android.Launcher observation, the existing app-specific payload contract,
+and J850's accepted code/content. No new loader, gameplay observer or runtime
+adapter is introduced. Use the existing standard baseline assessment/cleanup
+and `nova_bridge.current_errors`; private glue changes only the public
+bootstrap/Play launch route and restricts parsing of the hash-verified immutable
+APK snapshot to its unchanged diagnostic TextAsset. No assertion, deadline or
+assist rule is relaxed. Default menu observation uses its distinct report ID.
+
+**Admission and storage.** Acquire the orchestrator's exclusive device lease.
+Independently hash the actually installed package against its local ownership
+receipt before any installation; the earlier `be26c21c` installation matches.
+Record the native profile/settings hashes, absent selector/process and live
+internal-only placement. Initial free space is insufficient for the unchanged
+installation reserve, so no install is dispatched. Retire only 792 generated
+AssetRipper decompression temporary files inside a receipt-owned completed
+probe, recording their individual hashes and a retirement marker. This recovers
+8,469,227,616 bytes; source inputs, probe logs/results and all game/user data
+remain retained. Fresh capacity admits each subsequent install. No storage
+configuration, existing game placement or original installation is changed.
+
+**Complete preparation and refusal case.** Install J1049's signed version 1,
+SHA-256 `57dcd67442a5cc4f6f6a7ede0b0f15076d23a2b6659e813c0b29477aff1c96e7`,
+in 58.422 seconds. Independent installed-byte readback matches. Its approved
+frontend reaches Ready by verifying existing files. For a complete fresh
+extraction, preserve the original generated payload directory by rename, then
+let the activity create its new app-owned payload. Pause at 25%, resume,
+interrupt the process and cold-restart. All 13 already completed files remain
+correct, and all 134 final payload files independently match the embedded
+index: 2,265,941,767 bytes. No host payload sync supplies the new directory.
+
+Replace only the newly generated catalog with a small authored control file.
+Cold preparation refuses unfamiliar bytes and offers no Play action. Declining
+the native update dialog retains those exact bytes. Accepting the next reviewed
+update restores the exact expected catalog and retains the authored control in
+an independently hashed app-owned backup. Saves/settings remain outside this
+transaction. Failed/partial stages and the original payload remain preserved.
+
+**Increasing-version implementation and upgrade.** Committed source `b9d74dd7`
+adds an optional explicit `version_code` to the existing owner-APK producer.
+The binary XML owner accepts one increasing positive Android integer, preserves
+other original manifest attributes and clears any obsolete raw string value.
+Meaningful authored fixtures cover both string encodings, preserved attributes,
+nonincreasing/invalid values and missing/ambiguous/nonliteral versions. Existing
+Java/DEX sources and all game code/content stay unchanged. Ruff and fresh-clone
+CI pass: 1,843 tests, 127 expected skips; both GitHub checks pass.
+
+The complete version 2 build, canonical alignment and v1/v2/v3 signatures pass.
+All 713 nonsignature entries are independently compared with version 1: only
+`AndroidManifest.xml` differs. The same existing private lab signer is used
+read-only; its key stays on the host. Signed version 2 is 1,995,994,450 bytes,
+SHA-256 `4960fba8ed5e727639c4f156e2f08cf92a6b6486790bb0ab295925e9bd212de0`.
+The in-place update takes 55.556 seconds. Actual installed bytes/version match;
+an app-private marker and the exact original profile/settings hashes survive.
+Package placement and runtime backing are independently recorded on the live
+selected internal volume. This is an authorized ADB laboratory update, not
+qualification of Android PackageInstaller UI or phone-side owner signing.
+
+**Device controls and lifecycle.** Both versions pass both unchanged assisted
+standard assessments through bootstrap verification and the frontend Play
+action. Version 1 passes 35.059 seconds in Lakes and exactly one transition to
+Goolake with 13.932 seconds of destination play. Version 2 passes 35.058 seconds
+in Lakes and one Goolake transition with 10.022 seconds there. All four retain
+zero applied profile runs and pass selector removal, process stop and display
+sleep. Current-process log review records only the same five intentional
+Windows shader-bundle rejection lines; the canonical checker finds no
+unexpected error. These are diagnostic controls, not ordinary-difficulty,
+physical-input, audio or performance acceptance.
+
+Without a diagnostic selector or requested assists, cold public bootstrap/Play
+reaches the ordinary offline menu. Home followed by public launcher re-entry
+resumes the same Unity activity record in the same process, with no preparation
+receipt rewrite. Screenshots and activity observations agree. A cold explicit
+external Unity-activity start is refused as not exported. Final independent
+readback again verifies all 134 prepared files, the installed version 2 bytes,
+exact original profile/settings hashes and the live runtime backing. Selector
+and process are absent and the physical panel is off.
+
+**First failures and evidence.** Two private driver errors are retained: an
+unhandled truncated log JSON line, corrected to the existing launch reader's
+incomplete-line handling, and observation of the diagnostic report filename
+instead of the ordinary default-menu filename. Neither changes the APK or
+establishes a game failure. Corrected complete cases above pass. Standalone
+packaging requires no prepared Unity project; this worktree's lab doctor and
+game preflight still correctly refuse absent project/inventory-generation
+state. No game build readiness is inferred.
+
+All raw device/storage identities, snapshots, logs, receipts, private APKs and
+signing evidence stay under ignored `work/coordination/owner-apk-integration/`.
+`device-v1/`, `device-v2/` and `full-owner-apk-v4/` retain the complete cases;
+`device-proof-v1.json` binds 119 artifacts, SHA-256
+`59ecfb36095d8df678c4e752db321a74a9fbc5af5dc9aafd96592205f4d6d450`.
+The earlier J1049 source/artifact receipts remain unchanged. Mandatory host
+pruning is invoked from the main checkout; its initial build-lock refusal is
+retained and the updated shared pruner is retried without touching the editor.
+Only authored code/tests and this summary are published.
+
+**Remaining gates.** The installed candidate still embeds private target-bearing
+replay output and duplicates payload storage. It is not approved for public
+distribution. Every protected target byte still needs an independent owner-input
+producer; complete content/shaders/Burst, full-player Android compilation,
+permitted production tool hosting, durable on-device owner keys, user-mediated
+installation/update and matched workload performance remain open. The tested
+target is J850, without the later R36 audio integration. Retain the desktop
+fallback and Main's current player. Revisit this device qualification when the
+payload/profile, bootstrap, manifest/signing contract, tools or target Android
+behavior changes.
