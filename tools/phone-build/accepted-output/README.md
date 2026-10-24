@@ -734,7 +734,7 @@ The same native pixel helper performs the existing integer transparency
 dilation, keeping coordinate buffers outside the Python parent and freeing them
 before pipe output. Its authored seed/tie controls match the standard-library
 implementation; whole-cohort hashes remain the admission authority.
-SDK encoding uses at most four independent block bands at once, each at most
+SDK encoding uses at most two independent block bands at once, each at most
 262,144 pixels and aligned to four rows. Raster-order concatenation preserves
 the exact block stream; decoding/dilation still cover the complete source image.
 Each codec child retains its 120-second deadline, with bounded pending input and

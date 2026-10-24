@@ -276,7 +276,7 @@ def sdk_encode_rgba(rgba, width, height, sdk, etc_codec):
         colours = encode(0)
     else:
         colours = bytearray()
-        with ThreadPoolExecutor(max_workers=4) as workers:
+        with ThreadPoolExecutor(max_workers=2) as workers:
             for row in range(0, height, band_height * 4):
                 jobs = [workers.submit(encode, selected) for selected in range(row, min(height, row + band_height * 4), band_height)]
                 for job in jobs:
