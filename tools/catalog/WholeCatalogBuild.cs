@@ -60,6 +60,8 @@ public static class WholeCatalogBuild
         { 2538, "12e87e7c7fde8e74db9f75172456c5c3" }, // TranslucentImage EfficientBlur
         { 2539, "d996ab4381100014d99e25e68e9aac84" }, // TranslucentImage FillCrop
         { 2540, "b12e02e9a9b684543a286089a03cb04b" }, // TranslucentImage QuickDumbBlur
+        { 16024, "780f79b2a62a0df439dedf59c533eee6" }, // SobelBuffer
+        { 15952, "7d6541fe01591cd418caf48d3c099e52" }, // SobelOutline
     };
     const string ShaderLocationType = "UnityEngine.Shader, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null";
 

@@ -8,6 +8,8 @@ using System.Reflection;
 using RoR2;
 using RoR2.CameraModes;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.Rendering.PostProcessing;
 
 [DefaultExecutionOrder(-10000)]
 public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraStateProvider, IOriginalWwiseCameraListenerState
@@ -75,6 +77,16 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
     bool audioContextReleaseStarted;
     Component sourceDefaultListener, sourceAkGameObject;
     AndroidNativeSourceSkinLifecycle.Report sourceSkinReport;
+    PostProcessVolume sourceSobelVolume;
+    PostProcessProfile sourceSobelProfile;
+    SobelOutline sourceSobelSettings;
+    [Serializable]
+    public sealed class SourceSobelObservation
+    {
+        public bool volumeActiveWhenRendered, renderedCameraObserved, blendedEnabled, shaderSupported, retired;
+        public float outlineIntensity, outlineScale;
+    }
+    public SourceSobelObservation sourceSobelObservation { get; private set; }
     OutlineHighlight ownedOutlineHighlight;
     FieldInfo outlineMaterialField;
     bool outlinePassObserverSubscribed;
@@ -121,9 +133,9 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
 
     public static AndroidNativeSourceCameraRigOwner Create(Transform ownerRoot, CharacterBody body,
                                                             bool explicitlyRequested, bool selectedSourceModel, bool actualModel,
-                                                            AndroidNativeSourceSkinLifecycle.Report sourceReport)
+                                                            AndroidNativeSourceSkinLifecycle.Report sourceReport, Scene sourceStageScene)
     {
-        return CreateCore(ownerRoot, body, explicitlyRequested, selectedSourceModel, actualModel, sourceReport, false);
+        return CreateCore(ownerRoot, body, explicitlyRequested, selectedSourceModel, actualModel, sourceReport, false, sourceStageScene);
     }
 
     // Called only by IntegratedWorldSession after the process-scoped original
@@ -137,12 +149,12 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
             GameAudioOriginalOwner.HasTerminalFailure || GameAudioOriginalOwner.OriginalTermsReturned ||
             WwiseIntegrationManager.noAudio || !AkSoundEngine.IsInitialized())
             throw new InvalidOperationException("audio camera context requires the explicitly selected, initialized original audio owner");
-        return CreateCore(ownerRoot, body, true, true, true, null, true);
+        return CreateCore(ownerRoot, body, true, true, true, null, true, default(Scene));
     }
 
     static AndroidNativeSourceCameraRigOwner CreateCore(Transform ownerRoot, CharacterBody body,
                                                           bool explicitlyRequested, bool selectedSourceModel, bool actualModel,
-                                                          AndroidNativeSourceSkinLifecycle.Report sourceReport, bool audioContextOnly)
+                                                          AndroidNativeSourceSkinLifecycle.Report sourceReport, bool audioContextOnly, Scene sourceStageScene)
     {
         if (!audioContextOnly && !AndroidNativeSourceCameraRigContract.ShouldCreate(explicitlyRequested, selectedSourceModel, actualModel))
             throw Refuse(sourceReport, "view-only native camera requires an explicit request for the selected actual source model");
@@ -265,6 +277,8 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
             owner.Bind(staging, body, rig, scene, camera, pose, marker, cameraOffset, cameraRotationOffset);
             owner.audioContextOnly = audioContextOnly;
             owner.sourceSkinReport = sourceReport;
+            if (!audioContextOnly)
+                owner.PrepareSourceSobel(sourceStageScene);
             if (!audioContextOnly && explicitlyRequested && selectedSourceModel && actualModel &&
                 sourceReport != null && sourceReport.requested)
                 owner.TryAttachOutlinePassObserver();
@@ -315,6 +329,7 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
             if (owner)
             {
                 owner.DetachOutlinePassObserver();
+                owner.ReleaseSourceSobel();
                 owner.RestoreGlobalSceneCameraPointer();
             }
             if (staging)
@@ -324,6 +339,83 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
         }
     }
 
+
+    // The suppressed application root normally enables its graphics volume
+    // during startup. Restore only its recovered Sobel effect for this view;
+    // AO/colour-grading compute recovery remains a separate capability gate.
+    // Do not enable the application, mutate its profile or create services.
+    void PrepareSourceSobel(Scene sourceStageScene)
+    {
+        RoR2Application application = null;
+        foreach (var root in sourceStageScene.GetRootGameObjects())
+            if (root.name == "RoR2Application")
+                application = root.GetComponent<RoR2Application>();
+        if (!application || application.gameObject.activeInHierarchy)
+            throw new InvalidOperationException("source Sobel requires the inactive original stage application root");
+        PostProcessVolume source = null;
+        foreach (var behaviour in application.BehavioursToEnableDuringStartup)
+        {
+            var volume = behaviour as PostProcessVolume;
+            if (volume && volume.sharedProfile && volume.sharedProfile.name == "ppApplication_opt")
+                source = volume;
+        }
+        SobelOutline settings;
+        var layer = viewCamera.GetComponent<PostProcessLayer>();
+        if (!source || !source.isGlobal || source.targetLayer || !source.sharedProfile.TryGetSettings(out settings) ||
+            !settings.active || !settings.enabled.value || !layer ||
+            (layer.volumeLayer.value & (1 << source.gameObject.layer)) == 0)
+            throw new InvalidOperationException("original source Sobel profile or camera volume layer differs");
+        Shader shader = LegacyShaderAPI.Find("Hidden/PostProcess/SobelOutline");
+        if (!shader || !shader.isSupported)
+            throw new InvalidOperationException("original source Sobel composite shader is unavailable");
+        var rootObject = new GameObject("Source Sobel volume");
+        rootObject.transform.SetParent(stagingRoot.transform, false);
+        rootObject.layer = source.gameObject.layer;
+        sourceSobelProfile = ScriptableObject.CreateInstance<PostProcessProfile>();
+        sourceSobelSettings = Instantiate(settings);
+        sourceSobelProfile.AddSettings(sourceSobelSettings);
+        sourceSobelVolume = rootObject.AddComponent<PostProcessVolume>();
+        sourceSobelVolume.sharedProfile = sourceSobelProfile;
+        sourceSobelVolume.isGlobal = source.isGlobal;
+        sourceSobelVolume.priority = source.priority;
+        sourceSobelVolume.weight = source.weight;
+        sourceSobelVolume.blendDistance = source.blendDistance;
+        sourceSobelObservation = new SourceSobelObservation { shaderSupported = shader.isSupported };
+        Camera.onPostRender += ObserveSourceSobel;
+    }
+
+    void ObserveSourceSobel(Camera camera)
+    {
+        if (camera != viewCamera || !sourceSobelVolume || sourceSobelObservation == null || sourceSobelObservation.retired)
+            return;
+        var settings = camera.GetComponent<PostProcessLayer>().GetBundle<SobelOutline>().settings as SobelOutline;
+        sourceSobelObservation.volumeActiveWhenRendered = sourceSobelVolume.isActiveAndEnabled;
+        sourceSobelObservation.renderedCameraObserved = true;
+        sourceSobelObservation.blendedEnabled = settings && settings.active && settings.enabled.value;
+        if (settings)
+        {
+            sourceSobelObservation.outlineIntensity = settings.outlineIntensity.value;
+            sourceSobelObservation.outlineScale = settings.outlineScale.value;
+        }
+        Camera.onPostRender -= ObserveSourceSobel;
+    }
+
+    void ReleaseSourceSobel()
+    {
+        Camera.onPostRender -= ObserveSourceSobel;
+        if (sourceSobelVolume)
+            sourceSobelVolume.enabled = false; // Original OnDisable unregisters.
+        if (sourceSobelSettings)
+            Destroy(sourceSobelSettings);
+        if (sourceSobelProfile)
+            Destroy(sourceSobelProfile);
+        sourceSobelSettings = null;
+        sourceSobelProfile = null;
+        if (sourceSobelObservation != null)
+        {
+            sourceSobelObservation.retired = true;
+        }
+    }
 
     const string ViewOnlyMarkerTypeName = "RoR2.AndroidNativeSourceViewOnlyRigMarker";
     static bool markerContractResolved;
@@ -1419,6 +1511,7 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
     public void DisposeOwnedView()
     {
         DetachOutlinePassObserver();
+        ReleaseSourceSobel();
         if (!sourceListenerTeardownStarted && sourceDefaultListenerPreserved)
         {
             sourceListenerTeardownStarted = true;
@@ -1497,6 +1590,7 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
     void OnDisable()
     {
         DetachOutlinePassObserver();
+        ReleaseSourceSobel();
     }
 
     void OnDestroy()

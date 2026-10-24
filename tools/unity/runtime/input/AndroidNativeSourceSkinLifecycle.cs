@@ -144,6 +144,7 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
         public bool selectedBodyNetworkUserHasRegisteredLocalUser, selectedBodyLocalUserCachedBodyMatches, selectedBodyCanonicalRigLinksMatch;
         public bool rigOverrideInstalled, globalSceneCameraIsOwnedView;
         public bool nativeCameraOwnerAttached, nativeCameraOwnerReady;
+        public AndroidNativeSourceCameraRigOwner.SourceSobelObservation sourceSobel;
         public bool cameraGateObservationRequested;
         public bool cameraGateNextTargetKnown, cameraGateNextTargetMatchesExpected, cameraGateTargetKnown, cameraGateTargetMatchesExpected;
         public bool cameraGateRigActiveKnown, cameraGateRigActive, cameraGateProviderActiveKnown, cameraGateProviderActive;
@@ -476,6 +477,7 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
                 {
                     snapshot.nativeCameraOwnerAttached = nativeCameraOwner != null;
                     snapshot.nativeCameraOwnerReady = nativeCameraOwner != null && nativeCameraOwner.ready;
+                    snapshot.sourceSobel = nativeCameraOwner != null ? nativeCameraOwner.sourceSobelObservation : null;
                     snapshot.nativeCameraOwnerStatus = nativeCameraOwner != null ? ShortText(nativeCameraOwner.status, 160) : string.Empty;
                     snapshot.globalSceneCameraInstanceId = SceneCamera._camera ? SceneCamera._camera.GetInstanceID() : 0;
                     snapshot.globalSceneCameraIsOwnedView = SceneCamera._camera == ownedCamera;

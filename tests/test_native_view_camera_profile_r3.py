@@ -30,6 +30,8 @@ class NativeViewCameraR3ProfileTests(unittest.TestCase):
                 (2539, "d996ab4381100014d99e25e68e9aac84"),
                 (2540, "b12e02e9a9b684543a286089a03cb04b"),
                 (15950, "c14b6abb309b8c246add9e94a6920d7f"),
+                (16024, "780f79b2a62a0df439dedf59c533eee6"),
+                (15952, "7d6541fe01591cd418caf48d3c099e52"),
             ],
         )
         self.assertTrue(all(row["bundle"] == "must_be_present_in_built_manifest" for row in rows))
