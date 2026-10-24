@@ -16,7 +16,8 @@ changes can use:
 ./dev check-baseline --device SERIAL
 ```
 
-Commit build sources before building. The fast action verifies the existing
+Commit build sources before building, and keep the selected worker HEAD fixed
+until the shared build restores primary source. The fast action verifies the existing
 frozen-payload contract, runs Unity's ordinary native build with its warm Bee
 cache, and stops before Gradle. It substitutes the complete generated native
 libraries and player assets, including metadata and changed serialized Data,
@@ -82,7 +83,9 @@ incremental-delivery feature are required; unsupported installations fail
 without falling back to another mode. Android's
 [incremental installer](https://android.googlesource.com/platform/packages/modules/adb/+/HEAD/docs/dev/incremental-install.md)
 prioritizes requested blocks of a new APK. It does not reuse unchanged members
-from the previous installation. `--wait` includes completion in the measurement.
+from the previous installation. `--wait` includes the installation response in the measurement; independent
+installed-file hash readback verifies the complete APK separately. Streaming
+remains the default after the matched large-APK transport check.
 Moving audio into APK splits would require a new base/split manifest and proving
 Unity/Wwise lookup through that layout; `install-multiple` cannot turn an
 existing monolithic APK into byte-delta updates. The separate payload sync
