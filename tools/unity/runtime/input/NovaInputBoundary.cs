@@ -370,7 +370,7 @@ public sealed partial class PortSession
                     display.EnableNativeAimAfterAnimatorReady();
                 }
                 coordinator.r.framePacing = display.presentationCameraReport;
-                if (cfg.stageGeometry && !display.UsesOriginalLocalCamera)
+                if (cfg.stageGeometry)
                     display.camera.cullingMask |= LayerIndex.world.mask;
                 if (cfg.combatSpine)
                     coordinator.PrepareCombatScene(body, cfg);
