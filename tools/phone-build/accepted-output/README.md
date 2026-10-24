@@ -146,20 +146,63 @@ assembly; no current build or runtime consumes them.
 `texture_produce.py` owns a current experimental PC-input-only producer for
 the qualified uncompressed Texture2D cohort. Use Python 3.11+ on macOS, Linux
 or Android, staging it alongside `mesh_produce.py`, `unity_bundle.py` and
-`unity_mesh.py` and the audited recipe:
+`unity_mesh.py`, the audited recipe and the public JPEG tool described below:
 
 ```sh
 python3 -I -S -B tools/phone-build/accepted-output/texture_produce.py \
   --profile recipe/owner-uncompressed-textures.json --profile-sha256 RECIPE_SHA256 \
-  --pc ORIGINAL_PC_ROOT --output NEW_PRIVATE_OUTPUT
+  --pc ORIGINAL_PC_ROOT --output NEW_PRIVATE_OUTPUT \
+  --jpeg-codec PUBLIC_JPEG_TOOL --jpeg-codec-sha256 TOOL_SHA256
 ```
 
-The producer copies original raw pixel/mip bytes or decodes a BC1 top mip to
-RGB, retaining logical dimensions and row order. [Microsoft's BC1 specification](https://learn.microsoft.com/en-us/windows/win32/direct3d10/d3d10-graphics-programming-guide-resources-block-compression#bc1)
+The producer copies original raw pixel/mip bytes, decodes BC1 top mips to RGB,
+extends transparent RGB with fixed cardinal Manhattan jump flooding, or applies
+the source export's JPEG roundtrip. Dilation propagates original nonzero-alpha
+texel coordinates at offsets 16, 8, 4, 2 and 1, retains the current coordinate
+on equal distance, then considers left, right, preceding row and following row.
+Only RGB changes; source alpha is retained. This is a fixed qualified policy,
+not a general texture importer. [Microsoft's BC1 specification](https://learn.microsoft.com/en-us/windows/win32/direct3d10/d3d10-graphics-programming-guide-resources-block-compression#bc1)
 defines the authored decoder's endpoint palettes, selectors and transparent
 RGB projection. Metadata work preserves untouched fields and changes only
 declared name, image size/format, alpha/usage and inline/resource placement.
-No image library, Editor, UnityPy, SDK or target-content input is used.
+The JPEG tool uses public stb/IJG sources; no Editor, UnityPy, Unity SDK or
+target-content input is used.
+
+`build_texture_jpeg.py` owns the current native JPEG-tool build. Supply these
+unchanged public sources, obtained separately under their included terms:
+
+| Provider | SHA-256 |
+| --- | --- |
+| [IJG 9b source archive](https://www.ijg.org/files/jpegsrc.v9b.tar.gz) | `566241ad815df935390b341a5d3d15a73a4000e5aab40c58505324c2855cbbb8` |
+| [stb image writer at 003501f6](https://raw.githubusercontent.com/nothings/stb/003501f6d7a8668ce8b6d875e34dd97ad0d5d5b5/stb_image_write.h) | `cbd5f0ad7a9cf4468affb36354a1d2338034f2c12473cf1a8e32053cb6914a05` |
+
+```sh
+python3 -I -S -B tools/phone-build/accepted-output/build_texture_jpeg.py \
+  --jpeg-archive JPEG_SOURCE_TAR_GZ --stb-header STB_IMAGE_WRITE_H \
+  --compiler EXPLICIT_C_COMPILER --output NEW_PRIVATE_TOOL_OUTPUT
+```
+
+On Android, add `--android-tool-root OWNED_TOOL_ROOT` for the existing native
+Clang 21/sysroot/linker policy; select its `usr/bin/clang-21` explicitly. Host
+Clang and that Android policy use the same scalar C sources and disable fused
+floating-point contraction. The builder verifies provider/source/tool hashes,
+extracts only the named regular source/header members, adds authored Unix
+configuration and the `texture_jpeg.c` wrapper, bounds/reaps the compiler and
+retains build logs/result. It performs no download, Editor operation or game
+execution. The new output must be outside its input files. Keep its notices
+with the tool: **this software is based in part on the work of the Independent
+JPEG Group**. The full IJG README and unchanged stb header retain their terms;
+the wrapper and configuration are authored additions.
+
+`texture-jpeg WIDTH HEIGHT` reads exactly one bottom-up RGB image from stdin,
+encodes a top-down quality-90 JPEG and decodes with IJG 9b fast integer IDCT
+and ordinary chroma upsampling. It writes bottom-up RGB to stdout. Input/output
+dimensions are bounded; the helper has no file-output interface. The producer
+requires its explicit SHA-256, bounds the child and verifies the resulting
+pixel extent/hash. No codec executable or game JPEG is tracked or shipped as
+a reconstruction literal. Set `ROR2_TEXTURE_JPEG` to the locally built tool's
+absolute path to run the authored native-codec host control; dependency-free
+CI skips that control explicitly.
 
 Setup checks recipe/input pins, new separate output and expected object/resource
 capacity plus 2 GiB reserve. Source hashes/stat checks run before/after use;
@@ -170,13 +213,15 @@ and peak process RSS in bytes; failed outputs remain and process exit is
 teardown. Keep all generated data private. Android lab staging requires
 explicit authorized selection, workspace ownership and a permitted interpreter.
 
-The profile deliberately excludes unresolved pixel-postprocessing cases. These
-packs require a later complete bundle assembler and do not qualify other
+The profile now covers all 399 uncompressed records. These packs require a
+later complete bundle assembler and do not qualify other
 texture formats, game execution or the full phone-only owner installation.
 No current game build consumes this path.
 
-The complete host/phone case and explicit exclusions are recorded in
+The preceding host/phone cohort and its then-open exclusions are recorded in
 [J1076](../../../docs/PORTING_JOURNAL.md#j1076--produce-a-qualified-uncompressed-texture-cohort-from-pc-bundles-on-android).
+The complete successor's host replay passes; its Android qualification is
+pending. No current game build consumes either result.
 
 ## Acquire the three SDK-copy inputs
 

@@ -3,8 +3,10 @@
 import hashlib
 import importlib.util
 import json
+import os
 from pathlib import Path
 import struct
+import subprocess
 import tempfile
 import unittest
 
@@ -20,6 +22,7 @@ def load(name, path):
 
 
 T = load("texture_producer", ROOT / "tools/phone-build/accepted-output/texture_produce.py")
+JPEG_BUILD = load("jpeg_builder", ROOT / "tools/phone-build/accepted-output/build_texture_jpeg.py")
 FIXTURE = load("authored_bundle_fixture", ROOT / "tests/test_phone_mesh_producer.py")
 
 
@@ -56,6 +59,53 @@ def authored_body(name, image_size, texture_format, pixels, stream):
 
 
 class TextureProducerTests(unittest.TestCase):
+    def test_public_jpeg_source_provider_drift_refuses_before_output(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            provider = root / "authored-source"
+            provider.write_bytes(b"authored non-provider fixture")
+            with self.assertRaisesRegex(ValueError, "provider drift"):
+                JPEG_BUILD.build(provider, provider, provider, root / "output")
+            self.assertFalse((root / "output").exists())
+
+    def test_public_jpeg_codec_authored_pixels_and_input_extent(self):
+        codec = os.environ.get("ROR2_TEXTURE_JPEG")
+        if not codec:
+            self.skipTest("explicit locally built public JPEG codec is absent")
+        # Constant grayscale blocks have exact DC values and neutral chroma.
+        pixels = bytes(16 * 8 * 3) + bytes([255]) * (16 * 8 * 3)
+        result = subprocess.run([codec, "16", "16"], input=pixels, capture_output=True, timeout=10)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout, pixels)
+        for args, data in ((["16", "16"], pixels[:-1]), (["16", "16"], pixels + b"x"), (["0", "16"], b""), (["8193", "1"], b"")):
+            with self.subTest(args=args, bytes=len(data)):
+                result = subprocess.run([codec, *args], input=data, capture_output=True, timeout=10)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual(result.stdout, b"")
+
+    def test_dilation_uses_original_seed_coordinates_and_preserves_alpha(self):
+        # A single visible texel extends 31 positions, without wrapping an edge.
+        hidden, visible = bytes([17, 29, 41, 0]), bytes([103, 151, 197, 1])
+        source = visible + hidden * 64
+        expected = visible + (visible[:3] + b"\0") * 31 + hidden * 33
+        self.assertEqual(T.dilate_rgba(source, 65, 1), expected)
+        self.assertEqual(T.dilate_rgba(source, 1, 65), expected)
+        # Cardinal jumps cannot reach diagonal corners from this isolated seed.
+        source = hidden * 4 + visible + hidden * 4
+        filled = visible[:3] + b"\0"
+        expected = hidden + filled + hidden + filled + visible + filled + hidden + filled + hidden
+        self.assertEqual(T.dilate_rgba(source, 3, 3), expected)
+        # Equal-distance coordinates retain the existing seed before neighbors;
+        # left precedes right for a newly reached texel.
+        red, blue = bytes([211, 13, 7, 255]), bytes([5, 11, 223, 9])
+        source = red + hidden * 3 + blue
+        expected = red + (red[:3] + b"\0") * 2 + blue[:3] + b"\0" + blue
+        self.assertEqual(T.dilate_rgba(source, 5, 1), expected)
+        self.assertEqual(T.dilate_rgba(hidden * 6, 3, 2), hidden * 6)
+        for width, height, data in ((0, 1, b""), (True, 1, visible), (1, 1, visible[:3]), (8193, 1, b"")):
+            with self.subTest(width=width, height=height), self.assertRaises(ValueError):
+                T.dilate_rgba(data, width, height)
+
     def test_bc1_palette_selectors_and_logical_edge_cropping(self):
         # Red/blue endpoints and all four selectors in each row.
         block = struct.pack("<HHI", 0xF800, 0x001F, 0xE4E4E4E4)
@@ -144,6 +194,16 @@ class TextureProducerTests(unittest.TestCase):
                 T.produce(profile_path, T.BUNDLE.sha(profile_path), pc, root / "output")
             with self.assertRaisesRegex(ValueError, "profile drift"):
                 T.produce(profile_path, "0" * 64, pc, root / "profile-drift")
+            selected["operation"] = "dxt1-rgb-jpeg"
+            profile_path.write_text(json.dumps(profile))
+            with self.assertRaisesRegex(ValueError, "codec required"):
+                T.produce(profile_path, T.BUNDLE.sha(profile_path), pc, root / "missing-codec")
+            with self.assertRaisesRegex(ValueError, "codec drift"):
+                T.produce(profile_path, T.BUNDLE.sha(profile_path), pc, root / "codec-drift", source, "0" * 64)
+            with self.assertRaisesRegex(ValueError, "overlap"):
+                T.produce(profile_path, T.BUNDLE.sha(profile_path), pc, root / "game-as-codec", source, source_hash)
+            self.assertFalse((root / "game-as-codec").exists())
+            selected["operation"] = "dxt1-rgb"
             outputs[0]["pixel_sha256"] = "0" * 64
             profile_path.write_text(json.dumps(profile))
             with self.assertRaisesRegex(ValueError, "pixels differ"):
