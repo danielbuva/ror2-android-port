@@ -404,7 +404,9 @@ owner or whole-catalog build calls this support path.
 exact-editor texture oracle. The `phone-texture-fixture` action stages a fresh
 SDK-only project with authored `TextureMipFixture.cs`; `phone-texture-check`
 imports nine authored PNGs across linear, sRGB and normal settings under the
-primary editor mutex. The owner validates all raw mip files, source/config
+primary editor mutex. A linear RGBAFloat mirror and native scalar transfer
+observations separate filtering from byte quantization. The owner validates all
+raw mip files, source/config
 identity and persisted extents in a new attempt. Its output is a desktop
 comparison oracle, never a phone/game production input. No player is built.
 Teardown removes its generated project after evidence is retained; the earlier

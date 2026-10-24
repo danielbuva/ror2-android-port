@@ -130,4 +130,21 @@ def validate_mips(attempt, commit):
             if mip == 0 and row["mode"] != "normal" and path.read_bytes() != source.read_bytes():
                 raise ValueError("Texture mip oracle base pixels differ")
             outputs[name] = {"bytes": path.stat().st_size, "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
-    return {"report": str(root / "result.json"), "images": 9, "outputs": outputs}
+    mirror = report["floatMirror"]
+    if {k: mirror[k] for k in ("pattern", "mode", "format", "input")} != {
+        "pattern": "noise",
+        "mode": "linear-float",
+        "format": "RGBAFloat",
+        "input": "noise.input.rgba",
+    } or len(mirror["levels"]) != 11:
+        raise ValueError("Texture oracle float mirror identity differs")
+    for mip, level in enumerate(mirror["levels"]):
+        size = max(1, 1024 >> mip)
+        name = "noise-linear-float.mip" + str(mip) + ".rgba32f"
+        if level != {"width": size, "height": size, "mip": mip, "file": name} or (root / name).stat().st_size != size * size * 16:
+            raise ValueError("Texture oracle float mirror extent differs")
+        outputs[name] = {"bytes": (root / name).stat().st_size, "sha256": sha(root / name)}
+    if report["transfer"] != "runtime-transfer.f32" or (root / report["transfer"]).stat().st_size != 256 * 8:
+        raise ValueError("Texture oracle native transfer extent differs")
+    outputs[report["transfer"]] = {"bytes": 256 * 8, "sha256": sha(root / report["transfer"])}
+    return {"report": str(root / "result.json"), "images": 9, "float_mirror": True, "outputs": outputs}
