@@ -13,8 +13,14 @@ describes new-output ownership, inventory checks and optional tool execution.
 
 `work/coordination/source-audio-inputs-v1/` retains the complete private source
 case, metadata-only control on an owned bank copy, exact pinned-index comparison
-and final public entry outputs. All event/media names and generated index data
-stay ignored. The current game build reads none of this research state and no
+and final public entry outputs. A byte-identical research copy of the historical
+Init transformer remains under
+`work/coordination/wwise-init-android-platform-metadata/transform_init.py`, source
+SHA-256 `91c72d254ba9473d93ffb18c4be2233be1781b6072b08571aed7f607e76e9b37`.
+It reproduces the historical receipt through actual execution; it is required
+local research state until its separate source provenance audit. The public
+`wwise_init_platform.py` remains the preferred generator for new bank/receipt
+execution. All event/media names and generated index data stay ignored. The current game build reads none of this research state and no
 existing runtime stage/request pin is changed.
 
 ## Retained package producer inputs

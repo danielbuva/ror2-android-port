@@ -152,6 +152,13 @@ This closes their host production dependency; DLL bytes still differ from the
 capture, the declared managed projection is bounded, and Android execution,
 full-player/native integration and performance remain unqualified.
 
+The [complete source-audio input case (J1054)](PORTING_JOURNAL.md#j1054--reproduce-the-complete-source-bank-index-without-a-lab-project)
+reproduces the exact full bank index from legitimate PC files without a project,
+and reproduces Init bytes with the existing public transformation. The historical
+receipt is reproduced by actually executing its retained producer; its separate
+public-source audit remains open. No stage/request guard changes. These concrete
+input results do not complete the requested-audio assemblies or the game build.
+
 ## Binary patches and retained artifacts
 
 | Candidate shortcut | Assessment |

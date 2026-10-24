@@ -33494,3 +33494,88 @@ and actual device evidence. The working game and desktop fallback remain fixed.
 
 Primary schema reference:
 [Unity 2021.3 assembly-definition file format](https://docs.unity3d.com/2021.3/Documentation/Manual/AssemblyDefinitionFileFormat.html).
+
+## J1054 — Reproduce the complete source bank index without a lab project
+
+2026-10-24. Complete host owner-input indexing case, with separate Init/receipt
+reproduction controls. No Editor, shared project, device, audio playback or
+current game-build selection is used or changed.
+
+**Hypothesis and prior art.** The remaining requested-audio assemblies require
+an accepted source bank index. Existing `wwise_bank_index.index()` couples its
+parser to lab generation even though the underlying inputs are ordinary files
+in the legitimate installation. J496 establishes that decoder metadata must use
+a temporary bank copy, never the original. J588's pinned R2API.Sound/wwiser
+observations distinguish bank metadata, media references and native lifecycle;
+J744 already supplies the public structural Init transformation. Reuse those
+owners rather than implement another parser or disable requested audio.
+
+**Tracked change and lifecycle.** Extract the existing bank/XML parser into
+`parse_source_banks(root, input_id)`, which reads no lab state and executes no
+decoder. The input-id argument alone is not input or ownership validation.
+The existing `index()` still requires the accepted lab generation and preserves
+its schema, optional decoder and lab/current-pointer behavior. Share the existing
+metadata-only decoder step through a helper that checks original/copy hashes.
+The new explicit owner entry validates real accepted inventory/configuration
+before and after the whole scan, verifies every selected XML/bank hash, and owns
+only a new private output root separate from original inputs. Default owner mode
+is decoder-free; `--verify-decoder` explicitly requests the metadata-only step
+on a temporary copy. Failed new outputs/terminal receipts remain; existing
+outputs refuse and no lab/current pointer is written. Setup and state are named
+in ARCHITECTURE, phone-owner-build and LOCAL_STATE. No runtime request/stage pin
+or existing consumer is relaxed or redirected.
+
+**Complete original-input result.** Accepted input
+`6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88`
+yields all 247 version-150 banks, 11,876 embedded media entries and 3,318 events:
+1,157 single-media, 1,687 multi-media and 474 without direct media references.
+All 248 selected bank/XML hashes are independently rechecked against the reviewed
+inventory. No lab project or generation marker is created. The default index
+matches every substantive field of the current pinned index; its sole difference
+is the intentionally absent `decoder_sample`.
+
+A separate existing metadata procedure on an owned sample-bank copy reproduces
+that field in 0.0528 seconds, with no WAV export and unchanged original/copy
+hashes. The final tracked complete owner invocation reproduces the entire index
+byte-for-byte, SHA-256
+`f1d41954cb78c582a6c8a5fbbca58148057a120b01e4bb09cd47f8f107d66326`.
+The actual decoder executable hash is
+`c8d11572ee6cb42ed30b4a99be4a2a5ad6d254e6ad5c23b7de6e0097d57d56ab`.
+This resolves that source-input dependency without asserting a new audio runtime.
+Eight authored tests cover the original bank/header/media contracts, parser
+independence, traversal/version/media refusals, the legacy generation gate,
+temporary-copy decoder identity, full owner inventory flow and same-stat content
+drift. Ruff passes; Main independently reviews source and the exact full output.
+
+**Init and historical provenance follow-up.** Execute the unchanged public
+`wwise_init_platform.py` against the legitimate Init bank: it reproduces required
+bank SHA-256
+`618d1c5d534af10fc4cc30a1bacd193bf6871dab3e63992ebedd92a92576fb90`
+in 0.0912 seconds with original bytes unchanged. Its fresh receipt correctly
+differs from the historical pinned receipt in `transform_sha256` and the added
+`input_relative_path`; do not falsify either field. Main locates the exact
+historical authored transformer, source SHA-256
+`91c72d254ba9473d93ffb18c4be2233be1781b6072b08571aed7f607e76e9b37`.
+A byte-identical copy under the equivalent owned private layout actually executes
+against the same legitimate input and new outputs, reproducing both the bank and
+historical receipt SHA-256
+`3b274de411fe2128bffd43de117baf9156e58e75ebcd0f0cb2a5379b1f22260f`.
+This is honest historical reproduction, not a compatibility substitute or a
+claim that the old producer is now public. That source remains local research
+state pending its separate provenance audit; the public transformer remains the
+preferred new-execution owner. Original bank and existing stage guards stay fixed.
+
+**Evidence and remaining work.** Private whole-cohort outputs, inventory bindings,
+source comparisons, metadata-only control, public Init result and actual historical
+source/receipt reproduction live under `work/coordination/source-audio-inputs-v1/`.
+`proof-v2.json` SHA-256
+`55492ae6c6cd266192cbdfe13c08c5d1109bec57a4d00d8700373fb0275dbc99`
+binds source commit `3a79c39`, retained sources/results and all selected source
+hashes; the exact historical source copy is listed in LOCAL_STATE. No game data,
+raw index, bank/media or private historical source is committed. This closes the
+complete host bank-index producer and establishes the exact bank/receipt controls;
+it does not close all requested-audio inputs, the remaining game/authored DLLs,
+independent linker roots, native AOT/Burst, serialized content/shaders, phone tool
+hosting, installation or matched performance. Keep Route A, Architecture C and
+the desktop fallback; continue from these existing producers without claiming
+that a Unity Editor rebuild is inherently necessary.
