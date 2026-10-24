@@ -2117,3 +2117,8 @@ Fast-iteration infrastructure refreshes only the camera recipe's authored
 predecessor staging retirement and optional pre-Gradle dispatch. Camera transforms, game/API profiles and generated outputs
 are unchanged. Provenance/privacy audit: 2026-10-24; authored tooling and source
 digests only, with no protected content or private identifiers.
+
+The same audit binds the authored `common.py` clone primitive as the camera/music
+hooks' transitive `artifact_copy` source. Only their file-copy operation changes;
+existing preimage/output hashes, atomic publication and exact module profiles
+remain required. No generated assembly or protected implementation is included.

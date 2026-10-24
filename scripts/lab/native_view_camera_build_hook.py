@@ -13,7 +13,6 @@ import importlib.util
 import json
 import os
 from pathlib import Path
-import shutil
 import tempfile
 from pathlib import PurePosixPath
 
@@ -705,6 +704,13 @@ def restore_previous_camera(project: Path, work: Path) -> dict | None:
     return {"restored_sha256": expected_input, "camera_receipt_sha256": receipt_sha}
 
 
+def _copy_file_clone(source: Path, target: Path) -> None:
+    spec = importlib.util.spec_from_file_location("camera_artifact_copy", Path(__file__).with_name("common.py"))
+    helper = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(helper)
+    helper.copy_file_clone(source, target)
+
+
 def _atomic_copy(source: Path, target: Path, expected_hash: str, *, replace_hash: str | None = None) -> None:
     _reject_symlinks(source)
     _reject_symlinks(target, allow_missing=True)
@@ -713,9 +719,8 @@ def _atomic_copy(source: Path, target: Path, expected_hash: str, *, replace_hash
         raise ValueError("staging target changed outside the owned preimage/output pair")
     with tempfile.NamedTemporaryFile(prefix=".native-view-camera-", dir=target.parent, delete=False) as stream:
         temporary = Path(stream.name)
-        with source.open("rb") as original:
-            shutil.copyfileobj(original, stream)
-        stream.flush()
+    _copy_file_clone(source, temporary)
+    with temporary.open("rb") as stream:
         os.fsync(stream.fileno())
     if sha256(temporary) != expected_hash:
         temporary.unlink(missing_ok=True)
@@ -780,7 +785,7 @@ def stage_after_audio(project: Path, work: Path, audio_build_result: dict) -> di
     producer_receipt = transformed.with_name(transformed.name + ".producer-receipt.json")
     _reject_symlinks(output_root, allow_missing=True)
     if not output_root_existed:
-        shutil.copyfile(input_path, snapshot)
+        _copy_file_clone(input_path, snapshot)
         if sha256(snapshot) != selection["input_sha256"]:
             raise ValueError("immutable camera input snapshot failed hash verification")
         producer.transform(selection["profile"], input_path, resolution_dir, transformed, project)

@@ -5,6 +5,8 @@ import json
 import os
 import subprocess
 import datetime
+import shutil
+import sys
 from contextlib import contextmanager
 from contextvars import ContextVar
 from pathlib import Path
@@ -114,6 +116,23 @@ def run(args, timeout=120, check=True, **kw):
     if check and p.returncode:
         raise RuntimeError(f"{args[0]} exited {p.returncode}: " + p.stderr.decode(errors="replace")[-2000:] + p.stdout.decode(errors="replace")[-2000:])
     return p
+
+
+def copy_file_clone(source, destination, *, runner=None):
+    """Independent artifact snapshot, sharing APFS blocks when available.
+
+    Callers retain their scope/ownership/hash checks and atomic publication.
+    Never use hard links: later writes must not alter the source snapshot.
+    """
+    source, destination = Path(source), Path(destination)
+    if not source.is_file() or source.is_symlink() or destination.is_symlink() or source.resolve() == destination.resolve():
+        raise RuntimeError("Artifact copies require regular independent paths")
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.unlink(missing_ok=True)
+    cloned = sys.platform == "darwin" and (runner or run)(["/bin/cp", "-c", "-p", source, destination], check=False).returncode == 0
+    if not cloned:
+        shutil.copy2(source, destination)
+    return str(destination)
 
 
 def now():

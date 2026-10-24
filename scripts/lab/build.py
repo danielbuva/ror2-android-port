@@ -10,7 +10,6 @@ import re
 import shutil
 import time
 import zipfile
-import sys
 import threading
 import uuid
 from contextlib import contextmanager
@@ -49,13 +48,7 @@ def copy_build_artifact(source, destination, *, verify=True):
     before = file_identity(source)
     if source.resolve() == destination.resolve():
         raise RuntimeError("Build snapshot must have a different destination")
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    # cp -c cannot replace an existing destination; remove only this explicitly
-    # selected disposable snapshot, never its source.
-    destination.unlink(missing_ok=True)
-    cloned = sys.platform == "darwin" and run(["/bin/cp", "-c", "-p", source, destination], check=False).returncode == 0
-    if not cloned:
-        shutil.copy2(source, destination)
+    copy_file_clone(source, destination, runner=run)
     source_stat = source.stat()
     destination_stat = destination.stat()
     if (

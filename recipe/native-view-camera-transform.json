@@ -280,10 +280,11 @@
     "skin_lifecycle_audio_camera_merge": "tools/unity/runtime/input/AndroidNativeSourceSkinLifecycle.cs",
     "transformer": "tools/assembly-transforms/NativeViewCameraCecilTransform.cs",
     "verifier": "tools/assembly-transforms/VerifyNativeViewCameraTransform.cs",
-    "whole_catalog": "scripts/lab/whole_catalog.py"
+    "whole_catalog": "scripts/lab/whole_catalog.py",
+    "artifact_copy": "scripts/lab/common.py"
   },
   "source_sha256": {
-    "build_hook": "1882d8969a42e177e9058955a53172916c2d581655fdf74eaec5a4df4e9cc063",
+    "build_hook": "18541a252f6ad771c6b345e466fc54eacea23b2b04bb1d87f7cc9c12bd4b2426",
     "camera_contract": "259463fea059fb40f84ff8dd3bfc027efc70635ce7b81320725a177c78f5bf73",
     "camera_owner": "49adec4560582184a979baa534716b8fb3e50d25ea0a1e289a684ffb10b0e91b",
     "camera_prerequisites": "7d726175b0f93d9d4e83d032b7244cd9f9cd9df49d0ec1bd57d73df63587d18a",
@@ -291,7 +292,7 @@
     "marker": "7d86f674c0f6dde711916fe3105b8a88b2e91c39d1351d83ee77f0e2deea8f9f",
     "music_controller_owner": "15272167e3c416edb863797bf35dcbe8ef6704ecac805fdbe38186f4d73d41b0",
     "music_observer_core": "236a01f7fb24ee0a6799f0f41196579683505e8255d18d0d1a4d1ef19537da02",
-    "music_observer_stage": "9af55d3e034d46b3bf537d639f9d130ef7589e030cb5aa6732b7308b198de75b",
+    "music_observer_stage": "9fcde6ab123e961a9f8514e992ec4d831d857ea35bc63505cb2e0f3b472cff5c",
     "music_observer_transform": "c94e64eda96e1d969087272d0684ce1a809a00b2e18eed30e35a0a5825a77b95",
     "music_observer_transform_project": "bfca91b1984488e25dd1849433c319c1288fff37630b0279c6684cec140a012b",
     "producer": "3c181934e808c74dfebe2212e0c663275c1cee97a9a4d7effc6ea6508483fda0",
@@ -299,7 +300,8 @@
     "skin_lifecycle_audio_camera_merge": "60c7294363a3e5593b622799b3ac2871c87e75a308b7d4171b37d114c5c530f9",
     "transformer": "612e1f374e6381e48aec33e902505953e47d1f4df765df646ea02284c7d16598",
     "verifier": "f9047828a437fc650dbc30e68c81585a80b3f38ed87cc81427b32314b6cf9b91",
-    "whole_catalog": "dbf1c1484f091d7dbdabb0f87cfd247a2d736d340bf63969cdf275f63ff95555"
+    "whole_catalog": "dbf1c1484f091d7dbdabb0f87cfd247a2d736d340bf63969cdf275f63ff95555",
+    "artifact_copy": "6fbc71e09717a471040766f94b66cf6c62aaafb76a6da61db3afd68c3fcf4b76"
   },
   "stage_receipt_sha256": "21aeba0fa4e20e70346fdcc6e309d056ea385b63be013726f690b930ba33c05b",
   "unity_tools_sha256": {

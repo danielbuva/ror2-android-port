@@ -810,6 +810,12 @@ Host contracts: `test_iteration_apk.py`, `test_install_transport.py`,
 `test_build_snapshots.py`. Build/experiment artifact snapshots use APFS clones
 with an independent-copy fallback; snapshot verification can be requested while
 ordinary builds hash each source artifact once.
+`common.copy_file_clone` is the shared file-copy primitive. Camera/music
+preimages and atomic stage replacements also use it, retaining their existing
+scope checks, expected hashes, fsync and final rename. The hooks load this
+authored sibling helper only when copying, keeping absent-receipt inspection
+inert. The camera recipe pins this transitive source; synthetic atomic-copy
+contracts are in `test_artifact_clone_hooks.py`.
 
 Current optional debugging symbols (`--debug-symbols` on `build` or
 `whole-catalog-code-build`) flow through `main.py`/`actions.py` to
