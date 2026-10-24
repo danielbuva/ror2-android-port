@@ -57,6 +57,21 @@ produce the file from the input, prefer tracking the generator.
 
 ## Audit record
 
+`owner-uncompressed-textures.json` selects original bundle/member/object and
+pixel extents, field bounds, destination identities/layout and verification
+hashes. Its only pixel operations are copying original bytes and standard BC1
+top-mip decoding to RGB. Destination names, inline/stream placement and generic
+format/alpha/usage settings are serialization/import metadata. No pixel array,
+palette, target byte patch/frame, image, codec implementation or target float
+literal is included. Every pixel is copied or calculated from original PC
+data. The 43 unresolved pixel-postprocessing records are excluded. These
+minimum identifiers/relationships do not replace ownership or authentication.
+Manual provenance, privacy, licensing and sensitive-content review: 2026-10-24.
+Pinned UnityPy 1.25.3 field/resource observations and Microsoft's public BC1
+format documentation inform the authored reader/decoder; no upstream or game
+implementation is copied. Discovery, generated packs and raw evidence remain
+ignored. This audit does not qualify complete bundles or an owner installation.
+
 `owner-avatars.json` contains original bundle/member/object identities, hashes,
 source body and table extents, destination identities/hashes and permutations
 of original hash/string table entries. The 56 permutations describe incidental
@@ -112,6 +127,7 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 
 | File | Replaces | Provenance | Privacy and licensing | Readers |
 | --- | --- | --- | --- | --- |
+| `owner-uncompressed-textures.json` | Private replay uncompressed texture bodies/pixels for its qualified cohort | Original/destination selectors, source extents, generic import/placement metadata and hashes; copy or BC1-to-RGB policy. | No pixels, palettes, target literals/patches or image/library bytes; full audit above, 2026-10-24. Forty-three pixel-postprocessing records remain excluded. | Explicit PC-input-only `texture_produce.py`; no current game-build consumer. |
 | `owner-avatars.json` | Private replay Avatar bodies (J1075) | Minimum original/destination identities, hashes, source extents and source-entry permutations. | No strings, poses, rig/geometry values, target literals or byte frames; full audit above, 2026-10-24. | Explicit PC-input-only `avatar_produce.py`; no current game-build consumer. |
 | `owner-meshes.json` | Protected mesh bodies in the private replay packet, for the included cohort only (J1070) | Original bundle/object/resource selectors, destination identities/hashes and authored import/conversion settings. | No geometry arrays, collision data, target byte frames or float literals; full audit above, 2026-10-24. Two cases remain excluded. | Explicit original-input-only `mesh_produce.py`; no current game-build consumer. |
 | `shader-postprocessing-bloom-candidate.json` | Exported one-pass Bloom and exact source-camera CopyStd placeholders | Accepted-input source/meta/resource identities, official Unity package/license hashes and pass contracts; authored camera staging pin refreshed without changing camera transforms. | Authored selection metadata only; upstream source and generated content stay local under Unity Companion License. Manual audit 2026-10-23 described above. | `shader_postprocessing_bloom`, whole-catalog preparation and catalog replay comparison; default off. |

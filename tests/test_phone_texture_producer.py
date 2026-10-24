@@ -1,0 +1,171 @@
+"""Authored BC1 and byte-range texture contracts; no game or editor inputs."""
+
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+import struct
+import tempfile
+import unittest
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def load(name, path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    value = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(value)
+    return value
+
+
+T = load("texture_producer", ROOT / "tools/phone-build/accepted-output/texture_produce.py")
+FIXTURE = load("authored_bundle_fixture", ROOT / "tests/test_phone_mesh_producer.py")
+
+
+def digest(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def string(value):
+    encoded = value.encode()
+    return struct.pack("<I", len(encoded)) + encoded + b"\0" * (-len(encoded) % 4)
+
+
+def authored_body(name, image_size, texture_format, pixels, stream):
+    """Independent field ordering with sentinel bytes between selected fields."""
+    data = bytearray(b"AUTHORED")
+    spans = {}
+    values = [
+        ("m_Name", string(name)),
+        ("m_CompleteImageSize", struct.pack("<I", image_size)),
+        ("m_TextureFormat", struct.pack("<i", texture_format)),
+        ("m_IsAlphaChannelOptional", b"\0"),
+        (None, b"\x11\x22\x33"),
+        ("m_LightmapFormat", struct.pack("<i", 0)),
+        (None, b"KEEP"),
+        ("image data", struct.pack("<I", len(pixels)) + pixels + b"\0" * (-len(pixels) % 4)),
+        ("m_StreamData", struct.pack("<QI", stream["offset"], stream["size"]) + string(stream["path"])),
+    ]
+    for key, value in values:
+        if key:
+            spans[key] = [len(data), len(value)]
+        data.extend(value)
+    data.extend(b"TAIL")
+    return bytes(data), spans
+
+
+class TextureProducerTests(unittest.TestCase):
+    def test_bc1_palette_selectors_and_logical_edge_cropping(self):
+        # Red/blue endpoints and all four selectors in each row.
+        block = struct.pack("<HHI", 0xF800, 0x001F, 0xE4E4E4E4)
+        expected_row = bytes([255, 0, 0, 0, 0, 255, 170, 0, 85, 85, 0, 170])
+        self.assertEqual(T.dxt1_rgb(block, 4, 4), expected_row * 4)
+        green = struct.pack("<HHI", 0x07E0, 0, 0)
+        blue = struct.pack("<HHI", 0x001F, 0, 0)
+        red = struct.pack("<HHI", 0xF800, 0, 0)
+        white = struct.pack("<HHI", 0xFFFF, 0, 0)
+        expected = (bytes([0, 255, 0]) * 4 + bytes([0, 0, 255])) * 4 + bytes([255, 0, 0]) * 4 + bytes([255, 255, 255])
+        self.assertEqual(T.dxt1_rgb(green + blue + red + white, 5, 5), expected)
+        # Three-colour mode uses black for the transparent selector after RGB projection.
+        transparent = struct.pack("<HHI", 0, 0xFFFF, 0xFFFFFFFF)
+        self.assertEqual(T.dxt1_rgb(transparent, 4, 4), bytes(48))
+        halfway = struct.pack("<HHI", 0, 0xFFFF, 0xAAAAAAAA)
+        self.assertEqual(T.dxt1_rgb(halfway, 4, 4), bytes([127, 127, 127]) * 16)
+        for width, height, data in ((0, 4, block), (True, 4, block), (4, 4, block[:7]), (8193, 4, block)):
+            with self.subTest(width=width, height=height), self.assertRaises(ValueError):
+                T.dxt1_rgb(data, width, height)
+
+    def test_source_only_external_and_inline_packs_and_refusals(self):
+        encoded = struct.pack("<HHI", 0xF800, 0, 0)
+        expected_pixels = bytes([255, 0, 0]) * 16
+        empty = {"offset": 0, "size": 0, "path": ""}
+        source_stream = {"offset": 4, "size": 8, "path": "archive:/CAB-authored/CAB-authored.resS"}
+        body, fields = authored_body("Source", 8, 10, b"", source_stream)
+        target_stream = {"offset": 64, "size": 48, "path": "archive:/CAB-target/CAB-target.resS"}
+        outputs = []
+        expected_bodies = []
+        for inline in (False, True):
+            name = "Inline Ēta" if inline else "External"
+            stream = empty if inline else target_stream
+            expected_body, _ = authored_body(name, 48, 3, expected_pixels if inline else b"", stream)
+            expected_bodies.append(expected_body)
+            outputs.append(
+                {
+                    "bundle": "target.bundle",
+                    "member": "CAB-target",
+                    "path_id": 2 if inline else 1,
+                    "bytes": len(expected_body),
+                    "sha256": digest(expected_body),
+                    "name": name,
+                    "pixel_sha256": digest(expected_pixels),
+                    "pixel_bytes": 48,
+                    "inline": inline,
+                    "stream": stream,
+                    "alpha_optional": False,
+                    "usage": 0,
+                }
+            )
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            pc = root / "pc"
+            pc.mkdir()
+            source = pc / "authored.bundle"
+            source.write_bytes(FIXTURE.bundle([("CAB-authored", b"HEAD" + body, 4), ("CAB-authored.resS", b"LEAD" + encoded, 0)], True))
+            source_hash = T.BUNDLE.sha(source)
+            selected = {
+                "path_id": 99,
+                "offset": 4,
+                "bytes": len(body),
+                "sha256": digest(body),
+                "fields": fields,
+                "pixels": {"member": "CAB-authored.resS", "offset": 4, "bytes": 8, "sha256": digest(encoded)},
+                "operation": "dxt1-rgb",
+                "width": 4,
+                "height": 4,
+                "outputs": outputs,
+            }
+            profile = {
+                "input_id": T.MESH.INPUT_ID,
+                "bundles": [{"path": source.name, "sha256": source_hash, "members": [{"name": "CAB-authored", "textures": [selected]}]}],
+            }
+            profile_path = root / "profile.json"
+            profile_path.write_text(json.dumps(profile))
+            result = T.produce(profile_path, T.BUNDLE.sha(profile_path), pc, root / "output")
+            self.assertTrue(result["success"])
+            self.assertEqual(result["objects"], 2)
+            self.assertEqual((root / "output/objects.bin").read_bytes(), b"".join(expected_bodies))
+            self.assertEqual((root / "output/resources.bin").read_bytes(), expected_pixels)
+            index = [json.loads(line) for line in (root / "output/index.jsonl").read_text().splitlines()]
+            self.assertEqual(index[0]["resource"]["stream"], target_stream)
+            self.assertNotIn("resource", index[1])
+            self.assertEqual(T.BUNDLE.sha(source), source_hash)
+            with self.assertRaises(ValueError):
+                T.produce(profile_path, T.BUNDLE.sha(profile_path), pc, root / "output")
+            with self.assertRaisesRegex(ValueError, "profile drift"):
+                T.produce(profile_path, "0" * 64, pc, root / "profile-drift")
+            outputs[0]["pixel_sha256"] = "0" * 64
+            profile_path.write_text(json.dumps(profile))
+            with self.assertRaisesRegex(ValueError, "pixels differ"):
+                T.produce(profile_path, T.BUNDLE.sha(profile_path), pc, root / "pixel-drift")
+            self.assertFalse(json.loads((root / "pixel-drift/result.json").read_text())["success"])
+            source.write_bytes(b"authored drift")
+            with self.assertRaisesRegex(ValueError, "bundle drift"):
+                T.produce(profile_path, T.BUNDLE.sha(profile_path), pc, root / "input-drift")
+
+    def test_field_and_inline_source_bounds(self):
+        empty = {"offset": 0, "size": 0, "path": ""}
+        body, fields = authored_body("Source", 3, 3, b"RGB", empty)
+        target = {"name": "Target", "alpha_optional": False, "usage": 0, "inline": True, "stream": empty}
+        expected, _ = authored_body("Target", 3, 3, b"RGB", empty)
+        self.assertEqual(T.body_output(body, fields, b"RGB", target, "copy"), expected)
+        for replacement in ([-1, 4], [len(body), 4], fields["m_Name"]):
+            broken = dict(fields, m_TextureFormat=replacement)
+            with self.subTest(replacement=replacement), self.assertRaises(ValueError):
+                T.body_output(body, broken, b"RGB", target, "copy")
+        with self.assertRaisesRegex(ValueError, "escape"):
+            T.pixels_input(None, body, {"pixels": {"member": None, "offset": -1, "bytes": 1, "sha256": digest(b"L")}, "operation": "copy"})
+
+
+if __name__ == "__main__":
+    unittest.main()
