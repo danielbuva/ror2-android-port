@@ -97,8 +97,10 @@ reuses the named metadata/SDK registry/root-composition owners and exact SDK
 UnityLinker/IL2CPP tools with independent DLL providers. Current target root and
 preservation identities are explicit supplied configuration, not independently
 derived scene semantics. LOCAL_STATE records setup, retained inputs and teardown.
-The experiment has no current game-build consumer; native/content production
-and Android execution are separate gates.
+[J1059](PORTING_JOURNAL.md#j1059--build-the-complete-native-arm64-game-library-without-unity-editor)
+then completes native construction using the original SDK compiler policy.
+These experiments have no current game-build consumer; public orchestration,
+content production and Android execution remain separate gates.
 
 `scripts/lab/owner_audio_prefab.py` owns current experimental bounded host
 reconstruction of one source audio prefab from the owner's original bundles.

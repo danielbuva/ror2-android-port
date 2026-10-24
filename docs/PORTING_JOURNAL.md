@@ -33923,3 +33923,86 @@ Audited public configuration/bootstrap, full native/Burst production, serialized
 content/shaders, Android tool hosting, ownership-preserving installation and
 matched performance remain open. Working APKs, Architecture C and the desktop
 fallback stay unchanged; PR #55 keeps its device/adoption hold.
+
+## J1059 — Build the complete native ARM64 game library without Unity Editor
+
+2026-10-24. Complete host C++ → native IL2CPP library feasibility case, using
+J1058's actual freshly generated source and metadata. No Editor, working APK,
+SDK source, original PC input or device state is changed.
+
+**Hypothesis and native policy.** J1058 supplies the complete real player C++
+cohort. Reuse the frozen native graph as compiler/link configuration, never as a
+game-code provider. Its original NDK 21.3.6528147 Clang 9/BFD policy uses ARMv8-a,
+Android API 22, Os/development flags and the existing incremental-GC definitions.
+Do not substitute the qualified fixture's Clang 21/LLD profile and infer parity.
+The public native replay owner already explains SDK-relative include wrappers;
+reuse that authored include parser and preserve all SDK source bytes. This is
+generic native build engineering, with no new gameplay/runtime mechanism.
+
+**Complete coverage.** The frozen graph specifies 824 compilation tasks, including
+67 SDK-only lumps. Every recorded generated source exists in the fresh output.
+One additional fresh file, Assembly-CSharp__27.cpp, gets an explicit compilation
+and link slot with the identical original assembly policy. The actual complete
+set is 825 tasks: 138 SDK/wrapper tasks and 687 fresh generated translation units.
+The native plan records compiler, source/graph/store/wrapper bindings and the
+full relocated argument vectors. Only owned output paths are writable; captured
+original game C++, native objects and compiled game libraries supply no bytes.
+A host-only lab preflight still refuses the absent generated lab project; no lab
+or Unity build is dispatched or represented as passing. This separately bounded
+standalone SDK/compiler case has explicit independent input/output guards.
+
+**Source preservation and resource use.** All 687 generated C/C++ files have no
+source-to-source includes. Before building, compress the successful independently
+reviewed J1058 sources into individual gzip frames. Verify every decompressed
+SHA-256 against the actual converter receipt before expanded copies are retired.
+The complete ledger preserves original path, size, hash, mode and mtime plus each
+compressed hash. It retains 1,123,083,820 source bytes in 198,523,391 archive bytes,
+saving about 930 MB. The adjacent cpp.retired.json points to the restore ledger;
+J1058's proof records the historical verification before this preservation step.
+No failed case, metadata, known-good APK/rollback, SDK source or original game
+file is removed. Each active translation unit is restored byte-for-byte; success
+keeps a verified object receipt and can retire that expansion. Failure keeps its
+source/logs. One compiler process runs at a time, with output/link reserves and
+bounded child lifetime; no shared editor/build lock or device is used.
+
+**Full native result.** All 825 compilations and the original BFD link succeed in
+1,173.9786 seconds, producing 1,952,743,816 bytes of verified objects. The actual
+unstripped library is 825,080,360 bytes, SHA-256
+`646421a4d5a9a7adddd45f246f64aac7b626725e433a0261b5a8bd00eca69204`.
+All explicitly bound SDK/source inputs remain unchanged. Preserve the complete
+objects, per-job hashes, compiler logs, original plan and all source frames;
+this is the full game-source cohort, not the authored native fixture.
+
+Use the original SDK objcopy strip operation into a separate output. The final
+library is 98,903,576 bytes, SHA-256
+`04f8f762781254ac185b8fada145dc7280500220d6cb54dc78aafd7e57ef4aa0`.
+It is ELF64 little-endian ET_DYN/AArch64 with SONAME libil2cpp.so. All 2,359 dynamic
+export names exactly match the accepted J850 reference set, with no added or
+missing names. Both require libc, libdl, liblog and libm. Those are static loader
+checks, not complete calling-convention, memory-layout or gameplay acceptance.
+
+Explicitly bind the matching converter-produced global metadata:
+17,967,184 bytes, version 31, SHA-256
+`bcf048d4be9ef6d1cd2930134f84c357867ed82bfe60046bbec94d7f9ff1a5d7`.
+The final verifier rehashes all 825 objects, native libraries and actual converter
+metadata, and checks metadata magic and the original converter receipt. Current
+source/fixed roots differ from J850/R27, so no library, metadata or performance
+parity is asserted. No APK is replaced and no game is loaded on a device.
+
+**Evidence and remaining integration.** Private
+`work/coordination/owner-native-player-v1/proof-v1.json`, SHA-256
+`ae551cd30ce00ff880151278501cf407700804c52dc50c789728d43861efc06e`,
+binds 3,264 artifacts, source frames, commands, objects, static ELF observations
+and matching metadata. Main independently verifies all artifact hashes, all 687
+decompressed source hashes and the exact 825 compile-output/link-input set.
+A separate boundary review confirms the original policies and no captured game
+source/object provider. Both return GO for this explicit host scope. Production source is 55b23fb7; 7f24032b records the required
+native workspace/source-store setup. The full game-code path now runs from
+owner inputs through managed production, stripping, C++/metadata generation and
+native compilation without Editor import. It still uses explicit private native
+command/current-root configuration. Promote this same validated chain into one
+public input-gated owner with audited declarative profiles before claiming a
+public reproducible bootstrap. Full Burst provenance/production, serialized
+content/shaders, Android tool hosting, installation and matched device/gameplay
+performance remain open. Architecture C, the working build and desktop fallback
+remain current; PR #55 keeps its device/adoption hold.

@@ -24,8 +24,10 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       preparation, installation/update and game lifecycle remain unqualified.
       [J1058](PORTING_JOURNAL.md#j1058--strip-and-convert-the-complete-player-with-fixed-target-root-configuration)
       completes full host stripping/conversion with independent DLL providers
-      and supplied target-root configuration; audited configuration/bootstrap,
-      native output and phone execution remain open.
+      and supplied target-root configuration; Android execution remains open.
+      [J1059](PORTING_JOURNAL.md#j1059--build-the-complete-native-arm64-game-library-without-unity-editor)
+      completes the full host game-code chain through the native library;
+      public orchestration and phone qualification still remain.
       Full Unity-project reconstruction or AssetRipper export is not an assumed
       requirement. Every protected APK/payload output needs an owner-input
       producer; the accepted build supplies validation, never hidden target bytes.

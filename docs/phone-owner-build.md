@@ -423,3 +423,14 @@ This removes general Editor root discovery from that host candidate without
 claiming independent scene semantics. Public configuration audit, native/Burst
 builds, content/shader production and Android execution remain open. No existing
 working game build or installation architecture adopts the candidate.
+
+## Complete host native game-code construction
+
+[J1059](PORTING_JOURNAL.md#j1059--build-the-complete-native-arm64-game-library-without-unity-editor)
+connects J1058's actual C++ to the original SDK native compiler/link policy.
+All 825 compilation tasks and the native link succeed. The stripped ARM64 library
+and matching metadata are retained privately; export names, SONAME and runtime
+library dependencies match the accepted loader contract. No device/gameplay or
+performance parity follows from those static checks. Public input-gated
+orchestration/profiles, full Burst/content/shader production and Android execution
+remain open; the working game and desktop fallback stay unchanged.
