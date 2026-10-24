@@ -301,7 +301,7 @@
     "transformer": "612e1f374e6381e48aec33e902505953e47d1f4df765df646ea02284c7d16598",
     "verifier": "f9047828a437fc650dbc30e68c81585a80b3f38ed87cc81427b32314b6cf9b91",
     "whole_catalog": "90330f57eaf1263d6d541e54f8482a94fd65abe4c612acafd0a7e9cb0d5b6470",
-    "artifact_copy": "6fbc71e09717a471040766f94b66cf6c62aaafb76a6da61db3afd68c3fcf4b76"
+    "artifact_copy": "b4fff18bbb88573494e9189f7349a9f0f204dcd9bbe221d3b86891c89d156d55"
   },
   "stage_receipt_sha256": "21aeba0fa4e20e70346fdcc6e309d056ea385b63be013726f690b930ba33c05b",
   "unity_tools_sha256": {

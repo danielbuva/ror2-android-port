@@ -2216,3 +2216,8 @@ check confirms `_contextvars` is built into the supplied Android Python, so no
 native library or dependency selection is added. This is authored tool metadata,
 not game input or a redistribution approval. Original input admission and the
 fixture's remaining device gates still apply.
+Build-lane configuration refreshes the camera recipe's transitive authored
+`common.py` digest only. The copy primitive, camera/game transformations and
+licensed inputs are unchanged. New lane state is generated below ignored local
+paths; no captured source, game data, account/device identity or key is tracked.
+Provenance/privacy audit: 2026-10-24.

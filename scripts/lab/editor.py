@@ -6,6 +6,7 @@ import os
 import sys
 import datetime
 from pathlib import Path
+from common import WORK, lane_config
 from mcp import ClientSession
 from mcp.client.streamable_http import streamablehttp_client
 
@@ -23,19 +24,19 @@ from build_lock import (
 async def _main():
     target, action = sys.argv[1:3]
     expected = (
-        (ROOT / "work/lab-project")
+        (WORK / "lab-project")
         if target == "lab"
         else (ROOT / "smoke")
         if target == "smoke"
         else Path(json.loads((ROOT / "work/config/reconstruction.json").read_text())["projects"][0])
     )
     expected = (expected if expected.is_absolute() else ROOT / expected).resolve()
-    out = ROOT / "work/editor"
+    out = WORK / "editor"
     out.mkdir(parents=True, exist_ok=True)
     archive = out / (datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ") + "-" + target + "-" + action)
     archive.mkdir()
     evidence = {"target": str(expected), "action": action}
-    async with streamablehttp_client("http://127.0.0.1:8080/mcp") as (r, w, _):
+    async with streamablehttp_client("http://127.0.0.1:" + str(lane_config().get("mcp_port", 8080)) + "/mcp") as (r, w, _):
         async with ClientSession(r, w) as s:
             assert_build_unblocked()
             assert_host_build_lock_held(HOST_BUILD_LOCK)

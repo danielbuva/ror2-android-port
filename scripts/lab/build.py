@@ -170,6 +170,10 @@ def editor(target="lab", action="inspect"):
                     "GRADLE_USER_HOME": str(ROOT / ".local/gradle"),
                 }
             )
+            lane = lane_config()
+            if lane:
+                env["ROR2LAB_MCP_HTTP_URL"] = "http://127.0.0.1:" + str(lane["mcp_port"])
+            env["ROR2LAB_MCP_PREF_LOCK"] = str(Path(lane.get("canonical_work", WORK)) / "coordination/mcp-preferences.lock")
             stamp = now()
             log = WORK / "logs" / stamp[:8] / (target + "-editor-" + stamp + ".log")
             log.parent.mkdir(parents=True, exist_ok=True)

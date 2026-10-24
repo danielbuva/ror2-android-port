@@ -22,6 +22,8 @@ ADB = "/opt/homebrew/bin/adb"
 
 
 def require_device_access(*, force=False):
+    if common.lane_config():
+        raise RuntimeError("Build lanes do not own devices; use canonical device commands with explicit APK/payload paths")
     if (force or os.environ.get("LAB_COORDINATION_GUARD") == "1") and (ROOT / "work/coordination/claude-r9.lock").exists():
         raise RuntimeError("Device access blocked by work/coordination/claude-r9.lock")
 

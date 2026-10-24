@@ -25,8 +25,10 @@ import sys
 _registry_guard = threading.Lock()
 _registry: dict[str, "_LockState"] = {}
 ROOT = Path(__file__).resolve().parents[2]
-HOST_BUILD_LOCK = ROOT / "work/coordination/unity-build.lock"
-CLAUDE_COORDINATION_LOCK = ROOT / "work/coordination/claude-r9.lock"
+_lane_path = ROOT / "work/config/build-lane.json"
+_lane = json.loads(_lane_path.read_text()) if _lane_path.is_file() else {}
+HOST_BUILD_LOCK = Path(_lane.get("lock", ROOT / "work/coordination/unity-build.lock"))
+CLAUDE_COORDINATION_LOCK = Path(_lane.get("canonical_work", ROOT / "work")) / "coordination/claude-r9.lock"
 INHERITED_FD_ENV = "ROR2LAB_UNITY_BUILD_LOCK_FD"
 
 
@@ -94,9 +96,9 @@ def assert_build_unblocked(blocker_path: str | os.PathLike[str] | None = None) -
         raise RuntimeError("Unity build blocked by active coordination lock: " + str(blocker))
 
 
-def active_lock_handoff() -> tuple[dict[str, str], tuple[int, ...]]:
+def active_lock_handoff(lock_path=None) -> tuple[dict[str, str], tuple[int, ...]]:
     """Return env/pass_fds for a child process that must share this lock."""
-    lock_path = HOST_BUILD_LOCK.resolve()
+    lock_path = Path(lock_path or HOST_BUILD_LOCK).resolve()
     state = _state_for(lock_path)
     if state.fd is not None and state.depth > 0 and state.owner_thread == threading.get_ident():
         fd = state.fd

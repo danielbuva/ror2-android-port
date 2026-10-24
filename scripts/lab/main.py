@@ -2,10 +2,20 @@ import argparse
 import sys
 from common import *
 
+if len(sys.argv) > 1 and sys.argv[1] == "lane":
+    from build_lanes import main
+
+    sys.exit(main(sys.argv[2:]))
+if os.environ.get("LAB_LANE"):
+    from build_lanes import dispatch
+
+    sys.exit(dispatch(os.environ["LAB_LANE"], sys.argv[1:]))
+
 p = argparse.ArgumentParser(description="Local RoR2 porting laboratory; generated evidence lives under ignored work/.")
 p.add_argument(
     "command",
     choices=[
+        "lane",
         "diagnostics",
         "migrate-device-receipts",
         "test",

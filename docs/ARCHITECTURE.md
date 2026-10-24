@@ -3246,6 +3246,22 @@ or teardown and makes no Android appearance claim.
 
 ## Shared worktree build ownership
 
+`scripts/lab/build_lanes.py` owns current `./dev lane` creation/list/removal and
+`LAB_LANE=NAME` build dispatch. Each detached checkout has an APFS clone of
+prepared inputs, private writable editor/Gradle state, its own MCP port and a
+persistent lock outside the removable tree. Creation snapshots under the
+canonical mutex; later source selection/builds use only the lane lock. Completed
+artifacts are cloned/verified into canonical cache without changing current-build
+pointers. Teardown verifies process identities, retains logs/receipts, removes
+the checkout/work clone and preserves published artifacts. The pruner delegates
+old stopped lane removal to this owner. Lane device access refuses before ADB;
+device operations remain canonical. `BootstrapMcp` owns per-editor connection
+and reload setup with a short global preference lease and restoration, while
+`editor.py` checks the selected project through its lane endpoint. Setup and
+teardown: [build lanes](build-lanes.md). Host ownership contracts are in
+`test_build_lanes.py`; the actual asynchronous bootstrap executes against authored
+preference/bridge doubles in `test_bootstrap_mcp.py`. Editor/package pins stay fixed.
+
 `scripts/lab/shared_checkout_build.py` owns the current
 `./dev prototype --action shared-catalog-code-build` (`--full` for content),
 `shared-catalog-fast-build` and `shared-catalog-scripts-build` actions. A linked worker

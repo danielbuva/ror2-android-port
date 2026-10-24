@@ -17,6 +17,11 @@ RECIPE = ROOT / "recipe"  # audited, tracked build recipes (recipe/README.md)
 _hash_cache = ContextVar("lab_build_hash_cache", default=None)
 
 
+def lane_config():
+    path = WORK / "config/build-lane.json"
+    return json.loads(path.read_text()) if path.is_file() else {}
+
+
 def file_identity(path):
     st = Path(path).stat()
     return st.st_dev, st.st_ino, st.st_size, st.st_mtime_ns, st.st_ctime_ns

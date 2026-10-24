@@ -5,6 +5,9 @@
 This page preserves the laboratory setup and command reference. Run commands
 from the repository root. It is for contributors, not a player installer.
 
+Current independent prepared builds use [build lanes](build-lanes.md):
+`./dev lane --action create --name NAME`, then `LAB_LANE=NAME ./dev …`.
+
 An evidence-driven laboratory that runs the original PC game's managed code and converted
 content natively on ARM64 Android, using the user's own legitimate game installation.
 **It is not a finished or distributable port.** The current APK reaches the original offline
