@@ -42312,3 +42312,77 @@ the saved body/graph/terrain evidence, then host/exact-editor qualify the smalle
 repair. Keep native physics and source elite behavior intact. PC appearance,
 complete audio, rare-NaN causality, Siren completion, memory bounds and ordinary
 normal-difficulty runs remain open.
+
+
+## J1108 — Admit automatic Huntress mobility against original landing terrain
+
+**Hypothesis and source review.** J1105's bounded route ends below the original
+Scorched Acres teleporter after three native Blink and three Arrow Rain callbacks.
+Its sparse snapshots do not identify the movement that caused that displacement.
+Source review nevertheless finds a concrete unsafe diagnostic assumption:
+automatic combat requests utility while aiming at nearby airborne threats, and
+the native default Blink follows the three-dimensional aim ray rather than the
+ground navigator's movement. Default Arrow Rain also applies configured root
+motion. Decline unsafe automatic requests using source movement/landing data;
+do not rewrite native movement or introduce a recovery teleport.
+
+Read J291/J292/J295/J298/J301/J401 before changing navigation/bounds. The original
+Scorched Acres box can contain the saved lower position, so a missing out-of-bounds
+volume is not established. Re-read the community stage/authority map, pinned
+Starstorm2 `SlateMines` (a9a4badd) scene identity and DebugToolkit `Command_Noclip`
+(d1e2f0aa) typed motor/physics ownership. Their useful boundary is preserving
+original scene and motor state; neither supplies an Android landing repair.
+Accepted-input Blink/BeginArrowRain/EntityState configuration and the actual
+failed route remain authoritative. No community or decompiled implementation
+is copied.
+
+**Existing owner change.** `TeleporterWorldSession` conservatively admits only
+the two exact default Huntress mobility types against original configured
+endpoints and five capsule-width ground samples. The samples require source
+World geometry, original stable slope/jump-height limits and original bounds.
+Requests without a supported landing or while airborne are released. Other
+states, manual input and explicit kit-coverage diagnostics keep their existing
+paths. The integrated wrapper applies admission after route/combat production;
+no native state, root motion, health, transform, physics setting or jump limit
+is changed. Existing WorldReport stores check/rejection counts and the last
+reason. At most two inert native instances read their configured fields through
+original constructors; no OnEnter/body attachment occurs, and existing Dispose
+clears both before teardown. Repeated blocked requests do not allocate states
+or temporary sample arrays each tick. This repairs unsafe automatic admission;
+it does not yet prove recovery of the observed route.
+
+**Off-device qualification.** Thirty-seven focused tests pass with two expected
+missing-tool skips, including execution of the actual admission methods against
+synthetic floors, drops, edges, slopes, foreign scenes, bounds, invalid values,
+airborne requests, manual noninterference and bounded template construction.
+Ruff passes all three changed Python files. The exact current `siren-input-host`
+fixture reads both imported original configurations, invokes production movement
+prediction with real Unity vector math, and verifies source immutability without
+network/profile/combat startup. It passes with the existing native range/input
+contracts. Ownership/setup/teardown and recipe provenance are documented.
+
+Two initial host pin tests refuse the changed world-owner cohort; review and
+refresh only that source hash, the owner recipe digest and their transitive
+producer/camera pins. The corrected producer/camera contracts pass. The first
+fast-build attempt then correctly refuses frozen bundle reuse: the source-bound
+`GameAudioOriginalBootstrap.dll` changed from ba0047e6… to 86e97185…. A private
+modified-since-base comparison records that input; no guard is bypassed. Preserve
+`work/coordination/main-port-r56/fast-build.log` and the reviewed comparison.
+
+**Normal player result.** After pruning and accepted-input/free-space preflight,
+R56 from `3da3af79bcbf1e54bf710793f6e76590ef3e64a0`, request
+`20261024T234136.476859Z`, passes a normal full build in 165.383 s with zero errors
+(274.569 s complete pipeline wall time). APK SHA-256:
+`39413fcf04d7d8da5c4eb56576b8facc3d3fd605ed8800503ef7daafe56094d2`.
+All 267 path/hash references are rehashed, with no APK/payload copies in evidence
+folders. Frozen manifest, source/build receipt, host notes and actual-editor
+result are in `work/coordination/main-port-r56/`. Mandatory marker-aware pruning
+runs after the refused build and after normal build/fixture completion.
+
+R56 is uninstalled. Nova remains on J1105's R55 for the priority content case and
+alpha's explicitly matched heap comparison. Main remains unreachable and still
+requires interrupted-R45 recovery/cleanup/sleep first. Next qualify the current
+normal candidate on the same native route, require useful landing-rejection
+observations and actual Siren arrival/egg input, and retain the first failure.
+Rare-NaN causality, native mission completion, PC appearance, complete audio and
+normal-difficulty readiness remain open.
