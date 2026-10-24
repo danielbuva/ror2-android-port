@@ -91,7 +91,7 @@ class WriterRoundTripTests(unittest.TestCase):
         ROOT.mkdir(parents=True, exist_ok=True)
         (ROOT / "work").mkdir(exist_ok=True)
         self.temp = tempfile.TemporaryDirectory(prefix="wwise-v6-synthetic-", dir=ROOT / "work")
-        self.root = Path(self.temp.name)
+        self.root = Path(self.temp.name).resolve()
         self.repo = self.root / "test-repo"
         (self.repo / "work/config").mkdir(parents=True)
         (self.repo / "work/game-install").mkdir(parents=True)
@@ -445,7 +445,7 @@ class AcceptedInputBindingTests(unittest.TestCase):
         temp_root = HERE.parents[1] / "work/tests"
         temp_root.mkdir(parents=True, exist_ok=True)
         self.temp = tempfile.TemporaryDirectory(prefix="wwise-input-binding-", dir=temp_root)
-        self.base = Path(self.temp.name)
+        self.base = Path(self.temp.name).resolve()
         self.repo = self.base / "repo"
         self.work = self.repo / "work"
         self.game = self.work / "game-install"
