@@ -135,7 +135,7 @@ public static class WholeCatalogBuild
     }
 
     // The existing optional source-camera batch owns these Resources assets.
-    // Exercise the real editor importer before building or host initialization.
+    // Exercise the real editor importer before building.
     public static void ValidateSourceCameraPrograms()
     {
         const string receiptPath = ".rebuild/postprocessing-uber-receipt.json";
