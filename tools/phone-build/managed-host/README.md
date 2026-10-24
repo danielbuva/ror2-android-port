@@ -105,6 +105,16 @@ and public transform runtime configurations. Native providers enter only the
 PackageManager library directory; input game/SDK/target sources are separate
 caller-owned app data. SDK/tool acquisition rights remain separate from hosting.
 
+The muxer keeps CoreLib in the selected framework's verified data directory via
+the public hostfxr runtime-property API. For .NET 10 it uses the public
+[CoreCLR hosting ABI](https://github.com/dotnet/runtime/blob/v10.0.0/src/coreclr/hosts/inc/coreclrhost.h)
+with those same resolved properties and the selected CLR library. This avoids
+hostpolicy recombining the canonical installed directory with the .NET 8 native
+filename. ILSpy's child also searches its selected .NET 10 native links first;
+mixing the two native framework families causes measured startup/shutdown
+failures. The public transform producer sees an isolated .NET 8 framework tree
+and retains its exact enumeration and golden-output checks.
+
 Use `ToolHostActivity.Runner` instrumentation to execute the worker without an
 Activity or a display wake. `files/owner-input/request.json` selects either
 explicit managed providers or the fixed-target source request consumed by

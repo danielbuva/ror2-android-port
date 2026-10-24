@@ -92,13 +92,22 @@ def unchanged(bound):
         raise ValueError("managed producer input/source drift")
 
 
-def maps_and_support(out, inputs, managed, probe, profile, identity, *, work=None, source_root=ROOT, probe_provider_sha256=None):
+def maps_and_support(out, inputs, managed, probe, profile, identity, *, work=None, source_root=ROOT, probe_provider_sha256=None, android_tools=None):
     dotnet, ilspy = inputs["dotnet"], inputs["ilspy_dll"]
-    version = invoke([dotnet, ilspy, "--disable-updatecheck", "--version"], out, "ilspy-version").read_text()
+    decompiler_env = None
+    if android_tools:
+        (framework,) = Path(os.environ["ROR2LAB_BUILD_DOTNET_ROOT"]).glob("shared/Microsoft.NETCore.App/10.*")
+        decompiler_env = dict(os.environ, LD_LIBRARY_PATH=str(framework) + ":" + os.environ["LD_LIBRARY_PATH"])
+    version = invoke([dotnet, ilspy, "--disable-updatecheck", "--version"], out, "ilspy-version", env=decompiler_env).read_text()
     if profile["ilspy_version"] not in version:
         raise ValueError("qualified source decompiler version differs")
     for name, assembly in (("support-original", "Assembly-CSharp.dll"), ("maps-original", "RoR2.dll")):
-        invoke([dotnet, ilspy, "--disable-updatecheck", "-lv", "CSharp9_0", "-p", "-r", managed, "-o", out / name, managed / assembly], out, name)
+        invoke(
+            [dotnet, ilspy, "--disable-updatecheck", "-lv", "CSharp9_0", "-p", "-r", managed, "-o", out / name, managed / assembly],
+            out,
+            name,
+            env=decompiler_env,
+        )
     probe_env = dict(os.environ, ROR2LAB_CECIL_SHA256=probe_provider_sha256) if probe_provider_sha256 else None
 
     def query(arguments, label):
@@ -393,6 +402,7 @@ def target_run(work, sdk, values, target, source_root, output, *, android_tools=
             work=work,
             source_root=source_root,
             probe_provider_sha256=json.loads((output / "ordinary/public-tools-receipt.json").read_text())["provider_sha256"],
+            android_tools=android_tools,
         )
         result["phase"] = "gameplay"
         game = gameplay(

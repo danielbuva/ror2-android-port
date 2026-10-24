@@ -14,8 +14,8 @@ SOURCE = Path(__file__).resolve().parents[1] / "tools/phone-build/managed-host"
 class ManagedToolHostTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        if platform.system() != "Linux" or not shutil.which("cc"):
-            raise unittest.SkipTest("Linux /proc and native C compiler required")
+        if platform.system() not in {"Linux", "Android"} or not shutil.which("cc"):
+            raise unittest.SkipTest("Linux/Android /proc and native C compiler required")
         cls.temporary = tempfile.TemporaryDirectory()
         cls.root = Path(cls.temporary.name)
         for name in ("NativePythonHost", "NativeDotnetMuxer"):
@@ -69,6 +69,7 @@ int32_t hostfxr_initialize_for_dotnet_command_line(int argc,const char **argv,co
     if(getenv("FIXTURE_INIT_FAIL")) return -11;
     *handle=(void*)0x1234;return 0;
 }
+static char *overridden_tpa;
 int32_t hostfxr_get_runtime_property_value(void *handle,const char *name,const char **value) {
     (void)handle;
     const char *v=getenv(!strcmp(name,"FX_DEPS_FILE")?"FIXTURE_CORE_DEPS":"FIXTURE_TPA");
@@ -76,7 +77,28 @@ int32_t hostfxr_get_runtime_property_value(void *handle,const char *name,const c
     *value=v;return 0;
 }
 int32_t hostfxr_set_runtime_property_value(void *handle,const char *name,const char *value) {
-    (void)handle;printf("NET_PROPERTY %s=%s\n",name,value);return getenv("FIXTURE_PROPERTY_FAIL")?-1:0;
+    (void)handle;printf("NET_PROPERTY %s=%s\n",name,value);
+    if(getenv("FIXTURE_PROPERTY_FAIL")) return -1;
+    free(overridden_tpa);overridden_tpa=strdup(value);return 0;
+}
+int32_t hostfxr_get_runtime_properties(void *handle,size_t *count,const char **keys,const char **values) {
+    (void)handle;
+    *count=2;if(!keys||!values) return -1;
+    keys[0]="FX_DEPS_FILE";values[0]=getenv("FIXTURE_CORE_DEPS");
+    keys[1]="TRUSTED_PLATFORM_ASSEMBLIES";values[1]=overridden_tpa?overridden_tpa:getenv("FIXTURE_TPA");return 0;
+}
+int coreclr_initialize(const char *self,const char *name,int count,const char **keys,const char **values,void **host,unsigned *domain) {
+    (void)self;(void)name;
+    for(int i=0;i<count;i++) printf("CLR_PROPERTY %s=%s\n",keys[i],values[i]);
+    printf("CLR_INITIALIZE count=%d\n",count);*host=(void*)0x5678;*domain=42;return 0;
+}
+int coreclr_execute_assembly(void *host,unsigned domain,int argc,const char **argv,const char *app,unsigned *code) {
+    (void)host;printf("CLR_EXECUTE domain=%u app=%s argc=%d\n",domain,app,argc);
+    if(argc) printf("CLR_ARG=%s\n",argv[0]);
+    *code=37;return getenv("FIXTURE_CLR_EXEC_FAIL")?-1:0;
+}
+int coreclr_shutdown_2(void *host,unsigned domain,int *code) {
+    (void)host;(void)domain;*code=0;puts("CLR_SHUTDOWN");return 0;
 }
 int32_t hostfxr_run_app(void *handle){(void)handle;puts("NET_RUN");return getenv("FIXTURE_NET_EXIT")?atoi(getenv("FIXTURE_NET_EXIT")):0;}
 int32_t hostfxr_close(void *handle){(void)handle;puts("NET_CLOSE");return 0;}
@@ -111,6 +133,24 @@ int32_t hostfxr_close(void *handle){(void)handle;puts("NET_CLOSE");return 0;}
         p = self.execute("NativeDotnetMuxer", ["app.dll"], env | {"FIXTURE_PROPERTY_FAIL": "1"})
         self.assertEqual(p.returncode, 72)
         self.assertNotIn("NET_RUN", p.stdout)
+
+    def test_muxer_loads_versioned_clr_with_selected_framework_properties(self):
+        framework = self.root / "shared/Microsoft.NETCore.App/10.0.13"
+        framework.mkdir(parents=True, exist_ok=True)
+        (framework / "System.Private.CoreLib.dll").write_bytes(b"authored data fixture")
+        (framework / "libcoreclr.so").symlink_to(self.root / "libdotnet.so")
+        env = {"FIXTURE_CORE_DEPS": str(framework / "Microsoft.NETCore.App.deps.json"), "FIXTURE_TPA": "/native/System.Private.CoreLib.dll"}
+        p = self.execute("NativeDotnetMuxer", ["app.dll", "argument space"], env)
+        self.assertEqual(p.returncode, 37, p.stderr)
+        self.assertIn("CLR_INITIALIZE count=2", p.stdout)
+        self.assertIn("CLR_PROPERTY TRUSTED_PLATFORM_ASSEMBLIES=" + str(framework / "System.Private.CoreLib.dll"), p.stdout)
+        self.assertIn("CLR_EXECUTE domain=42 app=app.dll argc=1", p.stdout)
+        self.assertIn("CLR_ARG=argument space", p.stdout)
+        self.assertIn("CLR_SHUTDOWN", p.stdout)
+        self.assertNotIn("NET_RUN", p.stdout)
+        p = self.execute("NativeDotnetMuxer", ["app.dll"], env | {"FIXTURE_CLR_EXEC_FAIL": "1"})
+        self.assertEqual(p.returncode, 73)
+        self.assertIn("CLR_SHUTDOWN", p.stdout)
 
     def test_python_opaque_api_receives_isolation_paths_and_arguments(self):
         p = self.python()
