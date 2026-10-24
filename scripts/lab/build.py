@@ -693,6 +693,10 @@ def build(
         timing.phases["editor_wait"] = time.monotonic() - wait_start
         r["bee_timing"] = bee_timing(project, player_epoch, time.time())
         r["editor_log_timing"] = editor_log_timing(log_cursor)
+        if iteration_mode and any(
+            step.get("name") == "Building Gradle project" for step in (r.get("build_steps") or []) + r["editor_log_timing"].get("android_postprocess_tasks", [])
+        ):
+            raise RuntimeError("Iteration export ran Gradle; refusing to publish a fast-build receipt")
         if not r["success"] or r.get("errors", 0) > 0:
             raise RuntimeError(r["result"] + "; build errors=" + str(r.get("errors", 0)))
         key = build_cache_key(project, api) if android_symbols == "none" else build_cache_key(project, api, android_symbols)

@@ -98,7 +98,7 @@ class ScriptAuditTests(unittest.TestCase):
         # The fast-iteration change adds timed BuildReport steps and explicit export/
         # scripts-only options; the default remains a Development player build.
         # Keep destination audits from silently changing this reviewed path.
-        self.assertEqual(hashlib.sha256(body).hexdigest(), "b5a4dea33c120d4d48ebacde68505d4daafe7ecb5229ace3eb5972eb81e2ec7f")
+        self.assertEqual(hashlib.sha256(body).hexdigest(), "d249dc5ce8fd829354590f066d30b496d1033cff606c3527650dcaea06b3abb2")
 
     def test_destination_gates_before_calling_unchanged_build_and_never_filters_messages(self):
         source = SOURCE.read_text()

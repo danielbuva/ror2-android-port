@@ -428,6 +428,9 @@ public static class LabBuild {
    var options=BuildOptions.Development;
    if(iterationMode!=""){
     IterationRequest=request.request_id;IterationOutput=null;IterationCaptured=false;
+    // Android's callback dispatcher otherwise logs exceptions and continues
+    // into Gradle. StrictMode makes the owned cancellation stop its task runner.
+    options|=BuildOptions.StrictMode;
     if(iterationMode=="scripts-only")options|=BuildOptions.BuildScriptsOnly;
    }
    result.prepare_seconds=(DateTime.UtcNow-start).TotalSeconds-result.bundle_seconds;
@@ -443,6 +446,7 @@ public static class LabBuild {
    }
    if(iterationMode!=""){
     if(!IterationCaptured||string.IsNullOrEmpty(IterationOutput))throw new InvalidOperationException("Build failed before the owned pre-Gradle iteration callback");
+    if(report!=null&&report.steps.Any(step=>step.name=="Building Gradle project"))throw new InvalidOperationException("Iteration callback did not stop Gradle");
     if(result.player_build_error_messages!=null&&result.player_build_error_messages.Any(message=>!message.Contains("ROR2LAB_ITERATION_EXPORT_COMPLETE "+request.request_id)))throw new InvalidOperationException("Unrelated build errors accompanied the iteration cancellation");
     result.apk=IterationOutput;result.iteration_export_complete=true;result.success=true;result.result="Iteration export complete; player packaging intentionally cancelled before Gradle";
    }else{
