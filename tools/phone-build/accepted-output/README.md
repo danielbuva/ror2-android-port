@@ -340,3 +340,77 @@ The qualified ELF is AArch64/API 21, 175,312 bytes, with interpreter
 a differing build needs investigation and an explicit new profile, not a silent
 pin update. This compiler builds the reconstruction utility only; it does not
 replace the game toolchain or execution backend.
+
+## Build the standalone SDK tool runner
+
+Current experimental support for **build tools only**. The game retains native
+IL2CPP ARM64 execution. The runner starts explicit owner-supplied standalone
+libraries/programs; it registers no executable handler and opens no Editor or
+Unity project. Shell qualification is recorded in [J1081](../../../docs/PORTING_JOURNAL.md#j1081--run-owner-supplied-standalone-sdk-tools-through-a-public-android-runner).
+Ordinary app execution and each further SDK tool require their own qualification.
+
+Acquire unchanged public [Box64](https://github.com/ptitSeb/box64) source at
+`420eda69ff51ab5d5a7cbc3dee2e70433be3411d` (MIT). Supply the pinned Unity SDK
+NDK 21.3.6528147, public host CMake and LLVM archive/strip programs. On the
+supported macOS host, source `scripts/env.sh`, then choose explicit paths:
+
+```sh
+python3 tools/phone-build/accepted-output/build_sdk_runner.py \
+  --source "$BOX64_SOURCE" --ndk "$ANDROID_NDK_ROOT" \
+  --cmake "$CMAKE" --archiver "$LLVM_AR" --ranlib "$LLVM_RANLIB" \
+  --stripper "$LLVM_STRIP" --output "$NEW_RUNNER_OUTPUT"
+```
+
+The new output contains `box64`, upstream `LICENSE.txt`, commands, logs and a
+complete/failed receipt. The builder pins its build tools before/after, targets Android
+API 28, uses four host compile jobs and terminates its compiler process group on
+failure/timeout. It retains outputs. Preserve multicall executable names such
+as `llvm-ranlib` and `llvm-strip`; resolving them to `llvm-ar`/`llvm-objcopy`
+changes command dispatch. The SDK compiler/sysroot/LLD remain selected; public
+host archive tools avoid the SDK's old archiver failure on current macOS.
+
+The owner may separately acquire the official
+[Linux 2021.3.45f2 SDK archive](https://download.unity3d.com/download_unity/88f88f591b2e/LinuxEditorInstaller/Unity-2021.3.45f2.tar.xz)
+(3,263,644,788 bytes), require SHA-256
+`faaeafc17dd251ae0d3489ef762929f393928ad19b60d1f9b4155bb7d25d76d3`,
+and select only these members. Extracting them does not install or start the
+Editor. SDK binaries remain explicit private inputs and are not redistributed.
+
+| Member | SHA-256 |
+| --- | --- |
+| `Editor/etccompress.so` | `4dc31e0bc2591141648b238fa158fe700dd37c13f62fe3f165618ba85c1a2293` |
+| `Editor/Data/Tools/UnityShaderCompiler` | `c80dd80426848a1cd83eb7d9a430b66f06b6221d9ef85ed0b41ddcb255dd7dfa` |
+| `Editor/Data/Tools/libdxcompiler.so` | `79f53a5e8c05adbb92af99127bf3889625c7977d1d161f4d898fe5eaade6bfce` |
+| `Editor/libfreeimage-3.18.0.so` | `5a0677dcb425b4b8a8776a4bfbc98b8d7ec8509727afb3ac1e67a9cefceba1b3` |
+
+The bounded `sdk_texture_codec.c` control adapter takes the SDK image descriptor
+**by value**. Build its Android x86 entry point with the same NDK:
+
+```sh
+"$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang" \
+  --target=x86_64-linux-android28 -fuse-ld=lld -std=c11 \
+  -Wall -Wextra -Werror -O2 -fPIE -pie -Wl,--export-dynamic \
+  tools/phone-build/accepted-output/sdk_texture_codec.c -ldl \
+  -o "$NEW_CODEC_OUTPUT"
+```
+
+Box64's Android build expects a Bionic entry point. This adapter supplies
+standard GNU errno/assertion entries and C-locale message identity needed by
+this library; assertions still abort. Supply Debian Bullseye's `libgcc-s1`
+10.2.1-6 amd64 package from its official package index, requiring package SHA-256
+`e478f2709d8474165bb664de42e16950c391f30eaa55bc9b3573281d83a29daf`.
+Its `libgcc_s.so.1` requires SHA-256
+`2d771c2e232fce107c7ec7f9a64b9a804e6d6737063088a2d8096b149a0af8cd`.
+Keep provider copyright/license notices with any redistributed public runtime.
+No SDK implementation is incorporated into the authored adapter.
+
+In a leased, explicit owned Android workspace, select the runtime library path
+and call `box64 CODEC SDK_LIBRARY WIDTH HEIGHT FORMAT SPACE`, feeding exactly
+`WIDTH * HEIGHT * 4` RGBA bytes on stdin and retaining compressed stdout privately.
+Format `0` is ETC1 RGB; `2` is ETC2 RGBA8. Space `0` selects gamma/perceptual;
+`2` selects the qualified normal-data path. The adapter uses backend 1/quality 1,
+checks output size and refuses malformed input without emitting texture bytes.
+J1081's Linux RGBA outputs differ in decoded pixels from the accepted target;
+this diagnostic is **not** an admitted RGBA producer or receipt equivalence.
+ShaderCompiler and Burst execution remain separate open gates. No current game
+build consumes this runner or the diagnostic output.

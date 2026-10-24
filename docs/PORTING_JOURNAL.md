@@ -36875,3 +36875,105 @@ Other generated stages remain host-qualified only. Complete audio mix, event
 attribution, spatial behavior and physical audibility, PC post-processing/color
 parity, full kit semantics, Siren, unassisted normal runs and sustained
 performance remain open. Moon/finale/escape remain manual only.
+
+## J1081 — Run owner-supplied standalone SDK tools through a public Android runner
+
+Date: 2026-10-24 UTC. Hypothesis: a public Android build-tool runner can execute
+an owner's exact standalone Linux SDK codec without starting the Editor or
+rebuilding a Unity project. Such a tool could close the compressed-texture
+producer gap while preserving native IL2CPP ARM64 game execution. The fixed v1
+target remains J850/source `1780ea9545f1597c033a8d32e08074b03c7f38c8`, APK
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+This is a build-tool control, not full source-only phone content production.
+
+Prior art: the community texture recovery path's pinned AssetRipper
+`1ac666f47d8e9dedf96afb0b914c70d7656151ea` texture converter/importer informs
+source channel/normal handling. Public Ericsson ETCPACK
+`14a64d9d19318fb9f81ce339b7103ffa0f1781d7`, Google Etc2Comp
+`39422c1aa2f4889d636db5790af1d0be6ff3a226` and wolfpld etcpak
+`3d716e1550023dc5ff8b602636af8b76584e0b66` were compared as explicit local
+source providers. No encoder source was vendored; ETCPACK's source-distribution
+restriction remains respected. Public Box64
+`420eda69ff51ab5d5a7cbc3dee2e70433be3411d` supplies the unchanged MIT runner.
+Bounded SDK ABI/configuration observations inform an independently authored
+adapter; no SDK implementation or game pixel/codec frame is published.
+
+Changes: `build_sdk_runner.py` builds public Box64 from explicit unchanged source,
+the pinned SDK NDK 21.3.6528147 and explicit public host CMake/LLVM archive tools.
+An authored toolchain wrapper retains the SDK compiler/sysroot/LLD and selects
+Android API 28. Native archive-tool invocation names must be preserved: resolving
+`llvm-ranlib` to `llvm-ar` changes dispatch. `sdk_texture_codec.c` owns the bounded
+RGBA stdin/compressed stdout control, image-by-value ABI and three standard
+C-locale GNU/Bionic compatibility entries. Errors/assertions still fail; no
+ownership, authentication or entitlement behavior is introduced.
+
+The official Linux 2021.3.45f2 SDK archive was streamed without retaining its
+3,263,644,788 compressed bytes or extracting the Editor. Full provider MD5
+`2362c3fff9c2740f3baa4ff9612a1cbd` and SHA-256
+`faaeafc17dd251ae0d3489ef762929f393928ad19b60d1f9b4155bb7d25d76d3` pass.
+Only four standalone files (39,875,304 bytes total) are retained privately:
+`etccompress.so`, `UnityShaderCompiler`, `libdxcompiler.so` and FreeImage.
+Member pins and acquisition/setup are in the owner's tool README. Shader/Burst
+execution is not inferred from their presence. The public Debian libgcc runtime
+is a separately pinned local dependency; no SDK or runtime binary is committed.
+
+Host result: the reproducible public builder completes in 91.223 seconds and
+produces a 29,976,648-byte Android AArch64 runner, SHA-256
+`5cdaf4945d02ff3b95c81695416b95a20c5fbf0ef9602f3cf9f4ceaf3f8eef2c`.
+The authored Android x86 adapter is 12,688 bytes, SHA-256
+`7143c4fdfe4f4e236a5537aefe73925a3aa9ef9e382a60e0b2e559a565476e62`.
+Five authored host contracts pass: by-value ABI/exact pipes, malformed/incorrect
+extents, unknown/modified source refusal, unknown NDK refusal and retained build
+failure evidence with multicall names. Doctor retains its independent refusal
+because this worktree lacks the generated lab project/inventory/checkpoint;
+host-only preflight likewise refuses the unrecorded lab input generation. No
+game preflight gate is waived by standalone tool controls.
+
+Phone result: with the shared-device lease, the public-built runner and adapter
+execute all eight complete source-prepared top-mip controls in 7.593 seconds.
+Inputs are host-prepared original-PC pixels using the qualified dilation/normal
+math; target pixels are an independent comparison oracle, never tool input.
+Both ETC1 color textures and both normal maps match J850 exactly. Four ETC2
+RGBA textures differ in 14, 22, 27 and 20 color blocks respectively; all 4,096
+alpha blocks match. Decoded RGB differs in 537, 749, 1,094 and 693 channel bytes,
+with maximum deltas 47, 68, 33 and 16. These are not accepted as receipt-equivalent
+textures. In contrast, the separately supplied macOS ARM64 SDK codec reproduces
+all eight controls without starting the Editor. Platform codec equivalence
+remains open; the runner does not itself solve that gate.
+
+First failures/corrections: the old SDK archive tool aborted on current macOS;
+explicit public host LLVM tools fix it, with invocation names retained. GNU ld
+rejects the runner's image-base option; explicit SDK LLD fixes it. API 24 lacks
+required Bionic symbols; API 28 links and runs on the assigned API 33 device.
+A glibc executable's startup entry is unavailable in Box64's Android build;
+the authored Android x86 entry point loads the library. Missing errno/assert/
+C-locale message symbols are bridged without changing failure behavior. The
+SDK image descriptor is passed by value: treating it as a pointer happens to
+work through ARM64's indirect ABI but fails on x86-64. The corrected declaration
+runs all eight controls. These failures and logs remain local.
+
+Device boundaries: no game install/launch, package-data reset, storage change,
+binfmt registration or Editor/project invocation occurred. The actual shared
+APK before/after is unchanged at
+`04ee771b197ed61710f373d5bd86e53cbdfd5716dedc8cb0b3ef1c6ecf66d019`,
+matching its current installation receipt. The game process is absent at
+admission; the OLED is asleep before/after. The lease is released. No game,
+performance, ordinary app UID/W^X or public installer acceptance is claimed.
+
+Evidence: ignored `work/coordination/accepted-build-reconstruction/media-source-v1/`:
+`linux-sdk-tools-v1/result.json`, `linux-codec-sysroot-v1/result.json`,
+`sdk-runner-public-host-v2/`, `sdk-texture-codec-public-compile.json`,
+`device-linux-texture-v1/` through `device-linux-texture-v5/`, and v5
+`driver-result.json`/`target-comparison.json`. V4's independent target comparison
+and decoded-pixel comparison qualify v5's eight identical output hashes.
+Public-provider/codec comparisons and their failed presets remain adjacent.
+The shared orchestrator receipt names paths/hashes rather than copying binaries.
+Mandatory host pruning runs after build/run tasks; free space remains above
+100 GiB. Outputs and raw evidence stay ignored.
+
+Conclusion/revisit: the public runner is usable for standalone build-tool
+qualification, with a reproducible source build and an actual phone codec call.
+Linux RGBA equivalence, full mip/cubemap production, shader/Burst execution,
+ordinary app hosting and complete source-only bundle/APK reconstruction remain
+open. Revisit on a source-derived encoder fix or an independently qualified
+standalone SDK operation; never substitute target pixel/codec literals.
