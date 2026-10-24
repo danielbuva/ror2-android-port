@@ -56,7 +56,8 @@ post-processor children, readback, terminal state and teardown. `profile.json`
 pins all 282 runtime sources, seven post-processor sources, required package
 precompiled helpers and the 429-file host toolchain closure by normalized
 path/hash aggregates. The existing SDK-reference selector independently pins
-186 reference files. Nested same-assembly `.asmref` membership and case-insensitive
+186 reference files. The 57 SDK builtin package metadata files used for version
+defines are pinned separately. Nested same-assembly `.asmref` membership and case-insensitive
 source order matter; foreign assembly boundaries and ignored folders are excluded.
 The narrow version-define evaluator refuses unqualified present-package ranges.
 This fixed profile is not a general Unity assembly-definition implementation.

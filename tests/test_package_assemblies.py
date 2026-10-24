@@ -2,6 +2,7 @@
 
 import importlib.util
 import json
+import shlex
 from pathlib import Path
 import sys
 import tempfile
@@ -61,6 +62,10 @@ class PackageAssembliesTests(unittest.TestCase):
         spec["versionDefines"][0]["expression"] = "[1.0,2.0)"
         with self.assertRaisesRegex(ValueError, "unqualified"):
             PRODUCER.symbols("2021.3.45f2", spec, {"present": "1.2.0"})
+
+    def test_generated_pathmap_keeps_owner_spaces_in_one_option(self):
+        path = Path("/owner/My Packages/source roots")
+        self.assertEqual(shlex.split(PRODUCER.pathmap_option(path)), ["/pathmap:/owner/My Packages/source roots=/owner/packages"])
 
     def test_failed_process_keeps_log_and_terminal_receipt(self):
         with tempfile.TemporaryDirectory() as temporary:

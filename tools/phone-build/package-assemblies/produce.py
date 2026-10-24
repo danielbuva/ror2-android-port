@@ -26,7 +26,7 @@ ROWS = (
     ("com.unity.collections", "Unity.Collections/Unity.Collections.asmdef"),
     ("com.unity.burst", "Unity.Burst.CodeGen/Unity.Burst.CodeGen.asmdef"),
 )
-PROFILE_SHA = "cc113c8d707f43d12d4afff574eebc5dab625c430612bd5bcb175e99fb9fadd3"
+PROFILE_SHA = "82a166f9663e492622e09a82f923dad3a0dd6182814c0e2e2aded4641b894c46"
 RESERVE = 1024**3
 
 
@@ -97,6 +97,11 @@ def symbols(version, spec, versions):
         if tuple(map(int, actual.split("."))) >= tuple(map(int, row["expression"].split("."))):
             values.add(row["define"])
     return sorted(values)
+
+
+def pathmap_option(directory):
+    """Quote the complete response-file value, including owner paths with spaces."""
+    return "/pathmap:" + json.dumps(str(directory) + "=/owner/packages")
 
 
 def invoke(args, name, out):
@@ -176,6 +181,13 @@ def run(request):
             value = json.loads(path.read_text())
             versions[value["name"]] = value["version"]
             bind(path)
+        builtin_hashes = {
+            Path(path).relative_to(sdk).as_posix(): digest
+            for path, digest in inputs.items()
+            if Path(path).is_relative_to(sdk / "Resources/PackageManager/BuiltInPackages")
+        }
+        if len(builtin_hashes) != settings["builtin_packages"]["input_count"] or aggregate(builtin_hashes) != settings["builtin_packages"]["aggregate_sha256"]:
+            raise ValueError("SDK builtin-package version data drift")
         for folder in (sdk / "NetCoreRuntime", sdk / "DotNetSdkRoslyn", sdk / "Tools/netcorerun", sdk / "Tools/ILPostProcessorRunner"):
             for path in folder.rglob("*"):
                 if path.is_file():
@@ -233,7 +245,7 @@ def run(request):
                 "/utf8output",
                 "/preferreduilang:en-US",
                 "-warn:0",
-                "/pathmap:" + str(packages) + "=/owner/packages",
+                pathmap_option(packages),
             ]
             if spec.get("allowUnsafeCode"):
                 args.append("/unsafe+")
