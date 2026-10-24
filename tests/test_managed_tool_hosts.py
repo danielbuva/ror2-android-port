@@ -155,12 +155,19 @@ int32_t hostfxr_close(void *handle){(void)handle;puts("NET_CLOSE");return 0;}
         for value in (
             "NET_HOST=" + str(self.root / "NativeDotnetMuxer"),
             "NET_ROOT=/authored framework",
-            "NET_ARGC=2",
-            "NET_ARG_0=app path.dll",
-            "NET_ARG_1=arg space",
+            "NET_ARGC=3",
+            "NET_ARG_0=exec",
+            "NET_ARG_1=app path.dll",
+            "NET_ARG_2=arg space",
             "NET_RUN",
             "NET_CLOSE",
         ):
+            self.assertIn(value, p.stdout)
+
+    def test_dotnet_exec_preserves_runtime_configuration_option(self):
+        p = self.execute("NativeDotnetMuxer", ["exec", "--runtimeconfig", "config path.json", "app.dll"])
+        self.assertEqual(p.returncode, 0, p.stderr)
+        for value in ("NET_ARGC=4", "NET_ARG_0=exec", "NET_ARG_1=--runtimeconfig", "NET_ARG_2=config path.json", "NET_ARG_3=app.dll"):
             self.assertIn(value, p.stdout)
 
     def test_dotnet_failed_initialization_never_runs_invalid_context(self):

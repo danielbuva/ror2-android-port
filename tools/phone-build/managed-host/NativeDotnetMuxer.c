@@ -73,8 +73,9 @@ int main(int argc, char **argv) {
     if (!called && result == 0)
       result = 68;
   } else {
-    int offset = !strcmp(argv[1], "exec") ? 2 : 1;
-    if (argc <= offset)
+    /* Preserve exec: hostfxr recognizes --runtimeconfig only in exec mode. */
+    int offset = 1;
+    if (argc <= offset || (argc == 2 && !strcmp(argv[1], "exec")))
       return 64;
     initialize_fn initialize = (initialize_fn)dlsym(
         library, "hostfxr_initialize_for_dotnet_command_line");

@@ -114,8 +114,8 @@ try:
     if extra:
         for name, row in extra["natives"].items():
             path = Path(row["path"])
-            if not re.fullmatch(r"lib[-A-Za-z0-9_.]+\.so", name) or name in native_files or sha(path) != row["sha256"]:
-                raise RuntimeError("Backend native name or input drift")
+            if not re.fullmatch(r"lib[-+A-Za-z0-9_.]+\.so", name) or name in native_files or sha(path) != row["sha256"]:
+                raise RuntimeError("Backend native name or input drift: " + name)
             native_files[name] = path
     framework = runtime / "shared/Microsoft.NETCore.App/8.0.32"
     native_files.update({p.name: p for p in framework.glob("*.so")})
