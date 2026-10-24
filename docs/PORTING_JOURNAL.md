@@ -37063,8 +37063,10 @@ A second complete census passes all records. The first Android C++ build fails
 because sysroot `usr` creates duplicate `usr/include`/`usr/usr/include` wrapper
 search paths. Selecting the owned root above `usr` fixes the full build/case;
 public encoder source and original input remain unchanged. Failed evidence is
-retained. Doctor/host preflight's independent unrecorded lab-generation refusal
-from J1081 remains; no game build gate is waived.
+retained. Initial fresh-clone CI catches a missing audit-table row for the new
+recipe; the provenance paragraph was present, and the required table row is
+added before repushing. Doctor/host preflight's independent unrecorded
+lab-generation refusal from J1081 remains; no game build gate is waived.
 
 Device boundaries: use the shared-device atomic lease and actual package
 receipts. Installed APK before/after remains
