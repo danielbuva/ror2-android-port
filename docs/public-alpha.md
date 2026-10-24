@@ -29,6 +29,10 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       [J1063](PORTING_JOURNAL.md#j1063--complete-the-source-input-host-native-owner-build) completes public source-input host game-code
       production through a fresh native library. Explicit licensed SDK native
       input, full content/Burst/shaders and phone qualification remain gates.
+      [J1098](PORTING_JOURNAL.md#j1098--preserve-recorded-object-order-for-the-fixed-target-native-link) closes the host J850 native runtime-byte gap by retaining
+      recorded link order; all 23 runtime sections and metadata match, with
+      debug-link/build-ID differences retained. Phone native completion and
+      corrected linking remain open.
       [J1070](PORTING_JOURNAL.md#j1070--produce-the-accepted-mesh-cohort-from-original-pc-bundles-on-android)
       qualifies source-only phone mesh production; two meshes, other content
       classes and complete bundle assembly remain open. Its output is not an

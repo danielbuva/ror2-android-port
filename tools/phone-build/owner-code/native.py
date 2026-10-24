@@ -252,9 +252,30 @@ def generated_profile(profile, files):
             raise ValueError("nested target translation unit requires qualification")
         jobs.append({"arguments": modes[Path(name).suffix], "generated": name})
     result["jobs"] = jobs
-    position = next(i for i, row in enumerate(result["link"]) if isinstance(row, dict) and "object" in row)
-    result["link"] = [row for row in result["link"] if not (isinstance(row, dict) and "object" in row)]
-    result["link"][position:position] = [{"object": i} for i in range(len(jobs))]
+    generated = {row["generated"]: i for i, row in enumerate(jobs) if "generated" in row}
+    remap, sdk_index = {}, 0
+    for i, row in enumerate(profile["jobs"]):
+        if "generated" in row:
+            if row["generated"] in generated:
+                remap[i] = generated[row["generated"]]
+        else:
+            remap[i] = sdk_index
+            sdk_index += 1
+    # Object order selects COMDAT definitions, static initialization order and
+    # ARM64 erratum veneers. Keep the recorded policy when filtering a target.
+    link, insertion = [], None
+    for row in profile["link"]:
+        if isinstance(row, dict) and "object" in row:
+            old = row["object"]
+            if old in remap:
+                link.append({"object": remap[old]})
+            if "generated" in profile["jobs"][old]:
+                insertion = len(link)
+        else:
+            link.append(row)
+    added = sorted(set(generated.values()) - set(remap.values()))
+    link[insertion:insertion] = [{"object": i} for i in added]
+    result["link"] = link
     return result
 
 

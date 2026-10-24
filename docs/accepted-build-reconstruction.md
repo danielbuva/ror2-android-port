@@ -328,8 +328,11 @@ and matched performance remain required before adopting a new producer.
 
 [J1084](PORTING_JOURNAL.md#j1084--run-whole-player-stripping-conversion-and-arm64-compilation-in-the-android-tool-host) qualifies the supplied-provider Android backend
 control. Its linker/converter match the host, but its separately corrected native
-link differs under Android Clang 21. Source-only J850 reconstruction and complete
-APK/device/performance acceptance remain open; the accepted target supplies no
+link differs under Android Clang 21. [J1098](PORTING_JOURNAL.md#j1098--preserve-recorded-object-order-for-the-fixed-target-native-link) preserves the recorded native object order for the fixed
+target: host metadata and all 23 native executable/data sections match J850
+exactly, with build-ID/debug-link differences retained. The source-only phone
+native job, corrected phone linking and complete APK/device/performance
+acceptance remain open; the accepted target supplies no
 hidden output bytes.
 
 [J1094](PORTING_JOURNAL.md#j1094--qualify-exact-sdk-vulkan-shader-compilation-on-android) qualifies standalone exact-SDK
