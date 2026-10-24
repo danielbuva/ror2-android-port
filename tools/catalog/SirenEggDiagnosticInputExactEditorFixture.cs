@@ -21,6 +21,8 @@ public static class SirenEggDiagnosticInputExactEditorFixture
         public readonly List<CharacterBody> targets = new List<CharacterBody>();
         public readonly List<CharacterBody> visibleTargets = new List<CharacterBody>();
         public Vector3 lastDestination;
+        public bool hasNativeRange;
+        public float nativeRange = 60f;
         public bool Selected => selected;
         public bool Assisted => assisted;
         public bool ManualTakeover => manual;
@@ -64,12 +66,17 @@ public static class SirenEggDiagnosticInputExactEditorFixture
             visible = visibleTargets.Count == 0 || visibleTargets.Contains(body);
             return body.transform.position + Vector3.up;
         }
-        // The exact-editor source-contract fixture never arms navigation observation.
-        // These stubs satisfy the integrated production context without fabricating
-        // a live tracker, stage stall clock, or read-only world sampler.
+        // Only the range case supplies synthetic geometry; no native tracker or
+        // stage stall clock is created by this input-ownership fixture.
         public bool TryReadNavigationTrigger(CharacterBody player, CharacterBody egg, out float eggDistance,
                                              out float trackerMaximumDistance)
         {
+            if (hasNativeRange && player && player.inputBank && egg)
+            {
+                eggDistance = Vector3.Distance(player.inputBank.aimOrigin, egg.transform.position + Vector3.up);
+                trackerMaximumDistance = nativeRange;
+                return true;
+            }
             eggDistance = trackerMaximumDistance = float.NaN;
             return false;
         }
@@ -91,6 +98,7 @@ public static class SirenEggDiagnosticInputExactEditorFixture
         VerifyCombatThreatPolicy();
         VerifyTemporaryYieldRecoveryAndNativeStartLatch();
         VerifyVisibleRegisteredEggPreference();
+        VerifyNativeRangeApproach();
         VerifyProducerFramePreparationAndDefaultOff();
         VerifyJumpLeaseOwnership();
         VerifySelectionDisableTransition();
@@ -103,6 +111,7 @@ public static class SirenEggDiagnosticInputExactEditorFixture
                      temporaryNoTargetAndCombatYieldRecover = true,
                      nativeStartStopsOnLiveGateAndLatches = true,
                      visibleRegisteredEggPreferredOverOccludedNearest = true,
+                     nativeRangeSelectionApproachAndHold = true,
                      terminalStopReasonsTested = 8,
                      defaultOffInputNoninterference = true,
                      selectionDisabledOutstandingLeaseReleased = true,
@@ -517,6 +526,60 @@ public static class SirenEggDiagnosticInputExactEditorFixture
             objects.Dispose();
             if (visibleObject)
                 UnityEngine.Object.DestroyImmediate(visibleObject);
+        }
+    }
+
+    static void VerifyNativeRangeApproach()
+    {
+        var objects = new FixtureObjects();
+        var context = new Context { hasNativeRange = true };
+        var report = new SirenEggInputReport();
+        var owner = new SirenEggDiagnosticInput(context, report);
+        GameObject distantObject = null;
+        try
+        {
+            objects.Setup();
+            context.target = objects.target;
+            objects.target.transform.position = new Vector3(3, 0, 0);
+            distantObject = FixtureObjects.NewBodyObject("VultureEggBody distant candidate");
+            var distant = distantObject.GetComponent<CharacterBody>();
+            distantObject.transform.position = new Vector3(167, 0, 0);
+            context.targets.Add(objects.target);
+            context.targets.Add(distant);
+            context.visibleTargets.Add(distant);
+            Require(owner.Apply(objects.player, objects.bridge, true) && report.active && context.navigations == 1,
+                    "No attackable egg did not preserve ordinary approach");
+            Require(context.lastDestination == objects.target.transform.position && !objects.bridge.diagnosticPrimary &&
+                        !report.lastTargetVisible && report.lastTargetNativeRangeKnown,
+                    "Distant visible out-of-range egg displaced the nearer approach");
+
+            // An attackable egg may be farther than an occluded approach target.
+            distantObject.transform.position = new Vector3(20, 0, 0);
+            objects.BeginFreshProducerFrame();
+            Require(owner.Apply(objects.player, objects.bridge, true) && objects.bridge.diagnosticPrimary &&
+                        objects.bridge.movement == Vector2.zero && !objects.bridge.diagnosticSprint && context.navigations == 1,
+                    "In-range visible egg did not hold a native firing position");
+            Require(report.lastTargetVisible && report.lastTargetPrimaryRequested && report.lastTargetNativeDistance <= context.nativeRange,
+                    "Range-qualified primary report disagrees with its input");
+
+            // Range comes from the live source limit, without a cached 60 m assumption.
+            context.nativeRange = 1;
+            context.targets.Remove(objects.target);
+            objects.BeginFreshProducerFrame();
+            Require(owner.Apply(objects.player, objects.bridge, true) && !objects.bridge.diagnosticPrimary &&
+                        context.navigations == 2 && report.lastTargetVisible &&
+                        report.lastPrimaryRequestReason == "outside-native-primary-range",
+                    "A visible out-of-range egg was fired at or failed to approach");
+            owner.Dispose();
+            Require(objects.bridge.movement == Vector2.zero && !objects.bridge.diagnosticPrimary && report.cleaned,
+                    "Range approach retained its owned input after disposal");
+        }
+        finally
+        {
+            owner.Dispose();
+            objects.Dispose();
+            if (distantObject)
+                UnityEngine.Object.DestroyImmediate(distantObject);
         }
     }
 

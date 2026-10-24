@@ -100,6 +100,14 @@ async def _main():
                 evidence["result"] = await call("execute_menu_item", {"menu_path": "Porting Lab/Inspect Catalog Addresses"})
             elif action == "reference-identities":
                 evidence["result"] = await call("execute_menu_item", {"menu_path": "Porting Lab/Inspect Reference Identities"})
+            elif action == "siren-input-host":
+                evidence["result"] = await call(
+                    "execute_code",
+                    {
+                        "action": "execute",
+                        "code": 'if(EditorApplication.isUpdating||EditorUtility.scriptCompilationFailed)throw new System.Exception("Current editor source is not compiled and idle");return SirenEggDiagnosticInputExactEditorFixture.Run();',
+                    },
+                )
             elif action == "backend":
                 evidence["result"] = await call("execute_menu_item", {"menu_path": "Porting Lab/Record Backend Constraints"})
             elif action == "refresh":
