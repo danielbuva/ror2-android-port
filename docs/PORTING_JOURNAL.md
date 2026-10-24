@@ -33432,14 +33432,14 @@ ARCHITECTURE and LOCAL_STATE name setup, teardown, provenance and state. No
 current game build or launcher consumes this experimental host owner.
 
 The final public-source run completes all nine child stages successfully,
-4.5475 seconds summed child time, excluding acquisition, validation and comparison.
+4.4780 seconds summed child time, excluding acquisition, validation and comparison.
 It revalidates all 981 declared original input hashes at completion. Runtime
 source counts are UGUI 85, Burst 53, Mathematics 88 and Collections 56. Collections'
 managed post-processor materially changes the DLL, so bare Roslyn output is not
 a substitute. The complete four-package case, rather than another authored
-fixture, is the tested input-production scope. Four independent host contract
+fixture, is the tested input-production scope. Five independent host contract
 tests cover source boundaries/order, redirected inputs/output overlap, version
-defines and retained process failures; Ruff passes.
+defines, quoted owner paths and retained process failures; Ruff passes.
 
 **Comparison and first failures.** Independently rehash the frozen R27/J978
 pre-strip DLLs before comparing. Final generated outputs match the declared
@@ -33468,9 +33468,20 @@ receipts, initial cases, final explicit request and public-source outputs,
 comparison reader/reports and all byte differences live under
 `work/coordination/package-assemblies-v1/`. `proof-v1.json` SHA-256
 `65351f521aebe598c6cc678ad676ea6715d71b3c08cf63aa8222d3c5a4f353ec`
-binds source commit `4d54c65`, all final output/report hashes and the complete
-comparison. Owner SDK/package material and raw outputs stay ignored. Public
+binds the first public-source case at `4d54c65`. Final `proof-v2.json`, SHA-256
+`252be8de183b236da0019771db37880edfe82ba23b5f1f173ad2e8a9f10855b2`,
+binds source `ee9e19d` and the complete final output/report comparison, including
+an actual package root containing spaces. The final contract additionally pins
+the 57 SDK builtin package metadata files used to derive version symbols.
+Main review finds a path-map response quoting bug; the corrected producer and
+focused regression preserve spaced owner paths through actual compilation. Owner SDK/package material and raw outputs stay ignored. Public
 availability is not a redistribution grant; no SDK binaries are committed.
+The first mandatory fresh-clone check refuses the existing packet test because
+host free space falls below its 8 GiB reserve. Three superseded successful
+comparison-report sets are preserved in fully rehashed compressed archives with
+adjacent restoration markers; failed cases, source, logs, current evidence and
+all executable rollbacks remain untouched. The unchanged packet tests then pass.
+Production reserves and test expectations are not lowered.
 
 This supplies a reusable host producer for four package inputs within Route A
 and Architecture C. It does not generate the remaining game/authored assemblies,
