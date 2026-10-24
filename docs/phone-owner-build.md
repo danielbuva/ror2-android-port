@@ -70,6 +70,15 @@ Android-compiled fixture inputs through a separate stripping handoff:
 [J905](PORTING_JOURNAL.md#j905--feed-the-android-compiled-unity-fixture-into-a-separate-stripping-handoff).
 
 **Finding:** this repository has no demonstrated phone-only build path.
+The bounded SDK-compatible acquisition sequence is preserved in
+[J986](PORTING_JOURNAL.md#j986--compile-owner-assembly-transforms-on-android-with-a-public-compiler),
+[J990](PORTING_JOURNAL.md#j990--build-unchanged-owner-transforms-on-android-from-public-tool-inputs) and
+[J992](PORTING_JOURNAL.md#j992--connect-phone-acquired-public-tools-to-owner-assembly-transforms).
+[J995](PORTING_JOURNAL.md#j995--integrate-the-public-transform-profile-with-owner-prefix-and-portable-cli)
+adds the optional public transform profile. These qualify three transformed
+DLLs and host prefix production, not the complete game compiler/native chain,
+app-host delivery, content conversion or owner installation.
+
 Source-only [mesh production](../tools/phone-build/accepted-output/README.md#produce-meshes-directly-from-original-pc-bundles)
 now qualifies 13,231 accepted records on Android (J1070), while excluding two
 tangent/importer cases. Private object/resource packs still need complete

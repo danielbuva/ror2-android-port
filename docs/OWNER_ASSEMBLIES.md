@@ -3,8 +3,10 @@
 Current host preparation action: `owner-assembly-prefix` generates the reviewed
 DLL/importer subset from legitimate input, the public assembly recipes and the
 documented desktop toolchain. It requires no previous Unity project or private
-provenance map. Phone execution and the final installation flow remain research;
-the desktop fallback and IL2CPP ARM64 runtime remain authoritative.
+provenance map. The SDK producer remains the default. An explicit public .NET 8
+build-tool profile is available; it does not select a different game runtime.
+The final installation flow remains research, with the desktop fallback and
+IL2CPP ARM64 runtime retained.
 
 This is an initial subset of a project. Content, shaders, packages, native usage,
 linker roots and the rest of project composition still need their own producers
@@ -55,6 +57,57 @@ An existing destination, redirected/protected path, unknown input, source drift
 or output mismatch refuses. Failed attempts remain for inspection; choose a new
 destination after resolving the first failure. Keep all outputs and raw receipts
 private. No process state persists after exit, and no editor or device is used.
+
+## Optional public build-tool profile
+
+`public_transform_tools.py` owns the public profile's pinned archive validation,
+member extraction, source compilation and two transform modes. It consumes the
+three exact archives described in `recipe/owner-public-tools.json` from an
+explicit read-only local cache. The repository contains metadata, an authored
+provider witness and a Roslyn license notice; it contains no downloaded tool
+binaries or Cecil implementation. Compiler/reference packages were signature
+verified during profile qualification; each use checks pinned archive/member
+hashes. Cecil source also checks Git blob IDs. No upstream build script, package
+restore or network request runs in this command.
+
+Download the three public URLs in that recipe into an ignored cache, retaining
+the exact filenames. Do not substitute versions or accept hash drift. Native
+Python/.NET hosts and their dependencies remain owner-provided. Select exactly
+one qualified build-tool host: `host10` (.NET 10.0.12, explicit major roll-forward)
+or `android8` (.NET 8.0.32, no roll-forward). The runtime used by the tool and the
+generated unsigned Cecil provider are observed at each transform invocation.
+
+```sh
+: "${OWNER_INPUT_WORK:?Set the reviewed input work tree}"
+: "${OWNER_TOOL_ARCHIVES:?Set the three-archive cache}"
+: "${OWNER_DOTNET:?Set the qualified dotnet executable}"
+./dev prototype --action owner-assembly-prefix \
+  --work-dir "$OWNER_INPUT_WORK" \
+  --dest work/rebuild/owner-assembly-public-1 \
+  --assembly-profile public-dotnet8 \
+  --tool-archives "$OWNER_TOOL_ARCHIVES" \
+  --tool-launcher "$OWNER_DOTNET" --tool-host host10
+```
+
+This retains the complete accepted-input and DLL/importer output gates. The
+attempt includes `public-tools-receipt.json`, extracted notices, compiler logs,
+runtime/provider witnesses and failure state. Existing attempts are never
+reused. The ordinary SDK producer and R1 still call the existing generator.
+
+For a supplied legitimate Managed directory, the same stdlib-only module also
+exposes a portable component CLI, suitable for an isolated Android Python host:
+
+```sh
+python3 scripts/lab/public_transform_tools.py \
+  --managed "$OWNER_MANAGED" --dest "$OWNER_NEW_COMPONENT_DEST" \
+  --archives "$OWNER_TOOL_ARCHIVES" --launcher "$OWNER_DOTNET" --host android8
+```
+
+The component destination must be new and under this checkout's `work/rebuild/`.
+It produces only the three transformed DLLs. It does not verify a complete
+accepted game inventory or emit a Unity project. Source checkout/import, native
+host bootstrap, Android app permissions/network policy and the rest of the
+player pipeline remain separate gates. All generated outputs stay private.
 
 ## Existing knowledge and validation
 

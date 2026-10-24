@@ -1565,6 +1565,16 @@ input/source checks, preserved `attempt/`, a `project/` prefix, manifest and
 `preparing`/`complete`/`failed` receipt. It reads no project oracle and writes no
 lab generation/current-build marker. Setup, teardown and incomplete-project
 limits are in [OWNER_ASSEMBLIES.md](OWNER_ASSEMBLIES.md).
+The optional `public-dotnet8` profile delegates only the shared transform
+producer to `public_transform_tools.py`. That stdlib owner validates the three
+pinned public archives in `recipe/owner-public-tools.json`, extracts declared
+members/notices, compiles public Cecil source and unchanged authored tool source,
+checks actual runtime/provider witnesses and all three output hashes, and keeps
+its own `public-tools-receipt.json` lifecycle under the exclusive attempt. Native
+hosts and archive cache are explicit owner inputs. No network, upstream project
+scripts, package restore, editor or device action occurs. The component CLI
+exposes the same generator on an isolated Python host; it does not qualify a
+complete input inventory or player. Default SDK/R1 production stays unchanged.
 `unity_rebuild.py` owns R9 `unity-build` after `validate-bindings`: destination-only
 host preflight, an exclusive operation lock, exact-editor batch invocation through
 `whole_catalog.build_integration(destination=...)` → `build.build(destination=...)`

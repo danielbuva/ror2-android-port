@@ -32,6 +32,10 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       qualifies source-only phone mesh production; two meshes, other content
       classes and complete bundle assembly remain open. Its output is not an
       installable target or a replacement for the private replay packet.
+      [J995](PORTING_JOURNAL.md#j995--integrate-the-public-transform-profile-with-owner-prefix-and-portable-cli)
+      qualifies an optional public .NET 8 transform profile: all 98 host prefix
+      files and the three portable Android golden DLLs match. Complete game
+      compiler/native production and app delivery remain separate gates.
       Full Unity-project reconstruction or AssetRipper export is not an assumed
       requirement. Every protected APK/payload output needs an owner-input
       producer; the accepted build supplies validation, never hidden target bytes.
