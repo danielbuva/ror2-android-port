@@ -10,7 +10,7 @@
     "../../runtime/session/OriginalMusicControllerContract.cs": "bd8f78977722a276409623cea4909b0e41065fda6c195a6b0dee94ef8bb8b485",
     "../../runtime/session/OriginalNetworkSoundEventCatalogOwner.cs": "ca692357d4d6e635136c59529aaf89745f219e5227d4ea7b48be56cdd7fd455f",
     "../../runtime/session/PortSession.cs": "da79fd12544453666017eadbbc2149519319f592c16690195dc6f32037eec434",
-    "../../runtime/session/PortSessionOriginalAudioOwner.cs": "1ac09850b6ecd413ee3347cb30825ad2dec25db710bd401902f4d3fe94b11c16",
+    "../../runtime/session/PortSessionOriginalAudioOwner.cs": "6998134c0d9defec514167375d0426741bc2b4aa18e2df200f52b497f16ace25",
     "../../runtime/session/PortSessionOriginalMusicControllerOwner.cs": "15272167e3c416edb863797bf35dcbe8ef6704ecac805fdbe38186f4d73d41b0",
     "../../runtime/world/IntegratedWorldBoundary.cs": "85ded9fcd7677b63a9ca8990b08711016c2fabf190ee35c9bc0f34dbc611eac4",
     "../../runtime/world/LightningStakeSourceCallObserver.cs": "0792b3d7b40423e1b98ce2397a72917c73d20ab58ad555fac948d5b19146caf6",

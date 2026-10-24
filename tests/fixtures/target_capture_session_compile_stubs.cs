@@ -138,6 +138,7 @@ public static class AkSoundEngine
     public const ulong AK_INVALID_GAME_OBJECT = ulong.MaxValue;
     public const uint AK_INVALID_PLAYING_ID = 0;
     public static bool IsInitialized() => false;
+    public static AKRESULT WakeupFromSuspend() => AKRESULT.AK_Success;
     public static uint GetEventIDFromPlayingID(uint playingId) => 1u;
     public static AKRESULT GetPlayingSegmentInfo(uint playingId, AkSegmentInfo segment) => AKRESULT.AK_Success;
     public static AKRESULT GetState(uint groupId, out uint stateId) { stateId = 0; return AKRESULT.AK_Success; }
@@ -163,7 +164,7 @@ public sealed class AkGameObj : UnityEngine.Behaviour { }
 public static class GameAudioOriginalRequestBootstrap
 {
     public static bool PassivePcmCaptureRequested;
-    public static bool PassivePcmCaptureMusicOutputRequested;
+    public static bool PassivePcmCaptureMusicOutputRequested; public static bool PassivePcmCaptureAfterAuthoritySkillRequested;
     public static bool IsConfigured;
     public static Func<AkWwiseInitializationSettings> OriginalSettingsProvider;
     public static void ConfigureBeforeOriginalStartup() { }
@@ -205,3 +206,19 @@ public static class WholeCatalogComposed
     public static T[] DefinitionFamily<T>(System.Collections.Generic.IEnumerable<T> selected) => Array.Empty<T>();
     public static void ReleaseOriginalAudioOwnerLease(string identity) { }
 }
+
+public sealed class AkSoundEngineInitialization
+{
+    public delegate void TerminationDelegate();
+    public static readonly AkSoundEngineInitialization Instance = new AkSoundEngineInitialization();
+    public TerminationDelegate terminationDelegate;
+}
+namespace UnityEngine
+{
+    public static class Debug
+    {
+        public static void Log(object value) { }
+        public static void LogWarning(object value) { }
+    }
+}
+

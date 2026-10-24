@@ -19,7 +19,7 @@ HARNESS = FIXTURES / "original_wwise_listener_census_harness.cs"
 
 
 class OriginalWwiseListenerCensusHostTests(unittest.TestCase):
-    def test_census_is_opt_in_ready_only_and_failure_stays_unknown(self) -> None:
+    def test_census_and_termination_delegate_keep_owned_boundaries(self) -> None:
         if not MONO.is_file() or not CSC.is_file():
             self.skipTest("pinned Unity 2021.3.45f2 Mono/Roslyn host compiler is unavailable")
         for source in (OWNER, CONTRACT, STUBS, HARNESS):
@@ -49,6 +49,7 @@ class OriginalWwiseListenerCensusHostTests(unittest.TestCase):
             ran = subprocess.run([str(MONO), str(executable)], cwd=temp, capture_output=True, text=True, check=False)
             self.assertEqual(ran.returncode, 0, ran.stdout + ran.stderr)
             self.assertIn("default-off/pre-ready do not read", ran.stdout)
+            self.assertIn("original termination wakeup admission", ran.stdout)
 
 
 if __name__ == "__main__":
