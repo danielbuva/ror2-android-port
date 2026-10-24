@@ -37,6 +37,16 @@ class AndroidFeedbackTests(unittest.TestCase):
             "sealed partial class OfflineApplicationSession {\n"
             "public void ObserveOfflineApplicationInput()\n" + application_method + "\n}\n}\n"
         )
+        lifetime = application.split("        // Application screen lifetime:", 1)[1].split("        public DifficultyIndex SelectedOfflineDifficulty()", 1)[0]
+        lifetime = lifetime.split("        int priorScreenSleepTimeout;", 1)[1]
+        application_caller.write_text(
+            application_caller.read_text()
+            + "\npublic sealed partial class PortSession { sealed partial class OfflineApplicationSession {\n"
+            + "int priorScreenSleepTimeout;"
+            + lifetime
+            + "\n} public void KeepAwake() { if (applicationInput == null) applicationInput = new OfflineApplicationSession(this); applicationInput.KeepScreenAwake(); }"
+            + " public void ReleaseScreen() { applicationInput?.Dispose(); } }\n"
+        )
         cls.executable = directory / "feedback.exe"
         compiled = subprocess.run(
             [
@@ -87,6 +97,9 @@ class AndroidFeedbackTests(unittest.TestCase):
 
     def test_end_run_requires_explicit_confirmation_and_cancel_preserves_pause(self):
         self.run_case("end-run-confirmation")
+
+    def test_screen_policy_spans_loading_and_restores_only_owned_state(self):
+        self.run_case("screen-policy")
 
 
 if __name__ == "__main__":

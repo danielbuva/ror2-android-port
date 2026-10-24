@@ -9,7 +9,7 @@
     "../../runtime/session/MusicPcmJoinObserver.cs": "3c8ceaf8a8ce9ce07c76282adb70f63f8f9487f0682d33056ea6aeaa2139cef9",
     "../../runtime/session/OriginalMusicControllerContract.cs": "bd8f78977722a276409623cea4909b0e41065fda6c195a6b0dee94ef8bb8b485",
     "../../runtime/session/OriginalNetworkSoundEventCatalogOwner.cs": "ca692357d4d6e635136c59529aaf89745f219e5227d4ea7b48be56cdd7fd455f",
-    "../../runtime/session/PortSession.cs": "54704c4dfb3c2ac9275cd1935206ecb292536b9965445db9b181a716a7d7a569",
+    "../../runtime/session/PortSession.cs": "da79fd12544453666017eadbbc2149519319f592c16690195dc6f32037eec434",
     "../../runtime/session/PortSessionOriginalAudioOwner.cs": "1ac09850b6ecd413ee3347cb30825ad2dec25db710bd401902f4d3fe94b11c16",
     "../../runtime/session/PortSessionOriginalMusicControllerOwner.cs": "15272167e3c416edb863797bf35dcbe8ef6704ecac805fdbe38186f4d73d41b0",
     "../../runtime/world/IntegratedWorldBoundary.cs": "85ded9fcd7677b63a9ca8990b08711016c2fabf190ee35c9bc0f34dbc611eac4",

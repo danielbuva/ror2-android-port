@@ -80,7 +80,8 @@ namespace UnityEngine
             set { writes++; if (writeFails) throw new InvalidOperationException(); clipboard = written = value; }
         }
     }
-    public static class Screen { public static int width = 1440, height = 900; public static Rect safeArea = new Rect(0, 0, 1440, 900); }
+    public static class Screen { public static int width = 1440, height = 900, sleepTimeout = 15; public static Rect safeArea = new Rect(0, 0, 1440, 900); }
+    public static class SleepTimeout { public const int NeverSleep = -1; }
     public enum GraphicsDeviceType { Vulkan }
     public static class SystemInfo { public static GraphicsDeviceType graphicsDeviceType => GraphicsDeviceType.Vulkan; }
     public static class Application
@@ -372,6 +373,16 @@ public static class AndroidFeedbackHost
               "explicit confirmation did not dispatch exactly once");
         session.Dispose();
     }
+    static void ScreenPolicy()
+    {
+        var session = new PortSession(); session.KeepAwake();
+        Check(Screen.sleepTimeout == SleepTimeout.NeverSleep, "loading screen may auto-suspend");
+        session.KeepAwake(); session.ReleaseScreen();
+        Check(Screen.sleepTimeout == 15, "repeated setup lost original policy");
+        session.ReleaseScreen(); Check(Screen.sleepTimeout == 15, "repeated release changed policy");
+        session.KeepAwake(); Screen.sleepTimeout = 30; session.ReleaseScreen();
+        Check(Screen.sleepTimeout == 30, "cleanup overwrote a foreign policy");
+    }
     public static void Main(string[] args)
     {
         switch (args[0])
@@ -384,6 +395,7 @@ public static class AndroidFeedbackHost
             case "settings-lifecycle": SettingsLifecycle(); break;
             case "start-menu-input": StartMenuInput(); break;
             case "end-run-confirmation": EndRunConfirmation(); break;
+            case "screen-policy": ScreenPolicy(); break;
             default: throw new Exception("unknown case");
         }
         Console.WriteLine(args[0] + ": PASS");

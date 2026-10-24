@@ -1,5 +1,5 @@
 // Subsystem: session (game path). Owner map: docs/ARCHITECTURE.md#ownership.
-// Session phases: setup AwaitOfflineRunStart (OfflineApplicationSession); teardown — (Dispose is a no-op).
+// Session phases: validated playable Start and AwaitOfflineRunStart; teardown PortSession.OnDestroy.
 using System;
 using System.Collections;
 using System.IO;
@@ -86,7 +86,7 @@ public sealed partial class PortSession
     }
 
     // Retain the owner for menu input, focus/pause callbacks and result/restart
-    // queries. Menu cleanup stays in the iterator; Dispose does not reset flow state.
+    // queries. Menu cleanup stays in the iterator; Dispose restores the owned screen policy.
     sealed class OfflineApplicationSession : IDisposable
     {
         readonly PortSession coordinator;
@@ -97,6 +97,26 @@ public sealed partial class PortSession
         public OfflineApplicationSession(PortSession coordinator)
         {
             this.coordinator = coordinator;
+        }
+        // Application screen lifetime: include catalog loading and next-menu
+        // preparation, before the body-input iterator can hold NeverSleep.
+        int priorScreenSleepTimeout;
+        bool ownsScreenSleepTimeout;
+        public void KeepScreenAwake()
+        {
+            if (ownsScreenSleepTimeout)
+                return;
+            priorScreenSleepTimeout = Screen.sleepTimeout;
+            Screen.sleepTimeout = SleepTimeout.NeverSleep;
+            ownsScreenSleepTimeout = true;
+        }
+        public void Dispose()
+        {
+            if (!ownsScreenSleepTimeout)
+                return;
+            ownsScreenSleepTimeout = false;
+            if (Screen.sleepTimeout == SleepTimeout.NeverSleep)
+                Screen.sleepTimeout = priorScreenSleepTimeout;
         }
         public DifficultyIndex SelectedOfflineDifficulty()
         {
@@ -372,9 +392,6 @@ public sealed partial class PortSession
             return coordinator.returnToOfflineMenu && coordinator.r.settings != null && coordinator.r.settings.sessionAbandoned &&
                    coordinator.r.results != null && !coordinator.r.results.serverEnding && !coordinator.r.results.reportGenerated &&
                    !coordinator.r.results.persisted;
-        }
-        public void Dispose()
-        {
         }
     }
 }
