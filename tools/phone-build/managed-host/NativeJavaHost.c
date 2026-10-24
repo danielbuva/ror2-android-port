@@ -3,6 +3,7 @@
 #define _GNU_SOURCE
 #include <dlfcn.h>
 #include <jni.h>
+#include <malloc.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,6 +23,13 @@ int dladdr(const void *address, Dl_info *info) {
     return result;
 }
 int main(int argc, char **argv) {
+    // exec starts a fresh allocator, so the parent app's manifest setting does
+    // not cover this child. The acquired JDK requires untagged native pointers.
+    int (*configure_heap)(int, int) = dlsym(RTLD_DEFAULT, "mallopt");
+    if (!configure_heap || !configure_heap(M_BIONIC_SET_HEAP_TAGGING_LEVEL, M_HEAP_TAGGING_LEVEL_NONE)) {
+        fprintf(stderr, "JDK child requires Android's API 31 allocator compatibility\n");
+        return 2;
+    }
     const char *library_path = getenv("ROR2LAB_BUILD_JVM"), *home_path = getenv("ROR2LAB_BUILD_JAVA_HOME");
     if (!library_path || !home_path) {
         fprintf(stderr, "Explicit JVM library and Java home required\n");

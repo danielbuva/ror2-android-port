@@ -150,12 +150,14 @@ data layout. The actual ELF is opened from the installed native directory and
 its executable mappings retain that location; no VM binary is patched. Existing SDK JARs
 provide javac's Android reference surface, D8 and apksigner. The caller's extra
 native plan must include the JDK's Android spawn and shared-memory dependencies. The
-tool app selects Android's documented
-[`allowNativeHeapPointerTagging=false`](https://source.android.com/docs/security/test/tagged-pointers)
-compatibility setting: the acquired JDK truncates a tagged heap pointer under
-the default Android 13 app allocator. This is scoped to this build-tool app,
-changes no device policy or game manifest, and does not qualify future MTE
-devices or repair that upstream JDK limitation.
+acquired JDK truncates tagged heap pointers under Android 13's default allocator.
+An exec child has fresh allocator state, so an app-manifest opt-out does not
+cover it. Before loading the VM, this launcher uses Bionic's documented API 31
+`mallopt(M_BIONIC_SET_HEAP_TAGGING_LEVEL, M_HEAP_TAGGING_LEVEL_NONE)`
+[allocator option](https://android.googlesource.com/platform/bionic/+/refs/tags/android-13.0.0_r1/libc/include/malloc.h).
+It refuses when that child-local compatibility setting is unavailable. No device
+policy, parent app allocator or game manifest changes. This does not repair the
+upstream JDK's tagged-pointer limitation or qualify other allocator/API versions.
 
 The optional plan `package` selects a separate lab tool identity while retaining
 Java class names and private provider authority. It cannot select the game
