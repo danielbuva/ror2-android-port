@@ -124,6 +124,30 @@ main gameplay owner; a nonzero audio meter or loaded bundle is insufficient.
   owner key. Public alpha identity/signing and actual game update/rollback remain
   unqualified until their own evidence exists; fixture retention is separate.
 
+For a prepared owned lab installation, bind diagnostics to the actual installed
+APK SHA-256 from its verified receipt. Run each case under a separate shared
+device lease, verifying idle teardown before releasing it:
+
+```sh
+: "${PLAYTEST_APK_SHA256:?Set the verified installed APK SHA-256}"
+./dev prototype --action session-memory-check --device "$PLAYTEST_DEVICE" \
+  --expected-apk-sha256 "$PLAYTEST_APK_SHA256" --sessions 12
+./dev prototype --action settings-write-interrupt-check --device "$PLAYTEST_DEVICE" \
+  --expected-apk-sha256 "$PLAYTEST_APK_SHA256"
+```
+
+The memory case selects Commando explicitly, leaves all five gameplay assists
+off, uses diagnostic automatic input and requires strict cleanup for every
+completed session. A runtime error stops the case; incomplete series and old
+archived reports do not establish a growth bound. Native heap captures are a
+separate opt-in attribution case and must not be mixed with this measurement.
+
+The settings case observes a native pending-file creation and requests an owned
+package stop, preserving the existing preference values. It accepts recovery
+only after proving that the old primary and an actual uncommitted pending file
+survived. A completed save or missed interruption window fails the case. This
+diagnostic does not qualify power loss, ENOSPC or a physical touchscreen.
+
 ## Review feedback and finish
 
 Settings feedback provides a notes draft, an exact fixed-field preview, sharing

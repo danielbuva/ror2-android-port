@@ -38,13 +38,18 @@ result in the journal.
       and [J1066](PORTING_JOURNAL.md#j1066--qualify-native-settings-feedback-and-two-step-end-run-controls)
       device coverage; original Term/disarm and bounded application-owned Quit pass
       in J1077. Long-run retention remains open.
-- [ ] Attribute the remaining ~52 MB/session managed growth (J787): not reachable
-      from enumerable static/live roots; next a long session series on the
-      internal Nova to test whether PSS or Boehm usage reaches a limit. The
-      extended Thor attempt in [J1069](PORTING_JOURNAL.md#j1069--stop-the-extended-integrated-memory-series-on-the-first-native-error)
-      stops on J667. [J1086](PORTING_JOURNAL.md#j1086--complete-twelve-native-sessions-on-the-internal-device-without-accepting-a-memory-bound)
-      completes 12 internal-device sessions with 46.77 MiB managed growth per
-      session after warmup; native heap attribution and the bound remain open.
+- [ ] Bound corrected repeated-session managed usage and PSS over a completed
+      internal-device series, then qualify a sustained session. J1086 supplies
+      the completed uncorrected measurement;
+      [J1091](PORTING_JOURNAL.md#j1091--qualify-native-heap-capture-and-identify-retained-laboratory-log-payloads)
+      attributes captured retention to diagnostic JSON and returned bullet hits.
+      [J1092](PORTING_JOURNAL.md#j1092--correct-captured-retention-producers-and-preserve-a-failed-commando-series)
+      builds and installs the corrections; preserve its zero-session failure.
+      [J1100](PORTING_JOURNAL.md#j1100--complete-twelve-corrected-commando-sessions-and-retain-a-smaller-growth-frontier)
+      completes all 12 corrected Commando sessions with no runtime errors, but
+      the consistent menu samples retain 0.579 MiB/session positive growth.
+      Attribute that smaller frontier with a separate native heap pair before
+      claiming a full bound; retain the post-collection spike in the evidence.
 - [ ] Integrate original position indicators (`TeamComponent.Init`, player/NPC/boss
       indicator prefabs and Nameplate text), compared against PC captures (J787).
 - [ ] Attribute the crowded-stage enumeration hot path from the app-scope trace

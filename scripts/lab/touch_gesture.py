@@ -63,8 +63,8 @@ def validate_request(value):
     return value
 
 
-def compile_tool():
-    source = ROOT / "tools/android-touch-gesture/LabTouchGesture.java"
+def compile_tool(source=None):
+    source = ROOT / "tools/android-touch-gesture/LabTouchGesture.java" if source is None else Path(source)
     sdk = Path(os.environ["UNITY_ANDROID_ROOT"]) / "SDK"
     android = sdk / "platforms" / ("android-" + str(toolchain()["android_api"])) / "android.jar"
     build_tools = sdk / "build-tools" / toolchain()["android_build_tools"]

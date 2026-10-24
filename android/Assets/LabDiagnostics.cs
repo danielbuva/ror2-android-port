@@ -71,8 +71,13 @@ public sealed class LabDiagnostics : MonoBehaviour
  #endif
   var timings=new FrameTiming[1];if(FrameTimingManager.GetLatestTimings(1,timings)>0){snapshot.cpuFrameMs=timings[0].cpuFrameTime;snapshot.gpuFrameMs=timings[0].gpuFrameTime;}
   snapshot.unityVersion=Application.unityVersion;
+  PublishSnapshot(checkpoint,snapshot);
+ }
+ // Periodic full JSON belongs in the replaceable file, not the original console's
+ // retained log list (J1091). Keep the startup record used by Device.launch.
+ void PublishSnapshot(string checkpoint,Snapshot snapshot) {
   File.WriteAllText(Path.Combine(root,"snapshot.json"),JsonUtility.ToJson(snapshot,true));
-  Debug.Log("LAB_SNAPSHOT "+JsonUtility.ToJson(snapshot));
+  if(checkpoint!="periodic")Debug.Log("LAB_SNAPSHOT "+JsonUtility.ToJson(snapshot));
  }
  static string SafeField(Component c,System.Reflection.FieldInfo f){try{return Convert.ToString(f.GetValue(c));}catch{return "unavailable";}}
  static string Ancestors(Transform t){return t.parent?t.parent.name+"/"+Ancestors(t.parent):"";}

@@ -351,3 +351,51 @@ to J1091's captured graph and read-only prefix counts. The upstream SQLite
 dependency warning is retained in private build evidence; the planned local
 analysis uses default DuckDB on the lab's own captures. This adds no player
 package, acquisition grant, telemetry or alternate execution backend.
+
+### Retained diagnostic payloads and returned bullet hits
+
+J1091's actual captured graph names the two remaining producers investigated
+here. Pinned BepInEx `5b766a3b`'s
+`Runtimes/Unity/BepInEx.Unity.IL2CPP/Logging/IL2CPPUnityLogSource.cs` forwards
+Unity log strings through a callback; an ordinary `Debug.Log` payload is visible
+to process subscribers, rather than an ephemeral host-only transport. Keep fresh
+periodic diagnostics in the existing replaceable file and preserve the startup
+log contract, original/error logging and subscribers. No logger framework or
+console-purge mechanism is introduced.
+
+The same captured graph reaches completed player stats through the original
+`BulletAttack.bulletHitPool`. Accepted input's `BulletHit.Reset` omits
+`hitHurtBox`, while `HG.BasePool` keeps returned items in its private `items`
+stack. Pinned UnityExplorer's member inspection technique informs the bounded
+field access; no community adapter addresses this Android teardown lifetime.
+The existing resource owner may release only already-destroyed HurtBox targets
+in returned items after world/network teardown. Preserve live targets, checked-out
+hits, pool order/capacity and native hit/reset behavior. Host peers establish that
+contract; only a repeated device series can establish a changed memory slope.
+
+The SDK-only interrupted-settings case consults the official
+[FileObserver API](https://developer.android.com/reference/android/os/FileObserver)
+for CREATE events, its dedicated callback thread and the requirement to retain
+the observer. Android 13's public AOSP
+[IActivityManager interface](https://github.com/aosp-mirror/platform_frameworks_base/blob/android-13.0.0_r1/core/java/android/app/IActivityManager.aidl)
+provides `forceStopPackage` and `getUidProcessState`. The existing targeted SDK
+actor establishes the shell/UID scope technique. The new actor observes only the
+owned pending filename, rechecks PID/UID/foreground, and uses the normal shell
+stop permission. No platform implementation, player hook, grant or permission
+change is added. Actual retained pending bytes plus an unchanged primary are
+required; observer dispatch alone never qualifies a transaction interruption.
+
+### Thor secondary-panel control
+
+The public [ThorBottomScreen source](https://github.com/slushiimusic/ThorBottomScreen/tree/ba9f5febcb868a7c0313ac70e0cd2669948fe59f),
+pin `ba9f5feb`, distinguishes the stock dual-screen setting from physical panel
+power. Its README and authored `ShellService` describe the stock setting as a
+cover/touch-mask route. Its separate physical-off route temporarily changes a
+system property to override a vendor SurfaceFlinger refusal. That community
+route is not evidence of a vendor-supported panel-off control and is not
+integrated into device tooling. J1071's physical readback remains authoritative:
+the lower panel returns ON after the stock setting changes. Keep Thor gameplay
+fail-closed until a supported top-only control survives physical readback;
+neither a black cover nor another device's successful run closes that gate.
+No vendor disassembly, platform code, helper application or permission change
+is included in this repository.
