@@ -37284,3 +37284,84 @@ mission-lifetime gap: native master destruction after death conflicts with the
 encounter owner's live-master-only cleanup preflight. Continue that causal
 retirement implementation before the next batched device qualification; do not
 weaken missing/foreign identity refusals or claim mission acceptance here.
+
+## J1090 — Account for original Siren boss and probe destruction
+
+2026-10-24 UTC.
+
+**Observation and complete change.** Follow J1089's ordinary source-entry
+promotion through the remaining mission lifetime. Both original boss/probe
+master prefabs retain destruction on body death; current CharacterMaster
+schedules that native destruction. The existing Siren cleanup requires a live
+captured master even after a real defeat, so it would refuse a normal destroyed
+actor. Preserve native deaths and implement their causal cleanup accounting in
+the existing SirenEncounterSession, without preventing destruction or forcing
+a boss, kill, squad event or reward.
+
+The encounter owner adds one owned original server-death subscription before
+its network-spawn transaction. For already captured bosses/probes, record only
+the exact terminal victim master, original body prefab/index, monster team,
+original minion-owner relationship, dead health component and positive exact
+master/body server mappings in the owned scene. Native extra-life eligibility
+is read through the same original terminal-death API used by CombatSquad.
+The native BossGroup defeat event remains the independent completion witness.
+
+Detach the new subscription with the existing cleanup cursor before any actor
+mutation. A missing captured master is accepted only with that death witness,
+its retained destroyed reference and absent captured network mapping. A remaining
+corpse must still have the captured identity, dead health and exact server map
+before an owned destruction request. If already destroyed, all captured body
+components and its map must also be absent. Account for natural master retirement
+once, separately from requested master/body destruction. Preserve the complete
+squad preflight before requests, captured probe ancestry, identity/team/body
+checks, cleanup retries, foreign-object refusal and manual Moon boundary. No
+new runtime owner, selector or probe-switch behavior is added.
+
+**Prior art and source authority.** Consulted the community ledger, pinned
+R2API.Director identity and Starstorm2 ExtinctionController event lifetime;
+J594/J596/J601/J795/J1089 remain the recorded context. In particular J601
+already distinguishes current onCharacterDeathServer from the deprecated
+proc-dependent global alias. The accepted current CombatSquad terminal-death
+check, CharacterMaster lifetime and the actual two source prefabs govern this
+implementation. No community or protected game implementation is reproduced.
+
+**Host and exact editor.** All 38 Siren host tests pass. The new fixture compiles
+and runs the actual production observation, validation, complete squad preflight
+and request methods with host doubles. Cases include fully native retirement,
+master destruction preceding its corpse, ordinary live cleanup, natural probes,
+corpse-request retry/idempotence, revivable/living/client/disposed refusal,
+unknown disappearance, replaced master/body maps, changed components/scene,
+revived health and foreign squad members. A foreign member refuses before
+another actor receives a destructive request. Callback code issues no gameplay
+mutation; subscription detach precedes actor cleanup. Unity Mono/Roslyn absence
+skips the compiler-dependent case on clean CI hosts.
+
+The current exact-editor source-scene fixture also passes and independently
+reads the original boss/probe destruction settings in addition to inactive
+IDs 2/10/11, all 32 unique source egg spawners, three disabled MapZones and the
+existing admission/rollback policies. It starts no server and proves no native
+death or boss lifecycle.
+
+**Iteration artifact.** Source
+`3c9f2615029ad0c0a9896f02c184e76030d6dd20`, request
+`20261024T175329.161376Z`, exports in 70.872 seconds. APK SHA-256
+`1ede47e0af95e47100d624230793559cdbb1c407e3c1d54d070c8c6469c049e7`.
+All 267 reference-only artifacts independently rehash; all 266 payload hashes
+are identical to normal R50. Five permitted APK members change. This uses
+R50's normal anchor
+`7623aca2498b452760984c7670de67e779ef368bc7af7c384cc4363b9b0e1620`.
+The fresh-Data splice has iteration_export_complete true, with the owned
+pre-Gradle cancellation recorded as player_build_result Failed/three original
+BuildReport errors. Final splice/alignment/signature validation succeeds with
+zero final errors. It is iteration-only; normal full acceptance remains required.
+Receipts, actual-editor result, host contracts and mandatory pruning record live
+under `work/coordination/main-port-r51`. Artifacts are referenced, never copied.
+
+**Device and next action.** R51 is uninstalled. Main remains absent and alpha
+retains the shared fallback lease. Recovery-first collection of interrupted R45,
+owned cleanup and OLED sleep still precede any Main install. Lease-guarded
+operators are prepared for both authorized devices; they bind preservation to
+the actual pre-install profile bytes/count rather than a remembered shared-device
+count. No new device, egg-hit, native boss/defeat/reward, normal-run or PC-parity
+claim follows. Qualify the entire rendering/audio/Siren batch on one available
+authorized device, and complete normal full acceptance after iteration findings.
