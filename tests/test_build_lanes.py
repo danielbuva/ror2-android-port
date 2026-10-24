@@ -8,7 +8,9 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from contextlib import nullcontext
 from unittest.mock import patch
+from unittest.mock import Mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
 import build_lanes as lanes
@@ -149,6 +151,16 @@ class BuildLaneTests(unittest.TestCase):
         self.assertEqual(Path(published["apk"]).read_bytes(), b"authored package")
         self.assertEqual((Path(published["payload_directory"]) / "data").read_bytes(), b"authored payload")
         self.assertFalse((self.work / "config/current-build.json").exists())
+
+    def test_server_environment_does_not_import_the_lab_main_module(self):
+        facts = self.create()
+        process = Mock(pid=987654321)
+        process.poll.return_value = None
+        with patch.dict(os.environ, {"LAB_LANE": "second", "PYTHONPATH": "authored-lab-modules"}):
+            with patch.object(subprocess, "Popen", return_value=process) as launch, patch.object(lanes.urllib.request, "urlopen", return_value=nullcontext()):
+                lanes.start_server(facts)
+        self.assertNotIn("PYTHONPATH", launch.call_args.kwargs["env"])
+        self.assertNotIn("LAB_LANE", launch.call_args.kwargs["env"])
 
 
 if __name__ == "__main__":

@@ -147,6 +147,7 @@ def _create(name, port, root):
             (local / name_).symlink_to(base / ".local" / name_, target_is_directory=True)
         # Gradle/user state is writable and therefore cloned, never shared.
         clone([base / ".local" / n for n in ("android-user", "gradle") if (base / ".local" / n).exists()], local)
+        shutil.rmtree(local / "gradle/daemon", ignore_errors=True)
         facts.update(complete=True, clone_seconds=time.monotonic() - started, free_after=check_space(base))
         write(work / "config/build-lane.json", facts)
         write(lane / "lane.json", facts)
@@ -164,6 +165,9 @@ def start_server(facts):
             return
     checkout = Path(facts["checkout"])
     log = (lane / "mcp-server.log").open("ab")
+    environment = dict(os.environ, UNITY_MCP_TELEMETRY_ENABLED="false")
+    for key in ("LAB_LANE", "PYTHONPATH", "ROR2LAB_UNITY_BUILD_LOCK_FD"):
+        environment.pop(key, None)
     process = subprocess.Popen(
         [
             str(checkout / ".local/tools/unity-mcp/Server/.venv/bin/mcp-for-unity"),
@@ -175,7 +179,7 @@ def start_server(facts):
             str(port),
         ],
         cwd=checkout,
-        env=dict(os.environ, UNITY_MCP_TELEMETRY_ENABLED="false"),
+        env=environment,
         stdout=log,
         stderr=log,
         start_new_session=True,

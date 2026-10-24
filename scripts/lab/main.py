@@ -2,14 +2,14 @@ import argparse
 import sys
 from common import *
 
-if len(sys.argv) > 1 and sys.argv[1] == "lane":
-    from build_lanes import main
+if len(sys.argv) > 1 and sys.argv[1] == "lane" or os.environ.get("LAB_LANE"):
+    from build_lanes import main, dispatch
 
-    sys.exit(main(sys.argv[2:]))
-if os.environ.get("LAB_LANE"):
-    from build_lanes import dispatch
-
-    sys.exit(dispatch(os.environ["LAB_LANE"], sys.argv[1:]))
+    try:
+        sys.exit(main(sys.argv[2:]) if len(sys.argv) > 1 and sys.argv[1] == "lane" else dispatch(os.environ["LAB_LANE"], sys.argv[1:]))
+    except Exception as error:
+        print(json.dumps({"success": False, "command": "lane", "error": str(error)}), file=sys.stderr)
+        sys.exit(1)
 
 p = argparse.ArgumentParser(description="Local RoR2 porting laboratory; generated evidence lives under ignored work/.")
 p.add_argument(
