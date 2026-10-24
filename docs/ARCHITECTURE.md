@@ -52,6 +52,16 @@ reproduction and framed emission. It verifies supplied target/profile/PC/SDK
 inputs without generating independent Android target information. `assemble.py`
 owns hash-bound unsigned APK assembly and required uncompressed/aligned resource
 storage; canonical alignment and owner signing follow separately.
+`mesh_produce.py` owns a separate current experimental PC-input-only mesh
+producer, using read-only bounded UnityFS access in `unity_bundle.py`, embedded
+serialized-field extents and authored operations in `unity_mesh.py`, and the
+audited `recipe/owner-meshes.json` selectors/settings. Explicit original input,
+recipe hash and new output produce private object/resource packs plus an index
+and terminal receipt. Setup verifies source pins/capacity, processing checks
+every object and re-reads persisted extents, and failure/exit retain outputs
+and end the process. [Its lifecycle and qualified scope](../tools/phone-build/accepted-output/README.md#produce-meshes-directly-from-original-pc-bundles)
+remain separate from bundle assembly, the private replay receiver and current
+game builds; two mesh cases are excluded and no runtime owner is added.
 `sdk_inputs.py` owns current experimental owner-direct component extraction:
 an explicitly supplied, pinned provider archive yields only the three exact
 SDK-copy files in a new private root, with bounded parsing, readback and terminal

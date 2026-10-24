@@ -28,6 +28,10 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       [J1063](PORTING_JOURNAL.md#j1063--complete-the-source-input-host-native-owner-build) completes public source-input host game-code
       production through a fresh native library. Explicit licensed SDK native
       input, full content/Burst/shaders and phone qualification remain gates.
+      [J1070](PORTING_JOURNAL.md#j1070--produce-the-accepted-mesh-cohort-from-original-pc-bundles-on-android)
+      qualifies source-only phone mesh production; two meshes, other content
+      classes and complete bundle assembly remain open. Its output is not an
+      installable target or a replacement for the private replay packet.
       Full Unity-project reconstruction or AssetRipper export is not an assumed
       requirement. Every protected APK/payload output needs an owner-input
       producer; the accepted build supplies validation, never hidden target bytes.

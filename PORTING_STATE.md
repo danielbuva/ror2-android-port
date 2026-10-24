@@ -1,7 +1,8 @@
 # Porting state
 
 Updated 2026-10-24 UTC after
-[J1066](docs/PORTING_JOURNAL.md#j1066--qualify-native-settings-feedback-and-two-step-end-run-controls).
+[J1066](docs/PORTING_JOURNAL.md#j1066--qualify-native-settings-feedback-and-two-step-end-run-controls)
+and [J1070](docs/PORTING_JOURNAL.md#j1070--produce-the-accepted-mesh-cohort-from-original-pc-bundles-on-android).
 Native settings feedback, confirmation/cancel and strict automatic-input
 abandon/restart pass on Thor. The twelve-session memory series is running;
 no memory bound, ordinary-controller or complete touch-gameplay claim follows.
@@ -21,7 +22,7 @@ and [index](docs/JOURNAL_INDEX.md).
 | Accepted rollback | J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`, source 1780ea9. No newer diagnostic replaces this acceptance. |
 | Retained diagnostic rollbacks | R36/J1040 `bda30f33a62d62176cd45fd9cc0bd50ed5fe4e12d325ddc7ef19e948ec0fd3e7`, source 1428fdf; R35/J1034 `47d14cb855ce8fefdf2406d55591d13165665c4a160ab7d71f435c6469faba6e`, source 919e72a. Visual parity/full audio/natural Quit remain separate gates. |
 | Owner candidate installed now | J1065 owner version 2 `4960fba8ed5e727639c4f156e2f08cf92a6b6486790bb0ab295925e9bd212de0`, producer source b9d74dd7, remains in internal storage on the assigned owner device, stopped/asleep. Its J850 code/content, private preparation, upgrade retention and assisted controls pass; it has no current audio integration and is not a public phone converter. |
-| Phone-only production | J1063 completes source-input host game-code production; J1065 qualifies the private owner APK. Independent content/Burst/shader producers, licensed native input, Android tool execution, phone signing/installer UX and matched performance remain open. Architecture C and desktop fallback stay fixed. |
+| Phone-only production | J1063 completes source-input host game-code production; J1065 qualifies the private owner APK. J1070 produces 13,231 accepted mesh records exactly on Android from original PC bundles, with two tangent/importer cases excluded. Complete bundle assembly, other content/Burst/shader producers, licensed native input, full-player Android tools, owner signing/installer UX and matched performance remain open. Architecture C and desktop fallback stay fixed. |
 | Historical executable rollbacks | J425 `5a25bb9fe001440a01316bbe79f4e8269ac37e6bf33e91d4c20e91f1f9ae63b0`; paused J323 Moon `893b03c4162a79d4cc9b194fb07b412695e34c1b50439434230902289bd385a9`. J1051 retired older rebuildable executables; keep source/findings/receipts. |
 | Retained old input | Steam 21587608 / Unity 2021.3.33f1 under `work/migrations/steam-21587608`, old rollbacks only |
 

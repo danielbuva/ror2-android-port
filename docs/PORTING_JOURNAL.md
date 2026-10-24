@@ -34522,3 +34522,110 @@ and the referenced build-cache receipts. Raw logs/screenshots remain ignored.
 Revisit with actual physical presses, complete touch controls, a longer measured
 series or a concrete remaining input/lifecycle failure; never promote the
 assisted game or visual/audio capabilities from this UI result.
+
+## J1070 — Produce the accepted mesh cohort from original PC bundles on Android
+
+**Date:** 2026-10-24. **Result:** 13,231 of 13,233 accepted mesh records are
+produced byte-for-byte from original PC input on the assigned owner phone.
+The result is a private mesh/resource pack, not completed bundles or an APK.
+Two tangent/importer cases remain excluded; the private replay packet has not
+been replaced and no whole-content conversion percentage is claimed.
+
+**Hypothesis and prior art.** J1050's whole-bundle reuse measurement does not
+resolve object boundaries, streamed vertices or import transformations. A
+complete mesh cohort can instead reuse original topology/vertex content,
+apply authored import settings and resolve source resource streams, without
+shipping accepted target bodies. Consulted `community-prior-art.md` and the
+pinned UnityPy 1.25.3 `MeshHandler`, serialized-file/type-tree and compression
+readers. Their API knowledge identifies external `m_StreamData`, low-nibble
+channel dimensions, v22 object extents and nested alignment; no implementation
+was copied. J454/J458's topology/index/vertex identity rule prevents choosing
+duplicate same-name meshes. The decoder was independently authored against
+the [upstream LZ4 block specification](https://github.com/lz4/lz4/blob/v1.10.0/doc/lz4_Block_format.md).
+No community assumption overrides the measured original/accepted bytes.
+
+**Complete change.** Public `mesh_produce.py` coordinates source-only production
+using standard-library `unity_bundle.py` and `unity_mesh.py`. The bounded reader
+selects UnityFS 7/8, 2021.3, raw/LZ4 and little-endian serialized v22. Embedded
+source schemas locate fields; unchanged fields retain original bytes. The
+audited `recipe/owner-meshes.json` contains 652 source bundle pins, 7,372 source
+mesh selectors, source resource ranges, destination relationships/verification
+hashes and authored operations. It contains no target geometry, arbitrary byte
+patches, collision arrays, compressed target frames or target float literals.
+Input identity remains `6af7ed94…`; every source file/body/range is verified,
+files are checked again after use, every output body must match its expected
+hash, and persisted object/resource extents are independently re-read.
+
+Operations cover CPU retention/readability and usage flags, emptying accepted
+collision caches, minimal asset renames/resource relocation, external vertex
+inlining, channel dimension normalization and float32 normal/tangent to binary16
+conversion. Twelve Root Jungle records require that conversion. Seven halfway
+components in one rock, repeated in three bundles, establish the accepted
+halfway-away-from-zero rule; Python's default half packing instead chooses
+ties-to-even. Three other Root Jungle mesh families also match exactly. No new
+geometry, physics cooker or gameplay/runtime owner is introduced.
+
+**Evidence.** All raw evidence is ignored under
+`work/coordination/accepted-build-reconstruction/`:
+
+- `object-cohorts-v1/` bounds the metadata census across all 1,721 original and
+  133 accepted bundles. `mesh-source-v1/` retains full source/target mesh
+  signatures, external-stream resolution, independent UnityPy reconstruction,
+  mismatch analysis and failed attempts. Public production never reads those
+  target/discovery files; its only content input is the original PC root.
+- `mesh-source-v1/public-host-v4/` and its adjacent log record complete host
+  production in 116.104 s, peak RSS 161,693,696 bytes. Selected original bundles
+  total 2,360,576,865 bytes. The profile SHA-256 is
+  `6540b15092906d4ddb43e9eb7dc49481e15e359724541f6b307042f1a62aff23`.
+- `mesh-source-v1/device-v1/` binds exact staged source/profile hashes, the
+  permitted existing interpreter, input manifest, fresh receipt-owned workspace,
+  explicit assigned device, storage/placement observations and complete logs.
+  Actual Android production takes 177.072 s, with 90,348 KiB peak RSS
+  (92,516,352 bytes). No target bytes, mesh outputs, SDK or Unity project are
+  transferred to the producer; the existing read-only original PC copy supplies
+  all game content. The display stays asleep.
+- Both runs produce 13,231 records / 1,914,391,232 object bytes plus 1,780,640
+  external resource bytes. Independent device `sha256sum` matches the host for
+  all three persisted files: `objects.bin`
+  `ebe15d08db8640a4ec848a4315a6a9b44539220b8fa8c92aec720de4a5f60d3a`,
+  `resources.bin`
+  `6484d8ed8994f62ff99df6d9f42bf033886163b02a805763a8fb66624084cd18`,
+  and `index.jsonl`
+  `a32962f369d2d597f156189265aa5e6b1466eb5067653adf804943c4426a793b`.
+- Five authored contracts pass on the host and Android: raw/head/tail bundle
+  metadata and persisted packing, LZ4 overlap/extensions/malformed extents,
+  half rounding/subnormals, stream inlining/import flags/cache removal and
+  nested fixed-struct alignment. They also refuse source/output drift, existing
+  outputs, path escape, unknown operations and truncated bodies. Failed attempts
+  retain receipts/output; original authored fixtures remain separately scoped.
+- Installed APK is independently rehashed unchanged as J1065 version 2
+  `4960fba8ed5e727639c4f156e2f08cf92a6b6486790bb0ab295925e9bd212de0`.
+  This task installs or launches no game; J1065's controls are prior evidence,
+  not new mesh-runtime acceptance. No Unity Editor/build action occurs.
+
+**First failures and corrections.** An initial isolated CLI invocation cannot
+import sibling modules; explicit file-relative module loading repairs it.
+The first public whole-cohort producer then stops after 12,036 records because
+an embedded fixed struct advertises 10 data bytes but a child field requires
+12 bytes after alignment. Preserve `public-host-v1.log` and the failed
+`public-host-v3/` pack/receipt. Computing nested aligned extents repairs the
+actual source case and has an independent authored regression fixture. The
+full host/Android reruns above use the corrected source. `./dev doctor` still
+refuses this isolated worktree's absent lab-project/inventory-summary state;
+this source-only producer needs neither and makes no Editor-readiness claim.
+`./dev preflight --host-only` likewise refuses the absent recorded lab-project
+generation. No Unity build is attempted and no input generation is accepted or
+restaged to bypass that refusal.
+
+**Remaining gate and revisit conditions.** The compressed Merc swipe differs
+in two tangent range/start floats; do not publish those as replacement literals.
+The reimported grenade has exactly equal oriented triangles and joint
+position/normal/UV attributes, but reordered vertices and changed tangents
+(maximum observed component delta about 0.186), plus a UV metric change. It
+does not qualify as byte-exact or accepted behavior by that geometry observation.
+Keep both excluded until a source-derived algorithm or independently accepted
+receipt-equivalent result exists. Non-mesh classes, external resources, object
+reference/metadata reconstruction, complete bundle packing/compression, full
+game native phone production and durable owner signing/install remain open.
+No gameplay, performance or phone-only installation gate advances. Revisit
+when original input, accepted target, format, recipe or producer changes.

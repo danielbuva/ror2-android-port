@@ -69,8 +69,13 @@ SDK/package-derived Unity API fixture compilation on Android:
 Android-compiled fixture inputs through a separate stripping handoff:
 [J905](PORTING_JOURNAL.md#j905--feed-the-android-compiled-unity-fixture-into-a-separate-stripping-handoff).
 
-**Finding:** this repository has no demonstrated phone-only build path. Many
-preparation and packaging stages have Android-capable open-source building
+**Finding:** this repository has no demonstrated phone-only build path.
+Source-only [mesh production](../tools/phone-build/accepted-output/README.md#produce-meshes-directly-from-original-pc-bundles)
+now qualifies 13,231 accepted records on Android (J1070), while excluding two
+tangent/importer cases. Private object/resource packs still need complete
+content conversion and bundle assembly before any game build can consume them.
+
+Many preparation and packaging stages have Android-capable open-source building
 blocks. Unity's import/shader/bundle/player-data stages remain editor-bound in
 the current implementation. The exact converter now passes the complete authored
 player's stripped assembly closure on Android. The exact stripping tool also
