@@ -138,11 +138,16 @@ public distribution of any game-bearing packet remain separate gates.
 
 `tools/phone-build/owner-apk/` owns a separate experimental owner-APK bootstrap
 candidate after reconstruction. `build_owner_apk.py` and `binary_manifest.py`
-compile only authored Java, preserve original code/content bytes and move the
+compile only authored Java, preserve the selected content bytes and move the
 binary manifest's launcher filter to `PayloadBootstrapActivity`, with the
 original Unity entry private to enforce preparation. An optional owner-selected
 `version_code` changes only the original typed version attribute in addition
 to routing; it must increase and updates retain the same private signer.
+An optional complete `code` selection supplies independently produced IL2CPP,
+metadata and Burst files; all three are required, their actual hashes are retained,
+and comparison-target code files are not read. Other content retains the existing
+manifest layout/hashes. Source provenance and code/runtime qualification remain
+with their producers (J1102).
 `PayloadStore`
 streams/hash-checks embedded runtime payload into the calling app's own external
 files location, stages replacements, retains backups and gates launch of the

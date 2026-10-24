@@ -1701,3 +1701,11 @@ required local signing identity, never rebuildable cache or public material.
 Do not copy them into APKs/recipes/logs or prune them with build output. The
 signer has no timestamped lookup or implicit installer; failed APK output/logs
 stay separate. See the [signing lifecycle](../tools/phone-build/owner-apk/README.md#durable-owner-signing).
+
+The owner APK request may bind the three independently produced code files
+through `code` (J1102). IL2CPP and metadata are outputs of the existing
+`owner-code/produce.py` owner; the full Burst producer/qualification remains
+open. These are explicit private files, not implicit reads from run directories.
+The complete content root retains `targets[].path` layout/hashes from its
+content producer. Code substitutions never supply missing content or establish
+source provenance. Unsigned/signed APKs and comparison evidence remain ignored.

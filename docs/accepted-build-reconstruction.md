@@ -339,6 +339,13 @@ hidden output bytes.
 Vulkan tool execution with identical authored host/phone payloads, reflection and
 diagnostics. It does not qualify original shader recovery, complete variants,
 serialized shader records, ordinary app delivery or accepted-target appearance.
+[J1102](PORTING_JOURNAL.md#j1102--qualify-linked-vulkan-fragment-output-and-explicit-owner-apk-code-inputs)
+confirms the linked payload contains both executable graphics stages; an authored
+fragment-only operation change preserves its vertex module and changes the
+fragment instructions, raw-exact across host/phone. The existing APK builder now
+accepts an explicit complete IL2CPP/metadata/Burst cohort alongside the content
+producer's existing target-file tree, with no replay code fallback. Full-player
+assembly, Burst ABI and phone/install/performance gates remain open.
 
 ## Comparison and recommendation
 
