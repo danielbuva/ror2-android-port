@@ -131,6 +131,13 @@ than assembled bundles, so it does not replace the replay packet or establish
 a whole-content conversion percentage. See the
 [producer setup](../tools/phone-build/accepted-output/README.md#produce-meshes-directly-from-original-pc-bundles).
 
+[J1075](PORTING_JOURNAL.md#j1075--produce-every-accepted-avatar-from-original-pc-bundles-on-android)
+adds complete source-only Avatar production. Every byte is copied from original
+body ranges, with complete original table entries reordered where required.
+Its [producer setup](../tools/phone-build/accepted-output/README.md#produce-avatars-directly-from-original-pc-bundles)
+uses tracked layout/identity metadata rather than target bodies. This completes
+one object class; it does not complete bundles or the private-packet replacement.
+
 These observations rule out treating a platform flag edit or archive repack as
 the accepted conversion. They do not prove that full Unity import is required.
 [Unity documents platform-specific bundle assets](https://docs.unity3d.com/es/2021.1/ScriptReference/AssetBundle.html),
