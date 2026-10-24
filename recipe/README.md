@@ -2274,3 +2274,13 @@ game source, protected assets, device identifiers or private paths are tracked.
 The source camera and original audio transformations retain their existing
 ownership and behavior. Provenance/privacy audit: 2026-10-24; device impact
 acceptance remains separate.
+
+
+The J1091 diagnostic-retention correction changes authored `LabDiagnostics`
+publication and the existing completed-session resource owner only. Fresh file
+snapshots and startup discovery remain; periodic JSON is not sent to the original
+console. Accepted-input field knowledge identifies the returned bullet-hit pool's
+stale destroyed target. The bounded cleanup contains no copied original method
+body and changes no hit result, live actor or pool storage. Host peers are authored
+synthetic fixtures. Provenance/privacy audit: 2026-10-24; no game or snapshot bytes
+are included and ownership/distribution boundaries remain unchanged.

@@ -804,6 +804,13 @@ exit and session cleanup clear notes and consent. The settings/application/GUI
 owners give the visible modal input priority while retaining the owned pause.
 Android clipboard, browser handoff and the composed settings route require
 device acceptance; host fixtures exercise the authored flow and refusal paths.
+`LabDiagnostics` replaces `snapshot.json` on its existing periodic schedule.
+Only its startup/lifecycle snapshots use the full `LAB_SNAPSHOT` console record;
+periodic JSON is not retained by the original console. Original and error logging
+stay unchanged. During completed-session reclamation, `SessionResourceBoundary`
+releases already-destroyed HurtBox targets from returned bullet-hit pool entries,
+with no live world/network, after deferred destruction. It preserves live and
+checked-out hits and records its release count with existing registry cleanup.
 The existing `OfflineApplicationSession` also owns `Screen.sleepTimeout` for a
 validated playable coordinator, from `Start` before catalog preparation through
 `OnDestroy`. Menus/loading retain the same awake policy as active play; release

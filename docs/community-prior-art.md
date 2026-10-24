@@ -325,3 +325,25 @@ code vendoring or runtime dependency. Full result and private evidence paths liv
 once in J588. R2API.Sound's native initialization prerequisite remains material;
 neither bank parsing nor TXTP generation supplies Android ABI/codec/SDK permission
 or audible acceptance.
+
+
+### Retained diagnostic payloads and returned bullet hits
+
+J1091's actual captured graph names the two remaining producers investigated
+here. Pinned BepInEx `5b766a3b`'s
+`Runtimes/Unity/BepInEx.Unity.IL2CPP/Logging/IL2CPPUnityLogSource.cs` forwards
+Unity log strings through a callback; an ordinary `Debug.Log` payload is visible
+to process subscribers, rather than an ephemeral host-only transport. Keep fresh
+periodic diagnostics in the existing replaceable file and preserve the startup
+log contract, original/error logging and subscribers. No logger framework or
+console-purge mechanism is introduced.
+
+The same captured graph reaches completed player stats through the original
+`BulletAttack.bulletHitPool`. Accepted input's `BulletHit.Reset` omits
+`hitHurtBox`, while `HG.BasePool` keeps returned items in its private `items`
+stack. Pinned UnityExplorer's member inspection technique informs the bounded
+field access; no community adapter addresses this Android teardown lifetime.
+The existing resource owner may release only already-destroyed HurtBox targets
+in returned items after world/network teardown. Preserve live targets, checked-out
+hits, pool order/capacity and native hit/reset behavior. Host peers establish that
+contract; only a repeated device series can establish a changed memory slope.

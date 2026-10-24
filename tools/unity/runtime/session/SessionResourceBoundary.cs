@@ -352,6 +352,30 @@ public sealed partial class PortSession
         report.Add("TeamComponent.indicatorSetupQueue:" + (before - queue.Count) + "/" + queue.Count);
         return report.ToArray();
     }
+    // The captured J1091 graph identifies the original BulletHitPool as a root
+    // for completed actors. Its Reset leaves hitHurtBox assigned. Visit only
+    // returned items, after teardown, and release only Unity-destroyed targets.
+    int ReleaseDestroyedPooledHitTargets()
+    {
+        Check(r.world.cleaned && !Run.instance && !NetworkServer.active && !NetworkClient.active,
+              "Refuse pooled-hit cleanup in a live session");
+        var poolField = typeof(BulletAttack).GetField("bulletHitPool", BindingFlags.Static | BindingFlags.NonPublic);
+        var pool = poolField == null ? null : poolField.GetValue(null);
+        Check(pool != null, "Original bullet-hit pool changed");
+        var itemsField = pool.GetType().BaseType.GetField("items", BindingFlags.Instance | BindingFlags.NonPublic);
+        var items = itemsField == null ? null : itemsField.GetValue(pool) as System.Collections.Generic.Stack<BulletAttack.BulletHit>;
+        Check(items != null, "Original returned bullet-hit storage changed");
+        int released = 0;
+        foreach (var hit in items)
+        {
+            if (!ReferenceEquals(hit.hitHurtBox, null) && !hit.hitHurtBox)
+            {
+                hit.hitHurtBox = null;
+                released++;
+            }
+        }
+        return released;
+    }
     IEnumerator ReclaimCompletedSessionResources()
     {
         Check(r.world.cleaned && !Run.instance && !NetworkServer.active && !NetworkClient.active,
@@ -359,7 +383,9 @@ public sealed partial class PortSession
         // Let deferred destruction finish before Unity's ordinary unused-asset sweep.
         yield return null;
         int pruned = PruneDestroyedDepossessionSubscribers();
-        var registries = PruneDestroyedOriginalRegistries();
+        var registries = PruneDestroyedOriginalRegistries().Concat(new[] {
+            "BulletAttack.bulletHitPool.destroyedTargets:" + ReleaseDestroyedPooledHitTargets()
+        }).ToArray();
         ObserveSessionResources("completed-before-reclaim");
         r.sessionResources.Last().prunedDestroyedDepossessionSubscribers = pruned;
         r.sessionResources.Last().prunedDestroyedRegistryEntries = registries;
