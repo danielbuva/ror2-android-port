@@ -62,6 +62,15 @@ every object and re-reads persisted extents, and failure/exit retain outputs
 and end the process. [Its lifecycle and qualified scope](../tools/phone-build/accepted-output/README.md#produce-meshes-directly-from-original-pc-bundles)
 remain separate from bundle assembly, the private replay receiver and current
 game builds; two mesh cases are excluded and no runtime owner is added.
+`avatar_produce.py` owns current experimental PC-only Avatar production using
+the same bounded reader and input-path admission. Its audited
+`recipe/owner-avatars.json` selects original body/table extents and complete
+source-entry ordering. Explicit PC root/recipe hash and separate new output
+set up the process; before/after input checks, exact object hashes and persisted
+readbacks precede its terminal complete/failed receipt. Exit tears down the
+process and retains private packs. [Setup/lifecycle](../tools/phone-build/accepted-output/README.md#produce-avatars-directly-from-original-pc-bundles)
+requires no private target/discovery file. All 228 accepted records qualify in
+J1075; bundle assembly and game-build integration remain separate owners/gates.
 `sdk_inputs.py` owns current experimental owner-direct component extraction:
 an explicitly supplied, pinned provider archive yields only the three exact
 SDK-copy files in a new private root, with bounded parsing, readback and terminal

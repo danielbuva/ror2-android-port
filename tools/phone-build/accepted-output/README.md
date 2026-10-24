@@ -114,6 +114,33 @@ records host and phone qualification. Remaining meshes, non-mesh content,
 bundle assembly, native game-code phone production and the complete owner
 installation remain separate gates. No current game build consumes this path.
 
+## Produce Avatars directly from original PC bundles
+
+`avatar_produce.py` is a current experimental source-only producer. Use Python
+3.11+ and stage it alongside `mesh_produce.py`, `unity_bundle.py` and
+`unity_mesh.py`, with the audited `recipe/owner-avatars.json`:
+
+```sh
+python3 -I -S -B tools/phone-build/accepted-output/avatar_produce.py \
+  --profile recipe/owner-avatars.json --profile-sha256 RECIPE_SHA256 \
+  --pc ORIGINAL_PC_ROOT --output NEW_PRIVATE_OUTPUT
+```
+
+Setup checks recipe/input pins, separate new output and expected size plus
+2 GiB reserve. The producer reads bounded source body ranges from 178 original
+bundles: 172 records remain byte-identical and 56 reorder complete existing
+`m_TOS` hash/string entries. All native rig/pose data, strings, padding and
+surrounding bytes come from the original body. Orders must be bijective and
+table bounds exact. There is no target-content, SDK, Editor or UnityPy input.
+
+It checks original bundle hashes before/after, requires every output hash and
+re-reads persisted `objects.bin` extents through `index.jsonl`. A terminal
+complete/failed `result.json` retains outputs; process exit is teardown. Keep
+all output private. Android lab staging requires explicit authorized selection
+and the existing workspace/interpreter receipts. [J1075](../../../docs/PORTING_JOURNAL.md#j1075--produce-every-accepted-avatar-from-original-pc-bundles-on-android)
+qualifies all 228 records on host and phone. Packs require later complete bundle
+assembly; no current build or runtime consumes them.
+
 ## Acquire the three SDK-copy inputs
 
 `sdk_inputs.py` is current experimental acquisition support for an owner's exact

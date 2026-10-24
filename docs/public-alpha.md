@@ -32,6 +32,10 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       qualifies source-only phone mesh production; two meshes, other content
       classes and complete bundle assembly remain open. Its output is not an
       installable target or a replacement for the private replay packet.
+      [J1075](PORTING_JOURNAL.md#j1075--produce-every-accepted-avatar-from-original-pc-bundles-on-android)
+      qualifies all 228 Avatar records from original PC bundles on Android.
+      Textures, animation, shaders, other classes and complete bundle assembly
+      remain open; these private packs add no game/runtime acceptance.
       [J995](PORTING_JOURNAL.md#j995--integrate-the-public-transform-profile-with-owner-prefix-and-portable-cli)
       qualifies an optional public .NET 8 transform profile: all 98 host prefix
       files and the three portable Android golden DLLs match. Complete game

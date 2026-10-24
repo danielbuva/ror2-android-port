@@ -35807,3 +35807,82 @@ phone-build and game-runtime qualification false. Full game compiler/stripper/
 converter/native production, content/Burst/shaders and a complete phone-only
 installation remain open. Revisit on source/recipe, interpreter/runtime,
 native/provider, OS/package or input-contract change.
+
+## J1075 — Produce every accepted Avatar from original PC bundles on Android
+
+2026-10-24 UTC. **Result:** all 228 accepted Avatar records, 2,959,412 bytes,
+are reproduced exactly on host and assigned phone from original PC bundles.
+This is an object pack, not assembled UnityFS bundles, a replacement public
+packet, an APK or game-runtime acceptance.
+
+**Hypothesis and prior art.** Consulted the community-prior-art content-loader
+section and pinned UnityPy 1.25.3 type-tree/ObjectReader observations before
+matching the complete cohort. J1050 supplies the all-bundle reuse premise;
+J1070 supplies the bounded source reader. Among 228 matched records, 172 are
+already byte-identical and 56 differ only in `m_TOS` entry order. Native rig,
+pose and human-description bytes are unchanged. Preserve source bodies and
+reorder complete source hash/string/padding entries, rather than regenerate
+rig values or carry target bytes. No upstream implementation is copied.
+
+**Implementation.** Public `avatar_produce.py` extends the existing accepted
+output tooling and reuses its input-path/hash and UnityFS owners. Audited
+`recipe/owner-avatars.json` selects 178 original bundles, bounded source bodies
+and table fields, minimum source/destination identities, verification hashes
+and 6,858 source-entry ordinals across 56 permutations. Every order must be a
+complete bijection and consume exactly the original table extent. No bone
+paths, strings, poses, geometry, target float literals, patches or frames are
+tracked. All emitted bytes come from original bodies. Explicit source pins,
+new separate output and expected capacity plus 2 GiB reserve gate setup.
+Before/after source hashes, exact target hashes and independent persisted
+extent readbacks gate success; complete/failed receipts retain all output.
+There is no Editor, UnityPy, SDK or private target/discovery input at runtime.
+
+**Evidence.** Private evidence root is
+`work/coordination/accepted-build-reconstruction/media-source-v1/`:
+
+- `avatar_candidate.py` independently compares the entire source/target cohort
+  through UnityPy and verifies all 228 target bodies. `avatar_profile.py`
+  records only the audited minimum selectors/layout/order. These discovery
+  tools and game-derived observations remain ignored and are not dependencies
+  of public production.
+- `avatar-public-host-v1/result.json` records the complete public producer:
+  228 exact objects in 5.915 seconds, reading only original PC files and tracked
+  recipe SHA-256
+  `b82666096051cf5a76f68c3e42187cda63a7d7e8e84be30fffa445361a7c6aa3`.
+- `device-avatar-v1/driver-result.json` records the same source files and recipe
+  on the assigned phone, with a separately admitted unchanged original-input
+  copy and supplied isolated Python 3.14.8. All 228 objects match in
+  3.935 seconds; no APK is built, installed or launched.
+- Host and phone `objects.bin` SHA-256 is
+  `4bc9ae9f6aa887872d2bc0193164eaf4c1ef368e372d9de8f86b87ed936807fa`;
+  51,856-byte `index.jsonl` SHA-256 is
+  `01a3fc36b7f849655bbe2011ceb5fa9c2925a91f300596475147b8344dc5f91c`.
+  `independent-controls.json` binds actual OS SHA readback of both phone files
+  to the host results, rather than trusting only the producer receipt.
+- Three independently authored contracts pass on host and Android: Unicode/
+  empty string and surrounding-byte preservation, malformed/nonbijective/
+  out-of-bounds refusal, and raw UnityFS-to-pack persistence with input/profile
+  drift and existing-output refusal. Fixture content is authored, not game data.
+- Original installed owner APK is independently rehashed unchanged as
+  `4960fba8ed5e727639c4f156e2f08cf92a6b6486790bb0ab295925e9bd212de0`.
+  Its version remains 2, process is absent and display asleep. The owned lease
+  is released. Fresh storage is observed; no storage configuration or unrelated
+  data is changed. Host generated-output prune runs after the device task.
+
+`device-avatar-v1/proof-receipt.json` binds 27 raw artifacts, SHA-256
+`739db3c83687b56034142e340d7388c40a7486707a64d4c6e1a5565fcebc7ce3`.
+No public producer failure occurs in this case. An early private discovery
+assumption that `m_AvatarSize` directly located the following table was rejected
+by field-layout comparison before production; actual embedded source schema
+defines the recorded field bounds. No game/source acceptance is weakened.
+
+**Remaining/revisit.** Complete bundle metadata/reference assembly, two mesh
+cases, textures, animation, shaders and other classes remain open. The separate
+animation candidate does not justify a NaN-only conversion: full-cohort checks
+also expose regenerated curve coefficients/reference-pose data. No such target
+values are added to this recipe. Full-player Android compilation, licensed
+native inputs, durable owner signing, ordinary install/update and end-to-end
+phone-only installation remain separate gates. Revisit on original input,
+target schema/order, recipe, reader or interpreter changes. Architecture and
+LOCAL_STATE name the producer and lifecycle; no game runtime owner or `./dev`
+action is added.

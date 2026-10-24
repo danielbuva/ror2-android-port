@@ -96,6 +96,9 @@ Source-only [mesh production](../tools/phone-build/accepted-output/README.md#pro
 now qualifies 13,231 accepted records on Android (J1070), while excluding two
 tangent/importer cases. Private object/resource packs still need complete
 content conversion and bundle assembly before any game build can consume them.
+The [Avatar producer](../tools/phone-build/accepted-output/README.md#produce-avatars-directly-from-original-pc-bundles)
+also qualifies its complete 228-record class on Android (J1075). Texture,
+animation, shader and other object producers remain open.
 
 Many preparation and packaging stages have Android-capable open-source building
 blocks. Unity's import/shader/bundle/player-data stages remain editor-bound in
