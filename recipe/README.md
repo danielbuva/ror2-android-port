@@ -3017,3 +3017,17 @@ comparison hashes extend the existing recipe. Manual provenance, privacy,
 licensing and sensitive-content review: 2026-10-25, J1151. This introduces no
 SDK/game redistribution or ownership/entitlement grant; phone qualification
 remains open.
+
+
+
+
+
+
+Collision-policy restoration refreshes the authored world-owner, producer and
+transitive camera source pins. The world change observes the original projectile
+collision contract before gameplay; the producer reads the verified legitimate
+input and restores only generated project settings. No original matrix values,
+game source, protected assets, device identifiers or private paths are tracked.
+The source camera and original audio transformations retain their existing
+ownership and behavior. Provenance/privacy audit: 2026-10-24; device impact
+acceptance remains separate.

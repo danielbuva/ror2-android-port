@@ -328,6 +328,7 @@ class BuildEntryTests(unittest.TestCase):
                 (whole_catalog, "generate_build_bootstrap"),
             ):
                 stack.enter_context(tracked(module, name))
+            stack.enter_context(patch.object(whole_catalog, "stage_source_collision_policy"))
             stack.enter_context(patch.object(audio_build_hook, "stage_for_build", side_effect=stage_audio))
             # This test deliberately uses a temporary synthetic project root. Keep
             # the production camera hook's canonical work/ containment intact and

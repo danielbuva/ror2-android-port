@@ -101,6 +101,7 @@ public static class WholeCatalogBuild
             throw new Exception("Whole catalog recipe outside owned input");
         catalog = JObject.Parse(File.ReadAllText(manifest));
         ValidateSourceCameraPrograms();
+        ValidateSourceCollisionPolicy();
         var owners = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var build in builds)
             foreach (string path in build.assetNames)
@@ -132,6 +133,34 @@ public static class WholeCatalogBuild
         foreach (var row in catalog["locations"])
             row["bundle"] = owners[(string)row["path"]];
         ValidateCameraShaderRows(new HashSet<string>(owners.Keys, StringComparer.OrdinalIgnoreCase));
+    }
+
+    // Compare imported settings with the locally generated original-input receipt.
+    public static object ValidateSourceCollisionPolicy()
+    {
+        var path = Path.Combine(Path.GetDirectoryName(Application.dataPath), ".rebuild/source-collision-policy.json");
+        var expected = JObject.Parse(File.ReadAllText(path));
+        var rows = expected["rows"].ToObject<uint[]>();
+        var layers = expected["layers"].ToObject<string[]>();
+        if (rows.Length != 32 || layers.Length != 32)
+            throw new Exception("Original collision policy dimensions changed");
+        int pairs = 0;
+        for (int a = 0; a < 32; a++)
+        {
+            if (LayerMask.LayerToName(a) != layers[a])
+                throw new Exception("Collision policy layer index differs from its accepted source");
+            for (int b = a; b < 32; b++)
+            {
+                bool collides = (rows[a] & (1u << b)) != 0;
+                if (Physics.GetIgnoreLayerCollision(a, b) == collides)
+                    throw new Exception("Collision policy differs from accepted source at " + a + "/" + b);
+                pairs++;
+            }
+        }
+        return new { sourcePolicyVerified = true, unorderedPairs = pairs,
+                     projectileSelfIgnored = Physics.GetIgnoreLayerCollision(14, 14),
+                     projectileWorldCollides = !Physics.GetIgnoreLayerCollision(14, 11),
+                     projectileHurtBoxCollides = !Physics.GetIgnoreLayerCollision(14, 12) };
     }
 
     // The existing optional source-camera batch owns these Resources assets.

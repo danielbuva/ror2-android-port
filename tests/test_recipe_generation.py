@@ -124,6 +124,7 @@ class RecipeGenerationTests(unittest.TestCase):
                     raise StopBeforeBuild
 
                 with (
+                    patch.object(whole_catalog, "stage_source_collision_policy"),
                     patch.object(build, "build_source_identity", return_value={"commit": "fixture-commit"}),
                     patch.object(build, "validate_runtime_source_membership", side_effect=validate),
                     patch.object(build, "build") as invoke,
