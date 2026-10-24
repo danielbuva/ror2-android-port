@@ -89,6 +89,17 @@ adds a pinned public stb/IJG JPEG tool but no Unity SDK, Editor or private
 discovery input. J1079 qualifies all 399 uncompressed records and the public
 JPEG-tool build on Android. Other texture formats and complete bundle assembly
 remain separate gates; no current game build or runtime consumes these packs.
+`build_sdk_runner.py` owns current experimental public Box64 acquisition-by-build
+for standalone owner-supplied SDK tools. Explicit unchanged upstream source,
+the pinned SDK NDK and host archive tools produce a private Android runner.
+It owns bounded compiler process groups, retained licenses/logs and terminal
+build receipts. `sdk_texture_codec.c` owns a bounded pipe/ABI adapter for a
+separately supplied SDK codec, with C-locale GNU/Bionic compatibility entries.
+[Setup and limits](../tools/phone-build/accepted-output/README.md#build-the-standalone-sdk-tool-runner)
+keep this shell-only build-tool path separate from game execution and ordinary
+app delivery. J1081 qualifies runner execution, while Linux RGBA texture
+equivalence, shader/Burst tool execution and complete content production remain
+open. No Editor/project workflow or game backend changes.
 `sdk_inputs.py` owns current experimental owner-direct component extraction:
 an explicitly supplied, pinned provider archive yields only the three exact
 SDK-copy files in a new private root, with bounded parsing, readback and terminal

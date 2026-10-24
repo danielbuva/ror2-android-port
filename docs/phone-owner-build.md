@@ -112,6 +112,13 @@ complete bundle production remain open. Owner-build v1 uses the single accepted
 J850 target; current target metadata is an explicit profile input, and a newer
 target follows a complete v1 phone build/run.
 
+The [standalone SDK tool runner](../tools/phone-build/accepted-output/README.md#build-the-standalone-sdk-tool-runner)
+has a public source build and shell-only Android controls (J1081). This permits
+testing separately acquired Linux SDK tools without an Editor/project workflow.
+The Linux RGBA codec does not reproduce the accepted target; neither shader/
+Burst execution nor ordinary app tool delivery follows from this control.
+The game keeps its native IL2CPP ARM64 execution backend.
+
 Many preparation and packaging stages have Android-capable open-source building
 blocks. Unity's import/shader/bundle/player-data stages remain editor-bound in
 the current implementation. The exact converter now passes the complete authored

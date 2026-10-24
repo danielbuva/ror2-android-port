@@ -736,6 +736,19 @@ documented public inputs. Explicit Android workspace/interpreter ownership remai
 lab staging. See its
 [setup/lifecycle](../tools/phone-build/accepted-output/README.md#produce-uncompressed-textures-directly-from-original-pc-bundles).
 
+The experimental standalone SDK runner requires separately acquired, unchanged
+public Box64 source and the owner's pinned SDK NDK, plus explicit host CMake/
+LLVM archive tools. `build_sdk_runner.py` generates its private binary, license,
+logs and receipt. Standalone Linux SDK libraries are required local providers,
+not generated game data: select them from the hash-pinned official archive
+listed in the [setup](../tools/phone-build/accepted-output/README.md#build-the-standalone-sdk-tool-runner).
+The authored `sdk_texture_codec.c` adapter is built with the SDK's Android x86
+compiler target. Its diagnostic additionally needs the public Debian libgcc
+runtime listed there. Paths are explicit arguments; no build reads a timestamped
+run folder. SDK binaries, original-source pixels, diagnostic output and device
+receipts remain ignored. J1081 records the shell-only controls and remaining
+RGBA equivalence failure.
+
 The owner-APK bootstrap candidate consumes an explicit ignored request selecting
 the accepted private packet manifest and verified reconstructed target root,
 public frontend/wire-helper sources and supplied Java/Android/D8 tools.
