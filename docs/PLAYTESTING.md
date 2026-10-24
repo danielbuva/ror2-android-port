@@ -107,6 +107,9 @@ main gameplay owner; a nonzero audio meter or loaded bundle is insufficient.
   counts and process lifetime. A completed series with a positive memory slope
   leaves attribution/bounding open; record the measured limit rather than
   extrapolating indefinite stability.
+  Read the consistent `managed_before_presentation_bytes` menu slope alongside
+  the immediate post-collection slope. Retain every spike; a negative regression
+  dominated by an early spike does not establish a retained-memory bound.
 - Separately record sustained frame time, thermals and background/resume under a
   matched workload. Identify the hardware and conditions in private evidence;
   a short assisted run is not a supported-device performance guarantee.
@@ -145,7 +148,10 @@ separate opt-in attribution case and must not be mixed with this measurement.
 The settings case observes a native pending-file creation and requests an owned
 package stop, preserving the existing preference values. It accepts recovery
 only after proving that the old primary and an actual uncommitted pending file
-survived. A completed save or missed interruption window fails the case. This
+survived, including a hash-verified private copy of the initial primary. The
+SDK actor has a bounded lifetime independent of Android observer threads;
+failure output is retained. A completed save or missed interruption window
+fails the case. This
 diagnostic does not qualify power loss, ENOSPC or a physical touchscreen.
 
 ## Review feedback and finish

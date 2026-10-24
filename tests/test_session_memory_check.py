@@ -110,6 +110,25 @@ class SessionMemoryCheckTests(unittest.TestCase):
     def test_growth_slope_needs_two_later_points(self):
         summary = growth_summary([{"session": 1, "samples": samples(1, 5)}, {"session": 2, "samples": samples(5, 6)}])
         self.assertIsNone(summary["per_session_slope_from_session_2"]["managed_after_collection_bytes"])
+        self.assertIsNone(summary["per_session_slope_from_session_2"]["managed_before_presentation_bytes"])
+
+    def test_consistent_menu_growth_remains_visible_despite_post_collection_spike(self):
+        observed = [
+            {"session": index + 1, "samples": samples(start, after)} for index, (start, after) in enumerate(zip([1, 90, 91, 92, 93], [100, 101, 700, 103, 104]))
+        ]
+        final_menu = [{"phase": "before-presentation", "managed": 94}]
+        summary = growth_summary(observed, final_menu)
+        slopes = summary["per_session_slope_from_session_2"]
+        self.assertLess(slopes["managed_after_collection_bytes"], 0)
+        self.assertEqual(slopes["managed_before_presentation_bytes"], 1)
+        self.assertEqual(summary["rows"][2]["managed_after_collection"], 700)
+        self.assertEqual(summary["final_menu_samples"], final_menu)
+
+    def test_menu_slope_includes_actual_final_menu_instead_of_extrapolating_it(self):
+        observed = [{"session": i, "samples": samples(100, 100)} for i in (1, 2, 3)]
+        self.assertEqual(growth_summary(observed)["per_session_slope_from_session_2"]["managed_before_presentation_bytes"], 0)
+        final_menu = [{"phase": "before-presentation", "managed": 400}]
+        self.assertEqual(growth_summary(observed, final_menu)["per_session_slope_from_session_2"]["managed_before_presentation_bytes"], 150)
 
     def test_refuses_bad_counts_and_unbound_apk_before_device_access(self):
         with self.assertRaises(ValueError):

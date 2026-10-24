@@ -13,6 +13,15 @@ import settings_write_interrupt_check as check  # noqa: E402
 class InterruptedWriteEvidenceTests(unittest.TestCase):
     witness = dict(success=True, createObserved=True, pendingPresentAfterStop=True)
 
+    def test_observer_uses_the_actual_device_timeout_transport(self):
+        device = object.__new__(check.Device)
+        with patch.object(check.Device, "cmd", autospec=True, return_value="observer evidence") as command:
+            self.assertEqual(check.pending_observer(device, "owned observer"), "observer evidence")
+        self.assertEqual(command.call_count, 1)
+        self.assertEqual(command.call_args.args, (device, "shell", "owned observer"))
+        self.assertGreater(command.call_args.kwargs["timeout"], 30)
+        self.assertLessEqual(command.call_args.kwargs["timeout"], 45)
+
     def test_a_completed_save_is_not_interruption_evidence(self):
         with self.assertRaisesRegex(RuntimeError, "Missed pre-commit"):
             check.interrupted_transaction("old valid JSON", "new valid JSON", dict(state="absent"), self.witness)

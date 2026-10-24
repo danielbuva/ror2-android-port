@@ -895,6 +895,8 @@ stay unchanged. During completed-session reclamation, `SessionResourceBoundary`
 releases already-destroyed HurtBox targets from returned bullet-hit pool entries,
 with no live world/network, after deferred destruction. It preserves live and
 checked-out hits and records its release count with existing registry cleanup.
+The host memory summary keeps immediate post-collection and subsequent-menu
+managed slopes separate, including the observed final menu without extrapolation.
 The current `settings-write-interrupt-check` host diagnostic uses
 `settings_write_interrupt_check.py` and the authored `LabPendingWriteStop` SDK
 actor. It requires an idle, owned APK and a matched diagnostic menu selector,
@@ -904,7 +906,10 @@ unchanged primary and retained pending transaction are required before cold
 recovery/resave can qualify; a missed window refuses acceptance. The original
 store performs every save. Teardown removes only its selector and unique SDK
 temporary files, stops its owned process and verifies OLED sleep. Protected
-profile/results hashes remain unchanged. This does not simulate power loss or
+profile/results hashes remain unchanged. The SDK actor exits explicitly after
+its observer completes, with a separate 35-second process deadline because
+Android may retain a non-daemon observer thread. Initial primary bytes and
+observer failure output are preserved privately. This does not simulate power loss or
 ENOSPC, and runtime qualification remains a separate journal gate.
 The current `session-memory-check --memory-snapshots` diagnostic extends
 `SessionResourceBoundary` with native/managed heap captures before presentation

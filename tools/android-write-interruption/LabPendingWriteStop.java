@@ -22,7 +22,30 @@ public final class LabPendingWriteStop {
         if (!name.split("\0", 2)[0].equals(PACKAGE) || !java.util.regex.Pattern.compile("(?m)^Uid:\\s+" + uid + "\\s").matcher(status).find())
             throw new IllegalStateException("Owned PID/UID binding changed");
     }
-    public static void main(String[] args) throws Exception {
+    static void enforceDeadline(final long milliseconds) {
+        Thread deadline = new Thread(() -> {
+            try { Thread.sleep(milliseconds); }
+            catch (InterruptedException cancelled) { return; }
+            System.err.println("Owned settings observer exceeded its deadline");
+            System.err.flush();
+            Runtime.getRuntime().halt(124);
+        }, "owned-settings-observer-deadline");
+        deadline.setDaemon(true);
+        deadline.start();
+    }
+    public static void main(String[] args) {
+        enforceDeadline(35000);
+        try {
+            run(args);
+            System.out.flush();
+            System.exit(0);
+        } catch (Throwable error) {
+            error.printStackTrace(System.err);
+            System.err.flush();
+            System.exit(1);
+        }
+    }
+    private static void run(String[] args) throws Exception {
         if (args.length != 4 || Process.myUid() != 2000)
             throw new IllegalArgumentException("Requires shell, settings directory, ready path, observed PID and UID");
         final File directory = new File(args[0]).getCanonicalFile();

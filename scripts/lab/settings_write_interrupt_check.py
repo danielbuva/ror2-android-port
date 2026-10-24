@@ -32,6 +32,11 @@ def interrupted_transaction(before, after, pending, observed):
         raise RuntimeError("Missed pre-commit window; do not claim interrupted-write recovery")
 
 
+def pending_observer(device, command):
+    """Run the 30-second observer through the timeout-capable device transport."""
+    return device.cmd("shell", command, timeout=40)
+
+
 def check_settings_write_interrupt(expected_apk_sha256=None):
     expected = validate_expected_apk_sha256(expected_apk_sha256)
     if expected is None:
@@ -112,6 +117,12 @@ def check_settings_write_interrupt(expected_apk_sha256=None):
         before_profile = protected_hashes()
         before_raw = _read_raw(device, primary)
         before = json.loads(before_raw.lstrip("\ufeff"))
+        before_file = out / "before-primary.private"
+        device.cmd("pull", primary, str(before_file))
+        before_hash = device.sh("sha256sum", primary).split()[0]
+        if sha(before_file) != before_hash:
+            raise RuntimeError("Initial primary evidence transfer hash differs")
+        result["primary_before"] = dict(sha256=before_hash, bytes=before_file.stat().st_size)
         report = menu()
         tap("settings-open", report, report["settings"]["buttonX"], report["settings"]["buttonY"])
         report = wait(lambda r: r["settings"]["visible"] is True)
@@ -122,9 +133,10 @@ def check_settings_write_interrupt(expected_apk_sha256=None):
         write(out / "native-settings-before-save.json", report)
         dex = compile_tool(ROOT / "tools/android-write-interruption/LabPendingWriteStop.java")
         prefix = "/data/local/tmp/ror2lab-write-" + uuid.uuid4().hex
-        remote = [prefix + ".dex", prefix + ".ready"]
-        if any(_remote_path_state(device, path) != "absent" for path in remote):
+        targets = [prefix + ".dex", prefix + ".ready"]
+        if any(_remote_path_state(device, path) != "absent" for path in targets):
             raise RuntimeError("Temporary observer target exists; preserve it")
+        remote = targets
         packages = device.sh("cmd", "package", "list", "packages", "-U", PACKAGE)
         matches = re.findall(r"^package:" + re.escape(PACKAGE) + r" uid:([0-9]+)$", packages, re.M)
         if len(matches) != 1 or int(matches[0]) < 10000:
@@ -144,7 +156,7 @@ def check_settings_write_interrupt(expected_apk_sha256=None):
             raise RuntimeError("Observer DEX transfer hash differs")
         command = shlex.join(["env", "CLASSPATH=" + remote[0], "app_process", "/system/bin", "LabPendingWriteStop", directory, remote[1], pid, matches[0]])
         with ThreadPoolExecutor(max_workers=1) as pool:
-            future = pool.submit(device.sh, command, timeout=40)
+            future = pool.submit(pending_observer, device, command)
             deadline = time.monotonic() + 10
             while _remote_path_state(device, remote[1]) != "file":
                 if future.done():
@@ -160,7 +172,14 @@ def check_settings_write_interrupt(expected_apk_sha256=None):
                 # its final UP/wait completes. Only the independent CREATE/stop
                 # witness and retained pending file below can qualify this case.
                 result["save_gesture"] = dict(success=False, error=str(error))
-            raw = future.result(timeout=40)
+            try:
+                raw = future.result(timeout=40)
+            except Exception as error:
+                for stream in ("stdout", "stderr"):
+                    captured = getattr(error, stream, None)
+                    if isinstance(captured, (bytes, str)):
+                        (out / ("observer." + stream)).write_bytes(captured.encode() if isinstance(captured, str) else captured)
+                raise
             (out / "observer.stdout").write_text(raw)
             observed = json.loads(raw)
         stopped_pid = pid
@@ -171,6 +190,8 @@ def check_settings_write_interrupt(expected_apk_sha256=None):
         if device.sh("pidof", PACKAGE, check=False).strip():
             raise RuntimeError("Owned writer remained after force-stop")
         after_raw = _read_raw(device, primary)
+        if device.sh("sha256sum", primary).split()[0] != before_hash:
+            raise RuntimeError("Interrupted transaction changed the original primary bytes")
         state = _remote_path_state(device, pending)
         interrupted_transaction(before_raw, after_raw, dict(state=state), observed)
         result["interruption"] = observed
