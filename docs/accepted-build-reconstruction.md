@@ -345,7 +345,17 @@ fragment-only operation change preserves its vertex module and changes the
 fragment instructions, raw-exact across host/phone. The existing APK builder now
 accepts an explicit complete IL2CPP/metadata/Burst cohort alongside the content
 producer's existing target-file tree, with no replay code fallback. Full-player
-assembly, Burst ABI and phone/install/performance gates remain open.
+assembly and phone/install/performance gates remain open.
+
+[J1103](PORTING_JOURNAL.md#j1103--produce-fixed-target-burst-and-sign-owner-apks-in-the-android-tool-host)
+closes the fixed-target ordinary-app Burst producer and authored-APK app-signing
+gates. All 20 Burst runtime sections and fresh linker roots match J850; raw
+build-ID/debug differences remain. The app retains a private owner key across
+separate signing processes. Android DEX/manifest/resources and SDK library
+staging, complete source-derived target assembly, corrected phone native linking,
+full-player signing, compatible signer provisioning, ordinary installation and
+matched game performance remain open. Accepted APK entries remain validation
+references, never fallback suppliers for those missing producers.
 
 ## Comparison and recommendation
 

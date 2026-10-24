@@ -69,7 +69,8 @@ paths and logs remain private; reports keep security qualification false.
 ## Caller-owned device inputs and teardown
 
 Use the existing explicit-device, fresh-storage/reserve and exact installed-APK
-ownership rules. Refuse any pre-existing fixture package. After installing only
+ownership rules. Refuse an unowned pre-existing fixture package; updates require
+the exact current ownership receipt and the retained tool signer. After installing only
 the hash-bound fixture, supply `files/user-input/Managed/` and a separate
 `files/user-input/input-hashes.json` under its app UID. The manifest has schema 1,
 the accepted input ID and `files: {DLL_NAME: SHA256}` for the scoped 146-file
@@ -87,10 +88,11 @@ control must refuse before producer output. Preserve failures and receipts;
 remove only the package matching the ownership receipt, verify absence, and
 confirm the original input/game bytes, stopped state and display sleep.
 
-There is no game, launcher or whole-catalog consumer and no new `./dev` action.
+The scoped prefix control has no game/whole-catalog consumer or new `./dev`
+action.
 ADB-assisted input staging, the debuggable app, supplied tools and fixed profile
 do not qualify production bootstrap/delivery, general Python/native dependencies,
-Unity execution/content/player production, durable signing, cancellation/resume,
+Unity execution/content/player production, full-player signing, cancellation/resume,
 ownership acquisition, final installation UX or matched performance. J929's
 writable-execution refusal remains failed.
 
@@ -181,3 +183,10 @@ or Android's installer, using a private read-only content provider. Headless
 Runner jobs never launch UI. Retain the private owner key independently of
 disposable outputs and before removing this tool package. Final installer/game
 acceptance remains separate from successful tool execution.
+
+[J1103](../../../docs/PORTING_JOURNAL.md#j1103--produce-fixed-target-burst-and-sign-owner-apks-in-the-android-tool-host)
+qualifies fixed-target Burst and two authored APK signing processes in this
+ordinary app host, with actual native hash/mapping/UID/context evidence. It does
+not qualify full-player assembly, installer UI or game performance. The separate
+original-input native compilation remains active until its own terminal result
+and explicit corrected relink. Device policy/security qualification stays open.

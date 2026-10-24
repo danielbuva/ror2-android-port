@@ -24,11 +24,15 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       [J1065](PORTING_JOURNAL.md#j1065--qualify-private-owner-apk-preparation-upgrade-and-unity-lifecycle)
       qualifies its device preparation, update retention, Unity lifecycle and
       assisted controls. [J1095](PORTING_JOURNAL.md#j1095--retain-one-on-device-owner-key-across-separate-apk-signing-builds)
-      qualifies durable on-device key reuse/signing for authored APKs. Full-player
-      app signing, ordinary installer UX and independent production remain open.
+      qualifies durable on-device key reuse/signing for authored APKs.
+      [J1103](PORTING_JOURNAL.md#j1103--produce-fixed-target-burst-and-sign-owner-apks-in-the-android-tool-host)
+      additionally qualifies ordinary-app signing and fixed-target Burst production:
+      all 20 runtime sections and fresh linker roots match J850. Full-player
+      assembly/signing, Android packaging members, ordinary installer UX and
+      independent complete production remain open.
       [J1063](PORTING_JOURNAL.md#j1063--complete-the-source-input-host-native-owner-build) completes public source-input host game-code
       production through a fresh native library. Explicit licensed SDK native
-      input, full content/Burst/shaders and phone qualification remain gates.
+      input, full content/shaders and source-only native phone qualification remain gates.
       [J1098](PORTING_JOURNAL.md#j1098--preserve-recorded-object-order-for-the-fixed-target-native-link) closes the host J850 native runtime-byte gap by retaining
       recorded link order; all 23 runtime sections and metadata match, with
       debug-link/build-ID differences retained. Phone native completion and
@@ -54,15 +58,16 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       Remaining compressed textures, mips, cubemaps and complete bundles stay open.
       [J1081](PORTING_JOURNAL.md#j1081--run-owner-supplied-standalone-sdk-tools-through-a-public-android-runner)
       qualifies a reproducible public Android runner for standalone SDK build
-      tools. Linux RGBA codec equivalence, complete shader/Burst production and ordinary
-      app delivery remain open; game execution remains native IL2CPP ARM64.
+      tools. The full Linux RGBA cohort, original shader/content production and ordinary
+      owner delivery remain open; game execution remains native IL2CPP ARM64.
       [J1094](PORTING_JOURNAL.md#j1094--qualify-exact-sdk-vulkan-shader-compilation-on-android)
       qualifies exact host/phone authored Vulkan shader-tool output. Original
       shader recovery, variants, serialization and app integration remain open.
       [J1102](PORTING_JOURNAL.md#j1102--qualify-linked-vulkan-fragment-output-and-explicit-owner-apk-code-inputs)
       confirms both executable stages in that linked payload and accepts all
       three produced code outputs in the existing APK owner without replay
-      fallback. Full-player phone assembly/Burst/install acceptance remain open.
+      fallback. Full-player phone assembly/install acceptance remains open; J1103
+      qualifies the separate source-derived Burst producer.
       Owner-build v1 targets the single accepted J850 build through explicit
       profiles; promotion to a newer accepted target follows end-to-end proof.
       [J995](PORTING_JOURNAL.md#j995--integrate-the-public-transform-profile-with-owner-prefix-and-portable-cli)

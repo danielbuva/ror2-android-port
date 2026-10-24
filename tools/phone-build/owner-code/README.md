@@ -325,3 +325,9 @@ All outputs, commands, original inputs, SDK bytes and private evidence stay
 ignored. The caller owns thermal monitoring and output retention; preserve
 receipts/failures before deleting only the explicitly owned output. Runtime
 acceptance always requires the final phone APK and matched device controls.
+
+[J1103](../../../docs/PORTING_JOURNAL.md#j1103--produce-fixed-target-burst-and-sign-owner-apks-in-the-android-tool-host)
+qualifies the complete public Burst producer in the ordinary app from the actual
+phone source-produced managed cohort. Its 20 runtime sections and fresh linker
+roots match J850 exactly; original bytes and debug/build-ID differences remain
+recorded. This is a tool-production gate, with full APK/game acceptance separate.

@@ -789,7 +789,9 @@ existing `owner-apk` owner. Its key directory is outside each disposable build
 output. The Activity shows a completed private APK and hands a read-only content
 URI to Android's installer only after a user button press; the private provider
 permits only that verified output. Headless instrumentation never opens the
-installer. Tool APK updates use a separate durable tool key.
+installer. Tool APK updates use a separate durable tool key. J1103 qualifies ordinary-app
+Burst and authored-APK signing through these owners; installer/full-player
+acceptance and device security remain separate gates.
 
 `phone_native.py` owns experimental **support** for replaying the authored
 content fixture's native graph. `phone-native-fixture` verifies an explicit
