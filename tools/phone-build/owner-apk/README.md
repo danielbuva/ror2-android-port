@@ -4,8 +4,9 @@ Current experimental installation support after accepted-output reconstruction.
 The private candidate's preparation, increasing-version upgrade, Unity lifecycle
 and assisted standard controls are device-qualified in
 [J1065](../../../docs/PORTING_JOURNAL.md#j1065--qualify-private-owner-apk-preparation-upgrade-and-unity-lifecycle).
-Public installer UI, phone-side signing and independent PC-input production
-remain open; this is not an adopted final distribution architecture.
+[J1095](../../../docs/PORTING_JOURNAL.md#j1095--retain-one-on-device-owner-key-across-separate-apk-signing-builds)
+qualifies durable phone signing on authored APKs. Ordinary app packaging-tool
+hosting, installer UI and independent PC-input production remain open; this is not an adopted final distribution architecture.
 Game-bearing packets, APKs, metadata and outputs remain private under
 ignored `work/`; no key or game content belongs in Git.
 
@@ -116,7 +117,32 @@ J1065 qualifies the complete private candidate through authorized ADB installs,
 fresh preparation/readback, pause/interruption/restart, update consent/backup,
 unknown-file refusal, retained user data, live placement/backing, public
 bootstrap/Play, warm re-entry and both assisted standard controls. Ordinary
-Android installer UX, durable on-device owner signing, independent input-only
-production and matched performance remain open.
+Android installer UX, integration of J1095 signing into the ordinary app/full
+player build, independent input-only production and matched performance remain
+open.
 Neither the frontend nor successful extraction claims account ownership,
 authentication, DLC access or original-game readiness.
+
+
+## Durable owner signing
+
+The same owner accepts `--sign-request PRIVATE_SIGN_REQUEST.json --output
+NEW_PRIVATE_OUTPUT` after unsigned APK assembly. The request fields are exactly
+`unsigned`, `java`, `zipalign`, `apksigner_jar` and `key_directory`, all explicitly
+supplied local paths. Tool acquisition remains owner supplied. Keep the durable
+key directory separate from build outputs and preserve it across upgrades.
+
+On first use the owner creates `owner.p12` (alias `owner`) and a random private
+`password` file in that private directory. Later processes validate/reuse them;
+missing or mismatched existing state fails without replacing a key. Back up that
+owner key through an authorized private mechanism before removing its host data;
+never include it in an APK, recipe, public report or Git. The laboratory fixture's
+disposable signing identity is a separate mechanism.
+
+The owner writes new aligned/signed APKs and command/result logs, verifies the
+signature and 16 KiB alignment, and checks that every nonsignature APK content
+entry and original input/key remain unchanged. It reserves room for two output
+APKs plus 2 GiB. It never installs an APK. Failures and private keys remain; only
+the explicit disposable output may be removed after retaining needed evidence.
+J1095 qualifies two separate phone processes reusing a key for authored APKs;
+ordinary app delivery and the complete independent game APK remain open.

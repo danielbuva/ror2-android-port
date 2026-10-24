@@ -152,6 +152,12 @@ adapter-v1 actions. No existing Unity/game build consumes it and it is not a
 selected final distribution architecture. [Setup and device gates](../tools/phone-build/owner-apk/README.md)
 include ZIP size, duplicate storage cost, unknown-file acceptance and retained
 user data. All APKs and embedded game data stay ignored/private.
+The same APK owner has an explicit signing mode: acquired Java/zipalign/apksigner,
+a separate durable private key directory and fresh output own key setup/reuse,
+alignment/signing, content verification and failed-output retention. J1095
+qualifies separate phone signing processes; no install is performed.
+[Key/output lifecycle](../tools/phone-build/owner-apk/README.md#durable-owner-signing)
+keeps signing identity outside disposable build output.
 
 `tools/phone-build/package-assemblies/` owns a separate current experimental
 host producer for the four retained Unity package assemblies and their required

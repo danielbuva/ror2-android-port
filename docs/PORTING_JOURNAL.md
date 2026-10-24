@@ -37988,3 +37988,63 @@ different plugin/content cohort still requires a normal full lane seed. Revisit
 if a current staging owner adds another authored source family or receipt-bound
 plugin outside these existing owners; keep unknown-byte refusal and frozen
 content checks intact.
+
+## J1095 — Retain one on-device owner key across separate APK signing builds
+
+Date: 2026-10-24 UTC. **Authored Android shell-tool qualification; no install.**
+
+**Hypothesis.** The existing owner APK builder can own alignment and signing
+with a durable private key directory, rather than creating a disposable key for
+every build. A second process must sign a later authored version with the same
+key, independently verify signatures/alignment and preserve every content entry.
+This is generic APK/JDK plumbing; J836 and J1065 supply prior phone-signing and
+owner-bootstrap context. No new game reconstruction or runtime adapter is added.
+
+**Change / owner.** Extend `owner-apk/build_owner_apk.py` with an explicit
+`--sign-request` mode. It accepts the unsigned APK, Java, zipalign, apksigner JAR
+and persistent key directory. The existing APK construction/replay contract is
+unchanged. New-key setup writes a private random password and PKCS12 key;
+subsequent builds validate/reuse that alias. Passwords travel only through the
+child environment, not command arguments, receipts or public output. Key and
+password permissions are private; keys live outside disposable output. Failures
+retain their new output and existing keys. The caller supplies acquired tools;
+no implicit download, license acceptance, install, data reset or Editor occurs.
+
+**Actual phone result.** On the assigned headless tool device, Android-native
+JDK 21/aapt first builds two tiny authored APKs with increasing manifest versions.
+Separate Python processes align/sign them using the public owner function.
+Version 1 creates a key; version 2 reports reuse. Independent SDK apksigner and
+16 KiB zipalign checks pass for both, all unsigned content-entry hashes survive,
+and the durable key hash stays unchanged. No key/password is exported to host.
+Both OLED panels remain asleep and no game package changes.
+
+- Version 1: 8,472 B, APK SHA-256
+  `23a94635e1f48bb01d10f22082012be3941015147e0d2c0dbc56cfd53896bc85`;
+  signing/verification function wall time 20.726 s.
+- Version 2: 8,472 B, APK SHA-256
+  `76c1f4696a68729023e2e0400a7851bb4df525d4209640fea60a00a00f1e24b4`;
+  signing/verification function wall time 12.637 s.
+
+Local evidence: `work/coordination/phone-code/owner-signing-phone-v1.log`,
+`qualify-owner-signing.py` and `owner-signing-device-driver.py`; the owned phone
+workspace retains `owner-signing-control-v1/` with both unsigned/signed versions,
+per-command logs, comparison and private durable key directory. The SDK/tool
+providers are the same separately acquired phone packaging cohort used by the
+managed-host fixture; its private source/packaging manifests retain their hashes.
+The signing code itself and synthetic tests contain no SDK or game bytes.
+
+**Validation.** Two authored host tests cover persistence across builds,
+environment-only passwords, unchanged key/content and failed-tool retention.
+The seven signing/binary-manifest/payload-store tests pass, including the actual
+Java lifecycle fixture when the host JDK is present. Ruff passes. The source
+APK entry comparison excludes only obsolete signature entries, not game data.
+Mandatory generated-output pruning follows the phone tool run.
+
+**First failure / remaining gates.** No admitted signing control fails. These
+APKs are authored fixtures and are not installed. Ordinary app hosting of the
+packaging tools, final independent game APK/content assembly, the user-mediated
+Android installer, update retention under that identity, and game controls/
+performance remain open. Existing shared game installation and receipts are
+unchanged. Durable key generation alone does not establish ownership,
+authentication, entitlement or redistribution rights. Revisit on key/alias drift,
+signing/content/alignment failure, app-host admission or full-player integration.

@@ -1692,3 +1692,12 @@ receipted authored DLLs/metadata before ordinary whole-catalog composition.
 The audio build hook owns temporary APFS reference clones and deletes them on
 exit. Lane teardown removes all of this private state. No build discovers a
 timestamped staging receipt as input.
+
+
+Durable owner APK signing requires explicit acquired Java/zipalign/apksigner and
+an unsigned APK. Its caller-selected private `key_directory` contains `owner.p12`
+and `password`, retained across builds with private permissions. These are
+required local signing identity, never rebuildable cache or public material.
+Do not copy them into APKs/recipes/logs or prune them with build output. The
+signer has no timestamped lookup or implicit installer; failed APK output/logs
+stay separate. See the [signing lifecycle](../tools/phone-build/owner-apk/README.md#durable-owner-signing).

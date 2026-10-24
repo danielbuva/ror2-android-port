@@ -2400,3 +2400,13 @@ selected sources, camera transform and runtime behavior are unchanged. The
 change contains authored tooling only, with no protected content or new public
 identifiers. Lane staging uses the same runtime/editor/plugin owners and keeps
 generated assets, original files and canonical staging outside its write set.
+
+
+The owner APK signing addition is authored generic JDK/zipalign/apksigner
+orchestration. Its explicit local tool/key directory inputs and generated APKs,
+passwords, keys and raw command logs remain private. No SDK/tool implementation,
+private signing material, game content or authentication/ownership adapter is
+added to recipes. Public tests use authored tool/key/content witnesses only.
+Tool acquisition and distribution permissions remain separate; successful APK
+signing supplies no game entitlement. Provenance, privacy, licensing and
+sensitive-content audit: 2026-10-24; J1095.
