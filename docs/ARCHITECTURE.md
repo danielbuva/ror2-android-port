@@ -825,6 +825,18 @@ exit and session cleanup clear notes and consent. The settings/application/GUI
 owners give the visible modal input priority while retaining the owned pause.
 Android clipboard, browser handoff and the composed settings route require
 device acceptance; host fixtures exercise the authored flow and refusal paths.
+The current `session-memory-check --memory-snapshots` diagnostic extends
+`SessionResourceBoundary` with native/managed heap captures before presentation
+at menus 2 and 4, after the completed worlds have been reclaimed. It requires an
+attempt-matched opt-in and an idle Development player. Native callback completion
+and a nonempty owned file are required before the host proceeds. The host copies
+only that generated snapshot, verifies its SHA-256, then removes the exact device
+file; profile/payload data are untouched. Snapshot allocation and pauses exclude
+this case from ordinary growth/performance acceptance. The existing static-root
+walk is a separate diagnostic. Heap files, databases and analysis stay private.
+The public Unity `MemorySnapshotDataTools` CLI can analyze them without an Editor
+package; no parser or third-party implementation is vendored into the lab/player.
+
 `AndroidTouchInput` is the playable bridge's pointer producer. Stable finger IDs
 own independent movement, camera and eight native action captures, plus pause.
 Short action taps remain pending until a fixed tick consumes them; missing/canceled pointers,

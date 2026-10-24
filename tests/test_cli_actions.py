@@ -208,6 +208,29 @@ class PrototypeActionTests(unittest.TestCase):
             ],
         )
 
+    def test_native_heap_capture_is_explicit_and_bound_to_the_base_memory_action(self):
+        code, _, _ = self.cli("--action", "session-memory-check", "--sessions", "3", "--memory-snapshots", "--expected-apk-sha256", "a" * 64)
+        self.assertEqual(code, 0)
+        self.assertEqual(
+            self.calls,
+            [
+                dict(
+                    module="session_memory_check",
+                    function="check_session_memory",
+                    args=(),
+                    kwargs=dict(sessions=3, memory_snapshots=True, expected_apk_sha256="a" * 64),
+                )
+            ],
+        )
+
+    def test_native_heap_capture_cannot_change_other_actions_or_the_static_root_walk(self):
+        for action in ("session-memory-root-check", "session-abandon-check", "touch-gesture"):
+            with self.subTest(action=action):
+                code, _, error = self.cli("--action", action, "--memory-snapshots")
+                self.assertEqual(code, 2)
+                self.assertIn("--memory-snapshots requires", error)
+                self.assertEqual(self.calls, [])
+
     def test_series_count_cannot_silently_change_an_unrelated_action(self):
         code, _, error = self.cli("--action", "session-abandon-check", "--sessions", "12")
         self.assertEqual(code, 2)

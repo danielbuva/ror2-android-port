@@ -325,3 +325,26 @@ code vendoring or runtime dependency. Full result and private evidence paths liv
 once in J588. R2API.Sound's native initialization prerequisite remains material;
 neither bank parsing nor TXTP generation supplies Android ABI/codec/SDK permission
 or audible acceptance.
+
+### Native heap attribution after completed sessions
+
+The pinned UnityExplorer `ReflectionInspector.cs` at `1e1fb0e2` exposes static and
+instance member filtering; J787 shows that enumerable roots do not account for
+the remaining managed growth. Native heap snapshots address that measured gap.
+The exact 2021.3 SDK exposes
+`UnityEngine.Profiling.Memory.Experimental.MemoryProfiler.TakeSnapshot`; the
+existing player builder already selects `BuildOptions.Development`. Unity's
+[Memory Profiler documentation](https://docs.unity3d.com/Packages/com.unity.memoryprofiler@0.7/manual/index.html)
+requires Development players and describes capture allocation/freezes. Captures
+therefore remain opt-in, idle-menu diagnostics outside performance acceptance.
+
+Unity's public [MemorySnapshotDataTools](https://github.com/Unity-Technologies/MemorySnapshotDataTools/tree/86af1fe8b60bfcb5e6fbe63e85377887aec32ef5)
+provides the existing host parser, managed/native connection analysis and
+DuckDB export. The inspected source pin is `86af1fe8`, under the Unity Companion
+License for Unity-dependent projects; local source/build outputs stay ignored.
+No parser code is copied or distributed. The existing .NET 10.0.401 SDK builds
+its CLI, and 29 upstream host tests pass. Actual game-snapshot compatibility and
+retaining-root conclusions require device capture evidence. The upstream SQLite
+dependency warning is retained in private build evidence; the planned local
+analysis uses default DuckDB on the lab's own captures. This adds no player
+package, acquisition grant, telemetry or alternate execution backend.

@@ -2310,3 +2310,12 @@ Source pins are refreshed for the reviewed merged `PortSession` startup and
 `IntegratedWorldBoundary` touch/UI changes. Original scene audio retains the
 existing native-owner readiness gate. This updates authored source provenance;
 accepted game input and distribution grants are unchanged. Audit: 2026-10-24.
+
+Completed-session native heap capture extends the authored resource owner only.
+The selector, two idle-menu capture points, callback report and exact hash-checked
+host transfer contain no original implementation, serialized game object or
+third-party parser. Raw snapshots can contain protected/private runtime bytes and
+stay under ignored local evidence; they are never tooling distribution inputs.
+The host-only Unity snapshot-analysis source is separately pinned and inspected
+in community prior art, not vendored. Provenance/privacy audit: 2026-10-24;
+this does not add any runtime/content redistribution grant.
