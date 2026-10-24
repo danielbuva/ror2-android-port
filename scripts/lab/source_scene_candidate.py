@@ -31,8 +31,8 @@ SCENES = {
 SCENES["lakes"] = "DLC2"
 SCENES.update({name: "DLC1" for name in ("ancientloft", "snowyforest", "sulfurpools")})
 SCENES.update({name: "DLC2" for name in ("habitat", "habitatfall", "helminthroost", "lakesnight", "village", "villagenight")})
-# The original Wwise assembly has no authorized Android native engine. Keep
-# scene-local game logic, but do not activate serialized native-audio clients.
+# Default-off scenes omit native-audio clients. The existing explicit audio
+# selection preserves their original serialized state for the ready native owner.
 # RTPCController is the game's own direct Wwise-only component on SceneInfo.
 NO_AUDIO_GUID = "2b6c926553287666f24ffd5af5ba21cb"
 NO_AUDIO_GAME_SCRIPT = ("-1095921540", "951ce57ad999ac1f040a4dceb5f8b763")
@@ -119,8 +119,11 @@ def stage_unavailable_audio():
 
 def prepare(names=("lakes",), io=None):
     from composition_io import StageIO
+    from original_game_audio_build_hook import SELECTION, read_selection
 
     io = io or StageIO()
+    _, _, audio_variant = read_selection(io.work, io.physical(io.work / SELECTION))
+    preserve_audio = audio_variant == "requested"
     project = io.project
     export = io.resolve(io.read(io.work / "config/reconstruction.json")["projects"][0])
     generation = io.read(project / ".port-input.json")
@@ -164,7 +167,7 @@ def prepare(names=("lakes",), io=None):
             if not re.search(r"^  m_IsActive: [01]$", block, re.M):
                 raise RuntimeError("Original global-owner active state changed")
             by_id[owner] = re.sub(r"^  m_IsActive: 1$", "  m_IsActive: 0", block, count=1, flags=re.M)
-        removed_audio = set()
+        source_audio = set()
         source_null = set()
         disabled_render = set()
         for fid, block in by_id.items():
@@ -177,14 +180,15 @@ def prepare(names=("lakes",), io=None):
             if not script:
                 continue
             if script[2] == NO_AUDIO_GUID or script.groups() == NO_AUDIO_GAME_SCRIPT:
-                removed_audio.add(fid)
+                source_audio.add(fid)
             elif script.groups() in UNAVAILABLE_RENDER_SCRIPTS:
                 if not re.search(r"^  m_Enabled: 1$", block, re.M):
                     raise RuntimeError("Observed renderer callback state changed")
                 disabled_render.add(fid)
                 by_id[fid] = re.sub(r"^  m_Enabled: 1$", "  m_Enabled: 0", block, count=1, flags=re.M)
-        if not removed_audio or not disabled_render:
+        if not source_audio or not disabled_render:
             raise RuntimeError("Expected source audio/render callback populations absent")
+        removed_audio = set() if preserve_audio else source_audio
         removed = removed_audio | source_null
         for fid, block in tuple(by_id.items()):
             if block.startswith("--- !u!1 "):
@@ -236,10 +240,33 @@ def prepare(names=("lakes",), io=None):
         "success": True,
         "input_id": generation["input_id"],
         "staged": staged,
-        "scope": "Original stage-local scene with duplicate global roots inactive; source-null scripts and measured unavailable native-audio components omitted, unsupported decal/shadow callbacks disabled. Current reduced scenes retained.",
+        "scope": (
+            "Original stage-local scene with duplicate global roots inactive; source-null scripts omitted, original native-audio components preserved for explicitly requested audio, unsupported decal/shadow callbacks disabled. Current reduced scenes retained."
+            if preserve_audio
+            else "Original stage-local scene with duplicate global roots inactive; source-null scripts and measured unavailable native-audio components omitted, unsupported decal/shadow callbacks disabled. Current reduced scenes retained."
+        ),
     }
     out = io.work / "experiments/source-scenes"
     if not io.rebuilding:
         out.mkdir(parents=True, exist_ok=True)
     io.write(out / "candidate.json", result)
     return result
+
+
+def synchronize_audio(io, *, code_only):
+    """Align existing source scenes before stage maps and build-cache hashing."""
+    from original_game_audio_build_hook import SELECTION, read_selection
+
+    receipt_path = io.work / "experiments/source-scenes/candidate.json"
+    if not io.is_file(receipt_path):
+        return  # The ordinary stage-map contract reports missing source scenes.
+    rows = io.read(receipt_path)["staged"]
+    if not rows:
+        return
+    _, _, variant = read_selection(io.work, io.physical(io.work / SELECTION))
+    requested = variant == "requested"
+    if all((row["omitted_unavailable_audio_components"] == 0) == requested for row in rows):
+        return
+    if code_only:
+        raise RuntimeError("Source-scene audio selection changed; a full content build is required")
+    prepare(tuple(row["name"] for row in rows), io)

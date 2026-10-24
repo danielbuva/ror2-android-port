@@ -2341,10 +2341,13 @@ def _build_integration(
         from original_music_output_observer_build_hook import restore as restore_previous_music_output_observer
         from original_game_audio_build_hook import stage_for_build
         from rebuild import safe_destination
+        from source_scene_candidate import synchronize_audio
 
         destination_work = Path(work or WORK).resolve(strict=True)
         destination_input_id = read(destination_work / "config/accepted-input.json")["input_id"]
         destination_project = safe_destination(destination, destination_input_id, destination_work)
+        # R6 owns scene content. R9 must not silently change its selected variant.
+        synchronize_audio(StageIO(destination_work, destination_project), code_only=True)
         restore_previous_camera(destination_project, destination_work)
         restore_previous_music_output_observer(destination_project, destination_work)
         audio_inputs = stage_for_build(destination_project, WORK, selection_path=destination_work / "config/original-game-audio/selection.json")
@@ -2374,6 +2377,9 @@ def _build_integration(
     contract = read(out / "original-catalog-contract.json")
     if contract["input_sha256"] != assembly_hash or manifest["input_id"] != read(WORK / "config/accepted-input.json")["input_id"]:
         raise RuntimeError("Original body visual references belong to another accepted input")
+    from source_scene_candidate import synchronize_audio
+
+    synchronize_audio(io, code_only=code_only)
     generate_build_maps(io, manifest, contract, source, code_only)
     contract_dir = ROOT / read(out / "contracts-latest.json")["path"]
     from native_view_camera_build_hook import restore_previous_camera, stage_after_audio

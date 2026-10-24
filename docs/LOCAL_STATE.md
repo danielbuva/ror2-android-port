@@ -1210,6 +1210,14 @@ source scenes nor that receipt. Post-R6 R7 and ordinary whole-catalog builds
 verify exact source hashes before emission. All generated identity data stays
 ignored under `work/`; it is not a new user-maintained configuration field.
 
+Source-scene preparation also reads the existing validated
+`work/config/original-game-audio/selection.json`. Requested audio retains
+original Wwise/RTPC components; default off reproduces their omitted form.
+The same generator updates `candidate.json` and its exact scene hashes before
+current full-build stage maps are generated. Fast/code-only builds refuse a
+mode change; isolated R6 uses its own work selection and R9 verifies the mode.
+No timestamped run output or additional local selector is required.
+
 ### Mercenary editor-fixture initialization
 
 `work/tests/merc-evis-impact-effect/addressables-init/{settings,catalog}.json`

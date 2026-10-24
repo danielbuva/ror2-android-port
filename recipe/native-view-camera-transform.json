@@ -284,7 +284,7 @@
     "artifact_copy": "scripts/lab/common.py"
   },
   "source_sha256": {
-    "build_hook": "18541a252f6ad771c6b345e466fc54eacea23b2b04bb1d87f7cc9c12bd4b2426",
+    "build_hook": "4e2f9e547c66cfeda6b04c2b4a0eb4179aa1d23e6b9dd60ba86ef279c4cf4a27",
     "camera_contract": "259463fea059fb40f84ff8dd3bfc027efc70635ce7b81320725a177c78f5bf73",
     "camera_owner": "49adec4560582184a979baa534716b8fb3e50d25ea0a1e289a684ffb10b0e91b",
     "camera_prerequisites": "7d726175b0f93d9d4e83d032b7244cd9f9cd9df49d0ec1bd57d73df63587d18a",
@@ -300,7 +300,7 @@
     "skin_lifecycle_audio_camera_merge": "15832065332eb116d8c0f99a8f7649db53dbbf022451411b7a9b3d38dcd95dd5",
     "transformer": "612e1f374e6381e48aec33e902505953e47d1f4df765df646ea02284c7d16598",
     "verifier": "f9047828a437fc650dbc30e68c81585a80b3f38ed87cc81427b32314b6cf9b91",
-    "whole_catalog": "88fc0085c98bfa274e245e359ff5828f063aafc69f609cdf8ccbeeaa2ca5e39b",
+    "whole_catalog": "6cb443120ea1336e173ee26bd877321b986be3bfb4a049f323f2b74ff8606838",
     "artifact_copy": "b4fff18bbb88573494e9189f7349a9f0f204dcd9bbe221d3b86891c89d156d55"
   },
   "stage_receipt_sha256": "21aeba0fa4e20e70346fdcc6e309d056ea385b63be013726f690b930ba33c05b",

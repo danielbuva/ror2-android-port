@@ -169,6 +169,20 @@ class UnityRebuildTests(unittest.TestCase):
         self.assertEqual(self.methods, ["LabBuild.RepairDestinationPlugins"])
         self.assertEqual(self.before, self.snapshot())
 
+    def test_r9_refuses_changed_source_audio_before_staging_or_editor_mutation(self):
+        receipt = self.dest / ".rebuild/composition/experiments/source-scenes/candidate.json"
+        write(receipt, dict(staged=[dict(name="lakes", omitted_unavailable_audio_components=44)]))
+        before = receipt.read_bytes()
+        with (
+            patch.object(audio_build_hook, "read_selection", return_value=({}, {}, "requested")),
+            patch.object(r9, "run", side_effect=AssertionError("must refuse before Unity")),
+            self.assertRaisesRegex(RuntimeError, "full content build"),
+        ):
+            whole_catalog.build_integration(destination=self.dest, work=self.work)
+        self.assertEqual(self.audio_stage_calls, [])
+        self.assertEqual(receipt.read_bytes(), before)
+        self.assertEqual(self.before, self.snapshot())
+
     def test_reimport_errors_must_already_occur_in_the_fresh_import(self):
         with patch.object(r9, "run", side_effect=self.fake_run):
             result = whole_catalog.build_integration(destination=self.dest, work=self.work)

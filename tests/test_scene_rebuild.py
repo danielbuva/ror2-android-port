@@ -45,7 +45,7 @@ class SceneRebuildTests(unittest.TestCase):
         for i, name in enumerate(("RoR2Application", "SceneInfo", "Director", "GameManager", "Zone"), 1):
             components = [i * 10]
             if name == "Zone":
-                components += [51, 52, 53, 54]
+                components += [51, 52, 53, 54, 55, 56]
             self.source_text += (
                 f"--- !u!1 &{i}\nGameObject:\n  m_Component:\n"
                 + "".join(f"  - component: {{fileID: {fid}}}\n" for fid in components)
@@ -221,6 +221,72 @@ class SceneRebuildTests(unittest.TestCase):
         self.put(self.work / "lab-project" / row["scene"], "unowned drift")
         with self.assertRaisesRegex(RuntimeError, "owned receipt"):
             source_scene_candidate.prepare((self.name,))
+
+    def test_requested_audio_preserves_original_components_and_disabled_state(self):
+        text = self.source.read_text().replace(
+            "  - component: {fileID: 55}\n",
+            "  - component: {fileID: 55}\n  - component: {fileID: 57}\n  - component: {fileID: 58}\n  - component: {fileID: 59}\n",
+        )
+        rtpc_id, rtpc_guid = source_scene_candidate.NO_AUDIO_GAME_SCRIPT
+        audio_blocks = (
+            f"--- !u!114 &57\nMonoBehaviour:\n  m_GameObject: {{fileID: 5}}\n  m_Enabled: 1\n  m_Script: {{fileID: {rtpc_id}, guid: {rtpc_guid}, type: 3}}\n  akSoundString: SyntheticEvent\n",
+            f"--- !u!114 &58\nMonoBehaviour:\n  m_GameObject: {{fileID: 5}}\n  m_Enabled: 0\n  m_Script: {{fileID: 2, guid: {source_scene_candidate.NO_AUDIO_GUID}, type: 3}}\n  triggerId: 123\n",
+        )
+        text += "".join(audio_blocks) + "--- !u!114 &59\nMonoBehaviour:\n  m_GameObject: {fileID: 5}\n  m_Script: {fileID: 0}\n"
+        self.put(self.source, text)
+        with patch("original_game_audio_build_hook.read_selection", return_value=({}, {}, "requested")):
+            result = self.prepare_source(self.io)
+        row = result["staged"][0]
+        candidate = self.io.read_text(self.dest / row["scene"])
+        self.assertEqual(row["omitted_unavailable_audio_components"], 0)
+        self.assertEqual(row["omitted_source_null_scripts"], 1)
+        self.assertEqual(row["disabled_unavailable_render_components"], 1)
+        for block in audio_blocks:
+            self.assertIn(block, candidate)
+        self.assertIn("--- !u!114 &55", candidate)
+        self.assertIn("  - component: {fileID: 58}\n", candidate)
+        self.assertNotIn("--- !u!114 &59", candidate)
+        self.assertNotIn("  - component: {fileID: 59}\n", candidate)
+        self.assertEqual(candidate.count("  m_IsActive: 0\n"), 4)
+
+    def test_audio_mode_change_refuses_code_only_before_content_writes(self):
+        io = StageIO()
+        self.prepare_source(io)
+        before = self.snapshot()
+        with (
+            patch("original_game_audio_build_hook.read_selection", return_value=({}, {}, "requested")),
+            self.assertRaisesRegex(RuntimeError, "full content build"),
+        ):
+            source_scene_candidate.synchronize_audio(io, code_only=True)
+        self.assertEqual(before, self.snapshot())
+
+    def test_full_audio_mode_switch_and_default_off_restoration_are_reproducible(self):
+        io = StageIO()
+        row = self.prepare_source(io)["staged"][0]
+        scene = io.project / row["scene"]
+        before = scene.read_bytes()
+        metadata = Path(str(scene) + ".meta").read_bytes()
+        with patch("original_game_audio_build_hook.read_selection", return_value=({}, {}, "requested")):
+            source_scene_candidate.synchronize_audio(io, code_only=False)
+            self.assertIn("--- !u!114 &55", scene.read_text())
+            self.assertEqual(Path(str(scene) + ".meta").read_bytes(), metadata)
+            with patch.object(source_scene_candidate, "prepare", side_effect=AssertionError("unchanged mode must reuse scenes")):
+                source_scene_candidate.synchronize_audio(io, code_only=True)
+        source_scene_candidate.synchronize_audio(io, code_only=False)
+        self.assertEqual(scene.read_bytes(), before)
+        self.assertEqual(Path(str(scene) + ".meta").read_bytes(), metadata)
+
+    def test_audio_mode_switch_retains_unowned_scene_refusal(self):
+        io = StageIO()
+        row = self.prepare_source(io)["staged"][0]
+        scene = io.project / row["scene"]
+        scene.write_text("unowned scene drift")
+        with (
+            patch("original_game_audio_build_hook.read_selection", return_value=({}, {}, "requested")),
+            self.assertRaisesRegex(RuntimeError, "owned receipt"),
+        ):
+            source_scene_candidate.synchronize_audio(io, code_only=False)
+        self.assertEqual(scene.read_text(), "unowned scene drift")
 
     def test_r6_metadata_conflict_and_input_identity_refused(self):
         result = self.prepare_source(self.io)
