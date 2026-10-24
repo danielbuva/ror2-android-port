@@ -50,6 +50,12 @@ Separate positive managed build-tool app host:
 [J999](PORTING_JOURNAL.md#j999--host-the-existing-managed-build-tools-from-read-only-app-native-libraries).
 The earlier refusal/security gate remains open; this fixture supplies no
 complete app bootstrap or game-build acceptance.
+[J1027](PORTING_JOURNAL.md#j1027--bind-explicit-importer-configuration-and-reject-drift-on-android)
+qualifies explicit importer configuration and refusal controls on Android;
+actual-input initialization/lifecycle and complete export remain open.
+[J1029](PORTING_JOURNAL.md#j1029--preserve-a-native-importer-failure-during-raw-loading)
+fails the first real-input native call before typed materialization; the observed
+OOM formats an earlier read exception, whose identity remains unknown.
 Native fixture compile/link/loading: [J839](PORTING_JOURNAL.md#j839--compile-and-link-the-authored-il2cpp-native-library-on-android).
 Full authored converter/native/device closure: [J842](PORTING_JOURNAL.md#j842--run-the-full-authored-converter-and-load-its-phone-compiled-native-output).
 Authored input capture and Android stripping: [J846](PORTING_JOURNAL.md#j846--capture-authored-stripping-inputs-and-replay-unitylinker-on-android).
@@ -469,3 +475,9 @@ journal for independent evidence and comparison limits. Explicit licensed native
 SDK input, full Burst/content/shader production, Android tool hosting, install/
 update and matched device behavior/performance remain gates. The working game
 and desktop fallback stay unchanged.
+
+
+The historical [J951 preload operand result](PORTING_JOURNAL.md#j951--bind-sdk-preload-platform-assignment-operands-on-android)
+is retained for future general-target work. Its optional implementation remains
+in PR #38. The current accepted-target route uses J1063's explicit audited roots;
+preload record/alias/module discovery is not part of that fixed-target producer.

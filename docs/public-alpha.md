@@ -47,6 +47,10 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       Full Unity-project reconstruction or AssetRipper export is not an assumed
       requirement. Every protected APK/payload output needs an owner-input
       producer; the accepted build supplies validation, never hidden target bytes.
+      [J1027's importer configuration controls](PORTING_JOURNAL.md#j1027--bind-explicit-importer-configuration-and-reject-drift-on-android)
+      pass on Android. [J1029's actual-input call](PORTING_JOURNAL.md#j1029--preserve-a-native-importer-failure-during-raw-loading)
+      fails during raw loading while formatting an earlier exception. Complete
+      return/export and output equivalence remain unqualified.
 - [ ] Resolve permitted tool acquisition and Android app execution, complete
       game AOT/metadata construction, Android content/shader production, durable
       owner signing and user-mediated installation/update as one complete flow.

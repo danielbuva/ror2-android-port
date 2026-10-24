@@ -35886,3 +35886,280 @@ phone-only installation remain separate gates. Revisit on original input,
 target schema/order, recipe, reader or interpreter changes. Architecture and
 LOCAL_STATE name the producer and lifecycle; no game runtime owner or `./dev`
 action is added.
+
+## J1027 — Bind explicit importer configuration and reject drift on Android
+
+**Question and prior art.** J1025 qualifies an authored control in a separate
+NativeAOT importer console. Before a real-input call, make its configuration and
+refusal behavior explicit. Re-inspected the pinned public
+[CoreConfiguration](https://github.com/AssetRipper/AssetRipper/blob/1ac666f47d8e9dedf96afb0b914c70d7656151ea/Source/AssetRipper.Import/Configuration/CoreConfiguration.cs),
+ImportSettings and GameStructure.Load APIs, following the community extraction
+map. The unchanged importer separates file/assembly initialization from export.
+A host-only probe confirms Level2 script metadata, Extract streaming assets,
+zero default/target versions and script import enabled. This describes input
+metadata parsing; the game remains native IL2CPP ARM64.
+
+**Separate prototype and explicit contract.** The new private console retains
+the authored two-asset control and adds strict configuration checking plus an
+unexecuted import mode. Configuration accepts only its seven known fields,
+profile `default-import-v1`, the observed defaults and a 146-assembly contract.
+It hashes the actual configuration bytes and checks current upstream defaults
+before continuing. No export mode exists. Its import path uses the public
+GameStructure.Load API, bounded status/error observations and one disposable
+bundle/assembly-manager lifetime. This is not a current build consumer.
+Program SHA-256 is
+`3ed6c1b5db6e3477a2b4578bda890983979e859c11e67acb2d2def624743e830`;
+configuration SHA-256 is
+`b727e7bb017e5e06e8ea1bb25564a6407a615d53b8e667b5ea125c6cda632e90`.
+The original self-test-only console and J1025 evidence remain intact.
+
+**Host compilation boundaries.** Two initial authored-helper compiles fail on
+missing UnknownObject/UnreadableObject namespace imports; preserved source
+versions identify these wrapper errors. Referencing the public AssetCreation
+types resolves them without changing the importer. The first native compile
+then fails with an explicit OutOfMemoryException in ILCompiler.ObjectWriter's
+StringTableBuilder/MemoryStream growth under the 3 GiB compiler request:
+217.05 s, sampled family RSS 3,546,005,504 bytes. This is a host compiler failure,
+not a phone importer allocation or game result.
+
+A 4 GiB compiler retry first skips compilation because the failed object file
+looks current, then fails linking its absent export map. The pinned SDK's
+IlcCompile target lists only the native object as its incremental output. Hash
+and move this prototype's three failed native intermediates into the retained
+failed case, then regenerate that target. No shared cache is cleared. The next
+4 GiB compile succeeds in 213.07 s with sampled family RSS 3,937,222,656 bytes.
+All retries retain the independent 5 GiB family RSS guard, 8 GiB disk reserve,
+15 percent free-memory floor, two workers, 600 s deadline and busy-Unity-mutex
+stop. No phone memory budget, Unity game toolchain or upstream source changes.
+The 78,974,336-byte Android ELF has SHA-256
+`829acd0ff17143f648847f5cbf872766d30323ca9983913713bb0554bc038f0c`.
+
+**Host and Android controls.** The host passes configuration, the same two
+accepted typed assets / 204 input bytes, and export-mode refusal. Five invalid
+configurations refuse: unknown field, script level, streaming mode, target
+version flag and assembly count. On Android, both the existing Mono-based tool
+host and NativeAOT executable pass authored input and configuration, then refuse
+all five invalid configurations with exit 2. All 14 processes are absent at
+readback. Both configuration observations bind the exact same SHA-256 above.
+Short process lifetimes still leave retained-RSS/performance comparisons
+unqualified. The control runner keeps its 512 MiB RSS guard, RAM/scratch
+reserves and 30 s per-process deadline.
+
+**Input-verifier controls and pending trial.** The copied accepted-input manifest
+has an input ID and a nested path-to-size/hash map. Pre-run checks catch two
+new harness comparisons that incorrectly assumed a flat map/hash value; no
+actual-input process starts. The corrected reader is tested on 2,749 authored
+files: valid input passes; same-size hash mutation, size mutation and symlinks
+refuse. A separate host comparison confirms the copied manifest's 2,749
+size/hash rows and 4,121,244,593 bytes match the current accepted inventory.
+That comparison does not rehash the phone's real files in this experiment.
+The concrete actual-input trial is source/hash bound and pending peer review;
+its parser mode, dependency initialization and lifecycle remain unexecuted.
+
+**Peer-review correction before execution.** Static review finds that the
+proposed runners dynamically trust the current artifact manifest/control
+receipt instead of enforcing the reviewed pair. Pin the entire 62-row artifact
+manifest and 14-case control receipt at host admission, and pin the expected
+artifact/input digests on phone before/after. Joint artifact/manifest drift
+now refuses; the phone result also retains the input identity and both digests.
+The runnable authored `native_import_verifier_test_v3.py` passes four host tests,
+including the valid 2,749-file case, hash/size/symlink mutations, joint artifact/
+manifest replacement and control-receipt replacement. No native rebuild or
+real-input call occurs for this correction. Review packet v3 supersedes v1/v2.
+
+**Evidence and boundaries.** Source variants, failed intermediates, successful
+publications, synthetic verifier checks, exact configuration, 14 phone controls
+and review packet stay ignored under
+`work/coordination/phone-proof/nativeaot-tool-host-r1/`.
+`configuration-proof-v1.json` is 4,007 bytes, SHA-256
+`3e5046fbaadeeacb4574f354d5a6a4bac4cf3454e8859435384dcbcd3b6ef58c`.
+The source/guard successor `configuration-proof-v2.json` is 726 bytes,
+SHA-256 `ca46c03ef9f3899899bfae95530176fc285636cffdf0f50cb46f8efa7cc879d5`.
+All 614 baseline tool hashes match before/after each phone control attempt.
+Alpha retains APK
+be26c21c4cd8ff15a8a663528216cf7a69394a51d8b9441a63a1a496f83e98b5,
+with no game process/selector and the display asleep. Zero installs, game
+launches or editor actions occur; Main's resources remain untouched. Changed
+private drivers pass Ruff. Complete accepted-input import, processing/export,
+output comparison, permitted distribution, app policy and matched game
+performance remain open. Route A and the desktop fallback stay fixed.
+
+## J1029 — Preserve a native importer failure during raw loading
+
+**Hypothesis and qualified setup.** After J1027's explicit configuration,
+authored input and refusal controls, test whether the pinned NativeAOT importer
+returns the complete accepted input within the existing 5 GiB managed request
+and independent 6 GiB RSS guard. This is a separate build-tool process, not a
+game runtime. Peer review of the source-bound v3 runner closes its reviewed
+manifest/control-receipt pinning issue before dispatch. The launch rehashes the
+review packet, both drivers, runnable tests and exact native executable.
+
+**One actual-input attempt.** The supplied copy matches accepted input
+6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88.
+All 2,749 copied file sizes/hashes and all 62 selected artifact rows pass before
+and after. Initial available RAM is 9,858,334,720 bytes and owned scratch free
+space is 6,933,774,336 bytes. The 8 GiB initial RAM, 3 GiB initial scratch,
+continuous 1 GiB RAM / 2 GiB scratch reserves, 1,200 s deadline, two CPUs and
+64 MiB log bound remain enforced. No device budget is increased.
+
+The native process exits 2 through a caught OutOfMemoryException. The controller
+exits 1 and preserves failure; total attempt time, including verification, is
+34.13 s. Sampled peak process RSS is 5,286,301,696 bytes and the largest managed
+sample is 5,289,737,256 bytes. The last status is
+`loading_step_create_file_collection`; no bundle-return or complete event exists.
+Actual returned assembly/asset counts and dependency-initialization success are
+unobserved. The independent RSS/RAM/disk guard does not trigger this failure.
+
+**First observed allocation and source boundary.** The stack is Array.Resize
+inside the pinned .NET NativeAOT runtime's
+[ComputeLdftnReverseLookup_InvokeMap](https://github.com/dotnet/runtime/blob/v10.0.12/src/coreclr/nativeaot/System.Private.Reflection.Execution/src/Internal/Reflection/Execution/ExecutionEnvironmentImplementation.MappingTables.cs),
+then method-name/stack-trace construction and Exception.ToString, called by
+[GameBundle.LoadFilesAndDependencies](https://github.com/AssetRipper/AssetRipper/blob/1ac666f47d8e9dedf96afb0b914c70d7656151ea/Source/AssetRipper.Assets/Bundles/GameBundle.FromPaths.cs).
+That source catches a read/decompression exception and stores its formatted
+stack in FailedFile before returning the raw file stack. Typed collection
+materialization happens afterward. This identifies a secondary allocation
+failure while describing an earlier read error; it does not identify that
+original error, prove a general formatter defect or measure typed-asset
+retention. Do not attribute this run to J1020's later typed-materialization
+boundary merely because managed memory is near the requested limit.
+
+**Small authored diagnostic.** Truncate the selected authored bundle by 64 bytes
+in a new ignored control. The same managed and NativeAOT console reject it with
+exit 2, zero accepted objects and no OOM text. Sampled RSS is 35,287,040 and
+28,610,560 bytes respectively. Both use a 256 MiB managed request and independent
+512 MiB RSS guard. This control does not reproduce the real-input OOM or prove
+that its original exception path is identical. It supports no broader
+exception-rendering, capacity or performance conclusion.
+
+**Terminal evidence.** The actual process and both diagnostic processes are
+absent. Alpha retains APK
+be26c21c4cd8ff15a8a663528216cf7a69394a51d8b9441a63a1a496f83e98b5,
+with no selector/game process and the display asleep. Actual-input scratch free
+space is 5,635,444,736 bytes at terminal readback; preserve the owned failed
+case, logs and temporary outputs. There are zero installs, game launches or
+editor actions, and no operation on Main's device/editor.
+
+Evidence remains under
+`work/coordination/phone-proof/nativeaot-tool-host-r1/`, selected explicitly by
+`native-import-selection-v1.json` and
+`phone-malformed-exception-selection-v1.json`. `actual-import-proof-v1.json` is
+1,167 bytes, SHA-256
+`88013510c8e36eeedc658c9be4ff3b32ae01a2d7992266d06140ae6c1404e6b3`.
+It binds the exact reviewed packet and terminal result/events/stdout/control
+hashes. No game-derived content or raw device logs are published.
+
+**Next discriminating gate.** Preserve this failure and identify the original
+read exception or reduce raw-loading overlap without increasing phone limits.
+J1016 already compares every initial-file payload under two smaller existing
+temporary-stream thresholds. A separate pinned upstream source copy with only
+those two constants changed is prepared, not built or adopted. Its 1,312-byte
+patch SHA-256 is
+`b594e3de9a246e7609dc5ef022284be4339146c6abb7f7c70c39a7165ae3a69d`.
+Requalify exact native output, authored controls and read-byte behavior before
+another actual-input attempt. Complete import, processing/export, metadata and
+project equivalence, permitted distribution, app security and matched game
+performance remain open. Route A and the desktop fallback remain fixed.
+
+## J951 — Bind SDK preload platform assignment operands on Android
+
+**Hypothesis and scope.** J948 derives copied-field/pair/consumer alignment but
+leaves preload inputs and all runtime target decisions open. Bind platform
+assignment operands through the whole generated function, including storage
+reuse and out-of-line predecessors, without executing SDK code or treating
+record values as established. Main reserves J951. Rebase onto bcd77c4
+preserves its complete journal prefix and snapshot; change only Alpha research.
+Read J895/J931/J934/J939/J948 first. This is generic SDK metadata tooling, with
+no RoR2 reconstruction, renderer, runtime/backend, game source or APK change.
+
+**Authored ownership and contracts.** `phone_preload_flow.py` and
+`phone_preload_inputs.py` own a separate static assignment-input report. Sparse
+backward definitions traverse all normal CFG predecessors and backedges without
+allocating a dominator set for every node. GPR and SIMD namespaces are separate;
+normal calls carry ABI clobbers. Derive stack allocation anchors and aliases,
+then connect every copied buffer producer: existing field storage, grow return
+with that field receiver, and direct inline-field address. Neither branch
+conditions nor SDK calls execute. Require bounded file-backed C strings,
+scalar/vector fragment coverage, matching terminators, mode conditions and
+length writes, including compiler-reused tag/zero registers. Direct-stack
+reloads link to explicit full stores; partial or ambiguous stores refuse.
+Calls' memory effects and indirect aliases are **not** evaluated by that link.
+
+The reader binds one platform assignment to each of 19 insertion sites, using
+J948's independently derived consumer field offset. It also identifies 46 grow
+calls for other frame fields and retains 29 unresolved grow receivers. Complete
+classification of growth calls is false. Native preload inputs, constructed
+records, map population and live target/module support remain separate gates;
+no game build or root generator consumes this report. Android's label is read
+from its source operands, rather than supplied by an API answer or captured
+table. No new editor/API oracle is run or staged as a generation input.
+
+**First failures and host evidence.** The old fresh-payload helper correctly
+refuses an unproven local receiver and cannot account for grow bypass. Initial
+new prototypes additionally refuse compressed inline-length writes, scalar
+fragments mixed with vector loads, direct spill reuse and longer payloads.
+Preserve the failed reports and shape scans. Resolve those operand forms
+explicitly; retain the memory/state limitations. An initial all-growth coverage
+expectation fails despite 19 bindings because 29 receivers are unresolved.
+Keep that failure and expose insertion-site coverage separately from growth
+classification instead of claiming complete inputs.
+
+Actual source is dbbbc575d5408f7661f7756acc33e6412ffbb221; public rebased source
+11b09a31801d71ba6b8683825b607909106c3db2 has identical bytes for all 14 staged
+reader/helper/test files. Thirteen host contracts pass without skips, including
+an independently assembled LLVM fixture for GPR effects and distinct SIMD
+registers. Authored CFG/copy fixtures cover storage reuse, out-of-line paths,
+backedges, call clobbers, overlaps, compressed lengths and direct spills; no
+captured SDK instruction/table is a fixture. All 114 targeted SDK operand
+mutations refuse through the public components. SDK bytes remain unchanged.
+Changed-file Ruff, staged public scan and manual IP/provenance review pass.
+Doctor/preflight still refuse Alpha's missing clone-local game inputs; no game
+build is attempted or qualified.
+
+**Android evidence.** Stage 13 committed reader/helper sources and one test file
+in a fresh owned Alpha directory after checking explicit device selection,
+ownership, current storage/backing/capacity/reserve and supplied SDK/Python
+hashes. The static read completes in about 2.814 s. Host and Android report bytes
+match SHA-256
+27a139cf7be165231941d512eba377515c15adbfeff8c5a68b5aec658a2ed101.
+All 11 portable contracts pass without skips. Unknown-SDK and output-overwrite
+controls refuse while preserving the accepted report. Four adapter -O/-OO
+controls refuse before imports/device access. All staged sources and SDK bytes
+remain unchanged. Zero installs and game launches occur; owned Alpha be26c21c
+bytes remain unchanged, process/selector absent and display asleep. No shared
+Unity/editor/current pointer or Main-device action occurs. No APK is produced.
+
+**Evidence and disposition.** Private result:
+`work/coordination/phone-proof/preload-inputs-phone-c7b0e7dbf689410f87e85900882a262e/result.json`.
+`preload-proof-receipt-v1.json` under the phone proof root binds 86 artifacts,
+including failed prototypes, source stages, host/device reports, mutation
+controls, guards, private SDK observations and source equality; SHA-256
+6782a6f2c12abe3023b2461a297fc547a9583ac3a95cb4d14583cc4962ea5fac.
+Raw SDK material, identifiers and logs remain ignored. Named ownership and
+private replay inputs are documented.
+
+`input_operand_links_qualified` and insertion-site coverage are true.
+`all_grow_receivers_classified`, `all_record_inputs_complete`,
+`call_memory_effects_qualified`, `indirect_store_aliasing_qualified`,
+`record_values_qualified`, `constructor_result_qualified`,
+`hash_container_semantics_qualified`, `target_support_qualified`,
+`target_discovery_qualified`, `module_inclusion_qualified`,
+`native_usage_qualified` and `root_generation_qualified` remain false. Next
+requires complete reset/constructor/record inputs and call-memory/container/
+module/state/native-usage joins before independent root production. Preserve
+J939's failed exact API equivalence and J929's failed app-host refusal. Route A,
+the working Android renderer and desktop owner-build fallback remain fixed;
+full phone installation, matched performance and public-alpha readiness remain
+unproved.
+
+Final integration rebase preserves the complete Main journal prefix and all
+non-owned snapshot rows. `preload-rebase-equality-v4.json` separately binds the
+rebased source; the original phone report and 86-artifact proof stay unchanged.
+
+Integration disposition (2026-10-24): retain this historical result and its exact
+source/proof identities. The optional assignment-analysis implementation remains
+in PR #38 / commit `3e6ce440`, rather than being added to current tooling. J1063
+uses audited explicit fixed-target roots and the existing SDK native registry;
+this research is not a dependency of the accepted-target owner converter.
+General preload/target discovery remains unqualified and can be revisited from
+that preserved branch if a future target requires it. Closing the PR does not
+claim its unresolved record, alias or module semantics are solved.
