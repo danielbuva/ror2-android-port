@@ -1,5 +1,6 @@
-"""Current host-only owner assembly prefix; no project oracle, editor or device."""
+"""Current isolated owner assembly prefix; no project oracle, editor or device."""
 
+from functools import partial
 import hashlib
 import json
 from pathlib import Path
@@ -62,6 +63,10 @@ def source_state(transforms):
         "recipe/assembly-transforms.json",
         "recipe/templates/original-assembly.meta",
         "environment/toolchain.json",
+        "scripts/lab/public_transform_tools.py",
+        "recipe/owner-public-tools.json",
+        "tools/owner-build/PublicProviderWitness.cs",
+        "tools/owner-build/licenses/Roslyn-LICENSE.txt",
         *transforms["tool_sources"],
     }
     return {
@@ -71,10 +76,17 @@ def source_state(transforms):
     }
 
 
-def stage(destination, work=None):
+def stage(destination, work=None, *, assembly_profile="sdk", tool_archives=None, tool_launcher=None, tool_host=None):
     """Keep an exclusive attempt and its first failure; never update lab pointers."""
     if destination is None:
         raise RuntimeError("Owner assembly prefix requires an explicit new --dest")
+    options = (tool_archives, tool_launcher, tool_host)
+    if (
+        assembly_profile not in {"sdk", "public-dotnet8"}
+        or (assembly_profile == "sdk" and any(options))
+        or (assembly_profile == "public-dotnet8" and not all(options))
+    ):
+        raise RuntimeError("Public profile requires explicit tool archives, launcher and qualified host; SDK profile accepts none")
     work = Path(work or WORK).expanduser().resolve()
     identity, installation, inputs = input_state(work)
     destination = rebuild.safe_destination(destination, identity, work)
@@ -97,7 +109,8 @@ def stage(destination, work=None):
         "input_id": identity,
         "input_receipts_sha256": inputs,
         "source": source,
-        "cecil_sha256": transforms["cecil_sha256"],
+        "transform_profile": assembly_profile,
+        "cecil_sha256": transforms["cecil_sha256"] if assembly_profile == "sdk" else None,
         "full_project_qualified": False,
         "phone_build_qualified": False,
         "runtime_qualified": False,
@@ -106,7 +119,14 @@ def stage(destination, work=None):
     try:
         attempt = destination / "attempt"
         attempt.mkdir()
-        payload = rebuild.assembly_payload(work, identity, attempt, set(expected))
+        if assembly_profile == "public-dotnet8":
+            import public_transform_tools
+
+            producer = partial(public_transform_tools.generate, archives=tool_archives, launcher=tool_launcher, host=tool_host)
+            payload = rebuild.assembly_payload(work, identity, attempt, set(expected), transform_producer=producer)
+            receipt["public_tools_receipt_sha256"] = sha(attempt / "public-tools-receipt.json")
+        else:
+            payload = rebuild.assembly_payload(work, identity, attempt, set(expected))
         if set(payload) != set(expected) or any(hashlib.sha256(data).hexdigest() != expected[path] for path, data in payload.items()):
             raise RuntimeError("Owner assembly cohort differs from the public output contract")
         if input_state(work) != (identity, installation, inputs) or source_state(transforms) != source:
@@ -135,5 +155,5 @@ def stage(destination, work=None):
     return receipt
 
 
-def stage_action(dest=None, work=None):
-    print(json.dumps(stage(dest, work), indent=2))
+def stage_action(dest=None, work=None, **profile):
+    print(json.dumps(stage(dest, work, **profile), indent=2))

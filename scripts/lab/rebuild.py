@@ -45,7 +45,7 @@ def importer(row):
     )
 
 
-def assembly_payload(work, input_id, temporary, expected):
+def assembly_payload(work, input_id, temporary, expected, *, transform_producer=None):
     """Produce the recipe cohort independently of the working-project oracle."""
     recipe = read(RECIPE / "original-assemblies.json")
     transforms = assembly_transforms.load_recipe()
@@ -75,7 +75,7 @@ def assembly_payload(work, input_id, temporary, expected):
     by_name = {row["source"]: row for row in rows}
     if any(name not in by_name or by_name[name]["sha256"] != value for name, value in transform_inputs.items()):
         raise RuntimeError("Assembly transform input membership/hash drift")
-    transformed = assembly_transforms.generate(managed, temporary, transforms)
+    transformed = (transform_producer or assembly_transforms.generate)(managed, temporary, transforms)
     payload = {}
     for row in rows:
         path, name = row["path"], row["source"]

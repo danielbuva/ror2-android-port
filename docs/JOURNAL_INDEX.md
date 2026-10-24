@@ -10,6 +10,11 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1073](PORTING_JOURNAL.md#j1073--revalidate-the-public-owner-transform-profile-after-integration) | 2026-10-24 | Revalidate the public owner transform profile after integration | 2026-10-24 UTC. |
+| [J992](PORTING_JOURNAL.md#j992--connect-phone-acquired-public-tools-to-owner-assembly-transforms) | 2026-10-24 | Connect phone-acquired public tools to owner assembly transforms | 2026-10-23 UTC. |
+| [J990](PORTING_JOURNAL.md#j990--build-unchanged-owner-transforms-on-android-from-public-tool-inputs) | 2026-10-24 | Build unchanged owner transforms on Android from public tool inputs | 2026-10-23 UTC. |
+| [J986](PORTING_JOURNAL.md#j986--compile-owner-assembly-transforms-on-android-with-a-public-compiler) | 2026-10-24 | Compile owner assembly transforms on Android with a public compiler | 2026-10-23 UTC. |
+| [J995](PORTING_JOURNAL.md#j995--integrate-the-public-transform-profile-with-owner-prefix-and-portable-cli) | 2026-10-24 | Integrate the public transform profile with owner prefix and portable CLI | 2026-10-23 UTC. |
 | [J1072](PORTING_JOURNAL.md#j1072--qualify-timed-pre-gradle-apk-iteration-and-install-transports) | 2026-10-24 | Qualify timed pre-Gradle APK iteration and install transports | 2026-10-24 UTC. |
 | [J1068](PORTING_JOURNAL.md#j1068--resume-original-audio-for-bank-release-and-verify-healthy-quit) | 2026-10-24 | Resume original audio for bank release and verify healthy Quit | **Hypothesis and ownership.** |
 | [J1067](PORTING_JOURNAL.md#j1067--activate-source-camera-uber-and-skill-timed-mainoutput-together) | 2026-10-24 | Activate source-camera Uber and skill-timed MainOutput together | **Hypothesis and scope.** |

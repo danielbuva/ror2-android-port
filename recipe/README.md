@@ -123,6 +123,7 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 | `composition.json` | R2 migration selection B1 and the GUID part of B5 in the rebuild path | Accepted input ID; how many runtime-recipe stages composition stages (7); two accepted-export global-texture paths with SHA-256 and their resource names; 90 previous-input → current-export GUID pairs, exactly those that change inherited store bodies. | GUIDs and asset paths only; no bodies, maps beyond the 90 needed pairs, private roots or device/account data. Audited J597. | `composition_rebuild.recipe_inputs`, with `asset-transforms.json`, `inherited-state.json`, `runtime-config.json`, `content.json` and the shader recipe, replaces B1, B3–B6 and B8 for R2. |
 | `composition-export-copies.json` | Residual R2 export membership outside canonical catalog closure relocation | 128 export-path → project-path pairs and accepted input ID. | Asset identifiers only; no bodies, private roots, device/account identifiers or third-party source. Audited 2026-10-18. | `composition_io.export_membership`; all bytes come from the accepted export and are hash/size-gated against the local map. |
 | `assembly-transforms.json` | Implicit historical plugin transform sequence (migration-removal commit 7, verification scope); J638 adds the reviewed updated-input unstarted skill-response cleanup guard; J714 adds the read-only `--catalog-names` source (tool hashes only; transform outputs unchanged) | Existing authored AssemblyProbe modes, exact ordered argument identifiers, accepted original/output SHA-256, tool source hashes and supplied Mono.Cecil hash. Historical producers: `integrated_objective.transform_optional_presentation`, `source_scene_candidate.stage_unavailable_audio`; current local oracles: generation marker and reviewed transform receipts. | Minimum DLL names, mode/argument identifiers and hashes only; no IL, binaries, decompiled source, middleware, private paths or device/account data. Original assemblies and Cecil must be supplied locally; no ownership or authentication changes. Updated source is an authored null check plus structural audit, with no copied native method body. Audited 2026-10-19. | Current `assembly_transforms.py` verifies in disposable `.local/` scratch. Its shared generator also supplies the three transformed DLLs to R1 below. |
+| `owner-public-tools.json` | Optional public .NET 8 build-tool profile qualified from pinned public source/packages | Three public archive identities, member SHA-256/Git blobs, notice and witness hashes, exact qualified host versions; public package signatures checked during qualification. | Public tool metadata only; MIT declarations and retained notices audited 2026-10-23 UTC in the section below. No binary, signing key, game content, SDK implementation, credential or private identifier is tracked. Native host/dependency delivery remains a separate audit. | Current opt-in `public_transform_tools.py`; default SDK/R1 producer stays unchanged. |
 | `original-assemblies.json` | R1 installation assembly placement and importer initialization | Accepted Managed source hashes and project paths; retained GUIDs, creation times and execution orders. The tracked common importer template supplies fixed settings. | Identifiers/settings/hashes only; no DLL bytes, IL, decompiled source, private paths or account data. All 49 sources, including SimpleJSON, come from the legitimate installation. Audit above, 2026-10-18. | Current `rebuild.py` reconstructs 49 DLL/importer pairs under the isolated destination, applies J563, gates 98 output hashes/sizes and compares actual project bytes. |
 | `export-additions.json` | Inherited WarpRamp asset/meta pair | Hash-pinned accepted-export PNG and importer, identity operation, inherited GUID and importer creation-time parameter. | J548 identifiers, hashes and necessary importer parameters only. The creation time is an exporter field, not a device/account/session identifier. No PNG or importer body is tracked. Audited 2026-10-17. | `export_additions.py` returns the exact pair without history or filesystem writes; composition prepares it before staging. |
 | `unity-package-additions.json` | Used inherited TMP properties include pair | Unity's `com.unity.textmeshpro` 3.0.6 archive bundled with the pinned editor; outer archive, Essential Resources archive and selected include hashes; output GUID. | Package `LICENSE.md` identifies the Unity Companion License for Unity-dependent projects. The operator supplies the authorised installed package. Coordinates, hashes and selectors only; no third-party source, package, license text or importer body is tracked. Audited 2026-10-17. | `unity_package_additions.py` reads both archives in memory, selects one include and uses the existing authored importer generator. Composition stages the pair without installing TMP or changing assembly providers. |
@@ -1847,6 +1848,31 @@ metadata staging. It changes no camera transform output or protected input.
 Only authored staging code, synthetic metadata contracts and its source digest
 are published; generated project metadata and build evidence remain ignored.
 Provenance/privacy audit: 2026-10-22.
+
+## Public owner-transform build tools
+
+`owner-public-tools.json` is an authored input profile for the isolated optional
+`public-dotnet8` transform producer. It contains only public archive URLs, exact
+archive/member sizes and hashes, Cecil Git blob identities, runtime constraints
+and notice/witness metadata. The compiler is Microsoft.Net.Compilers.Toolset
+4.8.0 (Roslyn source `e091728607ca0fc9efca55ccfb3e59259c6b5a0a`); references are
+Microsoft.NETCore.App.Ref 8.0.32 (runtime source
+`b9a49e4a6d3a444a3685e318c74a7892d01873f7`); Cecil source is
+`mono/cecil` at `8021f3fbe75715a1762e725594d8c00cce3679d8`. Each declares MIT.
+Compiler/reference archives were signature-verified during qualification;
+runtime use checks pinned hashes and Cecil source Git blobs. Source/member
+selection matches the public projects and retained profile evidence, not game
+output or SDK implementation dumps. The full Roslyn MIT notice is retained at
+`tools/owner-build/licenses/Roslyn-LICENSE.txt`; archive license and third-party
+notices are extracted with the inputs. No signing key is selected or published.
+
+The authored `PublicProviderWitness.cs` checks only the build-tool provider's
+loaded identity/hash and runtime. No original game method, proprietary source,
+binary, account/device/storage data or credential is included in this profile.
+Archives, extracted implementation source, compiler outputs, game-derived DLLs
+and raw evidence stay ignored. This audit covers these public build-tool inputs,
+not native host/dependency redistribution or complete player delivery.
+Provenance/privacy audit: 2026-10-23 UTC.
 
 J991 extends the original-audio source cohort and both runtime source selections
 with the authored network-sound catalog admission owner. The project-layout

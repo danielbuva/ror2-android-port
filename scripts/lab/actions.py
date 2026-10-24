@@ -29,7 +29,10 @@ def _rebuild_step(function, kwargs, args):
 
 
 def _owner_assemblies(function, kwargs, args):
-    return function(dest=args.dest, work=args.work_dir, **kwargs)
+    selected = dict(kwargs)
+    if getattr(args, "assembly_profile", "sdk") != "sdk":
+        selected.update(assembly_profile=args.assembly_profile, tool_archives=args.tool_archives, tool_launcher=args.tool_launcher, tool_host=args.tool_host)
+    return function(dest=args.dest, work=args.work_dir, **selected)
 
 
 def _capture(function, kwargs, args):
@@ -291,7 +294,7 @@ _ENTRIES = (
         "stage_action",
         {},
         "current",
-        "Generate only the owner DLL/importer prefix from reviewed input and public recipes, without a project/provenance oracle. Requires a new --dest under this clone's work/rebuild/; --work-dir selects inputs. Host-only; no complete Unity project or phone/game qualification.",
+        "Generate only the owner DLL/importer prefix from reviewed input and public recipes, without a project/provenance oracle. Requires a new --dest under this clone's work/rebuild/; --work-dir selects inputs. SDK default; opt-in --assembly-profile public-dotnet8 requires exact --tool-archives, --tool-launcher and --tool-host. No complete project or phone/game qualification.",
         handler=_owner_assemblies,
     ),
     Action(

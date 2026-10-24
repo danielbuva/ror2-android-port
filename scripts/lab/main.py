@@ -44,6 +44,15 @@ p.add_argument(
     help="Current: rebuild-step, owner-assembly-prefix or isolated preflight destination beneath this clone's work/rebuild/; owner prefix requires a new directory",
 )
 p.add_argument("--compare-only", action="store_true", help="Current: compare an existing rebuild-step destination without writing")
+p.add_argument(
+    "--assembly-profile",
+    choices=("sdk", "public-dotnet8"),
+    default="sdk",
+    help="Current owner-assembly-prefix only: SDK default or opt-in public .NET 8 build tools; never a game runtime selection",
+)
+p.add_argument("--tool-archives", help="Current public-dotnet8 profile: read-only directory containing the three exact public archives")
+p.add_argument("--tool-launcher", help="Current public-dotnet8 profile: explicit existing dotnet executable")
+p.add_argument("--tool-host", choices=("host10", "android8"), help="Current public-dotnet8 profile: exact qualified build-tool runtime host")
 p.add_argument("--apk", help="Current: install this APK through the existing device safety/placement checks; preserves current-build")
 p.add_argument(
     "--install-mode",
@@ -156,6 +165,11 @@ if is_rebuild and not a.step:
     p.error("rebuild-step requires --step NAME")
 if is_owner_assemblies and not a.dest:
     p.error("owner-assembly-prefix requires a new --dest")
+tool_options = (a.tool_archives, a.tool_launcher, a.tool_host)
+if (a.assembly_profile != "sdk" or any(tool_options)) and not is_owner_assemblies:
+    p.error("--assembly-profile and --tool-* require owner-assembly-prefix")
+if (a.assembly_profile == "public-dotnet8" and not all(tool_options)) or (a.assembly_profile == "sdk" and any(tool_options)):
+    p.error("public-dotnet8 requires all three --tool-* selectors; SDK accepts none")
 if (a.step or a.compare_only) and not is_rebuild:
     p.error("--step and --compare-only require prototype --action rebuild-step")
 if a.dest and not (is_destination_preflight or is_rebuild or is_owner_assemblies):

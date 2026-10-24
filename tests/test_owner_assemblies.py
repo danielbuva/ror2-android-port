@@ -114,6 +114,27 @@ class OwnerAssemblyTests(unittest.TestCase):
         for key in ("full_project_qualified", "phone_build_qualified", "runtime_qualified"):
             self.assertIs(result[key], False)
 
+    def test_public_profile_is_explicit_and_uses_same_full_output_gate(self):
+        selectors = dict(assembly_profile="public-dotnet8", tool_archives="archives", tool_launcher="launcher", tool_host="host10")
+
+        def generated(managed, attempt, transforms, **options):
+            self.assertEqual(options, dict(archives="archives", launcher="launcher", host="host10"))
+            write(attempt / "public-tools-receipt.json", dict(profile="public-dotnet8", success=True))
+            return self.generate(managed, attempt, transforms)
+
+        with patch("public_transform_tools.generate", side_effect=generated):
+            result = owner.stage(self.destination, self.work, **selectors)
+        self.assertTrue(result["success"])
+        self.assertEqual(result["transform_profile"], "public-dotnet8")
+        self.assertIsNone(result["cecil_sha256"])
+        self.assertEqual(result["public_tools_receipt_sha256"], sha(self.destination / "attempt/public-tools-receipt.json"))
+
+    def test_partial_unknown_and_mixed_profile_selectors_refuse_before_destination(self):
+        for options in (dict(assembly_profile="unknown"), dict(tool_archives="unexpected"), dict(assembly_profile="public-dotnet8", tool_host="host10")):
+            with self.subTest(options=options), self.assertRaisesRegex(RuntimeError, "Public profile requires"):
+                owner.stage(self.destination, self.work, **options)
+            self.assertFalse(self.destination.exists())
+
     def test_existing_success_or_failure_destination_is_never_reused(self):
         self.stage()
         before = {path.relative_to(self.destination): path.read_bytes() for path in self.destination.rglob("*") if path.is_file()}
@@ -254,6 +275,15 @@ class OwnerAssemblyInterfaceTests(unittest.TestCase):
         for extra in ([], ["--dest", "work/rebuild/fixture", "--step", "assemblies"], ["--dest", "work/rebuild/fixture", "--compare-only"]):
             command = [sys.executable, str(ROOT / "scripts/lab/main.py"), "prototype", "--action", "owner-assembly-prefix", *extra]
             result = subprocess.run(command, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 2)
+
+    def test_public_profile_cli_rejects_partial_and_unrelated_selectors(self):
+        for extra in (
+            ["prototype", "--action", "owner-assembly-prefix", "--dest", "work/rebuild/fixture", "--assembly-profile", "public-dotnet8"],
+            ["prototype", "--action", "owner-assembly-prefix", "--dest", "work/rebuild/fixture", "--tool-host", "host10"],
+            ["doctor", "--assembly-profile", "public-dotnet8", "--tool-archives", "cache", "--tool-launcher", "dotnet", "--tool-host", "host10"],
+        ):
+            result = subprocess.run([sys.executable, str(ROOT / "scripts/lab/main.py"), *extra], capture_output=True, text=True)
             self.assertEqual(result.returncode, 2)
 
 
