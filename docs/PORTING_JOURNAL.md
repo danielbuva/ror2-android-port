@@ -37596,3 +37596,137 @@ Private evidence:
 `heap-parser-zero-before.log`, `heap-parser-zero-after.log`,
 `heap-after*-roots.*`, and `lane-heap-frozen.json`. Heap files, addresses, raw
 field values, databases, identifiers and logs remain private.
+
+## J1088 — Produce every single-mip ETC1 texture from PC bundles on Android
+
+Date: 2026-10-24 UTC. Hypothesis: every ETC1/single-mip Texture2D in the fixed
+J850 target can be derived from its original PC bundle and audited importer
+relationships through the existing texture owner. No exported image, accepted
+pixel, SDK encoder or Editor/project workflow is a production input. The fixed
+input and target remain J1082's J850/source `1780ea9`, APK
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+Prior art: consult `docs/community-prior-art.md` and J1050's full bundle reuse
+census. Pinned AssetRipper `1ac666f47d8e9dedf96afb0b914c70d7656151ea`
+TextureAssetExporter/TextureConverter/DirectBitmap establish original image-path
+extension selection, AG normal unpacking and image export behavior. Original
+AssetBundle container paths independently confirm the six selected JPEG source
+identities; exported images are comparison oracles only. The unchanged public
+Ericsson ETCPACK 2.74 encoder and J1079's qualified JPEG bridge supply encoding.
+Their acquisition/source/license pins remain unchanged. No protected encoder
+implementation is reproduced or vendored.
+
+Changes: extend `texture_produce.py` with `etc1` using source BC1/BC3, RGB24,
+RGBA32 and the qualified R16 high-byte path. BC3 uses four-color interpolation
+and its original alpha palette; BC1 preserves transparent selectors before the
+existing PNG dilation. Normal input uses original AG coordinates and integer
+square root reconstruction, selecting numeric ETC1 encoding. Color input uses
+perceptual encoding, including source-linear colors. The source JPEG policy
+discards alpha before the existing quality-90 export/decode bridge; PNG input
+retains the qualified transparency-dilation path. All seven existing field
+projections, source/body/pixel checks, output reservation and persisted readback
+remain owned by the existing producer.
+
+The generalized native owner is `build_texture_etc.py` / `texture_etc.cpp`,
+renamed from the former Alpha8-only helper. Its explicit `alpha8`, `rgb` and
+`normal` pipe modes use the same separately acquired public source provider,
+license notices, bounded compiler/codec children and retained terminal receipts.
+The producer admits it through `--etc-codec` and its explicit hash. J1082's old
+names remain historical at its recorded commit; no compatibility framework or
+second compiler/encoder owner is introduced.
+
+`recipe/owner-rgb-textures.json` selects 274 canonical original textures from
+79 PC bundles for all 281 target records. The 658,376-byte profile, SHA-256
+`2c4c1c416f676d09a93f987d1ea9f1ecda46aa279baee5799a196beec59fc4ed`,
+contains only selectors, field/pixel extents, hashes and importer/storage
+relationships. The two AndroidNative ramp aliases reuse the original Warp/Elite
+ramps already named by `composition.json`. Every pixel comes from the owner's
+original game files. No color/normal array, palette, encoded block, target byte
+frame or signing material is included. The provenance/privacy/licensing audit
+and required recipe-table row are recorded in `recipe/README.md`.
+
+Host result: the complete original-source census matches all 281 target bodies
+and pixel streams. The isolated standard-library producer independently passes
+all 281 in 30.244 seconds with parent peak RSS 135,659,520 bytes. Its shared
+public helper builds in 4.269 seconds. The complete 4,326-record Alpha8
+regression retains J1082's three exact pack hashes. Twelve authored contracts
+pass with both actual native tools, including BC1/BC3 alpha/interpolation and
+logical cropping, R16 bounds, integer normal coordinates, color/normal pipeline
+projection, malformed/extreme codec input, provider/input drift and persisted
+pack bounds. Test fixtures contain authored non-game patterns. Fresh-clone CI
+passes 1,955 tests with 141 explicit environment skips; both GitHub checks pass.
+
+Phone result: the complete combined case passes from implementation source
+`d64aaf76944f449c4d085193af27fc04f6fa5f9f`. The public ETC helper is compiled
+on the assigned phone in 33.088 seconds, producing AArch64 ELF SHA-256
+`9cedf64c570a804628949e0be531af019a7848eef11bac85a5293d7e1437e213`.
+The existing qualified public JPEG helper is independently hash checked. Each
+producer reads only original PC bundles, public recipes/tools and its explicitly
+owned interpreter/runtime. All 5,006 records pass their independent accepted
+body/pixel pins and match the host packs:
+
+| Cohort | Records | Seconds | Parent peak RSS (bytes) |
+| --- | ---: | ---: | ---: |
+| ETC1 single-mip | 281 | 331.052 | 85,278,720 |
+| Source Alpha8 single-mip | 4,326 | 32.439 | 39,055,360 |
+| Uncompressed | 399 | 571.942 | 105,582,592 |
+
+These parent RSS values exclude compiler/codec children. The combined case takes
+980.077 seconds, with an explicit cores 0–2 affinity. The pure-Python atlas
+postprocessing is substantially slower under that restriction than J1079's
+unrestricted producer; this is a tool-case timing, not game performance evidence.
+The new RGB outputs are:
+
+| Output | Bytes | SHA-256 |
+| --- | ---: | --- |
+| Object pack | 61,500 | `0a107d43cf76678125c255cdc0c304582289d502f4908df4618c9fc2332fc5ca` |
+| Resource pack | 17,874,000 | `435c1dc51692f5440f57e84cf7e772abf7173b5dd41ed9925425f04ca20617aa` |
+| Index | 139,602 | `c20c4f94db24fe8e7c40abdee484c79b3ff04349ddabb809743ceaf999cf4a90` |
+
+The Alpha8 and uncompressed outputs retain all six J1082/J1079 hashes exactly.
+All twelve authored contracts pass on Android with both real codecs. Existing
+output refuses for each of the three profiles. An incorrect ETC codec pin
+refuses before output creation. All nine persisted pack hashes are rechecked
+after refusals and contracts. No Editor, UnityPy, Pillow or exported project is
+an Android production dependency.
+
+First failures/corrections: initially treating every source-linear color as a
+numeric-compression input fails reference pixels; only normal input selects
+that metric in this cohort. Missing original JPEG policy accounts for additional
+reference failures. The R16 control uses the original high byte with zero green/
+blue, matching the independent exporter oracle. The remaining same-name
+`texTrimSheetDronesBrownEmissive` selects the Tanker original rather than the
+IronHauler variant; both public and standalone SDK oracle encoders then match
+all 32,768 blocks. These are source identity/importer corrections, with no target
+pixel or block patch. The final full host census passes before the public recipe
+is admitted. The phone case has no failed production/control step. Doctor/host
+preflight's separately recorded ungenerated-project refusal remains; no game
+build gate is waived.
+
+Device boundaries: acquire the shared-device lease atomically after alpha's
+handoff. Actual installed APK before/after is independently verified as
+`32c4742eba0bb61060f9e2a63441fdd0b961f5ada82e1f059101f1b75b7fd677`,
+matching the current central receipt. No install, game launch, data reset,
+storage reconfiguration, profile/payload deletion or other worker's files are
+involved. Admission/final checks verify the game process absent and OLED asleep.
+The lease is released and alpha is notified before documentation work resumes.
+
+Evidence: ignored `work/coordination/accepted-build-reconstruction/media-source-v1/`:
+`rgb-texture-candidates-v3.jsonl` / `rgb-texture-result-v3.json`, original-path/
+source-variant failure controls, `etc-codec-public-host-v2/`,
+`etc-rgb-public-host-v1/`, `etc-alpha-public-host-v1/` and
+`device-etc-batch-v1/`. The final `proof-files.json` receipt covers 134 artifacts,
+SHA-256 `f70ac7ee94448f38ea010339e50754959618392e437ebfae6d5ac96f7805170a`.
+Packs remain on the phone; receipts/logs, not duplicate payloads, are pulled.
+Mandatory primary-checkout pruning runs after host/device build/run tasks,
+preserving receipts and more than 100 GiB free. No APK/project is copied.
+
+Conclusion/revisit: this closes the complete ETC1/single-mip source-production
+cohort and requalifies the shared helper against every previously admitted
+texture record. Of 9,447 target Texture2D records, 5,006 now have exact public
+source-only phone production. The remaining 4,441 textures, cubemaps, two mesh
+exclusions, animation/other classes, player data and complete UnityFS assembly
+remain open. The code workstream separately owns native code/Burst/shaders and
+final APK/signing/install. No game runtime, ordinary app delivery or complete
+phone-only owner-installation acceptance follows from these private packs.
+Revisit this cohort for explicit input/target promotion or measured regression.

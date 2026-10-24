@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1088](PORTING_JOURNAL.md#j1088--produce-every-single-mip-etc1-texture-from-pc-bundles-on-android) | 2026-10-24 | Produce every single-mip ETC1 texture from PC bundles on Android | Date: 2026-10-24 UTC. |
 | [J1091](PORTING_JOURNAL.md#j1091--qualify-native-heap-capture-and-identify-retained-laboratory-log-payloads) | 2026-10-24 | Qualify native heap capture and identify retained laboratory log payloads | 2026-10-24. |
 | [J1086](PORTING_JOURNAL.md#j1086--complete-twelve-native-sessions-on-the-internal-device-without-accepting-a-memory-bound) | 2026-10-24 | Complete twelve native sessions on the internal device without accepting a memory bound | 2026-10-24. |
 | [J1071](PORTING_JOURNAL.md#j1071--qualify-software-touch-native-pause-and-recovery) | 2026-10-24 | Qualify software touch, native pause and recovery | 2026-10-24. |

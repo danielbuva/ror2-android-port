@@ -23,7 +23,7 @@ def load(name, path):
 
 T = load("texture_producer", ROOT / "tools/phone-build/accepted-output/texture_produce.py")
 JPEG_BUILD = load("jpeg_builder", ROOT / "tools/phone-build/accepted-output/build_texture_jpeg.py")
-ALPHA_BUILD = load("alpha_builder", ROOT / "tools/phone-build/accepted-output/build_texture_alpha.py")
+ETC_BUILD = load("etc_builder", ROOT / "tools/phone-build/accepted-output/build_texture_etc.py")
 FIXTURE = load("authored_bundle_fixture", ROOT / "tests/test_phone_mesh_producer.py")
 
 
@@ -36,7 +36,7 @@ def string(value):
     return struct.pack("<I", len(encoded)) + encoded + b"\0" * (-len(encoded) % 4)
 
 
-def authored_body(name, image_size, texture_format, pixels, stream):
+def authored_body(name, image_size, texture_format, pixels, stream, usage=0):
     """Independent field ordering with sentinel bytes between selected fields."""
     data = bytearray(b"AUTHORED")
     spans = {}
@@ -46,7 +46,7 @@ def authored_body(name, image_size, texture_format, pixels, stream):
         ("m_TextureFormat", struct.pack("<i", texture_format)),
         ("m_IsAlphaChannelOptional", b"\0"),
         (None, b"\x11\x22\x33"),
-        ("m_LightmapFormat", struct.pack("<i", 0)),
+        ("m_LightmapFormat", struct.pack("<i", usage)),
         (None, b"KEEP"),
         ("image data", struct.pack("<I", len(pixels)) + pixels + b"\0" * (-len(pixels) % 4)),
         ("m_StreamData", struct.pack("<QI", stream["offset"], stream["size"]) + string(stream["path"])),
@@ -60,13 +60,34 @@ def authored_body(name, image_size, texture_format, pixels, stream):
 
 
 class TextureProducerTests(unittest.TestCase):
+    def test_rgba_bc3_palette_alpha_and_logical_cropping(self):
+        selectors = sum((index % 8) << (3 * index) for index in range(16))
+        colours = struct.pack("<HHI", 0, 0xFFFF, 0xAAAAAAAA)
+        block = bytes([0, 255]) + selectors.to_bytes(6, "little") + colours
+        alphas = [0, 255, 51, 102, 153, 204, 0, 255] * 2
+        self.assertEqual(T.rgba_source(block, 4, 4, 12), b"".join(bytes([85, 85, 85, a]) for a in alphas))
+        block = bytes([255, 0]) + selectors.to_bytes(6, "little") + colours
+        alphas = [255, 0, 218, 182, 145, 109, 72, 36] * 2
+        self.assertEqual(T.rgba_source(block, 4, 4, 12), b"".join(bytes([85, 85, 85, a]) for a in alphas))
+        self.assertEqual(T.rgba_source(block, 1, 1, 12), bytes([85, 85, 85, 255]))
+        transparent = struct.pack("<HHI", 0, 0xFFFF, 0xFFFFFFFF)
+        self.assertEqual(T.rgba_source(transparent, 4, 4, 10), bytes(64))
+        self.assertEqual(T.rgba_source(struct.pack("<HH", 0, 65535), 2, 1, 9), bytes([0, 0, 0, 255, 255, 0, 0, 255]))
+        for fmt, source in ((3, bytes(2)), (4, bytes(3)), (9, b"x"), (10, bytes(7)), (12, bytes(15)), (99, b"")):
+            with self.subTest(fmt=fmt), self.assertRaises(ValueError):
+                T.rgba_source(source, 1, 1, fmt)
+
+    def test_normal_unpack_uses_ag_coordinates_and_integer_blue(self):
+        source = bytes([19, 128, 49, 128, 31, 128, 29, 255, 0, 128, 0, 0, 6, 0, 12, 128])
+        self.assertEqual(T.normal_rgb(source), bytes([128, 128, 254, 255, 128, 127, 0, 128, 127, 128, 0, 127]))
+
     def test_public_alpha_source_provider_drift_refuses_before_output(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             provider = root / "authored-source"
             provider.write_bytes(b"authored non-provider fixture")
             with self.assertRaisesRegex(ValueError, "provider drift"):
-                ALPHA_BUILD.build(provider, provider, root / "output")
+                ETC_BUILD.build(provider, provider, root / "output")
             self.assertFalse((root / "output").exists())
 
     def test_alpha_inline_source_and_target_field_projection(self):
@@ -78,11 +99,11 @@ class TextureProducerTests(unittest.TestCase):
         self.assertEqual(T.body_output(body, fields, pixels, target, "alpha8-etc2"), expected)
         start, _ = fields["image data"]
         selected = {"pixels": {"member": None, "offset": start + 4, "bytes": 16, "sha256": digest(pixels)}, "operation": "alpha8-etc2", "width": 4, "height": 4}
-        with self.assertRaisesRegex(ValueError, "Alpha8 codec required"):
+        with self.assertRaisesRegex(ValueError, "ETC codec required"):
             T.pixels_input(None, body, selected)
 
     def test_public_alpha_codec_authored_pixels_and_input_extent(self):
-        codec = os.environ.get("ROR2_TEXTURE_ALPHA")
+        codec = os.environ.get("ROR2_TEXTURE_ETC")
         if not codec:
             self.skipTest("explicit locally built public Alpha8 codec is absent")
         # These three complete block hashes derive solely from authored alpha
@@ -99,14 +120,42 @@ class TextureProducerTests(unittest.TestCase):
                 "width": 4,
                 "height": 4,
             }
-            result = T.pixels_input(None, pixels, selected, alpha_codec=Path(codec))
+            result = T.pixels_input(None, pixels, selected, etc_codec=Path(codec))
             self.assertEqual(len(result), 16)
             self.assertEqual(digest(result), pin)
         for args, data in ((["4", "4"], bytes(15)), (["4", "4"], bytes(17)), (["2", "4"], bytes(8)), (["8193", "4"], b"")):
             with self.subTest(args=args, bytes=len(data)):
-                result = subprocess.run([codec, *args], input=data, capture_output=True, timeout=10)
+                result = subprocess.run([codec, *args, "alpha8"], input=data, capture_output=True, timeout=10)
                 self.assertNotEqual(result.returncode, 0)
                 self.assertEqual(result.stdout, b"")
+
+    def test_public_rgb_codec_and_normal_source_pipeline(self):
+        codec = os.environ.get("ROR2_TEXTURE_ETC")
+        if not codec:
+            self.skipTest("explicit locally built public ETC codec is absent")
+        empty = {"offset": 0, "size": 0, "path": ""}
+        controls = (
+            (3, 0, bytes([0, 255, 0]) * 16, "8960179770da4d8fcd19e783e9955be93cf0e04587801bb1ee97eddbe291b617"),
+            (3, 0, bytes([17, 31, 73]) * 16, "12480c7cdf8719afca8fc7f63fa8cfac4fc7b445924da0644e8d618b65981344"),
+            (4, 3, bytes([19, 128, 49, 128]) * 16, "5e2ad0f0d6efbe7f93981a44ee8846830e265f7a767f54427f23e44880da1eab"),
+        )
+        for fmt, usage, pixels, pin in controls:
+            body, fields = authored_body("Original", len(pixels), fmt, pixels, empty, usage)
+            start, _ = fields["image data"]
+            selected = {
+                "fields": fields,
+                "pixels": {"member": None, "offset": start + 4, "bytes": len(pixels), "sha256": digest(pixels)},
+                "operation": "etc1",
+                "width": 4,
+                "height": 4,
+                "jpeg": False,
+            }
+            encoded = T.pixels_input(None, body, selected, etc_codec=Path(codec))
+            self.assertEqual(len(encoded), 8)
+            self.assertEqual(digest(encoded), pin)
+            target = {"name": "Converted", "alpha_optional": False, "usage": 4 if usage == 3 else 0, "inline": True, "stream": empty}
+            expected, _ = authored_body(target["name"], 8, 34, encoded, empty, target["usage"])
+            self.assertEqual(T.body_output(body, fields, encoded, target, "etc1"), expected)
 
     def test_public_jpeg_source_provider_drift_refuses_before_output(self):
         with tempfile.TemporaryDirectory() as temporary:

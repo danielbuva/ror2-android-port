@@ -736,13 +736,16 @@ documented public inputs. Explicit Android workspace/interpreter ownership remai
 lab staging. See its
 [setup/lifecycle](../tools/phone-build/accepted-output/README.md#produce-uncompressed-textures-directly-from-original-pc-bundles).
 
-The same texture entry accepts `recipe/owner-alpha-textures.json` and an explicit
-pinned Alpha8 codec. `build_texture_alpha.py` generates that codec from a
+The same texture entry accepts `recipe/owner-alpha-textures.json` and
+`recipe/owner-rgb-textures.json` with an explicit pinned shared ETC codec. `build_texture_etc.py` generates that codec from a
 separately acquired public ETCPACK archive and compiler; archive identity,
 notices, outputs and failed receipts remain in the private caller-selected root.
-`texture_alpha.cpp` is the authored pipe adapter. The recipe stores only minimum
+`texture_etc.cpp` is the authored pipe adapter. The recipe stores only minimum
 source/target relationships, layouts, hashes and settings; original Alpha8
-samples are read from the PC bundles at execution. No discovery snapshot,
+samples and the qualified RGB/BC/R16 samples are read from the PC bundles at
+execution. RGB JPEG policy uses the existing explicitly supplied public JPEG
+helper. J1088 qualifies the shared codec build and all 5,006 admitted texture
+records on Android. No discovery snapshot,
 captured target body/pixel or SDK encoder is an input. Android requires the
 existing explicit owned public compiler/sysroot/runtime and workspace, with
 the tool root above `usr` selected as the C++ sysroot. See
