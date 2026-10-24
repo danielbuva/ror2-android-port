@@ -6,6 +6,7 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -37,6 +38,11 @@ class SharedCheckoutBuildTests(unittest.TestCase):
         self.target = shared.git(self.worker, "rev-parse", "HEAD")
         self.lock = self.primary / "work/coordination/unity-build.lock"
         self.calls = []
+        # These source/lock tests build nothing. CI's disk capacity must not
+        # determine whether their synthetic Git transitions can be exercised.
+        capacity = patch.object(shared.shutil, "disk_usage", return_value=SimpleNamespace(free=200 * 1024**3))
+        capacity.start()
+        self.addCleanup(capacity.stop)
 
     def git(self, *args):
         return shared.git(self.primary, *args)
@@ -106,6 +112,13 @@ class SharedCheckoutBuildTests(unittest.TestCase):
         with patch.object(shared, "invoke") as invoke, self.assertRaisesRegex(RuntimeError, "unfinished Git operation"):
             shared.build_shared_checkout(root=self.worker)
         invoke.assert_not_called()
+
+    def test_real_build_headroom_gate_refuses_before_checkout(self):
+        with patch.object(shared.shutil, "disk_usage", return_value=SimpleNamespace(free=99 * 1024**3)):
+            with patch.object(shared, "invoke") as invoke, self.assertRaisesRegex(RuntimeError, "100 GiB"):
+                shared.build_shared_checkout(root=self.worker)
+        invoke.assert_not_called()
+        self.assertEqual(self.git("rev-parse", "HEAD"), self.original)
 
 
 if __name__ == "__main__":
