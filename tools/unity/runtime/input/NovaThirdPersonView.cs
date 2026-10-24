@@ -13,7 +13,7 @@ public sealed class NovaThirdPersonView
     {
         public bool perspective, originalParams, relativeMovement, rayAim;
         public string parameters;
-        public int frames, collisions, physicalFrames, lookFrames;
+        public int frames, collisions, physicalFrames, touchFrames, lookFrames;
         public float yaw, pitch, distance, minDistance = 999, maxDistance, maxAimError;
         public Vector3 position, direction, move;
         public float fov;
@@ -57,6 +57,17 @@ public sealed class NovaThirdPersonView
         yaw += stick.x * 180 * Time.deltaTime * AndroidOfflineSettings.current.lookSensitivity;
         pitch -= stick.y * 120 * Time.deltaTime * AndroidOfflineSettings.current.lookSensitivity *
                  (AndroidOfflineSettings.current.invertY ? -1 : 1);
+        Place();
+    }
+    public void LookTouch(Vector2 delta, float viewportHeight)
+    {
+        if (delta.sqrMagnitude == 0 || viewportHeight <= 0)
+            return;
+        report.touchFrames++;
+        report.lookFrames++;
+        float degreesPerPixel = 180 / viewportHeight * AndroidOfflineSettings.current.lookSensitivity;
+        yaw += delta.x * degreesPerPixel;
+        pitch -= delta.y * degreesPerPixel * (AndroidOfflineSettings.current.invertY ? -1 : 1);
         Place();
     }
     public Vector3 Movement(Vector2 stick)

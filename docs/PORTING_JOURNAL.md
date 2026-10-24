@@ -37095,3 +37095,55 @@ remain open. The code workstream separately owns J850 code/Burst/shader closure
 and final APK/signing/install. Full phone-only owner installation and matched
 performance remain open. Revisit this cohort only for explicit input/target
 promotion or a measured regression.
+
+## J1069 — Stop the extended integrated memory series on the first native error
+
+2026-10-24. Hypothesis: the current original-audio dependency lifetime might
+change J787/J1066's repeated-session memory growth enough to permit a longer
+series. Reuse the existing memory observer and strict native abandonment
+contracts; the new explicit `--sessions 12` changes the host observation count
+only. Prior art is J773/J782/J787's named root analysis and the pinned memory
+optimization/source-lifecycle references in `community-prior-art.md`. No new
+root walker, gameplay workaround or cache cleanup is introduced.
+
+Run the exact installed Thor APK
+`299445f72267f216b23c7c4c2610364329445625396d8cd536bab01c07747ead`
+(source bf40428f), with its matched 266-file payload. Each ordinary Commando
+menu start is followed by at least 60 s of ready Lakes play and explicit UI
+confirmation/abandonment. Input is automatic diagnostic input; all five gameplay
+assists are off. Three sessions pass every completed-session abandonment,
+cleanup and frozen-profile contract. The fourth stops at the first actual-process
+runtime-log error: the known J667 `LightningStake(Clone)` nonfinite collider
+transform. Preserve that report/log/error classification; do not retry until it
+passes, disable the source projectile, or call the requested series complete.
+The touch implementation is unbuilt source during this run and cannot be the
+cause of an error in the unchanged feature APK.
+
+| Completed session | Managed after collection, MiB | Next-menu PSS, KiB | Live completed coordinators at start |
+| --- | --- | --- | --- |
+| 1 | 191.51 | 3,033,272 | 0 |
+| 2 | 240.09 | 3,148,617 | 0 |
+| 3 | 289.83 | 3,726,613 | 0 |
+
+The session-2-to-3 managed slope is 52,158,464 bytes/session (49.74 MiB/session).
+The original-audio integrated lifetime retains four bundles, about 34,535
+catalog/template GameObjects and 1,577 textures after reclamation; this is a
+different retained-content cohort from the older one-bundle observation.
+Completed coordinators remain released. These short observations neither name
+the remaining managed root nor establish a bound, resident-memory limit,
+long-session stability, sustained performance or thermal acceptance.
+
+First failure is the known native J667 error during session 4, before a fourth
+abandonment. Terminal validation independently rehashes the installed APK,
+confirms the exact selector and process absent and both physical panels off,
+then releases the device lease. The host pruner finds no eligible outputs;
+receipts and failure evidence remain private. Revisit the extended series after
+a concrete J667 correction or a separately declared workload; never silently
+change the original behavior to obtain a passing stability report.
+
+Evidence (private):
+`work/device/<serial>/experiments/session-memory/20261024T091440.752415Z/`,
+`work/coordination/native-feedback-awake-acceptance-20261024/twelve-sessions.json`,
+`twelve-terminal.json` and `prune-after-memory.json`. No new APK is built or
+installed for this series; the original legitimate installation is untouched.
+Android-local run/report lifecycle writes remain within the owned package.

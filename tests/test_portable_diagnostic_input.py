@@ -68,7 +68,7 @@ public static class Program {
   Check(InputSessionPolicy.Resolve("Retroid Pocket Nova", false) == InputSessionPolicy.Mode.MeasuredNovaPhysicalInput, "Nova physical");
   Check(InputSessionPolicy.Resolve("Retroid Pocket Nova", true) == InputSessionPolicy.Mode.MeasuredNovaPhysicalInput, "Nova bringup unchanged");
   Check(InputSessionPolicy.Resolve("AYN Thor", true) == InputSessionPolicy.Mode.AutomaticDiagnosticWithoutPhysicalInput, "Thor explicit bringup");
-  Check(InputSessionPolicy.Resolve("AYN Thor", false) == InputSessionPolicy.Mode.RefuseUnmeasuredPhysicalInput, "Thor ordinary refused");
+  Check(InputSessionPolicy.Resolve("AYN Thor", false) == InputSessionPolicy.Mode.TouchWithoutPhysicalInput, "Thor ordinary touch; physical input remains unavailable");
   Check(InputSessionPolicy.Resolve("retroid pocket nova", true) == InputSessionPolicy.Mode.RefuseUnmeasuredPhysicalInput, "lowercase Nova refused");
   Check(InputSessionPolicy.Resolve("Retroid Pocket Nova Pro", true) == InputSessionPolicy.Mode.RefuseUnmeasuredPhysicalInput, "Nova-like model refused");
   Check(InputSessionPolicy.Resolve(null, true) == InputSessionPolicy.Mode.RefuseUnmeasuredPhysicalInput, "null model refused");
@@ -123,7 +123,7 @@ public static class Program {
         self.assertIn("IsAutomaticDiagnosticWithoutPhysicalInput(diagnosticInput, automaticDiagnosticOnly)", fixed)
         self.assertIn("MissingMappingRequiresNeutral(mapping == null, diagnosticInput, automaticDiagnosticOnly)", fixed)
         self.assertIn("!automaticDiagnosticOnly && mapping != null && mapping.enableSkills || enableAllSkills", fixed)
-        self.assertIn("diagnosticInput ? null : ReadRaw()", fixed)
+        self.assertIn("diagnosticInput || touchManual ? null : ReadRaw()", fixed)
 
         offline = (RUNTIME_ROOT / "session/OfflineApplicationBoundary.cs").read_text()
         present = extract_method(offline, "        public bool OfflineUiControllerPresent()")
@@ -131,22 +131,23 @@ public static class Program {
         self.assertLess(present.index("if (map == null"), present.index("ReadRaw()"))
         self.assertIn("if (coordinator.IsNovaInput())", offline)
         self.assertIn("mode != InputSessionPolicy.Mode.RefuseUnmeasuredPhysicalInput", offline)
-        self.assertIn("if (coordinator.UsesDiagnosticWithoutPhysicalInput())\n                offlineMenuMapping = null;", offline)
+        self.assertIn("if (coordinator.UsesTouchUi())\n                offlineMenuMapping = null;", offline)
         self.assertIn("offlineMenuMapping != null && OfflineUiControllerPresent()", offline)
         self.assertIn("coordinator.r.nova.mapping != null && coordinator.r.nova.physicalInputAvailable", offline)
 
         world = (RUNTIME_ROOT / "world/IntegratedWorldBoundary.cs").read_text()
-        self.assertIn("inputBridge.physicalInputAvailable &&", world)
+        self.assertIn("inputBridge.manualInputAvailable &&", world)
         self.assertIn("inputBridge.automaticDiagnosticOnly", world)
         restart = extract_method(world, "        public void ObserveWorldRestartInput()")
         self.assertIn("coordinator.r.nova.mapping != null && coordinator.r.nova.physicalInputAvailable", restart)
 
         owner = (RUNTIME_ROOT / "input/NovaInputBoundary.cs").read_text()
-        self.assertIn('inputSource = physicalInputAvailable ? "measured-nova" : "automatic-diagnostic"', owner)
+        self.assertIn('inputSource = physicalInputAvailable ? "measured-nova"', owner)
+        self.assertIn('automaticDiagnosticOnly ? "automatic-diagnostic" : "touch"', owner)
         self.assertIn("automaticDiagnosticOnly = inputMode == InputSessionPolicy.Mode.AutomaticDiagnosticWithoutPhysicalInput", owner)
         self.assertIn("bool automaticDiagnosticOnly = inputMode == InputSessionPolicy.Mode.AutomaticDiagnosticWithoutPhysicalInput", owner)
         self.assertIn("physicalInputAvailable ? NovaInputBridge.ReadRaw() : null", owner)
-        self.assertIn("if (!physicalInputAvailable)\n                {\n                    coordinator.worldManualTakeover = false;", owner)
+        self.assertIn("if (automaticDiagnosticOnly)\n                {\n                    coordinator.worldManualTakeover = false;", owner)
 
         settings = (RUNTIME_ROOT / "input/OfflineSettingsBoundary.cs").read_text()
         self.assertIn("coordinator.r.nova.physicalInputAvailable", settings)

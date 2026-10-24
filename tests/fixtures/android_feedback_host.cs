@@ -167,7 +167,7 @@ public sealed partial class PortSession
     public bool menuObscured;
     void SetRecoveredMenuObscured(bool value) { menuObscured = value; }
     bool offlineStartVisible, offlineStartSelected;
-    bool UsesDiagnosticWithoutPhysicalInput() => false;
+    bool UsesTouchUi() => false;
     bool OfflineUiControllerPresent() => true;
     bool CanAbandonOfflineRun() => true;
     void RequestAbandonOfflineRun() { abandonRequests++; }

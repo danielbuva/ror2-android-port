@@ -2443,7 +2443,7 @@ public sealed partial class PortSession
             // Explicit automation for integrated validation only; direct app launches use physical controls.
             bridge.touchEquipment |= coordinator.worldEquipmentTouch;
             coordinator.worldEquipmentTouch = false;
-            if (!bridge.physicalInputAvailable)
+            if (!bridge.manualInputAvailable)
                 coordinator.worldManualTakeover = false;
             bridge.diagnosticInput = !coordinator.worldManualTakeover;
             coordinator.r.world.manualTakeover = coordinator.worldManualTakeover;
@@ -3225,7 +3225,9 @@ public sealed partial class PortSession
                            AndroidMaterialPresentation.report.enabled ? "Graphics: approximation" : "Graphics: legacy preview"))
                 AndroidMaterialPresentation.SetEnabled(!AndroidMaterialPresentation.report.enabled);
             var inputBridge = coordinator.worldPlayer ? coordinator.worldPlayer.GetComponent<NovaInputBridge>() : null;
-            if (coordinator.r.id.EndsWith("-bringup") && world.health > 0 && inputBridge && inputBridge.physicalInputAvailable &&
+            if (inputBridge && !inputBridge.diagnosticInput && world.health > 0)
+                inputBridge.touchControls?.Draw();
+            if (coordinator.r.id.EndsWith("-bringup") && world.health > 0 && inputBridge && inputBridge.manualInputAvailable &&
                 GUI.Button(new Rect(coordinator.recoveredHud ? 20 : Screen.width - 210, coordinator.recoveredHud ? Screen.height - 195 : 20,
                                     190, 48),
                            coordinator.worldManualTakeover ? "Resume auto route" : "Take control"))
@@ -3243,7 +3245,7 @@ public sealed partial class PortSession
                     coordinator.Save();
                 }
             }
-            if (coordinator.r.id.EndsWith("-bringup") && world.health > 0 && (!inputBridge || !inputBridge.physicalInputAvailable))
+            if (coordinator.r.id.EndsWith("-bringup") && world.health > 0 && (!inputBridge || !inputBridge.manualInputAvailable))
                 GUI.Label(new Rect(20, Screen.height - 60, Screen.width - 40, 28), "Automatic diagnostic input · physical controller unavailable");
             var style = new GUIStyle(GUI.skin.label) { fontSize = 22 };
             var shadow = new GUIStyle(style);

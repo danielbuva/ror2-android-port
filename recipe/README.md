@@ -2276,3 +2276,21 @@ ownership, authentication or entitlement behavior. Provenance, licensing,
 privacy and sensitive-content audit: 2026-10-24. J1082 records the complete
 phone cohort and public codec build; other texture/mip and bundle assembly
 gates remain open.
+
+## Android touch input owner
+
+`AndroidTouchInput.cs` and its explicit script GUID are authored Android pointer
+routing, geometry and primitive observation code. The runtime membership lists,
+project layout and importer replay include that source. No game asset, image,
+serialized game object or middleware implementation is added. Touch buttons
+produce the existing original input-bank action slots; the existing camera
+adapter consumes pixel deltas. The measured Nova controller mapping remains
+separate, and Thor touch never claims physical-controller qualification.
+
+Prior-art review uses the pinned Starstorm2 `BorgMain` at `a9a4badd`: native
+`inputBank.jump.down`, authority and base-state scheduling are the consumer
+boundary. No community implementation is copied. Public source hashes for the
+existing world owner and its manifest/camera-hook chain are updated solely for
+the authored manual-input availability and touch presentation changes. Generated
+APK/payloads, raw pointer/device evidence and private mapping files remain under
+ignored `work/`.

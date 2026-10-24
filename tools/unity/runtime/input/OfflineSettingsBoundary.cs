@@ -221,7 +221,7 @@ public sealed partial class PortSession
             if (!coordinator.offlineSettingsVisible)
                 return false;
             GUI.Box(new Rect(Screen.width * .5f - 240, Screen.height * .5f - 200, 480, 465),
-                    coordinator.UsesDiagnosticWithoutPhysicalInput()
+                    coordinator.UsesTouchUi()
                         ? "Android offline settings · touch controls"
                         : "Android offline input settings · B back · A save");
             var x = Screen.width * .5f - 210;

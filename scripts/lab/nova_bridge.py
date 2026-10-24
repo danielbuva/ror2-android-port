@@ -194,6 +194,7 @@ def prepare_spine(
         "runtime/world/AutomaticModelBoundary",
         "runtime/input/NovaInputBoundary",
         "runtime/input/NovaInputBridge",
+        "runtime/input/AndroidTouchInput",
         "runtime/input/NovaDiagnosticDisplay",
         "runtime/input/NovaThirdPersonView",
     ]:

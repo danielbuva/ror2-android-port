@@ -145,6 +145,9 @@
     "Assets/LabLoadingScene/AndroidStageTransport.cs.meta": {
       "runtime_source": "runtime/stage/AndroidStageTransport.cs"
     },
+    "Assets/LabLoadingScene/AndroidTouchInput.cs.meta": {
+      "runtime_source": "runtime/input/AndroidTouchInput.cs"
+    },
     "Assets/LabLoadingScene/AutomaticDirectionBoundary.cs.meta": {
       "runtime_source": "runtime/world/AutomaticDirectionBoundary.cs"
     },

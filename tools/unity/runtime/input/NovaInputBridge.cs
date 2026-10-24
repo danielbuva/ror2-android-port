@@ -101,6 +101,8 @@ public sealed class NovaInputBridge : MonoBehaviour
     public Mapping mapping;
     public string error;
     public NovaThirdPersonView thirdPerson;
+    public AndroidTouchInput touchControls;
+    public bool manualInputAvailable => physicalInputAvailable || touchControls != null;
     public bool diagnosticEquipment, touchEquipment;
     public bool enablePrimary, enableAllSkills, diagnosticInput;
     // Opt-in only for the exact unsupported-model bringup diagnostic owner.
@@ -278,6 +280,28 @@ public sealed class NovaInputBridge : MonoBehaviour
                 Neutral();
                 return;
             }
+            if (Time.timeScale == 0)
+            {
+                presence?.Suspend();
+                SetManualMoonAutomaticHold(false);
+                Neutral();
+                return;
+            }
+            if (touchControls != null && !diagnosticInput)
+            {
+                touchControls.Poll();
+                if (thirdPerson != null)
+                    thirdPerson.LookTouch(touchControls.LookDelta, touchControls.ViewHeight);
+                if (touchControls.HasInput || !physicalInputAvailable)
+                {
+                    movement = touchControls.Movement;
+                    aim = Vector2.zero;
+                    diagnosticJumpRevision++;
+                    jumpHeld = touchControls.Down(AndroidTouchInput.Action.Jump);
+                    jumpLatched |= touchControls.Pressed(AndroidTouchInput.Action.Jump);
+                    return;
+                }
+            }
             if (IsAutomaticDiagnosticWithoutPhysicalInput(diagnosticInput, automaticDiagnosticOnly))
             {
                 presence?.Suspend();
@@ -293,13 +317,6 @@ public sealed class NovaInputBridge : MonoBehaviour
             }
             if (presence == null)
                 presence = new ControllerPresence(requiredControllerName);
-            if (Time.timeScale == 0)
-            {
-                presence.Suspend();
-                SetManualMoonAutomaticHold(false);
-                Neutral();
-                return;
-            }
             var names = UnityEngine.Input.GetJoystickNames();
             // The developer's deterministic input is independent of the physical
             // controller. Keep observing its connection for later manual takeover, but
@@ -343,18 +360,19 @@ public sealed class NovaInputBridge : MonoBehaviour
     void FixedUpdate()
     {
         bool noPhysicalDiagnostic = IsAutomaticDiagnosticWithoutPhysicalInput(diagnosticInput, automaticDiagnosticOnly);
+        bool touchManual = !diagnosticInput && touchControls != null && (touchControls.HasInput || !physicalInputAvailable);
         if (!bank || !focused || Time.timeScale == 0 ||
-            MissingMappingRequiresNeutral(mapping == null, diagnosticInput, automaticDiagnosticOnly))
+            (!touchManual && MissingMappingRequiresNeutral(mapping == null, diagnosticInput, automaticDiagnosticOnly)))
         {
             Neutral();
             return;
         }
-        if (!noPhysicalDiagnostic && !diagnosticInput && (presence == null || !presence.connected))
+        if (!touchManual && !noPhysicalDiagnostic && !diagnosticInput && (presence == null || !presence.connected))
         {
             Neutral();
             return;
         }
-        if (!noPhysicalDiagnostic && !diagnosticInput && !presence.Matches(UnityEngine.Input.GetJoystickNames()))
+        if (!touchManual && !noPhysicalDiagnostic && !diagnosticInput && !presence.Matches(UnityEngine.Input.GetJoystickNames()))
         {
             presence.Suspend();
             Neutral();
@@ -390,34 +408,43 @@ public sealed class NovaInputBridge : MonoBehaviour
         jumpLatched = false;
         bool isolatedSkills = diagnosticInput && isolatedDiagnosticSkillInput;
         bank.activateEquipment.PushState(EquipmentInputRequest(diagnosticInput, isolatedDiagnosticSkillInput,
-                                                                holdAutomatic ? false : diagnosticEquipment, touchEquipment));
+            holdAutomatic ? false : diagnosticEquipment,
+            touchEquipment || touchManual && touchControls.Request(AndroidTouchInput.Action.Equipment)));
         touchEquipment = false;
-        bank.sprint.PushState(diagnosticInput && !holdAutomatic && diagnosticSprint);
-        var raw = diagnosticInput ? null : ReadRaw();
+        bank.sprint.PushState(diagnosticInput ? !holdAutomatic && diagnosticSprint
+                                             : touchManual && touchControls.Request(AndroidTouchInput.Action.Sprint));
+        var raw = diagnosticInput || touchManual ? null : ReadRaw();
         bank.interact.PushState(diagnosticInput ? (!holdAutomatic && diagnosticInteract)
-                                                  : mapping.enableInteraction && raw.buttons[mapping.interact]);
+            : touchManual ? touchControls.Request(AndroidTouchInput.Action.Interact)
+                          : mapping.enableInteraction && raw.buttons[mapping.interact]);
         bool all = !automaticDiagnosticOnly && mapping != null && mapping.enableSkills || enableAllSkills;
         bank.skill1.PushState(!holdAutomatic && SkillInputRequest(diagnosticInput, isolatedSkills, isolatedDiagnosticSkillPulse,
                                                 isolatedDiagnosticSkillSlot, 0, diagnosticPrimary,
-                                                !diagnosticInput && (all || enablePrimary) && raw.buttons[mapping.primary]));
+                                                !diagnosticInput && (all || enablePrimary) &&
+                                                (touchManual ? touchControls.Request(AndroidTouchInput.Action.Primary) : raw.buttons[mapping.primary])));
         diagnosticInputEdgeCounts[0] = AdvanceDiagnosticInputEdgeCount(diagnosticInputEdgeCounts[0],
             diagnosticInputEdgeWitnessEnabled, bank.skill1.justPressed);
         bank.skill2.PushState(!holdAutomatic && SkillInputRequest(diagnosticInput, isolatedSkills, isolatedDiagnosticSkillPulse,
                                                 isolatedDiagnosticSkillSlot, 1, diagnosticSecondary,
-                                                !diagnosticInput && all && raw.buttons[mapping.secondary]));
+                                                !diagnosticInput && all &&
+                                                (touchManual ? touchControls.Request(AndroidTouchInput.Action.Secondary) : raw.buttons[mapping.secondary])));
         diagnosticInputEdgeCounts[1] = AdvanceDiagnosticInputEdgeCount(diagnosticInputEdgeCounts[1],
             diagnosticInputEdgeWitnessEnabled, bank.skill2.justPressed);
         bank.skill3.PushState(!holdAutomatic && SkillInputRequest(diagnosticInput, isolatedSkills, isolatedDiagnosticSkillPulse,
                                                 isolatedDiagnosticSkillSlot, 2, diagnosticUtility,
-                                                !diagnosticInput && all && raw.buttons[mapping.utility]));
+                                                !diagnosticInput && all &&
+                                                (touchManual ? touchControls.Request(AndroidTouchInput.Action.Utility) : raw.buttons[mapping.utility])));
         diagnosticInputEdgeCounts[2] = AdvanceDiagnosticInputEdgeCount(diagnosticInputEdgeCounts[2],
             diagnosticInputEdgeWitnessEnabled, bank.skill3.justPressed);
         bank.skill4.PushState(!holdAutomatic && SkillInputRequest(diagnosticInput, isolatedSkills, isolatedDiagnosticSkillPulse,
                                                 isolatedDiagnosticSkillSlot, 3, diagnosticSpecial,
-                                                !diagnosticInput && all && raw.buttons[mapping.special]));
+                                                !diagnosticInput && all &&
+                                                (touchManual ? touchControls.Request(AndroidTouchInput.Action.Special) : raw.buttons[mapping.special])));
         diagnosticInputEdgeCounts[3] = AdvanceDiagnosticInputEdgeCount(diagnosticInputEdgeCounts[3],
             diagnosticInputEdgeWitnessEnabled, bank.skill4.justPressed);
         fixedTicks++;
+        if (touchManual)
+            touchControls.ConsumeFixedTick();
         if (holdAutomatic)
             manualMoonNeutralFixedTicks++;
     }
@@ -430,6 +457,7 @@ public sealed class NovaInputBridge : MonoBehaviour
     }
     public void Neutral()
     {
+        touchControls?.Suspend();
         diagnosticJumpRevision++;
         inputNeutralRevision++;
         movement = aim = Vector2.zero;
