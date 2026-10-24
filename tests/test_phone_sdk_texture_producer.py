@@ -14,6 +14,26 @@ SDK_FIXTURE = load("authored_sdk_fixture", ROOT / "tests/test_phone_sdk_codec.py
 BUILD = load("sdk_texture_builder", ROOT / "tools/phone-build/accepted-output/build_texture_sdk.py")
 
 
+ALPHA_FIXTURE = r"""
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+int main(int argc,char **argv) {
+    if(argc!=4 || strcmp(argv[3],"alpha8")) return 64;
+    int w=atoi(argv[1]),h=atoi(argv[2]);
+    if(w<4 || h<4 || w%4 || h%4 || w*h>4096) return 65;
+    unsigned char data[4096],out[4096]={0};
+    if(fread(data,1,w*h,stdin)!=(size_t)(w*h) || fgetc(stdin)!=EOF)return 67;
+    int offset=0;
+    for(int y=0;y<h;y+=4)for(int x=0;x<w;x+=4){
+        for(int i=0;i<8;i++)out[offset+i]=data[(y+i/4)*w+x+i%4];
+        offset+=16;
+    }
+    return fwrite(out,1,offset,stdout)==(size_t)offset?0:68;
+}
+"""
+
+
 def mode6(colour):
     """Author a constant BC7 mode-6 block with identical odd-valued endpoints."""
     value, shift = 1 << 6, 7
@@ -34,11 +54,14 @@ class SdkTextureTests(unittest.TestCase):
         cls.temporary = tempfile.TemporaryDirectory()
         cls.addClassCleanup(cls.temporary.cleanup)
         cls.root = Path(cls.temporary.name)
-        cls.decoder, cls.codec, cls.library = (cls.root / n for n in ("pixels", "codec", "fixture.so"))
+        cls.decoder, cls.codec, cls.library, cls.alpha = (cls.root / n for n in ("pixels", "codec", "fixture.so", "alpha"))
         source = ROOT / "tools/phone-build/accepted-output"
         fixture = cls.root / "fixture.c"
         fixture.write_text(SDK_FIXTURE)
+        alpha = cls.root / "alpha.c"
+        alpha.write_text(ALPHA_FIXTURE)
         for command in (
+            [compiler, "-std=c11", str(alpha), "-o", str(cls.alpha)],
             [compiler, "-std=c11", "-O2", str(source / "texture_pixels.c"), "-o", str(cls.decoder)],
             [compiler, "-std=c11", str(source / "sdk_texture_codec.c"), "-ldl", "-o", str(cls.codec)],
             [compiler, "-dynamiclib" if sys.platform == "darwin" else "-shared", "-fPIC", str(fixture), "-o", str(cls.library)],
@@ -112,7 +135,7 @@ class SdkTextureTests(unittest.TestCase):
                 "fields": fields,
             }
             sdk = T.sdk_inputs(tools, T.BUNDLE.sha(tools), root)
-            self.assertEqual(T.pixels_input(None, body, selected, sdk=sdk), bytes([17, 31, 73, 255]) * 4)
+            self.assertEqual(T.pixels_input(None, body, selected, sdk=sdk, etc_codec=self.alpha), bytes([255]) * 8 + bytes([17, 31, 73, 255]) * 2)
 
     def test_source_to_sdk_pack_and_dependency_drift_refusal(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -124,7 +147,8 @@ class SdkTextureTests(unittest.TestCase):
             pixels = bytes([17, 31, 73, 255]) * 16
             empty = {"offset": 0, "size": 0, "path": ""}
             body, spans = authored_body("Original", len(pixels), 4, pixels, empty)
-            target_body, _ = authored_body("Target", 16, 47, pixels[:16], empty)
+            encoded_pixels = bytes([255]) * 8 + pixels[:8]
+            target_body, _ = authored_body("Target", 16, 47, encoded_pixels, empty)
             source = pc / "authored.bundle"
             source.write_bytes(FIXTURE.bundle([("CAB-authored", body, 4)], True))
             start, _ = spans["image data"]
@@ -146,7 +170,7 @@ class SdkTextureTests(unittest.TestCase):
                         "bytes": len(target_body),
                         "sha256": digest(target_body),
                         "name": "Target",
-                        "pixel_sha256": digest(pixels[:16]),
+                        "pixel_sha256": digest(encoded_pixels),
                         "pixel_bytes": 16,
                         "inline": True,
                         "stream": empty,
@@ -164,7 +188,12 @@ class SdkTextureTests(unittest.TestCase):
                     }
                 )
             )
-            kwargs = {"sdk_toolchain": tools, "sdk_toolchain_sha256": T.BUNDLE.sha(tools)}
+            kwargs = {
+                "sdk_toolchain": tools,
+                "sdk_toolchain_sha256": T.BUNDLE.sha(tools),
+                "etc_codec": self.alpha,
+                "etc_codec_sha256": T.BUNDLE.sha(self.alpha),
+            }
             result = T.produce(profile, T.BUNDLE.sha(profile), pc, root / "output", **kwargs)
             self.assertTrue(result["success"])
             self.assertEqual((root / "output/objects.bin").read_bytes(), target_body)
@@ -182,12 +211,12 @@ class SdkTextureTests(unittest.TestCase):
             tools = Path(temporary) / "sdk.json"
             value = self.tools(tools)
             rgba = b"".join(bytes([marker, 31, 73, 255]) * 16 for marker in (17, 29, 73, 99))
-            expected = b"".join(bytes([marker, 31, 73, 255]) * 4 for marker in (17, 29, 73, 99))
-            self.assertEqual(T.sdk_encode_rgba(rgba, 4, 16, value), expected)
+            expected = b"".join(bytes([255]) * 8 + bytes([marker, 31, 73, 255]) * 2 for marker in (17, 29, 73, 99))
+            self.assertEqual(T.sdk_encode_rgba(rgba, 4, 16, value, self.alpha), expected)
             with self.assertRaisesRegex(ValueError, "codec failed"):
-                T.sdk_encode_rgba(rgba[:64] + bytes([42]) + rgba[65:], 4, 16, value)
+                T.sdk_encode_rgba(rgba[:64] + bytes([42]) + rgba[65:], 4, 16, value, self.alpha)
             with self.assertRaisesRegex(ValueError, "codec failed"):
-                T.sdk_encode_rgba(rgba[:-1], 4, 16, value)
+                T.sdk_encode_rgba(rgba[:-1], 4, 16, value, self.alpha)
 
     def test_unqualified_sdk_provider_refuses_before_output(self):
         with tempfile.TemporaryDirectory() as temporary:

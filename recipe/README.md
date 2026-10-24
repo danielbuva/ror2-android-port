@@ -2572,6 +2572,11 @@ alternative, retaining the complete upstream license. The generic codec's
 standard tables are public upstream material, not game or SDK-derived bytes.
 The authored bounded `texture_pixels.c` pipe adapter uses its existing BC7 API
 and independently implements the already qualified integer BC3 interpolation.
+RGBA production now combines the already audited public ETCPACK EAC alpha
+blocks with owner-SDK ETC2 RGB colour blocks. Both planes are derived from the
+same original pixels and interleaved in standard block order; no target block
+is a production input. The existing native ETC tool is an explicit pinned
+dependency of this operation.
 Provider identities and license selection are documented beside the header.
 Provenance, licensing, privacy and sensitive-content audit: 2026-10-24. This
 source/recipe audit grants no game/SDK redistribution rights or ownership,

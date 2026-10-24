@@ -30,7 +30,7 @@ int main(int argc, char **argv) {
     if (*end || h < 1 || h > 8192)
         return 65;
     long fmt = strtol(argv[4], &end, 10);
-    if (*end || (fmt != 0 && fmt != 2))
+    if (*end || (fmt != 0 && fmt != 1 && fmt != 2))
         return 65;
     long space = strtol(argv[5], &end, 10);
     if (*end || space < 0 || space > 2)

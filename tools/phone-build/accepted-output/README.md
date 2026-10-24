@@ -702,7 +702,9 @@ python3 -I -S -B tools/phone-build/accepted-output/build_texture_sdk.py \
 The native Clang builds the BC7 adapter for Android ARM64 and the SDK C ABI
 adapter for Linux x86-64. QEMU executes only that standalone build tool; game
 execution stays native IL2CPP ARM64. The SDK descriptor is passed by value, with
-backend 1, ETC2 RGBA format 2, quality 1 and color metric 0. No SDK source or
+backend 1, ETC2 RGB format 1, quality 1 and color metric 0. The existing
+public ETC helper encodes EAC alpha natively; the producer interleaves each
+eight-byte alpha block with its eight-byte SDK colour block. No SDK source or
 binary is patched, and no Editor/project workflow runs. The builder preserves
 all provider/source pins, commands, bounded compiler logs, notices and complete/
 failed receipts. New output is mandatory. It generates `sdk-tools.json` with an
@@ -719,7 +721,8 @@ python3 -I -S -B tools/phone-build/accepted-output/texture_produce.py \
   --profile-sha256 76e596c4ec3049e471f292d42b2b623092e05596a1a756be66ff08e73bbe6f96 \
   --pc "$ORIGINAL_PC_ROOT" --output "$NEW_TEXTURE_OUTPUT" \
   --sdk-toolchain "$NEW_CODEC_OUTPUT/sdk-tools.json" \
-  --sdk-toolchain-sha256 "$SDK_TOOLCHAIN_SHA256"
+  --sdk-toolchain-sha256 "$SDK_TOOLCHAIN_SHA256" \
+  --etc-codec "$PUBLIC_ETC_CODEC" --etc-codec-sha256 "$PUBLIC_ETC_CODEC_SHA256"
 ```
 
 The existing producer owns source decoding, transparency dilation, field

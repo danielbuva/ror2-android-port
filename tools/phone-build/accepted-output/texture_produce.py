@@ -250,31 +250,41 @@ def sdk_inputs(path, pin, pc):
     return value
 
 
-def sdk_encode_rgba(rgba, width, height, sdk):
-    """Encode independent four-row block bands with at most four SDK children."""
+def sdk_encode_rgba(rgba, width, height, sdk, etc_codec):
+    """Combine native EAC alpha and bounded independent SDK ETC2 colour bands."""
+    if etc_codec is None:
+        raise ValueError("pinned public ETC codec required for SDK RGBA alpha")
+    alpha = subprocess.run([str(etc_codec), str(width), str(height), "alpha8"], input=rgba[3::4], capture_output=True, timeout=120)
+    if alpha.returncode or len(alpha.stdout) != width * height:
+        raise ValueError("public ETC codec failed or returned a different pixel extent")
     band_height = min(max(4, ((height + 15) // 16) * 4), max(4, (262144 // width) // 4 * 4))
 
     def encode(row):
         rows = min(band_height, height - row)
         encoded = subprocess.run(
-            [*sdk["command"], str(width), str(rows), "2", "0"],
+            [*sdk["command"], str(width), str(rows), "1", "0"],
             env={**os.environ, **sdk["environment"]},
             input=memoryview(rgba)[row * width * 4 : (row + rows) * width * 4],
             capture_output=True,
             timeout=120,
         )
-        if encoded.returncode or len(encoded.stdout) != width * rows:
+        if encoded.returncode or len(encoded.stdout) != width * rows // 2:
             raise ValueError("SDK texture codec failed or returned a different extent")
         return encoded.stdout
 
     if height <= band_height:
-        return encode(0)
-    output = bytearray()
-    with ThreadPoolExecutor(max_workers=4) as workers:
-        for row in range(0, height, band_height * 4):
-            jobs = [workers.submit(encode, selected) for selected in range(row, min(height, row + band_height * 4), band_height)]
-            for job in jobs:
-                output.extend(job.result())
+        colours = encode(0)
+    else:
+        colours = bytearray()
+        with ThreadPoolExecutor(max_workers=4) as workers:
+            for row in range(0, height, band_height * 4):
+                jobs = [workers.submit(encode, selected) for selected in range(row, min(height, row + band_height * 4), band_height)]
+                for job in jobs:
+                    colours.extend(job.result())
+    output = bytearray(width * height)
+    for offset in range(0, len(output), 16):
+        output[offset : offset + 8] = alpha.stdout[offset : offset + 8]
+        output[offset + 8 : offset + 16] = colours[offset // 2 : offset // 2 + 8]
     return bytes(output)
 
 
@@ -316,7 +326,7 @@ def pixels_input(bundle, body, selected, jpeg_codec=None, etc_codec=None, sdk=No
             if dilated.returncode or len(dilated.stdout) != width * height * 4:
                 raise ValueError("native pixel dilation failed or returned a different extent")
             rgba = dilated.stdout
-        return sdk_encode_rgba(rgba, width, height, sdk)
+        return sdk_encode_rgba(rgba, width, height, sdk, etc_codec)
     if operation in {"alpha8-etc2", "etc1"}:
         if etc_codec is None:
             raise ValueError("pinned public ETC codec required")
@@ -387,7 +397,10 @@ def produce(
         if jpeg_codec.is_relative_to(pc) or BUNDLE.sha(jpeg_codec) != jpeg_codec_sha256:
             raise ValueError("public JPEG codec drift or overlap with original input")
     needs_etc = any(
-        texture["operation"] in {"alpha8-etc2", "etc1"} for bundle in profile["bundles"] for member in bundle["members"] for texture in member["textures"]
+        texture["operation"] in {"alpha8-etc2", "etc1", "sdk-rgba"}
+        for bundle in profile["bundles"]
+        for member in bundle["members"]
+        for texture in member["textures"]
     )
     if needs_etc or etc_codec is not None or etc_codec_sha256 is not None:
         if etc_codec is None or etc_codec_sha256 is None:

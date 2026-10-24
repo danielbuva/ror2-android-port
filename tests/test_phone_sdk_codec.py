@@ -16,8 +16,8 @@ static int initialized;
 void libetc_init(void) {initialized=1;}
 int libetc_compress(struct Image image,int backend,int format,int quality,int space,void *out,size_t *size) {
     if (!initialized || image.type || image.width!=4 || image.height!=4 || image.stride!=16 ||
-        backend!=1 || format!=2 || quality!=1 || space || *size!=16) return 0;
-    memcpy(out,image.pixels,16);
+        backend!=1 || (format!=1 && format!=2) || quality!=1 || space || *size!=(format==2?16:8)) return 0;
+    memcpy(out,image.pixels,format==2?16:8);
     if (((unsigned char*)image.pixels)[0]==42) --*size;
     return 1;
 }
