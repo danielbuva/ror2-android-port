@@ -86,6 +86,21 @@ def clone(sources, destination):
         subprocess.run(["/bin/cp", "-c", "-R", "-P", *map(str, sources), str(destination)], check=True)
 
 
+def clone_audio_inputs(source_work, work):
+    """The current audio manifest explicitly names two legacy provider roots."""
+    selection = work / "config/original-game-audio/selection.json"
+    if not selection.exists():
+        return
+    roots = set()
+    for value in read(selection).get("inputs", {}).values():
+        path = Path(value)
+        if path.is_absolute() or ".." in path.parts:
+            raise RuntimeError("Audio lane input must stay relative to the prepared work root")
+        if len(path.parts) >= 2 and path.parts[0] == "coordination":
+            roots.add(source_work / Path(*path.parts[:2]))
+    clone(sorted(roots), work / "coordination")
+
+
 def create(name, port=None, root=ROOT):
     with host_build_lock(lock_path(name, root), operation="create build lane " + name):
         return _create(name, port, root)
@@ -129,6 +144,7 @@ def _create(name, port, root):
         source_work = base / "work"
         work = checkout / "work"
         clone([p for p in source_work.iterdir() if p.name not in SKIP], work)
+        clone_audio_inputs(source_work, work)
         project = work / "lab-project"
         clone([p for p in (source_work / "lab-project").iterdir() if p.name not in {"Temp", "Logs"}], project)
         copy_file_clone(root / "android/Assets/Editor/BootstrapMcp.cs", project / "Assets/Editor/BootstrapMcp.cs")
