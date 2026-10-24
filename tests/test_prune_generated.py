@@ -64,6 +64,13 @@ class PruneGeneratedTests(unittest.TestCase):
         os.utime(entry / "lab-vulkan.apk", None)
         self.assertEqual(self.plan().items, [])
 
+    def test_iteration_anchor_survives_a_different_current_build(self):
+        entry = self.cache_entry("i" * 64, "e" * 64)
+        (self.work / "config").mkdir()
+        (self.work / "config/iteration-base.json").write_text(json.dumps({"apk": str(entry / "lab-vulkan.apk"), "apk_sha256": "e" * 64}))
+        (self.work / "config/current-build.json").write_text(json.dumps({"apk_sha256": "f" * 64}))
+        self.assertEqual(self.plan().items, [])
+
     def test_experiment_binary_is_replaced_by_marker_but_logs_stay(self):
         run = self.work / "experiments/audio/run1"
         run.mkdir(parents=True)

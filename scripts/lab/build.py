@@ -647,6 +647,9 @@ def build(
 
             key = capture_cache_key(key, request_id)
         dest = WORK / "build-cache" / key
+        if dest.exists() and force and not capture_player_linker_inputs and not iteration_mode:
+            key += "-build-" + request_id
+            dest = WORK / "build-cache" / key
         receipt = dest / "result.json"
         if capture_player_linker_inputs and dest.exists():
             raise RuntimeError("Refuse to overwrite an existing request-specific linker output")

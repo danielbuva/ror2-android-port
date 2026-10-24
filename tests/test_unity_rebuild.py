@@ -562,6 +562,7 @@ class UnityRebuildTests(unittest.TestCase):
                 write(self.work / "lab-build/result.json", dict(success=True, errors=0, result="Succeeded", apk=str(apk), request_id=request["request_id"]))
             return "mock dispatch"
 
+        completed = []
         for code_only in (False, True):
             with (
                 self.subTest(code_only=code_only),
@@ -581,11 +582,15 @@ class UnityRebuildTests(unittest.TestCase):
                 self.assertEqual(reuse.call_count, int(code_only))
                 request = read(self.work / "build-request.json")
                 self.assertEqual(request["reusePayload"], code_only)
-                self.assertEqual(result["apk"], str(self.work / "build-cache/ordinary-key/lab-vulkan.apk"))
+                completed.append(result)
+                self.assertTrue(result["key"].startswith("ordinary-key"))
+                self.assertEqual(result["apk"], str(self.work / "build-cache" / result["key"] / "lab-vulkan.apk"))
                 self.assertEqual(result["payload"], {"keep": sha(self.work / "generated-android-data/keep")})
                 self.assertEqual(read(self.work / "config/current-build.json"), result)
-                self.assertEqual(read(self.work / "build-cache/ordinary-key/result.json"), result)
+                self.assertEqual(read(self.work / "build-cache" / result["key"] / "result.json"), result)
                 self.assertEqual((self.work / "device/installed.json").read_bytes(), installed)
+        self.assertNotEqual(completed[0]["apk"], completed[1]["apk"])
+        self.assertEqual(sha(completed[0]["apk"]), completed[0]["apk_sha256"])
 
     def test_shared_source_validator_reads_destination_selection_and_keeps_default_work_unchanged(self):
         selected = self.dest / ".rebuild/selected"

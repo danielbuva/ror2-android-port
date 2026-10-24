@@ -2396,12 +2396,17 @@ def _build_integration(
         result["original_audio"] = audio_inputs
         result["native_view_camera"] = camera_inputs
         result["composition_staging_seconds"] = staging_seconds
+    if not code_only:
+        freeze_start = time.monotonic()
+        freeze_whole_payload(project, result)
+        if isinstance(result, dict):
+            result["payload_freeze_seconds"] = time.monotonic() - freeze_start
+    if isinstance(result, dict):
+        result["pipeline_wall_seconds"] = time.monotonic() - staging_start
         if "apk" in result and "key" in result:
             write(WORK / "build-cache" / result["key"] / "result.json", result)
             write(WORK / "config/current-build.json", result)
     write(attempt / "build.json", result)
-    if not code_only:
-        freeze_whole_payload(project, result)
     return result
 
 

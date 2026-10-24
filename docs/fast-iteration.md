@@ -75,3 +75,6 @@ receipts separately record storage checks, hashing and transfers. Debug symbols
 remain off unless `--debug-symbols` is explicitly requested on a normal build.
 APFS clones keep independent artifact snapshots without duplicating unchanged
 disk blocks; ordinary build copies avoid rehashing the same bytes twice.
+Forced normal builds retain earlier cache artifacts instead of replacing an
+anchor that may still be installed. The generated-output pruner protects the
+current iteration anchor alongside normal current-build/device receipts.

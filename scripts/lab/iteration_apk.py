@@ -5,6 +5,7 @@ anchor; content/package drift requires another normal build, not a guessed patch
 """
 
 import copy
+import hashlib
 import os
 from pathlib import Path, PurePosixPath
 import shutil
@@ -22,6 +23,14 @@ GRADLE = "Library/Bee/Android/Prj/IL2CPP/Gradle"
 def signature(name):
     upper = name.upper()
     return upper.startswith("META-INF/") and (upper == "META-INF/MANIFEST.MF" or upper.endswith((".SF", ".RSA", ".DSA", ".EC")))
+
+
+def member_hash(archive, name):
+    h = hashlib.sha256()
+    with archive.open(name) as stream:
+        for block in iter(lambda: stream.read(4 * 1024 * 1024), b""):
+            h.update(block)
+    return h.hexdigest()
 
 
 def safe_name(name):
@@ -85,11 +94,11 @@ def write_anchor(work, project, result):
         return
     # Save the precise assets/lib coverage, including plugin libraries that are
     # packaged elsewhere and must remain untouched by the export overlay.
-    with zipfile.ZipFile(result["apk"]) as archive:
-        available = set(archive.namelist())
     members = export_members(gradle)
-    if not set(members) <= available:
-        raise RuntimeError("Normal APK does not contain its generated export members")
+    with zipfile.ZipFile(result["apk"]) as archive:
+        if not set(members) <= set(archive.namelist()):
+            raise RuntimeError("Normal APK does not contain its generated export members")
+        hashes = {name: member_hash(archive, name) for name in members}
     write(
         Path(work) / "config/iteration-base.json",
         {
@@ -101,6 +110,7 @@ def write_anchor(work, project, result):
             "graphics_api": result["graphics_api"],
             "packaging_inputs": packaging_inputs(gradle),
             "overlay_members": sorted(members),
+            "overlay_hashes": hashes,
             "source": result.get("source"),
         },
     )
@@ -110,6 +120,8 @@ def validate_anchor(work, input_id, api):
     anchor = read(Path(work) / "config/iteration-base.json")
     if anchor.get("schema") != 1 or anchor.get("input_id") != input_id or anchor.get("graphics_api") != api:
         raise RuntimeError("Iteration anchor identity changed; run a normal whole-catalog build")
+    if set(anchor.get("overlay_hashes", {})) != set(anchor["overlay_members"]):
+        raise RuntimeError("Iteration anchor lacks complete member hashes; run a normal build")
     apk = Path(anchor["apk"])
     if not apk.resolve().is_relative_to(Path(work).resolve()) or sha(apk) != anchor["apk_sha256"]:
         raise RuntimeError("Iteration anchor APK missing or changed")
@@ -191,6 +203,7 @@ def assemble_export(work, export, output, anchor):
         if packaging_inputs(export) != anchor["packaging_inputs"]:
             raise RuntimeError("Java/manifest/resource packaging changed; normal build required")
         members = export_members(export)
+        changed = {name: path for name, path in members.items() if sha(path) != anchor["overlay_hashes"].get(name)}
         previous = set(anchor["overlay_members"])
         # Changing the generated player file set is valid: remove obsolete data
         # rather than leaving stale metadata/resources behind.
@@ -198,7 +211,7 @@ def assemble_export(work, export, output, anchor):
     unsigned, aligned = output.with_suffix(".unsigned.apk"), output.with_suffix(".aligned.apk")
     try:
         with timing.phase("splice"):
-            splice(anchor["apk"], unsigned, members, removed)
+            splice(anchor["apk"], unsigned, changed, removed)
         with timing.phase("zipalign"):
             run([android_tools() / "zipalign", "-f", "-p", "4", unsigned, aligned], timeout=180)
         with timing.phase("sign"):
@@ -232,6 +245,8 @@ def assemble_export(work, export, output, anchor):
     return {
         "base_apk_sha256": anchor["apk_sha256"],
         "overlay_members": sorted(members),
+        "changed_members": sorted(changed),
+        "changed_bytes": sum(path.stat().st_size for path in changed.values()),
         "removed_members": sorted(removed),
         "timing": timing.report(),
         "acceptance": "iteration only; normal full build required for acceptance",
@@ -239,8 +254,6 @@ def assemble_export(work, export, output, anchor):
 
 
 def compare_members(first, second):
-    import hashlib
-
     def inventory(path):
         result = {}
         with zipfile.ZipFile(path) as archive:
@@ -249,11 +262,7 @@ def compare_members(first, second):
                     continue
                 if info.filename in result:
                     raise RuntimeError("Duplicate APK member")
-                h = hashlib.sha256()
-                with archive.open(info) as stream:
-                    for block in iter(lambda: stream.read(4 * 1024 * 1024), b""):
-                        h.update(block)
-                result[info.filename] = {"sha256": h.hexdigest(), "bytes": info.file_size}
+                result[info.filename] = {"sha256": member_hash(archive, info), "bytes": info.file_size}
         return result
 
     a, b = inventory(first), inventory(second)
