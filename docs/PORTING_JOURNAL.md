@@ -42206,3 +42206,109 @@ control and source-view/End Run/Quit remain pending. Existing installed bytes
 remain R55; later continuation uses its fresh owned receipt without reinstalling
 or repeating this successful plain observation. The rare NaN, appearance,
 mission and normal-game gates remain open.
+
+## J1105 — Qualify R55 controls and source-view teardown; retain the route stall before Siren
+
+**Hypothesis and fixed player.** J1101's integrated normal candidate can preserve
+standard transport/audio and original source-view lifecycles while exercising
+the restored collision policy in native combat. Reuse R55 from `eb2acf07`, APK
+`111b1facec5b021c87dce03be24c9b81e913160809e685dc94b23e161786917a`;
+no runtime change or new build follows its first plain control. Its frozen
+267-reference manifest remains in `work/coordination/main-port-r55/`.
+Nova's retained-data install is unchanged: no reinstall, uninstall, data clear
+or storage change. Fresh owned bytes/profile/idle state and the selected-volume
+15 GiB floor are checked before continuation. The shared queue grants one
+bounded root window before the priority content case and alpha's later checks.
+
+**Standard transport and audio.** The second strict control passes at
+160.5675 world seconds: one original Lakes-to-Goolake transition and 10.8222 s
+in the destination. Current-process review finds zero unexplained errors;
+the runtime source-projectile policy precondition is true. Skill-timed
+MainOutput has 470 callbacks, 541,440 samples, 91,584 nonzero finite samples
+and zero nonfinite samples. This window remains first-stage/skill-timed;
+it does not establish destination-stage PCM or full mix/event/audibility parity.
+Applied runs stay zero, full profile bytes match, and baseline cleanup verifies
+process/selector absence and OLED sleep. This window observes no stakes.
+Evidence: `work/experiments/baseline/20261024T225254.989753Z/` and the separate
+`stage-exit-qualification.json` in the R55 coordination directory. J1101 remains
+the only full account of the earlier passing plain control.
+
+**Source view and native Quit.** Huntress reaches 35.0794 world seconds with
+the original source skin/camera, live Sobel intensity 0.75/scale 3, enabled
+ambient occlusion and grading, bound owned resources and all 22 compute kernels.
+The screenshot shows terrain, vegetation, survivor and HUD; it remains bright
+and flat, so PC appearance is unaccepted. Its image SHA-256 is
+`cc65759ad2760b4ff2e2ee3e79dbe5e7f91301bd2ae4f087c69af4ded85a81d0`.
+MainOutput independently records 696 callbacks, 801,792 samples, 389,376 nonzero
+finite samples and zero nonfinite samples. This does not attribute those samples
+to Huntress's particular event or qualify its complete mix.
+
+The native settings UI confirms End Run in two steps. The completed first-session
+report observes owned Sobel retirement, then the same process reaches its next
+menu. Original bank-release wakeup succeeds, original Wwise Term succeeds, and
+the application-owned Quit makes the process absent after 7.4434 s. No force-stop
+is sent for that Quit; profile bytes remain unchanged and final cleanup verifies
+selector/process absence and OLED sleep. These are Nova observations, not a
+matched latency improvement over Main. Evidence:
+`work/experiments/original-game-audio/r55-source-camera-siren-collision-retention-batch-warm-quit-20261024T225920.906502Z/`.
+
+**Preserved host refusal.** The strict full-system-log review initially refuses
+one current-process Android `BLASTBufferQueue` line after native Term. The exact
+Android 13 [AOSP destructor](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-13.0.0_r1/libs/gui/BLASTBufferQueue.cpp)
+logs pending transaction application at error severity while completing ordinary
+queue destruction. The retrieved source hash is
+`32d583117076ae89ee65c980b8e515522ee18d476973802ff251e3cd5e10c4ea`.
+A private qualification annotation accepts only the one exact measured platform
+message, after successful native Term, observed natural process exit and no
+force-stop. The unchanged global classifier still reports that raw line; all
+other errors remain fatal, including a synthetic exact LightningStake NaN.
+The initial refused qualification and workflow remain preserved beside the
+separate passing result. No historical log, classifier or original source is
+edited. The harness had already automatically released its first lease; a
+bounded continuation acquires a new atomic lease before the scheduled handoff,
+without repeating controls or installing another player.
+
+**Positive native elite path.** The longer Huntress route completes two native
+stage transitions and observes six blue-elite Wisp-owned LightningStake
+identities. All six pre-fire snapshots have finite source operands. Twenty-three
+retained projectile snapshots remain finite, including native precise-HurtBox
+attachment and a world-platform attachment before/after its stuck-transform
+resolution. Original fire/impact/sticking callbacks are unchanged. The saved
+positive report is
+`work/experiments/siren-route/r55-20261024T230612.419406Z/positive-elite-stakes-third-stage-report.json`.
+Periodic strict current-process checks find no unexplained errors. This is
+positive exercised-path evidence under the restored source matrix, not proof
+that J1092's rare first-terrain-contact corruption is causally resolved; J1101's
+old-policy twelve-session negative control also remains relevant.
+
+**First route failure and bound.** Siren is never reached. On Scorched Acres the
+native teleporter is charged, its bosses are dead and its next scene is
+shipgraveyard. At world 482.1795 s, scripted navigation still reports a reachable
+37-waypoint route but no safe terrain candidate. Objective distance is 84.1782 m
+and progress has stalled for 159.2397 s. The body is near Y -53.99 while the
+teleporter is near Y 29.62. This identifies a concrete route/recovery failure;
+it does not yet establish why the body reached that lower location. Preserve
+`bounded-navigation-stall-report.json`, `operator-stop.json`, final report/logs
+and the screenshot under the same Siren run. The operator stops the owned
+attempt at the shared budget; this is not a native exception, a successful route
+or a completed 900-second timeout. No teleport, forced damage, direct targeting,
+expanded egg-input budget or progression grant is introduced. Native egg input,
+Siren encounter start/defeat/rewards and the R48–R51 Siren device gates remain open.
+
+**Cleanup and next step.** Last-active actual APK and profile hashes are checked
+before the diagnostic stop; this is explicitly separate from post-stop cleanup.
+The child verifies unchanged profile bytes, process/selector absence and OLED
+sleep, and the outer owner verifies sleep again before release. Total physical
+lease time is about 23.36 min across the two holds; elapsed window is about
+25.4 min including the host-refusal gap. Mandatory marker-aware pruning completes
+after each run, preserving all receipts/evidence and copying no APK/payload.
+Priority content takes the next lease; alpha follows it. A safe-point readback
+requested by alpha finds no matching shell observer and no pending settings
+file, so no actor is killed and no setting is changed. Main remains unreachable;
+its interrupted-R45 recovery/cleanup/sleep still precedes any future install.
+
+Next inspect the existing navigation and original out-of-bounds owners against
+the saved body/graph/terrain evidence, then host/exact-editor qualify the smallest
+repair. Keep native physics and source elite behavior intact. PC appearance,
+complete audio, rare-NaN causality, Siren completion, memory bounds and ordinary
+normal-difficulty runs remain open.
