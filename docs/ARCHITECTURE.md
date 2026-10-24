@@ -826,15 +826,17 @@ owners give the visible modal input priority while retaining the owned pause.
 Android clipboard, browser handoff and the composed settings route require
 device acceptance; host fixtures exercise the authored flow and refusal paths.
 `AndroidTouchInput` is the playable bridge's pointer producer. Stable finger IDs
-own independent movement, camera and eight native action captures, plus pause. Short action taps
-remain pending until a fixed tick consumes them; missing/canceled pointers,
+own independent movement, camera and eight native action captures, plus pause.
+Short action taps remain pending until a fixed tick consumes them; missing/canceled pointers,
 pause, focus loss and viewport changes neutralize capture. Reacquisition requires
 all touches to lift. Captured primary touch GUI events are claimed before legacy
-widgets; modal settings are exempt. Pause can be requested by a second finger,
-queues through the existing settings owner and neutralizes the bank immediately.
+widgets. The opening pointer retains GUI ownership through pause until lift,
+so its release cannot close the new modal. Fresh modal gestures remain available.
+A pause request from any captured finger queues through the existing settings
+owner and neutralizes the bank immediately.
 The native pause button shares its exact geometry with the producer; the lab
-takeover button occupies the reserved top strip. `NovaInputBridge` routes these requests through the existing
-original bank and `NovaThirdPersonView.LookTouch`; the adapter changes no motor,
+takeover button occupies the reserved top strip. `NovaInputBridge` routes these
+requests through the existing original bank and `NovaThirdPersonView.LookTouch`; the adapter changes no motor,
 transform, native skill or gameplay clock. The original world owner presents the
 controls and permits explicit touch takeover of automatic diagnostics. Thor's
 ordinary route is touch-only, with no measured controller mapping. Nova's
