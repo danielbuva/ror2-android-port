@@ -37189,3 +37189,87 @@ actual target raw outputs, finish Burst/shader and independent content closure,
 then assemble/sign/install and run both standard controls plus matched first-stage
 performance. The existing J1065 owner installation is separate evidence. No new
 game APK is produced, installed or claimed accepted here.
+
+## J1094 — Qualify exact SDK Vulkan shader compilation on Android
+
+Date: 2026-10-24 UTC. **Observed device tool result; no game launch.**
+
+**Hypothesis.** The separately acquired Linux 2021.3.45f2 shader compiler,
+its genuine GNU runtime and a public user-mode runner can preserve native SDK
+Vulkan output on Android without the Editor, a project, SDK binary patches or
+target shader bytes. This is a compiler-tool slice; original shader recovery and
+serialized content production remain the content owner's responsibility.
+
+**Prior art / version clue.** Consulted the shader-recovery subsystem and J364–
+J370 before new machinery. Hamish Milne's old standalone client
+(`hamish-milne/UnityShaderCompiler`, pinned
+`402aabf44f942be08da226c5e4fc07242afe5cbc`) demonstrates IPC admission, but its
+older framing is not the 2021.3 protocol. `0xf4b1/unify`, pinned
+`2a9a8b848f3569a501c472742fbc9ffc4b142dd5`, supplies a porting/version clue,
+not a complete 2021.3 client. No implementation was copied from either project.
+The [official 2021.3 enum definitions](https://github.com/Unity-Technologies/UnityCsReference/blob/2021.3/Editor/Mono/Graphics/ShaderCompilerData.cs)
+identify the Vulkan compiler platform. Exact locally acquired SDK observations
+resolve the current transport and operand contract. Existing pinned original-DXBC
+recovery techniques remain unchanged; no shader appearance/math is invented.
+
+**Change / ownership.** `tools/phone-build/owner-code/shader.py` owns a small
+explicit-command compiler session and typed IPC client. Strings use a 64-bit
+length and the current protocol magic; initialization supplies include/search
+mappings and reads all platform capabilities. The client requests Android Vulkan
+HLSL emission, preserving binary payload, reflection and diagnostics. Setup
+creates one new private log directory; context teardown shuts down or kills only
+its compiler child and closes sockets. Original game/SDK files are read-only;
+there is no implicit acquisition, Editor invocation, installer, runtime owner or
+current-build consumer. The four authored host tests use synthetic protocol
+witnesses, not captured SDK output.
+
+**Inputs / exact comparison.** Official Linux SDK archive SHA-256
+`faaeafc17dd251ae0d3489ef762929f393928ad19b60d1f9b4155bb7d25d76d3`;
+selected UnityShaderCompiler SHA-256
+`c80dd80426848a1cd83eb7d9a430b66f06b6221d9ef85ed0b41ddcb255dd7dfa`.
+The Linux x86-64 D3DCompiler_47.dll and 59 includes are separately selected from
+that archive. The Mac ARM64 PE plugin is incompatible with this Linux host.
+Public Termux QEMU x86-64 runner package SHA-256
+`6ef8219c876d576a2df22d2c84453c59dd70d4e48f18b070c3788121318ba8e7`
+and separately acquired GNU loader/libraries run the unchanged SDK tool. Generic
+runner code and acquired SDK data remain distinct providers; tool/component
+redistribution rights are not granted by this experiment.
+
+**Device evidence.** The assigned headless device ran shell-tool controls only,
+with both OLED panels asleep. No game package install, data reset, game launch or
+storage configuration change occurred. Native macOS exact-SDK and Android GNU
+initialization capabilities match byte for byte. The simple authored vertex/
+fragment fixture produces the same complete 706-byte response, including its
+642-byte shader payload, SHA-256
+`a2047832ac5373f27b475ef64dabdd307f0d18eebf1bedba95864f5340ec9154`.
+The public client then reproduces a richer texture/uniform fixture: 849-byte
+Vulkan payload SHA-256
+`ed0d4fee413a27a10ee20f6e6b7143e9ef4a802b4403a70c0f71d547e33b702b`,
+with identical six reflection records and no diagnostics. Both hosts also agree
+on an empty successful fragment request and a failed invalid-HLSL request with
+its parsed diagnostic. SDK success alone does not establish emitted data.
+
+Evidence is local under `work/coordination/phone-code/`:
+`shader-initialize-host/`, `shader-initialize-phone.log`,
+`shader-compile-host-v2/`,
+`shader-compile-phone-v2.log`, `public-shader-host-v1/`,
+`public-shader-phone-v1.log`, `public-shader-comparison.json`,
+`linux-shader-extra-v1/result.json` and the explicit
+qualification scripts. Protected SDK selections/output and private diagnostic
+inspection remain ignored. The redundant full SDK archive was removed only after
+verified selection/hash records; selected tools and failure evidence remain.
+
+**First failure / correction.** Older 32-bit string-length framing crashed the
+exact native host as well as Android; the fixed SDK requires 64-bit lengths.
+After correcting that contract, initialization and actual compilation succeed.
+A first source lacking both pragma declarations returns explicit SDK diagnostics;
+the authored two-entrypoint source fixes the fixture. These were transport/source
+contract failures, not evidence that the emulator changes shader math.
+
+**Validation / limits.** Four synthetic host IPC tests pass; Ruff passes. Raw
+host/phone shader payloads and reflection are compared without normalization.
+These are standalone tool controls, not an ordinary app-host shader producer or
+the original game shader cohort. Full HLSL recovery, variants, serialized records,
+bundle assembly, app delivery, installation and matched runtime/performance remain
+open. No APK was produced by this slice. Revisit on an original-cohort mismatch,
+SDK drift, new required reflection/stage contract or Android app admission.

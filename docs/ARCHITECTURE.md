@@ -196,6 +196,14 @@ Clang driver, and invokes it without a global Linux execution handler. Original
 SDK ARM64 target data remain inputs. Android Clang 21/LLD remains the explicit
 fallback; whole-player Linux app hosting and runtime parity are separate gates.
 
+`tools/phone-build/owner-code/shader.py` owns the experimental exact-SDK
+Vulkan IPC client. An explicit compiler command/SDK directory and new private
+output own setup, typed session state, reflection/diagnostics and child/socket
+teardown. It invokes no Editor/project and selects no runtime shader.
+[Setup and limits](../tools/phone-build/owner-code/README.md#standalone-sdk-shader-tool)
+separate the qualified authored fixture (J1094) from original-cohort recovery,
+serialized content construction and ordinary app admission.
+
 `tools/phone-build/owner-code/produce.py` owns the current experimental combined
 whole-player backend: explicit hash-bound managed providers, audited target
 roots, SDK-derived native identities, exact SDK stripping/conversion, verified

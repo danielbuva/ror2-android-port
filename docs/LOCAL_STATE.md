@@ -1668,3 +1668,12 @@ before and after use. Generic runner ELF files are installed read-only in the
 tool host; original SDK tools and GNU data stay in owner input storage. See the
 [owner setup](../tools/phone-build/owner-code/README.md) for the explicit bindings.
 No timestamped experiment directory is a runtime lookup default.
+
+
+Standalone shader-tool setup additionally requires an explicit exact-SDK
+UnityShaderCompiler, matching host-architecture D3DCompiler_47.dll, glslang/
+DXCompiler plugins and CGIncludes. The Linux-on-Android path supplies a public
+QEMU/GNU runtime separately. These acquired inputs and compiler outputs stay
+ignored; the public client has no timestamped-run lookup or SDK download default.
+[Lifecycle](../tools/phone-build/owner-code/README.md#standalone-sdk-shader-tool)
+covers owned logs, sockets and process cleanup.

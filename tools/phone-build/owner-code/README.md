@@ -255,3 +255,26 @@ establish native equivalence. Licensed native input production, Burst/content/
 shaders, phone hosting, installation/update and matched game behavior/performance
 remain gates. This host control does not commit the final installation experience
 to a desktop.
+
+
+## Standalone SDK shader tool
+
+`shader.py::compiler(command, sdk_data, output, ...)` starts an explicitly
+supplied exact-SDK standalone shader compiler, including an explicit public
+GNU runner prefix when required on Android. SDK tools, plugins, includes and
+GNU dependencies are separately acquired local inputs; none is bundled here.
+The context creates a new private log directory, initializes one loopback IPC
+session and closes sockets/stops its child at teardown. It does not run the
+Unity Editor or read a project. `Connection.compile` accepts authored/recovered
+HLSL, a diagnostic/include filename, vertex/fragment request, keywords, flags
+and requirements; it returns SDK status, bytes, reflection and diagnostics.
+An SDK-successful skipped request can return no data; callers must check payload
+presence for their content contract. There is no current game-build consumer.
+
+[J1094](../../../docs/PORTING_JOURNAL.md#j1094--qualify-exact-sdk-vulkan-shader-compilation-on-android)
+compares authored Vulkan shader payloads, reflection and errors exactly on host
+and Android. Original game shader recovery/variants and serialized content
+production are separate content-owner work. Ordinary app hosting, final APK
+assembly and runtime appearance/performance remain open. Retain failures and
+output evidence before deleting only this owned output; original SDK/game inputs
+and other runs remain untouched.

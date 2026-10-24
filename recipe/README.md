@@ -2306,3 +2306,15 @@ ownership, authentication or entitlement behavior. Provenance, licensing,
 privacy and sensitive-content audit: 2026-10-24. J1082 records the complete
 phone cohort and public codec build; other texture/mip and bundle assembly
 gates remain open.
+
+
+The authored `owner-code/shader.py` client implements only observed exact-SDK
+IPC framing, platform selection and source/keyword requests. It includes no SDK
+implementation, shader payload, recovered game source, private host path or
+protected tool. Old community clients provide a version clue and official Unity
+enums provide API identities; no upstream implementation was copied. Owners
+supply their separately acquired compiler/plugins/includes and runtime providers.
+All generated shader/code and raw inspection evidence stay ignored. No ownership,
+entitlement, authentication or license result is synthesized. This tool adds no
+permission to redistribute acquired SDK components or derived game outputs.
+Provenance, privacy, licensing and sensitive-content audit: 2026-10-24; J1094.
