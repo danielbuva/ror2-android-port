@@ -2128,6 +2128,13 @@ recorded without replacing a primary iterator exception.
 `test_automatic_spawn_cleanup_lease.py` executes these production helpers with
 synthetic lifetime, partial-subscription and remapping cases (J792).
 
+`PrimaryFireSession` preserves original pistol, reload, barrage and dodge sound
+configuration in integrated world play. Historical component fixtures retain
+their silent strings. Existing visual exclusions are independent; no event,
+routing or gameplay value is synthesized. Setup clones only the reload
+configuration; disposal restores captured statics and destroys that owned clone.
+The production setup/exclusion/disposal host fixture covers both modes.
+
 `PrimaryFireSession` reuses one scalar operand snapshot during observation and
 freezes a separate first-failure snapshot only on refusal or accessor exception.
 It captures the live body, locator, primary slot, state machine and state in

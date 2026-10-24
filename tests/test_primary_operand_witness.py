@@ -351,6 +351,19 @@ class PrimaryOperandWitnessTests(unittest.TestCase):
             ran = subprocess.run([str(mono), str(exe)], capture_output=True, text=True)
             self.assertEqual(ran.returncode, 0, ran.stdout + ran.stderr)
 
+    def test_integrated_configs_preserve_native_audio_and_restore_owned_state(self):
+        source = PRIMARY.read_text(encoding="utf-8")
+        members = "\n".join(
+            extract_member(source, declaration)
+            for declaration in (
+                "public EntityStateConfiguration[] PrepareSpineConfigs(",
+                "public void ApplySpineExclusions(",
+                "public void Dispose()",
+            )
+        )
+        fixture = (ROOT / "tests/fixtures/primary_original_audio_host.cs").read_text(encoding="utf-8")
+        self.compile_run(fixture.replace("__PRODUCTION_MEMBERS__", members), "")
+
     def test_actual_observer_under_healthy_and_invalid_operands(self):
         source = PRIMARY.read_text(encoding="utf-8")
         declarations = (

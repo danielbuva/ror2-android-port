@@ -126,14 +126,16 @@ public sealed partial class PortSession
             spineReload.serializedFieldsCollection.serializedFields = reload.serializedFieldsCollection.serializedFields.ToArray();
             int index = Array.FindIndex(spineReload.serializedFieldsCollection.serializedFields, x => x.fieldName == "enterSoundString");
             coordinator.Check(index >= 0, "Spine reload sound field missing");
-            spineReload.serializedFieldsCollection.serializedFields[index].fieldValue.stringValue = "";
-            coordinator.r.primary = new PrimaryFireReport { silentFixture = true, lastOperands = new PrimaryFireOperandSnapshot() };
+            if (!cfg.integratedWorld)
+                spineReload.serializedFieldsCollection.serializedFields[index].fieldValue.stringValue = "";
+            coordinator.r.primary = new PrimaryFireReport { silentFixture = !cfg.integratedWorld, lastOperands = new PrimaryFireOperandSnapshot() };
             var configs = new[] { spawn, fire, spineReload };
             return cfg.combatSpine ? configs.Concat(coordinator.PrepareCombatConfigs(cfg)).ToArray() : configs;
         }
         public void ApplySpineExclusions()
         {
-            FirePistol2.firePistolSoundString = "";
+            if (!coordinator.r.integratedWorld)
+                FirePistol2.firePistolSoundString = "";
             FirePistol2.muzzleEffectPrefab = null;
             FirePistol2.hitEffectPrefab = null;
             FirePistol2.tracerEffectPrefab = null;
@@ -142,11 +144,13 @@ public sealed partial class PortSession
             coordinator.r.primary.baseDuration = FirePistol2.baseDuration;
             if (coordinator.r.combat != null)
             {
-                FireBarrage.fireBarrageSoundString = "";
+                if (!coordinator.r.integratedWorld)
+                    FireBarrage.fireBarrageSoundString = "";
                 FireBarrage.effectPrefab = null;
                 FireBarrage.hitEffectPrefab = null;
                 FireBarrage.tracerEffectPrefab = null;
-                EntityStates.Commando.DodgeState.dodgeSoundString = "";
+                if (!coordinator.r.integratedWorld)
+                    EntityStates.Commando.DodgeState.dodgeSoundString = "";
                 EntityStates.Commando.DodgeState.jetEffect = null;
             }
         }
