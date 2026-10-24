@@ -790,6 +790,11 @@ Unexpected edits/ref movement are preserved and refuse restoration. Its current
 `shared-catalog-code-build` (`--full` for content), `shared-catalog-fast-build`
 and `shared-catalog-scripts-build` actions copy no project and select no device.
 Setup and restoration receipts stay under `work/coordination/shared-builds/`.
+Full staging retires predecessor-only authored C# copies through
+`build.retire_staged_runtime_sources`: the previous successful build commit,
+exact source bytes and pinned GUID must match before removal. A private
+`work/coordination/staging-retirements/` receipt records that reproducible owner.
+Edited/unknown files and code-only membership changes continue to refuse.
 Host contracts: `test_iteration_apk.py`, `test_install_transport.py`,
 `test_build_snapshots.py`. Build/experiment artifact snapshots use APFS clones
 with an independent-copy fallback; snapshot verification can be requested while

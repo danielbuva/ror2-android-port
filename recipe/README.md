@@ -2113,7 +2113,7 @@ credential, signing key or middleware is added. Provenance/privacy audit:
 2026-10-23. Native clipboard/browser acceptance remains a device gate.
 
 Fast-iteration infrastructure refreshes only the camera recipe's authored
-`whole_catalog.py` source digest for build timing, clone copies and optional
-pre-Gradle dispatch. Camera transforms, game/API profiles and generated outputs
+`whole_catalog.py` source digest for build timing, clone copies, verified
+predecessor staging retirement and optional pre-Gradle dispatch. Camera transforms, game/API profiles and generated outputs
 are unchanged. Provenance/privacy audit: 2026-10-24; authored tooling and source
 digests only, with no protected content or private identifiers.

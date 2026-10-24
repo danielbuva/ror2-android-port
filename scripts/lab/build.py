@@ -255,12 +255,58 @@ def whole_player_inputs():
 WHOLE_PLAYER_INPUTS = whole_player_inputs()
 
 
-def validate_runtime_source_membership(project):
+def retire_staged_runtime_sources(project, unexpected):
+    """A full build may remove unchanged authored copies owned by its predecessor.
+
+    Branch switching must not silently retain another branch's C#. Verify the
+    previous successful build's committed source and GUIDs before any removal.
+    Unknown or edited sources still refuse rather than being discarded.
+    """
+    if Path(project).resolve() != (WORK / "lab-project").resolve():
+        raise RuntimeError("Source retirement requires the prepared lab project")
+    previous = read(WORK / "config/current-build.json")
+    commit = previous.get("source", {}).get("commit", "")
+    if not re.fullmatch(r"[0-9a-f]{40}", commit):
+        raise RuntimeError("Previous committed staging owner required for source retirement")
+
+    def blob(path):
+        return run(["git", "-C", ROOT, "show", commit + ":" + path]).stdout
+
+    sources = {Path(name).name: name for name in json.loads(blob("recipe/runtime-sources.json"))}
+    guids = json.loads(blob("recipe/project-layout.json"))["runtime_source_guids"]
+    stage = Path(project) / "Assets/LabLoadingScene"
+    verified = []
+    for relative in unexpected:
+        name = sources.get(relative)
+        path = stage / relative
+        meta = Path(str(path) + ".meta")
+        guid = guids.get(name)
+        if not name or path.is_symlink() or path.read_bytes() != blob("tools/unity/" + name):
+            raise RuntimeError("Unlisted staged source is not an unchanged previous build input: " + relative)
+        if not guid or meta.is_symlink() or not meta.is_file() or re.findall(r"^guid: ([0-9a-f]{32})$", meta.read_text(), re.M) != [guid]:
+            raise RuntimeError("Previous staged source GUID is missing or changed: " + relative)
+        verified.append((path, meta, {"source": name, "sha256": sha(path), "guid": guid}))
+    receipt = WORK / "coordination/staging-retirements" / (now() + ".json")
+    facts = {"previous_source_commit": commit, "sources": [row for _, _, row in verified], "removed": []}
+    write(receipt, facts)
+    try:
+        for path, meta, _ in verified:
+            path.unlink()
+            meta.unlink()
+            facts["removed"].append(path.name)
+    finally:
+        write(receipt, facts)
+
+
+def validate_runtime_source_membership(project, *, retire_previous=False):
     names = runtime_sources()
     known = {Path(name).name for name in names} | WHOLE_GENERATED_RUNTIME_SOURCES
     stage = Path(project) / "Assets/LabLoadingScene"
     unexpected = sorted(str(source.relative_to(stage)) for source in stage.rglob("*.cs") if source.is_file() and str(source.relative_to(stage)) not in known)
     if unexpected:
+        if retire_previous:
+            retire_staged_runtime_sources(project, unexpected)
+            return names
         raise RuntimeError(
             "Unlisted whole-catalog C# sources in Assets/LabLoadingScene: "
             + ", ".join(unexpected)

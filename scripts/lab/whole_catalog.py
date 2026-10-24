@@ -2336,7 +2336,7 @@ def _build_integration(
     # Both build paths own their config inputs; never inherit migration or probe extras.
     generate_runtime_config(project)
     generate_content_recipe()
-    runtime_sources = validate_runtime_source_membership(project)
+    runtime_sources = validate_runtime_source_membership(project, **({"retire_previous": True} if not code_only else {}))
     out = ROOT / read(WORK / "experiments/whole-catalog/latest.json")["path"]
     attempt = ROOT / read(out / "integration-latest.json")["path"]
     if not read(attempt / "host-integration.json")["success"]:
