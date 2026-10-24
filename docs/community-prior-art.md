@@ -372,3 +372,15 @@ The existing resource owner may release only already-destroyed HurtBox targets
 in returned items after world/network teardown. Preserve live targets, checked-out
 hits, pool order/capacity and native hit/reset behavior. Host peers establish that
 contract; only a repeated device series can establish a changed memory slope.
+
+The SDK-only interrupted-settings case consults the official
+[FileObserver API](https://developer.android.com/reference/android/os/FileObserver)
+for CREATE events, its dedicated callback thread and the requirement to retain
+the observer. Android 13's public AOSP
+[IActivityManager interface](https://github.com/aosp-mirror/platform_frameworks_base/blob/android-13.0.0_r1/core/java/android/app/IActivityManager.aidl)
+provides `forceStopPackage` and `getUidProcessState`. The existing targeted SDK
+actor establishes the shell/UID scope technique. The new actor observes only the
+owned pending filename, rechecks PID/UID/foreground, and uses the normal shell
+stop permission. No platform implementation, player hook, grant or permission
+change is added. Actual retained pending bytes plus an unchanged primary are
+required; observer dispatch alone never qualifies a transaction interruption.

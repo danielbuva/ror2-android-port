@@ -246,6 +246,15 @@ class PrototypeActionTests(unittest.TestCase):
         self.assertEqual(json.loads(output), {"unity_compiled": False, "android_accepted": False})
         self.assertIsNone(code)
 
+    def test_interrupted_save_dispatch_binds_apk_and_selected_receipt_tree(self):
+        module = ModuleType("settings_write_interrupt_check")
+        module.check_settings_write_interrupt = Mock(return_value={"success": True})
+        with patch.dict(sys.modules, {"settings_write_interrupt_check": module}):
+            code, output, error = self.cli("--action", "settings-write-interrupt-check", "--expected-apk-sha256", "a" * 64, "--work-dir", str(FIXTURE_WORK))
+        self.assertEqual((code, error), (0, ""))
+        self.assertTrue(json.loads(output)["success"])
+        module.check_settings_write_interrupt.assert_called_once_with(expected_apk_sha256="a" * 64)
+
     def test_registry_names_and_current_status_match_documented_contract(self):
         # Added actions have separate dispatch contracts rather than changing
         # the historical pre-registry snapshot.
@@ -257,6 +266,7 @@ class PrototypeActionTests(unittest.TestCase):
             "whole-catalog-scripts-build",
             "apk-member-compare",
             "touch-gesture",
+            "settings-write-interrupt-check",
             "rebuild-step",
             "shader-outline-candidate",
             "shader-ramp-fog",
@@ -310,6 +320,7 @@ class PrototypeActionTests(unittest.TestCase):
                 "session-memory-check",
                 "session-memory-root-check",
                 "touch-gesture",
+                "settings-write-interrupt-check",
                 "whole-catalog-repair-bindings",
                 "whole-catalog-contracts",
                 "whole-catalog-host-providers",

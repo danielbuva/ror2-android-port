@@ -132,6 +132,12 @@ def _session_memory(function, kwargs, args):
     return _json_result(function, selected, args, indent=2)
 
 
+def _settings_write_interrupt(function, options, args):
+    if args.target != "lab":
+        raise SystemExit("settings-write-interrupt-check uses the native menu; omit --target")
+    return _json_result(function, dict(expected_apk_sha256=getattr(args, "expected_apk_sha256", None)), args, indent=2)
+
+
 def _touch_gesture(function, kwargs, args):
     return _json_result(function, dict(kwargs, target=args.target, expected_apk_sha256=getattr(args, "expected_apk_sha256", None)), args, indent=2)
 
@@ -420,6 +426,15 @@ _ENTRIES = (
         "current",
         "Repeat ordinary Commando menu-start, 60 s ready Lakes play and UI-abandon sessions in one process (five by default, --sessions 3 to 32); each completed session must pass the session-abandon contract. Reports existing runtime resource samples and per-menu PSS as observations, not a leak fix or normal-game acceptance. Optional --memory-snapshots captures private native/managed heaps at menus 2/4 for attribution; it allocates/pauses and is separate from ordinary growth/performance. Requires --expected-apk-sha256 bound to the selected device's ownership receipt.",
         handler=_session_memory,
+    ),
+    Action(
+        "settings-write-interrupt-check",
+        "settings_write_interrupt_check",
+        "check_settings_write_interrupt",
+        {},
+        "current",
+        "Cold native settings transaction: observe the pending-file create, stop only its owned writer, require an unchanged primary and retained pending file, then cold-recover and resave. Uses a diagnostic menu selector, no gameplay, power-cut or ENOSPC claim. Requires --expected-apk-sha256.",
+        handler=_settings_write_interrupt,
     ),
     Action(
         "touch-gesture",
