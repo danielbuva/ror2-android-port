@@ -222,8 +222,10 @@ they are not yet tracked (see [docs/LOCAL_STATE.md](LOCAL_STATE.md)).
 
 The selector, scoped receipts and receipt migration passed on the current Nova (J595).
 Additional devices and concurrent device runs still need live acceptance.
-Device operations do not take the global Unity build lock at
-`work/coordination/unity-build.lock`; Unity build/editor work uses that shared host lock.
+Device operations do not take the canonical Unity build lock at
+`work/coordination/unity-build.lock`. Canonical build/editor work uses that lock;
+[isolated lanes](build-lanes.md) each use their own persistent build lock and
+editor. Device ownership stays global across all lanes.
 
 ## Validation tiers
 

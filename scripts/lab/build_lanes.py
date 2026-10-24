@@ -140,6 +140,8 @@ def _create(name, port, root):
     # Snapshot only while the canonical staging/build owner is idle. Later lane
     # builds never take this lock or mutate the primary source checkout.
     with host_build_lock(base / "work/coordination/unity-build.lock", operation="clone build lane " + name):
+        if any(read(marker).get("mcp_port") == port for marker in lane.parent.glob("*/lane.json") if marker.parent != lane):
+            raise ValueError("Lane MCP port is already reserved; remove this incomplete lane and choose another port")
         subprocess.run(["git", "worktree", "add", "--detach", str(checkout), source], cwd=base, check=True, capture_output=True)
         source_work = base / "work"
         work = checkout / "work"

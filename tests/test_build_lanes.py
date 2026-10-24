@@ -136,6 +136,10 @@ class BuildLaneTests(unittest.TestCase):
         self.create()
         with self.assertRaises(RuntimeError):
             self.create()
+        with self.assertRaisesRegex(ValueError, "port is already reserved"):
+            self.create("duplicate-port")
+        self.assertFalse(lanes.read_lane("duplicate-port", self.root)["complete"])
+        lanes.remove("duplicate-port", self.root)
 
     def test_published_artifact_survives_lane_teardown_without_changing_current_pointer(self):
         facts = self.create()
