@@ -2410,3 +2410,9 @@ added to recipes. Public tests use authored tool/key/content witnesses only.
 Tool acquisition and distribution permissions remain separate; successful APK
 signing supplies no game entitlement. Provenance, privacy, licensing and
 sensitive-content audit: 2026-10-24; J1095.
+
+The J1098 native target-selection correction remaps object indices through the
+existing audited link sequence; it changes no recipe/source/tool bytes or compiler
+options. Its synthetic regression contains authored path/argument witnesses only.
+Accepted ELF/symbol bytes are private comparison evidence, never build inputs.
+Provenance/privacy/licensing and sensitive-content audit: 2026-10-24.

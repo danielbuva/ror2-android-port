@@ -37,8 +37,10 @@ corresponding SDK or freshly produced DLLs. They are hashed, staged and checked
 with the managed providers. Omitting symbols changes stripped PE sizes and the
 unchanged converter's size-based assembly order. The public recipe contains
 only companion names. Fresh original-input host production with these companions
-reproduces the accepted J850 metadata byte for byte; complete native/runtime
-parity remains a separate gate.
+reproduces the accepted J850 metadata byte for byte. J1098 preserves the recorded
+native link order when selecting target units: all 23 host runtime sections now
+match J850 exactly, with build-ID/debug-link metadata differences retained.
+Phone native completion, complete APK/runtime and performance remain gates.
 
 The optional `android_tools` dictionary supplies canonical paths for `dotnet`,
 `clang`, `linker`, `objcopy` and `resource_dir`. These replace host executables

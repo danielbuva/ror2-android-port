@@ -34,6 +34,22 @@ class OwnerCodeNativeTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "nested"):
             NATIVE.generated_profile(profile, {"cpp/nested/New.cpp": {}})
 
+    def test_target_link_keeps_recorded_sdk_and_generated_order(self):
+        profile = {
+            "jobs": [
+                {"sdk": "first.c", "arguments": 0},
+                {"sdk": "second.c", "arguments": 0},
+                {"generated": "Removed.cpp", "arguments": 1},
+                {"generated": "Z.cpp", "arguments": 1},
+                {"generated": "A.cpp", "arguments": 1},
+            ],
+            "link": ["-shared", {"object": 3}, {"object": 1}, {"object": 2}, {"object": 4}, {"object": 0}, "-llog"],
+        }
+        result = NATIVE.generated_profile(profile, {"cpp/A.cpp": {}, "cpp/C.cpp": {}, "cpp/Z.cpp": {}})
+        self.assertEqual([row.get("generated") for row in result["jobs"]], [None, None, "A.cpp", "C.cpp", "Z.cpp"])
+        self.assertEqual(result["link"], ["-shared", {"object": 4}, {"object": 1}, {"object": 2}, {"object": 3}, {"object": 0}, "-llog"])
+        self.assertEqual(profile["link"][1], {"object": 3})
+
     def test_json_tool_stdout_is_separate_from_runtime_diagnostics(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve()

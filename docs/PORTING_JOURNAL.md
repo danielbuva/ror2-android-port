@@ -38048,3 +38048,76 @@ performance remain open. Existing shared game installation and receipts are
 unchanged. Durable key generation alone does not establish ownership,
 authentication, entitlement or redistribution rights. Revisit on key/alias drift,
 signing/content/alignment failure, app-host admission or full-player integration.
+
+## J1098 — Preserve recorded object order for the fixed-target native link
+
+Date: 2026-10-24 UTC. **Host source production and bounded relink; phone job ongoing.**
+
+**Hypothesis / prior context.** J1063 establishes source-input host production;
+J1084 establishes the separate supplied-provider Android control. For the fixed
+J850 target, the source producer already reproduces the accepted metadata, but
+its complete host native library is 20,584 B smaller than the accepted library.
+The target adapter must preserve the existing native recipe's link order when
+selecting a different generated-source cohort. This is generic native build
+orchestration, not a new gameplay/content reconstruction mechanism.
+
+**First failure and change.** The adapter retained SDK compilation jobs, sorted
+actual generated units and then linked every object in that new job order. It
+therefore discarded the audited recipe's generated-first and nontrivial SDK
+object sequence. Object order changes COMDAT selection, initialization layout
+and AArch64 erratum veneers. Extend the existing `native.generated_profile`
+function to remap retained objects in the recorded link sequence. Omit absent
+target units and place genuinely new units at the end of its generated cohort.
+All original non-object link arguments are retained. No new profile, captured
+build graph, compiled object or target library is a production input.
+
+**Actual host result.** A cold original-input fixed-target run produces the
+329 managed providers, 69 PDB companions, 90 stripped DLLs, 681 converter files
+and 815 native compilation outputs without an Editor/project. The old-order
+stripped library is 98,183,336 B, SHA-256
+`3845b6fc1b1503f756040e6130079acf6e5e07238ab6e3d4ac89934f281beb7e`.
+A first bounded relink inferred from ELF file symbols is also wrong; those
+symbols do not specify physical function order. Its evidence is retained.
+
+A second bounded relink uses the existing recipe's actual object order, with
+target membership filtered/remapped. It takes 20.368 s and produces
+98,203,816 B, SHA-256
+`82daacf3b935a87f26000cdabb16fdfe17d946ce500193b64c58c773cc2f33a3`.
+All **23 executable/data sections match the accepted J850 bytes and virtual
+addresses exactly**, including instructions, read-only/data sections, relocations,
+imports and GOT. The accepted library is 98,203,920 B, SHA-256
+`ad0b384b1193c2aa68a31e83ce833a0e9067b4e74b6470f1e4bd08b68b12ca44`.
+The remaining 104 B size difference is debug-link metadata: the source-produced
+file lacks the accepted 24 B `.gnu_debuglink` and its associated ELF naming/
+section-header overhead. The 36 B build-ID note also differs. No runtime byte
+normalization is used. Global metadata remains raw-exact at 17,756,092 B,
+SHA-256 `082b458b6b18447c8a01bdf59adc4cfdab644eba9a545cb173692e5adb167ff8`.
+The target binary/symbol archive is used only for comparison, never production.
+
+**Evidence and validation.** Private evidence under
+`work/coordination/phone-code/`: `j850-host-full-native-v1/`,
+`j850-host-link-order-v2/` (commands/log/result),
+`j850-host-profile-order-runtime-comparison.json` (every section's raw hash and
+address), and `native-link-public-fix-validation.json`. The public fix generates
+the exact qualified link command while leaving all 815 compilation commands
+unchanged; the bounded relink reuses those same freshly compiled objects.
+This is not a second complete cold compilation with the new public command.
+A synthetic regression covers nonidentity SDK/generated ordering, removal,
+addition and source-profile immutability. All 26 affected native/backend tests
+and Ruff pass. This checkout's host preflight refuses its unrelated local lab
+project/input generation; no project is restaged to bypass that refusal. No new
+Editor/project build is needed for this native link correction. Mandatory
+pruning retains receipts/evidence; host free space
+remains above 100 GiB.
+
+**Phone scope / remaining gates.** The source-only ordinary-app phone run has
+already regenerated the accepted metadata. Its 677 generated translation units
+are compared by streaming: 644 raw-exact to this host source run, with the other
+33 differing only in complete `//` comment lines. That is not a claim of raw
+whole-converter/DLL parity. The ongoing phone native run still uses its original
+old-order plan; it is not hot-patched or relabelled. Its completion, an explicitly
+recorded corrected-order continuation, measurements and native comparison remain
+open. Full Burst ABI (including complete export names), nonempty fragment shader
+qualification, original content assembly, ordinary-app packaging/signing/installer,
+and full APK controls/performance remain open. No install or game run occurs for
+this host fix; installed-state and rollback facts are unchanged.
