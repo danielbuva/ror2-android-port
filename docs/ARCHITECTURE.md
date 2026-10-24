@@ -6,6 +6,10 @@ file, owner or pipeline step is added, moved or retired. Results and evidence li
 [journal](PORTING_JOURNAL.md); the files the build expects under `work/` are listed in
 [LOCAL_STATE.md](LOCAL_STATE.md).
 
+[Alpha policy](ALPHA_POLICY.md) owns packaging/acquisition decisions;
+[screen inventory](SCREEN_COVERAGE.md) maps the current Android surfaces and their
+remaining interaction gates.
+
 Documentation entry points: [project home](../README.md) and
 [player guide](PLAYER_GUIDE.md) explain availability for players.
 [DEVELOPING.md](DEVELOPING.md) owns contributor setup, the repository map and
@@ -21,6 +25,14 @@ original background and dependency-free frontend. `controller.js` owns the
 versioned host state/action adapter, subscription teardown and pending-action
 guard; `app.js` owns views and navigation. No backend is connected by default.
 The separate `demo/` is simulated and is never loaded by the frontend. This
+package's `feedback.js` owns page-memory notes, explicit consumption of schema 1
+sanitized baseline previews, an exact plain-text preview, review consent and
+clipboard copy with manual fallback. Setup is the Diagnostics feedback route;
+navigation removes listeners and retains notes in page memory, reload clears
+them, and background host updates preserve the form. It projects typed,
+bounded public facts into a new object and ignores unknown keys and draft URLs.
+No raw receipt, log, device, storage, network or attachment access is added.
+The notes are user-authored and require manual privacy review. The launcher
 package is a public-alpha integration boundary, not an Android shell, new
 build pipeline or runtime owner. Setup, lifecycle and acceptance gates are in
 its README; the existing owner-built delivery route remains unchanged.
@@ -716,8 +728,26 @@ explicit baseline result, validate typed facts and teardown claims, and create
 one new local preview. Its fixed tokenless issue-draft URL is optional and never
 opened automatically. Raw errors, paths and unknown fields are omitted; no device
 or attachment collection occurs. Setup, exclusive output, process teardown and
-review limits are in [BASELINE_FEEDBACK.md](BASELINE_FEEDBACK.md). Settings
-integration remains open.
+review limits are in [BASELINE_FEEDBACK.md](BASELINE_FEEDBACK.md).
+`AndroidFeedbackDraft` and `AndroidFeedbackScreen` own the separate native
+settings feedback form: manual notes and fixed, bounded build facts produce
+an exact preview, followed by explicit review consent and clipboard copy or a
+fixed GitHub draft URL. Copy success requires reading back only the just-written
+report; browser dispatch reports a request, not confirmed submission. The form
+reads no receipt, log, account, device identifier or attachment. Back, settings
+exit and session cleanup clear notes and consent. The settings/application/GUI
+owners give the visible modal input priority while retaining the owned pause.
+Android clipboard, browser handoff and the composed settings route require
+device acceptance; host fixtures exercise the authored flow and refusal paths.
+The existing `OfflineApplicationSession` also owns `Screen.sleepTimeout` for a
+validated playable coordinator, from `Start` before catalog preparation through
+`OnDestroy`. Menus/loading retain the same awake policy as active play; release
+restores the captured prior policy only while the owned NeverSleep value remains.
+The body-input iterator keeps its historical screen lease only for non-playable
+experiments, so playable input cleanup cannot overwrite application teardown.
+Explicit Android sleep/background actions remain available. The production
+lifetime methods execute in the native-feedback host fixture.
+
 The exact editor is started with `./dev editor --target lab --action open`; send it one
 mutation at a time. Device acceptance is always the real device, never the editor.
 
@@ -1863,11 +1893,11 @@ report, read against the journal entry that defines what it must show.
 | Subsystem | Main files (`tools/unity/`) | State | Setup → teardown | Host test / editor fixture |
 | --- | --- | --- | --- | --- |
 | Original equipment highlights | `runtime/catalog/OriginalEquipmentHighlightAssetsBoundary.cs`, existing `PortSession.OriginalStats` and `BodyCatalogBoundary` | nested `OriginalEquipmentHighlightAssetsSession` owns three typed source-location handles, exact static assignments, cancellation state and a primitive session report; prepopulated or competing slots refuse | After `SetEquipmentDefs`, prepare before body activation; retain through world/stage lifetime. At `CleanupBodyCatalog`, require body/model/world-player destruction, restore only owned assignments, refuse remaining foreign slots, release handles and clear retained locator/operation references before bundle unload. Cleanup failures remain visible and retain catalog ownership. | `test_equipment_highlight_assets_owner.py`, authored `EquipmentHighlightOwnerProgram.cs` and stubs; Android materialization and original highlighting remain device gates |
-| Session and entry | `PortSession`, `OfflineApplicationBoundary`, `SessionResourceBoundary`, `ActiveClientBoundary`, `OfflineRunSeedBoundary`, `SurvivorSelectionBoundary` | nested `OfflineRunSeedSession` (`IDisposable`) **own type** holds the cached seed, session id and source; nested `ActiveClientSession` (`IDisposable`) **own type** holds the owned body/master authority identities and client-scene ownership flag; `activeBodyClient`, `activeBodyOwner`, remaining state and `SessionReport r` (including `r.activeClient` and `r.rewards.seedSource`) stay on the coordinator; nested `OfflineApplicationSession` (`IDisposable`) **own types** hold their files' private state | `Start` → `AwaitOfflineRunStart` → `RunSelectedProbe`; `ConnectActiveBodyClient` → `CleanupActiveBodyClient` (calls `Dispose`: remove master then body authority, disconnect then shut down client) → coordinator server shutdown → `FinishActiveClientSceneCleanup`; active-client owner created on first use and retained after cleanup; `CollectPriorSessionGarbage` → `ReclaimCompletedSessionResources`; `SelectOwnedRunSeed` calls session `SelectOwnedRunSeed` (owner created on first use and retained; session id controls refresh; `Dispose` is a no-op with no teardown call) | `AndroidLifecycleHost.cs` |
+| Session and entry | `PortSession`, `OfflineApplicationBoundary`, `SessionResourceBoundary`, `ActiveClientBoundary`, `OfflineRunSeedBoundary`, `SurvivorSelectionBoundary` | nested `OfflineRunSeedSession` (`IDisposable`) **own type** holds the cached seed, session id and source; nested `ActiveClientSession` (`IDisposable`) **own type** holds the owned body/master authority identities and client-scene ownership flag; `activeBodyClient`, `activeBodyOwner`, remaining state and `SessionReport r` (including `r.activeClient` and `r.rewards.seedSource`) stay on the coordinator; nested `OfflineApplicationSession` (`IDisposable`) owns application/menu state and the captured screen timeout | `Start` (acquire the playable awake policy before catalog preparation; `OnDestroy` releases it) → `AwaitOfflineRunStart` → `RunSelectedProbe`; `ConnectActiveBodyClient` → `CleanupActiveBodyClient` (calls `Dispose`: remove master then body authority, disconnect then shut down client) → coordinator server shutdown → `FinishActiveClientSceneCleanup`; active-client owner created on first use and retained after cleanup; `CollectPriorSessionGarbage` → `ReclaimCompletedSessionResources`; `SelectOwnedRunSeed` calls session `SelectOwnedRunSeed` (owner created on first use and retained; session id controls refresh; `Dispose` is a no-op with no teardown call) | `AndroidLifecycleHost.cs` |
 | Catalog and resources | `BodyCatalogBoundary`, `WholeCatalogComposed`, `WholeCatalogLoader`, `SpawnStateBoundary`, `OriginalBodyVisualBoundary`, `OriginalGlobalCommonAssetsBoundary`, `TeleportMaterialBoundary`, `BarrierEffectBoundary` | `WholeCatalogComposed` **own type** (static); nested `TeleportMaterialSession` and `BarrierEffectSession` (`IDisposable`) **own types** hold the teleport material (locator, async handle, material, overlays) and the barrier effect (constants, locator, async handle, prefab, effect-slot snapshots, owned material copies); nested `OriginalBodyVisualSession` and `OriginalGlobalCommonAssetsSession` (`IDisposable`) **own types** each hold their native slot snapshots and async handle lists; nested `SpawnStateSession` (`IDisposable`) **own type** holds native state/preload snapshots and spawn delay/sound restoration; `ownsStateCatalog` stays shared on the coordinator; teleport, `r.barrier*` and `r.world` report fields remain coordinator observations; the rest coordinator fields; nested `BodyCatalogSession` (`IDisposable`) **own types** hold their files' private state | `RegisterBodyCatalog` (calls `WholeCatalogComposed.Prepare`) → `CleanupBodyCatalog` (calls `Release`); `PrepareBarrierEffect` → `ObserveBarrierEffect` / `ProbeBarrierEffectLifecycle` → `CleanupBarrierEffect` (awaited coroutine, preserving Start's setup and release order; `Dispose` is a no-op because release requires the coroutine's frame yields); `PrepareOriginalBodyVisualReferences` → `PrepareOriginalGlobalCommonAssets` → `CleanupOriginalGlobalCommonAssets` → `CleanupOriginalBodyVisualReferences` (each cleanup calls its owner's `Dispose`: restore slots, clear snapshots, release handles, clear handles, mark the coordinator report); `PrepareSpawnStateCatalog` forwards to `SpawnStateSession` without changing catalog/config/preload construction order; later `CleanupSpawnConfig` calls `Dispose` (objective, enemy and spine config cleanup, then spawn delay/sound restoration, then `RestoreWholeStateOwnership`); owners created on first use and retained after cleanup | `test_whole_catalog.py`, `test_composed_support.py`, `test_body_visual_map.py`, `test_common_assets_map.py`, `test_stage_variant_graph_roots.py`; `WholeCatalogHost.cs` |
 | Manual Moon boundary (existing config) | `NovaInputBoundary`, `NovaInputBridge`, `IntegratedStageBoundary` | `ManualMoonBoundary` is a pure four-completed-transition gate shared by the automatic input loop and transport entry guard; `NovaInputBridge` applies its diagnostic-only hold at every fixed tick, preserving touch-equipment requests and the physical-controller route when diagnostic input is off. It refuses any subsequent or explicit `moon2` transport while `pauseBeforeMoon` is enabled. The ordinary path and default `false` remain unchanged; the report records stage/count and a fixed-tick witness only after the sink actually runs. | Input-loop gate before transport/producers; transport guard before destination resolution or stage mutation | `SurvivorSkillInputHost.cs` (exact-editor bridge sink contract; no Moon/runtime acceptance) |
 | Input and camera | `NovaInputBoundary`, `NovaInputBridge`, `NovaThirdPersonView`, `AndroidPresentationCamera`, `NovaDiagnosticDisplay`, `AndroidNativeSourceCameraRigOwner` | nested `NovaInputSession` (`IDisposable`) **own type** holds trace cursors and the input iterators with local mapping, landing, camera and loop state; `NovaThirdPersonView` keeps its own camera/orbit state; `worldView` and `worldEquipmentBridge` stay shared on the coordinator; `NovaInputBridge`, `AndroidPresentationCamera`, `NovaDiagnosticDisplay` and opt-in `AndroidNativeSourceSkinLifecycle` (with pure `AndroidNativeSkinActivationPolicy`) remain **own types**; the native-skin owner is attached to the selected source model, retains only its native skin subscription and Android material clones through body lifetime, and writes scalar evidence into `NovaReport`; the per-run `SessionReport` selector defaults false; reports remain coordinator observations | `NovaRawBoundary` / `NovaInputBoundary` forward to the session; input teardown stays in its iterator `finally` in the same order; `NovaInputBridge.OnDisable` neutralises input; owner created on first use and retained after its no-op `Dispose` so final `Save` can flush traces | `test_nova_input_presence.py`, `test_nova_bridge_evidence.py`, `test_input_migration.py` |
-| Settings | `AndroidOfflineSettings`, `OfflineSettingsBoundary` | `AndroidOfflineSettings` **own type**, kept across sessions; nested `OfflineSettingsSession` (`IDisposable`) **own type** holds the saved pause time scale; store reference, visibility and pause flags stay on the coordinator for menu/Nova input | `PrepareOfflineSettings` (calls `OfflineSettingsSession.Prepare`) → `CleanupOfflineSettingsPause` (calls `Dispose`, releases an owned pause only) | — |
+| Settings | `AndroidOfflineSettings`, `OfflineSettingsBoundary`, `AndroidFeedbackDraft`, `AndroidFeedbackScreen` | `AndroidOfflineSettings` **own type**, kept across sessions; nested `OfflineSettingsSession` (`IDisposable`) **own type** holds the saved pause time scale and feedback screen; feedback draft owns only in-memory text, preview and consent; settings owns the two-step end-run confirmation and clears it on cancel/exit/cleanup; the recovered-menu owner disables its native Canvas while settings is visible; store reference, visibility and pause flags stay on the coordinator for menu/Nova input | `PrepareOfflineSettings` (calls `OfflineSettingsSession.Prepare`) → explicit settings feedback Open/Draw/Close → `CleanupOfflineSettingsPause` (calls `Dispose`, clears feedback and releases an owned pause only) | `test_android_feedback.py` executes the production model, screen and settings/input callers with controlled host peers; device acceptance is separate |
 | Progression and profile | `AndroidProgressionBoundary`, `AndroidOfflineProfile`, `AndroidProfileBoundary`, `OfflineLoadoutBoundary` | `AndroidProgressionBoundary` (`IDisposable`), `AndroidOfflineProfile` and nested `AndroidProfileSession` (`IDisposable`) **own types**; session owns loadout preview, catalog snapshots, redirect lease and event/discovery listeners; progression reference, results/save-system state, world references and pending menu loadout stay shared on the coordinator | `ApplyAndroidProfileLoadoutBeforeSpawn` (calls `AndroidProfileSession.ApplyLoadoutBeforeSpawn`) → `PrepareAndroidProfile` (calls session `Prepare`, then `AndroidProgressionBoundary.Prepare`) → `CleanupAndroidProfile` (calls session `Dispose`, including progression `Dispose`); results installs the save system before profile setup and restores it after profile cleanup | `AndroidProgressionHost.cs`, `AndroidDiscoveryHost.cs`, `AndroidProfileHost.cs` |
 | Results | `IntegratedResultsBoundary` (with `AndroidProfileSaveSystem` in `AndroidProfileBoundary`) | nested `IntegratedResultsSession` (`IDisposable`) **own type** holds ending templates/catalog restoration, statistics callbacks and event context, ledger directory, save-system swap/restore and result listeners; serializer guards remain static; `resultsSaveSystem`, `resultsLedger`, `resultsStats` and `resultsRunReport` stay shared on the coordinator; `r.results` remains the coordinator observation | `PrepareResultsKeyItems` may precede `PrepareIntegratedResults` (calls session `Prepare`) → `CleanupIntegratedResults` (calls `Dispose`: profile cleanup precedes save-system restore); owner created on first use and retained after `Dispose` | — |
 | HUD and UI | `RecoveredHudBoundary`, `RecoveredHudPresentation`, `RecoveredHudFeedback`, `RecoveredPickupPresentation`, `MoonPillarPresentation` | nested `RecoveredHudSession` (`IDisposable`) **own type** holds menu events, reference-rendering restoration and text reflection/restoration state; `recoveredHud`, `recoveredMenu`, `recoveredTextSettings` and `ownsRecoveredText` stay shared on the coordinator; feedback/queue state and pickup bindings stay in the existing presentation component **own types**; `r.hud` remains the coordinator observation | Session startup prepares owned text after prior-session collection, before presentation/catalog and independent of menu bypass; separate `PrepareRecoveredText`/`Menu`/`Hud` → `CleanupRecoveredHud` (calls `Dispose`, HUD then menu only), `CleanupRecoveredMenu`, `CleanupRecoveredText` (later catalog teardown); owner created on first use and retained after `Dispose` | — |
@@ -2669,7 +2699,9 @@ observer lifecycle result. Host contracts remain in
 `./dev prototype --action session-memory-check --expected-apk-sha256 <hash>`
 (current support action, `scripts/lab/session_memory_check.py`) repeats the
 ordinary Commando menu start, at least 60 s of ready Lakes play and the same UI
-abandon five times in one process, then stops at the sixth menu. Each completed
+abandon five times by default, then stops at the next menu. Explicit `--sessions`
+selects 3 to 32 sessions for a longer series without changing runtime gameplay.
+Each completed
 `movement-completed-session-<k>.json` must pass `abandon_contract` (reused through
 an index-checked session-1 view) before the next start, and profile counts must
 stay frozen. It collects the existing `SessionResourceBoundary` samples plus host
@@ -3041,6 +3073,22 @@ refuses unknown candidate preimages. Catalog verification and rebuild
 comparison replay only the exact receipt-bound files and includes. The normal
 whole-catalog preparation path is the build owner; this has no runtime state
 or teardown and makes no Android appearance claim.
+
+## Shared worktree build ownership
+
+`scripts/lab/shared_checkout_build.py` owns the current
+`./dev prototype --action shared-catalog-code-build` action. A linked worker
+checkout selects its clean committed HEAD in the clean primary checkout only
+while holding the primary Unity mutex. The ordinary primary `./dev` host
+preflight, source staging and code build run with that same inherited lock.
+The action copies no Unity project and performs no device operation. Its
+private receipt records the selected commit and restoration outcome.
+
+Teardown restores the original primary branch/commit after success or failure.
+Unexpected edits or moved refs refuse restoration and preserve those files for
+recovery; no stash, reset or authored-source patch is used. Workers must keep
+primary source edits serialized with this operation. Run generated-output
+pruning after the build, as for the ordinary build actions.
 
 ## Known structural debt
 

@@ -115,7 +115,8 @@ public sealed partial class PortSession
     }
     void OnGUI()
     {
-        DrawOfflineSettings();
+        if (DrawOfflineSettings())
+            return;
         if (DrawOfflineStart())
             return;
         if (r != null && r.results != null && r.results.reportGenerated)
@@ -301,7 +302,9 @@ public sealed partial class PortSession
             NovaInputBridge bridge = null;
             NovaDiagnosticDisplay display = null;
             int sleepTimeout = Screen.sleepTimeout, priorTargetFrameRate = Application.targetFrameRate;
-            Screen.sleepTimeout = SleepTimeout.NeverSleep;
+            bool ownsScreenSleepTimeout = !coordinator.IsPlayableSpine();
+            if (ownsScreenSleepTimeout)
+                Screen.sleepTimeout = SleepTimeout.NeverSleep;
             CharacterBody.JumpDelegate jumped = () =>
             { coordinator.r.nova.localJumpCallbacks++; };
             CharacterMotor.HitGroundDelegate landed = (ref CharacterMotor.HitGroundInfo hit) =>
@@ -1067,7 +1070,8 @@ public sealed partial class PortSession
                     }
                     coordinator.worldView = null;
                     Application.targetFrameRate = priorTargetFrameRate;
-                    Screen.sleepTimeout = sleepTimeout;
+                    if (ownsScreenSleepTimeout)
+                        Screen.sleepTimeout = sleepTimeout;
                 }
             }
         }

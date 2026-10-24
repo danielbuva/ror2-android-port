@@ -621,6 +621,7 @@ public sealed partial class PortSession : MonoBehaviour
 
     private void OnDestroy()
     {
+        offlineApplicationSession?.Dispose();
         // Close scheduling before teardown so a late callback cannot arm.
         passivePcmActivityArmPolicy?.Close();
         // Unexpected session destruction is terminal for an explicitly armed PCM
@@ -836,6 +837,8 @@ public sealed partial class PortSession : MonoBehaviour
         if (r.diagnosticSirenEggInput || r.sirenNativeEncounterContinuationRequested)
             r.sirenEggInput = new SirenEggInputReport();
         r.recoveredHudEnabled = config.recoveredHudEnabled;
+        if (IsPlayableSpine())
+            GetOfflineApplicationSession().KeepScreenAwake();
         if (r.recoveredHudEnabled)
             r.hud = new RecoveredHudPresentation.Observation();
         CollectPriorSessionGarbage();

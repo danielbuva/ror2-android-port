@@ -34374,3 +34374,151 @@ target is J850, without the later R36 audio integration. Retain the desktop
 fallback and Main's current player. Revisit this device qualification when the
 payload/profile, bootstrap, manifest/signing contract, tools or target Android
 behavior changes.
+
+## J1066 — Qualify native settings feedback and two-step end-run controls
+
+Date: 2026-10-24. Scope: the alpha checklist outside phone-only production.
+Hypothesis: tokenless feedback can own its complete notes/review/consent/copy/
+browser lifecycle without collecting raw data or allowing hidden menu actions;
+end-run confirmation can preserve existing native abandonment and cleanup.
+The uncommitted settings draft in the older playtest checkout is a strict
+predecessor of PR54's reviewed implementation and is preserved unchanged.
+
+Prior art: revisit J379/J408/J519, the profile boundary in
+`community-prior-art.md` and pinned ProperSave `d20c6c8e`'s
+`InitSaveFileSystem`/`SaveFile` ownership. Local filesystem policy, source profile
+serialization and cloud/platform identity remain separate; no upstream or game
+implementation is copied. Existing native teardown contracts and J914's
+retained dependency ownership remain authoritative. No original installation,
+Rewired/Burst/package pin, entitlement or authentication boundary changes.
+
+`AndroidFeedbackDraft` owns bounded manual notes, sanitized fixed build tags,
+an exact literal-Markdown preview and consent. `AndroidFeedbackScreen` owns
+native keyboard/preview, verified clipboard readback, a fixed GitHub issue URL,
+edit/back clearing and GUI-state restoration. No files, logs, accounts, network
+tokens or attachments are read. Notes require manual privacy review; this is
+not an arbitrary-log scrubber. Browser handoff never claims submission.
+`OfflineSettingsSession` owns feedback and a separate end-run confirmation;
+cancel preserves pause, cleanup clears pending state, and explicit confirmation
+calls the unchanged native abandon path without a completed result/reward.
+
+The first Android case finds that recovered native uGUI remains active behind
+IMGUI settings/feedback. The corrected existing `RecoveredHudSession` owns
+hiding/reactivating its exact menu hierarchy, while settings consumes the full
+GUI event including close. A tap at the hidden native Start coordinates must
+leave the process at its menu. The source/owner map and the host fixture cover
+that boundary.
+
+Builds use the current `shared-catalog-code-build` action: under the primary
+Unity mutex, select the worker's exact committed source in the clean primary
+checkout, run ordinary preflight/build, and restore its branch. No Unity project
+or binary is copied. Real temporary-Git tests cover source identity, inherited
+mutex, failure restoration, low-space refusal and concurrent-edit preservation.
+A CI-only failure initially exposes reliance on the runner having 100 GiB free;
+the Git fixtures now use explicit synthetic capacity and separately test the
+production headroom refusal. The pre-push fresh-clone suite and remote CI are required on the final head.
+Nine actual-source feedback/settings/screen cases, six real-Git shared-build
+contracts, 218 dispatch contracts and seven memory-runner contracts pass.
+The ordinary action-reference and journal-index generators refresh their
+rebased output; neither generated table is edited as a new source of truth.
+
+Code-only attempts correctly refuse content drift. The later difference is
+exactly the three generated APK StreamingAssets stage receipts (native camera,
+original audio and music-output observer); the frozen-content guard is retained.
+Full builds use existing caches and the ordinary content/player pipeline:
+
+- Source `057192fa`, request `20261024T073400.899774Z`, 145.717 s, zero errors;
+  APK `4e5f0feb79c5bc35b15518af39293779d5216f839cceb30103ceb8240f5fde5b`.
+  This first case exposes the native-menu layering defect.
+- Corrected source `e8600060`, request `20261024T075657.160834Z`, 136.814 s,
+  zero errors; APK
+  `c17a0ccc2947ac4b7c02cf43c183170ff866f88b03e90629c70a96121c1d18bb`.
+  All 266 cached payload members and APK bytes are independently rehashed and
+  frozen by reference. The branch/commit restoration receipts pass.
+- Final source `bf40428f`, request `20261024T090107.179684Z`, 147.704 s,
+  zero errors; APK
+  `299445f72267f216b23c7c4c2610364329445625396d8cd536bab01c07747ead`.
+  This adds application-owned screen lifetime; all 266 payload files and APK
+  bytes are independently rehashed and retained by reference.
+
+Final feedback result on the modal-corrected APK: PASS.
+Native keyboard entry, empty-preview refusal, sharing disabled before consent,
+exact preview, readback-confirmed copy, GitHub browser/login handoff and
+same-process return pass. Editing invalidates consent; closing/reopening clears
+notes. The recovered menu is absent behind the corrected modal and its hidden
+Start tap is refused. No issue is submitted, no login is performed, and no
+attachment or raw log is exported. Nine captured native-profile/settings/ledger
+files survive the in-place laboratory update byte-for-byte; public alpha signing,
+increasing-version/schema-compatible update policy remain separate gates.
+
+The corrected UI case also passes native end-run confirmation/cancel, pause
+freeze and cleanup into the next menu in the same process. The first bounded
+second-world observation times out while both physical panels are off; preserve
+that evidence without classifying an original catalog deadlock. A matched
+pre-modal control reaches a healthy second world after explicit wake. Inspection
+finds that the existing NeverSleep lease begins only in the body-input iterator,
+leaving menu/loading outside its lifetime. `OfflineApplicationSession` now owns
+that policy from validated playable `Start` before catalog preparation until
+`OnDestroy`, and restores only its still-owned value. Explicit Android sleep
+and background actions remain available. Its production lifetime methods pass
+host ownership/restoration contracts.
+
+The first awake build attempt refuses before Unity in the ABI helper's shared
+C# compiler server. Isolated compilation succeeds; reuse fast-iteration's
+`32c80868` helper isolation unchanged (local cherry-pick `bf40428f`), with all ten
+synthetic ABI tests passing against the pinned editor Cecil. No game or catalog
+transformation is added for the apparent stall. A later diagnostic launch refuses
+a relative installed-artifact path before device mutation; normalize that
+already hashed receipt to its existing absolute artifact, with no reinstall.
+
+The final awake APK passes the strict `session-abandon-check`: 60 s of ready
+play, explicit two-step confirmation, native cleanup, next menu and healthy
+second world in the same process, zero contract failures. Host-observed launch
+to first world is 186.590 s; first world to end-run request is 68.205 s;
+end-run request to completed cleanup is 26.329 s; second-menu Start to
+healthy second world is 90.667 s. The independent read-only screen monitor
+captures Android `KEEP_SCREEN_ON` and Awake through menu/catalog preparation,
+play and second-session preparation. It sends no wake or input commands.
+The runner removes its exact selector, stops the owned process and sleeps both
+panels. This is automatic diagnostic input with gameplay assists off; it does
+not qualify ordinary physical controls, full touch gameplay, natural Quit or a
+completed result. Natural original audio Term remains the main-port workstream's
+separate gate. The subsequent twelve-session series is a separate observation,
+not a prerequisite silently promoted by this feedback result.
+
+Independent managed-growth observation, before installing the new APK: the
+existing five-session runner passes all five ordinary menu-start/60 s ready
+play/UI-abandon/cleanup cases on receipted J817 APK
+`107718f8e318a22a90623ef3895c85ecdd164f4a5f8b3226dd342aaeec9113cb`.
+Input is automatic, with all five gameplay assists off. Managed after collection
+is 216.06, 264.87, 314.67, 363.11 and 413.50 MiB; the later-session slope is
+51,836,518 bytes/session. Live completed owners remain zero and reclaimed
+GameObjects remain eleven. This repeats J787's unresolved growth; it does not
+establish a bound, attribute its remaining root or qualify long-session stability.
+The app/selector are absent and both physical panels asleep before handback.
+
+`ALPHA_POLICY.md` records the reserved separate alpha identity, owner-private key
+custody, increasing versions, compatible forward rollback, local-file-only
+acquisition and Steam Cloud/account-download deferral. These are decisions,
+not activated package/signing implementations or publication approval.
+`SCREEN_COVERAGE.md` inventories existing and absent player surfaces;
+`PLAYTESTING.md` now separates prepared-lab controls, ordinary input, persistence,
+controlled faults, long sessions, final installation and deliberate feedback.
+The remaining checklist keeps physical Thor input, full touch gameplay,
+rebinding, memory attribution/bounding, long thermals/fault cases, unassisted
+play and final public-input installation open. No release/issue-template change
+or outward announcement is made.
+
+Evidence (private):
+`work/coordination/native-settings-feedback/` (build/CI/failure receipts),
+`work/coordination/native-feedback-acceptance-20261024/` (first UI case),
+`work/coordination/native-feedback-modal-acceptance-20261024/` (corrected case),
+`work/coordination/shared-builds/20261024T073328.433914Z.json`,
+`work/device/<serial>/experiments/session-memory/20261024T071332.684609Z/`,
+`work/coordination/native-feedback-awake-acceptance-20261024/`,
+`work/device/<serial>/experiments/session-cleanup/20261024T090730.322047Z/`,
+`work/coordination/shared-builds/20261024T085948.795647Z.json`
+and the referenced build-cache receipts. Raw logs/screenshots remain ignored.
+Revisit with actual physical presses, complete touch controls, a longer measured
+series or a concrete remaining input/lifecycle failure; never promote the
+assisted game or visual/audio capabilities from this UI result.

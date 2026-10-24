@@ -151,6 +151,34 @@ class PrototypeActionTests(unittest.TestCase):
                 self.assertEqual(json.loads(output), {"success": True, "unity_compiled": False})
                 self.assertIsNone(code)
 
+    def test_shared_build_full_and_capture_options_are_explicit(self):
+        module = ModuleType("shared_checkout_build")
+        module.build_shared_checkout = Mock(return_value={"success": True})
+        self.modules["shared_checkout_build"] = module
+        self.dispatch("shared-catalog-code-build", full=True, capture_player_linker_inputs=True)
+        module.build_shared_checkout.assert_called_once_with(code_only=False, capture_player_linker_inputs=True)
+
+    def test_long_memory_series_is_explicit_and_keeps_apk_and_root_walk_binding(self):
+        code, _, _ = self.cli("--action", "session-memory-root-check", "--sessions", "12", "--expected-apk-sha256", "a" * 64)
+        self.assertEqual(code, 0)
+        self.assertEqual(
+            self.calls,
+            [
+                dict(
+                    module="session_memory_check",
+                    function="check_session_memory",
+                    args=(),
+                    kwargs=dict(root_walk=True, sessions=12, expected_apk_sha256="a" * 64),
+                )
+            ],
+        )
+
+    def test_series_count_cannot_silently_change_an_unrelated_action(self):
+        code, _, error = self.cli("--action", "session-abandon-check", "--sessions", "12")
+        self.assertEqual(code, 2)
+        self.assertIn("--sessions requires", error)
+        self.assertEqual(self.calls, [])
+
     def test_translucent_candidate_dispatch_is_host_only_and_prints_result(self):
         module = ModuleType("shader_translucent")
         module.main = Mock(return_value={"unity_compiled": False, "android_accepted": False})
@@ -163,7 +191,7 @@ class PrototypeActionTests(unittest.TestCase):
     def test_registry_names_and_current_status_match_documented_contract(self):
         # Added actions have separate dispatch contracts rather than changing
         # the historical pre-registry snapshot.
-        added = {"rebuild-step", "shader-outline-candidate", "shader-ramp-fog", "shader-translucent", "owner-assembly-prefix"}
+        added = {"shared-catalog-code-build", "rebuild-step", "shader-outline-candidate", "shader-ramp-fog", "shader-translucent", "owner-assembly-prefix"}
         self.assertEqual(set(actions.ACTIONS) - added, set(EXPECTED) - {"inspect"})
         self.assertEqual(len(actions._ENTRIES), len(actions.ACTIONS))
         self.assertEqual(
@@ -207,6 +235,7 @@ class PrototypeActionTests(unittest.TestCase):
                 "whole-catalog-host-providers",
                 "whole-catalog-build",
                 "whole-catalog-code-build",
+                "shared-catalog-code-build",
                 "whole-catalog-run",
                 "project-manifest-capture",
                 "project-manifest-compare",

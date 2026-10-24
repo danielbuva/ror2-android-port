@@ -13,8 +13,10 @@ public sealed partial class PortSession
     public class OfflineSettingsReport
     {
         public bool ready, visible, paused, persisted, canEndRun, sessionAbandoned;
+        public bool endRunConfirmationVisible;
         public string recovery, error;
         public float deadzone, lookSensitivity, buttonX, buttonY, endRunButtonX, endRunButtonY, timeScale, runSeconds;
+        public float confirmEndRunButtonX, confirmEndRunButtonY;
         public int fixedTicks, observations, screenWidth, screenHeight;
         public bool invertY;
         public int saves, pauses, resumes, controllerOpens, controllerCloses, controllerSaves;
@@ -37,9 +39,9 @@ public sealed partial class PortSession
     {
         offlineSettingsSession?.ObserveControllerInput();
     }
-    void DrawOfflineSettings()
+    bool DrawOfflineSettings()
     {
-        offlineSettingsSession?.Draw();
+        return offlineSettingsSession != null && offlineSettingsSession.Draw();
     }
     void CleanupOfflineSettingsPause()
     {
@@ -51,6 +53,8 @@ public sealed partial class PortSession
     sealed class OfflineSettingsSession : IDisposable
     {
         readonly PortSession coordinator;
+        readonly AndroidFeedbackScreen feedback = new AndroidFeedbackScreen();
+        bool confirmEndRun;
         float offlineSettingsTimeScale;
         public OfflineSettingsSession(PortSession coordinator)
         {
@@ -80,6 +84,9 @@ public sealed partial class PortSession
             coordinator.r.settings.invertY = v.invertY;
             coordinator.r.settings.visible = coordinator.offlineSettingsVisible;
             coordinator.r.settings.paused = coordinator.offlineSettingsPaused;
+            coordinator.r.settings.endRunConfirmationVisible = confirmEndRun;
+            coordinator.r.settings.confirmEndRunButtonX = Screen.width * .5f - 115;
+            coordinator.r.settings.confirmEndRunButtonY = Screen.height * .5f + 42.5f;
             coordinator.r.settings.timeScale = Time.timeScale;
             coordinator.r.settings.runSeconds = Run.instance ? Run.instance.GetRunStopwatch() : 0;
             coordinator.r.settings.fixedTicks = coordinator.r.runClock == null ? 0 : coordinator.r.runClock.fixedTicks;
@@ -90,6 +97,9 @@ public sealed partial class PortSession
                 return;
             if (show == coordinator.offlineSettingsVisible)
                 return;
+            confirmEndRun = false;
+            if (!show)
+                feedback.Close();
             if (show && coordinator.worldPause && coordinator.worldPlayer && coordinator.worldPlayer.healthComponent.alive)
             {
                 coordinator.Check(PauseStopController.instance && !PauseStopController.instance.isPaused && Time.timeScale > 0,
@@ -112,6 +122,7 @@ public sealed partial class PortSession
                 coordinator.offlineSettingsPaused = false;
                 coordinator.r.settings.resumes++;
             }
+            coordinator.SetRecoveredMenuObscured(show);
             coordinator.offlineSettingsVisible = show;
             Observe();
             coordinator.Save();
@@ -125,6 +136,18 @@ public sealed partial class PortSession
             // adapter's menu/back action; it does not alter the original input bank.
             if (UnityEngine.Input.GetKeyDown(KeyCode.Joystick1Button1))
             {
+                if (feedback.Visible)
+                {
+                    feedback.Close();
+                    return;
+                }
+                if (confirmEndRun)
+                {
+                    confirmEndRun = false;
+                    Observe();
+                    coordinator.Save();
+                    return;
+                }
                 if (coordinator.offlineSettingsVisible)
                 {
                     coordinator.r.settings.controllerCloses++;
@@ -136,7 +159,7 @@ public sealed partial class PortSession
                     Show(true);
                 }
             }
-            if (coordinator.offlineSettingsVisible && coordinator.r.nova != null && coordinator.r.nova.physicalInputAvailable &&
+            if (!feedback.Visible && !confirmEndRun && coordinator.offlineSettingsVisible && coordinator.r.nova != null && coordinator.r.nova.physicalInputAvailable &&
                 coordinator.r.nova.mapping != null &&
                 UnityEngine.Input.GetKeyDown((KeyCode)((int)KeyCode.Joystick1Button0 + coordinator.r.nova.mapping.jump)))
             {
@@ -148,18 +171,56 @@ public sealed partial class PortSession
                 Show(false);
             }
         }
-        public void Draw()
+        public bool Draw()
         {
             if (coordinator.offlineSettings == null)
-                return;
+                return false;
+            if (confirmEndRun)
+            {
+                // The dialog owns the whole event, including the event that
+                // cancels it. Gameplay remains paused until settings resumes.
+                var left = Screen.width * .5f - 240;
+                var top = Screen.height * .5f - 120;
+                GUI.Box(new Rect(left, top, 480, 240), "End this run?");
+                GUI.Label(new Rect(left + 25, top + 42, 430, 70),
+                          "Return to the menu and discard this ongoing run?\nThis does not record a completed run result.");
+                var confirm = new Rect(left + 25, top + 135, 200, 55);
+                coordinator.r.settings.confirmEndRunButtonX = confirm.center.x;
+                coordinator.r.settings.confirmEndRunButtonY = confirm.center.y;
+                bool allowed = coordinator.CanAbandonOfflineRun();
+                var enabled = GUI.enabled;
+                GUI.enabled = enabled && allowed;
+                bool accepted = GUI.Button(confirm, "Confirm end run");
+                GUI.enabled = enabled;
+                bool cancel = GUI.Button(new Rect(left + 255, top + 135, 200, 55), "Keep playing");
+                if (cancel || !allowed || accepted)
+                {
+                    confirmEndRun = false;
+                    Observe();
+                    coordinator.Save();
+                    if (accepted && allowed)
+                        coordinator.RequestAbandonOfflineRun();
+                }
+                return true;
+            }
+            if (feedback.Visible)
+            {
+                feedback.Draw();
+                // Keep the GUI event owned even when Back closes the feedback.
+                return true;
+            }
             var button = new Rect(Screen.width - 205, 10, 185, 40);
             coordinator.r.settings.buttonX = button.center.x;
             coordinator.r.settings.buttonY = button.center.y;
             if (GUI.Button(button, coordinator.offlineSettingsVisible ? "Close settings" : "Settings / pause"))
+            {
                 Show(!coordinator.offlineSettingsVisible);
+                if (!coordinator.offlineSettingsVisible)
+                    return true;
+            }
             if (!coordinator.offlineSettingsVisible)
-                return;
-            GUI.Box(new Rect(Screen.width * .5f - 240, Screen.height * .5f - 200, 480, 400),
+                return false;
+            GUI.Box(new Rect(Screen.width * .5f - 240, Screen.height * .5f - 200, 480, 465),
                     coordinator.UsesDiagnosticWithoutPhysicalInput()
                         ? "Android offline settings · touch controls"
                         : "Android offline input settings · B back · A save");
@@ -189,22 +250,34 @@ public sealed partial class PortSession
             coordinator.r.settings.endRunButtonX = end.center.x;
             coordinator.r.settings.endRunButtonY = end.center.y;
             if (coordinator.r.settings.canEndRun && GUI.Button(end, "End run and return to menu"))
-                coordinator.RequestAbandonOfflineRun();
+            {
+                confirmEndRun = true;
+                Observe();
+                coordinator.Save();
+                return true;
+            }
             if (coordinator.r.profile != null && coordinator.r.profile.ready)
                 GUI.Label(new Rect(x, y + 302, 420, 44), "Android profile · " + coordinator.r.profile.appliedRuns + " genuine results · " +
                                                              coordinator.r.profile.kills +
                                                              " kills\nSteam/cloud and Rewired maps unavailable");
+            if (GUI.Button(new Rect(x, y + 356, 420, 45), "Send feedback"))
+                feedback.Open();
             Observe();
             if (coordinator.offlineSettingsPaused && Event.current.type == EventType.Repaint && Time.frameCount % 30 == 0)
             {
                 coordinator.r.settings.observations++;
                 coordinator.Save();
             }
+            return true;
         }
         // Cleanup may run between sessions. Only an owned pause is released; the
         // store and an unpaused visible screen keep their existing lifetime.
         public void Dispose()
         {
+            feedback.Close();
+            confirmEndRun = false;
+            if (coordinator.r != null && coordinator.r.settings != null)
+                coordinator.r.settings.endRunConfirmationVisible = false;
             if (coordinator.offlineSettingsPaused)
                 Show(false);
         }

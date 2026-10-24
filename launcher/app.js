@@ -1,4 +1,5 @@
 import {createController} from './controller.js';
+import {mountFeedback} from './feedback.js';
 const main = document.querySelector('main');
 const dialog = document.querySelector('dialog');
 const escape = text => String(text).replace(/[&<>"']/g, char => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[char]));
@@ -7,21 +8,30 @@ const labels = {selectFiles:'Select game files', prepare:'Prepare', pause:'Pause
 const statusLabels = {unavailable:'Backend unavailable', idle:'Setup required', preparing:'Preparing', paused:'Paused', error:'Needs attention', ready:'Ready'};
 const controller = createController(() => render());
 let focusKey = null;
+const feedbackNotes = {steps:'', expected:'', actual:'', metadata:''};
+let disposeFeedback = () => {};
 function button(action) {
   return `<button class="${action === 'launch' || action === 'prepare' ? 'primary' : 'secondary'}" data-action="${action}" data-focus="${action}" ${controller.can(action) ? '' : 'disabled'}>${labels[action]}</button>`;
 }
 function render() {
+  const view = location.hash.slice(1);
+  // Host progress cannot replace a draft or steal its focus/selection.
+  if (view === 'feedback' && main.dataset.view === 'feedback') return;
+  disposeFeedback(); disposeFeedback = () => {};
   const state = controller.snapshot();
   const active = document.activeElement;
   if (main.contains(active) && active !== main) focusKey = active.dataset.focus ?? null;
   else if (active !== main) focusKey = null;
-  const view = location.hash.slice(1);
+  main.dataset.view = view;
   const status = escape(statusLabels[state.status]);
   const message = `<p>${escape(state.message)}</p>`;
-  if (view === 'setup') {
+  if (view === 'feedback') {
+    main.innerHTML = back + '<div data-feedback-root></div>';
+    disposeFeedback = mountFeedback(main.querySelector('[data-feedback-root]'), feedbackNotes);
+  } else if (view === 'setup') {
     main.innerHTML = `${back}<section class="panel"><h2>${status}</h2>${message}${state.progress === null ? '' : `<div class="progress-head"><span>Preparation</span><strong>${state.progress}%</strong></div><progress max="100" value="${state.progress}" aria-label="Preparation progress"></progress>`}<div class="actions">${Object.keys(labels).filter(a => controller.offers(a) || (state.status === 'unavailable' && ['selectFiles','prepare'].includes(a))).map(button).join('')}</div></section>`;
   } else if (view === 'diagnostics') {
-    main.innerHTML = `${back}<section class="panel"><h2>Diagnostics</h2><div class="summary"><span>State</span><strong>${status}</strong></div>${message}<p>No device logs or personal data are collected by this frontend.</p></section>`;
+    main.innerHTML = `${back}<section class="panel"><h2>Diagnostics</h2><div class="summary"><span>State</span><strong>${status}</strong></div>${message}<p>No device logs or personal data are collected by this frontend.</p><button class="secondary" data-view="feedback" data-focus="feedback">Write feedback draft</button></section>`;
   } else {
     main.innerHTML = `<h1>Risk of<span>Rain <span class="number">2</span></span></h1><nav class="menu" aria-label="Launcher">${state.status === 'ready' ? button('launch') : '<button class="primary" data-view="setup" data-focus="setup">Set up <span class="arrow">→</span></button>'}<button data-view="setup" data-focus="files">Game files</button><button data-view="diagnostics" data-focus="diagnostics">Diagnostics</button><button data-about data-focus="about">About</button></nav><div class="home-status"><span class="dot"></span><strong>${status}</strong></div>`;
   }

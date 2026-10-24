@@ -2085,3 +2085,12 @@ approved for redistribution. Current source compilation uses the exact qualified
 host SDK policy and diagnostic target configuration; no runtime change, original
 installation mutation, fabricated project admission or phone/performance claim
 is introduced.
+
+Native settings feedback adds two authored C# owners and generic MonoImporter
+sidecars to the public runtime, project-layout and importer memberships. The
+audio cohort repeats those memberships; its producer/camera manifest pins are
+refreshed without changing audio owners, transforms or licensed inputs. The
+form uses manual notes and bounded public build tags only. No game-derived
+implementation, generated game content, logs, account/device/storage identity,
+credential, signing key or middleware is added. Provenance/privacy audit:
+2026-10-23. Native clipboard/browser acceptance remains a device gate.

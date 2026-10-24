@@ -33,7 +33,7 @@ p.add_argument(
 )
 p.add_argument(
     "--work-dir",
-    help="Current: read-only inputs for rebuild/check actions, owner-assembly-prefix and destination preflight; install/sync-data/run/check-baseline use this work tree for device receipts (default: work/)",
+    help="Current: read-only inputs for rebuild/check actions, owner-assembly-prefix and destination preflight; install/sync-data/run/check-baseline and session lifecycle/memory checks use this work tree for device receipts (default: work/)",
 )
 p.add_argument(
     "--step",
@@ -74,6 +74,7 @@ p.add_argument(
 p.add_argument("--subtree", default="")
 p.add_argument("--fields", action="store_true")
 p.add_argument("--disable", action="store_true")
+p.add_argument("--sessions", type=int, help="Current: session-memory-check/root-check series length, 3 to 32 (default: 5); automatic diagnostic input only")
 p.add_argument("--skill-variants", help="Current: ignored local JSON for one base-survivor skill or cleanup check; per-run native skill catalog indices only")
 p.add_argument(
     "--expected-apk-sha256",
@@ -103,7 +104,7 @@ from device_context import set_command_selector
 set_command_selector(a.device, os.environ.get("LAB_DEVICE"))
 if a.host_only and a.command != "preflight":
     p.error("--host-only requires preflight")
-whole_catalog_build = a.command == "prototype" and a.action in {"whole-catalog-build", "whole-catalog-code-build"}
+whole_catalog_build = a.command == "prototype" and a.action in {"whole-catalog-build", "whole-catalog-code-build", "shared-catalog-code-build"}
 if a.debug_symbols and not (a.command == "build" or whole_catalog_build):
     p.error("--debug-symbols requires build or a whole-catalog build action")
 if a.capture_player_linker_inputs and not whole_catalog_build:
@@ -114,7 +115,13 @@ if a.capture_il2cpp_invocation and not a.capture_player_linker_inputs:
     p.error("--capture-il2cpp-invocation requires --capture-player-linker-inputs for the same-build pre-strip join")
 # Device operations explicitly select the existing local receipt/config tree.
 # Rebuild --work-dir remains a read-only input boundary.
-if a.work_dir and a.command in {"install", "sync-data", "run", "check-baseline"}:
+device_prototype_work = a.command == "prototype" and a.action in {
+    "session-cleanup-check",
+    "session-abandon-check",
+    "session-memory-check",
+    "session-memory-root-check",
+}
+if a.work_dir and (a.command in {"install", "sync-data", "run", "check-baseline"} or device_prototype_work):
     import common
 
     common.WORK = WORK = Path(a.work_dir).expanduser().resolve()
@@ -129,6 +136,7 @@ if a.profile_scope != "pid" and not (a.command == "perf" and a.action == "cpu"):
 is_destination_preflight = a.command == "preflight" and a.dest is not None
 if (
     a.work_dir
+    and not device_prototype_work
     and not is_destination_preflight
     and a.command not in {"install", "sync-data", "run", "check-baseline"}
     and (a.command != "prototype" or a.action not in {"inherited-state-check", "assembly-transforms-check", "rebuild-step", "owner-assembly-prefix"})
@@ -146,6 +154,8 @@ if a.dest and not (is_destination_preflight or is_rebuild or is_owner_assemblies
     p.error("--dest requires rebuild-step, owner-assembly-prefix or isolated preflight")
 if a.stage_exit and a.command != "check-baseline":
     p.error("--stage-exit requires check-baseline")
+if a.sessions is not None and (a.command != "prototype" or a.action not in {"session-memory-check", "session-memory-root-check"}):
+    p.error("--sessions requires prototype --action session-memory-check or session-memory-root-check")
 if a.skill_variants and (a.command != "prototype" or a.action not in {"survivor-kit-check", "session-cleanup-check", "session-abandon-check"}):
     p.error("--skill-variants requires prototype --action survivor-kit-check, session-cleanup-check or session-abandon-check")
 if a.expected_apk_sha256 is not None and (

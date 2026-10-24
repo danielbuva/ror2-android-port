@@ -59,6 +59,10 @@ def _whole_catalog_code_build(function, kwargs, args):
     return function(**selected)
 
 
+def _shared_catalog_build(function, kwargs, args):
+    return _whole_catalog_code_build(function, dict(kwargs, code_only=not getattr(args, "full", False)), args)
+
+
 def _json_result(function, kwargs, args, **formatting):
     print(json.dumps(function(**kwargs), **formatting))
 
@@ -116,6 +120,8 @@ def _session_memory(function, kwargs, args):
         raise SystemExit("session-memory-check uses the ordinary Commando menu start; omit --target")
     expected_apk_sha256 = getattr(args, "expected_apk_sha256", None)
     selected = kwargs if expected_apk_sha256 is None else dict(kwargs, expected_apk_sha256=expected_apk_sha256)
+    if getattr(args, "sessions", None) is not None:
+        selected = dict(selected, sessions=args.sessions)
     return _json_result(function, selected, args, indent=2)
 
 
@@ -401,7 +407,7 @@ _ENTRIES = (
         "check_session_memory",
         {},
         "current",
-        "Repeat five ordinary Commando menu-start, 60 s ready Lakes play and UI-abandon sessions in one process; each completed session must pass the session-abandon contract. Reports existing runtime resource samples and per-menu PSS as observations, not a leak fix or normal-game acceptance. Requires --expected-apk-sha256 bound to the selected device's ownership receipt.",
+        "Repeat ordinary Commando menu-start, 60 s ready Lakes play and UI-abandon sessions in one process (five by default, --sessions 3 to 32); each completed session must pass the session-abandon contract. Reports existing runtime resource samples and per-menu PSS as observations, not a leak fix or normal-game acceptance. Requires --expected-apk-sha256 bound to the selected device's ownership receipt.",
         handler=_session_memory,
     ),
     Action(
@@ -432,6 +438,15 @@ _ENTRIES = (
         "current",
         "Build player code while verifying and reusing the frozen payload. Optional --debug-symbols retains matching Unity IL2CPP symbols for this exact APK. --capture-player-linker-inputs opts into the request/source/input-bound pre-strip UnityLinker inventory. Add --capture-il2cpp-invocation to capture the same request's pre-launch rendered IL2CPP line and input directory; it requires --capture-player-linker-inputs and does not claim exact argv or composed-audio stage equivalence.",
         handler=_whole_catalog_code_build,
+    ),
+    Action(
+        "shared-catalog-code-build",
+        "shared_checkout_build",
+        "build_shared_checkout",
+        {},
+        "current",
+        "Build this clean committed worktree through the primary checkout/editor under the shared mutex, then restore its branch. Add --full for content/new script metadata. No project copies or device actions. Supports ordinary capture/symbol flags; refuses concurrent source edits.",
+        handler=_shared_catalog_build,
     ),
     Action("whole-catalog-run", "whole_catalog", "run_integration", {}, "current", "Install, sync and run the catalog-registration check."),
     Action("shader-recovery", "shader_recovery", "recover", {}, "historical", "Recover shaders for --target.", handler=_target),

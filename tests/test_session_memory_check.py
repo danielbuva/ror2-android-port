@@ -70,6 +70,8 @@ class SessionMemoryCheckTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             check_session_memory(sessions=True)
         with self.assertRaises(ValueError):
+            check_session_memory(sessions=33, expected_apk_sha256="0" * 64)
+        with self.assertRaises(ValueError):
             check_session_memory(sessions=5, expected_apk_sha256=None)
 
 

@@ -785,6 +785,7 @@ def check_session_cleanup(survivor=DEFAULT_SURVIVOR, ending="loss", skill_varian
     host_timing = HostMilestoneTiming()
     settings_open_sent = False
     abandon_input_sent = False
+    abandon_confirmation_sent = False
     started = time.monotonic()
     next_log = 0.0
     cleanup_errors = []
@@ -839,6 +840,17 @@ def check_session_cleanup(survivor=DEFAULT_SURVIVOR, ending="loss", skill_varian
                         first_failure = details[0]
                     break
                 phase = current.get("phase")
+                settings = current.get("settings") or {}
+                if ending == "abandon" and current.get("session") == 1 and settings.get("endRunConfirmationVisible") is True and not abandon_confirmation_sent:
+                    if not abandon_input_sent or settings.get("paused") is not True or settings.get("canEndRun") is not True:
+                        fail("unexpected-or-unowned-end-run-confirmation")
+                        break
+                    coords = abandon_control_coordinates(current, "confirmEndRunButton", device.sh("wm", "size"), device.sh("dumpsys", "window", "displays"))
+                    if coords is None:
+                        fail("end-run-confirmation-geometry-unavailable")
+                        break
+                    device.sh("input", "tap", str(coords[0]), str(coords[1]))
+                    abandon_confirmation_sent = True
                 if phase == "offline-start-menu":
                     if current.get("session") == 1:
                         host_timing.mark("first_menu_observed")
@@ -1139,7 +1151,7 @@ def check_session_cleanup(survivor=DEFAULT_SURVIVOR, ending="loss", skill_varian
         "developer_survivor_override": survivor not in FREE_SURVIVORS,
         "skill_variant_override": skill_variant_override,
         "skill_variant_evidence": ({"type": "post-spawn-setup-snapshot", "continuous": False} if skill_variant_override is not None else None),
-        "abandon_ui": {"settings_open_sent": settings_open_sent, "end_run_sent": abandon_input_sent},
+        "abandon_ui": {"settings_open_sent": settings_open_sent, "end_run_sent": abandon_input_sent, "confirmation_sent": abandon_confirmation_sent},
         "session2_menu_ui": {"observed": session2_menu_observed, "start_sent": session2_menu_start_sent},
         "host_timing": host_timing.report(),
         "apk_sha256": artifact_hash,

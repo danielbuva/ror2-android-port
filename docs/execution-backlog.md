@@ -28,9 +28,11 @@ result in the journal.
 
 ## Stability and performance
 
-- [ ] Device-test J914's retained dependency ownership against J915's next-menu
-      failure; measure the additional bundle retention and preserve ordinary
-      survivor/profile/entitlement checks and source audio termination.
+- [ ] Qualify J914's retained dependencies over a long repeated-session series
+      and original audio termination, preserving ordinary survivor/profile/
+      entitlement checks. The native menu/restart boundary now has J1045/J1046
+      and [J1066](PORTING_JOURNAL.md#j1066--qualify-native-settings-feedback-and-two-step-end-run-controls)
+      device coverage; long-run retention and natural Term remain open.
 - [ ] Attribute the remaining ~52 MB/session managed growth (J787): not reachable
       from enumerable static/live roots; next a long session series on the
       internal Nova to test whether PSS or Boehm usage reaches a limit.

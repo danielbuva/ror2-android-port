@@ -77,6 +77,13 @@
     "runtime_dispatch_ready": false,
     "stage_to_apk_binding": false
   },
+  "music_observer_resolver_profiles": {
+    "post-audio-r10-1ced-game-lightning-r3": {
+      "api_sha256": "1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b",
+      "input_sha256": "594282cfa617ac58eda6965e0a48e6958438f345cbb98bfb7cb49b9130efad1d",
+      "profile": "current-project-point-sound-lightning-r3-api1ced-unity-2021.3.45f2"
+    }
+  },
   "profiles": {
     "default-game-3124": {
       "input_relative_path": "Assets/LabLoadingScene/Plugins/RoR2.dll",
@@ -283,7 +290,7 @@
     "whole_catalog": "scripts/lab/whole_catalog.py"
   },
   "source_sha256": {
-    "build_hook": "3f694a125c3b06fe946d91b531cbd6482f61483d490b3147af4fc0526d9ca4cf",
+    "build_hook": "fb59ea1919fb53b2a51ecb1fd3f14c5cbba05be974526809017f89a4ab409cfc",
     "camera_contract": "259463fea059fb40f84ff8dd3bfc027efc70635ce7b81320725a177c78f5bf73",
     "camera_owner": "49adec4560582184a979baa534716b8fb3e50d25ea0a1e289a684ffb10b0e91b",
     "camera_prerequisites": "7d726175b0f93d9d4e83d032b7244cd9f9cd9df49d0ec1bd57d73df63587d18a",
@@ -311,12 +318,5 @@
     "mono": "c2b946f92278147723d6074260c5d091f8f6bd5bef36f11a5999fc7241f313a5",
     "netstandard": "a5a0274fb4141529c87713489386cc2d52d485569586b8ceea269a672d13a9cf",
     "unity_core": "b2de8697a8e44aaa3b4ba2662015003c55fe3089ceee6ba8677716214e41c34d"
-  },
-  "music_observer_resolver_profiles": {
-    "post-audio-r10-1ced-game-lightning-r3": {
-      "input_sha256": "594282cfa617ac58eda6965e0a48e6958438f345cbb98bfb7cb49b9130efad1d",
-      "api_sha256": "1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b",
-      "profile": "current-project-point-sound-lightning-r3-api1ced-unity-2021.3.45f2"
-    }
   }
 }
