@@ -284,7 +284,7 @@
     "artifact_copy": "scripts/lab/common.py"
   },
   "source_sha256": {
-    "build_hook": "4e2f9e547c66cfeda6b04c2b4a0eb4179aa1d23e6b9dd60ba86ef279c4cf4a27",
+    "build_hook": "74bd43ee3730ed99fb146b53d886c0fe7fbb3df770199b1ed0ec47ec2afba582",
     "camera_contract": "259463fea059fb40f84ff8dd3bfc027efc70635ce7b81320725a177c78f5bf73",
     "camera_owner": "49adec4560582184a979baa534716b8fb3e50d25ea0a1e289a684ffb10b0e91b",
     "camera_prerequisites": "7d726175b0f93d9d4e83d032b7244cd9f9cd9df49d0ec1bd57d73df63587d18a",

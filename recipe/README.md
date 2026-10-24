@@ -2304,3 +2304,9 @@ with no retained game objects or gameplay mutation. The authored Java/Python
 adb shell permission. Its local DEX and device requests are generated privately
 from source; no platform implementation, SDK binary, game content, account data
 or raw device evidence is published with this helper.
+
+The touch integration reuses J1080's landed original scene-audio lifecycle.
+Source pins are refreshed for the reviewed merged `PortSession` startup and
+`IntegratedWorldBoundary` touch/UI changes. Original scene audio retains the
+existing native-owner readiness gate. This updates authored source provenance;
+accepted game input and distribution grants are unchanged. Audit: 2026-10-24.
