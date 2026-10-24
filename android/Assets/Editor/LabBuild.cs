@@ -14,7 +14,7 @@ public static class LabBuild {
   string marker="ROR2LAB_ITERATION_EXPORT_COMPLETE "+request;
   return messages!=null&&messages.Any(message=>message.Contains(marker))&&messages.Count(message=>message=="Building Player failed")<=1&&messages.All(message=>message=="Building Player failed"||message.Contains(marker));
  }
- [Serializable] class Request {public string request_id,api,output,androidSymbols,iterationMode;public bool presentationOnly,stagePresentation,reusePayload,captureIl2CppInvocation;public string[] reflectionTextureGuids;}
+ [Serializable] class Request {public string request_id,api,output,androidSymbols,iterationMode,bundleCompression;public bool presentationOnly,stagePresentation,reusePayload,captureIl2CppInvocation;public string[] reflectionTextureGuids;}
  [Serializable] class BuildPhase {public string name;public int depth;public double seconds;}
  [Serializable] class Result {public bool success; public string result,apk,backend,request_id,symbolPackage,build_report_guid,player_build_result;public string[] player_build_error_messages;public double seconds,bundle_seconds,player_seconds,prepare_seconds;public int errors,player_build_errors;public bool iteration_export_complete;public BuildPhase[] build_steps;}
  // Run last, after other Android project callbacks. An owned cancellation
@@ -409,10 +409,14 @@ public static class LabBuild {
    var currentRequest=JsonUtility.FromJson<Request>(File.ReadAllText(Path.Combine(root,"build-request.json")));
    if(currentRequest.request_id!=result.request_id||currentRequest.androidSymbols!=request.androidSymbols)throw new InvalidOperationException("Build request changed after dispatch");
    var bundleStart=DateTime.UtcNow;
+   if(!string.IsNullOrEmpty(currentRequest.bundleCompression)&&(currentRequest.bundleCompression!="uncompressed"||!File.Exists(Path.Combine(root,"config/build-lane.json"))))throw new InvalidOperationException("Uncompressed bundles require an isolated iteration lane");
    if(!currentRequest.reusePayload){
     var wholeBuilder=File.Exists(Path.Combine(root,"whole-catalog-build.json"))?Type.GetType("WholeCatalogBuild, Assembly-CSharp-Editor",true):null;
     if(wholeBuilder!=null)wholeBuilder.GetMethod("Append").Invoke(null,new object[]{root,bundleBuilds});
-    var bundleManifest=BuildPipeline.BuildAssetBundles(Path.Combine(root,"generated-android-data"),bundleBuilds.ToArray(),BuildAssetBundleOptions.ChunkBasedCompression,BuildTarget.Android);
+    var bundleOptions=currentRequest.bundleCompression=="uncompressed"?BuildAssetBundleOptions.UncompressedAssetBundle:BuildAssetBundleOptions.ChunkBasedCompression;
+    Debug.Log("LAB_BUNDLE_BUILD_START "+currentRequest.request_id+" "+DateTime.UtcNow.ToString("o")+" "+bundleOptions);
+    var bundleManifest=BuildPipeline.BuildAssetBundles(Path.Combine(root,"generated-android-data"),bundleBuilds.ToArray(),bundleOptions,BuildTarget.Android);
+    Debug.Log("LAB_BUNDLE_BUILD_END "+currentRequest.request_id+" "+DateTime.UtcNow.ToString("o"));
     if(!bundleManifest)throw new Exception("Requested bundle build failed");
     if(wholeBuilder!=null)wholeBuilder.GetMethod("Complete").Invoke(null,new object[]{bundleManifest});
    }

@@ -1,12 +1,16 @@
 import importlib.util
 import json
 import os
+import sys
+import subprocess
 import tempfile
 import time
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts/prune-generated.py"
+sys.path.insert(0, str(SCRIPT.parent / "lab"))
 spec = importlib.util.spec_from_file_location("prune_generated", SCRIPT)
 prune = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(prune)
@@ -91,6 +95,49 @@ class PruneGeneratedTests(unittest.TestCase):
         digest = prune.sha256(run / "candidate.apk")
         (self.root / "PORTING_STATE.md").write_text("`" + digest + "`\n")
         self.assertEqual(self.plan().items, [])
+
+    def test_lane_pruning_retains_recent_live_and_busy_lanes(self):
+        lanes = self.root / ".local/build-lanes"
+        for name in ("stale", "recent", "live", "busy"):
+            lane = lanes / name
+            lane.mkdir(parents=True)
+            (lane / "lane.json").write_text("{}")
+            if name == "live":
+                (lane / "server.json").write_text(json.dumps({"pid": os.getpid()}))
+            age(lane)
+        os.utime(lanes / "recent/lane.json", None)
+        lock = lanes / ".locks/busy.lock"
+        lock.parent.mkdir()
+        child = subprocess.Popen(
+            [
+                sys.executable,
+                "-c",
+                "import fcntl,sys; f=open(sys.argv[1],'w'); fcntl.flock(f,fcntl.LOCK_EX); print('held',flush=True); sys.stdin.read()",
+                str(lock),
+            ],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            text=True,
+        )
+        try:
+            self.assertEqual(child.stdout.readline().strip(), "held")
+            os.utime(lock, (OLD, OLD))
+            planner = self.plan()
+            planner.lanes()
+        finally:
+            child.communicate("")
+        self.assertEqual([(item["kind"], item["name"]) for item in planner.items], [("build lane", "stale")])
+        self.assertEqual(len(planner.kept), 3)
+
+    def test_lane_apply_uses_owned_teardown_and_handles_new_activity(self):
+        lane = self.root / ".local/build-lanes/stale"
+        lane.mkdir(parents=True)
+        plan = [{"path": lane, "kind": "build lane", "name": "stale"}]
+        with patch("build_lanes.remove", side_effect=TimeoutError) as remove:
+            prune.apply(plan, self.work, self.work / "ledger.json")
+        remove.assert_called_once_with("stale", root=self.root)
+        self.assertEqual(plan[0]["skipped"], "lane became active after planning")
+        self.assertTrue(lane.exists())
 
 
 if __name__ == "__main__":

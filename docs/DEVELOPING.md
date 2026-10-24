@@ -5,6 +5,9 @@
 This page preserves the laboratory setup and command reference. Run commands
 from the repository root. It is for contributors, not a player installer.
 
+Current independent prepared builds use [build lanes](build-lanes.md):
+`./dev lane --action create --name NAME`, then `LAB_LANE=NAME ./dev …`.
+
 An evidence-driven laboratory that runs the original PC game's managed code and converted
 content natively on ARM64 Android, using the user's own legitimate game installation.
 **It is not a finished or distributable port.** The current APK reaches the original offline
@@ -219,8 +222,10 @@ they are not yet tracked (see [docs/LOCAL_STATE.md](LOCAL_STATE.md)).
 
 The selector, scoped receipts and receipt migration passed on the current Nova (J595).
 Additional devices and concurrent device runs still need live acceptance.
-Device operations do not take the global Unity build lock at
-`work/coordination/unity-build.lock`; Unity build/editor work uses that shared host lock.
+Device operations do not take the canonical Unity build lock at
+`work/coordination/unity-build.lock`. Canonical build/editor work uses that lock;
+[isolated lanes](build-lanes.md) each use their own persistent build lock and
+editor. Device ownership stays global across all lanes.
 
 ## Validation tiers
 

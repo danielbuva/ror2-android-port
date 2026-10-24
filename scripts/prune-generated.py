@@ -24,6 +24,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -110,6 +111,43 @@ class Planner:
     def keep(self, path, reason):
         self.kept.append({"path": str(path.relative_to(ROOT)), "reason": reason})
 
+    def lanes(self):
+        """Retire only old, stopped managed lanes, through their normal owner."""
+        sys.path.insert(0, str(ROOT / "scripts/lab"))
+        from build_lock import host_build_lock
+
+        for marker in sorted((ROOT / ".local/build-lanes").glob("*/lane.json")):
+            lane = marker.parent
+            lock = lane.parent / ".locks" / (lane.name + ".lock")
+            if max(marker.stat().st_mtime, lock.stat().st_mtime if lock.exists() else 0) >= self.cutoff:
+                self.keep(lane, "recent build lane operation; shared APFS blocks")
+                continue
+            if not self.old(lane):
+                self.keep(lane, "recent build lane; shared APFS blocks")
+                continue
+            receipts = [lane / "server.json", lane / "checkout/work/editor/lab-process.json"]
+            live = False
+            for receipt in receipts:
+                if receipt.is_file():
+                    pid = json.loads(receipt.read_text())["pid"]
+                    try:
+                        os.kill(pid, 0)
+                        live = True
+                    except ProcessLookupError:
+                        pass
+                    except PermissionError:
+                        live = True
+            if live:
+                self.keep(lane, "build lane has a live owned process")
+                continue
+            try:
+                with host_build_lock(lane.parent / ".locks" / (lane.name + ".lock"), operation="inspect stale build lane", timeout=0):
+                    pass
+            except TimeoutError:
+                self.keep(lane, "build lane lock is held")
+                continue
+            self.add(lane, "build lane", name=lane.name)
+
     def add(self, path, kind, **extra):
         self.items.append({"path": path, "kind": kind, "bytes": tree_size(path), **extra})
 
@@ -191,6 +229,14 @@ def apply(plan, work, ledger_path):
         path = item["path"]
         if not path.exists():
             continue
+        if item["kind"] == "build lane":
+            from build_lanes import remove
+
+            try:
+                remove(item["name"], root=ROOT)
+            except TimeoutError:
+                item["skipped"] = "lane became active after planning"
+            continue
         if item["kind"] == "build-cache entry":
             keep = retired_receipts / path.name
             keep.mkdir(parents=True, exist_ok=True)
@@ -231,6 +277,7 @@ def main():
     planner = Planner(work, hashes, paths, args.min_age_hours)
     planner.build_cache()
     planner.lab_build()
+    planner.lanes()
     for name in SCAN_ROOTS:
         planner.scan(name)
     total = sum(i["bytes"] for i in planner.items)

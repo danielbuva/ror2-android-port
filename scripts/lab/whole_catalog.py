@@ -2273,6 +2273,7 @@ def build_integration(
     capture_player_linker_inputs=False,
     capture_il2cpp_invocation=False,
     iteration_mode="",
+    bundle_compression="",
 ):
     from build import build_source_identity
     from build_lock import HOST_BUILD_LOCK, assert_build_unblocked, host_build_lock
@@ -2286,6 +2287,8 @@ def build_integration(
         # Stage and build only committed sources, and record the commit (J738).
         identity = build_source_identity()
         extra = {"iteration_mode": iteration_mode} if iteration_mode else {}
+        if bundle_compression:
+            extra["bundle_compression"] = bundle_compression
         result = _build_integration(
             code_only=code_only,
             destination=destination,
@@ -2310,12 +2313,16 @@ def _build_integration(
     capture_player_linker_inputs=False,
     capture_il2cpp_invocation=False,
     iteration_mode="",
+    bundle_compression="",
 ):
     import time
 
     staging_start = time.monotonic()
     from build import build, freeze_whole_payload, generate_content_recipe, generate_runtime_config, validate_runtime_source_membership
     from composition_io import StageIO
+
+    if bundle_compression and (code_only or destination is not None or iteration_mode or android_symbols != "none" or capture_player_linker_inputs):
+        raise RuntimeError("Uncompressed bundles require a full iteration build without symbols/captures")
 
     if iteration_mode and (not code_only or destination is not None or android_symbols != "none" or capture_player_linker_inputs):
         raise RuntimeError("Iteration requires current-project code-only build without symbols/capture")
@@ -2389,7 +2396,9 @@ def _build_integration(
     if previous.exists():
         previous.rename(attempt / ("build-previous-" + now() + ".json"))
     staging_seconds = time.monotonic() - staging_start
-    if iteration_mode:
+    if bundle_compression:
+        result = build("vulkan", force=True, source=source_identity, bundle_compression=bundle_compression)
+    elif iteration_mode:
         result = build("vulkan", force=True, reuse_payload=True, source=source_identity, iteration_mode=iteration_mode)
     elif capture_player_linker_inputs:
         result = build(
@@ -2417,7 +2426,7 @@ def _build_integration(
         result["composition_staging_seconds"] = staging_seconds
     if not code_only:
         freeze_start = time.monotonic()
-        freeze_whole_payload(project, result)
+        freeze_whole_payload(project, result, **({"receipt": WORK / "whole-catalog-uncompressed-base.json"} if bundle_compression else {}))
         if isinstance(result, dict):
             result["payload_freeze_seconds"] = time.monotonic() - freeze_start
     if isinstance(result, dict):

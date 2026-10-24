@@ -167,6 +167,20 @@ class PrototypeActionTests(unittest.TestCase):
         self.dispatch("shared-catalog-code-build", full=True, capture_player_linker_inputs=True)
         module.build_shared_checkout.assert_called_once_with(code_only=False, capture_player_linker_inputs=True)
 
+    def test_uncompressed_flag_requires_a_lane_full_build_before_dispatch(self):
+        for lane, action in (({}, "whole-catalog-build"), ({"name": "fixture"}, "whole-catalog-code-build")):
+            with self.subTest(lane=lane, action=action), patch.object(common, "lane_config", return_value=lane):
+                code, _, error = self.cli("--action", action, "--bundle-compression", "uncompressed")
+                self.assertEqual(code, 2)
+                self.assertIn("requires whole-catalog-build in an isolated LAB_LANE", error)
+                self.assertEqual(self.calls, [])
+
+    def test_uncompressed_flag_reaches_only_the_selected_lane_full_build(self):
+        with patch.object(common, "lane_config", return_value={"name": "fixture"}):
+            code, _, _ = self.cli("--action", "whole-catalog-build", "--bundle-compression", "uncompressed")
+        self.assertEqual(code, 0)
+        self.assertEqual(self.calls, [dict(module="whole_catalog", function="build_integration", args=(), kwargs={"bundle_compression": "uncompressed"})])
+
     def test_long_memory_series_is_explicit_and_keeps_apk_and_root_walk_binding(self):
         code, _, _ = self.cli("--action", "session-memory-root-check", "--sessions", "12", "--expected-apk-sha256", "a" * 64)
         self.assertEqual(code, 0)

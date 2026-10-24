@@ -58,6 +58,31 @@ class WholePayloadReuseTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "Content inputs changed"):
             build.validate_whole_payload_reuse(self.project)
 
+    def test_uncompressed_reuse_is_separate_and_requires_exact_content_and_payload(self):
+        normal = self.work / "whole-catalog-code-base.json"
+        original = normal.read_bytes()
+        self.assertFalse(build.reuse_uncompressed_payload(self.project))
+        receipt = self.work / "whole-catalog-uncompressed-base.json"
+        payload = self.work / "generated-android-data/content"
+        build.freeze_whole_payload(self.project, {"payload": {"content": sha(payload)}, "key": "authored"}, receipt)
+        self.assertTrue(build.reuse_uncompressed_payload(self.project))
+        (self.project / "Assets/LabDiagnostics.cs").write_text("changed player-only code")
+        self.assertTrue(build.reuse_uncompressed_payload(self.project))
+        payload.write_text("changed generated payload")
+        self.assertFalse(build.reuse_uncompressed_payload(self.project))
+        payload.write_text("content fixture")
+        (self.project / "Assets/Content.prefab").write_text("changed content")
+        self.assertFalse(build.reuse_uncompressed_payload(self.project))
+        self.assertEqual(normal.read_bytes(), original)
+
+    def test_uncompressed_build_refuses_canonical_and_code_only_paths_before_editor_work(self):
+        with patch.object(build, "lane_config", return_value={}):
+            with self.assertRaisesRegex(RuntimeError, "isolated full iteration"):
+                build.build(bundle_compression="uncompressed")
+        with patch.object(build, "lane_config", return_value={"name": "fixture"}):
+            with self.assertRaisesRegex(RuntimeError, "isolated full iteration"):
+                build.build(bundle_compression="uncompressed", reuse_payload=True)
+
     def test_reuse_rejects_corrupted_or_added_payload(self):
         (self.work / "generated-android-data/content").write_text("corrupted")
         with self.assertRaisesRegex(RuntimeError, "payload identity changed"):
