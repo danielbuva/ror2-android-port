@@ -72,6 +72,16 @@ selected final distribution architecture. [Setup and device gates](../tools/phon
 include ZIP size, duplicate storage cost, unknown-file acceptance and retained
 user data. All APKs and embedded game data stay ignored/private.
 
+`tools/phone-build/package-assemblies/` owns a separate current experimental
+host producer for the four retained Unity package assemblies and their required
+Burst managed post-processing. It validates explicit owner SDK/package inputs,
+generates compilation requests, compiles the processor, bounds/reaps children,
+retains failures and writes input/output receipts in a new private root.
+[Setup and lifecycle](../tools/phone-build/package-assemblies/README.md) describe
+the fixed profile and exclusions. No captured project/player inputs or current
+game build consume this owner; phone execution and full-player qualification
+remain separate gates. Package versions and the native IL2CPP runtime stay fixed.
+
 Phone build **support**: `scripts/lab/phone_bundle.py` writes the isolated authored
 TextAsset bundle with only Python's standard library; its versioned native
 schemas consume no class database or generated asset. `phone_content.py` owns

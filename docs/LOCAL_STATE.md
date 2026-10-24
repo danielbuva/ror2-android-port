@@ -1,5 +1,23 @@
 # Local state dependency inventory
 
+## Retained package producer inputs
+
+The experimental `tools/phone-build/package-assemblies/produce.py` reads an
+explicit private request with `sdk_install`, `packages` and new `output` paths.
+An owner may store that request under `work/config/`; it is not discovered
+implicitly. The exact SDK and provider package sources/precompiled helpers are
+required owner-supplied local state because they are not distributed in Git.
+[Setup and pinned versions](../tools/phone-build/package-assemblies/README.md)
+describe acquisition and layout. The tracked producer/profile generate every
+compile response, the managed post-processor and all four output DLLs; they do
+not require captured project responses or precompiled player outputs.
+
+`work/coordination/package-assemblies-v1/` retains the complete private host case:
+provider metadata/archives, extracted SDK/package inputs, initial attempts,
+final public-source invocation, complete outputs and captured-player comparison.
+The current game build reads none of this research state. No tool selects a
+timestamped run or copies an output into the shared project automatically.
+
 ## Original game audio build selection (2026-10-20)
 
 The current whole-catalog build reads the optional ignored
