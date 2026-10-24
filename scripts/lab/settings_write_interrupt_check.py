@@ -153,7 +153,13 @@ def check_settings_write_interrupt(expected_apk_sha256=None):
                 if time.monotonic() >= deadline:
                     raise RuntimeError("Observer did not arm")
                 time.sleep(0.1)
-            result["save_gesture"] = tap("native-save-and-interrupt", report, width * 0.5 - 110, height * 0.5 + 48)
+            try:
+                result["save_gesture"] = tap("native-save-and-interrupt", report, width * 0.5 - 110, height * 0.5 + 48)
+            except Exception as error:
+                # The observed stop can invalidate the scoped gesture actor before
+                # its final UP/wait completes. Only the independent CREATE/stop
+                # witness and retained pending file below can qualify this case.
+                result["save_gesture"] = dict(success=False, error=str(error))
             raw = future.result(timeout=40)
             (out / "observer.stdout").write_text(raw)
             observed = json.loads(raw)
