@@ -213,6 +213,8 @@ public sealed partial class PortSession
         public int inputControllerSuspensions, inputControllerReconnections;
         public float liveTimeScale, liveFixedDeltaTime;
         public int combatMotionSamples, combatMotionBlocked, combatCandidates, combatBoundsRejected, travelDefenseFrames;
+        public int combatMobilityChecks, combatMobilityRejectedRequests;
+        public string combatMobilityLastRejection;
         public string combatTarget, travelDefenseTarget;
         public Vector3 combatGround, combatDestination;
         public Vector2 combatMotion;
@@ -395,6 +397,8 @@ public sealed partial class PortSession
     {
         var session = GetIntegratedWorldSession();
         session.IntegratedWorldStimulus(player, bridge, elapsed);
+        if (!r.diagnosticSkillCoverage)
+            GetTeleporterWorldSession().ApplyWorldMobilityLanding(player, bridge);
         session.ApplySurvivorSkillCoverage(player, bridge, elapsed);
     }
     void EarnedFeatherInput(CharacterBody player, NovaInputBridge bridge, float elapsed)

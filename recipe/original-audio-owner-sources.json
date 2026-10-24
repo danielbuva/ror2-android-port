@@ -12,7 +12,7 @@
     "../../runtime/session/PortSession.cs": "299d63ce62e86f7b9cb7c0569f9cef320b9da91a4de4190229cd6f55f6a8264a",
     "../../runtime/session/PortSessionOriginalAudioOwner.cs": "6998134c0d9defec514167375d0426741bc2b4aa18e2df200f52b497f16ace25",
     "../../runtime/session/PortSessionOriginalMusicControllerOwner.cs": "15272167e3c416edb863797bf35dcbe8ef6704ecac805fdbe38186f4d73d41b0",
-    "../../runtime/world/IntegratedWorldBoundary.cs": "c1a73b2cc9e9da9dd105a4633c6f03d658ebaaeb13bf0b6908ff364b98caca5a",
+    "../../runtime/world/IntegratedWorldBoundary.cs": "362385a36d809997fd43b92e58b89b014b399a756fc04eb9077ef89151378f59",
     "../../runtime/world/LightningStakeSourceCallObserver.cs": "0792b3d7b40423e1b98ce2397a72917c73d20ab58ad555fac948d5b19146caf6",
     "../../runtime/world/SurvivorSkillObserver.cs": "b8e2627c42355831d52fb382d4cfa9d9f932a98a3900abb0dfa76d8b4ca2006b",
     "bootstrap/GameAudioOriginalAcceptedRequestProvider.cs": "31cceff4ae1ea0df0b94fc6a63fc07c1e687f38bde9e12fd9c1330118997aa7d",

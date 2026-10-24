@@ -394,6 +394,8 @@ public sealed partial class PortSession
         ResourceAvailability priorGameModeAvailability;
         bool ownsGameModeCatalog;
         static string objectiveRuleSignature;
+        EntityStates.Huntress.BlinkState diagnosticBlink;
+        EntityStates.Huntress.BeginArrowRain diagnosticArrowRain;
         public TeleporterWorldSession(PortSession coordinator)
         {
             this.coordinator = coordinator;
@@ -2304,6 +2306,83 @@ public sealed partial class PortSession
                 coordinator.r.world.combatPrimaryRequested = bridge.diagnosticPrimary;
             }
         }
+        public void ApplyWorldMobilityLanding(CharacterBody player, NovaInputBridge bridge)
+        {
+            // Automatic combat aims at airborne enemies. A source Blink follows that
+            // three-dimensional ray, not the ground navigator's movement. Admit the
+            // request only with a measured landing; manual/isolated kit input stays native.
+            if (!bridge || !bridge.diagnosticInput || !player || !player.skillLocator)
+                return;
+            if (bridge.diagnosticUtility && !WorldMobilityHasLanding(player, player.skillLocator.utility, bridge.diagnosticAim))
+                bridge.diagnosticUtility = false;
+            if (bridge.diagnosticSpecial && !WorldMobilityHasLanding(player, player.skillLocator.special, bridge.diagnosticAim))
+                bridge.diagnosticSpecial = false;
+        }
+        static Vector3 DiagnosticMobilityOffset(EntityStates.EntityState state, Vector3 aim, float speed, float jumpPower)
+        {
+            var blink = state as EntityStates.Huntress.BlinkState;
+            if (blink != null)
+                return aim.normalized * (speed * blink.speedCoefficient * blink.duration);
+            var rain = (EntityStates.Huntress.BeginArrowRain)state;
+            aim.y = 0;
+            var direction = Util.QuaternionSafeLookRotation(aim.normalized, Vector3.up) * rain.blinkVector;
+            return direction.normalized * (jumpPower * rain.jumpCoefficient * rain.blinkDuration);
+        }
+        bool WorldMobilityHasLanding(CharacterBody player, GenericSkill skill, Vector3 aim)
+        {
+            var type = skill && skill.skillDef ? skill.skillDef.activationState.stateType : null;
+            if (type != typeof(EntityStates.Huntress.BlinkState) && type != typeof(EntityStates.Huntress.BeginArrowRain))
+                return true;
+            var report = coordinator.r.world;
+            report.combatMobilityChecks++;
+            string rejection = null;
+            if (!player.characterMotor.isGrounded)
+                rejection = "airborne";
+            else
+            {
+                // These inert native instances read the original configured instance
+                // fields in their constructors. Never enter a state or rewrite its data.
+                EntityStates.EntityState template;
+                if (type == typeof(EntityStates.Huntress.BlinkState))
+                    template = diagnosticBlink ?? (diagnosticBlink = new EntityStates.Huntress.BlinkState());
+                else
+                    template = diagnosticArrowRain ?? (diagnosticArrowRain = new EntityStates.Huntress.BeginArrowRain());
+                var foot = player.temporaryPathfindingFootpositionDoNotUseWillBePatchedOut;
+                var landing = foot + DiagnosticMobilityOffset(template, aim, player.moveSpeed, player.baseJumpPower);
+                float jump = player.maxJumpHeight;
+                float ceiling = Mathf.Max(foot.y, landing.y) + jump;
+                float depth = ceiling - foot.y + jump;
+                if (float.IsNaN(landing.x) || float.IsNaN(landing.y) || float.IsNaN(landing.z) ||
+                    float.IsInfinity(landing.x) || float.IsInfinity(landing.y) || float.IsInfinity(landing.z) ||
+                    float.IsNaN(depth) || float.IsInfinity(depth) || depth <= 0)
+                    rejection = "invalid source displacement";
+                else
+                {
+                    float radius = player.characterMotor.Motor.Capsule.radius;
+                    for (int i = 0; i < 5; i++)
+                    {
+                        var offset = i == 0 ? Vector3.zero : i == 1 ? Vector3.right * radius : i == 2 ? Vector3.left * radius
+                                                                   : i == 3 ? Vector3.forward * radius : Vector3.back * radius;
+                        RaycastHit ground;
+                        var origin = new Vector3(landing.x + offset.x, ceiling, landing.z + offset.z);
+                        if (!Physics.Raycast(origin, Vector3.down, out ground, depth, LayerIndex.world.mask,
+                                             QueryTriggerInteraction.Ignore) ||
+                            ground.collider.gameObject.scene != coordinator.stageGeometryScene ||
+                            Vector3.Angle(ground.normal, Vector3.up) > player.characterMotor.Motor.MaxStableSlopeAngle ||
+                            Mathf.Abs(ground.point.y - foot.y) > jump || !coordinator.InsideSourceStageBounds(ground.point))
+                        {
+                            rejection = "no supported source landing";
+                            break;
+                        }
+                    }
+                }
+            }
+            if (rejection == null)
+                return true;
+            report.combatMobilityRejectedRequests++;
+            report.combatMobilityLastRejection = rejection;
+            return false;
+        }
         public Vector3 WorldCombatAimPoint(CharacterBody target, Vector3 origin, out bool visible)
         {
             var point = target.mainHurtBox ? target.mainHurtBox.transform.position : target.corePosition;
@@ -2380,6 +2459,8 @@ public sealed partial class PortSession
         }
         public void Dispose()
         {
+            diagnosticBlink = null;
+            diagnosticArrowRain = null;
             if (coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt)
             {
                 try

@@ -4146,3 +4146,23 @@ The original projectile, elite dispatch and impact callbacks remain authoritativ
 Host tests exercise source identity, matrix encoding, destinations and refusal
 without shipping game data. An editor policy match does not prove the
 intermittent native LightningStake corruption is resolved.
+
+
+## Automatic Huntress mobility landing
+
+The existing `TeleporterWorldSession` admits automatic default Huntress Blink
+and Arrow Rain requests against the original configured movement endpoint and
+a five-point capsule-width landing footprint. The integrated input wrapper calls
+it after ordinary route/combat production and before explicit kit coverage.
+Manual input, explicit kit coverage and other activation types retain their
+existing paths. The guard changes only automatic button requests; native states,
+root motion, physics, jump limits and damage remain authoritative.
+
+The session lazily retains at most two inert native state instances to read
+configured instance fields, without entering them or retaining a body. Existing
+`Dispose` drops both before objective teardown. Existing `WorldReport` records
+checks, declined requests and the last reason. Synthetic geometry executes the
+production admission in `test_world_mobility_landing.py`; the current
+`siren-input-host` fixture checks imported original configuration, actual Unity
+vector math and source immutability without gameplay/network startup. This
+candidate follows J1105's route stall; device recovery is not yet qualified.

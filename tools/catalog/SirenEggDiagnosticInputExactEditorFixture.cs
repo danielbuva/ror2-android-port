@@ -99,6 +99,7 @@ public static class SirenEggDiagnosticInputExactEditorFixture
         VerifyTemporaryYieldRecoveryAndNativeStartLatch();
         VerifyVisibleRegisteredEggPreference();
         VerifyNativeRangeApproach();
+        VerifySourceAutomaticMobility();
         VerifyProducerFramePreparationAndDefaultOff();
         VerifyJumpLeaseOwnership();
         VerifySelectionDisableTransition();
@@ -112,6 +113,7 @@ public static class SirenEggDiagnosticInputExactEditorFixture
                      nativeStartStopsOnLiveGateAndLatches = true,
                      visibleRegisteredEggPreferredOverOccludedNearest = true,
                      nativeRangeSelectionApproachAndHold = true,
+                     sourceConfiguredAutomaticMobilityOffsets = true,
                      terminalStopReasonsTested = 8,
                      defaultOffInputNoninterference = true,
                      selectionDisabledOutstandingLeaseReleased = true,
@@ -119,6 +121,37 @@ public static class SirenEggDiagnosticInputExactEditorFixture
                      noProfileServerOrCombatCalls = true,
                      navigationObservationContextRemainsInert = true,
                      navigationObservationPolicyCases = 3 };
+    }
+
+    static void VerifySourceAutomaticMobility()
+    {
+        const string root = "Assets/WholeGame/RoR2/Base/Characters/Huntress/Skills/";
+        var blinkConfig = AssetDatabase.LoadAssetAtPath<EntityStateConfiguration>(root + "EntityStates.Huntress.BlinkState.asset");
+        var rainConfig = AssetDatabase.LoadAssetAtPath<EntityStateConfiguration>(root + "EntityStates.Huntress.BeginArrowRain.asset");
+        Require(blinkConfig && rainConfig, "Original Huntress movement configurations unavailable");
+        string beforeBlink = JsonUtility.ToJson(blinkConfig), beforeRain = JsonUtility.ToJson(rainConfig);
+        var blink = new EntityStates.Huntress.BlinkState();
+        var rain = new EntityStates.Huntress.BeginArrowRain();
+        // Apply to inert instances only; do not register configurations globally,
+        // enter states, attach a body or invoke any gameplay/network callback.
+        blinkConfig.BuildInstanceInitializer()(blink);
+        rainConfig.BuildInstanceInitializer()(rain);
+        Require(blink.duration > 0 && blink.speedCoefficient > 0 && rain.blinkDuration > 0 && rain.jumpCoefficient > 0 &&
+                    rain.blinkVector == Vector3.up,
+                "Compared native Huntress movement configuration differs");
+        var owner = typeof(PortSession).GetNestedType("TeleporterWorldSession", BindingFlags.NonPublic);
+        var method = owner.GetMethod("DiagnosticMobilityOffset", BindingFlags.Static | BindingFlags.NonPublic);
+        var forward = (Vector3)method.Invoke(null, new object[] { blink, Vector3.forward, 7f, 15f });
+        var right = (Vector3)method.Invoke(null, new object[] { blink, Vector3.right, 7f, 15f });
+        float blinkLength = 7f * blink.duration * blink.speedCoefficient;
+        Require(Vector3.Distance(forward, Vector3.forward * blinkLength) < .0001f &&
+                    Vector3.Distance(right, Vector3.right * blinkLength) < .0001f,
+                "Automatic Blink prediction must use original configured fields and three-dimensional aim");
+        var upward = (Vector3)method.Invoke(null, new object[] { rain, Vector3.right, 7f, 15f });
+        Require(Vector3.Distance(upward, Vector3.up * (15f * rain.jumpCoefficient * rain.blinkDuration)) < .0001f,
+                "Automatic Arrow Rain prediction must retain original configured leap");
+        Require(beforeBlink == JsonUtility.ToJson(blinkConfig) && beforeRain == JsonUtility.ToJson(rainConfig),
+                "Read-only movement fixture changed a source configuration");
     }
 
     static void VerifyImportedSourceEggPrefab()
