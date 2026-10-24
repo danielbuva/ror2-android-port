@@ -225,6 +225,18 @@ class ShaderRampFogCandidateTests(unittest.TestCase):
                 module.generate(work, root, target="unknown")
             self.assertFalse(work.exists())
 
+    def test_sobel_buffer_keeps_separate_fragment_parameter_record(self):
+        with tempfile.TemporaryDirectory(prefix="sobel-records-") as temp:
+            module = load_isolated_module(Path(temp))
+            source = json.loads((INTEGRATION / "recipe/shader-sobel-buffer-candidate.json").read_text())["source"]
+            blob = b"authored Sobel topology fixture"
+            source["serialized_blob_sha256"] = hashlib.sha256(blob).hexdigest()
+            tree = {"platforms": source["platform_codes"], "m_ParsedForm": {"m_Name": source["shader_name"], "m_SubShaders": [{"m_Passes": [{}]}]}}
+            records = json.loads(json.dumps(source["records"]))
+            module.validate_tree(tree, blob, records, {1: b"authored vertex", 3: b"authored fragment"}, source=source)
+            with self.assertRaisesRegex(RuntimeError, "program indices"):
+                module.validate_tree(tree, blob, records, {1: b"authored vertex", 2: b"incorrect fragment"}, source=source)
+
     def test_action_is_current_and_describes_qualification_limits(self) -> None:
         spec = importlib.util.spec_from_file_location("ramp_fog_actions", INTEGRATION / "scripts/lab/actions.py")
         assert spec is not None and spec.loader is not None
@@ -233,8 +245,22 @@ class ShaderRampFogCandidateTests(unittest.TestCase):
         action = actions.ACTIONS["shader-ramp-fog"]
         self.assertEqual(action.status, "current")
         self.assertEqual((action.module, action.function), ("shader_ramp_fog", "generate"))
-        self.assertIn("Host-only", action.help)
-        self.assertIn("visual equivalence", action.help)
+        self.assertIn("host-only", action.help)
+        self.assertIn("appearance", action.help)
+        import contextlib
+        import io
+        from types import SimpleNamespace
+
+        for requested, expected in (("lab", "ramp-fog"), ("sobel-buffer", "sobel-buffer"), ("sobel-outline", "sobel-outline")):
+            calls = []
+
+            def generate(*, target):
+                calls.append(target)
+                return {"target": target}
+
+            with contextlib.redirect_stdout(io.StringIO()):
+                action.handler(generate, {}, SimpleNamespace(target=requested))
+            self.assertEqual(calls, [expected])
 
 
 if __name__ == "__main__":

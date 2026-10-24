@@ -88,6 +88,10 @@ def _target_json_result(function, kwargs, args):
     print(json.dumps(function(args.target, **kwargs), indent=2))
 
 
+def _native_shader_target(function, kwargs, args):
+    print(json.dumps(function(**dict(kwargs, target="ramp-fog" if args.target in (None, "lab") else args.target)), indent=2))
+
+
 def _survivor_target(function, kwargs, args):
     path = getattr(args, "skill_variants", None)
     slot = getattr(args, "skill_slot", None)
@@ -511,8 +515,8 @@ _ENTRIES = (
         "generate",
         {},
         "current",
-        "Generate one accepted-input-bound RampFog ShaderLab candidate under ignored work/generated-shader-candidates/. Host-only; refuses input/helper/tool drift or an existing output. Unity compilation, Android acceptance, and visual equivalence remain separate checks.",
-        handler=_json_result,
+        "Current host-only native single-pass reconstruction: optional --target ramp-fog (default), sobel-buffer or sobel-outline. Refuses source/tool drift and existing output; editor compilation, Android execution and appearance remain separate gates.",
+        handler=_native_shader_target,
     ),
     Action(
         "shader-screen-damage",

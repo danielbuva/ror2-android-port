@@ -3169,9 +3169,9 @@ catalog consumer below stages this generated source; J965 qualifies the isolated
 exact-editor Android bundle fixture. Android appearance remains a separate gate.
 
 `scripts/lab/shader_ramp_fog.py` owns the source-bound single-pass
-`shader-ramp-fog` and `shader-screen-damage` host actions. The latter selects a
-second fixed public recipe, `recipe/shader-screen-damage-candidate.json`, while
-the original action retains its RampFog source identity. Each validates the
+`shader-ramp-fog` and `shader-screen-damage` host actions. The first also accepts
+`--target sobel-buffer` or `--target sobel-outline`; no target retains RampFog.
+Each target uses its fixed public `recipe/shader-<target>-candidate.json`. Each validates the
 accepted installation, exact native object/blob/program topology, measured
 interfaces and tool/helper pins before publishing new ignored evidence.
 The shared wrapper uses the validated native shader name and pass state;
@@ -3180,7 +3180,10 @@ expressions or compiled programs are public inputs.
 
 Current output roots are
 `work/generated-shader-candidates/ramp-fog-r5/<input_id>/` and
-`work/generated-shader-candidates/screen-damage-r1/<input_id>/`. Prior RampFog
+`work/generated-shader-candidates/screen-damage-r1/<input_id>/`, plus
+`work/generated-shader-candidates/{sobel-buffer,sobel-outline}-r1/<input_id>/`.
+SobelBuffer retains its separate fragment parameter record; binding slots name
+vertex/fragment stages independently of serialized record indices. Prior RampFog
 outputs remain preserved. Native programs, layouts, independent disassembly,
 byte roundtrips and source-immutability receipts accompany each candidate.
 The producer has no runtime setup or teardown; the original PostProcessLayer
@@ -3207,17 +3210,18 @@ and matched PC appearance remain separate gates.
 `whole_catalog.prepare_integration` owns the optional shader catalog override
 (J966/J1012). The public `recipe/shader-catalog-overrides.json` is a default-off
 exact identity allowlist for Outline Highlight, RampFog, the four Translucent
-candidates and the existing ScreenDamage runtime root. Ignored `work/config/shader-catalog-overrides.json` explicitly
+candidates, ScreenDamage and the SobelBuffer/SobelOutline pair. Ignored
+`work/config/shader-catalog-overrides.json` explicitly
 activates it for one accepted input. Before writing, staging validates all
 current generator/recipe chains, candidate source/metadata receipts and original
-catalog relationships. For Translucent and ScreenDamage it validates the catalog
+catalog relationships. For Translucent, ScreenDamage and Sobel it validates the catalog
 address GUID and distinct original exporter metadata GUID independently, plus source
 path/object identity, pass count and keyword shape. Only generated shader bodies
 replace their catalog files; existing `.meta` bytes stay identical. The attempt
 receipt and project `.rebuild` mirror/marker bind the selector digest.
 `catalog_rebuild` and `rebuild.compare` validate those exact exceptions and retain
-ordinary provenance comparison elsewhere. Historical exact two- and six-row receipts
-remain supported; current staging selects all seven rows and rejects partial
+ordinary provenance comparison elsewhere. Historical exact two-, six- and seven-row receipts
+remain supported; current staging selects all nine rows and rejects partial
 cohorts. Both current-project and destination staging persist the marker;
 disabling an already-staged override refuses before
 catalog writes and requires a clean destination. The generator owns candidate
@@ -3392,6 +3396,22 @@ It does not subscribe to the Outline callback (which changes `NeedsHighlight`),
 request highlights, create/replace a material or invoke a blit. Its scalar report
 records only camera/component identity and existing material pass/shader metadata;
 it does not show that pass 1 ran or explain an unknown-material log.
+For the requested visual camera only, the same owner restores the original
+Sobel graphics role suppressed with the inactive application root. Setup reads
+the active source scene's `RoR2Application.BehavioursToEnableDuringStartup`,
+selects its `ppApplication_opt` global volume and validates the source camera's
+volume mask. It clones only that profile's Sobel setting into an owned profile
+and child volume, preserving its fields and volume priority/weight/layer. The
+application and original assets remain inactive/unchanged; unsupported AO and
+gamma/colour-grading compute roles remain open. The original PostProcessLayer,
+SobelCommandBuffer and SobelOutlineRenderer retain rendering ownership.
+One exact-camera post-render sample records blended settings and supported
+shader separately from appearance acceptance. Disposal/disable unsubscribes,
+disables the owned volume (native unregister) and destroys only owned profile/
+settings. Audio-context-only cameras do not create this presentation.
+`test_source_sobel_lifecycle.py` executes production setup/sample/teardown with
+inert fixtures, including source immutability and excluded unrecovered effects.
+
 The narrow catalog root set also retains RampFog for the original post-process
 renderer. `whole_catalog.py` validates each exact address key, typed location and
 accepted source conversion; `WholeCatalogBuild.cs` verifies its bundle owner and

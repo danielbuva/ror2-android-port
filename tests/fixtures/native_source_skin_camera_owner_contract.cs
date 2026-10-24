@@ -4,6 +4,8 @@
 // stable report surface without importing game/editor assemblies.
 public sealed class AndroidNativeSourceCameraRigOwner : UnityEngine.MonoBehaviour, IOriginalWwiseCameraListenerState
 {
+    public sealed class SourceSobelObservation { }
+    public SourceSobelObservation sourceSobelObservation { get; set; }
     public bool ready { get; set; }
     public bool observationFieldsAvailable = true;
     public void CaptureUpdateContextObservation(AndroidNativeSourceSkinLifecycle.VisualSnapshot snapshot)

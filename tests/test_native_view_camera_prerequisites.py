@@ -26,11 +26,11 @@ class CameraShaderRootsTests(unittest.TestCase):
     def test_exact_camera_and_source_blur_shader_rows_are_added_as_source_paths(self):
         self.assertEqual(
             whole_catalog.camera_shader_roots(self.metadata, self.closure),
-            {f"Assets/Original/{i}.shader" for i in (16022, 16025, 15950, 2537, 2538, 2539, 2540)},
+            {f"Assets/Original/{i}.shader" for i in (16022, 16025, 15950, 2537, 2538, 2539, 2540, 16024, 15952)},
         )
 
     def test_source_blur_dependencies_cannot_be_filtered_or_missing(self):
-        for location_id in (2537, 2538, 2539, 2540):
+        for location_id in (2537, 2538, 2539, 2540, 16024, 15952):
             with self.subTest(location=location_id):
                 source = self.closure["converted"].pop(str(location_id))
                 try:
