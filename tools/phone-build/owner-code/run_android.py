@@ -1,7 +1,7 @@
 """Run the existing whole-player backend in the installed headless tool host.
 
-Caller-supplied original files, SDK and managed providers remain private app
-data, never APK assets. This bounded backend does not produce its DLL providers.
+Caller-supplied original files and SDK remain private app data, never APK assets.
+Select fixed-target source production or a supplied-provider infrastructure control.
 """
 
 import importlib.util

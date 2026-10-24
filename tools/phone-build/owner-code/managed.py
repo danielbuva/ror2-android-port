@@ -17,7 +17,6 @@ ROOT = HERE.parents[2]
 sys.path.insert(0, str(ROOT / "scripts/lab"))
 import assembly_transforms  # noqa: E402
 import body_visual_map  # noqa: E402
-import build  # noqa: E402
 import catalog_reader  # noqa: E402
 import common_assets_map  # noqa: E402
 import original_game_audio_produce as audio  # noqa: E402
@@ -237,7 +236,12 @@ def audio_assemblies(out, sdk, work, inputs, raw, ordinary, staged, prefab, bank
 def gameplay(out, sdk, inputs, original, ordinary, raw, package_output, audio_outputs, maps, support, *, source_root=None, android_tools=None):
     destination = out / "gameplay"
     destination.mkdir()
-    names = json.loads((source_root / "recipe/runtime-sources.json").read_text()) if source_root else build.runtime_sources()
+    if source_root:
+        names = json.loads((source_root / "recipe/runtime-sources.json").read_text())
+    else:
+        import build
+
+        names = build.runtime_sources()
     authored = source_root or ROOT
     public = [authored / "tools/unity" / native.relative(n) for n in names] + [authored / "android/Assets/LabDiagnostics.cs"]
     sources = public + support + maps
