@@ -253,6 +253,11 @@ def postprocessor_references(references, directory):
     return result
 
 
+def target_source_order(public, support, maps):
+    """Match the target's flat Assets/LabLoadingScene and Scripts trees."""
+    return [public[-1], *sorted(public[:-1] + maps, key=lambda path: path.name.casefold()), *support]
+
+
 def gameplay(out, sdk, inputs, original, ordinary, raw, package_output, audio_outputs, maps, support, *, source_root=None, android_tools=None):
     destination = out / "gameplay"
     destination.mkdir()
@@ -264,7 +269,7 @@ def gameplay(out, sdk, inputs, original, ordinary, raw, package_output, audio_ou
         names = build.runtime_sources()
     authored = source_root or ROOT
     public = [authored / "tools/unity" / native.relative(n) for n in names] + [authored / "android/Assets/LabDiagnostics.cs"]
-    sources = public + support + maps
+    sources = target_source_order(public, support, maps) if source_root else public + support + maps
     if (source_root is None and len(public) != 128) or len(support) != 14 or len(maps) != 3:
         raise ValueError("current player source membership changed; review configuration")
     refs = {Path(p).name: sdk / p for p in phone_unity_compile.references(sdk)}

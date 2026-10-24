@@ -13,6 +13,21 @@ SPEC.loader.exec_module(MANAGED)
 
 
 class OwnerCodeManagedTests(unittest.TestCase):
+    def test_fixed_target_uses_staged_paths_and_case_insensitive_source_order(self):
+        public = [Path(n) for n in ("TeleportMaterialBoundary.cs", "TeleporterWorldBoundary.cs", "ActiveClientBoundary.cs", "LabDiagnostics.cs")]
+        support, maps = [Path("support/Affix.cs")], [Path("maps/OriginalBodyVisualMap.cs")]
+        self.assertEqual(
+            [p.name for p in MANAGED.target_source_order(public, support, maps)],
+            [
+                "LabDiagnostics.cs",
+                "ActiveClientBoundary.cs",
+                "OriginalBodyVisualMap.cs",
+                "TeleporterWorldBoundary.cs",
+                "TeleportMaterialBoundary.cs",
+                "Affix.cs",
+            ],
+        )
+
     def test_postprocessor_only_sees_selected_providers_from_each_reference_root(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
