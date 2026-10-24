@@ -41994,3 +41994,69 @@ the actual pre-install profile bytes/count rather than a remembered shared-devic
 count. No new device, egg-hit, native boss/defeat/reward, normal-run or PC-parity
 claim follows. Qualify the entire rendering/audio/Siren batch on one available
 authorized device, and complete normal full acceptance after iteration findings.
+
+
+## J1096 — Restore the source collision policy before native projectile impacts
+
+**Hypothesis and prior evidence.** J634 shows mutually attached finite stakes;
+J667 identifies the original blue-elite Wisp source, and J946/J957 preserve the
+intermittent corruption without a cause claim. The fresh alpha Commando/seed-2
+case confirms three native blue-elite stakes. One transitions from finite to NaN
+position/velocity/local offset on its first observed terrain impact, before its
+stuck transform resolves. Two siblings attach to the player hull and remain
+finite. This is not evidence that Loader or reciprocal attachment caused it.
+The private final report is
+`work/coordination/alpha-touch-acceptance-20261024/failed39-last-report.json`.
+
+**Source comparison and prior art.** The accepted original `globalgamemanagers`
+SHA-256 is
+`292966bcba420ae931250b19633717684d0add5277abec3e9d3c4605cc5cd236`.
+Its layer names match the lab, but the lab matrix enables all pairs while the
+source disables 278 unordered pairs, including projectile self and body-hull
+contacts. World and precise-hitbox contacts remain enabled. The original
+AssetRipper export independently matches the measured matrix encoding.
+The community-prior-art index's pinned ThunderKit `95a6236d`,
+`ImportProjectSettings.cs`, explicitly maps original PhysicsManager to
+DynamicsManager and imports project settings from `globalgamemanagers`.
+Pinned Starstorm2 `a9a4badd`'s `FireFusionLaunch.cs` and DebugToolkit
+`d1e2f0aa`'s `Command_Noclip.cs` rebuild the native motor collision mask after
+layer changes. The accepted motor's `RebuildCollidableLayers` confirms that
+cache reads `Physics.GetIgnoreLayerCollision`. No community implementation or
+game settings bytes are copied into public source.
+
+**Change.** The existing whole-catalog build owner restores only the collision
+matrix from the verified legitimate input before editor import and body
+construction. Both build destinations generate their own private comparison
+receipt. The actual editor compares all 528 unordered pairs and all 32 layer
+names before bundle production. The existing world owner exposes a read-only
+projectile policy precondition before gameplay. Original elite dispatch,
+projectile operands, stick/impact callbacks, lifetime and fatal error
+classification remain unchanged. No NaN clamp or projectile suppression is added.
+
+**Host and exact-editor result.** R52 is a normal full build from
+`63ce8ca6`, request `20261024T210949.542784Z`,
+149.549 s, zero errors. APK SHA-256:
+`9ce08c18188fb5919cb278ebff793bfdfe9cbe30ad4eb626d0d10f50c74f175f`.
+All 267 artifact references were rehashed without copying outputs. The four
+source-policy tests cover original-input identity, exact matrix encoding,
+unchanged other settings, destination writes and malformed/drift refusals;
+coordinator checks include flushing destination settings before editor launch.
+The targeted policy/build/recipe/destination suite passes 52 tests; camera
+pin checks pass three. The actual idle-editor `lightning-stake-host` fixture
+passes all 528 pairs, imported original stake component/geometry checks and
+bounded observation contracts. The full host suite runs 2,052 tests with one
+Cecil compiler setup failure while the producer was compiling concurrently;
+that isolated four-test suite passes after the build. This is not a clean
+whole-suite pass; clean-clone CI remains the publication gate. Evidence:
+`work/coordination/main-port-r52/` and
+`work/coordination/main-port-lightning-root/`.
+Mandatory generated-output pruning follows the build.
+
+**First failure and remaining gate.** The confirmed defect is the missing
+original collision policy. Its causal relationship to the terrain-impact NaN
+remains unproven: terrain contact is permitted by the source matrix. R52 is
+uninstalled and has no device claim. Repeat the actual Commando seed-2 workload
+with positive native elite/stake observations and strict current-process error
+checks; retain all failures. Fold in alpha's existing diagnostic-retention
+commits for sustained-session measurement. Rendering, audio, Siren mission and
+normal-game acceptance remain separate device gates.

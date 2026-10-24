@@ -4140,6 +4140,8 @@ reuses this comparison and the existing imported-prefab/sampling fixture.
 `IntegratedWorldSession` reports and requires the original projectile self,
 world and precise-hitbox collision relationships before integrated gameplay.
 It observes the player settings without changing global physics at runtime.
+The native character motor caches its movement collision mask from these pairs
+during construction, so restoration precedes body activation.
 The original projectile, elite dispatch and impact callbacks remain authoritative.
 Host tests exercise source identity, matrix encoding, destinations and refusal
 without shipping game data. An editor policy match does not prove the
