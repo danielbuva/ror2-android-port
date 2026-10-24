@@ -393,7 +393,12 @@ TextAsset bundle with only Python's standard library; its versioned native
 schemas consume no class database or generated asset. `phone_content.py` owns
 project staging and source/bundle hash checks for that fixture.
 `tools/phone-build/ContentFixtureBuilder.cs` owns its exact-editor check and
-separate player build; `ContentFixture.cs` loads either its embedded bundle or
+separate player build. Editor-only `TextureMipFixture.cs` adds nine authored
+PNG imports across linear, sRGB and normal settings, retaining every raw mip
+in the new attempt. The Python owner validates their complete identity/extent
+cohort and pins the persisted files. These are desktop comparison oracles,
+never phone-production inputs; project teardown removes generated imports.
+`ContentFixture.cs` loads either its embedded bundle or
 a hash-bound candidate at a fixed path in its own data directory. It checks two
 load/unload cycles and writes a private report. The three `phone-content-*` prototype
 actions stage/check/build only this fixture under the primary checkout mutex.
