@@ -42169,3 +42169,40 @@ and bounded route/cleanup; boss defeat/rewards remain separate. Main still
 requires interrupted-R45 recovery, owned cleanup and OLED sleep before install
 on reconnect. NaN causality, PC appearance, full mix, mission completion,
 long-session bounds and normal-game acceptance remain open.
+
+
+### First Nova plain control and host-classifier refusal
+
+The shared phone is updated in place to R55 with canonical streamed install
+(26.627 s), fresh internal-storage/placement receipts and complete payload sync.
+Installed bytes match the frozen APK; profile bytes match before/after install.
+The selected-volume 15 GiB reserve guard passes. No uninstall, data clear or
+storage change occurs. The first plain baseline completes at 35.07785 world
+seconds, with the actual runtime projectile policy precondition true and
+profile applied-run count unchanged at zero. Its native report has no
+LightningStake identity in that bounded window; no elite-impact fix is inferred.
+Screenshot review confirms world, survivor and HUD visibility in the ordinary
+control; opt-in source-camera appearance remains untested.
+
+The post-run strict wrapper initially refuses its old whole-file checksum for
+`nova_bridge.py`. This is a host verification refusal, not a native game failure.
+Review against the prior published source finds exactly one unrelated change:
+AndroidTouchInput membership in `prepare_spine`; `current_errors` is
+byte-identical. A private reviewed shim pins the current file and unchanged
+historical strict wrapper without editing historical evidence or widening any
+error filter. A synthetic LightningStake NaN remains fatal. Reclassification of
+the preserved actual-process log passes with zero unexplained errors, 448
+MainOutput callbacks, 516,096 finite samples, 211,967 nonzero samples and zero
+nonfinite samples. The original refused workflow/log remains preserved.
+
+Plain evidence is `work/experiments/baseline/20261024T221128.919258Z`; the
+classification review and separate passing `plain-qualification.json` are
+under the R55 coordination directory. Baseline cleanup independently verifies
+process and selector absence and OLED sleep; the outer workflow verifies sleep
+again and releases the lease. A subsequent terminal-readback lease attempt
+refuses atomically before any ADB command because the ready priority content
+worker has acquired it. Thus the post-case full profile hash readback, stage-exit
+control and source-view/End Run/Quit remain pending. Existing installed bytes
+remain R55; later continuation uses its fresh owned receipt without reinstalling
+or repeating this successful plain observation. The rare NaN, appearance,
+mission and normal-game gates remain open.
