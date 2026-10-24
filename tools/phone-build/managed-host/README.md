@@ -55,7 +55,7 @@ The new builder validates native pins and archive hashes, packages native ELF
 only under `lib/arm64-v8a/`, and puts Python/.NET managed data, public source and
 archives in assets. Native Python extensions/dependencies are installed files;
 their data-tree links resolve to that directory. Unselected Python extensions
-are unsupported. Encrypted disposable signing material and all build outputs
+are unsupported. Private durable signing material and all build outputs
 stay ignored. No generated APK is approved for public distribution.
 
 `ToolHostActivity` owns each fresh data directory, data/native hash checks,
@@ -132,7 +132,7 @@ flags and original SDK target runtime remain unchanged; no extra wrapper or
 modified LLD binary is required.
 
 These remain debug/ADB-assisted private tool jobs. The fixed original-input
-gameplay source, complete content/Burst/shaders, full APK, durable signing,
+gameplay source, complete content/Burst/shaders, full APK, app signing,
 ordinary installation and game/performance acceptance are separate gates.
 
 ## Headless JDK and owner APK jobs
@@ -142,11 +142,12 @@ JDK. The phone builder compiles `NativeJavaHost.c` against its JNI headers and
 installs javac, keytool and java entry points plus the headless VM dependency
 closure as read-only PackageManager native files. Modules, security policy and
 configuration are hash-verified tool data. The JNI launcher uses the explicit
-VM path and Java home; it never loads ART as the build VM. HotSpot's existing
-alternate-VM launcher property and `JAVA_HOME` select the initial module image
-before ordinary property parsing, as implemented by OpenJDK
-[`os::jvm_path`](https://github.com/openjdk/jdk21u/blob/master/src/hotspot/os/linux/os_linux.cpp)
-and `Arguments::process_sun_java_launcher_properties`; no VM binary is patched. Existing SDK JARs
+VM path and Java home; it never loads ART as the build VM. The acquired JDK's
+[Android pathname adaptation](https://github.com/termux/termux-packages/blob/master/packages/openjdk-21/0017-Try-to-get-libjvm.so-path-from-proc-self-maps-on-and.patch)
+derives its initial data home from `dladdr(libjvm)`, before ordinary property
+parsing. The authored launcher adapts that one reported path to the logical JDK
+data layout. The actual ELF is opened from the installed native directory and
+its executable mappings retain that location; no VM binary is patched. Existing SDK JARs
 provide javac's Android reference surface, D8 and apksigner. The caller's extra
 native plan must include the JDK's Android spawn and shared-memory dependencies.
 

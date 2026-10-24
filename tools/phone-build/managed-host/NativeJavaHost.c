@@ -6,6 +6,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+static char *logical_jvm;
+// The acquired Android JDK derives its data home from dladdr(libjvm). Android
+// installs native libraries in a flat directory. Give this one pathname lookup
+// the logical JDK layout; the actual ELF and executable mappings stay read-only.
+int dladdr(const void *address, Dl_info *info) {
+    int (*platform_dladdr)(const void *, Dl_info *) = dlsym(RTLD_NEXT, "dladdr");
+    int result = platform_dladdr(address, info);
+    if (result && logical_jvm && info->dli_fname) {
+        const char *name = strrchr(info->dli_fname, '/');
+        name = name ? name + 1 : info->dli_fname;
+        if (!strcmp(name, "libjvm.so"))
+            info->dli_fname = logical_jvm;
+    }
+    return result;
+}
 int main(int argc, char **argv) {
     const char *library_path = getenv("ROR2LAB_BUILD_JVM"), *home_path = getenv("ROR2LAB_BUILD_JAVA_HOME");
     if (!library_path || !home_path) {
@@ -18,12 +33,8 @@ int main(int argc, char **argv) {
     asprintf(&home, "-Djava.home=%s", home_path);
     JavaVMOption options[argc + 8];
     int n = 0, index = 1, mode = 1;
-    // HotSpot's alternate-VM launcher support resolves the module image from
-    // JAVA_HOME before normal properties are parsed. Native files stay in the
-    // read-only PackageManager directory; home/lib contains verified links.
-    if (setenv("JAVA_HOME", home_path, 1))
+    if (setenv("JAVA_HOME", home_path, 1) || asprintf(&logical_jvm, "%s/lib/server/libjvm.so", home_path) < 0)
         return 2;
-    options[n++] = (JavaVMOption){"-Dsun.java.launcher.is_altjvm=true", 0};
     options[n++] = (JavaVMOption){home, 0};
     options[n++] = (JavaVMOption){"-Xmx512m", 0};
     options[n++] = (JavaVMOption){"-XX:ActiveProcessorCount=2", 0};
@@ -108,6 +119,7 @@ int main(int argc, char **argv) {
     (*vm)->DestroyJavaVM(vm);
     free(home);
     free(classpath);
+    free(logical_jvm);
     return 0;
 failed:
     if ((*env)->ExceptionCheck(env)) {
@@ -117,5 +129,6 @@ failed:
     (*vm)->DestroyJavaVM(vm);
     free(home);
     free(classpath);
+    free(logical_jvm);
     return 1;
 }

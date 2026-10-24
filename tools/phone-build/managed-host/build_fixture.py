@@ -25,9 +25,9 @@ env = dict(os.environ, LD_LIBRARY_PATH=":".join(str(toolroot / p) for p in ["pac
 receipt = dict(schema=1, success=False, game_inputs=False, security_qualified=False, commands=[], inputs={})
 
 
-def run(label, *args):
+def run(label, *args, timeout=180):
     args = list(map(str, args))
-    p = subprocess.run(args, env=env, capture_output=True, stdin=subprocess.DEVNULL, timeout=180)
+    p = subprocess.run(args, env=env, capture_output=True, stdin=subprocess.DEVNULL, timeout=timeout)
     (out / (label + ".log")).write_bytes(p.stdout + p.stderr)
     receipt["commands"].append(dict(label=label, exit=p.returncode))
     if p.returncode:
@@ -138,6 +138,7 @@ try:
                 "-fPIE",
                 "-pie",
                 source / "NativeJavaHost.c",
+                "-Wl,--export-dynamic",
                 "-ldl",
                 "-o",
                 java_host,
@@ -310,6 +311,7 @@ try:
         signing_request,
         "--output",
         out / "signing",
+        timeout=3600,
     )
     (out / "signing/signed.apk").rename(signed)
     for p, h in receipt["inputs"].items():
