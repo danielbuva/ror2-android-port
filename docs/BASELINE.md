@@ -86,33 +86,26 @@ turn the display off in `finally`, including if collection fails. Stage-mode res
 `mode`, `transitions`, `scene` and `stage_world_seconds` to the usual evidence receipt.
 The plain check and its acceptance criteria remain unchanged.
 
-## Current baseline (2026-10-23)
+## Current baseline (2026-10-24)
 
-[J1040](PORTING_JOURNAL.md#j1040--restore-bloom-and-the-source-cameras-copystd-pass-contracts)
-qualifies diagnostic R36 APK bda30f33, source 1428fdf, through both standard
-controls, strict current-process log checks and independent installed-byte,
-placement, backing and profile readback. Plain reaches 35.188797 s on Lakes;
-stage-exit completes one original transition and 13.503845 s on Goolake. Both
-retain 13 applied runs and finite nonzero samples from the existing selected
-MusicController output. The bounded source-view route now reaches its expected
-two-pass Outline observation without the previous Bloom or Blit pass errors.
-Color/background visibility improves, but washed-out rendering and PC parity
-remain open. These checks do not qualify full audio or natural Quit; J1037's
-saved music prefix and failed warm-Quit result remain separate evidence.
+[J1067](PORTING_JOURNAL.md#j1067--activate-source-camera-uber-and-skill-timed-mainoutput-together)
+qualifies diagnostic R37 APK
+`4e5f0feb79c5bc35b15518af39293779d5216f839cceb30103ceb8240f5fde5b`, source
+`057192fa`, through both unchanged standard modes, strict captured-process logs,
+original audio-camera/catalog/highlight contracts and independent installed-byte,
+profile, placement and runtime-backing readback. The profile is unchanged and
+both cleanups verify selector/process absence and sleeping display.
 
-J1045/J1046 additionally pass existing native first-stage UI-abandon and actual
-defeat/restart on the same R36 APK, with original audio ready, strict
-source-owner cleanup and unchanged profile/installed bytes. Natural boss rewards,
-transport, second-session audio output and ordinary combat remain open.
-
-J1043's default-off MainOutput capture timing and J1044's source-camera Uber
-composite source are not in R36. Both await the next full build and device
-qualification after the shared editor handback.
-
-R34's scoped MainOutput windows, failed warm Quit and separate cold-menu
-persistence remain recorded in J1022/J1028/J1031. Loader's full-kit semantics
-and the remaining audio/visual gates stay open. See the
+J1043's skill-timed MainOutput and J1044's Uber selection are now in that player.
+A plain MainOutput window and its separately saved prefix are nonzero; the
+stage window is zero. Full mix, event attribution and audibility remain open.
+The source-view world is almost black despite the expected Outline material
+contract. Warm Quit produces an ANR and an OS kill; original audio Term/disarm
+witnesses do not turn that exit into a pass. Those failures remain separate from
+the two passing standard controls. The full evidence and next gates are recorded
+once in J1067. R36 remains the previous diagnostic; see the
 [current snapshot](../PORTING_STATE.md).
+
 The accepted baseline below remains the rollback.
 
 | Item | Value |
