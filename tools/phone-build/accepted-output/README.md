@@ -503,3 +503,75 @@ qualifies all 281 records, the shared codec build and the complete 5,006-record
 RGB/Alpha8/uncompressed regression case on Android. Twelve authored contracts
 pass with both real codecs. Complete bundles, mip/cubemap production and
 ordinary app delivery remain open.
+
+## Produce single-mip RGBA textures with the owner-supplied SDK
+
+Current experimental source-only support; full phone-cohort qualification is
+pending. `recipe/owner-rgba-textures.json`, SHA-256
+`76e596c4ec3049e471f292d42b2b623092e05596a1a756be66ff08e73bbe6f96`,
+selects 1,277 canonical original textures from 535 PC bundles for the remaining
+1,333 non-Alpha8 ETC2 RGBA/single-mip records. It contains selectors, hashes and
+importer/storage relationships, with no pixel or encoded-block literals.
+
+`build_texture_sdk.py` owns the current SDK pipe/BC7 helper build. Its native BC7
+adapter uses the attributed unchanged public bcdec header under its MIT
+alternative, retaining its license. The SDK encoder is separately supplied by
+the owner, never included in this repository or a game-bearing packet. Select
+`Editor/etccompress.so` from the exact official Linux SDK archive documented
+above, SHA-256 `4dc31e0bc2591141648b238fa158fe700dd37c13f62fe3f165618ba85c1a2293`.
+Preserve SDK provider terms and the separate public QEMU/GNU license notices;
+the build performs no download or license acceptance.
+
+Android requires an explicit public QEMU x86-64 runtime root containing
+`bin/qemu-x86_64`, its native dependencies under `lib`, and genuine GNU loader/
+libraries under `linux`. The separate GNU development sysroot contains its
+headers, startup objects and nonshared libc support. Current required provider
+versions and reasons are listed in [LOCAL_STATE](../../../docs/LOCAL_STATE.md).
+The explicit native tool root is above `usr`, matching the other native helper
+builds. Use the configured device lease/owned workspace during lab staging:
+
+```sh
+python3 -I -S -B tools/phone-build/accepted-output/build_texture_sdk.py \
+  --compiler "$NATIVE_TOOL_ROOT/usr/bin/clang-21" \
+  --linker "$NATIVE_TOOL_ROOT/usr/bin/ld.lld" \
+  --android-tool-root "$NATIVE_TOOL_ROOT" \
+  --library "$SDK_TEXTURE_LIBRARY" --qemu-root "$QEMU_ROOT" \
+  --sysroot "$GNU_DEVELOPMENT_SYSROOT" --output "$NEW_CODEC_OUTPUT"
+```
+
+The native Clang builds the BC7 adapter for Android ARM64 and the SDK C ABI
+adapter for Linux x86-64. QEMU executes only that standalone build tool; game
+execution stays native IL2CPP ARM64. The SDK descriptor is passed by value, with
+backend 1, ETC2 RGBA format 2, quality 1 and color metric 0. No SDK source or
+binary is patched, and no Editor/project workflow runs. The builder preserves
+all provider/source pins, commands, bounded compiler logs, notices and complete/
+failed receipts. New output is mandatory. It generates `sdk-tools.json` with an
+explicit command, environment, pixel tool and every codec/runtime dependency pin.
+
+For a host-native SDK oracle, omit QEMU/sysroot/linker/Android-root options and
+select the owner's exact Mac SDK `etccompress.dylib`; its admitted SHA-256 is
+`d44cabed1440522efcdf486863176fdea4a0ca26984f43637a611c31dbb518ef`.
+This is a separate host tool case, not Android admission.
+
+```sh
+python3 -I -S -B tools/phone-build/accepted-output/texture_produce.py \
+  --profile recipe/owner-rgba-textures.json \
+  --profile-sha256 76e596c4ec3049e471f292d42b2b623092e05596a1a756be66ff08e73bbe6f96 \
+  --pc "$ORIGINAL_PC_ROOT" --output "$NEW_TEXTURE_OUTPUT" \
+  --sdk-toolchain "$NEW_CODEC_OUTPUT/sdk-tools.json" \
+  --sdk-toolchain-sha256 "$SDK_TOOLCHAIN_SHA256"
+```
+
+The existing producer owns source decoding, transparency dilation, field
+projection, capacity reservation and every produced/persisted body/pixel check.
+BC7 uses the bounded native decoder; BC3/RGBA use the existing qualified paths.
+The same native pixel helper performs the existing integer transparency
+dilation, keeping coordinate buffers outside the Python parent and freeing them
+before pipe output. Its authored seed/tie controls match the standard-library
+implementation; whole-cohort hashes remain the admission authority.
+It checks the toolchain file and every dependency before output creation and
+again before success. Existing output, input/tool drift and differing codec
+extents refuse; failed attempts remain private. Compiler/codec children are
+bounded and reaped. No game data is shipped with the public source or profiles.
+Complete bundles, remaining textures/mips/cubemaps and ordinary app delivery
+remain open.

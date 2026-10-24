@@ -1692,3 +1692,23 @@ receipted authored DLLs/metadata before ordinary whole-catalog composition.
 The audio build hook owns temporary APFS reference clones and deletes them on
 exit. Lane teardown removes all of this private state. No build discovers a
 timestamped staging receipt as input.
+
+The experimental `build_texture_sdk.py` reads explicitly supplied SDK library,
+compiler and (on Android) public QEMU/GNU runtime and GNU development sysroot.
+These are required local tool providers, not game-derived inputs. The current
+runtime is the separately acquired QEMU x86-64 11.1.2 Android package and its
+public native dependencies; the GNU sysroot is Debian libc6/libc6-dev
+2.31-13+deb11u11, linux-libc-dev 5.10.223-1 and libgcc-s1 10.2.1-6. Preserve their
+provider receipts, licenses and notices. The selected Unity Linux library has
+the archive/member pins in the standalone-runner setup. The GNU development
+headers/startup objects support the authored C pipe adapter only; the game
+compiler/target policy stays with the code owner.
+
+The tracked builder, C adapters and attributed bcdec source generate both
+private executables plus `sdk-tools.json`, notices and terminal build receipt.
+The texture producer reads the explicitly supplied, hash-pinned toolchain file
+and `recipe/owner-rgba-textures.json`; it never reads a timestamped experiment
+folder. Every dependency is recorded and rechecked. Host-native SDK mode uses
+the owner's exact installed Mac SDK as an oracle; Android uses native Clang 21
+for the adapters plus the explicit GNU runtime/QEMU for the unchanged Linux SDK.
+See the current [setup](../tools/phone-build/accepted-output/README.md#produce-single-mip-rgba-textures-with-the-owner-supplied-sdk).
