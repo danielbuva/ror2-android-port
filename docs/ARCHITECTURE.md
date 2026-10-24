@@ -115,8 +115,9 @@ owner keeps commands, tool logs, object receipts and terminal state; failures
 retain their output. [Setup and teardown](../tools/phone-build/owner-code/README.md)
 cover source-frame expansion, input immutability, child cleanup and capacity.
 There is no shared project, Editor, device or current game-build consumer.
-The public entry has complete plan equivalence evidence; its full execution
-and the remaining chain's single-command integration stay unqualified.
+J1063 qualifies the complete source-input host command through native execution.
+Independent content/Burst/shader production, licensed native input production
+and full-player Android construction remain open.
 
 `tools/phone-build/owner-code/produce.py` owns the current experimental combined
 whole-player backend: explicit hash-bound managed providers, audited target
@@ -126,8 +127,9 @@ source-frame retention and the native stage above. It adds no runtime owner.
 assembly order and tool hashes; no captured native table or response is read.
 [Setup and lifecycle](../tools/phone-build/owner-code/README.md#combined-whole-player-backend)
 name input setup, exclusive outputs, interstage drift checks, failed-state
-retention and teardown. J1061 verifies its complete stripping/conversion through
-native planning; upstream managed production is still explicitly supplied.
+retention and teardown. J1061 verifies the explicit-managed-input mode through
+native planning; J1063 qualifies the complete source-input mode, including fresh
+managed production and native linking.
 No shared project, Editor, device or current build consumer is involved.
 
 `tools/phone-build/owner-code/managed.py` owns current experimental original-input

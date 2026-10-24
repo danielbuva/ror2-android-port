@@ -2,7 +2,8 @@
 
 Current experimental build support. The complete host chain is established in
 [J1052–J1059](../../../docs/JOURNAL_INDEX.md); the source-input command below now composes the managed and native stages.
-Full default native integration and phone qualification remain open. No current game build
+J1063 qualifies the complete default source-input host chain through native
+linking. Full-player Android construction remains open. No current game build
 selects it. Architecture C and the desktop fallback remain unchanged.
 
 `native.py` replaces the private captured native DAG with the audited
