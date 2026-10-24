@@ -341,7 +341,7 @@ def target_run(work, sdk, values, target, source_root, output, *, android_tools=
         source_hashes([*base.values(), inputs["newtonsoft"], inputs["dotnet"], *[p for p in inputs["ilspy_dll"].parent.rglob("*") if p.is_file()]]) | authored
     )
     output.mkdir(mode=0o700)
-    result = {"success": False, "source_commit": target["source_commit"], "phone_qualified": False, "runtime_qualified": False}
+    result = {"success": False, "phase": "public-transforms", "source_commit": target["source_commit"], "phone_qualified": False, "runtime_qualified": False}
     try:
         for name in ("logs", "tmp", "ordinary"):
             (output / name).mkdir()
@@ -354,11 +354,13 @@ def target_run(work, sdk, values, target, source_root, output, *, android_tools=
             launcher=inputs["dotnet"],
             host="android8" if android_tools else "host10",
         )
+        result["phase"] = "packages"
         packages = output / "packages"
         package_request = {"sdk_install": str(sdk), "packages": str(inputs["packages"]), "output": str(packages)}
         if android_tools:
             package_request["android_tools"] = android_tools
         packages_owner.run(package_request)
+        result["phase"] = "original-support-and-maps"
         maps, support = maps_and_support(
             output,
             inputs,
@@ -370,6 +372,7 @@ def target_run(work, sdk, values, target, source_root, output, *, android_tools=
             source_root=source_root,
             probe_provider_sha256=json.loads((output / "ordinary/public-tools-receipt.json").read_text())["provider_sha256"],
         )
+        result["phase"] = "gameplay"
         game = gameplay(
             output,
             sdk,
@@ -393,8 +396,11 @@ def target_run(work, sdk, values, target, source_root, output, *, android_tools=
         if native.input_state(work) != state:
             raise ValueError("target original inputs changed")
         native.write(output / "providers.json", providers)
-        result.update(success=True, managed_providers=len(providers), authored_sources=len(target["source_files"]))
+        result.update(success=True, phase="managed-produced", managed_providers=len(providers), authored_sources=len(target["source_files"]))
         return providers
+    except BaseException as error:
+        result.update(error_type=type(error).__name__, error=str(error))
+        raise
     finally:
         native.write(output / "result.json", result)
 

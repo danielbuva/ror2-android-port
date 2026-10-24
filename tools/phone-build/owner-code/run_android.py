@@ -29,8 +29,8 @@ def run(request_file, runtime, installed):
 
     check_inputs()
     request = json.loads(request_file.read_text())
-    if set(request) != {"managed", "output"}:
-        raise ValueError("explicit managed providers and new output required")
+    if set(request) not in ({"managed", "output"}, {"source_inputs", "target", "output"}):
+        raise ValueError("explicit managed providers or fixed-target source inputs and new output required")
     work, sdk, game = [inputs / name for name in ("work", "sdk", "game")]
     inventory = json.loads((work / "inventory/files.json").read_text())
     for row in inventory["files"]:
@@ -42,12 +42,9 @@ def run(request_file, runtime, installed):
     # record this private copy's stats only after checking every original hash.
     (work / "inventory/files.json").write_text(json.dumps(inventory) + "\n")
     (work / "config/local.json").write_text(json.dumps({"game_path": str(game)}) + "\n")
-    providers = {}
-    for name, row in request["managed"].items():
-        providers[name] = {"path": str((inputs / backend.native.relative(row["path"])).resolve(strict=True)), "sha256": row["sha256"]}
     tools = {
         name: str(installed / filename)
-        for name, filename in {"dotnet": "libdotnetmuxer.so", "clang": "libclang.so", "linker": "liblld.so", "objcopy": "libobjcopy.so"}.items()
+        for name, filename in {"dotnet": "libdotnetmuxer.so", "clang": "libclang.so", "linker": "lib-ld.lld-.so", "objcopy": "libobjcopy.so"}.items()
     }
     tools["resource_dir"] = str(runtime / "clang/21")
     output = work / backend.native.relative(request["output"])
@@ -55,7 +52,22 @@ def run(request_file, runtime, installed):
     Path(os.environ["TMPDIR"]).mkdir(exist_ok=True)
     started = time.monotonic()
     free = __import__("shutil").disk_usage(work).free
-    result = backend.run({"owner_work": str(work), "sdk_install": str(sdk), "managed": providers, "output": str(output), "android_tools": tools})
+    production = {"owner_work": str(work), "sdk_install": str(sdk), "output": str(output), "android_tools": tools}
+    if "managed" in request:
+        providers = {}
+        for name, row in request["managed"].items():
+            providers[name] = {"path": str((inputs / backend.native.relative(row["path"])).resolve(strict=True)), "sha256": row["sha256"]}
+        production["managed"] = providers
+    else:
+        production["source_inputs"] = {
+            name: str((inputs / backend.native.relative(value)).resolve(strict=True)) for name, value in request["source_inputs"].items()
+        }
+        production["source_inputs"]["dotnet"] = tools["dotnet"]
+        production["target"] = {
+            "profile": str(runtime / "repo" / backend.native.relative(request["target"]["profile"])),
+            "source": str((inputs / backend.native.relative(request["target"]["source"])).resolve(strict=True)),
+        }
+    result = backend.run(production)
     # Generated local state changed intentionally; immutable original/SDK/provider
     # checks remain separate from those three private setup files.
     immutable = {n: h for n, h in before.items() if n not in {"work/config/local.json", "work/inventory/files.json"}}
@@ -70,7 +82,7 @@ def run(request_file, runtime, installed):
             "children_peak_rss_bytes": resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss * 1024,
             "free_bytes_before": free,
             "free_bytes_after": __import__("shutil").disk_usage(work).free,
-            "managed_providers_supplied": True,
+            "managed_providers_supplied": "managed" in request,
             "runtime_qualified": False,
         },
     )

@@ -93,3 +93,34 @@ do not qualify production bootstrap/delivery, general Python/native dependencies
 Unity execution/content/player production, durable signing, cancellation/resume,
 ownership acquisition, final installation UX or matched performance. J929's
 writable-execution refusal remains failed.
+
+## Headless whole-player code jobs
+
+`stage.py --owner-backend` also stages the tracked authored owners and target
+profiles. An explicit private `backend-tools.json` supplies hash-bound generic
+compiler/linker/strip/Python-extension ELF providers, native data-tree links and
+Clang resources to the existing builder. An optional supplied .NET 10 framework
+keeps the pinned ILSpy tool runnable; .NET 8 remains selected by the Unity tool
+and public transform runtime configurations. Native providers enter only the
+PackageManager library directory; input game/SDK/target sources are separate
+caller-owned app data. SDK/tool acquisition rights remain separate from hosting.
+
+Use `ToolHostActivity.Runner` instrumentation to execute the worker without an
+Activity or a display wake. `files/owner-input/request.json` selects either
+explicit managed providers or the fixed-target source request consumed by
+`owner-code/run_android.py`. The worker owns its fresh source/framework directory,
+native/data checks and child deadline. Timeout first signals the controller so
+it can reap its process groups. The caller retains receipts/results, verifies
+loaded providers/output bytes, monitors kernel temperatures and releases the
+owned package/lease afterward. The thermal service can be unavailable despite
+reporting status 0; battery temperature alone does not measure CPU hotspots.
+
+Install the LLD provider as `lib-ld.lld-.so`. The pinned
+[LLD dispatcher](https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/lld/Common/DriverDispatcher.cpp)
+recognizes the `ld.lld` filename segment as its GNU driver. The normal linker
+flags and original SDK target runtime remain unchanged; no extra wrapper or
+modified LLD binary is required.
+
+These remain debug/ADB-assisted private tool jobs. The fixed original-input
+gameplay source, complete content/Burst/shaders, full APK, durable signing,
+ordinary installation and game/performance acceptance are separate gates.

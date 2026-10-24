@@ -127,6 +127,15 @@ try:
             if p.is_file():
                 copy(p, assets / "clang/21" / p.relative_to(resources))
         plan["links"].update(extra["links"])
+        if "framework" in extra:
+            framework_data = Path(extra["framework"])
+            if not re.fullmatch(r"10\.[0-9]+\.[0-9]+", framework_data.name):
+                raise RuntimeError("Backend framework must be an explicit .NET 10 version")
+            for p in framework_data.iterdir():
+                if p.is_file() and (p.suffix in (".dll", ".json") or p.name == ".version"):
+                    copy(p, assets / "dotnet/shared/Microsoft.NETCore.App" / framework_data.name / p.name)
+            for name in ("LICENSE.txt", "ThirdPartyNotices.txt"):
+                copy(framework_data.parents[2] / name, assets / "notices/dotnet10" / name)
     for p in (toolroot / "python/usr/lib/python3.14").rglob("*"):
         if p.is_file() and p.suffix == ".py" and "__pycache__" not in p.parts:
             copy(p, assets / "python/lib/python3.14" / p.relative_to(toolroot / "python/usr/lib/python3.14"))

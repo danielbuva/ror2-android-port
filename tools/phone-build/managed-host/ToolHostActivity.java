@@ -28,6 +28,7 @@ public final class ToolHostActivity extends Activity {
     }
     private static class Worker {
     private final Context app;
+    private File hostfxr;
     Worker(Context app) { this.app=app; }
     private android.content.res.AssetManager getAssets() { return app.getAssets(); }
     private File getFilesDir() { return app.getFilesDir(); }
@@ -64,10 +65,14 @@ public final class ToolHostActivity extends Activity {
         env.put("DOTNET_CLI_TELEMETRY_OPTOUT","1"); env.put("DOTNET_CLI_HOME",new File(directory,"home").getPath());
         env.put("TMPDIR",getCacheDir().getPath());
         env.put("ROR2LAB_BUILD_DOTNET_ROOT",new File(directory,"dotnet").getPath());
-        env.put("ROR2LAB_BUILD_HOSTFXR",new File(nativeDir,"libhostfxr.so").getPath());
+        env.put("ROR2LAB_BUILD_HOSTFXR",hostfxr.getPath());
         env.put("ROR2LAB_BUILD_DOTNET_LAUNCHER",new File(nativeDir,"libdotnetmuxer.so").getPath());
         java.lang.Process process=builder.start();
-        if(!process.waitFor(label.equals("owner-backend")?21600:90,TimeUnit.SECONDS)){process.destroyForcibly();throw new IOException(label+" timeout");}
+        if(!process.waitFor(label.equals("owner-backend")?21600:90,TimeUnit.SECONDS)){
+            process.destroy();
+            if(!process.waitFor(15,TimeUnit.SECONDS)) process.destroyForcibly();
+            throw new IOException(label+" timeout");
+        }
         JSONObject result=new JSONObject(); result.put("exit",process.exitValue());result.put("log",output.getName());result.put("sha256",hash(output));
         if(process.exitValue()!=0) throw new IOException(label+" exit "+process.exitValue()+" "+text(output).substring(0,Math.min(2000,text(output).length())));
         return result;
@@ -94,6 +99,7 @@ public final class ToolHostActivity extends Activity {
                 verified.put(name);
             }
             report.put("nativeVerified",verified);report.put("nativeDirectory",nativeDir.getPath());report.put("appUid",android.os.Process.myUid());
+            hostfxr=new File(nativeDir,hashes.has("libhostfxr10.so")?"libhostfxr10.so":"libhostfxr.so");
             for(String name:new String[]{"libcoreclr.so","libhostpolicy.so","libSystem.Native.so","libSystem.Globalization.Native.so","libSystem.IO.Compression.Native.so","libSystem.Net.Security.Native.so","libSystem.Security.Cryptography.Native.Android.so","libSystem.Security.Cryptography.Native.OpenSsl.so"}) Os.symlink(new File(nativeDir,name).getPath(),new File(framework,name).getPath());
             Os.symlink(new File(nativeDir,"libcrypto.so").getPath(),new File(links,"libcrypto.so.3").getPath());
             Os.symlink(new File(nativeDir,"libssl.so").getPath(),new File(links,"libssl.so.3").getPath());

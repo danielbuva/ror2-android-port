@@ -345,6 +345,7 @@ def run(request, *, plan_only=False, profile=None):
                 "// Authored SDK include wrapper; owner SDK source remains unchanged.\n" + "".join('#include "' + p + '"\n' for p in members)
             )
         if not plan_only:
+            result["phase"] = "compiling"
             for index, job in enumerate(value["jobs"]):
                 if shutil.disk_usage(output).free < RESERVE:
                     raise RuntimeError("native compilation reserve unavailable; outputs retained")
@@ -363,9 +364,11 @@ def run(request, *, plan_only=False, profile=None):
             size = sum(Path(j["output"]).stat().st_size for j in value["jobs"])
             if shutil.disk_usage(output).free < size + 1536 * 1024**2:
                 raise RuntimeError("native link reserve unavailable; objects retained")
+            result["phase"] = "linking"
             invoke(value["link"], output, "link", env=environment)
             target = output / "libil2cpp.so"
             stripper = android_tools["objcopy"] if android_tools else str(sdk / profile["objcopy"])
+            result["phase"] = "stripping"
             invoke([stripper, "--strip-all", value["library"], str(target)], output, "strip", env=environment)
             with target.open("rb") as stream:
                 header = stream.read(64)
