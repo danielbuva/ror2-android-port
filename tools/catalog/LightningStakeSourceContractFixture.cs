@@ -83,8 +83,10 @@ public static class LightningStakeSourceContractFixture
         Require(Finite(body.mass) && body.mass == 1f && !body.useGravity && body.interpolation == RigidbodyInterpolation.Interpolate,
                 "Source rigidbody properties differ from the compared source");
         VerifySamplingPolicy();
+        var collisionPolicy = WholeCatalogBuild.ValidateSourceCollisionPolicy();
 
         return new { sourceGuidVerified = true,
+                     collisionPolicy = collisionPolicy,
                      sourceAssetOnly = true,
                      noInstantiationOrActivation = true,
                      projectileNetworkAndImpactComponents = true,

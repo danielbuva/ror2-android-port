@@ -2264,3 +2264,13 @@ The addition is a host workspace configuration lookup; it adds no import,
 changes no shared transformation/copy function, and is unused by the phone
 producer. This is a transitive source-pin audit, not a new Android qualification.
 No native/package selection or redistribution approval changes. Audit: 2026-10-24.
+
+
+Collision-policy restoration refreshes the authored world-owner, producer and
+transitive camera source pins. The world change observes the original projectile
+collision contract before gameplay; the producer reads the verified legitimate
+input and restores only generated project settings. No original matrix values,
+game source, protected assets, device identifiers or private paths are tracked.
+The source camera and original audio transformations retain their existing
+ownership and behavior. Provenance/privacy audit: 2026-10-24; device impact
+acceptance remains separate.

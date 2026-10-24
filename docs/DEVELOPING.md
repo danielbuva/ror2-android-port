@@ -105,6 +105,7 @@ authentication is needed to inspect the supplied installation.
 | `./dev preflight [--device SERIAL] [--host-only]` | Current: host/input gates plus selected-device storage; `--host-only` omits device access. |
 | `./dev check-baseline` | The standard device check on the installed APK: 35 s of assisted Lakes play, no report error, profile run count unchanged ([docs/BASELINE.md](BASELINE.md)). |
 | `./dev editor --target lab --action open` | Start the isolated exact editor and connect the pinned Unity MCP. One editor mutation at a time. |
+| `./dev editor --target lab --action lightning-stake-host` | Current: verify the original stake prefab and all 528 imported collision-layer pairs against the accepted local input; no live impact or NaN-fix acceptance. |
 | `./dev editor --target lab --action siren-input-host` | Current: run the staged source-asset and range-aware Siren input fixture in the idle exact editor; no game/server or encounter acceptance. |
 | `./dev editor --target lab --action siren-encounter-host` | Current: inspect original inactive Siren encounter, Director, toggle controller and 32 egg spawners plus retirement policy; no network, egg death or boss acceptance. |
 | `./dev editor --target lab --action source-camera-graphics-host` | Current: check real imported profile/resource clones and seven program bindings using inactive editor fixtures; no rendering acceptance. |

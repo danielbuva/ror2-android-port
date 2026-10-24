@@ -192,10 +192,11 @@ def editor(target="lab", action="inspect"):
             )
         if action == "minimal-build":
             preflight_host()
-        if target == "lab" and action in {"siren-input-host", "siren-encounter-host", "source-camera-graphics-host"}:
+        if target == "lab" and action in {"siren-input-host", "siren-encounter-host", "source-camera-graphics-host", "lightning-stake-host"}:
             from whole_catalog import copy_catalog_asset
 
             fixture, owners = {
+                "lightning-stake-host": ("LightningStakeSourceContractFixture.cs", ["world/IntegratedWorldBoundary.cs"]),
                 "siren-input-host": ("SirenEggDiagnosticInputExactEditorFixture.cs", ["input/SirenEggDiagnosticInput.cs", "world/IntegratedWorldBoundary.cs"]),
                 "siren-encounter-host": (
                     "SirenEncounterHost.cs",

@@ -3619,3 +3619,27 @@ restores lookup dependencies from placeholder exports; J1012 adds the recovered
 blur/crop sources through the six-row catalog consumer. J1017 installs that
 payload and separately verifies bounded camera readiness. Rendering, native
 listener outcome and audible playback remain unqualified.
+
+
+## Original collision policy
+
+`whole_catalog.stage_source_collision_policy` owns build-time restoration of
+the original collision matrix for both build destinations. It reads only the
+accepted, hash-verified `globalgamemanagers` in the configured legitimate input,
+requires its complete layer table to match the staged project, and changes only
+the generated `DynamicsManager.asset` matrix. It preserves the remaining lab
+physics settings and does not modify the original installation. The generated
+`.rebuild/source-collision-policy.json` contains the private comparison inputs;
+no original matrix bytes are tracked.
+
+`WholeCatalogBuild.ValidateSourceCollisionPolicy` compares all 528 unordered
+layer pairs and all layer names through the actual editor Physics API before
+bundle production. Current `./dev editor --target lab --action lightning-stake-host`
+reuses this comparison and the existing imported-prefab/sampling fixture.
+`IntegratedWorldSession` reports and requires the original projectile self,
+world and precise-hitbox collision relationships before integrated gameplay.
+It observes the player settings without changing global physics at runtime.
+The original projectile, elite dispatch and impact callbacks remain authoritative.
+Host tests exercise source identity, matrix encoding, destinations and refusal
+without shipping game data. An editor policy match does not prove the
+intermittent native LightningStake corruption is resolved.

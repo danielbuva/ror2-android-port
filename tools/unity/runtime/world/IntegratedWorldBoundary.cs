@@ -101,6 +101,7 @@ public sealed partial class PortSession
     [Serializable]
     public class WorldReport
     {
+        public bool sourceCollisionPolicyVerified;
         public int nativeEffectSourceRenderers, nativeEffectSourceMaterials;
         public ObjectiveRendererObservation[] nativeEffectViews;
 
@@ -1250,6 +1251,12 @@ public sealed partial class PortSession
                     "Persistent original Commando/default skills, recovered golemplains collision/navigation, continuous original one-card director, local HLAPI client/authority, original Money purchases/chest animation/droplet/default pickup/server grants/gold/XP/stats. Authored layout/HUD/input/materials and explicit audio-unavailable pickup presentation. Original Run clock only: stock startup/menu/profile/route/victory remain unavailable; composed original teleporter is observed separately; no NetworkUser, LocalUser or entitlement grant.",
                 feedbackCapability = "Authored pickup HUD; original native-audio notification handler unavailable."
             };
+            coordinator.r.world.sourceCollisionPolicyVerified =
+                Physics.GetIgnoreLayerCollision(LayerIndex.projectile.intVal, LayerIndex.projectile.intVal) &&
+                !Physics.GetIgnoreLayerCollision(LayerIndex.projectile.intVal, LayerIndex.world.intVal) &&
+                !Physics.GetIgnoreLayerCollision(LayerIndex.projectile.intVal, LayerIndex.entityPrecise.intVal);
+            coordinator.Check(coordinator.r.world.sourceCollisionPolicyVerified,
+                              "Original projectile collision policy is missing before integrated gameplay");
             if (survivorCombatOutputs != null)
                 coordinator.r.world.survivorCombatOutputs = survivorCombatOutputs.report;
             try
