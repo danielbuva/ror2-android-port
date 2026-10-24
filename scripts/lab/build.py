@@ -192,14 +192,17 @@ def editor(target="lab", action="inspect"):
             )
         if action == "minimal-build":
             preflight_host()
-        if target == "lab" and action in {"siren-input-host", "source-camera-graphics-host"}:
+        if target == "lab" and action in {"siren-input-host", "siren-encounter-host", "source-camera-graphics-host"}:
             from whole_catalog import copy_catalog_asset
 
-            fixture, owners = (
-                ("SirenEggDiagnosticInputExactEditorFixture.cs", ["input/SirenEggDiagnosticInput.cs", "world/IntegratedWorldBoundary.cs"])
-                if action == "siren-input-host"
-                else ("SourceCameraGraphicsHost.cs", ["input/AndroidNativeSourceCameraRigOwner.cs"])
-            )
+            fixture, owners = {
+                "siren-input-host": ("SirenEggDiagnosticInputExactEditorFixture.cs", ["input/SirenEggDiagnosticInput.cs", "world/IntegratedWorldBoundary.cs"]),
+                "siren-encounter-host": (
+                    "SirenEncounterHost.cs",
+                    ["stage/IntegratedStageBoundary.cs", "stage/SirenSourceEntrySession.cs", "stage/SirenEncounterBoundary.cs"],
+                ),
+                "source-camera-graphics-host": ("SourceCameraGraphicsHost.cs", ["input/AndroidNativeSourceCameraRigOwner.cs"]),
+            }[action]
             for owner in owners:
                 staged = WORK / "lab-project/Assets/LabLoadingScene" / Path(owner).name
                 if not staged.is_file() or sha(staged) != sha(ROOT / "tools/unity/runtime" / owner):

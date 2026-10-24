@@ -108,6 +108,8 @@ async def _main():
                         "code": 'if(EditorApplication.isUpdating||EditorUtility.scriptCompilationFailed)throw new System.Exception("Current editor source is not compiled and idle");return SirenEggDiagnosticInputExactEditorFixture.Run();',
                     },
                 )
+            elif action == "siren-encounter-host":
+                evidence["result"] = await call("execute_code", {"action": "execute", "code": "return SirenEncounterHost.Run();"})
             elif action == "source-camera-graphics-host":
                 evidence["result"] = await call("execute_code", {"action": "execute", "code": "return SourceCameraGraphicsHost.Run();"})
             elif action == "backend":

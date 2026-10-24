@@ -1,4 +1,4 @@
-"""Public-source host contracts for the opt-in Siren source Director handoff."""
+"""Public-source host contracts for the ordinary Siren source Director handoff."""
 
 from __future__ import annotations
 
@@ -42,7 +42,7 @@ class SirenSourceDirectorHandoffTests(unittest.TestCase):
         source = self.boundary
         transport = declaration(source, "public IEnumerator TransportIntegratedStage(")
         moon_guard = transport.index("ManualMoonBoundary.RefuseTransport(")
-        siren_attempt = transport.index("bool sirenSourceEntryAttempt =")
+        siren_attempt = transport.index("bool sirenSourceEntryRequired =")
         objective = transport.index("coordinator.SpawnStageObjective(integratedStageConfig)")
         inactive_guard = transport.index("!coordinator.automaticDirectorHost.activeSelf", siren_attempt)
         prepare = transport.index("SirenSourceEntrySession.Prepare(", inactive_guard)
@@ -65,9 +65,24 @@ class SirenSourceDirectorHandoffTests(unittest.TestCase):
         self.assertIn("sirenSourceEntry == null", transport[inactive_guard:prepare])
         guard = transport.rindex("coordinator.Check(", 0, inactive_guard)
         self.assertIn("ReferenceEquals(Stage.instance, coordinator.objectiveStage)", transport[guard:prepare])
-        default_branch = transport.index("if (!sirenSourceEntryAttempt)")
+        default_branch = transport.index("if (!sirenSourceEntryRequired)")
         default_activation = transport.index("coordinator.automaticDirectorHost.SetActive(true);", default_branch)
         self.assertLess(default_activation, objective)
+
+    def test_ordinary_entry_requires_source_eggs_without_enabling_diagnostic_input(self):
+        transport = declaration(self.boundary, "public IEnumerator TransportIntegratedStage(")
+        begin = declaration(self.boundary, "public IEnumerator BeginOriginalStage()")
+        attach = declaration(self.boundary, "void AttachSirenEncounterIfPresent()")
+        self.assertIn("bool sirenSourceEntryRequired = next.name == SirenEncounterContract.SceneName;", transport)
+        self.assertIn("if (sirenSourceEntryRequired)", transport)
+        self.assertIn("if (coordinator.stageGeometryScene.name == SirenEncounterContract.SceneName)", begin)
+        self.assertNotIn("sirenSourceEntryDiagnosticAttempt", begin)
+        self.assertNotIn("sirenSourceEntryDiagnosticAttempt", attach)
+        self.assertIn("sirenSourceEntry.CanAdmitOriginalEncounter(coordinator.r.diagnosticSirenEggInput)", attach)
+        self.assertIn("sirenSourceEntry.CapturedEggIdentities.ToArray()", attach)
+        self.assertNotIn("? sirenSourceEntry.CapturedEggIdentities", attach)
+        self.assertNotIn("diagnosticSirenEggInput =", transport + begin + attach)
+        self.assertIn("bool observeSirenTransport = sirenSourceEntryRequired && coordinator.r.sirenSourceEntryDiagnosticAttempt;", transport)
 
     def test_exact_source_id2_id11_and_foreign_identity_guards_remain(self):
         owner = self.owner
@@ -114,7 +129,7 @@ class SirenSourceDirectorHandoffTests(unittest.TestCase):
         self.assertIn("VerifyOwnedDirectorIdentityState();", dispatch)
         self.assertIn("foreach (var state in foreignSourceIdentities)", dispatch)
         self.assertIn("!IsRegistered(state.identity)", dispatch)
-        self.assertIn("if (!sirenSourceEntryAttempt)", transport)
+        self.assertIn("if (!sirenSourceEntryRequired)", transport)
         self.assertIn("coordinator.automaticDirectorHost.SetActive(true);", transport)
         self.assertIn("ManualMoonBoundary.RefuseTransport(", transport)
         self.assertIn("coordinator.r.pauseBeforeMoon", transport)
