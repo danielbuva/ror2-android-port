@@ -311,10 +311,10 @@ def run(request, *, stop_after_conversion=False):
             configs["android.runtimeconfig.json"] = native.sha(output / "configuration/android.runtimeconfig.json")
             native.write(output / "android-tools.json", android_state)
         for name, row in before.items():
-            target = output / "managed" / name
-            with Path(row["path"]).open("rb") as incoming, target.open("xb") as outgoing:
+            destination = output / "managed" / name
+            with Path(row["path"]).open("rb") as incoming, destination.open("xb") as outgoing:
                 shutil.copyfileobj(incoming, outgoing, 1024 * 1024)
-            if native.sha(target) != row["sha256"]:
+            if native.sha(destination) != row["sha256"]:
                 raise ValueError("managed input copy changed")
         environment = dict(os.environ, TMPDIR=str(output / "tmp")) if android_tools else None
         native.write(

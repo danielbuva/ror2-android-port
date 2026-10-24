@@ -16,6 +16,64 @@ SPEC.loader.exec_module(BACKEND)
 
 
 class OwnerCodeBackendTests(unittest.TestCase):
+    def test_default_backend_reaches_native_without_a_fixed_target(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            work, sdk, game = [root / name for name in ("work", "sdk", "game")]
+            for folder in (work, sdk, game):
+                folder.mkdir()
+            assembly = game / "Fixture.dll"
+            assembly.write_bytes(b"independent managed assembly fixture")
+            profile = root / "player.json"
+            profile.write_text(json.dumps({"input_id": "fixture", "managed_assemblies": [assembly.name], "converter_assemblies": [assembly.name]}))
+            native_profile = root / "native.json"
+            native_profile.write_text(json.dumps({"jobs": [{"generated": "Fixture.cpp"}]}))
+            output = work / "production"
+
+            def configuration(profile, sdk, output):
+                (output / "configuration").mkdir()
+                return {}
+
+            def invoke(command, output, name, **kwargs):
+                if name == "linker":
+                    (output / "stripped").mkdir()
+                    (output / "stripped/Fixture.dll").write_bytes(assembly.read_bytes())
+                else:
+                    (output / "converter/cpp").mkdir()
+                    (output / "converter/cpp/Fixture.cpp").write_text("int fixture() { return 7; }\n")
+                    (output / "converter/data/Metadata").mkdir(parents=True)
+                    (output / "converter/data/Metadata/global-metadata.dat").write_bytes(b"independent metadata fixture")
+
+            request = {
+                "owner_work": str(work),
+                "sdk_install": str(sdk),
+                "managed": {assembly.name: {"path": str(assembly), "sha256": BACKEND.native.sha(assembly)}},
+                "output": str(output),
+            }
+            with (
+                patch.object(BACKEND, "PROFILE", profile),
+                patch.object(BACKEND, "PROFILE_SHA", BACKEND.native.sha(profile)),
+                patch.object(BACKEND.native, "PROFILE", native_profile),
+                patch.object(BACKEND.native, "PROFILE_SHA", BACKEND.native.sha(native_profile)),
+                patch.object(BACKEND.native, "input_state", return_value=("fixture", game, {})),
+                patch.object(BACKEND, "tools", return_value={}),
+                patch.object(BACKEND.native, "sdk_files", return_value={}),
+                patch.object(BACKEND, "configuration", side_effect=configuration),
+                patch.object(BACKEND, "linker_command", return_value=["fixture-linker"]),
+                patch.object(BACKEND, "converter_command", return_value=["fixture-converter"]),
+                patch.object(BACKEND.native, "invoke", side_effect=invoke),
+                patch.object(BACKEND.native, "run", return_value={"success": True}) as build,
+                patch.object(BACKEND.native, "generated_profile") as generated,
+                patch.object(BACKEND, "target_inputs") as fixed_target,
+            ):
+                result = BACKEND.run(request)
+            self.assertTrue(result["success"])
+            self.assertEqual(result["phase"], "native-built")
+            self.assertEqual(result["source_frames"], 1)
+            build.assert_called_once()
+            generated.assert_not_called()
+            fixed_target.assert_not_called()
+
     def test_android_failure_keeps_wall_memory_and_storage_measurements(self):
         runner_spec = importlib.util.spec_from_file_location("android_owner_runner_test", PATH.parent / "run_android.py")
         runner = importlib.util.module_from_spec(runner_spec)
