@@ -13,6 +13,11 @@ Set `PLAYTEST_DEVICE` to the explicitly authorized, allowlisted serial. In a
 shared worker session, acquire its local device lease before any ADB command.
 Use only the assigned device. Run from the checkout with the owned local receipt
 and configuration; never borrow another device receipt or guess a storage path.
+All test panels are OLED. Keep them asleep between tests. Thor tests require
+the top display only: verify physical `Built-in Screen ON` / `Screen-2 OFF`
+throughout the run and restore the original vendor mode during teardown.
+`Device.display` refuses a black overlay or a transient lower-panel OFF state;
+do not bypass a refusal to continue a playtest.
 
 1. Configure the external legitimate PC installation and pinned toolchain as in
    [DEVELOPING.md](DEVELOPING.md#local-setup). Keep the original unchanged. Run

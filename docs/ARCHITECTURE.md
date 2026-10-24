@@ -1015,6 +1015,13 @@ refuse to choose. An explicit serial outside the configured allowlist also refus
 Top-level legacy settings are fallback values for the default device only. Per-device
 overrides cover `storage_mode` (`adopted` or `internal`), `internal_reserve_mib`,
 `apk_install_limit`, `sleep_display_when_idle`, `display_models`, and `display_count`.
+The exact Thor display profile requires two physical panels. `Device.display`
+owns the original vendor `dual_screen_display_mode` for the current transaction,
+selects top-only mode before wake and requires stable named physical-panel
+ON/OFF readback. Nested contexts retain the first original mode. Teardown sleeps
+the panels, restores that mode and verifies both OFF; an unsupported top-only
+transition refuses and performs the same cleanup. J1071 records the current
+firmware refusal, which blocks further Thor gameplay runs.
 
 `scripts/lab/device_context.py` owns pure selection, storage policy and receipt namespace
 resolution. Its explicit migration transaction requires verified ownership, preserves

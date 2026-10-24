@@ -89,7 +89,14 @@ J755 records three explicitly selected devices with separate receipts: the basel
 Nova uses adopted storage only; the second Nova and Thor use internal storage after
 live reserve checks. Both standard checks pass on the second Nova. Thor passes
 both checks through explicit automatic diagnostics (J762); physical input remains
-unmeasured. Both Thor OLED panels sleep during cleanup.
+unmeasured. Both Thor OLED panels sleep during cleanup. Thor's exact-model
+profile also requires `display_count: 2`. Before wake, `Device.display` saves
+`dual_screen_display_mode` and selects vendor mode `1`; it accepts only stable
+physical `Built-in Screen ON` / `Screen-2 OFF` observations. Teardown restores
+the original mode and verifies both panels OFF. A brief wake transition or a
+black vendor overlay is insufficient. The current firmware fails this gate
+([J1071](PORTING_JOURNAL.md#j1071--qualify-bounded-touch-consumers-and-recovery-while-preserving-the-failed-lifetime-case));
+further Thor gameplay/thermal checks wait for a supported top-only power path.
 Independent device runs have overlapped, while Unity builds remain serialized.
 
 `./dev inspect --full` creates a reviewed input identity. New or updated inputs must be
