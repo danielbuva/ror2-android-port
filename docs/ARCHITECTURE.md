@@ -2551,9 +2551,15 @@ independent world-owned input lease only when selected. Jump snapshots carry a
 write revision and fixed-consumption boundary so release preserves a later
 producer write and cannot duplicate a consumed pulse. Before ordinary input
 producers it releases its prior owned values; afterward it may navigate, aim
-and request primary against the nearest currently visible original registered egg.
-When all revalidated candidates are occluded, the nearest remains the navigation
-target with primary released. Candidate caches above 12 refuse before physics
+and request primary against an original registered egg. A visible candidate within
+an active native Huntress tracker's range outranks a nearer occluded candidate.
+If no candidate is attackable, the nearest remains the navigation target, so a
+distant visible egg cannot monopolize approach. Range measures the native search
+origin to the main HurtBox. Primary stays released outside that range; once a
+visible egg is in range, ordinary movement/sprint stop rather than demanding a
+path onto its perch. Survivors without a native tracking range retain their
+existing skill behavior. This does not change tracker searches, range, damage,
+native counters or the 180-second budget. Candidate caches above 12 refuse before physics
 queries. A fixed scalar witness samples the real Huntress tracker target and
 separates missing, disabled and inactive trackers before reading an active
 tracker; target states distinguish destroyed, unidentified and known targets,
@@ -2632,6 +2638,11 @@ target; runtime names alone never authorize input. Cleanup clears the cache and
 all engine references before source encounter teardown. The editor fixture
 checks the imported original asset and native field contracts, plus synthetic
 input ownership/yield/stop cases; it does not certify actual mission completion.
+Current `./dev editor --target lab --action siren-input-host` runs this existing
+fixture against the staged, compiled owner in the idle exact editor. It records
+the source-asset and range/selection/input-lifetime checks without starting a
+server or native combat. Stage the committed source through a build first;
+editor fixture success remains separate from the device encounter gate.
 
 Engineer shield compatibility (`EngiShieldHitGuard.cs`):
 `IntegratedWorldSession` acquires `EngiShieldHitGuardTemplateLease` only for the

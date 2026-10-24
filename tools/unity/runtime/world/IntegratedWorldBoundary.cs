@@ -2380,7 +2380,11 @@ public sealed partial class PortSession
                 var tracker = player.GetComponent<HuntressTracker>();
                 if (!tracker || !tracker.isActiveAndEnabled)
                     return false;
-                eggDistance = Vector3.Distance(player.corePosition, egg.corePosition);
+                // Match HuntressTracker's search origin and its actual target
+                // point, rather than body centers or pathfinding foot position.
+                if (!egg.mainHurtBox)
+                    return false;
+                eggDistance = Vector3.Distance(player.inputBank.aimOrigin, egg.mainHurtBox.transform.position);
                 trackerMaximumDistance = tracker.maxTrackingDistance;
                 return IntegratedWorldSession.Finite(eggDistance) && IntegratedWorldSession.Finite(trackerMaximumDistance) &&
                        trackerMaximumDistance >= 0;
