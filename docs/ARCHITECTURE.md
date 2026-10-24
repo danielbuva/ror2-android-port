@@ -71,6 +71,17 @@ readbacks precede its terminal complete/failed receipt. Exit tears down the
 process and retains private packs. [Setup/lifecycle](../tools/phone-build/accepted-output/README.md#produce-avatars-directly-from-original-pc-bundles)
 requires no private target/discovery file. All 228 accepted records qualify in
 J1075; bundle assembly and game-build integration remain separate owners/gates.
+`texture_produce.py` owns a separate current experimental uncompressed
+Texture2D producer. Audited `recipe/owner-uncompressed-textures.json` selects
+original body/pixel ranges and generic import/stream placement; standard BC1
+decoding and raw copying introduce no target pixels. Explicit PC root, recipe
+hash, new output and capacity reserve set up the process. It verifies source
+files before/after and every produced/persisted extent, writes private object/
+resource packs and a complete/failed receipt, then exits and retains outputs.
+Its [setup/lifecycle](../tools/phone-build/accepted-output/README.md#produce-uncompressed-textures-directly-from-original-pc-bundles)
+adds no image-library, SDK, Editor or private discovery input. Pixel
+postprocessing exclusions, other texture formats and complete bundle assembly
+remain separate gates; no current game build or runtime consumes these packs.
 `sdk_inputs.py` owns current experimental owner-direct component extraction:
 an explicitly supplied, pinned provider archive yields only the three exact
 SDK-copy files in a new private root, with bounded parsing, readback and terminal

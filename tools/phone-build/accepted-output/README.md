@@ -141,6 +141,43 @@ and the existing workspace/interpreter receipts. [J1075](../../../docs/PORTING_J
 qualifies all 228 records on host and phone. Packs require later complete bundle
 assembly; no current build or runtime consumes them.
 
+## Produce uncompressed textures directly from original PC bundles
+
+`texture_produce.py` owns a current experimental PC-input-only producer for
+the qualified uncompressed Texture2D cohort. Use Python 3.11+ on macOS, Linux
+or Android, staging it alongside `mesh_produce.py`, `unity_bundle.py` and
+`unity_mesh.py` and the audited recipe:
+
+```sh
+python3 -I -S -B tools/phone-build/accepted-output/texture_produce.py \
+  --profile recipe/owner-uncompressed-textures.json --profile-sha256 RECIPE_SHA256 \
+  --pc ORIGINAL_PC_ROOT --output NEW_PRIVATE_OUTPUT
+```
+
+The producer copies original raw pixel/mip bytes or decodes a BC1 top mip to
+RGB, retaining logical dimensions and row order. [Microsoft's BC1 specification](https://learn.microsoft.com/en-us/windows/win32/direct3d10/d3d10-graphics-programming-guide-resources-block-compression#bc1)
+defines the authored decoder's endpoint palettes, selectors and transparent
+RGB projection. Metadata work preserves untouched fields and changes only
+declared name, image size/format, alpha/usage and inline/resource placement.
+No image library, Editor, UnityPy, SDK or target-content input is used.
+
+Setup checks recipe/input pins, new separate output and expected object/resource
+capacity plus 2 GiB reserve. Source hashes/stat checks run before/after use;
+every output must match its pinned object and pixel hash. Persisted extents
+are independently reread through `index.jsonl` in `objects.bin` and
+`resources.bin`. Terminal `result.json` records success/failure, elapsed time
+and peak process RSS in bytes; failed outputs remain and process exit is
+teardown. Keep all generated data private. Android lab staging requires
+explicit authorized selection, workspace ownership and a permitted interpreter.
+
+The profile deliberately excludes unresolved pixel-postprocessing cases. These
+packs require a later complete bundle assembler and do not qualify other
+texture formats, game execution or the full phone-only owner installation.
+No current game build consumes this path.
+
+The complete host/phone case and explicit exclusions are recorded in
+[J1076](../../../docs/PORTING_JOURNAL.md#j1076--produce-a-qualified-uncompressed-texture-cohort-from-pc-bundles-on-android).
+
 ## Acquire the three SDK-copy inputs
 
 `sdk_inputs.py` is current experimental acquisition support for an owner's exact

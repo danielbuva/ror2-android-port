@@ -105,6 +105,9 @@ content conversion and bundle assembly before any game build can consume them.
 The [Avatar producer](../tools/phone-build/accepted-output/README.md#produce-avatars-directly-from-original-pc-bundles)
 also qualifies its complete 228-record class on Android (J1075). Texture,
 animation, shader and other object producers remain open.
+The [uncompressed texture producer](../tools/phone-build/accepted-output/README.md#produce-uncompressed-textures-directly-from-original-pc-bundles)
+qualifies 356 records on Android (J1076), excluding 43 pixel-postprocessing
+cases. ETC/cubemap and complete bundle production remain open.
 
 Many preparation and packaging stages have Android-capable open-source building
 blocks. Unity's import/shader/bundle/player-data stages remain editor-bound in

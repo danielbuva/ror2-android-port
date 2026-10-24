@@ -138,6 +138,14 @@ Its [producer setup](../tools/phone-build/accepted-output/README.md#produce-avat
 uses tracked layout/identity metadata rather than target bodies. This completes
 one object class; it does not complete bundles or the private-packet replacement.
 
+[J1076](PORTING_JOURNAL.md#j1076--produce-a-qualified-uncompressed-texture-cohort-from-pc-bundles-on-android)
+adds a source-only uncompressed texture cohort, with explicit pixel
+postprocessing exclusions. Its
+[setup](../tools/phone-build/accepted-output/README.md#produce-uncompressed-textures-directly-from-original-pc-bundles)
+needs original PC pixels and tracked metadata, not target image literals.
+Other formats, complete bundle assembly and the full replay-packet replacement
+remain open.
+
 These observations rule out treating a platform flag edit or archive repack as
 the accepted conversion. They do not prove that full Unity import is required.
 [Unity documents platform-specific bundle assets](https://docs.unity3d.com/es/2021.1/ScriptReference/AssetBundle.html),

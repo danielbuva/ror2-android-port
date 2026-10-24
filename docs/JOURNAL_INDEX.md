@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1076](PORTING_JOURNAL.md#j1076--produce-a-qualified-uncompressed-texture-cohort-from-pc-bundles-on-android) | 2026-10-24 | Produce a qualified uncompressed texture cohort from PC bundles on Android | 2026-10-24 UTC. |
 | [J951](PORTING_JOURNAL.md#j951--bind-sdk-preload-platform-assignment-operands-on-android) | 2026-10-24 | Bind SDK preload platform assignment operands on Android | **Hypothesis and scope.** |
 | [J1029](PORTING_JOURNAL.md#j1029--preserve-a-native-importer-failure-during-raw-loading) | 2026-10-24 | Preserve a native importer failure during raw loading | **Hypothesis and qualified setup.** |
 | [J1027](PORTING_JOURNAL.md#j1027--bind-explicit-importer-configuration-and-reject-drift-on-android) | 2026-10-24 | Bind explicit importer configuration and reject drift on Android | **Question and prior art.** |
