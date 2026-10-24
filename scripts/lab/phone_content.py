@@ -12,7 +12,6 @@ from phone_bundle import VERSION, make_bundle
 SOURCES = {
     "ContentFixture.cs": "Assets",
     "ContentFixtureBuilder.cs": "Assets/Editor",
-    "TextureMipFixture.cs": "Assets/Editor",
     "ContentFixtureLinkerCapture.cs": "Assets/Editor",
 }
 
@@ -32,7 +31,7 @@ def stage(destination):
         (folder / name).write_bytes(source.read_bytes())
     (destination / "Packages").mkdir()
     (destination / "Packages/manifest.json").write_text(
-        '{"dependencies":{"com.unity.modules.androidjni":"1.0.0","com.unity.modules.assetbundle":"1.0.0","com.unity.modules.imageconversion":"1.0.0","com.unity.modules.jsonserialize":"1.0.0","com.unity.modules.unitywebrequest":"1.0.0"}}\n'
+        '{"dependencies":{"com.unity.modules.androidjni":"1.0.0","com.unity.modules.assetbundle":"1.0.0","com.unity.modules.jsonserialize":"1.0.0","com.unity.modules.unitywebrequest":"1.0.0"}}\n'
     )
     (destination / "ProjectSettings").mkdir()
     (destination / "ProjectSettings/ProjectVersion.txt").write_text(
@@ -54,7 +53,6 @@ def stage(destination):
                 "scripts/lab/phone_bundle.py",
                 "tools/phone-build/ContentFixture.cs",
                 "tools/phone-build/ContentFixtureBuilder.cs",
-                "tools/phone-build/TextureMipFixture.cs",
                 "tools/phone-build/ContentFixtureLinkerCapture.cs",
             )
         },
@@ -99,38 +97,6 @@ def validate_linker_capture(attempt, commit):
         if path.stat().st_size != row["bytes"] or sha(path) != row["sha256"]:
             raise RuntimeError("Fixture linker captured input drift")
     return {"capture": str(capture), "files": len(files), "receipt_sha256": sha(capture / "receipt.json"), "build_report_guid": build["build_report_guid"]}
-
-
-def validate_mips(attempt, commit):
-    """Verify the authored oracle's complete imported-image/level file cohort."""
-    root = Path(attempt) / "texture-mips"
-    report = json.loads((root / "result.json").read_text())
-    if report["unity"] != VERSION or report["source_commit"] != commit:
-        raise ValueError("Texture mip oracle identity differs")
-    identities = {(r["pattern"], r["mode"]) for r in report["images"]}
-    if len(report["images"]) != 9 or identities != {(p, m) for p in ("ramp", "noise", "normal") for m in ("linear", "srgb", "normal")}:
-        raise ValueError("Texture mip oracle import cohort differs")
-    outputs = {}
-    for row in report["images"]:
-        width, height = (256, 4) if row["pattern"] == "ramp" else (32, 32)
-        source = root / (row["pattern"] + ".input.rgba")
-        if row["input"] != source.name or source.stat().st_size != width * height * 4:
-            raise ValueError("Texture mip oracle authored input differs")
-        expected_levels = max(width, height).bit_length()
-        if len(row["levels"]) != expected_levels:
-            raise ValueError("Texture mip oracle level count differs")
-        for mip, level in enumerate(row["levels"]):
-            name = row["pattern"] + "-" + row["mode"] + ".mip" + str(mip) + ".rgba"
-            w, h = max(1, width >> mip), max(1, height >> mip)
-            if level != {"width": w, "height": h, "mip": mip, "file": name}:
-                raise ValueError("Texture mip oracle level identity differs")
-            path = root / name
-            if path.stat().st_size != w * h * 4:
-                raise ValueError("Texture mip oracle pixel extent differs")
-            if mip == 0 and row["mode"] != "normal" and path.read_bytes() != source.read_bytes():
-                raise ValueError("Texture mip oracle base pixels differ")
-            outputs[name] = {"bytes": path.stat().st_size, "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
-    return {"report": str(root / "result.json"), "images": 9, "outputs": outputs}
 
 
 def run_editor(project, *, build=False):
@@ -190,11 +156,9 @@ def run_editor(project, *, build=False):
     oracle = None
     oracle_error = None
     linker_capture = None
-    mips = None
     try:
         oracle = json.loads((attempt / "oracle.json").read_text())
         validate_oracle(oracle)
-        mips = validate_mips(attempt, env["ROR2_PHONE_BUILD_SOURCE"])
         if build and result.returncode == 0:
             linker_capture = validate_linker_capture(attempt, env["ROR2_PHONE_BUILD_SOURCE"])
     except (OSError, ValueError, RuntimeError) as error:
@@ -208,7 +172,6 @@ def run_editor(project, *, build=False):
         "oracle": oracle,
         "oracle_error": oracle_error,
         "linker_capture": linker_capture,
-        "texture_mips": mips,
     }
     (attempt / "receipt.json").write_text(json.dumps(outcome, indent=2) + "\n")
     print(json.dumps(outcome, indent=2))

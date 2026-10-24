@@ -163,6 +163,23 @@ def _repair_reconstruction(function, kwargs, args):
 # Only the selected action's module is imported by dispatch().
 _ENTRIES = (
     Action(
+        "phone-texture-fixture",
+        "phone_texture_oracle",
+        "stage_action",
+        {},
+        "current",
+        "Experimental desktop oracle: stage a fresh SDK-only project for nine authored texture imports. No game inputs, player build or device action.",
+    ),
+    Action(
+        "phone-texture-check",
+        "phone_texture_oracle",
+        "run_editor",
+        {},
+        "current",
+        "Experimental desktop oracle: check explicit --target PROJECT with the exact editor under the primary mutex; retain all 63 raw authored mip levels. Never a phone-production input.",
+        handler=_target,
+    ),
+    Action(
         "phone-wrapper-oracle",
         "phone_wrapper_oracle",
         "stage_action",
@@ -267,7 +284,7 @@ _ENTRIES = (
         "run_editor",
         {},
         "current",
-        "Experimental: check the authored bundle and nine raw texture-mip imports in generated --target PROJECT through the exact editor under the primary checkout build mutex; no game project or device access.",
+        "Experimental: check generated --target PROJECT in the exact editor under the primary checkout build mutex; no game project or device access.",
         handler=_target,
     ),
     Action(

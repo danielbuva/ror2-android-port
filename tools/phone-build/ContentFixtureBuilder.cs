@@ -21,7 +21,6 @@ public static class ContentFixtureBuilder
         File.WriteAllText(oracle, JsonUtility.ToJson(report, true));
         if (!report.bundleLoaded || !report.textMatched || !report.unloaded || !String.IsNullOrEmpty(report.failure))
             throw new Exception("Content fixture failed; inspect the explicit oracle report");
-        TextureMipFixture.Check(Path.Combine(Path.GetDirectoryName(oracle), "texture-mips"));
     }
 
     public static void Build()
