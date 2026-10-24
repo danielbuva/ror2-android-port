@@ -3273,6 +3273,10 @@ comparison replay only the exact receipt-bound files and includes. The normal
 whole-catalog preparation path is the build owner. Generation has no runtime
 state or teardown and makes no Android appearance claim.
 
+Composition staging uses `StageIO.preflight` host/input gates, including for
+the primary project. It does not query device storage or require an attached
+device; installation owns the live storage checks.
+
 ## Shared worktree build ownership
 
 `build.py` and `whole_catalog.py` own the lane-only iteration bundle-compression
