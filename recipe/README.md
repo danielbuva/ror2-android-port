@@ -67,7 +67,7 @@ format/alpha/usage settings are serialization/import metadata. No pixel array,
 palette, target byte patch/frame, image, codec implementation or target float
 literal is included. Every pixel is copied or calculated from original PC
 data. The successor includes the 38 dilation and five JPEG cases formerly
-excluded; the complete host replay passes and Android qualification is pending. These
+excluded; complete host and Android replays pass. These
 minimum identifiers/relationships do not replace ownership or authentication.
 Manual provenance, privacy, licensing and sensitive-content review: 2026-10-24.
 Pinned UnityPy 1.25.3 field/resource observations and Microsoft's public BC1
@@ -79,7 +79,8 @@ SDK implementation, game pixels or target-fed coordinate/color mapping is
 copied. Public JPEG dependencies are acquired unchanged under their retained
 IJG and stb terms, separately from this metadata recipe. Discovery, generated packs and raw evidence remain
 ignored. This audit does not qualify complete bundles or an owner installation.
-J1076 records the qualified host/phone cohort and explicit exclusions.
+J1079 records the complete host/phone cohort, public-source Android codec build
+and controls; J1076 preserves the preceding bounded result.
 
 `owner-avatars.json` contains original bundle/member/object identities, hashes,
 source body and table extents, destination identities/hashes and permutations
@@ -136,7 +137,7 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 
 | File | Replaces | Provenance | Privacy and licensing | Readers |
 | --- | --- | --- | --- | --- |
-| `owner-uncompressed-textures.json` | Private replay uncompressed texture bodies/pixels | Original/destination selectors, source extents, generic import/placement metadata and hashes; copy, BC1, source-coordinate dilation and public JPEG policy. | No pixels, palettes, target literals/patches, native SDK implementation or image/library bytes; full audit above, 2026-10-24. Complete host successor passes; Android qualification pending. | Explicit PC-input-only `texture_produce.py` and separately built public JPEG tool; no current game-build consumer. |
+| `owner-uncompressed-textures.json` | Private replay uncompressed texture bodies/pixels | Original/destination selectors, source extents, generic import/placement metadata and hashes; copy, BC1, source-coordinate dilation and public JPEG policy. | No pixels, palettes, target literals/patches, native SDK implementation or image/library bytes; full audit above, 2026-10-24. All 399 records qualify on host/Android in J1079. | Explicit PC-input-only `texture_produce.py` and separately built public JPEG tool; no current game-build consumer. |
 | `owner-avatars.json` | Private replay Avatar bodies (J1075) | Minimum original/destination identities, hashes, source extents and source-entry permutations. | No strings, poses, rig/geometry values, target literals or byte frames; full audit above, 2026-10-24. | Explicit PC-input-only `avatar_produce.py`; no current game-build consumer. |
 | `owner-meshes.json` | Protected mesh bodies in the private replay packet, for the included cohort only (J1070) | Original bundle/object/resource selectors, destination identities/hashes and authored import/conversion settings. | No geometry arrays, collision data, target byte frames or float literals; full audit above, 2026-10-24. Two cases remain excluded. | Explicit original-input-only `mesh_produce.py`; no current game-build consumer. |
 | `shader-postprocessing-bloom-candidate.json` | Exported one-pass Bloom and exact source-camera CopyStd placeholders | Accepted-input source/meta/resource identities, official Unity package/license hashes and pass contracts; authored camera staging pin refreshed without changing camera transforms. | Authored selection metadata only; upstream source and generated content stay local under Unity Companion License. Manual audit 2026-10-23 described above. | `shader_postprocessing_bloom`, whole-catalog preparation and catalog replay comparison; default off. |

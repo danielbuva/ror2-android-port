@@ -36605,3 +36605,138 @@ default. Revisit compression when a representative changed-content workload,
 complete matched-content comparison and device gate justify it. Revisit lane
 scheduling when shared-host memory/throughput measurements justify more
 concurrent editors.
+
+## J1079 — Complete uncompressed texture production from PC bundles on Android
+
+2026-10-24 UTC. **Result:** all 399 accepted uncompressed Texture2D records
+now reproduce exactly on host and assigned phone: 17,424,448 object bytes and
+345,301,555 external pixel bytes. This closes J1076's 43 exclusions. The phone
+builds its JPEG tool from pinned public sources and runs all six authored
+controls. No game APK is built, installed or launched; complete bundles and
+other content remain open. The fixed v1 destination is J850, source
+`1780ea9545f1597c033a8d32e08074b03c7f38c8`, APK
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+Main's later runtime builds are separate targets, not implicit migration inputs.
+
+**Hypothesis, prior art and boundaries.** Read J1050/J1070/J1076 and the
+community content map before extending the existing producer. The pinned
+AssetRipper source at `1ac666f47d8e9dedf96afb0b914c70d7656151ea` identifies
+alpha-import configuration and its StbImageWriteSharp 1.16.7 JPEG-export API.
+The [original jump-flooding paper](https://www.comp.nus.edu.sg/~tants/jfa/i3d06-submitted.pdf)
+provides the public coordinate-propagation technique. Bounded observations of
+the exact owner's SDK identify source-coordinate/Manhattan semantics; original
+pixel comparisons identify the fixed pass/tie policy. The authored implementation
+uses standard-library integer arrays and original pixels. No native SDK
+implementation, target-fed pixel-coordinate table, target colour/float literal
+or byte patch is copied into public source or the recipe. The native SDK is an
+independent host oracle, never a phone producer dependency.
+
+**Complete transform.** All 79 selected original PC bundles remain pinned and
+read-only. The profile selects 287 raw-copy outputs, 69 ordinary BC1-to-RGB
+outputs, 38 RGBA dilation outputs, four BC1/JPEG outputs and one RGB/JPEG output.
+Unchanged source body fields and original pixel/mip bytes remain source-owned;
+name, format/size, alpha/usage and inline/resource placement are generic
+serialization/import configuration. Explicit recipe path/hash is the target
+configuration input. The accepted-input gate remains fixed and no different
+input build is silently admitted.
+
+RGBA dilation seeds coordinates at every originally nonzero-alpha texel. It
+compares Manhattan distance at cardinal offsets 16, 8, 4, 2 and 1, keeping the
+existing coordinate on a tie before checking left, right, preceding row and
+following row. Only original seed RGB is copied; every source alpha byte is
+preserved. All 38 previously excluded RGBA records match with this one policy,
+including complex-colour images. No per-image search result or pixel mapping
+is supplied to production.
+
+JPEG processing reproduces the source export, rather than importing a retained
+export JPEG. Unchanged public `stb_image_write.h` at commit
+`003501f6d7a8668ce8b6d875e34dd97ad0d5d5b5` encodes quality 90 with floating-point
+contraction disabled; unchanged IJG 9b decodes using fast integer IDCT and
+ordinary chroma upsampling. The authored C wrapper handles bottom-up source
+rows and exact stdin/stdout RGB extents. Its new-output builder verifies both
+source-provider hashes, extracts named regular source/header members, adds
+authored Unix configuration, bounds/reaps the compiler and retains source,
+notices/logs and a complete/failed receipt. This software is based in part on
+the work of the Independent JPEG Group. Full IJG README and stb terms accompany
+the generated tool. No FreeImage or Unity SDK binary/source is redistributed.
+
+**Source, tests and execution.** Initial public checkpoint `757dc2e9` is rebased
+onto merged Main rendering/build-lane changes as `20d5b51d`; private
+`complete-source-alias.json` verifies all five producer/builder/C/test/recipe
+files are byte-identical. The JPEG helper is hash-bound before/after production,
+its child is bounded, and every emitted/persisted object/pixel extent is checked.
+The public profile contains selectors, field bounds, settings and hashes only.
+No target image or private discovery file is a producer input.
+
+Evidence under
+`work/coordination/accepted-build-reconstruction/media-source-v1/`:
+
+- `alpha-jfa-result-v1.json` completes the independent 38-record RGBA comparison.
+  `jpeg-stb-v1/result.json` binds five exact source-generated export JPEGs;
+  `decode-result-ijg9b-v1.json` binds exact public decoding of all five cases.
+- `jpeg-codec-host-v1/result.json` records public-source host compilation;
+  `load-commands.txt` confirms only the system runtime dependency.
+- `texture-public-host-complete-v1/result.json` records the full public replay
+  in 36.239 seconds, parent peak RSS 223,756,288 bytes. Profile SHA-256 is
+  `e526418b4cf1e5f1903b18a2cb9305c719255724a2bce104d75fb1c0b3f813f5`.
+- `device-texture-complete-v1/driver-result.json` records original-PC copy
+  admission, Python/native-tool pins, the committed sources and a fresh owned
+  workspace. Android Clang 21.1.8 builds the public JPEG helper in 7.795 seconds;
+  independent ELF observation confirms 64-bit little-endian AArch64. Helper SHA-256
+  is `2cb3e2596ce3b1d11b5ed5d9ba651d351ab2cbfd93ad8733206533cc22800fec`.
+- The complete phone replay takes 66.334 seconds, parent peak RSS 105,140,224
+  bytes. These RSS figures describe the Python producer process, not aggregate
+  compiler/codec-child memory. Full case transfer/build/verification takes
+  80.642 seconds. No object/resource packs are pulled or copied for review.
+- Independent Android OS hashes equal the host packs: `objects.bin`
+  `5367a910748562aae865efa9c8edb0d5711843c46aeadb33eb3a8908edb8fc62`;
+  `resources.bin`
+  `dceaf0ea58ee9ad1683cc201fd4bd4493d2374f993a384339d31999b1e123d9f`;
+  155,192-byte `index.jsonl`
+  `fd8b6e8d62835d90b167dcb6a94d059f91116a989b389825e2e6f2764c05bd94`.
+- Six authored host/Android controls pass: BC1 palettes/cropping; bounded
+  source-coordinate dilation, alpha preservation and ties; source-only pack
+  persistence/refusals; field/inline bounds; public-provider drift refusal;
+  actual native JPEG grayscale blocks and truncated/excess/dimension refusal.
+  The real complete replay additionally refuses existing output and an incorrect
+  codec hash before creating output, then rehashes all original pack results.
+- The shared phone's actual installed alpha APK is independently read before
+  and after as
+  `564d4573c764f69376cb07ee1834fc191db65055a335f68650a12ef9298531aa`.
+  Its path/hash are unchanged, the game process is absent and OLED asleep.
+  Fresh storage/backing observations and matching current installation receipt
+  are retained. No installation, launch, storage configuration, profile/payload
+  deletion or other worker's data mutation occurs. The lease is released;
+  later device owners may advance installation state. Host generated-output
+  pruning runs after the task.
+
+`device-texture-complete-v1/proof-receipt.json` binds 91 artifacts, SHA-256
+`dd3b2c3b2e44ceff44cb5964883027b15876bcc2e0404c7931b7cf33240b4773`.
+The fresh-clone pre-push run passes 1,915 tests with 132 expected skips; the
+native-codec control explicitly skips without its separately built public tool.
+Ruff, staged public audit and manual provenance/privacy review pass. The host
+preflight still refuses this worktree's absent/unrecorded lab generation; no
+whole-game build gate is waived by standalone content admission.
+
+**First failures and exclusions resolved.** Simple synchronous 31-step fill
+and Euclidean nearest-source hypotheses fail on complex colours. Increasing
+cardinal offsets produce only 27 of the 38 exclusions exactly; decreasing
+source-coordinate jump flooding resolves all 38 without target data. Pillow's
+JPEG encoder does not match the source export. The public stb encoder matches
+all five files, while system libjpeg-turbo decode policies remain inexact.
+The exact SDK FreeImage oracle initially receives an incorrect assumed BGR
+layout; native RGB readback fixes that diagnostic assumption. Public IJG 9b's
+fixed fast-integer/non-fancy policy then matches all five without any SDK input.
+All these diagnostic attempts remain private and are not production fallbacks.
+
+**Remaining/revisit.** No uncompressed texture record remains excluded. ETC/
+cubemap/mip/normal-map production, two mesh cases, animation and complete bundle/
+player-data assembly remain content gates. Separate ETC diagnostics improve
+colour-block matching after the correct dilation, but retain encoder and normal
+preprocessing residue; no compressed-texture producer is qualified here. The
+code workstream owns the fixed J850 managed/native/Burst/shader closure, final
+APK assembly, durable owner signing and installer handoff. Complete phone-only
+installation, runtime controls and matched performance remain end-to-end gates.
+Revisit this cohort on source/input/recipe/interpreter/compiler/provider changes;
+no game build currently consumes these private packs. ARCHITECTURE/LOCAL_STATE
+and the producer README name setup, teardown and ownership.

@@ -36,9 +36,11 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       qualifies all 228 Avatar records from original PC bundles on Android.
       Textures, animation, shaders, other classes and complete bundle assembly
       remain open; these private packs add no game/runtime acceptance.
-      [J1076](PORTING_JOURNAL.md#j1076--produce-a-qualified-uncompressed-texture-cohort-from-pc-bundles-on-android)
-      qualifies 356 uncompressed texture records on Android; 43 pixel
-      postprocessing cases and the remaining texture/content formats stay open.
+      [J1079](PORTING_JOURNAL.md#j1079--complete-uncompressed-texture-production-from-pc-bundles-on-android)
+      qualifies all 399 uncompressed texture records and their public-source
+      JPEG-tool build on Android; compressed texture/content formats stay open.
+      Owner-build v1 targets the single accepted J850 build through explicit
+      profiles; promotion to a newer accepted target follows end-to-end proof.
       [J995](PORTING_JOURNAL.md#j995--integrate-the-public-transform-profile-with-owner-prefix-and-portable-cli)
       qualifies an optional public .NET 8 transform profile: all 98 host prefix
       files and the three portable Android golden DLLs match. Complete game

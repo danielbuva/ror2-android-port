@@ -218,10 +218,11 @@ later complete bundle assembler and do not qualify other
 texture formats, game execution or the full phone-only owner installation.
 No current game build consumes this path.
 
-The preceding host/phone cohort and its then-open exclusions are recorded in
-[J1076](../../../docs/PORTING_JOURNAL.md#j1076--produce-a-qualified-uncompressed-texture-cohort-from-pc-bundles-on-android).
-The complete successor's host replay passes; its Android qualification is
-pending. No current game build consumes either result.
+The complete host/phone case, public-source Android codec build and controls
+are recorded in
+[J1079](../../../docs/PORTING_JOURNAL.md#j1079--complete-uncompressed-texture-production-from-pc-bundles-on-android).
+The current explicit profile targets the accepted J850 content; a later target
+needs its own reviewed profile. No current game build consumes these packs.
 
 ## Acquire the three SDK-copy inputs
 

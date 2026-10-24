@@ -86,8 +86,8 @@ files before/after and every produced/persisted extent, writes private object/
 resource packs and a complete/failed receipt, then exits and retains outputs.
 Its [setup/lifecycle](../tools/phone-build/accepted-output/README.md#produce-uncompressed-textures-directly-from-original-pc-bundles)
 adds a pinned public stb/IJG JPEG tool but no Unity SDK, Editor or private
-discovery input. Complete successor phone qualification, other texture formats
-and complete bundle assembly
+discovery input. J1079 qualifies all 399 uncompressed records and the public
+JPEG-tool build on Android. Other texture formats and complete bundle assembly
 remain separate gates; no current game build or runtime consumes these packs.
 `sdk_inputs.py` owns current experimental owner-direct component extraction:
 an explicitly supplied, pinned provider archive yields only the three exact

@@ -138,9 +138,9 @@ Its [producer setup](../tools/phone-build/accepted-output/README.md#produce-avat
 uses tracked layout/identity metadata rather than target bodies. This completes
 one object class; it does not complete bundles or the private-packet replacement.
 
-[J1076](PORTING_JOURNAL.md#j1076--produce-a-qualified-uncompressed-texture-cohort-from-pc-bundles-on-android)
-adds a source-only uncompressed texture cohort, with explicit pixel
-postprocessing exclusions. Its
+[J1079](PORTING_JOURNAL.md#j1079--complete-uncompressed-texture-production-from-pc-bundles-on-android)
+completes source-only production of all 399 uncompressed texture records,
+including the public-source JPEG tool built on Android. Its
 [setup](../tools/phone-build/accepted-output/README.md#produce-uncompressed-textures-directly-from-original-pc-bundles)
 needs original PC pixels and tracked metadata, not target image literals.
 Other formats, complete bundle assembly and the full replay-packet replacement
