@@ -81,7 +81,7 @@ def build(archive, compiler, output, android_tool_root=None):
                 raise ValueError("Android Alpha8 build requires the selected native Clang 21")
             common[1:1] = [
                 "--target=aarch64-linux-android24",
-                "--sysroot=" + str(native),
+                "--sysroot=" + str(native.parent),
                 "-resource-dir=" + str(native / "lib/clang/21"),
                 "--ld-path=" + str(native / "bin/ld.lld"),
                 "-stdlib=libc++",
