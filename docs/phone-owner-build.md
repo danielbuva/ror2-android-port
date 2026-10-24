@@ -401,3 +401,14 @@ licensed product. Top-level project admissions and runtime gates remain intact.
 This is host support production, with full-player/native/device qualification
 still open. Setup and retained evidence are in LOCAL_STATE; the journal owns the
 complete result.
+
+## Complete gameplay source host support
+
+[J1057](PORTING_JOURNAL.md#j1057--compile-the-complete-gameplay-source-cohort-directly-from-owner-inputs)
+uses the existing PC catalog/IL readers, map generators, runtime recipe, SDK
+compiler/reference owner and retained Burst processor. All three maps reproduce
+exactly and the complete current 145-source gameplay cohort compiles without a
+project or Editor. Fourteen recovered support roots and two nested types match
+the declared frozen-target projection. Complete player roots, native/content
+production and Android execution remain open. LOCAL_STATE records the private
+case; the journal owns its full result.

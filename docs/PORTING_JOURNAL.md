@@ -33728,3 +33728,91 @@ serialized content/shaders, Android tool hosting and actual owner installation
 remain open. The instrumented native producer remains a separate licensed-input
 requirement. PR #55 keeps its real-device hold; Architecture C and the desktop
 fallback remain current.
+
+## J1057 — Compile the complete gameplay source cohort directly from owner inputs
+
+2026-10-24. Complete host source/compile/post-processing case. No Unity project,
+Editor, runtime selection or device is created or changed.
+
+**Hypothesis and prior art.** J1052 identifies 145 gameplay sources but leaves
+three maps and two recovered support-source syntax differences unqualified.
+Reuse existing readers/generators and the complete public runtime manifest.
+Inspect pinned R2API AddressReferencedAsset.cs at
+`f539511eabf87f02afddb5a83cafd2f4704c85ad`: address membership and successful
+runtime catalog/handle initialization are distinct. Original catalog membership
+can supply a source-map input without pretending converted content is ready.
+The observed player graph specifies the selected fourteen support filenames;
+it supplies no game source, map or compiled production bytes.
+
+**All three source maps.** Execute the existing CatalogContract and catalog-name
+readers against accepted PC RoR2/LegacyResourcesAPI DLLs. Parse the legitimate
+original catalog with the existing host reader, then invoke the existing body,
+health and common-asset generators with J1052's exact freshly decompiled source
+inputs. All three generated files match their observed target hashes exactly:
+body `2c25b90de43d29b97a0fcce7255c5f741e2abdeee1b4fc8acde32a356f36c5b0`,
+health `f6fef2f41f48e16c8e66ba5a8a2fb176ff30c1003d0ab47e39771011b8e2d478`,
+common `938a1d59a4d809517ba0adf117609eafa0cb9df9e0910e8da2bda5ba36569cca`.
+The complete map run takes 9.4984 seconds. Body reports one unlocated source
+field; health reports none; common retains its expected two missing fields.
+These reports do not assert Android asset availability. No captured map or
+exported project is an input.
+
+**Complete independent compilation.** Select all 127 public runtime sources from
+the current recipe plus public LabDiagnostics, fourteen freshly decompiled
+original support files and the three fresh maps: 145 sources. The existing
+AffixBead Event alias is qualified by reading the original two field types.
+All game/API references come from accepted PC inputs or the earlier independent
+owner transforms; the four package references are J1053's produced outputs and
+the three audio references are J1056's fresh outputs. Complete SDK reference
+membership is hash-bound through the existing reference owner. The resulting
+set has 243 references.
+
+The first source lookup assumes namespace directories rather than ILSpy's dotted
+namespace layout; retain the failure and correct only that lookup. The next
+compiler run identifies the missing Newtonsoft LINQ reference. Acquire the exact
+`com.unity.nuget.newtonsoft-json` 3.2.1 archive from Unity's registry, verify its
+registry SHA-1 and record archive/member SHA-256. The supplied package's AOT DLL
+exactly matches the frozen player input
+`a56146202232958f46bd6a28b5a7da166aea123ee0d646735a46e5c341dfbf1f`.
+No captured project DLL substitutes for it. With that reference, the complete
+Mono/Roslyn compilation succeeds in 2.3704 seconds.
+
+Then qualify the actual matching player compiler: the pinned SDK's
+DotNetSdkRoslyn/csc.dll and NetCoreRuntime host, explicit no-stdlib/no-config
+references, Android IL2CPP development symbol profile and portable debug output.
+All actual source conditional directives reference only UNITY_ANDROID and
+UNITY_EDITOR; unrelated captured engine feature flags are not production inputs.
+All source/reference hashes are checked before and after. Compilation succeeds
+in 1.7843 seconds, producing 2,118,144 bytes, SHA-256
+`64839477c920b91427d7c64c472dc140961e5fa438801c97d358759432df058a`.
+Run J1053's freshly compiled Burst.CodeGen through the existing SDK IL
+post-processor over the complete assembly and explicit references. The first
+attempt lacks the invocation owner's required temporary directory; retain its
+CoreCLR failure. Creating the normal private temporary directory resolves it.
+Final processing succeeds in 0.3294 seconds and leaves assembly bytes unchanged.
+
+**Support behavior qualification.** Compare all fourteen selected support root
+types and their two nested types using the complete existing declared Cecil
+projection, with compressed raw reports retained. Direct PC-original comparison
+matches only 2 of 16 types; release/debug lowering, field ordering and recovered
+source differ, so no original-byte/IL equality is asserted. The separate frozen
+R27 target comparison matches all 16 of 16 types exactly. This qualifies the two
+previously unqualified decompiler syntax differences against the actual target.
+The R27 DLL is only a hash-verified comparison oracle. The per-type projection
+excludes whole-assembly attributes/reference semantics, PE/MVID/debug data and
+the existing projection's resource/security/scope limitations. Full authored
+assembly, native performance and original-gameplay equivalence remain open.
+
+**Evidence and result.** Private
+`work/coordination/owner-player-assemblies-v1/proof-v1.json`, SHA-256
+`9a8de54855aca1ef2f6ef748713db07942293817e28fb36fc550daeb538c1ea5`,
+binds 118 artifacts, thirteen public tool/recipe bindings, complete source and
+reference hashes, original input hashes, registry acquisition, failed attempts,
+matching compiler/processor runs and both complete comparison reports. This
+proves the complete current gameplay source cohort can be produced and compiled
+without Editor/project import. Main independently verifies all 118 artifacts,
+145 sources and 243 references, and recomputes both 16/16 target and 2/16 PC
+comparisons before returning GO for this host support scope. Full independent player stripping/roots, native
+AOT/Burst, serialized content/shaders, Android tool hosting and install/runtime
+qualification remain separate requirements. No current game build is replaced;
+Architecture C and the desktop owner-build fallback remain authoritative.

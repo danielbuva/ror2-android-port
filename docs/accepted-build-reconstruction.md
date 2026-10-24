@@ -174,6 +174,14 @@ the instrumented native library remains supplied licensed local state.
 Whole-player/native/device equivalence remains open, and existing project/runtime
 admissions are unchanged.
 
+The [complete gameplay source case (J1057)](PORTING_JOURNAL.md#j1057--compile-the-complete-gameplay-source-cohort-directly-from-owner-inputs)
+produces all three exact visual maps from PC DLLs/catalog and compiles the full
+145-source current gameplay cohort with 243 independent references. The matching
+SDK compiler and fresh retained Burst processor run without a project or Editor;
+all sixteen selected support types match the declared R27 target projection.
+Full assembly/native/gameplay equivalence and independent player roots remain
+open. Captured game DLLs are comparison oracles only.
+
 ## Binary patches and retained artifacts
 
 | Candidate shortcut | Assessment |
@@ -187,7 +195,7 @@ admissions are unchanged.
 
 ## Genuine blockers and their scope
 
-**Missing producers:** complete game/player managed compilation and roots;
+**Missing producers:** complete player stripping and independent roots;
 matching code/metadata construction at game scale; the full target serialized
 content and shader producer; Burst and current Android middleware integration.
 These are absent implementations/qualifications, not proof that the Editor is

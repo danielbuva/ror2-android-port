@@ -1345,3 +1345,23 @@ copies were retired after full readback; `staged-v1.retired.json` binds their
 complete ledger, exact public generator/invocation and retained receipt. Restage
 into a new explicit root before any future use; this evidence path is not a
 live build input. Failed attempts, compiled outputs and all receipts remain.
+
+## Standalone gameplay source evidence (J1057)
+
+Ignored `work/coordination/owner-player-assemblies-v1/` retains the complete PC
+contract/catalog read, exact three generated maps, fourteen recovered support
+sources, all 145-source/243-reference manifests, official Newtonsoft package
+acquisition, compiler/processor runs and compressed comparison reports.
+Setup uses the accepted inventory, J1052's independently regenerated source,
+J1053/J1056's outputs, original plugin recipes and explicit pinned SDK tools.
+All support membership is specified separately from source/binary providers.
+No project, runtime selection or device is created; teardown changes no shared
+state. Source/output/hash proof and failed attempts remain private evidence.
+
+The named generators are existing `CatalogContract`, `catalog_reader`,
+`body_visual_map`, `common_assets_map`, the current public runtime recipe and
+the existing compiler/reference/package owners. The final matching-SDK output
+and fresh-processor output are separate from the earlier Mono compiler result.
+These are experimental host artifacts, not current game-build inputs or proof
+of full player/native equivalence. No protected source or compiled output is
+published.
