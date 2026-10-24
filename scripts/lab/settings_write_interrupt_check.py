@@ -32,6 +32,11 @@ def interrupted_transaction(before, after, pending, observed):
         raise RuntimeError("Missed pre-commit window; do not claim interrupted-write recovery")
 
 
+def pending_observer(device, command):
+    """Run the 30-second observer through the timeout-capable device transport."""
+    return device.cmd("shell", command, timeout=40)
+
+
 def check_settings_write_interrupt(expected_apk_sha256=None):
     expected = validate_expected_apk_sha256(expected_apk_sha256)
     if expected is None:
@@ -144,7 +149,7 @@ def check_settings_write_interrupt(expected_apk_sha256=None):
             raise RuntimeError("Observer DEX transfer hash differs")
         command = shlex.join(["env", "CLASSPATH=" + remote[0], "app_process", "/system/bin", "LabPendingWriteStop", directory, remote[1], pid, matches[0]])
         with ThreadPoolExecutor(max_workers=1) as pool:
-            future = pool.submit(device.sh, command, timeout=40)
+            future = pool.submit(pending_observer, device, command)
             deadline = time.monotonic() + 10
             while _remote_path_state(device, remote[1]) != "file":
                 if future.done():
