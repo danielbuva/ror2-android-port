@@ -16,6 +16,12 @@ public static class TextureMipFixture
         for (int i = 0; i < pixels.Length; i++) { bytes[i*4]=pixels[i].r; bytes[i*4+1]=pixels[i].g; bytes[i*4+2]=pixels[i].b; bytes[i*4+3]=pixels[i].a; }
         return bytes;
     }
+    public static void Run()
+    {
+        string output=Environment.GetEnvironmentVariable("ROR2_TEXTURE_MIP_REPORT");
+        if (String.IsNullOrEmpty(output)) throw new Exception("Explicit texture oracle output required");
+        Check(output);
+    }
     public static void Check(string output)
     {
         if (Application.unityVersion != "2021.3.45f2" || Directory.Exists(output)) throw new Exception("Fresh exact-editor mip oracle required");

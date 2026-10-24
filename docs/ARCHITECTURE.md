@@ -393,17 +393,22 @@ TextAsset bundle with only Python's standard library; its versioned native
 schemas consume no class database or generated asset. `phone_content.py` owns
 project staging and source/bundle hash checks for that fixture.
 `tools/phone-build/ContentFixtureBuilder.cs` owns its exact-editor check and
-separate player build. Editor-only `TextureMipFixture.cs` adds nine authored
-PNG imports across linear, sRGB and normal settings, retaining every raw mip
-in the new attempt. The Python owner validates their complete identity/extent
-cohort and pins the persisted files. These are desktop comparison oracles,
-never phone-production inputs; project teardown removes generated imports.
-`ContentFixture.cs` loads either its embedded bundle or
+separate player build; `ContentFixture.cs` loads either its embedded bundle or
 a hash-bound candidate at a fixed path in its own data directory. It checks two
 load/unload cycles and writes a private report. The three `phone-content-*` prototype
 actions stage/check/build only this fixture under the primary checkout mutex.
 See [probe setup and boundaries](../tools/phone-build/README.md). No game-runtime
 owner or whole-catalog build calls this support path.
+
+`scripts/lab/phone_texture_oracle.py` owns a separate current experimental
+exact-editor texture oracle. The `phone-texture-fixture` action stages a fresh
+SDK-only project with authored `TextureMipFixture.cs`; `phone-texture-check`
+imports nine authored PNGs across linear, sRGB and normal settings under the
+primary editor mutex. The owner validates all 63 raw mip files, source/config
+identity and persisted extents in a new attempt. Its output is a desktop
+comparison oracle, never a phone/game production input. No player is built.
+Teardown removes its generated project after evidence is retained; the earlier
+authored content/player fixture and its frozen native provenance are separate.
 
 `tools/phone-build/tool-host-fixture/Program.cs` owns a separate current
 experimental .NET build-tool graph fixture (J1023). Its project selects the tool
