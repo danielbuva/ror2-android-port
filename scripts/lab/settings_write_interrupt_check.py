@@ -120,6 +120,16 @@ def check_settings_write_interrupt(expected_apk_sha256=None):
         matches = re.findall(r"^package:" + re.escape(PACKAGE) + r" uid:([0-9]+)$", packages, re.M)
         if len(matches) != 1 or int(matches[0]) < 10000:
             raise RuntimeError("Owned package UID is ambiguous")
+        write(
+            out / "observer-binding.json",
+            dict(
+                apk_sha256=expected,
+                pid=pid,
+                uid=int(matches[0]),
+                dex_sha256=sha(dex),
+                source_sha256=sha(ROOT / "tools/android-write-interruption/LabPendingWriteStop.java"),
+            ),
+        )
         device.cmd("push", str(dex), remote[0])
         if device.sh("sha256sum", remote[0]).split()[0] != sha(dex):
             raise RuntimeError("Observer DEX transfer hash differs")
