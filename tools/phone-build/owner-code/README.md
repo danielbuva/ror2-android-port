@@ -1,8 +1,8 @@
 # Editor-free owner code producer
 
 Current experimental build support. The complete host chain is established in
-[J1052–J1059](../../../docs/JOURNAL_INDEX.md); promotion into one public command
-is in progress. This directory owns the native stage. No current game build
+[J1052–J1059](../../../docs/JOURNAL_INDEX.md); the source-input command below now composes the managed and native stages.
+Full default native integration and phone qualification remain open. No current game build
 selects it. Architecture C and the desktop fallback remain unchanged.
 
 `native.py` replaces the private captured native DAG with the audited
@@ -112,3 +112,68 @@ native compiler execution: J1059 remains that evidence. Default complete native
 execution through this controller, integration of upstream managed production,
 full content/Burst/shaders, Android hosting/install/update and device behavior
 remain open. The current game build consumes none of this state.
+
+
+## Original-input command
+
+The same `produce.py` entry also accepts `source_inputs` instead of `managed`.
+It generates all 12 non-original managed providers and assembles the complete
+332-provider cohort before running the backend above. No prebuilt game DLL,
+decompiled source folder, exported asset, captured graph or historical run is
+an input to this mode. The qualified target is the current diagnostic player
+configuration; this is not accepted-APK byte parity or a new runtime selection.
+
+The request has exactly `owner_work`, `sdk_install`, `source_inputs`, and new
+private `output`. This mode currently requires this checkout's canonical `work`
+root, because existing strict audio contracts and the archived Init tool use
+that layout. Owner inventory/configuration and original game files must already
+be reviewed. `source_inputs` has exactly these canonical absolute paths:
+
+| Field | Owner-supplied input |
+| --- | --- |
+| `packages` | The pinned package source root described in the package producer README (including UI, Burst, Mathematics, Collections and their required helpers). |
+| `netstandard_ref` | Complete NETStandard.Library.Ref 2.1.0 package directory; copied into an isolated offline cache. |
+| `newtonsoft` | Official Newtonsoft package 3.2.1 AOT Newtonsoft.Json.dll, pinned by hash. |
+| `dotnet` | The existing qualified .NET SDK host executable (current host control uses .NET 10). |
+| `ilspy_dll` | ILSpy 11.0.0.9375 CLI assembly, executed only as a decompiler under that host. |
+| `decoder` | The pinned vgmstream executable for required metadata qualification on a temporary bank copy. No audio playback occurs. |
+| `wwise_android_source` | Owner's authorized Android PINVOKE declarations. |
+| `wwise_os_string_source` | Matching authorized Android handwritten declarations. |
+| `wwise_abi_native` | Matching generic Release ARM64 SDK library for static ABI inspection. |
+| `wwise_native` | The explicitly supplied hash-bound instrumented SDK product required by existing audio contracts; independent production remains open. |
+
+```sh
+python tools/phone-build/owner-code/produce.py /absolute/owner/source-request.json
+```
+
+`--stop-after-conversion` runs all managed production, stripping, conversion and
+source preservation, then only plans native compilation. Default execution
+continues to the native library. Source mode first runs the existing raw managed
+producer, package compiler and original-assembly transforms; reproduces the bank
+index, prefab and exact historical Init receipt; stages all requested banks/media;
+uses unchanged lower-level audio contract/pin generators and compilers; derives
+maps from the actual original catalog/IL and freshly decompiles the selected 14
+support sources; then compiles/post-processes all 145 gameplay sources. The three
+runtime request/stage/project admissions remain intact. No fake project is used.
+
+`recipe/owner-managed-code.json` contains only minimum provider paths/hashes and
+support selection identities. At stage boundaries the owner rechecks original
+state and bound source/tool inputs. It retains all new private outputs and the
+complete provider manifest. Setup creates no shared Editor/device state; teardown
+removes only the explicit owned output after preserving required evidence, plus
+the recorded owned legacy tool materialization if no longer needed. No automatic
+retry or current-build pointer change occurs.
+
+The raw managed producer's optional `--netstandard-ref` accepts explicit package
+input while preserving its existing host-cache default. Its actual source hash
+pin is refreshed with that API change. Generic transform/decoder helpers likewise
+accept explicit tools with their default callers unchanged. No network package
+restore, installer, license acceptance or original input mutation is added.
+
+The source-only host run reaches all 332 providers, 93 stripped DLLs, 691 converter
+outputs, 687 checked source frames and the complete 825-task native plan. Fresh
+request/path identities can change DLL/metadata bytes; projection comparisons
+are bounded and do not establish native equivalence. Full default execution,
+licensed native input production, Burst/content/shaders, phone tool hosting,
+installation/update and matched game behavior/performance remain separate gates.
+This host control does not commit the final installation experience to a desktop.

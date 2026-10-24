@@ -40,9 +40,10 @@ class RebuiltAssemblyDrift(RuntimeError):
         self.checked = checked
 
 
-def generate(managed, temporary, recipe):
+def generate(managed, temporary, recipe, *, dotnet=None, unity_editor=None):
     """Replay J563 into caller-owned scratch; never write inputs or checkout tool outputs."""
-    cecil = Path(os.environ["UNITY_EDITOR"]).parent.parent / "MonoBleedingEdge/lib/mono/gac/Mono.Cecil/0.11.1.0__0738eb9f132ed756/Mono.Cecil.dll"
+    editor = Path(unity_editor if unity_editor is not None else os.environ["UNITY_EDITOR"])
+    cecil = editor.parent.parent / "MonoBleedingEdge/lib/mono/gac/Mono.Cecil/0.11.1.0__0738eb9f132ed756/Mono.Cecil.dll"
     if sha(cecil) != recipe["cecil_sha256"]:
         raise RuntimeError("Mono.Cecil drift")
     inputs = {name: value for step in recipe["steps"] for name, value in step["inputs"].items()}
@@ -53,7 +54,7 @@ def generate(managed, temporary, recipe):
     for name, expected in inputs.items():
         if sha(original / name) != expected:
             raise RuntimeError("Copied original assembly drift: " + name)
-    dotnet = Path.home() / ".local/share/dotnet/dotnet"
+    dotnet = Path(dotnet) if dotnet is not None else Path.home() / ".local/share/dotnet/dotnet"
     tool = temporary / "tool"
     # Build an isolated copy of the tool sources: the checkout may hold obj/ and bin/ from
     # ordinary probe_tool builds, which MSBuild would otherwise compile alongside.

@@ -142,7 +142,7 @@ def parse_source_banks(root: Path, input_id: str) -> dict:
     return report
 
 
-def decoder_metadata(root: Path, banks: list, scratch: Path) -> dict:
+def decoder_metadata(root: Path, banks: list, scratch: Path, *, executable="vgmstream-cli") -> dict:
     """Explicit metadata-only qualification on a temporary copy, never original audio."""
     candidate = min(((bank, media) for bank in banks for media in bank["embedded"]), key=lambda pair: pair[0]["bytes"], default=None)
     if candidate is None:
@@ -158,7 +158,7 @@ def decoder_metadata(root: Path, banks: list, scratch: Path) -> dict:
         shutil.copy2(original, local)
         if sha(local) != bank["sha256"]:
             raise ValueError("decoder bank copy differs")
-        result = run(["vgmstream-cli", "-m", "-I", "-s", str(media["subsong"]), local])
+        result = run([str(executable), "-m", "-I", "-s", str(media["subsong"]), local])
         if sha(original) != bank["sha256"] or sha(local) != bank["sha256"]:
             raise ValueError("decoder changed a source or copied bank")
     decoder = json.loads(result.stdout)
@@ -185,11 +185,13 @@ def index(verify_decoder=False):
     return report["summary"]
 
 
-def owner_index(work: Path, output: Path, verify_decoder=False) -> dict:
+def owner_index(work: Path, output: Path, verify_decoder=False, *, decoder_executable=None) -> dict:
     """Derive a complete index from a verified owner inventory, without a project."""
     from owner_assemblies import input_state
 
     work, output = Path(work), Path(output)
+    if decoder_executable is not None and not verify_decoder:
+        raise ValueError("explicit decoder requires metadata qualification")
     if not work.is_absolute() or work != work.resolve(strict=True):
         raise ValueError("owner work root must be canonical")
     if not output.is_absolute() or ".." in output.parts or output.parent != output.parent.resolve(strict=True):
@@ -209,9 +211,11 @@ def owner_index(work: Path, output: Path, verify_decoder=False) -> dict:
         report = parse_source_banks(root, identity)
         if verify_decoder:
             terminal["decoder_executed"] = True
-            executable = Path(shutil.which("vgmstream-cli") or "").resolve(strict=True)
+            executable = Path(decoder_executable if decoder_executable is not None else shutil.which("vgmstream-cli") or "").resolve(strict=True)
+            if not executable.is_file():
+                raise ValueError("decoder executable must be a regular file")
             executable_sha = sha(executable)
-            report["decoder_sample"] = decoder_metadata(root, report["banks"], output / "decoder-scratch")
+            report["decoder_sample"] = decoder_metadata(root, report["banks"], output / "decoder-scratch", executable=executable)
             if sha(executable) != executable_sha:
                 raise ValueError("decoder executable changed during metadata qualification")
             terminal["decoder_executable_sha256"] = executable_sha

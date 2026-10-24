@@ -65,6 +65,21 @@ class AssemblyTransformsTests(unittest.TestCase):
         self.tool_failure = False
         self.drift = False
 
+    def test_explicit_tools_do_not_consult_ambient_editor_or_home(self):
+        editor = Path(os.environ["UNITY_EDITOR"])
+        dotnet = self.base / "explicit-dotnet"
+        temporary = self.root / ".local/explicit-tools"
+        temporary.mkdir(parents=True)
+        with (
+            patch.object(transforms, "run", side_effect=self.run_tool),
+            patch.dict(os.environ, UNITY_EDITOR="/unselected/editor"),
+            patch.object(Path, "home", side_effect=AssertionError("ambient home")),
+        ):
+            result = transforms.generate(self.managed, temporary, self.recipe, dotnet=dotnet, unity_editor=editor)
+        self.assertEqual(set(result), set(self.generated))
+        self.assertTrue(self.calls)
+        self.assertTrue(all(Path(command[0]) == dotnet for command in self.calls))
+
     def run_tool(self, command, **kwargs):
         self.calls.append(command)
         self.assertEqual(kwargs["timeout"], 120)

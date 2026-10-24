@@ -1,8 +1,9 @@
-"""Compose the existing fixed-root, linker, converter and native owner stages.
+"""Build player code from owner game/SDK inputs, or explicit managed providers.
 
-Experimental whole-player backend: upstream managed assembly production remains
-an explicit supplied provider cohort. No project, captured DAG, response file,
-Editor or device is read. The default runs through the ARM64 native library.
+Current experimental source_inputs mode composes the existing managed producers
+with fixed roots, SDK stripping/conversion and native ARM64 construction. The
+managed mode accepts an explicit prepared cohort for bounded backend work.
+No project, captured DAG/response, Editor or device is read or executed.
 """
 
 import argparse
@@ -163,7 +164,56 @@ def verify_inputs(request, profile, sdk, sdk_state, before, work, state, output,
         raise ValueError("managed inputs changed during owner backend")
 
 
+def source_run(request, *, stop_after_conversion=False):
+    """Join original-input managed production to this same backend."""
+    if set(request) != {"owner_work", "sdk_install", "source_inputs", "output"}:
+        raise ValueError("explicit original-input owner request required")
+    specification = importlib.util.spec_from_file_location("owner_code_managed_producer", HERE / "managed.py")
+    managed_owner = importlib.util.module_from_spec(specification)
+    sys.modules[specification.name] = managed_owner
+    specification.loader.exec_module(managed_owner)
+    work, sdk = native.canonical(request["owner_work"]), native.canonical(request["sdk_install"])
+    if work != ROOT / "work":
+        raise ValueError("source owner currently requires this checkout's work root")
+    state = native.input_state(work)
+    inputs = managed_owner.bind_paths(request["source_inputs"])
+    output = Path(request["output"])
+    if not output.is_relative_to(work) or output == work:
+        raise ValueError("new source owner output must be inside owner work")
+    native.disjoint(output, [sdk, state[1], work / "config", work / "inventory", *inputs.values()])
+    if native.sha(PROFILE) != PROFILE_SHA or native.sha(managed_owner.PROFILE) != managed_owner.PROFILE_SHA:
+        raise ValueError("audited owner code profile drift")
+    tools(sdk, json.loads(PROFILE.read_text()))
+    native.sdk_files(sdk, json.loads(native.PROFILE.read_text()))
+    output.mkdir(mode=0o700)
+    result = {
+        "schema": 1,
+        "success": False,
+        "phase": "managed-production",
+        "source_sha256": native.sha(Path(__file__)),
+        "phone_qualified": False,
+        "runtime_qualified": False,
+    }
+    try:
+        providers = managed_owner.run(work, sdk, request["source_inputs"], output / "managed-production")
+        backend_request = {"owner_work": str(work), "sdk_install": str(sdk), "managed": providers, "output": str(output / "backend")}
+        native.write(output / "backend-request.json", backend_request)
+        result["phase"] = "whole-player-backend"
+        backend = run(backend_request, stop_after_conversion=stop_after_conversion)
+        if native.input_state(work) != state:
+            raise ValueError("owner input state changed across source production")
+        result.update(success=True, phase=backend["phase"], upstream_managed_generation_qualified=True, managed_providers=len(providers), backend=backend)
+    except BaseException as error:
+        result.update(error_type=type(error).__name__, error=str(error))
+        raise
+    finally:
+        native.write(output / "result.json", result)
+    return result
+
+
 def run(request, *, stop_after_conversion=False):
+    if "source_inputs" in request:
+        return source_run(request, stop_after_conversion=stop_after_conversion)
     if set(request) != {"owner_work", "sdk_install", "managed", "output"}:
         raise ValueError("explicit owner backend request required")
     work, sdk = [native.canonical(request[k]) for k in ("owner_work", "sdk_install")]
@@ -191,7 +241,7 @@ def run(request, *, stop_after_conversion=False):
         "input_id": state[0],
         "phone_qualified": False,
         "runtime_qualified": False,
-        "upstream_managed_generation_qualified": False,
+        "managed_providers_supplied": True,
     }
     try:
         for name in ("managed", "logs", "tmp", "converter"):

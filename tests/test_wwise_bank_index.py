@@ -93,6 +93,25 @@ class WwiseBankIndexTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "media identity"):
                     BANKS.decoder_metadata(root, report["banks"], root / "scratch")
 
+    def test_explicit_decoder_path_is_used_only_on_temporary_bank_copy(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self.source_fixture(root)
+            report = parse_source_banks(root, "authored-input")
+            executable = root / "explicit-decoder"
+
+            def metadata(command):
+                self.assertEqual(command[0], str(executable))
+                self.assertNotEqual(Path(command[-1]), root / "fixture.bnk")
+                return subprocess.CompletedProcess(command, 0, stdout=b'{"streamInfo":{"name":"17"},"numberOfSamples":10}')
+
+            with patch.object(BANKS, "run", side_effect=metadata):
+                result = BANKS.decoder_metadata(root, report["banks"], root / "scratch", executable=executable)
+            self.assertEqual(result["numberOfSamples"], 10)
+            with self.assertRaisesRegex(ValueError, "requires metadata qualification"):
+                BANKS.owner_index(root, root / "not-created", decoder_executable=executable)
+            self.assertFalse((root / "not-created").exists())
+
     def test_owner_entry_uses_inventory_without_project_and_refuses_hash_drift(self):
         from common import digest
 

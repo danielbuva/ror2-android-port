@@ -126,6 +126,7 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 | `original-audio-owner-sources.json` | Exact authored original-audio owner, bounded waveform and music-query cohort | Repository source hashes, source membership, authored script identities and historical ancestor hash. | Authored code identifiers and hashes only; no game implementation, content, SDK code, binary, private path or device/account data. Audited 2026-10-21. | Both producer modes validate the recipe and owner hashes; camera staging pins the same recipe, and actual owner bytes participate in generation cache identity. |
 | `owner-native-arm64.json` | J1059 native build configuration | SDK-relative selectors, six flag templates, translation-unit identities/link ordering and a portable SDK cohort hash. | No source bodies, game data, compiled bytes, captured graph, private paths or account/device data. Audited 2026-10-24. | Explicit accepted input, source/converter/metadata binding; no Editor/project or device consumer. |
 | `owner-player-code.json` | Current target root/retention and SDK linker/converter policy | Minimum scene/type/member identities, preservation flags, assembly order and tool hashes. | No method body, serialized object value, native registration table, binary, private path or account/device data. Audited 2026-10-24. | Full reviewed owner input and explicit hash-bound managed providers; exact SDK tools and derived native identities. |
+| `owner-managed-code.json` | Current owner managed-provider/source configuration | 48 original and 272 SDK relative providers/hashes, 12 produced identities, 14 support selectors, generic tool/package identities. | No game/SDK implementation, generated source/DLL, private path, account/device identifier or credential. Audited 2026-10-24. | Accepted full original inventory; explicit tools/packages/authorized SDK inputs; existing strict transforms/contracts. |
 
 `runtime-sources.json` lists paths relative to `tools/unity`, staged at
 `Assets/LabLoadingScene` by basename. Basename collisions (including generated sources)
@@ -2060,3 +2061,27 @@ This archival compatibility owner exists for unchanged historical receipt pins;
 it grants no new middleware, game-media or controller-output rights and claims
 no broader routing, audible, retained-runtime or phone acceptance. It changes no
 current game-build selector or runtime request/stage admission.
+
+
+## Original-input managed owner configuration
+
+`owner-managed-code.json` contains the minimum relative identities and hashes
+for 48 original PC and 272 generic SDK providers, the 12 DLL identities that the
+existing producers must generate or acquire from an official generic package,
+and the selected 14 original support source identities. It also pins the
+qualified decompiler version and generic Newtonsoft/decoder identities. The
+support identities select fresh decompilation from the owner's original DLL;
+no decompiled body or generated assembly is tracked. No method implementation,
+asset/media value, SDK body, binary, captured source/graph/response, private path,
+credential or account/device identity is included. Audit: 2026-10-24.
+
+The new source owner composes existing transformations, original catalog readers,
+map generators, package/gameplay compilers and audio contract/pin owners rather
+than adding gameplay or middleware mechanisms. Accepted inventory and provider
+hashes gate every original/SDK lookup. All generated content remains ignored.
+The archive-based Init compatibility source is separately audited above. Licensed
+Wwise inputs remain explicit required inputs, not independently reproduced or
+approved for redistribution. Current source compilation uses the exact qualified
+host SDK policy and diagnostic target configuration; no runtime change, original
+installation mutation, fabricated project admission or phone/performance claim
+is introduced.

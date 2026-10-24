@@ -1477,3 +1477,35 @@ cover the fixed layout and both private output locations; retain failed cases.
 public-wrapper execution and exact legacy output/receipt comparisons. The old
 private source remains historical evidence only. No current runtime build reads
 this new state automatically, and no archived SDK/game body is added.
+
+
+## Original-input player-code owner
+
+The `source_inputs` request mode of `tools/phone-build/owner-code/produce.py`
+uses this checkout's reviewed canonical `work` state and original installation,
+plus explicitly supplied SDK, package/tool and authorized Wwise inputs. Its
+[ten-field setup](../tools/phone-build/owner-code/README.md#original-input-command)
+includes the complete NETStandard reference package; no ambient framework cache
+is needed by this mode. The raw producer retains its prior default for existing
+callers. The instrumented native SDK product is a required explicit local input
+because independent public production is still open; it is not a captured game
+binary or claimed distributable artifact.
+
+The tracked managed owner and existing called generators produce every raw
+transform, package DLL, bank index, prefab, adapted Init/receipt, staged payload,
+audio contract/pin/assembly, original decompilation, visual map, gameplay assembly
+and full provider manifest. The existing backend produces all further code and
+metadata outputs. No input code is read from a historical run implicitly. All
+source/frame/receipt/log outputs remain ignored, and current game builds consume
+none of this state automatically. Remove only explicitly owned outputs after
+preserving required evidence; failed cases stay retained.
+
+`work/coordination/owner-full-code-v1/` retains the initial nine-input host case,
+then the explicit NETStandard-package/accepted-catalog guard revision. Both are
+complete source-driven runs through native planning; their actual DLL/metadata
+bytes differ with generated request/path identities. All source providers and
+commands are recorded rather than normalized to an old build. A separate detached
+qualification checkout may use another host volume for the full default native
+run; it uses the same committed source and newly generated owner work, never a
+shared Unity project. Its private location and ownership are recorded locally;
+no device or storage configuration is changed.
