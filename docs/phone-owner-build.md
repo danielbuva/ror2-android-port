@@ -206,7 +206,7 @@ host; wider dependencies, editor-root production,
 subprocesses and app sandbox execution remain open.
 The build-tool host is separate from the IL2CPP game runtime.
 
-[J1051](PORTING_JOURNAL.md#j1051--acquire-exact-generic-android-sdk-inputs-without-installing-the-editor)
+[J1064](PORTING_JOURNAL.md#j1064--acquire-exact-generic-android-sdk-inputs-without-installing-the-editor)
 qualifies direct owner acquisition of the three exact runtime/resource SDK-copy
 inputs from the provider's pinned component, without installing the Editor.
 The public [extractor](../tools/phone-build/accepted-output/README.md#acquire-the-three-sdk-copy-inputs)

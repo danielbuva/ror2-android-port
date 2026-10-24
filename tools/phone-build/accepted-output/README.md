@@ -94,7 +94,7 @@ unknown input, unsafe paths, selected symlinks, duplicate/missing members and
 content drift refuse. The process exits after its complete/failed receipt;
 there is no service, installer-script execution or current game-build mutation.
 
-[J1051](../../../docs/PORTING_JOURNAL.md#j1051--acquire-exact-generic-android-sdk-inputs-without-installing-the-editor)
+[J1064](../../../docs/PORTING_JOURNAL.md#j1064--acquire-exact-generic-android-sdk-inputs-without-installing-the-editor)
 records the complete host component case. Android execution is unqualified.
 The directory can supply `package.py`'s explicit SDK root; it is not the complete
 compiler, game/content producer, Android converter or public SDK distribution.

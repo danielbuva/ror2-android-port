@@ -33200,7 +33200,7 @@ lab-project receipts) and other worktrees are untouched pending owner review.
 source commit. If free space falls below 100 GB again, inspect `work/rebuild`
 and extra worktrees next.
 
-## J1051 — Acquire exact generic Android SDK inputs without installing the Editor
+## J1064 — Acquire exact generic Android SDK inputs without installing the Editor
 
 2026-10-23. Complete host acquisition/extraction case; Android execution remains
 unqualified. No installer, Unity Editor, game compiler or device is run.
