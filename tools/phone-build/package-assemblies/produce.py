@@ -137,7 +137,7 @@ def invoke(args, name, out):
 
 
 def run(request):
-    if set(request) != {"sdk_install", "packages", "output"}:
+    if set(request) - {"android_tools"} != {"sdk_install", "packages", "output"}:
         raise ValueError("explicit SDK/package/output request required")
     install = canonical(request["sdk_install"])
     sdk = install / "Unity.app/Contents"
@@ -164,6 +164,19 @@ def run(request):
                 raise ValueError("non-file package input")
             inputs[str(path)] = sha(path)
             return path
+
+        android_tools = request.get("android_tools")
+        if android_tools:
+            launcher = bind(Path(android_tools["dotnet"]))
+            runtime_config = out / "android.runtimeconfig.json"
+            runtime_config.write_text(
+                json.dumps({"runtimeOptions": {"tfm": "net8.0", "framework": {"name": "Microsoft.NETCore.App", "version": "8.0.32"}}}) + "\n"
+            )
+
+        def command(application, host):
+            if android_tools:
+                return [launcher, "exec", "--runtimeconfig", runtime_config, application]
+            return [*host, application]
 
         reference_module = ROOT / "scripts/lab/phone_unity_compile.py"
         loader = importlib.util.spec_from_file_location("package_sdk_refs", reference_module)
@@ -254,7 +267,9 @@ def run(request):
             requests.append({"name": name, "source_count": len(selected), "inputs": hashes, "defines": defines, "references": [str(p) for p in references]})
             (out / "inputs.json").write_text(json.dumps({"packages": requests, "inputs": inputs}, indent=2) + "\n")
             invoke(
-                [sdk / "NetCoreRuntime/dotnet", "exec", sdk / "DotNetSdkRoslyn/csc.dll", "/nostdlib", "/noconfig", "@" + str(response)], name + ".compile", out
+                command(sdk / "DotNetSdkRoslyn/csc.dll", [sdk / "NetCoreRuntime/dotnet", "exec"]) + ["/nostdlib", "/noconfig", "@" + str(response)],
+                name + ".compile",
+                out,
             )
             built[name] = output
         for row in requests[:4]:
@@ -282,7 +297,7 @@ def run(request):
             response = out / (name + ".generated-ilpp.rsp")
             response.write_text(" ".join(json.dumps(p) for p in args) + "\n")
             invoke(
-                [sdk / "Tools/netcorerun/netcorerun", sdk / "Tools/ILPostProcessorRunner/ILPostProcessorRunner.exe", "@" + str(response)],
+                command(sdk / "Tools/ILPostProcessorRunner/ILPostProcessorRunner.exe", [sdk / "Tools/netcorerun/netcorerun"]) + ["@" + str(response)],
                 name + ".postprocess",
                 out,
             )
