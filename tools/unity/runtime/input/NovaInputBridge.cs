@@ -313,8 +313,9 @@ public sealed class NovaInputBridge : MonoBehaviour
                     movement = touchControls.Movement;
                     aim = Vector2.zero;
                     diagnosticJumpRevision++;
-                    jumpHeld = touchControls.Down(AndroidTouchInput.Action.Jump);
-                    jumpLatched |= touchControls.Pressed(AndroidTouchInput.Action.Jump);
+                    // Touch owns its pending edge until fixed consumption or cancel.
+                    // Keep the physical latch separate so cancellation cannot leave a second edge.
+                    jumpHeld = jumpLatched = false;
                     return;
                 }
             }
@@ -418,7 +419,8 @@ public sealed class NovaInputBridge : MonoBehaviour
             bank.aimDirection = new Vector3(aim.x, 0, aim.y);
             aimTicks++;
         }
-        bank.jump.PushState(!holdAutomatic && (jumpHeld || jumpLatched));
+        bank.jump.PushState(!holdAutomatic && (touchManual ? touchControls.Request(AndroidTouchInput.Action.Jump)
+                                                         : jumpHeld || jumpLatched));
         if (bank.jump.justPressed)
             jumpPresses++;
         jumpLatched = false;

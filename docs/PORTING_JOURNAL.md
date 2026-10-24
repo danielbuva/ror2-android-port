@@ -37394,6 +37394,15 @@ Their `is_current_build=false` values are retained because the canonical host
 pointer belongs to another build. These controls do not claim a different
 installed APK.
 
+**Later source review.** A production Update/fixed-delivery fixture reproduces
+an additional cancellation race: a touch jump canceled before the next physics
+tick survives in the bridge's duplicate physical jump latch. Touch now consumes
+its sole producer-owned pending edge directly; its manual frame clears the
+physical latch. Eight pointer/bank fixtures pass, including canceled/missing
+pre-fixed pointers, released short taps and preserved untouched physical pending
+input. This later correction is not part of `d211c7fa`; new build/device
+qualification remains separate.
+
 **Remaining gates.** Physical digitizer/controller/rebinding,
 acquired-equipment and genuine interaction effects, complete screen/source
 appearance, ordinary normal runs, the managed-growth bound (J1069), sustained

@@ -1,6 +1,7 @@
 """Run the complete touch producer against the exact editor's managed Unity API."""
 
 import os
+import re
 from pathlib import Path
 import subprocess
 import tempfile
@@ -33,13 +34,25 @@ class AndroidTouchInputTests(unittest.TestCase):
         )
         bridge_source = (ROOT / "tools/unity/runtime/input/NovaInputBridge.cs").read_text()
         bank_method = bridge_source.split("    void ObserveTouchBank(bool countTouchPresses)", 1)[1].split("    public void Neutral()", 1)[0]
+        touch_frame = bridge_source.split("if (touchControls.HasInput || !physicalInputAvailable)\n                {", 1)[1].split("\n                }", 1)[0]
+        jump_push = re.search(r"bank\.jump\.PushState\(!holdAutomatic.*?;", bridge_source, re.S).group()
         bank = Path(cls.temp.name) / "Bank.cs"
         bank.write_text(
-            "public sealed class BankFixture { public sealed class Button { public bool down,justPressed; } "
+            "using UnityEngine; public sealed class BankFixture { public sealed class Button { public bool down,justPressed; "
+            "public void PushState(bool value){justPressed=value&&!down;down=value;} } "
             "public sealed class Bank { public Button jump=new Button(),skill1=new Button(),skill2=new Button(),skill3=new Button(),"
             "skill4=new Button(),activateEquipment=new Button(),interact=new Button(),sprint=new Button(); } "
             "public Bank bank=new Bank(); public AndroidTouchInput touchControls=new AndroidTouchInput(); "
             "public void ObserveTouchBank(bool countTouchPresses)" + bank_method + "}\n"
+            "public sealed class TouchJumpFixture { public AndroidTouchInput touchControls; "
+            "public BankFixture.Bank bank=new BankFixture.Bank(); public UnityEngine.Vector2 movement,aim; "
+            "public int diagnosticJumpRevision; public bool jumpHeld,jumpLatched; "
+            "public void Update(bool physicalInputAvailable){if(touchControls.HasInput||!physicalInputAvailable){"
+            + touch_frame
+            + "}else{jumpHeld=false;}} public bool Tick(bool physicalInputAvailable){bool holdAutomatic=false;"
+            "bool touchManual=touchControls.HasInput||!physicalInputAvailable;"
+            + jump_push
+            + "jumpLatched=false;if(touchManual)touchControls.ConsumeFixedTick();return bank.jump.down;} }\n"
         )
         result = subprocess.run(
             [
@@ -94,3 +107,6 @@ class AndroidTouchInputTests(unittest.TestCase):
 
     def test_native_bank_witness_keeps_each_action_edge_and_held_state_separate(self):
         self.case("bank-witness")
+
+    def test_canceled_and_missing_jump_before_physics_cannot_survive_in_a_second_latch(self):
+        self.case("jump-cancel-before-fixed")

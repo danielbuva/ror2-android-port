@@ -163,6 +163,33 @@ static class AndroidTouchInputHost
             Check(fixture.touchControls.report.manualBankHeldMask == 0, "physical fallback release is stale");
         }
     }
+    static void JumpCancelBeforeFixed()
+    {
+        foreach (bool physical in new[] { false, true })
+            foreach (bool missing in new[] { false, true })
+            {
+                var input = Ready(); var bridge = new TouchJumpFixture { touchControls = input };
+                var jump = input.ButtonRect(AndroidTouchInput.Action.Jump).center;
+                input.BeginFrame(1); input.Pointer(4, jump, true, false, false); input.EndFrame(); bridge.Update(physical);
+                input.BeginFrame(missing ? 0 : 1);
+                if (!missing) input.Pointer(4, jump, false, false, true);
+                input.EndFrame(); bridge.Update(physical);
+                Check(!bridge.Tick(physical), "canceled/missing jump survived until physics; physical=" + physical + " missing=" + missing);
+                Check(!bridge.Tick(physical), "canceled jump returned on a later physics tick");
+            }
+        foreach (bool physical in new[] { false, true })
+        {
+            var input = Ready(); var bridge = new TouchJumpFixture { touchControls = input };
+            var jump = input.ButtonRect(AndroidTouchInput.Action.Jump).center;
+            input.BeginFrame(1); input.Pointer(4, jump, true, false, false); input.EndFrame(); bridge.Update(physical);
+            input.BeginFrame(1); input.Pointer(4, jump, false, true, false); input.EndFrame(); bridge.Update(physical);
+            Check(bridge.Tick(physical), "released short jump was lost before physics");
+            bridge.Update(physical); Check(!bridge.Tick(physical), "released short jump repeated");
+        }
+        var raw = new TouchJumpFixture { touchControls = Ready(), jumpLatched = true };
+        raw.Update(true); Check(raw.Tick(true), "untouched physical pending edge was cleared");
+        Check(!raw.Tick(true), "physical pending edge repeated");
+    }
     static void Main(string[] args)
     {
         switch (args[0])
@@ -174,6 +201,7 @@ static class AndroidTouchInputHost
             case "camera-delta": CameraDelta(); break;
             case "gui-ownership": GuiOwnership(); break;
             case "bank-witness": BankWitness(); break;
+            case "jump-cancel-before-fixed": JumpCancelBeforeFixed(); break;
             default: throw new Exception("unknown case");
         }
         Console.WriteLine(args[0] + ": PASS");
