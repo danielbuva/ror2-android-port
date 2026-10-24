@@ -182,7 +182,7 @@ _ENTRIES = (
         "run_editor",
         {},
         "current",
-        "Experimental desktop oracle: check explicit --target PROJECT with the exact editor under the primary mutex; retain all 63 raw authored mip levels. Never a phone-production input.",
+        "Experimental desktop oracle: check explicit --target PROJECT with the exact editor under the primary mutex; retain all raw authored mip levels. Never a phone-production input.",
         handler=_target,
     ),
     Action(
