@@ -475,3 +475,9 @@ journal for independent evidence and comparison limits. Explicit licensed native
 SDK input, full Burst/content/shader production, Android tool hosting, install/
 update and matched device behavior/performance remain gates. The working game
 and desktop fallback stay unchanged.
+
+
+The historical [J951 preload operand result](PORTING_JOURNAL.md#j951--bind-sdk-preload-platform-assignment-operands-on-android)
+is retained for future general-target work. Its optional implementation remains
+in PR #38. The current accepted-target route uses J1063's explicit audited roots;
+preload record/alias/module discovery is not part of that fixed-target producer.

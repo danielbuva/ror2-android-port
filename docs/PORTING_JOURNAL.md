@@ -36059,3 +36059,107 @@ Requalify exact native output, authored controls and read-byte behavior before
 another actual-input attempt. Complete import, processing/export, metadata and
 project equivalence, permitted distribution, app security and matched game
 performance remain open. Route A and the desktop fallback remain fixed.
+
+## J951 — Bind SDK preload platform assignment operands on Android
+
+**Hypothesis and scope.** J948 derives copied-field/pair/consumer alignment but
+leaves preload inputs and all runtime target decisions open. Bind platform
+assignment operands through the whole generated function, including storage
+reuse and out-of-line predecessors, without executing SDK code or treating
+record values as established. Main reserves J951. Rebase onto bcd77c4
+preserves its complete journal prefix and snapshot; change only Alpha research.
+Read J895/J931/J934/J939/J948 first. This is generic SDK metadata tooling, with
+no RoR2 reconstruction, renderer, runtime/backend, game source or APK change.
+
+**Authored ownership and contracts.** `phone_preload_flow.py` and
+`phone_preload_inputs.py` own a separate static assignment-input report. Sparse
+backward definitions traverse all normal CFG predecessors and backedges without
+allocating a dominator set for every node. GPR and SIMD namespaces are separate;
+normal calls carry ABI clobbers. Derive stack allocation anchors and aliases,
+then connect every copied buffer producer: existing field storage, grow return
+with that field receiver, and direct inline-field address. Neither branch
+conditions nor SDK calls execute. Require bounded file-backed C strings,
+scalar/vector fragment coverage, matching terminators, mode conditions and
+length writes, including compiler-reused tag/zero registers. Direct-stack
+reloads link to explicit full stores; partial or ambiguous stores refuse.
+Calls' memory effects and indirect aliases are **not** evaluated by that link.
+
+The reader binds one platform assignment to each of 19 insertion sites, using
+J948's independently derived consumer field offset. It also identifies 46 grow
+calls for other frame fields and retains 29 unresolved grow receivers. Complete
+classification of growth calls is false. Native preload inputs, constructed
+records, map population and live target/module support remain separate gates;
+no game build or root generator consumes this report. Android's label is read
+from its source operands, rather than supplied by an API answer or captured
+table. No new editor/API oracle is run or staged as a generation input.
+
+**First failures and host evidence.** The old fresh-payload helper correctly
+refuses an unproven local receiver and cannot account for grow bypass. Initial
+new prototypes additionally refuse compressed inline-length writes, scalar
+fragments mixed with vector loads, direct spill reuse and longer payloads.
+Preserve the failed reports and shape scans. Resolve those operand forms
+explicitly; retain the memory/state limitations. An initial all-growth coverage
+expectation fails despite 19 bindings because 29 receivers are unresolved.
+Keep that failure and expose insertion-site coverage separately from growth
+classification instead of claiming complete inputs.
+
+Actual source is dbbbc575d5408f7661f7756acc33e6412ffbb221; public rebased source
+11b09a31801d71ba6b8683825b607909106c3db2 has identical bytes for all 14 staged
+reader/helper/test files. Thirteen host contracts pass without skips, including
+an independently assembled LLVM fixture for GPR effects and distinct SIMD
+registers. Authored CFG/copy fixtures cover storage reuse, out-of-line paths,
+backedges, call clobbers, overlaps, compressed lengths and direct spills; no
+captured SDK instruction/table is a fixture. All 114 targeted SDK operand
+mutations refuse through the public components. SDK bytes remain unchanged.
+Changed-file Ruff, staged public scan and manual IP/provenance review pass.
+Doctor/preflight still refuse Alpha's missing clone-local game inputs; no game
+build is attempted or qualified.
+
+**Android evidence.** Stage 13 committed reader/helper sources and one test file
+in a fresh owned Alpha directory after checking explicit device selection,
+ownership, current storage/backing/capacity/reserve and supplied SDK/Python
+hashes. The static read completes in about 2.814 s. Host and Android report bytes
+match SHA-256
+27a139cf7be165231941d512eba377515c15adbfeff8c5a68b5aec658a2ed101.
+All 11 portable contracts pass without skips. Unknown-SDK and output-overwrite
+controls refuse while preserving the accepted report. Four adapter -O/-OO
+controls refuse before imports/device access. All staged sources and SDK bytes
+remain unchanged. Zero installs and game launches occur; owned Alpha be26c21c
+bytes remain unchanged, process/selector absent and display asleep. No shared
+Unity/editor/current pointer or Main-device action occurs. No APK is produced.
+
+**Evidence and disposition.** Private result:
+`work/coordination/phone-proof/preload-inputs-phone-c7b0e7dbf689410f87e85900882a262e/result.json`.
+`preload-proof-receipt-v1.json` under the phone proof root binds 86 artifacts,
+including failed prototypes, source stages, host/device reports, mutation
+controls, guards, private SDK observations and source equality; SHA-256
+6782a6f2c12abe3023b2461a297fc547a9583ac3a95cb4d14583cc4962ea5fac.
+Raw SDK material, identifiers and logs remain ignored. Named ownership and
+private replay inputs are documented.
+
+`input_operand_links_qualified` and insertion-site coverage are true.
+`all_grow_receivers_classified`, `all_record_inputs_complete`,
+`call_memory_effects_qualified`, `indirect_store_aliasing_qualified`,
+`record_values_qualified`, `constructor_result_qualified`,
+`hash_container_semantics_qualified`, `target_support_qualified`,
+`target_discovery_qualified`, `module_inclusion_qualified`,
+`native_usage_qualified` and `root_generation_qualified` remain false. Next
+requires complete reset/constructor/record inputs and call-memory/container/
+module/state/native-usage joins before independent root production. Preserve
+J939's failed exact API equivalence and J929's failed app-host refusal. Route A,
+the working Android renderer and desktop owner-build fallback remain fixed;
+full phone installation, matched performance and public-alpha readiness remain
+unproved.
+
+Final integration rebase preserves the complete Main journal prefix and all
+non-owned snapshot rows. `preload-rebase-equality-v4.json` separately binds the
+rebased source; the original phone report and 86-artifact proof stay unchanged.
+
+Integration disposition (2026-10-24): retain this historical result and its exact
+source/proof identities. The optional assignment-analysis implementation remains
+in PR #38 / commit `3e6ce440`, rather than being added to current tooling. J1063
+uses audited explicit fixed-target roots and the existing SDK native registry;
+this research is not a dependency of the accepted-target owner converter.
+General preload/target discovery remains unqualified and can be revisited from
+that preserved branch if a future target requires it. Closing the PR does not
+claim its unresolved record, alias or module semantics are solved.
