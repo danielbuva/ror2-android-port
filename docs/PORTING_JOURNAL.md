@@ -36875,3 +36875,114 @@ Other generated stages remain host-qualified only. Complete audio mix, event
 attribution, spatial behavior and physical audibility, PC post-processing/color
 parity, full kit semantics, Siren, unassisted normal runs and sustained
 performance remain open. Moon/finale/escape remain manual only.
+
+## J1083 — Reconstruct source Sobel graphics and freeze corrected normal player
+
+2026-10-24 UTC.
+
+**Source contract and implementation.** The accepted loading and source-stage
+application roots contain a disabled global `ppApplication_opt` volume. Original
+startup enables it; the lab leaves that application inactive. Its Sobel role is
+therefore missing, and both Sobel shader exports are placeholders. Reinspect
+pinned RoR2ImportExtensions `477ad9b5` for its single Post Processing provider and
+custom deferred paths, d3dasm `a292206a` for typed HLSL/interface/resource lowering
+and byte roundtrips, and dxbc-spirv `c7f06970` for independent signatures. Original
+input and consumers govern the reconstruction; no application/service startup,
+new identity, ownership success or invented lighting/exposure is introduced.
+
+Extend the existing native single-pass generator for SobelBuffer/SobelOutline.
+SobelBuffer has a separate fragment parameter record, so source record indices
+are bound to vertex/fragment slots explicitly. Both catalog keys and distinct
+exporter metadata GUIDs survive. Current staging/replay selects nine shaders;
+historical two/six/seven-row receipts remain readable. The existing visual
+camera owner clones only the recovered Sobel setting and volume fields beneath
+its inactive staging root. Original PostProcessLayer, SobelCommandBuffer and
+SobelOutlineRenderer retain rendering. A one-shot exact-camera observation
+records blended settings separately from appearance; disable/disposal removes
+the callback, invokes native volume-disable cleanup and destroys owned assets.
+The non-rendering audio-context route does not create this presentation.
+
+**Host checks and corrections.** All 23 source stages have the same startup
+volume/layer contract. Four original Sobel programs roundtrip byte-identically
+with independent signature agreement; original bundles remain unchanged.
+Regenerating RampFog/ScreenDamage with the shared generator change produces
+identical shader bodies, with prior receipts retained. A production-method
+fixture checks source immutability, exact cloning, unsupported shader/layer
+refusal, foreign-camera exclusion, one-shot sampling and idempotent retirement.
+R3/R4 fixtures cover both identity domains and all nine rows.
+
+The first full host suite runs 2,048 tests with 12 skips and six stale CLI/root/
+fixture/audit expectations. Correct the missing editor-side root declarations,
+fixture seam and audit rows. The affected suite passes 301 checks. Fresh-clone
+CI then catches the remaining exact R3 root expectation; add both entries and
+their built-bundle requirement, with three profile checks passing. Fresh-clone
+CI passes 1,948 tests with 140 skips. Doctor reports the exact editor ready.
+Initial dispatch refusals for missing explicit device selection and an
+unsupported baseline-only CLI argument are retained; both happen before their
+requested operations. Restore the canonical argument contracts without
+weakening guards.
+
+**R45 normal build/install.** The typed editor import passes 7,466 roots. Normal
+full request `20261024T151848.298707Z`, source
+`70f4415134276adc7f4a46109168cfcffa1c6c67`, completes in 721.471490 seconds with
+zero Unity errors. APK SHA-256 is
+`43a8c0ffd5e98fd7f04e7030df3c3e29e765ebfe06a50a647231c7d3103a8d7a`.
+All 267 artifact references rehash. Only whole-game-content/generated-data,
+their manifests and catalog metadata change; no payload path is added/removed.
+A read-only editor sample attributes the long content phase to LZ4 HC archive
+compression. Normal compression remains unchanged. Host free space is 133 GiB
+before this build.
+
+Streaming install takes 26.509346 seconds. Current adopted placement/backing,
+payload sync, independent installed APK bytes and unchanged profile bytes pass.
+The first actual plain control then loses the assigned ADB transport before a
+current world report/capture is available. Its failed directory retains the
+selection, and canonical cleanup/display attempts also fail because the device
+is missing. This is a transport observation, not an attributed game/shader crash.
+No plain/stage/source-view acceptance follows. Main process/selector/display
+state after loss remains unverified. Host USB inventory still exposes its serial;
+serial-scoped attach/reconnect cannot find an ADB transport, and a bounded
+read-only bootloader-variable query times out. No global server reset, reboot,
+flash, storage change or other-device command is performed.
+
+**Explicit stage correction and R46/R47.** Independent host tracing catches a
+real setup-order problem before dispatching the new visual route: Nova creates
+the camera before RunClock selects the source stage as active. Pass the already
+loaded stage through NovaDiagnosticDisplay into camera setup. The fixture now
+keeps an unrelated active scene and verifies the explicit stage is used. The
+51 affected checks pass with three skips; fresh-clone CI again passes. No source
+profile/scene/shader bytes change for this correction.
+
+Source `4a72b630bfaf8f7e9d9ea5f444409b9cfd26d53e` produces R46 fast request
+`20261024T155254.811424Z` in 90.449344 seconds, APK
+`1ab6c29c238aa71779292768716723b4f4811d4e09c32cc8792ff924c1d8038f`.
+It uses the exact R45 normal anchor and changes eight allowed APK members.
+The owned pre-Gradle export cancellation is expected; final splice/alignment/
+signing succeeds. This is iteration only, not a normal player-build success.
+All 266 payload hashes remain identical and 267 references rehash.
+
+R47 is the corrected normal full acceptance candidate: request
+`20261024T155919.802444Z`, the same source, 96.878775 seconds, zero Unity errors,
+normal player result Succeeded, APK SHA-256
+`ef3ba8b699ce6b9327da5437e27a9bca17c30f97e03f8e3ca4c00dc705309950`.
+Its payload is exactly R45's; all 267 references rehash. R46/R47 are not installed
+or device-qualified. Main retains the previously verified R45 installation
+until a new device readback; R44/J1080 remains the latest qualified diagnostic
+and J850 the accepted rollback. Generated pruning runs after tasks.
+
+**Evidence and remaining gates.** Source/kernel/topology/contracts, generation
+receipts and failed host checks are under
+`work/coordination/main-port-rendering-next-r1/`. R45 install/sync/transport
+failure and target-only recovery observations are under
+`work/coordination/main-port-r45/`, with failed control
+`work/experiments/baseline/20261024T153930.312573Z/`. R46/R47 build, immutable
+reference manifests and normal-anchor metadata are under their matching
+`work/coordination/main-port-r46/` and `main-port-r47/` packets. No binaries or
+raw images/logs are published. The authorized shared fallback remains leased
+to another workstream; no fallback install or run occurs in this result.
+
+Revisit on authorized device availability: establish terminal state and retain
+failure logs, install the corrected normal candidate, qualify both controls and
+source-camera blended Sobel/image/End Run/Quit. Full AO/grading compute roles,
+configured graphics, matched PC appearance and the existing gameplay/audio/
+performance gates remain open. The public role remains opt-in/unaccepted.
