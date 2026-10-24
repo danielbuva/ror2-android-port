@@ -1,4 +1,4 @@
-"""Produce qualified uncompressed Texture2D bodies/pixels from owner PC bundles."""
+"""Produce qualified Texture2D bodies/pixels from owner PC bundles."""
 
 import argparse
 from array import array
@@ -124,6 +124,8 @@ def body_output(body, fields, pixels, target, operation):
     }
     if operation in {"dxt1-rgb", "dxt1-rgb-jpeg"}:
         replacements["m_TextureFormat"] = struct.pack("<i", 3)
+    elif operation == "alpha8-etc2":
+        replacements["m_TextureFormat"] = struct.pack("<i", 47)
     stream = target["stream"]
     if target["inline"] or not pixels:
         if stream != {"offset": 0, "size": 0, "path": ""}:
@@ -143,7 +145,7 @@ def body_output(body, fields, pixels, target, operation):
     return bytes(result)
 
 
-def pixels_input(bundle, body, selected, jpeg_codec=None):
+def pixels_input(bundle, body, selected, jpeg_codec=None, alpha_codec=None):
     location = selected["pixels"]
     if location["member"] is None:
         start = location["offset"]
@@ -159,6 +161,15 @@ def pixels_input(bundle, body, selected, jpeg_codec=None):
     operation = selected["operation"]
     if operation == "copy":
         return pixels
+    if operation == "alpha8-etc2":
+        if alpha_codec is None:
+            raise ValueError("pinned public Alpha8 codec required")
+        if len(pixels) != selected["width"] * selected["height"]:
+            raise ValueError("unqualified Alpha8 source extent")
+        result = subprocess.run([str(alpha_codec), str(selected["width"]), str(selected["height"])], input=pixels, capture_output=True, timeout=120)
+        if result.returncode != 0 or len(result.stdout) != len(pixels):
+            raise ValueError("public Alpha8 codec failed or returned a different pixel extent")
+        return result.stdout
     if operation == "dilate-rgba":
         return dilate_rgba(pixels, selected["width"], selected["height"])
     if operation in {"dxt1-rgb", "dxt1-rgb-jpeg"}:
@@ -175,7 +186,7 @@ def pixels_input(bundle, body, selected, jpeg_codec=None):
     raise ValueError("unqualified texture operation")
 
 
-def produce(profile_path, profile_sha256, pc, output, jpeg_codec=None, jpeg_codec_sha256=None):
+def produce(profile_path, profile_sha256, pc, output, jpeg_codec=None, jpeg_codec_sha256=None, alpha_codec=None, alpha_codec_sha256=None):
     if BUNDLE.sha(profile_path) != profile_sha256:
         raise ValueError("texture profile drift")
     profile = json.loads(profile_path.read_text())
@@ -191,6 +202,13 @@ def produce(profile_path, profile_sha256, pc, output, jpeg_codec=None, jpeg_code
         jpeg_codec = jpeg_codec.resolve(strict=True)
         if jpeg_codec.is_relative_to(pc) or BUNDLE.sha(jpeg_codec) != jpeg_codec_sha256:
             raise ValueError("public JPEG codec drift or overlap with original input")
+    needs_alpha = any(texture["operation"] == "alpha8-etc2" for bundle in profile["bundles"] for member in bundle["members"] for texture in member["textures"])
+    if needs_alpha or alpha_codec is not None or alpha_codec_sha256 is not None:
+        if alpha_codec is None or alpha_codec_sha256 is None:
+            raise ValueError("pinned public Alpha8 codec required")
+        alpha_codec = alpha_codec.resolve(strict=True)
+        if alpha_codec.is_relative_to(pc) or BUNDLE.sha(alpha_codec) != alpha_codec_sha256:
+            raise ValueError("public Alpha8 codec drift or overlap with original input")
     parent = output.parent.resolve(strict=True)
     output = parent / output.name
     if output.name in ("", ".", "..") or output.exists() or output.is_symlink() or parent.is_relative_to(pc) or pc.is_relative_to(output):
@@ -209,6 +227,8 @@ def produce(profile_path, profile_sha256, pc, output, jpeg_codec=None, jpeg_code
     receipt = {"success": False, "input_id": MESH.INPUT_ID, "profile_sha256": profile_sha256, "objects": 0, "object_bytes": 0, "resource_bytes": 0}
     if jpeg_codec is not None:
         receipt["jpeg_codec_sha256"] = jpeg_codec_sha256
+    if alpha_codec is not None:
+        receipt["alpha_codec_sha256"] = alpha_codec_sha256
     try:
         with (output / "objects.bin").open("xb") as objects, (output / "resources.bin").open("xb") as resources, (output / "index.jsonl").open("x") as index:
             for selected_bundle in profile["bundles"]:
@@ -224,7 +244,7 @@ def produce(profile_path, profile_sha256, pc, output, jpeg_codec=None, jpeg_code
                         body = BUNDLE.exact(member, selected["bytes"])
                         if hashlib.sha256(body).hexdigest() != selected["sha256"]:
                             raise ValueError("original texture body drift")
-                        pixels = pixels_input(bundle, body, selected, jpeg_codec)
+                        pixels = pixels_input(bundle, body, selected, jpeg_codec, alpha_codec)
                         pixel_sha = hashlib.sha256(pixels).hexdigest()
                         for target in selected["outputs"]:
                             if pixel_sha != target["pixel_sha256"] or len(pixels) != target["pixel_bytes"]:
@@ -262,6 +282,8 @@ def produce(profile_path, profile_sha256, pc, output, jpeg_codec=None, jpeg_code
                             raise ValueError("persisted texture extent drift")
         if jpeg_codec is not None and BUNDLE.sha(jpeg_codec) != jpeg_codec_sha256:
             raise ValueError("public JPEG codec changed during production")
+        if alpha_codec is not None and BUNDLE.sha(alpha_codec) != alpha_codec_sha256:
+            raise ValueError("public Alpha8 codec changed during production")
         receipt["outputs"] = {
             name: {"bytes": (output / name).stat().st_size, "sha256": BUNDLE.sha(output / name)} for name in ("objects.bin", "resources.bin", "index.jsonl")
         }
@@ -284,8 +306,10 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--jpeg-codec", type=Path)
     parser.add_argument("--jpeg-codec-sha256")
+    parser.add_argument("--alpha-codec", type=Path)
+    parser.add_argument("--alpha-codec-sha256")
     args = parser.parse_args()
-    produce(args.profile, args.profile_sha256, args.pc, args.output, args.jpeg_codec, args.jpeg_codec_sha256)
+    produce(args.profile, args.profile_sha256, args.pc, args.output, args.jpeg_codec, args.jpeg_codec_sha256, args.alpha_codec, args.alpha_codec_sha256)
 
 
 if __name__ == "__main__":

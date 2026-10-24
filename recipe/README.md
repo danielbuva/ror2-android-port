@@ -2252,3 +2252,25 @@ The addition is a host workspace configuration lookup; it adds no import,
 changes no shared transformation/copy function, and is unused by the phone
 producer. This is a transitive source-pin audit, not a new Android qualification.
 No native/package selection or redistribution approval changes. Audit: 2026-10-24.
+
+`owner-alpha-textures.json` is the current experimental source-only Alpha8
+Texture2D recipe for the fixed J850 target and accepted original input. Its
+selectors reuse 82 canonical original textures from nine PC bundles for 4,326
+target records. Canonicalization requires matching original pixel hashes and
+all unchanged serialized fields; names, storage extents and target hashes remain
+explicit relationships. The profile contains only minimum paths/IDs, field
+layouts, hashes and importer/storage settings. It contains no alpha samples,
+encoded blocks, target byte frames, protected source, SDK binary or private
+identifier. Every produced image byte comes from the owner's source Alpha8
+samples through a public encoder, including generic zero RGB defined by the
+pinned source export format.
+
+The authored `texture_alpha.cpp` adapter and `build_texture_alpha.py` use an
+explicit, separately acquired pinned Ericsson ETCPACK source archive. Upstream
+encoder source is unchanged and is not vendored or redistributed in source
+form. The build retains the provider's Software License Agreement and an
+addition/provenance notice beside private outputs. Codec/profile outputs and
+raw discovery evidence stay ignored. The public recipe/adapter introduces no
+ownership, authentication or entitlement behavior. Provenance, licensing,
+privacy and sensitive-content audit: 2026-10-24. Phone qualification remains a
+separate recorded gate until its complete device case passes.
