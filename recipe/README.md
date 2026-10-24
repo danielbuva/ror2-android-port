@@ -2432,6 +2432,11 @@ SDK binary is copied. Its DEX and unique temporary markers are generated from
 tracked source, hash-verified and removed by the existing SDK tool workflow.
 Raw pending files and recovery evidence stay private. Provenance/privacy audit:
 2026-10-24; native device qualification remains separate from host compilation.
+The actor explicitly exits and has a daemon deadline after inspection of the
+Android 13 FileObserver thread lifecycle (AOSP android-13.0.0_r1); no platform
+implementation is copied. Authored JVM fixtures exercise exit with a live
+non-daemon peer and deadline termination. Initial settings bytes and observer
+failure streams remain private evidence, not public fixtures.
 
 J1102 adds authored APK input selection for the three explicit code outputs,
 synthetic ZIP/tool witnesses, and documentation of the existing Vulkan linked

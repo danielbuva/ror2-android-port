@@ -117,6 +117,12 @@ def check_settings_write_interrupt(expected_apk_sha256=None):
         before_profile = protected_hashes()
         before_raw = _read_raw(device, primary)
         before = json.loads(before_raw.lstrip("\ufeff"))
+        before_file = out / "before-primary.private"
+        device.cmd("pull", primary, str(before_file))
+        before_hash = device.sh("sha256sum", primary).split()[0]
+        if sha(before_file) != before_hash:
+            raise RuntimeError("Initial primary evidence transfer hash differs")
+        result["primary_before"] = dict(sha256=before_hash, bytes=before_file.stat().st_size)
         report = menu()
         tap("settings-open", report, report["settings"]["buttonX"], report["settings"]["buttonY"])
         report = wait(lambda r: r["settings"]["visible"] is True)
@@ -166,7 +172,14 @@ def check_settings_write_interrupt(expected_apk_sha256=None):
                 # its final UP/wait completes. Only the independent CREATE/stop
                 # witness and retained pending file below can qualify this case.
                 result["save_gesture"] = dict(success=False, error=str(error))
-            raw = future.result(timeout=40)
+            try:
+                raw = future.result(timeout=40)
+            except Exception as error:
+                for stream in ("stdout", "stderr"):
+                    captured = getattr(error, stream, None)
+                    if isinstance(captured, (bytes, str)):
+                        (out / ("observer." + stream)).write_bytes(captured.encode() if isinstance(captured, str) else captured)
+                raise
             (out / "observer.stdout").write_text(raw)
             observed = json.loads(raw)
         stopped_pid = pid
@@ -177,6 +190,8 @@ def check_settings_write_interrupt(expected_apk_sha256=None):
         if device.sh("pidof", PACKAGE, check=False).strip():
             raise RuntimeError("Owned writer remained after force-stop")
         after_raw = _read_raw(device, primary)
+        if device.sh("sha256sum", primary).split()[0] != before_hash:
+            raise RuntimeError("Interrupted transaction changed the original primary bytes")
         state = _remote_path_state(device, pending)
         interrupted_transaction(before_raw, after_raw, dict(state=state), observed)
         result["interruption"] = observed

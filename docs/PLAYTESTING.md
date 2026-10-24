@@ -148,7 +148,10 @@ separate opt-in attribution case and must not be mixed with this measurement.
 The settings case observes a native pending-file creation and requests an owned
 package stop, preserving the existing preference values. It accepts recovery
 only after proving that the old primary and an actual uncommitted pending file
-survived. A completed save or missed interruption window fails the case. This
+survived, including a hash-verified private copy of the initial primary. The
+SDK actor has a bounded lifetime independent of Android observer threads;
+failure output is retained. A completed save or missed interruption window
+fails the case. This
 diagnostic does not qualify power loss, ENOSPC or a physical touchscreen.
 
 ## Review feedback and finish
