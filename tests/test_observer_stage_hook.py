@@ -66,6 +66,7 @@ class MusicObserverStageHookTests(unittest.TestCase):
             "recipe/assembly-transforms.json",
             "recipe/native-view-camera-transform.json",
             "scripts/lab/original_music_output_observer_build_hook.py",
+            "scripts/lab/common.py",
             "scripts/lab/native_view_camera_transform.py",
             "scripts/lab/native_view_camera_resolver.py",
             "tools/assembly-transforms/MusicOutputObserverCecilTransform.cs",

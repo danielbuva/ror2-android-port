@@ -94,6 +94,7 @@ class CameraRestorePredecessorTests(unittest.TestCase):
         lab.mkdir(parents=True)
         module_path = lab / "native_view_camera_build_hook.py"
         shutil.copy2(self.module_source, module_path)
+        shutil.copy2(self.module_source.with_name("common.py"), lab / "common.py")
         module_spec = importlib.util.spec_from_file_location("camera_restore_subject", module_path)
         self.assertIsNotNone(module_spec)
         module = importlib.util.module_from_spec(module_spec)

@@ -64,6 +64,7 @@ class DefaultReceiptRestoreTests(unittest.TestCase):
         hook_dir = root / "scripts/lab"
         hook_dir.mkdir(parents=True)
         shutil.copy2(CANDIDATE / "scripts/lab/native_view_camera_build_hook.py", hook_dir)
+        shutil.copy2(CANDIDATE / "scripts/lab/common.py", hook_dir)
         spec = importlib.util.spec_from_file_location("r6_camera_restore_subject", hook_dir / "native_view_camera_build_hook.py")
         module = importlib.util.module_from_spec(spec)
         sys.modules[spec.name] = module

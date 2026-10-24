@@ -78,6 +78,7 @@ class PreDelegateRestoreTests(unittest.TestCase):
         (self.root / "scripts/lab").mkdir(parents=True)
         (self.root / "environment/toolchain.json").write_text("{}\n")
         shutil.copy2(HOOK, self.root / "scripts/lab/native_view_camera_build_hook.py")
+        shutil.copy2(HOOK.with_name("common.py"), self.root / "scripts/lab/common.py")
         shutil.copy2(REPO / "recipe/native-view-camera-transform.json", self.root / "recipe/native-view-camera-transform.json")
 
     def fixture(self, case, mutation=None):
