@@ -51,3 +51,28 @@ outside deleted lanes so removal/recreation cannot split contenders. The pruner
 uses this same teardown for old stopped lanes; active/recent lanes are retained.
 Creation and teardown record free space; every build requires at least 100 GiB
 free. APFS logical sizes do not represent extra physical allocation.
+
+## Iteration bundle compression
+
+The accepted bundle setting already uses `ChunkBasedCompression` (LZ4HC).
+Keep that default for acceptance. To evaluate content changes without bundle
+compression, use an isolated lane:
+
+```sh
+LAB_LANE=second ./dev prototype --action whole-catalog-build --bundle-compression uncompressed
+```
+
+This still builds the complete bundle map, preserving dependency packing.
+Unity's existing incremental bundle builder reuses unchanged bundles. A repeat
+of the uncompressed action skips the entire bundle phase only when the staged
+content inputs, allowed player-code membership and every generated payload hash
+match its separate `whole-catalog-uncompressed-base.json`. Content or payload
+changes rebuild the map. It never updates the normal frozen-payload ledger or
+APK splice anchor. The result is marked iteration-only.
+
+After uncompressed work, run an ordinary full lane build to restore LZ4 bundles
+and establish the normal code/fast-build anchor. Normal code-only actions retain
+their existing frozen-payload checks and refuse an uncompressed payload. No
+compression option is accepted in the canonical context or destination rebuild.
+Bundle timing and bounded start/end log markers identify the measured phase;
+they do not claim that all bundle serialization time is compression.

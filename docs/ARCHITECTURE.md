@@ -3246,6 +3246,14 @@ or teardown and makes no Android appearance claim.
 
 ## Shared worktree build ownership
 
+`build.py` and `whole_catalog.py` own the lane-only iteration bundle-compression
+option: the accepted chunked LZ4 default is unchanged; explicit uncompressed
+builds use a separate exact-content/payload reuse ledger and iteration receipt.
+`LabBuild.cs` selects the bundle option without changing the bundle map and logs
+the bundle-phase boundaries. Normal anchors and frozen payloads remain separate;
+an ordinary full build restores them after iteration. Setup/teardown and commands
+are in [build lanes](build-lanes.md#iteration-bundle-compression).
+
 `scripts/lab/build_lanes.py` owns current `./dev lane` creation/list/removal and
 `LAB_LANE=NAME` build dispatch. Each detached checkout has an APFS clone of
 prepared inputs, private writable editor/Gradle state, its own MCP port and a
