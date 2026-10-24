@@ -458,9 +458,10 @@ public sealed class NovaInputBridge : MonoBehaviour
         diagnosticInputEdgeCounts[3] = AdvanceDiagnosticInputEdgeCount(diagnosticInputEdgeCounts[3],
             diagnosticInputEdgeWitnessEnabled, bank.skill4.justPressed);
         fixedTicks++;
+        if (!diagnosticInput)
+            ObserveTouchBank(touchManual);
         if (touchManual)
         {
-            ObserveTouchBank();
             touchControls.ConsumeFixedTick();
         }
         if (holdAutomatic)
@@ -473,13 +474,14 @@ public sealed class NovaInputBridge : MonoBehaviour
         jumpLatched |= down && !jumpHeld;
         jumpHeld = down;
     }
-    void ObserveTouchBank()
+    void ObserveTouchBank(bool countTouchPresses)
     {
         if (touchControls == null || bank == null) return;
         var report = touchControls.report;
         report.manualBankHeldMask = (bank.jump.down ? 1 : 0) | (bank.skill1.down ? 2 : 0) |
             (bank.skill2.down ? 4 : 0) | (bank.skill3.down ? 8 : 0) | (bank.skill4.down ? 16 : 0) |
             (bank.activateEquipment.down ? 32 : 0) | (bank.interact.down ? 64 : 0) | (bank.sprint.down ? 128 : 0);
+        if (!countTouchPresses) return;
         if (bank.jump.justPressed) report.bankPresses[0]++;
         if (bank.skill1.justPressed) report.bankPresses[1]++;
         if (bank.skill2.justPressed) report.bankPresses[2]++;

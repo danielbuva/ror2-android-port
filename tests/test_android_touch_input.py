@@ -32,13 +32,14 @@ class AndroidTouchInputTests(unittest.TestCase):
             "public void LookTouch(" + method + "}\n"
         )
         bridge_source = (ROOT / "tools/unity/runtime/input/NovaInputBridge.cs").read_text()
-        bank_method = bridge_source.split("    void ObserveTouchBank()", 1)[1].split("    public void Neutral()", 1)[0]
+        bank_method = bridge_source.split("    void ObserveTouchBank(bool countTouchPresses)", 1)[1].split("    public void Neutral()", 1)[0]
         bank = Path(cls.temp.name) / "Bank.cs"
         bank.write_text(
             "public sealed class BankFixture { public sealed class Button { public bool down,justPressed; } "
             "public sealed class Bank { public Button jump=new Button(),skill1=new Button(),skill2=new Button(),skill3=new Button(),"
             "skill4=new Button(),activateEquipment=new Button(),interact=new Button(),sprint=new Button(); } "
-            "public Bank bank=new Bank(); public AndroidTouchInput touchControls=new AndroidTouchInput(); public void ObserveTouchBank()" + bank_method + "}\n"
+            "public Bank bank=new Bank(); public AndroidTouchInput touchControls=new AndroidTouchInput(); "
+            "public void ObserveTouchBank(bool countTouchPresses)" + bank_method + "}\n"
         )
         result = subprocess.run(
             [

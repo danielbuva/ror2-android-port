@@ -136,13 +136,20 @@ static class AndroidTouchInputHost
             var fixture = new BankFixture();
             var button = (BankFixture.Button)typeof(BankFixture.Bank).GetField(fields[i]).GetValue(fixture.bank);
             button.down = button.justPressed = true;
-            fixture.ObserveTouchBank();
+            fixture.ObserveTouchBank(true);
             Check(fixture.touchControls.report.manualBankHeldMask == 1 << i, "bank held slot alias: " + fields[i]);
             Check(fixture.touchControls.report.bankPresses[i] == 1, "native edge not observed: " + fields[i]);
-            button.justPressed = false; fixture.ObserveTouchBank();
+            button.justPressed = false; fixture.ObserveTouchBank(true);
             Check(fixture.touchControls.report.bankPresses[i] == 1, "held state invented another native edge");
-            button.down = false; fixture.ObserveTouchBank();
+            button.down = false; fixture.ObserveTouchBank(false);
             Check(fixture.touchControls.report.manualBankHeldMask == 0, "bank release not observed");
+            button.down = button.justPressed = true;
+            fixture.ObserveTouchBank(false);
+            Check(fixture.touchControls.report.manualBankHeldMask == 1 << i, "physical fallback bank state is stale");
+            Check(fixture.touchControls.report.bankPresses[i] == 1, "physical fallback invented a touch edge");
+            button.down = button.justPressed = false;
+            fixture.ObserveTouchBank(false);
+            Check(fixture.touchControls.report.manualBankHeldMask == 0, "physical fallback release is stale");
         }
     }
     static void Main(string[] args)
