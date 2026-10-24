@@ -3251,7 +3251,7 @@ public sealed partial class PortSession
             if (coordinator.recoveredHud && world.health > 0)
             {
                 GUI.Label(new Rect(20, Screen.height - 30, Screen.width - 40, 26),
-                          "Offline composition · source UI/shader approximation · audio unavailable");
+                          "Offline play");
                 return;
             }
             string text = "Offline gameplay lab — " +

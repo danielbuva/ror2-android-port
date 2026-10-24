@@ -57,6 +57,16 @@ produce the file from the input, prefer tracking the generator.
 
 ## Audit record
 
+The requested-audio source-scene transformation preserves original Wwise/RTPC
+blocks from the owner's accepted local export through the existing generator.
+The public change contains authored selection/lifecycle logic and synthetic
+contracts only; no serialized scene body, event payload, bank or middleware
+implementation is included. Default-off transformation and source hierarchy
+ownership remain intact. Pinned R2API.Sound bank initialization/lifetime knowledge
+informs admission, without copying its implementation or adding another native
+engine owner. Manual provenance/privacy/licensing review: 2026-10-24. Generated
+scenes, receipts and raw device evidence remain ignored.
+
 `owner-uncompressed-textures.json` selects original bundle/member/object and
 pixel extents, field bounds, destination identities/layout and verification
 hashes. Pixel operations are copying original bytes, standard BC1 top-mip

@@ -25,8 +25,8 @@ public sealed partial class PortSession
         public int activeRoots, terrainMaterials, surfaceMaterials, terrainTextureMaterials;
         public bool terrainTexturesBound;
         public int objects, renderers, billboards, missingBillboardAssets, emptyLODRendererSlots, meshColliders, colliders, worldColliders,
-            nonWorldColliders, missingMeshes, missingColliderMeshes, behaviours, previewDisableComponents, previewsInactive,
-            previewsInactiveByParent;
+            nonWorldColliders, missingMeshes, missingColliderMeshes, behaviours, sourceAudioComponents, previewDisableComponents,
+            previewsInactive, previewsInactiveByParent;
         public int sourceRockZones, sourceRockPrefabSlots, sourceRockPrefabsResolved, sourceRockComponentsResolved,
             sourceRockZonePointsResolved, sourceDustManagers, sourceDustPrefabsResolved, sourceDustLocationsResolved;
         public Vector3 spawnPosition, groundPosition, groundNormal, entryOrigin;
@@ -120,6 +120,10 @@ public sealed partial class PortSession
         {
             this.coordinator = coordinator;
         }
+        static bool IsOriginalSceneAudio(MonoBehaviour component)
+        {
+            return component && (component.GetType().Name.StartsWith("Ak", StringComparison.Ordinal) || component is RTPCController);
+        }
         public void ActivateSourceGameManager()
         {
             var previous = coordinator.eventHost ? coordinator.eventHost.GetComponent<GlobalEventManager>() : null;
@@ -168,9 +172,8 @@ public sealed partial class PortSession
             var info = root.GetComponent<SceneInfo>();
             var population = root.GetComponent<ClassicStageInfo>();
             coordinator.Check(info && population &&
-                                  root.GetComponents<MonoBehaviour>().All(x => x && !x.GetType().FullName.StartsWith("Ak") &&
-                                                                               x.GetType().Name != "RTPCController"),
-                              "Original source scene context contains missing/native-audio components");
+                                  root.GetComponents<MonoBehaviour>().All(x => x && (GameAudioOriginalOwner.Ready || !IsOriginalSceneAudio(x))),
+                              "Original source scene context contains missing components or unavailable native audio");
             ActivateSourceGameManager();
             try
             {
@@ -301,6 +304,7 @@ public sealed partial class PortSession
                 }
             }
             var previewCallbacks = roots.SelectMany(x => x.GetComponentsInChildren<MonoBehaviour>(true)).ToArray();
+            coordinator.r.stage.sourceAudioComponents = previewCallbacks.Count(IsOriginalSceneAudio);
             // Shipped inactive variant parents legitimately prevent Start from running.
             coordinator.r.stage.previewDisableComponents = previewCallbacks.Count(x => x && x.GetType() == typeof(DisableOnStart));
             coordinator.r.stage.previewsInactive = previewCallbacks.Count(x => x && x is DisableOnStart && !x.gameObject.activeInHierarchy);

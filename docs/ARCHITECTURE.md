@@ -1239,8 +1239,21 @@ The same build hook synchronizes the original `SoundEmitter.prefab` before
 project/cache hashing. Requested audio restores its exact accepted `AkGameObj`
 component; default off restores the sanitizer's stripped form. Accepted input,
 source bytes, asset/script GUIDs and the selected project must match before
-writing. The original component owns its runtime lifecycle. Other stripped
-Wwise components remain unchanged; no replacement emitter is introduced.
+writing. The original component owns its runtime lifecycle; no replacement emitter
+is introduced. `source_scene_candidate.prepare` also consumes that existing
+validated audio selection: requested scenes preserve original Wwise/RTPC
+components, serialized fields, references and enable states. Default-off scenes
+retain the historical omission. Global-owner roots remain inactive. The current
+full build synchronizes that mode before stage-map/cache generation; code-only
+and fast builds refuse a change requiring scene content. Destination R6 uses
+the same selection, while R9 refuses a changed mode instead of rewriting R6.
+The process audio admission already precedes selected stage loading.
+`StageGeometrySession` permits source SceneInfo audio only when the original
+owner is Ready and records its loaded scene-audio component census. Original
+scene activation/unload retains callback/bank/event teardown ownership. No
+extra initialization, event, volume, position or output routing is added.
+Host contracts cover scene variants and source activation/rollback/retirement;
+composed stage audio and natural Quit require device evidence.
 `original_game_audio_stage.py` checks exact assembly preimages, GUIDs and owned
 payloads before staging. Requested stages also package the exact bank-cohort
 receipt at `Assets/StreamingAssets/stage-receipt.json`, the URL consumed by
