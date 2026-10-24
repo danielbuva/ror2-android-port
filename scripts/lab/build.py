@@ -192,6 +192,20 @@ def editor(target="lab", action="inspect"):
             )
         if action == "minimal-build":
             preflight_host()
+        if target == "lab" and action in {"siren-input-host", "source-camera-graphics-host"}:
+            from whole_catalog import copy_catalog_asset
+
+            fixture, owners = (
+                ("SirenEggDiagnosticInputExactEditorFixture.cs", ["input/SirenEggDiagnosticInput.cs", "world/IntegratedWorldBoundary.cs"])
+                if action == "siren-input-host"
+                else ("SourceCameraGraphicsHost.cs", ["input/AndroidNativeSourceCameraRigOwner.cs"])
+            )
+            for owner in owners:
+                staged = WORK / "lab-project/Assets/LabLoadingScene" / Path(owner).name
+                if not staged.is_file() or sha(staged) != sha(ROOT / "tools/unity/runtime" / owner):
+                    raise RuntimeError("Stage the current committed runtime through a build before this editor fixture: " + owner)
+            copy_catalog_asset(ROOT / "tools/catalog" / fixture, WORK / "lab-project/Assets/Editor" / fixture)
+            editor("lab", "refresh")
         env = os.environ.copy()
         handoff_env, pass_fds = active_lock_handoff()
         env.update(handoff_env)

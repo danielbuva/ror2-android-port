@@ -2641,8 +2641,10 @@ input ownership/yield/stop cases; it does not certify actual mission completion.
 Current `./dev editor --target lab --action siren-input-host` runs this existing
 fixture against the staged, compiled owner in the idle exact editor. It records
 the source-asset and range/selection/input-lifetime checks without starting a
-server or native combat. Stage the committed source through a build first;
-editor fixture success remains separate from the device encounter gate.
+server or native combat. Stage the committed runtime through a build first. Both current fixture actions
+refuse stale runtime source hashes, stage only their authored Editor fixture and
+refresh the exact editor before execution; fixture success remains separate
+from the device encounter gate.
 
 Engineer shield compatibility (`EngiShieldHitGuard.cs`):
 `IntegratedWorldSession` acquires `EngiShieldHitGuardTemplateLease` only for the
