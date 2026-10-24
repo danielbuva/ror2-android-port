@@ -470,7 +470,7 @@ app tool delivery and complete phone-only installation remain open.
 
 ## Produce ETC1 single-mip textures directly from original PC bundles
 
-Current experimental source-only path. The complete host-qualified profile is
+Current experimental source-only path. The complete host/phone-qualified profile is
 `recipe/owner-rgb-textures.json`, SHA-256
 `2c4c1c416f676d09a93f987d1ea9f1ecda46aa279baee5799a196beec59fc4ed`.
 It covers all 281 ETC1/single-mip records, including both authored composition
@@ -498,5 +498,8 @@ paths select JPEG export. Normal unpacking uses original AG coordinates and an
 integer square root; original pixel samples feed every output. The shared
 producer verifies every original input and produced/persisted body/resource
 extent before success, retaining failed outputs and refusing existing output
-or codec drift. Full phone qualification is pending the combined content case;
-complete bundles, mip/cubemap production and ordinary app delivery remain open.
+or codec drift. [J1088](../../../docs/PORTING_JOURNAL.md#j1088--produce-every-single-mip-etc1-texture-from-pc-bundles-on-android)
+qualifies all 281 records, the shared codec build and the complete 5,006-record
+RGB/Alpha8/uncompressed regression case on Android. Twelve authored contracts
+pass with both real codecs. Complete bundles, mip/cubemap production and
+ordinary app delivery remain open.

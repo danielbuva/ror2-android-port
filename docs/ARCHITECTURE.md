@@ -104,8 +104,9 @@ The same codec/producer now owns the ETC1 single-mip source path through
 policy and AG normal unpacking feed explicit color/normal encoder modes.
 The Alpha8 helper is generalized as `build_texture_etc.py` / `texture_etc.cpp`,
 with `--etc-codec` admission for both profiles. Setup/state/teardown and source/
-persisted-output verification stay with the existing owners. Host qualification
-passes; the complete combined phone case is the remaining admission gate.
+persisted-output verification stay with the existing owners. J1088 qualifies
+all 281 records on Android, the shared codec build and complete 5,006-record
+RGB/Alpha8/uncompressed regression case. Mips and complete bundles remain open.
 `build_sdk_runner.py` owns current experimental public Box64 acquisition-by-build
 for standalone owner-supplied SDK tools. Explicit unchanged upstream source,
 the pinned SDK NDK and host archive tools produce a private Android runner.
