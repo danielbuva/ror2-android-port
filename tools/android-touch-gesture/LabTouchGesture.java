@@ -22,9 +22,12 @@ public final class LabTouchGesture {
     private final ArrayList<Point> points = new ArrayList<>();
     private final Object input;
     private final Method inject;
+    private final Object activity;
+    private final Method uidState;
     private final int uid, device;
     private long downTime;
     private int sent;
+    private String termination = "steps-complete";
 
     private LabTouchGesture(int uid) throws Exception {
         if (Process.myUid() != 2000 || uid < 10000)
@@ -34,6 +37,8 @@ public final class LabTouchGesture {
         input = manager.getMethod("getInstance").invoke(null);
         // Refuse unavailable targeted injection; never fall back to all windows.
         inject = manager.getMethod("injectInputEvent", InputEvent.class, int.class, int.class);
+        activity = Class.forName("android.app.ActivityManager").getMethod("getService").invoke(null);
+        uidState = Class.forName("android.app.IActivityManager").getMethod("getUidProcessState", int.class, String.class);
         int found = 0;
         for (int id : InputDevice.getDeviceIds()) {
             InputDevice candidate = InputDevice.getDevice(id);
@@ -43,6 +48,16 @@ public final class LabTouchGesture {
             }
         }
         device = found;
+    }
+    private boolean foreground() throws Exception {
+        // PROCESS_STATE_TOP is 2 on the supported Android 13 framework.
+        if (((Integer)uidState.invoke(activity, uid, "com.android.shell")) == 2) return true;
+        if (sent == 0) throw new IllegalStateException("Owned UID left foreground before injection");
+        // Home ends the window's pointer stream. Do not inject a stale UP or
+        // CANCEL into a background window, or keep a shell actor across sleep.
+        termination = "focus-lost";
+        points.clear();
+        return false;
     }
     private int index(int id) {
         for (int i = 0; i < points.size(); i++) if (points.get(i).id == id) return i;
@@ -83,6 +98,7 @@ public final class LabTouchGesture {
             throw new IllegalArgumentException("Use 1 to 128 gesture steps");
         try {
             for (int i = 0; i < steps.length(); i++) {
+                if (!foreground()) return;
                 JSONObject step = steps.getJSONObject(i);
                 String action = step.getString("action");
                 if (action.equals("wait")) {
@@ -90,7 +106,13 @@ public final class LabTouchGesture {
                     totalWait += milliseconds;
                     if (milliseconds < 0 || totalWait > 30000)
                         throw new IllegalArgumentException("Gesture waits exceed 30 seconds");
-                    SystemClock.sleep(milliseconds);
+                    long until = SystemClock.uptimeMillis() + milliseconds;
+                    while (true) {
+                        if (!foreground()) return;
+                        long remaining = until - SystemClock.uptimeMillis();
+                        if (remaining <= 0) break;
+                        SystemClock.sleep(Math.min(remaining, 50));
+                    }
                     continue;
                 }
                 int id = step.getInt("id"), slot = index(id);
@@ -119,7 +141,7 @@ public final class LabTouchGesture {
             }
         } finally {
             if (!points.isEmpty()) {
-                try { send(MotionEvent.ACTION_CANCEL); }
+                try { if (foreground()) send(MotionEvent.ACTION_CANCEL); }
                 finally { points.clear(); }
             }
         }
@@ -128,6 +150,7 @@ public final class LabTouchGesture {
         JSONObject request = new JSONObject(new String(Files.readAllBytes(Paths.get(args[0])), StandardCharsets.UTF_8));
         LabTouchGesture gesture = new LabTouchGesture(Integer.parseInt(args[1]));
         gesture.execute(request.getJSONArray("steps"));
-        System.out.println(new JSONObject().put("success", true).put("events", gesture.sent).toString());
+        System.out.println(new JSONObject().put("success", true).put("events", gesture.sent)
+            .put("termination", gesture.termination).toString());
     }
 }

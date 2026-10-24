@@ -3629,5 +3629,11 @@ pointer-ID/action contract; no platform implementation is copied. Each gesture
 is bounded to 128 steps/30 s of waits, cancels a final hold and removes its
 unique temporary device DEX/request files. A dispatch failure stops only the
 still-matching owned game process. Success leaves the session/display running.
+The driver observes only the owned UID's foreground process state through the
+normal shell API. Leaving that state ends the pointer stream with
+`termination: focus-lost`, before display sleep; completed steps report
+`termination: steps-complete`. It sends no stale pointer event to a background
+window. The caller checks termination and verifies native focus release/resume
+separately.
 Receipts and raw motion evidence stay ignored. This verifies software delivery;
 it never qualifies physical buttons, a touchscreen digitizer or normal play.
