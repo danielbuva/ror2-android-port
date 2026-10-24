@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1096](PORTING_JOURNAL.md#j1096--restore-the-source-collision-policy-before-native-projectile-impacts) | 2026-10-24 | Restore the source collision policy before native projectile impacts | **Hypothesis and prior evidence.** |
 | [J1090](PORTING_JOURNAL.md#j1090--account-for-original-siren-boss-and-probe-destruction) | 2026-10-24 | Account for original Siren boss and probe destruction | 2026-10-24 UTC. |
 | [J1089](PORTING_JOURNAL.md#j1089--prepare-original-siren-eggs-on-ordinary-stage-entry) | 2026-10-24 | Prepare original Siren eggs on ordinary stage entry | 2026-10-24 UTC. |
 | [J1087](PORTING_JOURNAL.md#j1087--honor-native-siren-target-range-and-verify-original-graphics-clones) | 2026-10-24 | Honor native Siren target range and verify original graphics clones | 2026-10-24 UTC. |
