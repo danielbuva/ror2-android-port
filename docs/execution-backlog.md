@@ -44,9 +44,12 @@ result in the journal.
       [J1091](PORTING_JOURNAL.md#j1091--qualify-native-heap-capture-and-identify-retained-laboratory-log-payloads)
       attributes captured retention to diagnostic JSON and returned bullet hits.
       [J1092](PORTING_JOURNAL.md#j1092--correct-captured-retention-producers-and-preserve-a-failed-commando-series)
-      builds and installs the corrections, but its first Commando case stops on
-      the known LightningStake error before completing any session. Preserve that
-      failure separately; it provides no corrected growth measurement.
+      builds and installs the corrections; preserve its zero-session failure.
+      [J1100](PORTING_JOURNAL.md#j1100--complete-twelve-corrected-commando-sessions-and-retain-a-smaller-growth-frontier)
+      completes all 12 corrected Commando sessions with no runtime errors, but
+      the consistent menu samples retain 0.579 MiB/session positive growth.
+      Attribute that smaller frontier with a separate native heap pair before
+      claiming a full bound; retain the post-collection spike in the evidence.
 - [ ] Integrate original position indicators (`TeamComponent.Init`, player/NPC/boss
       indicator prefabs and Nameplate text), compared against PC captures (J787).
 - [ ] Attribute the crowded-stage enumeration hot path from the app-scope trace

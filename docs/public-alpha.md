@@ -143,6 +143,9 @@ qualification remain separate from these laboratory installs.
 
 - [ ] Attribute and bound repeated-session managed growth, then qualify a long
       device series ([open evidence](execution-backlog.md#stability-and-performance)).
+      [J1100](PORTING_JOURNAL.md#j1100--complete-twelve-corrected-commando-sessions-and-retain-a-smaller-growth-frontier)
+      completes 12 corrected Commando sessions, reducing matched menu growth to
+      0.579 MiB/session; the remaining positive slope still prevents a full bound.
 - [ ] Complete real interrupted-write/ENOSPC and sustained performance/thermal
       cases on supported hardware. [J1071](PORTING_JOURNAL.md#j1071--qualify-software-touch-native-pause-and-recovery)
       qualifies controlled VM-crash and genuine ANR cold recovery, invalid-pending

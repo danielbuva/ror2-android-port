@@ -38180,3 +38180,64 @@ Revisit with a completed guarded Commando series, preserving this failed case,
 and classify any recurrence separately. J1086 remains the completed uncorrected
 12-session measurement; J1091 remains the heap attribution, not corrected-player
 acceptance.
+
+## J1100 — Complete twelve corrected Commando sessions and retain a smaller growth frontier
+
+**Hypothesis and scope.** Repeat J1086's uninstrumented series after J1092's
+producer and returned-hit corrections, retaining the failed zero-session case
+separately. Use the same normal LZ4 APK
+`39f3dd9bf3a8da380153eec481c80c4e6be0752eb2a9745ca61c2766362a8a1a`,
+build source `e27cffac1bfd456a4ffcfad50788c3fe9cd64ad4`, existing 266-file
+payload, internal-storage device and seed 2. Explicitly select Commando with
+survivor override false; all five gameplay assists are off. Diagnostic automatic
+input remains assisted. No heap snapshot, root walk, gameplay/error suppression
+or new build is used. J1091 and its pinned prior art supply the root attribution.
+
+**Completed result.** All **12 sessions pass** native UI-abandon, original
+world/network cleanup, unchanged progression-count checks and same-process
+restart into menu 13. Every completed report has native **CommandoBody** combat
+facts. There is no first failure or unexplained current-process runtime error;
+the known LightningStake symptom does not recur in this case. This does not
+prove its repair. The final resource sample is at 2,263.991 process seconds.
+
+Post-collection managed usage, in session order, is 145.34, 149.24, 149.41,
+**664.63**, 147.16, 148.46, 152.45, 148.82, 152.26, 150.70, 152.52 and
+154.16 MiB. Preserve the fourth-session spike: its following menu collection
+reports 136.81 MiB. The post-collection regression is -13.58 MiB/session because
+that early spike dominates; it is not evidence of negative retained growth.
+
+At the consistent before-presentation menu samples 2–13, managed usage instead
+rises from **134.05 to 140.90 MiB**, a **0.579 MiB/session** linear slope and
+6.85 MiB net increase. The same phase in J1086 rises from 166.98 to 683.34 MiB,
+with a 46.879 MiB/session slope. The dominant captured growth is substantially
+reduced, but **a full managed-growth bound is refused**: the smaller positive
+frontier still needs attribution. Neither the spike nor the lower samples are
+dropped to obtain a preferred verdict.
+
+Menu PSS ranges from 3,402.70 to 3,529.11 MiB and finishes at 3,454.03 MiB;
+its sessions 2–12 slope is -3.83 MiB/session. This is the observed envelope of
+this finite case, not an indefinite resident-memory or supported-device limit.
+The final menu has zero live completed probes/reports, zero live retired catalog
+locators/manifests, 34,558 GameObjects, 1,582 textures and four bundles. Existing
+callback/cleanup contracts pass throughout. The new returned-hit cleanup runs
+on the device and releases destroyed targets without a live-world mutation.
+No ordinary input, full normal run, sustained frame-time or thermal claim follows.
+
+**Evidence, teardown and revisit.** Raw case:
+`work/device/<selected-device>/experiments/session-memory/20261024T205729.554764Z/`.
+The authored numeric comparison is retained privately as
+`work/coordination/alpha-touch-acceptance-20261024/corrected-twelve-summary.json`;
+the preceding matched series is J1086's `20261024T164502.466160Z` case.
+The SDK actor/source itself is not used by this series.
+
+Independent terminal verification at 21:35:33 UTC rehashes installed APK bytes,
+checks selector/process absence and OLED sleep, then releases the shared lease.
+The priority owner-build worker acquires the next lease; alpha does not start
+another case ahead of it. Mandatory primary pruning completes. No original game
+files, other worker data, package identity or storage configuration change.
+
+Land the verified producer/dead-target correction with this narrower result.
+After the priority handoff, use the existing opt-in native heap pair to attribute
+the remaining menu slope on the next matched normal candidate. Keep that capture
+separate from an uninstrumented bound/performance case. A real pending-write
+interruption and the sustained session remain separate acceptance work.
