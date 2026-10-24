@@ -20,6 +20,9 @@ class OwnerCodeBackendTests(unittest.TestCase):
         runner_spec = importlib.util.spec_from_file_location("android_owner_runner_test", PATH.parent / "run_android.py")
         runner = importlib.util.module_from_spec(runner_spec)
         runner_spec.loader.exec_module(runner)
+        environment = patch.dict(runner.os.environ)
+        environment.start()
+        self.addCleanup(environment.stop)
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve()
             inputs, runtime, installed = [root / n for n in ("inputs", "runtime", "installed")]
