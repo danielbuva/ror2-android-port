@@ -66,8 +66,9 @@ a normal run or a memory bound.
 Record start/end times, artifact identity, selected survivor/difficulty and every
 assistance setting. Use actual physical presses for controller qualification.
 ADB/synthetic events, automatic diagnostics and host fixtures are distinct
-supporting evidence. Thor's existing route is automatic-only: its physical
-mapping and complete touch gameplay remain open.
+supporting evidence. Thor has a separate ordinary touch route; its physical
+controller mapping remains unqualified. The scoped software motion case does
+not qualify the physical touchscreen digitizer.
 
 | Case | Required observation |
 | --- | --- |
@@ -82,8 +83,9 @@ mapping and complete touch gameplay remain open.
 | Genuine loss/results | Natural defeat, native result/ledger persistence exactly once, results navigation and ready same-process restart |
 
 The [screen inventory](SCREEN_COVERAGE.md) identifies absent original screens.
-Current touch menus/equipment do not supply full touch gameplay. Keep Moon/finale
-manual. Coordinate rendering/audio/animation and an unassisted normal run with the
+Touch gestures feed the existing native input bank and camera adapter. Keep
+acquired-equipment/interaction effects and genuine play separate from a bank-edge
+witness or an empty-slot request. Keep Moon/finale manual. Coordinate rendering/audio/animation and an unassisted normal run with the
 main gameplay owner; a nonzero audio meter or loaded bundle is insufficient.
 
 ## Stability, persistence and updates

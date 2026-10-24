@@ -1097,20 +1097,24 @@ the session's own frozen APK rather than a mutable current-build pointer.
 `InputSessionPolicy` in `NovaInputBoundary.cs` owns the explicit game-input
 choice. The exact Nova model retains measured, attempt-bound physical input.
 Only the observed Thor model with the existing `-bringup` selector permits
-automatic diagnostic input without a physical mapping. Ordinary Thor, missing
-and unknown model identities refuse. `NovaInputBridge.automaticDiagnosticOnly`
+automatic diagnostic input without a physical mapping. Ordinary Thor selects
+touch input and skips the physical-map startup wait; the explicit playable-start
+configuration is still required. Missing and unknown model identities refuse.
+`NovaInputBridge.automaticDiagnosticOnly`
 defaults false, so legacy mapped and null-mapping behavior is retained.
 The validated diagnostic path reports its source and unavailable physical
 input, bypasses raw joystick/presence reads, and feeds the existing input bank.
 The offline application/settings and integrated-world owners retain touch
-menus, hide physical takeover and guard physical restart/settings consumers.
+menus, permit manual takeover when touch or measured physical input is available,
+and guard physical restart/settings consumers.
 Their existing iterator cleanup and bridge disable neutralize input and
 release session ownership. `test_portable_diagnostic_input.py` executes the
 production policy/predicates and checks consumer guards; device acceptance is
-separate (J762). Availability flags are authoritative: Unity's JSON serializer
+separate (J762). The default-start fixture also verifies that Nova keeps its
+attempt-bound mapping wait and a default-off player stays disabled.
+Availability flags are authoritative: Unity's JSON serializer
 can emit default inline mapping/raw placeholders for null runtime references;
-those wire values are not measured input. This changes existing R8 sources
-without adding a runtime file/GUID.
+those wire values are not measured input.
 
 `NovaInputBridge` also owns an opt-in cumulative skill-edge witness at the
 existing `PushState` sink. `SurvivorSkillInputCoverage` enables it only for the
@@ -3605,7 +3609,7 @@ Current `./dev prototype --action touch-gesture --target REQUEST.json` uses
 `scripts/lab/touch_gesture.py` and authored
 `tools/android-touch-gesture/LabTouchGesture.java`. The bundled SDK compiles a
 content-addressed local DEX. Requests bind the existing owned APK hash, observed
-PID and viewport; stale processes and foreign focused windows refuse before
+PID and viewport; stale processes and foreign focused windows on display 0 refuse before
 deployment. Android 13's `InputManager.injectInputEvent(event, mode, targetUid)`
 confines every motion event to the owned app UID under ordinary adb shell
 permission. Unavailable targeted injection refuses; there is no global-input
