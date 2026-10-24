@@ -106,6 +106,7 @@ authentication is needed to inspect the supplied installation.
 | `./dev check-baseline` | The standard device check on the installed APK: 35 s of assisted Lakes play, no report error, profile run count unchanged ([docs/BASELINE.md](BASELINE.md)). |
 | `./dev editor --target lab --action open` | Start the isolated exact editor and connect the pinned Unity MCP. One editor mutation at a time. |
 | `./dev editor --target lab --action siren-input-host` | Current: run the staged source-asset and range-aware Siren input fixture in the idle exact editor; no game/server or encounter acceptance. |
+| `./dev editor --target lab --action source-camera-graphics-host` | Current: check real imported profile/resource clones and seven program bindings using inactive editor fixtures; no rendering acceptance. |
 | `./dev build [--target vulkan] [--force]` | Host preflight and instrumented IL2CPP ARM64 build through MCP with a content-addressed APK receipt. Rejects stale staged runtime sources. |
 | `./dev install [--device SERIAL]` | Install on the selected device after live storage and reserve checks; rejects foreign pre-existing packages and records placement. |
 | `./dev sync-data [--device SERIAL]` | Hash-verified sync of changed payload into the selected device's runtime-reported path. |

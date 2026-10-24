@@ -3437,6 +3437,14 @@ do not create this presentation.
 `test_source_sobel_lifecycle.py` executes production setup/sample/teardown with
 inert fixtures, including original resource/profile immutability, preserved
 inactive effects, missing programs/kernels and idempotent owned teardown.
+Current `./dev editor --target lab --action source-camera-graphics-host` runs
+`SourceCameraGraphicsHost` against the staged owner and real imported profiles.
+It uses inactive authored objects to check the original public Init binding,
+seven exact program references, 22 kernels, separate resource tables and every
+serialized cloned setting/override. It verifies original assets are unchanged,
+then immediately destroys only its own edit-mode objects. Rendering and native
+deferred teardown remain separate device gates. The existing whole-catalog
+build-source staging owns this editor fixture; no new ignored build input is read.
 
 The narrow catalog root set also retains RampFog for the original post-process
 renderer. `whole_catalog.py` validates each exact address key, typed location and

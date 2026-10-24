@@ -2251,6 +2251,7 @@ def stage_build_sources(io, runtime_sources, manifest, contracts):
         "EngiShieldHitGuardHost.cs",
         "EngineerNativeOutputObserverFixture.cs",
         "SirenEggDiagnosticInputExactEditorFixture.cs",
+        "SourceCameraGraphicsHost.cs",
         "LightningStakeSourceContractFixture.cs",
         "TeleporterExitTraceSourceContractFixture.cs",
         "SkillResponseCleanupExactEditorFixture.cs",
