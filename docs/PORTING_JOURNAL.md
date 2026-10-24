@@ -33812,7 +33812,13 @@ matching compiler/processor runs and both complete comparison reports. This
 proves the complete current gameplay source cohort can be produced and compiled
 without Editor/project import. Main independently verifies all 118 artifacts,
 145 sources and 243 references, and recomputes both 16/16 target and 2/16 PC
-comparisons before returning GO for this host support scope. Full independent player stripping/roots, native
+comparisons before returning GO for this host support scope. The first required fresh-clone hook fails only the packet fixture's unchanged
+8 GiB reserve as host margin falls. Preserve that failed hook log. Compress the
+eight already-reviewed successful J1053 comparison reports into a hash-verified,
+fully restorable archive, retaining result, source, failed cases and individual
+retirement markers. No game/SDK input or rollback is deleted and no reserve or
+test is relaxed. The unchanged packet fixture then passes all three tests.
+Full independent player stripping/roots, native
 AOT/Burst, serialized content/shaders, Android tool hosting and install/runtime
 qualification remain separate requirements. No current game build is replaced;
 Architecture C and the desktop owner-build fallback remain authoritative.
