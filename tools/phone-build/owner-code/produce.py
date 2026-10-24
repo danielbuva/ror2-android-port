@@ -197,7 +197,7 @@ def verify_inputs(request, profile, sdk, sdk_state, before, work, state, output,
 
 def source_run(request, *, stop_after_conversion=False):
     """Join original-input managed production to this same backend."""
-    if set(request) - {"target", "android_tools"} != {"owner_work", "sdk_install", "source_inputs", "output"}:
+    if set(request) - {"target", "android_tools", "linux_tools"} != {"owner_work", "sdk_install", "source_inputs", "output"}:
         raise ValueError("explicit original-input owner request required")
     specification = importlib.util.spec_from_file_location("owner_code_managed_producer", HERE / "managed.py")
     managed_owner = importlib.util.module_from_spec(specification)
@@ -216,6 +216,8 @@ def source_run(request, *, stop_after_conversion=False):
     if native.sha(PROFILE) != PROFILE_SHA or native.sha(managed_owner.PROFILE) != managed_owner.PROFILE_SHA:
         raise ValueError("audited owner code profile drift")
     tools(sdk, target["player"] if target else json.loads(PROFILE.read_text()))
+    if "linux_tools" in request:
+        native.linux_tool_state(request["linux_tools"])
     native.sdk_files(sdk, json.loads(native.PROFILE.read_text()))
     output.mkdir(mode=0o700)
     result = {
@@ -234,7 +236,7 @@ def source_run(request, *, stop_after_conversion=False):
         else:
             providers = managed_owner.run(work, sdk, request["source_inputs"], output / "managed-production")
         backend_request = {"owner_work": str(work), "sdk_install": str(sdk), "managed": providers, "output": str(output / "backend")}
-        for name in ("target", "android_tools"):
+        for name in ("target", "android_tools", "linux_tools"):
             if name in request:
                 backend_request[name] = request[name]
         native.write(output / "backend-request.json", backend_request)
@@ -256,7 +258,7 @@ def source_run(request, *, stop_after_conversion=False):
 def run(request, *, stop_after_conversion=False):
     if "source_inputs" in request:
         return source_run(request, stop_after_conversion=stop_after_conversion)
-    if set(request) - {"android_tools", "target"} != {"owner_work", "sdk_install", "managed", "output"}:
+    if set(request) - {"android_tools", "target", "linux_tools"} != {"owner_work", "sdk_install", "managed", "output"}:
         raise ValueError("explicit owner backend request required")
     work, sdk = [native.canonical(request[k]) for k in ("owner_work", "sdk_install")]
     output = Path(request["output"])
@@ -268,6 +270,8 @@ def run(request, *, stop_after_conversion=False):
     if state[0] != profile["input_id"]:
         raise ValueError("unsupported legitimate game input")
     before = providers(request["managed"], profile)
+    if "linux_tools" in request:
+        native.linux_tool_state(request["linux_tools"])
     android_tools = request.get("android_tools")
     android_state = native.android_tool_state(android_tools) if android_tools else None
     if not output.is_relative_to(work) or output == work:
@@ -356,6 +360,8 @@ def run(request, *, stop_after_conversion=False):
         }
         if android_tools:
             native_request["android_tools"] = android_tools
+        if "linux_tools" in request:
+            native_request["linux_tools"] = request["linux_tools"]
         native.write(output / "native-request.json", native_request)
         result["phase"] = "native-planning" if stop_after_conversion else "native-production"
         native_result = native.run(native_request, plan_only=stop_after_conversion, **({"profile": native_profile} if target else {}))

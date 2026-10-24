@@ -12,6 +12,7 @@ import json
 import os
 from pathlib import Path, PurePosixPath
 import shutil
+import shlex
 import signal
 import struct
 import subprocess
@@ -181,6 +182,63 @@ def android_command(argv, sdk, tools, *, link=False):
     return result
 
 
+def linux_tool_state(tools):
+    """Hash an explicitly supplied Linux NDK and public user-mode runner."""
+    if set(tools) != {"qemu", "clang", "linker", "objcopy", "loader_root", "library_dirs"}:
+        raise ValueError("explicit Linux runner, NDK tools, GNU loader and libraries required")
+    paths = {n: canonical(tools[n]) for n in ("qemu", "clang", "linker", "objcopy", "loader_root")}
+    if any(not paths[n].is_file() for n in ("qemu", "clang", "linker", "objcopy")) or not paths["loader_root"].is_dir():
+        raise ValueError("invalid Linux tool kind")
+    directories = [canonical(p) for p in tools["library_dirs"]]
+    if not directories or any(not p.is_dir() for p in directories):
+        raise ValueError("explicit GNU library directories required")
+    files = [paths[n] for n in ("qemu", "clang", "linker", "objcopy")]
+    for folder in [paths["loader_root"], *directories]:
+        files.extend(p for p in sorted(folder.rglob("*")) if p.is_file())
+    return {str(p): sha(p) for p in files}
+
+
+def linux_prefix(tools):
+    return [tools["qemu"], "-L", tools["loader_root"], "-E", "LD_LIBRARY_PATH=" + ":".join(tools["library_dirs"]), "-E", "LC_ALL=C"]
+
+
+def linux_driver_arguments(argv, sdk, tools):
+    # Target data remain the exact accepted SDK's headers, startup objects and
+    # runtime libraries. Only the host executables use the Linux NDK provider.
+    ndk = sdk / "PlaybackEngines/AndroidPlayer/NDK/toolchains/llvm/prebuilt/darwin-x86_64"
+    return [
+        "--driver-mode=g++",
+        "--sysroot=" + str(ndk / "sysroot"),
+        "-resource-dir=" + str(ndk / "lib64/clang/9.0.8"),
+        "--gcc-toolchain=" + str(ndk),
+        "-B" + str(Path(tools["linker"]).parent),
+        *argv[1:],
+    ]
+
+
+def linux_invoke(argv, output, name, sdk, tools, *, env, link=False):
+    """Run the unchanged driver's actual cc1/BFD command under QEMU.
+
+    Android cannot exec a Linux child through binfmt_misc. Ask the original
+    driver for its command and invoke that one child explicitly; no compiler
+    policy, optimization, source or target library is substituted.
+    """
+    prefix = linux_prefix(tools)
+    invoke([*prefix, tools["clang"], "-###", *linux_driver_arguments(argv, sdk, tools)], output, name + "-driver", env=env)
+    rendered = (output / "logs" / (name + "-driver.log")).read_text()
+    commands = [shlex.split(line) for line in rendered.splitlines() if line.lstrip().startswith('"')]
+    if len(commands) != 1:
+        raise ValueError("Linux NDK driver did not emit one tool command")
+    command = commands[0]
+    if link:
+        if Path(command[0]).name not in {"ld", "ld.bfd", "aarch64-linux-android-ld", "aarch64-linux-android-ld.bfd"}:
+            raise ValueError("Linux NDK driver did not select BFD")
+        command[0] = tools["linker"]
+    elif command[:2] != [tools["clang"], "-cc1"]:
+        raise ValueError("Linux NDK driver did not select its cc1 compiler")
+    invoke([*prefix, *command], output, name, env=env, timeout=3600)
+
+
 def generated_profile(profile, files):
     """Keep SDK native policy; compile every translation unit from this conversion."""
     result = json.loads(json.dumps(profile))
@@ -234,7 +292,7 @@ def plan(profile, sdk, output, android_tools=None):
     return {"schema": 1, "jobs": jobs, "wrappers": wrappers, "link": link, "library": str(output / "libil2cpp.unstripped.so")}
 
 
-def invoke(argv, output, name, *, env=None, separate_stderr=False):
+def invoke(argv, output, name, *, env=None, separate_stderr=False, timeout=600):
     started = time.monotonic()
     record = {"argv": argv, "exit_code": None}
 
@@ -257,7 +315,7 @@ def invoke(argv, output, name, *, env=None, separate_stderr=False):
                 start_new_session=True,
             )
             try:
-                record["exit_code"] = child.wait(timeout=600)
+                record["exit_code"] = child.wait(timeout=timeout)
             except BaseException:
                 if child.poll() is None:
                     os.killpg(child.pid, signal.SIGKILL)
@@ -291,7 +349,7 @@ def expand(row, destination):
 
 def run(request, *, plan_only=False, profile=None):
     required = {"owner_work", "sdk_install", "converter_receipt", "converter_receipt_sha256", "sources", "sources_compressed", "metadata", "output"}
-    if set(request) - {"android_tools"} != required or not isinstance(request["sources_compressed"], bool):
+    if set(request) - {"android_tools", "linux_tools"} != required or not isinstance(request["sources_compressed"], bool):
         raise ValueError("explicit native request fields required")
     work, sdk, receipt, sources, metadata = [canonical(request[n]) for n in ("owner_work", "sdk_install", "converter_receipt", "sources", "metadata")]
     output = Path(request["output"])
@@ -309,8 +367,10 @@ def run(request, *, plan_only=False, profile=None):
     providers, metadata_row = converter_inputs(receipt, request["converter_receipt_sha256"], sources, metadata, profile, request["sources_compressed"])
     android_tools = request.get("android_tools")
     tool_state = android_tool_state(android_tools) if android_tools else None
-    environment = dict(os.environ, TMPDIR=str(output / "tmp")) if android_tools else None
-    value = plan(profile, sdk, output, android_tools)
+    environment = dict(os.environ, TMPDIR=str(output / "tmp")) if android_tools or request.get("linux_tools") else None
+    linux_tools = request.get("linux_tools")
+    linux_state = linux_tool_state(linux_tools) if linux_tools else None
+    value = plan(profile, sdk, output, None if linux_tools else android_tools)
     output.mkdir(mode=0o700)
     result = {
         "schema": 1,
@@ -338,6 +398,7 @@ def run(request, *, plan_only=False, profile=None):
                 "sources": providers,
                 "metadata": metadata_row,
                 "android_tools": tool_state,
+                "linux_tools": linux_state,
             },
         )
         for target, members in value["wrappers"].items():
@@ -353,7 +414,10 @@ def run(request, *, plan_only=False, profile=None):
                 if job["kind"] == "generated":
                     expand(providers[source.name], source)
                 before = sha(source)
-                invoke(job["argv"], output, str(index), env=environment)
+                if linux_tools:
+                    linux_invoke(job["argv"], output, str(index), sdk, linux_tools, env=environment)
+                else:
+                    invoke(job["argv"], output, str(index), env=environment)
                 if sha(source) != before:
                     raise ValueError("native input changed during compilation")
                 obj = Path(job["output"])
@@ -365,11 +429,15 @@ def run(request, *, plan_only=False, profile=None):
             if shutil.disk_usage(output).free < size + 1536 * 1024**2:
                 raise RuntimeError("native link reserve unavailable; objects retained")
             result["phase"] = "linking"
-            invoke(value["link"], output, "link", env=environment)
+            if linux_tools:
+                linux_invoke(value["link"], output, "link", sdk, linux_tools, env=environment, link=True)
+            else:
+                invoke(value["link"], output, "link", env=environment)
             target = output / "libil2cpp.so"
             stripper = android_tools["objcopy"] if android_tools else str(sdk / profile["objcopy"])
             result["phase"] = "stripping"
-            invoke([stripper, "--strip-all", value["library"], str(target)], output, "strip", env=environment)
+            strip_command = [*linux_prefix(linux_tools), linux_tools["objcopy"]] if linux_tools else [stripper]
+            invoke([*strip_command, "--strip-all", value["library"], str(target)], output, "strip", env=environment)
             with target.open("rb") as stream:
                 header = stream.read(64)
             if len(header) != 64 or header[:6] != b"\x7fELF\x02\x01" or struct.unpack_from("<HH", header, 16) != (3, 183):
@@ -379,6 +447,8 @@ def run(request, *, plan_only=False, profile=None):
             raise ValueError("owner SDK or game input state changed")
         if android_tools and android_tool_state(android_tools) != tool_state:
             raise ValueError("Android tool inputs changed")
+        if linux_tools and linux_tool_state(linux_tools) != linux_state:
+            raise ValueError("Linux tool inputs changed")
         if converter_inputs(receipt, request["converter_receipt_sha256"], sources, metadata, profile, request["sources_compressed"]) != (
             providers,
             metadata_row,

@@ -45,6 +45,67 @@ class OwnerCodeNativeTests(unittest.TestCase):
             self.assertEqual(json.loads((root / "logs/query.log").read_text()), {"value": 7})
             self.assertEqual((root / "logs/query.stderr.log").read_text().strip(), "diagnostic witness")
 
+    def test_linux_driver_child_is_quoted_and_policy_is_not_rewritten(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary)
+            (output / "logs").mkdir()
+            tools = {
+                "qemu": "/runner/qemu",
+                "clang": "/owner tools/clang9",
+                "linker": "/owner tools/ld.bfd",
+                "loader_root": "/gnu",
+                "library_dirs": ["/gnu/lib"],
+            }
+            calls = []
+
+            def invoked(argv, where, name, **kwargs):
+                calls.append((argv, kwargs))
+                if name.endswith("-driver"):
+                    (where / "logs" / (name + ".log")).write_text('driver diagnostics\n"/owner tools/clang9" "-cc1" "-Os" "-o" "/result/object.o"\n')
+
+            with patch.object(NATIVE, "invoke", side_effect=invoked):
+                NATIVE.linux_invoke(["sdk-clang", "-Os", "-target", "aarch64-linux-android22"], output, "compile", Path("/sdk"), tools, env={})
+            self.assertIn("-Os", calls[0][0])
+            self.assertIn("--sysroot=/sdk/PlaybackEngines/AndroidPlayer/NDK/toolchains/llvm/prebuilt/darwin-x86_64/sysroot", calls[0][0])
+            self.assertEqual(calls[1][0][-5:], [tools["clang"], "-cc1", "-Os", "-o", "/result/object.o"])
+            self.assertEqual(calls[1][1]["timeout"], 3600)
+
+    def test_linux_driver_refuses_multiple_children_and_unexpected_compilers(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary)
+            (output / "logs").mkdir()
+            tools = {"qemu": "/runner", "clang": "/clang9", "linker": "/ld.bfd", "loader_root": "/gnu", "library_dirs": ["/gnu/lib"]}
+            for text in ['"/clang9" "-cc1"\n"/other" "input"\n', '"/other" "-cc1"\n']:
+                with self.subTest(driver=text):
+
+                    def invoked(argv, where, name, **kwargs):
+                        self.assertTrue(name.endswith("-driver"))
+                        (where / "logs" / (name + ".log")).write_text(text)
+
+                    with patch.object(NATIVE, "invoke", side_effect=invoked), self.assertRaisesRegex(ValueError, "driver did not"):
+                        NATIVE.linux_invoke(["sdk-clang"], output, "compile", Path("/sdk"), tools, env={})
+
+    def test_linux_runtime_and_ndk_inputs_are_hashed(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            tools = {}
+            for n in ("qemu", "clang", "linker", "objcopy"):
+                p = root / n
+                p.write_bytes(b"independent generic tool fixture")
+                tools[n] = str(p)
+            loader = root / "gnu"
+            libs = loader / "lib"
+            libs.mkdir(parents=True)
+            library = libs / "libc.so.6"
+            library.write_bytes(b"independent GNU runtime fixture")
+            tools.update(loader_root=str(loader), library_dirs=[str(libs)])
+            state = NATIVE.linux_tool_state(tools)
+            library.write_bytes(b"changed runtime")
+            self.assertNotEqual(NATIVE.linux_tool_state(tools), state)
+            del tools["linker"]
+            with self.assertRaisesRegex(ValueError, "explicit Linux runner"):
+                NATIVE.linux_tool_state(tools)
+
     def test_android_link_keeps_original_target_and_explicit_static_runtime(self):
         tools = {"clang": "/installed/libclang.so", "linker": "/installed/liblld.so", "resource_dir": "/tools/clang/21"}
         sdk = Path("/owner/sdk")

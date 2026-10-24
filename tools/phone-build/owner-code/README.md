@@ -32,6 +32,14 @@ while SDK compilation templates/lumps and link settings remain pinned. Native
 planning/linking includes every source from that conversion. Raw target hashes,
 types, behavior and performance remain comparison gates; differences stay visible.
 
+The fixed target also requires its 69 named PDB companions alongside the
+corresponding SDK or freshly produced DLLs. They are hashed, staged and checked
+with the managed providers. Omitting symbols changes stripped PE sizes and the
+unchanged converter's size-based assembly order. The public recipe contains
+only companion names. Fresh original-input host production with these companions
+reproduces the accepted J850 metadata byte for byte; complete native/runtime
+parity remains a separate gate.
+
 The optional `android_tools` dictionary supplies canonical paths for `dotnet`,
 `clang`, `linker`, `objcopy` and `resource_dir`. These replace host executables
 only. .NET 8 runs the unchanged SDK linker/converter; Android Clang/LLD uses
@@ -39,6 +47,28 @@ the original NDK target headers/static C++/ABI/GCC archives. Clang 21/LLD is
 explicitly different from the desktop Clang 9/BFD control. Tool/resource hashes,
 original SDK and provider inputs are rechecked. Every attempt owns its output,
 logs, exact commands and failed state; process-group cleanup remains active.
+
+An optional `linux_tools` dictionary selects the exact Linux NDK 21.3.6528147
+Clang 9/BFD executables through a public QEMU user-mode runner. Supply canonical
+`qemu`, `clang`, `linker`, `objcopy`, `loader_root` paths and a nonempty
+`library_dirs` list. The GNU loader/libraries and runner are explicit tool
+providers, hashed before and after execution. Original SDK target headers,
+startup objects and static runtime archives remain the target inputs. The
+unchanged Clang driver emits its actual `-cc1` or BFD command with `-###`; the
+owner invokes that single child explicitly because Android has no configured
+Linux `binfmt_misc` handler. Multiple or unexpected driver commands refuse.
+Neither compiler optimization policy nor source is replaced. Linux compilation
+has a one-hour per-tool deadline; the headless whole-backend deadline is 24 hours.
+
+In the Android input request, `linux_tools` supplies the five owner-relative data
+bindings (`clang`, `linker`, `objcopy`, `loader_root`, `library_dirs`); the runner
+is the PackageManager-installed `libqemu-x86_64.so`. Generic ARM64 runner
+dependencies must also be installed through the existing app-host tool plan.
+GNU target tools stay owner inputs outside the APK. Current bounded shell
+qualification uses public Termux QEMU 11.1.2 and Debian 11 GNU runtime files;
+no ordinary-app whole-player Linux build or game acceptance is inferred from
+those controls. Public provider notices/source obligations remain with their
+acquisition, and proprietary SDK tool bytes are never published.
 
 `run_android.py` connects this backend to the headless managed-host fixture.
 It verifies the caller's private input manifest, checks every copied original

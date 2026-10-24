@@ -189,6 +189,13 @@ J1063 qualifies the complete source-input host command through native execution.
 Independent content/Burst/shader production, licensed native input production
 and full-player Android construction remain open.
 
+The same native owner optionally runs explicit Linux NDK executables through a
+public QEMU user-mode provider. It hashes the supplied GNU loader/runtime and
+NDK tools, obtains one actual compiler/linker child command from the unchanged
+Clang driver, and invokes it without a global Linux execution handler. Original
+SDK ARM64 target data remain inputs. Android Clang 21/LLD remains the explicit
+fallback; whole-player Linux app hosting and runtime parity are separate gates.
+
 `tools/phone-build/owner-code/produce.py` owns the current experimental combined
 whole-player backend: explicit hash-bound managed providers, audited target
 roots, SDK-derived native identities, exact SDK stripping/conversion, verified

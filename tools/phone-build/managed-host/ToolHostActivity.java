@@ -68,7 +68,7 @@ public final class ToolHostActivity extends Activity {
         env.put("ROR2LAB_BUILD_HOSTFXR",hostfxr.getPath());
         env.put("ROR2LAB_BUILD_DOTNET_LAUNCHER",new File(nativeDir,"libdotnetmuxer.so").getPath());
         java.lang.Process process=builder.start();
-        if(!process.waitFor(label.equals("owner-backend")?21600:90,TimeUnit.SECONDS)){
+        if(!process.waitFor(label.equals("owner-backend")?86400:90,TimeUnit.SECONDS)){
             process.destroy();
             if(!process.waitFor(15,TimeUnit.SECONDS)) process.destroyForcibly();
             throw new IOException(label+" timeout");

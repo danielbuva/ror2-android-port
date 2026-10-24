@@ -1658,3 +1658,13 @@ supplier. The five explicit target dependencies and request setup are in the
 Targets, tool/source archives, original decompilations, generated providers,
 metadata, compressed sources and all native outputs stay private under `work/`.
 The default source mode's authorized audio inputs are unchanged.
+
+The experimental owner code producer's optional Linux route requires explicitly
+supplied public QEMU ARM64 runner/dependencies, a GNU x86-64 loader/runtime and
+the exact licensed Linux NDK 21.3.6528147 Clang/BFD tools. These are toolchain
+inputs, acquired from their official/public providers and bound by private
+hash manifests; they contain no generated game code. The owner verifies them
+before and after use. Generic runner ELF files are installed read-only in the
+tool host; original SDK tools and GNU data stay in owner input storage. See the
+[owner setup](../tools/phone-build/owner-code/README.md) for the explicit bindings.
+No timestamped experiment directory is a runtime lookup default.

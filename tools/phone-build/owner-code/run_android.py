@@ -29,7 +29,7 @@ def run(request_file, runtime, installed):
 
     check_inputs()
     request = json.loads(request_file.read_text())
-    if set(request) not in ({"managed", "output"}, {"source_inputs", "target", "output"}):
+    if set(request) - {"linux_tools"} not in ({"managed", "output"}, {"source_inputs", "target", "output"}):
         raise ValueError("explicit managed providers or fixed-target source inputs and new output required")
     work, sdk, game = [inputs / name for name in ("work", "sdk", "game")]
     inventory = json.loads((work / "inventory/files.json").read_text())
@@ -67,6 +67,15 @@ def run(request_file, runtime, installed):
             "profile": str(runtime / "repo" / backend.native.relative(request["target"]["profile"])),
             "source": str((inputs / backend.native.relative(request["target"]["source"])).resolve(strict=True)),
         }
+    if "linux_tools" in request:
+        supplied = request["linux_tools"]
+        if set(supplied) != {"clang", "linker", "objcopy", "loader_root", "library_dirs"}:
+            raise ValueError("explicit Linux NDK and GNU runtime providers required")
+        production["linux_tools"] = {"qemu": str(installed / "libqemu-x86_64.so")}
+        production["linux_tools"].update(
+            {name: str(inputs / backend.native.relative(supplied[name])) for name in ("clang", "linker", "objcopy", "loader_root")}
+        )
+        production["linux_tools"]["library_dirs"] = [str(inputs / backend.native.relative(p)) for p in supplied["library_dirs"]]
     result = backend.run(production)
     # Generated local state changed intentionally; immutable original/SDK/provider
     # checks remain separate from those three private setup files.
