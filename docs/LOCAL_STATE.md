@@ -1326,3 +1326,22 @@ Missing source evidence must be restored specifically using the retention policy
 do not fabricate it. No selection is shipped in Git. Once preserved baseline metadata is available,
 a missing selection fails with registration guidance rather than silently
 picking historical input. A fully fresh clone must first supply that baseline.
+
+## Standalone requested-audio support evidence (J1056)
+
+Ignored `work/coordination/owner-audio-stage-v1/` retains explicit planning/staging
+invocations, ordinary assembly-transform scratch, strict generated request/stage
+pins, supplied-native provenance and fresh observer/core/bootstrap outputs.
+Its input producers are J1052, J1054 and J1055; source tools are the existing
+`stage_original_game_banks.py`, `original_game_audio_produce.py` lower-level
+compiler functions and request/stage generators. All three plugin references
+are explicit; no Unity project or current selection is created. The private
+instrumented native input remains the licensed local product documented above.
+
+Setup uses the accepted original inventory, generated prefab/index/Init inputs,
+pinned SDK compiler/reference tools and an explicit new ignored output root.
+Teardown changes no shared state. The reviewed 274 generated stage payload
+copies were retired after full readback; `staged-v1.retired.json` binds their
+complete ledger, exact public generator/invocation and retained receipt. Restage
+into a new explicit root before any future use; this evidence path is not a
+live build input. Failed attempts, compiled outputs and all receipts remain.

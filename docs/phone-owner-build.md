@@ -389,3 +389,15 @@ new roots remain evidence. `WwiseGlobal.prefab`, raw reports and receipts stay
 private. No current game build or selector consumes a new output automatically.
 Phone execution, complete audio staging, requested-audio assembly compilation,
 player/native integration and performance remain separate gates.
+
+## Complete requested-audio host support
+
+[J1056](PORTING_JOURNAL.md#j1056--stage-and-compile-the-complete-requested-audio-support-closure-without-the-editor)
+reuses the existing bank stager, request/stage generators and lower-level audio
+compiler owners with independently reproduced source inputs. All 274 staged
+payloads match the exact receipt; observer/core/bootstrap compile without a
+project or Editor. The instrumented native library is an explicit supplied
+licensed product. Top-level project admissions and runtime gates remain intact.
+This is host support production, with full-player/native/device qualification
+still open. Setup and retained evidence are in LOCAL_STATE; the journal owns the
+complete result.

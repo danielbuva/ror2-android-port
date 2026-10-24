@@ -33653,3 +33653,78 @@ host producer. Android execution, remaining requested-audio staging and game/
 authored assembly production, roots, native AOT/Burst, content/shaders,
 installation and matched performance remain open. Retain Architecture C and the
 desktop fallback; do not infer player readiness from this complete file result.
+
+## J1056 — Stage and compile the complete requested-audio support closure without the Editor
+
+2026-10-24. Complete host support case through existing producers; no new
+runtime, Unity project, Editor process, build selection or device operation.
+
+**Hypothesis and prior art.** J1052–J1055 independently reproduce the managed
+transform chain, bank index, Init inputs and source prefab. The existing audio
+stager and strict request/stage generators should accept that complete closure
+without a general Unity import. Inspect pinned R2API.Sound/SoundAPI.cs at
+`f539511eabf87f02afddb5a83cafd2f4704c85ad`: bank loading occurs after the original
+engine initialization hook. A staged bank or compiled bootstrap therefore does
+not establish playback. Reuse the existing compiler owners rather than implement
+a second audio pipeline. Main explicitly supplies the licensed native input and
+its retained source/build provenance for this isolated compile/request case.
+
+**Complete staging.** The unchanged explicit-input stager accepts all independently
+reproduced source inputs. Its read-only full plan succeeds in 10.4817 seconds.
+Actual staging succeeds in 22.7770 seconds, with independent size/SHA-256
+readback of all 274 files: 153 original banks, the adapted Init and 120 streamed
+media, totaling 833,662,993 bytes. Receipt SHA-256 is exactly
+`db1969babb2db2f4201ebdb6c971b084c5ab9336fff5623187555dfcc7b18978`.
+Three bank filenames require the existing case normalization. Original bytes and
+accepted input remain unchanged. Runtime copy/readiness flags remain false.
+
+**Actual requested compilation.** Execute the existing three-assembly transform
+recipe in separate scratch; all declared output hashes match, including the
+Wwise MonoBehaviour reference. Revalidate all 249 files in J1052's raw-producer
+manifest. Supply the current instrumented Wwise native product explicitly,
+SHA-256 `9075b5a4d3718a209eb244760d2b251a59ef2f5c486a2d2fc0e83b90240cbba3`,
+with Main's authorization and hashes of its actual build record, stage record,
+adapter and build plan. This supplied SDK-derived library is not independently
+reproduced by this case and is not published.
+
+The existing contract generator creates a fresh requested=true request, selecting
+passive music-output PCM. The unchanged strict request/stage generators accept
+all exact input pins and the full staged cohort. Compile the standalone observer,
+five core sources and eleven bootstrap sources with the pinned SDK Mono/Roslyn.
+All three plugin references are explicit independently produced overrides;
+no fallback project exists. Do not call or relax the top-level
+`compile_requested` project/reference/request admission. Current owner-source
+pins and every compiler/reference hash are verified before and after execution.
+The complete final run succeeds in 3.1392 seconds.
+
+Observer bytes exactly match frozen R27:
+`df90e9c9c5a69b80d0e95358f1e5b7841a1c970c59678650158c51a8e3b16ac1`.
+Fresh core is `4a1fc5d10a560b6172a1840a31bff49d06dd1b4c9a4bc67366e0a0b1de1a25fd`;
+fresh bootstrap is
+`59f32de63c5e7a1d3205424a2cd5ac91f105e0c9636d5f9590d183bcffc56a2d`.
+These latter bytes differ from R27; the current passive-PCM source and fresh
+request identity/contract differ. No matching IL, stripped/native equivalence,
+whole-player integration or playback claim follows from successful compilation.
+The first compile attempt used an incorrect Roslyn path; preserve its source,
+request outputs and failure, then use the existing producer's exact SDK path.
+
+**Evidence and independent review.** Private case
+`work/coordination/owner-audio-stage-v1/`, proof `proof-v1.json`, SHA-256
+`5da56ff7bcc5817dcab1e42103cf7382a39a38ed76f123854ffa2b7652f076ee`,
+binds 520 artifacts, source/reference hashes, all payloads and fresh assemblies.
+Main independently verifies the complete proof and invocation and returns GO
+for this host support scope. After that review, rehash and retire only the
+274 reproducible staged payload copies to restore host CI headroom. Retain their
+complete hash ledger, exact stager/invocation binding, stage receipt, original
+inputs, supplied native provenance, both compile attempts and all compiled
+outputs. The adjacent retirement marker requires a new explicit output root
+for restaging; the old stage is no longer a live build input. No failed run,
+original installation, Main state or rollback is removed.
+
+**Result and remaining work.** General Editor import is unnecessary for this
+complete host audio-support closure. Existing strict runtime/build gates stay
+unchanged. Independent Assembly-CSharp/maps, full linker roots, native AOT/Burst,
+serialized content/shaders, Android tool hosting and actual owner installation
+remain open. The instrumented native producer remains a separate licensed-input
+requirement. PR #55 keeps its real-device hold; Architecture C and the desktop
+fallback remain current.

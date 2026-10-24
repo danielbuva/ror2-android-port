@@ -166,6 +166,14 @@ executes neither Editor nor exporter and consumes no target asset. This resolves
 another whole source input without general import; Android execution and the
 remaining game/player/native/content producers are still open.
 
+The [complete requested-audio support case (J1056)](PORTING_JOURNAL.md#j1056--stage-and-compile-the-complete-requested-audio-support-closure-without-the-editor)
+now stages all 274 payload files to the exact existing receipt and compiles the
+observer/core/bootstrap through existing lower-level owners without a project
+or Editor. Strict request/stage generators accept the independent input chain;
+the instrumented native library remains supplied licensed local state.
+Whole-player/native/device equivalence remains open, and existing project/runtime
+admissions are unchanged.
+
 ## Binary patches and retained artifacts
 
 | Candidate shortcut | Assessment |
