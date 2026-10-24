@@ -143,7 +143,11 @@ completes source-only production of all 399 uncompressed texture records,
 including the public-source JPEG tool built on Android. Its
 [setup](../tools/phone-build/accepted-output/README.md#produce-uncompressed-textures-directly-from-original-pc-bundles)
 needs original PC pixels and tracked metadata, not target image literals.
-Other formats, complete bundle assembly and the full replay-packet replacement
+[J1082](PORTING_JOURNAL.md#j1082--produce-the-complete-alpha8-texture-cohort-from-pc-bundles-on-android)
+adds the complete 4,326-record source Alpha8/single-mip cohort and public codec
+build on Android. Its [setup](../tools/phone-build/accepted-output/README.md#produce-alpha8-textures-directly-from-original-pc-bundles)
+uses canonical original sources plus metadata relationships. Other compressed
+formats/mips, complete bundle assembly and full replay-packet replacement
 remain open.
 
 These observations rule out treating a platform flag edit or archive repack as

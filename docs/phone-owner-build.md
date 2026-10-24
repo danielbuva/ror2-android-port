@@ -107,8 +107,11 @@ also qualifies its complete 228-record class on Android (J1075). Texture,
 animation, shader and other object producers remain open.
 The [uncompressed texture producer](../tools/phone-build/accepted-output/README.md#produce-uncompressed-textures-directly-from-original-pc-bundles)
 qualifies all 399 records on Android (J1079), including public-source JPEG-tool
-compilation and all former pixel-postprocessing exclusions. ETC/cubemap and
-complete bundle production remain open. Owner-build v1 uses the single accepted
+compilation and all former pixel-postprocessing exclusions. The same producer's
+[Alpha8 profile](../tools/phone-build/accepted-output/README.md#produce-alpha8-textures-directly-from-original-pc-bundles)
+qualifies all 4,326 source Alpha8/single-mip target records and builds its public
+codec on Android (J1082). Other compressed textures, mip/cubemap and complete
+bundle production remain open. Owner-build v1 uses the single accepted
 J850 target; current target metadata is an explicit profile input, and a newer
 target follows a complete v1 phone build/run.
 

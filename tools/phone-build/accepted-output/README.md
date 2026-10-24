@@ -414,3 +414,56 @@ J1081's Linux RGBA outputs differ in decoded pixels from the accepted target;
 this diagnostic is **not** an admitted RGBA producer or receipt equivalence.
 ShaderCompiler and Burst execution remain separate open gates. No current game
 build consumes this runner or the diagnostic output.
+
+## Produce Alpha8 textures directly from original PC bundles
+
+Current experimental source-only content producer, qualified for the complete
+4,326-record **source Alpha8/single-mip** target cohort in
+[J1082](../../../docs/PORTING_JOURNAL.md#j1082--produce-the-complete-alpha8-texture-cohort-from-pc-bundles-on-android).
+The explicit `recipe/owner-alpha-textures.json` profile requires SHA-256
+`fa23bc2cdc71234e3a5d4a084519a63bb59c6ef321e790fb964c295c8bd1d51a`.
+It reuses 82 original texture bodies/pixel extents from nine original PC bundles,
+with unchanged-field matching and explicit target name/storage relationships.
+There are no pixel samples, encoded blocks or target byte frames in the recipe.
+
+Acquire the unchanged public [ETCPACK 2.74 source archive](https://codeload.github.com/Ericsson/ETCPACK/tar.gz/14a64d9d19318fb9f81ce339b7103ffa0f1781d7)
+(995,165 bytes), requiring SHA-256
+`5fc5cad3e8ccd930a82f38da208f24c35b9a565a622092d0d4a37847000c98d2`.
+Its Software License Agreement permits binary compression products and restricts
+source redistribution. Encoder source is not vendored here. Keep the retained
+provider license/notice beside the locally built codec:
+
+```sh
+python3 tools/phone-build/accepted-output/build_texture_alpha.py \
+  --archive "$ETCPACK_ARCHIVE" --compiler "$CXX_COMPILER" \
+  --output "$NEW_ALPHA_CODEC_OUTPUT"
+```
+
+On Android add `--android-tool-root "$OWNED_TOOL_ROOT"` and select that root's
+`usr/bin/clang-21`. The existing owned public Clang/sysroot/libc++/linker closure
+is required. The sysroot is the tool root above `usr`; selecting `usr` duplicates
+C++ header search paths. The builder extracts only four unchanged source/header
+files plus the license, supplies an authored timing compatibility header for the
+unused upstream CLI, and builds an authored pipe adapter. Compiler children are
+bounded and terminated as process groups; complete/failed receipts, logs,
+licenses and private outputs are retained. No Unity SDK encoder is needed.
+
+```sh
+python3 -I -S -B tools/phone-build/accepted-output/texture_produce.py \
+  --profile recipe/owner-alpha-textures.json \
+  --profile-sha256 fa23bc2cdc71234e3a5d4a084519a63bb59c6ef321e790fb964c295c8bd1d51a \
+  --pc "$ORIGINAL_PC_ROOT" --output "$NEW_TEXTURE_OUTPUT" \
+  --alpha-codec "$ALPHA_CODEC" --alpha-codec-sha256 "$ALPHA_CODEC_SHA256"
+```
+
+The pinned source export maps Alpha8 samples to original alpha plus zero RGB.
+The native adapter generates the generic black color block and compresses those
+original alpha samples; it reads no target bytes. The common producer verifies
+all source files and produced/persisted body/resource extents, then retains
+private packs, index and terminal receipt. Existing output and wrong codec pins
+refuse; wrong pins refuse before output creation. Setup and teardown follow the
+uncompressed producer above. On Android explicitly lease the assigned device
+and use the existing owned interpreter/runtime/library path. Nine authored
+texture contracts include three non-game alpha patterns and malformed inputs.
+Other source formats, mip/cubemap generation, complete bundle assembly, ordinary
+app tool delivery and complete phone-only installation remain open.

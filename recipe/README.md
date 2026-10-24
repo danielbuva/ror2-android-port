@@ -2254,7 +2254,7 @@ producer. This is a transitive source-pin audit, not a new Android qualification
 No native/package selection or redistribution approval changes. Audit: 2026-10-24.
 
 `owner-alpha-textures.json` is the current experimental source-only Alpha8
-Texture2D recipe for the fixed J850 target and accepted original input. Its
+Texture2D single-mip recipe for the fixed J850 target and accepted original input. Its
 selectors reuse 82 canonical original textures from nine PC bundles for 4,326
 target records. Canonicalization requires matching original pixel hashes and
 all unchanged serialized fields; names, storage extents and target hashes remain
@@ -2272,5 +2272,6 @@ form. The build retains the provider's Software License Agreement and an
 addition/provenance notice beside private outputs. Codec/profile outputs and
 raw discovery evidence stay ignored. The public recipe/adapter introduces no
 ownership, authentication or entitlement behavior. Provenance, licensing,
-privacy and sensitive-content audit: 2026-10-24. Phone qualification remains a
-separate recorded gate until its complete device case passes.
+privacy and sensitive-content audit: 2026-10-24. J1082 records the complete
+phone cohort and public codec build; other texture/mip and bundle assembly
+gates remain open.

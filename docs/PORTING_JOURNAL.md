@@ -36977,3 +36977,119 @@ Linux RGBA equivalence, full mip/cubemap production, shader/Burst execution,
 ordinary app hosting and complete source-only bundle/APK reconstruction remain
 open. Revisit on a source-derived encoder fix or an independently qualified
 standalone SDK operation; never substitute target pixel/codec literals.
+
+## J1082 — Produce the complete Alpha8 texture cohort from PC bundles on Android
+
+Date: 2026-10-24 UTC. Hypothesis: every source Alpha8/single-mip Texture2D record
+in the fixed J850 target can be produced directly from original PC bundles,
+using canonical source relationships and a public encoder. No accepted image,
+SDK encoder, exported project or Unity Editor is a production input. V1 remains
+J850/source `1780ea9545f1597c033a8d32e08074b03c7f38c8`, APK
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`,
+with original input `6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88`.
+
+Prior art: J1050's all-bundle reuse map drives the source cohort. The pinned
+AssetRipper `1ac666f47d8e9dedf96afb0b914c70d7656151ea` TextureConverter/
+ColorA export establishes zero RGB with original Alpha8 samples; independent
+exported PNG observations are comparison oracles only. Ericsson ETCPACK 2.74
+`14a64d9d19318fb9f81ce339b7103ffa0f1781d7` supplies the unchanged public
+alpha/color encoder. Its Software License Agreement restricts encoder source
+redistribution; no implementation source is vendored. The authored adapter
+calls its existing APIs. No proprietary implementation or game samples enter
+tracked source. J1081's unresolved Linux RGBA codec differences are not used as
+a tolerance or an exception for this cohort.
+
+Changes: extend the existing `texture_produce.py` owner with `alpha8-etc2`, a
+pinned native helper and explicit format-field projection. The common input,
+output-capacity, byte/hash verification and retained receipt lifecycle remains
+in use. `recipe/owner-alpha-textures.json` contains only minimum source/target
+selectors, field extents, hashes and importer/storage relationships. It selects
+82 canonical original texture bodies from nine PC bundles to produce 4,326
+target records. Canonicalization requires identical original pixel hashes and
+all unchanged field hashes; source names, target names and stream placement
+are handled explicitly. Reuse is in the recipe, without a runtime cache layer.
+Every alpha byte is read from the owner's original input. Generic zero RGB and
+public compression produce the target bytes; no encoded block is a recipe
+literal. The profile is 3,405,190 bytes, SHA-256
+`fa23bc2cdc71234e3a5d4a084519a63bb59c6ef321e790fb964c295c8bd1d51a`.
+
+`build_texture_alpha.py` extracts only four unchanged source/header files and
+the license from the separately acquired 995,165-byte public archive, SHA-256
+`5fc5cad3e8ccd930a82f38da208f24c35b9a565a622092d0d4a37847000c98d2`.
+It adds authored `texture_alpha.cpp` and a timing compatibility header for the
+unused upstream CLI. The adapter accepts bounded exact Alpha8 stdin and emits
+ETC2 RGBA stdout. Both builds retain source/provider notices, commands, logs
+and complete/failed receipts; compiler children have process-group teardown.
+No Unity SDK encoder is a dependency. The Android path selects the existing
+owned public Clang 21/sysroot/libc++/linker closure and cores 0–2;
+it changes no global device or CPU policy.
+
+Host result: all 4,326 records match their independent target body/pixel hashes,
+producing 47,532,444 object bytes and 9,177,088 external resource bytes. The
+isolated `python3 -I -S -B` producer completes in 5.775 seconds with parent peak
+RSS 43,827,200 bytes. The public helper builds in 3.753 seconds. Nine authored
+texture contracts pass with the actual public Alpha8 and JPEG codecs, including
+zero/opaque/asymmetric alpha controls, malformed/extreme input, field projection,
+source/output bounds and provider refusal. No test fixture contains game pixels.
+
+Phone result: complete case PASS from source
+`80c17e030732369fdef039072a272b14f14b3de5` (implementation `097f0b24` plus
+the sysroot correction). The helper is compiled on the assigned phone in
+32.062 seconds, producing AArch64 ELF SHA-256
+`ced0a87fa738ba434930893ec18908f2120c8e106c1c7aa4bc9313c5160bed85`.
+The isolated producer reads only its nine original PC bundles and public recipe/
+helper; all 4,326 records match in 31.117 seconds with parent peak RSS
+37,208,064 bytes. Parent RSS does not include compiler/codec child memory.
+The complete build/production/control case takes 71.674 seconds. Persisted
+phone outputs equal host hashes byte for byte:
+
+| Output | Bytes | SHA-256 |
+| --- | ---: | --- |
+| Object pack | 47,532,444 | `c5b2ec3a0854dd0885735ed0cde878653ca14eefa77ca82e57bb93473d80c1c2` |
+| Resource pack | 9,177,088 | `590f7939a9cd8e58af220029f9d0f65f58f74fe62a9e1ad6cb10ff002b52c6e5` |
+| Index | 967,158 | `e08061feeb47421b1b8a1ccb4fad5ef6e9da507512b5118b2d4a03f72e63b834` |
+
+All nine authored texture contracts pass on Android, including the existing
+pinned public JPEG helper as a regression control. Existing output refuses.
+A wrong Alpha8 codec hash refuses before output creation. All three persisted
+output hashes are checked again after refusals/controls.
+
+First failures/corrections: an initial complete source census matches 4,324 of
+4,326 records. The remaining two use a duplicated font-atlas basename; the
+selected base-game atlas has different source alpha. Original DLC candidates
+with the same name reproduce both targets exactly. Their explicit original
+identities are admitted before canonicalization; no pixel correction is added.
+A second complete census passes all records. The first Android C++ build fails
+because sysroot `usr` creates duplicate `usr/include`/`usr/usr/include` wrapper
+search paths. Selecting the owned root above `usr` fixes the full build/case;
+public encoder source and original input remain unchanged. Failed evidence is
+retained. Doctor/host preflight's independent unrecorded lab-generation refusal
+from J1081 remains; no game build gate is waived.
+
+Device boundaries: use the shared-device atomic lease and actual package
+receipts. Installed APK before/after remains
+`04ee771b197ed61710f373d5bd86e53cbdfd5716dedc8cb0b3ef1c6ecf66d019`.
+No install/launch, data reset, storage reconfiguration, profile/payload deletion
+or other worker's files are involved. Game process absence and OLED sleep are
+verified at admission and completion; the lease is released. No game controls,
+rendering/performance or ordinary app tool delivery acceptance is inferred.
+
+Evidence: ignored `work/coordination/accepted-build-reconstruction/media-source-v1/`:
+`alpha-texture-candidates-v1.jsonl`, `alpha-texture-failures-v1.json`, complete
+`alpha-texture-candidates-v2.jsonl`/`alpha-texture-result-v2.json`,
+`alpha-codec-public-host-v1/`, `alpha-texture-public-host-v1/`,
+`device-alpha-texture-v1/` (failed compiler) and `device-alpha-texture-v2/`.
+The final private proof receipt covers 104 artifacts, SHA-256
+`1daae71527225d092740e25172884e49f569600f4b4b24b408a25ffca2568180`.
+Packs remain on the phone; only receipts/logs are pulled. Mandatory host pruning
+runs after build/run tasks, preserving receipts/evidence and more than 100 GiB
+free. No APK, payload or project is copied into a review folder.
+
+Conclusion/revisit: the complete source Alpha8/single-mip cohort has a public
+producer and exact full phone evidence. This closes that cohort's source-byte
+production gap. Other compressed textures, mip/cubemap generation, the two mesh
+exclusions, animation/other classes, player data and full UnityFS assembly
+remain open. The code workstream separately owns J850 code/Burst/shader closure
+and final APK/signing/install. Full phone-only owner installation and matched
+performance remain open. Revisit this cohort only for explicit input/target
+promotion or a measured regression.

@@ -736,6 +736,18 @@ documented public inputs. Explicit Android workspace/interpreter ownership remai
 lab staging. See its
 [setup/lifecycle](../tools/phone-build/accepted-output/README.md#produce-uncompressed-textures-directly-from-original-pc-bundles).
 
+The same texture entry accepts `recipe/owner-alpha-textures.json` and an explicit
+pinned Alpha8 codec. `build_texture_alpha.py` generates that codec from a
+separately acquired public ETCPACK archive and compiler; archive identity,
+notices, outputs and failed receipts remain in the private caller-selected root.
+`texture_alpha.cpp` is the authored pipe adapter. The recipe stores only minimum
+source/target relationships, layouts, hashes and settings; original Alpha8
+samples are read from the PC bundles at execution. No discovery snapshot,
+captured target body/pixel or SDK encoder is an input. Android requires the
+existing explicit owned public compiler/sysroot/runtime and workspace, with
+the tool root above `usr` selected as the C++ sysroot. See
+[setup/lifecycle](../tools/phone-build/accepted-output/README.md#produce-alpha8-textures-directly-from-original-pc-bundles).
+
 The experimental standalone SDK runner requires separately acquired, unchanged
 public Box64 source and the owner's pinned SDK NDK, plus explicit host CMake/
 LLVM archive tools. `build_sdk_runner.py` generates its private binary, license,
