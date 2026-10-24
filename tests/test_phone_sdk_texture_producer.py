@@ -1,5 +1,6 @@
 """Native public BC7 and authored SDK-pipe contracts, without game/Unity input."""
 
+import hashlib
 import json
 from pathlib import Path
 import shutil
@@ -62,7 +63,7 @@ class SdkTextureTests(unittest.TestCase):
         alpha.write_text(ALPHA_FIXTURE)
         for command in (
             [compiler, "-std=c11", str(alpha), "-o", str(cls.alpha)],
-            [compiler, "-std=c11", "-O2", str(source / "texture_pixels.c"), "-o", str(cls.decoder)],
+            [compiler, "-std=c11", "-O2", "-ffp-contract=off", str(source / "texture_pixels.c"), "-lm", "-o", str(cls.decoder)],
             [compiler, "-std=c11", str(source / "sdk_texture_codec.c"), "-ldl", "-o", str(cls.codec)],
             [compiler, "-dynamiclib" if sys.platform == "darwin" else "-shared", "-fPIC", str(fixture), "-o", str(cls.library)],
         ):
@@ -77,6 +78,56 @@ class SdkTextureTests(unittest.TestCase):
         }
         path.write_text(json.dumps(value))
         return value
+
+    def test_bc45_channel_bias_crop_and_refusal(self):
+        selectors = sum((i % 8) << (3 * i) for i in range(16)).to_bytes(6, "little")
+        blocks = (bytes((8, 0)) + selectors, bytes((0, 4)) + selectors)
+        palettes = ((8, 0, 7, 5, 4, 3, 2, 1), (0, 4, 1, 1, 2, 3, 0, 255))
+        for mode in ("bc4", "bc5"):
+            block = b"".join(blocks[: 1 if mode == "bc4" else 2])
+            for width, height in ((4, 4), (1, 3), (7, 5)):
+                encoded = block * (((width + 3) // 4) * ((height + 3) // 4))
+                expected = bytes(
+                    value
+                    for y in range(height)
+                    for x in range(width)
+                    for value in (palettes[0][(y % 4 * 4 + x % 4) % 8], palettes[1][(y % 4 * 4 + x % 4) % 8] if mode == "bc5" else 0, 0, 255)
+                )
+                result = subprocess.run([str(self.decoder), str(width), str(height), mode], input=encoded, capture_output=True, timeout=10)
+                self.assertEqual((result.returncode, result.stdout), (0, expected))
+            for encoded in (block[:-1], block + b"x"):
+                result = subprocess.run([str(self.decoder), "4", "4", mode], input=encoded, capture_output=True, timeout=10)
+                self.assertNotEqual(result.returncode, 0)
+
+    def test_complete_authored_mip_chains(self):
+        # Exact-editor observations of authored images; no game or SDK input is needed.
+        pins = {
+            ("ramp", "linear"): "b4556dd446fb2fefb46fc7aad23123a3efdda5190be43f99f3543eb56bfbb139",
+            ("ramp", "srgb"): "e2617c5d917d0e5b0fd5afdd57e31800abb69ef852d528cad7655cefe01c9d80",
+            ("noise", "linear"): "a9dc7f7ce1361a7c2388036a5cb8b0dc3b9e51625b763e5bc99f8ba092eb7231",
+            ("noise", "srgb"): "9d2be7a6915809d22e13ed27fab49a0816f327189642e9db3c2a8a6835b4bf9d",
+        }
+        for pattern in ("ramp", "noise"):
+            width, height = (256, 4) if pattern == "ramp" else (1024, 1024)
+            rgba = bytearray()
+            state = 731
+            for _y in range(height):
+                for x in range(width):
+                    if pattern == "ramp":
+                        rgba.extend((x, x * 17 % 256, x * 73 % 256, 255))
+                    else:
+                        for _ in range(3):
+                            state = (state * 1664525 + 1013904223) & 0xFFFFFFFF
+                            rgba.append(state >> 24)
+                        rgba.append(255)
+            for mode in ("linear", "srgb"):
+                result = subprocess.run([str(self.decoder), str(width), str(height), "mips-" + mode], input=rgba, capture_output=True, timeout=30)
+                self.assertEqual(result.returncode, 0)
+                self.assertEqual(hashlib.sha256(result.stdout).hexdigest(), pins[pattern, mode])
+        for data in (bytes(63), bytes(65)):
+            result = subprocess.run([str(self.decoder), "4", "4", "mips-linear"], input=data, capture_output=True, timeout=10)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual(result.stdout, b"")
 
     def test_bc7_authored_blocks_crop_and_extents(self):
         colours = ((17, 31, 73, 255), (255, 255, 255, 255))

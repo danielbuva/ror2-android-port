@@ -2635,3 +2635,12 @@ protected text, image, gameplay value, original implementation, credential,
 private path or device identifier is stored. All generated bodies/resources,
 raw comparisons and discovery artifacts remain ignored. This grants no
 ownership, authentication, entitlement or content redistribution capability.
+The pixel helper's experimental mip modes use authored float32 box filtering
+and sRGB transfer formulas, checked against nongame authored-image observations
+from the exact SDK. Host tests retain hashes of those authored observations,
+never protected pixels. BC4/BC5 decoding consults AssetRipper TextureDecoder
+2.6.3 `Bc4`, `Bc5` and `BcHelpers.SmoothAlphaBlock`, the version selected by
+AssetRipper `1ac666f47d8e9dedf96afb0b914c70d7656151ea`. Its channel layout and
+one-unit interpolation bias explain the independent source-image comparison;
+the bounded C adapter is authored here. No BC4/BC5 game output or mip-derived
+literal table is distributed. Whole game-cohort and Android checks remain open.

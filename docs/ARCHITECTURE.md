@@ -179,6 +179,10 @@ with bounded native coordinate buffers; `sdk_texture_codec.c` calls the separate
 SDK codec. Host-native SDK execution is an oracle; Android uses the public QEMU
 runner and genuine GNU runtime. No game runtime owner or Editor/project build
 is introduced. Full-cohort phone qualification remains pending.
+The same native pixel owner has experimental BC4/BC5 byte-channel decoding and
+linear/sRGB mip-chain pipe modes. It preserves byte units through the first
+linear reduction, then continuous float32 levels. These modes have authored
+exact-editor host controls; game-cohort and Android admission remain separate.
 `build_sdk_runner.py` owns current experimental public Box64 acquisition-by-build
 for standalone owner-supplied SDK tools. Explicit unchanged upstream source,
 the pinned SDK NDK and host archive tools produce a private Android runner.
@@ -404,8 +408,9 @@ owner or whole-catalog build calls this support path.
 exact-editor texture oracle. The `phone-texture-fixture` action stages a fresh
 SDK-only project with authored `TextureMipFixture.cs`; `phone-texture-check`
 imports nine authored PNGs across linear, sRGB and normal settings under the
-primary editor mutex. A linear RGBAFloat mirror and native scalar transfer
-observations separate filtering from byte quantization. The owner validates all
+primary editor mutex. A linear RGBAFloat mirror, its native byte conversion and
+native scalar transfer observations separate filtering from byte quantization.
+The owner validates all
 raw mip files, source/config
 identity and persisted extents in a new attempt. Its output is a desktop
 comparison oracle, never a phone/game production input. No player is built.

@@ -788,3 +788,15 @@ extents refuse; failed attempts remain private. Compiler/codec children are
 bounded and reaped. No game data is shipped with the public source or profiles.
 Complete bundles, remaining textures/mips/cubemaps and ordinary app delivery
 remain open.
+
+The native pixel tool additionally exposes experimental `bc4`, `bc5`,
+`mips-linear` and `mips-srgb` pipe modes. BC4/BC5 accept the complete compressed
+logical top mip and emit cropped RGBA with unused colour channels zero and alpha
+255. Their byte-channel interpolation retains the pinned upstream one-unit
+bias. The mip modes accept exactly `width * height * 4` RGBA bytes and emit all
+logical levels, including the original, through 1 by 1 in raster order. The
+first linear reduction precedes normalization; later levels retain float32
+values without intermediate byte quantization. Gamma conversion applies only
+to RGB. The builder disables floating-point contraction and links native libm.
+All 87 authored exact-editor byte levels match on the host. These modes do not
+yet admit a game mip cohort or establish Android equivalence.
