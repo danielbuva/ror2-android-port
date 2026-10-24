@@ -9,28 +9,32 @@ public static class TextureMipFixture
 {
     [Serializable] public sealed class Level { public int width; public int height; public int mip; public string file; }
     [Serializable] public sealed class ImageReport { public string pattern; public string mode; public string format; public string input; public Level[] levels; }
-    [Serializable] public sealed class Report { public string unity; public string source_commit; public ImageReport[] images; public ImageReport floatMirror; public string transfer; }
+    [Serializable] public sealed class Report { public string unity; public string source_commit; public ImageReport[] images; public ImageReport floatMirror; public ImageReport floatQuantized; public string transfer; }
     static byte[] Bytes(Color32[] pixels)
     {
         var bytes = new byte[pixels.Length * 4];
         for (int i = 0; i < pixels.Length; i++) { bytes[i*4]=pixels[i].r; bytes[i*4+1]=pixels[i].g; bytes[i*4+2]=pixels[i].b; bytes[i*4+3]=pixels[i].a; }
         return bytes;
     }
-    static ImageReport CaptureFloatMirror(string output)
+    static ImageReport CaptureFloatMirror(string output, out ImageReport quantized)
     {
         string asset="Assets/TextureMipFixture/noise-linear.png";
         var importer=(TextureImporter)AssetImporter.GetAtPath(asset);
         importer.SetPlatformTextureSettings(new TextureImporterPlatformSettings { name="Android",overridden=true,format=TextureImporterFormat.RGBAFloat,maxTextureSize=2048 });
         importer.SaveAndReimport(); var texture=AssetDatabase.LoadAssetAtPath<Texture2D>(asset);
         if (texture.format!=TextureFormat.RGBAFloat) throw new Exception("Actual RGBAFloat mirror required");
-        var levels=new List<Level>();
+        var levels=new List<Level>(); var byteLevels=new List<Level>();
         for (int mip=0;mip<texture.mipmapCount;mip++)
         {
             float[] values=texture.GetPixelData<float>(mip).ToArray();
             byte[] data=new byte[values.Length*4]; Buffer.BlockCopy(values,0,data,0,data.Length);
             string file="noise-linear-float.mip"+mip+".rgba32f"; File.WriteAllBytes(Path.Combine(output,file),data);
             levels.Add(new Level {width=Math.Max(1,texture.width>>mip),height=Math.Max(1,texture.height>>mip),mip=mip,file=file});
+            string byteFile="noise-linear-float-quantized.mip"+mip+".rgba";
+            File.WriteAllBytes(Path.Combine(output,byteFile),Bytes(texture.GetPixels32(mip)));
+            byteLevels.Add(new Level {width=Math.Max(1,texture.width>>mip),height=Math.Max(1,texture.height>>mip),mip=mip,file=byteFile});
         }
+        quantized=new ImageReport {pattern="noise",mode="linear-float-quantized",format=texture.format.ToString(),input="noise.input.rgba",levels=byteLevels.ToArray()};
         return new ImageReport {pattern="noise",mode="linear-float",format=texture.format.ToString(),input="noise.input.rgba",levels=levels.ToArray()};
     }
     static void CaptureTransfer(string output)
@@ -87,8 +91,8 @@ public static class TextureMipFixture
                 images.Add(new ImageReport {pattern=pattern,mode=mode,format=texture.format.ToString(),input=pattern+".input.rgba",levels=levels.ToArray()});
             }
         }
-        var mirror=CaptureFloatMirror(output); CaptureTransfer(Path.Combine(output,"runtime-transfer.f32"));
-        var report=new Report {floatMirror=mirror,transfer="runtime-transfer.f32",unity=Application.unityVersion,source_commit=Environment.GetEnvironmentVariable("ROR2_PHONE_BUILD_SOURCE"),images=images.ToArray()};
+        ImageReport quantized; var mirror=CaptureFloatMirror(output,out quantized); CaptureTransfer(Path.Combine(output,"runtime-transfer.f32"));
+        var report=new Report {floatMirror=mirror,floatQuantized=quantized,transfer="runtime-transfer.f32",unity=Application.unityVersion,source_commit=Environment.GetEnvironmentVariable("ROR2_PHONE_BUILD_SOURCE"),images=images.ToArray()};
         File.WriteAllText(Path.Combine(output,"result.json"),JsonUtility.ToJson(report,true));
     }
 }
