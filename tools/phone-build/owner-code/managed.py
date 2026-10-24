@@ -350,14 +350,32 @@ def target_run(work, sdk, values, target, source_root, output, *, android_tools=
         for name in ("logs", "tmp", "ordinary"):
             (output / name).mkdir()
         # Use the existing public compiler/Cecil producer, including all golden gates.
-        ordinary = public_transform_tools.generate(
-            state[1] / "Risk of Rain 2_Data/Managed",
-            output / "ordinary",
-            assembly_transforms.load_recipe(),
-            archives=inputs["archives"],
-            launcher=inputs["dotnet"],
-            host="android8" if android_tools else "host10",
-        )
+        runtime_env = {name: os.environ.get(name) for name in ("ROR2LAB_BUILD_DOTNET_ROOT", "ROR2LAB_BUILD_HOSTFXR")}
+        try:
+            if android_tools:
+                # The audited public-tool profile enumerates exactly .NET 8.
+                # ILSpy separately needs .NET 10; keep both installed while
+                # exposing only the original framework to this producer.
+                framework = Path(runtime_env["ROR2LAB_BUILD_DOTNET_ROOT"]) / "shared/Microsoft.NETCore.App/8.0.32"
+                isolated = output / "public-dotnet"
+                (isolated / "shared/Microsoft.NETCore.App").mkdir(parents=True)
+                (isolated / "shared/Microsoft.NETCore.App/8.0.32").symlink_to(framework, target_is_directory=True)
+                os.environ["ROR2LAB_BUILD_DOTNET_ROOT"] = str(isolated)
+                os.environ["ROR2LAB_BUILD_HOSTFXR"] = str(inputs["dotnet"].parent / "libhostfxr.so")
+            ordinary = public_transform_tools.generate(
+                state[1] / "Risk of Rain 2_Data/Managed",
+                output / "ordinary",
+                assembly_transforms.load_recipe(),
+                archives=inputs["archives"],
+                launcher=inputs["dotnet"],
+                host="android8" if android_tools else "host10",
+            )
+        finally:
+            for name, value in runtime_env.items():
+                if value is None:
+                    os.environ.pop(name, None)
+                else:
+                    os.environ[name] = value
         result["phase"] = "packages"
         packages = output / "packages"
         package_request = {"sdk_install": str(sdk), "packages": str(inputs["packages"]), "output": str(packages)}
