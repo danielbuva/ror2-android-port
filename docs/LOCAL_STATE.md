@@ -296,6 +296,45 @@ committed sources, verifies the explicitly configured device/owned workspace,
 fresh capacity and unchanged stopped game, and invokes the tracked driver with
 target 33. Its separate selector preserves the original J836 attempts.
 
+The positive native build-tool fixture stages public
+`tools/phone-build/native-host/` sources with the same supplied SDK jars and
+the already verified .NET 8.0.32, Roslyn, reference and native-dependency
+inputs described in its README. These are required local tools, not public
+repository contents. Private `build_on_alpha.py` and `install_on_alpha.py`
+under `work/coordination/phone-proof/native-tool-host-r1/` bind source/tool
+hashes, explicit device/workspace ownership, fresh capacity and the stopped
+game; their versioned selectors preserve each failed and successful attempt.
+The tracked builder generates each new APK and data/native hash manifest.
+Reports, raw mapping paths, source stages, disposable signing material and
+`proof-receipt-v1.json` stay under that ignored evidence root. No game build
+reads these private adapters, their timestamped outputs or the fixture APK.
+
+The connected fixture's public `tools/phone-build/managed-host/stage.py` stages
+the fixed source cohort, supplied SDK jars and audited native/link metadata.
+Its optional public producer checkout and three verified archive files remain
+explicit local tool inputs. Private `run_shell.py`, `build_app.py` and
+`install_app.py` under
+`work/coordination/phone-proof/native-python-host-r1/` own Alpha-only research
+coordination and versioned source/build/install/refusal selectors. These
+adapters hash accepted legitimate Managed files before copying them separately
+into the owned fixture data area; no game build reads them. The tracked builder
+and entry point generate the APK, link/data manifests and transform outputs.
+Input archives, disposable keys, raw process/mapping evidence, output DLLs and
+proof receipts stay ignored. Caller configuration and every device path remain
+local; no public tool embeds a timestamped experiment path.
+
+The current integration replay uses the public stage generator and explicit
+caller-owned tool-root, SDK/material/archive selection receipts under
+`work/coordination/app-host-integration/`. These selectors are required local
+orchestration state locating already acquired tools, not opaque game-production
+inputs. Its private adapters reuse the existing build/install contracts, select
+the assigned device explicitly and retain failed attempts. The public stage,
+builder and producer generate every consumed source/data artifact; original
+Managed input comes directly from the accepted installation. No current game
+build reads those selectors. The signed fixture APK is transferred once because
+the guarded SDK inspector/install-capacity interface requires a local file;
+other APK intermediates and disposable signing material stay on the phone.
+
 `phone_native.stage_action` generates `work/rebuild/phone-native/<attempt>/`
 from an explicit authored fixture project/APK/hash request. It copies supplied
 SDK/runtime source, the NDK target headers/libraries, generated C++ and its build

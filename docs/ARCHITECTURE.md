@@ -632,6 +632,34 @@ observed app UID/context agreement and an actual writable-copy permission denial
 Optional unprivileged enforcement reads can remain unknown. Failed controls
 retain their file metadata/backing and owned cleanup evidence.
 
+`tools/phone-build/native-host/` owns a separate positive build-tool hosting
+fixture. Its `NativeToolHost.c` calls the existing public hostfxr command-line
+ABI; `ToolHostActivity` owns fresh data directories, asset/native hash checks,
+read-only native links, bounded compiler/managed children and private reports.
+`build_fixture.py` owns phone compilation, packaging, disposable signing and
+input/failure receipts. Caller-owned installation/teardown requires explicit
+device selection, fresh storage and an exact installed-APK ownership receipt.
+Setup and unqualified boundaries are in its
+[README](../tools/phone-build/native-host/README.md). This support path has no
+game, launcher or whole-catalog consumer and adds no `./dev` action. It never
+changes the existing refusal probe or reports security qualification.
+
+`tools/phone-build/managed-host/` owns the connected experimental app-host
+support. `stage.py` checks the public source/native metadata contract and stages
+new owner-supplied SDK inputs; its builder owns the separate phone-built APK.
+`NativePythonHost.c` selects the existing interpreter's isolated configuration;
+`NativeDotnetMuxer.c` forwards actual framework queries/application invocations.
+The activity owns fresh data/native-link state and bounded children;
+`run_profile.py` checks supplied input hashes and invokes the unchanged public
+producer. Device installation, legitimate accepted-input transfer, independent
+readbacks and exact-APK teardown remain caller-owned. See its
+[README](../tools/phone-build/managed-host/README.md). No default build/runtime
+consumer or `./dev` action is added, and J929 remains a failed security gate.
+The integrated source selection refreshes the two authored helper pins while
+retaining the same native/interpreter/compiler owners. J1074 qualifies its
+current app-host operation; it does not turn this support fixture into a game
+compiler, content producer or installer.
+
 `phone_native.py` owns experimental **support** for replaying the authored
 content fixture's native graph. `phone-native-fixture` verifies an explicit
 project/APK request, copies supplied runtime/NDK and generated source inputs

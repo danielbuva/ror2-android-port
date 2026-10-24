@@ -37,6 +37,19 @@ improvement nor complete export.
 [J1025](PORTING_JOURNAL.md#j1025--run-the-pinned-importer-through-an-android-nativeaot-console)
 passes a separate console's authored importer control without the web frontend;
 complete accepted-input processing/export and memory behavior stay unqualified.
+
+
+Connected public transform producer inside the app:
+[J1001](PORTING_JOURNAL.md#j1001--run-the-unchanged-public-transform-producer-inside-the-android-app-host).
+The failed security/refusal gate and complete phone-build gates remain open.
+The integrated-source replay is
+[J1074](PORTING_JOURNAL.md#j1074--qualify-the-integrated-public-transform-tools-inside-the-android-app-host):
+two cold app-host transformations and copied-input refusal pass; full-player
+construction and policy enforcement remain separate gates.
+Separate positive managed build-tool app host:
+[J999](PORTING_JOURNAL.md#j999--host-the-existing-managed-build-tools-from-read-only-app-native-libraries).
+The earlier refusal/security gate remains open; this fixture supplies no
+complete app bootstrap or game-build acceptance.
 Native fixture compile/link/loading: [J839](PORTING_JOURNAL.md#j839--compile-and-link-the-authored-il2cpp-native-library-on-android).
 Full authored converter/native/device closure: [J842](PORTING_JOURNAL.md#j842--run-the-full-authored-converter-and-load-its-phone-compiled-native-output).
 Authored input capture and Android stripping: [J846](PORTING_JOURNAL.md#j846--capture-authored-stripping-inputs-and-replay-unitylinker-on-android).

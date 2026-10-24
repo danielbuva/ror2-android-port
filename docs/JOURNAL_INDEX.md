@@ -10,6 +10,9 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1074](PORTING_JOURNAL.md#j1074--qualify-the-integrated-public-transform-tools-inside-the-android-app-host) | 2026-10-24 | Qualify the integrated public transform tools inside the Android app host | 2026-10-24 UTC. |
+| [J1001](PORTING_JOURNAL.md#j1001--run-the-unchanged-public-transform-producer-inside-the-android-app-host) | 2026-10-22 | Run the unchanged public transform producer inside the Android app host | 2026-10-23 UTC. |
+| [J999](PORTING_JOURNAL.md#j999--host-the-existing-managed-build-tools-from-read-only-app-native-libraries) | 2026-10-22 | Host the existing managed build tools from read-only app native libraries | 2026-10-23 UTC. |
 | [J1073](PORTING_JOURNAL.md#j1073--revalidate-the-public-owner-transform-profile-after-integration) | 2026-10-24 | Revalidate the public owner transform profile after integration | 2026-10-24 UTC. |
 | [J992](PORTING_JOURNAL.md#j992--connect-phone-acquired-public-tools-to-owner-assembly-transforms) | 2026-10-24 | Connect phone-acquired public tools to owner assembly transforms | 2026-10-23 UTC. |
 | [J990](PORTING_JOURNAL.md#j990--build-unchanged-owner-transforms-on-android-from-public-tool-inputs) | 2026-10-24 | Build unchanged owner transforms on Android from public tool inputs | 2026-10-23 UTC. |
