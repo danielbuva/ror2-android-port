@@ -1388,3 +1388,24 @@ must not be published. Setup/teardown neither reads a mutable current build
 pointer nor changes the shared project/editor/device. None of these experimental
 output paths is a current whole-catalog build input. Preserve the complete case
 and proof before any specifically scoped source compression/retirement.
+
+## Whole native-player feasibility workspace
+
+Ignored `work/coordination/owner-native-player-v1/` owns the next experimental
+native build from J1058's actual generated source, with explicit frozen native
+command policy and exact supplied SDK compiler. It is not a Unity project or a
+current game-build input. The generated native plan and retained SDK-source
+hashes bind all commands/providers; only owned output paths may be written.
+
+J1058's reviewed C/C++ source is now individually compressed under this
+workspace's `source-store/`. `source-store-manifest.json` preserves every original
+path/hash/size/mode/mtime and each gzip hash. The adjacent J1058
+`whole-converter-v1/cpp.retired.json` points to that restore ledger. All 687 source
+frames were decompressed and hash-verified before expanded copies were retired;
+metadata, failed cases and all historical receipts stay intact. The private
+native replay adapter restores one exact translation unit at a time and retains
+verified object receipts. These frames and their restore ledger are required
+local source state until the candidate is promoted or specifically retired;
+never treat them as disposable cache. SDK/runtime source is read from the
+explicit owner install and remains unmodified. Failed compilation keeps its
+source and logs; successful source expansion can be restored from the frames.
