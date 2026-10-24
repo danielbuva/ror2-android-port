@@ -1,6 +1,6 @@
 # Porting state
 
-Updated 2026-10-24 UTC after **J1084**, **J1080** and **J1079**.
+Updated 2026-10-24 UTC after **J1085**, **J1080** and **J1079**.
 Main's latest qualified R44 preserves original stage audio clients after native readiness and
 passes both assisted controls, confirmed End Run, original Term/disarm, two
 application-owned Quits and a fresh-process audio restart. Observed exits take
@@ -17,7 +17,7 @@ through the [index](docs/JOURNAL_INDEX.md).
 | Accepted input | Steam 25475991; input `6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88` |
 | Toolchain | Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan; `environment/toolchain.json` |
 | Latest Main diagnostic | J1080/R44 `3d012ee9783e900117a10718d442582a3e6e6ecc1f444a48c316db7f043d4467`, build source `4c950513`: both standard controls, loaded source-audio clients on Lakes/Goolake, original Term/disarm, application-owned Quit and fresh-process restart. Full mix and PC appearance remain open. |
-| Pending rendering candidate | J1084/R48 normal `1578bc0d8cad458967341e58a629459c2ee631d358d845d1bab96215d3440bec`, source `498ef5e3`, restores both original startup graphics profiles with owned AO/LUT resources and the J1083 source Sobel path. Actual editor imports/kernel contracts and normal full build pass; it is not installed or device-qualified. Earlier R47 remains frozen locally. |
+| Pending rendering candidate | J1085/R48 normal `1578bc0d8cad458967341e58a629459c2ee631d358d845d1bab96215d3440bec`, source `498ef5e3`, restores both original startup graphics profiles with owned AO/LUT resources and the J1083 source Sobel path. Actual editor imports/kernel contracts and normal full build pass; it is not installed or device-qualified. Earlier R47 remains frozen locally. |
 | Latest UI feature | J1066 Thor `299445f72267f216b23c7c4c2610364329445625396d8cd536bab01c07747ead`, source `bf40428f`, qualifies application screen lifetime and strict native abandon/restart. Preceding modal-corrected `c17a0ccc2947ac4b7c02cf43c183170ff866f88b03e90629c70a96121c1d18bb`, source `e8600060`, qualifies native keyboard/preview/consent/copy/browser return and confirmation/cancel. Automatic gameplay diagnostics do not qualify complete physical/touch play. |
 | Installed now | Main was updated to R45 `43a8c0ffd5e98fd7f04e7030df3c3e29e765ebfe06a50a647231c7d3103a8d7a`, source `70f44151`, in adopted storage. Install/sync and independent byte/profile checks pass; the first control loses the assigned ADB transport before producing a report. Cleanup/process/selector/display state is unverified while unreachable. R44/J1080 remains the latest qualified diagnostic. J1072 restored Thor's 299445f7 in internal storage at handoff, with exact installed hash, runtime backing, selector/process absence and both panels OFF verified. Its shared lease was released; later owners may advance the receipts. Never infer installation from Git HEAD. |
 | Runtime source since those APKs | The explicit-stage Sobel correction and original global AO/grading role are compiled in uninstalled R48 normal. Original settings are preserved; compatible public programs do not establish exact original shader or PC appearance parity. R44 stage audio and J1078 tooling remain inherited. Shared-editor build pointers can move independently of device bytes. |
