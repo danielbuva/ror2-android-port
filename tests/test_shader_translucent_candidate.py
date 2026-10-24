@@ -41,7 +41,7 @@ class ProductionGeneratorContracts(unittest.TestCase):
                 work = Path(temp)
                 self.assertEqual(
                     module.output_path(work, "fixture-input"),
-                    (work / "generated-shader-candidates/translucent-camera-r1/fixture-input").resolve(),
+                    (work / "generated-shader-candidates/translucent-camera-r2/fixture-input").resolve(),
                 )
                 with self.assertRaisesRegex(RuntimeError, "does not match"):
                     module.output_path(work, "other-input")
@@ -50,7 +50,7 @@ class ProductionGeneratorContracts(unittest.TestCase):
                     module.output_path(work, "fixture-input")
         finally:
             module.SOURCE = old
-            module.RECIPE["stable_output"] = "generated-shader-candidates/translucent-camera-r1/{input_id}"
+            module.RECIPE["stable_output"] = "generated-shader-candidates/translucent-camera-r2/{input_id}"
 
     def test_output_rejects_symlinked_parent(self):
         old = module.SOURCE

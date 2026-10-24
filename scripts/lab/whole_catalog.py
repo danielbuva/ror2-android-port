@@ -179,11 +179,27 @@ def _validated_shader_overrides(io, closure, metadata, mapped, export, project, 
             -5627814109785558414,
             "e5c4572c0a575514bb041a5a82e33cea",
         ),
+        (
+            8943,
+            "62decc840d5afaa49886d8b13165939e",
+            "RoR2/Base/Core/CameraEffects/HGScreenDamage.shader",
+            "Assets/RoR2/Base/Core/CameraEffects/HGScreenDamage.shader",
+            "screen-damage",
+            "shader_ramp_fog.py",
+            "recipe/shader-screen-damage-candidate.json",
+            1,
+            "candidate.json",
+            "sources/ScreenDamageCandidate.shader",
+            "generated_shader",
+            "Hopoo Games/Post Process/Screen Damage",
+            916309824485114785,
+            "ed4a1bae3abd8f34b905b509b4ff70e0",
+        ),
     ]
     rows = selection.get("rows")
-    if not isinstance(rows, list) or len(rows) not in (2, len(expected)):
-        raise RuntimeError("Shader override selection must contain exactly the two historical roots or all six qualified roots")
-    expected = expected[:2] if len(rows) == 2 else expected
+    if not isinstance(rows, list) or len(rows) not in (2, 6, len(expected)):
+        raise RuntimeError("Shader override selection must contain a historical two/six-root profile or the complete current profile")
+    expected = expected[: len(rows)]
     locations = {int(row["id"]): row for row in metadata["locations"]}
     keys = {row["key"]: row for row in metadata["keys"] if row.get("keyType", "System.String") == "System.String"}
     output_rows = []
@@ -279,11 +295,11 @@ def _validated_shader_overrides(io, closure, metadata, mapped, export, project, 
             if not translucent_candidate_identity_matches(manifest, generator_recipe_data, location_id, guid, source_path, object_path_id, shader_name):
                 raise RuntimeError("Translucent camera candidate identity, pass map, or qualification changed")
         elif (
-            manifest.get("kind") != "local-source-bound-ramp-fog-candidate"
+            manifest.get("kind") != f"local-source-bound-{candidate_kind}-candidate"
             or source.get("shader_path_id") != object_path_id
             or source.get("shader_name") != shader_name
         ):
-            raise RuntimeError("RampFog candidate identity changed")
+            raise RuntimeError("Native post-process candidate identity changed")
         candidate_bytes = io.read_bytes(shader_path)
         if manifest.get(manifest_path_field) != shader_rel or manifest.get("generated_shader_sha256") != sha(shader_path):
             raise RuntimeError("Shader override candidate output differs from its manifest: " + candidate_kind)
@@ -297,10 +313,10 @@ def _validated_shader_overrides(io, closure, metadata, mapped, export, project, 
             manifest.get("android_compile_or_render_tested") is not False or manifest.get("appearance_parity_proven") is not False
         ):
             raise RuntimeError("Outline candidate must retain its unqualified status")
-        if candidate_kind == "ramp-fog":
+        if candidate_kind in {"ramp-fog", "screen-damage"}:
             ramp_receipt_path = candidate_directory / "receipt.json"
             if ramp_receipt_path.is_symlink() or not ramp_receipt_path.is_file():
-                raise RuntimeError("RampFog generator receipt is absent or linked")
+                raise RuntimeError("Native post-process generator receipt is absent or linked")
             ramp_receipt = io.read(ramp_receipt_path)
             if (
                 ramp_receipt.get("success") is not True
@@ -312,7 +328,7 @@ def _validated_shader_overrides(io, closure, metadata, mapped, export, project, 
                 or ramp_receipt.get("android_shader_acceptance") is not False
                 or ramp_receipt.get("visual_parity_proven") is not False
             ):
-                raise RuntimeError("RampFog generator receipt is incomplete or inconsistent")
+                raise RuntimeError("Native post-process generator receipt is incomplete or inconsistent")
         if not target_relative:
             raise RuntimeError("Shader override has no validated project mapping")
         meta = project / (target_relative + ".meta")

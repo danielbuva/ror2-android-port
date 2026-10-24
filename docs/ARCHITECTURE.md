@@ -3121,17 +3121,24 @@ interpolation survives. It has no runtime setup or teardown. The optional
 catalog consumer below stages this generated source; J965 qualifies the isolated
 exact-editor Android bundle fixture. Android appearance remains a separate gate.
 
-`scripts/lab/shader_ramp_fog.py` owns the one-shader `shader-ramp-fog` host
-action. It reads only the fixed public `recipe/shader-ramp-fog-candidate.json`
-and the user's accepted input, checks the exact serialized object, native
-programs and tool/helper pins, then writes a no-overwrite candidate under
-`work/generated-shader-candidates/ramp-fog-r4/<input_id>/`. R4 refreshes the
-bounded-array helper pin and preserves R3 and R2 outputs. Its generated shader
-bytes are unchanged; RampFog's measured render-state serialization stays on its
-existing numeric path. The output is ignored
-local ShaderLab/DXBC evidence. J965 qualifies its isolated exact-editor Android
-bundle fixture; the optional catalog consumer below stages its source. Android
-rendering remains a device gate.
+`scripts/lab/shader_ramp_fog.py` owns the source-bound single-pass
+`shader-ramp-fog` and `shader-screen-damage` host actions. The latter selects a
+second fixed public recipe, `recipe/shader-screen-damage-candidate.json`, while
+the original action retains its RampFog source identity. Each validates the
+accepted installation, exact native object/blob/program topology, measured
+interfaces and tool/helper pins before publishing new ignored evidence.
+The shared wrapper uses the validated native shader name and pass state;
+it retains recovered definitions before their calling wrappers. No game
+expressions or compiled programs are public inputs.
+
+Current output roots are
+`work/generated-shader-candidates/ramp-fog-r5/<input_id>/` and
+`work/generated-shader-candidates/screen-damage-r1/<input_id>/`. Prior RampFog
+outputs remain preserved. Native programs, layouts, independent disassembly,
+byte roundtrips and source-immutability receipts accompany each candidate.
+The producer has no runtime setup or teardown; the original PostProcessLayer
+and effect renderer remain its consumers. Compilation and device appearance
+are separate gates, as in the earlier J965 RampFog bundle fixture.
 
 `scripts/lab/shader_translucent.py` owns the current host-only
 `shader-translucent` action (J1003). Its fixed public
@@ -3139,29 +3146,31 @@ rendering remains a device gate.
 inventory, four source shader identities, pass counts, keyword axes and exact
 authored/native tool pins. It imports the repository binder directly and writes
 only new ignored evidence under
-`work/generated-shader-candidates/translucent-camera-r1/<input_id>/`.
+`work/generated-shader-candidates/translucent-camera-r2/<input_id>/`.
 Input/tool drift, symlinked output roots, unknown metadata and colliding output
 paths refuse before publication. The generator retains EfficientBlur's two
 source passes/shared fragment and QuickDumbBlur's measured `FLIP_V` axis.
-It has no runtime setup or teardown. J1009 verifies isolated Android/Vulkan
+R2 refreshes the shared signature-helper receipt while retaining the four
+shader identities and pass/keyword contracts. It has no runtime setup or
+teardown. J1009 verifies isolated Android/Vulkan
 compilation and cleanup. J1012 adds catalog consumption; J1017 installs the
 complete six-row payload after a full catalog/player build. Android rendering
 and matched PC appearance remain separate gates.
 
 `whole_catalog.prepare_integration` owns the optional shader catalog override
 (J966/J1012). The public `recipe/shader-catalog-overrides.json` is a default-off
-exact identity allowlist for Outline Highlight, RampFog and the four Translucent
-candidates. Ignored `work/config/shader-catalog-overrides.json` explicitly
+exact identity allowlist for Outline Highlight, RampFog, the four Translucent
+candidates and the existing ScreenDamage runtime root. Ignored `work/config/shader-catalog-overrides.json` explicitly
 activates it for one accepted input. Before writing, staging validates all
 current generator/recipe chains, candidate source/metadata receipts and original
-catalog relationships. For the four new rows it validates the catalog address
-GUID and distinct original exporter metadata GUID independently, plus source
+catalog relationships. For Translucent and ScreenDamage it validates the catalog
+address GUID and distinct original exporter metadata GUID independently, plus source
 path/object identity, pass count and keyword shape. Only generated shader bodies
 replace their catalog files; existing `.meta` bytes stay identical. The attempt
 receipt and project `.rebuild` mirror/marker bind the selector digest.
 `catalog_rebuild` and `rebuild.compare` validate those exact exceptions and retain
-ordinary provenance comparison elsewhere. Historical exact two-row receipts
-remain supported; current staging selects all six rows and rejects partial
+ordinary provenance comparison elsewhere. Historical exact two- and six-row receipts
+remain supported; current staging selects all seven rows and rejects partial
 cohorts. Both current-project and destination staging persist the marker;
 disabling an already-staged override refuses before
 catalog writes and requires a clean destination. The generator owns candidate

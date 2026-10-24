@@ -46,6 +46,13 @@ SHADER_OVERRIDE_ROWS = (
         "Assets/Le Tai's Asset/TranslucentImage/FormerResources/QuickDumbBlur.shader",
         "e5c4572c0a575514bb041a5a82e33cea",
     ),
+    (
+        8943,
+        "62decc840d5afaa49886d8b13165939e",
+        "RoR2/Base/Core/CameraEffects/HGScreenDamage.shader",
+        "Assets/RoR2/Base/Core/CameraEffects/HGScreenDamage.shader",
+        "ed4a1bae3abd8f34b905b509b4ff70e0",
+    ),
 )
 SHADER_OVERRIDE_GENERATORS = {
     16022: (
@@ -107,6 +114,16 @@ SHADER_OVERRIDE_GENERATORS = {
         "generated_shader",
         "Hidden/PostProcess/RampFog",
         2910825169780710437,
+    ),
+    8943: (
+        "shader_ramp_fog.py",
+        "recipe/shader-screen-damage-candidate.json",
+        1,
+        "candidate.json",
+        "sources/ScreenDamageCandidate.shader",
+        "generated_shader",
+        "Hopoo Games/Post Process/Screen Damage",
+        916309824485114785,
     ),
 }
 
@@ -201,9 +218,9 @@ def shader_override_rows(receipt, input_id, expected, provenance, candidate_work
     ):
         raise RuntimeError("Shader override receipt is not a qualified source-only receipt")
     rows = receipt.get("rows")
-    if not isinstance(rows, list) or len(rows) not in (2, len(SHADER_OVERRIDE_ROWS)):
-        raise RuntimeError("Shader override receipt must contain exactly the two historical roots or all six qualified roots")
-    expected_rows = SHADER_OVERRIDE_ROWS[:2] if len(rows) == 2 else SHADER_OVERRIDE_ROWS
+    if not isinstance(rows, list) or len(rows) not in (2, 6, len(SHADER_OVERRIDE_ROWS)):
+        raise RuntimeError("Shader override receipt must contain a historical two/six-root profile or the complete current profile")
+    expected_rows = SHADER_OVERRIDE_ROWS[: len(rows)]
     result = {}
     for row, (location_id, guid, primary_key, source_path, exporter_guid) in zip(rows, expected_rows, strict=True):
         target = "Assets/WholeGame/" + source_path.removeprefix("Assets/")
@@ -300,7 +317,8 @@ def shader_override_rows(receipt, input_id, expected, provenance, candidate_work
             )
         else:
             candidate_identity_matches = (
-                candidate_manifest.get("kind") == "local-source-bound-ramp-fog-candidate"
+                candidate_manifest.get("kind")
+                == ("local-source-bound-ramp-fog-candidate" if location_id == 15950 else "local-source-bound-screen-damage-candidate")
                 and candidate_manifest.get("source", {}).get("shader_path_id") == object_path_id
                 and candidate_manifest.get("source", {}).get("shader_name") == shader_name_value
             )
