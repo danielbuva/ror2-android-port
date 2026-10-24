@@ -359,3 +359,33 @@ This is an input producer for the larger requested-audio assembly path, not
 bank playback, bank conversion, a full game build or a selected installation
 architecture. Protected bank/media/index data stay private. Preserve native
 IL2CPP and the desktop fallback while the remaining producers are completed.
+
+## Bounded source audio prefab
+
+Current experimental host support in `scripts/lab/owner_audio_prefab.py` derives
+one complete WwiseGlobal source prefab directly from four original PC bundles.
+It uses the accepted inventory and the pinned UnityPy version already documented
+by the lab; no Editor, AssetRipper process or exported prefab is an input.
+
+```sh
+.local/lab-venv/bin/python scripts/lab/owner_audio_prefab.py --owner-work "$OWNER_WORK" --output "$NEW_OUTPUT"
+```
+
+Both paths are explicit/canonical and output must be new inside owner work,
+separate from the original installation. The owner/profile bind the complete
+accepted inventory, all four bundle hashes, root/collection identity, component
+order, script identities and the one external reference. Unknown graphs, script
+fields, references, parser versions or complete output hashes refuse. The
+serializer supports only this validated identity-root profile; it is not a
+general prefab converter. Its editor-only defaults and signed-zero behavior
+preserve the qualified format. All source values come from the original bundles.
+
+The [audited identity recipe](../recipe/README.md#source-wwiseglobal-prefab-identity-audit-2026-10-24)
+explicitly labels the one assigned export GUID as configuration rather than a
+PC GUID. It ships no serialized game data. The producer owns source validation,
+new-output setup, serialization/readback, final input revalidation and terminal
+receipt. It runs no child process and writes no project/current pointer; failed
+new roots remain evidence. `WwiseGlobal.prefab`, raw reports and receipts stay
+private. No current game build or selector consumes a new output automatically.
+Phone execution, complete audio staging, requested-audio assembly compilation,
+player/native integration and performance remain separate gates.

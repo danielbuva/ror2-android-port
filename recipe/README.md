@@ -1943,3 +1943,39 @@ relationship. No original implementation, shader body, generated asset,
 proprietary middleware, private path or raw device evidence is included.
 Reconstruction must replay this source cohort. Provenance/privacy audit:
 2026-10-23. Runtime material identity and rendering remain unverified.
+
+## Source WwiseGlobal prefab identity audit (2026-10-24)
+
+`owner-audio-prefab.json` is a minimal input/identity recipe for one source
+prefab, not a serialized asset or target-bearing patch. It contains the accepted
+input ID, four necessary original bundle paths/hashes/sizes, parser version,
+root/collection/object identities, required component/script counts and one
+external source-object to export-GUID relationship. The target size/hash is a
+validation contract and supplies no output bytes. These identifiers are the
+minimum lookup/relationship information needed by the bounded reconstruction.
+
+The external InitializationSettings GUID is explicitly **export configuration**:
+the pinned export collection allocates a GUID; it is not a PC catalog GUID or
+an independently derived original identity. The recipe binds that configured
+identity to the actual original collection/object/class/script, which the
+producer validates. All serialized names, bank selections, values and original
+object relationships are read from the legitimate input bundles, never stored
+in this recipe or copied from an exported prefab. Existing audited assembly
+GUIDs and `script_identity` supply script-pointer identity. No SDK/game source,
+serialized object body, bank/media data, private path, account/device/storage
+identifier, credential or signing material is included. The fixed input and
+source hashes refuse unknown versions; this does not substitute for owning the
+game or perform entitlement/authentication checks.
+
+Prior art: inspected AssetRipper `1ac666f47d8e9dedf96afb0b914c70d7656151ea`,
+`ExportIdHandler`, `Project/AssetsExportCollection`, `AssetExportCollection` and
+`Processing/Editor/EditorFormatConverterAsync`, plus the identity-root behavior
+of `Numerics/QuaternionExtensions`. These establish exporter ID allocation,
+configuration GUID origin and editor-only metadata/sign rules. The authored
+serializer uses mathematical empty-input XXH64 behavior, existing audited MD4
+script identity and versioned Unity YAML schema; no upstream implementation or
+exported YAML/template content is copied. The local MIT-licensed
+AssetRipper.Primitives 3.2.0 identity reference was inspected only for API
+knowledge; no third-party implementation is vendored. The private complete
+9,560-byte comparison and initial quoting/signed-zero mismatch remain ignored.
+The generic authored fixtures contain no original bank selections or asset data.

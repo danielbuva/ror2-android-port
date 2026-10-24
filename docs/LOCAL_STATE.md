@@ -1,5 +1,21 @@
 # Local state dependency inventory
 
+## Independent source audio prefab
+
+`owner_audio_prefab.py` reads explicit owner work configuration, accepted input
+and reviewed inventory plus the four original bundle paths named by the audited
+`recipe/owner-audio-prefab.json`. No exported asset, lab project or historical
+source catalog is a supplier. The tracked generator creates all new prefab and
+terminal receipt files; the single export-GUID relationship is configuration,
+not serialized data. [Setup](phone-owner-build.md#bounded-source-audio-prefab)
+describes ownership/refusal/lifecycle. Current game builds select none of these
+new outputs automatically.
+
+`work/coordination/owner-wwise-prefab-v1/` retains original-input inspection,
+lookup comparisons, complete private/public-source reconstruction attempts and
+the first quoting/signed-zero difference. All original type trees and generated
+prefab content stay private. No new source consumes a timestamped experiment.
+
 ## Independent source audio index
 
 The current source bank owner entry reads explicitly supplied owner work state:

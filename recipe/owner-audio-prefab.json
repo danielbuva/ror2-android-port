@@ -1,0 +1,64 @@
+{
+  "schema": 1,
+  "profile": "source-wwise-global-prefab-v1",
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "unitypy_version": "1.25.3",
+  "inputs": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-core-audio_assets_all_e9f75106964e48d54fea052d36cff3ba.bundle",
+      "bytes": 10885,
+      "sha256": "527c3b8db1e6d47d5f9ba2df069677da07c8e087ae94aa25dd40e0f6f40efa49"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/wwise_assets_all_97f249f6047d1fe87bc55a7f43700e80.bundle",
+      "bytes": 176072,
+      "sha256": "fc0a1c320c51035b6a927e70d0692b44e4989e229d862357409a83ff23778992"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_monoscripts_a69c140580dd1456807433bb923cc5ba.bundle",
+      "bytes": 87323,
+      "sha256": "68aee1b2d2633c3ce1713cc44238025f750d3ae0aa66f42e748d421b19178022"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-common-musictrackdefs_static_assets_all_8fc203a75bb79cc7f304b589daca7ed1.bundle",
+      "bytes": 4138,
+      "sha256": "8564a07615b60f6028fb280575cc314b92f710c4d8b36bb2a16811edf5612c22"
+    }
+  ],
+  "primary_collection": "CAB-e138378b56ecf985442fb3213a9546b6",
+  "root": {
+    "class_id": 1,
+    "path_id": 2856584850402090520,
+    "name": "WwiseGlobal"
+  },
+  "object_counts": {
+    "GameObject": 1,
+    "Transform": 1,
+    "MonoBehaviour": 11
+  },
+  "script_counts": {
+    "AK.Wwise.Unity.MonoBehaviour.dll|AkTerminator": 1,
+    "AK.Wwise.Unity.MonoBehaviour.dll|AkInitializer": 1,
+    "RoR2.dll|RoR2.WwiseUtils.SoundbankLoader": 9
+  },
+  "external_bindings": [
+    {
+      "source_file_id": 3,
+      "source_path_id": -8350993852590391895,
+      "source_collection": "CAB-da6064574d4e87f9b0c9a367ab839572",
+      "source_class_id": 114,
+      "source_name": "AkWwiseInitializationSettings",
+      "source_script": "AK.Wwise.Unity.API.dll|AkWwiseInitializationSettings",
+      "export": {
+        "fileID": 11400000,
+        "guid": "5f745af0dc49b9c4ebefb88cfe01969f",
+        "type": 2
+      },
+      "role": "existing-export-configuration-identity"
+    }
+  ],
+  "output": {
+    "bytes": 9560,
+    "sha256": "7f074267744a3f7652349572f4aa88f48cd3d43328ba629f686288f08c4be6af"
+  }
+}

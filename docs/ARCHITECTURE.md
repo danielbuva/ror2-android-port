@@ -92,6 +92,15 @@ and terminal receipt, and retains failures without updating lab/current state.
 keep the original lab gate and runtime stage/request guards intact. No game build
 automatically selects this source-only input path; Android execution is open.
 
+`scripts/lab/owner_audio_prefab.py` owns current experimental bounded host
+reconstruction of one source audio prefab from the owner's original bundles.
+`recipe/owner-audio-prefab.json` holds audited minimum identities and one clearly
+labeled export-GUID configuration relationship. The owner validates source and
+script/reference graphs, serializes the qualified profile, revalidates inputs
+and retains terminal state in a new private output root. [Setup/lifecycle](phone-owner-build.md#bounded-source-audio-prefab)
+requires no Editor/exported asset and adds no current game-build consumer or
+runtime owner. Unknown shapes and hashes refuse; phone qualification remains open.
+
 Phone build **support**: `scripts/lab/phone_bundle.py` writes the isolated authored
 TextAsset bundle with only Python's standard library; its versioned native
 schemas consume no class database or generated asset. `phone_content.py` owns
