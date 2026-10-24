@@ -67,12 +67,13 @@ def bank_version(path):
         return struct.unpack("<I", stream.read(4))[0]
 
 
-def index(verify_decoder=False):
-    accepted = read(WORK / "config/accepted-input.json")
-    generation = read(WORK / "lab-project/.port-input.json")
-    if accepted["input_id"] != generation["input_id"]:
-        raise RuntimeError("Audio input differs from accepted lab generation")
-    root = game() / "Risk of Rain 2_Data/StreamingAssets/Audio/GeneratedSoundBanks/Windows"
+def parse_source_banks(root: Path, input_id: str) -> dict:
+    """Read the complete source metadata/bank cohort, without lab state or decoding.
+
+    The caller must validate the legitimate inventory; an input-id argument alone
+    is not ownership or input verification. No source or project file is written.
+    """
+    root = Path(root)
     xml = root / "SoundbanksInfo.xml"
     if not xml.is_file():
         raise RuntimeError("Accepted Wwise bank metadata unavailable")
@@ -119,23 +120,8 @@ def index(verify_decoder=False):
     unresolved = [event for event in events if any(media not in all_media for media in event["media"])]
     if unresolved:
         raise ValueError(f"Events reference absent media: {len(unresolved)}; first {unresolved[0]['name']}")
-    decoder = None
-    if verify_decoder:
-        candidate = min(((bank, media) for bank in banks for media in bank["embedded"]), key=lambda pair: pair[0]["bytes"], default=None)
-        if candidate is None:
-            raise ValueError("No embedded audio to verify")
-        bank, media = candidate
-        scratch = WORK / "experiments/audio-recovery"
-        scratch.mkdir(parents=True, exist_ok=True)
-        with tempfile.TemporaryDirectory(prefix="decoder-", dir=scratch) as temp:
-            local = Path(temp) / Path(bank["path"]).name
-            shutil.copy2(root / bank["path"], local)
-            result = run(["vgmstream-cli", "-m", "-I", "-s", str(media["subsong"]), local])
-        decoder = json.loads(result.stdout)
-        if int(decoder["streamInfo"]["name"]) != media["id"] or decoder["numberOfSamples"] <= 0:
-            raise ValueError("Decoder subsong does not match DIDX media identity")
     report = {
-        "input_id": accepted["input_id"],
+        "input_id": input_id,
         "metadata_sha256": sha(xml),
         "metadata_schema_version": int(source.attrib["SchemaVersion"]),
         "metadata_bank_version": metadata_version,
@@ -151,8 +137,45 @@ def index(verify_decoder=False):
             "multi_media_events": sum(len(event["media"]) > 1 for event in events),
             "no_media_events": sum(not event["media"] for event in events),
         },
-        "decoder_sample": decoder,
+        "decoder_sample": None,
     }
+    return report
+
+
+def decoder_metadata(root: Path, banks: list, scratch: Path) -> dict:
+    """Explicit metadata-only qualification on a temporary copy, never original audio."""
+    candidate = min(((bank, media) for bank in banks for media in bank["embedded"]), key=lambda pair: pair[0]["bytes"], default=None)
+    if candidate is None:
+        raise ValueError("No embedded audio to verify")
+    bank, media = candidate
+    scratch = Path(scratch)
+    scratch.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="decoder-", dir=scratch) as temp:
+        local = Path(temp) / Path(bank["path"]).name
+        original = root / bank["path"]
+        if sha(original) != bank["sha256"]:
+            raise ValueError("decoder source bank changed")
+        shutil.copy2(original, local)
+        if sha(local) != bank["sha256"]:
+            raise ValueError("decoder bank copy differs")
+        result = run(["vgmstream-cli", "-m", "-I", "-s", str(media["subsong"]), local])
+        if sha(original) != bank["sha256"] or sha(local) != bank["sha256"]:
+            raise ValueError("decoder changed a source or copied bank")
+    decoder = json.loads(result.stdout)
+    if int(decoder["streamInfo"]["name"]) != media["id"] or decoder["numberOfSamples"] <= 0:
+        raise ValueError("Decoder subsong does not match DIDX media identity")
+    return decoder
+
+
+def index(verify_decoder=False):
+    accepted = read(WORK / "config/accepted-input.json")
+    generation = read(WORK / "lab-project/.port-input.json")
+    if accepted["input_id"] != generation["input_id"]:
+        raise RuntimeError("Audio input differs from accepted lab generation")
+    root = game() / "Risk of Rain 2_Data/StreamingAssets/Audio/GeneratedSoundBanks/Windows"
+    report = parse_source_banks(root, accepted["input_id"])
+    decoder = decoder_metadata(root, report["banks"], WORK / "experiments/audio-recovery") if verify_decoder else None
+    report["decoder_sample"] = decoder
     out = WORK / "experiments/audio-recovery" / now()
     write(out / "bank-index.json", report)
     write(
@@ -162,8 +185,71 @@ def index(verify_decoder=False):
     return report["summary"]
 
 
+def owner_index(work: Path, output: Path, verify_decoder=False) -> dict:
+    """Derive a complete index from a verified owner inventory, without a project."""
+    from owner_assemblies import input_state
+
+    work, output = Path(work), Path(output)
+    if not work.is_absolute() or work != work.resolve(strict=True):
+        raise ValueError("owner work root must be canonical")
+    if not output.is_absolute() or ".." in output.parts or output.parent != output.parent.resolve(strict=True):
+        raise ValueError("new output must have a canonical parent")
+    if not output.is_relative_to(work) or output == work or output.exists() or output.is_symlink():
+        raise ValueError("new output must be inside owner work")
+    identity, installation, receipts = input_state(work)
+    if output.is_relative_to(installation) or installation.is_relative_to(output):
+        raise ValueError("owner output overlaps original installation")
+    output.mkdir()
+    terminal = {"schema": 1, "success": False, "input_id": identity, "project_required": False, "decoder_executed": False}
+    try:
+        inventory = read(work / "inventory/files.json")
+        expected = {row["path"]: row for row in inventory["files"]}
+        prefix = "Risk of Rain 2_Data/StreamingAssets/Audio/GeneratedSoundBanks/Windows/"
+        root = installation / prefix
+        report = parse_source_banks(root, identity)
+        if verify_decoder:
+            terminal["decoder_executed"] = True
+            executable = Path(shutil.which("vgmstream-cli") or "").resolve(strict=True)
+            executable_sha = sha(executable)
+            report["decoder_sample"] = decoder_metadata(root, report["banks"], output / "decoder-scratch")
+            if sha(executable) != executable_sha:
+                raise ValueError("decoder executable changed during metadata qualification")
+            terminal["decoder_executable_sha256"] = executable_sha
+        selected = {prefix + "SoundbanksInfo.xml": report["metadata_sha256"]}
+        selected.update({prefix + row["path"]: row["sha256"] for row in report["banks"]})
+        for relative, digest in selected.items():
+            if relative not in expected or digest != expected[relative]["sha256"] or sha(installation / relative) != digest:
+                raise ValueError("source bank/metadata differs from accepted inventory")
+        after_identity, after_installation, after_receipts = input_state(work)
+        if (after_identity, after_installation, after_receipts) != (identity, installation, receipts):
+            raise ValueError("owner inventory/configuration changed during indexing")
+        write(output / "bank-index.json", report)
+        terminal.update(
+            success=True,
+            summary=report["summary"],
+            index_sha256=sha(output / "bank-index.json"),
+            source_hashes=selected,
+            inventory_receipts=receipts,
+            parser_sha256=sha(Path(__file__)),
+        )
+    except Exception as error:
+        terminal["error"] = str(error)
+        raise
+    finally:
+        write(output / "result.json", terminal)
+    return terminal
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--verify-decoder", action="store_true")
+    parser.add_argument("--owner-work", type=Path, help="current source-only mode: verified owner inventory root, no lab project")
+    parser.add_argument("--output", type=Path, help="new private output directory inside owner work")
     args = parser.parse_args()
-    print(json.dumps(index(args.verify_decoder), sort_keys=True))
+    if args.owner_work is not None or args.output is not None:
+        if args.owner_work is None or args.output is None:
+            parser.error("owner mode requires --owner-work and --output")
+        result = owner_index(args.owner_work, args.output, args.verify_decoder)
+        print(json.dumps({"success": result["success"], "summary": result["summary"], "index_sha256": result["index_sha256"]}, sort_keys=True))
+    else:
+        print(json.dumps(index(args.verify_decoder), sort_keys=True))

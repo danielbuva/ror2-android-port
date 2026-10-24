@@ -82,6 +82,16 @@ the fixed profile and exclusions. No captured project/player inputs or current
 game build consume this owner; phone execution and full-player qualification
 remain separate gates. Package versions and the native IL2CPP runtime stay fixed.
 
+`scripts/lab/wwise_bank_index.py` owns the shared source bank/XML parser and a
+current experimental owner-input entry independent of a lab project. Default
+owner indexing executes no decoder; explicit metadata qualification shares the
+legacy temporary-copy helper and never exports audio or writes original banks.
+The owner entry binds accepted inventory before/after, owns a new private output
+and terminal receipt, and retains failures without updating lab/current state.
+[Setup and lifecycle](phone-owner-build.md#source-audio-inputs-without-a-project)
+keep the original lab gate and runtime stage/request guards intact. No game build
+automatically selects this source-only input path; Android execution is open.
+
 Phone build **support**: `scripts/lab/phone_bundle.py` writes the isolated authored
 TextAsset bundle with only Python's standard library; its versioned native
 schemas consume no class database or generated asset. `phone_content.py` owns

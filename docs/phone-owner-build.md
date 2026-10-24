@@ -321,3 +321,41 @@ does not advance them or certify a build pipeline ready.
 [android-exec]: https://developer.android.com/about/versions/10/behavior-changes-10#execute-permission
 [unity-terms]: https://unity.com/legal/editor-terms-of-service/software
 [sdk-terms]: https://developer.android.com/studio/terms
+
+
+## Source audio inputs without a project
+
+The current experimental host path in `scripts/lab/wwise_bank_index.py` derives
+the complete source bank index from a verified owner installation. It uses the
+same parser as the existing lab action; it does not generate a Unity project,
+claim editor readiness or alter the original game. Supply canonical absolute
+paths to an owner work root with reviewed `config/local.json`,
+`config/accepted-input.json` and `inventory/files.json`, and a new output
+directory inside that work root:
+
+```sh
+python3 scripts/lab/wwise_bank_index.py --owner-work "$OWNER_WORK" --output "$NEW_OUTPUT"
+```
+
+This mode executes no decoder. Add `--verify-decoder` explicitly when the
+complete index requires the existing metadata diagnostic. That step runs
+`vgmstream-cli -m -I` against a temporary copy of the deterministically selected
+bank, checks media identity and original/copy hashes, and exports no audio.
+The caller supplies that tool; no download or installation is performed.
+Its actual executable hash is retained. Android execution remains unqualified.
+
+`parse_source_banks(root, input_id)` is the shared read-only parser; an input-id
+argument alone does not verify ownership or an input inventory. The public owner
+entry validates the complete accepted inventory/configuration before and after
+indexing and binds every selected bank/XML hash. It refuses existing outputs,
+redirected roots, source/output overlap and input drift. Its private
+`bank-index.json` and `result.json` retain detailed data, provenance and terminal
+state; failed new outputs remain evidence. It writes no lab/current pointer.
+The existing `index()` lab generation gate, optional decoder and output/current
+pointer remain in place. No current game build automatically selects an owner
+output, and no runtime stage/request guard is changed.
+
+This is an input producer for the larger requested-audio assembly path, not
+bank playback, bank conversion, a full game build or a selected installation
+architecture. Protected bank/media/index data stay private. Preserve native
+IL2CPP and the desktop fallback while the remaining producers are completed.

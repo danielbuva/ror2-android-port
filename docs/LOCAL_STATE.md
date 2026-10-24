@@ -1,5 +1,22 @@
 # Local state dependency inventory
 
+## Independent source audio index
+
+The current source bank owner entry reads explicitly supplied owner work state:
+`config/local.json`, `config/accepted-input.json` and `inventory/files.json`.
+It uses the original PC XML/banks from the configured installation, never a
+captured Android output or `lab-project/.port-input.json`. An explicitly requested
+metadata qualification additionally needs the owner's `vgmstream-cli` executable;
+default source-only indexing does not run it. The tracked parser/entry produces
+all new index/receipt files. [Setup](phone-owner-build.md#source-audio-inputs-without-a-project)
+describes new-output ownership, inventory checks and optional tool execution.
+
+`work/coordination/source-audio-inputs-v1/` retains the complete private source
+case, metadata-only control on an owned bank copy, exact pinned-index comparison
+and final public entry outputs. All event/media names and generated index data
+stay ignored. The current game build reads none of this research state and no
+existing runtime stage/request pin is changed.
+
 ## Retained package producer inputs
 
 The experimental `tools/phone-build/package-assemblies/produce.py` reads an
