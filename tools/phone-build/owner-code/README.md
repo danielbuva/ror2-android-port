@@ -280,3 +280,10 @@ production are separate content-owner work. Ordinary app hosting, final APK
 assembly and runtime appearance/performance remain open. Retain failures and
 output evidence before deleting only this owned output; original SDK/game inputs
 and other runs remain untouched.
+
+The Vulkan compiler returns a linked graphics program in the `stage="vertex"`
+response, including the executable fragment module. Preserve that complete
+payload and reflection. A separate fragment-stage request can validly return
+empty data. J1102 qualifies both decoded execution models and an authored
+fragment-only arithmetic change, with raw host/phone payload parity. Original
+shader recovery and serialized content assembly remain separate content gates.

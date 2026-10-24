@@ -70,7 +70,12 @@ class Connection:
         return capabilities
 
     def compile(self, source, filename, *, stage, platform_keywords=(), keywords=(), disabled_keywords=(), flags=0, requirements=1):
-        """Compile an HLSL vertex/fragment snippet; retain reflection/errors."""
+        """Compile an HLSL graphics snippet; retain the complete SDK response.
+
+        Vulkan emits the linked vertex/fragment program in the vertex response.
+        A fragment request alone can succeed with empty data. Consumers must
+        retain the complete vertex payload and its reflection for both stages.
+        """
         program = {"vertex": 0, "fragment": 1}[stage]
         filename = Path(filename)
         self.send_string("c:compileSnippet")

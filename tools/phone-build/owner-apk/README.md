@@ -63,7 +63,7 @@ It never formats storage, relocates another app or clears user data to fit.
 
 ## Build the complete private candidate
 
-Use the exact accepted profile supported by `accepted-output/`. An explicit
+Use the exact accepted file layout/profile supported by `accepted-output/`. An explicit
 ignored request JSON contains these paths and the manifest SHA:
 
 ```json
@@ -90,6 +90,24 @@ explicit value must be a positive Android integer greater than the frozen
 input version; select a value greater than every previously installed owner
 version for an update. Only that typed manifest attribute changes in addition
 to the launcher routing. Retain the same private signing key across updates.
+
+For independently produced code, add one `code` dictionary mapping these three
+APK entry names to canonical absolute output files:
+
+- `lib/arm64-v8a/libil2cpp.so`
+- `assets/bin/Data/Managed/Metadata/global-metadata.dat`
+- `lib/arm64-v8a/lib_burst_generated.so`
+
+All three are required together: a source-code build never silently falls back
+to replayed Burst or metadata. Their comparison-target files need not exist.
+The builder records actual hashes/sizes, rechecks every source and verifies ZIP
+readback; every other content/payload path retains its existing target hash.
+The `targets` root is the content producer's existing `apk/` plus `payload/`
+file tree, not a record pack. Omitting `code` retains the existing private replay
+control. This input selection does not establish source provenance or runtime
+compatibility: retain the producer evidence, complete Burst ABI and full-player
+phone/install/performance qualification. The synthetic assembly contract passes
+with all comparison-target code files absent (J1102).
 
 Keep the public source tree's relative `owner-apk/` and `accepted-output/`
 directories together when staging on Android. Supply the wire helper explicitly;

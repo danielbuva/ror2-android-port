@@ -38241,3 +38241,74 @@ After the priority handoff, use the existing opt-in native heap pair to attribut
 the remaining menu slope on the next matched normal candidate. Keep that capture
 separate from an uninstrumented bound/performance case. A real pending-write
 interruption and the sustained session remain separate acceptance work.
+
+## J1102 — Qualify linked Vulkan fragment output and explicit owner APK code inputs
+
+Date: 2026-10-24 UTC. **Authored phone shader control and host APK input contract.**
+
+**Hypothesis / prior art.** J1094 reports an empty successful fragment request;
+that must not be mistaken for executable fragment output. The exact Vulkan SDK
+may emit a linked graphics program through its vertex response. Reuse J1094's
+pinned standalone clients and inspect public
+[smol-v](https://github.com/aras-p/smol-v/blob/55000efe742f56d8b51223b9ea7775a8f0501881/source/smolv.h)
+revision `55000efe742f56d8b51223b9ea7775a8f0501881`: its public decoder restores
+SPIR-V from compressed modules. Source/header SHA-256 values are retained in the
+private provider manifest; neither upstream implementation nor SDK-generated
+program bytes are added to the repository. Original game shader recovery and
+serialization remain with the content owner.
+
+**Actual result.** The existing public client compiles an authored texture/
+uniform graphics snippet twice, changing only fragment multiplication to addition.
+Both requests select `stage="vertex"`; the SDK emits both executable stages in
+that complete response. The host and phone payloads, all reflection records and
+empty diagnostics match raw, without normalization. The two variants are each
+849 B, SHA-256 values respectively
+`ed0d4fee413a27a10ee20f6e6b7143e9ef4a802b4403a70c0f71d547e33b702b`
+and `1cd4105ea012fde195f8c46a5c4986d9fbca30927ef044715a07df764a865869`.
+Host compilation takes 0.080 s; phone shell-tool compilation takes 4.154 s.
+Both OLED panels stay asleep; no install, game launch or original input changes.
+
+The response's vertex module is 317 B compressed and 956 B decoded, with SPIR-V
+execution model 0. Its fragment module is 356 B compressed and 1,080 B decoded,
+with execution model 4. The decoded fragment contains the texture sample and
+floating multiply; changing the authored operator produces floating add instead.
+The vertex module is byte-identical across those two variants. An independent
+fragment request can still validly succeed with empty data; callers must preserve
+the entire linked vertex response and reflection rather than use that empty
+response as fragment code. No compiler/protocol change or speculative stage
+parser is needed in the public owner. Its API documentation now states this.
+
+Private evidence under `work/coordination/phone-code/`:
+`public-shader-pair-host-v1/`, `public-shader-pair-phone-v1.log`,
+`public-shader-pair-comparison-v1.json`, `qualify-shader-pair-v1.py` and
+`smolv-public-v1/` (pinned decoder/provider, decoded modules and opcode counts).
+The phone retains its corresponding shader output directory. A first invocation
+binds a nonexistent public-module path and refuses before compilation; the
+correct explicit module binding is then transferred and used. Protected acquired
+SDK files and generated program data remain ignored. Mandatory main-checkout
+pruning follows the tool control.
+
+**Complete APK input contract.** Extend the existing `owner-apk/build_owner_apk.py`
+owner with optional explicit `code` input paths for exactly IL2CPP, metadata and
+Burst. All three are required together; a caller cannot omit Burst and silently
+inherit target code. Selected target code files need not exist and are never read.
+The content owner supplies the existing `targets[].path` layout (`apk/` and
+`payload/`) with existing content hashes. Actual code sizes/hashes are recorded,
+all source inputs are rechecked, and independent ZIP readback verifies the selected
+bytes. Existing replay controls remain explicitly selected by omission of `code`;
+this does not promote their content into independently produced input.
+
+Two synthetic host regressions prove missing-Burst refusal and complete ZIP
+assembly with every comparison-target code file absent. Authored Java/DEX tool
+witnesses and content/payload bytes establish selection and preservation without
+publishing or requiring a game-bearing fixture. The four signing/assembly tests
+and existing shader IPC tests pass; Ruff passes. This is a host contract, not an
+actual full-player phone assembly or APK-install qualification.
+
+**Remaining gates.** The authored nonempty fragment compiler gate is closed;
+original DXBC recovery, variants, serialized linkage/content assembly and ordinary
+app shader delivery remain open. Full phone native completion/corrected linking,
+Burst ABI, ordinary app packaging/signing/installer, full APK controls and matched
+performance remain open. No APK is installed and shared installed-state facts
+remain unchanged. Revisit on actual original-cohort/module mismatch or missing
+code/content output; target replay remains validation-only for that route.

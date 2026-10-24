@@ -59,6 +59,10 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       [J1094](PORTING_JOURNAL.md#j1094--qualify-exact-sdk-vulkan-shader-compilation-on-android)
       qualifies exact host/phone authored Vulkan shader-tool output. Original
       shader recovery, variants, serialization and app integration remain open.
+      [J1102](PORTING_JOURNAL.md#j1102--qualify-linked-vulkan-fragment-output-and-explicit-owner-apk-code-inputs)
+      confirms both executable stages in that linked payload and accepts all
+      three produced code outputs in the existing APK owner without replay
+      fallback. Full-player phone assembly/Burst/install acceptance remain open.
       Owner-build v1 targets the single accepted J850 build through explicit
       profiles; promotion to a newer accepted target follows end-to-end proof.
       [J995](PORTING_JOURNAL.md#j995--integrate-the-public-transform-profile-with-owner-prefix-and-portable-cli)

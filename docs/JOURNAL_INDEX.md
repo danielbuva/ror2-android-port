@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1102](PORTING_JOURNAL.md#j1102--qualify-linked-vulkan-fragment-output-and-explicit-owner-apk-code-inputs) | 2026-10-24 | Qualify linked Vulkan fragment output and explicit owner APK code inputs | Date: 2026-10-24 UTC. |
 | [J1100](PORTING_JOURNAL.md#j1100--complete-twelve-corrected-commando-sessions-and-retain-a-smaller-growth-frontier) | 2026-10-24 | Complete twelve corrected Commando sessions and retain a smaller growth frontier | **Hypothesis and scope.** |
 | [J1092](PORTING_JOURNAL.md#j1092--correct-captured-retention-producers-and-preserve-a-failed-commando-series) | 2026-10-24 | Correct captured retention producers and preserve a failed Commando series | **Hypothesis and change.** |
 | [J1098](PORTING_JOURNAL.md#j1098--preserve-recorded-object-order-for-the-fixed-target-native-link) | 2026-10-24 | Preserve recorded object order for the fixed-target native link | Date: 2026-10-24 UTC. |

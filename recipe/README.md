@@ -2432,3 +2432,10 @@ SDK binary is copied. Its DEX and unique temporary markers are generated from
 tracked source, hash-verified and removed by the existing SDK tool workflow.
 Raw pending files and recovery evidence stay private. Provenance/privacy audit:
 2026-10-24; native device qualification remains separate from host compilation.
+
+J1102 adds authored APK input selection for the three explicit code outputs,
+synthetic ZIP/tool witnesses, and documentation of the existing Vulkan linked
+program response. No recipe target hashes, SDK implementation, decoded shader
+bytes, original expression or protected content is published. Public smol-v
+source is acquired privately for validation only, at its cited revision.
+Provenance/privacy/licensing and sensitive-content audit: 2026-10-24.

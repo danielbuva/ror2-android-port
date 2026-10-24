@@ -24,6 +24,11 @@ SOURCE = Path(__file__).resolve().parent
 PROFILE = "93789f88d8fff178e31e1a4b78bc5cf735bb63f6e17d8bfd4518474dbff99d4a"
 ART = "6f73ee2c7a9d6544b5f2972832b12a7aed3f98cf9ba00fc04b218502f65ea4ff"
 RESERVE = 8 * 1024**3
+CODE_ENTRIES = {
+    "lib/arm64-v8a/libil2cpp.so",
+    "lib/arm64-v8a/lib_burst_generated.so",
+    "assets/bin/Data/Managed/Metadata/global-metadata.dat",
+}
 
 
 def module(name, path):
@@ -41,6 +46,21 @@ MANIFEST = module("_owner_manifest", SOURCE / "binary_manifest.py")
 def sha(path):
     with Path(path).open("rb") as stream:
         return hashlib.file_digest(stream, "sha256").hexdigest()
+
+
+def code_sources(request):
+    """Use the complete explicitly produced code cohort, never replay fallbacks."""
+    if "code" not in request:
+        return {}
+    if not isinstance(request["code"], dict) or set(request["code"]) != CODE_ENTRIES:
+        raise ValueError("all native, metadata and Burst code outputs required")
+    sources = {}
+    for name, value in request["code"].items():
+        path = Path(value)
+        if not path.is_absolute() or path != path.resolve(strict=True) or not path.is_file():
+            raise ValueError("canonical produced code file required")
+        sources[name] = {"path": str(path), "bytes": path.stat().st_size, "sha256": sha(path)}
+    return sources
 
 
 def sign(request_path, output):
@@ -167,14 +187,15 @@ def sign(request_path, output):
 def build(request_path, output):
     request = json.loads(Path(request_path).read_text())
     fields = {"manifest", "manifest_sha256", "targets", "frontend", "java", "android_jar", "d8_jar", "wire_helper"}
-    if set(request) - {"version_code"} != fields or request["manifest_sha256"] != PROFILE:
+    if set(request) - {"version_code", "code"} != fields or request["manifest_sha256"] != PROFILE:
         raise ValueError("unsupported owner APK request/profile")
+    code = code_sources(request)
     version_code = request.get("version_code")
     if "version_code" in request and (type(version_code) is not int or not 1 <= version_code <= 2147483647):
         raise ValueError("owner version code must be a positive Android integer")
     roots = {key: Path(request[key]).resolve(strict=True) for key in fields - {"manifest_sha256"}}
     output = Path(output).absolute()
-    for selected in (roots["targets"], roots["frontend"], SOURCE):
+    for selected in (roots["targets"], roots["frontend"], SOURCE, *(Path(row["path"]) for row in code.values())):
         if output.resolve().is_relative_to(selected) or selected.is_relative_to(output.resolve()):
             raise ValueError("owner APK output overlaps source inputs")
     _, profile = PACKET.profile(roots["manifest"], PROFILE)
@@ -200,6 +221,7 @@ def build(request_path, output):
         tracked += [roots["frontend"] / n for n in ("app.js", "controller.js", "style.css", "background.png")]
         tracked += [Path(PACKET.__file__), Path(ASSEMBLY.__file__)]
         tracked += [roots[k] for k in ("java", "android_jar", "d8_jar", "wire_helper", "manifest")]
+        tracked += [Path(row["path"]) for row in code.values()]
         result["inputs"] = {str(p): {"bytes": p.stat().st_size, "sha256": sha(p)} for p in tracked}
 
         def run(command, label):
@@ -296,6 +318,9 @@ def build(request_path, output):
             for name, row in apk_rows.items():
                 if name == "AndroidManifest.xml":
                     entry(name, data=patched)
+                elif name in code:
+                    produced = code[name]
+                    entry(name, source=Path(produced["path"]), expected_sha=produced["sha256"], expected_bytes=produced["bytes"])
                 else:
                     entry(name, source=PACKET.verify(roots["targets"], row), expected_sha=row["sha256"], expected_bytes=row["bytes"])
             entry(next_dex, source=dex / "classes.dex")
@@ -325,13 +350,14 @@ def build(request_path, output):
             success=True,
             apk_sha256=sha(unsigned),
             apk_bytes=unsigned.stat().st_size,
-            original_entries_preserved=len(apk_rows) - 1,
+            original_entries_preserved=len(apk_rows) - 1 - len(code),
             original_entry_changed="AndroidManifest.xml",
             new_dex=next_dex,
             entries_verified=len(expected),
             runtime_payload_files=len(payload),
             runtime_payload_bytes=sum(r["bytes"] for r in payload),
-            il2cpp_or_original_dex_changed=False,
+            il2cpp_or_original_dex_changed=bool(code),
+            code_entries=code,
             signed=False,
             device_qualified=False,
             requested_version_code=version_code,
