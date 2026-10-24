@@ -106,8 +106,11 @@ The [Avatar producer](../tools/phone-build/accepted-output/README.md#produce-ava
 also qualifies its complete 228-record class on Android (J1075). Texture,
 animation, shader and other object producers remain open.
 The [uncompressed texture producer](../tools/phone-build/accepted-output/README.md#produce-uncompressed-textures-directly-from-original-pc-bundles)
-qualifies 356 records on Android (J1076), excluding 43 pixel-postprocessing
-cases. ETC/cubemap and complete bundle production remain open.
+qualifies all 399 records on Android (J1079), including public-source JPEG-tool
+compilation and all former pixel-postprocessing exclusions. ETC/cubemap and
+complete bundle production remain open. Owner-build v1 uses the single accepted
+J850 target; current target metadata is an explicit profile input, and a newer
+target follows a complete v1 phone build/run.
 
 Many preparation and packaging stages have Android-capable open-source building
 blocks. Unity's import/shader/bundle/player-data stages remain editor-bound in

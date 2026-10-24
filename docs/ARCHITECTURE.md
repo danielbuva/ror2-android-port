@@ -74,13 +74,20 @@ J1075; bundle assembly and game-build integration remain separate owners/gates.
 `texture_produce.py` owns a separate current experimental uncompressed
 Texture2D producer. Audited `recipe/owner-uncompressed-textures.json` selects
 original body/pixel ranges and generic import/stream placement; standard BC1
-decoding and raw copying introduce no target pixels. Explicit PC root, recipe
+decoding, raw copying, fixed source-coordinate color extension and public
+JPEG roundtripping introduce no target pixels. `build_texture_jpeg.py` owns
+the current native JPEG-tool build from pinned public source providers and
+an explicit compiler; `texture_jpeg.c` owns bounded stdin/stdout processing.
+New private output, source/tool admission, bounded compiler/codec children,
+retained notices and complete/failed receipts define setup/state/teardown.
+Explicit PC root, recipe
 hash, new output and capacity reserve set up the process. It verifies source
 files before/after and every produced/persisted extent, writes private object/
 resource packs and a complete/failed receipt, then exits and retains outputs.
 Its [setup/lifecycle](../tools/phone-build/accepted-output/README.md#produce-uncompressed-textures-directly-from-original-pc-bundles)
-adds no image-library, SDK, Editor or private discovery input. Pixel
-postprocessing exclusions, other texture formats and complete bundle assembly
+adds a pinned public stb/IJG JPEG tool but no Unity SDK, Editor or private
+discovery input. J1079 qualifies all 399 uncompressed records and the public
+JPEG-tool build on Android. Other texture formats and complete bundle assembly
 remain separate gates; no current game build or runtime consumes these packs.
 `sdk_inputs.py` owns current experimental owner-direct component extraction:
 an explicitly supplied, pinned provider archive yields only the three exact

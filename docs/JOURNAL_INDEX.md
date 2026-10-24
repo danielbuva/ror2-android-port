@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1079](PORTING_JOURNAL.md#j1079--complete-uncompressed-texture-production-from-pc-bundles-on-android) | 2026-10-24 | Complete uncompressed texture production from PC bundles on Android | 2026-10-24 UTC. |
 | [J1078](PORTING_JOURNAL.md#j1078--isolate-parallel-build-lanes-and-measure-iteration-bundle-compression) | 2026-10-24 | Isolate parallel build lanes and measure iteration bundle compression | 2026-10-24 UTC. |
 | [J1077](PORTING_JOURNAL.md#j1077--restore-source-world-visibility-and-readiness-scoped-original-audio) | 2026-10-24 | Restore source world visibility and readiness-scoped original audio | **Hypothesis and ownership.** |
 | [J1076](PORTING_JOURNAL.md#j1076--produce-a-qualified-uncompressed-texture-cohort-from-pc-bundles-on-android) | 2026-10-24 | Produce a qualified uncompressed texture cohort from PC bundles on Android | 2026-10-24 UTC. |

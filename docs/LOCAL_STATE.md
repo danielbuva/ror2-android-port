@@ -725,8 +725,14 @@ The independent uncompressed texture entry reads only original PC files and
 tracked `recipe/owner-uncompressed-textures.json`, through public
 `texture_produce.py`. It generates private object/resource packs, index and
 complete/failed receipt in a new caller-selected output root. No captured
-pixel, discovery snapshot, image library, SDK or timestamped run is a producer
-input. Explicit Android workspace/interpreter ownership remains required for
+pixel, discovery snapshot, Unity SDK or timestamped run is a producer input.
+JPEG operations additionally require an explicit public native tool and its
+SHA-256. `build_texture_jpeg.py` generates that tool in a new private output
+from separately supplied pinned public IJG/stb source providers and an explicit
+compiler, preserving source/notices/logs and a terminal build receipt. Its
+Android Clang policy selects the existing owned public tool root; source
+providers and tool outputs stay private local material, reproducible from the
+documented public inputs. Explicit Android workspace/interpreter ownership remains required for
 lab staging. See its
 [setup/lifecycle](../tools/phone-build/accepted-output/README.md#produce-uncompressed-textures-directly-from-original-pc-bundles).
 

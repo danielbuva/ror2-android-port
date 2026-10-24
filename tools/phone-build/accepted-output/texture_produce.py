@@ -1,6 +1,7 @@
 """Produce qualified uncompressed Texture2D bodies/pixels from owner PC bundles."""
 
 import argparse
+from array import array
 import hashlib
 import importlib.util
 import json
@@ -8,6 +9,7 @@ from pathlib import Path
 import resource
 import shutil
 import struct
+import subprocess
 import sys
 import time
 
@@ -52,6 +54,49 @@ def dxt1_rgb(data, width, height):
     return bytes(output)
 
 
+def dilate_rgba(data, width, height):
+    """Extend source RGB by cardinal Manhattan jump flooding; preserve alpha."""
+    if (
+        type(width) is not int
+        or type(height) is not int
+        or not 0 < width <= 8192
+        or not 0 < height <= 8192
+        or width * height * 4 > BUNDLE.LIMIT
+        or len(data) != width * height * 4
+    ):
+        raise ValueError("unqualified RGBA dilation dimensions")
+    count = width * height
+    coordinates = array("i", (index if data[index * 4 + 3] else -1 for index in range(count)))
+    transparent = array("i", (index for index in range(count) if not data[index * 4 + 3]))
+    for jump in (16, 8, 4, 2, 1):
+        updated = array("i", coordinates)
+        for index in transparent:
+            x, y = index % width, index // width
+            seed = coordinates[index]
+            distance = abs(seed % width - x) + abs(seed // width - y) if seed >= 0 else count + width + height
+            neighbors = (
+                index - jump if x >= jump else -1,
+                index + jump if x + jump < width else -1,
+                index - jump * width if y >= jump else -1,
+                index + jump * width if y + jump < height else -1,
+            )
+            for neighbor in neighbors:
+                if neighbor < 0 or coordinates[neighbor] < 0:
+                    continue
+                candidate = coordinates[neighbor]
+                candidate_distance = abs(candidate % width - x) + abs(candidate // width - y)
+                if candidate_distance < distance:
+                    seed, distance = candidate, candidate_distance
+            updated[index] = seed
+        coordinates = updated
+    output = bytearray(data)
+    for index in transparent:
+        seed = coordinates[index]
+        if seed >= 0:
+            output[index * 4 : index * 4 + 3] = data[seed * 4 : seed * 4 + 3]
+    return bytes(output)
+
+
 def text(value):
     encoded = value.encode("utf-8")
     return struct.pack("<I", len(encoded)) + encoded + bytes(-len(encoded) % 4)
@@ -77,7 +122,7 @@ def body_output(body, fields, pixels, target, operation):
         "m_LightmapFormat": struct.pack("<i", target["usage"]),
         "image data": struct.pack("<I", len(pixels)) + pixels + bytes(-len(pixels) % 4) if target["inline"] else bytes(4),
     }
-    if operation == "dxt1-rgb":
+    if operation in {"dxt1-rgb", "dxt1-rgb-jpeg"}:
         replacements["m_TextureFormat"] = struct.pack("<i", 3)
     stream = target["stream"]
     if target["inline"] or not pixels:
@@ -98,7 +143,7 @@ def body_output(body, fields, pixels, target, operation):
     return bytes(result)
 
 
-def pixels_input(bundle, body, selected):
+def pixels_input(bundle, body, selected, jpeg_codec=None):
     location = selected["pixels"]
     if location["member"] is None:
         start = location["offset"]
@@ -111,20 +156,41 @@ def pixels_input(bundle, body, selected):
         pixels = BUNDLE.exact(stream, location["bytes"])
     if len(pixels) != location["bytes"] or hashlib.sha256(pixels).hexdigest() != location["sha256"]:
         raise ValueError("original texture pixels drift")
-    if selected["operation"] == "copy":
+    operation = selected["operation"]
+    if operation == "copy":
         return pixels
-    if selected["operation"] == "dxt1-rgb":
-        return dxt1_rgb(pixels, selected["width"], selected["height"])
+    if operation == "dilate-rgba":
+        return dilate_rgba(pixels, selected["width"], selected["height"])
+    if operation in {"dxt1-rgb", "dxt1-rgb-jpeg"}:
+        pixels = dxt1_rgb(pixels, selected["width"], selected["height"])
+        if operation == "dxt1-rgb":
+            return pixels
+    if operation in {"rgb-jpeg", "dxt1-rgb-jpeg"}:
+        if jpeg_codec is None:
+            raise ValueError("pinned public JPEG codec required")
+        result = subprocess.run([str(jpeg_codec), str(selected["width"]), str(selected["height"])], input=pixels, capture_output=True, timeout=120)
+        if result.returncode != 0 or len(result.stdout) != selected["width"] * selected["height"] * 3:
+            raise ValueError("public JPEG codec failed or returned a different pixel extent")
+        return result.stdout
     raise ValueError("unqualified texture operation")
 
 
-def produce(profile_path, profile_sha256, pc, output):
+def produce(profile_path, profile_sha256, pc, output, jpeg_codec=None, jpeg_codec_sha256=None):
     if BUNDLE.sha(profile_path) != profile_sha256:
         raise ValueError("texture profile drift")
     profile = json.loads(profile_path.read_text())
     if set(profile) != {"input_id", "bundles"} or profile["input_id"] != MESH.INPUT_ID:
         raise ValueError("unknown texture input")
     pc = pc.resolve(strict=True)
+    needs_jpeg = any(
+        texture["operation"] in {"rgb-jpeg", "dxt1-rgb-jpeg"} for bundle in profile["bundles"] for member in bundle["members"] for texture in member["textures"]
+    )
+    if needs_jpeg or jpeg_codec is not None or jpeg_codec_sha256 is not None:
+        if jpeg_codec is None or jpeg_codec_sha256 is None:
+            raise ValueError("pinned public JPEG codec required")
+        jpeg_codec = jpeg_codec.resolve(strict=True)
+        if jpeg_codec.is_relative_to(pc) or BUNDLE.sha(jpeg_codec) != jpeg_codec_sha256:
+            raise ValueError("public JPEG codec drift or overlap with original input")
     parent = output.parent.resolve(strict=True)
     output = parent / output.name
     if output.name in ("", ".", "..") or output.exists() or output.is_symlink() or parent.is_relative_to(pc) or pc.is_relative_to(output):
@@ -141,6 +207,8 @@ def produce(profile_path, profile_sha256, pc, output):
     output.mkdir()
     started = time.monotonic()
     receipt = {"success": False, "input_id": MESH.INPUT_ID, "profile_sha256": profile_sha256, "objects": 0, "object_bytes": 0, "resource_bytes": 0}
+    if jpeg_codec is not None:
+        receipt["jpeg_codec_sha256"] = jpeg_codec_sha256
     try:
         with (output / "objects.bin").open("xb") as objects, (output / "resources.bin").open("xb") as resources, (output / "index.jsonl").open("x") as index:
             for selected_bundle in profile["bundles"]:
@@ -156,7 +224,7 @@ def produce(profile_path, profile_sha256, pc, output):
                         body = BUNDLE.exact(member, selected["bytes"])
                         if hashlib.sha256(body).hexdigest() != selected["sha256"]:
                             raise ValueError("original texture body drift")
-                        pixels = pixels_input(bundle, body, selected)
+                        pixels = pixels_input(bundle, body, selected, jpeg_codec)
                         pixel_sha = hashlib.sha256(pixels).hexdigest()
                         for target in selected["outputs"]:
                             if pixel_sha != target["pixel_sha256"] or len(pixels) != target["pixel_bytes"]:
@@ -192,6 +260,8 @@ def produce(profile_path, profile_sha256, pc, output):
                         stream.seek(extent["offset"])
                         if hashlib.sha256(BUNDLE.exact(stream, extent["bytes"])).hexdigest() != extent["sha256"]:
                             raise ValueError("persisted texture extent drift")
+        if jpeg_codec is not None and BUNDLE.sha(jpeg_codec) != jpeg_codec_sha256:
+            raise ValueError("public JPEG codec changed during production")
         receipt["outputs"] = {
             name: {"bytes": (output / name).stat().st_size, "sha256": BUNDLE.sha(output / name)} for name in ("objects.bin", "resources.bin", "index.jsonl")
         }
@@ -212,8 +282,10 @@ def main():
     parser.add_argument("--profile-sha256", required=True)
     parser.add_argument("--pc", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--jpeg-codec", type=Path)
+    parser.add_argument("--jpeg-codec-sha256")
     args = parser.parse_args()
-    produce(args.profile, args.profile_sha256, args.pc, args.output)
+    produce(args.profile, args.profile_sha256, args.pc, args.output, args.jpeg_codec, args.jpeg_codec_sha256)
 
 
 if __name__ == "__main__":
