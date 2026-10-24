@@ -13,6 +13,61 @@ import sys
 import time
 
 
+def package_job(request, inputs, runtime, installed, native):
+    specification = importlib.util.spec_from_file_location("android_owner_apk", runtime / "repo/tools/phone-build/owner-apk/build_owner_apk.py")
+    owner = importlib.util.module_from_spec(specification)
+    specification.loader.exec_module(owner)
+    output = inputs / native.relative(request["output"])
+    if not output.resolve().is_relative_to(inputs) or output.exists():
+        raise ValueError("new private APK output required")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.mkdir(mode=0o700)
+    selection = request.get("packaging", request.get("signing"))
+    if set(selection) != ({"targets", "manifest", "code", "key_directory", "version_code"} if "packaging" in request else {"unsigned", "key_directory"}):
+        raise ValueError("explicit APK assembly/signing inputs required")
+
+    def path(name):
+        value = (inputs / native.relative(name)).resolve()
+        if not value.is_relative_to(inputs):
+            raise ValueError("APK input escapes private owner files")
+        return str(value)
+
+    java = str(installed / "libjavatool.so")
+    if "packaging" in request:
+        build = {
+            "targets": path(selection["targets"]),
+            "manifest": path(selection["manifest"]),
+            "manifest_sha256": owner.PROFILE,
+            "code": {name: path(value) for name, value in selection["code"].items()},
+            "frontend": str(runtime / "repo/launcher"),
+            "wire_helper": str(runtime / "repo/scripts/lab/phone_apk.py"),
+            "java": java,
+            "javac": str(installed / "libjavactool.so"),
+            "android_jar": str(runtime / "java-tools/android.jar"),
+            "d8_jar": str(runtime / "java-tools/d8.jar"),
+            "version_code": selection["version_code"],
+        }
+        native.write(output / "assembly-request.json", build)
+        owner.build(output / "assembly-request.json", output / "assembly")
+        unsigned = str(output / "assembly/owner-unsigned.apk")
+    else:
+        unsigned = path(selection["unsigned"])
+    signing = {
+        "unsigned": unsigned,
+        "java": java,
+        "keytool": str(installed / "libkeytool.so"),
+        "zipalign": str(installed / "libzipalign.so"),
+        "apksigner_jar": str(runtime / "java-tools/apksigner.jar"),
+        "key_directory": path(selection["key_directory"]),
+    }
+    native.write(output / "sign-request.json", signing)
+    result = owner.sign(output / "sign-request.json", output / "signing")
+    ready = {"apk": str(output / "signing/signed.apk"), "sha256": result["apk_sha256"], "bytes": result["apk_bytes"]}
+    native.write(output / "ready.json", ready)
+    (output / "ready.json").replace(inputs / "owner-apk-ready.json")
+    return result
+
+
 def run(request_file, runtime, installed):
     request_file, runtime, installed = (Path(p).resolve(strict=True) for p in (request_file, runtime, installed))
     inputs = request_file.parent
@@ -29,7 +84,20 @@ def run(request_file, runtime, installed):
 
     check_inputs()
     request = json.loads(request_file.read_text())
-    if set(request) - {"linux_tools"} not in ({"managed", "output"}, {"source_inputs", "target", "output"}):
+    if set(request) in ({"signing", "output"}, {"packaging", "output"}):
+        result = package_job(request, inputs, runtime, installed, backend.native)
+        check_inputs()
+        print(json.dumps(result), flush=True)
+        return
+    burst_only = request.pop("burst_only", False)
+    if not isinstance(burst_only, bool):
+        raise ValueError("Burst-only qualification selector must be boolean")
+    if set(request) - {"linux_tools", "burst_tools"} not in (
+        {"managed", "output"},
+        {"source_inputs", "target", "output"},
+        {"managed", "target", "output"},
+        {"relink", "target", "output"},
+    ):
         raise ValueError("explicit managed providers or fixed-target source inputs and new output required")
     work, sdk, game = [inputs / name for name in ("work", "sdk", "game")]
     inventory = json.loads((work / "inventory/files.json").read_text())
@@ -53,11 +121,36 @@ def run(request_file, runtime, installed):
     started = time.monotonic()
     free = __import__("shutil").disk_usage(work).free
     production = {"owner_work": str(work), "sdk_install": str(sdk), "output": str(output), "android_tools": tools}
-    if "managed" in request:
+    native_profile = None
+    if "relink" in request:
+        supplied = request["relink"]
+        if (
+            set(supplied) != {"compiled", "converter_receipt", "converter_receipt_sha256", "sources", "sources_compressed", "metadata"}
+            or burst_only
+            or "burst_tools" in request
+        ):
+            raise ValueError("explicit completed native compilation and converter providers required")
+        selection = {
+            "profile": str(runtime / "repo" / backend.native.relative(request["target"]["profile"])),
+            "source": str((inputs / backend.native.relative(request["target"]["source"])).resolve(strict=True)),
+        }
+        backend.target_inputs(selection)
+        for name in ("compiled", "converter_receipt", "sources", "metadata"):
+            production[name] = str((inputs / backend.native.relative(supplied[name])).resolve(strict=True))
+        production.update(converter_receipt_sha256=supplied["converter_receipt_sha256"], sources_compressed=supplied["sources_compressed"])
+        native_profile = backend.native.generated_profile(
+            json.loads(backend.native.PROFILE.read_text()), json.loads(Path(production["converter_receipt"]).read_text())["files"]
+        )
+    elif "managed" in request:
         providers = {}
         for name, row in request["managed"].items():
             providers[name] = {"path": str((inputs / backend.native.relative(row["path"])).resolve(strict=True)), "sha256": row["sha256"]}
         production["managed"] = providers
+        if "target" in request:
+            production["target"] = {
+                "profile": str(runtime / "repo" / backend.native.relative(request["target"]["profile"])),
+                "source": str((inputs / backend.native.relative(request["target"]["source"])).resolve(strict=True)),
+            }
     else:
         production["source_inputs"] = {
             name: str((inputs / backend.native.relative(value)).resolve(strict=True)) for name, value in request["source_inputs"].items()
@@ -76,9 +169,34 @@ def run(request_file, runtime, installed):
             {name: str(inputs / backend.native.relative(supplied[name])) for name in ("clang", "linker", "objcopy", "loader_root")}
         )
         production["linux_tools"]["library_dirs"] = [str(inputs / backend.native.relative(p)) for p in supplied["library_dirs"]]
+    if "burst_tools" in request:
+        supplied = request["burst_tools"]
+        if set(supplied) != {"mono", "runtime"} or "linux_tools" not in production:
+            raise ValueError("explicit GNU Mono/Burst providers and Linux tools required")
+        mono, compiler = [inputs / backend.native.relative(supplied[name]) for name in ("mono", "runtime")]
+        linux = production["linux_tools"]
+        libraries = [str(compiler), str(mono / "usr/lib"), str(mono / "usr/lib/x86_64-linux-gnu"), *linux["library_dirs"]]
+        command = [linux["qemu"], "-L", linux["loader_root"]]
+        for value in [
+            "LD_LIBRARY_PATH=" + ":".join(libraries),
+            "LD_PRELOAD=" + str(runtime / "gnu/libgnu-tool-adapter.so"),
+            "MONO_CFG_DIR=" + str(mono / "etc"),
+            "MONO_PATH=" + str(mono / "usr/lib/mono/4.5") + ":" + str(mono / "usr/lib/mono/4.5/Facades"),
+            "ROR2_GNU_RUNNER=" + linux["qemu"],
+            "ROR2_GNU_LOADER_ROOT=" + linux["loader_root"],
+            "ROR2_GNU_NATIVE_LIBRARY_PATH=" + str(installed),
+        ]:
+            command += ["-E", value]
+        command.append(str(mono / "usr/bin/mono-sgen"))
+        production["burst_tools"] = {"command": command, "runtime": str(compiler)}
     output_preexisted = output.exists()
     try:
-        result = backend.run(production)
+        if native_profile is not None:
+            result = backend.native.run(production, profile=native_profile)
+        elif burst_only:
+            result = backend.run(production, burst_only=True)
+        else:
+            result = backend.run(production)
         # Generated local state changed intentionally; immutable original/SDK/provider
         # checks remain separate from those three private setup files.
         immutable = {n: h for n, h in before.items() if n not in {"work/config/local.json", "work/inventory/files.json"}}

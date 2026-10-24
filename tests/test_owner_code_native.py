@@ -18,6 +18,103 @@ SPEC.loader.exec_module(NATIVE)
 
 
 class OwnerCodeNativeTests(unittest.TestCase):
+    def compiled_fixture(self, root):
+        old_sdk, sdk, folder, output = [root / name for name in ("old-sdk", "sdk", "compiled", "relink")]
+        for directory in (old_sdk, sdk, folder / "objects", folder / "job-results"):
+            directory.mkdir(parents=True)
+        for selected in (old_sdk, sdk):
+            for name in ("sdk.c", "header.c"):
+                (selected / name).write_text("// independent SDK witness\n")
+        profile = {
+            "input_id": "independent fixture",
+            "compiler": "tools/clang",
+            "arguments": [["-O2", "-c", "SOURCE", "-o", "OBJECT"]],
+            "jobs": [{"sdk": "sdk.c", "arguments": 0}, {"generated": "Fixture.cpp", "arguments": 0}, {"lump": ["header.c"], "arguments": 0}],
+            "link": ["-shared", {"object": 0}, {"object": 1}, {"object": 2}, "-o", "LIBRARY"],
+        }
+        old, current = NATIVE.plan(profile, old_sdk, folder), NATIVE.plan(profile, sdk, output)
+        old["link"][1:4] = reversed(old["link"][1:4])
+        generated = hashlib.sha256(b"independent generated source").hexdigest()
+        inputs = {
+            "sdk": {"sdk.c": NATIVE.sha(sdk / "sdk.c"), "header.c": NATIVE.sha(sdk / "header.c")},
+            "sources": {"Fixture.cpp": {"path": str(sdk / "frame.gz"), "sha256": generated, "compressed": True}},
+            "metadata": {"sha256": "independent metadata witness"},
+            "converter_receipt_sha256": "independent converter witness",
+            "android_tools": {str(sdk / "libclang.so"): "independent tool hash"},
+            "linux_tools": None,
+        }
+        previous = {**inputs, "sources": {"Fixture.cpp": {**inputs["sources"]["Fixture.cpp"], "path": str(old_sdk / "frame.gz")}}}
+        previous["android_tools"] = {str(old_sdk / "libclang.so"): "independent tool hash"}
+        for index, job in enumerate(old["jobs"]):
+            obj = folder / "objects" / (str(index) + ".o")
+            obj.write_bytes(("independent compiled witness " + str(index)).encode())
+            digest = (
+                generated
+                if index == 1
+                else hashlib.sha256(NATIVE.lump_source(old["wrappers"][job["source"]]).encode()).hexdigest()
+                if index == 2
+                else NATIVE.sha(job["source"])
+            )
+            NATIVE.write(
+                folder / "job-results" / (str(index) + ".json"), {"source_sha256": digest, "output_sha256": NATIVE.sha(obj), "bytes": obj.stat().st_size}
+            )
+        for name, value in {
+            "plan": old,
+            "inputs": previous,
+            "result": {"success": True, "phase": "native-built", "input_id": profile["input_id"], "compile_tasks": 3},
+        }.items():
+            NATIVE.write(folder / (name + ".json"), value)
+        return folder, current, profile, sdk, inputs
+
+    def test_relink_admits_complete_owned_objects_across_roots_without_changing_compile_policy(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = self.compiled_fixture(Path(temporary).resolve())
+            rows = NATIVE.compiled_jobs(*fixture)
+            self.assertEqual(len(rows), 3)
+            self.assertEqual(rows[1][0].read_bytes(), b"independent compiled witness 1")
+
+    def test_relink_refuses_object_drift_or_changed_compilation_flags(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = self.compiled_fixture(Path(temporary).resolve())
+            fixture[1]["jobs"][0]["argv"].append("-fno-exceptions")
+            with self.assertRaisesRegex(ValueError, "command policy"):
+                NATIVE.compiled_jobs(*fixture)
+            fixture[1]["jobs"][0]["argv"].pop()
+            (fixture[0] / "objects/1.o").write_bytes(b"changed compiled input")
+            with self.assertRaisesRegex(ValueError, "object/source"):
+                NATIVE.compiled_jobs(*fixture)
+
+    def test_relink_refuses_incomplete_compilation_and_changed_source_cohort(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = self.compiled_fixture(Path(temporary).resolve())
+            fixture[4]["sources"]["Fixture.cpp"]["sha256"] = "changed source witness"
+            with self.assertRaisesRegex(ValueError, "source cohort"):
+                NATIVE.compiled_jobs(*fixture)
+            (fixture[0] / "result.json").write_text(json.dumps({"input_id": fixture[2]["input_id"], "compile_tasks": 2}))
+            with self.assertRaisesRegex(ValueError, "complete original compilation"):
+                NATIVE.compiled_jobs(*fixture)
+
+    def test_burst_ndk_layout_keeps_original_target_data_and_selects_linux_bfd(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            sdk = root / "sdk"
+            original = sdk / "PlaybackEngines/AndroidPlayer/NDK"
+            data = original / "toolchains/llvm/prebuilt/darwin-x86_64"
+            data.mkdir(parents=True)
+            (original / "source.properties").write_text("independent SDK properties")
+            for name in ("lib", "lib64", "include", "sysroot", "aarch64-linux-android"):
+                (data / name).mkdir()
+            tools = {}
+            for role in ("clang", "linker", "objcopy"):
+                path = root / role
+                path.write_bytes(b"independent GNU tool witness")
+                tools[role] = str(path)
+            ndk = NATIVE.burst_ndk(sdk, tools, root / "layout")
+            host = ndk / "toolchains/llvm/prebuilt/linux-x86_64"
+            self.assertEqual((host / "bin/ld").resolve(), Path(tools["linker"]))
+            self.assertEqual((host / "sysroot").resolve(), data / "sysroot")
+            self.assertEqual((original / "source.properties").read_text(), "independent SDK properties")
+
     def test_target_conversion_replaces_generated_units_and_rebuilds_link_closure(self):
         profile = {
             "jobs": [{"sdk": "sdk.c", "arguments": 0}, {"generated": "Old.cpp", "arguments": 4}, {"generated": "Old.c", "arguments": 5}],

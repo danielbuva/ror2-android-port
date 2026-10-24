@@ -742,6 +742,9 @@ support. `stage.py` checks the public source/native metadata contract and stages
 new owner-supplied SDK inputs; its builder owns the separate phone-built APK.
 `NativePythonHost.c` selects the existing interpreter's isolated configuration;
 `NativeDotnetMuxer.c` forwards actual framework queries/application invocations.
+`NativeJavaHost.c` invokes the separately acquired headless JDK through JNI;
+its javac/keytool/java entry names and read-only native dependencies are installed
+by PackageManager. Java modules and configuration remain verified tool data.
 The activity owns fresh data/native-link state and bounded children;
 `run_profile.py` checks supplied input hashes and invokes the unchanged public
 producer. Device installation, legitimate accepted-input transfer, independent
@@ -3750,3 +3753,20 @@ window. The caller checks termination and verifies native focus release/resume
 separately.
 Receipts and raw motion evidence stay ignored. This verifies software delivery;
 it never qualifies physical buttons, a touchscreen digitizer or normal play.
+
+The same app worker accepts explicit APK assembly/signing jobs through the
+existing `owner-apk` owner. Its key directory is outside each disposable build
+output. The Activity shows a completed private APK and hands a read-only content
+URI to Android's installer only after a user button press; the private provider
+permits only that verified output. Headless instrumentation never opens the
+installer. Tool APK updates use a separate durable tool key.
+
+`owner-code/produce.py::burst` owns the unchanged acquired Burst compiler
+invocation over freshly produced managed assemblies. Fixed-target metadata
+selects its roots, actual SDK compilation API defines, options and tool hashes.
+`GnuToolAdapter.c` supplies only the GNU build-tool low-address mappings and
+explicit emulated child execution required by Mono/LLVM under QEMU. It is foreign
+tool data, never linked into the ARM64 game. `native.py::compiled_jobs` validates
+a completed object's source/command/input/hash receipts for an explicit relink;
+the normal linker/stripper then use the selected profile order. Neither owner
+reads an accepted ELF as a supplier.

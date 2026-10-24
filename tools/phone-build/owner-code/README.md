@@ -287,3 +287,41 @@ payload and reflection. A separate fragment-stage request can validly return
 empty data. J1102 qualifies both decoded execution models and an authored
 fragment-only arithmetic change, with raw host/phone payload parity. Original
 shader recovery and serialized content assembly remain separate content gates.
+
+## Fixed-target Burst and completed-object relinking
+
+The combined backend optionally accepts `burst_tools: {"command": [EXPLICIT_HOST,
+...], "runtime": PRIVATE_BURST_RUNTIME}`. The fixed target's `burst` metadata
+pins the acquired compiler files/backend, five real managed roots, six recorded
+SDK compilation-API define lists, optimization/debug options and Android API.
+The extra MCP assembly name is hash metadata only: no MCP DLL is a supplier,
+root or output. Those API defines are independent of the IL2CPP managed compiler
+defines and do not change the player's backend.
+
+The owner invokes unchanged `bcl.exe +burstc`, writes a fresh ARM64 library and
+preservation XML, and requires the XML to equal the target's existing linker
+roots before stripping. `--burst-only` is a current bounded qualification that
+stops after these outputs; normal execution continues through UnityLinker,
+il2cpp and native compilation. The Android request supplies `burst_tools` as
+relative `mono` and `runtime` directories plus the existing `linux_tools`.
+The app binds the installed QEMU runner and authored GNU adapter explicitly.
+Linux NDK aliases select the unchanged Linux Clang/BFD while retaining the
+owner SDK's original target headers, archives and runtime sources. Neither
+original SDK tree is modified. Mono, GNU dependencies and Burst are separately
+acquired local tool inputs with their existing licensing obligations.
+
+An explicit native request may supply `compiled`, a completed output from this
+native owner. Relinking requires successful complete compilation, the same
+original input, SDK/converter/metadata providers, every compilation command and
+all source/object hashes. The owner links validated objects into a new output
+and records zero new compilations and the reused task count. An incomplete or
+changed cohort fails; a relink is not accepted as another compilation source.
+This permits a corrected profile order after an expensive phone compilation
+without hiding a host library or mutating the retained run. The Android request
+uses `relink` with explicit completed objects, converter receipt/hash, source
+frames/compression and metadata, plus `target`, `linux_tools` and new `output`.
+
+All outputs, commands, original inputs, SDK bytes and private evidence stay
+ignored. The caller owns thermal monitoring and output retention; preserve
+receipts/failures before deleting only the explicitly owned output. Runtime
+acceptance always requires the final phone APK and matched device controls.

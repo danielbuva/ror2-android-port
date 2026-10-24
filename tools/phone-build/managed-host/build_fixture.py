@@ -1,11 +1,11 @@
 """Private positive app-host experiment; no game inputs, policy or runtime changes."""
 
 import hashlib
+import importlib.util
 import json
 import os
 import re
 from pathlib import Path
-import secrets
 import shutil
 import subprocess
 import sys
@@ -22,7 +22,6 @@ packaging = toolroot / "packaging/usr"
 java = packaging / "lib/jvm/java-21-openjdk/bin/java"
 runtime = native / "lib/dotnet"
 env = dict(os.environ, LD_LIBRARY_PATH=":".join(str(toolroot / p) for p in ["packaging/usr/lib", "python/usr/lib", "usr/lib"]))
-env["ROR2_PHONE_SIGNING_PASSWORD"] = secrets.token_urlsafe(40)
 receipt = dict(schema=1, success=False, game_inputs=False, security_qualified=False, commands=[], inputs={})
 
 
@@ -117,6 +116,68 @@ try:
             if not re.fullmatch(r"lib[-+A-Za-z0-9_.]+\.so", name) or name in native_files or sha(path) != row["sha256"]:
                 raise RuntimeError("Backend native name or input drift: " + name)
             native_files[name] = path
+        if "java_home" in extra:
+            java_home = Path(extra["java_home"]).resolve(strict=True)
+            for header in (java_home / "include/jni.h", java_home / "include/linux/jni_md.h"):
+                bind(header)
+            java_host = out / "libjavahost.so"
+            run(
+                "build-NativeJavaHost",
+                native / "bin/clang-21",
+                "--target=aarch64-linux-android24",
+                "--sysroot=" + str(native),
+                "-resource-dir=" + str(native / "lib/clang/21"),
+                "--ld-path=" + str(native / "bin/ld.lld"),
+                "-B" + str(native / "lib"),
+                "-I" + str(java_home / "include"),
+                "-I" + str(java_home / "include/linux"),
+                "-O2",
+                "-Wall",
+                "-Wextra",
+                "-Werror",
+                "-fPIE",
+                "-pie",
+                source / "NativeJavaHost.c",
+                "-ldl",
+                "-o",
+                java_host,
+            )
+            for name in ("libjavatool.so", "libjavactool.so", "libkeytool.so"):
+                native_files[name] = java_host
+            # Headless javac/keytool/apksigner closure. GUI/audio/debugger
+            # libraries are not build-tool dependencies.
+            for relative in (
+                "server/libjvm.so",
+                "libjimage.so",
+                "libjava.so",
+                "libverify.so",
+                "libzip.so",
+                "libnet.so",
+                "libnio.so",
+                "libextnet.so",
+                "libjli.so",
+            ):
+                path = java_home / "lib" / relative
+                if not path.is_file() or path.name in native_files:
+                    raise RuntimeError("JDK native missing or name collision: " + relative)
+                native_files[path.name] = path
+                plan["links"]["java/" + path.relative_to(java_home).as_posix()] = path.name
+        if "libqemu-x86_64.so" in native_files:
+            adapter = source / "repo/tools/phone-build/owner-code/GnuToolAdapter.c"
+            bind(adapter)
+            run(
+                "build-GnuToolAdapter",
+                native / "bin/clang-21",
+                "--target=x86_64-linux-gnu",
+                "-ffreestanding",
+                "-fPIC",
+                "-O2",
+                "-c",
+                adapter,
+                "-o",
+                out / "gnu-adapter.o",
+            )
+            run("link-GnuToolAdapter", native / "bin/ld.lld", "-m", "elf_x86_64", "-shared", out / "gnu-adapter.o", "-o", out / "libgnu-tool-adapter.so")
     framework = runtime / "shared/Microsoft.NETCore.App/8.0.32"
     native_files.update({p.name: p for p in framework.glob("*.so")})
     assets = out / "assets"
@@ -127,6 +188,18 @@ try:
             if p.is_file():
                 copy(p, assets / "clang/21" / p.relative_to(resources))
         plan["links"].update(extra["links"])
+        if "java_home" in extra:
+            for path in java_home.rglob("*"):
+                if not path.is_file() or path.relative_to(java_home).parts[0] in {"bin", "include", "jmods"} or path.name == "src.zip":
+                    continue
+                with path.open("rb") as stream:
+                    executable = stream.read(4) == b"\x7fELF"
+                if not executable:
+                    copy(path, assets / "java" / path.relative_to(java_home))
+            for name in ("android.jar", "d8.jar", "apksigner.jar"):
+                copy(source / name, assets / "java-tools" / name)
+        if "libqemu-x86_64.so" in native_files:
+            copy(out / "libgnu-tool-adapter.so", assets / "gnu/libgnu-tool-adapter.so")
         if "framework" in extra:
             framework_data = Path(extra["framework"])
             if not re.fullmatch(r"10\.[0-9]+\.[0-9]+", framework_data.name):
@@ -201,7 +274,11 @@ try:
     dex.mkdir()
     run("dex", java, "-cp", source / "d8.jar", "com.android.tools.r8.D8", "--min-api", "24", "--lib", source / "android.jar", "--output", dex, jar)
     unsigned = out / "unsigned.apk"
-    run("aapt", packaging / "bin/aapt", "package", "-f", "-M", source / "AndroidManifest.xml", "-I", source / "android.jar", "-F", unsigned)
+    spec = importlib.util.spec_from_file_location("fixture_staging", source / "stage.py")
+    staging = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(staging)
+    staging.tool_manifest(source / "AndroidManifest.xml", out / "AndroidManifest.xml", extra.get("package") if extra else None)
+    run("aapt", packaging / "bin/aapt", "package", "-f", "-M", out / "AndroidManifest.xml", "-I", source / "android.jar", "-F", unsigned)
     with zipfile.ZipFile(unsigned, "a", zipfile.ZIP_DEFLATED) as z:
         z.write(dex / "classes.dex", "classes.dex")
         for name, p in native_files.items():
@@ -209,53 +286,32 @@ try:
         for p in assets.rglob("*"):
             if p.is_file():
                 z.write(p, "assets/" + p.relative_to(assets).as_posix())
-    aligned = out / "aligned.apk"
     signed = out / "signed.apk"
-    run("align", packaging / "bin/zipalign", "-P", "16", "-v", "4", unsigned, aligned)
-    run(
-        "key",
-        java.with_name("keytool"),
-        "-genkeypair",
-        "-alias",
-        "phonefixture",
-        "-dname",
-        "CN=Local Authored Fixture",
-        "-keystore",
-        out / "owner.p12",
-        "-storetype",
-        "PKCS12",
-        "-storepass:env",
-        "ROR2_PHONE_SIGNING_PASSWORD",
-        "-keypass:env",
-        "ROR2_PHONE_SIGNING_PASSWORD",
-        "-keyalg",
-        "RSA",
-        "-keysize",
-        "2048",
-        "-validity",
-        "3650",
-        "-noprompt",
+    signing_request = out / "sign-request.json"
+    signing_request.write_text(
+        json.dumps(
+            {
+                "unsigned": str(unsigned),
+                "java": str(java),
+                "zipalign": str(packaging / "bin/zipalign"),
+                "apksigner_jar": str(source / "apksigner.jar"),
+                "key_directory": str(toolroot / "owner-tool-key"),
+            }
+        )
+        + "\n"
     )
+    # Keep this key outside disposable builds so an update retains app data and
+    # long-running source jobs. This signer belongs to the tool APK, not the game.
     run(
-        "sign",
-        java,
-        "-jar",
-        source / "apksigner.jar",
-        "sign",
-        "--ks",
-        out / "owner.p12",
-        "--ks-key-alias",
-        "phonefixture",
-        "--ks-pass",
-        "env:ROR2_PHONE_SIGNING_PASSWORD",
-        "--key-pass",
-        "env:ROR2_PHONE_SIGNING_PASSWORD",
-        "--out",
-        signed,
-        aligned,
+        "owner-sign",
+        sys.executable,
+        source / "repo/tools/phone-build/owner-apk/build_owner_apk.py",
+        "--sign-request",
+        signing_request,
+        "--output",
+        out / "signing",
     )
-    run("verify", java, "-jar", source / "apksigner.jar", "verify", "--verbose", "--print-certs", signed)
-    run("alignment", packaging / "bin/zipalign", "-c", "-P", "16", "-v", "4", signed)
+    (out / "signing/signed.apk").rename(signed)
     for p, h in receipt["inputs"].items():
         if sha(p) != h:
             raise RuntimeError("build input changed")
@@ -269,7 +325,6 @@ try:
 except Exception as e:
     receipt["failure"] = str(e)
 finally:
-    env.pop("ROR2_PHONE_SIGNING_PASSWORD", None)
     (out / "build-receipt.json").write_text(json.dumps(receipt, indent=2) + "\n")
 print(json.dumps({k: v for k, v in receipt.items() if k not in ["inputs", "native_hashes"]}))
 sys.exit(0 if receipt["success"] else 1)

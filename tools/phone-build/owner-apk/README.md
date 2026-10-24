@@ -164,3 +164,9 @@ APKs plus 2 GiB. It never installs an APK. Failures and private keys remain; onl
 the explicit disposable output may be removed after retaining needed evidence.
 J1095 qualifies two separate phone processes reusing a key for authored APKs;
 ordinary app delivery and the complete independent game APK remain open.
+
+The optional explicit `keytool` signing path and `javac` assembly path support
+read-only Android app tool entry names; desktop callers retain their adjacent
+JDK executable defaults. The managed-host owner provides those JNI entry points
+and the user-triggered Android installer handoff. Signing success alone does
+not establish installer, update-signature compatibility or gameplay acceptance.

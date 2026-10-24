@@ -239,6 +239,22 @@ def linux_invoke(argv, output, name, sdk, tools, *, env, link=False):
     invoke([*prefix, *command], output, name, env=env, timeout=3600)
 
 
+def burst_ndk(sdk, tools, output):
+    """Expose unchanged target data and explicit GNU host tools to Burst."""
+    original = sdk / "PlaybackEngines/AndroidPlayer/NDK"
+    target = original / "toolchains/llvm/prebuilt/darwin-x86_64"
+    output.mkdir()
+    (output / "source.properties").symlink_to(original / "source.properties")
+    host = output / "toolchains/llvm/prebuilt/linux-x86_64"
+    host.mkdir(parents=True)
+    for name in ("lib", "lib64", "include", "sysroot", "aarch64-linux-android"):
+        (host / name).symlink_to(target / name, target_is_directory=True)
+    (host / "bin").mkdir()
+    for name, role in {"clang": "clang", "clang++": "clang", "ld": "linker", "aarch64-linux-android-ld": "linker", "llvm-objcopy": "objcopy"}.items():
+        (host / "bin" / name).symlink_to(canonical(tools[role]))
+    return output
+
+
 def generated_profile(profile, files):
     """Keep SDK native policy; compile every translation unit from this conversion."""
     result = json.loads(json.dumps(profile))
@@ -368,9 +384,81 @@ def expand(row, destination):
         raise ValueError("generated source differs from converter receipt")
 
 
+def lump_source(members):
+    return "// Authored SDK include wrapper; owner SDK source remains unchanged.\n" + "".join('#include "' + p + '"\n' for p in members)
+
+
+def compiled_jobs(folder, current, profile, sdk, inputs):
+    """Admit one complete owned compilation for an explicit corrected relink."""
+    old = json.loads((folder / "plan.json").read_text())
+    previous = json.loads((folder / "inputs.json").read_text())
+    result = json.loads((folder / "result.json").read_text())
+    if (
+        result.get("success") is not True
+        or result.get("phase") != "native-built"
+        or result["input_id"] != profile["input_id"]
+        or result["compile_tasks"] != len(current["jobs"])
+    ):
+        raise ValueError("complete original compilation required for relinking")
+    for name in ("sdk", "metadata", "converter_receipt_sha256"):
+        if previous[name] != inputs[name]:
+            raise ValueError("compiled native input differs: " + name)
+    for name in ("android_tools", "linux_tools"):
+
+        def identities(value):
+            return sorted((Path(path).name, digest) for path, digest in (value or {}).items())
+
+        if identities(previous[name]) != identities(inputs[name]):
+            raise ValueError("compiled native tool cohort differs: " + name)
+    source_state = lambda rows: {name: {k: v for k, v in row.items() if k != "path"} for name, row in rows.items()}
+    if source_state(previous["sources"]) != source_state(inputs["sources"]):
+        raise ValueError("compiled converter source cohort differs")
+    compiler = "/" + profile["compiler"]
+    if not old["jobs"][0]["argv"][0].endswith(compiler):
+        raise ValueError("compiled SDK command binding differs")
+    old_sdk = old["jobs"][0]["argv"][0][: -len(compiler)]
+    old_output = str(Path(old["library"]).parent)
+    output = str(Path(current["library"]).parent)
+
+    def remap(value):
+        if isinstance(value, str):
+            return value.replace(old_sdk, str(sdk)).replace(old_output, output)
+        if isinstance(value, list):
+            return [remap(item) for item in value]
+        return {remap(key): remap(item) for key, item in value.items()}
+
+    if remap(old["jobs"]) != current["jobs"] or remap(old["wrappers"]) != current["wrappers"]:
+        raise ValueError("compiled command policy differs; compile again")
+    if {p.name for p in (folder / "job-results").iterdir()} != {str(i) + ".json" for i in range(len(current["jobs"]))}:
+        raise ValueError("complete compiled job receipts required")
+    rows = []
+    for index, job in enumerate(current["jobs"]):
+        row = json.loads((folder / "job-results" / (str(index) + ".json")).read_text())
+        if job["kind"] == "generated":
+            source_sha = inputs["sources"][Path(job["source"]).name]["sha256"]
+        elif job["kind"] == "lump":
+            source_sha = hashlib.sha256(lump_source(old["wrappers"][old["jobs"][index]["source"]]).encode()).hexdigest()
+        else:
+            source_sha = sha(job["source"])
+        obj = folder / "objects" / (str(index) + ".o")
+        if (
+            obj.is_symlink()
+            or obj.resolve(strict=True) != obj
+            or row
+            != {
+                "source_sha256": source_sha,
+                "output_sha256": sha(obj),
+                "bytes": obj.stat().st_size,
+            }
+        ):
+            raise ValueError("compiled object/source receipt differs: " + str(index))
+        rows.append((obj, row))
+    return rows
+
+
 def run(request, *, plan_only=False, profile=None):
     required = {"owner_work", "sdk_install", "converter_receipt", "converter_receipt_sha256", "sources", "sources_compressed", "metadata", "output"}
-    if set(request) - {"android_tools", "linux_tools"} != required or not isinstance(request["sources_compressed"], bool):
+    if set(request) - {"android_tools", "linux_tools", "compiled"} != required or not isinstance(request["sources_compressed"], bool):
         raise ValueError("explicit native request fields required")
     work, sdk, receipt, sources, metadata = [canonical(request[n]) for n in ("owner_work", "sdk_install", "converter_receipt", "sources", "metadata")]
     output = Path(request["output"])
@@ -392,6 +480,19 @@ def run(request, *, plan_only=False, profile=None):
     linux_tools = request.get("linux_tools")
     linux_state = linux_tool_state(linux_tools) if linux_tools else None
     value = plan(profile, sdk, output, None if linux_tools else android_tools)
+    inputs = {
+        "inventory": inventory,
+        "sdk": sdk_state,
+        "converter_receipt_sha256": request["converter_receipt_sha256"],
+        "sources": providers,
+        "metadata": metadata_row,
+        "android_tools": tool_state,
+        "linux_tools": linux_state,
+    }
+    compiled = canonical(request["compiled"]) if "compiled" in request else None
+    if compiled:
+        disjoint(output, [compiled])
+    reused = compiled_jobs(compiled, value, profile, sdk, inputs) if compiled else None
     output.mkdir(mode=0o700)
     result = {
         "schema": 1,
@@ -404,31 +505,26 @@ def run(request, *, plan_only=False, profile=None):
         "runtime_qualified": False,
         "compile_tasks": 0,
     }
+    if compiled:
+        result.update(compiled=str(compiled), reused_compile_tasks=0)
     try:
         for name in ("tmp", "logs", "objects", "cpp", "lumps", "job-results"):
             (output / name).mkdir()
         write(output / "plan.json", value)
         if supplied_profile:
             write(output / "native-profile.json", profile)
-        write(
-            output / "inputs.json",
-            {
-                "inventory": inventory,
-                "sdk": sdk_state,
-                "converter_receipt_sha256": request["converter_receipt_sha256"],
-                "sources": providers,
-                "metadata": metadata_row,
-                "android_tools": tool_state,
-                "linux_tools": linux_state,
-            },
-        )
+        write(output / "inputs.json", inputs)
         for target, members in value["wrappers"].items():
-            Path(target).write_text(
-                "// Authored SDK include wrapper; owner SDK source remains unchanged.\n" + "".join('#include "' + p + '"\n' for p in members)
-            )
+            Path(target).write_text(lump_source(members))
         if not plan_only:
             result["phase"] = "compiling"
             for index, job in enumerate(value["jobs"]):
+                if reused is not None:
+                    obj, row = reused[index]
+                    os.link(obj, job["output"])
+                    write(output / "job-results" / (str(index) + ".json"), row)
+                    result["reused_compile_tasks"] += 1
+                    continue
                 if shutil.disk_usage(output).free < RESERVE:
                     raise RuntimeError("native compilation reserve unavailable; outputs retained")
                 source = Path(job["source"])
@@ -464,6 +560,8 @@ def run(request, *, plan_only=False, profile=None):
             if len(header) != 64 or header[:6] != b"\x7fELF\x02\x01" or struct.unpack_from("<HH", header, 16) != (3, 183):
                 raise ValueError("expected AArch64 shared ELF library")
             result.update(library_sha256=sha(target), library_bytes=target.stat().st_size)
+        if compiled and compiled_jobs(compiled, value, profile, sdk, inputs) != reused:
+            raise ValueError("compiled providers changed during relinking")
         if sdk_files(sdk, profile) != sdk_state or input_state(work) != (identity, game, inventory):
             raise ValueError("owner SDK or game input state changed")
         if android_tools and android_tool_state(android_tools) != tool_state:

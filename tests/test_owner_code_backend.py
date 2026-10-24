@@ -4,6 +4,8 @@ import gzip
 import importlib.util
 import json
 from pathlib import Path
+import struct
+import sys
 import tempfile
 from types import SimpleNamespace
 import unittest
@@ -16,6 +18,63 @@ SPEC.loader.exec_module(BACKEND)
 
 
 class OwnerCodeBackendTests(unittest.TestCase):
+    def burst_fixture(self, root):
+        managed, runtime, ndk = [root / name for name in ("managed", "runtime", "ndk")]
+        for folder in (managed, runtime, ndk):
+            folder.mkdir()
+        (managed / "Authored.dll").write_bytes(b"independent managed input witness")
+        for name in ("bcl.exe", "libfixture.so"):
+            (runtime / name).write_bytes(b"independent acquired-tool witness")
+        tools = {"command": [str(Path(sys.executable).resolve())], "runtime": str(runtime), "ndk": str(ndk)}
+        policy = {
+            "runtime_files": {"bcl.exe": BACKEND.native.sha(runtime / "bcl.exe")},
+            "backends": {"libfixture.so": BACKEND.native.sha(runtime / "libfixture.so")},
+            "roots": ["Authored.dll"],
+            "assembly_defines": {"Authored": ["AUTHORED"], "DeveloperMetadataOnly": ["SDK_FLAG"]},
+            "options": ["--platform=Android", "--debug=Full"],
+            "api_level": 22,
+        }
+        return tools, policy, managed
+
+    def test_burst_metadata_only_assembly_is_not_a_supplied_dll_or_root(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            tools, policy, managed = self.burst_fixture(root)
+            output = root / "output"
+
+            def invoke(argv, directory, name, **kwargs):
+                self.assertEqual(argv[-2], "+burstc")
+                self.assertEqual(kwargs["env"]["BURST_ANDROID_MIN_API_LEVEL"], "22")
+                options = (directory / "options.rsp").read_text().splitlines()
+                self.assertIn("--assembly-defines=DeveloperMetadataOnly;SDK_FLAG", options)
+                self.assertEqual([line for line in options if line.startswith("--root-assembly=")], ["--root-assembly=" + str(managed / "Authored.dll")])
+                header = bytearray(64)
+                header[:6] = b"\x7fELF\x02\x01"
+                struct.pack_into("<HH", header, 16, 3, 183)
+                (directory / "lib_burst_generated.so").write_bytes(header)
+                (directory / "burst.xml").write_text("<linker />\n")
+
+            with patch.object(BACKEND.native, "invoke", side_effect=invoke):
+                result = BACKEND.burst(tools, policy, managed, output)
+            self.assertTrue(result["success"])
+            self.assertFalse(result["runtime_qualified"])
+            self.assertFalse((managed / "DeveloperMetadataOnly.dll").exists())
+
+    def test_burst_refuses_missing_roots_and_tool_drift_before_output(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            tools, policy, managed = self.burst_fixture(root)
+            output = root / "output"
+            policy["roots"].append("Missing.dll")
+            with self.assertRaisesRegex(ValueError, "root cohort"):
+                BACKEND.burst(tools, policy, managed, output)
+            self.assertFalse(output.exists())
+            policy["roots"].pop()
+            (Path(tools["runtime"]) / "bcl.exe").write_bytes(b"changed tool witness")
+            with self.assertRaisesRegex(ValueError, "compiler drift"):
+                BACKEND.burst(tools, policy, managed, output)
+            self.assertFalse(output.exists())
+
     def test_default_backend_reaches_native_without_a_fixed_target(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve()

@@ -66,9 +66,11 @@ def code_sources(request):
 def sign(request_path, output):
     """Align/sign on the owner host, retaining one private key across builds."""
     request = json.loads(Path(request_path).read_text())
-    if set(request) != {"unsigned", "java", "zipalign", "apksigner_jar", "key_directory"}:
+    if set(request) - {"keytool"} != {"unsigned", "java", "zipalign", "apksigner_jar", "key_directory"}:
         raise ValueError("explicit owner signing inputs required")
     inputs = {name: Path(request[name]).resolve(strict=True) for name in ("unsigned", "java", "zipalign", "apksigner_jar")}
+    if "keytool" in request:
+        inputs["keytool"] = Path(request["keytool"]).resolve(strict=True)
     keys = Path(request["key_directory"])
     output = Path(output).absolute()
     if not keys.is_absolute() or keys != keys.resolve() or output.resolve().is_relative_to(keys) or keys.is_relative_to(output.resolve()):
@@ -100,7 +102,7 @@ def sign(request_path, output):
                     list(map(str, command)), env=environment, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT, check=True, timeout=600
                 )
 
-        keytool = inputs["java"].with_name("keytool")
+        keytool = inputs.get("keytool", inputs["java"].with_name("keytool"))
         credentials = ["-keystore", key, "-storepass:env", "ROR2_OWNER_SIGNING_PASSWORD"]
         if not key.exists():
             run(
@@ -187,13 +189,15 @@ def sign(request_path, output):
 def build(request_path, output):
     request = json.loads(Path(request_path).read_text())
     fields = {"manifest", "manifest_sha256", "targets", "frontend", "java", "android_jar", "d8_jar", "wire_helper"}
-    if set(request) - {"version_code", "code"} != fields or request["manifest_sha256"] != PROFILE:
+    if set(request) - {"version_code", "code", "javac"} != fields or request["manifest_sha256"] != PROFILE:
         raise ValueError("unsupported owner APK request/profile")
     code = code_sources(request)
     version_code = request.get("version_code")
     if "version_code" in request and (type(version_code) is not int or not 1 <= version_code <= 2147483647):
         raise ValueError("owner version code must be a positive Android integer")
     roots = {key: Path(request[key]).resolve(strict=True) for key in fields - {"manifest_sha256"}}
+    if "javac" in request:
+        roots["javac"] = Path(request["javac"]).resolve(strict=True)
     output = Path(output).absolute()
     for selected in (roots["targets"], roots["frontend"], SOURCE, *(Path(row["path"]) for row in code.values())):
         if output.resolve().is_relative_to(selected) or selected.is_relative_to(output.resolve()):
@@ -222,6 +226,8 @@ def build(request_path, output):
         tracked += [Path(PACKET.__file__), Path(ASSEMBLY.__file__)]
         tracked += [roots[k] for k in ("java", "android_jar", "d8_jar", "wire_helper", "manifest")]
         tracked += [Path(row["path"]) for row in code.values()]
+        if "javac" in roots:
+            tracked.append(roots["javac"])
         result["inputs"] = {str(p): {"bytes": p.stat().st_size, "sha256": sha(p)} for p in tracked}
 
         def run(command, label):
@@ -233,7 +239,7 @@ def build(request_path, output):
         dex.mkdir()
         run(
             [
-                roots["java"].with_name("javac"),
+                roots.get("javac", roots["java"].with_name("javac")),
                 "-source",
                 "8",
                 "-target",

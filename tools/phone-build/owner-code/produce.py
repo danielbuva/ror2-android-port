@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import struct
 import sys
 
 HERE = Path(__file__).resolve().parent
@@ -149,6 +150,66 @@ def file_map(folder):
     return {p.relative_to(folder).as_posix(): {"bytes": p.stat().st_size, "sha256": native.sha(p)} for p in sorted(folder.rglob("*")) if p.is_file()}
 
 
+def burst(tools, policy, managed, output):
+    """Run the unchanged acquired Burst compiler over freshly produced DLLs."""
+    if set(tools) != {"command", "runtime", "ndk"} or not isinstance(tools["command"], list) or not tools["command"]:
+        raise ValueError("explicit Burst host command, runtime and NDK required")
+    if any(not isinstance(arg, str) or any(c in arg for c in ("\n", "\r", "\0")) for arg in tools["command"]):
+        raise ValueError("invalid Burst host argument")
+    executable, runtime, ndk, managed = [native.canonical(p) for p in (tools["command"][0], tools["runtime"], tools["ndk"], managed)]
+    output = Path(output)
+    native.disjoint(output, [executable, runtime, ndk, managed])
+    for name, expected in policy["runtime_files"].items():
+        if native.sha(runtime / native.relative(name)) != expected:
+            raise ValueError("pinned Burst compiler drift: " + name)
+    backends = [name for name, expected in policy["backends"].items() if (runtime / name).is_file() and native.sha(runtime / name) == expected]
+    if len(backends) != 1:
+        raise ValueError("one pinned Burst LLVM backend required")
+    providers, compiler = file_map(managed), file_map(runtime)
+    runner = native.sha(executable)
+    roots = [native.relative(name) for name in policy["roots"]]
+    if any(len(name.parts) != 1 or name.suffix != ".dll" or name.as_posix() not in providers for name in roots):
+        raise ValueError("complete produced Burst root cohort required")
+    output.mkdir(mode=0o700)
+    result = {"success": False, "runtime_qualified": False}
+    try:
+        for name in ("logs", "tmp"):
+            (output / name).mkdir()
+        options = [
+            *policy["options"],
+            "--temp-folder=" + str(output / "tmp"),
+            "--assembly-folder=" + str(managed),
+            "--output=" + str(output / "lib_burst_generated"),
+            "--generate-link-xml=" + str(output / "burst.xml"),
+        ]
+        for name, defines in policy["assembly_defines"].items():
+            options.append("--assembly-defines=" + name + ";" + ";".join(defines))
+        options += ["--root-assembly=" + str(managed / name) for name in roots]
+        response = output / "options.rsp"
+        response.write_text("\n".join(options) + "\n")
+        native.write(output / "inputs.json", {"managed": providers, "runtime": compiler, "runner_sha256": runner, "backend": backends[0]})
+        environment = dict(os.environ, ANDROID_NDK_ROOT=str(ndk), BURST_ANDROID_MIN_API_LEVEL=str(policy["api_level"]), TMPDIR=str(output / "tmp"))
+        native.invoke([*tools["command"], str(runtime / "bcl.exe"), "+burstc", "@" + str(response)], output, "burst", env=environment)
+        library = output / "lib_burst_generated.so"
+        with library.open("rb") as stream:
+            header = stream.read(64)
+        if len(header) != 64 or header[:6] != b"\x7fELF\x02\x01" or struct.unpack_from("<HH", header, 16) != (3, 183):
+            raise ValueError("Burst did not produce an AArch64 shared ELF")
+        if not (output / "burst.xml").is_file():
+            raise ValueError("Burst linker preservation output missing")
+        if file_map(managed) != providers or file_map(runtime) != compiler or native.sha(executable) != runner:
+            raise ValueError("Burst input or tool provider changed")
+        result.update(
+            success=True, library_sha256=native.sha(library), library_bytes=library.stat().st_size, linker_xml_sha256=native.sha(output / "burst.xml")
+        )
+    except BaseException as error:
+        result.update(error_type=type(error).__name__, error=str(error))
+        raise
+    finally:
+        native.write(output / "result.json", result)
+    return result
+
+
 def preserve_sources(converter, files, output):
     """Keep bounded exact frames; remove owned expansions only after verification."""
     frames = output / "sources"
@@ -195,10 +256,12 @@ def verify_inputs(request, profile, sdk, sdk_state, before, work, state, output,
         raise ValueError("managed inputs changed during owner backend")
 
 
-def source_run(request, *, stop_after_conversion=False):
+def source_run(request, *, stop_after_conversion=False, burst_only=False):
     """Join original-input managed production to this same backend."""
-    if set(request) - {"target", "android_tools", "linux_tools"} != {"owner_work", "sdk_install", "source_inputs", "output"}:
+    if set(request) - {"target", "android_tools", "linux_tools", "burst_tools"} != {"owner_work", "sdk_install", "source_inputs", "output"}:
         raise ValueError("explicit original-input owner request required")
+    if burst_only and (stop_after_conversion or "burst_tools" not in request):
+        raise ValueError("Burst-only qualification requires its tools and no conversion stop")
     specification = importlib.util.spec_from_file_location("owner_code_managed_producer", HERE / "managed.py")
     managed_owner = importlib.util.module_from_spec(specification)
     sys.modules[specification.name] = managed_owner
@@ -236,12 +299,12 @@ def source_run(request, *, stop_after_conversion=False):
         else:
             providers = managed_owner.run(work, sdk, request["source_inputs"], output / "managed-production")
         backend_request = {"owner_work": str(work), "sdk_install": str(sdk), "managed": providers, "output": str(output / "backend")}
-        for name in ("target", "android_tools", "linux_tools"):
+        for name in ("target", "android_tools", "linux_tools", "burst_tools"):
             if name in request:
                 backend_request[name] = request[name]
         native.write(output / "backend-request.json", backend_request)
         result["phase"] = "whole-player-backend"
-        backend = run(backend_request, stop_after_conversion=stop_after_conversion)
+        backend = run(backend_request, stop_after_conversion=stop_after_conversion, burst_only=burst_only)
         if native.input_state(work) != state:
             raise ValueError("owner input state changed across source production")
         if target and target_inputs(request["target"])[2] != target_sha:
@@ -255,11 +318,13 @@ def source_run(request, *, stop_after_conversion=False):
     return result
 
 
-def run(request, *, stop_after_conversion=False):
+def run(request, *, stop_after_conversion=False, burst_only=False):
     if "source_inputs" in request:
-        return source_run(request, stop_after_conversion=stop_after_conversion)
-    if set(request) - {"android_tools", "target", "linux_tools"} != {"owner_work", "sdk_install", "managed", "output"}:
+        return source_run(request, stop_after_conversion=stop_after_conversion, burst_only=burst_only)
+    if set(request) - {"android_tools", "target", "linux_tools", "burst_tools"} != {"owner_work", "sdk_install", "managed", "output"}:
         raise ValueError("explicit owner backend request required")
+    if burst_only and (stop_after_conversion or "burst_tools" not in request):
+        raise ValueError("Burst-only qualification requires its tools and no conversion stop")
     work, sdk = [native.canonical(request[k]) for k in ("owner_work", "sdk_install")]
     output = Path(request["output"])
     state = native.input_state(work)
@@ -316,6 +381,22 @@ def run(request, *, stop_after_conversion=False):
                 shutil.copyfileobj(incoming, outgoing, 1024 * 1024)
             if native.sha(destination) != row["sha256"]:
                 raise ValueError("managed input copy changed")
+        if "burst_tools" in request:
+            if target is None or "burst" not in target:
+                raise ValueError("fixed target Burst policy required")
+            if set(request["burst_tools"]) != {"command", "runtime"}:
+                raise ValueError("explicit Burst host command and runtime required")
+            result["phase"] = "burst-production"
+            ndk = native.burst_ndk(sdk, request["linux_tools"], output / "burst-ndk") if "linux_tools" in request else sdk / "PlaybackEngines/AndroidPlayer/NDK"
+            result["burst"] = burst({**request["burst_tools"], "ndk": str(ndk)}, target["burst"], output / "managed", output / "burst")
+            if (output / "burst/burst.xml").read_text() != profile["xml"]["burst.xml"]:
+                raise ValueError("fresh Burst preservation differs from qualified target roots")
+            if burst_only:
+                verify_inputs(request, profile, sdk, sdk_state, before, work, state, output, configs)
+                if target_inputs(request["target"])[2] != target_sha:
+                    raise ValueError("target changed during Burst production")
+                result.update(success=True, phase="burst-built")
+                return result
         environment = dict(os.environ, TMPDIR=str(output / "tmp")) if android_tools else None
         native.write(
             output / "commands.json",
@@ -390,8 +471,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("request", type=Path)
     parser.add_argument("--stop-after-conversion", action="store_true", help="run complete stripping/conversion/preservation and only plan native compilation")
+    parser.add_argument("--burst-only", action="store_true", help="current fixed-target Burst qualification; stop before stripping/conversion/native work")
     args = parser.parse_args()
-    print(json.dumps(run(json.loads(args.request.read_text()), stop_after_conversion=args.stop_after_conversion), indent=2))
+    print(json.dumps(run(json.loads(args.request.read_text()), stop_after_conversion=args.stop_after_conversion, burst_only=args.burst_only), indent=2))
 
 
 if __name__ == "__main__":

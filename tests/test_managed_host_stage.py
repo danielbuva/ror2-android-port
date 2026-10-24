@@ -7,6 +7,7 @@ from pathlib import Path
 import tempfile
 import unittest
 from unittest import mock
+import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location("managed_host_stage", ROOT / "tools/phone-build/managed-host/stage.py")
@@ -76,6 +77,26 @@ class ManagedHostStageTests(unittest.TestCase):
             with self.subTest(destination=destination), self.assertRaisesRegex(ValueError, "must be new"):
                 stage.stage(self.profile, self.sdk, destination, root=self.root)
         self.assertEqual(sentinel.read_bytes(), b"preserve")
+
+    def test_separate_tool_package_retains_java_classes_and_private_apk_provider(self):
+        output = self.root / "AndroidManifest.xml"
+        source = stage.SOURCE / "AndroidManifest.xml"
+        before = source.read_bytes()
+        stage.tool_manifest(source, output, "dev.ror2lab.authoredtool")
+        value = ET.parse(output).getroot()
+        android = "{http://schemas.android.com/apk/res/android}"
+        self.assertEqual(value.attrib["package"], "dev.ror2lab.authoredtool")
+        runner = value.find("instrumentation")
+        self.assertEqual(runner.attrib[android + "targetPackage"], "dev.ror2lab.authoredtool")
+        self.assertEqual(runner.attrib[android + "name"], "dev.ror2lab.phonebuildhostfixture.ToolHostActivity$Runner")
+        provider = value.find("application/provider")
+        self.assertEqual(provider.attrib[android + "authorities"], "dev.ror2lab.authoredtool.apk")
+        self.assertEqual(provider.attrib[android + "exported"], "false")
+        self.assertEqual(provider.attrib[android + "grantUriPermissions"], "true")
+        self.assertEqual(source.read_bytes(), before)
+        with self.assertRaisesRegex(ValueError, "separate lab tool"):
+            stage.tool_manifest(source, self.root / "refused.xml", "dev.ror2lab.arm64")
+        self.assertFalse((self.root / "refused.xml").exists())
 
 
 class ManagedHostMetadataTests(unittest.TestCase):

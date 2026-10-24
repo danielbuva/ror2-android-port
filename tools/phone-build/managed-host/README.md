@@ -134,3 +134,37 @@ modified LLD binary is required.
 These remain debug/ADB-assisted private tool jobs. The fixed original-input
 gameplay source, complete content/Burst/shaders, full APK, durable signing,
 ordinary installation and game/performance acceptance are separate gates.
+
+## Headless JDK and owner APK jobs
+
+An explicit `java_home` in the private backend tool plan selects the acquired
+JDK. The phone builder compiles `NativeJavaHost.c` against its JNI headers and
+installs javac, keytool and java entry points plus the headless VM dependency
+closure as read-only PackageManager native files. Modules, security policy and
+configuration are hash-verified tool data. The JNI launcher uses the explicit
+VM path and Java home; it never loads ART as the build VM. Existing SDK JARs
+provide javac's Android reference surface, D8 and apksigner. The caller's extra
+native plan must include the JDK's Android spawn and shared-memory dependencies.
+
+The optional plan `package` selects a separate lab tool identity while retaining
+Java class names and private provider authority. It cannot select the game
+package. The builder keeps its durable tool signer at `TOOLROOT/owner-tool-key`,
+outside disposable build outputs; retain that directory for compatible updates.
+This key is separate from the game owner's signing key. No key enters the APK.
+
+Under `files/owner-input/`, a request `{"signing": {"unsigned":
+"INPUT.apk", "key_directory": "keys"}, "output": "work/sign-v1"}`
+selects existing owner signing. All paths are relative to that private input
+root. `input-hashes.json` pins the immutable supplied files; the durable key
+directory and output are generated state. A packaging request instead supplies
+`targets`, `manifest`, all three `code` paths, `key_directory` and `version_code`
+inside `packaging`; it invokes the existing complete APK owner first. Inputs
+remain distinct from tool APK assets. Each output must be new.
+
+Successful signing publishes `owner-apk-ready.json` and the worker binds its APK
+hash into the private report. Opening the Activity displays the package/version
+and enables an install button. Only that button opens unknown-source settings
+or Android's installer, using a private read-only content provider. Headless
+Runner jobs never launch UI. Retain the private owner key independently of
+disposable outputs and before removing this tool package. Final installer/game
+acceptance remains separate from successful tool execution.
