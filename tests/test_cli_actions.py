@@ -151,6 +151,13 @@ class PrototypeActionTests(unittest.TestCase):
                 self.assertEqual(json.loads(output), {"success": True, "unity_compiled": False})
                 self.assertIsNone(code)
 
+    def test_shared_build_full_and_capture_options_are_explicit(self):
+        module = ModuleType("shared_checkout_build")
+        module.build_shared_checkout = Mock(return_value={"success": True})
+        self.modules["shared_checkout_build"] = module
+        self.dispatch("shared-catalog-code-build", full=True, capture_player_linker_inputs=True)
+        module.build_shared_checkout.assert_called_once_with(code_only=False, capture_player_linker_inputs=True)
+
     def test_translucent_candidate_dispatch_is_host_only_and_prints_result(self):
         module = ModuleType("shader_translucent")
         module.main = Mock(return_value={"unity_compiled": False, "android_accepted": False})

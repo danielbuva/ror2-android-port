@@ -59,6 +59,10 @@ def _whole_catalog_code_build(function, kwargs, args):
     return function(**selected)
 
 
+def _shared_catalog_build(function, kwargs, args):
+    return _whole_catalog_code_build(function, dict(kwargs, code_only=not getattr(args, "full", False)), args)
+
+
 def _json_result(function, kwargs, args, **formatting):
     print(json.dumps(function(**kwargs), **formatting))
 
@@ -439,8 +443,8 @@ _ENTRIES = (
         "build_shared_checkout",
         {},
         "current",
-        "Build this clean committed worktree through the primary checkout/editor under the shared mutex, then restore its branch. No project copies or device actions. Supports the ordinary code-build capture/symbol flags; refuses concurrent source edits.",
-        handler=_whole_catalog_code_build,
+        "Build this clean committed worktree through the primary checkout/editor under the shared mutex, then restore its branch. Add --full for content/new script metadata. No project copies or device actions. Supports ordinary capture/symbol flags; refuses concurrent source edits.",
+        handler=_shared_catalog_build,
     ),
     Action("whole-catalog-run", "whole_catalog", "run_integration", {}, "current", "Install, sync and run the catalog-registration check."),
     Action("shader-recovery", "shader_recovery", "recover", {}, "historical", "Recover shaders for --target.", handler=_target),
