@@ -37730,3 +37730,84 @@ remain open. The code workstream separately owns native code/Burst/shaders and
 final APK/signing/install. No game runtime, ordinary app delivery or complete
 phone-only owner-installation acceptance follows from these private packs.
 Revisit this cohort for explicit input/target promotion or measured regression.
+
+## J1093 — Restage private lanes from their own authored source cohort
+
+2026-10-24 UTC. **Hypothesis and scope.** J1078's APFS snapshot can inherit
+unmerged canonical Editor/runtime sources and a newer authored audio DLL. Select
+and stage the lane's committed source before any private editor refresh or
+build, without changing canonical staging, original inputs or generated
+content. This is host infrastructure; no new APK or device acceptance is claimed.
+J1072's frozen-content and committed-predecessor retirement contracts remain in
+force. No new reconstruction, loader, serialization or middleware workaround is
+introduced, so the generic build-tooling prior-art exception applies.
+
+**Implementation.** `build_lanes` snapshots the canonical source commit, then
+runs `build.restage_lane_sources` from the private checkout at creation and after
+selecting each build/editor-open source. The private lock covers this work;
+restaging runs outside the canonical snapshot mutex. The existing
+`whole_catalog`, Android asset and `project_input_rebuild` owners stage their
+runtime, fixture, current builder and pinned baseline Editor sources. An extra
+C# file must match a predecessor Git blob before retirement; its source commit,
+path, source/metadata hashes and actual removals are recorded locally. Unknown
+or edited bytes refuse before removal. Existing lanes without the new snapshot
+field use the read-only canonical Git identity plus their retained build owner.
+
+The original-audio owner generates the selected checkout's artifacts against a
+small APFS reference clone. Its existing camera/music owners unwind that clone
+only. The live project receives only the three authored DLLs/metadata, with
+receipt-verified preimages; its full audio receipt remains unchanged because
+camera/music bind its hash. Ordinary whole-catalog composition restores those
+preimages before its existing overlay/audio stages. A plain player build
+refuses pending plugin changes and names the whole-catalog actions needed to
+compose a complete receipt. Teardown archives retirement/pending receipts and
+deletes private preimages/reference clones. No build discovers a timestamped
+receipt as input. Architecture C, accepted settings and ownership boundaries
+remain unchanged.
+
+**Host evidence and first failures.** Evidence is under
+`work/coordination/fast-iteration/lane-restage-*`; teardown's archive is
+`work/coordination/build-lanes/restage-check-20261024T185818.182589Z/`.
+The real snapshot takes 180.321 seconds; shared-host free space changes by about
+602 MiB during cloning, not a precise attribution of private physical blocks.
+The first create correctly refuses an unrecognized CatalogAddressProbe body:
+it is a pinned baseline template, so its existing recipe owner is added to the
+shared selection. The first staging selection also omitted the current
+WholeCatalogBuild owner; it is moved into the same shared Editor selection and
+verified present before any editor/player run. No unknown generated source is
+deleted to bypass either result.
+
+The reused private snapshot then retires the inherited SourceCameraGraphicsHost
+through committed byte proof and replaces GameAudioOriginalBootstrap from the
+lane's own producer. Its before/after SHA-256 values are
+`b95ec645cb057847f3119b9502dc440ee0fe0e9b4d1fe4b4c76acf10b235954d` and
+`94b2901f0b54d7f939d3fce9149987b413c1cd810151e27faa55215184bb4314`.
+The final repeat at source `edfb6730` takes 1.823 seconds and compares all 92,319
+normal frozen-content ledger members: **zero differences**. Runtime/Editor
+C# and APK-only receipts are outside that existing content ledger. The catalog
+builder matches the lane checkout, the foreign Editor source is absent, and
+the full audio receipt retains SHA-256
+`6434459da1df21e3923ce623754e6473fa3ab5dba65c88f57056edcebfe0bf59`.
+
+Seven real-Git worktree regressions pass: inherited Editor retirement, lane
+bootstrap replacement, retained runtime/builder/template sources and generated
+content, legacy lane facts, overlay receipt preservation, changed-plugin plain
+build refusal, and edited-source/preimage refusal. The 28 whole-catalog and
+eight lane contracts pass; the 121 audio contracts pass with two explicit
+skips. The first broad shared-work suite reports six environment/layout errors:
+five fixtures refuse this checkout's shared-work symlink, and one optional
+Cecil build uses a shared compiler server unable to read the editor directory.
+That four-case Cecil fixture passes with shared compilation disabled. The
+required merge gate is CI's fresh clone with neither shared work nor editor
+access; its committed-tree/pre-push and remote results are retained with the
+PR, rather than treating the failed shared-work run as a pass. Host preflight
+passes; doctor reports the existing bootstrap gate incomplete in this checkout.
+
+**Cleanup and limits.** The disposable lane is removed, all retirement receipts
+are verified in its archive, and primary-checkout pruning completes with
+111 GiB free. No Unity editor/player build, install or device command runs for
+this follow-up; there is no APK hash or new installed-state fact. A genuinely
+different plugin/content cohort still requires a normal full lane seed. Revisit
+if a current staging owner adds another authored source family or receipt-bound
+plugin outside these existing owners; keep unknown-byte refusal and frozen
+content checks intact.
