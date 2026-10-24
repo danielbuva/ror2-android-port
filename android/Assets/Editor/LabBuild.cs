@@ -8,8 +8,23 @@ using UnityEngine;
 using UnityEngine.Rendering;
 public static class LabBuild {
  const string PendingBuild="PortingLab.ARM64Pending",RunningBuild="PortingLab.ARM64Running";
- [Serializable] class Request {public string request_id,api,output,androidSymbols;public bool presentationOnly,stagePresentation,reusePayload,captureIl2CppInvocation;public string[] reflectionTextureGuids;}
- [Serializable] class Result {public bool success; public string result,apk,backend,request_id,symbolPackage,build_report_guid;public double seconds;public int errors;}
+ static string IterationRequest,IterationOutput;
+ static bool IterationCaptured;
+ [Serializable] class Request {public string request_id,api,output,androidSymbols,iterationMode;public bool presentationOnly,stagePresentation,reusePayload,captureIl2CppInvocation;public string[] reflectionTextureGuids;}
+ [Serializable] class BuildPhase {public string name;public int depth;public double seconds;}
+ [Serializable] class Result {public bool success; public string result,apk,backend,request_id,symbolPackage,build_report_guid,player_build_result;public string[] player_build_error_messages;public double seconds,bundle_seconds,player_seconds,prepare_seconds;public int errors,player_build_errors;public bool iteration_export_complete;public BuildPhase[] build_steps;}
+ // Run last, after other Android project callbacks. An owned cancellation
+ // retains the normal Bee native build/cache while bypassing only Gradle.
+ public static void CaptureIterationExport(string path){
+  if(string.IsNullOrEmpty(IterationRequest))return;
+  string project=Path.GetFullPath(Path.Combine(Application.dataPath,".."));
+  string expected=Path.Combine(project,"Library/Bee/Android/Prj/IL2CPP/Gradle");
+  string actual=Path.GetFullPath(path);
+  if(actual==Path.Combine(expected,"unityLibrary"))actual=expected;
+  if(actual!=expected||!File.Exists(Path.Combine(actual,"unityLibrary/src/main/jniLibs/arm64-v8a/libil2cpp.so"))||!File.Exists(Path.Combine(actual,"unityLibrary/src/main/assets/bin/Data/Managed/Metadata/global-metadata.dat")))throw new InvalidOperationException("Incomplete or unexpected iteration export");
+  IterationOutput=actual;IterationCaptured=true;
+  throw new UnityEditor.Build.BuildFailedException("ROR2LAB_ITERATION_EXPORT_COMPLETE "+IterationRequest);
+ }
  [Serializable] class NativeVariant {public string resource;}
  [Serializable] class NativeManifest {public NativeVariant[] variants;}
  [Serializable] class NativeFamily {public NativeVariant[] variants;}
@@ -283,6 +298,9 @@ public static class LabBuild {
    if(request.request_id!=result.request_id)throw new InvalidOperationException("Build request changed before dispatch");
    string symbolsMode=string.IsNullOrEmpty(request.androidSymbols)?"none":request.androidSymbols;
    if(symbolsMode!="none"&&symbolsMode!="debugging")throw new InvalidOperationException("Unsupported Android symbols mode");
+   string iterationMode=request.iterationMode??"";
+   if(iterationMode!=""&&iterationMode!="export-splice"&&iterationMode!="scripts-only")throw new InvalidOperationException("Unsupported iteration mode");
+   if(iterationMode!=""&&(!request.reusePayload||symbolsMode!="none"||request.captureIl2CppInvocation))throw new InvalidOperationException("Iteration requires frozen content and no symbols/capture");
    EditorUserBuildSettings.androidCreateSymbols=symbolsMode=="debugging"?AndroidCreateSymbols.Debugging:AndroidCreateSymbols.Disabled;
    if(symbolsMode=="debugging"){
     if(!System.Text.RegularExpressions.Regex.IsMatch(request.request_id,"^[A-Za-z0-9._-]{1,80}$"))throw new InvalidOperationException("Unsafe symbol build request identity");
@@ -386,6 +404,7 @@ public static class LabBuild {
    bundleBuilds.Add(new AssetBundleBuild{assetBundleName="labgeometry",assetNames=new[]{"Assets/Recovered/geometry.obj"}});
    var currentRequest=JsonUtility.FromJson<Request>(File.ReadAllText(Path.Combine(root,"build-request.json")));
    if(currentRequest.request_id!=result.request_id||currentRequest.androidSymbols!=request.androidSymbols)throw new InvalidOperationException("Build request changed after dispatch");
+   var bundleStart=DateTime.UtcNow;
    if(!currentRequest.reusePayload){
     var wholeBuilder=File.Exists(Path.Combine(root,"whole-catalog-build.json"))?Type.GetType("WholeCatalogBuild, Assembly-CSharp-Editor",true):null;
     if(wholeBuilder!=null)wholeBuilder.GetMethod("Append").Invoke(null,new object[]{root,bundleBuilds});
@@ -393,20 +412,47 @@ public static class LabBuild {
     if(!bundleManifest)throw new Exception("Requested bundle build failed");
     if(wholeBuilder!=null)wholeBuilder.GetMethod("Complete").Invoke(null,new object[]{bundleManifest});
    }
+   result.bundle_seconds=(DateTime.UtcNow-bundleStart).TotalSeconds;
    foreach(var path in presentationShaders.Where(x=>x.EndsWith(".shader",StringComparison.Ordinal))){var shader=AssetDatabase.LoadAssetAtPath<Shader>(path);var messages=ShaderUtil.GetShaderMessages(shader).Where(x=>x.severity==UnityEditor.Rendering.ShaderCompilerMessageSeverity.Error).ToArray();if(messages.Length>0){result.errors=messages.Length;throw new Exception("Android shader compile errors: "+path+"; "+messages[0].message);}}
+   // Scripts-only deliberately retains the last serialized scene. It is an
+   // explicit evaluation mode; the export-splice path serializes fresh Data.
+   if(iterationMode!="scripts-only"){
    var scene=EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Single);
    var camera=new GameObject("Lab Camera").AddComponent<Camera>();camera.tag="MainCamera";camera.backgroundColor=new Color(.04f,.06f,.09f);camera.clearFlags=CameraClearFlags.SolidColor;camera.gameObject.AddComponent<LabDiagnostics>();
    var light=new GameObject("Lab Light").AddComponent<Light>();light.type=LightType.Directional;light.transform.rotation=Quaternion.Euler(35,40,0);
    var cube=GameObject.CreatePrimitive(PrimitiveType.Cube);cube.name="G1 reference cube";cube.transform.position=new Vector3(3,0,0);
-   EditorSceneManager.SaveScene(scene,"Assets/Lab.unity");EditorUserBuildSettings.buildAppBundle=false;
+   EditorSceneManager.SaveScene(scene,"Assets/Lab.unity");
+   }
+   EditorUserBuildSettings.buildAppBundle=false;
    result.apk=Path.Combine(artifactDir,"lab-"+api+".apk");result.backend="IL2CPP ARM64 "+api;
-   var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{scenes=new[]{"Assets/Lab.unity"},locationPathName=result.apk,target=BuildTarget.Android,options=BuildOptions.Development});
+   var options=BuildOptions.Development;
+   if(iterationMode!=""){
+    IterationRequest=request.request_id;IterationOutput=null;IterationCaptured=false;
+    if(iterationMode=="scripts-only")options|=BuildOptions.BuildScriptsOnly;
+   }
+   result.prepare_seconds=(DateTime.UtcNow-start).TotalSeconds-result.bundle_seconds;
+   var playerStart=DateTime.UtcNow;
+   BuildReport report=null;
+   try{report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{scenes=new[]{"Assets/Lab.unity"},locationPathName=result.apk,target=BuildTarget.Android,options=options});}
+   catch(Exception exception){if(!IterationCaptured||!exception.ToString().Contains("ROR2LAB_ITERATION_EXPORT_COMPLETE "+request.request_id))throw;}
+   result.player_seconds=(DateTime.UtcNow-playerStart).TotalSeconds;
+   if(report!=null){
+   result.build_steps=report.steps.Select(step=>new BuildPhase{name=step.name,depth=step.depth,seconds=step.duration.TotalSeconds}).ToArray();
+   result.player_build_result=report.summary.result.ToString();result.player_build_errors=(int)report.summary.totalErrors;
+   result.player_build_error_messages=report.steps.SelectMany(step=>step.messages).Where(message=>message.type==LogType.Error||message.type==LogType.Exception||message.type==LogType.Assert).Select(message=>message.content).ToArray();
+   }
+   if(iterationMode!=""){
+    if(!IterationCaptured||string.IsNullOrEmpty(IterationOutput))throw new InvalidOperationException("Build failed before the owned pre-Gradle iteration callback");
+    if(result.player_build_error_messages!=null&&result.player_build_error_messages.Any(message=>!message.Contains("ROR2LAB_ITERATION_EXPORT_COMPLETE "+request.request_id)))throw new InvalidOperationException("Unrelated build errors accompanied the iteration cancellation");
+    result.apk=IterationOutput;result.iteration_export_complete=true;result.success=true;result.result="Iteration export complete; player packaging intentionally cancelled before Gradle";
+   }else{
    if(currentRequest.captureIl2CppInvocation)Il2CppInvocationCapture.CompleteAfterBuild(report);
    result.build_report_guid=report.summary.guid.ToString();
    result.result=report.summary.result.ToString();result.errors=(int)report.summary.totalErrors;result.success=report.summary.result==BuildResult.Succeeded&&result.errors==0;
    if(result.success&&symbolsMode=="debugging"){var symbolZips=Directory.GetFiles(artifactDir,"*.zip");if(symbolZips.Length!=1)throw new InvalidOperationException("Expected exactly one Unity Android symbols ZIP");result.symbolPackage=Path.GetFullPath(symbolZips[0]);}
+   }
   }catch(Exception e){result.success=false;result.result=e.ToString();Debug.LogException(e);}
-  finally{EditorUserBuildSettings.androidCreateSymbols=previousAndroidSymbols;}
+  finally{EditorUserBuildSettings.androidCreateSymbols=previousAndroidSymbols;IterationRequest=null;IterationOutput=null;IterationCaptured=false;}
   result.seconds=(DateTime.UtcNow-start).TotalSeconds;File.WriteAllText(Path.Combine(outDir,"result.json"),JsonUtility.ToJson(result,true));SessionState.SetString(RunningBuild,"");Debug.Log("LAB_BUILD_RESULT "+JsonUtility.ToJson(result));
  }
  [Serializable] class SceneProbeConfig {public string scene,prefab,teleportMaterial,barrierEffect,stageScene,nextStageScene,playerDeathEffect,pickupDroplet,genericPickup,teleporterIndicator,objectiveTMPSettings;public string[] prefabAssets,enemyRewardAssets,objectiveSupportAssets,nextStageScenes,sourceStageScenes;}
@@ -415,4 +461,8 @@ public static class LabBuild {
   var root=Path.GetFullPath(Path.Combine(Application.dataPath,"../.."));
   File.WriteAllText(Path.Combine(root,"backend-evidence.json"),"{\"editor\":\""+Application.unityVersion+"\",\"selectedBackend\":\""+PlayerSettings.GetScriptingBackend(BuildTargetGroup.Android)+"\",\"architecture\":\""+PlayerSettings.Android.targetArchitectures+"\"}");
  }
+}
+public sealed class LabIterationExport : UnityEditor.Android.IPostGenerateGradleAndroidProject {
+ public int callbackOrder {get{return int.MaxValue;}}
+ public void OnPostGenerateGradleAndroidProject(string path){LabBuild.CaptureIterationExport(path);}
 }

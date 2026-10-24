@@ -761,6 +761,33 @@ lifetime methods execute in the native-feedback host fixture.
 The exact editor is started with `./dev editor --target lab --action open`; send it one
 mutation at a time. Device acceptance is always the real device, never the editor.
 
+Current iteration support: `build_timing.py` owns host wall phases and
+request-bounded editor-log/Bee observations. `LabBuild.cs` records inclusive
+BuildReport steps, bundle generation and player duration; parallel compiler
+work is distinct from elapsed time. `device.py` records install/storage and
+payload hash/transfer phases. `common.cached_hashes` retains digests only during
+one build and invalidates them on inode, size or change-time drift.
+
+`iteration_apk.py` owns `whole-catalog-fast-build` packaging. A normal build
+generates `work/config/iteration-base.json` from its APK and Gradle inputs.
+The fast action verifies frozen content, stages committed C#, runs the normal
+Development IL2CPP native pipeline and stops at the last
+`IPostGenerateGradleAndroidProject` callback before Gradle. The intentional
+BuildPlayer cancellation and its original errors are recorded separately from
+iteration-export completion; an unrelated build error refuses. Under the same
+editor mutex, the host replaces the complete generated assets/native set,
+preserves unchanged ZIP records, aligns and signs using the existing local lab
+key. Failed attempts remain local; unsigned/alignment intermediates are removed
+after packaging. The anchor is replaced only by another normal build.
+`whole-catalog-scripts-build` evaluates `BuildScriptsOnly` with the same owner;
+it is not an acceptance build. `apk-member-compare` compares hash-bound builds
+of the same source without hiding build metadata differences. Normal full-build
+acceptance remains required. Commands and limits: [fast iteration](fast-iteration.md).
+Host contracts: `test_iteration_apk.py`, `test_install_transport.py`,
+`test_build_snapshots.py`. Build/experiment artifact snapshots use APFS clones
+with an independent-copy fallback; snapshot verification can be requested while
+ordinary builds hash each source artifact once.
+
 Current optional debugging symbols (`--debug-symbols` on `build` or
 `whole-catalog-code-build`) flow through `main.py`/`actions.py` to
 `whole_catalog.py` and `build.py`. `LabBuild.cs` requests

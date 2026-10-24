@@ -5,11 +5,30 @@ import json
 import os
 import subprocess
 import datetime
+from contextlib import contextmanager
+from contextvars import ContextVar
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-WORK = ROOT / "work"
+WORK = (ROOT / "work").resolve()
 RECIPE = ROOT / "recipe"  # audited, tracked build recipes (recipe/README.md)
+_hash_cache = ContextVar("lab_build_hash_cache", default=None)
+
+
+def file_identity(path):
+    st = Path(path).stat()
+    return st.st_dev, st.st_ino, st.st_size, st.st_mtime_ns, st.st_ctime_ns
+
+
+@contextmanager
+def cached_hashes():
+    """One operation only: reuse digests while inode, size and change times match."""
+    cache = _hash_cache.get()
+    token = _hash_cache.set({} if cache is None else cache)
+    try:
+        yield
+    finally:
+        _hash_cache.reset(token)
 
 
 def toolchain():
@@ -43,11 +62,20 @@ def game(work=None):
 
 
 def sha(p):
+    identity = file_identity(p)
+    cache = _hash_cache.get()
+    if cache is not None and identity in cache:
+        return cache[identity]
     h = hashlib.sha256()
     with Path(p).open("rb") as f:
         for b in iter(lambda: f.read(4 * 1024 * 1024), b""):
             h.update(b)
-    return h.hexdigest()
+    if file_identity(p) != identity:
+        raise RuntimeError("File changed while computing its SHA-256")
+    value = h.hexdigest()
+    if cache is not None:
+        cache[identity] = value
+    return value
 
 
 def digest(v):

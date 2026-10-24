@@ -14,6 +14,7 @@ import sys
 import threading
 import uuid
 from contextlib import contextmanager
+from build_timing import PhaseTiming, bee_timing, editor_log_cursor, editor_log_timing
 
 _build_dispatch_state = threading.local()
 
@@ -38,20 +39,31 @@ def sha256_file_member(archive_path, member):
     return h.hexdigest()
 
 
-def copy_build_artifact(source, destination):
+def copy_build_artifact(source, destination, *, verify=True):
     # Independent copy-on-write snapshots prevent repeated payloads exhausting host space.
     # Fall back to ordinary copies off APFS; artifact identity is always byte-checked.
     source = Path(source)
     destination = Path(destination)
     if not source.is_file() or source.is_symlink() or destination.is_symlink():
         raise RuntimeError("Build artifact paths must be regular files")
+    before = file_identity(source)
+    if source.resolve() == destination.resolve():
+        raise RuntimeError("Build snapshot must have a different destination")
     destination.parent.mkdir(parents=True, exist_ok=True)
+    # cp -c cannot replace an existing destination; remove only this explicitly
+    # selected disposable snapshot, never its source.
+    destination.unlink(missing_ok=True)
     cloned = sys.platform == "darwin" and run(["/bin/cp", "-c", "-p", source, destination], check=False).returncode == 0
     if not cloned:
         shutil.copy2(source, destination)
     source_stat = source.stat()
     destination_stat = destination.stat()
-    if (source_stat.st_dev, source_stat.st_ino) == (destination_stat.st_dev, destination_stat.st_ino) or sha(source) != sha(destination):
+    if (
+        (source_stat.st_dev, source_stat.st_ino) == (destination_stat.st_dev, destination_stat.st_ino)
+        or file_identity(source) != before
+        or source_stat.st_size != destination_stat.st_size
+        or (verify and sha(source) != sha(destination))
+    ):
         raise RuntimeError("Build snapshot independence or hash verification failed")
     return str(destination)
 
@@ -151,6 +163,7 @@ def editor(target="lab", action="inspect"):
                 if target == "smoke"
                 else ROOT / read(WORK / "config/reconstruction.json")["projects"][0]
             )
+            project = project.resolve()
             if not project.is_dir():
                 raise RuntimeError("Project does not exist: " + str(project))
             commands = run(["/bin/ps", "-axo", "command"]).stdout.decode().splitlines()
@@ -461,7 +474,7 @@ def build_cache_key(project, api, android_symbols="none"):
 def stage_android_assets(project, io=None):
     """Place Android assets without starting Unity; the real copytree contract stays intact."""
     if io is None:
-        shutil.copytree(ROOT / "android/Assets", project / "Assets", dirs_exist_ok=True)
+        shutil.copytree(ROOT / "android/Assets", project / "Assets", dirs_exist_ok=True, copy_function=lambda a, b: copy_build_artifact(a, b, verify=False))
     else:
         for source in sorted((ROOT / "android/Assets").rglob("*")):
             if source.is_file():
@@ -496,11 +509,17 @@ def build(
     android_symbols="none",
     capture_player_linker_inputs=False,
     capture_il2cpp_invocation=False,
+    iteration_mode="",
 ):
+    timing = PhaseTiming()
     if api not in ["gles", "vulkan", "lab"]:
         raise RuntimeError("Build target must be gles or vulkan")
     if android_symbols not in {"none", "debugging"}:
         raise RuntimeError("Android symbols mode must be none or debugging")
+    if iteration_mode not in {"", "export-splice", "scripts-only"}:
+        raise RuntimeError("Unknown iteration mode")
+    if iteration_mode and (not reuse_payload or destination is not None or android_symbols != "none" or capture_player_linker_inputs):
+        raise RuntimeError("Iteration requires the current frozen payload and no symbols/captures")
     if destination is not None and android_symbols != "none":
         raise RuntimeError("Debugging symbols are supported only by the normal lab build path")
     if capture_il2cpp_invocation and not capture_player_linker_inputs:
@@ -524,7 +543,7 @@ def build(
     if api == "lab":
         api = "gles"
     assert_build_unblocked()
-    with host_build_lock(HOST_BUILD_LOCK, operation="build: " + api):
+    with host_build_lock(HOST_BUILD_LOCK, operation="build: " + api), cached_hashes():
         assert_build_unblocked()
         if destination is not None:
             if reuse_payload:
@@ -534,6 +553,11 @@ def build(
             return execute_build(Path(destination), Path(work or WORK), api)
         preflight_host()
         project = WORK / "lab-project"
+        anchor = None
+        if iteration_mode:
+            from iteration_apk import validate_anchor
+
+            anchor = validate_anchor(WORK, read(WORK / "inventory/files.json")["input_id"], api)
         recipe = WORK / "scene-probe-build.json"
         if recipe.exists():
             validate_runtime_support(project, read(recipe))
@@ -543,6 +567,8 @@ def build(
         if reuse_payload:
             validate_whole_payload_reuse(project)
         key = build_cache_key(project, api) if android_symbols == "none" else build_cache_key(project, api, android_symbols)
+        if iteration_mode:
+            key = digest({"build": key, "iteration_mode": iteration_mode, "request": request_id})
         if capture_player_linker_inputs:
             from player_linker_receipt import capture_cache_key
 
@@ -568,7 +594,7 @@ def build(
                     source = dest / "payload" / name
                     if not source.is_file() or sha(source) != h:
                         raise RuntimeError("Cached payload is missing or changed: " + name)
-                    copy_build_artifact(source, WORK / "generated-android-data" / name)
+                    copy_build_artifact(source, WORK / "generated-android-data" / name, verify=False)
                 write(WORK / "config/current-build.json", r)
                 print(json.dumps({"cached": True, **r}, indent=2))
                 return r
@@ -577,14 +603,22 @@ def build(
         if result.exists():
             result.rename(result.with_name("previous-" + now() + ".json"))
         request = {"request_id": request_id, "api": api, "reusePayload": reuse_payload}
+        if iteration_mode:
+            request["iterationMode"] = iteration_mode
         if capture_player_linker_inputs:
             request.update(capture_request)
         if android_symbols != "none":
             request["androidSymbols"] = android_symbols
         write(WORK / "build-request.json", request)
-        print(editor("lab", "refresh"), flush=True)
-        with coordinated_editor_operation():
-            print(editor("lab", "build"), flush=True)
+        timing.phases["staging_validation_hashes"] = time.monotonic() - timing.started
+        log_cursor = editor_log_cursor(WORK)
+        with timing.phase("editor_refresh"):
+            print(editor("lab", "refresh"), flush=True)
+        player_epoch = time.time()
+        with timing.phase("editor_dispatch"):
+            with coordinated_editor_operation():
+                print(editor("lab", "build"), flush=True)
+        wait_start = time.monotonic()
         dispatch_deadline = time.monotonic() + 120
         deadline = time.monotonic() + (3600 if (WORK / "whole-catalog-build.json").exists() else 1200)
         while time.monotonic() < deadline:
@@ -600,9 +634,14 @@ def build(
         else:
             raise RuntimeError("Build timeout; inspect the editor log named in work/editor/lab-process.json; no cache stamp written")
         r = read(result)
+        timing.phases["editor_wait"] = time.monotonic() - wait_start
+        r["bee_timing"] = bee_timing(project, player_epoch, time.time())
+        r["editor_log_timing"] = editor_log_timing(log_cursor)
         if not r["success"] or r.get("errors", 0) > 0:
             raise RuntimeError(r["result"] + "; build errors=" + str(r.get("errors", 0)))
         key = build_cache_key(project, api) if android_symbols == "none" else build_cache_key(project, api, android_symbols)
+        if iteration_mode:
+            key = digest({"build": key, "iteration_mode": iteration_mode, "request": request_id})
         if capture_player_linker_inputs:
             from player_linker_receipt import capture_cache_key
 
@@ -613,12 +652,23 @@ def build(
             raise RuntimeError("Refuse to overwrite an existing request-specific linker output")
         dest.mkdir(parents=True, exist_ok=not capture_player_linker_inputs)
         build_report_output_path = str(Path(r["apk"]).resolve())
-        apk = dest / Path(r["apk"]).name
-        copy_build_artifact(r["apk"], apk)
+        apk = dest / ("lab-" + api + ".apk")
+        if iteration_mode:
+            from iteration_apk import assemble_export, GRADLE
+
+            export = Path(r["apk"]).resolve()
+            if not r.get("iteration_export_complete") or export != (project / GRADLE).resolve():
+                raise RuntimeError("Unexpected iteration export output")
+            r["iteration"] = {"mode": iteration_mode, **assemble_export(WORK, export, apk, anchor)}
+        else:
+            with timing.phase("apk_clone"):
+                copy_build_artifact(r["apk"], apk, verify=False)
+        with timing.phase("apk_hash"):
+            apk_hash = sha(apk)
         r.update(
             {
                 "apk": str(apk),
-                "apk_sha256": sha(apk),
+                "apk_sha256": apk_hash,
                 "apk_cache_path": apk.name,
                 "key": key,
                 "graphics_api": api,
@@ -657,13 +707,14 @@ def build(
                 input_id=capture_request["inputId"],
                 editor_version=editor_version_from_toolchain(toolchain()),
             )
+        symbols_start = time.monotonic()
         if android_symbols == "debugging":
             from symbol_artifacts import validate_fresh_symbol_package, verify_apk_symbol_pair
 
             expected_symbol_dir = WORK / "lab-build" / ("symbols-" + request_id)
             source_symbols = validate_fresh_symbol_package(r.get("symbolPackage"), expected_symbol_dir, request_id)
             symbols_zip = dest / "symbols.zip"
-            copy_build_artifact(source_symbols, symbols_zip)
+            copy_build_artifact(source_symbols, symbols_zip, verify=False)
             symbols_hash = sha(symbols_zip)
             libil2cpp_hash = sha256_file_member(apk, "lib/arm64-v8a/libil2cpp.so")
             pair = verify_apk_symbol_pair(
@@ -679,9 +730,17 @@ def build(
                     "symbol_sections": {"symtab": pair["symbols_has_symtab"], "debug_info": pair["symbols_has_debug_info"]},
                 }
             )
+        timing.phases["symbols_clone_hash_validation"] = time.monotonic() - symbols_start if android_symbols == "debugging" else 0.0
         payload = dest / "payload"
-        shutil.copytree(WORK / "generated-android-data", payload, dirs_exist_ok=True, copy_function=copy_build_artifact)
-        r["payload"] = {p.name: sha(p) for p in payload.glob("*") if p.is_file()}
+        with timing.phase("payload_clone_hash"):
+            r["payload"] = {p.name: sha(p) for p in (WORK / "generated-android-data").glob("*") if p.is_file()}
+            shutil.copytree(WORK / "generated-android-data", payload, dirs_exist_ok=True, copy_function=lambda a, b: copy_build_artifact(a, b, verify=False))
+        from iteration_apk import write_anchor
+
+        if not iteration_mode:
+            with timing.phase("iteration_anchor"):
+                write_anchor(WORK, project, r)
+        r["timing"] = timing.report()
         write(receipt, r)
         write(WORK / "config/current-build.json", r)
         print(json.dumps(r, indent=2))

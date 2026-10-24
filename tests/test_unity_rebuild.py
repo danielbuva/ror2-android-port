@@ -572,7 +572,7 @@ class UnityRebuildTests(unittest.TestCase):
                 patch.object(build, "validate_whole_payload_reuse") as reuse,
                 patch.object(build, "build_cache_key", return_value="ordinary-key"),
                 patch.object(build, "editor", side_effect=editor),
-                patch.object(build, "copy_build_artifact", side_effect=shutil.copy2),
+                patch.object(build, "copy_build_artifact", side_effect=lambda a, b, **kwargs: shutil.copy2(a, b)),
                 patch.object(r9, "execute_build") as isolated,
                 patch("sys.stdout", new_callable=StringIO),
             ):

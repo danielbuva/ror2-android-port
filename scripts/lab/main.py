@@ -45,6 +45,12 @@ p.add_argument(
 )
 p.add_argument("--compare-only", action="store_true", help="Current: compare an existing rebuild-step destination without writing")
 p.add_argument("--apk", help="Current: install this APK through the existing device safety/placement checks; preserves current-build")
+p.add_argument(
+    "--install-mode",
+    choices=("streaming", "incremental"),
+    default="streaming",
+    help="Current install transport: streaming (default, complete APK) or explicit incremental (requires matching v4 .idsig and device IncFS; still streams a new APK, not a delta; refuses unsupported devices without fallback)",
+)
 p.add_argument("--payload-dir", help="Current: sync-data from this payload directory; preserves the shared generated payload")
 p.add_argument("--full", action="store_true")
 p.add_argument("--device", help="Current: explicit allowlisted serial (or LAB_DEVICE); required when several devices are attached")
@@ -127,6 +133,8 @@ if a.work_dir and (a.command in {"install", "sync-data", "run", "check-baseline"
     common.WORK = WORK = Path(a.work_dir).expanduser().resolve()
 if a.apk and a.command != "install":
     p.error("--apk requires install")
+if a.install_mode != "streaming" and a.command != "install":
+    p.error("--install-mode requires install")
 if a.payload_dir and a.command != "sync-data":
     p.error("--payload-dir requires sync-data")
 if a.command == "perf" and a.action not in {"inspect", "collect", "cpu"}:
@@ -170,8 +178,8 @@ if (a.skill_slot or a.toolbot_offhand or a.captain_supply_beacon) and (a.command
     p.error("--skill-slot, --toolbot-offhand and --captain-supply-beacon require prototype --action survivor-kit-check")
 if a.debug_options and (a.command != "prototype" or a.action not in ["movement-batch-run", "movement-batch-retry"]):
     p.error("--debug-options requires movement-batch-run or movement-batch-retry")
-if bool(a.compare) != (a.command == "prototype" and a.action == "project-manifest-compare"):
-    p.error("--compare A B requires prototype --action project-manifest-compare and vice versa")
+if bool(a.compare) != (a.command == "prototype" and a.action in {"project-manifest-compare", "apk-member-compare"}):
+    p.error("--compare A B requires prototype --action project-manifest-compare or apk-member-compare and vice versa")
 command_failed = False
 try:
     if a.command == "test":
@@ -246,7 +254,8 @@ try:
             r = build(a.target, a.force)
             smoke(r["apk"])
         elif a.command == "install":
-            print(json.dumps(d.install(a.apk or read(WORK / "config/current-build.json")["apk"]), indent=2))
+            apk = a.apk or read(WORK / "config/current-build.json")["apk"]
+            print(json.dumps(d.install(apk, mode=a.install_mode) if a.install_mode != "streaming" else d.install(apk), indent=2))
         elif a.command == "sync-data":
             print(json.dumps(d.sync(Path(a.payload_dir)) if a.payload_dir else d.sync(), indent=2))
         elif a.command == "run":

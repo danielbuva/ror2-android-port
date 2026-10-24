@@ -29,7 +29,7 @@ async def _main():
         if target == "smoke"
         else Path(json.loads((ROOT / "work/config/reconstruction.json").read_text())["projects"][0])
     )
-    expected = expected if expected.is_absolute() else ROOT / expected
+    expected = (expected if expected.is_absolute() else ROOT / expected).resolve()
     out = ROOT / "work/editor"
     out.mkdir(parents=True, exist_ok=True)
     archive = out / (datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ") + "-" + target + "-" + action)

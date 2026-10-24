@@ -170,7 +170,9 @@ def execute_build(destination, work, api):
         target = scratch / "experiments/whole-catalog/manifest.json"
         write(target, manifest)
         write(scratch / "whole-catalog-build.json", dict(manifest=str(target)))
-        shutil.copyfile(destination / ".rebuild/composition/scene-probe-build.json", scratch / "scene-probe-build.json")
+        from build import copy_build_artifact
+
+        copy_build_artifact(destination / ".rebuild/composition/scene-probe-build.json", scratch / "scene-probe-build.json", verify=False)
         from script_audit import build_selection
 
         write(scratch / "build-selection.json", dict(assets=build_selection(manifest, read(scratch / "scene-probe-build.json"))))
@@ -181,7 +183,7 @@ def execute_build(destination, work, api):
         # R9 supplies the public smoke baseline, never a private PlayerSettings body.
         settings = destination / "ProjectSettings/ProjectSettings.asset"
         if not settings.exists():
-            shutil.copyfile(ROOT / "smoke/ProjectSettings/ProjectSettings.asset", settings)
+            copy_build_artifact(ROOT / "smoke/ProjectSettings/ProjectSettings.asset", settings, verify=False)
         request_id = now()
         write(scratch / "build-request.json", dict(request_id=request_id, api=api, reusePayload=False))
         (scratch / "graphics-api.txt").write_text(api)
@@ -193,7 +195,7 @@ def execute_build(destination, work, api):
         )
         signing_copy = Path(env["ANDROID_USER_HOME"]) / "debug.keystore"
         signing_copy.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(debug_signing_key(work), signing_copy)
+        copy_build_artifact(debug_signing_key(work), signing_copy, verify=False)
         signing_copy.chmod(0o600)
 
         def editor(method, log):

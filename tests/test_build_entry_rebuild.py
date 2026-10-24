@@ -366,7 +366,9 @@ class BuildEntryTests(unittest.TestCase):
         self.assertEqual(camera_stage_calls, [(self.project, self.work, audio_stage_result)])
         freeze.assert_not_called()
         self.assertEqual(read(self.work / "whole-catalog-build.json"), dict(manifest=str(attempt / "manifest.json")))
-        self.assertEqual(read(attempt / "build.json"), dict(host_fixture=True, original_audio=audio_stage_result, native_view_camera=camera_stage_result))
+        saved = read(attempt / "build.json")
+        self.assertGreaterEqual(saved.pop("composition_staging_seconds"), 0)
+        self.assertEqual(saved, dict(host_fixture=True, original_audio=audio_stage_result, native_view_camera=camera_stage_result))
 
     def binding_setup(self):
         r9 = read(Path(__file__).resolve().parents[1] / "recipe/rebuild-r9-obligations.json")

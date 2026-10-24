@@ -191,12 +191,25 @@ class PrototypeActionTests(unittest.TestCase):
     def test_registry_names_and_current_status_match_documented_contract(self):
         # Added actions have separate dispatch contracts rather than changing
         # the historical pre-registry snapshot.
-        added = {"shared-catalog-code-build", "rebuild-step", "shader-outline-candidate", "shader-ramp-fog", "shader-translucent", "owner-assembly-prefix"}
+        added = {
+            "shared-catalog-code-build",
+            "whole-catalog-fast-build",
+            "whole-catalog-scripts-build",
+            "apk-member-compare",
+            "rebuild-step",
+            "shader-outline-candidate",
+            "shader-ramp-fog",
+            "shader-translucent",
+            "owner-assembly-prefix",
+        }
         self.assertEqual(set(actions.ACTIONS) - added, set(EXPECTED) - {"inspect"})
         self.assertEqual(len(actions._ENTRIES), len(actions.ACTIONS))
         self.assertEqual(
             {name for name, entry in actions.ACTIONS.items() if entry.status == "current"},
             {
+                "whole-catalog-fast-build",
+                "whole-catalog-scripts-build",
+                "apk-member-compare",
                 "rebuild-step",
                 "owner-assembly-prefix",
                 "shader-outline-candidate",
