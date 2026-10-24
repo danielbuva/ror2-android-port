@@ -42108,3 +42108,64 @@ profile, run both strict controls, inspect source-view/End Run/Quit evidence and
 exercise native elite/stake contacts with fatal runtime errors retained.
 No NaN-resolution, memory-bound, PC-parity, full audio, Siren mission completion
 or normal-game acceptance is established by these host/build results.
+
+
+## J1101 — Integrate current UI and heap owners with the collision/rendering/Siren candidate
+
+**Hypothesis and integration.** Alpha's planned idle native heap comparison
+requires the landed PR #61 capture owner, which is absent from the R54
+pre-integration branch. Rebase only the unmerged PR #68 feature onto fetched
+main `459c51aa`, retaining the landed touch/settings, idle heap, PR #72 retention
+and `.prune-keep` support. Main and merged history are unchanged. Preserve both
+independent journal/provenance appends, the landed editor-source staging helper
+and audio restoration order. Skip the now-upstream retention/test cherry-picks.
+Refresh the actual merged world-owner and transitive camera source pins after
+review; retain current main's other workstream/installation facts in state.
+
+**Read-only packaged control.** J1100's old `39f3dd9b…` player really serializes
+an all-enabled collision matrix; it is not merely a stale editor assumption.
+R54 and R55 serialize the exact accepted original policy: 278 excluded unordered
+pairs, projectile self/player-hull/enemy-hull exclusions, with world and precise
+hitbox contacts retained. Source matrix SHA-256 is
+`711e9b0f16fd7bb8671b7a63f2730616176322816ff3b2f476f19431b24806fb`.
+Direct UnityPy reads of `assets/bin/Data/globalgamemanagers` use the frozen APK
+references, without extracting/copying a player. The private comparison is
+`work/coordination/main-port-r54/packaged-collision-policy-comparison.json`.
+A new bounded analysis of J1100's completed reports finds 27 native blue-elite
+stake identities, 160 retained finite samples and six world-fallback body-hull
+samples under the old policy. Thus a clean twelve-session case alone cannot
+establish the intermittent NaN's causal resolution. This analysis is saved in
+`work/coordination/main-port-r55/old-policy-twelve-session-stakes.json`;
+J1100 remains the only full record of that memory series.
+
+**Normal build and host result.** R55 from `eb2acf07`, request
+`20261024T215402.025993Z`, passes the normal full player build in
+149.711 s with zero errors. APK SHA-256:
+`111b1facec5b021c87dce03be24c9b81e913160809e685dc94b23e161786917a`.
+All 267 artifact references are rehashed. Its actual packaged matrix matches
+the source; actual IL2CPP metadata contains the idle heap-capture and retained-hit
+cleanup identifiers. This establishes packaging, not callback execution.
+The focused source-policy/build/destination/camera suite passes 48 tests and
+Ruff passes all 27 changed Python files. The actual idle exact editor passes
+`lightning-stake-host` (all 528 pairs/source prefab),
+`source-camera-graphics-host` (two profiles, 12 settings, seven programs,
+22 kernels and original-asset immutability), `siren-encounter-host` and
+`siren-input-host` (native-range selection/approach/hold). Native gameplay and
+rendering are explicitly outside those fixture claims.
+
+Evidence and immutable path/hash references are in
+`work/coordination/main-port-r55/`. Mandatory pruning uses the current
+marker-aware main script, preserving costly marked packets. No APK, payload or
+Unity project is copied into a run folder.
+
+**First failure and device gate.** The host integration gap is corrected; no
+R54 heap request is dispatched. R55 is uninstalled at this checkpoint. Nova is
+still held by the priority content case, followed by alpha's short SDK case;
+no shared-device lease is held here. After handoff install over the owned package
+with fresh storage/receipt/profile checks, qualify both strict controls and
+source-view/End Run/Quit, then collect positive native elite/stake evidence.
+A native Siren source-entry check is prepared separately, with original input
+and bounded route/cleanup; boss defeat/rewards remain separate. Main still
+requires interrupted-R45 recovery, owned cleanup and OLED sleep before install
+on reconnect. NaN causality, PC appearance, full mix, mission completion,
+long-session bounds and normal-game acceptance remain open.
