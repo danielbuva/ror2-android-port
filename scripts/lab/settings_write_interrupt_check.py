@@ -108,9 +108,9 @@ def check_settings_write_interrupt(expected_apk_sha256=None):
         report = wait(lambda r: r["settings"]["visible"] is True)
         width, height = report["settings"]["screenWidth"], report["settings"]["screenHeight"]
         original_invert = report["settings"]["invertY"]
-        tap("invert-unsaved", report, width * 0.5 - 180, height * 0.5 - 1)
-        report = wait(lambda r: r["settings"]["visible"] is True and r["settings"]["invertY"] != original_invert)
-        write(out / "unsaved-native-settings.json", report)
+        # Saving unchanged values still performs the real pending/replace transaction.
+        # A retained newly-created pending file distinguishes interruption from commit.
+        write(out / "native-settings-before-save.json", report)
         dex = compile_tool(ROOT / "tools/android-write-interruption/LabPendingWriteStop.java")
         prefix = "/data/local/tmp/ror2lab-write-" + uuid.uuid4().hex
         remote = [prefix + ".dex", prefix + ".ready"]
@@ -148,8 +148,13 @@ def check_settings_write_interrupt(expected_apk_sha256=None):
         state = _remote_path_state(device, pending)
         interrupted_transaction(before_raw, after_raw, dict(state=state), observed)
         result["interruption"] = observed
-        device.cmd("pull", pending, str(out / "interrupted-pending.private"))
-        device.cmd("pull", primary, str(out / "unchanged-primary.private"))
+        result["persistence_captures"] = {}
+        for source, name in ((pending, "interrupted-pending.private"), (primary, "unchanged-primary.private")):
+            device.cmd("pull", source, str(out / name))
+            actual = device.sh("sha256sum", source).split()[0]
+            if sha(out / name) != actual:
+                raise RuntimeError("Persistence evidence transfer hash differs")
+            result["persistence_captures"][name] = dict(sha256=actual, bytes=(out / name).stat().st_size)
         report = menu()
         if pid == stopped_pid or report["settings"]["recovery"] != "validated-primary" or report["settings"]["invertY"] != original_invert:
             raise RuntimeError("Cold recovery did not retain validated primary settings")

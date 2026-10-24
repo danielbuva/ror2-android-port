@@ -893,7 +893,7 @@ checked-out hits and records its release count with existing registry cleanup.
 The current `settings-write-interrupt-check` host diagnostic uses
 `settings_write_interrupt_check.py` and the authored `LabPendingWriteStop` SDK
 actor. It requires an idle, owned APK and a matched diagnostic menu selector,
-changes one unsaved native setting, observes the actual pending-file creation,
+saves the existing native values, observes the actual pending-file creation,
 then requests normal shell-authorized package stop for the bound PID/UID. An
 unchanged primary and retained pending transaction are required before cold
 recovery/resave can qualify; a missed window refuses acceptance. The original
