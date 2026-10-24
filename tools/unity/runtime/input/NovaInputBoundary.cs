@@ -115,6 +115,7 @@ public sealed partial class PortSession
     }
     void OnGUI()
     {
+        ConsumeTouchGameplayGuiEvent();
         if (DrawOfflineSettings())
             return;
         if (DrawOfflineStart())
@@ -151,6 +152,15 @@ public sealed partial class PortSession
                          ? ""
                          : "\nBeetle HP: " + r.enemy.health.ToString("F1") + " | player HP: " + r.enemy.playerHealth.ToString("F1") +
                                " | AI: " + r.enemy.aiState + " | attacks: " + r.enemy.headbutts));
+    }
+    void ConsumeTouchGameplayGuiEvent()
+    {
+        if (offlineSettingsVisible || worldPlayer == null || Event.current == null)
+            return;
+        var bridge = worldPlayer.GetComponent<NovaInputBridge>();
+        if (bridge != null && bridge.OwnsTouchGuiMouse &&
+            (Event.current.type == EventType.MouseDown || Event.current.type == EventType.MouseUp || Event.current.type == EventType.MouseDrag))
+            Event.current.Use();
     }
     bool IsNovaInput()
     {
@@ -491,6 +501,8 @@ public sealed partial class PortSession
                         cfg.integratedWorld && Time.frameCount % 30 == 0 ? GC.GetAllocatedBytesForCurrentThread() : -1;
                     if (coordinator.CompletedResultsReturn() || coordinator.CompletedOfflineAbandon())
                         yield break;
+                    if (bridge.ConsumeTouchPauseRequest())
+                        coordinator.ShowOfflineSettings(true);
                     bool pauseBeforeMoonBoundary = cfg.pauseBeforeMoon && cfg.teleporterLoop &&
                                                    coordinator.r.stageProgress != null &&
                                                    ManualMoonBoundary.HoldAutomaticProgression(

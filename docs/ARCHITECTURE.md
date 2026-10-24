@@ -826,10 +826,14 @@ owners give the visible modal input priority while retaining the owned pause.
 Android clipboard, browser handoff and the composed settings route require
 device acceptance; host fixtures exercise the authored flow and refusal paths.
 `AndroidTouchInput` is the playable bridge's pointer producer. Stable finger IDs
-own independent movement, camera and eight action captures. Short action taps
+own independent movement, camera and eight native action captures, plus pause. Short action taps
 remain pending until a fixed tick consumes them; missing/canceled pointers,
 pause, focus loss and viewport changes neutralize capture. Reacquisition requires
-all touches to lift. `NovaInputBridge` routes these requests through the existing
+all touches to lift. Captured primary touch GUI events are claimed before legacy
+widgets; modal settings are exempt. Pause can be requested by a second finger,
+queues through the existing settings owner and neutralizes the bank immediately.
+The native pause button shares its exact geometry with the producer; the lab
+takeover button occupies the reserved top strip. `NovaInputBridge` routes these requests through the existing
 original bank and `NovaThirdPersonView.LookTouch`; the adapter changes no motor,
 transform, native skill or gameplay clock. The original world owner presents the
 controls and permits explicit touch takeover of automatic diagnostics. Thor's
@@ -3593,3 +3597,26 @@ restores lookup dependencies from placeholder exports; J1012 adds the recovered
 blur/crop sources through the six-row catalog consumer. J1017 installs that
 payload and separately verifies bounded camera readiness. Rendering, native
 listener outcome and audible playback remain unqualified.
+
+
+## Scripted multi-touch device input
+
+Current `./dev prototype --action touch-gesture --target REQUEST.json` uses
+`scripts/lab/touch_gesture.py` and authored
+`tools/android-touch-gesture/LabTouchGesture.java`. The bundled SDK compiles a
+content-addressed local DEX. Requests bind the existing owned APK hash, observed
+PID and viewport; stale processes and foreign focused windows refuse before
+deployment. Android 13's `InputManager.injectInputEvent(event, mode, targetUid)`
+confines every motion event to the owned app UID under ordinary adb shell
+permission. Unavailable targeted injection refuses; there is no global-input
+fallback or permission/hidden-API-policy change.
+
+The source knowledge is the pinned Android 13
+[InputManager](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-13.0.0_r1/core/java/android/hardware/input/InputManager.java)
+and the public [MotionEvent](https://developer.android.com/reference/android/view/MotionEvent)
+pointer-ID/action contract; no platform implementation is copied. Each gesture
+is bounded to 128 steps/30 s of waits, cancels a final hold and removes its
+unique temporary device DEX/request files. A dispatch failure stops only the
+still-matching owned game process. Success leaves the session/display running.
+Receipts and raw motion evidence stay ignored. This verifies software delivery;
+it never qualifies physical buttons, a touchscreen digitizer or normal play.

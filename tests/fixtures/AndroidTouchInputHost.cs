@@ -10,7 +10,7 @@ static class AndroidTouchInputHost
     static AndroidTouchInput Ready()
     {
         var input = new AndroidTouchInput();
-        input.Layout(new Rect(0, 0, 1920, 1080));
+        input.Layout(new Rect(0, 0, 1920, 1080), new Vector2(1920, 1080));
         input.BeginFrame(0); input.EndFrame();
         return input;
     }
@@ -69,7 +69,7 @@ static class AndroidTouchInputHost
         input.BeginFrame(0); input.EndFrame();
         input.BeginFrame(1); input.Pointer(1, jump, true, false, false); input.EndFrame();
         Check(input.Request(AndroidTouchInput.Action.Jump), "fresh touch after lift resumes");
-        input.Layout(new Rect(60, 40, 1200, 650));
+        input.Layout(new Rect(60, 40, 1200, 650), new Vector2(1320, 730));
         Check(!input.HasInput && input.report.waitingForLift, "orientation/safe-area change releases old capture");
     }
     static void Cancellation()
@@ -81,7 +81,7 @@ static class AndroidTouchInputHost
         input.BeginFrame(1); input.Pointer(8, point, true, false, false); input.EndFrame();
         input.BeginFrame(1); input.Pointer(8, point, false, false, true); input.EndFrame();
         Check(!input.Request(AndroidTouchInput.Action.Utility), "canceled pending edge cannot fire");
-        input.Layout(new Rect(0, 0, 0, 0));
+        input.Layout(new Rect(0, 0, 0, 0), Vector2.zero);
         input.BeginFrame(0); input.EndFrame();
         input.BeginFrame(1); input.Pointer(9, point, true, false, false); input.EndFrame();
         Check(!input.HasInput && input.Movement == Vector2.zero, "zero viewport cannot produce nonfinite movement");
@@ -105,6 +105,46 @@ static class AndroidTouchInputHost
         inverted.LookTouch(new Vector2(100, 100), 0);
         Check(inverted.report.touchFrames == 1 && inverted.poses == 1, "invalid viewport does not move camera");
     }
+    static void GuiOwnership()
+    {
+        var input = Ready();
+        var move = input.MoveCenter;
+        var pause = input.ButtonRect(AndroidTouchInput.Action.Pause).center;
+        Check(pause == new Vector2(AndroidTouchInput.PauseGuiRect(1920).center.x, 1050), "pause shares native UI geometry");
+        input.BeginFrame(2);
+        input.Pointer(4, move, true, false, false, true);
+        input.Pointer(8, pause, true, false, false);
+        input.EndFrame();
+        Check(input.Pressed(AndroidTouchInput.Action.Pause), "secondary finger cannot request pause while movement is held");
+        Check(input.OwnsGuiMouse, "gameplay primary touch was not claimed before GUI widgets");
+        input.Suspend(); input.BeginFrame(1);
+        input.Pointer(4, move, false, false, false, true); input.EndFrame();
+        Check(input.OwnsGuiMouse && !input.HasInput, "waiting for lift leaked held pointer to GUI");
+        input.BeginFrame(0); input.EndFrame();
+        input.BeginFrame(1); input.Pointer(9, new Vector2(960, 1046), true, false, false, true); input.EndFrame();
+        Check(!input.HasInput && !input.OwnsGuiMouse, "reserved native UI strip became gameplay input");
+        input.BeginFrame(0); input.EndFrame();
+        input.BeginFrame(1); input.Pointer(1, pause, true, false, false, true); input.EndFrame();
+        input.BeginFrame(1); input.Pointer(1, pause, false, true, false, true); input.EndFrame();
+        Check(input.OwnsGuiMouse, "owned release event reached native GUI after touch ended");
+    }
+    static void BankWitness()
+    {
+        string[] fields = { "jump", "skill1", "skill2", "skill3", "skill4", "activateEquipment", "interact", "sprint" };
+        for (int i = 0; i < fields.Length; i++)
+        {
+            var fixture = new BankFixture();
+            var button = (BankFixture.Button)typeof(BankFixture.Bank).GetField(fields[i]).GetValue(fixture.bank);
+            button.down = button.justPressed = true;
+            fixture.ObserveTouchBank();
+            Check(fixture.touchControls.report.manualBankHeldMask == 1 << i, "bank held slot alias: " + fields[i]);
+            Check(fixture.touchControls.report.bankPresses[i] == 1, "native edge not observed: " + fields[i]);
+            button.justPressed = false; fixture.ObserveTouchBank();
+            Check(fixture.touchControls.report.bankPresses[i] == 1, "held state invented another native edge");
+            button.down = false; fixture.ObserveTouchBank();
+            Check(fixture.touchControls.report.manualBankHeldMask == 0, "bank release not observed");
+        }
+    }
     static void Main(string[] args)
     {
         switch (args[0])
@@ -114,6 +154,8 @@ static class AndroidTouchInputHost
             case "suspension": Suspension(); break;
             case "cancellation": Cancellation(); break;
             case "camera-delta": CameraDelta(); break;
+            case "gui-ownership": GuiOwnership(); break;
+            case "bank-witness": BankWitness(); break;
             default: throw new Exception("unknown case");
         }
         Console.WriteLine(args[0] + ": PASS");

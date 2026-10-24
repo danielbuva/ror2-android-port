@@ -3228,8 +3228,7 @@ public sealed partial class PortSession
             if (inputBridge && !inputBridge.diagnosticInput && world.health > 0)
                 inputBridge.touchControls?.Draw();
             if (coordinator.r.id.EndsWith("-bringup") && world.health > 0 && inputBridge && inputBridge.manualInputAvailable &&
-                GUI.Button(new Rect(coordinator.recoveredHud ? 20 : Screen.width - 210, coordinator.recoveredHud ? Screen.height - 195 : 20,
-                                    190, 48),
+                GUI.Button(new Rect(Screen.width * .5f - 95, 10, 190, 48),
                            coordinator.worldManualTakeover ? "Resume auto route" : "Take control"))
             {
                 var bridge = coordinator.worldPlayer ? coordinator.worldPlayer.GetComponent<NovaInputBridge>() : null;

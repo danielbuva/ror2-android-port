@@ -2294,3 +2294,13 @@ existing world owner and its manifest/camera-hook chain are updated solely for
 the authored manual-input availability and touch presentation changes. Generated
 APK/payloads, raw pointer/device evidence and private mapping files remain under
 ignored `work/`.
+
+
+The touch pause request shares the settings button geometry and enters the
+existing pause owner; captured primary touch events are claimed before legacy
+IMGUI widgets. Native-bank edge/held observations are primitive harness data,
+with no retained game objects or gameplay mutation. The authored Java/Python
+`touch-gesture` helper uses the Android 13 target-UID injection API under normal
+adb shell permission. Its local DEX and device requests are generated privately
+from source; no platform implementation, SDK binary, game content, account data
+or raw device evidence is published with this helper.

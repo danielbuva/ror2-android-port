@@ -152,6 +152,7 @@ device_prototype_work = a.command == "prototype" and a.action in {
     "session-abandon-check",
     "session-memory-check",
     "session-memory-root-check",
+    "touch-gesture",
 }
 if a.work_dir and (a.command in {"install", "sync-data", "run", "check-baseline"} or device_prototype_work):
     import common
@@ -199,11 +200,12 @@ if a.skill_variants and (a.command != "prototype" or a.action not in {"survivor-
     p.error("--skill-variants requires prototype --action survivor-kit-check, session-cleanup-check or session-abandon-check")
 if a.expected_apk_sha256 is not None and (
     a.command != "prototype"
-    or a.action not in {"survivor-kit-check", "session-cleanup-check", "session-abandon-check", "session-memory-check", "session-memory-root-check"}
+    or a.action
+    not in {"survivor-kit-check", "session-cleanup-check", "session-abandon-check", "session-memory-check", "session-memory-root-check", "touch-gesture"}
 ):
     p.error(
         "--expected-apk-sha256 requires prototype --action survivor-kit-check, session-cleanup-check, "
-        "session-abandon-check, session-memory-check or session-memory-root-check"
+        "session-abandon-check, session-memory-check, session-memory-root-check or touch-gesture"
     )
 if (a.skill_slot or a.toolbot_offhand or a.captain_supply_beacon) and (a.command != "prototype" or a.action != "survivor-kit-check"):
     p.error("--skill-slot, --toolbot-offhand and --captain-supply-beacon require prototype --action survivor-kit-check")

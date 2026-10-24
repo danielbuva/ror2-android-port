@@ -50,7 +50,7 @@ namespace UnityEngine
         public static void Label(Rect rect, string value, GUIStyle style = null) { labels.Add(value); }
         public static bool Button(Rect rect, string value, GUIStyle style = null)
         {
-            if (!enabled || click != value) return false;
+            if (!enabled || Event.current.type == EventType.Used || click != value) return false;
             click = null;
             return true;
         }
@@ -93,7 +93,7 @@ namespace UnityEngine
         public static void OpenURL(string value) { if (openFails) throw new InvalidOperationException(); url = value; }
         public static void Quit() { }
     }
-    public enum EventType { Repaint, KeyDown, Used }
+    public enum EventType { Repaint, KeyDown, MouseDown, MouseUp, MouseDrag, Used }
     public enum KeyCode { Escape = 27, Joystick1Button0 = 330, Joystick1Button1 = 331 }
     public class Event
     {
@@ -128,12 +128,18 @@ namespace RoR2
 }
 public class NovaInputBridge : UnityEngine.Object
 {
+    public static bool ownGuiMouse;
+    public bool OwnsTouchGuiMouse => ownGuiMouse;
     public class Mapping { public int moveX, aimX = 1, jump; }
     public struct Raw { public float[] axes; }
     public static Raw raw = new Raw { axes = new float[2] };
     public static Raw ReadRaw() => raw;
     public static int neutrals;
     public void Neutral() { neutrals++; }
+}
+public static class AndroidTouchInput
+{
+    public static Rect PauseGuiRect(float width) => new Rect(width - 205, 10, 185, 40);
 }
 public class AndroidOfflineSettings
 {
@@ -373,6 +379,22 @@ public static class AndroidFeedbackHost
               "successful retry did not save and resume");
         Check(string.IsNullOrEmpty(session.SettingsError), "successful retry retained stale error");
     }
+    static void TouchGuiOwnership()
+    {
+        var session = new PortSession(); session.Prepare();
+        NovaInputBridge.ownGuiMouse = true;
+        Event.current = new Event { type = EventType.MouseDown };
+        GUI.click = "Settings / pause"; session.Render();
+        Check(Event.current.type == EventType.Used && !session.SettingsVisible, "captured gameplay touch activated native GUI button");
+        NovaInputBridge.ownGuiMouse = false;
+        Event.current = new Event { type = EventType.MouseDown };
+        GUI.click = "Settings / pause"; session.Render();
+        Check(session.SettingsVisible && session.Paused, "unclaimed UI touch was swallowed");
+        NovaInputBridge.ownGuiMouse = true;
+        Event.current = new Event { type = EventType.MouseDown };
+        GUI.click = "Resume"; session.Render();
+        Check(!session.SettingsVisible && !session.Paused, "gameplay ownership swallowed modal controls");
+    }
     static void EndRunConfirmation()
     {
         var session = new PortSession(); session.Prepare(); session.Show(true);
@@ -420,6 +442,7 @@ public static class AndroidFeedbackHost
             case "end-run-confirmation": EndRunConfirmation(); break;
             case "screen-policy": ScreenPolicy(); break;
             case "settings-save-failure": SettingsSaveFailure(); break;
+            case "touch-gui-ownership": TouchGuiOwnership(); break;
             default: throw new Exception("unknown case");
         }
         Console.WriteLine(args[0] + ": PASS");

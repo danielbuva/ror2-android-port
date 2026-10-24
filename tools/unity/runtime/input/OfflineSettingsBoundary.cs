@@ -79,8 +79,9 @@ public sealed partial class PortSession
             if (coordinator.offlineSettings == null)
                 return;
             var v = coordinator.offlineSettings.values;
-            coordinator.r.settings.buttonX = Screen.width - 112.5f;
-            coordinator.r.settings.buttonY = 30;
+            var button = AndroidTouchInput.PauseGuiRect(Screen.width);
+            coordinator.r.settings.buttonX = button.center.x;
+            coordinator.r.settings.buttonY = button.center.y;
             coordinator.r.settings.screenWidth = Screen.width;
             coordinator.r.settings.screenHeight = Screen.height;
             coordinator.r.settings.deadzone = v.deadzone;
@@ -226,7 +227,7 @@ public sealed partial class PortSession
                 // Keep the GUI event owned even when Back closes the feedback.
                 return true;
             }
-            var button = new Rect(Screen.width - 205, 10, 185, 40);
+            var button = AndroidTouchInput.PauseGuiRect(Screen.width);
             coordinator.r.settings.buttonX = button.center.x;
             coordinator.r.settings.buttonY = button.center.y;
             if (GUI.Button(button, coordinator.offlineSettingsVisible ? "Close settings" : "Settings / pause"))

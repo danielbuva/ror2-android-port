@@ -130,6 +130,10 @@ def _session_memory(function, kwargs, args):
     return _json_result(function, selected, args, indent=2)
 
 
+def _touch_gesture(function, kwargs, args):
+    return _json_result(function, dict(kwargs, target=args.target, expected_apk_sha256=getattr(args, "expected_apk_sha256", None)), args, indent=2)
+
+
 def _timed_prepare(function, kwargs, args, *, seconds):
     from common import ROOT, WORK, read, write
 
@@ -414,6 +418,15 @@ _ENTRIES = (
         "current",
         "Repeat ordinary Commando menu-start, 60 s ready Lakes play and UI-abandon sessions in one process (five by default, --sessions 3 to 32); each completed session must pass the session-abandon contract. Reports existing runtime resource samples and per-menu PSS as observations, not a leak fix or normal-game acceptance. Requires --expected-apk-sha256 bound to the selected device's ownership receipt.",
         handler=_session_memory,
+    ),
+    Action(
+        "touch-gesture",
+        "touch_gesture",
+        "run",
+        {},
+        "current",
+        "Android 13+ lab diagnostic: --target JSON supplies PID, viewport and bounded multi-touch steps; requires --expected-apk-sha256 and the owned foreground game. Uses normal adb shell permission and target-UID dispatch; temporary files are removed. Leaves the session running on success; dispatch failure stops only the still-matching owned process. Does not qualify physical input or normal-game acceptance.",
+        handler=_touch_gesture,
     ),
     Action(
         "session-memory-root-check",

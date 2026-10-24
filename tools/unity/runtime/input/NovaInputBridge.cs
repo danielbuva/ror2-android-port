@@ -103,6 +103,14 @@ public sealed class NovaInputBridge : MonoBehaviour
     public NovaThirdPersonView thirdPerson;
     public AndroidTouchInput touchControls;
     public bool manualInputAvailable => physicalInputAvailable || touchControls != null;
+    bool touchPauseRequested;
+    public bool OwnsTouchGuiMouse => !diagnosticInput && (touchPauseRequested || touchControls != null && touchControls.OwnsGuiMouse);
+    public bool ConsumeTouchPauseRequest()
+    {
+        bool requested = touchPauseRequested;
+        touchPauseRequested = false;
+        return requested;
+    }
     public bool diagnosticEquipment, touchEquipment;
     public bool enablePrimary, enableAllSkills, diagnosticInput;
     // Opt-in only for the exact unsupported-model bringup diagnostic owner.
@@ -290,6 +298,13 @@ public sealed class NovaInputBridge : MonoBehaviour
             if (touchControls != null && !diagnosticInput)
             {
                 touchControls.Poll();
+                if (touchControls.Pressed(AndroidTouchInput.Action.Pause))
+                {
+                    touchControls.report.pauseRequests++;
+                    touchPauseRequested = true;
+                    Neutral();
+                    return;
+                }
                 if (thirdPerson != null)
                     thirdPerson.LookTouch(touchControls.LookDelta, touchControls.ViewHeight);
                 if (touchControls.HasInput || !physicalInputAvailable)
@@ -361,7 +376,7 @@ public sealed class NovaInputBridge : MonoBehaviour
     {
         bool noPhysicalDiagnostic = IsAutomaticDiagnosticWithoutPhysicalInput(diagnosticInput, automaticDiagnosticOnly);
         bool touchManual = !diagnosticInput && touchControls != null && (touchControls.HasInput || !physicalInputAvailable);
-        if (!bank || !focused || Time.timeScale == 0 ||
+        if (!bank || !focused || Time.timeScale == 0 || touchPauseRequested ||
             (!touchManual && MissingMappingRequiresNeutral(mapping == null, diagnosticInput, automaticDiagnosticOnly)))
         {
             Neutral();
@@ -444,7 +459,10 @@ public sealed class NovaInputBridge : MonoBehaviour
             diagnosticInputEdgeWitnessEnabled, bank.skill4.justPressed);
         fixedTicks++;
         if (touchManual)
+        {
+            ObserveTouchBank();
             touchControls.ConsumeFixedTick();
+        }
         if (holdAutomatic)
             manualMoonNeutralFixedTicks++;
     }
@@ -454,6 +472,22 @@ public sealed class NovaInputBridge : MonoBehaviour
         diagnosticJumpRequest = down;
         jumpLatched |= down && !jumpHeld;
         jumpHeld = down;
+    }
+    void ObserveTouchBank()
+    {
+        if (touchControls == null || bank == null) return;
+        var report = touchControls.report;
+        report.manualBankHeldMask = (bank.jump.down ? 1 : 0) | (bank.skill1.down ? 2 : 0) |
+            (bank.skill2.down ? 4 : 0) | (bank.skill3.down ? 8 : 0) | (bank.skill4.down ? 16 : 0) |
+            (bank.activateEquipment.down ? 32 : 0) | (bank.interact.down ? 64 : 0) | (bank.sprint.down ? 128 : 0);
+        if (bank.jump.justPressed) report.bankPresses[0]++;
+        if (bank.skill1.justPressed) report.bankPresses[1]++;
+        if (bank.skill2.justPressed) report.bankPresses[2]++;
+        if (bank.skill3.justPressed) report.bankPresses[3]++;
+        if (bank.skill4.justPressed) report.bankPresses[4]++;
+        if (bank.activateEquipment.justPressed) report.bankPresses[5]++;
+        if (bank.interact.justPressed) report.bankPresses[6]++;
+        if (bank.sprint.justPressed) report.bankPresses[7]++;
     }
     public void Neutral()
     {
@@ -475,6 +509,8 @@ public sealed class NovaInputBridge : MonoBehaviour
         bank.interact.PushState(false);
         bank.sprint.PushState(false);
         bank.activateEquipment.PushState(false);
+        if (touchControls != null)
+            touchControls.report.manualBankHeldMask = 0;
         touchEquipment = diagnosticEquipment = false;
         isolatedDiagnosticSkillPulse = false;
     }
@@ -484,6 +520,7 @@ public sealed class NovaInputBridge : MonoBehaviour
         SetManualMoonAutomaticHold(false);
         if (!value)
         {
+            touchPauseRequested = false;
             presence?.Suspend();
             Neutral();
         }
@@ -494,12 +531,14 @@ public sealed class NovaInputBridge : MonoBehaviour
         SetManualMoonAutomaticHold(false);
         if (value)
         {
+            touchPauseRequested = false;
             presence?.Suspend();
             Neutral();
         }
     }
     void OnDisable()
     {
+        touchPauseRequested = false;
         presence?.Suspend();
         SetManualMoonAutomaticHold(false);
         Neutral();

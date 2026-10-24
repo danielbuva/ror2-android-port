@@ -7,25 +7,28 @@ using UnityEngine;
 // transform, skill execution, inventory or gameplay clocks are changed here.
 public sealed class AndroidTouchInput
 {
-    public enum Action { Jump, Primary, Secondary, Utility, Special, Equipment, Interact, Sprint }
+    public enum Action { Jump, Primary, Secondary, Utility, Special, Equipment, Interact, Sprint, Pause }
     [Serializable]
     public sealed class Report
     {
         public bool active, waitingForLift;
-        public int frames, begins, cancels, releases, fixedTicks, heldMask;
-        public int[] consumedPresses = new int[8];
+        public int frames, begins, cancels, releases, fixedTicks, heldMask, pauseRequests;
+        public int[] consumedPresses = new int[9];
+        public int manualBankHeldMask;
+        public int[] bankPresses = new int[8];
         public float moveX, moveY, lookX, lookY;
         public float moveRadius;
         public Vector2 moveCenter, lookStart;
-        public Vector2[] buttonCenters = new Vector2[8];
+        public Vector2[] buttonCenters = new Vector2[9];
     }
     public readonly Report report = new Report();
-    readonly int[] fingers = new int[10];
-    readonly bool[] seen = new bool[10], held = new bool[8], pending = new bool[8];
-    readonly Vector2[] previous = new Vector2[10];
-    readonly Rect[] buttons = new Rect[8];
+    readonly int[] fingers = new int[11];
+    readonly bool[] seen = new bool[11], held = new bool[9], pending = new bool[9];
+    readonly Vector2[] previous = new Vector2[11];
+    readonly Rect[] buttons = new Rect[9];
     readonly string[] labels = { "Jump", "Primary", "Secondary", "Utility", "Special", "Equipment", "Interact", "Sprint" };
     Rect safe, moveZone, lookZone;
+    Vector2 viewport;
     Vector2 moveCenter;
     float radius, scale;
     bool waitingForLift = true;
@@ -33,6 +36,7 @@ public sealed class AndroidTouchInput
     // Slots 0/1 are movement/look; slots 2..9 are original bank actions.
     public Vector2 Movement { get; private set; }
     public Vector2 LookDelta { get; private set; }
+    public bool OwnsGuiMouse { get; private set; }
     public float ViewHeight => safe.height;
     public bool HasInput
     {
@@ -56,11 +60,13 @@ public sealed class AndroidTouchInput
     public Vector2 MoveCenter => moveCenter;
     public Rect LookZone => lookZone;
 
-    public void Layout(Rect area)
+    public static Rect PauseGuiRect(float width) => new Rect(width - 205, 10, 185, 40);
+    public void Layout(Rect area, Vector2 screen)
     {
-        if (safe == area) return;
+        if (safe == area && viewport == screen) return;
         Suspend();
         safe = area;
+        viewport = screen;
         if (area.width <= 0 || area.height <= 0)
         {
             radius = 0;
@@ -83,6 +89,9 @@ public sealed class AndroidTouchInput
         SetButton(Action.Equipment, right - 385 * scale, bottom + 105 * scale);
         SetButton(Action.Interact, right - 385 * scale, bottom + 225 * scale);
         SetButton(Action.Sprint, area.x + 410 * scale, bottom + 95 * scale);
+        var pause = PauseGuiRect(screen.x);
+        buttons[(int)Action.Pause] = new Rect(pause.x, screen.y - pause.yMax, pause.width, pause.height);
+        report.buttonCenters[(int)Action.Pause] = buttons[(int)Action.Pause].center;
     }
     void SetButton(Action action, float x, float y)
     {
@@ -95,6 +104,7 @@ public sealed class AndroidTouchInput
         Array.Clear(held, 0, held.Length);
         Array.Clear(pending, 0, pending.Length);
         Movement = LookDelta = Vector2.zero;
+        OwnsGuiMouse = false;
     }
     public void Suspend()
     {
@@ -108,9 +118,10 @@ public sealed class AndroidTouchInput
     {
         LookDelta = Vector2.zero;
         Array.Clear(seen, 0, seen.Length);
+        OwnsGuiMouse = waitingForLift && touchCount > 0;
         if (touchCount == 0) waitingForLift = false;
     }
-    public void Pointer(int id, Vector2 position, bool began, bool ended, bool canceled)
+    public void Pointer(int id, Vector2 position, bool began, bool ended, bool canceled, bool primary = false)
     {
         if (waitingForLift || radius <= 0 || id < 0) return;
         int slot = -1;
@@ -129,6 +140,7 @@ public sealed class AndroidTouchInput
             if (slot >= 2) pending[slot - 2] = true;
         }
         if (slot < 0) return;
+        if (primary) OwnsGuiMouse = true;
         seen[slot] = true;
         if (ended || canceled)
         {
@@ -164,14 +176,14 @@ public sealed class AndroidTouchInput
     }
     public void Poll()
     {
-        Layout(Screen.safeArea);
+        Layout(Screen.safeArea, new Vector2(Screen.width, Screen.height));
         int count = Input.touchCount;
         BeginFrame(count);
         for (int i = 0; i < count; i++)
         {
             var touch = Input.GetTouch(i);
             Pointer(touch.fingerId, touch.position, touch.phase == TouchPhase.Began,
-                    touch.phase == TouchPhase.Ended, touch.phase == TouchPhase.Canceled);
+                    touch.phase == TouchPhase.Ended, touch.phase == TouchPhase.Canceled, i == 0);
         }
         EndFrame();
     }
@@ -197,7 +209,7 @@ public sealed class AndroidTouchInput
     static Rect GuiRect(Rect rect) => new Rect(rect.x, Screen.height - rect.yMax, rect.width, rect.height);
     public void Draw()
     {
-        Layout(Screen.safeArea);
+        Layout(Screen.safeArea, new Vector2(Screen.width, Screen.height));
         if (safe.width <= 0 || safe.height <= 0) return;
         var color = GUI.color;
         try
@@ -209,7 +221,7 @@ public sealed class AndroidTouchInput
             GUI.Box(GuiRect(new Rect(moveCenter.x - radius, moveCenter.y - radius, radius * 2, radius * 2)), "Move", style);
             var knob = moveCenter + Movement * radius;
             GUI.Box(GuiRect(new Rect(knob.x - 25 * scale, knob.y - 25 * scale, 50 * scale, 50 * scale)), "");
-            for (int i = 0; i < buttons.Length; i++)
+            for (int i = 0; i < labels.Length; i++)
             {
                 GUI.color = held[i] ? new Color(.6f, 1, .6f, .85f) : new Color(1, 1, 1, .65f);
                 GUI.Box(GuiRect(buttons[i]), labels[i], style);

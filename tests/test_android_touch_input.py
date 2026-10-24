@@ -31,6 +31,15 @@ class AndroidTouchInputTests(unittest.TestCase):
             "public Report report=new Report(); public float yaw,pitch; public int poses; void Place(){poses++;} "
             "public void LookTouch(" + method + "}\n"
         )
+        bridge_source = (ROOT / "tools/unity/runtime/input/NovaInputBridge.cs").read_text()
+        bank_method = bridge_source.split("    void ObserveTouchBank()", 1)[1].split("    public void Neutral()", 1)[0]
+        bank = Path(cls.temp.name) / "Bank.cs"
+        bank.write_text(
+            "public sealed class BankFixture { public sealed class Button { public bool down,justPressed; } "
+            "public sealed class Bank { public Button jump=new Button(),skill1=new Button(),skill2=new Button(),skill3=new Button(),"
+            "skill4=new Button(),activateEquipment=new Button(),interact=new Button(),sprint=new Button(); } "
+            "public Bank bank=new Bank(); public AndroidTouchInput touchControls=new AndroidTouchInput(); public void ObserveTouchBank()" + bank_method + "}\n"
+        )
         result = subprocess.run(
             [
                 str(MONO),
@@ -50,6 +59,7 @@ class AndroidTouchInputTests(unittest.TestCase):
                 str(ROOT / "tools/unity/runtime/input/AndroidTouchInput.cs"),
                 str(ROOT / "tests/fixtures/AndroidTouchInputHost.cs"),
                 str(camera),
+                str(bank),
             ],
             text=True,
             capture_output=True,
@@ -77,3 +87,9 @@ class AndroidTouchInputTests(unittest.TestCase):
 
     def test_camera_drag_is_pixel_based_and_honors_sensitivity_and_invert(self):
         self.case("camera-delta")
+
+    def test_captured_gameplay_touches_do_not_activate_legacy_gui_and_can_pause(self):
+        self.case("gui-ownership")
+
+    def test_native_bank_witness_keeps_each_action_edge_and_held_state_separate(self):
+        self.case("bank-witness")
