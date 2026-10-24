@@ -41616,7 +41616,7 @@ source-camera blended Sobel/image/End Run/Quit. Full AO/grading compute roles,
 configured graphics, matched PC appearance and the existing gameplay/audio/
 performance gates remain open. The public role remains opt-in/unaccepted.
 
-## J1084 — Restore the original source-camera global post-processing roles
+## J1085 — Restore the original source-camera global post-processing roles
 
 2026-10-24 UTC.
 
