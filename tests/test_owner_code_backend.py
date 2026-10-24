@@ -15,6 +15,23 @@ SPEC.loader.exec_module(BACKEND)
 
 
 class OwnerCodeBackendTests(unittest.TestCase):
+    def test_explicit_target_source_cannot_drift_or_escape(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            source = root / "source"
+            source.mkdir()
+            file = source / "Fixture.cs"
+            file.write_text("// authored target source")
+            profile = root / "target.json"
+            profile.write_text(json.dumps({"source_commit": "fixture", "source_files": {"Fixture.cs": BACKEND.native.sha(file)}}))
+            target, actual, digest = BACKEND.target_inputs({"profile": str(profile), "source": str(source)})
+            self.assertEqual((target["source_commit"], actual, digest), ("fixture", source, BACKEND.native.sha(profile)))
+            file.write_text("// changed target source")
+            with self.assertRaisesRegex(ValueError, "target authored source drift"):
+                BACKEND.target_inputs({"profile": str(profile), "source": str(source)})
+            with self.assertRaisesRegex(ValueError, "target requires"):
+                BACKEND.target_inputs({"source": str(source)})
+
     def test_sdk_descriptors_and_root_marker_are_checked_before_execution(self):
         with tempfile.TemporaryDirectory() as temporary:
             sdk = Path(temporary).resolve()

@@ -6,6 +6,51 @@ J1063 qualifies the complete default source-input host chain through native
 linking. Full-player Android construction remains open. No current game build
 selects it. Architecture C and the desktop fallback remain unchanged.
 
+## Fixed accepted source target
+
+An optional `target` selects an explicit public profile and its separate authored
+source root: `{"profile": "ABSOLUTE_PROFILE_JSON", "source": "ABSOLUTE_SOURCE_ROOT"}`.
+`recipe/owner-j850-code.json` pins 114 public inputs from commit
+`1780ea9545f1597c033a8d32e08074b03c7f38c8`, including its 111 runtime sources.
+Supply that public commit's files, for example with `git archive`; every selected
+file is checked against the profile before and after production. No source is
+read from the moving checkout in place of those target files.
+
+In this pre-audio target mode, `source_inputs` has exactly five owner paths:
+`packages`, `newtonsoft`, `dotnet`, `ilspy_dll` and `archives`. The first four
+retain their meanings below; `archives` is the existing public transform tool
+archive cache. The existing public producer compiles its Cecil/provider tools
+and retains all three golden DLL gates. The package owner produces the four
+package assemblies; the target's authored sources and fresh original-source
+support/maps then produce the gameplay assembly. The complete 329-provider
+cohort feeds the same backend. The developer-only MCP DLL is excluded.
+
+The target profile reuses explicit fixed scene/module preservation configuration;
+this is not independent scene inference or a claim of accepted byte parity.
+Its actual converter outputs determine all generated native translation units,
+while SDK compilation templates/lumps and link settings remain pinned. Native
+planning/linking includes every source from that conversion. Raw target hashes,
+types, behavior and performance remain comparison gates; differences stay visible.
+
+The optional `android_tools` dictionary supplies canonical paths for `dotnet`,
+`clang`, `linker`, `objcopy` and `resource_dir`. These replace host executables
+only. .NET 8 runs the unchanged SDK linker/converter; Android Clang/LLD uses
+the original NDK target headers/static C++/ABI/GCC archives. Clang 21/LLD is
+explicitly different from the desktop Clang 9/BFD control. Tool/resource hashes,
+original SDK and provider inputs are rechecked. Every attempt owns its output,
+logs, exact commands and failed state; process-group cleanup remains active.
+
+`run_android.py` connects this backend to the headless managed-host fixture.
+It verifies the caller's private input manifest, checks every copied original
+game hash, and records the copy's actual timestamps without changing its content
+identity. Original/SDK/provider files stay outside the tool APK. Runtime tools
+are PackageManager-installed read-only native files; framework/source/input data
+remain private app data. The caller owns installation receipts, input transfer,
+kernel thermal monitoring, independent output comparison and teardown. No game
+launch, default build pointer or installer action is performed by this entry.
+Its measurements distinguish backend wall time, Python/child peak RSS and live
+free space. Copy/initial admission time and game performance are separate.
+
 `native.py` replaces the private captured native DAG with the audited
 `recipe/owner-native-arm64.json`. The profile contains six argument templates,
 SDK-relative source/lump relationships, generated translation-unit names and

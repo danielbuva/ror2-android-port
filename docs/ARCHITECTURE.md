@@ -202,6 +202,17 @@ native planning; J1063 qualifies the complete source-input mode, including fresh
 managed production and native linking.
 No shared project, Editor, device or current build consumer is involved.
 
+The same code owners accept an explicit fixed target (`profile` plus public
+authored-source root). `recipe/owner-j850-code.json` binds its public source
+commit and 114 inputs; `managed.py::target_run` composes existing public DLL
+transforms, package production, original support/maps and target gameplay sources.
+It excludes the later audio assemblies and developer-only MCP provider.
+The backend keeps fixed SDK/root policy while `native.py::generated_profile`
+compiles every translation unit from the actual target conversion. Setup owns
+a new output and checks source/tool/owner state; failed outputs remain and process
+teardown is unchanged. [Target setup and scope](../tools/phone-build/owner-code/README.md#fixed-accepted-source-target)
+retain inherited scene/module and raw target/device comparison gates.
+
 `tools/phone-build/owner-code/managed.py` owns current experimental original-input
 managed production under the same `produce.py` entry. Audited
 `recipe/owner-managed-code.json` names 320 original/SDK providers and the minimum
@@ -707,6 +718,17 @@ The integrated source selection refreshes the two authored helper pins while
 retaining the same native/interpreter/compiler owners. J1074 qualifies its
 current app-host operation; it does not turn this support fixture into a game
 compiler, content producer or installer.
+
+Its `ToolHostActivity.Runner` instrumentation entry runs the same worker without
+opening an Activity. The optional caller-owned backend job invokes
+`owner-code/run_android.py`, which verifies original/SDK/provider copies and
+calls the existing backend using installed native .NET/compiler/linker/strip
+tools. The builder's optional explicit native plan binds those generic ELF
+providers and their data-tree links; no game file enters the tool APK. The worker
+retains private reports and bounded child lifetime; the caller owns fresh storage,
+exact package receipt, kernel thermal monitoring, output readback and cleanup.
+This remains debug/ADB-assisted tool support, without security, final installer
+or gameplay qualification.
 
 `phone_native.py` owns experimental **support** for replaying the authored
 content fixture's native graph. `phone-native-fixture` verifies an explicit

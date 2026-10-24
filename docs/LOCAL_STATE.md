@@ -1647,3 +1647,14 @@ qualification checkout may use another host volume for the full default native
 run; it uses the same committed source and newly generated owner work, never a
 shared Unity project. Its private location and ownership are recorded locally;
 no device or storage configuration is changed.
+
+The optional fixed-target mode additionally requires a separate owner-supplied
+public authored-source root matching every file in `recipe/owner-j850-code.json`.
+Its public Git commit is the source/generator: extract the selected files with
+`git archive` or use a read-only checkout of that commit. The owner entry verifies
+every source hash before and after use; no historical generated source is a
+supplier. The five explicit target dependencies and request setup are in the
+[owner README](../tools/phone-build/owner-code/README.md#fixed-accepted-source-target).
+Targets, tool/source archives, original decompilations, generated providers,
+metadata, compressed sources and all native outputs stay private under `work/`.
+The default source mode's authorized audio inputs are unchanged.

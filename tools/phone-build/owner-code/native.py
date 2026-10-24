@@ -5,6 +5,7 @@ build graph, project, SDK modification, download, Editor or device operation.
 """
 
 import argparse
+from contextlib import ExitStack
 import gzip
 import hashlib
 import json
@@ -180,6 +181,25 @@ def android_command(argv, sdk, tools, *, link=False):
     return result
 
 
+def generated_profile(profile, files):
+    """Keep SDK native policy; compile every translation unit from this conversion."""
+    result = json.loads(json.dumps(profile))
+    modes = {Path(row["generated"]).suffix: row["arguments"] for row in profile["jobs"] if "generated" in row}
+    jobs = [row for row in result["jobs"] if "generated" not in row]
+    names = sorted(name.removeprefix("cpp/") for name in files if name.startswith("cpp/") and name.endswith((".cpp", ".c")))
+    if not names:
+        raise ValueError("target conversion emitted no native translation units")
+    for name in names:
+        if relative(name).name != name:
+            raise ValueError("nested target translation unit requires qualification")
+        jobs.append({"arguments": modes[Path(name).suffix], "generated": name})
+    result["jobs"] = jobs
+    position = next(i for i, row in enumerate(result["link"]) if isinstance(row, dict) and "object" in row)
+    result["link"] = [row for row in result["link"] if not (isinstance(row, dict) and "object" in row)]
+    result["link"][position:position] = [{"object": i} for i in range(len(jobs))]
+    return result
+
+
 def plan(profile, sdk, output, android_tools=None):
     roots = {"sdk": sdk, "output": output, "cpp": output / "cpp"}
     jobs, wrappers = [], {}
@@ -214,7 +234,7 @@ def plan(profile, sdk, output, android_tools=None):
     return {"schema": 1, "jobs": jobs, "wrappers": wrappers, "link": link, "library": str(output / "libil2cpp.unstripped.so")}
 
 
-def invoke(argv, output, name, *, env=None):
+def invoke(argv, output, name, *, env=None, separate_stderr=False):
     started = time.monotonic()
     record = {"argv": argv, "exit_code": None}
 
@@ -225,13 +245,15 @@ def invoke(argv, output, name, *, env=None):
     try:
         for signum in (signal.SIGTERM, signal.SIGINT):
             previous[signum] = signal.signal(signum, interrupted)
-        with (output / "logs" / (name + ".log")).open("xb") as log:
+        with ExitStack() as stack:
+            log = stack.enter_context((output / "logs" / (name + ".log")).open("xb"))
+            errors = stack.enter_context((output / "logs" / (name + ".stderr.log")).open("xb")) if separate_stderr else subprocess.STDOUT
             child = subprocess.Popen(
                 argv,
                 cwd=output,
                 env=env if env is not None else {"PATH": "/usr/bin:/bin", "LC_ALL": "C", "TMPDIR": str(output / "tmp")},
                 stdout=log,
-                stderr=subprocess.STDOUT,
+                stderr=errors,
                 start_new_session=True,
             )
             try:
@@ -267,7 +289,7 @@ def expand(row, destination):
         raise ValueError("generated source differs from converter receipt")
 
 
-def run(request, *, plan_only=False):
+def run(request, *, plan_only=False, profile=None):
     required = {"owner_work", "sdk_install", "converter_receipt", "converter_receipt_sha256", "sources", "sources_compressed", "metadata", "output"}
     if set(request) - {"android_tools"} != required or not isinstance(request["sources_compressed"], bool):
         raise ValueError("explicit native request fields required")
@@ -279,7 +301,8 @@ def run(request, *, plan_only=False):
     disjoint(output, (sdk, receipt, sources, metadata, game, work / "config", work / "inventory"))
     if sha(PROFILE) != PROFILE_SHA:
         raise ValueError("audited native profile drift")
-    profile = json.loads(PROFILE.read_text())
+    supplied_profile = profile is not None
+    profile = profile if supplied_profile else json.loads(PROFILE.read_text())
     if identity != profile["input_id"]:
         raise ValueError("unqualified legitimate input")
     sdk_state = sdk_files(sdk, profile)
@@ -294,7 +317,7 @@ def run(request, *, plan_only=False):
         "success": False,
         "phase": "planning",
         "input_id": identity,
-        "profile_sha256": PROFILE_SHA,
+        "profile_sha256": hashlib.sha256((json.dumps(profile, indent=2) + "\n").encode()).hexdigest() if supplied_profile else PROFILE_SHA,
         "source_sha256": sha(Path(__file__)),
         "phone_qualified": False,
         "runtime_qualified": False,
@@ -304,6 +327,8 @@ def run(request, *, plan_only=False):
         for name in ("tmp", "logs", "objects", "cpp", "lumps", "job-results"):
             (output / name).mkdir()
         write(output / "plan.json", value)
+        if supplied_profile:
+            write(output / "native-profile.json", profile)
         write(
             output / "inputs.json",
             {

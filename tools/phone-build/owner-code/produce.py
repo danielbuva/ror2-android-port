@@ -30,6 +30,18 @@ PROFILE_SHA = "50b445d8ae972880b3f5177bb9e5bcd6726acde344208fc039b2398ff19b8b98"
 XML_ORDER = ("TypesInScenes.xml", "SerializedTypes.xml", "empty.xml", "burst.xml", "whole-preservation.xml", "item-behaviors.xml")
 
 
+def target_inputs(selection):
+    if set(selection) != {"profile", "source"}:
+        raise ValueError("target requires explicit profile and authored source root")
+    path, source = [native.canonical(selection[n]) for n in ("profile", "source")]
+    target = json.loads(path.read_text())
+    for name, expected in target["source_files"].items():
+        file = native.canonical(source / native.relative(name))
+        if not file.is_relative_to(source) or native.sha(file) != expected:
+            raise ValueError("target authored source drift: " + name)
+    return target, source, native.sha(path)
+
+
 def tools(sdk, profile):
     actual = {}
     for folder in (sdk / "Unity.app/Contents/il2cpp/build/deploy", sdk / "Unity.app/Contents/il2cpp/LinkerDescriptors"):
@@ -178,24 +190,25 @@ def verify_inputs(request, profile, sdk, sdk_state, before, work, state, output,
 
 def source_run(request, *, stop_after_conversion=False):
     """Join original-input managed production to this same backend."""
-    if set(request) != {"owner_work", "sdk_install", "source_inputs", "output"}:
+    if set(request) - {"target", "android_tools"} != {"owner_work", "sdk_install", "source_inputs", "output"}:
         raise ValueError("explicit original-input owner request required")
     specification = importlib.util.spec_from_file_location("owner_code_managed_producer", HERE / "managed.py")
     managed_owner = importlib.util.module_from_spec(specification)
     sys.modules[specification.name] = managed_owner
     specification.loader.exec_module(managed_owner)
     work, sdk = native.canonical(request["owner_work"]), native.canonical(request["sdk_install"])
-    if work != ROOT / "work":
+    target, source_root, target_sha = target_inputs(request["target"]) if "target" in request else (None, None, None)
+    if target is None and work != ROOT / "work":
         raise ValueError("source owner currently requires this checkout's work root")
     state = native.input_state(work)
-    inputs = managed_owner.bind_paths(request["source_inputs"])
+    inputs = {k: native.canonical(v) for k, v in request["source_inputs"].items()} if target else managed_owner.bind_paths(request["source_inputs"])
     output = Path(request["output"])
     if not output.is_relative_to(work) or output == work:
         raise ValueError("new source owner output must be inside owner work")
     native.disjoint(output, [sdk, state[1], work / "config", work / "inventory", *inputs.values()])
     if native.sha(PROFILE) != PROFILE_SHA or native.sha(managed_owner.PROFILE) != managed_owner.PROFILE_SHA:
         raise ValueError("audited owner code profile drift")
-    tools(sdk, json.loads(PROFILE.read_text()))
+    tools(sdk, target["player"] if target else json.loads(PROFILE.read_text()))
     native.sdk_files(sdk, json.loads(native.PROFILE.read_text()))
     output.mkdir(mode=0o700)
     result = {
@@ -207,13 +220,23 @@ def source_run(request, *, stop_after_conversion=False):
         "runtime_qualified": False,
     }
     try:
-        providers = managed_owner.run(work, sdk, request["source_inputs"], output / "managed-production")
+        if target:
+            providers = managed_owner.target_run(
+                work, sdk, request["source_inputs"], target, source_root, output / "managed-production", android_tools=request.get("android_tools")
+            )
+        else:
+            providers = managed_owner.run(work, sdk, request["source_inputs"], output / "managed-production")
         backend_request = {"owner_work": str(work), "sdk_install": str(sdk), "managed": providers, "output": str(output / "backend")}
+        for name in ("target", "android_tools"):
+            if name in request:
+                backend_request[name] = request[name]
         native.write(output / "backend-request.json", backend_request)
         result["phase"] = "whole-player-backend"
         backend = run(backend_request, stop_after_conversion=stop_after_conversion)
         if native.input_state(work) != state:
             raise ValueError("owner input state changed across source production")
+        if target and target_inputs(request["target"])[2] != target_sha:
+            raise ValueError("target profile changed during source production")
         result.update(success=True, phase=backend["phase"], upstream_managed_generation_qualified=True, managed_providers=len(providers), backend=backend)
     except BaseException as error:
         result.update(error_type=type(error).__name__, error=str(error))
@@ -226,14 +249,15 @@ def source_run(request, *, stop_after_conversion=False):
 def run(request, *, stop_after_conversion=False):
     if "source_inputs" in request:
         return source_run(request, stop_after_conversion=stop_after_conversion)
-    if set(request) - {"android_tools"} != {"owner_work", "sdk_install", "managed", "output"}:
+    if set(request) - {"android_tools", "target"} != {"owner_work", "sdk_install", "managed", "output"}:
         raise ValueError("explicit owner backend request required")
     work, sdk = [native.canonical(request[k]) for k in ("owner_work", "sdk_install")]
     output = Path(request["output"])
     state = native.input_state(work)
     if native.sha(PROFILE) != PROFILE_SHA or native.sha(native.PROFILE) != native.PROFILE_SHA:
         raise ValueError("audited owner code profile drift")
-    profile = json.loads(PROFILE.read_text())
+    target, _, target_sha = target_inputs(request["target"]) if "target" in request else (None, None, None)
+    profile = target["player"] if target else json.loads(PROFILE.read_text())
     if state[0] != profile["input_id"]:
         raise ValueError("unsupported legitimate game input")
     before = providers(request["managed"], profile)
@@ -299,9 +323,10 @@ def run(request, *, stop_after_conversion=False):
         native.invoke(converter_command(sdk, output, profile, android_tools), output, "converter", env=environment)
         converter = output / "converter"
         files = {folder + "/" + n: row for folder in ("cpp", "data") for n, row in file_map(converter / folder).items()}
-        if {"cpp/" + j["generated"] for j in json.loads(native.PROFILE.read_text())["jobs"] if "generated" in j} != {
-            n for n in files if n.endswith((".cpp", ".c"))
-        }:
+        native_profile = json.loads(native.PROFILE.read_text())
+        if target:
+            native_profile = native.generated_profile(native_profile, files)
+        if {"cpp/" + j["generated"] for j in native_profile["jobs"] if "generated" in j} != {n for n in files if n.endswith((".cpp", ".c"))}:
             raise ValueError("new code generation changes native membership; inspect profile drift")
         if "data/Metadata/global-metadata.dat" not in files:
             raise ValueError("converter metadata missing")
@@ -326,10 +351,12 @@ def run(request, *, stop_after_conversion=False):
             native_request["android_tools"] = android_tools
         native.write(output / "native-request.json", native_request)
         result["phase"] = "native-planning" if stop_after_conversion else "native-production"
-        native_result = native.run(native_request, plan_only=stop_after_conversion)
+        native_result = native.run(native_request, plan_only=stop_after_conversion, **({"profile": native_profile} if target else {}))
         verify_inputs(request, profile, sdk, sdk_state, before, work, state, output, configs)
         if android_tools and native.android_tool_state(android_tools) != android_state:
             raise ValueError("Android backend tools changed")
+        if target and target_inputs(request["target"])[2] != target_sha:
+            raise ValueError("target profile changed during backend")
         result.update(
             success=True,
             phase="converted-native-planned" if stop_after_conversion else "native-built",

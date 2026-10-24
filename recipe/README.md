@@ -199,6 +199,7 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 | `owner-native-arm64.json` | J1059 native build configuration | SDK-relative selectors, six flag templates, translation-unit identities/link ordering and a portable SDK cohort hash. | No source bodies, game data, compiled bytes, captured graph, private paths or account/device data. Audited 2026-10-24. | Explicit accepted input, source/converter/metadata binding; no Editor/project or device consumer. |
 | `owner-player-code.json` | Current target root/retention and SDK linker/converter policy | Minimum scene/type/member identities, preservation flags, assembly order and tool hashes. | No method body, serialized object value, native registration table, binary, private path or account/device data. Audited 2026-10-24. | Full reviewed owner input and explicit hash-bound managed providers; exact SDK tools and derived native identities. |
 | `owner-managed-code.json` | Current owner managed-provider/source configuration | 48 original and 272 SDK relative providers/hashes, 12 produced identities, 14 support selectors, generic tool/package identities. | No game/SDK implementation, generated source/DLL, private path, account/device identifier or credential. Audited 2026-10-24. | Accepted full original inventory; explicit tools/packages/authorized SDK inputs; existing strict transforms/contracts. |
+| `owner-j850-code.json` | Fixed accepted authored-source target | Public source commit and 114 relative file hashes, accepted comparison hash, 329 managed/90 converter identities and inherited selector-only SDK/root policy. | No game/SDK implementation, native bytes, serialized values, private paths or identifiers. Audited 2026-10-24. | Independent owner sources/tools; inherited root and target byte/device parity remain explicit qualification gates. |
 
 `runtime-sources.json` lists paths relative to `tools/unity`, staged at
 `Assets/LabLoadingScene` by basename. Basename collisions (including generated sources)
@@ -2134,6 +2135,17 @@ SDK's normal root discovery when the tools run from a copied SDK tree. The host
 already consumed these descriptors implicitly; the explicit pins close that
 input gap without changing stripping policy. Manual provenance/privacy and
 sensitive-content review repeated 2026-10-24.
+
+`owner-j850-code.json` selects the public authored sources of J850 by their
+commit and individual hashes, with the original input identity unchanged. Its
+player configuration is the above published selector-only configuration with
+the three later original-audio assemblies removed. It does not carry generated
+game code or target content. The developer-only MCP input remains excluded;
+the converter's complete actual source cohort determines generated native jobs.
+These differences and inherited scene/module configuration remain visible
+comparison gates. The source hashes were checked against the public Git commit;
+all other retained selector/tool fields equal the already audited profile.
+Manual provenance, privacy, licensing and sensitive-content audit: 2026-10-24.
 
 
 ## Historical authored Init source compatibility

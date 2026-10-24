@@ -18,6 +18,33 @@ SPEC.loader.exec_module(NATIVE)
 
 
 class OwnerCodeNativeTests(unittest.TestCase):
+    def test_target_conversion_replaces_generated_units_and_rebuilds_link_closure(self):
+        profile = {
+            "jobs": [{"sdk": "sdk.c", "arguments": 0}, {"generated": "Old.cpp", "arguments": 4}, {"generated": "Old.c", "arguments": 5}],
+            "link": ["-shared", {"object": 0}, {"object": 1}, {"object": 2}, "-llog"],
+        }
+        result = NATIVE.generated_profile(profile, {"cpp/New.cpp": {}, "cpp/Register.c": {}, "data/metadata.dat": {}})
+        self.assertEqual(
+            result["jobs"], [{"sdk": "sdk.c", "arguments": 0}, {"generated": "New.cpp", "arguments": 4}, {"generated": "Register.c", "arguments": 5}]
+        )
+        self.assertEqual(result["link"], ["-shared", {"object": 0}, {"object": 1}, {"object": 2}, "-llog"])
+        self.assertEqual(profile["jobs"][1]["generated"], "Old.cpp")
+        with self.assertRaisesRegex(ValueError, "no native"):
+            NATIVE.generated_profile(profile, {"data/metadata.dat": {}})
+        with self.assertRaisesRegex(ValueError, "nested"):
+            NATIVE.generated_profile(profile, {"cpp/nested/New.cpp": {}})
+
+    def test_json_tool_stdout_is_separate_from_runtime_diagnostics(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            (root / "logs").mkdir()
+            (root / "tmp").mkdir()
+            NATIVE.invoke(
+                [sys.executable, "-c", "import sys;print('{\"value\":7}');print('diagnostic witness',file=sys.stderr)"], root, "query", separate_stderr=True
+            )
+            self.assertEqual(json.loads((root / "logs/query.log").read_text()), {"value": 7})
+            self.assertEqual((root / "logs/query.stderr.log").read_text().strip(), "diagnostic witness")
+
     def test_android_link_keeps_original_target_and_explicit_static_runtime(self):
         tools = {"clang": "/installed/libclang.so", "linker": "/installed/liblld.so", "resource_dir": "/tools/clang/21"}
         sdk = Path("/owner/sdk")
