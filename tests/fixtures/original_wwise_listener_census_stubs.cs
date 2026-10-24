@@ -80,6 +80,7 @@ public static class GameAudioOriginalRequestBootstrap
 {
     public static bool PassivePcmCaptureRequested;
     public static bool PassivePcmCaptureMusicOutputRequested;
+    public static bool PassivePcmCaptureAfterAuthoritySkillRequested;
     public static bool IsConfigured;
     public static Func<AkWwiseInitializationSettings> OriginalSettingsProvider;
     public static void ConfigureBeforeOriginalStartup() { }
@@ -145,6 +146,47 @@ namespace RoR2
 {
     public static class WwiseIntegrationManager
     {
+        public static bool noAudio;
         public static void Init() { }
     }
+}
+
+namespace UnityEngine
+{
+    public static class Debug
+    {
+        public static string LastLog, LastWarning;
+        public static void Log(object value) { LastLog = value.ToString(); }
+        public static void LogWarning(object value) { LastWarning = value.ToString(); }
+    }
+}
+public enum AKRESULT { AK_Success = 1, AK_Fail = 2 }
+public static class AkSoundEngine
+{
+    public static bool Initialized;
+    public static bool ThrowOnWakeup;
+    public static int WakeupCalls;
+    public static AKRESULT WakeupResult = AKRESULT.AK_Success;
+    public static bool IsInitialized() => Initialized;
+    public static AKRESULT WakeupFromSuspend()
+    {
+        WakeupCalls++;
+        if (ThrowOnWakeup) throw new InvalidOperationException("synthetic wakeup failure");
+        return WakeupResult;
+    }
+}
+public sealed class AkSoundEngineInitialization
+{
+    public delegate void TerminationDelegate();
+    public static readonly AkSoundEngineInitialization Current = new AkSoundEngineInitialization();
+    public static int GetterReads;
+    public static AkSoundEngineInitialization Instance { get { GetterReads++; return Current; } }
+    public TerminationDelegate terminationDelegate;
+}
+public static class OriginalNetworkSoundEventCatalogOwner
+{
+    public sealed class Snapshot { public string failure; }
+    public static Snapshot CaptureSnapshot() => new Snapshot();
+    public static void InitializeBeforeWorld(bool explicitlyRequested, bool noAudio, bool originalAudioReady,
+        bool originalTermsReturned, bool nativeEngineInitialized, bool originalCatalogLeaseHeld) { }
 }

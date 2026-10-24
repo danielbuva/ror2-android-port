@@ -4,7 +4,8 @@ using UnityEngine;
 
 // Persistent setup/session coordinator for the original game audio owner. This
 // component owns no Ak/Wwise lifecycle; the original AkInitializer and
-// AudioManager remain the only engine/service/focus/pause/Term owners.
+// AudioManager remain the engine/service/focus/pause/Term owners. The original
+// termination delegate owns the narrow Android bank-release resume seam.
 public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
 {
     private const float StartupDeadlineSeconds = 180.0f;
@@ -18,6 +19,7 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
     private string coordinatorFailure;
     private string catalogLeaseIdentity;
     private bool catalogLeaseAcquired;
+    private AkSoundEngineInitialization terminationInitialization;
 
     [Serializable]
     public sealed class Snapshot
@@ -32,6 +34,7 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
         public bool nativeApiCallsAvailable;
         public bool nativeInitAttemptObserved;
         public bool originalTermsReturned;
+        public bool bankReleaseWakeupAttached;
         public bool catalogBundleLeaseHeld;
         public string catalogBundleLeaseIdentity;
         public int requestedBankCount;
@@ -208,6 +211,7 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
             nativeApiCallsAvailable = GameAudioOriginalOwner.NativeApiCallsAvailable,
             nativeInitAttemptObserved = GameAudioOriginalOwner.NativeInitAttemptObserved,
             originalTermsReturned = GameAudioOriginalOwner.OriginalTermsReturned,
+            bankReleaseWakeupAttached = host && host.terminationInitialization != null,
             catalogBundleLeaseHeld = WholeCatalogComposed.OriginalAudioLeaseHeld,
             catalogBundleLeaseIdentity = WholeCatalogComposed.OriginalAudioLeaseIdentity,
             requestedBankCount = GameAudioOriginalOwner.RequestedBankCount,
@@ -382,6 +386,7 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
                         throw; // Preserve the exception; PortSession records the explicit startup refusal.
                     }
                 }
+                AttachOriginalBankReleaseWakeup();
                 PortSessionOriginalMusicControllerOwner.StartForReadyAudio(this, explicitlyRequested: true);
             }
         }
@@ -399,11 +404,52 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
         }
     }
 
+    // The original initializer invokes this delegate after StopAll and before
+    // UnregisterAllGameObjects/ClearBanks. Android focus loss can suspend its
+    // audio thread first; resume only that initialized engine so the unchanged
+    // synchronous bank-release path can finish. Original owners still own Term.
+    private void AttachOriginalBankReleaseWakeup()
+    {
+        if (terminationInitialization != null || !GameAudioOriginalOwner.Ready ||
+            !GameAudioOriginalOwner.OptInRequested || !GameAudioOriginalOwner.NativeApiCallsAvailable ||
+            RoR2.WwiseIntegrationManager.noAudio || GameAudioOriginalOwner.OriginalTermsReturned)
+            return;
+        terminationInitialization = AkSoundEngineInitialization.Instance;
+        terminationInitialization.terminationDelegate += ResumeForOriginalBankRelease;
+    }
+
+    private void ResumeForOriginalBankRelease()
+    {
+        if (!GameAudioOriginalOwner.OptInRequested || !GameAudioOriginalOwner.NativeApiCallsAvailable ||
+            !AkSoundEngine.IsInitialized())
+            return;
+        try
+        {
+            var result = AkSoundEngine.WakeupFromSuspend();
+            Debug.Log("Original audio bank-release wakeup returned " + result);
+        }
+        catch (Exception error)
+        {
+            Debug.LogWarning("Original audio bank-release wakeup failed: " + error.GetType().Name);
+            // Do not replace or interrupt the original termination sequence.
+        }
+    }
+
+    private void DetachOriginalBankReleaseWakeup()
+    {
+        if (terminationInitialization == null) return;
+        terminationInitialization.terminationDelegate -= ResumeForOriginalBankRelease;
+        terminationInitialization = null;
+    }
+
+    private void OnDestroy() => DetachOriginalBankReleaseWakeup();
+
     private void Update()
     {
         GameAudioOriginalOwner.TickPassiveCapture(Time.realtimeSinceStartup);
         if (GameAudioOriginalOwner.OriginalTermsReturned)
         {
+            DetachOriginalBankReleaseWakeup();
             try { GameAudioOriginalOwner.PassiveCapture?.PersistWaveformAfterOriginalTerms(); }
             catch { /* optional waveform evidence cannot become an audio lifecycle failure */ }
         }

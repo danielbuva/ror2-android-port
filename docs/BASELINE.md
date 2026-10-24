@@ -86,33 +86,24 @@ turn the display off in `finally`, including if collection fails. Stage-mode res
 `mode`, `transitions`, `scene` and `stage_world_seconds` to the usual evidence receipt.
 The plain check and its acceptance criteria remain unchanged.
 
-## Current baseline (2026-10-23)
+## Current baseline (2026-10-24)
 
-[J1040](PORTING_JOURNAL.md#j1040--restore-bloom-and-the-source-cameras-copystd-pass-contracts)
-qualifies diagnostic R36 APK bda30f33, source 1428fdf, through both standard
-controls, strict current-process log checks and independent installed-byte,
-placement, backing and profile readback. Plain reaches 35.188797 s on Lakes;
-stage-exit completes one original transition and 13.503845 s on Goolake. Both
-retain 13 applied runs and finite nonzero samples from the existing selected
-MusicController output. The bounded source-view route now reaches its expected
-two-pass Outline observation without the previous Bloom or Blit pass errors.
-Color/background visibility improves, but washed-out rendering and PC parity
-remain open. These checks do not qualify full audio or natural Quit; J1037's
-saved music prefix and failed warm-Quit result remain separate evidence.
+[J1068](PORTING_JOURNAL.md#j1068--resume-original-audio-for-bank-release-and-verify-healthy-quit)
+qualifies diagnostic R38 APK
+`ede957ee8faaa12106d7c36685625ed5459619452704a1c45517f5c65e6c2cba`, source
+`fad0247e`, through both unchanged standard modes and independent installed-byte,
+profile, placement and runtime-backing readback. The source-owned termination
+delegate now resumes the initialized native engine before original bank
+release. A bounded Quit completes with original Term/disarm, application-owned
+exit and fresh-process audio evidence. Exit latency remains substantial.
 
-J1045/J1046 additionally pass existing native first-stage UI-abandon and actual
-defeat/restart on the same R36 APK, with original audio ready, strict
-source-owner cleanup and unchanged profile/installed bytes. Natural boss rewards,
-transport, second-session audio output and ordinary combat remain open.
+Plain/fresh MainOutput windows and the final saved prefix contain nonzero
+samples; the stage window is silent. Full mix, event attribution and audibility
+remain open. All 266 payload hashes match R37, whose almost-black source-view
+failure remains unaccepted in
+[J1067](PORTING_JOURNAL.md#j1067--activate-source-camera-uber-and-skill-timed-mainoutput-together).
+See the [current snapshot](../PORTING_STATE.md) for installed/source facts.
 
-J1043's default-off MainOutput capture timing and J1044's source-camera Uber
-composite source are not in R36. Both await the next full build and device
-qualification after the shared editor handback.
-
-R34's scoped MainOutput windows, failed warm Quit and separate cold-menu
-persistence remain recorded in J1022/J1028/J1031. Loader's full-kit semantics
-and the remaining audio/visual gates stay open. See the
-[current snapshot](../PORTING_STATE.md).
 The accepted baseline below remains the rollback.
 
 | Item | Value |

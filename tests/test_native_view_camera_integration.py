@@ -90,6 +90,7 @@ class NativeViewCameraIntegrationTests(unittest.TestCase):
 
     def test_actual_current_audio_stage_matches_receipt_bound_artifact_roles(self):
         project = REPOSITORY / "work/lab-project"
+        stage_root = REPOSITORY
         stage_path = project / "Assets/StreamingAssets/Lab/OriginalGameAudioStageReceipt.json"
         if not stage_path.is_file():
             self.skipTest("actual local audio-stage receipt is unavailable")
@@ -158,6 +159,9 @@ class NativeViewCameraIntegrationTests(unittest.TestCase):
             shutil.copy2(REPOSITORY / "work" / snapshot, target)
             self.hook.restore_previous_camera(project_copy, work_copy)
             project = project_copy
+            stage_root = self.root
+        # Observer preimages resolve beside the receipts under examination.
+        self.hook.ROOT = stage_root
         self.hook._verify_stage_manifest_rows(stage, manifest, project)
         bank_receipts = [row for row in manifest["outputs"] if row["role"] == "bank_receipt"]
         self.assertEqual(len(bank_receipts), 1)

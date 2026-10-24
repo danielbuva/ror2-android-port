@@ -1037,6 +1037,22 @@ reads the managed default-listener count. It retains only a known flag and count
 default-off, pre-ready and failed reads remain unknown. This read-only census
 does not establish native registration or retain listener objects.
 
+The same coordinator attaches one callback to the initialized original
+`AkSoundEngineInitialization.terminationDelegate` after admitted audio startup.
+That source-owned delegate runs before its synchronous bank clearing. The
+callback resumes the same initialized native engine on Android so focus-loss
+suspension cannot withhold bank processing; it issues no Init, ClearBanks,
+RenderAudio or Term call and changes no ordinary focus/pause or output routing.
+Default-off, no-audio and unavailable-native startup paths do not attach it.
+Once attached, native initialization governs teardown even if consumer readiness
+has already been withdrawn.
+The snapshot records whether it is attached; current-process logs retain the
+native wakeup result or bounded failure type. The coordinator removes only its
+callback after both original Term witnesses or on destruction, retaining other
+delegate subscribers. The compiled owner fixture checks admission, duplicate
+setup, returned/thrown native failures and owned removal. Healthy application
+Quit remains a separate device gate; J1067 records the motivating ANR stack.
+
 `runtime/session/OriginalNetworkSoundEventCatalogOwner.cs` owns process-scoped
 native network-sound catalog admission after original engine/bank readiness and
 before selected-world activation. It obtains the complete original definition

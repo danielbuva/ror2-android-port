@@ -34629,3 +34629,210 @@ reference/metadata reconstruction, complete bundle packing/compression, full
 game native phone production and durable owner signing/install remain open.
 No gameplay, performance or phone-only installation gate advances. Revisit
 when original input, accepted target, format, recipe or producer changes.
+
+## J1067 — Activate source-camera Uber and skill-timed MainOutput together
+
+**Hypothesis and scope.** Activate the host-qualified J1043 MainOutput timing
+and J1044 source-camera Uber selections in one full content/player build.
+The existing authority observer schedules capture; it issues no sound event.
+The original camera/resource join selects the reconstructed Uber shader.
+Reinspect pinned R2API.Sound `f539511e` for initialization/bank lifetime and
+RoR2ImportExtensions `477ad9b5` for its Post Processing 2.3.0 installer and
+single-runtime-assembly policy. The latter is compatible source knowledge,
+not proof of the game's package version. No original game files are changed.
+
+**Build.** Preparation passes all 7,465 typed roots. The first full build,
+request `20261024T071243.297164Z`, finishes in 833.016 s with zero Unity errors,
+but its outer coordinator refuses a HEAD change caused by a skill-only commit.
+That unused candidate is preserved and never installed. Subsequent code-only
+attempts correctly refuse foreign staged feedback sources and changed audio
+DLL/stage-receipt inputs; the guards are retained.
+
+Reuse the feedback worker's combined full build after checking the relevant
+camera, observer, audio owner, generator and recipe against the Root source.
+Request `20261024T073400.899774Z`, source
+`057192fabd1a81864370d7e2a8459dba0864d6f6`, succeeds in 145.717 s with zero
+errors and a successful source-stable shared coordinator. APK SHA-256 is
+`4e5f0feb79c5bc35b15518af39293779d5216f839cceb30103ceb8240f5fde5b`.
+The packet verifies 272 referenced files, including the APK, all 266 cached
+payload files and selection/project receipts, without new binary copies.
+The exact editor is directly checked idle. Main updates in place on the live
+adopted volume; sync verifies 134 runtime files and transfers three changes.
+The combined player also contains that worker's native feedback/confirmation
+slice; these Root checks do not qualify its complete UI behavior.
+
+**Standard controls and audio.** Both unchanged modes pass, including strict
+current-process log and original source-owner contracts. Plain reaches
+35.196014 s on Lakes. Stage-exit completes exactly one original exit and
+10.767029 s on Goolake, at 151.202530 s total world time. Both retain 13 applied
+runs, all 153 requested banks ready, the 65-entry native network-sound mapping,
+three original highlight dependencies and the ready source audio-camera
+context. Both cleanups verify selector/process absence and display sleep.
+There are zero unexplained errors in their captured current-process logs.
+
+Both reports positively observe the requested authority-skill timing. Plain's
+MainOutput window has 465 callbacks and 535,680 finite samples, including
+74,880 nonzero samples. The stage window has 470 callbacks and 541,440 finite
+samples, all zero. Neither has nonfinite samples or rejected/capped buffers.
+This establishes one bounded nonzero default-selector window; consistent/full
+mix output, source-event attribution, spatial behavior and physical audibility
+remain unqualified. It does not convert the separate music-output result into
+a MainOutput claim.
+
+**Source-view first failure.** The same bounded Huntress protocol reaches
+5.004501 s of live play. The exact owned camera callback observes the supported
+original Outline material with two passes and matching identities; the source
+Blit invocation remains unobserved. Both screenshot-bracketing log captures have
+zero unexplained errors. Visual acceptance fails: the world is almost black
+while UI remains visible, rather than R36's washed-out brown image. A passing
+shader import or pass-count observation is not rendered equivalence. Keep this
+route opt-in and localize the first black render/composite input before tuning
+any lighting, fog or exposure value.
+
+**Warm Quit and actual exit cause.** On the same player, ordinary reported UI
+coordinates drive 35 s of assisted Commando play, settings, End Run confirmation,
+the next menu, then Quit. Nineteen bounded raw PID queries observe the launched
+process followed by absence at 14.624 s, without a query timeout. That absence
+is not graceful-Quit acceptance: the system log identifies ActivityManager's
+background-ANR kill. Unity records its 2 s pause/window-detach timeouts and
+Android records a 5 s focus-loss ANR. The raw observer's
+`natural_process_absence` field denotes absence without host force-stop; the
+separate interpretation explicitly rejects natural Quit after the OS kill.
+
+Unlike J1037's incomplete stack, this matching ANR retains UnityMain waiting
+through `CSharp_ClearBanks` during the original termination path. The accepted
+settings suspend audio on focus loss and do not render during that loss.
+Suspension blocking synchronous bank release is a hypothesis supported by the
+ordering and stack, not yet a proved cause. The existing original
+`terminationDelegate` runs before bank clearing and provides a narrow next seam
+for resuming the same initialized engine without replacing Init, ClearBanks or
+Term ownership.
+
+**Saved MainOutput prefix.** That warm run observes 460 callbacks, 529,920 finite
+samples and 72,576 nonzero samples. One new stable saved pair joins its output
+identity and counts and records original engine-Term and callback-manager-Term
+returns, verified post-Term disarm and raw persistence. Its 1 MiB prefix contains
+262,144 finite samples, including 72,576 nonzero samples: stereo 48 kHz,
+2.730667 s, RMS 0.009924818, range -0.176837 to 0.148597. It is explicitly
+truncated. Raw SHA-256 is
+`034d29fb5177d7bbf471c14221fead0a9367ed4129985fe9334d66e59a622851`;
+sidecar SHA-256 is
+`1b4af57197023544b411196d7dc63769885f86dcf7df7e49812f8ce06be62256`.
+The existing exporter validates the pair and creates a private WAV. This
+qualifies the inner observed audio release/persist path despite failed Quit;
+it does not qualify the application's shutdown or complete audio mix.
+
+**Terminal state and evidence.** Independent readback rehashes installed APK
+bytes, verifies current adopted placement/runtime backing and the exact
+unchanged 13-run profile, and confirms selector/process absence and sleeping
+display. No additional cleanup is needed for that query. Main retains this
+latest diagnostic; accepted J850 remains unchanged.
+
+Build references, refusals, source comparison, strict control qualifications,
+PCM transfer/export, matching ANR and terminal query are under
+`work/coordination/main-port-r37/`. Standard runs are
+`work/experiments/baseline/20261024T074153.325897Z/` and
+`work/experiments/baseline/20261024T074712.024222Z/`. Source-view evidence is
+`work/experiments/original-camera-listener-lifecycle/20261024T075415.632860Z/`.
+The warm run is
+`work/experiments/original-game-audio/r37-warm-quit-20261024T080048.513966Z/`.
+Generated pruning is retried after shared-editor contention; receipts and raw
+failed evidence remain local. No game-derived output is published.
+
+## J1068 — Resume original audio for bank release and verify healthy Quit
+
+**Hypothesis and ownership.** J1067's matching ANR stack waits inside original
+Wwise ClearBanks after Android focus-loss suspension. The initialized engine
+may need resuming before that synchronous bank release. Reinspect pinned
+R2API.Sound/SoundAPI.cs at `f539511e`: its bank operations retain original
+initialization/BankManager ownership, but provide no Android shutdown repair.
+The accepted API exposes an existing termination delegate between its StopAll
+and bank release. Extend `PortSessionOriginalAudioOwner` through that seam;
+call WakeupFromSuspend only for an initialized, explicitly requested native
+engine. Original Init, ClearBanks, engine Term, callback-manager Term and
+ordinary focus/pause ownership remain unchanged. Setup is readiness-gated;
+cleanup removes only this callback after the original Term witnesses or owner
+destruction. Foreign subscribers survive. The existing snapshot exposes the
+attachment and the current-process log records the native result.
+
+**Host and build.** The production-owner fixture checks admission, one
+subscription, native-uninitialized/failure/throw paths, consumer readiness
+withdrawal during teardown and removal of only the owned delegate. Eighteen
+audio/session/cache checks, nine producer checks and the 44-test camera cohort
+pass; the latter has three explicit historical-profile skips. Refresh the full
+owner recipe → producer/camera pin chain. The real-stage camera fixture also
+resolves observer preimages beside the receipts under examination. Ruff,
+public-content audit and fresh-clone CI pass (1,843 tests, 127 skips); both
+GitHub host checks are green at the source checkpoint.
+
+The committed full content/player build uses source
+`fad0247e41e1160be3fab30dce389e3a0ecfe7e1`, request
+`20261024T085605.772049Z`, exact Unity 2021.3.45f2, IL2CPP ARM64 and Vulkan.
+Unity finishes in 133.118314 seconds with zero errors. The frozen APK is
+`ede957ee8faaa12106d7c36685625ed5459619452704a1c45517f5c65e6c2cba`.
+All 267 artifact references are rehashed; all 266 payload hashes match R37.
+No APK, payload or Unity project is copied into the evidence packet. Install
+queries current capacity/placement and retains adopted runtime backing.
+
+**Standard controls.** The unchanged plain check reaches 35.230270 seconds in
+Lakes, with 792 callbacks, 912,384 finite samples and 49,536 nonzero samples.
+The one-exit check reaches Goolake for 12.045563 seconds, with 151.138977 seconds
+of total world play; its 465 callbacks contain 535,680 finite samples, all
+zero. Both have zero classified current-process errors, ready original audio,
+the attached delegate, unchanged 13-run profile and verified cleanup.
+`is_current_build=false` is retained: another worker moved the shared host
+pointer. The frozen build receipt, installed APK bytes, attempt and final
+reports bind these results without relabeling that raw field.
+
+**Quit observation and correction.** The first warm End Run → next-menu → Quit
+attempt observes WakeupFromSuspend returning AK_Success, then a real 3-second
+PID-query timeout at 7.739684 seconds. Its failure-only cleanup force-stops the
+process before a complete exit observation; this run cannot qualify Quit.
+A corrected local observer keeps the bounded window open after transport
+failures and allows up to 10 seconds per query. The next run has no query
+failures, original termination, Unity teardown, the process's self-issued
+exit signal and absence at 14.984663 seconds. Its older cleanup still sends a
+post-exit force-stop, overwriting Android's historical exit reason, so that
+history is not used as independent exit-cause evidence.
+
+A final fresh process reaches original-audio-ready world play for 35.182373
+seconds with all 153 banks, noAudio=false and the callback attached. It returns
+to the next menu, requests Quit and observes AK_Success, original successful
+termination and process absence at 20.420708 seconds, with no query timeout,
+ANR, Unity pause/detach timeout or unexplained shutdown failure. Its same-process
+Process log issues SIG:9 after Unity teardown. No host force-stop is sent after
+that observed absence. Android independently records SIGNALED/status 9 for
+that process, with no ANR trace. These joined observations qualify this bounded
+application-owned Quit and fresh-process audio restart. Exit latency remains
+substantial; this is not a performance qualification.
+
+**Saved output and terminal state.** The final live MainOutput window has 461
+callbacks, 531,072 finite samples, 51,840 nonzero and zero nonfinite samples.
+A new saved pair joins that live output and those counts. Both files retain
+identical device size/hash before and after transfer and match the local
+hashes. The sidecar witnesses both original Term returns, verified post-Term
+disarm and raw persistence. The existing exporter validates its 1 MiB prefix:
+262,144 finite samples, 50,368 nonzero, stereo 48 kHz, 2.730667 seconds,
+RMS 0.01134435 and peak magnitude 0.24609081. The raw prefix is truncated;
+event attribution and physical audibility remain unclaimed.
+
+Independent final readback rehashes the installed APK and verifies current
+adopted placement/runtime backing, the byte-identical 13-run profile,
+selector/process absence and sleeping display. Generated pruning runs after
+the build and run tasks; one successful pass recovers 5.4 GiB while retaining
+evidence and protected artifacts. J850 remains the accepted rollback. Full
+mix/spatial behavior, the silent stage window and J1067's black source-view
+image remain open; unchanged payload bytes do not establish visual parity.
+
+**Evidence and revisit.** Frozen references, build/install/sync receipts,
+control qualifications, PCM readback/export, native-exit qualification and
+terminal query are under `work/coordination/main-port-r38/`. Standard runs are
+`work/experiments/baseline/20261024T090155.475444Z/` and
+`work/experiments/baseline/20261024T090607.420154Z/`. The three warm observations
+are under `work/experiments/original-game-audio/`, prefixed
+`r38-warm-quit-20261024T091221.150581Z`,
+`r38-warm-quit-observer-r2-20261024T091914.882149Z` and
+`r38-warm-quit-fresh-r3-20261024T092639.838299Z`. Revisit shutdown if a matched
+current-process ANR/timeout, original Term/disarm failure or fresh-start audio
+regression occurs. Broader audio and rendered appearance require their own
+remaining gates; no raw audio, game output or device identifiers are published.

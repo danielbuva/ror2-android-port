@@ -10,6 +10,8 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1068](PORTING_JOURNAL.md#j1068--resume-original-audio-for-bank-release-and-verify-healthy-quit) | 2026-10-24 | Resume original audio for bank release and verify healthy Quit | **Hypothesis and ownership.** |
+| [J1067](PORTING_JOURNAL.md#j1067--activate-source-camera-uber-and-skill-timed-mainoutput-together) | 2026-10-24 | Activate source-camera Uber and skill-timed MainOutput together | **Hypothesis and scope.** |
 | [J1070](PORTING_JOURNAL.md#j1070--produce-the-accepted-mesh-cohort-from-original-pc-bundles-on-android) | 2026-10-24 | Produce the accepted mesh cohort from original PC bundles on Android | **Date:** 2026-10-24. |
 | [J1066](PORTING_JOURNAL.md#j1066--qualify-native-settings-feedback-and-two-step-end-run-controls) | 2026-10-24 | Qualify native settings feedback and two-step end-run controls | Date: 2026-10-24. |
 | [J1065](PORTING_JOURNAL.md#j1065--qualify-private-owner-apk-preparation-upgrade-and-unity-lifecycle) | 2026-10-24 | Qualify private owner APK preparation, upgrade and Unity lifecycle | 2026-10-24. |
