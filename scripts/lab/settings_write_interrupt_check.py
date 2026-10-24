@@ -127,9 +127,10 @@ def check_settings_write_interrupt(expected_apk_sha256=None):
         write(out / "native-settings-before-save.json", report)
         dex = compile_tool(ROOT / "tools/android-write-interruption/LabPendingWriteStop.java")
         prefix = "/data/local/tmp/ror2lab-write-" + uuid.uuid4().hex
-        remote = [prefix + ".dex", prefix + ".ready"]
-        if any(_remote_path_state(device, path) != "absent" for path in remote):
+        targets = [prefix + ".dex", prefix + ".ready"]
+        if any(_remote_path_state(device, path) != "absent" for path in targets):
             raise RuntimeError("Temporary observer target exists; preserve it")
+        remote = targets
         packages = device.sh("cmd", "package", "list", "packages", "-U", PACKAGE)
         matches = re.findall(r"^package:" + re.escape(PACKAGE) + r" uid:([0-9]+)$", packages, re.M)
         if len(matches) != 1 or int(matches[0]) < 10000:
