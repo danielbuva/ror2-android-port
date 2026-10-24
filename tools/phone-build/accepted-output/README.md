@@ -731,7 +731,11 @@ The same native pixel helper performs the existing integer transparency
 dilation, keeping coordinate buffers outside the Python parent and freeing them
 before pipe output. Its authored seed/tie controls match the standard-library
 implementation; whole-cohort hashes remain the admission authority.
-It checks the toolchain file and every dependency before output creation and
+SDK encoding uses at most four independent block bands at once, each at most
+262,144 pixels and aligned to four rows. Raster-order concatenation preserves
+the exact block stream; decoding/dilation still cover the complete source image.
+Each codec child retains its 120-second deadline, with bounded pending input and
+output. It checks the toolchain file and every dependency before output creation and
 again before success. Existing output, input/tool drift and differing codec
 extents refuse; failed attempts remain private. Compiler/codec children are
 bounded and reaped. No game data is shipped with the public source or profiles.

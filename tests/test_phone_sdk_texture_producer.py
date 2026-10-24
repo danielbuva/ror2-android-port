@@ -177,6 +177,18 @@ class SdkTextureTests(unittest.TestCase):
                 T.produce(profile, T.BUNDLE.sha(profile), pc, root / "drift", sdk_toolchain=tools, sdk_toolchain_sha256=T.BUNDLE.sha(tools))
             self.assertFalse((root / "drift").exists())
 
+    def test_sdk_bands_keep_raster_order_and_refuse_a_bad_child(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            tools = Path(temporary) / "sdk.json"
+            value = self.tools(tools)
+            rgba = b"".join(bytes([marker, 31, 73, 255]) * 16 for marker in (17, 29, 73, 99))
+            expected = b"".join(bytes([marker, 31, 73, 255]) * 4 for marker in (17, 29, 73, 99))
+            self.assertEqual(T.sdk_encode_rgba(rgba, 4, 16, value), expected)
+            with self.assertRaisesRegex(ValueError, "codec failed"):
+                T.sdk_encode_rgba(rgba[:64] + bytes([42]) + rgba[65:], 4, 16, value)
+            with self.assertRaisesRegex(ValueError, "codec failed"):
+                T.sdk_encode_rgba(rgba[:-1], 4, 16, value)
+
     def test_unqualified_sdk_provider_refuses_before_output(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

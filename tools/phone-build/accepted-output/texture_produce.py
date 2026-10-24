@@ -2,6 +2,7 @@
 
 import argparse
 from array import array
+from concurrent.futures import ThreadPoolExecutor
 import hashlib
 import importlib.util
 import json
@@ -249,6 +250,34 @@ def sdk_inputs(path, pin, pc):
     return value
 
 
+def sdk_encode_rgba(rgba, width, height, sdk):
+    """Encode independent four-row block bands with at most four SDK children."""
+    band_height = min(max(4, ((height + 15) // 16) * 4), max(4, (262144 // width) // 4 * 4))
+
+    def encode(row):
+        rows = min(band_height, height - row)
+        encoded = subprocess.run(
+            [*sdk["command"], str(width), str(rows), "2", "0"],
+            env={**os.environ, **sdk["environment"]},
+            input=memoryview(rgba)[row * width * 4 : (row + rows) * width * 4],
+            capture_output=True,
+            timeout=120,
+        )
+        if encoded.returncode or len(encoded.stdout) != width * rows:
+            raise ValueError("SDK texture codec failed or returned a different extent")
+        return encoded.stdout
+
+    if height <= band_height:
+        return encode(0)
+    output = bytearray()
+    with ThreadPoolExecutor(max_workers=4) as workers:
+        for row in range(0, height, band_height * 4):
+            jobs = [workers.submit(encode, selected) for selected in range(row, min(height, row + band_height * 4), band_height)]
+            for job in jobs:
+                output.extend(job.result())
+    return bytes(output)
+
+
 def pixels_input(bundle, body, selected, jpeg_codec=None, etc_codec=None, sdk=None):
     location = selected["pixels"]
     if location["member"] is None:
@@ -287,16 +316,7 @@ def pixels_input(bundle, body, selected, jpeg_codec=None, etc_codec=None, sdk=No
             if dilated.returncode or len(dilated.stdout) != width * height * 4:
                 raise ValueError("native pixel dilation failed or returned a different extent")
             rgba = dilated.stdout
-        encoded = subprocess.run(
-            [*sdk["command"], str(width), str(height), "2", "0"],
-            env={**os.environ, **sdk["environment"]},
-            input=rgba,
-            capture_output=True,
-            timeout=120,
-        )
-        if encoded.returncode or len(encoded.stdout) != width * height:
-            raise ValueError("SDK texture codec failed or returned a different extent")
-        return encoded.stdout
+        return sdk_encode_rgba(rgba, width, height, sdk)
     if operation in {"alpha8-etc2", "etc1"}:
         if etc_codec is None:
             raise ValueError("pinned public ETC codec required")
