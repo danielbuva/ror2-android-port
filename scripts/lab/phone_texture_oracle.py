@@ -111,7 +111,8 @@ def validate_mips(attempt, commit):
         raise ValueError("Texture mip oracle import cohort differs")
     outputs = {}
     for row in report["images"]:
-        width, height = (256, 4) if row["pattern"] == "ramp" else (32, 32)
+        width = 1024 if row["pattern"] == "noise" else 256
+        height = 4 if row["pattern"] == "ramp" else width
         source = root / (row["pattern"] + ".input.rgba")
         if row["input"] != source.name or source.stat().st_size != width * height * 4:
             raise ValueError("Texture mip oracle authored input differs")

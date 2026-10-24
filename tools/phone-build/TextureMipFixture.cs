@@ -30,7 +30,7 @@ public static class TextureMipFixture
         var images = new List<ImageReport>();
         foreach (string pattern in new [] { "ramp", "noise", "normal" })
         {
-            int width = pattern == "ramp" ? 256 : 32, height = pattern == "ramp" ? 4 : 32;
+            int width = pattern == "noise" ? 1024 : 256, height = pattern == "ramp" ? 4 : width;
             var pixels = new Color32[width * height]; uint state = 731;
             for (int y=0; y<height; y++) for (int x=0; x<width; x++)
             {
