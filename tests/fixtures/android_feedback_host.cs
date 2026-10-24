@@ -163,6 +163,8 @@ public sealed partial class PortSession
     RoR2.CharacterBody worldPlayer = new RoR2.CharacterBody();
     RoR2.DifficultyIndex offlineDifficulty;
     public int saves, underlying, survivorCycles, difficultyCycles, resultMenuRequests, abandonRequests;
+    public bool menuObscured;
+    void SetRecoveredMenuObscured(bool value) { menuObscured = value; }
     bool offlineStartVisible, offlineStartSelected;
     bool UsesDiagnosticWithoutPhysicalInput() => false;
     bool OfflineUiControllerPresent() => true;
@@ -304,6 +306,12 @@ public static class AndroidFeedbackHost
     {
         var session = new PortSession(); session.Prepare(); session.Show(true);
         Check(session.Paused && Time.timeScale == 0 && NovaInputBridge.neutrals == 1, "settings pause not owned");
+        session.Render();
+        Check(session.menuObscured && session.underlying == 0, "settings left native menu or underlying GUI active");
+        GUI.click = "Close settings"; session.Render();
+        Check(!session.SettingsVisible && !session.menuObscured && session.underlying == 0,
+              "settings closing event reached underlying menu");
+        session.Show(true);
         GUI.click = "Send feedback"; session.Render(); Check(session.underlying == 0, "opening feedback drew underlying widgets");
         GUI.edit = "Private draft"; session.Render();
         GUI.click = "Back to settings"; session.Render();
@@ -313,7 +321,7 @@ public static class AndroidFeedbackHost
         Input.down.Add(KeyCode.Joystick1Button1); Input.down.Add(KeyCode.Joystick1Button0); session.Controller(); Input.down.Clear();
         Check(session.Paused && session.SettingsVisible && session.SettingsSaves == 0, "feedback back bled into controller save/resume");
         GUI.click = "Send feedback"; session.Render(); GUI.edit = "Discard on cleanup"; session.Render();
-        session.Dispose(); Check(!session.Paused && !session.SettingsVisible && Time.timeScale == .75f, "cleanup failed to restore owned pause");
+        session.Dispose(); Check(!session.Paused && !session.SettingsVisible && !session.menuObscured && Time.timeScale == .75f, "cleanup failed to restore owned pause/menu");
         session.Show(true); GUI.click = "Send feedback"; session.Render(); GUI.click = "Preview report"; session.Render();
         Check(LabelContains("Enter a description first."), "cleanup retained private draft");
         session.Dispose(); session.Dispose(); Check(Time.timeScale == .75f, "repeated cleanup changed pause");

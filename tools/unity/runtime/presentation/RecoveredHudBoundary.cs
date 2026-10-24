@@ -41,6 +41,10 @@ public sealed partial class PortSession
     {
         GetRecoveredHudSession().CleanupRecoveredMenu();
     }
+    void SetRecoveredMenuObscured(bool obscured)
+    {
+        GetRecoveredHudSession().SetMenuObscured(obscured);
+    }
     void CleanupRecoveredHud()
     {
         GetRecoveredHudSession().Dispose();
@@ -134,6 +138,13 @@ public sealed partial class PortSession
         {
             if (coordinator.recoveredHud && coordinator.worldPlayer)
                 coordinator.recoveredHud.Present(coordinator.worldPlayer, coordinator.r, coordinator.r.hud);
+        }
+        public void SetMenuObscured(bool obscured)
+        {
+            // Disable the exact owned Canvas hierarchy and its native buttons,
+            // rather than relying on IMGUI event consumption to block uGUI.
+            if (coordinator.recoveredMenu)
+                coordinator.recoveredMenu.gameObject.SetActive(!obscured);
         }
         public void CleanupRecoveredMenu()
         {

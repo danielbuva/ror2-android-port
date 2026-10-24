@@ -122,6 +122,7 @@ public sealed partial class PortSession
                 coordinator.offlineSettingsPaused = false;
                 coordinator.r.settings.resumes++;
             }
+            coordinator.SetRecoveredMenuObscured(show);
             coordinator.offlineSettingsVisible = show;
             Observe();
             coordinator.Save();
@@ -212,7 +213,11 @@ public sealed partial class PortSession
             coordinator.r.settings.buttonX = button.center.x;
             coordinator.r.settings.buttonY = button.center.y;
             if (GUI.Button(button, coordinator.offlineSettingsVisible ? "Close settings" : "Settings / pause"))
+            {
                 Show(!coordinator.offlineSettingsVisible);
+                if (!coordinator.offlineSettingsVisible)
+                    return true;
+            }
             if (!coordinator.offlineSettingsVisible)
                 return false;
             GUI.Box(new Rect(Screen.width * .5f - 240, Screen.height * .5f - 200, 480, 465),
@@ -263,7 +268,7 @@ public sealed partial class PortSession
                 coordinator.r.settings.observations++;
                 coordinator.Save();
             }
-            return feedback.Visible;
+            return true;
         }
         // Cleanup may run between sessions. Only an owned pause is released; the
         // store and an unpaused visible screen keep their existing lifetime.
