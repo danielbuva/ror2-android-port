@@ -2246,6 +2246,7 @@ BUILD_EDITOR_SOURCES = [
     "EngiShieldHitGuardHost.cs",
     "EngineerNativeOutputObserverFixture.cs",
     "SirenEggDiagnosticInputExactEditorFixture.cs",
+    "SourceCameraGraphicsHost.cs",
     "LightningStakeSourceContractFixture.cs",
     "TeleporterExitTraceSourceContractFixture.cs",
     "SkillResponseCleanupExactEditorFixture.cs",
