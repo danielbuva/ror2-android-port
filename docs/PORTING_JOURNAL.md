@@ -41818,3 +41818,98 @@ host work; inspection identifies that ordinary Siren entry still omits the
 source-entry egg-spawner owner which currently runs only when a diagnostic flag
 is selected. That lifecycle is the next implementation, preserving exact source
 admission and native mission behavior rather than forcing its counter or boss.
+
+## J1089 — Prepare original Siren eggs on ordinary stage entry
+
+2026-10-24 UTC.
+
+**Observation / hypothesis.** Ordinary integrated Ship Graveyard transport
+attached the source ID-10 encounter but omitted the original ID-11 toggle and
+egg-spawner lifecycle unless the source-entry diagnostic flag was selected.
+J795 already qualified exact native source entry under that diagnostic. Reuse
+its existing owner and strict ordering for ordinary stage entry so the original
+mission can receive its source eggs; do not force a route, input, damage, native
+counter, boss state or reward.
+
+**Change and ownership.** IntegratedStageSession now selects source preparation
+from the actual destination scene. Retain the source owner before activating
+the exact ID-2 Director under the temporary Stage; activate ID 11 before that
+Stage is released. Original destination RNG, the one Run stage callback, full
+native multicast, natural spawner Start, exact twelve-egg bijection, empty queues
+and egg-input-off admission remain unchanged. Every Siren ID-10 admission now
+requires those exact source identities. Diagnostic iterator tracing, route
+pauses and assisted input remain separately selected. No normal run is marked
+assisted by this source-entry selection.
+
+Ordinary play can naturally destroy eggs. The source owner now subscribes to
+the original server death event only after complete source-cohort verification.
+It records a death only for the exact captured body, original health/identity
+components, dead health and matching positive server map. Cleanup detaches the
+subscription before any mutation. A captured egg is accounted as naturally
+retired only when that death was observed, both retained Unity references are
+destroyed and its captured ID is unmapped. Count it once without another
+UnSpawn/Destroy. Missing, replaced, still-mapped or unknown destruction refuses;
+remaining live eggs retain the original pose/identity/census and retry guards.
+One scalar count distinguishes natural retirement from owned cleanup. Existing
+source witnesses, toggle restoration, recovery context and manual Moon gate
+remain intact.
+
+**Prior art.** Consulted the community ledger, pinned R2API.Director
+DirectorAPIexternal.cs scene identity and Starstorm2 ExtinctionController.cs
+subscription/teardown pattern. The accepted current GlobalEventManager API
+distinguishes the system server-death event from the deprecated proc-dependent
+kill event; use the former. Original VultureEggDeathState/BirdsharkDeathState
+provide the native destruction lifecycle. These observations define API and
+lifetime knowledge only; no protected or community implementation is copied.
+J785/J795/J800 and the current legitimate scene govern ordering and ownership.
+
+**Host and exact editor.** All 36 Siren host tests pass, including ordinary
+scene selection without diagnostic input, exact Stage/Director/controller order,
+real production death observation/accounting/retirement under host doubles, all
+five natural-retirement operands, unknown destruction refusal and partial
+UnSpawn/Destroy retry behavior. All 59 catalog tests pass after supplying their
+normal module search path. Initial narrow discovery without that path failed
+two imports; no production failure follows. Host preflight passes.
+
+The current siren-encounter-host editor action verifies staged runtime source
+hashes, stages the existing fixture and refreshes through the pinned MCP/mutex.
+It additively owns the imported source scene, checks inactive IDs 2/10/11, all
+32 unique typed original egg spawners, source group dimensions and all three
+disabled MapZones, then closes only its scene/restores prior active scene.
+Admission, rollback and natural-retirement refusal policies pass. It starts no
+server and exercises no native egg death, boss or gameplay teardown.
+
+**First failures retained.** Fast reuse refuses one changed content input: the
+generated original-audio bootstrap DLL after J1087's reviewed recipe rebinding.
+Do not bypass the content gate; select a normal full build. Its initial typed
+host query reports pending compilation. The first new source-scene fixture
+omitted the GenericSceneSpawnPoint namespace; Unity retained an older compiled
+fixture which could still execute. Preserve that stale result as unqualified.
+Add the correct existing API namespace and make both scene/graphics editor
+actions refuse failed or pending compilation. The corrected current fixture
+returns its new 32-spawner result with no compilation failure. Failed dispatch
+receipts and mandatory pruning records remain local.
+
+**Normal build and artifacts.** Source
+`6dc7d1403219130710e47289b3df5c27193ae88e`, request
+`20261024T174305.150818Z`, completes a normal full build in 126.580 seconds
+with player result Succeeded and zero errors. APK SHA-256
+`7623aca2498b452760984c7670de67e779ef368bc7af7c384cc4363b9b0e1620`.
+All 267 reference-only artifacts independently rehash; all 266 payload hashes
+match R48 exactly. This batch inherits
+R48's graphics content and J1087's range-aware input; the full build refreshes
+the normal iteration anchor after the bootstrap DLL change. Private receipts,
+source/host/editor checks, fingerprint diff and cleanup records remain in
+`work/coordination/main-port-r50`. No APK or payload is copied into that packet.
+
+**Device and next action.** Main remains absent from ADB; the authorized fallback
+remains leased by alpha. R50 is uninstalled. Latest qualified Main behavior is
+still J1080/R44, with R45 last byte-verified before transport loss. Recovery of
+that interrupted run, owned cleanup and display sleep precede any installation.
+Ordinary Siren entry, natural deaths, live actor cleanup, boss start/defeat,
+rewards, normal runs and PC appearance remain device gates. Source review of
+the exact boss/probe prefabs and native CharacterMaster reveals another concrete
+mission-lifetime gap: native master destruction after death conflicts with the
+encounter owner's live-master-only cleanup preflight. Continue that causal
+retirement implementation before the next batched device qualification; do not
+weaken missing/foreign identity refusals or claim mission acceptance here.
