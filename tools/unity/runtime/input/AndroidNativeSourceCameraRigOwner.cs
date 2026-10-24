@@ -133,9 +133,9 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
 
     public static AndroidNativeSourceCameraRigOwner Create(Transform ownerRoot, CharacterBody body,
                                                             bool explicitlyRequested, bool selectedSourceModel, bool actualModel,
-                                                            AndroidNativeSourceSkinLifecycle.Report sourceReport)
+                                                            AndroidNativeSourceSkinLifecycle.Report sourceReport, Scene sourceStageScene)
     {
-        return CreateCore(ownerRoot, body, explicitlyRequested, selectedSourceModel, actualModel, sourceReport, false);
+        return CreateCore(ownerRoot, body, explicitlyRequested, selectedSourceModel, actualModel, sourceReport, false, sourceStageScene);
     }
 
     // Called only by IntegratedWorldSession after the process-scoped original
@@ -149,12 +149,12 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
             GameAudioOriginalOwner.HasTerminalFailure || GameAudioOriginalOwner.OriginalTermsReturned ||
             WwiseIntegrationManager.noAudio || !AkSoundEngine.IsInitialized())
             throw new InvalidOperationException("audio camera context requires the explicitly selected, initialized original audio owner");
-        return CreateCore(ownerRoot, body, true, true, true, null, true);
+        return CreateCore(ownerRoot, body, true, true, true, null, true, default(Scene));
     }
 
     static AndroidNativeSourceCameraRigOwner CreateCore(Transform ownerRoot, CharacterBody body,
                                                           bool explicitlyRequested, bool selectedSourceModel, bool actualModel,
-                                                          AndroidNativeSourceSkinLifecycle.Report sourceReport, bool audioContextOnly)
+                                                          AndroidNativeSourceSkinLifecycle.Report sourceReport, bool audioContextOnly, Scene sourceStageScene)
     {
         if (!audioContextOnly && !AndroidNativeSourceCameraRigContract.ShouldCreate(explicitlyRequested, selectedSourceModel, actualModel))
             throw Refuse(sourceReport, "view-only native camera requires an explicit request for the selected actual source model");
@@ -278,7 +278,7 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
             owner.audioContextOnly = audioContextOnly;
             owner.sourceSkinReport = sourceReport;
             if (!audioContextOnly)
-                owner.PrepareSourceSobel();
+                owner.PrepareSourceSobel(sourceStageScene);
             if (!audioContextOnly && explicitlyRequested && selectedSourceModel && actualModel &&
                 sourceReport != null && sourceReport.requested)
                 owner.TryAttachOutlinePassObserver();
@@ -344,10 +344,10 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
     // during startup. Restore only its recovered Sobel effect for this view;
     // AO/colour-grading compute recovery remains a separate capability gate.
     // Do not enable the application, mutate its profile or create services.
-    void PrepareSourceSobel()
+    void PrepareSourceSobel(Scene sourceStageScene)
     {
         RoR2Application application = null;
-        foreach (var root in SceneManager.GetActiveScene().GetRootGameObjects())
+        foreach (var root in sourceStageScene.GetRootGameObjects())
             if (root.name == "RoR2Application")
                 application = root.GetComponent<RoR2Application>();
         if (!application || application.gameObject.activeInHierarchy)

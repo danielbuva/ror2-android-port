@@ -97,23 +97,25 @@ class Harness : Obj
         source.sharedProfile.settings.Add(new Obj()); // An unrecovered effect is never activated.
         app.BehavioursToEnableDuringStartup = new Behaviour[] { source };
         SceneManager.scene = new Scene { roots = new[] { appRoot } };
+        var stage = SceneManager.scene;
+        SceneManager.scene = new Scene { roots = new GameObject[0] }; // Clock selects the active stage later.
         var cameraRoot = new GameObject("camera");
         var camera = cameraRoot.AddComponent<Camera>();
         var layer = cameraRoot.AddComponent<PostProcessLayer>();
         var owner = new Harness { viewCamera = camera };
         appRoot.activeInHierarchy = true;
-        try { owner.PrepareSourceSobel(); throw new Exception("active application accepted"); }
+        try { owner.PrepareSourceSobel(stage); throw new Exception("active application accepted"); }
         catch (InvalidOperationException) { }
         appRoot.activeInHierarchy = false;
         layer.volumeLayer.value = 0;
-        try { owner.PrepareSourceSobel(); throw new Exception("excluded volume layer accepted"); }
+        try { owner.PrepareSourceSobel(stage); throw new Exception("excluded volume layer accepted"); }
         catch (InvalidOperationException) { }
         layer.volumeLayer.value = 1 << 20;
         LegacyShaderAPI.shader.isSupported = false;
-        try { owner.PrepareSourceSobel(); throw new Exception("unsupported shader accepted"); }
+        try { owner.PrepareSourceSobel(stage); throw new Exception("unsupported shader accepted"); }
         catch (InvalidOperationException) { }
         LegacyShaderAPI.shader.isSupported = true;
-        owner.PrepareSourceSobel();
+        owner.PrepareSourceSobel(stage);
         Check(!appRoot.activeInHierarchy && !source.enabled, "source application or volume changed");
         Check(source.sharedProfile.settings.Count == 2 && owner.sourceSobelProfile.settings.Count == 1, "unrecovered settings copied");
         Check(owner.sourceSobelSettings != setting && owner.sourceSobelSettings.outlineIntensity.value == .75f && owner.sourceSobelSettings.outlineScale.value == 3, "source settings not cloned exactly");

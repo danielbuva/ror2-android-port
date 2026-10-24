@@ -356,7 +356,8 @@ public sealed partial class PortSession
                 display = new NovaDiagnosticDisplay(body.modelLocator.modelTransform, coordinator.artifactBundle, cfg.displayAssets,
                                                     coordinator.obstacle, spine, cfg.originalAimPresentation ? body : null,
                                                     coordinator.SelectedSourceSurvivor() ? coordinator.r.selectedSurvivor : null,
-                                                    nativeSourceSkinRequested, body, coordinator.r.nova.nativeSourceSkinLifecycle);
+                                                    nativeSourceSkinRequested, body, coordinator.r.nova.nativeSourceSkinLifecycle,
+                                                    coordinator.stageGeometryScene);
                 if (nativeSourceSkinRequested)
                 {
                     float assetDeadline = Time.realtimeSinceStartup + 15f;

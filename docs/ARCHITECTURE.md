@@ -3870,7 +3870,8 @@ records only camera/component identity and existing material pass/shader metadat
 it does not show that pass 1 ran or explain an unknown-material log.
 For the requested visual camera only, the same owner restores the original
 Sobel graphics role suppressed with the inactive application root. Setup reads
-the active source scene's `RoR2Application.BehavioursToEnableDuringStartup`,
+the stage supplied by NovaInputSession through NovaDiagnosticDisplay, then its
+`RoR2Application.BehavioursToEnableDuringStartup`,
 selects its `ppApplication_opt` global volume and validates the source camera's
 volume mask. It clones only that profile's Sobel setting into an owned profile
 and child volume, preserving its fields and volume priority/weight/layer. The
