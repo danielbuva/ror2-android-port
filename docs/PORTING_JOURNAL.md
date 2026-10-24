@@ -38312,3 +38312,57 @@ Burst ABI, ordinary app packaging/signing/installer, full APK controls and match
 performance remain open. No APK is installed and shared installed-state facts
 remain unchanged. Revisit on actual original-cohort/module mismatch or missing
 code/content output; target replay remains validation-only for that route.
+
+## J1104 — Refuse two settings interruption attempts and bound the SDK observer lifetime
+
+**Date:** 2026-10-24. **Hypothesis:** the existing native pending-file
+transaction can be observed and interrupted using ordinary shell package-stop
+permission, preserving both the original primary and the actual pending file.
+
+**Changes:** the host invokes the timeout-capable device transport rather than
+passing an unsupported timeout to its shell convenience method. Unique SDK
+cleanup targets are claimed only after their absence is established. The SDK
+actor now exits explicitly on success/failure and has a 35-second process
+deadline. The host preserves an initial hash-verified primary copy and captured
+observer failure streams. These are host/SDK changes; no player rebuild.
+
+**Evidence and first failures:** the first private case, indexed by timestamp
+`20261024T220814.363594Z` under `experiments/settings-write-interruption`, uses
+APK `39f3dd9bf3a8da380153eec481c80c4e6be0752eb2a9745ca61c2766362a8a1a`.
+It refuses before observation/Save because `Device.sh` does not accept
+`timeout`. The second, `20261024T225059.302536Z`, uses normal R55 APK
+`111b1facec5b021c87dce03be24c9b81e913160809e685dc94b23e161786917a`
+(source `eb2acf07c55a6ba67a649494ba77a7c65e6c6b45`). Its observer arms and the
+software Save gesture loses focus, but the SDK process exceeds its 40-second
+transport deadline. Its independent CREATE/stop output was not retained by
+that version, so it supplies no accepted interruption witness. Both raw result
+files report failure and no cleanup errors. Independent terminal receipts
+verify the expected installed bytes, no owned game/selector and OLED sleep
+before lease release. The subsequent lease owner independently finds neither
+the exact observer actor nor a pending settings file; no recovery mutation is
+made during that inspection. Private receipts remain under the existing
+`work/coordination/alpha-touch-acceptance-20261024` packet and R55 inspection
+packet; device-specific paths and raw content are not published.
+
+**Platform knowledge:** inspected AOSP `android-13.0.0_r1`,
+`core/java/android/os/FileObserver.java`: its shared observer thread extends
+`Thread` and is started without daemon configuration. Stopping an individual
+watch does not terminate that shared thread. This explains why returning from
+SDK main alone does not bound process lifetime; the exact cause of the second
+case's missing transaction witness remains unqualified. No platform source is
+copied.
+
+**Validation:** three real JVM fixtures execute the production entry/deadline
+methods against an authored non-daemon peer (success exit, failure exit and
+deadline exit). Six interruption evidence/transport contracts and twelve
+memory-summary contracts pass. Actual Android javac/DEX compilation succeeds;
+DEX SHA-256 `9c1c84c63886be484938460da045ab02fa930e47458d8ce322156decf7d2190b`.
+Ruff and the public staged-content audit pass. A separate host summary replay
+retains J1100's positive menu slope and the post-collection spike; no raw
+measurement is changed.
+
+**Result/revisit:** both device attempts remain failed; real interrupted-write
+recovery, power loss and ENOSPC are open. Retry the corrected SDK case under
+the scheduled device lease and require unchanged primary bytes, an actual
+retained pending file, cold native recovery/resave and unchanged protected
+profile/results hashes before advancing acceptance.
