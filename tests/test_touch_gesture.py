@@ -15,6 +15,17 @@ def request():
 
 
 class TouchGestureTests(unittest.TestCase):
+    def test_focus_must_belong_to_the_owned_app_on_display_zero(self):
+        def display(index, window):
+            return "  Display: mDisplayId=%d (organized)\n  mCurrentFocus=%s\n  mFocusedApp=ignored\n" % (index, window)
+
+        owned = "Window{fixture u0 dev.ror2lab.arm64/com.unity3d.player.UnityPlayerActivity}"
+        foreign = "Window{fixture u0 fixture.other/Activity}"
+        self.assertTrue(touch_gesture.owned_display_zero_focus(display(4, foreign) + display(0, owned)))
+        for text in (display(4, owned), display(4, owned) + display(0, foreign), display(0, "null"), display(0, owned) * 2, ""):
+            with self.subTest(text=text):
+                self.assertFalse(touch_gesture.owned_display_zero_focus(text))
+
     def test_multiple_fingers_and_a_final_canceled_hold_are_valid(self):
         value = request()
         value["steps"].insert(1, dict(action="down", id=1, x=900, y=300))

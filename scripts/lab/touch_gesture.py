@@ -105,6 +105,18 @@ def compile_tool():
     return destination / "classes.dex"
 
 
+def owned_display_zero_focus(text):
+    """Require the owned window on display 0, never a second-screen match."""
+    displays = list(re.finditer(r"^  Display: mDisplayId=([0-9]+)\b", text, re.M))
+    primary = [index for index, match in enumerate(displays) if match[1] == "0"]
+    if len(primary) != 1:
+        return False
+    index = primary[0]
+    block = text[displays[index].end() : displays[index + 1].start() if index + 1 < len(displays) else len(text)]
+    focus = re.findall(r"^  mCurrentFocus=(.*)$", block, re.M)
+    return len(focus) == 1 and re.fullmatch(r"Window\{[^\n]*\s" + re.escape(PACKAGE) + r"/[^\n]*\}", focus[0]) is not None
+
+
 def run(target, expected_apk_sha256=None):
     expected = validate_expected_apk_sha256(expected_apk_sha256)
     if expected is None:
@@ -120,8 +132,8 @@ def run(target, expected_apk_sha256=None):
         raise RuntimeError("Gesture PID differs from the currently owned game process")
     if int(device.sh("getprop", "ro.build.version.sdk")) < 33:
         raise RuntimeError("Targeted touch injection requires Android 13 or newer")
-    window = device.sh("dumpsys", "window", "windows")
-    if not re.search(r"mCurrentFocus=Window\{[^\n]*\s" + re.escape(PACKAGE) + r"/", window):
+    window = device.sh("dumpsys", "window", "displays")
+    if not owned_display_zero_focus(window):
         raise RuntimeError("The owned game is not the focused window")
     packages = device.sh("cmd", "package", "list", "packages", "-U", PACKAGE)
     matches = [match for line in packages.splitlines() if (match := re.fullmatch(r"package:" + re.escape(PACKAGE) + r" uid:([0-9]+)", line.strip()))]
