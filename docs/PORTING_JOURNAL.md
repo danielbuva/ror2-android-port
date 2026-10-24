@@ -38121,3 +38121,62 @@ open. Full Burst ABI (including complete export names), nonempty fragment shader
 qualification, original content assembly, ordinary-app packaging/signing/installer,
 and full APK controls/performance remain open. No install or game run occurs for
 this host fix; installed-state and rollback facts are unchanged.
+## J1092 — Correct captured retention producers and preserve a failed Commando series
+
+**Hypothesis and change.** J1091 attributes the dominant retained bytes to full
+periodic diagnostic JSON in the original console, and a smaller completed-player
+root to returned bullet hits. Keep periodic snapshots fresh in the existing
+replaceable file, logging the startup snapshot once. Preserve the original
+console, subscriptions and error logging. After completed world and network
+teardown, the existing resource owner clears only Unity-destroyed HurtBox
+references in returned `BulletAttack.bulletHitPool` items. Live targets,
+checked-out hits, stack order/capacity and original attack/reset behavior remain
+unchanged. Community API/lifetime clues are recorded in
+[prior art](community-prior-art.md#retained-diagnostic-payloads-and-returned-bullet-hits).
+No gameplay values or original input files are changed.
+
+**Host and build qualification.** Two extracted-production-method fixtures pass:
+400 large periodic publications replace one file without console accumulation;
+the pool fixture rejects live-world/network cleanup and preserves live/rented
+items and ordering. The normal LZ4 full build at source
+`e27cffac1bfd456a4ffcfad50788c3fe9cd64ad4` succeeds with zero Unity errors:
+request `20261024T183349.312318Z`, 453.706 s pipeline / 371.131 s Unity.
+APK SHA-256:
+`39f3dd9bf3a8da380153eec481c80c4e6be0752eb2a9745ca61c2766362a8a1a`.
+All 266 payload hashes are independently checked; only `whole-catalog.json`
+differs from J1091's cohort. A stale inherited editor fixture is retired only
+inside this worker's isolated lane after its source equality is checked. The
+canonical editor/staging stays untouched, and the lane is removed afterwards.
+
+An existing host CI capture-cleanup race is reproduced and fixed by waiting for
+the terminal background result, with bounded timeouts. Five focused contracts,
+the fresh-clone pre-push suite and remote host CI pass. This does not bypass a
+check or supply Android evidence.
+
+**Installation and first failure.** Initial capacity refusal occurs before
+installation. Only this worker's hash-backed runtime content is temporarily
+reclaimed, then fully restored when capacity remains insufficient. After the
+priority owner's documented scratch cleanup, a normal retained-data install
+succeeds and verifies all 134 runtime payload files. No uninstall, data clear,
+foreign scratch deletion or storage reconfiguration occurs.
+
+The first requested 12-session case stops on the known native nonfinite Collider
+transform for `LightningStake(Clone)`, with **zero completed sessions**. It
+cannot measure or bound repeated-session memory. Both its selector and actual
+native damage witness identify **Commando / CommandoBody**, with developer
+survivor override false; this is not a Loader selection. J667 identifies the
+same intermittent symptom on the blue-elite hit path, distinct from Loader's
+pylon. The exact new failing transition remains the gameplay owner's task.
+The error remains fatal to the collector; it is neither filtered nor clamped.
+
+**Evidence and terminal state.** Build/freeze/installation/handoff packets are
+under `work/coordination/alpha-touch-acceptance-20261024/`; the failed case is
+`work/device/<selected-device>/experiments/session-memory/20261024T191134.178970Z/`.
+The preserved final native report is `failed39-last-report.json` in the
+coordination packet. Installed APK bytes, absent selector/process and OLED sleep
+are independently checked before releasing the shared lease. Mandatory pruning
+runs after the case. The installed candidate is not a memory-bound acceptance.
+Revisit with a completed guarded Commando series, preserving this failed case,
+and classify any recurrence separately. J1086 remains the completed uncorrected
+12-session measurement; J1091 remains the heap attribution, not corrected-player
+acceptance.

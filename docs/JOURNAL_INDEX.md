@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1092](PORTING_JOURNAL.md#j1092--correct-captured-retention-producers-and-preserve-a-failed-commando-series) | 2026-10-24 | Correct captured retention producers and preserve a failed Commando series | **Hypothesis and change.** |
 | [J1098](PORTING_JOURNAL.md#j1098--preserve-recorded-object-order-for-the-fixed-target-native-link) | 2026-10-24 | Preserve recorded object order for the fixed-target native link | Date: 2026-10-24 UTC. |
 | [J1095](PORTING_JOURNAL.md#j1095--retain-one-on-device-owner-key-across-separate-apk-signing-builds) | 2026-10-24 | Retain one on-device owner key across separate APK signing builds | Date: 2026-10-24 UTC. |
 | [J1093](PORTING_JOURNAL.md#j1093--restage-private-lanes-from-their-own-authored-source-cohort) | 2026-10-24 | Restage private lanes from their own authored source cohort | 2026-10-24 UTC. |

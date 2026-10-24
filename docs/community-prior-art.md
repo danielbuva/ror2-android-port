@@ -384,3 +384,18 @@ owned pending filename, rechecks PID/UID/foreground, and uses the normal shell
 stop permission. No platform implementation, player hook, grant or permission
 change is added. Actual retained pending bytes plus an unchanged primary are
 required; observer dispatch alone never qualifies a transaction interruption.
+
+### Thor secondary-panel control
+
+The public [ThorBottomScreen source](https://github.com/slushiimusic/ThorBottomScreen/tree/ba9f5febcb868a7c0313ac70e0cd2669948fe59f),
+pin `ba9f5feb`, distinguishes the stock dual-screen setting from physical panel
+power. Its README and authored `ShellService` describe the stock setting as a
+cover/touch-mask route. Its separate physical-off route temporarily changes a
+system property to override a vendor SurfaceFlinger refusal. That community
+route is not evidence of a vendor-supported panel-off control and is not
+integrated into device tooling. J1071's physical readback remains authoritative:
+the lower panel returns ON after the stock setting changes. Keep Thor gameplay
+fail-closed until a supported top-only control survives physical readback;
+neither a black cover nor another device's successful run closes that gate.
+No vendor disassembly, platform code, helper application or permission change
+is included in this repository.
