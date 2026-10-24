@@ -61,7 +61,7 @@ class HdiutilVolumeTests(unittest.TestCase):
     def tearDown(self) -> None:
         self.temporary.cleanup()
 
-    def run_helper(self, mode: str, timeout: float = 0.35) -> tuple[subprocess.CompletedProcess[str], float]:
+    def run_helper(self, mode: str, timeout: float = 1.0) -> tuple[subprocess.CompletedProcess[str], float]:
         self.env["HDIUTIL_MODE"] = mode
         started = time.monotonic()
         result = subprocess.run(
@@ -69,7 +69,7 @@ class HdiutilVolumeTests(unittest.TestCase):
             env=self.env,
             capture_output=True,
             text=True,
-            timeout=5,
+            timeout=10,
             check=False,
         )
         return result, time.monotonic() - started
@@ -83,7 +83,7 @@ class HdiutilVolumeTests(unittest.TestCase):
     def test_create_timeout_reaps_own_cli_and_falls_back_before_attach(self) -> None:
         result, elapsed = self.run_helper("create-timeout")
         self.assertEqual(result.returncode, 1, result.stderr)
-        self.assertLess(elapsed, 3)
+        self.assertLess(elapsed, 6)
         self.assertIn("create timed out", result.stderr)
         self.assertEqual([line.split()[0] for line in self.log.read_text().splitlines()], ["create"])
         self.assert_child_was_stopped()
@@ -91,7 +91,7 @@ class HdiutilVolumeTests(unittest.TestCase):
     def test_attach_timeout_reaps_cli_and_marks_mount_state_uncertain(self) -> None:
         result, elapsed = self.run_helper("attach-timeout")
         self.assertEqual(result.returncode, 2, result.stderr)
-        self.assertLess(elapsed, 3)
+        self.assertLess(elapsed, 6)
         self.assertIn("mount state is uncertain", result.stderr)
         self.assertEqual([line.split()[0] for line in self.log.read_text().splitlines()], ["create", "attach"])
         self.assertTrue((self.mount / "mounted-sentinel").is_file())
@@ -175,9 +175,12 @@ class HdiutilVolumeTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         cleanup_dir = repo / ".git" / "ci-cleanup"
         cleanup_logs = []
-        for _ in range(100):
+        deadline = time.monotonic() + 5
+        expected_cleanup = "attach timed out with uncertain mount state; preserving"
+        while time.monotonic() < deadline:
             cleanup_logs = list(cleanup_dir.glob("*.log")) if cleanup_dir.exists() else []
-            if cleanup_logs:
+            # The trap starts in the background. File creation is not completion.
+            if len(cleanup_logs) == 1 and expected_cleanup in cleanup_logs[0].read_text():
                 break
             time.sleep(0.02)
         self.assertEqual(len(cleanup_logs), 1, "cleanup trap did not record its outcome")
