@@ -33387,3 +33387,99 @@ full-game conversion, Android tool execution, performance acceptance or public
 redistribution clearance. The private accepted-output replay and desktop
 owner-build/cache fallback remain the usable bounded routes while those
 producers and ordinary phone installation are completed.
+
+## J1053 — Produce all four retained package assemblies without the Editor
+
+2026-10-24. Complete host package-source compilation and managed post-processing
+case. No game input, captured assembly or project response is a producer input;
+no Editor, device, shared project or game build is changed.
+
+**Hypothesis and prior art.** J1052 identifies four retained source-compiled
+package assemblies as a concrete full-player dependency. Produce the whole
+cohort from owner SDK/provider sources, including the actual required IL
+post-processing, before attempting another game compiler implementation.
+The pinned RoR2ThunderBurster `9cbfd8c807e887111227b98f2803991c653d4717`,
+`Editor/Core/DependencyInstaller.cs`, supplies a package-version/dependency clue,
+not an Android producer. Its newer tuple is not adopted; retain Burst 1.8.11,
+Collections 1.2.4, Mathematics 1.2.1 and UGUI 1.0.0. Unity's assembly-definition
+schema explains version defines, references and platform/source membership.
+
+**Owner inputs and independent request.** Acquire the three exact provider
+archives from Unity's registry and verify their published SHA-1 checksums.
+Archive SHA-256 values are Burst
+`b478606a13d033f1782b42f603ff6be31e0062806045c3cbe3826a2a44d0837c`,
+Collections `507e94c8bf7ab636035789b3744f900f2e55262778573864cf7962251bd5686e`
+and Mathematics
+`3fb6ebcaccefc535c1a99197cca0c539b40ebd0f509c5d38c2bd9e9ee7081d77`.
+UGUI sources come from the owner's exact SDK builtin package. Select 282 runtime
+sources plus seven Burst.CodeGen sources using package assembly definitions,
+nested same-assembly references, ignored-folder rules and case-insensitive source
+order. Version defines derive from the fixed profile and supplied SDK packages.
+The existing independently pinned SDK selector supplies 186 references; required
+package helpers and the 429-file host compiler/post-processor toolchain are hash
+bound. No earlier compiled package, captured response file, game DLL or project
+is needed. Captured responses remain separate read-only comparison evidence.
+
+**Tracked owner and complete execution.**
+`tools/phone-build/package-assemblies/produce.py` and its pinned `profile.json`
+accept explicit canonical SDK/package roots and a new separate output root.
+They generate all responses, compile all four runtime assemblies plus
+Burst.CodeGen, then run that freshly compiled processor on the four runtime
+outputs. Compiler servers are disabled; bounded children are killed/reaped on
+interruption or timeout. Inputs are not edited. Logs, requests, partial outputs
+and terminal failure state remain private; existing runs are never overwritten.
+ARCHITECTURE and LOCAL_STATE name setup, teardown, provenance and state. No
+current game build or launcher consumes this experimental host owner.
+
+The final public-source run completes all nine child stages successfully,
+4.5475 seconds summed child time, excluding acquisition, validation and comparison.
+It revalidates all 981 declared original input hashes at completion. Runtime
+source counts are UGUI 85, Burst 53, Mathematics 88 and Collections 56. Collections'
+managed post-processor materially changes the DLL, so bare Roslyn output is not
+a substitute. The complete four-package case, rather than another authored
+fixture, is the tested input-production scope. Four independent host contract
+tests cover source boundaries/order, redirected inputs/output overlap, version
+defines and retained process failures; Ruff passes.
+
+**Comparison and first failures.** Independently rehash the frozen R27/J978
+pre-strip DLLs before comparing. Final generated outputs match the declared
+read-only Cecil projection for all 686 types: UGUI 202, Burst 88, Mathematics 97
+and Collections 299. That projection includes declared field order, all method
+IL with bit-preserved floating constants, custom attributes, generic constraints,
+layout, property/event bindings and interop/marshal data. It excludes MVID,
+PE headers/timestamps, PDB/debug information, metadata token identities/order
+outside the declared field/method collections, security declarations/resources
+and individual referenced-type scope identity beyond assembly-reference names.
+Do not promote this bounded projection to complete binary or native equivalence.
+All four DLL byte hashes differ from the captured inputs and remain recorded.
+
+The initial source selector incorrectly excludes Burst's nested same-assembly
+reference folder; the corrected producer retains it. A comparison-reader attempt
+refuses JSON infinity values; the corrected reader preserves float bit patterns.
+The first complete source-order comparison exposes Burst member-order/IL
+mismatches and two Collections attribute-order mismatches. Case-insensitive source
+ordering resolves those actual differences in the complete cohort. Initial
+sources, outputs, errors and negative comparisons remain evidence. None of these
+failures is hidden by changing the accepted package versions or normalizing away
+a differing instruction, field order or attribute.
+
+**Evidence and remaining work.** Private registry metadata, archives, acquisition
+receipts, initial cases, final explicit request and public-source outputs,
+comparison reader/reports and all byte differences live under
+`work/coordination/package-assemblies-v1/`. `proof-v1.json` SHA-256
+`65351f521aebe598c6cc678ad676ea6715d71b3c08cf63aa8222d3c5a4f353ec`
+binds source commit `4d54c65`, all final output/report hashes and the complete
+comparison. Owner SDK/package material and raw outputs stay ignored. Public
+availability is not a redistribution grant; no SDK binaries are committed.
+
+This supplies a reusable host producer for four package inputs within Route A
+and Architecture C. It does not generate the remaining game/authored assemblies,
+independent maps/catalog contracts, serialization/linker roots, native AOT or
+Burst output, Android serialized content/shaders, or a phone installer. The
+macOS host toolchain closure and its app-host execution still need an Android
+acquisition/execution solution; do not relabel this as a phone-qualified producer.
+Native/game behavior and matched performance require the remaining full pipeline
+and actual device evidence. The working game and desktop fallback remain fixed.
+
+Primary schema reference:
+[Unity 2021.3 assembly-definition file format](https://docs.unity3d.com/2021.3/Documentation/Manual/AssemblyDefinitionFileFormat.html).

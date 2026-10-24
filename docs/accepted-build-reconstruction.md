@@ -145,6 +145,13 @@ post-processing and linker-root dependencies rather than treating an Editor
 rebuild as inevitable. Its host result is not full-player or phone qualification;
 reuse these existing producers instead of starting a second raw audio pipeline.
 
+The [complete retained-package producer (J1053)](PORTING_JOURNAL.md#j1053--produce-all-four-retained-package-assemblies-without-the-editor)
+now compiles all four retained package assemblies and their required managed
+post-processor from explicit owner SDK/package inputs without the Editor.
+This closes their host production dependency; DLL bytes still differ from the
+capture, the declared managed projection is bounded, and Android execution,
+full-player/native integration and performance remain unqualified.
+
 ## Binary patches and retained artifacts
 
 | Candidate shortcut | Assessment |
