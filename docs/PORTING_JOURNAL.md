@@ -41615,3 +41615,105 @@ failure logs, install the corrected normal candidate, qualify both controls and
 source-camera blended Sobel/image/End Run/Quit. Full AO/grading compute roles,
 configured graphics, matched PC appearance and the existing gameplay/audio/
 performance gates remain open. The public role remains opt-in/unaccepted.
+
+## J1084 — Restore the original source-camera global post-processing roles
+
+2026-10-24 UTC.
+
+**Observation and hypothesis.** J1083 reconstructs Sobel but still leaves the
+suppressed application's original ambient-occlusion and gamma/colour-grading
+roles unavailable. The accepted stage application's startup list contains both
+`ppApplication_opt` and `ppDisabler_opt`; J46/J47 already established original
+volume registration and priority behavior. The source camera's own run profile
+disables grading/exposure. Restore the two original global profiles and their
+required program references, preserving serialized settings rather than guessing
+exposure, saturation, lighting or tone-mapping values. This is a host-qualified
+candidate, not an observed correction of Android appearance.
+
+**Prior art and source contract.** Consulted `docs/community-prior-art.md` and
+pinned RoR2ImportExtensions `Editor/PostProcessingInstaller.cs`: it selects
+Post Processing 2.3.0 and avoids duplicate runtime providers. That package is a
+compatible public program reference, not proof of the game's shipped package
+version or exact original shader equivalence. Original accepted-input
+PostProcessResources, PostProcessLayer, MultiScaleVO and ColorGradingRenderer
+supply the resource fields, public Init API, consumed kernel names and pass
+calls. All 22 original kernel names match the pinned public programs. Original
+kernel thread-group sizes are independently checked against actual editor
+imports. J330/J368/J369 lighting/HDR findings are retained; no new lighting or
+color-space adjustment is introduced.
+
+**Complete implementation.** The existing default-off
+`shader_postprocessing_uber` generator and audited recipe now produce five
+AO/LUT compute and two AO/LUT graphics programs plus an 18-file HLSL closure.
+Original asset/meta hashes and exact source-camera resource-field/GUID joins
+bind each program. New programs use deterministic lab GUIDs and the existing
+loading-scene Resources directory. Original camera/resource/compute/profile
+assets stay unchanged. Stable generated inputs live under
+`work/generated/shader-candidates/postprocessing-source-camera/<input_id>`;
+no timestamped evidence folder is a build input. Catalog receipts and replay
+validate program membership, paths, hashes and metadata alongside shared
+Bloom/Uber includes. Unknown stage preimages still refuse before writes.
+
+The requested visual camera owner clones both original startup profiles and
+each setting, preserving active/enabled flags, parameter values and volume
+priority/weight/layer. It clones the source resource object and both nested
+program tables, replaces only the seven program references and invokes the
+original public `PostProcessLayer.Init` before activation. Original application
+and services stay inactive; Console graphics preferences remain unavailable.
+Audio-context-only cameras bypass this presentation. Original post-processing
+renderers retain execution ownership. One exact-camera post-render sample
+records blended Sobel/AO/grading enablement and resource/kernel readiness.
+Disable/disposal unregisters both owned volumes and destroys only owned
+profiles/settings/resources; cleanup is idempotent.
+
+**Host qualification and first failures.** 161 affected tests pass with three
+skips; another 22 composition tests pass. The fresh-clone pre-push CI passes
+1,948 tests with 140 skips, Ruff, public audit and generated-document checks. The extracted
+production lifecycle fixture verifies immutable original profiles/resource
+tables, preserved inactive effects, missing-resource/kernel rejection, a
+foreign-camera refusal, one-shot observation and owned teardown. Synthetic
+staging/replay/comparison covers the new compute resource and metadata,
+incomplete receipt refusal and changed original-input refusal. All seven
+runtime resource names/fields and 22 kernel names equal the recipe; staged
+program/meta pairs independently rehash.
+
+First preparation refuses because primary composition staging still calls the
+device-inclusive preflight. It now uses the existing host/input preflight;
+install retains live storage checks. Next, the editor detects a new host-fixture
+call to a build helper before that helper is staged. Remove that cross-phase
+call: `WholeCatalogBuild.ValidateSourceCameraPrograms` stays in the full-build
+owner. A subsequent stale failed-compilation latch requires the supported
+`./dev editor --target lab --action refresh`; it recovers and the editor's
+7,466 typed catalog roots pass. Refusal/compile/refresh logs are preserved in
+`work/coordination/main-port-r48`; mandatory pruning follows failures and the
+successful build. These are host preparation issues, not Android failures.
+
+**Normal full build.** Source
+`498ef5e3a78c3a8d137de34cb951cc8fc1e9e8d7`, request
+`20261024T164245.024905Z`, completes in 140.570 seconds with zero Unity errors.
+The actual editor import gate passes all seven programs and 22 kernel/thread
+contracts before content/player construction. APK SHA-256
+`1578bc0d8cad458967341e58a629459c2ee631d358d845d1bab96215d3440bec`.
+This is a normal full player, not a fast-splice or ScriptsOnly result. All 267
+APK/payload references are independently rehashed; only `whole-catalog.json`
+changes among the 266 payload files versus R47. The new Resources programs are
+in player data. Receipts, reference-only manifest, normal iteration anchors,
+source/package contracts and host logs are in
+`work/coordination/main-port-r48`; no APK or payload is copied into evidence.
+
+**Device gate / first unresolved failure.** Main's assigned ADB transport remains
+absent. No server reset, new install, run or graphics observation occurs. The
+authorized fallback's shared lease belongs to the alpha worker's active tests,
+so it is not accessed. Main's last byte-verified installation remains R45 before
+its J1083 transport loss; cleanup/process/selector/display state remains unknown
+while unreachable. R44/J1080 remains the latest qualified Main diagnostic.
+R48 and R47 are uninstalled candidates. PC parity, original configured graphics,
+AO/tonemapping appearance and Android lifetime/performance remain unaccepted.
+
+**Next / revisit.** When an authorized device is available, first collect and
+clean up the interrupted Main run if its transport returns. Install the frozen
+R48 over the owned lab package, check live storage/profile/bytes, run both
+standard controls and the requested source-view/End Run/Quit cycle, then compare
+against a matched PC reference. A host build is insufficient to merge a claim
+that the nearly-black/washed-out output is fixed. Stage-audio evidence remains
+J1080; full original mix/audibility and normal-play gates remain open.
