@@ -6,7 +6,7 @@
     "visual_parity_proven": false
   },
   "schema": 1,
-  "scope": "Local host candidate generator only; never consumed by the whole-catalog build or treated as runtime acceptance.",
+  "scope": "Source-bound single-pass post-process reconstruction; generation alone does not qualify editor compilation, Android execution or appearance.",
   "source": {
     "build_id": "25475991",
     "bundle_path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-shaders_shader_assets_all_45ab8c24dd5dcd99e5cb60900de0231b.bundle",
@@ -43,7 +43,7 @@
     "shader_path_id": 2910825169780710437,
     "subshader_count": 1
   },
-  "stable_output": "generated-shader-candidates/ramp-fog-r4/{input_id}",
+  "stable_output": "generated-shader-candidates/ramp-fog-r5/{input_id}",
   "target": "ramp-fog",
   "tools": {
     "d3dasm": {

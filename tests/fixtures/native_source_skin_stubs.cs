@@ -84,6 +84,7 @@ namespace UnityEngine
     public class Mesh : Object { }
     public class MeshFilter : Component { public Mesh sharedMesh; }
     public class SkinnedMeshRenderer : Renderer { public Mesh sharedMesh; }
+    public static class QualitySettings {public static int activeColorSpace=1;}
     public class Camera : Behaviour
     {
         public static readonly List<Camera> enabledCameras = new List<Camera>();
@@ -117,6 +118,8 @@ namespace UnityEngine
         public int cullingMask = -1, targetDisplay;
         public CameraClearFlags clearFlags = CameraClearFlags.Skybox;
         public bool orthographic;
+        public bool allowHDR=true;
+        public int renderingPath=-1,actualRenderingPath=3,depthTextureMode;
         public Rect rect = new Rect { width = 1, height = 1 };
         public Texture targetTexture;
         public Vector3 WorldToScreenPoint(Vector3 point) => nonFiniteProjection

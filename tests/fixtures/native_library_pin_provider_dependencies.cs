@@ -50,5 +50,5 @@ internal sealed class GameAudioOriginalRequest
 {
     internal GameAudioOriginalRequest(bool requested, string[] names, IGameAudioOriginalStartupPreparation preparation) { }
     internal GameAudioOriginalRequest(bool requested, IEnumerable<string> names, IGameAudioOriginalStartupPreparation preparation,
-        bool captureRequested, IGameAudioOriginalPassivePcmCapture capture, bool musicOutputRequested) { }
+        bool captureRequested, IGameAudioOriginalPassivePcmCapture capture, bool musicOutputRequested, bool afterAuthoritySkillRequested) { }
 }

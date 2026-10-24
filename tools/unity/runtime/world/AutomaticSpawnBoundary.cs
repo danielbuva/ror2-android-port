@@ -266,8 +266,16 @@ public sealed partial class PortSession
             }
             automaticSpawnSetupStarted = true;
             // Body-enabled probes use only Unity Start/Update/FixedUpdate; other root callbacks remain inactive.
+            int preservedAudioRootCallbacks = 0;
             foreach (var component in body.GetComponents<MonoBehaviour>())
+            {
+                if (GameAudioOriginalOwner.Ready && component.GetType().Name.StartsWith("Ak", StringComparison.Ordinal))
+                {
+                    if (component.enabled) preservedAudioRootCallbacks++;
+                    continue;
+                }
                 component.enabled = false;
+            }
             if (automaticModel)
                 PrepareAutomaticModel(body);
             machine.enabled = true;
@@ -310,7 +318,7 @@ public sealed partial class PortSession
                 Check(r.automaticCallbacks.Length == (movingMotor ? 2 : 1) + (automaticBody ? 1 : 0) + (automaticDirection ? 1 : 0) +
                                                          (automaticModel ? 1 : 0) + AutomaticSkillCount() + (IsPlayableSpine() ? 2 : 0) +
                                                          restoredSourceEnabledStateMachines + restoredSourceEnabledRootTeamComponents +
-                                                         restoredSourceEnabledRootHuntressTrackers,
+                                                         restoredSourceEnabledRootHuntressTrackers + preservedAudioRootCallbacks,
                       "Unexpected enabled root callback");
             Physics.gravity = Vector3.zero;
             solver.SetGroundSolvingActivation(false);

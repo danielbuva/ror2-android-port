@@ -151,6 +151,15 @@ class PrototypeActionTests(unittest.TestCase):
                 self.assertEqual(json.loads(output), {"success": True, "unity_compiled": False})
                 self.assertIsNone(code)
 
+    def test_screen_damage_dispatch_keeps_the_fixed_native_target(self):
+        module = ModuleType("shader_ramp_fog")
+        module.generate = Mock(return_value={"success": True, "unity_compiled": False})
+        self.modules["shader_ramp_fog"] = module
+        code, output = self.dispatch("shader-screen-damage")
+        module.generate.assert_called_once_with(target="screen-damage")
+        self.assertEqual(json.loads(output), {"success": True, "unity_compiled": False})
+        self.assertIsNone(code)
+
     def test_shared_build_full_and_capture_options_are_explicit(self):
         module = ModuleType("shared_checkout_build")
         module.build_shared_checkout = Mock(return_value={"success": True})
@@ -201,6 +210,7 @@ class PrototypeActionTests(unittest.TestCase):
             "rebuild-step",
             "shader-outline-candidate",
             "shader-ramp-fog",
+            "shader-screen-damage",
             "shader-translucent",
             "owner-assembly-prefix",
         }
@@ -219,6 +229,7 @@ class PrototypeActionTests(unittest.TestCase):
                 "owner-assembly-prefix",
                 "shader-outline-candidate",
                 "shader-ramp-fog",
+                "shader-screen-damage",
                 "shader-translucent",
                 "phone-content-fixture",
                 "phone-content-check",

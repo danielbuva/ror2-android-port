@@ -302,6 +302,7 @@ public sealed partial class PortSession
                     {
                         if (behaviour.GetType().Name.StartsWith("Ak", StringComparison.Ordinal))
                         {
+                            if (GameAudioOriginalOwner.Ready) continue;
                             PortSession.DestroyImmediate(behaviour);
                             continue;
                         }
@@ -311,7 +312,8 @@ public sealed partial class PortSession
                     foreach (var sfx in bodyObject.GetComponentsInChildren<SfxLocator>(true))
                         foreach (var field in typeof(SfxLocator).GetFields(BindingFlags.Public | BindingFlags.Instance))
                             if (field.FieldType == typeof(string))
-                                field.SetValue(sfx, null);
+                                if (!GameAudioOriginalOwner.Ready)
+                                    field.SetValue(sfx, null);
                     coordinator.BindCatalogBodyTemplate(bodyObject);
                 }
                 var masterObject = PortSession.Instantiate(source, coordinator.enemyTemplates.transform);
@@ -321,7 +323,7 @@ public sealed partial class PortSession
                 if (inventory)
                     inventory.enabled = false;
                 foreach (var behaviour in masterObject.GetComponentsInChildren<MonoBehaviour>(true))
-                    if (behaviour.GetType().Name.StartsWith("Ak", StringComparison.Ordinal))
+                    if (!GameAudioOriginalOwner.Ready && behaviour.GetType().Name.StartsWith("Ak", StringComparison.Ordinal))
                         PortSession.DestroyImmediate(behaviour);
                 masterObject.SetActive(true);
                 coordinator.objectiveTemplates.Add(masterObject);

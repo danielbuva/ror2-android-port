@@ -1,4 +1,4 @@
-"""Generate a source-bound ignored ShaderLab RampFog candidate.
+"""Generate source-bound ignored native post-process candidates.
 
 The action is host-only support. Its candidate is not Android accepted or
 semantically equivalent until separately checked in Unity and on device.
@@ -29,22 +29,24 @@ RECIPE = json.loads(RECIPE_PATH.read_text(encoding="utf-8"))
 SOURCE = RECIPE["source"]
 
 
-def output_path(work: Path, input_id: str) -> Path:
+def output_path(work: Path, input_id: str, *, recipe: dict | None = None) -> Path:
     """Resolve the one recipe-declared stable output beneath work/ only."""
-    if input_id != SOURCE["input_id"]:
-        raise RuntimeError("Accepted input does not match the fixed RampFog recipe")
-    relative = Path(RECIPE["stable_output"].format(input_id=input_id))
+    recipe = RECIPE if recipe is None else recipe
+    source = recipe["source"]
+    if input_id != source["input_id"]:
+        raise RuntimeError("Accepted input does not match the fixed native post-process recipe")
+    relative = Path(recipe["stable_output"].format(input_id=input_id))
     if relative.is_absolute() or ".." in relative.parts:
-        raise RuntimeError("RampFog output recipe escapes work/")
+        raise RuntimeError("Native post-process output recipe escapes work/")
     work = Path(work).resolve()
     output = work / relative
     if work not in output.resolve(strict=False).parents:
-        raise RuntimeError("RampFog output is outside work/")
+        raise RuntimeError("Native post-process output is outside work/")
     cursor = work
     for part in relative.parts[:-1]:
         cursor = cursor / part
         if cursor.is_symlink():
-            raise RuntimeError("RampFog output parent contains a symlink")
+            raise RuntimeError("Native post-process output parent contains a symlink")
     return output
 
 
@@ -60,22 +62,23 @@ def sha_file(path: Path) -> str:
     return h.hexdigest()
 
 
-def validate_tree(tree: dict, blob: bytes, records: list[dict], programs: dict[int, bytes]) -> None:
-    if sha_bytes(blob) != SOURCE["serialized_blob_sha256"]:
+def validate_tree(tree: dict, blob: bytes, records: list[dict], programs: dict[int, bytes], *, source: dict | None = None) -> None:
+    source = SOURCE if source is None else source
+    if sha_bytes(blob) != source["serialized_blob_sha256"]:
         raise RuntimeError("Serialized shader blob drift")
-    if tree.get("platforms") != SOURCE["platform_codes"]:
+    if tree.get("platforms") != source["platform_codes"]:
         raise RuntimeError("Serialized platform drift")
     parsed = tree["m_ParsedForm"]
-    if parsed["m_Name"] != SOURCE["shader_name"]:
+    if parsed["m_Name"] != source["shader_name"]:
         raise RuntimeError("Shader name drift")
-    if len(parsed["m_SubShaders"]) != SOURCE["subshader_count"]:
+    if len(parsed["m_SubShaders"]) != source["subshader_count"]:
         raise RuntimeError("Subshader count drift")
     actual_passes = [len(s["m_Passes"]) for s in parsed["m_SubShaders"]]
-    if actual_passes != SOURCE["passes_per_subshader"]:
+    if actual_passes != source["passes_per_subshader"]:
         raise RuntimeError("Pass topology drift")
-    if len(records) != len(SOURCE["records"]) or len(programs) != 2:
+    if len(records) != len(source["records"]) or len(programs) != 2:
         raise RuntimeError("Native record or executable count drift")
-    for expected in SOURCE["records"]:
+    for expected in source["records"]:
         actual = records[expected["index"]]
         for key, value in expected.items():
             if actual.get(key) != value:
@@ -84,20 +87,21 @@ def validate_tree(tree: dict, blob: bytes, records: list[dict], programs: dict[i
         raise RuntimeError("Expected the exact vertex/fragment program indices")
 
 
-def _verify_tools(input_work: Path, root: Path) -> tuple[Path, Path]:
+def _verify_tools(input_work: Path, root: Path, *, recipe: dict | None = None) -> tuple[Path, Path]:
+    recipe = RECIPE if recipe is None else recipe
     from common import sha
 
     helper_pins = {
-        "shader_segments.py": RECIPE["tools"]["shader_segments_sha256"],
-        "shader_source.py": RECIPE["tools"]["shader_source_sha256"],
-        "shader_deferred.py": RECIPE["tools"]["shader_deferred_sha256"],
+        "shader_segments.py": recipe["tools"]["shader_segments_sha256"],
+        "shader_source.py": recipe["tools"]["shader_source_sha256"],
+        "shader_deferred.py": recipe["tools"]["shader_deferred_sha256"],
     }
     for helper, digest in helper_pins.items():
         if sha(root / "scripts/lab" / helper) != digest:
             raise RuntimeError(f"Pinned authored shader helper drift: {helper}")
-    d3d = input_work / RECIPE["tools"]["d3dasm"]["path"]
-    spirv = input_work / RECIPE["tools"]["dxbc_spirv"]["path"]
-    for name, spec, path in (("d3dasm", RECIPE["tools"]["d3dasm"], d3d), ("dxbc_spirv", RECIPE["tools"]["dxbc_spirv"], spirv)):
+    d3d = input_work / recipe["tools"]["d3dasm"]["path"]
+    spirv = input_work / recipe["tools"]["dxbc_spirv"]["path"]
+    for name, spec, path in (("d3dasm", recipe["tools"]["d3dasm"], d3d), ("dxbc_spirv", recipe["tools"]["dxbc_spirv"], spirv)):
         rev = subprocess.run(["git", "-C", str(path), "rev-parse", "HEAD"], capture_output=True, text=True, timeout=10, check=True).stdout.strip()
         if rev != spec["revision"]:
             raise RuntimeError(f"Pinned {name} revision drift")
@@ -107,43 +111,45 @@ def _verify_tools(input_work: Path, root: Path) -> tuple[Path, Path]:
         if dirty:
             raise RuntimeError(f"Pinned {name} tracked source is modified")
     binary = d3d / "target/release/d3dasm"
-    if sha_file(binary) != RECIPE["tools"]["d3dasm"]["binary_sha256"]:
+    if sha_file(binary) != recipe["tools"]["d3dasm"]["binary_sha256"]:
         raise RuntimeError("Pinned d3dasm binary drift")
     disassembler = spirv / "builddir/tools/dxbc_disasm"
-    if sha_file(disassembler) != RECIPE["tools"]["dxbc_spirv"]["disassembler_sha256"]:
+    if sha_file(disassembler) != recipe["tools"]["dxbc_spirv"]["disassembler_sha256"]:
         raise RuntimeError("Pinned DXBC disassembler binary drift")
     return binary, disassembler
 
 
-def _source_bundle(input_work: Path) -> Path:
+def _source_bundle(input_work: Path, *, source: dict | None = None) -> Path:
+    source = SOURCE if source is None else source
     accepted = read(input_work / "config/accepted-input.json")
     inventory = read(input_work / "inventory/files.json")
-    if accepted.get("input_id") != SOURCE["input_id"] or str(accepted.get("steam_buildid")) != SOURCE["build_id"]:
+    if accepted.get("input_id") != source["input_id"] or str(accepted.get("steam_buildid")) != source["build_id"]:
         raise RuntimeError("Accepted game input/build changed")
-    if inventory.get("input_id") != SOURCE["input_id"]:
+    if inventory.get("input_id") != source["input_id"]:
         raise RuntimeError("Inventory belongs to another input")
-    rows = [row for row in inventory["files"] if row["path"] == SOURCE["bundle_path"]]
-    if len(rows) != 1 or rows[0]["sha256"] != SOURCE["bundle_sha256"]:
+    rows = [row for row in inventory["files"] if row["path"] == source["bundle_path"]]
+    if len(rows) != 1 or rows[0]["sha256"] != source["bundle_sha256"]:
         raise RuntimeError("Accepted inventory bundle row drift/ambiguity")
-    bundle = game(input_work) / SOURCE["bundle_path"]
-    if not bundle.is_file() or sha_file(bundle) != SOURCE["bundle_sha256"]:
+    bundle = game(input_work) / source["bundle_path"]
+    if not bundle.is_file() or sha_file(bundle) != source["bundle_sha256"]:
         raise RuntimeError("Accepted source bundle missing or changed")
     return bundle
 
 
-def _extract(bundle: Path) -> tuple[dict, bytes, list[dict], dict[int, bytes]]:
+def _extract(bundle: Path, *, source: dict | None = None) -> tuple[dict, bytes, list[dict], dict[int, bytes]]:
+    source = SOURCE if source is None else source
     import UnityPy
 
     env = UnityPy.load(str(bundle))
-    matches = [obj for obj in env.objects if obj.type.name == "Shader" and obj.path_id == SOURCE["shader_path_id"]]
+    matches = [obj for obj in env.objects if obj.type.name == "Shader" and obj.path_id == source["shader_path_id"]]
     if len(matches) != 1:
         raise RuntimeError("Accepted shader path ID absent or ambiguous")
     tree = matches[0].read_typetree()
-    if tree["m_ParsedForm"]["m_Name"] != SOURCE["shader_name"]:
+    if tree["m_ParsedForm"]["m_Name"] != source["shader_name"]:
         raise RuntimeError("Shader path ID resolves to a different name")
     blob = bytes(tree["compressedBlob"])
     raw, records, programs = read_segments(tree, blob)
-    validate_tree(tree, blob, records, programs)
+    validate_tree(tree, blob, records, programs, source=source)
     return tree, raw, records, programs
 
 
@@ -342,7 +348,7 @@ def _shaderlab_candidate(tree: dict, sources: dict[int, str], layouts: dict[int,
     tag_line = " ".join(f"{json.dumps(k)}={json.dumps(v)}" for k, v in sorted(tag_map.items()))
     property_text = properties(tree)
     return (
-        f"Shader {json.dumps(SOURCE['shader_name'])} {{\n"
+        f"Shader {json.dumps(parsed['m_Name'])} {{\n"
         + ("Properties {\n" + property_text + "\n}\n" if property_text else "")
         + "SubShader {\n"
         + (f"Tags {{ {tag_line} }}\n" if tag_line else "")
@@ -374,7 +380,7 @@ def _shaderlab_candidate(tree: dict, sources: dict[int, str], layouts: dict[int,
 
 def _assert_source_unchanged(bundle: Path, initial_hash: str) -> None:
     if not bundle.is_file() or sha_file(bundle) != initial_hash:
-        raise RuntimeError("Accepted source bundle changed during RampFog generation")
+        raise RuntimeError("Accepted source bundle changed during native post-process generation")
 
 
 def _publish_staging(staging: Path, destination: Path, bundle: Path, initial_hash: str) -> None:
@@ -399,14 +405,22 @@ def _publish_staging(staging: Path, destination: Path, bundle: Path, initial_has
         raise
 
 
-def generate(work: Path = WORK, root: Path = ROOT) -> dict:
+def generate(work: Path = WORK, root: Path = ROOT, *, target: str = "ramp-fog") -> dict:
     work = Path(work).resolve()
     root = Path(root).resolve()
-    destination = output_path(work, SOURCE["input_id"])
+    if target not in {"ramp-fog", "screen-damage"}:
+        raise RuntimeError("Unsupported native post-process target")
+    recipe_path = root / "recipe" / f"shader-{target}-candidate.json"
+    recipe = json.loads(recipe_path.read_text(encoding="utf-8"))
+    if recipe.get("target") != target:
+        raise RuntimeError("Native post-process recipe target differs")
+    source = recipe["source"]
+    shader_relative = "sources/" + {"ramp-fog": "RampFogCandidate.shader", "screen-damage": "ScreenDamageCandidate.shader"}[target]
+    destination = output_path(work, source["input_id"], recipe=recipe)
     if destination.exists() or destination.is_symlink():
         raise RuntimeError(f"Stable candidate already exists; refusing overwrite: {destination}")
     destination.parent.mkdir(parents=True, exist_ok=True)
-    staging = Path(tempfile.mkdtemp(prefix=".ramp-fog-", dir=destination.parent))
+    staging = Path(tempfile.mkdtemp(prefix=f".{target}-", dir=destination.parent))
     bundle = None
     start_hash = None
     receipt = {
@@ -417,10 +431,10 @@ def generate(work: Path = WORK, root: Path = ROOT) -> dict:
         "visual_parity_proven": False,
     }
     try:
-        bundle = _source_bundle(work)
+        bundle = _source_bundle(work, source=source)
         start_hash = sha_file(bundle)
-        d3dasm, dxbc_disasm = _verify_tools(work, root)
-        tree, raw, records, programs = _extract(bundle)
+        d3dasm, dxbc_disasm = _verify_tools(work, root, recipe=recipe)
+        tree, raw, records, programs = _extract(bundle, source=source)
         selected = []
         recovered_sources: dict[int, str] = {}
         layouts: dict[int, dict] = {}
@@ -483,28 +497,28 @@ def generate(work: Path = WORK, root: Path = ROOT) -> dict:
         shader_source = _shaderlab_candidate(tree, recovered_sources, layouts, signature_tables)
         sources_dir = staging / "sources"
         sources_dir.mkdir()
-        shader_path = sources_dir / "RampFogCandidate.shader"
+        shader_path = staging / shader_relative
         shader_path.write_text(shader_source, encoding="utf-8")
         candidate = {
             "schema": 1,
-            "kind": "local-source-bound-ramp-fog-candidate",
+            "kind": f"local-source-bound-{target}-candidate",
             "generator_sha256": sha_file(SCRIPT),
-            "recipe_sha256": sha_file(RECIPE_PATH),
+            "recipe_sha256": sha_file(recipe_path),
             "helper_sha256": {
                 name: recipe_hash
                 for name, recipe_hash in {
-                    "shader_segments.py": RECIPE["tools"]["shader_segments_sha256"],
-                    "shader_source.py": RECIPE["tools"]["shader_source_sha256"],
-                    "shader_deferred.py": RECIPE["tools"]["shader_deferred_sha256"],
+                    "shader_segments.py": recipe["tools"]["shader_segments_sha256"],
+                    "shader_source.py": recipe["tools"]["shader_source_sha256"],
+                    "shader_deferred.py": recipe["tools"]["shader_deferred_sha256"],
                 }.items()
             },
-            "tool_pins": RECIPE["tools"],
-            "source": {key: SOURCE[key] for key in ["input_id", "build_id", "bundle_path", "bundle_sha256", "shader_path_id", "shader_name"]},
+            "tool_pins": recipe["tools"],
+            "source": {key: source[key] for key in ["input_id", "build_id", "bundle_path", "bundle_sha256", "shader_path_id", "shader_name"]},
             "programs": selected,
             "pass_state_file": "serialized-pass-state.json",
             "fog_mode_mapping": "source sentinel -1 preserved by omitting a Fog block" if int(state["fogMode"]) == -1 else "explicit native Fog Off",
             "record_table_file": "native-records.json",
-            "generated_shader": "sources/RampFogCandidate.shader",
+            "generated_shader": shader_relative,
             "generated_shader_sha256": sha_file(shader_path),
             "generated_shader_bytes": shader_path.stat().st_size,
             "unity_shaderlab_emitted": True,
@@ -515,16 +529,16 @@ def generate(work: Path = WORK, root: Path = ROOT) -> dict:
         receipt.update(
             {
                 "success": True,
-                "input_id": SOURCE["input_id"],
-                "bundle_path": SOURCE["bundle_path"],
-                "bundle_sha256": SOURCE["bundle_sha256"],
-                "shader_path_id": SOURCE["shader_path_id"],
-                "shader_name": SOURCE["shader_name"],
+                "input_id": source["input_id"],
+                "bundle_path": source["bundle_path"],
+                "bundle_sha256": source["bundle_sha256"],
+                "shader_path_id": source["shader_path_id"],
+                "shader_name": source["shader_name"],
                 "record_count": len(records),
                 "executable_program_count": len(programs),
                 "selected_programs": selected,
                 "serialized_state_retained": True,
-                "generated_shader": "sources/RampFogCandidate.shader",
+                "generated_shader": shader_relative,
                 "generated_shader_sha256": candidate["generated_shader_sha256"],
                 "source_program_math_public": False,
                 "unity_compiled": False,

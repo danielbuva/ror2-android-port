@@ -39,11 +39,18 @@ class CatalogRebuildTests(unittest.TestCase):
             15950: (
                 "scripts/lab/shader_ramp_fog.py",
                 "recipe/shader-ramp-fog-candidate.json",
-                "5c50fca86cdd1092edfbc3de97a3e30f25baec359dc512a6be26a96e1065482a",
-                "665ea6955a9dafb57e4b96b8dc2570e5bded0bc91c483969eaae629944ac0a00",
-                "generated-shader-candidates/ramp-fog-r4/{input_id}",
+                "6efdc9161a6bbefefa4b0ee8f7b74e92e4e550322259830eeb794ef7dbacc6c3",
+                "a744b5d09e2d112af06fa9cbf21a165cebb5cc091dfd8b79e770bdbbe748f707",
+                "generated-shader-candidates/ramp-fog-r5/{input_id}",
             ),
         }
+        expected[8943] = (
+            "scripts/lab/shader_ramp_fog.py",
+            "recipe/shader-screen-damage-candidate.json",
+            sha(REPO_ROOT / "scripts/lab/shader_ramp_fog.py"),
+            sha(REPO_ROOT / "recipe/shader-screen-damage-candidate.json"),
+            "generated-shader-candidates/screen-damage-r1/{input_id}",
+        )
         translucent = read(REPO_ROOT / "recipe/shader-translucent-candidate.json")
         translucent_generator = sha(REPO_ROOT / "scripts/lab/shader_translucent.py")
         translucent_recipe = sha(REPO_ROOT / "recipe/shader-translucent-candidate.json")
@@ -56,7 +63,7 @@ class CatalogRebuildTests(unittest.TestCase):
                 translucent["stable_output"],
             )
         self.assertEqual({row["location_id"] for row in selection["rows"]}, set(expected))
-        self.assertEqual(len(selection["rows"]), 6)
+        self.assertEqual(len(selection["rows"]), 7)
         for row in selection["rows"]:
             if 2537 <= row["location_id"] <= 2540:
                 recipe_shader = next(item for item in translucent["shaders"] if item["catalog_location"] == row["location_id"])
@@ -195,7 +202,7 @@ class CatalogRebuildTests(unittest.TestCase):
     def staging(self):
         return catalog_rebuild.CatalogIO(self.work, self.dest, self.input_id)
 
-    def install_shader_candidates(self, include_translucent=False):
+    def install_shader_candidates(self, include_translucent=False, include_screen_damage=False):
         selection = read(self.recipes / "shader-catalog-overrides.json")
         selection["enabled"] = False
         write(
@@ -237,16 +244,48 @@ class CatalogRebuildTests(unittest.TestCase):
                 "generated_shader",
             ),
         ]
+        if include_screen_damage:
+            self.assertTrue(include_translucent)
+            specs.append(
+                (
+                    8943,
+                    "62decc840d5afaa49886d8b13165939e",
+                    "RoR2/Base/Core/CameraEffects/HGScreenDamage.shader",
+                    "Assets/RoR2/Base/Core/CameraEffects/HGScreenDamage.shader",
+                    "screen-damage",
+                    "Hopoo Games/Post Process/Screen Damage",
+                    916309824485114785,
+                    "shader_ramp_fog.py",
+                    "recipe/shader-screen-damage-candidate.json",
+                    1,
+                    "candidate.json",
+                    "sources/ScreenDamageCandidate.shader",
+                    "generated_shader",
+                )
+            )
+            initial = "Assets/SyntheticCamera8943.shader"
+            self.put(self.export / initial, 'Shader "Synthetic/ScreenDamage" {}\n')
+            self.put(self.export / (initial + ".meta"), "guid: " + f"{8943:032x}" + "\n")
+            closure["converted"]["8943"] = dict(source=initial, resolution="exact")
+            closure["files"].append(initial)
+            closure["roots"].append(8943)
+            metadata["locations"].append(
+                dict(id=8943, type=whole_catalog.SHADER_LOCATION_TYPE, primaryKey="RoR2/Base/Core/CameraEffects/HGScreenDamage.shader")
+            )
+            metadata["keys"].append(dict(key="62decc840d5afaa49886d8b13165939e", keyType="System.String", locations=[8943]))
+            index[f"{8943:032x}"] = initial
         rows = []
         for loc, guid, key, source_path, kind, name, object_id, generator, gen_recipe, schema, manifest_name, shader_rel, manifest_field in specs:
             old = closure["converted"][str(loc)]["source"]
             (self.export / old).unlink()
             (self.export / (old + ".meta")).unlink()
             self.put(self.export / source_path, 'Shader "Synthetic/Original" {}\n')
-            self.put(self.export / (source_path + ".meta"), "guid: " + ("e" if loc == 16022 else "f") * 32 + "\n")
+            exporter = "ed4a1bae3abd8f34b905b509b4ff70e0" if loc == 8943 else ("e" if loc == 16022 else "f") * 32
+            self.put(self.export / (source_path + ".meta"), "guid: " + exporter + "\n")
+            closure["files"] = [source_path if path == old else path for path in closure["files"]]
             closure["converted"][str(loc)] = dict(source=source_path, resolution="exact")
             index.pop(f"{loc:032x}", None)
-            index[guid] = source_path
+            index[exporter if loc == 8943 else guid] = source_path
             asset = next(row for row in metadata["locations"] if row["id"] == loc)
             asset["primaryKey"] = key
             key_row = next(row for row in metadata["keys"] if row["locations"] == [loc])
@@ -279,7 +318,7 @@ class CatalogRebuildTests(unittest.TestCase):
             else:
                 doc = dict(
                     schema=1,
-                    kind="local-source-bound-ramp-fog-candidate",
+                    kind=f"local-source-bound-{kind}-candidate",
                     generator_sha256=generator_hash,
                     recipe_sha256=generator_recipe_hash,
                     source=dict(input_id=self.input_id, shader_path_id=object_id, shader_name=name, bundle_sha256="bundle"),
@@ -307,7 +346,8 @@ class CatalogRebuildTests(unittest.TestCase):
         write(self.catalog / "source-guid-index.json", index)
         if include_translucent:
             rows.extend(row for row in selection["rows"] if row["location_id"] in (2537, 2538, 2539, 2540))
-        selection["rows"] = rows
+        order = {row["location_id"]: n for n, row in enumerate(selection["rows"])}
+        selection["rows"] = sorted(rows, key=lambda row: order[row["location_id"]])
         write(self.recipes / "shader-catalog-overrides.json", selection)
         self.pin()
         return specs
@@ -403,6 +443,36 @@ class CatalogRebuildTests(unittest.TestCase):
             self.assertEqual(row["exporter_guid"], exporter_guid)
             self.assertNotEqual(row["guid"], row["exporter_guid"])
 
+    def test_screen_damage_seventh_row_preserves_exporter_identity_through_r3_r4(self):
+        self.install_shader_candidates(include_translucent=True, include_screen_damage=True)
+        self.install_translucent_candidates()
+        staging = self.staging()
+        staged = whole_catalog.prepare_integration(staging)
+        staging.flush()
+        self.assertTrue(staged["enabled"])
+        receipt = catalog_rebuild.read_shader_override_receipt(self.dest, self.input_id, self.work)
+        self.assertEqual(len(receipt["rows"]), 7)
+        rows = catalog_rebuild.shader_override_rows(receipt, self.input_id, set(), {}, candidate_work=self.work)
+        target = "Assets/WholeGame/RoR2/Base/Core/CameraEffects/HGScreenDamage.shader"
+        self.assertIn(target, rows)
+        row = rows[target]
+        self.assertEqual(row["location_id"], 8943)
+        self.assertEqual(row["guid"], "62decc840d5afaa49886d8b13165939e")
+        self.assertEqual(row["exporter_guid"], "ed4a1bae3abd8f34b905b509b4ff70e0")
+        self.assertEqual(
+            (self.dest / (target + ".meta")).read_bytes(), (self.export / "Assets/RoR2/Base/Core/CameraEffects/HGScreenDamage.shader.meta").read_bytes()
+        )
+        self.assertEqual(len(rows), 14)
+
+    def test_screen_damage_wrong_exporter_refuses_before_shader_writes(self):
+        self.install_shader_candidates(include_translucent=True, include_screen_damage=True)
+        self.install_translucent_candidates()
+        source = self.export / "Assets/RoR2/Base/Core/CameraEffects/HGScreenDamage.shader.meta"
+        self.put(source, "guid: " + "f" * 32 + "\n")
+        with self.assertRaisesRegex(RuntimeError, "exact original exporter GUID"):
+            whole_catalog.prepare_integration(self.staging())
+        self.assertFalse((self.dest / "Assets/WholeGame/RoR2/Base/Core/CameraEffects/HGScreenDamage.shader").exists())
+
     def test_translucent_wrong_exporter_meta_guid_refuses_before_any_shader_write(self):
         self.install_shader_candidates(include_translucent=True)
         translucent = self.install_translucent_candidates()
@@ -477,7 +547,7 @@ class CatalogRebuildTests(unittest.TestCase):
         selection = read(self.recipes / "shader-catalog-overrides.json")
         selection["rows"] = selection["rows"][:1]
         write(self.recipes / "shader-catalog-overrides.json", selection)
-        with self.assertRaisesRegex(RuntimeError, "exactly the two"):
+        with self.assertRaisesRegex(RuntimeError, "historical two/six-root"):
             whole_catalog.prepare_integration(self.staging())
         self.assertFalse((self.dest / "Assets/WholeGame/RoR2/Base/Shaders/PostProcess/HGOutlineHighlight.shader").exists())
 

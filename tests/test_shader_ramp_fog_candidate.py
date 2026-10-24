@@ -26,6 +26,7 @@ def load_isolated_module(root: Path):
         source = PROJECT_ROOT / "scripts/lab" / name if name != "shader_ramp_fog.py" else SOURCE_MODULE
         shutil.copy2(source, lab / name)
     shutil.copy2(PUBLIC_RECIPE, root / "recipe/shader-ramp-fog-candidate.json")
+    shutil.copy2(INTEGRATION / "recipe/shader-screen-damage-candidate.json", root / "recipe/shader-screen-damage-candidate.json")
     # A stale/private adjacent recipe must never shadow the fixed public recipe.
     (lab / "recipe_candidate.json").write_text("not-json", encoding="utf-8")
     spec = importlib.util.spec_from_file_location(f"shader_ramp_fog_{id(root)}", lab / "shader_ramp_fog.py")
@@ -53,11 +54,11 @@ class ShaderRampFogCandidateTests(unittest.TestCase):
             module = load_isolated_module(root)
             self.assertEqual(module.RECIPE_PATH, root.resolve() / "recipe/shader-ramp-fog-candidate.json")
             self.assertEqual(module.RECIPE["target"], "ramp-fog")
-            self.assertEqual(module.RECIPE["stable_output"], "generated-shader-candidates/ramp-fog-r4/{input_id}")
+            self.assertEqual(module.RECIPE["stable_output"], "generated-shader-candidates/ramp-fog-r5/{input_id}")
             self.assertFalse(module.RECIPE["generation_limits"]["unity_compiled"])
             helper_hash = hashlib.sha256((INTEGRATION / "scripts/lab/shader_deferred.py").read_bytes()).hexdigest()
             self.assertEqual(module.RECIPE["tools"]["shader_deferred_sha256"], helper_hash)
-            self.assertEqual(module.RECIPE["stable_output"], "generated-shader-candidates/ramp-fog-r4/{input_id}")
+            self.assertEqual(module.RECIPE["stable_output"], "generated-shader-candidates/ramp-fog-r5/{input_id}")
 
     def test_output_is_stable_input_scoped_and_work_contained(self) -> None:
         with tempfile.TemporaryDirectory(prefix="ramp-fog-path-test-") as temp:
@@ -65,8 +66,8 @@ class ShaderRampFogCandidateTests(unittest.TestCase):
             work.mkdir()
             module = load_isolated_module(Path(temp) / "repo")
             output = module.output_path(work, module.SOURCE["input_id"])
-            self.assertEqual(output, work.resolve() / "generated-shader-candidates/ramp-fog-r4" / module.SOURCE["input_id"])
-            with self.assertRaisesRegex(RuntimeError, "fixed RampFog recipe"):
+            self.assertEqual(output, work.resolve() / "generated-shader-candidates/ramp-fog-r5" / module.SOURCE["input_id"])
+            with self.assertRaisesRegex(RuntimeError, "fixed native post-process recipe"):
                 module.output_path(work, "another-input")
             module.RECIPE["stable_output"] = "../outside/{input_id}"
             with self.assertRaisesRegex(RuntimeError, "escapes work"):
@@ -98,7 +99,7 @@ class ShaderRampFogCandidateTests(unittest.TestCase):
             initial_hash = module.sha_file(bundle)
             bundle.write_bytes(b"changed during generation")
             destination = module.output_path(work, module.SOURCE["input_id"])
-            with self.assertRaisesRegex(RuntimeError, "changed during RampFog generation"):
+            with self.assertRaisesRegex(RuntimeError, "changed during native post-process generation"):
                 module._publish_staging(staging, destination, bundle, initial_hash)
             self.assertFalse(destination.exists())
             self.assertTrue((staging / "candidate.json").is_file())
@@ -165,7 +166,13 @@ class ShaderRampFogCandidateTests(unittest.TestCase):
         try:
             module.SOURCE = {"shader_name": "Hidden/Test/RampFog"}
             state = {"lighting": False, "fogMode": -1, "zClip": {"val": 1}, "alphaToMask": {"val": 0}}
-            tree = {"m_ParsedForm": {"m_PropInfo": {"m_Props": []}, "m_SubShaders": [{"m_Passes": [{"m_State": state}], "m_LOD": 100, "m_Tags": {"tags": []}}]}}
+            tree = {
+                "m_ParsedForm": {
+                    "m_Name": "Hidden/Test/MeasuredFullscreen",
+                    "m_PropInfo": {"m_Props": []},
+                    "m_SubShaders": [{"m_Passes": [{"m_State": state}], "m_LOD": 100, "m_Tags": {"tags": []}}],
+                }
+            }
             signatures = {
                 1: {"ISGN": [("POSITION0", 0, "xyzw")], "OSGN": [("SV_POSITION0", 0, "xyzw"), ("TEXCOORD0", 1, "xyzw")]},
                 2: {"ISGN": [("TEXCOORD0", 0, "xyzw")], "OSGN": [("SV_Target0", 0, "xyzw")]},
@@ -183,8 +190,40 @@ class ShaderRampFogCandidateTests(unittest.TestCase):
                 sys.modules["shader_deferred"] = old_deferred
         self.assertLess(output.index(functions[1]), output.index("Varyings vert("))
         self.assertLess(output.index(functions[2]), output.index("float4 frag("))
+        self.assertTrue(output.startswith('Shader "Hidden/Test/MeasuredFullscreen"'))
         self.assertIn(functions[1], output)
         self.assertIn(functions[2], output)
+
+    def test_screen_damage_target_is_separate_and_checks_native_identity(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="screen-damage-contract-") as temp:
+            root = Path(temp) / "repo"
+            module = load_isolated_module(root)
+            recipe = json.loads((root / "recipe/shader-screen-damage-candidate.json").read_text())
+            source = recipe["source"]
+            self.assertEqual(recipe["target"], "screen-damage")
+            self.assertNotEqual(source["shader_name"], module.SOURCE["shader_name"])
+            work = Path(temp) / "work"
+            self.assertEqual(
+                module.output_path(work, source["input_id"], recipe=recipe),
+                work.resolve() / "generated-shader-candidates/screen-damage-r1" / source["input_id"],
+            )
+            # Authored bytes exercise identity checking without copying game programs.
+            blob = b"authored native-program fixture"
+            measured = {**source, "serialized_blob_sha256": hashlib.sha256(blob).hexdigest()}
+            tree = {"platforms": source["platform_codes"], "m_ParsedForm": {"m_Name": source["shader_name"], "m_SubShaders": [{"m_Passes": [{}]}]}}
+            records = json.loads(json.dumps(source["records"]))
+            programs = {1: b"authored vertex", 2: b"authored fragment"}
+            module.validate_tree(tree, blob, records, programs, source=measured)
+            tree["m_ParsedForm"]["m_Name"] = module.SOURCE["shader_name"]
+            with self.assertRaisesRegex(RuntimeError, "Shader name drift"):
+                module.validate_tree(tree, blob, records, programs, source=measured)
+            tree["m_ParsedForm"]["m_Name"] = source["shader_name"]
+            records[1]["keywords"] = ["UNKNOWN"]
+            with self.assertRaisesRegex(RuntimeError, "record 1"):
+                module.validate_tree(tree, blob, records, programs, source=measured)
+            with self.assertRaisesRegex(RuntimeError, "Unsupported native post-process target"):
+                module.generate(work, root, target="unknown")
+            self.assertFalse(work.exists())
 
     def test_action_is_current_and_describes_qualification_limits(self) -> None:
         spec = importlib.util.spec_from_file_location("ramp_fog_actions", INTEGRATION / "scripts/lab/actions.py")

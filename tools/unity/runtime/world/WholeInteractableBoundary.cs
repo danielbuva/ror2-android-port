@@ -448,6 +448,7 @@ public sealed partial class PortSession
             {
                 if (behaviour.GetType().Name.StartsWith("Ak", StringComparison.Ordinal))
                 {
+                    if (GameAudioOriginalOwner.Ready) continue;
                     PortSession.DestroyImmediate(behaviour);
                     continue;
                 }
@@ -475,7 +476,8 @@ public sealed partial class PortSession
             foreach (var sfx in owned.GetComponentsInChildren<SfxLocator>(true))
                 foreach (var field in typeof(SfxLocator).GetFields(BindingFlags.Instance | BindingFlags.Public))
                     if (field.FieldType == typeof(string))
-                        field.SetValue(sfx, null);
+                        if (!GameAudioOriginalOwner.Ready)
+                            field.SetValue(sfx, null);
             var shop = owned.GetComponent<MultiShopController>();
             if (shop && shop.terminalPrefab)
                 shop.terminalPrefab = WholeInteractableTemplate(shop.terminalPrefab);

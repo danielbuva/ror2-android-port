@@ -36275,3 +36275,156 @@ owner signing and ordinary install/update remain open. These private packs
 have no current game-build consumer and establish no gameplay or performance
 acceptance. ARCHITECTURE and LOCAL_STATE name setup, teardown and ownership;
 no `./dev` action is added.
+
+## J1077 — Restore source world visibility and readiness-scoped original audio
+
+**Hypothesis and ownership.** J1067's nearly black source view has a missing
+pre-composite shader contract. The accepted Main Camera's enabled ScreenDamage
+renderer runs before Uber, but the exported shader is a dummy. Extend the
+existing native single-pass generator and exact catalog consumer; preserve both
+catalog and exporter GUIDs. The public recipe contains minimum identities and
+tool/helper pins, not shader expressions or game programs. Pinned d3dasm
+interface/value lowering and independent dxbc-spirv signatures retain native
+resources and program topology; EditorKit's shader registration does not supply
+Android programs. The original PostProcessLayer and effect renderer remain the
+runtime owners.
+
+Canonical ScreenDamage generation byte-roundtrips both original programs,
+retains serialized state and leaves the input bundle unchanged. Refreshed
+RampFog and all four Translucent shader sources remain byte-identical. The
+exact-editor fixture loads all 7,465 roots and 526 mesh aliases without failure.
+The existing Bloom owner already restores the exact camera's CopyStd/NaN-killer
+passes; no new copy mechanism or arbitrary exposure/lighting value is added.
+
+**Rendering result and second cause.** R39's normal content build succeeds in
+717.709 seconds, with zero errors. R40's fast player restores visible Huntress
+and scene objects but leaves terrain absent. The source camera's captured mask
+contains Default and Display only, while StageGeometry assigns terrain to
+World. NovaInputBoundary incorrectly adds World only for the diagnostic camera.
+Remove that camera exclusion; the production host fixture rejects the old
+condition and passes all four stage/camera cases. R41's source view reaches
+5.006 seconds with terrain, grass and the selected survivor visible. R42 also
+observes actual Deferred Shading, HDR enabled and Linear color space. These
+structural fixes do not establish matched PC color/lighting parity.
+
+**Audio cause and readiness boundary.** R40 passes both standard
+controls but the stage control's early MainOutput window remains zero. A bounded
+read-only first-pistol observation in R42 finds an empty original sound string,
+zero playing IDs, a present/enabled/managed-registered audio object, and resolved
+SFX volume 100. Its native queries succeed without changing registration or
+playback. The existing primary exclusion reads the report's integrated-world
+flag before NovaInputBoundary assigns it; the first attempted guard therefore
+still silences the pistol. PrimaryFireSession now captures configured mode and
+native readiness during setup, and its host fixture reproduces the earlier
+report flag being unset. Cleanup restores captured statics and destroys only
+owned configuration clones.
+
+Audit the other old unavailable-audio adaptations in the same batch. Once the
+original audio owner is ready, actor, pickup, effect, model and projectile
+adapters preserve original sound identities and authored Wwise enabled states.
+Unavailable audio retains the historical branch. Empty projectile start events
+retain the original absent-event behavior. Existing gameplay/visual isolation,
+source authority and cleanup owners remain in place. R2API.Sound's pinned
+post-initialization bank lifecycle and the accepted original wrappers govern
+this boundary; no new event, forced volume or routing success is synthesized.
+
+**Host/build and first failures.** All 2,008 host tests pass with nine explicit
+skips after refreshing stale exact-editor fixture dependencies and the startup
+ordering regression. Ruff and staged public audit pass. The first native Mono
+bootstrap compile crashes and leaves an incomplete generation; preserve its
+logs/dump, retain the generation and regenerate without weakening the cache
+receipt guard. Shared touch-worker staging also correctly refuses fast builds;
+verify exact predecessor source/GUID bytes through the merged retirement helper,
+and use normal builds when frozen source membership differs. Rebase only the
+unmerged branch onto current main; runtime hashes remain identical.
+
+R43's normal acceptance build succeeds in 182.611 seconds with zero errors,
+source `2be4fa64a394ad4fea4c89ad2efe003dae68e998`, APK SHA-256
+`206978b5e5d749ce11391bd68fe5689545b549abce414f2170aa7ad824589b02`.
+All 266 payload hashes equal the R39 rendering anchor. The packet verifies 267
+artifact references without binary copies and pins normal code/iteration
+metadata. Native code remains IL2CPP ARM64/Vulkan; original installation,
+ownership/entitlement boundaries and the accepted rollback remain unchanged.
+
+**R43 controls.** The unchanged plain control reaches 35.208054 seconds;
+stage-exit reaches Goolake with one original exit at 152.441193 seconds total.
+Both retain the byte-identical 13-run profile, all 153 banks ready, source
+camera/audio context ready and zero unexplained current-process errors.
+Their cleanups independently verify selector/process absence and display sleep.
+Plain MainOutput has 466 callbacks, 536,832 finite samples and 122,426 nonzero;
+stage's early gameplay window has 451 callbacks, 519,552 finite samples and
+126,484 nonzero. Neither has nonfinite samples. This resolves the observed
+silent stage-control window on this player, without attributing the early
+window to the later transition. Both source observations retain
+`Play_commando_R`, resolved SFX volume 100 and successful native queries.
+Their first playing-ID count remains zero; nonzero mix samples do not prove
+this particular event's voice or physical audibility.
+
+**R43 source view.** The opt-in Huntress source view reaches 5.001373 seconds.
+The current owned camera observes the exact supported two-pass Outline material;
+the source Blit call remains unobserved. Screenshot-bracketing current-PID logs
+have no unexplained errors. Terrain, grass and survivor are visible. Captured
+actual camera path is Deferred Shading, HDR is enabled, and active color space
+is Linear; the native material owner reports no unrecovered binding. Appearance
+still looks flat/desaturated, and the protocol explicitly retains visual
+acceptance false. There is no matched PC golden, so no further lighting or
+exposure change is justified by this image alone. All 13 applied profile runs
+remain byte-identical and the selector/process are absent with display asleep.
+
+**R43 confirmed End Run and Quit.** The normal UI path reaches 35 seconds of
+Commando play, opens settings, confirms End Run and returns to a fresh menu
+session with original audio still ready. Quit observes successful original
+bank-release wakeup and native engine termination. Process absence occurs at
+15.602007 seconds without query timeout, ANR, Unity pause/detach timeout or
+unexplained shutdown failure. The same-process log issues SIG:9 after Unity
+teardown; Android independently records SIGNALED/status 9, with no ANR trace.
+The host sends no force-stop after that observed absence. This is bounded
+application-owned exit acceptance, not an exit-latency qualification.
+
+One new size/hash-stable saved pair joins the live 469 callbacks, 540,288
+finite samples and 181,070 nonzero samples. Its metadata witnesses both
+original Term returns, verified post-Term disarm and raw persistence. The
+existing exporter validates a truncated 1 MiB prefix: 262,144 finite samples,
+110,478 nonzero, stereo 48 kHz, 2.730667 seconds, RMS 0.02918359 and peak
+magnitude 0.28358808. Raw SHA-256 is
+`a097fe2a2097bf79ee843185148ac1760ffac620f056f19acfbc3b9ce7999de2`;
+sidecar SHA-256 is
+`98902211b73ccab3951f0a5ebbfed386dd18bb70069d6ed346d20f56179aa261`.
+Raw files and the derived WAV remain private local evidence.
+
+**Fresh process and final readback.** A fresh process launched after that
+application-owned exit reaches 35.209702 seconds of world play with all 153
+banks ready and noAudio=false. Its bounded MainOutput has 468 callbacks,
+539,136 finite samples, 206,610 nonzero and zero nonfinite samples. Confirmed
+End Run returns to the next menu; the subsequent application-owned Quit again
+has successful bank-release wakeup and original native termination, no ANR or
+query timeout, and no host force-stop. Absence is observed at 21.187011 seconds;
+the same-process self SIG:9 and Android SIGNALED/status 9 agree. This qualifies
+this fresh-process restart, not complete mix or sustained performance.
+
+Independent terminal readback rehashes the installed APK, queries live adopted
+placement and runtime backing, verifies the byte-identical 13-run profile and
+confirms selector/process absence with display asleep. Generated pruning runs
+after the build and run tasks. Main retains R43; J850 remains the accepted
+rollback. Serialized stage Wwise clients remain excluded by source-scene
+preparation and are a separate full-audio gap.
+
+**Evidence and remaining gate.** Local receipts/logs are under
+`work/coordination/source-screen-damage-r1/` and
+`work/coordination/main-port-r39/` through `main-port-r43/`. Source-view packets
+are `original-camera-listener-lifecycle/20261024T130327.078020Z/`,
+`20261024T112129.885838Z/`,
+`20261024T113734.471401Z/` and `20261024T121237.440756Z/` under
+`work/experiments/`. R40 controls are baseline
+`20261024T111015.828288Z/` and `20261024T111435.416256Z/`; R43 controls
+are `20261024T125257.714767Z/` and `20261024T125711.592619Z/`; R42's plain standard
+passes at `20261024T120149.642025Z/`, while its source-audio qualifier fails on
+the empty source string. Preserve raw `is_current_build=false` when another
+shared build moved the host pointer; qualifications bind frozen APK/source and
+independent installation evidence instead. Raw logs/images/audio stay local.
+PC visual parity, complete audio mix/spatial/audibility, normal unassisted runs
+and sustained performance remain separate gates.
+
+The confirmed warm and fresh Quit runs are under
+`work/experiments/original-game-audio/r43-warm-quit-confirmed-20261024T130724.204810Z/`
+and `r43-warm-quit-confirmed-20261024T131304.124341Z/`.

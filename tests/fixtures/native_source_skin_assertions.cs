@@ -370,7 +370,9 @@ static class AdapterContractTests
                   sourceCamera.active && sourceCamera.enabled && sourceCamera.clearFlags == (int)CameraClearFlags.Skybox &&
                   sourceCamera.nearClip == camera.nearClipPlane && sourceCamera.cullingMask == camera.cullingMask &&
                   sourceCamera.rectWidth == 1f && sourceCamera.targetDisplay == camera.targetDisplay &&
-                  sourceCamera.scalarValuesFinite,
+                  sourceCamera.renderingPath == camera.renderingPath && sourceCamera.actualRenderingPath == camera.actualRenderingPath &&
+                  sourceCamera.allowHDR == camera.allowHDR && sourceCamera.depthTextureMode == camera.depthTextureMode &&
+                  sourceCamera.activeColorSpace == QualitySettings.activeColorSpace && sourceCamera.scalarValuesFinite,
               "camera stack records exact owned source identity and render-state scalars");
         Check(report.visual.renderEvidence.renderers[0].screenBoundsKnown && report.visual.renderEvidence.renderers[0].hasBehindCameraCorner &&
                   report.visual.renderEvidence.renderers[0].crossesNearClip && report.visual.renderEvidence.renderers[0].sampledMaterialCount == 1 &&

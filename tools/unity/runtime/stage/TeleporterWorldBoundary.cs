@@ -460,7 +460,8 @@ public sealed partial class PortSession
                 coordinator.Check(objectiveEffectSources[i] && objectiveEffectSources[i].GetComponent<EffectComponent>(),
                                   "Original character-bundle effect missing: " + characterPaths[i]);
             foreach (var source in objectiveEffectSources)
-                source.GetComponent<EffectComponent>().soundName = null;
+                if (!GameAudioOriginalOwner.Ready)
+                    source.GetComponent<EffectComponent>().soundName = null;
             return objectiveEffectSources.Select(x => new EffectDef(x)).ToArray();
         }
         public void PresentRegisteredNativeEffects()
@@ -554,6 +555,7 @@ public sealed partial class PortSession
         }
         public void PrepareObjectivePresentationSources()
         {
+            if (GameAudioOriginalOwner.Ready) return;
             // These are owned converted Android prefab assets in memory, never the original input.
             // Remove native-audio components before cloning or EffectManagerHelper caches Ak callbacks.
             foreach (var source in coordinator.artifactBundle.LoadAllAssets<GameObject>())
@@ -658,14 +660,16 @@ public sealed partial class PortSession
             foreach (var locator in ward.GetComponentsInChildren<SfxLocator>(true))
                 foreach (var field in typeof(SfxLocator).GetFields(BindingFlags.Public | BindingFlags.Instance))
                     if (field.FieldType == typeof(string))
-                        field.SetValue(locator, null);
+                        if (!GameAudioOriginalOwner.Ready)
+                            field.SetValue(locator, null);
             var supportEffects = new[] { coordinator.objectiveSupportSources[0], coordinator.objectiveSupportSources[3] }
                                      .Concat(coordinator.moonTransferEffect ? new[] { coordinator.moonTransferEffect } : new GameObject[0])
                                      .Concat(coreLootEffects)
                                      .Concat(commerceEffect ? new[] { commerceEffect } : new GameObject[0])
                                      .ToArray();
             foreach (var source in supportEffects)
-                source.GetComponent<EffectComponent>().soundName = null;
+                if (!GameAudioOriginalOwner.Ready)
+                    source.GetComponent<EffectComponent>().soundName = null;
             objectiveEffectSources = objectiveEffectSources.Concat(supportEffects).Distinct().ToArray();
             coordinator.RegisterComposedEffects(supportEffects.Select(x => new EffectDef(x)));
             PresentRegisteredNativeEffects();
@@ -822,7 +826,7 @@ public sealed partial class PortSession
                 {
                     var field = copy.serializedFieldsCollection.serializedFields[i];
                     var member = ((Type)copy.targetType).GetField(field.fieldName);
-                    if (member != null && member.FieldType == typeof(string) &&
+                    if (!GameAudioOriginalOwner.Ready && member != null && member.FieldType == typeof(string) &&
                         field.fieldName.IndexOf("sound", StringComparison.OrdinalIgnoreCase) >= 0)
                         copy.serializedFieldsCollection.serializedFields[i].fieldValue.stringValue = "";
                     // Retain genuine effect references: some original animation/state calls are unconditional.
@@ -843,10 +847,10 @@ public sealed partial class PortSession
                         foreach (var component in owned.GetComponentsInChildren<MonoBehaviour>(true))
                             foreach (var value in component.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public))
                             {
-                                if (value.FieldType == typeof(string) &&
+                                if (!GameAudioOriginalOwner.Ready && value.FieldType == typeof(string) &&
                                     value.Name.IndexOf("sound", StringComparison.OrdinalIgnoreCase) >= 0)
                                     value.SetValue(component, null);
-                                if (value.FieldType == typeof(NetworkSoundEventDef) || value.Name == "flightSoundLoop")
+                                if (!GameAudioOriginalOwner.Ready && (value.FieldType == typeof(NetworkSoundEventDef) || value.Name == "flightSoundLoop"))
                                     value.SetValue(component, null);
                             }
                         copy.serializedFieldsCollection.serializedFields[i].fieldValue.objectValue = owned;
@@ -886,6 +890,7 @@ public sealed partial class PortSession
                 {
                     if (behaviour.GetType().Name.StartsWith("Ak", StringComparison.Ordinal))
                     {
+                        if (GameAudioOriginalOwner.Ready) continue;
                         DestroyImmediate(behaviour);
                         continue;
                     }
@@ -906,7 +911,8 @@ public sealed partial class PortSession
                 coordinator.Check(sfx, "Original objective SfxLocator absent: " + spec.name);
                 foreach (var field in typeof(SfxLocator).GetFields(BindingFlags.Public | BindingFlags.Instance))
                     if (field.FieldType == typeof(string))
-                        field.SetValue(sfx, null);
+                        if (!GameAudioOriginalOwner.Ready)
+                            field.SetValue(sfx, null);
                 if (spec.bindings != null && spec.bindings.Length > 0)
                     coordinator.BindMoonActorVisuals(bodyObject, model, spec);
                 else
@@ -940,7 +946,8 @@ public sealed partial class PortSession
                 {
                     var surface = Instantiate(provider.surfaceDef);
                     surface.impactEffectPrefab = null;
-                    surface.impactSoundString = null;
+                    if (!GameAudioOriginalOwner.Ready)
+                        surface.impactSoundString = null;
                     provider.surfaceDef = surface;
                     coordinator.objectiveResources.Add(surface);
                 }
@@ -1425,12 +1432,13 @@ public sealed partial class PortSession
             {
                 if (behaviour.GetType().Name.StartsWith("Ak", StringComparison.Ordinal))
                 {
+                    if (GameAudioOriginalOwner.Ready) continue;
                     DestroyImmediate(behaviour);
                     continue;
                 }
                 // Whole source objective callbacks run. Optional native presentation is explicitly unavailable.
                 if (behaviour is SfxLocator || behaviour.GetType().Name == "PostProcessDuration" ||
-                    behaviour.GetType().Name == "WwiseSound")
+                    (!GameAudioOriginalOwner.Ready && behaviour.GetType().Name == "WwiseSound"))
                     behaviour.enabled = false;
             }
             var teleporter = host.GetComponent<TeleporterInteraction>();

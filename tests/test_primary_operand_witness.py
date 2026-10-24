@@ -351,6 +351,26 @@ class PrimaryOperandWitnessTests(unittest.TestCase):
             ran = subprocess.run([str(mono), str(exe)], capture_output=True, text=True)
             self.assertEqual(ran.returncode, 0, ran.stdout + ran.stderr)
 
+    def test_bounded_read_only_source_audio_observation(self):
+        source = PRIMARY.read_text(encoding="utf-8")
+        fixture = (ROOT / "tests/fixtures/primary_original_audio_observation.cs").read_text(encoding="utf-8")
+        fixture = fixture.replace("__REPORT__", extract_member(source, "public class PrimaryFireReport"))
+        fixture = fixture.replace("__PRODUCTION__", extract_member(source, "void ObserveOriginalPrimaryAudio("))
+        self.compile_run(fixture, "")
+
+    def test_integrated_configs_preserve_native_audio_and_restore_owned_state(self):
+        source = PRIMARY.read_text(encoding="utf-8")
+        members = "\n".join(
+            extract_member(source, declaration)
+            for declaration in (
+                "public EntityStateConfiguration[] PrepareSpineConfigs(",
+                "public void ApplySpineExclusions(",
+                "public void Dispose()",
+            )
+        )
+        fixture = (ROOT / "tests/fixtures/primary_original_audio_host.cs").read_text(encoding="utf-8")
+        self.compile_run(fixture.replace("__PRODUCTION_MEMBERS__", members), "")
+
     def test_actual_observer_under_healthy_and_invalid_operands(self):
         source = PRIMARY.read_text(encoding="utf-8")
         declarations = (
@@ -373,6 +393,7 @@ class PrimaryOperandWitnessTests(unittest.TestCase):
             + report_members
             + "\n    public sealed class PrimaryObserverHarness\n    {\n"
             + "        readonly PortSession coordinator;\n"
+            + "        void ObserveOriginalPrimaryAudio(CharacterBody body, PrimaryFireReport report) { }\n"
             + "        EntityStates.EntityState lastSpineWeaponState;\n"
             + "        public PrimaryObserverHarness(PortSession owner) { coordinator=owner; }\n"
             + observer_members

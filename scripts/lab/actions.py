@@ -513,6 +513,15 @@ _ENTRIES = (
         handler=_json_result,
     ),
     Action(
+        "shader-screen-damage",
+        "shader_ramp_fog",
+        "generate",
+        {"target": "screen-damage"},
+        "current",
+        "Host-only: reconstruct the accepted native ScreenDamage pass at a stable ignored path; refuses source/tool drift and overwrites. Editor compilation, Android execution and appearance are separate gates.",
+        handler=_json_result,
+    ),
+    Action(
         "shader-translucent",
         "shader_translucent",
         "main",
