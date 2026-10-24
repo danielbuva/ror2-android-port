@@ -188,31 +188,79 @@ class Device:
         models = self.settings.get("display_models")
         if models is None and self.serial == self.configuration["device_serial"]:
             models = ["Retroid Pocket Nova"]
-        if not isinstance(models, list) or not models or self.sh("getprop", "ro.product.model") not in models:
+        model = self.sh("getprop", "ro.product.model")
+        if not isinstance(models, list) or not models or model not in models:
             raise RuntimeError("Idle display control needs an explicitly authorized exact model (legacy default: Nova)")
         count = self.settings.get("display_count", 1)
         if not isinstance(count, int) or isinstance(count, bool) or count < 1:
             raise RuntimeError("Invalid physical display_count")
         key = (str(self.receipt_root), self.serial)
+        thor = model == "AYN Thor"
+        if thor and count != 2:
+            raise RuntimeError("Thor display control requires display_count 2")
+        owner = self._awake_devices.get(key, self)
         if awake:
             self.display_awakened = True
-            self._awake_devices[key] = self
-        self.sh("input", "keyevent", "KEYCODE_WAKEUP" if awake else "KEYCODE_SLEEP")
-        expected = "Awake" if awake else "Asleep"
-        deadline = time.monotonic() + 5
-        while time.monotonic() < deadline:
-            if "mWakefulness=" + expected in self.sh("dumpsys", "power"):
-                if count > 1:
-                    panels = physical_display_states(self.sh("dumpsys", "display"))
-                    if len(panels) != count or (not awake and any(state != "OFF" for state in panels)) or (awake and "ON" not in panels):
-                        time.sleep(0.25)
-                        continue
-                self.display_awakened = awake
-                if not awake:
-                    self._awake_devices.pop(key, None)
-                return True
-            time.sleep(0.25)
-        raise RuntimeError("Selected device displays did not reach " + expected + "; inspect current power state")
+            self._awake_devices.setdefault(key, self)
+        try:
+            if thor and awake:
+                if not hasattr(owner, "thor_display_mode"):
+                    original = self.sh("settings", "get", "system", "dual_screen_display_mode")
+                    if original not in {"0", "1", "2"}:
+                        raise RuntimeError("Unknown Thor dual-screen mode; refusing to change it")
+                    owner.thor_display_mode = original
+                self.sh("settings", "put", "system", "dual_screen_display_mode", "1")
+            # Sleep first so a failed setting restore cannot leave OLEDs awake.
+            self.sh("input", "keyevent", "KEYCODE_WAKEUP" if awake else "KEYCODE_SLEEP")
+            if thor and not awake and hasattr(owner, "thor_display_mode"):
+                original = owner.thor_display_mode
+                self.sh("settings", "put", "system", "dual_screen_display_mode", original)
+                if self.sh("settings", "get", "system", "dual_screen_display_mode") != original:
+                    raise RuntimeError("Thor dual-screen mode was not restored")
+                del owner.thor_display_mode
+            expected = "Awake" if awake else "Asleep"
+            deadline = time.monotonic() + 5
+            verified_since = None
+            while time.monotonic() < deadline:
+                if "mWakefulness=" + expected in self.sh("dumpsys", "power"):
+                    if count > 1:
+                        display = self.sh("dumpsys", "display")
+                        panels = physical_display_states(display)
+                        if len(panels) != count or (not awake and any(state != "OFF" for state in panels)) or (awake and "ON" not in panels):
+                            verified_since = None
+                            time.sleep(0.25)
+                            continue
+                        if thor and awake:
+                            # The vendor mode can merely draw a black overlay.
+                            # Require the physical panel itself to report OFF.
+                            named = re.findall(r'DisplayDeviceInfo\{"([^"]+)"(?=[^\n]*\btype INTERNAL\b)[^\n]*\bstate (OFF|ON)\b', display)
+                            if sorted(named) != [("Built-in Screen", "ON"), ("Screen-2", "OFF")]:
+                                verified_since = None
+                                time.sleep(0.25)
+                                continue
+                            if verified_since is None:
+                                verified_since = time.monotonic()
+                            # Wake transitions can briefly resemble top-only
+                            # power before the lower panel finishes waking.
+                            if time.monotonic() - verified_since < 1:
+                                time.sleep(0.25)
+                                continue
+                    self.display_awakened = owner.display_awakened = awake
+                    if not awake:
+                        self._awake_devices.pop(key, None)
+                    return True
+                verified_since = None
+                time.sleep(0.25)
+            if thor and awake:
+                raise RuntimeError("Thor requires Built-in Screen ON and Screen-2 OFF; vendor mode alone did not establish top-only power")
+            raise RuntimeError("Selected device displays did not reach " + expected + "; inspect current power state")
+        except Exception as error:
+            if thor and awake:
+                try:
+                    self.display(False)
+                except Exception as cleanup:
+                    error.add_note("Thor display cleanup failed: " + str(cleanup))
+            raise
 
     def exists(self):
         return ("package:" + PACKAGE) in self.sh("pm", "list", "packages", PACKAGE).splitlines()

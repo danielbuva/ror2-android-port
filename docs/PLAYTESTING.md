@@ -6,6 +6,10 @@ owner-generated APKs/payloads and raw evidence private. Read the
 [player guide](PLAYER_GUIDE.md), [alpha policy](ALPHA_POLICY.md),
 [screen inventory](SCREEN_COVERAGE.md) and [current status](../PORTING_STATE.md).
 A prepared-lab result does not close the fresh-owner gate.
+[J1071](PORTING_JOURNAL.md#j1071--qualify-software-touch-native-pause-and-recovery)
+records matching artifact/install receipts, both assisted controls, strict native
+restart, a complete software-touch transaction and bounded recovery cases.
+Hardware controls and fresh public-input installation remain unqualified.
 
 ## Prepare and install a matching build
 
@@ -13,16 +17,24 @@ Set `PLAYTEST_DEVICE` to the explicitly authorized, allowlisted serial. In a
 shared worker session, acquire its local device lease before any ADB command.
 Use only the assigned device. Run from the checkout with the owned local receipt
 and configuration; never borrow another device receipt or guess a storage path.
+All test panels are OLED. Keep them asleep between tests. Thor tests require
+the top display only: verify physical `Built-in Screen ON` / `Screen-2 OFF`
+throughout the run and restore the original vendor mode during teardown.
+`Device.display` refuses a black overlay or a transient lower-panel OFF state;
+do not bypass a refusal to continue a playtest.
 
 1. Configure the external legitimate PC installation and pinned toolchain as in
    [DEVELOPING.md](DEVELOPING.md#local-setup). Keep the original unchanged. Run
    input inventory/diff review and explicit acceptance; refuse unknown, changed
    or incomplete versions. The first alpha selects local files only and defers
    account downloads and Steam Cloud.
-2. Commit the source, run host preflight, then build through the shared Unity
-   mutex. A linked worktree can use `shared-catalog-code-build`; add `--full` for
-   content or runtime-membership changes. Keep at least 100 GB free on the host.
-   The ordinary primary checkout actions remain current.
+2. Commit the source, then use an [isolated build lane](build-lanes.md) for
+   parallel worker builds. Its preflight and editor operations retain the lane's
+   mutex; creation briefly acquires the canonical mutex. Start with the cheapest
+   applicable normal code/full build, keeping HEAD fixed during each operation.
+   Use only the published APK/payload paths for installation, then remove the
+   lane when done. Keep at least 100 GB free on the host. Ordinary primary
+   checkout actions remain current for its owner.
 3. Record the build receipt's source commit, accepted input, exact toolchain,
    request, APK SHA-256 and complete matching payload manifest. Preserve the
    last known-good compatible set by path/hash; use APFS clones only when an
@@ -66,8 +78,9 @@ a normal run or a memory bound.
 Record start/end times, artifact identity, selected survivor/difficulty and every
 assistance setting. Use actual physical presses for controller qualification.
 ADB/synthetic events, automatic diagnostics and host fixtures are distinct
-supporting evidence. Thor's existing route is automatic-only: its physical
-mapping and complete touch gameplay remain open.
+supporting evidence. Thor has a separate ordinary touch route; its physical
+controller mapping remains unqualified. The scoped software motion case does
+not qualify the physical touchscreen digitizer.
 
 | Case | Required observation |
 | --- | --- |
@@ -82,8 +95,9 @@ mapping and complete touch gameplay remain open.
 | Genuine loss/results | Natural defeat, native result/ledger persistence exactly once, results navigation and ready same-process restart |
 
 The [screen inventory](SCREEN_COVERAGE.md) identifies absent original screens.
-Current touch menus/equipment do not supply full touch gameplay. Keep Moon/finale
-manual. Coordinate rendering/audio/animation and an unassisted normal run with the
+Touch gestures feed the existing native input bank and camera adapter. Keep
+acquired-equipment/interaction effects and genuine play separate from a bank-edge
+witness or an empty-slot request. Keep Moon/finale manual. Coordinate rendering/audio/animation and an unassisted normal run with the
 main gameplay owner; a nonzero audio meter or loaded bundle is insufficient.
 
 ## Stability, persistence and updates

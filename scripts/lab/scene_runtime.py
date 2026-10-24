@@ -1369,6 +1369,7 @@ def movement_batch_prepare(kinematic=False, integrated=False, cases=None):
             "runtime/catalog/BarrierEffectBoundary",
             "runtime/input/NovaInputBoundary",
             "runtime/input/NovaInputBridge",
+            "runtime/input/AndroidTouchInput",
             "runtime/input/NovaDiagnosticDisplay",
             "runtime/world/PrimaryFireBoundary",
         ]:

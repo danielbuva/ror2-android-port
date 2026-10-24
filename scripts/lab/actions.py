@@ -127,7 +127,13 @@ def _session_memory(function, kwargs, args):
     selected = kwargs if expected_apk_sha256 is None else dict(kwargs, expected_apk_sha256=expected_apk_sha256)
     if getattr(args, "sessions", None) is not None:
         selected = dict(selected, sessions=args.sessions)
+    if getattr(args, "memory_snapshots", False):
+        selected = dict(selected, memory_snapshots=True)
     return _json_result(function, selected, args, indent=2)
+
+
+def _touch_gesture(function, kwargs, args):
+    return _json_result(function, dict(kwargs, target=args.target, expected_apk_sha256=getattr(args, "expected_apk_sha256", None)), args, indent=2)
 
 
 def _timed_prepare(function, kwargs, args, *, seconds):
@@ -412,8 +418,17 @@ _ENTRIES = (
         "check_session_memory",
         {},
         "current",
-        "Repeat ordinary Commando menu-start, 60 s ready Lakes play and UI-abandon sessions in one process (five by default, --sessions 3 to 32); each completed session must pass the session-abandon contract. Reports existing runtime resource samples and per-menu PSS as observations, not a leak fix or normal-game acceptance. Requires --expected-apk-sha256 bound to the selected device's ownership receipt.",
+        "Repeat ordinary Commando menu-start, 60 s ready Lakes play and UI-abandon sessions in one process (five by default, --sessions 3 to 32); each completed session must pass the session-abandon contract. Reports existing runtime resource samples and per-menu PSS as observations, not a leak fix or normal-game acceptance. Optional --memory-snapshots captures private native/managed heaps at menus 2/4 for attribution; it allocates/pauses and is separate from ordinary growth/performance. Requires --expected-apk-sha256 bound to the selected device's ownership receipt.",
         handler=_session_memory,
+    ),
+    Action(
+        "touch-gesture",
+        "touch_gesture",
+        "run",
+        {},
+        "current",
+        "Android 13+ lab diagnostic: --target JSON supplies PID, viewport and bounded multi-touch steps; requires --expected-apk-sha256 and the owned foreground game. Uses normal adb shell permission and target-UID dispatch; temporary files are removed. Leaves the session running on success; dispatch failure stops only the still-matching owned process. Does not qualify physical input or normal-game acceptance.",
+        handler=_touch_gesture,
     ),
     Action(
         "session-memory-root-check",

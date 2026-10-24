@@ -43,6 +43,10 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       qualifies 4,326 source Alpha8 texture records and their public codec build
       on Android. Other compressed textures, mip/cubemap and complete bundles
       remain open; these packs add no game-runtime acceptance.
+      [J1088](PORTING_JOURNAL.md#j1088--produce-every-single-mip-etc1-texture-from-pc-bundles-on-android)
+      qualifies all 281 ETC1/single-mip records and the shared public codec build
+      on Android, with all 5,006 RGB/Alpha8/uncompressed records reverified.
+      Remaining compressed textures, mips, cubemaps and complete bundles stay open.
       [J1081](PORTING_JOURNAL.md#j1081--run-owner-supplied-standalone-sdk-tools-through-a-public-android-runner)
       qualifies a reproducible public Android runner for standalone SDK build
       tools. Linux RGBA codec equivalence, complete shader/Burst production and ordinary
@@ -102,25 +106,30 @@ decisions. The following items are implementation and acceptance gates.
 - [ ] Implement the selected local-file validation, cancellation and honest
       unknown-version refusals in the final owner flow. Preserve the source
       installation; account downloads and Steam Cloud are deferred by policy.
-- [ ] Verify fresh capacity, package placement and runtime backing per device
-      ([J595](PORTING_JOURNAL.md#j595--verify-the-scoped-current-nova-path-and-harden-receipt-cleanup),
-      [J755](PORTING_JOURNAL.md#j755--onboard-the-additional-devices-with-separate-storage-ownership-and-roles)).
+Fresh per-device capacity, placement and runtime-backing receipts and capacity
+refusal are qualified in [J1071](PORTING_JOURNAL.md#j1071--qualify-software-touch-native-pause-and-recovery),
+retaining J595/J755's ownership guards. Final alpha identity and installation
+qualification remain separate from these laboratory installs.
 
 ## Controls, UI and sessions
 
 - [ ] Qualify ordinary physical input, original/native mappings and rebinding;
       automatic diagnostics do not qualify ordinary control
       ([J762](PORTING_JOURNAL.md#j762--accept-explicit-thor-game-diagnostics-and-unchanged-nova-controls)).
-- [ ] Device-test touch movement, aim/camera, skills, equipment, interaction and
-      menus, including pause/resume and held-input release.
-- [ ] Qualify the [inventoried player screens](SCREEN_COVERAGE.md), menus,
-      settings persistence and touch/controller navigation against
-      [subsystem coverage](subsystem-coverage.md).
-- [ ] Qualify end-run confirmation, teardown, results/return-menu and same-process
-      restart with ordinary input ([session owners](ARCHITECTURE.md#ownership)).
-      Device-test [J914's dependency-lifetime candidate](PORTING_JOURNAL.md#j914--retain-the-declared-audio-content-dependencies-across-session-cleanup)
-      against J915's genuine next-menu failure, including default-off cleanup,
-      original audio termination and repeated-session memory.
+- [ ] Qualify the physical touchscreen digitizer, acquired-equipment activation
+      and genuine target interaction. [J1071](PORTING_JOURNAL.md#j1071--qualify-software-touch-native-pause-and-recovery)
+      qualifies software touch movement/camera, four native skill consumers,
+      eight bank actions, cancellation, native menus/pause/release and fresh
+      same-session background return; empty-slot/target requests are bank-only.
+- [ ] Qualify ordinary navigation and remaining [inventoried player screens](SCREEN_COVERAGE.md)
+      against [subsystem coverage](subsystem-coverage.md). J1066/J1071 qualify
+      native settings, reviewed feedback and bounded persistence/recovery;
+      complete source presentation and hardware navigation remain open.
+- [ ] Qualify ordinary physical end-run/results navigation and repeated-session
+      memory ([session owners](ARCHITECTURE.md#ownership)). J1066/J1071 qualify
+      software confirmation/cancel, native teardown/menu and strict assisted
+      same-process restart. J1080 qualifies Main's original audio Term/disarm;
+      long-run dependency retention remains open.
 - [ ] Coordinate gameplay/audio/animation prerequisites with the main session;
       acceptance follows [capability gates](milestones.md), including an
       unassisted run. Keep Moon/finale manual.
@@ -129,8 +138,12 @@ decisions. The following items are implementation and acceptance gates.
 
 - [ ] Attribute and bound repeated-session managed growth, then qualify a long
       device series ([open evidence](execution-backlog.md#stability-and-performance)).
-- [ ] Qualify crash/ANR recovery, background/resume, interrupted writes, storage
-      failure, sustained performance and thermals on supported hardware.
+- [ ] Complete real interrupted-write/ENOSPC and sustained performance/thermal
+      cases on supported hardware. [J1071](PORTING_JOURNAL.md#j1071--qualify-software-touch-native-pause-and-recovery)
+      qualifies controlled VM-crash and genuine ANR cold recovery, invalid-pending
+      refusal, validated-backup recovery, directory-write failure/retry and fresh
+      background return. Injected persistence states do not establish a power-cut
+      or filled-filesystem result.
 - [ ] Qualify the [prepared-lab owner-build/install/playtest checklist](PLAYTESTING.md)
       on fresh public inputs, then establish final player installation, ordinary
       controls and update/rollback steps. Artifact identity, known limits and

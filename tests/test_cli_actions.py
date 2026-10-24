@@ -181,6 +181,18 @@ class PrototypeActionTests(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertEqual(self.calls, [dict(module="whole_catalog", function="build_integration", args=(), kwargs={"bundle_compression": "uncompressed"})])
 
+    def test_touch_gesture_keeps_explicit_request_apk_and_receipt_tree(self):
+        module = ModuleType("touch_gesture")
+        module.run = Mock(return_value={"success": True})
+        self.modules["touch_gesture"] = module
+        with patch.dict(sys.modules, {"touch_gesture": module}):
+            code, output, error = self.cli(
+                "--action", "touch-gesture", "--target", "gesture.json", "--expected-apk-sha256", "a" * 64, "--work-dir", str(FIXTURE_WORK)
+            )
+        self.assertEqual((code, error), (0, ""))
+        module.run.assert_called_once_with(target="gesture.json", expected_apk_sha256="a" * 64)
+        self.assertEqual(json.loads(output), {"success": True})
+
     def test_long_memory_series_is_explicit_and_keeps_apk_and_root_walk_binding(self):
         code, _, _ = self.cli("--action", "session-memory-root-check", "--sessions", "12", "--expected-apk-sha256", "a" * 64)
         self.assertEqual(code, 0)
@@ -195,6 +207,29 @@ class PrototypeActionTests(unittest.TestCase):
                 )
             ],
         )
+
+    def test_native_heap_capture_is_explicit_and_bound_to_the_base_memory_action(self):
+        code, _, _ = self.cli("--action", "session-memory-check", "--sessions", "3", "--memory-snapshots", "--expected-apk-sha256", "a" * 64)
+        self.assertEqual(code, 0)
+        self.assertEqual(
+            self.calls,
+            [
+                dict(
+                    module="session_memory_check",
+                    function="check_session_memory",
+                    args=(),
+                    kwargs=dict(sessions=3, memory_snapshots=True, expected_apk_sha256="a" * 64),
+                )
+            ],
+        )
+
+    def test_native_heap_capture_cannot_change_other_actions_or_the_static_root_walk(self):
+        for action in ("session-memory-root-check", "session-abandon-check", "touch-gesture"):
+            with self.subTest(action=action):
+                code, _, error = self.cli("--action", action, "--memory-snapshots")
+                self.assertEqual(code, 2)
+                self.assertIn("--memory-snapshots requires", error)
+                self.assertEqual(self.calls, [])
 
     def test_series_count_cannot_silently_change_an_unrelated_action(self):
         code, _, error = self.cli("--action", "session-abandon-check", "--sessions", "12")
@@ -221,6 +256,7 @@ class PrototypeActionTests(unittest.TestCase):
             "shared-catalog-scripts-build",
             "whole-catalog-scripts-build",
             "apk-member-compare",
+            "touch-gesture",
             "rebuild-step",
             "shader-outline-candidate",
             "shader-ramp-fog",
@@ -273,6 +309,7 @@ class PrototypeActionTests(unittest.TestCase):
                 "session-abandon-check",
                 "session-memory-check",
                 "session-memory-root-check",
+                "touch-gesture",
                 "whole-catalog-repair-bindings",
                 "whole-catalog-contracts",
                 "whole-catalog-host-providers",

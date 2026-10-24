@@ -47,6 +47,10 @@ public sealed partial class PortSession
     {
         offlineSettingsSession?.Dispose();
     }
+    bool SaveOfflineSettings()
+    {
+        return offlineSettingsSession != null && offlineSettingsSession.Save();
+    }
 
     // Nested so the owner can use the coordinator's shared state and report without
     // widening their visibility. It retains the same lifetime as the settings store.
@@ -75,8 +79,9 @@ public sealed partial class PortSession
             if (coordinator.offlineSettings == null)
                 return;
             var v = coordinator.offlineSettings.values;
-            coordinator.r.settings.buttonX = Screen.width - 112.5f;
-            coordinator.r.settings.buttonY = 30;
+            var button = AndroidTouchInput.PauseGuiRect(Screen.width);
+            coordinator.r.settings.buttonX = button.center.x;
+            coordinator.r.settings.buttonY = button.center.y;
             coordinator.r.settings.screenWidth = Screen.width;
             coordinator.r.settings.screenHeight = Screen.height;
             coordinator.r.settings.deadzone = v.deadzone;
@@ -127,6 +132,20 @@ public sealed partial class PortSession
             Observe();
             coordinator.Save();
         }
+        public bool Save()
+        {
+            bool saved = coordinator.offlineSettings.TrySave();
+            coordinator.r.settings.error = coordinator.offlineSettings.saveError;
+            coordinator.r.settings.persisted = saved;
+            if (saved)
+            {
+                AndroidOfflineSettings.current = coordinator.offlineSettings.values;
+                coordinator.r.settings.saves++;
+            }
+            Observe();
+            coordinator.Save();
+            return saved;
+        }
         public void ObserveControllerInput()
         {
             if (coordinator.offlineSettings == null || coordinator.r == null || !coordinator.r.freePlay ||
@@ -163,12 +182,11 @@ public sealed partial class PortSession
                 coordinator.r.nova.mapping != null &&
                 UnityEngine.Input.GetKeyDown((KeyCode)((int)KeyCode.Joystick1Button0 + coordinator.r.nova.mapping.jump)))
             {
-                coordinator.offlineSettings.Save();
-                AndroidOfflineSettings.current = coordinator.offlineSettings.values;
-                coordinator.r.settings.saves++;
-                coordinator.r.settings.controllerSaves++;
-                coordinator.r.settings.persisted = true;
-                Show(false);
+                if (Save())
+                {
+                    coordinator.r.settings.controllerSaves++;
+                    Show(false);
+                }
             }
         }
         public bool Draw()
@@ -209,7 +227,7 @@ public sealed partial class PortSession
                 // Keep the GUI event owned even when Back closes the feedback.
                 return true;
             }
-            var button = new Rect(Screen.width - 205, 10, 185, 40);
+            var button = AndroidTouchInput.PauseGuiRect(Screen.width);
             coordinator.r.settings.buttonX = button.center.x;
             coordinator.r.settings.buttonY = button.center.y;
             if (GUI.Button(button, coordinator.offlineSettingsVisible ? "Close settings" : "Settings / pause"))
@@ -219,9 +237,13 @@ public sealed partial class PortSession
                     return true;
             }
             if (!coordinator.offlineSettingsVisible)
+            {
+                if (!string.IsNullOrEmpty(coordinator.r.settings.error))
+                    GUI.Box(new Rect(Screen.width * .5f - 240, 60, 480, 50), coordinator.r.settings.error);
                 return false;
+            }
             GUI.Box(new Rect(Screen.width * .5f - 240, Screen.height * .5f - 200, 480, 465),
-                    coordinator.UsesDiagnosticWithoutPhysicalInput()
+                    coordinator.UsesTouchUi()
                         ? "Android offline settings · touch controls"
                         : "Android offline input settings · B back · A save");
             var x = Screen.width * .5f - 210;
@@ -237,11 +259,8 @@ public sealed partial class PortSession
                 GUI.Toggle(new Rect(x, y + 139, 420, 30), coordinator.offlineSettings.values.invertY, "Invert vertical camera");
             if (GUI.Button(new Rect(x, y + 180, 200, 45), "Save and close"))
             {
-                coordinator.offlineSettings.Save();
-                AndroidOfflineSettings.current = coordinator.offlineSettings.values;
-                coordinator.r.settings.saves++;
-                coordinator.r.settings.persisted = true;
-                Show(false);
+                if (Save())
+                    Show(false);
             }
             if (GUI.Button(new Rect(x + 220, y + 180, 200, 45), "Resume"))
                 Show(false);
@@ -256,7 +275,9 @@ public sealed partial class PortSession
                 coordinator.Save();
                 return true;
             }
-            if (coordinator.r.profile != null && coordinator.r.profile.ready)
+            if (!string.IsNullOrEmpty(coordinator.r.settings.error))
+                GUI.Label(new Rect(x, y + 302, 420, 44), coordinator.r.settings.error);
+            else if (coordinator.r.profile != null && coordinator.r.profile.ready)
                 GUI.Label(new Rect(x, y + 302, 420, 44), "Android profile · " + coordinator.r.profile.appliedRuns + " genuine results · " +
                                                              coordinator.r.profile.kills +
                                                              " kills\nSteam/cloud and Rewired maps unavailable");

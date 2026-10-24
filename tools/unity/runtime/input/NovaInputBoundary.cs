@@ -13,16 +13,16 @@ using UnityEngine;
 
 public static class InputSessionPolicy
 {
-    public enum Mode { RefuseUnmeasuredPhysicalInput, MeasuredNovaPhysicalInput, AutomaticDiagnosticWithoutPhysicalInput }
+    public enum Mode { RefuseUnmeasuredPhysicalInput, MeasuredNovaPhysicalInput, AutomaticDiagnosticWithoutPhysicalInput, TouchWithoutPhysicalInput }
     public const string NovaModel = "Retroid Pocket Nova";
     public const string ThorModel = "AYN Thor";
     public static Mode Resolve(string model, bool explicitBringup)
     {
         if (string.Equals(model, NovaModel, StringComparison.Ordinal))
             return Mode.MeasuredNovaPhysicalInput;
-        return explicitBringup && string.Equals(model, ThorModel, StringComparison.Ordinal)
-                   ? Mode.AutomaticDiagnosticWithoutPhysicalInput
-                   : Mode.RefuseUnmeasuredPhysicalInput;
+        if (string.Equals(model, ThorModel, StringComparison.Ordinal))
+            return explicitBringup ? Mode.AutomaticDiagnosticWithoutPhysicalInput : Mode.TouchWithoutPhysicalInput;
+        return Mode.RefuseUnmeasuredPhysicalInput;
     }
 }
 
@@ -40,10 +40,9 @@ public sealed partial class PortSession
 #endif
         return cachedInputDeviceModel;
     }
-    bool UsesDiagnosticWithoutPhysicalInput()
+    bool UsesTouchUi()
     {
-        return r != null && InputSessionPolicy.Resolve(CurrentDeviceModel(), r.id != null && r.id.EndsWith("-bringup", StringComparison.Ordinal)) ==
-                               InputSessionPolicy.Mode.AutomaticDiagnosticWithoutPhysicalInput;
+        return string.Equals(CurrentDeviceModel(), InputSessionPolicy.ThorModel, StringComparison.Ordinal);
     }
     [Serializable]
     public class PerformanceReport
@@ -78,6 +77,7 @@ public sealed partial class PortSession
         public AndroidNativeSourceSkinLifecycle.Report nativeSourceSkinLifecycle;
         public string inputSource;
         public bool physicalInputAvailable, mappingAvailable;
+        public AndroidTouchInput.Report touch;
         public bool automaticDiagnosticInputHeldAtBoundary;
         public int automaticDiagnosticHoldFixedTicks, automaticDiagnosticHoldTransitions;
         public string automaticDiagnosticHoldStage, automaticDiagnosticHoldScope;
@@ -115,6 +115,7 @@ public sealed partial class PortSession
     }
     void OnGUI()
     {
+        ConsumeTouchGameplayGuiEvent();
         if (DrawOfflineSettings())
             return;
         if (DrawOfflineStart())
@@ -151,6 +152,15 @@ public sealed partial class PortSession
                          ? ""
                          : "\nBeetle HP: " + r.enemy.health.ToString("F1") + " | player HP: " + r.enemy.playerHealth.ToString("F1") +
                                " | AI: " + r.enemy.aiState + " | attacks: " + r.enemy.headbutts));
+    }
+    void ConsumeTouchGameplayGuiEvent()
+    {
+        if (worldPlayer == null || Event.current == null)
+            return;
+        var bridge = worldPlayer.GetComponent<NovaInputBridge>();
+        if (bridge != null && bridge.OwnsTouchGuiMouse &&
+            (Event.current.type == EventType.MouseDown || Event.current.type == EventType.MouseUp || Event.current.type == EventType.MouseDrag))
+            Event.current.Use();
     }
     bool IsNovaInput()
     {
@@ -262,7 +272,8 @@ public sealed partial class PortSession
                                                   commandoPrimaryDiagnostic = commandoPrimaryDiagnostic,
                                                   diagnosticInput = bringup || automaticDiagnosticOnly,
                                                   novaOnly = physicalInputAvailable,
-                                                  inputSource = physicalInputAvailable ? "measured-nova" : "automatic-diagnostic",
+                                                  inputSource = physicalInputAvailable ? "measured-nova"
+                                                      : automaticDiagnosticOnly ? "automatic-diagnostic" : "touch",
                                                   physicalInputAvailable = physicalInputAvailable,
                                                   spawnedBodyId = body.netId.Value,
                                                   masterId = body.master.netId.Value };
@@ -426,7 +437,7 @@ public sealed partial class PortSession
                 bridge.bank = bank;
                 bridge.mapping = mapping;
                 bridge.automaticDiagnosticOnly = automaticDiagnosticOnly;
-                if (!physicalInputAvailable)
+                if (automaticDiagnosticOnly)
                 {
                     coordinator.worldManualTakeover = false;
                     if (coordinator.r.world != null)
@@ -445,6 +456,11 @@ public sealed partial class PortSession
                         coordinator.r.diagnosticSkillIsolationSlot);
                 }
                 bridge.thirdPerson = display.thirdPerson;
+                if (spine)
+                {
+                    bridge.touchControls = new AndroidTouchInput();
+                    coordinator.r.nova.touch = bridge.touchControls.report;
+                }
                 coordinator.r.nova.originalInputConsumer = true;
                 coordinator.worldEquipmentBridge = bridge;
                 if (cfg.integratedWorld)
@@ -485,6 +501,8 @@ public sealed partial class PortSession
                         cfg.integratedWorld && Time.frameCount % 30 == 0 ? GC.GetAllocatedBytesForCurrentThread() : -1;
                     if (coordinator.CompletedResultsReturn() || coordinator.CompletedOfflineAbandon())
                         yield break;
+                    if (bridge.ConsumeTouchPauseRequest())
+                        coordinator.ShowOfflineSettings(true);
                     bool pauseBeforeMoonBoundary = cfg.pauseBeforeMoon && cfg.teleporterLoop &&
                                                    coordinator.r.stageProgress != null &&
                                                    ManualMoonBoundary.HoldAutomaticProgression(

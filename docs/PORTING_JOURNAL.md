@@ -37273,3 +37273,718 @@ the original game shader cohort. Full HLSL recovery, variants, serialized record
 bundle assembly, app delivery, installation and matched runtime/performance remain
 open. No APK was produced by this slice. Revisit on an original-cohort mismatch,
 SDK drift, new required reflection/stage contract or Android app admission.
+## J1069 — Stop the extended integrated memory series on the first native error
+
+2026-10-24. Hypothesis: the current original-audio dependency lifetime might
+change J787/J1066's repeated-session memory growth enough to permit a longer
+series. Reuse the existing memory observer and strict native abandonment
+contracts; the new explicit `--sessions 12` changes the host observation count
+only. Prior art is J773/J782/J787's named root analysis and the pinned memory
+optimization/source-lifecycle references in `community-prior-art.md`. No new
+root walker, gameplay workaround or cache cleanup is introduced.
+
+Run the exact installed Thor APK
+`299445f72267f216b23c7c4c2610364329445625396d8cd536bab01c07747ead`
+(source bf40428f), with its matched 266-file payload. Each ordinary Commando
+menu start is followed by at least 60 s of ready Lakes play and explicit UI
+confirmation/abandonment. Input is automatic diagnostic input; all five gameplay
+assists are off. Three sessions pass every completed-session abandonment,
+cleanup and frozen-profile contract. The fourth stops at the first actual-process
+runtime-log error: the known J667 `LightningStake(Clone)` nonfinite collider
+transform. Preserve that report/log/error classification; do not retry until it
+passes, disable the source projectile, or call the requested series complete.
+The touch implementation is unbuilt source during this run and cannot be the
+cause of an error in the unchanged feature APK.
+
+| Completed session | Managed after collection, MiB | Next-menu PSS, KiB | Live completed coordinators at start |
+| --- | --- | --- | --- |
+| 1 | 191.51 | 3,033,272 | 0 |
+| 2 | 240.09 | 3,148,617 | 0 |
+| 3 | 289.83 | 3,726,613 | 0 |
+
+The session-2-to-3 managed slope is 52,158,464 bytes/session (49.74 MiB/session).
+The original-audio integrated lifetime retains four bundles, about 34,535
+catalog/template GameObjects and 1,577 textures after reclamation; this is a
+different retained-content cohort from the older one-bundle observation.
+Completed coordinators remain released. These short observations neither name
+the remaining managed root nor establish a bound, resident-memory limit,
+long-session stability, sustained performance or thermal acceptance.
+
+First failure is the known native J667 error during session 4, before a fourth
+abandonment. Terminal validation independently rehashes the installed APK,
+confirms the exact selector and process absent and both physical panels off,
+then releases the device lease. The host pruner finds no eligible outputs;
+receipts and failure evidence remain private. Revisit the extended series after
+a concrete J667 correction or a separately declared workload; never silently
+change the original behavior to obtain a passing stability report.
+
+Evidence (private):
+`work/device/<serial>/experiments/session-memory/20261024T091440.752415Z/`,
+`work/coordination/native-feedback-awake-acceptance-20261024/twelve-sessions.json`,
+`twelve-terminal.json` and `prune-after-memory.json`. No new APK is built or
+installed for this series; the original legitimate installation is untouched.
+Android-local run/report lifecycle writes remain within the owned package.
+
+## J1071 — Qualify software touch, native pause and recovery
+
+2026-10-24. Hypothesis: independent pointer captures can supply the existing
+native input bank and camera adapter, including a second-finger pause, without
+changing original movement, skill, authority or time semantics. Reuse the
+existing bridge/settings/session owners. Pinned Starstorm2 `BorgMain` at
+`a9a4badd` observes `inputBank.jump.down` and authority before scheduling
+native behavior; it informs the bank/consumer witness, not copied gameplay
+code. The current accepted inputs and device observations remain
+authoritative.
+
+**Implementation.** `AndroidTouchInput` owns stable finger IDs, movement,
+camera delta and jump/four skills/equipment/interaction/sprint/pause. Short
+taps remain pending until consumed by a fixed tick. Cancel, missing fingers,
+focus, pause, viewport change and teardown neutralize captures; reacquisition
+requires lift. `NovaInputBridge` retains original bank delivery and
+measured-controller selection, with touch taking the active manual gesture. A
+second-finger pause queues through the existing settings owner and neutralizes
+input immediately. Captured mouse GUI events cannot reach legacy buttons. The
+diagnostic takeover button moves to the reserved top strip. Thor's ordinary
+startup no longer waits for a physical controller map; its controller mapping
+remains unmeasured.
+
+`AndroidOfflineSettings.TrySave` catches expected persistence failures, shows
+a bounded message, retains the paused modal and marks persistence false. A
+successful retry clears the error. The existing validated
+pending/primary/backup transaction remains unchanged; difficulty uses the same
+store.
+
+The scoped `touch-gesture` diagnostic compiles authored Java with the pinned
+SDK. Android's target-UID injection overload binds events to the exact running
+owned APK/PID and focused display-0 window. It checks viewport bounds, pointer
+lifetimes and the 30-second gesture limit; temporary device files are verified
+and removed. A failed dispatch stops only the still-matching owned game. It
+changes no permissions, authentication or gameplay state. Software-injected
+motion does not qualify a physical digitizer or controller.
+
+**Artifacts and host checks.** The first normal full touch build, source
+`859cfd3d`, request `20261024T120043.036780Z`, completes in 164.538 s with
+zero build errors; APK
+`564d4573c764f69376cb07ee1834fc191db65055a335f68650a12ef9298531aa`. Nova
+exposes a reporting error: the native bank releases, but the touch report
+retains its last primary-held mask when measured physical input takes over at
+neutral. The bridge now observes the actual pushed bank on every manual fixed
+tick, counting touch press edges only while touch owns delivery. The exact
+production fixture covers that handoff without inventing touch presses.
+
+PR63/J1078's isolated build lane is used for all subsequent builds. A first
+normal full build, source `4680c85d`, produces
+`04ee771b197ed61710f373d5bd86e53cbdfd5716dedc8cb0b3ef1c6ecf66d019` in 492.846
+s (Unity 364.005 s, zero errors). Its menu/settings pass, but world startup
+refuses original native-audio components: the lane's R44 content and pre-PR66
+runtime form different cohorts. Reuse the landed J1080/PR66 runtime readiness
+gate; do not weaken the missing-component check or claim touch passed.
+
+The first matching normal full build, source `e04b3c64`, request
+`20261024T154012.064279Z`, produces
+`8df184361a51cbaa13c7c20e31d25d65f895ddf66b58320a9d0a71989f2467c3` in 493.042
+s (Unity 360.374 s, zero errors). All 266 payload/manifest hashes are
+independently verified and frozen by reference; sync uses 134 runtime files.
+No APK, payload or Unity project is copied into a run/review folder. Neither
+lane stages touch sources in the canonical editor project; both are removed
+after their build work is complete. The final lane stays warm for the separate
+memory-attribution work until its own teardown.
+
+The production pointer/camera, settings, feedback, portable-input and scoped
+SDK cases pass, as do 36 device-safety cases and 50 affected R44/touch
+integration cases. Fresh-clone CI at `e04b3c64` passes 1,957 tests with 142
+skips; after rebasing landed PR69, `9e9e5f45` passes 1,962 tests with 142
+skips. Exact-editor fixtures skip honestly when the editor is absent. A bare
+linked-worktree doctor reports missing local input/project state; `LAB_LANE`
+deliberately refuses the doctor action as outside its host-build allowlist.
+The configured lane preflight supplies build-input qualification instead.
+
+**Thor bounded witnesses and preserved failures.** The final case reaches
+original world authority, then explicitly disables automatic input with
+invincibility ON and the other four gameplay assists OFF. Concurrent move,
+look, primary and jump advance the native path, camera, primary shots and jump
+callback. All eight action bank edges and releases are observed; original
+secondary, utility and special consumers also advance. Equipment is empty and
+no interactable target is selected, so those two observations establish bank
+delivery/release only. A second held finger opens pause, neutralizes the bank,
+and freezes the native stopwatch/fixed ticks. An owned directory at the
+pending file path causes a bounded save refusal; primary bytes stay unchanged
+and pause stays owned. Removing only that test directory permits a successful
+retry and a fresh post-lift jump.
+
+The same case holds a scoped SDK primary pointer across Home/screen sleep. Its
+bounded report readback names the same master/body/authority and neutral
+input; host elapsed time is 20.443 s and reported native elapsed is 1.160 s.
+This older return predicate does not require a newly advanced world frame, so
+it alone does not qualify a fresh resumed session. Then the SDK actor exits
+137 (`Killed`) and its failure cleanup stops the owned game. The complete
+transaction is **failed**, not converted into a pass from its intermediate
+witnesses. No injector-specific kill reason is found in the retained system
+log. A separate all-assists-OFF attempt ends in genuine Commando death before
+Special; this is preserved, not classified as a touch regression or retried
+until a normal-play claim passes. Earlier zero-layout and wrong-focus requests
+refuse before injection; their corrected preconditions are retained.
+
+**Recovery scope.** On touch APK `564d4573` on Thor, an
+ActivityManager-induced VM crash of the observed owned PID is followed by a
+new-PID menu with existing native profile/settings/ledger hashes retained. A
+deliberately partial pending JSON is not adopted over a validated primary. An
+injected corrupt primary recovers from the validated backup; original file
+hashes remain intact. Only exact owned test files are removed/restored. These
+are controlled persistence states, not a real power cut or a filled
+filesystem.
+
+A debuggable-package STOP, independently watchdog-limited and always CONTed,
+produces Android's genuine 5,005 ms MotionEvent ANR. The vendor reason names a
+window token that joins to the owned activity ProcessRecord and pre-freeze
+PID; the next cold menu has a different PID and retained persistence. The
+original generic parser reports `anr_observed=false` because its expected
+PID/reason labels are absent. Preserve that original result and the separately
+derived window/PID classification; do not rewrite the raw result. This proves
+cold recovery after a controlled ANR, not live continuation through an
+arbitrary ANR.
+
+**OLED gate.** Earlier Thor functional cases had both panels ON, which does
+not satisfy the later-enforced top-only test condition. They support their
+bounded functional observations only; they provide no top-only, sustained
+performance or thermal acceptance. The installed vendor top-only control uses
+`dual_screen_display_mode=1`. The full vendor focus-setting transaction and a
+before-wake mode change both leave the lower physical panel ON. A tempting
+ON/OFF readback at 0.108 s is a wake transient: the lower panel is ON from
+0.593 s through 10.864 s. No black overlay is accepted as physical OFF.
+
+`Device.display` now saves the original vendor mode, selects mode 1 before
+wake, and requires stable named physical top ON/lower OFF readback. Nested
+contexts retain the first original mode. Refusal sleeps both panels and
+restores the original mode. Actual refusal/cleanup passes on the Thor:
+original mode 0 restored, both physical panels OFF, owned process/selector
+absent and installed APK rehashed. The three inspected vendor settings are all
+restored to their original 0 values. A supported physical lower-panel-off
+method remains required before further Thor gameplay/thermal runs.
+
+**Scoped SDK lifetime correction.** The original exit-137 case stays failed.
+The SDK actor now reads the owned UID's Android process state before dispatch
+and during bounded waits. After Home changes that UID from TOP, it ends with
+`termination: focus-lost`, without injecting a stale release into a background
+app. A normal complete stream reports `steps-complete`; failure cleanup still
+stops only the matching owned process. The actor stays in Android's normal
+shell context and changes no permission, priority, OS policy or gameplay
+state. An actual Nova stock-menu case sends one DOWN, observes Home, and ends
+with `focus-lost` before display sleep while retaining the game PID. Its
+compiled SDK bytecode hash is
+`ac808764c5a58b6030a93f452481066c6e4b80d693375f0bbea41804e00c4fae`. The
+complete world case separately requires fresh post-return world frames,
+neutral bank/captures, lift reacquisition and a new native jump edge.
+
+**Nova installation and recovery.** Explicit shared-device handoff authorizes
+retained-data replacement of J1065's candidate, which shares the lab
+namespace. The first immutable debug lab candidate uses version code 1 against
+the owner's 2, so that authorized diagnostic replacement uses Android's `-r
+-d`. Later lab replacements use ordinary `-r`. No uninstall or clear-data
+occurs. This is not alpha update-policy acceptance. Previous differing runtime
+bytes are hash-preserved device-locally before sync; no profile or owner
+packet is deleted.
+
+Fresh capacity guarding refuses the first matched R44 replacement before ADB
+install: 3.804 GB free is below its 3.994 GB scratch/reserve requirement. Only
+the 1,055,688,707-byte superseded alpha `whole-game-content` version is
+reclaimed, after checking the exact on-device hash, host cached copy and
+distinct preserved owner-original hash. Owner-original bytes are checked again
+afterwards. The normal installer then passes; all 134 runtime files sync,
+transferring one. Actual capacity, package placement and runtime backing
+remain in local receipts.
+
+On `564d4573`, Nova completes controlled VM-crash/new-PID recovery, refusal of
+partial pending JSON, validated-backup recovery and genuine 5,005 ms
+MotionEvent ANR/new-PID recovery, retaining eight existing persistence-file
+hashes. The first backup preparation refuses before corrupting any primary
+because the owner bootstrap's compact JSON and Unity's formatted JSON differ
+in bytes. Two ordinary unchanged native Saves establish the current store's
+backup; no setting value is changed to manufacture equality. The generic ANR
+parser's original false result is retained. A separate classification joins
+the reason's window token to the owned pre-freeze window/PID and new cold PID;
+raw evidence hashes accompany that classification.
+
+**Nova touch acceptance.** On `8df18436`, simultaneous native movement, look,
+primary and jump pass; all eight bank edges/release and a deliberately
+unfinished stream's ACTION_CANCEL pass. Held second-finger pause freezes the
+native stopwatch/fixed ticks; pending-path directory refusal retains primary
+bytes and pause, and retry succeeds. The corrected SDK transaction ends at
+Home with `focus-lost` before display sleep, retains the same PID/master/body,
+then returns with newly advanced world frames, a neutral bank and a fresh
+native jump. Background host/native elapsed values are recorded in the case
+result.
+
+The full case then **fails** on the next single-finger Settings tap: pauses
+and resumes both increment, leaving the modal closed. `Neutral` clears GUI
+ownership when the pause request is consumed, and the modal exception lets
+that same UP activate Close settings. The producer now retains only the
+captured GUI pointer through suspension until lift; paused polling clears that
+ownership when the pointer count reaches zero. The event guard also applies to
+the opening modal's captured stream. Fresh modal pointers remain available.
+Production pointer and modal fixtures cover repeated neutralization, the
+blocked opening release and the subsequent unclaimed Resume. Source `9e9e5f45`
+contains that correction; `437caf70` adds its owner/playtest documentation. A
+normal full build, request `20261024T162549.594563Z`, succeeds in 464.248 s
+(Unity 363.286 s, zero errors), producing
+`d211c7fa1f355381522e18fd93895b699a3b78de55755a20d87f2cc01c766e2e`. All 266
+payload/manifest hashes are verified by reference; three runtime files
+transfer during the 134-file sync. Its first code-only reuse refuses the same
+single authored audio-bootstrap DLL difference; use normal full, never bypass
+the frozen-input guard. The capacity guard again refuses before installation;
+only the verified superseded alpha content file is reclaimed, with the
+retained owner original reverified before normal `-r` installation.
+
+The failed 8df case ends stopped, with its selector removed and display
+asleep. It qualifies its bounded fresh-background witness, never
+end-run/full-transaction acceptance. The native viewport is 1280 × 960; a
+Thor-sized request refuses before injection. A second host precondition
+wrongly expects touch fixed ticks while neutral measured physical input owns
+the bank; it is corrected without changing runtime input. The next actual
+four-pointer case advances native path 6.83 to 25.00, jumps 0 to 1, primary
+shots 2 to 13 and camera-touch samples 0 to 1, but fails on the stale reported
+mask described above. Preserve each failed case separately. Physical mapping
+availability alone never supplies a touch or hardware-input witness.
+
+**Complete corrected case.** On `d211c7fa`, all concurrent movement/look/fire/
+jump consumers, all eight action bank edges and releases, explicit
+ACTION_CANCEL, held second-finger pause/frozen clock, pending-path save
+refusal/retry and fresh post-lift jump pass. Software motion reaches the
+original secondary, utility and special consumers; empty equipment and missing
+interaction target remain bank-only witnesses. Home ends the SDK stream with
+`focus-lost` before sleep. Freshly advanced world frames confirm return to the
+same live PID, master, body and authority with neutral input and a new native
+jump. Host elapsed is 24.412 s; native elapsed is 5.639 s, excluding the
+15-second sleeping interval.
+
+A single-finger Settings tap now stays open. End Run opens its confirmation;
+cancel retains the owned pause, reopening and confirming reaches session 2's
+menu in the same process. Actual-PID runtime errors are empty. The complete
+transaction passes; the selector is removed, process stopped and OLED asleep.
+It uses invincibility ON only, with automatic input explicitly disabled at
+manual takeover, and makes no ordinary hardware-input or normal-run claim.
+
+Both independent standard controls and strict native abandon/restart pass on
+the preceding `8df18436`: plain 35.067 s of native world, one transition plus
+10.036 s in Goolake, then native teardown and ready same-process restart.
+Their `is_current_build=false` values are retained because the canonical host
+pointer belongs to another build. These controls do not claim a different
+installed APK.
+
+**Later source review.** A production Update/fixed-delivery fixture reproduces
+an additional cancellation race: a touch jump canceled before the next physics
+tick survives in the bridge's duplicate physical jump latch. Touch now consumes
+its sole producer-owned pending edge directly; its manual frame clears the
+physical latch. Eight pointer/bank fixtures pass, including canceled/missing
+pre-fixed pointers, released short taps and preserved untouched physical pending
+input. This later correction is not part of `d211c7fa`; new build/device
+qualification remains separate. The subsequent complete software-touch case
+on `32c4742e` passes all prior gestures, fresh background return, single-finger
+pause, confirmation/cancel and same-process menu return with no actual-PID
+errors. Host/native background elapsed is 24.362/6.399 s; terminal selector
+removal, process stop and OLED sleep pass. The exact source is `5f25a12d`, with
+J1091's separately qualified heap capture; no hardware-input claim is added.
+
+**Remaining gates.** Physical digitizer/controller/rebinding,
+acquired-equipment and genuine interaction effects, complete screen/source
+appearance, ordinary normal runs, the managed-growth bound (J1069), sustained
+performance/thermals, real interruption/storage-failure conditions and final
+owner installation/ update remain separate open gates. The declared
+foreground-scoped SDK transaction has its own result; it does not
+retroactively pass the earlier killed actor. Preserve the first failure; do
+not relax OS policies, enable hidden assistance or substitute a fixture for
+ordinary control.
+
+Private evidence: `work/coordination/alpha-touch-acceptance-20261024/`,
+including `startup-frozen.json`, `lane-r44-frozen.json`,
+`lane-pause-frozen.json`, `native-touch-20261024T122931.807959Z/`,
+`touch-qualified-witnesses.json`, `recovery-20261024T122022.256275Z/`,
+`display-vendor/mode-before-wake-series.json`,
+`display-vendor/guard-stable-result.json`, `final-terminal.json`, and the
+separately named Nova case/installation receipts, especially
+`nova-native-touch-20261024T163652.284859Z/`,
+`nova-standard-20261024T161519.817387Z/` and
+`nova-recovery-20261024T141308.974283Z/`. Raw device logs/screenshots, vendor
+inspection and all game-derived outputs remain private. Cleanup runs the
+generated-output pruner, leaves displays asleep and releases owned leases.
+
+## J1086 — Complete twelve native sessions on the internal device without accepting a memory bound
+
+2026-10-24. Hypothesis: J787's remaining managed growth may reach a limit on the
+constrained internal-storage Nova, or expose a reproducible failure that the
+shorter series missed. J1069's extended Thor attempt stopped on the known
+LightningStake error after three completed sessions. Run the existing memory
+owner/strict native-abandon contracts on the separately qualified R44/touch
+cohort, preserving all failures and original gameplay/ownership semantics.
+
+**Artifact and method.** APK
+`d211c7fa1f355381522e18fd93895b699a3b78de55755a20d87f2cc01c766e2e`,
+build source `437caf70`, installed/matching-payload scope in J1071. Start Commando
+through the native offline menu, observe at least 60 s of ready first-stage play,
+then use the actual two-step End Run controls. Every completed world must pass
+the strict cleanup/profile-count contract before starting the next. Automatic
+input is diagnostic; all five gameplay assistance options are OFF. No native
+heap capture or static-root walk runs in this series, and no original result or
+permanent progression is fabricated.
+
+**Result.** All 12 requested sessions complete, reaching menu 13 in the same
+process. The runner stops at `repeated-sessions-observed`; first failure is null,
+failures and actual-PID runtime errors are empty. This case contains no recurrence
+of J1069's native error; it does not fix or disprove that separate failure.
+
+| Completed session | Managed after collection (MiB) | Next-menu PSS (MiB) |
+| --- | ---: | ---: |
+| 1 | 176.68 | 3298.57 |
+| 2 | 225.97 | 3220.43 |
+| 3 | 275.81 | 3958.52 |
+| 4 | 321.82 | 3113.27 |
+| 5 | 366.61 | 3540.08 |
+| 6 | 416.46 | 3780.92 |
+| 7 | 463.75 | 3869.10 |
+| 8 | 507.42 | 3439.49 |
+| 9 | 555.36 | 3966.36 |
+| 10 | 600.68 | 4979.45 |
+| 11 | 646.68 | 3943.77 |
+| 12 | 697.23 | 3806.91 |
+
+The existing least-squares fit over sessions 2–12 is **49,043,009 managed bytes
+per session** (46.77 MiB), **83,624 KiB PSS per session** (81.66 MiB), and 933,404
+reserved bytes per session. PSS fluctuates substantially; its fit is not a
+monotonic rise or an indefinite-memory forecast. Managed usage grows from
+176.68 to 697.23 MiB. `GC.GetTotalMemory(false)` matches the profiler's managed
+value in sampled sessions 1, 6 and 12; collection counts advance from 246 to
+1,482. No managed plateau or retaining root is established.
+
+At the final menu, live completed coordinators/reports are both zero. Reclaimed
+world object counts remain around 34,555 (34,558 at the end), textures 1,577 and
+bundles 4. The final next-menu setup has 1,582 textures; these are distinct sample
+phases. The existing destroyed-registry pruning and original callback counts
+remain observed, not a new cache purge. Stable counted objects do not account
+for the growing managed bytes.
+
+**Cleanup and next discriminating check.** The owned selector is absent, process
+stopped and OLED asleep. Before the retained-data handoff, installed APK bytes
+are independently rehashed and match the candidate. The generated-output pruner
+runs from the primary checkout. No other package/profile/payload data or storage
+configuration is removed or changed.
+
+Compare native/managed heap snapshots after completed sessions 1 and 3 using
+the newly opt-in resource owner and the pinned public Unity analysis tool. Native
+handles, closed generic statics and conservative roots are not exhaustively
+covered by the previous enumerable-root walk. Capture allocation/pauses belong
+to a separate attribution case, never this uninstrumented growth measurement.
+Ordinary hardware input, a long uninterrupted normal run, sustained thermals and
+the memory bound remain open.
+
+Private evidence:
+`work/device/<serial>/experiments/session-memory/20261024T164502.466160Z/`
+contains the frozen selection, 12 completed reports, final menu, current-process
+log and result. The wrapper's result/prune and independently verified handoff are
+under `work/coordination/alpha-touch-acceptance-20261024/`. Raw identifiers,
+profile data, logs and later heap bytes remain private.
+
+## J1091 — Qualify native heap capture and identify retained laboratory log payloads
+
+2026-10-24. Hypothesis: native/managed heap snapshots can account for J1086's
+remaining growth beyond the enumerable-root walk. Reuse the existing resource
+owner and Unity's capture/parser APIs. Pinned UnityExplorer `ReflectionInspector`
+(`1e1fb0e2`) exposes static/member filtering, but does not establish exhaustive
+native-handle reachability; the actual captured graph is authoritative. No
+community/game implementation is copied into the player.
+
+**Player and capture contract.** Normal code build source `5f25a12d`, request
+`20261024T171419.287939Z`, succeeds in 217.087 s (Unity 114.831 s, zero errors).
+APK `32c4742eba0bb61060f9e2a63441fdd0b961f5ada82e1f059101f1b75b7fd677`.
+All 266 matching payload/manifest hashes are independently verified and identical
+to the preceding J1071 candidate. Installation retains data and the original
+owner's preserved payload, with fresh capacity/placement/backing receipts.
+
+`SessionResourceBoundary` reads an attempt-matched opt-in and captures only at
+menus 2 and 4, after completed worlds. It refuses a live world/network or a
+non-Development player before the native call. The exact 2021.3 SDK provides
+`UnityEngine.Profiling.Memory.Experimental.MemoryProfiler.TakeSnapshot`; the
+existing builder already selects Development, so no new build mode is added.
+Native callback success and a nonempty owned file are required. A synchronous
+callback cannot publish startup session zero. The host waits for completion,
+pulls the exact generated file, verifies SHA-256, then removes only that device
+file. Original profile/payload files are untouched. Capture allocation/freezes
+exclude this case from ordinary growth/performance measurement.
+
+Five production-method C# transaction fixtures, ten resource-runner tests and
+224 CLI cases pass. The same batched player also contains J1071's sole-owner
+pending-jump correction. Fresh-clone CI at the built source passes 1,970 tests
+with 144 skips; exact-editor fixtures skip when the SDK is absent.
+
+**Device result.** All three requested Commando native starts, 60-second world
+observations, confirmed UI abandonments and cleanup contracts pass. Automatic
+input is diagnostic and all five gameplay assists are OFF. The final menu is
+session 4, failures and actual-PID runtime errors are empty. The native API and
+hash-checked transfers produce these private snapshots:
+
+| Point | Bytes | SHA-256 |
+| --- | ---: | --- |
+| Menu 2, after one completed world | 1,735,908,215 | `303409a61e506964fe411cc26dc31433fb3df41fd6a3c891aaf2ed6d645dafd4` |
+| Menu 4, after three completed worlds | 849,129,796 | `4d133dc622d5af0c7a7e4105e2d660af6585e3885816fd7a2ac43706f92ea312` |
+
+**Host parser first failure and correction.** Unity's public
+`MemorySnapshotDataTools` at `86af1fe8` builds with the installed .NET 10.0.401
+SDK; its 29 upstream tests pass. Its first real-file decode refuses a negative
+array-element size for an open generic `ExposedReference<T>` descriptor. Preserve
+that failed decode. Captured metadata is format 12, with 16,432 identity-mapped
+type indices. The actual array length is zero and its VM header is 32 bytes; no
+unknown element payload exists. An authored synthetic fixture reproduces that
+failure without game bytes. Return the known header for zero-length arrays;
+nonempty arrays with unknown element size still throw. All 31 upstream/authored
+tests then pass, and both actual files decode/export with minimal validation.
+The small authored recipe patch carries the correction/test against the exact
+public source pin; no parser implementation is vendored.
+
+The upstream SQLite dependency warning remains in private build evidence.
+Analysis uses default DuckDB on these owned captures; neither a database nor
+third-party binary is distributed. The CLI's Unity Companion License and its
+notices remain with private source/build outputs.
+
+**Attribution.** Managed string bytes increase from 57,215,180 to 151,908,614.
+The captured `RoR2.Console.logs` static list and its `Console.Log[]` retain
+48,610,188 string bytes after one world and 143,292,648 after three. Read-only
+prefix classification identifies **48,501,030** and **143,123,522** of those
+bytes as the authored `LAB_SNAPSHOT` stream. Its increase is 94,622,492 bytes
+across two worlds. The authored `LabDiagnostics.Dump` sends full renderer/
+hierarchy JSON every two seconds, which the original console correctly retains.
+This names the dominant root and producer; it is not evidence to clear the
+original console or change its logging policy.
+
+Smaller growth remains, including player-stat sheets reachable from completed
+actor graphs. These roots and the final bound still require attribution. Next,
+retain diagnostic file snapshots and original/error logging while removing the
+periodic full-JSON console payload, then repeat the uninstrumented series and
+sustained case. Do not treat instrumented heap sizes as an accepted memory bound.
+
+**Cleanup and evidence.** The exact device snapshot files are removed only after
+verified transfer; selector/process cleanup and OLED sleep pass. Before the
+priority handoff, installed bytes are independently rehashed and the lease is
+released for owner-build work. The finished isolated lane is removed and the
+primary pruner runs; published APK/payload paths remain by reference. No
+canonical editor staging is changed.
+
+Private evidence:
+`work/device/<serial>/experiments/session-memory/20261024T172717.816663Z/`,
+`work/coordination/alpha-touch-acceptance-20261024/heap-after*-export.*`,
+`heap-parser-zero-before.log`, `heap-parser-zero-after.log`,
+`heap-after*-roots.*`, and `lane-heap-frozen.json`. Heap files, addresses, raw
+field values, databases, identifiers and logs remain private.
+
+## J1088 — Produce every single-mip ETC1 texture from PC bundles on Android
+
+Date: 2026-10-24 UTC. Hypothesis: every ETC1/single-mip Texture2D in the fixed
+J850 target can be derived from its original PC bundle and audited importer
+relationships through the existing texture owner. No exported image, accepted
+pixel, SDK encoder or Editor/project workflow is a production input. The fixed
+input and target remain J1082's J850/source `1780ea9`, APK
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+Prior art: consult `docs/community-prior-art.md` and J1050's full bundle reuse
+census. Pinned AssetRipper `1ac666f47d8e9dedf96afb0b914c70d7656151ea`
+TextureAssetExporter/TextureConverter/DirectBitmap establish original image-path
+extension selection, AG normal unpacking and image export behavior. Original
+AssetBundle container paths independently confirm the six selected JPEG source
+identities; exported images are comparison oracles only. The unchanged public
+Ericsson ETCPACK 2.74 encoder and J1079's qualified JPEG bridge supply encoding.
+Their acquisition/source/license pins remain unchanged. No protected encoder
+implementation is reproduced or vendored.
+
+Changes: extend `texture_produce.py` with `etc1` using source BC1/BC3, RGB24,
+RGBA32 and the qualified R16 high-byte path. BC3 uses four-color interpolation
+and its original alpha palette; BC1 preserves transparent selectors before the
+existing PNG dilation. Normal input uses original AG coordinates and integer
+square root reconstruction, selecting numeric ETC1 encoding. Color input uses
+perceptual encoding, including source-linear colors. The source JPEG policy
+discards alpha before the existing quality-90 export/decode bridge; PNG input
+retains the qualified transparency-dilation path. All seven existing field
+projections, source/body/pixel checks, output reservation and persisted readback
+remain owned by the existing producer.
+
+The generalized native owner is `build_texture_etc.py` / `texture_etc.cpp`,
+renamed from the former Alpha8-only helper. Its explicit `alpha8`, `rgb` and
+`normal` pipe modes use the same separately acquired public source provider,
+license notices, bounded compiler/codec children and retained terminal receipts.
+The producer admits it through `--etc-codec` and its explicit hash. J1082's old
+names remain historical at its recorded commit; no compatibility framework or
+second compiler/encoder owner is introduced.
+
+`recipe/owner-rgb-textures.json` selects 274 canonical original textures from
+79 PC bundles for all 281 target records. The 658,376-byte profile, SHA-256
+`2c4c1c416f676d09a93f987d1ea9f1ecda46aa279baee5799a196beec59fc4ed`,
+contains only selectors, field/pixel extents, hashes and importer/storage
+relationships. The two AndroidNative ramp aliases reuse the original Warp/Elite
+ramps already named by `composition.json`. Every pixel comes from the owner's
+original game files. No color/normal array, palette, encoded block, target byte
+frame or signing material is included. The provenance/privacy/licensing audit
+and required recipe-table row are recorded in `recipe/README.md`.
+
+Host result: the complete original-source census matches all 281 target bodies
+and pixel streams. The isolated standard-library producer independently passes
+all 281 in 30.244 seconds with parent peak RSS 135,659,520 bytes. Its shared
+public helper builds in 4.269 seconds. The complete 4,326-record Alpha8
+regression retains J1082's three exact pack hashes. Twelve authored contracts
+pass with both actual native tools, including BC1/BC3 alpha/interpolation and
+logical cropping, R16 bounds, integer normal coordinates, color/normal pipeline
+projection, malformed/extreme codec input, provider/input drift and persisted
+pack bounds. Test fixtures contain authored non-game patterns. Fresh-clone CI
+passes 1,955 tests with 141 explicit environment skips; both GitHub checks pass.
+
+Phone result: the complete combined case passes from implementation source
+`d64aaf76944f449c4d085193af27fc04f6fa5f9f`. The public ETC helper is compiled
+on the assigned phone in 33.088 seconds, producing AArch64 ELF SHA-256
+`9cedf64c570a804628949e0be531af019a7848eef11bac85a5293d7e1437e213`.
+The existing qualified public JPEG helper is independently hash checked. Each
+producer reads only original PC bundles, public recipes/tools and its explicitly
+owned interpreter/runtime. All 5,006 records pass their independent accepted
+body/pixel pins and match the host packs:
+
+| Cohort | Records | Seconds | Parent peak RSS (bytes) |
+| --- | ---: | ---: | ---: |
+| ETC1 single-mip | 281 | 331.052 | 85,278,720 |
+| Source Alpha8 single-mip | 4,326 | 32.439 | 39,055,360 |
+| Uncompressed | 399 | 571.942 | 105,582,592 |
+
+These parent RSS values exclude compiler/codec children. The combined case takes
+980.077 seconds, with an explicit cores 0–2 affinity. The pure-Python atlas
+postprocessing is substantially slower under that restriction than J1079's
+unrestricted producer; this is a tool-case timing, not game performance evidence.
+The new RGB outputs are:
+
+| Output | Bytes | SHA-256 |
+| --- | ---: | --- |
+| Object pack | 61,500 | `0a107d43cf76678125c255cdc0c304582289d502f4908df4618c9fc2332fc5ca` |
+| Resource pack | 17,874,000 | `435c1dc51692f5440f57e84cf7e772abf7173b5dd41ed9925425f04ca20617aa` |
+| Index | 139,602 | `c20c4f94db24fe8e7c40abdee484c79b3ff04349ddabb809743ceaf999cf4a90` |
+
+The Alpha8 and uncompressed outputs retain all six J1082/J1079 hashes exactly.
+All twelve authored contracts pass on Android with both real codecs. Existing
+output refuses for each of the three profiles. An incorrect ETC codec pin
+refuses before output creation. All nine persisted pack hashes are rechecked
+after refusals and contracts. No Editor, UnityPy, Pillow or exported project is
+an Android production dependency.
+
+First failures/corrections: initially treating every source-linear color as a
+numeric-compression input fails reference pixels; only normal input selects
+that metric in this cohort. Missing original JPEG policy accounts for additional
+reference failures. The R16 control uses the original high byte with zero green/
+blue, matching the independent exporter oracle. The remaining same-name
+`texTrimSheetDronesBrownEmissive` selects the Tanker original rather than the
+IronHauler variant; both public and standalone SDK oracle encoders then match
+all 32,768 blocks. These are source identity/importer corrections, with no target
+pixel or block patch. The final full host census passes before the public recipe
+is admitted. The phone case has no failed production/control step. Doctor/host
+preflight's separately recorded ungenerated-project refusal remains; no game
+build gate is waived.
+
+Device boundaries: acquire the shared-device lease atomically after alpha's
+handoff. Actual installed APK before/after is independently verified as
+`32c4742eba0bb61060f9e2a63441fdd0b961f5ada82e1f059101f1b75b7fd677`,
+matching the current central receipt. No install, game launch, data reset,
+storage reconfiguration, profile/payload deletion or other worker's files are
+involved. Admission/final checks verify the game process absent and OLED asleep.
+The lease is released and alpha is notified before documentation work resumes.
+
+Evidence: ignored `work/coordination/accepted-build-reconstruction/media-source-v1/`:
+`rgb-texture-candidates-v3.jsonl` / `rgb-texture-result-v3.json`, original-path/
+source-variant failure controls, `etc-codec-public-host-v2/`,
+`etc-rgb-public-host-v1/`, `etc-alpha-public-host-v1/` and
+`device-etc-batch-v1/`. The final `proof-files.json` receipt covers 134 artifacts,
+SHA-256 `f70ac7ee94448f38ea010339e50754959618392e437ebfae6d5ac96f7805170a`.
+Packs remain on the phone; receipts/logs, not duplicate payloads, are pulled.
+Mandatory primary-checkout pruning runs after host/device build/run tasks,
+preserving receipts and more than 100 GiB free. No APK/project is copied.
+
+Conclusion/revisit: this closes the complete ETC1/single-mip source-production
+cohort and requalifies the shared helper against every previously admitted
+texture record. Of 9,447 target Texture2D records, 5,006 now have exact public
+source-only phone production. The remaining 4,441 textures, cubemaps, two mesh
+exclusions, animation/other classes, player data and complete UnityFS assembly
+remain open. The code workstream separately owns native code/Burst/shaders and
+final APK/signing/install. No game runtime, ordinary app delivery or complete
+phone-only owner-installation acceptance follows from these private packs.
+Revisit this cohort for explicit input/target promotion or measured regression.
+
+## J1093 — Restage private lanes from their own authored source cohort
+
+2026-10-24 UTC. **Hypothesis and scope.** J1078's APFS snapshot can inherit
+unmerged canonical Editor/runtime sources and a newer authored audio DLL. Select
+and stage the lane's committed source before any private editor refresh or
+build, without changing canonical staging, original inputs or generated
+content. This is host infrastructure; no new APK or device acceptance is claimed.
+J1072's frozen-content and committed-predecessor retirement contracts remain in
+force. No new reconstruction, loader, serialization or middleware workaround is
+introduced, so the generic build-tooling prior-art exception applies.
+
+**Implementation.** `build_lanes` snapshots the canonical source commit, then
+runs `build.restage_lane_sources` from the private checkout at creation and after
+selecting each build/editor-open source. The private lock covers this work;
+restaging runs outside the canonical snapshot mutex. The existing
+`whole_catalog`, Android asset and `project_input_rebuild` owners stage their
+runtime, fixture, current builder and pinned baseline Editor sources. An extra
+C# file must match a predecessor Git blob before retirement; its source commit,
+path, source/metadata hashes and actual removals are recorded locally. Unknown
+or edited bytes refuse before removal. Existing lanes without the new snapshot
+field use the read-only canonical Git identity plus their retained build owner.
+
+The original-audio owner generates the selected checkout's artifacts against a
+small APFS reference clone. Its existing camera/music owners unwind that clone
+only. The live project receives only the three authored DLLs/metadata, with
+receipt-verified preimages; its full audio receipt remains unchanged because
+camera/music bind its hash. Ordinary whole-catalog composition restores those
+preimages before its existing overlay/audio stages. A plain player build
+refuses pending plugin changes and names the whole-catalog actions needed to
+compose a complete receipt. Teardown archives retirement/pending receipts and
+deletes private preimages/reference clones. No build discovers a timestamped
+receipt as input. Architecture C, accepted settings and ownership boundaries
+remain unchanged.
+
+**Host evidence and first failures.** Evidence is under
+`work/coordination/fast-iteration/lane-restage-*`; teardown's archive is
+`work/coordination/build-lanes/restage-check-20261024T185818.182589Z/`.
+The real snapshot takes 180.321 seconds; shared-host free space changes by about
+602 MiB during cloning, not a precise attribution of private physical blocks.
+The first create correctly refuses an unrecognized CatalogAddressProbe body:
+it is a pinned baseline template, so its existing recipe owner is added to the
+shared selection. The first staging selection also omitted the current
+WholeCatalogBuild owner; it is moved into the same shared Editor selection and
+verified present before any editor/player run. No unknown generated source is
+deleted to bypass either result.
+
+The reused private snapshot then retires the inherited SourceCameraGraphicsHost
+through committed byte proof and replaces GameAudioOriginalBootstrap from the
+lane's own producer. Its before/after SHA-256 values are
+`b95ec645cb057847f3119b9502dc440ee0fe0e9b4d1fe4b4c76acf10b235954d` and
+`94b2901f0b54d7f939d3fce9149987b413c1cd810151e27faa55215184bb4314`.
+The final repeat at source `edfb6730` takes 1.823 seconds and compares all 92,319
+normal frozen-content ledger members: **zero differences**. Runtime/Editor
+C# and APK-only receipts are outside that existing content ledger. The catalog
+builder matches the lane checkout, the foreign Editor source is absent, and
+the full audio receipt retains SHA-256
+`6434459da1df21e3923ce623754e6473fa3ab5dba65c88f57056edcebfe0bf59`.
+
+Seven real-Git worktree regressions pass: inherited Editor retirement, lane
+bootstrap replacement, retained runtime/builder/template sources and generated
+content, legacy lane facts, overlay receipt preservation, changed-plugin plain
+build refusal, and edited-source/preimage refusal. The 28 whole-catalog and
+eight lane contracts pass; the 121 audio contracts pass with two explicit
+skips. The first broad shared-work suite reports six environment/layout errors:
+five fixtures refuse this checkout's shared-work symlink, and one optional
+Cecil build uses a shared compiler server unable to read the editor directory.
+That four-case Cecil fixture passes with shared compilation disabled. The
+required merge gate is CI's fresh clone with neither shared work nor editor
+access; its committed-tree/pre-push and remote results are retained with the
+PR, rather than treating the failed shared-work run as a pass. Host preflight
+passes; doctor reports the existing bootstrap gate incomplete in this checkout.
+
+**Cleanup and limits.** The disposable lane is removed, all retirement receipts
+are verified in its archive, and primary-checkout pruning completes with
+111 GiB free. No Unity editor/player build, install or device command runs for
+this follow-up; there is no APK hash or new installed-state fact. A genuinely
+different plugin/content cohort still requires a normal full lane seed. Revisit
+if a current staging owner adds another authored source family or receipt-bound
+plugin outside these existing owners; keep unknown-byte refusal and frozen
+content checks intact.

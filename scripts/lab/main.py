@@ -105,6 +105,11 @@ p.add_argument("--subtree", default="")
 p.add_argument("--fields", action="store_true")
 p.add_argument("--disable", action="store_true")
 p.add_argument("--sessions", type=int, help="Current: session-memory-check/root-check series length, 3 to 32 (default: 5); automatic diagnostic input only")
+p.add_argument(
+    "--memory-snapshots",
+    action="store_true",
+    help="Current: session-memory-check only; capture private native/managed heaps at menus 2/4, allocating and pausing; separate from ordinary growth/performance",
+)
 p.add_argument("--skill-variants", help="Current: ignored local JSON for one base-survivor skill or cleanup check; per-run native skill catalog indices only")
 p.add_argument(
     "--expected-apk-sha256",
@@ -152,6 +157,7 @@ device_prototype_work = a.command == "prototype" and a.action in {
     "session-abandon-check",
     "session-memory-check",
     "session-memory-root-check",
+    "touch-gesture",
 }
 if a.work_dir and (a.command in {"install", "sync-data", "run", "check-baseline"} or device_prototype_work):
     import common
@@ -195,15 +201,18 @@ if a.stage_exit and a.command != "check-baseline":
     p.error("--stage-exit requires check-baseline")
 if a.sessions is not None and (a.command != "prototype" or a.action not in {"session-memory-check", "session-memory-root-check"}):
     p.error("--sessions requires prototype --action session-memory-check or session-memory-root-check")
+if a.memory_snapshots and (a.command != "prototype" or a.action != "session-memory-check"):
+    p.error("--memory-snapshots requires prototype --action session-memory-check")
 if a.skill_variants and (a.command != "prototype" or a.action not in {"survivor-kit-check", "session-cleanup-check", "session-abandon-check"}):
     p.error("--skill-variants requires prototype --action survivor-kit-check, session-cleanup-check or session-abandon-check")
 if a.expected_apk_sha256 is not None and (
     a.command != "prototype"
-    or a.action not in {"survivor-kit-check", "session-cleanup-check", "session-abandon-check", "session-memory-check", "session-memory-root-check"}
+    or a.action
+    not in {"survivor-kit-check", "session-cleanup-check", "session-abandon-check", "session-memory-check", "session-memory-root-check", "touch-gesture"}
 ):
     p.error(
         "--expected-apk-sha256 requires prototype --action survivor-kit-check, session-cleanup-check, "
-        "session-abandon-check, session-memory-check or session-memory-root-check"
+        "session-abandon-check, session-memory-check, session-memory-root-check or touch-gesture"
     )
 if (a.skill_slot or a.toolbot_offhand or a.captain_supply_beacon) and (a.command != "prototype" or a.action != "survivor-kit-check"):
     p.error("--skill-slot, --toolbot-offhand and --captain-supply-beacon require prototype --action survivor-kit-check")

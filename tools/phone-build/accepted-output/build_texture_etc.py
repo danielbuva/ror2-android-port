@@ -1,4 +1,4 @@
-"""Build the current Alpha8 transform from a pinned, owner-acquired public codec."""
+"""Build the current ETC texture transforms from a pinned public source provider."""
 
 import argparse
 import hashlib
@@ -35,14 +35,14 @@ def sha(path):
 
 def build(archive, compiler, output, android_tool_root=None):
     if sha(archive) != ARCHIVE_SHA:
-        raise ValueError("public Alpha8 codec source provider drift")
+        raise ValueError("public ETC codec source provider drift")
     compiler = compiler.absolute()
-    source = Path(__file__).with_name("texture_alpha.cpp")
+    source = Path(__file__).with_name("texture_etc.cpp")
     inputs = [archive.resolve(), compiler.resolve(), source.resolve(), Path(__file__).resolve()]
     if output.exists() or output.is_symlink() or output.parent != output.parent.resolve(strict=True):
-        raise ValueError("new Alpha8 codec build output required")
+        raise ValueError("new ETC codec build output required")
     if any(p.is_relative_to(output) or output.is_relative_to(p) for p in inputs):
-        raise ValueError("Alpha8 codec build overlaps input")
+        raise ValueError("ETC codec build overlaps input")
     output.mkdir()
     started = time.monotonic()
     result = {"success": False, "inputs": {str(p): sha(p) for p in inputs}, "commands": []}
@@ -56,14 +56,14 @@ def build(archive, compiler, output, android_tool_root=None):
                     continue
                 key = member.name[len(PREFIX) :]
                 if key in seen or not member.isfile() or not 0 < member.size <= 1024**2:
-                    raise ValueError("public Alpha8 source archive member differs")
+                    raise ValueError("public ETC source archive member differs")
                 data = provider.extractfile(member).read()
                 if len(data) != member.size:
-                    raise ValueError("truncated public Alpha8 source")
+                    raise ValueError("truncated public ETC source")
                 (material / Path(key).name).write_bytes(data)
                 seen.add(key)
         if seen != MEMBERS:
-            raise ValueError("missing public Alpha8 source")
+            raise ValueError("missing public ETC source")
         (material / source.name).write_bytes(source.read_bytes())
         (material / "sys").mkdir()
         (material / "sys/timeb.h").write_text(TIMEB)
@@ -71,14 +71,14 @@ def build(archive, compiler, output, android_tool_root=None):
         (output / "NOTICE.txt").write_text(
             "ETCPACK 2.74 sources are unchanged, acquired separately by the owner.\n"
             "Its Software License Agreement is retained in LICENSE.txt.\n"
-            "The authored texture_alpha.cpp adapter and timing compatibility header are additions.\n"
+            "The authored texture_etc.cpp adapter and timing compatibility header are additions.\n"
             "No upstream encoder implementation is distributed by the repository.\n"
         )
         common = [str(compiler), "--driver-mode=g++", "-std=c++11", "-O2", "-ffp-contract=off", "-w", "-D_timeb=timeb", "-D_ftime=ftime", "-I", str(material)]
         if android_tool_root is not None:
             native = android_tool_root.resolve(strict=True) / "usr"
             if compiler.resolve() != (native / "bin/clang-21").resolve(strict=True):
-                raise ValueError("Android Alpha8 build requires the selected native Clang 21")
+                raise ValueError("Android ETC build requires the selected native Clang 21")
             common[1:1] = [
                 "--target=aarch64-linux-android24",
                 "--sysroot=" + str(native.parent),
@@ -97,7 +97,7 @@ def build(archive, compiler, output, android_tool_root=None):
             command = common + (["-Dmain=etcpack_public_cli_main"] if name == "etcpack.cxx" else []) + ["-c", str(material / name), "-o", str(obj)]
             result["commands"].append(command)
             objects.append(obj)
-        result["commands"].append(common + (["-pie"] if android_tool_root is not None else []) + [*map(str, objects), "-o", str(output / "texture-alpha")])
+        result["commands"].append(common + (["-pie"] if android_tool_root is not None else []) + [*map(str, objects), "-o", str(output / "texture-etc")])
         result["compiler_version"] = subprocess.run([str(compiler), "--version"], capture_output=True, text=True, check=True, timeout=10).stdout
         for index, command in enumerate(result["commands"]):
             with (output / f"{index}.stdout").open("xb") as stdout, (output / f"{index}.stderr").open("xb") as stderr:
@@ -109,10 +109,10 @@ def build(archive, compiler, output, android_tool_root=None):
                     child.wait()
                     raise
             if code:
-                raise ValueError(f"public Alpha8 compilation step {index} failed; inspect retained logs")
+                raise ValueError(f"public ETC compilation step {index} failed; inspect retained logs")
         if any(sha(Path(p)) != pin for p, pin in result["inputs"].items()):
-            raise ValueError("public Alpha8 source/compiler changed during build")
-        result["output_sha256"] = sha(output / "texture-alpha")
+            raise ValueError("public ETC source/compiler changed during build")
+        result["output_sha256"] = sha(output / "texture-etc")
         result["success"] = True
         return result
     except Exception as error:

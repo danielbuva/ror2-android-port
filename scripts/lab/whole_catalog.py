@@ -2199,35 +2199,43 @@ def stage_runtime_sources(io, runtime_sources):
         io.apply(target_meta, copy=source_meta, catalog=True)
 
 
+BUILD_EDITOR_SOURCES = [
+    "AndroidProgressionHost.cs",
+    "AndroidDiscoveryHost.cs",
+    "AndroidProfileHost.cs",
+    "AndroidLifecycleHost.cs",
+    "SurvivorSkillHost.cs",
+    "SurvivorSkillInputHost.cs",
+    "SirenEncounterHost.cs",
+    "TeleporterLifetimeHost.cs",
+    "TeleportOverlayLifetimeHost.cs",
+    "EngiShieldHitGuardHost.cs",
+    "EngineerNativeOutputObserverFixture.cs",
+    "SirenEggDiagnosticInputExactEditorFixture.cs",
+    "LightningStakeSourceContractFixture.cs",
+    "TeleporterExitTraceSourceContractFixture.cs",
+    "SkillResponseCleanupExactEditorFixture.cs",
+    "SurvivorCombatOutputObserverFixture.cs",
+    "DeveloperSkillVariantSelectionFixture.cs",
+    "FirstStageDiagnosticGateFixture.cs",
+    "NativeDirectorDeckSetterFixture.cs",
+    "SourceIdentityTransformParityFixture.cs",
+    "MercEvisImpactEffectExactEditorFixture.cs",
+    "WholeCatalogBuild.cs",
+]
+
+
+def stage_editor_sources(io):
+    for filename in BUILD_EDITOR_SOURCES:
+        io.apply(io.project / "Assets/Editor" / filename, copy=ROOT / "tools/catalog" / filename, catalog=True)
+
+
 def stage_build_sources(io, runtime_sources, manifest, contracts):
     project = io.project
     # Stage the tracked runtime selection; keep existing Unity-owned .meta files.
     stage_runtime_sources(io, runtime_sources)
     # Exact-editor host fixtures; stage together so none goes stale in the project.
-    for filename in [
-        "AndroidProgressionHost.cs",
-        "AndroidDiscoveryHost.cs",
-        "AndroidProfileHost.cs",
-        "AndroidLifecycleHost.cs",
-        "SurvivorSkillHost.cs",
-        "SurvivorSkillInputHost.cs",
-        "SirenEncounterHost.cs",
-        "TeleporterLifetimeHost.cs",
-        "TeleportOverlayLifetimeHost.cs",
-        "EngiShieldHitGuardHost.cs",
-        "EngineerNativeOutputObserverFixture.cs",
-        "SirenEggDiagnosticInputExactEditorFixture.cs",
-        "LightningStakeSourceContractFixture.cs",
-        "TeleporterExitTraceSourceContractFixture.cs",
-        "SkillResponseCleanupExactEditorFixture.cs",
-        "SurvivorCombatOutputObserverFixture.cs",
-        "DeveloperSkillVariantSelectionFixture.cs",
-        "FirstStageDiagnosticGateFixture.cs",
-        "NativeDirectorDeckSetterFixture.cs",
-        "SourceIdentityTransformParityFixture.cs",
-        "MercEvisImpactEffectExactEditorFixture.cs",
-    ]:
-        io.apply(project / "Assets/Editor" / filename, copy=ROOT / "tools/catalog" / filename, catalog=True)
+    stage_editor_sources(io)
     # Bundle-only serialized components and reflected location types are invisible
     # to the APK linker. Preserve their measured contracts, not a tested whitelist.
     roots = {}
@@ -2251,7 +2259,6 @@ def stage_build_sources(io, runtime_sources, manifest, contracts):
     roots.setdefault("RoR2", set()).update(progression)
     link_path = project / "Assets/LabLoadingScene/WholeCatalogPreservation/link.xml"
     io.apply(link_path, preservation_descriptor(roots))
-    io.apply(project / "Assets/Editor/WholeCatalogBuild.cs", copy=ROOT / "tools/catalog/WholeCatalogBuild.cs", catalog=True)
 
 
 def generate_build_bootstrap(io, manifest, closure):
@@ -2362,6 +2369,9 @@ def _build_integration(
         return result
     io = StageIO(WORK)
     project = io.project
+    from original_game_audio_stage import restore_authored
+
+    restore_authored(project)
     # Both build paths own their config inputs; never inherit migration or probe extras.
     generate_runtime_config(project)
     generate_content_recipe()

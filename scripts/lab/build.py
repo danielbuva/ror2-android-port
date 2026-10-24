@@ -536,6 +536,100 @@ def build_cache_key(project, api, android_symbols="none"):
     return digest(identity)
 
 
+def restage_lane_sources():
+    """Select authored inputs before a private lane editor can import them."""
+    from composition_io import StageIO
+    from project_input_rebuild import stage_editor_inputs
+    from whole_catalog import BUILD_EDITOR_SOURCES, stage_editor_sources, stage_runtime_sources
+    from original_game_audio_build_hook import restage_authored_for_lane
+
+    facts = read(WORK / "config/build-lane.json")
+    project = WORK / "lab-project"
+    if Path(facts["checkout"]).resolve() != ROOT.resolve() or WORK.resolve() == Path(facts["canonical_work"]).resolve():
+        raise RuntimeError("Authored lane staging requires the private checkout/work root")
+    marker = WORK / "config/lane-staging.json"
+    previous = read(marker) if marker.exists() else {}
+    canonical_source = (
+        facts.get("canonical_source_commit") or run(["git", "-C", Path(facts["canonical_work"]).parent, "rev-parse", "HEAD"]).stdout.decode().strip()
+    )
+    commits = {canonical_source, facts["seed_commit"]}
+    commits.update(previous.get("source_commits", []))
+    current_build = WORK / "config/current-build.json"
+    if current_build.exists():
+        commits.add(read(current_build).get("source", {}).get("commit", ""))
+    commits.discard("")
+    names = runtime_sources()
+    expected = {"Assets/LabLoadingScene/" + Path(name).name for name in names}
+    expected.update("Assets/LabLoadingScene/" + name for name in WHOLE_GENERATED_RUNTIME_SOURCES)
+    expected.update("Assets/Editor/" + name for name in BUILD_EDITOR_SOURCES)
+    expected.update(row["path"] for row in read(RECIPE / "project-inputs.json")["editors"])
+    expected.update(str(p.relative_to(ROOT / "android")) for p in (ROOT / "android/Assets/Editor").rglob("*.cs"))
+    unexpected = sorted(
+        p for folder in ("Assets/Editor", "Assets/LabLoadingScene") for p in (project / folder).rglob("*.cs") if str(p.relative_to(project)) not in expected
+    )
+    # A predecessor can be an unmerged canonical commit, not just the last APK.
+    # Index only authored Git sources; generated/game content is never a candidate.
+    owned = {}
+    for commit in sorted(commits):
+        paths = (
+            run(["git", "-C", ROOT, "ls-tree", "-r", "--name-only", commit, "android/Assets/Editor", "tools/catalog", "tools/unity"])
+            .stdout.decode()
+            .splitlines()
+        )
+        for source in paths:
+            if source.endswith(".cs"):
+                owned.setdefault(Path(source).name, []).append((commit, source))
+    verified = []
+    for path in unexpected:
+        if path.is_symlink() or any(parent.is_symlink() for parent in path.parents if parent.is_relative_to(project)):
+            raise RuntimeError("Lane source retirement refuses symlinks")
+        match = next(
+            (
+                (commit, source)
+                for commit, source in owned.get(path.name, [])
+                if path.read_bytes() == run(["git", "-C", ROOT, "show", commit + ":" + source]).stdout
+            ),
+            None,
+        )
+        if match is None:
+            raise RuntimeError("Inherited source is not an unchanged committed authored input: " + path.name)
+        meta = Path(str(path) + ".meta")
+        if meta.is_symlink() or (meta.exists() and not meta.is_file()):
+            raise RuntimeError("Lane source retirement refuses changed metadata ownership")
+        verified.append(
+            dict(
+                target=str(path.relative_to(project)),
+                source_commit=match[0],
+                source=match[1],
+                sha256=sha(path),
+                meta_sha256=sha(meta) if meta.exists() else None,
+            )
+        )
+    receipt = WORK / "coordination/staging-retirements" / ("lane-" + now() + ".json")
+    result = dict(source_commits=[build_source_identity()["commit"]], retired=verified, removed=[])
+    write(receipt, result)
+    try:
+        for row in verified:
+            path = project / row["target"]
+            path.unlink()
+            Path(str(path) + ".meta").unlink(missing_ok=True)
+            result["removed"].append(row["target"])
+    finally:
+        write(receipt, result)
+    io = StageIO(WORK)
+    stage_runtime_sources(io, names)
+    stage_editor_sources(io)
+    stage_editor_inputs(io)
+    stage_android_assets(project, io)
+    # The ordinary audio owner selects/compiles the lane's recipe generation.
+    # Its authored-only mode leaves banks, game assemblies and assets untouched.
+    audio = restage_authored_for_lane(project, WORK)
+    result["audio_authored_restage"] = audio["authored_restage"]
+    write(receipt, result)
+    write(marker, result)
+    return result
+
+
 def stage_android_assets(project, io=None):
     """Place Android assets without starting Unity; the real copytree contract stays intact."""
     if io is None:
@@ -629,6 +723,11 @@ def build(
             return execute_build(Path(destination), Path(work or WORK), api)
         preflight_host()
         project = WORK / "lab-project"
+        pending_audio = WORK / "lane-authored-audio/pending.json"
+        if pending_audio.exists():
+            pending = read(pending_audio)
+            if not pending["restored"] and pending["replaced"]:
+                raise RuntimeError("Authored plugin changes require whole-catalog-build or whole-catalog-code-build to compose the complete audio receipt")
         anchor = None
         if iteration_mode:
             from iteration_apk import validate_anchor

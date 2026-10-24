@@ -1,4 +1,7 @@
 import sys
+import hashlib
+import tempfile
+from unittest import mock
 import unittest
 from pathlib import Path
 
@@ -7,6 +10,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
 from session_memory_check import (
     as_session_one,
     check_session_memory,
+    collect_memory_snapshot,
+    memory_snapshot_file,
     completed_name,
     growth_summary,
     parse_total_pss_kib,
@@ -23,6 +28,48 @@ def samples(start, after, probes=0):
 
 
 class SessionMemoryCheckTests(unittest.TestCase):
+    def test_snapshot_admission_waits_for_native_completion_and_refuses_foreign_names(self):
+        name = "session-2-" + "a" * 32 + ".snap"
+        sample = {"phase": "before-presentation", "memorySnapshotRequested": True, "memorySnapshotComplete": False}
+        report = {"sessionResources": [sample]}
+        self.assertIsNone(memory_snapshot_file(report, 2))
+        sample.update(memorySnapshotComplete=True, memorySnapshotSuccess=True, memorySnapshotFile=name)
+        self.assertEqual(memory_snapshot_file(report, 2), name)
+        for bad in ("../profile.json", "session-4-" + "a" * 32 + ".snap", "session-2-user.snap"):
+            with self.subTest(name=bad), self.assertRaises(RuntimeError):
+                memory_snapshot_file({"sessionResources": [dict(sample, memorySnapshotFile=bad)]}, 2)
+        for changes in ({"memorySnapshotRequested": False}, {"memorySnapshotSuccess": False}):
+            with self.assertRaises(RuntimeError):
+                memory_snapshot_file({"sessionResources": [dict(sample, **changes)]}, 2)
+
+    def test_snapshot_transfer_deletes_only_exact_owned_file_after_real_host_hash_matches(self):
+        content = b"authored native heap fixture"
+        name = "session-2-" + "a" * 32 + ".snap"
+        remote = "/owned/diagnostics/session-memory/" + name
+        for matched in (True, False):
+            with tempfile.TemporaryDirectory() as temporary, self.subTest(matched=matched):
+                device = mock.Mock()
+                device.sh.return_value = hashlib.sha256(content).hexdigest() + "  " + remote
+                device.cmd.side_effect = lambda *args: Path(args[2]).write_bytes(content if matched else b"authored mismatched transfer")
+                with mock.patch("session_memory_check.cleanup._remote_path_state", side_effect=["file", "absent"]):
+                    if matched:
+                        result = collect_memory_snapshot(device, "/owned", Path(temporary), name)
+                        self.assertEqual(result["bytes"], len(content))
+                        self.assertEqual(result["sha256"], hashlib.sha256(content).hexdigest())
+                        device.sh.assert_any_call("rm", "--", remote)
+                    else:
+                        with self.assertRaisesRegex(RuntimeError, "transfer hash differs"):
+                            collect_memory_snapshot(device, "/owned", Path(temporary), name)
+                        self.assertNotIn(mock.call("rm", "--", remote), device.sh.call_args_list)
+
+    def test_snapshot_and_static_root_instrumentation_are_separate_before_device_access(self):
+        with mock.patch("session_memory_check.SessionCleanupDevice") as device:
+            with self.assertRaises(ValueError):
+                check_session_memory(sessions=3, expected_apk_sha256="0" * 64, root_walk=True, memory_snapshots=True)
+            with self.assertRaises(ValueError):
+                check_session_memory(sessions=3, expected_apk_sha256="0" * 64, memory_snapshots=1)
+            device.assert_not_called()
+
     def test_session_view_requires_the_real_index(self):
         self.assertIsNone(as_session_one({"session": 2}, 3))
         self.assertIsNone(as_session_one(None, 1))

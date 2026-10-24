@@ -12,7 +12,7 @@ normal-game acceptance.
 import re
 import time
 
-from common import WORK, now, write
+from common import WORK, now, sha, write
 from device import PACKAGE
 from installed_attempt import attempt_from_installed, bind_installed_apk, validate_expected_apk_sha256
 from nova_bridge import current_errors
@@ -74,6 +74,11 @@ SAMPLE_FIELDS = (
     "staticCallbackCounts",
     "prunedDestroyedDepossessionSubscribers",
     "prunedDestroyedRegistryEntries",
+    "memorySnapshotRequested",
+    "memorySnapshotComplete",
+    "memorySnapshotSuccess",
+    "memorySnapshotFile",
+    "memorySnapshotError",
 )
 WAITING = (
     "live world report is shorter than the 60 second observation interval",
@@ -164,9 +169,40 @@ def growth_summary(sessions):
     }
 
 
-def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, root_walk=False):
+def memory_snapshot_file(report, session):
+    sample = next((x for x in (report.get("sessionResources") or []) if isinstance(x, dict) and x.get("phase") == "before-presentation"), None)
+    if sample is None or sample.get("memorySnapshotRequested") is not True:
+        raise RuntimeError("Expected opt-in native memory snapshot was not requested")
+    if sample.get("memorySnapshotComplete") is not True:
+        return None
+    name = sample.get("memorySnapshotFile")
+    if sample.get("memorySnapshotSuccess") is not True or not isinstance(name, str) or not re.fullmatch(r"session-%d-[0-9a-f]{32}\.snap" % session, name):
+        raise RuntimeError("Native memory snapshot failed or has an unexpected name")
+    return name
+
+
+def collect_memory_snapshot(device, runtime, out, name):
+    remote = runtime + "/diagnostics/session-memory/" + name
+    if cleanup._remote_path_state(device, remote) != "file":
+        raise RuntimeError("Expected private snapshot file is absent")
+    digest = device.sh("sha256sum", remote).split()[0]
+    if not re.fullmatch(r"[0-9a-f]{64}", digest):
+        raise RuntimeError("Snapshot hash is unavailable")
+    local = out / name
+    device.cmd("pull", remote, str(local))
+    if not local.is_file() or local.stat().st_size == 0 or sha(local) != digest:
+        raise RuntimeError("Private snapshot transfer hash differs; preserve device evidence")
+    device.sh("rm", "--", remote)
+    if cleanup._remote_path_state(device, remote) != "absent":
+        raise RuntimeError("Transferred owned snapshot remains on device")
+    return {"file": name, "sha256": digest, "bytes": local.stat().st_size}
+
+
+def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, root_walk=False, memory_snapshots=False):
     if type(sessions) is not int or not MIN_SESSIONS <= sessions <= MAX_SESSIONS:
         raise ValueError("Use %d to %d sessions" % (MIN_SESSIONS, MAX_SESSIONS))
+    if type(memory_snapshots) is not bool or memory_snapshots and root_walk:
+        raise ValueError("Use native snapshots separately from the static-root walk")
     survivor = DEFAULT_SURVIVOR
     expected_apk_sha256 = validate_expected_apk_sha256(expected_apk_sha256)
     if expected_apk_sha256 is None:
@@ -198,10 +234,13 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
         # Opt-in reachability walk in SessionResourceBoundary, only at the final menu: it may run
         # unrelated static constructors, so it must follow every measured session (J773).
         value["diagnosticCompletedRootWalkSession"] = sessions + 1
+    if memory_snapshots:
+        value["diagnosticCompletedMemorySnapshots"] = True
     write(out / "selection.json", value)
     frozen = {
         "sessions": sessions,
         "root_walk": bool(root_walk),
+        "memory_snapshots": memory_snapshots,
         "package": PACKAGE,
         "apk_sha256": artifact_hash,
         "apk_binding_mode": apk_binding_mode,
@@ -217,6 +256,7 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
     first_failure = None
     profile_baseline = None
     observed = []  # one entry per completed session
+    snapshot_files = {}
     menu_pss = {}
     menu_started = set()
     live_at = startup_at = None
@@ -274,7 +314,14 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
                     fail(reason, details[0] if details else None)
                     break
                 phase = current.get("phase")
-                if phase == "offline-start-menu" and session not in menu_started:
+                snapshot_ready = True
+                if phase == "offline-start-menu" and memory_snapshots and session in (2, 4) and session not in snapshot_files:
+                    name = memory_snapshot_file(current, session)
+                    snapshot_ready = name is not None
+                    if snapshot_ready:
+                        snapshot_files[session] = collect_memory_snapshot(device, runtime, out, name)
+                        write(out / "memory-snapshots.json", snapshot_files)
+                if phase == "offline-start-menu" and session not in menu_started and snapshot_ready:
                     if session > 1:
                         completed = cleanup._read_json(device, runtime + "/" + completed_name(session - 1))
                         view = as_session_one(completed, session - 1)
@@ -416,6 +463,10 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
     # menu's profile is not loaded yet, so it carries no further count evidence.
     failures.extend(cleanup_errors)
     summary = growth_summary(observed)
+    if memory_snapshots:
+        summary["limits"] += (
+            " Native heap captures at menus 2/4 allocate and pause; this is attribution evidence, not an ordinary growth/performance measurement."
+        )
     summary["final_menu_samples"] = resource_samples(final_menu)
     result = {
         "success": not failures,
@@ -431,6 +482,7 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
         "profile_baseline": profile_baseline,
         "menu_pss_kib": menu_pss,
         "growth": summary,
+        "memory_snapshots": snapshot_files,
         "runtime_errors": runtime_errors,
         "evidence": str(out.relative_to(WORK.parent)),
     }

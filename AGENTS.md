@@ -37,6 +37,9 @@ The host disk is shared by every agent; unchecked build copies once filled
   coordination lock; everything else is disposable after 24 h.
 - Before starting a full build, check `df -h /System/Volumes/Data`; below 100 GB
   free, prune first and report if that does not restore it.
+- Device scratch counts too: workspaces you create on a phone (`/data/local/tmp/...`, app
+  scratch) are deleted when their evidence is on the host; keep only tool trees and inputs
+  your current work uses, and keep at least 15 GB free on every test device.
 - Extra worktrees (`git worktree list`, `~/.codex/worktrees`) are removed when
   their PR merges or the task is abandoned.
 

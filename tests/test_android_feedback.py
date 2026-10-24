@@ -101,6 +101,12 @@ class AndroidFeedbackTests(unittest.TestCase):
     def test_screen_policy_spans_loading_and_restores_only_owned_state(self):
         self.run_case("screen-policy")
 
+    def test_failed_save_preserves_pause_and_allows_an_honest_retry(self):
+        self.run_case("settings-save-failure")
+
+    def test_gameplay_touch_events_are_claimed_before_legacy_gui_and_exempt_modals(self):
+        self.run_case("touch-gui-ownership")
+
 
 if __name__ == "__main__":
     unittest.main()

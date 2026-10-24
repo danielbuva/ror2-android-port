@@ -159,6 +159,7 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 | --- | --- | --- | --- | --- |
 | `owner-uncompressed-textures.json` | Private replay uncompressed texture bodies/pixels | Original/destination selectors, source extents, generic import/placement metadata and hashes; copy, BC1, source-coordinate dilation and public JPEG policy. | No pixels, palettes, target literals/patches, native SDK implementation or image/library bytes; full audit above, 2026-10-24. All 399 records qualify on host/Android in J1079. | Explicit PC-input-only `texture_produce.py` and separately built public JPEG tool; no current game-build consumer. |
 | `owner-alpha-textures.json` | Private replay source Alpha8/single-mip texture cohort (J1082) | Canonical original/destination selectors, source/field extents, import/storage settings and hashes. | No alpha samples, encoded blocks, target byte frames, protected source or private identifiers; full audit below, 2026-10-24. | Original-PC-input-only `texture_produce.py` plus separately built public codec; no game-build consumer. |
+| `owner-rgb-textures.json` | Complete ETC1/single-mip target cohort | Original/destination selectors, field/pixel extents, hashes and source JPEG policy; composition aliases reuse original Warp/Elite ramps. | No colors, normal vectors, palettes, encoded blocks or target byte frames; audit below, 2026-10-24. | Original-input-only `texture_produce.py` and public ETC/JPEG tools; J1088 qualifies all 281 records on Android. |
 | `owner-avatars.json` | Private replay Avatar bodies (J1075) | Minimum original/destination identities, hashes, source extents and source-entry permutations. | No strings, poses, rig/geometry values, target literals or byte frames; full audit above, 2026-10-24. | Explicit PC-input-only `avatar_produce.py`; no current game-build consumer. |
 | `owner-meshes.json` | Protected mesh bodies in the private replay packet, for the included cohort only (J1070) | Original bundle/object/resource selectors, destination identities/hashes and authored import/conversion settings. | No geometry arrays, collision data, target byte frames or float literals; full audit above, 2026-10-24. Two cases remain excluded. | Explicit original-input-only `mesh_produce.py`; no current game-build consumer. |
 | `shader-postprocessing-bloom-candidate.json` | Exported one-pass Bloom and exact source-camera CopyStd placeholders | Accepted-input source/meta/resource identities, official Unity package/license hashes and pass contracts; authored camera staging pin refreshed without changing camera transforms. | Authored selection metadata only; upstream source and generated content stay local under Unity Companion License. Manual audit 2026-10-23 described above. | `shader_postprocessing_bloom`, whole-catalog preparation and catalog replay comparison; default off. |
@@ -2296,7 +2297,7 @@ identifier. Every produced image byte comes from the owner's source Alpha8
 samples through a public encoder, including generic zero RGB defined by the
 pinned source export format.
 
-The authored `texture_alpha.cpp` adapter and `build_texture_alpha.py` use an
+The authored `texture_etc.cpp` adapter and `build_texture_etc.py` use an
 explicit, separately acquired pinned Ericsson ETCPACK source archive. Upstream
 encoder source is unchanged and is not vendored or redistributed in source
 form. The build retains the provider's Software License Agreement and an
@@ -2318,3 +2319,84 @@ All generated shader/code and raw inspection evidence stay ignored. No ownership
 entitlement, authentication or license result is synthesized. This tool adds no
 permission to redistribute acquired SDK components or derived game outputs.
 Provenance, privacy, licensing and sensitive-content audit: 2026-10-24; J1094.
+`owner-rgb-textures.json` extends the same source-only texture owner to the 281
+ETC1/single-mip target records. Only original/destination identities, byte
+extents, hashes and importer/storage relationships are included. The source
+JPEG choice comes from original image-path metadata; the encoder consumes only
+original PC pixels through standard BC1/BC3, RGBA/RGB/Red16 conversion, AG normal
+unpacking and the existing public JPEG transform. Two authored ramp aliases
+reuse `composition.json`; same-name emissive data is pinned to its correct
+original source. No pixel, palette, normal-vector array, encoded block, target
+byte frame, private path or credential is included.
+
+The shared current native owner is named `build_texture_etc.py` /
+`texture_etc.cpp`, extending the former Alpha8 helper instead of introducing a
+second compiler/encoder owner. Source acquisition and upstream license retention
+remain unchanged. J1082's historical source/command names remain reproducible at
+its recorded commit. Provenance, licensing, privacy and sensitive-content audit:
+2026-10-24. Final outputs/raw evidence stay ignored; full public production and
+its device result are recorded separately.
+
+## Android touch input owner
+
+`AndroidTouchInput.cs` and its explicit script GUID are authored Android pointer
+routing, geometry and primitive observation code. The runtime membership lists,
+project layout and importer replay include that source. No game asset, image,
+serialized game object or middleware implementation is added. Touch buttons
+produce the existing original input-bank action slots; the existing camera
+adapter consumes pixel deltas. The measured Nova controller mapping remains
+separate, and Thor touch never claims physical-controller qualification.
+
+Prior-art review uses the pinned Starstorm2 `BorgMain` at `a9a4badd`: native
+`inputBank.jump.down`, authority and base-state scheduling are the consumer
+boundary. No community implementation is copied. Public source hashes for the
+existing world owner and its manifest/camera-hook chain are updated solely for
+the authored manual-input availability and touch presentation changes. Generated
+APK/payloads, raw pointer/device evidence and private mapping files remain under
+ignored `work/`.
+
+
+The touch pause request shares the settings button geometry and enters the
+existing pause owner; captured primary touch events are claimed before legacy
+IMGUI widgets. Native-bank edge/held observations are primitive harness data,
+with no retained game objects or gameplay mutation. The authored Java/Python
+`touch-gesture` helper uses the Android 13 target-UID injection API under normal
+adb shell permission. Its local DEX and device requests are generated privately
+from source; no platform implementation, SDK binary, game content, account data
+or raw device evidence is published with this helper.
+
+The touch integration reuses J1080's landed original scene-audio lifecycle.
+Source pins are refreshed for the reviewed merged `PortSession` startup and
+`IntegratedWorldBoundary` touch/UI changes. Original scene audio retains the
+existing native-owner readiness gate. This updates authored source provenance;
+accepted game input and distribution grants are unchanged. Audit: 2026-10-24.
+
+Completed-session native heap capture extends the authored resource owner only.
+The selector, two idle-menu capture points, callback report and exact hash-checked
+host transfer contain no original implementation, serialized game object or
+third-party parser. Raw snapshots can contain protected/private runtime bytes and
+stay under ignored local evidence; they are never tooling distribution inputs.
+The host-only Unity snapshot-analysis source is separately pinned and inspected
+in community prior art, not vendored. Provenance/privacy audit: 2026-10-24;
+this does not add any runtime/content redistribution grant.
+
+`memory-snapshot-data-tools-empty-array.patch` is an authored, zero-context
+transformation for the optional host-only Unity analysis CLI at source
+`86af1fe8b60bfcb5e6fbe63e85377887aec32ef5`. It returns the known VM header for
+zero-length arrays whose open generic element has no concrete size, and adds
+an authored synthetic-heap test that retains nonempty-size refusal. Apply with
+`git apply --unidiff-zero` only after verifying that exact public source pin.
+No upstream implementation or captured heap bytes are included. J1091 records
+31 passing tests and actual-file decode/export; the provider's Unity Companion
+License/notices stay with the private checkout and outputs. Provenance/privacy
+audit: 2026-10-24; no runtime/content redistribution grant changes.
+
+### Lane source-restaging audit
+
+The camera recipe's `whole_catalog.py` source digest is refreshed for extracting
+its existing Editor source selection into a shared staging owner and restoring
+receipted authored audio preimages before the ordinary composition steps. The
+selected sources, camera transform and runtime behavior are unchanged. The
+change contains authored tooling only, with no protected content or new public
+identifiers. Lane staging uses the same runtime/editor/plugin owners and keeps
+generated assets, original files and canonical staging outside its write set.

@@ -91,14 +91,22 @@ remain separate gates; no current game build or runtime consumes these packs.
 The same owner supports the source Alpha8 cohort through
 `recipe/owner-alpha-textures.json`: canonical original bodies/pixels are reused
 with explicit target names, storage extents and unchanged-field admission.
-`build_texture_alpha.py` builds a separately acquired pinned public ETCPACK
+`build_texture_etc.py` builds a separately acquired pinned public ETCPACK
 provider and retains its license, logs and complete/failed receipt;
-`texture_alpha.cpp` owns bounded Alpha8 stdin/ETC2 stdout processing. The source
+`texture_etc.cpp` owns bounded Alpha8 stdin/ETC2 stdout processing. The source
 export's zero RGB and original alpha produce every pixel, without an SDK encoder.
 [Setup/lifecycle](../tools/phone-build/accepted-output/README.md#produce-alpha8-textures-directly-from-original-pc-bundles)
 requires the pinned native helper. J1082 qualifies the whole 4,326-record cohort
 and helper build on Android. Other compressed textures, mip/cubemap production
 and full bundle assembly remain open.
+The same codec/producer now owns the ETC1 single-mip source path through
+`recipe/owner-rgb-textures.json`. Its source-format decoding, original JPEG
+policy and AG normal unpacking feed explicit color/normal encoder modes.
+The Alpha8 helper is generalized as `build_texture_etc.py` / `texture_etc.cpp`,
+with `--etc-codec` admission for both profiles. Setup/state/teardown and source/
+persisted-output verification stay with the existing owners. J1088 qualifies
+all 281 records on Android, the shared codec build and complete 5,006-record
+RGB/Alpha8/uncompressed regression case. Mips and complete bundles remain open.
 `build_sdk_runner.py` owns current experimental public Box64 acquisition-by-build
 for standalone owner-supplied SDK tools. Explicit unchanged upstream source,
 the pinned SDK NDK and host archive tools produce a private Android runner.
@@ -869,6 +877,47 @@ exit and session cleanup clear notes and consent. The settings/application/GUI
 owners give the visible modal input priority while retaining the owned pause.
 Android clipboard, browser handoff and the composed settings route require
 device acceptance; host fixtures exercise the authored flow and refusal paths.
+The current `session-memory-check --memory-snapshots` diagnostic extends
+`SessionResourceBoundary` with native/managed heap captures before presentation
+at menus 2 and 4, after the completed worlds have been reclaimed. It requires an
+attempt-matched opt-in and an idle Development player. Native callback completion
+and a nonempty owned file are required before the host proceeds. The host copies
+only that generated snapshot, verifies its SHA-256, then removes the exact device
+file; profile/payload data are untouched. Snapshot allocation and pauses exclude
+this case from ordinary growth/performance acceptance. The existing static-root
+walk is a separate diagnostic. Heap files, databases and analysis stay private.
+The public Unity `MemorySnapshotDataTools` CLI can analyze them without an Editor
+package; no parser or third-party implementation is vendored into the lab/player.
+
+`AndroidTouchInput` is the playable bridge's pointer producer. Stable finger IDs
+own independent movement, camera and eight native action captures, plus pause.
+Short action taps remain pending until a fixed tick consumes them; missing/canceled pointers,
+pause, focus loss and viewport changes neutralize capture. Reacquisition requires
+all touches to lift. Captured primary touch GUI events are claimed before legacy
+widgets. The opening pointer retains GUI ownership through pause until lift,
+so its release cannot close the new modal. Fresh modal gestures remain available.
+A pause request from any captured finger queues through the existing settings
+owner and neutralizes the bank immediately.
+The native pause button shares its exact geometry with the producer; the lab
+takeover button occupies the reserved top strip. `NovaInputBridge` routes these
+requests through the existing original bank and `NovaThirdPersonView.LookTouch`; the adapter changes no motor,
+transform, native skill or gameplay clock. The original world owner presents the
+controls and permits explicit touch takeover of automatic diagnostics. Thor's
+ordinary route is touch-only, with no measured controller mapping. Nova's
+measured physical route and the explicit automatic route remain separate.
+The actual production pointer owner and camera-delta method execute against the
+pinned editor's managed Unity API in `test_android_touch_input.py`; native
+consumption and full gestures still require the device case.
+
+Settings persistence remains owned by `AndroidOfflineSettings`. Its existing
+validated pending/primary/backup transaction is unchanged. `TrySave` converts
+expected storage/validation failures into a bounded message; the settings owner
+keeps its pause/modal and marks persistence false until an actual successful
+retry. Difficulty changes use the same owner. Raw exceptions and private paths
+do not enter the player message. `test_android_settings_store.py` executes the
+production store on a real temporary filesystem with a controlled JSON peer;
+partial-pending recovery is a contract test, not proof of a captured power loss.
+
 The existing `OfflineApplicationSession` also owns `Screen.sleepTimeout` for a
 validated playable coordinator, from `Start` before catalog preparation through
 `OnDestroy`. Menus/loading retain the same awake policy as active play; release
@@ -1032,6 +1081,13 @@ refuse to choose. An explicit serial outside the configured allowlist also refus
 Top-level legacy settings are fallback values for the default device only. Per-device
 overrides cover `storage_mode` (`adopted` or `internal`), `internal_reserve_mib`,
 `apk_install_limit`, `sleep_display_when_idle`, `display_models`, and `display_count`.
+The exact Thor display profile requires two physical panels. `Device.display`
+owns the original vendor `dual_screen_display_mode` for the current transaction,
+selects top-only mode before wake and requires stable named physical-panel
+ON/OFF readback. Nested contexts retain the first original mode. Teardown sleeps
+the panels, restores that mode and verifies both OFF; an unsupported top-only
+transition refuses and performs the same cleanup. J1071 records the current
+firmware refusal, which blocks further Thor gameplay runs.
 
 `scripts/lab/device_context.py` owns pure selection, storage policy and receipt namespace
 resolution. Its explicit migration transaction requires verified ownership, preserves
@@ -1114,20 +1170,24 @@ the session's own frozen APK rather than a mutable current-build pointer.
 `InputSessionPolicy` in `NovaInputBoundary.cs` owns the explicit game-input
 choice. The exact Nova model retains measured, attempt-bound physical input.
 Only the observed Thor model with the existing `-bringup` selector permits
-automatic diagnostic input without a physical mapping. Ordinary Thor, missing
-and unknown model identities refuse. `NovaInputBridge.automaticDiagnosticOnly`
+automatic diagnostic input without a physical mapping. Ordinary Thor selects
+touch input and skips the physical-map startup wait; the explicit playable-start
+configuration is still required. Missing and unknown model identities refuse.
+`NovaInputBridge.automaticDiagnosticOnly`
 defaults false, so legacy mapped and null-mapping behavior is retained.
 The validated diagnostic path reports its source and unavailable physical
 input, bypasses raw joystick/presence reads, and feeds the existing input bank.
 The offline application/settings and integrated-world owners retain touch
-menus, hide physical takeover and guard physical restart/settings consumers.
+menus, permit manual takeover when touch or measured physical input is available,
+and guard physical restart/settings consumers.
 Their existing iterator cleanup and bridge disable neutralize input and
 release session ownership. `test_portable_diagnostic_input.py` executes the
 production policy/predicates and checks consumer guards; device acceptance is
-separate (J762). Availability flags are authoritative: Unity's JSON serializer
+separate (J762). The default-start fixture also verifies that Nova keeps its
+attempt-bound mapping wait and a default-off player stays disabled.
+Availability flags are authoritative: Unity's JSON serializer
 can emit default inline mapping/raw placeholders for null runtime references;
-those wire values are not measured input. This changes existing R8 sources
-without adding a runtime file/GUID.
+those wire values are not measured input.
 
 `NovaInputBridge` also owns an opt-in cumulative skill-edge witness at the
 existing `PushState` sink. `SurvivorSkillInputCoverage` enables it only for the
@@ -2111,6 +2171,7 @@ report, read against the journal entry that defines what it must show.
 
 | Subsystem | Main files (`tools/unity/`) | State | Setup → teardown | Host test / editor fixture |
 | --- | --- | --- | --- | --- |
+| Touch game input | `runtime/input/AndroidTouchInput.cs`, `NovaInputBridge`, `NovaThirdPersonView` | Bridge-owned pointer captures, held/pending action states, viewport geometry and primitive report; no game objects or native gameplay ownership | Playable body input setup → `Poll`/fixed-tick consumption and world GUI → `Neutral`/pause/focus/disable release; require lift before reacquiring | `test_android_touch_input.py` runs production pointer/camera code against exact managed Unity API; Android consumer case is separate |
 | Original equipment highlights | `runtime/catalog/OriginalEquipmentHighlightAssetsBoundary.cs`, existing `PortSession.OriginalStats` and `BodyCatalogBoundary` | nested `OriginalEquipmentHighlightAssetsSession` owns three typed source-location handles, exact static assignments, cancellation state and a primitive session report; prepopulated or competing slots refuse | After `SetEquipmentDefs`, prepare before body activation; retain through world/stage lifetime. At `CleanupBodyCatalog`, require body/model/world-player destruction, restore only owned assignments, refuse remaining foreign slots, release handles and clear retained locator/operation references before bundle unload. Cleanup failures remain visible and retain catalog ownership. | `test_equipment_highlight_assets_owner.py`, authored `EquipmentHighlightOwnerProgram.cs` and stubs; Android materialization and original highlighting remain device gates |
 | Session and entry | `PortSession`, `OfflineApplicationBoundary`, `SessionResourceBoundary`, `ActiveClientBoundary`, `OfflineRunSeedBoundary`, `SurvivorSelectionBoundary` | nested `OfflineRunSeedSession` (`IDisposable`) **own type** holds the cached seed, session id and source; nested `ActiveClientSession` (`IDisposable`) **own type** holds the owned body/master authority identities and client-scene ownership flag; `activeBodyClient`, `activeBodyOwner`, remaining state and `SessionReport r` (including `r.activeClient` and `r.rewards.seedSource`) stay on the coordinator; nested `OfflineApplicationSession` (`IDisposable`) owns application/menu state and the captured screen timeout | `Start` (acquire the playable awake policy before catalog preparation; `OnDestroy` releases it) → `AwaitOfflineRunStart` → `RunSelectedProbe`; `ConnectActiveBodyClient` → `CleanupActiveBodyClient` (calls `Dispose`: remove master then body authority, disconnect then shut down client) → coordinator server shutdown → `FinishActiveClientSceneCleanup`; active-client owner created on first use and retained after cleanup; `CollectPriorSessionGarbage` → `ReclaimCompletedSessionResources`; `SelectOwnedRunSeed` calls session `SelectOwnedRunSeed` (owner created on first use and retained; session id controls refresh; `Dispose` is a no-op with no teardown call) | `AndroidLifecycleHost.cs` |
 | Catalog and resources | `BodyCatalogBoundary`, `WholeCatalogComposed`, `WholeCatalogLoader`, `SpawnStateBoundary`, `OriginalBodyVisualBoundary`, `OriginalGlobalCommonAssetsBoundary`, `TeleportMaterialBoundary`, `BarrierEffectBoundary` | `WholeCatalogComposed` **own type** (static); nested `TeleportMaterialSession` and `BarrierEffectSession` (`IDisposable`) **own types** hold the teleport material (locator, async handle, material, overlays) and the barrier effect (constants, locator, async handle, prefab, effect-slot snapshots, owned material copies); nested `OriginalBodyVisualSession` and `OriginalGlobalCommonAssetsSession` (`IDisposable`) **own types** each hold their native slot snapshots and async handle lists; nested `SpawnStateSession` (`IDisposable`) **own type** holds native state/preload snapshots and spawn delay/sound restoration; `ownsStateCatalog` stays shared on the coordinator; teleport, `r.barrier*` and `r.world` report fields remain coordinator observations; the rest coordinator fields; nested `BodyCatalogSession` (`IDisposable`) **own types** hold their files' private state | `RegisterBodyCatalog` (calls `WholeCatalogComposed.Prepare`) → `CleanupBodyCatalog` (calls `Release`); `PrepareBarrierEffect` → `ObserveBarrierEffect` / `ProbeBarrierEffectLifecycle` → `CleanupBarrierEffect` (awaited coroutine, preserving Start's setup and release order; `Dispose` is a no-op because release requires the coroutine's frame yields); `PrepareOriginalBodyVisualReferences` → `PrepareOriginalGlobalCommonAssets` → `CleanupOriginalGlobalCommonAssets` → `CleanupOriginalBodyVisualReferences` (each cleanup calls its owner's `Dispose`: restore slots, clear snapshots, release handles, clear handles, mark the coordinator report); `PrepareSpawnStateCatalog` forwards to `SpawnStateSession` without changing catalog/config/preload construction order; later `CleanupSpawnConfig` calls `Dispose` (objective, enemy and spine config cleanup, then spawn delay/sound restoration, then `RestoreWholeStateOwnership`); owners created on first use and retained after cleanup | `test_whole_catalog.py`, `test_composed_support.py`, `test_body_visual_map.py`, `test_common_assets_map.py`, `test_stage_variant_graph_roots.py`; `WholeCatalogHost.cs` |
@@ -3343,7 +3404,20 @@ are in [build lanes](build-lanes.md#iteration-bundle-compression).
 `LAB_LANE=NAME` build dispatch. Each detached checkout has an APFS clone of
 prepared inputs, private writable editor/Gradle state, its own MCP port and a
 persistent lock outside the removable tree. Creation snapshots under the
-canonical mutex; later source selection/builds use only the lane lock. Completed
+canonical mutex; later source selection/builds use only the lane lock. Creation
+and every build/editor-open restage authored inputs from the selected checkout
+through `build.restage_lane_sources`, `whole_catalog` runtime/editor staging,
+`project_input_rebuild.stage_editor_inputs` for pinned baseline templates, and
+the ordinary Android/audio owners. Extra C# is retired only after matching a
+predecessor Git blob, with source/metadata hashes and a removal receipt. Unknown
+or edited files refuse. `original_game_audio_build_hook.restage_authored_for_lane`
+uses a small APFS reference clone to unwind camera/music without changing live
+content; the producer selects the checkout's own generation.
+`original_game_audio_stage` owns the three-DLL refresh and verified preimages in
+`work/lane-authored-audio`; its pending receipt preserves full audio/overlay
+bindings. Ordinary whole-catalog composition restores those preimages before
+its existing overlay/audio staging. Lane teardown deletes this private state.
+Generated content, game inputs and canonical staging are untouched. Completed
 artifacts are cloned/verified into canonical cache without changing current-build
 pointers. Teardown verifies process identities, stops private Gradle daemons
 through their own registry, retains logs/receipts, removes
@@ -3613,3 +3687,32 @@ restores lookup dependencies from placeholder exports; J1012 adds the recovered
 blur/crop sources through the six-row catalog consumer. J1017 installs that
 payload and separately verifies bounded camera readiness. Rendering, native
 listener outcome and audible playback remain unqualified.
+
+
+## Scripted multi-touch device input
+
+Current `./dev prototype --action touch-gesture --target REQUEST.json` uses
+`scripts/lab/touch_gesture.py` and authored
+`tools/android-touch-gesture/LabTouchGesture.java`. The bundled SDK compiles a
+content-addressed local DEX. Requests bind the existing owned APK hash, observed
+PID and viewport; stale processes and foreign focused windows on display 0 refuse before
+deployment. Android 13's `InputManager.injectInputEvent(event, mode, targetUid)`
+confines every motion event to the owned app UID under ordinary adb shell
+permission. Unavailable targeted injection refuses; there is no global-input
+fallback or permission/hidden-API-policy change.
+
+The source knowledge is the pinned Android 13
+[InputManager](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-13.0.0_r1/core/java/android/hardware/input/InputManager.java)
+and the public [MotionEvent](https://developer.android.com/reference/android/view/MotionEvent)
+pointer-ID/action contract; no platform implementation is copied. Each gesture
+is bounded to 128 steps/30 s of waits, cancels a final hold and removes its
+unique temporary device DEX/request files. A dispatch failure stops only the
+still-matching owned game process. Success leaves the session/display running.
+The driver observes only the owned UID's foreground process state through the
+normal shell API. Leaving that state ends the pointer stream with
+`termination: focus-lost`, before display sleep; completed steps report
+`termination: steps-complete`. It sends no stale pointer event to a background
+window. The caller checks termination and verifies native focus release/resume
+separately.
+Receipts and raw motion evidence stay ignored. This verifies software delivery;
+it never qualifies physical buttons, a touchscreen digitizer or normal play.

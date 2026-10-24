@@ -1,0 +1,62 @@
+diff --git a/Core/Parser/ManagedSnapshotCrawler.cs b/Core/Parser/ManagedSnapshotCrawler.cs
+index d2a92a8..73f3de0 100644
+--- a/Core/Parser/ManagedSnapshotCrawler.cs
++++ b/Core/Parser/ManagedSnapshotCrawler.cs
+@@ -168,0 +169,2 @@ internal sealed class ManagedSnapshotCrawler
++            if (length == 0)
++                return _vm.ArrayHeaderSize;
+diff --git a/Tests/EmptyGenericArrayTests.cs b/Tests/EmptyGenericArrayTests.cs
+new file mode 100644
+index 0000000..b488156
+--- /dev/null
++++ b/Tests/EmptyGenericArrayTests.cs
+@@ -0,0 +1,49 @@
++using MemorySnapshotDataTools.Parser;
++using Xunit;
++
++namespace MemorySnapshotDataTools.Tests;
++
++public sealed class EmptyGenericArrayTests
++{
++    private static DecodedSnapshot Snapshot(int length)
++    {
++        var heap = new byte[64];
++        BitConverter.GetBytes(0x2000UL).CopyTo(heap, 0);
++        BitConverter.GetBytes(length).CopyTo(heap, 24);
++        return new DecodedSnapshot
++        {
++            VirtualMachineInformation = new DecodedVirtualMachineInfo
++            {
++                PointerSize = 8, ObjectHeaderSize = 16, ArrayHeaderSize = 32,
++                ArrayBoundsOffsetInHeader = 16, ArraySizeOffsetInHeader = 24,
++            },
++            ManagedHeapSectionStartAddresses = [0x1000],
++            ManagedHeapSectionBytes = [heap],
++            GcHandleTargets = [0x1000],
++            ManagedTypeFlags = [65538, 1],
++            ManagedTypeNames = ["AuthoredElement<T>[]", "AuthoredElement<T>"],
++            ManagedTypeAssemblies = ["Authored", "Authored"],
++            ManagedTypeStaticFieldBytes = [[], []],
++            ManagedTypeSizes = [32, -1],
++            ManagedTypeInfoAddresses = [0x2000, 0x3000],
++            ManagedTypeBaseOrElementTypeIndices = [1, -1],
++            ManagedTypeFieldIndices = [[], []],
++        };
++    }
++
++    [Fact]
++    public void EmptyArrayNeedsOnlyItsKnownHeader()
++    {
++        var result = SnapshotBridge.ExtractFromDecoded(Snapshot(0), "authored.snap");
++        var item = Assert.Single(result.ManagedObjects);
++        Assert.Equal(32, item.SizeBytes);
++        Assert.Equal("AuthoredElement<T>[]", item.ManagedTypeName);
++        Assert.Empty(result.Connections);
++    }
++
++    [Fact]
++    public void NonemptyArrayStillRejectsUnknownElementSize()
++    {
++        Assert.Throws<InvalidOperationException>(() => SnapshotBridge.ExtractFromDecoded(Snapshot(1), "authored.snap"));
++    }
++}

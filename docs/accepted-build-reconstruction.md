@@ -146,9 +146,12 @@ needs original PC pixels and tracked metadata, not target image literals.
 [J1082](PORTING_JOURNAL.md#j1082--produce-the-complete-alpha8-texture-cohort-from-pc-bundles-on-android)
 adds the complete 4,326-record source Alpha8/single-mip cohort and public codec
 build on Android. Its [setup](../tools/phone-build/accepted-output/README.md#produce-alpha8-textures-directly-from-original-pc-bundles)
-uses canonical original sources plus metadata relationships. Other compressed
-formats/mips, complete bundle assembly and full replay-packet replacement
-remain open.
+uses canonical original sources plus metadata relationships.
+[J1088](PORTING_JOURNAL.md#j1088--produce-every-single-mip-etc1-texture-from-pc-bundles-on-android)
+adds all 281 ETC1/single-mip records through the same source-only owner and
+shared public codec, with a complete 5,006-record phone regression.
+Other compressed formats/mips, complete bundle assembly and full replay-packet
+replacement remain open.
 
 These observations rule out treating a platform flag edit or archive repack as
 the accepted conversion. They do not prove that full Unity import is required.

@@ -349,7 +349,7 @@ def synchronize_sound_emitter(project: Path, work: Path, *, requested: bool, res
     }
 
 
-def stage_for_build(project: Path, work: Path, *, selection_path: Path | None = None) -> dict:
+def stage_for_build(project: Path, work: Path, *, selection_path: Path | None = None, authored_only: bool = False) -> dict:
     """Compile and stage audio inputs before the enclosing build computes its key."""
     project = project.resolve(strict=True)
     work = work.resolve(strict=True)
@@ -402,9 +402,18 @@ def stage_for_build(project: Path, work: Path, *, selection_path: Path | None = 
         bank_receipt = json.loads(resolved["stage_receipt"].read_text(encoding="utf-8"))
         payload["receipt_bound_payload"] = bank_receipt["outputs"]
         payload["receipt_bound_streamed_media"] = bank_receipt.get("streamed_media", [])
-    sound_emitter = synchronize_sound_emitter(project, work, requested=variant == "requested", resolved=resolved)
+    sound_emitter = None if authored_only else synchronize_sound_emitter(project, work, requested=variant == "requested", resolved=resolved)
+    stage_output = (
+        (
+            lambda _project, manifest, request, receipt: dict(
+                manifest=str(manifest), request=str(request) if request else None, receipt=str(receipt) if receipt else None
+            )
+        )
+        if authored_only
+        else stager.stage
+    )
     generation_key = hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
-    output_parent = project.parent / "original-game-audio-owner"
+    output_parent = work / "original-game-audio-owner" if authored_only else project.parent / "original-game-audio-owner"
     producer.reject_symlink_components(output_parent)
     output_parent.mkdir(exist_ok=True)
     output = output_parent / generation_key
@@ -414,7 +423,7 @@ def stage_for_build(project: Path, work: Path, *, selection_path: Path | None = 
         validate_generation_receipt(output, generation_key, payload)
         manifest_path = output / "artifact-manifest.json"
         stager.read_artifacts(manifest_path, request_file, stage_receipt)
-        receipt = stager.stage(project, manifest_path, request_file, stage_receipt)
+        receipt = stage_output(project, manifest_path, request_file, stage_receipt)
         return {
             "producer": {
                 "variant": variant,
@@ -429,7 +438,7 @@ def stage_for_build(project: Path, work: Path, *, selection_path: Path | None = 
     if variant == "default-off":
         result = producer.compile_default_off(project, editor_contents, mono, csc, output)
         record_generation(output, generation_key, payload)
-        receipt = stager.stage(project, output / "artifact-manifest.json", None, None)
+        receipt = stage_output(project, output / "artifact-manifest.json", None, None)
     else:
         managed_producer = ROOT / "tools/unity/support/audio/managed-producer/produce.py"
         if not managed_producer.is_file():
@@ -463,13 +472,41 @@ def stage_for_build(project: Path, work: Path, *, selection_path: Path | None = 
             selection["passive_pcm_capture_after_authority_skill_requested"],
         )
         record_generation(output, generation_key, payload)
-        receipt = stager.stage(
+        receipt = stage_output(
             project,
             output / "artifact-manifest.json",
             output / "generated/request.json",
             resolved["stage_receipt"],
         )
     return {"producer": result, "stage": receipt, "variant": variant, "sound_emitter": sound_emitter}
+
+
+def restage_authored_for_lane(project: Path, work: Path) -> dict:
+    """Compile against an unwound reference clone; leave live content unchanged."""
+    from common import copy_file_clone
+    from native_view_camera_build_hook import restore_previous_camera
+    from original_music_output_observer_build_hook import restore
+    from original_game_audio_stage import restage_authored, restore_authored
+
+    restore_authored(project)
+    # Camera/music overlays bind the full audio receipt. Unwind only the small
+    # reference clone, then let the ordinary producer enforce its exact inputs.
+    with tempfile.TemporaryDirectory(prefix="lane-audio-references-", dir=work) as directory:
+        reference = Path(directory) / "project"
+        paths = [project / "ProjectSettings/ProjectVersion.txt"]
+        paths += list((project / "Assets/LabLoadingScene/Plugins").glob("*.dll"))
+        paths += list((project / "Assets/StreamingAssets/Lab").glob("*StageReceipt.json"))
+        for path in paths:
+            copy_file_clone(path, reference / path.relative_to(project))
+        restore_previous_camera(reference, work)
+        restore(reference, work)
+        produced = stage_for_build(reference, work, authored_only=True)["stage"]
+    return restage_authored(
+        project,
+        Path(produced["manifest"]),
+        Path(produced["request"]) if produced["request"] else None,
+        Path(produced["receipt"]) if produced["receipt"] else None,
+    )
 
 
 __all__ = ["stage_for_build"]

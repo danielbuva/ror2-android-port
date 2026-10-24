@@ -140,6 +140,7 @@ def _create(name, port, root):
     # Snapshot only while the canonical staging/build owner is idle. Later lane
     # builds never take this lock or mutate the primary source checkout.
     with host_build_lock(base / "work/coordination/unity-build.lock", operation="clone build lane " + name):
+        facts["canonical_source_commit"] = git(base, "rev-parse", "HEAD")
         if any(read(marker).get("mcp_port") == port for marker in lane.parent.glob("*/lane.json") if marker.parent != lane):
             raise ValueError("Lane MCP port is already reserved; remove this incomplete lane and choose another port")
         subprocess.run(["git", "worktree", "add", "--detach", str(checkout), source], cwd=base, check=True, capture_output=True)
@@ -149,7 +150,6 @@ def _create(name, port, root):
         clone_audio_inputs(source_work, work)
         project = work / "lab-project"
         clone([p for p in (source_work / "lab-project").iterdir() if p.name not in {"Temp", "Logs"}], project)
-        copy_file_clone(root / "android/Assets/Editor/BootstrapMcp.cs", project / "Assets/Editor/BootstrapMcp.cs")
         # Current-build source provenance remains useful for owned staging
         # retirement. Old APK/cache pointers are not iteration anchors here.
         (work / "config/iteration-base.json").unlink(missing_ok=True)
@@ -166,10 +166,28 @@ def _create(name, port, root):
         # Gradle/user state is writable and therefore cloned, never shared.
         clone([base / ".local" / n for n in ("android-user", "gradle") if (base / ".local" / n).exists()], local)
         shutil.rmtree(local / "gradle/daemon", ignore_errors=True)
-        facts.update(complete=True, clone_seconds=time.monotonic() - started, free_after=check_space(base))
+        facts.update(clone_seconds=time.monotonic() - started, free_after=check_space(base))
         write(work / "config/build-lane.json", facts)
         write(lane / "lane.json", facts)
+    restage(facts)
+    facts["complete"] = True
+    write(work / "config/build-lane.json", facts)
+    write(lane / "lane.json", facts)
     return facts
+
+
+def restage(facts):
+    """Run the normal staging owners in the selected checkout, never this process's ROOT."""
+    env, descriptors = active_lock_handoff(facts["lock"])
+    env = dict(os.environ, **env)
+    env.pop("LAB_LANE", None)
+    subprocess.run(
+        ["/bin/bash", "-c", 'source scripts/env.sh; exec .local/lab-venv/bin/python -c "from build import restage_lane_sources; restage_lane_sources()"'],
+        cwd=facts["checkout"],
+        env=dict(env, PYTHONPATH="scripts/lab"),
+        pass_fds=descriptors,
+        check=True,
+    )
 
 
 def start_server(facts):
@@ -301,7 +319,7 @@ def remove(name, root=ROOT):
             write(lane / "gradle-stop.json", dict(output=stopped.stdout))
         evidence = canonical / "coordination/build-lanes" / (name + "-" + now())
         work = checkout / "work"
-        for folder in ("config", "editor", "logs", "lab-build"):
+        for folder in ("config", "editor", "logs", "lab-build", "coordination/staging-retirements", "lane-authored-audio"):
             for source in (work / folder).rglob("*"):
                 if source.is_file() and not source.is_symlink() and source.suffix in {".json", ".log", ".txt"}:
                     copy_file_clone(source, evidence / source.relative_to(work))
@@ -339,6 +357,8 @@ def dispatch(name, arguments, root=ROOT):
         checkout = Path(facts["checkout"])
         clean(checkout)
         git(checkout, "switch", "--detach", source)
+        if arguments[0] in {"build", "prototype"} or (arguments[0] == "editor" and "open" in arguments):
+            restage(facts)
         if arguments[0] != "preflight":
             start_server(facts)
         env, descriptors = active_lock_handoff(facts["lock"])

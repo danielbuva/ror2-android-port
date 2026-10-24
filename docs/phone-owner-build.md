@@ -110,8 +110,12 @@ qualifies all 399 records on Android (J1079), including public-source JPEG-tool
 compilation and all former pixel-postprocessing exclusions. The same producer's
 [Alpha8 profile](../tools/phone-build/accepted-output/README.md#produce-alpha8-textures-directly-from-original-pc-bundles)
 qualifies all 4,326 source Alpha8/single-mip target records and builds its public
-codec on Android (J1082). Other compressed textures, mip/cubemap and complete
-bundle production remain open. Owner-build v1 uses the single accepted
+codec on Android (J1082). The same owner's
+[ETC1 profile](../tools/phone-build/accepted-output/README.md#produce-etc1-single-mip-textures-directly-from-original-pc-bundles)
+qualifies all 281 single-mip records, the shared codec build and a complete
+5,006-record RGB/Alpha8/uncompressed phone regression (J1088).
+Other compressed textures, mip/cubemap and complete bundle production remain
+open. Owner-build v1 uses the single accepted
 J850 target; current target metadata is an explicit profile input, and a newer
 target follows a complete v1 phone build/run.
 
