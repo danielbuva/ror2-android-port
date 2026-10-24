@@ -343,8 +343,11 @@ provides the existing host parser, managed/native connection analysis and
 DuckDB export. The inspected source pin is `86af1fe8`, under the Unity Companion
 License for Unity-dependent projects; local source/build outputs stay ignored.
 No parser code is copied or distributed. The existing .NET 10.0.401 SDK builds
-its CLI, and 29 upstream host tests pass. Actual game-snapshot compatibility and
-retaining-root conclusions require device capture evidence. The upstream SQLite
+its CLI. J1091 qualifies actual-file decode/export after an authored empty-array
+correction, with 31 upstream/authored tests passing. The small transformation
+and synthetic test live in `recipe/memory-snapshot-data-tools-empty-array.patch`;
+no parser implementation is vendored. Retaining-root conclusions are limited
+to J1091's captured graph and read-only prefix counts. The upstream SQLite
 dependency warning is retained in private build evidence; the planned local
 analysis uses default DuckDB on the lab's own captures. This adds no player
 package, acquisition grant, telemetry or alternate execution backend.

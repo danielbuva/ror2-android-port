@@ -37401,7 +37401,12 @@ its sole producer-owned pending edge directly; its manual frame clears the
 physical latch. Eight pointer/bank fixtures pass, including canceled/missing
 pre-fixed pointers, released short taps and preserved untouched physical pending
 input. This later correction is not part of `d211c7fa`; new build/device
-qualification remains separate.
+qualification remains separate. The subsequent complete software-touch case
+on `32c4742e` passes all prior gestures, fresh background return, single-finger
+pause, confirmation/cancel and same-process menu return with no actual-PID
+errors. Host/native background elapsed is 24.362/6.399 s; terminal selector
+removal, process stop and OLED sleep pass. The exact source is `5f25a12d`, with
+J1091's separately qualified heap capture; no hardware-input claim is added.
 
 **Remaining gates.** Physical digitizer/controller/rebinding,
 acquired-equipment and genuine interaction effects, complete screen/source
@@ -37500,3 +37505,94 @@ contains the frozen selection, 12 completed reports, final menu, current-process
 log and result. The wrapper's result/prune and independently verified handoff are
 under `work/coordination/alpha-touch-acceptance-20261024/`. Raw identifiers,
 profile data, logs and later heap bytes remain private.
+
+## J1091 — Qualify native heap capture and identify retained laboratory log payloads
+
+2026-10-24. Hypothesis: native/managed heap snapshots can account for J1086's
+remaining growth beyond the enumerable-root walk. Reuse the existing resource
+owner and Unity's capture/parser APIs. Pinned UnityExplorer `ReflectionInspector`
+(`1e1fb0e2`) exposes static/member filtering, but does not establish exhaustive
+native-handle reachability; the actual captured graph is authoritative. No
+community/game implementation is copied into the player.
+
+**Player and capture contract.** Normal code build source `5f25a12d`, request
+`20261024T171419.287939Z`, succeeds in 217.087 s (Unity 114.831 s, zero errors).
+APK `32c4742eba0bb61060f9e2a63441fdd0b961f5ada82e1f059101f1b75b7fd677`.
+All 266 matching payload/manifest hashes are independently verified and identical
+to the preceding J1071 candidate. Installation retains data and the original
+owner's preserved payload, with fresh capacity/placement/backing receipts.
+
+`SessionResourceBoundary` reads an attempt-matched opt-in and captures only at
+menus 2 and 4, after completed worlds. It refuses a live world/network or a
+non-Development player before the native call. The exact 2021.3 SDK provides
+`UnityEngine.Profiling.Memory.Experimental.MemoryProfiler.TakeSnapshot`; the
+existing builder already selects Development, so no new build mode is added.
+Native callback success and a nonempty owned file are required. A synchronous
+callback cannot publish startup session zero. The host waits for completion,
+pulls the exact generated file, verifies SHA-256, then removes only that device
+file. Original profile/payload files are untouched. Capture allocation/freezes
+exclude this case from ordinary growth/performance measurement.
+
+Five production-method C# transaction fixtures, ten resource-runner tests and
+224 CLI cases pass. The same batched player also contains J1071's sole-owner
+pending-jump correction. Fresh-clone CI at the built source passes 1,970 tests
+with 144 skips; exact-editor fixtures skip when the SDK is absent.
+
+**Device result.** All three requested Commando native starts, 60-second world
+observations, confirmed UI abandonments and cleanup contracts pass. Automatic
+input is diagnostic and all five gameplay assists are OFF. The final menu is
+session 4, failures and actual-PID runtime errors are empty. The native API and
+hash-checked transfers produce these private snapshots:
+
+| Point | Bytes | SHA-256 |
+| --- | ---: | --- |
+| Menu 2, after one completed world | 1,735,908,215 | `303409a61e506964fe411cc26dc31433fb3df41fd6a3c891aaf2ed6d645dafd4` |
+| Menu 4, after three completed worlds | 849,129,796 | `4d133dc622d5af0c7a7e4105e2d660af6585e3885816fd7a2ac43706f92ea312` |
+
+**Host parser first failure and correction.** Unity's public
+`MemorySnapshotDataTools` at `86af1fe8` builds with the installed .NET 10.0.401
+SDK; its 29 upstream tests pass. Its first real-file decode refuses a negative
+array-element size for an open generic `ExposedReference<T>` descriptor. Preserve
+that failed decode. Captured metadata is format 12, with 16,432 identity-mapped
+type indices. The actual array length is zero and its VM header is 32 bytes; no
+unknown element payload exists. An authored synthetic fixture reproduces that
+failure without game bytes. Return the known header for zero-length arrays;
+nonempty arrays with unknown element size still throw. All 31 upstream/authored
+tests then pass, and both actual files decode/export with minimal validation.
+The small authored recipe patch carries the correction/test against the exact
+public source pin; no parser implementation is vendored.
+
+The upstream SQLite dependency warning remains in private build evidence.
+Analysis uses default DuckDB on these owned captures; neither a database nor
+third-party binary is distributed. The CLI's Unity Companion License and its
+notices remain with private source/build outputs.
+
+**Attribution.** Managed string bytes increase from 57,215,180 to 151,908,614.
+The captured `RoR2.Console.logs` static list and its `Console.Log[]` retain
+48,610,188 string bytes after one world and 143,292,648 after three. Read-only
+prefix classification identifies **48,501,030** and **143,123,522** of those
+bytes as the authored `LAB_SNAPSHOT` stream. Its increase is 94,622,492 bytes
+across two worlds. The authored `LabDiagnostics.Dump` sends full renderer/
+hierarchy JSON every two seconds, which the original console correctly retains.
+This names the dominant root and producer; it is not evidence to clear the
+original console or change its logging policy.
+
+Smaller growth remains, including player-stat sheets reachable from completed
+actor graphs. These roots and the final bound still require attribution. Next,
+retain diagnostic file snapshots and original/error logging while removing the
+periodic full-JSON console payload, then repeat the uninstrumented series and
+sustained case. Do not treat instrumented heap sizes as an accepted memory bound.
+
+**Cleanup and evidence.** The exact device snapshot files are removed only after
+verified transfer; selector/process cleanup and OLED sleep pass. Before the
+priority handoff, installed bytes are independently rehashed and the lease is
+released for owner-build work. The finished isolated lane is removed and the
+primary pruner runs; published APK/payload paths remain by reference. No
+canonical editor staging is changed.
+
+Private evidence:
+`work/device/<serial>/experiments/session-memory/20261024T172717.816663Z/`,
+`work/coordination/alpha-touch-acceptance-20261024/heap-after*-export.*`,
+`heap-parser-zero-before.log`, `heap-parser-zero-after.log`,
+`heap-after*-roots.*`, and `lane-heap-frozen.json`. Heap files, addresses, raw
+field values, databases, identifiers and logs remain private.

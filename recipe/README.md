@@ -2319,3 +2319,14 @@ stay under ignored local evidence; they are never tooling distribution inputs.
 The host-only Unity snapshot-analysis source is separately pinned and inspected
 in community prior art, not vendored. Provenance/privacy audit: 2026-10-24;
 this does not add any runtime/content redistribution grant.
+
+`memory-snapshot-data-tools-empty-array.patch` is an authored, zero-context
+transformation for the optional host-only Unity analysis CLI at source
+`86af1fe8b60bfcb5e6fbe63e85377887aec32ef5`. It returns the known VM header for
+zero-length arrays whose open generic element has no concrete size, and adds
+an authored synthetic-heap test that retains nonempty-size refusal. Apply with
+`git apply --unidiff-zero` only after verifying that exact public source pin.
+No upstream implementation or captured heap bytes are included. J1091 records
+31 passing tests and actual-file decode/export; the provider's Unity Companion
+License/notices stay with the private checkout and outputs. Provenance/privacy
+audit: 2026-10-24; no runtime/content redistribution grant changes.
