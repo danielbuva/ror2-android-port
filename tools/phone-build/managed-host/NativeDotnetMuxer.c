@@ -33,8 +33,38 @@ typedef int32_t (*initialize_fn)(int, const char **, const struct parameters *,
                                  handle_t *);
 typedef int32_t (*run_fn)(handle_t);
 typedef int32_t (*close_fn)(handle_t);
+typedef int32_t (*get_property_fn)(handle_t, const char *, const char **);
+typedef int32_t (*set_property_fn)(handle_t, const char *, const char *);
 typedef void (*info_callback)(const struct environment_info *, void *);
 typedef int32_t (*environment_fn)(const char *, void *, info_callback, void *);
+/* hostpolicy resolves the installed native CLR symlink, then assumes CoreLib
+   shares its directory. Managed data stays in the verified framework tree.
+   Correct that property through the public hostfxr API before loading the CLR. */
+static int framework_corelib(void *library, handle_t handle) {
+  get_property_fn get = (get_property_fn)dlsym(library, "hostfxr_get_runtime_property_value");
+  set_property_fn set = (set_property_fn)dlsym(library, "hostfxr_set_runtime_property_value");
+  const char *deps, *tpa, *name = "/System.Private.CoreLib.dll";
+  if (!get || !set) return 67;
+  if (get(handle, "FX_DEPS_FILE", &deps) < 0) return 0;
+  if (get(handle, "TRUSTED_PLATFORM_ASSEMBLIES", &tpa) < 0) return 72;
+  const char *slash = strrchr(deps, '/'), *found = strstr(tpa, name);
+  if (!slash || !found) return 72;
+  const char *end = found + strlen(name), *start = tpa;
+  if (*end && *end != ':') return 72;
+  for (const char *p = tpa; p < found; p++) if (*p == ':') start = p + 1;
+  size_t directory = (size_t)(slash - deps), prefix = (size_t)(start - tpa);
+  char *core = malloc(directory + strlen(name) + 1);
+  if (!core) return 72;
+  memcpy(core, deps, directory); strcpy(core + directory, name);
+  if (access(core, R_OK)) { free(core); return 72; }
+  char *value = malloc(prefix + strlen(core) + strlen(end) + 1);
+  if (!value) { free(core); return 72; }
+  memcpy(value, tpa, prefix); strcpy(value + prefix, core);
+  strcat(value, end);
+  int result = set(handle, "TRUSTED_PLATFORM_ASSEMBLIES", value);
+  free(value); free(core);
+  return result < 0 ? 72 : 0;
+}
 static void enumerate(const struct environment_info *info, void *context) {
   int *called = context;
   if (!info || info->size < sizeof(*info) || info->framework_count > 32)
@@ -91,6 +121,8 @@ int main(int argc, char **argv) {
       fprintf(stderr, "DOTNET_INITIALIZE=%d\n", result);
       return 69;
     }
+    result = framework_corelib(library, handle);
+    if (result) { close(handle); return result; }
     result = run(handle);
     close(handle);
   }

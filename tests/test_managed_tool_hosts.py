@@ -28,6 +28,7 @@ class ManagedToolHostTests(unittest.TestCase):
 #include <stdlib.h>
 #include <stdint.h>
 #include <stddef.h>
+#include <string.h>
 void *PyInitConfig_Create(void) { return getenv("FIXTURE_CREATE_FAIL") ? NULL : (void*)0x1234; }
 void PyInitConfig_Free(void *p) { if(p==(void*)0x1234) puts("PY_FREE"); }
 int PyInitConfig_SetInt(void *p,const char *name,int64_t value) {
@@ -52,6 +53,7 @@ int Py_RunMain(void) { puts("PY_RUN");return getenv("FIXTURE_PY_EXIT") ? atoi(ge
 #include <stdlib.h>
 #include <stdint.h>
 #include <stddef.h>
+#include <string.h>
 struct parameters {size_t size;const char *host;const char *root;};
 struct framework {size_t size;const char *name;const char *version;const char *path;};
 struct environment {size_t size;const char *version;const char *commit;size_t sdk_count;const void *sdks;size_t count;const struct framework *frameworks;};
@@ -66,6 +68,15 @@ int32_t hostfxr_initialize_for_dotnet_command_line(int argc,const char **argv,co
     for(int i=0;i<argc;i++) printf("NET_ARG_%d=%s\n",i,argv[i]);
     if(getenv("FIXTURE_INIT_FAIL")) return -11;
     *handle=(void*)0x1234;return 0;
+}
+int32_t hostfxr_get_runtime_property_value(void *handle,const char *name,const char **value) {
+    (void)handle;
+    const char *v=getenv(!strcmp(name,"FX_DEPS_FILE")?"FIXTURE_CORE_DEPS":"FIXTURE_TPA");
+    if(!v) return -1;
+    *value=v;return 0;
+}
+int32_t hostfxr_set_runtime_property_value(void *handle,const char *name,const char *value) {
+    (void)handle;printf("NET_PROPERTY %s=%s\n",name,value);return getenv("FIXTURE_PROPERTY_FAIL")?-1:0;
 }
 int32_t hostfxr_run_app(void *handle){(void)handle;puts("NET_RUN");return getenv("FIXTURE_NET_EXIT")?atoi(getenv("FIXTURE_NET_EXIT")):0;}
 int32_t hostfxr_close(void *handle){(void)handle;puts("NET_CLOSE");return 0;}
@@ -86,6 +97,20 @@ int32_t hostfxr_close(void *handle){(void)handle;puts("NET_CLOSE");return 0;}
 
     def python(self, extra=None, arguments=None):
         return self.execute("NativePythonHost", arguments or [self.root / "libpython.so", "/authored home", "script path.py", "argument space"], extra)
+
+    def test_muxer_points_corelib_at_framework_data_before_running(self):
+        framework = self.root / "authored framework"
+        framework.mkdir(exist_ok=True)
+        (framework / "System.Private.CoreLib.dll").write_bytes(b"authored data fixture")
+        original = "/app/A.dll:/installed/native/System.Private.CoreLib.dll:/app/B.dll"
+        env = {"FIXTURE_CORE_DEPS": str(framework / "Microsoft.NETCore.App.deps.json"), "FIXTURE_TPA": original}
+        p = self.execute("NativeDotnetMuxer", ["app.dll"], env)
+        self.assertEqual(p.returncode, 0, p.stderr)
+        self.assertIn("NET_PROPERTY TRUSTED_PLATFORM_ASSEMBLIES=/app/A.dll:" + str(framework / "System.Private.CoreLib.dll") + ":/app/B.dll", p.stdout)
+        self.assertLess(p.stdout.index("NET_PROPERTY"), p.stdout.index("NET_RUN"))
+        p = self.execute("NativeDotnetMuxer", ["app.dll"], env | {"FIXTURE_PROPERTY_FAIL": "1"})
+        self.assertEqual(p.returncode, 72)
+        self.assertNotIn("NET_RUN", p.stdout)
 
     def test_python_opaque_api_receives_isolation_paths_and_arguments(self):
         p = self.python()
