@@ -124,8 +124,9 @@ def _phase_value(samples, phase, key):
     return None
 
 
-def growth_summary(sessions):
-    """Summarize post-collection levels per completed session; no leak verdict."""
+def growth_summary(sessions, final_menu_samples=None):
+    """Keep immediate post-GC and subsequent menu measurements distinct."""
+    final_menu_samples = final_menu_samples or []
     rows = []
     for entry in sessions:
         samples = entry.get("samples") or []
@@ -147,9 +148,11 @@ def growth_summary(sessions):
             }
         )
 
-    def slope(key):
+    def slope(key, final_value=None):
         # Exclude session 1, whose first collection includes one-time warmup.
         points = [(row["session"], row[key]) for row in rows[1:] if type(row[key]) is int]
+        if rows and type(final_value) is int:
+            points.append((rows[-1]["session"] + 1, final_value))
         if len(points) < 2:
             return None
         n = len(points)
@@ -162,10 +165,15 @@ def growth_summary(sessions):
         "rows": rows,
         "per_session_slope_from_session_2": {
             "managed_after_collection_bytes": slope("managed_after_collection"),
+            "managed_before_presentation_bytes": slope("managed_at_start", _phase_value(final_menu_samples, "before-presentation", "managed")),
             "reserved_after_collection_bytes": slope("reserved_after_collection"),
             "menu_pss_kib": slope("menu_pss_kib"),
         },
-        "limits": "Observation only: Boehm/IL2CPP heap usage, PSS and object counts; no retaining root is attributed here.",
+        "final_menu_samples": final_menu_samples,
+        "limits": (
+            "Observation only: Boehm/IL2CPP heap usage, PSS and object counts; no retaining root is attributed here. "
+            "Inspect both sampling phases: an early post-collection spike can dominate its regression while consistent menu usage still rises."
+        ),
     }
 
 
@@ -462,12 +470,11 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
     # Every completed session already passed abandon_contract's frozen profile counts; the final
     # menu's profile is not loaded yet, so it carries no further count evidence.
     failures.extend(cleanup_errors)
-    summary = growth_summary(observed)
+    summary = growth_summary(observed, resource_samples(final_menu))
     if memory_snapshots:
         summary["limits"] += (
             " Native heap captures at menus 2/4 allocate and pause; this is attribution evidence, not an ordinary growth/performance measurement."
         )
-    summary["final_menu_samples"] = resource_samples(final_menu)
     result = {
         "success": not failures,
         "stop": stop,

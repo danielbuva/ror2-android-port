@@ -895,6 +895,8 @@ stay unchanged. During completed-session reclamation, `SessionResourceBoundary`
 releases already-destroyed HurtBox targets from returned bullet-hit pool entries,
 with no live world/network, after deferred destruction. It preserves live and
 checked-out hits and records its release count with existing registry cleanup.
+The host memory summary keeps immediate post-collection and subsequent-menu
+managed slopes separate, including the observed final menu without extrapolation.
 The current `settings-write-interrupt-check` host diagnostic uses
 `settings_write_interrupt_check.py` and the authored `LabPendingWriteStop` SDK
 actor. It requires an idle, owned APK and a matched diagnostic menu selector,

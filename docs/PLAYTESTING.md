@@ -107,6 +107,9 @@ main gameplay owner; a nonzero audio meter or loaded bundle is insufficient.
   counts and process lifetime. A completed series with a positive memory slope
   leaves attribution/bounding open; record the measured limit rather than
   extrapolating indefinite stability.
+  Read the consistent `managed_before_presentation_bytes` menu slope alongside
+  the immediate post-collection slope. Retain every spike; a negative regression
+  dominated by an early spike does not establish a retained-memory bound.
 - Separately record sustained frame time, thermals and background/resume under a
   matched workload. Identify the hardware and conditions in private evidence;
   a short assisted run is not a supported-device performance guarantee.
