@@ -73,6 +73,15 @@ public static class SirenEncounterHost
                         selectedIdentity && selectedIdentity.sceneId.Value == SirenEncounterContract.EncounterSceneId,
                 "Runtime selector did not return the exact inactive source encounter with scene ID 10");
 
+            var bossMaster = selectedSource.GetComponent<ScriptedCombatEncounter>().spawns[0].spawnCard.prefab
+                .GetComponent<CharacterMaster>();
+            var probePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/WholeGame/RoR2/Base/Characters/RoboBallBoss/RoboBallMini/RoboBallMiniMaster.prefab");
+            var probeMaster = probePrefab ? probePrefab.GetComponent<CharacterMaster>() : null;
+            Require(bossMaster && bossMaster.name == "SuperRoboBallBossMaster" && bossMaster.destroyOnBodyDeath &&
+                        probeMaster && probeMaster.destroyOnBodyDeath,
+                "Original Siren boss/probe masters must retain native destruction on body death");
+
             var identities = sourceScene.GetRootGameObjects()
                 .SelectMany(root => root.GetComponentsInChildren<NetworkIdentity>(true)).ToArray();
             var director = identities.Single(identity => identity.sceneId.Value == 2);
@@ -278,6 +287,7 @@ public static class SirenEncounterHost
             originalMapZoneCount = originalMapZoneCount,
             originalInactiveDirectorAndToggleController = true,
             originalEggSpawnerCount = 32,
+            originalBossAndProbeDestroyOnBodyDeath = true,
             naturalRetirementRefusalPolicy = true,
             allOriginalMapZonesRemainDisabled = true,
             nativeEncounterLifecycleVerified = false,

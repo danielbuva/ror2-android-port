@@ -195,7 +195,7 @@ public sealed partial class PortSession
         public int diagnosticSourceEggCandidatesObserved, nativeEggSlotsRegistered;
         public int observedEggBodyCount, nativeBossMembers, observationSamples, encounterSquadMembersAtCleanup,
             retiredBossBodiesRequested, retiredBossMastersRequested, retiredProbeBodiesRequested,
-            retiredProbeMastersRequested;
+            retiredProbeMastersRequested, naturallyRetiredBossMasters, naturallyRetiredProbeMasters;
         public uint identitySceneId, networkId;
         public uint[] sourceEntryEggNetworkIds, nativeRegisteredEggNetworkIds;
         public SirenNativeListeningSnapshot nativeListeningSnapshot = new SirenNativeListeningSnapshot();
@@ -217,6 +217,11 @@ public sealed partial class SirenEncounterSession : IDisposable
         public NetworkInstanceId ownerNetworkId;
         public bool bodyDestroyRequestCompleted;
         public bool masterDestroyRequestCompleted;
+        public bool nativeDeathObserved, naturallyRetired;
+        public GameObject deathBody;
+        public NetworkIdentity deathBodyIdentity;
+        public HealthComponent deathHealth;
+        public NetworkInstanceId deathBodyId;
     }
 
     const float ObservationIntervalSeconds = 0.5f;
@@ -235,6 +240,7 @@ public sealed partial class SirenEncounterSession : IDisposable
     bool ownsBossDefeatObservation;
     bool ownsSquadMemberObservation;
     bool ownsMinionSummonObservation;
+    bool ownsNativeDeathObservation;
     bool cleanupStarted;
     bool disposed;
     int cleanupStep;
@@ -374,6 +380,8 @@ public sealed partial class SirenEncounterSession : IDisposable
                 // ownership-change event occurs before the minion has a netId.
                 MasterSummon.onServerMasterSummonGlobal += owner.OnMinionSummoned;
                 owner.ownsMinionSummonObservation = true;
+                GlobalEventManager.onCharacterDeathServer += owner.OnNativeActorDeath;
+                owner.ownsNativeDeathObservation = true;
             },
             () =>
             {
@@ -432,6 +440,69 @@ public sealed partial class SirenEncounterSession : IDisposable
         return !squads[0].propagateMembershipToSummons && !scripted.spawnOnStart &&
                scripted.teamIndex == TeamIndex.Monster && scripted.spawns != null && scripted.spawns.Length == 1 && scripted.spawns[0].spawnCard &&
                scripted.spawns[0].spawnCard.name == "cscSuperRoboBallBoss";
+    }
+
+    void OnNativeActorDeath(DamageReport damage)
+    {
+        if (disposed || cleanupStarted || !NetworkServer.active || damage == null ||
+            !damage.victimMaster || !damage.victimBody || !damage.victim || damage.victim.alive)
+            return;
+        foreach (var entry in ownedBossMasters)
+            CaptureNativeActorDeath(entry, damage, OriginalBossBodyName);
+        foreach (var entry in ownedProbeMasters)
+            CaptureNativeActorDeath(entry, damage, OriginalProbeBodyName);
+    }
+
+    void CaptureNativeActorDeath(OwnedMaster entry, DamageReport damage, string expectedBodyName)
+    {
+        var member = entry.master;
+        if (!member || entry.masterDestroyRequestCompleted || entry.naturallyRetired ||
+            !ReferenceEquals(damage.victimMaster, member) || member.netId != entry.networkId ||
+            !ReferenceEquals(NetworkServer.FindLocalObject(entry.networkId), member.gameObject) ||
+            member.teamIndex != TeamIndex.Monster || member.playerCharacterMasterController ||
+            member.bodyPrefab != BodyCatalog.FindBodyPrefab(expectedBodyName) || !member.IsDeadAndOutOfLivesServer())
+            return;
+        if (entry.ownerNetworkId != NetworkInstanceId.Invalid &&
+            (!member.minionOwnership || member.minionOwnership.NetworkownerMasterId != entry.ownerNetworkId))
+            return;
+        if (entry.ownerNetworkId == NetworkInstanceId.Invalid && member.minionOwnership &&
+            member.minionOwnership.NetworkownerMasterId != NetworkInstanceId.Invalid)
+            return;
+        var body = damage.victimBody.gameObject;
+        var bodyIdentity = body.GetComponent<NetworkIdentity>();
+        if (body.scene != scene || damage.victimBody.master != member ||
+            damage.victimBody.bodyIndex != BodyCatalog.FindBodyIndex(expectedBodyName) ||
+            !ReferenceEquals(body.GetComponent<HealthComponent>(), damage.victim) || !bodyIdentity ||
+            bodyIdentity.netId.Value == 0 || !bodyIdentity.isServer ||
+            !ReferenceEquals(NetworkServer.FindLocalObject(bodyIdentity.netId), body))
+            return;
+        entry.deathBody = body;
+        entry.deathBodyIdentity = bodyIdentity;
+        entry.deathHealth = damage.victim;
+        entry.deathBodyId = bodyIdentity.netId;
+        entry.nativeDeathObserved = true;
+    }
+
+    void ValidateNaturallyDestroyedMaster(OwnedMaster entry)
+    {
+        if (!entry.nativeDeathObserved || ReferenceEquals(entry.master, null) || entry.master ||
+            entry.networkId.Value == 0 || !ReferenceEquals(NetworkServer.FindLocalObject(entry.networkId), null) ||
+            ReferenceEquals(entry.deathBody, null) || ReferenceEquals(entry.deathBodyIdentity, null) ||
+            ReferenceEquals(entry.deathHealth, null) || entry.deathBodyId.Value == 0)
+            throw new InvalidOperationException("Missing Siren master lacks exact native terminal-death and unmapped-ID evidence");
+        if (entry.deathBody)
+        {
+            if (!entry.deathBodyIdentity || entry.deathBody.scene != scene ||
+                entry.deathBodyIdentity.netId != entry.deathBodyId || !entry.deathBodyIdentity.isServer ||
+                !ReferenceEquals(entry.deathBody.GetComponent<NetworkIdentity>(), entry.deathBodyIdentity) ||
+                !entry.deathHealth || entry.deathHealth.alive ||
+                !ReferenceEquals(entry.deathBody.GetComponent<HealthComponent>(), entry.deathHealth) ||
+                !ReferenceEquals(NetworkServer.FindLocalObject(entry.deathBodyId), entry.deathBody))
+                throw new InvalidOperationException("Native Siren corpse identity, health or server mapping changed before cleanup");
+        }
+        else if (entry.deathBodyIdentity || entry.deathHealth ||
+                 !ReferenceEquals(NetworkServer.FindLocalObject(entry.deathBodyId), null))
+            throw new InvalidOperationException("Destroyed Siren corpse retains an identity, health component or mapped ID");
     }
 
     void OnBossGroupDefeatedServer(BossGroup defeated)
@@ -556,6 +627,8 @@ public sealed partial class SirenEncounterSession : IDisposable
         {
             SirenEncounterContract.DetachOwnedSubscription(ref ownsMinionSummonObservation,
                 () => MasterSummon.onServerMasterSummonGlobal -= OnMinionSummoned);
+            SirenEncounterContract.DetachOwnedSubscription(ref ownsNativeDeathObservation,
+                () => GlobalEventManager.onCharacterDeathServer -= OnNativeActorDeath);
         }, ref cleanupFirstFailure, out failure))
             ThrowCleanupFailure(failure);
         if (!SirenEncounterContract.TryAdvanceOwnedCleanupStep(ref cleanupStep, 3,
@@ -629,14 +702,17 @@ public sealed partial class SirenEncounterSession : IDisposable
         }
 
         foreach (var entry in roots)
-            if (!entry.masterDestroyRequestCompleted)
+            if (!entry.masterDestroyRequestCompleted && !entry.naturallyRetired)
                 ValidateOwnedMaster(entry, OriginalBossBodyName, NetworkInstanceId.Invalid, "native boss");
         foreach (var entry in probes)
         {
-            if (entry.masterDestroyRequestCompleted)
+            if (entry.masterDestroyRequestCompleted || entry.naturallyRetired)
                 continue;
             if (!entry.master)
-                throw new InvalidOperationException("A captured Siren probe disappeared before its native destroy request was recorded");
+            {
+                ValidateNaturallyDestroyedMaster(entry);
+                continue;
+            }
             var ownership = entry.master.minionOwnership;
             if (!ownership || !ownedBossNetworkIds.Contains(entry.ownerNetworkId.Value) ||
                 ownership.NetworkownerMasterId != entry.ownerNetworkId)
@@ -664,7 +740,12 @@ public sealed partial class SirenEncounterSession : IDisposable
     void ValidateOwnedMaster(OwnedMaster entry, string expectedBodyName, NetworkInstanceId expectedOwner, string label)
     {
         var member = entry.master;
-        if (!member || member.netId != entry.networkId || member.netId.Value == 0 ||
+        if (!member)
+        {
+            ValidateNaturallyDestroyedMaster(entry);
+            return;
+        }
+        if (member.netId != entry.networkId || member.netId.Value == 0 ||
             NetworkServer.FindLocalObject(entry.networkId) != member.gameObject ||
             member.teamIndex != TeamIndex.Monster || member.playerCharacterMasterController ||
             member.bodyPrefab != BodyCatalog.FindBodyPrefab(expectedBodyName))
@@ -689,10 +770,28 @@ public sealed partial class SirenEncounterSession : IDisposable
 
     void RequestDestroy(OwnedMaster entry, bool isProbe)
     {
-        if (entry.masterDestroyRequestCompleted)
+        if (entry.masterDestroyRequestCompleted || entry.naturallyRetired)
             return;
         if (!entry.master)
-            throw new InvalidOperationException("Captured Siren master disappeared before its native destroy request was recorded");
+        {
+            ValidateNaturallyDestroyedMaster(entry);
+            if (!entry.bodyDestroyRequestCompleted && entry.deathBody)
+            {
+                NetworkServer.Destroy(entry.deathBody);
+                if (isProbe)
+                    Report.retiredProbeBodiesRequested++;
+                else
+                    Report.retiredBossBodiesRequested++;
+                Report.retirementRequestsIssued = true;
+            }
+            entry.bodyDestroyRequestCompleted = true;
+            entry.naturallyRetired = true;
+            if (isProbe)
+                Report.naturallyRetiredProbeMasters++;
+            else
+                Report.naturallyRetiredBossMasters++;
+            return;
+        }
         if (!entry.bodyDestroyRequestCompleted)
         {
             var body = entry.master.GetBody();
