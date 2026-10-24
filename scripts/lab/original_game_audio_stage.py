@@ -856,6 +856,90 @@ def stage(
     return receipt
 
 
+def restage_authored(project: Path, manifest_path: Path, request_path: Path | None, stage_receipt_path: Path | None) -> dict:
+    """Refresh only the three authored DLLs/sidecars; retain all content inputs.
+
+    Use the ordinary manifest validator, previous-output byte checks and atomic
+    installer. Preserve the previous content receipt's lineage until the normal
+    build stager composes the complete current generation.
+    """
+    project = project.resolve(strict=True)
+    no_symlink_path(project)
+    _, rows, pins = read_artifacts(manifest_path, request_path, stage_receipt_path)
+    receipt_path = project / "Assets/StreamingAssets/Lab/OriginalGameAudioStageReceipt.json"
+    no_symlink_path(receipt_path)
+    previous = json.loads(receipt_path.read_text())
+    if previous.get("schema") != RECEIPT_SCHEMA or previous.get("accepted_input_id") != LINEAGE["accepted_input_id"]:
+        raise ValueError("authored lane restaging requires the inherited audio ownership receipt")
+    targets = {DEFAULT_TARGETS[role] for role in DEFAULT_ROLES} | NEW_ASSEMBLY_META
+    rows = [row for row in rows if row["target_relative"] in targets]
+    previous_outputs = {row["target"]: row for row in previous["outputs"]}
+    for row in rows:
+        target = row["target_relative"]
+        if target not in previous_outputs:
+            raise ValueError("authored plugin lacks previous ownership: " + target)
+        row["preimage_sha256"] = previous_outputs[target]["sha256"]
+        existing = project / target
+        no_symlink_path(existing)
+        if sha256(existing) != row["preimage_sha256"]:
+            raise ValueError("inherited authored plugin differs from its receipt: " + target)
+    # Do not rewrite the full receipt: camera/music overlays bind its exact hash.
+    # Preserve only changed authored preimages, restoring them before the normal
+    # composition owner unwinds overlays and stages a complete current generation.
+    retirement = {
+        "previous_artifact_manifest_sha256": previous["artifact_manifest_sha256"],
+        "artifact_manifest_sha256": pins["artifact_manifest_sha256"],
+        "replaced": [
+            dict(target=row["target_relative"], before_sha256=row["preimage_sha256"], sha256=row["sha256"])
+            for row in rows
+            if row["preimage_sha256"] != row["sha256"]
+        ],
+    }
+    evidence = project.parent / "coordination/staging-retirements" / ("audio-" + os.urandom(8).hex() + ".json")
+    evidence.parent.mkdir(parents=True, exist_ok=True)
+    evidence.write_text(json.dumps(retirement, indent=2, sort_keys=True) + "\n")
+    from common import copy_file_clone, write
+
+    checkpoint = project.parent / "lane-authored-audio"
+    state = dict(audio_receipt_sha256=sha256(receipt_path), replaced=retirement["replaced"], restored=False)
+    for row in state["replaced"]:
+        copy_file_clone(project / row["target"], checkpoint / "preimages" / Path(row["target"]).name)
+    write(checkpoint / "pending.json", state)
+    for item in rows:
+        install_one(project, item)
+    return {"authored_restage": retirement}
+
+
+def restore_authored(project: Path) -> None:
+    """Restore receipted authored preimages before ordinary audio composition."""
+    from common import copy_file_clone, read, write
+
+    checkpoint = project.parent / "lane-authored-audio"
+    marker = checkpoint / "pending.json"
+    if not marker.exists():
+        return
+    state = read(marker)
+    if state["restored"]:
+        return
+    receipt = project / "Assets/StreamingAssets/Lab/OriginalGameAudioStageReceipt.json"
+    if sha256(receipt) != state["audio_receipt_sha256"]:
+        raise ValueError("audio composition changed during pending authored lane restaging")
+    allowed = {DEFAULT_TARGETS[role] for role in DEFAULT_ROLES} | NEW_ASSEMBLY_META
+    for row in state["replaced"]:
+        if row["target"] not in allowed:
+            raise ValueError("authored preimage target escapes the three-DLL cohort")
+        target = project / row["target"]
+        source = checkpoint / "preimages" / Path(row["target"]).name
+        no_symlink_path(target)
+        no_symlink_path(source)
+        if sha256(target) not in (row["sha256"], row["before_sha256"]) or sha256(source) != row["before_sha256"]:
+            raise ValueError("pending authored lane plugin/preimage drift")
+    for row in state["replaced"]:
+        copy_file_clone(checkpoint / "preimages" / Path(row["target"]).name, project / row["target"])
+    state["restored"] = True
+    write(marker, state)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--project", type=Path, required=True)

@@ -20,6 +20,25 @@ persistent lock. The caller's committed HEAD is selected under that lock for
 each operation. Keep HEAD fixed until completion. Other lanes and the canonical
 build may run concurrently without switching the primary source checkout.
 
+Creation and every build or editor-open refresh authored runtime, Editor and
+plugin inputs from the selected lane checkout. Inherited extra C# is removed
+only when its bytes match an identified predecessor Git source. Retirement
+receipts retain the commit, source path, source/metadata hashes and removed
+paths. Unknown or edited files refuse, preserving them for inspection.
+
+The audio producer compiles the lane's own sources using a small APFS reference
+clone with camera/music overlays unwound. Only its three authored DLLs and
+metadata are replaced in the live project. Verified preimages are retained in
+`work/lane-authored-audio` until ordinary composition restores them before its
+existing audio/overlay steps. The full audio receipt and generated content keep
+their existing bytes and bindings. This runs inside the private lock and never
+changes canonical staging. Existing lanes gain this behavior on their next
+build from an updated checkout; no recreation is required. Frozen-content checks
+remain in force: a genuinely different plugin cohort can still require a normal
+full lane build to establish its own baseline. A plain `./dev build` refuses a
+pending changed plugin cohort; use a whole-catalog build action so the ordinary
+composition owner can produce the complete current audio receipt.
+
 The pinned MCP transport captures its endpoint at connection but uses global
 EditorPrefs for setup. The authored bootstrap briefly serializes connection
 setup, captures the lane endpoint, restores preferences and handles domain

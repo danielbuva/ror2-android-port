@@ -55,6 +55,7 @@ class BuildLaneTests(unittest.TestCase):
             patch.object(lanes.sys, "platform", "darwin"),
             patch.object(lanes, "check_space", return_value=200 * 1024**3),
             patch.object(lanes, "clone", side_effect=self.clone),
+            patch.object(lanes, "restage"),
         ]
         for p in self.patches:
             p.start()
@@ -79,6 +80,8 @@ class BuildLaneTests(unittest.TestCase):
 
     def test_clone_retains_library_but_not_live_editor_or_device_state(self):
         facts = self.create()
+        lanes.restage.assert_called_once_with(facts)
+        self.assertEqual(facts["canonical_source_commit"], self.git("rev-parse", "HEAD"))
         work = Path(facts["checkout"]) / "work"
         self.assertEqual((work / "lab-project/Library/cache").read_text(), "authored cache")
         self.assertFalse((work / "lab-project/Temp").exists())
@@ -94,11 +97,14 @@ class BuildLaneTests(unittest.TestCase):
 
     def test_dispatch_passes_only_its_lock_while_canonical_is_held(self):
         facts = self.create()
+        lanes.restage.reset_mock()
         original_run = subprocess.run
         calls = []
 
         def invoke(args, **kwargs):
             if str(args[0]) == str(Path(facts["checkout"]) / "dev"):
+                lanes.restage.assert_called_once_with(facts)
+                self.assertEqual(lanes.git(Path(facts["checkout"]), "rev-parse", "HEAD"), self.git("rev-parse", "HEAD"))
                 calls.append((args, kwargs))
                 (fd,) = kwargs["pass_fds"]
                 self.assertEqual(os.fstat(fd).st_ino, Path(facts["lock"]).stat().st_ino)
@@ -119,6 +125,9 @@ class BuildLaneTests(unittest.TestCase):
         facts = self.create()
         server_log = lanes.location("second", self.root) / "mcp-server.log"
         server_log.write_text("authored server evidence")
+        retirement = Path(facts["checkout"]) / "work/coordination/staging-retirements/fixture.json"
+        retirement.parent.mkdir(parents=True, exist_ok=True)
+        retirement.write_text("{}\n")
         for arguments in (["install"], ["preflight"], ["prototype", "--action", "whole-catalog-run"], ["prototype", "--action"]):
             with self.subTest(arguments=arguments), self.assertRaises(RuntimeError):
                 lanes.dispatch("second", arguments, root=self.root)
@@ -129,6 +138,7 @@ class BuildLaneTests(unittest.TestCase):
         self.assertEqual((self.work / "lab-project/Temp/UnityLockfile").read_text(), "live canonical editor")
         self.assertEqual(json.loads(Path(result["evidence"]).read_text())["seed_commit"], facts["seed_commit"])
         self.assertEqual((Path(result["evidence"]).parent / "mcp-server.log").read_text(), "authored server evidence")
+        self.assertEqual((Path(result["evidence"]).parent / "coordination/staging-retirements/fixture.json").read_text(), "{}\n")
         self.assertNotIn(facts["checkout"], self.git("worktree", "list"))
 
     def test_names_ports_and_existing_lane_refuse_without_overwriting(self):

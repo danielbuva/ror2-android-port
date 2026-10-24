@@ -56,6 +56,22 @@ def graphics_settings(template, expected_hash):
 PROJECT_INPUT_PATHS = frozenset(membership(read(RECIPE / "project-inputs.json")))
 
 
+def stage_editor_inputs(io):
+    """Stage the same recipe-pinned baseline Editor sources for rebuilds and lanes."""
+    from rebuild import relative_path
+
+    recipe = read(RECIPE / "project-inputs.json")
+    for row in recipe["editors"]:
+        relative_path(row["path"])
+        # A historical body keeps its recipe template; a restaged one names the current source (J725).
+        base, relative = (RECIPE, row["template"]) if "template" in row else (ROOT, row["source_path"])
+        relative_path(relative)
+        source = base / relative
+        if not source.resolve().is_relative_to(base.resolve()) or sha(source) != row["sha256"]:
+            raise RuntimeError("Historical authored editor template drift" if "template" in row else "Authored editor source drift")
+        io.apply(io.project / row["path"], copy=source)
+
+
 def project_inputs(destination, work, input_id, expected, provenance):
     import UnityPy
 
@@ -81,15 +97,7 @@ def project_inputs(destination, work, input_id, expected, provenance):
     if "graphics_template_sha256" in recipe:
         path = "ProjectSettings/GraphicsSettings.asset"
         io.apply(destination / path, graphics_settings((ROOT / "smoke" / path).read_bytes(), recipe["graphics_template_sha256"]))
-    for row in recipe["editors"]:
-        relative_path(row["path"])
-        # A historical body keeps its recipe template; a restaged one names the current source (J725).
-        base, relative = (RECIPE, row["template"]) if "template" in row else (ROOT, row["source_path"])
-        relative_path(relative)
-        source = base / relative
-        if not source.resolve().is_relative_to(base.resolve()) or sha(source) != row["sha256"]:
-            raise RuntimeError("Historical authored editor template drift" if "template" in row else "Authored editor source drift")
-        io.apply(destination / row["path"], copy=source)
+    stage_editor_inputs(io)
     io.apply(destination / "ProjectSettings/InputManager.asset", insert_axes((ROOT / "smoke/ProjectSettings/InputManager.asset").read_text(), nova_axes()))
     guids = read(RECIPE / "project-layout.json")["runtime_source_guids"]
     guid = guids["runtime/input/NovaInputBridge.cs"]
