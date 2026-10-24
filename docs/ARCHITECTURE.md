@@ -127,6 +127,16 @@ retention and teardown. J1061 verifies its complete stripping/conversion through
 native planning; upstream managed production is still explicitly supplied.
 No shared project, Editor, device or current build consumer is involved.
 
+`tools/phone-build/owner-code/legacy_init.py` owns current experimental
+historical Init-receipt compatibility. It requires the full accepted owner
+inventory and exact configured source bank before materializing/executing the
+byte-bound authored archive in `tools/phone-build/legacy/`. It retains the exact
+historical source and receipt scope; there is no synthetic old hash on new code.
+[Setup/lifecycle](../tools/phone-build/legacy/README.md) document the fixed private
+source-root depth, exclusive outputs, refusal/failure retention and teardown.
+The current public Init producer remains preferred for new callers; no shared
+runtime owner, selector or build admission changes.
+
 `scripts/lab/owner_audio_prefab.py` owns current experimental bounded host
 reconstruction of one source audio prefab from the owner's original bundles.
 `recipe/owner-audio-prefab.json` holds audited minimum identities and one clearly

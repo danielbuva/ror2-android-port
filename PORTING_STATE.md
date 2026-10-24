@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-24 UTC after **J1040/J1045/J1046 (device), J1043/J1044 (host) and J1036/J1042/J1049/J1050/J1051/J1052/J1053/J1054/J1055/J1056/J1057/J1058/J1059/J1060/J1061 (owner-build assessment/private replay/reuse census)**.
+Last updated 2026-10-24 UTC after **J1040/J1045/J1046 (device), J1043/J1044 (host) and J1036/J1042/J1049/J1050/J1051/J1052/J1053/J1054/J1055/J1056/J1057/J1058/J1059/J1060/J1061/J1062 (owner-build assessment/private replay/reuse census)**.
 R36 diagnostic bda30f33 passes both standard controls, strict current-process
 log checks and independent installed-byte/profile/placement readback. The
 source-camera route now reaches its bounded Outline observation without the

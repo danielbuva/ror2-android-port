@@ -33,8 +33,10 @@ and final public entry outputs. A byte-identical research copy of the historical
 Init transformer remains under
 `work/coordination/wwise-init-android-platform-metadata/transform_init.py`, source
 SHA-256 `91c72d254ba9473d93ffb18c4be2233be1781b6072b08571aed7f607e76e9b37`.
-It reproduces the historical receipt through actual execution; it is required
-local research state until its separate source provenance audit. The public
+It remains a private historical comparison artifact. The separately audited
+readable template and full-inventory-gated `owner-code/legacy_init.py` now
+reproduce that exact historical bank/receipt from public authored source; this
+private source copy is no longer a required producer input. The public
 `wwise_init_platform.py` remains the preferred generator for new bank/receipt
 execution. All event/media names and generated index data stay ignored. The current game build reads none of this research state and no
 existing runtime stage/request pin is changed.
@@ -1456,3 +1458,22 @@ failed case or required input was retired. The generator does not read these
 research paths implicitly. The final sealed proof covers the current source,
 configuration, actual outputs and comparison to J1058. Native execution remains
 J1059; these new attempts stop after native planning, not native compilation.
+
+
+## Historical Init source compatibility owner
+
+`tools/phone-build/owner-code/legacy_init.py` reads this checkout's explicit
+owner `work` root, accepted inventory/configuration and the configured original
+Init bank. Its exact authored source supplier is the audited tracked readable
+`tools/phone-build/legacy/transform_init.py.txt`; no private experiment supplies
+code. The wrapper generates a byte-identical private tool under
+`work/legacy-init-tools/<owned-run>/transform_init.py`, preserving the historical
+source-root lookup depth, and owns bank/receipt/log/result generation under an
+explicit new private output. The materialized source path is recorded in that
+output's result. [Setup/refusal/teardown](../tools/phone-build/legacy/README.md)
+cover the fixed layout and both private output locations; retain failed cases.
+
+`work/coordination/owner-code-producer-v1/public-legacy-init-v1/` records actual
+public-wrapper execution and exact legacy output/receipt comparisons. The old
+private source remains historical evidence only. No current runtime build reads
+this new state automatically, and no archived SDK/game body is added.

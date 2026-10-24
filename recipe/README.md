@@ -86,6 +86,7 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 | `shader-postprocessing-bloom-candidate.json` | Exported one-pass Bloom and exact source-camera CopyStd placeholders | Accepted-input source/meta/resource identities, official Unity package/license hashes and pass contracts; authored camera staging pin refreshed without changing camera transforms. | Authored selection metadata only; upstream source and generated content stay local under Unity Companion License. Manual audit 2026-10-23 described above. | `shader_postprocessing_bloom`, whole-catalog preparation and catalog replay comparison; default off. |
 | `shader-postprocessing-uber-candidate.json` | Exact source-camera `PostProcessResources.uber` one-pass constant-white placeholder | Accepted-input Main Camera/resource/shader/profile identities, official archive/license/source hashes, pass-0 call contract and 18-file include closure. | Reconstruction metadata only; official shader/includes and generated candidates stay ignored under Unity Companion License. Package 2.3.0 is a compatible reference, not a shipped-version claim. Audited 2026-10-23. | `shader_postprocessing_uber`, whole-catalog preparation and catalog replay comparison; independent default-off activation. |
 | `wwise-init-android.json` | Private fixture-only Init metadata generator constants (J744) | Minimum source-bank path, format/identity/size and plugin/device/bus relationships; generated bank bodies remain local. | Authored parsing/serialization and metadata only; accepted full inventory plus explicit source hash required, exclusive ignored outputs, no SDK/media/implementation/private identifiers. Audit details below. | `wwise_init_platform.py`, explicitly invoked support tool; no current game-build dependency. |
+| `tools/phone-build/legacy/transform_init.py.txt` | Exact authored historical Init transformer source | Bounded parsing/serialization and minimum format/plugin/device/bus identities, retained byte-exact for truthful historical receipts. | No bank/media bytes, SDK or wwiser implementation, private path, binary, credential or account/device identifier. Audited 2026-10-24. | Formatted owner wrapper checks full accepted inventory and configured bank before materializing/executing exact source; outputs remain ignored. |
 | `owner-audio-prefab.json` | One exported source audio prefab as a local analysis input (J1055) | Four accepted bundle identities, minimum root/script/reference metadata and one explicit generated export-GUID binding; values come from original type trees. | Authored derivation and metadata only; no serialized asset/template bodies, game/SDK source, media, personal/device/account identifiers or secrets. Full audit below. | `owner_audio_prefab.py`, current experimental host support; no automatic game-build consumer. |
 | `wwise-android-abi.json` | Explicit support-mode Wwise managed ABI candidate generator | Exact accepted input ID; retained API hash; official Android declaration and OS-string helper source hashes; ARM64 Release plugin identity/export hashes; minimal import/parameter rewrites, one exact-signature OS-string helper call-operand rewrite and unavailable import names. | Authored transformation policy and metadata identifiers only; authorized local Integration source inspected read-only. No SDK code, binary, managed assembly, private path, account/device data, bank or audio content is copied. The 11 unavailable imports and `enable_production_audio: false` remain explicit. Audited 2026-10-20. | `tools/wwise-android-abi/generate.py` validates the exact local profile and writes new ignored plan/candidate outputs; its strict Cecil writer and synthetic tests verify the declared changes and preservation. Explicit support tool, separate from default builds. |
 | `inherited-rebuild.json` | One texture-importer host input | Accepted input, minimum export metadata identity/hash, inherited GUID and creation-time parameter. | No texture/importer body or private identifiers; accepted local export only. | `inherited_rebuild` gates source and final ledger hashes. |
@@ -2027,3 +2028,35 @@ from the complete explicit owner-supplied provider cohort and reviewed legitimat
 input. Main independently checked the six XMLs against prior configuration and
 confirmed selector-only contents and exact project-field equality. Manual
 provenance, privacy, licensing and sensitive-content audit: 2026-10-24.
+
+
+## Historical authored Init source compatibility
+
+`tools/phone-build/legacy/transform_init.py.txt` is the exact 18,170-byte authored
+source from the J740/J744 experiment, SHA-256
+`91c72d254ba9473d93ffb18c4be2233be1781b6072b08571aed7f607e76e9b37`.
+Full readable source review finds bounded chunk/HIRC parsing, serialization and
+exclusive ignored-output handling, with only minimum accepted-bank, plugin,
+format, device and bus identities/relationships. It contains no bank/media body,
+SDK implementation, vendored wwiser code, credentials, private path or account
+identifier. Existing J744 provenance records pinned wwiser as an observation aid,
+not copied implementation or a runtime dependency. Main independently reviewed
+this origin and all source/receipt bindings. Audit: 2026-10-24.
+
+The archive retains its original source bytes, formatting and historical scope
+text. Like existing readable C# source templates, it is a versioned source
+artifact explicitly consumed by a formatted current wrapper; it is not a Ruff
+exemption for current Python. `owner-code/legacy_init.py` first validates full
+accepted owner state and the configured original bank, then materializes the
+exact artifact under ignored work at the original root-relative depth and runs
+it. The real source reads its own bytes for its receipt. No new execution is
+assigned a historical digest: output and receipt result from actual byte-exact
+source execution. The wrapper checks source/input/output/receipt bindings again
+afterwards, and retains failures/source for review. Only minimum metadata is
+tracked; all generated banks, receipts, tool materializations and logs stay local.
+
+Use current `wwise_init_platform.py` and a truthful fresh receipt for new callers.
+This archival compatibility owner exists for unchanged historical receipt pins;
+it grants no new middleware, game-media or controller-output rights and claims
+no broader routing, audible, retained-runtime or phone acceptance. It changes no
+current game-build selector or runtime request/stage admission.

@@ -34126,3 +34126,56 @@ suppliers from the downstream owner chain. Upstream managed orchestration,
 licensed native input production, Burst/content/shaders, Android hosting,
 installation/update and matched gameplay/performance remain open. Architecture C,
 working build, desktop fallback and PR #55 device/adoption hold are unchanged.
+
+
+## J1062 — Replace the private historical Init source with an audited owner tool
+
+2026-10-24. Host owner-input/source compatibility only. No source bank, SDK,
+current runtime, game build, original input or device state is modified.
+
+**Problem and provenance.** J1054 reproduces exact historical Init bytes and
+receipt through real execution, but its authored historical source remains a
+private dependency. Main reviews all of that 18,170-byte source and its J740/J744
+provenance: bounded authored chunk/HIRC parsing/serialization, exclusive ignored
+outputs and minimum format/plugin/device/bus identities; no bank/media data,
+SDK implementation or copied wwiser implementation. Existing prior-art/recipe
+audit records pinned wwiser as an observation aid, not vendored code. Promote
+the byte-exact source as a readable archival template, following the existing
+`.cs.txt` tool-source precedent. Recipe README contains the separate full audit
+and table row. Current wrapper/test Python passes Ruff; the archive preserves
+its historical bytes and formatting because its real source digest is part of
+the unchanged accepted receipt contract.
+
+**Named owner and execution.** `owner-code/legacy_init.py` requires the complete
+reviewed owner inventory and exact configured original bank before creating
+outputs or materializing any code. It writes exact authored source into its
+owned ignored tool directory at the original root-relative depth, rehashes it,
+and invokes its real CLI. The historical source's own exact-bank, ignored-output
+and exclusive-write guards remain. Preserve source and scope strings literally;
+never assign a historical transform digest to modified code. Recheck source,
+input state, bank and receipt after execution. All outputs/failures stay private;
+other work roots refuse the legacy layout before execution. Current
+`wwise_init_platform.py` remains preferred for callers accepting fresh receipts.
+No shared audio owner or request/stage gate is altered.
+
+**Result.** Actual execution from the new public wrapper produces bank SHA-256
+`618d1c5d534af10fc4cc30a1bacd193bf6871dab3e63992ebedd92a92576fb90`
+and receipt SHA-256
+`3b274de411fe2128bffd43de117baf9156e58e75ebcd0f0cb2a5379b1f22260f`,
+exactly the unchanged historical pins. The invoked materialized source and
+readable template both hash to
+`91c72d254ba9473d93ffb18c4be2233be1781b6072b08571aed7f607e76e9b37`.
+Private `work/coordination/owner-code-producer-v1/public-legacy-init-v1/` keeps
+the real process command, exit 0, bank, receipt and terminal result; the generated
+source is recorded under the new tool owner's directory. No private historical
+source folder supplies any execution input. Four focused tests verify exact
+readable-source identity, full-inventory admission, wrong-bank refusal before
+output creation and exact-source/failure retention.
+
+**Independent review and limits.** Main rehashes the template and actual invoked
+source, verifies process receipt/argv/exit and both output pins, and returns GO
+for truthful source/receipt reproduction. This resolves an upstream source
+supplier, not middleware/media redistribution, controller-output fidelity,
+retained managed runtime, phone hosting or completed audio acceptance. Public
+source scan supplements the full manual provenance/privacy review. Architecture C,
+working build, existing admissions, desktop fallback and device hold remain.
