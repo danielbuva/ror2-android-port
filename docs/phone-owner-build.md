@@ -145,6 +145,12 @@ Desktop scene roots and base engine/content remain inputs.
 These are build-pipeline problems; keep the game runtime
 and desktop fallback while investigating them independently.
 
+[J1065](PORTING_JOURNAL.md#j1065--qualify-private-owner-apk-preparation-upgrade-and-unity-lifecycle)
+qualifies the separate private owner-APK candidate's device preparation,
+increasing-version update, Unity lifecycle and assisted standard controls.
+It consumes reconstructed target files; independent PC-input production,
+phone-side signing and ordinary Android installer UX remain open.
+
 ## Stage map
 
 "Port candidate" means a public tool/source mechanism exists; it does not mean

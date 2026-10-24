@@ -34256,3 +34256,121 @@ ADB command runs. The unused Alpha device lease is returned through Main.
 Desktop fallback, existing runtime, working build and PR device/adoption hold
 remain. Pause here at the human's requested checkpoint; do not claim phone
 conversion or public-alpha completion from this host success.
+
+## J1065 — Qualify private owner APK preparation, upgrade and Unity lifecycle
+
+2026-10-24. **Hypothesis and scope.** J1049's complete signed owner APK can
+prepare the accepted J850 content from its own embedded files, launch the
+unchanged IL2CPP player through its public bootstrap, and retain user data
+through an increasing-version update. The resumed assignment explicitly owns
+the former Alpha device. This closes the bounded J1049 device hold; independent
+PC-input-only content/code production and the public installation product remain
+separate gates. Architecture C and Main's game/editor/device remain unchanged.
+
+**Inputs and prior art.** Reuse J1049's owners and its pinned
+BepInEx.Android.Launcher observation, the existing app-specific payload contract,
+and J850's accepted code/content. No new loader, gameplay observer or runtime
+adapter is introduced. Use the existing standard baseline assessment/cleanup
+and `nova_bridge.current_errors`; private glue changes only the public
+bootstrap/Play launch route and restricts parsing of the hash-verified immutable
+APK snapshot to its unchanged diagnostic TextAsset. No assertion, deadline or
+assist rule is relaxed. Default menu observation uses its distinct report ID.
+
+**Admission and storage.** Acquire the orchestrator's exclusive device lease.
+Independently hash the actually installed package against its local ownership
+receipt before any installation; the earlier `be26c21c` installation matches.
+Record the native profile/settings hashes, absent selector/process and live
+internal-only placement. Initial free space is insufficient for the unchanged
+installation reserve, so no install is dispatched. Retire only 792 generated
+AssetRipper decompression temporary files inside a receipt-owned completed
+probe, recording their individual hashes and a retirement marker. This recovers
+8,469,227,616 bytes; source inputs, probe logs/results and all game/user data
+remain retained. Fresh capacity admits each subsequent install. No storage
+configuration, existing game placement or original installation is changed.
+
+**Complete preparation and refusal case.** Install J1049's signed version 1,
+SHA-256 `57dcd67442a5cc4f6f6a7ede0b0f15076d23a2b6659e813c0b29477aff1c96e7`,
+in 58.422 seconds. Independent installed-byte readback matches. Its approved
+frontend reaches Ready by verifying existing files. For a complete fresh
+extraction, preserve the original generated payload directory by rename, then
+let the activity create its new app-owned payload. Pause at 25%, resume,
+interrupt the process and cold-restart. All 13 already completed files remain
+correct, and all 134 final payload files independently match the embedded
+index: 2,265,941,767 bytes. No host payload sync supplies the new directory.
+
+Replace only the newly generated catalog with a small authored control file.
+Cold preparation refuses unfamiliar bytes and offers no Play action. Declining
+the native update dialog retains those exact bytes. Accepting the next reviewed
+update restores the exact expected catalog and retains the authored control in
+an independently hashed app-owned backup. Saves/settings remain outside this
+transaction. Failed/partial stages and the original payload remain preserved.
+
+**Increasing-version implementation and upgrade.** Committed source `b9d74dd7`
+adds an optional explicit `version_code` to the existing owner-APK producer.
+The binary XML owner accepts one increasing positive Android integer, preserves
+other original manifest attributes and clears any obsolete raw string value.
+Meaningful authored fixtures cover both string encodings, preserved attributes,
+nonincreasing/invalid values and missing/ambiguous/nonliteral versions. Existing
+Java/DEX sources and all game code/content stay unchanged. Ruff and fresh-clone
+CI pass: 1,843 tests, 127 expected skips; both GitHub checks pass.
+
+The complete version 2 build, canonical alignment and v1/v2/v3 signatures pass.
+All 713 nonsignature entries are independently compared with version 1: only
+`AndroidManifest.xml` differs. The same existing private lab signer is used
+read-only; its key stays on the host. Signed version 2 is 1,995,994,450 bytes,
+SHA-256 `4960fba8ed5e727639c4f156e2f08cf92a6b6486790bb0ab295925e9bd212de0`.
+The in-place update takes 55.556 seconds. Actual installed bytes/version match;
+an app-private marker and the exact original profile/settings hashes survive.
+Package placement and runtime backing are independently recorded on the live
+selected internal volume. This is an authorized ADB laboratory update, not
+qualification of Android PackageInstaller UI or phone-side owner signing.
+
+**Device controls and lifecycle.** Both versions pass both unchanged assisted
+standard assessments through bootstrap verification and the frontend Play
+action. Version 1 passes 35.059 seconds in Lakes and exactly one transition to
+Goolake with 13.932 seconds of destination play. Version 2 passes 35.058 seconds
+in Lakes and one Goolake transition with 10.022 seconds there. All four retain
+zero applied profile runs and pass selector removal, process stop and display
+sleep. Current-process log review records only the same five intentional
+Windows shader-bundle rejection lines; the canonical checker finds no
+unexpected error. These are diagnostic controls, not ordinary-difficulty,
+physical-input, audio or performance acceptance.
+
+Without a diagnostic selector or requested assists, cold public bootstrap/Play
+reaches the ordinary offline menu. Home followed by public launcher re-entry
+resumes the same Unity activity record in the same process, with no preparation
+receipt rewrite. Screenshots and activity observations agree. A cold explicit
+external Unity-activity start is refused as not exported. Final independent
+readback again verifies all 134 prepared files, the installed version 2 bytes,
+exact original profile/settings hashes and the live runtime backing. Selector
+and process are absent and the physical panel is off.
+
+**First failures and evidence.** Two private driver errors are retained: an
+unhandled truncated log JSON line, corrected to the existing launch reader's
+incomplete-line handling, and observation of the diagnostic report filename
+instead of the ordinary default-menu filename. Neither changes the APK or
+establishes a game failure. Corrected complete cases above pass. Standalone
+packaging requires no prepared Unity project; this worktree's lab doctor and
+game preflight still correctly refuse absent project/inventory-generation
+state. No game build readiness is inferred.
+
+All raw device/storage identities, snapshots, logs, receipts, private APKs and
+signing evidence stay under ignored `work/coordination/owner-apk-integration/`.
+`device-v1/`, `device-v2/` and `full-owner-apk-v4/` retain the complete cases;
+`device-proof-v1.json` binds 119 artifacts, SHA-256
+`59ecfb36095d8df678c4e752db321a74a9fbc5af5dc9aafd96592205f4d6d450`.
+The earlier J1049 source/artifact receipts remain unchanged. Mandatory host
+pruning is invoked from the main checkout; its initial build-lock refusal is
+retained and the updated shared pruner is retried without touching the editor.
+Only authored code/tests and this summary are published.
+
+**Remaining gates.** The installed candidate still embeds private target-bearing
+replay output and duplicates payload storage. It is not approved for public
+distribution. Every protected target byte still needs an independent owner-input
+producer; complete content/shaders/Burst, full-player Android compilation,
+permitted production tool hosting, durable on-device owner keys, user-mediated
+installation/update and matched workload performance remain open. The tested
+target is J850, without the later R36 audio integration. Retain the desktop
+fallback and Main's current player. Revisit this device qualification when the
+payload/profile, bootstrap, manifest/signing contract, tools or target Android
+behavior changes.

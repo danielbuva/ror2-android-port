@@ -4,8 +4,11 @@ Assessment and implementation evidence: 2026-10-23. **Complete private
 accepted-output reconstruction now works on Android without Unity Editor or game
 compilation.** A pinned delta/frame package plus verified owner PC and SDK inputs
 reproduces every file of the frozen target. This is a practical narrow replay
-architecture; it is not yet an independent PC-input-only converter or a signed,
-installable launcher product. The package carries substantial game-derived
+architecture; independent PC-input-only conversion and a phone installation
+product remain open. [J1065](PORTING_JOURNAL.md#j1065--qualify-private-owner-apk-preparation-upgrade-and-unity-lifecycle)
+qualifies the private host-built/signed bootstrap candidate's device
+preparation, upgrade, Unity lifecycle and assisted standard controls.
+The package carries substantial game-derived
 output information and stays private. No new execution backend is needed.
 
 The complete host/Android result is recorded once in

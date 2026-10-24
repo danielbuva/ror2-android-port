@@ -20,8 +20,11 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       completes private delta/frame replay; independent input-only production and
       an Android-qualified installation/launcher flow remain open.
       [J1049](PORTING_JOURNAL.md#j1049--assemble-and-sign-the-complete-private-owner-apk-bootstrap-candidate)
-      completes the private host-built/signed bootstrap candidate; real device
-      preparation, installation/update and game lifecycle remain unqualified.
+      supplies the private host-built/signed bootstrap candidate.
+      [J1065](PORTING_JOURNAL.md#j1065--qualify-private-owner-apk-preparation-upgrade-and-unity-lifecycle)
+      qualifies its device preparation, update retention, Unity lifecycle and
+      assisted controls. Phone-side signing, ordinary installer UX and
+      independent production remain open.
       [J1063](PORTING_JOURNAL.md#j1063--complete-the-source-input-host-native-owner-build) completes public source-input host game-code
       production through a fresh native library. Explicit licensed SDK native
       input, full content/Burst/shaders and phone qualification remain gates.

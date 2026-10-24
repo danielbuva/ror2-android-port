@@ -62,7 +62,10 @@ public distribution of any game-bearing packet remain separate gates.
 candidate after reconstruction. `build_owner_apk.py` and `binary_manifest.py`
 compile only authored Java, preserve original code/content bytes and move the
 binary manifest's launcher filter to `PayloadBootstrapActivity`, with the
-original Unity entry private to enforce preparation. `PayloadStore`
+original Unity entry private to enforce preparation. An optional owner-selected
+`version_code` changes only the original typed version attribute in addition
+to routing; it must increase and updates retain the same private signer.
+`PayloadStore`
 streams/hash-checks embedded runtime payload into the calling app's own external
 files location, stages replacements, retains backups and gates launch of the
 unchanged Unity activity. The activity owns worker/receipt/UI setup, pause/retry,

@@ -651,6 +651,9 @@ introduce a timestamped build dependency. See the
 The owner-APK bootstrap candidate consumes an explicit ignored request selecting
 the accepted private packet manifest and verified reconstructed target root,
 public frontend/wire-helper sources and supplied Java/Android/D8 tools.
+Optional `version_code` is owner-selected revision configuration, not generated
+game input; it selects an increasing package version while retaining the same
+private signing identity. Omission retains the frozen input version.
 `tools/phone-build/owner-apk/build_owner_apk.py` generates the authored DEX,
 patched binary manifest, embedded payload index, unsigned owner APK and private
 source/tool/hash result. These are reproducible post-reconstruction outputs,
