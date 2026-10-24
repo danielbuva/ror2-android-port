@@ -99,21 +99,23 @@ def write_anchor(work, project, result):
         if not set(members) <= set(archive.namelist()):
             raise RuntimeError("Normal APK does not contain its generated export members")
         hashes = {name: member_hash(archive, name) for name in members}
-    write(
-        Path(work) / "config/iteration-base.json",
-        {
-            "schema": 1,
-            "apk": result["apk"],
-            "apk_sha256": result["apk_sha256"],
-            "request_id": result["request_id"],
-            "input_id": result["input_id"],
-            "graphics_api": result["graphics_api"],
-            "packaging_inputs": packaging_inputs(gradle),
-            "overlay_members": sorted(members),
-            "overlay_hashes": hashes,
-            "source": result.get("source"),
-        },
-    )
+    anchor = {
+        "schema": 1,
+        "apk": result["apk"],
+        "apk_sha256": result["apk_sha256"],
+        "request_id": result["request_id"],
+        "input_id": result["input_id"],
+        "graphics_api": result["graphics_api"],
+        "packaging_inputs": packaging_inputs(gradle),
+        "overlay_members": sorted(members),
+        "overlay_hashes": hashes,
+        "source": result.get("source"),
+        "signer_sha256": signer_digest(result["apk"]),
+        "payload_directory": result["payload_directory"],
+    }
+    result["iteration_anchor"] = str(Path(result["apk"]).parent / "iteration-base.json")
+    write(result["iteration_anchor"], anchor)
+    write(Path(work) / "config/iteration-base.json", anchor)
 
 
 def validate_anchor(work, input_id, api):
@@ -122,6 +124,8 @@ def validate_anchor(work, input_id, api):
         raise RuntimeError("Iteration anchor identity changed; run a normal whole-catalog build")
     if set(anchor.get("overlay_hashes", {})) != set(anchor["overlay_members"]):
         raise RuntimeError("Iteration anchor lacks complete member hashes; run a normal build")
+    if not anchor.get("signer_sha256") or not anchor.get("payload_directory"):
+        raise RuntimeError("Iteration anchor lacks signing/payload identity; run a normal build")
     apk = Path(anchor["apk"])
     if not apk.resolve().is_relative_to(Path(work).resolve()) or sha(apk) != anchor["apk_sha256"]:
         raise RuntimeError("Iteration anchor APK missing or changed")
@@ -236,7 +240,7 @@ def assemble_export(work, export, output, anchor):
                 timeout=180,
             )
         with timing.phase("verify_signature"):
-            if signer_digest(output) != signer_digest(anchor["apk"]):
+            if signer_digest(output) != anchor["signer_sha256"]:
                 raise RuntimeError("Iteration APK signing identity differs from anchor")
             run([android_tools() / "zipalign", "-c", "-p", "4", output], timeout=180)
     finally:

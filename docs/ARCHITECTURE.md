@@ -765,8 +765,10 @@ Current iteration support: `build_timing.py` owns host wall phases and
 request-bounded editor-log/Bee observations. `LabBuild.cs` records inclusive
 BuildReport steps, bundle generation and player duration; parallel compiler
 work is distinct from elapsed time. `device.py` records install/storage and
-payload hash/transfer phases. `common.cached_hashes` retains digests only during
-one build and invalidates them on inode, size or change-time drift.
+payload hash/transfer phases. `common.cached_hashes` memoizes verified digests
+by device/inode, size, modification and change times. Normal whole-catalog
+builds rehash and regenerate `work/build-hash-cache.json`; explicit iteration
+actions may reuse it. The cache retains only identities used by that operation.
 
 `iteration_apk.py` owns `whole-catalog-fast-build` packaging. A normal build
 generates `work/config/iteration-base.json` from its APK and Gradle inputs.
@@ -778,7 +780,10 @@ iteration-export completion; an unrelated build error refuses. Under the same
 editor mutex, the host replaces the complete generated assets/native set,
 preserves unchanged ZIP records, aligns and signs using the existing local lab
 key. Failed attempts remain local; unsigned/alignment intermediates are removed
-after packaging. The anchor is replaced only by another normal build.
+after packaging. Each normal cache retains its own `iteration-base.json`; the
+active anchor is replaced only by another normal build. Iteration receipts
+reference that normal cache's hash-verified `payload_directory`, without another
+payload copy, and bind its previously verified signing certificate.
 `whole-catalog-scripts-build` evaluates `BuildScriptsOnly` with the same owner;
 it is not an acceptance build. `apk-member-compare` compares hash-bound builds
 of the same source without hiding build metadata differences. Normal full-build

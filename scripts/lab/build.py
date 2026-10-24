@@ -781,9 +781,19 @@ def build(
             )
         timing.phases["symbols_clone_hash_validation"] = time.monotonic() - symbols_start if android_symbols == "debugging" else 0.0
         payload = dest / "payload"
-        with timing.phase("payload_clone_hash"):
+        with timing.phase("payload_reference" if iteration_mode else "payload_clone_hash"):
             r["payload"] = {p.name: sha(p) for p in (WORK / "generated-android-data").glob("*") if p.is_file()}
-            shutil.copytree(WORK / "generated-android-data", payload, dirs_exist_ok=True, copy_function=lambda a, b: copy_build_artifact(a, b, verify=False))
+            if iteration_mode:
+                payload = Path(anchor["payload_directory"])
+                if payload.resolve() != (Path(anchor["apk"]).parent / "payload").resolve() or not payload.resolve().is_relative_to(WORK.resolve()):
+                    raise RuntimeError("Unexpected frozen payload reference")
+                if any(not (payload / name).is_file() or sha(payload / name) != expected for name, expected in r["payload"].items()):
+                    raise RuntimeError("Normal-build payload reference is missing or changed")
+            else:
+                shutil.copytree(
+                    WORK / "generated-android-data", payload, dirs_exist_ok=True, copy_function=lambda a, b: copy_build_artifact(a, b, verify=False)
+                )
+            r["payload_directory"] = str(payload)
         from iteration_apk import write_anchor
 
         if not iteration_mode:

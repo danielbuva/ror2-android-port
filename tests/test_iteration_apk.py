@@ -2,18 +2,21 @@
 
 import hashlib
 import json
+import os
 from pathlib import Path
 import struct
 import sys
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
+from io import StringIO
 import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
 import iteration_apk as apk
-from build_timing import PhaseTiming, bee_timing, trace_events
+from build_timing import PhaseTiming, bee_timing, trace_events, editor_log_cursor, editor_log_timing
 import common
+import build
 
 
 class IterationApkTests(unittest.TestCase):
@@ -111,6 +114,35 @@ class IterationApkTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "symlinks"):
             apk.packaging_inputs(self.root)
 
+    def test_normal_anchor_is_retained_with_member_hashes_signer_and_payload_reference(self):
+        self.base_apk()
+        result = {
+            "success": True,
+            "apk": str(self.base),
+            "apk_sha256": common.sha(self.base),
+            "request_id": "authored",
+            "input_id": "authored",
+            "graphics_api": "vulkan",
+            "payload_directory": str(self.root / "payload"),
+        }
+        gradle = self.root / "project" / apk.GRADLE
+        gradle.mkdir(parents=True)
+        with (
+            patch.object(apk, "export_members", return_value={apk.NATIVE: self.root / "unused"}),
+            patch.object(apk, "packaging_inputs", return_value={"authored": "b" * 64}),
+            patch.object(apk, "signer_digest", return_value="a" * 64),
+        ):
+            apk.write_anchor(self.root, self.root / "project", result)
+        current = common.read(self.root / "config/iteration-base.json")
+        self.assertEqual(common.read(result["iteration_anchor"]), current)
+        self.assertEqual(current["signer_sha256"], "a" * 64)
+        self.assertEqual(current["overlay_hashes"][apk.NATIVE], hashlib.sha256(b"old native bytes").hexdigest())
+        self.assertEqual(apk.validate_anchor(self.root, "authored", "vulkan"), current)
+        with self.base.open("ab") as stream:
+            stream.write(b"changed archive")
+        with self.assertRaisesRegex(RuntimeError, "changed"):
+            apk.validate_anchor(self.root, "authored", "vulkan")
+
     def test_export_requires_complete_fresh_arm64_and_metadata(self):
         for name in (apk.NATIVE, apk.METADATA, "assets/bin/Data/globalgamemanagers", "assets/bin/Data/boot.config"):
             relative = "jniLibs/" + name.removeprefix("lib/") if name.startswith("lib/") else name
@@ -166,6 +198,110 @@ class BuildTimingTests(unittest.TestCase):
                     self.assertEqual(hashing.call_count, 2)
                 common.sha(path)
                 self.assertEqual(hashing.call_count, 3)
+
+    def test_iteration_cache_persists_identity_but_full_build_rehashes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path, cache = root / "authored", root / "hashes.json"
+            path.write_bytes(b"first")
+            with common.cached_hashes(cache_path=cache):
+                expected = common.sha(path)
+            with patch.object(common.hashlib, "sha256", wraps=hashlib.sha256) as hashing:
+                with common.cached_hashes(cache_path=cache, reuse=True):
+                    self.assertEqual(common.sha(path), expected)
+                self.assertEqual(hashing.call_count, 0)
+                with common.cached_hashes(cache_path=cache):
+                    self.assertEqual(common.sha(path), expected)
+                self.assertEqual(hashing.call_count, 1)
+            before = path.stat()
+            path.write_bytes(b"other")
+            os.utime(path, ns=(before.st_atime_ns, before.st_mtime_ns))
+            with common.cached_hashes(cache_path=cache, reuse=True):
+                self.assertNotEqual(common.sha(path), expected)
+
+    def test_request_log_records_actual_gradle_and_android_task_durations(self):
+        with tempfile.TemporaryDirectory() as directory:
+            work = Path(directory)
+            log = work / "editor.log"
+            log.write_text("BUILD SUCCESSFUL in 99s\n")
+            common.write(work / "editor/lab-process.json", {"log": str(log)})
+            cursor = editor_log_cursor(work)
+            with log.open("a") as stream:
+                stream.write('Android PostProcess task "Building Gradle project" took 1250 ms\nBUILD SUCCESSFUL in 1m 2s\n')
+            report = editor_log_timing(cursor)
+            self.assertEqual(report["gradle_invocations_seconds"], [62])
+            self.assertEqual(report["android_postprocess_tasks"], [{"name": "Building Gradle project", "seconds": 1.25}])
+
+
+class IterationPayloadReceiptTests(unittest.TestCase):
+    def exercise(self, changed):
+        with tempfile.TemporaryDirectory() as directory:
+            work = Path(directory).resolve()
+            generated, frozen = work / "generated-android-data", work / "build-cache/normal/payload"
+            generated.mkdir()
+            frozen.mkdir(parents=True)
+            (generated / "authored").write_bytes(b"frozen content")
+            (frozen / "authored").write_bytes(b"changed content" if changed else b"frozen content")
+            base = frozen.parent / "base.apk"
+            base.write_bytes(b"authored normal APK")
+            anchor = {"apk": str(base), "payload_directory": str(frozen)}
+            project = work / "lab-project"
+            common.write(work / "inventory/files.json", {"input_id": "authored"})
+            prior = {"apk_sha256": "prior owned build"}
+            common.write(work / "config/current-build.json", prior)
+
+            def editor(target, action):
+                if action == "build":
+                    request = common.read(work / "build-request.json")
+                    common.write(
+                        work / "lab-build/result.json",
+                        {
+                            "success": True,
+                            "errors": 0,
+                            "request_id": request["request_id"],
+                            "apk": str(project / apk.GRADLE),
+                            "iteration_export_complete": True,
+                        },
+                    )
+                return "authored dispatch"
+
+            def assemble(work, export, output, anchor):
+                output.write_bytes(b"authored iteration APK")
+                return {"base_apk_sha256": common.sha(base)}
+
+            with (
+                patch.multiple(
+                    build,
+                    WORK=work,
+                    HOST_BUILD_LOCK=work / "coordination/unity-build.lock",
+                    preflight_host=Mock(),
+                    validate_staged_runtime_sources=Mock(),
+                    stage_android_assets=Mock(),
+                    validate_whole_payload_reuse=Mock(),
+                    build_cache_key=Mock(return_value="authored"),
+                    assert_build_unblocked=Mock(),
+                ),
+                patch.object(build, "editor", side_effect=editor),
+                patch.object(apk, "validate_anchor", return_value=anchor),
+                patch.object(apk, "assemble_export", side_effect=assemble),
+                patch.object(build, "copy_build_artifact") as copying,
+                patch("sys.stdout", new_callable=StringIO),
+            ):
+                if changed:
+                    with self.assertRaisesRegex(RuntimeError, "payload reference is missing or changed"):
+                        build.build("vulkan", force=True, reuse_payload=True, iteration_mode="export-splice")
+                    self.assertEqual(common.read(work / "config/current-build.json"), prior)
+                else:
+                    result = build.build("vulkan", force=True, reuse_payload=True, iteration_mode="export-splice")
+                    self.assertEqual(result["payload_directory"], str(frozen))
+                    self.assertFalse((Path(result["apk"]).parent / "payload").exists())
+                copying.assert_not_called()
+
+    def test_fast_receipt_references_verified_normal_payload_without_binary_copies(self):
+        self.exercise(False)
+
+    def test_changed_payload_reference_refuses_without_replacing_current_build(self):
+        self.exercise(True)
 
 
 if __name__ == "__main__":

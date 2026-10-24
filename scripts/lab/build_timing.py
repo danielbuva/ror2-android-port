@@ -65,11 +65,14 @@ def bee_timing(project, start_epoch, end_epoch):
                         ("C_Android", "cpp_compile"),
                         ("Link_Android", "native_link"),
                         ("Csc", "csharp_compile"),
+                        ("NdkObjCopy", "native_symbols"),
                     )
                     if name.startswith(prefix)
                 ),
                 None,
             )
+            if name == "CopyFiles" and str(event.get("args", {}).get("detail", "")).endswith((".dbg.so", ".sym.so")):
+                group = "symbol_staging"
             if group:
                 groups[group].append((ts, min(ts + duration, end_epoch)))
                 used = True
@@ -110,11 +113,16 @@ def editor_log_timing(cursor):
         terms = re.findall(r"([0-9.]+)(ms|h|m|s)", duration)
         if terms:
             gradle.append(sum(float(value) * {"ms": 0.001, "h": 3600, "m": 60, "s": 1}[unit] for value, unit in terms))
+    tasks = [
+        {"name": name, "seconds": float(milliseconds) / 1000}
+        for name, milliseconds in re.findall(r'Android PostProcess task "([^"]+)" took ([0-9.]+) ms', text)
+    ]
     return {
         "observed": True,
         "path": str(path),
         "byte_start": offset,
         "byte_end": offset + len(raw),
         "gradle_invocations_seconds": gradle,
+        "android_postprocess_tasks": tasks,
         "scope": "request-bounded editor log; Gradle reports rounded elapsed seconds",
     }

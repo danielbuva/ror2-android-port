@@ -21,14 +21,38 @@ def file_identity(path):
 
 
 @contextmanager
-def cached_hashes():
-    """One operation only: reuse digests while inode, size and change times match."""
-    cache = _hash_cache.get()
-    token = _hash_cache.set({} if cache is None else cache)
+def cached_hashes(*, cache_path=None, reuse=False):
+    """Reuse verified digests by OS file identity; normal full builds rehash.
+
+    Optional persistence is for iteration only. Keep only identities consulted
+    by this operation so old build artifacts cannot grow the cache forever.
+    """
+    parent = _hash_cache.get()
+    hashes = {}
+    if parent is None and cache_path is not None and reuse:
+        try:
+            rows = read(cache_path)
+            hashes = {
+                tuple(row[:5]): row[5]
+                for row in rows
+                if len(row) == 6 and all(isinstance(v, int) for v in row[:5]) and isinstance(row[5], str) and len(row[5]) == 64
+            }
+        except (OSError, ValueError, TypeError):
+            hashes = {}
+    session = parent if parent is not None else (hashes, set())
+    token = _hash_cache.set(session)
     try:
         yield
     finally:
-        _hash_cache.reset(token)
+        try:
+            if parent is None and cache_path is not None:
+                path = Path(cache_path)
+                path.parent.mkdir(parents=True, exist_ok=True)
+                temporary = path.with_suffix(path.suffix + ".tmp")
+                temporary.write_text(json.dumps([list(key) + [session[0][key]] for key in session[1] if key in session[0]], separators=(",", ":")) + "\n")
+                temporary.replace(path)
+        finally:
+            _hash_cache.reset(token)
 
 
 def toolchain():
@@ -63,7 +87,10 @@ def game(work=None):
 
 def sha(p):
     identity = file_identity(p)
-    cache = _hash_cache.get()
+    session = _hash_cache.get()
+    cache = session[0] if session is not None else None
+    if session is not None:
+        session[1].add(identity)
     if cache is not None and identity in cache:
         return cache[identity]
     h = hashlib.sha256()

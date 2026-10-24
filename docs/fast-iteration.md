@@ -12,7 +12,7 @@ changes can use:
 ./dev preflight --host-only
 ./dev prototype --action whole-catalog-fast-build
 ./dev install --device SERIAL --apk APK
-./dev sync-data --device SERIAL
+./dev sync-data --device SERIAL --payload-dir PAYLOAD_DIRECTORY
 ./dev check-baseline --device SERIAL
 ```
 
@@ -47,6 +47,9 @@ signature verification and receipt publication. An iteration export is reported
 separately from its deliberately cancelled BuildPlayer packaging; the receipt
 retains that BuildReport's errors. A failed build before the owned callback or
 an unrelated error does not qualify as an export.
+Each normal cache retains its own generated `iteration-base.json`. Iteration
+receipts name its immutable `payload_directory`; use that path for explicit
+sync instead of creating another payload snapshot.
 
 `whole-catalog-scripts-build` evaluates the pinned editor's
 `BuildOptions.BuildScriptsOnly`. It retains previously serialized player Data;
@@ -89,6 +92,10 @@ receipts separately record storage checks, hashing and transfers. Debug symbols
 remain off unless `--debug-symbols` is explicitly requested on a normal build.
 APFS clones keep independent artifact snapshots without duplicating unchanged
 disk blocks; ordinary build copies avoid rehashing the same bytes twice.
+Explicit iteration actions also reuse `work/build-hash-cache.json` while the
+OS file identity, size, modification and change times match. Normal builds
+rehash and replace this disposable cache. It keeps only identities used by the
+current operation; deleting it merely makes the next iteration rehash.
 Forced normal builds retain earlier cache artifacts instead of replacing an
 anchor that may still be installed. The generated-output pruner protects the
 current iteration anchor alongside normal current-build/device receipts.
