@@ -109,9 +109,21 @@ async def _main():
                     },
                 )
             elif action == "siren-encounter-host":
-                evidence["result"] = await call("execute_code", {"action": "execute", "code": "return SirenEncounterHost.Run();"})
+                evidence["result"] = await call(
+                    "execute_code",
+                    {
+                        "action": "execute",
+                        "code": 'if(EditorApplication.isUpdating||EditorApplication.isCompiling||EditorUtility.scriptCompilationFailed)throw new System.Exception("Current editor source is not compiled and idle");return SirenEncounterHost.Run();',
+                    },
+                )
             elif action == "source-camera-graphics-host":
-                evidence["result"] = await call("execute_code", {"action": "execute", "code": "return SourceCameraGraphicsHost.Run();"})
+                evidence["result"] = await call(
+                    "execute_code",
+                    {
+                        "action": "execute",
+                        "code": 'if(EditorApplication.isUpdating||EditorApplication.isCompiling||EditorUtility.scriptCompilationFailed)throw new System.Exception("Current editor source is not compiled and idle");return SourceCameraGraphicsHost.Run();',
+                    },
+                )
             elif action == "backend":
                 evidence["result"] = await call("execute_menu_item", {"menu_path": "Porting Lab/Record Backend Constraints"})
             elif action == "refresh":
