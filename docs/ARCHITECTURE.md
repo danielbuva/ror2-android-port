@@ -727,6 +727,13 @@ tools. The builder's optional explicit native plan binds those generic ELF
 providers and their data-tree links; no game file enters the tool APK. The worker
 retains private reports and bounded child lifetime; the caller owns fresh storage,
 exact package receipt, kernel thermal monitoring, output readback and cleanup.
+The muxer keeps CoreLib in verified framework data. For .NET 10 it preserves
+hostfxr selection/properties and loads the selected versioned native CLR through
+the public CoreCLR ABI; ILSpy searches the matching native framework first.
+The public transform producer retains its isolated .NET 8 enumeration contract.
+Gameplay postprocessing sees one generated directory of the exact selected
+reference providers, avoiding conflicting unselected sibling DLLs. All links and
+managed/native outputs belong to the new private output/fixture lifetime.
 This remains debug/ADB-assisted tool support, without security, final installer
 or gameplay qualification.
 

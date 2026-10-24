@@ -57,6 +57,10 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       qualifies current Python/.NET app hosting for those three DLLs, including
       cold attempts and input refusal. Full-player tool delivery, native/content
       production and the complete owner installation remain open.
+      [J1084](PORTING_JOURNAL.md#j1084--run-whole-player-stripping-conversion-and-arm64-compilation-in-the-android-tool-host)
+      qualifies the supplied-provider Android backend control; its corrected
+      link remains separate, native bytes differ, and independent J850 managed
+      production, final assembly/installation and performance remain open.
       Full Unity-project reconstruction or AssetRipper export is not an assumed
       requirement. Every protected APK/payload output needs an owner-input
       producer; the accepted build supplies validation, never hidden target bytes.
