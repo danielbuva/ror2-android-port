@@ -326,6 +326,17 @@ optimization, libraries and shaders. An alternate Clang 21 build is not the
 accepted Clang 9 build merely because both are IL2CPP. End-to-end device behavior
 and matched performance remain required before adopting a new producer.
 
+[J1084](PORTING_JOURNAL.md#j1084--run-whole-player-stripping-conversion-and-arm64-compilation-in-the-android-tool-host) qualifies the supplied-provider Android backend
+control. Its linker/converter match the host, but its separately corrected native
+link differs under Android Clang 21. Source-only J850 reconstruction and complete
+APK/device/performance acceptance remain open; the accepted target supplies no
+hidden output bytes.
+
+[J1094](PORTING_JOURNAL.md#j1094--qualify-exact-sdk-vulkan-shader-compilation-on-android) qualifies standalone exact-SDK
+Vulkan tool execution with identical authored host/phone payloads, reflection and
+diagnostics. It does not qualify original shader recovery, complete variants,
+serialized shader records, ordinary app delivery or accepted-target appearance.
+
 ## Comparison and recommendation
 
 | Route | What it saves | What still prevents a complete phone product |

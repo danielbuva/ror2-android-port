@@ -1,6 +1,8 @@
 package dev.ror2lab.phonebuildhostfixture;
 
 import android.app.Activity;
+import android.app.Instrumentation;
+import android.content.Context;
 import android.os.Bundle;
 import android.system.Os;
 import android.widget.TextView;
@@ -15,8 +17,23 @@ public final class ToolHostActivity extends Activity {
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         TextView view = new TextView(this); view.setText("Private build-tool host test"); setContentView(view);
-        new Thread(new Runnable() { public void run() { executeFixture(); } }).start();
+        new Thread(new Runnable() { public void run() { new Worker(ToolHostActivity.this).executeFixture(); } }).start();
     }
+    public static class Runner extends Instrumentation {
+        public void onCreate(Bundle arguments) { super.onCreate(arguments); start(); }
+        public void onStart() {
+            new Worker(getTargetContext()).executeFixture();
+            finish(Activity.RESULT_OK, new Bundle());
+        }
+    }
+    private static class Worker {
+    private final Context app;
+    private File hostfxr;
+    Worker(Context app) { this.app=app; }
+    private android.content.res.AssetManager getAssets() { return app.getAssets(); }
+    private File getFilesDir() { return app.getFilesDir(); }
+    private File getCacheDir() { return app.getCacheDir(); }
+    private android.content.pm.ApplicationInfo getApplicationInfo() { return app.getApplicationInfo(); }
     private void copyAssets(String name, File destination) throws Exception {
         String[] children = getAssets().list(name);
         if (children.length > 0) {
@@ -48,10 +65,14 @@ public final class ToolHostActivity extends Activity {
         env.put("DOTNET_CLI_TELEMETRY_OPTOUT","1"); env.put("DOTNET_CLI_HOME",new File(directory,"home").getPath());
         env.put("TMPDIR",getCacheDir().getPath());
         env.put("ROR2LAB_BUILD_DOTNET_ROOT",new File(directory,"dotnet").getPath());
-        env.put("ROR2LAB_BUILD_HOSTFXR",new File(nativeDir,"libhostfxr.so").getPath());
+        env.put("ROR2LAB_BUILD_HOSTFXR",hostfxr.getPath());
         env.put("ROR2LAB_BUILD_DOTNET_LAUNCHER",new File(nativeDir,"libdotnetmuxer.so").getPath());
         java.lang.Process process=builder.start();
-        if(!process.waitFor(90,TimeUnit.SECONDS)){process.destroyForcibly();throw new IOException(label+" timeout");}
+        if(!process.waitFor(label.equals("owner-backend")?86400:90,TimeUnit.SECONDS)){
+            process.destroy();
+            if(!process.waitFor(15,TimeUnit.SECONDS)) process.destroyForcibly();
+            throw new IOException(label+" timeout");
+        }
         JSONObject result=new JSONObject(); result.put("exit",process.exitValue());result.put("log",output.getName());result.put("sha256",hash(output));
         if(process.exitValue()!=0) throw new IOException(label+" exit "+process.exitValue()+" "+text(output).substring(0,Math.min(2000,text(output).length())));
         return result;
@@ -78,6 +99,7 @@ public final class ToolHostActivity extends Activity {
                 verified.put(name);
             }
             report.put("nativeVerified",verified);report.put("nativeDirectory",nativeDir.getPath());report.put("appUid",android.os.Process.myUid());
+            hostfxr=new File(nativeDir,hashes.has("libhostfxr10.so")?"libhostfxr10.so":"libhostfxr.so");
             for(String name:new String[]{"libcoreclr.so","libhostpolicy.so","libSystem.Native.so","libSystem.Globalization.Native.so","libSystem.IO.Compression.Native.so","libSystem.Net.Security.Native.so","libSystem.Security.Cryptography.Native.Android.so","libSystem.Security.Cryptography.Native.OpenSsl.so"}) Os.symlink(new File(nativeDir,name).getPath(),new File(framework,name).getPath());
             Os.symlink(new File(nativeDir,"libcrypto.so").getPath(),new File(links,"libcrypto.so.3").getPath());
             Os.symlink(new File(nativeDir,"libssl.so").getPath(),new File(links,"libssl.so.3").getPath());
@@ -90,6 +112,12 @@ public final class ToolHostActivity extends Activity {
                 if(link.exists()){if(!link.getCanonicalFile().equals(target))throw new IOException("existing native link differs");}
                 else Os.symlink(target.getPath(),link.getPath());
             }
+            File ownerJob=new File(getFilesDir(),"owner-input/request.json");
+            if(ownerJob.isFile()) {
+                List<String> backend=Arrays.asList(new File(nativeDir,"libpythonhost.so").getPath(),new File(nativeDir,"libpython3.14.so").getPath(),new File(root,"python").getPath(),new File(root,"repo/tools/phone-build/owner-code/run_android.py").getPath(),ownerJob.getPath(),root.getPath(),nativeDir.getPath());
+                report.put("ownerBackend",child("owner-backend",backend,root,nativeDir,links));
+                report.put("success",true);
+            } else {
             List<String> prefix=Arrays.asList(new File(nativeDir,"libtoolhost.so").getPath(),new File(nativeDir,"libhostfxr.so").getPath(),runtime.getPath());
             List<String> version=new ArrayList<>(prefix);version.add(new File(root,"compiler/csc.dll").getPath());version.add("-version");
             report.put("compilerVersion",child("version",version,root,nativeDir,links));
@@ -107,7 +135,9 @@ public final class ToolHostActivity extends Activity {
             JSONObject publicReceipt=new JSONObject(text(new File(root,"repo/work/rebuild/app-component-v1/public-tools-receipt.json")));
             if(!pythonReport.getBoolean("success") || !publicReceipt.getBoolean("success") || publicReceipt.getBoolean("game_assemblies_executed"))throw new IOException("public producer contract differs");
             report.put("pythonProfile",pythonReport);report.put("publicReceipt",publicReceipt);report.put("success",true);
+            }
         }catch(Exception error){try{report.put("failure",error.toString());}catch(Exception ignored){}}
         try(FileOutputStream output=new FileOutputStream(new File(getFilesDir(),"tool-host-report.json"))){output.write(report.toString(2).getBytes(StandardCharsets.UTF_8));}catch(Exception ignored){}
+    }
     }
 }

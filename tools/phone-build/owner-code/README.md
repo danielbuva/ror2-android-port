@@ -6,6 +6,82 @@ J1063 qualifies the complete default source-input host chain through native
 linking. Full-player Android construction remains open. No current game build
 selects it. Architecture C and the desktop fallback remain unchanged.
 
+## Fixed accepted source target
+
+An optional `target` selects an explicit public profile and its separate authored
+source root: `{"profile": "ABSOLUTE_PROFILE_JSON", "source": "ABSOLUTE_SOURCE_ROOT"}`.
+`recipe/owner-j850-code.json` pins 114 public inputs from commit
+`1780ea9545f1597c033a8d32e08074b03c7f38c8`, including its 111 runtime sources.
+Supply that public commit's files, for example with `git archive`; every selected
+file is checked against the profile before and after production. No source is
+read from the moving checkout in place of those target files.
+
+In this pre-audio target mode, `source_inputs` has exactly five owner paths:
+`packages`, `newtonsoft`, `dotnet`, `ilspy_dll` and `archives`. The first four
+retain their meanings below; `archives` is the existing public transform tool
+archive cache. The existing public producer compiles its Cecil/provider tools
+and retains all three golden DLL gates. The package owner produces the four
+package assemblies; the target's authored sources and fresh original-source
+support/maps then produce the gameplay assembly. The complete 329-provider
+cohort feeds the same backend. The developer-only MCP DLL is excluded.
+
+The target profile reuses explicit fixed scene/module preservation configuration;
+this is not independent scene inference or a claim of accepted byte parity.
+Its actual converter outputs determine all generated native translation units,
+while SDK compilation templates/lumps and link settings remain pinned. Native
+planning/linking includes every source from that conversion. Raw target hashes,
+types, behavior and performance remain comparison gates; differences stay visible.
+
+The fixed target also requires its 69 named PDB companions alongside the
+corresponding SDK or freshly produced DLLs. They are hashed, staged and checked
+with the managed providers. Omitting symbols changes stripped PE sizes and the
+unchanged converter's size-based assembly order. The public recipe contains
+only companion names. Fresh original-input host production with these companions
+reproduces the accepted J850 metadata byte for byte; complete native/runtime
+parity remains a separate gate.
+
+The optional `android_tools` dictionary supplies canonical paths for `dotnet`,
+`clang`, `linker`, `objcopy` and `resource_dir`. These replace host executables
+only. .NET 8 runs the unchanged SDK linker/converter; Android Clang/LLD uses
+the original NDK target headers/static C++/ABI/GCC archives. Clang 21/LLD is
+explicitly different from the desktop Clang 9/BFD control. Tool/resource hashes,
+original SDK and provider inputs are rechecked. Every attempt owns its output,
+logs, exact commands and failed state; process-group cleanup remains active.
+
+An optional `linux_tools` dictionary selects the exact Linux NDK 21.3.6528147
+Clang 9/BFD executables through a public QEMU user-mode runner. Supply canonical
+`qemu`, `clang`, `linker`, `objcopy`, `loader_root` paths and a nonempty
+`library_dirs` list. The GNU loader/libraries and runner are explicit tool
+providers, hashed before and after execution. Original SDK target headers,
+startup objects and static runtime archives remain the target inputs. The
+unchanged Clang driver emits its actual `-cc1` or BFD command with `-###`; the
+owner invokes that single child explicitly because Android has no configured
+Linux `binfmt_misc` handler. Multiple or unexpected driver commands refuse.
+Neither compiler optimization policy nor source is replaced. Owner tool calls
+have a one-hour deadline, including slow single-core managed conversion; the
+headless whole-backend deadline is 24 hours.
+
+In the Android input request, `linux_tools` supplies the five owner-relative data
+bindings (`clang`, `linker`, `objcopy`, `loader_root`, `library_dirs`); the runner
+is the PackageManager-installed `libqemu-x86_64.so`. Generic ARM64 runner
+dependencies must also be installed through the existing app-host tool plan.
+GNU target tools stay owner inputs outside the APK. Current bounded shell
+qualification uses public Termux QEMU 11.1.2 and Debian 11 GNU runtime files;
+no ordinary-app whole-player Linux build or game acceptance is inferred from
+those controls. Public provider notices/source obligations remain with their
+acquisition, and proprietary SDK tool bytes are never published.
+
+`run_android.py` connects this backend to the headless managed-host fixture.
+It verifies the caller's private input manifest, checks every copied original
+game hash, and records the copy's actual timestamps without changing its content
+identity. Original/SDK/provider files stay outside the tool APK. Runtime tools
+are PackageManager-installed read-only native files; framework/source/input data
+remain private app data. The caller owns installation receipts, input transfer,
+kernel thermal monitoring, independent output comparison and teardown. No game
+launch, default build pointer or installer action is performed by this entry.
+Its measurements distinguish backend wall time, Python/child peak RSS and live
+free space. Copy/initial admission time and game performance are separate.
+
 `native.py` replaces the private captured native DAG with the audited
 `recipe/owner-native-arm64.json`. The profile contains six argument templates,
 SDK-relative source/lump relationships, generated translation-unit names and
@@ -179,3 +255,26 @@ establish native equivalence. Licensed native input production, Burst/content/
 shaders, phone hosting, installation/update and matched game behavior/performance
 remain gates. This host control does not commit the final installation experience
 to a desktop.
+
+
+## Standalone SDK shader tool
+
+`shader.py::compiler(command, sdk_data, output, ...)` starts an explicitly
+supplied exact-SDK standalone shader compiler, including an explicit public
+GNU runner prefix when required on Android. SDK tools, plugins, includes and
+GNU dependencies are separately acquired local inputs; none is bundled here.
+The context creates a new private log directory, initializes one loopback IPC
+session and closes sockets/stops its child at teardown. It does not run the
+Unity Editor or read a project. `Connection.compile` accepts authored/recovered
+HLSL, a diagnostic/include filename, vertex/fragment request, keywords, flags
+and requirements; it returns SDK status, bytes, reflection and diagnostics.
+An SDK-successful skipped request can return no data; callers must check payload
+presence for their content contract. There is no current game-build consumer.
+
+[J1094](../../../docs/PORTING_JOURNAL.md#j1094--qualify-exact-sdk-vulkan-shader-compilation-on-android)
+compares authored Vulkan shader payloads, reflection and errors exactly on host
+and Android. Original game shader recovery/variants and serialized content
+production are separate content-owner work. Ordinary app hosting, final APK
+assembly and runtime appearance/performance remain open. Retain failures and
+output evidence before deleting only this owned output; original SDK/game inputs
+and other runs remain untouched.

@@ -3,6 +3,7 @@
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import secrets
 import shutil
@@ -106,10 +107,35 @@ try:
         if row["target"] in native_files and sha(native_files[row["target"]]) != row["sha256"]:
             raise RuntimeError("Native name collision")
         native_files[row["target"]] = path
+    # Optional caller-supplied native build tools are installed by PackageManager,
+    # never executed from writable assets. Every extra input is hash-bound.
+    extra_tools = source / "backend-tools.json"
+    extra = json.loads(extra_tools.read_text()) if extra_tools.exists() else None
+    if extra:
+        for name, row in extra["natives"].items():
+            path = Path(row["path"])
+            if not re.fullmatch(r"lib[-+A-Za-z0-9_.]+\.so", name) or name in native_files or sha(path) != row["sha256"]:
+                raise RuntimeError("Backend native name or input drift: " + name)
+            native_files[name] = path
     framework = runtime / "shared/Microsoft.NETCore.App/8.0.32"
     native_files.update({p.name: p for p in framework.glob("*.so")})
     assets = out / "assets"
     assets.mkdir()
+    if extra:
+        resources = Path(extra["clang_resources"])
+        for p in resources.rglob("*"):
+            if p.is_file():
+                copy(p, assets / "clang/21" / p.relative_to(resources))
+        plan["links"].update(extra["links"])
+        if "framework" in extra:
+            framework_data = Path(extra["framework"])
+            if not re.fullmatch(r"10\.[0-9]+\.[0-9]+", framework_data.name):
+                raise RuntimeError("Backend framework must be an explicit .NET 10 version")
+            for p in framework_data.iterdir():
+                if p.is_file() and (p.suffix in (".dll", ".json") or p.name == ".version"):
+                    copy(p, assets / "dotnet/shared/Microsoft.NETCore.App" / framework_data.name / p.name)
+            for name in ("LICENSE.txt", "ThirdPartyNotices.txt"):
+                copy(framework_data.parents[2] / name, assets / "notices/dotnet10" / name)
     for p in (toolroot / "python/usr/lib/python3.14").rglob("*"):
         if p.is_file() and p.suffix == ".py" and "__pycache__" not in p.parts:
             copy(p, assets / "python/lib/python3.14" / p.relative_to(toolroot / "python/usr/lib/python3.14"))

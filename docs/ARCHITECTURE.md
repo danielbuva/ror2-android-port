@@ -197,6 +197,21 @@ J1063 qualifies the complete source-input host command through native execution.
 Independent content/Burst/shader production, licensed native input production
 and full-player Android construction remain open.
 
+The same native owner optionally runs explicit Linux NDK executables through a
+public QEMU user-mode provider. It hashes the supplied GNU loader/runtime and
+NDK tools, obtains one actual compiler/linker child command from the unchanged
+Clang driver, and invokes it without a global Linux execution handler. Original
+SDK ARM64 target data remain inputs. Android Clang 21/LLD remains the explicit
+fallback; whole-player Linux app hosting and runtime parity are separate gates.
+
+`tools/phone-build/owner-code/shader.py` owns the experimental exact-SDK
+Vulkan IPC client. An explicit compiler command/SDK directory and new private
+output own setup, typed session state, reflection/diagnostics and child/socket
+teardown. It invokes no Editor/project and selects no runtime shader.
+[Setup and limits](../tools/phone-build/owner-code/README.md#standalone-sdk-shader-tool)
+separate the qualified authored fixture (J1094) from original-cohort recovery,
+serialized content construction and ordinary app admission.
+
 `tools/phone-build/owner-code/produce.py` owns the current experimental combined
 whole-player backend: explicit hash-bound managed providers, audited target
 roots, SDK-derived native identities, exact SDK stripping/conversion, verified
@@ -209,6 +224,17 @@ retention and teardown. J1061 verifies the explicit-managed-input mode through
 native planning; J1063 qualifies the complete source-input mode, including fresh
 managed production and native linking.
 No shared project, Editor, device or current build consumer is involved.
+
+The same code owners accept an explicit fixed target (`profile` plus public
+authored-source root). `recipe/owner-j850-code.json` binds its public source
+commit and 114 inputs; `managed.py::target_run` composes existing public DLL
+transforms, package production, original support/maps and target gameplay sources.
+It excludes the later audio assemblies and developer-only MCP provider.
+The backend keeps fixed SDK/root policy while `native.py::generated_profile`
+compiles every translation unit from the actual target conversion. Setup owns
+a new output and checks source/tool/owner state; failed outputs remain and process
+teardown is unchanged. [Target setup and scope](../tools/phone-build/owner-code/README.md#fixed-accepted-source-target)
+retain inherited scene/module and raw target/device comparison gates.
 
 `tools/phone-build/owner-code/managed.py` owns current experimental original-input
 managed production under the same `produce.py` entry. Audited
@@ -715,6 +741,24 @@ The integrated source selection refreshes the two authored helper pins while
 retaining the same native/interpreter/compiler owners. J1074 qualifies its
 current app-host operation; it does not turn this support fixture into a game
 compiler, content producer or installer.
+
+Its `ToolHostActivity.Runner` instrumentation entry runs the same worker without
+opening an Activity. The optional caller-owned backend job invokes
+`owner-code/run_android.py`, which verifies original/SDK/provider copies and
+calls the existing backend using installed native .NET/compiler/linker/strip
+tools. The builder's optional explicit native plan binds those generic ELF
+providers and their data-tree links; no game file enters the tool APK. The worker
+retains private reports and bounded child lifetime; the caller owns fresh storage,
+exact package receipt, kernel thermal monitoring, output readback and cleanup.
+The muxer keeps CoreLib in verified framework data. For .NET 10 it preserves
+hostfxr selection/properties and loads the selected versioned native CLR through
+the public CoreCLR ABI; ILSpy searches the matching native framework first.
+The public transform producer retains its isolated .NET 8 enumeration contract.
+Gameplay postprocessing sees one generated directory of the exact selected
+reference providers, avoiding conflicting unselected sibling DLLs. All links and
+managed/native outputs belong to the new private output/fixture lifetime.
+This remains debug/ADB-assisted tool support, without security, final installer
+or gameplay qualification.
 
 `phone_native.py` owns experimental **support** for replaying the authored
 content fixture's native graph. `phone-native-fixture` verifies an explicit

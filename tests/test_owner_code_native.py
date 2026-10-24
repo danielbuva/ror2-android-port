@@ -18,6 +18,130 @@ SPEC.loader.exec_module(NATIVE)
 
 
 class OwnerCodeNativeTests(unittest.TestCase):
+    def test_target_conversion_replaces_generated_units_and_rebuilds_link_closure(self):
+        profile = {
+            "jobs": [{"sdk": "sdk.c", "arguments": 0}, {"generated": "Old.cpp", "arguments": 4}, {"generated": "Old.c", "arguments": 5}],
+            "link": ["-shared", {"object": 0}, {"object": 1}, {"object": 2}, "-llog"],
+        }
+        result = NATIVE.generated_profile(profile, {"cpp/New.cpp": {}, "cpp/Register.c": {}, "data/metadata.dat": {}})
+        self.assertEqual(
+            result["jobs"], [{"sdk": "sdk.c", "arguments": 0}, {"generated": "New.cpp", "arguments": 4}, {"generated": "Register.c", "arguments": 5}]
+        )
+        self.assertEqual(result["link"], ["-shared", {"object": 0}, {"object": 1}, {"object": 2}, "-llog"])
+        self.assertEqual(profile["jobs"][1]["generated"], "Old.cpp")
+        with self.assertRaisesRegex(ValueError, "no native"):
+            NATIVE.generated_profile(profile, {"data/metadata.dat": {}})
+        with self.assertRaisesRegex(ValueError, "nested"):
+            NATIVE.generated_profile(profile, {"cpp/nested/New.cpp": {}})
+
+    def test_json_tool_stdout_is_separate_from_runtime_diagnostics(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            (root / "logs").mkdir()
+            (root / "tmp").mkdir()
+            NATIVE.invoke(
+                [sys.executable, "-c", "import sys;print('{\"value\":7}');print('diagnostic witness',file=sys.stderr)"], root, "query", separate_stderr=True
+            )
+            self.assertEqual(json.loads((root / "logs/query.log").read_text()), {"value": 7})
+            self.assertEqual((root / "logs/query.stderr.log").read_text().strip(), "diagnostic witness")
+
+    def test_linux_driver_child_is_quoted_and_policy_is_not_rewritten(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary)
+            (output / "logs").mkdir()
+            tools = {
+                "qemu": "/runner/qemu",
+                "clang": "/owner tools/clang9",
+                "linker": "/owner tools/ld.bfd",
+                "loader_root": "/gnu",
+                "library_dirs": ["/gnu/lib"],
+            }
+            calls = []
+
+            def invoked(argv, where, name, **kwargs):
+                calls.append((argv, kwargs))
+                if name.endswith("-driver"):
+                    (where / "logs" / (name + ".log")).write_text('driver diagnostics\n"/owner tools/clang9" "-cc1" "-Os" "-o" "/result/object.o"\n')
+
+            with patch.object(NATIVE, "invoke", side_effect=invoked):
+                NATIVE.linux_invoke(["sdk-clang", "-Os", "-target", "aarch64-linux-android22"], output, "compile", Path("/sdk"), tools, env={})
+            self.assertIn("-Os", calls[0][0])
+            self.assertIn("--sysroot=/sdk/PlaybackEngines/AndroidPlayer/NDK/toolchains/llvm/prebuilt/darwin-x86_64/sysroot", calls[0][0])
+            self.assertEqual(calls[1][0][-5:], [tools["clang"], "-cc1", "-Os", "-o", "/result/object.o"])
+            self.assertEqual(calls[1][1]["timeout"], 3600)
+
+    def test_linux_driver_refuses_multiple_children_and_unexpected_compilers(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary)
+            (output / "logs").mkdir()
+            tools = {"qemu": "/runner", "clang": "/clang9", "linker": "/ld.bfd", "loader_root": "/gnu", "library_dirs": ["/gnu/lib"]}
+            for text in ['"/clang9" "-cc1"\n"/other" "input"\n', '"/other" "-cc1"\n']:
+                with self.subTest(driver=text):
+
+                    def invoked(argv, where, name, **kwargs):
+                        self.assertTrue(name.endswith("-driver"))
+                        (where / "logs" / (name + ".log")).write_text(text)
+
+                    with patch.object(NATIVE, "invoke", side_effect=invoked), self.assertRaisesRegex(ValueError, "driver did not"):
+                        NATIVE.linux_invoke(["sdk-clang"], output, "compile", Path("/sdk"), tools, env={})
+
+    def test_linux_runtime_and_ndk_inputs_are_hashed(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            tools = {}
+            for n in ("qemu", "clang", "linker", "objcopy"):
+                p = root / n
+                p.write_bytes(b"independent generic tool fixture")
+                tools[n] = str(p)
+            loader = root / "gnu"
+            libs = loader / "lib"
+            libs.mkdir(parents=True)
+            library = libs / "libc.so.6"
+            library.write_bytes(b"independent GNU runtime fixture")
+            tools.update(loader_root=str(loader), library_dirs=[str(libs)])
+            state = NATIVE.linux_tool_state(tools)
+            library.write_bytes(b"changed runtime")
+            self.assertNotEqual(NATIVE.linux_tool_state(tools), state)
+            del tools["linker"]
+            with self.assertRaisesRegex(ValueError, "explicit Linux runner"):
+                NATIVE.linux_tool_state(tools)
+
+    def test_android_link_keeps_original_target_and_explicit_static_runtime(self):
+        tools = {"clang": "/installed/libclang.so", "linker": "/installed/liblld.so", "resource_dir": "/tools/clang/21"}
+        sdk = Path("/owner/sdk")
+        args = ["host-clang", "-target", "aarch64-linux-android22", "-Os", "-fuse-ld=bfd", "-static-libstdc++", "-Wl,--no-undefined", "source.o"]
+        command = NATIVE.android_command(args, sdk, tools, link=True)
+        self.assertEqual(command[0], tools["clang"])
+        self.assertIn("-fintegrated-cc1", command)
+        self.assertIn("aarch64-linux-android22", command)
+        self.assertIn("-Os", command)
+        self.assertIn("-Wl,--no-undefined", command)
+        self.assertNotIn("-fuse-ld=bfd", command)
+        self.assertNotIn("-static-libstdc++", command)
+        self.assertIn("--ld-path=/installed/liblld.so", command)
+        self.assertIn("--unwindlib=none", command)
+        self.assertTrue(any(v.startswith(str(sdk)) and v.endswith("libc++_static.a") for v in command))
+        self.assertTrue(any(v.startswith(str(sdk)) and v.endswith("libgcc.a") for v in command))
+
+    def test_android_resource_inputs_are_bound_and_incomplete_selection_refuses(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            tools = {}
+            for name in ("dotnet", "clang", "linker", "objcopy"):
+                path = root / name
+                path.write_bytes(b"authored tool stand-in")
+                tools[name] = str(path)
+            resources = root / "resources"
+            resources.mkdir()
+            header = resources / "fixture.h"
+            header.write_text("// independent header")
+            tools["resource_dir"] = str(resources)
+            before = NATIVE.android_tool_state(tools)
+            header.write_text("// changed header")
+            self.assertNotEqual(NATIVE.android_tool_state(tools), before)
+            with self.assertRaisesRegex(ValueError, "explicit Android"):
+                NATIVE.android_tool_state({})
+
     def test_source_expansion_is_bounded_and_hash_checked(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve()

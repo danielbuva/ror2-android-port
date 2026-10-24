@@ -37096,6 +37096,183 @@ and final APK/signing/install. Full phone-only owner installation and matched
 performance remain open. Revisit this cohort only for explicit input/target
 promotion or a measured regression.
 
+## J1084 — Run whole-player stripping conversion and ARM64 compilation in the Android tool host
+
+Date: 2026-10-24 UTC.
+
+**Hypothesis and ownership.** Extend the existing public Python/.NET app host
+and `owner-code` backend to run the unchanged SDK linker and IL2CPP converter,
+then compile native ARM64 code under an actual Android app UID. This is a
+J1063-provider infrastructure control, not independent phone managed production
+or a reconstruction of the fixed J850 target. The control explicitly supplies
+J1063's host-produced DLLs. The separate fixed-source request/profile binds
+J850's public source commit; it never substitutes the moving checkout for those
+sources. Architecture C, current game/runtime and the desktop fallback stay
+unchanged.
+
+Re-inspected pinned ThunderKit's ManagedAssemblyPatcher/PackageHelper and the
+community prior-art map: provider identity and original input stay separate from
+host/tool availability. No community/game implementation is copied. The
+[hostfxr ABI](https://github.com/dotnet/runtime/blob/v8.0.32/src/native/corehost/hostfxr.h)
+requires preserving `exec` for `--runtimeconfig`. Copied SDK discovery also needs
+its original empty `il2cpp_root` marker and 17 LinkerDescriptors; their hashes,
+not their protected contents, enter the existing recipe. `produce.py` now binds
+327 SDK tool/configuration files. No Editor process/project or captured native
+command graph is used. Installed native ELF providers are hash-bound, read-only
+PackageManager files; original/SDK/managed inputs are separate private app data.
+`ToolHostActivity.Runner` uses instrumentation without opening an Activity.
+
+**Observed control.** The target-33 headless worker runs as `untrusted_app`.
+All 93 stripped DLLs and all 691 converter file records equal the J1063 host
+outputs byte-for-byte. All 687 compressed C/C++ frames are independently
+restored and checked. All 825 native compilations exit 0; every object/process
+record is retained. Their summed process wall time is 2,822.904 seconds,
+including any pauses inside those processes; it is not total acquisition,
+copy/admission, backend wall time or gameplay performance.
+
+The app controller's first terminal native failure is the LLD multicall filename:
+`liblld.so` does not select its GNU driver. Its original failed report is kept.
+A separate, explicitly labelled `runas_app` continuation checks all 825 object
+hashes and recorded commands, extracts the same Clang driver's link arguments,
+uses LLD's `ld.lld` argv0, links and strips. This continuation is not an
+uninterrupted successful `untrusted_app` controller run. The current builder
+installs LLD as `lib-ld.lld-.so`, whose segment is recognized by the pinned
+[dispatcher](https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/lld/Common/DriverDispatcher.cpp).
+No LLD binary or target link policy is patched.
+
+The resulting stripped library is 100,111,304 bytes, SHA-256
+`4ec4a2399a0c0447b455152e638c59dad405d483ec36a0534e9dc50a181a1400`.
+Its unstripped hash is
+`d3f4fea4282bd895964abfaacc899ae4ddff605de02c98dcb80e5b3912f946af`.
+Metadata equals J1063's host output exactly:
+`5476df811354239bfaa7edc4613731ae97e56665a9bdd728638aec40a621e6f8`.
+The corrected link takes 2.074 seconds and strip 0.322 seconds; the continuation's
+maximum child RSS is 3,167,870,976 bytes. This is a maximum single-child statistic,
+not the full compile's concurrent peak memory. Afterward, all 15,661 immutable
+input files and all source frames pass independent re-verification.
+
+**Raw difference and thermal limit.** Android Clang 21/LLD differs from the
+accepted SDK Clang 9/BFD chain. Its library is not J1063's `4ad4c24c…` library.
+Both export the same 237 `il2cpp_` API names and have the same SONAME/system-library
+set; this is not runtime/ABI equivalence. Raw ELF comparison retains the missing
+GNU boundary/internal-C++ exports, two added compiler-rt exports and an app-data
+SDK runpath. None is normalized away. Exact NDK r21 Linux tools under the shared
+Box64 provider are the next compiler comparison; build-tool emulation does not
+replace the native ARM64 game backend.
+
+The thermal service reported status 0 with its HAL unavailable, and the battery
+was cool while kernel CPU sensors were hot. The retained kernel watch reaches
+93.9 degrees C and records three stop/cool/resume cycles; it does not establish
+sustained thermal acceptance. The independent source-job follow-up peaks at
+84 degrees C. Future jobs pin the owned controller/children to one middle core,
+poll kernel sensors every two seconds and pause at 80/resume at 65 degrees C.
+No global CPU, storage, display or system policy changes. Both OLED panels stay
+OFF; no game launch occurs. The tool's security qualification remains false.
+
+**Evidence and checks.** Private evidence under
+`work/coordination/phone-code/` includes `backend-app-report-v1.json`,
+`first-import-failure/`, `first-linker-host-failure/`, `second-linker-failure/`,
+`control-compile-timing-summary.json`, `phone-native-control/` (original failed
+native result, distinct link continuation, raw ELF comparisons, metadata and
+post-input verification), and `kernel-thermal-policy.json`. The owned phone
+`infra-backend-v1` preserves native outputs after the disposable tool-host cycle.
+Current authored C ABI tests also compile and pass all 12 cases on Android;
+27 owner-code host tests and six staging tests pass. Fresh-clone CI and staged
+privacy/Ruff checks pass for the pushed implementation. A later host preflight
+correctly refuses this independent workspace's absent lab-project generation;
+no fake project/marker is supplied and no Unity build is dispatched. Generated
+pruning runs after tool build/run milestones; failures and receipts remain.
+
+**Revisit and remaining work.** Complete the source-only J850 managed/linker/
+converter/native path with its exact selected reference providers, compare the
+actual target raw outputs, finish Burst/shader and independent content closure,
+then assemble/sign/install and run both standard controls plus matched first-stage
+performance. The existing J1065 owner installation is separate evidence. No new
+game APK is produced, installed or claimed accepted here.
+
+## J1094 — Qualify exact SDK Vulkan shader compilation on Android
+
+Date: 2026-10-24 UTC. **Observed device tool result; no game launch.**
+
+**Hypothesis.** The separately acquired Linux 2021.3.45f2 shader compiler,
+its genuine GNU runtime and a public user-mode runner can preserve native SDK
+Vulkan output on Android without the Editor, a project, SDK binary patches or
+target shader bytes. This is a compiler-tool slice; original shader recovery and
+serialized content production remain the content owner's responsibility.
+
+**Prior art / version clue.** Consulted the shader-recovery subsystem and J364–
+J370 before new machinery. Hamish Milne's old standalone client
+(`hamish-milne/UnityShaderCompiler`, pinned
+`402aabf44f942be08da226c5e4fc07242afe5cbc`) demonstrates IPC admission, but its
+older framing is not the 2021.3 protocol. `0xf4b1/unify`, pinned
+`2a9a8b848f3569a501c472742fbc9ffc4b142dd5`, supplies a porting/version clue,
+not a complete 2021.3 client. No implementation was copied from either project.
+The [official 2021.3 enum definitions](https://github.com/Unity-Technologies/UnityCsReference/blob/2021.3/Editor/Mono/Graphics/ShaderCompilerData.cs)
+identify the Vulkan compiler platform. Exact locally acquired SDK observations
+resolve the current transport and operand contract. Existing pinned original-DXBC
+recovery techniques remain unchanged; no shader appearance/math is invented.
+
+**Change / ownership.** `tools/phone-build/owner-code/shader.py` owns a small
+explicit-command compiler session and typed IPC client. Strings use a 64-bit
+length and the current protocol magic; initialization supplies include/search
+mappings and reads all platform capabilities. The client requests Android Vulkan
+HLSL emission, preserving binary payload, reflection and diagnostics. Setup
+creates one new private log directory; context teardown shuts down or kills only
+its compiler child and closes sockets. Original game/SDK files are read-only;
+there is no implicit acquisition, Editor invocation, installer, runtime owner or
+current-build consumer. The four authored host tests use synthetic protocol
+witnesses, not captured SDK output.
+
+**Inputs / exact comparison.** Official Linux SDK archive SHA-256
+`faaeafc17dd251ae0d3489ef762929f393928ad19b60d1f9b4155bb7d25d76d3`;
+selected UnityShaderCompiler SHA-256
+`c80dd80426848a1cd83eb7d9a430b66f06b6221d9ef85ed0b41ddcb255dd7dfa`.
+The Linux x86-64 D3DCompiler_47.dll and 59 includes are separately selected from
+that archive. The Mac ARM64 PE plugin is incompatible with this Linux host.
+Public Termux QEMU x86-64 runner package SHA-256
+`6ef8219c876d576a2df22d2c84453c59dd70d4e48f18b070c3788121318ba8e7`
+and separately acquired GNU loader/libraries run the unchanged SDK tool. Generic
+runner code and acquired SDK data remain distinct providers; tool/component
+redistribution rights are not granted by this experiment.
+
+**Device evidence.** The assigned headless device ran shell-tool controls only,
+with both OLED panels asleep. No game package install, data reset, game launch or
+storage configuration change occurred. Native macOS exact-SDK and Android GNU
+initialization capabilities match byte for byte. The simple authored vertex/
+fragment fixture produces the same complete 706-byte response, including its
+642-byte shader payload, SHA-256
+`a2047832ac5373f27b475ef64dabdd307f0d18eebf1bedba95864f5340ec9154`.
+The public client then reproduces a richer texture/uniform fixture: 849-byte
+Vulkan payload SHA-256
+`ed0d4fee413a27a10ee20f6e6b7143e9ef4a802b4403a70c0f71d547e33b702b`,
+with identical six reflection records and no diagnostics. Both hosts also agree
+on an empty successful fragment request and a failed invalid-HLSL request with
+its parsed diagnostic. SDK success alone does not establish emitted data.
+
+Evidence is local under `work/coordination/phone-code/`:
+`shader-initialize-host/`, `shader-initialize-phone.log`,
+`shader-compile-host-v2/`,
+`shader-compile-phone-v2.log`, `public-shader-host-v1/`,
+`public-shader-phone-v1.log`, `public-shader-comparison.json`,
+`linux-shader-extra-v1/result.json` and the explicit
+qualification scripts. Protected SDK selections/output and private diagnostic
+inspection remain ignored. The redundant full SDK archive was removed only after
+verified selection/hash records; selected tools and failure evidence remain.
+
+**First failure / correction.** Older 32-bit string-length framing crashed the
+exact native host as well as Android; the fixed SDK requires 64-bit lengths.
+After correcting that contract, initialization and actual compilation succeed.
+A first source lacking both pragma declarations returns explicit SDK diagnostics;
+the authored two-entrypoint source fixes the fixture. These were transport/source
+contract failures, not evidence that the emulator changes shader math.
+
+**Validation / limits.** Four synthetic host IPC tests pass; Ruff passes. Raw
+host/phone shader payloads and reflection are compared without normalization.
+These are standalone tool controls, not an ordinary app-host shader producer or
+the original game shader cohort. Full HLSL recovery, variants, serialized records,
+bundle assembly, app delivery, installation and matched runtime/performance remain
+open. No APK was produced by this slice. Revisit on an original-cohort mismatch,
+SDK drift, new required reflection/stage contract or Android app admission.
 ## J1069 — Stop the extended integrated memory series on the first native error
 
 2026-10-24. Hypothesis: the current original-audio dependency lifetime might

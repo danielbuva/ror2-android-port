@@ -6,6 +6,7 @@ Licensed Wwise declarations/native inputs and generic packages remain supplied.
 
 import importlib.util
 import json
+import os
 from pathlib import Path
 import re
 import shutil
@@ -16,12 +17,12 @@ ROOT = HERE.parents[2]
 sys.path.insert(0, str(ROOT / "scripts/lab"))
 import assembly_transforms  # noqa: E402
 import body_visual_map  # noqa: E402
-import build  # noqa: E402
 import catalog_reader  # noqa: E402
 import common_assets_map  # noqa: E402
 import original_game_audio_produce as audio  # noqa: E402
 import owner_audio_prefab  # noqa: E402
 import phone_unity_compile  # noqa: E402
+import public_transform_tools  # noqa: E402
 import wwise_bank_index  # noqa: E402
 
 
@@ -52,8 +53,9 @@ INPUT_FIELDS = {
 }
 
 
-def invoke(argv, output, label):
-    native.invoke([str(v) for v in argv], output, label)
+def invoke(argv, output, label, *, env=None, separate_stderr=False):
+    environment = env if env is not None else dict(os.environ, TMPDIR=str(output / "tmp")) if sys.platform == "android" else None
+    native.invoke([str(v) for v in argv], output, label, env=environment, separate_stderr=separate_stderr or sys.platform == "android")
     return output / "logs" / (label + ".log")
 
 
@@ -90,26 +92,40 @@ def unchanged(bound):
         raise ValueError("managed producer input/source drift")
 
 
-def maps_and_support(out, inputs, managed, probe, profile, identity):
+def maps_and_support(out, inputs, managed, probe, profile, identity, *, work=None, source_root=ROOT, probe_provider_sha256=None, android_tools=None):
     dotnet, ilspy = inputs["dotnet"], inputs["ilspy_dll"]
-    version = invoke([dotnet, ilspy, "--disable-updatecheck", "--version"], out, "ilspy-version").read_text()
+    decompiler_env = None
+    if android_tools:
+        (framework,) = Path(os.environ["ROR2LAB_BUILD_DOTNET_ROOT"]).glob("shared/Microsoft.NETCore.App/10.*")
+        decompiler_env = dict(os.environ, LD_LIBRARY_PATH=str(framework) + ":" + os.environ["LD_LIBRARY_PATH"])
+    version = invoke([dotnet, ilspy, "--disable-updatecheck", "--version"], out, "ilspy-version", env=decompiler_env).read_text()
     if profile["ilspy_version"] not in version:
         raise ValueError("qualified source decompiler version differs")
     for name, assembly in (("support-original", "Assembly-CSharp.dll"), ("maps-original", "RoR2.dll")):
-        invoke([dotnet, ilspy, "--disable-updatecheck", "-lv", "CSharp9_0", "-p", "-r", managed, "-o", out / name, managed / assembly], out, name)
-    contract = json.loads(invoke([dotnet, probe, "--catalog-contract", managed / "RoR2.dll"], out, "catalog-contract").read_text())
+        invoke(
+            [dotnet, ilspy, "--disable-updatecheck", "-lv", "CSharp9_0", "-p", "-r", managed, "-o", out / name, managed / assembly],
+            out,
+            name,
+            env=decompiler_env,
+        )
+    probe_env = dict(os.environ, ROR2LAB_CECIL_SHA256=probe_provider_sha256) if probe_provider_sha256 else None
+
+    def query(arguments, label):
+        return json.loads(invoke([dotnet, probe, *arguments], out, label, env=probe_env, separate_stderr=bool(probe_env)).read_text())
+
+    contract = query(["--catalog-contract", managed / "RoR2.dll"], "catalog-contract")
     if contract["input_sha256"] != native.sha(managed / "RoR2.dll") or contract["legacyInputSha256"] != native.sha(managed / "LegacyResourcesAPI.dll"):
         raise ValueError("original catalog identity contract drift")
-    names = json.loads(invoke([dotnet, probe, "--catalog-names", managed / "RoR2.dll", *contract["providers"]], out, "catalog-names").read_text())
+    names = query(["--catalog-names", managed / "RoR2.dll", *contract["providers"]], "catalog-names")
     catalog_path = managed.parent / "StreamingAssets/aa/catalog.json"
-    inventory = json.loads((ROOT / "work/inventory/files.json").read_text())
+    inventory = json.loads(((work or ROOT / "work") / "inventory/files.json").read_text())
     expected = {r["path"]: r["sha256"] for r in inventory["files"]}
     if native.sha(catalog_path) != expected[catalog_path.relative_to(managed.parent.parent).as_posix()]:
         raise ValueError("original catalog differs from accepted inventory")
     catalog = catalog_reader.read_shipped(catalog_path, "/_/owner-original-aa", names)
     native.write(out / "original-catalog.json", catalog)
     manifest = {"keys": catalog["keys"]}
-    recipes = json.loads((ROOT / "recipe/build-entry-inputs.json").read_text())["decompiled"]
+    recipes = json.loads((source_root / "recipe/build-entry-inputs.json").read_text())["decompiled"]
     if native.sha(managed / recipes["assembly"]) != recipes["assembly_sha256"]:
         raise ValueError("map source assembly differs")
     generated = out / "maps"
@@ -139,9 +155,7 @@ def maps_and_support(out, inputs, managed, probe, profile, identity):
         target = selected / native.relative(relative)
         target.parent.mkdir(parents=True, exist_ok=True)
         if target.name == "AffixBeadProjectileSound.cs":
-            fields = json.loads(
-                invoke([dotnet, probe, managed / "Assembly-CSharp.dll", "AffixBeadProjectileSound"], out, "support-field-contract").read_text()
-            )["types"][0]["fields"]
+            fields = query([managed / "Assembly-CSharp.dll", "AffixBeadProjectileSound"], "support-field-contract")["types"][0]["fields"]
             if {r["name"]: r["type"] for r in fields} != {"SpawnBeadChaseEvent": "AK.Wwise.Event", "ExplodeEvent": "AK.Wwise.Event"}:
                 raise ValueError("original sound field contract differs")
             target.write_text("using Event = AK.Wwise.Event;\n" + matches[0].read_text())
@@ -228,12 +242,35 @@ def audio_assemblies(out, sdk, work, inputs, raw, ordinary, staged, prefab, bank
     return {p.name: p for p in (observer, core, bootstrap)}
 
 
-def gameplay(out, sdk, inputs, original, ordinary, raw, package_output, audio_outputs, maps, support):
+def postprocessor_references(references, directory):
+    """Expose only selected providers, not conflicting siblings in their roots."""
+    directory.mkdir()
+    result = []
+    for source in references:
+        path = directory / source.name
+        path.symlink_to(source)
+        result.append(path)
+    return result
+
+
+def target_source_order(public, support, maps):
+    """Match the target's flat Assets/LabLoadingScene and Scripts trees."""
+    return [public[-1], *sorted(public[:-1] + maps, key=lambda path: path.name.casefold()), *support]
+
+
+def gameplay(out, sdk, inputs, original, ordinary, raw, package_output, audio_outputs, maps, support, *, source_root=None, android_tools=None):
     destination = out / "gameplay"
     destination.mkdir()
-    public = [ROOT / "tools/unity" / n for n in build.runtime_sources()] + [ROOT / "android/Assets/LabDiagnostics.cs"]
-    sources = public + support + maps
-    if len(public) != 128 or len(support) != 14 or len(maps) != 3:
+    if source_root:
+        names = json.loads((source_root / "recipe/runtime-sources.json").read_text())
+    else:
+        import build
+
+        names = build.runtime_sources()
+    authored = source_root or ROOT
+    public = [authored / "tools/unity" / native.relative(n) for n in names] + [authored / "android/Assets/LabDiagnostics.cs"]
+    sources = target_source_order(public, support, maps) if source_root else public + support + maps
+    if (source_root is None and len(public) != 128) or len(support) != 14 or len(maps) != 3:
         raise ValueError("current player source membership changed; review configuration")
     refs = {Path(p).name: sdk / p for p in phone_unity_compile.references(sdk)}
     plugins = {}
@@ -244,7 +281,8 @@ def gameplay(out, sdk, inputs, original, ordinary, raw, package_output, audio_ou
         if native.sha(source) != transformed.get(name, row["sha256"]):
             raise ValueError("original player reference drift: " + name)
         plugins[name] = source
-    plugins.update({"AK.Wwise.Unity.API.dll": raw / "api-instrumented-composed.dll", "RoR2.dll": raw / "game-original-owner-point-sound-composed.dll"})
+    if raw is not None:
+        plugins.update({"AK.Wwise.Unity.API.dll": raw / "api-instrumented-composed.dll", "RoR2.dll": raw / "game-original-owner-point-sound-composed.dll"})
     for row in json.loads((package_output / "result.json").read_text())["packages"]:
         path = package_output / "postprocessed" / (row["name"] + ".dll")
         if native.sha(path) != row["sha256"]:
@@ -268,7 +306,14 @@ def gameplay(out, sdk, inputs, original, ordinary, raw, package_output, audio_ou
     )
     assembly = destination / "Assembly-CSharp.dll"
     audio.compile_library(
-        "compile_gameplay", contents / "NetCoreRuntime/dotnet", contents / "DotNetSdkRoslyn/csc.dll", assembly, sources, options, [], destination
+        "compile_gameplay",
+        Path(android_tools["dotnet"]) if android_tools else contents / "NetCoreRuntime/dotnet",
+        contents / "DotNetSdkRoslyn/csc.dll",
+        assembly,
+        sources,
+        options,
+        [],
+        destination,
     )
     post = destination / "postprocessed"
     post.mkdir()
@@ -279,6 +324,7 @@ def gameplay(out, sdk, inputs, original, ordinary, raw, package_output, audio_ou
     ]
     processor = package_output / "compiled/Unity.Burst.CodeGen.dll"
     bound.update(source_hashes([*references, processor, assembly]))
+    references = postprocessor_references(references, destination / "ilpp-references")
     args = ["-assembly", str(assembly), "-outputDir", str(post), "-processors", str(processor)]
     for path in references:
         args += ["-assemblyReferences", str(path)]
@@ -293,13 +339,119 @@ def gameplay(out, sdk, inputs, original, ordinary, raw, package_output, audio_ou
         args += ["-assemblyFolders", str(path)]
     rsp = destination / "generated-ilpp.rsp"
     rsp.write_text(" ".join(json.dumps(v) for v in args) + "\n")
+    processor = contents / "Tools/ILPostProcessorRunner/ILPostProcessorRunner.exe"
+    command = (
+        [android_tools["dotnet"], "exec", "--runtimeconfig", package_output / "android.runtimeconfig.json", processor]
+        if android_tools
+        else [contents / "Tools/netcorerun/netcorerun", processor]
+    )
     packages_owner.invoke(
-        [contents / "Tools/netcorerun/netcorerun", contents / "Tools/ILPostProcessorRunner/ILPostProcessorRunner.exe", "@" + str(rsp)],
+        command + ["@" + str(rsp)],
         "gameplay.postprocess",
         destination,
     )
     unchanged(bound)
     return post / "Assembly-CSharp.dll"
+
+
+def target_run(work, sdk, values, target, source_root, output, *, android_tools=None):
+    """Produce the pre-audio accepted target from its pinned authored sources."""
+    if set(values) != {"packages", "newtonsoft", "dotnet", "ilspy_dll", "archives"}:
+        raise ValueError("target source inputs require packages, Newtonsoft, runtime, ILSpy and public archives")
+    inputs = {k: native.canonical(v) for k, v in values.items()}
+    state = native.input_state(work)
+    profile = json.loads(PROFILE.read_text())
+    if native.sha(PROFILE) != PROFILE_SHA or state[0] != profile["input_id"] or native.sha(inputs["newtonsoft"]) != profile["newtonsoft_sha256"]:
+        raise ValueError("target managed input/profile drift")
+    native.disjoint(output, [sdk, state[1], work / "config", work / "inventory", source_root, *inputs.values()])
+    base = base_providers(profile, sdk, state[1])
+    authored = {str(source_root / native.relative(n)): h for n, h in target["source_files"].items()}
+    unchanged(authored)
+    bound = (
+        source_hashes([*base.values(), inputs["newtonsoft"], inputs["dotnet"], *[p for p in inputs["ilspy_dll"].parent.rglob("*") if p.is_file()]]) | authored
+    )
+    output.mkdir(mode=0o700)
+    result = {"success": False, "phase": "public-transforms", "source_commit": target["source_commit"], "phone_qualified": False, "runtime_qualified": False}
+    try:
+        for name in ("logs", "tmp", "ordinary"):
+            (output / name).mkdir()
+        # Use the existing public compiler/Cecil producer, including all golden gates.
+        runtime_env = {name: os.environ.get(name) for name in ("ROR2LAB_BUILD_DOTNET_ROOT", "ROR2LAB_BUILD_HOSTFXR")}
+        try:
+            if android_tools:
+                # The audited public-tool profile enumerates exactly .NET 8.
+                # ILSpy separately needs .NET 10; keep both installed while
+                # exposing only the original framework to this producer.
+                framework = Path(runtime_env["ROR2LAB_BUILD_DOTNET_ROOT"]) / "shared/Microsoft.NETCore.App/8.0.32"
+                isolated = output / "public-dotnet"
+                (isolated / "shared/Microsoft.NETCore.App").mkdir(parents=True)
+                (isolated / "shared/Microsoft.NETCore.App/8.0.32").symlink_to(framework, target_is_directory=True)
+                os.environ["ROR2LAB_BUILD_DOTNET_ROOT"] = str(isolated)
+                os.environ["ROR2LAB_BUILD_HOSTFXR"] = str(inputs["dotnet"].parent / "libhostfxr.so")
+            ordinary = public_transform_tools.generate(
+                state[1] / "Risk of Rain 2_Data/Managed",
+                output / "ordinary",
+                assembly_transforms.load_recipe(),
+                archives=inputs["archives"],
+                launcher=inputs["dotnet"],
+                host="android8" if android_tools else "host10",
+            )
+        finally:
+            for name, value in runtime_env.items():
+                if value is None:
+                    os.environ.pop(name, None)
+                else:
+                    os.environ[name] = value
+        result["phase"] = "packages"
+        packages = output / "packages"
+        package_request = {"sdk_install": str(sdk), "packages": str(inputs["packages"]), "output": str(packages)}
+        if android_tools:
+            package_request["android_tools"] = android_tools
+        packages_owner.run(package_request)
+        result["phase"] = "original-support-and-maps"
+        maps, support = maps_and_support(
+            output,
+            inputs,
+            state[1] / "Risk of Rain 2_Data/Managed",
+            output / "ordinary/tool/AssemblyProbe.dll",
+            profile,
+            state[0],
+            work=work,
+            source_root=source_root,
+            probe_provider_sha256=json.loads((output / "ordinary/public-tools-receipt.json").read_text())["provider_sha256"],
+            android_tools=android_tools,
+        )
+        result["phase"] = "gameplay"
+        game = gameplay(
+            output,
+            sdk,
+            inputs,
+            state[1] / "Risk of Rain 2_Data/Managed",
+            ordinary,
+            None,
+            packages,
+            {},
+            maps,
+            support,
+            source_root=source_root,
+            android_tools=android_tools,
+        )
+        produced = ordinary | {"Assembly-CSharp.dll": game, "Newtonsoft.Json.dll": inputs["newtonsoft"]}
+        produced.update({p.name: p for p in (packages / "postprocessed").glob("*.dll")})
+        providers = {n: {"path": str(p), "sha256": native.sha(p)} for n, p in (base | produced).items()}
+        if set(providers) != set(target["player"]["managed_assemblies"]):
+            raise ValueError("target managed membership differs")
+        unchanged(bound)
+        if native.input_state(work) != state:
+            raise ValueError("target original inputs changed")
+        native.write(output / "providers.json", providers)
+        result.update(success=True, phase="managed-produced", managed_providers=len(providers), authored_sources=len(target["source_files"]))
+        return providers
+    except BaseException as error:
+        result.update(error_type=type(error).__name__, error=str(error))
+        raise
+    finally:
+        native.write(output / "result.json", result)
 
 
 def run(work, sdk, values, output):

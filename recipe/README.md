@@ -57,6 +57,16 @@ produce the file from the input, prefer tracking the generator.
 
 ## Audit record
 
+`owner-j850-code.json` additionally names the 69 legitimate debug-symbol
+companions required by the fixed target's managed closure. These are SDK or
+freshly produced package/gameplay PDB inputs, kept private and verified before
+and after stripping. No symbol bytes, protected implementation, device identity
+or private path is recorded. Their presence affects stripped PE sizes and the
+unchanged SDK converter's size-based assembly ordering. Manual provenance,
+privacy, licensing and sensitive-content review: 2026-10-24. This extends the
+existing source-only target recipe; accepted metadata is used for comparison.
+
+
 The requested-audio source-scene transformation preserves original Wwise/RTPC
 blocks from the owner's accepted local export through the existing generator.
 The public change contains authored selection/lifecycle logic and synthetic
@@ -200,6 +210,7 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 | `owner-native-arm64.json` | J1059 native build configuration | SDK-relative selectors, six flag templates, translation-unit identities/link ordering and a portable SDK cohort hash. | No source bodies, game data, compiled bytes, captured graph, private paths or account/device data. Audited 2026-10-24. | Explicit accepted input, source/converter/metadata binding; no Editor/project or device consumer. |
 | `owner-player-code.json` | Current target root/retention and SDK linker/converter policy | Minimum scene/type/member identities, preservation flags, assembly order and tool hashes. | No method body, serialized object value, native registration table, binary, private path or account/device data. Audited 2026-10-24. | Full reviewed owner input and explicit hash-bound managed providers; exact SDK tools and derived native identities. |
 | `owner-managed-code.json` | Current owner managed-provider/source configuration | 48 original and 272 SDK relative providers/hashes, 12 produced identities, 14 support selectors, generic tool/package identities. | No game/SDK implementation, generated source/DLL, private path, account/device identifier or credential. Audited 2026-10-24. | Accepted full original inventory; explicit tools/packages/authorized SDK inputs; existing strict transforms/contracts. |
+| `owner-j850-code.json` | Fixed accepted authored-source target | Public source commit and 114 relative file hashes, accepted comparison hash, 329 managed/90 converter identities and inherited selector-only SDK/root policy. | No game/SDK implementation, native bytes, serialized values, private paths or identifiers. Audited 2026-10-24. | Independent owner sources/tools; inherited root and target byte/device parity remain explicit qualification gates. |
 
 `runtime-sources.json` lists paths relative to `tools/unity`, staged at
 `Assets/LabLoadingScene` by basename. Basename collisions (including generated sources)
@@ -2108,7 +2119,7 @@ hosting and game acceptance remain open.
 `owner-player-code.json` records the qualified current target's 471 scene/type
 identity relationships, empty serialized-type JSON set, explicit module policy,
 six preservation XML documents, 332 managed provider identities, 11 root
-assemblies, 93 converter assembly identities/order and 309 SDK tool/config file
+assemblies, 93 converter assembly identities/order and 327 SDK tool/config file
 hashes. Its XML contains selector elements and attributes only: type/member names,
 preservation/serialization flags and relationships, never method bodies or
 serialized object values. The original current XML bytes are retained to avoid
@@ -2127,6 +2138,25 @@ from the complete explicit owner-supplied provider cohort and reviewed legitimat
 input. Main independently checked the six XMLs against prior configuration and
 confirmed selector-only contents and exact project-field equality. Manual
 provenance, privacy, licensing and sensitive-content audit: 2026-10-24.
+
+The Android-host closure additionally pins the 17 original LinkerDescriptors
+files and the original empty `il2cpp_root` marker. These are SDK-relative names
+and hashes only; none of their SDK content is published. The marker retains the
+SDK's normal root discovery when the tools run from a copied SDK tree. The host
+already consumed these descriptors implicitly; the explicit pins close that
+input gap without changing stripping policy. Manual provenance/privacy and
+sensitive-content review repeated 2026-10-24.
+
+`owner-j850-code.json` selects the public authored sources of J850 by their
+commit and individual hashes, with the original input identity unchanged. Its
+player configuration is the above published selector-only configuration with
+the three later original-audio assemblies removed. It does not carry generated
+game code or target content. The developer-only MCP input remains excluded;
+the converter's complete actual source cohort determines generated native jobs.
+These differences and inherited scene/module configuration remain visible
+comparison gates. The source hashes were checked against the public Git commit;
+all other retained selector/tool fields equal the already audited profile.
+Manual provenance, privacy, licensing and sensitive-content audit: 2026-10-24.
 
 
 ## Historical authored Init source compatibility
@@ -2279,6 +2309,16 @@ phone cohort and public codec build; other texture/mip and bundle assembly
 gates remain open.
 
 
+The authored `owner-code/shader.py` client implements only observed exact-SDK
+IPC framing, platform selection and source/keyword requests. It includes no SDK
+implementation, shader payload, recovered game source, private host path or
+protected tool. Old community clients provide a version clue and official Unity
+enums provide API identities; no upstream implementation was copied. Owners
+supply their separately acquired compiler/plugins/includes and runtime providers.
+All generated shader/code and raw inspection evidence stay ignored. No ownership,
+entitlement, authentication or license result is synthesized. This tool adds no
+permission to redistribute acquired SDK components or derived game outputs.
+Provenance, privacy, licensing and sensitive-content audit: 2026-10-24; J1094.
 `owner-rgb-textures.json` extends the same source-only texture owner to the 281
 ETC1/single-mip target records. Only original/destination identities, byte
 extents, hashes and importer/storage relationships are included. The source

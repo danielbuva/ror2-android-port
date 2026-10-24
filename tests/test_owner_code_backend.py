@@ -5,6 +5,7 @@ import importlib.util
 import json
 from pathlib import Path
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -15,6 +16,155 @@ SPEC.loader.exec_module(BACKEND)
 
 
 class OwnerCodeBackendTests(unittest.TestCase):
+    def test_default_backend_reaches_native_without_a_fixed_target(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            work, sdk, game = [root / name for name in ("work", "sdk", "game")]
+            for folder in (work, sdk, game):
+                folder.mkdir()
+            assembly = game / "Fixture.dll"
+            assembly.write_bytes(b"independent managed assembly fixture")
+            profile = root / "player.json"
+            profile.write_text(json.dumps({"input_id": "fixture", "managed_assemblies": [assembly.name], "converter_assemblies": [assembly.name]}))
+            native_profile = root / "native.json"
+            native_profile.write_text(json.dumps({"jobs": [{"generated": "Fixture.cpp"}]}))
+            output = work / "production"
+
+            def configuration(profile, sdk, output):
+                (output / "configuration").mkdir()
+                return {}
+
+            def invoke(command, output, name, **kwargs):
+                if name == "linker":
+                    (output / "stripped").mkdir()
+                    (output / "stripped/Fixture.dll").write_bytes(assembly.read_bytes())
+                else:
+                    (output / "converter/cpp").mkdir()
+                    (output / "converter/cpp/Fixture.cpp").write_text("int fixture() { return 7; }\n")
+                    (output / "converter/data/Metadata").mkdir(parents=True)
+                    (output / "converter/data/Metadata/global-metadata.dat").write_bytes(b"independent metadata fixture")
+
+            request = {
+                "owner_work": str(work),
+                "sdk_install": str(sdk),
+                "managed": {assembly.name: {"path": str(assembly), "sha256": BACKEND.native.sha(assembly)}},
+                "output": str(output),
+            }
+            with (
+                patch.object(BACKEND, "PROFILE", profile),
+                patch.object(BACKEND, "PROFILE_SHA", BACKEND.native.sha(profile)),
+                patch.object(BACKEND.native, "PROFILE", native_profile),
+                patch.object(BACKEND.native, "PROFILE_SHA", BACKEND.native.sha(native_profile)),
+                patch.object(BACKEND.native, "input_state", return_value=("fixture", game, {})),
+                patch.object(BACKEND, "tools", return_value={}),
+                patch.object(BACKEND.native, "sdk_files", return_value={}),
+                patch.object(BACKEND, "configuration", side_effect=configuration),
+                patch.object(BACKEND, "linker_command", return_value=["fixture-linker"]),
+                patch.object(BACKEND, "converter_command", return_value=["fixture-converter"]),
+                patch.object(BACKEND.native, "invoke", side_effect=invoke),
+                patch.object(BACKEND.native, "run", return_value={"success": True}) as build,
+                patch.object(BACKEND.native, "generated_profile") as generated,
+                patch.object(BACKEND, "target_inputs") as fixed_target,
+            ):
+                result = BACKEND.run(request)
+            self.assertTrue(result["success"])
+            self.assertEqual(result["phase"], "native-built")
+            self.assertEqual(result["source_frames"], 1)
+            build.assert_called_once()
+            generated.assert_not_called()
+            fixed_target.assert_not_called()
+
+    def test_android_failure_keeps_wall_memory_and_storage_measurements(self):
+        runner_spec = importlib.util.spec_from_file_location("android_owner_runner_test", PATH.parent / "run_android.py")
+        runner = importlib.util.module_from_spec(runner_spec)
+        runner_spec.loader.exec_module(runner)
+        environment = patch.dict(runner.os.environ)
+        environment.start()
+        self.addCleanup(environment.stop)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            inputs, runtime, installed = [root / n for n in ("inputs", "runtime", "installed")]
+            for directory in (inputs / "game", inputs / "work/inventory", inputs / "work/config", inputs / "packages", runtime, installed):
+                directory.mkdir(parents=True)
+            original = inputs / "game/original.bin"
+            original.write_bytes(b"independent owner input fixture")
+            digest = BACKEND.native.sha(original)
+            (inputs / "input-hashes.json").write_text(json.dumps({"game/original.bin": digest}))
+            (inputs / "work/inventory/files.json").write_text(
+                json.dumps({"files": [{"path": "original.bin", "sha256": digest, "size": original.stat().st_size}]})
+            )
+            request = inputs / "request.json"
+            request.write_text(
+                json.dumps({"source_inputs": {"packages": "packages"}, "target": {"profile": "recipe/fixture.json", "source": "packages"}, "output": "attempt"})
+            )
+
+            def fail(production):
+                Path(production["output"]).mkdir()
+                raise RuntimeError("independent converter failure fixture")
+
+            backend = SimpleNamespace(native=BACKEND.native, run=fail)
+            specification = SimpleNamespace(loader=SimpleNamespace(exec_module=lambda module: None))
+            with (
+                patch.object(runner.importlib.util, "spec_from_file_location", return_value=specification),
+                patch.object(runner.importlib.util, "module_from_spec", return_value=backend),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "converter failure fixture"):
+                    runner.run(request, runtime, installed)
+            measurements = json.loads((inputs / "work/attempt/android-measurements.json").read_text())
+            self.assertGreaterEqual(measurements["wall_seconds"], 0)
+            self.assertGreater(measurements["python_peak_rss_bytes"], 0)
+            self.assertGreater(measurements["free_bytes_before"], 0)
+            self.assertGreater(measurements["free_bytes_after"], 0)
+            self.assertFalse(measurements["runtime_qualified"])
+            self.assertEqual(BACKEND.native.sha(original), digest)
+            measurement = inputs / "work/attempt/android-measurements.json"
+            measurement.unlink()
+            with (
+                patch.object(runner.importlib.util, "spec_from_file_location", return_value=specification),
+                patch.object(runner.importlib.util, "module_from_spec", return_value=backend),
+            ):
+                with self.assertRaises(FileExistsError):
+                    runner.run(request, runtime, installed)
+            self.assertFalse(measurement.exists())
+
+    def test_explicit_target_source_cannot_drift_or_escape(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            source = root / "source"
+            source.mkdir()
+            file = source / "Fixture.cs"
+            file.write_text("// authored target source")
+            profile = root / "target.json"
+            profile.write_text(json.dumps({"source_commit": "fixture", "source_files": {"Fixture.cs": BACKEND.native.sha(file)}}))
+            target, actual, digest = BACKEND.target_inputs({"profile": str(profile), "source": str(source)})
+            self.assertEqual((target["source_commit"], actual, digest), ("fixture", source, BACKEND.native.sha(profile)))
+            file.write_text("// changed target source")
+            with self.assertRaisesRegex(ValueError, "target authored source drift"):
+                BACKEND.target_inputs({"profile": str(profile), "source": str(source)})
+            with self.assertRaisesRegex(ValueError, "target requires"):
+                BACKEND.target_inputs({"source": str(source)})
+
+    def test_sdk_descriptors_and_root_marker_are_checked_before_execution(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            sdk = Path(temporary).resolve()
+            names = [
+                "Unity.app/Contents/il2cpp/build/deploy/Fixture.dll",
+                "Unity.app/Contents/il2cpp/LinkerDescriptors/Default/fixture.xml",
+                "Unity.app/Contents/il2cpp/il2cpp_root",
+                "PlaybackEngines/AndroidPlayer/modules.asset",
+                "PlaybackEngines/AndroidPlayer/Tools/AndroidNativeLink.xml",
+            ]
+            files = {}
+            for name in names:
+                path = sdk / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("" if name.endswith("il2cpp_root") else "independent SDK fixture")
+                files[name] = BACKEND.native.sha(path)
+            self.assertEqual(BACKEND.tools(sdk, {"tools": files}), files)
+            (sdk / names[1]).write_text("changed descriptor")
+            with self.assertRaisesRegex(ValueError, "configuration drift"):
+                BACKEND.tools(sdk, {"tools": files})
+
     def test_complete_provider_membership_and_byte_drift_refuse(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve()
@@ -30,6 +180,28 @@ class OwnerCodeBackendTests(unittest.TestCase):
                 BACKEND.providers(request, profile)
             with self.assertRaisesRegex(ValueError, "relative"):
                 BACKEND.providers({"../Fixture.dll": request["Fixture.dll"]}, {"managed_assemblies": ["../Fixture.dll"]})
+
+    def test_fixed_target_requires_immutable_colocated_symbol_companions(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            dll = root / "Fixture.dll"
+            dll.write_bytes(b"independent assembly witness")
+            request = {dll.name: {"path": str(dll), "sha256": BACKEND.native.sha(dll)}}
+            profile = {"managed_assemblies": [dll.name], "symbol_assemblies": [dll.name]}
+            with self.assertRaisesRegex(ValueError, "symbol companion missing"):
+                BACKEND.providers(request, profile)
+            pdb = dll.with_suffix(".pdb")
+            pdb.write_bytes(b"independent debug symbol witness")
+            before = BACKEND.providers(request, profile)
+            self.assertEqual(set(before), {dll.name, pdb.name})
+            pdb.write_bytes(b"changed symbols")
+            self.assertNotEqual(BACKEND.providers(request, profile), before)
+            pdb.unlink()
+            elsewhere = root / "elsewhere.pdb"
+            elsewhere.write_bytes(b"redirected symbols")
+            pdb.symlink_to(elsewhere)
+            with self.assertRaisesRegex(ValueError, "redirected"):
+                BACKEND.providers(request, profile)
 
     def test_policy_keeps_whole_closure_and_original_checks(self):
         profile = json.loads(BACKEND.PROFILE.read_text())

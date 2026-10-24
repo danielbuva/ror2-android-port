@@ -1651,6 +1651,35 @@ run; it uses the same committed source and newly generated owner work, never a
 shared Unity project. Its private location and ownership are recorded locally;
 no device or storage configuration is changed.
 
+The optional fixed-target mode additionally requires a separate owner-supplied
+public authored-source root matching every file in `recipe/owner-j850-code.json`.
+Its public Git commit is the source/generator: extract the selected files with
+`git archive` or use a read-only checkout of that commit. The owner entry verifies
+every source hash before and after use; no historical generated source is a
+supplier. The five explicit target dependencies and request setup are in the
+[owner README](../tools/phone-build/owner-code/README.md#fixed-accepted-source-target).
+Targets, tool/source archives, original decompilations, generated providers,
+metadata, compressed sources and all native outputs stay private under `work/`.
+The default source mode's authorized audio inputs are unchanged.
+
+The experimental owner code producer's optional Linux route requires explicitly
+supplied public QEMU ARM64 runner/dependencies, a GNU x86-64 loader/runtime and
+the exact licensed Linux NDK 21.3.6528147 Clang/BFD tools. These are toolchain
+inputs, acquired from their official/public providers and bound by private
+hash manifests; they contain no generated game code. The owner verifies them
+before and after use. Generic runner ELF files are installed read-only in the
+tool host; original SDK tools and GNU data stay in owner input storage. See the
+[owner setup](../tools/phone-build/owner-code/README.md) for the explicit bindings.
+No timestamped experiment directory is a runtime lookup default.
+
+
+Standalone shader-tool setup additionally requires an explicit exact-SDK
+UnityShaderCompiler, matching host-architecture D3DCompiler_47.dll, glslang/
+DXCompiler plugins and CGIncludes. The Linux-on-Android path supplies a public
+QEMU/GNU runtime separately. These acquired inputs and compiler outputs stay
+ignored; the public client has no timestamped-run lookup or SDK download default.
+[Lifecycle](../tools/phone-build/owner-code/README.md#standalone-sdk-shader-tool)
+covers owned logs, sockets and process cleanup.
 ## Lane authored-source staging
 
 `work/config/lane-staging.json` and

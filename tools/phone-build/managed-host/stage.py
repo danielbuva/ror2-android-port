@@ -6,6 +6,7 @@ import json
 from pathlib import Path, PurePosixPath
 import re
 import shutil
+import subprocess
 
 SOURCE = Path(__file__).resolve().parent
 ROOT = SOURCE.parents[2]
@@ -47,7 +48,7 @@ def load_metadata():
     return data
 
 
-def stage(profile_source, sdk, destination, *, root=ROOT):
+def stage(profile_source, sdk, destination, *, root=ROOT, owner_backend=False):
     profile_source = Path(profile_source).resolve(strict=True)
     sdk = Path(sdk).resolve(strict=True)
     destination = Path(destination).expanduser().absolute()
@@ -71,9 +72,17 @@ def stage(profile_source, sdk, destination, *, root=ROOT):
         bind(path, "repo/" + name)
         if files["repo/" + name][1] != expected:
             raise ValueError("Public transform source drift: " + name)
-    for name in ("NativePythonHost.c", "NativeDotnetMuxer.c", "ToolHostActivity.java", "run_profile.py", "build_fixture.py"):
+    if owner_backend:
+        names = (
+            subprocess.check_output(["git", "ls-files", "-z", "--", "scripts", "tools", "recipe", "environment", ".gitignore", "AGENTS.md", "dev"], cwd=root)
+            .decode()
+            .split("\0")
+        )
+        for name in filter(None, names):
+            bind(root / name, "repo/" + name)
+    for name in ("NativePythonHost.c", "NativeDotnetMuxer.c", "ToolHostActivity.java", "run_profile.py", "build_fixture.py", "AndroidManifest.xml"):
         bind(SOURCE / name, name)
-    for name in ("NativeToolHost.c", "Hello.cs", "AndroidManifest.xml"):
+    for name in ("NativeToolHost.c", "Hello.cs"):
         bind(SOURCE.parent / "native-host" / name, name)
     bind(METADATA, "python-native-plan.json")
     for name, path in {
@@ -107,6 +116,7 @@ if __name__ == "__main__":
     parser.add_argument("--profile-source", type=Path, required=True)
     parser.add_argument("--sdk", type=Path, required=True)
     parser.add_argument("--dest", type=Path, required=True)
+    parser.add_argument("--owner-backend", action="store_true", help="stage current authored owners for the headless whole-player backend")
     args = parser.parse_args()
-    result = stage(args.profile_source, args.sdk, args.dest)
+    result = stage(args.profile_source, args.sdk, args.dest, owner_backend=args.owner_backend)
     print(json.dumps(dict(success=result["success"], files=len(result["files"]))))

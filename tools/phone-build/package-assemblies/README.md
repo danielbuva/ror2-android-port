@@ -6,6 +6,12 @@ producer, including Burst's required managed post-processor. No current game
 build or launcher consumes it. It selects no runtime or final distribution
 architecture. Android execution and full-player/native equivalence remain open.
 
+The request may additionally supply `android_tools` from the owner-code backend.
+Its explicit `dotnet` launcher replaces only the host executables, with an owned
+.NET 8 runtime configuration for the unchanged SDK compiler and post-processor.
+All original SDK and package pins remain checked. This is experimental Android
+tool support; execution qualification is separate from the host result.
+
 The owner supplies the exact macOS ARM64 SDK installation and source packages:
 Burst 1.8.11, Collections 1.2.4, Mathematics 1.2.1 and SDK-builtin UGUI 1.0.0.
 The first three are available at Unity's registry package endpoints:
