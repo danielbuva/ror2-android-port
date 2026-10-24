@@ -434,9 +434,9 @@ source redistribution. Encoder source is not vendored here. Keep the retained
 provider license/notice beside the locally built codec:
 
 ```sh
-python3 tools/phone-build/accepted-output/build_texture_alpha.py \
+python3 tools/phone-build/accepted-output/build_texture_etc.py \
   --archive "$ETCPACK_ARCHIVE" --compiler "$CXX_COMPILER" \
-  --output "$NEW_ALPHA_CODEC_OUTPUT"
+  --output "$NEW_ETC_CODEC_OUTPUT"
 ```
 
 On Android add `--android-tool-root "$OWNED_TOOL_ROOT"` and select that root's
@@ -453,7 +453,7 @@ python3 -I -S -B tools/phone-build/accepted-output/texture_produce.py \
   --profile recipe/owner-alpha-textures.json \
   --profile-sha256 fa23bc2cdc71234e3a5d4a084519a63bb59c6ef321e790fb964c295c8bd1d51a \
   --pc "$ORIGINAL_PC_ROOT" --output "$NEW_TEXTURE_OUTPUT" \
-  --alpha-codec "$ALPHA_CODEC" --alpha-codec-sha256 "$ALPHA_CODEC_SHA256"
+  --etc-codec "$ETC_CODEC" --etc-codec-sha256 "$ETC_CODEC_SHA256"
 ```
 
 The pinned source export maps Alpha8 samples to original alpha plus zero RGB.
@@ -467,3 +467,36 @@ and use the existing owned interpreter/runtime/library path. Nine authored
 texture contracts include three non-game alpha patterns and malformed inputs.
 Other source formats, mip/cubemap generation, complete bundle assembly, ordinary
 app tool delivery and complete phone-only installation remain open.
+
+## Produce ETC1 single-mip textures directly from original PC bundles
+
+Current experimental source-only path. The complete host-qualified profile is
+`recipe/owner-rgb-textures.json`, SHA-256
+`2c4c1c416f676d09a93f987d1ea9f1ecda46aa279baee5799a196beec59fc4ed`.
+It covers all 281 ETC1/single-mip records, including both authored composition
+ramp aliases, through 274 canonical sources in 79 original PC bundles. The
+profile contains selectors, field bounds, hashes and original JPEG policy;
+there are no colors, normal vectors, palettes or encoded blocks.
+
+Build the shared public codec using `build_texture_etc.py` above. Its explicit
+`alpha8`, `rgb` and `normal` pipe modes share the same provider, compiler and
+license owner; the producer selects the mode. The former experimental
+`build_texture_alpha.py` / `--alpha-codec` names remain historical at J1082's
+source commit. Current Alpha8 and RGB profiles use `--etc-codec`.
+
+```sh
+python3 -I -S -B tools/phone-build/accepted-output/texture_produce.py \
+  --profile recipe/owner-rgb-textures.json \
+  --profile-sha256 2c4c1c416f676d09a93f987d1ea9f1ecda46aa279baee5799a196beec59fc4ed \
+  --pc "$ORIGINAL_PC_ROOT" --output "$NEW_TEXTURE_OUTPUT" \
+  --etc-codec "$ETC_CODEC" --etc-codec-sha256 "$ETC_CODEC_SHA256" \
+  --jpeg-codec "$JPEG_CODEC" --jpeg-codec-sha256 "$JPEG_CODEC_SHA256"
+```
+
+The same public JPEG tool remains required for source images whose original
+paths select JPEG export. Normal unpacking uses original AG coordinates and an
+integer square root; original pixel samples feed every output. The shared
+producer verifies every original input and produced/persisted body/resource
+extent before success, retaining failed outputs and refusing existing output
+or codec drift. Full phone qualification is pending the combined content case;
+complete bundles, mip/cubemap production and ordinary app delivery remain open.

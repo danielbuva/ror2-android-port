@@ -5,6 +5,7 @@ from array import array
 import hashlib
 import importlib.util
 import json
+import math
 from pathlib import Path
 import resource
 import shutil
@@ -25,7 +26,7 @@ BUNDLE = module("unity_bundle")
 MESH = module("mesh_produce")
 
 
-def dxt1_rgb(data, width, height):
+def dxt1_rgb(data, width, height, force_four_colours=False):
     """Decode a BC1 top mip to RGB, retaining logical dimensions and row order."""
     if type(width) is not int or type(height) is not int or not 0 < width <= 8192 or not 0 < height <= 8192 or width * height * 3 > BUNDLE.LIMIT:
         raise ValueError("unqualified DXT1 dimensions")
@@ -43,7 +44,7 @@ def dxt1_rgb(data, width, height):
             first, second, selectors = struct.unpack_from("<HHI", data, (by * columns + bx) * 8)
             a, b = colour(first), colour(second)
             palette = [a, b]
-            if first > second:
+            if first > second or force_four_colours:
                 palette.extend((tuple((2 * x + y) // 3 for x, y in zip(a, b)), tuple((x + 2 * y) // 3 for x, y in zip(a, b))))
             else:
                 palette.extend((tuple((x + y) // 2 for x, y in zip(a, b)), (0, 0, 0)))
@@ -52,6 +53,86 @@ def dxt1_rgb(data, width, height):
                     offset = ((by * 4 + y) * width + bx * 4 + x) * 3
                     output[offset : offset + 3] = bytes(palette[(selectors >> (2 * (y * 4 + x))) & 3])
     return bytes(output)
+
+
+def rgba_source(data, width, height, texture_format):
+    """Decode the qualified PC formats to logical bottom-up RGBA bytes."""
+    if type(width) is not int or type(height) is not int or not 0 < width <= 8192 or not 0 < height <= 8192 or width * height * 4 > BUNDLE.LIMIT:
+        raise ValueError("unqualified source RGBA dimensions")
+    count = width * height
+    if texture_format == 4:
+        if len(data) != count * 4:
+            raise ValueError("unqualified RGBA32 extent")
+        return data
+    columns, rows = (width + 3) // 4, (height + 3) // 4
+    if texture_format in (10, 12):
+        stride = 16 if texture_format == 12 else 8
+        if len(data) < columns * rows * stride:
+            raise ValueError("truncated BC source")
+        colours = b"".join(data[q + 8 : q + 16] for q in range(0, columns * rows * 16, 16)) if texture_format == 12 else data
+        rgb = dxt1_rgb(colours, width, height, texture_format == 12)
+    elif texture_format == 3:
+        if len(data) != count * 3:
+            raise ValueError("unqualified RGB24 extent")
+        rgb = data
+    elif texture_format == 9:
+        if len(data) != count * 2:
+            raise ValueError("unqualified R16 extent")
+        rgb = bytearray(count * 3)
+        rgb[0::3] = data[1::2]
+    else:
+        raise ValueError("unqualified source texture format")
+    rgba = bytearray(count * 4)
+    rgba[0::4], rgba[1::4], rgba[2::4], rgba[3::4] = rgb[0::3], rgb[1::3], rgb[2::3], bytes([255]) * count
+    if texture_format in (10, 12):
+        for by in range(rows):
+            for bx in range(columns):
+                start = (by * columns + bx) * stride
+                if texture_format == 10:
+                    first, second, selectors = struct.unpack_from("<HHI", data, start)
+                    if first > second or not selectors & (selectors >> 1) & 0x55555555:
+                        continue
+                    alpha = [255, 255, 255, 0]
+                    bits, mask = 2, 3
+                else:
+                    first, second = data[start : start + 2]
+                    alpha = [first, second]
+                    if first > second:
+                        alpha += [((7 - i) * first + i * second) // 7 for i in range(1, 7)]
+                    else:
+                        alpha += [((5 - i) * first + i * second) // 5 for i in range(1, 5)] + [0, 255]
+                    selectors = int.from_bytes(data[start + 2 : start + 8], "little")
+                    bits, mask = 3, 7
+                for y in range(min(4, height - by * 4)):
+                    for x in range(min(4, width - bx * 4)):
+                        rgba[((by * 4 + y) * width + bx * 4 + x) * 4 + 3] = alpha[(selectors >> (bits * (y * 4 + x))) & mask]
+    return bytes(rgba)
+
+
+def rgb_channels(rgba):
+    rgb = bytearray(len(rgba) // 4 * 3)
+    rgb[0::3], rgb[1::3], rgb[2::3] = rgba[0::4], rgba[1::4], rgba[2::4]
+    return bytes(rgb)
+
+
+def normal_rgb(rgba):
+    """Unpack original AG normal coordinates using an integer square root."""
+    rgb = bytearray(len(rgba) // 4 * 3)
+    for q in range(0, len(rgba), 4):
+        green, alpha = rgba[q + 1], rgba[q + 3]
+        blue = (math.isqrt(max(0, 255**2 - (2 * alpha - 255) ** 2 - (2 * green - 255) ** 2)) + 255) // 2
+        offset = q // 4 * 3
+        rgb[offset : offset + 3] = bytes((alpha, green, blue))
+    return bytes(rgb)
+
+
+def jpeg_rgb(pixels, width, height, codec):
+    if codec is None:
+        raise ValueError("pinned public JPEG codec required")
+    result = subprocess.run([str(codec), str(width), str(height)], input=pixels, capture_output=True, timeout=120)
+    if result.returncode != 0 or len(result.stdout) != width * height * 3:
+        raise ValueError("public JPEG codec failed or returned a different pixel extent")
+    return result.stdout
 
 
 def dilate_rgba(data, width, height):
@@ -126,6 +207,8 @@ def body_output(body, fields, pixels, target, operation):
         replacements["m_TextureFormat"] = struct.pack("<i", 3)
     elif operation == "alpha8-etc2":
         replacements["m_TextureFormat"] = struct.pack("<i", 47)
+    elif operation == "etc1":
+        replacements["m_TextureFormat"] = struct.pack("<i", 34)
     stream = target["stream"]
     if target["inline"] or not pixels:
         if stream != {"offset": 0, "size": 0, "path": ""}:
@@ -145,7 +228,7 @@ def body_output(body, fields, pixels, target, operation):
     return bytes(result)
 
 
-def pixels_input(bundle, body, selected, jpeg_codec=None, alpha_codec=None):
+def pixels_input(bundle, body, selected, jpeg_codec=None, etc_codec=None):
     location = selected["pixels"]
     if location["member"] is None:
         start = location["offset"]
@@ -161,14 +244,31 @@ def pixels_input(bundle, body, selected, jpeg_codec=None, alpha_codec=None):
     operation = selected["operation"]
     if operation == "copy":
         return pixels
-    if operation == "alpha8-etc2":
-        if alpha_codec is None:
-            raise ValueError("pinned public Alpha8 codec required")
-        if len(pixels) != selected["width"] * selected["height"]:
-            raise ValueError("unqualified Alpha8 source extent")
-        result = subprocess.run([str(alpha_codec), str(selected["width"]), str(selected["height"])], input=pixels, capture_output=True, timeout=120)
-        if result.returncode != 0 or len(result.stdout) != len(pixels):
-            raise ValueError("public Alpha8 codec failed or returned a different pixel extent")
+    if operation in {"alpha8-etc2", "etc1"}:
+        if etc_codec is None:
+            raise ValueError("pinned public ETC codec required")
+        width, height = selected["width"], selected["height"]
+        count = width * height
+        mode, output_size = "alpha8", count
+        if operation == "alpha8-etc2":
+            if len(pixels) != count:
+                raise ValueError("unqualified Alpha8 source extent")
+        else:
+            fmt = struct.unpack("<i", field(body, selected["fields"], "m_TextureFormat"))[0]
+            normal = struct.unpack("<i", field(body, selected["fields"], "m_LightmapFormat"))[0] == 3
+            rgba = rgba_source(pixels, width, height, fmt)
+            if normal:
+                pixels = normal_rgb(rgba)
+            else:
+                if not selected["jpeg"] and 0 in rgba[3::4]:
+                    rgba = dilate_rgba(rgba, width, height)
+                pixels = rgb_channels(rgba)
+            if selected["jpeg"]:
+                pixels = jpeg_rgb(pixels, width, height, jpeg_codec)
+            mode, output_size = "normal" if normal else "rgb", count // 2
+        result = subprocess.run([str(etc_codec), str(width), str(height), mode], input=pixels, capture_output=True, timeout=120)
+        if result.returncode != 0 or len(result.stdout) != output_size:
+            raise ValueError("public ETC codec failed or returned a different pixel extent")
         return result.stdout
     if operation == "dilate-rgba":
         return dilate_rgba(pixels, selected["width"], selected["height"])
@@ -177,16 +277,11 @@ def pixels_input(bundle, body, selected, jpeg_codec=None, alpha_codec=None):
         if operation == "dxt1-rgb":
             return pixels
     if operation in {"rgb-jpeg", "dxt1-rgb-jpeg"}:
-        if jpeg_codec is None:
-            raise ValueError("pinned public JPEG codec required")
-        result = subprocess.run([str(jpeg_codec), str(selected["width"]), str(selected["height"])], input=pixels, capture_output=True, timeout=120)
-        if result.returncode != 0 or len(result.stdout) != selected["width"] * selected["height"] * 3:
-            raise ValueError("public JPEG codec failed or returned a different pixel extent")
-        return result.stdout
+        return jpeg_rgb(pixels, selected["width"], selected["height"], jpeg_codec)
     raise ValueError("unqualified texture operation")
 
 
-def produce(profile_path, profile_sha256, pc, output, jpeg_codec=None, jpeg_codec_sha256=None, alpha_codec=None, alpha_codec_sha256=None):
+def produce(profile_path, profile_sha256, pc, output, jpeg_codec=None, jpeg_codec_sha256=None, etc_codec=None, etc_codec_sha256=None):
     if BUNDLE.sha(profile_path) != profile_sha256:
         raise ValueError("texture profile drift")
     profile = json.loads(profile_path.read_text())
@@ -194,7 +289,10 @@ def produce(profile_path, profile_sha256, pc, output, jpeg_codec=None, jpeg_code
         raise ValueError("unknown texture input")
     pc = pc.resolve(strict=True)
     needs_jpeg = any(
-        texture["operation"] in {"rgb-jpeg", "dxt1-rgb-jpeg"} for bundle in profile["bundles"] for member in bundle["members"] for texture in member["textures"]
+        texture["operation"] in {"rgb-jpeg", "dxt1-rgb-jpeg"} or (texture["operation"] == "etc1" and texture["jpeg"])
+        for bundle in profile["bundles"]
+        for member in bundle["members"]
+        for texture in member["textures"]
     )
     if needs_jpeg or jpeg_codec is not None or jpeg_codec_sha256 is not None:
         if jpeg_codec is None or jpeg_codec_sha256 is None:
@@ -202,13 +300,15 @@ def produce(profile_path, profile_sha256, pc, output, jpeg_codec=None, jpeg_code
         jpeg_codec = jpeg_codec.resolve(strict=True)
         if jpeg_codec.is_relative_to(pc) or BUNDLE.sha(jpeg_codec) != jpeg_codec_sha256:
             raise ValueError("public JPEG codec drift or overlap with original input")
-    needs_alpha = any(texture["operation"] == "alpha8-etc2" for bundle in profile["bundles"] for member in bundle["members"] for texture in member["textures"])
-    if needs_alpha or alpha_codec is not None or alpha_codec_sha256 is not None:
-        if alpha_codec is None or alpha_codec_sha256 is None:
-            raise ValueError("pinned public Alpha8 codec required")
-        alpha_codec = alpha_codec.resolve(strict=True)
-        if alpha_codec.is_relative_to(pc) or BUNDLE.sha(alpha_codec) != alpha_codec_sha256:
-            raise ValueError("public Alpha8 codec drift or overlap with original input")
+    needs_etc = any(
+        texture["operation"] in {"alpha8-etc2", "etc1"} for bundle in profile["bundles"] for member in bundle["members"] for texture in member["textures"]
+    )
+    if needs_etc or etc_codec is not None or etc_codec_sha256 is not None:
+        if etc_codec is None or etc_codec_sha256 is None:
+            raise ValueError("pinned public ETC codec required")
+        etc_codec = etc_codec.resolve(strict=True)
+        if etc_codec.is_relative_to(pc) or BUNDLE.sha(etc_codec) != etc_codec_sha256:
+            raise ValueError("public ETC codec drift or overlap with original input")
     parent = output.parent.resolve(strict=True)
     output = parent / output.name
     if output.name in ("", ".", "..") or output.exists() or output.is_symlink() or parent.is_relative_to(pc) or pc.is_relative_to(output):
@@ -227,8 +327,8 @@ def produce(profile_path, profile_sha256, pc, output, jpeg_codec=None, jpeg_code
     receipt = {"success": False, "input_id": MESH.INPUT_ID, "profile_sha256": profile_sha256, "objects": 0, "object_bytes": 0, "resource_bytes": 0}
     if jpeg_codec is not None:
         receipt["jpeg_codec_sha256"] = jpeg_codec_sha256
-    if alpha_codec is not None:
-        receipt["alpha_codec_sha256"] = alpha_codec_sha256
+    if etc_codec is not None:
+        receipt["etc_codec_sha256"] = etc_codec_sha256
     try:
         with (output / "objects.bin").open("xb") as objects, (output / "resources.bin").open("xb") as resources, (output / "index.jsonl").open("x") as index:
             for selected_bundle in profile["bundles"]:
@@ -244,7 +344,7 @@ def produce(profile_path, profile_sha256, pc, output, jpeg_codec=None, jpeg_code
                         body = BUNDLE.exact(member, selected["bytes"])
                         if hashlib.sha256(body).hexdigest() != selected["sha256"]:
                             raise ValueError("original texture body drift")
-                        pixels = pixels_input(bundle, body, selected, jpeg_codec, alpha_codec)
+                        pixels = pixels_input(bundle, body, selected, jpeg_codec, etc_codec)
                         pixel_sha = hashlib.sha256(pixels).hexdigest()
                         for target in selected["outputs"]:
                             if pixel_sha != target["pixel_sha256"] or len(pixels) != target["pixel_bytes"]:
@@ -282,8 +382,8 @@ def produce(profile_path, profile_sha256, pc, output, jpeg_codec=None, jpeg_code
                             raise ValueError("persisted texture extent drift")
         if jpeg_codec is not None and BUNDLE.sha(jpeg_codec) != jpeg_codec_sha256:
             raise ValueError("public JPEG codec changed during production")
-        if alpha_codec is not None and BUNDLE.sha(alpha_codec) != alpha_codec_sha256:
-            raise ValueError("public Alpha8 codec changed during production")
+        if etc_codec is not None and BUNDLE.sha(etc_codec) != etc_codec_sha256:
+            raise ValueError("public ETC codec changed during production")
         receipt["outputs"] = {
             name: {"bytes": (output / name).stat().st_size, "sha256": BUNDLE.sha(output / name)} for name in ("objects.bin", "resources.bin", "index.jsonl")
         }
@@ -306,10 +406,10 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--jpeg-codec", type=Path)
     parser.add_argument("--jpeg-codec-sha256")
-    parser.add_argument("--alpha-codec", type=Path)
-    parser.add_argument("--alpha-codec-sha256")
+    parser.add_argument("--etc-codec", type=Path)
+    parser.add_argument("--etc-codec-sha256")
     args = parser.parse_args()
-    produce(args.profile, args.profile_sha256, args.pc, args.output, args.jpeg_codec, args.jpeg_codec_sha256, args.alpha_codec, args.alpha_codec_sha256)
+    produce(args.profile, args.profile_sha256, args.pc, args.output, args.jpeg_codec, args.jpeg_codec_sha256, args.etc_codec, args.etc_codec_sha256)
 
 
 if __name__ == "__main__":

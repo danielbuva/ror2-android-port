@@ -91,14 +91,21 @@ remain separate gates; no current game build or runtime consumes these packs.
 The same owner supports the source Alpha8 cohort through
 `recipe/owner-alpha-textures.json`: canonical original bodies/pixels are reused
 with explicit target names, storage extents and unchanged-field admission.
-`build_texture_alpha.py` builds a separately acquired pinned public ETCPACK
+`build_texture_etc.py` builds a separately acquired pinned public ETCPACK
 provider and retains its license, logs and complete/failed receipt;
-`texture_alpha.cpp` owns bounded Alpha8 stdin/ETC2 stdout processing. The source
+`texture_etc.cpp` owns bounded Alpha8 stdin/ETC2 stdout processing. The source
 export's zero RGB and original alpha produce every pixel, without an SDK encoder.
 [Setup/lifecycle](../tools/phone-build/accepted-output/README.md#produce-alpha8-textures-directly-from-original-pc-bundles)
 requires the pinned native helper. J1082 qualifies the whole 4,326-record cohort
 and helper build on Android. Other compressed textures, mip/cubemap production
 and full bundle assembly remain open.
+The same codec/producer now owns the ETC1 single-mip source path through
+`recipe/owner-rgb-textures.json`. Its source-format decoding, original JPEG
+policy and AG normal unpacking feed explicit color/normal encoder modes.
+The Alpha8 helper is generalized as `build_texture_etc.py` / `texture_etc.cpp`,
+with `--etc-codec` admission for both profiles. Setup/state/teardown and source/
+persisted-output verification stay with the existing owners. Host qualification
+passes; the complete combined phone case is the remaining admission gate.
 `build_sdk_runner.py` owns current experimental public Box64 acquisition-by-build
 for standalone owner-supplied SDK tools. Explicit unchanged upstream source,
 the pinned SDK NDK and host archive tools produce a private Android runner.
