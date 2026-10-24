@@ -9,8 +9,8 @@ result in the journal.
 
 - [ ] Compare the opt-in source view against a matched PC reference and resolve
       measured color/lighting differences; terrain visibility is restored in J1077.
-- [ ] Restore serialized stage Wwise clients under original native readiness and
-      complete audio mix/spatial/event-attribution/audibility acceptance.
+- [ ] Complete audio mix/spatial/event-attribution/audibility acceptance; source
+      stage clients and bounded release/restart are qualified in J1080.
 - [ ] Unassisted full run with normal-difficulty combat (all current route evidence is assisted).
 - [ ] Commit an actually earned alternate loadout choice through the profile (J493 revisit).
 - [ ] Observe the remaining J503 achievement conditions (near-death charge, two-stack Mountain

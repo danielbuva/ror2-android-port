@@ -36740,3 +36740,138 @@ installation, runtime controls and matched performance remain end-to-end gates.
 Revisit this cohort on source/input/recipe/interpreter/compiler/provider changes;
 no game build currently consumes these private packs. ARCHITECTURE/LOCAL_STATE
 and the producer README name setup, teardown and ownership.
+
+## J1080 — Preserve native stage audio through transport, End Run and Quit
+
+2026-10-24 UTC.
+
+**Hypothesis and owner.** J1077 restores actor/effect sound paths, but source
+scene preparation still omits original Wwise and RTPC clients. Those clients
+can retain their original lifecycle once process audio is ready. Reinspect
+pinned R2API.Sound `f539511e` bank initialization/lifetime and the accepted
+original component/RTPC contracts; neither supplies an Android replacement.
+Extend the existing scene generator and StageGeometrySession. Original
+components retain bank/event/registration/position and unload ownership; no
+second Init, synthetic event, forced volume or routing success is added.
+
+The generator reads the existing validated original-audio selection. Requested
+scenes preserve authored component blocks, fields, references, hierarchy and
+enable states. Default off keeps the previous omission. Source-null scripts
+remain omitted, unsupported render callbacks remain disabled and duplicate
+global-owner roots remain inactive. Current full builds synchronize the mode
+before stage maps/cache identity. Code-only/fast actions refuse a content-mode
+change before scene writes; isolated R6 uses its own selection and R9 verifies
+that mode without rewriting R6. StageGeometrySession admits source SceneInfo
+audio only after native readiness and records a loaded scene-audio census.
+The stale unavailable-audio footer becomes “Offline play”; its existing source
+provenance chain is refreshed.
+
+**Host and first refusals.** Buffered real-data replay preserves all 635 original
+audio blocks across 23 scenes byte for byte. All 66 referenced GUIDs already
+exist in the project. Default-off scene hashes match R43, metadata stays
+identical and the replay writes no project files. Original export hashes match
+the owned source receipt. All 23 GameManager roots retain their existing single
+component contract; SceneInfo's original audio clients need the ready-only
+admission. Synthetic contracts exercise disabled-state preservation, exact
+mode restoration, unowned-content refusal, pre-write code-only/R9 refusal and
+actual source-context activation, failure rollback and retirement.
+
+The host suite passes 2,026 tests with 11 explicit skips. The initial full run
+finds an unnecessary catalog-analysis regeneration in the R9 check and stale
+source pins. Use the existing StageIO reader and refresh those pins; preserve
+the failed logs. A later pre-push refusal catches the footer's remaining
+provenance pin; refresh its owner-manifest/producer/camera chain, retaining the
+checks. After adopting merged J1078 tooling, all player runtime hashes remain
+identical, 145 affected checks pass with three skips, and fresh-clone CI passes
+1,944 tests with 139 skips. Missing exact-editor facilities are explicit skips.
+
+The first build refuses a disconnected local MCP server. Restart the pinned
+server and verify the exact connected editor with doctor. A premature retry
+correctly refuses dirty source before Unity dispatch; its short wrapper log
+replaces the earlier wrapper assertion, while the canonical MCP failure log
+remains intact. No APK is produced by either refusal. No cache clearing or
+source/receipt guard weakening is used.
+
+**Full build and installation.** Request `20261024T135726.995470Z`, source
+`4c950513f1f5f75459be563472f831c070908769`, completes the normal full content/player
+build in 290.649265 seconds with zero Unity errors. APK SHA-256 is
+`3d012ee9783e900117a10718d442582a3e6e6ecc1f444a48c316db7f043d4467`.
+All 267 artifact references are independently rehashed without binary copies.
+The 49 changed payload files are the 23 source-scene bundles, their manifests
+and aggregate metadata; no payload path is added or removed. Player execution
+remains IL2CPP ARM64/Vulkan. Host free space is 137 GiB before the build.
+Streaming install queries current adopted storage/placement, sync verifies the
+payload, and independent readback verifies installed APK bytes. The resumed
+worker refreshes its stale own lease under the documented dead-owner rule.
+
+**Two unchanged assisted controls.** Plain reaches 37.366531 seconds on Lakes.
+Stage-exit completes one original exit into Goolake at 156.220825 seconds total.
+Both have ready original audio/all 153 banks, the original source pistol name,
+zero unexplained current-process errors and a byte-identical 13-run profile.
+Their loaded scene-audio counts are 55 on Lakes and 21 on Goolake, with source
+SceneInfo active; the serialized input contains 44 and 20 respectively. These
+are loaded component counts, not counts of audible voices or proven events.
+Plain MainOutput has 454 callbacks, 523,008 finite samples and 120,736 nonzero;
+stage's early window has 460 callbacks, 529,920 finite samples and 180,864
+nonzero. Neither has nonfinite samples. Both cleanups verify selector/process
+absence and sleeping display. The first pistol playing-ID sample remains
+empty; no event-to-PCM attribution follows.
+
+**Source-view regression.** The same player reaches 5.003204 seconds in the
+opt-in Huntress route with 55 scene-audio clients. Terrain, grass and survivor
+remain visible, and the corrected footer is visible. The exact camera observes
+the supported two-pass Outline material; the source Blit invocation remains
+unobserved. Screenshot-bracketing logs have no unexplained errors, profile
+bytes remain unchanged and cleanup verifies stop/sleep. Appearance remains
+flat/desaturated and the protocol retains visual acceptance false. This is no
+matched PC rendering or full source-view audio qualification.
+
+**Original release and fresh restart.** A fresh assisted Commando session reaches
+35 seconds, confirms End Run and returns to the next menu. Quit observes the
+original bank-release wakeup returning success, native engine termination and
+process absence at 18.296479 seconds, without query timeout, ANR, unexplained
+shutdown error or host force-stop. The same-process log issues SIG:9 after
+Unity teardown; Android independently records SIGNALED/status 9 without an
+ANR trace.
+
+One new stable saved pair joins 461 callbacks, 531,072 finite samples and
+125,294 nonzero. Its metadata witnesses both original Term returns, verified
+post-Term disarm and raw persistence. Independent size/hash checks bracket
+transfer, and the existing exporter validates a truncated stereo 48 kHz prefix:
+262,144 finite samples, 88,270 nonzero, 2.730667 seconds, RMS 0.02560244 and peak
+magnitude 0.30601469. Raw SHA-256 is
+`577965f75afe51dcdd460ee4474a43a7d58e131891ed3df2bb6b7a2e7a850f7a`;
+sidecar SHA-256 is
+`96e605a2f59f6af23ef264f882f43682267a969e9e37af8238757fe5427783e4`.
+The raw files and derived WAV remain private.
+
+The next process reaches 35.224472 seconds with all 153 banks ready, noAudio=false
+and 55 loaded scene-audio clients. Its MainOutput has 465 callbacks, 535,680
+finite samples, 91,584 nonzero and zero nonfinite samples. Confirmed End Run and
+Quit again succeed, with absence at 18.958712 seconds, successful original
+wakeup/termination, no ANR/query timeout/host force-stop and matching Android
+SIGNALED/status 9. These are bounded application-owned exit/restart observations;
+the roughly 19-second exit is not a latency acceptance.
+
+**Terminal state, evidence and remaining gates.** Independent final readback
+rehashes installed bytes, verifies current adopted placement/runtime backing,
+the unchanged profile, selector/process absence and display sleep. Main retains
+R44; J850 remains the accepted rollback and R43 the preceding diagnostic.
+Generated pruning runs after the build/run tasks. Merged build-lane tooling is
+adopted through the unmerged branch with byte-identical player runtime source;
+the existing device APK remains bound to its original build receipt.
+
+Build/reference/source comparison, mode replay, failed/refused host/build logs,
+strict control qualifications, PCM/export, exit and terminal evidence are under
+`work/coordination/main-port-stage-audio-r1/` and
+`work/coordination/main-port-r44/`. Standard runs are
+`work/experiments/baseline/20261024T140844.002096Z/` and
+`20261024T141258.165442Z/`; source view is
+`work/experiments/original-camera-listener-lifecycle/20261024T142108.293257Z/`.
+Warm/fresh evidence is under `work/experiments/original-game-audio/` at
+`r44-warm-quit-confirmed-20261024T142755.535959Z/` and
+`r44-warm-quit-confirmed-20261024T143444.737764Z/`.
+Other generated stages remain host-qualified only. Complete audio mix, event
+attribution, spatial behavior and physical audibility, PC post-processing/color
+parity, full kit semantics, Siren, unassisted normal runs and sustained
+performance remain open. Moon/finale/escape remain manual only.
