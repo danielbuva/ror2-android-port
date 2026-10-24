@@ -2,7 +2,7 @@
   <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="33" />
   <uses-permission android:name="android.permission.INTERNET" />
   <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
-  <application android:label="Private build-tool fixture" android:debuggable="true" android:allowBackup="false" android:extractNativeLibs="true">
+  <application android:label="Private build-tool fixture" android:debuggable="true" android:allowBackup="false" android:extractNativeLibs="true" android:allowNativeHeapPointerTagging="false">
     <activity android:name=".ToolHostActivity" android:exported="true">
       <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
     </activity>

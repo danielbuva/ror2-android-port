@@ -184,7 +184,7 @@ def run(request_file, runtime, installed):
             "MONO_PATH=" + str(mono / "usr/lib/mono/4.5") + ":" + str(mono / "usr/lib/mono/4.5/Facades"),
             "ROR2_GNU_RUNNER=" + linux["qemu"],
             "ROR2_GNU_LOADER_ROOT=" + linux["loader_root"],
-            "ROR2_GNU_NATIVE_LIBRARY_PATH=" + str(installed),
+            "ROR2_GNU_NATIVE_LIBRARY_PATH=" + str(installed) + ":" + str(runtime / "native-links"),
         ]:
             command += ["-E", value]
         command.append(str(mono / "usr/bin/mono-sgen"))

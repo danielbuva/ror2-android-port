@@ -149,7 +149,13 @@ parsing. The authored launcher adapts that one reported path to the logical JDK
 data layout. The actual ELF is opened from the installed native directory and
 its executable mappings retain that location; no VM binary is patched. Existing SDK JARs
 provide javac's Android reference surface, D8 and apksigner. The caller's extra
-native plan must include the JDK's Android spawn and shared-memory dependencies.
+native plan must include the JDK's Android spawn and shared-memory dependencies. The
+tool app selects Android's documented
+[`allowNativeHeapPointerTagging=false`](https://source.android.com/docs/security/test/tagged-pointers)
+compatibility setting: the acquired JDK truncates a tagged heap pointer under
+the default Android 13 app allocator. This is scoped to this build-tool app,
+changes no device policy or game manifest, and does not qualify future MTE
+devices or repair that upstream JDK limitation.
 
 The optional plan `package` selects a separate lab tool identity while retaining
 Java class names and private provider authority. It cannot select the game
