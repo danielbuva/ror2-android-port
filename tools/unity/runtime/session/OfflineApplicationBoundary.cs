@@ -146,7 +146,7 @@ public sealed partial class PortSession
             if (coordinator.offlineSettings != null)
             {
                 coordinator.offlineSettings.values.offlineDifficulty = (int)coordinator.offlineDifficulty;
-                coordinator.offlineSettings.Save();
+                coordinator.SaveOfflineSettings();
             }
             if (coordinator.r.hud != null)
                 coordinator.r.hud.menuDifficulty = coordinator.offlineDifficulty.ToString();

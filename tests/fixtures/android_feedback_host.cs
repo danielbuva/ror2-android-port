@@ -141,9 +141,17 @@ public class AndroidOfflineSettings
     public static Values current;
     public Values values = new Values();
     public string recovery = "none";
+    public string saveError;
+    public bool refuseSave;
     public int saves;
     public AndroidOfflineSettings(string path) { }
     public void Save() { saves++; }
+    public bool TrySave()
+    {
+        saveError = refuseSave ? "Settings save failed. Check storage and try again." : null;
+        if (!refuseSave) Save();
+        return !refuseSave;
+    }
 }
 public sealed partial class PortSession
 {
@@ -189,6 +197,9 @@ public sealed partial class PortSession
     public bool Paused => offlineSettingsPaused;
     public bool SettingsVisible => offlineSettingsVisible;
     public int SettingsSaves => offlineSettings.saves;
+    public string SettingsError => r.settings.error;
+    public bool SettingsPersisted => r.settings.persisted;
+    public void RefuseSettingsSave(bool refuse) { offlineSettings.refuseSave = refuse; }
     public bool StartSelected => offlineStartSelected;
     public void StartMenu() { offlineStartVisible = true; worldPause = null; worldPlayer = null; }
     void CycleOrdinarySurvivor(int direction) { survivorCycles++; }
@@ -350,6 +361,18 @@ public static class AndroidFeedbackHost
         Check(session.StartSelected && session.survivorCycles == 1 && session.difficultyCycles == 1,
               "ordinary closed-menu A/stick routing changed");
     }
+    static void SettingsSaveFailure()
+    {
+        var session = new PortSession(); session.Prepare(); session.Show(true);
+        session.RefuseSettingsSave(true); GUI.click = "Save and close"; session.Render();
+        Check(session.Paused && session.SettingsVisible && Time.timeScale == 0, "failed save released pause or closed settings");
+        Check(session.SettingsSaves == 0 && !session.SettingsPersisted && !string.IsNullOrEmpty(session.SettingsError),
+              "failed save claimed persistence or omitted recovery message");
+        session.RefuseSettingsSave(false); GUI.click = "Save and close"; session.Render();
+        Check(!session.Paused && !session.SettingsVisible && session.SettingsSaves == 1 && session.SettingsPersisted,
+              "successful retry did not save and resume");
+        Check(string.IsNullOrEmpty(session.SettingsError), "successful retry retained stale error");
+    }
     static void EndRunConfirmation()
     {
         var session = new PortSession(); session.Prepare(); session.Show(true);
@@ -396,6 +419,7 @@ public static class AndroidFeedbackHost
             case "start-menu-input": StartMenuInput(); break;
             case "end-run-confirmation": EndRunConfirmation(); break;
             case "screen-policy": ScreenPolicy(); break;
+            case "settings-save-failure": SettingsSaveFailure(); break;
             default: throw new Exception("unknown case");
         }
         Console.WriteLine(args[0] + ": PASS");

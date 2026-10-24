@@ -17,6 +17,7 @@ public sealed class AndroidOfflineSettings
     public static Values current = new Values();
     public readonly string directory;
     public string recovery = "none";
+    public string saveError;
     public Values values;
     public AndroidOfflineSettings(string directory)
     {
@@ -98,5 +99,24 @@ public sealed class AndroidOfflineSettings
         else
             File.Move(pending, path);
         values = Read(path);
+    }
+    public bool TrySave()
+    {
+        try
+        {
+            Save();
+            saveError = null;
+            return true;
+        }
+        catch (Exception error)
+        {
+            if (!(error is IOException) && !(error is UnauthorizedAccessException) &&
+                !(error is InvalidDataException) && !(error is ArgumentException))
+                throw;
+            // Do not expose paths or claim the commit was verified after an I/O
+            // failure. The owned screen stays open and offers an ordinary retry.
+            saveError = "Settings save failed. Check storage and try again.";
+            return false;
+        }
     }
 }

@@ -101,6 +101,9 @@ class AndroidFeedbackTests(unittest.TestCase):
     def test_screen_policy_spans_loading_and_restores_only_owned_state(self):
         self.run_case("screen-policy")
 
+    def test_failed_save_preserves_pause_and_allows_an_honest_retry(self):
+        self.run_case("settings-save-failure")
+
 
 if __name__ == "__main__":
     unittest.main()

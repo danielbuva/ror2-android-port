@@ -839,6 +839,15 @@ The actual production pointer owner and camera-delta method execute against the
 pinned editor's managed Unity API in `test_android_touch_input.py`; native
 consumption and full gestures still require the device case.
 
+Settings persistence remains owned by `AndroidOfflineSettings`. Its existing
+validated pending/primary/backup transaction is unchanged. `TrySave` converts
+expected storage/validation failures into a bounded message; the settings owner
+keeps its pause/modal and marks persistence false until an actual successful
+retry. Difficulty changes use the same owner. Raw exceptions and private paths
+do not enter the player message. `test_android_settings_store.py` executes the
+production store on a real temporary filesystem with a controlled JSON peer;
+partial-pending recovery is a contract test, not proof of a captured power loss.
+
 The existing `OfflineApplicationSession` also owns `Screen.sleepTimeout` for a
 validated playable coordinator, from `Start` before catalog preparation through
 `OnDestroy`. Menus/loading retain the same awake policy as active play; release
