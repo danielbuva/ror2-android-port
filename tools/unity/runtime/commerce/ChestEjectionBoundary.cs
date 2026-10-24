@@ -175,7 +175,7 @@ public sealed partial class PortSession
                                               string.IsNullOrEmpty(x.GetComponent<EffectComponent>().soundName) &&
                                               !x.GetComponent<VFXAttributes>().DoNotPool &&
                                               x.GetComponentsInChildren<MonoBehaviour>(true).All(
-                                                  c => c && !c.GetType().Name.StartsWith("Ak", StringComparison.Ordinal)));
+                                                  c => c && (GameAudioOriginalOwner.Ready || !c.GetType().Name.StartsWith("Ak", StringComparison.Ordinal))));
             coordinator.Check(report.sourceEffects, "Original silent pooled chest effects or ownership differs");
             coordinator.Check(chestEjectionSources[0].GetComponent<DestroyOnTimer>().duration == .75f &&
                                   chestEjectionSources[1].GetComponent<DestroyOnTimer>().duration == 1,

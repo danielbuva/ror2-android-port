@@ -115,6 +115,7 @@ public sealed partial class PortSession
         FieldInfo[] spineFields;
         object[] spinePrior;
         EntityStateConfiguration spineReload;
+        bool preserveOriginalAudio;
         EntityState lastSpineWeaponState;
         public PrimaryFireSession(PortSession coordinator)
         {
@@ -122,6 +123,7 @@ public sealed partial class PortSession
         }
         public EntityStateConfiguration[] PrepareSpineConfigs(SessionConfig cfg, EntityStateConfiguration spawn)
         {
+            preserveOriginalAudio = cfg.integratedWorld && GameAudioOriginalOwner.Ready;
             spineFields = (cfg.combatSpine ? new[] { typeof(FirePistol2), typeof(FireBarrage), typeof(EntityStates.Commando.DodgeState) }
                                            : new[] { typeof(FirePistol2) })
                               .SelectMany(t => t.GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly))
@@ -134,15 +136,15 @@ public sealed partial class PortSession
             spineReload.serializedFieldsCollection.serializedFields = reload.serializedFieldsCollection.serializedFields.ToArray();
             int index = Array.FindIndex(spineReload.serializedFieldsCollection.serializedFields, x => x.fieldName == "enterSoundString");
             coordinator.Check(index >= 0, "Spine reload sound field missing");
-            if (!cfg.integratedWorld)
+            if (!preserveOriginalAudio)
                 spineReload.serializedFieldsCollection.serializedFields[index].fieldValue.stringValue = "";
-            coordinator.r.primary = new PrimaryFireReport { silentFixture = !cfg.integratedWorld, lastOperands = new PrimaryFireOperandSnapshot() };
+            coordinator.r.primary = new PrimaryFireReport { silentFixture = !preserveOriginalAudio, lastOperands = new PrimaryFireOperandSnapshot() };
             var configs = new[] { spawn, fire, spineReload };
             return cfg.combatSpine ? configs.Concat(coordinator.PrepareCombatConfigs(cfg)).ToArray() : configs;
         }
         public void ApplySpineExclusions()
         {
-            if (!coordinator.r.integratedWorld)
+            if (!preserveOriginalAudio)
                 FirePistol2.firePistolSoundString = "";
             FirePistol2.muzzleEffectPrefab = null;
             FirePistol2.hitEffectPrefab = null;
@@ -152,12 +154,12 @@ public sealed partial class PortSession
             coordinator.r.primary.baseDuration = FirePistol2.baseDuration;
             if (coordinator.r.combat != null)
             {
-                if (!coordinator.r.integratedWorld)
+                if (!preserveOriginalAudio)
                     FireBarrage.fireBarrageSoundString = "";
                 FireBarrage.effectPrefab = null;
                 FireBarrage.hitEffectPrefab = null;
                 FireBarrage.tracerEffectPrefab = null;
-                if (!coordinator.r.integratedWorld)
+                if (!preserveOriginalAudio)
                     EntityStates.Commando.DodgeState.dodgeSoundString = "";
                 EntityStates.Commando.DodgeState.jetEffect = null;
             }
@@ -368,6 +370,7 @@ public sealed partial class PortSession
             }
             if (spineReload)
                 Destroy(spineReload);
+            preserveOriginalAudio = false;
         }
         public bool IsPrimaryFire()
         {

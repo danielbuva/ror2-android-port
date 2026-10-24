@@ -99,7 +99,7 @@ public sealed partial class PortSession
                 for (int i = 0; i < copy.serializedFieldsCollection.serializedFields.Length; i++)
                 {
                     var name = copy.serializedFieldsCollection.serializedFields[i].fieldName;
-                    if (name == "attackSoundString")
+                    if (!GameAudioOriginalOwner.Ready && name == "attackSoundString")
                         copy.serializedFieldsCollection.serializedFields[i].fieldValue.stringValue = "";
                     if (name == "effectPrefab" && ((Type)copy.targetType) == typeof(FireFMJ))
                         copy.serializedFieldsCollection.serializedFields[i].fieldValue.objectValue = null;
@@ -116,16 +116,17 @@ public sealed partial class PortSession
                         {
                             if (component.GetType().Name.StartsWith("Ak", StringComparison.Ordinal))
                             {
+                                if (GameAudioOriginalOwner.Ready) continue;
                                 DestroyImmediate(component);
                                 continue;
                             }
                             foreach (var field in component.GetType().GetFields(BindingFlags.Public | BindingFlags.Instance))
                             {
                                 // Original AkEventIdArg bypasses native ID lookup only for null, not empty strings.
-                                if (field.FieldType == typeof(string) &&
+                                if (!GameAudioOriginalOwner.Ready && field.FieldType == typeof(string) &&
                                     field.Name.IndexOf("sound", StringComparison.OrdinalIgnoreCase) >= 0)
                                     field.SetValue(component, null);
-                                if (typeof(NetworkSoundEventDef).IsAssignableFrom(field.FieldType) || field.Name == "flightSoundLoop")
+                                if (!GameAudioOriginalOwner.Ready && (typeof(NetworkSoundEventDef).IsAssignableFrom(field.FieldType) || field.Name == "flightSoundLoop"))
                                     field.SetValue(component, null);
                                 if (field.FieldType == typeof(GameObject) &&
                                     new[] { "ghostPrefab", "impactEffect", "impactEffectPrefab", "hitEffectPrefab" }.Contains(field.Name))
@@ -168,8 +169,9 @@ public sealed partial class PortSession
             targetHost.name = "Owned original damage target";
             foreach (var component in targetHost.GetComponentsInChildren<MonoBehaviour>(true))
             {
+                if (GameAudioOriginalOwner.Ready && component.GetType().Name.StartsWith("Ak", StringComparison.Ordinal)) continue;
                 component.enabled = false;
-                if (component.GetType().Name.StartsWith("Ak", StringComparison.Ordinal))
+                if (!GameAudioOriginalOwner.Ready && component.GetType().Name.StartsWith("Ak", StringComparison.Ordinal))
                     DestroyImmediate(component);
             }
             foreach (var renderer in targetHost.GetComponentsInChildren<Renderer>(true))

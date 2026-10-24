@@ -264,7 +264,7 @@ public sealed partial class PortSession
                 {
                     var field = copy.serializedFieldsCollection.serializedFields[i];
                     var member = ((Type)copy.targetType).GetField(field.fieldName);
-                    if (member != null && member.FieldType == typeof(string) &&
+                    if (!GameAudioOriginalOwner.Ready && member != null && member.FieldType == typeof(string) &&
                         field.fieldName.IndexOf("sound", StringComparison.OrdinalIgnoreCase) >= 0)
                         copy.serializedFieldsCollection.serializedFields[i].fieldValue.stringValue = "";
                     if (field.fieldName.IndexOf("effect", StringComparison.OrdinalIgnoreCase) >= 0)
@@ -276,7 +276,8 @@ public sealed partial class PortSession
         }
         public void EnemyExclusions()
         {
-            EntityStates.BeetleMonster.HeadbuttState.attackSoundString = "";
+            if (!GameAudioOriginalOwner.Ready)
+                EntityStates.BeetleMonster.HeadbuttState.attackSoundString = "";
             EntityStates.BeetleMonster.HeadbuttState.hitEffectPrefab = null;
             StunState.stunVfxPrefab = null;
         }
@@ -374,6 +375,7 @@ public sealed partial class PortSession
             {
                 if (component.GetType().Name.StartsWith("Ak", StringComparison.Ordinal))
                 {
+                    if (GameAudioOriginalOwner.Ready) continue;
                     DestroyImmediate(component);
                     continue;
                 }
@@ -399,7 +401,8 @@ public sealed partial class PortSession
             var sfx = templateBody.GetComponent<SfxLocator>();
             foreach (var field in typeof(SfxLocator).GetFields(BindingFlags.Public | BindingFlags.Instance))
                 if (field.FieldType == typeof(string))
-                    field.SetValue(sfx, null);
+                    if (!GameAudioOriginalOwner.Ready)
+                        field.SetValue(sfx, null);
             var sourceMaterial = coordinator.artifactBundle.LoadAsset<Material>(cfg.enemyMaterialAsset);
             enemyMaterial = new Material(sourceMaterial);
             enemyMaterial.shader = Resources.Load<Shader>("CommandoMaterialPreview");
@@ -433,7 +436,8 @@ public sealed partial class PortSession
             enemySurface = Instantiate(surfaces[0].surfaceDef);
             enemySurface.impactEffectPrefab = null;
             if (cfg.integratedWorld)
-                enemySurface.impactSoundString = null;
+                if (!GameAudioOriginalOwner.Ready)
+                    enemySurface.impactSoundString = null;
             foreach (var surface in surfaces)
                 surface.surfaceDef = enemySurface;
             SubscribeEnemyActorEvents();

@@ -43,7 +43,7 @@ class AutomaticSpawnRestorationTests(unittest.TestCase):
         source = " ".join(self.candidate.split())
         roots = "var rootEntityStateMachines = body.GetComponents<EntityStateMachine>();"
         snapshot = "var sourceEnabledRootStateMachines = rootEntityStateMachines.Where("
-        disable = "foreach (var component in body.GetComponents<MonoBehaviour>()) component.enabled = false;"
+        disable = "foreach (var component in body.GetComponents<MonoBehaviour>()) {"
         selection = "if (IsPlayableSpine())"
         call = "RestoreCapturedEnabledRootStateMachines(sourceEnabledRootStateMachines, cfg.integratedWorld)"
         capture_filter = ".Where(stateMachine => stateMachine && stateMachine.enabled).ToArray()"

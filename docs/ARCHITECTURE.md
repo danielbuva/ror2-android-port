@@ -2133,7 +2133,17 @@ configuration in integrated world play. Historical component fixtures retain
 their silent strings. Existing visual exclusions are independent; no event,
 routing or gameplay value is synthesized. Setup clones only the reload
 configuration; disposal restores captured statics and destroys that owned clone.
-The production setup/exclusion/disposal host fixture covers both modes.
+The production setup/exclusion/disposal host fixture covers both modes,
+including the initial report-mode flag still being unset during configuration.
+The owner captures the configured mode and native readiness during setup;
+it never treats the later report assignment as startup authority.
+
+Once the original audio owner is ready, existing actor, projectile, pickup,
+effect and model adapters preserve source sound identities and authored Wwise
+enable states. Unavailable audio retains the historical silent boundary.
+`SilentProjectileBoundary` preserves a nonempty native start event in that mode
+and retains the original absent-event branch for empty/null values. Other
+gameplay, visual isolation and cleanup responsibilities stay with those owners.
 
 For selected PCM diagnostics, the first observed original pistol state records
 one read-only source sound/registration/native-voice/global-SFX-volume sample

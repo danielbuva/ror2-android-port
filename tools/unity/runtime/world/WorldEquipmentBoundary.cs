@@ -172,7 +172,8 @@ public sealed partial class PortSession
                            .GetValue(coordinator.objectiveSupportLeases[i]));
                 if (source.GetComponent<EffectComponent>())
                 {
-                    source.GetComponent<EffectComponent>().soundName = null;
+                    if (!GameAudioOriginalOwner.Ready)
+                        source.GetComponent<EffectComponent>().soundName = null;
                     effects.Add(source);
                 }
                 else if (source.GetComponent<RoR2.Projectile.ProjectileController>() != null)
@@ -246,7 +247,8 @@ public sealed partial class PortSession
             foreach (var source in effects.Distinct())
             {
                 coordinator.Check(source.GetComponent<EffectComponent>(), "Equipment/proc effect identity absent");
-                source.GetComponent<EffectComponent>().soundName = null;
+                if (!GameAudioOriginalOwner.Ready)
+                    source.GetComponent<EffectComponent>().soundName = null;
             }
             return effects.Distinct().ToArray();
         }

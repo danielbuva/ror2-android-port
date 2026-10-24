@@ -3,14 +3,17 @@
 using RoR2.Projectile;
 using UnityEngine;
 
-// Unity normalizes serialized null strings on clone. Set the original no-event branch on the instance.
+// Preserve source events with a ready original owner; normalize absent events
+// to the original null/no-event branch after Unity cloning.
 [DefaultExecutionOrder(-20000)]
 public sealed class SilentProjectileBoundary : MonoBehaviour
 {
     public static int prepared;
     void Awake()
     {
-        GetComponent<ProjectileController>().startSound = null;
+        var source = GetComponent<ProjectileController>();
+        if (!GameAudioOriginalOwner.Ready || string.IsNullOrEmpty(source.startSound))
+            source.startSound = null;
         prepared++;
     }
 }

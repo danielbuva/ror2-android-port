@@ -206,7 +206,8 @@ public sealed partial class PortSession
                 else
                 {
                     coordinator.Check(source.GetComponent<EffectComponent>(), "Original whole-item effect component absent: " + path);
-                    source.GetComponent<EffectComponent>().soundName = null;
+                    if (!GameAudioOriginalOwner.Ready)
+                        source.GetComponent<EffectComponent>().soundName = null;
                 }
                 worldItemSupportBaselines.Add(path, (int)typeof(AsyncOperationHandle<GameObject>)
                                                         .GetProperty("ReferenceCount", BindingFlags.Instance | BindingFlags.NonPublic)

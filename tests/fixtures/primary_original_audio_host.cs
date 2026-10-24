@@ -27,6 +27,7 @@ namespace RoR2 {
   public static implicit operator bool(EntityStateConfiguration value) {return value!=null&&!value.destroyed;}
  }
 }
+public static class GameAudioOriginalOwner {public static bool Ready;}
 public sealed class SessionConfig {public bool integratedWorld,combatSpine;public string primaryFireConfigAsset="fire",primaryReloadConfigAsset="reload";}
 public sealed class SessionReport {public bool integratedWorld;public PortSession.PrimaryFireReport primary;public object combat;}
 public sealed class Bundle {
@@ -42,7 +43,7 @@ public sealed class PortSession {
  public EntityStateConfiguration[] PrepareCombatConfigs(SessionConfig cfg) {r.combat=new object();return new EntityStateConfiguration[0];}
  public void CleanupCombatConfigs() {cleaned++;}
  public sealed class PrimaryFireSession {
-  readonly PortSession coordinator;FieldInfo[] spineFields;object[] spinePrior;EntityStateConfiguration spineReload;
+  readonly PortSession coordinator;FieldInfo[] spineFields;object[] spinePrior;EntityStateConfiguration spineReload;bool preserveOriginalAudio;
   public PrimaryFireSession(PortSession owner) {coordinator=owner;}
   static EntityStateConfiguration Instantiate(EntityStateConfiguration source) {return new EntityStateConfiguration {serializedFieldsCollection=source.serializedFieldsCollection};}
   static void Destroy(EntityStateConfiguration value) {value.destroyed=true;}
@@ -52,26 +53,27 @@ public sealed class PortSession {
 public static class PrimaryAudioHarness {
  static void Need(bool value,string message) {if(!value)throw new Exception(message);}
  public static void Main() {
-  foreach(bool integrated in new[]{false,true})foreach(bool combat in new[]{false,true}) {
+  foreach(bool ready in new[]{false,true})foreach(bool integrated in new[]{false,true})foreach(bool combat in new[]{false,true}) {
+   GameAudioOriginalOwner.Ready=ready;bool preserve=ready&&integrated;
    FirePistol2.firePistolSoundString="prior-pistol";
    FireBarrage.fireBarrageSoundString="prior-barrage";
    EntityStates.Commando.DodgeState.dodgeSoundString="prior-dodge";
-   var owner=new PortSession();owner.r.integratedWorld=integrated;
+   var owner=new PortSession();owner.r.integratedWorld=false; // Setup precedes the report-mode assignment in NovaInputBoundary.
    var session=new PortSession.PrimaryFireSession(owner);
    var cfg=new SessionConfig {integratedWorld=integrated,combatSpine=combat};
    var configs=session.PrepareSpineConfigs(cfg,new EntityStateConfiguration());
    var reload=configs[2];
-   Need(reload.serializedFieldsCollection.serializedFields[0].fieldValue.stringValue==(integrated?"native-reload":""),"reload selection");
+   Need(reload.serializedFieldsCollection.serializedFields[0].fieldValue.stringValue==(preserve?"native-reload":""),"reload selection");
    Need(owner.artifactBundle.reload.serializedFieldsCollection.serializedFields[0].fieldValue.stringValue=="native-reload","original reload mutated");
-   Need(owner.r.primary.silentFixture==!integrated,"silent fixture report");
+   Need(owner.r.primary.silentFixture==!preserve,"silent fixture report");
    FirePistol2.firePistolSoundString="native-pistol";
    FireBarrage.fireBarrageSoundString="native-barrage";
    EntityStates.Commando.DodgeState.dodgeSoundString="native-dodge";
    FirePistol2.muzzleEffectPrefab=FirePistol2.hitEffectPrefab=FirePistol2.tracerEffectPrefab=new object();
    session.ApplySpineExclusions();
-   Need(FirePistol2.firePistolSoundString==(integrated?"native-pistol":""),"pistol native sound");
-   Need(FireBarrage.fireBarrageSoundString==(!combat||integrated?"native-barrage":""),"barrage sound");
-   Need(EntityStates.Commando.DodgeState.dodgeSoundString==(!combat||integrated?"native-dodge":""),"dodge sound");
+   Need(FirePistol2.firePistolSoundString==(preserve?"native-pistol":""),"pistol native sound");
+   Need(FireBarrage.fireBarrageSoundString==(!combat||preserve?"native-barrage":""),"barrage sound");
+   Need(EntityStates.Commando.DodgeState.dodgeSoundString==(!combat||preserve?"native-dodge":""),"dodge sound");
    Need(FirePistol2.muzzleEffectPrefab==null&&FirePistol2.hitEffectPrefab==null&&FirePistol2.tracerEffectPrefab==null,"effect exclusions retained");
    Need(FirePistol2.damageCoefficient==1&&FirePistol2.force==200&&FirePistol2.baseDuration==.15f,"gameplay fields changed");
    session.Dispose();session.Dispose();

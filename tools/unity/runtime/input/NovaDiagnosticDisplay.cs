@@ -106,11 +106,13 @@ public sealed class NovaDiagnosticDisplay : IDisposable
                                        nativeSourceSkinLifecycle && component.gameObject == nativeSourceSkinLifecycle.gameObject &&
                                        (component is RoR2.ModelSkinController || component is RoR2.CharacterModel);
                 bool nativeSkinAdapter = sourceSkinLifecycleDiagnostic && component == nativeSourceSkinLifecycle;
+                bool nativeAudio = authoredEnabled && GameAudioOriginalOwner.Ready &&
+                                   component.GetType().Name.StartsWith("Ak", StringComparison.Ordinal);
                 bool nativeGameplay = component is RoR2.AnimationEvents || component is RoR2.HitBox || component is RoR2.HitBoxGroup ||
                                       component is RoR2.HurtBox || component is RoR2.HurtBoxGroup;
-                component.enabled = sourceSelected && (nativeSkinOwner || nativeSkinAdapter || nativeGameplay && authoredEnabled);
-                // Optional native sound producers cannot enter Awake on this silent Android instance.
-                if (component.GetType().Name.StartsWith("Ak", StringComparison.Ordinal))
+                component.enabled = nativeAudio || sourceSelected && (nativeSkinOwner || nativeSkinAdapter || nativeGameplay && authoredEnabled);
+                // Preserve authored audio state only after original native ownership is ready.
+                if (!GameAudioOriginalOwner.Ready && component.GetType().Name.StartsWith("Ak", StringComparison.Ordinal))
                     UnityEngine.Object.DestroyImmediate(component);
             }
         }

@@ -119,7 +119,7 @@ public sealed partial class PortSession
                                    controller.waitDuration == .5f &&
                                    coordinator.defaultPickupSource.GetComponentsInChildren<Component>(true).All(x => x) &&
                                    coordinator.defaultPickupSource.GetComponentsInChildren<MonoBehaviour>(true).All(
-                                       x => !x.GetType().Name.StartsWith("Ak", StringComparison.Ordinal));
+                                       x => GameAudioOriginalOwner.Ready || !x.GetType().Name.StartsWith("Ak", StringComparison.Ordinal));
             coordinator.Check(report.sourceMatched, "Original full generic component/display source changed");
             Func<int> references = () => (int)typeof(AsyncOperationHandle<GameObject>)
                                              .GetProperty("ReferenceCount", BindingFlags.Instance | BindingFlags.NonPublic)

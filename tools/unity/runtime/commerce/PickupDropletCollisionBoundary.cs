@@ -98,6 +98,7 @@ public sealed partial class PortSession
             {
                 if (component.GetType().Name.StartsWith("Ak", StringComparison.Ordinal))
                 {
+                    if (GameAudioOriginalOwner.Ready) continue;
                     DestroyImmediate(component);
                     continue;
                 }
