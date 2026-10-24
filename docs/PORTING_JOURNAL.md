@@ -33579,3 +33579,72 @@ independent linker roots, native AOT/Burst, serialized content/shaders, phone to
 hosting, installation or matched performance. Keep Route A, Architecture C and
 the desktop fallback; continue from these existing producers without claiming
 that a Unity Editor rebuild is inherently necessary.
+
+## J1055 — Reconstruct the complete source audio prefab directly from PC bundles
+
+2026-10-24. Complete host source-prefab case; no Editor, AssetRipper process,
+full import, shared project, device or current build selection is used.
+
+**Hypothesis and source lookup.** J1054 reproduces the source bank index and
+Init controls, while requested-audio staging still requires the original
+WwiseGlobal prefab. Main supplies catalog lookup clues, not production bytes:
+`RoR2/Base/Core/Audio/WwiseGlobal.prefab` is in the original core-audio bundle.
+Validate the four required original bundles against accepted input
+`6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88`.
+They total 278,418 bytes; the primary bundle is 10,885 bytes. Its 50 objects have
+readable type trees, and the selected rooted prefab contains 13 objects. General
+whole-game import and Editor authoring are unnecessary for this source input.
+
+**Prior art and configuration boundary.** Inspect pinned AssetRipper
+`1ac666f47d8e9dedf96afb0b914c70d7656151ea` export-ID allocation, prefab collection,
+script identity and editor-format conversion rules. All 13 local export IDs
+reproduce from class prefixes and empty-input XXH64 ordinal values. All 11 script
+pointers use the existing audited assembly GUID recipe and J597's MD4 file-ID
+rule. One external InitializationSettings GUID was assigned during export; it is
+not a PC identity or a missing serialized value. Record only the minimum
+source-object to existing export-GUID relationship in
+`recipe/owner-audio-prefab.json`, with source collection/object/class/script
+validation. The recipe/README provenance/privacy/IP audit distinguishes that
+configuration from data read from the legitimate bundles. No upstream exporter
+implementation, target YAML/template, serialized values or game source is copied.
+
+**Tracked owner and lifecycle.** `scripts/lab/owner_audio_prefab.py` accepts an
+explicit canonical owner-work root and new private output. It binds the reviewed
+inventory, parser/profile/assembly recipe, four bundle hashes, source root,
+component order and script/reference graph. It reads every serialized value from
+the original type trees, adds only the versioned editor-format schema/defaults,
+and serializes the qualified identity-root profile. Unknown objects, references,
+script fields, parser versions and complete output hashes refuse. Original input
+and inventory/configuration hashes are checked again; written output is rehashed
+before success. New failed roots/terminal receipts remain, with no current/project
+pointer, child process, runtime owner or source-input mutation. ARCHITECTURE and
+LOCAL_STATE name setup, teardown and state. The serializer is bounded support,
+not a general Unity prefab/content converter.
+
+**Complete result and first failure.** The final public-source invocation yields
+all 9,560 bytes exactly, SHA-256
+`7f074267744a3f7652349572f4aa88f48cd3d43328ba629f686288f08c4be6af`,
+including all source values, component relationships and script identities.
+Original bundle hashes remain unchanged. Exported prefab content is a comparison
+oracle only and is not supplied to the producer. The first complete prototype
+is 22 bytes too long: it quotes GUID scalars and loses the editor Euler hint's
+negative-zero signs. Correct those versioned format rules rather than normalize
+away the differences; retain the mismatched source/output/diff. The identity-root
+hint preserves `y: -0` and `z: -0`. Five authored tests cover independent hash
+vectors, whole-graph value/reference preservation, unknown graph/script refusal,
+explicit external binding and scalar/sign behavior. Ruff passes. The final
+readback-qualified public run is `public-production-v3`; earlier attempts remain.
+
+**Evidence and remaining work.** Original-input hashes/type-tree observations,
+lookup comparisons, initial errors, complete private/public-source invocations,
+all output bytes and graph comparisons remain under
+`work/coordination/owner-wwise-prefab-v1/`. `public-proof-v1.json`, SHA-256
+`587ef6e25c1d4f149dc7a5870bafeaac8634e572e359656982a93d1a77f83338`,
+binds source `ac94a08`, all final artifact hashes and public source/recipe bindings.
+Only authored code, minimum audited metadata and synthetic tests are tracked;
+all original type trees and generated prefabs stay ignored. No current stage,
+request or runtime pin is changed; this exact source input now has a bounded
+host producer. Android execution, remaining requested-audio staging and game/
+authored assembly production, roots, native AOT/Burst, content/shaders,
+installation and matched performance remain open. Retain Architecture C and the
+desktop fallback; do not infer player readiness from this complete file result.

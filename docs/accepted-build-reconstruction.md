@@ -159,6 +159,13 @@ receipt is reproduced by actually executing its retained producer; its separate
 public-source audit remains open. No stage/request guard changes. These concrete
 input results do not complete the requested-audio assemblies or the game build.
 
+The [complete source prefab producer (J1055)](PORTING_JOURNAL.md#j1055--reconstruct-the-complete-source-audio-prefab-directly-from-pc-bundles)
+derives all bytes of the required WwiseGlobal prefab from four original bundles,
+existing script identity and one explicitly audited export-GUID binding. It
+executes neither Editor nor exporter and consumes no target asset. This resolves
+another whole source input without general import; Android execution and the
+remaining game/player/native/content producers are still open.
+
 ## Binary patches and retained artifacts
 
 | Candidate shortcut | Assessment |
