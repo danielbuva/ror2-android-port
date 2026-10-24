@@ -2221,6 +2221,7 @@ BUILD_EDITOR_SOURCES = [
     "NativeDirectorDeckSetterFixture.cs",
     "SourceIdentityTransformParityFixture.cs",
     "MercEvisImpactEffectExactEditorFixture.cs",
+    "WholeCatalogBuild.cs",
 ]
 
 
@@ -2258,7 +2259,6 @@ def stage_build_sources(io, runtime_sources, manifest, contracts):
     roots.setdefault("RoR2", set()).update(progression)
     link_path = project / "Assets/LabLoadingScene/WholeCatalogPreservation/link.xml"
     io.apply(link_path, preservation_descriptor(roots))
-    io.apply(project / "Assets/Editor/WholeCatalogBuild.cs", copy=ROOT / "tools/catalog/WholeCatalogBuild.cs", catalog=True)
 
 
 def generate_build_bootstrap(io, manifest, closure):

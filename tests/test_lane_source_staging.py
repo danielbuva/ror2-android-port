@@ -9,6 +9,7 @@ import sys
 import tempfile
 import unittest
 from unittest.mock import patch
+from contextlib import nullcontext
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
 import build
@@ -36,13 +37,27 @@ class LaneSourceStagingTests(unittest.TestCase):
             "tools/unity/" + self.name: "// lane runtime\n",
             "tools/unity/" + self.name + ".meta": "fileFormatVersion: 2\nguid: " + self.guid + "\n",
             "tools/catalog/OwnedHost.cs": "// lane host\n",
+            "tools/catalog/WholeCatalogBuild.cs": "// lane builder\n",
+            "recipe/templates/BaselineHost.cs": "// lane baseline host\n",
             "android/Assets/Editor/BootstrapMcp.cs": "// lane bootstrap\n",
             "tools/unity/support/audio/Bootstrap.cs": "// lane audio bootstrap\n",
         }.items():
             target = self.base / path
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(data)
-        write(self.base / "recipe/project-inputs.json", {"editors": [], "settings_templates": []})
+        write(
+            self.base / "recipe/project-inputs.json",
+            {
+                "editors": [
+                    dict(
+                        path="Assets/Editor/BaselineHost.cs",
+                        template="templates/BaselineHost.cs",
+                        sha256=hashlib.sha256(b"// lane baseline host\n").hexdigest(),
+                    )
+                ],
+                "settings_templates": [],
+            },
+        )
         write(self.base / "recipe/runtime-sources.json", [self.name])
         write(self.base / "recipe/project-layout.json", {"runtime_source_guids": {self.name: self.guid}})
         self.git(self.base, "add", ".")
@@ -90,7 +105,7 @@ class LaneSourceStagingTests(unittest.TestCase):
                     context.start()
                     self.addCleanup(context.stop)
         for context in (
-            patch.object(whole_catalog, "BUILD_EDITOR_SOURCES", ["OwnedHost.cs"]),
+            patch.object(whole_catalog, "BUILD_EDITOR_SOURCES", ["OwnedHost.cs", "WholeCatalogBuild.cs"]),
             patch.object(build, "WHOLE_GENERATED_RUNTIME_SOURCES", {self.generated_name}),
             patch.object(audio_hook, "restage_authored_for_lane", side_effect=self.stage_audio),
         ):
@@ -143,6 +158,8 @@ class LaneSourceStagingTests(unittest.TestCase):
         for target, source in (
             ("Assets/LabLoadingScene/Owned.cs", "tools/unity/" + self.name),
             ("Assets/Editor/OwnedHost.cs", "tools/catalog/OwnedHost.cs"),
+            ("Assets/Editor/WholeCatalogBuild.cs", "tools/catalog/WholeCatalogBuild.cs"),
+            ("Assets/Editor/BaselineHost.cs", "recipe/templates/BaselineHost.cs"),
             ("Assets/Editor/BootstrapMcp.cs", "android/Assets/Editor/BootstrapMcp.cs"),
         ):
             self.assertEqual((self.project / target).read_bytes(), (self.root / source).read_bytes())
@@ -151,6 +168,24 @@ class LaneSourceStagingTests(unittest.TestCase):
         self.assertEqual(
             (self.project / "Assets/LabLoadingScene/Owned.cs.meta").read_bytes(), (self.root / ("tools/unity/" + self.name + ".meta")).read_bytes()
         )
+
+    def test_existing_lane_without_snapshot_commit_uses_verified_canonical_git_source(self):
+        marker = self.work / "config/build-lane.json"
+        facts = read(marker)
+        del facts["canonical_source_commit"]
+        write(marker, facts)
+        result = build.restage_lane_sources()
+        self.assertEqual(result["retired"][0]["source_commit"], self.canonical)
+
+    def test_plain_player_build_refuses_pending_plugin_receipt_until_composition(self):
+        build.restage_lane_sources()
+        with (
+            patch.object(build, "host_build_lock", return_value=nullcontext()),
+            patch.object(build, "assert_build_unblocked"),
+            patch.object(build, "preflight_host"),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "compose the complete audio receipt"):
+                build.build("vulkan")
 
     def test_audio_overlay_content_and_receipt_remain_exact_and_pending_drift_refuses(self):
         receipt = self.project / "Assets/StreamingAssets/Lab/OriginalGameAudioStageReceipt.json"

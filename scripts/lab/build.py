@@ -723,6 +723,11 @@ def build(
             return execute_build(Path(destination), Path(work or WORK), api)
         preflight_host()
         project = WORK / "lab-project"
+        pending_audio = WORK / "lane-authored-audio/pending.json"
+        if pending_audio.exists():
+            pending = read(pending_audio)
+            if not pending["restored"] and pending["replaced"]:
+                raise RuntimeError("Authored plugin changes require whole-catalog-build or whole-catalog-code-build to compose the complete audio receipt")
         anchor = None
         if iteration_mode:
             from iteration_apk import validate_anchor

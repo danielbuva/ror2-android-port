@@ -35,7 +35,9 @@ their existing bytes and bindings. This runs inside the private lock and never
 changes canonical staging. Existing lanes gain this behavior on their next
 build from an updated checkout; no recreation is required. Frozen-content checks
 remain in force: a genuinely different plugin cohort can still require a normal
-full lane build to establish its own baseline.
+full lane build to establish its own baseline. A plain `./dev build` refuses a
+pending changed plugin cohort; use a whole-catalog build action so the ordinary
+composition owner can produce the complete current audio receipt.
 
 The pinned MCP transport captures its endpoint at connection but uses global
 EditorPrefs for setup. The authored bootstrap briefly serializes connection
