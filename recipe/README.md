@@ -148,6 +148,7 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 | File | Replaces | Provenance | Privacy and licensing | Readers |
 | --- | --- | --- | --- | --- |
 | `owner-uncompressed-textures.json` | Private replay uncompressed texture bodies/pixels | Original/destination selectors, source extents, generic import/placement metadata and hashes; copy, BC1, source-coordinate dilation and public JPEG policy. | No pixels, palettes, target literals/patches, native SDK implementation or image/library bytes; full audit above, 2026-10-24. All 399 records qualify on host/Android in J1079. | Explicit PC-input-only `texture_produce.py` and separately built public JPEG tool; no current game-build consumer. |
+| `owner-alpha-textures.json` | Private replay source Alpha8/single-mip texture cohort (J1082) | Canonical original/destination selectors, source/field extents, import/storage settings and hashes. | No alpha samples, encoded blocks, target byte frames, protected source or private identifiers; full audit below, 2026-10-24. | Original-PC-input-only `texture_produce.py` plus separately built public codec; no game-build consumer. |
 | `owner-avatars.json` | Private replay Avatar bodies (J1075) | Minimum original/destination identities, hashes, source extents and source-entry permutations. | No strings, poses, rig/geometry values, target literals or byte frames; full audit above, 2026-10-24. | Explicit PC-input-only `avatar_produce.py`; no current game-build consumer. |
 | `owner-meshes.json` | Protected mesh bodies in the private replay packet, for the included cohort only (J1070) | Original bundle/object/resource selectors, destination identities/hashes and authored import/conversion settings. | No geometry arrays, collision data, target byte frames or float literals; full audit above, 2026-10-24. Two cases remain excluded. | Explicit original-input-only `mesh_produce.py`; no current game-build consumer. |
 | `shader-postprocessing-bloom-candidate.json` | Exported one-pass Bloom and exact source-camera CopyStd placeholders | Accepted-input source/meta/resource identities, official Unity package/license hashes and pass contracts; authored camera staging pin refreshed without changing camera transforms. | Authored selection metadata only; upstream source and generated content stay local under Unity Companion License. Manual audit 2026-10-23 described above. | `shader_postprocessing_bloom`, whole-catalog preparation and catalog replay comparison; default off. |
@@ -2252,3 +2253,26 @@ The addition is a host workspace configuration lookup; it adds no import,
 changes no shared transformation/copy function, and is unused by the phone
 producer. This is a transitive source-pin audit, not a new Android qualification.
 No native/package selection or redistribution approval changes. Audit: 2026-10-24.
+
+`owner-alpha-textures.json` is the current experimental source-only Alpha8
+Texture2D single-mip recipe for the fixed J850 target and accepted original input. Its
+selectors reuse 82 canonical original textures from nine PC bundles for 4,326
+target records. Canonicalization requires matching original pixel hashes and
+all unchanged serialized fields; names, storage extents and target hashes remain
+explicit relationships. The profile contains only minimum paths/IDs, field
+layouts, hashes and importer/storage settings. It contains no alpha samples,
+encoded blocks, target byte frames, protected source, SDK binary or private
+identifier. Every produced image byte comes from the owner's source Alpha8
+samples through a public encoder, including generic zero RGB defined by the
+pinned source export format.
+
+The authored `texture_alpha.cpp` adapter and `build_texture_alpha.py` use an
+explicit, separately acquired pinned Ericsson ETCPACK source archive. Upstream
+encoder source is unchanged and is not vendored or redistributed in source
+form. The build retains the provider's Software License Agreement and an
+addition/provenance notice beside private outputs. Codec/profile outputs and
+raw discovery evidence stay ignored. The public recipe/adapter introduces no
+ownership, authentication or entitlement behavior. Provenance, licensing,
+privacy and sensitive-content audit: 2026-10-24. J1082 records the complete
+phone cohort and public codec build; other texture/mip and bundle assembly
+gates remain open.

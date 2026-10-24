@@ -71,8 +71,7 @@ readbacks precede its terminal complete/failed receipt. Exit tears down the
 process and retains private packs. [Setup/lifecycle](../tools/phone-build/accepted-output/README.md#produce-avatars-directly-from-original-pc-bundles)
 requires no private target/discovery file. All 228 accepted records qualify in
 J1075; bundle assembly and game-build integration remain separate owners/gates.
-`texture_produce.py` owns a separate current experimental uncompressed
-Texture2D producer. Audited `recipe/owner-uncompressed-textures.json` selects
+`texture_produce.py` owns the current experimental Texture2D source producer. Audited `recipe/owner-uncompressed-textures.json` selects
 original body/pixel ranges and generic import/stream placement; standard BC1
 decoding, raw copying, fixed source-coordinate color extension and public
 JPEG roundtripping introduce no target pixels. `build_texture_jpeg.py` owns
@@ -89,6 +88,17 @@ adds a pinned public stb/IJG JPEG tool but no Unity SDK, Editor or private
 discovery input. J1079 qualifies all 399 uncompressed records and the public
 JPEG-tool build on Android. Other texture formats and complete bundle assembly
 remain separate gates; no current game build or runtime consumes these packs.
+The same owner supports the source Alpha8 cohort through
+`recipe/owner-alpha-textures.json`: canonical original bodies/pixels are reused
+with explicit target names, storage extents and unchanged-field admission.
+`build_texture_alpha.py` builds a separately acquired pinned public ETCPACK
+provider and retains its license, logs and complete/failed receipt;
+`texture_alpha.cpp` owns bounded Alpha8 stdin/ETC2 stdout processing. The source
+export's zero RGB and original alpha produce every pixel, without an SDK encoder.
+[Setup/lifecycle](../tools/phone-build/accepted-output/README.md#produce-alpha8-textures-directly-from-original-pc-bundles)
+requires the pinned native helper. J1082 qualifies the whole 4,326-record cohort
+and helper build on Android. Other compressed textures, mip/cubemap production
+and full bundle assembly remain open.
 `build_sdk_runner.py` owns current experimental public Box64 acquisition-by-build
 for standalone owner-supplied SDK tools. Explicit unchanged upstream source,
 the pinned SDK NDK and host archive tools produce a private Android runner.

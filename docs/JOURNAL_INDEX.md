@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1082](PORTING_JOURNAL.md#j1082--produce-the-complete-alpha8-texture-cohort-from-pc-bundles-on-android) | 2026-10-24 | Produce the complete Alpha8 texture cohort from PC bundles on Android | Date: 2026-10-24 UTC. |
 | [J1081](PORTING_JOURNAL.md#j1081--run-owner-supplied-standalone-sdk-tools-through-a-public-android-runner) | 2026-10-24 | Run owner-supplied standalone SDK tools through a public Android runner | Date: 2026-10-24 UTC. |
 | [J1080](PORTING_JOURNAL.md#j1080--preserve-native-stage-audio-through-transport-end-run-and-quit) | 2026-10-24 | Preserve native stage audio through transport, End Run and Quit | 2026-10-24 UTC. |
 | [J1079](PORTING_JOURNAL.md#j1079--complete-uncompressed-texture-production-from-pc-bundles-on-android) | 2026-10-24 | Complete uncompressed texture production from PC bundles on Android | 2026-10-24 UTC. |

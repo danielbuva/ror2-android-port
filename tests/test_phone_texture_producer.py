@@ -23,6 +23,7 @@ def load(name, path):
 
 T = load("texture_producer", ROOT / "tools/phone-build/accepted-output/texture_produce.py")
 JPEG_BUILD = load("jpeg_builder", ROOT / "tools/phone-build/accepted-output/build_texture_jpeg.py")
+ALPHA_BUILD = load("alpha_builder", ROOT / "tools/phone-build/accepted-output/build_texture_alpha.py")
 FIXTURE = load("authored_bundle_fixture", ROOT / "tests/test_phone_mesh_producer.py")
 
 
@@ -59,6 +60,54 @@ def authored_body(name, image_size, texture_format, pixels, stream):
 
 
 class TextureProducerTests(unittest.TestCase):
+    def test_public_alpha_source_provider_drift_refuses_before_output(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            provider = root / "authored-source"
+            provider.write_bytes(b"authored non-provider fixture")
+            with self.assertRaisesRegex(ValueError, "provider drift"):
+                ALPHA_BUILD.build(provider, provider, root / "output")
+            self.assertFalse((root / "output").exists())
+
+    def test_alpha_inline_source_and_target_field_projection(self):
+        pixels = bytes(range(16))
+        empty = {"offset": 0, "size": 0, "path": ""}
+        body, fields = authored_body("Alpha source", 16, 1, pixels, empty)
+        target = {"name": "Authored target", "alpha_optional": False, "usage": 0, "inline": True, "stream": empty}
+        expected, _ = authored_body(target["name"], 16, 47, pixels, empty)
+        self.assertEqual(T.body_output(body, fields, pixels, target, "alpha8-etc2"), expected)
+        start, _ = fields["image data"]
+        selected = {"pixels": {"member": None, "offset": start + 4, "bytes": 16, "sha256": digest(pixels)}, "operation": "alpha8-etc2", "width": 4, "height": 4}
+        with self.assertRaisesRegex(ValueError, "Alpha8 codec required"):
+            T.pixels_input(None, body, selected)
+
+    def test_public_alpha_codec_authored_pixels_and_input_extent(self):
+        codec = os.environ.get("ROR2_TEXTURE_ALPHA")
+        if not codec:
+            self.skipTest("explicit locally built public Alpha8 codec is absent")
+        # These three complete block hashes derive solely from authored alpha
+        # patterns (zero, opaque and an asymmetric ramp), never game pixels.
+        controls = (
+            (bytes(16), "b0aa3ff40c657793d226b9fcd215c20d6a93313be1bf327b69144d40220817a4"),
+            (bytes([255]) * 16, "8f9ccc8e3d3b453e5cb747a105908186456f2056af1cd4f3f049b60fed2d343c"),
+            (bytes(range(0, 256, 17)), "1fa5776f4e0f0720374eb294f5a8fbae7e2edbb716977f1d8b012b14934ce901"),
+        )
+        for pixels, pin in controls:
+            selected = {
+                "pixels": {"member": None, "offset": 0, "bytes": len(pixels), "sha256": digest(pixels)},
+                "operation": "alpha8-etc2",
+                "width": 4,
+                "height": 4,
+            }
+            result = T.pixels_input(None, pixels, selected, alpha_codec=Path(codec))
+            self.assertEqual(len(result), 16)
+            self.assertEqual(digest(result), pin)
+        for args, data in ((["4", "4"], bytes(15)), (["4", "4"], bytes(17)), (["2", "4"], bytes(8)), (["8193", "4"], b"")):
+            with self.subTest(args=args, bytes=len(data)):
+                result = subprocess.run([codec, *args], input=data, capture_output=True, timeout=10)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual(result.stdout, b"")
+
     def test_public_jpeg_source_provider_drift_refuses_before_output(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

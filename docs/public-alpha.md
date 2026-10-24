@@ -39,6 +39,10 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       [J1079](PORTING_JOURNAL.md#j1079--complete-uncompressed-texture-production-from-pc-bundles-on-android)
       qualifies all 399 uncompressed texture records and their public-source
       JPEG-tool build on Android; compressed texture/content formats stay open.
+      [J1082](PORTING_JOURNAL.md#j1082--produce-the-complete-alpha8-texture-cohort-from-pc-bundles-on-android)
+      qualifies 4,326 source Alpha8 texture records and their public codec build
+      on Android. Other compressed textures, mip/cubemap and complete bundles
+      remain open; these packs add no game-runtime acceptance.
       [J1081](PORTING_JOURNAL.md#j1081--run-owner-supplied-standalone-sdk-tools-through-a-public-android-runner)
       qualifies a reproducible public Android runner for standalone SDK build
       tools. Linux RGBA codec equivalence, shader/Burst execution and ordinary
