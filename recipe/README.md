@@ -57,6 +57,11 @@ produce the file from the input, prefer tracking the generator.
 
 ## Audit record
 
+J1087 refreshes only the reviewed authored world-owner source hash and its
+audio-cohort manifest binding after native egg-range measurement changes.
+No input game hash, gameplay value, asset content or ownership gate changes.
+Manual provenance/privacy/licensing review: 2026-10-24.
+
 The requested-audio source-scene transformation preserves original Wwise/RTPC
 blocks from the owner's accepted local export through the existing generator.
 The public change contains authored selection/lifecycle logic and synthetic

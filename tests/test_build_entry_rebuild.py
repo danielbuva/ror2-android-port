@@ -117,6 +117,7 @@ class BuildEntryTests(unittest.TestCase):
             "SurvivorSkillHost",
             "SurvivorSkillInputHost",
             "SirenEncounterHost",
+            "SourceCameraGraphicsHost",
             "TeleporterLifetimeHost",
             "TeleportOverlayLifetimeHost",
             "EngiShieldHitGuardHost",

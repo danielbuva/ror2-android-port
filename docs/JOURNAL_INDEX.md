@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1087](PORTING_JOURNAL.md#j1087--honor-native-siren-target-range-and-verify-original-graphics-clones) | 2026-10-24 | Honor native Siren target range and verify original graphics clones | 2026-10-24 UTC. |
 | [J1085](PORTING_JOURNAL.md#j1085--restore-the-original-source-camera-global-post-processing-roles) | 2026-10-24 | Restore the original source-camera global post-processing roles | 2026-10-24 UTC. |
 | [J1083](PORTING_JOURNAL.md#j1083--reconstruct-source-sobel-graphics-and-freeze-corrected-normal-player) | 2026-10-24 | Reconstruct source Sobel graphics and freeze corrected normal player | 2026-10-24 UTC. |
 | [J1080](PORTING_JOURNAL.md#j1080--preserve-native-stage-audio-through-transport-end-run-and-quit) | 2026-10-24 | Preserve native stage audio through transport, End Run and Quit | 2026-10-24 UTC. |

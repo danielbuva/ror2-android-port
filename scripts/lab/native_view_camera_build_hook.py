@@ -32,7 +32,7 @@ STAGE_SCHEMA = "native-view-camera-project-stage-r1"
 AUDIO_SCHEMA = "original-game-audio-project-stage-r1"
 HASHES = {
     "accepted_input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
-    "r4_manifest_sha256": "715cddaf1ffd14f6fdb82f3eb0829a282fefa705f8d012c714ffab771952a5f5",
+    "r4_manifest_sha256": "2c69851bfe1ac770187ebad7e4b19f310bdad1238f8554c44612b182854ebf8a",
     "stage_receipt_sha256": "db1969babb2db2f4201ebdb6c971b084c5ab9336fff5623187555dfcc7b18978",
     "ordinary_api": "107295e478a58ef295a83228111f375c536861bc9081f482d638c59899bf495c",
     "ordinary_game": "3124a2ed9cf458acee78b1beaf969590b184be452e2b3aa5a8852df82ff95d30",

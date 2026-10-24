@@ -37088,3 +37088,104 @@ standard controls and the requested source-view/End Run/Quit cycle, then compare
 against a matched PC reference. A host build is insufficient to merge a claim
 that the nearly-black/washed-out output is fixed. Stage-audio evidence remains
 J1080; full original mix/audibility and normal-play gates remain open.
+
+## J1087 — Honor native Siren target range and verify original graphics clones
+
+2026-10-24 UTC.
+
+**Observation / complete input change.** J822 measured a visible selected egg
+167 m away, outside the active original Huntress tracker's 60 m limit; visibility
+alone still won target ranking. J943 retains the later stock-Commando timeout
+without causal hit evidence. Fix the demonstrated tracking-range contract in the
+existing explicit assisted Siren input owner, rather than extending its budget,
+assigning a native target or applying damage. This does not claim to explain the
+separate Commando failure.
+
+A visible egg within the active native tracking range now outranks a nearer
+occluded candidate. If none is attackable, approach the nearest registered egg
+rather than a distant visible egg. Range is measured from the original input
+bank aim origin to the egg's main HurtBox, matching the native tracker search;
+the accepted original egg prefab has one main HurtBox. Release primary outside
+the supplied range. Once a visible egg is within range, hold movement/sprint
+instead of requiring a path within 1.5 m of its perch. Nontracking survivors
+retain their existing skill behavior. Original tracking, skill execution,
+damage, native egg counters, network identities and the 180-second bound remain
+authoritative. Existing manual/nearby-combat yields and exact-value input lease
+retain their cleanup behavior.
+
+**Prior art.** Consulted `docs/community-prior-art.md`, current accepted
+HuntressTracker and the pinned Starstorm2 `Components/NemMerc/NemMercTracker.cs`
+search-origin/direction/range/LOS pattern. The latter identifies API ownership,
+not a team-mask or target-selection workaround. No community/game implementation
+or profile values are copied into public source. Existing R2API.Director scene
+identity and J812/J822/J943 evidence remain authoritative.
+
+**Host / exact editor.** All 34 Siren host checks pass, including native range
+boundary, beyond-range/nonfinite/occluded refusal and unchanged nontracking
+behavior. Two source-seam expectations are updated to follow the actual primary
+request rather than equating it with visibility. All 48 catalog checks and 45
+camera checks (three skips) pass. The existing actual-editor Siren fixture also
+passes: original prefab/registration metadata, range-aware selection/approach/
+hold, eight terminal reasons, temporary yields, default-off noninterference,
+fresh producer preservation and owned input release. It uses inactive fixture
+objects; native skill execution and encounter completion are not tested.
+
+The same batch adds `SourceCameraGraphicsHost` to existing build-source staging.
+Current `./dev editor --target lab --action source-camera-graphics-host` checks
+the actual imported PostProcessResources, two original profiles, all twelve
+settings and their serialized override/parameter values. Seven resource fields
+select the exact generated assets; the native Init binding and all 22 runtime
+kernel checks pass. Both nested resource tables are separate. Original resource
+and setting assets serialize unchanged before/after. The fixture stays inactive,
+starts no server and immediately destroys only owned editor objects. Native
+rendering and production deferred teardown are not exercised.
+
+Current `siren-input-host` and `source-camera-graphics-host` editor actions use the
+existing pinned MCP client/mutex, refuse stale staged runtime source hashes,
+stage only their own authored Editor fixture and refresh before execution. No
+new runtime owner, selector or ignored build input is introduced. Architecture
+and developer documentation describe these current commands.
+
+**First failures retained.** The first fast dispatch rejects the reviewed
+whole-catalog source pin after the additive fixture staging change. Refresh the
+pin after reviewing that change and passing camera contracts; no input drift is
+accepted. Next dispatch cannot reach the local MCP server after the worker
+restart. Restart the pinned server; the existing editor reconnects automatically,
+and the supported refresh compiles current source. Do not restart ADB or the
+editor. The first real graphics comparison rejects clone serialization; its
+comparison had removed the clone name at the wrong JSON level. Unity wraps
+these objects in `MonoBehaviour`. Compare that exact wrapper, excluding only
+`m_Name`; all twelve actual effect parameter/override objects then match.
+Failures, corrected queries and pruning records are preserved, without
+attributing these host issues to Android.
+
+Clean-clone pre-push CI also exposes a missing new fixture in the synthetic
+build-entry checkout and an old world-owner hash in the frozen audio cohort.
+Add the fixture to that test setup and refresh the reviewed world-owner and
+manifest pins; the changed world seam only reads native egg tracking distance.
+
+**R49 iteration build.** Committed source
+`d79a9bc4b639b8009b16ed2d097cbc2d2f1f7142`, request
+`20261024T172403.804717Z`, completes in 89.796 seconds. APK SHA-256
+`86bd59dfe71ec0b4889ce68b188c1184923d4657cf3db66819d5d21fe61cc3b6`.
+It uses the R48 normal anchor
+`1578bc0d8cad458967341e58a629459c2ee631d358d845d1bab96215d3440bec`.
+All 267 frozen references independently rehash; all 266 payload hashes equal
+R48. Six permitted APK members change. This is a fresh-Data pre-Gradle splice:
+`iteration_export_complete=true`, the owned export cancellation leaves
+`player_build_result=Failed`, and final splice/alignment/signature validation
+succeeds. It is not a normal acceptance build. Reference-only artifacts, host
+and editor results live under `work/coordination/main-port-r49`.
+
+**Device and next work.** Main remains unreachable. A lease-bound recovery-first
+collector records the absent transport and releases its temporary lease without
+package actions. The shared fallback remains in the alpha twelve-session series.
+R49 is uninstalled; J1080/R44 remains the latest qualified Main diagnostic and
+R45 remains the last byte-verified installation before transport loss. On Main
+return, collect the interrupted R45 evidence, clean up and sleep OLED before
+installing anything. PC appearance, real egg hits, native boss start/defeat,
+rewards and ordinary-difficulty acceptance remain open. Continue independent
+host work; inspection identifies that ordinary Siren entry still omits the
+source-entry egg-spawner owner which currently runs only when a diagnostic flag
+is selected. That lifecycle is the next implementation, preserving exact source
+admission and native mission behavior rather than forcing its counter or boss.
