@@ -3254,8 +3254,13 @@ build; Android rendering and PC appearance remain separate gates.
 shader batch for the exact `Main Camera` → `PostProcessResources_53.uber`
 reference. It pins the accepted export's camera, resource, shader metadata and
 `ppRunBase` Bloom/effect settings, then generates the official Post Processing
-2.3.0 Uber shader and its 17-file HLSL include closure from the locally pinned
-archive. The generated closure is the Uber shader plus 17 HLSL includes. That
+2.3.0 Uber shader, five AO/LUT compute programs, two AO/LUT graphics programs
+and their 18-file HLSL closure from the locally pinned archive. The seven
+additional programs use deterministic lab GUIDs in the existing loading scene's
+Resources directory; original resource, compute assets and camera bytes stay
+unchanged. Their original resource slots, kernel names and thread groups are
+pinned in the recipe. `WholeCatalogBuild.ValidateSourceCameraPrograms` exercises
+the actual imports and all 22 kernels in host initialization and full builds. That
 archive is a compatible source reference, not proof of the game's shipped
 package version. `PostProcessLayer.RenderBuiltins` selects pass 0 of the
 three-pass source shader. The ignored
@@ -3265,8 +3270,8 @@ receipts remain readable. Preparation validates selectors before writing
 catalog assets; stage preserves source `.meta`, resource and camera bytes and
 refuses unknown candidate preimages. Catalog verification and rebuild
 comparison replay only the exact receipt-bound files and includes. The normal
-whole-catalog preparation path is the build owner; this has no runtime state
-or teardown and makes no Android appearance claim.
+whole-catalog preparation path is the build owner. Generation has no runtime
+state or teardown and makes no Android appearance claim.
 
 ## Shared worktree build ownership
 
@@ -3397,21 +3402,26 @@ request highlights, create/replace a material or invoke a blit. Its scalar repor
 records only camera/component identity and existing material pass/shader metadata;
 it does not show that pass 1 ran or explain an unknown-material log.
 For the requested visual camera only, the same owner restores the original
-Sobel graphics role suppressed with the inactive application root. Setup reads
+graphics roles suppressed with the inactive application root. Setup reads
 the stage supplied by NovaInputSession through NovaDiagnosticDisplay, then its
 `RoR2Application.BehavioursToEnableDuringStartup`,
-selects its `ppApplication_opt` global volume and validates the source camera's
-volume mask. It clones only that profile's Sobel setting into an owned profile
-and child volume, preserving its fields and volume priority/weight/layer. The
-application and original assets remain inactive/unchanged; unsupported AO and
-gamma/colour-grading compute roles remain open. The original PostProcessLayer,
+selects its `ppApplication_opt` and `ppDisabler_opt` global volumes and validates
+the source camera's volume mask. It clones each setting into owned profiles and
+child volumes, preserving serialized active/enabled flags, values and volume
+priority/weight/layer. It clones the camera's resource object and both nested
+program tables, binds only the seven qualified AO/LUT references and calls the
+original public `PostProcessLayer.Init` before activation. Original resources
+and the application stay unchanged/inactive; Console graphics preferences remain
+unavailable and no brightness, gamma or exposure tuning is invented. The original PostProcessLayer,
 SobelCommandBuffer and SobelOutlineRenderer retain rendering ownership.
-One exact-camera post-render sample records blended settings and supported
-shader separately from appearance acceptance. Disposal/disable unsubscribes,
-disables the owned volume (native unregister) and destroys only owned profile/
-settings. Audio-context-only cameras do not create this presentation.
+One exact-camera post-render sample records blended Sobel/AO/grading settings,
+resource binding and kernel readiness separately from appearance acceptance.
+Disposal/disable unsubscribes, disables both owned volumes (native unregister)
+and destroys only owned profiles/settings/resources. Audio-context-only cameras
+do not create this presentation.
 `test_source_sobel_lifecycle.py` executes production setup/sample/teardown with
-inert fixtures, including source immutability and excluded unrecovered effects.
+inert fixtures, including original resource/profile immutability, preserved
+inactive effects, missing programs/kernels and idempotent owned teardown.
 
 The narrow catalog root set also retains RampFog for the original post-process
 renderer. `whole_catalog.py` validates each exact address key, typed location and

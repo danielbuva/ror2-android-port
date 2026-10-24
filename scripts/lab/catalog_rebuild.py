@@ -789,12 +789,21 @@ def postprocessing_uber_rows(receipt, input_id, expected, provenance, candidate_
         "preserved_meta_bytes": receipt["shader_meta_bytes"],
         "_meta_only": True,
     }
-    includes = receipt.get("includes")
-    generated = manifest.get("includes")
-    if not isinstance(includes, list) or not isinstance(generated, list) or len(includes) != len(generated):
-        raise RuntimeError("Uber receipt has incomplete include closure")
-    for row, item in zip(includes, generated, strict=True):
-        rel = PurePosixPath(recipe["include_target_prefix"]) / PurePosixPath(item["package_path"])
+    includes, generated = [], []
+    for kind in ("includes", "programs"):
+        rows, items = receipt.get(kind, []), manifest.get(kind, [])
+        if not isinstance(rows, list) or not isinstance(items, list) or len(rows) != len(items):
+            raise RuntimeError("Uber receipt has incomplete " + kind + " closure")
+        if kind == "programs" and [{key: item.get(key) for key in contract} for item, contract in zip(items, recipe.get("programs", []))] != recipe.get(
+            "programs", []
+        ):
+            raise RuntimeError("Source camera programs differ from the pinned recipe")
+        if kind == "programs" and len(items) != len(recipe.get("programs", [])):
+            raise RuntimeError("Source camera program membership differs from the pinned recipe")
+        includes.extend((kind, row) for row in rows)
+        generated.extend(items)
+    for (kind, row), item in zip(includes, generated, strict=True):
+        rel = PurePosixPath(recipe["include_target_prefix"]) / PurePosixPath(item["package_path"]) if kind == "includes" else PurePosixPath(item["target"])
         candidate_path = item["candidate_path"]
         candidate_file = candidate_root(candidate_work, input_id, recipe) / candidate_path
         meta_candidate = Path(str(candidate_file) + ".meta")

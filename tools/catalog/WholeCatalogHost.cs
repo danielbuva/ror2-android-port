@@ -54,6 +54,7 @@ public static class WholeCatalogHost
         if (EditorApplication.isCompiling || EditorApplication.isUpdating || EditorApplication.isPlayingOrWillChangePlaymode ||
             UnityEditor.BuildPipeline.isBuildingPlayer || stack.Count != 0)
             throw new Exception("Editor busy");
+        WholeCatalogBuild.ValidateSourceCameraPrograms();
         output = outputPath;
         deadline = EditorApplication.timeSinceStartup + 240;
         waiting = null;

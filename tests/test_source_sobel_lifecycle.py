@@ -29,7 +29,15 @@ class SourceSobelLifecycleTests(unittest.TestCase):
         source = (ROOT / "tools/unity/runtime/input/AndroidNativeSourceCameraRigOwner.cs").read_text()
         methods = "\n".join(
             method(source, signature)
-            for signature in ("void PrepareSourceSobel(Scene sourceStageScene)", "void ObserveSourceSobel(Camera camera)", "void ReleaseSourceSobel()")
+            for signature in (
+                "void PrepareSourceSobel(Scene sourceStageScene)",
+                "void ObserveSourceSobel(Camera camera)",
+                "void ReleaseSourceSobel()",
+                "PostProcessVolume CloneSourceGraphicsVolume(PostProcessVolume source, out PostProcessProfile profile)",
+                "void PrepareSourceGraphicsResources(PostProcessLayer layer)",
+                "Shader SourceGraphicsShader(string resource)",
+                "ComputeShader SourceGraphicsCompute(string resource, params string[] kernels)",
+            )
         )
         fixture = (ROOT / "tests/fixtures/source_sobel_lifecycle_host.cs").read_text().replace("__METHODS__", methods)
         with tempfile.TemporaryDirectory(prefix="source-sobel-lifecycle-") as temp:
