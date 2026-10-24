@@ -59,9 +59,9 @@ decisions. The following items are implementation and acceptance gates.
 - [ ] Enforce the selected alpha identity, increasing version code, private
       signing custody and update/rollback policy; prove actual game
       profile/settings update retention.
-- [ ] Implement approved local-file validation and, if selected, owned-account
-      downloads with Steam Guard, cancellation, secret-safe logs and honest
-      unknown-version refusals. Preserve the source installation.
+- [ ] Implement the selected local-file validation, cancellation and honest
+      unknown-version refusals in the final owner flow. Preserve the source
+      installation; account downloads and Steam Cloud are deferred by policy.
 - [ ] Verify fresh capacity, package placement and runtime backing per device
       ([J595](PORTING_JOURNAL.md#j595--verify-the-scoped-current-nova-path-and-harden-receipt-cleanup),
       [J755](PORTING_JOURNAL.md#j755--onboard-the-additional-devices-with-separate-storage-ownership-and-roles)).
@@ -91,11 +91,6 @@ decisions. The following items are implementation and acceptance gates.
       device series ([open evidence](execution-backlog.md#stability-and-performance)).
 - [ ] Qualify crash/ANR recovery, background/resume, interrupted writes, storage
       failure, sustained performance and thermals on supported hardware.
-- [ ] Add tokenless feedback from settings: browser issue draft, separate redacted
-      report preview/export and explicit attachment consent. Obtain approval
-      before public issue-template or tracker changes. The separate
-      [host baseline preview](BASELINE_FEEDBACK.md) selects fixed facts for manual
-      review; settings, arbitrary-log redaction and attachment export remain open.
 - [ ] Qualify the [prepared-lab owner-build/install/playtest checklist](PLAYTESTING.md)
       on fresh public inputs, then establish final player installation, ordinary
       controls and update/rollback steps. Artifact identity, known limits and
