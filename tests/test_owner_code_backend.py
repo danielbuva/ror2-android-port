@@ -15,6 +15,27 @@ SPEC.loader.exec_module(BACKEND)
 
 
 class OwnerCodeBackendTests(unittest.TestCase):
+    def test_sdk_descriptors_and_root_marker_are_checked_before_execution(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            sdk = Path(temporary).resolve()
+            names = [
+                "Unity.app/Contents/il2cpp/build/deploy/Fixture.dll",
+                "Unity.app/Contents/il2cpp/LinkerDescriptors/Default/fixture.xml",
+                "Unity.app/Contents/il2cpp/il2cpp_root",
+                "PlaybackEngines/AndroidPlayer/modules.asset",
+                "PlaybackEngines/AndroidPlayer/Tools/AndroidNativeLink.xml",
+            ]
+            files = {}
+            for name in names:
+                path = sdk / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("" if name.endswith("il2cpp_root") else "independent SDK fixture")
+                files[name] = BACKEND.native.sha(path)
+            self.assertEqual(BACKEND.tools(sdk, {"tools": files}), files)
+            (sdk / names[1]).write_text("changed descriptor")
+            with self.assertRaisesRegex(ValueError, "configuration drift"):
+                BACKEND.tools(sdk, {"tools": files})
+
     def test_complete_provider_membership_and_byte_drift_refuse(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve()

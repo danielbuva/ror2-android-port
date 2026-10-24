@@ -26,19 +26,23 @@ SPEC = importlib.util.spec_from_file_location("owner_code_native_stage", HERE / 
 native = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(native)
 PROFILE = ROOT / "recipe/owner-player-code.json"
-PROFILE_SHA = "11780f8849add2425e53d25dd9dc045c7062c1405fd651e8e7f89f1ea89b155a"
+PROFILE_SHA = "50b445d8ae972880b3f5177bb9e5bcd6726acde344208fc039b2398ff19b8b98"
 XML_ORDER = ("TypesInScenes.xml", "SerializedTypes.xml", "empty.xml", "burst.xml", "whole-preservation.xml", "item-behaviors.xml")
 
 
 def tools(sdk, profile):
     actual = {}
-    folder = sdk / "Unity.app/Contents/il2cpp/build/deploy"
-    for path in sorted(folder.rglob("*")):
-        if path.is_file():
-            if not path.resolve().is_relative_to(sdk):
-                raise ValueError("converter tool escapes SDK")
-            actual[path.relative_to(sdk).as_posix()] = native.sha(path)
-    for name in ("PlaybackEngines/AndroidPlayer/modules.asset", "PlaybackEngines/AndroidPlayer/Tools/AndroidNativeLink.xml"):
+    for folder in (sdk / "Unity.app/Contents/il2cpp/build/deploy", sdk / "Unity.app/Contents/il2cpp/LinkerDescriptors"):
+        for path in sorted(folder.rglob("*")):
+            if path.is_file():
+                if not path.resolve().is_relative_to(sdk):
+                    raise ValueError("converter tool escapes SDK")
+                actual[path.relative_to(sdk).as_posix()] = native.sha(path)
+    for name in (
+        "PlaybackEngines/AndroidPlayer/modules.asset",
+        "PlaybackEngines/AndroidPlayer/Tools/AndroidNativeLink.xml",
+        "Unity.app/Contents/il2cpp/il2cpp_root",
+    ):
         path = sdk / name
         if not path.resolve(strict=True).is_relative_to(sdk):
             raise ValueError("linker configuration escapes SDK")

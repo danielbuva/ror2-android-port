@@ -4139,6 +4139,24 @@
     "Unity.app/Contents/il2cpp/build/deploy/mscorlib.dll": "1c4fa305282eff19dd76d0509171b7c51a6be74b5a64cda45a1a98aa9ca65367",
     "Unity.app/Contents/il2cpp/build/deploy/netstandard.dll": "f048f754e76b8fc8a30dc4d2d3fd4010ca62b1a1437b73668f415bab9b1f6449",
     "PlaybackEngines/AndroidPlayer/modules.asset": "143d2be27e09a7e713afe60e7c7f7b73caeb96d95820958b08d93fa47df5bc5c",
-    "PlaybackEngines/AndroidPlayer/Tools/AndroidNativeLink.xml": "be28781b6487fd2d861991a78bce63fe2c7c2e4518705668160d41c4116f3d7a"
+    "PlaybackEngines/AndroidPlayer/Tools/AndroidNativeLink.xml": "be28781b6487fd2d861991a78bce63fe2c7c2e4518705668160d41c4116f3d7a",
+    "Unity.app/Contents/il2cpp/LinkerDescriptors/Default/UnityEngine.Advertisements.xml": "26c83f61ca8bde91b6c76327cb5c577b7ad6fa78366ee787a96658a4f0ad859d",
+    "Unity.app/Contents/il2cpp/LinkerDescriptors/Default/FSharp.Core.xml": "d357b7dd6d4eb2ecccdb0bcf8e864bef9928491b06bfadf7f18e4a15ae34ac46",
+    "Unity.app/Contents/il2cpp/LinkerDescriptors/Default/JsonFx.Json.xml": "0c9327826edadf5f27fa2dc624524fcffe24396c868fe3b31ec306b63bf8b4d6",
+    "Unity.app/Contents/il2cpp/LinkerDescriptors/Default/System.Runtime.WindowsRuntime.xml": "8f2e5764bc78cd35a5daef91b7b5a00747cd57ba728c42ba2b9cf714c3ffb6a0",
+    "Unity.app/Contents/il2cpp/LinkerDescriptors/Default/System.xml": "c11bada0f0f5ae8943a9c94658ca346d29b493bce37b6ff01f6e29e9915e4920",
+    "Unity.app/Contents/il2cpp/LinkerDescriptors/Default/mscorlib.xml": "3b4976c9e50592a96c48e991cb4bf102caff39e5e17a1e53fe6960af5dd00b49",
+    "Unity.app/Contents/il2cpp/LinkerDescriptors/Default/Windows.xml": "39f3438b9c30bdaef53823f979fb59b7a6590fc3a21b9276bc183060f0f4580d",
+    "Unity.app/Contents/il2cpp/LinkerDescriptors/Default/System.Net.xml": "ee2b2e7b0ab2ceb8d0d870bc1f1dd3f3b8a5297b268cd1a01a95d1aff3936c5e",
+    "Unity.app/Contents/il2cpp/LinkerDescriptors/Default/System.Configuration.xml": "158bffbac68eda8a7b92efaa634a60927dd2e5079e1e66793bc701b847a1c526",
+    "Unity.app/Contents/il2cpp/LinkerDescriptors/Aggressive/mscorlib.xml": "010995431a1d6cdbc11c9c4dfcd006650abcc0b8c361b7552d1a8449028e81e6",
+    "Unity.app/Contents/il2cpp/LinkerDescriptors/Aggressive/mono/System.Xml.xml": "105fc9f96cbc8213e06b8a6f9a702cf5354a343b1ef92ebf719b169a1918fd2e",
+    "Unity.app/Contents/il2cpp/LinkerDescriptors/Aggressive/mono/System.xml": "9b6c853a386f4073052fef6518c3665eac8b2cdd74c0cb582daae21572a13635",
+    "Unity.app/Contents/il2cpp/LinkerDescriptors/Default/45/System.xml": "ae17a39da4025cd6bf38c984c2419709db78e3ea73476d40f89d80abef37befd",
+    "Unity.app/Contents/il2cpp/LinkerDescriptors/Default/45/mscorlib.xml": "f04b5785f4896831d8f16387509e40eeb55c6fddf585dd9ce7546c323c15865e",
+    "Unity.app/Contents/il2cpp/LinkerDescriptors/Default/mono/System.Xml.xml": "105fc9f96cbc8213e06b8a6f9a702cf5354a343b1ef92ebf719b169a1918fd2e",
+    "Unity.app/Contents/il2cpp/LinkerDescriptors/Default/mono/System.xml": "9b6c853a386f4073052fef6518c3665eac8b2cdd74c0cb582daae21572a13635",
+    "Unity.app/Contents/il2cpp/LinkerDescriptors/Default/mono/mscorlib.xml": "bf507b2794829b268ade81c6c10cc6d200581ed43f4293eeda8a34f05b6f1eaf",
+    "Unity.app/Contents/il2cpp/il2cpp_root": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
   }
 }

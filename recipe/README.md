@@ -2107,7 +2107,7 @@ hosting and game acceptance remain open.
 `owner-player-code.json` records the qualified current target's 471 scene/type
 identity relationships, empty serialized-type JSON set, explicit module policy,
 six preservation XML documents, 332 managed provider identities, 11 root
-assemblies, 93 converter assembly identities/order and 309 SDK tool/config file
+assemblies, 93 converter assembly identities/order and 327 SDK tool/config file
 hashes. Its XML contains selector elements and attributes only: type/member names,
 preservation/serialization flags and relationships, never method bodies or
 serialized object values. The original current XML bytes are retained to avoid
@@ -2126,6 +2126,14 @@ from the complete explicit owner-supplied provider cohort and reviewed legitimat
 input. Main independently checked the six XMLs against prior configuration and
 confirmed selector-only contents and exact project-field equality. Manual
 provenance, privacy, licensing and sensitive-content audit: 2026-10-24.
+
+The Android-host closure additionally pins the 17 original LinkerDescriptors
+files and the original empty `il2cpp_root` marker. These are SDK-relative names
+and hashes only; none of their SDK content is published. The marker retains the
+SDK's normal root discovery when the tools run from a copied SDK tree. The host
+already consumed these descriptors implicitly; the explicit pins close that
+input gap without changing stripping policy. Manual provenance/privacy and
+sensitive-content review repeated 2026-10-24.
 
 
 ## Historical authored Init source compatibility
