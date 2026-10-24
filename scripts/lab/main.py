@@ -33,7 +33,7 @@ p.add_argument(
 )
 p.add_argument(
     "--work-dir",
-    help="Current: read-only inputs for rebuild/check actions, owner-assembly-prefix and destination preflight; install/sync-data/run/check-baseline use this work tree for device receipts (default: work/)",
+    help="Current: read-only inputs for rebuild/check actions, owner-assembly-prefix and destination preflight; install/sync-data/run/check-baseline and session lifecycle/memory checks use this work tree for device receipts (default: work/)",
 )
 p.add_argument(
     "--step",
@@ -114,7 +114,13 @@ if a.capture_il2cpp_invocation and not a.capture_player_linker_inputs:
     p.error("--capture-il2cpp-invocation requires --capture-player-linker-inputs for the same-build pre-strip join")
 # Device operations explicitly select the existing local receipt/config tree.
 # Rebuild --work-dir remains a read-only input boundary.
-if a.work_dir and a.command in {"install", "sync-data", "run", "check-baseline"}:
+device_prototype_work = a.command == "prototype" and a.action in {
+    "session-cleanup-check",
+    "session-abandon-check",
+    "session-memory-check",
+    "session-memory-root-check",
+}
+if a.work_dir and (a.command in {"install", "sync-data", "run", "check-baseline"} or device_prototype_work):
     import common
 
     common.WORK = WORK = Path(a.work_dir).expanduser().resolve()
@@ -129,6 +135,7 @@ if a.profile_scope != "pid" and not (a.command == "perf" and a.action == "cpu"):
 is_destination_preflight = a.command == "preflight" and a.dest is not None
 if (
     a.work_dir
+    and not device_prototype_work
     and not is_destination_preflight
     and a.command not in {"install", "sync-data", "run", "check-baseline"}
     and (a.command != "prototype" or a.action not in {"inherited-state-check", "assembly-transforms-check", "rebuild-step", "owner-assembly-prefix"})

@@ -162,12 +162,12 @@ public sealed partial class PortSession
     GameObject worldPause = new GameObject();
     RoR2.CharacterBody worldPlayer = new RoR2.CharacterBody();
     RoR2.DifficultyIndex offlineDifficulty;
-    public int saves, underlying, survivorCycles, difficultyCycles, resultMenuRequests;
+    public int saves, underlying, survivorCycles, difficultyCycles, resultMenuRequests, abandonRequests;
     bool offlineStartVisible, offlineStartSelected;
     bool UsesDiagnosticWithoutPhysicalInput() => false;
     bool OfflineUiControllerPresent() => true;
     bool CanAbandonOfflineRun() => true;
-    void RequestAbandonOfflineRun() { }
+    void RequestAbandonOfflineRun() { abandonRequests++; }
     void Save() { saves++; }
     void Check(bool value, string message) { if (!value) throw new InvalidOperationException(message); }
     bool DrawOfflineStart() { underlying++; return false; }
@@ -341,6 +341,29 @@ public static class AndroidFeedbackHost
         Check(session.StartSelected && session.survivorCycles == 1 && session.difficultyCycles == 1,
               "ordinary closed-menu A/stick routing changed");
     }
+    static void EndRunConfirmation()
+    {
+        var session = new PortSession(); session.Prepare(); session.Show(true);
+        GUI.click = "End run and return to menu"; session.Render();
+        Check(session.abandonRequests == 0 && session.r.settings.endRunConfirmationVisible && session.underlying == 0,
+              "opening end-run dialog ended the run or leaked the event");
+        GUI.click = "Keep playing"; session.Render();
+        Check(session.abandonRequests == 0 && !session.r.settings.endRunConfirmationVisible && session.Paused,
+              "cancel ended the run or resumed hidden gameplay");
+        GUI.click = "End run and return to menu"; session.Render();
+        Input.down.Add(KeyCode.Joystick1Button1); Input.down.Add(KeyCode.Joystick1Button0);
+        session.Controller(); Input.down.Clear();
+        Check(!session.r.settings.endRunConfirmationVisible && session.Paused && session.SettingsSaves == 0,
+              "controller cancel confirmed, saved or resumed the run");
+        GUI.click = "End run and return to menu"; session.Render(); session.Dispose();
+        Check(!session.r.settings.endRunConfirmationVisible && session.abandonRequests == 0,
+              "cleanup retained or accepted a pending confirmation");
+        session.Show(true); GUI.click = "End run and return to menu"; session.Render();
+        GUI.click = "Confirm end run"; session.Render();
+        Check(session.abandonRequests == 1 && !session.r.settings.endRunConfirmationVisible,
+              "explicit confirmation did not dispatch exactly once");
+        session.Dispose();
+    }
     public static void Main(string[] args)
     {
         switch (args[0])
@@ -352,6 +375,7 @@ public static class AndroidFeedbackHost
             case "screen-escape": ScreenEscape(); break;
             case "settings-lifecycle": SettingsLifecycle(); break;
             case "start-menu-input": StartMenuInput(); break;
+            case "end-run-confirmation": EndRunConfirmation(); break;
             default: throw new Exception("unknown case");
         }
         Console.WriteLine(args[0] + ": PASS");

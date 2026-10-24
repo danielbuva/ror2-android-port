@@ -971,9 +971,41 @@ class SessionCleanupCheckTests(unittest.TestCase):
             self.assertFalse(device.alive)
             saved = json.loads((evidence / "result.json").read_text())
             self.assertEqual(saved["ending_mode"], "abandon")
-            self.assertEqual(saved["abandon_ui"], {"settings_open_sent": True, "end_run_sent": True})
+            self.assertEqual(saved["abandon_ui"], {"settings_open_sent": True, "end_run_sent": True, "confirmation_sent": False})
             self.assertEqual(saved["completed_session"]["settings"]["sessionAbandoned"], True)
             self.assertFalse(saved["completed_session"]["results"]["persisted"])
+        finally:
+            temp.cleanup()
+
+    def test_abandon_runner_observes_and_taps_confirmation_once(self):
+        settings = dict(
+            ready=True,
+            visible=True,
+            paused=True,
+            canEndRun=True,
+            endRunConfirmationVisible=False,
+            buttonX=1167.5,
+            buttonY=30.0,
+            endRunButtonX=430.0,
+            endRunButtonY=512.5,
+            confirmEndRunButtonX=525.0,
+            confirmEndRunButtonY=442.5,
+            screenWidth=1280,
+            screenHeight=800,
+        )
+        world = dict(seconds=60.0, ready=True, health=130.0, maxHealth=130.0, diagnosticInputEver=True, engiShieldGuardPrepared=True)
+        identity = dict(selectedSurvivor="Engi", developerSurvivorOverride=True)
+        reports = [live_report(session=1, world=world, **identity) for _ in range(40)]
+        reports += [live_report(session=1, settings=settings, world=world, **identity) for _ in range(3)]
+        reports += [live_report(session=1, settings=dict(settings, endRunConfirmationVisible=True), world=world, **identity) for _ in range(2)]
+        reports += [live_report(session=2, **identity)]
+        temp, device, result, error, evidence = run_fake_check(reports, survivor="Engi", ending="abandon", clock_step=1.0)
+        try:
+            self.assertIsNone(error)
+            self.assertTrue(result["success"])
+            self.assertEqual(device.taps, [(1168, 30), (430, 512), (525, 442)])
+            saved = json.loads((evidence / "result.json").read_text())
+            self.assertTrue(saved["abandon_ui"]["confirmation_sent"])
         finally:
             temp.cleanup()
 

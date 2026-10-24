@@ -85,6 +85,9 @@ class AndroidFeedbackTests(unittest.TestCase):
     def test_application_input_gives_settings_priority_over_hidden_start_menu(self):
         self.run_case("start-menu-input")
 
+    def test_end_run_requires_explicit_confirmation_and_cancel_preserves_pause(self):
+        self.run_case("end-run-confirmation")
+
 
 if __name__ == "__main__":
     unittest.main()

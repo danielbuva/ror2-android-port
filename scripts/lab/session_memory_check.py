@@ -220,7 +220,7 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
     menu_pss = {}
     menu_started = set()
     live_at = startup_at = None
-    settings_sent = end_sent = False
+    settings_sent = end_requested = end_sent = False
     final_menu = None
     runtime_errors = []
     cleanup_errors = []
@@ -303,7 +303,7 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
                     device.sh("input", "tap", str(coords[0]), str(coords[1]))
                     menu_started.add(session)
                     live_at = startup_at = None
-                    settings_sent = end_sent = False
+                    settings_sent = end_requested = end_sent = False
                 if phase == "integrated-world-playing" and not end_sent:
                     if session not in menu_started:
                         fail("ordinary-menu-start-not-observed", "session %d" % session)
@@ -340,7 +340,12 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
                         key = None
                         if not settings_sent:
                             key = "button"
-                        elif settings.get("visible") is True and settings.get("canEndRun") is True:
+                        elif settings.get("endRunConfirmationVisible") is True:
+                            if not end_requested or settings.get("paused") is not True or settings.get("canEndRun") is not True:
+                                fail("unexpected-or-unowned-end-run-confirmation", "session %d" % session)
+                                break
+                            key = "confirmEndRunButton"
+                        elif not end_requested and settings.get("visible") is True and settings.get("canEndRun") is True:
                             key = "endRunButton"
                         if key:
                             coords = abandon_control_coordinates(current, key, device.sh("wm", "size"), device.sh("dumpsys", "window", "displays"))
@@ -350,6 +355,10 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
                             device.sh("input", "tap", str(coords[0]), str(coords[1]))
                             if key == "button":
                                 settings_sent = True
+                            elif key == "endRunButton":
+                                end_requested = True
+                                # Historical players have a one-step abandon UI.
+                                end_sent = "endRunConfirmationVisible" not in settings
                             else:
                                 end_sent = True
                 if phase == "commando-defeated":

@@ -13,8 +13,10 @@ public sealed partial class PortSession
     public class OfflineSettingsReport
     {
         public bool ready, visible, paused, persisted, canEndRun, sessionAbandoned;
+        public bool endRunConfirmationVisible;
         public string recovery, error;
         public float deadzone, lookSensitivity, buttonX, buttonY, endRunButtonX, endRunButtonY, timeScale, runSeconds;
+        public float confirmEndRunButtonX, confirmEndRunButtonY;
         public int fixedTicks, observations, screenWidth, screenHeight;
         public bool invertY;
         public int saves, pauses, resumes, controllerOpens, controllerCloses, controllerSaves;
@@ -52,6 +54,7 @@ public sealed partial class PortSession
     {
         readonly PortSession coordinator;
         readonly AndroidFeedbackScreen feedback = new AndroidFeedbackScreen();
+        bool confirmEndRun;
         float offlineSettingsTimeScale;
         public OfflineSettingsSession(PortSession coordinator)
         {
@@ -81,6 +84,9 @@ public sealed partial class PortSession
             coordinator.r.settings.invertY = v.invertY;
             coordinator.r.settings.visible = coordinator.offlineSettingsVisible;
             coordinator.r.settings.paused = coordinator.offlineSettingsPaused;
+            coordinator.r.settings.endRunConfirmationVisible = confirmEndRun;
+            coordinator.r.settings.confirmEndRunButtonX = Screen.width * .5f - 115;
+            coordinator.r.settings.confirmEndRunButtonY = Screen.height * .5f + 42.5f;
             coordinator.r.settings.timeScale = Time.timeScale;
             coordinator.r.settings.runSeconds = Run.instance ? Run.instance.GetRunStopwatch() : 0;
             coordinator.r.settings.fixedTicks = coordinator.r.runClock == null ? 0 : coordinator.r.runClock.fixedTicks;
@@ -91,6 +97,7 @@ public sealed partial class PortSession
                 return;
             if (show == coordinator.offlineSettingsVisible)
                 return;
+            confirmEndRun = false;
             if (!show)
                 feedback.Close();
             if (show && coordinator.worldPause && coordinator.worldPlayer && coordinator.worldPlayer.healthComponent.alive)
@@ -133,6 +140,13 @@ public sealed partial class PortSession
                     feedback.Close();
                     return;
                 }
+                if (confirmEndRun)
+                {
+                    confirmEndRun = false;
+                    Observe();
+                    coordinator.Save();
+                    return;
+                }
                 if (coordinator.offlineSettingsVisible)
                 {
                     coordinator.r.settings.controllerCloses++;
@@ -144,7 +158,7 @@ public sealed partial class PortSession
                     Show(true);
                 }
             }
-            if (!feedback.Visible && coordinator.offlineSettingsVisible && coordinator.r.nova != null && coordinator.r.nova.physicalInputAvailable &&
+            if (!feedback.Visible && !confirmEndRun && coordinator.offlineSettingsVisible && coordinator.r.nova != null && coordinator.r.nova.physicalInputAvailable &&
                 coordinator.r.nova.mapping != null &&
                 UnityEngine.Input.GetKeyDown((KeyCode)((int)KeyCode.Joystick1Button0 + coordinator.r.nova.mapping.jump)))
             {
@@ -160,6 +174,34 @@ public sealed partial class PortSession
         {
             if (coordinator.offlineSettings == null)
                 return false;
+            if (confirmEndRun)
+            {
+                // The dialog owns the whole event, including the event that
+                // cancels it. Gameplay remains paused until settings resumes.
+                var left = Screen.width * .5f - 240;
+                var top = Screen.height * .5f - 120;
+                GUI.Box(new Rect(left, top, 480, 240), "End this run?");
+                GUI.Label(new Rect(left + 25, top + 42, 430, 70),
+                          "Return to the menu and discard this ongoing run?\nThis does not record a completed run result.");
+                var confirm = new Rect(left + 25, top + 135, 200, 55);
+                coordinator.r.settings.confirmEndRunButtonX = confirm.center.x;
+                coordinator.r.settings.confirmEndRunButtonY = confirm.center.y;
+                bool allowed = coordinator.CanAbandonOfflineRun();
+                var enabled = GUI.enabled;
+                GUI.enabled = enabled && allowed;
+                bool accepted = GUI.Button(confirm, "Confirm end run");
+                GUI.enabled = enabled;
+                bool cancel = GUI.Button(new Rect(left + 255, top + 135, 200, 55), "Keep playing");
+                if (cancel || !allowed || accepted)
+                {
+                    confirmEndRun = false;
+                    Observe();
+                    coordinator.Save();
+                    if (accepted && allowed)
+                        coordinator.RequestAbandonOfflineRun();
+                }
+                return true;
+            }
             if (feedback.Visible)
             {
                 feedback.Draw();
@@ -203,7 +245,12 @@ public sealed partial class PortSession
             coordinator.r.settings.endRunButtonX = end.center.x;
             coordinator.r.settings.endRunButtonY = end.center.y;
             if (coordinator.r.settings.canEndRun && GUI.Button(end, "End run and return to menu"))
-                coordinator.RequestAbandonOfflineRun();
+            {
+                confirmEndRun = true;
+                Observe();
+                coordinator.Save();
+                return true;
+            }
             if (coordinator.r.profile != null && coordinator.r.profile.ready)
                 GUI.Label(new Rect(x, y + 302, 420, 44), "Android profile · " + coordinator.r.profile.appliedRuns + " genuine results · " +
                                                              coordinator.r.profile.kills +
@@ -223,6 +270,9 @@ public sealed partial class PortSession
         public void Dispose()
         {
             feedback.Close();
+            confirmEndRun = false;
+            if (coordinator.r != null && coordinator.r.settings != null)
+                coordinator.r.settings.endRunConfirmationVisible = false;
             if (coordinator.offlineSettingsPaused)
                 Show(false);
         }
