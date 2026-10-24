@@ -8,7 +8,7 @@ payload copies and Unity Library/Bee/il2cppOutput trees inside experiment and
 coordination roots. Receipts, logs, captures, JSON evidence and recipes stay.
 
 Protected: every APK SHA-256 named in PORTING_STATE.md, docs/BASELINE.md,
-docs/history-retention.md, the codex coordination lock, current-build and
+docs/history-retention.md, the codex coordination lock, current-build, iteration-base and
 device receipts (plus --keep-sha256), and anything modified more recently than
 --min-age-hours (so it is safe to run while a build holds the editor). A removed build-cache entry keeps its result.json under
 work/cleanup-analysis/pruned-build-cache/<key>/; a removed experiment binary
@@ -31,7 +31,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 HASH = re.compile(r"\b[0-9a-f]{64}\b")
 PROTECTION_DOCS = ("PORTING_STATE.md", "docs/BASELINE.md", "docs/history-retention.md")
-PROTECTION_RECEIPTS = ("coordination/codex-runtime.lock", "config/current-build.json")
+PROTECTION_RECEIPTS = ("coordination/codex-runtime.lock", "config/current-build.json", "config/iteration-base.json")
 BINARY_SUFFIXES = (".apk", ".aab", ".obb")
 BULKY_DIRS = {"payload", "il2cppOutput", "Bee"}
 LARGE_BINARY = 32 * 1024 * 1024

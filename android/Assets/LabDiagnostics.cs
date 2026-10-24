@@ -11,7 +11,7 @@ public sealed class LabDiagnostics : MonoBehaviour
  [Serializable] public class Config { public bool enabled=true; public string subtree=""; public bool fields=false; }
  [Serializable] public class ObjectInfo { public string name; public string parent; public string[] components; public string[] fields; }
  [Serializable] public class Snapshot {
-  public string checkpoint,utc,scene,graphicsApi,gpu,persistentDataPath,streamingAssetsPath,privateDataPath,camera;
+  public string checkpoint,utc,scene,graphicsApi,gpu,persistentDataPath,streamingAssetsPath,privateDataPath,camera,unityVersion;
   public string audio="not initialized: isolated lab",network="not initialized: isolated lab",gameState="no RoR2 gameplay loaded";
   public bool playerExists; public string[] controllers,renderers,assemblies; public ObjectInfo[] hierarchy;
   public float fps,frameMs; public long managedBytes,totalAllocatedBytes;public double cpuFrameMs,gpuFrameMs;
@@ -70,6 +70,7 @@ public sealed class LabDiagnostics : MonoBehaviour
   using(var unity=new AndroidJavaClass("com.unity3d.player.UnityPlayer"))using(var activity=unity.GetStatic<AndroidJavaObject>("currentActivity"))using(var dir=activity.Call<AndroidJavaObject>("getFilesDir"))snapshot.privateDataPath=dir.Call<string>("getAbsolutePath");
  #endif
   var timings=new FrameTiming[1];if(FrameTimingManager.GetLatestTimings(1,timings)>0){snapshot.cpuFrameMs=timings[0].cpuFrameTime;snapshot.gpuFrameMs=timings[0].gpuFrameTime;}
+  snapshot.unityVersion=Application.unityVersion;
   File.WriteAllText(Path.Combine(root,"snapshot.json"),JsonUtility.ToJson(snapshot,true));
   Debug.Log("LAB_SNAPSHOT "+JsonUtility.ToJson(snapshot));
  }

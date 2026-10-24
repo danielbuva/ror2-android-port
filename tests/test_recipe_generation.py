@@ -116,8 +116,9 @@ class RecipeGenerationTests(unittest.TestCase):
                 for path in self.targets.values():
                     path.unlink(missing_ok=True)
 
-                def validate(project):
+                def validate(project, **options):
                     self.assertEqual(project, self.project)
+                    self.assertEqual(options.get("retire_previous", False), not code_only)
                     build.validate_runtime_config(project)
                     build.validate_content_recipe()
                     raise StopBeforeBuild

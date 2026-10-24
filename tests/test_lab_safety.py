@@ -496,7 +496,7 @@ class SafetyTests(unittest.TestCase):
         apk = self.apk()
         self.d.install(apk)
         self.assertTrue(self.d.install(apk)["reused"])
-        self.assertEqual(calls[0][:4], ("install", "-r", "--force-uuid", "internal"))
+        self.assertEqual(calls[0][:6], ("install", "--streaming", "--no-incremental", "-r", "--force-uuid", "internal"))
         self.assertEqual(len(calls), 1)
         with zipfile.ZipFile(apk, "w") as z:
             z.writestr("lib/arm64-v8a/libtest.so", b"changed")
@@ -537,7 +537,7 @@ class SafetyTests(unittest.TestCase):
         self.assertNotEqual(first["apk_sha256"], second["apk_sha256"])
         self.assertEqual(len(calls), 2)
         for call in calls:
-            self.assertEqual(call[:4], ("install", "-r", "--force-uuid", "internal"))
+            self.assertEqual(call[:6], ("install", "--streaming", "--no-incremental", "-r", "--force-uuid", "internal"))
         counter = json.loads(self.d.install_counter().read_text())
         self.assertEqual(counter["dispatched"], 2)
 

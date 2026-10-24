@@ -5,6 +5,7 @@ import shlex
 import zipfile
 import copy
 import common
+from build_timing import PhaseTiming
 from device_context import (
     ACTIVATION_MARKER,
     DeviceContextError,
@@ -251,12 +252,30 @@ class Device:
         self.write_receipt("storage.json", result)
         return result
 
-    def install(self, apk):
+    def install(self, apk, mode="streaming"):
+        timing = PhaseTiming()
         apk = Path(apk)
-        validate_apk_identity(apk)
+        if mode not in {"streaming", "incremental"}:
+            raise RuntimeError("Unknown install transport")
+        with timing.phase("apk_validation_hash"):
+            validate_apk_identity(apk)
+            apk_hash = sha(apk)
         if self.exists():
             self.owned()
-        storage = self.storage()
+        with timing.phase("storage_query"):
+            storage = self.storage()
+        transport = ["--streaming", "--no-incremental"]
+        idsig_hash = None
+        if mode == "incremental":
+            idsig = Path(str(apk) + ".idsig")
+            if not idsig.is_file() or idsig.is_symlink():
+                raise RuntimeError("Incremental install requires the APK's generated v4 .idsig sidecar")
+            if not re.search(r"^feature:android\.software\.incremental_delivery(?:=\d+)?$", self.sh("pm", "list", "features"), re.M):
+                raise RuntimeError("Selected device does not advertise incremental delivery; use streaming")
+            # adb's explicit mode verifies the sidecar and must fail rather than
+            # silently substituting a different transport for this measurement.
+            idsig_hash = sha(idsig)
+            transport = ["--incremental", "--wait"]
         limit = self.settings.get("apk_install_limit")
         counter = self.install_counter()
         prior_counter = read(counter) if counter.exists() else {"serial": self.serial, "dispatched": 0}
@@ -269,23 +288,37 @@ class Device:
             if used >= limit:
                 if self.exists():
                     prior = self.owned()
-                    if prior["apk_sha256"] == sha(apk):
+                    if prior["apk_sha256"] == apk_hash:
                         return dict(prior, reused=True, install_output="Existing receipted identical APK reused; no installation dispatched")
                 raise RuntimeError("Authorized APK installation limit exhausted; retain current APK")
         self.install_capacity(apk, storage)
-        write(counter, {"serial": self.serial, "dispatched": used + 1, "apk_sha256": sha(apk), "status": "dispatched; verify installation receipt"})
+        write(counter, {"serial": self.serial, "dispatched": used + 1, "apk_sha256": apk_hash, "status": "dispatched; verify installation receipt"})
         t = time.monotonic()
-        output = self.cmd("install", "-r", "--force-uuid", storage["uuid"] or "internal", str(apk), timeout=240)
+        try:
+            with timing.phase("adb_install"):
+                output = self.cmd("install", *transport, "-r", "--force-uuid", storage["uuid"] or "internal", str(apk), timeout=240)
+        except Exception as error:
+            self.write_receipt(
+                "install-attempt.json",
+                {"success": False, "apk_sha256": apk_hash, "transport": mode, "error": str(error), "storage": storage, "timing": timing.report()},
+            )
+            raise
+        with timing.phase("placement_query"):
+            package_path = self.sh("pm", "path", PACKAGE)
+            details = self.sh("dumpsys", "package", PACKAGE)
         r = {
             "serial": self.serial,
             "package": PACKAGE,
             "apk": str(apk),
-            "apk_sha256": sha(apk),
-            "package_path": self.sh("pm", "path", PACKAGE),
-            "details": self.sh("dumpsys", "package", PACKAGE),
+            "apk_sha256": apk_hash,
+            "package_path": package_path,
+            "details": details,
             "seconds": time.monotonic() - t,
             "install_output": output,
             "storage": storage,
+            "transport": mode,
+            "v4_idsig_sha256": idsig_hash,
+            "timing": timing.report(),
         }
         self.write_receipt("installed.json", r)
         expected = "/data/app/" if storage.get("mode") == "internal" else "/mnt/expand/" + storage["uuid"] + "/"
@@ -378,10 +411,12 @@ class Device:
         return result
 
     def sync(self, payload_directory=None):
+        timing = PhaseTiming()
         self.owned()
         runtime = self.read_receipt("runtime.json")
         path = runtime["persistentDataPath"]
-        storage = self.storage()
+        with timing.phase("storage_query"):
+            storage = self.storage()
         if not path.endswith("/Android/data/" + PACKAGE + "/files"):
             raise RuntimeError("Unexpected runtime content path; inspect storage before extending sync policy")
         if storage["mode"] == "adopted":
@@ -398,23 +433,27 @@ class Device:
         for p in sorted(files):
             if not p.is_file() or p.suffix == ".manifest":
                 continue
-            h = sha(p)
+            with timing.phase("local_hash"):
+                h = sha(p)
             remote = dest + "/" + p.name
             if not re.fullmatch("[A-Za-z0-9_.-]+", p.name):
                 raise RuntimeError("Unsafe payload filename")
-            existing = self.sh("sha256sum", remote, check=False).split()
+            with timing.phase("remote_hash"):
+                existing = self.sh("sha256sum", remote, check=False).split()
             changed = not existing or existing[0] != h
             if changed:
                 volume = storage["internal"] if storage.get("mode") == "internal" else storage["adopted"]
                 if volume["free_bytes"] < p.stat().st_size * 2 + 1024**3:
                     raise RuntimeError("Payload exceeds selected free space")
-                self.cmd("push", str(p), remote + ".partial", timeout=300)
-                got = self.sh("sha256sum", remote + ".partial").split()[0]
+                with timing.phase("push"):
+                    self.cmd("push", str(p), remote + ".partial", timeout=300)
+                with timing.phase("transfer_verification"):
+                    got = self.sh("sha256sum", remote + ".partial").split()[0]
                 if got != h:
                     raise RuntimeError("Transferred payload hash mismatch")
                 self.sh("mv", remote + ".partial", remote)
             manifest.append({"name": p.name, "sha256": h, "bytes": p.stat().st_size, "transferred": changed})
-        result = {"runtime_path": path, "backing_df": self.sh("df", "-k", path), "files": manifest}
+        result = {"runtime_path": path, "backing_df": self.sh("df", "-k", path), "files": manifest, "timing": timing.report()}
         self.write_receipt("sync.json", result)
         return result
 
@@ -460,7 +499,7 @@ class Device:
                 (out / "native-maps.txt").write_text(
                     self.sh("run-as", PACKAGE, "cat", "/proc/" + self.sh("pidof", PACKAGE, check=False).strip() + "/maps", check=False)
                 )
-        return {"artifacts": str(out.relative_to(ROOT))}
+        return {"artifacts": str(out.relative_to(self.work_root.parent))}
 
     def reset(self):
         if not self.exists():

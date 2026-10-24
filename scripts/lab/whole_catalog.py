@@ -407,7 +407,10 @@ def copy_catalog_asset(source, target):
     source, target = Path(source), Path(target)
     if source.is_symlink() or target.is_symlink():
         raise RuntimeError("Catalog import refuses symlinks")
+    if source.resolve() == target.resolve():
+        raise RuntimeError("Catalog snapshot destination must differ from its source")
     target.parent.mkdir(parents=True, exist_ok=True)
+    target.unlink(missing_ok=True)
     if not target.exists() and sys.platform == "darwin":
         clone = ctypes.CDLL("/usr/lib/libSystem.B.dylib", use_errno=True).clonefile
         clone.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_uint32]
@@ -2253,15 +2256,20 @@ def build_integration(
     android_symbols="none",
     capture_player_linker_inputs=False,
     capture_il2cpp_invocation=False,
+    iteration_mode="",
 ):
     from build import build_source_identity
     from build_lock import HOST_BUILD_LOCK, assert_build_unblocked, host_build_lock
 
     assert_build_unblocked()
-    with host_build_lock(HOST_BUILD_LOCK, operation="whole-catalog staging and build"):
+    with (
+        host_build_lock(HOST_BUILD_LOCK, operation="whole-catalog staging and build"),
+        cached_hashes(cache_path=None if destination is not None else WORK / "build-hash-cache.json", reuse=bool(iteration_mode)),
+    ):
         assert_build_unblocked()
         # Stage and build only committed sources, and record the commit (J738).
         identity = build_source_identity()
+        extra = {"iteration_mode": iteration_mode} if iteration_mode else {}
         result = _build_integration(
             code_only=code_only,
             destination=destination,
@@ -2270,6 +2278,7 @@ def build_integration(
             android_symbols=android_symbols,
             capture_player_linker_inputs=capture_player_linker_inputs,
             capture_il2cpp_invocation=capture_il2cpp_invocation,
+            **extra,
         )
         if build_source_identity() != identity:
             raise RuntimeError("Build sources changed during the build; its receipt names " + identity["commit"])
@@ -2284,9 +2293,16 @@ def _build_integration(
     android_symbols="none",
     capture_player_linker_inputs=False,
     capture_il2cpp_invocation=False,
+    iteration_mode="",
 ):
+    import time
+
+    staging_start = time.monotonic()
     from build import build, freeze_whole_payload, generate_content_recipe, generate_runtime_config, validate_runtime_source_membership
     from composition_io import StageIO
+
+    if iteration_mode and (not code_only or destination is not None or android_symbols != "none" or capture_player_linker_inputs):
+        raise RuntimeError("Iteration requires current-project code-only build without symbols/capture")
 
     if capture_il2cpp_invocation and not capture_player_linker_inputs:
         raise RuntimeError("IL2CPP invocation capture requires --capture-player-linker-inputs for the pre-strip join")
@@ -2323,7 +2339,7 @@ def _build_integration(
     # Both build paths own their config inputs; never inherit migration or probe extras.
     generate_runtime_config(project)
     generate_content_recipe()
-    runtime_sources = validate_runtime_source_membership(project)
+    runtime_sources = validate_runtime_source_membership(project, **({"retire_previous": True} if not code_only else {}))
     out = ROOT / read(WORK / "experiments/whole-catalog/latest.json")["path"]
     attempt = ROOT / read(out / "integration-latest.json")["path"]
     if not read(attempt / "host-integration.json")["success"]:
@@ -2356,7 +2372,10 @@ def _build_integration(
     previous = attempt / "build.json"
     if previous.exists():
         previous.rename(attempt / ("build-previous-" + now() + ".json"))
-    if capture_player_linker_inputs:
+    staging_seconds = time.monotonic() - staging_start
+    if iteration_mode:
+        result = build("vulkan", force=True, reuse_payload=True, source=source_identity, iteration_mode=iteration_mode)
+    elif capture_player_linker_inputs:
         result = build(
             "vulkan",
             force=android_symbols == "none",
@@ -2379,9 +2398,19 @@ def _build_integration(
     if isinstance(result, dict):
         result["original_audio"] = audio_inputs
         result["native_view_camera"] = camera_inputs
-    write(attempt / "build.json", result)
+        result["composition_staging_seconds"] = staging_seconds
     if not code_only:
+        freeze_start = time.monotonic()
         freeze_whole_payload(project, result)
+        if isinstance(result, dict):
+            result["payload_freeze_seconds"] = time.monotonic() - freeze_start
+    if isinstance(result, dict):
+        result["pipeline_wall_seconds"] = time.monotonic() - staging_start
+        if "apk" in result and "key" in result:
+            write(WORK / "build-cache" / result["key"] / "result.json", result)
+            write(WORK / "config/current-build.json", result)
+    write(attempt / "build.json", result)
+    return result
 
 
 def run_integration():

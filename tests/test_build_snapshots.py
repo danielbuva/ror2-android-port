@@ -42,7 +42,11 @@ class BuildSnapshotTests(unittest.TestCase):
             source = Path(tmp) / "source"
             target = Path(tmp) / "snapshot"
             source.write_bytes(b"valid")
-            target.write_bytes(b"corrupt")
-            with patch.object(build.sys, "platform", "darwin"), patch.object(build, "run", return_value=SimpleNamespace(returncode=0)):
+
+            def corrupt_clone(*args, **kwargs):
+                target.write_bytes(b"corrupt")
+                return SimpleNamespace(returncode=0)
+
+            with patch.object(build.sys, "platform", "darwin"), patch.object(build, "run", side_effect=corrupt_clone):
                 with self.assertRaisesRegex(RuntimeError, "hash verification failed"):
                     build.copy_build_artifact(source, target)

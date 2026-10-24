@@ -5,11 +5,56 @@ import json
 import os
 import subprocess
 import datetime
+import shutil
+import sys
+from contextlib import contextmanager
+from contextvars import ContextVar
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-WORK = ROOT / "work"
+WORK = (ROOT / "work").resolve()
 RECIPE = ROOT / "recipe"  # audited, tracked build recipes (recipe/README.md)
+_hash_cache = ContextVar("lab_build_hash_cache", default=None)
+
+
+def file_identity(path):
+    st = Path(path).stat()
+    return st.st_dev, st.st_ino, st.st_size, st.st_mtime_ns, st.st_ctime_ns
+
+
+@contextmanager
+def cached_hashes(*, cache_path=None, reuse=False):
+    """Reuse verified digests by OS file identity; normal full builds rehash.
+
+    Optional persistence is for iteration only. Keep only identities consulted
+    by this operation so old build artifacts cannot grow the cache forever.
+    """
+    parent = _hash_cache.get()
+    hashes = {}
+    if parent is None and cache_path is not None and reuse:
+        try:
+            rows = read(cache_path)
+            hashes = {
+                tuple(row[:5]): row[5]
+                for row in rows
+                if len(row) == 6 and all(isinstance(v, int) for v in row[:5]) and isinstance(row[5], str) and len(row[5]) == 64
+            }
+        except (OSError, ValueError, TypeError):
+            hashes = {}
+    session = parent if parent is not None else (hashes, set())
+    token = _hash_cache.set(session)
+    try:
+        yield
+    finally:
+        try:
+            if parent is None and cache_path is not None:
+                path = Path(cache_path)
+                path.parent.mkdir(parents=True, exist_ok=True)
+                temporary = path.with_suffix(path.suffix + ".tmp")
+                temporary.write_text(json.dumps([list(key) + [session[0][key]] for key in session[1] if key in session[0]], separators=(",", ":")) + "\n")
+                temporary.replace(path)
+        finally:
+            _hash_cache.reset(token)
 
 
 def toolchain():
@@ -43,11 +88,23 @@ def game(work=None):
 
 
 def sha(p):
+    identity = file_identity(p)
+    session = _hash_cache.get()
+    cache = session[0] if session is not None else None
+    if session is not None:
+        session[1].add(identity)
+    if cache is not None and identity in cache:
+        return cache[identity]
     h = hashlib.sha256()
     with Path(p).open("rb") as f:
         for b in iter(lambda: f.read(4 * 1024 * 1024), b""):
             h.update(b)
-    return h.hexdigest()
+    if file_identity(p) != identity:
+        raise RuntimeError("File changed while computing its SHA-256")
+    value = h.hexdigest()
+    if cache is not None:
+        cache[identity] = value
+    return value
 
 
 def digest(v):
@@ -59,6 +116,23 @@ def run(args, timeout=120, check=True, **kw):
     if check and p.returncode:
         raise RuntimeError(f"{args[0]} exited {p.returncode}: " + p.stderr.decode(errors="replace")[-2000:] + p.stdout.decode(errors="replace")[-2000:])
     return p
+
+
+def copy_file_clone(source, destination, *, runner=None):
+    """Independent artifact snapshot, sharing APFS blocks when available.
+
+    Callers retain their scope/ownership/hash checks and atomic publication.
+    Never use hard links: later writes must not alter the source snapshot.
+    """
+    source, destination = Path(source), Path(destination)
+    if not source.is_file() or source.is_symlink() or destination.is_symlink() or source.resolve() == destination.resolve():
+        raise RuntimeError("Artifact copies require regular independent paths")
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.unlink(missing_ok=True)
+    cloned = sys.platform == "darwin" and (runner or run)(["/bin/cp", "-c", "-p", source, destination], check=False).returncode == 0
+    if not cloned:
+        shutil.copy2(source, destination)
+    return str(destination)
 
 
 def now():

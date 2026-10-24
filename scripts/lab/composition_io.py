@@ -107,7 +107,7 @@ class StageIO:
             if not missing_ok and not self.is_file(path):
                 raise FileNotFoundError(path)
             data = None
-        elif copy is not None:
+        elif copy is not None and self.rebuilding:
             data = self.read_bytes(copy)
         elif value is not None:
             data = (json.dumps(value, indent=2, sort_keys=True) + "\n").encode()
@@ -118,12 +118,9 @@ class StageIO:
         elif delete:
             target.unlink(missing_ok=missing_ok)
         elif copy is not None:
-            if catalog:
-                from whole_catalog import copy_catalog_asset
+            from whole_catalog import copy_catalog_asset
 
-                copy_catalog_asset(copy, target)
-            else:
-                shutil.copy2(copy, target)
+            copy_catalog_asset(copy, target)
         elif value is not None:
             write(target, value)
         else:
@@ -275,7 +272,9 @@ def composition(destination, work, input_id, expected, provenance):
     for path, source in copies.items():
         target = destination / path
         target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(export / source, target)
+        from whole_catalog import copy_catalog_asset
+
+        copy_catalog_asset(export / source, target)
     io.apply(destination / "Packages/manifest.json", value=dict(dependencies=read(RECIPE / "project-layout.json")["dependencies"]))
     stage(io, recipe_inputs(io))
     # Check required products before publishing any staged transformations. Other

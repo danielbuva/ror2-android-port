@@ -95,8 +95,10 @@ class ScriptAuditTests(unittest.TestCase):
         # reviewed, request-scoped symbols mode. The later audio-provenance
         # addition records report.summary.guid after BuildPlayer returns. J975
         # also finalizes its optional capture witness from that returned report;
-        # keep destination audits from silently changing this reviewed path.
-        self.assertEqual(hashlib.sha256(body).hexdigest(), "de48d2fd893748012f06819020df8296990ee5dfa2afa9edd1a1109db5d2be7e")
+        # The fast-iteration change adds timed BuildReport steps and explicit export/
+        # scripts-only options; the default remains a Development player build.
+        # Keep destination audits from silently changing this reviewed path.
+        self.assertEqual(hashlib.sha256(body).hexdigest(), "6eb40a7a0a7581e913eee30d43fa0cfab2483f098f6772c4a273c606999cc971")
 
     def test_destination_gates_before_calling_unchanged_build_and_never_filters_messages(self):
         source = SOURCE.read_text()

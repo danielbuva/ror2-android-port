@@ -13,6 +13,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import tempfile
+import importlib.util
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "environment/toolchain.json").is_file())
 GAME = Path("Assets/LabLoadingScene/Plugins/RoR2.dll")
@@ -106,6 +107,13 @@ def _observer_output_profile(input_game: str, api_hash: str, core_hash: str) -> 
     raise ValueError("music observer source/core/API tuple is not a reviewed exact profile")
 
 
+def _copy_file_clone(source: Path, target: Path) -> None:
+    spec = importlib.util.spec_from_file_location("music_artifact_copy", Path(__file__).with_name("common.py"))
+    helper = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(helper)
+    helper.copy_file_clone(source, target)
+
+
 def _copy_verified(source: Path, destination: Path, expected: str, replace: str) -> None:
     _safe(source)
     _safe(destination, missing=True)
@@ -114,9 +122,8 @@ def _copy_verified(source: Path, destination: Path, expected: str, replace: str)
         raise ValueError("observer target is outside the exact raw/observed game pair")
     with tempfile.NamedTemporaryFile(prefix=".music-observer-", dir=destination.parent, delete=False) as stream:
         temp = Path(stream.name)
-        with source.open("rb") as src:
-            shutil.copyfileobj(src, stream)
-        stream.flush()
+    _copy_file_clone(source, temp)
+    with temp.open("rb") as stream:
         os.fsync(stream.fileno())
     if sha(temp) != expected:
         temp.unlink(missing_ok=True)
@@ -208,7 +215,7 @@ def stage(project: Path, work: Path, reference_directory: Path, profile: str) ->
             raise ValueError("cached observer generation is incomplete or differs from exact immutable hashes")
         transform_log = "reused exact content-addressed observer output"
     else:
-        shutil.copyfile(game, snapshot)
+        _copy_file_clone(game, snapshot)
         if sha(snapshot) != input_game:
             raise ValueError("observer input snapshot failed its exact source hash")
         tool_root = output_root / "transform-tool"

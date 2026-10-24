@@ -84,6 +84,21 @@ class SharedCheckoutBuildTests(unittest.TestCase):
         self.assertFalse(receipt["success"])
         self.assertTrue(receipt["restored"])
 
+    def test_iteration_modes_keep_source_restoration_and_select_exact_action(self):
+        for mode, action in (("export-splice", "whole-catalog-fast-build"), ("scripts-only", "whole-catalog-scripts-build")):
+            with self.subTest(mode=mode), patch.object(shared, "invoke", side_effect=self.invoke):
+                result = shared.build_shared_checkout(root=self.worker, iteration_mode=mode)
+            self.assertTrue(result["restored"])
+            self.assertEqual(self.calls[-1], ["prototype", "--action", action])
+            self.assertEqual(self.git("rev-parse", "HEAD"), self.original)
+
+    def test_iteration_refuses_full_content_symbols_and_capture_before_checkout(self):
+        for extra in ({"code_only": False}, {"android_symbols": "debugging"}, {"capture_player_linker_inputs": True}):
+            with self.subTest(extra=extra), patch.object(shared, "invoke") as invoke, self.assertRaises(ValueError):
+                shared.build_shared_checkout(root=self.worker, iteration_mode="export-splice", **extra)
+            invoke.assert_not_called()
+            self.assertEqual(self.git("rev-parse", "HEAD"), self.original)
+
     def test_dirty_primary_is_refused_before_checkout_or_build(self):
         (self.primary / "owner.txt").write_text("another worker's changes\n")
         with patch.object(shared, "invoke") as invoke, self.assertRaisesRegex(RuntimeError, "clean source checkouts"):

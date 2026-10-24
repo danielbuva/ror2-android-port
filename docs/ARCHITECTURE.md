@@ -761,6 +761,56 @@ lifetime methods execute in the native-feedback host fixture.
 The exact editor is started with `./dev editor --target lab --action open`; send it one
 mutation at a time. Device acceptance is always the real device, never the editor.
 
+Current iteration support: `build_timing.py` owns host wall phases and
+request-bounded editor-log/Bee observations. `LabBuild.cs` records inclusive
+BuildReport steps, bundle generation and player duration; parallel compiler
+work is distinct from elapsed time. `device.py` records install/storage and
+payload hash/transfer phases. `common.cached_hashes` memoizes verified digests
+by device/inode, size, modification and change times. Normal whole-catalog
+builds rehash and regenerate `work/build-hash-cache.json`; explicit iteration
+actions may reuse it. The cache retains only identities used by that operation.
+
+`iteration_apk.py` owns `whole-catalog-fast-build` packaging. A normal build
+generates `work/config/iteration-base.json` from its APK and Gradle inputs.
+The fast action verifies frozen content, stages committed C#, runs the normal
+Development IL2CPP native pipeline and stops at the last
+`IPostGenerateGradleAndroidProject` callback before Gradle. The intentional
+BuildPlayer cancellation and its original errors are recorded separately from
+iteration-export completion; an unrelated build error refuses. Iteration enables
+`StrictMode` callback dispatch; any observed Gradle build phase also refuses.
+The host holds the editor mutex while it replaces the complete generated assets/native set,
+preserves unchanged ZIP records, aligns and signs using the existing local lab
+key. Failed attempts remain local; unsigned/alignment intermediates are removed
+after packaging. Each normal cache retains its own `iteration-base.json`; the
+active anchor is replaced only by another normal build. Iteration receipts
+reference that normal cache's hash-verified `payload_directory`, without another
+payload copy, and bind its previously verified signing certificate.
+`whole-catalog-scripts-build` evaluates `BuildScriptsOnly` with the same owner;
+it is not an acceptance build. `apk-member-compare` compares hash-bound builds
+of the same source without hiding build metadata differences. Normal full-build
+acceptance remains required. Commands and limits: [fast iteration](fast-iteration.md).
+Linked worktrees use the [shared build owner](#shared-worktree-build-ownership).
+Full staging retires predecessor-only authored C# copies through
+`build.retire_staged_runtime_sources`: the previous successful build commit,
+exact source bytes and pinned GUID must match before removal. A private
+`work/coordination/staging-retirements/` receipt records that reproducible owner.
+Edited/unknown files and code-only membership changes continue to refuse.
+The three generated `StreamingAssets/Lab/*StageReceipt.json` files (camera,
+original audio and music observer, plus their metadata) are APK-only provenance.
+Code-only builds may regenerate those exact files while external bundle inputs,
+audio bytes and all other StreamingAssets remain frozen. This uses the existing
+`whole_player_inputs` contract, not a general StreamingAssets exception.
+Host contracts: `test_iteration_apk.py`, `test_install_transport.py`,
+`test_build_snapshots.py`. Build/experiment artifact snapshots use APFS clones
+with an independent-copy fallback; snapshot verification can be requested while
+ordinary builds hash each source artifact once.
+`common.copy_file_clone` is the shared file-copy primitive. Camera/music
+preimages and atomic stage replacements also use it, retaining their existing
+scope checks, expected hashes, fsync and final rename. The hooks load this
+authored sibling helper only when copying, keeping absent-receipt inspection
+inert. The camera recipe pins this transitive source; synthetic atomic-copy
+contracts are in `test_artifact_clone_hooks.py`.
+
 Current optional debugging symbols (`--debug-symbols` on `build` or
 `whole-catalog-code-build`) flow through `main.py`/`actions.py` to
 `whole_catalog.py` and `build.py`. `LabBuild.cs` requests
@@ -3103,12 +3153,15 @@ or teardown and makes no Android appearance claim.
 ## Shared worktree build ownership
 
 `scripts/lab/shared_checkout_build.py` owns the current
-`./dev prototype --action shared-catalog-code-build` action. A linked worker
+`./dev prototype --action shared-catalog-code-build` (`--full` for content),
+`shared-catalog-fast-build` and `shared-catalog-scripts-build` actions. A linked worker
 checkout selects its clean committed HEAD in the clean primary checkout only
 while holding the primary Unity mutex. The ordinary primary `./dev` host
-preflight, source staging and code build run with that same inherited lock.
+preflight, source staging and selected ordinary build action run with that same
+inherited lock.
 The action copies no Unity project and performs no device operation. Its
-private receipt records the selected commit and restoration outcome.
+private receipt under `work/coordination/shared-builds/` records the selected
+commit and restoration outcome.
 
 Teardown restores the original primary branch/commit after success or failure.
 Unexpected edits or moved refs refuse restoration and preserve those files for
