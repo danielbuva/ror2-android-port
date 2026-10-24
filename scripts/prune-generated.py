@@ -4,8 +4,8 @@
 Current. Every agent runs this when it finishes a build/run task (AGENTS.md
 "Storage hygiene"). It removes only regenerable binaries: superseded
 build-cache entries, staged symbol packages, APK/AAB/symbol/libil2cpp copies,
-payload copies and Unity Library/Bee/il2cppOutput trees inside experiment and
-coordination roots. Receipts, logs, captures, JSON evidence and recipes stay.
+payload copies and Unity Library/Bee/il2cppOutput trees inside experiment, coordination and old
+rebuild roots. Receipts, logs, captures, JSON evidence and recipes stay.
 
 Protected: every APK SHA-256 named in PORTING_STATE.md, docs/BASELINE.md,
 docs/history-retention.md, the codex coordination lock, current-build, iteration-base and
@@ -35,7 +35,7 @@ PROTECTION_RECEIPTS = ("coordination/codex-runtime.lock", "config/current-build.
 BINARY_SUFFIXES = (".apk", ".aab", ".obb")
 BULKY_DIRS = {"payload", "il2cppOutput", "Bee"}
 LARGE_BINARY = 32 * 1024 * 1024
-SCAN_ROOTS = ("experiments", "coordination")
+SCAN_ROOTS = ("experiments", "coordination", "rebuild")
 
 
 def tree_size(path):
