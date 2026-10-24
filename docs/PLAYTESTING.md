@@ -6,6 +6,10 @@ owner-generated APKs/payloads and raw evidence private. Read the
 [player guide](PLAYER_GUIDE.md), [alpha policy](ALPHA_POLICY.md),
 [screen inventory](SCREEN_COVERAGE.md) and [current status](../PORTING_STATE.md).
 A prepared-lab result does not close the fresh-owner gate.
+[J1071](PORTING_JOURNAL.md#j1071--qualify-software-touch-native-pause-and-recovery)
+records matching artifact/install receipts, both assisted controls, strict native
+restart, a complete software-touch transaction and bounded recovery cases.
+Hardware controls and fresh public-input installation remain unqualified.
 
 ## Prepare and install a matching build
 
