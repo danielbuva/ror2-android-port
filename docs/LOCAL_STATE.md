@@ -1365,3 +1365,26 @@ and fresh-processor output are separate from the earlier Mono compiler result.
 These are experimental host artifacts, not current game-build inputs or proof
 of full player/native equivalence. No protected source or compiled output is
 published.
+
+## Whole-player fixed-root feasibility evidence (J1058)
+
+Ignored `work/coordination/owner-player-roots-v1/` retains a current R36-era root
+snapshot explicitly labeled as comparison/configuration evidence, not R27 roots.
+The fixture does not provide those full-player root files. Setup uses the
+accepted original inventory, J1052/J1053/J1056/J1057 independent providers and
+the exact owner SDK. Existing registry/metadata readers validate the input
+identities; `phone_linker_roots` composes supplied project configuration with
+SDK-native metadata. The current TypesInScenes/SerializedTypes, authored
+preservation/Burst descriptors and module policy remain explicit required local
+configuration until a minimum-identity publication audit and reproducible
+configuration owner are integrated. No protected root table is embedded in code.
+
+The standalone whole-linker input/provider manifest records all 332 DLLs and the
+MCP developer-runtime exclusion. Its 93 stripped DLLs are the sole game-code
+inputs to the whole-converter run. Generated C++/metadata, full SDK tool hashes,
+commands, failed validations, exact-consumer observations and raw comparisons
+stay private. SDK-derived decompiler snippets are protected research inputs and
+must not be published. Setup/teardown neither reads a mutable current build
+pointer nor changes the shared project/editor/device. None of these experimental
+output paths is a current whole-catalog build input. Preserve the complete case
+and proof before any specifically scoped source compression/retirement.

@@ -412,3 +412,14 @@ project or Editor. Fourteen recovered support roots and two nested types match
 the declared frozen-target projection. Complete player roots, native/content
 production and Android execution remain open. LOCAL_STATE records the private
 case; the journal owns its full result.
+
+## Whole-player fixed-root host chain
+
+[J1058](PORTING_JOURNAL.md#j1058--strip-and-convert-the-complete-player-with-fixed-target-root-configuration)
+connects the complete independent managed inputs to actual UnityLinker and
+IL2CPP converter execution. It treats current target retention identities as
+explicit supplied configuration and independently extracts the SDK-native table.
+This removes general Editor root discovery from that host candidate without
+claiming independent scene semantics. Public configuration audit, native/Burst
+builds, content/shader production and Android execution remain open. No existing
+working game build or installation architecture adopts the candidate.

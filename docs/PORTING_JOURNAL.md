@@ -33822,3 +33822,104 @@ Full independent player stripping/roots, native
 AOT/Burst, serialized content/shaders, Android tool hosting and install/runtime
 qualification remain separate requirements. No current game build is replaced;
 Architecture C and the desktop owner-build fallback remain authoritative.
+
+## J1058 — Strip and convert the complete player with fixed target root configuration
+
+2026-10-24. Complete host UnityLinker → IL2CPP converter feasibility case.
+No Editor process, Unity project mutation, device operation or runtime adoption.
+
+**Hypothesis and fixed-target simplification.** The user's known-final-state
+approach does not require rediscovering every general Editor root-selection
+algorithm. Type/module/scene identities and preservation choices can instead be
+explicit target configuration, subject to minimum-identity provenance/privacy
+and publication audit. This case tests that route privately; it does not claim
+independent scene semantics or publish a root recipe. J857/J859 already produce
+the SDK-native registration table from owner SDK bytes, so do not vendor or use
+a captured SDK table. The pinned R2API address/initialization distinction from
+J1057 still applies: root metadata is not content or runtime readiness.
+
+**Actual target evidence.** Main finds no preserved R27 scene/root snapshots;
+its four sealed command/DAG/trace files remain the only R27 metadata evidence.
+Hash and copy explicitly labeled current R36-era TypesInScenes.xml,
+SerializedTypes.xml and EditorToUnityLinkerData.json. They contain 458 XML type
+rows in fourteen assemblies, 37 serialized XML rows in six assemblies, 471 JSON
+scene/type relationships, empty JSON serializedTypes, four module exclusions
+and no forced inclusions. They are supplied configuration, not R27 roots or
+PC-derived serialized content. Current authored whole-catalog/item-behavior
+preservation descriptors and Burst link configuration are also explicit inputs.
+All method bodies, SDK source excerpts and raw reports remain private.
+
+**Independent providers and SDK metadata.** Reuse J1057's actual current
+145-source assembly, J1056's authored audio outputs, J1053's package outputs,
+J1052's game/API transformations, accepted original PC DLLs and exact owner SDK
+DLLs. The full staged pre-strip set has 332 assemblies. The developer-only
+MCP runtime is explicitly excluded; it is not a selected game root/reference.
+The command/provider manifest records that choice instead of claiming the
+historical 333-file capture was reproduced verbatim. Captured DLLs supply no
+production bytes. Copies and original providers are hash-checked before/after.
+
+The existing metadata inventory reads 244 independent providers without executing
+them. Of 966 XML/JSON checks, 946 resolve directly through managed forwarding
+or native name/module identity. The other twenty are ten UnityEditor.* names
+repeated across XML and JSON; all ten have exact SDK-native class/module matches.
+Inspect the pinned UnityLinker consumer: IsEditorType recognizes that namespace,
+and ProcessTypeInSceneData routes those engine-module records through native
+dependency/base registration rather than ordinary managed type lookup. Keep the
+original missing-managed-definition report and explicit native classification;
+do not invent managed wrappers or drop roots. The SDK registry reader generates
+all 318 native records from the unchanged owner binary. Its complete value map
+matches the supplied target, while canonical table order differs. The first
+candidate's strict full-JSON equality assertion exposes that ordering difference;
+preserve it and compare project fields and native values separately. This is
+not an order-independent equality claim.
+
+**Complete stripping.** Invoke the pinned SDK UnityLinker directly with the same
+conservative Android/IL2CPP development policy and eleven root assemblies as the
+R27 command specification. Use only the new staged independent DLLs, supplied
+fixed current root/preservation configuration, generated SDK-native JSON and
+explicit SDK module/native-link data. Relocate every output into the isolated
+case and omit tool analytics. No live project or captured game assembly is an
+input. Actual execution succeeds in 18.5380 seconds: 93 stripped DLLs plus the
+linker-to-editor report. All providers remain unchanged. The generated table's
+order is accepted in this complete run; output parity is still separate.
+A direct byte comparison with frozen R27 matches 45 of 93 DLLs; 48 differ.
+Current source/configuration and independently rebuilt packages are different
+inputs. No digest normalization or stripping equivalence is asserted.
+
+**Complete IL2CPP conversion.** Preserve the original R27 response's complete
+93-assembly order and conversion/checking policy as specification only. Bind
+all actual assembly inputs to this run's freshly stripped outputs. Execute the
+supplied exact IL2CPP converter directly, with relocated data/C++/symbols/profiler
+paths and analytics disabled. It succeeds in 19.6431 seconds and generates 691
+C++/metadata files totaling 1,141,507,738 bytes. Every output is rehashed and all
+93 input hashes stay unchanged. This is actual whole-player conversion rather
+than an authored fixture, but no native compilation, metadata-byte parity,
+performance, content production or device loading follows from it.
+
+**Deterministic host contracts.** Large private output exposes the tiny packet
+unit fixture's incidental dependence on actual host free space. Change only that
+fixture's advertised capacity to exactly the unchanged production reserve;
+real Zstd encoding, files and stream/damage assertions remain. Add explicit
+reserve-minus-one refusal, exact-reserve admission and deadline-with-sufficient-
+capacity refusal, checking failed receipts and zero payload processing. Production
+reserve/deadline code is unchanged. Preserve and correct the two initial test
+errors (receipt filename and clock-mock receipt read). Ruff and all five focused
+tests pass; Main independently reviews this test delta GO. This fixes host test
+determinism without changing production admission or discarding evidence to
+satisfy a kilobyte-sized test.
+
+**Evidence and remaining gates.** Private
+`work/coordination/owner-player-roots-v1/proof-v2.json`, SHA-256
+`c0bc086aa0d172ea6132c5b9354fb290220abbf5f4628824fdd92260b304a691`,
+binds 1,214 artifacts, 307 SDK tool files, source/metadata/command bindings,
+complete inputs/outputs, first failures, supplied-current-root provenance and
+all comparisons. Main independently verifies the complete proof, all 332 source
+and staged providers, all 93 stripped outputs and all 691 generated files, with
+a separate boundary review finding no issue. GO is for this explicit host scope.
+Production source is c668a29a; checkpoint 8ab0e777 adds only the reviewed
+deterministic packet tests. A fixed-root configuration route is feasible
+through complete host stripping/conversion without general Editor import.
+Audited public configuration/bootstrap, full native/Burst production, serialized
+content/shaders, Android tool hosting, ownership-preserving installation and
+matched performance remain open. Working APKs, Architecture C and the desktop
+fallback stay unchanged; PR #55 keeps its device/adoption hold.

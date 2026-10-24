@@ -92,6 +92,14 @@ and terminal receipt, and retains failures without updating lab/current state.
 keep the original lab gate and runtime stage/request guards intact. No game build
 automatically selects this source-only input path; Android execution is open.
 
+[J1058's whole-player host case](PORTING_JOURNAL.md#j1058--strip-and-convert-the-complete-player-with-fixed-target-root-configuration)
+reuses the named metadata/SDK registry/root-composition owners and exact SDK
+UnityLinker/IL2CPP tools with independent DLL providers. Current target root and
+preservation identities are explicit supplied configuration, not independently
+derived scene semantics. LOCAL_STATE records setup, retained inputs and teardown.
+The experiment has no current game-build consumer; native/content production
+and Android execution are separate gates.
+
 `scripts/lab/owner_audio_prefab.py` owns current experimental bounded host
 reconstruction of one source audio prefab from the owner's original bundles.
 `recipe/owner-audio-prefab.json` holds audited minimum identities and one clearly

@@ -182,6 +182,16 @@ all sixteen selected support types match the declared R27 target projection.
 Full assembly/native/gameplay equivalence and independent player roots remain
 open. Captured game DLLs are comparison oracles only.
 
+The [whole-player fixed-root case (J1058)](PORTING_JOURNAL.md#j1058--strip-and-convert-the-complete-player-with-fixed-target-root-configuration)
+now runs the complete host chain: 332 independent DLL providers → 93 stripped
+DLLs → 691 generated C++/metadata files. It reuses supplied, explicitly labeled
+current target root/preservation configuration and generates the SDK-native table
+from owner SDK bytes. General Editor root discovery is unnecessary for that
+candidate, but the configuration is not independently inferred scene semantics
+or an audited public bootstrap. Stripped DLLs match only 45/93 frozen R27 hashes;
+no whole-output/native equivalence is claimed. Full native/Burst, content/shader
+production, Android execution and installation remain open.
+
 ## Binary patches and retained artifacts
 
 | Candidate shortcut | Assessment |
@@ -195,9 +205,11 @@ open. Captured game DLLs are comparison oracles only.
 
 ## Genuine blockers and their scope
 
-**Missing producers:** complete player stripping and independent roots;
-matching code/metadata construction at game scale; the full target serialized
-content and shader producer; Burst and current Android middleware integration.
+**Missing producers/qualification:** audited fixed-target root configuration and
+complete owner-input bootstrap; full native compilation and matching output;
+the full target serialized content and shader producer; Burst and current
+Android middleware integration. Complete host managed stripping and C++/metadata
+production now run in J1058 with supplied current target configuration.
 These are absent implementations/qualifications, not proof that the Editor is
 mathematically indispensable. A frozen destination removes general editor
 authoring and asset discovery requirements, but does not remove their output
