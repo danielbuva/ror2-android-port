@@ -80,11 +80,16 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
     PostProcessVolume sourceSobelVolume;
     PostProcessProfile sourceSobelProfile;
     SobelOutline sourceSobelSettings;
+    PostProcessVolume sourceGradingVolume;
+    PostProcessProfile sourceGradingProfile;
+    PostProcessResources sourceGraphicsResources;
     [Serializable]
     public sealed class SourceSobelObservation
     {
         public bool volumeActiveWhenRendered, renderedCameraObserved, blendedEnabled, shaderSupported, retired;
         public float outlineIntensity, outlineScale;
+        public bool ambientOcclusionEnabled, colorGradingEnabled, ownedResourcesBound;
+        public int computeKernelsVerified;
     }
     public SourceSobelObservation sourceSobelObservation { get; private set; }
     OutlineHighlight ownedOutlineHighlight;
@@ -341,8 +346,8 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
 
 
     // The suppressed application root normally enables its graphics volume
-    // during startup. Restore only its recovered Sobel effect for this view;
-    // AO/colour-grading compute recovery remains a separate capability gate.
+    // during startup. Restore its two graphics profiles for this view using
+    // compatible pinned programs and the unchanged original setting values.
     // Do not enable the application, mutate its profile or create services.
     void PrepareSourceSobel(Scene sourceStageScene)
     {
@@ -352,12 +357,14 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
                 application = root.GetComponent<RoR2Application>();
         if (!application || application.gameObject.activeInHierarchy)
             throw new InvalidOperationException("source Sobel requires the inactive original stage application root");
-        PostProcessVolume source = null;
+        PostProcessVolume source = null, grading = null;
         foreach (var behaviour in application.BehavioursToEnableDuringStartup)
         {
             var volume = behaviour as PostProcessVolume;
             if (volume && volume.sharedProfile && volume.sharedProfile.name == "ppApplication_opt")
                 source = volume;
+            if (volume && volume.sharedProfile && volume.sharedProfile.name == "ppDisabler_opt")
+                grading = volume;
         }
         SobelOutline settings;
         var layer = viewCamera.GetComponent<PostProcessLayer>();
@@ -365,23 +372,80 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
             !settings.active || !settings.enabled.value || !layer ||
             (layer.volumeLayer.value & (1 << source.gameObject.layer)) == 0)
             throw new InvalidOperationException("original source Sobel profile or camera volume layer differs");
+        ColorGrading gradingSettings;
+        if (!grading || !grading.isGlobal || grading.targetLayer ||
+            !grading.sharedProfile.TryGetSettings(out gradingSettings) || !gradingSettings.active || !gradingSettings.enabled.value ||
+            (layer.volumeLayer.value & (1 << grading.gameObject.layer)) == 0)
+            throw new InvalidOperationException("original source grading profile or camera volume layer differs");
         Shader shader = LegacyShaderAPI.Find("Hidden/PostProcess/SobelOutline");
         if (!shader || !shader.isSupported)
             throw new InvalidOperationException("original source Sobel composite shader is unavailable");
-        var rootObject = new GameObject("Source Sobel volume");
+        sourceSobelObservation = new SourceSobelObservation { shaderSupported = shader.isSupported };
+        PrepareSourceGraphicsResources(layer);
+        sourceSobelVolume = CloneSourceGraphicsVolume(source, out sourceSobelProfile);
+        sourceSobelProfile.TryGetSettings(out sourceSobelSettings);
+        sourceGradingVolume = CloneSourceGraphicsVolume(grading, out sourceGradingProfile);
+        Camera.onPostRender += ObserveSourceSobel;
+    }
+
+    PostProcessVolume CloneSourceGraphicsVolume(PostProcessVolume source, out PostProcessProfile profile)
+    {
+        profile = ScriptableObject.CreateInstance<PostProcessProfile>();
+        foreach (var setting in source.sharedProfile.settings)
+            profile.AddSettings(Instantiate(setting));
+        var rootObject = new GameObject("Source graphics " + source.sharedProfile.name);
         rootObject.transform.SetParent(stagingRoot.transform, false);
         rootObject.layer = source.gameObject.layer;
-        sourceSobelProfile = ScriptableObject.CreateInstance<PostProcessProfile>();
-        sourceSobelSettings = Instantiate(settings);
-        sourceSobelProfile.AddSettings(sourceSobelSettings);
-        sourceSobelVolume = rootObject.AddComponent<PostProcessVolume>();
-        sourceSobelVolume.sharedProfile = sourceSobelProfile;
-        sourceSobelVolume.isGlobal = source.isGlobal;
-        sourceSobelVolume.priority = source.priority;
-        sourceSobelVolume.weight = source.weight;
-        sourceSobelVolume.blendDistance = source.blendDistance;
-        sourceSobelObservation = new SourceSobelObservation { shaderSupported = shader.isSupported };
-        Camera.onPostRender += ObserveSourceSobel;
+        var volume = rootObject.AddComponent<PostProcessVolume>();
+        volume.sharedProfile = profile;
+        volume.isGlobal = source.isGlobal;
+        volume.priority = source.priority;
+        volume.weight = source.weight;
+        volume.blendDistance = source.blendDistance;
+        return volume;
+    }
+
+    void PrepareSourceGraphicsResources(PostProcessLayer layer)
+    {
+        var field = typeof(PostProcessLayer).GetField("m_Resources", BindingFlags.Instance | BindingFlags.NonPublic);
+        var original = field == null ? null : field.GetValue(layer) as PostProcessResources;
+        if (!original || original.shaders == null || original.computeShaders == null)
+            throw new InvalidOperationException("original source camera post-process resources are unavailable");
+        sourceGraphicsResources = Instantiate(original);
+        sourceGraphicsResources.shaders = original.shaders.Clone();
+        sourceGraphicsResources.computeShaders = original.computeShaders.Clone();
+        sourceGraphicsResources.shaders.multiScaleAO = SourceGraphicsShader("SourceCameraMultiScaleVO");
+        sourceGraphicsResources.shaders.lut2DBaker = SourceGraphicsShader("SourceCameraLut2DBaker");
+        var compute = sourceGraphicsResources.computeShaders;
+        compute.lut3DBaker = SourceGraphicsCompute("SourceCameraLut3DBaker", "KGenLut3D_NoTonemap", "KGenLut3D_AcesTonemap", "KGenLut3D_NeutralTonemap", "KGenLut3D_CustomTonemap");
+        compute.multiScaleAODownsample1 = SourceGraphicsCompute("SourceCameraMultiScaleVODownsample1", "MultiScaleVODownsample1", "MultiScaleVODownsample1_MSAA");
+        compute.multiScaleAODownsample2 = SourceGraphicsCompute("SourceCameraMultiScaleVODownsample2", "MultiScaleVODownsample2", "MultiScaleVODownsample2_MSAA");
+        compute.multiScaleAORender = SourceGraphicsCompute("SourceCameraMultiScaleVORender", "MultiScaleVORender", "MultiScaleVORender_interleaved", "MultiScaleVORender_MSAA", "MultiScaleVORender_MSAA_interleaved");
+        compute.multiScaleAOUpsample = SourceGraphicsCompute("SourceCameraMultiScaleVOUpsample", "MultiScaleVOUpSample", "MultiScaleVOUpSample_invert", "MultiScaleVOUpSample_premin", "MultiScaleVOUpSample_blendout", "MultiScaleVOUpSample_premin_blendout", "MultiScaleVOUpSample_MSAA", "MultiScaleVOUpSample_MSAA_invert", "MultiScaleVOUpSample_MSAA_premin", "MultiScaleVOUpSample_MSAA_blendout", "MultiScaleVOUpSample_MSAA_premin_blendout");
+        layer.Init(sourceGraphicsResources);
+        sourceSobelObservation.ownedResourcesBound = ReferenceEquals(field.GetValue(layer), sourceGraphicsResources);
+    }
+
+    Shader SourceGraphicsShader(string resource)
+    {
+        var shader = Resources.Load<Shader>(resource);
+        if (!shader || !shader.isSupported)
+            throw new InvalidOperationException("source graphics shader is unavailable: " + resource);
+        return shader;
+    }
+
+    ComputeShader SourceGraphicsCompute(string resource, params string[] kernels)
+    {
+        var shader = Resources.Load<ComputeShader>(resource);
+        if (!SystemInfo.supportsComputeShaders || !shader)
+            throw new InvalidOperationException("source graphics compute program is unavailable: " + resource);
+        foreach (var kernel in kernels)
+        {
+            if (!shader.HasKernel(kernel))
+                throw new InvalidOperationException("source graphics compute kernel is unavailable: " + kernel);
+            sourceSobelObservation.computeKernelsVerified++;
+        }
+        return shader;
     }
 
     void ObserveSourceSobel(Camera camera)
@@ -392,6 +456,11 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
         sourceSobelObservation.volumeActiveWhenRendered = sourceSobelVolume.isActiveAndEnabled;
         sourceSobelObservation.renderedCameraObserved = true;
         sourceSobelObservation.blendedEnabled = settings && settings.active && settings.enabled.value;
+        var layer = camera.GetComponent<PostProcessLayer>();
+        var ao = layer.GetBundle<AmbientOcclusion>().settings as AmbientOcclusion;
+        var grading = layer.GetBundle<ColorGrading>().settings as ColorGrading;
+        sourceSobelObservation.ambientOcclusionEnabled = ao && ao.active && ao.enabled.value;
+        sourceSobelObservation.colorGradingEnabled = grading && grading.active && grading.enabled.value;
         if (settings)
         {
             sourceSobelObservation.outlineIntensity = settings.outlineIntensity.value;
@@ -403,14 +472,22 @@ public sealed class AndroidNativeSourceCameraRigOwner : MonoBehaviour, ICameraSt
     void ReleaseSourceSobel()
     {
         Camera.onPostRender -= ObserveSourceSobel;
-        if (sourceSobelVolume)
-            sourceSobelVolume.enabled = false; // Original OnDisable unregisters.
-        if (sourceSobelSettings)
-            Destroy(sourceSobelSettings);
-        if (sourceSobelProfile)
-            Destroy(sourceSobelProfile);
+        foreach (var volume in new[] { sourceSobelVolume, sourceGradingVolume })
+            if (volume)
+                volume.enabled = false; // Original OnDisable unregisters.
+        foreach (var profile in new[] { sourceSobelProfile, sourceGradingProfile })
+            if (profile)
+            {
+                foreach (var setting in profile.settings)
+                    Destroy(setting);
+                Destroy(profile);
+            }
+        if (sourceGraphicsResources)
+            Destroy(sourceGraphicsResources);
+        sourceGraphicsResources = null;
         sourceSobelSettings = null;
         sourceSobelProfile = null;
+        sourceGradingProfile = null;
         if (sourceSobelObservation != null)
         {
             sourceSobelObservation.retired = true;
