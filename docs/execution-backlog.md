@@ -7,6 +7,10 @@ result in the journal.
 
 ## Gameplay integration
 
+- [ ] Compare the opt-in source view against a matched PC reference and resolve
+      measured color/lighting differences; terrain visibility is restored in J1077.
+- [ ] Restore serialized stage Wwise clients under original native readiness and
+      complete audio mix/spatial/event-attribution/audibility acceptance.
 - [ ] Unassisted full run with normal-difficulty combat (all current route evidence is assisted).
 - [ ] Commit an actually earned alternate loadout choice through the profile (J493 revisit).
 - [ ] Observe the remaining J503 achievement conditions (near-death charge, two-stack Mountain
@@ -29,10 +33,11 @@ result in the journal.
 ## Stability and performance
 
 - [ ] Qualify J914's retained dependencies over a long repeated-session series
-      and original audio termination, preserving ordinary survivor/profile/
-      entitlement checks. The native menu/restart boundary now has J1045/J1046
+      while preserving ordinary survivor/profile/entitlement checks. The native
+      menu/restart boundary now has J1045/J1046
       and [J1066](PORTING_JOURNAL.md#j1066--qualify-native-settings-feedback-and-two-step-end-run-controls)
-      device coverage; long-run retention and natural Term remain open.
+      device coverage; original Term/disarm and bounded application-owned Quit pass
+      in J1077. Long-run retention remains open.
 - [ ] Attribute the remaining ~52 MB/session managed growth (J787): not reachable
       from enumerable static/live roots; next a long session series on the
       internal Nova to test whether PSS or Boehm usage reaches a limit.
