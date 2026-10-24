@@ -1,0 +1,194 @@
+{
+  "kind": "owner-app-host-tools-v1",
+  "links": {
+    "native-links/libandroid-support.so": "libpydep_android-support.so",
+    "native-links/libbz2.so.1.0": "libpydep_bz2.so",
+    "native-links/libcrypto.so.3": "libcrypto.so",
+    "native-links/liblzma.so.5": "libpydep_lzma.so",
+    "native-links/libpython3.14.so": "libpython3.14.so",
+    "native-links/libz.so.1": "libpydep_z.so",
+    "native-links/libzstd.so.1": "libpydep_zstd.so",
+    "python/lib/python3.14/lib-dynload/_bisect.cpython-314-aarch64-linux-android.so": "libpyext__bisect.so",
+    "python/lib/python3.14/lib-dynload/_blake2.cpython-314-aarch64-linux-android.so": "libpyext__blake2.so",
+    "python/lib/python3.14/lib-dynload/_bz2.cpython-314-aarch64-linux-android.so": "libpyext__bz2.so",
+    "python/lib/python3.14/lib-dynload/_hashlib.cpython-314-aarch64-linux-android.so": "libpyext__hashlib.so",
+    "python/lib/python3.14/lib-dynload/_json.cpython-314-aarch64-linux-android.so": "libpyext__json.so",
+    "python/lib/python3.14/lib-dynload/_lzma.cpython-314-aarch64-linux-android.so": "libpyext__lzma.so",
+    "python/lib/python3.14/lib-dynload/_posixsubprocess.cpython-314-aarch64-linux-android.so": "libpyext__posixsubprocess.so",
+    "python/lib/python3.14/lib-dynload/_random.cpython-314-aarch64-linux-android.so": "libpyext__random.so",
+    "python/lib/python3.14/lib-dynload/_struct.cpython-314-aarch64-linux-android.so": "libpyext__struct.so",
+    "python/lib/python3.14/lib-dynload/_zstd.cpython-314-aarch64-linux-android.so": "libpyext__zstd.so",
+    "python/lib/python3.14/lib-dynload/binascii.cpython-314-aarch64-linux-android.so": "libpyext_binascii.so",
+    "python/lib/python3.14/lib-dynload/fcntl.cpython-314-aarch64-linux-android.so": "libpyext_fcntl.so",
+    "python/lib/python3.14/lib-dynload/grp.cpython-314-aarch64-linux-android.so": "libpyext_grp.so",
+    "python/lib/python3.14/lib-dynload/math.cpython-314-aarch64-linux-android.so": "libpyext_math.so",
+    "python/lib/python3.14/lib-dynload/select.cpython-314-aarch64-linux-android.so": "libpyext_select.so",
+    "python/lib/python3.14/lib-dynload/zlib.cpython-314-aarch64-linux-android.so": "libpyext_zlib.so"
+  },
+  "natives": [
+    {
+      "path": "lib/python3.14/lib-dynload/_bisect.cpython-314-aarch64-linux-android.so",
+      "root": "python",
+      "sha256": "b5fbd3319b50d157b6f0281402beb74772b118a3f07966fdd86e750965e15f5e",
+      "target": "libpyext__bisect.so"
+    },
+    {
+      "path": "lib/python3.14/lib-dynload/_blake2.cpython-314-aarch64-linux-android.so",
+      "root": "python",
+      "sha256": "f29d2db093d323c53b8b0ea2d5ee96b3a9d89904786a3bef077be32e6969e217",
+      "target": "libpyext__blake2.so"
+    },
+    {
+      "path": "lib/python3.14/lib-dynload/_bz2.cpython-314-aarch64-linux-android.so",
+      "root": "python",
+      "sha256": "80789059b436fd0f06500ef909e2b135f5472421196bcbda83d22b6104cb4547",
+      "target": "libpyext__bz2.so"
+    },
+    {
+      "path": "lib/python3.14/lib-dynload/_hashlib.cpython-314-aarch64-linux-android.so",
+      "root": "python",
+      "sha256": "afbd84086c5d9a27ac5c6af65e4ec4cdd6e48f09ff99e64069eb8e62236a045b",
+      "target": "libpyext__hashlib.so"
+    },
+    {
+      "path": "lib/python3.14/lib-dynload/_json.cpython-314-aarch64-linux-android.so",
+      "root": "python",
+      "sha256": "0ea16c04d49395a86dfc1c7123e0c7ed9d096cd8d38a9c539ffd44f678c93c2b",
+      "target": "libpyext__json.so"
+    },
+    {
+      "path": "lib/python3.14/lib-dynload/_lzma.cpython-314-aarch64-linux-android.so",
+      "root": "python",
+      "sha256": "5bb33581e155d672753c36ad2a2cf48ffe19ac47ffede4c455da78c744899559",
+      "target": "libpyext__lzma.so"
+    },
+    {
+      "path": "lib/python3.14/lib-dynload/_posixsubprocess.cpython-314-aarch64-linux-android.so",
+      "root": "python",
+      "sha256": "a8bd28c055801d6db1d94f97bb7a12b5b9eb7fe68bff1e67b46911033fc66318",
+      "target": "libpyext__posixsubprocess.so"
+    },
+    {
+      "path": "lib/python3.14/lib-dynload/_random.cpython-314-aarch64-linux-android.so",
+      "root": "python",
+      "sha256": "74894f48920ebda8087dce78ee22cceda0929ecd50ced61159774e5da6d15083",
+      "target": "libpyext__random.so"
+    },
+    {
+      "path": "lib/python3.14/lib-dynload/_struct.cpython-314-aarch64-linux-android.so",
+      "root": "python",
+      "sha256": "a00a9e4d4da69eab2633c22ba9c079dab2a8eea6637488acc9124b84a73d8462",
+      "target": "libpyext__struct.so"
+    },
+    {
+      "path": "lib/python3.14/lib-dynload/_zstd.cpython-314-aarch64-linux-android.so",
+      "root": "python",
+      "sha256": "65d023f2b219ee6a9ec055d6e525f7e27d2d8630e0363b286f7855bd7f9258d3",
+      "target": "libpyext__zstd.so"
+    },
+    {
+      "path": "lib/python3.14/lib-dynload/binascii.cpython-314-aarch64-linux-android.so",
+      "root": "python",
+      "sha256": "b3553f75c4012a9e80dec06b37b64eabaf1b1de8c8e6a2898320a7fb1527a206",
+      "target": "libpyext_binascii.so"
+    },
+    {
+      "path": "lib/python3.14/lib-dynload/fcntl.cpython-314-aarch64-linux-android.so",
+      "root": "python",
+      "sha256": "2a6679c2aa7a96731772fe153550cfb836fc0aa9650406bd288b8a888627b420",
+      "target": "libpyext_fcntl.so"
+    },
+    {
+      "path": "lib/python3.14/lib-dynload/grp.cpython-314-aarch64-linux-android.so",
+      "root": "python",
+      "sha256": "2595c9c17fec98e0643626d57b52bd38536c5d5f54eb6c257196e5b8ec4b90a9",
+      "target": "libpyext_grp.so"
+    },
+    {
+      "path": "lib/python3.14/lib-dynload/math.cpython-314-aarch64-linux-android.so",
+      "root": "python",
+      "sha256": "b21bd219d70a8e3158d74810358c45b99dc56b92eac4b24a7b326e730b1c5673",
+      "target": "libpyext_math.so"
+    },
+    {
+      "path": "lib/python3.14/lib-dynload/select.cpython-314-aarch64-linux-android.so",
+      "root": "python",
+      "sha256": "62a1b3dffe7c4bb143da85e907b46fc2264bfa783cf61cd64407a23a74552abc",
+      "target": "libpyext_select.so"
+    },
+    {
+      "path": "lib/python3.14/lib-dynload/zlib.cpython-314-aarch64-linux-android.so",
+      "root": "python",
+      "sha256": "0b04f09ce259f44433c478dbf02934ae9dd10af22b00d8afd56ba19b26be79a2",
+      "target": "libpyext_zlib.so"
+    },
+    {
+      "path": "lib/libpython3.14.so",
+      "root": "python",
+      "sha256": "2600087b21b1820d6d5363602011b6795de1c4fd7a6fb1d837dc05e0538016e2",
+      "target": "libpython3.14.so"
+    },
+    {
+      "path": "lib/libandroid-support.so",
+      "root": "python",
+      "sha256": "739cf829511d71dafd6c67fdbb70f3f0c6048642ea2e1967790ee961fde14430",
+      "target": "libpydep_android-support.so"
+    },
+    {
+      "path": "lib/libz.so.1",
+      "root": "usr",
+      "sha256": "c47748ed4b6ca6a2ecd664bab04795f3493956ab1f5cddc4ba0efa737ef3b711",
+      "target": "libpydep_z.so"
+    },
+    {
+      "path": "lib/libzstd.so.1",
+      "root": "usr",
+      "sha256": "1677d5e828c1839f111f0261697c08f99a5e4e80434659ab88e5ff859a1374f7",
+      "target": "libpydep_zstd.so"
+    },
+    {
+      "path": "lib/liblzma.so.5",
+      "root": "python",
+      "sha256": "ba3a66a34cb61713f004c3c35d808007cb41c21a8f396e0678219fef1ec25e71",
+      "target": "libpydep_lzma.so"
+    },
+    {
+      "path": "lib/libcrypto.so.3",
+      "root": "usr",
+      "sha256": "5dddfd86746aabaca2c13eea108c8968811a4f9dcccf5889e34ebff6be920949",
+      "target": "libcrypto.so"
+    },
+    {
+      "path": "lib/libbz2.so.1.0",
+      "root": "python",
+      "sha256": "667055cac259f6a9404a24a6e927f410e2f41141709d27d5cce0071cbf525407",
+      "target": "libpydep_bz2.so"
+    }
+  ],
+  "public_profile_source_hashes": {
+    "recipe/assembly-transforms.json": "f6ed66e4cc324f7888a270b601882710d5f9f7d60da38068540d6121d031265b",
+    "recipe/owner-public-tools.json": "1f4b333652fbb38174f8e2f7c54366369171b543789a4fbfe54fd8db4cc2fec1",
+    "scripts/lab/assembly_transforms.py": "9e30fa8771789a6b5a47cb81231aba38219cb13ce1ed74d7a8c88700f3843ec4",
+    "scripts/lab/common.py": "6fbc71e09717a471040766f94b66cf6c62aaafb76a6da61db3afd68c3fcf4b76",
+    "scripts/lab/public_transform_tools.py": "f79c9cb79a56f6bd8d41b3fcaf4d47d456a3b052db0f3d47340d47bb607394d9",
+    "tools/assembly-transforms/AssemblyProbe.csproj": "72af7a71d7476ab4633780e2f76b54de5aaacbc202e5b26dd0780633986f330e",
+    "tools/assembly-transforms/AudioGuard.cs": "ac5d6dd4e08786d54346bc14c69f640785e04f98d8a104da9c39c86c6a00ffd6",
+    "tools/assembly-transforms/CatalogContract.cs": "5c9ec3e42209d7f1cf1f7cbc18e2ff61c16e314363b3fc9135fc77c8747e1da4",
+    "tools/assembly-transforms/CatalogNames.cs": "ff18bcf18c58de1e5a2113bcfb35b02d98b1c33db80e7345bd077daea6ace682",
+    "tools/assembly-transforms/MigrationSurface.cs": "771f9ecb44b76328b135eecb3539a611ffc3f8ab3fff7213494865e84d7a56af",
+    "tools/assembly-transforms/MusicOutputObserverCecilTransform.cs": "c94e64eda96e1d969087272d0684ce1a809a00b2e18eed30e35a0a5825a77b95",
+    "tools/assembly-transforms/MusicOutputObserverCecilTransform.csproj": "bfca91b1984488e25dd1849433c319c1288fff37630b0279c6684cec140a012b",
+    "tools/assembly-transforms/NativeViewCameraCecilTransform.cs": "612e1f374e6381e48aec33e902505953e47d1f4df765df646ea02284c7d16598",
+    "tools/assembly-transforms/OptionalPresentationGuard.cs": "a78d5d453bfe7d78a2df3b2040ff3ca09f22ef6ef9dd9047be751b5ed6e962f0",
+    "tools/assembly-transforms/Program.cs": "f4fd626746cd6a2a970e3a543a62ce1f487587c5ce10bf356a3611e4c5d6bf28",
+    "tools/assembly-transforms/RewiredContract.cs": "ed300e3f88ed25823d05ef9ab22e732d9d37d6dee0e5968e837c50ec63c8b8f3",
+    "tools/assembly-transforms/Slice.cs": "6d25f9bf0c8f8f4107708d32d0275fb728ffe06de81ec1fdee7fcb32962bf494",
+    "tools/assembly-transforms/VerifyNativeViewCameraTransform.cs": "f9047828a437fc650dbc30e68c81585a80b3f38ed87cc81427b32314b6cf9b91",
+    "tools/assembly-transforms/WwiseUnavailable.cs": "81ebaa69b8c40a19c2068dfcb856ceffe67a0b3d4be8852936ffcbedb8486ba3",
+    "tools/owner-build/PublicProviderWitness.cs": "d3cd2fe4d237774dde69470b7f45cb10872d99f66b73bab60550d11731520ce0",
+    "tools/owner-build/licenses/Roslyn-LICENSE.txt": "ae48df11a335dc1a615f4f938b69cba73bcf4485c4f97af49b38efb0f216353b"
+  },
+  "python_version": "3.14.8",
+  "schema": 1,
+  "source_head": "2504a2c6b9369e4a1dfb103440cc8ffe95405c4e"
+}

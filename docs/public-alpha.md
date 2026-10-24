@@ -36,6 +36,10 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       qualifies an optional public .NET 8 transform profile: all 98 host prefix
       files and the three portable Android golden DLLs match. Complete game
       compiler/native production and app delivery remain separate gates.
+      [J1074](PORTING_JOURNAL.md#j1074--qualify-the-integrated-public-transform-tools-inside-the-android-app-host)
+      qualifies current Python/.NET app hosting for those three DLLs, including
+      cold attempts and input refusal. Full-player tool delivery, native/content
+      production and the complete owner installation remain open.
       Full Unity-project reconstruction or AssetRipper export is not an assumed
       requirement. Every protected APK/payload output needs an owner-input
       producer; the accepted build supplies validation, never hidden target bytes.

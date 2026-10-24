@@ -102,6 +102,8 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 | `owner-meshes.json` | Protected mesh bodies in the private replay packet, for the included cohort only (J1070) | Original bundle/object/resource selectors, destination identities/hashes and authored import/conversion settings. | No geometry arrays, collision data, target byte frames or float literals; full audit above, 2026-10-24. Two cases remain excluded. | Explicit original-input-only `mesh_produce.py`; no current game-build consumer. |
 | `shader-postprocessing-bloom-candidate.json` | Exported one-pass Bloom and exact source-camera CopyStd placeholders | Accepted-input source/meta/resource identities, official Unity package/license hashes and pass contracts; authored camera staging pin refreshed without changing camera transforms. | Authored selection metadata only; upstream source and generated content stay local under Unity Companion License. Manual audit 2026-10-23 described above. | `shader_postprocessing_bloom`, whole-catalog preparation and catalog replay comparison; default off. |
 | `shader-postprocessing-uber-candidate.json` | Exact source-camera `PostProcessResources.uber` one-pass constant-white placeholder | Accepted-input Main Camera/resource/shader/profile identities, official archive/license/source hashes, pass-0 call contract and 18-file include closure. | Reconstruction metadata only; official shader/includes and generated candidates stay ignored under Unity Companion License. Package 2.3.0 is a compatible reference, not a shipped-version claim. Audited 2026-10-23. | `shader_postprocessing_uber`, whole-catalog preparation and catalog replay comparison; independent default-off activation. |
+
+| `owner-app-host-tools.json` | Private scoped native-host staging plan | Exact open Python/dependency file hashes, relative package paths/link targets and 21 pinned public producer source hashes; source commit is a retrieval hint. | Authored tool metadata only; no binary, SDK/game content, keys, credentials, private paths or device/storage identifiers. License/distribution boundaries are recorded below. Audited 2026-10-23. | `tools/phone-build/managed-host/stage.py` validates the fixed profile; its staged phone builder verifies file hashes and creates a separate private fixture, with no game/default-build consumer. |
 | `wwise-init-android.json` | Private fixture-only Init metadata generator constants (J744) | Minimum source-bank path, format/identity/size and plugin/device/bus relationships; generated bank bodies remain local. | Authored parsing/serialization and metadata only; accepted full inventory plus explicit source hash required, exclusive ignored outputs, no SDK/media/implementation/private identifiers. Audit details below. | `wwise_init_platform.py`, explicitly invoked support tool; no current game-build dependency. |
 | `tools/phone-build/legacy/transform_init.py.txt` | Exact authored historical Init transformer source | Bounded parsing/serialization and minimum format/plugin/device/bus identities, retained byte-exact for truthful historical receipts. | No bank/media bytes, SDK or wwiser implementation, private path, binary, credential or account/device identifier. Audited 2026-10-24. | Formatted owner wrapper checks full accepted inventory and configured bank before materializing/executing exact source; outputs remain ignored. |
 | `owner-audio-prefab.json` | One exported source audio prefab as a local analysis input (J1055) | Four accepted bundle identities, minimum root/script/reference metadata and one explicit generated export-GUID binding; values come from original type trees. | Authored derivation and metadata only; no serialized asset/template bodies, game/SDK source, media, personal/device/account identifiers or secrets. Full audit below. | `owner_audio_prefab.py`, current experimental host support; no automatic game-build consumer. |
@@ -2148,3 +2150,37 @@ The same audit binds the authored `common.py` clone primitive as the camera/musi
 hooks' transitive `artifact_copy` source. Only their file-copy operation changes;
 existing preimage/output hashes, atomic publication and exact module profiles
 remain required. No generated assembly or protected implementation is included.
+
+## App-host build-tool metadata audit (2026-10-23)
+
+`owner-app-host-tools.json` contains relative paths, names, hashes and native
+link selections for the scoped Python 3.14.8 build-tool profile, plus 21 public
+producer source digests. Its source commit is a retrieval hint; readers compare
+actual bytes. Native selections come from the previously supplied open Android
+Python/dependency packages and observed imports, with no implementation or
+binary copied into this repository. Source selectors refer only to audited
+public repository code/metadata and notices. No legitimate game data,
+account/authentication state, device/storage identity, home path or signing
+material appears in the recipe.
+
+The authored C shims use the public CPython opaque initialization and hostfxr
+hosting declarations; no upstream implementation is copied. Python/framework
+and dependency license notices remain with the supplied tools and private
+fixture. This audit approves metadata/source tracking, not public SDK/tool/APK
+redistribution. The debuggable fixture, caller-supplied tools and app-data
+input manifest do not establish ownership/authentication, complete dependency
+bootstrap or security-policy enforcement. Route A and the working game build
+are unchanged. Setup and unsupported modes are documented in
+`tools/phone-build/managed-host/README.md`; the experiment result lives only in
+J1001.
+
+
+The app-host profile source pins were refreshed on 2026-10-24 for the integrated
+public profile: `assembly_transforms.py` and `common.py` changed while the
+public transform component and C# sources remained unchanged. The source hint
+now names the integrated public commit; per-file hashes remain authoritative.
+The current common helper imports `contextvars`; an explicit assigned-device
+check confirms `_contextvars` is built into the supplied Android Python, so no
+native library or dependency selection is added. This is authored tool metadata,
+not game input or a redistribution approval. Original input admission and the
+fixture's remaining device gates still apply.
