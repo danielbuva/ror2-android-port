@@ -8,9 +8,10 @@ public static class BootstrapMcp
 {
     static bool connecting;
     [UnityEditor.Callbacks.DidReloadScripts(-10000)]
-    static void ResumeLane()
+    static void ResumeBridge()
     {
-        if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("ROR2LAB_MCP_HTTP_URL")))
+        if (SessionState.GetBool("MCPForUnity.ResumeHttpAfterReload", false)
+            || !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("ROR2LAB_MCP_HTTP_URL")))
         {
             SessionState.EraseBool("MCPForUnity.ResumeHttpAfterReload");
             EditorApplication.delayCall += Connect;
@@ -23,6 +24,8 @@ public static class BootstrapMcp
         FileStream lease = null;
         string laneUrl = Environment.GetEnvironmentVariable("ROR2LAB_MCP_HTTP_URL");
         string lockPath = Environment.GetEnvironmentVariable("ROR2LAB_MCP_PREF_LOCK");
+        if (string.IsNullOrEmpty(lockPath))
+            lockPath = Path.GetFullPath(Path.Combine(Application.dataPath, "../../coordination/mcp-preferences.lock"));
         try
         {
             // The pinned MCP captures its endpoint at StartAsync but stores

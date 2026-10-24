@@ -32,11 +32,11 @@ namespace UnityEditor {
   public static bool GetBool(string k,bool d){return values.ContainsKey(k)?values[k]=="true":d;}
   public static void SetBool(string k,bool v){values[k]=v?"true":"false";}
  }
- public static class SessionState {public static bool erased;public static void EraseBool(string key){if(key=="MCPForUnity.ResumeHttpAfterReload")erased=true;}}
+ public static class SessionState {public static bool erased;public static bool GetBool(string key,bool d){return !erased;}public static void EraseBool(string key){if(key=="MCPForUnity.ResumeHttpAfterReload")erased=true;}}
  public static class EditorApplication {public static Action delayCall;}
  namespace Callbacks {public sealed class DidReloadScripts:Attribute {public DidReloadScripts(int order){}}}
 }
-namespace UnityEngine {public static class Debug {public static bool done;public static void Log(object value){done=value.ToString()=="BOOTSTRAP_MCP_CONNECTED=True";}}}
+namespace UnityEngine {public static class Application {public static string dataPath=".";}public static class Debug {public static bool done;public static void Log(object value){done=value.ToString()=="BOOTSTRAP_MCP_CONNECTED=True";}}}
 namespace MCPForUnity.Editor.Services {
  public sealed class Bridge {public string url;public int stops;public Task StopAsync(){stops++;return Task.CompletedTask;}
   public Task<bool> StartAsync(){url=UnityEditor.EditorPrefs.GetString("MCPForUnity.HttpUrl","");return Task.FromResult(true);}}
@@ -56,6 +56,9 @@ public static class Host {
   if(!UnityEditor.SessionState.erased||MCPForUnity.Editor.Services.MCPServiceLocator.Bridge.stops!=1)return 5;
   UnityEditor.EditorPrefs.DeleteKey("MCPForUnity.HttpUrl");BootstrapMcp.Connect();
   if(UnityEditor.EditorPrefs.HasKey("MCPForUnity.HttpUrl"))return 6;
+  Environment.SetEnvironmentVariable("ROR2LAB_MCP_HTTP_URL",null);UnityEditor.SessionState.erased=false;
+  typeof(BootstrapMcp).GetMethod("ResumeBridge",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Static).Invoke(null,null);
+  if(!UnityEditor.SessionState.erased||UnityEditor.EditorApplication.delayCall==null)return 7;
   return 0;
  }
 }
