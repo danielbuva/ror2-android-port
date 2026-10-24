@@ -37431,3 +37431,51 @@ with positive native elite/stake observations and strict current-process error
 checks; retain all failures. Fold in alpha's existing diagnostic-retention
 commits for sustained-session measurement. Rendering, audio, Siren mission and
 normal-game acceptance remain separate device gates.
+
+
+## J1097 — Batch original collision, rendering and Siren changes with existing retention fixes
+
+**Hypothesis and reuse.** A sustained device run needs alpha's existing periodic
+diagnostic publication and destroyed returned-hit cleanup, rather than the
+known retained-log producer. Inspected and reused PR #72 commits `ead5e612` and
+`e27cffac` as `21e73efa` and `cf33a8b1` on the existing port branch. Only their
+actual documentation deltas were retained during cherry-pick conflicts; no
+parent-branch touch/capture features were implicitly imported. The existing
+`LabDiagnostics` and `SessionResourceBoundary` retain their owner boundaries.
+Their recorded J1091 community/source evidence remains authoritative; native
+logging and live/checked-out pool targets are unchanged. J1096's original
+collision-policy repair and all R48–R51 graphics/input/Siren work are inherited.
+
+**Host and build result.** Both builds use source `cf33a8b1`.
+The two production-method retention checks and five CI-cleanup checks pass.
+The pushed source passes clean-clone CI: 1,957 tests, 142 expected skips, Ruff,
+public audit, journal index and action documentation. GitHub host-tests passes.
+The earlier local compiler setup failure is retained in J1096, with its isolated
+retry passing.
+
+- R53 fast request `20261024T211815.645088Z`: 83.344 s, final zero
+  errors, APK `8c53767a53f29e31b23f38b7ec9d0bc4b0d39340756351cc07f1544c2cc597d5`.
+  Its owned pre-Gradle cancellation is an iteration export, not normal player
+  acceptance. All 266 payload hashes match normal R52; 267 references rehashed.
+- R54 normal request `20261024T212213.367435Z`: 74.637 s, normal full
+  player build, zero errors, APK
+  `796f8954a0e9a657b2434fe24c5dd22d73f5b63a3994b972ef1d756850605a2a`.
+  All 267 artifact references rehashed and all 266 payload hashes match R52.
+  This is the complete candidate for device qualification and the later
+  sustained-session workload.
+
+Build receipts, path/SHA references and operator preparation stay in
+`work/coordination/main-port-r53/` and `work/coordination/main-port-r54/`.
+No APK, payload or project is copied into a run/review directory. Mandatory
+pruning follows both builds. The shared editor mutex is released after R54,
+with no further editor work queued for the higher-priority content fixture.
+
+**Remaining device gate.** Both APKs are uninstalled at this checkpoint. Main
+remains unreachable; collect its interrupted R45 evidence and verify owned
+cleanup/display sleep before any new installation when it reconnects. Shared
+Nova remains occupied by the existing alpha series, then priority content work
+and alpha's short SDK case. Later install over the owned package, preserve the
+profile, run both strict controls, inspect source-view/End Run/Quit evidence and
+exercise native elite/stake contacts with fatal runtime errors retained.
+No NaN-resolution, memory-bound, PC-parity, full audio, Siren mission completion
+or normal-game acceptance is established by these host/build results.

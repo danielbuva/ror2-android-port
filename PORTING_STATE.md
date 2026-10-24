@@ -1,6 +1,6 @@
 # Porting state
 
-Updated 2026-10-24 UTC after **J1096**, **J1090**, **J1089** and **J1080**.
+Updated 2026-10-24 UTC after **J1097**, **J1096**, **J1090** and **J1080**.
 Main's latest qualified R44 preserves original stage audio clients after native readiness and
 passes both assisted controls, confirmed End Run, original Term/disarm, two
 application-owned Quits and a fresh-process audio restart. Observed exits take
@@ -17,11 +17,11 @@ through the [index](docs/JOURNAL_INDEX.md).
 | Accepted input | Steam 25475991; input `6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88` |
 | Toolchain | Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan; `environment/toolchain.json` |
 | Latest Main diagnostic | J1080/R44 `3d012ee9783e900117a10718d442582a3e6e6ecc1f444a48c316db7f043d4467`, build source `4c950513`: both standard controls, loaded source-audio clients on Lakes/Goolake, original Term/disarm, application-owned Quit and fresh-process restart. Full mix and PC appearance remain open. |
-| Pending normal gameplay/rendering batch | J1096/R52 `9ce08c18188fb5919cb278ebff793bfdfe9cbe30ad4eb626d0d10f50c74f175f`, source `63ce8ca6`, normal full build, zero errors. Inherits R48–R51 rendering and Siren changes and restores original collision-layer policy from accepted input. Host contracts and actual-editor 528-pair/source-prefab checks pass. Uninstalled; LightningStake NaN causality and all device acceptance remain open. |
-| Pending sustained-session successor | Alpha PR #72 diagnostic-retention commits are queued for reuse atop R52 before the long device workload; they are not included in R52. |
+| Pending normal gameplay/rendering batch | J1097/R54 `796f8954a0e9a657b2434fe24c5dd22d73f5b63a3994b972ef1d756850605a2a`, source `cf33a8b1`, normal full build, zero errors. Inherits R48–R51 rendering/Siren work, J1096 original collision policy and alpha PR #72 diagnostic-retention fixes. All 267 references verified; all 266 payload hashes match R52. Host/editor contracts and clean-clone/GitHub CI pass. Uninstalled; native NaN causality and device acceptance remain open. |
+| Iteration comparison | J1097/R53 fast `8c53767a53f29e31b23f38b7ec9d0bc4b0d39340756351cc07f1544c2cc597d5` uses the same source and exact normal R52 payload; iteration-only. R52 normal `9ce08c18188fb5919cb278ebff793bfdfe9cbe30ad4eb626d0d10f50c74f175f` remains the collision-policy checkpoint. |
 | Latest UI feature | J1066 Thor `299445f72267f216b23c7c4c2610364329445625396d8cd536bab01c07747ead`, source `bf40428f`, qualifies application screen lifetime and strict native abandon/restart. Preceding modal-corrected `c17a0ccc2947ac4b7c02cf43c183170ff866f88b03e90629c70a96121c1d18bb`, source `e8600060`, qualifies native keyboard/preview/consent/copy/browser return and confirmation/cancel. Automatic gameplay diagnostics do not qualify complete physical/touch play. |
 | Installed now | Main was updated to R45 `43a8c0ffd5e98fd7f04e7030df3c3e29e765ebfe06a50a647231c7d3103a8d7a`, source `70f44151`, in adopted storage. Install/sync and independent byte/profile checks pass; the first control loses the assigned ADB transport before producing a report. Cleanup/process/selector/display state is unverified while unreachable. R44/J1080 remains the latest qualified diagnostic. J1072 restored Thor's 299445f7 in internal storage at handoff, with exact installed hash, runtime backing, selector/process absence and both panels OFF verified. Its shared lease was released; later owners may advance the receipts. Never infer installation from Git HEAD. |
-| Runtime source since those APKs | R52 includes original collision-policy restoration before motor/body construction plus all R48–R51 graphics/input/Siren lifecycle changes. Original native callbacks remain authoritative. No device or NaN-resolution claim follows from source/editor checks. R44 stage audio remains inherited; shared-editor pointers move independently of installed bytes. |
+| Runtime source since those APKs | R54 includes original collision-policy restoration before motor/body construction, all R48–R51 graphics/input/Siren lifecycle work and alpha’s existing periodic-diagnostic/returned-hit retention corrections. Original native callbacks remain authoritative. Source/editor checks do not establish NaN resolution, appearance or native mission completion. R44 stage audio is inherited; shared-editor pointers move independently of installed bytes. |
 | Developer iteration | J1072: current fresh-Data pre-Gradle splice and explicit ScriptsOnly actions; [operation](docs/fast-iteration.md). Normal verification APK `00b5813ce4faa860b3f2094a2daeab15849bcd181c5e120964c09a8d7b50b603`, source `0f0fab22`; fast verification APK `3375a6514e2092f5908f880e06675104bf6451a23ec9e52afb4982751a95fdf7`, source `20c3dbd7`. These are separate from the installed/accepted rollbacks. Streaming stays default after the matched transport check. |
 | Parallel build infrastructure | J1078: isolated APFS lanes pass concurrent code/full builds, private Gradle teardown and explicit iteration-only uncompressed reuse. [Commands](docs/build-lanes.md). Normal host control `1935024b8f290c456044c83cd1b6fb069a8179be40fedc3d6f5ba1367e1d0d94`, source `0b1e048c`, is retained for host comparison; it is not device-verified or installed. Acceptance compression stays LZ4. |
 | Accepted rollback | J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`, source `1780ea9`; scope in [BASELINE.md](docs/BASELINE.md). |
@@ -49,7 +49,7 @@ observed, but appearance remains flat/desaturated and PC parity is unaccepted.
 
 The next gameplay work is:
 
-1. Qualify the R52 batch and diagnostic-retention successor when an authorized device is available, compare
+1. Qualify the R54 normal batch when an authorized device is available, compare
    source-view output with a matched PC reference and resolve the measured
    remaining rendering difference without arbitrary lighting/exposure tuning.
 2. Complete original audio mix/spatial/audibility and reduce Quit latency while
