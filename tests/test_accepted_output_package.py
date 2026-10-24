@@ -9,7 +9,9 @@ import shutil
 import struct
 import subprocess
 import tempfile
+from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 
 SCRIPT = Path(__file__).resolve().parents[1] / "tools/phone-build/accepted-output/package.py"
@@ -81,7 +83,10 @@ class AcceptedOutputPackageTests(unittest.TestCase):
             manifest.write_bytes(data)
             pin = hashlib.sha256(data).hexdigest()
             output = root / "packet"
-            result = PACKET.create(manifest, pin, targets, pc, sdk, codec, output)
+            # The tiny fixture exercises real encoding and IO, while available
+            # production capacity is controlled independently of the CI host.
+            with patch.object(PACKET.shutil, "disk_usage", return_value=SimpleNamespace(free=PACKET.RESERVE)):
+                result = PACKET.create(manifest, pin, targets, pc, sdk, codec, output)
             self.assertTrue(result["success"])
             self.assertEqual(result["targets_verified"], 3)
             self.assertEqual((output / "manifest.json").read_bytes(), data)
@@ -115,3 +120,56 @@ class AcceptedOutputPackageTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "overlaps"):
                 PACKET.create(root / "unused", "unused", root, root, root, root, root / "packet")
             self.assertFalse((root / "packet").exists())
+
+    def test_capacity_threshold_is_enforced_before_payload_processing(self):
+        for free, admitted in ((PACKET.RESERVE - 1, False), (PACKET.RESERVE, True)):
+            with self.subTest(free=free), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                manifest, targets, pc, sdk, codec, pin = self.reserve_fixture(root)
+                output = root / "packet"
+                capacity = SimpleNamespace(free=free)
+                with patch.object(PACKET.shutil, "disk_usage", return_value=capacity):
+                    if admitted:
+                        result = PACKET.create(manifest, pin, targets, pc, sdk, codec, output)
+                        self.assertTrue(result["success"])
+                        self.assertEqual(result["targets_verified"], 1)
+                    else:
+                        with self.assertRaisesRegex(RuntimeError, "reserve/deadline"):
+                            PACKET.create(manifest, pin, targets, pc, sdk, codec, output)
+                        result = json.loads((output / "creation-result.json").read_text())
+                        self.assertFalse(result["success"])
+                        self.assertEqual(result["targets_verified"], 0)
+                        self.assertFalse((output / "manifest.json").exists())
+
+    def test_deadline_refuses_even_when_capacity_is_sufficient(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            manifest, targets, pc, sdk, codec, pin = self.reserve_fixture(root)
+            capacity = SimpleNamespace(free=PACKET.RESERVE)
+            with patch.object(PACKET.shutil, "disk_usage", return_value=capacity), patch.object(PACKET.time, "monotonic", side_effect=[0, 1801, 1801]):
+                with self.assertRaisesRegex(RuntimeError, "reserve/deadline"):
+                    PACKET.create(manifest, pin, targets, pc, sdk, codec, root / "packet")
+            self.assertEqual(json.loads((root / "packet/creation-result.json").read_text())["targets_verified"], 0)
+
+    @staticmethod
+    def reserve_fixture(root):
+        pc, targets, sdk = (root / name for name in ("pc", "targets", "sdk"))
+        for path in (pc, targets, sdk):
+            path.mkdir()
+        content = b"authored SDK input"
+        (targets / "engine").write_bytes(content)
+        (sdk / "engine").write_bytes(content)
+        row = {"path": "engine", "bytes": len(content), "sha256": hashlib.sha256(content).hexdigest()}
+        codec = root / "unused-codec"
+        codec.write_bytes(b"not executed for SDK-copy")
+        data = json.dumps(
+            {
+                "schema": "private-accepted-output-delta-v1",
+                "tool": {"sha256": PACKET.sha(codec), "flags": ["-3", "--single-thread"]},
+                "sources": [],
+                "targets": [{**row, "mode": "sdk-copy", "reference": row}],
+            }
+        ).encode()
+        manifest = root / "profile.json"
+        manifest.write_bytes(data)
+        return manifest, targets, pc, sdk, codec, hashlib.sha256(data).hexdigest()
