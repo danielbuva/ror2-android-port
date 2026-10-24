@@ -78,7 +78,8 @@ public sealed class NovaDiagnosticDisplay : IDisposable
     public NovaDiagnosticDisplay(Transform model, AssetBundle bundle, string[] assets, GameObject floor, bool actual = false,
                                  RoR2.CharacterBody aimingBody = null, string sourceSurvivor = null,
                                  bool nativeSourceSkinLifecycleDiagnostic = false, RoR2.CharacterBody selectedBody = null,
-                                 AndroidNativeSourceSkinLifecycle.Report nativeSourceSkinReport = null)
+                                 AndroidNativeSourceSkinLifecycle.Report nativeSourceSkinReport = null,
+                                 UnityEngine.SceneManagement.Scene sourceStageScene = default)
     {
         actualModel = actual;
         bool sourceSelected = !string.IsNullOrEmpty(sourceSurvivor);
@@ -266,7 +267,7 @@ public sealed class NovaDiagnosticDisplay : IDisposable
             try
             {
                 nativeCameraRigOwner = AndroidNativeSourceCameraRigOwner.Create(root.transform, selectedBody,
-                    nativeSourceSkinLifecycleDiagnostic, sourceSelected, actual, sourceSkinReport);
+                    nativeSourceSkinLifecycleDiagnostic, sourceSelected, actual, sourceSkinReport, sourceStageScene);
             }
             catch (InvalidOperationException error)
             {

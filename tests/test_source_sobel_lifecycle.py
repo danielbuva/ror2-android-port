@@ -28,7 +28,8 @@ class SourceSobelLifecycleTests(unittest.TestCase):
             self.skipTest("pinned Unity host compiler unavailable")
         source = (ROOT / "tools/unity/runtime/input/AndroidNativeSourceCameraRigOwner.cs").read_text()
         methods = "\n".join(
-            method(source, signature) for signature in ("void PrepareSourceSobel()", "void ObserveSourceSobel(Camera camera)", "void ReleaseSourceSobel()")
+            method(source, signature)
+            for signature in ("void PrepareSourceSobel(Scene sourceStageScene)", "void ObserveSourceSobel(Camera camera)", "void ReleaseSourceSobel()")
         )
         fixture = (ROOT / "tests/fixtures/source_sobel_lifecycle_host.cs").read_text().replace("__METHODS__", methods)
         with tempfile.TemporaryDirectory(prefix="source-sobel-lifecycle-") as temp:
@@ -40,7 +41,14 @@ class SourceSobelLifecycleTests(unittest.TestCase):
 
     def test_only_the_requested_visual_camera_prepares_sobel(self):
         source = (ROOT / "tools/unity/runtime/input/AndroidNativeSourceCameraRigOwner.cs").read_text()
-        self.assertIn("if (!audioContextOnly)\n                owner.PrepareSourceSobel();", source)
+        self.assertIn("if (!audioContextOnly)\n                owner.PrepareSourceSobel(sourceStageScene);", source)
+        setup = method(source, "void PrepareSourceSobel(Scene sourceStageScene)")
+        self.assertIn("sourceStageScene.GetRootGameObjects()", setup)
+        self.assertNotIn("SceneManager.GetActiveScene", setup)
+        caller = (ROOT / "tools/unity/runtime/input/NovaInputBoundary.cs").read_text()
+        self.assertIn(
+            "coordinator.r.nova.nativeSourceSkinLifecycle,\n                                                    coordinator.stageGeometryScene", caller
+        )
         for signature in ("public void DisposeOwnedView()", "void OnDisable()"):
             self.assertIn("ReleaseSourceSobel();", method(source, signature))
         self.assertNotIn("RoR2Application.instance =", source)
