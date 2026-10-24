@@ -85,7 +85,7 @@ OWNER_SOURCE_HASHES = {
     "../../runtime/session/MusicPcmJoinObserver.cs": "3c8ceaf8a8ce9ce07c76282adb70f63f8f9487f0682d33056ea6aeaa2139cef9",
     "../../runtime/session/OriginalMusicControllerContract.cs": "bd8f78977722a276409623cea4909b0e41065fda6c195a6b0dee94ef8bb8b485",
     "../../runtime/session/OriginalNetworkSoundEventCatalogOwner.cs": "ca692357d4d6e635136c59529aaf89745f219e5227d4ea7b48be56cdd7fd455f",
-    "../../runtime/session/PortSession.cs": "da79fd12544453666017eadbbc2149519319f592c16690195dc6f32037eec434",
+    "../../runtime/session/PortSession.cs": "299d63ce62e86f7b9cb7c0569f9cef320b9da91a4de4190229cd6f55f6a8264a",
     "../../runtime/session/PortSessionOriginalAudioOwner.cs": "6998134c0d9defec514167375d0426741bc2b4aa18e2df200f52b497f16ace25",
     "../../runtime/session/PortSessionOriginalMusicControllerOwner.cs": "15272167e3c416edb863797bf35dcbe8ef6704ecac805fdbe38186f4d73d41b0",
     "../../runtime/world/IntegratedWorldBoundary.cs": "dca51118da0ebb8359894f495eaeee28df376ca62dc0e24e42a5809fe197ade2",
