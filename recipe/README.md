@@ -2221,3 +2221,9 @@ Build-lane configuration refreshes the camera recipe's transitive authored
 licensed inputs are unchanged. New lane state is generated below ignored local
 paths; no captured source, game data, account/device identity or key is tracked.
 Provenance/privacy audit: 2026-10-24.
+
+Iteration bundle compression refreshes the authored whole-catalog producer
+source digest. It adds only a private-lane uncompressed output choice and a
+separate exact-input/payload reuse receipt. Acceptance compression and all
+camera transformations remain unchanged. Provenance/privacy audit: 2026-10-24;
+authored tooling only, no generated game content or private identifiers.

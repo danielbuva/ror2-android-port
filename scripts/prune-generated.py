@@ -130,7 +130,13 @@ class Planner:
             for receipt in receipts:
                 if receipt.is_file():
                     pid = json.loads(receipt.read_text())["pid"]
-                    live |= subprocess.run(["/bin/ps", "-p", str(pid)], capture_output=True).returncode == 0
+                    try:
+                        os.kill(pid, 0)
+                        live = True
+                    except ProcessLookupError:
+                        pass
+                    except PermissionError:
+                        live = True
             if live:
                 self.keep(lane, "build lane has a live owned process")
                 continue
