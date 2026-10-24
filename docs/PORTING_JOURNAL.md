@@ -34179,3 +34179,80 @@ supplier, not middleware/media redistribution, controller-output fidelity,
 retained managed runtime, phone hosting or completed audio acceptance. Public
 source scan supplements the full manual provenance/privacy review. Architecture C,
 working build, existing admissions, desktop fallback and device hold remain.
+
+
+## J1063 — Complete the source-input host native owner build
+
+**Hypothesis and scope.** Compose the existing public managed, audio, stripping,
+conversion and native owners into one original-input command, without an Editor
+project, captured command graph or prepared game outputs. Architecture C and the
+working Android build remain unchanged. Existing pinned subsystem/prior-art
+knowledge and unchanged audio admissions are reused; no second runtime or
+content pipeline is introduced.
+
+**Named owner and inputs.** `owner-code/managed.py` supplies the existing
+`produce.py` backend. Audited `recipe/owner-managed-code.json` records 320 minimum
+original/SDK provider identities plus 12 produced/acquired identities and 14
+support-source selectors. The request supplies the reviewed legitimate input,
+exact SDK and ten explicit generic/package/authorized middleware tool paths.
+The instrumented licensed native SDK product remains supplied, not independently
+produced. Explicit compiler, reference-package and decoder options preserve
+existing caller defaults. The raw managed producer's actual source pin is
+`603f3d5db75acfa6423536268249e192f51abc7a003d13c41eeca6a15ff7b65a`.
+No admission is relaxed, fake project supplied, network restore performed or
+original installation modified. Setup, state and teardown are documented in
+ARCHITECTURE, LOCAL_STATE and the owner README.
+
+**Execution and result.** Initial source cases v1/v2 complete managed production
+through native planning only; v2 supplies all ten dependencies explicitly. Their
+metadata hashes are respectively `137435c5f44ec88c73c4ccaca6fb9a6e7e0b00cd836dfc08b7b16c9a169ba093`
+and `b2101719c4d17c0db848c14a17a11b49c86a4ea56c8f65eac5819728809f7cf9`.
+The complete default run uses committed source `65b1816bffe43de5e0c5c92af5b76f749f68ede5`
+in a clean detached checkout on an existing external host volume, retaining
+outputs and internal free-space reserves. It consumes no prepared game DLL,
+decompiled source tree, Editor project or historical native graph. All 332
+providers, 145 gameplay sources, 93 stripped DLLs, 691 converter outputs and 687
+fully restored source frames feed 825 actual native compilations, link and strip.
+The command exits 0 with phase `native-built`; phone/runtime qualification stays
+false. All 274 staged audio payloads (833,662,993 bytes) are hash/size checked.
+
+The stripped library is 98,903,576 bytes, SHA-256
+`4ad4c24c0129c4781af3742ae7e45513a5a29b74fc592d089bdac7d5eb6dcc93`.
+The unstripped library is 824,664,504 bytes, SHA-256
+`748bc853d8301ba5f744eb7681e2eb833dba58ba032171a016566f580124e75d`.
+Its same-converter metadata is 17,967,184 bytes, version 31, SHA-256
+`5476df811354239bfaa7edc4613731ae97e56665a9bdd728638aec40a621e6f8`.
+Every actual process argv matches its plan and exits 0. The 825 objects total
+1,952,299,560 bytes. Summed compile process wall time is 1,047.354 seconds;
+link 67.126 seconds and strip 2.077 seconds. These are host tool times, not total
+conversion duration or game performance.
+
+**Independent checks.** The ELF is AArch64 ELF64 ET_DYN, SONAME `libil2cpp.so`,
+with exactly libc, libdl, liblog and libm dependencies. Its 2,359 defined dynamic
+export names equal the accepted library's set. This does not prove full ABI,
+layout, gameplay or performance parity. Of 332 providers, 326 are byte-identical
+to J1058. Complete declared projections of all 806 gameplay and 686 package
+types match. Bootstrap differs only in three generated request constants
+(BuildInputContractSha256, RequestId, RequestReceiptSha256) and their three
+matching ldstr operands. Actual changed bytes remain distinct. This projection
+excludes MVID/PE/PDB, security declarations, resources, exported-type scope and
+complete reference-resolution semantics.
+
+Private `work/coordination/owner-full-code-v1/` retains the external qualification
+locator, source v1/v2 proofs, default native verification and managed projection.
+`default-proof-v1.json` seals 10,532 artifacts (4,215,377,394 bytes), SHA-256
+`1e0945715cbd422359e1caea083c79678f1e57e783bf2ccae6a14fc42d87e3da`.
+Main independently rehashes every artifact, all 825 process/object receipts,
+link closure, 687 decompressed frame joins, 332 providers, 274 payload bindings
+and static native contract, returning GO for this bounded host result. All raw
+receipts, game-derived outputs and private paths remain ignored.
+
+**Checkpoint and remaining gates.** Complete source-input host game-code
+construction is now implemented and executed through fresh native output.
+Independent licensed native-product production/acquisition, Burst, full content
+and shaders, Android tool hosting, owner installation/update and matched device
+behavior/performance remain open. No APK is replaced or installed; no Editor or
+ADB command runs. The unused Alpha device lease is returned through Main.
+Desktop fallback, existing runtime, working build and PR device/adoption hold
+remain. Pause here at the human's requested checkpoint; do not claim phone
+conversion or public-alpha completion from this host success.

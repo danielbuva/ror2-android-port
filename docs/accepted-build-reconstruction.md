@@ -64,13 +64,11 @@ code to fresh native compilation, replacement in a fixed player and actual
 Android load/update checks. They retain desktop scene roots and base content;
 they are not a game build.
 
-[J1059](PORTING_JOURNAL.md#j1059--build-the-complete-native-arm64-game-library-without-unity-editor)
-now completes the real game-code host chain through a fresh ARM64 IL2CPP library
-and matching metadata, using explicit fixed configuration and owner SDK inputs.
-It preserves the original native compiler policy and matches the accepted
-library's dynamic export/dependency contract. This is not byte, performance or
-device equivalence, and the same complete chain still needs a public reproducible
-owner/profile rather than private graph/history dependencies.
+[J1063](PORTING_JOURNAL.md#j1063--complete-the-source-input-host-native-owner-build) completes one public source-input host command through fresh managed
+production, stripping, IL2CPP conversion and native linking, without an Editor
+project or captured native graph. Explicit authorized SDK products remain inputs.
+The static loader contract passes; byte, performance and device equivalence
+remain unqualified. Phone hosting and complete content production stay open.
 
 For a **single pinned game/input/build profile**, a converter can replace editor
 orchestration with explicit, audited inputs:
@@ -213,15 +211,13 @@ production, Android execution and installation remain open.
 
 ## Genuine blockers and their scope
 
-**Missing producers/qualification:** audited fixed-target root configuration and
-complete owner-input bootstrap; public native orchestration and matching output
-qualification; the full target serialized content and shader producer; Burst
-and current Android middleware integration. Complete host game-code construction
-through the native library now runs in J1059 with supplied fixed configuration.
-These are absent implementations/qualifications, not proof that the Editor is
-mathematically indispensable. A frozen destination removes general editor
-authoring and asset discovery requirements, but does not remove their output
-semantics.
+**Missing producers/qualification:** independent licensed native SDK product
+production/acquisition, the full target serialized content and shader producer,
+Burst and Android integration. [J1063](PORTING_JOURNAL.md#j1063--complete-the-source-input-host-native-owner-build) completes public source-input
+host game-code orchestration through the native library. Remaining missing
+implementations/qualifications do not prove the Editor is mathematically
+indispensable. A frozen destination removes general authoring and discovery
+requirements, but does not remove their output semantics.
 
 **Phone execution and resources:** the shell fixture chain works, while the
 ordinary target-33 app-host path still fails its writable-execution restriction.

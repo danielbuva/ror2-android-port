@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1063](PORTING_JOURNAL.md#j1063--complete-the-source-input-host-native-owner-build) | 2026-10-23 | Complete the source-input host native owner build | **Hypothesis and scope.** |
 | [J1062](PORTING_JOURNAL.md#j1062--replace-the-private-historical-init-source-with-an-audited-owner-tool) | 2026-10-23 | Replace the private historical Init source with an audited owner tool | 2026-10-24. |
 | [J1061](PORTING_JOURNAL.md#j1061--compose-the-public-whole-player-stripping-and-conversion-backend) | 2026-10-23 | Compose the public whole-player stripping and conversion backend | 2026-10-24. |
 | [J1060](PORTING_JOURNAL.md#j1060--remove-the-captured-native-graph-from-the-public-owner-stage) | 2026-10-23 | Remove the captured native graph from the public owner stage | 2026-10-24. |

@@ -107,11 +107,10 @@ providers, SDK, inputs and other outputs remain untouched.
 `--stop-after-conversion` runs the complete stripping/conversion/preservation
 stages and **only plans** the native stage. The recorded host case reproduces
 all 94 prior stripped outputs and all 691 prior C++/metadata output records,
-including 687 independently restored source frames, exactly. It is not a new
-native compiler execution: J1059 remains that evidence. Default complete native
-execution through this controller, integration of upstream managed production,
-full content/Burst/shaders, Android hosting/install/update and device behavior
-remain open. The current game build consumes none of this state.
+including 687 independently restored source frames, exactly. The later full default source-input run in J1063 executes the complete native
+stage successfully. Full content/Burst/shaders, licensed native input production,
+Android hosting/install/update and device behavior remain open. The current game
+build consumes none of this state.
 
 
 ## Original-input command
@@ -170,10 +169,12 @@ pin is refreshed with that API change. Generic transform/decoder helpers likewis
 accept explicit tools with their default callers unchanged. No network package
 restore, installer, license acceptance or original input mutation is added.
 
-The source-only host run reaches all 332 providers, 93 stripped DLLs, 691 converter
-outputs, 687 checked source frames and the complete 825-task native plan. Fresh
-request/path identities can change DLL/metadata bytes; projection comparisons
-are bounded and do not establish native equivalence. Full default execution,
-licensed native input production, Burst/content/shaders, phone tool hosting,
-installation/update and matched game behavior/performance remain separate gates.
-This host control does not commit the final installation experience to a desktop.
+[J1063](../../../docs/PORTING_JOURNAL.md#j1063--complete-the-source-input-host-native-owner-build)
+executes this default source-input command through all 332 providers, 93 stripped
+DLLs, 691 converter outputs, 687 checked frames and 825 actual native tasks plus
+link and strip. Main independently verifies the sealed host evidence. Fresh
+request/path identities change DLL/metadata bytes; bounded projections do not
+establish native equivalence. Licensed native input production, Burst/content/
+shaders, phone hosting, installation/update and matched game behavior/performance
+remain gates. This host control does not commit the final installation experience
+to a desktop.

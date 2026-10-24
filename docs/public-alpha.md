@@ -22,12 +22,9 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       [J1049](PORTING_JOURNAL.md#j1049--assemble-and-sign-the-complete-private-owner-apk-bootstrap-candidate)
       completes the private host-built/signed bootstrap candidate; real device
       preparation, installation/update and game lifecycle remain unqualified.
-      [J1058](PORTING_JOURNAL.md#j1058--strip-and-convert-the-complete-player-with-fixed-target-root-configuration)
-      completes full host stripping/conversion with independent DLL providers
-      and supplied target-root configuration; Android execution remains open.
-      [J1059](PORTING_JOURNAL.md#j1059--build-the-complete-native-arm64-game-library-without-unity-editor)
-      completes the full host game-code chain through the native library;
-      public orchestration and phone qualification still remain.
+      [J1063](PORTING_JOURNAL.md#j1063--complete-the-source-input-host-native-owner-build) completes public source-input host game-code
+      production through a fresh native library. Explicit licensed SDK native
+      input, full content/Burst/shaders and phone qualification remain gates.
       Full Unity-project reconstruction or AssetRipper export is not an assumed
       requirement. Every protected APK/payload output needs an owner-input
       producer; the accepted build supplies validation, never hidden target bytes.
