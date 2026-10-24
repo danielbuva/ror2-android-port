@@ -34738,3 +34738,101 @@ The warm run is
 `work/experiments/original-game-audio/r37-warm-quit-20261024T080048.513966Z/`.
 Generated pruning is retried after shared-editor contention; receipts and raw
 failed evidence remain local. No game-derived output is published.
+
+## J1068 — Resume original audio for bank release and verify healthy Quit
+
+**Hypothesis and ownership.** J1067's matching ANR stack waits inside original
+Wwise ClearBanks after Android focus-loss suspension. The initialized engine
+may need resuming before that synchronous bank release. Reinspect pinned
+R2API.Sound/SoundAPI.cs at `f539511e`: its bank operations retain original
+initialization/BankManager ownership, but provide no Android shutdown repair.
+The accepted API exposes an existing termination delegate between its StopAll
+and bank release. Extend `PortSessionOriginalAudioOwner` through that seam;
+call WakeupFromSuspend only for an initialized, explicitly requested native
+engine. Original Init, ClearBanks, engine Term, callback-manager Term and
+ordinary focus/pause ownership remain unchanged. Setup is readiness-gated;
+cleanup removes only this callback after the original Term witnesses or owner
+destruction. Foreign subscribers survive. The existing snapshot exposes the
+attachment and the current-process log records the native result.
+
+**Host and build.** The production-owner fixture checks admission, one
+subscription, native-uninitialized/failure/throw paths, consumer readiness
+withdrawal during teardown and removal of only the owned delegate. Eighteen
+audio/session/cache checks, nine producer checks and the 44-test camera cohort
+pass; the latter has three explicit historical-profile skips. Refresh the full
+owner recipe → producer/camera pin chain. The real-stage camera fixture also
+resolves observer preimages beside the receipts under examination. Ruff,
+public-content audit and fresh-clone CI pass (1,843 tests, 127 skips); both
+GitHub host checks are green at the source checkpoint.
+
+The committed full content/player build uses source
+`fad0247e41e1160be3fab30dce389e3a0ecfe7e1`, request
+`20261024T085605.772049Z`, exact Unity 2021.3.45f2, IL2CPP ARM64 and Vulkan.
+Unity finishes in 133.118314 seconds with zero errors. The frozen APK is
+`ede957ee8faaa12106d7c36685625ed5459619452704a1c45517f5c65e6c2cba`.
+All 267 artifact references are rehashed; all 266 payload hashes match R37.
+No APK, payload or Unity project is copied into the evidence packet. Install
+queries current capacity/placement and retains adopted runtime backing.
+
+**Standard controls.** The unchanged plain check reaches 35.230270 seconds in
+Lakes, with 792 callbacks, 912,384 finite samples and 49,536 nonzero samples.
+The one-exit check reaches Goolake for 12.045563 seconds, with 151.138977 seconds
+of total world play; its 465 callbacks contain 535,680 finite samples, all
+zero. Both have zero classified current-process errors, ready original audio,
+the attached delegate, unchanged 13-run profile and verified cleanup.
+`is_current_build=false` is retained: another worker moved the shared host
+pointer. The frozen build receipt, installed APK bytes, attempt and final
+reports bind these results without relabeling that raw field.
+
+**Quit observation and correction.** The first warm End Run → next-menu → Quit
+attempt observes WakeupFromSuspend returning AK_Success, then a real 3-second
+PID-query timeout at 7.739684 seconds. Its failure-only cleanup force-stops the
+process before a complete exit observation; this run cannot qualify Quit.
+A corrected local observer keeps the bounded window open after transport
+failures and allows up to 10 seconds per query. The next run has no query
+failures, original termination, Unity teardown, the process's self-issued
+exit signal and absence at 14.984663 seconds. Its older cleanup still sends a
+post-exit force-stop, overwriting Android's historical exit reason, so that
+history is not used as independent exit-cause evidence.
+
+A final fresh process reaches original-audio-ready world play for 35.182373
+seconds with all 153 banks, noAudio=false and the callback attached. It returns
+to the next menu, requests Quit and observes AK_Success, original successful
+termination and process absence at 20.420708 seconds, with no query timeout,
+ANR, Unity pause/detach timeout or unexplained shutdown failure. Its same-process
+Process log issues SIG:9 after Unity teardown. No host force-stop is sent after
+that observed absence. Android independently records SIGNALED/status 9 for
+that process, with no ANR trace. These joined observations qualify this bounded
+application-owned Quit and fresh-process audio restart. Exit latency remains
+substantial; this is not a performance qualification.
+
+**Saved output and terminal state.** The final live MainOutput window has 461
+callbacks, 531,072 finite samples, 51,840 nonzero and zero nonfinite samples.
+A new saved pair joins that live output and those counts. Both files retain
+identical device size/hash before and after transfer and match the local
+hashes. The sidecar witnesses both original Term returns, verified post-Term
+disarm and raw persistence. The existing exporter validates its 1 MiB prefix:
+262,144 finite samples, 50,368 nonzero, stereo 48 kHz, 2.730667 seconds,
+RMS 0.01134435 and peak magnitude 0.24609081. The raw prefix is truncated;
+event attribution and physical audibility remain unclaimed.
+
+Independent final readback rehashes the installed APK and verifies current
+adopted placement/runtime backing, the byte-identical 13-run profile,
+selector/process absence and sleeping display. Generated pruning runs after
+the build and run tasks; one successful pass recovers 5.4 GiB while retaining
+evidence and protected artifacts. J850 remains the accepted rollback. Full
+mix/spatial behavior, the silent stage window and J1067's black source-view
+image remain open; unchanged payload bytes do not establish visual parity.
+
+**Evidence and revisit.** Frozen references, build/install/sync receipts,
+control qualifications, PCM readback/export, native-exit qualification and
+terminal query are under `work/coordination/main-port-r38/`. Standard runs are
+`work/experiments/baseline/20261024T090155.475444Z/` and
+`work/experiments/baseline/20261024T090607.420154Z/`. The three warm observations
+are under `work/experiments/original-game-audio/`, prefixed
+`r38-warm-quit-20261024T091221.150581Z`,
+`r38-warm-quit-observer-r2-20261024T091914.882149Z` and
+`r38-warm-quit-fresh-r3-20261024T092639.838299Z`. Revisit shutdown if a matched
+current-process ANR/timeout, original Term/disarm failure or fresh-start audio
+regression occurs. Broader audio and rendered appearance require their own
+remaining gates; no raw audio, game output or device identifiers are published.

@@ -88,23 +88,21 @@ The plain check and its acceptance criteria remain unchanged.
 
 ## Current baseline (2026-10-24)
 
-[J1067](PORTING_JOURNAL.md#j1067--activate-source-camera-uber-and-skill-timed-mainoutput-together)
-qualifies diagnostic R37 APK
-`4e5f0feb79c5bc35b15518af39293779d5216f839cceb30103ceb8240f5fde5b`, source
-`057192fa`, through both unchanged standard modes, strict captured-process logs,
-original audio-camera/catalog/highlight contracts and independent installed-byte,
-profile, placement and runtime-backing readback. The profile is unchanged and
-both cleanups verify selector/process absence and sleeping display.
+[J1068](PORTING_JOURNAL.md#j1068--resume-original-audio-for-bank-release-and-verify-healthy-quit)
+qualifies diagnostic R38 APK
+`ede957ee8faaa12106d7c36685625ed5459619452704a1c45517f5c65e6c2cba`, source
+`fad0247e`, through both unchanged standard modes and independent installed-byte,
+profile, placement and runtime-backing readback. The source-owned termination
+delegate now resumes the initialized native engine before original bank
+release. A bounded Quit completes with original Term/disarm, application-owned
+exit and fresh-process audio evidence. Exit latency remains substantial.
 
-J1043's skill-timed MainOutput and J1044's Uber selection are now in that player.
-A plain MainOutput window and its separately saved prefix are nonzero; the
-stage window is zero. Full mix, event attribution and audibility remain open.
-The source-view world is almost black despite the expected Outline material
-contract. Warm Quit produces an ANR and an OS kill; original audio Term/disarm
-witnesses do not turn that exit into a pass. Those failures remain separate from
-the two passing standard controls. The full evidence and next gates are recorded
-once in J1067. R36 remains the previous diagnostic; see the
-[current snapshot](../PORTING_STATE.md).
+Plain/fresh MainOutput windows and the final saved prefix contain nonzero
+samples; the stage window is silent. Full mix, event attribution and audibility
+remain open. All 266 payload hashes match R37, whose almost-black source-view
+failure remains unaccepted in
+[J1067](PORTING_JOURNAL.md#j1067--activate-source-camera-uber-and-skill-timed-mainoutput-together).
+See the [current snapshot](../PORTING_STATE.md) for installed/source facts.
 
 The accepted baseline below remains the rollback.
 
