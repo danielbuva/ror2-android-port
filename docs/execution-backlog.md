@@ -40,7 +40,11 @@ result in the journal.
       in J1077. Long-run retention remains open.
 - [ ] Attribute the remaining ~52 MB/session managed growth (J787): not reachable
       from enumerable static/live roots; next a long session series on the
-      internal Nova to test whether PSS or Boehm usage reaches a limit.
+      internal Nova to test whether PSS or Boehm usage reaches a limit. The
+      extended Thor attempt in [J1069](PORTING_JOURNAL.md#j1069--stop-the-extended-integrated-memory-series-on-the-first-native-error)
+      stops on J667. [J1086](PORTING_JOURNAL.md#j1086--complete-twelve-native-sessions-on-the-internal-device-without-accepting-a-memory-bound)
+      completes 12 internal-device sessions with 46.77 MiB managed growth per
+      session after warmup; native heap attribution and the bound remain open.
 - [ ] Integrate original position indicators (`TeamComponent.Init`, player/NPC/boss
       indicator prefabs and Nameplate text), compared against PC captures (J787).
 - [ ] Attribute the crowded-stage enumeration hot path from the app-scope trace

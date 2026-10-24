@@ -146,7 +146,7 @@ public sealed partial class PortSession
             if (coordinator.offlineSettings != null)
             {
                 coordinator.offlineSettings.values.offlineDifficulty = (int)coordinator.offlineDifficulty;
-                coordinator.offlineSettings.Save();
+                coordinator.SaveOfflineSettings();
             }
             if (coordinator.r.hud != null)
                 coordinator.r.hud.menuDifficulty = coordinator.offlineDifficulty.ToString();
@@ -228,7 +228,7 @@ public sealed partial class PortSession
                 coordinator.Check(mode != InputSessionPolicy.Mode.RefuseUnmeasuredPhysicalInput,
                                   "Unmeasured physical input is unavailable outside Nova or an explicit Thor bringup diagnostic");
             }
-            if (coordinator.UsesDiagnosticWithoutPhysicalInput())
+            if (coordinator.UsesTouchUi())
                 offlineMenuMapping = null;
             else
             {
@@ -322,7 +322,7 @@ public sealed partial class PortSession
                     coordinator.DrawOfflineLoadout();
                 GUI.Label(
                     new Rect(20, Screen.height - 58, Screen.width - 40, 55),
-                    coordinator.UsesDiagnosticWithoutPhysicalInput()
+                    coordinator.UsesTouchUi()
                         ? "Touch controls: survivor, difficulty, and start · physical input unavailable · roster/UI rendering approximation"
                         : "Left stick: survivor · Right stick: difficulty · A: start · audio/Steam profiles unavailable · roster/UI rendering approximation");
                 return true;
@@ -332,7 +332,7 @@ public sealed partial class PortSession
             GUI.Label(
                 new Rect(45, 100, 800, 220),
                 selected + " · " + OfflineDifficultyName() +
-                    (coordinator.UsesDiagnosticWithoutPhysicalInput()
+                    (coordinator.UsesTouchUi()
                          ? "\nExplore, earn items, defeat each teleporter boss, then reach the Moon.\nUse the touch controls below; physical input is unavailable.\nOriginal profile data and results stay on this Android device. Audio and Steam/cloud profiles are unavailable."
                          : "\nExplore, earn items, defeat each teleporter boss, then reach the Moon.\nLeft stick: survivor · Right stick: difficulty · A: start.\nOriginal profile data and results stay on this Android device. Audio and Steam/cloud profiles are unavailable."),
                 style);
@@ -340,7 +340,7 @@ public sealed partial class PortSession
                 coordinator.CycleOrdinarySurvivor(1);
             if (GUI.Button(new Rect(440, 270, 370, 55), "Difficulty: " + OfflineDifficultyName() + "  ◀  ▶"))
                 CycleOfflineDifficulty();
-            if (GUI.Button(new Rect(45, 340, 370, 65), coordinator.UsesDiagnosticWithoutPhysicalInput() ? "Start run" : "Start run (A)"))
+            if (GUI.Button(new Rect(45, 340, 370, 65), coordinator.UsesTouchUi() ? "Start run" : "Start run (A)"))
                 coordinator.offlineStartSelected = true;
             if (GUI.Button(new Rect(440, 340, 370, 65), "Quit"))
                 Application.Quit();

@@ -50,7 +50,7 @@ namespace UnityEngine
         public static void Label(Rect rect, string value, GUIStyle style = null) { labels.Add(value); }
         public static bool Button(Rect rect, string value, GUIStyle style = null)
         {
-            if (!enabled || click != value) return false;
+            if (!enabled || Event.current.type == EventType.Used || click != value) return false;
             click = null;
             return true;
         }
@@ -93,7 +93,7 @@ namespace UnityEngine
         public static void OpenURL(string value) { if (openFails) throw new InvalidOperationException(); url = value; }
         public static void Quit() { }
     }
-    public enum EventType { Repaint, KeyDown, Used }
+    public enum EventType { Repaint, KeyDown, MouseDown, MouseUp, MouseDrag, Used }
     public enum KeyCode { Escape = 27, Joystick1Button0 = 330, Joystick1Button1 = 331 }
     public class Event
     {
@@ -128,6 +128,8 @@ namespace RoR2
 }
 public class NovaInputBridge : UnityEngine.Object
 {
+    public static bool ownGuiMouse;
+    public bool OwnsTouchGuiMouse => ownGuiMouse;
     public class Mapping { public int moveX, aimX = 1, jump; }
     public struct Raw { public float[] axes; }
     public static Raw raw = new Raw { axes = new float[2] };
@@ -135,15 +137,27 @@ public class NovaInputBridge : UnityEngine.Object
     public static int neutrals;
     public void Neutral() { neutrals++; }
 }
+public static class AndroidTouchInput
+{
+    public static Rect PauseGuiRect(float width) => new Rect(width - 205, 10, 185, 40);
+}
 public class AndroidOfflineSettings
 {
     public class Values { public float deadzone = .1f, lookSensitivity = 1; public bool invertY; public int offlineDifficulty; }
     public static Values current;
     public Values values = new Values();
     public string recovery = "none";
+    public string saveError;
+    public bool refuseSave;
     public int saves;
     public AndroidOfflineSettings(string path) { }
     public void Save() { saves++; }
+    public bool TrySave()
+    {
+        saveError = refuseSave ? "Settings save failed. Check storage and try again." : null;
+        if (!refuseSave) Save();
+        return !refuseSave;
+    }
 }
 public sealed partial class PortSession
 {
@@ -167,7 +181,7 @@ public sealed partial class PortSession
     public bool menuObscured;
     void SetRecoveredMenuObscured(bool value) { menuObscured = value; }
     bool offlineStartVisible, offlineStartSelected;
-    bool UsesDiagnosticWithoutPhysicalInput() => false;
+    bool UsesTouchUi() => false;
     bool OfflineUiControllerPresent() => true;
     bool CanAbandonOfflineRun() => true;
     void RequestAbandonOfflineRun() { abandonRequests++; }
@@ -189,6 +203,9 @@ public sealed partial class PortSession
     public bool Paused => offlineSettingsPaused;
     public bool SettingsVisible => offlineSettingsVisible;
     public int SettingsSaves => offlineSettings.saves;
+    public string SettingsError => r.settings.error;
+    public bool SettingsPersisted => r.settings.persisted;
+    public void RefuseSettingsSave(bool refuse) { offlineSettings.refuseSave = refuse; }
     public bool StartSelected => offlineStartSelected;
     public void StartMenu() { offlineStartVisible = true; worldPause = null; worldPlayer = null; }
     void CycleOrdinarySurvivor(int direction) { survivorCycles++; }
@@ -350,6 +367,39 @@ public static class AndroidFeedbackHost
         Check(session.StartSelected && session.survivorCycles == 1 && session.difficultyCycles == 1,
               "ordinary closed-menu A/stick routing changed");
     }
+    static void SettingsSaveFailure()
+    {
+        var session = new PortSession(); session.Prepare(); session.Show(true);
+        session.RefuseSettingsSave(true); GUI.click = "Save and close"; session.Render();
+        Check(session.Paused && session.SettingsVisible && Time.timeScale == 0, "failed save released pause or closed settings");
+        Check(session.SettingsSaves == 0 && !session.SettingsPersisted && !string.IsNullOrEmpty(session.SettingsError),
+              "failed save claimed persistence or omitted recovery message");
+        session.RefuseSettingsSave(false); GUI.click = "Save and close"; session.Render();
+        Check(!session.Paused && !session.SettingsVisible && session.SettingsSaves == 1 && session.SettingsPersisted,
+              "successful retry did not save and resume");
+        Check(string.IsNullOrEmpty(session.SettingsError), "successful retry retained stale error");
+    }
+    static void TouchGuiOwnership()
+    {
+        var session = new PortSession(); session.Prepare();
+        NovaInputBridge.ownGuiMouse = true;
+        Event.current = new Event { type = EventType.MouseDown };
+        GUI.click = "Settings / pause"; session.Render();
+        Check(Event.current.type == EventType.Used && !session.SettingsVisible, "captured gameplay touch activated native GUI button");
+        NovaInputBridge.ownGuiMouse = false;
+        Event.current = new Event { type = EventType.MouseDown };
+        GUI.click = "Settings / pause"; session.Render();
+        Check(session.SettingsVisible && session.Paused, "unclaimed UI touch was swallowed");
+        NovaInputBridge.ownGuiMouse = true;
+        Event.current = new Event { type = EventType.MouseDown };
+        GUI.click = "Close settings"; session.Render();
+        Check(Event.current.type == EventType.Used && session.SettingsVisible && session.Paused,
+              "opening gameplay pointer toggled the new modal closed");
+        NovaInputBridge.ownGuiMouse = false;
+        Event.current = new Event { type = EventType.MouseDown };
+        GUI.click = "Resume"; session.Render();
+        Check(!session.SettingsVisible && !session.Paused, "fresh modal tap was swallowed after the opening pointer lifted");
+    }
     static void EndRunConfirmation()
     {
         var session = new PortSession(); session.Prepare(); session.Show(true);
@@ -396,6 +446,8 @@ public static class AndroidFeedbackHost
             case "start-menu-input": StartMenuInput(); break;
             case "end-run-confirmation": EndRunConfirmation(); break;
             case "screen-policy": ScreenPolicy(); break;
+            case "settings-save-failure": SettingsSaveFailure(); break;
+            case "touch-gui-ownership": TouchGuiOwnership(); break;
             default: throw new Exception("unknown case");
         }
         Console.WriteLine(args[0] + ": PASS");

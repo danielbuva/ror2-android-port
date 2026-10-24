@@ -432,6 +432,114 @@ class SafetyTests(unittest.TestCase):
             ],
         )
 
+    def thor_display_shell(self, bottom_can_power_off):
+        state = {"mode": "0", "awake": False, "calls": []}
+        self.d.settings.update(sleep_display_when_idle=True, display_models=["AYN Thor"], display_count=2)
+
+        def shell(*args, **kwargs):
+            state["calls"].append(args)
+            if args == ("getprop", "ro.product.model"):
+                return "AYN Thor"
+            if args == ("settings", "get", "system", "dual_screen_display_mode"):
+                return state["mode"]
+            if args[:4] == ("settings", "put", "system", "dual_screen_display_mode"):
+                state["mode"] = args[4]
+                return ""
+            if args[:2] == ("input", "keyevent"):
+                state["awake"] = args[2] == "KEYCODE_WAKEUP"
+                return ""
+            if args == ("dumpsys", "power"):
+                return "mWakefulness=" + ("Awake" if state["awake"] else "Asleep")
+            if args == ("dumpsys", "display"):
+                top = "ON" if state["awake"] else "OFF"
+                bottom = "ON" if state["awake"] and not (bottom_can_power_off and state["mode"] == "1") else "OFF"
+                return "\n".join(
+                    [
+                        'DisplayDeviceInfo{"Built-in Screen": type INTERNAL, state ' + top + "}",
+                        'DisplayDeviceInfo{"Screen-2": type INTERNAL, state ' + bottom + "}",
+                        'DisplayDeviceInfo{"virtual": type VIRTUAL, state ON}',
+                    ]
+                )
+            self.fail("Unexpected mocked device command: " + repr(args))
+
+        self.d.sh = shell
+        return state
+
+    def test_thor_top_only_is_verified_and_first_mode_survives_nested_device_context(self):
+        state = self.thor_display_shell(True)
+        self.assertTrue(self.d.display(True))
+        second = object.__new__(device.Device)
+        second.__dict__.update(self.d.__dict__)
+        self.assertTrue(second.display(True))
+        self.assertEqual(device.Device.sleep_awakened(), [])
+        self.assertEqual(state["mode"], "0")
+        self.assertFalse(state["awake"])
+        self.assertEqual(device.Device._awake_devices, {})
+        writes = [args[-1] for args in state["calls"] if args[:2] == ("settings", "put")]
+        self.assertEqual(writes, ["1", "1", "0"])
+
+    def test_thor_black_vendor_overlay_refuses_and_restores_then_sleeps_both_panels(self):
+        state = self.thor_display_shell(False)
+        with patch.object(device.time, "monotonic", side_effect=range(30)), patch.object(device.time, "sleep"):
+            with self.assertRaisesRegex(RuntimeError, "Screen-2 OFF"):
+                self.d.display(True)
+        self.assertFalse(state["awake"])
+        self.assertEqual(state["mode"], "0")
+        self.assertEqual(device.Device._awake_devices, {})
+        self.assertFalse(self.d.display_awakened)
+
+    def test_thor_unknown_mode_is_never_overwritten(self):
+        state = self.thor_display_shell(True)
+        state["mode"] = "unknown"
+        with self.assertRaisesRegex(RuntimeError, "Unknown Thor"):
+            self.d.display(True)
+        self.assertEqual(state["mode"], "unknown")
+        self.assertFalse(state["awake"])
+        self.assertFalse(any(args[:2] == ("settings", "put") for args in state["calls"]))
+        self.assertEqual(device.Device._awake_devices, {})
+
+    def test_thor_brief_wake_transition_is_not_top_only_acceptance(self):
+        state = self.thor_display_shell(False)
+        shell = self.d.sh
+        sampled = False
+
+        def transient(*args, **kwargs):
+            nonlocal sampled
+            result = shell(*args, **kwargs)
+            if args == ("dumpsys", "display") and state["awake"] and not sampled:
+                sampled = True
+                return result.replace('"Screen-2": type INTERNAL, state ON', '"Screen-2": type INTERNAL, state OFF')
+            return result
+
+        self.d.sh = transient
+        clock = [0.0]
+        with (
+            patch.object(device.time, "monotonic", side_effect=lambda: clock[0]),
+            patch.object(device.time, "sleep", side_effect=lambda seconds: clock.__setitem__(0, clock[0] + seconds)),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "Screen-2 OFF"):
+                self.d.display(True)
+        self.assertTrue(sampled)
+        self.assertFalse(state["awake"])
+        self.assertEqual(state["mode"], "0")
+
+    def test_thor_failed_mode_write_still_restores_original_and_sleeps(self):
+        state = self.thor_display_shell(True)
+        shell = self.d.sh
+
+        def interrupted(*args, **kwargs):
+            result = shell(*args, **kwargs)
+            if args == ("settings", "put", "system", "dual_screen_display_mode", "1"):
+                raise RuntimeError("Interrupted mode write")
+            return result
+
+        self.d.sh = interrupted
+        with self.assertRaisesRegex(RuntimeError, "Interrupted mode write"):
+            self.d.display(True)
+        self.assertFalse(state["awake"])
+        self.assertEqual(state["mode"], "0")
+        self.assertEqual(device.Device._awake_devices, {})
+
     def test_production_device_lock_refusal_uses_only_temporary_root(self):
         lock = self.root / "work/coordination/claude-r9.lock"
         lock.parent.mkdir(parents=True)

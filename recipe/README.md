@@ -2276,3 +2276,57 @@ ownership, authentication or entitlement behavior. Provenance, licensing,
 privacy and sensitive-content audit: 2026-10-24. J1082 records the complete
 phone cohort and public codec build; other texture/mip and bundle assembly
 gates remain open.
+
+## Android touch input owner
+
+`AndroidTouchInput.cs` and its explicit script GUID are authored Android pointer
+routing, geometry and primitive observation code. The runtime membership lists,
+project layout and importer replay include that source. No game asset, image,
+serialized game object or middleware implementation is added. Touch buttons
+produce the existing original input-bank action slots; the existing camera
+adapter consumes pixel deltas. The measured Nova controller mapping remains
+separate, and Thor touch never claims physical-controller qualification.
+
+Prior-art review uses the pinned Starstorm2 `BorgMain` at `a9a4badd`: native
+`inputBank.jump.down`, authority and base-state scheduling are the consumer
+boundary. No community implementation is copied. Public source hashes for the
+existing world owner and its manifest/camera-hook chain are updated solely for
+the authored manual-input availability and touch presentation changes. Generated
+APK/payloads, raw pointer/device evidence and private mapping files remain under
+ignored `work/`.
+
+
+The touch pause request shares the settings button geometry and enters the
+existing pause owner; captured primary touch events are claimed before legacy
+IMGUI widgets. Native-bank edge/held observations are primitive harness data,
+with no retained game objects or gameplay mutation. The authored Java/Python
+`touch-gesture` helper uses the Android 13 target-UID injection API under normal
+adb shell permission. Its local DEX and device requests are generated privately
+from source; no platform implementation, SDK binary, game content, account data
+or raw device evidence is published with this helper.
+
+The touch integration reuses J1080's landed original scene-audio lifecycle.
+Source pins are refreshed for the reviewed merged `PortSession` startup and
+`IntegratedWorldBoundary` touch/UI changes. Original scene audio retains the
+existing native-owner readiness gate. This updates authored source provenance;
+accepted game input and distribution grants are unchanged. Audit: 2026-10-24.
+
+Completed-session native heap capture extends the authored resource owner only.
+The selector, two idle-menu capture points, callback report and exact hash-checked
+host transfer contain no original implementation, serialized game object or
+third-party parser. Raw snapshots can contain protected/private runtime bytes and
+stay under ignored local evidence; they are never tooling distribution inputs.
+The host-only Unity snapshot-analysis source is separately pinned and inspected
+in community prior art, not vendored. Provenance/privacy audit: 2026-10-24;
+this does not add any runtime/content redistribution grant.
+
+`memory-snapshot-data-tools-empty-array.patch` is an authored, zero-context
+transformation for the optional host-only Unity analysis CLI at source
+`86af1fe8b60bfcb5e6fbe63e85377887aec32ef5`. It returns the known VM header for
+zero-length arrays whose open generic element has no concrete size, and adds
+an authored synthetic-heap test that retains nonempty-size refusal. Apply with
+`git apply --unidiff-zero` only after verifying that exact public source pin.
+No upstream implementation or captured heap bytes are included. J1091 records
+31 passing tests and actual-file decode/export; the provider's Unity Companion
+License/notices stay with the private checkout and outputs. Provenance/privacy
+audit: 2026-10-24; no runtime/content redistribution grant changes.

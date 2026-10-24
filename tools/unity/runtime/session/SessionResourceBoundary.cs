@@ -40,31 +40,74 @@ public sealed partial class PortSession
         public int rootWalkNodes, rootWalkRoots, rootWalkReadFailures;
         public float rootWalkSeconds;
         public string[] rootWalkPaths, rootWalkFailureSamples, rootWalkCensus, rootWalkRootAttribution;
+        // Private diagnostic snapshots at menus 2/4; not ordinary growth/performance samples.
+        public bool memorySnapshotRequested, memorySnapshotComplete, memorySnapshotSuccess;
+        public string memorySnapshotFile, memorySnapshotError;
     }
     [Serializable]
     class RootWalkSelection
     {
         public string attempt;
         public int diagnosticCompletedRootWalkSession;
+        public bool diagnosticCompletedMemorySnapshots;
     }
     const int RootWalkNodeBudget = 2000000;
     // Reads only the launch selector's opt-in session index; the coordinator's own parsing is
     // unchanged. Reading an uninitialized static field runs that type's static constructor, which
     // can register original callbacks (J773), so the walk runs only at the requested final menu.
-    bool CompletedRootWalkRequested()
+    RootWalkSelection ReadResourceDiagnostics()
     {
         var path = System.IO.Path.Combine(Application.persistentDataPath, "movement-batch-selection.json");
         if (r == null || !System.IO.File.Exists(path))
-            return false;
+            return null;
         try
         {
             var selection = JsonUtility.FromJson<RootWalkSelection>(System.IO.File.ReadAllText(path));
-            return selection != null && selection.attempt == r.attempt && selection.diagnosticCompletedRootWalkSession > 1 &&
-                   selection.diagnosticCompletedRootWalkSession == sessionIndex;
+            return selection != null && selection.attempt == r.attempt ? selection : null;
         }
         catch (Exception)
         {
-            return false;
+            return null;
+        }
+    }
+    bool CompletedRootWalkRequested()
+    {
+        var selection = ReadResourceDiagnostics();
+        return selection != null && selection.diagnosticCompletedRootWalkSession > 1 &&
+               selection.diagnosticCompletedRootWalkSession == sessionIndex;
+    }
+    void CaptureCompletedMemorySnapshot(SessionResourceSample sample)
+    {
+        var selection = ReadResourceDiagnostics();
+        if (selection == null || !selection.diagnosticCompletedMemorySnapshots || (sessionIndex != 2 && sessionIndex != 4))
+            return;
+        sample.memorySnapshotRequested = true;
+        if (!Debug.isDebugBuild || Run.instance || NetworkServer.active || NetworkClient.active)
+        {
+            sample.memorySnapshotComplete = true;
+            sample.memorySnapshotError = "Snapshot requires an idle development menu.";
+            return;
+        }
+        try
+        {
+            var directory = System.IO.Path.Combine(Application.persistentDataPath, "diagnostics", "session-memory");
+            System.IO.Directory.CreateDirectory(directory);
+            sample.memorySnapshotFile = "session-" + sessionIndex + "-" + Guid.NewGuid().ToString("N") + ".snap";
+            var path = System.IO.Path.Combine(directory, sample.memorySnapshotFile);
+            UnityEngine.Profiling.Memory.Experimental.MemoryProfiler.TakeSnapshot(path, (returned, success) =>
+            {
+                sample.memorySnapshotComplete = true;
+                sample.memorySnapshotSuccess = success && returned == path && System.IO.File.Exists(path) && new System.IO.FileInfo(path).Length > 0;
+                if (!sample.memorySnapshotSuccess) sample.memorySnapshotError = "Native snapshot capture failed.";
+                // A synchronous callback precedes the startup report's session assignment;
+                // its next Save publishes completion without writing a transient session 0.
+                if (this && r != null && r.session == sessionIndex) Save();
+            }, UnityEngine.Profiling.Memory.Experimental.CaptureFlags.ManagedObjects | UnityEngine.Profiling.Memory.Experimental.CaptureFlags.NativeObjects);
+        }
+        catch (Exception error)
+        {
+            sample.memorySnapshotComplete = true;
+            sample.memorySnapshotError = error.GetType().Name;
         }
     }
     void WalkCompletedSessionRoots(SessionResourceSample sample)
@@ -254,8 +297,11 @@ public sealed partial class PortSession
             bundles = AssetBundle.GetAllLoadedAssetBundles().Count(),
             bundleNames = AssetBundle.GetAllLoadedAssetBundles().Select(x => x.name).OrderBy(x => x).ToArray()
         });
-        if (phase == "before-presentation" && completedSessionReferences.Count > 0 && CompletedRootWalkRequested())
-            WalkCompletedSessionRoots(r.sessionResources.Last());
+        if (phase == "before-presentation" && completedSessionReferences.Count > 0)
+        {
+            if (CompletedRootWalkRequested()) WalkCompletedSessionRoots(r.sessionResources.Last());
+            CaptureCompletedMemorySnapshot(r.sessionResources.Last());
+        }
     }
     static string[] ReadStatQueueCounts()
     {

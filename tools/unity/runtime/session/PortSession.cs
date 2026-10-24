@@ -802,11 +802,15 @@ public sealed partial class PortSession : MonoBehaviour
         {
             if (!config.launchPlayableSlice)
                 yield break;
-            // Existing sync pushes this attempt-bound mapping only after the complete payload sync.
-            var mappingPath = System.IO.Path.Combine(Application.persistentDataPath, "nova-input-mapping.json");
-            while (!File.Exists(mappingPath) ||
-                   JsonUtility.FromJson<NovaInputBridge.Mapping>(File.ReadAllText(mappingPath)).attempt != config.attempt)
-                yield return new WaitForSeconds(1);
+            // Touch-only startup neither reads nor fabricates a physical map.
+            // Nova retains the attempt-bound mapping supplied after payload sync.
+            if (!UsesTouchUi())
+            {
+                var mappingPath = System.IO.Path.Combine(Application.persistentDataPath, "nova-input-mapping.json");
+                while (!File.Exists(mappingPath) ||
+                       JsonUtility.FromJson<NovaInputBridge.Mapping>(File.ReadAllText(mappingPath)).attempt != config.attempt)
+                    yield return new WaitForSeconds(1);
+            }
             r = new SessionReport { attempt = config.attempt, id = "body-state-spawn-state-auto-nova-spine", freePlay = true };
         }
         if (r.nativeSourceSkinLifecycleDiagnosticRequested &&
