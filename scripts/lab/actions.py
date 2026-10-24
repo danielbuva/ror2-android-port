@@ -267,7 +267,7 @@ _ENTRIES = (
         "run_editor",
         {},
         "current",
-        "Experimental: check generated --target PROJECT in the exact editor under the primary checkout build mutex; no game project or device access.",
+        "Experimental: check the authored bundle and nine raw texture-mip imports in generated --target PROJECT through the exact editor under the primary checkout build mutex; no game project or device access.",
         handler=_target,
     ),
     Action(
