@@ -35,6 +35,13 @@ The host disk is shared by every agent; unchecked build copies once filled
 - Extra worktrees (`git worktree list`, `~/.codex/worktrees`) are removed when
   their PR merges or the task is abandoned.
 
+## Agent skills
+
+Shared skills live in `.agents/skills/` (Codex) and are symlinked as
+`.claude/skills` (Claude): `lab-device-cycle` (build/install/run/cleanup),
+`land-pr` (rebase/verify/merge) and `orchestrated-worker` (brief, status file,
+final report). Project Codex subagents are in `.codex/agents/`.
+
 ## Scientific workflow
 
 Observe → state a hypothesis → smallest meaningful change → `./dev preflight` → build → install/sync → run → collect logs/crash/screenshot → classify first failure → update state/journal → commit a logical checkpoint.
