@@ -47,6 +47,9 @@ signature verification and receipt publication. An iteration export is reported
 separately from its deliberately cancelled BuildPlayer packaging; the receipt
 retains that BuildReport's errors. A failed build before the owned callback or
 an unrelated error does not qualify as an export.
+Iteration uses `BuildOptions.StrictMode` so Android callback exceptions stop the
+task runner. A Gradle build step in either the BuildReport or bounded editor log
+refuses publication of an iteration receipt.
 Each normal cache retains its own generated `iteration-base.json`. Iteration
 receipts name its immutable `payload_directory`; use that path for explicit
 sync instead of creating another payload snapshot.

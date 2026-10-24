@@ -10,6 +10,10 @@ public static class LabBuild {
  const string PendingBuild="PortingLab.ARM64Pending",RunningBuild="PortingLab.ARM64Running";
  static string IterationRequest,IterationOutput;
  static bool IterationCaptured;
+ public static bool IsOwnedIterationCancellation(string[] messages,string request){
+  string marker="ROR2LAB_ITERATION_EXPORT_COMPLETE "+request;
+  return messages!=null&&messages.Any(message=>message.Contains(marker))&&messages.Count(message=>message=="Building Player failed")<=1&&messages.All(message=>message=="Building Player failed"||message.Contains(marker));
+ }
  [Serializable] class Request {public string request_id,api,output,androidSymbols,iterationMode;public bool presentationOnly,stagePresentation,reusePayload,captureIl2CppInvocation;public string[] reflectionTextureGuids;}
  [Serializable] class BuildPhase {public string name;public int depth;public double seconds;}
  [Serializable] class Result {public bool success; public string result,apk,backend,request_id,symbolPackage,build_report_guid,player_build_result;public string[] player_build_error_messages;public double seconds,bundle_seconds,player_seconds,prepare_seconds;public int errors,player_build_errors;public bool iteration_export_complete;public BuildPhase[] build_steps;}
@@ -447,7 +451,7 @@ public static class LabBuild {
    if(iterationMode!=""){
     if(!IterationCaptured||string.IsNullOrEmpty(IterationOutput))throw new InvalidOperationException("Build failed before the owned pre-Gradle iteration callback");
     if(report!=null&&report.steps.Any(step=>step.name=="Building Gradle project"))throw new InvalidOperationException("Iteration callback did not stop Gradle");
-    if(result.player_build_error_messages!=null&&result.player_build_error_messages.Any(message=>!message.Contains("ROR2LAB_ITERATION_EXPORT_COMPLETE "+request.request_id)))throw new InvalidOperationException("Unrelated build errors accompanied the iteration cancellation");
+    if(result.player_build_error_messages!=null&&!IsOwnedIterationCancellation(result.player_build_error_messages,request.request_id))throw new InvalidOperationException("Unrelated build errors accompanied the iteration cancellation");
     result.apk=IterationOutput;result.iteration_export_complete=true;result.success=true;result.result="Iteration export complete; player packaging intentionally cancelled before Gradle";
    }else{
    if(currentRequest.captureIl2CppInvocation)Il2CppInvocationCapture.CompleteAfterBuild(report);

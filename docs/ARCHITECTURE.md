@@ -776,8 +776,9 @@ The fast action verifies frozen content, stages committed C#, runs the normal
 Development IL2CPP native pipeline and stops at the last
 `IPostGenerateGradleAndroidProject` callback before Gradle. The intentional
 BuildPlayer cancellation and its original errors are recorded separately from
-iteration-export completion; an unrelated build error refuses. Under the same
-editor mutex, the host replaces the complete generated assets/native set,
+iteration-export completion; an unrelated build error refuses. Iteration enables
+`StrictMode` callback dispatch; any observed Gradle build phase also refuses.
+The host holds the editor mutex while it replaces the complete generated assets/native set,
 preserves unchanged ZIP records, aligns and signs using the existing local lab
 key. Failed attempts remain local; unsigned/alignment intermediates are removed
 after packaging. Each normal cache retains its own `iteration-base.json`; the

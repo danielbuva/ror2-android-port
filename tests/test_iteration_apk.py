@@ -267,7 +267,7 @@ class IterationPayloadReceiptTests(unittest.TestCase):
                 with self.assertRaisesRegex(RuntimeError, "Content inputs changed"):
                     build.validate_whole_payload_reuse(project)
 
-    def exercise(self, changed):
+    def exercise(self, changed, gradle=False):
         with tempfile.TemporaryDirectory() as directory:
             work = Path(directory).resolve()
             generated, frozen = work / "generated-android-data", work / "build-cache/normal/payload"
@@ -294,6 +294,7 @@ class IterationPayloadReceiptTests(unittest.TestCase):
                             "request_id": request["request_id"],
                             "apk": str(project / apk.GRADLE),
                             "iteration_export_complete": True,
+                            "build_steps": [{"name": "Building Gradle project", "seconds": 1}] if gradle else [],
                         },
                     )
                 return "authored dispatch"
@@ -320,8 +321,8 @@ class IterationPayloadReceiptTests(unittest.TestCase):
                 patch.object(build, "copy_build_artifact") as copying,
                 patch("sys.stdout", new_callable=StringIO),
             ):
-                if changed:
-                    with self.assertRaisesRegex(RuntimeError, "payload reference is missing or changed"):
+                if changed or gradle:
+                    with self.assertRaisesRegex(RuntimeError, "ran Gradle" if gradle else "payload reference is missing or changed"):
                         build.build("vulkan", force=True, reuse_payload=True, iteration_mode="export-splice")
                     self.assertEqual(common.read(work / "config/current-build.json"), prior)
                 else:
@@ -335,6 +336,9 @@ class IterationPayloadReceiptTests(unittest.TestCase):
 
     def test_changed_payload_reference_refuses_without_replacing_current_build(self):
         self.exercise(True)
+
+    def test_gradle_execution_refuses_before_publishing_an_iteration_receipt(self):
+        self.exercise(False, gradle=True)
 
 
 if __name__ == "__main__":
