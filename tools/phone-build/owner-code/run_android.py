@@ -76,25 +76,29 @@ def run(request_file, runtime, installed):
             {name: str(inputs / backend.native.relative(supplied[name])) for name in ("clang", "linker", "objcopy", "loader_root")}
         )
         production["linux_tools"]["library_dirs"] = [str(inputs / backend.native.relative(p)) for p in supplied["library_dirs"]]
-    result = backend.run(production)
-    # Generated local state changed intentionally; immutable original/SDK/provider
-    # checks remain separate from those three private setup files.
-    immutable = {n: h for n, h in before.items() if n not in {"work/config/local.json", "work/inventory/files.json"}}
-    for name, expected in immutable.items():
-        if backend.native.sha(inputs / name) != expected:
-            raise ValueError("Android owner input changed: " + name)
-    backend.native.write(
-        output / "android-measurements.json",
-        {
-            "wall_seconds": time.monotonic() - started,
-            "python_peak_rss_bytes": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024,
-            "children_peak_rss_bytes": resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss * 1024,
-            "free_bytes_before": free,
-            "free_bytes_after": __import__("shutil").disk_usage(work).free,
-            "managed_providers_supplied": "managed" in request,
-            "runtime_qualified": False,
-        },
-    )
+    output_preexisted = output.exists()
+    try:
+        result = backend.run(production)
+        # Generated local state changed intentionally; immutable original/SDK/provider
+        # checks remain separate from those three private setup files.
+        immutable = {n: h for n, h in before.items() if n not in {"work/config/local.json", "work/inventory/files.json"}}
+        for name, expected in immutable.items():
+            if backend.native.sha(inputs / name) != expected:
+                raise ValueError("Android owner input changed: " + name)
+    finally:
+        if not output_preexisted and output.is_dir():
+            backend.native.write(
+                output / "android-measurements.json",
+                {
+                    "wall_seconds": time.monotonic() - started,
+                    "python_peak_rss_bytes": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024,
+                    "children_peak_rss_bytes": resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss * 1024,
+                    "free_bytes_before": free,
+                    "free_bytes_after": __import__("shutil").disk_usage(work).free,
+                    "managed_providers_supplied": "managed" in request,
+                    "runtime_qualified": False,
+                },
+            )
     print(json.dumps(result), flush=True)
 
 

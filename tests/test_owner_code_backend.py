@@ -5,6 +5,7 @@ import importlib.util
 import json
 from pathlib import Path
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -15,6 +16,56 @@ SPEC.loader.exec_module(BACKEND)
 
 
 class OwnerCodeBackendTests(unittest.TestCase):
+    def test_android_failure_keeps_wall_memory_and_storage_measurements(self):
+        runner_spec = importlib.util.spec_from_file_location("android_owner_runner_test", PATH.parent / "run_android.py")
+        runner = importlib.util.module_from_spec(runner_spec)
+        runner_spec.loader.exec_module(runner)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            inputs, runtime, installed = [root / n for n in ("inputs", "runtime", "installed")]
+            for directory in (inputs / "game", inputs / "work/inventory", inputs / "work/config", inputs / "packages", runtime, installed):
+                directory.mkdir(parents=True)
+            original = inputs / "game/original.bin"
+            original.write_bytes(b"independent owner input fixture")
+            digest = BACKEND.native.sha(original)
+            (inputs / "input-hashes.json").write_text(json.dumps({"game/original.bin": digest}))
+            (inputs / "work/inventory/files.json").write_text(
+                json.dumps({"files": [{"path": "original.bin", "sha256": digest, "size": original.stat().st_size}]})
+            )
+            request = inputs / "request.json"
+            request.write_text(
+                json.dumps({"source_inputs": {"packages": "packages"}, "target": {"profile": "recipe/fixture.json", "source": "packages"}, "output": "attempt"})
+            )
+
+            def fail(production):
+                Path(production["output"]).mkdir()
+                raise RuntimeError("independent converter failure fixture")
+
+            backend = SimpleNamespace(native=BACKEND.native, run=fail)
+            specification = SimpleNamespace(loader=SimpleNamespace(exec_module=lambda module: None))
+            with (
+                patch.object(runner.importlib.util, "spec_from_file_location", return_value=specification),
+                patch.object(runner.importlib.util, "module_from_spec", return_value=backend),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "converter failure fixture"):
+                    runner.run(request, runtime, installed)
+            measurements = json.loads((inputs / "work/attempt/android-measurements.json").read_text())
+            self.assertGreaterEqual(measurements["wall_seconds"], 0)
+            self.assertGreater(measurements["python_peak_rss_bytes"], 0)
+            self.assertGreater(measurements["free_bytes_before"], 0)
+            self.assertGreater(measurements["free_bytes_after"], 0)
+            self.assertFalse(measurements["runtime_qualified"])
+            self.assertEqual(BACKEND.native.sha(original), digest)
+            measurement = inputs / "work/attempt/android-measurements.json"
+            measurement.unlink()
+            with (
+                patch.object(runner.importlib.util, "spec_from_file_location", return_value=specification),
+                patch.object(runner.importlib.util, "module_from_spec", return_value=backend),
+            ):
+                with self.assertRaises(FileExistsError):
+                    runner.run(request, runtime, installed)
+            self.assertFalse(measurement.exists())
+
     def test_explicit_target_source_cannot_drift_or_escape(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve()

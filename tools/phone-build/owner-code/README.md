@@ -57,8 +57,9 @@ startup objects and static runtime archives remain the target inputs. The
 unchanged Clang driver emits its actual `-cc1` or BFD command with `-###`; the
 owner invokes that single child explicitly because Android has no configured
 Linux `binfmt_misc` handler. Multiple or unexpected driver commands refuse.
-Neither compiler optimization policy nor source is replaced. Linux compilation
-has a one-hour per-tool deadline; the headless whole-backend deadline is 24 hours.
+Neither compiler optimization policy nor source is replaced. Owner tool calls
+have a one-hour deadline, including slow single-core managed conversion; the
+headless whole-backend deadline is 24 hours.
 
 In the Android input request, `linux_tools` supplies the five owner-relative data
 bindings (`clang`, `linker`, `objcopy`, `loader_root`, `library_dirs`); the runner

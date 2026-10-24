@@ -292,7 +292,7 @@ def plan(profile, sdk, output, android_tools=None):
     return {"schema": 1, "jobs": jobs, "wrappers": wrappers, "link": link, "library": str(output / "libil2cpp.unstripped.so")}
 
 
-def invoke(argv, output, name, *, env=None, separate_stderr=False, timeout=600):
+def invoke(argv, output, name, *, env=None, separate_stderr=False, timeout=3600):
     started = time.monotonic()
     record = {"argv": argv, "exit_code": None}
 
