@@ -33073,3 +33073,37 @@ occurs. Alpha's existing feedback lease and Main's working build are preserved.
 Only this authored summary is published. Any actual converter must still
 produce all required outputs and pass ordinary phone installation/execution and
 matched behavior/performance before adoption.
+
+## J1051 — Host storage pruning and a mandatory agent cleanup rule
+
+**Hypothesis.** Parallel agent sessions filled the host disk (867 GB used,
+37 GB free) with rebuildable copies: one build-cache entry, staged symbol
+package and experiment copy per build, plus about 45 pinned rollback APKs.
+Discarding only regenerable binaries restores working headroom without losing
+evidence.
+
+**Change.** `scripts/prune-generated.py` (current; dry-run by default) removes
+superseded build-cache entries (keeping `result.json` under
+`work/cleanup-analysis/pruned-build-cache/`), staged `lab-build/symbols-*`
+packages, APK/AAB/symbol/libil2cpp/payload copies and Unity
+`Library`/`Bee`/`il2cppOutput` trees in experiment and coordination roots,
+leaving `<name>.retired.json` markers. It protects APKs named in
+`PORTING_STATE.md`, `docs/BASELINE.md`, `docs/history-retention.md`, device
+receipts and the coordination lock, refuses while `unity-build.lock` is held,
+and skips anything newer than 24 h. A build-cache miss after pruning simply
+rebuilds, because cache reuse already requires the APK to exist and match.
+`PORTING_STATE.md` now pins accepted J850, installed R36, previous R35, J425
+and J323; the older J502–J840 and R26–R34 executables become rebuildable
+history (hashes and source commits stay in this journal). AGENTS.md gains a
+mandatory storage-hygiene section. Host tests: `tests/test_prune_generated.py`.
+
+**Evidence.** Ledgers `work/cleanup-analysis/prune-20261024T064325Z.json`
+(404 items, 331.8 GiB logical) and `prune-20261024T064955Z.json` (107 items,
+123.8 GiB logical). Free space on the data volume rose from 37 GB to 151 GB;
+the logical/physical gap is APFS clone sharing. No device, editor, install or
+runtime source operation occurred. `work/rebuild` (68 GB of older
+lab-project receipts) and other worktrees are untouched pending owner review.
+
+**Revisit.** If an old candidate is needed, rebuild it from its recorded
+source commit. If free space falls below 100 GB again, inspect `work/rebuild`
+and extra worktrees next.

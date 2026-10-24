@@ -552,6 +552,11 @@ preserved original assembly before inventory/probe work. This support owner has
 no runtime or build-selection side effects; its registration and local-state
 contract are in [LOCAL_STATE.md](LOCAL_STATE.md#named-historical-optional-guard-evidence).
 
+`scripts/prune-generated.py` (current) discards rebuildable build outputs under
+`work/` while protecting the APKs pinned by `PORTING_STATE.md`, `docs/BASELINE.md`,
+device receipts and the coordination lock; agents run it after each build/run task
+(AGENTS.md "Storage hygiene").
+
 `scripts/git-hooks/pre-push` delegates committed-source checks to
 `scripts/ci-local.sh` in a fresh clone. Its support helper
 `scripts/ci-hdiutil-volume.py` requests a 30 s timeout for each optional image

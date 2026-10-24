@@ -12,6 +12,29 @@ Reading order: `PORTING_STATE.md` (current snapshot) → `docs/ARCHITECTURE.md` 
 - Require the explicitly configured authorized device serial. Query current adopted storage and free space every install. Physical internal storage is nearly full. Never format, repartition, erase, change storage configuration, or remove/move existing games/data to make space.
 - Never hardcode a portable SD path or remembered adopted UUID. Record package placement and runtime data backing after installation. The disposable lab package is `dev.ror2lab.arm64`; reset requires its local ownership receipt. Bootstrap smoke uses a separate package and refuses pre-existing installs.
 
+## Storage hygiene (mandatory)
+
+The host disk is shared by every agent; unchecked build copies once filled
+866 GB. Each agent cleans up after itself:
+
+- When a build/run task finishes (pass or fail), and before ending a session,
+  run `python3 scripts/prune-generated.py --apply`. It discards only rebuildable
+  binaries (superseded build-cache entries, staged symbols, APK/AAB/symbol/
+  libil2cpp/payload copies, Unity `Library`/`Bee`/`il2cppOutput` trees in
+  experiment and coordination roots), keeps receipts/logs/evidence, protects
+  every APK named in `PORTING_STATE.md`, `docs/BASELINE.md`, device receipts or
+  `work/coordination/codex-runtime.lock`, and skips anything newer than 24 h.
+- Never copy an APK, payload or Unity project into a run/review folder when a
+  path plus SHA-256 reference works. Prefer APFS clones (`cp -c`) when a copy is
+  unavoidable. Review checkouts and scratch Unity projects are deleted when the
+  review ends.
+- Pin an APK you still need by naming its hash in `PORTING_STATE.md` or the
+  coordination lock; everything else is disposable after 24 h.
+- Before starting a full build, check `df -h /System/Volumes/Data`; below 100 GB
+  free, prune first and report if that does not restore it.
+- Extra worktrees (`git worktree list`, `~/.codex/worktrees`) are removed when
+  their PR merges or the task is abandoned.
+
 ## Scientific workflow
 
 Observe → state a hypothesis → smallest meaningful change → `./dev preflight` → build → install/sync → run → collect logs/crash/screenshot → classify first failure → update state/journal → commit a logical checkpoint.
