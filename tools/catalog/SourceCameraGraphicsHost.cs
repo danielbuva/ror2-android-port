@@ -92,11 +92,18 @@ public static class SourceCameraGraphicsHost
                     var setting = source.settings[i];
                     var cloned = copy.settings[i];
                     Require(cloned && cloned != setting && cloned.GetType() == setting.GetType(), "Setting not individually cloned");
-                    JObject before = JObject.Parse(EditorJsonUtility.ToJson(setting));
-                    JObject after = JObject.Parse(EditorJsonUtility.ToJson(cloned));
+                    JObject before = JObject.Parse(EditorJsonUtility.ToJson(setting))["MonoBehaviour"] as JObject;
+                    JObject after = JObject.Parse(EditorJsonUtility.ToJson(cloned))["MonoBehaviour"] as JObject;
+                    Require(before != null && after != null, "Exact-editor setting serialization shape changed");
                     before.Remove("m_Name");
                     after.Remove("m_Name");
-                    Require(JToken.DeepEquals(before, after), "Cloned original parameter values/override flags differ: " + setting.GetType().Name);
+                    if (!JToken.DeepEquals(before, after))
+                    {
+                        var different = new List<string>();
+                        foreach (var field in before.Properties())
+                            if (!JToken.DeepEquals(field.Value, after[field.Name])) different.Add(field.Name);
+                        throw new InvalidOperationException("Cloned original fields differ: " + setting.GetType().Name + ": " + string.Join(",", different));
+                    }
                     settingsChecked++;
                 }
             }
