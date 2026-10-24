@@ -80,3 +80,6 @@ they do not claim that all bundle serialization time is compression.
 Repeated normal builds can also vary serialized records; the journal records
 the measured comparison limits. The uncompressed option adds no device or
 byte-equivalence acceptance claim.
+
+Measured concurrency, compression costs, comparison limits and cleanup evidence
+are recorded once in [J1078](PORTING_JOURNAL.md#j1078--isolate-parallel-build-lanes-and-measure-iteration-bundle-compression).

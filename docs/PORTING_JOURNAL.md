@@ -36428,3 +36428,180 @@ and sustained performance remain separate gates.
 The confirmed warm and fresh Quit runs are under
 `work/experiments/original-game-audio/r43-warm-quit-confirmed-20261024T130724.204810Z/`
 and `r43-warm-quit-confirmed-20261024T131304.124341Z/`.
+
+## J1078 — Isolate parallel build lanes and measure iteration bundle compression
+
+2026-10-24 UTC. **Hypothesis and scope.** A prepared APFS clone with its own
+committed checkout, Unity instance, MCP endpoint and build lock lets workers
+build concurrently without staging over each other. An explicit iteration
+bundle format can reduce repeated content-build work without changing normal
+acceptance settings. This is host infrastructure, not a phone-side Unity
+build, runtime feature or new game-readiness claim. Architecture C is
+unchanged.
+
+**Prior work.** Read J506/J584 and J1072 before extending the existing frozen
+payload, timing and clone owners. This generic editor/packaging work adds no
+RoR2 reconstruction, loader or middleware adapter. The exact pinned MCP
+package captures its endpoint at transport start but stores setup in
+machine-global EditorPrefs; the authored bootstrap serializes only setup and
+restores those preferences. No vendor package is patched. Unity 2021.3
+documents
+[ChunkBasedCompression](https://docs.unity3d.com/2021.3/Documentation/ScriptReference/BuildAssetBundleOptions.ChunkBasedCompression.html)
+and
+[BuildCompression.LZ4](https://docs.unity3d.com/2021.3/Documentation/ScriptReference/BuildCompression.html)
+as chunked LZ4HC: the accepted code already used this option. The R37 stack
+sample is a short compressor observation, not a measurement of its full build.
+
+**Implementation.** `build_lanes.py` owns `./dev lane` and `LAB_LANE`
+dispatch. Creation snapshots prepared inputs/project/Library with APFS clones
+under the canonical mutex. Later operations select the worker's committed
+source in the lane's detached checkout, using a persistent lock outside the
+removable tree. Editor, MCP and writable Gradle/user state are private. Device
+access refuses; canonical device ownership and explicit published APK/payload
+paths remain the only deployment route. Publication verifies clone hashes and
+leaves canonical current-build/iteration pointers unchanged. Teardown stops
+receipt-matched processes, retains receipts/logs and deletes the checkout.
+Stale-lane pruning uses the same owner, preserving recent, live and busy
+lanes.
+
+`--bundle-compression uncompressed` is explicit, lane-only and iteration-only.
+It retains the complete bundle map and Unity's incremental bundle builder. A
+separate exact input/membership/payload ledger skips the complete bundle phase
+only on a verified match. It never overwrites the accepted normal ledger or
+splice anchor. Content or payload changes rebuild bundles. Normal code-only
+checks still refuse an uncompressed payload. A normal full build restores LZ4
+and a normal anchor. Bundle API start/end markers distinguish compression
+sampling from the larger bundle phase, which also includes preparation and
+manifest completion. Ordinary acceptance defaults remain unchanged.
+
+**Lane proof.** Creation took 163.817 s, with a shared-host net allocation
+increase of 385.2 MiB (APFS blocks are shared; other host work also affects
+free space). The private MCP reported the exact lane project and host
+preflight passed. Inherited code-only reuse correctly refused one different
+audio bootstrap DLL from the canonical source cohort; no input gate was
+relaxed. A normal seed established the branch's own cohort. Relocation also
+required a cold Bee native DAG, so creation does not promise a warm first
+native compile.
+
+The lane code build at source `b4704164` passed with zero errors and
+overlapped the canonical R42 normal build at source `4c102939` for the lane's
+entire 55.158 s Unity build interval. Original terminal receipt mtimes minus
+their elapsed seconds place those intervals at 11:56:31–11:57:26 UTC (private)
+and 11:56:07–11:58:52 UTC (canonical), with subsecond file-write uncertainty.
+Distinct project/editor identities and held locks were captured; canonical
+source was never switched by this worker. The private pipeline took 155.384 s;
+R42's Unity build took 164.699 s. Both successful artifacts were independently
+hashed. The seed and code binaries were later retired as this worker's
+superseded host outputs; their complete receipts remain.
+
+**Compression measurements.** The normal control and first uncompressed build
+used source `0b1e048c` after the same staged inputs; the warm normal control
+used `bc8c74f5` (the intervening commit changed documentation only).
+
+| Build | Pipeline s | Bundle phase s | Bundle API s | Player s |
+| --- | ---: | ---: | ---: | ---: |
+| Warm unchanged LZ4 | 201.24 | 40.62 | 20.60 | 56.91 |
+| First uncompressed, complete format transition | 1,031.87 | 872.15 | 828.55 | 71.72 |
+| Unchanged uncompressed repeat | 152.32 | < 0.001 | skipped | 51.18 |
+| LZ4 restore, complete format transition | 1,613.42 | 1,462.20 | 1,442.44 | 55.64 |
+
+These complete format transitions invalidate the entire bundle set; they are
+not representative of an unchanged or single-bundle full command. Editor cache
+warmth and competing host work were not controlled. The final warm lane
+`whole-catalog-fast-build` at source `42a1782c` also passed: 117.66 s
+pipeline, 43.52 s Unity export and 7.75 s splice/sign/verify; no Gradle task
+ran.
+
+These are shared-host observations, not an isolated throughput benchmark.
+Sampled compressor stack fractions estimate main-thread occupancy during the
+bundle API call; they are not exact CPU durations or summed parallel work. At
+10 ms sampling intervals in one-second captures across the bundle API, 37,323
+of 83,942 main-thread samples (44.46%) contained LZ4HC during the complete LZ4
+restoration. This is about 641 s if scaled to its API duration, or about 40%
+of that instrumented pipeline, an estimate rather than additive measured phase
+time. The uncompressed call had 78 of 46,574 such samples (0.17%); the warm
+LZ4 call had none of 1,275. This supports both serialization and compression
+as significant full-rebuild costs. Normal payload size was 2,273,439,758 bytes
+at restoration; the first uncompressed payload was 5,436,985,338 bytes. The
+exact payload sizes, sample counts and block formats remain in the private
+measurement/oracle receipts.
+
+**Content comparison.** The normal and uncompressed ledgers had identical
+content inputs and allowed player-code membership, while normal payload hashes
+remained unchanged in their separate ledger. The unchanged uncompressed repeat
+reused every payload hash. A bounded streaming oracle decoded all 133 UnityFS
+bundles without materializing large raw bundles. Padding/alignment differs by
+format. Initially 121 bundles had exact serialized member bytes. Among the
+other 12, object-level comparison of 527,333 records localized changes to 119
+LineRenderer position arrays, one manifest table, one hurtBoxGroup reference
+and one Animator string table. No differences were silently ignored. The fresh
+LZ4 control matched 122 of 133 bundles exactly against the earlier LZ4
+control. Its 527,331 compared objects reproduced the 119 line-position changes
+and hurtBoxGroup change. Uncompressed versus fresh LZ4 matched 121 of 133
+bundles; its differences were the 119 line arrays, manifest table and Animator
+string table. Thus the earlier control already contains rebuild variation
+independent of compression. No full byte-equivalence or runtime parity is
+claimed for the uncompressed mode; the default acceptance path stays LZ4. This
+does not weaken J1072's separate exact APK-splice replay proof.
+
+**First failures and corrections.** The first lane server inherited PYTHONPATH
+and imported the CLI's main module; its launch now clears that variable. The
+snapshot initially omitted two audio providers selected in the current
+manifest; creation now clones only those named coordination provider roots,
+not live coordination state. Initial code reuse then refused the distinct
+source cohort and required its normal seed. Compression staging refused stale
+reviewed producer pins before Unity; authored pins were audited/refreshed.
+Fresh-clone CI also caught a sandbox-denied process query; pruning now checks
+liveness without spawning that query. Duplicate reserved MCP ports refuse
+creation before any editor is launched.
+
+**Validation and teardown.** Eight real-Git/lifecycle contracts pass,
+including an optional exact bundled Gradle/OpenJDK fixture that starts a real
+private daemon and verifies its exit before teardown (12.6 s for the eight
+cases). Seven pruner, 220 CLI, 28 payload, 13 build-lock, one asynchronous
+Bootstrap, five app-host and ten public-tool contracts also pass. The
+transitive app-host common helper source pin was refreshed after rebase: the
+new host-only lookup adds no imports and is unused by the phone producer; no
+new Android qualification is claimed. Actual lane project inspection,
+normal/code/iteration builds and the concurrent canonical build supply
+host/editor evidence only. No device command was issued, no lease acquired and
+no device runtime or OLED behavior is newly qualified. J1072 remains the
+separate Thor fast-APK evidence. The first real teardown stopped Unity/MCP but
+hit a Gradle registry write after Git removed the checkout registration.
+Teardown now stops Gradle via the private home and recovers an unregistered
+residual tree without running Git against its primary ancestor. The retry
+removed the lane, registration and private server; normal/fast published APK
+hashes were rechecked after deletion and the canonical Gradle process remained
+alive. Free space was 136,747,565,056 bytes afterward, with unrelated
+shared-host activity affecting the net figure. Root-level MCP log retention
+was also added and fixture-tested; the initial standalone server log was
+omitted by the first archive, while controller failure receipts and
+Unity/build logs remain. Mandatory generated-output pruning ran after builds
+and before handoff. Existing accepted rollbacks, game inputs, keys and other
+workers' artifacts were not removed.
+
+**Evidence.** Private `work/coordination/fast-iteration/` retains lane
+creation, MCP/preflight, `concurrent-results.json`,
+`concurrent-intervals.json`, compression measurement directories, bounded
+oracle scripts/results, ledger checks and retirement receipts. Raw sampling
+stacks stay ignored. The complete editor/config/build archive is
+`work/coordination/build-lanes/second-20261024T130256.906162Z`; the recovery
+terminal/Gradle-stop receipt is in
+`work/coordination/build-lanes/second-20261024T131231.303551Z`. Retained
+normal host control:
+`1935024b8f290c456044c83cd1b6fb069a8179be40fedc3d6f5ba1367e1d0d94`, source
+`0b1e048c`, published under
+`work/build-cache/lane-second-20261024T122925.983597Z/`. It is not a new
+device-verified rollback. Fast handoff APK
+`b10151188eb8ebcc44c774309de755e31281d152dc78acdbcada7e81af1a5748` references
+that normal anchor; the earlier measured controls and superseded iteration
+binaries may be retired, retaining their receipts and oracle hashes.
+
+**Decision and revisit.** Keep accepted LZ4 plus J1072's frozen-payload fast
+path for authored C#. Keep lanes warm when useful and remove them when
+finished. Uncompressed format switching has an expensive first rebuild and a
+larger payload; it is an explicit iteration experiment, not a new acceptance
+default. Revisit compression when a representative changed-content workload,
+complete matched-content comparison and device gate justify it. Revisit lane
+scheduling when shared-host memory/throughput measurements justify more
+concurrent editors.
