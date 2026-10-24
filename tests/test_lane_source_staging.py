@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
 import build
 import composition_io
 import whole_catalog
+import project_input_rebuild
 import original_game_audio_build_hook as audio_hook
 from common import read, write, sha
 from test_original_audio_stage import write_set, stage_module as audio_stage
@@ -41,6 +42,7 @@ class LaneSourceStagingTests(unittest.TestCase):
             target = self.base / path
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(data)
+        write(self.base / "recipe/project-inputs.json", {"editors": [], "settings_templates": []})
         write(self.base / "recipe/runtime-sources.json", [self.name])
         write(self.base / "recipe/project-layout.json", {"runtime_source_guids": {self.name: self.guid}})
         self.git(self.base, "add", ".")
@@ -81,7 +83,7 @@ class LaneSourceStagingTests(unittest.TestCase):
         audio_stage.stage(self.project, manifest, None, None)
         self.newer_dll = (self.project / audio_stage.DEFAULT_TARGETS["bootstrap"]).read_bytes()
         self.original_assets = {str(p.relative_to(self.project)): p.read_bytes() for p in self.project.rglob("*") if p.is_file()}
-        for module in (build, whole_catalog, composition_io):
+        for module in (build, whole_catalog, composition_io, project_input_rebuild):
             for name, value in (("ROOT", self.root), ("WORK", self.work), ("RECIPE", self.root / "recipe")):
                 if hasattr(module, name):
                     context = patch.object(module, name, value)

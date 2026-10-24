@@ -319,7 +319,7 @@ def remove(name, root=ROOT):
             write(lane / "gradle-stop.json", dict(output=stopped.stdout))
         evidence = canonical / "coordination/build-lanes" / (name + "-" + now())
         work = checkout / "work"
-        for folder in ("config", "editor", "logs", "lab-build"):
+        for folder in ("config", "editor", "logs", "lab-build", "coordination/staging-retirements", "lane-authored-audio"):
             for source in (work / folder).rglob("*"):
                 if source.is_file() and not source.is_symlink() and source.suffix in {".json", ".log", ".txt"}:
                     copy_file_clone(source, evidence / source.relative_to(work))

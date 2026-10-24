@@ -125,6 +125,9 @@ class BuildLaneTests(unittest.TestCase):
         facts = self.create()
         server_log = lanes.location("second", self.root) / "mcp-server.log"
         server_log.write_text("authored server evidence")
+        retirement = Path(facts["checkout"]) / "work/coordination/staging-retirements/fixture.json"
+        retirement.parent.mkdir(parents=True, exist_ok=True)
+        retirement.write_text("{}\n")
         for arguments in (["install"], ["preflight"], ["prototype", "--action", "whole-catalog-run"], ["prototype", "--action"]):
             with self.subTest(arguments=arguments), self.assertRaises(RuntimeError):
                 lanes.dispatch("second", arguments, root=self.root)
@@ -135,6 +138,7 @@ class BuildLaneTests(unittest.TestCase):
         self.assertEqual((self.work / "lab-project/Temp/UnityLockfile").read_text(), "live canonical editor")
         self.assertEqual(json.loads(Path(result["evidence"]).read_text())["seed_commit"], facts["seed_commit"])
         self.assertEqual((Path(result["evidence"]).parent / "mcp-server.log").read_text(), "authored server evidence")
+        self.assertEqual((Path(result["evidence"]).parent / "coordination/staging-retirements/fixture.json").read_text(), "{}\n")
         self.assertNotIn(facts["checkout"], self.git("worktree", "list"))
 
     def test_names_ports_and_existing_lane_refuse_without_overwriting(self):

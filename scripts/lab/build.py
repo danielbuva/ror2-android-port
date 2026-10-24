@@ -539,6 +539,7 @@ def build_cache_key(project, api, android_symbols="none"):
 def restage_lane_sources():
     """Select authored inputs before a private lane editor can import them."""
     from composition_io import StageIO
+    from project_input_rebuild import stage_editor_inputs
     from whole_catalog import BUILD_EDITOR_SOURCES, stage_editor_sources, stage_runtime_sources
     from original_game_audio_build_hook import restage_authored_for_lane
 
@@ -561,6 +562,7 @@ def restage_lane_sources():
     expected = {"Assets/LabLoadingScene/" + Path(name).name for name in names}
     expected.update("Assets/LabLoadingScene/" + name for name in WHOLE_GENERATED_RUNTIME_SOURCES)
     expected.update("Assets/Editor/" + name for name in BUILD_EDITOR_SOURCES)
+    expected.update(row["path"] for row in read(RECIPE / "project-inputs.json")["editors"])
     expected.update(str(p.relative_to(ROOT / "android")) for p in (ROOT / "android/Assets/Editor").rglob("*.cs"))
     unexpected = sorted(
         p for folder in ("Assets/Editor", "Assets/LabLoadingScene") for p in (project / folder).rglob("*.cs") if str(p.relative_to(project)) not in expected
@@ -617,6 +619,7 @@ def restage_lane_sources():
     io = StageIO(WORK)
     stage_runtime_sources(io, names)
     stage_editor_sources(io)
+    stage_editor_inputs(io)
     stage_android_assets(project, io)
     # The ordinary audio owner selects/compiles the lane's recipe generation.
     # Its authored-only mode leaves banks, game assemblies and assets untouched.
