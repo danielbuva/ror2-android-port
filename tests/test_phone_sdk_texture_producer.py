@@ -101,6 +101,20 @@ class SdkTextureTests(unittest.TestCase):
                 result = subprocess.run([str(self.decoder), "4", "4", mode], input=encoded, capture_output=True, timeout=10)
                 self.assertNotEqual(result.returncode, 0)
 
+    def test_native_bc1_matches_qualified_integer_and_transparency_rules(self):
+        for width, height in ((4, 4), (1, 3), (61, 47), (128, 128)):
+            state, encoded = 631, bytearray()
+            for block in range(((width + 3) // 4) * ((height + 3) // 4)):
+                values = []
+                for _ in range(3):
+                    state = (state * 1664525 + 1013904223) & 0xFFFFFFFF
+                    values.append(state)
+                first, second = (0, 65535) if block % 3 == 0 else (65535, 0) if block % 3 == 1 else (values[0] & 65535, values[1] & 65535)
+                encoded.extend(struct.pack("<HHI", first, second, values[2]))
+            expected = T.rgba_source(encoded, width, height, 10)
+            result = subprocess.run([str(self.decoder), str(width), str(height), "bc1"], input=encoded, capture_output=True, timeout=10)
+            self.assertEqual((result.returncode, result.stdout), (0, expected))
+
     def test_complete_authored_mip_chains(self):
         # Exact-editor observations of authored images; no game or SDK input is needed.
         pins = {

@@ -295,11 +295,11 @@ def sdk_encode_rgba(rgba, width, height, sdk, etc_codec):
 
 def source_rgba(pixels, width, height, fmt, sdk):
     """Use pinned native block decoders where the source format requires them."""
-    if sdk is not None and fmt in (12, 25, 26, 27):
-        top_bytes = ((width + 3) // 4) * ((height + 3) // 4) * (8 if fmt == 26 else 16)
+    if sdk is not None and fmt in (10, 12, 25, 26, 27):
+        top_bytes = ((width + 3) // 4) * ((height + 3) // 4) * (8 if fmt in (10, 26) else 16)
         if len(pixels) < top_bytes:
             raise ValueError("truncated BC top mip")
-        mode = {12: ["bc3"], 25: [], 26: ["bc4"], 27: ["bc5"]}[fmt]
+        mode = {10: ["bc1"], 12: ["bc3"], 25: [], 26: ["bc4"], 27: ["bc5"]}[fmt]
         decoded = subprocess.run([sdk["pixels"], str(width), str(height), *mode], input=pixels[:top_bytes], capture_output=True, timeout=120)
         if decoded.returncode or len(decoded.stdout) != width * height * 4:
             raise ValueError("native BC decoder failed or returned a different extent")

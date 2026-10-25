@@ -146,6 +146,28 @@ static void bc3(const unsigned char *block, unsigned char *rgba) {
     }
 }
 
+static void bc1(const unsigned char *block, unsigned char *rgba) {
+    unsigned first = block[0] | (unsigned)block[1] << 8;
+    unsigned second = block[2] | (unsigned)block[3] << 8;
+    unsigned char palette[4][4];
+    for (int i = 0; i < 2; i++) {
+        unsigned value = i ? second : first;
+        unsigned r = value >> 11, g = (value >> 5) & 63, b = value & 31;
+        palette[i][0] = (r << 3) | (r >> 2);
+        palette[i][1] = (g << 2) | (g >> 4);
+        palette[i][2] = (b << 3) | (b >> 2);
+        palette[i][3] = 255;
+    }
+    for (int c = 0; c < 3; c++) {
+        palette[2][c] = first > second ? (2 * palette[0][c] + palette[1][c]) / 3 : (palette[0][c] + palette[1][c]) / 2;
+        palette[3][c] = first > second ? (palette[0][c] + 2 * palette[1][c]) / 3 : 0;
+    }
+    palette[2][3] = 255; palette[3][3] = first > second ? 255 : 0;
+    uint32_t selectors = 0;
+    for (int i = 0; i < 4; i++) selectors |= (uint32_t)block[i + 4] << (i * 8);
+    for (int i = 0; i < 16; i++) memcpy(rgba + i * 4, palette[(selectors >> (i * 2)) & 3], 4);
+}
+
 int main(int argc, char **argv) {
     if (argc != 3 && argc != 4)
         return 64;
@@ -157,9 +179,10 @@ int main(int argc, char **argv) {
     if (*end || height < 1 || height > 8192 || width * height * 4 > 64 * 1024 * 1024)
         return 65;
     int is_bc3 = argc == 4 && !strcmp(argv[3], "bc3");
+    int is_bc1 = argc == 4 && !strcmp(argv[3], "bc1");
     int is_bc4 = argc == 4 && !strcmp(argv[3], "bc4");
     int is_bc5 = argc == 4 && !strcmp(argv[3], "bc5");
-    if (argc == 4 && !is_bc3 && !is_bc4 && !is_bc5) {
+    if (argc == 4 && !is_bc1 && !is_bc3 && !is_bc4 && !is_bc5) {
         if (!strcmp(argv[3], "dilate")) return dilate((int)width, (int)height);
         if (!strcmp(argv[3], "mips-linear")) return mips((int)width, (int)height, 0);
         if (!strcmp(argv[3], "mips-srgb")) return mips((int)width, (int)height, 1);
@@ -172,7 +195,7 @@ int main(int argc, char **argv) {
         for (int bx = 0; bx < width; bx += 4) {
             _Alignas(uint64_t) unsigned char block[16];
             unsigned char decoded[64];
-            size_t block_bytes = is_bc4 ? 8 : 16;
+            size_t block_bytes = is_bc1 || is_bc4 ? 8 : 16;
             if (fread(block, 1, block_bytes, stdin) != block_bytes)
                 return 67;
             if (is_bc4 || is_bc5) {
@@ -180,7 +203,8 @@ int main(int argc, char **argv) {
                 for (int i = 0; i < 16; i++) decoded[i * 4 + 3] = 255;
                 bc45_channel(block, decoded, 0);
                 if (is_bc5) bc45_channel(block + 8, decoded, 1);
-            } else if (is_bc3) bc3(block, decoded);
+            } else if (is_bc1) bc1(block, decoded);
+            else if (is_bc3) bc3(block, decoded);
             else bcdec_bc7(block, decoded, 16);
             int columns = width - bx < 4 ? width - bx : 4;
             for (int y = 0; y < 4 && by + y < height; y++)
