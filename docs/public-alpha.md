@@ -77,7 +77,7 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       hashes and native selection manifests. J1155 extends the independently
       produced payload cohort to eighteen complete bundles. The shared source
       tree preserves J1157's complete host Shader cohort. The combined
-      fixed-target readiness check has 124 missing content entries; all 18 code/SDK
+      fixed-target readiness check has 122 missing content entries; all 18 code/SDK
       entries are available. Phone replay, the
       remaining bundles/player data and complete source-derived installation
       remain open; the structural writer produces no missing content itself.
@@ -94,9 +94,9 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       original-shader recovery and app integration remain open. J1157 qualifies
       all 414 APK Shader48 objects through source-only host
       production: 369 complete files plus two shared records. The combined
-      source tree has 581 of 705 entries available (576 raw-exact, two code
-      comparison entries and three separately drift-explained); 124 remain
-      missing. Shared mixed-file assembly and phone serialization remain open.
+      source tree has 583 of 705 entries available (578 raw-exact, two code
+      comparison entries and three separately drift-explained); 122 remain
+      missing (J1162). Host shared mixed-file assembly is qualified; phone serialization remains open.
       [J1102](PORTING_JOURNAL.md#j1102--qualify-linked-vulkan-fragment-output-and-explicit-owner-apk-code-inputs)
       confirms both executable stages in that linked payload and accepts all
       three produced code outputs in the existing APK owner without replay
@@ -266,3 +266,12 @@ matched first-stage performance remain open.
 source animation/controller and checked hierarchy graph packs on the host.
 They add no complete final-file readiness entry or APK destination record.
 Complete file assembly and ordinary-app production remain required.
+
+[J1162](PORTING_JOURNAL.md#j1162--retain-the-native-measurement-transport-failure-and-refresh-source-readiness)
+updates current host readiness to 583 of 705 files: 578 raw-exact, two produced
+code outputs requiring separate comparisons and three drift-explained files.
+Seven APK files and 115 payload files remain missing; current-only assembly,
+phone production and runtime qualification remain open. The native measurement
+attempt stops on a host ADB stream SIGKILL during tool-host compilation, before
+any native timings. Its sender is unknown; cleanup verifies stopped tools,
+sleeping panels and lease release.
