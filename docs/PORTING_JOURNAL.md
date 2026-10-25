@@ -44417,3 +44417,17 @@ memory/thermal guards before claiming phone production. Seven APK files and
 - All 26 WholeStageContexts YAML digest requirements remain open; no final file, readiness entry or input-drift exception is claimed. No target-derived substitution is admitted.
 - Revisit with a source-reproducible historical identity provider, or an explicitly authorized comparison-policy decision. Existing input-drift permission does not cover exporter entropy.
 - Host only; no Editor, device lease, installation or game launch. J850 comparison APK remains `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1173 — Preserve the RGBA phone prefix after bounded wall timeout
+
+2026-10-25 UTC. Hypothesis: J1140's guarded source-only producer completes all 1,333 single-mip RGBA records in one detached run.
+Prior art and unchanged public producer/profile follow J1158; no new pixel transform or protected supplier is introduced.
+The retry passes all pre-run controls but reaches its 10,000 s wall deadline: guard 124, child -9, thermal stop null.
+No completed cohort, output mismatch, OOM diagnosis or owner installation is claimed.
+Recovery validates all 506 durable object extents and 501 resource extents against the pinned profile/order and manifest.
+The preserved prefix contains 449,028 object bytes and 25,236,320 resource bytes; it is not a complete admissible pack.
+Evidence: `work/coordination/accepted-build-reconstruction/media-source-v1/`, `device-rgba-batch-v9-retry-done.json` and `device-rgba-v9-retry-checkpoint-recovery-done.json`.
+The host checkpoint is retained; owned device scratch/groups/namespace are absent, OLED asleep and lease released.
+Installed R58 remains `4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`; no install or game launch occurs.
+Explicit terminal handoff yields the device to alpha then Main; no P1 retry is queued.
+Revisit through bounded measured continuation of the validated prefix; full RGBA/mip/cube phone qualification and source-derived owner installation remain open.
