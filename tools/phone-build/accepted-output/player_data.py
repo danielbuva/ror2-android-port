@@ -171,6 +171,77 @@ def full_rectangle_sprite(body, rectangle_offset):
     return stream.getvalue()
 
 
+def material_string(stream):
+    size = W.B.unpack(stream, "<I")[0]
+    if size > 4096:
+        raise ValueError("material string bound exceeded")
+    value = W.B.exact(stream, size).decode("utf-8")
+    W.B.exact(stream, -stream.tell() % 4)
+    return value
+
+
+def material_count(stream):
+    count = W.B.unpack(stream, "<I")[0]
+    if count > 4096:
+        raise ValueError("material property count bound exceeded")
+    return count
+
+
+def material_texture_properties(pc, source):
+    """Read texture-property names from the original Shader's property table."""
+    path = OBJECTS.M.safe_input(pc, source["path"])
+    checked(path, (source["bytes"], source["sha256"]))
+    with path.open("rb") as raw:
+        raw.size = path.stat().st_size
+        member = W.B.Bundle(path).member(source["member"]) if "member" in source else raw
+        original = W.read_serialized(member)
+        row = next(row for row in original["objects"] if row["path_id"] == source["path_id"])
+        if original["types"][row["type_id"]]["class_id"] != 48:
+            raise ValueError("material shader source type differs")
+        member.seek(original["data_offset"] + row["offset"])
+        stream = io.BytesIO(W.B.exact(member, row["bytes"]))
+        material_string(stream)
+        textures = set()
+        for _ in range(material_count(stream)):
+            name = material_string(stream)
+            material_string(stream)  # Description.
+            for _ in range(material_count(stream)):
+                material_string(stream)  # Attribute.
+            kind = W.B.unpack(stream, "<i")[0]
+            W.B.exact(stream, 20)  # Flags and original four-component default.
+            material_string(stream)  # Default texture name.
+            W.B.exact(stream, 4)  # Texture dimension.
+            if kind == 4:
+                textures.add(name)
+    checked(path, (source["bytes"], source["sha256"]))
+    return textures
+
+
+def material_textures(body, properties):
+    """Keep original TexEnv ranges declared by the assigned source shader."""
+    stream = io.BytesIO(body)
+    material_string(stream)
+    W.B.exact(stream, 12)  # Relocated Shader PPtr.
+    for _ in range(2):
+        for _ in range(material_count(stream)):
+            material_string(stream)  # Preserve both keyword lists.
+    W.B.exact(stream, 12)  # Lightmap flags, booleans/alignment and render queue.
+    for _ in range(material_count(stream)):
+        material_string(stream)
+        material_string(stream)  # Tag map pair.
+    for _ in range(material_count(stream)):
+        material_string(stream)  # Disabled pass.
+    start = stream.tell()
+    kept = []
+    for _ in range(material_count(stream)):
+        begin = stream.tell()
+        name = material_string(stream)
+        W.B.exact(stream, 28)  # Texture PPtr, scale and offset.
+        if name in properties:
+            kept.append(body[begin : stream.tell()])
+    return body[:start] + struct.pack("<I", len(kept)) + b"".join(kept) + body[stream.tell() :]
+
+
 def object_file(pc, selected, destination):
     """Reuse original player-object bodies and source type identities.
 
@@ -181,6 +252,8 @@ def object_file(pc, selected, destination):
     source = selected["source"]
     path = OBJECTS.M.safe_input(pc, source["path"])
     checked(path, (source["bytes"], source["sha256"]))
+    shader = selected.get("material_shader")
+    properties = material_texture_properties(pc, shader) if shader is not None else None
     with path.open("rb") as raw:
         raw.size = path.stat().st_size
         member = W.B.Bundle(path).member(source["member"]) if "member" in source else raw
@@ -242,6 +315,16 @@ def object_file(pc, selected, destination):
                 if types[target["type_id"]]["class_id"] != 21 or selection["keyword_policy"] != "dummy-shader-demote-valid":
                     raise ValueError("unqualified player material keyword policy")
                 data = OBJECTS.demote_material_keywords(data)
+            if properties is not None:
+                if types[target["type_id"]]["class_id"] != 21:
+                    raise ValueError("only material texture properties are qualified")
+                data = material_textures(data, properties)
+            if "rename" in selection:
+                if types[target["type_id"]]["class_id"] != 21:
+                    raise ValueError("only authored material import names are qualified")
+                name = io.BytesIO()
+                OBJECTS.aligned_string(name, selection["rename"])
+                data = name.getvalue() + data[(struct.unpack_from("<I", data)[0] + 7) // 4 * 4 :]
             if types[target["type_id"]]["class_id"] == 114 and list(struct.unpack_from("<iq", data, 16)) != selected["script"]:
                 raise ValueError("player object script relationship differs")
             if hashlib.sha256(data).hexdigest() != selection["sha256"]:
@@ -251,6 +334,8 @@ def object_file(pc, selected, destination):
         with destination.open("xb") as output:
             W.write_serialized(output, layout, body)
         checked(path, (source["bytes"], source["sha256"]))
+        if shader is not None:
+            checked(OBJECTS.M.safe_input(pc, shader["path"]), (shader["bytes"], shader["sha256"]))
 
 
 def inline_texture(body, row, pixels):
@@ -421,14 +506,91 @@ def text_files(profile_root, pc, selected, output):
         checked(path, (recipe["bytes"], recipe["sha256"]))
 
 
-def produce(profile_path, profile_sha256, pc, sdk, converter, converter_receipt_sha256, output, texture_packs=()):
+def builtin_ui(pc, profile, builtin_extra, destination):
+    """Project the pinned SDK's built-in UI objects into runtime serialization.
+
+    SDK type trees identify the 40-byte editor Object prefix, Texture image
+    hash/VT fields and Sprite atlas-name/tag, duplicate AtlasRD and SpriteID.
+    Their checked six-object layout retains the original mip pixels, geometry,
+    physics shapes and bones. Runtime type identities come from the PC files.
+    """
+    selected = profile["builtin_ui"]
+    if builtin_extra is None:
+        raise ValueError("built-in UI requires explicit --builtin-extra SDK input")
+    source = Path(builtin_extra).absolute()
+    pin = (selected["source"]["bytes"], selected["source"]["sha256"])
+    checked(source, pin)
+    types = []
+    for class_id, original_source in ((28, profile["font"]["source"]), (213, profile["sprites"]["source"])):
+        path = OBJECTS.M.safe_input(pc, original_source["path"])
+        original_pin = (original_source["bytes"], original_source["sha256"])
+        checked(path, original_pin)
+        with path.open("rb") as raw:
+            raw.size = path.stat().st_size
+            member = W.B.Bundle(path).member(original_source["member"]) if "member" in original_source else raw
+            original = W.read_serialized(member)
+            types.append(next(row for row in original["types"] if row["class_id"] == class_id))
+        checked(path, original_pin)
+    rows, bodies, textures = [], {}, {}
+    offset = 0
+    with source.open("rb") as raw:
+        raw.size = source.stat().st_size
+        original = W.read_serialized(raw)
+        objects = {row["path_id"]: row for row in original["objects"]}
+        for type_id, identities in enumerate((selected["textures"], selected["sprites"])):
+            for identity in identities:
+                row = objects[identity]
+                if original["types"][row["type_id"]]["class_id"] != (28 if type_id == 0 else 213):
+                    raise ValueError("built-in UI source type differs")
+                raw.seek(original["data_offset"] + row["offset"])
+                body = W.B.exact(raw, row["bytes"])
+                name_end = (44 + struct.unpack_from("<I", body, 40)[0] + 3) // 4 * 4
+                target_id = len(rows) + 1
+                if type_id == 0:
+                    # After the name: 16-byte ImageContentsHash; VTOnly and
+                    # AlphaIsTransparency occupy the aligned bytes 56..60.
+                    body = body[40:name_end] + body[name_end + 16 : name_end + 56] + body[name_end + 60 :]
+                    textures[identity] = target_id
+                else:
+                    # AtlasName/PackingTag: 60..76; duplicate AtlasRD:
+                    # 512..908 (396 bytes); trailing SpriteID: 36 bytes.
+                    body = body[40 : name_end + 60] + body[name_end + 76 : name_end + 512] + body[name_end + 908 : -36]
+                    key = name_end - 40 + 60
+                    body = bytearray(sprite_key(body, selected["file"]))
+                    file_id, texture = struct.unpack_from("<iq", body, key + 40)
+                    if file_id != 0 or texture not in textures:
+                        raise ValueError("built-in UI source texture relationship differs")
+                    struct.pack_into("<q", body, key + 16, identity)
+                    struct.pack_into("<q", body, key + 44, textures[texture])
+                    body = bytes(body)
+                offset = (offset + 7) // 8 * 8
+                rows.append({"path_id": target_id, "offset": offset, "bytes": len(body), "type_id": type_id})
+                bodies[target_id] = body
+                offset += len(body)
+        layout = {
+            "engine": original["engine"],
+            "platform": 13,
+            "trees": False,
+            "types": types,
+            "objects": rows,
+            "scripts": [],
+            "externals": [],
+            "ref_types": [],
+            "user": "",
+        }
+        with destination.open("xb") as output:
+            W.write_serialized(output, layout, lambda row: io.BytesIO(bodies[row["path_id"]]))
+    checked(source, pin)
+
+
+def produce(profile_path, profile_sha256, pc, sdk, converter, converter_receipt_sha256, output, texture_packs=(), builtin_extra=None):
     """Write a new target tree; never use target bytes as a source provider."""
     profile_path = Path(profile_path)
     if sha(profile_path) != profile_sha256:
         raise ValueError("player-data profile drift")
     profile = json.loads(profile_path.read_text())
     if (
-        set(profile) - {"objects", "textures"} != {"input_id", "sources", "outputs", "project_assemblies", "font", "text_assets", "sprites"}
+        set(profile) - {"objects", "textures", "builtin_ui"} != {"input_id", "sources", "outputs", "project_assemblies", "font", "text_assets", "sprites"}
         or profile["input_id"] != INPUT_ID
     ):
         raise ValueError("unknown player-data profile")
@@ -506,6 +668,12 @@ def produce(profile_path, profile_sha256, pc, sdk, converter, converter_receipt_
             object_file(pc, selection, output / (TARGET + name))
             result["files"][TARGET + name] = {**profile["outputs"][name], "source_role": "pc-objects", "source": selection["source"]["path"]}
         texture_files(pc, profile["font"]["source"], profile.get("textures", []), texture_packs, output, result)
+        if "builtin_ui" in profile:
+            name = profile["builtin_ui"]["file"]
+            if name in ("", ".", "..") or PurePosixPath(name).name != name or "\\" in name:
+                raise ValueError("unsafe built-in UI player filename")
+            builtin_ui(pc, profile, builtin_extra, output / (TARGET + name))
+            result["files"][TARGET + name] = {**profile["outputs"][name], "source_role": "sdk-and-pc-types", "source": "unity_builtin_extra"}
         text_files(profile_path.parent.resolve(strict=True), pc, profile["text_assets"], output)
         for item in profile["text_assets"]["files"]:
             name = item["file"]
@@ -542,6 +710,7 @@ def main():
     parser.add_argument("--profile-sha256", required=True)
     parser.add_argument("--pc", type=Path, required=True, help="original installation root; output must be disjoint")
     parser.add_argument("--sdk", type=Path, required=True, help="owner's pinned AndroidPlayer SDK root")
+    parser.add_argument("--builtin-extra", type=Path, help="owner's pinned editor Resources/unity_builtin_extra; required for built-in UI")
     parser.add_argument("--converter", type=Path, required=True, help="fresh converter directory containing data/ and result.json")
     parser.add_argument("--converter-receipt-sha256", required=True)
     parser.add_argument(
@@ -554,7 +723,9 @@ def main():
     )
     parser.add_argument("--output", type=Path, required=True, help="new private target-tree root; parent must exist")
     args = parser.parse_args()
-    produce(args.profile, args.profile_sha256, args.pc, args.sdk, args.converter, args.converter_receipt_sha256, args.output, args.texture_pack)
+    produce(
+        args.profile, args.profile_sha256, args.pc, args.sdk, args.converter, args.converter_receipt_sha256, args.output, args.texture_pack, args.builtin_extra
+    )
 
 
 if __name__ == "__main__":

@@ -214,6 +214,59 @@ def sprite_fixture(pc):
     return selected, {name: bytes(expected)}
 
 
+def builtin_fixture(root):
+    """Authored editor-only fields surround independently named runtime fields."""
+    name = struct.pack("<I", 7) + b"Builtin\0"
+    editor_prefix = b"editor object fields".ljust(40, b"!")
+    texture_header = bytes(range(40))
+    pixels = b"authored inline mip pixels and sampler data"
+    texture = editor_prefix + name + b"editor hash!!!!!" + texture_header + b"VT!?" + pixels
+    sprite_header = bytes(range(60))
+    original_key = b"source GUID!!!!!" + struct.pack("<q", 21300000)
+    runtime_rd = struct.pack("<iqiq", 0, 701, 0, 0) + b"original geometry and UV data".ljust(372, b"g")
+    physics_and_bones = struct.pack("<II", 0, 0)
+    sprite = (
+        editor_prefix
+        + name
+        + sprite_header
+        + b"atlas name/tag!!"
+        + original_key
+        + bytes(16)
+        + runtime_rd
+        + b"editor atlas geometry".ljust(396, b"d")
+        + physics_and_bones
+        + b"editor sprite ID".ljust(36, b"i")
+    )
+    types = [{"class_id": cid, "stripped": 0, "script_type": -1, "hash": b"E" * 16} for cid in (28, 213)]
+    layout = {
+        "engine": "2021.3.45f2",
+        "platform": -2,
+        "trees": False,
+        "types": types,
+        "objects": [
+            {"path_id": 701, "offset": 0, "bytes": len(texture), "type_id": 0},
+            {"path_id": 702, "offset": (len(texture) + 7) // 8 * 8, "bytes": len(sprite), "type_id": 1},
+        ],
+        "scripts": [],
+        "externals": [],
+        "ref_types": [],
+        "user": "",
+    }
+    source = root / "authored-unity_builtin_extra"
+    with source.open("xb") as stream:
+        P.W.write_serialized(stream, layout, lambda row: io.BytesIO(texture if row["type_id"] == 0 else sprite))
+    expected_texture = name + texture_header + pixels
+    expected_rd = struct.pack("<iqiq", 0, 1, 0, 0) + runtime_rd[24:]
+    expected_sprite = name + sprite_header + bytes(8) + b"\x0f" + bytes(7) + struct.pack("<q", 702) + bytes(16) + expected_rd + physics_and_bones
+    selected = {
+        "file": "0000000000000000f000000000000000",
+        "source": {"bytes": source.stat().st_size, "sha256": P.sha(source)},
+        "textures": [701],
+        "sprites": [702],
+    }
+    return source, selected, (expected_texture, expected_sprite)
+
+
 class PlayerDataTests(unittest.TestCase):
     def setUp(self):
         temporary = tempfile.TemporaryDirectory()
@@ -288,8 +341,10 @@ class PlayerDataTests(unittest.TestCase):
         (self.converter / "result.json").write_text(json.dumps(self.receipt))
         self.receipt_hash = P.sha(self.converter / "result.json")
 
-    def produce(self, output=None, texture_packs=()):
-        return P.produce(self.profile_path, self.profile_hash, self.pc, self.sdk, self.converter, self.receipt_hash, output or self.output, texture_packs)
+    def produce(self, output=None, texture_packs=(), builtin_extra=None):
+        return P.produce(
+            self.profile_path, self.profile_hash, self.pc, self.sdk, self.converter, self.receipt_hash, output or self.output, texture_packs, builtin_extra
+        )
 
     def failed(self):
         self.assertFalse(json.loads((self.output / "result.json").read_text())["success"])
@@ -310,6 +365,33 @@ class PlayerDataTests(unittest.TestCase):
         self.assertEqual((self.pc / "owner.bin").read_bytes(), before)
         with self.assertRaisesRegex(ValueError, "must be new"):
             self.produce()
+
+    def test_builtin_editor_fields_are_removed_and_runtime_data_and_pc_types_preserved(self):
+        source, selected, expected = builtin_fixture(self.root)
+        self.profile["builtin_ui"] = selected
+        destination = self.root / "builtin-player"
+        P.builtin_ui(self.pc, self.profile, source, destination)
+        with destination.open("rb") as stream:
+            stream.size = destination.stat().st_size
+            layout = P.W.read_serialized(stream)
+            self.assertEqual(layout["platform"], 13)
+            self.assertFalse(layout["trees"])
+            self.assertEqual([row["hash"] for row in layout["types"]], [bytes([2]) * 16, b"S" * 16])
+            self.assertEqual(layout["externals"], [])
+            for row, body in zip(layout["objects"], expected):
+                stream.seek(layout["data_offset"] + row["offset"])
+                self.assertEqual(stream.read(row["bytes"]), body)
+        self.profile["outputs"][selected["file"]] = {"bytes": destination.stat().st_size, "sha256": P.sha(destination)}
+        self.profile_path.write_text(json.dumps(self.profile))
+        self.profile_hash = P.sha(self.profile_path)
+        result = self.produce(builtin_extra=source)
+        self.assertEqual((self.output / (P.TARGET + selected["file"])).read_bytes(), destination.read_bytes())
+        self.assertEqual(result["files"][P.TARGET + selected["file"]]["source_role"], "sdk-and-pc-types")
+        with self.assertRaisesRegex(ValueError, "explicit --builtin-extra"):
+            self.produce(self.root / "builtin-missing")
+        source.write_bytes(b"changed SDK source")
+        with self.assertRaisesRegex(ValueError, "bytes differ"):
+            self.produce(self.root / "builtin-drift", builtin_extra=source)
 
     def test_sprite_source_override_is_used_and_recorded(self):
         sprites = self.profile["sprites"]
@@ -387,6 +469,7 @@ class PlayerDataTests(unittest.TestCase):
         source_body = prefix + struct.pack("<iq", 3, 77) + keywords + tail
         relocated = prefix + struct.pack("<iq", 1, 1) + keywords + struct.pack("<iq", 2, 1) + tail[12:]
         demoted = prefix + struct.pack("<iqII", 1, 1, 0, 2) + string("SOURCE_FEATURE") + string("SOURCE_DISABLED") + relocated[-len(tail) :]
+        renamed = string("NativeUiMaterial0") + relocated[len(prefix) :]
         source_type = {"class_id": 21, "stripped": 0, "script_type": -1, "hash": b"M" * 16}
         layout = {
             "engine": "2021.3.45f2",
@@ -404,7 +487,7 @@ class PlayerDataTests(unittest.TestCase):
             P.W.write_serialized(stream, layout, lambda row: io.BytesIO(source_body))
         before = P.sha(source)
         selections = []
-        for index, body in enumerate((relocated, demoted)):
+        for index, body in enumerate((relocated, demoted, renamed)):
             name = "00112233445566778899aabbccddee" + f"{index:04x}"
             selected = {
                 "file": name,
@@ -415,6 +498,7 @@ class PlayerDataTests(unittest.TestCase):
                         "source_path_id": -27,
                         "path_id": 1,
                         "bytes": len(body),
+                        "source_bytes": len(source_body),
                         "source_sha256": pin(source_body)[1],
                         "sha256": pin(body)[1],
                         "references": [
@@ -424,8 +508,10 @@ class PlayerDataTests(unittest.TestCase):
                     }
                 ],
             }
-            if index:
+            if index == 1:
                 selected["objects"][0]["keyword_policy"] = "dummy-shader-demote-valid"
+            elif index == 2:
+                selected["objects"][0]["rename"] = "NativeUiMaterial0"
             selections.append(selected)
             # Independently pack the one-object v22 player metadata.
             meta = bytearray(b"2021.3.45f2\0" + struct.pack("<i?IiBh", 13, False, 1, 21, 0, -1) + b"M" * 16 + struct.pack("<I", 1))
@@ -450,6 +536,125 @@ class PlayerDataTests(unittest.TestCase):
         selections[1]["objects"][0]["keyword_policy"] = "unknown"
         with self.assertRaisesRegex(ValueError, "keyword policy"):
             P.object_file(self.pc, selections[1], self.root / "wrong-material-policy")
+
+    def test_material_clone_filters_by_original_shader_and_preserves_source_ranges(self):
+        def string(value):
+            data = value.encode()
+            return struct.pack("<I", len(data)) + data + bytes(-len(data) % 4)
+
+        def property(name, kind):
+            return (
+                string(name)
+                + string("Authored description")
+                + struct.pack("<I", 1)
+                + string("Authored attribute")
+                + struct.pack("<iI4f", kind, 19, 0.25, -3.0, 7.0, 1.0)
+                + string("authored default")
+                + struct.pack("<i", 2)
+            )
+
+        def environment(name, pointer, values):
+            return string(name) + struct.pack("<iq4f", *pointer, *values)
+
+        shader_body = string("Original shader") + struct.pack("<I", 3) + property("_KeepA", 4) + property("_Scalar", 2) + property("_KeepB", 4)
+        # Material order deliberately differs from the shader's property order.
+        env_b = environment("_KeepB", (3, 71), (2.0, 0.5, -4.0, 6.0))
+        env_removed = environment("_Discard", (5, 90), (8.0, -1.0, 0.25, 11.0))
+        env_a = environment("_KeepA", (7, -82), (0.125, 9.0, -2.0, 3.0))
+        keywords = struct.pack("<I", 1) + string("SOURCE_ON") + struct.pack("<I", 1) + string("SOURCE_OFF")
+        fields = struct.pack("<IBB2xiI", 4, 1, 0, 2333, 1) + string("SourceTag") + string("SourceValue") + struct.pack("<I", 1) + string("SourcePass")
+        prefix = string("Original material") + struct.pack("<iq", 2, 99) + keywords + fields
+        tail = (
+            struct.pack("<I", 1)
+            + string("_Integer")
+            + struct.pack("<iI", -12, 1)
+            + string("_Scalar")
+            + struct.pack("<fI", -7.25, 1)
+            + string("_Colour")
+            + struct.pack("<4fI", 0.125, -2.0, 3.0, 0.5, 0)
+        )
+        material_body = prefix + struct.pack("<I", 3) + env_b + env_removed + env_a + tail
+        expected = string("FontMaterialFixture") + struct.pack("<iq", 1, 1) + keywords + fields + struct.pack("<I", 2)
+        expected += environment("_KeepB", (2, 1), (2.0, 0.5, -4.0, 6.0)) + environment("_KeepA", (3, 1), (0.125, 9.0, -2.0, 3.0)) + tail
+
+        def write_source(path, body, kind):
+            layout = {
+                "engine": "2021.3.45f2",
+                "platform": 19,
+                "trees": False,
+                "types": [{"class_id": kind, "stripped": 0, "script_type": -1, "hash": b"F" * 16}],
+                "objects": [{"path_id": 55, "offset": 0, "bytes": len(body), "type_id": 0}],
+                "scripts": [],
+                "externals": [],
+                "ref_types": [],
+                "user": "",
+            }
+            with path.open("wb") as stream:
+                P.W.write_serialized(stream, layout, lambda row: io.BytesIO(body))
+            return {"path": path.name, "bytes": path.stat().st_size, "sha256": P.sha(path)}
+
+        material_path, shader_path = self.pc / "clone-material.assets", self.pc / "clone-shader.assets"
+        selected = {
+            "file": "authored-clone",
+            "source": write_source(material_path, material_body, 21),
+            "material_shader": {**write_source(shader_path, shader_body, 48), "path_id": 55},
+            "externals": ["authored-shader", "authored-texture-b", "authored-texture-a"],
+            "objects": [
+                {
+                    "source_path_id": 55,
+                    "path_id": 1,
+                    "source_bytes": len(material_body),
+                    "bytes": len(expected),
+                    "source_sha256": pin(material_body)[1],
+                    "sha256": pin(expected)[1],
+                    "rename": "FontMaterialFixture",
+                    "references": [
+                        {"offset": len(string("Original material")), "from": [2, 99], "to": [1, 1]},
+                        {"offset": len(prefix) + 4 + len(string("_KeepB")), "from": [3, 71], "to": [2, 1]},
+                        {"offset": len(prefix) + 4 + len(env_b) + len(env_removed) + len(string("_KeepA")), "from": [7, -82], "to": [3, 1]},
+                    ],
+                }
+            ],
+        }
+        destination = self.root / "material-clone"
+        P.object_file(self.pc, selected, destination)
+        with destination.open("rb") as stream:
+            stream.size = destination.stat().st_size
+            layout = P.W.read_serialized(stream)
+            stream.seek(layout["data_offset"])
+            self.assertEqual(stream.read(), expected)
+        self.assertEqual(layout["types"], [{"class_id": 21, "stripped": 0, "script_type": -1, "hash": b"F" * 16}])
+        self.assertEqual(P.sha(material_path), selected["source"]["sha256"])
+        self.assertEqual(P.sha(shader_path), selected["material_shader"]["sha256"])
+        with shader_path.open("ab") as stream:
+            stream.write(b"drift")
+        with self.assertRaisesRegex(ValueError, "player-data bytes differ"):
+            P.object_file(self.pc, selected, self.root / "shader-drift-before")
+        selected["material_shader"] = {**write_source(shader_path, shader_body, 21), "path_id": 55}
+        with self.assertRaisesRegex(ValueError, "shader source type"):
+            P.object_file(self.pc, selected, self.root / "wrong-shader-type")
+        selected["material_shader"] = {**write_source(shader_path, shader_body, 48), "path_id": 55}
+        selected["source"] = write_source(material_path, material_body, 28)
+        with self.assertRaisesRegex(ValueError, "only material texture"):
+            P.object_file(self.pc, selected, self.root / "wrong-clone-type")
+        selected["source"] = write_source(material_path, material_body, 21)
+        original_write = P.W.write_serialized
+
+        def drift_after_write(*args):
+            original_write(*args)
+            with shader_path.open("ab") as stream:
+                stream.write(b"late drift")
+
+        with patch.object(P.W, "write_serialized", side_effect=drift_after_write):
+            with self.assertRaisesRegex(ValueError, "player-data bytes differ"):
+                P.object_file(self.pc, selected, self.root / "shader-drift-after")
+        self.assertTrue((self.root / "shader-drift-after").is_file())
+        with self.assertRaisesRegex(ValueError, "string bound"):
+            P.material_textures(struct.pack("<I", 4097), {"_KeepA"})
+        with self.assertRaisesRegex(ValueError, "count bound"):
+            P.material_textures(string("") + bytes(12) + struct.pack("<I", 4097), {"_KeepA"})
+        with self.assertRaisesRegex(ValueError, "truncated"):
+            P.material_textures(material_body[: len(prefix) + 6], {"_KeepA"})
 
     def test_texture_pack_composition_keeps_original_native_fields_and_inline_records(self):
         pack = self.root / "texture-pack"

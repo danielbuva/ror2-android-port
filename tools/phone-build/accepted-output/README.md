@@ -182,12 +182,12 @@ bringing the complete source bundle count to seven. Phone qualification remains 
 
 ## Produce named player-data files
 
-`player_data.py` produces 153 canonical `apk/assets/bin/Data/...` files:
+`player_data.py` produces 161 canonical `apk/assets/bin/Data/...` files:
 SDK default resources, three fresh converter resource files, two script metadata
 JSON files derived from original PC metadata plus authored initialization/order,
 the embedded font serialized file, two original line-breaking TextAssets, the
 authored runtime and bootstrap JSON TextAssets, 64 standalone Sprite files,
-the original TimerStringFormatter, three original TMP objects, six materials and 68 standalone
+the original TimerStringFormatter, three original TMP objects, 13 materials, the six-object SDK built-in UI file and 68 standalone
 textures from existing source-produced packs. The font, material and texture bodies and their
 type identities/dependency come from one original PC bundle; only
 four checked reference identities change. The generic writer generates its
@@ -207,6 +207,7 @@ source relationships, not object bodies or a target byte template.
 python3 -I -S -B tools/phone-build/accepted-output/player_data.py \
   --profile recipe/owner-player-data.json --profile-sha256 RECIPE_SHA256 \
   --pc ORIGINAL_PC_ROOT --sdk OWNER_ANDROID_PLAYER_SDK \
+  --builtin-extra OWNER_SDK_RESOURCES/unity_builtin_extra \
   --converter FRESH_CONVERTER_OUTPUT \
   --converter-receipt-sha256 CONVERTER_RECEIPT_SHA256 \
   --texture-pack UNCOMPRESSED_PACK UNCOMPRESSED_RECEIPT_SHA256 \
@@ -222,6 +223,13 @@ profile selects producer profile hashes and bundle/member/path IDs, never
 physical private paths or pixel literals. Uncompressed/RGB/Alpha8 producers are
 documented below. The 54 RGBA selections use the separately audited, landed
 [PR75 producer/profile](https://github.com/danielbuva/ror2-android-port/pull/75).
+The built-in UI input is the full pinned file from the owner-supplied exact
+SDK's editor Resources directory; no Editor process or project is used. Only
+its selected original Texture/Sprite fields survive editor-field stripping.
+Material clones use the existing authored importer names and derive retained
+texture properties from the assigned original Shader declarations, preserving
+all other source values. This supplies no compiled shader programs.
+
 No texture producer is changed by this assembly step. Streamed records retain
 all native fields and move only their verified produced pixels inline; existing
 inline records remain unchanged. Native type metadata comes from the already

@@ -608,6 +608,38 @@
     "1a65bcd77dc4a4ea1b339b04cfa6b11c": {
       "bytes": 4464,
       "sha256": "1245e0ff492b52d8227ba708f4370896a94ed9f3871d508e142c411fcaa811a5"
+    },
+    "701a6ca3dad0d4fbfad388d9a50858d6": {
+      "bytes": 5124,
+      "sha256": "0db260f0595e2c4419df50153acac69fbb27638f4137c395b0b5bc42915a8131"
+    },
+    "98f55e3ca8e2dbc42866806e87ca60c4": {
+      "bytes": 5864,
+      "sha256": "50ac8e7e7fe73a89c0998d311a099d82d6bb38556628a4690c89ae7fdbffd189"
+    },
+    "ebe00a2d05dbb46548197adea59675b3": {
+      "bytes": 5104,
+      "sha256": "18cffc3cf74eb8f0070f037ccc1d582fd9904c75feb21dd613becdda4773c3fc"
+    },
+    "0000000000000000f000000000000000": {
+      "bytes": 22492,
+      "sha256": "0c6dab60690497ef5c01408f9b2e0f779ebffeacd0df660393528fe072b50d66"
+    },
+    "777181c2a35334de183172e9419ed316": {
+      "bytes": 5692,
+      "sha256": "907fc1b4e07726953a18f7d750ffb0faad258008e8a294dcfc9e9b03f69e4f28"
+    },
+    "99966425867404d918fd8b975c2ce4bd": {
+      "bytes": 5676,
+      "sha256": "95b12756e8185ae3b88abc07c9dbeac907fb9b77ac45f70bd8452fb10b728568"
+    },
+    "038c92fc06c9842beb8464db0e4e9bde": {
+      "bytes": 5692,
+      "sha256": "08dfa8b656fc57df3e0d550ad7f65c377176341f1cd0c00ca8ce4a63c8804015"
+    },
+    "28599ef043ac14e47885c86aa6842213": {
+      "bytes": 5692,
+      "sha256": "32752f8a580b597cbe7bacbe0860fddc25d682a9690b3d76b33e3a48eb0294db"
     }
   },
   "project_assemblies": [
@@ -3525,6 +3557,392 @@
         "9ccc2dfce38b2364798a4262581c1d21",
         "6f4d11dfb9c8cc94e86ed1cdf49f4674"
       ]
+    },
+    {
+      "file": "701a6ca3dad0d4fbfad388d9a50858d6",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-ui-specialuimaterials_assets_all_8d80f9bf896bb8ab9c3e733a3529066d.bundle",
+        "bytes": 6925,
+        "sha256": "04007d3d0f3c61db1abc6ffbdb61ac8e6aee169f3491c367ec17bbff58e37c47",
+        "member": "CAB-08f2c365b0bd2eb82104044524ef98ac"
+      },
+      "objects": [
+        {
+          "source_path_id": -808175813973487146,
+          "path_id": 1,
+          "bytes": 1028,
+          "source_bytes": 1032,
+          "source_sha256": "2cd7ca86765609d23bc9e84b7caaf5ffcf9531ea5f0d1af350657996eda83432",
+          "sha256": "83c4c925ddbd6eb70d2e124b090a97a0f43ed5afcbfe6ee30cc99476ec8a3fec",
+          "references": [
+            {
+              "offset": 28,
+              "from": [
+                1,
+                -8085301563477162814
+              ],
+              "to": [
+                1,
+                1
+              ]
+            },
+            {
+              "offset": 128,
+              "from": [
+                4,
+                818954577243729944
+              ],
+              "to": [
+                2,
+                1
+              ]
+            },
+            {
+              "offset": 172,
+              "from": [
+                5,
+                4022799135922440692
+              ],
+              "to": [
+                3,
+                1
+              ]
+            }
+          ],
+          "rename": "NativeUiMaterial0"
+        }
+      ],
+      "externals": [
+        "0ad6e8aee52b6441b97187951fa9730a",
+        "31ef5309ba05beb4d9bf9b6c2669555b",
+        "103d2c37114096b4b9cbba6185a2debd"
+      ]
+    },
+    {
+      "file": "98f55e3ca8e2dbc42866806e87ca60c4",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc3-items-sharedsuffering_assets_all_00fb14708d80a853c7e390241f52a430.bundle",
+        "bytes": 440501,
+        "sha256": "e52ce1003fc962c075dcf59c5654341b65bef83538f87d884c78903f5914af50",
+        "member": "CAB-37278393c77ce867b01e270506b66bfe"
+      },
+      "objects": [
+        {
+          "source_path_id": -2406584223105888589,
+          "path_id": 1,
+          "bytes": 1768,
+          "source_sha256": "b96f8bf545941db6d1a81834321af183175bf9addd68196c40947bbf055f4f39",
+          "sha256": "b05bf0e6e5a3845a09fc4c6fe2dbe4ba23f0e0715b8344d8a3795c8027c1672d",
+          "references": [
+            {
+              "offset": 28,
+              "from": [
+                8,
+                683148379888368288
+              ],
+              "to": [
+                1,
+                1
+              ]
+            },
+            {
+              "offset": 180,
+              "from": [
+                9,
+                -6476077496790144276
+              ],
+              "to": [
+                2,
+                1
+              ]
+            },
+            {
+              "offset": 220,
+              "from": [
+                0,
+                4896315350987296435
+              ],
+              "to": [
+                3,
+                1
+              ]
+            }
+          ],
+          "keyword_policy": "dummy-shader-demote-valid"
+        }
+      ],
+      "externals": [
+        "9ccc2dfce38b2364798a4262581c1d21",
+        "6935f1e68401f464a87ab9d6bc78e78c",
+        "ff579ba37da12e3428ceb17a6db2a4ec"
+      ]
+    },
+    {
+      "file": "ebe00a2d05dbb46548197adea59675b3",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-ui-specialuimaterials_assets_all_8d80f9bf896bb8ab9c3e733a3529066d.bundle",
+        "bytes": 6925,
+        "sha256": "04007d3d0f3c61db1abc6ffbdb61ac8e6aee169f3491c367ec17bbff58e37c47",
+        "member": "CAB-08f2c365b0bd2eb82104044524ef98ac"
+      },
+      "objects": [
+        {
+          "source_path_id": -1878511259775889022,
+          "path_id": 1,
+          "bytes": 1008,
+          "source_bytes": 1016,
+          "source_sha256": "be2eac5ee2254a2a61c77f891cf7bb3d916d182a772372fc0ba824ccba9fdef7",
+          "sha256": "ed04195e71c846afbfbf95644ead685a5d7fc16477378323065ed9da0789bdd0",
+          "references": [
+            {
+              "offset": 32,
+              "from": [
+                1,
+                -8085301563477162814
+              ],
+              "to": [
+                1,
+                1
+              ]
+            },
+            {
+              "offset": 176,
+              "from": [
+                0,
+                1592107098891939360
+              ],
+              "to": [
+                2,
+                1
+              ]
+            }
+          ],
+          "rename": "NativeUiMaterial1"
+        }
+      ],
+      "externals": [
+        "0ad6e8aee52b6441b97187951fa9730a",
+        "b47972b75d91c384f87f98007b7305aa"
+      ]
+    },
+    {
+      "file": "777181c2a35334de183172e9419ed316",
+      "source": {
+        "path": "Risk of Rain 2_Data/sharedassets0.assets",
+        "bytes": 506080,
+        "sha256": "3d735244606be616f3ce8ed90a644d04afc9ecbe44cdc9823fb2ed8b6c081f77"
+      },
+      "material_shader": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/textmeshpro-formerresources-shaders_assets_all_417237179ff4ade74c214cc315d331a9.bundle",
+        "bytes": 74541,
+        "sha256": "8a35d57bbc505e293298f717ee7b0460b57b54605d492ea34b5902b9280bb6a5",
+        "member": "CAB-fefb3bd8c2e00d01daf14c5ecd5a5d7d",
+        "path_id": 7030032868776217633
+      },
+      "objects": [
+        {
+          "source_path_id": 8,
+          "path_id": 1,
+          "bytes": 1596,
+          "source_bytes": 1768,
+          "source_sha256": "e7eeabd7e974d8a3e4b5873643ba8890f1a423180148d03a5b37d1c779626ddb",
+          "sha256": "3ccdc61720f41ae81e4d8843e6abcdd4c7d95b7b4c6c168e4c5778aa9b62e700",
+          "references": [
+            {
+              "offset": 28,
+              "from": [
+                0,
+                31
+              ],
+              "to": [
+                1,
+                1
+              ]
+            },
+            {
+              "offset": 220,
+              "from": [
+                0,
+                28
+              ],
+              "to": [
+                2,
+                1
+              ]
+            }
+          ],
+          "rename": "FontMaterial0"
+        }
+      ],
+      "externals": [
+        "fc09a4c7f1fa342f6bc0a974d09572cf",
+        "8097df9f2df3c0d49b91b615e733c726"
+      ]
+    },
+    {
+      "file": "99966425867404d918fd8b975c2ce4bd",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-common-fonts-riskofrain_assets_all_af18ba36b0beea88fd31594edaa6d02b.bundle",
+        "bytes": 56204,
+        "sha256": "9e61d40123d807d523fc70532589c28aa76a01d291eef4fde17d2f193cb825f9",
+        "member": "CAB-bac8ed7ccae670f43410310604e51749"
+      },
+      "material_shader": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/textmeshpro-formerresources-shaders_assets_all_417237179ff4ade74c214cc315d331a9.bundle",
+        "bytes": 74541,
+        "sha256": "8a35d57bbc505e293298f717ee7b0460b57b54605d492ea34b5902b9280bb6a5",
+        "member": "CAB-fefb3bd8c2e00d01daf14c5ecd5a5d7d",
+        "path_id": 7030032868776217633
+      },
+      "objects": [
+        {
+          "source_path_id": -2368549767984625940,
+          "path_id": 1,
+          "bytes": 1580,
+          "source_bytes": 1756,
+          "source_sha256": "e8a1be2f63c1621d8c6edc9c467cc07e2a7da0d59069620e24e6c9c17b4d1168",
+          "sha256": "6fe3623d12f49cb6c56494898d7ee45bc812486a3ac983a66a1cfbd473fc0cbd",
+          "references": [
+            {
+              "offset": 32,
+              "from": [
+                2,
+                683148379888368288
+              ],
+              "to": [
+                1,
+                1
+              ]
+            },
+            {
+              "offset": 208,
+              "from": [
+                0,
+                4019152015143552748
+              ],
+              "to": [
+                2,
+                1
+              ]
+            }
+          ],
+          "rename": "FontMaterial1"
+        }
+      ],
+      "externals": [
+        "fc09a4c7f1fa342f6bc0a974d09572cf",
+        "3080439f9fea4a744a038b12f49800b1"
+      ]
+    },
+    {
+      "file": "038c92fc06c9842beb8464db0e4e9bde",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc3-items-sharedsuffering_assets_all_00fb14708d80a853c7e390241f52a430.bundle",
+        "bytes": 440501,
+        "sha256": "e52ce1003fc962c075dcf59c5654341b65bef83538f87d884c78903f5914af50",
+        "member": "CAB-37278393c77ce867b01e270506b66bfe"
+      },
+      "material_shader": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/textmeshpro-formerresources-shaders_assets_all_417237179ff4ade74c214cc315d331a9.bundle",
+        "bytes": 74541,
+        "sha256": "8a35d57bbc505e293298f717ee7b0460b57b54605d492ea34b5902b9280bb6a5",
+        "member": "CAB-fefb3bd8c2e00d01daf14c5ecd5a5d7d",
+        "path_id": 7030032868776217633
+      },
+      "objects": [
+        {
+          "source_path_id": -2406584223105888589,
+          "path_id": 1,
+          "bytes": 1596,
+          "source_bytes": 1768,
+          "source_sha256": "b96f8bf545941db6d1a81834321af183175bf9addd68196c40947bbf055f4f39",
+          "sha256": "4103fe63fe56f47da06da02ebf1d246ebe85668bca651a2c0014fb0d9a9685dc",
+          "references": [
+            {
+              "offset": 28,
+              "from": [
+                8,
+                683148379888368288
+              ],
+              "to": [
+                1,
+                1
+              ]
+            },
+            {
+              "offset": 220,
+              "from": [
+                0,
+                4896315350987296435
+              ],
+              "to": [
+                2,
+                1
+              ]
+            }
+          ],
+          "rename": "FontMaterial2"
+        }
+      ],
+      "externals": [
+        "fc09a4c7f1fa342f6bc0a974d09572cf",
+        "ff579ba37da12e3428ceb17a6db2a4ec"
+      ]
+    },
+    {
+      "file": "28599ef043ac14e47885c86aa6842213",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-common-fonts-noto_assets_all_577d99b3ba49181d5b80de3725245e01.bundle",
+        "bytes": 15521356,
+        "sha256": "ce5332be8285053f057f9ee0aaca65701c898ccfba69495b3adfcce966209ff9",
+        "member": "CAB-6c8c13484990024e48f0af7d1ab3d2e1"
+      },
+      "material_shader": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/textmeshpro-formerresources-shaders_assets_all_417237179ff4ade74c214cc315d331a9.bundle",
+        "bytes": 74541,
+        "sha256": "8a35d57bbc505e293298f717ee7b0460b57b54605d492ea34b5902b9280bb6a5",
+        "member": "CAB-fefb3bd8c2e00d01daf14c5ecd5a5d7d",
+        "path_id": 7030032868776217633
+      },
+      "objects": [
+        {
+          "source_path_id": -6869146203260279654,
+          "path_id": 1,
+          "bytes": 1596,
+          "source_bytes": 1776,
+          "source_sha256": "5bc41663a1cc3b929dffdd4abf2191a3396db25cd3471fec13b528abc9e0a70d",
+          "sha256": "45efb76f9f0beb2e3481366f774036a0d6d36e808ad8a9cfce9fc29ededc128f",
+          "references": [
+            {
+              "offset": 36,
+              "from": [
+                2,
+                683148379888368288
+              ],
+              "to": [
+                1,
+                1
+              ]
+            },
+            {
+              "offset": 228,
+              "from": [
+                0,
+                6833859139072730266
+              ],
+              "to": [
+                2,
+                1
+              ]
+            }
+          ],
+          "rename": "FontMaterial3"
+        }
+      ],
+      "externals": [
+        "fc09a4c7f1fa342f6bc0a974d09572cf",
+        "6f4d11dfb9c8cc94e86ed1cdf49f4674"
+      ]
     }
   ],
   "textures": [
@@ -3956,5 +4374,22 @@
         }
       ]
     }
-  ]
+  ],
+  "builtin_ui": {
+    "file": "0000000000000000f000000000000000",
+    "source": {
+      "bytes": 133069551,
+      "sha256": "db99888b83efb4ec35e6ce219de78c951fc37bc0129712579131360312cc4f8e"
+    },
+    "textures": [
+      10904,
+      10906,
+      10916
+    ],
+    "sprites": [
+      10905,
+      10907,
+      10917
+    ]
+  }
 }

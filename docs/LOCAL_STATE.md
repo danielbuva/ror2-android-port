@@ -1837,3 +1837,14 @@ evidence live under `work/coordination/p1-anim/` in the assigned worktree.
 tracked audited profiles. Callers pass a pack and successful pinned receipt
 explicitly; no build reads a timestamped experiment directory. Original native
 type metadata and final bundle/player-file assembly remain caller-owned.
+
+J1126's built-in UI projection additionally requires the caller-supplied exact
+SDK `Resources/unity_builtin_extra` through `--builtin-extra`. Its complete
+size/hash and six selected object IDs live in the audited player profile; the
+input is an explicitly acquired SDK resource, not an ungenerated game-derived
+work file. The existing owner reads native runtime type metadata from original
+PC font/sharedassets Sprite files. Material clone property selection reads the
+profile-pinned original mobile Shader record. No private discovery/cache or
+timestamped path is a production provider. Generated host receipts/comparisons
+are under `work/coordination/p1-player-ui-assembly-v1/`; the separate guarded
+phone assembly support/evidence is `work/coordination/p1-player-phone-assembly-v1/`.
