@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1107](PORTING_JOURNAL.md#j1107--complete-host-rgba-production-and-bound-the-phone-thermal-refusal) | 2026-10-24 | Complete host RGBA production and bound the phone thermal refusal | 2026-10-24. |
 | [J1117](PORTING_JOURNAL.md#j1117--produce-every-standalone-sprite-and-the-third-source-only-bundle) | 2026-10-24 | Produce every standalone Sprite and the third source-only bundle | Date: 2026-10-25 UTC. |
 | [J1116](PORTING_JOURNAL.md#j1116--qualify-bounded-writing-against-every-accepted-unityfs-bundle) | 2026-10-24 | Qualify bounded writing against every accepted UnityFS bundle | Date: 2026-10-25 UTC. |
 | [J1115](PORTING_JOURNAL.md#j1115--assemble-a-second-source-only-bundle-and-fifteen-more-player-files) | 2026-10-24 | Assemble a second source-only bundle and fifteen more player files | Date: 2026-10-25 UTC. |

@@ -39151,3 +39151,115 @@ behind the independently owned texture case. Complete animation/shader/object/
 player-data production and ordinary installation/controls/performance remain
 open. Revisit for input/target drift, a new source derivation or first phone
 qualification; do not substitute accepted objects for the remaining gaps.
+
+## J1107 — Complete host RGBA production and bound the phone thermal refusal
+
+2026-10-24. Fixed J850 target; host production and bounded Android tool cases.
+No game build, installation or launch occurs.
+
+**Hypothesis and prior art.** The remaining single-mip ETC2 RGBA records can be
+produced from original PC texture bytes through the exact standalone SDK tool,
+without an Editor/project workflow or target pixel literals. J1081's Box64
+colour differences do not qualify that runner for this cohort. The corrected
+public QEMU/GNU standalone-tool control matches the authored host outputs.
+Pinned AssetRipper texture conversion/export and UnityPy supply source decoding,
+field-layout and storage clues; bcdec supplies the unchanged public BC7 decoder
+under its retained MIT alternative. J1082's public ETCPACK EAC alpha path already
+qualifies the alpha plane. These are build tools; game execution stays IL2CPP
+ARM64, with SDK inputs separately supplied by the owner.
+
+**Implementation.** The audited `owner-rgba-textures.json` profile selects 1,277
+canonical originals from 535 PC bundles for all 1,333 remaining non-Alpha8
+ETC2 RGBA/single-mip records. Its SHA-256 is
+`76e596c4ec3049e471f292d42b2b623092e05596a1a756be66ff08e73bbe6f96`.
+It carries source/destination selectors, verification hashes and import/storage
+relationships, with no pixels, compressed-block literals or target frames.
+Seven duplicate-name inputs require selection by original bundle/member/path-ID
+identity, rather than name alone. The existing texture owner projects the seven
+selected fields and checks every generated body, pixel range and persisted pack.
+
+`build_texture_sdk.py` compiles the bounded native BC3/BC7/dilation adapter and
+an x86-64 GNU C ABI wrapper. The native authored BC3 decoder preserves the
+qualified integer interpolation/cropping; native jump flooding preserves the
+existing cardinal seed/tie decisions while moving coordinate buffers out of the
+Python parent. The SDK descriptor is passed by value. Native EAC alpha and SDK
+ETC2 RGB, backend 1, quality 1, colour metric 0, are interleaved in standard
+block order. Independent four-row-aligned bands preserve raster order; source
+`9aea6992` permits at most two active SDK jobs. Every source/provider/binary pin
+is explicit; new output, capacity checks, readback and failure receipts remain
+with the existing owners. No SDK binary or public provider is patched.
+
+**Complete public host result.** Source `9aea6992` produces all 1,333 records in
+126.993 seconds, matching every independent target body/pixel pin and all three
+persisted packs:
+
+| Output | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `objects.bin` | 678,032 | `9e408304853cbdcd94203937b4ba65566c84506366f4ffc97d92e7163da3e171` |
+| `resources.bin` | 122,753,712 | `82a2be78f7bae0b95f818661b819905ce3db741745140d69ba51a5a435b5f2a4` |
+| `index.jsonl` | 664,680 | `aa9b475422b424f2da6f4ee8be35b5c4f5302e75f7358b2a683927f3437f1bdd` |
+
+Twelve focused native/pipeline/refusal tests and twelve real-provider authored
+image controls pass on the host. Fresh-clone CI passes 2,006 tests with 145
+skips; GitHub CI also passes. The earlier four-job/native-alpha run has identical
+pack hashes. This is source-only host production, not Android cohort admission.
+
+**Android build and first failures.** The phone compiles the public ARM64 pixel
+adapter and GNU x86-64 SDK wrapper through native Clang, using the pinned
+standalone Linux SDK encoder, public QEMU runtime and genuine GNU dependencies.
+The v4 wrapper is SHA-256
+`ab2e7439ff7ddf2319cdb06c8a04ad188503915a3b5831504b80e9b6a45beb6a`;
+the native pixel adapter is
+`a02dcdb52684b40d5f82b1d9a85264669e396a558faf2a59335f32a345a01559`.
+All twelve actual SDK image/band controls pass, together with authored native
+BC3/BC7, cropping, transparency dilation and malformed-input controls.
+
+The full phone cohort is still **unqualified**. Preserve the distinct first
+failures rather than infer a byte mismatch:
+
+- The initial sequential case reaches its 30-minute harness limit after 511
+  persisted index rows. The first sampler cannot establish process-family RSS
+  on this Android kernel; no family-memory claim is made from it.
+- The four-band full-SDK case also reaches its 30-minute whole-producer limit.
+  The corrected `ps` PID/PPID forest samples a 350,945,280-byte family peak.
+  Neither case reaches a complete cohort or reports a produced-byte mismatch.
+- Native-alpha v4 passes build and authored controls, but the 15-second CPU
+  sampler is too slow for four unrestricted SDK jobs. It observes repeated
+  94–95-degree bursts, with a maximum of 95.1 degrees C. An explicit external
+  thermal review stops only the owned producer group using continue/terminate;
+  the monitor joins and kills remaining group members. Producer duration is
+  325.293 seconds, sampled family peak 134,303,744 bytes, battery maximum
+  41 degrees C and HAL status 0. Overall case duration is 423.927 seconds.
+  This is a thermal refusal, not completion or pixel equivalence.
+- The first cooler harness passes its 44.6-degree start gate, then refuses
+  before encoding because an authored control still names a new codec directory
+  instead of the verified reused adapter path. The corrected harness uses that
+  explicit codec root. A subsequent idle-only case stops cleanly to apply the
+  orchestrator's revised start threshold; no encoder ran in either case.
+
+**Terminal state and revisit condition.** Independent before/after readback of
+the v4 and cooler harnesses preserves installed R55 APK SHA-256
+`111b1facec5b021c87dce03be24c9b81e913160809e685dc94b23e161786917a`.
+The game and owned children are absent, the OLED is asleep and each completed
+lease is released. These checks do not replace either standard game control.
+The next complete case must retain at most two SDK jobs on efficiency cores,
+a CPU sample interval no longer than two seconds, pause at 75 degrees C and
+resume at 60, abort at 85 with a one-job fallback, and battery/HAL stops at
+42 degrees C/status 3. Its current approved start requires three minutes idle,
+all CPU zones at most 55 degrees C, battery at most 38 and HAL 0; the whole case
+budget is three hours. Final cleanup verifies process-group absence even when
+reused codec paths lie outside the new case directory. Complete all 1,333 RGBA
+records and the existing 5,006-record regression before Android admission.
+Ordinary app delivery, final bundle/player assembly, installation and matched
+game behavior/performance remain separate gates.
+
+**Evidence.** Private authored sources, provider pins, host outputs/timings,
+first refusals, stdout/stderr and terminal receipts are under
+`work/coordination/accepted-build-reconstruction/media-source-v1/`:
+`rgba-public-host-v7/`, `rgba-public-host-v7-timing.json`,
+`device-rgba-batch-v1/`, `device-rgba-batch-v2/`, `device-rgba-batch-v4/`,
+`device-rgba-batch-v5/` and `device-rgba-batch-v6/`. The v4
+`thermal-review-abort.json`, producer monitor and thermal trace retain the
+external stop and samples. Only this authored summary is published. Generated
+packs, SDK bytes, original files, raw device paths/logs and signing material
+remain ignored; the host result does not permit distributing target frames.
