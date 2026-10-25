@@ -7,6 +7,7 @@ from pathlib import Path, PurePosixPath
 import re
 import shutil
 import subprocess
+import xml.etree.ElementTree as ET
 
 SOURCE = Path(__file__).resolve().parent
 ROOT = SOURCE.parents[2]
@@ -48,6 +49,29 @@ def load_metadata():
     return data
 
 
+def tool_manifest(source, destination, package=None):
+    """Keep Java class identities when selecting a separate owned tool package."""
+    tree = ET.parse(source)
+    manifest = tree.getroot()
+    original = manifest.attrib["package"]
+    package = package or original
+    if not re.fullmatch(r"dev\.ror2lab\.[A-Za-z][A-Za-z0-9_.]*", package) or package == "dev.ror2lab.arm64":
+        raise ValueError("separate lab tool package required")
+    android = "{http://schemas.android.com/apk/res/android}"
+    for node in manifest.iter():
+        if node.tag in {"activity", "instrumentation", "provider"}:
+            name = node.attrib.get(android + "name", "")
+            if name.startswith("."):
+                node.set(android + "name", original + name)
+        if node.tag == "instrumentation":
+            node.set(android + "targetPackage", package)
+        if node.tag == "provider":
+            node.set(android + "authorities", package + ".apk")
+    manifest.set("package", package)
+    ET.register_namespace("android", "http://schemas.android.com/apk/res/android")
+    tree.write(destination, encoding="utf-8", xml_declaration=True)
+
+
 def stage(profile_source, sdk, destination, *, root=ROOT, owner_backend=False):
     profile_source = Path(profile_source).resolve(strict=True)
     sdk = Path(sdk).resolve(strict=True)
@@ -72,15 +96,28 @@ def stage(profile_source, sdk, destination, *, root=ROOT, owner_backend=False):
         bind(path, "repo/" + name)
         if files["repo/" + name][1] != expected:
             raise ValueError("Public transform source drift: " + name)
+    for name in ("owner-apk/build_owner_apk.py", "owner-apk/binary_manifest.py", "accepted-output/package.py", "accepted-output/assemble.py"):
+        bind(SOURCE.parent / name, "repo/tools/phone-build/" + name)
     if owner_backend:
         names = (
-            subprocess.check_output(["git", "ls-files", "-z", "--", "scripts", "tools", "recipe", "environment", ".gitignore", "AGENTS.md", "dev"], cwd=root)
+            subprocess.check_output(
+                ["git", "ls-files", "-z", "--", "scripts", "tools", "recipe", "environment", "launcher", ".gitignore", "AGENTS.md", "dev"], cwd=root
+            )
             .decode()
             .split("\0")
         )
         for name in filter(None, names):
             bind(root / name, "repo/" + name)
-    for name in ("NativePythonHost.c", "NativeDotnetMuxer.c", "ToolHostActivity.java", "run_profile.py", "build_fixture.py", "AndroidManifest.xml"):
+    for name in (
+        "NativePythonHost.c",
+        "NativeDotnetMuxer.c",
+        "NativeJavaHost.c",
+        "ToolHostActivity.java",
+        "run_profile.py",
+        "stage.py",
+        "build_fixture.py",
+        "AndroidManifest.xml",
+    ):
         bind(SOURCE / name, name)
     for name in ("NativeToolHost.c", "Hello.cs"):
         bind(SOURCE.parent / "native-host" / name, name)

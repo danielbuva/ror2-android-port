@@ -3,8 +3,19 @@ package dev.ror2lab.phonebuildhostfixture;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
+import android.content.ContentProvider;
+import android.content.ContentValues;
+import android.content.Intent;
+import android.database.Cursor;
+import android.database.MatrixCursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.ParcelFileDescriptor;
+import android.provider.OpenableColumns;
+import android.provider.Settings;
 import android.system.Os;
+import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -16,8 +27,60 @@ import org.json.*;
 public final class ToolHostActivity extends Activity {
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
-        TextView view = new TextView(this); view.setText("Private build-tool host test"); setContentView(view);
-        new Thread(new Runnable() { public void run() { new Worker(ToolHostActivity.this).executeFixture(); } }).start();
+        final TextView view = new TextView(this); view.setText("Private build-tool host test");
+        final Button install = new Button(this); install.setText("Install owner-built APK"); install.setEnabled(false);
+        LinearLayout layout = new LinearLayout(this); layout.setOrientation(LinearLayout.VERTICAL); layout.addView(view); layout.addView(install); setContentView(layout);
+        final Runnable ready = new Runnable() { public void run() {
+            try {
+                File apk=readyApk(ToolHostActivity.this);
+                android.content.pm.PackageInfo info=getPackageManager().getPackageArchiveInfo(apk.getPath(),0);
+                if(info==null)throw new IOException("APK manifest unavailable");
+                view.setText("Owner-built APK ready: "+info.packageName+" ("+info.versionName+")"); install.setEnabled(true);
+            } catch(Exception error) { view.setText("Build result: "+error.getMessage()); }
+        }};
+        install.setOnClickListener(new android.view.View.OnClickListener() { public void onClick(android.view.View ignored) {
+            try {
+                readyApk(ToolHostActivity.this);
+                if(android.os.Build.VERSION.SDK_INT>=26 && !getPackageManager().canRequestPackageInstalls()) {
+                    startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,Uri.parse("package:"+getPackageName()))); return;
+                }
+                Intent intent=new Intent(Intent.ACTION_INSTALL_PACKAGE,Uri.parse("content://"+getPackageName()+".apk/owner.apk"));
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION); startActivity(intent);
+            }catch(Exception error){view.setText("Installer unavailable: "+error.getMessage());}
+        }});
+        try { readyApk(this); ready.run(); }
+        catch(Exception missing) {
+            new Thread(new Runnable() { public void run() { new Worker(ToolHostActivity.this).executeFixture(); runOnUiThread(ready); } }).start();
+        }
+    }
+    private static File readyApk(Context app) throws Exception {
+        File report=new File(app.getFilesDir(),"tool-host-report.json");
+        byte[] bytes=new byte[(int)report.length()];
+        try(DataInputStream in=new DataInputStream(new FileInputStream(report))){in.readFully(bytes);}
+        JSONObject value=new JSONObject(new String(bytes,StandardCharsets.UTF_8));
+        if(!value.getBoolean("success"))throw new IOException("successful owner build required");
+        File apk=new File(value.getJSONObject("ownerApk").getString("apk")).getCanonicalFile();
+        if(!apk.getPath().startsWith(app.getFilesDir().getCanonicalPath()+"/")||!apk.isFile())throw new IOException("private owner APK required");
+        return apk;
+    }
+    public static final class ApkProvider extends ContentProvider {
+        public boolean onCreate(){return true;}
+        private File selected(Uri uri) throws FileNotFoundException {
+            if(!"/owner.apk".equals(uri.getPath()))throw new FileNotFoundException("unknown owner APK");
+            try{return readyApk(getContext());}catch(Exception error){throw new FileNotFoundException(error.toString());}
+        }
+        public String getType(Uri uri){return "application/vnd.android.package-archive";}
+        public ParcelFileDescriptor openFile(Uri uri,String mode) throws FileNotFoundException {
+            if(!"r".equals(mode))throw new FileNotFoundException("read-only owner APK");
+            return ParcelFileDescriptor.open(selected(uri),ParcelFileDescriptor.MODE_READ_ONLY);
+        }
+        public Cursor query(Uri uri,String[] projection,String selection,String[] args,String sort) {
+            try { File apk=selected(uri);MatrixCursor cursor=new MatrixCursor(new String[]{OpenableColumns.DISPLAY_NAME,OpenableColumns.SIZE});cursor.addRow(new Object[]{"owner-built.apk",apk.length()});return cursor; }
+            catch(FileNotFoundException error){return null;}
+        }
+        public Uri insert(Uri uri,ContentValues values){throw new UnsupportedOperationException();}
+        public int update(Uri uri,ContentValues values,String where,String[] args){throw new UnsupportedOperationException();}
+        public int delete(Uri uri,String where,String[] args){throw new UnsupportedOperationException();}
     }
     public static class Runner extends Instrumentation {
         public void onCreate(Bundle arguments) { super.onCreate(arguments); start(); }
@@ -67,6 +130,11 @@ public final class ToolHostActivity extends Activity {
         env.put("ROR2LAB_BUILD_DOTNET_ROOT",new File(directory,"dotnet").getPath());
         env.put("ROR2LAB_BUILD_HOSTFXR",hostfxr.getPath());
         env.put("ROR2LAB_BUILD_DOTNET_LAUNCHER",new File(nativeDir,"libdotnetmuxer.so").getPath());
+        for(String key:new String[]{"JAVA_TOOL_OPTIONS","JDK_JAVA_OPTIONS","_JAVA_OPTIONS","JAVA_HOME","CLASSPATH"})env.remove(key);
+        if(new File(nativeDir,"libjvm.so").isFile()) {
+            env.put("ROR2LAB_BUILD_JVM",new File(nativeDir,"libjvm.so").getPath());
+            env.put("ROR2LAB_BUILD_JAVA_HOME",new File(directory,"java").getPath());
+        }
         java.lang.Process process=builder.start();
         if(!process.waitFor(label.equals("owner-backend")?86400:90,TimeUnit.SECONDS)){
             process.destroy();
@@ -116,6 +184,13 @@ public final class ToolHostActivity extends Activity {
             if(ownerJob.isFile()) {
                 List<String> backend=Arrays.asList(new File(nativeDir,"libpythonhost.so").getPath(),new File(nativeDir,"libpython3.14.so").getPath(),new File(root,"python").getPath(),new File(root,"repo/tools/phone-build/owner-code/run_android.py").getPath(),ownerJob.getPath(),root.getPath(),nativeDir.getPath());
                 report.put("ownerBackend",child("owner-backend",backend,root,nativeDir,links));
+                File ready=new File(getFilesDir(),"owner-input/owner-apk-ready.json");
+                JSONObject job=new JSONObject(text(ownerJob));
+                if((job.has("signing")||job.has("packaging"))&&ready.isFile()) {
+                    JSONObject apk=new JSONObject(text(ready)); File file=new File(apk.getString("apk")).getCanonicalFile();
+                    if(!file.getPath().startsWith(getFilesDir().getCanonicalPath()+"/")||!hash(file).equals(apk.getString("sha256")))throw new IOException("owner APK output drift");
+                    report.put("ownerApk",apk);
+                }
                 report.put("success",true);
             } else {
             List<String> prefix=Arrays.asList(new File(nativeDir,"libtoolhost.so").getPath(),new File(nativeDir,"libhostfxr.so").getPath(),runtime.getPath());

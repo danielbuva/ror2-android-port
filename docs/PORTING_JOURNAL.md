@@ -38366,3 +38366,147 @@ recovery, power loss and ENOSPC are open. Retry the corrected SDK case under
 the scheduled device lease and require unchanged primary bytes, an actual
 retained pending file, cold native recovery/resave and unchanged protected
 profile/results hashes before advancing acceptance.
+
+
+## J1103 — Produce fixed-target Burst and sign owner APKs in the Android tool host
+
+2026-10-24. Complete experimental tool-host qualification; no game installation,
+rendering or performance acceptance. The fixed target remains J850, source
+`1780ea9545f1597c033a8d32e08074b03c7f38c8`, with the accepted original PC input.
+
+**Hypothesis and prior art.** The existing original-input managed producer can
+feed unchanged Burst 1.8.11 inside the ordinary Android app host, while the same
+read-only tool mechanism can retain one owner signing key across APK builds.
+Consulted `community-prior-art.md`, pinned ThunderBurster `9cbfd8c8`
+`BurstStagedAssemblies`/`CollectionsEmbedder`, and BurstsOfRain `842395b2`
+`AddBurstAssembly`. Their staged-assembly/define and additional-library knowledge
+informs the compiler boundary; their mod-host dependency changes and DLL loader
+are excluded. Keep J14's package tuple and Architecture C. The exact SDK's
+CompilationPipeline/Burst AOT APIs establish the actual compile options. No
+upstream or game implementation is copied into authored tooling.
+
+**Named owners and complete change.** `owner-code/produce.py::burst` invokes the
+acquired compiler over fresh managed providers, binds compiler/backend hashes,
+produces the ARM64 library and linker XML, and verifies that fresh XML against
+the fixed target's preservation roots before stripping. Its bounded Burst-only
+selection stops there; normal source mode continues through the existing
+linker/converter/native owners. Five real DLL roots and six SDK compile-API
+define lists reproduce the complete ABI. The developer-only MCP assembly name
+is hash metadata only: no MCP DLL is supplied, rooted or shipped. `ENABLE_MONO`
+in those recorded API defines does not change the IL2CPP game backend.
+
+The authored `GnuToolAdapter.c` supplies Mono's required low-address mappings
+and explicit GNU child execution through the installed public QEMU runner.
+Native children receive the verified native directory and versioned-name links;
+GNU children retain their explicit loader/dependencies. `native.py::burst_ndk`
+exposes original SDK target data through new aliases with unchanged Linux
+Clang 9/BFD. Neither SDK is modified and no binfmt/device policy changes.
+
+`managed-host/NativeJavaHost.c` invokes the acquired headless JDK through JNI.
+Its ELF dependency closure is installed read-only; modules/configuration remain
+verified tool data. The acquired Android JDK derives its initial home from
+`dladdr(libjvm)`, so the authored launcher supplies that logical data-tree path
+while opening/mapping the actual installed ELF. The API knowledge comes from
+the [JNI Invocation API](https://docs.oracle.com/en/java/javase/21/docs/specs/jni/invocation.html)
+and the pinned provider's Android pathname adaptation. Native exec starts a new
+allocator: the parent manifest's tagging setting did not cover the JDK child.
+The launcher now selects only that child's documented Bionic API 31
+[`M_BIONIC_SET_HEAP_TAGGING_LEVEL`](https://android.googlesource.com/platform/bionic/+/refs/tags/android-13.0.0_r1/libc/include/malloc.h)
+compatibility setting before loading this legacy VM, refusing unsupported
+allocators. The parent/game policy stays unchanged. Other allocator/API versions
+and a future tagged-pointer-safe JDK remain unqualified.
+
+The existing APK owner accepts explicit read-only javac/keytool entry paths.
+The app worker runs the same assembly/signing functions with a durable private
+key outside disposable outputs. Tool APK updates use a separate durable tool
+key. A private read-only provider and user button implement installer handoff;
+that UI is not launched on the headless build device and remains unqualified.
+The new completed-object relink selection separately validates complete original
+input, SDK/converter/metadata, source, command and object receipts. Its host case
+reuses all 815 owned objects with zero compilations and reproduces J1098's
+qualified corrected link. The source-only phone job is not hot-patched.
+
+**Actual ordinary-app Burst result.** The original-input app v15 first produces
+329 DLLs and 69 PDB companions. A direct on-phone copy supplies that immutable
+cohort to a separate ordinary-app v20 job; no host/prepared game DLL or accepted
+output is a supplier. The complete public backend returns `phase: burst-built`,
+with fresh preservation XML SHA-256
+`335f484105a78786063f2bd43217f1aaf14fb9a1f0992f2dcc58ff18f3330bfc`
+matching the existing roots exactly. The 266,480-byte ARM64 library is
+`1961a2771ce9150a8d9f05189b5a40b73e2be5d52380853825c8bbbef23501a4`.
+All 20 runtime sections, including dynamic symbols/strings and all 103 exports,
+match accepted J850 raw bytes at identical addresses. No relocation, instruction
+or symbol-name normalization is used. The only differing allocated section is
+the 36-byte GNU build-ID note. Complete section comparison also finds differences
+in `.debug_info`, `.debug_line`, `.debug_str` and static `.symtab`; the raw file
+is retained, 2,208 bytes smaller than the accepted library.
+
+The compiler child takes 556.9917 seconds; the backend takes 700.7967 seconds
+including original/SDK/provider checks. Peak child RSS is 785,047,552 bytes;
+sampled whole-app UID RSS peaks at 996,487,168 bytes. The observed CPU maximum
+is 67.3 C, with no heat-triggered pause in this job. The retained output tree is
+98,622 KiB. Its shared-device free-space delta includes concurrent native/tool
+builds and is not an exclusive peak-storage measurement. The larger native job
+has a separate ongoing output/object storage sampler. Earlier shell continuation
+v8 also matches all 20 runtime sections in 459.7460 seconds; it is not relabelled
+as ordinary-app execution. The public host producer independently matches those
+same runtime sections.
+
+**Actual app signing result.** The complete source-frozen v21 phone tool build
+(authored checkpoint `ef2090bb`, rebased with unchanged tooling to `2b0cbf72`)
+passes native/Java/DEX/AAPT/durable signing and installs as a separate owned tool
+package through retained-data updates. Its 262,403,024-byte APK is
+`f740d20378e8971f5968aeef8e5bce3bcead8ad7b492153dc5f79178a4bae99f`.
+Two distinct ordinary-app processes sign authored version 1/2 APKs in
+12.9081/7.8580 seconds. The first creates a private key; the second reuses it,
+with key/password hashes unchanged and signature/alignment/content checks passing.
+The two 8,472-byte APK hashes are
+`552076973cd8719b7d5a4a9c26ab7607c8083d32c8d90f1a4e4348a0dc3a7278`
+and `784a6eac2d8ae36b1a98afb11762f01bda401b4b56890263204a16617fa6bd39`.
+Live keytool/apksigner witnesses map the actual JVM from the read-only installed
+native directory, with file-backed executable maps only in installed native or
+Android system roots. Earlier live QEMU mappings establish that same boundary;
+the successful Burst worker independently verifies all installed native hashes.
+Actual child/app UID and untrusted-app context are recorded privately. The
+device's pre-existing permissive SELinux state means security qualification
+remains false. No game package, profile, storage configuration or display mode
+is changed; both build-device panels remain asleep.
+
+**First failures and controls.** Retained private attempts identify missing Mono
+XML dependencies, GNU low-map/child execution and Mac-linker alias selection.
+The first public app request correctly rejects PDBs listed as DLL roots; the
+corrected request keeps their implicit companions. Its next full compile reaches
+linking but child QEMU lacks the versioned native aliases; adding the already
+verified link directory closes that binding. JNI first refuses the flat boot
+path; the upstream alternate-VM flag is bypassed by this Android JDK adaptation.
+After path repair, tagged-pointer aborts identify the fresh exec allocator. The
+child-local API closes that failure. A thermally paused outer tool-signing step
+hits its old 180-second limit; the retained unsigned archive signs through the
+public owner continuation, and the corrected full v19/v20/v21 builds pass with
+the complete signing budget. Failures are preserved, not renamed as passes.
+
+Two earlier tool-startup intervals briefly overshoot to 91.9/95.1 C before
+the host watcher attaches; the original native watcher pauses/cools its job.
+Subsequent launch drivers pin the parent immediately. One detached 75/60 C
+controller now guards both owned app UIDs and the verified shell build together,
+with bounded observation retries. This avoids competing hysteresis and protects
+the long original-source job across worker-session exits. These earlier peaks
+are not omitted from the retained thermal evidence.
+
+**Evidence and remaining gates.** Evidence is under the assigned worktree's
+ignored `work/coordination/phone-code/`: `app-burst-v20-*`,
+`burst-public-app-v20-runtime-comparison.json`,
+`burst-public-app-v20-all-sections.json`, `app-sign-v21-*`,
+`toolhost-ownership-v21.json`, `app-build-v21-*`, source-stage receipts and
+`owned-code-thermal.jsonl`. Prior failures and the independent shell/host cases
+remain adjacent. All protected inputs, generated libraries/APKs, raw mappings
+and private keys stay local. Affected backend/native, signing and stage contracts
+pass; fresh-clone CI passes 2,021 tests with 147 skips. Privacy/provenance review,
+staged audit and Ruff pass. The worktree doctor/preflight still refuse a missing
+canonical lab-project generation; these standalone owners instead admit the
+explicit original input and SDK, without staging another worker's project.
+The source-only phone native compilation still
+needs completion and explicit corrected relinking. Android packaging members,
+complete content/player data, the source-produced full APK, compatible owner
+signer provisioning, ordinary installer and matched game controls/performance
+remain open. These tool passes do not establish game readiness or entitlement.

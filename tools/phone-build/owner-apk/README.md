@@ -135,9 +135,8 @@ J1065 qualifies the complete private candidate through authorized ADB installs,
 fresh preparation/readback, pause/interruption/restart, update consent/backup,
 unknown-file refusal, retained user data, live placement/backing, public
 bootstrap/Play, warm re-entry and both assisted standard controls. Ordinary
-Android installer UX, integration of J1095 signing into the ordinary app/full
-player build, independent input-only production and matched performance remain
-open.
+Android installer UX, full-player app signing, independent input-only production
+and matched performance remain open.
 Neither the frontend nor successful extraction claims account ownership,
 authentication, DLC access or original-game readiness.
 
@@ -163,4 +162,16 @@ entry and original input/key remain unchanged. It reserves room for two output
 APKs plus 2 GiB. It never installs an APK. Failures and private keys remain; only
 the explicit disposable output may be removed after retaining needed evidence.
 J1095 qualifies two separate phone processes reusing a key for authored APKs;
-ordinary app delivery and the complete independent game APK remain open.
+J1103 qualifies that operation inside the ordinary Android app host. The complete
+independent game APK, installer and matched runtime acceptance remain open.
+
+The optional explicit `keytool` signing path and `javac` assembly path support
+read-only Android app tool entry names; desktop callers retain their adjacent
+JDK executable defaults. The managed-host owner provides those JNI entry points
+and the user-triggered Android installer handoff. Signing success alone does
+not establish installer, update-signature compatibility or gameplay acceptance.
+
+A fresh owner key supports that owner's first install and subsequent updates.
+The existing shared lab package requires explicit provisioning of its matching
+signer before a retained-data update; a new key does not inherit that identity.
+No existing lab key is shipped or silently selected by this producer.

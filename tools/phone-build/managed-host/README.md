@@ -55,7 +55,7 @@ The new builder validates native pins and archive hashes, packages native ELF
 only under `lib/arm64-v8a/`, and puts Python/.NET managed data, public source and
 archives in assets. Native Python extensions/dependencies are installed files;
 their data-tree links resolve to that directory. Unselected Python extensions
-are unsupported. Encrypted disposable signing material and all build outputs
+are unsupported. Private durable signing material and all build outputs
 stay ignored. No generated APK is approved for public distribution.
 
 `ToolHostActivity` owns each fresh data directory, data/native hash checks,
@@ -69,7 +69,8 @@ paths and logs remain private; reports keep security qualification false.
 ## Caller-owned device inputs and teardown
 
 Use the existing explicit-device, fresh-storage/reserve and exact installed-APK
-ownership rules. Refuse any pre-existing fixture package. After installing only
+ownership rules. Refuse an unowned pre-existing fixture package; updates require
+the exact current ownership receipt and the retained tool signer. After installing only
 the hash-bound fixture, supply `files/user-input/Managed/` and a separate
 `files/user-input/input-hashes.json` under its app UID. The manifest has schema 1,
 the accepted input ID and `files: {DLL_NAME: SHA256}` for the scoped 146-file
@@ -87,10 +88,11 @@ control must refuse before producer output. Preserve failures and receipts;
 remove only the package matching the ownership receipt, verify absence, and
 confirm the original input/game bytes, stopped state and display sleep.
 
-There is no game, launcher or whole-catalog consumer and no new `./dev` action.
+The scoped prefix control has no game/whole-catalog consumer or new `./dev`
+action.
 ADB-assisted input staging, the debuggable app, supplied tools and fixed profile
 do not qualify production bootstrap/delivery, general Python/native dependencies,
-Unity execution/content/player production, durable signing, cancellation/resume,
+Unity execution/content/player production, full-player signing, cancellation/resume,
 ownership acquisition, final installation UX or matched performance. J929's
 writable-execution refusal remains failed.
 
@@ -132,5 +134,59 @@ flags and original SDK target runtime remain unchanged; no extra wrapper or
 modified LLD binary is required.
 
 These remain debug/ADB-assisted private tool jobs. The fixed original-input
-gameplay source, complete content/Burst/shaders, full APK, durable signing,
+gameplay source, complete content/Burst/shaders, full APK, app signing,
 ordinary installation and game/performance acceptance are separate gates.
+
+## Headless JDK and owner APK jobs
+
+An explicit `java_home` in the private backend tool plan selects the acquired
+JDK. The phone builder compiles `NativeJavaHost.c` against its JNI headers and
+installs javac, keytool and java entry points plus the headless VM dependency
+closure as read-only PackageManager native files. Modules, security policy and
+configuration are hash-verified tool data. The JNI launcher uses the explicit
+VM path and Java home; it never loads ART as the build VM. The acquired JDK's
+[Android pathname adaptation](https://github.com/termux/termux-packages/blob/master/packages/openjdk-21/0017-Try-to-get-libjvm.so-path-from-proc-self-maps-on-and.patch)
+derives its initial data home from `dladdr(libjvm)`, before ordinary property
+parsing. The authored launcher adapts that one reported path to the logical JDK
+data layout. The actual ELF is opened from the installed native directory and
+its executable mappings retain that location; no VM binary is patched. Existing SDK JARs
+provide javac's Android reference surface, D8 and apksigner. The caller's extra
+native plan must include the JDK's Android spawn and shared-memory dependencies. The
+acquired JDK truncates tagged heap pointers under Android 13's default allocator.
+An exec child has fresh allocator state, so an app-manifest opt-out does not
+cover it. Before loading the VM, this launcher uses Bionic's documented API 31
+`mallopt(M_BIONIC_SET_HEAP_TAGGING_LEVEL, M_HEAP_TAGGING_LEVEL_NONE)`
+[allocator option](https://android.googlesource.com/platform/bionic/+/refs/tags/android-13.0.0_r1/libc/include/malloc.h).
+It refuses when that child-local compatibility setting is unavailable. No device
+policy, parent app allocator or game manifest changes. This does not repair the
+upstream JDK's tagged-pointer limitation or qualify other allocator/API versions.
+
+The optional plan `package` selects a separate lab tool identity while retaining
+Java class names and private provider authority. It cannot select the game
+package. The builder keeps its durable tool signer at `TOOLROOT/owner-tool-key`,
+outside disposable build outputs; retain that directory for compatible updates.
+This key is separate from the game owner's signing key. No key enters the APK.
+
+Under `files/owner-input/`, a request `{"signing": {"unsigned":
+"INPUT.apk", "key_directory": "keys"}, "output": "work/sign-v1"}`
+selects existing owner signing. All paths are relative to that private input
+root. `input-hashes.json` pins the immutable supplied files; the durable key
+directory and output are generated state. A packaging request instead supplies
+`targets`, `manifest`, all three `code` paths, `key_directory` and `version_code`
+inside `packaging`; it invokes the existing complete APK owner first. Inputs
+remain distinct from tool APK assets. Each output must be new.
+
+Successful signing publishes `owner-apk-ready.json` and the worker binds its APK
+hash into the private report. Opening the Activity displays the package/version
+and enables an install button. Only that button opens unknown-source settings
+or Android's installer, using a private read-only content provider. Headless
+Runner jobs never launch UI. Retain the private owner key independently of
+disposable outputs and before removing this tool package. Final installer/game
+acceptance remains separate from successful tool execution.
+
+[J1103](../../../docs/PORTING_JOURNAL.md#j1103--produce-fixed-target-burst-and-sign-owner-apks-in-the-android-tool-host)
+qualifies fixed-target Burst and two authored APK signing processes in this
+ordinary app host, with actual native hash/mapping/UID/context evidence. It does
+not qualify full-player assembly, installer UI or game performance. The separate
+original-input native compilation remains active until its own terminal result
+and explicit corrected relink. Device policy/security qualification stays open.

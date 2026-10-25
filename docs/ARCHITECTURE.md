@@ -215,6 +215,16 @@ Clang driver, and invokes it without a global Linux execution handler. Original
 SDK ARM64 target data remain inputs. Android Clang 21/LLD remains the explicit
 fallback; whole-player Linux app hosting and runtime parity are separate gates.
 
+`owner-code/produce.py::burst` owns the unchanged acquired Burst compiler
+invocation over freshly produced managed assemblies. Fixed-target metadata
+selects its roots, actual SDK compilation API defines, options and tool hashes.
+`GnuToolAdapter.c` supplies only the GNU build-tool low-address mappings and
+explicit emulated child execution required by Mono/LLVM under QEMU. It is foreign
+tool data, never linked into the ARM64 game. `native.py::compiled_jobs` validates
+a completed object's source/command/input/hash receipts for an explicit relink;
+the normal linker/stripper then use the selected profile order. Neither owner
+reads an accepted ELF as a supplier.
+
 `tools/phone-build/owner-code/shader.py` owns the experimental exact-SDK
 Vulkan IPC client. An explicit compiler command/SDK directory and new private
 output own setup, typed session state, reflection/diagnostics and child/socket
@@ -742,6 +752,9 @@ support. `stage.py` checks the public source/native metadata contract and stages
 new owner-supplied SDK inputs; its builder owns the separate phone-built APK.
 `NativePythonHost.c` selects the existing interpreter's isolated configuration;
 `NativeDotnetMuxer.c` forwards actual framework queries/application invocations.
+`NativeJavaHost.c` invokes the separately acquired headless JDK through JNI;
+its javac/keytool/java entry names and read-only native dependencies are installed
+by PackageManager. Java modules and configuration remain verified tool data.
 The activity owns fresh data/native-link state and bounded children;
 `run_profile.py` checks supplied input hashes and invokes the unchanged public
 producer. Device installation, legitimate accepted-input transfer, independent
@@ -750,8 +763,8 @@ readbacks and exact-APK teardown remain caller-owned. See its
 consumer or `./dev` action is added, and J929 remains a failed security gate.
 The integrated source selection refreshes the two authored helper pins while
 retaining the same native/interpreter/compiler owners. J1074 qualifies its
-current app-host operation; it does not turn this support fixture into a game
-compiler, content producer or installer.
+generic app-host operation; fixed-target code jobs and the owner APK flow
+extend the same owners without adding a content producer.
 
 Its `ToolHostActivity.Runner` instrumentation entry runs the same worker without
 opening an Activity. The optional caller-owned backend job invokes
@@ -770,6 +783,15 @@ reference providers, avoiding conflicting unselected sibling DLLs. All links and
 managed/native outputs belong to the new private output/fixture lifetime.
 This remains debug/ADB-assisted tool support, without security, final installer
 or gameplay qualification.
+
+The same app worker accepts explicit APK assembly/signing jobs through the
+existing `owner-apk` owner. Its key directory is outside each disposable build
+output. The Activity shows a completed private APK and hands a read-only content
+URI to Android's installer only after a user button press; the private provider
+permits only that verified output. Headless instrumentation never opens the
+installer. Tool APK updates use a separate durable tool key. J1103 qualifies ordinary-app
+Burst and authored-APK signing through these owners; installer/full-player
+acceptance and device security remain separate gates.
 
 `phone_native.py` owns experimental **support** for replaying the authored
 content fixture's native graph. `phone-native-fixture` verifies an explicit

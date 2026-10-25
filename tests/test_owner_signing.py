@@ -60,11 +60,17 @@ class OwnerSigningTests(unittest.TestCase):
                 first = OWNER.sign(request, root / "first")
                 key = (root / "keys/owner.p12").read_bytes()
                 password = (root / "keys/password").read_text()
+                readonly_keytool = root / "libkeytool.so"
+                readonly_keytool.write_bytes(b"independent installed keytool witness")
+                second_request = json.loads(request.read_text())
+                second_request["keytool"] = str(readonly_keytool)
+                request.write_text(json.dumps(second_request))
                 second = OWNER.sign(request, root / "second")
             self.assertTrue(first["success"] and second["success"])
             self.assertTrue(first["new_owner_key"])
             self.assertFalse(second["new_owner_key"])
             self.assertEqual(sum("-genkeypair" in argv for argv in calls), 1)
+            self.assertTrue(any(argv[0] == str(readonly_keytool) and "-list" in argv for argv in calls))
             self.assertEqual((root / "keys/owner.p12").read_bytes(), key)
             self.assertEqual((root / "keys/password").read_text(), password)
             self.assertNotIn(password, (root / "first/result.json").read_text())
@@ -129,7 +135,7 @@ class OwnerAssemblyTests(unittest.TestCase):
                 profile["targets"].append({"path": "apk/" + name, "bytes": 1, "sha256": "0" * 64})
             for name in ("app.js", "controller.js", "style.css", "background.png"):
                 (frontend / name).write_bytes(("independent frontend " + name).encode())
-            for name in ("java", "android.jar", "d8.jar", "manifest.json"):
+            for name in ("java", "libjavactool.so", "android.jar", "d8.jar", "manifest.json"):
                 (root / name).write_bytes(("independent tool " + name).encode())
             (root / "wire.py").write_text("# Authored empty helper witness\n")
             request = root / "request.json"
@@ -141,6 +147,7 @@ class OwnerAssemblyTests(unittest.TestCase):
                         "targets": str(targets),
                         "frontend": str(frontend),
                         "java": str(root / "java"),
+                        "javac": str(root / "libjavactool.so"),
                         "android_jar": str(root / "android.jar"),
                         "d8_jar": str(root / "d8.jar"),
                         "wire_helper": str(root / "wire.py"),
@@ -152,7 +159,7 @@ class OwnerAssemblyTests(unittest.TestCase):
 
             def run(argv, **kwargs):
                 argv = list(map(str, argv))
-                if Path(argv[0]).name == "javac":
+                if Path(argv[0]).name == "libjavactool.so":
                     (Path(argv[argv.index("-d") + 1]) / "Authored.class").write_bytes(b"independent Java witness")
                 else:
                     (Path(argv[argv.index("--output") + 1]) / "classes.dex").write_bytes(b"independent DEX witness")

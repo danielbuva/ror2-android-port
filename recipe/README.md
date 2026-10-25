@@ -2444,3 +2444,14 @@ program response. No recipe target hashes, SDK implementation, decoded shader
 bytes, original expression or protected content is published. Public smol-v
 source is acquired privately for validation only, at its cited revision.
 Provenance/privacy/licensing and sensitive-content audit: 2026-10-24.
+
+The fixed-target Burst policy adds generic SDK compiler option/define metadata,
+root names and exact acquired-tool hashes only. These define lists are the SDK
+compilation API's hash inputs, separate from player compilation flags. The MCP
+name contributes metadata only; no MCP DLL/code is rooted, copied or shipped.
+Authored GNU adapters and JNI invocation launchers contain no SDK implementation
+or game behavior. Their tools, generated libraries, source-derived outputs and
+private keys remain local. Completed-object relinking reads explicit validated
+owner outputs, never accepted ELF bytes. Public tests contain authored synthetic
+ELF/command/path witnesses. Provenance/privacy/licensing and sensitive-content
+audit: 2026-10-24; acquisition/distribution rights remain separate gates.

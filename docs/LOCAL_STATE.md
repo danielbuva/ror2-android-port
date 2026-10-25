@@ -1709,3 +1709,20 @@ open. These are explicit private files, not implicit reads from run directories.
 The complete content root retains `targets[].path` layout/hashes from its
 content producer. Code substitutions never supply missing content or establish
 source provenance. Unsigned/signed APKs and comparison evidence remain ignored.
+
+## Owner code toolchain and signing inputs
+
+The explicit owner-code request selects separately acquired Mono/GNU/Burst/NDK
+providers. `produce.py::burst` generates its options, preservation XML, library
+and receipts; `native.py::burst_ndk` generates aliases without modifying either
+SDK. The authored `GnuToolAdapter.c` is compiled by the existing phone tool APK
+builder. No generated game or accepted-output byte is a tool supplier.
+
+The managed-host builder selects an explicit local JDK and SDK JARs, generating
+read-only JNI tool entry points and verified data links. Its durable
+`TOOLROOT/owner-tool-key` belongs to the tool APK. A separate caller-selected
+private `key_directory` belongs to owner APK signing and persists beyond build
+outputs; removing app data without backing up that directory loses update
+compatibility. Keys, passwords, generated game objects/APKs and raw logs remain
+private. Retained coordination folders are evidence only; no code discovers a
+timestamped folder or supplies an accepted library automatically.
