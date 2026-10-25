@@ -148,9 +148,9 @@ off, uses diagnostic automatic input and requires strict cleanup for every
 completed session. A runtime error stops the case; incomplete series and old
 archived reports do not establish a growth bound. Native heap captures are a
 separate opt-in attribution case and must not be mixed with this measurement.
-The pre-fix heap analysis identifies a roughly 0.580 MiB player-stat graph as a
-candidate fingerprint for the remaining 0.579 MiB/session slope. It does not
-identify the corrected retained root. A fresh matched heap pair must inspect
+[J1122](PORTING_JOURNAL.md#j1122--prepare-alpha-host-contracts-and-identify-an-old-heap-fingerprint)
+records an old-heap graph fingerprint, without identifying the corrected retained
+root. A fresh matched heap pair must inspect
 actual GC/static roots and native bridges; stable native object counts alone do
 not establish a managed-memory bound.
 
@@ -158,7 +158,8 @@ For an explicitly scheduled combined case, `alpha-stability-batch` owns **one**
 canonical lease across the SDK interruption case, three-session heap pair and
 30-minute assisted first-stage observation. Do not wrap it in another lease.
 It requires an idle owned installation, an explicit verified APK digest, host
-and device storage reserves and a new absolute done-file under canonical ignored
+and device storage reserves (including 4 GiB capture headroom above 15 GiB free)
+and a new absolute done-file under canonical ignored
 `work/`. Schedule it only after the device owner reports safe handoff; a device
 reboot/emergency state requires explicit clearance first. Launch once detached:
 
