@@ -288,8 +288,8 @@ class PlayerDataTests(unittest.TestCase):
         (self.converter / "result.json").write_text(json.dumps(self.receipt))
         self.receipt_hash = P.sha(self.converter / "result.json")
 
-    def produce(self, output=None):
-        return P.produce(self.profile_path, self.profile_hash, self.pc, self.sdk, self.converter, self.receipt_hash, output or self.output)
+    def produce(self, output=None, texture_packs=()):
+        return P.produce(self.profile_path, self.profile_hash, self.pc, self.sdk, self.converter, self.receipt_hash, output or self.output, texture_packs)
 
     def failed(self):
         self.assertFalse(json.loads((self.output / "result.json").read_text())["success"])
@@ -375,6 +375,158 @@ class PlayerDataTests(unittest.TestCase):
         selected["script"] = [1, 34]
         with self.assertRaisesRegex(ValueError, "script relationship"):
             P.object_file(self.pc, selected, self.root / "wrong-script")
+
+    def test_materials_use_original_values_checked_references_and_existing_keyword_policy(self):
+        def string(value):
+            data = value.encode()
+            return struct.pack("<I", len(data)) + data + bytes(-len(data) % 4)
+
+        prefix = string("Authored material")
+        keywords = struct.pack("<I", 1) + string("SOURCE_FEATURE") + struct.pack("<I", 1) + string("SOURCE_DISABLED")
+        tail = struct.pack("<iq4f", 0, -91, 0.125, -2.5, 7.0, 0.0)
+        source_body = prefix + struct.pack("<iq", 3, 77) + keywords + tail
+        relocated = prefix + struct.pack("<iq", 1, 1) + keywords + struct.pack("<iq", 2, 1) + tail[12:]
+        demoted = prefix + struct.pack("<iqII", 1, 1, 0, 2) + string("SOURCE_FEATURE") + string("SOURCE_DISABLED") + relocated[-len(tail) :]
+        source_type = {"class_id": 21, "stripped": 0, "script_type": -1, "hash": b"M" * 16}
+        layout = {
+            "engine": "2021.3.45f2",
+            "platform": 19,
+            "trees": False,
+            "types": [source_type],
+            "objects": [{"path_id": -27, "offset": 0, "bytes": len(source_body), "type_id": 0}],
+            "scripts": [],
+            "externals": [],
+            "ref_types": [],
+            "user": "",
+        }
+        source = self.pc / "authored-material.assets"
+        with source.open("xb") as stream:
+            P.W.write_serialized(stream, layout, lambda row: io.BytesIO(source_body))
+        before = P.sha(source)
+        selections = []
+        for index, body in enumerate((relocated, demoted)):
+            name = "00112233445566778899aabbccddee" + f"{index:04x}"
+            selected = {
+                "file": name,
+                "source": {"path": source.name, "bytes": source.stat().st_size, "sha256": before},
+                "externals": ["authored-shader", "authored-texture"],
+                "objects": [
+                    {
+                        "source_path_id": -27,
+                        "path_id": 1,
+                        "bytes": len(body),
+                        "source_sha256": pin(source_body)[1],
+                        "sha256": pin(body)[1],
+                        "references": [
+                            {"offset": len(prefix), "from": [3, 77], "to": [1, 1]},
+                            {"offset": len(source_body) - len(tail), "from": [0, -91], "to": [2, 1]},
+                        ],
+                    }
+                ],
+            }
+            if index:
+                selected["objects"][0]["keyword_policy"] = "dummy-shader-demote-valid"
+            selections.append(selected)
+            # Independently pack the one-object v22 player metadata.
+            meta = bytearray(b"2021.3.45f2\0" + struct.pack("<i?IiBh", 13, False, 1, 21, 0, -1) + b"M" * 16 + struct.pack("<I", 1))
+            meta.extend(bytes(-len(meta) % 4))
+            meta.extend(struct.pack("<qqIiII", 1, 0, len(body), 0, 0, 2))
+            for external in selected["externals"]:
+                meta.extend(bytes(17) + struct.pack("<i", 0) + external.encode() + b"\0")
+            meta.extend(bytes(5))
+            expected = struct.pack(">IIII", 0, 0, 22, 0) + bytes(4) + struct.pack(">Iqqq", len(meta), 4096 + len(body), 4096, 0) + meta
+            expected += bytes(4096 - len(expected)) + body
+            self.profile["outputs"][name] = {"bytes": len(expected), "sha256": pin(expected)[1]}
+            self.generated[name] = expected
+        self.profile["objects"] = selections
+        self.profile_path.write_text(json.dumps(self.profile))
+        self.profile_hash = P.sha(self.profile_path)
+        result = self.produce()
+        for selected in selections:
+            name = selected["file"]
+            self.assertEqual((self.output / (P.TARGET + name)).read_bytes(), self.generated[name])
+            self.assertEqual(result["files"][P.TARGET + name]["source"], source.name)
+        self.assertEqual(P.sha(source), before)
+        selections[1]["objects"][0]["keyword_policy"] = "unknown"
+        with self.assertRaisesRegex(ValueError, "keyword policy"):
+            P.object_file(self.pc, selections[1], self.root / "wrong-material-policy")
+
+    def test_texture_pack_composition_keeps_original_native_fields_and_inline_records(self):
+        pack = self.root / "texture-pack"
+        pack.mkdir()
+        pixels = b"PIXEL"
+        native = b"original native texture fields!!"
+        native += bytes(-len(native) % 4)
+        descriptor = {"offset": 9876, "size": len(pixels), "path": "archive:/authored/texture.resS"}
+        path = descriptor["path"].encode()
+        streamed = (
+            native + bytes(4) + struct.pack("<QI", descriptor["offset"], descriptor["size"]) + struct.pack("<I", len(path)) + path + bytes(-len(path) % 4)
+        )
+        inlined = native + struct.pack("<I", len(pixels)) + pixels + bytes(3) + bytes(16)
+        rows = []
+        targets = []
+        for index, body in enumerate((streamed, inlined)):
+            row = {
+                "bundle": "authored-bundle",
+                "member": "CAB-authored",
+                "path_id": index + 10,
+                "offset": 0 if not index else len(streamed),
+                "bytes": len(body),
+                "sha256": pin(body)[1],
+            }
+            if not index:
+                row["resource"] = {"offset": 0, "bytes": len(pixels), "sha256": pin(pixels)[1], "stream": descriptor}
+            rows.append(row)
+            name = "ffeeddccbbaa9988776655443322" + f"{index:04x}"
+            targets.append({"file": name, **{key: row[key] for key in ("bundle", "member", "path_id")}})
+            # Independent one-native-object serialized envelope; source font
+            # fixture's Texture2D type hash is 16 copies of byte 2.
+            meta = bytearray(b"2021.3.45f2\0" + struct.pack("<i?IiBh", 13, False, 1, 28, 0, -1) + bytes([2]) * 16 + struct.pack("<I", 1))
+            meta.extend(bytes(-len(meta) % 4))
+            meta.extend(struct.pack("<qqIiIII", 1, 0, len(inlined), 0, 0, 0, 0) + b"\0")
+            expected = struct.pack(">IIII", 0, 0, 22, 0) + bytes(4) + struct.pack(">Iqqq", len(meta), 4096 + len(inlined), 4096, 0) + meta
+            expected += bytes(4096 - len(expected)) + inlined
+            self.profile["outputs"][name] = {"bytes": len(expected), "sha256": pin(expected)[1]}
+            self.generated[name] = expected
+        (pack / "objects.bin").write_bytes(streamed + inlined)
+        (pack / "resources.bin").write_bytes(pixels)
+        (pack / "index.jsonl").write_text("".join(json.dumps(row) + "\n" for row in rows))
+        producer = {"success": True, "input_id": P.INPUT_ID, "profile_sha256": "authored-source-profile", "outputs": {}}
+
+        def save_producer():
+            producer["outputs"] = {
+                name: {"bytes": (pack / name).stat().st_size, "sha256": P.sha(pack / name)} for name in ("objects.bin", "resources.bin", "index.jsonl")
+            }
+            (pack / "result.json").write_text(json.dumps(producer))
+            return P.sha(pack / "result.json")
+
+        receipt_pin = save_producer()
+        self.profile["textures"] = [{"profile_sha256": producer["profile_sha256"], "files": targets}]
+        self.profile_path.write_text(json.dumps(self.profile))
+        self.profile_hash = P.sha(self.profile_path)
+        result = self.produce(texture_packs=[(pack, receipt_pin)])
+        for target in targets:
+            name = target["file"]
+            self.assertEqual((self.output / (P.TARGET + name)).read_bytes(), self.generated[name])
+            self.assertEqual(result["files"][P.TARGET + name]["source"], receipt_pin)
+        self.assertEqual(result["texture_packs"], {producer["profile_sha256"]: receipt_pin})
+        with self.assertRaisesRegex(ValueError, "missing source-produced"):
+            self.produce(self.root / "no-pack")
+        with self.assertRaisesRegex(ValueError, "bytes differ"):
+            self.produce(self.root / "wrong-receipt", [(pack, "0" * 64)])
+        (pack / "resources.bin").write_bytes(b"WRONG")
+        with self.assertRaisesRegex(ValueError, "bytes differ"):
+            self.produce(self.root / "changed-pack", [(pack, receipt_pin)])
+        (pack / "resources.bin").write_bytes(pixels)
+        rows[0]["resource"]["stream"]["offset"] += 1
+        (pack / "index.jsonl").write_text("".join(json.dumps(row) + "\n" for row in rows))
+        changed_pin = save_producer()
+        with self.assertRaisesRegex(ValueError, "stream descriptor differs"):
+            self.produce(self.root / "wrong-descriptor", [(pack, changed_pin)])
+        producer["success"] = False
+        failed_pin = save_producer()
+        with self.assertRaisesRegex(ValueError, "unsuccessful texture producer"):
+            self.produce(self.root / "failed-producer", [(pack, failed_pin)])
 
     def test_receipt_drift_failure_membership_and_resource_hash_fail_closed(self):
         mutations = ("pin", "failure", "changed-inputs", "missing", "comparison-hash")

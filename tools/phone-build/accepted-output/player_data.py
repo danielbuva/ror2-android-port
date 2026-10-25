@@ -1,9 +1,9 @@
 """Produce named accepted player-data files from explicit SDK/converter inputs.
 
-This source-only cohort includes original font and text records and authored
-JSON resources, not the remaining startup data or bundles. No accepted APK, replay packet or Unity
-project is read. Outputs and receipts remain private; this command does not
-install or qualify a player.
+This cohort includes original font/text/material/script/Sprite records, authored
+JSON and receipt-verified source-produced texture packs. No accepted APK, replay
+packet or Unity project is read. Outputs and receipts remain private; this
+command does not install or qualify a player.
 """
 
 import argparse
@@ -238,6 +238,10 @@ def object_file(pc, selected, destination):
                     data = sprite_crop(data, selected["crop_rectangle_offset"])
                 data = sprite_key(data, selected["file"])
             data = OBJECTS.remap(data, selection.get("references", []))
+            if "keyword_policy" in selection:
+                if types[target["type_id"]]["class_id"] != 21 or selection["keyword_policy"] != "dummy-shader-demote-valid":
+                    raise ValueError("unqualified player material keyword policy")
+                data = OBJECTS.demote_material_keywords(data)
             if types[target["type_id"]]["class_id"] == 114 and list(struct.unpack_from("<iq", data, 16)) != selected["script"]:
                 raise ValueError("player object script relationship differs")
             if hashlib.sha256(data).hexdigest() != selection["sha256"]:
@@ -247,6 +251,113 @@ def object_file(pc, selected, destination):
         with destination.open("xb") as output:
             W.write_serialized(output, layout, body)
         checked(path, (source["bytes"], source["sha256"]))
+
+
+def inline_texture(body, row, pixels):
+    """Move a producer's existing pixel stream into a standalone player body."""
+    if "resource" not in row:
+        if pixels:
+            raise ValueError("inline texture has unexpected external pixels")
+        return body
+    resource = row["resource"]
+    stream = resource["stream"]
+    if len(pixels) != resource["bytes"] or stream["size"] != len(pixels):
+        raise ValueError("produced texture stream length differs")
+    suffix = io.BytesIO()
+    suffix.write(struct.pack("<QI", stream["offset"], stream["size"]))
+    OBJECTS.aligned_string(suffix, stream["path"])
+    tail = bytes(4) + suffix.getvalue()  # Empty inline array, then StreamData.
+    if not body.endswith(tail):
+        raise ValueError("produced texture stream descriptor differs")
+    return body[: -len(tail)] + struct.pack("<I", len(pixels)) + pixels + bytes(-len(pixels) % 4) + bytes(16)
+
+
+def texture_files(pc, type_source, selections, packs, output, result):
+    """Assemble source-produced packs into the existing final target-tree paths."""
+    required = {row["profile_sha256"] for row in selections}
+    providers = {}
+    for supplied, receipt_sha256 in packs:
+        supplied = Path(supplied).resolve(strict=True)
+        receipt = supplied / "result.json"
+        checked(receipt, (receipt.stat().st_size, receipt_sha256))
+        value = json.loads(receipt.read_text())
+        profile = value.get("profile_sha256")
+        if value.get("success") is not True or value.get("input_id") != INPUT_ID or profile not in required or profile in providers:
+            raise ValueError("unexpected or unsuccessful texture producer")
+        if set(value["outputs"]) != {"objects.bin", "resources.bin", "index.jsonl"}:
+            raise ValueError("incomplete texture producer outputs")
+        for name, pin in value["outputs"].items():
+            checked(supplied / name, (pin["bytes"], pin["sha256"]))
+        providers[profile] = supplied, receipt_sha256, value
+    if set(providers) != required:
+        raise ValueError("missing source-produced texture pack")
+    if not selections:
+        return
+    path = OBJECTS.M.safe_input(pc, type_source["path"])
+    checked(path, (type_source["bytes"], type_source["sha256"]))
+    with path.open("rb") as raw:
+        raw.size = path.stat().st_size
+        member = W.B.Bundle(path).member(type_source["member"]) if "member" in type_source else raw
+        source = W.read_serialized(member)
+    types = [typ for typ in source["types"] if typ["class_id"] == 28]
+    if len(types) != 1:
+        raise ValueError("original Texture2D type identity required")
+
+    def extent(stream, row):
+        offset, size = row["offset"], row["bytes"]
+        if type(offset) is not int or type(size) is not int or offset < 0 or not 0 <= size <= W.B.LIMIT or offset + size > stream.seek(0, 2):
+            raise ValueError("produced texture extent escapes pack")
+        stream.seek(offset)
+        data = W.B.exact(stream, size)
+        if hashlib.sha256(data).hexdigest() != row["sha256"]:
+            raise ValueError("produced texture extent hash differs")
+        return data
+
+    def identity(row):
+        return row["bundle"], row["member"], row["path_id"]
+
+    result["texture_packs"] = {}
+    for selected in selections:
+        profile = selected["profile_sha256"]
+        supplied, receipt_sha256, value = providers[profile]
+        wanted = {identity(row) for row in selected["files"]}
+        records = {}
+        with (supplied / "index.jsonl").open() as index:
+            for line in index:
+                row = json.loads(line)
+                key = identity(row)
+                if key in wanted:
+                    if key in records:
+                        raise ValueError("duplicate produced texture identity")
+                    records[key] = row
+        if set(records) != wanted:
+            raise ValueError("produced texture record missing")
+        with (supplied / "objects.bin").open("rb") as objects, (supplied / "resources.bin").open("rb") as resources:
+            for target in selected["files"]:
+                name = target["file"]
+                if len(name) != 32 or any(char not in "0123456789abcdef" for char in name):
+                    raise ValueError("invalid standalone texture filename")
+                row = records[identity(target)]
+                body = inline_texture(extent(objects, row), row, extent(resources, row["resource"]) if "resource" in row else b"")
+                layout = {
+                    "engine": source["engine"],
+                    "platform": 13,
+                    "trees": False,
+                    "types": types,
+                    "objects": [{"path_id": 1, "offset": 0, "bytes": len(body), "type_id": 0}],
+                    "scripts": [],
+                    "externals": [],
+                    "ref_types": [],
+                    "user": "",
+                }
+                with (output / (TARGET + name)).open("xb") as destination:
+                    W.write_serialized(destination, layout, lambda row: io.BytesIO(body))
+                result["files"][TARGET + name] = {"source_role": "pc-texture-pack", "source": receipt_sha256}
+        for name, pin in value["outputs"].items():
+            checked(supplied / name, (pin["bytes"], pin["sha256"]))
+        checked(supplied / "result.json", ((supplied / "result.json").stat().st_size, receipt_sha256))
+        result["texture_packs"][profile] = receipt_sha256
+    checked(path, (type_source["bytes"], type_source["sha256"]))
 
 
 def text_files(profile_root, pc, selected, output):
@@ -310,14 +421,14 @@ def text_files(profile_root, pc, selected, output):
         checked(path, (recipe["bytes"], recipe["sha256"]))
 
 
-def produce(profile_path, profile_sha256, pc, sdk, converter, converter_receipt_sha256, output):
+def produce(profile_path, profile_sha256, pc, sdk, converter, converter_receipt_sha256, output, texture_packs=()):
     """Write a new target tree; never use target bytes as a source provider."""
     profile_path = Path(profile_path)
     if sha(profile_path) != profile_sha256:
         raise ValueError("player-data profile drift")
     profile = json.loads(profile_path.read_text())
     if (
-        set(profile) - {"script_objects"} != {"input_id", "sources", "outputs", "project_assemblies", "font", "text_assets", "sprites"}
+        set(profile) - {"objects", "textures"} != {"input_id", "sources", "outputs", "project_assemblies", "font", "text_assets", "sprites"}
         or profile["input_id"] != INPUT_ID
     ):
         raise ValueError("unknown player-data profile")
@@ -387,13 +498,14 @@ def produce(profile_path, profile_sha256, pc, sdk, converter, converter_receipt_
         object_file(pc, font, output / (TARGET + name))
         result["files"][TARGET + name] = {**profile["outputs"][name], "source_role": "pc-objects", "source": font["source"]["path"]}
         sprites = profile["sprites"]
-        selections = [{"source": sprites["source"], **selected} for selected in sprites["files"]] + profile.get("script_objects", [])
+        selections = [{"source": sprites["source"], **selected} for selected in sprites["files"]] + profile.get("objects", [])
         for selection in selections:
             name = selection["file"]
             if name in ("", ".", "..") or PurePosixPath(name).name != name or "\\" in name:
-                raise ValueError("unsafe sprite player filename")
+                raise ValueError("unsafe object player filename")
             object_file(pc, selection, output / (TARGET + name))
             result["files"][TARGET + name] = {**profile["outputs"][name], "source_role": "pc-objects", "source": selection["source"]["path"]}
+        texture_files(pc, profile["font"]["source"], profile.get("textures", []), texture_packs, output, result)
         text_files(profile_path.parent.resolve(strict=True), pc, profile["text_assets"], output)
         for item in profile["text_assets"]["files"]:
             name = item["file"]
@@ -408,6 +520,7 @@ def produce(profile_path, profile_sha256, pc, sdk, converter, converter_receipt_
             checked(sources[name], pin)
         for name, row in profile["outputs"].items():
             checked(output / (TARGET + name), (row["bytes"], row["sha256"]))
+            result["files"][TARGET + name].update(row)
         for name, source in pc_sources.items():
             row = profile["sources"][name]
             checked(source, (row["bytes"], row["sha256"]))
@@ -431,9 +544,17 @@ def main():
     parser.add_argument("--sdk", type=Path, required=True, help="owner's pinned AndroidPlayer SDK root")
     parser.add_argument("--converter", type=Path, required=True, help="fresh converter directory containing data/ and result.json")
     parser.add_argument("--converter-receipt-sha256", required=True)
+    parser.add_argument(
+        "--texture-pack",
+        nargs=2,
+        action="append",
+        default=[],
+        metavar=("DIRECTORY", "RECEIPT_SHA256"),
+        help="source-produced texture pack and pinned result.json; repeat for each producer",
+    )
     parser.add_argument("--output", type=Path, required=True, help="new private target-tree root; parent must exist")
     args = parser.parse_args()
-    produce(args.profile, args.profile_sha256, args.pc, args.sdk, args.converter, args.converter_receipt_sha256, args.output)
+    produce(args.profile, args.profile_sha256, args.pc, args.sdk, args.converter, args.converter_receipt_sha256, args.output, args.texture_pack)
 
 
 if __name__ == "__main__":

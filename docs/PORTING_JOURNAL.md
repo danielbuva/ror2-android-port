@@ -39263,3 +39263,125 @@ first refusals, stdout/stderr and terminal receipts are under
 external stop and samples. Only this authored summary is published. Generated
 packs, SDK bytes, original files, raw device paths/logs and signing material
 remain ignored; the host result does not permit distributing target frames.
+
+## J1118 — Assemble original TMP objects and produced player textures
+
+Date: 2026-10-25 UTC. Host-only final player-file assembly. Accepted comparison
+is J850 APK SHA-256
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+No Editor, device command, lease, package update or game run occurs.
+
+**Hypothesis and prior art.** J1117's player owner can close final files by
+reusing existing source-derived records rather than adding object producers.
+Consulted `community-prior-art.md`, pinned UnityPy 1.25.3's serialized-file/PPtr
+schema and the pinned AssetRipper
+`1ac666f47d8e9dedf96afb0b914c70d7656151ea` MaterialExtensions and
+DummyShaderTextExporter sources using that exact revision. Their material
+property/reference and dummy-shader keyword boundaries inform reuse; current
+original input, producer records and full-file comparison remain authority.
+The existing `texture_produce.py` pack contract already separates object bodies,
+resource pixels and source stream descriptors. No upstream implementation,
+protected object value or target template is copied into tracked source.
+
+**Complete implementation.** Extend only `player_data.py` and its existing
+profile/tests. The generic object selection replaces the narrower
+`script_objects` field and now includes three original TMP objects and six
+materials. Their bodies, type/script identities and all non-reference fields
+come from original PC input. The three scripted objects receive generated
+external script tables with index zero; 40 checked PPtrs across the nine files
+relocate dependencies. Two materials reuse the existing qualified dummy-shader
+policy, moving original valid keyword strings before the original invalid list
+without introducing strings or changing property values. All nine complete
+files are byte-exact: **53,840 bytes**. The separate managed type-hash blocker
+for other TMP font objects remains unsolved and is not overridden.
+
+The same owner assembles **68 standalone Texture2D files**, **10,724,120 bytes**,
+from existing uncompressed, Alpha8/ETC, RGB/ETC and RGBA source-produced packs.
+Repeated explicit `--texture-pack DIRECTORY RECEIPT_SHA256` arguments bind
+successful producer receipts, original input/profile identities and all three
+pack output hashes. The audited profile selects existing bundle/member/path IDs;
+physical offsets and extent hashes come from the checked index. For 67 streamed
+records, verify the complete recorded stream descriptor and empty inline array,
+then move those exact produced pixels inline and clear StreamData. The one
+already-inline record is unchanged. Every other native body byte remains
+unchanged, including name, format, usage, dimensions, flags and image size.
+The original PC font bundle already selected by the owner supplies native
+Texture2D type metadata; the structural writer emits the stripped one-object
+Android envelope. It introduces no target type hash, pixel/scalar literal,
+shader substitute or additional producer framework. Producer files are untouched.
+Input and persisted pack hashes are checked again before completion. Missing,
+failed, redirected or changed providers refuse and retain failed outputs.
+
+The complete source/SDK/fresh-converter player cohort is **152 files**,
+**32,402,781 bytes**, produced in **4.831 seconds**. Every complete output is
+independently compared byte-for-byte with the frozen J850 reference; all pass.
+Production itself reads no accepted APK, target file or replay packet.
+
+A final source-text extension uses the existing TextAsset recipe path for
+`WholeCatalogBootstrap`, without changing producer code. Its attempt identity
+already exists in public `recipe/build-entry-inputs.json`; its four sorted
+missing preload GUID relationships are read independently from original Engi,
+Huntress, Reaperboss and Totem state records and checked absent from the original
+Addressables catalog's 83,490 decoded keys. This follows the existing
+`generate_build_bootstrap` policy and the prior-art catalog-key identity rule.
+The pinned `owner-bootstrap.json` contains only those minimum relationships and
+authored attempt/input metadata. Original PC native TextAsset metadata supplies
+the envelope; no accepted body or target type template is read. The resulting
+4,464-byte file has SHA-256
+`1245e0ff492b52d8227ba708f4370896a94ed9f3871d508e142c411fcaa811a5`.
+The complete extended cohort is **153 files**, **32,407,245 bytes**, produced
+in **5.369 seconds**, with all complete files independently raw-exact. Existing player,
+writer, object and recipe fixtures pass **32 checks**, with **four architecture
+checks** also passing. Independent provenance review finds no blocker.
+
+**Dependencies, first limits and verification.** Independent review identifies
+an explicit public dependency: 54 selected texture files use RGBA profile
+`76e596c4ec3049e471f292d42b2b623092e05596a1a756be66ff08e73bbe6f96`
+from PR75. Its original-input host pack and public branch profile match, but
+its producer/profile must land before this entire slice is merged or described
+as reproducible from main. The other 14 texture selections use current tracked
+producers. No private pack is promoted as a substitute for that missing public
+dependency. The four remaining standalone textures require ETC2 mip production;
+368 standalone shader files remain a larger independent gap. The 320 qualified
+animation bodies would close no final files yet, so they are deferred behind
+this complete player-file slice rather than shipped as guessed arithmetic.
+
+Authored integration fixtures independently pack final player metadata and
+verify generic material admission, original scalar/keyword preservation,
+checked references, streamed-to-inline pixels/padding, unchanged inline bodies,
+original native type identity, receipt provenance, missing/failed/drifting packs
+and descriptor refusal. All **52 affected/supporting host checks pass**, including
+existing writer/codec/source-drift and recipe contracts. Ruff, host-only preflight and whitespace checks pass. Doctor retains
+its generic bootstrap failure while input/parser/project/checkpoint checks pass;
+no full toolchain/game readiness is inferred. Staged public audit and manual
+recipe provenance/privacy/licensing/sensitive-content review cover selectors,
+pointer relationships and producer-record identities, with no game/SDK bytes,
+raw evidence, private identifiers/paths or secrets published.
+
+**Readiness and terminal state.** The canonical partial tree hardlinks only
+**156 independently produced content files**: three previous complete bundles
+and 153 player files, **32,446,130 bytes**. With the same 18 code/SDK suppliers,
+readiness is **174 of 705 available, 531 content files missing** (400 APK and
+131 payload), zero invalid/mismatched entries and no replay fallback. This
+closes **78 final entries**, **10,782,424 bytes**. Availability is separate from
+complete public source provenance and phone/runtime qualification, which remain
+false/open. The required RGBA publication dependency remains explicit.
+
+Full production and independent comparison are
+`work/coordination/p1-player-assembly-v1/full-host-v2/result.json` and
+`full-host-v2-comparison.json`. The same evidence root retains
+`generic-nine-proof.json`, `texture-68-proof.json`,
+`bootstrap-source-proof-v1.json`, the original-input selector
+qualifiers and explicit local producer arguments. Canonical composition and
+readiness request/report are in `work/coordination/p1-content-source-host-v7/`.
+Main-checkout pruning removes zero bytes and preserves evidence. No device
+state changes; the combined source-only phone replay remains queued behind the
+texture worker's independently released lease. Revisit after PR75 lands, for
+first guarded phone assembly, or a new independently derivable final cohort.
+Complete content/original shaders, signed installation, controls and matched
+runtime/performance remain open.
+
+Publication follow-through: PR75 subsequently lands at `f71583ed`, supplying
+the audited public RGBA producer/profile. Rebase retains its newer installed
+state facts. This closes the public-source dependency only; the combined phone
+replay and complete-content gates remain open.

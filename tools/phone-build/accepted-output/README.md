@@ -146,12 +146,13 @@ gates.
 
 ## Produce named player-data files
 
-`player_data.py` produces 75 canonical `apk/assets/bin/Data/...` files:
+`player_data.py` produces 153 canonical `apk/assets/bin/Data/...` files:
 SDK default resources, three fresh converter resource files, two script metadata
 JSON files derived from original PC metadata plus authored initialization/order,
 the embedded font serialized file, two original line-breaking TextAssets, the
-authored runtime JSON TextAsset, 64 standalone Sprite files and one original
-TimerStringFormatter object. The font, material and texture bodies and their
+authored runtime and bootstrap JSON TextAssets, 64 standalone Sprite files,
+the original TimerStringFormatter, three original TMP objects, six materials and 68 standalone
+textures from existing source-produced packs. The font, material and texture bodies and their
 type identities/dependency come from one original PC bundle; only
 four checked reference identities change. The generic writer generates its
 tree-stripped Android metadata and object layout. Original Sprites retain
@@ -161,7 +162,10 @@ providers remain separate inputs to full composition. The authored full-rectangl
 Sprite generates four corners and two triangles from original bounds and
 recovered pivot/border/pixel scale, matching the existing HUD policy. The runtime TextAsset
 formats the pinned sibling `runtime-config.json` through the existing authored
-JSON policy.
+JSON policy. The pinned `owner-bootstrap.json` follows the existing
+`generate_build_bootstrap` policy with the public fixed attempt identity and
+four original preload keys absent from the original catalog. These are minimum
+source relationships, not object bodies or a target byte template.
 
 ```sh
 python3 -I -S -B tools/phone-build/accepted-output/player_data.py \
@@ -169,19 +173,37 @@ python3 -I -S -B tools/phone-build/accepted-output/player_data.py \
   --pc ORIGINAL_PC_ROOT --sdk OWNER_ANDROID_PLAYER_SDK \
   --converter FRESH_CONVERTER_OUTPUT \
   --converter-receipt-sha256 CONVERTER_RECEIPT_SHA256 \
+  --texture-pack UNCOMPRESSED_PACK UNCOMPRESSED_RECEIPT_SHA256 \
+  --texture-pack ALPHA_ETC_PACK ALPHA_ETC_RECEIPT_SHA256 \
+  --texture-pack RGB_ETC_PACK RGB_ETC_RECEIPT_SHA256 \
+  --texture-pack RGBA_PACK RGBA_RECEIPT_SHA256 \
   --output NEW_PRIVATE_TARGET_TREE
 ```
+
+Each texture directory is an existing producer's `objects.bin`, `resources.bin`,
+`index.jsonl` and successful `result.json`; pass the hash of that receipt. The
+profile selects producer profile hashes and bundle/member/path IDs, never
+physical private paths or pixel literals. Uncompressed/RGB/Alpha8 producers are
+documented below. The 54 RGBA selections use the separately audited, landed
+[PR75 producer/profile](https://github.com/danielbuva/ror2-android-port/pull/75).
+No texture producer is changed by this assembly step. Streamed records retain
+all native fields and move only their verified produced pixels inline; existing
+inline records remain unchanged. Native type metadata comes from the already
+selected original PC font bundle. Receipt/input/profile and complete pack hashes,
+selected extents and source stream descriptors are verified before use; provider
+hashes are checked again before completion. A missing/failed/changed pack refuses.
 
 Stage `player_data.py`, `sdk_inputs.py`, `object_produce.py`, `mesh_produce.py`,
 `unity_mesh.py`, `unity_bundle.py`, `unity_write.py` and the selected recipe as
 sibling Python inputs for an Android replay. Keep the pinned
-`runtime-config.json` beside the selected player profile. No native codec is
-needed for this player cohort. The converter input is its successful `result.json` and its
+`runtime-config.json` and `owner-bootstrap.json` beside the selected player profile. No native codec is
+needed for this assembly step; its texture producers retain their own codec/SDK
+requirements. The converter input is its successful `result.json` and its
 three `data/Resources/...` outputs, not files extracted from an accepted APK.
 The original PC root, SDK and converter are read-only and disjoint from the new
 output. Input hashes, converter completion, source/body/reference relationships,
 capacity and persisted readbacks precede the complete/failed receipt. Failure
-retains output; exit ends the producer. These 22 host-qualified files do not
+retains output; exit ends the producer. These host-qualified files do not
 close the remaining player-data, shader, animation or phone-install gates.
 
 Both producers emit target paths accepted by the existing owner-APK readiness

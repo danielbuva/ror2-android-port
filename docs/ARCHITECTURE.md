@@ -76,10 +76,11 @@ its original valid keywords into the invalid list without introducing strings
 or material values. Failure retains outputs and the codec context reaps its
 child; exit ends the producer.
 
-`player_data.py` owns the separate current 75-file player cohort: SDK/converter
+`player_data.py` owns the separate current 153-file player cohort: SDK/converter
 resources, PC-derived script JSON, the three-object font file, original
-line-breaking TextAssets, authored runtime JSON, 64 standalone Sprites and one
-original TimerStringFormatter object. Its audited `recipe/owner-player-data.json`,
+line-breaking TextAssets, authored runtime/bootstrap JSON, 64 standalone Sprites and one
+original TimerStringFormatter object, three original TMP objects, six materials
+and 68 standalone textures. Its audited `recipe/owner-player-data.json`,
 explicit original PC/SDK/converter inputs and converter receipt set up a new
 target tree; checked pointer relocation and `unity_write.py` build serialized
 files. Original Sprite geometry/UVs remain unchanged; source render-data crops
@@ -88,8 +89,17 @@ The authored full-rectangle Sprite generates corners/triangles from original
 bounds and recovered pivot/border/pixel scale through the existing HUD policy.
 Importer identities derive from destination filenames. The scripted object
 retains its source type/body with a relocated external script table. The
-JSON input is a pinned sibling of the profile. Persisted/input hashes and
-complete/failed receipts define state and teardown. Neither owner consumes
+runtime JSON input is a pinned sibling of the profile. The separate pinned
+`owner-bootstrap.json` retains the existing public attempt identity and four
+original preload GUID relationships absent from the original catalog.
+`texture_files` consumes explicit producer directories and pinned successful receipts in the existing object/
+resource pack interface. `inline_texture` moves only existing produced pixels
+inline, clears their stream descriptor and retains every other body byte; the
+already-selected original font bundle supplies native Texture2D type metadata.
+Pack/profile/input/extent hashes and unchanged providers precede completion.
+The landed RGBA producer/profile from PR75 supplies 54 selections;
+the combined phone replay remains open. Persisted/input
+hashes and complete/failed receipts define state and teardown. Neither owner consumes
 replay files or a Unity project. Their
 [setup and limits](../tools/phone-build/accepted-output/README.md#produce-the-first-complete-source-only-bundle)
 remain separate from complete content assembly, installation and runtime acceptance.
