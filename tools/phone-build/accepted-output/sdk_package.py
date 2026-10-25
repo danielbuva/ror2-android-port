@@ -17,6 +17,8 @@ import zipfile
 HERE = Path(__file__).resolve().parent
 SDK_ENTRIES = {
     "AndroidManifest.xml",
+    "META-INF/com/android/build/gradle/app-metadata.properties",
+    "META-INF/com.android.games.engine.build_fingerprint",
     "classes.dex",
     "classes2.dex",
     "classes3.dex",
@@ -113,6 +115,20 @@ def manifest(sdk):
         ET.SubElement(application, "meta-data", {attr("name"): name, attr("value"): value})
     ET.indent(root, space="    ")
     return ET.tostring(root, encoding="utf-8", xml_declaration=True)
+
+
+def build_metadata(tree, java, output):
+    """Generate AGP metadata and the fixed target's SDK build-setting fingerprint."""
+    NATIVE.invoke(
+        [*java, "metadata", str(tree / "META-INF/com/android/build/gradle/app-metadata.properties")],
+        output,
+        "build-metadata",
+        env=dict(os.environ, LC_ALL="C", TMPDIR=str(output / "tmp")),
+    )
+    # SDK GetBuildFingerprintContents field order; these are the authored J850
+    # settings, matching the pinned SDK, Development libraries and IL2CPP owner.
+    fingerprint = ["2021.3.45f2", "IL2CPP", "Development", "StripEngineCode:0", "OptimizedFramePacing:1"]
+    (tree / "META-INF/com.android.games.engine.build_fingerprint").write_bytes((";".join(fingerprint) + ";").encode("utf-8"))
 
 
 def resources(sdk, android_jar, aapt, output, *, formatter, prefix=()):
@@ -241,6 +257,7 @@ def produce(request):
         tree = output / "resources/apk"
         for name in ("classes.dex", "classes2.dex", "classes3.dex", "classes4.dex"):
             shutil.copyfile(output / "dex" / name, tree / name)
+        build_metadata(tree, java, output)
         if sdk_state(paths["sdk"]) != state or any(NATIVE.sha(path) != TOOL_JARS[name] for name, path in jars.items()):
             raise ValueError("Android SDK/tool inputs changed")
         result.update(success=True, files={str(p.relative_to(tree)): NATIVE.sha(p) for p in sorted(tree.rglob("*")) if p.is_file()})

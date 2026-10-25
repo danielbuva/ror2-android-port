@@ -180,9 +180,9 @@ bytes exact. The guarded startup-affinity rerun completes with a 79.2 C peak and
 95.5 C failure remains recorded. Complete content composition, sustained thermal
 qualification and final installation remain open.
 
-The owner APK assembler accepts the complete 13-entry SDK output cohort alongside
+The owner APK assembler accepts the complete 15-entry SDK output cohort alongside
 the three mandatory IL2CPP/metadata/Burst files through its existing explicit
-`code` mapping. Host fixtures assemble all 16 outputs without replay files and
+`code` mapping. Host fixtures assemble all 18 outputs without replay files and
 check produced-manifest routing, source drift and partial-cohort refusal. This
 wiring does not close complete phone composition, installation, controls or
 matched performance.
@@ -195,3 +195,10 @@ the content producers still require bundle/player-data assembly; the complete
 source-derived tree and corrected phone-native output remain open. A separate
 host composition/signing validation passes with produced host code/SDK and
 explicit replay content; it does not qualify phone production or installation.
+
+[J1114](PORTING_JOURNAL.md#j1114--produce-both-generic-android-build-metadata-files)
+closes the two generic Android build-metadata producer gaps. Fresh host SDK
+production yields all 15 entries raw-exact to J850. The shared readiness request
+now has all 18 code/SDK files ready and 687 final content files absent. The two
+new files still require an ordinary-app rerun; corrected phone-native output,
+complete content, installation, controls and matched performance remain open.

@@ -427,3 +427,11 @@ Follow unsigned assembly with the existing durable owner-signing action. The
 separately labelled full host replay-content validation passes composition,
 durable signing, signature verification and alignment. Source-derived content,
 corrected phone-native production and device installation remain open.
+
+[J1114](PORTING_JOURNAL.md#j1114--produce-both-generic-android-build-metadata-files)
+extends the existing SDK producer to both generic Android `META-INF` metadata
+files without accepted-byte inputs. Fresh host production makes all 15 SDK
+entries raw-exact. The current explicit selection contains 18 code/SDK files;
+the readiness report leaves 687 missing final content files and no code-file
+availability gaps. Ordinary-app production of the added metadata and corrected
+native output remain separate gates from host equality.

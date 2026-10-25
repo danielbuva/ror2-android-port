@@ -13,6 +13,8 @@ import com.android.tools.r8.D8;
 import com.android.tools.r8.D8Command;
 import com.android.tools.r8.OutputMode;
 import java.io.File;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -124,6 +126,23 @@ public final class SdkAndroidCode {
     }
 
     public static void main(String[] arguments) throws Exception {
+        if (arguments.length == 2 && arguments[0].equals("metadata")) {
+            Path target = Paths.get(arguments[1]);
+            Files.createDirectories(target.getParent());
+            // This Kotlin synthetic accessor is not visible to Java source lookup.
+            // Resolve only its own signature; other methods depend on Gradle's API.
+            try {
+                MethodHandles.publicLookup().findStatic(
+                        Class.forName("com.android.build.gradle.internal.tasks.AppMetadataTaskKt"),
+                        "access$writeAppMetadataFile",
+                        MethodType.methodType(void.class, File.class,
+                                String.class, String.class, String.class))
+                        .invoke(target.toFile(), "1.1", "7.4.2", (String) null);
+            } catch (Throwable failure) {
+                throw new IllegalStateException("AGP app metadata generation failed", failure);
+            }
+            return;
+        }
         if (arguments.length == 3 && arguments[0].equals("manifest")) {
             String xml = Files.readString(Paths.get(arguments[1]));
             String formatted = XmlPrettyPrinter.prettyPrint(

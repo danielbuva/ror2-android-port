@@ -2462,3 +2462,9 @@ no SDK implementation, game Java, assets, captured bytecode or signing material.
 Exact SDK/public-tool hashes identify owner-acquired inputs only. SDK Java and
 resource data, generated classes/DEX/APK members and raw receipts remain ignored.
 The fixed package label/settings originate in the lab's authored build setup.
+The same transformation generates the two generic Android build metadata files:
+the pinned AGP writer receives its schema/tool versions and absent AGDE version;
+the Unity fingerprint serializes fixed authored build settings in the exact SDK
+field order. No accepted metadata bytes, SDK implementation or game-derived
+content is embedded in the caller. Provenance/privacy/licensing and sensitive
+content audit: 2026-10-25; provider redistribution remains a separate gate.

@@ -125,6 +125,9 @@ private root. Bounded parsing, exact readback and terminal receipts remain with
 that owner. `sdk_package.py` and the authored `SdkAndroidCode.java` API caller own
 the experimental generic Android package slice: pinned SDK/public tools produce
 four DEX entries, manifest/resources/icons and the two SDK native libraries.
+The same owner generates both generic `META-INF` build metadata files: the
+pinned AGP writer supplies app metadata, and the fixed authored target settings
+supply the SDK-ordered Unity fingerprint. These files use no accepted APK input.
 Setup creates new private outputs; teardown bounds children and retains logs;
 source/tool hashes are checked before and after production. The existing
 `owner-code/run_android.py::android_sdk_job` supplies the installed read-only JVM
@@ -158,11 +161,11 @@ to routing; it must increase and updates retain the same private signer.
 An optional complete `code` selection supplies independently produced IL2CPP,
 metadata and Burst files; all three are required, their actual hashes are retained,
 and comparison-target code files are not read. The same dictionary can also
-include the complete 13-entry Android SDK cohort owned by
+include the complete 15-entry Android SDK cohort owned by
 `accepted-output/sdk_package.py::SDK_ENTRIES`; partial cohorts and unknown names
 refuse. The produced manifest feeds the existing routing/version patch, and
 the other selected SDK outputs stream unchanged. Host fixtures cover this
-16-entry composition without comparison-target files and retain input-drift
+18-entry composition without comparison-target files and retain input-drift
 checks; complete phone installation/controls/performance remain open.
 The same owner's current `--check-request` action inventories every selected
 final target/code file, retaining actual hashes, raw comparison differences and

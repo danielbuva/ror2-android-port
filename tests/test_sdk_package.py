@@ -69,6 +69,11 @@ class SDKPackageTests(unittest.TestCase):
                     elif "manifest" in argv:
                         jvm_calls.append("format-manifest")
                         Path(argv[-1]).write_bytes(Path(argv[-2]).read_bytes())
+                    elif "metadata" in argv:
+                        jvm_calls.append("build-metadata")
+                        path = Path(argv[-1])
+                        path.parent.mkdir(parents=True)
+                        path.write_bytes(b"authored AGP metadata")
                     else:
                         jvm_calls.append("produce-dex")
                         dex = Path(argv[-1])
@@ -117,8 +122,14 @@ class SDKPackageTests(unittest.TestCase):
                 )
             self.assertTrue(result["success"])
             self.assertEqual(set(result["files"]), PACKAGE.SDK_ENTRIES)
-            self.assertEqual(jvm_calls, ["compile-helper", "format-manifest", "produce-dex"])
+            self.assertEqual(jvm_calls, ["compile-helper", "format-manifest", "produce-dex", "build-metadata"])
             self.assertEqual(aapt_calls, ["compile", "link"])
+            tree = root / "output/resources/apk"
+            fingerprint = (tree / "META-INF/com.android.games.engine.build_fingerprint").read_bytes()
+            fields = fingerprint.decode("utf-8").split(";")
+            self.assertEqual(fields[:3], ["2021.3.45f2", "IL2CPP", "Development"])
+            self.assertEqual(fields[3:], ["StripEngineCode:0", "OptimizedFramePacing:1", ""])
+            self.assertEqual((tree / "META-INF/com/android/build/gradle/app-metadata.properties").read_bytes(), b"authored AGP metadata")
 
     def test_manifest_retains_sdk_entry_points_and_applies_fixed_target(self):
         with tempfile.TemporaryDirectory() as temp:
