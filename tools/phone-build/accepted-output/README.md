@@ -799,11 +799,12 @@ first linear reduction precedes normalization; later levels retain float32
 values without intermediate byte quantization. Gamma conversion applies only
 to RGB. The builder disables floating-point contraction and links native libm.
 All 87 authored exact-editor byte levels match on the host. These modes do not
-yet admit a game mip cohort or establish Android equivalence.
+establish Android equivalence; the ETC1 host cohort is qualified below.
 
 ## Produce ETC1 mip chains
 
-Current experimental support: full public host/phone qualification is pending.
+Current experimental support: J1110 qualifies all 1,589 records on the host.
+Full Android cohort qualification remains open.
 `recipe/owner-rgb-mip-textures.json`, SHA-256
 `380d6d4c2a7f64db1bac10cefa0c6d31ec7cbfb1e817cd4fd2d7067643cb4283`,
 selects 1,548 canonical originals for all 1,589 ETC1 mip-chain records. Use the

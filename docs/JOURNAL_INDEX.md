@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1110](PORTING_JOURNAL.md#j1110--produce-every-etc1-mip-chain-from-original-pc-textures-on-the-host) | 2026-10-24 | Produce every ETC1 mip chain from original PC textures on the host | 2026-10-25. |
 | [J1120](PORTING_JOURNAL.md#j1120--assemble-three-more-source-derived-payload-bundles) | 2026-10-24 | Assemble three more source-derived payload bundles | Date: 2026-10-25 UTC. |
 | [J1118](PORTING_JOURNAL.md#j1118--assemble-original-tmp-objects-and-produced-player-textures) | 2026-10-24 | Assemble original TMP objects and produced player textures | Date: 2026-10-25 UTC. |
 | [J1107](PORTING_JOURNAL.md#j1107--complete-host-rgba-production-and-bound-the-phone-thermal-refusal) | 2026-10-24 | Complete host RGBA production and bound the phone thermal refusal | 2026-10-24. |

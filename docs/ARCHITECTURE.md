@@ -189,7 +189,8 @@ provides the original/destination field and import relationships. The existing
 public ETC tool also owns bounded Unity Crunch top-level decompression using
 unchanged pinned Zlib headers, built by `build_texture_etc.py`. The SDK toolchain
 supplies its native pixel helper; ETC1 mip production executes no SDK encoder.
-Full public host/phone cohort qualification remains pending.
+J1110 qualifies all 1,589 records on the host; Android cohort qualification
+remains open.
 `build_sdk_runner.py` owns current experimental public Box64 acquisition-by-build
 for standalone owner-supplied SDK tools. Explicit unchanged upstream source,
 the pinned SDK NDK and host archive tools produce a private Android runner.

@@ -114,8 +114,10 @@ codec on Android (J1082). The same owner's
 [ETC1 profile](../tools/phone-build/accepted-output/README.md#produce-etc1-single-mip-textures-directly-from-original-pc-bundles)
 qualifies all 281 single-mip records, the shared codec build and a complete
 5,006-record RGB/Alpha8/uncompressed phone regression (J1088).
-Other compressed textures, mip/cubemap and complete bundle production remain
-open. Owner-build v1 uses the single accepted
+J1107 qualifies all 1,333 remaining single-mip RGBA records on the host, with
+its complete phone cohort open. J1110 qualifies all 1,589 ETC1 mip-chain records
+on the host; Android production remains open. RGBA mips, cubemaps and complete
+bundle production remain open. Owner-build v1 uses the single accepted
 J850 target; current target metadata is an explicit profile input, and a newer
 target follows a complete v1 phone build/run.
 
