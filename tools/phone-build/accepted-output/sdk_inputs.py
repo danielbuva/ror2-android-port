@@ -1,4 +1,4 @@
-"""Extract three exact SDK inputs from an owner's pinned Unity component.
+"""Extract exact SDK inputs from an owner's pinned Unity component.
 
 Current experimental acquisition support. No installer/Editor is run, no download
 or license acceptance is performed, and no SDK bits are distributed by this tool.
@@ -28,6 +28,26 @@ FILES = {
     "Variations/il2cpp/Development/Libs/arm64-v8a/libmain.so": (13312, "0fe51173f05822dd432430f8f6b6411c95713b1b4f55d45ae394cc77153a02cd"),
     "Variations/il2cpp/Development/Libs/arm64-v8a/libunity.so": (60927416, "69e63737c6aa6a2159831b7d274a31b6dec3b42f6b23fd9d368ba97f655ac4af"),
 }
+# Generic SDK Java/resource inputs for the fixed accepted Android package.
+ANDROID_FILES = {
+    "Variations/il2cpp/Development/Classes/classes.jar": (141718, "fba234caa7eff370ba1a57fbbb8e9314d295d7bff4e4477541d58f3d8c25218e"),
+    "Source/com/unity3d/player/UnityPlayerActivity.java": (5110, "69b0c6d5d1503a22bbd8706571cd24241ac593e96b8359daa397c5c7057f2b59"),
+    "Apk/LauncherManifest.xml": (527, "20d02042d43a5fce4a9d4fdc5b83ec5d285374c04de08aa2d08b54e052dfa969"),
+    "Apk/UnityManifest.xml": (657, "c8155dab9861429e65797b4f9a1ec52345a1d900b7a5e6f3c3dac59369cef926"),
+    "Apk/res/mipmap-anydpi-v26/app_icon.xml": (266, "44cc3246d167bd718fb61feaba493850ff95255c1ddbb8854c0e4c0534832f96"),
+    "Apk/res/mipmap-anydpi-v26/app_icon_round.xml": (266, "44cc3246d167bd718fb61feaba493850ff95255c1ddbb8854c0e4c0534832f96"),
+    "Apk/res/mipmap-mdpi/app_icon.png": (1746, "ca4cf311409e14f4b14714b4e2c969cc62d40c1c2a5310a175e5878732c42800"),
+    "Apk/res/mipmap-mdpi/ic_launcher_background.png": (318, "75ef53c4d4418a640fa25e4706e3db1cce1872f866c5d1e25b1a6e95355b4408"),
+    "Apk/res/mipmap-mdpi/ic_launcher_foreground.png": (4549, "b069982e0f75f5621f9d06f066f50e0617bfeb9b14e06d5768a070ddccf727b0"),
+    "Apk/res/values/freeformwindow.xml": (359, "425d3881c49fbdc050a94641abe5c55bc56aca2e214fba010c4b1ed3a8f3f9bc"),
+    "Apk/res/values/ids.xml": (111, "8f9e8dc7a26056d00606d53359a35fae3aa2db85ccb231b583922f7733791ee0"),
+    "Apk/res/values/strings.xml": (182, "4d585291da9e6b24535aaee77af493e46fe362ead583f33c8bd96cdf275ee8a6"),
+    "Apk/res/values/styles.xml": (529, "fda849fd2348634bd568b66991363523447fe1a70f8045c50c05a8d69a1c6505"),
+    "Apk/res/values-v21/styles.xml": (169, "b45ea725fa49146986e5c8778ea63c4cb8307367abb6c9cc4b49d86eb2b36f6d"),
+    "Apk/res/values-v28/styles.xml": (245, "e75ff390b53c5cd714e9ebe0e356a048418a81b7b075ffb6af7c295c10902712"),
+    "Apk/res/values-v30/freeformwindow.xml": (395, "f879f85c06803e416f089e0546c75fe6d32c75ee8e9158c8c569fe89a1fbfbbb"),
+}
+
 RESERVE = 2 * 1024**3
 
 
@@ -192,7 +212,8 @@ def copy_cpio(stream, output, wanted, started):
     return {"files": found, "members_read": members, "uncompressed_archive_bytes": position}
 
 
-def extract(component, output):
+def extract(component, output, *, android_package=False):
+    wanted = FILES | ANDROID_FILES if android_package else FILES
     component, output = Path(component).absolute(), Path(output).absolute()
     if component != component.resolve(strict=True) or not component.is_file() or component.stat().st_size != COMPONENT_BYTES:
         raise ValueError("unsupported or redirected owner component")
@@ -201,7 +222,7 @@ def extract(component, output):
             raise ValueError("owner component hash differs")
     if output != output.resolve() or not output.parent.is_dir():
         raise ValueError("output parent redirected or absent")
-    if shutil.disk_usage(output.parent).free < RESERVE + sum(row[0] for row in FILES.values()) + 16 * 1024**2:
+    if shutil.disk_usage(output.parent).free < RESERVE + sum(row[0] for row in wanted.values()) + 16 * 1024**2:
         raise RuntimeError("insufficient SDK extraction reserve")
     output.mkdir(mode=0o700)
     started = time.monotonic()
@@ -219,7 +240,7 @@ def extract(component, output):
             source.seek(offset)
             limited = Limit(source, length)
             with gzip.GzipFile(fileobj=limited, mode="rb") as stream:
-                result.update(copy_cpio(stream, output, FILES, started))
+                result.update(copy_cpio(stream, output, wanted, started))
             if limited.remaining:
                 raise ValueError("component payload incomplete")
         with component.open("rb") as source:
@@ -239,8 +260,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--component", required=True, help="owner-downloaded exact Unity Android support PKG")
     parser.add_argument("--output", required=True, help="new private SDK input directory; parent must exist")
+    parser.add_argument("--android-package", action="store_true", help="also extract pinned generic SDK Java and Android resource inputs")
     args = parser.parse_args()
-    print(json.dumps(extract(args.component, args.output)))
+    print(json.dumps(extract(args.component, args.output, android_package=args.android_package)))
 
 
 if __name__ == "__main__":

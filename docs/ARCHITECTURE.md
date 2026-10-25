@@ -119,12 +119,18 @@ app delivery. J1081 qualifies runner execution, while Linux RGBA texture
 equivalence, shader/Burst tool execution and complete content production remain
 open. No Editor/project workflow or game backend changes.
 `sdk_inputs.py` owns current experimental owner-direct component extraction:
-an explicitly supplied, pinned provider archive yields only the three exact
-SDK-copy files in a new private root, with bounded parsing, readback and terminal
-receipt. It runs no installer/Editor or download and retains failed outputs.
-[Setup/lifecycle](../tools/phone-build/accepted-output/README.md#acquire-the-three-sdk-copy-inputs)
-keeps this acquisition owner separate from compiler/content production and
-phone execution; no current game build consumes it.
+an explicitly supplied, pinned provider archive yields the three SDK-copy files
+and, with `--android-package`, the generic Android Java/resource inputs in a new
+private root. Bounded parsing, exact readback and terminal receipts remain with
+that owner. `sdk_package.py` and the authored `SdkAndroidCode.java` API caller own
+the experimental generic Android package slice: pinned SDK/public tools produce
+four DEX entries, manifest/resources/icons and the two SDK native libraries.
+Setup creates new private outputs; teardown bounds children and retains logs;
+source/tool hashes are checked before and after production. The existing
+`owner-code/run_android.py::android_sdk_job` supplies the installed read-only JVM
+and QEMU host. [Setup/lifecycle](../tools/phone-build/accepted-output/README.md#produce-the-generic-android-package-entries)
+keeps this owner separate from content, game-code production and final signing.
+J1109 qualifies host byte equivalence; phone execution remains open.
 `phone_decode.py` in that directory owns current
 experimental **support**, not game runtime: explicit new owned workspace, pinned
 private package and verified PC/SDK inputs produce complete target files and an

@@ -397,3 +397,7 @@ content/shader cohorts. J1042 does not solve that separate information-source
 problem by compression. The desktop owner-build/cache fallback remains available
 while the phone product is completed. No final distribution architecture is
 adopted solely from byte-reconstruction success.
+
+J1109 qualifies all 13 generic Android package entries from pinned SDK/public
+tools on the host, raw byte-identical to J850. The ordinary Android app-host
+producer, complete content composition and final installation remain open.

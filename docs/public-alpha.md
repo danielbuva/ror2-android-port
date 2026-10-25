@@ -170,3 +170,7 @@ qualification remain separate from these laboratory installs.
 - [ ] Obtain explicit user approval for releases, outward announcements,
       repository settings and issue templates after preparing reviewable changes.
       Workstream pushes and PR merges are already authorized.
+
+J1109 qualifies all 13 generic Android package entries from pinned SDK/public
+tools on the host, raw byte-identical to J850. The ordinary Android app-host
+producer, complete content composition and final installation remain open.

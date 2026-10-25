@@ -109,6 +109,24 @@ class SDKInputTests(unittest.TestCase):
                 SDK.copy_cpio(io.BytesIO(cpio([(NAME, DATA, stat.S_IFREG | 0o644)])), output, WANTED, SDK.time.monotonic())
             self.assertEqual(list(outside.iterdir()), [])
 
+    def test_android_package_selection_is_explicit_and_hash_checked(self):
+        extra = "Apk/res/values/owner.xml"
+        extra_data = b"<resources />"
+        android = {extra: (len(extra_data), hashlib.sha256(extra_data).hexdigest())}
+        archive = component([(NAME, DATA, stat.S_IFREG | 0o644), (extra, extra_data, stat.S_IFREG | 0o644)])
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp).resolve()
+            source = root / "owner.pkg"
+            source.write_bytes(archive)
+            with patch.multiple(
+                SDK, COMPONENT_BYTES=len(archive), COMPONENT_SHA256=hashlib.sha256(archive).hexdigest(), FILES=WANTED, ANDROID_FILES=android, RESERVE=0
+            ):
+                SDK.extract(source, root / "minimal")
+                result = SDK.extract(source, root / "android", android_package=True)
+            self.assertEqual(set(result["files"]), {NAME, extra})
+            self.assertFalse((root / "minimal" / SDK.PREFIX / extra).exists())
+            self.assertEqual((root / "android" / SDK.PREFIX / extra).read_bytes(), extra_data)
+
     def test_unknown_component_refuses_before_creating_output(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp).resolve()

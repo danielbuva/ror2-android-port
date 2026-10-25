@@ -68,6 +68,44 @@ def package_job(request, inputs, runtime, installed, native):
     return result
 
 
+def android_sdk_job(request, inputs, runtime, installed, native):
+    """Produce generic Android entries with the pinned SDK/public tools."""
+    selection = request["android_sdk"]
+    if set(selection) != {"sdk", "android_jar", "aapt", "jars", "loader_root", "library_dirs"}:
+        raise ValueError("explicit generic Android SDK/tool inputs required")
+    spec = importlib.util.spec_from_file_location("owner_sdk_package", runtime / "repo/tools/phone-build/accepted-output/sdk_package.py")
+    owner = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(owner)
+
+    def path(value):
+        result = (inputs / native.relative(value)).resolve(strict=True)
+        if not result.is_relative_to(inputs):
+            raise ValueError("Android SDK input escapes private owner files")
+        return str(result)
+
+    output = inputs / native.relative(request["output"])
+    if output.resolve() != output or not output.is_relative_to(inputs):
+        raise ValueError("Android SDK output escapes private owner files")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    production = {name: path(selection[name]) for name in ("sdk", "android_jar", "aapt")}
+    production.update(
+        java=str(installed / "libjavatool.so"),
+        javac=str(installed / "libjavactool.so"),
+        jars={name: path(value) for name, value in selection["jars"].items()},
+        output=str(output),
+        aapt_prefix=[
+            str(installed / "libqemu-x86_64.so"),
+            "-L",
+            path(selection["loader_root"]),
+            "-E",
+            "LD_LIBRARY_PATH=" + ":".join(path(p) for p in selection["library_dirs"]),
+            "-E",
+            "LC_ALL=C",
+        ],
+    )
+    return owner.produce(production)
+
+
 def run(request_file, runtime, installed):
     request_file, runtime, installed = (Path(p).resolve(strict=True) for p in (request_file, runtime, installed))
     inputs = request_file.parent
@@ -86,6 +124,11 @@ def run(request_file, runtime, installed):
     request = json.loads(request_file.read_text())
     if set(request) in ({"signing", "output"}, {"packaging", "output"}):
         result = package_job(request, inputs, runtime, installed, backend.native)
+        check_inputs()
+        print(json.dumps(result), flush=True)
+        return
+    if set(request) == {"android_sdk", "output"}:
+        result = android_sdk_job(request, inputs, runtime, installed, backend.native)
         check_inputs()
         print(json.dumps(result), flush=True)
         return

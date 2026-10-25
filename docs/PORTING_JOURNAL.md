@@ -38510,3 +38510,54 @@ needs completion and explicit corrected relinking. Android packaging members,
 complete content/player data, the source-produced full APK, compatible owner
 signer provisioning, ordinary installer and matched game controls/performance
 remain open. These tool passes do not establish game readiness or entitlement.
+
+## J1109 — Reproduce the generic Android package entries from the owner SDK
+
+2026-10-25. Host qualification; Android execution and composed installation remain
+open. This slice supplies no game content or managed/native gameplay code.
+
+**Hypothesis and source.** The remaining four DEX files, binary manifest, resource
+table, five icon files and two generic native libraries can be produced from the
+owner-acquired pinned SDK plus public Android tools, without accepted APK bytes
+as production inputs. J1064 already qualifies component extraction. This is
+generic Android packaging, so the game-specific community prerequisite does not
+apply. Public AGP 7.4.2's BuildConfig generator, R-class writer, XML formatter and
+D8 archive configuration establish the SDK contracts; unchanged D8 4.0.52 and
+AAPT2 7.4.2-8841542 implement them. No SDK implementation is copied into source.
+
+**Owner and lifecycle.** `accepted-output/sdk_inputs.py --android-package` extends
+the existing exact component extraction with the required SDK Java/templates and
+resources. `sdk_package.py` validates those pinned inputs and the public Java-tool
+cohort, creates a new private output, compiles the small authored
+`SdkAndroidCode.java` API caller, formats/compiles the SDK resources and authored
+settings, generates BuildConfig/R classes and produces all four DEX entries.
+It retains logs and terminal results, rechecks source/tool hashes and never
+opens a game or accepted APK. `owner-code/run_android.py::android_sdk_job` maps
+explicit private provider paths to the existing installed JVM/QEMU hosts.
+Content remains with its existing owner; there is no accepted-byte fallback.
+
+**Result.** The complete public host producer succeeds in 11.354876 seconds; all
+13 produced APK entries are raw byte-identical to J850. This includes the binary
+manifest, all four DEX files, resource table, all five icons, libmain and libunity.
+The unchanged SDK classes need D8's checksum option. Java source/target 11 yields
+the recorded class checksums; the application BuildConfig uses D8's public
+intermediate per-class output, explaining its absence of a D8 marker. AGP's
+manifest formatter with the standard XML declaration reproduces source-line
+metadata without padding or editing binary output. AAPT2's no-crunch setting
+preserves the SDK PNGs. Source inputs remain unchanged.
+
+**Evidence and checks.** Private `work/coordination/phone-code/` contains
+`android-sdk-package-full-host-v1-request.json`,
+`android-sdk-package-full-host-v1/result.json`, its compiler/process logs and
+`android-sdk-package-full-host-v1-proof.json`. The latter compares every produced
+member directly with accepted APK
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949` as validation
+only. Eight affected SDK tests pass, including explicit extraction membership,
+source immutability and unknown/redirected-input refusal. Source-only preflight
+refuses the absent lab project/checkpoint; no Editor/project is introduced.
+
+**Open and revisit.** The installed app-host job has not run this new slice yet.
+The complete original-input native job and full content assembly also remain
+open. No game APK is assembled, installed or launched by this result, and no
+phone runtime/performance/security qualification is inferred. Revisit after the
+exact public producer runs in the ordinary Android tool host.

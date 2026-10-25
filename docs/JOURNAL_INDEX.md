@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1109](PORTING_JOURNAL.md#j1109--reproduce-the-generic-android-package-entries-from-the-owner-sdk) | 2026-10-24 | Reproduce the generic Android package entries from the owner SDK | 2026-10-25. |
 | [J1103](PORTING_JOURNAL.md#j1103--produce-fixed-target-burst-and-sign-owner-apks-in-the-android-tool-host) | 2026-10-24 | Produce fixed-target Burst and sign owner APKs in the Android tool host | 2026-10-24. |
 | [J1104](PORTING_JOURNAL.md#j1104--refuse-two-settings-interruption-attempts-and-bound-the-sdk-observer-lifetime) | 2026-10-24 | Refuse two settings interruption attempts and bound the SDK observer lifetime | **Date:** 2026-10-24. |
 | [J1102](PORTING_JOURNAL.md#j1102--qualify-linked-vulkan-fragment-output-and-explicit-owner-apk-code-inputs) | 2026-10-24 | Qualify linked Vulkan fragment output and explicit owner APK code inputs | Date: 2026-10-24 UTC. |
