@@ -203,7 +203,7 @@ def packed_fixture(root):
     return pc, profile_path, directory, profile, row, serialized
 
 
-def scene_fixture(root, *, preload_dependency=False, global_owner=False):
+def scene_fixture(root, *, preload_dependency=False, global_owner=False, engine="2021.3.45f2"):
     """Authored two-member scene with overlapping IDs and external scripts."""
     pc = root / "pc"
     pc.mkdir()
@@ -298,7 +298,7 @@ def scene_fixture(root, *, preload_dependency=False, global_owner=False):
     }
     serialized = {}
     for name, physical, type_ids in ((shared, [7, 8, 1, 2, 3], [0, 0, 1, 2, 3]), (main, [1, 2, 3, 4, 5], [0, 1, 2, 3, 4])):
-        layout = {"engine": "2021.3.45f2", "platform": 13, "trees": True, "ref_types": [], "user": "", **expected_layouts[name]}
+        layout = {"engine": engine, "platform": 13, "trees": True, "ref_types": [], "user": "", **expected_layouts[name]}
         offset, objects = 0, []
         for identity, type_id in zip(physical, type_ids, strict=True):
             offset = (offset + 7) // 8 * 8
@@ -310,7 +310,9 @@ def scene_fixture(root, *, preload_dependency=False, global_owner=False):
         P.W.write_serialized(stream, layout, lambda row, name=name: io.BytesIO(bodies[name][row["path_id"]]))
         serialized[name] = stream.getvalue()
     expected_bundle = io.BytesIO()
-    P.W.write_bundle(expected_bundle, [(name, 4, len(data), lambda data=data: io.BytesIO(data)) for name, data in serialized.items()], literal_lz4)
+    P.W.write_bundle(
+        expected_bundle, [(name, 4, len(data), lambda data=data: io.BytesIO(data)) for name, data in serialized.items()], literal_lz4, engine=engine
+    )
     pack = root / "pack"
     pack.mkdir()
     (pack / "objects.bin").write_bytes(b"SHAREDMAIN")
@@ -402,6 +404,8 @@ def scene_fixture(root, *, preload_dependency=False, global_owner=False):
                 "to": [1, 404],
             }
         ]
+    if engine != "2021.3.45f2":
+        profile["bundle"]["engine"] = engine
     path = root / "scene-profile.json"
     path.write_text(json.dumps(profile))
     return pc, path, profile, pack, bodies, serialized, expected_bundle.getvalue()
@@ -443,7 +447,7 @@ def rewrite_managed_source(pc, profile, mutate):
             row["source_sha256"] = digest(bodies[row["source"][1]])
 
 
-def managed_fixture(root, *, omit_master=False, disable=False):
+def managed_fixture(root, *, omit_master=False, disable=False, plugin_order=False):
     pc, path, profile, _, original_target = fixture(root)
     source = pc / "source.bundle"
     source_layout = P.W.read_serialized(P.B.Bundle(source).member("CAB-source"))
@@ -451,6 +455,8 @@ def managed_fixture(root, *, omit_master=False, disable=False):
     target_stream.size = len(original_target)
     target_layout = P.W.read_serialized(target_stream)
     names = ("CharacterMaster", "RoR2", "RoR2.dll") if omit_master else ("AuthoredBehaviour", "Fixture.Namespace", "Fixture.Assembly")
+    if plugin_order:
+        names = names[:2] + ("RoR2.dll",)
     script = io.BytesIO()
     P.aligned_string(script, "Different display name")
     script.write(struct.pack("<i", -17))
@@ -462,6 +468,8 @@ def managed_fixture(root, *, omit_master=False, disable=False):
     script.write(b"PRESERVE SCRIPT TAIL")
     source_script = script.getvalue()
     target_script = source_script[:hash_offset] + derived_hash + source_script[hash_offset + 16 :]
+    if plugin_order:
+        target_script = target_script[: hash_offset - 4] + bytes(4) + target_script[hash_offset:]
     source_behaviour = bytes(range(16)) + struct.pack("<iq", 0, 51) + b"PRESERVE BEHAVIOUR"
     if disable:
         source_behaviour = source_behaviour[:12] + b"\x01\0\0\0" + source_behaviour[16:]
@@ -502,6 +510,8 @@ def managed_fixture(root, *, omit_master=False, disable=False):
                 selected["references"][0]["offset"] = 16
                 if disable:
                     selected["disable_original_behaviour"] = True
+            elif plugin_order:
+                selected["plugin_import_default_execution_order"] = True
     script_end = (len(target_script) + 7) // 8 * 8
     target_layout["types"][1] = {**behaviour_type, "hash": derived_hash, "script_type": 0}
     if omit_master:
@@ -527,6 +537,27 @@ def managed_fixture(root, *, omit_master=False, disable=False):
 
 
 class ObjectProducerTests(unittest.TestCase):
+    def test_plugin_import_order_preserves_script_identity_and_derived_hash_in_complete_bundle(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            pc, path, profile, sdk, names, _, _, derived, bodies, serialized = managed_fixture(root, plugin_order=True)
+            real_module = P.module
+            helper = Mock(properties_hash=Mock(return_value=derived))
+            with (
+                patch.object(P, "module", side_effect=lambda name, location=None: helper if name == "script_identity" else real_module(name, location)),
+                patch.object(P.W, "codec", return_value=nullcontext(literal_lz4)),
+            ):
+                result = P.produce(path, P.B.sha(path), pc, root / "produced", Path("codec"), "pin", sdk=sdk)
+            self.assertTrue(result["success"])
+            member = P.B.Bundle(root / "produced/payload/authored-target").member("CAB-target")
+            self.assertEqual(P.B.exact(member, member.size), serialized)
+            offset, actual_names = P.script_fields(bodies[2])
+            self.assertEqual(actual_names, names)
+            self.assertEqual(bodies[2][offset - 4 : offset], bytes(4))
+            self.assertEqual(bodies[2][offset : offset + 16], derived)
+            with self.assertRaisesRegex(ValueError, "admitted original DLL script"):
+                P.plugin_import_order(bodies[2].replace(b"RoR2.dll", b"Evil.dll"))
+
     def test_original_preload_admits_only_pinned_gameobject_membership(self):
         gameobject = b"AUTHORED GAMEOBJECT"
         preload = struct.pack("<I", 3) + b"Old\0" + struct.pack("<Iiq", 1, 1, 19)
@@ -886,6 +917,18 @@ class ObjectProducerTests(unittest.TestCase):
                 result = P.produce(path, P.B.sha(path), pc, root / "produced", Path("codec"), "pin", [(pack, P.B.sha(pack / "result.json"))])
             self.assertTrue(result["success"])
             self.assertEqual((root / "produced/payload/authored-scene").read_bytes(), expected)
+
+    def test_retained_legacy_engine_is_preserved_in_both_headers(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            pc, path, profile, pack, _, _, expected = scene_fixture(root, engine="2021.3.33f1")
+            with patch.object(P.W, "codec", return_value=nullcontext(literal_lz4)):
+                result = P.produce(path, P.B.sha(path), pc, root / "produced", Path("codec"), "pin", [(pack, P.B.sha(pack / "result.json"))])
+            self.assertTrue(result["success"])
+            self.assertEqual((root / "produced/payload/authored-scene").read_bytes(), expected)
+            emitted = P.B.Bundle(root / "produced/payload/authored-scene")
+            for member in emitted.members:
+                self.assertEqual(P.W.read_serialized(emitted.member(member))["engine"], "2021.3.33f1")
 
     def test_global_owner_suppression_checks_original_identity_and_active_tail(self):
         for name in ("SceneInfo", "Director", "GameManager", "RoR2Application"):
@@ -1463,6 +1506,145 @@ class BezierOwnerProductionTests(unittest.TestCase):
             self.assertEqual(data, line)
             self.assertEqual(data[20:80], BezierCurveLineTests.EXPECTED)
             self.assertEqual(struct.unpack_from("<iq", data, 80), (1, 88))
+
+
+LEGACY_IDENTITY = P.module("script_identity", ROOT / "scripts/lab/script_identity.py")
+
+
+def legacy_policy_fixture():
+    def curve(name, editor):
+        children = [CURVE_MESH_FIXTURE.node(n, 4, kind="float") for n in ["time", "value", "inSlope", "outSlope"]]
+        if editor:
+            children.append(CURVE_MESH_FIXTURE.node("tangentMode", 4, kind="int"))
+        children.extend(
+            [
+                CURVE_MESH_FIXTURE.node("weightedMode", 4, kind="int"),
+                CURVE_MESH_FIXTURE.node("inWeight", 4, kind="float"),
+                CURVE_MESH_FIXTURE.node("outWeight", 4, kind="float"),
+            ]
+        )
+        key = CURVE_MESH_FIXTURE.node("data", 32 if editor else 28, children=children, kind="Keyframe")
+        return CURVE_MESH_FIXTURE.node(
+            name,
+            kind="AnimationCurve",
+            children=[
+                CURVE_MESH_FIXTURE.array("m_Curve", key),
+                *[CURVE_MESH_FIXTURE.node(n, 4, kind="int") for n in ["m_PreInfinity", "m_PostInfinity", "m_RotationOrder"]],
+            ],
+        )
+
+    boolean = lambda name: CURVE_MESH_FIXTURE.node(name, 1, kind="UInt8", meta=0x4000)
+    source = CURVE_MESH_FIXTURE.node(
+        "Base",
+        kind="MonoBehaviour",
+        children=[
+            curve("alphaCurve", False),
+            boolean("disableOnEnd"),
+            boolean("disableObjectOnEnd"),
+            boolean("resetOnEnable"),
+            CURVE_MESH_FIXTURE.node("time", 4, kind="float"),
+            CURVE_MESH_FIXTURE.node("retained", 12, kind="PPtr<Object>"),
+        ],
+    )
+    sdk = CURVE_MESH_FIXTURE.node("Base", kind="MonoBehaviour", children=[CURVE_MESH_FIXTURE.text("m_EditorClassIdentifier"), curve("m_Falloff", True)])
+    body = struct.pack("<I4fI2f3I", 1, 0, 1, 2, 3, 0, 0.25, 0.75, 2, 2, 4) + bytes(12) + struct.pack("<fiq", 3.5, 7, -1234567)
+
+    def tree(body, node):
+        raw = CURVE_RECORD_FIXTURE.serialized(body, node, 114)
+        stream = io.BytesIO(raw)
+        stream.size = len(raw)
+        md = P.W.read_serialized(stream)
+        return md["types"][0]["tree"]
+
+    sdkbody = bytes(4) + struct.pack("<I4fII2f3I", 1, 0, 1, 2, 3, 0, 0, 0.25, 0.75, 2, 2, 4)
+    return body, tree(body, source), tree(sdkbody, sdk)
+
+
+class LegacyBarrierPolicyTests(unittest.TestCase):
+    def test_only_zero_additions_are_removed_and_tail_and_runtime_curve_are_retained(self):
+        body, tree, sdk = legacy_policy_fixture()
+        result, projected = P.legacy_animate_fields(body, tree, LEGACY_IDENTITY)
+        self.assertEqual(result, body[:48] + body[56:])
+        self.assertEqual(result[-16:], body[-16:])
+        self.assertEqual(P.legacy_animate_fields(result, projected, LEGACY_IDENTITY), (result, projected))
+        fields = [n["name"] for n in LEGACY_IDENTITY.tree_nodes(projected) if n["level"] == 1]
+        self.assertEqual(fields, ["alphaCurve", "disableOnEnd", "time", "retained"])
+        hashed = P.legacy_animate_hash_tree(projected, sdk, LEGACY_IDENTITY)
+        self.assertEqual(next((n["size"] for n in LEGACY_IDENTITY.tree_nodes(projected) if n["type"] == "Keyframe")), 28)
+        self.assertEqual(next((n["size"] for n in LEGACY_IDENTITY.tree_nodes(hashed) if n["type"] == "Keyframe")), 32)
+        self.assertEqual(sum((n["name"] == "tangentMode" for n in LEGACY_IDENTITY.tree_nodes(hashed))), 1)
+        self.assertNotEqual(
+            LEGACY_IDENTITY.properties_hash("AnimateShaderAlpha", "RoR2", "RoR2.dll", projected, sdk),
+            LEGACY_IDENTITY.properties_hash("AnimateShaderAlpha", "RoR2", "RoR2.dll", hashed, sdk),
+        )
+
+    def test_nonzero_value_or_alignment_padding_is_never_discarded(self):
+        body, tree, _ = legacy_policy_fixture()
+        for offset in [48, 49, 52, 55]:
+            with self.subTest(offset=offset):
+                changed = bytearray(body)
+                changed[offset] = 1
+                with self.assertRaisesRegex(ValueError, "zero aligned"):
+                    P.legacy_animate_fields(bytes(changed), tree, LEGACY_IDENTITY)
+
+    def test_wrong_field_shape_and_sdk_curve_are_rejected(self):
+        body, tree, sdk = legacy_policy_fixture()
+        for original, replacement in [(b"disableObjectOnEnd\x00", b"disableObjectOnBad\x00"), (b"resetOnEnable\x00", b"resetOnEnabXX\x00")]:
+            with self.subTest(original=original):
+                with self.assertRaisesRegex(ValueError, "membership"):
+                    P.legacy_animate_fields(body, tree.replace(original, replacement), LEGACY_IDENTITY)
+        _, projected = P.legacy_animate_fields(body, tree, LEGACY_IDENTITY)
+        with self.assertRaisesRegex(ValueError, "curve schema absent"):
+            P.legacy_animate_hash_tree(projected, sdk.replace(b"m_Falloff\x00", b"m_FallBad\x00"), LEGACY_IDENTITY)
+        with self.assertRaisesRegex(ValueError, "tangent schema"):
+            P.legacy_animate_hash_tree(projected, sdk.replace(b"tangentMode\x00", b"tangentMade\x00"), LEGACY_IDENTITY)
+
+
+class ReflectionProbeImportTests(unittest.TestCase):
+    def fixture(self, mode=0, texture=(0, 0), mode_name="m_Mode"):
+        f = CURVE_MESH_FIXTURE
+        root = f.node(
+            "Base",
+            kind="ReflectionProbe",
+            children=[
+                f.node("m_IntensityMultiplier", 4, kind="float"),
+                f.node(mode_name, 4, kind="int"),
+                f.node("m_BakedTexture", 12, kind="PPtr<Texture>"),
+                f.node("m_CustomBakedTexture", 12, kind="PPtr<Texture>"),
+                f.node("m_BoxSize", 12, kind="Vector3f"),
+            ],
+        )
+        body = struct.pack("<fiiqiq3f", 1.25, mode, 34, -9876543, *texture, 20, 30, 40)
+        raw = CURVE_RECORD_FIXTURE.serialized(body, root, 215)
+        stream = io.BytesIO(raw)
+        stream.size = len(raw)
+        return body, P.W.read_serialized(stream)["types"][0]
+
+    def test_only_mode_changes_and_original_textures_and_bounds_are_retained(self):
+        body, typ = self.fixture()
+        result = P.custom_reflection_probe(body, typ)
+        self.assertEqual(result, body[:4] + struct.pack("<i", 2) + body[8:])
+        self.assertEqual(body[4:8], bytes(4))
+        self.assertEqual(typ["class_id"], 215)
+
+    def test_wrong_class_nonbaked_mode_and_assigned_custom_texture_are_rejected(self):
+        body, typ = self.fixture()
+        with self.assertRaisesRegex(ValueError, "ReflectionProbe"):
+            P.custom_reflection_probe(body, {**typ, "class_id": 114})
+        for options in [{"mode": 1}, {"mode": 2}, {"texture": (0, 12)}, {"texture": (3, 0)}]:
+            with self.subTest(options=options):
+                body, typ = self.fixture(**options)
+                with self.assertRaises(ValueError):
+                    P.custom_reflection_probe(body, typ)
+
+    def test_schema_drift_and_unowned_trailing_bytes_cannot_be_discarded(self):
+        body, typ = self.fixture(mode_name="unknown")
+        with self.assertRaisesRegex(ValueError, "fields missing"):
+            P.custom_reflection_probe(body, typ)
+        body, typ = self.fixture()
+        for malformed in [body[:-1], body + b"UNOWNED"]:
+            with self.assertRaises((ValueError, struct.error)):
+                P.custom_reflection_probe(malformed, typ)
 
 
 if __name__ == "__main__":

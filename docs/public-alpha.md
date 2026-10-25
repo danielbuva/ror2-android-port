@@ -83,10 +83,10 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       [J1113](PORTING_JOURNAL.md#j1113--produce-a-complete-source-only-bundle-and-seven-player-data-files)
       qualifies the first complete PC-only bundle and seven player-data files;
       J1139 supplies 173 complete player files, including source-derived TMP
-      hashes and native selection manifests. J1155 extends the independently
-      produced payload cohort to eighteen complete bundles. The shared source
+      hashes and native selection manifests. J1163 extends the independently
+      produced payload cohort to twenty-two complete bundles. The shared source
       tree preserves J1157's complete host Shader cohort. The combined
-      fixed-target readiness check has 122 missing content entries; all 18 code/SDK
+      fixed-target readiness check has 118 missing content entries; all 18 code/SDK
       entries are available. Phone replay, the
       remaining bundles/player data and complete source-derived installation
       remain open; the structural writer produces no missing content itself.
@@ -103,9 +103,9 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       original-shader recovery and app integration remain open. J1157 qualifies
       all 414 APK Shader48 objects through source-only host
       production: 369 complete files plus two shared records. The combined
-      source tree has 583 of 705 entries available (578 raw-exact, two code
-      comparison entries and three separately drift-explained); 122 remain
-      missing (J1162). Host shared mixed-file assembly is qualified; phone serialization remains open.
+      source tree has 587 of 705 entries available (582 raw-exact, two code
+      comparison entries and three separately drift-explained); 118 remain
+      missing (J1163). Host shared mixed-file assembly is qualified; phone serialization remains open.
       [J1102](PORTING_JOURNAL.md#j1102--qualify-linked-vulkan-fragment-output-and-explicit-owner-apk-code-inputs)
       confirms both executable stages in that linked payload and accepts all
       three produced code outputs in the existing APK owner without replay
