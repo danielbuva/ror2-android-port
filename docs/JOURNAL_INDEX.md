@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1174](PORTING_JOURNAL.md#j1174--define-public-release-updates-and-incremental-owner-outputs) | 2026-10-25 | Define public release updates and incremental owner outputs | 2026-10-25. |
 | [J1171](PORTING_JOURNAL.md#j1171--identical-input-scene-exports-change-historical-yaml-identity-hashes) | 2026-10-25 | Identical-input scene exports change historical YAML identity hashes | - Hypothesis: the pinned original-only exporter and stage owner can reproduce the WholeStageContexts full YAML digests. |
 | [J1169](PORTING_JOURNAL.md#j1169--bound-the-complete-source-only-player-registry-metadata-lifetime) | 2026-10-25 | Bound the complete source-only player registry metadata lifetime | **Hypothesis and prior art.** |
 | [J1166](PORTING_JOURNAL.md#j1166--guarded-phone-player-assembly-stops-on-thermal-limit) | 2026-10-25 | Guarded phone player assembly stops on thermal limit | **Hypothesis.** |
