@@ -58,9 +58,10 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       Remaining compressed textures, mips, cubemaps and complete bundles stay open.
       [J1113](PORTING_JOURNAL.md#j1113--produce-a-complete-source-only-bundle-and-seven-player-data-files)
       qualifies the first complete PC-only bundle and seven player-data files;
-      J1117 extends the host cohort to three complete bundles and 75 player files
-      on the host, through the direct UnityFS/serialized writer. The fixed-target
-      readiness check now has 609 missing content entries; all 18 code/SDK
+      J1118 extends the host cohort to three complete bundles and 152 player files
+      through the existing owners; 54 texture selections require PR75's public
+      RGBA producer/profile before merge. The fixed-target readiness check now
+      has 532 missing content entries; all 18 code/SDK
       entries are available. Phone replay, the
       remaining bundles/player data and complete source-derived installation
       remain open; the structural writer produces no missing content itself.
@@ -208,9 +209,9 @@ explicit replay content; it does not qualify phone production or installation.
 closes the two generic Android build-metadata producer gaps. Fresh host SDK
 production yields all 15 entries raw-exact to J850. The shared readiness request
 combined with
-[J1117](PORTING_JOURNAL.md#j1117--produce-every-standalone-sprite-and-the-third-source-only-bundle)
-has all 18 code/SDK files and 78 content files ready, with 609 content entries
-absent. Phone replay and complete content/shader/animation production remain
-open. The two
+[J1118](PORTING_JOURNAL.md#j1118--assemble-original-tmp-objects-and-produced-player-textures)
+has all 18 code/SDK files and 155 content files ready, with 532 content entries
+absent. The 54 RGBA selections depend on PR75's public producer/profile. Phone
+replay and complete content/shader/animation production remain open. The two
 new files still require an ordinary-app rerun; corrected phone-native output,
 complete content, installation, controls and matched performance remain open.

@@ -296,6 +296,314 @@
     "1aa6d2fefeb6a435a86a323feac0dde5": {
       "bytes": 4552,
       "sha256": "f733b2b215a45bd04decee564e56292c3fdce457a89d083d98f273aa62614f87"
+    },
+    "399f33191811f7f489e29c5158034c70": {
+      "bytes": 10060,
+      "sha256": "dc2aced99f73b82a3ddaa4b00c30152b983fbe84a907f21ae25ec2f510c19fde"
+    },
+    "e6becca3ce07b4cfe9b202058d67c4c9": {
+      "bytes": 4356,
+      "sha256": "21eaa479a4f0bafdeeb4e85596258924f340f806f55a07a14f7ace530dd84111"
+    },
+    "5ab3c9a50d8470e40a5341f2557f0f83": {
+      "bytes": 5676,
+      "sha256": "ee3a3673ece6e3bc374e20ffae68216eab9d1017e8950c8603740bb027013645"
+    },
+    "452b53151060c4246833b8aa00b3f31a": {
+      "bytes": 5860,
+      "sha256": "fc94b549eb7be86ccc54fc5d31eded01bcaf0bdc16f33dfd09f09b871c451091"
+    },
+    "5c5ec0bcb0d9710409cd342ccfb2f7fe": {
+      "bytes": 5852,
+      "sha256": "c88358c7a084c36a0a460a1c14b75805a78829b079ad509c1fa8f07020455a12"
+    },
+    "68f624db1b0aca74eab776e85ff99e37": {
+      "bytes": 4452,
+      "sha256": "386bebcafdd309a20fff1f8258d28375653d0286ab93d2c2cfb7fe3f14671d4b"
+    },
+    "d5ae9c58bb768f5438715270ac659dc0": {
+      "bytes": 5848,
+      "sha256": "102fe9545c2da4ef32caf726d135f19fb5e3fd0d8b6772f9250122dc7f5ab566"
+    },
+    "b4274b35db558904eb40ed4c4e738a2b": {
+      "bytes": 5864,
+      "sha256": "385c6f28f71f59e090796ff8cde3ce252427692a698aced6d31fa8023f0c1295"
+    },
+    "a8753b3887cba66408ced0b3fd85df3a": {
+      "bytes": 5872,
+      "sha256": "710691a9b4fdbd0228965fa38df2330600861ebeb1e000660bc25cad32fbe638"
+    },
+    "013fc4f7a708fbe44b1877f74e411a8b": {
+      "bytes": 20604,
+      "sha256": "127073615b8f94b563a789e20b69156cec9ff4f3499f1a5ba82bc5142dca62e7"
+    },
+    "0987807fb55d39946a603b99aa1e6c5b": {
+      "bytes": 20608,
+      "sha256": "ca8bd8f996225751e7c02615bc18c7698b10baf5de9001b3399ec057ac0c39a7"
+    },
+    "0c752d371fb43254ea674fc1100eb54a": {
+      "bytes": 20608,
+      "sha256": "31b85715876ffbe5c1b6e3b557d3383b1d8c61b3630ca3d8dacbd4b26d8de844"
+    },
+    "0d9ea9fbc5b8d7c4d8e1c00227ac616f": {
+      "bytes": 20604,
+      "sha256": "a622180d07e37e4eb6dd23a31d4af1ac18a5e1f01468b9c8ec6f85cc95e1d35e"
+    },
+    "103d2c37114096b4b9cbba6185a2debd": {
+      "bytes": 4480,
+      "sha256": "d34ccde6091d0b4e44e5cec8d64a7da763aa2909c34e5bca61dc93af8e1f7419"
+    },
+    "25d3e4d4c46e96d468b7f1f04b2d4ff9": {
+      "bytes": 69764,
+      "sha256": "b1620d777e1b79bf94df2c67ec14eb8418f858955924d876088d0ffd1cbf1ff5"
+    },
+    "289d8e8d610031e4da020093d436972b": {
+      "bytes": 8320,
+      "sha256": "f103831f91b2378e134e04e5863f91a135db6f1ec055bb042eca1db7e1452e56"
+    },
+    "28f6731c4dac26b43a6261f6d2d26937": {
+      "bytes": 266388,
+      "sha256": "d5be2e2ba561c5d0b57b8b557daac1512828f3238da333d796747de53f5475aa"
+    },
+    "3080439f9fea4a744a038b12f49800b1": {
+      "bytes": 266372,
+      "sha256": "227c95b60a5ae6a2dc683b2ebaace03aab3df3b0e131157ff643d508d451d6f9"
+    },
+    "33ccdb7ea1198374189289a18dee899f": {
+      "bytes": 20612,
+      "sha256": "7ef2f4c356ee4f38bc1aa7316009a8ed62ed2f1d01e057866cbcc2bd113e37a7"
+    },
+    "40a2b16d5b97f89429bf8e5f28cbc775": {
+      "bytes": 20616,
+      "sha256": "0f0ddddb3277f2cc2f45e12da4a9b5fd290f9df9d7bf2e696d265eecbb079b75"
+    },
+    "42cf5f1f2c8500c409c8134bd602e7c7": {
+      "bytes": 12416,
+      "sha256": "8de158826f9c105fea8dd8d0b9350cd05df4baa3829562a3fae1acd00bda52a0"
+    },
+    "494c5d0d939864646a7a2a4954fc27f1": {
+      "bytes": 20604,
+      "sha256": "e25ade761946f63cae42498b9360e445fa53880128a4fed132ce9c8ea94b8da7"
+    },
+    "550bc19d10cf19044a75d16090835a39": {
+      "bytes": 8328,
+      "sha256": "2c5362e0244038f3225f4bf7b01b30b561cc412c2f24338d15adb0bdd122ab48"
+    },
+    "5c04b3b04d4401747834009733f25eaa": {
+      "bytes": 20620,
+      "sha256": "908cd2272d6cfe10d2cb1750f0c04236c866519161bf1ce750cd1d966ace9bae"
+    },
+    "61f7ee47a0de62643938e3ef2eeca9e6": {
+      "bytes": 20620,
+      "sha256": "9ad0be7d5676b05b6431232f783c7ad03b80e5436933626d5c048d0bbbad3b71"
+    },
+    "634f21e3c38d71642822fe0836524556": {
+      "bytes": 20604,
+      "sha256": "637e8f0128c1c262739fdad165cae21a5753b0440ae20c70ce505618375f2a67"
+    },
+    "6935f1e68401f464a87ab9d6bc78e78c": {
+      "bytes": 8316,
+      "sha256": "69f8c45fb8213e5aa9dad4894f82e8cfe698a4993d20244cd73b77827c13fbf7"
+    },
+    "69f40642faca7a04390f2169d9890ea1": {
+      "bytes": 1052824,
+      "sha256": "eab6ae473385c17502e412c23b6d3d563ab37188249abf1375c03cec86ab8aef"
+    },
+    "6b6641f0636844d479d5193f08e8b93a": {
+      "bytes": 20604,
+      "sha256": "bd201248053005aa6bc346c95a9012e27c1574264a450f7d06b814ea90bd016a"
+    },
+    "6cacd04934c7d0949a655d94c41cbaac": {
+      "bytes": 5252,
+      "sha256": "86e379234090025aeca6492ba43bd36d812a3ba39c44445cf26e28e64deb1450"
+    },
+    "6e46913bd0dc6fc498babd5b9def49bc": {
+      "bytes": 69756,
+      "sha256": "13cf5b05c63d1af52e48469dc69a88cfcd56cdecca3dfe1433bf41e63e6adc62"
+    },
+    "6f4d11dfb9c8cc94e86ed1cdf49f4674": {
+      "bytes": 1052840,
+      "sha256": "0291a62d9a7338094037bd5296c76c19526818625d8bd06926e434c99941e06c"
+    },
+    "70d81643f41af274ba716cf383806198": {
+      "bytes": 20612,
+      "sha256": "f132a14aebe4046e7ab45a893d8f6ffa92ef4808b37db2435eac34d46169c33f"
+    },
+    "7bb7164292f8f9847ad07b542471704f": {
+      "bytes": 1052796,
+      "sha256": "23587b442dc325e4e8eb1e15956c7fa865fac106d47eafa28f341b9e8932869d"
+    },
+    "7f7345602196cd14aa873745b2333e89": {
+      "bytes": 8324,
+      "sha256": "b6e119c22f170dcef316d1d3a53aec5056d132bcfe12d31d81979adfd80b8095"
+    },
+    "8097df9f2df3c0d49b91b615e733c726": {
+      "bytes": 1052804,
+      "sha256": "0bb82f4085d5f32e8c58862982325d2214392170801ce6e3691b2c4c9e9cd012"
+    },
+    "86ac8acbb0108144eb6b97987c06a7c3": {
+      "bytes": 528508,
+      "sha256": "9b3b13d913610f2f23d5c7c9b7eda34eb56d260887914f8e7393efaf5f027e3a"
+    },
+    "8ad72d8c15de76940ae3642cb88c4f12": {
+      "bytes": 20608,
+      "sha256": "b3177e00e0fcc9631884b5091f070dfc306ad4b173788dd64110f85fc4ed02c9"
+    },
+    "8e51017f77e27774d90d36cff5e77289": {
+      "bytes": 1839264,
+      "sha256": "831c6ccc1f350ddcb9fea24114f69c19ba6ed9fb417d68152fef5f04b3803f40"
+    },
+    "8e7feed380bfedf4c9555b357079c308": {
+      "bytes": 8324,
+      "sha256": "a4a602def2091d1e1c1742c994ed9cfd99ae403fb387eb5228722e26918e8835"
+    },
+    "8fcf78f7797fe0d5c953e7e545404135": {
+      "bytes": 6276,
+      "sha256": "7982fad6fcdf85630c6fc2b81fb022f9950f7e661162594c08df464e27c9698f"
+    },
+    "8fe3ba24af76c48419170679f024ef99": {
+      "bytes": 6272,
+      "sha256": "9f4161b0ec6f179d032e172252bb264fb51e418c36526a4b16a87c440ba623bf"
+    },
+    "92b74220ad9364548ba8452b54b78899": {
+      "bytes": 6276,
+      "sha256": "1885ad1902be8fafb0a08fdcd7c4fba66f2034eed7a0d112869b66542e8d0954"
+    },
+    "92fa163b5e7d74e498b400ab78c6adda": {
+      "bytes": 8328,
+      "sha256": "2d404e4464e9f3acb99298cf118af1043ad73fed71e62705a7e7fef4f0035787"
+    },
+    "963a07a7824810544bafc5c488e4ad0b": {
+      "bytes": 266380,
+      "sha256": "3cad3355d8bf5c9f82e6c03de1d016440e216a37e8ec8e65ce465aab7409503a"
+    },
+    "abdb677869ab6a143a50ee0d67bdf8ba": {
+      "bytes": 20612,
+      "sha256": "55c300322d1a82e3ec441e282396f210cce538f17c996c452b168d2c155a2a5c"
+    },
+    "aec1c9bf0d4e6324ba5d6509b133dc77": {
+      "bytes": 20596,
+      "sha256": "b1c3ad86efedb5b98508bf99f66761c6c4872870e839e0a0217640937c0efc0d"
+    },
+    "b47972b75d91c384f87f98007b7305aa": {
+      "bytes": 4740,
+      "sha256": "6c723907a0b8fb006eb2b8a1ad2fda3ea0af5bb64d934a2f253664c74f7345f6"
+    },
+    "b60b372f03220724099ba8ee6ea2270a": {
+      "bytes": 20608,
+      "sha256": "53941b540f5132f7caf2d8a087c69e5b1871307c0323db755b4714de00bd5c02"
+    },
+    "b6356f20f0ca2204e830809e16bca323": {
+      "bytes": 266364,
+      "sha256": "c09dfa412d95fc4f7100eac0b155451734dcb31e2541511399c21b1a4b95f0c7"
+    },
+    "b72134e3d64df22419c166f94db7da70": {
+      "bytes": 69760,
+      "sha256": "62701741c1781b0e5b05e4ad9e86d84fbf844b697572fd6ce28d7b439e7ba3e2"
+    },
+    "c2840ff9013a7f9050da8e307379470b": {
+      "bytes": 20612,
+      "sha256": "dc1903e450d97a9338c9c788e6280c9ecfda359e60fdee239a0ef9c640003c57"
+    },
+    "c320bea49aa22c34d9564a18a6b0d07b": {
+      "bytes": 8112,
+      "sha256": "93afcdbe3625c9d8afc78a8a35e360fb42e6d6f2ea7bee7f532a837d0bdfdd40"
+    },
+    "c8f2140d20d59bf4c82f708094f34b29": {
+      "bytes": 69764,
+      "sha256": "2e0ecae482e9c0bb9ddfdad47a86255cb0ca1fb4229e32813e573cbe846be656"
+    },
+    "c9eeeb190e67cf747a094aca252a4acf": {
+      "bytes": 20604,
+      "sha256": "0579a4b40e1da938203e76d50e0eabbb3ec30699cac014cb78e4f4b850a8b4c1"
+    },
+    "cf8d482fc2ecdf643859875d4e2ff9d4": {
+      "bytes": 6276,
+      "sha256": "7db40554ce139b842bb8abf815d0f83e72c28a00e1b5ff408d6bf00a69d3002f"
+    },
+    "d36120d99b8d5d4439a0d0608bf4d26d": {
+      "bytes": 20604,
+      "sha256": "5c1c6ec59a8532ad865c381ea99e7d09a04324b84351f26e620e2f38e2a3f6a5"
+    },
+    "d7bd2d8f8913ae14380c37d529b01d09": {
+      "bytes": 14216,
+      "sha256": "402a50b35420e26373c662f36e335be59466aea2b180d0eb4395809753a9cdbd"
+    },
+    "d8294398cc8bdb94e9666bfc94624782": {
+      "bytes": 69756,
+      "sha256": "13560723b580a3128a8d47a2dfa1e7ba1f766c2cd5b465b1ca32251babf3746b"
+    },
+    "d8ec22b18bb114648997bd12bb300174": {
+      "bytes": 20608,
+      "sha256": "2893e8954bf89848cf1b746ad40f34edb2c76b8338895a801a9826f59da432dd"
+    },
+    "daab271c8ebd8594f8d1d0df9f055cf1": {
+      "bytes": 69768,
+      "sha256": "975a3f1103153916948c11d208c0b258a263baed2e4cc1884dd39e79a8f4ab5e"
+    },
+    "db193343afd79194388605b19e23ed86": {
+      "bytes": 20600,
+      "sha256": "54244b155cdb342696136139826403704d2f404634cd9d080fa838bb17bd25e5"
+    },
+    "dc3e36e1c56d5a047a60d82a8147347a": {
+      "bytes": 135308,
+      "sha256": "e6690b331919393e2d5d8a8fb9757b4873d4d11627179a2348b3a922d407fb20"
+    },
+    "e09fbdc306719d24b96effef43baff55": {
+      "bytes": 14628,
+      "sha256": "fce963e442b5bb1638083fac226910f069f4ba45d5b1ddba6cb855eb89e672e5"
+    },
+    "e117dbe81fdc53a4682de5520f017b4c": {
+      "bytes": 36992,
+      "sha256": "93ee947a11e21f7a64c3986ca58a554f3636c1d7497364bcb4ab715af0b290a6"
+    },
+    "e3c1194aa44648f4d9d55e0f61968803": {
+      "bytes": 266368,
+      "sha256": "a01880fdab5e2ce9638b649b58ee5a67c6367acfdbe838543cc8e5c727a80f37"
+    },
+    "e5ccd95c30db7b34eb8381d079dc2602": {
+      "bytes": 135296,
+      "sha256": "0c66e8b0e73c3ff561b71bcb403c72dc27aee7a82c6964e35e5306a8a474e236"
+    },
+    "e6340e03235d05e4e8b8616b46fbc703": {
+      "bytes": 20604,
+      "sha256": "39fa79270e284acc9b3891c688fda8257edcb00c6d56df8f7b48f2d8cc160e3d"
+    },
+    "e93f94c1c521eb244ba0ae13aa9e65be": {
+      "bytes": 36988,
+      "sha256": "4bf1120a6e6bf5dc6ed2b22e370d7af3df1874fbf45499a533412adb4feb67ec"
+    },
+    "ea68c3dfbca9ea344b59f5939a0c70c1": {
+      "bytes": 8312,
+      "sha256": "cc95e5086d6aa7bbb21528641f387dc890b7119fc1dfc53e8c2f5d69e172a06d"
+    },
+    "ecbcdaff4cab5d64c99e2b377c233153": {
+      "bytes": 266368,
+      "sha256": "cab07e4aaf40838410931c9772f8f8dcc57a83165209418d64423e53200d9ead"
+    },
+    "ef1c20f11c0d42e49b9cbaf71063e1d8": {
+      "bytes": 6928,
+      "sha256": "f848567a34527665f012d4b7c9d02cde5ddf996a1d8dcb863374a26e7d6d7355"
+    },
+    "f035fb54d0c729c43a5632a67782c27f": {
+      "bytes": 20616,
+      "sha256": "5b5f043c01ef634b4486fc87c7dad2ba3e58aad596250ff9ae7de04377b1d007"
+    },
+    "f0865689cac43124dbf9cad9f14ec2c6": {
+      "bytes": 69756,
+      "sha256": "e5562f16a9c36761bcefc003dfdbeac5a3bf9db7746312567ce9cf8798bb28e7"
+    },
+    "f234c70b3f5c2294d9e2f9606b50734c": {
+      "bytes": 12408,
+      "sha256": "f2c5252ff06aa125b790fe05cf1782e1fcead566db562d644753b4cc966496b7"
+    },
+    "fc007d9034d8d754e99f79b285923ab4": {
+      "bytes": 20612,
+      "sha256": "0ad218d291acff4a9532b1d711eb2287e0f8e05dbca85e98655879e35abdc961"
+    },
+    "ff579ba37da12e3428ceb17a6db2a4ec": {
+      "bytes": 1052804,
+      "sha256": "5b895ff868b0a8273db6d6f20b5b114c4e2cd5285abad74cc15d28bd0b26bb9f"
     }
   },
   "project_assemblies": [
@@ -2483,7 +2791,7 @@
       }
     ]
   },
-  "script_objects": [
+  "objects": [
     {
       "file": "bd1a995f9946b1c48b2009619e9dc3cc",
       "source": {
@@ -2520,6 +2828,1117 @@
       ],
       "externals": [
         "globalgamemanagers.assets"
+      ]
+    },
+    {
+      "file": "399f33191811f7f489e29c5158034c70",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/textmeshpro-formerresources_assets_all_2b4559dda7675ee5a3be2897f6eaabdd.bundle",
+        "bytes": 5466,
+        "sha256": "3fab763a0fd0db2eb3ce414807ca25f99171e3db292fdd5e35741cc5b0a4592d",
+        "member": "CAB-0d23dcb3dc4b855c47402bcf479e53a4"
+      },
+      "objects": [
+        {
+          "source_path_id": -2731013043648782514,
+          "path_id": 1,
+          "bytes": 5964,
+          "source_sha256": "2f895ad95a24038da3fc9f6edeb056aca5b6b5da0353b8853312df48563bff53",
+          "sha256": "2195a2f0d52ff3d05a4463f0ba3d9f3579a9cb3a7bc1d451dd08313a4a984b8e",
+          "references": [
+            {
+              "offset": 16,
+              "from": [
+                1,
+                6928278202894795757
+              ],
+              "to": [
+                1,
+                111
+              ]
+            }
+          ]
+        }
+      ],
+      "externals": [
+        "globalgamemanagers.assets"
+      ],
+      "script": [
+        1,
+        111
+      ]
+    },
+    {
+      "file": "e6becca3ce07b4cfe9b202058d67c4c9",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/textmeshpro-formerresources_assets_all_2b4559dda7675ee5a3be2897f6eaabdd.bundle",
+        "bytes": 5466,
+        "sha256": "3fab763a0fd0db2eb3ce414807ca25f99171e3db292fdd5e35741cc5b0a4592d",
+        "member": "CAB-0d23dcb3dc4b855c47402bcf479e53a4"
+      },
+      "objects": [
+        {
+          "source_path_id": 4830342042864431830,
+          "path_id": 1,
+          "bytes": 260,
+          "source_sha256": "029bb79b7d885003f2b8e42d49bd6a898ee5daf1a3d4d3a4507f13ddf54ec3b4",
+          "sha256": "6b8fb3e7cfc97ea740186b8c6bd090fb696a3c11a0b977b05d4c3ec895e1a873",
+          "references": [
+            {
+              "offset": 16,
+              "from": [
+                1,
+                -4829617894460389559
+              ],
+              "to": [
+                1,
+                914
+              ]
+            },
+            {
+              "offset": 80,
+              "from": [
+                3,
+                3888779353165285049
+              ],
+              "to": [
+                2,
+                1
+              ]
+            },
+            {
+              "offset": 156,
+              "from": [
+                4,
+                4597277033764267162
+              ],
+              "to": [
+                3,
+                1
+              ]
+            },
+            {
+              "offset": 172,
+              "from": [
+                2,
+                -5791551102258628253
+              ],
+              "to": [
+                4,
+                1
+              ]
+            },
+            {
+              "offset": 216,
+              "from": [
+                0,
+                -2731013043648782514
+              ],
+              "to": [
+                5,
+                1
+              ]
+            },
+            {
+              "offset": 232,
+              "from": [
+                0,
+                -5385084587632863328
+              ],
+              "to": [
+                6,
+                1
+              ]
+            },
+            {
+              "offset": 244,
+              "from": [
+                0,
+                8066986779016975682
+              ],
+              "to": [
+                7,
+                1
+              ]
+            }
+          ]
+        }
+      ],
+      "externals": [
+        "globalgamemanagers.assets",
+        "e24ad2e9e87603348befae7014f52a5c",
+        "a7168cf4aa86d984ea43a0f795f50b0c",
+        "5ab3c9a50d8470e40a5341f2557f0f83",
+        "399f33191811f7f489e29c5158034c70",
+        "9af5fc8f2494ebb43a7c53b7eec56b9a",
+        "b2a3d1e61b131354885f831024ad385e"
+      ],
+      "script": [
+        1,
+        914
+      ]
+    },
+    {
+      "file": "5ab3c9a50d8470e40a5341f2557f0f83",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/textmeshpro-formerresources-spriteassets_assets_all_721b9441367dc34a119e97f521ce7d92.bundle",
+        "bytes": 3558195,
+        "sha256": "0330e3f269815e60d6a4e7719f7143cb116510398e24a1d7df0242e2a20df952",
+        "member": "CAB-3ff05bddabe68af25568c301afeb5891"
+      },
+      "objects": [
+        {
+          "source_path_id": -5791551102258628253,
+          "path_id": 1,
+          "bytes": 1580,
+          "source_sha256": "440d3d022d0cafe37cfc4f56a9ea1161e718a091e16debbdb21b63e20b020507",
+          "sha256": "1816b1de3a72e48fe3ebd4298c30df2567a274a0ea0b40c4c72e5f7a84485aba",
+          "references": [
+            {
+              "offset": 16,
+              "from": [
+                1,
+                -8000332008922304187
+              ],
+              "to": [
+                1,
+                2692
+              ]
+            },
+            {
+              "offset": 52,
+              "from": [
+                0,
+                7488429921673165155
+              ],
+              "to": [
+                2,
+                1
+              ]
+            },
+            {
+              "offset": 164,
+              "from": [
+                0,
+                -5211609530254543854
+              ],
+              "to": [
+                3,
+                1
+              ]
+            },
+            {
+              "offset": 464,
+              "from": [
+                0,
+                -7023792341211925486
+              ],
+              "to": [
+                4,
+                1
+              ]
+            },
+            {
+              "offset": 528,
+              "from": [
+                0,
+                -7023792341211925486
+              ],
+              "to": [
+                4,
+                1
+              ]
+            },
+            {
+              "offset": 592,
+              "from": [
+                0,
+                -7023792341211925486
+              ],
+              "to": [
+                4,
+                1
+              ]
+            },
+            {
+              "offset": 656,
+              "from": [
+                0,
+                -7023792341211925486
+              ],
+              "to": [
+                4,
+                1
+              ]
+            },
+            {
+              "offset": 720,
+              "from": [
+                0,
+                -7023792341211925486
+              ],
+              "to": [
+                4,
+                1
+              ]
+            },
+            {
+              "offset": 784,
+              "from": [
+                0,
+                -7023792341211925486
+              ],
+              "to": [
+                4,
+                1
+              ]
+            },
+            {
+              "offset": 848,
+              "from": [
+                0,
+                -8615859617638239214
+              ],
+              "to": [
+                5,
+                1
+              ]
+            },
+            {
+              "offset": 912,
+              "from": [
+                0,
+                -4769953674759097326
+              ],
+              "to": [
+                6,
+                1
+              ]
+            },
+            {
+              "offset": 976,
+              "from": [
+                0,
+                -5284187053688474606
+              ],
+              "to": [
+                7,
+                1
+              ]
+            },
+            {
+              "offset": 1040,
+              "from": [
+                0,
+                9194045476933022738
+              ],
+              "to": [
+                8,
+                1
+              ]
+            },
+            {
+              "offset": 1104,
+              "from": [
+                0,
+                3299044896338359314
+              ],
+              "to": [
+                9,
+                1
+              ]
+            },
+            {
+              "offset": 1168,
+              "from": [
+                0,
+                -8931422102749629422
+              ],
+              "to": [
+                10,
+                1
+              ]
+            },
+            {
+              "offset": 1252,
+              "from": [
+                0,
+                -7023792341211925486
+              ],
+              "to": [
+                4,
+                1
+              ]
+            },
+            {
+              "offset": 1332,
+              "from": [
+                0,
+                -7023792341211925486
+              ],
+              "to": [
+                4,
+                1
+              ]
+            },
+            {
+              "offset": 1408,
+              "from": [
+                0,
+                -7023792341211925486
+              ],
+              "to": [
+                4,
+                1
+              ]
+            },
+            {
+              "offset": 1480,
+              "from": [
+                0,
+                -7023792341211925486
+              ],
+              "to": [
+                4,
+                1
+              ]
+            },
+            {
+              "offset": 1552,
+              "from": [
+                0,
+                -7023792341211925486
+              ],
+              "to": [
+                4,
+                1
+              ]
+            }
+          ]
+        }
+      ],
+      "externals": [
+        "globalgamemanagers.assets",
+        "68f624db1b0aca74eab776e85ff99e37",
+        "7bb7164292f8f9847ad07b542471704f",
+        "357ed309e07d45544a9a0d4379ece55c",
+        "052fae6f38eec0a42bc517f4f7295e98",
+        "ad121363681ef994195edfd0ee5e7735",
+        "c8e81dc872be5ae46b2c3e429d6e4f97",
+        "2fd098d5e23286840b160350db49a7df",
+        "5b9bb88733c656d498935b2c0d8efed2",
+        "ea6b742eacb085344899850f6e70170c"
+      ],
+      "script": [
+        1,
+        2692
+      ]
+    },
+    {
+      "file": "452b53151060c4246833b8aa00b3f31a",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-common-fonts-noto_assets_all_577d99b3ba49181d5b80de3725245e01.bundle",
+        "bytes": 15521356,
+        "sha256": "ce5332be8285053f057f9ee0aaca65701c898ccfba69495b3adfcce966209ff9",
+        "member": "CAB-6c8c13484990024e48f0af7d1ab3d2e1"
+      },
+      "objects": [
+        {
+          "source_path_id": 1794542172784412603,
+          "path_id": 1,
+          "bytes": 1764,
+          "source_sha256": "2b04be472b983fe280fbc1ea80f04d0aa85914f221949821e97db9075bd57533",
+          "sha256": "56d373861093f6460339b0af1f597f99c4d775bc2e34a019a48cc98b06901d17",
+          "references": [
+            {
+              "offset": 40,
+              "from": [
+                2,
+                683148379888368288
+              ],
+              "to": [
+                1,
+                1
+              ]
+            },
+            {
+              "offset": 216,
+              "from": [
+                0,
+                -7232181904344234053
+              ],
+              "to": [
+                2,
+                1
+              ]
+            }
+          ]
+        }
+      ],
+      "externals": [
+        "9ccc2dfce38b2364798a4262581c1d21",
+        "69f40642faca7a04390f2169d9890ea1"
+      ]
+    },
+    {
+      "file": "5c5ec0bcb0d9710409cd342ccfb2f7fe",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-common-fonts-riskofrain_assets_all_af18ba36b0beea88fd31594edaa6d02b.bundle",
+        "bytes": 56204,
+        "sha256": "9e61d40123d807d523fc70532589c28aa76a01d291eef4fde17d2f193cb825f9",
+        "member": "CAB-bac8ed7ccae670f43410310604e51749"
+      },
+      "objects": [
+        {
+          "source_path_id": -2368549767984625940,
+          "path_id": 1,
+          "bytes": 1756,
+          "source_sha256": "e8a1be2f63c1621d8c6edc9c467cc07e2a7da0d59069620e24e6c9c17b4d1168",
+          "sha256": "0ea873e90f06ae5883f767aa126293263d804c1773be18511e5eaae7017dad6d",
+          "references": [
+            {
+              "offset": 32,
+              "from": [
+                2,
+                683148379888368288
+              ],
+              "to": [
+                1,
+                1
+              ]
+            },
+            {
+              "offset": 208,
+              "from": [
+                0,
+                4019152015143552748
+              ],
+              "to": [
+                2,
+                1
+              ]
+            }
+          ]
+        }
+      ],
+      "externals": [
+        "9ccc2dfce38b2364798a4262581c1d21",
+        "3080439f9fea4a744a038b12f49800b1"
+      ]
+    },
+    {
+      "file": "68f624db1b0aca74eab776e85ff99e37",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/textmeshpro-formerresources-spriteassets_assets_all_721b9441367dc34a119e97f521ce7d92.bundle",
+        "bytes": 3558195,
+        "sha256": "0330e3f269815e60d6a4e7719f7143cb116510398e24a1d7df0242e2a20df952",
+        "member": "CAB-3ff05bddabe68af25568c301afeb5891"
+      },
+      "objects": [
+        {
+          "source_path_id": -6620876763352312843,
+          "path_id": 1,
+          "bytes": 356,
+          "source_sha256": "1857361a44397af21b79baa7e0b97a7b85f1e1fa82e6d0eb11751d0522843bb8",
+          "sha256": "10def85c63589429534bbfca95fc160f2fd1a4434d6565b8eb3c712edafe6860",
+          "references": [
+            {
+              "offset": 24,
+              "from": [
+                2,
+                3416126243364311598
+              ],
+              "to": [
+                1,
+                1
+              ]
+            },
+            {
+              "offset": 80,
+              "from": [
+                0,
+                -2169998193712611179
+              ],
+              "to": [
+                2,
+                1
+              ]
+            }
+          ]
+        }
+      ],
+      "externals": [
+        "c91d9e1017850f541a8fb361fa673565",
+        "7bb7164292f8f9847ad07b542471704f"
+      ]
+    },
+    {
+      "file": "d5ae9c58bb768f5438715270ac659dc0",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-common-fonts-squaresbold_assets_all_49ffaeb6258d040d6fbd7043a4b7160d.bundle",
+        "bytes": 161004,
+        "sha256": "03b5521c6a804c8044f9bc20fb3282d83932b5e6c12aa163d07e360bfe54a3e6",
+        "member": "CAB-c1c42a877bb02cbc4a0b2b9bc31eba9d"
+      },
+      "objects": [
+        {
+          "source_path_id": 1188887953541353651,
+          "path_id": 1,
+          "bytes": 1752,
+          "source_sha256": "16127e0f98b39001fd38a2924a21a04dfe7943c771de3389eeec361680d2896b",
+          "sha256": "cf429b614b2f62797feb8173151a63bd26355871430ef661d0148dad3f29732d",
+          "references": [
+            {
+              "offset": 28,
+              "from": [
+                2,
+                683148379888368288
+              ],
+              "to": [
+                1,
+                1
+              ]
+            },
+            {
+              "offset": 204,
+              "from": [
+                0,
+                5396532730158436531
+              ],
+              "to": [
+                2,
+                1
+              ]
+            }
+          ]
+        }
+      ],
+      "externals": [
+        "9ccc2dfce38b2364798a4262581c1d21",
+        "ecbcdaff4cab5d64c99e2b377c233153"
+      ]
+    },
+    {
+      "file": "b4274b35db558904eb40ed4c4e738a2b",
+      "source": {
+        "path": "Risk of Rain 2_Data/sharedassets0.assets",
+        "bytes": 506080,
+        "sha256": "3d735244606be616f3ce8ed90a644d04afc9ecbe44cdc9823fb2ed8b6c081f77"
+      },
+      "objects": [
+        {
+          "source_path_id": 8,
+          "path_id": 1,
+          "bytes": 1768,
+          "source_sha256": "e7eeabd7e974d8a3e4b5873643ba8890f1a423180148d03a5b37d1c779626ddb",
+          "sha256": "40e4f554906929f2d0aebe87955ff02e1848bb73845a6d33f85ca686af215d7a",
+          "references": [
+            {
+              "offset": 28,
+              "from": [
+                0,
+                31
+              ],
+              "to": [
+                1,
+                1
+              ]
+            },
+            {
+              "offset": 220,
+              "from": [
+                0,
+                28
+              ],
+              "to": [
+                2,
+                1
+              ]
+            }
+          ],
+          "keyword_policy": "dummy-shader-demote-valid"
+        }
+      ],
+      "externals": [
+        "9ccc2dfce38b2364798a4262581c1d21",
+        "8097df9f2df3c0d49b91b615e733c726"
+      ]
+    },
+    {
+      "file": "a8753b3887cba66408ced0b3fd85df3a",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-common-fonts-noto_assets_all_577d99b3ba49181d5b80de3725245e01.bundle",
+        "bytes": 15521356,
+        "sha256": "ce5332be8285053f057f9ee0aaca65701c898ccfba69495b3adfcce966209ff9",
+        "member": "CAB-6c8c13484990024e48f0af7d1ab3d2e1"
+      },
+      "objects": [
+        {
+          "source_path_id": -6869146203260279654,
+          "path_id": 1,
+          "bytes": 1776,
+          "source_sha256": "5bc41663a1cc3b929dffdd4abf2191a3396db25cd3471fec13b528abc9e0a70d",
+          "sha256": "939f76328952040e4cdf315a7298cd721617c2f7de2a1647ef936bd08f9a19c1",
+          "references": [
+            {
+              "offset": 36,
+              "from": [
+                2,
+                683148379888368288
+              ],
+              "to": [
+                1,
+                1
+              ]
+            },
+            {
+              "offset": 228,
+              "from": [
+                0,
+                6833859139072730266
+              ],
+              "to": [
+                2,
+                1
+              ]
+            }
+          ],
+          "keyword_policy": "dummy-shader-demote-valid"
+        }
+      ],
+      "externals": [
+        "9ccc2dfce38b2364798a4262581c1d21",
+        "6f4d11dfb9c8cc94e86ed1cdf49f4674"
+      ]
+    }
+  ],
+  "textures": [
+    {
+      "profile_sha256": "2c4c1c416f676d09a93f987d1ea9f1ecda46aa279baee5799a196beec59fc4ed",
+      "files": [
+        {
+          "file": "42cf5f1f2c8500c409c8134bd602e7c7",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": 9089698306565972099
+        },
+        {
+          "file": "8fcf78f7797fe0d5c953e7e545404135",
+          "bundle": "android-presentation-lab",
+          "member": "CAB-23cea50fbea0e0a5c32a54b130d19fb4",
+          "path_id": 1396507957089991421
+        },
+        {
+          "file": "92b74220ad9364548ba8452b54b78899",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": -3393971831823373132
+        },
+        {
+          "file": "c2840ff9013a7f9050da8e307379470b",
+          "bundle": "android-presentation-lab",
+          "member": "CAB-23cea50fbea0e0a5c32a54b130d19fb4",
+          "path_id": 8097239728611098818
+        },
+        {
+          "file": "dc3e36e1c56d5a047a60d82a8147347a",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": -2002322025164434123
+        },
+        {
+          "file": "e93f94c1c521eb244ba0ae13aa9e65be",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": 195212173745867626
+        }
+      ]
+    },
+    {
+      "profile_sha256": "76e596c4ec3049e471f292d42b2b623092e05596a1a756be66ff08e73bbe6f96",
+      "files": [
+        {
+          "file": "013fc4f7a708fbe44b1877f74e411a8b",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": 5367481095488702280
+        },
+        {
+          "file": "0987807fb55d39946a603b99aa1e6c5b",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": 7668833669819623972
+        },
+        {
+          "file": "0c752d371fb43254ea674fc1100eb54a",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": 1508111363902738241
+        },
+        {
+          "file": "0d9ea9fbc5b8d7c4d8e1c00227ac616f",
+          "bundle": "commando-prefab-lab",
+          "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+          "path_id": 5926414637099209323
+        },
+        {
+          "file": "103d2c37114096b4b9cbba6185a2debd",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": -8979127115475108537
+        },
+        {
+          "file": "25d3e4d4c46e96d468b7f1f04b2d4ff9",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": -2835256521466099648
+        },
+        {
+          "file": "289d8e8d610031e4da020093d436972b",
+          "bundle": "commando-prefab-lab",
+          "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+          "path_id": 952098381307953304
+        },
+        {
+          "file": "28f6731c4dac26b43a6261f6d2d26937",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": 6054122525024807728
+        },
+        {
+          "file": "33ccdb7ea1198374189289a18dee899f",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": 2853448911946235767
+        },
+        {
+          "file": "40a2b16d5b97f89429bf8e5f28cbc775",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": -6926862097134510706
+        },
+        {
+          "file": "494c5d0d939864646a7a2a4954fc27f1",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": 7035799921663322185
+        },
+        {
+          "file": "550bc19d10cf19044a75d16090835a39",
+          "bundle": "commando-prefab-lab",
+          "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+          "path_id": 5359641529861039830
+        },
+        {
+          "file": "5c04b3b04d4401747834009733f25eaa",
+          "bundle": "commando-prefab-lab",
+          "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+          "path_id": 3247902170922792149
+        },
+        {
+          "file": "61f7ee47a0de62643938e3ef2eeca9e6",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": 8363874468228735694
+        },
+        {
+          "file": "634f21e3c38d71642822fe0836524556",
+          "bundle": "commando-prefab-lab",
+          "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+          "path_id": 7575646601575928600
+        },
+        {
+          "file": "6935f1e68401f464a87ab9d6bc78e78c",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": -1857266055340926268
+        },
+        {
+          "file": "6b6641f0636844d479d5193f08e8b93a",
+          "bundle": "objective-support-lab",
+          "member": "CAB-d621b06adada9dbd86ac345cd5e6cc93",
+          "path_id": 5893211173371386338
+        },
+        {
+          "file": "6cacd04934c7d0949a655d94c41cbaac",
+          "bundle": "commando-prefab-lab",
+          "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+          "path_id": -6089444432484519878
+        },
+        {
+          "file": "6e46913bd0dc6fc498babd5b9def49bc",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": -6309441958615325173
+        },
+        {
+          "file": "70d81643f41af274ba716cf383806198",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": -8483289977212166486
+        },
+        {
+          "file": "7bb7164292f8f9847ad07b542471704f",
+          "bundle": "objective-ui-lab",
+          "member": "CAB-2d1a28e3d1055cbd37d92110cfc439a9",
+          "path_id": 1460287922970034516
+        },
+        {
+          "file": "7f7345602196cd14aa873745b2333e89",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": -1895022112304589085
+        },
+        {
+          "file": "86ac8acbb0108144eb6b97987c06a7c3",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": -8253412134172520135
+        },
+        {
+          "file": "8ad72d8c15de76940ae3642cb88c4f12",
+          "bundle": "commando-prefab-lab",
+          "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+          "path_id": 1262540361776226289
+        },
+        {
+          "file": "8e51017f77e27774d90d36cff5e77289",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": -7589070504457483735
+        },
+        {
+          "file": "8e7feed380bfedf4c9555b357079c308",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": 36046349753316787
+        },
+        {
+          "file": "8fe3ba24af76c48419170679f024ef99",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": 4584416759290214625
+        },
+        {
+          "file": "92fa163b5e7d74e498b400ab78c6adda",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": 4803156137965392372
+        },
+        {
+          "file": "963a07a7824810544bafc5c488e4ad0b",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": -7876051443896747039
+        },
+        {
+          "file": "abdb677869ab6a143a50ee0d67bdf8ba",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": -8969325440551219790
+        },
+        {
+          "file": "aec1c9bf0d4e6324ba5d6509b133dc77",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": 4820255554429483891
+        },
+        {
+          "file": "b47972b75d91c384f87f98007b7305aa",
+          "bundle": "commando-prefab-lab",
+          "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+          "path_id": -2915550296444116115
+        },
+        {
+          "file": "b60b372f03220724099ba8ee6ea2270a",
+          "bundle": "commando-prefab-lab",
+          "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+          "path_id": 3867330103031043493
+        },
+        {
+          "file": "b6356f20f0ca2204e830809e16bca323",
+          "bundle": "commando-prefab-lab",
+          "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+          "path_id": 6256431684070703659
+        },
+        {
+          "file": "b72134e3d64df22419c166f94db7da70",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": 8466664328476667894
+        },
+        {
+          "file": "c8f2140d20d59bf4c82f708094f34b29",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": 5523461131786929040
+        },
+        {
+          "file": "c9eeeb190e67cf747a094aca252a4acf",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": -2156534682939669224
+        },
+        {
+          "file": "cf8d482fc2ecdf643859875d4e2ff9d4",
+          "bundle": "commando-prefab-lab",
+          "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+          "path_id": 398027522228061966
+        },
+        {
+          "file": "d36120d99b8d5d4439a0d0608bf4d26d",
+          "bundle": "commando-prefab-lab",
+          "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+          "path_id": -3985249152907623725
+        },
+        {
+          "file": "d7bd2d8f8913ae14380c37d529b01d09",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": -5003196984328142613
+        },
+        {
+          "file": "d8294398cc8bdb94e9666bfc94624782",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": 5664547192032082452
+        },
+        {
+          "file": "d8ec22b18bb114648997bd12bb300174",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": -2262054613405309900
+        },
+        {
+          "file": "daab271c8ebd8594f8d1d0df9f055cf1",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": -3714239564990921329
+        },
+        {
+          "file": "db193343afd79194388605b19e23ed86",
+          "bundle": "commando-prefab-lab",
+          "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+          "path_id": -643461469193739983
+        },
+        {
+          "file": "e117dbe81fdc53a4682de5520f017b4c",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": 3239381951636119651
+        },
+        {
+          "file": "e3c1194aa44648f4d9d55e0f61968803",
+          "bundle": "commando-prefab-lab",
+          "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+          "path_id": 3467058475517307358
+        },
+        {
+          "file": "e5ccd95c30db7b34eb8381d079dc2602",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": 2848621923227726066
+        },
+        {
+          "file": "e6340e03235d05e4e8b8616b46fbc703",
+          "bundle": "commando-prefab-lab",
+          "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+          "path_id": -212744732479728401
+        },
+        {
+          "file": "ea68c3dfbca9ea344b59f5939a0c70c1",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": -1755272221554547156
+        },
+        {
+          "file": "ef1c20f11c0d42e49b9cbaf71063e1d8",
+          "bundle": "generic-pickup-lab",
+          "member": "CAB-ad6bf8edb0972a6db1da8306137ef93f",
+          "path_id": -2810273720328380070
+        },
+        {
+          "file": "f035fb54d0c729c43a5632a67782c27f",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": 7589412504249265513
+        },
+        {
+          "file": "f0865689cac43124dbf9cad9f14ec2c6",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": 7840731189453120327
+        },
+        {
+          "file": "f234c70b3f5c2294d9e2f9606b50734c",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": 2676046836120513949
+        },
+        {
+          "file": "fc007d9034d8d754e99f79b285923ab4",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": 3597991563770133516
+        }
+      ]
+    },
+    {
+      "profile_sha256": "e526418b4cf1e5f1903b18a2cb9305c719255724a2bce104d75fb1c0b3f813f5",
+      "files": [
+        {
+          "file": "c320bea49aa22c34d9564a18a6b0d07b",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": -7150587043514030724
+        },
+        {
+          "file": "e09fbdc306719d24b96effef43baff55",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": -7717536007910406861
+        }
+      ]
+    },
+    {
+      "profile_sha256": "fa23bc2cdc71234e3a5d4a084519a63bb59c6ef321e790fb964c295c8bd1d51a",
+      "files": [
+        {
+          "file": "3080439f9fea4a744a038b12f49800b1",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": 3046963490528425781
+        },
+        {
+          "file": "69f40642faca7a04390f2169d9890ea1",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": 4468495165281888101
+        },
+        {
+          "file": "6f4d11dfb9c8cc94e86ed1cdf49f4674",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": 906247241811204738
+        },
+        {
+          "file": "8097df9f2df3c0d49b91b615e733c726",
+          "bundle": "commando-prefab-lab",
+          "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+          "path_id": -7660946981623088472
+        },
+        {
+          "file": "ecbcdaff4cab5d64c99e2b377c233153",
+          "bundle": "commando-prefab-lab",
+          "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+          "path_id": 8312898102938633961
+        },
+        {
+          "file": "ff579ba37da12e3428ceb17a6db2a4ec",
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": -8582350653611174741
+        }
       ]
     }
   ]
