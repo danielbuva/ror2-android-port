@@ -59,7 +59,7 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       qualifies all 1,333 remaining single-mip RGBA records on the host; its
       complete phone cohort remains open after
       [J1123](PORTING_JOURNAL.md#j1123--guarded-rgba-phone-batch-loses-transport-admission-stays-open)
-      records the interrupted guarded run. Post-reboot evidence and a
+      records the interrupted guarded run. Recovered evidence review and a
       checkpointed single-job rerun are required.
       [J1110](PORTING_JOURNAL.md#j1110--produce-every-etc1-mip-chain-from-original-pc-textures-on-the-host)
       qualifies all 1,589 ETC1 mip-chain records on the host, with Android

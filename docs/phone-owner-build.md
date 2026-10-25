@@ -117,7 +117,7 @@ qualifies all 281 single-mip records, the shared codec build and a complete
 J1107 qualifies all 1,333 remaining single-mip RGBA records on the host, with
 its complete phone cohort open after the interrupted guarded run in
 [J1123](PORTING_JOURNAL.md#j1123--guarded-rgba-phone-batch-loses-transport-admission-stays-open).
-Post-reboot evidence and a checkpointed single-job rerun are required.
+Recovered evidence review and a checkpointed single-job rerun are required.
 J1110 qualifies all 1,589 ETC1 mip-chain records
 on the host; Android production remains open. RGBA mips, cubemaps and complete
 bundle production remain open. Owner-build v1 uses the single accepted

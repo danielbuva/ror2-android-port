@@ -39770,10 +39770,10 @@ reconciled crash timestamp or its cause.
 The last retained idle observation is 38.6 degrees C. The subsequent 13-second
 authored SDK control observes at most 37.4 degrees C, a maximum 1.00138-second
 sample interval, battery 28 degrees C and HAL status 0. These are pre-production
-controls. The heavy producer's thermal trace and monitor result never reach
-the host. Its maximum temperature, sampling gaps, pauses, progress and reason
-for termination therefore remain unknown. Neither a thermal cause nor
-successful guard operation follows from the available evidence.
+controls. The initial heavy-producer trace/result transfers fail. Later bounded
+recovery obtains the trace prefix described below; the terminal monitor result
+and final interval remain unavailable. Neither a thermal cause nor successful
+terminal guard operation follows from the available evidence.
 
 **Guard and terminal limits.** The sampler runs on the device while the host
 waits on the producer. Its one-second loop allows intervals up to two seconds,
@@ -39789,12 +39789,36 @@ The driver requests no game install or launch. Terminal ADB failure prevents
 verification of process absence, scratch cleanup, display state and the
 installed APK after the interruption. The old host driver is subsequently
 absent; its local lease release and primary-checkout prune complete. Those
-host facts do not establish the device's terminal state. Preserve the remote
-scratch and recover its thermal log, partial index and boot reason before
-cleanup once device ownership is explicitly released.
+host facts do not establish the device's terminal state. The subsequent bounded
+recovery below supplies a separate post-reboot readback; preserve the original
+remote scratch until its evidence and partial binary extents are reviewed.
 
-**Revisit conditions.** The orchestrator now owns the cooldown lease. No rerun
-occurs in this result. Later heavy cases must use one heavy job, a subsecond
+**Post-reboot recovery.** After the orchestrator releases its cooldown lease,
+a bounded read-only recovery acquires and releases a separate lease. Both boot
+reason properties report generic `reboot`, which does not identify a cause.
+The actual installed APK still matches the pre-run R55 hash, the game is absent
+and the OLED is asleep. No game installation, launch or heavy producer runs.
+
+The recovered heavy trace has 6,824 valid samples through 6,830.911 elapsed
+seconds, followed by a 2,250-byte NUL tail. Maximum observed CPU temperature is
+49.3 degrees C; the last valid sample is 42.6. Maximum battery temperature is
+31 degrees C and HAL status stays zero. There are no observed pause/resume
+events or 85-degree samples. All 6,823 measured gaps range from 1.00009 to
+1.00657 seconds: within the old two-second contract, but not a strict one-second
+limit. The trace does not demonstrate a missed abort or reconcile the separately
+reported 87.6-degree zone without its sensor identity and timestamp. Its final
+interval and reboot cause remain unknown.
+
+The recovered index contains 511 complete records. Every row matches the
+profile's ordered identities, offsets, sizes, hashes and stream relationships;
+it is also byte-exact against the corresponding host-index prefix. The implied
+committed ends are 450,132 object bytes and 28,906,336 resource bytes. Actual
+binary extents have not been read or verified; this is not a completed cohort
+or an admitted checkpoint. The remote producer result and final monitor JSON
+remain unavailable. Recovery receipts and raw files stay under the adjacent
+`device-rgba-batch-v8-recovery-v1/` directory.
+
+**Revisit conditions.** No heavy rerun occurs in this result. Later heavy cases must use one heavy job, a subsecond
 sampler enforcing at most one-second gaps, pause at 70 degrees C, resume at 55,
 abort above 80 and stop on lost telemetry. Long batches must checkpoint
 progress. Sequential SDK bands and durable verified index checkpoints belong
