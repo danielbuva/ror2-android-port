@@ -345,7 +345,9 @@ def object_file(pc, selected, destination, script_sdk_tree=None):
             selections[identity] = (target, row)
             offset += target["bytes"]
         layout = {
-            "engine": original["engine"],
+            # Destination follows the accepted Android toolchain, as in the
+            # existing object producer; original schemas remain source-derived.
+            "engine": "2021.3.45f2",
             "platform": 13,
             "trees": False,
             "types": types,
@@ -636,6 +638,66 @@ def shader_manifests(profile_root, pc, recipe):
     return manifests, [(source_recipe, (recipe["bytes"], recipe["sha256"])), *providers.items()]
 
 
+def language_json(raw):
+    """Accept original JObject trailing commas without changing quoted text."""
+    text = raw.decode("utf-8-sig")
+    chars = list(text)
+    quoted = escape = False
+    for index, char in enumerate(text):
+        if quoted:
+            if escape:
+                escape = False
+            elif char == "\\":
+                escape = True
+            elif char == '"':
+                quoted = False
+        elif char == '"':
+            quoted = True
+        elif char == ",":
+            end = index + 1
+            while end < len(text) and text[end].isspace():
+                end += 1
+            if end < len(text) and text[end] in "}]":
+                chars[index] = " "
+    return json.loads("".join(chars))
+
+
+def language_strings(pc, sources):
+    """Replay StageStrings using the qualified original English cohort.
+
+    Its uppercase ASCII keys have an independently qualified en-US collation
+    order. Other alphabets require a separately established collation contract.
+    """
+    directory = "Risk of Rain 2_Data/StreamingAssets/Language/en"
+    expected = {row["path"] for row in sources}
+    actual = {(PurePosixPath(directory) / path.name).as_posix() for path in (pc / directory).glob("*.json")}
+    if expected != actual or len(expected) != len(sources):
+        raise ValueError("English original file set differs")
+    names = [PurePosixPath(row["path"]).name.casefold() for row in sources]
+    if len(set(names)) != len(names):
+        raise ValueError("English filename collation is ambiguous")
+    pins, values = [], {}
+    for row in sorted(sources, key=lambda row: PurePosixPath(row["path"]).name.casefold()):
+        if PurePosixPath(row["path"]).parent.as_posix() != directory:
+            raise ValueError("English source is outside the original language directory")
+        path = OBJECTS.M.safe_input(pc, row["path"])
+        pin = row["bytes"], row["sha256"]
+        checked(path, pin)
+        tokens = language_json(path.read_bytes()).get("strings")
+        if isinstance(tokens, dict):
+            values.update((key, value) for key, value in tokens.items() if isinstance(value, str))
+        checked(path, pin)
+        pins.append((path, pin))
+    alphabet = "./_0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    if any(not key or any(char not in alphabet for char in key) for key in values):
+        raise ValueError("English token collation is outside the qualified cohort")
+    if not {"TITLE_SINGLEPLAYER", "SUBMENU_QUIT"} <= values.keys():
+        raise ValueError("Original English menu tokens absent")
+    keys = sorted(values, key=lambda key: tuple(alphabet.index(char) for char in key))
+    script = json.dumps({"entries": [{"key": key, "value": values[key]} for key in keys]}, ensure_ascii=False, separators=(",", ":"))
+    return script, pins
+
+
 def text_files(profile_root, pc, selected, output):
     """Strip original TextAsset type trees; keep source bytes or generate JSON.
 
@@ -655,8 +717,13 @@ def text_files(profile_root, pc, selected, output):
     recipes = []
     manifest_pins = []
     manifests = {}
+    language = None
+    if "language" in selected:
+        language, language_pins = language_strings(pc, selected["language"])
+        manifest_pins.extend(language_pins)
     if "manifests" in selected:
-        manifests, manifest_pins = shader_manifests(profile_root, pc, selected["manifests"])
+        manifests, shader_pins = shader_manifests(profile_root, pc, selected["manifests"])
+        manifest_pins.extend(shader_pins)
     for item in selected["files"]:
         name = item["file"]
         if name in ("", ".", "..") or PurePosixPath(name).name != name or "\\" in name:
@@ -669,6 +736,13 @@ def text_files(profile_root, pc, selected, output):
             data = W.B.exact(member, row["bytes"])
             if hashlib.sha256(data).hexdigest() != item["source_sha256"]:
                 raise ValueError("original TextAsset body drift")
+        elif item.get("language") is True:
+            if language is None:
+                raise ValueError("English original sources required")
+            stream = io.BytesIO()
+            OBJECTS.aligned_string(stream, item["name"])
+            OBJECTS.aligned_string(stream, language)
+            data = stream.getvalue()
         elif "manifest" in item:
             stream = io.BytesIO()
             OBJECTS.aligned_string(stream, item["name"])
@@ -689,7 +763,7 @@ def text_files(profile_root, pc, selected, output):
         if len(data) != item["bytes"] or hashlib.sha256(data).hexdigest() != item["sha256"]:
             raise ValueError("produced TextAsset body differs")
         layout = {
-            "engine": original["engine"],
+            "engine": "2021.3.45f2",
             "platform": 13,
             "trees": False,
             "types": definitions,
@@ -706,6 +780,9 @@ def text_files(profile_root, pc, selected, output):
         checked(path, (recipe["bytes"], recipe["sha256"]))
     for path, pin in manifest_pins:
         checked(path, pin)
+    if "language" in selected:
+        # StageStrings consumes the complete directory, including late additions.
+        language_strings(pc, selected["language"])
 
 
 def builtin_ui(pc, profile, builtin_extra, destination):
@@ -885,11 +962,13 @@ def produce(profile_path, profile_sha256, pc, sdk, converter, converter_receipt_
             name = item["file"]
             result["files"][TARGET + name] = {
                 **profile["outputs"][name],
-                "source_role": "pc-and-authored" if "recipe" in item or "manifest" in item else "pc-objects",
+                "source_role": "pc-and-authored" if "recipe" in item or "manifest" in item or item.get("language") is True else "pc-objects",
                 "source": item["recipe"]["path"]
                 if "recipe" in item
                 else profile["text_assets"]["manifests"]["path"]
                 if "manifest" in item
+                else "Risk of Rain 2_Data/StreamingAssets/Language/en"
+                if item.get("language") is True
                 else profile["text_assets"]["source"]["path"],
             }
         # Re-read persisted files and their providers before declaring success.

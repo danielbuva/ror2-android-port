@@ -173,7 +173,7 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 | `owner-death-effect-objects.json` | Private replay player-death-effect bundle | Rooted original graph/script selectors, checked pointer extents, preload/dependency identities and hashes. | No body, type-tree snapshot, scalar/curve override or target delta; audit below, 2026-10-25. | Existing original-input-only `object_produce.py`; J1115 host qualification, phone gate open. |
 | `owner-pickup-objects.json` | Private replay pickup bundle | Original selectors, hashes, checked pointer extents and destination relationships. | No bodies, type trees or target deltas; full audit below, 2026-10-25. | Original-input-only `object_produce.py`; J1113 host qualification, phone gate open. |
 | `owner-bootstrap.json` | Authored bootstrap TextAsset | Existing public build-entry attempt identity/input ID and four original preload GUID relationships absent from the original catalog. | No object/body/type-tree/target template or protected text; audit below, 2026-10-25. | Existing `player_data.text_files`; J1118 host qualification, phone gate open. |
-| `owner-player-data.json` | 173 private player files | Original object selectors, checked pointers/importer relationships, authored JSON/assembly order and existing texture-pack record identities. | No game bodies, pixels, text payloads, type-hash overrides or private identifiers; full audits below, 2026-10-25. | Explicit PC/SDK/fresh-converter and pinned source-produced texture packs; J1118 host qualification; landed PR75 provider, phone gate open. |
+| `owner-player-data.json` | 175 private player files | Original object selectors, checked pointers/importer relationships, authored JSON/assembly order and existing texture-pack record identities. | No game bodies, pixels, text payloads, type-hash overrides or private identifiers; full audits below, 2026-10-25. | Explicit PC/SDK/fresh-converter and pinned source-produced texture packs; J1118 host qualification; landed PR75 provider, phone gate open. |
 | `owner-player-shader-manifests.json` | Two native selection TextAssets | Original Material/Shader selectors, source asset identities and admission hashes. | No keyword inventory, shader programs, material values, serialized templates or private identifiers; audit below, 2026-10-25. | Original PC fields plus the shared authored selection policy; complete shader and phone gates remain open. |
 | `owner-uncompressed-textures.json` | Private replay uncompressed texture bodies/pixels | Original/destination selectors, source extents, generic import/placement metadata and hashes; copy, BC1, source-coordinate dilation and public JPEG policy. | No pixels, palettes, target literals/patches, native SDK implementation or image/library bytes; full audit above, 2026-10-24. All 399 records qualify on host/Android in J1079. | Explicit PC-input-only `texture_produce.py` and separately built public JPEG tool; no current game-build consumer. |
 | `owner-alpha-textures.json` | Private replay source Alpha8/single-mip texture cohort (J1082) | Canonical original/destination selectors, source/field extents, import/storage settings and hashes. | No alpha samples, encoded blocks, target byte frames, protected source or private identifiers; full audit below, 2026-10-24. | Original-PC-input-only `texture_produce.py` plus separately built public codec; no game-build consumer. |
@@ -2927,3 +2927,20 @@ values, geometry and pixels stay owner-supplied. No accepted template, scalar
 patch, private path, device identifier, credential or additional redistribution,
 authentication, ownership or entitlement grant is introduced. J1145 owns the
 complete host evidence; phone and runtime gates stay open.
+
+The player profile additionally selects the current original English JSON files
+for the existing authored `StageStrings` transformation and the fifth original
+font-material clone. Language entries are source paths, byte counts and hashes;
+the material selection contains original object/shader relationships and checked
+pointer relocations. No game text, cached token table, material scalar, serialized
+body, historical input path or target-byte override is included. Output hashes
+identify the deterministic current-input files, whose historical-input drift is
+qualified separately; they do not assert exact J850 equality.
+
+Provenance, privacy, licensing and sensitive-content audit: 2026-10-25. Original
+current files are reread and checked through output completion. Historical
+originals remain private qualification inputs and are never required for owner
+reconstruction. Serialized destinations retain the fixed Android toolchain
+identity and original native schemas. These selectors grant no game/SDK
+redistribution, ownership, authentication or entitlement capability. All original
+text, material values, generated files and detailed drift evidence stay ignored.
