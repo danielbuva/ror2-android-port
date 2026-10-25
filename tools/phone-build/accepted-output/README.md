@@ -664,6 +664,7 @@ compilers order class constant pools differently. All remaining DEX bytes match;
 no output rewriting is used. Composed installation remains open. Failed new
 outputs are retained, and active private inputs are unchanged. Remove only disposable generated outputs after evidence
 is recorded; run the mandatory repository pruner after build/run work.
+
 ## Produce single-mip RGBA textures with the owner-supplied SDK
 
 Current experimental source-only support; full phone-cohort qualification is

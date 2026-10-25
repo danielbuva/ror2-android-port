@@ -1778,6 +1778,7 @@ and `full-host-v6-comparison.json`, with the teleport receipt under
 `work/coordination/next-bundle-readonly-v1/teleport-source-host-v1/`.
 The independently produced canonical partial tree and readiness request/report
 are generated under `work/coordination/p1-content-source-host-v5/`.
+
 The experimental `build_texture_sdk.py` reads explicitly supplied SDK library,
 compiler and (on Android) public QEMU/GNU runtime and GNU development sysroot.
 These are required local tool providers, not game-derived inputs. The current
