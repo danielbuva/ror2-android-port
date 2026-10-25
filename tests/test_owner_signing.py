@@ -21,6 +21,17 @@ SDK = OWNER.module("owner_test_sdk", PATH.parent.parent / "accepted-output/sdk_p
 
 
 class OwnerSigningTests(unittest.TestCase):
+    def test_build_refuses_version_exhaustion_before_creating_output(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            request = {key: "unused" for key in ("manifest", "targets", "frontend", "java", "android_jar", "d8_jar", "wire_helper")}
+            request.update(manifest_sha256=OWNER.PROFILE, version_code=2100000001)
+            path = root / "request.json"
+            path.write_text(json.dumps(request))
+            with self.assertRaisesRegex(ValueError, "between 1 and 2100000000"):
+                OWNER.build(path, root / "output")
+            self.assertFalse((root / "output").exists())
+
     def test_unsafe_existing_key_custody_refuses_without_replacement_or_tool_execution(self):
         for state in ("missing-password", "linked-key", "linked-password", "public-directory", "public-key", "public-password", "empty-password"):
             with self.subTest(state=state), tempfile.TemporaryDirectory() as temporary:

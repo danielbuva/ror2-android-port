@@ -42204,3 +42204,23 @@ bounds and sustained play remain open. Run one fresh queue under the refined
 gameplay policy, retaining this failed case separately. Physical input, ordinary
 play and real ENOSPC remain separate gates.
 
+## J1129 — Enforce the selected owner version-code ceiling
+
+**Hypothesis/scope:** the existing owner APK builder and binary-manifest owner
+should enforce ALPHA_POLICY's 2,100,000,000 ceiling before output creation.
+J1122 leaves final-flow packaging acceptance open; this is host-only admission
+maintenance, with no APK build, installation or device claim.
+
+**Change:** tighten both existing explicit-code checks and correct the policy
+acceptance matrix. Existing omission behavior remains available to historical
+lab builds. No new allocation state or installation framework is introduced.
+
+**Validation:** 83 owner host tests pass; authored manifests accept exactly
+2,100,000,000 and refuse larger values. Request admission refuses exhaustion
+before creating an output directory. Ruff formatting/checks pass.
+
+**First remaining failure/revisit:** durable issued-code allocation, mandatory
+final-flow codes, final alpha identity, actual profile/settings update retention
+and compatible rollback still require complete owner-flow integration/device
+evidence. No public-alpha packaging checkbox is closed by these host contracts.
+

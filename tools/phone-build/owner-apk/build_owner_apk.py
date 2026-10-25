@@ -379,8 +379,8 @@ def build(request_path, output):
         raise ValueError("unsupported owner APK request/profile")
     code = code_paths(request)
     version_code = request.get("version_code")
-    if "version_code" in request and (type(version_code) is not int or not 1 <= version_code <= 2147483647):
-        raise ValueError("owner version code must be a positive Android integer")
+    if "version_code" in request and (type(version_code) is not int or not 1 <= version_code <= 2100000000):
+        raise ValueError("owner version code must be between 1 and 2100000000")
     roots = {key: Path(request[key]).resolve() for key in fields - {"manifest_sha256"}}
     if "javac" in request:
         roots["javac"] = Path(request["javac"]).resolve()
