@@ -258,6 +258,9 @@ non-pointer byte and native script/type identity;
 material keyword demotion reuses the existing object owner's policy. No runtime
 owner or Editor is added. [Setup and qualified scope](../tools/phone-build/accepted-output/README.md#produce-animation-and-generic-object-records)
 remain separate from complete bundle/player-file assembly and phone acceptance.
+[J1143](PORTING_JOURNAL.md#j1143--qualify-expanded-source-animation-controller-and-graph-records) qualifies the full
+expanded host cohorts; their payload destination identities are not APK
+identities and callers must supply their own checked player relationships.
 `avatar_produce.py` owns current experimental PC-only Avatar production using
 the same bounded reader and input-path admission. Its audited
 `recipe/owner-avatars.json` selects original body/table extents and complete

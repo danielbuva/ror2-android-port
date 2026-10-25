@@ -41768,3 +41768,148 @@ expensive unit on the phone under the independent guard; choose a generous activ
 budget from those measurements, then continue at receipt 498. Complete native
 library/metadata comparison, final phone APK/install, controls and matched
 performance remain open.
+
+## J1143 — Qualify expanded source animation, controller and graph records
+
+Date: 2026-10-25 UTC. **Host-only result:** all four public graph shards
+produce 2,498,566 records / 321,299,405 bytes. Expanded profiles produce
+3,317 AnimationClips / 205,761,672 bytes and 334 AnimatorControllers /
+891,296 bytes. Every persisted record matches J850 byte-for-byte. These are
+record providers, with overlap between graph and prior hierarchy/native packs;
+counts must not be summed as unique coverage. They directly close **zero**
+final-file readiness entries and contain **zero** APK destination records.
+No device lease/command, Editor/project build, install or launch occurs.
+Comparison APK remains J850
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`;
+there is no new APK or installed/runtime fact.
+
+**Hypothesis and prior art.** The J1133 original-schema import rules and
+qualified graph identities can cover additional animation/controller and
+unchanged graph records using source selectors/relationships only. Consulted
+`community-prior-art.md`, J1070/J1075, J1119 and J1133 before expansion.
+Pinned AssetRipper `1ac666f` `StreamedCurveKey.cs` and
+`CustomCurveResolver.cs` inform original tangent and unknown material-path CRC
+contracts; `813fed1597bac674def7256ce633a227e7b27497`
+`ExportCollection.cs` and `AnimatorControllerExtensions.GetStateBehaviours`
+inform source filenames/behaviour range identity. UnityPy 1.25.3 embedded
+type-tree/PPtr contracts remain format prior art. Original source, exact SDK
+observations and complete J850 comparison outrank community assumptions.
+No game, SDK or community implementation is published.
+
+**Named owner and source-only rules.** Existing `record_produce.py` retains
+the object-pack interface and original embedded schemas. Root average motion
+samples original channels over 20 intervals with source orientation/loop/mirror
+masks. Duplicate bindings collapse only after complete source entry, channel
+and delta-endpoint equality; finite stream keys remain. Merged original
+Hermite tangents, equal-curve-only row permutations and selected original
+start/stop sampling resolve additional import cases. Material-path attributes
+derive from original path CRCs. No coefficient, pose or scalar supplier exists.
+Controllers permute original clips/behaviours, regenerate selected original
+export path/name CRC relationships and compile opposed angles from original
+vectors. Loop flags read original clip leaves through pinned bundle/body hashes,
+real PPtrs, class-74 checks and original typed loop fields.
+
+Graph discovery anchors qualified Transform/RectTransform relationships,
+excludes conflicts and uses component ownership backlinks. Body fingerprints
+alone never seed GameObject identity. Admitted graph records require equal
+original class/native hash/script identity and every non-PPtr byte; only
+checked original-to-destination PPtrs change. Four deterministic gzip JSONL
+profiles store selectors/hashes/relationships. Their 956 source groups are
+bounded to 8 MiB (largest 8,386,845 bytes); capacity and production stream
+them without a decompressed metadata copy. The public audit expands/scans
+every bounded row. Header filenames/comments and private metadata are absent.
+No new producer, private build supplier, schema framework or runtime owner
+is introduced.
+
+**Full public qualification.** Production receives only each pinned public
+profile and the owner's unchanged original PC root. Original bundle hashes
+are checked before/after; expected full record hashes and independently
+re-read persisted extents gate success. No accepted body/tree/byte frame is
+a production input. A separate comparison reads actual J850 records only
+after production and compares all persisted bytes.
+
+| Graph shard | Records | Bytes | Profile SHA-256 |
+| --- | ---: | ---: | --- |
+| 1 | 808,261 | 104,872,310 | `dbc558cf55542cc0411709c264be35f79f5f5d691d7b15c51eaa299fd0e72b3f` |
+| 2 | 790,555 | 95,449,044 | `9aba6e22572952056a5284e0b25ffe18073780766669c973660904a554f8395c` |
+| 3 | 626,573 | 84,257,301 | `fc3f3fd934c07c5ad320b4e8cc3365f54acffaca45c88011c8dc2565fa51e6d3` |
+| 4 | 273,177 | 36,720,750 | `b953f5af26eebac7438f14d7bd751b9bb96e427e96bec59c23fde7500d14e924` |
+
+Graph classes: GameObject 692,131; Transform 578,995; MeshRenderer 351,438;
+MeshFilter 352,738; MeshCollider 60,912; BoxCollider 15,088; Light 5,158;
+MonoBehaviour/ScriptableObject 226,466; SphereCollider 1,899;
+CapsuleCollider 4,374; SkinnedMeshRenderer 2,895; ParticleSystem 16,544;
+ParticleSystemRenderer 20,345; LODGroup 155,730; ReflectionProbe 100;
+RectTransform 13,753.
+
+Private evidence in assigned worktree `work/coordination/p1-anim/`:
+
+- `graph-public-host-v1/part-{1,2,3,4}/` contains each successful `result.json`,
+  `objects.bin`, `index.jsonl` and `independent-comparison.json`.
+  `graph-production-done.json` pins all four receipts/comparisons/output hashes.
+  Total elapsed including comparisons/reused validated parts: 285.398 s;
+  maximum resident set 655,114,240 bytes.
+- `graph-detached-done.json`: graph, staged audit and mandatory cleanup each
+  exit 0. Interrupted part directories from the duplicate-parent startup race
+  are retained and excluded; successful parts are independently pinned.
+- `clip-expansion-public-host-v2/result.json`,
+  `clip-expansion-production-done-v2.json` and
+  `clip-expansion-independent-comparison-v2.json`: profile
+  `64810bf73c7913ad412dca435b773fafcb28cbb4936f28a996ac475e3f12e08a`,
+  83.625 s production; objects
+  `17dd9150e0ea9a0c83921b63dfd4c9e374128fe7c0d5b22fe61c366e51b5046e`,
+  index `03ef16cf261d521a580b247475abcbb88c32f482b102dc2494fc19ab1120345b`.
+- `controllers-expanded-host-v1/result.json` and
+  `independent-comparison.json`: profile
+  `bf9bc93d665d33633f97bbf4a25cab8eb515ed3f0584aaac59339d66b85ad22d`,
+  12.910 s production; objects
+  `4a496af1ea1e630a3ec2a171b87bfbb59f5b40e19a2c37516245af2c83f972c0`,
+  index `a395e861d6caf5467cc2ea7358eddc536bc88314235ecbb8c6f6e52d26382c18`.
+
+The animation expansion adds 71 records / 5,064,212 bytes, preserving all
+3,246 previous selectors/output hashes/bytes. Controller expansion adds
+102 / 614,492 bytes, preserving all 232 previous records: 51 permutation,
+44 TOS/native relationship, six source-loop and one singleton-behaviour cases.
+The unchanged J1119 material pack remains valid.
+
+**Validation, provenance and first failures.** Sixty-one focused host tests
+pass across producer, animation/controller, object-owner, content-recipe,
+recipe and public-audit contracts. Changed Python Ruff formatting/checks and
+whitespace pass. Independent `graph-review.json` and `expansion-review.json`
+report GO; final reviewer rehashes every qualified pack/profile, validates
+contiguous extents/counts and preservation of old qualified records. Recipes
+have zero float literals; the graph's complete field whitelist checks
+2,003,290 source rows and 5,896,927 references. Staged public audit passes;
+manual provenance/privacy/licensing review records selectors, hashes and
+authored source policies only in `recipe/README.md`. Original data, type trees,
+values, target bytes, raw evidence and generated packs remain ignored.
+No ownership/authentication/entitlement or redistribution capability is added.
+`./dev doctor` and host preflight refuse missing isolated local config,
+inventory and Editor project; standalone explicit-PC-root producers need none
+of that project state and do not bypass accepted-input/build checks.
+
+Six clips remain excluded: four native portable-atan rounding cases,
+Recorded's source-to-MonoBehaviour adapter and AcoHang's unequal material-path
+curve collision/tied-key order. Fifty-four controllers remain excluded:
+24 graph-pruning, 14 clip-count reductions, nine native-size, four behaviour
+identity, two filename-collision and one compiled-path/state-CRC first blockers.
+The six previously complete class-74 payload dependencies remain complete;
+this expansion closes no new class-74 bundle dependency. No target literals
+are used to fill these gaps.
+
+**Readiness and next closure.** Metadata-only
+`readiness-ranking-v1/{ranking.json,ranking.md}` accounts for all 503 missing
+entries in the 202/705 canonical snapshot: 380 APK and 123 payload. It deduplicates
+exact destinations and includes all residual classes, including native scene
+assembly and AssetBundle. Graph parts touch 123 payload entries, including
+118 then missing entries, without proving complete files. APK gaps are
+unaffected; 370 contain 414 Shader objects and no missing APK clip. The
+subsequent payload-owner Wisp qualification is independent, not a record-pack
+readiness promotion. Caller-owned source graphs/full-file assembly remain
+necessary. Native UI classes 222/223/225 already have producer dispatch;
+original TitleMenu/HUDSimple source mappings must compose with the APK owner's
+authored recovered graph rather than relabel payload PPtrs. Further generic
+95/193 or six-clip work waits for a demonstrated complete-file consumer.
+Revisit on source/schema/relationship/reader/algorithm/interpreter changes.
+Phone production, final source-only installation and runtime/performance
+qualification remain open; Architecture C and IL2CPP ARM64 remain fixed.

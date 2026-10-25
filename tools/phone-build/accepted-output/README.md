@@ -919,11 +919,16 @@ Bundle/player-file callers independently obtain original native type metadata
 and generate destination layout. There is no replay, SDK, UnityPy or Editor
 input to production.
 
-J1133 qualifies 3,246 AnimationClips, 27,114 GameObjects, 176,689 Transforms
-and 29,473 generic records on the host. J1119 additionally qualifies 232
-AnimatorControllers and 4,979 Materials. This partial cohort closes no final-file readiness entry by
-itself; complete source-only content and ordinary-app/device qualification
-remain open. Outputs and all discovery/comparison evidence stay ignored.
+[J1143](../../../docs/PORTING_JOURNAL.md#j1143--qualify-expanded-source-animation-controller-and-graph-records)
+qualifies 3,317 of 3,323 AnimationClips, 334 of 388 AnimatorControllers and
+2,498,566 graph-selected hierarchy/native/scripted records on the host. The
+graph shards overlap the earlier J1133 hierarchy/generic packs; do not add
+their counts as unique coverage. J1119's 4,979 Materials remain qualified.
+Every admitted record was independently compared with J850 after persistence.
+These packs close zero final-file readiness entries by themselves and contain
+no APK destination records. Complete bundle/player-file assembly and
+ordinary-app/device qualification remain open. Outputs and all discovery/
+comparison evidence stay ignored.
 The native pixel tool additionally exposes experimental `bc4`, `bc5`,
 `mips-linear` and `mips-srgb` pipe modes. BC4/BC5 accept the complete compressed
 logical top mip and emit cropped RGBA with unused colour channels zero and alpha
