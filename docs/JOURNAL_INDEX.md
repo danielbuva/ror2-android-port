@@ -10,6 +10,8 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1168](PORTING_JOURNAL.md#j1168--android-native-continuation-requires-a-checked-object-copy-fallback) | 2026-10-25 | Android native continuation requires a checked object-copy fallback | - **Observation / hypothesis:** J1167's measured active-time budget admits a continuation from the original 498 completed native jobs, but the embedded Android… |
+| [J1167](PORTING_JOURNAL.md#j1167--measure-representative-native-compilation-on-the-phone) | 2026-10-25 | Measure representative native compilation on the phone | 2026-10-25 UTC. |
 | [J1165](PORTING_JOURNAL.md#j1165--bound-historical-input-drift-in-native-snowy-cubemaps) | 2026-10-25 | Bound historical-input drift in native Snowy cubemaps | 2026-10-25 UTC. |
 | [J1164](PORTING_JOURNAL.md#j1164--recover-an-interrupted-native-save-and-classify-stage-load-thermal-refusal) | 2026-10-25 | Recover an interrupted native save and classify stage-load thermal refusal | **Hypothesis and scope.** |
 | [J1160](PORTING_JOURNAL.md#j1160--budget-alpha-capture-storage-separately-from-full-builds) | 2026-10-25 | Budget alpha capture storage separately from full builds | **Hypothesis and change.** |

@@ -461,3 +461,12 @@ phone production and runtime qualification remain open. The native measurement
 attempt stops on a host ADB stream SIGKILL during tool-host compilation, before
 any native timings. Its sender is unknown; cleanup verifies stopped tools,
 sleeping panels and lease release.
+
+[J1167](PORTING_JOURNAL.md#j1167--measure-representative-native-compilation-on-the-phone) completes the three representative ordinary-app native compiler timings.
+They size the active-time budget for checked continuation from 498 retained
+objects; complete native production, final assembly and game qualification
+remain open.
+
+J1168 records the first continuation failure before compilation: Android
+Python lacks `os.link`. A receipt-checked copy fallback passes host contracts;
+full phone native production and gameplay qualification remain open.

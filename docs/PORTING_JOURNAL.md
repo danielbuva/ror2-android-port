@@ -42848,3 +42848,81 @@ The source-only import or prefilter derivation remains unknown. Revisit only
 with a new measured transform or source lineage; neither these failures nor
 J1136 prove rebaking is necessary. Continue the independently unblocked guarded
 Android texture qualification.
+
+## J1167 — Measure representative native compilation on the phone
+
+2026-10-25 UTC. Tool-only device evidence; no game APK, installation or runtime
+qualification. J850 remains the accepted comparison APK.
+
+**Observation and correction.** Following J1162, the v23 launcher loses the
+literal instrumentation class suffix to remote shell expansion, before native
+compilation. The driver then incorrectly ignores its exited launcher. The v24
+launcher quotes the component and fails promptly on an exited child, but refuses
+startup because a model-added mandatory skin sensor is unavailable. Retained
+thermal inventory exposes CPU, GPU and battery sensors; the thermal HAL reports
+no usable skin sensor. The actual admission policy filters available sensors.
+V25 requires CPU, GPU and battery, records skin as unavailable, and retains the
+45 C battery/available-skin abort, 80 C all-physical-zone abort, 75/60 C pause and
+resume, 250 ms sampling, 1 s maximum device gap and 2 s host heartbeat. This is
+not evidence identifying the earlier unknown SIGKILL sender.
+
+**Measured result.** The existing installed ordinary-app tool host freshly
+compiles jobs 407, 410 and 418 from its retained owner converter output. Active
+compile times are **109.907**, **796.569** and **917.086 seconds**; all exit zero,
+with no recorded pause. These cover the largest C unit, largest C++ unit and
+most expensive host unit. The phase is `native-measured`, never `native-built`.
+A 60 s device-time guard baseline and fresh 10 s admission precede compilation.
+The full operation takes 2,103.096 seconds; 6,696 samples record a 71.6 C peak,
+370 ms maximum sample gap and 1,687,112 KiB peak tool-UID RSS. Metadata SHA-256
+remains `082b458b6b18447c8a01bdf59adc4cfdab644eba9a545cb173692e5adb167ff8`.
+
+Evidence is `work/coordination/phone-code/measure-native-v25-done.json`, adjacent
+`native-measure-v25-result.json`, three `native-measure-v25-job-*.json` receipts,
+storage readbacks and `owned-code-thermal-v9.jsonl`. The installed tool APK is
+`4d30299364a2f58a9433e574cf5c9df79c4b0bfb38f8a76e9029168c23a2fa69`;
+it is not a game candidate. No build, install or retained-prefix copy occurs.
+Cleanup verifies stopped tool jobs, retired guard, both physical panels OFF
+and released lease. Timing objects are removed; original objects remain intact.
+Main and worktree storage pruning pass.
+
+**Continuation and limits.** The measured maximum supports a 14,400 s active
+compile budget, over fifteen times that observation, before checked continuation
+from 498 objects into a new output. All thermal limits remain unchanged. The
+long-running private driver bounds telemetry memory and preserves aggregate
+observations; 14 driver, 16 guard, 24 native and 15 backend host contracts pass,
+with independent read-only review GO. Input/tool pins pass doctor; absent
+isolated lab generation produces the expected preflight refusal. This changes
+orchestration only and introduces no new RoR2 mechanism requiring prior art.
+Complete native production/comparison, current-only final APK assembly, durable
+compatible signing, ordinary install, both controls and matched performance
+remain open. No continuation result is inferred from these measurements.
+
+## J1168 — Android native continuation requires a checked object-copy fallback
+
+- **Observation / hypothesis:** J1167's measured active-time budget admits a
+  continuation from the original 498 completed native jobs, but the embedded
+  Android Python does not expose `os.link`. Generic Python platform portability
+  is the subsystem here; no RoR2 reconstruction or runtime policy changes.
+- **First failure / evidence:**
+  `work/coordination/phone-code/measure-native-v26-done.json` records
+  `AttributeError` during the first reused object, before any fresh native
+  compilation. The tool APK remains
+  `4d30299364a2f58a9433e574cf5c9df79c4b0bfb38f8a76e9029168c23a2fa69`.
+  Metadata remains raw-exact at
+  `082b458b6b18447c8a01bdf59adc4cfdab644eba9a545cb173692e5adb167ff8`.
+  The guard records 539 samples, 77.2 C peak and 370 ms maximum sample gap.
+  Cleanup verifies stopped tool jobs, both panels asleep and released lease.
+- **Change:** The existing native owner keeps hard links when the API exists.
+  When absent, it checks per-object storage headroom, copies only previously
+  validated completed objects and checks persisted size and SHA-256 before
+  writing the new job receipt. An existing hard-link error remains fatal.
+  The original failed output and its partial job 498 remain unchanged.
+- **Host validation:** The 498-prefix fixture exercises hard links and the
+  absent-API copy path, compiles only jobs 498 and 499, and completes corrected
+  linking. It checks low-space, corrupt-copy and hard-link-error refusals.
+  No complete native library, new tool installation, game APK or gameplay
+  qualification follows from these host checks.
+- **Revisit:** Rebuild the tool app from committed source, install over its
+  hash-verified owned package without clearing data, and continue in a fresh
+  output using the retained prefix and unchanged J1167 thermal/active-time
+  policy. Retain the terminal result before comparing native library bytes.
