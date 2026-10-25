@@ -71,19 +71,25 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       hangup, and full phone qualification remains open. Separate recovery
       preserves the interrupted checkpoint, verifies idle state and unchanged
       installed bytes, removes owned scratch and releases the device.
+      [J1173](PORTING_JOURNAL.md#j1173--preserve-the-rgba-phone-prefix-after-bounded-wall-timeout)
+      preserves 506 verified records after the retry wall timeout; a complete
+      source-only phone cohort remains open.
       [J1128](PORTING_JOURNAL.md#j1128--produce-complete-rgba-mip-and-source-cubemap-cohorts-on-the-host) qualifies all 1,523 RGBA mip-chain records
       and 110 source-derived Cubemaps on the host. Their Android production,
       13 native reflection cubes and complete bundle assembly remain open.
       [J1136](PORTING_JOURNAL.md#j1136--bound-native-cubemap-residue-with-omitted-original-pc-sources)
       tests omitted original scene/player sources without closing that residue;
       no replacement lighting or target pixels enter the producer.
+      [J1165](PORTING_JOURNAL.md#j1165--bound-historical-input-drift-in-native-snowy-cubemaps)
+      also excludes the retained historical Snowy triplet: none reproduces J850,
+      so those records remain outside drift-explained qualification.
       [J1113](PORTING_JOURNAL.md#j1113--produce-a-complete-source-only-bundle-and-seven-player-data-files)
       qualifies the first complete PC-only bundle and seven player-data files;
       J1139 supplies 173 complete player files, including source-derived TMP
-      hashes and native selection manifests. J1155 extends the independently
-      produced payload cohort to eighteen complete bundles. The shared source
+      hashes and native selection manifests. J1163 extends the independently
+      produced payload cohort to twenty-two complete bundles. The shared source
       tree preserves J1157's complete host Shader cohort. The combined
-      fixed-target readiness check has 122 missing content entries; all 18 code/SDK
+      fixed-target readiness check has 118 missing content entries; all 18 code/SDK
       entries are available. Phone replay, the
       remaining bundles/player data and complete source-derived installation
       remain open; the structural writer produces no missing content itself.
@@ -100,9 +106,9 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       original-shader recovery and app integration remain open. J1157 qualifies
       all 414 APK Shader48 objects through source-only host
       production: 369 complete files plus two shared records. The combined
-      source tree has 583 of 705 entries available (578 raw-exact, two code
-      comparison entries and three separately drift-explained); 122 remain
-      missing (J1162). Host shared mixed-file assembly is qualified; phone serialization remains open.
+      source tree has 587 of 705 entries available (582 raw-exact, two code
+      comparison entries and three separately drift-explained); 118 remain
+      missing (J1163). Host shared mixed-file assembly is qualified; phone serialization remains open.
       [J1102](PORTING_JOURNAL.md#j1102--qualify-linked-vulkan-fragment-output-and-explicit-owner-apk-code-inputs)
       confirms both executable stages in that linked payload and accepts all
       three produced code outputs in the existing APK owner without replay
@@ -309,3 +315,24 @@ phone production and runtime qualification remain open. The native measurement
 attempt stops on a host ADB stream SIGKILL during tool-host compilation, before
 any native timings. Its sender is unknown; cleanup verifies stopped tools,
 sleeping panels and lease release.
+
+[J1167](PORTING_JOURNAL.md#j1167--measure-representative-native-compilation-on-the-phone) completes the three representative ordinary-app native compiler timings.
+They size the active-time budget for checked continuation from 498 retained
+objects; complete native production, final assembly and game qualification
+remain open.
+
+J1168 records the first continuation failure before compilation: Android
+Python lacks `os.link`. A receipt-checked copy fallback passes host contracts;
+full phone native production and gameplay qualification remain open.
+
+[J1161](PORTING_JOURNAL.md#j1161--assemble-the-complete-player-script-registry-and-default-scene-shared-file)
+adds complete source-derived script-registry and default-scene files through the
+existing player owner. Its 177-file host cohort has 175 raw-exact files and two
+current-input differences; complete host availability is 583 of 705 files.
+[J1169](PORTING_JOURNAL.md#j1169--bound-the-complete-source-only-player-registry-metadata-lifetime) closes the host metadata memory gate;
+a fresh bounded phone replay remains open.
+[J1159](PORTING_JOURNAL.md#j1159--phone-player-assembly-refuses-an-omitted-original-shader-input)
+records the separate phone replay's incomplete staging;
+[J1166](PORTING_JOURNAL.md#j1166--guarded-phone-player-assembly-stops-on-thermal-limit)
+records its repaired retry's thermal stop and verified cleanup. No complete
+phone comparison or installation is qualified.

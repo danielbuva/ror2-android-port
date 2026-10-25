@@ -78,9 +78,8 @@ public static class SirenEggTargetSelectionPolicy
     public static bool IsCandidateCountSupported(int count) => count >= 0 && count <= MaximumCandidates;
 
     // Selection changes only which already validated original egg receives the
-    // ordinary movement/aim request. Visibility wins over proximity; distance
-    // breaks ties. When every candidate is occluded, the nearest one remains a
-    // navigation target and the caller must keep primary released.
+    // ordinary movement/aim request. An attackable target wins over proximity;
+    // otherwise approach the nearest egg, rather than a distant visible one.
     public static bool Prefer(bool candidateVisible, float candidateDistanceSqr, bool bestExists, bool bestVisible, float bestDistanceSqr)
     {
         if (float.IsNaN(candidateDistanceSqr) || float.IsInfinity(candidateDistanceSqr) || candidateDistanceSqr < 0f)
@@ -90,6 +89,17 @@ public static class SirenEggTargetSelectionPolicy
         if (candidateVisible != bestVisible)
             return candidateVisible;
         return candidateDistanceSqr < bestDistanceSqr;
+    }
+
+    public static bool CanRequestPrimary(bool visible, bool nativeRangeKnown, float distance, float maximumDistance)
+    {
+        if (!visible)
+            return false;
+        // Survivors without a tracking range retain their existing native skill
+        // behavior. A supplied range must be finite; never expand the tracker.
+        return !nativeRangeKnown || (!float.IsNaN(distance) && !float.IsInfinity(distance) && distance >= 0f &&
+               !float.IsNaN(maximumDistance) && !float.IsInfinity(maximumDistance) && maximumDistance >= 0f &&
+               distance <= maximumDistance);
     }
 }
 
@@ -121,6 +131,8 @@ public sealed class SirenEggInputReport
     public int lastTargetSampleFrame;
     public float lastTargetSampleRealtime;
     public bool lastTargetSampleKnown, lastTargetVisible, lastTargetPrimaryRequested;
+    public bool lastTargetNativeRangeKnown;
+    public float lastTargetNativeDistance, lastTargetNativeMaximumDistance;
 
     // Read-only witness of the native HuntressTracker target at the same input
     // owner's sample. These counters intentionally distinguish an absent
@@ -705,10 +717,10 @@ public sealed class SirenEggDiagnosticInput : IDisposable
             Yield("native-source-egg-candidate-limit-exceeded");
             return false;
         }
-        CharacterBody nearestEgg = null, visibleEgg = null;
-        Vector3 nearestPoint = Vector3.zero, visiblePoint = Vector3.zero;
-        float nearestDistanceSqr = float.PositiveInfinity, visibleDistanceSqr = float.PositiveInfinity;
-        bool hasNearest = false, hasVisible = false;
+        CharacterBody nearestEgg = null, attackableEgg = null;
+        Vector3 nearestPoint = Vector3.zero, attackablePoint = Vector3.zero;
+        float nearestDistanceSqr = float.PositiveInfinity, attackableDistanceSqr = float.PositiveInfinity;
+        bool hasNearest = false, hasAttackable = false, nearestVisible = false;
         for (int i = 0; i < sourceEggCandidates.Count; i++)
         {
             CharacterBody candidate = sourceEggCandidates[i];
@@ -716,22 +728,27 @@ public sealed class SirenEggDiagnosticInput : IDisposable
                 continue;
             float distanceSqr = (candidate.corePosition - player.corePosition).sqrMagnitude;
             Vector3 candidatePoint = context.WorldCombatAimPoint(candidate, player.inputBank.aimOrigin, out bool candidateVisible);
+            float candidateDistance, candidateMaximumDistance;
+            bool candidateRangeKnown = context.TryReadNavigationTrigger(player, candidate, out candidateDistance, out candidateMaximumDistance);
+            bool attackable = SirenEggTargetSelectionPolicy.CanRequestPrimary(candidateVisible, candidateRangeKnown,
+                                                                             candidateDistance, candidateMaximumDistance);
             if (SirenEggTargetSelectionPolicy.Prefer(false, distanceSqr, hasNearest, false, nearestDistanceSqr))
             {
                 nearestEgg = candidate;
                 nearestPoint = candidatePoint;
                 nearestDistanceSqr = distanceSqr;
                 hasNearest = true;
+                nearestVisible = candidateVisible;
             }
-            if (candidateVisible && SirenEggTargetSelectionPolicy.Prefer(true, distanceSqr, hasVisible, true, visibleDistanceSqr))
+            if (attackable && SirenEggTargetSelectionPolicy.Prefer(true, distanceSqr, hasAttackable, true, attackableDistanceSqr))
             {
-                visibleEgg = candidate;
-                visiblePoint = candidatePoint;
-                visibleDistanceSqr = distanceSqr;
-                hasVisible = true;
+                attackableEgg = candidate;
+                attackablePoint = candidatePoint;
+                attackableDistanceSqr = distanceSqr;
+                hasAttackable = true;
             }
         }
-        CharacterBody egg = hasVisible ? visibleEgg : nearestEgg;
+        CharacterBody egg = hasAttackable ? attackableEgg : nearestEgg;
         if (!egg || !context.IsCurrentSourceEgg(egg))
         {
             Yield("no-current-source-egg-target");
@@ -765,18 +782,29 @@ public sealed class SirenEggDiagnosticInput : IDisposable
             return false;
         }
 
-        bool visible = hasVisible;
-        Vector3 point = visible ? visiblePoint : nearestPoint;
+        bool visible = hasAttackable || nearestVisible;
+        Vector3 point = hasAttackable ? attackablePoint : nearestPoint;
         var identity = egg.GetComponent<UnityEngine.Networking.NetworkIdentity>();
         uint selectedEggNetworkId = identity ? identity.netId.Value : 0;
         float selectedEggDistance, trackerMaximumDistance;
-        if (context.TryReadNavigationTrigger(player, egg, out selectedEggDistance, out trackerMaximumDistance))
+        bool nativeRangeKnown = context.TryReadNavigationTrigger(player, egg, out selectedEggDistance, out trackerMaximumDistance);
+        bool primaryRequested = SirenEggTargetSelectionPolicy.CanRequestPrimary(visible, nativeRangeKnown,
+                                                                               selectedEggDistance, trackerMaximumDistance);
+        if (nativeRangeKnown)
             navigationObservation.ObserveTrigger(true, true, selectedEggNetworkId, selectedEggDistance, trackerMaximumDistance,
                                                   context.NavigationObjectiveStalledSeconds, Time.realtimeSinceStartup);
         else
             navigationObservation.ResetTriggerContinuity();
 
-        context.NavigateWorldInput(player, bridge, egg.transform.position, StopDistance, "Original Vulture egg", stageElapsed);
+        // Eggs can sit above traversable ground. The native tracking range is a
+        // sufficient firing position; do not demand walking to an egg's perch.
+        if (nativeRangeKnown && primaryRequested)
+        {
+            bridge.movement = Vector2.zero;
+            bridge.diagnosticSprint = false;
+        }
+        else
+            context.NavigateWorldInput(player, bridge, egg.transform.position, StopDistance, "Original Vulture egg", stageElapsed);
         // Read after the selected Siren route has updated the shared PathFollower
         // and request clock. NovaInputBoundary suppresses the competing general
         // route only while this exact native owner holds the diagnostic frame.
@@ -790,11 +818,11 @@ public sealed class SirenEggDiagnosticInput : IDisposable
             navigationObservation.ObservePending(selectedEggNetworkId, Time.realtimeSinceStartup, OwnsDiagnosticInput(player, bridge),
                                                   bridge.fixedTicks, context.CreateNavigationObservationReader(player, bridge));
         }
-        ObserveNativeHuntressTarget(player, egg, selectedEggNetworkId, visible, point);
+        ObserveNativeHuntressTarget(player, egg, selectedEggNetworkId, primaryRequested, point);
         Vector3 aim = point - player.inputBank.aimOrigin;
         bridge.aim = new Vector2(aim.x, aim.z).normalized;
         bridge.diagnosticAim = aim.normalized;
-        bridge.diagnosticPrimary = visible;
+        bridge.diagnosticPrimary = primaryRequested;
         inputLease.CaptureOwnedOverlay(bridge);
         navigationObservation.QueueRequest(bridge.movement, bridge.fixedTicks, context.NavigationObjectiveStalledSeconds);
         ownedBridge = bridge;
@@ -806,10 +834,14 @@ public sealed class SirenEggDiagnosticInput : IDisposable
         report.lastTargetSampleFrame = Time.frameCount;
         report.lastTargetSampleRealtime = Time.realtimeSinceStartup;
         report.lastTargetVisible = visible;
-        report.lastTargetPrimaryRequested = visible;
+        report.lastTargetPrimaryRequested = primaryRequested;
+        report.lastTargetNativeRangeKnown = nativeRangeKnown;
+        report.lastTargetNativeDistance = nativeRangeKnown && SirenTargetEligibilityWitnessPolicy.IsFinite(selectedEggDistance) ? selectedEggDistance : 0f;
+        report.lastTargetNativeMaximumDistance = nativeRangeKnown && SirenTargetEligibilityWitnessPolicy.IsFinite(trackerMaximumDistance) ? trackerMaximumDistance : 0f;
         report.lastTargetSampleKnown = true;
-        lastSubmittedPrimary = visible;
-        report.stopReason = visible ? "ordinary-primary-requested" : "source-aim-occluded";
+        lastSubmittedPrimary = primaryRequested;
+        report.lastPrimaryRequestReason = primaryRequested ? "visible-in-native-range-primary" : visible ? "outside-native-primary-range" : "no-visible-egg-primary-released";
+        report.stopReason = primaryRequested ? "ordinary-primary-requested" : visible ? "approaching-native-primary-range" : "source-aim-occluded";
         return true;
     }
 

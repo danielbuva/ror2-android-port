@@ -603,7 +603,16 @@ def run(request, *, plan_only=False, profile=None):
                     continue
                 if measured is None and reused is not None and index < len(reused):
                     obj, row = reused[index]
-                    os.link(obj, job["output"])
+                    link = getattr(os, "link", None)
+                    if link is not None:
+                        link(obj, job["output"])
+                    else:
+                        # Android's embedded Python omits os.link.
+                        if shutil.disk_usage(output).free < row["bytes"] + RESERVE:
+                            raise RuntimeError("native reuse reserve unavailable; outputs retained")
+                        shutil.copyfile(obj, job["output"])
+                        if Path(job["output"]).stat().st_size != row["bytes"] or sha(Path(job["output"])) != row["output_sha256"]:
+                            raise ValueError("reused native object copy differs from its receipt")
                     write(output / "job-results" / (str(index) + ".json"), row)
                     result["reused_compile_tasks"] += 1
                     continue

@@ -1,0 +1,77 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "source_type": {
+    "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-shaders_shader_assets_all_45ab8c24dd5dcd99e5cb60900de0231b.bundle",
+    "bytes": 2601960,
+    "sha256": "bd1acda75caf15bcb9014dc14e7a0fc5680419e39d61cf24baca429509c12906",
+    "member": "CAB-779f6fd4edc30ec27d018e8344a8081e",
+    "path_id": -658352061839041481
+  },
+  "compiler_sdk": {
+    "MacOS/Unity": {
+      "bytes": 79453472,
+      "sha256": "906123118e45d56c6bcf20f3776ed2373417553042500714023daeb9e53058e8"
+    },
+    "Tools/UnityShaderCompiler": {
+      "bytes": 12603248,
+      "sha256": "4f4e5be21d27dd7541fa9385ea480b15816e70ddaa83b516df0ab60b819142b5"
+    }
+  },
+  "compiler_includes_sha256": "163fad0ca42bd98ea1628888dedd01d91fcbb9f6bda60a8120f9b453cc565144",
+  "settings": {
+    "color_space": 0,
+    "caching_preprocessor": true,
+    "tier0": {
+      "standardShaderQuality": 0,
+      "useReflectionProbeBoxProjection": 0,
+      "useReflectionProbeBlending": 0,
+      "useDetailNormalMap": 0,
+      "useCascadedShadowMaps": 0,
+      "enableLPPV": 0,
+      "useDitherMaskForAlphaBlendedShadows": 0
+    },
+    "virtual_texturing": 0,
+    "vulkan_pretransform": 0,
+    "shader_precision_model": 0,
+    "deferred_reflections": 1
+  },
+  "source_filename": "Assets/LabLoadingScene/RoR2/Base/Shaders/FX/HGCloudRemap.shader",
+  "exporter_revision": "1ac666f47d8e9dedf96afb0b914c70d7656151ea",
+  "outputs": [
+    {
+      "bundle": "barrier-effect-lab",
+      "member": "CAB-ad06aa33a47d6983e36dda9ff33ebde2",
+      "path_id": -6362973405072239269
+    },
+    {
+      "bundle": "barrier-effect-lab",
+      "member": "CAB-ad06aa33a47d6983e36dda9ff33ebde2",
+      "path_id": -4404651390618690416
+    }
+  ],
+  "legacy_sdk": {
+    "MacOS/Unity": {
+      "bytes": 78971296,
+      "sha256": "bd512698fb1c652b0bd78a96a114e97e341a1d381cc21276be9768e8dc98ef32"
+    },
+    "Resources/unity_builtin_extra": {
+      "bytes": 133023575,
+      "sha256": "5cdba700f478541ee3f0c7ac31fe0969a07ce64e6c1531ef7823078a8ddb80a5"
+    },
+    "Tools/UnityShaderCompiler": {
+      "bytes": 12555408,
+      "sha256": "41ba554ba1f081638d5f59c09ad016cc99d1e33d5fb6e24b6cbb1b46f98e44bf"
+    }
+  },
+  "legacy_includes_sha256": "502aafe0c45259b12ff7a6e2ea1920b8b09a56677692105ea3770b2eaebcfe56",
+  "template_inputs": {
+    "Templates.json": {
+      "bytes": 640,
+      "sha256": "b046b777ec15bc92caaea19558a438e041f2ce174cdbeb6bb570055e2eb557cc"
+    },
+    "SingleTexture.txt": {
+      "bytes": 942,
+      "sha256": "7b7ae955e72eb9d5b0c084aed0749ae21846098236abd4f30281d162738c9371"
+    }
+  }
+}

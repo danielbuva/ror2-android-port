@@ -119,7 +119,9 @@ its complete phone cohort open after the interrupted guarded run in
 [J1123](PORTING_JOURNAL.md#j1123--guarded-rgba-phone-batch-loses-transport-admission-stays-open).
 [J1140](PORTING_JOURNAL.md#j1140--qualify-the-bounded-android-tool-guard-and-checkpoint-recovery)
 qualifies bounded Android guard and real checkpoint-recovery controls; the
-complete checkpointed single-job cohort remains open.
+complete checkpointed single-job cohort remains open. [J1173](PORTING_JOURNAL.md#j1173--preserve-the-rgba-phone-prefix-after-bounded-wall-timeout)
+records the retry wall timeout and verified 506-record prefix; full cohort
+admission still requires completed source-only production.
 J1110 qualifies all 1,589 ETC1 mip-chain records
 on the host; Android production remains open. [J1128](PORTING_JOURNAL.md#j1128--produce-complete-rgba-mip-and-source-cubemap-cohorts-on-the-host) qualifies all
 1,523 RGBA mip-chain records and 110 source-derived Cubemaps on the host. Their

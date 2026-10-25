@@ -461,3 +461,29 @@ phone production and runtime qualification remain open. The native measurement
 attempt stops on a host ADB stream SIGKILL during tool-host compilation, before
 any native timings. Its sender is unknown; cleanup verifies stopped tools,
 sleeping panels and lease release.
+
+[J1167](PORTING_JOURNAL.md#j1167--measure-representative-native-compilation-on-the-phone) completes the three representative ordinary-app native compiler timings.
+They size the active-time budget for checked continuation from 498 retained
+objects; complete native production, final assembly and game qualification
+remain open.
+
+J1168 records the first continuation failure before compilation: Android
+Python lacks `os.link`. A receipt-checked copy fallback passes host contracts;
+full phone native production and gameplay qualification remain open.
+
+[J1161](PORTING_JOURNAL.md#j1161--assemble-the-complete-player-script-registry-and-default-scene-shared-file)
+adds complete source-derived script-registry and default-scene files through the
+existing player owner. Its 177-file host cohort has 175 raw-exact files and two
+current-input differences; complete host availability is 583 of 705 files.
+[J1169](PORTING_JOURNAL.md#j1169--bound-the-complete-source-only-player-registry-metadata-lifetime) closes the host metadata memory gate;
+a fresh bounded phone replay remains open.
+[J1159](PORTING_JOURNAL.md#j1159--phone-player-assembly-refuses-an-omitted-original-shader-input)
+records the separate phone replay's incomplete staging;
+[J1166](PORTING_JOURNAL.md#j1166--guarded-phone-player-assembly-stops-on-thermal-limit)
+records its repaired retry's thermal stop and verified cleanup. No complete
+phone comparison or installation is qualified.
+
+[J1171](PORTING_JOURNAL.md#j1171--identical-input-scene-exports-change-historical-yaml-identity-hashes)
+confirms exporter GUID entropy in identical-input scene YAML repeats. The
+WholeStageContexts full-digest gate remains open; semantic agreement and
+comparison-only GUID normalization do not qualify its final file.

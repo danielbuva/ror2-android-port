@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using RoR2;
+using RoR2.Networking;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -71,6 +72,42 @@ public static class SirenEncounterHost
                         selectedSource.name == SirenEncounterContract.EncounterObjectName && !selectedSource.activeSelf &&
                         selectedIdentity && selectedIdentity.sceneId.Value == SirenEncounterContract.EncounterSceneId,
                 "Runtime selector did not return the exact inactive source encounter with scene ID 10");
+
+            var bossMaster = selectedSource.GetComponent<ScriptedCombatEncounter>().spawns[0].spawnCard.prefab
+                .GetComponent<CharacterMaster>();
+            var probePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/WholeGame/RoR2/Base/Characters/RoboBallBoss/RoboBallMini/RoboBallMiniMaster.prefab");
+            var probeMaster = probePrefab ? probePrefab.GetComponent<CharacterMaster>() : null;
+            Require(bossMaster && bossMaster.name == "SuperRoboBallBossMaster" && bossMaster.destroyOnBodyDeath &&
+                        probeMaster && probeMaster.destroyOnBodyDeath,
+                "Original Siren boss/probe masters must retain native destruction on body death");
+
+            var identities = sourceScene.GetRootGameObjects()
+                .SelectMany(root => root.GetComponentsInChildren<NetworkIdentity>(true)).ToArray();
+            var director = identities.Single(identity => identity.sceneId.Value == 2);
+            Require(director && director.gameObject.name == "Director" && !director.gameObject.activeSelf &&
+                        director.GetComponent<DirectorCore>() && director.GetComponent<SceneDirector>(),
+                "Original Siren Director must remain inactive before the stage owner prepares source entry");
+            var controllerIdentity = identities.Single(identity => identity.sceneId.Value == 11);
+            var controller = controllerIdentity.GetComponent<SceneObjectToggleGroup>();
+            Require(controller && !controllerIdentity.gameObject.activeSelf && controller.toggleGroups.Length == 5 &&
+                        controller.toggleGroups.Select(group => group.objects.Length).SequenceEqual(new[] { 1, 2, 4, 3, 32 }),
+                "Original Siren source toggle controller/group widths changed");
+            var nests = controller.toggleGroups[4].objects;
+            var spawners = nests.Select(nest => {
+                Require(nest && nest.scene == sourceScene && !nest.activeSelf,
+                    "Original source egg nest must remain inactive in the imported scene");
+                var points = nest.GetComponentsInChildren<GenericSceneSpawnPoint>(true);
+                Require(points.Length == 1 && points[0].enabled && points[0].gameObject.activeSelf &&
+                            points[0].networkedObjectPrefab && points[0].networkedObjectPrefab.name == "VultureEggBody" &&
+                            points[0].networkedObjectPrefab.GetComponent<HealthComponent>() &&
+                            points[0].networkedObjectPrefab.GetComponent<NetworkIdentity>(),
+                    "Each source nest must retain its one original enabled typed egg spawner");
+                return points[0];
+            }).ToArray();
+            Require(spawners.Distinct().Count() == 32 &&
+                        spawners.All(point => ReferenceEquals(point.networkedObjectPrefab, spawners[0].networkedObjectPrefab)),
+                "Source nest/spawner references must be unique and share the original egg prefab");
 
             var originalMapZones = sourceScene.GetRootGameObjects()
                 .SelectMany(root => root.GetComponentsInChildren<MapZone>(true))
@@ -234,12 +271,24 @@ public static class SirenEncounterHost
                     !SirenSourceEntryContract.MayAdmitEncounter(true, true, true, true, false),
             "Encounter admission must refuse any missing egg bijection, pending queue, active ID 10, or selected egg input");
 
+        Require(SirenSourceEntryContract.IsNaturallyRetiredEgg(true, true, false, false, true) &&
+                    !SirenSourceEntryContract.IsNaturallyRetiredEgg(false, true, false, false, true) &&
+                    !SirenSourceEntryContract.IsNaturallyRetiredEgg(true, false, false, false, true) &&
+                    !SirenSourceEntryContract.IsNaturallyRetiredEgg(true, true, true, false, true) &&
+                    !SirenSourceEntryContract.IsNaturallyRetiredEgg(true, true, false, true, true) &&
+                    !SirenSourceEntryContract.IsNaturallyRetiredEgg(true, true, false, false, false),
+            "Natural egg retirement needs exact captured death, destroyed objects and absent server mapping");
+
         return new
         {
             success = true,
             stagedSourceScene = OriginalSourceScenePath,
             importedInactiveSceneId10SelectedByRuntimeAttachPredicate = true,
             originalMapZoneCount = originalMapZoneCount,
+            originalInactiveDirectorAndToggleController = true,
+            originalEggSpawnerCount = 32,
+            originalBossAndProbeDestroyOnBodyDeath = true,
+            naturalRetirementRefusalPolicy = true,
             allOriginalMapZonesRemainDisabled = true,
             nativeEncounterLifecycleVerified = false,
             exactIdentitySelected = true,

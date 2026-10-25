@@ -84,5 +84,11 @@ class PhoneContentTests(unittest.TestCase):
             receipt = stage(project)
             self.assertFalse(receipt["device_accepted"])
             self.assertFalse(receipt["game_inputs"])
+            native = "tools/phone-build/NativeScriptSchemaFixture.cs"
+            source = Path(__file__).resolve().parents[1] / native
+            self.assertEqual(
+                ((project / "Assets/NativeScriptSchemaFixture.cs").read_bytes(), receipt["sources"][native]),
+                (source.read_bytes(), hashlib.sha256(source.read_bytes()).hexdigest()),
+            )
             with self.assertRaises(FileExistsError):
                 stage(project)

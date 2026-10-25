@@ -11,6 +11,7 @@ from phone_bundle import VERSION, make_bundle
 
 SOURCES = {
     "ContentFixture.cs": "Assets",
+    "NativeScriptSchemaFixture.cs": "Assets",
     "ContentFixtureBuilder.cs": "Assets/Editor",
     "ContentFixtureLinkerCapture.cs": "Assets/Editor",
 }
@@ -52,6 +53,7 @@ def stage(destination):
                 "scripts/lab/phone_content.py",
                 "scripts/lab/phone_bundle.py",
                 "tools/phone-build/ContentFixture.cs",
+                "tools/phone-build/NativeScriptSchemaFixture.cs",
                 "tools/phone-build/ContentFixtureBuilder.cs",
                 "tools/phone-build/ContentFixtureLinkerCapture.cs",
             )

@@ -324,7 +324,8 @@ frames/compression and metadata, plus `target`, `linux_tools` and new `output`.
 A failed native output in phase `compiling` can instead be supplied as `resume`.
 The owner validates the same original/SDK/converter/tool providers, compile
 plan, and the contiguous completed job-receipt prefix before creating a
-new output. It hard-links only hash-validated completed objects and compiles the
+new output. It hard-links only hash-validated completed objects, or copies and
+rechecks them when Android Python has no `os.link`, and compiles the
 remaining jobs; a partial object without a receipt is ignored. The failed output,
 result and logs remain unchanged. The new result separates `compile_tasks` from
 `reused_compile_tasks`; their sum is the complete cohort admitted by a subsequent

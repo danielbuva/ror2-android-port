@@ -244,6 +244,23 @@ class OwnerCodeNativeTests(unittest.TestCase):
                         NATIVE.compiled_jobs(measured_output, NATIVE.plan(profile, sdk, root / "measurement-relink"), profile, sdk, inputs)
                     invoked.clear()
                     result = NATIVE.run(request, profile=profile)
+                    invoked.clear()
+                    with patch.object(NATIVE.os, "link", side_effect=OSError("fixture hardlink failure")):
+                        with self.assertRaisesRegex(OSError, "fixture hardlink failure"):
+                            NATIVE.run({**request, "output": str(root / "link-error")}, profile=profile)
+                    copied = root / "continued-without-link"
+                    with patch.object(NATIVE.os, "link", None):
+                        copied_result = NATIVE.run({**request, "output": str(copied)}, profile=profile)
+                        self.assertEqual(copied_result["reused_compile_tasks"], 498)
+                        self.assertNotEqual((copied / "objects/497.o").stat().st_ino, (failed / "objects/497.o").stat().st_ino)
+                        self.assertEqual(len(NATIVE.compiled_jobs(copied, NATIVE.plan(profile, sdk, root / "copied-relink"), profile, sdk, inputs)), 500)
+                        with patch.object(NATIVE.shutil, "disk_usage", return_value=SimpleNamespace(free=NATIVE.RESERVE)):
+                            with self.assertRaisesRegex(RuntimeError, "native reuse reserve unavailable"):
+                                NATIVE.run({**request, "output": str(root / "copy-low-space")}, profile=profile)
+                        with patch.object(NATIVE.shutil, "copyfile", side_effect=lambda src, dst: Path(dst).write_bytes(b"corrupt")):
+                            with self.assertRaisesRegex(ValueError, "copy differs"):
+                                NATIVE.run({**request, "output": str(root / "copy-corrupt")}, profile=profile)
+                        self.assertFalse((root / "copy-corrupt/job-results/0.json").exists())
             self.assertEqual(invoked, ["498", "499", "link", "strip"])
             self.assertEqual((result["compile_tasks"], result["reused_compile_tasks"]), (2, 498))
             self.assertEqual(json.loads((failed / "result.json").read_text()), original_result)

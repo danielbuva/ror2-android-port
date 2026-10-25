@@ -39,7 +39,7 @@ class CatalogRebuildTests(unittest.TestCase):
             15950: (
                 "scripts/lab/shader_ramp_fog.py",
                 "recipe/shader-ramp-fog-candidate.json",
-                "7e7fe1089b5a64f80e30151948072e9becd658569e8fd277dc02a4335af9e865",
+                "a81eade20c1771e4511925a64d6c3b66fe7acab6ef3687fc19b08fe3b17dfece",
                 "088940070767d0c4c13ac6a30846e4a96d733780ab76f947fd0d6d332674045b",
                 "generated-shader-candidates/ramp-fog-r5/{input_id}",
             ),
@@ -51,6 +51,15 @@ class CatalogRebuildTests(unittest.TestCase):
             sha(REPO_ROOT / "recipe/shader-screen-damage-candidate.json"),
             "generated-shader-candidates/screen-damage-r1/{input_id}",
         )
+        for location, kind in ((16024, "sobel-buffer"), (15952, "sobel-outline")):
+            recipe_path = f"recipe/shader-{kind}-candidate.json"
+            expected[location] = (
+                "scripts/lab/shader_ramp_fog.py",
+                recipe_path,
+                sha(REPO_ROOT / "scripts/lab/shader_ramp_fog.py"),
+                sha(REPO_ROOT / recipe_path),
+                f"generated-shader-candidates/{kind}-r1/{{input_id}}",
+            )
         translucent = read(REPO_ROOT / "recipe/shader-translucent-candidate.json")
         translucent_generator = sha(REPO_ROOT / "scripts/lab/shader_translucent.py")
         translucent_recipe = sha(REPO_ROOT / "recipe/shader-translucent-candidate.json")
@@ -63,7 +72,7 @@ class CatalogRebuildTests(unittest.TestCase):
                 translucent["stable_output"],
             )
         self.assertEqual({row["location_id"] for row in selection["rows"]}, set(expected))
-        self.assertEqual(len(selection["rows"]), 7)
+        self.assertEqual(len(selection["rows"]), 9)
         for row in selection["rows"]:
             if 2537 <= row["location_id"] <= 2540:
                 recipe_shader = next(item for item in translucent["shaders"] if item["catalog_location"] == row["location_id"])
@@ -202,7 +211,7 @@ class CatalogRebuildTests(unittest.TestCase):
     def staging(self):
         return catalog_rebuild.CatalogIO(self.work, self.dest, self.input_id)
 
-    def install_shader_candidates(self, include_translucent=False, include_screen_damage=False):
+    def install_shader_candidates(self, include_translucent=False, include_screen_damage=False, include_sobel=False):
         selection = read(self.recipes / "shader-catalog-overrides.json")
         selection["enabled"] = False
         write(
@@ -274,18 +283,45 @@ class CatalogRebuildTests(unittest.TestCase):
             )
             metadata["keys"].append(dict(key="62decc840d5afaa49886d8b13165939e", keyType="System.String", locations=[8943]))
             index[f"{8943:032x}"] = initial
+        if include_sobel:
+            self.assertTrue(include_screen_damage)
+            for row in selection["rows"]:
+                if row["candidate_kind"] not in ("sobel-buffer", "sobel-outline"):
+                    continue
+                loc = row["location_id"]
+                kind = row["candidate_kind"]
+                object_id = -583016510457714391 if kind == "sobel-buffer" else 2831377250017133402
+                specs.append(
+                    (
+                        loc,
+                        row["guid"],
+                        row["primary_key"],
+                        row["source_asset_path"],
+                        kind,
+                        row["shader_name"],
+                        object_id,
+                        row["generator"],
+                        row["generator_recipe"],
+                        row["candidate_schema"],
+                        row["manifest"],
+                        row["shader"],
+                        row["manifest_path_field"],
+                    )
+                )
         rows = []
         for loc, guid, key, source_path, kind, name, object_id, generator, gen_recipe, schema, manifest_name, shader_rel, manifest_field in specs:
             old = closure["converted"][str(loc)]["source"]
             (self.export / old).unlink()
             (self.export / (old + ".meta")).unlink()
             self.put(self.export / source_path, 'Shader "Synthetic/Original" {}\n')
-            exporter = "ed4a1bae3abd8f34b905b509b4ff70e0" if loc == 8943 else ("e" if loc == 16022 else "f") * 32
+            exporter = {8943: "ed4a1bae3abd8f34b905b509b4ff70e0", 16024: "6d9e1738bf3095e42a34d9feb449ad3b", 15952: "0af91730b526684408399853ee967ce8"}.get(
+                loc, ("e" if loc == 16022 else "f") * 32
+            )
             self.put(self.export / (source_path + ".meta"), "guid: " + exporter + "\n")
             closure["files"] = [source_path if path == old else path for path in closure["files"]]
             closure["converted"][str(loc)] = dict(source=source_path, resolution="exact")
             index.pop(f"{loc:032x}", None)
-            index[exporter if loc == 8943 else guid] = source_path
+            index[exporter if loc in (8943, 16024, 15952) else guid] = source_path
             asset = next(row for row in metadata["locations"] if row["id"] == loc)
             asset["primaryKey"] = key
             key_row = next(row for row in metadata["keys"] if row["locations"] == [loc])
@@ -442,6 +478,22 @@ class CatalogRebuildTests(unittest.TestCase):
             self.assertEqual(row["guid"], catalog_key)
             self.assertEqual(row["exporter_guid"], exporter_guid)
             self.assertNotEqual(row["guid"], row["exporter_guid"])
+
+    def test_sobel_pair_preserves_source_exporter_identity_and_replays(self):
+        self.install_shader_candidates(include_translucent=True, include_screen_damage=True, include_sobel=True)
+        self.install_translucent_candidates()
+        staging = self.staging()
+        whole_catalog.prepare_integration(staging)
+        staging.flush()
+        receipt = catalog_rebuild.read_shader_override_receipt(self.dest, self.input_id, self.work)
+        self.assertEqual(len(receipt["rows"]), 9)
+        for loc, kind in ((16024, "sobel-buffer"), (15952, "sobel-outline")):
+            row = next(item for item in receipt["rows"] if item["location_id"] == loc)
+            self.assertNotEqual(row["guid"], row["exporter_guid"])
+            self.assertIn(kind, row["generator_recipe"])
+            self.assertEqual(sha(self.dest / (row["target"] + ".meta")), row["original_meta_sha256"])
+        replayed = catalog_rebuild.shader_override_rows(receipt, self.input_id, set(), {}, candidate_work=self.work)
+        self.assertEqual(len(replayed), 18)
 
     def test_screen_damage_seventh_row_preserves_exporter_identity_through_r3_r4(self):
         self.install_shader_candidates(include_translucent=True, include_screen_damage=True)
