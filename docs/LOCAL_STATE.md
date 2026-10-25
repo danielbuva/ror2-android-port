@@ -1737,6 +1737,18 @@ QEMU/GNU runtime separately. These acquired inputs and compiler outputs stay
 ignored; the public client has no timestamped-run lookup or SDK download default.
 [Lifecycle](../tools/phone-build/owner-code/README.md#standalone-sdk-shader-tool)
 covers owned logs, sockets and process cleanup.
+The standalone player Shader producer additionally takes explicit public
+HLSLDecompiler and AssetRipper Git repositories. These are acquired local tool
+sources, not game/accepted outputs. Existing shader-recovery pins select the
+HLSLDecompiler revision; the player Shader profile pins the AssetRipper revision
+and three exporter-resource contents. Reads use those Git objects rather than
+mutable checkout files. `shader_recovery.build_native_hlsl` generates the native
+fallback executable, compatibility sources and retained upstream notices under
+the new producer output. The acquired SDK supplies its TMP package directly;
+no retained generated ShaderLab or timestamped run folder is an input.
+The current [player Shader setup](../tools/phone-build/accepted-output/README.md#source-derived-player-shaders)
+records the explicit providers and output lifecycle.
+
 ## Lane authored-source staging
 
 `work/config/lane-staging.json` and

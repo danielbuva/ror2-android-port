@@ -252,3 +252,84 @@ def generate(output=None, resources=None, work=WORK, root=ROOT, independent=None
         write(out / "receipt.json", result)
     print(json.dumps({"success": True, "evidence": str(out.relative_to(ROOT)) if output is None else str(out), "variants": result["variant_count"]}))
     return out
+
+
+def standard_source(ctx, keys, resource, emitter):
+    name = resource
+    tree = ctx[0]
+    passes = tree["m_ParsedForm"]["m_SubShaders"][0]["m_Passes"]
+    vi, fi = emitter.pair(ctx, 0, set(keys) | {"LIGHTPROBE_SH", "UNITY_HDR_ON"})
+    text = (
+        '// Private recovered candidate; PC draw/semantic parity unverified.\nShader "Porting Lab/'
+        + name
+        + '" {\nProperties {\n'
+        + properties(tree)
+        + '\n}\nSubShader {Tags {"RenderType"="Opaque"}\n'
+    )
+    text += 'Pass {Name "DEFERRED" Tags {"LightMode"="Deferred"}\n' + render_state(passes[0]["m_State"]) + emitter.block(ctx, [(None, vi, fi)]) + "}\n"
+    shadow_features = {k for r in ctx[2] if r["kind"] == "program" and r["pass_index"] == 1 for k in r["keywords"]} & set(FEATURES)
+    pairs = []
+    for mode in ["SHADOWS_DEPTH", "SHADOWS_CUBE"]:
+        vi, fi = emitter.pair(ctx, 1, (set(keys) & shadow_features) | {mode})
+        pairs.append(("defined(" + mode + ")", vi, fi))
+    text += (
+        'Pass {Name "ShadowCaster" Tags {"LightMode"="ShadowCaster"}\n'
+        + render_state(passes[1]["m_State"])
+        + emitter.block(ctx, pairs, "#pragma multi_compile_shadowcaster\n")
+        + "}\n}}\n"
+    )
+    return name, text
+
+
+def internal_source(ctx, kind, emitter):
+    tree = ctx[0]
+    passes = tree["m_ParsedForm"]["m_SubShaders"][0]["m_Passes"]
+    groups = []
+    if kind == "reflections":
+        name = "AndroidNativeDeferredReflections"
+        text = (
+            '// Private original reflection candidate; PC parity unverified.\nShader "Porting Lab/'
+            + name
+            + '" {Properties {\n'
+            + properties(tree)
+            + "\n}\nSubShader {\n"
+        )
+        for pi, p in enumerate(passes):
+            sets = sorted({tuple(r["keywords"]) for r in ctx[2] if r["kind"] == "program" and r["pass_index"] == pi})
+            pairs = []
+            for keys in sets:
+                vi, fi = emitter.pair(ctx, pi, keys)
+                condition = None if len(sets) == 1 else ("defined(UNITY_HDR_ON)" if "UNITY_HDR_ON" in keys else "!defined(UNITY_HDR_ON)")
+                pairs.append((condition, vi, fi))
+            text += (
+                "Pass {\n" + render_state(p["m_State"]) + emitter.block(ctx, pairs, "#pragma multi_compile __ UNITY_HDR_ON\n" if len(sets) > 1 else "") + "}\n"
+            )
+            groups.append([list(k) for k in sets])
+        tags = [[] for _ in passes]
+    else:
+        name = "AndroidNativeDeferredLighting"
+        allkeys = sorted({k for r in ctx[2] if r["kind"] == "program" and r["pass_index"] == 0 for k in r["keywords"]})
+        sets = sorted({tuple(r["keywords"]) for r in ctx[2] if r["kind"] == "program" and r["pass_index"] == 0})
+        pairs = []
+        for keys in sets:
+            vi, fi = emitter.pair(ctx, 0, keys)
+            condition = " && ".join("defined(" + k + ")" if k in keys else "!defined(" + k + ")" for k in allkeys)
+            pairs.append((condition, vi, fi))
+        text = (
+            '// Private recovered lighting candidate; no PC semantic-parity claim.\nShader "Porting Lab/'
+            + name
+            + '" {Properties {\n'
+            + properties(tree)
+            + "\n}\nSubShader {\n"
+        )
+        text += (
+            'Pass {Tags {"SHADOWSUPPORT"="true"}\n'
+            + render_state(passes[0]["m_State"])
+            + emitter.block(ctx, pairs, "#pragma multi_compile_lightpass\n#pragma multi_compile __ UNITY_HDR_ON\n")
+            + "}\n"
+        )
+        vi, fi = emitter.pair(ctx, 1, [])
+        text += "Pass {\n" + render_state(passes[1]["m_State"]) + emitter.block(ctx, [(None, vi, fi)]) + "}\n"
+        groups = [[list(k) for k in sets], [[]]]
+        tags = [[["SHADOWSUPPORT", "true"]], []]
+    return name, text + "}}\n"

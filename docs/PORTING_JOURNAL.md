@@ -41913,3 +41913,120 @@ authored recovered graph rather than relabel payload PPtrs. Further generic
 Revisit on source/schema/relationship/reader/algorithm/interpreter changes.
 Phone production, final source-only installation and runtime/performance
 qualification remain open; Architecture C and IL2CPP ARM64 remain fixed.
+
+## J1157 — Reconstruct every APK Shader48 object from source
+
+**Hypothesis / prior art.** The J1151 owner can reproduce the remaining native,
+authored, font and SDK shaders without accepted Shader records or an Editor.
+The pinned AssetRipper/UABEA/uTinyRipper readers in
+`docs/community-prior-art.md` and the existing recovery ledger establish source
+property, native program and compressed-record relationships. Actual original
+PC programs, acquired SDK source snippets, reflection callbacks and native SDK
+serialization observations determine the Android-specific contracts.
+
+**Implementation.** Extend the existing `shader_produce.py`, shader source
+emitters, recovery/binder and shared material selection owner. All 350 native
+wrappers regenerate HLSL from original DXBC, including the portable fallback
+needed by twelve lighting programs; no retained HLSL is consumed. The existing
+`shader_recovery.build_native_hlsl` builds the pinned public MIT core from Git
+objects and retains upstream notices locally. SDK disassembly replaces the old
+Windows runtime dependency. Fourteen authored shaders use fresh preprocessing,
+including surface-generated multipass Billboard. Three font dummy exporters
+read explicitly supplied, content-pinned GPL-3.0 AssetRipper resources; the fourth
+reads the acquired SDK TMP package with its authored declaration-only rename.
+Original FontMaterial relationships select used features. No template contents
+are vendored or original font implementation/appearance parity claimed.
+
+Source declarations, original materials and the pinned fresh scene/build settings
+select variants. Shader-wide packing relocates both parameter and executable
+indices. Source state supplies inherited LOD/tags, properties, passes and fallback
+relationships. SDK source callbacks own root specialization constants and
+structured instancing buffers, including separate top-level CB counts, member
+prefix removal and native/common ordering. A bounded parser replay handles all
+192 actual source Standard responses without target reads; complete payload
+Standard qualification belongs to its separate owner.
+
+The new callable `shader_sdk.py` uses source SDK forms/snippets and explicit
+per-pass/per-tier selections. Native interning follows source keyword rows then
+tiers; serialized tier tables preserve caller source order. The acquired SDK's
+linked-stage append/deduplication contract and retained-only mixed-radix ranking
+avoid expanding unused feature products. The pure `snippet_key` helper accepts
+source-derived SDK/hash context for frozen payloads; it supplies no target hash.
+A later payload request adds explicit caller source-derived `native_order` rows
+for pool emission while preserving table order and the APK default. The original
+PC Standard shader independently emits all 2,202 native records in first-seen
+serialized source-table order. The helper validates declared keywords and exact
+retained-set coverage; it accepts no native indices. The payload owner retains
+variant policy and fresh full-body qualification. The payload owner subsequently qualifies the fresh supported CLI at
+`p1-payload-standard-host-v1/qualified-standard-handoff.json`; final bundle
+registration remains its responsibility. Source contract and diagnostic:
+`p1-payload-standard-host-v1/{source-native-emission-order.json,source-order-diagnostic-v1/result.json}`
+under its ignored coordination root.
+
+The 44-object builtin closure comes from original PC and SDK identities plus
+source GraphicsSettings. `m_VideoShadersIncludeMode: 2` calls the SDK hidden
+internal shader collector; its Android build branch resolves registered
+`Hidden/VideoDecodeAndroid`, independently identifying SDK object 16003. The
+source native collector retains that reference regardless of VideoPlayer scene
+objects. Empty source forms and absent SDK identities are excluded by source
+state. Original PC native schemas and the existing serialized writer produce
+sorted IDs, eight-byte object alignment and Android framing. Shared Standard
+and Skybox use source material/dependency relationships and the existing
+`objects.bin`/`index.jsonl`/`result.json` interface; the mixed-file writer remains
+owned by the player-data workstream.
+
+**Result.** Fresh strict public production emits **369 complete files,
+8,717,708 B**, plus **two shared records, 109,000 B**, in 262.69 seconds: all
+**414 Shader48 objects** across the 368 standalone files, 44-object builtin
+container and two shared shaders. Independent comparison opens J850 only after
+production and confirms every persisted byte. All previous 125 files and the preceding full 369-file/record run remain
+unchanged. This final rerun includes the source-order API and refreshed helper
+pin; the optional order path has an independent caller qualification. The guard denies prior packets, retained generated source/programs
+and accepted oracle inputs; 14,892 allowed work paths are recorded. Profile:
+`9ff4e5d552d71bc0f8e68653e2ac5680810bad07a1b18b84290f72b8188aa008`.
+Frozen qualified producer:
+`58b88d023c7e3e4671646b90b3e4a4f50d0575ab595c1b7c7adba46699d64a52`.
+The builtin file is 539,956 B,
+`db29c826dfbc7d9ea9a946b86b2496c8b542d28af6bd8865720ae7d844ab1b9c`.
+Shared receipt SHA-256:
+`ebd41c8812eea4354504f5c244155e568f6194dc09032f2fb535ee039644c841`.
+
+Evidence under `work/coordination/p1-player-shaders-v1/`:
+`public-complete369-integration-report.md`,
+`public-complete369-guarded-v3/{handoff.json,result.json,source-only-guard.json,comparison-only.json}`,
+`public-sdk-final-source-contract.json`,
+`sdk-root-structured-reflection-source-contract.md`,
+`sdk-empty-stage-owner-contract.md` and
+`sdk-android-video-retention-source-contract.md`. Preserved failures are
+`public-standalone368-guarded-v1` (upstream C++ source encoding) and
+`public-complete369-guarded-v1` (zero-job stage ownership). The latter matches
+43 of 44 builtin bodies; native SDK initialization/transfer proves Vulkan keeps
+one stage owner even with no retained jobs. The corrected empty video body
+independently matches before the complete fresh rerun. No target field or
+special-case target ID supplies the correction.
+
+Canonical `work/coordination/p1-player-shaders-source-host-v8/` preserves Wisp
+and all three separately qualified current-input drift cases. The public
+checker reports **581 of 705 available**: **576 raw-exact**, **two separate
+code-comparison entries**, **three drift-explained**; **124 missing** (**9 APK,
+115 payload**), zero invalid/mismatched. Source-provenance, assembly-ready and
+device-qualified fields remain false. The shared record pack alone does not
+close `sharedassets0.assets`; its public mixed-file assembly is separate.
+
+**Validation / remaining gates.** Independent review returns GO for all 369
+files/shared bodies, source provider/closure boundaries and native contracts.
+Forty-four owner tests and 142 shader tests (including sixteen SDK contracts),
+Ruff and existing object-pack admission pass. A subsequent actual payload
+request adds only ShaderLab `2DArray` property decoding (texture type 4,
+dimension 5), with an authored regression and unchanged old property branches;
+its fresh payload comparison remains a separate gate. Historical candidate and
+catalog override pins are refreshed only for the emitter factoring. The first
+fresh-clone CI caught one stale override binding (2,237 tests, one failure);
+updating the dependent recipe hashes preserves the existing pin checks. Original/game/SDK outputs, raw
+observations and decompilation stay ignored; recipes contain selectors and
+comparison identities only. No Editor/project build, APK, device lease or run
+occurs. Accepted J850 APK remains
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+Ordinary-app production, complete installation, original PC appearance and
+runtime/performance qualification remain open. Revisit on an actual source,
+SDK, selection or record-contract change or failed independent comparison.

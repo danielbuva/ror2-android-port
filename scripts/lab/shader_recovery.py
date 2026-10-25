@@ -375,3 +375,128 @@ def recover(target="lab"):
     print(json.dumps({"success": receipt["success"], "evidence": str(out.relative_to(ROOT)), "scope": receipt["scope"], "semantic_equivalence_proven": False}))
     if not receipt["success"]:
         raise RuntimeError(receipt["first_failure"])
+
+
+def pinned_source(source, revision, path):
+    """Read a specified public Git object, never a mutable working-tree file."""
+    actual = run(["git", "-C", source, "rev-parse", revision + "^{commit}"]).stdout.decode().strip()
+    if actual != revision:
+        raise ValueError("public shader source revision differs")
+    return run(["git", "-C", source, "show", revision + ":" + path]).stdout
+
+
+def build_native_hlsl(source, output):
+    """Build the pinned MIT decompiler core with a small POSIX frontend.
+
+    The caller supplies the public source repository; generated sources, binary,
+    LICENSE and AUTHORS remain together in its new private output directory.
+    """
+    import re
+
+    revision = PINS["hlsl"][1]
+    O = Path(output)
+    O.mkdir()
+    names = run(["git", "-C", source, "ls-tree", "-r", "--name-only", revision]).stdout.decode().splitlines()
+    for name in names:
+        path = Path(name)
+        notice = path.name.lower().startswith(("license", "authors", "copying"))
+        core = path.parts[0] in ("HLSLDecompiler", "BinaryDecompiler") and path.suffix in (".cpp", ".h", ".hpp") and "cmd_Decompiler" not in path.parts
+        if not core and not notice and name != "version.h":
+            continue
+        target = O / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        data = pinned_source(source, revision, name)
+        if core:
+            text = data.decode(errors="replace")
+            text = re.sub(r'(#include\s+"[^"]*)', lambda match: match[0].replace("\\", "/"), text)
+            text = re.sub(r"for each\(([^ ]+) ([^ ]+) in ([^)]*)\)", r"for (\1 \2 : \3)", text)
+            data = text.replace("%Id", "%zd").encode()
+        target.write_bytes(data)
+    (O / "excpt.h").write_text("")
+    (O / "log.h").write_text("""#pragma once
+    #include <cstdio>
+    #include <string>
+    #include <ctime>
+    using namespace std;
+    extern FILE *LogFile; extern bool gLogDebug;
+    #define LogInfo(...) do { if (LogFile) fprintf(LogFile,__VA_ARGS__); } while (0)
+    #define LogDebug(...) do { if (gLogDebug) LogInfo(__VA_ARGS__); } while (0)
+    static string LogTime() { return "fixed source conversion\\n"; }
+    """)
+    (O / "compat.h").write_text(r"""#pragma once
+    #include <cstdio>
+    #include <cstring>
+    #include <cstdlib>
+    #include <cstdint>
+    #include <cstdarg>
+    #include <string>
+    #include <cmath>
+    #include <limits>
+    #include <cerrno>
+    using namespace std;
+    #define __int64 long long
+    #define _stricmp strcasecmp
+    #define _strnicmp strncasecmp
+    #define _isnan isnan
+    #define _finite isfinite
+    template<size_t N,typename...Args> int sprintf_s(char (&d)[N],const char* f,Args...args){return snprintf(d,N,f,args...);}
+    template<typename...Args> int sprintf_s(char* d,size_t n,const char* f,Args...args){return snprintf(d,n,f,args...);}
+    template<typename...Args> int _snprintf_s(char* d,size_t n,size_t count,const char* f,Args...args){return snprintf(d,n,f,args...);}
+    #define sscanf_s portable_scan
+    inline int strcpy_s(char* d,size_t n,const char* s){snprintf(d,n,"%s",s);return 0;}
+    inline int strncpy_s(char* d,size_t n,const char* s,size_t count){size_t k=std::min(n-1,count);memcpy(d,s,k);d[k]=0;return 0;}
+    inline int portable_scan(const char* input,const char* format,...) {
+     va_list args; va_start(args,format);int count=0;const char* p=format;const char* s=input;
+     while(*p){
+      string part;bool conversion=false;char kind=0;
+      while(*p){char c=*p++;part+=c;if(c!='%')continue;
+       if(*p=='%'){part+=*p++;continue;}
+       conversion=true;
+       while(*p && (strchr("0123456789hlLjztI64",*p)))part+=*p++;
+       kind=*p++;part+=kind;
+       if(kind=='['){if(*p=='^')part+=*p++;if(*p==']')part+=*p++;while(*p&&*p!=']')part+=*p++;if(*p)part+=*p++;}
+       break;
+      }
+      int consumed=-1;part+="%n";
+      if(conversion){void* dest=va_arg(args,void*);if(kind=='s'||kind=='c'||kind=='[')(void)va_arg(args,int);int got=sscanf(s,part.c_str(),dest,&consumed);if(got!=1||consumed<0)break;count++;}
+      else{sscanf(s,part.c_str(),&consumed);if(consumed<0)break;}
+      s+=consumed;
+     }
+     va_end(args);return count;
+    }
+    """)
+    (O / "main.cpp").write_text(r"""#include "HLSLDecompiler/DecompileHLSL.h"
+    #include <fstream>
+    #include <iterator>
+    FILE* LogFile=stderr; bool gLogDebug=false;
+    int main(int argc,char**argv){
+     if(argc!=4)return 2;
+     std::ifstream f(argv[1],std::ios::binary),g(argv[2],std::ios::binary);
+     std::string dxbc((std::istreambuf_iterator<char>(f)),{}),assembly((std::istreambuf_iterator<char>(g)),{});
+     ParseParameters p={};p.bytecode=dxbc.data();p.decompiled=assembly.data();p.decompiledSize=assembly.size();p.IniParamsReg=120;p.StereoParamsReg=125;
+     bool patched=false,error=false;std::string model;auto output=DecompileBinaryHLSL(p,patched,model,error);
+     if(error||output.empty())return 1;
+     std::ofstream out(argv[3],std::ios::binary);out<<output;return 0;
+    }
+    """)
+    command = [
+        "clang++",
+        "-std=c++14",
+        "-w",
+        "-include",
+        str(O / "compat.h"),
+        "-I" + str(O),
+        "-I" + str(O / "BinaryDecompiler/include"),
+        "-I" + str(O / "BinaryDecompiler"),
+        str(O / "main.cpp"),
+        str(O / "HLSLDecompiler/DecompileHLSL.cpp"),
+        str(O / "BinaryDecompiler/decode.cpp"),
+        str(O / "BinaryDecompiler/reflect.cpp"),
+        "-o",
+        str(O / "hlsl-decompiler"),
+    ]
+    result = run(command, check=False)
+    (O / "build.log").write_bytes(result.stdout + result.stderr)
+    if result.returncode:
+        raise RuntimeError("native public HLSLDecompiler build failed; see private build.log")
+    return O / "hlsl-decompiler"

@@ -1,6 +1,7 @@
 """Privately recover the measured cloud, snow, terrain and reflection closure."""
 
 from common import *
+import itertools
 from shader_metadata import FAMILIES, ENGINE, material_selection, family_manifest
 from shader_deferred import load_analysis, render_state
 from shader_programs import NativePrograms, NativeVariantUnavailable
@@ -360,3 +361,153 @@ def generate(output=None, resources=None, work=WORK, root=ROOT, independent=None
         write(out / "receipt.json", result)
     print(json.dumps({"success": True, "variants": result["variant_count"], "evidence": str(out.relative_to(ROOT)) if output is None else str(out)}))
     return out
+
+
+def deferred_source(ctx, keys, resource, features, emitter):
+    name = resource
+    tree = ctx[0]
+    sub = tree["m_ParsedForm"]["m_SubShaders"][0]
+    passes = sub["m_Passes"]
+    text = (
+        '// Private native candidate; PC draw/semantic parity unverified.\nShader "Porting Lab/'
+        + name
+        + '" {\nProperties {\n'
+        + properties(tree)
+        + "\n}\nSubShader {\n"
+        + tags(sub["m_Tags"]["tags"])
+    )
+    text += "Pass {Name " + json.dumps(passes[0]["m_State"]["m_Name"]) + " " + tags(passes[0]["m_State"]["m_Tags"]["tags"]) + render_state(passes[0]["m_State"])
+    vi, fi = emitter.pair(ctx, 0, set(keys) | {"LIGHTPROBE_SH", "UNITY_HDR_ON"})
+    text += emitter.block(ctx, [(None, vi, fi)]) + "}\n"
+    shadow_features = {k for r in ctx[2] if r["kind"] == "program" and r["pass_index"] == 1 for k in r["keywords"]} & features
+    pairs = []
+    for mode in ["SHADOWS_DEPTH", "SHADOWS_CUBE"]:
+        vi, fi = emitter.pair(ctx, 1, (set(keys) & shadow_features) | {mode})
+        pairs.append(("defined(" + mode + ")", vi, fi))
+    text += (
+        'Pass {Name "ShadowCaster" Tags {"LightMode"="ShadowCaster"}\n'
+        + render_state(passes[1]["m_State"])
+        + emitter.block(ctx, pairs, "#pragma multi_compile_shadowcaster\n")
+        + "}\n}}\n"
+    )
+    return name, text
+
+
+def speedtree_source(ctx, keys, resource, features, emitter):
+    name = resource
+    tree = ctx[0]
+    sub = tree["m_ParsedForm"]["m_SubShaders"][0]
+    passes = sub["m_Passes"]
+    p = passes[0]
+    text = (
+        '// Private native candidate; PC draw/semantic parity unverified.\nShader "Porting Lab/'
+        + name
+        + '" {\nProperties {\n'
+        + properties(tree)
+        + "\n}\nSubShader {\n"
+        + tags(sub["m_Tags"]["tags"])
+    )
+    text += "Pass {Name " + json.dumps(p["m_State"]["m_Name"]) + " " + tags(p["m_State"]["m_Tags"]["tags"]) + render_state(p["m_State"])
+    pairs = []
+    for lod, wind in itertools.product(["LOD_FADE_PERCENTAGE", "LOD_FADE_CROSSFADE"], [False, True]):
+        vi, fi = emitter.pair(ctx, 0, set(keys) | {"LIGHTPROBE_SH", "UNITY_HDR_ON", lod} | ({"ENABLE_WIND"} if wind else set()))
+        condition = ("" if lod == "LOD_FADE_CROSSFADE" else "!") + "defined(LOD_FADE_CROSSFADE) && " + ("" if wind else "!") + "defined(ENABLE_WIND)"
+        pairs.append((condition, vi, fi))
+    text += emitter.block(ctx, pairs, "#pragma multi_compile LOD_FADE_PERCENTAGE LOD_FADE_CROSSFADE\n#pragma multi_compile __ ENABLE_WIND\n") + "}\n"
+    shadow_features = {
+        k
+        for r in ctx[2]
+        if r["kind"] == "program" and any(c["subshader_index"] == 0 and c["pass_index"] == 1 for c in r.get("consumers", [r]))
+        for k in r["keywords"]
+    } & features
+    pairs = []
+    for mode, lod, wind in itertools.product(["SHADOWS_DEPTH", "SHADOWS_CUBE"], ["LOD_FADE_PERCENTAGE", "LOD_FADE_CROSSFADE"], [False, True]):
+        vi, fi = emitter.pair(ctx, 1, (set(keys) & shadow_features) | {mode, lod} | ({"ENABLE_WIND"} if wind else set()))
+        condition = (
+            "defined("
+            + mode
+            + ") && "
+            + ("" if lod == "LOD_FADE_CROSSFADE" else "!")
+            + "defined(LOD_FADE_CROSSFADE) && "
+            + ("" if wind else "!")
+            + "defined(ENABLE_WIND)"
+        )
+        pairs.append((condition, vi, fi))
+    text += (
+        'Pass {Name "ShadowCaster" '
+        + tags(passes[1]["m_State"]["m_Tags"]["tags"])
+        + render_state(passes[1]["m_State"])
+        + emitter.block(
+            ctx,
+            pairs,
+            "#pragma multi_compile_shadowcaster\n#pragma multi_compile LOD_FADE_PERCENTAGE LOD_FADE_CROSSFADE\n#pragma multi_compile __ ENABLE_WIND\n",
+        )
+        + "}\n}}\n"
+    )
+    return name, text
+
+
+def water_source(ctx, keys, resource, emitter):
+    if any(k.startswith("_DISPLACEMENTMODE_") for k in keys):
+        raise NativeVariantUnavailable("Displacement requires original topology qualification; existing original-vertices selection")
+    name = resource
+    tree = ctx[0]
+    sub = tree["m_ParsedForm"]["m_SubShaders"][0]
+    passes = sub["m_Passes"]
+    text = (
+        '// Private native candidate; PC draw/semantic parity unverified.\nShader "Porting Lab/'
+        + name
+        + '" {\nProperties {\n'
+        + properties(tree)
+        + "\n}\nSubShader {\n"
+        + tags(sub["m_Tags"]["tags"])
+        + "GrabPass {"
+        + json.dumps(passes[0]["m_TextureName"])
+        + "}\n"
+    )
+    for pi, p in enumerate(passes[1:], 1):
+        pairs = []
+        for fog, sh, shadow in itertools.product([None, "FOG_LINEAR", "FOG_EXP"], [False, True], [False, True]):
+            engine = {"DIRECTIONAL"} | ({fog} if fog else set()) | ({"LIGHTPROBE_SH"} if sh else set()) | ({"SHADOWS_SCREEN"} if shadow else set())
+            condition = (
+                ("defined(" + fog + ")" if fog else "!defined(FOG_LINEAR) && !defined(FOG_EXP)")
+                + " && "
+                + ("" if sh else "!")
+                + "defined(LIGHTPROBE_SH) && "
+                + ("" if shadow else "!")
+                + "defined(SHADOWS_SCREEN)"
+            )
+            pairs.append((condition, emitter.quad(ctx, pi, set(keys) | engine)))
+        text += (
+            "Pass {Name "
+            + json.dumps(p["m_State"]["m_Name"])
+            + " "
+            + tags(p["m_State"]["m_Tags"]["tags"])
+            + render_state(p["m_State"])
+            + emitter.water_block(ctx, pairs, original_vertices=True)
+            + "}\n"
+        )
+    return name, text + "}}\n"
+
+
+def distortion_source(ctx, keys, resource, emitter):
+    name = resource
+    tree = ctx[0]
+    sub = tree["m_ParsedForm"]["m_SubShaders"][0]
+    passes = sub["m_Passes"]
+    p = passes[1]
+    text = (
+        '// Private native candidate; PC draw/semantic parity unverified.\nShader "Porting Lab/'
+        + name
+        + '" {\nProperties {\n'
+        + properties(tree)
+        + "\n}\nSubShader {\n"
+        + tags(sub["m_Tags"]["tags"])
+    )
+    text += "GrabPass {" + json.dumps(passes[0]["m_TextureName"]) + "}\n"
+    text += "Pass {Name " + json.dumps(p["m_State"]["m_Name"]) + " " + tags(p["m_State"]["m_Tags"]["tags"]) + render_state(p["m_State"])
+    pairs = []
+    for soft in [False, True]:
+        vi, fi = emitter.pair(ctx, 1, set(keys) | ({"SOFTPARTICLES_ON"} if soft else set()))
+        pairs.append((("" if soft else "!") + "defined(SOFTPARTICLES_ON)", vi, fi))
+    return name, text + emitter.block(ctx, pairs, "#pragma multi_compile_particles\n") + "}\n}}\n"

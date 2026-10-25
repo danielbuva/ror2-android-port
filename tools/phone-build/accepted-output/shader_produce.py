@@ -11,6 +11,7 @@ import argparse
 import hashlib
 import importlib.util
 import io
+import itertools
 import json
 from pathlib import Path, PurePosixPath
 import re
@@ -100,7 +101,7 @@ def string(value):
 
 
 def reflection(rows):
-    result = {"inputs": [], "buffers": [], "textures": [], "bindings": []}
+    result = {"inputs": [], "constants": [], "buffers": [], "textures": [], "bindings": []}
     current = None
     for line in rows:
         kind, fields = line.split(": ", 1)
@@ -109,14 +110,18 @@ def reflection(rows):
             result["inputs"].append(list(map(int, fields)))
         elif kind == "cb":
             name, size, count = fields
-            current = {"name": name, "size": int(size), "count": int(count), "constants": []}
+            current = {"name": name, "size": int(size), "count": int(count), "constants": [], "structures": []}
             result["buffers"].append(current)
         elif kind == "const":
-            if current is None:
-                raise ValueError("constant before constant buffer")
             name, offset, kind, matrix, rows, columns, array = fields
-            current["constants"].append(
-                {
+            if int(matrix) == 2:
+                if current is None:
+                    raise ValueError("structured constant before constant buffer")
+                current["structures"].append({"name": name, "offset": int(offset), "array": int(array), "size": int(rows), "constants": []})
+            else:
+                if int(matrix) not in (0, 1):
+                    raise ValueError("unsupported reflected constant type")
+                constant = {
                     "name": name,
                     "offset": int(offset),
                     "type": int(kind),
@@ -125,7 +130,14 @@ def reflection(rows):
                     "columns": int(columns),
                     "array": int(array),
                 }
-            )
+                if "." in name:
+                    prefix, constant["name"] = name.split(".", 1)
+                    structure = next((row for row in current["structures"] if row["name"] == prefix), None) if current else None
+                    if structure is None or "." in constant["name"]:
+                        raise ValueError("undeclared or nested structured constant member")
+                    structure["constants"].append(constant)
+                else:
+                    (result["constants"] if current is None else current["constants"]).append(constant)
         elif kind == "cbbind":
             name, index = fields
             result["bindings"].append({"name": name, "index": int(index)})
@@ -145,24 +157,35 @@ def reflection(rows):
 def native_parameters(reflect, common=None):
     """Move only shared reflection rows to the serialized common tables."""
     common = reflect if common is None else common
-    buffers = [{"name": "", "size": 0, "constants": []}] + reflect["buffers"]
+    globals = [row for row in reflect.get("constants", []) if row not in common.get("constants", [])]
+    buffers = [{"name": "", "size": 0, "constants": globals}] + reflect["buffers"]
     result = [words(VERSION, len(buffers))]
-    for buffer in buffers:
-        variables = [] if buffer in common["buffers"] else buffer.get("constants", [])
-        result.append(string(buffer["name"]) + words(buffer["size"], len(variables)))
+
+    def variables(rows):
         # SDK SaveParametersToData writes the vector array, then matrices.
-        for variable in sorted(variables, key=lambda row: row["matrix"]):
+        for variable in sorted(rows, key=lambda row: row["matrix"]):
             result.append(
                 string(variable["name"])
                 + words(variable["type"], variable["rows"], variable["columns"], int(variable["matrix"]), variable["array"], variable["offset"])
             )
-        result.append(words(0))  # No structured constants in this source cohort.
+
+    for index, buffer in enumerate(buffers):
+        shared = index > 0 and buffer in common["buffers"]
+        constants = [] if shared else buffer.get("constants", [])
+        result.append(string(buffer["name"]) + words(buffer["size"], len(constants)))
+        variables(constants)
+        structures = [] if shared else buffer.get("structures", [])
+        result.append(words(len(structures)))
+        for structure in structures:
+            result.append(string(structure["name"]) + words(structure["offset"], structure["array"], structure["size"], len(structure["constants"])))
+            variables(structure["constants"])
     bindings = [row for row in reflect.get("bindings", []) if row not in common.get("bindings", [])]
     textures = [row for row in reflect.get("textures", []) if row not in common.get("textures", [])]
     result.append(words(len(textures) + len(bindings)))
     # SDK SaveParametersToData writes noncommon textures before CB bindings.
     result.extend(
-        string(row["name"]) + words(0, row["texture"], row["sampler"], ((row["dimension"] & 0xFF) << 1) | int(row["multisample"])) for row in textures
+        string(row["name"]) + words(0, row["texture"], row["sampler"] & 0xFFFFFFFF, ((row["dimension"] & 0xFF) << 1) | int(row["multisample"]))
+        for row in textures
     )
     result.extend(string(row["name"]) + words(1, row["index"], 0) for row in bindings)
     return b"".join(result)
@@ -210,6 +233,14 @@ def common_parameters(reflect):
             "m_Samplers",
         )
     }
+
+    def constant_row(constant):
+        value = {"m_NameIndex": index(constant["name"]), "m_Index": constant["offset"], "m_ArraySize": constant["array"], "m_Type": constant["type"]}
+        value["m_RowCount" if constant["matrix"] else "m_Dim"] = constant["rows"] if constant["matrix"] else constant["columns"]
+        return value
+
+    for constant in sorted(reflect.get("constants", []), key=lambda row: row["matrix"]):
+        result["m_MatrixParams" if constant["matrix"] else "m_VectorParams"].append(constant_row(constant))
     for texture in reflect["textures"]:
         result["m_TextureParams"].append(
             {
@@ -236,13 +267,22 @@ def common_parameters(reflect):
         }
         # SDK CreateNamesTable visits vector members before matrix members.
         for constant in sorted(buffer["constants"], key=lambda row: row["matrix"]):
-            value = {"m_NameIndex": index(constant["name"]), "m_Index": constant["offset"], "m_ArraySize": constant["array"], "m_Type": constant["type"]}
-            if constant["matrix"]:
-                value["m_RowCount"] = constant["rows"]
-                row["m_MatrixParams"].append(value)
-            else:
-                value["m_Dim"] = constant["columns"]
-                row["m_VectorParams"].append(value)
+            row["m_MatrixParams" if constant["matrix"] else "m_VectorParams"].append(constant_row(constant))
+        structures = buffer.get("structures", [])
+        for structure in structures:
+            index(structure["name"])
+        for structure in structures:
+            member = {
+                "m_NameIndex": index(structure["name"]),
+                "m_Index": structure["offset"],
+                "m_ArraySize": structure["array"],
+                "m_StructSize": structure["size"],
+                "m_VectorMembers": [],
+                "m_MatrixMembers": [],
+            }
+            for constant in sorted(structure["constants"], key=lambda row: row["matrix"]):
+                member["m_MatrixMembers" if constant["matrix"] else "m_VectorMembers"].append(constant_row(constant))
+            row["m_StructParams"].append(member)
         result["m_ConstantBuffers"].append(row)
     for binding in reflect["bindings"]:
         result["m_ConstantBufferBindings"].append({"m_NameIndex": index(binding["name"]), "m_Index": binding["index"], "m_ArraySize": 1})
@@ -252,7 +292,10 @@ def common_parameters(reflect):
 def variant_records(variants, keyword_names):
     """Factor fresh reflection and emit parameters before linked executables."""
     reflects = [reflection(variant["compilation"]["reflection"]) for variant in variants]
-    common = {key: [row for row in reflects[0][key] if all(row in reflect[key] for reflect in reflects[1:])] for key in ("buffers", "bindings", "textures")}
+    common = {
+        key: [row for row in reflects[0][key] if all(row in reflect[key] for reflect in reflects[1:])]
+        for key in ("constants", "buffers", "bindings", "textures")
+    }
     records, parameters, programs = [], [], []
 
     def intern(record):
@@ -300,35 +343,39 @@ def value(number=0, name="<noninit>"):
 
 
 def properties(prop_node, shaderlab):
-    block = re.search(r"\bProperties\s*\{(.*?)\}\s*SubShader", shaderlab, re.S)
-    if block is None:
+    blocks = source_blocks(shaderlab, "Properties")
+    if not blocks:
         return []
-    pattern = (
-        r'((?:\[Normal\]\s*)*)(\w+)\s*\(\s*"([^"]+)"\s*,\s*(2D|Cube|Color|Vector|Float|Range\s*\([^)]*\))\s*\)\s*=\s*("[^"]+"\s*\{\s*\}|\([^)]*\)|[-+\d.eE]+)'
-    )
+    block = blocks[0][1]
+    pattern = r'((?:\[[^\]]+\]\s*)*)(\w+)\s*\(\s*"([^"]*)"\s*,\s*(2DArray|2D|Cube|Color|Vector|Float|Range\s*\([^)]*\))\s*\)\s*=\s*("[^"]*"\s*\{\s*\}|\([^)]*\)|[-+\d.eE]+)'
     result = []
-    for match in re.finditer(pattern, block[1]):
+    known = {name: 1 << index for index, name in enumerate(("HideInInspector", "PerRendererData", "NoScaleOffset", "Normal", "HDR", "Gamma"))}
+    for match in re.finditer(pattern, block, re.I):
         attributes, name, description, kind, literal = match.groups()
+        kind = kind[0].upper() + kind[1:].lower() if kind.lower() in ("color", "vector", "float", "cube") else kind
         prop = default(prop_node)
-        prop.update({"m_Name": name, "m_Description": description, "m_Type": {"Color": 0, "Vector": 1, "Float": 2, "2D": 4, "Cube": 4}.get(kind, 3)})
-        # Recognized Normal is consumed into ShaderPropertyFlags.Normal.
-        prop["m_Flags"] = 8 if attributes else 0
+        prop.update(
+            {"m_Name": name, "m_Description": description, "m_Type": {"Color": 0, "Vector": 1, "Float": 2, "2D": 4, "Cube": 4, "2DArray": 4}.get(kind, 3)}
+        )
+        attributes = re.findall(r"\[([^\]]+)\]", attributes)
+        prop["m_Flags"] = sum(known.get(attribute, 0) for attribute in attributes)
+        prop["m_Attributes"] = [attribute for attribute in attributes if attribute not in known]
         prop["m_DefTexture"]["m_TexDim"] = 1
-        if kind in ("2D", "Cube"):
-            prop["m_DefTexture"] = {"m_DefaultName": re.search(r'"([^"]+)"', literal)[1], "m_TexDim": 2 if kind == "2D" else 4}
+        if kind in ("2D", "Cube", "2DArray"):
+            prop["m_DefTexture"] = {"m_DefaultName": re.search(r'"([^"]*)"', literal)[1], "m_TexDim": {"2D": 2, "Cube": 4, "2DArray": 5}[kind]}
         else:
             values = [float(part.strip()) for part in literal.strip("()").split(",")]
             if len(values) != (4 if kind in ("Color", "Vector") else 1):
                 raise ValueError("unsupported shader property default")
-            if kind.startswith("Range"):
+            if kind.lower().startswith("range"):
                 limits = [float(part) for part in re.search(r"\(([^)]+)\)", kind)[1].split(",")]
                 if len(limits) != 2:
                     raise ValueError("unsupported shader property range")
                 values.extend(limits)
-            for i, number in enumerate(values):
-                prop[f"m_DefValue[{i}]"] = number
+            for index, number in enumerate(values):
+                prop[f"m_DefValue[{index}]"] = number
         result.append(prop)
-    if re.sub(pattern, "", block[1]).strip():
+    if re.sub(pattern, "", block, flags=re.I).strip():
         raise ValueError("unsupported shader property declaration")
     return result
 
@@ -405,30 +452,52 @@ def render_state(shaderlab, gpu_program_id):
         matches = re.findall(r"\b" + command + r"\s+" + token, source)
         if matches:
             state[field] = scalar(matches[-1])
-    command = re.search(r"\bBlend\s+" + token + r"\s+" + token, source)
-    if command:
-        fields = command.groups()
+    commands = re.findall(r"\bBlend\s+" + token + r"\s+" + token, source)
+    if commands:
+        fields = commands[-1]
         for field, operand in (("srcBlend", fields[0]), ("destBlend", fields[1]), ("srcBlendAlpha", fields[0]), ("destBlendAlpha", fields[1])):
             try:
                 state["rtBlend0"][field] = scalar(operand)
             except ValueError as error:
                 raise ValueError("unsupported source Blend") from error
+    for command, field in (("ReadMask", "stencilReadMask"), ("WriteMask", "stencilWriteMask"), ("Ref", "stencilRef")):
+        binding = re.search(r"\b" + command + r"\s+\[([^\]]+)\]", source)
+        if binding:
+            state[field] = value(0, binding[1])
+    for command, field in (("Comp", "comp"), ("Pass", "pass")):
+        binding = re.search(r"\b" + command + r"\s+\[([^\]]+)\]", source)
+        if binding:
+            state["stencilOp"][field] = value(0, binding[1])
+    mask = re.search(r"\bColorMask\s+\[([^\]]+)\]", source)
+    if mask:
+        state["rtBlend0"]["colMask"] = value(0, mask[1])
+    if re.search(r"\bFog\s*\{\s*Mode\s+Off", source):
+        state["fogMode"] = 0
     return state
 
 
 def source_tags(shaderlab):
-    # Source PC SerializedTagMap observations: every one of223 multitag maps in
-    # the schema provider bundle is ordered by canonical key string, not source
-    # declaration order. QUEUE's canonical spelling is the existing SDK registry.
-    tags = re.search(r"\bTags\s*\{([^}]+)\}", shaderlab)
-    result = []
-    for key, text in re.findall(r'"([^"]+)"\s*=\s*"([^"]+)"', tags[1]) if tags else []:
-        key = {"queue": "QUEUE", "ignoreprojector": "IGNOREPROJECTOR"}.get(key.casefold(), key)
-        # SDK shadertag::Initialize interns literal true before authored input.
-        if key == "IGNOREPROJECTOR":
-            text = text.lower()
-        result.append([key, text])
-    return sorted(result)
+    """SDK-interned tag keys/values; SerializedTagMap orders canonical strings."""
+    canonical = {
+        "queue": "QUEUE",
+        "lightmode": "LIGHTMODE",
+        "ignoreprojector": "IGNOREPROJECTOR",
+        "shadowsupport": "SHADOWSUPPORT",
+        "rendertype": "RenderType",
+        "disablebatching": "DisableBatching",
+    }
+    rows = {}
+    for _, block in source_blocks(shaderlab, "Tags"):
+        for key, text in re.findall(r'"([^"]+)"\s*=\s*"([^"]+)"', block):
+            key = canonical.get(key.casefold(), key)
+            if key in ("IGNOREPROJECTOR", "SHADOWSUPPORT"):
+                text = text.lower()
+            if key == "LIGHTMODE":
+                text = text.upper()
+            if key == "DisableBatching" and text.casefold() == "lodfading":
+                text = "LodFading"
+            rows[key] = text
+    return sorted([[key, text] for key, text in rows.items()])
 
 
 def grab_pass(pass_node, texture_name):
@@ -445,24 +514,94 @@ def grab_pass(pass_node, texture_name):
     return shader_pass
 
 
-def source_keyword_registration(preprocessing, builtin_keywords):
-    """Register fog names retained by the source build's automatic fog stripping.
+def source_blocks(text, word):
+    result = []
+    cursor = 0
+    pattern = re.compile(r"\b" + word + r"\s*\{")
+    while match := pattern.search(text, cursor):
+        start, depth, quoted = match.end(), 1, False
+        for end in range(start, len(text)):
+            char = text[end]
+            if char == '"' and text[end - 1] != "\\":
+                quoted = not quoted
+            if not quoted:
+                depth += (char == "{") - (char == "}")
+            if not depth:
+                result.append((match.start(), text[start:end]))
+                cursor = end + 1
+                break
+        else:
+            raise ValueError("unclosed source ShaderLab block")
+    return result
 
-    J850 builds one EmptyScene Lab scene with fog disabled. Names remain
-    registered while only the no-fog executable survives the build.
-    """
-    names, flags = (list(values) for values in builtin_keywords)
-    for row in preprocessing["records"]:
-        if not row["kind"].startswith("keywords") or "values" not in row:
-            continue
-        for axis in row["values"]:
-            if row["kind"] != "keywordsUserGlobal" or axis != "__ FOG_LINEAR FOG_EXP FOG_EXP2":
-                raise ValueError("unsupported authored shader keyword variants")
-            for name in axis.split()[1:]:
-                if name not in names:
-                    names.append(name)
-                    flags.append(0)
-    return names, flags
+
+def pass_keywords(pre, builtins):
+    names, flags = (list(values) for values in builtins)
+    masks = {}
+    for snippet in pre["snippets"]:
+        gpu = snippet["fields"][0]
+        mask = list(range(len(builtins[0])))
+        for row in pre["records"]:
+            if row["kind"] not in ("keywordsUserGlobal", "keywordsUserLocal", "keywordsBuiltin") or row["fields"][0] != gpu:
+                continue
+            for axis in row["values"]:
+                for name in axis.split():
+                    if name == "__":
+                        continue
+                    if name not in names:
+                        names.append(name)
+                        flags.append(int(row["kind"] == "keywordsUserLocal"))
+                    if names.index(name) not in mask:
+                        mask.append(names.index(name))
+        masks[gpu] = sorted(mask)
+    return names, flags, masks
+
+
+def retained_keywords(pre, gpu, material_keywords=None):
+    """Pinned EmptyScene policy, SDK axis order and original material features."""
+    no_lightmap = {"LIGHTMAP_ON", "DIRLIGHTMAP_COMBINED", "DYNAMICLIGHTMAP_ON", "SHADOWS_SHADOWMASK", "LIGHTMAP_SHADOW_MIXING"}
+    builtin = next((row["values"] for row in pre["records"] if row["kind"] == "keywordsBuiltin" and row["fields"] == [gpu, 0]), [])
+    builtin = [row.split() for row in builtin if not set(row.split()) & no_lightmap] if builtin else [[]]
+    axes = [
+        axis for row in pre["records"] if row["kind"] in ("keywordsUserGlobal", "keywordsUserLocal") and row["fields"] == [gpu, 0] for axis in row["values"]
+    ]
+    feature_axes, multi_axes = [], []
+    req = next(row for row in pre["records"] if row["kind"] == "keywordsEnd" and row["fields"] == [gpu])
+    multi_names = set(req.get("keywords", "").split())
+    for axis in axes:
+        values = axis.split()
+        if "FOG_LINEAR" in values or "INSTANCING_ON" in values:
+            values = ["__"]
+        options = [[] if name == "__" else [name] for name in values]
+        (feature_axes if material_keywords is not None and set(values) - {"__"} - multi_names else multi_axes).append(options)
+    multi = [sum(values, []) for values in itertools.product(*multi_axes)]
+    features = [sum(values, []) for values in itertools.product(*feature_axes)]
+    if material_keywords is not None:
+        feature_names = {name for axis in feature_axes for option in axis for name in option}
+        used = {frozenset(keys) & feature_names for keys in material_keywords}
+        features = [keys for keys in features if frozenset(keys) in used]
+    # User/multi axes outer, SDK builtin combinations next; actual source
+    # material shader_feature combinations are the innermost source selection.
+    return [builtin_keys + user_keys + feature_keys for user_keys, builtin_keys, feature_keys in itertools.product(multi, builtin, features)]
+
+
+def shader_records(passes, keyword_names):
+    """Merge fresh per-pass groups, preserving their local/native record order."""
+    records, packed = [], []
+    for variants in passes:
+        raw, tables, programs, parameters = variant_records(variants, keyword_names)
+        indices = []
+        for index in range(struct.unpack_from("<I", raw)[0]):
+            offset, size, _ = struct.unpack_from("<3I", raw, 4 + index * 12)
+            record = raw[offset : offset + size]
+            if record not in records:
+                records.append(record)
+            indices.append(records.index(record))
+        programs = deepcopy(programs)
+        for program in programs:
+            program["m_BlobIndex"] = indices[program["m_BlobIndex"]]
+        packed.append((tables, programs, [indices[index] for index in parameters]))
+    return segment(records), packed
 
 
 def native_keywords(preprocessing, builtin_keywords):
@@ -482,78 +621,102 @@ def native_keywords(preprocessing, builtin_keywords):
     return names, flags, sets
 
 
-def construct(node, shaderlab, preprocessing, compilation, payload, compressed, editor_hash, builtin_keywords):
-    """Construct the complete typed Shader value from source/native outputs."""
-    if len(editor_hash) != 16:
-        raise ValueError("source-derived editor hash must be 16 bytes")
-    if not compilation["success"] or not payload:
-        raise ValueError("fresh native compiler output drift")
-    if re.findall(r"\b(?:CG|HLSL)PROGRAM\b", shaderlab) != ["CGPROGRAM"]:
-        raise ValueError("only the single CGPROGRAM control is supported")
-    records = preprocessing["records"]
-    (snippet,) = preprocessing["snippets"]
-    gpu_program_id = snippet["fields"][0]
-    requirements = next(row["requirements"] for row in records if row["kind"] == "keywordsEnd")
-    names, flags = source_keyword_registration(preprocessing, builtin_keywords)
-    name = re.search(r'\bShader\s+"([^"]+)"', shaderlab).group(1)
-    result = default(node)
+def shader_requirements(record, keywords):
+    requirements = record["requirements"]
+    for override in record["overrides"]:
+        if override["keyword"] in keywords:
+            requirements |= override["requirements"]
+    return requirements
+
+
+def fallback_externals(tree, shader_files):
+    fallback = tree["m_ParsedForm"]["m_FallbackName"]
+    if fallback not in shader_files:
+        return []
+    tree["m_Dependencies"] = [{"m_FileID": 1, "m_PathID": 1}]
+    return [{"empty": "", "guid": bytes(16), "type": 0, "path": shader_files[fallback]}]
+
+
+def construct(node, shaderlab, preprocessing, compiled_passes, compress, builtin_keywords, original=None, ui=False, intersection=False):
+    """Construct every pass from source declarations and fresh native programs."""
+    tree = default(node)
     form_node = child(node, "m_ParsedForm")
-    form = result["m_ParsedForm"]
-    prop_node = item(child(child(form_node, "m_PropInfo"), "m_Props"))
-    form["m_PropInfo"]["m_Props"] = properties(prop_node, shaderlab)
+    form = tree["m_ParsedForm"]
+    names, flags, masks = pass_keywords(preprocessing, builtin_keywords)
+    form.update({"m_Name": re.search(r'\bShader\s+"([^"]+)"', shaderlab)[1], "m_KeywordNames": names, "m_KeywordFlags": flags})
+    source = re.sub(r"//[^\n]*", "", preprocessing["shaderlab"])
+    for declaration, field in (("Fallback", "m_FallbackName"), ("CustomEditor", "m_CustomEditorName")):
+        match = re.search(r"\b" + declaration + r'\s+"([^"]+)"', source)
+        form[field] = match[1] if match else ""
+    if original is None:
+        prop_node = item(child(child(form_node, "m_PropInfo"), "m_Props"))
+        form["m_PropInfo"]["m_Props"] = properties(prop_node, shaderlab)
+    else:
+        form["m_PropInfo"]["m_Props"] = deepcopy(original["m_ParsedForm"]["m_PropInfo"]["m_Props"])
+        for prop in form["m_PropInfo"]["m_Props"]:
+            prop["m_Attributes"] = []
     sub_node = item(child(form_node, "m_SubShaders"))
-    sub = default(sub_node)
-    sub["m_Tags"]["tags"] = source_tags(shaderlab)
     pass_node = item(child(sub_node, "m_Passes"))
-    shader_pass = default(pass_node)
-    shader_pass.update(
-        {
-            "m_EditorDataHash": [{f"bytes[{i}]": b for i, b in enumerate(editor_hash)}],
-            "m_Platforms": [18],
-            "m_State": render_state(shaderlab, gpu_program_id),
-            # Vertex bit1 and fragment bit2. Vulkan executable owns both stages.
-            "m_ProgramMask": (1 << 1) | (1 << 2),
-        }
-    )
-    # Parser state inheritance copies SubShader tags into the pass state.
-    shader_pass["m_State"]["m_Tags"] = deepcopy(sub["m_Tags"])
-    reflect = reflection(compilation["reflection"])
-    tables = common_parameters(reflect)
-    shader_pass["m_NameIndices"] = tables["m_NameIndices"]
-    program = shader_pass["progVertex"]
-    # J850's source project_input_rebuild.graphics_settings explicitly retains
-    # Android graphics tiers0,1,2; slot3 is the non-tier-specific table.
-    # This source has no tier-sensitive branches: reuse its linked executable.
-    variant = {"m_BlobIndex": 1, "m_KeywordIndices": [], "m_ShaderRequirements": requirements, "m_GpuProgramType": compilation["gpu_program_type"]}
-    program["m_PlayerSubPrograms"] = [[deepcopy(variant)] for _ in range(3)] + [[]]
-    program["m_ParameterBlobIndices"] = [[0] for _ in range(3)] + [[]]
-    program["m_CommonParameters"] = tables["m_CommonParameters"]
-    form["m_KeywordNames"], form["m_KeywordFlags"] = names, flags
-    shader_pass["m_SerializedKeywordStateMask"] = list(range(len(names)))
-    sub["m_Passes"] = [shader_pass]
-    grab = re.search(r'\bGrabPass\s*\{\s*"([^"]+)"\s*\}', shaderlab)
-    if grab:
-        sub["m_Passes"].insert(0, grab_pass(pass_node, grab[1]))
-    form["m_SubShaders"] = [sub]
-    form["m_Name"] = name
-    raw = segment([native_parameters(reflect), native_executable(payload, compilation["gpu_program_type"], reflect)])
-    # stageCounts counts serialized executable-owning stage tables. The linked
-    # GPU25 pair is one native stage owner, although ProgramMask has two bits.
-    stage_count = sum(
-        bool(shader_pass[name]["m_PlayerSubPrograms"]) for name in ("progVertex", "progFragment", "progGeometry", "progHull", "progDomain", "progRayTracing")
-    )
-    result.update(
+    ordered = []
+    for _, sub_text in source_blocks(source, "SubShader"):
+        passes = source_blocks(sub_text, "Pass")
+        ordered.extend(int(re.search(r"\bGpuProgramID\s+(\d+)", text)[1]) for _, text in passes)
+    raw, packed = shader_records([compiled_passes[gpu]["variants"] for gpu in ordered], names)
+    packed = dict(zip(ordered, packed))
+    for sub_index, (_, sub_text) in enumerate(source_blocks(source, "SubShader")):
+        sub = default(sub_node)
+        passes = source_blocks(sub_text, "Pass")
+        header = sub_text[: passes[0][0]]
+        sub["m_Tags"]["tags"] = source_tags(header)
+        lod = re.search(r"\bLOD\s+(\d+)", header)
+        sub["m_LOD"] = int(lod[1]) if lod else 0
+        grabs = re.findall(r'\bGrabPass\s*\{\s*"([^"]+)"\s*\}', header)
+        sub["m_Passes"] = [grab_pass(pass_node, name) for name in grabs]
+        for pass_index, (_, text) in enumerate(passes):
+            gpu = int(re.search(r"\bGpuProgramID\s+(\d+)", text)[1])
+            compiled = compiled_passes[gpu]
+            table, programs, parameters = packed[gpu]
+            shader_pass = default(pass_node)
+            if original is not None and not intersection:
+                source_state = original["m_ParsedForm"]["m_SubShaders"][sub_index]["m_Passes"][pass_index + len(grabs)]["m_State"]
+                state = native_state(source_state, gpu, ui)
+            else:
+                state = render_state(header + "\n" + text, gpu)
+            name = re.search(r'\bName\s+"([^"]+)"', text)
+            state.update({"m_Name": name[1] if name else "", "m_Tags": {"tags": source_tags(header + "\n" + text)}, "m_LOD": sub["m_LOD"]})
+            shader_pass.update(
+                {
+                    "m_State": state,
+                    "m_EditorDataHash": [{f"bytes[{index}]": byte for index, byte in enumerate(compiled["identity"])}],
+                    "m_Platforms": [18],
+                    "m_ProgramMask": 6,
+                    "m_NameIndices": table["m_NameIndices"],
+                    "m_SerializedKeywordStateMask": masks[gpu],
+                    "m_HasInstancingVariant": "INSTANCING_ON" in [names[index] for index in masks[gpu]],
+                }
+            )
+            shader_pass["progVertex"].update(
+                {
+                    "m_CommonParameters": table["m_CommonParameters"],
+                    "m_PlayerSubPrograms": [deepcopy(programs) for _ in range(3)] + [[]],
+                    "m_ParameterBlobIndices": [parameters[:] for _ in range(3)] + [[]],
+                }
+            )
+            sub["m_Passes"].append(shader_pass)
+        form["m_SubShaders"].append(sub)
+    compressed = compress(raw, 9)
+    tree.update(
         {
             "platforms": [18],
             "offsets": [[0]],
             "compressedLengths": [[len(compressed)]],
             "decompressedLengths": [[len(raw)]],
             "compressedBlob": list(compressed),
-            "stageCounts": [stage_count],
+            "stageCounts": [1],
             "m_ShaderIsBaked": True,
         }
     )
-    return result
+    return tree
 
 
 def native_state(source_state, gpu_program_id, ui):
@@ -565,57 +728,6 @@ def native_state(source_state, gpu_program_id, ui):
         state["rtBlend0"][name] = deepcopy(source_state["rtBlend0"][name])
     state["stencilOp"] = deepcopy(source_state["stencilOp" if ui else "stencilOpFront"])
     return state
-
-
-def construct_native(node, original, resource, preprocessing, variants, compressed, identity, builtin_keywords, ui):
-    """Preserve PC fields explicitly emitted by the existing source owner."""
-    result = default(node)
-    form_node = child(node, "m_ParsedForm")
-    sub_node = item(child(form_node, "m_SubShaders"))
-    sub = default(sub_node)
-    shader_pass = default(item(child(sub_node, "m_Passes")))
-    source_form = original["m_ParsedForm"]
-    source_sub = source_form["m_SubShaders"][0]
-    source_state = source_sub["m_Passes"][0]["m_State"]
-    (snippet,) = preprocessing["snippets"]
-    state = native_state(source_state, snippet["fields"][0], ui)
-    names, flags, _ = native_keywords(preprocessing, builtin_keywords)
-    raw, tables, programs, parameters = variant_records(variants, names)
-    shader_pass.update(
-        {
-            "m_EditorDataHash": [{f"bytes[{i}]": byte for i, byte in enumerate(identity)}],
-            "m_Platforms": [18],
-            "m_State": state,
-            "m_ProgramMask": 6,
-            "m_NameIndices": tables["m_NameIndices"],
-            "m_SerializedKeywordStateMask": list(range(len(names))),
-        }
-    )
-    shader_pass["progVertex"].update(
-        {
-            "m_PlayerSubPrograms": [deepcopy(programs) for _ in range(3)] + [[]],
-            "m_ParameterBlobIndices": [parameters[:] for _ in range(3)] + [[]],
-            "m_CommonParameters": tables["m_CommonParameters"],
-        }
-    )
-    sub.update({"m_Tags": deepcopy(source_sub["m_Tags"]), "m_Passes": [shader_pass]})
-    form = result["m_ParsedForm"]
-    form.update({"m_Name": "Porting Lab/" + resource, "m_SubShaders": [sub], "m_KeywordNames": names, "m_KeywordFlags": flags})
-    form["m_PropInfo"]["m_Props"] = deepcopy(source_form["m_PropInfo"]["m_Props"])
-    for prop in form["m_PropInfo"]["m_Props"]:
-        prop["m_Attributes"] = []  # Existing properties() emits known flag attributes only.
-    result.update(
-        {
-            "platforms": [18],
-            "offsets": [[0]],
-            "compressedLengths": [[len(compressed)]],
-            "decompressedLengths": [[len(raw)]],
-            "compressedBlob": list(compressed),
-            "stageCounts": [1],
-            "m_ShaderIsBaked": True,
-        }
-    )
-    return result
 
 
 def native_ui_sources(root, pc, selected, tool, output):
@@ -657,72 +769,150 @@ def native_ui_sources(root, pc, selected, tool, output):
     return tree, sources
 
 
-def native_cloud_sources(root, pc, selected, tool, output):
-    """Recover Cloud using the shared qualified manifest selection policy."""
+def native_material_sources(root, pc, selected, tool, output):
+    """Recover the qualified native families from original objects, once."""
     import UnityPy
 
     sys.path.insert(0, str(root / "scripts/lab"))
-    import shader_materials
-    import shader_metadata
-    from shader_programs import NativePrograms
+    import shader_materials as M
+    import shader_deferred as D
+    import shader_metadata as metadata
     from shader_segments import read_segments
+    from shader_programs import NativePrograms, NativeVariantUnavailable
+    from shader_tessellation import TessellationPrograms
 
-    if selected["d3dasm_revision"] != shader_materials.PINS["d3dasm"][1]:
-        raise ValueError("native Cloud public recovery source revision differs")
+    if selected["d3dasm_revision"] != M.PINS["d3dasm"][1]:
+        raise ValueError("native public recovery source revision differs")
     selector_path = relative(root, selected["manifests"]["path"])
     checked(selector_path, selected["manifests"])
     selectors = json.loads(selector_path.read_text())
     pins = [(selector_path, selected["manifests"])]
+    contexts, types, rows = {}, {}, {}
+    source_rows = [row for row in selectors["shaders"] if row["family"] != "ui-alpha"]
+    source_keys = {(row["member"], row["path_id"]): row["family"] for row in source_rows}
+    W = module("_native_material_writer", Path(__file__).with_name("unity_write.py"))
 
-    def original_bundle(row, digest):
+    def bundle(row, digest):
         path = relative(pc, row["path"])
         pin = {"bytes": path.stat().st_size, "sha256": digest}
         checked(path, pin)
         pins.append((path, pin))
-        return UnityPy.load(str(path))
+        return path, UnityPy.load(str(path))
 
-    def original_object(objects, member, selected, digest):
-        obj = objects[member, selected["path_id"]]
-        if hashlib.sha256(obj.get_raw_data()).hexdigest() != digest:
-            raise ValueError("native Cloud original body differs")
-        return obj, obj.read_typetree()
-
-    source = next(row for row in selectors["shaders"] if row["family"] == "cloud")
-    environment = original_bundle(source, source["bundle_sha256"])
-    objects = {(obj.assets_file.name, obj.path_id): obj for obj in environment.objects}
-    _, tree = original_object(objects, source["member"], source, source["body_sha256"])
-    raw, records, programs = read_segments(tree, bytes(tree["compressedBlob"]))
-    context = tree, raw, records, programs, {}
-    rows = []
-    for bundle in selectors["materials"]:
+    for source in source_rows:
+        path, environment = bundle(source, source["bundle_sha256"])
+        obj = next(obj for obj in environment.objects if (obj.assets_file.name, obj.path_id) == (source["member"], source["path_id"]))
+        if hashlib.sha256(obj.get_raw_data()).hexdigest() != source["body_sha256"]:
+            raise ValueError("original native shader body differs")
+        tree = obj.read_typetree()
+        raw, records, programs = read_segments(tree, bytes(tree["compressedBlob"]))
+        family = source["family"]
+        contexts[family] = tree, raw, records, programs, {}
+        layout = W.read_serialized(W.B.Bundle(path).member(source["member"]))
+        types[family] = layout["types"][next(row for row in layout["objects"] if row["path_id"] == source["path_id"])["type_id"]]
+        rows[family] = []
+    for selected_bundle in selectors["materials"]:
         materials = [
             (member, row)
-            for member in bundle["members"]
+            for member in selected_bundle["members"]
             for row in member["materials"]
-            if (row["shader_member"], row["shader_path_id"]) == (source["member"], source["path_id"])
+            if (row["shader_member"], row["shader_path_id"]) in source_keys
         ]
         if not materials:
             continue
-        environment = original_bundle(bundle, bundle["sha256"])
+        _, environment = bundle(selected_bundle, selected_bundle["sha256"])
         objects = {(obj.assets_file.name, obj.path_id): obj for obj in environment.objects}
-        for member, selected_material in materials:
-            obj, material = original_object(objects, member["name"], selected_material, selected_material["sha256"])
+        for member, selection in materials:
+            obj = objects[member["name"], selection["path_id"]]
+            if hashlib.sha256(obj.get_raw_data()).hexdigest() != selection["sha256"]:
+                raise ValueError("original native material body differs")
+            material = obj.read_typetree()
             pointer = material["m_Shader"]
             file_id = pointer["m_FileID"]
             if not 0 <= file_id <= len(obj.assets_file.externals):
-                raise ValueError("native Cloud shader pointer extent differs")
-            shader_member = member["name"] if file_id == 0 else obj.assets_file.externals[file_id - 1].path.rsplit("/", 1)[-1]
-            if (shader_member, pointer["m_PathID"]) != (source["member"], source["path_id"]):
-                raise ValueError("native Cloud original shader pointer differs")
+                raise ValueError("original native shader pointer extent differs")
+            member_name = member["name"] if file_id == 0 else obj.assets_file.externals[file_id - 1].path.rsplit("/", 1)[-1]
+            key = member_name, pointer["m_PathID"]
+            if key != (selection["shader_member"], selection["shader_path_id"]):
+                raise ValueError("original native material shader pointer differs")
+            family = source_keys[key]
             keys = set(material.get("m_ValidKeywords", [])) | set(material.get("m_InvalidKeywords", [])) | set(material.get("m_ShaderKeywords", "").split())
-            rows.append((selected_material["asset"], tree["m_ParsedForm"]["m_Name"], ",".join(sorted(keys))))
-    _, _, sets = shader_metadata.material_selection(rows, tree["m_ParsedForm"], "cloud")
+            rows[family].append((selection["asset"], contexts[family][0]["m_ParsedForm"]["m_Name"], ",".join(sorted(keys))))
     emitter = NativePrograms(output, {"programs": []}, tool, allow_independent=False)
-    sources = {
-        "AndroidNativeFamily0Variant" + str(index): shader_materials.cloud_source(context, keys, "AndroidNativeFamily0Variant" + str(index), emitter)
-        for index, keys in enumerate(sets)
-    }
-    return tree, sources, pins
+    water = TessellationPrograms(output, {"programs": []}, tool, allow_independent=False)
+    sources = {}
+    for family in [*metadata.FAMILIES, "standard"]:
+        if family not in contexts:
+            continue
+        context = contexts[family]
+        features, _, sets = metadata.material_selection(rows[family], context[0]["m_ParsedForm"], family)
+        for index, keys in enumerate(sets):
+            resource = (
+                "AndroidNativeStandard" + str(index)
+                if family == "standard"
+                else "AndroidNativeFamily" + str(list(metadata.FAMILIES).index(family)) + "Variant" + str(index)
+            )
+            try:
+                if family == "standard":
+                    _, source = D.standard_source(context, keys, resource, emitter)
+                elif family == "cloud":
+                    source = M.cloud_source(context, keys, resource, emitter)
+                elif family == "distortion":
+                    _, source = M.distortion_source(context, keys, resource, emitter)
+                elif family == "speedtree":
+                    _, source = M.speedtree_source(context, keys, resource, features, emitter)
+                elif family in ("water", "water-single"):
+                    _, source = M.water_source(context, keys, resource, water)
+                else:
+                    _, source = M.deferred_source(context, keys, resource, features, emitter)
+            except NativeVariantUnavailable:
+                continue
+            sources[resource] = context[0], source, family, types[family]
+    return sources, pins
+
+
+def native_internal_sources(pc, selected, tool, output, connection, core):
+    """Recover only original deferred-lighting/reflection objects from GGM."""
+    import UnityPy
+    import shader_deferred
+    from shader_segments import read_segments
+    from shader_programs import NativePrograms
+
+    W = module("_native_internal_writer", Path(__file__).with_name("unity_write.py"))
+    path = relative(pc, selected["path"])
+    checked(path, selected)
+    data = path.read_bytes()
+    reader = io.BytesIO(data)
+    reader.size = len(data)
+    layout = W.read_serialized(reader)
+    objects = {obj.path_id: obj for obj in UnityPy.load(str(path)).objects}
+    emitter = NativePrograms(output, {"programs": []}, tool, allow_independent=False, native_decompiler=(connection, core))
+    sources = {}
+    for kind, identity in selected["objects"].items():
+        tree = objects[identity].read_typetree()
+        raw, records, programs = read_segments(tree, bytes(tree["compressedBlob"]))
+        resource, source = shader_deferred.internal_source((tree, raw, records, programs, {}), kind, emitter)
+        typ = layout["types"][next(row for row in layout["objects"] if row["path_id"] == identity)["type_id"]]
+        sources[resource] = tree, source, kind, typ
+    return sources
+
+
+def original_materials(pc, selections):
+    import UnityPy
+
+    result = []
+    for selection in selections:
+        path = relative(pc, selection["path"])
+        checked(path, selection)
+        obj = next(
+            obj
+            for obj in UnityPy.load(str(path)).objects
+            if obj.path_id == selection["path_id"] and ("member" not in selection or obj.assets_file.name == selection["member"])
+        )
+        if obj.type.name != "Material":
+            raise ValueError("original TMP feature selector is not Material")
+        result.append(obj.read_typetree())
+    return result
 
 
 def sdk_read(image, address, size):
@@ -789,6 +979,20 @@ def compilation_flags(sdk_image, settings):
     return (((bits >> 17) & 1) << 28) | (((bits >> 6) & 1) << 14) | (((bits >> 32) & 1) << 31)
 
 
+def snippet_key(source, include_hash, key_flags, compiler_version, platform_capabilities, common_bytes):
+    """SDK zero-seed 80-byte base key; key_flags is not compilation_flags.
+
+    key_flags encodes cached preprocessing at bit7 and platform at bits8..15.
+    Historical callers own their acquired SDK's version/caps/include context.
+    """
+    if len(include_hash) != 16:
+        raise ValueError("snippet include hash must be 16 bytes")
+    preimage = spooky(source.encode("utf-8")) + include_hash
+    preimage += struct.pack("<2Q", key_flags, compiler_version)
+    preimage += spooky(struct.pack("<Q", platform_capabilities)) + spooky(common_bytes)
+    return spooky(preimage)
+
+
 def editor_hash(snippet, sdk_image, capabilities, settings, common_bytes):
     """SDK ComputeShaderSnippetKey's base key, its second output.
 
@@ -801,10 +1005,9 @@ def editor_hash(snippet, sdk_image, capabilities, settings, common_bytes):
         version |= 0xFFFFFFFF00000000
     version |= 0x0C0BE49A00000000
     include_hash = struct.pack("<4I", *(word & 0xFFFFFFFF for word in snippet["fields"][6:10]))
-    preimage = spooky(snippet["source"].encode()) + include_hash
-    preimage += struct.pack("<2Q", (int(settings["caching_preprocessor"]) << 7) | (18 << 8), version)
-    preimage += spooky(struct.pack("<Q", platform_caps(sdk_image, settings))) + spooky(common_bytes)
-    return spooky(preimage)
+    return snippet_key(
+        snippet["source"], include_hash, (int(settings["caching_preprocessor"]) << 7) | (18 << 8), version, platform_caps(sdk_image, settings), common_bytes
+    )
 
 
 def sha(path):
@@ -847,18 +1050,236 @@ def module(name, path):
     return loaded
 
 
-def produce(profile_path, profile_sha256, pc, sdk, output, codec_path, codec_sha256, d3dasm_path=None, d3dasm_sha256=None):
-    """Produce pinned authored Shader files from PC schema and the acquired SDK.
+def sdk_scene_variants(snippet, material_keywords=None):
+    """Declared SDK alternatives retained by the pinned fresh mono Lab scene."""
+    rejected = {
+        "FOG_LINEAR",
+        "FOG_EXP",
+        "FOG_EXP2",
+        "INSTANCING_ON",
+        "DOTS_INSTANCING_ON",
+        "EDITOR_VISUALIZATION",
+        "LIGHTMAP_ON",
+        "DIRLIGHTMAP_COMBINED",
+        "DYNAMICLIGHTMAP_ON",
+        "SHADOWS_SHADOWMASK",
+        "LIGHTMAP_SHADOW_MIXING",
+        "STEREO_INSTANCING_ON",
+        "STEREO_MULTIVIEW_ON",
+        "STEREO_CUBEMAP_RENDER_ON",
+        "UNITY_SINGLE_PASS_STEREO",
+    }
+    axes = []
+    for group in ("m_VariantsUserGlobal", "m_VariantsUserLocal"):
+        merged = []
+        for stage in range(7):
+            for axis in snippet[group + str(stage)]:
+                if axis not in merged:
+                    merged.append(axis)
+        axes.extend(merged)
+    # The SDK distinguishes shader_feature names from multi_compile names in
+    # this source field, including global features such as _EMISSION. A source
+    # material selects features before expansion, while runtime axes survive.
+    runtime = set(snippet["m_NonStrippedUserKeywords"].split()) if material_keywords is not None else None
+    users = [[]]
+    for axis in axes:
+        retained = [
+            name for name in axis if name not in rejected and (not name.strip("_") or material_keywords is None or name in runtime or name in material_keywords)
+        ]
+        users = [keys + ([name] if name.strip("_") else []) for keys in users for name in retained]
+    builtins = [row for row in snippet["m_VariantsBuiltin0"] or [[]] if not (set(row) & rejected)]
+    return [sorted(set(user + builtin)) for user in users for builtin in builtins]
 
-    SDK is the pinned Unity.app/Contents directory. MacOS/Unity is read only as
-    source metadata; only Tools/UnityShaderCompiler executes. The final expected
-    file hashes are comparators after complete independent serialization.
+
+def sdk_scene_selections(source, material_keywords=None):
+    # SDK EmitPass removes META when the fresh scene has no realtime GI usage.
+    for sub in source["m_ParsedForm"]["m_SubShaders"]:
+        sub["m_Passes"] = [
+            shader_pass
+            for shader_pass in sub["m_Passes"]
+            if not any(key.upper() == "LIGHTMODE" and text.upper() == "META" for key, text in shader_pass["m_State"]["m_Tags"]["tags"])
+        ]
+    snippets = dict(source["m_CompileInfo"]["m_Snippets"])
+    return {
+        shader_pass["m_State"]["gpuProgramID"]: [
+            deepcopy(sdk_scene_variants(snippets[shader_pass["m_State"]["gpuProgramID"]], material_keywords)) for _ in range(3)
+        ]
+        for sub in source["m_ParsedForm"]["m_SubShaders"]
+        for shader_pass in sub["m_Passes"]
+        if shader_pass["m_Type"] == 0
+    }
+
+
+def project_tiers(root, settings, template_pin):
+    """Use the same authored graphics-settings generator as the player build."""
+    import project_input_rebuild
+
+    template = relative(root, "smoke/ProjectSettings/GraphicsSettings.asset").read_bytes()
+    graphics = project_input_rebuild.graphics_settings(template, template_pin["sha256"]).decode()
+    tiers = []
+    for fields in re.findall(r"m_Settings:\s*\n(.*?)\s*m_Automatic:", graphics, re.S):
+        setting = deepcopy(settings)
+        setting["tier0"] = {name: int(value) for name, value in re.findall(r"(\w+):\s*(-?\d+)", fields)}
+        tiers.append(setting)
+    if len(tiers) != 3:
+        raise ValueError("source Android graphics tiers differ")
+    return tiers
+
+
+def produce_sdk_records(root, pc, sdk, profile, profile_sha256, output, connection, compress, sdk_image, common_bytes):
+    """Append builtin complete-file framing and the shared Shader record pack."""
+    import UnityPy
+    from UnityPy.helpers.TypeTreeHelper import write_typetree
+    from UnityPy.streams import EndianBinaryWriter
+
+    sys.path.insert(0, str(Path(__file__).parent))
+    import shader_sdk
+
+    W = module("_sdk_record_writer", Path(__file__).with_name("unity_write.py"))
+    selected = profile["builtin"]
+    source_path = relative(pc, selected["source"]["path"])
+    checked(source_path, selected["source"])
+    environment = UnityPy.load(str(source_path))
+    pc_ids = {obj.path_id for obj in environment.objects if obj.type.name == "Shader"}
+    node = next(obj for obj in environment.objects if obj.type.name == "Shader")._get_typetree_node()
+    with source_path.open("rb") as stream:
+        stream.size = source_path.stat().st_size
+        layout = W.read_serialized(stream)
+    native_type = next(typ for typ in layout["types"] if typ["class_id"] == 48)
+    sdk_path = sdk / "Resources/unity_builtin_extra"
+    checked(sdk_path, profile["sdk"]["Resources/unity_builtin_extra"])
+    sdk_objects = {obj.path_id: obj for obj in UnityPy.load(str(sdk_path)).objects}
+    sdk_shaders = {identity: obj for identity, obj in sdk_objects.items() if obj.type.name == "Shader"}
+    graphics = relative(root, "smoke/ProjectSettings/GraphicsSettings.asset").read_text()
+    settings_ids = set(map(int, re.findall(r"fileID: (\d+), guid: 0000000000000000f000000000000000", graphics)))
+    # Android's native Video player resource is separate from the PC closure.
+    candidates = sorted((pc_ids & sdk_shaders.keys()) | settings_ids | {16003})
+    tiers = project_tiers(root, profile["settings"], profile["authored_inputs"]["smoke/ProjectSettings/GraphicsSettings.asset"])
+    sprite_materials = original_materials(pc, selected["sprite_materials"])
+    default_material = sdk_objects[10303].read_typetree()
+    if (
+        default_material["m_Shader"] != {"m_FileID": 0, "m_PathID": 46}
+        or default_material["m_ValidKeywords"]
+        or default_material["m_InvalidKeywords"]
+        or any(row["m_EnableInstancingVariants"] for row in [default_material, *sprite_materials])
+    ):
+        raise ValueError("source default-material feature usage differs from the qualified fresh scene")
+    if any(row["m_Shader"]["m_PathID"] != 10753 for row in sprite_materials):
+        raise ValueError("source Sprite material shader relation differs")
+    if "com.unity.rendering.hybrid" in json.loads(relative(root, "recipe/project-layout.json").read_text())["dependencies"]:
+        raise ValueError("source mono/instancing usage differs")
+    directory = output / "sdk-shaders"
+    directory.mkdir()
+    bodies = {}
+    for identity in candidates:
+        if identity not in sdk_shaders:
+            continue
+        source = sdk_shaders[identity].read_typetree()
+        if not source["m_ParsedForm"]["m_SubShaders"]:
+            continue
+        selections = sdk_scene_selections(source)
+        destination = directory / str(identity)
+        destination.mkdir()
+        body, _, _ = shader_sdk.compile_body(connection, source, node, selections, tiers, sdk_image, common_bytes, compress, destination)
+        bodies[identity] = body
+    rows, cursor = [], 0
+    for identity, body in sorted(bodies.items()):
+        cursor = (cursor + 7) & ~7
+        rows.append({"path_id": identity, "type_id": 0, "offset": cursor, "bytes": len(body)})
+        cursor += len(body)
+    layout = {
+        "engine": "2021.3.45f2",
+        "platform": 13,
+        "trees": False,
+        "types": [native_type],
+        "objects": rows,
+        "scripts": [],
+        "externals": [],
+        "ref_types": [],
+        "user": "",
+    }
+    name = "apk/assets/bin/Data/Resources/unity_builtin_extra"
+    destination = output / name
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    with destination.open("wb") as stream:
+        W.write_serialized(stream, layout, lambda row: io.BytesIO(bodies[row["path_id"]]))
+    checked(destination, selected)
+    shared = profile["shared_shaders"]
+    shared_path = relative(pc, shared["source"]["path"])
+    checked(shared_path, shared["source"])
+    shared_obj = next(obj for obj in UnityPy.load(str(shared_path)).objects if obj.path_id == shared["source"]["path_id"])
+    shared_node = shared_obj._get_typetree_node()
+    pack = output / "shared-shaders"
+    pack.mkdir()
+    local = {row["sdk_id"]: row["path_id"] for row in shared["records"]}
+    with (pack / "objects.bin").open("wb") as objects, (pack / "index.jsonl").open("w") as index:
+        for row in shared["records"]:
+            identity = row["sdk_id"]
+            source = sdk_shaders[identity].read_typetree()
+            # The source primitive's SDK Default-Material has no features;
+            # select that set before expanding the source runtime axes.
+            material_keywords = set(default_material["m_ValidKeywords"]) if identity == default_material["m_Shader"]["m_PathID"] else None
+            selections = sdk_scene_selections(source, material_keywords)
+            folder = directory / str(identity)
+            folder.mkdir()
+            body, tree, _ = shader_sdk.compile_body(connection, source, shared_node, selections, tiers, sdk_image, common_bytes, compress, folder)
+            dependencies = []
+            for pointer in source["m_Dependencies"]:
+                if pointer["m_FileID"] != 0:
+                    raise ValueError("SDK shared shader dependency is not local to the source resource")
+                shader_id = pointer["m_PathID"]
+                dependencies.append({"m_FileID": 0 if shader_id in local else 1, "m_PathID": local.get(shader_id, shader_id)})
+            tree["m_Dependencies"] = dependencies
+            writer = EndianBinaryWriter(endian="<")
+            write_typetree(tree, shared_node, writer)
+            body = writer.bytes
+            if len(body) != row["bytes"] or hashlib.sha256(body).hexdigest() != row["sha256"]:
+                raise ValueError("complete shared shader differs from expected comparator")
+            index.write(
+                json.dumps(
+                    {
+                        "bundle": "apk",
+                        "member": shared["member"],
+                        "path_id": row["path_id"],
+                        "offset": objects.tell(),
+                        "bytes": len(body),
+                        "sha256": hashlib.sha256(body).hexdigest(),
+                    },
+                    sort_keys=True,
+                )
+                + "\n"
+            )
+            objects.write(body)
+    receipt = {
+        "success": True,
+        "input_id": profile["input_id"],
+        "profile_sha256": profile_sha256,
+        "outputs": {name: {"bytes": (pack / name).stat().st_size, "sha256": sha(pack / name)} for name in ("objects.bin", "index.jsonl")},
+    }
+    (pack / "result.json").write_text(json.dumps(receipt, indent=2) + "\n")
+    return name, {"bytes": destination.stat().st_size, "sha256": sha(destination)}
+
+
+def produce(
+    profile_path, profile_sha256, pc, sdk, output, codec_path, codec_sha256, d3dasm_path=None, d3dasm_sha256=None, hlsl_source=None, asset_ripper_source=None
+):
+    """Reproduce all selected standalone shaders from original PC/public inputs.
+
+    The SDK compiler executes without the Editor/project. Public source providers
+    are explicit pinned Git object trees; expected file hashes compare only fully
+    persisted independent output. No retained generated source/body is read.
     """
     import UnityPy
     from UnityPy.helpers.TypeTreeHelper import write_typetree
     from UnityPy.streams import EndianBinaryWriter
 
     root = Path(__file__).resolve().parents[3]
+    sys.path.insert(0, str(root / "scripts/lab"))
+    import shader_source as sources
+    import shader_recovery as recovery
+    from shader_segments import read_segments
+    from shader_programs import NativePrograms
+
     profile_path, codec_path = Path(profile_path).absolute(), Path(codec_path).absolute()
     profile_pin = {"bytes": profile_path.stat().st_size, "sha256": profile_sha256}
     codec_pin = {"bytes": codec_path.stat().st_size, "sha256": codec_sha256}
@@ -870,20 +1291,35 @@ def produce(profile_path, profile_sha256, pc, sdk, output, codec_path, codec_sha
     output = output.parent.resolve(strict=True) / output.name
     if output.exists():
         raise ValueError("shader output must be a new private directory")
-    if any(output.is_relative_to(source) or source.is_relative_to(output) for source in (pc, sdk)):
-        raise ValueError("shader output must be disjoint from original game and SDK")
+    provider_roots = [pc, sdk] + [Path(path).resolve(strict=True) for path in (hlsl_source, asset_ripper_source) if path is not None]
+    if any(output.is_relative_to(source) or source.is_relative_to(output) for source in provider_roots):
+        raise ValueError("shader output must be disjoint from original and public source inputs")
     source = profile["source_type"]
     source_path = relative(pc, source["path"])
     pins = [(profile_path, profile_pin), (codec_path, codec_pin), (source_path, source)]
     pins.extend((relative(sdk, name), pin) for name, pin in profile["sdk"].items())
     pins.extend((relative(root, name), pin) for name, pin in profile["authored_inputs"].items())
-    if "native_ui" in profile or "native_cloud" in profile:
+    if "native_ui" in profile or "native_materials" in profile:
         if d3dasm_path is None or d3dasm_sha256 is None:
-            raise ValueError("native source recovery requires the explicitly supplied pinned public d3dasm tool")
+            raise ValueError("native recovery requires the explicit pinned public d3dasm tool")
         d3dasm_path = Path(d3dasm_path).absolute()
         pins.append((d3dasm_path, {"bytes": d3dasm_path.stat().st_size, "sha256": d3dasm_sha256}))
     if "native_ui" in profile:
         pins.extend((relative(pc, row["path"]), row) for row in [profile["native_ui"]["source"], *profile["native_ui"]["materials"]])
+    if "native_internal" in profile:
+        if hlsl_source is None:
+            raise ValueError("custom lighting requires the explicit pinned public HLSLDecompiler source repository")
+        pins.append((relative(pc, profile["native_internal"]["path"]), profile["native_internal"]))
+    if "tmp_dummy" in profile:
+        if asset_ripper_source is None:
+            raise ValueError("TMP exporter requires the explicit pinned public AssetRipper source repository")
+        pins.append((relative(pc, profile["tmp_dummy"]["source"]["path"]), profile["tmp_dummy"]["source"]))
+    if "tmp_mobile" in profile:
+        pins.extend((relative(pc, row["path"]), row) for row in profile["tmp_mobile"]["materials"])
+    if "builtin" in profile:
+        pins.append((relative(pc, profile["builtin"]["source"]["path"]), profile["builtin"]["source"]))
+        pins.extend((relative(pc, row["path"]), row) for row in profile["builtin"]["sprite_materials"])
+        pins.append((relative(pc, profile["shared_shaders"]["source"]["path"]), profile["shared_shaders"]["source"]))
     for path, pin in pins:
         checked(path, pin)
         if path.is_relative_to(output) or output.is_relative_to(path):
@@ -897,10 +1333,7 @@ def produce(profile_path, profile_sha256, pc, sdk, output, codec_path, codec_sha
         name = shader["file"]
         if PurePosixPath(name).name != name or name in ("", ".", "..") or "\\" in name:
             raise ValueError("unsafe shader player filename")
-        if "native_resource" in shader:
-            if "native_ui" not in profile and "native_cloud" not in profile:
-                raise ValueError("native shader lacks original input selectors")
-        else:
+        if "source" in shader:
             if shader["source"] not in profile["authored_inputs"]:
                 raise ValueError("shader source lacks an authored input pin")
             relative(root, shader["source"])
@@ -914,9 +1347,9 @@ def produce(profile_path, profile_sha256, pc, sdk, output, codec_path, codec_sha
     selected = next(row for row in layout["objects"] if row["path_id"] == source["path_id"])
     native_type = layout["types"][selected["type_id"]]
     if native_type["class_id"] != 48:
-        raise ValueError("original shader schema provider is not Shader48")
+        raise ValueError("original schema provider is not Shader48")
     environment = UnityPy.load(str(source_path))
-    obj = next(row for row in environment.objects if row.path_id == source["path_id"])
+    obj = next(row for row in environment.objects if (row.assets_file.name, row.path_id) == (source["member"], source["path_id"]))
     node = obj.serialized_type.node
     original_form = obj.read_typetree()["m_ParsedForm"]
     registry = original_form["m_KeywordNames"][:4], original_form["m_KeywordFlags"][:4]
@@ -924,7 +1357,7 @@ def produce(profile_path, profile_sha256, pc, sdk, output, codec_path, codec_sha
     compile_keywords = platform_keywords(sdk_image, profile["settings"])
     compile_flags = compilation_flags(sdk_image, profile["settings"])
     output.mkdir()
-    native_sources = {}
+    native_sources, shader_sources, template_inputs = {}, {}, {}
     result = {
         "success": False,
         "input_id": profile["input_id"],
@@ -938,66 +1371,105 @@ def produce(profile_path, profile_sha256, pc, sdk, output, codec_path, codec_sha
         },
         "files": {},
     }
+    if d3dasm_path is not None:
+        result["inputs"]["d3dasm_sha256"] = d3dasm_sha256
     started = time.monotonic()
     try:
         if "native_ui" in profile:
-            recovery = output / "native-ui"
-            recovery.mkdir()
-            tree, sources = native_ui_sources(root, pc, profile["native_ui"], d3dasm_path, recovery)
-            native_sources.update({name: (tree, source, True) for name, source in sources.items()})
-            result["inputs"]["native_ui"] = profile["native_ui"]
-            result["inputs"]["d3dasm_sha256"] = d3dasm_sha256
-        if "native_cloud" in profile:
-            recovery = output / "native-cloud"
-            recovery.mkdir()
-            tree, sources, providers = native_cloud_sources(root, pc, profile["native_cloud"], d3dasm_path, recovery)
-            native_sources.update({name: (tree, source, False) for name, source in sources.items()})
+            directory = output / "native-ui"
+            directory.mkdir()
+            tree, texts = native_ui_sources(root, pc, profile["native_ui"], d3dasm_path, directory)
+            native_sources.update({name: (tree, text, "ui-alpha", native_type) for name, text in texts.items()})
+        if "native_materials" in profile:
+            directory = output / "native-materials"
+            directory.mkdir()
+            native, providers = native_material_sources(root, pc, profile["native_materials"], d3dasm_path, directory)
+            native_sources.update(native)
             pins.extend(providers)
-            result["inputs"]["native_cloud"] = profile["native_cloud"]
-            result["inputs"]["d3dasm_sha256"] = d3dasm_sha256
+        include_dirs = [include_dir, root / "tools/unity/runtime/shaders"]
+        if "tmp_mobile" in profile:
+            package = sources.package_mobile_source(sdk, profile["tmp_mobile"]["package"])
+            directory = output / "tmp-package"
+            directory.mkdir()
+            (directory / "TMPro_Properties.cginc").write_bytes(package["include"])
+            include_dirs.append(directory)
+            mobile_source = package["shader"].decode("utf-8")
+            material_keywords = [row["m_ValidKeywords"] for row in original_materials(pc, profile["tmp_mobile"]["materials"])]
+        if "tmp_dummy" in profile:
+            selected = profile["tmp_dummy"]
+            for name, pin in selected["template_inputs"].items():
+                data = recovery.pinned_source(asset_ripper_source, selected["exporter_revision"], name)
+                if len(data) != pin["bytes"] or hashlib.sha256(data).hexdigest() != pin["sha256"]:
+                    raise ValueError("pinned public TMP template resource differs")
+                template_inputs[Path(name).name] = data.decode().replace("\r", "")
+            # GPL source remains caller supplied. Keep its notice with local outputs.
+            (output / "AssetRipper-LICENSE.md").write_bytes(recovery.pinned_source(asset_ripper_source, selected["exporter_revision"], "LICENSE.md"))
+            selected = selected["source"]
+            tmp_objects = {obj.path_id: obj for obj in UnityPy.load(str(relative(pc, selected["path"]))).objects if obj.assets_file.name == selected["member"]}
+        core = recovery.build_native_hlsl(hlsl_source, output / "native-hlsl-tool") if "native_internal" in profile else None
         with (
-            compiler.compiler([sdk / "Tools/UnityShaderCompiler"], sdk, output / "compiler", includes=[include_dir]) as connection,
+            compiler.compiler([sdk / "Tools/UnityShaderCompiler"], sdk, output / "compiler", includes=include_dirs) as connection,
             W.codec(codec_path, codec_sha256) as compress,
         ):
+            if "native_internal" in profile:
+                directory = output / "native-internal"
+                directory.mkdir()
+                native_sources.update(native_internal_sources(pc, profile["native_internal"], d3dasm_path, directory, connection, core))
+            if "native_intersection" in profile:
+                identity = profile["native_intersection"]
+                obj = next(obj for obj in environment.objects if (obj.assets_file.name, obj.path_id) == (source["member"], identity))
+                tree = obj.read_typetree()
+                raw, records, programs = read_segments(tree, bytes(tree["compressedBlob"]))
+                directory = output / "native-intersection"
+                directory.mkdir()
+                emitter = NativePrograms(directory, {"programs": []}, d3dasm_path, allow_independent=False)
+                text = sources.intersection_source((tree, raw, records, programs, {}), emitter)
+                typ = layout["types"][next(row for row in layout["objects"] if row["path_id"] == identity)["type_id"]]
+                native_sources["AndroidIntersectionPresentation"] = tree, text, "intersection", typ
+            for shader in profile["shaders"]:
+                if "native_resource" in shader:
+                    shader_sources[shader["file"]] = native_sources[shader["native_resource"]][1]
+                elif "tmp_dummy" in shader:
+                    text, _ = sources.dummy_shader_source(tmp_objects[shader["tmp_dummy"]].read_typetree()["m_ParsedForm"], template_inputs)
+                    shader_sources[shader["file"]] = text
+                elif shader.get("tmp_mobile"):
+                    shader_sources[shader["file"]] = mobile_source
+                else:
+                    shader_sources[shader["file"]] = relative(root, shader["source"]).read_text()
+            names_to_files = {re.search(r'\bShader\s+"([^\"]+)"', text)[1]: name for name, text in shader_sources.items()}
             for shader, name in zip(profile["shaders"], destinations):
-                shaderlab = native_sources[shader["native_resource"]][1] if "native_resource" in shader else relative(root, shader["source"]).read_text()
-                preprocessing = connection.preprocess(
-                    shaderlab,
-                    shader["filename"],
-                    platform_keywords=["SHADER_API_MOBILE"],
-                    caching_preprocessor=profile["settings"]["caching_preprocessor"],
+                text = shader_sources[shader["file"]]
+                pre = connection.preprocess(
+                    text, shader["filename"], platform_keywords=["SHADER_API_MOBILE"], caching_preprocessor=profile["settings"]["caching_preprocessor"]
                 )
-                if not preprocessing["success"] or len(preprocessing["snippets"]) != 1:
-                    raise ValueError("single-pass source preprocessing failed")
-                (snippet,) = preprocessing["snippets"]
-                requirements = next(row["requirements"] for row in preprocessing["records"] if row["kind"] == "keywordsEnd")
-                identity = editor_hash(snippet, sdk_image, connection.capabilities, profile["settings"], common_bytes)
+                if not pre["success"] or not pre["snippets"]:
+                    raise ValueError("source shader preprocessing failed")
+                compiled_passes = {}
+                for snippet in pre["snippets"]:
+                    gpu = snippet["fields"][0]
+                    req = next(row for row in pre["records"] if row["kind"] == "keywordsEnd" and row["fields"] == [gpu])
+                    identity = editor_hash(snippet, sdk_image, connection.capabilities, profile["settings"], common_bytes)
+                    variants = []
+                    for keywords in retained_keywords(pre, gpu, material_keywords if shader.get("tmp_mobile") else None):
+                        requirements = shader_requirements(req, keywords)
+                        compilation = connection.compile(
+                            snippet["source"],
+                            shader["filename"],
+                            stage="vertex",
+                            platform_keywords=compile_keywords,
+                            keywords=keywords,
+                            flags=compile_flags,
+                            requirements=requirements,
+                        )
+                        if not compilation["success"] or not compilation["data"]:
+                            raise ValueError("linked Vulkan shader compilation failed")
+                        variants.append({"keywords": keywords, "requirements": requirements, "compilation": compilation})
+                    compiled_passes[gpu] = {"identity": identity, "variants": variants}
+                original, kind, typ = None, None, native_type
                 if "native_resource" in shader:
-                    names, _, keyword_sets = native_keywords(preprocessing, registry)
-                else:
-                    keyword_sets = [[]]
-                variants = []
-                for keywords in keyword_sets:
-                    compilation = connection.compile(
-                        snippet["source"],
-                        shader["filename"],
-                        stage="vertex",
-                        platform_keywords=compile_keywords,
-                        keywords=keywords,
-                        flags=compile_flags,
-                        requirements=requirements,
-                    )
-                    if not compilation["success"] or not compilation["data"]:
-                        raise ValueError("linked Vulkan shader compilation failed")
-                    variants.append({"keywords": keywords, "requirements": requirements, "compilation": compilation})
-                if "native_resource" in shader:
-                    raw = variant_records(variants, names)[0]
-                    original, _, ui = native_sources[shader["native_resource"]]
-                    tree = construct_native(node, original, shader["native_resource"], preprocessing, variants, compress(raw, 9), identity, registry, ui)
-                else:
-                    reflect = reflection(compilation["reflection"])
-                    raw = segment([native_parameters(reflect), native_executable(compilation["data"], compilation["gpu_program_type"], reflect)])
-                    tree = construct(node, shaderlab, preprocessing, compilation, compilation["data"], compress(raw, 9), identity, registry)
+                    original, _, kind, typ = native_sources[shader["native_resource"]]
+                tree = construct(node, text, pre, compiled_passes, compress, registry, original, kind == "ui-alpha", kind == "intersection")
+                externals = fallback_externals(tree, names_to_files)
                 body_writer = EndianBinaryWriter(endian="<")
                 write_typetree(tree, node, body_writer)
                 body = body_writer.bytes
@@ -1007,18 +1479,20 @@ def produce(profile_path, profile_sha256, pc, sdk, output, codec_path, codec_sha
                     "engine": "2021.3.45f2",
                     "platform": 13,
                     "trees": False,
-                    "types": [native_type],
+                    "types": [typ],
                     "objects": [{"path_id": 1, "type_id": 0, "offset": 0, "bytes": len(body)}],
                     "scripts": [],
-                    "externals": [],
+                    "externals": externals,
                     "ref_types": [],
                     "user": "",
                 }
                 with destination.open("wb") as stream:
                     W.write_serialized(stream, standalone, lambda _: io.BytesIO(body))
-                # Expected accepted size/hash only compare a fully persisted file.
                 checked(destination, shader)
                 result["files"][name] = {"bytes": destination.stat().st_size, "sha256": sha(destination)}
+            if "builtin" in profile:
+                name, pin = produce_sdk_records(root, pc, sdk, profile, profile_sha256, output, connection, compress, sdk_image, common_bytes)
+                result["files"][name] = pin
         for path, pin in pins:
             checked(path, pin)
         if includes(include_dir)[0] != inventory:
@@ -1046,8 +1520,22 @@ def main():
     parser.add_argument("--codec-sha256", required=True)
     parser.add_argument("--d3dasm", type=Path, help="explicit tool built from the pinned public source; required for native source recovery")
     parser.add_argument("--d3dasm-sha256", help="expected SHA-256 of the caller-supplied public tool")
+    parser.add_argument("--hlsl-source", type=Path, help="caller-supplied pinned public HLSLDecompiler Git repository; native core builds into new output")
+    parser.add_argument("--asset-ripper-source", type=Path, help="caller-supplied pinned public AssetRipper Git repository; template bodies stay local")
     args = parser.parse_args()
-    produce(args.profile, args.profile_sha256, args.pc, args.sdk, args.output, args.codec, args.codec_sha256, args.d3dasm, args.d3dasm_sha256)
+    produce(
+        args.profile,
+        args.profile_sha256,
+        args.pc,
+        args.sdk,
+        args.output,
+        args.codec,
+        args.codec_sha256,
+        args.d3dasm,
+        args.d3dasm_sha256,
+        args.hlsl_source,
+        args.asset_ripper_source,
+    )
 
 
 if __name__ == "__main__":

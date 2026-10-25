@@ -1057,14 +1057,17 @@ J1145 owns the host result, with phone/runtime acceptance open.
 
 ## Source-derived player shaders
 
-Current bounded owner: `shader_produce.py`. It reconstructs 125 complete Shader files: ten authored,
-113 original Cloud and two original UI Alpha files from public/original source, one original PC native schema and
+Current bounded owner: `shader_produce.py`. It reconstructs the complete standalone Shader cohort from fourteen authored,
+350 original native and four font source selections from public/original source, one original PC native schema and
 the exact acquired macOS ARM64 SDK. The SDK Editor executable supplies pinned
 metadata only; the standalone shader compiler executes without an Editor/project.
-The original Cloud/UI paths regenerate HLSL from the selected original programs via
+The original native paths regenerate HLSL from the selected original programs via
 the existing native recovery/binder, with an explicit separately built public
-d3dasm tool. No retained HLSL is consumed. Other shader families and phone
-execution remain unqualified (J1144/J1146/J1147/J1151).
+d3dasm tool. No retained HLSL is consumed. Builtin and shared source records use the same acquired SDK and original PC
+schema. The same command emits the 44-object builtin file and the two-record
+`shared-shaders` object pack for the existing mixed-file writer. There are 369
+complete files plus two shared records; the terminal shared receipt records its
+`objects.bin` and `index.jsonl` hashes. Phone execution remains unqualified (J1144/J1146/J1147/J1151/J1157).
 
 Build the existing public LZ4 worker with `build_bundle_lz4.py`; its worker method
 9 selects shader HC9 while UnityFS methods 2/3 stay fast/HC12. Then run:
@@ -1075,8 +1078,19 @@ python3 tools/phone-build/accepted-output/shader_produce.py \
   --pc ORIGINAL_INSTALL --sdk UNITY_APP_CONTENTS \
   --codec PUBLIC_LZ4_WORKER --codec-sha256 WORKER_SHA256 \
   --d3dasm PUBLIC_D3DASM_TOOL --d3dasm-sha256 TOOL_SHA256 \
+  --hlsl-source PUBLIC_HLSLDECOMPILER_GIT \
+  --asset-ripper-source PUBLIC_ASSETRIPPER_GIT \
   --output NEW_PRIVATE_DIRECTORY
 ```
+
+The complete standalone profile also requires the two explicit public source
+repositories above. The producer reads the pinned Git objects, independent of
+their checked-out revision. `shader_recovery.build_native_hlsl` builds the MIT
+fallback core into the new output with its license notices; the existing SDK
+connection freshly disassembles the required original DXBC. AssetRipper font
+exporter resources remain acquired local GPL-3.0 inputs with per-resource pins;
+no template body is vendored. The mobile font source comes from the pinned TMP
+package in the acquired SDK and uses a declaration-only authored rename.
 
 All paths are explicit. Setup verifies original, authored, SDK, include-inventory
 and codec pins; output must be new and disjoint from original/SDK inputs. Source
@@ -1089,3 +1103,42 @@ checked again after completion. Errors retain private output and failure details
 compiler/socket/codec children close through existing context owners. No target
 packet or previous run directory supplies content. Full phone assembly, runtime
 appearance and SDK distribution rights remain separate gates.
+
+
+The callable SDK source path is `shader_sdk.py`. With this directory on the
+Python import path, `sdk_source(sdk, shader_id, expected_sha256)` loads a pinned
+SDK builtin source Shader. `compile_body(connection, source, node, selections,
+tier_settings, sdk_image, common_bytes, compress, output, platform=18, *,
+native_order=None)` emits a
+complete native Shader body and returns `(body, tree, raw)`.
+
+`selections` maps each source GPU program ID to three tier lists of declared
+keyword sets. `tier_settings` contains the three source Android settings used by
+the existing capability/flag readers. Explicit empty selections preserve source
+pass metadata without executables; source platform masks can also exclude a
+backend. Callers own source-derived runtime-pass selection, dependency relocation
+and final object-pack placement. The helper currently qualifies only Vulkan 18.
+It preserves declared instancing metadata independently of retained programs.
+Linked Vulkan stage axes follow the SDK source merge; native records use
+source-row/tier order while caller per-tier table order is preserved. Only
+retained rows are ranked, without constructing the unused Cartesian product.
+Payload callers whose original serialized shader supplies retained native order
+can pass `native_order={gpuProgramID: [keyword_rows]}`. Each provided order must
+contain each retained keyword set exactly once; source declaration validation
+still applies. This changes pool emission order only, with each source row
+followed by its tiers. It supplies no variant retention or target index mapping.
+Use a new private output directory and existing compiler/codec contexts; the
+caller owns setup, teardown and input completion checks. SDK source, generated
+programs and native bodies remain local. This API provides no payload-specific
+variant selection or accepted-byte fallback.
+
+
+`shader_produce.snippet_key(source, include_hash, key_flags, compiler_version,
+platform_capabilities, common_bytes)` exposes the same source-derived 80-byte
+base-key algorithm for frozen payload contexts. `key_flags` encodes cached
+preprocessing at bit 7 and platform at bits 8–15; `compiler_version` is the SDK's
+complete sign-extended/XOR/salted version word. Callers must derive these values,
+the snippet/include hash and common include bytes from that artifact's actual
+acquired SDK and source build settings. This permits the retained SDK33 payload
+lineage without applying current APK settings retroactively. It supplies no
+target hash or compiler-context guessing.

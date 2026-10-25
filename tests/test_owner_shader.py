@@ -66,6 +66,16 @@ class OwnerShaderTests(unittest.TestCase):
         self.assertTrue(stream.sent.endswith(number(1, 64) + number(2) + number(1)))
         self.assertFalse(stream.data)
 
+    def test_original_disassembly_uses_raw_dxbc_and_reads_terminal_status(self):
+        stream = Stream(string("err: 0 4 0") + string("original.dxbc") + string("authored warning") + string("disasm: 1") + string("AUTHORED_ASSEMBLY"))
+        self.assertEqual(SHADER.Connection(stream).disassemble(b"DXBC_FIXTURE", 17), "AUTHORED_ASSEMBLY")
+        self.assertEqual(
+            stream.sent, string("c:disassembleShader") + string("original.dxbc") + number(4) + number(17) + number(0) + number(12, 64) + b"DXBC_FIXTURE"
+        )
+        self.assertFalse(stream.data)
+        with self.assertRaisesRegex(ValueError, "disassembly failed"):
+            SHADER.Connection(Stream(string("disasm: 0") + string(""))).disassemble(b"invalid")
+
     def test_failed_compile_is_not_reported_as_success(self):
         stream = Stream(string("shader: 0") + number(0) + number(0, 64))
         result = SHADER.Connection(stream).compile("invalid source", "fixture.hlsl", stage="vertex")

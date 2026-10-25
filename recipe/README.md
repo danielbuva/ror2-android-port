@@ -2973,14 +2973,14 @@ host results; Android and complete installation remain open.
 ### Source-derived player Shader profile (J1144)
 
 `owner-player-shaders.json` is an authored selection for the bounded complete
-authored/original Cloud and UI Alpha producer. It records only the accepted original-input identity,
+authored/original native/font and SDK builtin producer. It records only the accepted original-input identity,
 original native-schema/Shader/material provider paths/members/path IDs and hashes, public authored
 source/settings pins, acquired SDK tool/include-inventory pins and explained
 build settings. Output names and final size/hash are comparison contracts after
 source-only generation. They supply no Shader body, type-hash literal, program,
 include contents, game math, target pass key or serialized template.
 
-Provenance/privacy/licensing review: the ten authored shaders are existing tracked
+Provenance/privacy/licensing review: the fourteen authored shaders are existing tracked
 lab-authored identity/visibility/presentation passes; native schema and builtin registry remain sourced
 from the owner's legitimate PC files. Platform defaults and compiler-version data
 are read from the exact owner-acquired SDK, never shipped as SDK binary data.
@@ -2989,7 +2989,7 @@ algorithm is public domain and its test vectors use authored bytes. No protected
 input, private path, account/device identifier, credential or generated shader
 output is added. This audit authorizes tooling/selection metadata only, with no
 new redistribution or ownership claim. Full evidence and remaining gates are
-recorded once in J1144/J1146/J1147/J1151.
+recorded once in J1144/J1146/J1147/J1151/J1157.
 
 The original UI Alpha extension selects one original Shader and two original
 Materials, derives their feature sets and regenerates every selected original
@@ -3064,3 +3064,44 @@ audit: 2026-10-25; J1143. The profiles contain source ordinals, named operations
 selectors, hashes and relationships; no target float/scalar/body/type template,
 SDK implementation or private identifier. Existing source, SDK, ownership and
 redistribution boundaries remain unchanged. Generated content stays ignored.
+
+The remaining standalone Shader extension retains the same audited selection
+profile. Native wrapper feature sets come from the shared original-material
+policy; original DXBC is interpreted locally by pinned public tools. The optional
+portable HLSLDecompiler provider is built from its pinned public MIT source with
+license notices retained in the local output. SDK disassembly supplies fresh
+assembly to that provider; retained decompilation and generated programs are
+never recipe inputs. The producer preserves the existing source emitters and
+uses source declarations, original material use and authored build settings for
+variant retention.
+
+The three AssetRipper dummy font exporters consume explicitly supplied,
+content-pinned resources from the recorded upstream revision. Those GPL-3.0
+resource bodies are acquired locally and are not vendored into the public
+Python/recipe. Their existing original-property export policy is reproduced;
+it does not recover the original font shader implementation or qualify visual
+parity. The remaining mobile font pass reads the acquired SDK's pinned TMP
+package and applies only the recorded authored Shader declaration rename, with
+original FontMaterial relationships deciding used feature sets. No template text,
+original property value, retained ShaderLab, native table or accepted body is
+published. Source/tool identities, selectors and comparison hashes grant no
+additional upstream/game/SDK redistribution, ownership or entitlement rights.
+Generated source, compiler data and final bodies remain ignored locally.
+Provenance, privacy, licensing and sensitive-content review: 2026-10-25.
+
+The SDK builtin/shared extension reads the pinned acquired SDK's source forms,
+snippets and declarations. The builtin closure is reconstructed from original PC
+Shader IDs, source GraphicsSettings and the Android video resource relationship;
+missing SDK identities and source-empty forms are excluded by source state.
+Original PC native schemas supply serialization identity. The existing public
+writer frames the builtin file; source material references allocate shared
+Standard/Skybox IDs and their builtin-resource dependencies. The shared output
+uses the existing object-pack contract. No accepted record roster, header/body,
+compiled shader, target type hash or native program is a supplier. Vulkan's
+stage-owner count follows the acquired SDK's initialization/transfer contract,
+including zero-job shaders. Global constants and structured instancing buffers
+use source SDK callback/layout contracts. Updated historical candidate helper
+pins reflect the existing emitter factoring, with no previous source-generation
+behavior change. Manual audit: 2026-10-25, J1157. All SDK/game/source-derived
+bodies and detailed observations remain local; existing acquisition, license
+and redistribution boundaries continue to apply.
