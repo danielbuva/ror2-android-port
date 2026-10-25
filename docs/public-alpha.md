@@ -223,8 +223,12 @@ qualification remain separate from these laboratory installs.
       host-qualifies per-zone core duration and immediate core/battery/skin
       runtime limits after J1152's startup spike; fresh gameplay qualification
       remains open.
-      Injected persistence states do not establish a power-cut
-      or filled-filesystem result.
+      [J1164](PORTING_JOURNAL.md#j1164--recover-an-interrupted-native-save-and-classify-stage-load-thermal-refusal)
+      qualifies native pending-write interruption/recovery on the installed R58.
+      Its next stage is deliberately stopped by the sustained CPU thermal guard
+      during stage startup; fresh heaps and sustained play remain open.
+      Injected persistence states and this writer interruption do not establish
+      a power-cut or filled-filesystem result.
 - [ ] Qualify the [prepared-lab owner-build/install/playtest checklist](PLAYTESTING.md)
       on fresh public inputs, then establish final player installation, ordinary
       controls and update/rollback steps. Artifact identity, known limits and

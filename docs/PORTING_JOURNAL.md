@@ -42727,3 +42727,54 @@ change or device acceptance claim. The prior host-only storage refusal is not
 a device experiment. SDK interrupted-write, fresh corrected native heaps and
 sustained runtime qualification remain open until their separately retained
 batch result, with actual installed APK readback and J1148/J1156 supervision.
+
+## J1164 — Recover an interrupted native save and classify stage-load thermal refusal
+
+**Hypothesis and scope.** Run the public SDK interrupted-write, corrected fresh
+heap-pair and sustained sequence on the actual installed R58, under J1148/J1156
+and J1160's capture budget. No player rebuild, install, profile reset or thermal
+limit change occurs. This uses the existing diagnostic owners, without adding
+a RoR2-specific mechanism.
+
+**Device result.** Installed-byte readback binds the complete batch to APK
+`4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`.
+The settings case observes the native pending transaction, terminates its
+same-UID writer in 109 ms, retains the 138-byte pending file and unchanged
+primary, then verifies recovery without runtime errors. Six protected files
+remain covered. This qualifies interrupted pending-write recovery, not power
+loss or ENOSPC. Its peak CPU reading is 74.4 C.
+
+The next session-memory case completes zero of three sessions and captures
+neither requested fresh heap. Its `process-exited` result is caused by the
+J1156 supervisor: a CPU sensor remains above 80 C for the required continuous
+second. The observed CPU/all-zone peak is 84.8 C. This is a deliberate thermal
+termination, not evidence of a spontaneous crash, ANR or low-memory kill.
+The first menu PSS is 2,233,885 KiB; one menu sample establishes no growth bound.
+The sustained stage never starts.
+
+**Timing and evidence.** The retained process log places launch near 13:18:15
+UTC, gameplay preparation at 13:20:30.079 and native `SceneDirector.Start`
+at 13:21:25.742. The first sampled CPU/GPU crossing above 80 C is
+13:21:32.329 UTC, approximately 197 s after launch and 6.6 s after that stage
+callback. The final sustained streak spans 13:21:48.020–13:21:49.333 UTC
+(80.8, 84.8, 84.8, 84.8 and 83.6 C), about 213 s after launch and
+22.3–23.6 s after the stage callback. This locates the crossing during stage
+startup; it does not attribute
+the hotspot to one callback or establish a frame-cap/refresh cause. The
+subsequent force-stop contaminates cooling comparisons. Prior R58/J1152 also
+refused during startup, so no new R58-specific regression is established.
+Ignored evidence is under
+`work/coordination/alpha-touch-acceptance-20261024/capture-budget-20261025T131045Z/`
+(`terminal.done.json`, `batch.done.json`, thermal JSONL and batch log); raw
+session evidence is the `session-memory/20261025T131812.520307Z` run and save
+evidence the `settings-write-interruption/20261025T131637.403767Z` run beneath
+the authorized device's local experiments. Full raw paths remain private.
+
+**Cleanup and next gate.** Terminal readback verifies unchanged APK bytes,
+process/selector/pending absence and OLED sleep. The lease is released and
+pruning passes. Explicit terminal handoff gives the next slot to the queued
+phone assembly owner; no automatic replay follows refusal. Fresh corrected
+heaps, sustained heat/performance, ordinary full play and genuine ENOSPC stay
+open. Revisit after the next explicit device handoff and fresh admission, using
+the current limits; investigate loading-only presentation pacing separately
+without changing native fixed-step behaviour.
