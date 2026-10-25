@@ -965,3 +965,9 @@ The scene layout output uses a `members` list in physical member order and the
 receipt records each serialized member hash. No Editor or accepted target input
 is needed for production; complete bundle comparison and phone acceptance are
 separate gates.
+
+The same streamed-scene command accepts `owner-helminthroost-objects.json`
+and the existing mesh pack. J1135 qualifies its 6,853 records and complete
+9,593,495-byte bundle raw-exact on the host without further producer changes.
+Together with J1134 and J1132, nine full source-derived host bundles are now
+qualified. Phone and complete catalog/content acceptance remain open.

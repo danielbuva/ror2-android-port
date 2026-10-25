@@ -40224,3 +40224,71 @@ behaviour, game readiness or performance. Helminthroost is the next bounded
 shader/clip-free scene candidate; native shader and imported-artifact root
 manifest hash gates remain separate. Revisit only on source/profile drift, a
 failed contract or actual Android evidence.
+
+## J1135 — Reconstruct the complete Helminth Roost streamed-scene bundle
+
+Date: 2026-10-25 UTC. Host-only source production; no Unity Editor, device,
+installation or game launch. Comparison remains J850 APK SHA-256
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+**Hypothesis and prior art.** Reuse J1134's complete streamed-scene owner for
+the next high-reuse scene. J1050 records 76.91% chunk reuse; that metric alone
+proves no reconstruction. Consulted `community-prior-art.md`, J1050/J1116/J1134,
+pinned UnityPy 1.25.3 object/reference/type contracts and the existing
+`nova_bridge.py` scene keep/component/MapZone policies. No full census or writer
+experiment is repeated. Bounded original scene, source-script and mesh-selector
+graph matching resolves source identities; ambiguous equal bodies must satisfy
+source graph relationships. Both original MonoScripts and MonoBehaviour types
+match without SDK/hash changes, apart from regenerated script-table ordinals.
+
+**Implementation and result.** Add only the audited relationship recipe
+`owner-helminthroost-objects.json`; the J1134 object owner and J1116 writer remain
+unchanged. Its existing generated native metadata, member-specific external
+script tables, original-body/reference admission, component omission and
+inactive MapZone policies suffice. The source mesh producer supplies all
+102 inline meshes through its pinned pack/receipt. Source graph matching
+qualifies all bodies and both serialized members before public production.
+The public `python3 -I -S -B` command, explicit PC/codec/mesh inputs and the
+new recipe produce **6,853 objects / 16,324,951 body bytes** in 8.030 seconds.
+The complete **9,593,495-byte helminthroost-spine-lab** bundle is raw-exact
+against J850, SHA-256:
+`0af52610abc0f30ea8bb064a63c1f8134ec8e61207e93e095bb1ca4e21fb877c`.
+
+| Member | Objects | Bytes | SHA-256 |
+| --- | ---: | ---: | --- |
+| `BuildPlayer-helminthroost.sharedAssets` | 107 | 14,572,968 | `3d43d26b11cad1976f0703d9d3079355f8811322d622388ee999593e4013ba41` |
+| `BuildPlayer-helminthroost` | 6,746 | 2,108,720 | `8bf5e090a1fc616ad77ae9d0a21caf62726ec9d3b2de24864b5cbe03bd2229e0` |
+
+The recipe retains 383 owners with 700 checked omitted components, 12
+inactive MapZone owners and two original bake PPtrs cleared by the existing
+scene policy. LightProbes and NavMeshSettings preserve original bodies/types;
+LightmapSettings changes only its original LightProbes pointer. No new scalar
+transformation, producer, receipt framework or target template is introduced.
+Independent persisted readback verifies the entire bundle, both members and
+all 6,853 object extents. This is the ninth complete source-derived host bundle.
+
+Private evidence: `work/coordination/p1-payload-helminth-discovery-v1/` contains
+`refine-done.json`, `public-host-v1/result.json` and
+`public-host-v1-comparison.json`. Recipe SHA-256:
+`cf0f619b4f117fd6d04b1944235dcba0b3fbfe4e0101784aa045f6035f011266`.
+The unchanged mesh profile is
+`6540b15092906d4ddb43e9eb7dc49481e15e359724541f6b307042f1a62aff23`.
+Canonical `work/coordination/p1-content-source-host-v11` reports **188/705
+ready**, **517 missing (392 APK / 125 payload)** and zero invalid/mismatched
+entries. Source files are hard-linked into the union; no review copies exist.
+
+**Checks and remaining.** No public-producer failure or additional code change
+is needed. J1134's 16 object and seven writer checks remain the affected
+contracts; public/manual staged recipe audit and read-only review pass.
+Main-checkout generated-storage cleanup retains evidence. Complete content,
+Android replay, controls/performance and owner installation remain open.
+
+Catalog research confirms existing `content.json` and LabBuild ownership rules
+reproduce all 30,322 location owners and the 114 active names. J714/J725's
+existing source catalog/GUID/conversion/closure generators remain the metadata
+route, without Editor; a direct raw-PC replacement is unqualified. The catalog
+itself needs actual final bundle SHA/length and transitive dependency closure,
+not the root manifest's imported-artifact MD4. Complete catalog emission still
+waits for independently produced active files and source-metadata admission.
+No accepted catalog or integration manifest becomes a provider. Revisit this
+scene only on source/profile drift or a failed host/Android contract.
