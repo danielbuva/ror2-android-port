@@ -1,6 +1,7 @@
 """Complete source-only prefab fixture; no game bytes or installed Editor."""
 
 from contextlib import nullcontext
+import copy
 import hashlib
 import importlib.util
 import io
@@ -202,7 +203,7 @@ def packed_fixture(root):
     return pc, profile_path, directory, profile, row, serialized
 
 
-def scene_fixture(root, *, preload_dependency=False):
+def scene_fixture(root, *, preload_dependency=False, global_owner=False):
     """Authored two-member scene with overlapping IDs and external scripts."""
     pc = root / "pc"
     pc.mkdir()
@@ -217,7 +218,7 @@ def scene_fixture(root, *, preload_dependency=False):
     first = bytes(16) + struct.pack("<iqiqiqiq", 1, 7, 2, 90, 3, 80, 1, 3)
     original_second = bytes(16) + struct.pack("<iqiqiq", 0, 72, 9, 80, 4, 123)
     second = bytes(16) + struct.pack("<iqiqiq", 1, 8, 3, 80, 4, 123)
-    original_gameobject = struct.pack("<II", 0, 0) + string("Map owner") + struct.pack("<HB", 0, 1)
+    original_gameobject = struct.pack("<II", 0, 0) + string("SceneInfo" if global_owner else "Map owner") + struct.pack("<HB", 0, 1)
     gameobject = struct.pack("<Iiq", 1, 0, 1) + original_gameobject[4:-1] + bytes(1)
     original_occlusion = bytes(range(16)) + struct.pack("<iqIiqiqIiq", 8, 80, 2, 0, 81, 0, 82, 1, 0, 83)
     occlusion_without_renderers = original_occlusion[:28] + bytes(4) + original_occlusion[56:]
@@ -381,7 +382,9 @@ def scene_fixture(root, *, preload_dependency=False):
                         source_selection(main, 1, 81, references=refs(original_first, first, [16, 28, 40, 52])),
                         source_selection(main, 2, 82, references=refs(original_second, second, [16, 28, 40])),
                         packed_selection(main),
-                        source_selection(main, 4, 83, inactive_map_zone=True, append_components=[1]),
+                        source_selection(
+                            main, 4, 83, **({"inactive_global_owner": "SceneInfo"} if global_owner else {"inactive_map_zone": True}), append_components=[1]
+                        ),
                         source_selection(main, 5, 84, clear_static_renderers=2, references=refs(occlusion_without_renderers, occlusion, [16, 36])),
                     ],
                 },
@@ -875,6 +878,72 @@ class ObjectProducerTests(unittest.TestCase):
                     P.produce(path, P.B.sha(path), pc, root / "failed", Path("codec"), "pin", [(pack, P.B.sha(pack / "result.json"))])
                 self.assertFalse(json.loads((root / "failed/result.json").read_text())["success"])
 
+    def test_named_global_owner_suppression_emits_the_complete_scene(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            pc, path, profile, pack, _, _, expected = scene_fixture(root, global_owner=True)
+            with patch.object(P.W, "codec", return_value=nullcontext(literal_lz4)):
+                result = P.produce(path, P.B.sha(path), pc, root / "produced", Path("codec"), "pin", [(pack, P.B.sha(pack / "result.json"))])
+            self.assertTrue(result["success"])
+            self.assertEqual((root / "produced/payload/authored-scene").read_bytes(), expected)
+
+    def test_global_owner_suppression_checks_original_identity_and_active_tail(self):
+        for name in ("SceneInfo", "Director", "GameManager", "RoR2Application"):
+            encoded = name.encode()
+            original = struct.pack("<IiqII", 1, 0, 713, 9, len(encoded)) + encoded + bytes(-len(encoded) % 4) + struct.pack("<HB", 17, 1)
+            self.assertEqual(P.deactivate_global_owner(original, name), original[:-1] + bytes(1))
+            for body, selected in (
+                (original, "Other"),
+                (original, "Director" if name != "Director" else "SceneInfo"),
+                (original[:-1] + bytes(1), name),
+                (original + bytes(1), name),
+            ):
+                with self.subTest(name=name, selected=selected), self.assertRaises(ValueError):
+                    P.deactivate_global_owner(body, selected)
+
+    def test_original_windows_bundle_copy_needs_no_codec_or_comparison_supplier(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            pc = root / "pc"
+            pc.mkdir()
+            body = FIXTURE.bundle([("CAB-authored", b"OWNER ORIGINAL", 0)], True)
+            source = pc / "original.bundle"
+            source.write_bytes(body)
+            profile = {"input_id": P.M.INPUT_ID, "original_bundle": {"path": source.name, "bytes": len(body), "sha256": digest(body)}}
+            path = root / "copy-profile.json"
+            path.write_text(json.dumps(profile))
+            result = P.produce(path, P.B.sha(path), pc, root / "copied", None, None)
+            self.assertTrue(result["success"])
+            self.assertEqual((root / "copied/payload/windows-shaders.bundle").read_bytes(), body)
+            self.assertEqual(result["outputs"]["payload/windows-shaders.bundle"], {"bytes": len(body), "sha256": digest(body)})
+            self.assertEqual(source.read_bytes(), body)
+            with self.assertRaisesRegex(ValueError, "outside original"):
+                P.produce(path, P.B.sha(path), pc, pc / "nested", None, None)
+            source.write_bytes(body + b"DRIFT")
+            with self.assertRaisesRegex(ValueError, "input drift"):
+                P.produce(path, P.B.sha(path), pc, root / "drift", None, None)
+            self.assertFalse((root / "drift").exists())
+
+    def test_original_bundle_copy_keeps_a_failed_receipt_when_source_changes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            pc = root / "pc"
+            pc.mkdir()
+            source = pc / "original.bundle"
+            source.write_bytes(b"ORIGINAL")
+            profile = {"input_id": P.M.INPUT_ID, "original_bundle": {"path": source.name, "bytes": 8, "sha256": digest(b"ORIGINAL")}}
+            path = root / "profile.json"
+            path.write_text(json.dumps(profile))
+            copyfile = P.shutil.copyfile
+
+            def drift(original, destination):
+                copyfile(original, destination)
+                original.write_bytes(b"MUTATION")
+
+            with patch.object(P.shutil, "copyfile", side_effect=drift), self.assertRaisesRegex(ValueError, "changed during"):
+                P.produce(path, P.B.sha(path), pc, root / "failed", None, None)
+            self.assertFalse(json.loads((root / "failed/result.json").read_text())["success"])
+
     def test_audio_component_omission_preserves_order_and_every_other_gameobject_byte(self):
         suffix = b"NAME-LAYER-TAG-AND-ACTIVE"
         original = struct.pack("<Iiqiqiq", 3, 0, 71, 0, -19, 0, 48) + suffix
@@ -1098,6 +1167,302 @@ class ObjectProducerTests(unittest.TestCase):
         self.assertEqual(mono["script_type"], 99)
         self.assertEqual(bodies[8], body)
         self.assertEqual([(row["path_id"], row["offset"]) for row in layout["objects"]], [(-8, 0), (8, 16), (12, 8)])
+
+
+CURVE_RECORD_FIXTURE = load("curve_record_fixture", ROOT / "tests/test_phone_record_producer.py")
+CURVE_MESH_FIXTURE = CURVE_RECORD_FIXTURE.F
+
+
+def curve_type(body, node, class_id):
+    value = CURVE_RECORD_FIXTURE.serialized(body, node, class_id)
+    source = io.BytesIO(value)
+    source.size = len(value)
+    return P.W.read_serialized(source)["types"][0]
+
+
+def curve_sources(records, profiles):
+    """Build genuine serialized members consumed by unchanged source_record."""
+    result = []
+    for member_records, profile in zip(records, profiles):
+        types, objects, bodies, offset = [], [], {}, 0
+        for identity, (body, typ) in sorted(member_records.items()):
+            types.append(typ)
+            offset = (offset + 7) // 8 * 8
+            objects.append(dict(path_id=identity, offset=offset, bytes=len(body), type_id=len(types) - 1))
+            bodies[identity] = body
+            offset += len(body)
+        layout = dict(
+            engine="2021.3.45f2",
+            platform=19,
+            trees=True,
+            types=types,
+            objects=objects,
+            scripts=[],
+            externals=profile.get("externals", []),
+            ref_types=[],
+            user="",
+        )
+        serialized = io.BytesIO()
+        P.W.write_serialized(serialized, layout, lambda row: io.BytesIO(bodies[row["path_id"]]))
+        serialized.size = len(serialized.getvalue())
+        metadata = P.W.read_serialized(serialized)
+        result.append((None, None, serialized, metadata, {r["path_id"]: r for r in metadata["objects"]}))
+    return result
+
+
+def bezier_fixture(*, endpoint=True):
+    F = CURVE_MESH_FIXTURE
+    u32 = lambda name: F.node(name, 4, kind="UInt32")
+    vec3 = lambda name: F.node(name, children=[F.node(axis, 4, kind="float") for axis in ("x", "y", "z")])
+    ptr = lambda name: F.node(name, 12, kind="PPtr<Object>")
+    node = F.node(
+        "Base", children=[ptr("m_GameObject"), u32("retainedBefore"), F.array("m_Positions", vec3("data")), ptr("retainedMaterial"), u32("retainedAfter")]
+    )
+    line = struct.pack("<iqII", 0, 1, 0xAABBCCDD, 5) + struct.pack("<15f", *([99.0, 98.0, 97.0] * 5))
+    line += struct.pack("<iqI", 7, -1234567890123, 0xFEDCBA98)
+    line_type = curve_type(line, node, 120)
+    curve_schema = F.node(
+        "Base",
+        children=[
+            ptr("m_GameObject"),
+            u32("m_Enabled"),
+            ptr("m_Script"),
+            F.text("m_Name"),
+            vec3("v0"),
+            vec3("p1"),
+            vec3("v1"),
+            ptr("endTransform"),
+            F.node("animateBezierWind", 1, kind="UInt8", meta=0x4000),
+            vec3("windMagnitude"),
+            vec3("windFrequency"),
+        ],
+    )
+    # p0 comes from parent scale+translation: (1,2,3)*(2,3,4)+(10,20,30)=(12,26,42).
+    # p1 comes from endpoint (-1,2,3) through the same parent, or its original literal.
+    curve = struct.pack("<iqIiqI", 0, 1, 1, 1, 100, 0)
+    curve += struct.pack("<9f", 0, 8, 0, 8, 26, 42, 0, 0, 8) + struct.pack("<iq", 0, 40 if endpoint else 0) + bytes(28)
+    assert len(curve) == 108
+    curve_typ = curve_type(curve, curve_schema, 114)
+    go_schema = F.node("Base", children=[F.array("m_Component", ptr("data")), u32("retained")])
+    go = struct.pack("<IiqiqiqI", 3, 0, 30, 0, 10, 0, 20, 0x10203040)
+    go_type = curve_type(go, go_schema, 1)
+    transform_schema = F.node(
+        "Base",
+        children=[
+            ptr("m_GameObject"),
+            F.node("m_LocalRotation", children=[F.node(a, 4, kind="float") for a in ("x", "y", "z", "w")]),
+            vec3("m_LocalPosition"),
+            vec3("m_LocalScale"),
+            F.array("m_Children", ptr("data")),
+            ptr("m_Father"),
+        ],
+    )
+
+    def transform(goid, position, scale=(1, 1, 1), parent=0):
+        return struct.pack("<iq4f3f3fIiq", 0, goid, 0, 0, 0, 1, *position, *scale, 0, 0, parent)
+
+    start = transform(1, (1, 2, 3), parent=31)
+    parent = transform(3, (10, 20, 30), (2, 3, 4))
+    end = transform(2, (-1, 2, 3), parent=31)
+    transform_typ = curve_type(start, transform_schema, 4)
+
+    def text(value):
+        raw = value.encode()
+        return struct.pack("<I", len(raw)) + raw + bytes(-len(raw) % 4)
+
+    script = text("BezierCurveLine") + struct.pack("<i", 1600) + bytes(range(16)) + text("BezierCurveLine") + text("") + text("RoR2.dll")
+    script_schema = F.node(
+        "Base", children=[F.text("m_Name"), u32("m_ExecutionOrder"), F.node("hash", 16), F.text("m_ClassName"), F.text("m_Namespace"), F.text("m_AssemblyName")]
+    )
+    script_typ = curve_type(script, script_schema, 115)
+    records = [
+        {1: (go, go_type), 10: (line, line_type), 20: (curve, curve_typ), 30: (start, transform_typ), 31: (parent, transform_typ), 40: (end, transform_typ)},
+        {100: (script, script_typ)},
+    ]
+    profiles = [
+        dict(member="CAB-authored-line", externals=[dict(empty="", guid=bytes(16), type=0, path="archive:/CAB-authored-script/CAB-authored-script")]),
+        dict(member="CAB-authored-script"),
+    ]
+    return records, profiles
+
+
+class BezierCurveLineTests(unittest.TestCase):
+    # This is a closed polynomial fixture, not a second evaluation of helper Lerp.
+    # P(t)=(12-4t, 26+8t(1-t), 42+8t(1-t)), t=0,1/4,1/2,3/4,1.
+    EXPECTED = struct.pack("<15f", 12, 26, 42, 11, 27.5, 43.5, 10, 28, 44, 9, 27.5, 43.5, 8, 26, 42)
+
+    def result(self, records, profiles, body=None):
+        source = curve_sources(records, profiles)
+        return P.rebuild_bezier_line(records[0][10][0] if body is None else body, source, profiles, [0, 10], [0, 20])
+
+    def mutate(self, records, identity, offset, data, member=0):
+        body, typ = records[member][identity]
+        value = bytearray(body)
+        value[offset : offset + len(data)] = data
+        records[member][identity] = bytes(value), typ
+
+    def test_original_transform_hierarchy_and_endpoint_rebuild_known_polynomial_only(self):
+        records, profiles = bezier_fixture()
+        before = copy.deepcopy(records)
+        result = self.result(records, profiles)
+        self.assertEqual(result[20:80], self.EXPECTED)
+        self.assertEqual(result[:20], records[0][10][0][:20])
+        self.assertEqual(result[80:], records[0][10][0][80:])
+        self.assertEqual(struct.unpack_from("<iq", result, 80), (7, -1234567890123))
+        self.assertEqual(records, before)
+
+    def test_null_endpoint_uses_original_literal_p1(self):
+        records, profiles = bezier_fixture(endpoint=False)
+        self.assertEqual(self.result(records, profiles)[20:80], self.EXPECTED)
+
+    def test_mutated_body_must_equal_original_line(self):
+        records, profiles = bezier_fixture()
+        body = bytearray(records[0][10][0])
+        body[-1] ^= 1
+        with self.assertRaisesRegex(ValueError, "original line member"):
+            self.result(records, profiles, bytes(body))
+
+    def test_original_source_contract_mutants_are_rejected(self):
+        cases = [
+            ("curve GO", 20, 0, struct.pack("<iq", 0, 2), "GameObject differs"),
+            ("external GO", 20, 0, struct.pack("<iq", 1, 1), "GameObject differs"),
+            ("absent line component", 1, 20, struct.pack("<q", 99), "component membership"),
+            ("external component", 1, 4, struct.pack("<i", 1), "component membership"),
+            ("duplicate curve component", 1, 8, struct.pack("<q", 20), "component membership"),
+            ("starting transform backlink", 30, 0, struct.pack("<iq", 0, 999), "GameObject"),
+            ("parent cycle", 31, 56, struct.pack("<iq", 0, 30), "parent cycle"),
+            ("external parent", 30, 56, struct.pack("<iq", 1, 31), "parent escapes"),
+            ("nonidentity rotation", 31, 12, struct.pack("<4f", 0, 0, 1, 0), "identity-rotation"),
+            ("animated wind", 20, 80, bytes([1]), "animated Bezier wind"),
+            ("external endpoint", 20, 68, struct.pack("<iq", 1, 40), "endTransform escapes"),
+            ("nonfinite source", 20, 32, struct.pack("<f", float("nan")), "nonfinite"),
+        ]
+        for label, identity, offset, data, error in cases:
+            with self.subTest(label=label):
+                records, profiles = bezier_fixture()
+                self.mutate(records, identity, offset, data)
+                with self.assertRaisesRegex(ValueError, error):
+                    self.result(records, profiles)
+
+    def test_wrong_operand_classes_cannot_supply_curve_values(self):
+        for identity, class_id in [(10, 4), (20, 120), (1, 4), (30, 1), (31, 1), (40, 1)]:
+            with self.subTest(identity=identity):
+                records, profiles = bezier_fixture()
+                body, typ = records[0][identity]
+                typ = {**typ, "class_id": class_id}
+                # Keep valid serialized type encoding when class_id changes from MonoBehaviour.
+                if class_id != 114:
+                    typ.pop("script_id", None)
+                records[0][identity] = (body, typ)
+                with self.assertRaisesRegex(ValueError, "record class|transform differs"):
+                    self.result(records, profiles)
+
+    def test_script_class_namespace_and_assembly_are_original_identity(self):
+        for original, revised in [(b"BezierCurveLine", b"VezierCurveLine"), (b"RoR2.dll", b"Evil.dll")]:
+            with self.subTest(original=original):
+                records, profiles = bezier_fixture()
+                body, typ = records[1][100]
+                records[1][100] = (body.replace(original, revised), typ)
+                with self.assertRaisesRegex(ValueError, "script identity differs"):
+                    self.result(records, profiles)
+
+    def test_script_must_be_a_unique_original_member_provider(self):
+        records, profiles = bezier_fixture()
+        profiles[1]["member"] = "CAB-different"
+        with self.assertRaisesRegex(ValueError, "script provider differs"):
+            self.result(records, profiles)
+        records, profiles = bezier_fixture()
+        records.append(copy.deepcopy(records[1]))
+        profiles.append(copy.deepcopy(profiles[1]))
+        with self.assertRaisesRegex(ValueError, "script provider differs"):
+            self.result(records, profiles)
+
+    def test_source_array_count_and_curve_schema_are_checked(self):
+        records, profiles = bezier_fixture()
+        body, typ = records[0][10]
+        body = body[:16] + struct.pack("<I", 1) + body[20:32] + body[80:]
+        records[0][10] = (body, typ)
+        with self.assertRaisesRegex(ValueError, "position array drift"):
+            self.result(records, profiles)
+        records, profiles = bezier_fixture()
+        body, typ = records[0][20]
+        typ = {**typ, "tree": typ["tree"].replace(b"windFrequency\0", b"windFrequencX\0")}
+        records[0][20] = (body, typ)
+        with self.assertRaisesRegex(ValueError, "schema drift"):
+            self.result(records, profiles)
+
+
+def bezier_production_fixture(root):
+    pc, path, profile, _, _ = fixture(root)
+    records, source_profiles = bezier_fixture()
+    source_profiles[0]["member"] = "CAB-source"
+    records[0][99] = (b"Original unused container", typ(142))
+    sources = curve_sources(records, source_profiles)
+    source = pc / "source.bundle"
+    source.write_bytes(FIXTURE.bundle([(selected["member"], value[2].getvalue(), 4) for selected, value in zip(source_profiles, sources)], True))
+    profile["sources"] = [dict(path=source.name, member=p["member"], sha256=P.B.sha(source)) for p in source_profiles]
+    original = records[0][10][0]
+    # Retain the original GO field. Relocate only the material dependency after
+    # curve reconstruction, proving the helper runs on the original source body.
+    output_line = original[:20] + BezierCurveLineTests.EXPECTED + struct.pack("<iq", 1, 88) + original[92:]
+    script = records[1][100][0]
+    bodies = {-7: output_line, 1: container_bytes(), 2: script}
+    aligned = lambda n: (n + 7) // 8 * 8
+    line_offset = aligned(len(script))
+    container_offset = aligned(line_offset + len(output_line))
+    layout = dict(
+        engine="2021.3.45f2",
+        platform=13,
+        trees=True,
+        types=[records[1][100][1], records[0][10][1], typ(142)],
+        objects=[
+            dict(path_id=-7, offset=line_offset, bytes=len(output_line), type_id=1),
+            dict(path_id=1, offset=container_offset, bytes=len(bodies[1]), type_id=2),
+            dict(path_id=2, offset=0, bytes=len(script), type_id=0),
+        ],
+        scripts=[(0, 2)],
+        externals=[dict(empty="", guid=bytes(16), type=0, path="archive:/CAB-dependency/CAB-dependency")],
+        ref_types=[],
+        user="",
+    )
+    serialized = io.BytesIO()
+    P.W.write_serialized(serialized, layout, lambda row: io.BytesIO(bodies[row["path_id"]]))
+    bundle = io.BytesIO()
+    P.W.write_bundle(bundle, [("CAB-target", 4, len(serialized.getvalue()), lambda: io.BytesIO(serialized.getvalue()))], literal_lz4)
+    digest = lambda b: hashlib.sha256(b).hexdigest()
+    profile["bundle"].update(serialized_sha256=digest(serialized.getvalue()), sha256=digest(bundle.getvalue()), bytes=len(bundle.getvalue()))
+    profile["objects"] = [
+        dict(
+            path_id=-7,
+            source=[0, 10],
+            source_sha256=digest(original),
+            bezier_curve_line=[0, 20],
+            bytes=len(output_line),
+            sha256=digest(output_line),
+            references=[dict(offset=80, **{"from": [7, -1234567890123], "to": [1, 88]})],
+        ),
+        dict(path_id=1, type_source=0, bytes=len(bodies[1]), sha256=digest(bodies[1])),
+        dict(path_id=2, source=[1, 100], source_sha256=digest(script), bytes=len(script), sha256=digest(script)),
+    ]
+    path.write_text(json.dumps(profile))
+    return pc, path, profile, output_line, bundle.getvalue()
+
+
+class BezierOwnerProductionTests(unittest.TestCase):
+    def test_full_owner_reconstructs_before_pointer_relocation_and_persists_exact_bundle(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            pc, path, profile, line, bundle = bezier_production_fixture(root)
+            with patch.object(P.W, "codec", return_value=nullcontext(literal_lz4)):
+                result = P.produce(path, P.B.sha(path), pc, root / "produced", Path("authored-codec"), "authored-codec-pin")
+            self.assertTrue(result["success"])
+            self.assertEqual((root / "produced/payload/authored-target").read_bytes(), bundle)
+            index = [json.loads(l) for l in (root / "produced/index.jsonl").read_text().splitlines()]
+            row = next(r for r in index if r["path_id"] == -7)
+            data = (root / "produced/objects.bin").read_bytes()[row["offset"] : row["offset"] + row["bytes"]]
+            self.assertEqual(data, line)
+            self.assertEqual(data[20:80], BezierCurveLineTests.EXPECTED)
+            self.assertEqual(struct.unpack_from("<iq", data, 80), (1, 88))
 
 
 if __name__ == "__main__":
