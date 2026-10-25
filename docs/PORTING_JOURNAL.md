@@ -42778,3 +42778,73 @@ heaps, sustained heat/performance, ordinary full play and genuine ENOSPC stay
 open. Revisit after the next explicit device handoff and fresh admission, using
 the current limits; investigate loading-only presentation pacing separately
 without changing native fixed-step behaviour.
+
+## J1165 — Bound historical-input drift in native Snowy cubemaps
+
+2026-10-25 UTC. Host-only source qualification against fixed J850 APK
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+Three retained historical original PC cubemaps produce zero exact target pixel
+or body matches. The residual remains 13 native Cubemap records, six distinct
+pixel groups and 4,785,168 encoded bytes. No device, Editor, game build,
+installation or launch occurs. Current originals remain the only production
+supplier; historical files are qualification evidence only.
+
+**Hypothesis and prior art.** J1136 excludes several omitted current sources,
+but does not test the retained historical Snowy BC6 resources. The three
+serialized Cubemap bodies match current originals while their compressed
+resource extents differ. Under the accepted input-drift policy, the same public
+producer might reproduce J850 from historical originals and permit a separately
+explained current-input result. Consulted community-prior-art.md, J332, J1128
+and J1136. Pinned AssetRipper `1ac666f` LightingDataProcessor adds the generated
+sky reference without restoring the missing native baked-probe table. Its
+source interpretation does not prove the required pixel transform.
+
+**Method.** The existing public `texture_produce.py` `cube-hdr` operation and
+pinned v11 tools transform historical original IDs 13, 14 and 15 once each,
+matched by original native scene references to J850 Snowy IDs 1, 2 and 3.
+The historical receipt binds input
+`3e2dc63f6350b7523f3222c06962b40948da5ebf26b1d1b04f1f67d85b4e9dfd`.
+The historical original bundle is
+`Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-snowyforest_scenes_all_6e82476f77c518313fc7c41da77e70b2.bundle`,
+SHA-256 `ff962a4827abd65c5ad81510bba02397ec36b26ac9eb2667881fc6c2d2d83eae`.
+The existing import settings remain usage 7 / colour 1. Historical identity,
+body selectors and original resource hashes pass. Outputs are persisted before
+independent target-byte comparison. No codec, filter, producer, public recipe
+or record-pack interface changes; no target pixel provider is introduced.
+
+| Historical source / J850 target | Matching encoded bytes | Exact face/mip blocks | Exact body |
+| --- | ---: | ---: | --- |
+| Snowy 13 / 1 | 10,267 / 65,616 | 0 / 48 | No |
+| Snowy 14 / 2 | 20,740 / 65,616 | 0 / 48 | No |
+| Snowy 15 / 3 | 321,576 / 1,048,656 | 0 / 60 | No |
+
+Independent body serialization passes, with no unexpected unchanged fields;
+the remaining mismatch is in encoded pixels. A private diagnostic projection
+using target pixels makes each body exact, but those pixels never enter the
+public transform or any source pack. The initial v1 selector setup fails before
+conversion because the current bundle filename differs; that failure remains
+retained separately. The corrected v2 executes exactly three historical
+transformations. With no historical exact result, current-input repeated
+production and drift qualification are not admitted. No other source sweep is
+repeated.
+
+**Evidence.** Ignored root
+`work/coordination/accepted-build-reconstruction/media-source-v1/cubemap-source-v1/`:
+`historical-snowy-source-v2.py`, `historical-snowy-source-v2/` and
+`historical-snowy-source-v2-terminal.json`. Terminal SHA-256
+`a43d610c035c8001d43d65d160594a9c2be24c43da3ab146242f7265a3e16f5b`;
+result SHA-256
+`01cf8524796be1402b4ade8ccb5e17314a3c9a4fd6fa8bd8bf7b2beac19c0f61`.
+The result pins each original/tool extent and every produced face/mip.
+Unchanged public producer SHA-256
+`ea29094e9f8e4740329bb84ee4b59e5d4b5c7a989cf0ea44924c9b7519cadb14`;
+executed v11 descriptor
+`ad05fa2b534dd80b143fbe90787e4b8de8dcb6eaaa2b1b9edc8eb488e3fa0bae`.
+
+**First failure and revisit.** Historical source 13 / target 1 differs at the
+public HDR pixel transform. Changed original input alone does not qualify these
+records as drift-explained. Keep all 13 outside the qualified 110-record profile.
+The source-only import or prefilter derivation remains unknown. Revisit only
+with a new measured transform or source lineage; neither these failures nor
+J1136 prove rebaking is necessary. Continue the independently unblocked guarded
+Android texture qualification.
