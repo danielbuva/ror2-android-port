@@ -132,7 +132,8 @@ python3 -I -S tools/phone-build/owner-apk/build_owner_apk.py \
 ```
 
 This current host/Android action needs only `manifest`, `manifest_sha256`,
-`targets` and the optional existing `code` mapping from that request. The target
+`targets`, optional existing `code` mapping and optional `drift` evidence from
+that request. The target
 root and selected produced files may be absent: the report lists every required
 final entry as ready, missing, mismatched or invalid. An absent produced code
 file remains missing even if its comparison file exists under `targets`.
@@ -143,13 +144,71 @@ are blocked. A report must be a new file.
 Each available entry records actual size/hash and raw target equality.
 `code_comparison_required` lists produced code/SDK entries whose raw bytes differ;
 the assembler preserves these actual bytes, allowing independently documented
-compiler and ELF metadata differences. Content must match its existing target
-hash. The selection distinguishes complete produced code/SDK, produced game
+compiler and ELF metadata differences. Content matches its existing target
+hash unless explicitly admitted as `drift-explained` below. The selection distinguishes complete produced code/SDK, produced game
 code alone and the replay control. Neither a hash match nor a supplied tree
 proves source provenance or phone/runtime qualification; both qualification
 fields stay false. Keep the producer journals with the report. Mesh/avatar/
 texture object/resource packs are intermediate records and cannot fill a final
 bundle/player-data target entry.
+
+### Current-input drift evidence
+
+J1153 implements the current-install input policy without changing exact hash
+admission. An optional `drift` dictionary maps a changed **content** target path
+(including `apk/` or `payload/`) to three pinned private JSON documents:
+
+```json
+{
+  "drift": {
+    "payload/example.bundle": {
+      "historical_exact": {"path": "/PRIVATE/historical.json", "sha256": "SHA256"},
+      "current_deterministic": {"path": "/PRIVATE/current.json", "sha256": "SHA256"},
+      "difference_map": {"path": "/PRIVATE/map.json", "sha256": "SHA256"}
+    }
+  }
+}
+```
+
+All three documents require `success: true`, `path` equal to the dictionary's
+target, and nonempty `evidence` containing pinned `{path, sha256}` references to
+the retained raw producer/comparison receipts. Every receipt path is canonical
+and absolute. Pins are rechecked through assembly; explicit failed raw evidence
+refuses. The documents contain these additional fields:
+
+- `historical_exact`: `producer_sha256`, `bytes`, `sha256`. The complete output
+  must match the existing target pin. Historical originals qualify the producer
+  only; neither the checker nor assembler reads them or their generated outputs.
+- `current_deterministic`: the **same** `producer_sha256` and at least two `runs`,
+  each with a distinct `id` identifying its actual invocation, `bytes`, `sha256`.
+  Retained raw evidence must identify both executions. Every run must match the
+  actual current supplier. Changing producer source requires requalification.
+- `difference_map`: `inputs` and `operations`. Each input pairs `historical` and
+  `current` relative original-game `{path, bytes, sha256}` identities; one may be
+  `null` for additions/removals. The identities must differ. Each operation has
+  half-open `historical_range` and `current_range`, `historical_sha256` and
+  `current_sha256`. Operations partition both complete files in order, including
+  equal extents and zero-length insert/delete sides. Changed extents additionally
+  require nonempty `inputs` indexes into the input list and a nonempty `reason`.
+  Every current extent is hashed directly from the assembly supplier.
+
+The documents are reviewed qualification summaries of the pinned raw evidence,
+not independent proof of semantic causation. The checker verifies their explicit
+contract and current bytes; human review establishes the public producer,
+independent executions and original-input lineage. It cannot establish these
+facts from hashes alone. `source_provenance_verified` and `device_qualified`
+remain false. Do not normalize a receipt from an earlier producer as though it
+came from a later one or use target bytes to fill missing production.
+
+`exact_count` counts raw-exact available entries. `drift_explained_count` counts
+only admitted changed content, whose status is `drift-explained` and whose
+`target_equal` remains false. Produced code with raw ELF/compiler differences
+remains in `code_comparison_required`, separate from both counts. Missing,
+unexplained, malformed or stale evidence stays blocked. The assembler preserves
+admitted current bytes and hashes, including the embedded Android payload index;
+it never substitutes historical bytes. Keep these required private evidence
+inputs with their producer receipts as described in
+[LOCAL_STATE](../../../docs/LOCAL_STATE.md).
 
 The normal build writes the same `readiness.json` and refuses all blocked inputs
 before launcher compilation or ZIP creation. Once the content owner materializes

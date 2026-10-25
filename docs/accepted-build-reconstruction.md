@@ -435,3 +435,38 @@ entries raw-exact. The current explicit selection contains 18 code/SDK files;
 the readiness report leaves 687 missing final content files and no code-file
 availability gaps. Ordinary-app production of the added metadata and corrected
 native output remain separate gates from host equality.
+
+[J1153](PORTING_JOURNAL.md#j1153--admit-reviewed-current-input-drift-without-historical-runtime-suppliers)
+adds explicit `drift-explained` readiness for current-install content. Three
+pinned private documents bind historical exact production, repeated current
+production by the same public producer, and a complete named input/output
+difference map. The checker hashes every current extent and reports exact and
+drift-explained counts separately. Assembly and the Android payload index use
+the admitted current hashes; historical originals and outputs are qualification
+evidence only. The [evidence contract](../tools/phone-build/owner-apk/README.md#current-input-drift-evidence)
+still requires human review of source lineage and independent invocations.
+It does not qualify runtime behavior or permit replay filling missing inputs.
+
+[J1154](PORTING_JOURNAL.md#j1154--collect-the-paused-native-jobs-terminal-timeout-without-restarting-it)
+collects the original phone native job's failed terminal report. Job 498 times
+out at the existing 3,600 s wall deadline; retained objects and receipts remain
+available for checked continuation. A complete phone-native library and matched
+game controls/performance remain open.
+
+[J1162](PORTING_JOURNAL.md#j1162--retain-the-native-measurement-transport-failure-and-refresh-source-readiness)
+updates current host readiness to 583 of 705 files: 578 raw-exact, two produced
+code outputs requiring separate comparisons and three drift-explained files.
+Seven APK files and 115 payload files remain missing; current-only assembly,
+phone production and runtime qualification remain open. The native measurement
+attempt stops on a host ADB stream SIGKILL during tool-host compilation, before
+any native timings. Its sender is unknown; cleanup verifies stopped tools,
+sleeping panels and lease release.
+
+[J1167](PORTING_JOURNAL.md#j1167--measure-representative-native-compilation-on-the-phone) completes the three representative ordinary-app native compiler timings.
+They size the active-time budget for checked continuation from 498 retained
+objects; complete native production, final assembly and game qualification
+remain open.
+
+J1168 records the first continuation failure before compilation: Android
+Python lacks `os.link`. A receipt-checked copy fallback passes host contracts;
+full phone native production and gameplay qualification remain open.

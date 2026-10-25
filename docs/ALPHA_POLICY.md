@@ -67,6 +67,37 @@ The pinned ProperSave filesystem boundary, reviewed in
 informs that separation; its mod save format is not an Android profile protocol.
 No community or game implementation is copied into this policy.
 
+## Final-flow acceptance contract
+
+These are concrete acceptance cases for the eventual alpha flow, not claims
+that it exists. Extend the existing [owner APK producer](../tools/phone-build/owner-apk/README.md),
+input admission and device ownership owners; do not introduce a second signing,
+installer or input-acceptance pipeline. Keep detailed receipts private and publish
+only reviewed summaries. The prepared-lab [playtest checklist](PLAYTESTING.md)
+remains the desktop fallback.
+
+| Boundary | Required case and evidence | Existing coverage and remaining gate |
+| --- | --- | --- |
+| Final package identity | Independently inspect the assembled and installed package as `dev.ror2lab.alpha`. On an occupied identity, require its local ownership receipt and matching signing certificate before updating; refuse an unowned or conflicting signer without uninstalling. Record actual installed APK hash, version, placement and runtime backing. | `binary_manifest.py` preserves the supplied package identity; its authored fixture proves that preservation. It does not select the alpha identity. The current laboratory/device ownership contract and J1065 are reusable, but neither qualifies an alpha installation. |
+| Issued versions | Allocate positive codes through 2,100,000,000 from durable owner-local state. Build two updates from the same frozen source manifest and prove the second code exceeds the first issued code. Refuse reuse, lower codes and exhaustion before dispatching installation. A failed or cancelled attempt must not allow a previously issued code to be reused. Bind every issue to the source/input/toolchain/APK/payload/certificate receipt required above. | `binary_manifest.py` checks only that an explicit code exceeds the supplied manifest version, accepts through the policy maximum of 2,100,000,000 and permits omission. Request admission refuses a larger explicit code before creating output. Durable issued-version allocation and mandatory final-flow codes are additional integration gates; passing the manifest tests does not establish monotonic owner updates. |
+| Signing and recovery | Sign separate builds with the same owner certificate, then independently verify signatures, alignment and unchanged nonsignature content. Refuse redirected, exposed or incomplete existing key state without replacing a retained key. Qualify a private recovery backup and restoration with that same certificate before the first alpha installation. | `build_owner_apk.py` owns durable key reuse and signing verification; `test_owner_signing.py` covers authored key reuse, tool failure and unsafe existing custody. J1095 qualifies authored phone signing, not final game packaging, certificate-bound install admission or backup recovery. |
+| Legitimate local input | Admit the complete reviewed inventory, then repeat with an unknown version, missing file and changed bytes under otherwise identical filenames. Each refused attempt leaves the legitimate installation unchanged and creates no accepted build/current pointer. Recheck admitted input after processing so a mid-operation change cannot become accepted output. | The desktop inventory/acceptance preflight and source producers supply admission contracts. The private replay APK builder accepts a target profile, not arbitrary original PC files. Final phone import/UI and honest unknown-version refusal remain unqualified. |
+| Cancellation and updates | Cancel local acquisition before copying and during processing, then restart. Source bytes stay unchanged; incomplete output is never Ready, launchable or selected as accepted. Separately prove a normal installer update and a compatible higher-code rollback retain real game profile/settings across cold starts. Refuse incompatible schemas. | `PayloadStore.java` and its actual Java harness cover per-file packaged-payload pause/restart, exact drift consent, retained backups and failed-stage refusal. They do not implement local PC import cancellation. J1065 qualifies retained data under the lab identity and ADB installation; final alpha identity, ordinary installer and rollback cases remain open. |
+
+Run the existing host contracts without private input or an editor:
+
+```sh
+python3 -m unittest discover -s tests -p 'test_owner_binary_manifest.py'
+python3 -m unittest discover -s tests -p 'test_owner_signing.py'
+python3 -m unittest discover -s tests -p 'test_owner_payload_store.py'
+```
+
+The payload fixture compiles and executes the actual Java owner when a JDK is
+available; a skipped Java test is not a passing preparation result. Signing
+tests use authored APK/tool doubles and establish orchestration/refusal contracts,
+not cryptographic, Android installer or game-runtime acceptance. Keep J1065 and
+J1095's separate device scopes when evaluating the final-flow evidence.
+
 ## Distribution and feedback
 
 Only audited authored tooling, recipes and original bootstrap material are

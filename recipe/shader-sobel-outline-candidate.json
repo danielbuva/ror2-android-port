@@ -56,8 +56,9 @@
       "path": "reference-repos/doitsujin__dxbc-spirv",
       "revision": "c7f069701227dcb800a01bd93e42f8001b7543e7"
     },
-    "shader_deferred_sha256": "f877d0a93bb628b3d351630ac2a6f8c82efc5f2990b6ca816efd93c419f4a541",
-    "shader_segments_sha256": "a0906e1abe38b5a18f6dc8f9e902acb3def0123368ef7344f5427d2e03aeff58",
-    "shader_source_sha256": "d712407d715c37e79806207bd763bf2dc7d502a861366af2784ae8e63e3c026c"
+    "shader_deferred_sha256": "dc1b81f1e012de8dd9da7cedddc2d62b7ac76cb564ac00cf262e55815b3b11c4",
+    "shader_segments_sha256": "2cba875459a7ea35f9f0279696569fd05a6429c9f4b206ad331d5b723dca4872",
+    "shader_source_sha256": "f6b78e8ca9862e40e1443198939b3d288d90d6ed3e40270680fedbadb662e1aa",
+    "shader_metadata_sha256": "1701b9a0f621cd29c4f16fbb594676401d4a81cf2d02b5ab10664ce8aa629318"
   }
 }

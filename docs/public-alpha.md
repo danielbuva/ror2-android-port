@@ -65,33 +65,47 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       qualifies all 1,589 ETC1 mip-chain records on the host, with Android
       qualification open. [J1140](PORTING_JOURNAL.md#j1140--qualify-the-bounded-android-tool-guard-and-checkpoint-recovery)
       qualifies bounded Android guard and checkpoint-recovery controls, without
-      admitting a full texture cohort. [J1128](PORTING_JOURNAL.md#j1128--produce-complete-rgba-mip-and-source-cubemap-cohorts-on-the-host) qualifies all 1,523 RGBA mip-chain records
+      admitting a full texture cohort.
+      [J1158](PORTING_JOURNAL.md#j1158--rgba-phone-cohort-interrupted-by-recorded-hangup)
+      records the next interrupted cohort: host ADB is killed, the guard records
+      hangup, and full phone qualification remains open. Separate recovery
+      preserves the interrupted checkpoint, verifies idle state and unchanged
+      installed bytes, removes owned scratch and releases the device.
+      [J1128](PORTING_JOURNAL.md#j1128--produce-complete-rgba-mip-and-source-cubemap-cohorts-on-the-host) qualifies all 1,523 RGBA mip-chain records
       and 110 source-derived Cubemaps on the host. Their Android production,
       13 native reflection cubes and complete bundle assembly remain open.
       [J1136](PORTING_JOURNAL.md#j1136--bound-native-cubemap-residue-with-omitted-original-pc-sources)
       tests omitted original scene/player sources without closing that residue;
       no replacement lighting or target pixels enter the producer.
+      [J1165](PORTING_JOURNAL.md#j1165--bound-historical-input-drift-in-native-snowy-cubemaps)
+      also excludes the retained historical Snowy triplet: none reproduces J850,
+      so those records remain outside drift-explained qualification.
       [J1113](PORTING_JOURNAL.md#j1113--produce-a-complete-source-only-bundle-and-seven-player-data-files)
       qualifies the first complete PC-only bundle and seven player-data files;
       J1139 supplies 173 complete player files, including source-derived TMP
-      hashes and native selection manifests. J1145 extends the independently
-      produced payload cohort to fifteen complete bundles. The shared source
-      tree also retains J1144's separately qualified ColorGrade file; its
-      publication and phone gates remain separate. The fixed-target readiness
-      check now has 372 missing content entries; all 18 code/SDK
+      hashes and native selection manifests. J1155 extends the independently
+      produced payload cohort to eighteen complete bundles. The shared source
+      tree preserves J1157's complete host Shader cohort. The combined
+      fixed-target readiness check has 122 missing content entries; all 18 code/SDK
       entries are available. Phone replay, the
       remaining bundles/player data and complete source-derived installation
       remain open; the structural writer produces no missing content itself.
+      J1155 additionally qualifies the unchanged current-original Windows
+      comparison-bundle copy as drift-explained, separately from exact output.
+      Its admission through the public input-drift checker is a host
+      control; no historical file becomes a reconstruction input.
       [J1081](PORTING_JOURNAL.md#j1081--run-owner-supplied-standalone-sdk-tools-through-a-public-android-runner)
       qualifies a reproducible public Android runner for standalone SDK build
       tools. The full Linux RGBA cohort, original shader/content production and ordinary
       owner delivery remain open; game execution remains native IL2CPP ARM64.
       [J1094](PORTING_JOURNAL.md#j1094--qualify-exact-sdk-vulkan-shader-compilation-on-android)
-      qualifies exact host/phone authored Vulkan shader-tool output. Original
-      shader recovery, variants and app integration remain open. J1144/J1146/J1147/J1151 add 125
-      complete source-derived host Shader files through the standalone compiler
-      and existing writer; the source-only final-file union reaches 333 of 705
-      entries. Remaining shader families and phone serialization are still open.
+      qualifies exact host/phone authored Vulkan shader-tool output. Phone
+      original-shader recovery and app integration remain open. J1157 qualifies
+      all 414 APK Shader48 objects through source-only host
+      production: 369 complete files plus two shared records. The combined
+      source tree has 583 of 705 entries available (578 raw-exact, two code
+      comparison entries and three separately drift-explained); 122 remain
+      missing (J1162). Host shared mixed-file assembly is qualified; phone serialization remains open.
       [J1102](PORTING_JOURNAL.md#j1102--qualify-linked-vulkan-fragment-output-and-explicit-owner-apk-code-inputs)
       confirms both executable stages in that linked payload and accepts all
       three produced code outputs in the existing APK owner without replay
@@ -142,6 +156,9 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
 [ALPHA_POLICY.md](ALPHA_POLICY.md) records the local-file-only acquisition,
 separate alpha identity, owner signing/update/rollback and cloud deferral
 decisions. The following items are implementation and acceptance gates.
+The policy's [acceptance matrix](ALPHA_POLICY.md#final-flow-acceptance-contract)
+separates reusable host owners from final-flow work; it does not qualify an
+installed alpha package.
 
 - [ ] Enforce the selected alpha identity, increasing version code, private
       signing custody and update/rollback policy; prove actual game
@@ -157,7 +174,8 @@ qualification remain separate from these laboratory installs.
 ## Controls, UI and sessions
 
 - [ ] Qualify ordinary physical input, original/native mappings and rebinding;
-      automatic diagnostics do not qualify ordinary control
+      use the [measured-input contract](INPUT_QUALIFICATION.md).
+      Automatic diagnostics do not qualify ordinary control
       ([J762](PORTING_JOURNAL.md#j762--accept-explicit-thor-game-diagnostics-and-unchanged-nova-controls)).
 - [ ] Qualify the physical touchscreen digitizer, acquired-equipment activation
       and genuine target interaction. [J1071](PORTING_JOURNAL.md#j1071--qualify-software-touch-native-pause-and-recovery)
@@ -184,12 +202,36 @@ qualification remain separate from these laboratory installs.
       [J1100](PORTING_JOURNAL.md#j1100--complete-twelve-corrected-commando-sessions-and-retain-a-smaller-growth-frontier)
       completes 12 corrected Commando sessions, reducing matched menu growth to
       0.579 MiB/session; the remaining positive slope still prevents a full bound.
+      The old-heap graph fingerprint and host-only queued-case qualification are
+      recorded in [J1122](PORTING_JOURNAL.md#j1122--prepare-alpha-host-contracts-and-identify-an-old-heap-fingerprint).
 - [ ] Complete real interrupted-write/ENOSPC and sustained performance/thermal
       cases on supported hardware. [J1071](PORTING_JOURNAL.md#j1071--qualify-software-touch-native-pause-and-recovery)
       qualifies controlled VM-crash and genuine ANR cold recovery, invalid-pending
       refusal, validated-backup recovery, directory-write failure/retry and fresh
-      background return. Injected persistence states do not establish a power-cut
-      or filled-filesystem result.
+      background return. J1127 stops cold startup at the CPU thermal threshold
+      before any interrupted-write, heap or sustained stage completes. J1130 confirms
+      unreadable thermal interfaces;
+      [J1131](PORTING_JOURNAL.md#j1131--supervise-all-readable-gameplay-thermal-zones)
+      host-qualifies the clarified readable-zone admission/runtime policy.
+      [J1137](PORTING_JOURNAL.md#j1137--separate-thermal-admission-discovery-from-runtime-sampling)
+      separates admission discovery from strict runtime sampling after a prelaunch
+      timeout.
+      [J1141](PORTING_JOURNAL.md#j1141--exclude-unavailable-admission-thermal-sentinels)
+      host-qualifies the revised admission-only unavailable-sentinel policy;
+      previously valid sensors becoming sentinels still abort gameplay.
+      [J1148](PORTING_JOURNAL.md#j1148--restrict-gameplay-admission-to-cpu-gpu-battery-and-skin)
+      host-qualifies the revised CPU/GPU/battery/skin admission scope. Fresh
+      device qualification remains open; J1156 below updates the runtime limits.
+      [J1156](PORTING_JOURNAL.md#j1156--qualify-per-zone-gameplay-thermal-duration-and-limits)
+      host-qualifies per-zone core duration and immediate core/battery/skin
+      runtime limits after J1152's startup spike; fresh gameplay qualification
+      remains open.
+      [J1164](PORTING_JOURNAL.md#j1164--recover-an-interrupted-native-save-and-classify-stage-load-thermal-refusal)
+      qualifies native pending-write interruption/recovery on the installed R58.
+      Its next stage is deliberately stopped by the sustained CPU thermal guard
+      during stage startup; fresh heaps and sustained play remain open.
+      Injected persistence states and this writer interruption do not establish
+      a power-cut or filled-filesystem result.
 - [ ] Qualify the [prepared-lab owner-build/install/playtest checklist](PLAYTESTING.md)
       on fresh public inputs, then establish final player installation, ordinary
       controls and update/rollback steps. Artifact identity, known limits and
@@ -227,15 +269,13 @@ explicit replay content; it does not qualify phone production or installation.
 
 [J1114](PORTING_JOURNAL.md#j1114--produce-both-generic-android-build-metadata-files)
 closes the two generic Android build-metadata producer gaps. Fresh host SDK
-production yields all 15 entries raw-exact to J850. The shared readiness request
-combined with
-[J1145](PORTING_JOURNAL.md#j1145--produce-complete-sky-meadow-solusweb-and-ancient-loft-scene-bundles)
-has all 18 code/SDK files and 189 content files ready, with 498 content entries
-absent. The 173 player files include the twelve newly completed manifests,
-fonts and mip textures. Phone
-replay and complete content/shader/animation production remain open. The two
-new files still require an ordinary-app rerun; corrected phone-native output,
-complete content, installation, controls and matched performance remain open.
+production yields all 15 entries raw-exact to J850. Final-file availability and
+raw equality remain separate from source provenance,
+phone production and runtime acceptance. J1153 records the current exact,
+drift-explained and missing cohorts; the checker preserves actual admitted
+current bytes. Ordinary-app metadata qualification, corrected phone-native
+output, complete content, installation, controls and matched performance remain
+open.
 
 [J1133](PORTING_JOURNAL.md#j1133--produce-source-animation-hierarchy-and-generic-records-on-the-host)
 extends the source-only object producers. These host-qualified packs still
@@ -246,5 +286,38 @@ they do not independently close a final-file readiness entry.
 adds current-input English and the fifth font material through the same player
 owner. Historical originals qualify the transformation; reconstruction consumes
 the current installation only. Their complete byte differences are explained by
-original-input drift and remain separate from exact J850 matching. Checker
-classification and phone qualification remain open.
+original-input drift and remain separate from exact J850 matching.
+J1153 adds the explicit checker classification through pinned historical exact,
+repeated current and complete input/output difference evidence. Exact and
+drift-explained counts remain separate, and assembly preserves the current
+supplier bytes and payload-index hashes. The checker never reads historical
+originals or outputs; causal lineage and independent invocations still need
+review of the raw producer receipts. Phone qualification remains open.
+
+J1154 collects the phone native job's failed terminal timeout at compilation
+job 498. Its retained successful objects may support checked continuation;
+complete phone-native production, ordinary installation, both controls and
+matched first-stage performance remain open.
+
+[J1143](PORTING_JOURNAL.md#j1143--qualify-expanded-source-animation-controller-and-graph-records) qualifies expanded
+source animation/controller and checked hierarchy graph packs on the host.
+They add no complete final-file readiness entry or APK destination record.
+Complete file assembly and ordinary-app production remain required.
+
+[J1162](PORTING_JOURNAL.md#j1162--retain-the-native-measurement-transport-failure-and-refresh-source-readiness)
+updates current host readiness to 583 of 705 files: 578 raw-exact, two produced
+code outputs requiring separate comparisons and three drift-explained files.
+Seven APK files and 115 payload files remain missing; current-only assembly,
+phone production and runtime qualification remain open. The native measurement
+attempt stops on a host ADB stream SIGKILL during tool-host compilation, before
+any native timings. Its sender is unknown; cleanup verifies stopped tools,
+sleeping panels and lease release.
+
+[J1167](PORTING_JOURNAL.md#j1167--measure-representative-native-compilation-on-the-phone) completes the three representative ordinary-app native compiler timings.
+They size the active-time budget for checked continuation from 498 retained
+objects; complete native production, final assembly and game qualification
+remain open.
+
+J1168 records the first continuation failure before compilation: Android
+Python lacks `os.link`. A receipt-checked copy fallback passes host contracts;
+full phone native production and gameplay qualification remain open.

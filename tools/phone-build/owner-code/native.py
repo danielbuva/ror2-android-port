@@ -9,6 +9,7 @@ from contextlib import ExitStack
 import gzip
 import hashlib
 import json
+import math
 import os
 from pathlib import Path, PurePosixPath
 import shutil
@@ -216,7 +217,7 @@ def linux_driver_arguments(argv, sdk, tools):
     ]
 
 
-def linux_invoke(argv, output, name, sdk, tools, *, env, link=False):
+def linux_invoke(argv, output, name, sdk, tools, *, env, link=False, timeout=3600, pause_clock=None):
     """Run the unchanged driver's actual cc1/BFD command under QEMU.
 
     Android cannot exec a Linux child through binfmt_misc. Ask the original
@@ -224,7 +225,7 @@ def linux_invoke(argv, output, name, sdk, tools, *, env, link=False):
     policy, optimization, source or target library is substituted.
     """
     prefix = linux_prefix(tools)
-    invoke([*prefix, tools["clang"], "-###", *linux_driver_arguments(argv, sdk, tools)], output, name + "-driver", env=env)
+    invoke([*prefix, tools["clang"], "-###", *linux_driver_arguments(argv, sdk, tools)], output, name + "-driver", env=env, pause_clock=pause_clock)
     rendered = (output / "logs" / (name + "-driver.log")).read_text()
     commands = [shlex.split(line) for line in rendered.splitlines() if line.lstrip().startswith('"')]
     if len(commands) != 1:
@@ -236,7 +237,7 @@ def linux_invoke(argv, output, name, sdk, tools, *, env, link=False):
         command[0] = tools["linker"]
     elif command[:2] != [tools["clang"], "-cc1"]:
         raise ValueError("Linux NDK driver did not select its cc1 compiler")
-    invoke([*prefix, *command], output, name, env=env, timeout=3600)
+    invoke([*prefix, *command], output, name, env=env, timeout=timeout, pause_clock=pause_clock)
 
 
 def burst_ndk(sdk, tools, output):
@@ -329,9 +330,50 @@ def plan(profile, sdk, output, android_tools=None):
     return {"schema": 1, "jobs": jobs, "wrappers": wrappers, "link": link, "library": str(output / "libil2cpp.unstripped.so")}
 
 
-def invoke(argv, output, name, *, env=None, separate_stderr=False, timeout=3600):
+def elapsed_clock():
+    # Android's guard records /proc/uptime, which uses BOOTTIME rather than
+    # MONOTONIC across system suspend. Host fixtures need no Linux-only API.
+    return time.clock_gettime(getattr(time, "CLOCK_BOOTTIME", time.CLOCK_MONOTONIC))
+
+
+def paused_seconds(path):
+    value = json.loads(path.read_text())
+    if set(value) != {"paused_seconds", "paused_at"}:
+        raise ValueError("explicit cumulative pause clock required")
+    total, at = value["paused_seconds"], value["paused_at"]
+    if any(isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v) or v < 0 for v in (total, *([] if at is None else [at]))):
+        raise ValueError("invalid pause clock")
+    now = elapsed_clock()
+    if at is not None and at > now:
+        raise ValueError("pause clock is ahead of BOOTTIME")
+    return now, total + (now - at if at is not None else 0)
+
+
+def wait_active(child, timeout, pause_clock, record):
+    """Guard owns STOP/CONT; its independent clock survives a stopped parent."""
+    started, initial_pause = paused_seconds(pause_clock)
+    prior_pause = initial_pause
+    while True:
+        now, paused = paused_seconds(pause_clock)
+        if paused + 0.000001 < prior_pause or paused - initial_pause > now - started + 0.01:
+            raise ValueError("pause clock reset or exceeds elapsed time")
+        prior_pause = paused
+        active = max(0, now - started - (paused - initial_pause))
+        record.update(active_seconds=active, paused_seconds=paused - initial_pause)
+        code = child.poll()
+        if code is not None:
+            return code
+        if active >= timeout:
+            raise subprocess.TimeoutExpired(child.args, timeout)
+        try:
+            child.wait(timeout=min(0.1, timeout - active))
+        except subprocess.TimeoutExpired:
+            pass
+
+
+def invoke(argv, output, name, *, env=None, separate_stderr=False, timeout=3600, pause_clock=None):
     started = time.monotonic()
-    record = {"argv": argv, "exit_code": None}
+    record = {"argv": argv, "exit_code": None, "timeout_seconds": timeout}
 
     def interrupted(signum, frame):
         raise KeyboardInterrupt("native tool interrupted")
@@ -352,7 +394,7 @@ def invoke(argv, output, name, *, env=None, separate_stderr=False, timeout=3600)
                 start_new_session=True,
             )
             try:
-                record["exit_code"] = child.wait(timeout=timeout)
+                record["exit_code"] = wait_active(child, timeout, pause_clock, record) if pause_clock else child.wait(timeout=timeout)
             except BaseException:
                 if child.poll() is None:
                     os.killpg(child.pid, signal.SIGKILL)
@@ -388,18 +430,19 @@ def lump_source(members):
     return "// Authored SDK include wrapper; owner SDK source remains unchanged.\n" + "".join('#include "' + p + '"\n' for p in members)
 
 
-def compiled_jobs(folder, current, profile, sdk, inputs):
-    """Admit one complete owned compilation for an explicit corrected relink."""
+def compiled_jobs(folder, current, profile, sdk, inputs, *, resume=False):
+    """Validate retained object receipts before relinking or continuing a failure."""
     old = json.loads((folder / "plan.json").read_text())
     previous = json.loads((folder / "inputs.json").read_text())
     result = json.loads((folder / "result.json").read_text())
-    if (
-        result.get("success") is not True
-        or result.get("phase") != "native-built"
-        or result["input_id"] != profile["input_id"]
-        or result["compile_tasks"] != len(current["jobs"])
-    ):
+    count = result.get("compile_tasks", 0) + result.get("reused_compile_tasks", 0)
+    if resume:
+        if result.get("success") is not False or result.get("phase") != "compiling" or not 0 <= count < len(current["jobs"]):
+            raise ValueError("failed original compilation with a receipt prefix required for resume")
+    elif result.get("success") is not True or result.get("phase") != "native-built" or count != len(current["jobs"]):
         raise ValueError("complete original compilation required for relinking")
+    if result.get("input_id") != profile["input_id"]:
+        raise ValueError("compiled original input differs")
     for name in ("sdk", "metadata", "converter_receipt_sha256"):
         if previous[name] != inputs[name]:
             raise ValueError("compiled native input differs: " + name)
@@ -429,36 +472,52 @@ def compiled_jobs(folder, current, profile, sdk, inputs):
 
     if remap(old["jobs"]) != current["jobs"] or remap(old["wrappers"]) != current["wrappers"]:
         raise ValueError("compiled command policy differs; compile again")
-    if {p.name for p in (folder / "job-results").iterdir()} != {str(i) + ".json" for i in range(len(current["jobs"]))}:
+    if {p.name for p in (folder / "job-results").iterdir()} != {str(i) + ".json" for i in range(count)}:
         raise ValueError("complete compiled job receipts required")
     rows = []
-    for index, job in enumerate(current["jobs"]):
+    for index, job in enumerate(current["jobs"][:count]):
         row = json.loads((folder / "job-results" / (str(index) + ".json")).read_text())
         if job["kind"] == "generated":
             source_sha = inputs["sources"][Path(job["source"]).name]["sha256"]
         elif job["kind"] == "lump":
-            source_sha = hashlib.sha256(lump_source(old["wrappers"][old["jobs"][index]["source"]]).encode()).hexdigest()
+            origin = row.get("lump_sdk_root", old_sdk)
+            if (
+                not isinstance(origin, str)
+                or not Path(origin).is_absolute()
+                or str(Path(origin)) != origin
+                or ".." in Path(origin).parts
+                or any(c in origin for c in ('"', "\\", "\r", "\n", "\0"))
+            ):
+                raise ValueError("invalid compiled lump SDK origin")
+            members = [str(Path(origin) / Path(member).relative_to(old_sdk)) for member in old["wrappers"][old["jobs"][index]["source"]]]
+            source_sha = hashlib.sha256(lump_source(members).encode()).hexdigest()
         else:
             source_sha = sha(job["source"])
         obj = folder / "objects" / (str(index) + ".o")
-        if (
-            obj.is_symlink()
-            or obj.resolve(strict=True) != obj
-            or row
-            != {
-                "source_sha256": source_sha,
-                "output_sha256": sha(obj),
-                "bytes": obj.stat().st_size,
-            }
-        ):
+        if obj.is_symlink() or obj.resolve(strict=True) != obj:
             raise ValueError("compiled object/source receipt differs: " + str(index))
+        expected = {"source_sha256": source_sha, "output_sha256": sha(obj), "bytes": obj.stat().st_size}
+        if job["kind"] == "lump" and "lump_sdk_root" in row:
+            expected["lump_sdk_root"] = origin
+        if row != expected:
+            raise ValueError("compiled object/source receipt differs: " + str(index))
+        if job["kind"] == "lump" and origin != str(sdk):
+            row = {**row, "lump_sdk_root": origin}
         rows.append((obj, row))
     return rows
 
 
 def run(request, *, plan_only=False, profile=None):
     required = {"owner_work", "sdk_install", "converter_receipt", "converter_receipt_sha256", "sources", "sources_compressed", "metadata", "output"}
-    if set(request) - {"android_tools", "linux_tools", "compiled"} != required or not isinstance(request["sources_compressed"], bool):
+    if set(request) - {
+        "android_tools",
+        "linux_tools",
+        "compiled",
+        "resume",
+        "compile_timeout_seconds",
+        "pause_clock",
+        "measure_jobs",
+    } != required or not isinstance(request["sources_compressed"], bool):
         raise ValueError("explicit native request fields required")
     work, sdk, receipt, sources, metadata = [canonical(request[n]) for n in ("owner_work", "sdk_install", "converter_receipt", "sources", "metadata")]
     output = Path(request["output"])
@@ -489,10 +548,28 @@ def run(request, *, plan_only=False, profile=None):
         "android_tools": tool_state,
         "linux_tools": linux_state,
     }
-    compiled = canonical(request["compiled"]) if "compiled" in request else None
+    measured = request.get("measure_jobs")
+    if "measure_jobs" in request and (
+        not isinstance(measured, list)
+        or not measured
+        or any(isinstance(index, bool) or not isinstance(index, int) or not 0 <= index < len(value["jobs"]) for index in measured)
+        or len(set(measured)) != len(measured)
+        or plan_only
+    ):
+        raise ValueError("nonempty unique valid measurement job indexes required; no plan-only measurement")
+    if "compiled" in request and "resume" in request:
+        raise ValueError("select completed relink or failed compilation resume")
+    timeout = request.get("compile_timeout_seconds", 3600)
+    if isinstance(timeout, bool) or not isinstance(timeout, (int, float)) or not math.isfinite(timeout) or timeout <= 0:
+        raise ValueError("positive active compile timeout required")
+    pause_clock = canonical(request["pause_clock"]) if "pause_clock" in request else None
+    if pause_clock:
+        paused_seconds(pause_clock)
+    resuming = "resume" in request
+    compiled = canonical(request["resume" if resuming else "compiled"]) if "compiled" in request or resuming else None
     if compiled:
         disjoint(output, [compiled])
-    reused = compiled_jobs(compiled, value, profile, sdk, inputs) if compiled else None
+    reused = compiled_jobs(compiled, value, profile, sdk, inputs, resume=resuming) if compiled else None
     output.mkdir(mode=0o700)
     result = {
         "schema": 1,
@@ -504,9 +581,12 @@ def run(request, *, plan_only=False, profile=None):
         "phone_qualified": False,
         "runtime_qualified": False,
         "compile_tasks": 0,
+        "compile_timeout_seconds": timeout,
     }
+    if measured is not None:
+        result["measured_jobs"] = measured
     if compiled:
-        result.update(compiled=str(compiled), reused_compile_tasks=0)
+        result.update(**{"resume" if resuming else "compiled": str(compiled)}, reused_compile_tasks=0)
     try:
         for name in ("tmp", "logs", "objects", "cpp", "lumps", "job-results"):
             (output / name).mkdir()
@@ -519,9 +599,20 @@ def run(request, *, plan_only=False, profile=None):
         if not plan_only:
             result["phase"] = "compiling"
             for index, job in enumerate(value["jobs"]):
-                if reused is not None:
+                if measured is not None and index not in measured:
+                    continue
+                if measured is None and reused is not None and index < len(reused):
                     obj, row = reused[index]
-                    os.link(obj, job["output"])
+                    link = getattr(os, "link", None)
+                    if link is not None:
+                        link(obj, job["output"])
+                    else:
+                        # Android's embedded Python omits os.link.
+                        if shutil.disk_usage(output).free < row["bytes"] + RESERVE:
+                            raise RuntimeError("native reuse reserve unavailable; outputs retained")
+                        shutil.copyfile(obj, job["output"])
+                        if Path(job["output"]).stat().st_size != row["bytes"] or sha(Path(job["output"])) != row["output_sha256"]:
+                            raise ValueError("reused native object copy differs from its receipt")
                     write(output / "job-results" / (str(index) + ".json"), row)
                     result["reused_compile_tasks"] += 1
                     continue
@@ -532,9 +623,9 @@ def run(request, *, plan_only=False, profile=None):
                     expand(providers[source.name], source)
                 before = sha(source)
                 if linux_tools:
-                    linux_invoke(job["argv"], output, str(index), sdk, linux_tools, env=environment)
+                    linux_invoke(job["argv"], output, str(index), sdk, linux_tools, env=environment, timeout=timeout, pause_clock=pause_clock)
                 else:
-                    invoke(job["argv"], output, str(index), env=environment)
+                    invoke(job["argv"], output, str(index), env=environment, timeout=timeout, pause_clock=pause_clock)
                 if sha(source) != before:
                     raise ValueError("native input changed during compilation")
                 obj = Path(job["output"])
@@ -542,25 +633,26 @@ def run(request, *, plan_only=False, profile=None):
                 result["compile_tasks"] += 1
                 if job["kind"] == "generated":
                     source.unlink()
-            size = sum(Path(j["output"]).stat().st_size for j in value["jobs"])
-            if shutil.disk_usage(output).free < size + 1536 * 1024**2:
-                raise RuntimeError("native link reserve unavailable; objects retained")
-            result["phase"] = "linking"
-            if linux_tools:
-                linux_invoke(value["link"], output, "link", sdk, linux_tools, env=environment, link=True)
-            else:
-                invoke(value["link"], output, "link", env=environment)
-            target = output / "libil2cpp.so"
-            stripper = android_tools["objcopy"] if android_tools else str(sdk / profile["objcopy"])
-            result["phase"] = "stripping"
-            strip_command = [*linux_prefix(linux_tools), linux_tools["objcopy"]] if linux_tools else [stripper]
-            invoke([*strip_command, "--strip-all", value["library"], str(target)], output, "strip", env=environment)
-            with target.open("rb") as stream:
-                header = stream.read(64)
-            if len(header) != 64 or header[:6] != b"\x7fELF\x02\x01" or struct.unpack_from("<HH", header, 16) != (3, 183):
-                raise ValueError("expected AArch64 shared ELF library")
-            result.update(library_sha256=sha(target), library_bytes=target.stat().st_size)
-        if compiled and compiled_jobs(compiled, value, profile, sdk, inputs) != reused:
+            if measured is None:
+                size = sum(Path(j["output"]).stat().st_size for j in value["jobs"])
+                if shutil.disk_usage(output).free < size + 1536 * 1024**2:
+                    raise RuntimeError("native link reserve unavailable; objects retained")
+                result["phase"] = "linking"
+                if linux_tools:
+                    linux_invoke(value["link"], output, "link", sdk, linux_tools, env=environment, link=True, pause_clock=pause_clock)
+                else:
+                    invoke(value["link"], output, "link", env=environment, pause_clock=pause_clock)
+                target = output / "libil2cpp.so"
+                stripper = android_tools["objcopy"] if android_tools else str(sdk / profile["objcopy"])
+                result["phase"] = "stripping"
+                strip_command = [*linux_prefix(linux_tools), linux_tools["objcopy"]] if linux_tools else [stripper]
+                invoke([*strip_command, "--strip-all", value["library"], str(target)], output, "strip", env=environment, pause_clock=pause_clock)
+                with target.open("rb") as stream:
+                    header = stream.read(64)
+                if len(header) != 64 or header[:6] != b"\x7fELF\x02\x01" or struct.unpack_from("<HH", header, 16) != (3, 183):
+                    raise ValueError("expected AArch64 shared ELF library")
+                result.update(library_sha256=sha(target), library_bytes=target.stat().st_size)
+        if compiled and compiled_jobs(compiled, value, profile, sdk, inputs, resume=resuming) != reused:
             raise ValueError("compiled providers changed during relinking")
         if sdk_files(sdk, profile) != sdk_state or input_state(work) != (identity, game, inventory):
             raise ValueError("owner SDK or game input state changed")
@@ -574,7 +666,10 @@ def run(request, *, plan_only=False, profile=None):
         ):
             raise ValueError("converter providers changed during native production")
         result.update(
-            success=True, phase="planned" if plan_only else "native-built", metadata_sha256=metadata_row["sha256"], planned_compile_tasks=len(value["jobs"])
+            success=True,
+            phase="planned" if plan_only else "native-measured" if measured is not None else "native-built",
+            metadata_sha256=metadata_row["sha256"],
+            planned_compile_tasks=len(value["jobs"]),
         )
     except BaseException as error:
         result.update(error_type=type(error).__name__, error=str(error))

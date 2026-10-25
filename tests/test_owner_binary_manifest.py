@@ -143,8 +143,12 @@ class OwnerBinaryManifestTests(unittest.TestCase):
                 expected[(PATCH.ANDROID, "versionCode")] = 8
                 self.assertEqual(after[0]["attributes"], expected)
 
+    def test_owner_upgrade_accepts_policy_maximum(self):
+        _, _, elements = read(PATCH.patch(authored_manifest(), WIRE, version_code=2100000000))
+        self.assertEqual(elements[0]["attributes"][(PATCH.ANDROID, "versionCode")], 2100000000)
+
     def test_owner_upgrade_refuses_nonincreasing_invalid_and_ambiguous_versions(self):
-        for version in (0, -1, True, 7, 6, 2147483648, "8"):
+        for version in (0, -1, True, 7, 6, 2100000001, 2147483647, 2147483648, "8"):
             with self.subTest(version=version), self.assertRaises(ValueError):
                 PATCH.patch(authored_manifest(), WIRE, version_code=version)
         for options in ({"version_kind": 3}, {"duplicate_version": True}, {"omit_version": True}):

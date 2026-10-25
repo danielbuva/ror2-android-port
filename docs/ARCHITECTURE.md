@@ -67,6 +67,8 @@ object/layout derivation and phone qualification remain separate.
 teleport-material, objective-UI, teleporter-indicator, generic-pickup and
 enemy-reward, Village Night, Helminth Roost, Habitat, Habitatfall and
 Wispgraveyard, Sky Meadow, Solusweb, Ancient Loft, AI Test and Testscene slices.
+It also owns the complete Wispgraveyard source-scene variant and the unchanged
+original Windows comparison-bundle copy.
 Audited profiles `recipe/owner-pickup-objects.json`,
 `recipe/owner-death-effect-objects.json`,
 `recipe/owner-teleport-material-objects.json`, `recipe/owner-objective-ui-objects.json`,
@@ -117,6 +119,20 @@ reaps its child; exit ends the producer.
 Wispgraveyard reproduces the accepted reduced diagnostic scene through the
 same checked export omissions, including original Tree and scripted components.
 It does not establish full original stage behavior.
+`recipe/owner-wispgraveyard-source-objects.json` selects the separate full
+source-scene variant. The owner suppresses only checked named original global
+GameObjects, following `source_scene_candidate.py`. Its two LineRenderer arrays
+derive from original BezierCurveLine operands and original local Transform
+hierarchies with identity rotations. Existing schema/field parsers locate their
+arrays; float32 arithmetic preserves all other original bytes before pointer
+relocation. Synthetic typed sources and full-bundle fixtures check these
+contracts. No additional runtime or experiment-switch case is introduced.
+`recipe/owner-windows-shaders.json` selects the current original Windows bundle
+for the existing unchanged-file copy from `prepare.py`. This path needs no codec
+or project, admits a pinned input and new disjoint output, verifies unchanged
+input and persisted output, and retains success/failed receipts. Historical
+copies are qualification only; the current result is drift-explained against
+J850. It establishes no Android shader compatibility. J1155 owns both results.
 Sky Meadow and Ancient Loft clear the checked original occlusion static-renderer
 array while retaining the original GUID, occlusion pointer and portals. These full scene
 slices append an existing source-produced component to the original SceneInfo
@@ -215,7 +231,8 @@ remain separate. Original script-file-ID derivation remains unchanged.
 production through the same object-pack interface. Audited
 `recipe/owner-animation-clips.json`, `recipe/owner-animator-controllers.json`,
 `recipe/owner-material-records.json`, `recipe/owner-gameobjects.json`,
-`recipe/owner-transforms.json` and `recipe/owner-generic-records.json`
+`recipe/owner-transforms.json`, `recipe/owner-generic-records.json` and
+the four `recipe/owner-hierarchy-records-*.jsonl.gz` shards
 select original records, checked pointer relationships and source-only animation
 policies. Original embedded schemas identify typed float fields, reference-pose
 and streamed/dense/constant arrays. Native Hermite packing reconstructs source
@@ -223,7 +240,17 @@ tangents with float32 operation order. Source binding permutations reorder
 whole stream keys, delta ranges and root indices; dense curves retain the
 measured import endpoint/signed-zero rules. Root rotations derive from original
 indexed delta endpoints using ARM reciprocal-square-root arithmetic.
-Setup admits a pinned recipe, unchanged original
+Root average motion samples original channels at 20 intervals and applies the
+original orientation, loop and mirror masks. Duplicate bindings may collapse
+only when complete source entries, channel values and delta endpoints agree;
+finite streamed keys remain, with selected permutations restricted to equal
+curve indices. Unknown material-path bindings derive their attribute from the
+original path CRC. Controller policies permute original clips/behaviours,
+rebuild selected export-path CRC/name entries and compile opposed-vector angles
+and state loop flags from original vectors and pinned original clip leaves.
+Large compressed recipes retain the same source-bundle rows, bounded to 8 MiB,
+and stream twice for capacity and production without an expanded metadata copy.
+The public audit expands and scans their bounded rows. Setup admits a pinned recipe, unchanged original
 PC bundles and separate new output with capacity reserve; source and persisted
 record hashes gate its complete/failed receipt. It retains outputs and ends the
 process on failure/exit. Generic and hierarchy records preserve every
@@ -231,6 +258,9 @@ non-pointer byte and native script/type identity;
 material keyword demotion reuses the existing object owner's policy. No runtime
 owner or Editor is added. [Setup and qualified scope](../tools/phone-build/accepted-output/README.md#produce-animation-and-generic-object-records)
 remain separate from complete bundle/player-file assembly and phone acceptance.
+[J1143](PORTING_JOURNAL.md#j1143--qualify-expanded-source-animation-controller-and-graph-records) qualifies the full
+expanded host cohorts; their payload destination identities are not APK
+identities and callers must supply their own checked player relationships.
 `avatar_produce.py` owns current experimental PC-only Avatar production using
 the same bounded reader and input-path admission. Its audited
 `recipe/owner-avatars.json` selects original body/table extents and complete
@@ -386,8 +416,17 @@ and refuses blocked inputs before compiling its launcher. Check-only teardown
 retains one new private report; it starts no compiler or device action. Complete
 record packs do not satisfy final bundle/player-data paths, and this byte check
 does not establish source provenance or device qualification.
-Other content retains the existing
-manifest layout/hashes. Source provenance and code/runtime qualification remain
+Its optional `drift` selection admits changed content only through three pinned
+private qualification documents: historical exact production, repeated current
+production by the same public producer, and a named original-input/output extent
+map. It hashes every current extent and counts exact and drift-explained files
+separately. Historical originals/outputs are never assembly inputs. Actual
+admitted current hashes feed ZIP entries and the Android payload index; evidence
+pins join the existing before/after input checks. The producer owns qualification
+and retained evidence; check-only exit retains the report and assembly exit
+retains outputs. [The evidence contract](../tools/phone-build/owner-apk/README.md#current-input-drift-evidence)
+does not establish causation from hashes or qualify runtime behavior.
+Other content retains the existing manifest layout/hashes. Source provenance and code/runtime qualification remain
 with their producers (J1102).
 `PayloadStore`
 streams/hash-checks embedded runtime payload into the calling app's own external
@@ -462,8 +501,16 @@ selects its roots, actual SDK compilation API defines, options and tool hashes.
 `GnuToolAdapter.c` supplies only the GNU build-tool low-address mappings and
 explicit emulated child execution required by Mono/LLVM under QEMU. It is foreign
 tool data, never linked into the ARM64 game. `native.py::compiled_jobs` validates
-a completed object's source/command/input/hash receipts for an explicit relink;
-the normal linker/stripper then use the selected profile order. Neither owner
+a completed object's source/command/input/hash receipts for an explicit relink,
+or the contiguous successful prefix of a failed compilation for explicit
+continuation in a new output. Reused lump receipts retain their actual original
+SDK wrapper root after relocation. An optional independently written pause
+clock lets its process wait count active time while the entire tool UID is
+stopped; malformed/reset clocks fail closed. Selected-job measurement compiles
+only requested units, records timings and skips linking, with a distinct
+`native-measured` terminal phase. Setup and controller clock ordering are in the
+[native owner contract](../tools/phone-build/owner-code/README.md).
+The normal linker/stripper then use the selected profile order. Neither owner
 reads an accepted ELF as a supplier.
 
 `tools/phone-build/owner-code/shader.py` owns the experimental exact-SDK
@@ -476,26 +523,63 @@ serialized content construction and ordinary app admission.
 
 `tools/phone-build/accepted-output/shader_produce.py` owns the current bounded
 source-only Android Shader48 producer. Audited `recipe/owner-player-shaders.json`
-selects ten authored sources, original Cloud/UI Alpha shader/material selectors,
+selects fourteen authored sources, original native/font Shader and material selectors,
 PC schema/keyword registry,
 source build settings and pinned SDK inputs. The existing compiler session owns
 ShaderLab preprocessing, snippet/include identities and linked Vulkan emission;
 fresh reflection supplies native parameter/program records and common tables.
+Root specialization constants and structured instancing buffers retain their SDK
+scope, member layout and count contracts; ordinary CB counts exclude separate
+struct declarations and dotted members.
 The producer derives the pass key from source/capabilities/SDK inputs, constructs
 the parsed form from source and schema defaults, requests HC9 through the existing
 codec worker and emits complete files through `unity_write`. The SDK executable
 is read as metadata only. Explicit read-only providers and a new disjoint output
 set up production; before/after pins, complete-file comparison and terminal
 success/failure receipts retain state. Compiler/codec contexts own teardown.
-The original Cloud/UI paths use existing `shader_materials.cloud_source`,
-`shader_materials.ui_source` and
+The original native paths use the existing source emitters and
 `NativePrograms` to regenerate source from pinned PC shaders/materials through an
 explicit public d3dasm tool/hash, without retained HLSL. Variant reflection
 intersection owns common/native records; SDK capability names/flag moves drive
-compilation separately from import preprocessing. J1144/J1146/J1147/J1151 qualify 125
-complete host files; other shader families, mixed/built-in
-files and phone/runtime gates remain open. No target body or Editor/project is
+compilation separately from import preprocessing. J1144/J1146/J1147/J1151 qualify the first 125
+complete host files; J1157 qualifies all 414 Shader48 objects as 369 complete
+files plus two shared records. Phone/runtime gates remain open. No target body or Editor/project is
 read. Setup is in the [producer README](../tools/phone-build/accepted-output/README.md#source-derived-player-shaders).
+
+The standalone source path extends the existing `shader_materials`,
+`shader_source` and `shader_deferred` emitters, with the shared qualified material
+selection owner. Shader-wide record packing deduplicates fresh per-pass parameter
+and executable records and relocates both index tables. Source declarations and
+original material use determine retained features; authored empty-scene/build
+settings determine fog/lightmap/instancing stripping. The existing compiler
+connection additionally owns source DXBC disassembly. The optional native
+fallback in `shader_programs` invokes `shader_recovery.build_native_hlsl`, which
+builds the pinned public MIT core from Git objects into the new private output,
+retaining its notices. Pinned AssetRipper font-export resources and the acquired
+SDK TMP package remain explicit source providers; generated ShaderLab and
+programs are never retained providers. The existing output/context owners keep
+setup, state and teardown; no runtime selector is added.
+
+`tools/phone-build/accepted-output/shader_sdk.py` owns the callable SDK-source
+Shader48 assembly path. `sdk_source` checks the explicitly acquired SDK builtin
+source container; `compile_body` consumes its source form/snippets, the original
+PC native schema, caller-selected per-snippet/per-tier keyword sets and source
+Android tier settings. Vulkan platform 18 is currently qualified. The existing
+compiler session and codec supply fresh executables and HC9 compression;
+reflection determines shader-wide records, common parameters and tier tables.
+SDK source platform masks and declared instancing metadata survive executable
+stripping. Linked-stage global/local axes follow the SDK append/deduplication
+contract; retained keyword rows are ranked without expanding unused variants.
+Native records use source-row/tier order while lookup tables keep the caller
+source selection order within each tier. A caller can supply `native_order`
+keyword rows when its original shader establishes retained pool order; declared
+keywords and exact retained-set coverage are checked. This accepts no native
+indices. Destination dependencies, runtime-pass selection and payload retention
+remain caller-owned; no accepted program/table or target body is a provider.
+The caller creates private output and owns compiler/codec contexts and final
+object-pack placement. The API returns the typed tree, raw record stream and
+serialized body and retains private diagnostics. Complete-file and phone gates
+remain independent of partial SDK-record qualification.
 
 `tools/phone-build/owner-code/produce.py` owns the current experimental combined
 whole-player backend: explicit hash-bound managed providers, audited target
@@ -1200,7 +1284,10 @@ The current `settings-write-interrupt-check` host diagnostic uses
 `settings_write_interrupt_check.py` and the authored `LabPendingWriteStop` SDK
 actor. It requires an idle, owned APK and a matched diagnostic menu selector,
 saves the existing native values, observes the actual pending-file creation,
-then requests normal shell-authorized package stop for the bound PID/UID. An
+then terminates that writer through same-UID signalling from the owned
+Development package via standard `run-as`. Both SDK and host require its exit.
+The normal package-stop command remains failure teardown; no root or permission
+changes are used. An
 unchanged primary and retained pending transaction are required before cold
 recovery/resave can qualify; a missed window refuses acceptance. The original
 store performs every save. Teardown removes only its selector and unique SDK
@@ -1222,6 +1309,55 @@ walk is a separate diagnostic. Heap files, databases and analysis stay private.
 The public Unity `MemorySnapshotDataTools` CLI can analyze them without an Editor
 package; no parser or third-party implementation is vendored into the lab/player.
 
+`alpha_stability_batch.py` owns the current detached diagnostic queue. The
+explicit device, installed APK digest and new absolute done-file select one
+canonical device lease before any device access. The actual driver PID owns that
+lease while existing SDK interruption and three-session native-heap owners run,
+followed by `session_sustained_check.py`. The latter observes one original
+Commando first-stage world for 30 minutes with invincibility only, manual neutral
+input and small software camera drags. Fresh advancing diagnostics, native clock
+and frame counters, battery/HAL stops and original End Run/menu teardown are
+required. It retains the exact assisted/all-off refusal separately and requires
+all assists restored off. This is an assisted workload, not ordinary play or a
+performance guarantee. Host admission estimates two 4 GiB snapshots plus
+1 GiB of diagnostic output and requires a further 20 GiB margin; the receipt
+records that budget and observed free bytes. The 100 GiB full-build floor does
+not apply to this capture-only queue. Host fixtures exercise admission and
+failure contracts.
+The batch stops on the first failure; independent actual APK/idle/OLED readback
+and canonical pruning precede lease release and atomic done-file publication.
+Foreign selectors/pending transactions are preserved, and failed terminal
+verification retains the lease for diagnosis. No installation is performed.
+The batch's independent temperature-zone observer targets 250 ms intervals and
+refuses a measured gap above 1 s. Runtime aborts if one CPU/GPU zone remains
+above 80 C for at least one second, with at least three consecutive observations
+spaced at most 0.35 s apart; a reading at or below 80 C or a longer gap resets
+that zone's continuity. Any CPU/GPU reading above 88 C or battery/skin reading
+above 45 C aborts immediately. Brief core spikes remain recorded. Failed
+supervision also aborts without retry.
+Before each stage, readable CPU/GPU/battery/skin zones must cool to at most
+50 C with the OLED asleep. Other physical zones, including power-management,
+charger and USB sensors, are recorded as excluded from admission only; they
+remain sampled in raw observations and all-zone peaks. The runtime thresholds
+apply to CPU/GPU/battery/skin. Admission discovers zone types and readable paths
+with a separate 10-second ADB timeout while no gameplay runs. Runtime reads those
+physical temperature paths in one batch, retaining the 0.7-second ADB timeout
+and measured one-second maximum sampling gap. Unreadable temperature interfaces
+are excluded with their
+type/path recorded; known electrical pseudo-zones remain excluded. Unknown
+numeric sentinels and missing readable CPU coverage still refuse admission. Runtime and unexpected failures retain first-failure authority; a
+bounded stop worker cannot block temperature sampling. The owner records the
+peak, prevents launches after cancellation and never suspends the native
+runtime. Completed stages checkpoint within one three-hour deadline; failed
+evidence is retained and cooldown never counts as play. The separate 70/55 C
+pause/resume policy applies to pausable tool jobs. Battery/HAL checks remain
+additional limits. This supervision does not establish sustained acceptance.
+The settings interruption owner captures its last matching report and actual-PID
+logs on failure before teardown, including before menu readiness. Capture
+failures preserve the original exception; established native errors take
+precedence over a transition failure. Private captures remain ignored.
+
+
 `AndroidTouchInput` is the playable bridge's pointer producer. Stable finger IDs
 own independent movement, camera and eight native action captures, plus pause.
 Short action taps remain pending until a fixed tick consumes them; missing/canceled pointers,
@@ -1238,6 +1374,13 @@ transform, native skill or gameplay clock. The original world owner presents the
 controls and permits explicit touch takeover of automatic diagnostics. Thor's
 ordinary route is touch-only, with no measured controller mapping. Nova's
 measured physical route and the explicit automatic route remain separate.
+Physical reconnect admission uses the same radial stick conversion as movement
+and aim; diagonal input cannot pass neutral admission while producing movement.
+`test_nova_input_mapping.py` executes the production mapping and conversion
+methods against the pinned managed Unity API. The measured mapping, existing
+owner boundaries and remaining rebinding implementation/physical cases are in
+[INPUT_QUALIFICATION.md](INPUT_QUALIFICATION.md); host fixtures do not accept
+hardware or native gameplay.
 The actual production pointer owner and camera-delta method execute against the
 pinned editor's managed Unity API in `test_android_touch_input.py`; native
 consumption and full gestures still require the device case.

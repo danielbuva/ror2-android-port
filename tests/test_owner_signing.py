@@ -1,6 +1,8 @@
 """Durable owner-key lifecycle with authored APK/tool doubles only."""
 
 import importlib.util
+import copy
+import difflib
 import hashlib
 import json
 from pathlib import Path
@@ -19,6 +21,68 @@ SDK = OWNER.module("owner_test_sdk", PATH.parent.parent / "accepted-output/sdk_p
 
 
 class OwnerSigningTests(unittest.TestCase):
+    def test_build_refuses_version_exhaustion_before_creating_output(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            request = {key: "unused" for key in ("manifest", "targets", "frontend", "java", "android_jar", "d8_jar", "wire_helper")}
+            request.update(manifest_sha256=OWNER.PROFILE, version_code=2100000001)
+            path = root / "request.json"
+            path.write_text(json.dumps(request))
+            with self.assertRaisesRegex(ValueError, "between 1 and 2100000000"):
+                OWNER.build(path, root / "output")
+            self.assertFalse((root / "output").exists())
+
+    def test_unsafe_existing_key_custody_refuses_without_replacement_or_tool_execution(self):
+        for state in ("missing-password", "linked-key", "linked-password", "public-directory", "public-key", "public-password", "empty-password"):
+            with self.subTest(state=state), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary).resolve()
+                for name in ("unsigned.apk", "java", "zipalign", "apksigner.jar"):
+                    (root / name).write_bytes(b"independent fixture")
+                keys = root / "keys"
+                keys.mkdir(mode=0o700)
+                key, password = keys / "owner.p12", keys / "password"
+                key.write_bytes(b"retained owner key witness")
+                password.write_bytes(b"retained owner password witness")
+                key.chmod(0o600)
+                password.chmod(0o600)
+                if state == "missing-password":
+                    password.unlink()
+                elif state in ("linked-key", "linked-password"):
+                    selected = key if state == "linked-key" else password
+                    retained = root / "retained"
+                    selected.rename(retained)
+                    selected.symlink_to(retained)
+                elif state == "public-directory":
+                    keys.chmod(0o755)
+                elif state == "public-key":
+                    key.chmod(0o644)
+                elif state == "public-password":
+                    password.chmod(0o644)
+                elif state == "empty-password":
+                    password.write_bytes(b"")
+                before = {path: path.read_bytes() for path in (key, password) if path.exists()}
+                request = root / "request.json"
+                request.write_text(
+                    json.dumps(
+                        {
+                            "unsigned": str(root / "unsigned.apk"),
+                            "java": str(root / "java"),
+                            "zipalign": str(root / "zipalign"),
+                            "apksigner_jar": str(root / "apksigner.jar"),
+                            "key_directory": str(keys),
+                        }
+                    )
+                )
+                with patch.object(OWNER.subprocess, "run") as run:
+                    with self.assertRaises(ValueError):
+                        OWNER.sign(request, root / "refused")
+                run.assert_not_called()
+                self.assertEqual({path: path.read_bytes() for path in before}, before)
+                self.assertEqual(password.exists(), state != "missing-password")
+                self.assertFalse((root / "refused/signed.apk").exists())
+                if (root / "refused/result.json").exists():
+                    self.assertFalse(json.loads((root / "refused/result.json").read_text())["success"])
+
     def test_key_survives_two_builds_without_password_in_argv_or_receipt(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve()
@@ -109,6 +173,145 @@ class OwnerSigningTests(unittest.TestCase):
 
 
 class OwnerAssemblyTests(unittest.TestCase):
+    def drift_proof(self, root, name, old, new):
+        """Authored original-input/producer witnesses, with no game providers."""
+        directory = root / (name.replace("/", "-") + "-evidence")
+        directory.mkdir()
+
+        def identity(data):
+            return {"bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()}
+
+        def receipt(name, value):
+            path = directory / (name + ".json")
+            path.write_text(json.dumps(value))
+            return {"path": str(path), "sha256": OWNER.sha(path)}
+
+        producer = hashlib.sha256(b"authored deterministic producer witness").hexdigest()
+        operations = []
+        for tag, a, b, c, d in difflib.SequenceMatcher(None, old, new, autojunk=False).get_opcodes():
+            operations.append(
+                {
+                    "historical_range": [a, b],
+                    "current_range": [c, d],
+                    "historical_sha256": identity(old[a:b])["sha256"],
+                    "current_sha256": identity(new[c:d])["sha256"],
+                    "inputs": [] if tag == "equal" else [0],
+                    "reason": "original authored input changed" if tag != "equal" else "unchanged",
+                }
+            )
+        proof = {
+            "historical_exact": {"producer_sha256": producer, **identity(old), "evidence": [receipt("historical-raw", {"output": identity(old)})]},
+            "current_deterministic": {
+                "producer_sha256": producer,
+                "runs": [{"id": "current-" + str(i), **identity(new)} for i in range(2)],
+                "evidence": [receipt("current-raw", {"outputs": [identity(new), identity(new)]})],
+            },
+            "difference_map": {
+                "evidence": [receipt("lineage-raw", {"operations": operations})],
+                "inputs": [{"historical": {"path": "original/data", **identity(old)}, "current": {"path": "original/data", **identity(new)}}],
+                "operations": operations,
+            },
+        }
+        for document in proof.values():
+            document.update(success=True, path=name)
+        return proof, {kind: receipt(kind, document) for kind, document in proof.items()}
+
+    def test_readiness_separates_exact_and_drift_without_historical_runtime_files(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            name = "payload/authored.bundle"
+            old, new = b"prefix old suffix", b"prefix new and larger suffix"
+            path = root / name
+            path.parent.mkdir()
+            path.write_bytes(new)
+            exact = root / "apk/exact"
+            exact.parent.mkdir()
+            exact.write_bytes(b"exact")
+            rows = [
+                {"path": name, "bytes": len(old), "sha256": hashlib.sha256(old).hexdigest()},
+                {"path": "apk/exact", "bytes": 5, "sha256": OWNER.sha(exact)},
+            ]
+            proof, pin = self.drift_proof(root, name, old, new)
+            request = {"manifest": "unused", "manifest_sha256": OWNER.PROFILE, "targets": str(root)}
+            with patch.object(OWNER.PACKET, "profile", return_value=(b"", {"targets": rows})):
+                self.assertEqual(OWNER.check(request)["blocked_entries"], [name])
+                request["drift"] = {name: pin}
+                report = OWNER.check(request)
+            self.assertTrue(report["assembly_ready"])
+            self.assertEqual(report["exact_count"], 1)
+            self.assertEqual(report["drift_explained_count"], 1)
+            self.assertEqual(report["entries"][0]["status"], "drift-explained")
+            self.assertFalse(report["entries"][0]["target_equal"])
+            self.assertFalse(report["source_provenance_verified"] or report["device_qualified"])
+            # Only receipts and actual current bytes exist, no historical output/input.
+            self.assertEqual(proof["difference_map"]["inputs"][0]["historical"]["path"], "original/data")
+
+    def test_drift_rejects_incomplete_unbound_or_unexplained_proofs(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            name, old, new = "payload/current", b"old bytes", b"new expanded bytes"
+            path = root / name
+            path.parent.mkdir()
+            path.write_bytes(new)
+            proof, pin = self.drift_proof(root, name, old, new)
+            row = {"path": name, "bytes": len(old), "sha256": hashlib.sha256(old).hexdigest()}
+            request = {"manifest": "unused", "manifest_sha256": OWNER.PROFILE, "targets": str(root), "drift": {name: pin}}
+            mutations = {
+                "wrong-target": lambda p: p["historical_exact"].update(path="payload/other"),
+                "failed-historical": lambda p: p["historical_exact"].update(success=False),
+                "failed-current": lambda p: p["current_deterministic"].update(success=False),
+                "failed-map": lambda p: p["difference_map"].update(success=False),
+                "historical-not-exact": lambda p: p["historical_exact"].update(sha256="0" * 64),
+                "producer-changed": lambda p: p["current_deterministic"].update(producer_sha256="0" * 64),
+                "only-one-run": lambda p: p["current_deterministic"]["runs"].pop(),
+                "duplicated-run": lambda p: p["current_deterministic"]["runs"][1].update(id=p["current_deterministic"]["runs"][0]["id"]),
+                "nondeterministic": lambda p: p["current_deterministic"]["runs"][1].update(sha256="0" * 64),
+                "missing-raw-receipt": lambda p: p["historical_exact"]["evidence"][0].update(path=str(root / "absent")),
+                "receipt-pin-drift": lambda p: p["difference_map"]["evidence"][0].update(sha256="0" * 64),
+                "missing-evidence": lambda p: p["current_deterministic"].update(evidence=[]),
+                "range-gap": lambda p: p["difference_map"]["operations"][0]["current_range"].__setitem__(0, 1),
+                "range-type": lambda p: p["difference_map"]["operations"][0].update(current_range=[0, True]),
+                "uncovered-tail": lambda p: p["difference_map"]["operations"].pop(),
+                "current-extent-drift": lambda p: p["difference_map"]["operations"][0].update(current_sha256="0" * 64),
+                "unexplained-change": lambda p: p["difference_map"]["operations"][0].update(inputs=[]),
+                "unknown-input": lambda p: p["difference_map"]["operations"][0].update(inputs=[10]),
+                "unnamed-cause": lambda p: p["difference_map"]["operations"][0].update(reason=" "),
+                "unchanged-original": lambda p: p["difference_map"]["inputs"][0].update(current=p["difference_map"]["inputs"][0]["historical"]),
+                "unsafe-original": lambda p: p["difference_map"]["inputs"][0]["current"].update(path="../outside"),
+            }
+            with patch.object(OWNER.PACKET, "profile", return_value=(b"", {"targets": [row]})):
+                for label, mutate in mutations.items():
+                    with self.subTest(label=label):
+                        invalid = copy.deepcopy(proof)
+                        mutate(invalid)
+                        for kind, document in invalid.items():
+                            Path(pin[kind]["path"]).write_text(json.dumps(document))
+                            pin[kind]["sha256"] = OWNER.sha(pin[kind]["path"])
+                        report = OWNER.check(request)
+                        self.assertFalse(report["assembly_ready"])
+                        self.assertEqual(report["entries"][0]["status"], "invalid")
+                        self.assertEqual(report["drift_explained_count"], 0)
+                # A repinned raw failure cannot be laundered through a successful summary.
+                raw_pin = proof["current_deterministic"]["evidence"][0]
+                Path(raw_pin["path"]).write_text('{"success": false}')
+                raw_pin["sha256"] = OWNER.sha(raw_pin["path"])
+                for kind, document in proof.items():
+                    Path(pin[kind]["path"]).write_text(json.dumps(document))
+                    pin[kind]["sha256"] = OWNER.sha(pin[kind]["path"])
+                report = OWNER.check(request)
+                self.assertFalse(report["assembly_ready"])
+
+    def test_drift_proof_never_fills_missing_content_or_unknown_targets(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            request = {"manifest": "unused", "manifest_sha256": OWNER.PROFILE, "targets": temporary, "drift": {"payload/missing": {}}}
+            profile = {"targets": [{"path": "payload/missing", "bytes": 1, "sha256": "0" * 64}]}
+            with patch.object(OWNER.PACKET, "profile", return_value=(b"", profile)):
+                report = OWNER.check(request)
+                self.assertEqual(report["entries"][0]["status"], "missing")
+                request["drift"] = {"payload/unknown": {}}
+                with self.assertRaisesRegex(ValueError, "not in content selection"):
+                    OWNER.check(request)
+
     def test_readiness_lists_all_missing_and_mismatched_inputs_without_replay(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve()
@@ -176,7 +379,13 @@ class OwnerAssemblyTests(unittest.TestCase):
     def test_produced_manifest_drift_refuses(self):
         self.check_assembly(OWNER.CODE_ENTRIES | SDK.SDK_ENTRIES, change_manifest=True)
 
-    def check_assembly(self, entries, *, change_manifest=False, missing_content=False):
+    def test_assembly_preserves_current_drift_bytes_and_indexes_actual_payload(self):
+        self.check_assembly(OWNER.CODE_ENTRIES | SDK.SDK_ENTRIES, drift_content=True)
+
+    def test_drift_evidence_change_during_assembly_fails(self):
+        self.check_assembly(OWNER.CODE_ENTRIES, drift_content=True, change_evidence=True)
+
+    def check_assembly(self, entries, *, change_manifest=False, missing_content=False, drift_content=False, change_evidence=False):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve()
             targets, frontend, produced = (root / name for name in ("targets", "frontend", "produced"))
@@ -201,6 +410,14 @@ class OwnerAssemblyTests(unittest.TestCase):
                     path.write_bytes(data)
                     row = {"path": name, "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()}
                 profile["targets"].append(row)
+            drift = {}
+            if drift_content:
+                for name in ("apk/assets/authored.txt", "payload/authored.bundle"):
+                    path = targets / name
+                    old = path.read_bytes()
+                    new = old + b" and new original input"
+                    path.write_bytes(new)
+                    _, drift[name] = self.drift_proof(root, name, old, new)
             for name in ("app.js", "controller.js", "style.css", "background.png"):
                 (frontend / name).write_bytes(("independent frontend " + name).encode())
             for name in ("java", "libjavactool.so", "android.jar", "d8.jar", "manifest.json"):
@@ -220,6 +437,7 @@ class OwnerAssemblyTests(unittest.TestCase):
                         "d8_jar": str(root / "d8.jar"),
                         "wire_helper": str(root / "wire.py"),
                         **({"code": code} if code else {}),
+                        **({"drift": drift} if drift else {}),
                     }
                 )
             )
@@ -230,6 +448,8 @@ class OwnerAssemblyTests(unittest.TestCase):
 
             def run(argv, **kwargs):
                 argv = list(map(str, argv))
+                if change_evidence:
+                    Path(next(iter(drift.values()))["historical_exact"]["path"]).write_text("{}")
                 if Path(argv[0]).name == "libjavactool.so":
                     (Path(argv[argv.index("-d") + 1]) / "Authored.class").write_bytes(b"independent Java witness")
                 else:
@@ -264,6 +484,11 @@ class OwnerAssemblyTests(unittest.TestCase):
                         OWNER.build(request, output)
                     self.assertFalse(json.loads((output / "result.json").read_text())["success"])
                     return
+                if change_evidence:
+                    with self.assertRaisesRegex(ValueError, "input changed"):
+                        OWNER.build(request, output)
+                    self.assertFalse(json.loads((output / "result.json").read_text())["success"])
+                    return
                 result = OWNER.build(request, output)
             self.assertEqual(manifest_patch.call_args.args[0], original_manifest)
             self.assertTrue(result["success"])
@@ -278,6 +503,9 @@ class OwnerAssemblyTests(unittest.TestCase):
                 self.assertEqual(archive.read(result["new_dex"]), b"independent DEX witness")
                 self.assertEqual(archive.read("assets/authored.txt"), (targets / "apk/assets/authored.txt").read_bytes())
                 self.assertEqual(archive.read("assets/owner-bootstrap/data/authored.bundle"), (targets / "payload/authored.bundle").read_bytes())
+                index = json.loads(archive.read("assets/owner-bootstrap/payload-index.json"))
+                payload_file = targets / "payload/authored.bundle"
+                self.assertEqual(index["files"], [{"name": "authored.bundle", "bytes": payload_file.stat().st_size, "sha256": OWNER.sha(payload_file)}])
 
 
 if __name__ == "__main__":

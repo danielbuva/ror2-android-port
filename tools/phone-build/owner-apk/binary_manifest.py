@@ -41,8 +41,8 @@ def string_pool(strings, utf8):
 
 
 def patch(data, wire, *, version_code=None):
-    if version_code is not None and (type(version_code) is not int or not 1 <= version_code <= 2147483647):
-        raise ValueError("owner version code must be a positive Android integer")
+    if version_code is not None and (type(version_code) is not int or not 1 <= version_code <= 2100000000):
+        raise ValueError("owner version code must be between 1 and 2100000000")
     if len(data) < 8 or struct.unpack_from("<HHI", data) != (3, 8, len(data)):
         raise ValueError("invalid complete binary Android manifest")
     chunks = list(wire._chunks(data, 8, len(data)))

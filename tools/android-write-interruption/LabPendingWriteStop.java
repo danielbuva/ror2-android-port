@@ -1,10 +1,11 @@
-// Authored shell diagnostic: observe the owned settings transaction, then stop
-// only that package through the normal ActivityManager shell permission.
+// Authored debug-UID diagnostic: observe the real settings transaction and
+// terminate only its PID/UID-bound writer through normal same-UID signalling.
 import android.os.FileObserver;
 import android.os.Process;
 import android.os.SystemClock;
 import java.io.File;
-import java.lang.reflect.Method;
+import android.system.Os;
+import android.system.OsConstants;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -46,22 +47,19 @@ public final class LabPendingWriteStop {
         }
     }
     private static void run(String[] args) throws Exception {
-        if (args.length != 4 || Process.myUid() != 2000)
-            throw new IllegalArgumentException("Requires shell, settings directory, ready path, observed PID and UID");
+        if (args.length != 4)
+            throw new IllegalArgumentException("Requires owned debug UID, settings directory, ready path, observed PID and UID");
         final File directory = new File(args[0]).getCanonicalFile();
         final File pending = new File(directory, "preferences.json.pending");
         final File ready = new File(args[1]);
         final int pid = Integer.parseInt(args[2]), uid = Integer.parseInt(args[3]);
-        if (pid <= 0 || uid < 10000 || !directory.isDirectory()
+        if (pid <= 0 || uid < 10000 || Process.myUid() != uid || !directory.isDirectory()
             || !directory.getPath().endsWith("/Android/data/" + PACKAGE + "/files/offline-settings-v1")
-            || !ready.getPath().matches("/data/local/tmp/ror2lab-write-[0-9a-f]{32}\\.ready")
+            || !ready.getCanonicalFile().getParentFile().equals(directory.getParentFile())
+            || !ready.getName().matches("ror2lab-write-[0-9a-f]{32}\\.ready")
             || ready.exists() || pending.exists())
             throw new IllegalArgumentException("Unexpected transaction or temporary path");
         bind(pid, uid);
-        final Object activity = Class.forName("android.app.ActivityManager").getMethod("getService").invoke(null);
-        final Class<?> api = Class.forName("android.app.IActivityManager");
-        final Method stop = api.getMethod("forceStopPackage", String.class, int.class);
-        final Method state = api.getMethod("getUidProcessState", int.class, String.class);
         final CountDownLatch done = new CountDownLatch(1);
         final AtomicBoolean triggered = new AtomicBoolean();
         final AtomicReference<Throwable> failure = new AtomicReference<>();
@@ -71,13 +69,15 @@ public final class LabPendingWriteStop {
                 if ((event & FileObserver.CREATE) == 0 || !"preferences.json.pending".equals(name) || !triggered.compareAndSet(false, true)) return;
                 try {
                     bind(pid, uid);
-                    if (((Integer)state.invoke(activity, uid, "com.android.shell")) != 2)
-                        throw new IllegalStateException("Owned UID left foreground before interruption");
                     result.put("createObserved", true).put("pendingPresentBeforeStop", pending.isFile())
                         .put("pendingBytesBeforeStop", pending.length());
                     long started = SystemClock.uptimeMillis();
-                    stop.invoke(activity, PACKAGE, uid / 100000);
-                    result.put("stopMilliseconds", SystemClock.uptimeMillis() - started)
+                    Os.kill(pid, OsConstants.SIGKILL);
+                    while (Files.exists(Paths.get("/proc/" + pid)) && SystemClock.uptimeMillis() - started < 1000)
+                        SystemClock.sleep(1);
+                    if (Files.exists(Paths.get("/proc/" + pid)))
+                        throw new IllegalStateException("Bound writer did not exit after same-UID termination");
+                    result.put("writerExited", true).put("stopMilliseconds", SystemClock.uptimeMillis() - started)
                         .put("pendingPresentAfterStop", pending.isFile()).put("pendingBytesAfterStop", pending.length());
                 } catch (Throwable error) { failure.set(error); }
                 finally { done.countDown(); }

@@ -23,7 +23,9 @@ def package_job(request, inputs, runtime, installed, native):
     output.parent.mkdir(parents=True, exist_ok=True)
     output.mkdir(mode=0o700)
     selection = request.get("packaging", request.get("signing"))
-    if set(selection) != ({"targets", "manifest", "code", "key_directory", "version_code"} if "packaging" in request else {"unsigned", "key_directory"}):
+    if (set(selection) - {"drift"} if "packaging" in request else set(selection)) != (
+        {"targets", "manifest", "code", "key_directory", "version_code"} if "packaging" in request else {"unsigned", "key_directory"}
+    ):
         raise ValueError("explicit APK assembly/signing inputs required")
 
     def path(name):
@@ -47,6 +49,10 @@ def package_job(request, inputs, runtime, installed, native):
             "d8_jar": str(runtime / "java-tools/d8.jar"),
             "version_code": selection["version_code"],
         }
+        if "drift" in selection:
+            build["drift"] = {
+                target: {name: {**row, "path": path(row["path"])} for name, row in receipts.items()} for target, receipts in selection["drift"].items()
+            }
         native.write(output / "assembly-request.json", build)
         owner.build(output / "assembly-request.json", output / "assembly")
         unsigned = str(output / "assembly/owner-unsigned.apk")
@@ -135,11 +141,12 @@ def run(request_file, runtime, installed):
     burst_only = request.pop("burst_only", False)
     if not isinstance(burst_only, bool):
         raise ValueError("Burst-only qualification selector must be boolean")
-    if set(request) - {"linux_tools", "burst_tools"} not in (
+    if set(request) - {"linux_tools", "burst_tools", "compile_timeout_seconds", "pause_clock", "measure_jobs"} not in (
         {"managed", "output"},
         {"source_inputs", "target", "output"},
         {"managed", "target", "output"},
         {"relink", "target", "output"},
+        {"resume", "target", "output"},
     ):
         raise ValueError("explicit managed providers or fixed-target source inputs and new output required")
     work, sdk, game = [inputs / name for name in ("work", "sdk", "game")]
@@ -165,21 +172,30 @@ def run(request_file, runtime, installed):
     free = __import__("shutil").disk_usage(work).free
     production = {"owner_work": str(work), "sdk_install": str(sdk), "output": str(output), "android_tools": tools}
     native_profile = None
-    if "relink" in request:
-        supplied = request["relink"]
+    if "relink" in request or "resume" in request:
+        mode = "resume" if "resume" in request else "relink"
+        supplied = request[mode]
         if (
-            set(supplied) != {"compiled", "converter_receipt", "converter_receipt_sha256", "sources", "sources_compressed", "metadata"}
+            set(supplied)
+            != {"resume" if mode == "resume" else "compiled", "converter_receipt", "converter_receipt_sha256", "sources", "sources_compressed", "metadata"}
             or burst_only
             or "burst_tools" in request
         ):
             raise ValueError("explicit completed native compilation and converter providers required")
+
+        def provider(value):
+            resolved = (inputs / backend.native.relative(value)).resolve(strict=True)
+            if not resolved.is_relative_to(inputs):
+                raise ValueError("native provider escapes private owner files")
+            return str(resolved)
+
         selection = {
             "profile": str(runtime / "repo" / backend.native.relative(request["target"]["profile"])),
-            "source": str((inputs / backend.native.relative(request["target"]["source"])).resolve(strict=True)),
+            "source": provider(request["target"]["source"]),
         }
         backend.target_inputs(selection)
-        for name in ("compiled", "converter_receipt", "sources", "metadata"):
-            production[name] = str((inputs / backend.native.relative(supplied[name])).resolve(strict=True))
+        for name in ("resume" if mode == "resume" else "compiled", "converter_receipt", "sources", "metadata"):
+            production[name] = provider(supplied[name])
         production.update(converter_receipt_sha256=supplied["converter_receipt_sha256"], sources_compressed=supplied["sources_compressed"])
         native_profile = backend.native.generated_profile(
             json.loads(backend.native.PROFILE.read_text()), json.loads(Path(production["converter_receipt"]).read_text())["files"]
@@ -232,6 +248,15 @@ def run(request_file, runtime, installed):
             command += ["-E", value]
         command.append(str(mono / "usr/bin/mono-sgen"))
         production["burst_tools"] = {"command": command, "runtime": str(compiler)}
+    if "measure_jobs" in request:
+        production["measure_jobs"] = request["measure_jobs"]
+    if "compile_timeout_seconds" in request:
+        production["compile_timeout_seconds"] = request["compile_timeout_seconds"]
+    if "pause_clock" in request:
+        clock = (inputs / backend.native.relative(request["pause_clock"])).resolve(strict=True)
+        if not clock.is_relative_to(inputs):
+            raise ValueError("pause clock escapes private owner files")
+        production["pause_clock"] = str(clock)
     output_preexisted = output.exists()
     try:
         if native_profile is not None:

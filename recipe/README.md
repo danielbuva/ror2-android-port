@@ -181,6 +181,8 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-24.
 | `owner-itancientloft-objects.json` | Private Ancient Loft scene | Original selectors, checked SceneInfo/occlusion-array/PPtr policies, current-input Sprite GUID relationships, SDK schema and qualified mesh/texture profiles. | No body/tree/geometry/pixel/scalar template; provenance/privacy/licensing audit below, 2026-10-25. | Existing `object_produce.py`; J1145 host exact, phone open. |
 | `owner-ai-test-objects.json` | Private AI Test scene | Original selectors, checked CharacterMaster body/schema omission, source Sprite identities, SDK schema and qualified mesh/texture profiles. | No body/tree/geometry/pixel/scalar template; provenance/privacy/licensing audit below, 2026-10-25. | Existing `object_produce.py`; J1150 host exact, phone open. |
 | `owner-testscene-objects.json` | Private Testscene scene | Original selectors, checked CharacterMaster body/schema omission, source Sprite identities, original preload membership, SDK schema and qualified mesh/texture profiles. | No body/tree/geometry/pixel/scalar template; provenance/privacy/licensing audit below, 2026-10-25. | Existing `object_produce.py`; J1150 host exact, phone open. |
+| `owner-windows-shaders.json` | Original Windows comparison payload | Current original bundle path, length and integrity hash for the existing unchanged-file copy operation. | Provenance/privacy/licensing audit below, 2026-10-25; no programs or historical reconstruction input. | Existing `object_produce.py`; current host drift-explained, phone open. |
+| `owner-wispgraveyard-source-objects.json` | Private Wispgraveyard source-scene variant | Original object/type selectors, checked source pointers and import policies, original curve/component relationships, current Sprite identities, SDK schema and qualified media profiles. | No body/tree/curve/geometry/pixel template; provenance/privacy/licensing audit below, 2026-10-25. | Existing `object_produce.py`; J1155 host exact, phone open. |
 | `owner-teleport-material-objects.json` | Private teleport-material bundle | Original material/type selectors, checked references, named dummy-shader keyword policy and container relationships. | No material/shader body, keyword literal, numeric override or target template; audit below, 2026-10-25. | Source-only `object_produce.py`; J1117 host qualification, phone gate open. |
 | `owner-death-effect-objects.json` | Private replay player-death-effect bundle | Rooted original graph/script selectors, checked pointer extents, preload/dependency identities and hashes. | No body, type-tree snapshot, scalar/curve override or target delta; audit below, 2026-10-25. | Existing original-input-only `object_produce.py`; J1115 host qualification, phone gate open. |
 | `owner-pickup-objects.json` | Private replay pickup bundle | Original selectors, hashes, checked pointer extents and destination relationships. | No bodies, type trees or target deltas; full audit below, 2026-10-25. | Original-input-only `object_produce.py`; J1113 host qualification, phone gate open. |
@@ -192,6 +194,10 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-24.
 | `owner-alpha-textures.json` | Private replay source Alpha8/single-mip texture cohort (J1082) | Canonical original/destination selectors, source/field extents, import/storage settings and hashes. | No alpha samples, encoded blocks, target byte frames, protected source or private identifiers; full audit below, 2026-10-24. | Original-PC-input-only `texture_produce.py` plus separately built public codec; no game-build consumer. |
 | `owner-rgb-textures.json` | Complete ETC1/single-mip target cohort | Original/destination selectors, field/pixel extents, hashes and source JPEG policy; composition aliases reuse original Warp/Elite ramps. | No colors, normal vectors, palettes, encoded blocks or target byte frames; audit below, 2026-10-24. | Original-input-only `texture_produce.py` and public ETC/JPEG tools; J1088 qualifies all 281 records on Android. |
 | `owner-rgba-textures.json` | Complete non-Alpha8 ETC2 RGBA/single-mip target cohort | Original/destination selectors, byte/field extents, hashes and canonical source relationships. | No pixels, palettes, encoded blocks, SDK implementation, private paths or target byte frames; audit below, 2026-10-24. | Existing source-only texture owner plus separately supplied SDK codec and public BC7 decoder; full phone qualification pending. |
+| `owner-hierarchy-records-1.jsonl.gz` | Qualified graph-selected original object relationships | Pinned original/destination selectors, hashes and checked PPtrs only; bounded source groups, decoded by the public audit. | No body/type template, scalar, float, gameplay value or private identifier; audit below, 2026-10-25. | Existing `record_produce.py`; J1143 full source-only host qualification; phone/assembly gates open. |
+| `owner-hierarchy-records-2.jsonl.gz` | Qualified graph-selected original object relationships | Pinned original/destination selectors, hashes and checked PPtrs only; bounded source groups, decoded by the public audit. | No body/type template, scalar, float, gameplay value or private identifier; audit below, 2026-10-25. | Existing `record_produce.py`; J1143 full source-only host qualification; phone/assembly gates open. |
+| `owner-hierarchy-records-3.jsonl.gz` | Qualified graph-selected original object relationships | Pinned original/destination selectors, hashes and checked PPtrs only; bounded source groups, decoded by the public audit. | No body/type template, scalar, float, gameplay value or private identifier; audit below, 2026-10-25. | Existing `record_produce.py`; J1143 full source-only host qualification; phone/assembly gates open. |
+| `owner-hierarchy-records-4.jsonl.gz` | Qualified graph-selected original object relationships | Pinned original/destination selectors, hashes and checked PPtrs only; bounded source groups, decoded by the public audit. | No body/type template, scalar, float, gameplay value or private identifier; audit below, 2026-10-25. | Existing `record_produce.py`; J1143 full source-only host qualification; phone/assembly gates open. |
 | `owner-generic-records.json` | Qualified remaining native/scripted object records | Original selectors/hashes, destination identities and checked PPtr relationships. | Every source field, script ID and native type hash is preserved; no state/property/particle value or target template. Audit below, 2026-10-25. | Source-only `record_produce.py`; host cohort and open phone/assembly gates recorded with the generic slice. |
 | `owner-gameobjects.json` | Qualified private GameObject record cohort | Original source bundle/member/object selectors and hashes, destination identities and checked PPtrs. | No component value, body or target template; original fields and native type identity preserved. Audit below, 2026-10-25. | Source-only `record_produce.py`; host qualification and remaining gates recorded with the hierarchy slice. |
 | `owner-transforms.json` | Qualified private Transform record cohort | Original source bundle/member/object selectors and hashes, destination identities and checked PPtrs. | No position, rotation, scale, hierarchy template or target scalar; source fields/native type identity preserved. Audit below, 2026-10-25. | Source-only `record_produce.py`; host qualification and remaining gates recorded with the hierarchy slice. |
@@ -2470,7 +2476,8 @@ are included and ownership/distribution boundaries remain unchanged.
 
 The authored `LabPendingWriteStop` and its host case observe a native settings
 pending transaction without changing player code or supplying file contents.
-SDK APIs provide the observer/normal shell package stop; no Android source or
+SDK APIs provide the observer and same-UID signal for the PID/UID-bound writer;
+standard debug `run-as` selects that UID and refuses an unavailable grant. No Android source or
 SDK binary is copied. Its DEX and unique temporary markers are generated from
 tracked source, hash-verified and removed by the existing SDK tool workflow.
 Raw pending files and recovery evidence stay private. Provenance/privacy audit:
@@ -2681,8 +2688,10 @@ Animation policies select schema-typed float canonicalization, original
 reference-pose removal, constant-curve folding, checked PPtr remaps and the
 existing importer binding-attribute mask. No pose vector, curve coefficient,
 event string, native controller value, state graph, target byte template or
-arbitrary scalar replacement is present. Controllers preserve all non-pointer
-bytes. Materials reuse checked original fields and the existing named keyword
+arbitrary scalar replacement is present. Controller policies preserve original
+state data while selecting complete clip/behaviour permutations, exported
+path/name CRC regeneration, opposed-vector endpoint calculation and loop flags
+read from pinned original clip leaves. Materials reuse checked original fields and the existing named keyword
 demotion policy, preserving every original keyword string/value and total body
 length. Source matching admits only unique original records with unchanged
 native type identity; ambiguous matches remain excluded. These are partial
@@ -2977,14 +2986,14 @@ host results; Android and complete installation remain open.
 ### Source-derived player Shader profile (J1144)
 
 `owner-player-shaders.json` is an authored selection for the bounded complete
-authored/original Cloud and UI Alpha producer. It records only the accepted original-input identity,
+authored/original native/font and SDK builtin producer. It records only the accepted original-input identity,
 original native-schema/Shader/material provider paths/members/path IDs and hashes, public authored
 source/settings pins, acquired SDK tool/include-inventory pins and explained
 build settings. Output names and final size/hash are comparison contracts after
 source-only generation. They supply no Shader body, type-hash literal, program,
 include contents, game math, target pass key or serialized template.
 
-Provenance/privacy/licensing review: the ten authored shaders are existing tracked
+Provenance/privacy/licensing review: the fourteen authored shaders are existing tracked
 lab-authored identity/visibility/presentation passes; native schema and builtin registry remain sourced
 from the owner's legitimate PC files. Platform defaults and compiler-version data
 are read from the exact owner-acquired SDK, never shipped as SDK binary data.
@@ -2993,7 +3002,7 @@ algorithm is public domain and its test vectors use authored bytes. No protected
 input, private path, account/device identifier, credential or generated shader
 output is added. This audit authorizes tooling/selection metadata only, with no
 new redistribution or ownership claim. Full evidence and remaining gates are
-recorded once in J1144/J1146/J1147/J1151.
+recorded once in J1144/J1146/J1147/J1151/J1157.
 
 The original UI Alpha extension selects one original Shader and two original
 Materials, derives their feature sets and regenerates every selected original
@@ -3082,3 +3091,94 @@ merging current main's metadata validation with the source Sobel producer.
 Manual provenance/privacy review retains existing authored tooling and recipe
 selectors only; no protected content or new build input is introduced. Frozen
 R58 predates this integration; no device qualification is implied.
+`owner-windows-shaders.json` receives a provenance, privacy, licensing and
+sensitive-content audit on 2026-10-25. It names only the current original file
+and its length/integrity hash, preserving the unchanged-file copy already owned
+by `prepare.py`. It contains no shader program or protected asset bytes.
+Historical originals qualify the same copy transformation against J850 only;
+the current reconstruction uses the current legitimate installation exclusively.
+Its current output is drift-explained, separate from exact reconstruction.
+The recipe grants no redistribution, ownership or authentication rights.
+
+`owner-wispgraveyard-source-objects.json` receives the same provenance,
+privacy, licensing and sensitive-content audit on 2026-10-25. All curve operands
+come from original behaviours and Transform hierarchies; the recipe contains
+only their selectors. The authored mathematical reconstruction introduces no
+curve samples, numeric delta or copied game implementation. Named global-owner
+suppression follows the existing source-scene import policy. Current Sprite
+GUIDs are checked against the current accepted-input export and original scene
+references. Independent review checks every original-schema pointer extent and
+source value; equivalent source wind/mesh relationships remain explicit.
+The compact JSON decodes identically to the audited profile. No protected body,
+type tree, media, private path, credential, account or redistribution grant is
+included. J1155 owns the complete host result; phone qualification remains open.
+
+The four compressed hierarchy-record recipes contain only original bundle,
+member and object selectors/hashes plus destination identities, verification
+hashes and checked PPtr relationships. They preserve every original non-PPtr
+byte and native/script type identity. Discovery anchors identity through
+qualified Transform/RectTransform graphs and component backlinks, excluding
+conflicts; body fingerprints alone do not seed GameObject identity.
+Provenance/privacy/licensing/sensitive-content audit: 2026-10-25. A complete
+field whitelist walk admits 2,498,566 rows with no value, float, curve, code,
+body or type template. Compression is deterministic metadata storage, required
+to keep individual public files below the hosting limit. JSONL source groups
+are bounded to 8 MiB so phone production need not load the whole cohort;
+the staged public audit expands and scans every group. Existing CLI and output
+pack fields remain unchanged. J1143 qualifies full public host execution and independent persisted comparison;
+no phone, assembled-file or runtime result is implied. All bodies,
+raw source/target evidence and generated packs remain ignored. This grants no
+game/SDK redistribution, ownership, authentication or entitlement permission.
+
+
+The expanded animation/controller policies derive root-average motion, merged
+Hermite coefficients, equal-curve ordering, material path CRCs and controller
+clip/state/behaviour relationships from original source values and selected
+source identities. Complete equal binding/channel/delta checks precede duplicate
+binding collapse. Controller loop flags come from hash-pinned original clip
+leaves, not recipe booleans. Provenance/privacy/licensing/sensitive-content
+audit: 2026-10-25; J1143. The profiles contain source ordinals, named operations,
+selectors, hashes and relationships; no target float/scalar/body/type template,
+SDK implementation or private identifier. Existing source, SDK, ownership and
+redistribution boundaries remain unchanged. Generated content stays ignored.
+
+The remaining standalone Shader extension retains the same audited selection
+profile. Native wrapper feature sets come from the shared original-material
+policy; original DXBC is interpreted locally by pinned public tools. The optional
+portable HLSLDecompiler provider is built from its pinned public MIT source with
+license notices retained in the local output. SDK disassembly supplies fresh
+assembly to that provider; retained decompilation and generated programs are
+never recipe inputs. The producer preserves the existing source emitters and
+uses source declarations, original material use and authored build settings for
+variant retention.
+
+The three AssetRipper dummy font exporters consume explicitly supplied,
+content-pinned resources from the recorded upstream revision. Those GPL-3.0
+resource bodies are acquired locally and are not vendored into the public
+Python/recipe. Their existing original-property export policy is reproduced;
+it does not recover the original font shader implementation or qualify visual
+parity. The remaining mobile font pass reads the acquired SDK's pinned TMP
+package and applies only the recorded authored Shader declaration rename, with
+original FontMaterial relationships deciding used feature sets. No template text,
+original property value, retained ShaderLab, native table or accepted body is
+published. Source/tool identities, selectors and comparison hashes grant no
+additional upstream/game/SDK redistribution, ownership or entitlement rights.
+Generated source, compiler data and final bodies remain ignored locally.
+Provenance, privacy, licensing and sensitive-content review: 2026-10-25.
+
+The SDK builtin/shared extension reads the pinned acquired SDK's source forms,
+snippets and declarations. The builtin closure is reconstructed from original PC
+Shader IDs, source GraphicsSettings and the Android video resource relationship;
+missing SDK identities and source-empty forms are excluded by source state.
+Original PC native schemas supply serialization identity. The existing public
+writer frames the builtin file; source material references allocate shared
+Standard/Skybox IDs and their builtin-resource dependencies. The shared output
+uses the existing object-pack contract. No accepted record roster, header/body,
+compiled shader, target type hash or native program is a supplier. Vulkan's
+stage-owner count follows the acquired SDK's initialization/transfer contract,
+including zero-job shaders. Global constants and structured instancing buffers
+use source SDK callback/layout contracts. Updated historical candidate helper
+pins reflect the existing emitter factoring, with no previous source-generation
+behavior change. Manual audit: 2026-10-25, J1157. All SDK/game/source-derived
+bodies and detailed observations remain local; existing acquisition, license
+and redistribution boundaries continue to apply.

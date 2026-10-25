@@ -1,9 +1,11 @@
 """Authored AnimationClip source transformations and persisted pack contracts."""
 
+import gzip
 import hashlib
 import importlib.util
 import io
 import json
+import math
 from pathlib import Path
 import struct
 import tempfile
@@ -112,6 +114,7 @@ def layout_fixture():
         "Base",
         children=[
             integer("m_MuscleClipSize"),
+            F.node("m_SampleRate", 4, kind="float"),
             F.node(
                 "m_MuscleClip",
                 children=[
@@ -139,6 +142,7 @@ def layout_fixture():
                     ),
                     F.array("m_ValueArrayDelta", delta),
                     words("m_IndexArray"),
+                    F.node("m_StopTime", 4, kind="float"),
                 ],
             ),
             F.node("m_ClipBindingConstant", children=[F.array("genericBindings", binding)]),
@@ -152,15 +156,160 @@ def layout_fixture():
         return struct.pack("<I" + "I" * len(values), len(values), *values)
 
     stream = [0xFF800000, 0, 0, 2, 0, 0, 0, 0, word(10), 1, 0, 0, 0, word(20), 0x3F800000, 2, 0, 0, 0, 0, word(11), 1, 0, 0, 0, word(20.001), 0x7F800000, 0]
-    body = struct.pack("<I", 1000) + pack(stream) + struct.pack("<IIIII", 2, 3, 1, word(30), 0)
+    body = struct.pack("<If", 1000, 60) + pack(stream) + struct.pack("<IIIII", 2, 3, 1, word(30), 0)
     body += pack([0x80000000, 0, word(42)]) + pack([word(40)])
     body += struct.pack("<I8f", 4, 10, 11, 20, 20.001, -0.0, 42, 40, 40)
-    body += pack([0xFFFFFFFF, 0, 1, 2, 3])
+    body += pack([0xFFFFFFFF, 0, 1, 2, 3]) + struct.pack("<f", 2 / 30)
     body += struct.pack("<I", 4) + b"".join(struct.pack("<III", i + 100, i + 7, 137) for i in range(4))
     return body, schema
 
 
+def root_motion_fixture(turn=False):
+    def integer(name):
+        return F.node(name, 4, kind="UInt32")
+
+    def floating(name):
+        return F.node(name, 4, kind="float")
+
+    def words(name, node=None):
+        return F.array(name, node or integer("data"))
+
+    vector = lambda name, components: F.node(name, children=[floating(v) for v in components])
+    schema = F.node(
+        "Base",
+        children=[
+            F.node(
+                "m_MuscleClip",
+                children=[
+                    F.node(
+                        "m_Clip",
+                        children=[
+                            F.node(
+                                "data",
+                                children=[
+                                    F.node("m_StreamedClip", children=[words("data"), integer("curveCount")]),
+                                    F.node(
+                                        "m_DenseClip",
+                                        children=[
+                                            integer("m_FrameCount"),
+                                            integer("m_CurveCount"),
+                                            floating("m_SampleRate"),
+                                            floating("m_BeginTime"),
+                                            words("m_SampleArray", floating("data")),
+                                        ],
+                                    ),
+                                    F.node("m_ConstantClip", children=[words("data", floating("data"))]),
+                                ],
+                            )
+                        ],
+                    ),
+                    words("m_IndexArray"),
+                    floating("m_StartTime"),
+                    floating("m_StopTime"),
+                    F.node("m_StartX", children=[vector("q", ("x", "y", "z", "w"))]),
+                    floating("m_OrientationOffsetY"),
+                    vector("m_AverageSpeed", ("x", "y", "z")),
+                    floating("m_AverageAngularSpeed"),
+                    *[
+                        F.node(name, 1)
+                        for name in ("m_KeepOriginalOrientation", "m_LoopBlendOrientation", "m_Mirror", "m_LoopBlendPositionXZ", "m_LoopBlendPositionY")
+                    ],
+                ],
+            )
+        ],
+    )
+    pack = lambda data: struct.pack("<I" + "I" * len(data), len(data), *data)
+    word = lambda v: struct.unpack("<I", struct.pack("<f", v))[0]
+    if turn:
+        keys = [0, 2, 0, 0, 0, word(1), 0, 1, 0, 0, 0, word(1), word(1), 2, 0, 0, 0, 0, word(1), 1, 0, 0, 0, word(1)]
+        body = pack(keys) + struct.pack("<I4I", 2, 0, 0, word(1), 0) + pack([]) + pack([])
+        indices = [-1] * 10 + [-1, 0, -1, 1]
+    else:
+        body = pack([0x7F800000, 0]) + struct.pack("<I4I", 0, 2, 3, word(1), 0) + struct.pack("<I6f", 6, 0, 0, 0, 4, 2, -6) + pack([])
+        indices = [-1] * 7 + [0, 1, 2] + [-1] * 4
+    body += struct.pack("<I14i", 14, *indices) + struct.pack("<2f4ff4f5B", 0, 1, 0, 0, 0, 1, 0, 99, 99, 99, 99, 0, 0, 0, 0, 0)
+    return body, schema
+
+
 class AnimationProducerTests(unittest.TestCase):
+    def test_empty_dense_metadata_uses_original_clip_stop_and_rate(self):
+        body, schema = layout_fixture()
+        _, spans = A.fields(body, schema)
+        dense = ("m_MuscleClip", "m_Clip", "data", "m_DenseClip")
+        stream = ("m_MuscleClip", "m_Clip", "data", "m_StreamedClip")
+        # Move the sole dense curve into the original constant bucket.
+        result = bytearray(body)
+        struct.pack_into("<I", result, spans[dense + ("m_CurveCount",)][0], 0)
+        struct.pack_into("<I", result, spans[dense + ("m_FrameCount",)][0], 123)
+        struct.pack_into("<f", result, spans[dense + ("m_BeginTime",)][0], 9)
+        start, end = spans[dense + ("m_SampleArray",)]
+        result[start:end] = struct.pack("<I", 0)
+        _, changed = A.fields(bytes(result), schema)
+        start, end = changed[("m_MuscleClip", "m_Clip", "data", "m_ConstantClip", "data")]
+        result[start:end] = struct.pack("<I2f", 2, 0, 40)
+        made = A.layout_clip(bytes(result), schema, {"binding_order": [0, 1, 2, 3], "fold_bindings": [], "dense_policy": "append"})
+        _, revised = A.fields(made, schema)
+        self.assertEqual(struct.unpack_from("<I", made, revised[dense + ("m_FrameCount",)][0])[0], 6)
+        self.assertEqual(struct.unpack_from("<f", made, revised[dense + ("m_SampleRate",)][0])[0], 60)
+        self.assertEqual(struct.unpack_from("<f", made, revised[dense + ("m_BeginTime",)][0])[0], 0)
+        self.assertEqual(made[revised[dense + ("m_SampleArray",)][0] : revised[dense + ("m_SampleArray",)][1]], bytes(4))
+        self.assertEqual(
+            made[revised[stream + ("data",)][0] : revised[stream + ("data",)][1]], body[spans[stream + ("data",)][0] : spans[stream + ("data",)][1]]
+        )
+
+    def test_controller_clip_permutation_preserves_parent_indices_then_checks_references(self):
+        integer = lambda name: F.node(name, 4)
+        node = F.node("data", children=[F.array("m_ChildIndices", integer("data")), integer("m_ClipID")])
+        pointer = F.node("data", children=[integer("m_FileID"), F.node("m_PathID", 8)])
+        schema = F.node("Base", children=[F.node("m_Controller", children=[F.array("nodes", node)]), F.array("m_AnimationClips", pointer), integer("opaque")])
+        nodes = struct.pack("<I6I", 5, 0, 0, 0, 1, 0, 0xFFFFFFFF) + struct.pack("<4I2I", 2, 0, 1, 0xDEADBEEF, 0, 2)
+        clips = struct.pack("<IiqiqiqI", 3, 5, 11, 7, 22, 9, 33, 12345)
+        body = nodes + clips
+        _, spans = A.fields(body, schema)
+        offset = spans[("m_AnimationClips",)][0] + 4
+        operations = {"controller_clip_order": [2, 0, 1], "references": [{"offset": offset, "from": [9, 33], "to": [12, 44]}]}
+        result = A.transform_generic(body, 91, operations, schema)
+        self.assertEqual(result[offset : offset + 36], struct.pack("<iqiqiq", 12, 44, 5, 11, 7, 22))
+        for i, expected in enumerate((1, 2, 0xFFFFFFFF, 0xDEADBEEF, 0)):
+            self.assertEqual(struct.unpack_from("<I", result, spans[("m_Controller", "nodes", "Array", str(i), "m_ClipID")][0])[0], expected)
+        self.assertEqual(result[-4:], body[-4:])
+        with self.assertRaisesRegex(ValueError, "complete permutation"):
+            A.reorder_controller_clips(body, schema, [0, 0, 1])
+        with self.assertRaisesRegex(ValueError, "original controller schema"):
+            A.transform_generic(body, 74, operations, schema)
+
+    def test_root_average_integrates_original_dense_motion_and_applies_source_masks(self):
+        body, schema = root_motion_fixture()
+        result = A.root_average(body, schema)
+        _, spans = A.fields(body, schema)
+        speed = spans[("m_MuscleClip", "m_AverageSpeed")][0]
+        angular = spans[("m_MuscleClip", "m_AverageAngularSpeed")][0]
+        for expected, actual in zip((4, 2, -6), struct.unpack_from("<3f", result, speed)):
+            self.assertAlmostEqual(actual, expected, places=5)
+        self.assertEqual(struct.unpack_from("<f", result, angular)[0], 0)
+        self.assertEqual(result[:speed], body[:speed])
+        changed = bytearray(body)
+        for name in ("m_Mirror", "m_LoopBlendPositionY"):
+            changed[spans[("m_MuscleClip", name)][0]] = 1
+        revised = A.root_average(bytes(changed), schema)
+        for expected, actual in zip((-4, 0, -6), struct.unpack_from("<3f", revised, speed)):
+            self.assertAlmostEqual(actual, expected, places=5)
+        struct.pack_into("<f", changed, spans[("m_MuscleClip", "m_StopTime")][0], 0)
+        with self.assertRaisesRegex(ValueError, "sample interval"):
+            A.root_average(bytes(changed), schema)
+
+    def test_root_average_streamed_yaw_uses_original_curve_samples(self):
+        body, schema = root_motion_fixture(turn=True)
+        result = A.transform(body, schema, {"root_average": True})
+        _, spans = A.fields(body, schema)
+        angular = spans[("m_MuscleClip", "m_AverageAngularSpeed")][0]
+        self.assertAlmostEqual(struct.unpack_from("<f", result, angular)[0], math.pi / 2, places=5)
+        speed = spans[("m_MuscleClip", "m_AverageSpeed")][0]
+        self.assertEqual(struct.unpack_from("<3f", result, speed), (0, 0, 0))
+        changed = bytearray(body)
+        changed[spans[("m_MuscleClip", "m_Mirror")][0]] = 1
+        self.assertAlmostEqual(struct.unpack_from("<f", A.root_average(bytes(changed), schema), angular)[0], -math.pi / 2, places=5)
+
     def test_binding_reorder_sorts_complete_source_keys_by_the_new_curve_index(self):
         body, schema = layout_fixture()
         result = A.layout_clip(body, schema, {"binding_order": [1, 0, 2, 3], "fold_bindings": [], "dense_policy": "preserve"})
@@ -311,7 +460,7 @@ class AnimationProducerTests(unittest.TestCase):
     def test_generic_packs_retain_all_nonpointer_bytes(self):
         body, schema = fixture()
         expected = body[:-16] + struct.pack("<iq", 7, -999) + body[-4:]
-        for class_id in (1, 4, 23, 65, 91, 104, 114, 135, 136, 198, 199, 205, 215, 224):
+        for class_id in (1, 4, 23, 33, 64, 65, 91, 104, 108, 114, 135, 136, 137, 198, 199, 205, 215, 222, 223, 224, 225):
             transform = {"references": [{"offset": len(body) - 16, "from": [3, 1234567], "to": [7, -999]}]}
             with tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary)
@@ -358,6 +507,19 @@ class AnimationProducerTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "generic object operation"):
             A.transform_generic(body, 91, selected)
 
+    def test_compressed_profile_streams_groups_and_rejects_unbounded_or_incomplete_rows(self):
+        header = json.dumps({"input_id": A.M.INPUT_ID}).encode() + b"\n"
+        group = {"path": "authored.bundle", "sha256": "authored", "members": []}
+        line = json.dumps(group).encode() + b"\n"
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "profile.jsonl.gz"
+            path.write_bytes(gzip.compress(header + line + line, mtime=0))
+            self.assertEqual(list(A.profile_bundles(path)), [group, group])
+            for invalid in (header + line[:-1], header + b" " * (8 * 1024**2) + line):
+                path.write_bytes(gzip.compress(invalid, mtime=0))
+                with self.assertRaisesRegex(ValueError, "bounded recipe line"):
+                    list(A.profile_bundles(path))
+
     def test_source_pack_persistence_and_input_output_drift(self):
         body, schema = fixture()
         transform = {"clear_reference_pose": True, "canonical": "nan"}
@@ -397,6 +559,15 @@ class AnimationProducerTests(unittest.TestCase):
             self.assertTrue(receipt["success"])
             self.assertEqual(receipt["objects"], 1)
             self.assertEqual((root / "output/objects.bin").read_bytes(), expected)
+            compressed = root / "profile.jsonl.gz"
+            payload = json.dumps({"input_id": A.M.INPUT_ID}) + "\n" + json.dumps(profile["bundles"][0]) + "\n"
+            compressed.write_bytes(gzip.compress(payload.encode(), mtime=0))
+            packed = A.produce(compressed, A.B.sha(compressed), pc, root / "compressed-output")
+            self.assertTrue(packed["success"])
+            self.assertEqual((root / "compressed-output/objects.bin").read_bytes(), expected)
+            compressed.write_bytes(gzip.compress((json.dumps({"input_id": A.M.INPUT_ID}) + "\n{}\n").encode(), mtime=0))
+            with self.assertRaisesRegex(ValueError, "source group"):
+                A.produce(compressed, A.B.sha(compressed), pc, root / "invalid-compressed-output")
             with self.assertRaisesRegex(ValueError, "new and outside"):
                 A.produce(path, A.B.sha(path), pc, root / "output")
             with self.assertRaisesRegex(ValueError, "profile drift"):

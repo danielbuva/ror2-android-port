@@ -1,4 +1,4 @@
-"""Current: observe a genuine pending-file transaction, stop its owned writer, cold-recover.
+"""Current: observe a genuine pending-file transaction, terminate its owned writer, cold-recover.
 
 No injected store bytes, player hooks, power-cut or ENOSPC claim. Refuse a missed
 pre-commit window. The native store performs both ordinary saves and recovery.
@@ -25,6 +25,8 @@ def interrupted_transaction(before, after, pending, observed):
         not isinstance(observed, dict)
         or observed.get("success") is not True
         or observed.get("createObserved") is not True
+        or observed.get("writerExited") is not True
+        or observed.get("pendingPresentBeforeStop") is not True
         or observed.get("pendingPresentAfterStop") is not True
     ):
         raise RuntimeError("No successful native pending-create/stop witness")
@@ -37,7 +39,7 @@ def pending_observer(device, command):
     return device.cmd("shell", command, timeout=40)
 
 
-def check_settings_write_interrupt(expected_apk_sha256=None):
+def check_settings_write_interrupt(expected_apk_sha256=None, _launch=None):
     expected = validate_expected_apk_sha256(expected_apk_sha256)
     if expected is None:
         raise ValueError("settings-write-interrupt-check requires --expected-apk-sha256")
@@ -59,16 +61,19 @@ def check_settings_write_interrupt(expected_apk_sha256=None):
         success=False,
         apk_sha256=expected,
         attempt=attempt,
-        scope="Observed native pending transaction interrupted by owned-package force-stop; no power-cut/ENOSPC claim",
+        scope="Observed native pending transaction interrupted by same-UID writer termination; no power-cut/ENOSPC claim",
     )
     pid = None
+    last_report = None
     remote = []
 
     def wait(check, timeout=100):
+        nonlocal last_report
         end = time.monotonic() + timeout
         while time.monotonic() < end:
             report = _read_json(device, runtime + "/movement-batch-" + SPINE_ID + ".json")
             if matches_run(report, pid, attempt):
+                last_report = report
                 if report.get("firstFailure"):
                     raise RuntimeError("Native first failure: " + str(report["firstFailure"]))
                 if check(report):
@@ -79,8 +84,9 @@ def check_settings_write_interrupt(expected_apk_sha256=None):
         raise RuntimeError("Current native report deadline")
 
     def menu():
-        nonlocal pid
-        pid = device.launch()["pid"]
+        nonlocal pid, last_report
+        last_report = None
+        pid = (_launch(device) if _launch else device.launch())["pid"]
         return wait(lambda r: r.get("phase") == "offline-start-menu" and r.get("settings", {}).get("ready") is True)
 
     def tap(name, report, x, y):
@@ -101,8 +107,7 @@ def check_settings_write_interrupt(expected_apk_sha256=None):
         (out / (name + ".log")).write_text(logs)
         errors = current_errors(logs, pid)
         result.setdefault("runtime_errors", []).extend(errors)
-        if errors:
-            raise RuntimeError("Actual-PID runtime error during native persistence case")
+        return errors
 
     def protected_hashes():
         roots = [runtime + "/" + name for name in ("android-profile-v1", "offline-run-results-v1")]
@@ -132,7 +137,7 @@ def check_settings_write_interrupt(expected_apk_sha256=None):
         # A retained newly-created pending file distinguishes interruption from commit.
         write(out / "native-settings-before-save.json", report)
         dex = compile_tool(ROOT / "tools/android-write-interruption/LabPendingWriteStop.java")
-        prefix = "/data/local/tmp/ror2lab-write-" + uuid.uuid4().hex
+        prefix = runtime + "/ror2lab-write-" + uuid.uuid4().hex
         targets = [prefix + ".dex", prefix + ".ready"]
         if any(_remote_path_state(device, path) != "absent" for path in targets):
             raise RuntimeError("Temporary observer target exists; preserve it")
@@ -141,6 +146,8 @@ def check_settings_write_interrupt(expected_apk_sha256=None):
         matches = re.findall(r"^package:" + re.escape(PACKAGE) + r" uid:([0-9]+)$", packages, re.M)
         if len(matches) != 1 or int(matches[0]) < 10000:
             raise RuntimeError("Owned package UID is ambiguous")
+        if device.sh("run-as", PACKAGE, "id", "-u").strip() != matches[0]:
+            raise RuntimeError("Requires the owned Development package debug UID")
         write(
             out / "observer-binding.json",
             dict(
@@ -154,7 +161,9 @@ def check_settings_write_interrupt(expected_apk_sha256=None):
         device.cmd("push", str(dex), remote[0])
         if device.sh("sha256sum", remote[0]).split()[0] != sha(dex):
             raise RuntimeError("Observer DEX transfer hash differs")
-        command = shlex.join(["env", "CLASSPATH=" + remote[0], "app_process", "/system/bin", "LabPendingWriteStop", directory, remote[1], pid, matches[0]])
+        command = shlex.join(
+            ["run-as", PACKAGE, "env", "CLASSPATH=" + remote[0], "app_process", "/system/bin", "LabPendingWriteStop", directory, remote[1], pid, matches[0]]
+        )
         with ThreadPoolExecutor(max_workers=1) as pool:
             future = pool.submit(pending_observer, device, command)
             deadline = time.monotonic() + 10
@@ -182,8 +191,10 @@ def check_settings_write_interrupt(expected_apk_sha256=None):
                 raise
             (out / "observer.stdout").write_text(raw)
             observed = json.loads(raw)
+        result["interruption_observer"] = observed
         stopped_pid = pid
-        capture_owned_errors("interrupted-process")
+        if capture_owned_errors("interrupted-process"):
+            raise RuntimeError("Actual-PID runtime error during native persistence case")
         deadline = time.monotonic() + 10
         while device.sh("pidof", PACKAGE, check=False).strip() and time.monotonic() < deadline:
             time.sleep(0.1)
@@ -218,11 +229,37 @@ def check_settings_write_interrupt(expected_apk_sha256=None):
         after_profile = protected_hashes()
         if not before_profile or after_profile != before_profile:
             raise RuntimeError("Existing native profile/results changed")
-        capture_owned_errors("recovered-process")
+        if capture_owned_errors("recovered-process"):
+            raise RuntimeError("Actual-PID runtime error during native persistence case")
         result.update(success=True, protected_files=len(before_profile), recovered_pid=pid, interrupted_pid=stopped_pid)
         write(out / "native-resave.json", report)
     except Exception as error:
         result["error"] = str(error)
+        if pid:
+            # Capture before teardown even if the first menu transition failed.
+            # A transport failure must not hide either the original exception or
+            # runtime evidence collected through the other channel.
+            try:
+                report = _read_json(device, runtime + "/movement-batch-" + SPINE_ID + ".json")
+                if matches_run(report, pid, attempt):
+                    last_report = report
+            except Exception as capture_error:
+                result.setdefault("capture_errors", []).append(str(capture_error))
+            try:
+                if last_report is not None:
+                    write(out / "failure-current-report.json", last_report)
+            except Exception as capture_error:
+                result.setdefault("capture_errors", []).append(str(capture_error))
+            try:
+                capture_owned_errors("failure-process")
+            except Exception as capture_error:
+                result.setdefault("capture_errors", []).append(str(capture_error))
+            failure = last_report.get("firstFailure") if last_report is not None else None
+            if failure or result.get("runtime_errors"):
+                message = "Native first failure: " + str(failure) if failure else "Actual-PID runtime error during native persistence case"
+                result["original_error"] = str(error)
+                result["error"] = message
+                raise RuntimeError(message) from error
         raise
     finally:
         errors = []

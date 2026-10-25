@@ -186,6 +186,124 @@ class OwnerCodeBackendTests(unittest.TestCase):
                     runner.run(request, runtime, installed)
             self.assertFalse(measurement.exists())
 
+    def test_android_resume_routes_failed_prefix_and_active_clock_to_native_owner(self):
+        specification = importlib.util.spec_from_file_location("android_resume_route_test", PATH.parent / "run_android.py")
+        runner = importlib.util.module_from_spec(specification)
+        specification.loader.exec_module(runner)
+        with tempfile.TemporaryDirectory() as temporary, patch.dict(runner.os.environ):
+            root = Path(temporary).resolve()
+            inputs, runtime, installed = [root / n for n in ("inputs", "runtime", "installed")]
+            for directory in (inputs / "work/config", inputs / "work/inventory", inputs / "game", inputs / "failed", inputs / "sources", runtime, installed):
+                directory.mkdir(parents=True)
+            (inputs / "input-hashes.json").write_text("{}")
+            (inputs / "work/inventory/files.json").write_text('{"files": []}')
+            (inputs / "metadata.dat").write_text("fixture metadata")
+            (inputs / "converter.json").write_text('{"files": {"cpp/Fixture.cpp": {}}}')
+            (inputs / "pause.json").write_text('{"paused_seconds": 0, "paused_at": null}')
+            selection = {
+                "resume": "failed",
+                "converter_receipt": "converter.json",
+                "converter_receipt_sha256": "fixture digest",
+                "sources": "sources",
+                "sources_compressed": True,
+                "metadata": "metadata.dat",
+            }
+            request = inputs / "request.json"
+            request.write_text(
+                json.dumps(
+                    {
+                        "resume": selection,
+                        "target": {"profile": "recipe/fixture.json", "source": "sources"},
+                        "output": "continued",
+                        "compile_timeout_seconds": 7200,
+                        "pause_clock": "pause.json",
+                        "measure_jobs": [407, 410, 418],
+                    }
+                )
+            )
+            captured = {}
+
+            def native_run(production, **kwargs):
+                captured.update(production)
+                Path(production["output"]).mkdir()
+                return {"success": True}
+
+            backend = SimpleNamespace(native=BACKEND.native, target_inputs=lambda value: None)
+            module_spec = SimpleNamespace(loader=SimpleNamespace(exec_module=lambda module: None))
+            with (
+                patch.object(runner.importlib.util, "spec_from_file_location", return_value=module_spec),
+                patch.object(runner.importlib.util, "module_from_spec", return_value=backend),
+                patch.object(BACKEND.native, "run", side_effect=native_run),
+            ):
+                runner.run(request, runtime, installed)
+            self.assertEqual(captured["resume"], str(inputs / "failed"))
+            self.assertEqual(captured["pause_clock"], str(inputs / "pause.json"))
+            self.assertEqual(captured["compile_timeout_seconds"], 7200)
+            self.assertEqual(captured["measure_jobs"], [407, 410, 418])
+            self.assertNotIn("compiled", captured)
+            baseline = json.loads(request.read_text())
+            outside = root / "outside-provider"
+            outside.mkdir()
+            for mode in ("resume", "relink"):
+                for name in ("compiled" if mode == "relink" else "resume", "converter_receipt", "sources", "metadata", "target_source"):
+                    link = inputs / ("escape-" + mode + "-" + name)
+                    link.symlink_to(outside, target_is_directory=True)
+                    attempted = json.loads(json.dumps(baseline))
+                    supplied = attempted.pop("resume")
+                    if mode == "relink":
+                        supplied["compiled"] = supplied.pop("resume")
+                    attempted[mode] = supplied
+                    attempted["output"] = "escaped-output"
+                    if name == "target_source":
+                        attempted["target"]["source"] = link.name
+                    else:
+                        supplied[name] = link.name
+                    request.write_text(json.dumps(attempted))
+                    with (
+                        self.subTest(mode=mode, provider=name),
+                        patch.object(runner.importlib.util, "spec_from_file_location", return_value=module_spec),
+                        patch.object(runner.importlib.util, "module_from_spec", return_value=backend),
+                        patch.object(BACKEND.native, "run", side_effect=AssertionError("native production must not start")),
+                    ):
+                        with self.assertRaisesRegex(ValueError, "provider escapes private"):
+                            runner.run(request, runtime, installed)
+                    self.assertFalse((inputs / "work/escaped-output").exists())
+
+    def test_android_packaging_maps_pinned_drift_receipts_to_private_paths(self):
+        specification = importlib.util.spec_from_file_location("android_packaging_route_test", PATH.parent / "run_android.py")
+        runner = importlib.util.module_from_spec(specification)
+        specification.loader.exec_module(runner)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            inputs, runtime, installed = [root / n for n in ("inputs", "runtime", "installed")]
+            for directory in (inputs, runtime, installed):
+                directory.mkdir()
+            proofs = {
+                name: {"path": name + ".json", "sha256": "fixture pin " + name} for name in ("historical_exact", "current_deterministic", "difference_map")
+            }
+            captured = {}
+
+            def build(request, output):
+                captured.update(json.loads(request.read_text()))
+
+            owner = SimpleNamespace(PROFILE="fixture profile", build=build, sign=lambda request, output: {"apk_sha256": "fixture apk", "apk_bytes": 123})
+            module_spec = SimpleNamespace(loader=SimpleNamespace(exec_module=lambda module: None))
+            selection = {
+                "targets": "targets.json",
+                "manifest": "manifest.json",
+                "code": {},
+                "key_directory": "key",
+                "version_code": 1,
+                "drift": {"assets/bin/Data/fixture": proofs},
+            }
+            with (
+                patch.object(runner.importlib.util, "spec_from_file_location", return_value=module_spec),
+                patch.object(runner.importlib.util, "module_from_spec", return_value=owner),
+            ):
+                runner.package_job({"packaging": selection, "output": "package"}, inputs, runtime, installed, BACKEND.native)
+            for name, pin in captured["drift"]["assets/bin/Data/fixture"].items():
+                self.assertEqual(pin, {"path": str(inputs / (name + ".json")), "sha256": proofs[name]["sha256"]})
+
     def test_explicit_target_source_cannot_drift_or_escape(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve()

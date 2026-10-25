@@ -41505,6 +41505,1427 @@ source production remain separate gates. Revisit on source/variant/native-form
 changes or an independent comparison failure; host equality establishes neither
 PC appearance nor complete phone-only installation.
 
+## J1155 — Reconstruct Wisp's source scene and qualify the original Windows copy
+
+Date: 2026-10-25 UTC. Host only; no Unity Editor, device, lease, installation or
+game launch. Comparison remains J850 APK SHA-256
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+**Hypothesis and prior art.** Join the 117 remaining payload entries against
+the retained J1050 census and qualified producer receipts before implementing
+another converter. Only Wisp's source-scene bundle, the catalog and binary root
+manifest lack Shader48. The last two retain their independent final-graph and
+Android ArtifactID/native-feed gates. The other 114 files contain shaders;
+standalone Cloud/Standard/native cohort names do not prove embedded-record
+identity. Goldshores scene/spine Standard bodies differ. The bounded ranking is
+`work/coordination/p1-payload-remaining-ranking-v2/`; no full census is repeated.
+Consulted `community-prior-art.md`, pinned UnityPy schema/PPtr contracts,
+ThunderKit's catalog-copy distinction, J1050/J1116/J1142/J1145 and the existing
+`source_scene_candidate.py` import policy. Original current input and SDK
+metadata remain authoritative.
+
+**Complete Wisp implementation.** The existing `object_produce.py` owner and
+new audited `owner-wispgraveyard-source-objects.json` produce the separate
+`wispgraveyard-source-lab` variant. Existing source identities, checked pointer
+relationships, SDK script hash derivation, 67 qualified meshes and two textures
+supply its content. Previously qualified policies handle sixteen component
+omissions, sixteen disabled original callbacks and 981 removed occlusion
+renderer links. Three original global GameObjects use the existing source-scene
+suppression policy, now checked by original class/name/layout/active tail.
+
+Two original LineRenderer arrays differ in eight float components after editor
+evaluation. The authored reconstruction reads original BezierCurveLine operands,
+original GameObject/component relationships and both six-node local Transform
+chains. It evaluates the source curve's mathematical interpolation with float32
+rounding at each operation; all rotations are checked identity. Existing source
+schema/field readers locate arrays, script identity is checked, and all bytes
+outside the position array remain original before pointer remapping. No curve
+samples, scalar deltas, copied game implementation or target body/tree supply
+production. Four Sprite identities are checked against current-input export
+receipts, metadata and original scene references; two use existing crop policies.
+Three changed script identities produce six script/body hash records through
+the unchanged SDK hash owner. Source graph relationships generate all 172 preload
+pointers. The container path follows `source_scene_candidate.py`'s source-scene
+route, distinct from the whole-scene route.
+
+Isolated public `python3 -I -S -B` production and independent persisted readback
+pass: **70,005 objects / 23,244,982 body bytes**, two complete serialized members
+of **17,819,344** and **7,602,108 bytes**, and the entire **12,135,569-byte** bundle
+are raw-exact. Bundle SHA-256:
+`845236e66f5185c6b2b431d3108c9b437499a99dd594912828e6735e063a77b4`.
+Compact recipe SHA-256:
+`fb5e3e340faeaaf33097672b67176b9edc95f0f5fd7694d4a79cce3f7f25992b`;
+its 24,888,591 bytes decode identically to the initial audited profile. Final
+public receipt SHA-256:
+`701224fc9cf7f092bb67c7dcbb6c45e245eb19b649e5790333e4422b533615cd`.
+Producer source hash is checked unchanged before/after. Evidence is
+`work/coordination/p1-payload-shader-free-discovery-v2/`: `public-host-v2/`,
+`public-v2-done.json`, `public-independent-compare.json`,
+`source-schema-audit.json`, `current-sprite-provenance.json` and
+`profile-format-equivalence.json`. Independent review reruns all 69,934 source
+object checks / 188,160 actual-schema pointer/value checks and all persisted
+extents/members/final bytes. Equivalent original wind bodies and the existing
+qualified mesh mapping explain alternate source identities; no new scalar or
+mesh policy is inferred.
+
+**Windows input drift, separately qualified.** `prepare.py` originally copies
+an original Windows bundle unchanged. It does not reconstruct an Android shader.
+The same operation now runs without a project through the existing object owner
+and audited `owner-windows-shaders.json`. The public copy function verifies
+pinned source/profile, new disjoint output, unchanged original and persisted
+bytes; it records successful/failed receipts and requires no codec. The normal
+CLI admits only the current input. Historical qualification directly invokes
+the identical public function with a truthfully tagged historical profile;
+the same isolated wrapper invokes that function twice for current input.
+All three calls bind producer source hash
+`577c127426742d5ee363458755e4dee72aa1d1314ed33403c97963171980d7b1`,
+profiles, outputs and receipt hashes. Separate current CLI repetitions also pass.
+
+Historical original computationalexchange shader bundle suffix
+`c4dec0422c9493f3885f2e91960ce15d` is **31,707 bytes**, SHA-256
+`1d3eff595f5c9403791c4628cd7f08f4c597d942ce3ea14e3bc5d3a91001ab89`:
+the entire copied file equals J850. Current original suffix
+`1ac452c7249a3b08bfca2553796dfd87` is **32,708 bytes**, SHA-256
+`70b14b0e1ff95f959f78d3d34dc9b974c7a6afe3ef0dcbee33963c4c7b92849d`.
+Both complete relative original paths, input IDs and hashes are recorded in the
+private proof. Every output byte is the identically positioned source byte.
+All **1,995** ordered extent operations cover both outputs; **997** changed
+operations / **3,443** changed current bytes trace to those named changed
+original inputs, with zero unexplained bytes. No variant stripping or shader
+compiler is needed. Historical files are qualification only and never become
+current reconstruction inputs.
+
+Evidence is `work/coordination/p1-payload-shader-metadata-v1/`
+(`windows-copy-drift-proof.json`),
+`work/coordination/p1-payload-windows-source-host-v1/`
+(`same-public-producer.json`, repeated pinned receipts/invocations), and
+`work/coordination/p1-payload-windows-drift-admission-v1/` (the three normalized
+proof documents and request pins). The code owner's developing checker accepts
+the separate drift-explained entry while a guarded control refuses all
+historical original/output reads. Its source hash is retained in the combined
+readiness receipt. Checker publication remains with that owner.
+
+**Readiness, failures and checks.** The exact source union
+`work/coordination/p1-payload-wisp-source-host-v1` preserves J1151's 125 Shader
+files and all prior content: **334/705 exact**, **371 missing (255 APK /
+116 payload)**, zero invalid/mismatched entries. This is eighteen complete source
+payload bundles. The separate developing-checker union
+`p1-payload-wisp-windows-source-host-v1` has **334 exact + 1 drift-explained**,
+**370 missing (255 APK / 115 payload)**. It does not silently count drift as exact
+or qualify the two separate player-file drift cases. No partial catalog is emitted.
+
+Wisp's first container uses the wrong whole-scene path; the existing source-scene
+pipeline resolves it. Windows initially appears to need compiler/editor-hash
+reconstruction; the actual copy owner and historical full-file proof identify
+input drift. An initial union request points at the previous tree; correcting
+its existing `targets` field yields the stated complete inventory. Failures
+and earlier proofs remain private. Nine new synthetic curve tests include an
+independent analytic array, real serialized source members, source-relationship
+mutants and complete public-owner bundle/readback before PPtr relocation. Review
+finds and fixes the starting Transform's missing GameObject backlink check.
+All 61 affected object/writer/hash/record/recipe checks, Ruff, preflight and
+manual provenance/privacy/licensing review pass. Independent final review is GO
+at `work/coordination/p1-payload-wisp-windows-review-v1/`. Main-checkout pruning
+retains receipts/evidence; no new device/APK/runtime claim is made.
+
+Phone reconstruction, full installation, normal gameplay/performance, remaining
+payload/player shaders/content and root-manifest/catalog gates remain open.
+The bounded ComputeShader proof also derives twelve stripped source records
+exactly across 48 comparison occurrences; it supplies no additional complete
+file or executable compute behavior. Goldshores has a source-qualified recipe
+and all nonShader extents ready, but still needs its independently generated
+Standard record/retention selection. Revisit on source/profile/contract drift or
+new qualified shader/import-hash evidence; do not repeat broad native censuses.
+
+## J1153 — Admit reviewed current-input drift without historical runtime suppliers
+
+2026-10-25 UTC. Host-only readiness and assembly contract against accepted J850
+APK SHA-256 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+No new APK, device installation, game launch or runtime acceptance.
+
+**Hypothesis and policy.** Current legitimate originals must remain the only
+reconstruction input. A separately classified file can be ready when the same
+public producer reproduces the accepted output from retained historical
+originals, produces deterministic current output, and explains every difference
+through named original-input changes. This implements the authorized input-drift
+policy; it neither relaxes exact matching nor permits replay suppliers.
+J1149 supplies the language/material lineage. Its existing public producer and
+original native-schema interpretation remain authoritative; the generic checker
+introduces no new game reconstruction or community-derived runtime mechanism.
+
+**Implementation.** The existing `build_owner_apk.py` checker accepts an explicit
+`drift` selection with three pinned private qualification documents per changed
+content path. It validates historical target equality, identical public producer
+hashes, distinct repeated current invocations, retained raw receipt pins, named
+changed original identities and a contiguous extent map over both complete
+outputs. Every current extent is hashed from the actual supplier. Failed,
+malformed, stale, incomplete or unexplained proof remains blocked. Unknown/code
+selections refuse. Missing files never acquire a fallback. Historical originals
+and their generated outputs are never opened by the checker or assembler.
+
+The report retains `target_equal: false` and status `drift-explained` for admitted
+changed content, with separate `exact_count` and `drift_explained_count`.
+Raw-different produced code remains independently listed for comparison.
+Assembly uses admitted current size/hash pins in both ZIP entries and the Android
+payload index and rechecks evidence before/after compilation. Hashes cannot
+prove semantic causation or independent execution by themselves: the normalized
+documents summarize reviewed raw evidence. Source-provenance and device flags
+remain false. README, ARCHITECTURE and LOCAL_STATE name the owner, review contract,
+required private state and retention; no new runtime owner or action is added.
+
+**Real evidence.** The retained source-only composition preserves the shader
+workstream's 125 complete files and the payload workstream's Wisp addition.
+`work/coordination/phone-code/drift-readiness-v4/{request,readiness}.json`
+reports **705 entries: 332 raw-exact, two available raw-different code outputs,
+three drift-explained content outputs, and 368 missing (253 APK, 115 payload)**.
+There are no invalid/mismatched entries. Overall assembly remains blocked.
+The admitted current entries are:
+
+- Strings: J1149's final public owner `c7749055…` historical/current invocation
+  plus the independent complete 175-file invocation; 5,587 mapped extents and
+  named original English providers. The normalized documents and adapter remain
+  under `work/coordination/phone-code/drift-readiness-v1/` and beside that root.
+- FontMaterial4: a narrow rerun of the same final `c7749055…` public `object_file`
+  against pinned historical input and two independent current invocations. The
+  historical hash is `a228dbb617c02f703f4ac04c3c1d367af5a5933d0d188c57484b1896eac805ae`;
+  both current files are 5,676 bytes,
+  `d12b4a65926af9260305c1b344d2473b972a7a87cc34c8f39e85ad2c73774aa5`.
+  Only `[4938, 4940)` changes, preserving the original `_Sharpness` scalar.
+  Source-only production precedes comparison. Raw production/adapter remain in
+  `font-final-producer-v1/`; canonical receipt normalization is in
+  `font-drift-admission-v2/`, beside the readiness roots. Earlier evidence using
+  a different owner hash is retained rather than attributed to the final owner.
+- Windows shaders: the payload owner's actual public `copy_original_bundle`
+  callable `577c1274…` runs once on historical input and twice on current input.
+  All 1,995 mapped extents include 997 changed extents. Raw invocations and
+  normalization remain under `work/coordination/p1-payload-windows-source-host-v1/`
+  and `work/coordination/p1-payload-windows-drift-admission-v1/`.
+
+The first combined font normalization is retained as a failed check because two
+raw receipt paths used aliases rather than canonical paths. Resolving those
+receipt paths, without changing outputs or admission, yields the final report.
+No historical output/provider is present in its assembly tree.
+
+**Validation and remaining gate.** Fifteen focused signing/readiness/assembly
+contracts pass, including failed evidence, producer mismatch, duplicated run,
+nondeterminism, gaps/overlaps, extent corruption, missing lineage, actual current
+ZIP/payload-index bytes and evidence mutation. Seven additional bootstrap,
+manifest and structural-assembly contracts pass. Ruff and independent review
+pass. Doctor verifies original input/pins but, like host preflight, refuses this
+isolated worktree's absent lab project; no Unity build is attempted. Source-only
+phone production, the remaining final content, full installation, both controls
+and matched performance remain open. Revisit a proof when its producer,
+original inputs, output supplier or causal evidence changes.
+
+## J1154 — Collect the paused native job's terminal timeout without restarting it
+
+2026-10-25 UTC. Native tool recovery, followed by a host-only continuation repair.
+No new APK or game runtime qualification. The accepted comparison APK remains
+J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+**Observation.** The detached recovery driver finds an existing terminal tool
+report immediately; it does not admit or resume compilation. The complete
+backend log identifies `subprocess.TimeoutExpired` after **3,600 seconds** on
+job **498**, `RoR2__24.cpp`, under the original Linux NDK compiler/QEMU chain.
+The prior snapshot has 498 completed object receipts. The wall deadline counts
+external freezes; this is not evidence of a compiler/source error, suspend cause
+or completed native library. Earlier thermal/sample-gap failures remain retained.
+
+The terminal receipt is
+`work/coordination/phone-code/recovery-native-v20-done.json`; original tool report
+and full backend log are `source-app-report-v15.json` and
+`source-owner-backend-v15.log` beside it. The driver stops the completed original
+and NEXT tool apps; idle readback contains no matching UID processes and both
+panels OFF. The lease is released. Original input, plan, objects, receipts and
+failed result remain on the device. No immediate retry occurs.
+
+**Hypothesis and host repair.** The existing native owner can continue the
+checked successful prefix in a fresh output while counting only active time.
+`native.py` now accepts explicit `resume`, verifies original/SDK/converter/tool
+identities, every compile command and the contiguous receipt prefix, and
+hard-links only hash-validated objects. An unreceipted partial object is ignored;
+the failed output is never changed. Corrected audited link order is allowed under
+the existing relink policy. Relocated SDK lumps retain their actual original
+wrapper root and source hash, permitting honest second continuation/relink.
+
+An optional independently written cumulative pause clock lets the process wait
+subtract the complete STOP interval even when its Python parent is also stopped.
+The controller records BOOTTIME before STOP/CONT; invalid/reset/impossible clocks
+fail closed. Process receipts retain active/paused/wall time and the explicit
+compile budget. `measure_jobs` compiles selected units freshly, skips linking
+and ends at `native-measured`, never `native-built`. The Android route forwards
+these existing-owner controls and optional APK drift receipts. README,
+ARCHITECTURE and LOCAL_STATE record setup, ownership, retention and teardown.
+No native toolchain, game policy or community runtime mechanism is replaced.
+
+**Validation and next step.** Forty-eight owner-code host contracts pass,
+including a 498-object prefix with only the missing suffix compiled, ignored
+partial object, changed provider/compile-command refusal, relocated lump
+readmission, selected-job measurement without linking, distinct measured phase,
+Android routing and a stopped-parent pause interval. Ruff passes. These are host
+contracts, not phone evidence. Measure the largest native unit and a representative
+expensive unit on the phone under the independent guard; choose a generous active
+budget from those measurements, then continue at receipt 498. Complete native
+library/metadata comparison, final phone APK/install, controls and matched
+performance remain open.
+
+## J1143 — Qualify expanded source animation, controller and graph records
+
+Date: 2026-10-25 UTC. **Host-only result:** all four public graph shards
+produce 2,498,566 records / 321,299,405 bytes. Expanded profiles produce
+3,317 AnimationClips / 205,761,672 bytes and 334 AnimatorControllers /
+891,296 bytes. Every persisted record matches J850 byte-for-byte. These are
+record providers, with overlap between graph and prior hierarchy/native packs;
+counts must not be summed as unique coverage. They directly close **zero**
+final-file readiness entries and contain **zero** APK destination records.
+No device lease/command, Editor/project build, install or launch occurs.
+Comparison APK remains J850
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`;
+there is no new APK or installed/runtime fact.
+
+**Hypothesis and prior art.** The J1133 original-schema import rules and
+qualified graph identities can cover additional animation/controller and
+unchanged graph records using source selectors/relationships only. Consulted
+`community-prior-art.md`, J1070/J1075, J1119 and J1133 before expansion.
+Pinned AssetRipper `1ac666f` `StreamedCurveKey.cs` and
+`CustomCurveResolver.cs` inform original tangent and unknown material-path CRC
+contracts; `813fed1597bac674def7256ce633a227e7b27497`
+`ExportCollection.cs` and `AnimatorControllerExtensions.GetStateBehaviours`
+inform source filenames/behaviour range identity. UnityPy 1.25.3 embedded
+type-tree/PPtr contracts remain format prior art. Original source, exact SDK
+observations and complete J850 comparison outrank community assumptions.
+No game, SDK or community implementation is published.
+
+**Named owner and source-only rules.** Existing `record_produce.py` retains
+the object-pack interface and original embedded schemas. Root average motion
+samples original channels over 20 intervals with source orientation/loop/mirror
+masks. Duplicate bindings collapse only after complete source entry, channel
+and delta-endpoint equality; finite stream keys remain. Merged original
+Hermite tangents, equal-curve-only row permutations and selected original
+start/stop sampling resolve additional import cases. Material-path attributes
+derive from original path CRCs. No coefficient, pose or scalar supplier exists.
+Controllers permute original clips/behaviours, regenerate selected original
+export path/name CRC relationships and compile opposed angles from original
+vectors. Loop flags read original clip leaves through pinned bundle/body hashes,
+real PPtrs, class-74 checks and original typed loop fields.
+
+Graph discovery anchors qualified Transform/RectTransform relationships,
+excludes conflicts and uses component ownership backlinks. Body fingerprints
+alone never seed GameObject identity. Admitted graph records require equal
+original class/native hash/script identity and every non-PPtr byte; only
+checked original-to-destination PPtrs change. Four deterministic gzip JSONL
+profiles store selectors/hashes/relationships. Their 956 source groups are
+bounded to 8 MiB (largest 8,386,845 bytes); capacity and production stream
+them without a decompressed metadata copy. The public audit expands/scans
+every bounded row. Header filenames/comments and private metadata are absent.
+No new producer, private build supplier, schema framework or runtime owner
+is introduced.
+
+**Full public qualification.** Production receives only each pinned public
+profile and the owner's unchanged original PC root. Original bundle hashes
+are checked before/after; expected full record hashes and independently
+re-read persisted extents gate success. No accepted body/tree/byte frame is
+a production input. A separate comparison reads actual J850 records only
+after production and compares all persisted bytes.
+
+| Graph shard | Records | Bytes | Profile SHA-256 |
+| --- | ---: | ---: | --- |
+| 1 | 808,261 | 104,872,310 | `dbc558cf55542cc0411709c264be35f79f5f5d691d7b15c51eaa299fd0e72b3f` |
+| 2 | 790,555 | 95,449,044 | `9aba6e22572952056a5284e0b25ffe18073780766669c973660904a554f8395c` |
+| 3 | 626,573 | 84,257,301 | `fc3f3fd934c07c5ad320b4e8cc3365f54acffaca45c88011c8dc2565fa51e6d3` |
+| 4 | 273,177 | 36,720,750 | `b953f5af26eebac7438f14d7bd751b9bb96e427e96bec59c23fde7500d14e924` |
+
+Graph classes: GameObject 692,131; Transform 578,995; MeshRenderer 351,438;
+MeshFilter 352,738; MeshCollider 60,912; BoxCollider 15,088; Light 5,158;
+MonoBehaviour/ScriptableObject 226,466; SphereCollider 1,899;
+CapsuleCollider 4,374; SkinnedMeshRenderer 2,895; ParticleSystem 16,544;
+ParticleSystemRenderer 20,345; LODGroup 155,730; ReflectionProbe 100;
+RectTransform 13,753.
+
+Private evidence in assigned worktree `work/coordination/p1-anim/`:
+
+- `graph-public-host-v1/part-{1,2,3,4}/` contains each successful `result.json`,
+  `objects.bin`, `index.jsonl` and `independent-comparison.json`.
+  `graph-production-done.json` pins all four receipts/comparisons/output hashes.
+  Total elapsed including comparisons/reused validated parts: 285.398 s;
+  maximum resident set 655,114,240 bytes.
+- `graph-detached-done.json`: graph, staged audit and mandatory cleanup each
+  exit 0. Interrupted part directories from the duplicate-parent startup race
+  are retained and excluded; successful parts are independently pinned.
+- `clip-expansion-public-host-v2/result.json`,
+  `clip-expansion-production-done-v2.json` and
+  `clip-expansion-independent-comparison-v2.json`: profile
+  `64810bf73c7913ad412dca435b773fafcb28cbb4936f28a996ac475e3f12e08a`,
+  83.625 s production; objects
+  `17dd9150e0ea9a0c83921b63dfd4c9e374128fe7c0d5b22fe61c366e51b5046e`,
+  index `03ef16cf261d521a580b247475abcbb88c32f482b102dc2494fc19ab1120345b`.
+- `controllers-expanded-host-v1/result.json` and
+  `independent-comparison.json`: profile
+  `bf9bc93d665d33633f97bbf4a25cab8eb515ed3f0584aaac59339d66b85ad22d`,
+  12.910 s production; objects
+  `4a496af1ea1e630a3ec2a171b87bfbb59f5b40e19a2c37516245af2c83f972c0`,
+  index `a395e861d6caf5467cc2ea7358eddc536bc88314235ecbb8c6f6e52d26382c18`.
+
+The animation expansion adds 71 records / 5,064,212 bytes, preserving all
+3,246 previous selectors/output hashes/bytes. Controller expansion adds
+102 / 614,492 bytes, preserving all 232 previous records: 51 permutation,
+44 TOS/native relationship, six source-loop and one singleton-behaviour cases.
+The unchanged J1119 material pack remains valid.
+
+**Validation, provenance and first failures.** Sixty-one focused host tests
+pass across producer, animation/controller, object-owner, content-recipe,
+recipe and public-audit contracts. Changed Python Ruff formatting/checks and
+whitespace pass. Independent `graph-review.json` and `expansion-review.json`
+report GO; final reviewer rehashes every qualified pack/profile, validates
+contiguous extents/counts and preservation of old qualified records. Recipes
+have zero float literals; the graph's complete field whitelist checks
+2,003,290 source rows and 5,896,927 references. Staged public audit passes;
+manual provenance/privacy/licensing review records selectors, hashes and
+authored source policies only in `recipe/README.md`. Original data, type trees,
+values, target bytes, raw evidence and generated packs remain ignored.
+No ownership/authentication/entitlement or redistribution capability is added.
+`./dev doctor` and host preflight refuse missing isolated local config,
+inventory and Editor project; standalone explicit-PC-root producers need none
+of that project state and do not bypass accepted-input/build checks.
+
+Six clips remain excluded: four native portable-atan rounding cases,
+Recorded's source-to-MonoBehaviour adapter and AcoHang's unequal material-path
+curve collision/tied-key order. Fifty-four controllers remain excluded:
+24 graph-pruning, 14 clip-count reductions, nine native-size, four behaviour
+identity, two filename-collision and one compiled-path/state-CRC first blockers.
+The six previously complete class-74 payload dependencies remain complete;
+this expansion closes no new class-74 bundle dependency. No target literals
+are used to fill these gaps.
+
+**Readiness and next closure.** Metadata-only
+`readiness-ranking-v1/{ranking.json,ranking.md}` accounts for all 503 missing
+entries in the 202/705 canonical snapshot: 380 APK and 123 payload. It deduplicates
+exact destinations and includes all residual classes, including native scene
+assembly and AssetBundle. Graph parts touch 123 payload entries, including
+118 then missing entries, without proving complete files. APK gaps are
+unaffected; 370 contain 414 Shader objects and no missing APK clip. The
+subsequent payload-owner Wisp qualification is independent, not a record-pack
+readiness promotion. Caller-owned source graphs/full-file assembly remain
+necessary. Native UI classes 222/223/225 already have producer dispatch;
+original TitleMenu/HUDSimple source mappings must compose with the APK owner's
+authored recovered graph rather than relabel payload PPtrs. Further generic
+95/193 or six-clip work waits for a demonstrated complete-file consumer.
+Revisit on source/schema/relationship/reader/algorithm/interpreter changes.
+Phone production, final source-only installation and runtime/performance
+qualification remain open; Architecture C and IL2CPP ARM64 remain fixed.
+
+## J1157 — Reconstruct every APK Shader48 object from source
+
+**Hypothesis / prior art.** The J1151 owner can reproduce the remaining native,
+authored, font and SDK shaders without accepted Shader records or an Editor.
+The pinned AssetRipper/UABEA/uTinyRipper readers in
+`docs/community-prior-art.md` and the existing recovery ledger establish source
+property, native program and compressed-record relationships. Actual original
+PC programs, acquired SDK source snippets, reflection callbacks and native SDK
+serialization observations determine the Android-specific contracts.
+
+**Implementation.** Extend the existing `shader_produce.py`, shader source
+emitters, recovery/binder and shared material selection owner. All 350 native
+wrappers regenerate HLSL from original DXBC, including the portable fallback
+needed by twelve lighting programs; no retained HLSL is consumed. The existing
+`shader_recovery.build_native_hlsl` builds the pinned public MIT core from Git
+objects and retains upstream notices locally. SDK disassembly replaces the old
+Windows runtime dependency. Fourteen authored shaders use fresh preprocessing,
+including surface-generated multipass Billboard. Three font dummy exporters
+read explicitly supplied, content-pinned GPL-3.0 AssetRipper resources; the fourth
+reads the acquired SDK TMP package with its authored declaration-only rename.
+Original FontMaterial relationships select used features. No template contents
+are vendored or original font implementation/appearance parity claimed.
+
+Source declarations, original materials and the pinned fresh scene/build settings
+select variants. Shader-wide packing relocates both parameter and executable
+indices. Source state supplies inherited LOD/tags, properties, passes and fallback
+relationships. SDK source callbacks own root specialization constants and
+structured instancing buffers, including separate top-level CB counts, member
+prefix removal and native/common ordering. A bounded parser replay handles all
+192 actual source Standard responses without target reads; complete payload
+Standard qualification belongs to its separate owner.
+
+The new callable `shader_sdk.py` uses source SDK forms/snippets and explicit
+per-pass/per-tier selections. Native interning follows source keyword rows then
+tiers; serialized tier tables preserve caller source order. The acquired SDK's
+linked-stage append/deduplication contract and retained-only mixed-radix ranking
+avoid expanding unused feature products. The pure `snippet_key` helper accepts
+source-derived SDK/hash context for frozen payloads; it supplies no target hash.
+A later payload request adds explicit caller source-derived `native_order` rows
+for pool emission while preserving table order and the APK default. The original
+PC Standard shader independently emits all 2,202 native records in first-seen
+serialized source-table order. The helper validates declared keywords and exact
+retained-set coverage; it accepts no native indices. The payload owner retains
+variant policy and fresh full-body qualification. The payload owner subsequently qualifies the fresh supported CLI at
+`p1-payload-standard-host-v1/qualified-standard-handoff.json`; final bundle
+registration remains its responsibility. Source contract and diagnostic:
+`p1-payload-standard-host-v1/{source-native-emission-order.json,source-order-diagnostic-v1/result.json}`
+under its ignored coordination root.
+
+The 44-object builtin closure comes from original PC and SDK identities plus
+source GraphicsSettings. `m_VideoShadersIncludeMode: 2` calls the SDK hidden
+internal shader collector; its Android build branch resolves registered
+`Hidden/VideoDecodeAndroid`, independently identifying SDK object 16003. The
+source native collector retains that reference regardless of VideoPlayer scene
+objects. Empty source forms and absent SDK identities are excluded by source
+state. Original PC native schemas and the existing serialized writer produce
+sorted IDs, eight-byte object alignment and Android framing. Shared Standard
+and Skybox use source material/dependency relationships and the existing
+`objects.bin`/`index.jsonl`/`result.json` interface; the mixed-file writer remains
+owned by the player-data workstream.
+
+**Result.** Fresh strict public production emits **369 complete files,
+8,717,708 B**, plus **two shared records, 109,000 B**, in 262.69 seconds: all
+**414 Shader48 objects** across the 368 standalone files, 44-object builtin
+container and two shared shaders. Independent comparison opens J850 only after
+production and confirms every persisted byte. All previous 125 files and the preceding full 369-file/record run remain
+unchanged. This final rerun includes the source-order API and refreshed helper
+pin; the optional order path has an independent caller qualification. The guard denies prior packets, retained generated source/programs
+and accepted oracle inputs; 14,892 allowed work paths are recorded. Profile:
+`9ff4e5d552d71bc0f8e68653e2ac5680810bad07a1b18b84290f72b8188aa008`.
+Frozen qualified producer:
+`58b88d023c7e3e4671646b90b3e4a4f50d0575ab595c1b7c7adba46699d64a52`.
+The builtin file is 539,956 B,
+`db29c826dfbc7d9ea9a946b86b2496c8b542d28af6bd8865720ae7d844ab1b9c`.
+Shared receipt SHA-256:
+`ebd41c8812eea4354504f5c244155e568f6194dc09032f2fb535ee039644c841`.
+
+Evidence under `work/coordination/p1-player-shaders-v1/`:
+`public-complete369-integration-report.md`,
+`public-complete369-guarded-v3/{handoff.json,result.json,source-only-guard.json,comparison-only.json}`,
+`public-sdk-final-source-contract.json`,
+`sdk-root-structured-reflection-source-contract.md`,
+`sdk-empty-stage-owner-contract.md` and
+`sdk-android-video-retention-source-contract.md`. Preserved failures are
+`public-standalone368-guarded-v1` (upstream C++ source encoding) and
+`public-complete369-guarded-v1` (zero-job stage ownership). The latter matches
+43 of 44 builtin bodies; native SDK initialization/transfer proves Vulkan keeps
+one stage owner even with no retained jobs. The corrected empty video body
+independently matches before the complete fresh rerun. No target field or
+special-case target ID supplies the correction.
+
+Canonical `work/coordination/p1-player-shaders-source-host-v8/` preserves Wisp
+and all three separately qualified current-input drift cases. The public
+checker reports **581 of 705 available**: **576 raw-exact**, **two separate
+code-comparison entries**, **three drift-explained**; **124 missing** (**9 APK,
+115 payload**), zero invalid/mismatched. Source-provenance, assembly-ready and
+device-qualified fields remain false. The shared record pack alone does not
+close `sharedassets0.assets`; its public mixed-file assembly is separate.
+
+**Validation / remaining gates.** Independent review returns GO for all 369
+files/shared bodies, source provider/closure boundaries and native contracts.
+Forty-four owner tests and 142 shader tests (including sixteen SDK contracts),
+Ruff and existing object-pack admission pass. A subsequent actual payload
+request adds only ShaderLab `2DArray` property decoding (texture type 4,
+dimension 5), with an authored regression and unchanged old property branches;
+its fresh payload comparison remains a separate gate. Historical candidate and
+catalog override pins are refreshed only for the emitter factoring. The first
+fresh-clone CI caught one stale override binding (2,237 tests, one failure);
+updating the dependent recipe hashes preserves the existing pin checks. Original/game/SDK outputs, raw
+observations and decompilation stay ignored; recipes contain selectors and
+comparison identities only. No Editor/project build, APK, device lease or run
+occurs. Accepted J850 APK remains
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+Ordinary-app production, complete installation, original PC appearance and
+runtime/performance qualification remain open. Revisit on an actual source,
+SDK, selection or record-contract change or failed independent comparison.
+
+## J1162 — Retain the native measurement transport failure and refresh source readiness
+
+2026-10-25 UTC. Tool-only device evidence and host-only composition; no game APK,
+installation or runtime qualification. J850 remains the accepted comparison APK,
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+**Hypothesis and first failure.** J1154's three fresh representative native units
+would size an active-time budget before continuation at receipt 498. The v22
+driver instead stops during the separate tool-host build, before installation,
+copying or native measurement. Two fresh admission windows pass at a maximum
+45.3 C and 340 ms sample gap. The independent guard retains 366 valid samples;
+its final sample is running with a 300 ms gap, and the observed peak is 58.1 C.
+The first proven failure is the host ADB stream process receiving SIGKILL
+(status -9). Its stderr is empty. No thermal abort, compiler error or signal
+sender is established. Later retained Android logs do not cover the interruption
+and cannot exclude an earlier OS event. No unchanged heavy retry occurs.
+
+Terminal evidence is `work/coordination/phone-code/measure-native-v22-done.json`;
+the adjacent `owned-code-thermal-v6.jsonl`, `owned-code-guard-errors-v6.jsonl`,
+`owned-code-guard-remote-stderr-v6.log` and `v22-host-kernel-window.log` retain the
+guard observations. A single later leased read in `v22-retained-diagnostics/`
+finds an empty build log and no build receipt; neither establishes which process
+stopped first. Cleanup verifies owned process absence, remote guard retirement,
+both panels OFF and lease release. The original completed object prefix remains
+on the device. The next diagnostic isolates the host stream's process session
+and records its identity, then requires a bounded guard-only baseline before
+any build. It must retain the existing fail-closed thermal/heartbeat limits;
+isolation is not proof of the unknown signal's cause or its repair.
+
+**Current source composition.** The existing readiness checker now retains the
+complete latest source Shader cohort from J1157, all prior suppliers including
+J1155's Wisp and current Windows output, and the independently qualified 177-file
+player cohort. The final public player producer
+`06958562713570774a028121fadbb617b2a15842f93582bfde45ab5db8efa7b6`
+also receives fresh historical and two current invocations for FontMaterial4
+and Strings. Historical outputs match J850; current outputs remain deterministic.
+Complete source-input/output maps explain every differing range. Historical
+originals and outputs remain qualification-only, never assembly suppliers.
+
+`work/coordination/phone-code/final-player-drift-v2/` retains those six calls and
+normalized proofs. The current-only composition is `drift-readiness-v6/` beside
+it: **583 of 705** files available, comprising **578 raw-exact**, **two code
+outputs requiring separate comparisons** and **three drift-explained** files.
+**122 are missing: seven APK and 115 payload**. There are zero invalid or
+mismatched entries. All 580 previously available files remain byte-identical.
+An independent review reruns the checker and confirms preservation of the latest
+Shader, Wisp and Windows suppliers. Audited checking opens no originals or
+historical outputs. Assembly readiness, overall source provenance and device
+qualification remain false. The remaining APK paths are explicit in
+`drift-readiness-v6/summary.json`; record packs cannot substitute for them.
+
+**Limits and revisit.** No native timings or new game APK exist. Complete native
+continuation/comparison, content completion, compatible owner signing, final
+installation, both controls and matched first-stage performance remain open.
+Input/tool pins pass doctor; the isolated checkout's absent lab project produces
+the expected doctor/preflight refusal. Main-checkout storage pruning passes.
+This changes orchestration evidence and source composition only; it introduces
+no RoR2 reconstruction or runtime mechanism requiring new community prior art.
+## J1158 — RGBA phone cohort interrupted by recorded hangup
+
+2026-10-25 UTC. The fixed J850 reconstruction target and existing pack interface
+remain unchanged. This is an interrupted source-only tool case, not a completed
+phone cohort or owner installation. No Editor, game build, installation or game
+launch occurs. The pre-run installed R58 hash remains
+`4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`;
+the separate recovery below verifies the same installed bytes.
+
+**Hypothesis and change.** After J1140's bounded Android guard and recovery
+qualification, one checkpointed 1,333-record RGBA cohort can complete with the
+existing producer. The v9 driver uses the original public producer/profile,
+sequential SDK bands, CPU affinity, independent CPU sampling, thermal admission
+and the separately pinned readable-zone observer. It retains the exact phone
+v4 SDK descriptor lineage; host v10/v11 helpers are not substituted. Prior art
+and transformation evidence remain J1107/J1128; no texture transformation or
+new reconstruction mechanism is introduced.
+
+**Observed result.** Authored controls pass in 27.325 seconds. The subsequent
+producer is interrupted after 1,457.896 seconds. Its host ADB command receipt
+records return code `-9`; the device monitor records signal `1` (SIGHUP),
+producer return code `-9`, no thermal stop and no timeout. The guard's signal
+handler records SIGHUP, its main loop exits on any recorded signal, and its
+finally block kills the owned producer group. A host ADB kill followed by remote
+hangup and guard termination is consistent with this evidence; the sender and
+cause of the host signal remain unknown. This does not establish Android OOM.
+
+The monitor retains 5,827 CPU samples, maximum gap 0.303346 seconds, peak CPU
+41.0 degrees C, battery 27.0 degrees C and HAL status zero. Its sampled peak
+parent/family RSS is 38,150,144 / 64,249,856 bytes. These samples do not exclude
+unobserved memory peaks. The captured index has 176 rows; the remote binary
+manifest reports 37,984 object bytes and 3,075,360 resource bytes. Full binary
+transfer was deferred to the separate recovery below. This prefix does not
+qualify a completed cohort.
+
+**First failure and terminal limits.** The original cleanup immediately observes
+one registered monitor identity still present after killing its group. It does
+not prove group absence, idle state, display state or terminal installed bytes,
+and deliberately retains the lease and remote scratch. The host later reports
+the holder dead and moves its stale lease aside. Neither that host action nor
+the earlier J1140 cleanup establishes this attempt's terminal device state.
+Recovery must atomically acquire its own lease, capture available diagnostic
+logs, verify owned process/namespace absence, preserve and hash the interrupted
+checkpoint, remove only its owned scratch, sleep the OLED and explicitly hand
+remaining device work to the next owner. No heavy rerun is authorized by this
+result.
+
+**Source review and remaining.** The bundle reader retains at most two expanded
+blocks; a read-only census of the 535 profile bundles observes a maximum block
+size of 128 KiB. The producer writes and commits individual records, and SDK
+bands run sequentially. The next canonical record after the captured prefix is
+a 512 by 512 texture with 1 MiB source pixels. These facts provide no basis for
+attributing the interruption to unbounded cohort accumulation. Inspect host ADB
+lifetime/cancellation before changing the producer; retain fail-closed signal
+and thermal behavior. Full Android RGBA/mip/cubemap production and phone-only
+installation remain open.
+
+**Evidence.** Private files remain under
+`work/coordination/accepted-build-reconstruction/media-source-v1/`:
+`device-rgba-batch-v9-done.json`, SHA-256
+`3e11d033c74e4cbc7ce0856f641b2ab3657c3b1cb9ff98dff2d12a9fd3499432`,
+its referenced case's `103-command.json`, producer monitor, captured index and
+thermal traces; `device-rgba-batch-v9-handoff-done.json` records unsafe handoff.
+Keep these receipts unchanged.
+
+**Separate terminal recovery.** The bounded recovery finishes at 12:42:36 UTC
+with success true. It captures logcat, dmesg, boot reason, current memory and
+application exit diagnostics, preserves all four interrupted pack files with
+host/device SHA-256 agreement, verifies the five registered owned identities
+and independent namespace are absent, removes only this attempt's scratch,
+and verifies game/selector absence, OLED sleep and lease release. Installed
+R58 bytes remain unchanged. Device free space is above 15 GiB. The main-checkout
+storage prune passes. The explicit terminal handoff goes to the next content
+worker; no reconstruction rerun or game launch is queued by this worker.
+
+Independent read-only verification checks all 176 committed rows against the
+canonical profile order and every persisted object/resource extent against its
+expected SHA-256. The object/resource streams contain exactly 37,984 /
+3,075,360 committed bytes, with no unindexed binary tail. The initial
+`result.json` still reports success false and zero completed objects; it is
+not replaced with a successful final receipt. This is a verified interrupted
+prefix, without a successful Android continuation or complete-cohort claim.
+
+The separate private terminal receipt is
+`device-rgba-v9-recovery-done.json`, SHA-256
+`824058baced69fae22e48cc7d02f098a12fc1f3d5e30880586c6f1c5a34090d9`; its case is
+`device-rgba-v9-recovery/`, including `captured/rgba/` and the diagnostic logs.
+Recovery establishes safe cleanup and preservation, independently of the
+failed cohort. It does not change that cohort's result or qualify a complete
+phone-produced pack.
+
+
+**Diagnostic and host lifetime follow-up.** Retained diagnostics contain no
+OOM-killer event attributable to this attempt. Historical low-memory
+application exits predate it; recovery-time free memory is not an
+interruption-time measurement. The retained logcat window starts after the
+interruption and cannot exclude earlier events. No OOM cause is inferred.
+
+A bounded authored macOS fixture kills only its exact local transport process,
+which holds the sole PTY master descriptor. Closing that descriptor causes the
+unchanged guard to record SIGHUP, kill its owned producer and exit 125. The
+fixture does not send SIGHUP directly. It reaps transport and guard and verifies
+producer absence. Separate ownership-refusal controls preserve unrelated
+non-session processes and reject an injected changed Linux birth identity.
+All five existing host texture-checkpoint contracts pass, including real
+SIGKILL recovery, partial outputs/tails, committed-data corruption and pin drift.
+
+The private fixture is `rgba_v9_lifetime_host.py`; its receipt is
+`rgba-v9-lifetime-host-result.json`, SHA-256
+`900434f85d6e92bc13fa2b5e9d10e20adb310b7c87f25d22ec23130f8d6e9e6d`,
+with retained evidence under `rgba-v9-lifetime-host-evidence/`. This demonstrates
+a possible host transport-lifetime mechanism. It neither reproduces Android
+adbd behavior nor identifies the actual v9 signal sender. No producer memory
+rewrite or full phone rerun follows from these observations; retain the bounded
+reader, sequential encoder, durable prefix and fail-closed thermal/signal
+contracts while isolating host cancellation before the next phone attempt.
+## J1106 — Observe the real settings commit race and prepare same-UID writer termination
+
+**Date:** 2026-10-24. **Hypothesis:** J1104's explicit SDK exit makes the
+existing CREATE/normal-package-stop case measurable, without player changes or
+supplied persistence bytes.
+
+**Device evidence:** normal R55 APK
+`111b1facec5b021c87dce03be24c9b81e913160809e685dc94b23e161786917a`,
+source `eb2acf07c55a6ba67a649494ba77a7c65e6c6b45`; private case timestamp
+`20261024T232752.445462Z` under `experiments/settings-write-interruption`.
+Following the prior owner's thermal stop, the case begins with verified OLED
+sleep, CPU sensors 50.1–52.1 °C, battery 40 °C and reported thermal status 0
+(HAL temperature reporting is unavailable). The SDK observer arms, observes
+actual CREATE with a 138-byte pending file and completes its normal package
+stop in 45 ms. It exits without the former transport timeout. Its independent
+result records the pending file absent after stop: the atomic commit won the
+race. The original 138-byte primary remains SHA-256
+`0567c9aab39c0307b4d41ae6e1d79f38ccd91e306a63333a126f1cf73e919b0a`;
+actual-PID runtime errors are empty. The host correctly refuses acceptance;
+there is no cold interrupted-write recovery claim. The raw observer output,
+initial primary copy and failure result remain private. Independent terminal
+readback at 23:28:31 UTC verifies installed APK bytes unchanged, no game or
+selector, and OLED asleep before lease release. Mandatory pruning completes.
+
+**Change and API knowledge:** replace the slow binder package-stop request
+inside the SDK observer with direct termination of the same PID/UID-bound
+writer from its own debug UID. Standard Android `run-as` must report exactly
+the owned package UID before the observer is launched; unavailable debug
+access refuses. The actor checks its own UID and exact target process identity
+before signalling, then requires target exit and a retained pending file.
+Unique SDK files live in the owned runtime directory and retain the existing
+absence/hash/cleanup contracts. No suspended-process state, player hook, root
+access or permission/storage change is introduced. Normal package stop remains
+failure teardown.
+
+The [Android Process API](https://developer.android.com/reference/android/os/Process#sendSignal(int,%20int))
+documents signalling and kernel UID restrictions. Inspected AOSP Android 13
+[`run-as.cpp`](https://github.com/aosp-mirror/platform_system_core/blob/android-13.0.0_r1/run-as/run-as.cpp)
+requires an installed debuggable package and drops to its application UID/GID.
+These are API/ownership observations; no platform implementation is copied.
+
+**Host validation:** six evidence/transport contracts reject missing/false or
+non-boolean writer-exit and pending-file witnesses, completed saves and changed
+primary bytes. Three actual JVM lifecycle/deadline fixtures pass. Android
+javac/DEX compilation passes; replacement DEX SHA-256
+`f1d6b58f8ffc0ca23f683d2e99b8e681b997ef7555bc6cb3c2efc80896251ac1`. Ruff and the
+public content audit pass. This replacement has no device qualification yet.
+
+**Result/revisit:** SDK lifetime repair is observed on device; interrupted-write
+recovery remains **unqualified** because the commit completed before stop. Run
+the same-UID replacement only after the priority owner-build rerun releases
+the shared device. Require an actual retained pending file, unchanged primary,
+cold native recovery/resave and unchanged protected profile/results before
+advancing acceptance. Heap and sustained cases remain separately queued; this
+case establishes no memory, power-loss, ENOSPC or ordinary-input guarantee.
+
+## J1122 — Prepare alpha host contracts and identify an old-heap fingerprint
+
+**Hypothesis/scope:** J1100's corrected menu growth, 0.578617 MiB per session,
+resembles one retained player-stat graph. Reanalyse existing pre-fix J1091 heaps
+without repeating a device experiment, then prepare the remaining acceptance
+cases while the shared device is unavailable. This entry records host work only;
+no APK was built, installed or run and no physical-input or stability gate closes.
+
+**Prior art/method:** reuse the pinned public Unity `MemorySnapshotDataTools`
+source at `86af1fe8` and its existing private parser/root-logging adaptations.
+Its reader/crawler describe managed connections and object sizes. The input
+review uses pinned Starstorm2 `BorgMain.cs` for native bank/authority observation,
+not an Android backend; details are in [INPUT_QUALIFICATION.md](INPUT_QUALIFICATION.md).
+No protected implementation or parser is vendored. Query managed-object edges,
+seed reachability with snapshot GC handles and static roots, then compare reach
+with and without returned BulletHit-to-HurtBox edges. Cross-check raw stack size,
+all array slots, hit references and inherited cached native pointers. Sizes below
+are declared object sizes, not allocator-resident usage.
+
+**Existing heap result:** after one versus three completed sessions, the returned
+stack has 75/128 versus 177/256 active/capacity entries. Every unused slot is null.
+The 24/48 hit-to-HurtBox targets and all three retained player-stat wrappers have
+zero cached native pointers and no native bridge. Cutting those hit edges removes
+1,040/2,537 exclusively reachable objects, totalling 717,390/2,077,876 bytes.
+Player-exclusive descendant graphs are 608,136–608,184 bytes each
+(0.579964–0.580009 MiB): three stat sheets each own a 195,800-byte array of
+8,157 stat fields. That graph size is within 0.24% of the corrected slope.
+Old pool-item/backing-capacity growth is only 6,224 bytes per session.
+
+This is a **candidate fingerprint**, not attribution of the corrected growth.
+Those snapshots precede the J1100 fixes. J1100 actually releases 341 destroyed
+HurtBox references across its 12 sessions, and its later stable native counts do
+not prove that managed roots disappeared. Fresh matched post-fix heaps must
+identify actual retained roots; the full managed-growth bound remains refused.
+Keep the earlier 664.629 MiB post-collection spike and every runtime error.
+
+**Host implementation:** physical mapping fixtures execute actual production
+validation, stick conversion and neutral admission. A regression first exposed
+per-axis neutral admission accepting diagonal input that radial conversion made
+active. Admission now uses that same conversion for both sticks; bindings,
+deadzone defaults and reacquisition duration are unchanged. The input contract
+specifies remaining physical/rebinding work without claiming it implemented.
+The [alpha policy](ALPHA_POLICY.md#final-flow-acceptance-contract) maps selected
+packaging/acquisition decisions to existing owners and explicit final-flow
+refusals. Signing tests add unsafe existing-custody cases without modifying the
+phone-only production workstream.
+
+The current `alpha-stability-batch` diagnostic owns one canonical lease and
+explicit installed digest across SDK interruption, three-session heap captures
+and a 30-minute assisted first-stage observation. Its PID is the detached lease
+owner; first failure stops the queue. Independent actual package/idle/OLED
+verification, mandatory pruning and lease-release decisions precede atomic
+terminal receipt publication. The sustained owner requires fresh advancing
+measurements, invincibility only, thermal stops, original End Run and assist
+restoration. These are prepared host contracts; actual SDK replacement recovery,
+fresh heap attribution and sustained observation remain unqualified.
+
+**Evidence/validation:** private packet
+`work/coordination/alpha-touch-acceptance-20261024/` retains
+`residual-memory-host-attribution.json`, `heap-after1.duckdb`,
+`heap-after3.duckdb`, `old-pair-analysis-replay.json` and
+`heap-evidence-relocation.json`. Original J1091 snapshot paths remain valid via
+hash-verified private archive references; evidence was not discarded. Seven
+production mapping cases, ten signing/payload cases, seventeen queue/sustained
+cases and 227 CLI cases pass, alongside related existing host checks. Ruff and
+staged public audit pass. No current device APK or installed-state claim follows.
+
+**First failure/revisit:** the shared device emergency-reboot/cooldown handoff
+introduced a mandatory CPU policy: one heavy job, sample at most 1 s apart,
+pause/resume at 70/55 C and abort above 80 C. Existing battery/HAL sampling does
+not satisfy it. The batch therefore refuses **before lease/device access**, with
+a failed terminal receipt; host tests prove this refusal. Implement a game-aware
+thermal owner and valid pause accounting before launching the prepared queue.
+The reported cooldown release alone does not admit this workload.
+Use the actual handed-off installed digest, never the global build pointer.
+Require retained pending state/unchanged primary/native cold recovery for SDK
+acceptance; classify LightningStake/runtime failures separately without waiving
+strict teardown. Physical input, real ENOSPC, ordinary long play, final owner
+installation/update and outward publication remain open.
+
+## J1125 — Supervise the alpha queue after the shared-device emergency reboot
+
+**Hypothesis/scope:** enforce the new CPU thermal policy around the existing
+SDK, heap and sustained owners without a player rebuild, native-process
+suspension or counting cooldown as gameplay. This entry qualifies host contracts
+and an idle post-reboot readback, not a new game run or a thermal acceptance gate.
+
+**Implementation:** the existing `alpha_stability_batch.py` owns independent
+CPU sampling and bounded package shutdown. Sampling targets 250 ms; an observed
+gap above one second, missing/invalid CPU readings, temperature above 80 C or
+supervision failure aborts. At 70 C the owned game stops. Only a classified
+cancellation may restart the complete stage after verified idle/OLED cleanup
+and cooling to at most 55 C. Runtime/unexpected errors remain first failures
+even when a thermal interruption or hard abort coincides. No interrupted heap
+series or sustained timer is combined with its replacement.
+
+The three existing stage owners accept an optional launch callback; the batch
+rejects initial/recovery launches after cancellation and checks launches that
+were already in flight. Package identity, ownership receipt, live PID and
+placement are revalidated before stopping. Shutdown transport is bounded and
+separate from sampling. Capture capacity is rechecked before every memory
+attempt; pending transactions are preserved and refuse retry. Completed stages
+are checkpointed under one three-hour deadline; the single driver retains the
+lease through independent terminal APK/idle/OLED checks and canonical pruning.
+This is generic host/device supervision using the existing runtime owners,
+not a new game diagnostic or reconstructed platform implementation.
+
+**Evidence/validation:** focused batch, SDK, memory, sustained and CLI contracts
+pass, including a slow stop with continuing samples, canceled initial/recovery
+launches, low-space retry refusal and coincident native/thermal failures. Ruff,
+diff checks and the staged public audit pass. The independent idle inspection
+is `work/coordination/alpha-touch-acceptance-20261024/postreboot-idle.done.json`.
+After explicit reboot clearance it acquires one atomic lease, observes boot
+reason `reboot`, verifies actual installed R55 bytes
+`111b1facec5b021c87dce03be24c9b81e913160809e685dc94b23e161786917a`
+(source `eb2acf07c55a6ba67a649494ba77a7c65e6c6b45`), absent game/selector/pending
+state and more than 42 GiB free. Independent terminal verification leaves the
+OLED asleep and releases the lease. No install, gameplay launch or other
+worker's scratch deletion occurs. Canonical pruning keeps evidence and removes
+no candidates. Doctor reports valid canonical input/project state but an absent
+historical bootstrap smoke; no passing smoke is inferred.
+
+**Result/revisit:** the queue can be scheduled once after a safe device handoff.
+Actual CPU-trace cadence and SDK interrupted-write recovery remain device gates.
+Native heap attribution, managed-growth bounds, ordinary long play, physical
+input, genuine ENOSPC and the other public-alpha gates remain open. Generic
+errors after a thermal stop abort conservatively instead of retrying an
+unclassified failure.
+
+## J1127 — Stop cold startup at the CPU threshold and retain failure diagnostics
+
+**Hypothesis/scope:** J1125's independent CPU supervisor must stop the existing
+frozen player before an unsafe sustained case. Inspect the first failed queue
+before repeating it; this is generic device supervision and evidence handling,
+not a new RoR2 reconstruction or runtime mechanism.
+
+**Device result:** the single detached queue fails during initial settings-menu
+startup, before the interrupted-write observer is armed. No SDK, heap or
+sustained stage completes. The installed R55 APK remains
+`111b1facec5b021c87dce03be24c9b81e913160809e685dc94b23e161786917a`
+(source `eb2acf07c55a6ba67a649494ba77a7c65e6c6b45`). Its 76 CPU samples start at
+36.2 C, reach 72.0 C at the stop threshold, and end at 43.4 C. Maximum sample
+gap is 0.737 s; no above-80 C observation occurs. The stage reports generic
+process loss and conservatively aborts, preserving J1125's first-error rule.
+
+The original stage failure saved neither its last report nor terminal PID log.
+One subsequent atomic, read-only forensic lease retrieves retained Android
+exit history, the failed PID log and crash buffer. The matching PID's Android
+exit is USER REQUESTED / FORCE STOP, 181 ms after the 72 C sample; the existing
+PID-specific classifier finds no runtime errors in the retained log. This
+supports supervisor shutdown rather than a native crash, without proving the
+menu or interrupted-write contract. A missing last report remains unknown.
+Independent actual-APK/idle/selector/pending readbacks pass before and after
+forensics; the OLED is asleep and both leases are released. No install,
+profile mutation, gameplay continuation or other worker's scratch deletion
+occurs. The unchanged queue is not repeated: even cold startup exceeded the
+then-current 70 C limit, so blind whole-stage replay was not attempted.
+
+**Evidence:** private `work/coordination/alpha-touch-acceptance-20261024/` holds
+`alpha-stability-20261025T050009Z.done.json`, its `.done.thermal.jsonl` and
+`failed-start-forensics/{done.json,pid.log,crash.log,exit-info.txt}`. Raw records
+remain ignored. The batch's terminal receipt also records completed canonical
+pruning. The independent forensic receipt records unchanged bytes and cleanup.
+
+**Host correction/validation:** the existing settings interruption owner now
+retains the last matching report and actual-PID logs on failure, including
+before menu readiness. Native report/log failures remain authoritative; an
+unavailable capture records its error while preserving the original exception.
+Four focused failure-path fixtures cover evidence retention, independent capture
+failure and runtime-error precedence. The action registry now matches the
+implemented CPU supervisor; its formerly stale help blocked the previous
+push's fresh-clone pre-push check. Regenerated help, focused tests and Ruff pass.
+These changes have no player-build input or device-acceptance claim.
+
+**Policy refinement/implementation:** the orchestrator subsequently clarifies
+that the 70/55 C pause/resume policy applies to pausable tool jobs. Gameplay
+must continue through 80 C, abort only above 80 C, sample at most one second
+apart and cool all temperature zones to at most 50 C before the next run. The
+shared game supervisor adopts that rule, retains independent bounded shutdown,
+records the peak and removes the obsolete gameplay replay path. Initial and
+recovery launches remain forbidden after a supervision failure. This explicit
+policy refinement, rather than reclassification of generic process loss, admits
+a fresh scheduled case. Host fixtures cover the new boundaries, including a hotter non-CPU physical
+zone blocking admission and sentinel refusal before launch. The cooldown
+observation retains raw types/values and explicitly identifies known electrical
+level zones; unrecognized negative wireless readings refuse admission rather
+than being assumed cool or disconnected. Device proof of the revised rule
+remains pending.
+
+**Result/revisit:** SDK interruption, corrected heap attribution, managed-growth
+bounds and sustained play remain open. Run one fresh queue under the refined
+gameplay policy, retaining this failed case separately. Physical input, ordinary
+play and real ENOSPC remain separate gates.
+
+## J1129 — Enforce the selected owner version-code ceiling
+
+**Hypothesis/scope:** the existing owner APK builder and binary-manifest owner
+should enforce ALPHA_POLICY's 2,100,000,000 ceiling before output creation.
+J1122 leaves final-flow packaging acceptance open; this is host-only admission
+maintenance, with no APK build, installation or device claim.
+
+**Change:** tighten both existing explicit-code checks and correct the policy
+acceptance matrix. Existing omission behavior remains available to historical
+lab builds. No new allocation state or installation framework is introduced.
+
+**Validation:** 83 owner host tests pass; authored manifests accept exactly
+2,100,000,000 and refuse larger values. Request admission refuses exhaustion
+before creating an output directory. Ruff formatting/checks pass.
+
+**First remaining failure/revisit:** durable issued-code allocation, mandatory
+final-flow codes, final alpha identity, actual profile/settings update retention
+and compatible rollback still require complete owner-flow integration/device
+evidence. No public-alpha packaging checkbox is closed by these host contracts.
+
+## J1130 — Retain unreadable thermal-zone failures before gameplay admission
+
+**Hypothesis/scope:** J1127's shared gameplay supervisor must preserve failed
+sysfs observations as evidence while refusing unknown temperatures. Main's R58
+qualification stops in initial cooldown after installation/sync, before any
+control or gameplay stage. Its shell reports `read: Invalid argument` after the
+first readable zone. This is generic device evidence handling; no new game
+runtime mechanism or build is introduced.
+
+**Observation:** one atomic read-only alpha lease inventories all 95 sysfs
+thermal zones using `cat`, independently of the shell `read` builtin. Exactly
+28 temperature files return EINVAL, including `pa1` and several modem families.
+This confirms an unreadable sysfs interface rather than invalid shell syntax;
+it does not prove those sensors disconnected, absent or cool. The installed
+receipt names R58 APK
+`4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`,
+source `55149b4846744f5f9d8c521928858a63f0eba314`. Main's preceding driver verifies
+those actual bytes after install; alpha performs no new byte verification,
+installation or launch. Its read-only inventory observes no game PID and the
+OLED asleep, then releases its lease. No game/profile/payload changes occur.
+
+**Change/validation:** the existing all-zone command now identifies the failed
+path/type. Command errors, including partial output and timeout exceptions,
+enter the existing JSONL trace before the original exception is re-raised.
+Admission remains refused; there is no new sensor exclusion, retry or policy
+relaxation. All 26 batch host tests and Ruff pass, including an executable
+shell fixture preserving preceding output and a trace/exception-identity fixture.
+
+**Evidence:** ignored
+`work/coordination/alpha-touch-acceptance-20261024/thermal-read-forensics/result.json`
+contains the complete inventory and idle/power readbacks. Main's separate
+`work/coordination/main-port-r58/device.done.json` retains its original failed
+qualification and cleanup/release result. Raw device paths stay private.
+
+**First failure/revisit:** all-zone at-most-50 C admission cannot be established
+while these physical sensor identities are unreadable. Obtain documented
+platform sensor applicability or an explicit revised thermal policy before a
+new gameplay case. SDK interruption, corrected heap attribution, sustained
+play and ordinary physical controls remain unqualified; no checklist item closes.
+
+## J1131 — Supervise all readable gameplay thermal zones
+
+**Hypothesis/scope:** the orchestrator's clarified gameplay policy excludes
+unreadable temperature interfaces while recording them, requires every readable
+physical zone at or below 50 C before launch, and aborts above 80 C on any
+readable physical zone. J1130's 28 EINVAL observations remain evidence of
+unreadable interfaces, without a claim that the sensors are cool or absent.
+This extends the existing generic device supervisor, without game runtime changes.
+
+**Change:** the shared owner records unreadable temperature type/path exclusions
+and continues reading remaining zones. Admission and runtime both sample the
+complete zone list. Non-CPU heat now aborts too; CPU and all-zone peaks remain
+separate. Exact known electrical pseudo-zones retain their exclusions. Unknown
+numeric sentinels, missing readable CPU coverage, malformed observations, ADB
+failures and gaps above one second still refuse. Gameplay never pauses or retries;
+the separate pausable-tool 70/55 C policy remains unchanged.
+
+**Validation:** 29 batch host tests and Ruff pass. Executable shell fixtures
+cover an unreadable temperature without losing preceding or later observations;
+parser/owner controls cover recorded admission/runtime exclusions, non-CPU
+80 C acceptance and above-80 C abort, all-unreadable refusal, sentinel refusal,
+and sampling gaps. Independent review reports GO. No build, installation,
+launch or new device evidence occurs in this checkpoint.
+
+**Evidence/next:** the existing ignored shared handoff
+`work/coordination/main-port-r58/thermal-handoff.json` pins the reviewed helper
+path and SHA for Main's R58 controls continuation; its separate ready done-file
+notifies the dispatcher. R58 APK
+`4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`
+remains the last installation receipt, with no accepted gameplay controls.
+Fresh device evidence is required before closing any public-alpha gate.
+
+## J1137 — Separate thermal admission discovery from runtime sampling
+
+**Hypothesis/scope:** Main's first J1131 R58 controls continuation refuses before
+launch because discovering approximately 95 thermal zones exceeds the shared
+0.7-second ADB timeout. A slower admission read while idle must be independent
+of the strict gameplay sampling deadline. This is generic shell supervision;
+no game reconstruction or runtime change is involved.
+
+**Change:** admission discovers temperature types and readable physical paths
+with a 10-second timeout. Runtime reads the discovered physical temperature
+paths in one batch without repeatedly reading zone types or unsupported paths.
+The existing owner API and readable-zone policy remain: at most 50 C admission,
+above 80 C abort, no native suspension or replay, a 0.7-second runtime ADB timeout
+and measured sampling gaps of at most one second. Admission discovery is outside
+the runtime gap bound; each runtime starts a fresh measured interval. Excluded
+interfaces and separate CPU/all-zone peaks remain recorded. Failed runtime reads,
+malformed output and numeric sentinels still refuse supervision.
+
+**Validation:** 32 focused batch host fixtures and Ruff format/check pass. The
+executable shell fixtures exercise discovery, batched physical-path reads and
+missing-file refusal. Slow admission takes longer than one second without a
+runtime gap refusal; the subsequent runtime still rejects non-CPU heat above
+80 C. Five sustained-owner regression fixtures also pass. No device command,
+build, installation or gameplay qualification occurs in this checkpoint.
+
+**Evidence/limits:** retained private Main result
+`work/coordination/main-port-r58/controls-retry/device.done.json` records the
+prelaunch timeout, zero launched controls, process/selector absence, OLED asleep
+and lease release. Its installed R58 APK is
+`4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`, source
+`55149b48`; this host fix neither installs nor qualifies gameplay on it.
+The revised shared handoff and `thermal-timeout-ready.done.json` select the exact
+helper for Main's next controls continuation. Fresh device sampling cadence and
+all alpha stability/physical-input acceptance gates remain open.
+
+## J1141 — Exclude unavailable admission thermal sentinels
+
+**Hypothesis/scope:** Main's next R58 continuation completes admission discovery
+but refuses a readable numeric sentinel before launching any control. The
+orchestrator's explicit revised policy classifies admission values at or below
+-30 C as unavailable sensors, with recorded exclusions. This is a generic device
+supervision change; no game reconstruction or runtime behavior changes.
+
+**Change:** the existing parser excludes these values only during idle admission,
+retaining type, path and raw value. Runtime reads only admitted valid physical
+paths. A previously valid zone becoming a sentinel still refuses supervision.
+Readable CPU coverage remains mandatory, which also prevents admission without
+any valid CPU/GPU/battery/skin sensor. Malformed values, other invalid numeric
+readings, failed reads and missing coverage still refuse. The 50 C admission,
+above-80 C abort and one-second runtime gap limits remain unchanged.
+
+**Validation:** 35 focused batch host fixtures, five sustained-owner regression
+fixtures and Ruff pass. Controls cover both observed sentinel values, the exact
+-30 C admission boundary, retained exclusions, runtime path selection, valid-to-
+sentinel runtime transitions and absent valid CPU coverage. No new device command,
+build, installation or gameplay qualification occurs in this checkpoint.
+
+**Evidence/limits:** Main owns the full failed-run result. Its retained private
+`work/coordination/main-port-r58/controls-timeout-retry/plain-thermal.jsonl`
+records the unavailable readings and
+`work/coordination/main-port-r58/controls-timeout-retry/device.done.json`
+records no launched controls, process/selector absence, OLED asleep and lease
+release. The retained installed R58 APK is
+`4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`, source
+`55149b48`. The revised shared handoff pins this helper for one further Main
+retry. Fresh sampling cadence and all alpha device acceptance gates remain open.
+
+## J1148 — Restrict gameplay admission to CPU GPU battery and skin
+
+**Hypothesis/scope:** USB-charging power-management sensors can remain above
+50 C while the CPU is cool. The orchestrator explicitly refines the gameplay
+admission policy to readable CPU/GPU/battery/skin zones only. This generic host
+device-supervision correction does not change the game or pausable tool policy.
+
+**Change:** the existing shared gameplay owner computes a separate admission
+maximum. Other valid physical zones, including PMIC, charger and USB sensors,
+are named with raw values and paths in `admission_excluded_zones`; all remain in
+the runtime sampling set and in the above-80 C hard abort and peak accounting.
+Unreadable/sentinel admission exclusions remain separate. Readable CPU coverage,
+valid-to-sentinel refusal, strict runtime timeout and one-second gap limits are
+unchanged.
+
+**Validation:** 36 batch fixtures, five sustained-owner regressions, 228 CLI
+fixtures and Ruff pass. A 57.763 C power-zone fixture admits a 49 C CPU, records
+all four power-zone names and paths, then refuses a runtime PMIC value of
+80.001 C. CPU/GPU/battery/skin fixtures each wait at 51 C and admit at 50 C.
+Existing sentinel, unsupported-zone, failure and cadence controls remain passing.
+
+**Evidence/limits:** host-only; no ADB, build, installation or gameplay test.
+Main's installed R58 receipt remains the last handed-off identity:
+`4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`, source
+`55149b48`. The private `work/coordination/main-port-r58/thermal-handoff.json`
+pins the updated helper and invocation. Main owns its running sentinel-retry
+case and terminal evidence; this checkpoint does not qualify its sampling
+cadence or any outstanding alpha device gate. Revisit on actual fresh runtime
+sensor or cadence failure; preserve the current device queue and explicit
+terminal handoffs.
+
+## J1156 — Qualify per-zone gameplay thermal duration and limits
+
+**Hypothesis and scope.** J1152 preserves a guarded R58 startup termination,
+not a spontaneous crash or gameplay qualification. Its crossing neighborhood
+includes maxima 76.8, 77.2, 81.6, 78.8 and 63.7 C; later cooling is affected by
+force-stop. The orchestrator's explicit revised runtime policy distinguishes
+brief core spikes from sustained heat. This host-only change implements that
+policy in the existing gameplay supervisor; no player source, APK, native
+execution, device storage or ownership boundary changes.
+
+**Change.** `scripts/lab/alpha_stability_batch.py` retains raw observations and
+CPU/all-zone peaks. For each CPU/GPU sensor, keyed by type and sysfs path, a
+reading above 80 C starts or extends its own streak. At least one continuous
+second and at least three consecutive samples spaced at most 0.35 s apart are
+required to abort. A reading at or below 80 C or a longer sample interval resets
+that sensor's streak. A CPU/GPU reading above 88 C or battery/skin above 45 C
+aborts immediately; a runtime sampling gap above one second still refuses.
+Other readable physical sensors remain recorded without these runtime class
+thresholds. Admission, unsupported/sentinel handling, valid CPU coverage,
+launch cancellation, bounded stop ownership and the separate pausable-tool
+policy remain unchanged. Admission still rejects any readable physical zone
+above its existing 80 C hard limit before its CPU/GPU/battery/skin cooldown.
+The helper SHA-256 is
+`a08b64b420e25d1a97223e75eead83fa3f9ba097ab413ad8402d0772ccce515b`.
+This modifies existing generic sysfs supervision and adds no RoR2-specific
+observer, platform adapter or new diagnostic mechanism.
+
+**Host validation.** All 42 batch fixtures, five sustained fixtures and 228 CLI
+fixtures pass. The supplied five-point J1152 trace at 0.30 s intervals continues
+while retaining its 81.6 C peak. CPU and GPU 81 C streaks continue before one
+second and abort at the first qualifying sample at 0.25 s or 0.35 s spacing.
+Boundary fixtures cover 88 versus above 88 C, 45 versus above 45 C, a reading
+at 80 C, interrupted sampling continuity, same-type sensors with different
+paths, the one-second sampling-gap boundary and continued PMIC raw/peak
+recording. Existing admission, sentinel-transition, cancellation and cleanup
+contracts remain covered. Ruff format/check and diff checks pass; independent
+read-only review approves the algorithm and fixtures. Operational architecture,
+playtest guidance and open alpha gates describe the current policy.
+
+**Publication and remaining gate.** Shared helper metadata is published under
+ignored `work/coordination/main-port-r58/thermal-handoff.json` with the exact
+committed helper and a new `thermal-duration-ready.done.json`; the prior
+helper/failed-run evidence remains retained. No device command, lease,
+installation or run occurs for this result. R58's retained APK
+`4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`
+remains installed according to the latest shared readback and remains gameplay
+unqualified. Main's next explicit controls handoff and alpha's SDK interrupted
+write, fresh corrected heaps and sustained cases remain open. Do not replay the
+historical R55 private driver or relax thresholds after a refusal. Fresh device
+qualification follows the explicit shared-device queue and current APK receipt;
+this host result does not establish safe uninterrupted heat or accepted play.
+
+## J1160 — Budget alpha capture storage separately from full builds
+
+**Hypothesis and change.** The 100 GiB storage floor applies to a full Unity
+build. The orchestrator explicitly authorizes the existing capture-only alpha
+batch to admit against estimated output plus a 20 GiB margin. The existing
+`alpha_stability_batch.py` owner now records two 4 GiB native snapshot estimates
+(menus 2 and 4), plus 1 GiB for SDK/session/thermal diagnostics, and the 20 GiB
+margin: 29 GiB required in total. Admission records observed free bytes and
+refuses before acquiring a lease or accessing a device when below that budget.
+The full-build floor and 19 GiB device capture admission remain unchanged.
+This generic host storage correction adds no runtime mechanism or player build.
+
+**Evidence and validation.** J1091's retained evidence totals 2,595,839,863 bytes,
+including 2,585,038,011 bytes in its two snapshots. The corrected later memory
+series retains 17,390,129 bytes of diagnostics; inspected prior SDK cases are
+under 215 KB. These local read-only measurements support the conservative
+9 GiB estimate; no heap parser/export is part of this queue. All 43 batch,
+five sustained, 228 CLI and ten SDK interruption fixtures pass. Boundary
+fixtures refuse 28 GiB, admit 29 and 96 GiB, record the complete budget and
+prove no device/lease access on insufficient capacity. Ruff and diff checks
+pass; independent read-only review approves the estimate and admission.
+Canonical host-only preflight passes; canonical doctor validates input/project
+but retains its absent historical bootstrap-smoke gate.
+
+**Scope and remaining gate.** This is host qualification only, with no APK
+change or device acceptance claim. The prior host-only storage refusal is not
+a device experiment. SDK interrupted-write, fresh corrected native heaps and
+sustained runtime qualification remain open until their separately retained
+batch result, with actual installed APK readback and J1148/J1156 supervision.
+
+## J1164 — Recover an interrupted native save and classify stage-load thermal refusal
+
+**Hypothesis and scope.** Run the public SDK interrupted-write, corrected fresh
+heap-pair and sustained sequence on the actual installed R58, under J1148/J1156
+and J1160's capture budget. No player rebuild, install, profile reset or thermal
+limit change occurs. This uses the existing diagnostic owners, without adding
+a RoR2-specific mechanism.
+
+**Device result.** Installed-byte readback binds the complete batch to APK
+`4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`.
+The settings case observes the native pending transaction, terminates its
+same-UID writer in 109 ms, retains the 138-byte pending file and unchanged
+primary, then verifies recovery without runtime errors. Six protected files
+remain covered. This qualifies interrupted pending-write recovery, not power
+loss or ENOSPC. Its peak CPU reading is 74.4 C.
+
+The next session-memory case completes zero of three sessions and captures
+neither requested fresh heap. Its `process-exited` result is caused by the
+J1156 supervisor: a CPU sensor remains above 80 C for the required continuous
+second. The observed CPU/all-zone peak is 84.8 C. This is a deliberate thermal
+termination, not evidence of a spontaneous crash, ANR or low-memory kill.
+The first menu PSS is 2,233,885 KiB; one menu sample establishes no growth bound.
+The sustained stage never starts.
+
+**Timing and evidence.** The retained process log places launch near 13:18:15
+UTC, gameplay preparation at 13:20:30.079 and native `SceneDirector.Start`
+at 13:21:25.742. The first sampled CPU/GPU crossing above 80 C is
+13:21:32.329 UTC, approximately 197 s after launch and 6.6 s after that stage
+callback. The final sustained streak spans 13:21:48.020–13:21:49.333 UTC
+(80.8, 84.8, 84.8, 84.8 and 83.6 C), about 213 s after launch and
+22.3–23.6 s after the stage callback. This locates the crossing during stage
+startup; it does not attribute
+the hotspot to one callback or establish a frame-cap/refresh cause. The
+subsequent force-stop contaminates cooling comparisons. Prior R58/J1152 also
+refused during startup, so no new R58-specific regression is established.
+Ignored evidence is under
+`work/coordination/alpha-touch-acceptance-20261024/capture-budget-20261025T131045Z/`
+(`terminal.done.json`, `batch.done.json`, thermal JSONL and batch log); raw
+session evidence is the `session-memory/20261025T131812.520307Z` run and save
+evidence the `settings-write-interruption/20261025T131637.403767Z` run beneath
+the authorized device's local experiments. Full raw paths remain private.
+
+**Cleanup and next gate.** Terminal readback verifies unchanged APK bytes,
+process/selector/pending absence and OLED sleep. The lease is released and
+pruning passes. Explicit terminal handoff gives the next slot to the queued
+phone assembly owner; no automatic replay follows refusal. Fresh corrected
+heaps, sustained heat/performance, ordinary full play and genuine ENOSPC stay
+open. Revisit after the next explicit device handoff and fresh admission, using
+the current limits; investigate loading-only presentation pacing separately
+without changing native fixed-step behaviour.
+
+## J1165 — Bound historical-input drift in native Snowy cubemaps
+
+2026-10-25 UTC. Host-only source qualification against fixed J850 APK
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+Three retained historical original PC cubemaps produce zero exact target pixel
+or body matches. The residual remains 13 native Cubemap records, six distinct
+pixel groups and 4,785,168 encoded bytes. No device, Editor, game build,
+installation or launch occurs. Current originals remain the only production
+supplier; historical files are qualification evidence only.
+
+**Hypothesis and prior art.** J1136 excludes several omitted current sources,
+but does not test the retained historical Snowy BC6 resources. The three
+serialized Cubemap bodies match current originals while their compressed
+resource extents differ. Under the accepted input-drift policy, the same public
+producer might reproduce J850 from historical originals and permit a separately
+explained current-input result. Consulted community-prior-art.md, J332, J1128
+and J1136. Pinned AssetRipper `1ac666f` LightingDataProcessor adds the generated
+sky reference without restoring the missing native baked-probe table. Its
+source interpretation does not prove the required pixel transform.
+
+**Method.** The existing public `texture_produce.py` `cube-hdr` operation and
+pinned v11 tools transform historical original IDs 13, 14 and 15 once each,
+matched by original native scene references to J850 Snowy IDs 1, 2 and 3.
+The historical receipt binds input
+`3e2dc63f6350b7523f3222c06962b40948da5ebf26b1d1b04f1f67d85b4e9dfd`.
+The historical original bundle is
+`Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-snowyforest_scenes_all_6e82476f77c518313fc7c41da77e70b2.bundle`,
+SHA-256 `ff962a4827abd65c5ad81510bba02397ec36b26ac9eb2667881fc6c2d2d83eae`.
+The existing import settings remain usage 7 / colour 1. Historical identity,
+body selectors and original resource hashes pass. Outputs are persisted before
+independent target-byte comparison. No codec, filter, producer, public recipe
+or record-pack interface changes; no target pixel provider is introduced.
+
+| Historical source / J850 target | Matching encoded bytes | Exact face/mip blocks | Exact body |
+| --- | ---: | ---: | --- |
+| Snowy 13 / 1 | 10,267 / 65,616 | 0 / 48 | No |
+| Snowy 14 / 2 | 20,740 / 65,616 | 0 / 48 | No |
+| Snowy 15 / 3 | 321,576 / 1,048,656 | 0 / 60 | No |
+
+Independent body serialization passes, with no unexpected unchanged fields;
+the remaining mismatch is in encoded pixels. A private diagnostic projection
+using target pixels makes each body exact, but those pixels never enter the
+public transform or any source pack. The initial v1 selector setup fails before
+conversion because the current bundle filename differs; that failure remains
+retained separately. The corrected v2 executes exactly three historical
+transformations. With no historical exact result, current-input repeated
+production and drift qualification are not admitted. No other source sweep is
+repeated.
+
+**Evidence.** Ignored root
+`work/coordination/accepted-build-reconstruction/media-source-v1/cubemap-source-v1/`:
+`historical-snowy-source-v2.py`, `historical-snowy-source-v2/` and
+`historical-snowy-source-v2-terminal.json`. Terminal SHA-256
+`a43d610c035c8001d43d65d160594a9c2be24c43da3ab146242f7265a3e16f5b`;
+result SHA-256
+`01cf8524796be1402b4ade8ccb5e17314a3c9a4fd6fa8bd8bf7b2beac19c0f61`.
+The result pins each original/tool extent and every produced face/mip.
+Unchanged public producer SHA-256
+`ea29094e9f8e4740329bb84ee4b59e5d4b5c7a989cf0ea44924c9b7519cadb14`;
+executed v11 descriptor
+`ad05fa2b534dd80b143fbe90787e4b8de8dcb6eaaa2b1b9edc8eb488e3fa0bae`.
+
+**First failure and revisit.** Historical source 13 / target 1 differs at the
+public HDR pixel transform. Changed original input alone does not qualify these
+records as drift-explained. Keep all 13 outside the qualified 110-record profile.
+The source-only import or prefilter derivation remains unknown. Revisit only
+with a new measured transform or source lineage; neither these failures nor
+J1136 prove rebaking is necessary. Continue the independently unblocked guarded
+Android texture qualification.
+
+## J1167 — Measure representative native compilation on the phone
+
+2026-10-25 UTC. Tool-only device evidence; no game APK, installation or runtime
+qualification. J850 remains the accepted comparison APK.
+
+**Observation and correction.** Following J1162, the v23 launcher loses the
+literal instrumentation class suffix to remote shell expansion, before native
+compilation. The driver then incorrectly ignores its exited launcher. The v24
+launcher quotes the component and fails promptly on an exited child, but refuses
+startup because a model-added mandatory skin sensor is unavailable. Retained
+thermal inventory exposes CPU, GPU and battery sensors; the thermal HAL reports
+no usable skin sensor. The actual admission policy filters available sensors.
+V25 requires CPU, GPU and battery, records skin as unavailable, and retains the
+45 C battery/available-skin abort, 80 C all-physical-zone abort, 75/60 C pause and
+resume, 250 ms sampling, 1 s maximum device gap and 2 s host heartbeat. This is
+not evidence identifying the earlier unknown SIGKILL sender.
+
+**Measured result.** The existing installed ordinary-app tool host freshly
+compiles jobs 407, 410 and 418 from its retained owner converter output. Active
+compile times are **109.907**, **796.569** and **917.086 seconds**; all exit zero,
+with no recorded pause. These cover the largest C unit, largest C++ unit and
+most expensive host unit. The phase is `native-measured`, never `native-built`.
+A 60 s device-time guard baseline and fresh 10 s admission precede compilation.
+The full operation takes 2,103.096 seconds; 6,696 samples record a 71.6 C peak,
+370 ms maximum sample gap and 1,687,112 KiB peak tool-UID RSS. Metadata SHA-256
+remains `082b458b6b18447c8a01bdf59adc4cfdab644eba9a545cb173692e5adb167ff8`.
+
+Evidence is `work/coordination/phone-code/measure-native-v25-done.json`, adjacent
+`native-measure-v25-result.json`, three `native-measure-v25-job-*.json` receipts,
+storage readbacks and `owned-code-thermal-v9.jsonl`. The installed tool APK is
+`4d30299364a2f58a9433e574cf5c9df79c4b0bfb38f8a76e9029168c23a2fa69`;
+it is not a game candidate. No build, install or retained-prefix copy occurs.
+Cleanup verifies stopped tool jobs, retired guard, both physical panels OFF
+and released lease. Timing objects are removed; original objects remain intact.
+Main and worktree storage pruning pass.
+
+**Continuation and limits.** The measured maximum supports a 14,400 s active
+compile budget, over fifteen times that observation, before checked continuation
+from 498 objects into a new output. All thermal limits remain unchanged. The
+long-running private driver bounds telemetry memory and preserves aggregate
+observations; 14 driver, 16 guard, 24 native and 15 backend host contracts pass,
+with independent read-only review GO. Input/tool pins pass doctor; absent
+isolated lab generation produces the expected preflight refusal. This changes
+orchestration only and introduces no new RoR2 mechanism requiring prior art.
+Complete native production/comparison, current-only final APK assembly, durable
+compatible signing, ordinary install, both controls and matched performance
+remain open. No continuation result is inferred from these measurements.
+
+## J1168 — Android native continuation requires a checked object-copy fallback
+
+- **Observation / hypothesis:** J1167's measured active-time budget admits a
+  continuation from the original 498 completed native jobs, but the embedded
+  Android Python does not expose `os.link`. Generic Python platform portability
+  is the subsystem here; no RoR2 reconstruction or runtime policy changes.
+- **First failure / evidence:**
+  `work/coordination/phone-code/measure-native-v26-done.json` records
+  `AttributeError` during the first reused object, before any fresh native
+  compilation. The tool APK remains
+  `4d30299364a2f58a9433e574cf5c9df79c4b0bfb38f8a76e9029168c23a2fa69`.
+  Metadata remains raw-exact at
+  `082b458b6b18447c8a01bdf59adc4cfdab644eba9a545cb173692e5adb167ff8`.
+  The guard records 539 samples, 77.2 C peak and 370 ms maximum sample gap.
+  Cleanup verifies stopped tool jobs, both panels asleep and released lease.
+- **Change:** The existing native owner keeps hard links when the API exists.
+  When absent, it checks per-object storage headroom, copies only previously
+  validated completed objects and checks persisted size and SHA-256 before
+  writing the new job receipt. An existing hard-link error remains fatal.
+  The original failed output and its partial job 498 remain unchanged.
+- **Host validation:** The 498-prefix fixture exercises hard links and the
+  absent-API copy path, compiles only jobs 498 and 499, and completes corrected
+  linking. It checks low-space, corrupt-copy and hard-link-error refusals.
+  No complete native library, new tool installation, game APK or gameplay
+  qualification follows from these host checks.
+- **Revisit:** Rebuild the tool app from committed source, install over its
+  hash-verified owned package without clearing data, and continue in a fresh
+  output using the retained prefix and unchanged J1167 thermal/active-time
+  policy. Retain the terminal result before comparing native library bytes.
+
 ## J1083 — Reconstruct source Sobel graphics and freeze corrected normal player
 
 2026-10-24 UTC.
