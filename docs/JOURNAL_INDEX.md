@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1163](PORTING_JOURNAL.md#j1163--reconstruct-barrier-and-all-three-goldshores-payloads) | 2026-10-25 | Reconstruct Barrier and all three Goldshores payloads | 2026-10-25 UTC. |
 | [J1168](PORTING_JOURNAL.md#j1168--android-native-continuation-requires-a-checked-object-copy-fallback) | 2026-10-25 | Android native continuation requires a checked object-copy fallback | - **Observation / hypothesis:** J1167's measured active-time budget admits a continuation from the original 498 completed native jobs, but the embedded Android… |
 | [J1167](PORTING_JOURNAL.md#j1167--measure-representative-native-compilation-on-the-phone) | 2026-10-25 | Measure representative native compilation on the phone | 2026-10-25 UTC. |
 | [J1165](PORTING_JOURNAL.md#j1165--bound-historical-input-drift-in-native-snowy-cubemaps) | 2026-10-25 | Bound historical-input drift in native Snowy cubemaps | 2026-10-25 UTC. |
@@ -28,7 +29,6 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1106](PORTING_JOURNAL.md#j1106--observe-the-real-settings-commit-race-and-prepare-same-uid-writer-termination) | 2026-10-25 | Observe the real settings commit race and prepare same-UID writer termination | **Date:** 2026-10-24. |
 | [J1158](PORTING_JOURNAL.md#j1158--rgba-phone-cohort-interrupted-by-recorded-hangup) | 2026-10-25 | RGBA phone cohort interrupted by recorded hangup | 2026-10-25 UTC. |
 | [J1162](PORTING_JOURNAL.md#j1162--retain-the-native-measurement-transport-failure-and-refresh-source-readiness) | 2026-10-25 | Retain the native measurement transport failure and refresh source readiness | 2026-10-25 UTC. |
-| [J1163](PORTING_JOURNAL.md#j1163--reconstruct-barrier-and-all-three-goldshores-payloads) | 2026-10-25 | Reconstruct Barrier and all three Goldshores payloads | 2026-10-25 UTC. |
 | [J1157](PORTING_JOURNAL.md#j1157--reconstruct-every-apk-shader48-object-from-source) | 2026-10-25 | Reconstruct every APK Shader48 object from source | **Hypothesis / prior art.** |
 | [J1143](PORTING_JOURNAL.md#j1143--qualify-expanded-source-animation-controller-and-graph-records) | 2026-10-25 | Qualify expanded source animation, controller and graph records | Date: 2026-10-25 UTC. |
 | [J1154](PORTING_JOURNAL.md#j1154--collect-the-paused-native-jobs-terminal-timeout-without-restarting-it) | 2026-10-25 | Collect the paused native job's terminal timeout without restarting it | 2026-10-25 UTC. |
