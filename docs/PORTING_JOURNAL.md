@@ -39597,3 +39597,70 @@ generic classes remain separate work. Full phone production, content assembly,
 installation and runtime behavior remain open. Revisit on input, schema,
 source relationships, policy, reader or interpreter changes. Architecture C,
 IL2CPP ARM64 and ownership boundaries remain unchanged.
+
+## J1124 — Derive managed script properties hashes from original and SDK schemas
+
+Date: 2026-10-25 UTC. **Host-only result:** the existing
+`script_identity.py` derives EffectManagerHelper's accepted properties/type hash
+`8856e68b7415b9ae5149c91b0f94058d` using only original PC metadata and the owner's
+exact SDK native base. No target-file input, UnityPy or Editor is needed by
+this pure helper. No device, lease, game build, install or launch occurs.
+
+**Hypothesis and prior art.** The earlier read-only managed-hash review correctly
+finds passthrough fields in pinned UnityPy 1.25.3 `SerializedFile.py` and
+AssetRipper `1ac666f` `MonoScriptExtensions.cs`/`SerializedTypeBase.cs`; those
+parsers supply no hash derivation. Consulted `community-prior-art.md` and those
+pinned sources before inspecting the supplied exact SDK's named native routines.
+`ComputeTypeTreeHashForScriptClass`, `TypeTreeQueries::HashTypeTree` and
+`MdFourGenerator::Feed` establish the missing editor-schema rule and ordered
+hash operands. No native implementation or SDK metadata snapshot is copied.
+The existing authored RFC 1320 MD4 owner and its known-vector tests are reused.
+
+**Change.** `script_identity.properties_hash(class_name, namespace,
+assembly_name, original_tree, sdk_tree)` decodes source v22 type metadata with
+50 standard Unity common-string offsets. It retains the SDK MonoBehaviour's
+native base through `m_EditorClassIdentifier`, discards SDK custom fields, and
+appends the original PC custom-field subtrees in source order. MD4 receives raw
+UTF-8 class/namespace/assembly identity, then each preorder node's type/name and
+little-endian byte size, type flags, version and alignment bit `0x4000`.
+No string length/terminator, index, depth or other metadata bit is hashed.
+Setup is explicit input bytes; there is no file or process access, retained
+state, cache, SDK path selection or automatic metadata rewrite. Malformed or
+unknown schemas refuse. Callers retain source/provenance admission and select
+original passthrough versus recomputation explicitly.
+
+**Evidence.** Private evidence stays in `work/coordination/p1-anim/`:
+`properties_public_proof.py`, `properties-public-source-proof-v2.log` and
+`properties-public-source-proof.json`. The proof runs with `python3 -I -S`.
+It parses actual class/namespace/assembly strings from the original MonoScript,
+selects its original MonoBehaviour schema, independently reads the supplied SDK
+native base, and calls the public helper. It never opens a target file.
+The source script is selected from original calmwater MonoScripts; its bundle
+SHA-256 is `68aee1b2d2633c3ce1713cc44238025f750d3ae0aa66f42e748d421b19178022`.
+The original commando-static schema bundle SHA-256 is
+`fc97a8bc1ce5ebd97961419ca6ebdcd615af6cb0077f79f673ac63fb7729bf79`.
+The supplied SDK `unity editor resources` file SHA-256 is
+`25bcb42474a8e1d639d4835a28fa2017dc153e2612e3961c6b09895f5ac3a190`;
+its original selected tree SHA-256 is
+`9bb2166001dadf80fedb76bfa2cb8ca9448cf4351c6f38220fc9558e32700000`.
+The composition retains 27 SDK native nodes plus 16 original custom nodes.
+These are source selectors/hashes, not distributed schemas or target suppliers.
+
+Three new authored host contracts independently verify exact ordered feed,
+SDK-base/original-custom composition, common-string decoding, semantic metadata,
+alignment masking and malformed/unknown-schema refusal. The existing RFC MD4
+and script-file-ID fixture also passes. Ruff and staged public audit pass.
+All fixtures are authored and contain no game/SDK tree or body. Architecture
+names the helper and its caller-owned setup/lifecycle. Existing runtime,
+ownership, entitlement and content distribution boundaries are unchanged.
+
+**First failure and remaining.** Hashing the original release schema directly
+produces a different value: the SDK uses the flags-zero editor schema. Native
+base rehydration resolves that discrepancy. A private initial proof iterates a
+bundle-member dictionary as rows and fails before hashing; using its named
+member interface corrects that discovery-only error. The public helper has no
+file consumer or target fallback. Full bundle/player integration belongs to
+the existing content owners; this helper alone closes zero final-file readiness
+entries. Not every script needs recomputation, and genuinely changed/custom
+schemas remain separate source-transform work. Revisit on SDK, input, schema
+or identity changes; ordinary-app/device qualification remains open.

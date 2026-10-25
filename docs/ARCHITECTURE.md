@@ -123,6 +123,15 @@ every object and re-reads persisted extents, and failure/exit retain outputs
 and end the process. [Its lifecycle and qualified scope](../tools/phone-build/accepted-output/README.md#produce-meshes-directly-from-original-pc-bundles)
 remain separate from bundle assembly, the private replay receiver and current
 game builds; two mesh cases are excluded and no runtime owner is added.
+`scripts/lab/script_identity.py` additionally owns current pure managed script
+properties-hash derivation. Callers supply original PC and exact SDK embedded
+type metadata plus original script identity; the helper composes the SDK native
+editor base with original custom fields and hashes their semantic metadata using
+its existing authored MD4. It performs no file/process access or automatic
+metadata replacement, and retains no state. Callers admit inputs, select the
+needed hash policy, persist outputs and own setup/teardown. J1124 qualifies one
+source-only EffectManagerHelper case; complete content and phone qualification
+remain separate. Original script-file-ID derivation remains unchanged.
 `record_produce.py` owns source-only AnimationClip and generic object-record
 production through the same object-pack interface. Audited
 `recipe/owner-animation-clips.json`, `recipe/owner-animator-controllers.json`
