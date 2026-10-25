@@ -4430,3 +4430,12 @@ is 30 s; the ordinary 10-second stage check and first-stage defaults are unchang
 Host tests execute the real session methods with the existing core policy and
 verify driver cleanup on a synthetic native NaN. Device audio attribution, full
 mix and audibility remain separate gates.
+
+J1170 adds six audited `owner-*-objects.json` scene selections and three
+`owner-*-postprocess.json` Shader selections to the existing
+`object_produce.py` / `payload_shader_records.py` owners. Setup remains
+explicit current PC/SDK roots, profile/tool pins, independently produced
+record packs and a separate new output directory. The existing object pack
+and member-aware layout feed `unity_write.py`; process exit tears down the
+producer while receipts and evidence remain local. No runtime state, Editor,
+new owner or private target-tree supplier is added.

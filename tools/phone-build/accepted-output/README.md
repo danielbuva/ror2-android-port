@@ -1217,3 +1217,33 @@ lightmap arrays and renderer bindings determine usage, independently of baking
 preferences. SDK45 source and the shared compiler supply programs; the existing
 record-pack interface carries the final fallback pointer and explicit output
 identities. No accepted table or generated-run lookup supplies content.
+
+## Root and post-processing scene object profiles
+
+J1170 qualifies six complete host bundles through the existing streamed-scene
+object command. Select `recipe/owner-rootjungle-objects.json`,
+`owner-rootjungle-source-objects.json`, `owner-rootjungle-spine-objects.json`,
+`owner-mysteryspace-objects.json`, `owner-eclipseworld-objects.json` or
+`owner-helminthroost-source-objects.json`; exact profile pins are listed in
+`recipe/README.md`. Supply explicit `--pc`, pinned `--profile-sha256`,
+`--codec`/`--codec-sha256`, separate new `--output` and the acquired `--sdk`
+root when selected. Repeat `--record-pack DIRECTORY RESULT_JSON_SHA256`
+for each referenced source pack.
+
+Root whole/source use mesh, uncompressed texture, RGBA-mip, alpha texture,
+whole-context Standard and Root PP24 packs; Root spine uses mesh and its
+separate reduced-spine Standard pack. MysterySpace and Helminthroost source
+use mesh, uncompressed texture, RGBA-mip and their own PP24 packs. EclipseWorld
+uses uncompressed texture, RGBA-mip, qualified cubemap and its PP24 pack.
+The three new `owner-*-postprocess.json` selectors run through
+`payload_shader_records.py` with the same SDK/public-template inputs as the
+existing Root PP24 carrier. Their unchanged profile pins are the object
+profiles' `record.profile_sha256` values. Only those source-produced records
+may supply the pack inputs; the accepted J850 bundle is a later comparison
+input.
+
+Outputs retain the existing object-pack and member-aware `layout.json`
+contract consumed by `unity_write.py`; no private target tree or run folder
+is a production input. Exit ends the producer process and retains the terminal
+receipt and failed outputs. Host comparison does not qualify phone production,
+installation or original scene behavior.

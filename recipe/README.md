@@ -3311,3 +3311,39 @@ source identity. The shared writer owns allocation/linkage, with no target
 header or captured metadata template. All source and pack providers are checked
 again at completion. Pattern scanning supplements this manual provenance,
 privacy and sensitive-content review; phone/runtime qualification is separate.
+
+## Root and PP scene object profiles (J1170, 2026-10-25)
+
+The six profiles below select current original object/type records, checked
+pointer relationships, source GUID relationships and existing named import
+policies. Their source-only producer is the existing `object_produce.py`;
+media and Shader bodies arrive through independently produced record packs.
+No new producer or runtime owner is added.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-rootjungle-objects.json` | `6e17c9e40ced968b73cb4d27956217b7b04bbb0293585e13f267ee3983d9402b` |
+| `owner-rootjungle-source-objects.json` | `6fecc35de3b3aac0ca7ee34af3542a803ed12cae2a409f40952f3553354e42e4` |
+| `owner-rootjungle-spine-objects.json` | `99ca43f8d6c2e61189338e0ebdef428df266615024233d3185fcf7c667a29c8d` |
+| `owner-mysteryspace-objects.json` | `c3441252ca1efb648ca73b59122c1b8fbdffcd6a58986826f904f77d7730e246` |
+| `owner-eclipseworld-objects.json` | `4c0aa1fd65112878256bcf3dc295825adaaeafcb86a5a4de84690a95204c77b7` |
+| `owner-helminthroost-source-objects.json` | `897151fdc9fc781e80b3fdec37aa7bd8554cbc976d23eb4af0aaf063fbfbdbe5` |
+
+| `owner-eclipseworld-postprocess.json` | `40110337a0dcbf92c7d1f96665dc73c37c0d357b2ead9fad5574090d4e46b68d` |
+| `owner-helminthroost-source-postprocess.json` | `b2ffee927b6d87cb2dd013f29e4868ace34ecaf92362b838a7b7dbb0fe8ba4a6` |
+| `owner-mysteryspace-postprocess.json` | `e8325b36e76478f734e4f243858c87d00afb1ee0bdbad4206f2b926ba94aea2a` |
+
+The three `owner-{mysteryspace,eclipseworld,helminthroost-source}-postprocess.json`
+profiles are byte-unchanged qualified peer selector recipes for the existing
+source Shader carrier. They pin SDK/public-tool inputs, authored build settings,
+original Shader identities and source-derived export paths/destinations; they
+contain no ShaderLab, template text, native program or serialized body.
+
+Manual provenance, privacy, licensing and sensitive-content audit: 2026-10-25.
+All nine recipes contain only selectors, pins, checked relationships and
+authored policies. Object profile compaction preserves every decoded value.
+No private identifiers, copied game source, original scalar/curve/pixel/body
+values or target type-tree templates are published. Current originals and
+explicitly acquired SDK/public resources remain required; no historical file
+is a reconstruction supplier. Generated content and raw evidence stay ignored.
+Existing ownership, license and redistribution boundaries remain unchanged.
