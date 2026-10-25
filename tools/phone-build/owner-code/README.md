@@ -321,6 +321,55 @@ without hiding a host library or mutating the retained run. The Android request
 uses `relink` with explicit completed objects, converter receipt/hash, source
 frames/compression and metadata, plus `target`, `linux_tools` and new `output`.
 
+A failed native output in phase `compiling` can instead be supplied as `resume`.
+The owner validates the same original/SDK/converter/tool providers, compile
+plan, and the contiguous completed job-receipt prefix before creating a
+new output. It hard-links only hash-validated completed objects and compiles the
+remaining jobs; a partial object without a receipt is ignored. The failed output,
+result and logs remain unchanged. The new result separates `compile_tasks` from
+`reused_compile_tasks`; their sum is the complete cohort admitted by a subsequent
+relink. The Android request uses `resume` in place of `relink`, with `resume`
+instead of `compiled` inside its provider selection. As with a completed relink,
+the current audited profile may correct link order while preserving every
+compilation command; validated objects are independent of link order.
+
+When a reused lump moves between SDK roots, its receipt additionally names
+`lump_sdk_root`, the SDK root actually embedded in its original compile wrapper.
+Its original `source_sha256` remains unchanged. Later admissions reconstruct that
+wrapper from the same pinned SDK-relative members and the recorded original
+root, without reading the old SDK installation. A second continuation or relink
+therefore validates the actual compilation lineage after relocation.
+
+`measure_jobs` is an optional nonempty list of unique native job indexes. In a
+fresh output it compiles exactly those jobs, including selected jobs already
+covered by a supplied resume prefix, and skips linking and stripping. Success is
+`native-measured`, never `native-built`; measured objects do not qualify as a
+complete compilation. Use the same Android `resume` request and providers to
+measure representative expensive units before choosing the continuation
+budget. Process receipts retain each selected unit's timings.
+
+`compile_timeout_seconds` sets the per-translation-unit budget (default 3,600
+seconds). Choose a generous multiple of the largest unit's measured active phone
+compile time. A caller that externally pauses the tool UID must also supply
+`pause_clock`: an explicit file path, relative to private owner inputs in the
+Android request, canonical and absolute in a native request. An independent
+controller outside the paused UID atomically replaces that JSON file:
+
+```json
+{"paused_seconds": 120.25, "paused_at": null}
+```
+
+`paused_seconds` accumulates finished pauses; `paused_at` is either `null` while
+running or the current pause's starting Android BOOTTIME (`/proc/uptime`) value
+in seconds. Before STOP, record the starting value; before CONT, fold the elapsed
+pause into the cumulative total and clear `paused_at`. Preserve the counter for
+the entire invocation. The owner subtracts pause-clock deltas even when its own
+parent was stopped and could not sample. Invalid, reset or impossible clock
+values fail closed. Process receipts retain wall time, budget and, when a clock
+is supplied, active and paused seconds. The clock is mutable control state and
+must not be listed among immutable source-provider hashes. It does not replace
+thermal admission or authorize any device operation.
+
 All outputs, commands, original inputs, SDK bytes and private evidence stay
 ignored. The caller owns thermal monitoring and output retention; preserve
 receipts/failures before deleting only the explicitly owned output. Runtime

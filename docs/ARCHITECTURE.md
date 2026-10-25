@@ -402,8 +402,17 @@ and refuses blocked inputs before compiling its launcher. Check-only teardown
 retains one new private report; it starts no compiler or device action. Complete
 record packs do not satisfy final bundle/player-data paths, and this byte check
 does not establish source provenance or device qualification.
-Other content retains the existing
-manifest layout/hashes. Source provenance and code/runtime qualification remain
+Its optional `drift` selection admits changed content only through three pinned
+private qualification documents: historical exact production, repeated current
+production by the same public producer, and a named original-input/output extent
+map. It hashes every current extent and counts exact and drift-explained files
+separately. Historical originals/outputs are never assembly inputs. Actual
+admitted current hashes feed ZIP entries and the Android payload index; evidence
+pins join the existing before/after input checks. The producer owns qualification
+and retained evidence; check-only exit retains the report and assembly exit
+retains outputs. [The evidence contract](../tools/phone-build/owner-apk/README.md#current-input-drift-evidence)
+does not establish causation from hashes or qualify runtime behavior.
+Other content retains the existing manifest layout/hashes. Source provenance and code/runtime qualification remain
 with their producers (J1102).
 `PayloadStore`
 streams/hash-checks embedded runtime payload into the calling app's own external
@@ -478,8 +487,16 @@ selects its roots, actual SDK compilation API defines, options and tool hashes.
 `GnuToolAdapter.c` supplies only the GNU build-tool low-address mappings and
 explicit emulated child execution required by Mono/LLVM under QEMU. It is foreign
 tool data, never linked into the ARM64 game. `native.py::compiled_jobs` validates
-a completed object's source/command/input/hash receipts for an explicit relink;
-the normal linker/stripper then use the selected profile order. Neither owner
+a completed object's source/command/input/hash receipts for an explicit relink,
+or the contiguous successful prefix of a failed compilation for explicit
+continuation in a new output. Reused lump receipts retain their actual original
+SDK wrapper root after relocation. An optional independently written pause
+clock lets its process wait count active time while the entire tool UID is
+stopped; malformed/reset clocks fail closed. Selected-job measurement compiles
+only requested units, records timings and skips linking, with a distinct
+`native-measured` terminal phase. Setup and controller clock ordering are in the
+[native owner contract](../tools/phone-build/owner-code/README.md).
+The normal linker/stripper then use the selected profile order. Neither owner
 reads an accepted ELF as a supplier.
 
 `tools/phone-build/owner-code/shader.py` owns the experimental exact-SDK

@@ -41636,3 +41636,135 @@ file or executable compute behavior. Goldshores has a source-qualified recipe
 and all nonShader extents ready, but still needs its independently generated
 Standard record/retention selection. Revisit on source/profile/contract drift or
 new qualified shader/import-hash evidence; do not repeat broad native censuses.
+
+## J1153 — Admit reviewed current-input drift without historical runtime suppliers
+
+2026-10-25 UTC. Host-only readiness and assembly contract against accepted J850
+APK SHA-256 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+No new APK, device installation, game launch or runtime acceptance.
+
+**Hypothesis and policy.** Current legitimate originals must remain the only
+reconstruction input. A separately classified file can be ready when the same
+public producer reproduces the accepted output from retained historical
+originals, produces deterministic current output, and explains every difference
+through named original-input changes. This implements the authorized input-drift
+policy; it neither relaxes exact matching nor permits replay suppliers.
+J1149 supplies the language/material lineage. Its existing public producer and
+original native-schema interpretation remain authoritative; the generic checker
+introduces no new game reconstruction or community-derived runtime mechanism.
+
+**Implementation.** The existing `build_owner_apk.py` checker accepts an explicit
+`drift` selection with three pinned private qualification documents per changed
+content path. It validates historical target equality, identical public producer
+hashes, distinct repeated current invocations, retained raw receipt pins, named
+changed original identities and a contiguous extent map over both complete
+outputs. Every current extent is hashed from the actual supplier. Failed,
+malformed, stale, incomplete or unexplained proof remains blocked. Unknown/code
+selections refuse. Missing files never acquire a fallback. Historical originals
+and their generated outputs are never opened by the checker or assembler.
+
+The report retains `target_equal: false` and status `drift-explained` for admitted
+changed content, with separate `exact_count` and `drift_explained_count`.
+Raw-different produced code remains independently listed for comparison.
+Assembly uses admitted current size/hash pins in both ZIP entries and the Android
+payload index and rechecks evidence before/after compilation. Hashes cannot
+prove semantic causation or independent execution by themselves: the normalized
+documents summarize reviewed raw evidence. Source-provenance and device flags
+remain false. README, ARCHITECTURE and LOCAL_STATE name the owner, review contract,
+required private state and retention; no new runtime owner or action is added.
+
+**Real evidence.** The retained source-only composition preserves the shader
+workstream's 125 complete files and the payload workstream's Wisp addition.
+`work/coordination/phone-code/drift-readiness-v4/{request,readiness}.json`
+reports **705 entries: 332 raw-exact, two available raw-different code outputs,
+three drift-explained content outputs, and 368 missing (253 APK, 115 payload)**.
+There are no invalid/mismatched entries. Overall assembly remains blocked.
+The admitted current entries are:
+
+- Strings: J1149's final public owner `c7749055…` historical/current invocation
+  plus the independent complete 175-file invocation; 5,587 mapped extents and
+  named original English providers. The normalized documents and adapter remain
+  under `work/coordination/phone-code/drift-readiness-v1/` and beside that root.
+- FontMaterial4: a narrow rerun of the same final `c7749055…` public `object_file`
+  against pinned historical input and two independent current invocations. The
+  historical hash is `a228dbb617c02f703f4ac04c3c1d367af5a5933d0d188c57484b1896eac805ae`;
+  both current files are 5,676 bytes,
+  `d12b4a65926af9260305c1b344d2473b972a7a87cc34c8f39e85ad2c73774aa5`.
+  Only `[4938, 4940)` changes, preserving the original `_Sharpness` scalar.
+  Source-only production precedes comparison. Raw production/adapter remain in
+  `font-final-producer-v1/`; canonical receipt normalization is in
+  `font-drift-admission-v2/`, beside the readiness roots. Earlier evidence using
+  a different owner hash is retained rather than attributed to the final owner.
+- Windows shaders: the payload owner's actual public `copy_original_bundle`
+  callable `577c1274…` runs once on historical input and twice on current input.
+  All 1,995 mapped extents include 997 changed extents. Raw invocations and
+  normalization remain under `work/coordination/p1-payload-windows-source-host-v1/`
+  and `work/coordination/p1-payload-windows-drift-admission-v1/`.
+
+The first combined font normalization is retained as a failed check because two
+raw receipt paths used aliases rather than canonical paths. Resolving those
+receipt paths, without changing outputs or admission, yields the final report.
+No historical output/provider is present in its assembly tree.
+
+**Validation and remaining gate.** Fifteen focused signing/readiness/assembly
+contracts pass, including failed evidence, producer mismatch, duplicated run,
+nondeterminism, gaps/overlaps, extent corruption, missing lineage, actual current
+ZIP/payload-index bytes and evidence mutation. Seven additional bootstrap,
+manifest and structural-assembly contracts pass. Ruff and independent review
+pass. Doctor verifies original input/pins but, like host preflight, refuses this
+isolated worktree's absent lab project; no Unity build is attempted. Source-only
+phone production, the remaining final content, full installation, both controls
+and matched performance remain open. Revisit a proof when its producer,
+original inputs, output supplier or causal evidence changes.
+
+## J1154 — Collect the paused native job's terminal timeout without restarting it
+
+2026-10-25 UTC. Native tool recovery, followed by a host-only continuation repair.
+No new APK or game runtime qualification. The accepted comparison APK remains
+J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+**Observation.** The detached recovery driver finds an existing terminal tool
+report immediately; it does not admit or resume compilation. The complete
+backend log identifies `subprocess.TimeoutExpired` after **3,600 seconds** on
+job **498**, `RoR2__24.cpp`, under the original Linux NDK compiler/QEMU chain.
+The prior snapshot has 498 completed object receipts. The wall deadline counts
+external freezes; this is not evidence of a compiler/source error, suspend cause
+or completed native library. Earlier thermal/sample-gap failures remain retained.
+
+The terminal receipt is
+`work/coordination/phone-code/recovery-native-v20-done.json`; original tool report
+and full backend log are `source-app-report-v15.json` and
+`source-owner-backend-v15.log` beside it. The driver stops the completed original
+and NEXT tool apps; idle readback contains no matching UID processes and both
+panels OFF. The lease is released. Original input, plan, objects, receipts and
+failed result remain on the device. No immediate retry occurs.
+
+**Hypothesis and host repair.** The existing native owner can continue the
+checked successful prefix in a fresh output while counting only active time.
+`native.py` now accepts explicit `resume`, verifies original/SDK/converter/tool
+identities, every compile command and the contiguous receipt prefix, and
+hard-links only hash-validated objects. An unreceipted partial object is ignored;
+the failed output is never changed. Corrected audited link order is allowed under
+the existing relink policy. Relocated SDK lumps retain their actual original
+wrapper root and source hash, permitting honest second continuation/relink.
+
+An optional independently written cumulative pause clock lets the process wait
+subtract the complete STOP interval even when its Python parent is also stopped.
+The controller records BOOTTIME before STOP/CONT; invalid/reset/impossible clocks
+fail closed. Process receipts retain active/paused/wall time and the explicit
+compile budget. `measure_jobs` compiles selected units freshly, skips linking
+and ends at `native-measured`, never `native-built`. The Android route forwards
+these existing-owner controls and optional APK drift receipts. README,
+ARCHITECTURE and LOCAL_STATE record setup, ownership, retention and teardown.
+No native toolchain, game policy or community runtime mechanism is replaced.
+
+**Validation and next step.** Forty-eight owner-code host contracts pass,
+including a 498-object prefix with only the missing suffix compiled, ignored
+partial object, changed provider/compile-command refusal, relocated lump
+readmission, selected-job measurement without linking, distinct measured phase,
+Android routing and a stopped-parent pause interval. Ruff passes. These are host
+contracts, not phone evidence. Measure the largest native unit and a representative
+expensive unit on the phone under the independent guard; choose a generous active
+budget from those measurements, then continue at receipt 498. Complete native
+library/metadata comparison, final phone APK/install, controls and matched
+performance remain open.

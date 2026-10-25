@@ -258,7 +258,12 @@ def verify_inputs(request, profile, sdk, sdk_state, before, work, state, output,
 
 def source_run(request, *, stop_after_conversion=False, burst_only=False):
     """Join original-input managed production to this same backend."""
-    if set(request) - {"target", "android_tools", "linux_tools", "burst_tools"} != {"owner_work", "sdk_install", "source_inputs", "output"}:
+    if set(request) - {"target", "android_tools", "linux_tools", "burst_tools", "compile_timeout_seconds", "pause_clock", "measure_jobs"} != {
+        "owner_work",
+        "sdk_install",
+        "source_inputs",
+        "output",
+    }:
         raise ValueError("explicit original-input owner request required")
     if burst_only and (stop_after_conversion or "burst_tools" not in request):
         raise ValueError("Burst-only qualification requires its tools and no conversion stop")
@@ -299,7 +304,7 @@ def source_run(request, *, stop_after_conversion=False, burst_only=False):
         else:
             providers = managed_owner.run(work, sdk, request["source_inputs"], output / "managed-production")
         backend_request = {"owner_work": str(work), "sdk_install": str(sdk), "managed": providers, "output": str(output / "backend")}
-        for name in ("target", "android_tools", "linux_tools", "burst_tools"):
+        for name in ("target", "android_tools", "linux_tools", "burst_tools", "compile_timeout_seconds", "pause_clock", "measure_jobs"):
             if name in request:
                 backend_request[name] = request[name]
         native.write(output / "backend-request.json", backend_request)
@@ -321,7 +326,12 @@ def source_run(request, *, stop_after_conversion=False, burst_only=False):
 def run(request, *, stop_after_conversion=False, burst_only=False):
     if "source_inputs" in request:
         return source_run(request, stop_after_conversion=stop_after_conversion, burst_only=burst_only)
-    if set(request) - {"android_tools", "target", "linux_tools", "burst_tools"} != {"owner_work", "sdk_install", "managed", "output"}:
+    if set(request) - {"android_tools", "target", "linux_tools", "burst_tools", "compile_timeout_seconds", "pause_clock", "measure_jobs"} != {
+        "owner_work",
+        "sdk_install",
+        "managed",
+        "output",
+    }:
         raise ValueError("explicit owner backend request required")
     if burst_only and (stop_after_conversion or "burst_tools" not in request):
         raise ValueError("Burst-only qualification requires its tools and no conversion stop")
@@ -443,6 +453,9 @@ def run(request, *, stop_after_conversion=False, burst_only=False):
             native_request["android_tools"] = android_tools
         if "linux_tools" in request:
             native_request["linux_tools"] = request["linux_tools"]
+        for name in ("compile_timeout_seconds", "pause_clock", "measure_jobs"):
+            if name in request:
+                native_request[name] = request[name]
         native.write(output / "native-request.json", native_request)
         result["phase"] = "native-planning" if stop_after_conversion else "native-production"
         native_result = native.run(native_request, plan_only=stop_after_conversion, **({"profile": native_profile} if target else {}))
@@ -453,7 +466,7 @@ def run(request, *, stop_after_conversion=False, burst_only=False):
             raise ValueError("target profile changed during backend")
         result.update(
             success=True,
-            phase="converted-native-planned" if stop_after_conversion else "native-built",
+            phase="converted-native-planned" if stop_after_conversion else "native-measured" if "measure_jobs" in request else "native-built",
             stripped_assemblies=len(profile["converter_assemblies"]),
             generated_files=len(files),
             source_frames=len(json.loads((output / "source-frames.json").read_text())),
