@@ -10,6 +10,10 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1151](PORTING_JOURNAL.md#j1151--reconstruct-125-complete-shader-files-from-original-and-authored-source) | 2026-10-25 | Reconstruct 125 complete Shader files from original and authored source | **Hypothesis / prior art.** |
+| [J1147](PORTING_JOURNAL.md#j1147--reconstruct-original-ui-alpha-and-five-more-authored-shader-files) | 2026-10-25 | Reconstruct original UI Alpha and five more authored Shader files | 2026-10-25 UTC. |
+| [J1146](PORTING_JOURNAL.md#j1146--produce-two-complete-moon-preview-shaders-from-source) | 2026-10-25 | Produce two complete Moon preview Shaders from source | 2026-10-25 UTC. |
+| [J1144](PORTING_JOURNAL.md#j1144--reconstruct-one-complete-android-shader-from-source-without-the-editor) | 2026-10-25 | Reconstruct one complete Android Shader from source without the Editor | 2026-10-25 UTC. |
 | [J1150](PORTING_JOURNAL.md#j1150--reconstruct-complete-ai-test-and-testscene-payloads) | 2026-10-25 | Reconstruct complete AI Test and Testscene payloads | Date: 2026-10-25 UTC. |
 | [J1149](PORTING_JOURNAL.md#j1149--produce-current-english-and-font-material-with-explained-input-drift) | 2026-10-25 | Produce current English and font material with explained input drift | 2026-10-25 UTC. |
 | [J1145](PORTING_JOURNAL.md#j1145--produce-complete-sky-meadow-solusweb-and-ancient-loft-scene-bundles) | 2026-10-25 | Produce complete Sky Meadow, Solusweb and Ancient Loft scene bundles | Date: 2026-10-25 UTC. |

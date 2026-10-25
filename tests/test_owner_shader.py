@@ -72,6 +72,79 @@ class OwnerShaderTests(unittest.TestCase):
         self.assertFalse(result["success"])
         self.assertEqual(result["data"], b"")
 
+    def test_preprocess_preserves_source_hash_words_keywords_and_requirements(self):
+        fields = [17, 0, 2, 0, 0, 0, -1, 2, 3, 4, 0, 0, 0]
+        stream = Stream(
+            string("snip: " + " ".join(map(str, fields)))
+            + string("independently authored snippet")
+            + string("includes: 1")
+            + string("sdk/fixture.cginc")
+            + string("filepaths: 0")
+            + string("keywordsUserGlobal: 17 0 1")
+            + string("_ FIXTURE")
+            + string("keywordsUserLocal: 17 0 0")
+            + string("keywordsBuiltin: 17 0 0")
+            + string("keywordsEnd: 17")
+            + string("FIXTURE")
+            + string("")
+            + number(33, 64)
+            + number(1)
+            + string("FIXTURE")
+            + number(65, 64)
+            + string("shader: 1 0 0")
+            + string("authored parsed ShaderLab")
+        )
+        result = SHADER.Connection(stream).preprocess(
+            "authored ShaderLab", "fixtures/test.shader", platform_keywords=["SHADER_API_MOBILE"], disabled_keywords=["DISABLED"]
+        )
+        self.assertTrue(result["success"])
+        self.assertEqual(result["snippets"], [{"fields": fields, "source": "independently authored snippet"}])
+        self.assertEqual(result["shaderlab"], "authored parsed ShaderLab")
+        self.assertEqual(result["records"][0], {"kind": "includes", "fields": [], "values": ["sdk/fixture.cginc"]})
+        self.assertEqual(
+            result["records"][-1],
+            {
+                "kind": "keywordsEnd",
+                "fields": [17],
+                "keywords": "FIXTURE",
+                "always_included": "",
+                "requirements": 33,
+                "overrides": [{"keyword": "FIXTURE", "requirements": 65}],
+            },
+        )
+        self.assertEqual(result["diagnostics"], [])
+        self.assertFalse(stream.data)
+        self.assertEqual(
+            stream.sent,
+            string("c:preprocess")
+            + string("authored ShaderLab")
+            + string("fixtures")
+            + string("test.shader")
+            + number(0)
+            + number(0)
+            + number(13)
+            + number(1 << 18)
+            + number(1)
+            + string("SHADER_API_MOBILE")
+            + number(1)
+            + string("DISABLED"),
+        )
+
+    def test_preprocess_failure_and_protocol_drift_are_explicit(self):
+        stream = Stream(string("err: 0 18 2") + string("test.shader") + string("authored syntax error") + string("shader: 0") + string(""))
+        result = SHADER.Connection(stream).preprocess("bad ShaderLab", "test.shader")
+        self.assertFalse(result["success"])
+        self.assertEqual(result["diagnostics"][0]["message"], "authored syntax error")
+        for response, expected in [("snip: 1 2", "metadata differs"), ("includes: -1", "negative"), ("newCallback: 0", "unknown")]:
+            with self.subTest(response=response), self.assertRaisesRegex(ValueError, expected):
+                SHADER.Connection(Stream(string(response))).preprocess("source", "test.shader")
+
+    def test_preprocess_sends_the_selected_caching_mode(self):
+        stream = Stream(string("shader: 1 0 0") + string("authored ShaderLab"))
+        result = SHADER.Connection(stream).preprocess("source", "test.shader", caching_preprocessor=True)
+        self.assertTrue(result["success"])
+        self.assertIn(number(0) + number(1) + number(13) + number(1 << 18), stream.sent)
+
     def test_old_wire_version_truncation_and_unbounded_length_refuse(self):
         with self.assertRaisesRegex(ValueError, "version differs"):
             SHADER.Connection(Stream(struct.pack("<IQ", 201508070, 0))).buffer()

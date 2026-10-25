@@ -474,6 +474,29 @@ teardown. It invokes no Editor/project and selects no runtime shader.
 separate the qualified authored fixture (J1094) from original-cohort recovery,
 serialized content construction and ordinary app admission.
 
+`tools/phone-build/accepted-output/shader_produce.py` owns the current bounded
+source-only Android Shader48 producer. Audited `recipe/owner-player-shaders.json`
+selects ten authored sources, original Cloud/UI Alpha shader/material selectors,
+PC schema/keyword registry,
+source build settings and pinned SDK inputs. The existing compiler session owns
+ShaderLab preprocessing, snippet/include identities and linked Vulkan emission;
+fresh reflection supplies native parameter/program records and common tables.
+The producer derives the pass key from source/capabilities/SDK inputs, constructs
+the parsed form from source and schema defaults, requests HC9 through the existing
+codec worker and emits complete files through `unity_write`. The SDK executable
+is read as metadata only. Explicit read-only providers and a new disjoint output
+set up production; before/after pins, complete-file comparison and terminal
+success/failure receipts retain state. Compiler/codec contexts own teardown.
+The original Cloud/UI paths use existing `shader_materials.cloud_source`,
+`shader_materials.ui_source` and
+`NativePrograms` to regenerate source from pinned PC shaders/materials through an
+explicit public d3dasm tool/hash, without retained HLSL. Variant reflection
+intersection owns common/native records; SDK capability names/flag moves drive
+compilation separately from import preprocessing. J1144/J1146/J1147/J1151 qualify 125
+complete host files; other shader families, mixed/built-in
+files and phone/runtime gates remain open. No target body or Editor/project is
+read. Setup is in the [producer README](../tools/phone-build/accepted-output/README.md#source-derived-player-shaders).
+
 `tools/phone-build/owner-code/produce.py` owns the current experimental combined
 whole-player backend: explicit hash-bound managed providers, audited target
 roots, SDK-derived native identities, exact SDK stripping/conversion, verified

@@ -1,0 +1,1055 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "source_type": {
+    "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-shaders_shader_assets_all_45ab8c24dd5dcd99e5cb60900de0231b.bundle",
+    "bytes": 2601960,
+    "sha256": "bd1acda75caf15bcb9014dc14e7a0fc5680419e39d61cf24baca429509c12906",
+    "member": "CAB-779f6fd4edc30ec27d018e8344a8081e",
+    "path_id": -8989458460904117762
+  },
+  "sdk": {
+    "MacOS/Unity": {
+      "bytes": 79453472,
+      "sha256": "906123118e45d56c6bcf20f3776ed2373417553042500714023daeb9e53058e8"
+    },
+    "Tools/UnityShaderCompiler": {
+      "bytes": 12603248,
+      "sha256": "4f4e5be21d27dd7541fa9385ea480b15816e70ddaa83b516df0ab60b819142b5"
+    }
+  },
+  "includes_sha256": "163fad0ca42bd98ea1628888dedd01d91fcbb9f6bda60a8120f9b453cc565144",
+  "settings": {
+    "color_space": 1,
+    "caching_preprocessor": true,
+    "tier0": {
+      "standardShaderQuality": 0,
+      "renderingPath": 3,
+      "hdrMode": 1,
+      "realtimeGICPUUsage": 25,
+      "useReflectionProbeBoxProjection": 0,
+      "useReflectionProbeBlending": 0,
+      "useHDR": 1,
+      "useDetailNormalMap": 0,
+      "useCascadedShadowMaps": 0,
+      "prefer32BitShadowMaps": 0,
+      "enableLPPV": 0,
+      "useDitherMaskForAlphaBlendedShadows": 0
+    },
+    "virtual_texturing": 0,
+    "vulkan_pretransform": 0,
+    "shader_precision_model": 0,
+    "deferred_reflections": 1
+  },
+  "authored_inputs": {
+    "scripts/lab/project_input_rebuild.py": {
+      "bytes": 6548,
+      "sha256": "ccf35babc8a9f1576e658b0e867f357cbb5c380df44209d8026ed616d0b4e2e8"
+    },
+    "recipe/project-inputs.json": {
+      "bytes": 2948,
+      "sha256": "de1ed235adfbc7b0b1c663289a33d19304b844afac01be1b69196a40914fc246"
+    },
+    "smoke/ProjectSettings/GraphicsSettings.asset": {
+      "bytes": 2445,
+      "sha256": "7e7101091125a933bbbaaed9ba2f9b3c7e69a38222c2554a29af9c9490b8687b"
+    },
+    "smoke/ProjectSettings/ProjectSettings.asset": {
+      "bytes": 20145,
+      "sha256": "d66146bae51e552b7f83ac8ad4a141a457996753cb7da7ea394dc66ce2954452"
+    },
+    "smoke/ProjectSettings/EditorSettings.asset": {
+      "bytes": 1392,
+      "sha256": "fa7130f8e63927b87c4ba36f474e11e547c91b8f893abbb80fc6c4ac0fb2e7cc"
+    },
+    "android/Assets/Editor/LabBuild.cs": {
+      "bytes": 50114,
+      "sha256": "9cfd0aec4dd17c33c291bf8ee218b197e626a27d1182c385e337bfe09ea6b700"
+    },
+    "tools/unity/runtime/shaders/AndroidColorGrade.shader": {
+      "bytes": 414,
+      "sha256": "1613f49bc1bcd392b26d11275ebbe1d5f0b48316d00fa59604b2d5dec390e19c"
+    },
+    "tools/unity/runtime/shaders/MoonPillarBeaconPreview.shader": {
+      "bytes": 775,
+      "sha256": "5b214ded54203129e6283a33c9073b30792b99c38edb6cc76191e82bdf12b0bc"
+    },
+    "tools/unity/runtime/shaders/MoonPillarBeamPreview.shader": {
+      "bytes": 1389,
+      "sha256": "43728d3a807973ecaf42d0906ce6271488f84380449858b0ecc6caa72dee1ab8"
+    },
+    "scripts/lab/shader_materials.py": {
+      "bytes": 20159,
+      "sha256": "ad549127d53c4729b31df0e07f5dda579f75ca0d1214f9aeac75c12fd4188cb3"
+    },
+    "scripts/lab/shader_programs.py": {
+      "bytes": 8242,
+      "sha256": "2b793f0d125f3efd61e936dae72973b9411a024630f5320317d508ad40f3a733"
+    },
+    "scripts/lab/shader_segments.py": {
+      "bytes": 12739,
+      "sha256": "2cba875459a7ea35f9f0279696569fd05a6429c9f4b206ad331d5b723dca4872"
+    },
+    "scripts/lab/shader_source.py": {
+      "bytes": 20265,
+      "sha256": "d712407d715c37e79806207bd763bf2dc7d502a861366af2784ae8e63e3c026c"
+    },
+    "scripts/lab/shader_deferred.py": {
+      "bytes": 12689,
+      "sha256": "9fa121e6b5f3e769c365eb3b4092c2a460c7a05bbe5617f3ccba01958acaef39"
+    },
+    "scripts/lab/shader_tessellation.py": {
+      "bytes": 13973,
+      "sha256": "9358767fd4bc9bdb2931b2d0376d1f7c2e8f68a065df9c70c421eef3e816bfcc"
+    },
+    "scripts/lab/shader_recovery.py": {
+      "bytes": 20147,
+      "sha256": "f5829fb5086e231a5eabb041c0446f4a75883806a72691b73d7e3953a822f142"
+    },
+    "tools/unity/runtime/shaders/CommandoMaterialPreview.shader": {
+      "bytes": 1222,
+      "sha256": "a0d79ca77733182f4ef3ab08415edd561041b39996e26cb02729be0bafc95b99"
+    },
+    "tools/unity/runtime/shaders/CommandoPreview.shader": {
+      "bytes": 804,
+      "sha256": "d6cd24df6845a9dc1940f085c4689018fcaaa56d544debae4daf2c378d49a8df"
+    },
+    "tools/unity/runtime/shaders/StageSurfacePreview.shader": {
+      "bytes": 1140,
+      "sha256": "ebff1420ec896525b0fe058c8989f2eaf52fa749fcc02c14265e43a46d714e92"
+    },
+    "tools/unity/runtime/shaders/StageTerrainPreview.shader": {
+      "bytes": 2628,
+      "sha256": "97176b709d4f14820c2ce86eb46ec60c9e1868f42c5f36b6f201be24db2c91f8"
+    },
+    "tools/unity/runtime/shaders/AndroidDistortionPresentation.shader": {
+      "bytes": 2817,
+      "sha256": "21fc0955f7caf0aa99c893affc95ce1a31e017618d00158a4f1af600583a0071"
+    },
+    "scripts/lab/shader_metadata.py": {
+      "bytes": 12749,
+      "sha256": "1701b9a0f621cd29c4f16fbb594676401d4a81cf2d02b5ab10664ce8aa629318"
+    },
+    "tools/unity/runtime/shaders/AndroidParticlePresentation.shader": {
+      "bytes": 3271,
+      "sha256": "aed64c8c961b5834f9d00d4f8331d2fe09d0fc2f12e08b29fd37a80908733596"
+    },
+    "tools/unity/runtime/shaders/AndroidWaterPresentation.shader": {
+      "bytes": 3118,
+      "sha256": "20c238b540554e6cbc45d7be43731ce6bcf8d5c62146009e1edfc80f6e5b6820"
+    }
+  },
+  "shaders": [
+    {
+      "file": "19e91578880954efeab1111b405232b9",
+      "source": "tools/unity/runtime/shaders/AndroidColorGrade.shader",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidColorGrade.shader",
+      "bytes": 7784,
+      "sha256": "fb6f38549e1336f51e87d60672350305c745c4017a044bc50189c1c2f534e98c"
+    },
+    {
+      "file": "25346ec2465c244a0b4757833c1b7ffb",
+      "source": "tools/unity/runtime/shaders/MoonPillarBeaconPreview.shader",
+      "filename": "Assets/LabLoadingScene/Resources/MoonPillarBeaconPreview.shader",
+      "bytes": 7948,
+      "sha256": "786970b00e0de060112998be781ba44606e3a89cdbd7c0c4f8f93d413aad0d55"
+    },
+    {
+      "file": "a64cd6eb27f5b41f0b8fd35fb109c753",
+      "source": "tools/unity/runtime/shaders/MoonPillarBeamPreview.shader",
+      "filename": "Assets/LabLoadingScene/Resources/MoonPillarBeamPreview.shader",
+      "bytes": 9092,
+      "sha256": "f76336523735f8852eaac710efb415e81bf1bd8ba6ea14bfb132475bb4a4acfa"
+    },
+    {
+      "file": "0ad6e8aee52b6441b97187951fa9730a",
+      "native_resource": "AndroidNativeFamily6Variant0",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily6Variant0.shader",
+      "bytes": 13400,
+      "sha256": "cfad12e2bba9da9f6ece5e43b4bf39748a5375515cfdcde728d624fb7604c012"
+    },
+    {
+      "file": "111aa310821d74e19a9c4144bf25f8af",
+      "native_resource": "AndroidNativeFamily6Variant1",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily6Variant1.shader",
+      "bytes": 13980,
+      "sha256": "7034cbc74c336284bd30905a665f922c25bf655cb2a695ebe44aeacc556910b9"
+    },
+    {
+      "file": "95401c496311c41d88e5c3f490444838",
+      "source": "tools/unity/runtime/shaders/CommandoMaterialPreview.shader",
+      "filename": "Assets/LabLoadingScene/Resources/CommandoMaterialPreview.shader",
+      "bytes": 9204,
+      "sha256": "8335f254b871a55076598b989f5f81cbf22ad7b064fe7067875dbdb108978487"
+    },
+    {
+      "file": "2b3b24a29a5564b38a4640b20012bc4f",
+      "source": "tools/unity/runtime/shaders/CommandoPreview.shader",
+      "filename": "Assets/LabLoadingScene/Resources/CommandoPreview.shader",
+      "bytes": 8360,
+      "sha256": "3c15880d72302c617e39aec9cc74eef3c3325e2989fff74e3ce585e7f4e0c950"
+    },
+    {
+      "file": "a855c2ac6b11443848e0414d94271fd6",
+      "source": "tools/unity/runtime/shaders/StageSurfacePreview.shader",
+      "filename": "Assets/LabLoadingScene/Resources/StageSurfacePreview.shader",
+      "bytes": 9124,
+      "sha256": "b815dbcbb94ab9f6ed15687a6bf7da5167bbdf8c88f7c74d0e8219d54ce0697c"
+    },
+    {
+      "file": "f841c3cf2a0cb4036aef85eae3b43fae",
+      "source": "tools/unity/runtime/shaders/StageTerrainPreview.shader",
+      "filename": "Assets/LabLoadingScene/Resources/StageTerrainPreview.shader",
+      "bytes": 11076,
+      "sha256": "13107297647e7b630807566ad90f7a36caa66df719f28a2b8e6ce2cf203d5916"
+    },
+    {
+      "file": "2a429ea9e4edb4e15a2756ca05616eee",
+      "source": "tools/unity/runtime/shaders/AndroidDistortionPresentation.shader",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidDistortionPresentation.shader",
+      "bytes": 13448,
+      "sha256": "172cc9863b7e432ffe9a17994697ade22e7f6cb88057c89bf711ba34dd5550ff"
+    },
+    {
+      "file": "daae5771644804e21a6d31c4af5e379f",
+      "source": "tools/unity/runtime/shaders/AndroidParticlePresentation.shader",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidParticlePresentation.shader",
+      "bytes": 12808,
+      "sha256": "0a9243bb53206aab6ab904a36a20fd3aa7ec80dfadab6ea5a8198a83acd7ce2f"
+    },
+    {
+      "file": "b2a87e61dc94e4221907b115e9d8c60f",
+      "source": "tools/unity/runtime/shaders/AndroidWaterPresentation.shader",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidWaterPresentation.shader",
+      "bytes": 12144,
+      "sha256": "2140c15d7104a76b6f150e500750b4adc412ce94c905e4a95c7e8689a8b0d647"
+    },
+    {
+      "file": "906f44dc593e54cc9b3d79551644f7cc",
+      "native_resource": "AndroidNativeFamily0Variant0",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant0.shader",
+      "bytes": 13800,
+      "sha256": "c57420c5caac562a8fb602fd4eb03703bd8cad4e77adb114f422c4611ab4ef97"
+    },
+    {
+      "file": "b5b6bc796fae34279aa60561ba915cb9",
+      "native_resource": "AndroidNativeFamily0Variant1",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant1.shader",
+      "bytes": 13800,
+      "sha256": "ee7b7be1b2a8e35dd6bbc9d952a018d52612c2f3d3bb091b10c71e39603eca3f"
+    },
+    {
+      "file": "d8e1c6d91c34e445d961de0486e0dbe9",
+      "native_resource": "AndroidNativeFamily0Variant2",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant2.shader",
+      "bytes": 11996,
+      "sha256": "20cfd98a337b1f60e44ea81b9c468b13f767fc6fe7915b5d57540f1ef2d86d77"
+    },
+    {
+      "file": "8b24a7979a5424357a6525e3951643c1",
+      "native_resource": "AndroidNativeFamily0Variant3",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant3.shader",
+      "bytes": 12896,
+      "sha256": "340a4bd3a7a0f91420c703513d316b83d9d5c6cca430f860809f06e574af5143"
+    },
+    {
+      "file": "13a0b108ab9054572b1550a9cfffd8e1",
+      "native_resource": "AndroidNativeFamily0Variant4",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant4.shader",
+      "bytes": 12904,
+      "sha256": "c257ba43f95003f2cbd96b3f922dcfe3ff15fad82c20bc7b507bb40d28bf636b"
+    },
+    {
+      "file": "de57abea92bd04b5f9a3ba8b6870ab81",
+      "native_resource": "AndroidNativeFamily0Variant5",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant5.shader",
+      "bytes": 12864,
+      "sha256": "fd9daf3731584e74f52898f7982ff495c0653a27b724da5faa596e74aefe9a46"
+    },
+    {
+      "file": "8b0414e3fb1784a81a473f3f377e02dc",
+      "native_resource": "AndroidNativeFamily0Variant6",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant6.shader",
+      "bytes": 12896,
+      "sha256": "6c80b2e78d10a8d9e31a86c1e4c1622563b99b010aabca958c67398a2b9ae7c4"
+    },
+    {
+      "file": "80ccb8d9c1add453992bf68608808476",
+      "native_resource": "AndroidNativeFamily0Variant7",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant7.shader",
+      "bytes": 12896,
+      "sha256": "950257ce4f5d6a1162a233ce37fea101f3e1e908548ed8abfb0f30b3e54b1880"
+    },
+    {
+      "file": "afe668dde5c884f71b0750b6fd9ecee2",
+      "native_resource": "AndroidNativeFamily0Variant8",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant8.shader",
+      "bytes": 11996,
+      "sha256": "385a03562135125dec6f8b3a178f9cf5b988b0d928375bde9900ca1c67058a8a"
+    },
+    {
+      "file": "0cd43c22c051c483aa7f3eda65e46f10",
+      "native_resource": "AndroidNativeFamily0Variant9",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant9.shader",
+      "bytes": 12904,
+      "sha256": "73190d5bce628616ea30a92ee5b5e639d599139e68510b914e986aa5422fb181"
+    },
+    {
+      "file": "634b6c9b1f29a4dbab29765e0d6f472c",
+      "native_resource": "AndroidNativeFamily0Variant10",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant10.shader",
+      "bytes": 12868,
+      "sha256": "06e3091dcfb5ea0779ec435748ba01a695e887c6692eda0b12432102acf76c22"
+    },
+    {
+      "file": "4af9583f4e49640818964f0d41890007",
+      "native_resource": "AndroidNativeFamily0Variant11",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant11.shader",
+      "bytes": 12900,
+      "sha256": "7df9260a39f03d38f90b1c95699facf281e4e16509b8168da5d10280885bec80"
+    },
+    {
+      "file": "7d3af0f583423468e947bb5b0c50c14f",
+      "native_resource": "AndroidNativeFamily0Variant12",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant12.shader",
+      "bytes": 13964,
+      "sha256": "b51e78241b0ea5d4cc193bab8104963aa01a865b0fc6523508b47fcfd8eebe57"
+    },
+    {
+      "file": "f02a39ecbec5748bb833f35806770b55",
+      "native_resource": "AndroidNativeFamily0Variant13",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant13.shader",
+      "bytes": 16200,
+      "sha256": "61da949a0dceb272bb570fb6493967aced463f4b6a8aa811c9ed77aebf01b2d8"
+    },
+    {
+      "file": "9d88ed3afeffc4891897cf1a7c525734",
+      "native_resource": "AndroidNativeFamily0Variant14",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant14.shader",
+      "bytes": 16148,
+      "sha256": "59a53158b69e920c4ad51c795b8b77ad4d7acfe38cdf0979a56de5a6359ba756"
+    },
+    {
+      "file": "b398353df839c40aa9e35ee7212ed059",
+      "native_resource": "AndroidNativeFamily0Variant15",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant15.shader",
+      "bytes": 16168,
+      "sha256": "133dec21bd620b29f6fe77ceee8d64a5836e387f74cd8e3b060291d18ef24a7c"
+    },
+    {
+      "file": "903be2af288bc4e8295d805f4c5a32f3",
+      "native_resource": "AndroidNativeFamily0Variant16",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant16.shader",
+      "bytes": 14580,
+      "sha256": "0170ec308817f46640c8ca7c58380604d94d7a0a0904885615137532ce068ff3"
+    },
+    {
+      "file": "a3c62f8916bbe44e1b0c59d4c21d7fde",
+      "native_resource": "AndroidNativeFamily0Variant17",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant17.shader",
+      "bytes": 14616,
+      "sha256": "2f1dd177df8f7116cfdd0a0bd3bca4d6cfb32a6c87524552851bc6b74f46d76e"
+    },
+    {
+      "file": "f3a2e206796ef4af8800aff01ec3f9de",
+      "native_resource": "AndroidNativeFamily0Variant18",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant18.shader",
+      "bytes": 14580,
+      "sha256": "02ecb905bdfa50680fa216a69270247ea7e3b160165f8b65fba5089759e888d4"
+    },
+    {
+      "file": "60cbb86dbc17041edabe2ce91c81fc09",
+      "native_resource": "AndroidNativeFamily0Variant19",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant19.shader",
+      "bytes": 14656,
+      "sha256": "7cadae5748c0bd5166fbafd79e973efb0fb341b4061afb777b958e015f5b6beb"
+    },
+    {
+      "file": "dfdcc3e93f23e46e095d4ecdacc083bb",
+      "native_resource": "AndroidNativeFamily0Variant20",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant20.shader",
+      "bytes": 14616,
+      "sha256": "33216652d126198a7fb8d96b75ae2940a2a184e5735233855f0214697ff7852b"
+    },
+    {
+      "file": "1125e8315bed94f48a23f50cff986d29",
+      "native_resource": "AndroidNativeFamily0Variant21",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant21.shader",
+      "bytes": 14696,
+      "sha256": "3c7c2f9e259441b6d813e37a16c7b27ccbea4294d4a726c018f0de202f5f4e0b"
+    },
+    {
+      "file": "d36340465d2ea4fc5919d3ab27eeb459",
+      "native_resource": "AndroidNativeFamily0Variant22",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant22.shader",
+      "bytes": 14468,
+      "sha256": "a750e7621a4593d1eaab35c57b3e3f6657f13e4b2df8f09495b2fb9794216528"
+    },
+    {
+      "file": "e389ad52457a04adeb952f790a33f2c0",
+      "native_resource": "AndroidNativeFamily0Variant23",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant23.shader",
+      "bytes": 15292,
+      "sha256": "227af4433d98f7cdd52318cfd89f2fa53e5399533a8dedc6128c9a55c6caa4d5"
+    },
+    {
+      "file": "dfdcf31b3bc4843dda778ec60badacae",
+      "native_resource": "AndroidNativeFamily0Variant24",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant24.shader",
+      "bytes": 16036,
+      "sha256": "7b164894822f41859363682ac06b554c40d27a58b80b4706649845f36a9dd529"
+    },
+    {
+      "file": "b57786202abd1490d94ed87963fef1d2",
+      "native_resource": "AndroidNativeFamily0Variant25",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant25.shader",
+      "bytes": 16036,
+      "sha256": "c8971cb55822caf4a384df0947e47caddbb796bc8c634c6da5ad2aca84a635af"
+    },
+    {
+      "file": "01e3058185bf64c73b3d452b9ef4f53b",
+      "native_resource": "AndroidNativeFamily0Variant26",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant26.shader",
+      "bytes": 16016,
+      "sha256": "c295db854e5b24fed3cd0287aa197b0d5946036052b4814fffc441cf788fc74e"
+    },
+    {
+      "file": "3ceefb7a0199e49cebde6143ac51e243",
+      "native_resource": "AndroidNativeFamily0Variant27",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant27.shader",
+      "bytes": 16136,
+      "sha256": "b8358858aabee9fe2a8423f82f750af9cc29b1d420a846196777003f9727bed1"
+    },
+    {
+      "file": "49c9f2dab9e214ac0ae8a292fade36c8",
+      "native_resource": "AndroidNativeFamily0Variant28",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant28.shader",
+      "bytes": 15996,
+      "sha256": "a16155e95ab0463a288448e5c49214fa390e7c58643e94d2f2775dcc27f143db"
+    },
+    {
+      "file": "df2181a78de1b4c08a35b826921321db",
+      "native_resource": "AndroidNativeFamily0Variant29",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant29.shader",
+      "bytes": 16052,
+      "sha256": "4d6b9e8049fd18b85ddfdc5382bd6b25b23aa9d72f6faf30d0f414c9e8cec86f"
+    },
+    {
+      "file": "82f9a5711110a4c51948d36e126db821",
+      "native_resource": "AndroidNativeFamily0Variant30",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant30.shader",
+      "bytes": 16176,
+      "sha256": "e3dc10d2a6f6ba05a397c3155c41e46f7a19cb94b018a6e1df9eed7931598a15"
+    },
+    {
+      "file": "7595932db43ab4204ad037917c440c2a",
+      "native_resource": "AndroidNativeFamily0Variant31",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant31.shader",
+      "bytes": 16016,
+      "sha256": "adfff8d520e54bfaf93700079c8b800571d906b17d158986e18735c71e759005"
+    },
+    {
+      "file": "95e593775fe2a4801948bd0e269605d6",
+      "native_resource": "AndroidNativeFamily0Variant32",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant32.shader",
+      "bytes": 16136,
+      "sha256": "8d8caeec4e28a08dfa85ac7ec0e15be14ede8b8234476ec336e2584c3008bc82"
+    },
+    {
+      "file": "50b52c5d8a8fc47308825b018abef342",
+      "native_resource": "AndroidNativeFamily0Variant33",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant33.shader",
+      "bytes": 14488,
+      "sha256": "a82de31f25bdcd449b271a881ae80cce2a1043574f8ec45d8e9298b044d2e017"
+    },
+    {
+      "file": "ff986b38f45374a1886db4f41a15a3b5",
+      "native_resource": "AndroidNativeFamily0Variant34",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant34.shader",
+      "bytes": 14320,
+      "sha256": "246eaf82185c5f5cfb28fb851f4c675e36f0c2e7ea935ecec241c5796b8e2706"
+    },
+    {
+      "file": "39bc302c49a98494bb021f1fc40b4214",
+      "native_resource": "AndroidNativeFamily0Variant35",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant35.shader",
+      "bytes": 14492,
+      "sha256": "393a2ba39e63409c71db9f1bcfa2981a1444f37ee9061309c2355ae81ae1f50a"
+    },
+    {
+      "file": "f969f8d9e0b13454e9538d0fea96ea25",
+      "native_resource": "AndroidNativeFamily0Variant36",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant36.shader",
+      "bytes": 14440,
+      "sha256": "c0e295cb3466ad418651881ca9f041e9cbd689012fea6a42c1eb284d8be61efd"
+    },
+    {
+      "file": "8e2c2e072c7ab400690a52ef3f4da721",
+      "native_resource": "AndroidNativeFamily0Variant37",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant37.shader",
+      "bytes": 14968,
+      "sha256": "8b2be5dc25b5f9078bdd959b1dd64784f771fa55e039ad9b21f60a417006b38d"
+    },
+    {
+      "file": "7836ac84ee3ae4c4ea24831d90bf7b2b",
+      "native_resource": "AndroidNativeFamily0Variant38",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant38.shader",
+      "bytes": 15040,
+      "sha256": "3d2454a204df8afd206346aabd45b73306e2cfb3ab724eff1ef486536d25083f"
+    },
+    {
+      "file": "68e8504e951cf44f78ad707e60b177d8",
+      "native_resource": "AndroidNativeFamily0Variant39",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant39.shader",
+      "bytes": 15004,
+      "sha256": "79c5640fb8e4eb1f5299798f8adf6a4a5a46562df9abb53733763b107554ee24"
+    },
+    {
+      "file": "c9fa9f21309264b3c87eeefa24ef0083",
+      "native_resource": "AndroidNativeFamily0Variant40",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant40.shader",
+      "bytes": 15136,
+      "sha256": "5e9c4fd8f80594d43456a6b3ef1fde58277e11822b9b73e8a745cc173d372cac"
+    },
+    {
+      "file": "cbd10913b43e1461297077a568c2f224",
+      "native_resource": "AndroidNativeFamily0Variant41",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant41.shader",
+      "bytes": 14552,
+      "sha256": "aa1815a9db436e71c289ef4098434fda87ade2a6da10327f99b06b8d384ac90c"
+    },
+    {
+      "file": "0ea1d80692cd14313aa53a97831cfdd2",
+      "native_resource": "AndroidNativeFamily0Variant42",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant42.shader",
+      "bytes": 13860,
+      "sha256": "3252705e3eec5b365338af34157357742f8e8db0a2348eb62ec399a03a23bc67"
+    },
+    {
+      "file": "12e27f8d3888b44198356cf97d73383f",
+      "native_resource": "AndroidNativeFamily0Variant43",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant43.shader",
+      "bytes": 13988,
+      "sha256": "fd39ed13ec67a11a3cc6d0a7367278d9cd6412c7c5ced79256608f12408ac120"
+    },
+    {
+      "file": "95c7bf790870844f688e4349eb1ae1de",
+      "native_resource": "AndroidNativeFamily0Variant44",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant44.shader",
+      "bytes": 12000,
+      "sha256": "7181dfcf0fc9602e5a2eddf974858248e092ad8643713fadd1a0243af9b11b0e"
+    },
+    {
+      "file": "612f4532905a548cba8708d63e3a203a",
+      "native_resource": "AndroidNativeFamily0Variant45",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant45.shader",
+      "bytes": 12000,
+      "sha256": "a2b8defa89fbfdc9e44c2353d9178f32b26104a33329d1b61c8fa481903e3ccc"
+    },
+    {
+      "file": "66a30a6bbbbbb4f2f897921e7d2da563",
+      "native_resource": "AndroidNativeFamily0Variant46",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant46.shader",
+      "bytes": 12736,
+      "sha256": "be59bcbc42acecb15621d548d70926b10646d16e6cb18df0e051d292e1a349ed"
+    },
+    {
+      "file": "a681a3cf8ecb14ae59390ad13b3c0767",
+      "native_resource": "AndroidNativeFamily0Variant47",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant47.shader",
+      "bytes": 12680,
+      "sha256": "17754827be79c434c4cfb341bbaf71a0a44448dd1fdb3fc659a551d591d3fbf0"
+    },
+    {
+      "file": "54b4def4d19a24969beb76050be57415",
+      "native_resource": "AndroidNativeFamily0Variant48",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant48.shader",
+      "bytes": 12736,
+      "sha256": "ab8b4ae35ee94356182b1f84c23b62ab030c36d7da6f87359e9880d4a386b36b"
+    },
+    {
+      "file": "e13e906b4b9f446d6a5c1359f6522af5",
+      "native_resource": "AndroidNativeFamily0Variant49",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant49.shader",
+      "bytes": 12740,
+      "sha256": "58e2b191ead741a8d542486def348269eaca04c60544f0d6d88c82b56bfefdcf"
+    },
+    {
+      "file": "7c44b702698574235ace33fd3f53621b",
+      "native_resource": "AndroidNativeFamily0Variant50",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant50.shader",
+      "bytes": 12724,
+      "sha256": "e09d05bcaf1da0e14bf7a602e2550098233f7901a7ca0b920aae4ba6bcb04e88"
+    },
+    {
+      "file": "7ccee6d48c80e4ed5add602288e5b476",
+      "native_resource": "AndroidNativeFamily0Variant51",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant51.shader",
+      "bytes": 12036,
+      "sha256": "7d326b606cc034b6c82510972f2ec1b68d3fe7a19a707e97fb936e6696951055"
+    },
+    {
+      "file": "b126ebedfd63b40598dab1e3b984354f",
+      "native_resource": "AndroidNativeFamily0Variant52",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant52.shader",
+      "bytes": 12000,
+      "sha256": "d1a658fae40d7fe7b6a01eca42d5a78e8cd8e81e4319b85f0e1907844a1fec4d"
+    },
+    {
+      "file": "f9c393e6a6a56489493cda88ddcdc415",
+      "native_resource": "AndroidNativeFamily0Variant53",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant53.shader",
+      "bytes": 12724,
+      "sha256": "c0df56c2d5fab2dc255eaaccb9c5a72f53c6afc66afafcb9a9352ae23f38c496"
+    },
+    {
+      "file": "8fcf8353b0ed346fbac8d5af1d6ba9ab",
+      "native_resource": "AndroidNativeFamily0Variant54",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant54.shader",
+      "bytes": 12736,
+      "sha256": "a9390d173b52802bfc1d243d99d5291f09945b092103924d4131ec3bd27d7eb6"
+    },
+    {
+      "file": "3749cec5072a84f67ae3339db734401a",
+      "native_resource": "AndroidNativeFamily0Variant55",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant55.shader",
+      "bytes": 12724,
+      "sha256": "e926a5f7033e8ab4d4c655a0481747099fe924ce1ad8c7a1a08124a66a4f8e34"
+    },
+    {
+      "file": "0839c78eb457b415bb4a51dc56c7bbcf",
+      "native_resource": "AndroidNativeFamily0Variant56",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant56.shader",
+      "bytes": 12724,
+      "sha256": "cb129e5b8d8d3b3cd86a3c976209a7863c44e4d237cce8f939763384b4dc4fb1"
+    },
+    {
+      "file": "3a9fe9cd5420b461bb3c999b3762c394",
+      "native_resource": "AndroidNativeFamily0Variant57",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant57.shader",
+      "bytes": 12040,
+      "sha256": "1288056d9fbe7ad3dbeeb4def10717ea56c71c80d602d8ed54dfb6563642c304"
+    },
+    {
+      "file": "63495ca1b639b4a739ae168b81f48b47",
+      "native_resource": "AndroidNativeFamily0Variant58",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant58.shader",
+      "bytes": 12000,
+      "sha256": "6031c70f1536686d162d539039de4a0b49415a27812099ac76599690934f07ab"
+    },
+    {
+      "file": "02f7ec2ecc1374580bec8e8b2a9f99b9",
+      "native_resource": "AndroidNativeFamily0Variant59",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant59.shader",
+      "bytes": 12036,
+      "sha256": "603c97b132b7a05b31d3ee004f1079b3d10f61ec6527ad43fb369157d242fd9f"
+    },
+    {
+      "file": "6606d47b0309f439cb9caa92e0fe5fda",
+      "native_resource": "AndroidNativeFamily0Variant60",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant60.shader",
+      "bytes": 12036,
+      "sha256": "441a7bf0d33545a8be3ca079b54e1a0561a310852d6aca7036eab6a3e77d4f0c"
+    },
+    {
+      "file": "ce4f0053b404a4cbe9d41c7bb716c768",
+      "native_resource": "AndroidNativeFamily0Variant61",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant61.shader",
+      "bytes": 13964,
+      "sha256": "bfacb4f8cf71739c319e3e92a85496534b71d71d0ed91902a88ffa6551209c85"
+    },
+    {
+      "file": "cf2aa3b64ee3f4e2ea77cb9c642bf809",
+      "native_resource": "AndroidNativeFamily0Variant62",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant62.shader",
+      "bytes": 14496,
+      "sha256": "c2f371ce0fbb0a154bcff7de18355d5c4c243eab8c8a4c2b74b3c0027d0ac737"
+    },
+    {
+      "file": "f722564c609aa496b9fafae084a400ca",
+      "native_resource": "AndroidNativeFamily0Variant63",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant63.shader",
+      "bytes": 15392,
+      "sha256": "df24079c0ed4f566a8b4f5766a38804f5fe566f71129597cafc760095bc03c55"
+    },
+    {
+      "file": "b21176ea692e54700ba5cdabd91e996f",
+      "native_resource": "AndroidNativeFamily0Variant64",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant64.shader",
+      "bytes": 15568,
+      "sha256": "c4e1ccbd0b620934f80158198cf565f5131aae8ce6669fddd6d6ab208fdbc7ba"
+    },
+    {
+      "file": "afbed81f20a3c4dd28d16d8c405c1745",
+      "native_resource": "AndroidNativeFamily0Variant65",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant65.shader",
+      "bytes": 15548,
+      "sha256": "fc0eaeaf71d411e573130fe84f06c2d018b648f0d3526bf3e9e7db9c3506100a"
+    },
+    {
+      "file": "eda4abd942c424f989435082b7fe3ae9",
+      "native_resource": "AndroidNativeFamily0Variant66",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant66.shader",
+      "bytes": 15516,
+      "sha256": "de677117b38323dc4acb3b4c87ce93b222ad0ddbe460bc6fc734f76162c9c6fd"
+    },
+    {
+      "file": "679d60eebaaf74c5aab986d7ca89fb69",
+      "native_resource": "AndroidNativeFamily0Variant67",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant67.shader",
+      "bytes": 14388,
+      "sha256": "19ef16a7d4c73a15060e29fc76ba385fc20514d001a71cfdf3b13458e0fe553d"
+    },
+    {
+      "file": "ac791b6e4ed7342ec835ab29f0e859ea",
+      "native_resource": "AndroidNativeFamily0Variant68",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant68.shader",
+      "bytes": 14392,
+      "sha256": "b3302ecc2577b25a75baaa44e32bda7bfe79aa25b133a88687166b27ed3630cd"
+    },
+    {
+      "file": "a84fd0e84c9f24eddb2587c7a1dd75df",
+      "native_resource": "AndroidNativeFamily0Variant69",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant69.shader",
+      "bytes": 14560,
+      "sha256": "4f68dcf8885c27c3ebc765757eac12cb2979b56bdc28a73b0612044cf6e40d29"
+    },
+    {
+      "file": "ccd16be8f56a44b5ead9211e0a14f66d",
+      "native_resource": "AndroidNativeFamily0Variant70",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant70.shader",
+      "bytes": 14496,
+      "sha256": "7409e912bffc216fd67d692ff26e62e6a6b9d689e64271941a977d0087e5651c"
+    },
+    {
+      "file": "2667d1fd5d12e409baac8acd2a1ee8f4",
+      "native_resource": "AndroidNativeFamily0Variant71",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant71.shader",
+      "bytes": 14376,
+      "sha256": "2446a103f9b3b8a6fcd00de47fad17fde540fbe35687c7469dc750ea34f3f6a2"
+    },
+    {
+      "file": "96c6c34e7570142558afc07d5f125a22",
+      "native_resource": "AndroidNativeFamily0Variant72",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant72.shader",
+      "bytes": 14448,
+      "sha256": "2e2088797a6e2a38f983c8447a9ebcd62347b7cc56693fb1820d0fe56244ba53"
+    },
+    {
+      "file": "f83e54b8aa3d04d2fa974b44eab6bdd7",
+      "native_resource": "AndroidNativeFamily0Variant73",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant73.shader",
+      "bytes": 14496,
+      "sha256": "70d7855642551dfd31c8bf8e30f9f8c151436a83b8f6ca81e32b981c310e66ce"
+    },
+    {
+      "file": "6500417560c924980bf76d894de1f295",
+      "native_resource": "AndroidNativeFamily0Variant74",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant74.shader",
+      "bytes": 14436,
+      "sha256": "7dc88684c681c7b76b3190aa20f6db52b07f67d2653e123a6a837d4bd0015ae9"
+    },
+    {
+      "file": "821f97e6ef7f14062b2d12ca05c418c2",
+      "native_resource": "AndroidNativeFamily0Variant75",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant75.shader",
+      "bytes": 14552,
+      "sha256": "9b12bd05121527d04a515f99288f7e2a4c3a7a10d0914b0ed1a3053b3cd030fa"
+    },
+    {
+      "file": "692797e0703dc41feaa3ed271958aefc",
+      "native_resource": "AndroidNativeFamily0Variant76",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant76.shader",
+      "bytes": 14508,
+      "sha256": "eb87d075e0c4328083f0af584b9fb4d0e881c5e8c816e008d9791a386f323da9"
+    },
+    {
+      "file": "c3c61c4e2ffaf45beb6b37f8501a53e4",
+      "native_resource": "AndroidNativeFamily0Variant77",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant77.shader",
+      "bytes": 14092,
+      "sha256": "604aa228619cf1e46cf2ef5c232a1a366d77e72408d51e077a1d5d40ff25a02a"
+    },
+    {
+      "file": "72e312523244447e48e8926dba2b9996",
+      "native_resource": "AndroidNativeFamily0Variant78",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant78.shader",
+      "bytes": 14044,
+      "sha256": "91f926bbbd4820b63a0e2f2d8a5e3769cc4e03daebda37ed56dd6fbce71c1d40"
+    },
+    {
+      "file": "59d2854d3348f4c759cf2a3aa890ab5b",
+      "native_resource": "AndroidNativeFamily0Variant79",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant79.shader",
+      "bytes": 14028,
+      "sha256": "1d879f406a624e745543fb61bf57c7aa9dc7fac9dff9d79396f600065e2c7678"
+    },
+    {
+      "file": "927455dad485a4ca79cfe1257d0dedfa",
+      "native_resource": "AndroidNativeFamily0Variant80",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant80.shader",
+      "bytes": 14136,
+      "sha256": "d32629ebfa1203b954bef9f7d15af749c3fba84ed0c54699b934b297e8ce0e29"
+    },
+    {
+      "file": "484f01690d0a7481bb02d08145ffc3a2",
+      "native_resource": "AndroidNativeFamily0Variant81",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant81.shader",
+      "bytes": 14468,
+      "sha256": "2f707bdc13e9b7e6bd09e5ccc1d64aba50a1d1db1120857df89acad63ff01b4a"
+    },
+    {
+      "file": "9a18ece2f7d3640b1980d78831c6c57e",
+      "native_resource": "AndroidNativeFamily0Variant82",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant82.shader",
+      "bytes": 14852,
+      "sha256": "c6a57fbd4584234a73f65932f40bafe1bf4a59352b43a0149240c39cec7e922c"
+    },
+    {
+      "file": "4c74063bd07454f3db882444ae46f70b",
+      "native_resource": "AndroidNativeFamily0Variant83",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant83.shader",
+      "bytes": 14664,
+      "sha256": "6e85a4ef79edb9d883f5472c770346ebcdb22d569862075ae327081e0a82c734"
+    },
+    {
+      "file": "5116014e8ab0748a6924b8c70d3cc691",
+      "native_resource": "AndroidNativeFamily0Variant84",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant84.shader",
+      "bytes": 14660,
+      "sha256": "3d35695d2f12b05871ad021644f16c06e78a031cb1e9cdf31b9643b45ddeafc0"
+    },
+    {
+      "file": "e1b0d132f857645cc903f8123740313f",
+      "native_resource": "AndroidNativeFamily0Variant85",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant85.shader",
+      "bytes": 15212,
+      "sha256": "832341137585571630aaa985c40f369ce0a50380dd77aff82b6a54d28b8a1eda"
+    },
+    {
+      "file": "baa551a7349fe4e738b073a12e8e8de1",
+      "native_resource": "AndroidNativeFamily0Variant86",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant86.shader",
+      "bytes": 14788,
+      "sha256": "e65ad60b35863c583c42d37fd22a8972b64f9ac7592f7fb50d15d00d39f9f97a"
+    },
+    {
+      "file": "913d8ee30324443b1812d2e2b71d948a",
+      "native_resource": "AndroidNativeFamily0Variant87",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant87.shader",
+      "bytes": 15136,
+      "sha256": "10475d3371764c24098445f7331fef8ab15a8b6ebc4067788287d222810d8b74"
+    },
+    {
+      "file": "683b8de347cda4f68b13ad233e63f8d5",
+      "native_resource": "AndroidNativeFamily0Variant88",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant88.shader",
+      "bytes": 15188,
+      "sha256": "2e43cbfe77b66fbf2957ff8f226d245f4fe4630a98773d79fa69993cfcd85c02"
+    },
+    {
+      "file": "0ba06e6b055d242969d99be8a0c1031b",
+      "native_resource": "AndroidNativeFamily0Variant89",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant89.shader",
+      "bytes": 15276,
+      "sha256": "46aac43402bce7f8485490ad110e6dd923c3c16ba690eba230f58c5b67df6747"
+    },
+    {
+      "file": "350b33eff16894026b4e1bd1e923d4bd",
+      "native_resource": "AndroidNativeFamily0Variant90",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant90.shader",
+      "bytes": 15212,
+      "sha256": "84f2da30e076e4fbc1c7f0ddbad2e47501f4413159078d0a03ce41888bfffddb"
+    },
+    {
+      "file": "7dcfdbf635cc946f19b4b3358a808584",
+      "native_resource": "AndroidNativeFamily0Variant91",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant91.shader",
+      "bytes": 15164,
+      "sha256": "ba548c3d0e2406ae57ea918c2d9c50af66bffa4e5a4fbe870fa5ba374c7959af"
+    },
+    {
+      "file": "c1ac73ec0f2c446f3acecbc62c8e6761",
+      "native_resource": "AndroidNativeFamily0Variant92",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant92.shader",
+      "bytes": 14788,
+      "sha256": "d619197ca1c21990f21cef9d3026de913dd60ff0810763a702c1b40d193764b8"
+    },
+    {
+      "file": "c43536fd5fffe4bd2b64d82d5770cf2f",
+      "native_resource": "AndroidNativeFamily0Variant93",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant93.shader",
+      "bytes": 14468,
+      "sha256": "ded5fabe39cdbc45e45154d6b96ad48d565b876a88b01055be427e46bfe959ef"
+    },
+    {
+      "file": "59b673589afa9454aa0685b72ec94e54",
+      "native_resource": "AndroidNativeFamily0Variant94",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant94.shader",
+      "bytes": 14536,
+      "sha256": "158873282d9d599bbd1dcfc407d1e4ab7e310374294c0f23d0e1cc2750241bd4"
+    },
+    {
+      "file": "453dc315125994b41b71208d0cda942e",
+      "native_resource": "AndroidNativeFamily0Variant95",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant95.shader",
+      "bytes": 14508,
+      "sha256": "42ba4767bf3868f8280de4b80e35736ad165ca34efb5b14452525cda68f12875"
+    },
+    {
+      "file": "3191bf34d1b7346bc8f8849262be88fa",
+      "native_resource": "AndroidNativeFamily0Variant96",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant96.shader",
+      "bytes": 14572,
+      "sha256": "51eff9947a30a9ef6b1e938a852cbe085d4be56b687d535c77d1bd0145fb6840"
+    },
+    {
+      "file": "abc95fc9da79d4efc94a8a451cb53a85",
+      "native_resource": "AndroidNativeFamily0Variant97",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant97.shader",
+      "bytes": 14040,
+      "sha256": "67467fe494d495c25d912ea0b97208ce325d5e88b4245deb2907db5041f96611"
+    },
+    {
+      "file": "d6d1568fed12347ec86734bd483be13c",
+      "native_resource": "AndroidNativeFamily0Variant98",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant98.shader",
+      "bytes": 14228,
+      "sha256": "fcd155d756cd6fab0b175d0fe85ccea723bef3cf5b959306a686eda7c2d70c07"
+    },
+    {
+      "file": "135217496716540ba88988e9e690f89b",
+      "native_resource": "AndroidNativeFamily0Variant99",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant99.shader",
+      "bytes": 13384,
+      "sha256": "260f074b29feb8f3e317987e97fad6584f302ed1fe09813b044d2f2a6799b52f"
+    },
+    {
+      "file": "868d4263759dc417fbc02f626802d3f0",
+      "native_resource": "AndroidNativeFamily0Variant100",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant100.shader",
+      "bytes": 14200,
+      "sha256": "bed7118bed9e5a25c15cebff141cd1bd5bb532167969c8cc0d5582c92468919c"
+    },
+    {
+      "file": "afb97d0dc680b4d4d806ce4b2caab0a6",
+      "native_resource": "AndroidNativeFamily0Variant101",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant101.shader",
+      "bytes": 14196,
+      "sha256": "f6de66a3205cb6b766207310918c6b34b825348c28a11862734a799565e88843"
+    },
+    {
+      "file": "ebe2cfdf2157b438a936de2b14f9962c",
+      "native_resource": "AndroidNativeFamily0Variant102",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant102.shader",
+      "bytes": 14188,
+      "sha256": "92878bd00e10b42f287ff9621931c85ff29eed3d7ec40d60fcaa77beae210994"
+    },
+    {
+      "file": "3bfe6782b0b424764ad7f60b1c847726",
+      "native_resource": "AndroidNativeFamily0Variant103",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant103.shader",
+      "bytes": 14256,
+      "sha256": "23241a01d12d2eaced8469fa271786b6007f8143cff6e2a565fb0f8c2778f907"
+    },
+    {
+      "file": "2dcb5ca4ace0b415d8048bbfabd65a16",
+      "native_resource": "AndroidNativeFamily0Variant104",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant104.shader",
+      "bytes": 14304,
+      "sha256": "190c9622a6914cfbef7ce78c32e70d7245a6a48050f91d21d9e0538e66dbee69"
+    },
+    {
+      "file": "00a81f1a92cdc4f8e91dd727e6c7f8a8",
+      "native_resource": "AndroidNativeFamily0Variant105",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant105.shader",
+      "bytes": 14248,
+      "sha256": "354fa0eb46321f0588dea0d2f1e68711dfdb7943b518d7ec086c8e2813e0a5ac"
+    },
+    {
+      "file": "b50412bc462084c41a7fd13150b7424b",
+      "native_resource": "AndroidNativeFamily0Variant106",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant106.shader",
+      "bytes": 14360,
+      "sha256": "886121aa619f9aa06a76b72c3494de6db30e5f8896eeb4a6d0dccbee62e09ddd"
+    },
+    {
+      "file": "fcd961048e09947639c638ebabfa3f38",
+      "native_resource": "AndroidNativeFamily0Variant107",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant107.shader",
+      "bytes": 14312,
+      "sha256": "a0839533aa2b898be7bd455b023c6f12469bc72f7f4d76030ac1f4d168d4f35c"
+    },
+    {
+      "file": "ea6bb986e35f44a5389c6dec61b1154f",
+      "native_resource": "AndroidNativeFamily0Variant108",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant108.shader",
+      "bytes": 13808,
+      "sha256": "ff27af9e5040c7543e1e8c500c364366fe2bb79e8a6e80f490c066e61b7399a1"
+    },
+    {
+      "file": "4990fa92346444b30ac01672bbccdece",
+      "native_resource": "AndroidNativeFamily0Variant109",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant109.shader",
+      "bytes": 13820,
+      "sha256": "5101452a9a034abc61f4693c26ea1e4a48fea3043ff71c926c7359774e3e4e60"
+    },
+    {
+      "file": "30fd15c5b175a4e399861c5143d12f8c",
+      "native_resource": "AndroidNativeFamily0Variant110",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant110.shader",
+      "bytes": 13884,
+      "sha256": "271fabc179668c24c091acc5dce6687f567b7ecac0716aef1142a724986b419d"
+    },
+    {
+      "file": "84b06ada5ccb345c7b4ba22dca3f942b",
+      "native_resource": "AndroidNativeFamily0Variant111",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant111.shader",
+      "bytes": 13860,
+      "sha256": "326d6474e235a14e9a55c88837d9130e37168635175c00706d83584674d95a69"
+    },
+    {
+      "file": "4de6ed5e5abc446009951106a363bdf0",
+      "native_resource": "AndroidNativeFamily0Variant112",
+      "filename": "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant112.shader",
+      "bytes": 13928,
+      "sha256": "c24809f70daea406c79ec90ecb475d3655c9e49df299e5e86008eb860a994bf6"
+    }
+  ],
+  "native_ui": {
+    "d3dasm_revision": "a292206a15daf0723d945a475c6254413eda8551",
+    "source": {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-shaders_shader_assets_all_45ab8c24dd5dcd99e5cb60900de0231b.bundle",
+      "bytes": 2601960,
+      "sha256": "bd1acda75caf15bcb9014dc14e7a0fc5680419e39d61cf24baca429509c12906",
+      "member": "CAB-779f6fd4edc30ec27d018e8344a8081e",
+      "path_id": -8085301563477162814,
+      "body_sha256": "21e013c71eec0703a19da9de55a625583e147b10996f5a3dd775d35556465ada"
+    },
+    "materials": [
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-ui-specialuimaterials_assets_all_8d80f9bf896bb8ab9c3e733a3529066d.bundle",
+        "bytes": 6925,
+        "sha256": "04007d3d0f3c61db1abc6ffbdb61ac8e6aee169f3491c367ec17bbff58e37c47",
+        "member": "CAB-08f2c365b0bd2eb82104044524ef98ac",
+        "path_id": -1878511259775889022,
+        "body_sha256": "be2eac5ee2254a2a61c77f891cf7bb3d916d182a772372fc0ba824ccba9fdef7"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-ui-specialuimaterials_assets_all_8d80f9bf896bb8ab9c3e733a3529066d.bundle",
+        "bytes": 6925,
+        "sha256": "04007d3d0f3c61db1abc6ffbdb61ac8e6aee169f3491c367ec17bbff58e37c47",
+        "member": "CAB-08f2c365b0bd2eb82104044524ef98ac",
+        "path_id": 1461627942216547332,
+        "body_sha256": "69153e61c7e3c8b405526c1b9974d321bffbbb513162e2883730f57e0a439e30"
+      }
+    ]
+  },
+  "native_cloud": {
+    "d3dasm_revision": "a292206a15daf0723d945a475c6254413eda8551",
+    "manifests": {
+      "path": "recipe/owner-player-shader-manifests.json",
+      "bytes": 2214369,
+      "sha256": "5c55f316b6098569f62b25eff767f2eed2936557e0700b8f7f78de59cb489ab1"
+    }
+  }
+}
