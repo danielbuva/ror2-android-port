@@ -67,6 +67,8 @@ object/layout derivation and phone qualification remain separate.
 teleport-material, objective-UI, teleporter-indicator, generic-pickup and
 enemy-reward, Village Night, Helminth Roost, Habitat, Habitatfall and
 Wispgraveyard, Sky Meadow, Solusweb, Ancient Loft, AI Test and Testscene slices.
+It also owns the complete Wispgraveyard source-scene variant and the unchanged
+original Windows comparison-bundle copy.
 Audited profiles `recipe/owner-pickup-objects.json`,
 `recipe/owner-death-effect-objects.json`,
 `recipe/owner-teleport-material-objects.json`, `recipe/owner-objective-ui-objects.json`,
@@ -117,6 +119,20 @@ reaps its child; exit ends the producer.
 Wispgraveyard reproduces the accepted reduced diagnostic scene through the
 same checked export omissions, including original Tree and scripted components.
 It does not establish full original stage behavior.
+`recipe/owner-wispgraveyard-source-objects.json` selects the separate full
+source-scene variant. The owner suppresses only checked named original global
+GameObjects, following `source_scene_candidate.py`. Its two LineRenderer arrays
+derive from original BezierCurveLine operands and original local Transform
+hierarchies with identity rotations. Existing schema/field parsers locate their
+arrays; float32 arithmetic preserves all other original bytes before pointer
+relocation. Synthetic typed sources and full-bundle fixtures check these
+contracts. No additional runtime or experiment-switch case is introduced.
+`recipe/owner-windows-shaders.json` selects the current original Windows bundle
+for the existing unchanged-file copy from `prepare.py`. This path needs no codec
+or project, admits a pinned input and new disjoint output, verifies unchanged
+input and persisted output, and retains success/failed receipts. Historical
+copies are qualification only; the current result is drift-explained against
+J850. It establishes no Android shader compatibility. J1155 owns both results.
 Sky Meadow and Ancient Loft clear the checked original occlusion static-renderer
 array while retaining the original GUID, occlusion pointer and portals. These full scene
 slices append an existing source-produced component to the original SceneInfo

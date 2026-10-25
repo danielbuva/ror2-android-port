@@ -114,6 +114,143 @@ def clear_static_renderers(body, expected):
     return body[:28] + bytes(4) + body[end:]
 
 
+def deactivate_global_owner(body, name):
+    """Apply source_scene_candidate's named global-root suppression."""
+    if name not in {"SceneInfo", "Director", "GameManager", "RoR2Application"}:
+        raise ValueError("unknown original global owner")
+    stream = io.BytesIO(body)
+    count = B.unpack(stream, "<I")[0]
+    if count > len(body) // 12:
+        raise ValueError("truncated original global owner components")
+    B.exact(stream, count * 12 + 4)  # Original components and layer.
+    size = B.unpack(stream, "<I")[0]
+    if size > len(body):
+        raise ValueError("truncated original global owner name")
+    original = B.exact(stream, size).decode("utf-8")
+    B.exact(stream, -stream.tell() % 4)
+    B.exact(stream, 2)  # Preserve original tag.
+    active = B.exact(stream, 1)
+    if original != name or active != b"\x01" or stream.tell() != len(body):
+        raise ValueError("global suppression requires the named active original GameObject")
+    return body[:-1] + bytes(1)
+
+
+def rebuild_bezier_line(body, sources, source_profiles, line_selector, behaviour_selector):
+    """Re-evaluate one original nonanimated BezierCurveLine using Unity float32 Lerp.
+
+    Called before PPtr relocation. All operands are read from original records;
+    source schemas locate the line array and declare the curve field contract.
+    The qualified source hierarchy has identity rotations and local links only.
+    """
+    import math
+
+    records = module("record_produce")
+    schema = records.SCHEMA
+
+    def single(value):
+        value = struct.unpack("<f", struct.pack("<f", value))[0]
+        if not math.isfinite(value):
+            raise ValueError("nonfinite original Bezier operand")
+        return value
+
+    def read(selector, class_id):
+        data, typ = source_record(sources, selector)
+        if typ["class_id"] != class_id:
+            raise ValueError("original Bezier record class drift")
+        return data, typ
+
+    line, line_type = read(line_selector, 120)
+    curve, curve_type = read(behaviour_selector, 114)
+    source = line_selector[0]
+    if behaviour_selector[0] != source or body != line:
+        raise ValueError("Bezier curve must belong to original line member")
+    _, spans = records.fields(line, schema.type_tree(io.BytesIO(line_type["tree"])))
+    start, end = spans[("m_Positions",)]
+    count = struct.unpack_from("<I", line, start)[0]
+    if not 2 <= count <= 100000 or end - start != 4 + count * 12:
+        raise ValueError("original line position array drift")
+    _, fields = records.fields(curve, schema.type_tree(io.BytesIO(curve_type["tree"])))
+    names = [node.name for node in schema.type_tree(io.BytesIO(curve_type["tree"])).children]
+    if names[-7:] != ["v0", "p1", "v1", "endTransform", "animateBezierWind", "windMagnitude", "windFrequency"]:
+        raise ValueError("original BezierCurveLine schema drift")
+    if (
+        len(curve) != 108
+        or fields[("v0",)] != (32, 44)
+        or fields[("p1",)] != (44, 56)
+        or fields[("v1",)] != (56, 68)
+        or fields[("endTransform",)] != (68, 80)
+        or fields[("animateBezierWind",)] != (80, 84)
+    ):
+        raise ValueError("original BezierCurveLine body layout drift")
+    if curve[80] != 0:
+        raise ValueError("animated Bezier wind is not qualified")
+    go_pointer = struct.unpack_from("<iq", line)
+    if go_pointer != struct.unpack_from("<iq", curve) or go_pointer[0] or not go_pointer[1]:
+        raise ValueError("original curve/line GameObject differs")
+    go, _ = read([source, go_pointer[1]], 1)
+    components = [struct.unpack_from("<iq", go, 4 + i * 12) for i in range(struct.unpack_from("<I", go)[0])]
+    if any(file_id for file_id, _ in components) or components.count((0, line_selector[1])) != 1 or components.count((0, behaviour_selector[1])) != 1:
+        raise ValueError("original curve/line component membership drift")
+    transforms = [pid for _, pid in components if source_record(sources, [source, pid])[1]["class_id"] == 4]
+    if len(transforms) != 1:
+        raise ValueError("original Bezier GameObject transform differs")
+    transform, _ = read([source, transforms[0]], 4)
+    if struct.unpack_from("<iq", transform) != go_pointer:
+        raise ValueError("original Bezier transform belongs to another GameObject")
+    # The script record is already selected for source-derived scene metadata.
+    file_id, pid = struct.unpack_from("<iq", curve, 16)
+    meta = sources[source][3]
+    if not 0 <= file_id <= len(meta["externals"]):
+        raise ValueError("original Bezier script link drift")
+    member = source_profiles[source]["member"] if not file_id else meta["externals"][file_id - 1]["path"].rsplit("/", 1)[-1]
+    script_sources = [i for i, selected in enumerate(source_profiles) if selected["member"] == member and pid in sources[i][4]]
+    if len(script_sources) != 1:
+        raise ValueError("original Bezier script provider differs")
+    script, _ = read([script_sources[0], pid], 115)
+    if script_fields(script)[1] != ("BezierCurveLine", "", "RoR2.dll"):
+        raise ValueError("original Bezier script identity differs")
+
+    def world(identity):
+        position = (0.0, 0.0, 0.0)
+        seen = set()
+        while identity:
+            if identity in seen:
+                raise ValueError("original transform parent cycle")
+            seen.add(identity)
+            transform, _ = read([source, identity], 4)
+            children = struct.unpack_from("<I", transform, 52)[0]
+            if len(transform) != 68 + children * 12 or struct.unpack_from("<4f", transform, 12) != (0.0, 0.0, 0.0, 1.0):
+                raise ValueError("Bezier requires original identity-rotation transform hierarchy")
+            local = struct.unpack_from("<3f", transform, 28)
+            scale = struct.unpack_from("<3f", transform, 40)
+            position = tuple(single(single(value * factor) + offset) for value, factor, offset in zip(position, scale, local))
+            father_file, identity = struct.unpack_from("<iq", transform, 56 + children * 12)
+            if father_file:
+                raise ValueError("original Bezier parent escapes source scene")
+        return position
+
+    p0 = world(transforms[0])
+    end_file, end_id = struct.unpack_from("<iq", curve, 68)
+    if end_file:
+        raise ValueError("original Bezier endTransform escapes source scene")
+    p1 = world(end_id) if end_id else struct.unpack_from("<3f", curve, 44)
+    v0, v1 = struct.unpack_from("<3f", curve, 32), struct.unpack_from("<3f", curve, 56)
+
+    def add(a, b):
+        return tuple(single(x + y) for x, y in zip(a, b))
+
+    def lerp(a, b, t):
+        return tuple(single(x + single(single(y - x) * t)) for x, y in zip(a, b))
+
+    positions = bytearray()
+    for index in range(count):
+        t = single(index / (count - 1))
+        a = lerp(p0, add(p0, v0), t)
+        b = lerp(p1, add(p1, v1), single(1.0 - t))
+        positions.extend(struct.pack("<3f", *lerp(a, b, t)))
+    return body[: start + 4] + positions + body[end:]
+
+
 def aligned_string(stream, value):
     data = value.encode("utf-8")
     stream.write(struct.pack("<I", len(data)) + data)
@@ -387,10 +524,56 @@ def script_fields(body):
     return offset, (string(), string(), string())
 
 
+def copy_original_bundle(profile, profile_sha256, pc, output):
+    """Preserve prepare.py's original Windows bundle copy without a project."""
+    if set(profile) != {"input_id", "original_bundle"}:
+        raise ValueError("unknown original bundle profile")
+    selected = profile["original_bundle"]
+    if set(selected) != {"path", "bytes", "sha256"} or not 0 < selected["bytes"] <= B.LIMIT:
+        raise ValueError("invalid original bundle selection")
+    pc = pc.resolve(strict=True)
+    source = M.safe_input(pc, selected["path"])
+    output = output.parent.resolve(strict=True) / output.name
+    if output.exists() or output.is_symlink() or output.is_relative_to(pc) or pc.is_relative_to(output):
+        raise ValueError("original bundle output must be new and outside original input")
+    before = source.stat()
+    if before.st_size != selected["bytes"] or B.sha(source) != selected["sha256"]:
+        raise ValueError("original bundle input drift")
+    if shutil.disk_usage(output.parent).free < selected["bytes"] + 2 * 1024**3:
+        raise ValueError("insufficient original bundle output capacity")
+    output.mkdir()
+    started = time.monotonic()
+    receipt = {"success": False, "input_id": profile["input_id"], "profile_sha256": profile_sha256}
+    try:
+        destination = output / "payload/windows-shaders.bundle"
+        destination.parent.mkdir()
+        shutil.copyfile(source, destination)
+        after = source.stat()
+        if (before.st_size, before.st_mtime_ns) != (after.st_size, after.st_mtime_ns) or B.sha(source) != selected["sha256"]:
+            raise ValueError("original bundle changed during production")
+        if destination.stat().st_size != selected["bytes"] or B.sha(destination) != selected["sha256"]:
+            raise ValueError("persisted original bundle differs")
+        receipt["outputs"] = {"payload/windows-shaders.bundle": {"bytes": selected["bytes"], "sha256": selected["sha256"]}}
+        receipt["success"] = True
+        return receipt
+    except Exception as error:
+        receipt["error"] = type(error).__name__ + ": " + str(error)
+        raise
+    finally:
+        receipt["seconds"] = time.monotonic() - started
+        (output / "result.json").write_text(json.dumps(receipt, indent=2) + "\n")
+
+
 def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, packs=(), sdk=None):
     if B.sha(profile_path) != profile_sha256:
         raise ValueError("object profile drift")
     profile = json.loads(profile_path.read_text())
+    if "original_bundle" in profile:
+        if profile["input_id"] != M.INPUT_ID:
+            raise ValueError("unknown original bundle input")
+        return copy_original_bundle(profile, profile_sha256, pc, output)
+    if codec_path is None or codec_sha256 is None:
+        raise ValueError("object serialization requires the pinned codec")
     scene = "members" in profile["bundle"]
     required = {"input_id", "sources", "bundle"} | (set() if scene else {"objects"})
     if set(profile) - {"sdk"} != required or profile["input_id"] != M.INPUT_ID:
@@ -487,6 +670,8 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                         if typ["class_id"] != 29:
                             raise ValueError("static-renderer removal requires original OcclusionCullingSettings")
                         body = clear_static_renderers(body, selected["clear_static_renderers"])
+                    if "bezier_curve_line" in selected:
+                        body = rebuild_bezier_line(body, sources, profile["sources"], selected["source"], selected["bezier_curve_line"])
                     if "importer_guid" in selected:
                         if typ["class_id"] != 213:
                             raise ValueError("Sprite importer policy requires an original Sprite")
@@ -497,6 +682,10 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                         if selected["inactive_map_zone"] is not True or typ["class_id"] != 1 or not body or body[-1] != 1:
                             raise ValueError("inactive MapZone policy requires an active original GameObject")
                         body = body[:-1] + bytes(1)
+                    if "inactive_global_owner" in selected:
+                        if typ["class_id"] != 1:
+                            raise ValueError("global suppression requires an original GameObject")
+                        body = deactivate_global_owner(body, selected["inactive_global_owner"])
                     if "disable_original_behaviour" in selected:
                         if selected["disable_original_behaviour"] is not True or typ["class_id"] != 114 or body[12:16] != b"\x01\0\0\0":
                             raise ValueError("disabled original behaviour requires an enabled MonoBehaviour")
@@ -645,8 +834,8 @@ def main():
     parser.add_argument("--pc", type=Path, required=True)
     parser.add_argument("--sdk", type=Path, help="owner's pinned Unity SDK root; required only for script properties derivation")
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--codec", type=Path, required=True)
-    parser.add_argument("--codec-sha256", required=True)
+    parser.add_argument("--codec", type=Path, help="pinned codec; required for serialization, unnecessary for the original Windows bundle copy")
+    parser.add_argument("--codec-sha256")
     parser.add_argument(
         "--record-pack",
         nargs=2,

@@ -41504,3 +41504,135 @@ Remaining native/authored/font cohorts, built-in/mixed files and ordinary-app
 source production remain separate gates. Revisit on source/variant/native-form
 changes or an independent comparison failure; host equality establishes neither
 PC appearance nor complete phone-only installation.
+
+## J1155 — Reconstruct Wisp's source scene and qualify the original Windows copy
+
+Date: 2026-10-25 UTC. Host only; no Unity Editor, device, lease, installation or
+game launch. Comparison remains J850 APK SHA-256
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+**Hypothesis and prior art.** Join the 117 remaining payload entries against
+the retained J1050 census and qualified producer receipts before implementing
+another converter. Only Wisp's source-scene bundle, the catalog and binary root
+manifest lack Shader48. The last two retain their independent final-graph and
+Android ArtifactID/native-feed gates. The other 114 files contain shaders;
+standalone Cloud/Standard/native cohort names do not prove embedded-record
+identity. Goldshores scene/spine Standard bodies differ. The bounded ranking is
+`work/coordination/p1-payload-remaining-ranking-v2/`; no full census is repeated.
+Consulted `community-prior-art.md`, pinned UnityPy schema/PPtr contracts,
+ThunderKit's catalog-copy distinction, J1050/J1116/J1142/J1145 and the existing
+`source_scene_candidate.py` import policy. Original current input and SDK
+metadata remain authoritative.
+
+**Complete Wisp implementation.** The existing `object_produce.py` owner and
+new audited `owner-wispgraveyard-source-objects.json` produce the separate
+`wispgraveyard-source-lab` variant. Existing source identities, checked pointer
+relationships, SDK script hash derivation, 67 qualified meshes and two textures
+supply its content. Previously qualified policies handle sixteen component
+omissions, sixteen disabled original callbacks and 981 removed occlusion
+renderer links. Three original global GameObjects use the existing source-scene
+suppression policy, now checked by original class/name/layout/active tail.
+
+Two original LineRenderer arrays differ in eight float components after editor
+evaluation. The authored reconstruction reads original BezierCurveLine operands,
+original GameObject/component relationships and both six-node local Transform
+chains. It evaluates the source curve's mathematical interpolation with float32
+rounding at each operation; all rotations are checked identity. Existing source
+schema/field readers locate arrays, script identity is checked, and all bytes
+outside the position array remain original before pointer remapping. No curve
+samples, scalar deltas, copied game implementation or target body/tree supply
+production. Four Sprite identities are checked against current-input export
+receipts, metadata and original scene references; two use existing crop policies.
+Three changed script identities produce six script/body hash records through
+the unchanged SDK hash owner. Source graph relationships generate all 172 preload
+pointers. The container path follows `source_scene_candidate.py`'s source-scene
+route, distinct from the whole-scene route.
+
+Isolated public `python3 -I -S -B` production and independent persisted readback
+pass: **70,005 objects / 23,244,982 body bytes**, two complete serialized members
+of **17,819,344** and **7,602,108 bytes**, and the entire **12,135,569-byte** bundle
+are raw-exact. Bundle SHA-256:
+`845236e66f5185c6b2b431d3108c9b437499a99dd594912828e6735e063a77b4`.
+Compact recipe SHA-256:
+`fb5e3e340faeaaf33097672b67176b9edc95f0f5fd7694d4a79cce3f7f25992b`;
+its 24,888,591 bytes decode identically to the initial audited profile. Final
+public receipt SHA-256:
+`701224fc9cf7f092bb67c7dcbb6c45e245eb19b649e5790333e4422b533615cd`.
+Producer source hash is checked unchanged before/after. Evidence is
+`work/coordination/p1-payload-shader-free-discovery-v2/`: `public-host-v2/`,
+`public-v2-done.json`, `public-independent-compare.json`,
+`source-schema-audit.json`, `current-sprite-provenance.json` and
+`profile-format-equivalence.json`. Independent review reruns all 69,934 source
+object checks / 188,160 actual-schema pointer/value checks and all persisted
+extents/members/final bytes. Equivalent original wind bodies and the existing
+qualified mesh mapping explain alternate source identities; no new scalar or
+mesh policy is inferred.
+
+**Windows input drift, separately qualified.** `prepare.py` originally copies
+an original Windows bundle unchanged. It does not reconstruct an Android shader.
+The same operation now runs without a project through the existing object owner
+and audited `owner-windows-shaders.json`. The public copy function verifies
+pinned source/profile, new disjoint output, unchanged original and persisted
+bytes; it records successful/failed receipts and requires no codec. The normal
+CLI admits only the current input. Historical qualification directly invokes
+the identical public function with a truthfully tagged historical profile;
+the same isolated wrapper invokes that function twice for current input.
+All three calls bind producer source hash
+`577c127426742d5ee363458755e4dee72aa1d1314ed33403c97963171980d7b1`,
+profiles, outputs and receipt hashes. Separate current CLI repetitions also pass.
+
+Historical original computationalexchange shader bundle suffix
+`c4dec0422c9493f3885f2e91960ce15d` is **31,707 bytes**, SHA-256
+`1d3eff595f5c9403791c4628cd7f08f4c597d942ce3ea14e3bc5d3a91001ab89`:
+the entire copied file equals J850. Current original suffix
+`1ac452c7249a3b08bfca2553796dfd87` is **32,708 bytes**, SHA-256
+`70b14b0e1ff95f959f78d3d34dc9b974c7a6afe3ef0dcbee33963c4c7b92849d`.
+Both complete relative original paths, input IDs and hashes are recorded in the
+private proof. Every output byte is the identically positioned source byte.
+All **1,995** ordered extent operations cover both outputs; **997** changed
+operations / **3,443** changed current bytes trace to those named changed
+original inputs, with zero unexplained bytes. No variant stripping or shader
+compiler is needed. Historical files are qualification only and never become
+current reconstruction inputs.
+
+Evidence is `work/coordination/p1-payload-shader-metadata-v1/`
+(`windows-copy-drift-proof.json`),
+`work/coordination/p1-payload-windows-source-host-v1/`
+(`same-public-producer.json`, repeated pinned receipts/invocations), and
+`work/coordination/p1-payload-windows-drift-admission-v1/` (the three normalized
+proof documents and request pins). The code owner's developing checker accepts
+the separate drift-explained entry while a guarded control refuses all
+historical original/output reads. Its source hash is retained in the combined
+readiness receipt. Checker publication remains with that owner.
+
+**Readiness, failures and checks.** The exact source union
+`work/coordination/p1-payload-wisp-source-host-v1` preserves J1151's 125 Shader
+files and all prior content: **334/705 exact**, **371 missing (255 APK /
+116 payload)**, zero invalid/mismatched entries. This is eighteen complete source
+payload bundles. The separate developing-checker union
+`p1-payload-wisp-windows-source-host-v1` has **334 exact + 1 drift-explained**,
+**370 missing (255 APK / 115 payload)**. It does not silently count drift as exact
+or qualify the two separate player-file drift cases. No partial catalog is emitted.
+
+Wisp's first container uses the wrong whole-scene path; the existing source-scene
+pipeline resolves it. Windows initially appears to need compiler/editor-hash
+reconstruction; the actual copy owner and historical full-file proof identify
+input drift. An initial union request points at the previous tree; correcting
+its existing `targets` field yields the stated complete inventory. Failures
+and earlier proofs remain private. Nine new synthetic curve tests include an
+independent analytic array, real serialized source members, source-relationship
+mutants and complete public-owner bundle/readback before PPtr relocation. Review
+finds and fixes the starting Transform's missing GameObject backlink check.
+All 61 affected object/writer/hash/record/recipe checks, Ruff, preflight and
+manual provenance/privacy/licensing review pass. Independent final review is GO
+at `work/coordination/p1-payload-wisp-windows-review-v1/`. Main-checkout pruning
+retains receipts/evidence; no new device/APK/runtime claim is made.
+
+Phone reconstruction, full installation, normal gameplay/performance, remaining
+payload/player shaders/content and root-manifest/catalog gates remain open.
+The bounded ComputeShader proof also derives twelve stripped source records
+exactly across 48 comparison occurrences; it supplies no additional complete
+file or executable compute behavior. Goldshores has a source-qualified recipe
+and all nonShader extents ready, but still needs its independently generated
+Standard record/retention selection. Revisit on source/profile/contract drift or
+new qualified shader/import-hash evidence; do not repeat broad native censuses.
