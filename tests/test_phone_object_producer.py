@@ -159,6 +159,20 @@ def fixture(root):
 
 
 class ObjectProducerTests(unittest.TestCase):
+    def test_container_preload_partition_order_is_explicit(self):
+        selected = {"name": "authored-bundle", "asset": "Assets/Authored.prefab", "root": 7, "external_objects": [[2, 91], [1, -18]], "dependencies": []}
+        for external_first in (False, True):
+            with self.subTest(external_first=external_first):
+                selected["external_preload_first"] = external_first
+                body = P.asset_bundle(selected, [7, -6])
+                size = struct.unpack_from("<I", body)[0]
+                offset = (4 + size + 3) // 4 * 4
+                count = struct.unpack_from("<I", body, offset)[0]
+                self.assertEqual(count, 4)
+                actual = [struct.unpack_from("<iq", body, offset + 4 + 12 * index) for index in range(count)]
+                local, external = [(0, -6), (0, 7)], [(2, 91), (1, -18)]
+                self.assertEqual(actual, external + local if external_first else local + external)
+
     def test_complete_source_only_pack_and_source_derived_layout(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

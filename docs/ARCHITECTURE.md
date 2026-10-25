@@ -61,19 +61,23 @@ deadlines and child teardown; callers own input provenance and retained outputs.
 separately acquired pinned public LZ4 archive, retaining its license, build logs
 and terminal receipt. These structural writers generate no game content or
 target relationships and have no game-build/runtime consumer.
-`object_produce.py` owns the current source-only prefab slice: audited
-`recipe/owner-pickup-objects.json` selects original bodies/type metadata and
-checked pointer relationships. It generates container/preload metadata, packs,
+`object_produce.py` owns the current source-only pickup and player-death-effect
+prefab slices: audited `recipe/owner-pickup-objects.json` and
+`recipe/owner-death-effect-objects.json` select original bodies/type metadata
+and checked pointer relationships. It generates container/preload metadata with explicit local/external order, packs,
 layout and a canonical target-tree bundle through those writers. New disjoint
 output, pinned PC files/recipe/codec and capacity checks set up the process;
 persisted output and unchanged inputs precede a complete/failed terminal receipt.
 Failure retains outputs and the codec context reaps its child; exit ends the
-producer. `player_data.py` owns the separate current seven-file named player
-cohort: SDK default resources, converter resources, PC-derived script JSON and
-the three-object PC font file. Its audited `recipe/owner-player-data.json`,
+producer. `player_data.py` owns the separate current 22-file player cohort: SDK default
+resources, converter resources, PC-derived script JSON, the three-object PC
+font file, original line-breaking TextAssets, an authored runtime JSON resource
+and twelve standalone PC Sprites. Its audited `recipe/owner-player-data.json`,
 explicit original PC/SDK/converter inputs and converter receipt set up a new
-target tree; checked pointer relocation and `unity_write.py` build the font
-file. Persisted/input hashes and complete/failed receipts define state and
+target tree; checked pointer relocation and `unity_write.py` build serialized
+files. Sprite importer identities derive from destination filenames; original
+geometry/UVs remain unchanged. The authored JSON input is a pinned sibling of
+the selected profile. Persisted/input hashes and complete/failed receipts define state and
 teardown. Neither owner consumes replay files or a Unity project. Their
 [setup and limits](../tools/phone-build/accepted-output/README.md#produce-the-first-complete-source-only-bundle)
 remain separate from full content assembly, installation and runtime acceptance.

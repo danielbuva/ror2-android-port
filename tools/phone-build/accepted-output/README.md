@@ -112,8 +112,8 @@ private accepted bundle is a roundtrip control, not PC-input-only production.
 
 ## Produce the first complete source-only bundle
 
-`object_produce.py` currently qualifies the complete pickup-droplet bundle from
-original PC records. The audited recipe contains original selectors, checked
+`object_produce.py` currently qualifies the complete pickup-droplet and
+player-death-effect bundles from original PC records. The audited recipe contains original selectors, checked
 PPtr relationships, destination identities/dependencies and comparison hashes.
 All content bodies and embedded type metadata come from the original input;
 the producer generates AssetBundle container/preload metadata and relocates
@@ -135,19 +135,29 @@ target templates. Explicit source/recipe/codec admission and 2 GiB reserve
 precede processing. Every body, serialized member, final bundle and persisted
 extent must match its comparison hash; source hashes/stats are checked before
 and after. A complete/failed `result.json` retains state, failure retains its
-output, and the codec context reaps its child. This one source prefab is a
-complete bundle slice, not a general object converter. Its dependent Commando
-bundle and full target tree remain separate gates.
+output, and the codec context reaps its child. The second slice uses
+`recipe/owner-death-effect-objects.json` through the same command and owner. Its original rooted graph contains 36 bodies and a generated
+container; only checked references change. Its container requires external
+preloads before local preloads. These complete bundle slices are not a general
+object converter. Their dependent bundles and full target tree remain separate
+gates.
 
 ## Produce named player-data files
 
-`player_data.py` produces seven canonical `apk/assets/bin/Data/...` files:
+`player_data.py` produces 22 canonical `apk/assets/bin/Data/...` files:
 SDK default resources, three fresh converter resource files, two script metadata
 JSON files derived from original PC metadata plus authored initialization/order,
-and the embedded font serialized file. The font, material and texture bodies
+the embedded font serialized file, two original line-breaking TextAssets, the
+authored runtime JSON TextAsset and twelve standalone Sprite files. The font,
+material and texture bodies
 and their type identities/dependency come from one original PC bundle; only
 four checked reference identities change. The generic writer generates its
-tree-stripped Android metadata and object layout.
+tree-stripped Android metadata and object layout. Standalone Sprites retain
+original geometry/UVs, regenerate their importer GUID/local identity from the
+destination filename and relocate one checked texture reference. Their texture
+providers remain separate inputs to full composition. The runtime TextAsset
+formats the pinned sibling `runtime-config.json` through the existing authored
+JSON policy.
 
 ```sh
 python3 -I -S -B tools/phone-build/accepted-output/player_data.py \
@@ -160,13 +170,14 @@ python3 -I -S -B tools/phone-build/accepted-output/player_data.py \
 
 Stage `player_data.py`, `sdk_inputs.py`, `object_produce.py`, `mesh_produce.py`,
 `unity_mesh.py`, `unity_bundle.py`, `unity_write.py` and the selected recipe as
-sibling Python inputs for an Android replay. No native codec is needed for this
-player cohort. The converter input is its successful `result.json` and its
+sibling Python inputs for an Android replay. Keep the pinned
+`runtime-config.json` beside the selected player profile. No native codec is
+needed for this player cohort. The converter input is its successful `result.json` and its
 three `data/Resources/...` outputs, not files extracted from an accepted APK.
 The original PC root, SDK and converter are read-only and disjoint from the new
 output. Input hashes, converter completion, source/body/reference relationships,
 capacity and persisted readbacks precede the complete/failed receipt. Failure
-retains output; exit ends the producer. These seven host-qualified files do not
+retains output; exit ends the producer. These 22 host-qualified files do not
 close the remaining player-data, shader, animation or phone-install gates.
 
 Both producers emit target paths accepted by the existing owner-APK readiness
