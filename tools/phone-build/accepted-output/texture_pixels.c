@@ -7,7 +7,7 @@
 #define BCDEC_IMPLEMENTATION
 #include "third_party/bcdec/bcdec.h"
 
-/* The byte import path reduces once in byte units before float normalization. */
+/* Linear bytes reduce before normalization; sRGB normalizes RGBA on import. */
 static int mips(int width, int height, int gamma) {
     size_t bytes = (size_t)width * height * 4;
     unsigned char *pixels = malloc(bytes);
@@ -16,9 +16,10 @@ static int mips(int width, int height, int gamma) {
     if (fread(pixels, 1, bytes, stdin) != bytes || fgetc(stdin) != EOF) return 67;
     for (size_t i = 0; i < bytes; i++) {
         float v = pixels[i];
-        if (gamma && i % 4 != 3) {
+        if (gamma) {
             v *= 1.f / 255.f;
-            v = v <= .04045f ? v / 12.92f : powf((v + .055f) / 1.055f, 2.4f);
+            if (i % 4 != 3)
+                v = v <= .04045f ? v / 12.92f : powf((v + .055f) / 1.055f, 2.4f);
         }
         values[i] = v;
     }
@@ -39,7 +40,7 @@ static int mips(int width, int height, int gamma) {
             float a = values[(y0 * width + x0) * 4 + c], b = values[(y0 * width + x1) * 4 + c];
             float d = values[(y1 * width + x0) * 4 + c], e = values[(y1 * width + x1) * 4 + c];
             float v = ((a + b) + d + e) * .25f;
-            if (level == 0 && (!gamma || c == 3)) v *= 1.f / 255.f;
+            if (level == 0 && !gamma) v *= 1.f / 255.f;
             values[(y * nw + x) * 4 + c] = v;
         }
         width = nw; height = nh;

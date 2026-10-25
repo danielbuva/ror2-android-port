@@ -122,9 +122,11 @@ class SdkTextureTests(unittest.TestCase):
             ("ramp", "srgb"): "e2617c5d917d0e5b0fd5afdd57e31800abb69ef852d528cad7655cefe01c9d80",
             ("noise", "linear"): "a9dc7f7ce1361a7c2388036a5cb8b0dc3b9e51625b763e5bc99f8ba092eb7231",
             ("noise", "srgb"): "9d2be7a6915809d22e13ed27fab49a0816f327189642e9db3c2a8a6835b4bf9d",
+            ("alpha", "linear"): "bb4ad640f171c2674af766e7cc302fd782699d174af93dcc285093d8ec0534a3",
+            ("alpha", "srgb"): "38ff681241a125cdfcfc4fc5dfc2f0b2840f84bc79cfa207200b86fecf23af55",
         }
-        for pattern in ("ramp", "noise"):
-            width, height = (256, 4) if pattern == "ramp" else (1024, 1024)
+        for pattern in ("ramp", "noise", "alpha"):
+            width, height = (256, 4) if pattern == "ramp" else (256, 256) if pattern == "alpha" else (1024, 1024)
             rgba = bytearray()
             state = 731
             for _y in range(height):
@@ -135,7 +137,11 @@ class SdkTextureTests(unittest.TestCase):
                         for _ in range(3):
                             state = (state * 1664525 + 1013904223) & 0xFFFFFFFF
                             rgba.append(state >> 24)
-                        rgba.append(255)
+                        alpha = 255
+                        if pattern == "alpha":
+                            state = (state * 1664525 + 1013904223) & 0xFFFFFFFF
+                            alpha = state >> 24
+                        rgba.append(alpha)
             for mode in ("linear", "srgb"):
                 result = subprocess.run([str(self.decoder), str(width), str(height), "mips-" + mode], input=rgba, capture_output=True, timeout=30)
                 self.assertEqual(result.returncode, 0)
@@ -167,6 +173,25 @@ class SdkTextureTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "inconsistent full-chain"):
             T.etc1_mips(rgb, 2, 2, selected, {"pixels": str(self.decoder)}, self.alpha)
 
+    def test_rgba_mips_preserve_alpha_and_repeat_small_levels(self):
+        rgba = bytes((0, 10, 20, 0, 40, 50, 60, 64, 80, 90, 100, 128, 120, 130, 140, 255))
+        selected = {"outputs": [{"mips": 2, "colour_space": 0}]}
+        calls = []
+
+        def encode(pixels, width, height, sdk, etc_codec):
+            self.assertEqual((width, height), (4, 4))
+            calls.append(pixels)
+            return bytes([len(calls)]) * 16
+
+        with patch.object(T, "sdk_encode_rgba", side_effect=encode):
+            result = T.sdk_rgba_mips(rgba, 2, 2, selected, {"pixels": str(self.decoder)}, self.alpha)
+        self.assertEqual(result, bytes([1]) * 16 + bytes([2]) * 16)
+        self.assertEqual(calls[0], b"".join(rgba[((y % 2) * 2 + x % 2) * 4 : ((y % 2) * 2 + x % 2 + 1) * 4] for y in range(4) for x in range(4)))
+        self.assertEqual(calls[1], bytes((60, 70, 80, 112)) * 16)
+        selected["outputs"].append({"mips": 2, "colour_space": 1})
+        with self.assertRaisesRegex(ValueError, "inconsistent full-chain"):
+            T.sdk_rgba_mips(rgba, 2, 2, selected, {"pixels": str(self.decoder)}, self.alpha)
+
     def test_mip_body_projection_keeps_unselected_sentinels(self):
         stream = {"offset": 0, "size": 0, "path": ""}
         source, fields = authored_body("Source", 64, 4, bytes(64), stream)
@@ -175,9 +200,10 @@ class SdkTextureTests(unittest.TestCase):
         source = source[:-4] + struct.pack("<ii", 1, 0) + b"TAIL"
         pixels = bytes(range(24))
         target = {"name": "Owner", "alpha_optional": False, "usage": 4, "inline": True, "stream": stream, "mips": 3, "colour_space": 1}
-        expected, _ = authored_body("Owner", 24, 34, pixels, stream, 4)
-        expected = expected[:-4] + struct.pack("<ii", 3, 1) + b"TAIL"
-        self.assertEqual(T.body_output(source, fields, pixels, target, "etc1-mips"), expected)
+        for operation, fmt in (("etc1-mips", 34), ("sdk-rgba-mips", 47)):
+            expected, _ = authored_body("Owner", 24, fmt, pixels, stream, 4)
+            expected = expected[:-4] + struct.pack("<ii", 3, 1) + b"TAIL"
+            self.assertEqual(T.body_output(source, fields, pixels, target, operation), expected)
 
     def test_native_crunch_rejects_wrong_extents_and_malformed_streams(self):
         compiler = shutil.which("c++")
@@ -278,6 +304,28 @@ class SdkTextureTests(unittest.TestCase):
             }
             sdk = T.sdk_inputs(tools, T.BUNDLE.sha(tools), root)
             self.assertEqual(T.pixels_input(None, body, selected, sdk=sdk, etc_codec=self.alpha), bytes([255]) * 8 + bytes([17, 31, 73, 255]) * 2)
+
+    def test_rgba_mip_source_uses_top_level_and_zero_rgb_for_alpha8(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            tools = Path(temporary) / "sdk.json"
+            sdk = self.tools(tools)
+            empty = {"offset": 0, "size": 0, "path": ""}
+            for fmt, original, rgba in (
+                (4, bytes((17, 31, 73, 255)) * 16 + bytes(20), bytes((17, 31, 73, 255))),
+                (1, bytes([255]) * 16 + bytes(5), bytes((0, 0, 0, 255))),
+            ):
+                body, fields = authored_body("Original", len(original), fmt, original, empty)
+                start, _ = fields["image data"]
+                selected = {
+                    "pixels": {"member": None, "offset": start + 4, "bytes": len(original), "sha256": digest(original)},
+                    "operation": "sdk-rgba-mips",
+                    "width": 4,
+                    "height": 4,
+                    "fields": fields,
+                    "outputs": [{"mips": 3, "colour_space": 0}],
+                }
+                expected = (bytes([255]) * 8 + rgba * 2) * 3
+                self.assertEqual(T.pixels_input(None, body, selected, sdk=sdk, etc_codec=self.alpha), expected)
 
     def test_source_to_sdk_pack_and_dependency_drift_refusal(self):
         with tempfile.TemporaryDirectory() as temporary:
