@@ -122,6 +122,42 @@ compatibility: retain the producer evidence, complete Burst ABI and full-player
 phone/install/performance qualification. The synthetic assembly contract passes
 with all comparison-target code files absent (J1102).
 
+Before assembling, inventory the same request without invoking Java or writing
+an APK:
+
+```sh
+python3 -I -S tools/phone-build/owner-apk/build_owner_apk.py \
+  --check-request PRIVATE_REQUEST.json --output NEW_PRIVATE_READINESS.json
+```
+
+This current host/Android action needs only `manifest`, `manifest_sha256`,
+`targets` and the optional existing `code` mapping from that request. The target
+root and selected produced files may be absent: the report lists every required
+final entry as ready, missing, mismatched or invalid. An absent produced code
+file remains missing even if its comparison file exists under `targets`.
+Obsolete signatures and payload `.manifest` sidecars are omitted, matching the
+assembler. Exit 0 means all assembly inputs are available; exit 1 means entries
+are blocked. A report must be a new file.
+
+Each available entry records actual size/hash and raw target equality.
+`code_comparison_required` lists produced code/SDK entries whose raw bytes differ;
+the assembler preserves these actual bytes, allowing independently documented
+compiler and ELF metadata differences. Content must match its existing target
+hash. The selection distinguishes complete produced code/SDK, produced game
+code alone and the replay control. Neither a hash match nor a supplied tree
+proves source provenance or phone/runtime qualification; both qualification
+fields stay false. Keep the producer journals with the report. Mesh/avatar/
+texture object/resource packs are intermediate records and cannot fill a final
+bundle/player-data target entry.
+
+The normal build writes the same `readiness.json` and refuses all blocked inputs
+before launcher compilation or ZIP creation. Once the content owner materializes
+its final tree, use that unchanged request with `--request`, then pass the new
+`owner-unsigned.apk` to the existing `--sign-request` mode below. No replay bytes
+are selected automatically. A separately labelled replay-content validation run
+can exercise assembly/signing while final content production and corrected
+phone-native output remain open; it is not a source-input production result.
+
 Keep the public source tree's relative `owner-apk/` and `accepted-output/`
 directories together when staging on Android. Supply the wire helper explicitly;
 the builder never finds a timestamped analysis directory. SDK/tool acquisition

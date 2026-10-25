@@ -164,6 +164,13 @@ refuse. The produced manifest feeds the existing routing/version patch, and
 the other selected SDK outputs stream unchanged. Host fixtures cover this
 16-entry composition without comparison-target files and retain input-drift
 checks; complete phone installation/controls/performance remain open.
+The same owner's current `--check-request` action inventories every selected
+final target/code file, retaining actual hashes, raw comparison differences and
+all missing/mismatched/invalid entries. Normal assembly writes `readiness.json`
+and refuses blocked inputs before compiling its launcher. Check-only teardown
+retains one new private report; it starts no compiler or device action. Complete
+record packs do not satisfy final bundle/player-data paths, and this byte check
+does not establish source provenance or device qualification.
 Other content retains the existing
 manifest layout/hashes. Source provenance and code/runtime qualification remain
 with their producers (J1102).
