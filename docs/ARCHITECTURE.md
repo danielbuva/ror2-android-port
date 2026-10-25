@@ -103,8 +103,8 @@ selectors. The existing `script_identity.properties_hash` owner derives the
 MonoScript properties hash and MonoBehaviour type hash from original custom
 fields and the SDK's editor base schema. All other body/type bytes remain
 source-owned; SDK hashes are checked before and after production.
-Selected original RoR2, Wwise and TextMeshPro DLL MonoScripts can retain PluginImporter's default
-execution order through the checked `plugin_import_default_execution_order`
+Selected original RoR2, Wwise and TextMeshPro DLL MonoScripts can retain
+PluginImporter's default execution order through the checked `plugin_import_default_execution_order`
 policy. It preserves original identity, properties hash and tail; any existing
 script-properties policy still derives its hash separately. The source bundle's
 explicit legacy engine metadata is passed to both serialized and UnityFS
@@ -114,6 +114,11 @@ zero-valued additions. Its serialized curve stays in the original runtime
 layout; both script/body hashes use the supplied SDK editor Keyframe schema,
 including its editor-only tangent field. These named projections share the
 existing hash cache without changing the shared hash algorithm.
+The named `strip_compute_programs` policy projects original DXBC ComputeShader
+records into the accepted declaration-only placeholder. Existing source-schema
+spans locate every compiled array and thread-group dimension; names, keywords,
+requirements and native type metadata stay original. This reproduces retained
+content and does not provide executable Android compute.
 The streamed-scene slices process shared assets then the scene member. Each
 member retains its own object/type/external tables and index identities. Scene
 script tables derive from actual MonoBehaviour script pointers, independently
