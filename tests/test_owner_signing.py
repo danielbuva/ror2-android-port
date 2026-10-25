@@ -21,6 +21,57 @@ SDK = OWNER.module("owner_test_sdk", PATH.parent.parent / "accepted-output/sdk_p
 
 
 class OwnerSigningTests(unittest.TestCase):
+    def test_unsafe_existing_key_custody_refuses_without_replacement_or_tool_execution(self):
+        for state in ("missing-password", "linked-key", "linked-password", "public-directory", "public-key", "public-password", "empty-password"):
+            with self.subTest(state=state), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary).resolve()
+                for name in ("unsigned.apk", "java", "zipalign", "apksigner.jar"):
+                    (root / name).write_bytes(b"independent fixture")
+                keys = root / "keys"
+                keys.mkdir(mode=0o700)
+                key, password = keys / "owner.p12", keys / "password"
+                key.write_bytes(b"retained owner key witness")
+                password.write_bytes(b"retained owner password witness")
+                key.chmod(0o600)
+                password.chmod(0o600)
+                if state == "missing-password":
+                    password.unlink()
+                elif state in ("linked-key", "linked-password"):
+                    selected = key if state == "linked-key" else password
+                    retained = root / "retained"
+                    selected.rename(retained)
+                    selected.symlink_to(retained)
+                elif state == "public-directory":
+                    keys.chmod(0o755)
+                elif state == "public-key":
+                    key.chmod(0o644)
+                elif state == "public-password":
+                    password.chmod(0o644)
+                elif state == "empty-password":
+                    password.write_bytes(b"")
+                before = {path: path.read_bytes() for path in (key, password) if path.exists()}
+                request = root / "request.json"
+                request.write_text(
+                    json.dumps(
+                        {
+                            "unsigned": str(root / "unsigned.apk"),
+                            "java": str(root / "java"),
+                            "zipalign": str(root / "zipalign"),
+                            "apksigner_jar": str(root / "apksigner.jar"),
+                            "key_directory": str(keys),
+                        }
+                    )
+                )
+                with patch.object(OWNER.subprocess, "run") as run:
+                    with self.assertRaises(ValueError):
+                        OWNER.sign(request, root / "refused")
+                run.assert_not_called()
+                self.assertEqual({path: path.read_bytes() for path in before}, before)
+                self.assertEqual(password.exists(), state != "missing-password")
+                self.assertFalse((root / "refused/signed.apk").exists())
+                if (root / "refused/result.json").exists():
+                    self.assertFalse(json.loads((root / "refused/result.json").read_text())["success"])
+
     def test_key_survives_two_builds_without_password_in_argv_or_receipt(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve()
