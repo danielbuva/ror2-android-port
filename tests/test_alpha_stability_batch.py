@@ -240,15 +240,70 @@ class GameThermalOwnerTests(unittest.TestCase):
         self.owner = batch._GameThermalOwner(self.device, HASH, Path(self.temp.name) / "thermal.jsonl", float("inf"))
 
     def test_actual_gap_and_unknown_read_are_hard_refusals(self):
-        self.device.cmd.return_value = "cpu-0 56000"
+        self.owner.runtime_zones = [("cpu-0", "/thermal_zone0/temp")]
+        self.device.cmd.return_value = "56000\n"
         with mock.patch.object(batch.time, "monotonic", side_effect=[0, 0.2, 0.4, 1.3]):
             self.assertEqual(self.owner.sample(), 56)
             with self.assertRaisesRegex(RuntimeError, "gap exceeded"):
                 self.owner.sample()
-        self.device.cmd.assert_called_with("shell", batch.ALL_ZONES, timeout=0.7)
+        self.device.cmd.assert_called_with("shell", "cat /thermal_zone0/temp", timeout=0.7)
         self.device.cmd.side_effect = TimeoutError("hung ADB")
         with self.assertRaisesRegex(TimeoutError, "hung ADB"):
             self.owner.sample()
+
+    def test_slow_admission_discovers_paths_then_runtime_uses_one_cat(self):
+        self.device.display.return_value = True
+        self.device.cmd.return_value = (
+            "cpu-0 49000 /thermal_zone0/temp\npm8550_tz 50000 /thermal_zone1/temp\npa1 UNREADABLE /thermal_zone2/temp\nvbat 0 /thermal_zone3/temp"
+        )
+        with mock.patch.object(batch.time, "monotonic", side_effect=[0, 2]):
+            self.owner.cool()
+        self.device.cmd.assert_called_once_with("shell", batch.ALL_ZONES, timeout=10)
+        self.assertIsNone(self.owner.previous)
+        self.assertEqual(self.owner.runtime_zones, [("cpu-0", "/thermal_zone0/temp"), ("pm8550_tz", "/thermal_zone1/temp")])
+        self.device.cmd.return_value = "49000\n80001\n"
+        with mock.patch.object(batch.time, "monotonic", side_effect=[3, 3.2]), self.assertRaisesRegex(RuntimeError, "80 C hard abort"):
+            self.owner.sample()
+        self.device.cmd.assert_called_with("shell", "cat /thermal_zone0/temp /thermal_zone1/temp", timeout=0.7)
+        rows = [json.loads(line) for line in self.owner.trace.read_text().splitlines()]
+        self.assertTrue(rows[0]["admission"])
+        self.assertFalse(rows[1]["admission"])
+        self.assertEqual(rows[1]["excluded_zones"], rows[0]["excluded_zones"])
+        self.assertEqual(self.owner.peak_zone_celsius, 80.001)
+        self.assertEqual(self.owner.peak_cpu_celsius, 49)
+
+    def test_runtime_cat_protocol_and_failures_are_fail_closed(self):
+        root = Path(self.temp.name)
+        paths = [root / "cpu-fixture/temp", root / "pmic/temp"]
+        for path, value in zip(paths, ("49000\n", "79000\n")):
+            path.parent.mkdir()
+            path.write_text(value)
+        self.owner.runtime_zones = list(zip(("cpu-0", "pmic"), map(str, paths)))
+
+        def shell(*args, **kwargs):
+            self.assertEqual(args[0], "shell")
+            self.assertEqual(kwargs, dict(timeout=0.7))
+            self.assertTrue(args[1].startswith("cat "))
+            self.assertEqual(args[1].count("cat "), 1)
+            return subprocess.run(["/bin/sh", "-c", args[1]], check=True, capture_output=True, text=True).stdout
+
+        self.device.cmd.side_effect = shell
+        self.assertEqual(self.owner.sample(), 79)
+        paths[1].unlink()
+        with self.assertRaises(subprocess.CalledProcessError):
+            self.owner.sample()
+        self.device.cmd.side_effect = None
+        for raw in ("49000\n", "49000\n79000\n1\n", "49000 79000\n", "49000\nunknown\n", "49000\n0\n", "49000\n-40000\n"):
+            with self.subTest(raw=raw):
+                self.device.cmd.return_value = raw
+                with self.assertRaises(RuntimeError):
+                    self.owner.sample()
+                self.assertIn("error", json.loads(self.owner.trace.read_text().splitlines()[-1]))
+
+    def test_runtime_refuses_without_admission_before_any_adb(self):
+        with self.assertRaisesRegex(RuntimeError, "requires admission"):
+            self.owner.sample()
+        self.device.cmd.assert_not_called()
 
     def test_shell_read_failure_names_zone_and_preserves_previous_output(self):
         root = Path(self.temp.name)
@@ -266,7 +321,9 @@ class GameThermalOwnerTests(unittest.TestCase):
         command = batch.ALL_ZONES.replace("/sys/class/thermal/thermal_zone*", str(root / "thermal_zone*"))
         result = subprocess.run(["/bin/sh", "-c", command], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0)
-        self.assertEqual(result.stdout, "pa\t34600\npa1\tUNREADABLE\t" + str(failed / "temp") + "\ncpu-0\t49000\n")
+        self.assertEqual(
+            result.stdout, "pa\t34600\t" + str(first / "temp") + "\npa1\tUNREADABLE\t" + str(failed / "temp") + "\ncpu-0\t49000\t" + str(last / "temp") + "\n"
+        )
         (failed / "type").unlink()
         result = subprocess.run(["/bin/sh", "-c", command], capture_output=True, text=True)
         self.assertNotEqual(result.returncode, 0)
@@ -286,21 +343,21 @@ class GameThermalOwnerTests(unittest.TestCase):
 
     def test_above_80_aborts_but_80_itself_continues(self):
         self.device.cmd.return_value = "cpu-0 80000"
-        self.assertEqual(self.owner.sample(), 80)
+        self.assertEqual(self.owner.sample(all_zones=True), 80)
         self.device.cmd.return_value = "cpu-0 80001"
         with self.assertRaisesRegex(RuntimeError, "80 C hard abort"):
-            self.owner.sample()
+            self.owner.sample(all_zones=True)
         self.assertEqual(self.owner.peak_cpu_celsius, 80.001)
 
     def test_runtime_uses_non_cpu_readable_zone_and_records_unsupported(self):
         self.device.cmd.return_value = "cpu-0 49000\npm8550_tz 80000\npa1 UNREADABLE /thermal_zone1/temp"
-        self.assertEqual(self.owner.sample(), 80)
+        self.assertEqual(self.owner.sample(all_zones=True), 80)
         row = json.loads(self.owner.trace.read_text())
         self.assertEqual(row["maximum_zone_celsius"], 80)
         self.assertEqual(row["excluded_zones"], [dict(type="pa1", path="/thermal_zone1/temp", reason="Thermal temp read failed/unsupported")])
         self.device.cmd.return_value = "cpu-0 49000\npm8550_tz 80001"
         with self.assertRaisesRegex(RuntimeError, "80 C hard abort"):
-            self.owner.sample()
+            self.owner.sample(all_zones=True)
         self.assertEqual(self.owner.peak_zone_celsius, 80.001)
         self.assertEqual(self.owner.peak_cpu_celsius, 49)
 
@@ -318,7 +375,7 @@ class GameThermalOwnerTests(unittest.TestCase):
     def test_unreadable_cpu_does_not_substitute_for_a_readable_cpu(self):
         self.device.cmd.return_value = "cpu-0 UNREADABLE /thermal_zone0/temp\npm8550_tz 40000"
         with self.assertRaisesRegex(RuntimeError, "No readable CPU"):
-            self.owner.sample()
+            self.owner.sample(all_zones=True)
 
     def test_cooling_hysteresis_excludes_wait_from_game_attempt(self):
         self.device.display.return_value = True
@@ -336,7 +393,7 @@ class GameThermalOwnerTests(unittest.TestCase):
         with mock.patch.object(batch.time, "sleep") as sleep:
             self.owner.cool()
         sleep.assert_called_once_with(batch.THERMAL_INTERVAL_SECONDS)
-        self.device.cmd.assert_called_with("shell", batch.ALL_ZONES, timeout=0.7)
+        self.device.cmd.assert_called_with("shell", batch.ALL_ZONES, timeout=10)
         rows = [json.loads(line) for line in self.owner.trace.read_text().splitlines()]
         self.assertEqual([row["maximum_zone_celsius"] for row in rows], [51, 50])
         self.assertEqual(self.owner.peak_cpu_celsius, 49)

@@ -42296,3 +42296,38 @@ notifies the dispatcher. R58 APK
 remains the last installation receipt, with no accepted gameplay controls.
 Fresh device evidence is required before closing any public-alpha gate.
 
+## J1137 — Separate thermal admission discovery from runtime sampling
+
+**Hypothesis/scope:** Main's first J1131 R58 controls continuation refuses before
+launch because discovering approximately 95 thermal zones exceeds the shared
+0.7-second ADB timeout. A slower admission read while idle must be independent
+of the strict gameplay sampling deadline. This is generic shell supervision;
+no game reconstruction or runtime change is involved.
+
+**Change:** admission discovers temperature types and readable physical paths
+with a 10-second timeout. Runtime reads the discovered physical temperature
+paths in one batch without repeatedly reading zone types or unsupported paths.
+The existing owner API and readable-zone policy remain: at most 50 C admission,
+above 80 C abort, no native suspension or replay, a 0.7-second runtime ADB timeout
+and measured sampling gaps of at most one second. Admission discovery is outside
+the runtime gap bound; each runtime starts a fresh measured interval. Excluded
+interfaces and separate CPU/all-zone peaks remain recorded. Failed runtime reads,
+malformed output and numeric sentinels still refuse supervision.
+
+**Validation:** 32 focused batch host fixtures and Ruff format/check pass. The
+executable shell fixtures exercise discovery, batched physical-path reads and
+missing-file refusal. Slow admission takes longer than one second without a
+runtime gap refusal; the subsequent runtime still rejects non-CPU heat above
+80 C. Five sustained-owner regression fixtures also pass. No device command,
+build, installation or gameplay qualification occurs in this checkpoint.
+
+**Evidence/limits:** retained private Main result
+`work/coordination/main-port-r58/controls-retry/device.done.json` records the
+prelaunch timeout, zero launched controls, process/selector absence, OLED asleep
+and lease release. Its installed R58 APK is
+`4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`, source
+`55149b48`; this host fix neither installs nor qualifies gameplay on it.
+The revised shared handoff and `thermal-timeout-ready.done.json` select the exact
+helper for Main's next controls continuation. Fresh device sampling cadence and
+all alpha stability/physical-input acceptance gates remain open.
+

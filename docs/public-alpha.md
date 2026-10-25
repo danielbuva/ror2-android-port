@@ -209,7 +209,10 @@ qualification remain separate from these laboratory installs.
       before any interrupted-write, heap or sustained stage completes. J1130 confirms
       unreadable thermal interfaces;
       [J1131](PORTING_JOURNAL.md#j1131--supervise-all-readable-gameplay-thermal-zones)
-      host-qualifies the clarified readable-zone admission/runtime policy. Fresh
+      host-qualifies the clarified readable-zone admission/runtime policy.
+      [J1137](PORTING_JOURNAL.md#j1137--separate-thermal-admission-discovery-from-runtime-sampling)
+      separates admission discovery from strict runtime sampling after a prelaunch
+      timeout. Fresh
       device qualification remains open.
       Injected persistence states do not establish a power-cut
       or filled-filesystem result.

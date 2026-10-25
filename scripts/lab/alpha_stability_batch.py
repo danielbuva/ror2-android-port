@@ -11,6 +11,7 @@ import importlib
 import json
 import os
 from pathlib import Path
+import shlex
 import shutil
 import subprocess
 import sys
@@ -36,7 +37,7 @@ ALL_ZONES = (
     "for z in /sys/class/thermal/thermal_zone*; do "
     'read -r t < "$z/type" || { printf "Thermal type read failed: %s\\n" "$z/type" >&2; exit 1; }; '
     'read -r v < "$z/temp" || { printf "%s\\tUNREADABLE\\t%s\\n" "$t" "$z/temp"; continue; }; '
-    'printf "%s\\t%s\\n" "$t" "$v"; done'
+    'printf "%s\\t%s\\t%s\\n" "$t" "$v" "$z/temp"; done'
 )
 NON_TEMPERATURE_ZONES = {
     "pm8550-bcl-lvl0",
@@ -79,9 +80,9 @@ def cooldown_temperatures(text):
         if len(fields) == 3 and fields[1] == "UNREADABLE":
             excluded.append(dict(type=fields[0], path=fields[2], reason="Thermal temp read failed/unsupported"))
             continue
-        if len(fields) != 2:
+        if len(fields) not in (2, 3) or (len(fields) == 3 and (not fields[2].startswith("/") or not fields[2].endswith("/temp"))):
             raise RuntimeError("Malformed all-zone thermal observation")
-        name, raw = fields
+        name, raw = fields[:2]
         try:
             value = int(raw)
         except ValueError as error:
@@ -122,19 +123,43 @@ class _GameThermalOwner:
         self.error = None
         self.peak_cpu_celsius = None
         self.peak_zone_celsius = None
+        self.runtime_zones = []
+        self.excluded_zones = []
 
-    def sample(self, all_zones=True):
+    def sample(self, all_zones=False):
         before = time.monotonic()
         self.trace.parent.mkdir(parents=True, exist_ok=True)
-        observation = dict(utc=common.now(), all_zones=True)
+        observation = dict(utc=common.now(), all_zones=True, admission=all_zones)
         try:
-            text = self.device.cmd("shell", ALL_ZONES, timeout=0.7)
+            if all_zones:
+                text = self.device.cmd("shell", ALL_ZONES, timeout=10)
+            else:
+                if not self.runtime_zones:
+                    raise RuntimeError("Runtime thermal sampling requires admission discovery")
+                # One cat reads every admitted readable physical sensor. Reading
+                # each unsupported sysfs interface again can itself take seconds.
+                command = "cat " + " ".join(shlex.quote(path) for _, path in self.runtime_zones)
+                raw = self.device.cmd("shell", command, timeout=0.7)
+                observation["runtime_raw"] = raw
+                values = raw.splitlines()
+                if len(values) != len(self.runtime_zones) or any(len(value.split()) != 1 for value in values):
+                    raise RuntimeError("Malformed runtime thermal observation")
+                text = "\n".join(name + "\t" + value + "\t" + path for (name, path), value in zip(self.runtime_zones, values))
             at = time.monotonic()
             gap = at - self.previous if self.previous is not None else at - before
             self.previous = at
             observation["gap_seconds"] = gap
             observation["all_zones_raw"] = text
             maximum, value, excluded = cooldown_temperatures(text)
+            if all_zones:
+                self.runtime_zones = [
+                    (fields[0], fields[2])
+                    for line in text.splitlines()
+                    if len(fields := line.split()) == 3 and fields[1] != "UNREADABLE" and fields[0] not in NON_TEMPERATURE_ZONES
+                ]
+                self.excluded_zones = excluded
+            else:
+                excluded = self.excluded_zones
             observation.update(maximum_zone_celsius=maximum, excluded_zones=excluded)
             self.peak_zone_celsius = max(maximum, self.peak_zone_celsius or maximum)
             self.peak_cpu_celsius = max(value, self.peak_cpu_celsius or value)
@@ -145,7 +170,7 @@ class _GameThermalOwner:
         finally:
             with self.trace.open("a") as stream:
                 stream.write(json.dumps(observation) + "\n")
-        if gap > 1:
+        if not all_zones and gap > 1:
             raise RuntimeError("Thermal sample gap exceeded one second")
         if at >= self.deadline:
             raise RuntimeError("Three-hour alpha driver deadline reached")

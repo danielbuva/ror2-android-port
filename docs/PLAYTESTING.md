@@ -165,6 +165,9 @@ failed supervision still abort. Exact known electrical pseudo-zones are excluded
 Record CPU and all-zone peaks and retain runtime or unexpected errors as first
 failures, following
 [J1131](PORTING_JOURNAL.md#j1131--supervise-all-readable-gameplay-thermal-zones).
+Admission discovery uses a separate 10-second timeout while idle; gameplay
+reads the discovered physical temperature paths in one batch with the strict
+runtime timeout and gap bound ([J1137](PORTING_JOURNAL.md#j1137--separate-thermal-admission-discovery-from-runtime-sampling)).
 Completed stages checkpoint within one three-hour deadline; cooldown never
 counts as play. The 70/55 C pause/resume rule applies to pausable tool jobs,
 not gameplay. Battery/HAL checks remain additional limits.
