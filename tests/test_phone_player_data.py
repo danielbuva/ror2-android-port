@@ -1279,6 +1279,198 @@ class PlayerDataTests(unittest.TestCase):
                 self.assertFalse(json.loads((output / "result.json").read_text())["success"])
 
 
+class SharedDefaultMaterialTests(unittest.TestCase):
+    def fixture(self, editor_sizes=(4, 12, 12, 12)):
+        """Invented SDK fields and raw values; no game or SDK files are read."""
+
+        def string(value):
+            raw = value.encode()
+            return struct.pack("<I", len(raw)) + raw + bytes(-len(raw) % 4)
+
+        def vector(name, element):
+            return ("vector", name, -1, 0, 0, [("Array", "Array", -1, 1, 0, [("int", "size", 4, 0, 0, []), element])])
+
+        def pairs(name, value):
+            return vector(name, ("pair", "data", -1, 0, 0, [metadata_string("first"), value]))
+
+        def property(name, kind, defaults=bytes(16)):
+            return (
+                string(name)
+                + string("Invented description")
+                + struct.pack("<I", 1)
+                + string("Invented attribute")
+                + struct.pack("<iI", kind, 23)
+                + defaults
+                + string("Invented texture default")
+                + struct.pack("<i", 2)
+            )
+
+        def texture(name, identity):
+            return string(name) + struct.pack("<iq4f", 3, identity, 0.25, -2.0, 7.0, 1.0)
+
+        prefix_names = ("m_ObjectHideFlags", "m_CorrespondingSourceObject", "m_PrefabInstance", "m_PrefabAsset")
+        saved = (
+            "SavedProperties",
+            "m_SavedProperties",
+            -1,
+            0,
+            0,
+            [
+                pairs("m_TexEnvs", ("TexEnv", "second", 28, 0, 0, [])),
+                pairs("m_Ints", ("int", "second", 4, 0, 0, [])),
+                pairs("m_Floats", ("float", "second", 4, 0, 0, [])),
+                pairs("m_Colors", ("ColorRGBA", "second", 16, 0, 0, [])),
+            ],
+        )
+        definition = metadata_tree(
+            (
+                "Material",
+                "Base",
+                -1,
+                0,
+                0,
+                [("EditorField", name, size, 0, 0, []) for name, size in zip(prefix_names, editor_sizes)]
+                + [
+                    metadata_string("m_Name"),
+                    ("PPtr<Shader>", "m_Shader", 12, 0, 0, []),
+                    vector("m_ValidKeywords", metadata_string("data")),
+                    vector("m_InvalidKeywords", metadata_string("data")),
+                    ("NativeState", "nativeState", 12, 0, 0, []),
+                    pairs("m_StringTagMap", metadata_string("second")),
+                    vector("m_DisabledShaderPasses", metadata_string("data")),
+                    saved,
+                    ("UnrelatedTail", "unrelatedTail", 8, 0, 0, []),
+                ],
+            )
+        )
+        runtime = string("Invented SDK material") + struct.pack("<iq", 0, -81)
+        runtime += struct.pack("<I", 1) + string("FEATURE_\u2603") + struct.pack("<I", 1) + string("DISABLED")
+        runtime += struct.pack("<IBB2xi", 19, 1, 0, 2471)
+        runtime += struct.pack("<I", 1) + string("Tag") + string("Retained value") + struct.pack("<I", 1) + string("Retained pass")
+        kept_b, removed, kept_a = texture("_TextureB", -13), texture("_Discard", 29), texture("_TextureA", 77)
+        integers = struct.pack("<I", 1) + string("_Integer") + struct.pack("<i", -91)
+        original_nan = bytes.fromhex("4523c17f")
+        original_negative_zero = bytes.fromhex("00000080")
+        added_nan = bytes.fromhex("3412c07f")
+        original_scalars = (
+            struct.pack("<I", 3)
+            + string("_ZExisting")
+            + original_nan
+            + string("_Orphan")
+            + struct.pack("<f", -7.25)
+            + string("_BExisting")
+            + original_negative_zero
+        )
+        colors_and_tail = struct.pack("<I", 1) + string("_Tint") + bytes(range(16)) + b"tail\x00\xff\x01!"
+        body = bytes(range(sum(editor_sizes))) + runtime + struct.pack("<I", 3) + kept_b + removed + kept_a + integers + original_scalars + colors_and_tail
+        # Neither shader declaration order nor material scalar order is sorted.
+        shader = (
+            string("Invented shader")
+            + struct.pack("<I", 7)
+            + property("_ZExisting", 2, struct.pack("<4f", 13.0, 0, 0, 0))
+            + property("_TextureA", 4)
+            + property("_MMissing", 2, added_nan + bytes(12))
+            + property("_BExisting", 3, struct.pack("<4f", 6.5, 0, 0, 0))
+            + property("_TextureB", 4)
+            + property("_AMissing", 3, original_negative_zero + bytes(12))
+            + property("_Discard", 1)
+        )
+        expected_scalars = (
+            struct.pack("<I", 5)
+            + string("_AMissing")
+            + original_negative_zero
+            + string("_BExisting")
+            + original_negative_zero
+            + string("_MMissing")
+            + added_nan
+            + string("_Orphan")
+            + struct.pack("<f", -7.25)
+            + string("_ZExisting")
+            + original_nan
+        )
+        expected = runtime + struct.pack("<I", 2) + kept_b + kept_a + integers + expected_scalars + colors_and_tail
+        return body, definition, shader, expected
+
+    def test_projection_reconciles_declared_properties_and_preserves_raw_source_values(self):
+        body, definition, shader, expected = self.fixture()
+        self.assertEqual(P.shared_default_material(body, definition, shader), expected)
+
+    def test_projection_requires_the_sdk_editor_object_prefix(self):
+        body, definition, shader, _ = self.fixture((4, 8, 12, 12))
+        with self.assertRaisesRegex(ValueError, "editor Material Object prefix"):
+            P.shared_default_material(body, definition, shader)
+
+
+class RegistryRequestAdapterTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name).resolve()
+        self.profile_root = self.root / "recipe"
+        self.profile_root.mkdir()
+        self.recipe = self.profile_root / "registry.json"
+        self.recipe_value = {"authored": {"configuration": "invented source membership"}}
+        self.recipe.write_text(json.dumps(self.recipe_value))
+        self.selected = {"path": self.recipe.name, "sha256": P.sha(self.recipe)}
+        self.pc, self.authored, self.packages, self.managed = (self.root / name for name in ("pc", "authored", "factory/packages", "managed"))
+        for path in (self.pc, self.authored, self.packages, self.managed):
+            path.mkdir(parents=True)
+        self.input_hashes = self.packages.parent / "input-hashes.json"
+        self.input_hashes.write_text(json.dumps({"packages/Fixture.cs": "invented factory pin"}))
+        self.editor_resources = self.root / "editor-resources"
+        self.editor_resources.write_bytes(b"invented SDK input")
+        self.request = self.root / "code-request.json"
+        self.request.write_text(json.dumps({"target": {"source": str(self.authored)}, "source_inputs": {"packages": str(self.packages)}}))
+
+    def run_adapter(self):
+        return P.registry_records(self.profile_root, self.selected, self.pc, self.editor_resources, self.request, self.managed)
+
+    def leaf_result(self):
+        return {"layout": {"authored": True}, "bodies": {3: b"invented script body"}, "script_ids": {("Fixture.dll", "", "Fixture"): 3}, "provider_pins": {}}
+
+    def test_existing_code_request_selects_factory_inputs_and_preserves_leaf_result(self):
+        value = self.leaf_result()
+        existing_pin = {"bytes": self.input_hashes.stat().st_size, "sha256": P.sha(self.input_hashes)}
+        value["provider_pins"][str(self.input_hashes)] = existing_pin
+        with patch.object(P.SCRIPT, "registry", return_value=value) as leaf:
+            result = self.run_adapter()
+        leaf.assert_called_once_with(self.pc, self.editor_resources, self.managed, str(self.authored), self.packages, self.input_hashes, self.recipe_value, P.W)
+        self.assertIs(result, value)
+        self.assertEqual(result["provider_pins"][str(self.input_hashes)], existing_pin)
+        self.assertEqual(set(result["provider_pins"]), {str(self.input_hashes), str(self.recipe), str(self.request)})
+        for path, expected in result["provider_pins"].items():
+            P.checked(Path(path), (expected["bytes"], expected["sha256"]))
+
+    def test_early_recipe_drift_is_refused_before_registry_production(self):
+        self.recipe.write_text(self.recipe.read_text() + " ")
+        with patch.object(P.SCRIPT, "registry") as leaf, self.assertRaisesRegex(ValueError, "bytes differ"):
+            self.run_adapter()
+        leaf.assert_not_called()
+
+    def test_late_recipe_or_code_request_drift_is_refused(self):
+        originals = {path: path.read_bytes() for path in (self.recipe, self.request)}
+        for changed in (self.recipe, self.request):
+            with self.subTest(provider=changed.name):
+                for path, raw in originals.items():
+                    path.write_bytes(raw)
+
+                def mutate_provider(*args):
+                    changed.write_bytes(originals[changed] + b" ")
+                    return self.leaf_result()
+
+                with patch.object(P.SCRIPT, "registry", side_effect=mutate_provider) as leaf, self.assertRaisesRegex(ValueError, "bytes differ"):
+                    self.run_adapter()
+                leaf.assert_called_once()
+
+    def test_required_source_setup_is_checked_before_registry_production(self):
+        for absent in ("editor_resources", "request", "managed"):
+            inputs = {"editor_resources": self.editor_resources, "request": self.request, "managed": self.managed}
+            inputs[absent] = None
+            with self.subTest(absent=absent), patch.object(P.SCRIPT, "registry") as leaf, self.assertRaisesRegex(ValueError, "registry requires"):
+                P.registry_records(self.profile_root, self.selected, self.pc, inputs["editor_resources"], inputs["request"], inputs["managed"])
+            leaf.assert_not_called()
+
+
 class EnglishStringsTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()

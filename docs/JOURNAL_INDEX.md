@@ -10,6 +10,10 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1169](PORTING_JOURNAL.md#j1169--bound-the-complete-source-only-player-registry-metadata-lifetime) | 2026-10-25 | Bound the complete source-only player registry metadata lifetime | **Hypothesis and prior art.** |
+| [J1166](PORTING_JOURNAL.md#j1166--guarded-phone-player-assembly-stops-on-thermal-limit) | 2026-10-25 | Guarded phone player assembly stops on thermal limit | **Hypothesis.** |
+| [J1161](PORTING_JOURNAL.md#j1161--assemble-the-complete-player-script-registry-and-default-scene-shared-file) | 2026-10-25 | Assemble the complete player script registry and default-scene shared file | **Hypothesis and scope.** |
+| [J1159](PORTING_JOURNAL.md#j1159--phone-player-assembly-refuses-an-omitted-original-shader-input) | 2026-10-25 | Phone player assembly refuses an omitted original shader input | **Hypothesis.** |
 | [J1152](PORTING_JOURNAL.md#j1152--preserve-r58-thermal-abort-before-baseline-world-play) | 2026-10-25 | Preserve R58 thermal abort before baseline world play | **Hypothesis and fixed candidate.** |
 | [J1121](PORTING_JOURNAL.md#j1121--match-native-blink-travel-ticks-and-qualify-engineer-beam-configuration) | 2026-10-24 | Match native Blink travel ticks and qualify Engineer beam configuration | **Hypothesis and prior evidence.** |
 | [J1111](PORTING_JOURNAL.md#j1111--build-the-destination-only-mainoutput-observation-candidate) | 2026-10-24 | Build the destination-only MainOutput observation candidate | **Hypothesis and existing ownership.** |

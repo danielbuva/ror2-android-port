@@ -115,6 +115,14 @@ roots or phone-only installation.
 ./dev prototype --action phone-content-build --target <generated-project>
 ```
 
+The exact-editor check additionally writes `native-script-schema.json` and a
+binary `native-script-schema.assets` beside its content oracle. The authored
+Editor-only `NativeScriptSchemaFixture` covers native property names, exposed
+references and integer-vector scalar/collection fields. Its native MonoScript
+hash and saved bytes are verification evidence; inspect the actual serialized
+metadata before claiming that type trees were retained. Temporary objects are
+destroyed after capture. These files are never production inputs.
+
 `phone-wrapper-oracle` is separate current **desktop verification** support.
 Its explicit request is either `{"operation":"stage"}` or
 `{"operation":"check","project":"<absolute generated project>"}`. Stage writes

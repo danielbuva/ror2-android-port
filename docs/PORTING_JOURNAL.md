@@ -44057,3 +44057,264 @@ Siren-route recovery/mission, live Engineer semantics, PC appearance, full audio
 and normal unassisted runs remain open. Revisit the launch/setup thermal cost
 from the retained trace and logs before another attempt, preserving the current
 thresholds and explicit device order.
+## J1159 — Phone player assembly refuses an omitted original shader input
+
+**Hypothesis.** The existing 173-file player owner can reproduce its qualified
+host cohort on Android from legitimate originals, the exact SDK/converter and
+five source-produced texture packs, without a Unity project or target supplier.
+This checks assembly from host-produced pixel records, not phone texture
+production, installation, launch or game readiness. The source is frozen at
+`378e71638da62095c70824c6e76488fe520194b5`, profile
+`a8cc2a42bef5d629211fb69a3e972b59f01768308511aa9c04103244a4cb5f46`.
+
+**Change and controls.** No public producer changes were made for the run. The
+private driver is pinned by SHA-256
+`79f7879b74537e3bb65482e736a0ed941194f8b6c46c948cfacb0ea656c8ebec`,
+with 21 host harness contracts, independent review and dry source admission.
+An explicit terminal peer handoff preceded atomic lease acquisition. A 250 ms
+CPU stream covers staging and execution; the driver pauses at 70 C, resumes
+only after a later sample at or below 55 C and aborts above 80 C. Existing
+500 MiB sampled family RSS, 512 MiB available memory and 15 GiB free-space
+floors remain enforced. This reuses the J1139 player/shader-selection owners;
+no new reconstruction mechanism or community assumption is introduced.
+
+**Result and first failure.** Staging transferred 803 files / 4,034,980,411 bytes;
+phone hash admission passed in 4.946 s. Assembly then correctly refused a
+missing original base-shaders bundle while deriving the shader-selection
+TextAssets. The host staging walker had collected original Material providers
+but omitted Shader providers represented by the manifest recipe's dependency
+relationships. Its input admission checked that incomplete list, so admission
+success did not prove source closure. Assembly exited 1 after 14.728 s; sampled
+family peak RSS was 47,906,816 bytes, maximum CPU sample was 76 C and the maximum
+sample interval was 0.252 s. Eighteen thermal pauses are recorded. This is a
+harness discovery defect, not a completed output comparison, source mismatch,
+OOM attribution or phone qualification.
+
+**Evidence and cleanup.** Full private receipts, traceback, thermal samples and
+recovered partial producer receipt are retained under
+`work/coordination/p1-player-phone-assembly-v1/`, including
+`phone173-execute-v1-done.json`, `phone173-parent-terminal-v1.json` and
+`run-82ea226e2ee146ab8f2fb4e4fd274f83/`. Terminal evidence was checked by size
+and SHA-256 on the host and rechecked remotely before scratch removal. Owned
+groups are absent/completed, the game is absent, the display is asleep, scratch
+is removed and the lease is released. More than 42 GiB remains free. The
+installed R58 APK remains unchanged at
+`4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`.
+No APK was built, installed or launched. The next worker received an explicit
+terminal handoff. Revisit only after repairing original-provider discovery and
+independently verifying complete host admission; a future phone run requires
+another explicit device slot. No completed 173-file phone result is claimed.
+
+## J1161 — Assemble the complete player script registry and default-scene shared file
+
+**Hypothesis and scope.** Original PC script records and embedded schemas,
+source-produced managed assemblies, original SDK/package importers and the
+existing writer can reconstruct both complete startup-content files. The
+source owner should allocate IDs from importer identities, compute properties
+hashes from actual source metadata and compose native defaults from original
+and SDK records. Accepted bytes may be compared only after production. This
+is a host content slice; phone memory and complete installation remain open.
+
+**Prior art and native control.** The implementation reuses the pinned
+AssetRipper/ThunderKit MD4 importer-ID knowledge recorded by J430/J597, existing
+J1124 properties hashing and AssetRipper CLR field/generic serialization rules.
+An authored Editor-only `NativeScriptSchemaFixture` captures the exact SDK's
+native properties hash and binary serialization for primitive, PropertyName,
+ExposedReference and integer-vector scalar/array/list fields. The first binary
+save rejected a persistent MonoScript argument; retaining only the temporary
+authored objects fixes it. The isolated exact-editor check passes. Its native
+API hash, saved native type hash and the public properties-hash implementation
+agree at `b973b4cdbb26cc540f29bd68e3c41be7`. The generated 5,640-byte fixture is
+private verification evidence, never a producer input. It independently fixes
+the native value-array alignment fact; original source schemas also corroborate
+it. Both temporary SDK projects were deleted after preserving evidence, with
+no game project/build or device mutation.
+
+**Implementation.** Existing `script_identity.registry` now admits the code
+owner's successful source-produced managed directory, actual provider/compiler
+receipts, immutable authored sources and original package source/meta pairs.
+`owner-player-registry.json` selects 429 source members in 427 original files,
+with 1,692 unique identity/schema witnesses and one script-table dependency.
+The census comes from original sources. Duplicate original script identities
+must agree, and source importer GUID plus signed importer local ID determines
+the final allocation; no target-ID table is supplied. Actual CLR inheritance,
+ordered eligible fields, native SDK base/curve schemas and original native
+field witnesses determine supported properties hashes. Explicitly unsupported
+native transfers retain the original record only when its actual DLL provider
+is unchanged. Source-only controls qualify all 1,691 original custom schemas.
+The complete output contains 2,753 MonoScripts plus the two original native
+records. Existing `player_data.py` writes the returned layout/bodies and owns
+terminal provider rechecks.
+
+The original package factory retains all prior compiler inputs, adding original
+importer sidecars and the importer-only TestRunner/MCP source sets through its
+existing request and flat `input-hashes.json`. These add no compiler sources.
+The one previously unset Siren importer GUID is explicit configuration from the
+laboratory's own authored project; the public recipe audit records the missing
+adjacent archived J850 source/meta pair. No raw generated meta, game code, body,
+tree snapshot or target hash override is published.
+
+The same player owner assembles `sharedassets0.assets` from original native
+class identities, original Skybox/RenderSettings relationships, SDK resource
+and material records, and the shader owner's existing Standard/Skybox record
+pack. A source-native RenderSettings hash match precedes schema reuse. The
+material helper drops the SDK editor prefix by metadata, filters textures by
+Shader declarations, retains original scalar bits and adds/sorts missing SDK
+defaults. Cube and diagnostics preloads follow the authored LabBuild policy and
+source-derived script IDs. Existing `write_serialized` owns framing and padding.
+All original, SDK, source-managed, recipe and pack providers are rechecked.
+No peer object producer was edited.
+
+**Host result.** A fresh guarded public run writes **177 complete files /
+35,281,913 bytes** in 248.315 s, with no private-cache, fixture or accepted-target
+reads and unchanged source pins. Comparison occurs separately after persistence:
+**175 raw-exact J850 files plus two previously explained current-input drift
+files**. Every prior 175-file output is unchanged. The two new final-file
+closures are `globalgamemanagers.assets`, 346,760 bytes, SHA-256
+`29461f8555c1c2ddf8f8c8c0b16705cf231095cd944a36b552925f656a0532df`,
+and `sharedassets0.assets`, 114,496 bytes, SHA-256
+`8c233ceb1511437e3358d745cf671a683fd93260061addfc04ff239e3190d054`.
+Strings/font remain current-input drift; neither is relabelled as exact.
+The code owner's composed readiness preserves all prior suppliers and the
+complete shader cohort: **583 of 705 files available**, comprising 578 raw-exact,
+two separately compared code outputs and three drift-explained current files.
+The 122 missing files are seven APK entries and 115 payload entries, with zero
+invalid or mismatched suppliers. Source provenance and device qualification stay
+separate from this host availability report. Fresh final-player-owner historical
+and repeated current font/Strings invocations preserve the existing complete
+difference proofs; historical inputs are never assembly suppliers. The composed
+request/report is `work/coordination/phone-code/drift-readiness-v6/` in the code
+owner's worktree; raw qualification is `final-player-drift-v2/` beside it.
+The source-only profile is
+`8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767`;
+registry recipe is
+`d30549957de20c686c00ff8987199edeffbd9afb56158046152354f87cd95840`.
+
+**Resource and review limits.** Lazy metadata reads and releasing the original
+resolver before current production reduce private control peak RSS from
+4.44 GiB to 2.12 GiB; the complete run peaks at 2,226,257,920 bytes. This still
+exceeds the 500 MiB phone guard, so complete phone registry production is
+unqualified. Review also finds a rejected non-CLR PE could escape ownership;
+registering each acquired PE before validation makes existing scope teardown
+cover that failure. A fresh final-source run at helper
+`8d9f6cd0c0582acae7bbd5962ce74da6e22286d0dd1e9bee81f1ae71c913ab41`
+passes the same source guard and terminal pins in 311.601 s; all 177 persisted
+files remain byte-identical to the first run, with peak RSS 2,146,566,144 bytes.
+Independent review verifies the full files and source/provider boundary.
+A regression checks both absent CLR and absent TypeDef,
+exactly one close and an empty owner cache. Synthetic host contracts cover
+source inheritance, field/generic/native hashing, lifecycle, material metadata
+projection, raw scalar retention and early/late provider drift. The existing
+42 player tests and 25 script-family tests pass, with Ruff and host preflight.
+The known generic doctor Bootstrap failure remains; original-input, inventory,
+parser, project and checkpoint checks pass.
+
+**Evidence and revisit.** Complete public source-only production and separate
+comparison are under `work/coordination/p1-player-registry-public-v1/`.
+Original schema/native controls and independent reports remain in
+`work/coordination/p1-player-startup-v2/`,
+`work/coordination/p1-player-registry-hashes-v1/` and
+`work/coordination/p1-player-shared-assets-v1/`. The isolated SDK control is in
+`work/rebuild/phone-content/20261025T120748.884504Z/`; no generated fixture is
+read by production. J1159 separately records the earlier 173-file phone
+harness's staging failure and verified cleanup, without a complete phone
+comparison. No APK was built, installed or launched for this host slice; J850
+remains comparison APK
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+Revisit phone qualification with bounded metadata ownership and complete
+original-provider staging. Remaining startup metadata identities, UI graph
+allocation and complete source-derived installation retain their own gates.
+
+## J1166 — Guarded phone player assembly stops on thermal limit
+
+**Hypothesis.** Repairing J1159's two omitted original shader bundles should
+allow the frozen 173-file source-only player assembly to reach independent
+whole-file comparison. Registry expansion remains outside this phone case.
+
+**Change and controls.** Frozen source `378e71638da62095c70824c6e76488fe520194b5`
+and private driver SHA-256
+`83fdc389c91eeade6d3b394ccb6014403c4ae614fc34e603c65d0da2fcd9e902`
+retain original providers, 500 MiB allowance and shared thermal observation.
+All 39 driver controls and fresh host dry admission pass. The driver stages
+805 files / 4,037,754,679 bytes and verifies admitted input hashes successfully.
+No installation or game launch occurs.
+
+**First failure.** Assembly is cancelled by the existing instantaneous CPU
+80 °C guard at 80.4 °C, after 59.106 s including 105 pauses. Sampled process
+family RSS peaks at 60,342,272 bytes; maximum CPU sample interval is 0.253 s.
+This is a thermal stop, not a complete-output or memory qualification. There
+is no complete production comparison and no passing phone-content claim.
+
+**Evidence and cleanup.** Local evidence lives under
+`work/coordination/p1-player-phone-assembly-v1/`: wrapper terminal
+`phone173-execute-v3-done.json`, case
+`run-23e6e0c082c644879b2086d7dabbc6a3/` and independently checked
+`phone173-parent-terminal-v3.json`. Every recovered terminal artifact matches
+its recorded size and SHA-256. Parent readback verifies owned processes and
+scratch absent, game/selector/pending absent, display asleep, more than 15 GiB
+free and lease released. Installed R58 remains SHA-256
+`4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`.
+The next owner receives an explicit terminal handoff; no retry is queued.
+
+**Revisit.** Preserve the failed evidence and diagnose CPU scheduling/cooling
+under the existing thermal limits before another exclusive device slot. The
+177-file registry additionally needs a fresh bounded-memory host proof and
+its own subsequent phone qualification.
+
+## J1169 — Bound the complete source-only player registry metadata lifetime
+
+**Hypothesis and prior art.** J1161's byte-exact source registry needs only CLR
+serialization identities, eligible fields and their references, rather than
+persistent PE/table graphs. Preserve its pinned AssetRipper CLR serialization
+and importer rules while releasing SDK and original-schema discovery state
+before traversing current managed providers. This is a host resource closure;
+it does not qualify phone execution.
+
+**Change.** The existing `script_identity` owner projects raw lazy `dnfile`
+metadata into the fields consumed by its current serializer. MethodDef and
+MemberRef constructors independently identify serialization attributes; field
+signatures, generic ownership, type forwarding and nested-type membership
+preserve their existing meaning. Each PE closes immediately after projection,
+including rejected non-CLR inputs. The registry releases SDK/curve layouts and
+final original witnesses before managed traversal, rereading original witness
+layouts for validation instead of retaining all 429 layouts. Terminal resolver
+cleanup still covers completion and exceptions. No new producer input, cache,
+target body or object-owner interface is introduced.
+
+**Host result.** Fresh public helper SHA-256
+`bdac038fba518dad8c6891a17c408a53a7a7548be207733ced7b68762721f7da`
+and unchanged player owner
+`06958562713570774a028121fadbb617b2a15842f93582bfde45ab5db8efa7b6`
+produce **177 files / 35,281,913 bytes in 146.285 s**, with whole-process peak
+RSS **289,341,440 bytes**, below the 500 MiB allowance. The guarded producer
+records no forbidden reads; the guard additionally excludes the private
+compact experiment. A separate comparison after persistence verifies all 177
+files against J1161's qualified outputs, preserving its **175 raw-exact files
+and two explained current-input differences**. The registry remains 2,753
+MonoScripts / 346,760 bytes, SHA-256
+`29461f8555c1c2ddf8f8c8c0b16705cf231095cd944a36b552925f656a0532df`.
+The source-only recipe hashes and all final-file bytes are unchanged.
+The prior composed availability remains 583 of 705; this memory change closes
+no additional content entry and does not substitute for a fresh full union.
+
+**Verification and evidence.** All 21 registry and 42 player host contracts
+pass; the registry contracts also pass under isolated standard-library startup.
+They cover attribute constructor forms, fields, inheritance, generics,
+forwarders, unsupported metadata, PE close on rejection and SDK/final-witness
+lifetime release. Ruff format/check and host preflight pass. Doctor confirms
+legitimate input, inventory and parser pins; its known Bootstrap gate remains
+blocked. Evidence is under
+`work/coordination/p1-player-registry-public-v1/`: terminal
+`full-host-v3-done.json`, separate `full-host-v3-comparison.json`, frozen source
+map, producer log and persisted `full-host-v3/` output. Producer receipt SHA-256
+is `5742ca49620f55036c7de934ffbb0abbe33fc46fb21ba44511b4a2d9aa3b006f`;
+comparison SHA-256 is
+`bd8c64f961e6b35f1b095a4e15073269f08863207e4cc42075c12d4846f76229`.
+
+**Remaining gate.** No APK, installation, phone lease or game launch occurs.
+J850 remains comparison APK
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+J1166's separate 173-file phone case stops thermally and cannot qualify this
+177-file cohort. Require a fresh exclusive phone replay under the existing
+memory/thermal guards before claiming phone production. Seven APK files and
+115 payload files remain missing from the last composed availability report.
