@@ -109,6 +109,48 @@ class OwnerSigningTests(unittest.TestCase):
 
 
 class OwnerAssemblyTests(unittest.TestCase):
+    def test_readiness_lists_all_missing_and_mismatched_inputs_without_replay(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            targets = root / "not-produced-yet"
+            code = {}
+            rows = []
+            for i, name in enumerate(sorted(OWNER.CODE_ENTRIES | SDK.SDK_ENTRIES)):
+                path = root / str(i)
+                path.write_bytes(b"produced code")
+                code[name] = str(path)
+                rows.append({"path": "apk/" + name, "bytes": 1, "sha256": "0" * 64})
+            native = "lib/arm64-v8a/libil2cpp.so"
+            Path(code[native]).unlink()
+            # A comparison file must never become a missing produced output's fallback.
+            replay = targets / ("apk/" + native)
+            replay.parent.mkdir(parents=True)
+            replay.write_bytes(b"comparison code")
+            for name in ("apk/assets/player", "payload/catalog", "payload/bundle", "payload/stale"):
+                rows.append({"path": name, "bytes": 1, "sha256": "0" * 64})
+            stale = targets / "payload/stale"
+            stale.parent.mkdir(parents=True)
+            stale.write_bytes(b"wrong bytes")
+            omitted = ["apk/META-INF/OWNER.RSA", "payload/bundle.manifest"]
+            rows += [{"path": name} for name in omitted]
+            request = {"manifest": "unused", "manifest_sha256": OWNER.PROFILE, "targets": str(targets), "code": code}
+            with patch.object(OWNER.PACKET, "profile", return_value=(b"", {"targets": rows})):
+                report = OWNER.check(request)
+            self.assertFalse(report["assembly_ready"])
+            self.assertEqual(report["selection"], "produced-code-and-sdk")
+            self.assertEqual(
+                set(report["blocked_entries"]),
+                {"apk/" + native, "apk/assets/player", "payload/catalog", "payload/bundle", "payload/stale"},
+            )
+            self.assertEqual(report["omitted_entries"], omitted)
+            self.assertEqual(len(report["code_comparison_required"]), 15)
+            self.assertEqual(next(r for r in report["entries"] if r["path"] == "payload/stale")["status"], "mismatch")
+            self.assertFalse(report["source_provenance_verified"])
+            self.assertFalse(report["device_qualified"])
+
+    def test_missing_content_refuses_before_any_compiler_and_retains_full_report(self):
+        self.check_assembly(OWNER.CODE_ENTRIES | SDK.SDK_ENTRIES, missing_content=True)
+
     def test_produced_code_requires_burst_instead_of_replaying_it(self):
         with self.assertRaisesRegex(ValueError, "Burst"):
             OWNER.code_sources({"code": {name: "not read" for name in OWNER.CODE_ENTRIES if "burst" not in name}})
@@ -134,7 +176,7 @@ class OwnerAssemblyTests(unittest.TestCase):
     def test_produced_manifest_drift_refuses(self):
         self.check_assembly(OWNER.CODE_ENTRIES | SDK.SDK_ENTRIES, change_manifest=True)
 
-    def check_assembly(self, entries, *, change_manifest=False):
+    def check_assembly(self, entries, *, change_manifest=False, missing_content=False):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve()
             targets, frontend, produced = (root / name for name in ("targets", "frontend", "produced"))
@@ -182,6 +224,9 @@ class OwnerAssemblyTests(unittest.TestCase):
                 )
             )
             output = root / "output"
+            if missing_content:
+                (targets / "apk/assets/authored.txt").unlink()
+                (targets / "payload/authored.bundle").unlink()
 
             def run(argv, **kwargs):
                 argv = list(map(str, argv))
@@ -195,8 +240,17 @@ class OwnerAssemblyTests(unittest.TestCase):
                 patch.object(OWNER.MANIFEST, "patch", return_value=b"independent routed manifest") as manifest_patch,
                 patch.object(OWNER, "ART", OWNER.sha(frontend / "background.png")),
                 patch.object(OWNER, "RESERVE", 0),
-                patch.object(OWNER.subprocess, "run", side_effect=run),
+                patch.object(OWNER.subprocess, "run", side_effect=run) as compiler,
             ):
+                if missing_content:
+                    with self.assertRaisesRegex(ValueError, "inputs incomplete"):
+                        OWNER.build(request, output)
+                    compiler.assert_not_called()
+                    report = json.loads((output / "readiness.json").read_text())
+                    self.assertEqual(report["blocked_entries"], ["apk/assets/authored.txt", "payload/authored.bundle"])
+                    self.assertFalse((output / "owner-unsigned.apk").exists())
+                    self.assertFalse(json.loads((output / "result.json").read_text())["success"])
+                    return
                 manifest_source = Path(code["AndroidManifest.xml"]) if "AndroidManifest.xml" in code else targets / "apk/AndroidManifest.xml"
                 original_manifest = manifest_source.read_bytes()
                 if change_manifest:

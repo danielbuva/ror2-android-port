@@ -38655,3 +38655,84 @@ complete original-input native job and full content assembly remain open. No
 game APK is assembled, installed or launched by this result, and no phone
 runtime/performance/security qualification is inferred. Revisit final composition
 when both code and content producers have completed.
+
+## J1112 — Inventory final owner APK inputs before launcher compilation
+
+2026-10-25. Host-only packaging; no device or Editor action.
+
+**Hypothesis and owner.** Extend the existing owner APK assembly, rather than
+introducing another target layout: inspect every selected `targets[].path` plus
+the explicit produced code/SDK cohort before launching a compiler. This is
+generic APK packaging and reuses J1102/J1109; no new game reconstruction,
+loader, serialization, platform adapter or runtime diagnostic is introduced.
+The content owner retains meshes, avatars, textures, bundles and player data.
+
+**Implementation.** `build_owner_apk.py --check-request` writes a new private
+report containing every required final entry, actual size/hash, raw comparison,
+and missing/mismatched/invalid status. The normal build writes the same
+`readiness.json` and rejects all blocked inputs before Java or ZIP creation.
+Obsolete signatures and payload manifest sidecars are excluded exactly as in
+assembly. Missing produced code never selects a comparison-tree fallback.
+The existing complete three/16-output selection and durable signer remain.
+Source provenance and device qualification stay explicitly false; raw equality
+cannot establish either. Intermediate content record packs cannot satisfy final
+bundle/player-data paths.
+
+**Original-input outputs and gaps.** The real J850 profile requires 705 final
+entries after 135 omitted signatures/sidecars. All 16 explicit host code/SDK
+outputs are available: metadata and all 13 SDK entries are raw-exact. Native
+and Burst retain J1098/J1103's independently classified ELF metadata differences,
+with runtime sections exact; this checker does not infer their acceptance.
+The source-only final target tree is not yet produced: 687 CONTENT files
+(553 player-data and 134 payload) plus two CODE/packaging build-metadata files
+are missing. The latter are `META-INF/com/android/build/gradle/app-metadata.properties`
+and `META-INF/com.android.games.engine.build_fingerprint`, not original content.
+They remain explicit producer gates. No record pack or replay file fills these
+paths. Corrected phone-native output also remains unqualified/pending.
+
+Private `work/coordination/phone-code/` retains
+`owner-production-readiness-v1-request.json`,
+`owner-production-readiness-v1.json` and the independent CLI result
+`owner-production-readiness-cli-v1.json` (exit 1, all 689 gaps).
+The separate `owner-replay-validation-v1-request.json` selects produced code/SDK
+with the existing accepted-output replay content tree for validation only;
+its readiness report has zero blocked entries. That input is not promoted as
+source-derived content.
+
+**Verification.** All 19 affected host fixtures pass, including exhaustive gaps,
+missing produced code despite an existing replay comparison, partial-cohort
+refusal, no compiler/ZIP on incomplete content, actual 16-output assembly,
+manifest routing, input drift and durable signing. Independent reviewer GO;
+Ruff and public audit pass. Fresh-clone pre-push CI passes on `a78d5eaa`.
+Doctor/preflight retain the expected isolated lab-project refusal; no project or
+Editor is introduced to satisfy host packaging checks.
+
+**Full host composition and signing.** The detached validation completes in
+491.264 seconds: assembly takes 166.226 seconds and signing takes 317.477 seconds.
+It consumes all 16 produced host code/SDK files with the existing private
+accepted-output replay content, strictly as a wiring validation. The assembler
+verifies 713 entries, retains 134 runtime payload files (2,265,941,767 bytes),
+and creates the unsigned APK
+`f2103f96f6d227fb026634e36aa6f84e1cdd60b48f2d6d6c12a7058b2686c73d`
+(1,995,909,317 bytes). A new separate durable host owner key signs APK
+`45e9c5e2bea347aba591c7d0552ca6e45f7d7fa45ca8c3651ad1956708b785e1`
+(1,995,994,444 bytes); signature and 16 KiB ZIP alignment verification pass.
+No shared lab key is used or provisioned. The official Google build-tools 35
+archive is checked against its catalog checksum before extracting zipalign;
+the older host tool lacks the required page-alignment option.
+
+Private evidence: `owner-replay-validation-v1-done.json`,
+`owner-replay-validation-v1-{build,sign}.log`,
+`owner-replay-validation-v1-sign-request.json` and
+`host-zipalign-provider-v1.json` under the same coordination root. Unsigned and
+signed artifacts/results are referenced in that receipt on the external
+qualification volume; the rebuildable aligned intermediate is removed.
+The content remains replay-derived, and the native files are host outputs.
+All phone-native, source-production, installation and device-qualification gates
+remain false/open. No installation compatibility or game readiness is inferred.
+
+**Open gates.** Complete source-derived target files (including both generic
+build-metadata files), corrected phone-native output, composed phone assembly,
+compatible retained-data signer provisioning, user installer, both controls and
+matched first-stage performance remain open. No APK is installed or shared lab
+state changed. The Thor native job, sole guard and held lease are untouched.

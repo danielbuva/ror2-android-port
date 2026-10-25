@@ -48,8 +48,8 @@ def sha(path):
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
-def code_sources(request):
-    """Use the complete explicitly produced code cohort, never replay fallbacks."""
+def code_paths(request):
+    """Select a complete produced cohort, never replay fallbacks."""
     if "code" not in request:
         return {}
     if not isinstance(request["code"], dict) or not CODE_ENTRIES <= set(request["code"]):
@@ -58,13 +58,81 @@ def code_sources(request):
         sdk = module("_owner_sdk_package", SOURCE.parent / "accepted-output/sdk_package.py")
         if set(request["code"]) != CODE_ENTRIES | sdk.SDK_ENTRIES:
             raise ValueError("complete SDK Android cohort required alongside code outputs")
+    return request["code"]
+
+
+def code_sources(request):
     sources = {}
-    for name, value in request["code"].items():
+    for name, value in code_paths(request).items():
         path = Path(value)
         if not path.is_absolute() or path != path.resolve(strict=True) or not path.is_file():
             raise ValueError("canonical produced code file required")
         sources[name] = {"path": str(path), "bytes": path.stat().st_size, "sha256": sha(path)}
     return sources
+
+
+def check(request):
+    """Inventory final assembly inputs; byte equality never establishes provenance."""
+    if request["manifest_sha256"] != PROFILE:
+        raise ValueError("unsupported owner APK request/profile")
+    _, profile = PACKET.profile(Path(request["manifest"]), PROFILE)
+    code = code_paths(request)
+    targets = Path(request["targets"]).resolve()
+    entries, omitted = [], []
+    for target in profile["targets"]:
+        name = target["path"]
+        if name.startswith("apk/"):
+            apk_name = name[4:]
+            if ASSEMBLY.obsolete_signature(apk_name):
+                omitted.append(name)
+                continue
+        elif name.startswith("payload/"):
+            apk_name = None
+            if name.endswith(".manifest"):
+                omitted.append(name)
+                continue
+        else:
+            raise ValueError("unsupported owner APK target path")
+        produced = apk_name in code
+        row = {
+            "path": name,
+            "owner": "code" if produced else "content" if code else "replay-control",
+            "target_bytes": target["bytes"],
+            "target_sha256": target["sha256"],
+        }
+        try:
+            if produced:
+                path = Path(code[apk_name])
+                if not path.is_absolute() or path != path.resolve():
+                    raise ValueError("canonical produced code file required")
+            else:
+                path = PACKET.safe(targets, name)
+            row["source"] = str(path)
+            if not path.exists():
+                row["status"] = "missing"
+            elif not path.is_file():
+                raise ValueError("assembly input must be a regular file")
+            else:
+                row.update(bytes=path.stat().st_size, sha256=sha(path))
+                equal = row["bytes"] == target["bytes"] and row["sha256"] == target["sha256"]
+                row.update(status="ready" if produced or equal else "mismatch", target_equal=equal)
+        except (OSError, ValueError, TypeError) as error:
+            row.update(status="invalid", error=str(error))
+        entries.append(row)
+    selected = {row["path"][4:] for row in entries if row["owner"] == "code"}
+    if selected != set(code):
+        raise ValueError("produced code cohort not present in target profile")
+    blocked = [row["path"] for row in entries if row["status"] != "ready"]
+    return {
+        "assembly_ready": not blocked,
+        "selection": "produced-code-and-sdk" if len(code) > len(CODE_ENTRIES) else "produced-code" if code else "replay-control",
+        "blocked_entries": blocked,
+        "code_comparison_required": [row["path"] for row in entries if row["owner"] == "code" and row.get("target_equal") is False],
+        "entries": entries,
+        "omitted_entries": omitted,
+        "device_qualified": False,
+        "source_provenance_verified": False,
+    }
 
 
 def sign(request_path, output):
@@ -195,21 +263,17 @@ def build(request_path, output):
     fields = {"manifest", "manifest_sha256", "targets", "frontend", "java", "android_jar", "d8_jar", "wire_helper"}
     if set(request) - {"version_code", "code", "javac"} != fields or request["manifest_sha256"] != PROFILE:
         raise ValueError("unsupported owner APK request/profile")
-    code = code_sources(request)
+    code = code_paths(request)
     version_code = request.get("version_code")
     if "version_code" in request and (type(version_code) is not int or not 1 <= version_code <= 2147483647):
         raise ValueError("owner version code must be a positive Android integer")
-    roots = {key: Path(request[key]).resolve(strict=True) for key in fields - {"manifest_sha256"}}
+    roots = {key: Path(request[key]).resolve() for key in fields - {"manifest_sha256"}}
     if "javac" in request:
-        roots["javac"] = Path(request["javac"]).resolve(strict=True)
+        roots["javac"] = Path(request["javac"]).resolve()
     output = Path(output).absolute()
-    for selected in (roots["targets"], roots["frontend"], SOURCE, *(Path(row["path"]) for row in code.values())):
+    for selected in (roots["targets"], roots["frontend"], SOURCE, *(Path(path).resolve() for path in code.values())):
         if output.resolve().is_relative_to(selected) or selected.is_relative_to(output.resolve()):
             raise ValueError("owner APK output overlaps source inputs")
-    _, profile = PACKET.profile(roots["manifest"], PROFILE)
-    if sha(roots["frontend"] / "background.png") != ART:
-        raise ValueError("approved launcher art pin differs")
-    wire = module("_owner_wire", roots["wire_helper"])
     output.mkdir(mode=0o700)
     started = time.monotonic()
     result = {
@@ -222,6 +286,16 @@ def build(request_path, output):
         "public_distribution_qualified": False,
     }
     try:
+        readiness = check(request)
+        (output / "readiness.json").write_text(json.dumps(readiness, indent=2) + "\n")
+        if not readiness["assembly_ready"]:
+            raise ValueError("owner APK inputs incomplete; see readiness.json for every blocked entry")
+        code = code_sources(request)
+        roots = {key: path.resolve(strict=True) for key, path in roots.items()}
+        _, profile = PACKET.profile(roots["manifest"], PROFILE)
+        if sha(roots["frontend"] / "background.png") != ART:
+            raise ValueError("approved launcher art pin differs")
+        wire = module("_owner_wire", roots["wire_helper"])
         tracked = [
             SOURCE / n
             for n in ("PayloadStore.java", "PayloadBootstrapActivity.java", "index.html", "owner-host.js", "binary_manifest.py", "build_owner_apk.py")
@@ -392,10 +466,19 @@ def main():
     selection = parser.add_mutually_exclusive_group(required=True)
     selection.add_argument("--request")
     selection.add_argument("--sign-request")
+    selection.add_argument("--check-request", help="inventory final target-tree/code inputs without compiling, assembling or signing")
     parser.add_argument("--output", required=True)
     args = parser.parse_args()
+    if args.check_request:
+        result = check(json.loads(Path(args.check_request).read_text()))
+        with Path(args.output).open("x") as stream:
+            json.dump(result, stream, indent=2)
+            stream.write("\n")
+        print(json.dumps({key: value for key, value in result.items() if key != "entries"}))
+        return 0 if result["assembly_ready"] else 1
     print(json.dumps(sign(args.sign_request, args.output) if args.sign_request else build(args.request, args.output)))
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
