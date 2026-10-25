@@ -55,7 +55,12 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       [J1088](PORTING_JOURNAL.md#j1088--produce-every-single-mip-etc1-texture-from-pc-bundles-on-android)
       qualifies all 281 ETC1/single-mip records and the shared public codec build
       on Android, with all 5,006 RGB/Alpha8/uncompressed records reverified.
-      Remaining compressed textures, mips, cubemaps and complete bundles stay open.
+      [J1107](PORTING_JOURNAL.md#j1107--complete-host-rgba-production-and-bound-the-phone-thermal-refusal)
+      qualifies all 1,333 remaining single-mip RGBA records on the host; its
+      complete phone cohort remains open.
+      [J1110](PORTING_JOURNAL.md#j1110--produce-every-etc1-mip-chain-from-original-pc-textures-on-the-host)
+      qualifies all 1,589 ETC1 mip-chain records on the host, with Android
+      qualification open. RGBA mips, cubemaps and complete bundles stay open.
       [J1113](PORTING_JOURNAL.md#j1113--produce-a-complete-source-only-bundle-and-seven-player-data-files)
       qualifies the first complete PC-only bundle and seven player-data files;
       J1120 extends the host cohort to six complete bundles and 153 player files

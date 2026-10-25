@@ -788,3 +788,39 @@ extents refuse; failed attempts remain private. Compiler/codec children are
 bounded and reaped. No game data is shipped with the public source or profiles.
 Complete bundles, remaining textures/mips/cubemaps and ordinary app delivery
 remain open.
+
+The native pixel tool additionally exposes experimental `bc4`, `bc5`,
+`mips-linear` and `mips-srgb` pipe modes. BC4/BC5 accept the complete compressed
+logical top mip and emit cropped RGBA with unused colour channels zero and alpha
+255. Their byte-channel interpolation retains the pinned upstream one-unit
+bias. The mip modes accept exactly `width * height * 4` RGBA bytes and emit all
+logical levels, including the original, through 1 by 1 in raster order. The
+first linear reduction precedes normalization; later levels retain float32
+values without intermediate byte quantization. Gamma conversion applies only
+to RGB. The builder disables floating-point contraction and links native libm.
+All 87 authored exact-editor byte levels match on the host. These modes do not
+establish Android equivalence; the ETC1 host cohort is qualified below.
+
+## Produce ETC1 mip chains
+
+Current experimental support: J1110 qualifies all 1,589 records on the host.
+Full Android cohort qualification remains open.
+`recipe/owner-rgb-mip-textures.json`, SHA-256
+`380d6d4c2a7f64db1bac10cefa0c6d31ec7cbfb1e817cd4fd2d7067643cb4283`,
+selects 1,548 canonical originals for all 1,589 ETC1 mip-chain records. Use the
+same texture producer with this profile, the current `--etc-codec` and
+`--jpeg-codec` paths/pins, and a current `--sdk-toolchain` path/pin. This operation
+uses only that toolchain's native pixel helper, not the standalone SDK encoder.
+Source decoding/unpacking precedes transparency extension or the selected JPEG
+round trip. Float mip levels remain continuous; only emitted logical levels are
+quantized. Tail levels tile to complete ETC blocks. Destination usage selects the
+existing normal or perceptual ETC metric. The nine-field projection additionally
+sets mip count and colour space, preserving every unselected original byte.
+
+The current public ETC builder also compiles the unchanged vendored Unity Crunch
+headers under their retained Zlib notice. `texture-etc WIDTH HEIGHT uncrunch-bc1`
+and `uncrunch-bc3` accept a bounded original CRN stream on stdin, verify dimensions,
+format and a single face, and emit only its top BC level. These are intermediate
+owner-derived bytes; no Crunch image is distributed. The builder pins all three
+headers and their complete license before/after compilation and emits
+`CRUNCH-LICENSE.txt` alongside the existing provider notices.

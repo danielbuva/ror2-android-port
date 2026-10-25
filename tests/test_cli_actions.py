@@ -255,10 +255,22 @@ class PrototypeActionTests(unittest.TestCase):
         self.assertTrue(json.loads(output)["success"])
         module.check_settings_write_interrupt.assert_called_once_with(expected_apk_sha256="a" * 64)
 
+    def test_texture_oracle_dispatch_keeps_staging_and_explicit_check_separate(self):
+        self.modules["phone_texture_oracle"] = SimpleNamespace(
+            stage_action=self.record("phone_texture_oracle", "stage_action"), run_editor=self.record("phone_texture_oracle", "run_editor")
+        )
+        self.dispatch("phone-texture-fixture")
+        self.assertEqual(self.calls, [dict(module="phone_texture_oracle", function="stage_action", args=(), kwargs={})])
+        self.calls.clear()
+        self.dispatch("phone-texture-check", target="work/authored-project")
+        self.assertEqual(self.calls, [dict(module="phone_texture_oracle", function="run_editor", args=("work/authored-project",), kwargs={})])
+
     def test_registry_names_and_current_status_match_documented_contract(self):
         # Added actions have separate dispatch contracts rather than changing
         # the historical pre-registry snapshot.
         added = {
+            "phone-texture-fixture",
+            "phone-texture-check",
             "shared-catalog-code-build",
             "whole-catalog-fast-build",
             "shared-catalog-fast-build",
@@ -304,6 +316,8 @@ class PrototypeActionTests(unittest.TestCase):
                 "phone-native-registry",
                 "phone-wrapper-search",
                 "phone-wrapper-oracle",
+                "phone-texture-fixture",
+                "phone-texture-check",
                 "phone-native-apk-fixture",
                 "assembly-transforms-check",
                 "asset-transforms-check",

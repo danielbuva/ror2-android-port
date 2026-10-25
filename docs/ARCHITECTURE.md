@@ -179,6 +179,18 @@ with bounded native coordinate buffers; `sdk_texture_codec.c` calls the separate
 SDK codec. Host-native SDK execution is an oracle; Android uses the public QEMU
 runner and genuine GNU runtime. No game runtime owner or Editor/project build
 is introduced. Full-cohort phone qualification remains pending.
+The same native pixel owner has experimental BC4/BC5 byte-channel decoding and
+linear/sRGB mip-chain pipe modes. It preserves byte units through the first
+linear reduction, then continuous float32 levels. These modes have authored
+exact-editor host controls; game-cohort and Android admission remain separate.
+`etc1-mips` extends that texture owner with full-chain filtering, logical-tail
+tiling and destination normal-metric selection. `owner-rgb-mip-textures.json`
+provides the original/destination field and import relationships. The existing
+public ETC tool also owns bounded Unity Crunch top-level decompression using
+unchanged pinned Zlib headers, built by `build_texture_etc.py`. The SDK toolchain
+supplies its native pixel helper; ETC1 mip production executes no SDK encoder.
+J1110 qualifies all 1,589 records on the host; Android cohort qualification
+remains open.
 `build_sdk_runner.py` owns current experimental public Box64 acquisition-by-build
 for standalone owner-supplied SDK tools. Explicit unchanged upstream source,
 the pinned SDK NDK and host archive tools produce a private Android runner.
@@ -399,6 +411,19 @@ load/unload cycles and writes a private report. The three `phone-content-*` prot
 actions stage/check/build only this fixture under the primary checkout mutex.
 See [probe setup and boundaries](../tools/phone-build/README.md). No game-runtime
 owner or whole-catalog build calls this support path.
+
+`scripts/lab/phone_texture_oracle.py` owns a separate current experimental
+exact-editor texture oracle. The `phone-texture-fixture` action stages a fresh
+SDK-only project with authored `TextureMipFixture.cs`; `phone-texture-check`
+imports nine authored PNGs across linear, sRGB and normal settings under the
+primary editor mutex. A linear RGBAFloat mirror, its native byte conversion and
+native scalar transfer observations separate filtering from byte quantization.
+The owner validates all
+raw mip files, source/config
+identity and persisted extents in a new attempt. Its output is a desktop
+comparison oracle, never a phone/game production input. No player is built.
+Teardown removes its generated project after evidence is retained; the earlier
+authored content/player fixture and its frozen native provenance are separate.
 
 `tools/phone-build/tool-host-fixture/Program.cs` owns a separate current
 experimental .NET build-tool graph fixture (J1023). Its project selects the tool
