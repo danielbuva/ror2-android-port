@@ -42451,3 +42451,78 @@ on this frozen normal candidate, then qualify J1108's landing admission on the
 Siren route. Destination audio attribution, full mix/audibility, mission
 completion, PC appearance, rare-NaN causality and normal-game readiness remain
 open.
+
+
+## J1121 — Match native Blink travel ticks and qualify Engineer beam configuration
+
+**Hypothesis and prior evidence.** J1108's automatic landing admission must
+measure the actual native displacement before the next Siren route. Read
+J291/J292/J295/J298/J301/J310/J497 and retain the source graph/motor boundary:
+J1105's final path does not establish a usable lower-platform start, and changing
+recovery without that evidence would weaken the existing terrain-circling guard.
+The accepted original Blink instead exposes a precise admission error: its
+fixed callback moves for the complete tick before testing its float stopwatch.
+A configured 0.3 s duration at 0.02 s takes 16 ticks. At speed 7 and coefficient
+14 this is 31.36 m, rather than the 29.4 m nominal endpoint. Five supported
+samples around the old endpoint therefore do not prove support at the native
+endpoint. No cause of J1105's displacement is established by this finding.
+
+Reviewed the community stage/authority map, pinned DebugToolkit's typed
+motor/teleport boundary at d1e2f0aa, and the accepted input's actual state APIs.
+An initial comparison to an older input suggested a different jump-power field;
+matching the current assembly input rejects that hypothesis. Keep the accepted
+baseJumpPower and original movement axes. For the independent kit slice, read
+J685/J705's remaining beam semantics and J700's native configuration precedent.
+Pinned R2API.Loadout at f539511e separates state registration from native
+configuration, while Starstorm2's SS2VanillaSurvivor at a9a4badd preserves native
+state/network relationships. Neither supplies an Android beam implementation.
+No original/community implementation or serialized curve payload is copied.
+
+**Authored change and ownership.** Source e84ec048 changes only Blink endpoint
+prediction inside the existing TeleporterWorldSession automatic-input admission:
+count complete float-accumulated fixed ticks. Original state methods, source
+configuration, root motion, physics, health, transforms and input eligibility
+remain unchanged. The source fixture uses an inactive machine with no motor,
+direction, network identity or authority, calls the original Blink.FixedUpdate
+without OnEnter/SetState, reads its clock and destroys its temporary host.
+The normal fixture staging guard now checks this objective owner as well as its
+existing wrapper/input owners. An authored ledge test rejects ground supporting
+only the nominal endpoint, while admitting supported actual endpoints.
+
+The existing FirstStageDiagnosticGateFixture source gains an inert Engineer
+Laser Cutter configuration/phase fixture. Current action
+`./dev editor --target lab --action engineer-laser-host` stages it through the
+existing mutex/MCP path. It verifies four original config targets and minimal
+asset identities, applies native ApplyStatic and BuildInstanceInitializer after
+distinct sentinels, and includes inherited serialized fields in phases 2/3.
+Deferred prefab references are inspected without invoking Addressables loads.
+Native GetNextState calls verify phase construction and aim/timer handoff;
+finally restores every captured static and verifies asset bytes/dirty state.
+No state entry, catalog startup, Run, profile or network session is created.
+Live charge/release, damage, healing and effect/audio lifetimes remain open.
+
+**Off-device result.** The focused suite passes 253 tests with one expected
+missing-tool skip. Ruff and public staged audit pass; independent source review
+returns GO. The production admission and the Engineer sentinel/failure-detection
+helpers execute against authored host doubles. After staging all 130 current
+runtime sources through the existing staging owner, the exact 2021.3.45f2 editor
+passes refresh, siren-input-host and engineer-laser-host. The original Blink clock
+confirms 16 ticks; the native Engineer field counts are 3 for charge and
+18/17/17 for the three beam phases. Native phase handoff, static restoration
+and unchanged source assets all pass. Private source-bound receipts/logs live
+under `work/coordination/main-port-r58/`, including host.done.json,
+host-tests.log and both named editor-action logs. No artifact copies are made.
+
+**Build/device boundary and next step.** No player build or device access occurs
+in this slice. Host preflight initially passes at 107,537,514,496 free bytes;
+shared use then reduces free space below 100 GiB. Mandatory pruning succeeds
+with no eligible items and does not restore the build floor, so a full player
+build is deferred. Doctor retains the known Bootstrap FAIL. R57/J1111 remains
+the frozen, uninstalled normal candidate, APK
+`e950fcb18ff8ed69c56b9399bd528657277af901525b6563cd4ed988c5a43f37`;
+it does not contain this newer correction. Installed/qualified device facts
+remain J1105, subject to subsequent owners' receipts. Build one normal successor
+when host space permits, then qualify destination PCM and the complete Siren
+route after the explicit shared-device handoff. Native mission completion,
+rare-NaN causality, PC appearance, full audio and normal-run acceptance remain
+open. Current cooldown/lease restrictions are honored without device queries.
