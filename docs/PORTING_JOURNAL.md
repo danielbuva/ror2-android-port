@@ -42205,3 +42205,576 @@ adbd behavior nor identifies the actual v9 signal sender. No producer memory
 rewrite or full phone rerun follows from these observations; retain the bounded
 reader, sequential encoder, durable prefix and fail-closed thermal/signal
 contracts while isolating host cancellation before the next phone attempt.
+=======
+## J1106 — Observe the real settings commit race and prepare same-UID writer termination
+
+**Date:** 2026-10-24. **Hypothesis:** J1104's explicit SDK exit makes the
+existing CREATE/normal-package-stop case measurable, without player changes or
+supplied persistence bytes.
+
+**Device evidence:** normal R55 APK
+`111b1facec5b021c87dce03be24c9b81e913160809e685dc94b23e161786917a`,
+source `eb2acf07c55a6ba67a649494ba77a7c65e6c6b45`; private case timestamp
+`20261024T232752.445462Z` under `experiments/settings-write-interruption`.
+Following the prior owner's thermal stop, the case begins with verified OLED
+sleep, CPU sensors 50.1–52.1 °C, battery 40 °C and reported thermal status 0
+(HAL temperature reporting is unavailable). The SDK observer arms, observes
+actual CREATE with a 138-byte pending file and completes its normal package
+stop in 45 ms. It exits without the former transport timeout. Its independent
+result records the pending file absent after stop: the atomic commit won the
+race. The original 138-byte primary remains SHA-256
+`0567c9aab39c0307b4d41ae6e1d79f38ccd91e306a63333a126f1cf73e919b0a`;
+actual-PID runtime errors are empty. The host correctly refuses acceptance;
+there is no cold interrupted-write recovery claim. The raw observer output,
+initial primary copy and failure result remain private. Independent terminal
+readback at 23:28:31 UTC verifies installed APK bytes unchanged, no game or
+selector, and OLED asleep before lease release. Mandatory pruning completes.
+
+**Change and API knowledge:** replace the slow binder package-stop request
+inside the SDK observer with direct termination of the same PID/UID-bound
+writer from its own debug UID. Standard Android `run-as` must report exactly
+the owned package UID before the observer is launched; unavailable debug
+access refuses. The actor checks its own UID and exact target process identity
+before signalling, then requires target exit and a retained pending file.
+Unique SDK files live in the owned runtime directory and retain the existing
+absence/hash/cleanup contracts. No suspended-process state, player hook, root
+access or permission/storage change is introduced. Normal package stop remains
+failure teardown.
+
+The [Android Process API](https://developer.android.com/reference/android/os/Process#sendSignal(int,%20int))
+documents signalling and kernel UID restrictions. Inspected AOSP Android 13
+[`run-as.cpp`](https://github.com/aosp-mirror/platform_system_core/blob/android-13.0.0_r1/run-as/run-as.cpp)
+requires an installed debuggable package and drops to its application UID/GID.
+These are API/ownership observations; no platform implementation is copied.
+
+**Host validation:** six evidence/transport contracts reject missing/false or
+non-boolean writer-exit and pending-file witnesses, completed saves and changed
+primary bytes. Three actual JVM lifecycle/deadline fixtures pass. Android
+javac/DEX compilation passes; replacement DEX SHA-256
+`f1d6b58f8ffc0ca23f683d2e99b8e681b997ef7555bc6cb3c2efc80896251ac1`. Ruff and the
+public content audit pass. This replacement has no device qualification yet.
+
+**Result/revisit:** SDK lifetime repair is observed on device; interrupted-write
+recovery remains **unqualified** because the commit completed before stop. Run
+the same-UID replacement only after the priority owner-build rerun releases
+the shared device. Require an actual retained pending file, unchanged primary,
+cold native recovery/resave and unchanged protected profile/results before
+advancing acceptance. Heap and sustained cases remain separately queued; this
+case establishes no memory, power-loss, ENOSPC or ordinary-input guarantee.
+
+## J1122 — Prepare alpha host contracts and identify an old-heap fingerprint
+
+**Hypothesis/scope:** J1100's corrected menu growth, 0.578617 MiB per session,
+resembles one retained player-stat graph. Reanalyse existing pre-fix J1091 heaps
+without repeating a device experiment, then prepare the remaining acceptance
+cases while the shared device is unavailable. This entry records host work only;
+no APK was built, installed or run and no physical-input or stability gate closes.
+
+**Prior art/method:** reuse the pinned public Unity `MemorySnapshotDataTools`
+source at `86af1fe8` and its existing private parser/root-logging adaptations.
+Its reader/crawler describe managed connections and object sizes. The input
+review uses pinned Starstorm2 `BorgMain.cs` for native bank/authority observation,
+not an Android backend; details are in [INPUT_QUALIFICATION.md](INPUT_QUALIFICATION.md).
+No protected implementation or parser is vendored. Query managed-object edges,
+seed reachability with snapshot GC handles and static roots, then compare reach
+with and without returned BulletHit-to-HurtBox edges. Cross-check raw stack size,
+all array slots, hit references and inherited cached native pointers. Sizes below
+are declared object sizes, not allocator-resident usage.
+
+**Existing heap result:** after one versus three completed sessions, the returned
+stack has 75/128 versus 177/256 active/capacity entries. Every unused slot is null.
+The 24/48 hit-to-HurtBox targets and all three retained player-stat wrappers have
+zero cached native pointers and no native bridge. Cutting those hit edges removes
+1,040/2,537 exclusively reachable objects, totalling 717,390/2,077,876 bytes.
+Player-exclusive descendant graphs are 608,136–608,184 bytes each
+(0.579964–0.580009 MiB): three stat sheets each own a 195,800-byte array of
+8,157 stat fields. That graph size is within 0.24% of the corrected slope.
+Old pool-item/backing-capacity growth is only 6,224 bytes per session.
+
+This is a **candidate fingerprint**, not attribution of the corrected growth.
+Those snapshots precede the J1100 fixes. J1100 actually releases 341 destroyed
+HurtBox references across its 12 sessions, and its later stable native counts do
+not prove that managed roots disappeared. Fresh matched post-fix heaps must
+identify actual retained roots; the full managed-growth bound remains refused.
+Keep the earlier 664.629 MiB post-collection spike and every runtime error.
+
+**Host implementation:** physical mapping fixtures execute actual production
+validation, stick conversion and neutral admission. A regression first exposed
+per-axis neutral admission accepting diagonal input that radial conversion made
+active. Admission now uses that same conversion for both sticks; bindings,
+deadzone defaults and reacquisition duration are unchanged. The input contract
+specifies remaining physical/rebinding work without claiming it implemented.
+The [alpha policy](ALPHA_POLICY.md#final-flow-acceptance-contract) maps selected
+packaging/acquisition decisions to existing owners and explicit final-flow
+refusals. Signing tests add unsafe existing-custody cases without modifying the
+phone-only production workstream.
+
+The current `alpha-stability-batch` diagnostic owns one canonical lease and
+explicit installed digest across SDK interruption, three-session heap captures
+and a 30-minute assisted first-stage observation. Its PID is the detached lease
+owner; first failure stops the queue. Independent actual package/idle/OLED
+verification, mandatory pruning and lease-release decisions precede atomic
+terminal receipt publication. The sustained owner requires fresh advancing
+measurements, invincibility only, thermal stops, original End Run and assist
+restoration. These are prepared host contracts; actual SDK replacement recovery,
+fresh heap attribution and sustained observation remain unqualified.
+
+**Evidence/validation:** private packet
+`work/coordination/alpha-touch-acceptance-20261024/` retains
+`residual-memory-host-attribution.json`, `heap-after1.duckdb`,
+`heap-after3.duckdb`, `old-pair-analysis-replay.json` and
+`heap-evidence-relocation.json`. Original J1091 snapshot paths remain valid via
+hash-verified private archive references; evidence was not discarded. Seven
+production mapping cases, ten signing/payload cases, seventeen queue/sustained
+cases and 227 CLI cases pass, alongside related existing host checks. Ruff and
+staged public audit pass. No current device APK or installed-state claim follows.
+
+**First failure/revisit:** the shared device emergency-reboot/cooldown handoff
+introduced a mandatory CPU policy: one heavy job, sample at most 1 s apart,
+pause/resume at 70/55 C and abort above 80 C. Existing battery/HAL sampling does
+not satisfy it. The batch therefore refuses **before lease/device access**, with
+a failed terminal receipt; host tests prove this refusal. Implement a game-aware
+thermal owner and valid pause accounting before launching the prepared queue.
+The reported cooldown release alone does not admit this workload.
+Use the actual handed-off installed digest, never the global build pointer.
+Require retained pending state/unchanged primary/native cold recovery for SDK
+acceptance; classify LightningStake/runtime failures separately without waiving
+strict teardown. Physical input, real ENOSPC, ordinary long play, final owner
+installation/update and outward publication remain open.
+
+## J1125 — Supervise the alpha queue after the shared-device emergency reboot
+
+**Hypothesis/scope:** enforce the new CPU thermal policy around the existing
+SDK, heap and sustained owners without a player rebuild, native-process
+suspension or counting cooldown as gameplay. This entry qualifies host contracts
+and an idle post-reboot readback, not a new game run or a thermal acceptance gate.
+
+**Implementation:** the existing `alpha_stability_batch.py` owns independent
+CPU sampling and bounded package shutdown. Sampling targets 250 ms; an observed
+gap above one second, missing/invalid CPU readings, temperature above 80 C or
+supervision failure aborts. At 70 C the owned game stops. Only a classified
+cancellation may restart the complete stage after verified idle/OLED cleanup
+and cooling to at most 55 C. Runtime/unexpected errors remain first failures
+even when a thermal interruption or hard abort coincides. No interrupted heap
+series or sustained timer is combined with its replacement.
+
+The three existing stage owners accept an optional launch callback; the batch
+rejects initial/recovery launches after cancellation and checks launches that
+were already in flight. Package identity, ownership receipt, live PID and
+placement are revalidated before stopping. Shutdown transport is bounded and
+separate from sampling. Capture capacity is rechecked before every memory
+attempt; pending transactions are preserved and refuse retry. Completed stages
+are checkpointed under one three-hour deadline; the single driver retains the
+lease through independent terminal APK/idle/OLED checks and canonical pruning.
+This is generic host/device supervision using the existing runtime owners,
+not a new game diagnostic or reconstructed platform implementation.
+
+**Evidence/validation:** focused batch, SDK, memory, sustained and CLI contracts
+pass, including a slow stop with continuing samples, canceled initial/recovery
+launches, low-space retry refusal and coincident native/thermal failures. Ruff,
+diff checks and the staged public audit pass. The independent idle inspection
+is `work/coordination/alpha-touch-acceptance-20261024/postreboot-idle.done.json`.
+After explicit reboot clearance it acquires one atomic lease, observes boot
+reason `reboot`, verifies actual installed R55 bytes
+`111b1facec5b021c87dce03be24c9b81e913160809e685dc94b23e161786917a`
+(source `eb2acf07c55a6ba67a649494ba77a7c65e6c6b45`), absent game/selector/pending
+state and more than 42 GiB free. Independent terminal verification leaves the
+OLED asleep and releases the lease. No install, gameplay launch or other
+worker's scratch deletion occurs. Canonical pruning keeps evidence and removes
+no candidates. Doctor reports valid canonical input/project state but an absent
+historical bootstrap smoke; no passing smoke is inferred.
+
+**Result/revisit:** the queue can be scheduled once after a safe device handoff.
+Actual CPU-trace cadence and SDK interrupted-write recovery remain device gates.
+Native heap attribution, managed-growth bounds, ordinary long play, physical
+input, genuine ENOSPC and the other public-alpha gates remain open. Generic
+errors after a thermal stop abort conservatively instead of retrying an
+unclassified failure.
+
+## J1127 — Stop cold startup at the CPU threshold and retain failure diagnostics
+
+**Hypothesis/scope:** J1125's independent CPU supervisor must stop the existing
+frozen player before an unsafe sustained case. Inspect the first failed queue
+before repeating it; this is generic device supervision and evidence handling,
+not a new RoR2 reconstruction or runtime mechanism.
+
+**Device result:** the single detached queue fails during initial settings-menu
+startup, before the interrupted-write observer is armed. No SDK, heap or
+sustained stage completes. The installed R55 APK remains
+`111b1facec5b021c87dce03be24c9b81e913160809e685dc94b23e161786917a`
+(source `eb2acf07c55a6ba67a649494ba77a7c65e6c6b45`). Its 76 CPU samples start at
+36.2 C, reach 72.0 C at the stop threshold, and end at 43.4 C. Maximum sample
+gap is 0.737 s; no above-80 C observation occurs. The stage reports generic
+process loss and conservatively aborts, preserving J1125's first-error rule.
+
+The original stage failure saved neither its last report nor terminal PID log.
+One subsequent atomic, read-only forensic lease retrieves retained Android
+exit history, the failed PID log and crash buffer. The matching PID's Android
+exit is USER REQUESTED / FORCE STOP, 181 ms after the 72 C sample; the existing
+PID-specific classifier finds no runtime errors in the retained log. This
+supports supervisor shutdown rather than a native crash, without proving the
+menu or interrupted-write contract. A missing last report remains unknown.
+Independent actual-APK/idle/selector/pending readbacks pass before and after
+forensics; the OLED is asleep and both leases are released. No install,
+profile mutation, gameplay continuation or other worker's scratch deletion
+occurs. The unchanged queue is not repeated: even cold startup exceeded the
+then-current 70 C limit, so blind whole-stage replay was not attempted.
+
+**Evidence:** private `work/coordination/alpha-touch-acceptance-20261024/` holds
+`alpha-stability-20261025T050009Z.done.json`, its `.done.thermal.jsonl` and
+`failed-start-forensics/{done.json,pid.log,crash.log,exit-info.txt}`. Raw records
+remain ignored. The batch's terminal receipt also records completed canonical
+pruning. The independent forensic receipt records unchanged bytes and cleanup.
+
+**Host correction/validation:** the existing settings interruption owner now
+retains the last matching report and actual-PID logs on failure, including
+before menu readiness. Native report/log failures remain authoritative; an
+unavailable capture records its error while preserving the original exception.
+Four focused failure-path fixtures cover evidence retention, independent capture
+failure and runtime-error precedence. The action registry now matches the
+implemented CPU supervisor; its formerly stale help blocked the previous
+push's fresh-clone pre-push check. Regenerated help, focused tests and Ruff pass.
+These changes have no player-build input or device-acceptance claim.
+
+**Policy refinement/implementation:** the orchestrator subsequently clarifies
+that the 70/55 C pause/resume policy applies to pausable tool jobs. Gameplay
+must continue through 80 C, abort only above 80 C, sample at most one second
+apart and cool all temperature zones to at most 50 C before the next run. The
+shared game supervisor adopts that rule, retains independent bounded shutdown,
+records the peak and removes the obsolete gameplay replay path. Initial and
+recovery launches remain forbidden after a supervision failure. This explicit
+policy refinement, rather than reclassification of generic process loss, admits
+a fresh scheduled case. Host fixtures cover the new boundaries, including a hotter non-CPU physical
+zone blocking admission and sentinel refusal before launch. The cooldown
+observation retains raw types/values and explicitly identifies known electrical
+level zones; unrecognized negative wireless readings refuse admission rather
+than being assumed cool or disconnected. Device proof of the revised rule
+remains pending.
+
+**Result/revisit:** SDK interruption, corrected heap attribution, managed-growth
+bounds and sustained play remain open. Run one fresh queue under the refined
+gameplay policy, retaining this failed case separately. Physical input, ordinary
+play and real ENOSPC remain separate gates.
+
+## J1129 — Enforce the selected owner version-code ceiling
+
+**Hypothesis/scope:** the existing owner APK builder and binary-manifest owner
+should enforce ALPHA_POLICY's 2,100,000,000 ceiling before output creation.
+J1122 leaves final-flow packaging acceptance open; this is host-only admission
+maintenance, with no APK build, installation or device claim.
+
+**Change:** tighten both existing explicit-code checks and correct the policy
+acceptance matrix. Existing omission behavior remains available to historical
+lab builds. No new allocation state or installation framework is introduced.
+
+**Validation:** 83 owner host tests pass; authored manifests accept exactly
+2,100,000,000 and refuse larger values. Request admission refuses exhaustion
+before creating an output directory. Ruff formatting/checks pass.
+
+**First remaining failure/revisit:** durable issued-code allocation, mandatory
+final-flow codes, final alpha identity, actual profile/settings update retention
+and compatible rollback still require complete owner-flow integration/device
+evidence. No public-alpha packaging checkbox is closed by these host contracts.
+
+## J1130 — Retain unreadable thermal-zone failures before gameplay admission
+
+**Hypothesis/scope:** J1127's shared gameplay supervisor must preserve failed
+sysfs observations as evidence while refusing unknown temperatures. Main's R58
+qualification stops in initial cooldown after installation/sync, before any
+control or gameplay stage. Its shell reports `read: Invalid argument` after the
+first readable zone. This is generic device evidence handling; no new game
+runtime mechanism or build is introduced.
+
+**Observation:** one atomic read-only alpha lease inventories all 95 sysfs
+thermal zones using `cat`, independently of the shell `read` builtin. Exactly
+28 temperature files return EINVAL, including `pa1` and several modem families.
+This confirms an unreadable sysfs interface rather than invalid shell syntax;
+it does not prove those sensors disconnected, absent or cool. The installed
+receipt names R58 APK
+`4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`,
+source `55149b4846744f5f9d8c521928858a63f0eba314`. Main's preceding driver verifies
+those actual bytes after install; alpha performs no new byte verification,
+installation or launch. Its read-only inventory observes no game PID and the
+OLED asleep, then releases its lease. No game/profile/payload changes occur.
+
+**Change/validation:** the existing all-zone command now identifies the failed
+path/type. Command errors, including partial output and timeout exceptions,
+enter the existing JSONL trace before the original exception is re-raised.
+Admission remains refused; there is no new sensor exclusion, retry or policy
+relaxation. All 26 batch host tests and Ruff pass, including an executable
+shell fixture preserving preceding output and a trace/exception-identity fixture.
+
+**Evidence:** ignored
+`work/coordination/alpha-touch-acceptance-20261024/thermal-read-forensics/result.json`
+contains the complete inventory and idle/power readbacks. Main's separate
+`work/coordination/main-port-r58/device.done.json` retains its original failed
+qualification and cleanup/release result. Raw device paths stay private.
+
+**First failure/revisit:** all-zone at-most-50 C admission cannot be established
+while these physical sensor identities are unreadable. Obtain documented
+platform sensor applicability or an explicit revised thermal policy before a
+new gameplay case. SDK interruption, corrected heap attribution, sustained
+play and ordinary physical controls remain unqualified; no checklist item closes.
+
+## J1131 — Supervise all readable gameplay thermal zones
+
+**Hypothesis/scope:** the orchestrator's clarified gameplay policy excludes
+unreadable temperature interfaces while recording them, requires every readable
+physical zone at or below 50 C before launch, and aborts above 80 C on any
+readable physical zone. J1130's 28 EINVAL observations remain evidence of
+unreadable interfaces, without a claim that the sensors are cool or absent.
+This extends the existing generic device supervisor, without game runtime changes.
+
+**Change:** the shared owner records unreadable temperature type/path exclusions
+and continues reading remaining zones. Admission and runtime both sample the
+complete zone list. Non-CPU heat now aborts too; CPU and all-zone peaks remain
+separate. Exact known electrical pseudo-zones retain their exclusions. Unknown
+numeric sentinels, missing readable CPU coverage, malformed observations, ADB
+failures and gaps above one second still refuse. Gameplay never pauses or retries;
+the separate pausable-tool 70/55 C policy remains unchanged.
+
+**Validation:** 29 batch host tests and Ruff pass. Executable shell fixtures
+cover an unreadable temperature without losing preceding or later observations;
+parser/owner controls cover recorded admission/runtime exclusions, non-CPU
+80 C acceptance and above-80 C abort, all-unreadable refusal, sentinel refusal,
+and sampling gaps. Independent review reports GO. No build, installation,
+launch or new device evidence occurs in this checkpoint.
+
+**Evidence/next:** the existing ignored shared handoff
+`work/coordination/main-port-r58/thermal-handoff.json` pins the reviewed helper
+path and SHA for Main's R58 controls continuation; its separate ready done-file
+notifies the dispatcher. R58 APK
+`4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`
+remains the last installation receipt, with no accepted gameplay controls.
+Fresh device evidence is required before closing any public-alpha gate.
+
+## J1137 — Separate thermal admission discovery from runtime sampling
+
+**Hypothesis/scope:** Main's first J1131 R58 controls continuation refuses before
+launch because discovering approximately 95 thermal zones exceeds the shared
+0.7-second ADB timeout. A slower admission read while idle must be independent
+of the strict gameplay sampling deadline. This is generic shell supervision;
+no game reconstruction or runtime change is involved.
+
+**Change:** admission discovers temperature types and readable physical paths
+with a 10-second timeout. Runtime reads the discovered physical temperature
+paths in one batch without repeatedly reading zone types or unsupported paths.
+The existing owner API and readable-zone policy remain: at most 50 C admission,
+above 80 C abort, no native suspension or replay, a 0.7-second runtime ADB timeout
+and measured sampling gaps of at most one second. Admission discovery is outside
+the runtime gap bound; each runtime starts a fresh measured interval. Excluded
+interfaces and separate CPU/all-zone peaks remain recorded. Failed runtime reads,
+malformed output and numeric sentinels still refuse supervision.
+
+**Validation:** 32 focused batch host fixtures and Ruff format/check pass. The
+executable shell fixtures exercise discovery, batched physical-path reads and
+missing-file refusal. Slow admission takes longer than one second without a
+runtime gap refusal; the subsequent runtime still rejects non-CPU heat above
+80 C. Five sustained-owner regression fixtures also pass. No device command,
+build, installation or gameplay qualification occurs in this checkpoint.
+
+**Evidence/limits:** retained private Main result
+`work/coordination/main-port-r58/controls-retry/device.done.json` records the
+prelaunch timeout, zero launched controls, process/selector absence, OLED asleep
+and lease release. Its installed R58 APK is
+`4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`, source
+`55149b48`; this host fix neither installs nor qualifies gameplay on it.
+The revised shared handoff and `thermal-timeout-ready.done.json` select the exact
+helper for Main's next controls continuation. Fresh device sampling cadence and
+all alpha stability/physical-input acceptance gates remain open.
+
+## J1141 — Exclude unavailable admission thermal sentinels
+
+**Hypothesis/scope:** Main's next R58 continuation completes admission discovery
+but refuses a readable numeric sentinel before launching any control. The
+orchestrator's explicit revised policy classifies admission values at or below
+-30 C as unavailable sensors, with recorded exclusions. This is a generic device
+supervision change; no game reconstruction or runtime behavior changes.
+
+**Change:** the existing parser excludes these values only during idle admission,
+retaining type, path and raw value. Runtime reads only admitted valid physical
+paths. A previously valid zone becoming a sentinel still refuses supervision.
+Readable CPU coverage remains mandatory, which also prevents admission without
+any valid CPU/GPU/battery/skin sensor. Malformed values, other invalid numeric
+readings, failed reads and missing coverage still refuse. The 50 C admission,
+above-80 C abort and one-second runtime gap limits remain unchanged.
+
+**Validation:** 35 focused batch host fixtures, five sustained-owner regression
+fixtures and Ruff pass. Controls cover both observed sentinel values, the exact
+-30 C admission boundary, retained exclusions, runtime path selection, valid-to-
+sentinel runtime transitions and absent valid CPU coverage. No new device command,
+build, installation or gameplay qualification occurs in this checkpoint.
+
+**Evidence/limits:** Main owns the full failed-run result. Its retained private
+`work/coordination/main-port-r58/controls-timeout-retry/plain-thermal.jsonl`
+records the unavailable readings and
+`work/coordination/main-port-r58/controls-timeout-retry/device.done.json`
+records no launched controls, process/selector absence, OLED asleep and lease
+release. The retained installed R58 APK is
+`4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`, source
+`55149b48`. The revised shared handoff pins this helper for one further Main
+retry. Fresh sampling cadence and all alpha device acceptance gates remain open.
+
+## J1148 — Restrict gameplay admission to CPU GPU battery and skin
+
+**Hypothesis/scope:** USB-charging power-management sensors can remain above
+50 C while the CPU is cool. The orchestrator explicitly refines the gameplay
+admission policy to readable CPU/GPU/battery/skin zones only. This generic host
+device-supervision correction does not change the game or pausable tool policy.
+
+**Change:** the existing shared gameplay owner computes a separate admission
+maximum. Other valid physical zones, including PMIC, charger and USB sensors,
+are named with raw values and paths in `admission_excluded_zones`; all remain in
+the runtime sampling set and in the above-80 C hard abort and peak accounting.
+Unreadable/sentinel admission exclusions remain separate. Readable CPU coverage,
+valid-to-sentinel refusal, strict runtime timeout and one-second gap limits are
+unchanged.
+
+**Validation:** 36 batch fixtures, five sustained-owner regressions, 228 CLI
+fixtures and Ruff pass. A 57.763 C power-zone fixture admits a 49 C CPU, records
+all four power-zone names and paths, then refuses a runtime PMIC value of
+80.001 C. CPU/GPU/battery/skin fixtures each wait at 51 C and admit at 50 C.
+Existing sentinel, unsupported-zone, failure and cadence controls remain passing.
+
+**Evidence/limits:** host-only; no ADB, build, installation or gameplay test.
+Main's installed R58 receipt remains the last handed-off identity:
+`4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`, source
+`55149b48`. The private `work/coordination/main-port-r58/thermal-handoff.json`
+pins the updated helper and invocation. Main owns its running sentinel-retry
+case and terminal evidence; this checkpoint does not qualify its sampling
+cadence or any outstanding alpha device gate. Revisit on actual fresh runtime
+sensor or cadence failure; preserve the current device queue and explicit
+terminal handoffs.
+
+## J1156 — Qualify per-zone gameplay thermal duration and limits
+
+**Hypothesis and scope.** J1152 preserves a guarded R58 startup termination,
+not a spontaneous crash or gameplay qualification. Its crossing neighborhood
+includes maxima 76.8, 77.2, 81.6, 78.8 and 63.7 C; later cooling is affected by
+force-stop. The orchestrator's explicit revised runtime policy distinguishes
+brief core spikes from sustained heat. This host-only change implements that
+policy in the existing gameplay supervisor; no player source, APK, native
+execution, device storage or ownership boundary changes.
+
+**Change.** `scripts/lab/alpha_stability_batch.py` retains raw observations and
+CPU/all-zone peaks. For each CPU/GPU sensor, keyed by type and sysfs path, a
+reading above 80 C starts or extends its own streak. At least one continuous
+second and at least three consecutive samples spaced at most 0.35 s apart are
+required to abort. A reading at or below 80 C or a longer sample interval resets
+that sensor's streak. A CPU/GPU reading above 88 C or battery/skin above 45 C
+aborts immediately; a runtime sampling gap above one second still refuses.
+Other readable physical sensors remain recorded without these runtime class
+thresholds. Admission, unsupported/sentinel handling, valid CPU coverage,
+launch cancellation, bounded stop ownership and the separate pausable-tool
+policy remain unchanged. Admission still rejects any readable physical zone
+above its existing 80 C hard limit before its CPU/GPU/battery/skin cooldown.
+The helper SHA-256 is
+`a08b64b420e25d1a97223e75eead83fa3f9ba097ab413ad8402d0772ccce515b`.
+This modifies existing generic sysfs supervision and adds no RoR2-specific
+observer, platform adapter or new diagnostic mechanism.
+
+**Host validation.** All 42 batch fixtures, five sustained fixtures and 228 CLI
+fixtures pass. The supplied five-point J1152 trace at 0.30 s intervals continues
+while retaining its 81.6 C peak. CPU and GPU 81 C streaks continue before one
+second and abort at the first qualifying sample at 0.25 s or 0.35 s spacing.
+Boundary fixtures cover 88 versus above 88 C, 45 versus above 45 C, a reading
+at 80 C, interrupted sampling continuity, same-type sensors with different
+paths, the one-second sampling-gap boundary and continued PMIC raw/peak
+recording. Existing admission, sentinel-transition, cancellation and cleanup
+contracts remain covered. Ruff format/check and diff checks pass; independent
+read-only review approves the algorithm and fixtures. Operational architecture,
+playtest guidance and open alpha gates describe the current policy.
+
+**Publication and remaining gate.** Shared helper metadata is published under
+ignored `work/coordination/main-port-r58/thermal-handoff.json` with the exact
+committed helper and a new `thermal-duration-ready.done.json`; the prior
+helper/failed-run evidence remains retained. No device command, lease,
+installation or run occurs for this result. R58's retained APK
+`4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`
+remains installed according to the latest shared readback and remains gameplay
+unqualified. Main's next explicit controls handoff and alpha's SDK interrupted
+write, fresh corrected heaps and sustained cases remain open. Do not replay the
+historical R55 private driver or relax thresholds after a refusal. Fresh device
+qualification follows the explicit shared-device queue and current APK receipt;
+this host result does not establish safe uninterrupted heat or accepted play.
+
+## J1160 — Budget alpha capture storage separately from full builds
+
+**Hypothesis and change.** The 100 GiB storage floor applies to a full Unity
+build. The orchestrator explicitly authorizes the existing capture-only alpha
+batch to admit against estimated output plus a 20 GiB margin. The existing
+`alpha_stability_batch.py` owner now records two 4 GiB native snapshot estimates
+(menus 2 and 4), plus 1 GiB for SDK/session/thermal diagnostics, and the 20 GiB
+margin: 29 GiB required in total. Admission records observed free bytes and
+refuses before acquiring a lease or accessing a device when below that budget.
+The full-build floor and 19 GiB device capture admission remain unchanged.
+This generic host storage correction adds no runtime mechanism or player build.
+
+**Evidence and validation.** J1091's retained evidence totals 2,595,839,863 bytes,
+including 2,585,038,011 bytes in its two snapshots. The corrected later memory
+series retains 17,390,129 bytes of diagnostics; inspected prior SDK cases are
+under 215 KB. These local read-only measurements support the conservative
+9 GiB estimate; no heap parser/export is part of this queue. All 43 batch,
+five sustained, 228 CLI and ten SDK interruption fixtures pass. Boundary
+fixtures refuse 28 GiB, admit 29 and 96 GiB, record the complete budget and
+prove no device/lease access on insufficient capacity. Ruff and diff checks
+pass; independent read-only review approves the estimate and admission.
+Canonical host-only preflight passes; canonical doctor validates input/project
+but retains its absent historical bootstrap-smoke gate.
+
+**Scope and remaining gate.** This is host qualification only, with no APK
+change or device acceptance claim. The prior host-only storage refusal is not
+a device experiment. SDK interrupted-write, fresh corrected native heaps and
+sustained runtime qualification remain open until their separately retained
+batch result, with actual installed APK readback and J1148/J1156 supervision.
+
+## J1164 — Recover an interrupted native save and classify stage-load thermal refusal
+
+**Hypothesis and scope.** Run the public SDK interrupted-write, corrected fresh
+heap-pair and sustained sequence on the actual installed R58, under J1148/J1156
+and J1160's capture budget. No player rebuild, install, profile reset or thermal
+limit change occurs. This uses the existing diagnostic owners, without adding
+a RoR2-specific mechanism.
+
+**Device result.** Installed-byte readback binds the complete batch to APK
+`4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`.
+The settings case observes the native pending transaction, terminates its
+same-UID writer in 109 ms, retains the 138-byte pending file and unchanged
+primary, then verifies recovery without runtime errors. Six protected files
+remain covered. This qualifies interrupted pending-write recovery, not power
+loss or ENOSPC. Its peak CPU reading is 74.4 C.
+
+The next session-memory case completes zero of three sessions and captures
+neither requested fresh heap. Its `process-exited` result is caused by the
+J1156 supervisor: a CPU sensor remains above 80 C for the required continuous
+second. The observed CPU/all-zone peak is 84.8 C. This is a deliberate thermal
+termination, not evidence of a spontaneous crash, ANR or low-memory kill.
+The first menu PSS is 2,233,885 KiB; one menu sample establishes no growth bound.
+The sustained stage never starts.
+
+**Timing and evidence.** The retained process log places launch near 13:18:15
+UTC, gameplay preparation at 13:20:30.079 and native `SceneDirector.Start`
+at 13:21:25.742. The first sampled CPU/GPU crossing above 80 C is
+13:21:32.329 UTC, approximately 197 s after launch and 6.6 s after that stage
+callback. The final sustained streak spans 13:21:48.020–13:21:49.333 UTC
+(80.8, 84.8, 84.8, 84.8 and 83.6 C), about 213 s after launch and
+22.3–23.6 s after the stage callback. This locates the crossing during stage
+startup; it does not attribute
+the hotspot to one callback or establish a frame-cap/refresh cause. The
+subsequent force-stop contaminates cooling comparisons. Prior R58/J1152 also
+refused during startup, so no new R58-specific regression is established.
+Ignored evidence is under
+`work/coordination/alpha-touch-acceptance-20261024/capture-budget-20261025T131045Z/`
+(`terminal.done.json`, `batch.done.json`, thermal JSONL and batch log); raw
+session evidence is the `session-memory/20261025T131812.520307Z` run and save
+evidence the `settings-write-interruption/20261025T131637.403767Z` run beneath
+the authorized device's local experiments. Full raw paths remain private.
+
+**Cleanup and next gate.** Terminal readback verifies unchanged APK bytes,
+process/selector/pending absence and OLED sleep. The lease is released and
+pruning passes. Explicit terminal handoff gives the next slot to the queued
+phone assembly owner; no automatic replay follows refusal. Fresh corrected
+heaps, sustained heat/performance, ordinary full play and genuine ENOSPC stay
+open. Revisit after the next explicit device handoff and fresh admission, using
+the current limits; investigate loading-only presentation pacing separately
+without changing native fixed-step behaviour.

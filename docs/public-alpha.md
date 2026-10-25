@@ -153,6 +153,9 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
 [ALPHA_POLICY.md](ALPHA_POLICY.md) records the local-file-only acquisition,
 separate alpha identity, owner signing/update/rollback and cloud deferral
 decisions. The following items are implementation and acceptance gates.
+The policy's [acceptance matrix](ALPHA_POLICY.md#final-flow-acceptance-contract)
+separates reusable host owners from final-flow work; it does not qualify an
+installed alpha package.
 
 - [ ] Enforce the selected alpha identity, increasing version code, private
       signing custody and update/rollback policy; prove actual game
@@ -168,7 +171,8 @@ qualification remain separate from these laboratory installs.
 ## Controls, UI and sessions
 
 - [ ] Qualify ordinary physical input, original/native mappings and rebinding;
-      automatic diagnostics do not qualify ordinary control
+      use the [measured-input contract](INPUT_QUALIFICATION.md).
+      Automatic diagnostics do not qualify ordinary control
       ([J762](PORTING_JOURNAL.md#j762--accept-explicit-thor-game-diagnostics-and-unchanged-nova-controls)).
 - [ ] Qualify the physical touchscreen digitizer, acquired-equipment activation
       and genuine target interaction. [J1071](PORTING_JOURNAL.md#j1071--qualify-software-touch-native-pause-and-recovery)
@@ -195,12 +199,36 @@ qualification remain separate from these laboratory installs.
       [J1100](PORTING_JOURNAL.md#j1100--complete-twelve-corrected-commando-sessions-and-retain-a-smaller-growth-frontier)
       completes 12 corrected Commando sessions, reducing matched menu growth to
       0.579 MiB/session; the remaining positive slope still prevents a full bound.
+      The old-heap graph fingerprint and host-only queued-case qualification are
+      recorded in [J1122](PORTING_JOURNAL.md#j1122--prepare-alpha-host-contracts-and-identify-an-old-heap-fingerprint).
 - [ ] Complete real interrupted-write/ENOSPC and sustained performance/thermal
       cases on supported hardware. [J1071](PORTING_JOURNAL.md#j1071--qualify-software-touch-native-pause-and-recovery)
       qualifies controlled VM-crash and genuine ANR cold recovery, invalid-pending
       refusal, validated-backup recovery, directory-write failure/retry and fresh
-      background return. Injected persistence states do not establish a power-cut
-      or filled-filesystem result.
+      background return. J1127 stops cold startup at the CPU thermal threshold
+      before any interrupted-write, heap or sustained stage completes. J1130 confirms
+      unreadable thermal interfaces;
+      [J1131](PORTING_JOURNAL.md#j1131--supervise-all-readable-gameplay-thermal-zones)
+      host-qualifies the clarified readable-zone admission/runtime policy.
+      [J1137](PORTING_JOURNAL.md#j1137--separate-thermal-admission-discovery-from-runtime-sampling)
+      separates admission discovery from strict runtime sampling after a prelaunch
+      timeout.
+      [J1141](PORTING_JOURNAL.md#j1141--exclude-unavailable-admission-thermal-sentinels)
+      host-qualifies the revised admission-only unavailable-sentinel policy;
+      previously valid sensors becoming sentinels still abort gameplay.
+      [J1148](PORTING_JOURNAL.md#j1148--restrict-gameplay-admission-to-cpu-gpu-battery-and-skin)
+      host-qualifies the revised CPU/GPU/battery/skin admission scope. Fresh
+      device qualification remains open; J1156 below updates the runtime limits.
+      [J1156](PORTING_JOURNAL.md#j1156--qualify-per-zone-gameplay-thermal-duration-and-limits)
+      host-qualifies per-zone core duration and immediate core/battery/skin
+      runtime limits after J1152's startup spike; fresh gameplay qualification
+      remains open.
+      [J1164](PORTING_JOURNAL.md#j1164--recover-an-interrupted-native-save-and-classify-stage-load-thermal-refusal)
+      qualifies native pending-write interruption/recovery on the installed R58.
+      Its next stage is deliberately stopped by the sustained CPU thermal guard
+      during stage startup; fresh heaps and sustained play remain open.
+      Injected persistence states and this writer interruption do not establish
+      a power-cut or filled-filesystem result.
 - [ ] Qualify the [prepared-lab owner-build/install/playtest checklist](PLAYTESTING.md)
       on fresh public inputs, then establish final player installation, ordinary
       controls and update/rollback steps. Artifact identity, known limits and

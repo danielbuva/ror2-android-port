@@ -206,7 +206,7 @@ def collect_memory_snapshot(device, runtime, out, name):
     return {"file": name, "sha256": digest, "bytes": local.stat().st_size}
 
 
-def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, root_walk=False, memory_snapshots=False):
+def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, root_walk=False, memory_snapshots=False, _launch=None):
     if type(sessions) is not int or not MIN_SESSIONS <= sessions <= MAX_SESSIONS:
         raise ValueError("Use %d to %d sessions" % (MIN_SESSIONS, MAX_SESSIONS))
     if type(memory_snapshots) is not bool or memory_snapshots and root_walk:
@@ -296,7 +296,7 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
                 if cleanup._remote_path_state(device, target) != "absent":
                     raise RuntimeError("Could not clear the exact stale report target")
         device.cmd("push", str(out / "selection.json"), selector)
-        launch = device.launch()
+        launch = _launch(device) if _launch else device.launch()
         pid = str(launch["pid"])
         write(out / "launch.json", {"pid": pid, **frozen})
         if not device.display(True):

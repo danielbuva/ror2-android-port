@@ -81,6 +81,10 @@ ADB/synthetic events, automatic diagnostics and host fixtures are distinct
 supporting evidence. Thor has a separate ordinary touch route; its physical
 controller mapping remains unqualified. The scoped software motion case does
 not qualify the physical touchscreen digitizer.
+Use the [input qualification contract](INPUT_QUALIFICATION.md) for measured
+mapping provenance, the remaining rebinding implementation and physical cases.
+The host radial-neutral regression fixture does not qualify reconnect behavior
+on an installed candidate.
 
 | Case | Required observation |
 | --- | --- |
@@ -128,7 +132,7 @@ main gameplay owner; a nonzero audio meter or loaded bundle is insufficient.
   unqualified until their own evidence exists; fixture retention is separate.
 
 For a prepared owned lab installation, bind diagnostics to the actual installed
-APK SHA-256 from its verified receipt. Run each case under a separate shared
+APK SHA-256 from its verified receipt. Individual checks require their own shared
 device lease, verifying idle teardown before releasing it:
 
 ```sh
@@ -144,9 +148,75 @@ off, uses diagnostic automatic input and requires strict cleanup for every
 completed session. A runtime error stops the case; incomplete series and old
 archived reports do not establish a growth bound. Native heap captures are a
 separate opt-in attribution case and must not be mixed with this measurement.
+[J1122](PORTING_JOURNAL.md#j1122--prepare-alpha-host-contracts-and-identify-an-old-heap-fingerprint)
+records an old-heap graph fingerprint, without identifying the corrected retained
+root. A fresh matched heap pair must inspect
+actual GC/static roots and native bridges; stable native object counts alone do
+not establish a managed-memory bound.
 
-The settings case observes a native pending-file creation and requests an owned
-package stop, preserving the existing preference values. It accepts recovery
+The combined batch supervises temperature zones independently, targeting 250 ms
+samples and refusing gaps above 1 s. Abort when one CPU/GPU zone remains above
+80 C for at least one second, with at least three consecutive samples spaced
+at most 0.35 s apart. A reading at or below 80 C or a longer gap resets that
+zone's continuity. Abort immediately for CPU/GPU above 88 C or battery/skin
+above 45 C. Record brief core spikes and retain the failed case without retry,
+following [J1156](PORTING_JOURNAL.md#j1156--qualify-per-zone-gameplay-thermal-duration-and-limits).
+Before each stage, cool readable CPU/GPU/battery/skin zones to at most 50 C
+with the OLED asleep. Record other physical zones, including power-management,
+charger and USB sensors, as excluded from admission only; continue sampling
+them in raw observations and all-zone peaks. Admission follows
+[J1148](PORTING_JOURNAL.md#j1148--restrict-gameplay-admission-to-cpu-gpu-battery-and-skin).
+Record unreadable temperature interfaces as exclusions
+with their type/path; they do not establish cool or absent sensors. Admission
+readings at or below -30 C are also unavailable: record their type/path/raw value
+and exclude them. A previously valid zone becoming a sentinel during gameplay
+still aborts. Missing readable CPU coverage, other invalid numeric readings,
+malformed readings, ADB failure or failed supervision also abort. Exact known
+electrical pseudo-zones are excluded. The sentinel policy and host fixtures are
+recorded in [J1141](PORTING_JOURNAL.md#j1141--exclude-unavailable-admission-thermal-sentinels).
+Record CPU and all-zone peaks and retain runtime or unexpected errors as first
+failures, following
+[J1131](PORTING_JOURNAL.md#j1131--supervise-all-readable-gameplay-thermal-zones).
+Admission discovery uses a separate 10-second timeout while idle; gameplay
+reads the discovered physical temperature paths in one batch with the strict
+runtime timeout and gap bound ([J1137](PORTING_JOURNAL.md#j1137--separate-thermal-admission-discovery-from-runtime-sampling)).
+Completed stages checkpoint within one three-hour deadline; cooldown never
+counts as play. The 70/55 C pause/resume rule applies to pausable tool jobs,
+not gameplay. Battery/HAL checks remain additional limits.
+J1127 records the superseded 70 C rule stopping cold startup at 72 C before menu
+readiness, with a maximum sample gap of 0.737 s and Android force-stop evidence.
+No stage completed; that observation does not establish sustained acceptance.
+
+For an explicitly scheduled combined case, `alpha-stability-batch` owns **one**
+canonical lease across the SDK interruption case, three-session heap pair and
+30-minute assisted first-stage observation. Do not wrap it in another lease.
+It requires an idle owned installation, an explicit verified APK digest, host
+and device storage reserves (including 4 GiB capture headroom above 15 GiB free)
+and a new absolute done-file under canonical ignored
+`work/`. Schedule it only after the device owner reports safe handoff; a device
+reboot/emergency state requires explicit clearance first. Launch once detached:
+
+```sh
+: "${PLAYTEST_DONE:?Set a new absolute JSON path under canonical work/}"
+nohup ./dev prototype --action alpha-stability-batch \
+  --device "$PLAYTEST_DEVICE" --expected-apk-sha256 "$PLAYTEST_APK_SHA256" \
+  --done-file "$PLAYTEST_DONE" >"${PLAYTEST_DONE%.json}.driver.txt" 2>&1 &
+```
+
+The long-lived driver records its own PID in the lease, stops on the first
+failure and publishes the done receipt after terminal verification and pruning.
+Read that receipt after completion rather than polling the device. A failed
+terminal readback preserves the lease and evidence for diagnosis. The sustained
+case uses invincibility only, manual neutral input and small software camera
+drags, fresh advancing JSON and battery/HAL stop limits. It requires native
+End Run and restoration of every assist. It does not qualify ordinary play,
+physical input, thermal performance across a full run or a memory bound. Keep
+native-heap pause/allocation effects separate from repeated-session measurement.
+
+The settings case observes a native pending-file creation and terminates only
+the bound writer from its own Development-package UID, preserving the existing
+preference values. It requires standard debug `run-as` access; ordinary package
+stop remains failure teardown. It accepts recovery
 only after proving that the old primary and an actual uncommitted pending file
 survived, including a hash-verified private copy of the initial primary. The
 SDK actor has a bounded lifetime independent of Android observer threads;
