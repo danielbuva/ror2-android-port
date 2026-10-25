@@ -12,7 +12,7 @@ GUID_REF = re.compile(r"^\{fileID: -?\d+, guid: [0-9a-f]{32}, type: 3\}$")
 class RecipeAuditTests(unittest.TestCase):
     def test_every_recipe_is_listed_in_the_audit_record(self):
         record = (RECIPE / "README.md").read_text()
-        for path in RECIPE.glob("*.json"):
+        for path in (*RECIPE.glob("*.json"), *RECIPE.glob("*.jsonl.gz")):
             with self.subTest(recipe=path.name):
                 self.assertIn("| `" + path.name + "` |", record)
 

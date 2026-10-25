@@ -880,7 +880,12 @@ Use `recipe/owner-animator-controllers.json` for the qualified controller
 cohort, `recipe/owner-material-records.json` for materials,
 `recipe/owner-gameobjects.json` / `recipe/owner-transforms.json` for hierarchy
 records, and `recipe/owner-generic-records.json` for the qualified native and
-scripted records. A recipe contains source selectors/hashes, target relationships/hashes
+scripted records. The four `recipe/owner-hierarchy-records-*.jsonl.gz` shards use
+the same CLI, one invocation and separate output per shard. Their header pins
+the input; each following line contains an ordinary source-bundle group bounded
+to 8 MiB. Capacity and production read the groups sequentially; the complete
+compressed recipe hash is checked before and after production. No decompressed
+recipe copy is needed. A recipe contains source selectors/hashes, target relationships/hashes
 and named source transformations, never target object bytes. The producer
 reads original embedded schemas and records, relocates checked PPtrs, and
 verifies each full result against its accepted hash. Animation policies clear
@@ -893,8 +898,14 @@ by their remapped indices; value ranges and root indices follow the same source
 permutation. Root quaternions derive from indexed original delta endpoints,
 with the measured ARM float32 normalization. No native library or instruction
 emulator is required. Original event strings, values, paths,
-curve data and other non-transformed bytes remain original. Generic controllers
-and the qualified hierarchy/native/scripted records change only PPtrs,
+curve data and other non-transformed bytes remain original. Selected root
+average motion uses original channel sampling and masks. Duplicate bindings
+require equal source entries, values and delta endpoints; finite keys remain,
+and selected key permutations stay within one curve index. Unknown material
+path attributes derive from the original path CRC. Controller policies reorder
+complete original clip/behaviour entries, regenerate selected exported names and
+CRCs, derive opposed angles from original vectors and read original clip loop
+flags through pinned source dependencies. Hierarchy/native/scripted records change only PPtrs,
 preserving original type and script identities. The material path reuses the existing original keyword
 demotion operation; it introduces no material or shader value.
 

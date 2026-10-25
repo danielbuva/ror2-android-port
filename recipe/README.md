@@ -2675,8 +2675,10 @@ Animation policies select schema-typed float canonicalization, original
 reference-pose removal, constant-curve folding, checked PPtr remaps and the
 existing importer binding-attribute mask. No pose vector, curve coefficient,
 event string, native controller value, state graph, target byte template or
-arbitrary scalar replacement is present. Controllers preserve all non-pointer
-bytes. Materials reuse checked original fields and the existing named keyword
+arbitrary scalar replacement is present. Controller policies preserve original
+state data while selecting complete clip/behaviour permutations, exported
+path/name CRC regeneration, opposed-vector endpoint calculation and loop flags
+read from pinned original clip leaves. Materials reuse checked original fields and the existing named keyword
 demotion policy, preserving every original keyword string/value and total body
 length. Source matching admits only unique original records with unchanged
 native type identity; ambiguous matches remain excluded. These are partial

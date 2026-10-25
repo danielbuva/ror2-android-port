@@ -507,6 +507,19 @@ class AnimationProducerTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "generic object operation"):
             A.transform_generic(body, 91, selected)
 
+    def test_compressed_profile_streams_groups_and_rejects_unbounded_or_incomplete_rows(self):
+        header = json.dumps({"input_id": A.M.INPUT_ID}).encode() + b"\n"
+        group = {"path": "authored.bundle", "sha256": "authored", "members": []}
+        line = json.dumps(group).encode() + b"\n"
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "profile.jsonl.gz"
+            path.write_bytes(gzip.compress(header + line + line, mtime=0))
+            self.assertEqual(list(A.profile_bundles(path)), [group, group])
+            for invalid in (header + line[:-1], header + b" " * (8 * 1024**2) + line):
+                path.write_bytes(gzip.compress(invalid, mtime=0))
+                with self.assertRaisesRegex(ValueError, "bounded recipe line"):
+                    list(A.profile_bundles(path))
+
     def test_source_pack_persistence_and_input_output_drift(self):
         body, schema = fixture()
         transform = {"clear_reference_pose": True, "canonical": "nan"}

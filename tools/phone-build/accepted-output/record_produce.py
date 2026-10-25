@@ -185,8 +185,81 @@ def native_stream(data):
     return struct.pack("<I" + "I" * length, length, *result)
 
 
+def merged_stream(data, aliases):
+    """Recover original tangents, then pack the merged source key sequence.
+
+    The caller admits aliases only after comparing complete original binding,
+    channel and delta data. Finite keys remain present, including tied times.
+    """
+    length = struct.unpack_from("<I", data)[0]
+    if len(data) != 4 + length * 4:
+        raise ValueError("invalid merged stream extent")
+    words = list(struct.unpack_from("<" + "I" * length, data, 4))
+    result, frames, cursor = list(words), [], 0
+
+    def number(word):
+        return struct.unpack("<f", struct.pack("<I", word))[0]
+
+    def f32(value):
+        return struct.unpack("<f", struct.pack("<f", value))[0]
+
+    def word(value):
+        return 0x7FC00000 if math.isnan(value) else struct.unpack("<I", struct.pack("<f", value))[0]
+
+    while cursor < length:
+        if cursor + 2 > length:
+            raise ValueError("truncated merged frame")
+        time_word, count = words[cursor : cursor + 2]
+        cursor += 2
+        if count > (length - cursor) // 5:
+            raise ValueError("truncated merged keys")
+        keys = []
+        for _ in range(count):
+            keys.append((words[cursor], cursor))
+            cursor += 5
+        frames.append((number(time_word), keys))
+    incoming, outgoing, following = {}, {}, {}
+    for frame in range(len(frames) - 2, 0, -1):
+        time_value, keys = frames[frame]
+        for index, position in keys:
+            outgoing[position] = 0.0
+            if index in following:
+                next_time, next_position = following[index]
+                dt = next_time - time_value
+                a, b, c, value = map(number, words[position + 1 : position + 5])
+                next_value = number(words[next_position + 4])
+                if a != 0 or b != 0 or c != 0:
+                    outgoing[position] = c
+                    incoming[next_position] = f32(3 * ((a * dt) * dt) + 2 * (b * dt) + c)
+                elif value != next_value:
+                    outgoing[position] = incoming[next_position] = float("inf")
+                else:
+                    outgoing[position] = incoming[next_position] = 0.0
+            following[index] = (time_value, position)
+    curves = {}
+    for frame in range(1, len(frames) - 1):
+        time_value, keys = frames[frame]
+        for index, position in keys:
+            curves.setdefault(aliases.get(index, index), []).append((time_value, position))
+    for keys in curves.values():
+        for (time_value, position), (next_time, next_position) in zip(keys, keys[1:]):
+            out_slope, in_slope = outgoing.get(position, 0.0), incoming.get(next_position, 0.0)
+            if math.isinf(out_slope) or math.isinf(in_slope):
+                result[position + 1 : position + 4] = [0, 0, 0]
+                continue
+            dx = max(f32(next_time - time_value), f32(0.0001))
+            inverse = f32(1 / dx)
+            square = f32(inverse * inverse)
+            difference = f32(number(words[next_position + 4]) - number(words[position + 4]))
+            d0, d1 = f32(out_slope * dx), f32(in_slope * dx)
+            an = f32(f32(f32(d0 + d1) - difference) - difference)
+            bn = f32(f32(f32(f32(difference + f32(difference + difference)) - d0) - d0) - d1)
+            result[position + 1 : position + 4] = [word(f32(f32(an * square) * inverse)), word(f32(bn * square)), word(out_slope)]
+    return struct.pack("<I" + "I" * length, length, *result)
+
+
 def layout_clip(body, root, selected):
-    """Reorder source binding groups and import selected constant/dense curves."""
+    """Import source groups, retaining one binding for identical channels."""
     _, spans = fields(body, root)
 
     def f32(value):
@@ -217,7 +290,8 @@ def layout_clip(body, root, selected):
     order, folds = selected["binding_order"], selected["fold_bindings"]
     if (
         any(type(i) is not int for i in order + folds)
-        or sorted(order) != list(range(count))
+        or len(set(order)) != len(order)
+        or any(not 0 <= i < count for i in order)
         or len(set(folds)) != len(folds)
         or any(not 0 <= i < count for i in folds)
     ):
@@ -233,6 +307,14 @@ def layout_clip(body, root, selected):
         cursor += dimension
     flat = [i for binding in order for i in groups[binding]]
     inverse = {i: j for j, i in enumerate(flat)}
+    aliases = {}
+    for index in set(range(count)) - set(order):
+        retained = next((i for i in order if entries[i] == entries[index]), None)
+        if retained is None:
+            raise ValueError("omitted binding has no identical original binding")
+        for old, representative in zip(groups[index], groups[retained], strict=True):
+            aliases[old] = representative
+            inverse[old] = inverse[representative]
     cp = ("m_MuscleClip", "m_Clip", "data")
     sp, dp, kp = cp + ("m_StreamedClip",), cp + ("m_DenseClip",), cp + ("m_ConstantClip", "data")
     ns, nd = integer(sp + ("curveCount",)), integer(dp + ("m_CurveCount",))
@@ -240,8 +322,8 @@ def layout_clip(body, root, selected):
     folded = {i for binding in folds for i in groups[binding]}
     if any(i >= cs for i in folded):
         raise ValueError("cannot refold existing constants")
-    new_ns = ns - sum(i < ns for i in folded)
-    new_nd = nd - sum(ns <= i < cs for i in folded)
+    new_ns = ns - sum(i < ns for i in folded) - sum(i < ns for i in aliases)
+    new_nd = nd - sum(ns <= i < cs for i in folded) - sum(ns <= i < cs for i in aliases)
     new_cs = new_ns + new_nd
     if (
         any(i >= ns or i in folded for i in flat[:new_ns])
@@ -250,7 +332,42 @@ def layout_clip(body, root, selected):
     ):
         raise ValueError("unqualified clip bucket movement")
     words = array(sp + ("data",))
+    original_words = words
+    constants = array(kp)
+    samples = array(dp + ("m_SampleArray",))
+    vp = ("m_MuscleClip", "m_ValueArrayDelta")
+    vstart, vend = spans[vp]
+    if struct.unpack_from("<I", body, vstart)[0] != cursor or vend - vstart != 4 + cursor * 8:
+        raise ValueError("value-delta extent differs")
+    if aliases:
+        signatures = {}
+        position = 0
+        while position < len(words):
+            time_word, n = words[position : position + 2]
+            position += 2
+            if n > (len(words) - position) // 5:
+                raise ValueError("truncated duplicate source stream")
+            for _ in range(n):
+                index = words[position]
+                signatures.setdefault(index, []).append((time_word, *words[position + 1 : position + 5]))
+                position += 5
+        for old, representative in aliases.items():
+            if (old < ns) != (representative < ns) or (old < cs) != (representative < cs):
+                raise ValueError("duplicate binding crosses clip buckets")
+            if old < ns:
+                equal = signatures.get(old) == signatures.get(representative)
+            elif old < cs:
+                equal = samples[old - ns :: nd] == samples[representative - ns :: nd]
+            else:
+                equal = constants[old - cs] == constants[representative - cs]
+            equal = equal and body[vstart + 4 + old * 8 : vstart + 12 + old * 8] == body[vstart + 4 + representative * 8 : vstart + 12 + representative * 8]
+            if not equal:
+                raise ValueError("duplicate binding has different original values")
+        data = merged_stream(pack(words), aliases)
+        words = list(struct.unpack_from("<" + "I" * (len(data) // 4 - 1), data, 4))
     first, frames, position = {}, [], 0
+    stream_order = dict(selected.get("stream_order", []))
+    frame_index = 0
     while position < len(words):
         if position + 2 > len(words):
             raise ValueError("truncated clip frame")
@@ -264,20 +381,27 @@ def layout_clip(body, root, selected):
             if i >= ns:
                 raise ValueError("source curve outside stream")
             first.setdefault(i, words[position + 4])
-            if i not in folded:
+            if i not in folded and not (frame_index == 0 and i in aliases):
                 keys.append((inverse[i], *words[position + 1 : position + 5]))
             position += 5
         if keys or not math.isfinite(number(time_word)):
-            frames.extend((time_word, len(keys), *(word for key in sorted(keys, key=lambda key: key[0]) for word in key)))
-    samples = array(dp + ("m_SampleArray",))
+            keys.sort(key=lambda key: key[0])
+            if frame_index in stream_order:
+                permutation = stream_order.pop(frame_index)
+                if sorted(permutation) != list(range(len(keys))) or any(keys[i][0] != keys[j][0] for i, j in enumerate(permutation)):
+                    raise ValueError("invalid equal-curve source row permutation")
+                keys = [keys[i] for i in permutation]
+            frames.extend((time_word, len(keys), *(word for key in keys for word in key)))
+        frame_index += 1
+    if stream_order:
+        raise ValueError("source frame permutation outside clip")
     old_frames = integer(dp + ("m_FrameCount",))
     if len(samples) != old_frames * nd or (nd and not old_frames):
         raise ValueError("dense sample extent differs")
     for i in folded:
         if i >= ns:
             first[i] = samples[i - ns]
-    constants = array(kp)
-    if len(flat) != cs + len(constants):
+    if cursor != cs + len(constants):
         raise ValueError("binding dimensions differ")
     new_constants = [constants[i - cs] if i >= cs else first[i] for i in flat[new_cs:]]
     policy = selected["dense_policy"]
@@ -306,16 +430,40 @@ def layout_clip(body, root, selected):
             if policy == "interior-zero" and frame < old_frames - 1 and value == 0x80000000:
                 value = 0
             new_samples.append(value)
-    vp = ("m_MuscleClip", "m_ValueArrayDelta")
-    vstart, vend = spans[vp]
-    if struct.unpack_from("<I", body, vstart)[0] != len(flat) or vend - vstart != 4 + len(flat) * 8:
-        raise ValueError("value-delta extent differs")
     delta_rows = []
+    endpoints = None
+    if selected.get("resample_stream_delta"):
+        if not aliases:
+            raise ValueError("stream delta resampling requires duplicate curves")
+        endpoints = [number(integer(("m_MuscleClip", name))) for name in ("m_StartTime", "m_StopTime")]
+
+    def sample_stream(index, time_value):
+        latest = None
+        position = 0
+        while position < len(frames):
+            time_word, n = frames[position : position + 2]
+            position += 2
+            key_time = number(time_word)
+            for _ in range(n):
+                key = frames[position : position + 5]
+                if key[0] == index and math.isfinite(key_time) and key_time <= time_value:
+                    latest = key_time, key
+                position += 5
+        if latest is None:
+            raise ValueError("no original streamed endpoint")
+        key_time, key = latest
+        dx = f32(time_value - key_time)
+        a, b, c, value = map(number, key[1:])
+        value = f32(f32(f32(f32(f32(f32(a * dx) + b) * dx) + c) * dx) + value)
+        return struct.pack("<f", value)
+
     for i in flat:
         if i in folded:
             row = struct.pack("<II", first[i], first[i])
         else:
             row = body[vstart + 4 + i * 8 : vstart + 12 + i * 8]
+            if endpoints is not None and i < ns:
+                row = b"".join(sample_stream(inverse[i], time_value) for time_value in endpoints)
             if policy == "interior-zero" and ns <= i < cs:
                 row = struct.pack("<II", *(0 if value == 0x80000000 else value for value in struct.unpack("<II", row)))
         delta_rows.append(row)
@@ -330,7 +478,7 @@ def layout_clip(body, root, selected):
         (spans[sp + ("data",)], pack(frames)),
         (spans[kp], pack(new_constants)),
         (spans[dp + ("m_SampleArray",)], pack(new_samples)),
-        ((bstart, bend), struct.pack("<I", count) + b"".join(entries[i] for i in order)),
+        ((bstart, bend), struct.pack("<I", len(order)) + b"".join(entries[i] for i in order)),
         ((vstart, vend), delta),
         (spans[sp + ("curveCount",)], struct.pack("<I", new_ns)),
         (spans[dp + ("m_CurveCount",)], struct.pack("<I", new_nd)),
@@ -338,7 +486,11 @@ def layout_clip(body, root, selected):
     ]
     if not nd and policy != "preserve":
         changes.extend([(spans[dp + ("m_SampleRate",)], struct.pack("<f", rate)), (spans[dp + ("m_BeginTime",)], bytes(4))])
-    size = integer(("m_MuscleClipSize",)) + 4 * (len(frames) - len(words) + len(new_constants) - len(constants) + len(new_samples) - len(samples))
+    size = (
+        integer(("m_MuscleClipSize",))
+        + 4 * (len(frames) - len(original_words) + len(new_constants) - len(constants) + len(new_samples) - len(samples))
+        + 8 * (len(flat) - cursor)
+    )
     changes.append((spans[("m_MuscleClipSize",)], struct.pack("<I", size)))
     result = bytearray(body)
     for (start, end), data in sorted(changes, reverse=True):
@@ -541,6 +693,7 @@ def transform(body, root, selected):
         "fold_constants",
         "references",
         "binding_attributes",
+        "material_path_bindings",
         "native_stream",
         "layout",
         "normalize_root_quaternions",
@@ -579,6 +732,16 @@ def transform(body, root, selected):
             raise ValueError("invalid AnimationClip binding attribute")
         (value,) = struct.unpack_from("<I", result, offset)
         struct.pack_into("<I", result, offset, (value & 0x0FFFFFFF) | 0x80000000)
+    for index in selected.get("material_path_bindings", []):
+        path = ("m_ClipBindingConstant", "genericBindings", "Array", str(index))
+        if type(index) is not int or index < 0 or path + ("attribute",) not in spans:
+            raise ValueError("invalid material path binding")
+        # AssetRipper's unknown-path RendererMaterial fallback exports
+        # material.PATH. Its imported property ID therefore comes from the
+        # original path CRC rather than the original material property CRC.
+        offset = spans[path + ("attribute",)][0]
+        source_path = struct.unpack_from("<I", result, spans[path + ("path",)][0])[0]
+        struct.pack_into("<I", result, offset, (source_path & 0x0FFFFFFF) | 0x80000000)
     changes = []
     muscle = ("m_MuscleClip",)
     if selected.get("clear_reference_pose"):
@@ -653,7 +816,7 @@ def exported_clip_tos(value):
     if not name or len((name + ".anim").encode()) > 240:
         raise ValueError("unqualified export filename")
     directory = value[: match.start()].rsplit("/", 1)[0]
-    return directory.replace("Assets/", "Assets/WholeGame/", 1) + "/" + name + ".anim" + clip_name
+    return "Assets/WholeGame" + directory[len("Assets") :] + "/" + name + ".anim" + clip_name
 
 
 def controller_tos(body, root, selection):
@@ -749,11 +912,53 @@ def controller_singleton_behaviours(body, root, order):
     return bytes(out)
 
 
-def transform_generic(body, class_id, selected, root=None):
+def controller_loop_states(body, root, states, read_clip):
+    """Compile selected original states' loop flag from their original clip leaves."""
+    if read_clip is None:
+        raise ValueError("controller loop policy requires original clip reader")
+    _, spans = fields(body, root)
+    result = bytearray(body)
+    clip_start = spans[("m_AnimationClips",)][0] + 4
+    clip_count = struct.unpack_from("<I", body, clip_start - 4)[0]
+    seen = set()
+    for selected in states:
+        machine, state = selected["state"]
+        if type(machine) is not int or type(state) is not int or min(machine, state) < 0 or (machine, state) in seen:
+            raise ValueError("invalid controller loop state selection")
+        seen.add((machine, state))
+        prefix = ("m_Controller", "m_StateMachineArray", "Array", str(machine), "data", "m_StateConstantArray", "Array", str(state), "data")
+        leaves = set()
+        for path, (offset, _) in spans.items():
+            if path[: len(prefix)] != prefix or path[-1] != "m_ClipID":
+                continue
+            children = spans[path[:-1] + ("m_ChildIndices",)][0]
+            if struct.unpack_from("<I", body, children)[0]:
+                continue
+            index = struct.unpack_from("<I", body, offset)[0]
+            if index == 0xFFFFFFFF:
+                continue
+            if index >= clip_count:
+                raise ValueError("controller loop leaf outside original clips")
+            leaves.add(index)
+        clips = selected["clips"]
+        if not leaves or any(type(row["index"]) is not int for row in clips) or sorted(row["index"] for row in clips) != sorted(leaves):
+            raise ValueError("controller loop dependency does not match original leaves")
+        flags = [read_clip(row, struct.unpack_from("<iq", body, clip_start + row["index"] * 12)) for row in clips]
+        if any(type(flag) is not bool for flag in flags):
+            raise ValueError("invalid original clip loop flag")
+        offset, end = spans[prefix + ("m_Loop",)]
+        if end - offset != 1 or body[offset] not in (0, 1):
+            raise ValueError("invalid original state loop extent")
+        result[offset] = all(flags)
+    return bytes(result)
+
+
+def transform_generic(body, class_id, selected, root=None, read_clip=None):
     if set(selected) - {
         "references",
         "demote_keywords",
         "controller_clip_order",
+        "controller_loop_states",
         "controller_tos",
         "controller_opposed_angles",
         "controller_behaviour_order",
@@ -762,6 +967,8 @@ def transform_generic(body, class_id, selected, root=None):
         raise ValueError("unknown generic object operation")
     if any(key.startswith("controller_") or key == "canonical" for key in selected) and (class_id != 91 or root is None):
         raise ValueError("controller operations require original controller schema")
+    if "controller_loop_states" in selected:
+        body = controller_loop_states(body, root, selected["controller_loop_states"], read_clip)
     if "controller_clip_order" in selected:
         if class_id != 91 or root is None:
             raise ValueError("controller clip order requires original controller schema")
@@ -830,6 +1037,35 @@ def produce(profile_path, profile_sha256, pc, output):
                     metadata = W.read_serialized(member)
                     objects = {row["path_id"]: row for row in metadata["objects"]}
                     trees = {}
+
+                    def read_controller_clip(row, pointer):
+                        file_id, path_id = pointer
+                        name = metadata["externals"][file_id - 1]["path"].split("/")[-1] if file_id else selected_member["name"]
+                        if row["member"] != name or row["path_id"] != path_id:
+                            raise ValueError("controller original clip PPtr drift")
+                        clip_path = M.safe_input(pc, row["bundle"])
+                        if B.sha(clip_path) != row["bundle_sha256"]:
+                            raise ValueError("controller original clip bundle drift")
+                        clip_bundle = B.Bundle(clip_path)
+                        clip_member = clip_bundle.member(name)
+                        clip_metadata = W.read_serialized(clip_member)
+                        clip_object = next(obj for obj in clip_metadata["objects"] if obj["path_id"] == path_id)
+                        clip_type = clip_metadata["types"][clip_object["type_id"]]
+                        if clip_type["class_id"] != 74:
+                            raise ValueError("controller loop input is not an original AnimationClip")
+                        clip_member.seek(clip_metadata["data_offset"] + clip_object["offset"])
+                        clip_body = B.exact(clip_member, clip_object["bytes"])
+                        if hashlib.sha256(clip_body).hexdigest() != row["sha256"]:
+                            raise ValueError("controller original clip body drift")
+                        clip_root = SCHEMA.type_tree(io.BytesIO(clip_type["tree"]))
+                        clip_spans = fields(clip_body, clip_root)[1]
+                        start, stop = clip_spans[("m_MuscleClip", "m_LoopTime")]
+                        if stop - start != 1 or clip_body[start] not in (0, 1):
+                            raise ValueError("invalid original clip loop extent")
+                        if B.sha(clip_path) != row["bundle_sha256"]:
+                            raise ValueError("controller original clip input changed during production")
+                        return bool(clip_body[start])
+
                     for selected in selected_member["objects"]:
                         obj = objects[selected["path_id"]]
                         typ = metadata["types"][obj["type_id"]]
@@ -873,7 +1109,7 @@ def produce(profile_path, profile_sha256, pc, output):
                             if typ["class_id"] == 74:
                                 result = transform(body, root, operations)
                             else:
-                                result = transform_generic(body, typ["class_id"], operations, root)
+                                result = transform_generic(body, typ["class_id"], operations, root, read_controller_clip)
                             digest = hashlib.sha256(result).hexdigest()
                             if digest != target["sha256"] or len(result) != target["bytes"]:
                                 raise ValueError("produced object record differs from accepted hash")
