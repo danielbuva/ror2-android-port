@@ -1,53 +1,12 @@
 """Read the shipped segment table, without interpreting shader math."""
 
+from shader_metadata import STAGES, variants
+
 import hashlib
 import struct
 import lz4.block
 from UnityPy.export.ShaderConverter import ShaderSubProgram
 from UnityPy.streams import EndianBinaryReader
-
-STAGES = ["progVertex", "progFragment", "progHull", "progDomain", "progGeometry"]
-
-
-def variants(tree):
-    result = {}
-    keywords = tree["m_ParsedForm"]["m_KeywordNames"]
-    for subshader_index, subshader in enumerate(tree["m_ParsedForm"]["m_SubShaders"]):
-        for pass_index, p in enumerate(subshader["m_Passes"]):
-            for stage in STAGES:
-                tables = p[stage]["m_PlayerSubPrograms"]
-                parameter_tables = p[stage]["m_ParameterBlobIndices"]
-                if not tables and not parameter_tables:
-                    continue
-                if len(tables) != 4 or len(parameter_tables) != 4 or any(tables[:3]) or any(parameter_tables[:3]):
-                    raise RuntimeError("Unmeasured shader platform tables")
-                programs = tables[3]
-                parameters = parameter_tables[3]
-                if len(programs) != len(parameters):
-                    raise RuntimeError("Shader variant/parameter lengths differ")
-                for program, parameter in zip(programs, parameters):
-                    index = program["m_BlobIndex"]
-                    value = {
-                        "index": index,
-                        "parameter_index": parameter,
-                        "gpu_type": program["m_GpuProgramType"],
-                        "keywords": sorted(keywords[k] for k in program["m_KeywordIndices"]),
-                        "pass": p["m_State"]["m_Name"],
-                        "stage": stage,
-                        "subshader_index": subshader_index,
-                        "pass_index": pass_index,
-                    }
-                    if index in result:
-                        previous = result[index]
-                        if any(previous[k] != value[k] for k in ["parameter_index", "gpu_type", "keywords", "stage"]):
-                            raise RuntimeError("Original shader program identity has conflicting consumers")
-                        location = {k: value[k] for k in ["pass", "subshader_index", "pass_index"]}
-                        consumers = previous.setdefault("consumers", [{k: previous[k] for k in location}])
-                        if location not in consumers:
-                            consumers.append(location)
-                    else:
-                        result[index] = value
-    return result
 
 
 def read_segments(tree, blob):

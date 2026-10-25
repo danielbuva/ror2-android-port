@@ -1,6 +1,7 @@
 """Private Standard/lighting candidate from measured shipped programs and layouts."""
 
 from common import *
+from shader_metadata import FEATURES, material_selection, standard_manifest
 from shader_segments import read_segments, selected_layout
 from shader_source import bind_hlsl, properties, output_directory
 from shader_recovery import PINS
@@ -8,19 +9,6 @@ import base64
 import re
 import shutil
 import UnityPy
-
-FEATURES = [
-    "PRINT_CUTOFF",
-    "SPLATMAP",
-    "FORCE_SPEC",
-    "DITHER",
-    "CUTOUT",
-    "USE_VERTEX_COLORS",
-    "FRESNEL_EMISSION",
-    "USE_VERTEX_COLORS_FOR_FRESNEL_EMISSION_AND_FLOWMAP",
-    "FLOWMAP",
-    "LIMBREMOVAL",
-]
 
 
 def load_analysis(path, identity, shader, work=WORK, root=ROOT):
@@ -186,7 +174,7 @@ def generate(output=None, resources=None, work=WORK, root=ROOT, independent=None
         if WORK.resolve() not in material_file.parents or sha(material_file) != selection["material_inventory_sha256"]:
             raise RuntimeError("Measured material inventory drift")
         rows = [x.split("|") for x in material_file.read_text().splitlines() if "|Hopoo Games/Deferred/Standard|" in x]
-        feature_sets = sorted({tuple(sorted(set(x[2].split(",")) & set(FEATURES))) for x in rows})
+        _, rows, feature_sets = material_selection(rows, standard[0]["m_ParsedForm"], "standard")
         if not rows or len(feature_sets) > 128:
             raise RuntimeError("Unexpected native material closure")
         from shader_programs import NativePrograms
@@ -246,15 +234,10 @@ def generate(output=None, resources=None, work=WORK, root=ROOT, independent=None
         vi, fi = pair(lighting, 1, [])
         shader += "Pass {\n" + render_state(passes[1]["m_State"]) + block(lighting, [(None, vi, fi)]) + "}\n}}\n"
         (sources / "AndroidNativeDeferredLighting.shader").write_text(shader)
-        write(
-            sources / "AndroidNativeStandardVariants.json",
-            {
-                "features": FEATURES,
-                "variants": variants,
-                "source_material_count": len(rows),
-                "scope": "Measured static material features, mono/noninstanced SH/HDR Standard and original custom lighting; other families/reflections/PC parity remain open",
-            },
-        )
+        manifest = standard_manifest(rows, standard, resources)
+        if manifest["variants"] != variants:
+            raise RuntimeError("Native Standard manifest selection differs from emitted programs")
+        write(sources / "AndroidNativeStandardVariants.json", manifest)
         result.update(
             success=True,
             material_count=len(rows),

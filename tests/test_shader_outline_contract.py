@@ -19,7 +19,7 @@ atexit.register(_stage.cleanup)
 TEST_ROOT = Path(_stage.name).resolve()
 (TEST_ROOT / "scripts/lab").mkdir(parents=True)
 (TEST_ROOT / "recipe").mkdir()
-for module in ("common.py", "shader_segments.py", "shader_deferred.py", "shader_recovery.py"):
+for module in ("common.py", "shader_metadata.py", "shader_segments.py", "shader_deferred.py", "shader_recovery.py"):
     shutil.copy2(REPO / "scripts/lab" / module, TEST_ROOT / "scripts/lab" / module)
 for module in ("shader_outline.py", "shader_source.py"):
     shutil.copy2(REPO / "scripts/lab" / module, TEST_ROOT / "scripts/lab" / module)
@@ -30,6 +30,7 @@ public_recipe = {
     "stable_output": "generated-shader-candidates/outline-highlight-r4/{input_id}",
     "programs": [],
     "helpers": {
+        "shader_metadata.py": hashlib.sha256((TEST_ROOT / "scripts/lab/shader_metadata.py").read_bytes()).hexdigest(),
         "shader_source.py": hashlib.sha256((TEST_ROOT / "scripts/lab/shader_source.py").read_bytes()).hexdigest(),
         "shader_deferred.py": hashlib.sha256((TEST_ROOT / "scripts/lab/shader_deferred.py").read_bytes()).hexdigest(),
     },
@@ -57,6 +58,17 @@ class GeneratorContractTests(unittest.TestCase):
     def test_recipe_pins_modified_shared_render_state_helper(self) -> None:
         helper = TEST_ROOT / "scripts/lab/shader_deferred.py"
         self.assertEqual(generator.MODULE_PINS["shader_deferred.py"], hashlib.sha256(helper.read_bytes()).hexdigest())
+
+    def test_shared_metadata_is_pinned_and_drift_refuses(self) -> None:
+        helper = TEST_ROOT / "scripts/lab/shader_metadata.py"
+        original = helper.read_bytes()
+        generator.verify_authored_helpers()
+        try:
+            helper.write_bytes(original + b"\n# changed policy\n")
+            with self.assertRaisesRegex(RuntimeError, "helper drift: shader_metadata.py"):
+                generator.verify_authored_helpers()
+        finally:
+            helper.write_bytes(original)
 
     def test_production_recipe_is_fixed_public_path_without_private_fallback(self) -> None:
         self.assertEqual(generator.RECIPE_PATH, TEST_ROOT / "recipe/shader-outline-candidate.json")

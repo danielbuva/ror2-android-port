@@ -182,12 +182,12 @@ bringing the complete source bundle count to seven. Phone qualification remains 
 
 ## Produce named player-data files
 
-`player_data.py` produces 153 canonical `apk/assets/bin/Data/...` files:
+`player_data.py` produces 173 canonical `apk/assets/bin/Data/...` files:
 SDK default resources, three fresh converter resource files, two script metadata
 JSON files derived from original PC metadata plus authored initialization/order,
 the embedded font serialized file, two original line-breaking TextAssets, the
 authored runtime and bootstrap JSON TextAssets, 64 standalone Sprite files,
-the original TimerStringFormatter, three original TMP objects, six materials and 68 standalone
+the original TimerStringFormatter, nine original TMP objects, 13 materials, the six-object SDK built-in UI file and 72 standalone
 textures from existing source-produced packs. The font, material and texture bodies and their
 type identities/dependency come from one original PC bundle; only
 four checked reference identities change. The generic writer generates its
@@ -207,12 +207,15 @@ source relationships, not object bodies or a target byte template.
 python3 -I -S -B tools/phone-build/accepted-output/player_data.py \
   --profile recipe/owner-player-data.json --profile-sha256 RECIPE_SHA256 \
   --pc ORIGINAL_PC_ROOT --sdk OWNER_ANDROID_PLAYER_SDK \
+  --builtin-extra OWNER_SDK_RESOURCES/unity_builtin_extra \
+  --editor-resources "OWNER_SDK_RESOURCES/unity editor resources" \
   --converter FRESH_CONVERTER_OUTPUT \
   --converter-receipt-sha256 CONVERTER_RECEIPT_SHA256 \
   --texture-pack UNCOMPRESSED_PACK UNCOMPRESSED_RECEIPT_SHA256 \
   --texture-pack ALPHA_ETC_PACK ALPHA_ETC_RECEIPT_SHA256 \
   --texture-pack RGB_ETC_PACK RGB_ETC_RECEIPT_SHA256 \
   --texture-pack RGBA_PACK RGBA_RECEIPT_SHA256 \
+  --texture-pack RGBA_MIP_PACK RGBA_MIP_RECEIPT_SHA256 \
   --output NEW_PRIVATE_TARGET_TREE
 ```
 
@@ -222,6 +225,33 @@ profile selects producer profile hashes and bundle/member/path IDs, never
 physical private paths or pixel literals. Uncompressed/RGB/Alpha8 producers are
 documented below. The 54 RGBA selections use the separately audited, landed
 [PR75 producer/profile](https://github.com/danielbuva/ror2-android-port/pull/75).
+The built-in UI input is the full pinned file from the owner-supplied exact
+SDK's editor Resources directory; no Editor process or project is used. Only
+its selected original Texture/Sprite fields survive editor-field stripping.
+Material clones use the existing authored importer names and derive retained
+texture properties from the assigned original Shader declarations, preserving
+all other source values. This supplies no compiled shader programs.
+
+The two native shader-selection TextAssets read original material keywords and
+Shader declaration metadata through embedded source type trees. Their sibling
+`owner-player-shader-manifests.json` recipe pins original providers and object
+identities without storing keyword inventories or shader programs. The shared
+pure policy in `scripts/lab/shader_metadata.py` also serves the existing shader
+generators. Preserve this repository-relative helper path when staging the
+player owner on Android, and keep the pinned selector recipe beside the player
+profile. No UnityPy, cached inventory, compiler or Editor is needed for these
+two JSON files.
+
+Six selected TMP fonts derive managed properties hashes from their original
+MonoScript class/namespace/assembly identity, original custom schema and the
+exact SDK native MonoBehaviour base. Supply the full pinned SDK
+`unity editor resources` explicitly with `--editor-resources`; the existing
+built-in UI provider lacks this schema. The profile's source descriptors select
+original script and SDK records; no destination type hash is an input. The
+shared `scripts/lab/script_identity.py` computes the hash. Checked original
+script relationships and input rechecks precede completion. Other scripted
+objects retain their original type hashes.
+
 No texture producer is changed by this assembly step. Streamed records retain
 all native fields and move only their verified produced pixels inline; existing
 inline records remain unchanged. Native type metadata comes from the already
@@ -229,10 +259,11 @@ selected original PC font bundle. Receipt/input/profile and complete pack hashes
 selected extents and source stream descriptors are verified before use; provider
 hashes are checked again before completion. A missing/failed/changed pack refuses.
 
-Stage `player_data.py`, `sdk_inputs.py`, `object_produce.py`, `mesh_produce.py`,
-`unity_mesh.py`, `unity_bundle.py`, `unity_write.py` and the selected recipe as
-sibling Python inputs for an Android replay. Keep the pinned
-`runtime-config.json` and `owner-bootstrap.json` beside the selected player profile. No native codec is
+Stage the player owner and its existing Python dependencies at their
+repository-relative paths for an Android replay, including
+`scripts/lab/shader_metadata.py` and `scripts/lab/script_identity.py`. Keep the
+pinned `runtime-config.json`, `owner-bootstrap.json` and
+`owner-player-shader-manifests.json` beside the selected player profile. No native codec is
 needed for this assembly step; its texture producers retain their own codec/SDK
 requirements. The converter input is its successful `result.json` and its
 three `data/Resources/...` outputs, not files extracted from an accepted APK.

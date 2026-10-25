@@ -178,22 +178,6 @@ class TessellationPrograms(NativePrograms):
         )
         return data
 
-    def quad(self, context, pass_index, keys):
-        indices = []
-        for stage in ["progVertex", "progHull", "progDomain", "progFragment"]:
-            found = [
-                r["index"]
-                for r in context[2]
-                if r["kind"] == "program"
-                and r["stage"] == stage
-                and r["keywords"] == sorted(keys)
-                and any(c["subshader_index"] == 0 and c["pass_index"] == pass_index for c in r.get("consumers", [r]))
-            ]
-            if len(found) != 1:
-                raise RuntimeError("Ambiguous native tessellation stage: " + stage + "/" + str(keys))
-            indices.append(found[0])
-        return indices
-
     def water_block(self, context, variants, original_vertices=False):
         inputs = set()
         controls = set()

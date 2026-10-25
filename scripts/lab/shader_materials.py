@@ -1,53 +1,12 @@
 """Privately recover the measured cloud, snow, terrain and reflection closure."""
 
 from common import *
+from shader_metadata import FAMILIES, ENGINE, material_selection, family_manifest
 from shader_deferred import load_analysis, render_state
 from shader_programs import NativePrograms, NativeVariantUnavailable
 from shader_tessellation import TessellationPrograms
 from shader_source import properties, output_directory
 from shader_recovery import PINS
-
-FAMILIES = {
-    "cloud": (-658352061839041481, "Hopoo Games/FX/Cloud Remap"),
-    "opaque-cloud": (-704325499538927933, "Hopoo Games/FX/Opaque Cloud Remap"),
-    "snow": (3671293666148614723, "Hopoo Games/Deferred/Snow Topped"),
-    "terrain": (5954585457266417408, "Hopoo Games/Deferred/Triplanar Terrain Blend"),
-    "grass": (-8989458460904117762, "Hopoo Games/Environment/Waving Grass"),
-    "cloth": (-6170440028897955187, "Hopoo Games/Deferred/Wavy Cloth"),
-    "ui-alpha": (-8085301563477162814, "Hopoo Games/UI/Animate Alpha"),
-    "distortion": (1142643595885926041, "Hopoo Games/FX/Distortion"),
-    "speedtree": (-8684109817920462965, "SpeedtreeOverride/SpeedtreeCustom"),
-    "water-single": (-8115552462691183134, "CalmWater/Calm Water [DX11]"),
-    "water": (-92852985697471365, "CalmWater/Calm Water [DX11] [Double Sided]"),
-}
-ENGINE = {
-    "STEREO_INSTANCING_ON",
-    "UNITY_SINGLE_PASS_STEREO",
-    "STEREO_MULTIVIEW_ON",
-    "STEREO_CUBEMAP_RENDER_ON",
-    "INSTANCING_ON",
-    "LIGHTPROBE_SH",
-    "DYNAMICLIGHTMAP_ON",
-    "SHADOWS_SHADOWMASK",
-    "LIGHTMAP_ON",
-    "DIRLIGHTMAP_COMBINED",
-    "UNITY_HDR_ON",
-    "SHADOWS_DEPTH",
-    "SHADOWS_CUBE",
-    "EDITOR_VISUALIZATION",
-    "FOG_LINEAR",
-    "FOG_EXP",
-    "FOG_EXP2",
-    "DIRECTIONAL",
-    "LIGHTMAP_SHADOW_MIXING",
-    "SHADOWS_SCREEN",
-    "VERTEXLIGHT_ON",
-    "POINT",
-    "SPOT",
-    "POINT_COOKIE",
-    "DIRECTIONAL_COOKIE",
-    "SOFTPARTICLES_ON",
-}
 
 
 def tags(pairs):
@@ -141,16 +100,10 @@ def generate(output=None, resources=None, work=WORK, root=ROOT, independent=None
             form = tree["m_ParsedForm"]
             sub = form["m_SubShaders"][0]
             passes = sub["m_Passes"]
-            features = set(form["m_KeywordNames"]) - ENGINE - {"UNITY_UI_CLIP_RECT", "UNITY_UI_ALPHACLIP"}
+            features, materials, sets = material_selection(rows, form, name)
             ui = name == "ui-alpha"
-            if name == "speedtree":
-                features -= {"ENABLE_WIND", "LOD_FADE_PERCENTAGE", "LOD_FADE_CROSSFADE"}
             water = name in ["water", "water-single"]
             first_pass = 1 if name == "distortion" or water else 0
-            materials = [x for x in rows if x[1] == form["m_Name"]]
-            sets = sorted({tuple(sorted(set(x[2].split(",")) & features)) for x in materials})
-            if not sets or len(sets) > 128:
-                raise RuntimeError("Unexpected native material closure")
             variants = []
             for i, keys in enumerate(sets):
                 try:
@@ -343,16 +296,10 @@ def generate(output=None, resources=None, work=WORK, root=ROOT, independent=None
             )
         text += "}}\n"
         (sources / "AndroidNativeDeferredReflections.shader").write_text(text)
-        write(
-            sources / "AndroidNativeMaterialFamilies.json",
-            {
-                "families": families,
-                "deferred_variants": result["deferred_variants"],
-                "water_topology": topology,
-                "water_geometry_approximation": topology == "original-vertices",
-                "scope": "Measured static material features, mono/noninstanced HDR deferred; cloud SH/soft-particle variants; original reflection candidate, no PC semantic/visual parity",
-            },
-        )
+        manifest = family_manifest(contexts, rows, topology, resources)
+        if manifest["families"] != families or manifest["deferred_variants"] != result["deferred_variants"]:
+            raise RuntimeError("Native family manifest selection differs from emitted programs")
+        write(sources / "AndroidNativeMaterialFamilies.json", manifest)
         result.update(
             success=True,
             families=families,

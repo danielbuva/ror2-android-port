@@ -18,7 +18,7 @@ _STAGE = tempfile.TemporaryDirectory(prefix="translucent-generator-contract-")
 STAGED_ROOT = Path(_STAGE.name)
 (STAGED_ROOT / "scripts/lab").mkdir(parents=True)
 (STAGED_ROOT / "recipe").mkdir()
-for name in ("common.py", "shader_segments.py", "shader_deferred.py", "shader_ramp_fog.py", "shader_source.py", "shader_recovery.py"):
+for name in ("common.py", "shader_metadata.py", "shader_segments.py", "shader_deferred.py", "shader_ramp_fog.py", "shader_source.py", "shader_recovery.py"):
     shutil.copy2(ROOT / "scripts/lab" / name, STAGED_ROOT / "scripts/lab" / name)
 shutil.copy2(ROOT / "scripts/lab/shader_translucent.py", STAGED_ROOT / "scripts/lab/shader_translucent.py")
 shutil.copy2(ROOT / "recipe/shader-translucent-candidate.json", STAGED_ROOT / "recipe/shader-translucent-candidate.json")
@@ -182,6 +182,18 @@ class ProductionGeneratorContracts(unittest.TestCase):
                     module.verify_authored_helpers()
         finally:
             module.RECIPE["tools"]["authored_helpers"] = original
+
+    def test_shared_metadata_is_pinned_and_drift_refuses(self):
+        helper = STAGED_ROOT / "scripts/lab/shader_metadata.py"
+        original = helper.read_bytes()
+        self.assertEqual(module.RECIPE["tools"]["authored_helpers"]["shader_metadata.py"], hashlib.sha256(original).hexdigest())
+        module.verify_authored_helpers()
+        try:
+            helper.write_bytes(original + b"\n# changed policy\n")
+            with self.assertRaisesRegex(RuntimeError, "helper pin drift: shader_metadata.py"):
+                module.verify_authored_helpers()
+        finally:
+            helper.write_bytes(original)
 
     def test_output_layout_refuses_collisions_with_reports_and_intermediates(self):
         original = module.RECIPE["shaders"]

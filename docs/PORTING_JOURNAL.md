@@ -40443,3 +40443,262 @@ single-job cohort only after Main's explicit terminal release; admission,
 subsecond CPU telemetry, 70/55-degree pause/resume and above-80-degree abort
 remain required. This short case establishes no sustained thermal, performance,
 ordinary-app or owner-installation qualification.
+## J1126 — Assemble SDK UI resources and original font materials
+
+Date: 2026-10-25 UTC. Source-only host player-file assembly. Accepted comparator
+is J850 APK SHA-256
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+No Editor, device command, lease acquisition, installation or game run occurs.
+
+**Hypothesis and prior art.** Extend J1118's existing player owner to close
+complete files using original SDK/native fields and the existing authored HUD
+import policy. Consulted `community-prior-art.md`, pinned UnityPy 1.25.3's
+TypeTreeHelper/PPtr contracts and the pinned AssetRipper
+`1ac666f47d8e9dedf96afb0b914c70d7656151ea` SpriteExtensions and
+MaterialExtensions. Source type trees identify editor-only fields and native
+texture ownership. `RecoveredHudBuilder.Normalize` clones original materials,
+assigns the mobile font shader and stores explicit importer names. Original
+input, field extents and complete-file comparison remain the authority. No
+upstream implementation or protected payload is copied into public source.
+
+**Implementation and complete files.** The existing `player_data.py` now accepts
+explicit `--builtin-extra` for the caller-supplied exact SDK
+`Resources/unity_builtin_extra`. The recipe pins the complete provider and
+selects its three built-in UI textures and three corresponding Sprites. Source
+schema projection removes the editor Object prefix, texture image-content hash
+and editor flags, Sprite atlas-name/tag fields, duplicate atlas render data and
+trailing editor Sprite identity. All original mip pixels, sampler fields,
+geometry, physics shapes and bone records remain source-owned. Existing Sprite
+GUID generation retains the original SDK importer local IDs; checked original
+local texture relationships relocate to the three generated local objects.
+Runtime Texture2D metadata comes from the already selected original PC font
+bundle; Sprite metadata comes from the original PC sharedassets source already
+selected by the player profile. No native type hash is supplied as a template.
+The standard writer emits the six-object file: **22,492 bytes**, SHA-256
+`0c6dab60690497ef5c01408f9b2e0f779ebffeacd0df660393528fe072b50d66`,
+raw-exact against J850. The entire SDK provider is verified before and after
+use; its binary remains private and subject to the owner's Unity rights.
+
+Seven further original Material files are complete and raw-exact:
+**38,844 bytes**. Three use the existing checked-pointer and dummy-keyword
+policies; two require only the authored native-UI importer name. Four font
+clones additionally read the assigned original mobile Shader's actual property
+table, derive texture-property membership from its native property kinds and
+retain only matching original Material TexEnv records. The original shader,
+property names and scalar defaults are read from PC input, never a cached
+property/target template. Filtering preserves original material order, texture
+scale/offset values and all keyword, scalar, colour and remaining native fields.
+Pointers are checked/remapped before filtering and aligned name replacement.
+The original Shader is checked before/after property reading and again after
+final output. A fifth font material retains an unexplained source-to-accepted
+`_Sharpness` difference and is excluded; no scalar override is introduced.
+Six additional TMP font bodies are reusable after PPtr relocation, but their
+managed native type hashes remain an independent producer dependency.
+
+The complete public owner/profile cohort is **161 files**, **32,468,581 bytes**,
+produced in **5.467 seconds**. Every persisted file is independently compared
+byte-for-byte with J850 after production completes; all pass. Production reads
+only explicit original PC, exact SDK, genuine fresh-converter resource outputs,
+tracked recipes and the four existing source-produced texture packs. It reads
+no accepted file, replay packet, generated Unity project or private discovery
+cache. The source checkpoint is `4895eeb3`, rebased onto the landed J1120 owner.
+
+**Verification and audit.** All **58 affected host checks pass**, including
+17 player, seven writer, 12 object, three recipe, seven recipe-generation
+and 12 content-recipe checks. Independent authored fixtures check retained and
+stripped SDK fields, pixels/geometry/physics, importer and texture identities,
+original-PC native type metadata, missing/drifting SDK inputs, material rename
+size changes and source-derived property filtering. Shader/material property
+order is deliberately different in the fixture, proving retained material order
+and value preservation. Wrong classes, truncated/bounded fields and late Shader
+input drift refuse. Public helpers also reproduce the four font files with
+Python `-S`, without UnityPy. Ruff, whitespace and host-only preflight pass.
+Doctor retains its known generic bootstrap failure while its original input,
+parser, project and checkpoint checks pass. Independent code/provenance review
+finds no blocker. Staged pattern audit supplements manual provenance, licensing,
+privacy and sensitive-content review: recipes contain only minimum source and
+dependency identities, SDK IDs, authored names and comparison hashes. SDK/game
+bytes, target bodies/type hashes, raw evidence and private identifiers stay
+ignored. Existing texture and generic object producers are not modified.
+
+**Readiness, phone gate and first limits.** The new canonical tree unions the
+latest independently produced J1120 tree with these player outputs using
+hardlinks, never replay suppliers: **167 content files**, comprising six
+bundles and 161 player files. With the same 18 code/SDK suppliers, the unchanged
+readiness owner reports **185 of 705 ready, 520 content entries missing**
+(392 APK and 128 payload), zero invalid/mismatched entries. Source-provenance
+and device-qualification flags remain false. This slice closes eight final
+entries, **61,336 bytes**; whole-content, shader, installation, controls and
+matched runtime/performance gates remain open.
+
+A private frozen-source phone assembly driver is prepared and host-admitted at
+`4895eeb3` without device access. It uses all four genuine complete host-produced
+packs, the full pinned SDK provider and actual converter outputs; it does not
+invent compact-pack receipts. Its cold input set is 756,716,490 bytes. Phone
+execution is queued behind the current exclusive device lease. The new guard
+uses at most one job, CPU sampling at most one second apart, pause/resume at
+70/55 C and abort above 80 C, with bounded family memory, capacity, process-group
+cleanup and persisted independent hashes. These are prepared controls, not
+observed phone measurements. Even a passing run would qualify Android assembly
+of host-produced records, not Android texture conversion or a complete owner
+installation. No installed-game or display state is re-observed by this slice.
+
+**Bounded next-cohort findings.** Four remaining standalone mip textures are
+privately source-qualified with the existing unchanged `sdk-rgba-mips` owner:
+all four final files raw-exact, **1,087,412 bytes**. Their standard pack/profile
+is handed to the texture owner for public integration; it is not included in
+this published player cohort. Two native manifest TextAssets are independently
+reproduced from 4,904 original Materials and 12 original Shader records:
+**83,192 bytes**, raw-exact, **51.699 seconds**, with Python `-S`. Existing
+embedded type metadata and bounded field reads replace cached inventory as a
+provider. The qualification privately extracts existing pure variant-selection
+functions; public integration must factor that metadata policy instead of
+shipping AST extraction. No shader code compilation is needed for these JSON
+files. WholeStageContexts still lacks complete original scene/pool identity and
+staged-hash derivation. ColorGrade source compilation reproduces its accepted
+vertex module; fragment precision decorations, importer hashes and serialized
+Shader production remain unresolved. None of these findings adds ready entries.
+
+**Evidence and revisit.** Full host production/comparison are
+`work/coordination/p1-player-ui-assembly-v1/full-host-v4/result.json` and
+`full-host-v4-comparison.json`; independent review is `review.md` beside them.
+Canonical composition and readiness are
+`work/coordination/p1-player-ui-source-host-v1/`. Original SDK field-range
+proofs are `work/coordination/p1-player-builtin-v1/`; original material and
+Shader-property proofs are `work/coordination/p1-player-object-gap-v1/`.
+`work/coordination/p1-player-text-assets-v1/` retains the four-mip and two
+manifest source-only scripts, selectors, pack receipts and independent results.
+The Shader compiler contract is
+`work/coordination/p1-player-shaders-v1/plan.md`. Frozen-source phone support
+is `work/coordination/p1-player-phone-assembly-v1/`; no phone result is claimed.
+Main pruning preserves evidence and removes no eligible data; available host
+capacity exceeds 100 GB. Revisit for the queued guarded phone assembly, the
+shared metadata-only manifest owner or independently produced managed hashes;
+do not repeat J1116's already complete structural control.
+
+## J1139 — Assemble source shader manifests and managed font files
+
+2026-10-25 UTC. Source-only host assembly against accepted J850 APK SHA-256
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+No device, lease, Editor process, game build, installation or run occurs.
+
+**Hypothesis and prior art.** Extend the existing player owner with complete
+files derived from original source metadata, the landed texture producer and
+J1124's managed properties-hash algorithm. Consulted `community-prior-art.md`,
+J1126's bounded findings and pinned UnityPy 1.25.3 TypeTreeHelper/PPtr framing.
+Existing authored shader variant selection and HUD import relationships remain
+owners of policy. No upstream implementation, protected text, shader program or
+serialized type/body template is copied into public source.
+
+**Public implementation.** `player_data.py` rereads 4,904 original Material
+records in 744 bundles and 12 original Shader declarations through their
+embedded schemas. The audited `owner-player-shader-manifests.json` contains
+source selectors, relationship identities and hashes, without cached keywords
+or material values. Shared pure declaration/variant functions move to
+`scripts/lab/shader_metadata.py`; existing shader generators call the same
+policy, including resource filtering and unavailable-variant handling.
+Admission/receipt helper pins include the shared dependency. Catalog generator
+and recipe pins are refreshed together, retaining all existing source guards.
+
+The two complete selection TextAssets are raw-exact: **83,192 bytes**. A clean
+public Python `-S` replay completes in **88.139 seconds**, with no UnityPy,
+AST extraction, compiler, generated project or cached inventory provider.
+All original providers are checked through final serialized output.
+
+Six TMP font files retain original bodies apart from checked PPtrs and derive
+their managed properties hashes through public `script_identity.properties_hash`.
+The owner verifies the actual source MonoScript relationship and reads its
+class/namespace/assembly strings from original schema fields. Original custom
+fields and an explicitly supplied exact SDK native MonoBehaviour base determine
+the hash; no destination hash override is accepted. Unselected scripted objects
+retain their original hash behavior. The existing built-in UI provider lacks
+this native schema, so optional `--editor-resources` admits the pinned full SDK
+`unity editor resources` file. Original script and SDK inputs are rechecked
+through completion. The six public outputs are raw-exact: **246,980 bytes** in
+**0.660 seconds**, using Python `-I -S` without a reader monkeypatch.
+
+Four further standalone mip textures consume PR95's unchanged public
+1,523-record RGBA mip pack/profile. The existing player texture consumer writes
+all four final files raw-exact: **1,087,412 bytes**. No texture producer or pixel
+policy changes. Together these twelve files close **1,417,584 bytes** of final
+APK content.
+
+**Complete cohort and readiness.** The full public player invocation produces
+**173 files**, **33,886,165 bytes**, in **57.092 seconds**. Its profile is
+`a8cc2a42bef5d629211fb69a3e972b59f01768308511aa9c04103244a4cb5f46`.
+Every persisted file is independently rehashed and compared byte-for-byte with
+J850 after production; all pass. A separate adversarial review independently
+repeats all 173 comparisons. Production uses only explicit original PC files,
+SDK inputs, actual converter outputs/receipt, tracked recipes and five genuine
+complete source-produced texture packs.
+
+The new composition hardlinks the latest independently produced payload v13
+with these player files: **184 content files**, 173 APK and eleven bundles.
+The unchanged readiness owner with the same eighteen code/SDK suppliers reports
+**202 of 705 ready**, **503 missing** (380 APK and 123 payload), no invalid or
+mismatched entries. Source-provenance/device qualification flags remain false.
+This is host content assembly, not a complete source-built APK or phone result.
+
+**Verification and first repaired failures.** Player, shader-policy, catalog,
+owner-shader, writer, object, content and recipe checks pass. Authored fixtures
+cover source metadata framing, unavailable/ambiguous selection, shared-helper
+pin drift, original script linkage/class/identity, SDK class/schema admission,
+selected-only hash derivation and early/late provider drift. Public recipe,
+licensing, privacy and sensitive-content review finds only required selectors,
+authored policy and comparison hashes. Pattern audit supplements manual review.
+The reviewer first finds stale catalog generator/recipe pins after the shared
+policy move. Refreshing all seven current pin pairs fixes the existing catalog
+contract; no guard is weakened. Ruff, whitespace and host preflight pass.
+Doctor retains the known generic Bootstrap failure; its original input, parser,
+project and checkpoint checks pass. No expensive build bypass is attempted.
+
+**Remaining APK partition and source lineage.** Bounded existing-metadata
+analysis finds 370 of the remaining 380 APK files contain 414 Shader objects.
+The qualified animation/generic pack indexes contain no APK destinations;
+payload PPtrs cannot be relabeled as player records. The two authored Menu/HUD
+graphs need exact source mappings and native CanvasRenderer/Canvas/CanvasGroup
+records. The request is handed to the record owner; APK graph transformations
+and final composition remain with the player owner.
+
+Current original English inputs have 901 additional tokens and fourteen changed
+values relative to the accepted Strings TextAsset. No target text patch is
+introduced. A separate private proof verifies 39 explicitly retained legitimate
+historical PC English files against their original inventory and reproduces the
+complete accepted Strings file, **773,524 bytes**, raw-exact. It requires that
+additional historical owner input. It is excluded from the public profile and
+readiness union; no global input switch or implicit cached provider is added.
+Current-input-only Strings production remains open.
+
+**Bounded Shader advance, with no final-file closure.** Genuine exact-SDK
+preprocessing of unchanged tracked ColorGrade source derives its accepted
+GPU-program identity. SDK-observed mobile sampler flag `1 << 28` resolves the
+previous fragment precision difference without source edits or decoration
+patches. Fresh compilation produces the complete linked **1,192-byte** payload
+raw-exact. Fresh reflection generates exact **64-byte** parameters,
+**1,248-byte** executable and **1,340-byte** segment; public pinned LZ4 1.9.4's
+native default HC9 yields the exact **954-byte** shader blob. UnityFS HC12 is a
+separate compression policy. Eight independent comparisons and six authored
+native-record checks pass. Original PC class-48 metadata supplies the native
+type identity. The first unresolved field is the serialized pass
+`m_EditorDataHash[0]`; the source include hash differs and is not substituted.
+A source-backed parsed-form/default/keyword constructor also remains to be
+implemented. No target hash/body/type/program template or incomplete final
+Shader file is admitted. These private intermediates close no readiness entry.
+
+**Evidence and next gates.** Full public production, comparison and independent
+review are under `work/coordination/p1-player-manifests-fonts-v1/`; the canonical
+union/check are `work/coordination/p1-player-manifests-fonts-source-host-v1/`.
+The two-manifest receipts/comparisons are in
+`work/coordination/p1-player-text-assets-v1/`; public six-font proof is
+`work/coordination/p1-player-object-gap-v1/public-font-integration-result.json`.
+The bounded partition is `work/coordination/p1-player-remaining-v1/`; current and
+historical Strings proofs are `work/coordination/p1-player-strings-v1/`.
+Shader source/compiler/reflection/compression pins, private implementations and
+terminal result are `work/coordination/p1-player-shaders-v1/vertical-source-result.json`.
+All generated content and raw evidence stay ignored. Main pruning retains
+receipts/evidence and host capacity exceeds 100 GB. The earlier 161-file phone
+driver does not qualify this expanded cohort: staging must include the shared
+helpers, selector recipe, extra SDK input, original manifest providers and fifth
+texture pack. Guarded phone replay, whole content, Shader production, compatible
+signing, installation, controls and matched performance remain open. Do not
+repeat exact intermediate controls without changed inputs or a new contract.

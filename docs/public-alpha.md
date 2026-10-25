@@ -73,11 +73,11 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       no replacement lighting or target pixels enter the producer.
       [J1113](PORTING_JOURNAL.md#j1113--produce-a-complete-source-only-bundle-and-seven-player-data-files)
       qualifies the first complete PC-only bundle and seven player-data files;
-      J1135 extends the host cohort to nine complete bundles; the combined
-      readiness tree includes 161 player files
-      through the existing owners; 54 texture selections use PR75's landed
-      public RGBA producer/profile. The fixed-target readiness check now
-      has 517 missing content entries; all 18 code/SDK
+      J1139 extends the host cohort to 173 player files, composed with eleven
+      independently produced bundles, including J1132/J1134/J1135's reward and
+      streamed-scene files, through the existing owners; selected TMP
+      hashes and native selection manifests are source-derived. The fixed-target
+      readiness check now has 503 missing content entries; all 18 code/SDK
       entries are available. Phone replay, the
       remaining bundles/player data and complete source-derived installation
       remain open; the structural writer produces no missing content itself.
@@ -225,9 +225,10 @@ explicit replay content; it does not qualify phone production or installation.
 closes the two generic Android build-metadata producer gaps. Fresh host SDK
 production yields all 15 entries raw-exact to J850. The shared readiness request
 combined with
-[J1135](PORTING_JOURNAL.md#j1135--reconstruct-the-complete-helminth-roost-streamed-scene-bundle)
-has all 18 code/SDK files and 170 content files ready, with 517 content entries
-absent. The 54 RGBA selections use PR75's landed public producer/profile. Phone
+[J1139](PORTING_JOURNAL.md#j1139--assemble-source-shader-manifests-and-managed-font-files)
+has all 18 code/SDK files and 184 content files ready, with 503 content entries
+absent. The 173 player files include the twelve newly completed manifests,
+fonts and mip textures. Phone
 replay and complete content/shader/animation production remain open. The two
 new files still require an ordinary-app rerun; corrected phone-native output,
 complete content, installation, controls and matched performance remain open.
@@ -236,3 +237,9 @@ complete content, installation, controls and matched performance remain open.
 extends the source-only object producers. These host-qualified packs still
 require complete bundle/player-file assembly and ordinary-app qualification;
 they do not independently close a final-file readiness entry.
+
+Exact J850 Strings reproduction additionally requires the owner's retained
+legitimate historical PC English inputs; current-input-only reproduction remains
+open. Those historical files are outside the public source profile. The bounded
+source-lineage and Shader findings are recorded in
+[J1139](PORTING_JOURNAL.md#j1139--assemble-source-shader-manifests-and-managed-font-files).
