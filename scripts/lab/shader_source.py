@@ -3,6 +3,10 @@
 from common import *
 import base64
 import re
+import io
+import math
+import struct
+import tarfile
 import UnityPy
 from shader_segments import read_segments, selected_layout
 
@@ -374,3 +378,167 @@ def generate(output=None, work=WORK, root=ROOT, selection=None):
         write(out / "receipt.json", result)
     print(json.dumps({"success": True, "evidence": str(out.relative_to(ROOT)) if output is None else str(out), "device_rendering_verified": False}))
     return out
+
+
+def intersection_source(ctx, emitter):
+    definitions = []
+    declarations = {}
+    textures = set()
+    inputs = set()
+    outputs = set()
+    vertex = {}
+    fragment = {}
+    for index in [8, 6, 42, 39, 40, 41]:
+        bound, params, decls, tex = emitter.bound(ctx, index)
+        definitions.append(bound)
+        textures.update(t["name"] for t in tex)
+        for name, kind in decls.items():
+            if name in declarations:
+                assert declarations[name] == kind
+            declarations[name] = kind
+        if ctx[2][index]["stage"] == "progVertex":
+            vertex[index] = params
+            inputs.update(p["semantic"] for p in params if not p["out"])
+            outputs.update(p["semantic"] for p in params if p["out"])
+        else:
+            fragment[index] = params
+
+    def structure(name, semantics):
+        return "struct " + name + " {\n" + "\n".join("float4 " + s + " : " + s + ";" for s in sorted(semantics)) + "\n};"
+
+    def call(index, params):
+        return "native_" + str(index) + "(" + ",".join(("o." if p["out"] else "i.") + p["semantic"] for p in params) + ");"
+
+    vertex_entry = (
+        "Varyings vert(AppData i) { Varyings o=(Varyings)0; if (_TriplanarOn>0.5) {" + call(6, vertex[6]) + "} else {" + call(8, vertex[8]) + "} return o; }"
+    )
+
+    def pixel(index):
+        return "native_" + str(index) + "(" + ",".join("result" if p["out"] else "i." + p["semantic"] for p in fragment[index]) + ");"
+
+    fragment_entry = (
+        "float4 frag(Varyings i):SV_Target {float4 result; if (_TriplanarOn>0.5) {if (_FadeFromVertexColorsOn>0.5) {"
+        + pixel(41)
+        + "} else {"
+        + pixel(40)
+        + "}} else {if (_FadeFromVertexColorsOn>0.5) {"
+        + pixel(39)
+        + "} else {"
+        + pixel(42)
+        + "}} return result;}"
+    )
+    declarations.update({"_TriplanarOn": "float", "_FadeFromVertexColorsOn": "float"})
+    state = ctx[0]["m_ParsedForm"]["m_SubShaders"][0]["m_Passes"][0]["m_State"]
+    assert state["zWrite"]["val"] == 0 and state["zTest"]["val"] == 4 and state["culling"]["name"] == "_Cull"
+    assert state["rtBlend0"]["srcBlend"]["name"] == "_SrcBlendFloat" and state["rtBlend0"]["destBlend"]["name"] == "_DstBlendFloat"
+    shader = (
+        '// Generated privately from shipped programs; bindings adapted, PC parity unverified.\nShader "Porting Lab/Android Intersection Presentation" {\nProperties {\n'
+        + properties(ctx[0])
+        + '\n}\nSubShader {Tags {"Queue"="Transparent" "RenderType"="Transparent" "IgnoreProjector"="True"}\nPass {Name "FORWARD" Tags {"LightMode"="ForwardBase"} Blend [_SrcBlendFloat] [_DstBlendFloat] Cull [_Cull] ZTest LEqual ZWrite Off\nHLSLPROGRAM\n#pragma target 4.0\n#pragma vertex vert\n#pragma fragment frag\n#include "UnityCG.cginc"\n'
+    )
+    shader += "\n".join(kind + " " + name + ";" for name, kind in sorted(declarations.items())) + "\n"
+    shader += "\n".join("Texture2D<float4> " + name + "; SamplerState sampler" + name + ";" for name in sorted(textures)) + "\n"
+    return (
+        shader
+        + structure("AppData", inputs)
+        + "\n"
+        + structure("Varyings", outputs)
+        + "\n"
+        + "\n".join(definitions)
+        + "\n"
+        + vertex_entry
+        + "\n"
+        + fragment_entry
+        + "\nENDHLSL\n}}}\n"
+    )
+
+
+def shader_single(value):
+    # .NET invariant Single general formatting uses the shortest decimal with the
+    # same float32 value. These source properties need no exceptional/infinite values.
+    for precision in range(1, 10):
+        text = format(value, f".{precision}g")
+        if struct.pack("<f", float(text)) == struct.pack("<f", value):
+            exponent = math.floor(math.log10(abs(value))) if value else 0
+            if -4 <= exponent < 7:
+                return format(float(text), f".{max(0, precision - 1 - exponent)}f")
+            return text.replace("e", "E")
+    raise ValueError("single decimal formatting failed")
+
+
+def dummy_shader_source(form, templates):
+    props = form["m_PropInfo"]["m_Props"]
+    text = 'Shader "' + form["m_Name"] + '" {\n\tProperties {\n'
+    for row in props:
+        values = [shader_single(row[f"m_DefValue[{i}]"]) for i in range(4)]
+        typ = row["m_Type"]
+        attrs = "".join("[" + name + "] " for name in row["m_Attributes"])
+        attrs += "".join(
+            "[" + name + "] "
+            for bit, name in enumerate(["HideInInspector", "PerRendererData", "NoScaleOffset", "Normal", "HDR", "Gamma"])
+            if row["m_Flags"] & (1 << bit)
+        )
+        dtype = {
+            0: "Vector",
+            1: "Vector",
+            2: "Float",
+            3: f"Range({values[1]}, {values[2]})",
+            4: {1: "any", 2: "2D", 3: "3D", 4: "Cube", 5: "2DArray", 6: "CubeArray"}.get(row["m_DefTexture"]["m_TexDim"]),
+            5: "Int",
+        }[typ]
+        value = "(" + ",".join(values) + ")" if typ in (0, 1) else ('"' + row["m_DefTexture"]["m_DefaultName"] + '" {}' if typ == 4 else values[0])
+        text += "\t\t" + attrs + row["m_Name"] + ' ("' + row["m_Description"] + '", ' + dtype + ") = " + value + "\n"
+    text += "\t}\n\t//DummyShaderTextExporter\n"
+    choices = json.loads(templates["Templates.json"])["Templates"]
+    types = ["Color", "Vector", "Float", "Range", "Texture", "Int"]
+    eligible = [
+        t
+        for t in choices
+        if all(any(p["m_Name"] == r["PropertyName"] and types[p["m_Type"]] == r["PropertyTypeName"] for p in props) for r in t["RequiredProperties"])
+    ]
+    chosen = max(eligible, key=lambda t: len(t["RequiredProperties"]))
+    text += templates[chosen["TemplateName"] + ".txt"] + "\n"
+    if form["m_FallbackName"]:
+        text += '\tFallback "' + form["m_FallbackName"] + '"\n'
+    if form["m_CustomEditorName"]:
+        text += '\t//CustomEditor "' + form["m_CustomEditorName"] + '"\n'
+    return text + "}", chosen["TemplateName"]
+
+
+def package_member(archive, name):
+    matches = [row for row in archive.getmembers() if row.name == name]
+    if len(matches) != 1 or not matches[0].isfile() or matches[0].size > 32 * 1024 * 1024:
+        raise ValueError("invalid pinned TMP package member")
+    return archive.extractfile(matches[0]).read()
+
+
+def package_mobile_source(sdk, package):
+    path = sdk / "Resources/PackageManager/Editor" / (package["name"] + "-" + package["version"] + ".tgz")
+    raw = path.read_bytes()
+    if hashlib.sha256(raw).hexdigest() != package["sha256"]:
+        raise ValueError("TMP package drift")
+    with tarfile.open(fileobj=io.BytesIO(raw)) as archive:
+        resource = package_member(archive, package["resource"])
+    if hashlib.sha256(resource).hexdigest() != package["resource_sha256"]:
+        raise ValueError("TMP Essential Resources drift")
+    wanted = {"Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile.shader": "shader", "Assets/TextMesh Pro/Shaders/TMPro_Properties.cginc": "include"}
+    sources = {}
+    with tarfile.open(fileobj=io.BytesIO(resource)) as archive:
+        for row in archive.getmembers():
+            if row.name.endswith("/pathname"):
+                selector = package_member(archive, row.name).decode().strip()
+                if selector in wanted:
+                    kind = wanted[selector]
+                    if kind in sources:
+                        raise ValueError("ambiguous TMP package selector")
+                    sources[kind] = package_member(archive, row.name.rsplit("/", 1)[0] + "/asset")
+    if set(sources) != {"shader", "include"}:
+        raise ValueError("missing TMP package shader/include")
+    # This authored declaration rename is the ONLY mutation of package source.
+    # Keep the UTF-8 BOM, whitespace, original instructions and include bytes.
+    text = sources["shader"].decode("utf-8")
+    declaration = re.search(r'\bShader\s+"([^"]+)"', text)
+    if declaration is None or declaration[1] != "TextMeshPro/Mobile/Distance Field":
+        raise ValueError("unexpected package shader declaration")
+    sources["shader"] = (text[: declaration.start(1)] + "PortingLab/RecoveredFontSDF" + text[declaration.end(1) :]).encode("utf-8")
+    return sources

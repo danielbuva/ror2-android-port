@@ -141,13 +141,41 @@ class ShaderHashTests(unittest.TestCase):
         self.assertEqual(flags, [2, 0, 0, 1])
         self.assertEqual(variants, [[], ["CLIP"], ["SOFT"], ["SOFT", "CLIP"], ["SH"], ["SH", "CLIP"], ["SH", "SOFT"], ["SH", "SOFT", "CLIP"]])
 
-    def test_fog_keyword_registration_survives_no_fog_source_build(self):
-        rows = [{"kind": "keywordsUserGlobal", "values": ["__ FOG_LINEAR FOG_EXP FOG_EXP2"]}] * 2
-        names, flags = N.source_keyword_registration({"records": rows}, (["STEREO"], [2]))
-        self.assertEqual(names, ["STEREO", "FOG_LINEAR", "FOG_EXP", "FOG_EXP2"])
-        self.assertEqual(flags, [2, 0, 0, 0])
-        with self.assertRaisesRegex(ValueError, "unsupported authored"):
-            N.source_keyword_registration({"records": [{"kind": "keywordsUserGlobal", "values": ["__ UNMEASURED"]}]}, ([], []))
+    def test_per_pass_declarations_retention_and_requirement_overrides(self):
+        rows = []
+        for stage in (0, 1):
+            rows.extend(
+                [
+                    {"kind": "keywordsUserGlobal", "fields": [7, stage], "values": ["__ USER", "__ INSTANCING_ON"]},
+                    {"kind": "keywordsUserLocal", "fields": [7, stage], "values": ["__ LOCAL"]},
+                    {"kind": "keywordsBuiltin", "fields": [7, stage], "values": ["DEPTH", "CUBE", "LIGHTMAP_ON"]},
+                    {"kind": "keywordsUserGlobal", "fields": [8, stage], "values": ["__ FOG_LINEAR FOG_EXP FOG_EXP2"]},
+                ]
+            )
+        req = {"kind": "keywordsEnd", "fields": [7], "requirements": 33, "keywords": "USER LOCAL", "overrides": [{"keyword": "LOCAL", "requirements": 64}]}
+        rows.extend([req, {"kind": "keywordsEnd", "fields": [8], "requirements": 33, "keywords": "", "overrides": []}])
+        pre = {"snippets": [{"fields": [7]}, {"fields": [8]}], "records": rows}
+        names, flags, masks = N.pass_keywords(pre, (["STEREO"], [2]))
+        self.assertEqual(names, ["STEREO", "USER", "INSTANCING_ON", "LOCAL", "DEPTH", "CUBE", "LIGHTMAP_ON", "FOG_LINEAR", "FOG_EXP", "FOG_EXP2"])
+        self.assertEqual(flags[3], 1)
+        self.assertEqual(masks[8], [0, 7, 8, 9])
+        self.assertIn(names.index("INSTANCING_ON"), masks[7])
+        self.assertEqual(
+            N.retained_keywords(pre, 7),
+            [
+                ["DEPTH"],
+                ["CUBE"],
+                ["DEPTH", "LOCAL"],
+                ["CUBE", "LOCAL"],
+                ["DEPTH", "USER"],
+                ["CUBE", "USER"],
+                ["DEPTH", "USER", "LOCAL"],
+                ["CUBE", "USER", "LOCAL"],
+            ],
+        )
+        self.assertEqual(N.retained_keywords(pre, 8), [[]])
+        self.assertEqual(N.shader_requirements(req, ["LOCAL"]), 97)
+        self.assertEqual(N.shader_requirements(req, []), 33)
 
     def test_native_wrapper_state_uses_source_commands_and_parser_fog_defaults(self):
         original = N.render_state("Cull Off ZWrite Off ZTest Always", 2)
@@ -341,8 +369,270 @@ class ShaderHashTests(unittest.TestCase):
         cube = N.properties(prop, 'Properties { _Sky ("Fixture cube", Cube)="black"{} } SubShader {}')[0]
         self.assertEqual(cube["m_Type"], 4)
         self.assertEqual(cube["m_DefTexture"], {"m_DefaultName": "black", "m_TexDim": 4})
+        array = N.properties(prop, 'Properties { _ImageArray ("", 2DArray)="white"{} } SubShader {}')[0]
+        self.assertEqual(array["m_Description"], "")
+        self.assertEqual(array["m_Type"], 4)
+        self.assertEqual(array["m_DefTexture"], {"m_DefaultName": "white", "m_TexDim": 5})
         with self.assertRaisesRegex(ValueError, "property declaration"):
             N.properties(prop, 'Properties { _Fixture ("Unsupported", Matrix) = 1 } SubShader {}')
+
+
+class CompleteShaderContracts(unittest.TestCase):
+    def test_shader_wide_record_dedup_relocates_parameters_and_programs(self):
+        def variant(payload):
+            return {
+                "keywords": [],
+                "requirements": 33,
+                "compilation": {"data": payload, "gpu_program_type": 25, "reflection": ["cb: Fixture 16 1", "const: tint 0 0 0 1 4 0", "cbbind: Fixture 5"]},
+            }
+
+        raw, passes = N.shader_records([[variant(b"first")], [variant(b"first"), variant(b"second")]], [])
+        self.assertEqual(struct.unpack_from("<I", raw)[0], 3)
+        self.assertEqual(passes[0][2], [0])
+        self.assertEqual(passes[1][2], [0, 0])
+        self.assertEqual([p["m_BlobIndex"] for p in passes[1][1]], [1, 2])
+        start, size, _ = struct.unpack_from("<3I", raw, 4)
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
+        from shader_segments import parameter_layout
+
+        self.assertEqual(parameter_layout(raw[start : start + size])["buffers"][1]["name"], "Fixture")
+
+    def test_null_texture_sampler_is_signed_native_index(self):
+        reflected = N.reflection(["texbind: no_sampler 2 -1 0 2"])
+        raw = N.native_parameters(reflected, {"buffers": [], "bindings": [], "textures": []})
+        self.assertTrue(raw.endswith(N.string("no_sampler") + N.words(0, 2, 0xFFFFFFFF, 4)))
+
+    def test_two_pass_form_inherits_source_lod_tags_and_stripped_instancing(self):
+        from copy import deepcopy
+
+        defaults = {
+            "root": {"m_ParsedForm": {"m_PropInfo": {"m_Props": []}, "m_SubShaders": []}},
+            "m_SubShaders": {"m_Tags": {"tags": []}, "m_Passes": []},
+            "m_Passes": {"progVertex": {}},
+        }
+        source = 'Shader "Fixture" { SubShader { LOD 200 Tags {"Queue"="Transparent"} Cull Back Blend One Zero Pass {Name "First" Cull Off GpuProgramID 7} Pass {Name "Second" Blend SrcAlpha OneMinusSrcAlpha Tags {"LightMode"="ForwardAdd"} GpuProgramID 8} }}'
+        records = [{"kind": "keywordsUserGlobal", "fields": [7, 0], "values": ["__ INSTANCING_ON"]}]
+        pre = {"shaderlab": source, "records": records, "snippets": [{"fields": [7]}, {"fields": [8]}]}
+        compiled = {
+            gpu: {
+                "identity": bytes(16),
+                "variants": [{"keywords": [], "requirements": 33, "compilation": {"data": bytes([gpu]), "gpu_program_type": 25, "reflection": []}}],
+            }
+            for gpu in (7, 8)
+        }
+        with (
+            patch.object(N, "child", side_effect=lambda node, name: name),
+            patch.object(N, "item", side_effect=lambda node: node),
+            patch.object(N, "default", side_effect=lambda node: deepcopy(defaults[node])),
+        ):
+            tree = N.construct("root", source, pre, compiled, lambda raw, method: raw, (["STEREO"], [2]))
+        sub = tree["m_ParsedForm"]["m_SubShaders"][0]
+        first, second = sub["m_Passes"]
+        self.assertEqual([sub["m_LOD"], first["m_State"]["m_LOD"], second["m_State"]["m_LOD"]], [200] * 3)
+        self.assertTrue(first["m_HasInstancingVariant"])
+        self.assertFalse(second["m_HasInstancingVariant"])
+        self.assertEqual(first["m_State"]["culling"]["val"], 0)
+        self.assertEqual(second["m_State"]["culling"]["val"], 2)
+        self.assertEqual(second["m_State"]["rtBlend0"]["srcBlend"]["val"], 5)
+        self.assertEqual(second["m_State"]["m_Tags"]["tags"], [["LIGHTMODE", "FORWARDADD"], ["QUEUE", "Transparent"]])
+
+    def test_original_material_feature_sets_are_inside_multicompile_axes(self):
+        pre = {
+            "records": [
+                {"kind": "keywordsEnd", "fields": [1], "keywords": "CLIP ALPHA", "requirements": 33, "overrides": []},
+                {"kind": "keywordsUserGlobal", "fields": [1, 0], "values": ["__ OUTLINE", "__ UNDERLAY INNER", "__ CLIP", "__ ALPHA"]},
+            ]
+        }
+        self.assertEqual(
+            N.retained_keywords(pre, 1, [[], ["UNDERLAY", "IRRELEVANT"]]),
+            [[], ["UNDERLAY"], ["ALPHA"], ["ALPHA", "UNDERLAY"], ["CLIP"], ["CLIP", "UNDERLAY"], ["CLIP", "ALPHA"], ["CLIP", "ALPHA", "UNDERLAY"]],
+        )
+
+    def test_source_fallback_resolves_generated_shader_identity(self):
+        tree = {"m_ParsedForm": {"m_FallbackName": "Fixture/Mobile"}}
+        self.assertEqual(N.fallback_externals(tree, {"Fixture/Mobile": "mobile-file"}), [{"empty": "", "guid": bytes(16), "type": 0, "path": "mobile-file"}])
+        self.assertEqual(tree["m_Dependencies"], [{"m_FileID": 1, "m_PathID": 1}])
+
+    def test_balanced_properties_preserve_custom_and_consumed_attributes(self):
+        from copy import deepcopy
+
+        prop = {"m_DefTexture": {"m_DefaultName": "", "m_TexDim": 1}, **{f"m_DefValue[{index}]": 0 for index in range(4)}}
+        source = 'Properties { [HDR][Toggle(ALPHA)]_Tint ("Tint", vector)=(1,2,3,4) [PerRendererData]_MainTex ("Texture", 2D)="white" {} } CGINCLUDE float x; ENDCG SubShader {}'
+        with patch.object(N, "default", side_effect=lambda node: deepcopy(prop)):
+            tint, image = N.properties(None, source)
+        self.assertEqual(tint["m_Flags"], 16)
+        self.assertEqual(tint["m_Attributes"], ["Toggle(ALPHA)"])
+        self.assertEqual(tint["m_Type"], 1)
+        self.assertEqual(image["m_Flags"], 2)
+        self.assertEqual(image["m_DefTexture"], {"m_DefaultName": "white", "m_TexDim": 2})
+
+    def test_exporter_template_choice_color_vector_and_single_general(self):
+        import json
+
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
+        import shader_source as sources
+
+        def prop(name, kind):
+            return {
+                "m_Name": name,
+                "m_Description": name,
+                "m_Type": kind,
+                "m_Flags": 0,
+                "m_Attributes": [],
+                "m_DefTexture": {"m_DefaultName": "white", "m_TexDim": 2},
+                **{f"m_DefValue[{index}]": 1.0 for index in range(4)},
+            }
+
+        templates = {
+            "Templates.json": json.dumps(
+                {
+                    "Templates": [
+                        {"TemplateName": "Single", "RequiredProperties": [{"PropertyName": "_MainTex", "PropertyTypeName": "Texture"}]},
+                        {
+                            "TemplateName": "Color",
+                            "RequiredProperties": [
+                                {"PropertyName": "_MainTex", "PropertyTypeName": "Texture"},
+                                {"PropertyName": "_Color", "PropertyTypeName": "Color"},
+                            ],
+                        },
+                    ]
+                }
+            ),
+            "Single.txt": "PUBLIC_SINGLE",
+            "Color.txt": "PUBLIC_COLOR",
+        }
+        form = {"m_Name": "Fixture", "m_PropInfo": {"m_Props": [prop("_MainTex", 4), prop("_Color", 0)]}, "m_FallbackName": "", "m_CustomEditorName": ""}
+        text, chosen = sources.dummy_shader_source(form, templates)
+        self.assertEqual(chosen, "Color")
+        self.assertIn('_Color ("_Color", Vector) = (1,1,1,1)', text)
+        self.assertIn("PUBLIC_COLOR", text)
+        self.assertEqual(sources.shader_single(10.0), "10")
+        self.assertEqual(sources.shader_single(-32767.0), "-32767")
+
+    def test_package_declaration_rename_preserves_bom_and_all_other_bytes(self):
+        import hashlib
+        import io
+        import tarfile
+        import tempfile
+
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
+        import shader_source as sources
+
+        def archive(rows):
+            stream = io.BytesIO()
+            with tarfile.open(fileobj=stream, mode="w:gz") as tar:
+                for name, data in rows.items():
+                    entry = tarfile.TarInfo(name)
+                    entry.size = len(data)
+                    tar.addfile(entry, io.BytesIO(data))
+            return stream.getvalue()
+
+        original = b'\xef\xbb\xbfShader "TextMeshPro/Mobile/Distance Field" {\nProperties {}\n}\n'
+        include = b"PUBLIC_FIXTURE_INCLUDE\n"
+        resource = archive(
+            {
+                "shader/pathname": b"Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile.shader",
+                "shader/asset": original,
+                "include/pathname": b"Assets/TextMesh Pro/Shaders/TMPro_Properties.cginc",
+                "include/asset": include,
+            }
+        )
+        raw = archive({"package/resources": resource})
+        package = {
+            "name": "fixture",
+            "version": "1",
+            "sha256": hashlib.sha256(raw).hexdigest(),
+            "resource": "package/resources",
+            "resource_sha256": hashlib.sha256(resource).hexdigest(),
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            sdk = Path(directory)
+            path = sdk / "Resources/PackageManager/Editor/fixture-1.tgz"
+            path.parent.mkdir(parents=True)
+            path.write_bytes(raw)
+            result = sources.package_mobile_source(sdk, package)
+        self.assertEqual(result["shader"], original.replace(b"TextMeshPro/Mobile/Distance Field", b"PortingLab/RecoveredFontSDF"))
+        self.assertEqual(result["include"], include)
+
+    def test_pure_snippet_key_matches_native_reference_80_byte_fixture(self):
+        # Independent public-domain C++ SpookyV2 wrapper over authored inputs.
+        self.assertEqual(
+            N.snippet_key("authored snippet", bytes(range(16)), 0x1280, 0x1122334455667788, 0x0102030405060708, b"authored common").hex(),
+            "9fefed80213e6b00f37298001e5b0903",
+        )
+        with self.assertRaisesRegex(ValueError, "include hash"):
+            N.snippet_key("source", b"short", 0, 0, 0, b"")
+
+    def test_sdk_scene_policy_keeps_runtime_axes_and_strips_unused_scene_features(self):
+        snippet = {group + str(stage): [] for group in ("m_VariantsUserGlobal", "m_VariantsUserLocal") for stage in range(7)}
+        snippet.update(
+            {
+                "m_VariantsUserGlobal0": [["___", "UNITY_HDR_ON"], ["__", "INSTANCING_ON"]],
+                "m_VariantsUserLocal1": [["__", "LOCAL"]],
+                "m_VariantsBuiltin0": [["DEPTH"], ["CUBE"], ["LIGHTMAP_ON"], ["FOG_LINEAR"]],
+            }
+        )
+        self.assertEqual(
+            N.sdk_scene_variants(snippet),
+            [
+                ["DEPTH"],
+                ["CUBE"],
+                ["DEPTH", "LOCAL"],
+                ["CUBE", "LOCAL"],
+                ["DEPTH", "UNITY_HDR_ON"],
+                ["CUBE", "UNITY_HDR_ON"],
+                ["DEPTH", "LOCAL", "UNITY_HDR_ON"],
+                ["CUBE", "LOCAL", "UNITY_HDR_ON"],
+            ],
+        )
+        source = {
+            "m_ParsedForm": {
+                "m_SubShaders": [
+                    {
+                        "m_Passes": [
+                            {"m_Type": 0, "m_State": {"gpuProgramID": 7, "m_Tags": {"tags": [["LIGHTMODE", "META"]]}}},
+                            {"m_Type": 0, "m_State": {"gpuProgramID": 8, "m_Tags": {"tags": []}}},
+                        ]
+                    }
+                ]
+            },
+            "m_CompileInfo": {"m_Snippets": [[8, snippet]]},
+        }
+        selections = N.sdk_scene_selections(source)
+        self.assertEqual(list(selections), [8])
+        self.assertEqual(len(source["m_ParsedForm"]["m_SubShaders"][0]["m_Passes"]), 1)
+        self.assertEqual(selections[8][0], N.sdk_scene_variants(snippet))
+
+    def test_sdk_material_features_are_stripped_before_cartesian_expansion(self):
+        snippet = {group + str(stage): [] for group in ("m_VariantsUserGlobal", "m_VariantsUserLocal") for stage in range(7)}
+        snippet.update(
+            m_NonStrippedUserKeywords="UNITY_HDR_ON INSTANCING_ON",
+            m_VariantsUserGlobal0=[["_", "_EMISSION"], ["__", "UNITY_HDR_ON"], ["__", "INSTANCING_ON"]],
+            m_VariantsUserLocal1=[["_", "FEATURE" + str(index)] for index in range(41)],
+            m_VariantsBuiltin0=[["DIRECTIONAL"], ["LIGHTMAP_ON"]],
+        )
+        self.assertEqual(N.sdk_scene_variants(snippet, set()), [["DIRECTIONAL"], ["DIRECTIONAL", "UNITY_HDR_ON"]])
+        self.assertEqual(
+            N.sdk_scene_variants(snippet, {"_EMISSION", "FEATURE7"}),
+            [
+                ["DIRECTIONAL"],
+                ["DIRECTIONAL", "FEATURE7"],
+                ["DIRECTIONAL", "UNITY_HDR_ON"],
+                ["DIRECTIONAL", "FEATURE7", "UNITY_HDR_ON"],
+                ["DIRECTIONAL", "_EMISSION"],
+                ["DIRECTIONAL", "FEATURE7", "_EMISSION"],
+                ["DIRECTIONAL", "UNITY_HDR_ON", "_EMISSION"],
+                ["DIRECTIONAL", "FEATURE7", "UNITY_HDR_ON", "_EMISSION"],
+            ],
+        )
+
+    def test_sdk_tiers_come_from_the_public_player_settings_generator(self):
+        root = Path(__file__).resolve().parents[1]
+        sys.path.insert(0, str(root / "scripts/lab"))
+        tiers = N.project_tiers(root, {"color_space": 1}, {"sha256": N.sha(root / "smoke/ProjectSettings/GraphicsSettings.asset")})
+        self.assertEqual([tier["tier0"]["standardShaderQuality"] for tier in tiers], [0, 1, 1])
+        self.assertEqual([tier["tier0"]["renderingPath"] for tier in tiers], [3, 3, 3])
+        self.assertTrue(all(tier["color_space"] == 1 for tier in tiers))
 
 
 if __name__ == "__main__":

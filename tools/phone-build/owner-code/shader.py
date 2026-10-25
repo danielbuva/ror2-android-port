@@ -70,6 +70,27 @@ class Connection:
             raise ValueError("acquired SDK compiler does not support Vulkan")
         return capabilities
 
+    def disassemble(self, bytecode, gpu_type=17):
+        """Use the acquired SDK's D3D disassembler for original PC DXBC."""
+        self.send_string("c:disassembleShader")
+        self.send_string("original.dxbc")
+        for number in (4, gpu_type, 0):
+            self.send_number(number)
+        self.send_number(len(bytecode), 64)
+        self.stream.sendall(bytecode)
+        diagnostics = []
+        while True:
+            record = self.string()
+            if record.startswith("disasm:"):
+                text = self.string()
+                if record != "disasm: 1":
+                    raise ValueError("SDK original disassembly failed: " + str(diagnostics))
+                return text
+            if record.startswith("err:"):
+                diagnostics.append([record, self.string(), self.string()])
+            else:
+                raise ValueError("unexpected SDK disassembly response: " + record)
+
     def compile(self, source, filename, *, stage, platform_keywords=(), keywords=(), disabled_keywords=(), flags=0, requirements=1):
         """Compile an HLSL graphics snippet; retain the complete SDK response.
 

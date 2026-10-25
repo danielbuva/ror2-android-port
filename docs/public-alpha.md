@@ -76,25 +76,27 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       J1139 supplies 173 complete player files, including source-derived TMP
       hashes and native selection manifests. J1155 extends the independently
       produced payload cohort to eighteen complete bundles. The shared source
-      tree preserves J1151's 125 separately qualified Shader files. The exact
-      fixed-target readiness check has 371 missing content entries; all 18 code/SDK
+      tree preserves J1157's complete host Shader cohort. The combined
+      fixed-target readiness check has 124 missing content entries; all 18 code/SDK
       entries are available. Phone replay, the
       remaining bundles/player data and complete source-derived installation
       remain open; the structural writer produces no missing content itself.
       J1155 additionally qualifies the unchanged current-original Windows
       comparison-bundle copy as drift-explained, separately from exact output.
-      Its admission through the code owner's developing drift checker is a host
+      Its admission through the public input-drift checker is a host
       control; no historical file becomes a reconstruction input.
       [J1081](PORTING_JOURNAL.md#j1081--run-owner-supplied-standalone-sdk-tools-through-a-public-android-runner)
       qualifies a reproducible public Android runner for standalone SDK build
       tools. The full Linux RGBA cohort, original shader/content production and ordinary
       owner delivery remain open; game execution remains native IL2CPP ARM64.
       [J1094](PORTING_JOURNAL.md#j1094--qualify-exact-sdk-vulkan-shader-compilation-on-android)
-      qualifies exact host/phone authored Vulkan shader-tool output. Original
-      shader recovery, variants and app integration remain open. J1144/J1146/J1147/J1151 add 125
-      complete source-derived host Shader files through the standalone compiler
-      and existing writer; the source-only final-file union reaches 333 of 705
-      entries. Remaining shader families and phone serialization are still open.
+      qualifies exact host/phone authored Vulkan shader-tool output. Phone
+      original-shader recovery and app integration remain open. J1157 qualifies
+      all 414 APK Shader48 objects through source-only host
+      production: 369 complete files plus two shared records. The combined
+      source tree has 581 of 705 entries available (576 raw-exact, two code
+      comparison entries and three separately drift-explained); 124 remain
+      missing. Shared mixed-file assembly and phone serialization remain open.
       [J1102](PORTING_JOURNAL.md#j1102--qualify-linked-vulkan-fragment-output-and-explicit-owner-apk-code-inputs)
       confirms both executable stages in that linked payload and accepts all
       three produced code outputs in the existing APK owner without replay

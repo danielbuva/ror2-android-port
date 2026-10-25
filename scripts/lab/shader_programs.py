@@ -6,6 +6,7 @@ from shader_segments import selected_layout
 from shader_source import bind_hlsl
 from shader_recovery import PINS
 import shutil
+import re
 
 
 def structure(name, semantics):
@@ -23,7 +24,8 @@ def call(index, params, inputs="i", outputs="o"):
 
 
 class NativePrograms(MetadataPrograms):
-    def __init__(self, out, result, exe, allow_independent=True, independent=None):
+    def __init__(self, out, result, exe, allow_independent=True, independent=None, native_decompiler=None):
+        self.native_decompiler = native_decompiler
         self.independent = Path(independent) if independent is not None else None
         self.allow_independent = allow_independent
         self.out = out
@@ -50,7 +52,20 @@ class NativePrograms(MetadataPrograms):
             raise RuntimeError("Native roundtrip changed")
         origin = "d3dasm"
         if "not decompiled" in hlsl.read_text():
-            if self.independent is not None:
+            if self.native_decompiler is not None:
+                connection, tool = self.native_decompiler
+                text = connection.disassemble(programs[index], records[index]["gpu_type"])
+                # MS47 instruction labels and CB spelling differ from MS46.
+                text = re.sub(r"^ *[0-9]+: ", "      ", text, flags=re.M)
+                text = re.sub(r"(dcl_constantbuffer )CB", r"\1cb", text)
+                source_asm = self.out / (stem + ".sdk.d3dasm")
+                source_asm.write_text(text)
+                run([tool, f, source_asm, hlsl])
+                text = re.sub(r"[ \t]+$", "", hlsl.read_text(), flags=re.M)
+                text = re.sub(r"([0-9.]+[eE][+-])([0-9]{2})\b", r"\g<1>0\2", text)
+                hlsl.write_text(text)
+                origin = "native pinned HLSLDecompiler core + acquired SDK disassembly"
+            elif self.independent is not None:
                 # Reuse only a hash-verified, validated intermediate for this exact native program.
                 receipt = read(self.independent / "receipt.json")
                 matches = [p for p in receipt["programs"] if (p["shader"], p["index"]) == key]

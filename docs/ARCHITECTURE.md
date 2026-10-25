@@ -523,26 +523,61 @@ serialized content construction and ordinary app admission.
 
 `tools/phone-build/accepted-output/shader_produce.py` owns the current bounded
 source-only Android Shader48 producer. Audited `recipe/owner-player-shaders.json`
-selects ten authored sources, original Cloud/UI Alpha shader/material selectors,
+selects fourteen authored sources, original native/font Shader and material selectors,
 PC schema/keyword registry,
 source build settings and pinned SDK inputs. The existing compiler session owns
 ShaderLab preprocessing, snippet/include identities and linked Vulkan emission;
 fresh reflection supplies native parameter/program records and common tables.
+Root specialization constants and structured instancing buffers retain their SDK
+scope, member layout and count contracts; ordinary CB counts exclude separate
+struct declarations and dotted members.
 The producer derives the pass key from source/capabilities/SDK inputs, constructs
 the parsed form from source and schema defaults, requests HC9 through the existing
 codec worker and emits complete files through `unity_write`. The SDK executable
 is read as metadata only. Explicit read-only providers and a new disjoint output
 set up production; before/after pins, complete-file comparison and terminal
 success/failure receipts retain state. Compiler/codec contexts own teardown.
-The original Cloud/UI paths use existing `shader_materials.cloud_source`,
-`shader_materials.ui_source` and
+The original native paths use the existing source emitters and
 `NativePrograms` to regenerate source from pinned PC shaders/materials through an
 explicit public d3dasm tool/hash, without retained HLSL. Variant reflection
 intersection owns common/native records; SDK capability names/flag moves drive
-compilation separately from import preprocessing. J1144/J1146/J1147/J1151 qualify 125
-complete host files; other shader families, mixed/built-in
-files and phone/runtime gates remain open. No target body or Editor/project is
+compilation separately from import preprocessing. J1144/J1146/J1147/J1151 qualify the first 125
+complete host files; J1157 qualifies all 414 Shader48 objects as 369 complete
+files plus two shared records. Phone/runtime gates remain open. No target body or Editor/project is
 read. Setup is in the [producer README](../tools/phone-build/accepted-output/README.md#source-derived-player-shaders).
+
+The standalone source path extends the existing `shader_materials`,
+`shader_source` and `shader_deferred` emitters, with the shared qualified material
+selection owner. Shader-wide record packing deduplicates fresh per-pass parameter
+and executable records and relocates both index tables. Source declarations and
+original material use determine retained features; authored empty-scene/build
+settings determine fog/lightmap/instancing stripping. The existing compiler
+connection additionally owns source DXBC disassembly. The optional native
+fallback in `shader_programs` invokes `shader_recovery.build_native_hlsl`, which
+builds the pinned public MIT core from Git objects into the new private output,
+retaining its notices. Pinned AssetRipper font-export resources and the acquired
+SDK TMP package remain explicit source providers; generated ShaderLab and
+programs are never retained providers. The existing output/context owners keep
+setup, state and teardown; no runtime selector is added.
+
+`tools/phone-build/accepted-output/shader_sdk.py` owns the callable SDK-source
+Shader48 assembly path. `sdk_source` checks the explicitly acquired SDK builtin
+source container; `compile_body` consumes its source form/snippets, the original
+PC native schema, caller-selected per-snippet/per-tier keyword sets and source
+Android tier settings. Vulkan platform 18 is currently qualified. The existing
+compiler session and codec supply fresh executables and HC9 compression;
+reflection determines shader-wide records, common parameters and tier tables.
+SDK source platform masks and declared instancing metadata survive executable
+stripping. Linked-stage global/local axes follow the SDK append/deduplication
+contract; retained keyword rows are ranked without expanding unused variants.
+Native records use source-row/tier order while lookup tables keep the caller
+source selection order within each tier. Destination dependencies, runtime-pass
+selection and payload retention
+remain caller-owned; no accepted program/table or target body is a provider.
+The caller creates private output and owns compiler/codec contexts and final
+object-pack placement. The API returns the typed tree, raw record stream and
+serialized body and retains private diagnostics. Complete-file and phone gates
+remain independent of partial SDK-record qualification.
 
 `tools/phone-build/owner-code/produce.py` owns the current experimental combined
 whole-player backend: explicit hash-bound managed providers, audited target
