@@ -788,3 +788,41 @@ extents refuse; failed attempts remain private. Compiler/codec children are
 bounded and reaped. No game data is shipped with the public source or profiles.
 Complete bundles, remaining textures/mips/cubemaps and ordinary app delivery
 remain open.
+
+## Produce animation and generic object records
+
+`record_produce.py` is a current experimental source-only producer. Run with
+Python 3 and the sibling public producer/reader modules:
+
+```sh
+python3 -I -S -B tools/phone-build/accepted-output/record_produce.py \
+  --profile recipe/owner-animation-clips.json --profile-sha256 RECIPE_SHA256 \
+  --pc ORIGINAL_PC_ROOT --output NEW_PRIVATE_OUTPUT
+```
+
+Use `recipe/owner-animator-controllers.json` for the qualified controller
+cohort and `recipe/owner-material-records.json` for materials. A recipe contains source selectors/hashes, target relationships/hashes
+and named source transformations, never target object bytes. The producer
+reads original embedded schemas and records, relocates checked PPtrs, and
+verifies each full result against its accepted hash. Animation policies clear
+original reference-pose arrays while preserving the importer size, canonicalize
+schema-declared float values or packed float words, and fold only complete,
+exclusive constant streamed curves. Original event strings, values, paths,
+curve data and other non-transformed bytes remain original. Generic controllers
+change only PPtrs. The material path reuses the existing original keyword
+demotion operation; it introduces no material or shader value.
+
+Setup requires a matching recipe hash, pinned unchanged original PC bundles,
+new output outside the input and expected output capacity plus 2 GiB reserve.
+Before/after source hashes and independently re-read persisted extents gate
+success. Failure retains the partial output and `result.json`; exit tears down
+the process. Successful outputs are `objects.bin`, `index.jsonl` and
+`result.json`, matching the Avatar producer's bundle/member/path-ID interface.
+Bundle/player-file callers independently obtain original native type metadata
+and generate destination layout. There is no replay, SDK, UnityPy or Editor
+input to production.
+
+J1119 qualifies 320 AnimationClip, 232 AnimatorController and 4,979 Material
+records on the host. This partial cohort closes no final-file readiness entry by
+itself; complete source-only content and ordinary-app/device qualification
+remain open. Outputs and all discovery/comparison evidence stay ignored.

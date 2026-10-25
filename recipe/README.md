@@ -169,6 +169,9 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 | `owner-alpha-textures.json` | Private replay source Alpha8/single-mip texture cohort (J1082) | Canonical original/destination selectors, source/field extents, import/storage settings and hashes. | No alpha samples, encoded blocks, target byte frames, protected source or private identifiers; full audit below, 2026-10-24. | Original-PC-input-only `texture_produce.py` plus separately built public codec; no game-build consumer. |
 | `owner-rgb-textures.json` | Complete ETC1/single-mip target cohort | Original/destination selectors, field/pixel extents, hashes and source JPEG policy; composition aliases reuse original Warp/Elite ramps. | No colors, normal vectors, palettes, encoded blocks or target byte frames; audit below, 2026-10-24. | Original-input-only `texture_produce.py` and public ETC/JPEG tools; J1088 qualifies all 281 records on Android. |
 | `owner-rgba-textures.json` | Complete non-Alpha8 ETC2 RGBA/single-mip target cohort | Original/destination selectors, byte/field extents, hashes and canonical source relationships. | No pixels, palettes, encoded blocks, SDK implementation, private paths or target byte frames; audit below, 2026-10-24. | Existing source-only texture owner plus separately supplied SDK codec and public BC7 decoder; full phone qualification pending. |
+| `owner-animation-clips.json` | Qualified private AnimationClip object cohort | Original selectors/hashes, destination relationships and named source-schema animation policies. | No curve, pose, event/string/body template, arbitrary patch or target scalar; audit below, 2026-10-25. | Source-only `record_produce.py`; J1119 host qualification, full cohort/phone gate open. |
+| `owner-material-records.json` | Qualified private Material object cohort | Original selectors/hashes, checked PPtr relationships and existing dummy-shader keyword policy. | No material value, keyword string, shader program, body template or target scalar; audit below, 2026-10-25. | Source-only `record_produce.py`; J1119 host qualification, remaining materials/phone gate open. |
+| `owner-animator-controllers.json` | Qualified private AnimatorController object cohort | Original selectors/hashes and checked PPtr relationships only. | No native controller body, TOS table, curve/state value or target template; audit below, 2026-10-25. | Source-only `record_produce.py`; J1119 host qualification, full cohort/phone gate open. |
 | `owner-avatars.json` | Private replay Avatar bodies (J1075) | Minimum original/destination identities, hashes, source extents and source-entry permutations. | No strings, poses, rig/geometry values, target literals or byte frames; full audit above, 2026-10-24. | Explicit PC-input-only `avatar_produce.py`; no current game-build consumer. |
 | `owner-meshes.json` | Protected mesh bodies in the private replay packet, for the included cohort only (J1070) | Original bundle/object/resource selectors, destination identities/hashes and authored import/conversion settings. | No geometry arrays, collision data, target byte frames or float literals; full audit above, 2026-10-24. Two cases remain excluded. | Explicit original-input-only `mesh_produce.py`; no current game-build consumer. |
 | `shader-postprocessing-bloom-candidate.json` | Exported one-pass Bloom and exact source-camera CopyStd placeholders | Accepted-input source/meta/resource identities, official Unity package/license hashes and pass contracts; authored camera staging pin refreshed without changing camera transforms. | Authored selection metadata only; upstream source and generated content stay local under Unity Companion License. Manual audit 2026-10-23 described above. | `shader_postprocessing_bloom`, whole-catalog preparation and catalog replay comparison; default off. |
@@ -2635,3 +2638,25 @@ protected text, image, gameplay value, original implementation, credential,
 private path or device identifier is stored. All generated bodies/resources,
 raw comparisons and discovery artifacts remain ignored. This grants no
 ownership, authentication, entitlement or content redistribution capability.
+
+## Animation and generic object records
+
+`owner-animation-clips.json`, `owner-animator-controllers.json` and
+`owner-material-records.json` contain only
+original source bundle/member/object selectors and hashes, destination
+relationships/verification hashes and named transformations. Original type trees
+are read from PC bundles; no source/target type-tree snapshot is tracked.
+Animation policies select schema-typed float canonicalization, original
+reference-pose removal, constant-curve folding, checked PPtr remaps and the
+existing importer binding-attribute mask. No pose vector, curve coefficient,
+event string, native controller value, state graph, target byte template or
+arbitrary scalar replacement is present. Controllers preserve all non-pointer
+bytes. Materials reuse checked original fields and the existing named keyword
+demotion policy, preserving every original keyword string/value and total body
+length. Source matching admits only unique original records with unchanged
+native type identity; ambiguous matches remain excluded. These are partial
+object cohorts, not independently assembled files.
+Provenance/privacy/licensing/sensitive-content audit: 2026-10-25; J1119.
+All discovery evidence, source bodies and generated packs remain ignored;
+this grants no game/SDK redistribution, ownership, authentication or entitlement
+permission. Host and ordinary-app/device qualifications remain separate.

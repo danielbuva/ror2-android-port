@@ -39500,3 +39500,100 @@ lease or package/process/display state changes. Main-checkout pruning finds
 no eligible outputs; free host capacity remains about 98 GiB, so no full build
 is started. Revisit after the specific source producers advance or for the
 first phone qualification, rather than repeat J1116 or accept replay suppliers.
+
+## J1119 — Produce animation, controller and material records from original PC bundles
+
+Date: 2026-10-25 UTC. **Host-only result:** 5,531 independently source-produced
+object records, 11,359,872 bytes, match J850 byte-for-byte. These are object
+packs, not completed bundles/player files or device/runtime qualification.
+Accepted comparison is J850 APK SHA-256
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+No Editor, device command, lease, install or game launch occurs.
+
+**Hypothesis and prior art.** Consulted `community-prior-art.md`, J1070/J1075
+and the pinned UnityPy 1.25.3 type-tree/ObjectReader/PPtr relationships.
+Inspected pinned AssetRipper `1ac666f47d8e9dedf96afb0b914c70d7656151ea`
+`StreamedCurveKey.cs`, `AnimationClipConverter.cs`,
+`AnimatorControllerProcessor.cs`, `AnimatorControllerExtensions.cs` and
+`MaterialExtensions.cs`. Their observation techniques distinguish original
+serialized fields, importer curve processing, native controller/state rebuilds
+and dummy-shader keyword scope. Current PC/J850 full-body comparison remains
+authority; no upstream or SDK implementation is copied.
+
+**Implementation.** `record_produce.py` extends the existing source-only
+object-pack pattern with three audited selector-only recipes. It reads original
+embedded type trees and native object records through the existing bounded
+UnityFS/serialized reader. The animation policy can clear the original
+reference-pose array while preserving `m_MuscleClipSize`, normalize only typed
+float fields and packed stream float words, fold complete exclusive constant
+curves, relocate checked PPtrs and derive the binding importer flag. Events,
+strings, original coefficients/values and all other bytes originate in PC input.
+No target coefficient, pose, event/string body, numeric override, arbitrary
+patch or type-tree snapshot is in the recipe.
+
+Controllers preserve every non-pointer byte. Materials reuse the existing
+checked PPtr relocation and named dummy-shader keyword policy: original valid
+keywords move before the original invalid keywords, preserving every string,
+material property and body length. All admitted controller/material candidates
+have unique physical original sources and equal original/accepted native type
+hashes. Ambiguous or otherwise changed originals remain excluded.
+
+Setup requires a pinned recipe, exact original bundle/body hashes, new output
+outside the input and expected capacity plus 2 GiB reserve. Source hashes are
+checked before and after processing. Full result hashes and persisted extent
+readbacks gate success; failure retains a terminal receipt and partial output.
+The producer emits existing `objects.bin`/`index.jsonl`/`result.json` contracts;
+the bundle/player owner separately reads original type metadata and generates
+layout. There is no replay file, SDK, UnityPy or Editor input to production.
+
+**Evidence.** All raw discovery, receipts and comparisons remain ignored in
+the assigned worktree's `work/coordination/p1-anim/`:
+
+| Cohort | Exact records / bytes | Public production | Object pack SHA-256 |
+| --- | --- | --- | --- |
+| AnimationClips | 320 / 2,718,652 | `animation-clips-host-v2/`, 9.842 s | `a36e433fca53863c10e3c2a0149549d6dd85e0bd615de37153b52ecb387143eb` |
+| AnimatorControllers | 232 / 276,804 | `animator-controllers-host-v2/`, 8.158 s | `e8d8d965f1eb98cb9df0f38a509141f5b89d111fc38b9845829992e8babf115d` |
+| Materials | 4,979 / 8,364,416 | `material-host-v1/`, 66.743 s | `f50c58260982cf2e159857dedb14b6f77564fd1fe1769ca0c73f4f57158e59d7` |
+
+Recipe SHA-256 values respectively are
+`7024ecd1775973b8afdea4b8c1a3d638d41f54e53af781ee812c0cc0cb2dee77`,
+`7c566b8f121bce2690c9bf968cf7b42cc6ccca5133c8b2813796d6994a2225f4`
+and `f1b56f210e2cbfcd874c41727db1881f5ff0202f97d8403ed819e85cebf06d61`.
+`independent-comparison.json`, `controller-independent-comparison.json` and
+`material-independent-comparison.json` compare every full persisted record
+directly with the actual J850 comparison bundle, independently of recipe hashes.
+The material result verifies successful receipt, both persisted pack hashes,
+all 4,979 records and total extent before reporting complete comparison.
+
+The animation cohort has 241 raw-exact records, 55 qualified pose/canonical/
+constant-fold cases, 19 binding/event cases and five NaN-only cases. Controllers
+relocate 751 checked references. Materials select 783 original bundles,
+relocate 20,487 references and demote original keywords in 3,967 records.
+Six authored producer contracts plus seven existing object-owner and three
+recipe contracts pass. They cover source-schema common-string aliases, typed
+float/signed-zero preservation, importer-size preservation, source-only constant
+folding and malformed refusal, checked pointer/binding changes, material
+operation order/idempotence, source/output/class/operation drift and persisted
+packs. Ruff, whitespace and staged public audit pass; independent review finds
+no must-fix issue. No game-derived fixture or private capture is tracked.
+
+**First failures.** An initial source-schema walk leaves common name `data`
+unresolved; explicit common-string handling corrects the real source case and
+an authored fixture exercises that encoding. An early private material
+comparison reads a still-growing output and stops at 4,429 records; it is kept
+as `material-incomplete-comparison-v1.json`, never accepted as full evidence.
+The final comparison runs after the successful producer receipt and requires
+its expected counts and persisted hashes. `./dev doctor` and host preflight
+refuse this new worktree's absent local input/inventory/lab-project state.
+These producers need none of that Editor-project state; no source generation,
+input acceptance or build bypass is performed.
+
+**Remaining/revisit.** These packs directly close zero final-file readiness
+entries until their bundle/player callers assemble complete files. Of the
+payload cohort, 3,003 AnimationClips, 156 AnimatorControllers and 1,188 Materials
+remain outside these profiles; the latter includes 257 ambiguous-source cases.
+Curve regeneration, changed controller state/index/TOS relationships and other
+generic classes remain separate work. Full phone production, content assembly,
+installation and runtime behavior remain open. Revisit on input, schema,
+source relationships, policy, reader or interpreter changes. Architecture C,
+IL2CPP ARM64 and ownership boundaries remain unchanged.
