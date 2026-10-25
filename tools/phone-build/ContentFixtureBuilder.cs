@@ -60,8 +60,10 @@ public static class ContentFixtureBuilder
             receipt.properties_hash = (string)method.Invoke(script, null);
             if (String.IsNullOrEmpty(receipt.properties_hash)) throw new Exception("Native MonoScript hash empty");
             string path = Path.Combine(attempt, receipt.serialized_file);
+            // The imported MonoScript is persistent; this API saves only the
+            // temporary authored objects, retaining their script reference.
             InternalEditorUtility.SaveToSerializedFileAndForget(
-                new UnityEngine.Object[] { instance, instance.transform, fixture, script }, path, false);
+                new UnityEngine.Object[] { instance, instance.transform, fixture }, path, false);
             byte[] data = File.ReadAllBytes(path);
             receipt.serialized_bytes = data.LongLength;
             if (data.Length == 0) throw new Exception("Native fixture serialized file empty");
