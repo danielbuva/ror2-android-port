@@ -123,6 +123,19 @@ every object and re-reads persisted extents, and failure/exit retain outputs
 and end the process. [Its lifecycle and qualified scope](../tools/phone-build/accepted-output/README.md#produce-meshes-directly-from-original-pc-bundles)
 remain separate from bundle assembly, the private replay receiver and current
 game builds; two mesh cases are excluded and no runtime owner is added.
+`record_produce.py` owns source-only AnimationClip and generic object-record
+production through the same object-pack interface. Audited
+`recipe/owner-animation-clips.json`, `recipe/owner-animator-controllers.json`
+and `recipe/owner-material-records.json`
+select original records, checked pointer relationships and source-only animation
+policies. Original embedded schemas identify typed float fields, reference-pose
+and streamed/constant arrays. Setup admits a pinned recipe, unchanged original
+PC bundles and separate new output with capacity reserve; source and persisted
+record hashes gate its complete/failed receipt. It retains outputs and ends the
+process on failure/exit. Generic controllers preserve every non-pointer byte;
+material keyword demotion reuses the existing object owner's policy. No runtime
+owner or Editor is added. [Setup and qualified scope](../tools/phone-build/accepted-output/README.md#produce-animation-and-generic-object-records)
+remain separate from complete bundle/player-file assembly and phone acceptance.
 `avatar_produce.py` owns current experimental PC-only Avatar production using
 the same bounded reader and input-path admission. Its audited
 `recipe/owner-avatars.json` selects original body/table extents and complete
