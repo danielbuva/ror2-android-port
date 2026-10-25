@@ -466,6 +466,11 @@ attempt stops on a host ADB stream SIGKILL during tool-host compilation, before
 any native timings. Its sender is unknown; cleanup verifies stopped tools,
 sleeping panels and lease release.
 
+J1170 adds six source-derived scene bundles: current host readiness is
+593 of 705 files (588 raw-exact, two code comparison entries and three
+drift-explained); 112 remain missing (7 APK, 105 payload).
+Complete phone assembly and runtime qualification remain open.
+
 [J1167](PORTING_JOURNAL.md#j1167--measure-representative-native-compilation-on-the-phone) completes the three representative ordinary-app native compiler timings.
 They size the active-time budget for checked continuation from 498 retained
 objects; complete native production, final assembly and game qualification
