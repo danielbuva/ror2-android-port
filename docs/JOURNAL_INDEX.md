@@ -13,6 +13,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1162](PORTING_JOURNAL.md#j1162--retain-the-native-measurement-transport-failure-and-refresh-source-readiness) | 2026-10-25 | Retain the native measurement transport failure and refresh source readiness | 2026-10-25 UTC. |
 | [J1157](PORTING_JOURNAL.md#j1157--reconstruct-every-apk-shader48-object-from-source) | 2026-10-25 | Reconstruct every APK Shader48 object from source | **Hypothesis / prior art.** |
 | [J1158](PORTING_JOURNAL.md#j1158--rgba-phone-cohort-interrupted-by-recorded-hangup) | 2026-10-25 | RGBA phone cohort interrupted by recorded hangup | 2026-10-25 UTC. |
+| [J1157](PORTING_JOURNAL.md#j1157--reconstruct-every-apk-shader48-object-from-source) | 2026-10-25 | Reconstruct every APK Shader48 object from source | **Hypothesis / prior art.** |
 | [J1143](PORTING_JOURNAL.md#j1143--qualify-expanded-source-animation-controller-and-graph-records) | 2026-10-25 | Qualify expanded source animation, controller and graph records | Date: 2026-10-25 UTC. |
 | [J1154](PORTING_JOURNAL.md#j1154--collect-the-paused-native-jobs-terminal-timeout-without-restarting-it) | 2026-10-25 | Collect the paused native job's terminal timeout without restarting it | 2026-10-25 UTC. |
 | [J1153](PORTING_JOURNAL.md#j1153--admit-reviewed-current-input-drift-without-historical-runtime-suppliers) | 2026-10-25 | Admit reviewed current-input drift without historical runtime suppliers | 2026-10-25 UTC. |
