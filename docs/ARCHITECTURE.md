@@ -168,7 +168,7 @@ AI Test and Testscene reuse those same schema, Sprite, pointer and preload
 policies without another producer branch. Their Sprite importer identities
 follow the current accepted-input export and original scene relationships.
 
-`player_data.py` owns the separate current 175-file player cohort: SDK/converter
+`player_data.py` owns the separate current 177-file player cohort: SDK/converter
 resources, PC-derived script JSON, the three-object font file, original
 line-breaking TextAssets, authored runtime/bootstrap JSON, 64 standalone Sprites and one
 original TimerStringFormatter object, nine original TMP objects, 14 materials
@@ -208,6 +208,27 @@ outputs use current originals only; historical originals serve independent
 transformation qualification, with input drift kept separate from exact output
 comparison. Serialized object/TextAsset destinations use the fixed Android
 toolchain engine version while retaining source-derived native schemas.
+The same owner writes the complete script registry and default-scene shared
+file. `script_identity.registry` resolves actual source-produced CLR providers,
+original embedded schemas and original package importer sidecars. The audited
+`owner-player-registry.json` selects minimum original schema witnesses and
+authored importer identities; it contains no serialized bodies or hash overrides.
+The code owner's existing request supplies the immutable authored source root
+and packages root, with the existing flat input-hash manifest. The identity owner
+returns source-sorted script IDs, native layout and bodies; `player_data.py`
+writes them through the existing serialized writer and rechecks all providers.
+`shared_defaults` uses those source script IDs, original RenderSettings with a
+hash-matched original Wisp schema, SDK Material/resource records and the shader
+owner's standard record pack. Its Cube and diagnostics preloads follow the
+authored LabBuild policy. No generated project, private schema cache or Editor
+fixture output is a production input. Registry metadata inspection lazily uses
+the pinned `dnfile`/`pefile` dependencies; the earlier player slices keep their
+standard-library path. The registry projects only the raw CLR metadata consumed
+by serialization and closes each PE immediately. It releases SDK and original
+witness layouts before managed traversal, rereading witnesses during validation
+instead of caching them. Completion and failure close the current resolver.
+The complete host cohort stays below 500 MiB; phone production still needs its
+own guarded replay.
 The same player owner derives its two native shader-selection TextAssets from
 original Material keywords and Shader declaration metadata. Its pinned
 `recipe/owner-player-shader-manifests.json` supplies source selectors; embedded
@@ -695,6 +716,11 @@ separate player build; `ContentFixture.cs` loads either its embedded bundle or
 a hash-bound candidate at a fixed path in its own data directory. It checks two
 load/unload cycles and writes a private report. The three `phone-content-*` prototype
 actions stage/check/build only this fixture under the primary checkout mutex.
+The check also captures the native properties hash and binary serialization of
+the authored `NativeScriptSchemaFixture.cs` fields. It destroys the temporary
+objects after capture; the host must inspect actual type-tree presence before
+using the output as schema evidence. The fixture class is Editor-only and has
+no game-build consumer.
 See [probe setup and boundaries](../tools/phone-build/README.md). No game-runtime
 owner or whole-catalog build calls this support path.
 

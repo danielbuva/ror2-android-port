@@ -182,13 +182,14 @@ bringing the complete source bundle count to seven. Phone qualification remains 
 
 ## Produce named player-data files
 
-`player_data.py` produces 175 canonical `apk/assets/bin/Data/...` files:
+`player_data.py` produces 177 canonical `apk/assets/bin/Data/...` files:
 SDK default resources, three fresh converter resource files, two script metadata
 JSON files derived from original PC metadata plus authored initialization/order,
 the embedded font serialized file, two original line-breaking TextAssets, the
 authored runtime and bootstrap JSON TextAssets, 64 standalone Sprite files,
 the original TimerStringFormatter, nine original TMP objects, 14 materials, the six-object SDK built-in UI file and 72 standalone
-textures from existing source-produced packs. The font, material and texture bodies and their
+textures from existing source-produced packs, the complete script registry and
+the default-scene shared file. The font, material and texture bodies and their
 type identities/dependency come from one original PC bundle; only
 four checked reference identities change. The generic writer generates its
 tree-stripped Android metadata and object layout. Original Sprites retain
@@ -215,13 +216,16 @@ originals qualify the same transformation separately. This does not make either
 file an exact J850 match or qualify phone production.
 
 ```sh
-python3 -I -S -B tools/phone-build/accepted-output/player_data.py \
+.local/lab-venv/bin/python -I -B tools/phone-build/accepted-output/player_data.py \
   --profile recipe/owner-player-data.json --profile-sha256 RECIPE_SHA256 \
   --pc ORIGINAL_PC_ROOT --sdk OWNER_ANDROID_PLAYER_SDK \
   --builtin-extra OWNER_SDK_RESOURCES/unity_builtin_extra \
   --editor-resources "OWNER_SDK_RESOURCES/unity editor resources" \
   --converter FRESH_CONVERTER_OUTPUT \
   --converter-receipt-sha256 CONVERTER_RECEIPT_SHA256 \
+  --code-request ORIGINAL_INPUT_CODE_REQUEST.json \
+  --managed-production SOURCE_PRODUCED_MANAGED_DIRECTORY \
+  --record-pack SHARED_SHADER_PACK SHARED_SHADER_RECEIPT_SHA256 \
   --texture-pack UNCOMPRESSED_PACK UNCOMPRESSED_RECEIPT_SHA256 \
   --texture-pack ALPHA_ETC_PACK ALPHA_ETC_RECEIPT_SHA256 \
   --texture-pack RGB_ETC_PACK RGB_ETC_RECEIPT_SHA256 \
@@ -229,6 +233,32 @@ python3 -I -S -B tools/phone-build/accepted-output/player_data.py \
   --texture-pack RGBA_MIP_PACK RGBA_MIP_RECEIPT_SHA256 \
   --output NEW_PRIVATE_TARGET_TREE
 ```
+
+The registry lazily imports `dnfile` and `pefile`, pinned in
+`tools/lab-requirements.txt`; use an interpreter containing those packages.
+The earlier player slices remain standard-library only when no registry is
+selected. The code request is the existing original-input code-owner request:
+`target.source` names the immutable public authored source tree and
+`source_inputs.packages` names original package sources and adjacent `.meta`
+files. Its existing `input-hashes.json` is beside the packages directory.
+The supplied managed directory must contain the successful fresh source
+production and its actual provider/compiler receipts. It is never an accepted
+assembly replay directory. TestRunner and MCP source importers are original
+package inputs; they add no compiler inputs.
+
+`owner-player-registry.json` contains minimum original bundle/member/type
+witnesses and authored script membership/importer identities. The producer
+derives all script IDs by source importer order, computes supported properties
+hashes from original schemas and actual CLR fields, and preserves original
+records only for explicitly unsupported native contracts whose DLL provider
+is unchanged. The default-scene writer consumes the source-derived registry
+IDs and two shader records through the existing pack interface. Original scene
+and SDK records supply the native types, dependencies, material properties and
+cookie relationship. All providers are checked again after writing.
+No native Editor fixture output or private discovery JSON is a provider.
+The CLR reader projects compact metadata and releases PE/SDK/witness state;
+J1169 qualifies the complete host cohort below 500 MiB. Complete registry
+production on a phone remains open until its own guarded replay passes.
 
 Each texture directory is an existing producer's `objects.bin`, `resources.bin`,
 `index.jsonl` and successful `result.json`; pass the hash of that receipt. The
