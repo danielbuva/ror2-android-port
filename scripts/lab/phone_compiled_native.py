@@ -27,7 +27,7 @@ APK_SHA = "90e8f9f8fa5028716cf9f1c8de8afb6d297f048c8c0bb486a987a594e3ab5a61"
 FIXTURE_SHA = "957217bd379a3e0a747ce0b5d7aef9420fff449432b07775d8a320f908a0a22f"
 SDK_SHA = "906123118e45d56c6bcf20f3776ed2373417553042500714023daeb9e53058e8"
 CPP = "project/Library/Bee/artifacts/Android/il2cppOutput/cpp/"
-FIXTURE_SOURCES = ("ContentFixture.cs", "ContentFixtureBuilder.cs", "ContentFixtureLinkerCapture.cs")
+FIXTURE_SOURCES = ("ContentFixture.cs", "NativeScriptSchemaFixture.cs", "ContentFixtureBuilder.cs", "ContentFixtureLinkerCapture.cs")
 FIXTURE_FILES = {"tools/phone-build/" + name: "sources/" + name for name in FIXTURE_SOURCES} | {
     "scripts/lab/phone_content.py": "generators/phone_content.py",
     "scripts/lab/phone_bundle.py": "generators/phone_bundle.py",

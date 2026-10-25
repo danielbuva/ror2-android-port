@@ -696,6 +696,14 @@
     "852bc9f46df26480bb862df820e94806": {
       "bytes": 5676,
       "sha256": "d12b4a65926af9260305c1b344d2473b972a7a87cc34c8f39e85ad2c73774aa5"
+    },
+    "globalgamemanagers.assets": {
+      "bytes": 346760,
+      "sha256": "29461f8555c1c2ddf8f8c8c0b16705cf231095cd944a36b552925f656a0532df"
+    },
+    "sharedassets0.assets": {
+      "bytes": 114496,
+      "sha256": "8c233ceb1511437e3358d745cf671a683fd93260061addfc04ff239e3190d054"
     }
   },
   "project_assemblies": [
@@ -5224,5 +5232,33 @@
     "bytes": 240756040,
     "sha256": "25bcb42474a8e1d639d4835a28fa2017dc153e2612e3961c6b09895f5ac3a190",
     "path_id": -9215203055440829681
+  },
+  "registry": {
+    "file": "globalgamemanagers.assets",
+    "path": "owner-player-registry.json",
+    "sha256": "d30549957de20c686c00ff8987199edeffbd9afb56158046152354f87cd95840"
+  },
+  "shared_defaults": {
+    "file": "sharedassets0.assets",
+    "source": {
+      "path": "Risk of Rain 2_Data/sharedassets0.assets",
+      "bytes": 506080,
+      "sha256": "3d735244606be616f3ce8ed90a644d04afc9ecbe44cdc9823fb2ed8b6c081f77"
+    },
+    "scene": {
+      "path": "Risk of Rain 2_Data/level0",
+      "bytes": 32896,
+      "sha256": "86b614465595334d10d26d0e781daef8ebf43cf427b857c739e40c89251a44e2"
+    },
+    "render_schema": {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-wispgraveyard_scenes_all_aed6652e1c5ce7a88e35d4bd65a3aed0.bundle",
+      "member": "CAB-4efe3d317b4c29113b78eb95d4f0d4b7",
+      "sha256": "76ca19b1b14aa738d9c7a3c94d34a5dc676cf4281bee6240f739febbcb323dae"
+    },
+    "sdk_source": {
+      "bytes": 133069551,
+      "sha256": "db99888b83efb4ec35e6ce219de78c951fc37bc0129712579131360312cc4f8e"
+    },
+    "shader_record": "9ff4e5d552d71bc0f8e68653e2ac5680810bad07a1b18b84290f72b8188aa008"
   }
 }
