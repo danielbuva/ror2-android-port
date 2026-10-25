@@ -39845,3 +39845,107 @@ numbered failed-transfer receipts are authoritative for the statements above.
 The ignored `device_rgba_batch_v8.py` and `measure_family_v6.py` retain the exact
 harness. Raw logs, original inputs, SDK providers and remote identifiers remain
 private; only this authored summary is published.
+
+## J1128 — Produce complete RGBA mip and source cubemap cohorts on the host
+
+2026-10-25. Fixed J850 target, APK SHA-256
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+**Host-only result:** all 1,523 RGBA mip-chain records and all 110 source-derived
+Cubemaps match the target body/pixel contracts. These are record packs, not
+complete bundles or an installable owner build. No device command, game build,
+installation or launch occurs in these cases. Android qualification remains open.
+
+**Hypothesis and prior art.** Original top-level pixels plus the measured
+import/filter/encoder rules can produce these entire cohorts without target
+pixel literals or an Editor/project in production. Consulted
+`community-prior-art.md`, J1110 and J332's original reflection relationships.
+Pinned AssetRipper TextureConverter/ExrWriter face strides, layer traversal,
+orientation and exporter half conversion inform source interpretation. Existing
+UnityPy serialized fields, public bcdec BC6/BC7 decoding and ETCPACK alpha/colour
+contracts remain in use with retained licenses. The exact-editor fixture supplies
+only independently authored nongame arithmetic controls; original PC/J850
+comparisons determine accepted content relationships. No exported image or
+upstream implementation is copied into the recipe.
+
+**Implementation.** Existing `texture_produce.py`, `texture_pixels.c` and the
+SDK/public codec builders own every operation; no new runtime owner is added.
+The RGBA recipe selects 1,399 canonical transformations for 1,519 bundle records
+plus four player records from 319 original bundle entries. Only original top
+pixels feed continuous float32 mip generation, logical-tail block tiling,
+SDK colour and public EAC alpha encoding. sRGB imports normalize all channels
+with float32 `1 / 255` before filtering, applying gamma transfer only to RGB;
+linear imports preserve the first byte-unit reduction. Authored varying-alpha
+controls distinguish that arithmetic from premature division/quantization.
+
+The cubemap recipe selects 68 original PC bundles: 50 ordinary ETC1, 56 HDR ETC1
+and four RGBA Cubemaps. Original six-face chain strides preserve face order and
+orientation. HDR import reproduces exporter half conversion, float filtering
+and DoubleLDR quantization before uniform ETC encoding; destination colour space
+selects the transfer. RGBA cubes reuse the SDK colour/public alpha path. All four
+varying 254/255-alpha cases pass without pixel patches. CompleteImageSize remains
+per face, while the resource extent contains all six. Nine selected fields are
+projected; every unselected original byte is retained. Thirteen native cubes
+(five generated skies and eight baked probes) are excluded, with no fallback.
+
+Both audited profiles contain selectors, hashes and import/storage relationships,
+never pixels, block literals, serialized body/type templates or SDK code.
+Explicit original inputs, profile/tool pins, new output and capacity admission
+set up the existing producer. Source/tool and persisted extent verification gate
+success. Sequential SDK colour bands and fsynced per-object object/resource/index
+checkpoints preserve the existing pack interface. Host interruption controls
+qualify ordered prefix recovery; Android recovery remains open after J1123.
+
+**Complete host evidence.** Private output and raw reviews remain under
+`work/coordination/accepted-build-reconstruction/media-source-v1/`.
+`rgba-mip-public-host-v1/` produces 1,523 records in 1,293.865 seconds with
+541,032,448 bytes peak RSS; `cubemap-public-host-v1/` produces 110 records in
+140.995 seconds with 315,572,224 bytes peak RSS.
+
+| Cohort / output | Bytes | SHA-256 |
+| --- | ---: | --- |
+| RGBA `objects.bin` | 2,641,656 | `2f179e31e3ed27116d230ce133a9390400e53231ebdcfe5416a30de11797329b` |
+| RGBA `resources.bin` | 993,403,152 | `a3c5f9efda4d2befa95b88a54044be6608de57271d4c876d6ce848bf22251b80` |
+| RGBA `index.jsonl` | 741,775 | `d92264482fe249e6c8b346fb42f41eeeca31c48cae6b09c8237d8098ce2dd3db` |
+| Cubemap `objects.bin` | 1,997,624 | `f81481e015a15647c5a6b176d7ef9c95b048b8e0eb0dcb985564bf0077685d60` |
+| Cubemap `resources.bin` | 162,589,248 | `49ba8752dda165c433215212fe7acceb5ee984c3852bd91c8368bacd3ad81132` |
+| Cubemap `index.jsonl` | 46,564 | `cebd30c461359b9397e4e66bded8bfa143c7382ec374f3c5ba903d8921dd412a` |
+
+RGBA profile SHA-256 is
+`723c4e641349941a172aef28d6a4b23eee2954c5390cd7257a75a54cd0bf66fd`;
+Cubemap profile SHA-256 is
+`319691fd4c11591b87b4aae654b00a1cd7789105b43be2cd52a090bb98cb2526`.
+RGBA execution uses source `7253e828` (producer identical to `8e647630`) and
+helper v10 descriptor
+`1c5efdb467f875899a5f1d2370e51df52df0763ca72bbf4ad9912619195fc880`.
+Cubemap execution uses source `d45eb536` and helper v11 descriptor
+`ad05fa2b534dd80b143fbe90787e4b8de8dcb6eaaa2b1b9edc8eb488e3fa0bae`.
+Rebased commits do not relabel those runs. Independent launch/current source
+review finds unchanged RGBA encoder/filter ASTs, 54 identical authored helper
+comparisons and 22 passing focused controls; it does not promote v10 to v11 or
+permit resuming with a changed descriptor.
+
+Independent persisted Cubemap review verifies all three pack hashes, source/tool
+pins, 110 body/pixel extents (30 inline, 80 external) and 110 nine-field scalar
+projections. Independent RGBA review verifies all three pack hashes, launch/source/tool
+pins, 1,523 ordered unique bodies/pixel extents (88 inline, 1,435 external),
+nine-field projections, mip/block sizes and contiguous storage. Terminal and
+persisted receipt agree; the full review is retained beside the run. Focused producer, SDK, interruption and recipe
+checks pass. The first pre-push suite refuses two missing recipe audit-table
+rows; both rows are added without weakening the check. Doctor and host preflight
+still refuse this worktree's missing inventory/lab-project generation; no game
+build bypass is attempted.
+
+**First failures and remaining gates.** Earlier varying-alpha mip mismatches
+come from arithmetic ordering; the generic float32 correction passes authored
+and real-data controls without target pixel exceptions. Native reflection
+relationships alone do not produce the remaining 13 native cube records. Six distinct
+pixel groups and possible historical scene/cache lineage remain a bounded
+follow-up; auto-generated scene lighting is an inference, not a rendering
+contract. Retain private comparisons and source lineage, and revisit on changed
+input, import settings, helper/libm, source selection or SDK encoder.
+
+The unchanged objects/resource/index/result interface is handed to the existing
+bundle/player owners. These packs close no final-file readiness entry by
+themselves. Complete source content, Android encoder/filter agreement, guarded
+single-job recovery, source-derived APK production/install, standard controls
+and performance remain open. Architecture C and native IL2CPP ARM64 remain fixed.

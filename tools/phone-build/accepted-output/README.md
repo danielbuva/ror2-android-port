@@ -884,7 +884,8 @@ headers and their complete license before/after compilation and emits
 
 ## Produce RGBA mip chains
 
-Current experimental source operation: `sdk-rgba-mips`. Use the existing texture
+Current experimental source operation: `sdk-rgba-mips`. J1128 qualifies all
+1,523 records on the host; Android qualification remains open. Use the existing texture
 producer and explicit SDK/public ETC tools with
 `recipe/owner-rgba-mip-textures.json`, SHA-256
 `723c4e641349941a172aef28d6a4b23eee2954c5390cd7257a75a54cd0bf66fd`.
@@ -903,6 +904,7 @@ production. Android cohort qualification remains open.
 
 ## Produce source-derived cubemaps
 
+J1128 qualifies the complete 110-record profile on the host.
 Use the existing texture producer with `recipe/owner-cubemap-textures.json`,
 SHA-256
 `319691fd4c11591b87b4aae654b00a1cd7789105b43be2cd52a090bb98cb2526`,

@@ -63,7 +63,9 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       checkpointed single-job rerun are required.
       [J1110](PORTING_JOURNAL.md#j1110--produce-every-etc1-mip-chain-from-original-pc-textures-on-the-host)
       qualifies all 1,589 ETC1 mip-chain records on the host, with Android
-      qualification open. RGBA mips, cubemaps and complete bundles stay open.
+      qualification open. [J1128](PORTING_JOURNAL.md#j1128--produce-complete-rgba-mip-and-source-cubemap-cohorts-on-the-host) qualifies all 1,523 RGBA mip-chain records
+      and 110 source-derived Cubemaps on the host. Their Android production,
+      13 native reflection cubes and complete bundle assembly remain open.
       [J1113](PORTING_JOURNAL.md#j1113--produce-a-complete-source-only-bundle-and-seven-player-data-files)
       qualifies the first complete PC-only bundle and seven player-data files;
       J1120 extends the host cohort to six complete bundles and 153 player files

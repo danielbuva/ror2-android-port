@@ -119,8 +119,10 @@ its complete phone cohort open after the interrupted guarded run in
 [J1123](PORTING_JOURNAL.md#j1123--guarded-rgba-phone-batch-loses-transport-admission-stays-open).
 Recovered evidence review and a checkpointed single-job rerun are required.
 J1110 qualifies all 1,589 ETC1 mip-chain records
-on the host; Android production remains open. RGBA mips, cubemaps and complete
-bundle production remain open. Owner-build v1 uses the single accepted
+on the host; Android production remains open. [J1128](PORTING_JOURNAL.md#j1128--produce-complete-rgba-mip-and-source-cubemap-cohorts-on-the-host) qualifies all
+1,523 RGBA mip-chain records and 110 source-derived Cubemaps on the host. Their
+Android production, 13 native reflection cubes and complete bundle production
+remain open. Owner-build v1 uses the single accepted
 J850 target; current target metadata is an explicit profile input, and a newer
 target follows a complete v1 phone build/run.
 
