@@ -207,7 +207,10 @@ qualification remain separate from these laboratory installs.
       refusal, validated-backup recovery, directory-write failure/retry and fresh
       background return. J1127 stops cold startup at the CPU thermal threshold
       before any interrupted-write, heap or sustained stage completes. J1130 confirms
-      unreadable thermal sensors block admission under the revised all-zone rule.
+      unreadable thermal interfaces;
+      [J1131](PORTING_JOURNAL.md#j1131--supervise-all-readable-gameplay-thermal-zones)
+      host-qualifies the clarified readable-zone admission/runtime policy. Fresh
+      device qualification remains open.
       Injected persistence states do not establish a power-cut
       or filled-filesystem result.
 - [ ] Qualify the [prepared-lab owner-build/install/playtest checklist](PLAYTESTING.md)

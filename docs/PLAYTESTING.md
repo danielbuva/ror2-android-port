@@ -155,12 +155,18 @@ actual GC/static roots and native bridges; stable native object counts alone do
 not establish a managed-memory bound.
 
 The combined batch supervises temperature zones independently, targeting 250 ms
-samples and refusing gaps above 1 s. Gameplay continues through 80 C; above
-80 C, missing sensors or failed supervision abort the batch without retry.
-Before each stage, cool all temperature zones to at most 50 C with the OLED
-asleep. Record the peak and retain runtime or unexpected errors as first
-failures. Completed stages checkpoint within one three-hour deadline; cooldown
-never counts as play. The 70/55 C pause/resume rule applies to pausable tool jobs,
+samples and refusing gaps above 1 s. Gameplay continues through 80 C; any
+readable physical temperature above 80 C aborts the batch without retry.
+Before each stage, cool every readable physical temperature zone to at most
+50 C with the OLED asleep. Record unreadable temperature interfaces as exclusions
+with their type/path; they do not establish cool or absent sensors. Missing
+readable CPU coverage, numeric sentinels, malformed readings, ADB failure or
+failed supervision still abort. Exact known electrical pseudo-zones are excluded.
+Record CPU and all-zone peaks and retain runtime or unexpected errors as first
+failures, following
+[J1131](PORTING_JOURNAL.md#j1131--supervise-all-readable-gameplay-thermal-zones).
+Completed stages checkpoint within one three-hour deadline; cooldown never
+counts as play. The 70/55 C pause/resume rule applies to pausable tool jobs,
 not gameplay. Battery/HAL checks remain additional limits.
 J1127 records the superseded 70 C rule stopping cold startup at 72 C before menu
 readiness, with a maximum sample gap of 0.737 s and Android force-stop evidence.
