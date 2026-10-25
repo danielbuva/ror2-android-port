@@ -6,6 +6,7 @@ import hashlib
 import json
 from pathlib import Path, PurePosixPath
 import re
+import struct
 import tarfile
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -103,7 +104,7 @@ def archive_files(archive: Path, recipe: dict) -> dict[str, bytes]:
             raise RuntimeError("Pinned Post Processing license changed")
         for member in tar.getmembers():
             prefix = "package/PostProcessing/Shaders/"
-            if member.name.startswith(prefix) and member.name.endswith((".hlsl", ".meta", ".shader")):
+            if member.name.startswith(prefix) and member.name.endswith((".hlsl", ".meta", ".shader", ".compute")):
                 stream = tar.extractfile(member)
                 if stream:
                     files[member.name[len(prefix) :]] = stream.read()
@@ -138,17 +139,54 @@ def include_closure(files: dict[str, bytes], source_path: str) -> dict[str, byte
     return result
 
 
-def rewrite_includes(shader: bytes, closure: dict[str, bytes]) -> bytes:
+def rewrite_includes(shader: bytes, closure: dict[str, bytes], prefix: str = "PostProcessing/") -> bytes:
     text = shader.decode("utf-8")
     for path in closure:
         if path.endswith(".hlsl"):
             parts = PurePosixPath(path).parts
-            replacement = "PostProcessing/" + "/".join(parts)
-            if len(parts) > 1 and parts[0] == "Builtins":
-                replacement = "PostProcessing/Builtins/" + "/".join(parts[1:])
+            replacement = prefix + "/".join(parts)
             text = text.replace(f'"../{PurePosixPath(path).name}"', f'"{replacement}"')
             text = text.replace(f'"{PurePosixPath(path).name}"', f'"{replacement}"')
     return text.encode("utf-8")
+
+
+def validate_programs(export: Path, files: dict[str, bytes], recipe: dict) -> None:
+    """Bind compatible public programs to the original camera's exact resource slots."""
+    resource = (export / safe_path(recipe["camera_contract"]["resource"])).read_text(encoding="utf-8")
+    for row in recipe.get("programs", []):
+        source = export / safe_path(row["source_path"])
+        meta = Path(str(source) + ".meta")
+        package = files.get(row["package_path"], b"")
+        package_meta = files.get(row["package_path"] + ".meta", b"")
+        if (
+            not source.is_file()
+            or source.is_symlink()
+            or digest(source) != row["source_sha256"]
+            or not meta.is_file()
+            or meta.is_symlink()
+            or digest(meta) != row["source_meta_sha256"]
+            or parse_guid(meta) != row["source_guid"]
+            or digest_bytes(package) != row["package_sha256"]
+            or digest_bytes(package_meta) != row["package_meta_sha256"]
+            or re.findall(r"(?m)^\s*" + re.escape(row["field"]) + r": \{fileID: [0-9-]+, guid: ([0-9a-f]{32}), type: [0-9]+\}$", resource)
+            != [row["source_guid"]]
+        ):
+            raise RuntimeError("Source camera program/resource identity changed: " + row["field"])
+        if row["kernels"]:
+            native = re.findall(r"(?m)^ +name: (\S+)$", source.read_text(encoding="utf-8"))
+            kernels = re.findall(r"(?m)^\s*#pragma kernel (\w+)", package.decode("utf-8"))
+            if kernels != row["kernels"] or native != kernels:
+                raise RuntimeError("Original and public compute kernel contracts differ: " + row["field"])
+            groups = [
+                list(struct.unpack("<III", bytes.fromhex(value)))
+                for value in re.findall(r"(?m)^\s*threadGroupSize: ([0-9a-f]{24})$", source.read_text(encoding="utf-8"))
+            ]
+            if groups != row["kernel_thread_groups"]:
+                raise RuntimeError("Original compute thread groups differ: " + row["field"])
+
+
+def program_guid(target: str) -> str:
+    return digest_bytes(("ror2lab/source-camera-program/" + target).encode())[:32]
 
 
 def validate_uber_contract(shader: bytes, recipe: dict) -> None:
@@ -172,11 +210,22 @@ def generate_candidate(work: Path, export: Path, input_id: str, *, allow_create:
     identity = validate_source_join(export, recipe)
     archive = work / Path(recipe["package_archive"]).relative_to("work")
     files = archive_files(archive, recipe)
+    validate_programs(export, files, recipe)
     official = files["Builtins/Uber.shader"]
     closure = include_closure(files, "Builtins/Uber.shader")
     candidate = rewrite_includes(official, closure)
     validate_uber_contract(candidate, recipe)
     output_files = {"sources/Hidden_PostProcessing_Uber_53.shader": candidate}
+    program_rows = []
+    for row in recipe.get("programs", []):
+        source_path = row["package_path"]
+        program_closure = include_closure(files, source_path)
+        closure.update(program_closure)
+        relative = "programs/" + safe_path(row["target"]).name
+        body = rewrite_includes(files[source_path], program_closure, recipe["include_target_prefix"])
+        meta = re.sub(rb"(?m)^guid: [0-9a-f]{32}$", ("guid: " + program_guid(row["target"])).encode(), files[source_path + ".meta"])
+        output_files[relative], output_files[relative + ".meta"] = body, meta
+        program_rows.append({**row, "candidate_path": relative, "sha256": digest_bytes(body), "meta_sha256": digest_bytes(meta)})
     include_rows = []
     for name, data in sorted(closure.items()):
         if not name.endswith(".hlsl"):
@@ -200,6 +249,7 @@ def generate_candidate(work: Path, export: Path, input_id: str, *, allow_create:
         "pass_count": recipe["source_pass_count"],
         "selected_pass": 0,
         "includes": include_rows,
+        "programs": program_rows,
         "unity_compiled": False,
         "android_accepted": False,
         "visual_parity_proven": False,
@@ -305,10 +355,10 @@ def stage(io, *, export: Path, mapped: dict[str, str], owners: dict[str, str], d
     candidate = output / "sources/Hidden_PostProcessing_Uber_53.shader"
     prepared = [(target, candidate.read_bytes())]
     # Includes are staged under the exact package-relative namespace. Existing bytes must be exact.
-    include_rows = []
-    for row in manifest["includes"]:
+    include_rows, program_rows = [], []
+    for kind, row in [("include", row) for row in manifest["includes"]] + [("program", row) for row in manifest["programs"]]:
         package_path = safe_path(row["package_path"])
-        relative = PurePosixPath(recipe["include_target_prefix"]) / package_path
+        relative = PurePosixPath(recipe["include_target_prefix"]) / package_path if kind == "include" else safe_path(row["target"])
         target_include = io.project / relative
         candidate_include = output / row["candidate_path"]
         source_meta = Path(str(candidate_include) + ".meta")
@@ -331,7 +381,7 @@ def stage(io, *, export: Path, mapped: dict[str, str], owners: dict[str, str], d
         else:
             prepared.extend(((target_include, candidate_include.read_bytes()), (target_meta, source_meta.read_bytes())))
         owners[guid] = relative.as_posix()
-        include_rows.append({**row, "target": relative.as_posix(), "meta_target": meta_relative, "guid": guid})
+        (include_rows if kind == "include" else program_rows).append({**row, "target": relative.as_posix(), "meta_target": meta_relative, "guid": guid})
     # Finish every identity and preimage check before any project write.
     for path, data in prepared:
         io.apply(path, data=data)
@@ -355,6 +405,7 @@ def stage(io, *, export: Path, mapped: dict[str, str], owners: dict[str, str], d
         "camera_sha256": contract["source_camera_prefab_sha256"],
         "camera_meta_sha256": contract["source_camera_prefab_meta_sha256"],
         "includes": include_rows,
+        "programs": program_rows,
         "unity_compiled": False,
         "android_accepted": False,
         "visual_parity_proven": False,

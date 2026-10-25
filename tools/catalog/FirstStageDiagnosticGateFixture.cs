@@ -78,6 +78,225 @@ public static class FirstStageDiagnosticGateFixture
 #endif
 
 #if UNITY_EDITOR
+namespace EngineerConfigFixture
+{
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.ExceptionServices;
+using System.Security.Cryptography;
+using EntityStates;
+using EntityStates.Engi.EngiWeapon;
+using RoR2;
+using RoR2.AsyncManagement;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.Networking;
+
+// Inert native config/phase contracts only: no state entry, Addressables load,
+// catalog initialization, gameplay, Run, profile, or networking lifecycle.
+public static class EngineerLaserCutterConfigFixture
+{
+    const string Root = "Assets/WholeGame/RoR2/Base/Characters/Engi/Engi/Skills/LaserCutter/";
+    const BindingFlags MutableStatic = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.DeclaredOnly;
+
+    static void Require(bool condition, string message)
+    {
+        if (!condition) throw new InvalidOperationException("Engineer Laser Cutter config fixture failed: " + message);
+    }
+
+    static string Hash(string path)
+    {
+        using (var sha = SHA256.Create())
+            return Convert.ToBase64String(sha.ComputeHash(File.ReadAllBytes(
+                System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Application.dataPath), path))));
+    }
+
+    static UnityEngine.Object Asset(string guid, string name, Type type, Dictionary<string, string> hashes)
+    {
+        string path = Root + name;
+        Require(AssetDatabase.GUIDToAssetPath(guid) == path && AssetDatabase.AssetPathToGUID(path) == guid,
+                "Generated source asset identity changed: " + name);
+        hashes.Add(path, Hash(path));
+        hashes.Add(path + ".meta", Hash(path + ".meta"));
+        var asset = AssetDatabase.LoadAssetAtPath(path, type);
+        Require(asset && !EditorUtility.IsDirty(asset), "Source asset is missing or already dirty: " + name);
+        return asset;
+    }
+
+    static bool SameValue(object actual, object expected)
+    {
+        // EntityStateGameObject's bool/GameObject conversions load Addressables.
+        // Inspect its stored identity only; never call its gameObject getter.
+        if (actual is EntityStateGameObject || expected is EntityStateGameObject)
+        {
+            var a = actual as EntityStateGameObject;
+            var b = expected as EntityStateGameObject;
+            return a != null && b != null && a.directReference == null && b.directReference == null &&
+                a.addressableReference != null && b.addressableReference != null &&
+                a.addressableReference.AssetGUID == b.addressableReference.AssetGUID;
+        }
+        if (actual is AnimationCurve || expected is AnimationCurve)
+        {
+            var a = actual as AnimationCurve;
+            var b = expected as AnimationCurve;
+            return a != null && b != null && a.preWrapMode == b.preWrapMode && a.postWrapMode == b.postWrapMode &&
+                a.keys.SequenceEqual(b.keys);
+        }
+        if (actual is UnityEngine.Object || expected is UnityEngine.Object)
+            return (actual as UnityEngine.Object) == (expected as UnityEngine.Object);
+        return Equals(actual, expected);
+    }
+
+    static object Sentinel(Type type)
+    {
+        if (type == typeof(float)) return -410001f;
+        if (type == typeof(string)) return "fixture-unconfigured";
+        Require(!type.IsValueType, "Unhandled native serialized field type: " + type.FullName);
+        return null;
+    }
+
+    static int ApplyAndCheck(EntityStateConfiguration config, object state)
+    {
+        Type type = (Type)config.targetType;
+        var names = new HashSet<string>(StringComparer.Ordinal);
+        var expected = new List<KeyValuePair<FieldInfo, object>>();
+        foreach (var serialized in config.serializedFieldsCollection.serializedFields)
+        {
+            Require(names.Add(serialized.fieldName), "Duplicate source config field: " + serialized.fieldName);
+            // Default GetField deliberately includes inherited public fields, as
+            // required by the native BuildInstanceInitializer API for phases 2/3.
+            var field = type.GetField(serialized.fieldName);
+            Require(field != null && !field.IsInitOnly && !field.IsLiteral,
+                    "Native config field missing or immutable: " + serialized.fieldName);
+            if (!field.IsStatic)
+                Require(field.GetCustomAttribute<SerializeField>() != null && state != null,
+                        "Native instance config field is not serialized: " + serialized.fieldName);
+            object value = serialized.fieldValue.GetValue(field);
+            object sentinel = Sentinel(field.FieldType);
+            Require(!SameValue(sentinel, value), "Sentinel is not distinct: " + field.Name);
+            field.SetValue(field.IsStatic ? null : state, sentinel);
+            expected.Add(new KeyValuePair<FieldInfo, object>(field, value));
+        }
+        Require(expected.Count > 0, "Source config has no fields");
+        config.ApplyStatic();
+        Action<object> initialize = config.BuildInstanceInitializer();
+        Require((state == null) == (initialize == null), "Unexpected native instance initializer availability");
+        if (initialize != null) initialize(state);
+        foreach (var pair in expected)
+            Require(SameValue(pair.Key.GetValue(pair.Key.IsStatic ? null : state), pair.Value),
+                    "Native config did not replace sentinel: " + type.FullName + "." + pair.Key.Name);
+        return expected.Count;
+    }
+
+    static void CheckReference(EntityStateGameObject reference, string addressableGuid)
+    {
+        Require(reference != null && reference.directReference == null && reference.addressableReference != null &&
+                    reference.addressableReference.AssetGUID == addressableGuid,
+                "Native deferred prefab identity changed");
+    }
+
+    public static object Run()
+    {
+        Require(!EditorApplication.isPlaying && !EditorApplication.isCompiling && !EditorApplication.isUpdating &&
+                    !NetworkServer.active && !NetworkClient.active && !RoR2.Run.instance,
+                "Require the exact idle editor without Play Mode, compilation, network, or Run");
+        var hashes = new Dictionary<string, string>(StringComparer.Ordinal);
+        var assets = new List<UnityEngine.Object>();
+        var snapshots = new List<KeyValuePair<FieldInfo, object>>();
+        foreach (Type type in new[] { typeof(EnterEngiLaserCutter), typeof(EngiLaserCutter) })
+            foreach (var field in type.GetFields(MutableStatic))
+                if (!field.IsLiteral && !field.IsInitOnly)
+                    snapshots.Add(new KeyValuePair<FieldInfo, object>(field, field.GetValue(null)));
+        object result = null;
+        Exception failure = null, cleanupFailure = null;
+        try
+        {
+            string[] names = { "EnterEngiLaserCutter", "EngiLaserCutter", "EngiLaserCutter2", "EngiLaserCutter3" };
+            string[] guids = { "d13b3c44ba4778e4f8c316b544f2ec01", "42a33b20af1bec44fb59eaf23a806a5b",
+                               "6fb33cacc7712af46a11ef5ebc22ad80", "bc1e1611ea4513844925acb689a33933" };
+            Type[] types = { typeof(EnterEngiLaserCutter), typeof(EngiLaserCutter), typeof(EngiLaserCutter2), typeof(EngiLaserCutter3) };
+            var configs = new EntityStateConfiguration[4];
+            for (int i = 0; i < configs.Length; i++)
+            {
+                configs[i] = (EntityStateConfiguration)Asset(guids[i], "EntityStates.Engi." + names[i] + ".asset",
+                                                            typeof(EntityStateConfiguration), hashes);
+                assets.Add(configs[i]);
+                Require((Type)configs[i].targetType == types[i], "Source config target type changed: " + names[i]);
+            }
+            // Generated Unity GUIDs are distinct from the original Addressables
+            // GUIDs above. Validate staged prefabs without resolving the wrappers.
+            string[] prefabNames = { "ChargeLaserCutter", "LaserCutterBeamSmall", "LaserCutterBeamMedium", "LaserCutterBeamLarge", "LaserCutterHitVFX" };
+            string[] prefabGuids = { "8ed50b0f5ebec9e4082d2fc33ad6b67a", "d29ad4cbab5f03f4d9b11a88a64032e6",
+                                    "148eb904252df5445a294310fc28f02f", "4654d0483242b9c46a984dc4ad346f6a", "ff2f9c6e9194a6c48906f64bfda93c6c" };
+            for (int i = 0; i < prefabNames.Length; i++)
+                assets.Add(Asset(prefabGuids[i], prefabNames[i] + ".prefab", typeof(GameObject), hashes));
+            var sound = Asset("9c20a074d7950f646b1ade5b3bd3cd11", "lsdLaserCutter.asset", typeof(RoR2.Audio.LoopSoundDef), hashes);
+            assets.Add(sound);
+            int enterFields = ApplyAndCheck(configs[0], null);
+            Require(enterFields == 3 && Mathf.Approximately(EnterEngiLaserCutter.baseDuration, 0.6f), "Native charge duration/field contract changed");
+            CheckReference(EnterEngiLaserCutter.chargeEffectPrefab, "128de1607ef2a3343a5298ebe353d272");
+            var phases = new EngiLaserCutter[] { new EngiLaserCutter(), new EngiLaserCutter2(), new EngiLaserCutter3() };
+            int[] fieldCounts = new int[3];
+            string[] beamGuids = { "0744bfd82b0b0d24a9c627bbc009e212", "7d725d209b464284e884fd498b4ac9df", "813c6a8e9212a254d9f90a6df8b0a71e" };
+            for (int i = 0; i < phases.Length; i++)
+            {
+                fieldCounts[i] = ApplyAndCheck(configs[i + 1], phases[i]);
+                Require(fieldCounts[i] == (i == 0 ? 18 : 17) && phases[i].laserCutterSound == sound,
+                        "Native beam config field count/sound identity changed");
+                CheckReference(phases[i].laserLPrefabVFX, beamGuids[i]);
+                CheckReference(phases[i].laserRPrefabVFX, beamGuids[i]);
+                CheckReference(phases[i].impactEffectPrefab, "366b4cc19aebc1b428d761fcea6934c0");
+            }
+            Require(phases[0].damageCoefficient < phases[1].damageCoefficient && phases[1].damageCoefficient < phases[2].damageCoefficient &&
+                        phases[0].healCoefficient < phases[1].healCoefficient && phases[1].healCoefficient < phases[2].healCoefficient &&
+                        phases[0].maxTurnSpeed > phases[1].maxTurnSpeed && phases[1].maxTurnSpeed > phases[2].maxTurnSpeed &&
+                        phases[0].baseMaxDuration == phases[1].baseMaxDuration && phases[2].baseMaxDuration > phases[1].baseMaxDuration,
+                    "Native phase escalation contract changed");
+            var aim = typeof(EngiLaserCutter).GetField("currentAimVector", BindingFlags.Instance | BindingFlags.NonPublic);
+            Require(aim != null, "Native phase aim handoff field missing");
+            var direction = new Vector3(0.25f, -0.5f, 0.75f);
+            aim.SetValue(phases[0], direction);
+            phases[0].fireStopwatch = 0.375f;
+            var second = phases[0].GetNextState() as EngiLaserCutter2;
+            Require(second != null && second.initialAimVector == direction && second.fireStopwatch == phases[0].fireStopwatch,
+                    "Native phase 1->2 lost aim or fire timer");
+            aim.SetValue(second, direction);
+            second.fireStopwatch = 0.625f;
+            var third = second.GetNextState() as EngiLaserCutter3;
+            Require(third != null && third.initialAimVector == direction && third.fireStopwatch == 0f && third.GetNextState().GetType() == typeof(Idle),
+                    "Native phase 2->3->Idle handoff changed");
+            result = new { nativeStaticAndInheritedInstanceConfigVerified = true, enterFields, phaseFieldCounts = fieldCounts,
+                           nativePhaseAimAndTimerHandoffVerified = true, staticFieldsRestored = true, sourceAssetsUnchanged = true,
+                           stateEntryCatalogRunProfileOrNetworkCreated = false, deviceBeamDamageHealingOrReleaseProven = false };
+        }
+        catch (Exception error) { failure = error; }
+        finally
+        {
+            foreach (var pair in snapshots)
+                try { pair.Key.SetValue(null, pair.Value); }
+                catch (Exception error) { if (cleanupFailure == null) cleanupFailure = error; }
+            foreach (var pair in snapshots)
+                try { Require(ReferenceEquals(pair.Key.GetValue(null), pair.Value) || Equals(pair.Key.GetValue(null), pair.Value), "Static restore failed: " + pair.Key.Name); }
+                catch (Exception error) { if (cleanupFailure == null) cleanupFailure = error; }
+            foreach (var pair in hashes)
+                try { Require(Hash(pair.Key) == pair.Value, "Source asset bytes changed: " + pair.Key); }
+                catch (Exception error) { if (cleanupFailure == null) cleanupFailure = error; }
+            foreach (var asset in assets)
+                try { Require(asset && !EditorUtility.IsDirty(asset), "Source asset became dirty"); }
+                catch (Exception error) { if (cleanupFailure == null) cleanupFailure = error; }
+        }
+        if (failure != null) ExceptionDispatchInfo.Capture(failure).Throw();
+        if (cleanupFailure != null) ExceptionDispatchInfo.Capture(cleanupFailure).Throw();
+        return result;
+    }
+}
+}
+#endif
+
+#if UNITY_EDITOR
 namespace NativeSourceFieldFixture
 {
     using System;

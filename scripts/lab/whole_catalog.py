@@ -17,6 +17,8 @@ CAMERA_SHADER_ROOTS = {
     2538: ("12e87e7c7fde8e74db9f75172456c5c3", "TranslucentImage/EfficientBlur.shader"),
     2539: ("d996ab4381100014d99e25e68e9aac84", "TranslucentImage/FillCrop.shader"),
     2540: ("b12e02e9a9b684543a286089a03cb04b", "TranslucentImage/QuickDumbBlur.shader"),
+    16024: ("780f79b2a62a0df439dedf59c533eee6", "RoR2/Base/Shaders/HGSobelBuffer.shader"),
+    15952: ("7d6541fe01591cd418caf48d3c099e52", "RoR2/Base/Shaders/SobelOutline.shader"),
 }
 SHADER_LOCATION_TYPE = "UnityEngine.Shader, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"
 
@@ -195,9 +197,41 @@ def _validated_shader_overrides(io, closure, metadata, mapped, export, project, 
             916309824485114785,
             "ed4a1bae3abd8f34b905b509b4ff70e0",
         ),
+        (
+            16024,
+            "780f79b2a62a0df439dedf59c533eee6",
+            "RoR2/Base/Shaders/HGSobelBuffer.shader",
+            "Assets/RoR2/Base/Shaders/PostProcess/HGSobelBuffer.shader",
+            "sobel-buffer",
+            "shader_ramp_fog.py",
+            "recipe/shader-sobel-buffer-candidate.json",
+            1,
+            "candidate.json",
+            "sources/SobelBufferCandidate.shader",
+            "generated_shader",
+            "Hopoo Games/Internal/SobelBuffer",
+            -583016510457714391,
+            "6d9e1738bf3095e42a34d9feb449ad3b",
+        ),
+        (
+            15952,
+            "7d6541fe01591cd418caf48d3c099e52",
+            "RoR2/Base/Shaders/SobelOutline.shader",
+            "Assets/RoR2/Base/Shaders/CustomPostProcess/SobelOutline.shader",
+            "sobel-outline",
+            "shader_ramp_fog.py",
+            "recipe/shader-sobel-outline-candidate.json",
+            1,
+            "candidate.json",
+            "sources/SobelOutlineCandidate.shader",
+            "generated_shader",
+            "Hidden/PostProcess/SobelOutline",
+            2831377250017133402,
+            "0af91730b526684408399853ee967ce8",
+        ),
     ]
     rows = selection.get("rows")
-    if not isinstance(rows, list) or len(rows) not in (2, 6, len(expected)):
+    if not isinstance(rows, list) or len(rows) not in (2, 6, 7, len(expected)):
         raise RuntimeError("Shader override selection must contain a historical two/six-root profile or the complete current profile")
     expected = expected[: len(rows)]
     locations = {int(row["id"]): row for row in metadata["locations"]}
@@ -313,7 +347,7 @@ def _validated_shader_overrides(io, closure, metadata, mapped, export, project, 
             manifest.get("android_compile_or_render_tested") is not False or manifest.get("appearance_parity_proven") is not False
         ):
             raise RuntimeError("Outline candidate must retain its unqualified status")
-        if candidate_kind in {"ramp-fog", "screen-damage"}:
+        if candidate_kind in {"ramp-fog", "screen-damage", "sobel-buffer", "sobel-outline"}:
             ramp_receipt_path = candidate_directory / "receipt.json"
             if ramp_receipt_path.is_symlink() or not ramp_receipt_path.is_file():
                 raise RuntimeError("Native post-process generator receipt is absent or linked")
@@ -2212,6 +2246,7 @@ BUILD_EDITOR_SOURCES = [
     "EngiShieldHitGuardHost.cs",
     "EngineerNativeOutputObserverFixture.cs",
     "SirenEggDiagnosticInputExactEditorFixture.cs",
+    "SourceCameraGraphicsHost.cs",
     "LightningStakeSourceContractFixture.cs",
     "TeleporterExitTraceSourceContractFixture.cs",
     "SkillResponseCleanupExactEditorFixture.cs",
@@ -2311,6 +2346,48 @@ def build_integration(
         return result
 
 
+def stage_source_collision_policy(io):
+    """Restore only the accepted game's collision matrix, preserving other lab settings."""
+    import struct
+    import UnityPy
+
+    inventory = io.read(io.work / "inventory/files.json")
+    accepted = io.read(io.work / "config/accepted-input.json")
+    relative = "Risk of Rain 2_Data/globalgamemanagers"
+    entries = [row for row in inventory["files"] if row["path"] == relative]
+    source = game(io.work) / relative
+    if inventory["input_id"] != accepted["input_id"] or len(entries) != 1 or sha(source) != entries[0]["sha256"]:
+        raise RuntimeError("Source physics settings differ from the accepted input inventory")
+    objects = list(UnityPy.load(str(source)).objects)
+    physics = [obj.read_typetree() for obj in objects if obj.type.name == "PhysicsManager"]
+    tags = [obj.read_typetree() for obj in objects if obj.type.name == "TagManager"]
+    if len(physics) != 1 or len(tags) != 1:
+        raise RuntimeError("Expected one original PhysicsManager and TagManager")
+    rows = physics[0].get("m_LayerCollisionMatrix")
+    layers = tags[0].get("layers")
+    if not isinstance(rows, list) or len(rows) != 32 or any(type(row) is not int or not 0 <= row <= 0xFFFFFFFF for row in rows):
+        raise RuntimeError("Original physics collision matrix must contain 32 uint32 rows")
+    if not isinstance(layers, list) or len(layers) != 32 or any(not isinstance(name, str) for name in layers):
+        raise RuntimeError("Original physics collision matrix requires its complete layer table")
+    if any(bool(rows[a] & (1 << b)) != bool(rows[b] & (1 << a)) for a in range(32) for b in range(32)):
+        raise RuntimeError("Original physics collision matrix is not symmetric")
+    tag_text = io.read_text(io.project / "ProjectSettings/TagManager.asset")
+    match = re.search(r"^  layers:\n(.*?)^  m_SortingLayers:", tag_text, re.M | re.S)
+    current_layers = re.findall(r"^  -(?: (.*))?$", match[1], re.M) if match else []
+    if current_layers != layers:
+        raise RuntimeError("Staged physics layer names differ from original collision-matrix indices")
+    path = io.project / "ProjectSettings/DynamicsManager.asset"
+    before = io.read_text(path)
+    pattern = r"(^  m_LayerCollisionMatrix: )[0-9a-fA-F]{256}(?=\n|$)"
+    if len(re.findall(pattern, before, re.M)) != 1:
+        raise RuntimeError("Staged physics collision matrix has an unexpected serialized shape")
+    after = re.sub(pattern, lambda match: match[1] + struct.pack("<32I", *rows).hex(), before, flags=re.M)
+    io.apply(path, data=after)
+    io.write(
+        io.project / ".rebuild/source-collision-policy.json", dict(input_id=inventory["input_id"], source_sha256=entries[0]["sha256"], layers=layers, rows=rows)
+    )
+
+
 def _build_integration(
     code_only=False,
     destination=None,
@@ -2358,6 +2435,9 @@ def _build_integration(
         restore_previous_camera(destination_project, destination_work)
         restore_previous_music_output_observer(destination_project, destination_work)
         audio_inputs = stage_for_build(destination_project, WORK, selection_path=destination_work / "config/original-game-audio/selection.json")
+        collision_io = StageIO(destination_work, destination_project)
+        stage_source_collision_policy(collision_io)
+        collision_io.flush()
         result = build("vulkan", force=True, reuse_payload=code_only, destination=destination, work=work)
         if isinstance(result, dict):
             result["source"] = source_identity
@@ -2372,6 +2452,7 @@ def _build_integration(
     from original_game_audio_stage import restore_authored
 
     restore_authored(project)
+    stage_source_collision_policy(io)
     # Both build paths own their config inputs; never inherit migration or probe extras.
     generate_runtime_config(project)
     generate_content_recipe()

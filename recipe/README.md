@@ -67,6 +67,11 @@ privacy, licensing and sensitive-content review: 2026-10-24. This extends the
 existing source-only target recipe; accepted metadata is used for comparison.
 
 
+J1087 refreshes only the reviewed authored world-owner source hash and its
+audio-cohort manifest binding after native egg-range measurement changes.
+No input game hash, gameplay value, asset content or ownership gate changes.
+Manual provenance/privacy/licensing review: 2026-10-24.
+
 The requested-audio source-scene transformation preserves original Wwise/RTPC
 blocks from the owner's accepted local export through the existing generator.
 The public change contains authored selection/lifecycle logic and synthetic
@@ -148,12 +153,17 @@ runtime and visual acceptance require their own evidence.
 resource field, source Uber placeholder, run profile settings, and official
 Post Processing 2.3.0 archive/license/source hashes. The shader source declares
 three passes and the accepted caller selects pass 0; generation also pins the
-18-file shader closure (Uber plus 17 HLSL includes) and preserves each source
-asset's `.meta`, resource, and camera bytes. The archive and generated source
+shader closure and preserves each source asset's `.meta`, resource, and camera
+bytes. The same recipe now binds five AO/LUT compute and two AO/LUT graphics
+programs to the original resource fields, asset identities and 22 kernel/thread
+group contracts. These use new deterministic lab GUIDs under the loading scene's
+Resources directory. No original program body, profile values or code is tracked;
+only the minimum reconstruction identities and compatibility contracts are public.
+The archive and generated source
 remain local under the Unity Companion License. This package is a compatible
 source reference, not a claim about the game's shipped package version. The
 default-off activation and separate receipt are explicit; no Android or PC
-visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
+visual parity is claimed. Manual provenance/privacy review: 2026-10-24.
 
 | File | Replaces | Provenance | Privacy and licensing | Readers |
 | --- | --- | --- | --- | --- |
@@ -201,7 +211,7 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 | `owner-avatars.json` | Private replay Avatar bodies (J1075) | Minimum original/destination identities, hashes, source extents and source-entry permutations. | No strings, poses, rig/geometry values, target literals or byte frames; full audit above, 2026-10-24. | Explicit PC-input-only `avatar_produce.py`; no current game-build consumer. |
 | `owner-meshes.json` | Protected mesh bodies in the private replay packet, for the included cohort only (J1070) | Original bundle/object/resource selectors, destination identities/hashes and authored import/conversion settings. | No geometry arrays, collision data, target byte frames or float literals; full audit above, 2026-10-24. Two cases remain excluded. | Explicit original-input-only `mesh_produce.py`; no current game-build consumer. |
 | `shader-postprocessing-bloom-candidate.json` | Exported one-pass Bloom and exact source-camera CopyStd placeholders | Accepted-input source/meta/resource identities, official Unity package/license hashes and pass contracts; authored camera staging pin refreshed without changing camera transforms. | Authored selection metadata only; upstream source and generated content stay local under Unity Companion License. Manual audit 2026-10-23 described above. | `shader_postprocessing_bloom`, whole-catalog preparation and catalog replay comparison; default off. |
-| `shader-postprocessing-uber-candidate.json` | Exact source-camera `PostProcessResources.uber` one-pass constant-white placeholder | Accepted-input Main Camera/resource/shader/profile identities, official archive/license/source hashes, pass-0 call contract and 18-file include closure. | Reconstruction metadata only; official shader/includes and generated candidates stay ignored under Unity Companion License. Package 2.3.0 is a compatible reference, not a shipped-version claim. Audited 2026-10-23. | `shader_postprocessing_uber`, whole-catalog preparation and catalog replay comparison; independent default-off activation. |
+| `shader-postprocessing-uber-candidate.json` | Exact source-camera `PostProcessResources.uber` one-pass constant-white placeholder | Accepted-input Main Camera/resource/shader/profile identities, official archive/license/source hashes, pass-0 call contract, seven original AO/LUT resource joins, 22 kernel/thread groups and transitive includes. | Reconstruction metadata only; official shader/includes and generated candidates stay ignored under Unity Companion License. Package 2.3.0 is a compatible reference, not a shipped-version claim. Audited 2026-10-24. | `shader_postprocessing_uber`, whole-catalog preparation and catalog replay comparison; independent default-off activation. |
 
 | `owner-app-host-tools.json` | Private scoped native-host staging plan | Exact open Python/dependency file hashes, relative package paths/link targets and 21 pinned public producer source hashes; source commit is a retrieval hint. | Authored tool metadata only; no binary, SDK/game content, keys, credentials, private paths or device/storage identifiers. License/distribution boundaries are recorded below. Audited 2026-10-23. | `tools/phone-build/managed-host/stage.py` validates the fixed profile; its staged phone builder verifies file hashes and creates a separate private fixture, with no game/default-build consumer. |
 | `wwise-init-android.json` | Private fixture-only Init metadata generator constants (J744) | Minimum source-bank path, format/identity/size and plugin/device/bus relationships; generated bank bodies remain local. | Authored parsing/serialization and metadata only; accepted full inventory plus explicit source hash required, exclusive ignored outputs, no SDK/media/implementation/private identifiers. Audit details below. | `wwise_init_platform.py`, explicitly invoked support tool; no current game-build dependency. |
@@ -218,6 +228,8 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 | `shader-translucent-candidate.json` | Four local source-camera blur/crop candidates | Accepted input/bundle identity, minimum shader paths/names/object IDs, separate catalog keys and exporter metadata GUIDs, pass/keyword relationships and exact authored/tool digests. | Reconstruction metadata only; no source shader body, program math, binary, private path, account/device data or tool implementation. Audited 2026-10-23. | `scripts/lab/shader_translucent.py` reads the accepted local installation and writes ignored candidates; no current catalog consumer or runtime acceptance. |
 | `shader-ramp-fog-candidate.json` | One input-gated local RampFog source candidate | Accepted input ID, minimum asset-bundle path/hash, shader path ID/name, record indices/stages and exact program/blob digests; pinned authored helper and disassembler identities. R3 preserves the prior candidate after the shared helper pin changes; its numeric render state is unchanged. | Metadata and reconstruction policy only; no DXBC, HLSL, ShaderLab body, serialized asset body, private path or tool binary. Audited 2026-10-22. | `scripts/lab/shader_ramp_fog.py` reads this fixed public recipe and the user's accepted local input, then writes only ignored work output. No fallback/private recipe and optional exact-identity catalog consumer (J966); Android appearance remains unqualified. |
 | `shader-screen-damage-candidate.json` | Exact native ScreenDamage single-pass reconstruction | Accepted input/bundle/object/blob identities, native record topology, tool/helper pins and stable output root. | Minimum reconstruction identities and hashes only; no serialized content, native program, shader expressions, private path or device/account data. Audited 2026-10-24. | The existing single-pass generator emits private source from the legitimate local bundle. Catalog consumption is default-off; generation does not establish editor or Android appearance acceptance. |
+| `shader-sobel-buffer-candidate.json` | Native depth-edge mask and outline composite | Accepted bundle/object/blob identity, exact record/stage topology, tool/helper hashes and stable output roots. | Minimum reconstruction selectors/hashes only; no source profile values, shader expressions, program bytes or private identifiers. Audited 2026-10-24. | Existing native single-pass generator emits ignored local sources; the existing default-off shader catalog consumer preserves both catalog and exporter GUIDs. Rendering and appearance require separate editor/device evidence. |
+| `shader-sobel-outline-candidate.json` | Native outline composite | Accepted bundle/object/blob identity, exact record/stage topology, tool/helper hashes and stable output roots. | Minimum reconstruction selectors/hashes only; no source profile values, shader expressions, program bytes or private identifiers. Audited 2026-10-24. | Existing native single-pass generator emits ignored local sources; the existing default-off shader catalog consumer preserves both catalog and exporter GUIDs. Rendering and appearance require separate editor/device evidence. |
 | `project-inputs.json` | Remaining independently authored project inputs and original geometry identity | Public smoke/editor source identities, exact public Git commits, original bundle/mesh/hash identities. | No original geometry or private settings bodies; archived templates are our own public source. Audited 2026-10-18. | `project_input_rebuild` renders/stages/exports and hash-gates 26 complete files, including Burst defaults and authored Android graphics tiers. |
 | `build-entry-inputs.json` | R7/R8 inputs: the bootstrap attempt name, the decompiled sources R7 regenerates, and one retained contract result | Accepted input ID, attempt name, assembly name/SHA-256, decompiler pin, three output paths/SHA-256, and one work-relative path/SHA-256. | No decompiled bodies, catalog data, binaries, private roots, credentials or account/device identifiers. Audited 2026-10-18; revised J597. | `build_entry_rebuild.BuildEntryIO` gates the contract result; `BuildEntryIO.decompiled` regenerates and hash-gates the sources. Only the contract result is a blocker. |
 | `rebuild-binding-targets.json` | J565 final binding membership | Accepted input ID and 104 minimum project asset identities from the regenerated R2 guard. | Identifiers only, no serialized content, private roots or device/account data. Audited 2026-10-18. | Final validation requires all identifiers in both the regenerated R2 receipt and destination; R4 deferred targets are checked too. |
@@ -3016,6 +3028,70 @@ licensing and sensitive-content review: 2026-10-25, J1151. This introduces no
 SDK/game redistribution or ownership/entitlement grant; phone qualification
 remains open.
 
+
+
+
+
+
+Collision-policy restoration refreshes the authored world-owner, producer and
+transitive camera source pins. The world change observes the original projectile
+collision contract before gameplay; the producer reads the verified legitimate
+input and restores only generated project settings. No original matrix values,
+game source, protected assets, device identifiers or private paths are tracked.
+The source camera and original audio transformations retain their existing
+ownership and behavior. Provenance/privacy audit: 2026-10-24; device impact
+acceptance remains separate.
+
+
+PR #68 integration refreshes the actual authored owner and camera source pins
+after combining current main's touch/settings, idle heap capture and diagnostic
+retention with source rendering, Siren lifecycle and collision-policy changes.
+The existing editor-source staging and audio restoration owners remain in use.
+No original input, protected bytes, middleware selection, account entitlement
+or ownership boundary changes. Audit: 2026-10-24; a newly built normal player
+and device checks remain required for the integrated source.
+
+
+The automatic Huntress landing candidate after J1105 changes only authored
+diagnostic input admission in the existing world/objective owners. It reads
+original state configuration through native constructors and existing imported
+assets, measures the current source scene, and releases at most two inert state
+references at existing teardown. Original state implementations/configurations,
+physics and legitimate input remain unchanged. No new private build input,
+source implementation, original asset bytes or runtime export is tracked; the
+existing world-owner source pin is refreshed for the reviewed authored change.
+Host and editor contracts remain separate from Android route acceptance.
+
+
+The destination MainOutput candidate adds only an explicit per-run arm gate and
+owned scalar witnesses in the existing session, plus its public diagnostic
+runner/tests. It reuses the accepted one-shot capture and original authority
+callback without changing native audio ownership, bank data, event routing or
+provider generation. It adds no build input, SDK payload or original bytes to
+the repository. Existing first-stage defaults remain unchanged; original audio
+playback and destination statistics require separate device evidence.
+
+The destination arm gate refreshes the existing `PortSession.cs` source pin,
+its owner-recipe digest and the dependent producer/camera provenance pins.
+Only that reviewed authored source changes in the frozen owner cohort. These
+checks remain mandatory; the normal player build must regenerate its source-bound
+bootstrap rather than reuse an older frozen payload.
+
+The follow-up mobility correction counts complete native fixed ticks when
+predicting automatic Blink admission. An authored ledge fixture distinguishes
+the nominal endpoint from the actual endpoint; an inert exact-editor machine
+executes only the original clock callback, with no motor or network authority.
+The Engineer Laser Cutter fixture reads minimal original config/asset identities,
+applies the native config APIs to inert states, inspects their native phase
+construction and restores every captured static. It retains no original config
+payload, implementation, audio or asset bytes in Git. These are authored contract
+checks and an input-admission correction, with device behavior still unverified.
+
+J1152 integration refreshes direct and transitive shader-helper hash pins after
+merging current main's metadata validation with the source Sobel producer.
+Manual provenance/privacy review retains existing authored tooling and recipe
+selectors only; no protected content or new build input is introduced. Frozen
+R58 predates this integration; no device qualification is implied.
 `owner-windows-shaders.json` receives a provenance, privacy, licensing and
 sensitive-content audit on 2026-10-25. It names only the current original file
 and its length/integrity hash, preserving the unchanged-file copy already owned

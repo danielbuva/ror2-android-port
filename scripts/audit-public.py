@@ -17,7 +17,8 @@ PATTERNS = {
     "concrete storage UUID": rb"(?i)/mnt/expand/[0-9a-f]{8}-[0-9a-f-]{27,}",
     "UUID": rb"(?i)\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b",
     "private key": rb"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----",
-    "email": rb"[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}",
+    # Start at the full local token so encoded runs are scanned only once.
+    "email": rb"(?<![\w.+-])[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}",
     "device/account identifier value": rb'(?i)"(?:serial|device_serial|uniqueId|displayUniqueId|accountId|steamId)"\s*:\s*"(?!AUTHORIZED_SERIAL"|REDACTED")[^"\n]+"',
 }
 PUBLIC_ENVIRONMENT = {

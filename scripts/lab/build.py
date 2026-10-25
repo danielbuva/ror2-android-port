@@ -192,6 +192,34 @@ def editor(target="lab", action="inspect"):
             )
         if action == "minimal-build":
             preflight_host()
+        if target == "lab" and action in {
+            "siren-input-host",
+            "siren-encounter-host",
+            "source-camera-graphics-host",
+            "lightning-stake-host",
+            "engineer-laser-host",
+        }:
+            from whole_catalog import copy_catalog_asset
+
+            fixture, owners = {
+                "lightning-stake-host": ("LightningStakeSourceContractFixture.cs", ["world/IntegratedWorldBoundary.cs"]),
+                "siren-input-host": (
+                    "SirenEggDiagnosticInputExactEditorFixture.cs",
+                    ["input/SirenEggDiagnosticInput.cs", "world/IntegratedWorldBoundary.cs", "stage/TeleporterWorldBoundary.cs"],
+                ),
+                "engineer-laser-host": ("FirstStageDiagnosticGateFixture.cs", []),
+                "siren-encounter-host": (
+                    "SirenEncounterHost.cs",
+                    ["stage/IntegratedStageBoundary.cs", "stage/SirenSourceEntrySession.cs", "stage/SirenEncounterBoundary.cs"],
+                ),
+                "source-camera-graphics-host": ("SourceCameraGraphicsHost.cs", ["input/AndroidNativeSourceCameraRigOwner.cs"]),
+            }[action]
+            for owner in owners:
+                staged = WORK / "lab-project/Assets/LabLoadingScene" / Path(owner).name
+                if not staged.is_file() or sha(staged) != sha(ROOT / "tools/unity/runtime" / owner):
+                    raise RuntimeError("Stage the current committed runtime through a build before this editor fixture: " + owner)
+            copy_catalog_asset(ROOT / "tools/catalog" / fixture, WORK / "lab-project/Assets/Editor" / fixture)
+            editor("lab", "refresh")
         env = os.environ.copy()
         handoff_env, pass_fds = active_lock_handoff()
         env.update(handoff_env)
