@@ -97,8 +97,8 @@ resource pack interface. `inline_texture` moves only existing produced pixels
 inline, clears their stream descriptor and retains every other body byte; the
 already-selected original font bundle supplies native Texture2D type metadata.
 Pack/profile/input/extent hashes and unchanged providers precede completion.
-The RGBA producer/profile in PR75 is a required dependency for 54 selections;
-its public landing and the combined phone replay remain open. Persisted/input
+The landed RGBA producer/profile from PR75 supplies 54 selections;
+the combined phone replay remains open. Persisted/input
 hashes and complete/failed receipts define state and teardown. Neither owner consumes
 replay files or a Unity project. Their
 [setup and limits](../tools/phone-build/accepted-output/README.md#produce-the-first-complete-source-only-bundle)

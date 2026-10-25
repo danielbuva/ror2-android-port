@@ -184,9 +184,8 @@ Each texture directory is an existing producer's `objects.bin`, `resources.bin`,
 `index.jsonl` and successful `result.json`; pass the hash of that receipt. The
 profile selects producer profile hashes and bundle/member/path IDs, never
 physical private paths or pixel literals. Uncompressed/RGB/Alpha8 producers are
-documented below. The 54 RGBA selections require the separately audited
-[PR75 producer/profile](https://github.com/danielbuva/ror2-android-port/pull/75)
-to land before this complete cohort is reproducible from main or merged.
+documented below. The 54 RGBA selections use the separately audited, landed
+[PR75 producer/profile](https://github.com/danielbuva/ror2-android-port/pull/75).
 No texture producer is changed by this assembly step. Streamed records retain
 all native fields and move only their verified produced pixels inline; existing
 inline records remain unchanged. Native type metadata comes from the already

@@ -1807,14 +1807,14 @@ texture producers generate their `objects.bin`, `resources.bin` and
 `index.jsonl`. Their profile hashes and original input ID identify the selected
 producer cohort. The authored bootstrap uses tracked `recipe/owner-bootstrap.json`;
 its public attempt identity and minimum original preload relationships introduce
-no new local input state. The 54 RGBA selections require PR75's producer/profile
-before public reproducibility; the other selected packs use current tracked producers.
+no new local input state. The 54 RGBA selections use PR75's landed producer/profile; the other
+selected packs use the existing tracked producers.
 No source reads a fixed historical directory. The original PC font bundle
 already supplies the native texture type; source record/pixel hashes, descriptor
 checks and repeated provider hashes protect assembly. Original script/material
 selectors likewise introduce no private template or new ungenerated input.
 Full production/comparison and discovery evidence remain under
 `work/coordination/p1-player-assembly-v1/`; the generated partial canonical tree
-and readiness request/report are in `work/coordination/p1-content-source-host-v6/`.
+and readiness request/report are in `work/coordination/p1-content-source-host-v7/`.
 The selected pack paths are local inputs, not target or replay suppliers. Phone
 qualification remains open; no new device or installed-state fact is implied.

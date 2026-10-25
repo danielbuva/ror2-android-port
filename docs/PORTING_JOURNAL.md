@@ -39380,3 +39380,8 @@ texture worker's independently released lease. Revisit after PR75 lands, for
 first guarded phone assembly, or a new independently derivable final cohort.
 Complete content/original shaders, signed installation, controls and matched
 runtime/performance remain open.
+
+Publication follow-through: PR75 subsequently lands at `f71583ed`, supplying
+the audited public RGBA producer/profile. Rebase retains its newer installed
+state facts. This closes the public-source dependency only; the combined phone
+replay and complete-content gates remain open.
