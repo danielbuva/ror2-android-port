@@ -171,8 +171,8 @@ qualification remain separate from these laboratory installs.
 ## Controls, UI and sessions
 
 - [ ] Qualify ordinary physical input, original/native mappings and rebinding;
-      follow the [measured-input contract and remaining implementation](INPUT_QUALIFICATION.md).
-      automatic diagnostics do not qualify ordinary control
+      use the [measured-input contract](INPUT_QUALIFICATION.md).
+      Automatic diagnostics do not qualify ordinary control
       ([J762](PORTING_JOURNAL.md#j762--accept-explicit-thor-game-diagnostics-and-unchanged-nova-controls)).
 - [ ] Qualify the physical touchscreen digitizer, acquired-equipment activation
       and genuine target interaction. [J1071](PORTING_JOURNAL.md#j1071--qualify-software-touch-native-pause-and-recovery)

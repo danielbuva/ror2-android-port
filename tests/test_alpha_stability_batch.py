@@ -25,12 +25,38 @@ class AlphaStabilityBatchTests(unittest.TestCase):
         self.lease = self.root / ".local/orchestrator/leases" / SERIAL
         self.args = dict(device_serial=SERIAL, expected_apk_sha256=HASH, canonical_root=self.root, done_file=self.done)
 
+    def test_production_thermal_guard_publishes_failed_done_before_lease_or_device_access(self):
+        with (
+            mock.patch.object(batch, "_device") as device,
+            mock.patch.object(batch, "_modules") as stages,
+            mock.patch.object(batch, "_sleep_awakened") as sleep,
+            mock.patch.object(batch, "_prune") as prune,
+        ):
+            with self.assertRaisesRegex(RuntimeError, "batch failed"):
+                batch.check_alpha_stability_batch(**self.args)
+            device.assert_not_called()
+            stages.assert_not_called()
+            sleep.assert_not_called()
+            prune.assert_not_called()
+        self.assertFalse(self.lease.parent.exists())
+        result = json.loads(self.done.read_text())
+        self.assertFalse(result["success"])
+        self.assertFalse(result["lease_released"])
+        self.assertIn("missing game-aware CPU thermal owner", result["error"])
+        for protocol in ("<= 1 s sampling", "pause at 70 C", "resume at 55 C", "abort above 80 C"):
+            self.assertIn(protocol, result["error"])
+
     def test_busy_lease_refuses_before_any_device_or_stage_and_preserves_owner(self):
         self.lease.mkdir(parents=True)
         owner = self.lease / "owner.json"
         owner.write_text('{"pid": 73, "workstream": "foreign"}\n')
         before = owner.read_bytes()
-        with mock.patch.object(batch, "_device") as device, mock.patch.object(batch, "_modules") as stages, mock.patch.object(batch, "_prune") as prune:
+        with (
+            mock.patch.object(batch, "_require_game_thermal_owner"),
+            mock.patch.object(batch, "_device") as device,
+            mock.patch.object(batch, "_modules") as stages,
+            mock.patch.object(batch, "_prune") as prune,
+        ):
             with self.assertRaisesRegex(RuntimeError, "batch failed"):
                 batch.check_alpha_stability_batch(**self.args)
             device.assert_not_called()
@@ -104,6 +130,7 @@ class AlphaStabilityBatchTests(unittest.TestCase):
             events.append("prune")
 
         with (
+            mock.patch.object(batch, "_require_game_thermal_owner"),
             mock.patch.object(batch, "_device", side_effect=device),
             mock.patch.object(batch, "_idle_readback", return_value={}),
             mock.patch.object(batch, "_modules", return_value=modules),

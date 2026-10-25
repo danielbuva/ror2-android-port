@@ -39542,12 +39542,17 @@ fresh heap attribution and sustained observation remain unqualified.
 `heap-after3.duckdb`, `old-pair-analysis-replay.json` and
 `heap-evidence-relocation.json`. Original J1091 snapshot paths remain valid via
 hash-verified private archive references; evidence was not discarded. Seven
-production mapping cases, ten signing/payload cases, sixteen queue/sustained
+production mapping cases, ten signing/payload cases, seventeen queue/sustained
 cases and 227 CLI cases pass, alongside related existing host checks. Ruff and
 staged public audit pass. No current device APK or installed-state claim follows.
 
-**First failure/revisit:** the device queue is blocked on orchestrator clearance
-and explicit safe handoff after emergency reboot, then atomic lease acquisition.
+**First failure/revisit:** the shared device emergency-reboot/cooldown handoff
+introduced a mandatory CPU policy: one heavy job, sample at most 1 s apart,
+pause/resume at 70/55 C and abort above 80 C. Existing battery/HAL sampling does
+not satisfy it. The batch therefore refuses **before lease/device access**, with
+a failed terminal receipt; host tests prove this refusal. Implement a game-aware
+thermal owner and valid pause accounting before launching the prepared queue.
+The reported cooldown release alone does not admit this workload.
 Use the actual handed-off installed digest, never the global build pointer.
 Require retained pending state/unchanged primary/native cold recovery for SDK
 acceptance; classify LightningStake/runtime failures separately without waiving

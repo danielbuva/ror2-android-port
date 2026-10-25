@@ -154,6 +154,12 @@ root. A fresh matched heap pair must inspect
 actual GC/static roots and native bridges; stable native object counts alone do
 not establish a managed-memory bound.
 
+The combined batch currently refuses before device access: the new mandatory
+CPU-zone thermal owner (sample at most 1 s apart, pause at 70 C, resume at 55 C,
+abort above 80 C) is not implemented for these game workloads. Battery/HAL checks
+are insufficient. Do not launch the queued recipe until that owner exists and
+its pause accounting preserves each case's measurement contract.
+
 For an explicitly scheduled combined case, `alpha-stability-batch` owns **one**
 canonical lease across the SDK interruption case, three-session heap pair and
 30-minute assisted first-stage observation. Do not wrap it in another lease.

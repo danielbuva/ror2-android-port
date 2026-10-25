@@ -3,6 +3,10 @@
 The caller launches this driver once and waits on its explicit atomic done file.
 No detached child owns the lease. Public checks retain their own scoped cleanup;
 an independent installed-byte/idle/display readback gates release of this lease.
+Currently blocked before lease/device access: no game-aware owner enforces CPU
+pause at 70 C, resume at 55 C, <= 1 s sampling and abort above 80 C without
+invalidating the gameplay observations. Battery/HAL checks do not satisfy this
+protocol. There is no runtime override.
 """
 
 import importlib
@@ -22,6 +26,13 @@ DEVICE_FREE_RESERVE_BYTES = 15 * 1024**3
 # J1091's native capture sizes inform this allowance. Only one capture remains
 # on the device at a time; its verified host transfer removes the device file.
 NATIVE_CAPTURE_HEADROOM_BYTES = 4 * 1024**3
+
+
+def _require_game_thermal_owner():
+    raise RuntimeError(
+        "Alpha stability batch blocked: missing game-aware CPU thermal owner for <= 1 s sampling, "
+        "pause at 70 C, resume at 55 C and abort above 80 C; existing battery/HAL checks do not satisfy this protocol"
+    )
 
 
 def _modules():
@@ -120,6 +131,7 @@ def check_alpha_stability_batch(*, device_serial, expected_apk_sha256, canonical
         if expected is None:
             raise ValueError("alpha-stability-batch requires --expected-apk-sha256")
         result["apk_sha256"] = expected
+        _require_game_thermal_owner()
         lease = root / ".local/orchestrator/leases" / serial
         lease.parent.mkdir(parents=True, exist_ok=True)
         if lease.parent.resolve() != lease.parent:
