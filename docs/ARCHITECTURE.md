@@ -157,7 +157,14 @@ original Unity entry private to enforce preparation. An optional owner-selected
 to routing; it must increase and updates retain the same private signer.
 An optional complete `code` selection supplies independently produced IL2CPP,
 metadata and Burst files; all three are required, their actual hashes are retained,
-and comparison-target code files are not read. Other content retains the existing
+and comparison-target code files are not read. The same dictionary can also
+include the complete 13-entry Android SDK cohort owned by
+`accepted-output/sdk_package.py::SDK_ENTRIES`; partial cohorts and unknown names
+refuse. The produced manifest feeds the existing routing/version patch, and
+the other selected SDK outputs stream unchanged. Host fixtures cover this
+16-entry composition without comparison-target files and retain input-drift
+checks; complete phone installation/controls/performance remain open.
+Other content retains the existing
 manifest layout/hashes. Source provenance and code/runtime qualification remain
 with their producers (J1102).
 `PayloadStore`

@@ -347,6 +347,15 @@ accepts an explicit complete IL2CPP/metadata/Burst cohort alongside the content
 producer's existing target-file tree, with no replay code fallback. Full-player
 assembly and phone/install/performance gates remain open.
 
+The same explicit `code` mapping now also accepts the complete 13-entry Android
+SDK output cohort with those three mandatory code files. The SDK producer owns
+the exact entry membership; partial cohorts and unknown paths refuse. Produced
+manifest bytes feed the existing bootstrap/version patch, while the other SDK
+outputs stream unchanged with actual source hashes and independent ZIP readback.
+Host fixtures verify complete 16-entry selection without replay source files,
+including manifest consumption and drift refusal. Complete phone composition,
+installation, controls and matched performance remain open.
+
 [J1103](PORTING_JOURNAL.md#j1103--produce-fixed-target-burst-and-sign-owner-apks-in-the-android-tool-host)
 closes the fixed-target ordinary-app Burst producer and authored-APK app-signing
 gates. All 20 Burst runtime sections and fresh linker roots match J850; raw
@@ -402,6 +411,7 @@ J1109 qualifies all 13 generic Android package entries from pinned SDK/public
 tools on the host, raw byte-identical to J850. Ordinary Android app-host production
 also succeeds: 11 entries are raw-exact; the other two DEX files differ only in
 compiler-generated class checksums and derived DEX headers, with all remaining
-bytes exact. Startup reaches 95.5 C before the guard pauses the jobs; startup CPU
-affinity is being qualified separately. Complete content composition, thermal
+bytes exact. The guarded startup-affinity rerun completes with a 79.2 C peak and
+340 ms maximum sampling gap, meeting the short-job thermal protocol; the earlier
+95.5 C failure remains recorded. Complete content composition, sustained thermal
 qualification and final installation remain open.

@@ -38610,8 +38610,44 @@ at 52.5 C. This is a thermal failure, not a cool-run qualification. A periodic
 watcher cannot constrain a child before observing its PID. The tool host now
 prefixes children with Android `taskset 1`, setting CPU 0 before interpreter/JVM
 startup and inheriting that affinity into descendants. The existing guard stays
-in place. This authored change awaits the next tool APK/device check; it does not
-alter the original running native package.
+in place. This authored change is qualified by the following fifth run; it does
+not alter the original running native package.
+
+**Startup affinity and guarded rerun.** The fifth ordinary-app run uses tool APK
+`d766e8532f03d1a8c0c4914afddf880a749a1e239fa267ec7cf00eca98bf2bf8`, source
+`dbf312ea`, installed over the separate next-tool package with exact readback,
+retained inputs and the original native package unchanged. The backend completes
+in 37.938397 seconds, 51.587967 seconds including collection. The same 11 entries
+are raw-exact to J850; the remaining two hashes exactly reproduce the independently
+classified fourth-run DEX files. No output normalization or target-byte input is
+introduced.
+
+The original native job stays paused throughout this short proof. A sole private
+persistent-device guard samples CPU thermal zones independently of slower process
+inspection/control, pauses at 75 C, resumes at 60 C and aborts new work above
+88 C or on a sample gap over one second. Across 182 observed samples, the maximum
+gap is 340 ms and peak CPU temperature is **79.2 C**. Three pause/resume pairs
+occur; no abort occurs. The sampled next-tool UID peaks at 334,168 KiB RSS and
+output occupies 60,241 KiB. Both panels remain off; the battery is 30 C and device
+free space exceeds 800 GiB. This rerun meets the specified guarded short-job
+thermal protocol; it does not qualify sustained native compilation or game
+thermal/performance behavior. The separate tool app is stopped afterwards; the
+original native job resumes only after CPU temperature is at most 60 C.
+
+Private evidence: `toolhost-install-v26.json`,
+`android-sdk-phone-v5-{done,report,result,proof,resources}.json`,
+`owned-code-thermal-v2.jsonl` and `owned-code-process-v2.jsonl` under the same
+coordination root. Fourth-run evidence retains the earlier thermal failure.
+
+**Composition contract.** The existing owner-APK `code` mapping now accepts the
+three mandatory gameplay outputs plus this complete 13-entry SDK cohort.
+`SDK_ENTRIES` in the producer owns the exact membership; partial SDK cohorts and
+unknown names refuse before file reads. The produced manifest feeds the existing
+routing/version patch; the other selected SDK bytes stream unchanged. Eleven
+focused host tests pass across SDK packaging and owner signing/composition,
+including complete 16-entry assembly with no comparison-target source files,
+manifest input consumption, source drift and partial selection refusal. These
+fixtures do not qualify a composed game APK on the phone.
 
 **Open and revisit.** Raw DEX identity retains the documented compiler-checksum
 difference; byte identity would require using the same Java compiler. The

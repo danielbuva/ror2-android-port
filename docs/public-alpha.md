@@ -175,6 +175,14 @@ J1109 qualifies all 13 generic Android package entries from pinned SDK/public
 tools on the host, raw byte-identical to J850. Ordinary Android app-host production
 also succeeds: 11 entries are raw-exact; the other two DEX files differ only in
 compiler-generated class checksums and derived DEX headers, with all remaining
-bytes exact. Startup reaches 95.5 C before the guard pauses the jobs; startup CPU
-affinity is being qualified separately. Complete content composition, thermal
+bytes exact. The guarded startup-affinity rerun completes with a 79.2 C peak and
+340 ms maximum sampling gap, meeting the short-job thermal protocol; the earlier
+95.5 C failure remains recorded. Complete content composition, sustained thermal
 qualification and final installation remain open.
+
+The owner APK assembler accepts the complete 13-entry SDK output cohort alongside
+the three mandatory IL2CPP/metadata/Burst files through its existing explicit
+`code` mapping. Host fixtures assemble all 16 outputs without replay files and
+check produced-manifest routing, source drift and partial-cohort refusal. This
+wiring does not close complete phone composition, installation, controls or
+matched performance.

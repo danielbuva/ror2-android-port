@@ -15,6 +15,21 @@ import xml.etree.ElementTree as ET
 import zipfile
 
 HERE = Path(__file__).resolve().parent
+SDK_ENTRIES = {
+    "AndroidManifest.xml",
+    "classes.dex",
+    "classes2.dex",
+    "classes3.dex",
+    "classes4.dex",
+    "lib/arm64-v8a/libmain.so",
+    "lib/arm64-v8a/libunity.so",
+    "resources.arsc",
+    "res/mipmap-anydpi-v26/app_icon.xml",
+    "res/mipmap-anydpi-v26/app_icon_round.xml",
+    "res/mipmap-mdpi-v4/app_icon.png",
+    "res/mipmap-mdpi-v4/ic_launcher_background.png",
+    "res/mipmap-mdpi-v4/ic_launcher_foreground.png",
+}
 SPEC = importlib.util.spec_from_file_location("package_sdk_inputs", HERE / "sdk_inputs.py")
 SDK = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(SDK)

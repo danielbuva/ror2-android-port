@@ -87,6 +87,9 @@ class SDKPackageTests(unittest.TestCase):
                     with zipfile.ZipFile(cwd / "resources.apk", "w") as archive:
                         archive.writestr("AndroidManifest.xml", b"authored binary manifest")
                         archive.writestr("resources.arsc", b"authored resource table")
+                        for name in PACKAGE.SDK_ENTRIES:
+                            if name.startswith("res/"):
+                                archive.writestr(name, ("authored resource " + name).encode())
                 return SimpleNamespace(wait=lambda timeout: 0)
 
             with (
@@ -113,6 +116,7 @@ class SDKPackageTests(unittest.TestCase):
                     }
                 )
             self.assertTrue(result["success"])
+            self.assertEqual(set(result["files"]), PACKAGE.SDK_ENTRIES)
             self.assertEqual(jvm_calls, ["compile-helper", "format-manifest", "produce-dex"])
             self.assertEqual(aapt_calls, ["compile", "link"])
 

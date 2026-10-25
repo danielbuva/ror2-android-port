@@ -15,6 +15,7 @@ PATH = Path(__file__).resolve().parents[1] / "tools/phone-build/owner-apk/build_
 SPEC = importlib.util.spec_from_file_location("owner_signing", PATH)
 OWNER = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(OWNER)
+SDK = OWNER.module("owner_test_sdk", PATH.parent.parent / "accepted-output/sdk_package.py")
 
 
 class OwnerSigningTests(unittest.TestCase):
@@ -112,27 +113,52 @@ class OwnerAssemblyTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Burst"):
             OWNER.code_sources({"code": {name: "not read" for name in OWNER.CODE_ENTRIES if "burst" not in name}})
 
+    def test_partial_sdk_and_unknown_entries_refuse_before_reading_paths(self):
+        for entries in (
+            OWNER.CODE_ENTRIES | {"classes2.dex"},
+            (OWNER.CODE_ENTRIES | SDK.SDK_ENTRIES) - {"resources.arsc"},
+            OWNER.CODE_ENTRIES | SDK.SDK_ENTRIES | {"assets/unknown"},
+        ):
+            with self.subTest(entries=entries), self.assertRaisesRegex(ValueError, "complete SDK Android cohort"):
+                OWNER.code_sources({"code": {name: "not read" for name in entries}})
+
     def test_assembly_uses_produced_code_without_target_code_files(self):
+        self.check_assembly(OWNER.CODE_ENTRIES)
+
+    def test_assembly_uses_complete_sdk_cohort_including_manifest_without_replay(self):
+        self.check_assembly(OWNER.CODE_ENTRIES | SDK.SDK_ENTRIES)
+
+    def test_assembly_retains_no_code_replay_control(self):
+        self.check_assembly(set())
+
+    def test_produced_manifest_drift_refuses(self):
+        self.check_assembly(OWNER.CODE_ENTRIES | SDK.SDK_ENTRIES, change_manifest=True)
+
+    def check_assembly(self, entries, *, change_manifest=False):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve()
             targets, frontend, produced = (root / name for name in ("targets", "frontend", "produced"))
             for directory in (targets, frontend, produced):
                 directory.mkdir()
-            profile = {"targets": []}
-            for name in ("apk/AndroidManifest.xml", "apk/classes.dex", "apk/assets/authored.txt", "payload/authored.bundle"):
-                path = targets / name
-                path.parent.mkdir(parents=True, exist_ok=True)
-                data = ("independent content " + name).encode()
-                path.write_bytes(data)
-                profile["targets"].append({"path": name, "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()})
             code = {}
-            for i, name in enumerate(sorted(OWNER.CODE_ENTRIES)):
-                data = ("independent produced output " + name).encode()
+            for i, name in enumerate(sorted(entries)):
                 path = produced / str(i)
-                path.write_bytes(data)
+                path.write_bytes(("independent produced output " + name).encode())
                 code[name] = str(path)
-                # Comparison rows exist, but no replay code is available to read.
-                profile["targets"].append({"path": "apk/" + name, "bytes": 1, "sha256": "0" * 64})
+            profile = {"targets": []}
+            names = {"apk/AndroidManifest.xml", "apk/classes.dex", "apk/assets/authored.txt", "payload/authored.bundle"}
+            names |= {"apk/" + name for name in entries}
+            for name in sorted(names):
+                if name.removeprefix("apk/") in code:
+                    # Comparison rows exist, but no replay source is available.
+                    row = {"path": name, "bytes": 1, "sha256": "0" * 64}
+                else:
+                    path = targets / name
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    data = ("independent content " + name).encode()
+                    path.write_bytes(data)
+                    row = {"path": name, "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()}
+                profile["targets"].append(row)
             for name in ("app.js", "controller.js", "style.css", "background.png"):
                 (frontend / name).write_bytes(("independent frontend " + name).encode())
             for name in ("java", "libjavactool.so", "android.jar", "d8.jar", "manifest.json"):
@@ -151,7 +177,7 @@ class OwnerAssemblyTests(unittest.TestCase):
                         "android_jar": str(root / "android.jar"),
                         "d8_jar": str(root / "d8.jar"),
                         "wire_helper": str(root / "wire.py"),
-                        "code": code,
+                        **({"code": code} if code else {}),
                     }
                 )
             )
@@ -166,19 +192,36 @@ class OwnerAssemblyTests(unittest.TestCase):
 
             with (
                 patch.object(OWNER.PACKET, "profile", return_value=(b"", profile)),
-                patch.object(OWNER.MANIFEST, "patch", return_value=b"independent routed manifest"),
+                patch.object(OWNER.MANIFEST, "patch", return_value=b"independent routed manifest") as manifest_patch,
                 patch.object(OWNER, "ART", OWNER.sha(frontend / "background.png")),
                 patch.object(OWNER, "RESERVE", 0),
                 patch.object(OWNER.subprocess, "run", side_effect=run),
             ):
+                manifest_source = Path(code["AndroidManifest.xml"]) if "AndroidManifest.xml" in code else targets / "apk/AndroidManifest.xml"
+                original_manifest = manifest_source.read_bytes()
+                if change_manifest:
+
+                    def patch_manifest(*args, **kwargs):
+                        manifest_source.write_bytes(b"unexpected manifest drift")
+                        return b"independent routed manifest"
+
+                    manifest_patch.side_effect = patch_manifest
+                    with self.assertRaisesRegex(ValueError, "input changed"):
+                        OWNER.build(request, output)
+                    self.assertFalse(json.loads((output / "result.json").read_text())["success"])
+                    return
                 result = OWNER.build(request, output)
+            self.assertEqual(manifest_patch.call_args.args[0], original_manifest)
             self.assertTrue(result["success"])
-            self.assertTrue(result["il2cpp_or_original_dex_changed"])
-            self.assertEqual(result["original_entries_preserved"], 2)
-            self.assertEqual(set(result["code_entries"]), OWNER.CODE_ENTRIES)
+            self.assertEqual(result["il2cpp_or_original_dex_changed"], bool(code))
+            self.assertEqual(result["original_entries_preserved"], 1 if "AndroidManifest.xml" in code else 2)
+            self.assertEqual(set(result["code_entries"]), entries)
             with zipfile.ZipFile(output / "owner-unsigned.apk") as archive:
+                self.assertEqual(archive.read("AndroidManifest.xml"), b"independent routed manifest")
                 for name, path in code.items():
-                    self.assertEqual(archive.read(name), Path(path).read_bytes())
+                    if name != "AndroidManifest.xml":
+                        self.assertEqual(archive.read(name), Path(path).read_bytes())
+                self.assertEqual(archive.read(result["new_dex"]), b"independent DEX witness")
                 self.assertEqual(archive.read("assets/authored.txt"), (targets / "apk/assets/authored.txt").read_bytes())
                 self.assertEqual(archive.read("assets/owner-bootstrap/data/authored.bundle"), (targets / "payload/authored.bundle").read_bytes())
 
