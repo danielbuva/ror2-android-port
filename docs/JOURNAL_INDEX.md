@@ -10,7 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
-| [J1139](PORTING_JOURNAL.md#j1139--assemble-source-shader-manifests-and-managed-font-files) | 2026-10-25 | Assemble source shader manifests and managed font files | 2026-10-25 UTC. |
+| [J1139](PORTING_JOURNAL.md#j1139--assemble-source-shader-manifests-and-managed-font-files) | 2026-10-24 | Assemble source shader manifests and managed font files | 2026-10-25 UTC. |
 | [J1126](PORTING_JOURNAL.md#j1126--assemble-sdk-ui-resources-and-original-font-materials) | 2026-10-24 | Assemble SDK UI resources and original font materials | Date: 2026-10-25 UTC. |
 | [J1140](PORTING_JOURNAL.md#j1140--qualify-the-bounded-android-tool-guard-and-checkpoint-recovery) | 2026-10-25 | Qualify the bounded Android tool guard and checkpoint recovery | 2026-10-25 UTC. |
 | [J1136](PORTING_JOURNAL.md#j1136--bound-native-cubemap-residue-with-omitted-original-pc-sources) | 2026-10-25 | Bound native cubemap residue with omitted original PC sources | 2026-10-25. |
