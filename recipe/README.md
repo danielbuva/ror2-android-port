@@ -163,6 +163,12 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 | `owner-enemy-reward-objects.json` | Private enemy-reward bundle | Original object/script/behaviour selectors, pinned SDK base-schema selector, checked PPtrs, component omissions and rooted container relationships. | No body, type tree/hash or scalar template; audit below, 2026-10-25. | Existing `object_produce.py`; complete host and phone qualification tracked separately. |
 | `owner-villagenight-objects.json` | Private Village Night streamed scene | Original object/type selectors, checked PPtr/component relationships, scene/member identities and source mesh profile. | No body/tree/geometry/pixel/scalar template; provenance/privacy/licensing audit below, 2026-10-25. | Existing `object_produce.py`; J1134 host exact, phone open. |
 | `owner-helminthroost-objects.json` | Private Helminth Roost streamed scene | Original object/type selectors, checked PPtr/component relationships, scene/member identities and source mesh profile. | No body/tree/geometry/pixel/scalar template; provenance/privacy/licensing audit below, 2026-10-25. | Existing `object_produce.py`; J1135 host exact, phone open. |
+| `owner-habitatfall-objects.json` | Private habitatfall streamed scene | Original object/type selectors, checked scene/component/PPtr relationships and existing source mesh/cube pack selectors. | No body/tree/geometry/pixel/scalar template; provenance/privacy/licensing audit below, 2026-10-25. | Existing `object_produce.py`; J1138 host exact, phone open. |
+| `owner-habitat-objects.json` | Private habitat streamed scene | Original object/type selectors, checked scene/component/PPtr relationships and existing source mesh/cube pack selectors. | No body/tree/geometry/pixel/scalar template; provenance/privacy/licensing audit below, 2026-10-25. | Existing `object_produce.py`; J1138 host exact, phone open. |
+| `owner-wispgraveyard-objects.json` | Private Wispgraveyard reduced diagnostic scene | Original object/type selectors, checked export component omissions, scene/member/PPtr relationships and qualified mesh profile. | No body/tree/geometry/pixel/scalar template; provenance/privacy/licensing audit below, 2026-10-25. | Existing `object_produce.py`; J1142 host exact, phone open. |
+| `owner-itskymeadow-objects.json` | Private Sky Meadow scene | Original selectors, checked SceneInfo component/occlusion-array/PPtr policies, Sprite relationships, SDK schema and qualified mesh/texture profiles. | No body/tree/geometry/pixel/scalar template; provenance/privacy/licensing audit below, 2026-10-25. | Existing `object_produce.py`; J1145 host exact, phone open. |
+| `owner-solusweb-objects.json` | Private Solusweb scene | Original selectors, checked SceneInfo/bank/final CharacterMaster field policies, original preload GameObject membership and qualified mesh profile. | No body/tree/geometry/pixel/scalar template; provenance/privacy/licensing audit below, 2026-10-25. | Existing `object_produce.py`; J1145 host exact, phone open. |
+| `owner-itancientloft-objects.json` | Private Ancient Loft scene | Original selectors, checked SceneInfo/occlusion-array/PPtr policies, current-input Sprite GUID relationships, SDK schema and qualified mesh/texture profiles. | No body/tree/geometry/pixel/scalar template; provenance/privacy/licensing audit below, 2026-10-25. | Existing `object_produce.py`; J1145 host exact, phone open. |
 | `owner-teleport-material-objects.json` | Private teleport-material bundle | Original material/type selectors, checked references, named dummy-shader keyword policy and container relationships. | No material/shader body, keyword literal, numeric override or target template; audit below, 2026-10-25. | Source-only `object_produce.py`; J1117 host qualification, phone gate open. |
 | `owner-death-effect-objects.json` | Private replay player-death-effect bundle | Rooted original graph/script selectors, checked pointer extents, preload/dependency identities and hashes. | No body, type-tree snapshot, scalar/curve override or target delta; audit below, 2026-10-25. | Existing original-input-only `object_produce.py`; J1115 host qualification, phone gate open. |
 | `owner-pickup-objects.json` | Private replay pickup bundle | Original selectors, hashes, checked pointer extents and destination relationships. | No bodies, type trees or target deltas; full audit below, 2026-10-25. | Original-input-only `object_produce.py`; J1113 host qualification, phone gate open. |
@@ -2877,3 +2883,47 @@ Shared shader-policy factoring also refreshes existing generator helper pins,
 their recipe pins and all seven current catalog override pin pairs. The change
 introduces only authored helper identity hashes, without altering original
 shader-selection identities or relaxing source admission. Review: 2026-10-25.
+
+`owner-habitat-objects.json` and `owner-habitatfall-objects.json` receive the
+same provenance, licensing, privacy and sensitive-content audit (2026-10-25).
+They store only original source/type selectors, comparison hashes, checked
+scene/component/PPtr relationships and qualified mesh/cubemap profile selectors.
+Original billboard body/type bytes are supplied by the PC input. Native scene
+metadata is generated; inactive MapZone/component/bake policies are unchanged.
+No protected geometry, pixels, scalar, scene text, serialized template, private
+path/device identity or credential is published. No game/SDK redistribution,
+ownership, authentication or entitlement capability is granted. Generated
+content/raw evidence stays ignored; host and phone gates remain separate.
+
+
+## Wispgraveyard source relationship audit
+
+`owner-wispgraveyard-objects.json` receives provenance, privacy, licensing and
+sensitive-content review on 2026-10-25. It contains original PC object/type
+selectors, hashes, checked component/PPtr relationships and an existing
+qualified mesh-pack profile. Original bodies, type schemas, geometry and scene
+values remain owner-supplied. Component omissions follow the accepted reduced
+diagnostic scene export and extend beyond native audio; they do not authorize
+new gameplay changes. Native metadata is generated from the produced graph.
+No body/tree/scalar template, private path, device identifier or credential is
+published. There is no additional game/SDK redistribution, ownership,
+authentication or entitlement grant. Generated content/raw evidence stays
+ignored; J1142 records host qualification with the phone gate open.
+
+
+## Full scene source policy audit
+
+`owner-itskymeadow-objects.json`, `owner-solusweb-objects.json` and
+`owner-itancientloft-objects.json` receive provenance, privacy, licensing and
+sensitive-content review on 2026-10-25. They contain original PC object/type
+selectors, SDK selector/hash, checked component/occlusion/bank/schema policies,
+Sprite GUID relationships and existing qualified record-pack identities.
+Solusweb's minimum preload relationship includes original source membership
+and hashes; its destination agrees with the existing source GameObject recipe.
+The CharacterMaster field name is required transformation metadata, not a
+copied schema or implementation. Ancient Loft's GUID uses the current accepted
+input export and scene relationship. All original bodies/type schemas, scene
+values, geometry and pixels stay owner-supplied. No accepted template, scalar
+patch, private path, device identifier, credential or additional redistribution,
+authentication, ownership or entitlement grant is introduced. J1145 owns the
+complete host evidence; phone and runtime gates stay open.

@@ -65,7 +65,8 @@ all 133 accepted bundles as a structural control using accepted records; PC-only
 object/layout derivation and phone qualification remain separate.
 `object_produce.py` owns the current source-only pickup, player-death-effect,
 teleport-material, objective-UI, teleporter-indicator, generic-pickup and
-enemy-reward, Village Night and Helminth Roost scene slices.
+enemy-reward, Village Night, Helminth Roost, Habitat, Habitatfall and
+Wispgraveyard, Sky Meadow, Solusweb and Ancient Loft scene slices.
 Audited profiles `recipe/owner-pickup-objects.json`,
 `recipe/owner-death-effect-objects.json`,
 `recipe/owner-teleport-material-objects.json`, `recipe/owner-objective-ui-objects.json`,
@@ -73,7 +74,12 @@ Audited profiles `recipe/owner-pickup-objects.json`,
 `recipe/owner-generic-pickup-objects.json`,
 `recipe/owner-enemy-reward-objects.json`,
 `recipe/owner-villagenight-objects.json` and
-`recipe/owner-helminthroost-objects.json` select original bodies/type
+`recipe/owner-helminthroost-objects.json`, `recipe/owner-habitat-objects.json` and
+`recipe/owner-habitatfall-objects.json` and
+`recipe/owner-wispgraveyard-objects.json`,
+`recipe/owner-itskymeadow-objects.json` and
+`recipe/owner-solusweb-objects.json` and
+`recipe/owner-itancientloft-objects.json` select original bodies/type
 metadata and checked pointer relationships. It generates container/preload
 metadata with explicit local/external order, packs, layout and canonical
 bundles through those writers. New disjoint output, pinned PC files/recipe/
@@ -102,10 +108,23 @@ relationships generate sorted external PreloadData; native scene containers
 preserve the original relocated scene path and streamed-scene semantics. The
 existing scene export policy disables the selected MapZone owner and omits
 checked original components; reflected bake removal uses ordinary PPtr remaps.
-Village Night's 46 and Helminth Roost's 102 meshes come through the existing
-pinned producer pack. Setup, input admission, persisted verification and failure
+All scene meshes come through the existing pinned producer pack. Habitat also
+consumes the qualified source Cubemap pack; original billboard bodies/types
+remain unchanged apart from checked references. Setup, input admission, persisted verification and failure
 retention share the prefab owner. Failure retains outputs and the codec context
 reaps its child; exit ends the producer.
+Wispgraveyard reproduces the accepted reduced diagnostic scene through the
+same checked export omissions, including original Tree and scripted components.
+It does not establish full original stage behavior.
+Sky Meadow and Ancient Loft clear the checked original occlusion static-renderer
+array while retaining the original GUID, occlusion pointer and portals. These full scene
+slices append an existing source-produced component to the original SceneInfo
+GameObject. Solusweb disables the two selected original bank behaviours and
+omits only CharacterMaster's measured final debug field from body and schema;
+the existing hash owner consumes that amended source schema. Its additional
+preload relationship checks the original preload record, GameObject body and
+external-member membership before emitting the mapped identity. These policies
+retain the existing setup, input checks, persisted verification and teardown.
 
 `player_data.py` owns the separate current 173-file player cohort: SDK/converter
 resources, PC-derived script JSON, the three-object font file, original

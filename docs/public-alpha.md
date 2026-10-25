@@ -73,11 +73,12 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       no replacement lighting or target pixels enter the producer.
       [J1113](PORTING_JOURNAL.md#j1113--produce-a-complete-source-only-bundle-and-seven-player-data-files)
       qualifies the first complete PC-only bundle and seven player-data files;
-      J1139 extends the host cohort to 173 player files, composed with eleven
-      independently produced bundles, including J1132/J1134/J1135's reward and
-      streamed-scene files, through the existing owners; selected TMP
-      hashes and native selection manifests are source-derived. The fixed-target
-      readiness check now has 503 missing content entries; all 18 code/SDK
+      J1139 supplies 173 complete player files, including source-derived TMP
+      hashes and native selection manifests. J1145 extends the independently
+      produced payload cohort to fifteen complete bundles. The shared source
+      tree also retains J1144's separately qualified ColorGrade file; its
+      publication and phone gates remain separate. The fixed-target readiness
+      check now has 498 missing content entries; all 18 code/SDK
       entries are available. Phone replay, the
       remaining bundles/player data and complete source-derived installation
       remain open; the structural writer produces no missing content itself.
@@ -225,8 +226,8 @@ explicit replay content; it does not qualify phone production or installation.
 closes the two generic Android build-metadata producer gaps. Fresh host SDK
 production yields all 15 entries raw-exact to J850. The shared readiness request
 combined with
-[J1139](PORTING_JOURNAL.md#j1139--assemble-source-shader-manifests-and-managed-font-files)
-has all 18 code/SDK files and 184 content files ready, with 503 content entries
+[J1145](PORTING_JOURNAL.md#j1145--produce-complete-sky-meadow-solusweb-and-ancient-loft-scene-bundles)
+has all 18 code/SDK files and 189 content files ready, with 498 content entries
 absent. The 173 player files include the twelve newly completed manifests,
 fonts and mip textures. Phone
 replay and complete content/shader/animation production remain open. The two

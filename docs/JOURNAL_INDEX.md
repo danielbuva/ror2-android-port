@@ -10,8 +10,11 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
-| [J1139](PORTING_JOURNAL.md#j1139--assemble-source-shader-manifests-and-managed-font-files) | 2026-10-24 | Assemble source shader manifests and managed font files | 2026-10-25 UTC. |
-| [J1126](PORTING_JOURNAL.md#j1126--assemble-sdk-ui-resources-and-original-font-materials) | 2026-10-24 | Assemble SDK UI resources and original font materials | Date: 2026-10-25 UTC. |
+| [J1145](PORTING_JOURNAL.md#j1145--produce-complete-sky-meadow-solusweb-and-ancient-loft-scene-bundles) | 2026-10-25 | Produce complete Sky Meadow, Solusweb and Ancient Loft scene bundles | Date: 2026-10-25 UTC. |
+| [J1142](PORTING_JOURNAL.md#j1142--reconstruct-the-complete-wispgraveyard-diagnostic-scene-bundle) | 2026-10-25 | Reconstruct the complete Wispgraveyard diagnostic scene bundle | Date: 2026-10-25 UTC. |
+| [J1138](PORTING_JOURNAL.md#j1138--reconstruct-complete-habitat-and-habitatfall-streamed-scenes) | 2026-10-25 | Reconstruct complete Habitat and Habitatfall streamed scenes | Date: 2026-10-25 UTC. |
+| [J1139](PORTING_JOURNAL.md#j1139--assemble-source-shader-manifests-and-managed-font-files) | 2026-10-25 | Assemble source shader manifests and managed font files | 2026-10-25 UTC. |
+| [J1126](PORTING_JOURNAL.md#j1126--assemble-sdk-ui-resources-and-original-font-materials) | 2026-10-25 | Assemble SDK UI resources and original font materials | Date: 2026-10-25 UTC. |
 | [J1140](PORTING_JOURNAL.md#j1140--qualify-the-bounded-android-tool-guard-and-checkpoint-recovery) | 2026-10-25 | Qualify the bounded Android tool guard and checkpoint recovery | 2026-10-25 UTC. |
 | [J1136](PORTING_JOURNAL.md#j1136--bound-native-cubemap-residue-with-omitted-original-pc-sources) | 2026-10-25 | Bound native cubemap residue with omitted original PC sources | 2026-10-25. |
 | [J1135](PORTING_JOURNAL.md#j1135--reconstruct-the-complete-helminth-roost-streamed-scene-bundle) | 2026-10-25 | Reconstruct the complete Helminth Roost streamed-scene bundle | Date: 2026-10-25 UTC. |

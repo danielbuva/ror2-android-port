@@ -1002,3 +1002,27 @@ and the existing mesh pack. J1135 qualifies its 6,853 records and complete
 9,593,495-byte bundle raw-exact on the host without further producer changes.
 Together with J1134 and J1132, nine full source-derived host bundles are now
 qualified. Phone and complete catalog/content acceptance remain open.
+
+J1138 adds `owner-habitatfall-objects.json` and `owner-habitat-objects.json`
+through the unchanged scene owner. Both consume the mesh pack; Habitat also
+requires the qualified source cubemap pack. Original billboard records retain
+all non-pointer bytes and native type metadata. The complete bundles compare
+raw-exact on the host, bringing this owner cohort to eleven full bundles.
+Phone qualification and complete content/catalog remain open.
+
+`owner-wispgraveyard-objects.json` uses the same streamed-scene command and
+qualified mesh pack. It needs no SDK schema, texture or cubemap input. Its
+checked original component omissions reproduce J850's reduced diagnostic
+scene, including Tree and scripted components; full original stage behavior
+remains unqualified. See J1142 for the complete host result. Phone acceptance
+and complete content/catalog remain open.
+
+The same command supports `owner-itskymeadow-objects.json`,
+`owner-itancientloft-objects.json` and `owner-solusweb-objects.json` with the
+pinned editor-resource `--sdk` root. Sky Meadow and Ancient Loft consume the
+existing mesh, uncompressed-texture and RGBA-mip packs;
+Solusweb consumes only the mesh record pack. Their checked native scene/schema
+policies preserve original record data outside the measured changes. The
+Solusweb extra preload verifies membership in original PC metadata before using
+its mapped GameObject identity. Setup and output lifecycle are unchanged;
+J1145 owns the host result, with phone/runtime acceptance open.

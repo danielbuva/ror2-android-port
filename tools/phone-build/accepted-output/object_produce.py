@@ -2,7 +2,8 @@
 
 UnityPy 1.25.3 and AssetRipper 1ac666f document the serialized type/script
 relationships. Bodies and embedded type trees come from the owner's input;
-only explicit PPtr identities and authored bundle-container metadata change.
+checked native export policies and authored bundle-container metadata transform
+those original records without an accepted-output byte provider.
 """
 
 import argparse
@@ -78,7 +79,7 @@ def demote_material_keywords(body):
 
 
 def remove_components(body, removals):
-    """Apply the existing build's explicit native-audio component omissions."""
+    """Apply checked component omissions from the accepted scene export."""
     count = struct.unpack_from("<I", body)[0]
     end = 4 + count * 12
     if end > len(body):
@@ -93,6 +94,24 @@ def remove_components(body, removals):
         selected[index] = removal["path_id"]
     kept = [body[4 + index * 12 : 16 + index * 12] for index in range(count) if index not in selected]
     return struct.pack("<I", len(kept)) + b"".join(kept) + body[end:]
+
+
+def append_components(body, identities):
+    """Append existing source-produced components, preserving the original tail."""
+    count = struct.unpack_from("<I", body)[0]
+    end = 4 + count * 12
+    if end > len(body):
+        raise ValueError("truncated original GameObject component array")
+    return struct.pack("<I", count + len(identities)) + body[4:end] + b"".join(struct.pack("<iq", 0, identity) for identity in identities) + body[end:]
+
+
+def clear_static_renderers(body, expected):
+    """Clear only the original occlusion static-renderer array, retaining portals."""
+    count = struct.unpack_from("<I", body, 28)[0]
+    end = 32 + count * 12
+    if count != expected or end > len(body):
+        raise ValueError("original occlusion static-renderer array drift")
+    return body[:28] + bytes(4) + body[end:]
 
 
 def aligned_string(stream, value):
@@ -159,6 +178,11 @@ def preload_data(bundle, selected, members):
                 name = member["externals"][file_id - 1]
                 if name not in names:
                     references.add((selected["externals"].index(name) + 1, path_id))
+    for dependency in bundle.get("preload_dependencies", []):
+        file_id, path_id = dependency["to"]
+        if not 1 <= file_id <= len(selected["externals"]) or not path_id:
+            raise ValueError("original preload dependency has an absent destination")
+        references.add((file_id, path_id))
     stream = io.BytesIO()
     aligned_string(stream, "")
     stream.write(struct.pack("<I", len(references)))
@@ -300,6 +324,52 @@ def source_record(sources, selector):
     return B.exact(member, row["bytes"]), metadata["types"][row["type_id"]]
 
 
+def check_preload_dependencies(sources, source_profiles, dependencies):
+    """Admit mapped GameObjects explicitly retained by the original scene preload."""
+    for dependency in dependencies:
+        body, typ = source_record(sources, dependency["source"])
+        preload, preload_type = source_record(sources, dependency["preload_source"])
+        if typ["class_id"] != 1 or hashlib.sha256(body).hexdigest() != dependency["source_sha256"]:
+            raise ValueError("original preload GameObject drift")
+        if preload_type["class_id"] != 150 or hashlib.sha256(preload).hexdigest() != dependency["preload_sha256"]:
+            raise ValueError("original scene preload drift")
+        stream = io.BytesIO(preload)
+        size = B.unpack(stream, "<I")[0]
+        B.exact(stream, size)
+        stream.seek((stream.tell() + 3) // 4 * 4)
+        count = B.unpack(stream, "<I")[0]
+        pointers = [B.unpack(stream, "<iq") for _ in range(count)]
+        pointer = tuple(dependency["source_pointer"])
+        metadata = sources[dependency["preload_source"][0]][3]
+        file_id, path_id = pointer
+        if not 0 <= file_id <= len(metadata["externals"]):
+            raise ValueError("original preload external file drift")
+        member = metadata["externals"][file_id - 1]["path"].rsplit("/", 1)[-1] if file_id else source_profiles[dependency["preload_source"][0]]["member"]
+        if pointers.count(pointer) != 1 or path_id != dependency["source"][1] or member != source_profiles[dependency["source"][0]]["member"]:
+            raise ValueError("original preload GameObject relationship drift")
+
+
+def omit_character_master_field(tree, identity_owner):
+    """Remove only the measured final original debug field from its native schema."""
+    nodes = identity_owner.tree_nodes(tree)
+    node = nodes[-1]
+    count, length = struct.unpack_from("<II", tree)
+    end = 8 + 32 * count
+    suffix = b"isUnkillable\0"
+    if (
+        (node["name"], node["type"], node["level"], node["size"]) != ("isUnkillable", "UInt8", 1, 1)
+        or not node["meta"] & 0x4000
+        or not tree[end:].endswith(suffix)
+    ):
+        raise ValueError("original CharacterMaster final field drift")
+    for offset in range(8, end - 32, 32):
+        for position in (offset + 4, offset + 8):
+            label = struct.unpack_from("<I", tree, position)[0]
+            if not label & 0x80000000 and label >= length - len(suffix):
+                raise ValueError("original CharacterMaster final field string is shared")
+    return struct.pack("<II", count - 1, length - len(suffix)) + tree[8 : end - 32] + tree[end : -len(suffix)]
+
+
 def script_fields(body):
     """Read original release MonoScript identity and its properties-hash extent."""
     stream = io.BytesIO(body)
@@ -367,6 +437,7 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
             member = B.Bundle(path).member(selected["member"])
             metadata = W.read_serialized(member)
             sources.append((path, before, member, metadata, {row["path_id"]: row for row in metadata["objects"]}))
+        check_preload_dependencies(sources, profile["sources"], selected_bundle.get("preload_dependencies", []))
         records, layouts, members = [], [], []
         packed, providers = record_packs(selected_members, packs, selected_bundle)
         receipt["record_packs"] = {profile: pin for profile, (_, pin, _) in providers.items()}
@@ -408,6 +479,14 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                         if typ["class_id"] != 1:
                             raise ValueError("component omission requires an original GameObject")
                         body = remove_components(body, selected["remove_components"])
+                    if "append_components" in selected:
+                        if typ["class_id"] != 1 or any(identity not in identities for identity in selected["append_components"]):
+                            raise ValueError("component addition requires an original GameObject and existing produced components")
+                        body = append_components(body, selected["append_components"])
+                    if "clear_static_renderers" in selected:
+                        if typ["class_id"] != 29:
+                            raise ValueError("static-renderer removal requires original OcclusionCullingSettings")
+                        body = clear_static_renderers(body, selected["clear_static_renderers"])
                     if "importer_guid" in selected:
                         if typ["class_id"] != 213:
                             raise ValueError("Sprite importer policy requires an original Sprite")
@@ -418,6 +497,10 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                         if selected["inactive_map_zone"] is not True or typ["class_id"] != 1 or not body or body[-1] != 1:
                             raise ValueError("inactive MapZone policy requires an active original GameObject")
                         body = body[:-1] + bytes(1)
+                    if "disable_original_behaviour" in selected:
+                        if selected["disable_original_behaviour"] is not True or typ["class_id"] != 114 or body[12:16] != b"\x01\0\0\0":
+                            raise ValueError("disabled original behaviour requires an enabled MonoBehaviour")
+                        body = body[:12] + bytes(1) + body[13:]
                     body = remap(body, selected.get("references", []))
                     if "keyword_policy" in selected:
                         if typ["class_id"] != 21 or selected["keyword_policy"] != "dummy-shader-demote-valid":
@@ -444,20 +527,31 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                     if sdk_tree is None:
                         raise ValueError("script properties require SDK metadata")
                     selectors = selected["properties_hash"]
-                    key = tuple(selectors["script"]), tuple(selectors["behaviour"])
+                    omit_master = selected.get("omit_character_master_unkillable", False)
+                    key = tuple(selectors["script"]), tuple(selectors["behaviour"]), omit_master
                     if key not in properties:
                         script, script_type = source_record(sources, selectors["script"])
                         _, behaviour_type = source_record(sources, selectors["behaviour"])
                         if script_type["class_id"] != 115 or behaviour_type["class_id"] != 114:
                             raise ValueError("script properties selectors have wrong classes")
                         _, names = script_fields(script)
-                        properties[key] = identity_owner.properties_hash(*names, behaviour_type["tree"], sdk_tree)
+                        schema = behaviour_type["tree"]
+                        if omit_master:
+                            if omit_master is not True or names != ("CharacterMaster", "RoR2", "RoR2.dll"):
+                                raise ValueError("final field omission requires original CharacterMaster")
+                            schema = omit_character_master_field(schema, identity_owner)
+                        properties[key] = identity_owner.properties_hash(*names, schema, sdk_tree)
                     value = properties[key]
                     if typ["class_id"] == 115:
                         offset, _ = script_fields(body)
                         body = body[:offset] + value + body[offset + 16 :]
                     elif typ["class_id"] == 114:
                         typ = copy.deepcopy(typ)
+                        if omit_master:
+                            if body[-4:] != bytes(4):
+                                raise ValueError("original CharacterMaster final value drift")
+                            body = body[:-4]
+                            typ["tree"] = omit_character_master_field(typ["tree"], identity_owner)
                         typ["hash"] = value
                     else:
                         raise ValueError("script properties require MonoScript or MonoBehaviour")
