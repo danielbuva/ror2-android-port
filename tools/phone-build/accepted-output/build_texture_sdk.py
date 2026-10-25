@@ -73,7 +73,7 @@ def build(compiler, linker, library, output, qemu_root=None, sysroot=None, andro
                 "-fPIE",
                 "-pie",
             ]
-        result["commands"].append([*common, *native_flags, str(source / "texture_pixels.c"), "-o", str(decoder)])
+        result["commands"].append([*common, *native_flags, str(source / "texture_pixels.c"), "-lm", "-o", str(decoder)])
         if linux:
             dev = sysroot / "usr/lib/x86_64-linux-gnu"
             lib = sysroot / "lib/x86_64-linux-gnu"

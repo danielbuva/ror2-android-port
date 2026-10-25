@@ -39597,3 +39597,81 @@ generic classes remain separate work. Full phone production, content assembly,
 installation and runtime behavior remain open. Revisit on input, schema,
 source relationships, policy, reader or interpreter changes. Architecture C,
 IL2CPP ARM64 and ownership boundaries remain unchanged.
+## J1110 — Produce every ETC1 mip chain from original PC textures on the host
+
+2026-10-25. Fixed J850 target; source-only host production. Android cohort
+qualification, complete content assembly and owner installation remain open.
+No game build, installation or launch occurs in this experiment.
+
+**Hypothesis and prior art.** Original PC texture top levels plus the measured
+import/filter/encoder relationships can reproduce the complete ETC1 mip cohort
+without target pixel literals or an Editor/project build in production. Pinned
+AssetRipper texture conversion/export and UnityPy provide original format,
+normal/export and serialized-field contracts. AssetRipper TextureDecoder 2.6.3
+provides the BC4/BC5 channel/interpolation contract. Unity Crunch conversion 1.0.3
+identifies the public Unity-Technologies/crunch `8708900eca8ec609d279270e72936258f81ddfb7`
+decompression source. Its three unchanged headers retain their Zlib notice and
+exact bytes. The existing public bcdec source remains attributed separately.
+The exact Editor is a non-game filter oracle only; production uses the owner's
+PC bundles and separately acquired public JPEG/ETC tools.
+
+**Implementation and resolved failures.** The existing texture owner gains
+`etc1-mips`; `owner-rgb-mip-textures.json` selects 1,548 canonical originals
+from 380 PC bundles for all 1,589 records. The audited recipe contains original/
+destination identities, field extents, hashes and import/storage relationships;
+its SHA-256 is
+`380d6d4c2a7f64db1bac10cefa0c6d31ec7cbfb1e817cd4fd2d7067643cb4283`.
+It contains no pixels, compressed blocks or target byte frames. The nine-field
+projection sets full mip count and colour space and preserves other original
+bytes. Seven original Unity Crunch inputs decode their top BC levels through
+the pinned public headers; independent raw-level comparison passes all seven.
+
+The native pixel helper extends the existing owner with BC1/BC4/BC5 decoding
+and linear/sRGB continuous float32 mip filtering. All 87 authored byte levels
+match the isolated exact-editor oracle; an independent float mirror isolates
+the arithmetic/quantization contract. The first linear reduction must retain
+byte units before normalization; later reductions retain continuous float32,
+left-associated additions and the measured inverse gamma exponent. Earlier
+per-level byte quantization and different addition/transfer arithmetic fail
+raw-level comparisons and are rejected. BC4/BC5 interpolation preserves the
+one-unit bias. Correct original variants and an original `.jpeg` export policy
+resolve the final 16 records; no per-pixel corrections are introduced. Small
+logical tail levels repeat into complete ETC blocks; destination normal usage
+selects the qualified encoder metric. Native BC1 preserves the prior Python
+integer expansion/interpolation while reducing repeated decode overhead.
+
+**Complete public host result.** Source `b7c25fbc` produces all 1,589 records in
+527.847 seconds, with 706,232,320 bytes peak child RSS. Every body/pixel check
+and persisted pack matches the independent target pins. All three pack hashes
+also match the complete earlier public run at `fa5e35f0` (744.893 seconds):
+
+| Output | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `objects.bin` | 522,992 | `e996a79e9706e1bb346bb7fc35c373ae61e369656880385747accd9f771b1e74` |
+| `resources.bin` | 620,933,280 | `ec01afdb6dc1d2f28b10a078780f203381505bcf4ba76e1b5eec0f1e32902948` |
+| `index.jsonl` | 797,712 | `7aa39c7842ea64988408887bb56cfacf6b2d688b85558255790a31d021b870db` |
+
+The SDK descriptor supplies only the native pixel helper for this producer;
+no SDK encoder executes. Its pinned SHA-256 is
+`2ab0f3547a6c3de8c5684dd27ff037491368daee442b063fe5fca2cd8ce6572e`.
+Focused native/producer/refusal tests, Ruff and public audits pass. The complete
+fresh-clone/pre-push suite passes; its logs remain private with the PR. Doctor
+still reports this checkout's missing lab-project/inventory bootstrap state;
+that does not qualify a game build and does not prevent this standalone owner.
+
+**Evidence and limits.** Private evidence is under
+`work/coordination/accepted-build-reconstruction/media-source-v1/`:
+`etc-mip-public-host-v1/`, `etc-mip-public-host-v1-timing.json`,
+`etc-mip-public-host-v2/`, `etc-mip-public-host-v2-timing.json`,
+`etc-mip-resolved-frontier-v1.json`, `mip-native-quantization-result-v1.json`,
+`qualify_crunch_host.py` and the retained mip-oracle/comparison receipts.
+Original bytes and generated packs remain ignored. Disposable oracle projects
+are removed after retaining receipts; active private target oracles are marked
+for preservation, and primary-checkout pruning runs. There is no new APK hash
+or installed-state fact. The independent active RGBA phone case is unchanged.
+
+Revisit on the complete Android build/production of this 1,589-record cohort
+and the existing admitted texture regressions, with all persisted packs checked.
+Android float/libm agreement, ordinary app delivery, RGBA mips, cubemaps, other
+content and complete bundle/player-data assembly remain gates. These host packs
+do not establish an installable owner build or game behavior/performance.

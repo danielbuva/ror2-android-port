@@ -194,6 +194,8 @@ def field(body, fields, name):
 
 def body_output(body, fields, pixels, target, operation):
     required = {"m_Name", "m_CompleteImageSize", "m_TextureFormat", "m_IsAlphaChannelOptional", "m_LightmapFormat", "image data", "m_StreamData"}
+    if operation == "etc1-mips":
+        required |= {"m_MipCount", "m_ColorSpace"}
     if set(fields) != required:
         raise ValueError("unknown texture field selection")
     for name in required:
@@ -209,8 +211,11 @@ def body_output(body, fields, pixels, target, operation):
         replacements["m_TextureFormat"] = struct.pack("<i", 3)
     elif operation in {"alpha8-etc2", "sdk-rgba"}:
         replacements["m_TextureFormat"] = struct.pack("<i", 47)
-    elif operation == "etc1":
+    elif operation in {"etc1", "etc1-mips"}:
         replacements["m_TextureFormat"] = struct.pack("<i", 34)
+    if operation == "etc1-mips":
+        replacements["m_MipCount"] = struct.pack("<i", target["mips"])
+        replacements["m_ColorSpace"] = struct.pack("<i", target["colour_space"])
     stream = target["stream"]
     if target["inline"] or not pixels:
         if stream != {"offset": 0, "size": 0, "path": ""}:
@@ -288,6 +293,50 @@ def sdk_encode_rgba(rgba, width, height, sdk, etc_codec):
     return bytes(output)
 
 
+def source_rgba(pixels, width, height, fmt, sdk):
+    """Use pinned native block decoders where the source format requires them."""
+    if sdk is not None and fmt in (10, 12, 25, 26, 27):
+        top_bytes = ((width + 3) // 4) * ((height + 3) // 4) * (8 if fmt in (10, 26) else 16)
+        if len(pixels) < top_bytes:
+            raise ValueError("truncated BC top mip")
+        mode = {10: ["bc1"], 12: ["bc3"], 25: [], 26: ["bc4"], 27: ["bc5"]}[fmt]
+        decoded = subprocess.run([sdk["pixels"], str(width), str(height), *mode], input=pixels[:top_bytes], capture_output=True, timeout=120)
+        if decoded.returncode or len(decoded.stdout) != width * height * 4:
+            raise ValueError("native BC decoder failed or returned a different extent")
+        return decoded.stdout
+    return rgba_source(pixels, width, height, fmt)
+
+
+def etc1_mips(rgb, width, height, selected, sdk, etc_codec):
+    target = selected["outputs"][0]
+    count = max(width, height).bit_length()
+    settings = (count, target["colour_space"], target["usage"] == 4)
+    if target["colour_space"] not in (0, 1) or any((row["mips"], row["colour_space"], row["usage"] == 4) != settings for row in selected["outputs"]):
+        raise ValueError("inconsistent full-chain ETC1 mip settings")
+    rgba = bytearray(width * height * 4)
+    rgba[0::4], rgba[1::4], rgba[2::4], rgba[3::4] = rgb[0::3], rgb[1::3], rgb[2::3], bytes([255]) * (width * height)
+    mode = "mips-srgb" if target["colour_space"] else "mips-linear"
+    result = subprocess.run([sdk["pixels"], str(width), str(height), mode], input=rgba, capture_output=True, timeout=120)
+    del rgba
+    expected = sum(max(1, width >> mip) * max(1, height >> mip) * 4 for mip in range(count))
+    if result.returncode or len(result.stdout) != expected:
+        raise ValueError("native mip filter failed or returned a different extent")
+    encoded, offset = [], 0
+    for mip in range(count):
+        w, h = max(1, width >> mip), max(1, height >> mip)
+        level = result.stdout[offset : offset + w * h * 4]
+        offset += len(level)
+        pixels = rgb_channels(level)
+        ew, eh = max(4, w), max(4, h)
+        if (ew, eh) != (w, h):
+            pixels = b"".join(pixels[((y % h) * w + x % w) * 3 : ((y % h) * w + x % w + 1) * 3] for y in range(eh) for x in range(ew))
+        part = subprocess.run([str(etc_codec), str(ew), str(eh), "normal" if target["usage"] == 4 else "rgb"], input=pixels, capture_output=True, timeout=120)
+        if part.returncode or len(part.stdout) != ew * eh // 2:
+            raise ValueError("public ETC mip codec failed or returned a different extent")
+        encoded.append(part.stdout)
+    return b"".join(encoded)
+
+
 def pixels_input(bundle, body, selected, jpeg_codec=None, etc_codec=None, sdk=None):
     location = selected["pixels"]
     if location["member"] is None:
@@ -309,25 +358,14 @@ def pixels_input(bundle, body, selected, jpeg_codec=None, etc_codec=None, sdk=No
             raise ValueError("pinned SDK texture toolchain required")
         width, height = selected["width"], selected["height"]
         fmt = struct.unpack("<i", field(body, selected["fields"], "m_TextureFormat"))[0]
-        if fmt in (12, 25):
-            top_bytes = ((width + 3) // 4) * ((height + 3) // 4) * 16
-            if len(pixels) < top_bytes:
-                raise ValueError("truncated BC top mip")
-            decoded = subprocess.run(
-                [sdk["pixels"], str(width), str(height), *(["bc3"] if fmt == 12 else [])], input=pixels[:top_bytes], capture_output=True, timeout=120
-            )
-            if decoded.returncode or len(decoded.stdout) != width * height * 4:
-                raise ValueError("native BC decoder failed or returned a different extent")
-            rgba = decoded.stdout
-        else:
-            rgba = rgba_source(pixels, width, height, fmt)
+        rgba = source_rgba(pixels, width, height, fmt, sdk)
         if 0 in rgba[3::4]:
             dilated = subprocess.run([sdk["pixels"], str(width), str(height), "dilate"], input=rgba, capture_output=True, timeout=120)
             if dilated.returncode or len(dilated.stdout) != width * height * 4:
                 raise ValueError("native pixel dilation failed or returned a different extent")
             rgba = dilated.stdout
         return sdk_encode_rgba(rgba, width, height, sdk, etc_codec)
-    if operation in {"alpha8-etc2", "etc1"}:
+    if operation in {"alpha8-etc2", "etc1", "etc1-mips"}:
         if etc_codec is None:
             raise ValueError("pinned public ETC codec required")
         width, height = selected["width"], selected["height"]
@@ -339,7 +377,26 @@ def pixels_input(bundle, body, selected, jpeg_codec=None, etc_codec=None, sdk=No
         else:
             fmt = struct.unpack("<i", field(body, selected["fields"], "m_TextureFormat"))[0]
             normal = struct.unpack("<i", field(body, selected["fields"], "m_LightmapFormat"))[0] == 3
-            rgba = rgba_source(pixels, width, height, fmt)
+            if operation == "etc1-mips":
+                if sdk is None:
+                    raise ValueError("pinned native pixel toolchain required for mip production")
+                if fmt in (28, 29):
+                    unpacked = subprocess.run(
+                        [str(etc_codec), str(width), str(height), "uncrunch-bc1" if fmt == 28 else "uncrunch-bc3"],
+                        input=pixels,
+                        capture_output=True,
+                        timeout=120,
+                    )
+                    fmt = 10 if fmt == 28 else 12
+                    top_bytes = ((width + 3) // 4) * ((height + 3) // 4) * (8 if fmt == 10 else 16)
+                    if unpacked.returncode or len(unpacked.stdout) != top_bytes:
+                        raise ValueError("public Unity Crunch decoder failed or returned a different extent")
+                    pixels = unpacked.stdout
+                if fmt in (3, 4, 9):
+                    pixels = pixels[: count * {3: 3, 4: 4, 9: 2}[fmt]]
+                rgba = source_rgba(pixels, width, height, fmt, sdk)
+            else:
+                rgba = rgba_source(pixels, width, height, fmt)
             if normal:
                 pixels = normal_rgb(rgba)
             else:
@@ -348,6 +405,9 @@ def pixels_input(bundle, body, selected, jpeg_codec=None, etc_codec=None, sdk=No
                 pixels = rgb_channels(rgba)
             if selected["jpeg"]:
                 pixels = jpeg_rgb(pixels, width, height, jpeg_codec)
+            if operation == "etc1-mips":
+                del rgba
+                return etc1_mips(pixels, width, height, selected, sdk, etc_codec)
             mode, output_size = "normal" if normal else "rgb", count // 2
         result = subprocess.run([str(etc_codec), str(width), str(height), mode], input=pixels, capture_output=True, timeout=120)
         if result.returncode != 0 or len(result.stdout) != output_size:
@@ -382,10 +442,12 @@ def produce(
     if set(profile) != {"input_id", "bundles"} or profile["input_id"] != MESH.INPUT_ID:
         raise ValueError("unknown texture input")
     pc = pc.resolve(strict=True)
-    needs_sdk = any(texture["operation"] == "sdk-rgba" for bundle in profile["bundles"] for member in bundle["members"] for texture in member["textures"])
+    needs_sdk = any(
+        texture["operation"] in {"sdk-rgba", "etc1-mips"} for bundle in profile["bundles"] for member in bundle["members"] for texture in member["textures"]
+    )
     sdk = sdk_inputs(sdk_toolchain, sdk_toolchain_sha256, pc) if needs_sdk or sdk_toolchain is not None or sdk_toolchain_sha256 is not None else None
     needs_jpeg = any(
-        texture["operation"] in {"rgb-jpeg", "dxt1-rgb-jpeg"} or (texture["operation"] == "etc1" and texture["jpeg"])
+        texture["operation"] in {"rgb-jpeg", "dxt1-rgb-jpeg"} or (texture["operation"] in {"etc1", "etc1-mips"} and texture["jpeg"])
         for bundle in profile["bundles"]
         for member in bundle["members"]
         for texture in member["textures"]
@@ -397,7 +459,7 @@ def produce(
         if jpeg_codec.is_relative_to(pc) or BUNDLE.sha(jpeg_codec) != jpeg_codec_sha256:
             raise ValueError("public JPEG codec drift or overlap with original input")
     needs_etc = any(
-        texture["operation"] in {"alpha8-etc2", "etc1", "sdk-rgba"}
+        texture["operation"] in {"alpha8-etc2", "etc1", "etc1-mips", "sdk-rgba"}
         for bundle in profile["bundles"]
         for member in bundle["members"]
         for texture in member["textures"]
