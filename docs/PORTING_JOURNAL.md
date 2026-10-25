@@ -42927,3 +42927,88 @@ remain open. No continuation result is inferred from these measurements.
   hash-verified owned package without clearing data, and continue in a fresh
   output using the retained prefix and unchanged J1167 thermal/active-time
   policy. Retain the terminal result before comparing native library bytes.
+## J1163 — Reconstruct Barrier and all three Goldshores payloads
+
+2026-10-25 UTC. Host only; no Editor/project build, APK, device lease,
+installation or game launch. Accepted comparison APK remains J850
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+**Hypothesis / prior art.** Existing source object/media owners plus freshly
+compiled source Shader records can close four complete payload entries.
+Consulted `community-prior-art.md`, pinned UnityPy schema/PPtr contracts and
+AssetRipper revision `1ac666f47d8e9dedf96afb0b914c70d7656151ea` shader
+exporters/templates. Their property/template selection describes historical
+import behavior, not original rendering parity. J1157's supported SDK API and
+source-native program ordering replace private compiler experiments. Current
+originals, acquired SDK metadata and source staging policies govern production;
+accepted records are opened only for independent comparison.
+
+**Implementation.** Extend `object_produce.py` with checked source plugin import
+order, legacy type/curve projection and Barrier managed-schema reconstruction.
+Original field schemas and authored omission policies produce the retained
+script shape; no copied game source, target scalar/body/tree or binary template
+supplies it. Compute declaration projection preserves original names, keywords,
+requirements, schema and hash while removing programs through the explicit
+`strip_compute_programs` policy; twelve Root records and all 48 destinations
+qualify independently. This does not provide executable Android Compute.
+
+`payload_shader_records.py` uses the existing public shader compiler/serializer
+and emits the existing record-pack interface. Original declarations, actual
+Material/scene relationships and checked fog/GI/build settings select variants.
+Source-derived keyword ordering controls native pool packing through J1157's
+supported API. Five freshly produced packs contain 29 unique shaders and 56
+independently exact destinations: Barrier, 24 post-processing forms, whole-scene
+Standard and distinct Gold/Root reduced-spine Standard. Barrier reads acquired
+33f1 metadata/includes with the current 45f2 compiler; neither Editor nor the
+old compiler executes. Public template resources are acquired explicitly with
+pins and notices, not vendored. Root packs alone close no complete file.
+
+Audited `owner-goldshores*-objects.json` select whole/source/reduced-spine
+forms through existing object/layout/writer owners and qualified media packs.
+Actual source schemas verify pointer extents and values, script/component
+relationships and current GUID provenance. Recipes contain selectors,
+relationships, named policies and integrity pins only; original/SDK content,
+compiled source/programs and generated assets stay ignored.
+
+**Result.** The final tracked-source CLI run at source `86b3d527` completes in
+134.19 seconds. After persistence, independent readers verify every packed
+object, every member including native resource membership, and complete
+compressed bundle bytes. Four complete final files close:
+
+| Payload | Objects | Bundle bytes | SHA-256 |
+| --- | ---: | ---: | --- |
+| `barrier-effect-lab` | 30 | 1,077,583 | `aaf162416b4d6fc714a9c692beb285d8a39c684034a883a0071d2b2c532e4f36` |
+| `whole-scene-goldshores` | 6,164 | 21,783,442 | `c0409e8808648557c4ccbaf3a9e5cbffc7bda3339b40f1b6fba40e41fe779395` |
+| `goldshores-source-lab` | 6,145 | 21,614,663 | `070b0a8529e46a99fad34cbcd41985503c429596440e34cf9a08a1caa02b13ec` |
+| `goldshores-spine-lab` | 4,617 | 21,350,915 | `4b9928225923f3549ceee6c23ddadc0a1c34431289e3d49efb1687d1ae190678` |
+
+Final evidence under the assigned checkout's ignored
+`work/coordination/p1-payload-complete-shaders-host-v1/`:
+`qualify-done.json`, `qualified-packs.json`, each pack's
+`source-read-guard.json`, each bundle's `independent-comparison.json` and
+`result.json`. The source guard denies accepted targets, generated exports and
+prior packet suppliers; source pins stay unchanged before/after production.
+Preparation/schema evidence remains in
+`p1-payload-barrier-public-prep-v1/`, `p1-payload-goldshores-public-prep-v1/`
+and `p1-payload-goldshores-family-prep-v1/`. These are qualification evidence,
+never reconstruction-time content suppliers. Preserved first failures include
+Standard's default SDK native order (48 of 780 serialized records exact),
+unsupported 2DArray declaration parsing and pending explicit Shader holes.
+Source-order emission, the shared declaration parser fix and qualified providers
+resolve those failures without target index tables or body substitutions.
+
+`readiness-union/` links the four final products into J1162's qualified current
+source composition and reruns the existing public checker. All 583 previously
+available entries preserve content/status. Result: **587 of 705 available**,
+**582 raw-exact**, **two code outputs requiring separate comparisons** and
+**three drift-explained**; **118 missing (7 APK, 111 payload)**, zero invalid
+or mismatched. Overall source provenance, assembly and device flags stay false.
+
+**Validation / limits / revisit.** Forty-four object, five Compute and twenty
+payload Shader host tests pass; changed Python passes Ruff format/check.
+Independent producer/recipe/privacy review returns GO. Doctor accepts current
+input, parser pins and project but retains the known bootstrap failure. No
+phone production, ownership/signing, installation, runtime/rendering or
+performance gate closes. Architecture C is unchanged. Root's three complete
+bundle closures are the next step. Revisit on source/SDK/policy drift or an
+independent mismatch. Mandatory generated-output pruning passes after the run.
