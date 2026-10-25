@@ -159,6 +159,20 @@ def fixture(root):
 
 
 class ObjectProducerTests(unittest.TestCase):
+    def test_dummy_shader_keeps_original_keywords_and_material_values(self):
+        prefix = struct.pack("<I", 4) + b"Demo" + struct.pack("<iq", 2, 77)
+        first = struct.pack("<I", 3) + b"ONE\0"
+        second = struct.pack("<I", 3) + b"TWO\0"
+        third = struct.pack("<I", 5) + b"THREE\0\0\0"
+        suffix = bytes(range(64))
+        original = prefix + struct.pack("<I", 2) + first + second + struct.pack("<I", 1) + third + suffix
+        expected = prefix + struct.pack("<II", 0, 3) + first + second + third + suffix
+        self.assertEqual(P.demote_material_keywords(original), expected)
+        self.assertEqual(len(original), len(expected))
+        self.assertEqual(P.demote_material_keywords(expected), expected)
+        with self.assertRaises((ValueError, EOFError)):
+            P.demote_material_keywords(prefix + struct.pack("<I", 100000))
+
     def test_container_preload_partition_order_is_explicit(self):
         selected = {"name": "authored-bundle", "asset": "Assets/Authored.prefab", "root": 7, "external_objects": [[2, 91], [1, -18]], "dependencies": []}
         for external_first in (False, True):

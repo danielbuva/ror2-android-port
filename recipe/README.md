@@ -157,9 +157,10 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 
 | File | Replaces | Provenance | Privacy and licensing | Readers |
 | --- | --- | --- | --- | --- |
+| `owner-teleport-material-objects.json` | Private teleport-material bundle | Original material/type selectors, checked references, named dummy-shader keyword policy and container relationships. | No material/shader body, keyword literal, numeric override or target template; audit below, 2026-10-25. | Source-only `object_produce.py`; J1117 host qualification, phone gate open. |
 | `owner-death-effect-objects.json` | Private replay player-death-effect bundle | Rooted original graph/script selectors, checked pointer extents, preload/dependency identities and hashes. | No body, type-tree snapshot, scalar/curve override or target delta; audit below, 2026-10-25. | Existing original-input-only `object_produce.py`; J1115 host qualification, phone gate open. |
 | `owner-pickup-objects.json` | Private replay pickup bundle | Original selectors, hashes, checked pointer extents and destination relationships. | No bodies, type trees or target deltas; full audit below, 2026-10-25. | Original-input-only `object_produce.py`; J1113 host qualification, phone gate open. |
-| `owner-player-data.json` | Twenty-two private replay player files | Original metadata/font/text/Sprite selectors, hashes, pointer/importer relationships and authored JSON/assembly order. | No game bodies, images, text payloads, SDK bytes or private identifiers; full audits below, 2026-10-25. | Explicit PC/SDK/fresh-converter `player_data.py`; J1115 host qualification, phone gate open. |
+| `owner-player-data.json` | Seventy-five private player files | Original metadata/font/text/Sprite selectors, hashes, pointer/importer relationships and authored JSON/assembly order. | No game bodies, images, text payloads, SDK bytes or private identifiers; full audits below, 2026-10-25. | Explicit PC/SDK/fresh-converter `player_data.py`; J1117 host qualification, phone gate open. |
 | `owner-uncompressed-textures.json` | Private replay uncompressed texture bodies/pixels | Original/destination selectors, source extents, generic import/placement metadata and hashes; copy, BC1, source-coordinate dilation and public JPEG policy. | No pixels, palettes, target literals/patches, native SDK implementation or image/library bytes; full audit above, 2026-10-24. All 399 records qualify on host/Android in J1079. | Explicit PC-input-only `texture_produce.py` and separately built public JPEG tool; no current game-build consumer. |
 | `owner-alpha-textures.json` | Private replay source Alpha8/single-mip texture cohort (J1082) | Canonical original/destination selectors, source/field extents, import/storage settings and hashes. | No alpha samples, encoded blocks, target byte frames, protected source or private identifiers; full audit below, 2026-10-24. | Original-PC-input-only `texture_produce.py` plus separately built public codec; no game-build consumer. |
 | `owner-rgb-textures.json` | Complete ETC1/single-mip target cohort | Original/destination selectors, field/pixel extents, hashes and source JPEG policy; composition aliases reuse original Warp/Elite ramps. | No colors, normal vectors, palettes, encoded blocks or target byte frames; audit below, 2026-10-24. | Original-input-only `texture_produce.py` and public ETC/JPEG tools; J1088 qualifies all 281 records on Android. |
@@ -2516,3 +2517,34 @@ ordering is structural metadata, needed by the measured target container.
 Provenance/privacy/licensing/sensitive-content audit: 2026-10-25; J1115.
 All game-derived outputs and raw discovery evidence remain ignored. No
 ownership, authentication, entitlement or redistribution grant is added.
+
+J1117 extends `owner-player-data.json` to all 63 PC-derived standalone Sprites
+plus an authored full-rectangle Sprite and one original TimerStringFormatter
+object, for 75 final player files.
+Per-file source selectors refer to original PC bundles; source rectangle extents
+select the variable-length Sprite render-data field. The 32 cropped records
+recover rect/pivot/offset/border from original coordinates using the pinned
+AssetRipper coordinate formula and float32 operation ordering. Geometry/UVs
+and source type hashes remain original. No target coordinate, border, vertex,
+image or text value is recorded. The one MonoBehaviour retains its original
+body/type identity and relocates a checked script PPtr into a generated external
+script table; its MonoScript identity is independently compared to the original.
+
+`owner-teleport-material-objects.json` selects one original material/type tree
+and three checked references, plus generated AssetBundle metadata. Its named
+dummy-shader policy moves original valid keywords into the original invalid
+list without adding strings or changing material values. The existing authored
+scene owner explicitly retains this exported dummy shader; pinned AssetRipper
+DummyShaderTextExporter confirms that shader export's scope. No shader program,
+material array, keyword literal or target delta is in the profile. Source fields
+are reused or transformed by these explicit source-coordinate/platform policies.
+Provenance/privacy/licensing/sensitive-content audit: 2026-10-25; J1117.
+All outputs and discovery/comparison records remain ignored; this grants no
+ownership, authentication, entitlement or redistribution permission.
+
+The one additional authored full-rectangle crosshair applies the existing
+`RecoveredHudBuilder.cs` Sprite.Create policy. Original bounds/pivot/border/pixel
+scale generate four corners and two triangles; no target vector, geometry or
+byte template is in the profile. Its separately checked source/output extents
+are required because this generated body changes size. All 64 standalone Sprites
+qualify in J1117; original image/texture providers remain separate.

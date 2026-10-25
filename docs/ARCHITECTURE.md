@@ -63,26 +63,36 @@ and terminal receipt. These structural writers generate no game content or
 target relationships and have no game-build/runtime consumer. J1116 qualifies
 all 133 accepted bundles as a structural control using accepted records; PC-only
 object/layout derivation and phone qualification remain separate.
-`object_produce.py` owns the current source-only pickup and player-death-effect
-prefab slices: audited `recipe/owner-pickup-objects.json` and
-`recipe/owner-death-effect-objects.json` select original bodies/type metadata
-and checked pointer relationships. It generates container/preload metadata with explicit local/external order, packs,
-layout and a canonical target-tree bundle through those writers. New disjoint
-output, pinned PC files/recipe/codec and capacity checks set up the process;
-persisted output and unchanged inputs precede a complete/failed terminal receipt.
-Failure retains outputs and the codec context reaps its child; exit ends the
-producer. `player_data.py` owns the separate current 22-file player cohort: SDK default
-resources, converter resources, PC-derived script JSON, the three-object PC
-font file, original line-breaking TextAssets, an authored runtime JSON resource
-and twelve standalone PC Sprites. Its audited `recipe/owner-player-data.json`,
+`object_produce.py` owns the current source-only pickup, player-death-effect
+and teleport-material content slices. Audited profiles
+`recipe/owner-pickup-objects.json`, `recipe/owner-death-effect-objects.json` and
+`recipe/owner-teleport-material-objects.json` select original bodies/type
+metadata and checked pointer relationships. It generates container/preload
+metadata with explicit local/external order, packs, layout and canonical
+bundles through those writers. New disjoint output, pinned PC files/recipe/
+codec and capacity checks set up the process; persisted output and unchanged
+inputs precede a complete/failed receipt. The qualified dummy material moves
+its original valid keywords into the invalid list without introducing strings
+or material values. Failure retains outputs and the codec context reaps its
+child; exit ends the producer.
+
+`player_data.py` owns the separate current 75-file player cohort: SDK/converter
+resources, PC-derived script JSON, the three-object font file, original
+line-breaking TextAssets, authored runtime JSON, 64 standalone Sprites and one
+original TimerStringFormatter object. Its audited `recipe/owner-player-data.json`,
 explicit original PC/SDK/converter inputs and converter receipt set up a new
 target tree; checked pointer relocation and `unity_write.py` build serialized
-files. Sprite importer identities derive from destination filenames; original
-geometry/UVs remain unchanged. The authored JSON input is a pinned sibling of
-the selected profile. Persisted/input hashes and complete/failed receipts define state and
-teardown. Neither owner consumes replay files or a Unity project. Their
+files. Original Sprite geometry/UVs remain unchanged; source render-data crops
+recover standalone rect/pivot/offset/border coordinates with float32 arithmetic.
+The authored full-rectangle Sprite generates corners/triangles from original
+bounds and recovered pivot/border/pixel scale through the existing HUD policy.
+Importer identities derive from destination filenames. The scripted object
+retains its source type/body with a relocated external script table. The
+JSON input is a pinned sibling of the profile. Persisted/input hashes and
+complete/failed receipts define state and teardown. Neither owner consumes
+replay files or a Unity project. Their
 [setup and limits](../tools/phone-build/accepted-output/README.md#produce-the-first-complete-source-only-bundle)
-remain separate from full content assembly, installation and runtime acceptance.
+remain separate from complete content assembly, installation and runtime acceptance.
 `mesh_produce.py` owns a separate current experimental PC-input-only mesh
 producer, using read-only bounded UnityFS access in `unity_bundle.py`, embedded
 serialized-field extents and authored operations in `unity_mesh.py`, and the

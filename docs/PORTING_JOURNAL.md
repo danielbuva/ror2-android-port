@@ -39037,3 +39037,117 @@ new implementation or redundant tests are added for this result. No device
 lease or installed/process/display state changes. Revisit for a changed writer,
 codec, accepted layout or its first phone qualification. Remaining content and
 ordinary signed installation/controls/performance gates stay open.
+
+## J1117 — Produce every standalone Sprite and the third source-only bundle
+
+Date: 2026-10-25 UTC. Host-only source content production. No Editor, device
+command, package installation or game run. Accepted comparison is J850 APK
+SHA-256 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+**Hypothesis and prior art.** J1115 qualifies twelve standalone Sprites and
+two full prefab bundles. Complete all remaining original standalone Sprites
+through that existing player owner and one full material bundle through the
+existing object owner. Consulted `community-prior-art.md`, pinned UnityPy
+1.25.3 serialized-file/PPtr layout, and pinned AssetRipper
+`1ac666f47d8e9dedf96afb0b914c70d7656151ea`'s `SpriteExtensions.cs`,
+`MaterialExtensions.cs` and `DummyShaderTextExporter.cs`. The Sprite coordinate
+helper explicitly recovers original render-data crops into standalone importer
+rect/pivot/border values. The dummy exporter preserves material properties but
+introduces no original custom shader implementation or material keyword set.
+No upstream implementation, protected object value or target template is copied
+into the public profile. Current input and full-file comparisons are authority.
+
+**Complete original standalone Sprite cohort.** The existing player owner now
+produces all **63 PC-derived standalone Sprite files**. Twelve retain J1115
+qualification; nineteen more reuse original bodies with importer identity and
+checked texture-PPtr relocation. The remaining **32** additionally recover
+standalone coordinates from their original render-data texture rectangle and
+crop offset: move the original texture rectangle into the importer rectangle,
+recover pivot and offset, subtract source crop distances from nonzero borders,
+and clear the absorbed crop offset. Every Vector2 arithmetic operation rounds
+to float32. Original vertices, indices, UVs, texture coordinates and type hashes
+remain unchanged. Per-file source selectors and render-data field offsets are
+source extents, never target scalar patches. Receipt provenance names each
+actual PC bundle. The same owner separately reproduces the authored full-rectangle crosshair
+through `RecoveredHudBuilder`'s existing `Sprite.Create` policy: original
+bounds/recovered pivot/border/pixel scale generate four vertices and two
+triangles, with the engine-native layout generated structurally. This closes
+all **64 standalone Sprites**. It introduces no target vector template; texture
+providers and the complete player rendering graph remain open.
+
+**Original scripted object.** The same owner produces the 4,368-byte original
+TimerStringFormatter player file. Its original body/type hash are retained,
+with one checked MonoScript PPtr relocated into a generated external script
+table. Source and destination MonoScripts independently agree on original
+class/namespace/assembly/properties identity. The standalone file's type uses
+script-table index zero, separate from that external object's local ID. No
+script body or target type hash is stored in the recipe.
+
+With the SDK/fresh-converter/script JSON/font/TextAsset files retained from
+J1113/J1115, the complete player cohort is **75 files**, **21,624,821 bytes**.
+The existing public owner produces and re-reads every file, then independent
+comparison confirms every full-file hash exactly equals J850. Final production
+completes in **3.349 seconds**. The 53 newly ready player files total 282,456
+bytes; no private replay file supplies any byte.
+
+**Third complete source-only bundle.** `owner-teleport-material-objects.json`
+selects the original teleport material, original type metadata and three
+checked PPtr remaps. The existing authored scene owner explicitly retains its
+exported dummy shader (`scene_runtime.py`'s teleport-material scope); that shader
+declares no original material keywords. The qualified named policy moves the
+material's original valid keywords to the front of its original invalid list,
+preserving strings and order, all 45 float properties, seven colors and four
+texture transforms. It introduces no keyword literal or scalar override.
+The generic AssetBundle owner generates its container/dependency/preload record.
+
+The two records total 1,792 object bytes; serialized SHA-256 is
+`ac35f88488546fded85f601c8abc343c3341bd4b92820662045ddd3a50c28322`.
+The final **3,176-byte** UnityFS is byte-exact, SHA-256
+`4dc6d713dae47efab10d280d178dc39fd9e6d300bcc3d7b9f2a6ce9555032b46`,
+in 0.193 seconds. Its shader/texture/dependency bundles remain missing; this
+is not runtime load or appearance qualification.
+
+**First failures and verification.** Raw standalone Sprite reuse initially
+fails only importer-coordinate comparison for the cropped cohort. Source crop
+recovery resolves those differences without changing geometry or adding target
+numbers. TimerStringFormatter requires both script-table index and external
+PPtr relocation; copying its original table index alone is insufficient. The first complete
+full-rectangle production retains the original 540-byte object extent for its
+new 456-byte body and refuses as truncated. Separate checked source/output
+lengths correct that layout; the failed v5 receipt remains preserved. The new
+authored full-rectangle fixture verifies changed body extents and generated
+corners/triangles without target geometry.
+Authored fixtures verify nontrivial source rect/pivot/border recovery, exact
+float rounding, preserved geometry extents, source override provenance, external
+script/type identity and script-pointer drift, original keyword order/value
+preservation, and existing bounded writing/compression/input-drift contracts.
+All **40 affected/supporting host checks** pass with the explicit public codec
+provider. Ruff, host-only preflight and whitespace checks pass. `./dev doctor`
+continues to report its generic bootstrap failure despite accepted input/parser/
+project/checkpoint checks; no full game/toolchain readiness is inferred.
+The staged public audit and manual recipe provenance/privacy/licensing review
+cover the added profile and selected source-only operations. No game/SDK bytes,
+raw evidence, private paths/identifiers or credentials are published.
+
+**Readiness, evidence and terminal state.** The generated canonical partial
+tree hardlinks only **78 independently produced content files**: three bundles
+and 75 player files, **21,663,706 bytes**. With the same 18 explicit code/SDK
+providers, readiness is **96 of 705 available, 609 content files missing**
+(478 APK player-data files and 131 payload files), with zero invalid/mismatched
+entries and no replay fallback. The 54 newly ready entries total 285,632 bytes.
+These counts do not establish complete source provenance, phone qualification
+or a conversion percentage.
+
+Full player receipts and independent full-file comparison remain in
+`work/coordination/p1-player-next-v1/full-host-v6/` and
+`full-host-v6-comparison.json`. Sprite source/full-file discovery proofs remain
+beside them, including `crop-full-file-proof.json` and
+`crop-extra-full-file-proof.json`. Teleport receipt is
+`work/coordination/next-bundle-readonly-v1/teleport-source-host-v1/result.json`.
+Canonical composition/request/readiness are in
+`work/coordination/p1-content-source-host-v5/`. No device lease is acquired;
+package/process/display state is untouched. Combined phone replay remains queued
+behind the independently owned texture case. Complete animation/shader/object/
+player-data production and ordinary installation/controls/performance remain
+open. Revisit for input/target drift, a new source derivation or first phone
+qualification; do not substitute accepted objects for the remaining gaps.

@@ -1769,3 +1769,12 @@ comparison tree. Host evidence remains under
 `work/coordination/death-source-v1/`; the partial composition and readiness
 request/report are in `work/coordination/p1-content-source-host-v2/`.
 These are generated local outputs, not new required input state.
+
+J1117 extends the same audited owners to the teleport material and 75 player
+files. Source crop extents and original script/PPtr relationships are selected
+in the profile; no new ungenerated `work/` input is introduced. Full host
+receipts/comparisons remain in `work/coordination/p1-player-next-v1/full-host-v6/`
+and `full-host-v6-comparison.json`, with the teleport receipt under
+`work/coordination/next-bundle-readonly-v1/teleport-source-host-v1/`.
+The independently produced canonical partial tree and readiness request/report
+are generated under `work/coordination/p1-content-source-host-v5/`.
