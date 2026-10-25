@@ -2,3 +2,9 @@
 *.unity text eol=lf whitespace=-blank-at-eol
 *.asset text eol=lf whitespace=-blank-at-eol
 *.meta text eol=lf whitespace=-blank-at-eol
+
+# Preserve the exact pinned upstream Crunch bytes, including original CRLF.
+tools/phone-build/accepted-output/third_party/unitycrunch/LICENSE -text -whitespace
+tools/phone-build/accepted-output/third_party/unitycrunch/crn_decomp.h -text -whitespace
+tools/phone-build/accepted-output/third_party/unitycrunch/crn_defs.h -text -whitespace
+tools/phone-build/accepted-output/third_party/unitycrunch/crnlib.h -text -whitespace
