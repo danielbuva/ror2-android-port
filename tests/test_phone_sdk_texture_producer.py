@@ -4,10 +4,12 @@ import hashlib
 import json
 from pathlib import Path
 import shutil
+import struct
 import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from test_phone_texture_producer import FIXTURE, ROOT, T, authored_body, digest, load
 
@@ -128,6 +130,81 @@ class SdkTextureTests(unittest.TestCase):
             result = subprocess.run([str(self.decoder), "4", "4", "mips-linear"], input=data, capture_output=True, timeout=10)
             self.assertNotEqual(result.returncode, 0)
             self.assertEqual(result.stdout, b"")
+
+    def test_etc1_mips_tiles_small_levels_and_uses_destination_metric(self):
+        rgb = bytes((0, 10, 20, 40, 50, 60, 80, 90, 100, 120, 130, 140))
+        selected = {"outputs": [{"mips": 2, "colour_space": 0, "usage": 4}]}
+        native = subprocess.run
+        calls = []
+
+        def run(command, **kwargs):
+            if command[0] == str(self.decoder):
+                return native(command, **kwargs)
+            self.assertEqual(command, [str(self.alpha), "4", "4", "normal"])
+            calls.append(kwargs["input"])
+            return subprocess.CompletedProcess(command, 0, bytes([len(calls)]) * 8, b"")
+
+        with patch.object(T.subprocess, "run", side_effect=run):
+            result = T.etc1_mips(rgb, 2, 2, selected, {"pixels": str(self.decoder)}, self.alpha)
+        self.assertEqual(result, bytes([1]) * 8 + bytes([2]) * 8)
+        self.assertEqual(calls[0], b"".join(rgb[((y % 2) * 2 + x % 2) * 3 : ((y % 2) * 2 + x % 2 + 1) * 3] for y in range(4) for x in range(4)))
+        self.assertEqual(calls[1], bytes((60, 70, 80)) * 16)
+        selected["outputs"][0]["mips"] = 1
+        with self.assertRaisesRegex(ValueError, "inconsistent full-chain"):
+            T.etc1_mips(rgb, 2, 2, selected, {"pixels": str(self.decoder)}, self.alpha)
+
+    def test_mip_body_projection_keeps_unselected_sentinels(self):
+        stream = {"offset": 0, "size": 0, "path": ""}
+        source, fields = authored_body("Source", 64, 4, bytes(64), stream)
+        fields["m_MipCount"] = [len(source) - 4, 4]
+        fields["m_ColorSpace"] = [len(source), 4]
+        source = source[:-4] + struct.pack("<ii", 1, 0) + b"TAIL"
+        pixels = bytes(range(24))
+        target = {"name": "Owner", "alpha_optional": False, "usage": 4, "inline": True, "stream": stream, "mips": 3, "colour_space": 1}
+        expected, _ = authored_body("Owner", 24, 34, pixels, stream, 4)
+        expected = expected[:-4] + struct.pack("<ii", 3, 1) + b"TAIL"
+        self.assertEqual(T.body_output(source, fields, pixels, target, "etc1-mips"), expected)
+
+    def test_native_crunch_rejects_wrong_extents_and_malformed_streams(self):
+        compiler = shutil.which("c++")
+        if compiler is None:
+            self.skipTest("a public C++ compiler is unavailable")
+        stubs = self.root / "unused_etc_stubs.cpp"
+        stubs.write_text(
+            "#include <cstdlib>\n"
+            "bool readCompressParams(){std::abort();}\n"
+            "void setupAlphaTable(){std::abort();}\n"
+            "void compressBlockAlphaFast(unsigned char*,int,int,int,int,unsigned char*){std::abort();}\n"
+            "void compressBlockETC2FastPerceptual(unsigned char*,unsigned char*,int,int,int,int,unsigned int&,unsigned int&){std::abort();}\n"
+            "double compressBlockDiffFlipFast(unsigned char*,unsigned char*,int,int,int,int,unsigned int&,unsigned int&){std::abort();}\n"
+            "void compressBlockDiffFlipFastPerceptual(unsigned char*,unsigned char*,int,int,int,int,unsigned int&,unsigned int&){std::abort();}\n"
+        )
+        (self.root / "malloc.h").write_text(
+            "#ifdef __APPLE__\n#include <malloc/malloc.h>\n#define malloc_usable_size malloc_size\n#else\n#include_next <malloc.h>\n#endif\n"
+        )
+        tool = self.root / "crunch"
+        subprocess.run(
+            [
+                compiler,
+                "-std=c++11",
+                "-O2",
+                "-fno-strict-aliasing",
+                "-I",
+                str(self.root),
+                str(ROOT / "tools/phone-build/accepted-output/texture_etc.cpp"),
+                str(stubs),
+                "-o",
+                str(tool),
+            ],
+            capture_output=True,
+            check=True,
+            timeout=60,
+        )
+        for width, height, data in ((0, 4, b""), (4, 8193, b""), (4, 4, b""), (4, 4, b"Hx" + bytes(200)), (1, 3, bytes(range(73)))):
+            for mode in ("uncrunch-bc1", "uncrunch-bc3"):
+                result = subprocess.run([str(tool), str(width), str(height), mode], input=data, capture_output=True, timeout=10)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual(result.stdout, b"")
 
     def test_bc7_authored_blocks_crop_and_extents(self):
         colours = ((17, 31, 73, 255), (255, 255, 255, 255))

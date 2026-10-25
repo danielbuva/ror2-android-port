@@ -183,6 +183,13 @@ The same native pixel owner has experimental BC4/BC5 byte-channel decoding and
 linear/sRGB mip-chain pipe modes. It preserves byte units through the first
 linear reduction, then continuous float32 levels. These modes have authored
 exact-editor host controls; game-cohort and Android admission remain separate.
+`etc1-mips` extends that texture owner with full-chain filtering, logical-tail
+tiling and destination normal-metric selection. `owner-rgb-mip-textures.json`
+provides the original/destination field and import relationships. The existing
+public ETC tool also owns bounded Unity Crunch top-level decompression using
+unchanged pinned Zlib headers, built by `build_texture_etc.py`. The SDK toolchain
+supplies its native pixel helper; ETC1 mip production executes no SDK encoder.
+Full public host/phone cohort qualification remains pending.
 `build_sdk_runner.py` owns current experimental public Box64 acquisition-by-build
 for standalone owner-supplied SDK tools. Explicit unchanged upstream source,
 the pinned SDK NDK and host archive tools produce a private Android runner.

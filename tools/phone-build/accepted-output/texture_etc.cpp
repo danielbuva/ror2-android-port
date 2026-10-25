@@ -2,6 +2,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <vector>
+#include "third_party/unitycrunch/crn_decomp.h"
 
 extern bool readCompressParams();
 extern void setupAlphaTable();
@@ -20,18 +22,46 @@ static void words(unsigned char *out, unsigned int first, unsigned int second) {
     }
 }
 
+static int uncrunch(long width, long height, bool bc3) {
+    std::vector<unsigned char> input;
+    unsigned char chunk[65536];
+    while (size_t count = std::fread(chunk, 1, sizeof(chunk), stdin)) {
+        if (input.size() + count > 64 * 1024 * 1024) return 65;
+        input.insert(input.end(), chunk, chunk + count);
+    }
+    if (std::ferror(stdin)) return 67;
+    crnd::crn_texture_info info;
+    if (!crnd::crnd_get_texture_info(input.data(), input.size(), &info) ||
+        info.m_width != width || info.m_height != height || info.m_faces != 1 ||
+        !info.m_levels || info.m_levels > 14 ||
+        info.m_format != (bc3 ? cCRNFmtDXT5 : cCRNFmtDXT1)) return 65;
+    size_t pitch = ((width + 3) / 4) * (bc3 ? 16 : 8);
+    size_t size = pitch * ((height + 3) / 4);
+    if (size > 64 * 1024 * 1024) return 65;
+    std::vector<unsigned char> output(size);
+    auto context = crnd::crnd_unpack_begin(input.data(), input.size());
+    if (!context) return 67;
+    void *destination = output.data();
+    bool ok = crnd::crnd_unpack_level(context, &destination, size, pitch, 0);
+    crnd::crnd_unpack_end(context);
+    if (!ok) return 67;
+    return std::fwrite(output.data(), 1, size, stdout) == size && !std::fflush(stdout) ? 0 : 68;
+}
+
 int main(int argc, char **argv) {
     if (argc != 4)
         return 64;
-    bool alpha = !std::strcmp(argv[3], "alpha8"), normal = !std::strcmp(argv[3], "normal");
-    if (!alpha && !normal && std::strcmp(argv[3], "rgb"))
-        return 65;
     char *end;
     long width = std::strtol(argv[1], &end, 10);
-    if (*end || width < 4 || width > 8192 || width % 4)
+    if (*end || width < 1 || width > 8192)
         return 65;
     long height = std::strtol(argv[2], &end, 10);
-    if (*end || height < 4 || height > 8192 || height % 4 ||
+    if (*end || height < 1 || height > 8192) return 65;
+    if (!std::strcmp(argv[3], "uncrunch-bc1")) return uncrunch(width, height, false);
+    if (!std::strcmp(argv[3], "uncrunch-bc3")) return uncrunch(width, height, true);
+    bool alpha = !std::strcmp(argv[3], "alpha8"), normal = !std::strcmp(argv[3], "normal");
+    if (!alpha && !normal && std::strcmp(argv[3], "rgb")) return 65;
+    if (width < 4 || height < 4 || width % 4 || height % 4 ||
         width * height * (alpha ? 1 : 3) > 64 * 1024 * 1024)
         return 65;
     size_t pixels = (size_t)width * height, input_size = pixels * (alpha ? 1 : 3);

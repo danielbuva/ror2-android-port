@@ -169,6 +169,7 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 | `owner-alpha-textures.json` | Private replay source Alpha8/single-mip texture cohort (J1082) | Canonical original/destination selectors, source/field extents, import/storage settings and hashes. | No alpha samples, encoded blocks, target byte frames, protected source or private identifiers; full audit below, 2026-10-24. | Original-PC-input-only `texture_produce.py` plus separately built public codec; no game-build consumer. |
 | `owner-rgb-textures.json` | Complete ETC1/single-mip target cohort | Original/destination selectors, field/pixel extents, hashes and source JPEG policy; composition aliases reuse original Warp/Elite ramps. | No colors, normal vectors, palettes, encoded blocks or target byte frames; audit below, 2026-10-24. | Original-input-only `texture_produce.py` and public ETC/JPEG tools; J1088 qualifies all 281 records on Android. |
 | `owner-rgba-textures.json` | Complete non-Alpha8 ETC2 RGBA/single-mip target cohort | Original/destination selectors, byte/field extents, hashes and canonical source relationships. | No pixels, palettes, encoded blocks, SDK implementation, private paths or target byte frames; audit below, 2026-10-24. | Existing source-only texture owner plus separately supplied SDK codec and public BC7 decoder; full phone qualification pending. |
+| `owner-rgb-mip-textures.json` | Complete ETC1 mip-chain target cohort | Original/destination selectors, field/pixel extents, hashes, full mip counts and source JPEG/normal relationships. | No pixels, vectors, encoded blocks, SDK bytes or target frames; audit below, 2026-10-24. | Existing texture owner, native pixel/mip helper and public ETC/JPEG/Unity Crunch tools; full public host/phone qualification pending. |
 | `owner-avatars.json` | Private replay Avatar bodies (J1075) | Minimum original/destination identities, hashes, source extents and source-entry permutations. | No strings, poses, rig/geometry values, target literals or byte frames; full audit above, 2026-10-24. | Explicit PC-input-only `avatar_produce.py`; no current game-build consumer. |
 | `owner-meshes.json` | Protected mesh bodies in the private replay packet, for the included cohort only (J1070) | Original bundle/object/resource selectors, destination identities/hashes and authored import/conversion settings. | No geometry arrays, collision data, target byte frames or float literals; full audit above, 2026-10-24. Two cases remain excluded. | Explicit original-input-only `mesh_produce.py`; no current game-build consumer. |
 | `shader-postprocessing-bloom-candidate.json` | Exported one-pass Bloom and exact source-camera CopyStd placeholders | Accepted-input source/meta/resource identities, official Unity package/license hashes and pass contracts; authored camera staging pin refreshed without changing camera transforms. | Authored selection metadata only; upstream source and generated content stay local under Unity Companion License. Manual audit 2026-10-23 described above. | `shader_postprocessing_bloom`, whole-catalog preparation and catalog replay comparison; default off. |
@@ -2644,3 +2645,33 @@ AssetRipper `1ac666f47d8e9dedf96afb0b914c70d7656151ea`. Its channel layout and
 one-unit interpolation bias explain the independent source-image comparison;
 the bounded C adapter is authored here. No BC4/BC5 game output or mip-derived
 literal table is distributed. Whole game-cohort and Android checks remain open.
+
+`owner-rgb-mip-textures.json` extends the same source-only texture owner to
+1,589 ETC1 mip-chain records, using 1,548 canonical source transformations from
+380 original PC bundles. SHA-256:
+`380d6d4c2a7f64db1bac10cefa0c6d31ec7cbfb1e817cd4fd2d7067643cb4283`.
+The nine selected fields add mip count and colour space to the existing seven
+texture fields. Remaining metadata is copied from the original object. Flags
+select source normal unpacking/JPEG policy and destination mip/normal handling;
+all content comes from original pixels. Duplicate names select the exact PC
+bundle/member/path-ID instance. A `.jpeg` original follows the same authored
+JPEG round trip as `.jpg` inputs. No exporter image is a production input.
+
+The vendored Unity Crunch material is unchanged public decompression source
+from `Unity-Technologies/crunch` commit
+`8708900eca8ec609d279270e72936258f81ddfb7`, selected by the pinned AssetRipper
+conversion package. Its complete Zlib notice and origin are retained beside
+three headers. The authored pipe adapter validates dimensions, one face,
+DXT1/DXT5 format, bounded input/output and decode success before writing bytes.
+It emits only the owner's decoded top BC level; the existing native pixel/mip
+and public ETC tools derive every target level. The compiler disables strict
+aliasing for the header adapter as required upstream; ETCPACK objects keep their
+existing compiler flags. A separate authored malloc compatibility header handles
+host compilation, without changing upstream source.
+
+Provenance, licensing, privacy and sensitive-content review: 2026-10-24. Only
+source selectors, hashes, format/import flags, names and storage relationships
+required for reconstruction are published. No protected pixel/block/curve table,
+SDK implementation or target frame is included. Full public-producer and Android
+qualification remain separate gates; generated packs and raw evidence stay
+ignored. Provider licenses grant no game or SDK redistribution permission.
