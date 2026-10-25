@@ -1831,7 +1831,7 @@ and readiness request/report are in `work/coordination/p1-content-source-host-v7
 The selected pack paths are local inputs, not target or replay suppliers. Phone
 qualification remains open; no new device or installed-state fact is implied.
 
-The J1119 animation/controller object packs and source-only discovery/comparison
+The animation/controller/material/hierarchy/generic object packs and source-only discovery/comparison
 evidence live under `work/coordination/p1-anim/` in the assigned worktree.
 `record_produce.py` generates packs from explicit original PC files and the
 tracked audited profiles. Callers pass a pack and successful pinned receipt

@@ -169,6 +169,9 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 | `owner-alpha-textures.json` | Private replay source Alpha8/single-mip texture cohort (J1082) | Canonical original/destination selectors, source/field extents, import/storage settings and hashes. | No alpha samples, encoded blocks, target byte frames, protected source or private identifiers; full audit below, 2026-10-24. | Original-PC-input-only `texture_produce.py` plus separately built public codec; no game-build consumer. |
 | `owner-rgb-textures.json` | Complete ETC1/single-mip target cohort | Original/destination selectors, field/pixel extents, hashes and source JPEG policy; composition aliases reuse original Warp/Elite ramps. | No colors, normal vectors, palettes, encoded blocks or target byte frames; audit below, 2026-10-24. | Original-input-only `texture_produce.py` and public ETC/JPEG tools; J1088 qualifies all 281 records on Android. |
 | `owner-rgba-textures.json` | Complete non-Alpha8 ETC2 RGBA/single-mip target cohort | Original/destination selectors, byte/field extents, hashes and canonical source relationships. | No pixels, palettes, encoded blocks, SDK implementation, private paths or target byte frames; audit below, 2026-10-24. | Existing source-only texture owner plus separately supplied SDK codec and public BC7 decoder; full phone qualification pending. |
+| `owner-generic-records.json` | Qualified remaining native/scripted object records | Original selectors/hashes, destination identities and checked PPtr relationships. | Every source field, script ID and native type hash is preserved; no state/property/particle value or target template. Audit below, 2026-10-25. | Source-only `record_produce.py`; host cohort and open phone/assembly gates recorded with the generic slice. |
+| `owner-gameobjects.json` | Qualified private GameObject record cohort | Original source bundle/member/object selectors and hashes, destination identities and checked PPtrs. | No component value, body or target template; original fields and native type identity preserved. Audit below, 2026-10-25. | Source-only `record_produce.py`; host qualification and remaining gates recorded with the hierarchy slice. |
+| `owner-transforms.json` | Qualified private Transform record cohort | Original source bundle/member/object selectors and hashes, destination identities and checked PPtrs. | No position, rotation, scale, hierarchy template or target scalar; source fields/native type identity preserved. Audit below, 2026-10-25. | Source-only `record_produce.py`; host qualification and remaining gates recorded with the hierarchy slice. |
 | `owner-animation-clips.json` | Qualified private AnimationClip object cohort | Original selectors/hashes, destination relationships and named source-schema animation policies. | No curve, pose, event/string/body template, arbitrary patch or target scalar; audit below, 2026-10-25. | Source-only `record_produce.py`; J1119 host qualification, full cohort/phone gate open. |
 | `owner-material-records.json` | Qualified private Material object cohort | Original selectors/hashes, checked PPtr relationships and existing dummy-shader keyword policy. | No material value, keyword string, shader program, body template or target scalar; audit below, 2026-10-25. | Source-only `record_produce.py`; J1119 host qualification, remaining materials/phone gate open. |
 | `owner-animator-controllers.json` | Qualified private AnimatorController object cohort | Original selectors/hashes and checked PPtr relationships only. | No native controller body, TOS table, curve/state value or target template; audit below, 2026-10-25. | Source-only `record_produce.py`; J1119 host qualification, full cohort/phone gate open. |
@@ -2750,3 +2753,36 @@ apply. Pinned AssetRipper TextureConverter/ExrWriter source informs face strides
 orientation and export half conversion; no upstream implementation or exporter
 image is copied. Provider terms grant no game/SDK redistribution, ownership,
 authentication or entitlement capability. Generated packs remain ignored.
+The GameObject/Transform record profiles select only uniquely matched original
+records with equal native type identity. Every non-pointer byte remains source
+owned, including original component entries and local position/rotation/scale.
+Only checked original-to-destination PPtrs change. No graph/body template,
+component scalar, coordinate, target value or arbitrary byte patch is present.
+Profiles are compact JSON because the admitted hierarchy cohort has 203,803
+destination relationships; this changes no parser or recipe format.
+Provenance/privacy/licensing/sensitive-content audit: 2026-10-25. All original
+content, produced packs and discovery evidence remain ignored; no ownership,
+entitlement or redistribution grant is added.
+
+The generic record profile admits eleven additional original classes, including
+MonoBehaviour/ScriptableObject, particle data, renderer/collider/settings and
+RectTransform records. Matching requires equal class ID, native type hash,
+script identity and every non-pointer body byte, with exactly one physical
+source. The producer changes only checked PPtrs; scripted metadata is passed
+through, and this cohort does not use the separate script-hash recomputation
+policy. No code, gameplay state, particle curve/value, native body/type template,
+coordinate or arbitrary byte patch is recorded. Provenance/privacy/licensing/
+sensitive-content audit: 2026-10-25. Outputs and raw matching evidence stay
+ignored; final bundle/player integration and phone qualification remain open.
+
+The expanded animation profile additionally selects native coefficient packing,
+source-binding permutations/constant folds, dense endpoint repetition and
+source quaternion normalization. Root quaternions use original indexed delta
+endpoints, not target poses. Binding permutations move complete stream keys,
+delta ranges and root indices together. Dense signed-zero import rules operate
+only on the selected original samples and ranges. All coefficients, quaternion values, dense
+samples and delta ranges are computed from original values; the recipe contains
+only source ordinals, field-policy flags and verification hashes. It contains
+no target sample, pose, curve coefficient, range or byte patch. The existing
+pointer/attribute transformations remain checked original relationships.
+Provenance/privacy/licensing/sensitive-content audit: 2026-10-25.

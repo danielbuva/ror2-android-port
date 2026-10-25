@@ -39949,3 +39949,131 @@ bundle/player owners. These packs close no final-file readiness entry by
 themselves. Complete source content, Android encoder/filter agreement, guarded
 single-job recovery, source-derived APK production/install, standard controls
 and performance remain open. Architecture C and native IL2CPP ARM64 remain fixed.
+## J1133 — Produce source animation, hierarchy and generic records on the host
+
+Date: 2026-10-25 UTC. **Host-only result:** four audited public profiles produce
+236,522 object records / 339,837,475 bytes, all independently compared byte for
+byte against J850. They extend the existing record owner and pack interface;
+complete file assembly, phone production and runtime acceptance remain open.
+No device, lease, Editor/project build, installation or launch occurs.
+
+**Hypothesis and prior art.** Original PC schemas/values plus authored import
+rules can reproduce most missing AnimationClips and unchanged native/scripted
+records without target body, tree, pose, coefficient or property literals.
+Consulted the J1119 record findings and existing animation/matching review.
+Pinned AssetRipper `1ac666f` streamed-curve tangent reconstruction and pinned
+UnityPy 1.25.3 type-tree/PPtr/serialized-type contracts supply format knowledge;
+Android-specific coefficient packing and root/dense import behavior remain
+requirements here. The exact SDK provides native operation-order observations,
+not production input or published implementation. Public
+[ARM instruction semantics](https://www.scs.stanford.edu/~zyedidia/arm64/shared_pseudocode.html)
+explain reciprocal-square-root estimate quantization and fused refinement.
+All conversion code is authored; no game or SDK implementation is published.
+
+**Named owner and implementation.** Existing `record_produce.py` uses embedded
+original type trees to locate typed float fields and streamed/dense/constant,
+index and delta arrays. It reconstructs original streamed tangents, then packs
+Hermite coefficients with the observed float32 order (including repeated
+subtractions). Selected original binding permutations move complete stream
+keys, ranges and root indices together; keys sort by remapped index per frame.
+Constant folds use the selected original first values. Dense import recomputes
+endpoint count with float32 timing, repeats the last original sample where
+needed and applies the selected signed-zero rule to original interior samples
+and dense delta endpoints. Importer size tracks these array changes while
+excluding reference-pose removal, as in J1119.
+
+Root quaternion inputs are original delta start/stop endpoints selected by
+original index-array channels 10–13, with absent-channel identity defaults.
+Already normalized original root fields are insufficient. Pairwise squared
+magnitude, a quantized ARM estimate and two fused refinement steps reproduce
+the native normalization; a scalar square root alone does not. No target vector
+or native library is needed. Native-class records preserve every non-PPtr byte;
+matching admits one physical source with equal class/native hash/script ID.
+The generic MonoBehaviour cohort passes original type identity through and
+uses no J1124 hash recomputation. This is a byte-provider qualification, not a
+claim that coincident GameObject bodies establish scene identity for graph
+expansion. Ambiguous physical sources remain excluded.
+
+**Profiles and final production.**
+
+| Cohort | Records | Bytes | Profile SHA-256 |
+| --- | ---: | ---: | --- |
+| AnimationClip | 3,246 | 200,697,460 | `2777c83eacc7343c2aa882bcc93ceed2590dffb7ede6c4676db07ede7aeec9a0` |
+| GameObject | 27,114 | 1,977,546 | `3da7ab3805dde0bf94fb883bd07a52bd4150d1985f6753d777b34d4da3ace442` |
+| Transform | 176,689 | 15,603,284 | `ab45522e5dbd8a05b0009e5d50c30b0339616007a6d34728cf1b36ee7a95e2b7` |
+| Generic native/scripted | 29,473 | 121,559,185 | `9039e884a2c56e879fc640efdd512d7474a858f266324d60a2a1c5bf48079f7e` |
+
+Generic counts: MeshRenderer 1,210; BoxCollider 239; RenderSettings 101;
+MonoBehaviour/ScriptableObject 19,532; SphereCollider 99; CapsuleCollider 493;
+ParticleSystem 5,890; ParticleSystemRenderer 523; LODGroup 59;
+ReflectionProbe 29; RectTransform 1,298.
+
+All four public producer executions use only the pinned recipes, unchanged
+original PC bundles and standard-library/public sibling modules. Every source
+file is checked before/after; expected record hashes and re-read persisted
+extents gate success. The final comparison requires successful receipts,
+matching persisted pack hashes/counts and full direct J850 bytes. Target files
+are comparison-only, never public-producer inputs. Outputs remain the existing
+`objects.bin`, `index.jsonl` and successful `result.json` interface.
+
+Private evidence under `work/coordination/p1-anim/` in the assigned worktree:
+
+- `final-animation-host-v1/result.json` and `final-animation-independent-comparison.json`:
+  81.504 s public production; object pack
+  `4071aa445a39ad25a1948600a85e63cdebb817d5942bc1cdea447d5fefe117e7`; index
+  `eb1d16e643294929b4f065c70e2b69b544582534137659f86b663350c406afc0`.
+- `gameobjects-host-v1/result.json` and `gameobjects-independent-comparison.json`:
+  71.341 s public production; object pack
+  `3f076e9db09ad035e26a8e80f33480cdbc047856c6da14a665bc3cf3c848b19a`; index
+  `4e6aebc34a3f46034e020187fb3776462b20ad509f8d56fb452a6550233ab5ae`.
+- `transforms-host-v1/result.json` and `transforms-independent-comparison.json`:
+  73.888 s public production; object pack
+  `83291b90f6e416407c196f037a66e4bb4fc1dcae1e208d6a711195cfc954f5eb`; index
+  `75777c5667e80df0c44e38e767702640e0be642f16107e2d02a3c2fced8b7a1f`.
+- `generic-host-v1/result.json` and `generic-independent-comparison.json`:
+  159.392 s public production; object pack
+  `add7ae97644b880853b1f472b7ac59377e1c7dab44f2f6d544050e59e2522931`; index
+  `8bd890da57c44d32541f053d1729c325b384a99803804113fccfbc064d39e3e2`.
+
+`final-production-done.json` additionally requires producer/comparison completion;
+`final-profiles-summary.json` and `final-clip-bundle-coverage.json` record the
+selector audit and remaining per-bundle counts. The earlier intermediate packs
+and refused discovery cases are retained. J850 comparison reference APK is
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`;
+there is no new APK or installed-state fact.
+
+**Failure classification and tests.** The earlier source normalization of
+already baked root quaternions misses a native rounding case; indexed original
+delta inputs resolve it without regressing the admitted cohort. Source binding
+order alone misses per-frame key sorting and root indices. Applying the same
+permutation fixes both without additional selectors. Dense import retains
+signed zero at terminal samples; indiscriminate global clearing is not used.
+The final profile excludes all unresolved clips instead of storing target
+values. Twelve authored record contracts, twelve object-producer contracts,
+twelve content-recipe contracts and three recipe tests pass, with Ruff and the
+staged public audit. The assigned worktree preflight refuses its absent local
+config/inventory/project state; these standalone producers require none of
+that Editor-project state and no input acceptance/build bypass occurs.
+Independent final review: GO, including rehashed final persisted clip outputs
+and all profile/count/host-only claims.
+
+**Readiness, provenance and remaining work.** The expanded clip profile covers
+3,246 of 3,323 payload clips; 77 remain. It closes the AnimationClip dependency
+for six payload bundles (FoggySwamp source, intro, outro, PromoRailgunner,
+PromoVoidSurvivor and VoidOutro), while commando/whole-game retain missing
+clips. These partial object packs directly close zero final-file readiness
+entries until callers assemble all dependencies. Hierarchy/generic packs are
+available to both payload and player-data callers; this experiment adds no
+complete APK player file. Existing J1119 controller/material packs and J1124
+managed-hash behavior remain intact.
+
+Remaining clip failures include root average motion/curve import differences
+and unresolved source-binding/reference relationships. Remaining controllers,
+materials, generic classes and full scene relationship transforms are separate
+source work. Generated content, original schemas/values and all raw discovery/
+comparison evidence stay ignored; public recipes contain selectors, hashes and
+relationships only, as audited in `recipe/README.md`. No ownership,
+authentication, entitlement or redistribution capability is granted.
+Revisit on original input, schema, selected relationship, algorithm, interpreter
+or reader changes. Phone production, complete source content, installation and
+matched runtime/performance remain open; Architecture C/IL2CPP ARM64 is fixed.

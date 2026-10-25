@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1133](PORTING_JOURNAL.md#j1133--produce-source-animation-hierarchy-and-generic-records-on-the-host) | 2026-10-24 | Produce source animation, hierarchy and generic records on the host | Date: 2026-10-25 UTC. |
 | [J1128](PORTING_JOURNAL.md#j1128--produce-complete-rgba-mip-and-source-cubemap-cohorts-on-the-host) | 2026-10-24 | Produce complete RGBA mip and source cubemap cohorts on the host | 2026-10-25. |
 | [J1123](PORTING_JOURNAL.md#j1123--guarded-rgba-phone-batch-loses-transport-admission-stays-open) | 2026-10-24 | Guarded RGBA phone batch loses transport; admission stays open | 2026-10-25. |
 | [J1124](PORTING_JOURNAL.md#j1124--derive-managed-script-properties-hashes-from-original-and-sdk-schemas) | 2026-10-24 | Derive managed script properties hashes from original and SDK schemas | Date: 2026-10-25 UTC. |
