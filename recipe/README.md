@@ -157,8 +157,9 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 
 | File | Replaces | Provenance | Privacy and licensing | Readers |
 | --- | --- | --- | --- | --- |
+| `owner-death-effect-objects.json` | Private replay player-death-effect bundle | Rooted original graph/script selectors, checked pointer extents, preload/dependency identities and hashes. | No body, type-tree snapshot, scalar/curve override or target delta; audit below, 2026-10-25. | Existing original-input-only `object_produce.py`; J1115 host qualification, phone gate open. |
 | `owner-pickup-objects.json` | Private replay pickup bundle | Original selectors, hashes, checked pointer extents and destination relationships. | No bodies, type trees or target deltas; full audit below, 2026-10-25. | Original-input-only `object_produce.py`; J1113 host qualification, phone gate open. |
-| `owner-player-data.json` | Seven private replay player files | Original metadata/font selectors, hashes, pointer relationships and authored assembly order. | No game bodies, images, SDK bytes or private identifiers; full audit below, 2026-10-25. | Explicit PC/SDK/fresh-converter `player_data.py`; J1113 host qualification, phone gate open. |
+| `owner-player-data.json` | Twenty-two private replay player files | Original metadata/font/text/Sprite selectors, hashes, pointer/importer relationships and authored JSON/assembly order. | No game bodies, images, text payloads, SDK bytes or private identifiers; full audits below, 2026-10-25. | Explicit PC/SDK/fresh-converter `player_data.py`; J1115 host qualification, phone gate open. |
 | `owner-uncompressed-textures.json` | Private replay uncompressed texture bodies/pixels | Original/destination selectors, source extents, generic import/placement metadata and hashes; copy, BC1, source-coordinate dilation and public JPEG policy. | No pixels, palettes, target literals/patches, native SDK implementation or image/library bytes; full audit above, 2026-10-24. All 399 records qualify on host/Android in J1079. | Explicit PC-input-only `texture_produce.py` and separately built public JPEG tool; no current game-build consumer. |
 | `owner-alpha-textures.json` | Private replay source Alpha8/single-mip texture cohort (J1082) | Canonical original/destination selectors, source/field extents, import/storage settings and hashes. | No alpha samples, encoded blocks, target byte frames, protected source or private identifiers; full audit below, 2026-10-24. | Original-PC-input-only `texture_produce.py` plus separately built public codec; no game-build consumer. |
 | `owner-rgb-textures.json` | Complete ETC1/single-mip target cohort | Original/destination selectors, field/pixel extents, hashes and source JPEG policy; composition aliases reuse original Warp/Elite ramps. | No colors, normal vectors, palettes, encoded blocks or target byte frames; audit below, 2026-10-24. | Original-input-only `texture_produce.py` and public ETC/JPEG tools; J1088 qualifies all 281 records on Android. |
@@ -2495,3 +2496,23 @@ not copied implementations. The five initializer identities are public authored
 lab declarations. No private path, credential, native binary, target literal or
 redistribution grant is added. Provenance, privacy, licensing and sensitive-content
 audit: 2026-10-25; J1113. All game-derived output stays private.
+
+J1115 extends `owner-player-data.json` with two original line-breaking text
+selectors, the pinned authored `runtime-config.json` input and twelve original
+standalone Sprite selectors. The Sprite operation regenerates only its importer
+GUID/local identity from the destination filename and relocates a checked
+texture pointer. Geometry, UVs, colors, text and source type identities are
+read from legitimate input, never stored in the profile. The existing runtime
+recipe is independently authored public configuration, formatted by its current
+owner. No rendered image, font/text payload, encoded block or target field
+array is included. The sprite texture file names are minimum dependency
+relationships; texture production remains a separate owner/gate.
+
+`owner-death-effect-objects.json` selects the original rooted prefab and its
+MonoScripts, with checked pointer relationships and comparison hashes. All
+non-reference fields and embedded type metadata come directly from the source;
+there are no numeric overrides or serialized templates. External-first preload
+ordering is structural metadata, needed by the measured target container.
+Provenance/privacy/licensing/sensitive-content audit: 2026-10-25; J1115.
+All game-derived outputs and raw discovery evidence remain ignored. No
+ownership, authentication, entitlement or redistribution grant is added.

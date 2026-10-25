@@ -102,6 +102,118 @@ def font_fixture(pc):
     return selected, bytes(expected)
 
 
+def text_fixture(pc, profile_root):
+    """Two independent TextAsset bodies, source reuse and authored JSON."""
+
+    def aligned(value):
+        data = value.encode("utf-8")
+        result = struct.pack("<I", len(data)) + data
+        return result + bytes(-len(result) % 4)
+
+    before = aligned("Original line breaks") + aligned("authored punctuation: )]!?\n")
+    recipe = profile_root / "authored-runtime.json"
+    recipe.write_text('{"greeting":"hello \u2603","active":true}')
+    script = '{\n  "greeting": "hello \\u2603",\n  "active": true\n}\n'
+    generated = aligned("AuthoredRuntime") + aligned(script)
+    definition = {"class_id": 49, "stripped": 0, "script_type": -1, "hash": b"T" * 16, "tree": struct.pack("<II", 1, 0) + bytes(32), "dependencies": []}
+    layout = {
+        "engine": "2021.3.45f2",
+        "platform": 19,
+        "trees": True,
+        "types": [definition],
+        "objects": [{"path_id": -51, "offset": 0, "bytes": len(before), "type_id": 0}],
+        "scripts": [],
+        "externals": [],
+        "ref_types": [],
+        "user": "",
+    }
+    serialized = io.BytesIO()
+    P.W.write_serialized(serialized, layout, lambda row: io.BytesIO(before))
+    source = pc / "authored-text.bundle"
+    data = serialized.getvalue()
+    with source.open("xb") as stream:
+        P.W.write_bundle(stream, [("CAB-authored-text", 4, len(data), lambda: io.BytesIO(data))], lambda body, method: body, flags=0x40)
+    expected = {}
+    for name, body in (("original-text-player", before), ("authored-json-player", generated)):
+        meta = bytearray(b"2021.3.45f2\0" + struct.pack("<i?I", 13, False, 1))
+        meta.extend(struct.pack("<iBh", 49, 0, -1) + b"T" * 16 + struct.pack("<I", 1))
+        meta.extend(bytes(-len(meta) % 4))
+        meta.extend(struct.pack("<qqIiIII", 1, 0, len(body), 0, 0, 0, 0))
+        meta.extend(b"\0")
+        header = struct.pack(">IIII", 0, 0, 22, 0) + bytes(4) + struct.pack(">Iqqq", len(meta), 4096 + len(body), 4096, 0)
+        expected[name] = header + meta + bytes(4096 - len(header) - len(meta)) + body
+    selected = {
+        "source": {"path": source.name, "bytes": source.stat().st_size, "sha256": P.sha(source), "member": "CAB-authored-text"},
+        "files": [
+            {"file": "original-text-player", "source_path_id": -51, "source_sha256": pin(before)[1], "bytes": len(before), "sha256": pin(before)[1]},
+            {
+                "file": "authored-json-player",
+                "name": "AuthoredRuntime",
+                "recipe": {"path": recipe.name, "bytes": recipe.stat().st_size, "sha256": P.sha(recipe)},
+                "bytes": len(generated),
+                "sha256": pin(generated)[1],
+            },
+        ],
+    }
+    return selected, expected
+
+
+def sprite_fixture(pc):
+    """An authored standalone Sprite, preserving all non-identity body bytes."""
+    source_body = bytearray(b"!" * 160)
+    struct.pack_into("<I", source_body, 0, 6)
+    source_body[4:10] = b"sprite"
+    key = 72
+    source_body[key + 24 : key + 64] = bytes(40)
+    struct.pack_into("<iq", source_body, key + 40, 0, 11)
+    name = "0123456789abcdef0011223344556677"
+    texture = "fedcba98765432100011223344556677"
+    expected_body = bytearray(source_body)
+    expected_body[key : key + 24] = bytes.fromhex("1032547698badcfe00112233445566772003450100000000")
+    struct.pack_into("<iq", expected_body, key + 40, 1, 1)
+    layout = {
+        "engine": "2021.3.45f2",
+        "platform": 19,
+        "trees": False,
+        "types": [{"class_id": 213, "stripped": 0, "script_type": -1, "hash": b"S" * 16}],
+        "objects": [{"path_id": 37, "offset": 0, "bytes": len(source_body), "type_id": 0}],
+        "scripts": [],
+        "externals": [],
+        "ref_types": [],
+        "user": "",
+    }
+    source = pc / "authored-sprites.assets"
+    with source.open("xb") as output:
+        P.W.write_serialized(output, layout, lambda row: io.BytesIO(source_body))
+    meta = bytearray(b"2021.3.45f2\0" + struct.pack("<i?I", 13, False, 1))
+    meta.extend(struct.pack("<iBh", 213, 0, -1) + b"S" * 16 + struct.pack("<I", 1))
+    meta.extend(bytes(-len(meta) % 4))
+    meta.extend(struct.pack("<qqIiII", 1, 0, len(expected_body), 0, 0, 1))
+    meta.extend(b"\0" + bytes(16) + struct.pack("<i", 0) + texture.encode() + b"\0" + struct.pack("<I", 0) + b"\0")
+    header = struct.pack(">IIII", 0, 0, 22, 0) + bytes(4) + struct.pack(">Iqqq", len(meta), 4096 + len(expected_body), 4096, 0)
+    expected = header + meta + bytes(4096 - len(header) - len(meta)) + expected_body
+    selected = {
+        "source": {"path": source.name, "bytes": source.stat().st_size, "sha256": P.sha(source)},
+        "files": [
+            {
+                "file": name,
+                "texture": texture,
+                "objects": [
+                    {
+                        "source_path_id": 37,
+                        "path_id": 1,
+                        "bytes": len(source_body),
+                        "source_sha256": pin(source_body)[1],
+                        "sha256": pin(expected_body)[1],
+                        "references": [{"offset": key + 40, "from": [0, 11], "to": [1, 1]}],
+                    }
+                ],
+            }
+        ],
+    }
+    return selected, {name: bytes(expected)}
+
+
 class PlayerDataTests(unittest.TestCase):
     def setUp(self):
         temporary = tempfile.TemporaryDirectory()
@@ -143,6 +255,10 @@ class PlayerDataTests(unittest.TestCase):
         }
         self.profile["font"], font_bytes = font_fixture(self.pc)
         self.generated[self.profile["font"]["file"]] = font_bytes
+        self.profile["text_assets"], text_bytes = text_fixture(self.pc, self.root)
+        self.profile["sprites"], sprite_bytes = sprite_fixture(self.pc)
+        self.generated.update(sprite_bytes)
+        self.generated.update(text_bytes)
         self.profile["outputs"] = {name: {"bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()} for name, data in self.generated.items()}
         self.profile_path = self.root / "profile.json"
         self.profile_path.write_text(json.dumps(self.profile))
@@ -285,6 +401,49 @@ class PlayerDataTests(unittest.TestCase):
                 self.assertFalse(json.loads((output / "result.json").read_text())["success"])
                 if mutation == "original":
                     source.write_bytes(old)
+
+    def test_text_source_and_authored_recipe_drift_refuse_without_fallback(self):
+        for mutation in ("source", "body", "recipe", "recipe-path", "file-path", "generated-body"):
+            with self.subTest(mutation=mutation):
+                profile = json.loads(json.dumps(self.profile))
+                text = profile["text_assets"]
+                if mutation == "source":
+                    text["source"]["sha256"] = "0" * 64
+                elif mutation == "body":
+                    text["files"][0]["source_sha256"] = "0" * 64
+                elif mutation == "recipe":
+                    text["files"][1]["recipe"]["sha256"] = "0" * 64
+                elif mutation == "recipe-path":
+                    text["files"][1]["recipe"]["path"] = "../authored-runtime.json"
+                elif mutation == "file-path":
+                    text["files"][0]["file"] = "../escaped"
+                else:
+                    text["files"][1]["name"] = "Unpinned authored name"
+                self.profile_path.write_text(json.dumps(profile))
+                self.profile_hash = P.sha(self.profile_path)
+                output = self.root / mutation
+                with self.assertRaises(ValueError):
+                    self.produce(output)
+                self.assertFalse(json.loads((output / "result.json").read_text())["success"])
+                self.assertFalse((output / "apk/assets/bin/escaped").exists())
+
+    def test_sprite_guid_regeneration_preserves_non_identity_body_and_refuses_atlas(self):
+        body = bytearray(160)
+        struct.pack_into("<I", body, 0, 6)
+        body[4:10] = b"sprite"
+        body[72:96] = b"original importer key!!!"
+        expected_key = bytes.fromhex("1032547698badcfe00112233445566772003450100000000")
+        result = P.sprite_key(bytes(body), "0123456789abcdef0011223344556677")
+        self.assertEqual(result[:72], body[:72])
+        self.assertEqual(result[72:96], expected_key)
+        self.assertEqual(result[96:], body[96:])
+        for offset in (96, 100, 124):
+            changed = bytearray(body)
+            changed[offset] = 1
+            with self.subTest(offset=offset), self.assertRaisesRegex(ValueError, "layout"):
+                P.sprite_key(changed, "0123456789abcdef0011223344556677")
+        with self.assertRaisesRegex(ValueError, "GUID"):
+            P.sprite_key(body, "../escaped")
 
     def test_font_source_object_reference_and_output_metadata_drift_refuse(self):
         for mutation in ("bundle", "body", "reference", "metadata", "memory-bound"):

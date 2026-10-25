@@ -53,7 +53,9 @@ def asset_bundle(selected, identities):
     """Build Unity's release AssetBundle metadata, without target body literals."""
     stream = io.BytesIO()
     aligned_string(stream, selected["name"])
-    preload = [(0, identity) for identity in sorted(identities)] + selected["external_objects"]
+    local = [(0, identity) for identity in sorted(identities)]
+    external = selected["external_objects"]
+    preload = external + local if selected.get("external_preload_first", False) else local + external
     stream.write(struct.pack("<I", len(preload)))
     for file_id, path_id in preload:
         stream.write(struct.pack("<iq", file_id, path_id))
