@@ -197,7 +197,7 @@ class SdkTextureTests(unittest.TestCase):
             "#ifdef __APPLE__\n#include <malloc/malloc.h>\n#define malloc_usable_size malloc_size\n#else\n#include_next <malloc.h>\n#endif\n"
         )
         tool = self.root / "crunch"
-        subprocess.run(
+        compilation = subprocess.run(
             [
                 compiler,
                 "-std=c++11",
@@ -211,9 +211,9 @@ class SdkTextureTests(unittest.TestCase):
                 str(tool),
             ],
             capture_output=True,
-            check=True,
             timeout=60,
         )
+        self.assertEqual(compilation.returncode, 0, compilation.stderr.decode(errors="replace"))
         for width, height, data in ((0, 4, b""), (4, 8193, b""), (4, 4, b""), (4, 4, b"Hx" + bytes(200)), (1, 3, bytes(range(73)))):
             for mode in ("uncrunch-bc1", "uncrunch-bc3"):
                 result = subprocess.run([str(tool), str(width), str(height), mode], input=data, capture_output=True, timeout=10)

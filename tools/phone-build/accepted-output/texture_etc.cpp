@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <stdint.h>
 #include <vector>
 #include "third_party/unitycrunch/crn_decomp.h"
 
