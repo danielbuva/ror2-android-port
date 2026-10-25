@@ -42558,3 +42558,53 @@ PCM and the complete Siren route under the explicit shared handoff. Native
 Engineer effects, mission completion, rare-NaN causality, PC appearance, full
 audio and normal-run acceptance remain open. R57 remains a frozen uninstalled
 predecessor.
+
+
+## J1152 — Preserve R58 thermal abort before baseline world play
+
+**Hypothesis and fixed candidate.** Continue J1121's installed normal R58 with
+the reviewed shared thermal owner from J1148, without rebuilding, reinstalling
+or changing gameplay. Read J1121's prior inventory failures and the shared-owner
+handoff before the single continuation. The helper is pinned to source 039ebda8
+and SHA-256
+`b39b1478a085a1fe8978a0740729c8cf2cd49ec76e2d9dafd5bf2abe94209836`.
+Admission requires CPU/GPU/battery/skin at or below 50 C; all readable physical
+temperature zones remain sampled at runtime with an above-80 C abort. Unsupported
+reads and unavailable admission sentinels are recorded separately. No threshold
+is relaxed and no new runtime diagnostic or platform adapter is implemented.
+
+**Observed first failure.** Retained-data/profile and current installed-byte
+checks pass for R58, source 55149b48, APK SHA-256
+`4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`.
+Fresh internal free space exceeds 15 GiB. Admission passes with a 31.4 C maximum
+for its selected sensor classes. The plain control launches, but the shared
+thermal observer records CPU/all-zone peak 81.6 C and a hard abort during setup.
+The baseline returns process-exited and zero world-play seconds; it does not
+complete the required 35 s. The stage-exit and destination controls never run.
+The over-limit sample identifies cpu-1-9, about 193 s after baseline evidence
+begins; the maximum runtime sampling gap is 0.487 s. The last source log records
+SceneDirector population about 3 s before the crossing. The retained report has
+blank error/first-failure fields; the JobTempAlloc warning does not establish
+causality.
+This is a guarded thermal termination, not evidence of a spontaneous native
+crash, an accepted control, or a rendering/audio/gameplay regression.
+
+Private evidence is
+`work/coordination/main-port-r58/controls-admission-retry/`: the single terminal
+`device.done.json`, `plain.json`, `plain-thermal.jsonl`, pre-control receipt,
+failure report/log and both prune logs. Baseline evidence remains at
+`work/experiments/baseline/20261025T111240.271111Z`. The terminal receipt is read
+once. All evidence and original failed attempts remain local; no artifacts are
+copied. Doctor still passes accepted-input/project checks and reports the known
+historical bootstrap gate as blocked.
+
+**Terminal ownership and remaining gates.** Independent cleanup records app
+process and selector absent, OLED asleep and lease released. Mandatory post-run
+pruning passes. Explicit terminal handoff yields the shared device to the queued
+owner-build case, followed by bundles and alpha; no new main-port device job is
+queued. R55/J1105 remains the latest gameplay-qualified candidate on this device.
+R58 remains installed but unqualified. Both strict controls, destination PCM,
+Siren-route recovery/mission, live Engineer semantics, PC appearance, full audio
+and normal unassisted runs remain open. Revisit the launch/setup thermal cost
+from the retained trace and logs before another attempt, preserving the current
+thresholds and explicit device order.
