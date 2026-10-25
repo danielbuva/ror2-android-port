@@ -202,6 +202,190 @@ def packed_fixture(root):
     return pc, profile_path, directory, profile, row, serialized
 
 
+def scene_fixture(root):
+    """Authored two-member scene with overlapping IDs and external scripts."""
+    pc = root / "pc"
+    pc.mkdir()
+    shared, main = "BuildPlayer-authored.sharedAssets", "BuildPlayer-authored"
+
+    def string(value):
+        data = value.encode()
+        return struct.pack("<I", len(data)) + data + bytes(-len(data) % 4)
+
+    mono = {**typ(114), "script_id": bytes(16), "script_type": 99}
+    original_first = bytes(16) + struct.pack("<iqiqiqiq", 0, 71, 8, 90, 8, 80, 0, 91)
+    first = bytes(16) + struct.pack("<iqiqiqiq", 1, 7, 2, 90, 3, 80, 1, 3)
+    original_second = bytes(16) + struct.pack("<iqiqiq", 0, 72, 9, 80, 4, 123)
+    second = bytes(16) + struct.pack("<iqiqiq", 1, 8, 3, 80, 4, 123)
+    original_gameobject = struct.pack("<II", 0, 0) + string("Map owner") + struct.pack("<HB", 0, 1)
+    gameobject = original_gameobject[:-1] + bytes(1)
+    source_bodies = {
+        71: (typ(115), b"FIRST"),
+        72: (typ(115), b"SECOND"),
+        81: (mono, original_first),
+        82: (mono, original_second),
+        83: (typ(1), original_gameobject),
+        91: (typ(43), b"ORIGINAL-MESH"),
+        101: (typ(150), b"ORIGINAL-PRELOAD"),
+        102: (typ(142), b"ORIGINAL-CONTAINER"),
+    }
+    source_layout = {
+        "engine": "2021.3.1f1",
+        "platform": 19,
+        "trees": True,
+        "types": [typ(115), mono, typ(1), typ(43), typ(150), typ(142)],
+        "objects": [],
+        "scripts": [],
+        "externals": [],
+        "ref_types": [],
+        "user": "",
+    }
+    offset = 0
+    for identity, (kind, body) in source_bodies.items():
+        offset = (offset + 7) // 8 * 8
+        source_layout["objects"].append({"path_id": identity, "offset": offset, "bytes": len(body), "type_id": source_layout["types"].index(kind)})
+        offset += len(body)
+    source_serialized = io.BytesIO()
+    P.W.write_serialized(source_serialized, source_layout, lambda row: io.BytesIO(source_bodies[row["path_id"]][1]))
+    source = pc / "original.bundle"
+    source.write_bytes(FIXTURE.bundle([("CAB-original", source_serialized.getvalue(), 4)], True))
+    # Independent expected native bodies: sorted unique dependencies translated
+    # into the shared member's external table; all scene-local PPtrs excluded.
+    preload = string("") + struct.pack("<IiqiqiqI", 3, 1, 80, 2, 123, 3, 90, 1) + string("authored-dependency") + bytes(1)
+    container = (
+        string("authored-scene")
+        + struct.pack("<II", 0, 1)
+        + string("Assets/WholeGame/SceneCase/Room.unity")
+        + struct.pack("<iiiq", 0, 0, 0, 0)
+        + struct.pack("<iiiqI", 0, 0, 0, 0, 1)
+        + string("")
+        + struct.pack("<I", 0)
+        + struct.pack("<B3xiii", 1, 0, 7, 0)
+    )
+    bodies = {
+        shared: {1: preload, 2: container, 3: b"SHARED", 7: b"FIRST", 8: b"SECOND"},
+        main: {1: first, 2: second, 3: b"MAIN", 4: gameobject},
+    }
+    shared_external = ["CAB-A", "Library/unity default resources", "CAB-B"]
+    main_external = [shared, "CAB-B", "CAB-A", "Library/unity default resources"]
+
+    def external(path, native=False):
+        return {"empty": "", "guid": bytes.fromhex("00000000000000000e00000000000000") if native else bytes(16), "type": 0, "path": path}
+
+    expected_layouts = {
+        shared: {
+            "types": [typ(115), typ(150), typ(142), typ(43)],
+            "scripts": [],
+            "externals": [external("archive:/CAB-A/CAB-A"), external("Library/unity default resources", True), external("archive:/CAB-B/CAB-B")],
+        },
+        main: {
+            "types": [{**mono, "script_type": 0}, {**mono, "script_type": 1}, typ(43), typ(1)],
+            "scripts": [(1, 7), (1, 8)],
+            "externals": [
+                external("archive:/" + main + "/" + shared),
+                external("archive:/CAB-B/CAB-B"),
+                external("archive:/CAB-A/CAB-A"),
+                external("Library/unity default resources", True),
+            ],
+        },
+    }
+    serialized = {}
+    for name, physical, type_ids in ((shared, [7, 8, 1, 2, 3], [0, 0, 1, 2, 3]), (main, [1, 2, 3, 4], [0, 1, 2, 3])):
+        layout = {"engine": "2021.3.45f2", "platform": 13, "trees": True, "ref_types": [], "user": "", **expected_layouts[name]}
+        offset, objects = 0, []
+        for identity, type_id in zip(physical, type_ids, strict=True):
+            offset = (offset + 7) // 8 * 8
+            body = bodies[name][identity]
+            objects.append({"path_id": identity, "offset": offset, "bytes": len(body), "type_id": type_id})
+            offset += len(body)
+        layout["objects"] = sorted(objects, key=lambda row: row["path_id"])
+        stream = io.BytesIO()
+        P.W.write_serialized(stream, layout, lambda row, name=name: io.BytesIO(bodies[name][row["path_id"]]))
+        serialized[name] = stream.getvalue()
+    expected_bundle = io.BytesIO()
+    P.W.write_bundle(expected_bundle, [(name, 4, len(data), lambda data=data: io.BytesIO(data)) for name, data in serialized.items()], literal_lz4)
+    pack = root / "pack"
+    pack.mkdir()
+    (pack / "objects.bin").write_bytes(b"SHAREDMAIN")
+    pack_rows = [
+        {"bundle": "authored-scene", "member": name, "path_id": 3, "offset": offset, "bytes": len(body), "sha256": digest(body)}
+        for name, offset, body in ((shared, 0, b"SHARED"), (main, 6, b"MAIN"))
+    ]
+    (pack / "index.jsonl").write_text("".join(json.dumps(row) + "\n" for row in pack_rows))
+    record_pin = "c" * 64
+    (pack / "result.json").write_text(
+        json.dumps(
+            {
+                "success": True,
+                "input_id": P.M.INPUT_ID,
+                "profile_sha256": record_pin,
+                "outputs": {name: {"bytes": (pack / name).stat().st_size, "sha256": P.B.sha(pack / name)} for name in ("objects.bin", "index.jsonl")},
+            }
+        )
+    )
+
+    def source_selection(name, identity, original_id, **policy):
+        body = bodies[name][identity]
+        return {
+            "path_id": identity,
+            "source": [0, original_id],
+            "source_sha256": digest(source_bodies[original_id][1]),
+            "bytes": len(body),
+            "sha256": digest(body),
+            **policy,
+        }
+
+    def packed_selection(name):
+        body = bodies[name][3]
+        return {"path_id": 3, "record": record_pin, "type_source": [0, 91], "bytes": len(body), "sha256": digest(body)}
+
+    def refs(original, body, positions):
+        return [
+            {"offset": offset, "from": list(struct.unpack_from("<iq", original, offset)), "to": list(struct.unpack_from("<iq", body, offset))}
+            for offset in positions
+        ]
+
+    profile = {
+        "input_id": P.M.INPUT_ID,
+        "sources": [{"path": source.name, "member": "CAB-original", "sha256": P.B.sha(source)}],
+        "bundle": {
+            "name": "authored-scene",
+            "bytes": len(expected_bundle.getvalue()),
+            "sha256": digest(expected_bundle.getvalue()),
+            "scene_path": "Assets/WholeGame/SceneCase/Room.unity",
+            "dependencies": ["authored-dependency"],
+            "members": [
+                {
+                    "name": shared,
+                    "externals": shared_external,
+                    "serialized_sha256": digest(serialized[shared]),
+                    "objects": [
+                        {"path_id": 1, "type_source": [0, 101], "generate": "PreloadData", "bytes": len(preload), "sha256": digest(preload)},
+                        {"path_id": 2, "type_source": [0, 102], "generate": "AssetBundle", "bytes": len(container), "sha256": digest(container)},
+                        packed_selection(shared),
+                        source_selection(shared, 7, 71),
+                        source_selection(shared, 8, 72),
+                    ],
+                },
+                {
+                    "name": main,
+                    "externals": main_external,
+                    "serialized_sha256": digest(serialized[main]),
+                    "objects": [
+                        source_selection(main, 1, 81, references=refs(original_first, first, [16, 28, 40, 52])),
+                        source_selection(main, 2, 82, references=refs(original_second, second, [16, 28, 40])),
+                        packed_selection(main),
+                        source_selection(main, 4, 83, inactive_map_zone=True),
+                    ],
+                },
+            ],
+        },
+    }
+    path = root / "scene-profile.json"
+    path.write_text(json.dumps(profile))
+    return pc, path, profile, pack, bodies, serialized, expected_bundle.getvalue()
+
+
 def managed_fixture(root):
     pc, path, profile, _, original_target = fixture(root)
     source = pc / "source.bundle"
@@ -344,6 +528,62 @@ class ObjectProducerTests(unittest.TestCase):
                 receipt = json.loads((root / "failed/result.json").read_text())
                 self.assertFalse(receipt["success"])
                 self.assertIn(message, receipt["error"])
+
+    def test_complete_two_member_scene_preserves_scripts_dependencies_and_pack_identities(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            pc, path, profile, pack, bodies, serialized, expected_bundle = scene_fixture(root)
+            before = P.B.sha(pc / "original.bundle")
+            with patch.object(P.W, "codec", return_value=nullcontext(literal_lz4)):
+                result = P.produce(path, P.B.sha(path), pc, root / "produced", Path("codec"), "pin", [(pack, P.B.sha(pack / "result.json"))])
+            self.assertTrue(result["success"])
+            self.assertEqual(result["objects"], 9)
+            self.assertEqual(result["object_bytes"], sum(len(body) for member in bodies.values() for body in member.values()))
+            self.assertEqual((root / "produced/payload/authored-scene").read_bytes(), expected_bundle)
+            emitted = P.B.Bundle(root / "produced/payload/authored-scene")
+            self.assertEqual(list(emitted.members), list(serialized))
+            self.assertEqual([row[2] for row in emitted.members.values()], [4, 4])
+            for name, expected in serialized.items():
+                member = emitted.member(name)
+                self.assertEqual(P.B.exact(member, member.size), expected)
+            layouts = json.loads((root / "produced/layout.json").read_text())["members"]
+            self.assertEqual([row["name"] for row in layouts], list(serialized))
+            self.assertEqual(layouts[0]["scripts"], [])
+            self.assertEqual(layouts[1]["scripts"], [[1, 7], [1, 8]])
+            self.assertEqual(result["serialized_sha256"], {name: digest(data) for name, data in serialized.items()})
+            rows = [json.loads(line) for line in (root / "produced/index.jsonl").read_text().splitlines()]
+            self.assertEqual(
+                [(row["member"], row["path_id"]) for row in rows], [(name, identity) for name, member in bodies.items() for identity in sorted(member)]
+            )
+            packed = (root / "produced/objects.bin").read_bytes()
+            for row in rows:
+                self.assertEqual(packed[row["offset"] : row["offset"] + row["bytes"]], bodies[row["member"]][row["path_id"]])
+            self.assertEqual(P.B.sha(pc / "original.bundle"), before)
+
+    def test_scene_mapzone_and_generated_native_types_are_checked(self):
+        for failure, message in (
+            ("policy", "active original GameObject"),
+            ("class", "active original GameObject"),
+            ("preload", "original PreloadData type"),
+            ("bundle", "original AssetBundle type"),
+        ):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                pc, path, profile, pack, _, _, _ = scene_fixture(root)
+                shared, main = profile["bundle"]["members"]
+                owner = main["objects"][-1]
+                if failure == "policy":
+                    owner["inactive_map_zone"] = False
+                elif failure == "class":
+                    owner.update(source=[0, 91], source_sha256=digest(b"ORIGINAL-MESH"))
+                elif failure == "preload":
+                    shared["objects"][0]["type_source"] = [0, 102]
+                else:
+                    shared["objects"][1]["type_source"] = [0, 101]
+                path.write_text(json.dumps(profile))
+                with self.assertRaisesRegex(ValueError, message):
+                    P.produce(path, P.B.sha(path), pc, root / "failed", Path("codec"), "pin", [(pack, P.B.sha(pack / "result.json"))])
+                self.assertFalse(json.loads((root / "failed/result.json").read_text())["success"])
 
     def test_audio_component_omission_preserves_order_and_every_other_gameobject_byte(self):
         suffix = b"NAME-LAYER-TAG-AND-ACTIVE"

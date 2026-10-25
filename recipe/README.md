@@ -2804,3 +2804,17 @@ Generated records, raw comparisons and source discovery remain ignored. This
 recipe grants no ownership, authentication, entitlement, SDK/game acquisition
 or redistribution capability; phone execution and complete installation remain
 separate gates.
+
+
+`owner-villagenight-objects.json` is audited for provenance, licensing, privacy
+and sensitive content (2026-10-25). It contains original PC bundle/member/object
+selectors and hashes, checked local/external pointer and component relationships,
+source-produced mesh selectors and comparison hashes. Original bodies and embedded
+type metadata are read locally. Scene/container/member identities and dependencies
+are minimum reconstruction relationships, never serialized templates. The named
+inactive MapZone policy retains the existing authored scene export behaviour.
+The omitted ReflectionProbe bake is represented by a checked null PPtr. No
+original scene text, geometry, pixels, shader, gameplay scalar or serialized
+body/tree is distributed; raw discovery/output/comparison data stays ignored.
+This grants no game/SDK redistribution, acquisition, ownership, authentication
+or entitlement permission. Host and phone qualification remain separate.

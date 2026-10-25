@@ -951,3 +951,17 @@ RGBA cubes use the SDK colour/public EAC alpha path. CompleteImageSize remains
 per face; the resource extent contains all six faces. Original metadata outside
 the selected nine fields is retained. No target pixel supplier or Editor/project
 executes in production. Complete Android qualification remains open.
+
+`owner-villagenight-objects.json` uses the same object owner for the complete
+two-member streamed-scene bundle. Supply its independently produced mesh pack
+with `--record-pack DIRECTORY RESULT_JSON_SHA256`. Shared assets precede the
+scene member; each retains its own type/script/external tables and persisted
+index member identity. The scene's script table includes only actually used
+script pointers, including references into the shared member. Generated native
+PreloadData collects the qualified external reference relationships; the native
+streamed-scene container preserves original path case. Original scene export
+component omissions and inactive MapZone policy remain checked transformations.
+The scene layout output uses a `members` list in physical member order and the
+receipt records each serialized member hash. No Editor or accepted target input
+is needed for production; complete bundle comparison and phone acceptance are
+separate gates.

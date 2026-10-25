@@ -40144,3 +40144,83 @@ Unity AssetBundleHash values require imported-artifact dependency derivation,
 separately from final bundle SHA/length generation. Native shader and remaining
 content producer gates are unchanged. Revisit this slice only for source/SDK
 drift, a failed reconstruction contract or actual phone evidence.
+
+## J1134 — Reconstruct the complete Village Night streamed-scene bundle
+
+Date: 2026-10-25 UTC. Host-only source production; no Unity Editor, device,
+installation or game launch. J850 comparison APK SHA-256:
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+**Hypothesis and prior art.** J1050's reuse census selects the next high-value
+shader/clip-free scene after J1132. J1116 already qualifies the writer; neither
+census is repeated. Read those entries and J1120 before mapping the scene.
+Consulted `community-prior-art.md`, pinned UnityPy 1.25.3's generated
+AssetBundle/PreloadData contracts and `SerializedFile.script_types`, plus the
+existing `nova_bridge.py` authored scene keep/MapZone/component policies.
+Original graph identity and current legitimate source outrank same-name/equal
+bodies. Existing source/target structural comparisons discover relationships;
+accepted bodies, type trees or metadata snapshots never become production inputs.
+
+**Complete slice.** Extend only the existing `object_produce.py`, its fixture
+and audited `owner-villagenight-objects.json`. Process shared assets then the
+scene member. Preserve each member's source-native type metadata and checked
+object relationships, with independent physical script-first body order and
+actually used MonoBehaviour script tables. Shared assets have two MonoScripts
+and an empty script table; the main member uses both external script pointers.
+Cross-member references use the scene archive path. Original source scripts
+require no properties/type-hash recomputation. The existing source mesh pack
+provides all 46 inline meshes; its receipt and persisted extents are checked.
+
+Generate native PreloadData from the qualified checked external relationships,
+translated through member external tables and deduplicated/sorted. Its 77
+preloads exclude local scene members. Generate the streamed-scene AssetBundle
+container from its minimum original relocated scene path, preserving case,
+root zero and empty container bundle-name/dependency metadata. Dependencies
+live in PreloadData. Checked component omissions preserve remaining original
+bytes. The existing MapZone policy disables one originally active owner; the
+original omitted ReflectionProbe bake uses an ordinary checked null PPtr.
+No additional parser, writer, geometry/media producer or framework is added.
+
+**Result.** The public `python3 -I -S -B` producer consumes only the original
+PC input, explicit public codec, audited recipe and pinned mesh pack. In
+6.438 seconds it produces **12,332 objects / 11,192,096 body bytes** and the
+complete **6,468,004-byte villagenight-spine-lab** bundle. Full SHA-256:
+`4a79889afcdc08f37075ea0530e4028a73f1366344eb1c4c4510e7c6c480be80`.
+Both complete serialized members match J850:
+
+| Member | Objects | Bytes | SHA-256 |
+| --- | ---: | ---: | --- |
+| `BuildPlayer-villagenight.sharedAssets` | 51 | 9,982,800 | `09cf987a20e988e029be91f5c689d57f4399ccd59b606858f521f0a551895066` |
+| `BuildPlayer-villagenight` | 12,281 | 1,719,056 | `bde37b760ed72f2f98b1f91c1a34ae31a68741c6cf7bfa6107710c7e6c804677` |
+
+Independent persistent readback compares the entire bundle and both members
+raw-exact, and verifies all 12,332 object extents. Private evidence lives in
+`work/coordination/p1-payload-village-discovery-v1/`: `refine-done.json`,
+`public-host-v1/result.json` and `public-host-v1-comparison.json`. Public recipe
+SHA-256: `2ede8a44bca33616f8a29fdc81abb6d5752b02911d283751dd3c8ec52ff8ac69`.
+The source-produced mesh profile is
+`6540b15092906d4ddb43e9eb7dc49481e15e359724541f6b307042f1a62aff23`.
+This is the eighth complete source-derived host bundle and first complete
+streamed-scene slice through this owner. Canonical source union
+`work/coordination/p1-content-source-host-v10` reports **187/705 ready**,
+**518 missing (392 APK / 126 payload)** and **zero invalid/mismatched** entries.
+No APK/payload copy is made for review; the union hard-links produced files.
+
+**First failure and verification.** Initial bounded graph discovery resolves
+12,328 of 12,332 records. The remaining records are generated native PreloadData/
+AssetBundle, the inactive MapZone owner and omitted reflection bake. Resolve
+them through existing export policies and source relationships. Six ambiguous
+rope duplicates retain original within-class source order after graph matching.
+Both private serialized members then compare exact. The first public producer
+run succeeds. Sixteen authored object contracts and seven writer checks pass;
+the new two-member fixture checks independently constructed metadata/bundle
+bytes, external script tables, member-qualified duplicate path IDs, translated
+preloads, persisted output identities and inactive-owner refusal on drift.
+Ruff, host preflight, staged/public/manual provenance audit pass.
+
+**Remaining.** Full original content/catalog production and phone execution
+remain open. This complete source-derived host file does not qualify installed
+behaviour, game readiness or performance. Helminthroost is the next bounded
+shader/clip-free scene candidate; native shader and imported-artifact root
+manifest hash gates remain separate. Revisit only on source/profile drift, a
+failed contract or actual Android evidence.

@@ -68,11 +68,11 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       13 native reflection cubes and complete bundle assembly remain open.
       [J1113](PORTING_JOURNAL.md#j1113--produce-a-complete-source-only-bundle-and-seven-player-data-files)
       qualifies the first complete PC-only bundle and seven player-data files;
-      J1132 extends the host cohort to seven complete bundles; the combined
+      J1134 extends the host cohort to eight complete bundles; the combined
       readiness tree includes 161 player files
       through the existing owners; 54 texture selections use PR75's landed
       public RGBA producer/profile. The fixed-target readiness check now
-      has 519 missing content entries; all 18 code/SDK
+      has 518 missing content entries; all 18 code/SDK
       entries are available. Phone replay, the
       remaining bundles/player data and complete source-derived installation
       remain open; the structural writer produces no missing content itself.
@@ -220,8 +220,8 @@ explicit replay content; it does not qualify phone production or installation.
 closes the two generic Android build-metadata producer gaps. Fresh host SDK
 production yields all 15 entries raw-exact to J850. The shared readiness request
 combined with
-[J1132](PORTING_JOURNAL.md#j1132--produce-the-complete-enemy-reward-payload-from-original-input)
-has all 18 code/SDK files and 168 content files ready, with 519 content entries
+[J1134](PORTING_JOURNAL.md#j1134--reconstruct-the-complete-village-night-streamed-scene-bundle)
+has all 18 code/SDK files and 169 content files ready, with 518 content entries
 absent. The 54 RGBA selections use PR75's landed public producer/profile. Phone
 replay and complete content/shader/animation production remain open. The two
 new files still require an ordinary-app rerun; corrected phone-native output,

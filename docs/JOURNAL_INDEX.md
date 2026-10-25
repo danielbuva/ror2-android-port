@@ -10,7 +10,8 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
-| [J1132](PORTING_JOURNAL.md#j1132--produce-the-complete-enemy-reward-payload-from-original-input) | 2026-10-25 | Produce the complete enemy-reward payload from original input | Date: 2026-10-25 UTC. |
+| [J1134](PORTING_JOURNAL.md#j1134--reconstruct-the-complete-village-night-streamed-scene-bundle) | 2026-10-25 | Reconstruct the complete Village Night streamed-scene bundle | Date: 2026-10-25 UTC. |
+| [J1132](PORTING_JOURNAL.md#j1132--produce-the-complete-enemy-reward-payload-from-original-input) | 2026-10-24 | Produce the complete enemy-reward payload from original input | Date: 2026-10-25 UTC. |
 | [J1133](PORTING_JOURNAL.md#j1133--produce-source-animation-hierarchy-and-generic-records-on-the-host) | 2026-10-24 | Produce source animation, hierarchy and generic records on the host | Date: 2026-10-25 UTC. |
 | [J1128](PORTING_JOURNAL.md#j1128--produce-complete-rgba-mip-and-source-cubemap-cohorts-on-the-host) | 2026-10-24 | Produce complete RGBA mip and source cubemap cohorts on the host | 2026-10-25. |
 | [J1123](PORTING_JOURNAL.md#j1123--guarded-rgba-phone-batch-loses-transport-admission-stays-open) | 2026-10-24 | Guarded RGBA phone batch loses transport; admission stays open | 2026-10-25. |
