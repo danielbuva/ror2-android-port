@@ -68,8 +68,9 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       admitting a full texture cohort.
       [J1158](PORTING_JOURNAL.md#j1158--rgba-phone-cohort-interrupted-by-recorded-hangup)
       records the next interrupted cohort: host ADB is killed, the guard records
-      hangup, and full phone qualification remains open. Recovery must verify
-      idle state and preserve the checkpoint before releasing the device.
+      hangup, and full phone qualification remains open. Separate recovery
+      preserves the interrupted checkpoint, verifies idle state and unchanged
+      installed bytes, removes owned scratch and releases the device.
       [J1128](PORTING_JOURNAL.md#j1128--produce-complete-rgba-mip-and-source-cubemap-cohorts-on-the-host) qualifies all 1,523 RGBA mip-chain records
       and 110 source-derived Cubemaps on the host. Their Android production,
       13 native reflection cubes and complete bundle assembly remain open.
