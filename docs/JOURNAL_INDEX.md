@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1116](PORTING_JOURNAL.md#j1116--qualify-bounded-writing-against-every-accepted-unityfs-bundle) | 2026-10-24 | Qualify bounded writing against every accepted UnityFS bundle | Date: 2026-10-25 UTC. |
 | [J1115](PORTING_JOURNAL.md#j1115--assemble-a-second-source-only-bundle-and-fifteen-more-player-files) | 2026-10-24 | Assemble a second source-only bundle and fifteen more player files | Date: 2026-10-25 UTC. |
 | [J1113](PORTING_JOURNAL.md#j1113--produce-a-complete-source-only-bundle-and-seven-player-data-files) | 2026-10-24 | Produce a complete source-only bundle and seven player-data files | Date: 2026-10-25 UTC. |
 | [J1114](PORTING_JOURNAL.md#j1114--produce-both-generic-android-build-metadata-files) | 2026-10-24 | Produce both generic Android build metadata files | 2026-10-25. |

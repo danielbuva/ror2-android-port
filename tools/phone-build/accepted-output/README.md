@@ -108,7 +108,9 @@ The Python `codec(path, sha256)` context owns one helper process, 64 MiB request
 bounds, per-block deadlines, independent decoded-byte verification and teardown.
 Object provenance, new final-output admission, drift checks and retained failure
 receipts belong to the calling producer. Structural qualification against a
-private accepted bundle is a roundtrip control, not PC-input-only production.
+all 133 accepted bundles passes byte-exact in J1116 with 198.125 MiB peak
+host RSS. This is an accepted-record roundtrip control, not PC-input-only
+production or phone qualification.
 
 ## Produce the first complete source-only bundle
 

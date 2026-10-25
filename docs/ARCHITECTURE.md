@@ -60,7 +60,9 @@ deadlines and child teardown; callers own input provenance and retained outputs.
 `build_bundle_lz4.py` builds the HC12/fast block helper `bundle_lz4.c` from a
 separately acquired pinned public LZ4 archive, retaining its license, build logs
 and terminal receipt. These structural writers generate no game content or
-target relationships and have no game-build/runtime consumer.
+target relationships and have no game-build/runtime consumer. J1116 qualifies
+all 133 accepted bundles as a structural control using accepted records; PC-only
+object/layout derivation and phone qualification remain separate.
 `object_produce.py` owns the current source-only pickup and player-death-effect
 prefab slices: audited `recipe/owner-pickup-objects.json` and
 `recipe/owner-death-effect-objects.json` select original bodies/type metadata
