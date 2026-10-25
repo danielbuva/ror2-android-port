@@ -158,7 +158,141 @@ def fixture(root):
     return pc, path, profile, bodies, target.getvalue()
 
 
+def packed_fixture(root):
+    pc, profile_path, profile, bodies, serialized = fixture(root)
+    directory = root / "record-pack"
+    directory.mkdir()
+    record_profile = "a" * 64
+    data = b"AUTHORED"
+    row = {
+        "bundle": "authored-target",
+        "member": "CAB-target",
+        "path_id": -7,
+        "offset": 0,
+        "bytes": len(bodies[-7]),
+        "sha256": digest(bodies[-7]),
+        "resource": {
+            "offset": 0,
+            "bytes": len(data),
+            "sha256": digest(data),
+            "stream": {"path": "archive:/CAB-target/CAB-target.resS", "offset": 8, "size": len(data)},
+        },
+    }
+    (directory / "objects.bin").write_bytes(bodies[-7])
+    (directory / "resources.bin").write_bytes(data)
+    (directory / "index.jsonl").write_text(json.dumps(row) + "\n")
+    receipt = {"success": True, "input_id": P.M.INPUT_ID, "profile_sha256": record_profile}
+    receipt["outputs"] = {
+        name: {"bytes": (directory / name).stat().st_size, "sha256": P.B.sha(directory / name)} for name in ("objects.bin", "resources.bin", "index.jsonl")
+    }
+    (directory / "result.json").write_text(json.dumps(receipt))
+    selected = profile["objects"][0]
+    selected.pop("source")
+    selected.pop("source_sha256")
+    selected.pop("references")
+    selected.update(record=record_profile, type_source=[0, 61])
+    complete = io.BytesIO()
+    P.W.write_bundle(
+        complete,
+        [("CAB-target", 4, len(serialized), lambda: io.BytesIO(serialized)), ("CAB-target.resS", 0, 16, lambda: io.BytesIO(bytes(8) + data))],
+        literal_lz4,
+    )
+    profile["bundle"].update(bytes=len(complete.getvalue()), sha256=digest(complete.getvalue()))
+    profile_path.write_text(json.dumps(profile))
+    return pc, profile_path, directory, profile, row, serialized
+
+
 class ObjectProducerTests(unittest.TestCase):
+    def test_audio_component_omission_preserves_order_and_every_other_gameobject_byte(self):
+        suffix = b"NAME-LAYER-TAG-AND-ACTIVE"
+        original = struct.pack("<Iiqiqiq", 3, 0, 71, 0, -19, 0, 48) + suffix
+        self.assertEqual(P.remove_components(original, [{"index": 1, "path_id": -19}]), struct.pack("<Iiqiq", 2, 0, 71, 0, 48) + suffix)
+        for removals in ([{"index": 1, "path_id": -20}], [{"index": 3, "path_id": 48}], [{"index": 1, "path_id": -19}] * 2):
+            with self.subTest(removals=removals), self.assertRaises(ValueError):
+                P.remove_components(original, removals)
+        with self.assertRaisesRegex(ValueError, "truncated"):
+            P.remove_components(original[:10], [])
+
+    def test_android_builtin_sprite_external_uses_native_resource_identity(self):
+        layout, _ = P.make_layout({"externals": ["Resources/unity_builtin_extra", "CAB-external"]}, [])
+        self.assertEqual(
+            layout["externals"][0], {"empty": "", "guid": bytes.fromhex("00000000000000000f00000000000000"), "type": 0, "path": "Resources/unity_builtin_extra"}
+        )
+        self.assertEqual(layout["externals"][1]["path"], "archive:/CAB-external/CAB-external")
+        self.assertEqual(layout["externals"][1]["guid"], bytes(16))
+
+    def test_complete_bundle_uses_produced_records_and_resource_positions(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            pc, profile, pack, _, _, serialized = packed_fixture(root)
+            before = P.B.sha(pc / "source.bundle")
+            with patch.object(P.W, "codec", return_value=nullcontext(literal_lz4)):
+                result = P.produce(profile, P.B.sha(profile), pc, root / "complete", Path("codec"), "pin", [(pack, P.B.sha(pack / "result.json"))])
+            self.assertTrue(result["success"])
+            self.assertEqual(result["record_packs"], {"a" * 64: P.B.sha(pack / "result.json")})
+            emitted = P.B.Bundle(root / "complete/payload/authored-target")
+            self.assertEqual(P.B.exact(emitted.member("CAB-target"), len(serialized)), serialized)
+            self.assertEqual(P.B.exact(emitted.member("CAB-target.resS"), 16), bytes(8) + b"AUTHORED")
+            self.assertEqual(P.B.sha(pc / "source.bundle"), before)
+
+    def test_pack_receipts_outputs_identities_and_extents_are_checked(self):
+        for failure in ("receipt", "failed", "profile", "output", "extent", "missing", "duplicate", "foreign-resource"):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                pc, profile_path, pack, profile, row, _ = packed_fixture(root)
+                receipt = json.loads((pack / "result.json").read_text())
+                if failure == "failed":
+                    receipt["success"] = False
+                elif failure == "profile":
+                    receipt["profile_sha256"] = "b" * 64
+                elif failure == "extent":
+                    row["offset"] = 100
+                elif failure == "missing":
+                    row["member"] = "CAB-another"
+                elif failure == "foreign-resource":
+                    row["resource"]["stream"]["path"] = "archive:/CAB-another/CAB-target.resS"
+                lines = [row] * (2 if failure == "duplicate" else 1)
+                (pack / "index.jsonl").write_text("".join(json.dumps(item) + "\n" for item in lines))
+                receipt["outputs"]["index.jsonl"] = {"bytes": (pack / "index.jsonl").stat().st_size, "sha256": P.B.sha(pack / "index.jsonl")}
+                (pack / "result.json").write_text(json.dumps(receipt))
+                pin = P.B.sha(pack / "result.json")
+                if failure == "receipt":
+                    pin = "0" * 64
+                if failure == "output":
+                    (pack / "resources.bin").write_bytes(b"DRIFTING")
+                with self.assertRaises(ValueError):
+                    P.produce(profile_path, P.B.sha(profile_path), pc, root / "failed", Path("codec"), "pin", [(pack, pin)])
+                self.assertFalse(json.loads((root / "failed/result.json").read_text())["success"])
+
+    def test_multiple_rooted_assets_preserve_shared_preloads_and_partition_offsets(self):
+        selected = {
+            "name": "two-assets",
+            "dependencies": [],
+            "assets": [
+                {"path": "Assets/First.asset", "root": 8, "preload": [[1, 20], [0, -4], [0, 8]]},
+                {"path": "Assets/Second.asset", "root": -4, "preload": [[0, -4]]},
+            ],
+        }
+        body = P.asset_bundle(selected, [-4, 8])
+        stream = io.BytesIO(body)
+
+        def string():
+            size = struct.unpack("<I", stream.read(4))[0]
+            value = stream.read(size)
+            stream.read(-stream.tell() % 4)
+            return value
+
+        self.assertEqual(string(), b"two-assets")
+        self.assertEqual(struct.unpack("<I", stream.read(4))[0], 4)
+        self.assertEqual([struct.unpack("<iq", stream.read(12)) for _ in range(4)], [(1, 20), (0, -4), (0, 8), (0, -4)])
+        self.assertEqual(struct.unpack("<I", stream.read(4))[0], 2)
+        self.assertEqual(string(), b"assets/first.asset")
+        self.assertEqual(struct.unpack("<iiiq", stream.read(20)), (0, 3, 0, 8))
+        self.assertEqual(string(), b"assets/second.asset")
+        self.assertEqual(struct.unpack("<iiiq", stream.read(20)), (3, 1, 0, -4))
+        with self.assertRaisesRegex(ValueError, "absent local"):
+            P.asset_bundle(selected, [8])
+
     def test_dummy_shader_keeps_original_keywords_and_material_values(self):
         prefix = struct.pack("<I", 4) + b"Demo" + struct.pack("<iq", 2, 77)
         first = struct.pack("<I", 3) + b"ONE\0"

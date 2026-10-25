@@ -63,18 +63,28 @@ and terminal receipt. These structural writers generate no game content or
 target relationships and have no game-build/runtime consumer. J1116 qualifies
 all 133 accepted bundles as a structural control using accepted records; PC-only
 object/layout derivation and phone qualification remain separate.
-`object_produce.py` owns the current source-only pickup, player-death-effect
-and teleport-material content slices. Audited profiles
-`recipe/owner-pickup-objects.json`, `recipe/owner-death-effect-objects.json` and
-`recipe/owner-teleport-material-objects.json` select original bodies/type
+`object_produce.py` owns the current source-only pickup, player-death-effect,
+teleport-material, objective-UI, teleporter-indicator and generic-pickup slices.
+Audited profiles `recipe/owner-pickup-objects.json`,
+`recipe/owner-death-effect-objects.json`,
+`recipe/owner-teleport-material-objects.json`, `recipe/owner-objective-ui-objects.json`,
+`recipe/owner-teleporter-indicator-objects.json` and
+`recipe/owner-generic-pickup-objects.json` select original bodies/type
 metadata and checked pointer relationships. It generates container/preload
 metadata with explicit local/external order, packs, layout and canonical
 bundles through those writers. New disjoint output, pinned PC files/recipe/
 codec and capacity checks set up the process; persisted output and unchanged
 inputs precede a complete/failed receipt. The qualified dummy material moves
 its original valid keywords into the invalid list without introducing strings
-or material values. Failure retains outputs and the codec context reaps its
-child; exit ends the producer.
+or material values. Explicit record-pack directory/receipt pins supply already
+produced texture bodies and resources; the owner verifies them before/after,
+assembles resource extents, and generates each asset's rooted container preloads.
+It calls the existing `player_data.py` Sprite crop/importer helpers only when
+needed, after module setup; no helper implementation is duplicated. The original
+GenericPickup GameObject omits one checked native-audio component relationship,
+preserving every remaining byte. Native Android Sprite shader references use
+Unity's built-in resource identity. Failure retains outputs and the codec context
+reaps its child; exit ends the producer.
 
 `player_data.py` owns the separate current 153-file player cohort: SDK/converter
 resources, PC-derived script JSON, the three-object font file, original

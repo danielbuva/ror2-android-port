@@ -144,6 +144,27 @@ preloads before local preloads. These complete bundle slices are not a general
 object converter. Their dependent bundles and full target tree remain separate
 gates.
 
+J1120 extends the same owner to three more complete source-derived bundles:
+`owner-objective-ui-objects.json`, `owner-teleporter-indicator-objects.json`
+and `owner-generic-pickup-objects.json`. Each uses original PC bodies/types,
+checked references and explicit rooted container relationships. Sprites reuse
+the player owner's crop/importer policy. GenericPickup additionally omits its
+one checked original AkGameObj component; remaining original values are retained.
+The qualified dummy material keeps its original keywords in the invalid list.
+
+Supply each independently produced texture pack explicitly, repeating
+`--record-pack PACK_DIRECTORY RESULT_JSON_SHA256` after the command above.
+Objective UI and generic pickup require the RGBA pack; teleporter indicator
+requires RGBA and Alpha8 packs. Successful, input/profile-bound receipts and
+all pack file hashes are checked before/after production. Original PC records
+supply their native type metadata; packs supply texture bodies and resource
+extents. The owner assembles those resource members and records provider receipt
+hashes in its own result. No comparison tree or replay file is a provider.
+These six full bundles are host byte-exact to J850; complete catalog/remaining
+content production and phone/runtime qualification remain open. Unity's textual
+build-side `.manifest` files are excluded by the existing APK readiness checker;
+their build-cache hashes are not reproduced by this slice.
+
 ## Produce named player-data files
 
 `player_data.py` produces 153 canonical `apk/assets/bin/Data/...` files:
