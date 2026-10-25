@@ -191,6 +191,9 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-24.
 | `owner-rootjungle-spine-standard-shaders.json` | Root spine Standard | Current original Material/Shader/scene selectors, SDK45 source/compiler pins and destination relationships. | Provenance/privacy/licensing audit below, 2026-10-25; no programs, hashes-as-input or target tables. | Existing `payload_shader_records.py`; bounded host record exact, phone open. |
 | `owner-goldshores-spine-standard-shaders.json` | Gold spine Standard | Current original Material/Shader/scene selectors, SDK45 source/compiler pins and destination relationships. | Provenance/privacy/licensing audit below, 2026-10-25; no programs, hashes-as-input or target tables. | Existing `payload_shader_records.py`; bounded host record exact, phone open. |
 | `owner-goldshores-standard-shaders.json` | Gold/Root whole and Gold source Standard | Current original Material/Shader/scene selectors, SDK45 source/compiler pins and destination relationships. | Provenance/privacy/licensing audit below, 2026-10-25; no programs, hashes-as-input or target tables. | Existing `payload_shader_records.py`; bounded host record exact, phone open. |
+| `owner-shipgraveyard-postprocess-shaders.json` | Shipgraveyard post-processing | Current original forms, resource field identities, pinned templates and SDK compiler context. | Audited below, 2026-10-25; no protected source/program/table. | Existing Shader pack owner; 24 host records exact, phone open. |
+| `owner-repurposedcrater-hidevertices-shaders.json` | Repurposed Crater HideVertices | Original Shader/form selector, public dummy-source template and SDK pins. | Audited below, 2026-10-25; no generated content. | Existing Shader pack owner; host record exact, phone open. |
+| `owner-testotherbrother-skybox-shaders.json` | TestOtherBrother Skybox | Original scene/material/Shader pointer chain and pinned SDK106 source/compiler. | Audited below, 2026-10-25; no target variants or program content. | Existing Shader pack owner; host record exact, phone open. |
 | `owner-wispgraveyard-source-objects.json` | Private Wispgraveyard source-scene variant | Original object/type selectors, checked source pointers and import policies, original curve/component relationships, current Sprite identities, SDK schema and qualified media profiles. | No body/tree/curve/geometry/pixel template; provenance/privacy/licensing audit below, 2026-10-25. | Existing `object_produce.py`; J1155 host exact, phone open. |
 | `owner-teleport-material-objects.json` | Private teleport-material bundle | Original material/type selectors, checked references, named dummy-shader keyword policy and container relationships. | No material/shader body, keyword literal, numeric override or target template; audit below, 2026-10-25. | Source-only `object_produce.py`; J1117 host qualification, phone gate open. |
 | `owner-death-effect-objects.json` | Private replay player-death-effect bundle | Rooted original graph/script selectors, checked pointer extents, preload/dependency identities and hashes. | No body, type-tree snapshot, scalar/curve override or target delta; audit below, 2026-10-25. | Existing original-input-only `object_produce.py`; J1115 host qualification, phone gate open. |
@@ -3311,3 +3314,11 @@ source identity. The shared writer owns allocation/linkage, with no target
 header or captured metadata template. All source and pack providers are checked
 again at completion. Pattern scanning supplements this manual provenance,
 privacy and sensitive-content review; phone/runtime qualification is separate.
+
+The Shipgraveyard post-processing, Repurposed Crater HideVertices and
+TestOtherBrother Skybox Shader profiles receive provenance, privacy, licensing
+and sensitive-content review on 2026-10-25. Only original selectors, hashes,
+source relationships, public-template/SDK pins and destination identities are
+tracked. No game/SDK source, program, target keyword table, private path or
+credential is included. All generated content stays ignored; these profiles
+grant no ownership or redistribution right. Phone execution remains open.

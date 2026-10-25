@@ -44431,3 +44431,14 @@ The host checkpoint is retained; owned device scratch/groups/namespace are absen
 Installed R58 remains `4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`; no install or game launch occurs.
 Explicit terminal handoff yields the device to alpha then Main; no P1 retry is queued.
 Revisit through bounded measured continuation of the validated prefix; full RGBA/mip/cube phone qualification and source-derived owner installation remain open.
+## J1172 — Three source-derived scene Shader packs
+
+- Hypothesis: original material/scene pointers plus pinned SDK/public templates suffice for these records.
+- Existing `payload_shader_records.py` now follows the original RenderSettings → Skybox material → Shader chain; disabled scene fog is retained as disabled.
+- Shipgraveyard 24 post-processing records, Repurposed Crater HideVertices (3,468 B), and TestOtherBrother Skybox (10,288 B) match J850 exactly.
+- Guarded tracked CLI persists source production before independent comparison; no accepted/retained supplier.
+- Evidence: `work/coordination/p1-payload-scene-shaders-v1/pp-scenes-v1/qualify-done.json`, `standard-scenes-v1/repurposed-hidevertices/qualified-handoff.json`, and `skybox-scene-v1/qualify-done.json`.
+- Prior art: pinned AssetRipper `DummyShaderTextExporter` supplies property/template relationships, not recovered rendering; J1157 supplies SDK/native contracts.
+- First remaining failure: four Standard contexts lack shared feature/instancing retention; those profiles remain unqualified and unpublished.
+- Acceptance: 23 focused host tests and Ruff pass. Complete scene assembly belongs to the consumer; phone Shader execution remains open.
+- APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`; no device run.
