@@ -24,6 +24,9 @@ from common import read, sha, write
 
 class UnityRebuildTests(unittest.TestCase):
     def setUp(self):
+        collision_stage = patch.object(whole_catalog, "stage_source_collision_policy")
+        collision_stage.start()
+        self.addCleanup(collision_stage.stop)
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name).resolve()
@@ -161,6 +164,21 @@ class UnityRebuildTests(unittest.TestCase):
         self.assertEqual(self.before, self.snapshot())
         self.assertFalse((self.dest / ".rebuild/unity-build.lock").exists())
         self.assertEqual((self.dest / "ProjectSettings/ProjectSettings.asset").read_text(), "public baseline")
+
+    def test_destination_flushes_collision_policy_before_editor_build(self):
+        marker = self.dest / ".rebuild/source-collision-policy.json"
+
+        def stage(io):
+            io.write(marker, {"synthetic": True})
+
+        def execute(command, **kwargs):
+            self.assertEqual(read(marker), {"synthetic": True})
+            return self.fake_run(command, **kwargs)
+
+        with patch.object(whole_catalog, "stage_source_collision_policy", side_effect=stage), patch.object(r9, "run", side_effect=execute):
+            result = whole_catalog.build_integration(destination=self.dest, work=self.work)
+        self.assertTrue(result["success"])
+        self.assertEqual(self.before, self.snapshot())
 
     def test_failed_plugin_reimport_pass_stops_before_the_build_pass(self):
         self.repair_fails = True

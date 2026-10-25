@@ -1,0 +1,64 @@
+{
+  "generation_limits": {
+    "android_shader_acceptance": false,
+    "semantic_equivalence_proven": false,
+    "unity_compiled": false,
+    "visual_parity_proven": false
+  },
+  "schema": 1,
+  "scope": "Source-bound single-pass reconstruction; generated content remains private, with separate exact-editor and Android appearance gates.",
+  "source": {
+    "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+    "build_id": "25475991",
+    "bundle_path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-shaders_shader_assets_all_45ab8c24dd5dcd99e5cb60900de0231b.bundle",
+    "bundle_sha256": "bd1acda75caf15bcb9014dc14e7a0fc5680419e39d61cf24baca429509c12906",
+    "shader_path_id": 2831377250017133402,
+    "shader_name": "Hidden/PostProcess/SobelOutline",
+    "serialized_blob_sha256": "00bd36011bbb786641b991ce9f003e975f135f71c6ff442db75c1eca1493c6f2",
+    "platform_codes": [
+      4
+    ],
+    "subshader_count": 1,
+    "passes_per_subshader": [
+      1
+    ],
+    "records": [
+      {
+        "index": 0,
+        "kind": "parameters"
+      },
+      {
+        "index": 1,
+        "kind": "program",
+        "gpu_type": 15,
+        "keywords": [],
+        "stage": "progVertex"
+      },
+      {
+        "index": 2,
+        "kind": "program",
+        "gpu_type": 17,
+        "keywords": [],
+        "stage": "progFragment"
+      }
+    ]
+  },
+  "stable_output": "generated-shader-candidates/sobel-outline-r1/{input_id}",
+  "target": "sobel-outline",
+  "tools": {
+    "d3dasm": {
+      "binary_sha256": "5d966831f2bf711b23ba1958819444f28e3b071148d62914223b86e7f902f800",
+      "path": "reference-repos/coconutbird__d3dasm",
+      "revision": "a292206a15daf0723d945a475c6254413eda8551"
+    },
+    "dxbc_spirv": {
+      "disassembler_sha256": "56e0fe3adbf76b33d086dc148085824b4e80be89dba594876de19e7a950a51c0",
+      "path": "reference-repos/doitsujin__dxbc-spirv",
+      "revision": "c7f069701227dcb800a01bd93e42f8001b7543e7"
+    },
+    "shader_deferred_sha256": "dc1b81f1e012de8dd9da7cedddc2d62b7ac76cb564ac00cf262e55815b3b11c4",
+    "shader_segments_sha256": "2cba875459a7ea35f9f0279696569fd05a6429c9f4b206ad331d5b723dca4872",
+    "shader_source_sha256": "f6b78e8ca9862e40e1443198939b3d288d90d6ed3e40270680fedbadb662e1aa",
+    "shader_metadata_sha256": "1701b9a0f621cd29c4f16fbb594676401d4a81cf2d02b5ab10664ce8aa629318"
+  }
+}

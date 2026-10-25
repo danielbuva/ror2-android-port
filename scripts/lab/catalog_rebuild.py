@@ -53,6 +53,20 @@ SHADER_OVERRIDE_ROWS = (
         "Assets/RoR2/Base/Core/CameraEffects/HGScreenDamage.shader",
         "ed4a1bae3abd8f34b905b509b4ff70e0",
     ),
+    (
+        16024,
+        "780f79b2a62a0df439dedf59c533eee6",
+        "RoR2/Base/Shaders/HGSobelBuffer.shader",
+        "Assets/RoR2/Base/Shaders/PostProcess/HGSobelBuffer.shader",
+        "6d9e1738bf3095e42a34d9feb449ad3b",
+    ),
+    (
+        15952,
+        "7d6541fe01591cd418caf48d3c099e52",
+        "RoR2/Base/Shaders/SobelOutline.shader",
+        "Assets/RoR2/Base/Shaders/CustomPostProcess/SobelOutline.shader",
+        "0af91730b526684408399853ee967ce8",
+    ),
 )
 SHADER_OVERRIDE_GENERATORS = {
     16022: (
@@ -124,6 +138,26 @@ SHADER_OVERRIDE_GENERATORS = {
         "generated_shader",
         "Hopoo Games/Post Process/Screen Damage",
         916309824485114785,
+    ),
+    16024: (
+        "shader_ramp_fog.py",
+        "recipe/shader-sobel-buffer-candidate.json",
+        1,
+        "candidate.json",
+        "sources/SobelBufferCandidate.shader",
+        "generated_shader",
+        "Hopoo Games/Internal/SobelBuffer",
+        -583016510457714391,
+    ),
+    15952: (
+        "shader_ramp_fog.py",
+        "recipe/shader-sobel-outline-candidate.json",
+        1,
+        "candidate.json",
+        "sources/SobelOutlineCandidate.shader",
+        "generated_shader",
+        "Hidden/PostProcess/SobelOutline",
+        2831377250017133402,
     ),
 }
 
@@ -218,7 +252,7 @@ def shader_override_rows(receipt, input_id, expected, provenance, candidate_work
     ):
         raise RuntimeError("Shader override receipt is not a qualified source-only receipt")
     rows = receipt.get("rows")
-    if not isinstance(rows, list) or len(rows) not in (2, 6, len(SHADER_OVERRIDE_ROWS)):
+    if not isinstance(rows, list) or len(rows) not in (2, 6, 7, len(SHADER_OVERRIDE_ROWS)):
         raise RuntimeError("Shader override receipt must contain a historical two/six-root profile or the complete current profile")
     expected_rows = SHADER_OVERRIDE_ROWS[: len(rows)]
     result = {}
@@ -318,7 +352,11 @@ def shader_override_rows(receipt, input_id, expected, provenance, candidate_work
         else:
             candidate_identity_matches = (
                 candidate_manifest.get("kind")
-                == ("local-source-bound-ramp-fog-candidate" if location_id == 15950 else "local-source-bound-screen-damage-candidate")
+                == (
+                    "local-source-bound-"
+                    + {15950: "ramp-fog", 8943: "screen-damage", 16024: "sobel-buffer", 15952: "sobel-outline"}[location_id]
+                    + "-candidate"
+                )
                 and candidate_manifest.get("source", {}).get("shader_path_id") == object_path_id
                 and candidate_manifest.get("source", {}).get("shader_name") == shader_name_value
             )
@@ -751,12 +789,21 @@ def postprocessing_uber_rows(receipt, input_id, expected, provenance, candidate_
         "preserved_meta_bytes": receipt["shader_meta_bytes"],
         "_meta_only": True,
     }
-    includes = receipt.get("includes")
-    generated = manifest.get("includes")
-    if not isinstance(includes, list) or not isinstance(generated, list) or len(includes) != len(generated):
-        raise RuntimeError("Uber receipt has incomplete include closure")
-    for row, item in zip(includes, generated, strict=True):
-        rel = PurePosixPath(recipe["include_target_prefix"]) / PurePosixPath(item["package_path"])
+    includes, generated = [], []
+    for kind in ("includes", "programs"):
+        rows, items = receipt.get(kind, []), manifest.get(kind, [])
+        if not isinstance(rows, list) or not isinstance(items, list) or len(rows) != len(items):
+            raise RuntimeError("Uber receipt has incomplete " + kind + " closure")
+        if kind == "programs" and [{key: item.get(key) for key in contract} for item, contract in zip(items, recipe.get("programs", []))] != recipe.get(
+            "programs", []
+        ):
+            raise RuntimeError("Source camera programs differ from the pinned recipe")
+        if kind == "programs" and len(items) != len(recipe.get("programs", [])):
+            raise RuntimeError("Source camera program membership differs from the pinned recipe")
+        includes.extend((kind, row) for row in rows)
+        generated.extend(items)
+    for (kind, row), item in zip(includes, generated, strict=True):
+        rel = PurePosixPath(recipe["include_target_prefix"]) / PurePosixPath(item["package_path"]) if kind == "includes" else PurePosixPath(item["target"])
         candidate_path = item["candidate_path"]
         candidate_file = candidate_root(candidate_work, input_id, recipe) / candidate_path
         meta_candidate = Path(str(candidate_file) + ".meta")

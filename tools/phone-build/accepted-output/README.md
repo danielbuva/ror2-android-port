@@ -1172,3 +1172,48 @@ the snippet/include hash and common include bytes from that artifact's actual
 acquired SDK and source build settings. This permits the retained SDK33 payload
 lineage without applying current APK settings retroactively. It supplies no
 target hash or compiler-context guessing.
+
+## Source-derived Barrier payload
+
+Current bounded owner: `payload_shader_records.py`, with
+`recipe/owner-barrier-shaders.json`. It emits two source-derived Shader records
+through the shared compiler/serializer and existing object-pack interface.
+The retained build's Gamma/default-tier context comes from acquired SDK33
+source/hash metadata; only the pinned SDK45 standalone compiler executes. The
+public AssetRipper template source and license must be supplied separately at
+the pinned revision. No Editor, project rebuild or historical game input runs.
+
+```sh
+python3 tools/phone-build/accepted-output/payload_shader_records.py \
+  --profile recipe/owner-barrier-shaders.json --profile-sha256 PROFILE_SHA256 \
+  --pc ORIGINAL_INSTALL --sdk UNITY_45_CONTENTS \
+  --legacy-sdk UNITY_33_CONTENTS --asset-ripper PUBLIC_ASSETRIPPER_GIT \
+  --codec PUBLIC_LZ4_WORKER --codec-sha256 WORKER_SHA256 \
+  --output NEW_PRIVATE_RECORD_DIRECTORY
+```
+
+Pass that directory and its `result.json` hash through the existing
+`object_produce.py --record-pack` interface, with
+`recipe/owner-barrier-objects.json` and its qualified media packs. Both owners
+require explicit pins and new outputs, preserve failed evidence and close their
+compiler/codec children. They protect original and SDK trees from output writes.
+The complete host bundle matches the retained comparison target. Phone
+production, installation and runtime behavior remain unqualified.
+
+The same CLI accepts `recipe/owner-rootjungle-postprocess-shaders.json` for the
+24 current-source post-processing records used by two Rootjungle variants. Omit
+`--legacy-sdk` for that profile; it uses SDK45 source/compilation only. The owner
+compares fresh quality-tier native programs and reflection before writing the
+existing record pack. Original resources and pinned public templates determine
+properties and source text, including 2DArray. This pack alone completes neither
+Rootjungle bundle; their Standard record and complete assembly remain separate.
+
+The three Standard profiles use the same CLI without `--asset-ripper` or
+`--legacy-sdk`: `owner-goldshores-standard-shaders.json`,
+`owner-goldshores-spine-standard-shaders.json` and
+`owner-rootjungle-spine-standard-shaders.json`. Original Material relationships
+select the retained feature combinations and instancing. Actual source
+lightmap arrays and renderer bindings determine usage, independently of baking
+preferences. SDK45 source and the shared compiler supply programs; the existing
+record-pack interface carries the final fallback pointer and explicit output
+identities. No accepted table or generated-run lookup supplies content.

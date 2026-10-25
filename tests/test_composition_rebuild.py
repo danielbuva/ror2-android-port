@@ -110,7 +110,7 @@ class CompositionStageTests(unittest.TestCase):
         self.patches.enter_context(patch("unity_package_additions.generate_pairs", return_value={}))
         # Only external inputs and generation cohorts are synthetic; stage, store validation,
         # dependencies, sanitizer, scene contracts, ordering and receipts run normally.
-        self.preflight = self.patches.enter_context(patch("build.preflight"))
+        self.preflight = self.patches.enter_context(patch("build.preflight_host"))
         self.patches.enter_context(patch("integrated_objective.WORK", self.work))
         self.patches.enter_context(patch("integrated_objective.ROOT", self.root))
         self.patches.enter_context(patch.object(composition, "WORK", self.work))

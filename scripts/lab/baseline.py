@@ -3,8 +3,9 @@
 Commando is chosen from the ordinary offline menu with invincibility as the only
 (diagnostic) assist, so the run never grants permanent progression. The check stops at
 35 s of world play or on leaving the first stage. The optional stage-exit mode adds
-high damage and fast charge and stops after 10 s of next-stage play. Both modes
-always force-stop the app and turn the display off.
+high damage and fast charge and stops after 10 s of next-stage play. An explicit
+destination PCM diagnostic waits for its bounded window, up to 30 s there. Both
+modes always force-stop the app and turn the display off.
 """
 
 import json
@@ -20,6 +21,7 @@ from installed_attempt import attempt_from_installed
 SPINE_ID = "body-state-spawn-state-auto-nova-spine-bringup"
 WORLD_SECONDS = 35
 STAGE_WORLD_SECONDS = 10
+DESTINATION_PCM_SECONDS = 30
 FIRST_STAGE = "lakes"
 DEADLINE_SECONDS = 370
 DEBUG_OPTIONS = ("invincibility", "highDamage", "fastCharge", "movementBoost", "jumpBoost")
@@ -96,7 +98,7 @@ def cleanup(d, runtime, selector):
     return result
 
 
-def selection(attempt, stage_exit=False):
+def selection(attempt, stage_exit=False, capture_in_destination=False):
     """The attempt-bound selection Start reads from movement-batch-selection.json."""
     debug = {key: False for key in DEBUG_OPTIONS}
     debug["invincibility"] = True
@@ -104,7 +106,9 @@ def selection(attempt, stage_exit=False):
     if stage_exit:
         debug["highDamage"] = debug["fastCharge"] = True
         debug["purpose"] = "Standard one-exit baseline check; diagnostic assists, no permanent progression"
-    return {
+    if capture_in_destination and not stage_exit:
+        raise ValueError("Destination capture requires the one-exit check")
+    value = {
         "attempt": attempt,
         "id": SPINE_ID,
         "freePlay": True,
@@ -114,6 +118,9 @@ def selection(attempt, stage_exit=False):
         "goldshoresRoute": False,
         "debugOptions": debug,
     }
+    if capture_in_destination:
+        value["passivePcmCaptureInDestinationRequested"] = True
+    return value
 
 
 def stage_world_seconds(report):
@@ -125,7 +132,7 @@ def stage_world_seconds(report):
     return seconds - entered if 0 <= entered <= seconds else None
 
 
-def stage_exit_stop(report):
+def stage_exit_stop(report, capture_in_destination=False):
     """Decide whether a current-process report ends the one-exit check."""
     if report.get("error") or report.get("firstFailure"):
         return "first-failure"
@@ -146,11 +153,13 @@ def stage_exit_stop(report):
             return "second-stage-exit"
         age = stage_world_seconds(report)
         if report.get("phase") == "integrated-world-playing" and scene and scene != FIRST_STAGE and age is not None and age >= STAGE_WORLD_SECONDS:
+            if capture_in_destination and (report.get("originalAudio") or {}).get("passivePcmState") != "captured":
+                return "destination-pcm-deadline" if age >= DESTINATION_PCM_SECONDS else None
             return "stage-exit-10s"
     return None
 
 
-def assess(stop, first, final, stage_exit=False):
+def assess(stop, first, final, stage_exit=False, capture_in_destination=False):
     """Return the failed criteria (empty when the check passes) for one run.
 
     `first` is the first report taken during live world play, `final` the last one.
@@ -193,10 +202,45 @@ def assess(stop, first, final, stage_exit=False):
     runs = (final.get("profile") or {}).get("appliedRuns")
     if runs is None or runs != ((first or {}).get("profile") or {}).get("appliedRuns"):
         failures.append("profile run count changed or missing")
+    if capture_in_destination:
+        audio = final.get("originalAudio") or {}
+        arm_time = final.get("passivePcmArmWorldSeconds")
+        entered = (final.get("stageProgress") or {}).get("enteredAt")
+        if (
+            not stage_exit
+            or final.get("passivePcmCaptureInDestinationRequested") is not True
+            or final.get("passivePcmCaptureInDestinationObserved") is not True
+            or final.get("passivePcmCaptureAfterAuthoritySkillRequested") is not True
+            or final.get("passivePcmAuthoritySkillObserved") is not True
+            or final.get("passivePcmGameplayArmRequested") is not True
+            or final.get("passivePcmArmStageScene") != (final.get("stage") or {}).get("scene")
+            or type(final.get("passivePcmArmStageTransitions")) is not int
+            or final.get("passivePcmArmStageTransitions") != 1
+            or type(arm_time) not in (int, float)
+            or type(entered) not in (int, float)
+            or not math.isfinite(arm_time)
+            or not math.isfinite(entered)
+            or arm_time <= entered
+            or ((first or {}).get("passivePcmGameplayArmRequested") is True)
+        ):
+            failures.append("destination PCM arm is not bound to the verified next stage")
+        if (
+            audio.get("passivePcmState") != "captured"
+            or audio.get("passivePcmCaptureSelectorMode") != "main"
+            or type(audio.get("passivePcmNonzeroFiniteSamples")) is not int
+            or audio.get("passivePcmNonzeroFiniteSamples", 0) <= 0
+            or audio.get("passivePcmNonfiniteSamples") != 0
+            or audio.get("passivePcmFailure") != ""
+        ):
+            failures.append("destination MainOutput is missing, silent or nonfinite")
     return failures
 
 
-def check_baseline(stage_exit=False):
+def check_baseline(stage_exit=False, capture_in_destination=False):
+    if capture_in_destination and not stage_exit:
+        raise ValueError("Destination capture requires the one-exit check")
+    if capture_in_destination:
+        from nova_bridge import current_errors
     d = Device()
     installed = d.owned()
     storage = d.storage()
@@ -214,13 +258,16 @@ def check_baseline(stage_exit=False):
     report_path = runtime + "/movement-batch-" + SPINE_ID + ".json"
     if PurePosixPath(selector).name in runtime_files(d, runtime):
         raise RuntimeError("Existing diagnostic selector")
-    write(out / "selection.json", selection(attempt, stage_exit=stage_exit))
+    write(out / "selection.json", selection(attempt, stage_exit=stage_exit, capture_in_destination=capture_in_destination))
     pid = None
     started = False
     stop = "deadline"
     first = None
     last_report = None
     operation_error = None
+    pcm_log_errors = []
+    next_log_at = 0
+    deadline = DEADLINE_SECONDS + (DESTINATION_PCM_SECONDS - STAGE_WORLD_SECONDS if capture_in_destination else 0)
     began = time.monotonic()
     try:
         d.sh("rm", "-f", report_path)
@@ -228,7 +275,7 @@ def check_baseline(stage_exit=False):
         pid = d.launch()["pid"]
         if not isinstance(pid, str) or not pid.isascii() or not pid.isdigit():
             raise RuntimeError("Baseline launch has no unambiguous process identity")
-        while time.monotonic() - began < DEADLINE_SECONDS:
+        while time.monotonic() - began < deadline:
             if process_pid(d) != pid:
                 stop = "process-exited"
                 break
@@ -242,8 +289,16 @@ def check_baseline(stage_exit=False):
                 if r.get("error") or r.get("firstFailure"):
                     stop = "first-failure"
                     break
+                if capture_in_destination and time.monotonic() >= next_log_at:
+                    text = d.cmd("logcat", "-d", "--pid=" + pid, "-v", "threadtime", "Unity:I", "AndroidRuntime:E", "*:S")
+                    pcm_log_errors = current_errors(text, pid)
+                    next_log_at = time.monotonic() + 10
+                    if pcm_log_errors:
+                        (out / "first-runtime-error.log").write_text(text)
+                        stop = "first-runtime-error"
+                        break
                 if stage_exit:
-                    reason = stage_exit_stop(r)
+                    reason = stage_exit_stop(r, capture_in_destination=capture_in_destination)
                     if reason:
                         stop = reason
                         break
@@ -272,6 +327,8 @@ def check_baseline(stage_exit=False):
         write(out / "final-report.json", final)
         d.collect("logs", out / "capture")
         d.collect("screenshot", out / "capture")
+        if capture_in_destination:
+            pcm_log_errors = list(dict.fromkeys(pcm_log_errors + current_errors((out / "capture/unity.log").read_text(), pid)))
     except Exception as error:
         operation_error = error
         raise
@@ -282,7 +339,9 @@ def check_baseline(stage_exit=False):
             if operation_error is not None:
                 raise RuntimeError(str(operation_error) + "; " + str(error)) from operation_error
             raise
-    failures = assess(stop, first, final, stage_exit=stage_exit)
+    failures = assess(stop, first, final, stage_exit=stage_exit, capture_in_destination=capture_in_destination)
+    if pcm_log_errors:
+        failures.append("destination check has unexplained current-process runtime errors")
     try:
         current_build_sha256 = read(WORK / "config/current-build.json")["apk_sha256"]
     except FileNotFoundError:
@@ -306,5 +365,7 @@ def check_baseline(stage_exit=False):
             scene=((final or {}).get("stage") or {}).get("scene"),
             stage_world_seconds=stage_world_seconds(final) if final else None,
         )
+    if capture_in_destination:
+        result.update(capture_in_destination=True, destination_pcm_log_errors=pcm_log_errors)
     write(out / "result.json", result)
     return result

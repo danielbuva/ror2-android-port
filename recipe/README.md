@@ -67,6 +67,11 @@ privacy, licensing and sensitive-content review: 2026-10-24. This extends the
 existing source-only target recipe; accepted metadata is used for comparison.
 
 
+J1087 refreshes only the reviewed authored world-owner source hash and its
+audio-cohort manifest binding after native egg-range measurement changes.
+No input game hash, gameplay value, asset content or ownership gate changes.
+Manual provenance/privacy/licensing review: 2026-10-24.
+
 The requested-audio source-scene transformation preserves original Wwise/RTPC
 blocks from the owner's accepted local export through the existing generator.
 The public change contains authored selection/lifecycle logic and synthetic
@@ -148,12 +153,17 @@ runtime and visual acceptance require their own evidence.
 resource field, source Uber placeholder, run profile settings, and official
 Post Processing 2.3.0 archive/license/source hashes. The shader source declares
 three passes and the accepted caller selects pass 0; generation also pins the
-18-file shader closure (Uber plus 17 HLSL includes) and preserves each source
-asset's `.meta`, resource, and camera bytes. The archive and generated source
+shader closure and preserves each source asset's `.meta`, resource, and camera
+bytes. The same recipe now binds five AO/LUT compute and two AO/LUT graphics
+programs to the original resource fields, asset identities and 22 kernel/thread
+group contracts. These use new deterministic lab GUIDs under the loading scene's
+Resources directory. No original program body, profile values or code is tracked;
+only the minimum reconstruction identities and compatibility contracts are public.
+The archive and generated source
 remain local under the Unity Companion License. This package is a compatible
 source reference, not a claim about the game's shipped package version. The
 default-off activation and separate receipt are explicit; no Android or PC
-visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
+visual parity is claimed. Manual provenance/privacy review: 2026-10-24.
 
 | File | Replaces | Provenance | Privacy and licensing | Readers |
 | --- | --- | --- | --- | --- |
@@ -172,6 +182,15 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 | `owner-ai-test-objects.json` | Private AI Test scene | Original selectors, checked CharacterMaster body/schema omission, source Sprite identities, SDK schema and qualified mesh/texture profiles. | No body/tree/geometry/pixel/scalar template; provenance/privacy/licensing audit below, 2026-10-25. | Existing `object_produce.py`; J1150 host exact, phone open. |
 | `owner-testscene-objects.json` | Private Testscene scene | Original selectors, checked CharacterMaster body/schema omission, source Sprite identities, original preload membership, SDK schema and qualified mesh/texture profiles. | No body/tree/geometry/pixel/scalar template; provenance/privacy/licensing audit below, 2026-10-25. | Existing `object_produce.py`; J1150 host exact, phone open. |
 | `owner-windows-shaders.json` | Original Windows comparison payload | Current original bundle path, length and integrity hash for the existing unchanged-file copy operation. | Provenance/privacy/licensing audit below, 2026-10-25; no programs or historical reconstruction input. | Existing `object_produce.py`; current host drift-explained, phone open. |
+| `owner-barrier-objects.json` | Retained Barrier payload | Original body/type selectors, checked source pointers, named legacy import policies and independently produced media/Shader pins. | Provenance/privacy/licensing audit below, 2026-10-25; no protected body, tree or media template. | Existing `object_produce.py`; host exact, phone open. |
+| `owner-goldshores-spine-objects.json` | Goldshores reduced spine payload | Current original object/type selectors, actual-schema PPtr relationships, qualified media and source Shader profiles. | Provenance/privacy/licensing audit below, 2026-10-25; no body/tree/media/program template. | Existing `object_produce.py`; complete host qualification, phone open. |
+| `owner-goldshores-source-objects.json` | Goldshores source-scene payload | Current original object/type selectors, actual-schema PPtr relationships, qualified media and source Shader profiles. | Provenance/privacy/licensing audit below, 2026-10-25; no body/tree/media/program template. | Existing `object_produce.py`; complete host qualification, phone open. |
+| `owner-goldshores-objects.json` | Goldshores whole-scene payload | Current original object/type selectors, actual-schema PPtr relationships, qualified media and source Shader profiles. | Provenance/privacy/licensing audit below, 2026-10-25; no body/tree/media/program template. | Existing `object_produce.py`; complete host qualification, phone open. |
+| `owner-barrier-shaders.json` | Barrier source Shader records | Current original Shader selector, pinned public template revision, supplied SDK33 source metadata and SDK45 compiler identities, source filename and destination relationships. | Provenance/privacy/licensing audit below, 2026-10-25; no programs, pass keys or accepted tables. | `payload_shader_records.py`; bounded two-record host proof, phone open. |
+| `owner-rootjungle-postprocess-shaders.json` | Rootjungle post-processing Shader records | Current original forms, source filenames, pinned public templates and acquired SDK45 context; shared record extents for two scene variants. | Provenance/privacy/licensing audit below, 2026-10-25; no protected source, programs or target tables. | Existing `payload_shader_records.py`; 24 host records exact, phone open. |
+| `owner-rootjungle-spine-standard-shaders.json` | Root spine Standard | Current original Material/Shader/scene selectors, SDK45 source/compiler pins and destination relationships. | Provenance/privacy/licensing audit below, 2026-10-25; no programs, hashes-as-input or target tables. | Existing `payload_shader_records.py`; bounded host record exact, phone open. |
+| `owner-goldshores-spine-standard-shaders.json` | Gold spine Standard | Current original Material/Shader/scene selectors, SDK45 source/compiler pins and destination relationships. | Provenance/privacy/licensing audit below, 2026-10-25; no programs, hashes-as-input or target tables. | Existing `payload_shader_records.py`; bounded host record exact, phone open. |
+| `owner-goldshores-standard-shaders.json` | Gold/Root whole and Gold source Standard | Current original Material/Shader/scene selectors, SDK45 source/compiler pins and destination relationships. | Provenance/privacy/licensing audit below, 2026-10-25; no programs, hashes-as-input or target tables. | Existing `payload_shader_records.py`; bounded host record exact, phone open. |
 | `owner-wispgraveyard-source-objects.json` | Private Wispgraveyard source-scene variant | Original object/type selectors, checked source pointers and import policies, original curve/component relationships, current Sprite identities, SDK schema and qualified media profiles. | No body/tree/curve/geometry/pixel template; provenance/privacy/licensing audit below, 2026-10-25. | Existing `object_produce.py`; J1155 host exact, phone open. |
 | `owner-teleport-material-objects.json` | Private teleport-material bundle | Original material/type selectors, checked references, named dummy-shader keyword policy and container relationships. | No material/shader body, keyword literal, numeric override or target template; audit below, 2026-10-25. | Source-only `object_produce.py`; J1117 host qualification, phone gate open. |
 | `owner-death-effect-objects.json` | Private replay player-death-effect bundle | Rooted original graph/script selectors, checked pointer extents, preload/dependency identities and hashes. | No body, type-tree snapshot, scalar/curve override or target delta; audit below, 2026-10-25. | Existing original-input-only `object_produce.py`; J1115 host qualification, phone gate open. |
@@ -201,7 +220,7 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 | `owner-avatars.json` | Private replay Avatar bodies (J1075) | Minimum original/destination identities, hashes, source extents and source-entry permutations. | No strings, poses, rig/geometry values, target literals or byte frames; full audit above, 2026-10-24. | Explicit PC-input-only `avatar_produce.py`; no current game-build consumer. |
 | `owner-meshes.json` | Protected mesh bodies in the private replay packet, for the included cohort only (J1070) | Original bundle/object/resource selectors, destination identities/hashes and authored import/conversion settings. | No geometry arrays, collision data, target byte frames or float literals; full audit above, 2026-10-24. Two cases remain excluded. | Explicit original-input-only `mesh_produce.py`; no current game-build consumer. |
 | `shader-postprocessing-bloom-candidate.json` | Exported one-pass Bloom and exact source-camera CopyStd placeholders | Accepted-input source/meta/resource identities, official Unity package/license hashes and pass contracts; authored camera staging pin refreshed without changing camera transforms. | Authored selection metadata only; upstream source and generated content stay local under Unity Companion License. Manual audit 2026-10-23 described above. | `shader_postprocessing_bloom`, whole-catalog preparation and catalog replay comparison; default off. |
-| `shader-postprocessing-uber-candidate.json` | Exact source-camera `PostProcessResources.uber` one-pass constant-white placeholder | Accepted-input Main Camera/resource/shader/profile identities, official archive/license/source hashes, pass-0 call contract and 18-file include closure. | Reconstruction metadata only; official shader/includes and generated candidates stay ignored under Unity Companion License. Package 2.3.0 is a compatible reference, not a shipped-version claim. Audited 2026-10-23. | `shader_postprocessing_uber`, whole-catalog preparation and catalog replay comparison; independent default-off activation. |
+| `shader-postprocessing-uber-candidate.json` | Exact source-camera `PostProcessResources.uber` one-pass constant-white placeholder | Accepted-input Main Camera/resource/shader/profile identities, official archive/license/source hashes, pass-0 call contract, seven original AO/LUT resource joins, 22 kernel/thread groups and transitive includes. | Reconstruction metadata only; official shader/includes and generated candidates stay ignored under Unity Companion License. Package 2.3.0 is a compatible reference, not a shipped-version claim. Audited 2026-10-24. | `shader_postprocessing_uber`, whole-catalog preparation and catalog replay comparison; independent default-off activation. |
 
 | `owner-app-host-tools.json` | Private scoped native-host staging plan | Exact open Python/dependency file hashes, relative package paths/link targets and 21 pinned public producer source hashes; source commit is a retrieval hint. | Authored tool metadata only; no binary, SDK/game content, keys, credentials, private paths or device/storage identifiers. License/distribution boundaries are recorded below. Audited 2026-10-23. | `tools/phone-build/managed-host/stage.py` validates the fixed profile; its staged phone builder verifies file hashes and creates a separate private fixture, with no game/default-build consumer. |
 | `wwise-init-android.json` | Private fixture-only Init metadata generator constants (J744) | Minimum source-bank path, format/identity/size and plugin/device/bus relationships; generated bank bodies remain local. | Authored parsing/serialization and metadata only; accepted full inventory plus explicit source hash required, exclusive ignored outputs, no SDK/media/implementation/private identifiers. Audit details below. | `wwise_init_platform.py`, explicitly invoked support tool; no current game-build dependency. |
@@ -218,6 +237,8 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 | `shader-translucent-candidate.json` | Four local source-camera blur/crop candidates | Accepted input/bundle identity, minimum shader paths/names/object IDs, separate catalog keys and exporter metadata GUIDs, pass/keyword relationships and exact authored/tool digests. | Reconstruction metadata only; no source shader body, program math, binary, private path, account/device data or tool implementation. Audited 2026-10-23. | `scripts/lab/shader_translucent.py` reads the accepted local installation and writes ignored candidates; no current catalog consumer or runtime acceptance. |
 | `shader-ramp-fog-candidate.json` | One input-gated local RampFog source candidate | Accepted input ID, minimum asset-bundle path/hash, shader path ID/name, record indices/stages and exact program/blob digests; pinned authored helper and disassembler identities. R3 preserves the prior candidate after the shared helper pin changes; its numeric render state is unchanged. | Metadata and reconstruction policy only; no DXBC, HLSL, ShaderLab body, serialized asset body, private path or tool binary. Audited 2026-10-22. | `scripts/lab/shader_ramp_fog.py` reads this fixed public recipe and the user's accepted local input, then writes only ignored work output. No fallback/private recipe and optional exact-identity catalog consumer (J966); Android appearance remains unqualified. |
 | `shader-screen-damage-candidate.json` | Exact native ScreenDamage single-pass reconstruction | Accepted input/bundle/object/blob identities, native record topology, tool/helper pins and stable output root. | Minimum reconstruction identities and hashes only; no serialized content, native program, shader expressions, private path or device/account data. Audited 2026-10-24. | The existing single-pass generator emits private source from the legitimate local bundle. Catalog consumption is default-off; generation does not establish editor or Android appearance acceptance. |
+| `shader-sobel-buffer-candidate.json` | Native depth-edge mask and outline composite | Accepted bundle/object/blob identity, exact record/stage topology, tool/helper hashes and stable output roots. | Minimum reconstruction selectors/hashes only; no source profile values, shader expressions, program bytes or private identifiers. Audited 2026-10-24. | Existing native single-pass generator emits ignored local sources; the existing default-off shader catalog consumer preserves both catalog and exporter GUIDs. Rendering and appearance require separate editor/device evidence. |
+| `shader-sobel-outline-candidate.json` | Native outline composite | Accepted bundle/object/blob identity, exact record/stage topology, tool/helper hashes and stable output roots. | Minimum reconstruction selectors/hashes only; no source profile values, shader expressions, program bytes or private identifiers. Audited 2026-10-24. | Existing native single-pass generator emits ignored local sources; the existing default-off shader catalog consumer preserves both catalog and exporter GUIDs. Rendering and appearance require separate editor/device evidence. |
 | `project-inputs.json` | Remaining independently authored project inputs and original geometry identity | Public smoke/editor source identities, exact public Git commits, original bundle/mesh/hash identities. | No original geometry or private settings bodies; archived templates are our own public source. Audited 2026-10-18. | `project_input_rebuild` renders/stages/exports and hash-gates 26 complete files, including Burst defaults and authored Android graphics tiers. |
 | `build-entry-inputs.json` | R7/R8 inputs: the bootstrap attempt name, the decompiled sources R7 regenerates, and one retained contract result | Accepted input ID, attempt name, assembly name/SHA-256, decompiler pin, three output paths/SHA-256, and one work-relative path/SHA-256. | No decompiled bodies, catalog data, binaries, private roots, credentials or account/device identifiers. Audited 2026-10-18; revised J597. | `build_entry_rebuild.BuildEntryIO` gates the contract result; `BuildEntryIO.decompiled` regenerates and hash-gates the sources. Only the contract result is a blocker. |
 | `rebuild-binding-targets.json` | J565 final binding membership | Accepted input ID and 104 minimum project asset identities from the regenerated R2 guard. | Identifiers only, no serialized content, private roots or device/account data. Audited 2026-10-18. | Final validation requires all identifiers in both the regenerated R2 receipt and destination; R4 deferred targets are checked too. |
@@ -3016,6 +3037,70 @@ licensing and sensitive-content review: 2026-10-25, J1151. This introduces no
 SDK/game redistribution or ownership/entitlement grant; phone qualification
 remains open.
 
+
+
+
+
+
+Collision-policy restoration refreshes the authored world-owner, producer and
+transitive camera source pins. The world change observes the original projectile
+collision contract before gameplay; the producer reads the verified legitimate
+input and restores only generated project settings. No original matrix values,
+game source, protected assets, device identifiers or private paths are tracked.
+The source camera and original audio transformations retain their existing
+ownership and behavior. Provenance/privacy audit: 2026-10-24; device impact
+acceptance remains separate.
+
+
+PR #68 integration refreshes the actual authored owner and camera source pins
+after combining current main's touch/settings, idle heap capture and diagnostic
+retention with source rendering, Siren lifecycle and collision-policy changes.
+The existing editor-source staging and audio restoration owners remain in use.
+No original input, protected bytes, middleware selection, account entitlement
+or ownership boundary changes. Audit: 2026-10-24; a newly built normal player
+and device checks remain required for the integrated source.
+
+
+The automatic Huntress landing candidate after J1105 changes only authored
+diagnostic input admission in the existing world/objective owners. It reads
+original state configuration through native constructors and existing imported
+assets, measures the current source scene, and releases at most two inert state
+references at existing teardown. Original state implementations/configurations,
+physics and legitimate input remain unchanged. No new private build input,
+source implementation, original asset bytes or runtime export is tracked; the
+existing world-owner source pin is refreshed for the reviewed authored change.
+Host and editor contracts remain separate from Android route acceptance.
+
+
+The destination MainOutput candidate adds only an explicit per-run arm gate and
+owned scalar witnesses in the existing session, plus its public diagnostic
+runner/tests. It reuses the accepted one-shot capture and original authority
+callback without changing native audio ownership, bank data, event routing or
+provider generation. It adds no build input, SDK payload or original bytes to
+the repository. Existing first-stage defaults remain unchanged; original audio
+playback and destination statistics require separate device evidence.
+
+The destination arm gate refreshes the existing `PortSession.cs` source pin,
+its owner-recipe digest and the dependent producer/camera provenance pins.
+Only that reviewed authored source changes in the frozen owner cohort. These
+checks remain mandatory; the normal player build must regenerate its source-bound
+bootstrap rather than reuse an older frozen payload.
+
+The follow-up mobility correction counts complete native fixed ticks when
+predicting automatic Blink admission. An authored ledge fixture distinguishes
+the nominal endpoint from the actual endpoint; an inert exact-editor machine
+executes only the original clock callback, with no motor or network authority.
+The Engineer Laser Cutter fixture reads minimal original config/asset identities,
+applies the native config APIs to inert states, inspects their native phase
+construction and restores every captured static. It retains no original config
+payload, implementation, audio or asset bytes in Git. These are authored contract
+checks and an input-admission correction, with device behavior still unverified.
+
+J1152 integration refreshes direct and transitive shader-helper hash pins after
+merging current main's metadata validation with the source Sobel producer.
+Manual provenance/privacy review retains existing authored tooling and recipe
+selectors only; no protected content or new build input is introduced. Frozen
+R58 predates this integration; no device qualification is implied.
 `owner-windows-shaders.json` receives a provenance, privacy, licensing and
 sensitive-content audit on 2026-10-25. It names only the current original file
 and its length/integrity hash, preserving the unchanged-file copy already owned
@@ -3107,6 +3192,76 @@ pins reflect the existing emitter factoring, with no previous source-generation
 behavior change. Manual audit: 2026-10-25, J1157. All SDK/game/source-derived
 bodies and detailed observations remain local; existing acquisition, license
 and redistribution boundaries continue to apply.
+
+### Retained Barrier source profiles
+
+`owner-barrier-objects.json` and `owner-barrier-shaders.json` receive provenance,
+privacy, licensing and sensitive-content review on 2026-10-25. These authored
+selectors reconstruct the fixed retained Barrier build from current legitimate
+originals. Its source engine metadata, Gamma settings and default Android tiers
+follow its original build lineage. The SDK33 files are separately acquired
+source/hash metadata; only the pinned SDK45 standalone compiler executes.
+The public pinned AssetRipper template is acquired separately with its license.
+No original Shader, SDK include, generated ShaderLab, compiled program, type
+tree, pass hash or target table is stored in either recipe.
+
+The named legacy AnimateShaderAlpha import projection removes only two checked
+zero-valued additions in current original records and derives the corresponding
+hashes through the existing SDK editor-schema owner. The historical original
+DLL/prefab qualifies that retained shape only; production opens neither. The
+PluginImporter default-order policy changes one checked original script field.
+All other source bytes remain original apart from checked pointer relocations
+and existing qualified media transformations. The independent source audit
+checks actual original PPtr spans and script/component relationships. This
+metadata grants no game/SDK redistribution, ownership or authentication rights.
+Generated objects, resource streams, templates and compiler logs remain ignored.
+Phone reconstruction, installation and runtime qualification remain open.
+
+`owner-rootjungle-postprocess-shaders.json` receives the same provenance,
+privacy, licensing and sensitive-content review on 2026-10-25. It selects 24
+current original Shader forms and their original source-body hashes, public
+Default/SingleTexture templates and the current acquired SDK45 context. Original
+PostProcessResources relationships and current export GUID metadata independently
+qualify its authored filenames; exports are never production suppliers. The
+profile contains no template text, executable, reflection, type tree, key or
+accepted record table. Fresh SDK compilation qualifies identical native programs
+for the selected Android quality tiers, including the original 2DArray property.
+One produced extent serves both explicit destination relationships through the
+existing record-pack contract. This closes no final Rootjungle bundle by itself.
+Original content, generated source, SDK data and compiled outputs stay ignored;
+no new redistribution or ownership right is granted.
+
+The three `owner-*-standard-shaders.json` profiles receive provenance, privacy,
+licensing and sensitive-content review on 2026-10-25. They select current
+original Material/Shader relationships and supplied SDK45 Standard source.
+Original scene/retained authored dependency relationships explain the bounded
+material seeds: Default/DebugRed/JunkShrineRock for the whole context,
+Default/DebugRed for Gold spine and Default/Green for Root spine. Original
+DebugRed enables emission and instancing; Green enables emission without
+instancing. Source fog and actual lightmap/renderer usage qualify runtime
+retention. Baking preferences alone do not establish a runtime lightmap.
+The same source-derived row order drives the shared SDK compiler's native pool
+ordering; no accepted record/index mapping is read. Original and SDK fallback
+relationships resolve the explicit destination resource identity.
+
+Only selectors, tool/source pins, authored context and destination identities
+are tracked. Neither historical game inputs nor exported scenes/templates,
+programs, native records, type trees, scalar replacements or target tables
+supply reconstruction. Generated source, compiled content and raw evidence
+remain ignored. The profiles grant no ownership, authentication or SDK/game
+redistribution rights. Complete bundles and phone acceptance are separate gates.
+
+The three `owner-goldshores*-objects.json` profiles receive provenance, privacy,
+licensing and sensitive-content review on 2026-10-25. Their compact authored
+JSON contains only current original object/type selectors, checked pointer
+relationships, current input GUID relationships, named import policies and
+qualified media/Shader profile identities. Independent schema audits verify
+original pointer extents/values and source script/component relationships.
+Existing owners derive mesh/texture records, script identities, scene tables
+and preloads; no generated object or type-tree template enters a recipe.
+The profiles carry no historical input requirement, credential, private path,
+protected body, curve, geometry, pixel or program. Original/SDK data and all
+produced bundles stay ignored; no redistribution or ownership right is granted.
 
 ## Complete player registry and default-scene recipe audit — 2026-10-25
 
