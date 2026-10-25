@@ -452,3 +452,12 @@ collects the original phone native job's failed terminal report. Job 498 times
 out at the existing 3,600 s wall deadline; retained objects and receipts remain
 available for checked continuation. A complete phone-native library and matched
 game controls/performance remain open.
+
+[J1162](PORTING_JOURNAL.md#j1162--retain-the-native-measurement-transport-failure-and-refresh-source-readiness)
+updates current host readiness to 583 of 705 files: 578 raw-exact, two produced
+code outputs requiring separate comparisons and three drift-explained files.
+Seven APK files and 115 payload files remain missing; current-only assembly,
+phone production and runtime qualification remain open. The native measurement
+attempt stops on a host ADB stream SIGKILL during tool-host compilation, before
+any native timings. Its sender is unknown; cleanup verifies stopped tools,
+sleeping panels and lease release.

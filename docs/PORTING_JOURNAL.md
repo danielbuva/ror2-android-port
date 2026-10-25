@@ -42030,3 +42030,62 @@ occurs. Accepted J850 APK remains
 Ordinary-app production, complete installation, original PC appearance and
 runtime/performance qualification remain open. Revisit on an actual source,
 SDK, selection or record-contract change or failed independent comparison.
+
+## J1162 — Retain the native measurement transport failure and refresh source readiness
+
+2026-10-25 UTC. Tool-only device evidence and host-only composition; no game APK,
+installation or runtime qualification. J850 remains the accepted comparison APK,
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+**Hypothesis and first failure.** J1154's three fresh representative native units
+would size an active-time budget before continuation at receipt 498. The v22
+driver instead stops during the separate tool-host build, before installation,
+copying or native measurement. Two fresh admission windows pass at a maximum
+45.3 C and 340 ms sample gap. The independent guard retains 366 valid samples;
+its final sample is running with a 300 ms gap, and the observed peak is 58.1 C.
+The first proven failure is the host ADB stream process receiving SIGKILL
+(status -9). Its stderr is empty. No thermal abort, compiler error or signal
+sender is established. Later retained Android logs do not cover the interruption
+and cannot exclude an earlier OS event. No unchanged heavy retry occurs.
+
+Terminal evidence is `work/coordination/phone-code/measure-native-v22-done.json`;
+the adjacent `owned-code-thermal-v6.jsonl`, `owned-code-guard-errors-v6.jsonl`,
+`owned-code-guard-remote-stderr-v6.log` and `v22-host-kernel-window.log` retain the
+guard observations. A single later leased read in `v22-retained-diagnostics/`
+finds an empty build log and no build receipt; neither establishes which process
+stopped first. Cleanup verifies owned process absence, remote guard retirement,
+both panels OFF and lease release. The original completed object prefix remains
+on the device. The next diagnostic isolates the host stream's process session
+and records its identity, then requires a bounded guard-only baseline before
+any build. It must retain the existing fail-closed thermal/heartbeat limits;
+isolation is not proof of the unknown signal's cause or its repair.
+
+**Current source composition.** The existing readiness checker now retains the
+complete latest source Shader cohort from J1157, all prior suppliers including
+J1155's Wisp and current Windows output, and the independently qualified 177-file
+player cohort. The final public player producer
+`06958562713570774a028121fadbb617b2a15842f93582bfde45ab5db8efa7b6`
+also receives fresh historical and two current invocations for FontMaterial4
+and Strings. Historical outputs match J850; current outputs remain deterministic.
+Complete source-input/output maps explain every differing range. Historical
+originals and outputs remain qualification-only, never assembly suppliers.
+
+`work/coordination/phone-code/final-player-drift-v2/` retains those six calls and
+normalized proofs. The current-only composition is `drift-readiness-v6/` beside
+it: **583 of 705** files available, comprising **578 raw-exact**, **two code
+outputs requiring separate comparisons** and **three drift-explained** files.
+**122 are missing: seven APK and 115 payload**. There are zero invalid or
+mismatched entries. All 580 previously available files remain byte-identical.
+An independent review reruns the checker and confirms preservation of the latest
+Shader, Wisp and Windows suppliers. Audited checking opens no originals or
+historical outputs. Assembly readiness, overall source provenance and device
+qualification remain false. The remaining APK paths are explicit in
+`drift-readiness-v6/summary.json`; record packs cannot substitute for them.
+
+**Limits and revisit.** No native timings or new game APK exist. Complete native
+continuation/comparison, content completion, compatible owner signing, final
+installation, both controls and matched first-stage performance remain open.
+Input/tool pins pass doctor; the isolated checkout's absent lab project produces
+the expected doctor/preflight refusal. Main-checkout storage pruning passes.
+This changes orchestration evidence and source composition only; it introduces
+no RoR2 reconstruction or runtime mechanism requiring new community prior art.
