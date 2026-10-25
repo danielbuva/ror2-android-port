@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1150](PORTING_JOURNAL.md#j1150--reconstruct-complete-ai-test-and-testscene-payloads) | 2026-10-25 | Reconstruct complete AI Test and Testscene payloads | Date: 2026-10-25 UTC. |
 | [J1149](PORTING_JOURNAL.md#j1149--produce-current-english-and-font-material-with-explained-input-drift) | 2026-10-25 | Produce current English and font material with explained input drift | 2026-10-25 UTC. |
 | [J1145](PORTING_JOURNAL.md#j1145--produce-complete-sky-meadow-solusweb-and-ancient-loft-scene-bundles) | 2026-10-25 | Produce complete Sky Meadow, Solusweb and Ancient Loft scene bundles | Date: 2026-10-25 UTC. |
 | [J1142](PORTING_JOURNAL.md#j1142--reconstruct-the-complete-wispgraveyard-diagnostic-scene-bundle) | 2026-10-25 | Reconstruct the complete Wispgraveyard diagnostic scene bundle | Date: 2026-10-25 UTC. |

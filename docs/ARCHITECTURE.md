@@ -66,7 +66,7 @@ object/layout derivation and phone qualification remain separate.
 `object_produce.py` owns the current source-only pickup, player-death-effect,
 teleport-material, objective-UI, teleporter-indicator, generic-pickup and
 enemy-reward, Village Night, Helminth Roost, Habitat, Habitatfall and
-Wispgraveyard, Sky Meadow, Solusweb and Ancient Loft scene slices.
+Wispgraveyard, Sky Meadow, Solusweb, Ancient Loft, AI Test and Testscene slices.
 Audited profiles `recipe/owner-pickup-objects.json`,
 `recipe/owner-death-effect-objects.json`,
 `recipe/owner-teleport-material-objects.json`, `recipe/owner-objective-ui-objects.json`,
@@ -79,7 +79,8 @@ Audited profiles `recipe/owner-pickup-objects.json`,
 `recipe/owner-wispgraveyard-objects.json`,
 `recipe/owner-itskymeadow-objects.json` and
 `recipe/owner-solusweb-objects.json` and
-`recipe/owner-itancientloft-objects.json` select original bodies/type
+`recipe/owner-itancientloft-objects.json`, `recipe/owner-ai-test-objects.json` and
+`recipe/owner-testscene-objects.json` select original bodies/type
 metadata and checked pointer relationships. It generates container/preload
 metadata with explicit local/external order, packs, layout and canonical
 bundles through those writers. New disjoint output, pinned PC files/recipe/
@@ -125,6 +126,9 @@ the existing hash owner consumes that amended source schema. Its additional
 preload relationship checks the original preload record, GameObject body and
 external-member membership before emitting the mapped identity. These policies
 retain the existing setup, input checks, persisted verification and teardown.
+AI Test and Testscene reuse those same schema, Sprite, pointer and preload
+policies without another producer branch. Their Sprite importer identities
+follow the current accepted-input export and original scene relationships.
 
 `player_data.py` owns the separate current 175-file player cohort: SDK/converter
 resources, PC-derived script JSON, the three-object font file, original
