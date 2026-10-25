@@ -43187,3 +43187,16 @@ J1166's separate 173-file phone case stops thermally and cannot qualify this
 177-file cohort. Require a fresh exclusive phone replay under the existing
 memory/thermal guards before claiming phone production. Seven APK files and
 115 payload files remain missing from the last composed availability report.
+
+## J1171 — Identical-input scene exports change historical YAML identity hashes
+
+- Hypothesis: the pinned original-only exporter and stage owner can reproduce the WholeStageContexts full YAML digests.
+- Prior art: community extraction guidance and pinned AssetRipper `AssetExportCollection.cs:47–52,78` assign random collection GUIDs to external YAML pointers.
+- Two exports use identical original scene, dependency and executable hashes; source and staged YAML each differ on exactly 82 lines through seven bijective GUID substitutions.
+- GUID-normalized whole YAML files match; scene meta identity is stable, while its export timestamp differs. Normalization is comparison-only.
+- Both staging runs preserve 841 behaviours and 22 roots, omit 31 unavailable audio components and disable 16 render callbacks. Neither full hash matches the historical comparator.
+- Evidence: `work/coordination/p1-player-stage-contexts-v2/repeat-comparison.json`, `current-pair-v2/done.json`, `current-pair-repeat-v1/done.json` and `pair-comparison.json`.
+- First failure: historical arbitrary exporter identities are not reproducible through this path from identical original inputs; completing dependencies alone does not remove the observed randomness.
+- All 26 WholeStageContexts YAML digest requirements remain open; no final file, readiness entry or input-drift exception is claimed. No target-derived substitution is admitted.
+- Revisit with a source-reproducible historical identity provider, or an explicitly authorized comparison-policy decision. Existing input-drift permission does not cover exporter entropy.
+- Host only; no Editor, device lease, installation or game launch. J850 comparison APK remains `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.

@@ -482,3 +482,8 @@ records the separate phone replay's incomplete staging;
 [J1166](PORTING_JOURNAL.md#j1166--guarded-phone-player-assembly-stops-on-thermal-limit)
 records its repaired retry's thermal stop and verified cleanup. No complete
 phone comparison or installation is qualified.
+
+[J1171](PORTING_JOURNAL.md#j1171--identical-input-scene-exports-change-historical-yaml-identity-hashes)
+confirms exporter GUID entropy in identical-input scene YAML repeats. The
+WholeStageContexts full-digest gate remains open; semantic agreement and
+comparison-only GUID normalization do not qualify its final file.
