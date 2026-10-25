@@ -39385,3 +39385,118 @@ Publication follow-through: PR75 subsequently lands at `f71583ed`, supplying
 the audited public RGBA producer/profile. Rebase retains its newer installed
 state facts. This closes the public-source dependency only; the combined phone
 replay and complete-content gates remain open.
+
+## J1120 — Assemble three more source-derived payload bundles
+
+Date: 2026-10-25 UTC. Host-only content production; no Unity Editor, device
+command, installation or runtime test. Comparison remains J850 APK SHA-256
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+**Hypothesis, prior art and selection.** J1116 qualifies structural writing
+from accepted records, while J1050 measures source chunk reuse. Neither
+supplies missing object/reference/type derivation. Read both results before
+selecting the highest-value next complete bundles. Goldshores spine has
+93.53% source chunk reuse and all 27 meshes already produced, but its native
+Standard shader remains a separate platform/variant/serialization dependency.
+Enemy reward has 199 of 200 non-mesh/container source records mapped; its
+EffectManagerHelper properties/type hash still needs independent derivation.
+Do not substitute accepted hashes or target type templates for either gap.
+Select three shader-free bundles whose original script properties/type hashes
+already match, then finish their full serialization and resource assembly.
+
+Consulted `community-prior-art.md`, pinned UnityPy 1.25.3 `ObjectReader`,
+`PPtr` and serialized-file/type structure, pinned AssetRipper
+`1ac666f47d8e9dedf96afb0b914c70d7656151ea`'s Sprite coordinate recovery,
+and EditorKit's pinned `AddressablesPathDictionary` identity/lookup boundary.
+These separate original object identity, importer coordinates and provider
+relationships; none supplies Android bundle assembly. Reuse J1117's qualified
+Sprite crop/importer helpers, J1107's produced RGBA records, J1082's Alpha8
+records and J1116's unchanged bounded native writer. No upstream implementation
+or original game content is copied into public source or recipes.
+
+**Complete implementation.** Extend the existing `object_produce.py`, without
+changing the texture/mesh/avatar/animation producers or structural writer.
+Explicit `--record-pack` directory/receipt pins admit successful input/profile-
+bound producer outputs. The consumer verifies whole pack hashes, selected
+record identities/extents and resource hashes before and after use. Original
+PC records supply type metadata. Resource streams are assembled at produced
+stream offsets with zero alignment gaps. Each asset's rooted preload set
+builds its container partition without importing target body bytes. Script
+ordering and script-table/type indices retain the existing source-derived
+layout policy. The existing player owner's Sprite helpers load only when
+needed, after module setup; no coordinate implementation is duplicated.
+
+Three audited relationship profiles produce the complete bundles below:
+
+| Bundle | Objects | Final bytes | Full SHA-256 |
+| --- | ---: | ---: | --- |
+| `objective-ui-lab` | 18 | 66,644 | `557c025c13a1b1cd30f19f3c8d7392b724c21222ac88977d3f7692436fc8660f` |
+| `teleporter-indicator-lab` | 43 | 75,919 | `6b3dd30d22bd2fc04fbd9c9d13aced19f811c07692436a900d957dad18140187` |
+| `generic-pickup-lab` | 482 | 74,355 | `fddfda609add82f365ed1c175c48a0c1a7c2ceb439ca4f317a479831eea03131` |
+
+All **543 objects**, **621,563 body bytes** and six produced texture records
+assemble with **1,608,336 resource bytes**. Every complete serialized member
+and final UnityFS matches J850 byte for byte after persistent readback. Public
+production completes in 0.422, 0.352 and 0.876 seconds respectively. Eleven
+Sprites retain original geometry/UVs while recovering original crop coordinates
+and importer identities through the existing policy. The qualified TRACER
+dummy material demotes original keyword strings without adding values. The
+GenericPickup root removes its one checked original AkGameObj component
+relationship, preserving remaining component order and every other GameObject
+byte. Native Sprite shader references use Android's built-in resource GUID/path.
+Every MonoScript body/properties hash and embedded native/script type record
+comes from original PC input; only script-table indices are regenerated.
+
+**First failure and contracts.** Initial private composition treats the native
+Sprite shader external as an archive/CAB reference. The serialized file is
+32 bytes too long. Unity's Android built-in resource identity resolves that
+structural difference; no target scalar/type hash is introduced. Duplicate
+material names require the original asset/container identity, rather than an
+arbitrary same-name candidate. The old RGBA native-alpha output is retired;
+production explicitly selects the complete current RGBA pack and its receipt.
+
+Twelve authored object-producer fixtures pass. Added contracts cover complete
+record/resource bundle writing, resource placement with alignment gaps,
+provider receipt/completion/profile/output/extent/identity failures, duplicate
+records, foreign resource paths, rooted preload partitions, native external
+identity and source-component omission with unchanged order/tail bytes.
+Existing player/Sprite/serialization/codec contracts are rerun with their
+explicit codec provider; all 42 affected checks pass after rebasing the landed
+player owner. Ruff and host-only preflight pass. Read-only
+independent review returns GO. The recipe catalog records a manual provenance,
+privacy, licensing and sensitive-content review; no body, type snapshot,
+pixels, raw evidence, private paths/identifiers or credentials are staged.
+`./dev doctor` retains the known generic bootstrap failure while accepted
+input/parser/project/checkpoint checks pass; no game readiness is inferred.
+
+**Readiness and evidence.** Canonical partial tree
+`work/coordination/p1-content-source-host-v8/` hardlinks only the previous
+independently produced v7 files and the three new bundle outputs. Its request
+retains the same 18 explicit code/SDK providers. The existing exhaustive
+checker reports **177 of 705 ready**, **528 missing**: **400 player-data** and
+**128 payload** entries, with zero invalid/mismatched content. The available
+content is 153 player files and six bundles. No missing path falls back to
+replay. Counts do not establish a conversion percentage or phone qualification.
+
+Public production receipts remain under
+`work/coordination/p1-payload-ui-discovery-v1/public-host-v1/` and
+`work/coordination/p1-payload-pickup-discovery-v1/` in
+`teleporter-indicator-lab-public-host-v1/` and
+`generic-pickup-lab-public-host-v1/`. Adjacent small mapping/proof artifacts
+retain discovery/comparison evidence. No build reads those private discovery
+scripts or the accepted comparison tree as a provider. The source-only
+canonical tree, request and complete readiness report stay ignored.
+
+**Remaining gates.** Larger spine/scene bundles need native Standard shader
+variant/compiled-object production even where mesh reuse is large. The nearest
+reward slice needs independently derived managed serialization hashes; whole
+content also needs the independently owned remaining animation/generic/media
+cohorts. Complete catalog generation must consume final produced bundles.
+Unity's build-side textual `.manifest` cache hashes remain unproduced and are
+excluded by the existing runtime readiness policy; their absence is not hidden
+as a runtime entry gain. Phone execution of these six bundles, complete content,
+signed installation, controls and matched performance remain open. No device
+lease or package/process/display state changes. Main-checkout pruning finds
+no eligible outputs; free host capacity remains about 98 GiB, so no full build
+is started. Revisit after the specific source producers advance or for the
+first phone qualification, rather than repeat J1116 or accept replay suppliers.

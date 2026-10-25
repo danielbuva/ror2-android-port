@@ -157,6 +157,9 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 
 | File | Replaces | Provenance | Privacy and licensing | Readers |
 | --- | --- | --- | --- | --- |
+| `owner-objective-ui-objects.json` | Private objective-UI bundle | Original object/type selectors, checked pointers, Sprite importer/crop relationships, produced texture profile and rooted container preloads. | No content body, type-tree/hash template, pixels, geometry or scalar override; audit below, 2026-10-25. | Existing `object_produce.py`; J1120 host qualification, phone gate open. |
+| `owner-teleporter-indicator-objects.json` | Private teleporter-indicator bundle | Original selectors, Sprite relationships, produced RGBA/Alpha8 profiles, dummy-material keyword policy and rooted container preloads. | No content/type/pixel/keyword literals or scalar patches; audit below, 2026-10-25. | Existing `object_produce.py`; J1120 host qualification, phone gate open. |
+| `owner-generic-pickup-objects.json` | Private generic-pickup bundle | Original rooted object/type selectors, checked PPtrs, one omitted component identity, Sprite/texture profiles and container relationships. | No content/type/pixel/template or scalar patches; audit below, 2026-10-25. | Existing `object_produce.py`; J1120 host qualification, phone gate open. |
 | `owner-teleport-material-objects.json` | Private teleport-material bundle | Original material/type selectors, checked references, named dummy-shader keyword policy and container relationships. | No material/shader body, keyword literal, numeric override or target template; audit below, 2026-10-25. | Source-only `object_produce.py`; J1117 host qualification, phone gate open. |
 | `owner-death-effect-objects.json` | Private replay player-death-effect bundle | Rooted original graph/script selectors, checked pointer extents, preload/dependency identities and hashes. | No body, type-tree snapshot, scalar/curve override or target delta; audit below, 2026-10-25. | Existing original-input-only `object_produce.py`; J1115 host qualification, phone gate open. |
 | `owner-pickup-objects.json` | Private replay pickup bundle | Original selectors, hashes, checked pointer extents and destination relationships. | No bodies, type trees or target deltas; full audit below, 2026-10-25. | Original-input-only `object_produce.py`; J1113 host qualification, phone gate open. |
@@ -2612,3 +2615,23 @@ selected original PC bundle and serializes this authored descriptor. No game
 text, object body, type hash, shader, target byte frame or private identifier
 is included. Full original field extents and membership proof stay ignored.
 Provenance/privacy/licensing/sensitive-content audit: 2026-10-25; J1118.
+
+J1120 audits `owner-objective-ui-objects.json`,
+`owner-teleporter-indicator-objects.json` and
+`owner-generic-pickup-objects.json` for provenance, privacy, licensing and
+sensitive content (2026-10-25). Original PC selectors and comparison hashes
+admit the accepted legitimate input. Local/external IDs, rooted preload sets,
+Sprite importer GUIDs and native-resource paths are the minimum reconstruction
+relationships. Source crop extents select original Sprite data; the existing
+source-coordinate algorithm supplies every coordinate and geometry byte.
+Texture profile hashes select independently produced record/resource packs;
+no pixels or encoded blocks are included. Script bodies, properties hashes,
+embedded type metadata and all non-reference values come from original input.
+The GenericPickup component omission names its checked original AkGameObj
+relationship, with remaining component order and GameObject bytes preserved.
+The qualified dummy material policy moves original keyword strings without
+introducing any string or value. No target type tree/hash, serialized body,
+protected text, image, gameplay value, original implementation, credential,
+private path or device identifier is stored. All generated bodies/resources,
+raw comparisons and discovery artifacts remain ignored. This grants no
+ownership, authentication, entitlement or content redistribution capability.

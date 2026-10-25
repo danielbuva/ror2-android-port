@@ -58,10 +58,10 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       Remaining compressed textures, mips, cubemaps and complete bundles stay open.
       [J1113](PORTING_JOURNAL.md#j1113--produce-a-complete-source-only-bundle-and-seven-player-data-files)
       qualifies the first complete PC-only bundle and seven player-data files;
-      J1118 extends the host cohort to three complete bundles and 153 player files
+      J1120 extends the host cohort to six complete bundles and 153 player files
       through the existing owners; 54 texture selections use PR75's landed
       public RGBA producer/profile. The fixed-target readiness check now
-      has 531 missing content entries; all 18 code/SDK
+      has 528 missing content entries; all 18 code/SDK
       entries are available. Phone replay, the
       remaining bundles/player data and complete source-derived installation
       remain open; the structural writer produces no missing content itself.
@@ -209,8 +209,8 @@ explicit replay content; it does not qualify phone production or installation.
 closes the two generic Android build-metadata producer gaps. Fresh host SDK
 production yields all 15 entries raw-exact to J850. The shared readiness request
 combined with
-[J1118](PORTING_JOURNAL.md#j1118--assemble-original-tmp-objects-and-produced-player-textures)
-has all 18 code/SDK files and 156 content files ready, with 531 content entries
+[J1120](PORTING_JOURNAL.md#j1120--assemble-three-more-source-derived-payload-bundles)
+has all 18 code/SDK files and 159 content files ready, with 528 content entries
 absent. The 54 RGBA selections use PR75's landed public producer/profile. Phone
 replay and complete content/shader/animation production remain open. The two
 new files still require an ordinary-app rerun; corrected phone-native output,
