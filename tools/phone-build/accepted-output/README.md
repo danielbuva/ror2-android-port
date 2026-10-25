@@ -1108,7 +1108,8 @@ appearance and SDK distribution rights remain separate gates.
 The callable SDK source path is `shader_sdk.py`. With this directory on the
 Python import path, `sdk_source(sdk, shader_id, expected_sha256)` loads a pinned
 SDK builtin source Shader. `compile_body(connection, source, node, selections,
-tier_settings, sdk_image, common_bytes, compress, output, platform=18)` emits a
+tier_settings, sdk_image, common_bytes, compress, output, platform=18, *,
+native_order=None)` emits a
 complete native Shader body and returns `(body, tree, raw)`.
 
 `selections` maps each source GPU program ID to three tier lists of declared
@@ -1121,6 +1122,11 @@ It preserves declared instancing metadata independently of retained programs.
 Linked Vulkan stage axes follow the SDK source merge; native records use
 source-row/tier order while caller per-tier table order is preserved. Only
 retained rows are ranked, without constructing the unused Cartesian product.
+Payload callers whose original serialized shader supplies retained native order
+can pass `native_order={gpuProgramID: [keyword_rows]}`. Each provided order must
+contain each retained keyword set exactly once; source declaration validation
+still applies. This changes pool emission order only, with each source row
+followed by its tiers. It supplies no variant retention or target index mapping.
 Use a new private output directory and existing compiler/codec contexts; the
 caller owns setup, teardown and input completion checks. SDK source, generated
 programs and native bodies remain local. This API provides no payload-specific

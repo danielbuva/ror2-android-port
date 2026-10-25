@@ -41952,6 +41952,16 @@ tiers; serialized tier tables preserve caller source order. The acquired SDK's
 linked-stage append/deduplication contract and retained-only mixed-radix ranking
 avoid expanding unused feature products. The pure `snippet_key` helper accepts
 source-derived SDK/hash context for frozen payloads; it supplies no target hash.
+A later payload request adds explicit caller source-derived `native_order` rows
+for pool emission while preserving table order and the APK default. The original
+PC Standard shader independently emits all 2,202 native records in first-seen
+serialized source-table order. The helper validates declared keywords and exact
+retained-set coverage; it accepts no native indices. The payload owner retains
+variant policy and fresh full-body qualification. The payload owner subsequently qualifies the fresh supported CLI at
+`p1-payload-standard-host-v1/qualified-standard-handoff.json`; final bundle
+registration remains its responsibility. Source contract and diagnostic:
+`p1-payload-standard-host-v1/{source-native-emission-order.json,source-order-diagnostic-v1/result.json}`
+under its ignored coordination root.
 
 The 44-object builtin closure comes from original PC and SDK identities plus
 source GraphicsSettings. `m_VideoShadersIncludeMode: 2` calls the SDK hidden
@@ -41966,23 +41976,24 @@ and Skybox use source material/dependency relationships and the existing
 owned by the player-data workstream.
 
 **Result.** Fresh strict public production emits **369 complete files,
-8,717,708 B**, plus **two shared records, 109,000 B**, in 295.29 seconds: all
+8,717,708 B**, plus **two shared records, 109,000 B**, in 262.69 seconds: all
 **414 Shader48 objects** across the 368 standalone files, 44-object builtin
 container and two shared shaders. Independent comparison opens J850 only after
-production and confirms every persisted byte. All previous 125 files remain
-unchanged. The guard denies prior packets, retained generated source/programs
+production and confirms every persisted byte. All previous 125 files and the preceding full 369-file/record run remain
+unchanged. This final rerun includes the source-order API and refreshed helper
+pin; the optional order path has an independent caller qualification. The guard denies prior packets, retained generated source/programs
 and accepted oracle inputs; 14,892 allowed work paths are recorded. Profile:
-`d1b8a8fc4f918f2b662a4df64589c135291573bb5ddacc68b2ca4660a1373866`.
+`9ff4e5d552d71bc0f8e68653e2ac5680810bad07a1b18b84290f72b8188aa008`.
 Frozen qualified producer:
-`2c5ff3f578966b0076f81bec5563b126f492ebe8003d51858315191f30863df7`.
+`58b88d023c7e3e4671646b90b3e4a4f50d0575ab595c1b7c7adba46699d64a52`.
 The builtin file is 539,956 B,
 `db29c826dfbc7d9ea9a946b86b2496c8b542d28af6bd8865720ae7d844ab1b9c`.
 Shared receipt SHA-256:
-`545103e6ad31c6cd9a689c1c1a7b6cd922996f0dd8140d5b6bdc23618b825c59`.
+`ebd41c8812eea4354504f5c244155e568f6194dc09032f2fb535ee039644c841`.
 
 Evidence under `work/coordination/p1-player-shaders-v1/`:
 `public-complete369-integration-report.md`,
-`public-complete369-guarded-v2/{handoff.json,result.json,source-only-guard.json,comparison-only.json}`,
+`public-complete369-guarded-v3/{handoff.json,result.json,source-only-guard.json,comparison-only.json}`,
 `public-sdk-final-source-contract.json`,
 `sdk-root-structured-reflection-source-contract.md`,
 `sdk-empty-stage-owner-contract.md` and
@@ -42004,12 +42015,14 @@ close `sharedassets0.assets`; its public mixed-file assembly is separate.
 
 **Validation / remaining gates.** Independent review returns GO for all 369
 files/shared bodies, source provider/closure boundaries and native contracts.
-Forty-four owner tests and 140 shader tests (including fourteen SDK contracts),
+Forty-four owner tests and 142 shader tests (including sixteen SDK contracts),
 Ruff and existing object-pack admission pass. A subsequent actual payload
 request adds only ShaderLab `2DArray` property decoding (texture type 4,
 dimension 5), with an authored regression and unchanged old property branches;
-its fresh payload comparison remains a separate gate. Historical candidate pins
-are refreshed only for the emitter factoring. Original/game/SDK outputs, raw
+its fresh payload comparison remains a separate gate. Historical candidate and
+catalog override pins are refreshed only for the emitter factoring. The first
+fresh-clone CI caught one stale override binding (2,237 tests, one failure);
+updating the dependent recipe hashes preserves the existing pin checks. Original/game/SDK outputs, raw
 observations and decompilation stay ignored; recipes contain selectors and
 comparison identities only. No Editor/project build, APK, device lease or run
 occurs. Accepted J850 APK remains

@@ -158,7 +158,7 @@ class SDKSource(unittest.TestCase):
         snippet["m_VariantsUserLocal0"] = [["_", "FEATURE"]]
         return source, node
 
-    def assemble(self, source, node, selections, output):
+    def assemble(self, source, node, selections, output, **options):
         connection = Compiler()
         hashes = []
 
@@ -172,7 +172,16 @@ class SDKSource(unittest.TestCase):
             patch.object(S.P, "editor_hash", side_effect=identity),
         ):
             result = S.compile_body(
-                connection, source, node, selections, [{"cap": cap} for cap in ("low", "medium", "medium")], b"", b"", lambda raw, method: b"compressed", output
+                connection,
+                source,
+                node,
+                selections,
+                [{"cap": cap} for cap in ("low", "medium", "medium")],
+                b"",
+                b"",
+                lambda raw, method: b"compressed",
+                output,
+                **options,
             )
         return result, connection, hashes
 
@@ -225,6 +234,36 @@ class SDKSource(unittest.TestCase):
         self.assertEqual(program["m_ParameterBlobIndices"], [[1, 1], [0, 0], [0, 0], []])
         self.assertEqual(struct.unpack_from("<I", raw)[0], 6)
 
+    def test_explicit_source_order_changes_native_pool_without_reordering_tier_tables(self):
+        source, node = self.fixture()
+        source["m_ParsedForm"]["m_KeywordNames"] = ["A", "B", "C"]
+        source["m_ParsedForm"]["m_KeywordFlags"] = [1, 1, 1]
+        snippet = source["m_CompileInfo"]["m_Snippets"][0][1]
+        snippet["m_VariantsUserGlobal0"] = []
+        snippet["m_VariantsUserLocal0"] = [["A", "B", "C"]]
+        with tempfile.TemporaryDirectory() as tmp:
+            (_, tree, raw), _, _ = self.assemble(
+                source, node, {10: [[["B"], ["C"]], [["A"], ["B"]], [["A"], ["B"]]]}, Path(tmp), native_order={10: [["C"], ["B"], ["A"]]}
+            )
+        program = tree["m_ParsedForm"]["m_SubShaders"][0]["m_Passes"][0]["progVertex"]
+        tables = program["m_PlayerSubPrograms"]
+        self.assertEqual([[row["m_KeywordIndices"] for row in tier] for tier in tables], [[[1], [2]], [[0], [1]], [[0], [1]], []])
+        self.assertEqual([[row["m_BlobIndex"] for row in tier] for tier in tables], [[3, 2], [5, 4], [5, 4], []])
+        self.assertEqual(program["m_ParameterBlobIndices"], [[0, 0], [1, 1], [1, 1], []])
+        self.assertEqual(struct.unpack_from("<I", raw)[0], 6)
+
+    def test_malformed_native_orders_are_rejected_before_compilation(self):
+        source, node = self.fixture()
+        snippet = source["m_CompileInfo"]["m_Snippets"][0][1]
+        snippet["m_VariantsUserGlobal0"] = []
+        snippet["m_VariantsUserLocal0"] = [["A", "B", "C", "D"]]
+        orders = ({}, {10: [["A"], ["B"]]}, {10: [["A"], ["B"], ["C"], ["D"]]}, {10: [["A"], ["B"], ["B"], ["C"]]})
+        for order in orders:
+            with self.subTest(order=order), tempfile.TemporaryDirectory() as tmp, patch.object(Compiler, "compile") as compile:
+                with self.assertRaisesRegex(ValueError, "exactly once"):
+                    self.assemble(source, node, {10: [[["A"], ["B"], ["C"]], [], []]}, Path(tmp), native_order=order)
+                compile.assert_not_called()
+
     def test_linked_source_axes_include_fragment_only_declarations(self):
         source, _ = self.fixture()
         snippet = source["m_CompileInfo"]["m_Snippets"][0][1]
@@ -253,9 +292,10 @@ class SDKSource(unittest.TestCase):
 
     def test_unknown_source_row_is_rejected(self):
         source, node = self.fixture()
-        with tempfile.TemporaryDirectory() as tmp:
-            with self.assertRaisesRegex(ValueError, "not declared"):
-                self.assemble(source, node, {10: [[["UNKNOWN"]], [], []]}, Path(tmp))
+        for options in ({}, {"native_order": {10: [["UNKNOWN"]]}}):
+            with self.subTest(options=options), tempfile.TemporaryDirectory() as tmp:
+                with self.assertRaisesRegex(ValueError, "not declared"):
+                    self.assemble(source, node, {10: [[["UNKNOWN"]], [], []]}, Path(tmp), **options)
 
     def test_caller_can_explicitly_strip_executables_without_erasing_source_pass(self):
         source, node = self.fixture()

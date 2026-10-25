@@ -571,8 +571,10 @@ SDK source platform masks and declared instancing metadata survive executable
 stripping. Linked-stage global/local axes follow the SDK append/deduplication
 contract; retained keyword rows are ranked without expanding unused variants.
 Native records use source-row/tier order while lookup tables keep the caller
-source selection order within each tier. Destination dependencies, runtime-pass
-selection and payload retention
+source selection order within each tier. A caller can supply `native_order`
+keyword rows when its original shader establishes retained pool order; declared
+keywords and exact retained-set coverage are checked. This accepts no native
+indices. Destination dependencies, runtime-pass selection and payload retention
 remain caller-owned; no accepted program/table or target body is a provider.
 The caller creates private output and owns compiler/codec contexts and final
 object-pack placement. The API returns the typed tree, raw record stream and

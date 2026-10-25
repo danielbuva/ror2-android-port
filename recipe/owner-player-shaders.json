@@ -166,8 +166,8 @@
       "sha256": "e12bf69b2f148cfaa3703d2dd21f1be1f55738f6495cf15b29d7553ba4ee9447"
     },
     "tools/phone-build/accepted-output/shader_sdk.py": {
-      "bytes": 10763,
-      "sha256": "90822d7857db84187260788d02855db06927c3bdeec3e8dc474ee8a72d6ebeb6"
+      "bytes": 11438,
+      "sha256": "ff7df468266cca97a4e9d8a9e3a02bf363d18b9fc40ca1ff4632834568c0ed19"
     }
   },
   "shaders": [

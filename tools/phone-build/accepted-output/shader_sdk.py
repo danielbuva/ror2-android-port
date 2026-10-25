@@ -68,7 +68,7 @@ def source_ranks(snippet, selected):
     return ranks
 
 
-def compile_body(connection, source, node, selections, tier_settings, sdk_image, common_bytes, compress, output, platform=18):
+def compile_body(connection, source, node, selections, tier_settings, sdk_image, common_bytes, compress, output, platform=18, *, native_order=None):
     """Compile complete SDK source form using explicit per-tier keyword choices.
 
     selections: {gpuProgramID: [tier0_sets, tier1_sets, tier2_sets]}, each set a
@@ -77,6 +77,9 @@ def compile_body(connection, source, node, selections, tier_settings, sdk_image,
     Vulkan18 is the only qualified backend; a different platform fails closed.
     Native interning follows source rows across tiers even when their retained
     subsets differ. The caller's per-tier table order is preserved.
+    native_order optionally supplies {gpuProgramID: [keyword_sets]} from original
+    source metadata, replacing declaration rank only for native interning. Each
+    pass order must contain every retained keyword identity exactly once.
     Returns (body, tree, raw). Payload/native metadata writers remain callers.
     """
     from UnityPy.helpers.TypeTreeHelper import write_typetree
@@ -108,6 +111,11 @@ def compile_body(connection, source, node, selections, tier_settings, sdk_image,
             if len(selected) != 3:
                 raise ValueError("source snippet needs three tier selections")
             ranks = source_ranks(snippet, [keys for tier in selected for keys in tier])
+            if native_order is not None:
+                order = [frozenset(keys) for keys in native_order.get(identity, [])]
+                if identity not in native_order or len(order) != len(set(order)) or set(order) != set(ranks):
+                    raise ValueError("native order must contain each retained SDK keyword row exactly once")
+                ranks = {keys: rank for rank, keys in enumerate(order)}
             tiers, all_variants = [], []
             for sets, settings in zip(selected, tier_settings):
                 variants = []
