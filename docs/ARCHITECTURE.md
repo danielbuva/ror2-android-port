@@ -1230,10 +1230,15 @@ or gameplay qualification.
 
 The same app worker accepts explicit APK assembly/signing jobs through the
 existing `owner-apk` owner. Its key directory is outside each disposable build
-output. The Activity shows a completed private APK and hands a read-only content
-URI to Android's installer only after a user button press; the private provider
-permits only that verified output. Headless instrumentation never opens the
-installer. Tool APK updates use a separate durable tool key. J1103 qualifies ordinary-app
+output. The Activity shows Install/Update for a completed private APK.
+`managed-host/OwnerInstaller.java` owns streaming/hash verification, increasing
+installed-version and same-certificate checks, session staging/commit and its
+private result receiver. Android 12+ updates request no user action; pending
+Android confirmation and terminal results persist in private preferences and
+appear when the Activity resumes. Failed staging abandons the session. No
+uninstall or save-file writes occur. The legacy read-only APK provider remains
+available for explicit private tool use. Headless instrumentation never opens the
+installer. Release acquisition and device session acceptance remain open. Tool APK updates use a separate durable tool key. J1103 qualifies ordinary-app
 Burst and authored-APK signing through these owners; installer/full-player
 acceptance and device security remain separate gates.
 

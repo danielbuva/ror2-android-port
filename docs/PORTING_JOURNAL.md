@@ -42206,6 +42206,7 @@ adbd behavior nor identifies the actual v9 signal sender. No producer memory
 rewrite or full phone rerun follows from these observations; retain the bounded
 reader, sequential encoder, durable prefix and fail-closed thermal/signal
 contracts while isolating host cancellation before the next phone attempt.
+=======
 ## J1106 — Observe the real settings commit race and prepare same-UID writer termination
 
 **Date:** 2026-10-24. **Hypothesis:** J1104's explicit SDK exit makes the
@@ -42779,6 +42780,19 @@ open. Revisit after the next explicit device handoff and fresh admission, using
 the current limits; investigate loading-only presentation pacing separately
 without changing native fixed-step behaviour.
 
+## J1175 — Stage owner APKs through Android install sessions
+
+2026-10-25. Hypothesis: the existing ordinary-app tool host can submit its
+completed owner build through PackageInstaller without uninstalling the player.
+Reuse J1065/J1095/J1103 packaging and durable-key owners; no runtime changes.
+`OwnerInstaller` streams and hashes the APK, checks increasing installed version
+and matching signing certificate, fsyncs and commits a full-install session.
+Android 12+ updates request USER_ACTION_NOT_REQUIRED; Android confirmation,
+success and failure callbacks persist status. Failed staging abandons its session.
+Native UI selects Install/Update; custom tool package staging retains the receiver.
+Acceptance: Android 33 javac and authored Java session harness PASS; seven staging
+tests PASS. No device/APK/install/save-survival claim. Release fetch/verification,
+incremental rebuild wiring and device session acceptance remain open.
 ## J1165 — Bound historical-input drift in native Snowy cubemaps
 
 2026-10-25 UTC. Host-only source qualification against fixed J850 APK
