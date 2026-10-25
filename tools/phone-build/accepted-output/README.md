@@ -72,6 +72,44 @@ retain identical ASTs; the added startup guard has authored host coverage and
 awaits device qualification. Exact versions and receipts remain private. These
 host contracts do not establish game readiness.
 
+## Construct serialized files and UnityFS containers
+
+`unity_write.py` is a current experimental structural writer. It receives
+explicit source-derived type metadata, destination identities/order and already
+produced object/resource streams. It does not derive those relationships or
+read an accepted target as a content provider. `write_serialized` preserves
+object-table order separately from physical body order, writes little-endian
+v22 metadata and the big-endian envelope, and streams bodies into their declared
+extents. It adds zero padding without adding final object alignment.
+
+`write_bundle` streams ordered members through globally consecutive 128 KiB
+blocks. Its current accepted-target policy uses UnityFS 8, HC12, raw fallback
+when compression expands a block, a generated block directory and zero alignment
+padding. Per-bundle engine versions remain explicit. Raw and fast-LZ4 policies,
+version 7 and block-info-at-end are also supported by the structural interface.
+The writer retains only one pending block and the directory in memory, with
+compressed data in a temporary file beside the output; exit removes that file.
+It does not alter runtime, shader, texture, animation or ownership semantics.
+
+Build the bounded persistent codec worker from an explicitly supplied public
+[LZ4 v1.9.4 archive](https://github.com/lz4/lz4/releases/tag/v1.9.4):
+
+```sh
+python3 -I -S tools/phone-build/accepted-output/build_bundle_lz4.py \
+  --lz4-archive OWNER_LZ4_ARCHIVE --compiler EXPLICIT_COMPILER \
+  --output NEW_PRIVATE_TOOL_OUTPUT
+```
+
+The builder checks the archive pin and all compiler/source hashes, retains the
+BSD license, notices and compiler logs, and writes a complete/failed receipt.
+Android compilation additionally selects `--android-tool-root` through the
+existing acquired native Clang 21 layout. No SDK codec or Unity project is used.
+The Python `codec(path, sha256)` context owns one helper process, 64 MiB request
+bounds, per-block deadlines, independent decoded-byte verification and teardown.
+Object provenance, new final-output admission, drift checks and retained failure
+receipts belong to the calling producer. Structural qualification against a
+private accepted bundle is a roundtrip control, not PC-input-only production.
+
 ## Produce meshes directly from original PC bundles
 
 `mesh_produce.py`, `unity_bundle.py` and `unity_mesh.py` own current experimental

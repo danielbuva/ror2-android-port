@@ -2468,3 +2468,12 @@ the Unity fingerprint serializes fixed authored build settings in the exact SDK
 field order. No accepted metadata bytes, SDK implementation or game-derived
 content is embedded in the caller. Provenance/privacy/licensing and sensitive
 content audit: 2026-10-25; provider redistribution remains a separate gate.
+
+The generic UnityFS/serialized writer and LZ4 helper contain authored wire-format
+orchestration only. The separately acquired unchanged public LZ4 v1.9.4 provider
+is pinned by archive hash; its BSD license/notices remain with private build
+outputs. No game record, compressed block, schema snapshot, SDK implementation,
+target byte literal or private path is embedded in the writer or its authored
+fixtures. Structural target roundtrips remain private validation, independent
+of source-only object production. Provenance/privacy/licensing and
+sensitive-content audit: 2026-10-25.
