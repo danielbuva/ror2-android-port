@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1114](PORTING_JOURNAL.md#j1114--produce-both-generic-android-build-metadata-files) | 2026-10-24 | Produce both generic Android build metadata files | 2026-10-25. |
 | [J1112](PORTING_JOURNAL.md#j1112--inventory-final-owner-apk-inputs-before-launcher-compilation) | 2026-10-24 | Inventory final owner APK inputs before launcher compilation | 2026-10-25. |
 | [J1109](PORTING_JOURNAL.md#j1109--reproduce-the-generic-android-package-entries-from-the-owner-sdk) | 2026-10-24 | Reproduce the generic Android package entries from the owner SDK | 2026-10-25. |
 | [J1103](PORTING_JOURNAL.md#j1103--produce-fixed-target-burst-and-sign-owner-apks-in-the-android-tool-host) | 2026-10-24 | Produce fixed-target Burst and sign owner APKs in the Android tool host | 2026-10-24. |

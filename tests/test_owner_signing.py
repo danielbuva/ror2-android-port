@@ -143,7 +143,7 @@ class OwnerAssemblyTests(unittest.TestCase):
                 {"apk/" + native, "apk/assets/player", "payload/catalog", "payload/bundle", "payload/stale"},
             )
             self.assertEqual(report["omitted_entries"], omitted)
-            self.assertEqual(len(report["code_comparison_required"]), 15)
+            self.assertEqual(len(report["code_comparison_required"]), len(OWNER.CODE_ENTRIES | SDK.SDK_ENTRIES) - 1)
             self.assertEqual(next(r for r in report["entries"] if r["path"] == "payload/stale")["status"], "mismatch")
             self.assertFalse(report["source_provenance_verified"])
             self.assertFalse(report["device_qualified"])

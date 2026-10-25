@@ -38736,3 +38736,64 @@ build-metadata files), corrected phone-native output, composed phone assembly,
 compatible retained-data signer provisioning, user installer, both controls and
 matched first-stage performance remain open. No APK is installed or shared lab
 state changed. The Thor native job, sole guard and held lease are untouched.
+
+## J1114 — Produce both generic Android build metadata files
+
+2026-10-25. Host-only packaging; no device or Editor action.
+
+**Hypothesis and owner.** J1112 separates 687 missing CONTENT files from two
+missing generic Android CODE/packaging metadata files. Extend J1109's existing
+SDK package owner to generate both from its pinned tools and fixed authored
+J850 settings. This is generic Android packaging, with no new RoR2
+reconstruction, loader, serialization, platform adapter or runtime diagnostic;
+community implementation research is not required for this slice.
+
+**API/settings evidence.** The pinned AGP 7.4.2 provider's
+`AppMetadataTaskKt.access$writeAppMetadataFile(File, String, String, String)`
+accepts metadata version, AGP version and nullable AGDE version. The unchanged
+writer emits its ordered UTF-8 properties with line terminators. The authored
+Java caller supplies `1.1`, `7.4.2` and null through `MethodHandles`, because the
+Kotlin synthetic accessor is hidden from Java source lookup. This also avoids
+resolving unrelated methods requiring the Gradle runtime API.
+
+The exact owner SDK's `AndroidBuildPostprocessor.GetBuildFingerprintContents`
+serializes Unity version, scripting implementation, build type, engine-strip
+flag and optimized-frame-pacing flag, with semicolon separators and a trailing
+semicolon, without newline/BOM. The settings originate in the pinned toolchain,
+authored LabBuild IL2CPP/Development/no-engine-stripping policy and existing
+serialized `androidUseSwappy: 1` project setting. The private J850 source snapshot
+confirms the policy. No SDK implementation, accepted metadata bytes or game
+content is copied into the caller.
+
+**Implementation.** `sdk_package.py::build_metadata` calls that provider and
+serializes the fixed target's build-setting fingerprint in the existing new
+`resources/apk/META-INF` tree. The complete SDK cohort grows from 13 to 15 and
+the existing APK owner's complete code/SDK mapping grows from 16 to 18.
+Missing or partial cohorts still refuse before assembly; neither new path can
+fall back to a comparison tree. Content owners and signing remain unchanged.
+The files need no new provider, recipe, framework, flag or receipt format.
+
+**Host verification.** Fresh complete SDK production succeeds in 11.329 seconds.
+All 15 final entries match J850 raw bytes, including both newly produced
+metadata files. The accepted profile is read only by the separate validation
+comparison, never by production. Updated readiness has all 18 code/SDK files
+ready and exactly 687 missing final content files; there are zero code-file
+availability gaps. Native/Burst raw ELF differences remain J1098/J1103's
+separately documented runtime-section comparisons, not new equivalence claims.
+
+Private evidence under `work/coordination/phone-code/`:
+`android-sdk-package-full-host-v2-{request.json,done.json,log}` and its output
+`result.json`/process logs; `android-build-metadata-host-v2-comparison.json`;
+`owner-production-readiness-v2-{request.json,json}`. All generated data remains
+ignored. Thirteen focused host fixtures pass: full SDK production environment,
+both metadata entries, complete 18-output assembly without replay, missing
+content and partial-cohort refusal, input drift and durable signing. Independent
+reviewer GO, Ruff and whitespace checks pass. Doctor/preflight retain their
+expected isolated-project refusal; no project is created to satisfy them.
+
+**Remaining gates.** Ordinary-app production of the added metadata is not
+inferred from the host result. The original phone native job and its sole
+thermal owner/lease remain untouched. Corrected phone-native relinking,
+complete source content, phone composition/signing, compatible retained-data
+signer provisioning, user installer, both controls and matched first-stage
+performance remain open. No APK is installed and no device behaviour is claimed.

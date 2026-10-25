@@ -521,7 +521,13 @@ plus QEMU with its explicit GNU loader/library directories.
 The producer creates `resources/apk/` with the generic Android entries and
 retains intermediate source, process logs and `result.json`. The authored Java
 caller invokes unchanged public SDK tools; it contains no SDK implementation or
-game Java. The APK tree is disjoint from content's `assets/bin/Data`/payload and
+game Java. Its 15-entry cohort includes AGP's `app-metadata.properties`, generated
+by the pinned provider's writer, and Unity's build fingerprint generated from
+the fixed authored J850 settings (exact SDK version, IL2CPP, Development,
+engine stripping disabled and optimized frame pacing enabled). The latter uses
+the exact SDK field order and trailing separator, without a newline or BOM.
+Neither file reads an accepted APK or content tree. The APK tree is disjoint
+from content's `assets/bin/Data`/payload and
 the three explicit game-code outputs. Accepted APK bytes are never suppliers.
 J1109 records host equivalence and successful ordinary-app production. Eleven
 phone entries are raw-exact; `classes2.dex` and `classes4.dex` differ only in
