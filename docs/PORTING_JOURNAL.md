@@ -40702,3 +40702,293 @@ helpers, selector recipe, extra SDK input, original manifest providers and fifth
 texture pack. Guarded phone replay, whole content, Shader production, compatible
 signing, installation, controls and matched performance remain open. Do not
 repeat exact intermediate controls without changed inputs or a new contract.
+
+## J1138 — Reconstruct complete Habitat and Habitatfall streamed scenes
+
+Date: 2026-10-25 UTC. Host-only production; no Unity Editor, device,
+installation or game launch. J850 comparison APK SHA-256:
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+**Hypothesis and prior art.** J1134/J1135's existing scene owner should also
+handle native billboards whose original non-pointer bytes/types already match,
+and consume the source-derived cubemap pack where needed. A class's presence
+in a scene is no evidence of an unsolved transformation. Consulted
+`community-prior-art.md`, J1050/J1116/J1128/J1134/J1135, pinned UnityPy
+1.25.3 object/reference/type contracts and the existing `nova_bridge.py`
+export/component/MapZone policies before the bounded source graph checks.
+No full reuse/object census or writer control is repeated.
+
+**Complete implementation.** Add only audited relationship recipes
+`owner-habitatfall-objects.json` and `owner-habitat-objects.json`. The existing
+object owner, writer and other workers' producers remain unchanged. Original
+PC graph relationships resolve object identities, checked PPtr relocation and
+component omissions. The source-produced mesh pack supplies 61 Habitatfall
+and 73 Habitat meshes. The J1128 110-record cube pack supplies Habitat's one
+inline Cubemap; no resource member or native reflection-cube fallback is used.
+Three original BillboardAsset and 102 BillboardRenderer records retain every
+non-pointer body byte and original type metadata. No billboard implementation
+or media arithmetic is introduced. Habitat retains its original qualified
+reflection bake; Habitatfall's existing export policy omits one bake through
+a checked null pointer. Both apply the existing inactive MapZone policy once.
+
+Both public `python3 -I -S -B` runs consume only the PC input, audited recipe,
+public codec and pinned produced mesh/cubemap packs. They succeed on the first
+attempt. Results after independent persisted bundle/member/body readback:
+
+| Bundle | Objects | Body bytes | Final bytes | SHA-256 |
+| --- | ---: | ---: | ---: | --- |
+| `habitatfall-spine-lab` | 11,381 | 9,209,443 | 6,130,134 | `5ed88043700246fc880bdc4ddad9a0ae8c2b0891d67fe9d5ebea3928553ecbd8` |
+| `habitat-spine-lab` | 10,915 | 9,645,897 | 6,405,353 | `fb86f3d36ec154cf17ffa75730760cc83a273864b9d410672f1c09ba2162e3d3` |
+
+All **22,296 bodies**, all four complete serialized members and both entire
+UnityFS files are raw-exact against J850. Production takes 7.779 and 7.260
+seconds respectively. Private evidence stays in
+`work/coordination/p1-payload-habitatfall-discovery-v1/` and
+`work/coordination/p1-payload-habitat-discovery-v1/`: `refine-done.json`,
+`public-host-v1/result.json` and `public-host-v1-comparison.json`. Recipe hashes:
+`4caf89b059f65ce2a05a08e33339dca43c88330197412631a1fffbf76e8555cf`
+(Habitatfall) and
+`1518fa31c4d2393e53b98856ec82709972b9e9ede13276d625b2cf95800b9439`
+(Habitat). The unchanged mesh/cube profiles are
+`6540b15092906d4ddb43e9eb7dc49481e15e359724541f6b307042f1a62aff23`
+and `319691fd4c11591b87b4aae654b00a1cd7789105b43be2cd52a090bb98cb2526`.
+
+Readiness is rerun after each complete bundle: source union v12 reports
+189/705 ready and 516 missing; canonical
+`work/coordination/p1-content-source-host-v13` reports **190/705 ready**,
+**515 missing (392 APK / 123 payload)**, zero invalid/mismatched. There are
+now eleven complete source-derived host bundles. Hard links retain one produced
+file without review copies. No comparison manifest/catalog is a provider.
+At resumed publication, rerunning the existing checker against the source union
+`work/coordination/p1-player-manifests-fonts-source-host-v1` preserves all eleven
+bundles and adds the player owner's 173-file cohort: **202/705 ready**,
+**503 missing (380 APK / 123 payload)** and zero invalid/mismatched entries.
+Private rerun receipt: `work/coordination/p1-payload-reward-publication-v1/readiness-resume.json`.
+
+**First failure and contracts.** Bounded Habitatfall matching initially leaves
+five native-policy/relationship residuals, including a MeshFilter source-mesh
+alias; Habitat leaves four, including the produced cube. Source graph identity,
+the existing native metadata generation and measured export policies resolve
+them. Both complete private serialized-member proofs then pass. The unchanged
+J1134 fixture covers multi-member metadata, source/pack drift and pointer
+policies. The recipe audit table, full manual provenance/privacy review and
+host preflight pass. The first publication's fresh-clone recipe-table check
+previously caught missing table rows for J1134/J1135; those rows are corrected
+before this slice. No failed content or device run is hidden by that paperwork
+correction. Main-checkout pruning retains receipts and reports no eligible data.
+
+**Remaining.** Phone/runtime/performance/owner installation, complete catalog
+and remaining payload/player files remain open. Wispgraveyard's larger source
+graph is the next bounded candidate; it has no passing production claim here.
+Root imported-artifact hashes, native reflection cubes, shader/platform records
+and remaining animation/type producer gates remain separate. Revisit only on
+source/profile drift or a failed host/Android contract.
+
+## J1142 — Reconstruct the complete Wispgraveyard diagnostic scene bundle
+
+Date: 2026-10-25 UTC. Host-only source production; no Unity Editor,
+installation, device lease or game launch. J850 comparison APK SHA-256:
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+**Hypothesis and prior art.** J1050 identifies this larger high-reuse scene;
+J1134/J1135/J1138's existing scene owner should reproduce its accepted reduced
+diagnostic export without a new serializer or object producer. Read
+`community-prior-art.md` and pinned UnityPy 1.25.3 `SerializedType` and `PPtr`
+contracts: script-table indices, original type hashes and external-file
+relationships remain separate identities. Inspect existing
+`nova_bridge.py` scene-export keep/presentation/MapZone rules and the qualified
+J1070 mesh recipe before bounded source matching. No full census or J1116
+structural control is repeated.
+
+**Implementation and provenance.** Add only audited
+`recipe/owner-wispgraveyard-objects.json` and current owner documentation.
+The unchanged public producer consumes 17 original serialized-member selectors
+from 16 legitimate PC bundles and 67 already-qualified mesh records. All native
+and script type metadata remains original except the existing derived
+MonoBehaviour script-table index. Three original BillboardAssets need only
+checked pointer relocation; one is found in the original Black Beach bundle
+outside the initial mesh-derived closure. Native PreloadData/container metadata
+comes from the produced graph and original scene identity, with 125 external
+preloads. No accepted body, type tree/hash supplier, serialized template,
+geometry, pixels or scalar delta is consumed.
+
+Every omitted component checks its original index and path ID. The accepted
+export removes 11,094 components from 10,937 GameObjects: 8,698 Tree, 2,361
+MonoBehaviour and 35 other native/presentation components. All lie outside the
+existing export keep policy; no retained MapZone script is omitted. One original
+MapZone owner becomes inactive, and three checked ReflectionProbe bake pointers
+become null. This reproduces **J850's reduced diagnostic scene**, including its
+scripted omissions; it does not establish full original stage behavior.
+Unused discovery markers and empty reference arrays are omitted from the public
+recipe. One-space JSON indentation keeps the new recipe below the repository
+host's large-file warning threshold without changing its relationships.
+
+**Complete public result.** The `python3 -I -S -B` producer reads the tracked
+recipe, original PC files, public codec and pinned mesh pack only. It completes
+in 11.750 seconds, producing `wispgraveyard-spine-lab`:
+**11,898,906 bytes**, SHA-256
+`bd010ce71b79cf629cdfdfb0ebb7c41e9425d3ee6ad57276ab0a8b3d8aef8079`.
+Independent persisted readback verifies the entire bundle, both complete
+serialized members and all **58,837 object extents / 22,764,315 body bytes**
+raw-exact against J850. Shared assets contain 74 records; the scene contains
+58,763. Recipe SHA-256:
+`f81d097f39247c6b1d50d45bfb4b4b775a66b880f312ea5852bee1db725190ae`.
+Mesh profile/receipt pins remain J1138's existing inputs.
+
+Private evidence:
+`work/coordination/p1-payload-wispgraveyard-discovery-v1/` contains
+`batch-v3-done.json`, `provenance.json`, `public-invocation.json`,
+`public-host-v1/result.json`, `public-independent-compare.json` and
+`verify-public.log`. Producer receipt SHA-256:
+`225c8059d33b73508c587263ca95a0e39d742c51260697622b5acd64c41c0de4`.
+All generated content and raw evidence remain ignored.
+
+The existing checker is rerun on
+`work/coordination/p1-payload-wispgraveyard-source-host-v1`: **203/705 ready**,
+**502 missing (380 APK / 122 payload)**, zero invalid/mismatched entries.
+It preserves all prior source-produced content by hard links and adds exactly
+one produced bundle. The comparison manifest is validation only. There are now
+twelve complete source-derived host bundles, including five streamed scenes.
+
+**First failure and contracts.** Earlier discovery died while materializing
+candidate memberships; that was a process/memory failure, not a content gap.
+Shared candidate domains and inverse graph edges complete the bounded mapping.
+The first refinement incorrectly requires unique scalar bodies for two probes;
+original owning-GameObject relationships resolve them and the related
+MeshFilter/MeshCollider residuals. The independent source proof then passes
+both serialized members before public production. Existing synthetic scene,
+checked component-omission, pointer-drift and produced-pack fixtures cover the
+unchanged owner. Manual provenance/privacy/licensing review and independent
+recipe/graph review pass; public pattern audit supplements them. Mandatory
+main-checkout pruning retains receipts and reports no eligible data.
+
+**Remaining.** Phone/runtime/performance/owner installation, manifests/catalog,
+remaining payload/player files, shaders and native reflection cubes remain
+open. Sky Meadow's measured source policies and Solusweb's remaining script
+schema cases are separate follow-up work. Revisit only on input/profile drift
+or a failed host/Android contract.
+
+## J1145 — Produce complete Sky Meadow, Solusweb and Ancient Loft scene bundles
+
+Date: 2026-10-25 UTC. Host-only source production; no Editor, device, lease,
+installation or game launch. J850 comparison APK SHA-256:
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+**Hypothesis and prior art.** Extend J1134/J1138/J1142's existing scene owner
+only for measured native export/import policies, then compose complete bundles
+from original PC records and existing qualified media packs. Consulted
+`community-prior-art.md`, pinned UnityPy 1.25.3 SerializedType/PPtr/type-tree
+contracts, current source export policies and J1124's script-properties hash
+owner before changing serialization. Type-node alignment and local/external
+pointer identities determine the transformations; class presence alone is no
+producer gap. J1050's retained census selects these bounded candidates; neither
+that full census nor J1116's accepted-record writer control is repeated.
+
+**Complete implementation.** `object_produce.py` remains the owner. Three new
+relationship profiles select original bodies/types and pin SDK/native schemas,
+source files, pointers, media packs and output hashes. It adds only measured
+operations and retains the existing setup, source/output capacity checks,
+persisted readback, failed receipts and codec teardown:
+
+- Append an already source-produced AkTriggerDisable component to each original
+  SceneInfo GameObject, preserving original component order and every tail
+  byte. The added component's full body/type comes from the original PC bundle.
+- Clear only the original OcclusionCullingSettings static-renderer arrays
+  (67 Sky Meadow / 992 Ancient Loft), checking counts and retaining original
+  GUIDs, occlusion pointers and portal arrays before checked pointer remaps.
+- Disable only the two selected original Solusweb AkBank behaviours: require
+  original enabled byte/padding, change byte 12 and preserve other bytes.
+- Omit CharacterMaster's measured final aligned UInt8 `isUnkillable` field:
+  check original script identity, final schema node, unshared terminal name
+  and four zero body bytes. Derive both MonoScript properties and MonoBehaviour
+  type hashes with the same amended original schema and pinned SDK base.
+  The existing properties cache includes this named policy. No change to the
+  shared `script_identity` owner or hash algorithm is needed.
+- Retain one original Solusweb preload-only GameObject dependency beyond direct
+  scene references. Verify original PreloadData class/hash, original GameObject
+  class/body hash, unique source-pointer membership and original external-member
+  resolution before emitting the minimum mapped identity. Its destination also
+  matches the existing source-qualified GameObject recipe, independently of the
+  accepted target. Native preload/container records are generated from these
+  verified relationships and the produced graph.
+
+All remaining original body/type bytes stay source-owned. Sky Meadow and
+Ancient Loft use the existing Sprite crop/importer helpers, mesh pack and two
+texture packs; Solusweb uses only the mesh pack. Native trees, billboards,
+wind and animator records do not require new scalar/template producers.
+Ancient Loft's Sprite identity is verified against the current accepted-input
+export and scene reference; the previous-input export is rejected. No accepted
+body/tree/hash template, pixel, geometry, scalar delta or target metadata file
+supplies production bytes. Recipes omit unused discovery marker fields.
+
+**Public result.** All three isolated `python3 -I -S -B` invocations consume
+tracked recipes, original PC files, admitted SDK resource, public codec and
+pinned source-produced packs only. Independent persisted readers compare the
+complete compressed bundle, both serialized members and every object extent:
+
+| Bundle | Objects | Body bytes | Bundle bytes | SHA-256 |
+| --- | ---: | ---: | ---: | --- |
+| `whole-scene-itskymeadow` | 17,369 | 16,184,159 | 9,918,572 | `b07bfcecb0a0036fc38b400855852fecd5451897e5bdeb8663f5a3cfff9108f8` |
+| `whole-scene-solusweb` | 23,287 | 2,744,819 | 692,346 | `8cc382f5a3209483c0351a65ca2c9fa289684534c0b9b476653caae060e8cb1c` |
+| `whole-scene-itancientloft` | 11,247 | 11,464,281 | 6,417,866 | `15e69dbd54c95f7ff6c125ff55ce4edc652c38f6d53b046980c97a1c04968c31` |
+
+All **51,903 persisted bodies**, all six complete serialized members and all
+three entire UnityFS files are raw-exact. Production takes 8.109, 6.944 and
+8.611 seconds respectively. Solusweb's initial public production also passes;
+the second run qualifies the added schema-alignment/string-ownership guards,
+with unchanged output bytes and the original comparison retained.
+
+Recipe SHA-256 pins, in table order:
+`3e865fc508c0d1935f6c3e086352967b4fe94ddc029063fda444d7b068e96720`,
+`1c7c0304e9da86cd1be9701a53f776ca2ab526113171a46875d6df2e1454f886`,
+`bc6a9c125d2ea2b654b333ec733a3579829dd40a7c1d382f3bc5c2a5e9bcb3f4`.
+Public producer receipt SHA-256 pins:
+`2882d9a03e5d81b51132a3f2427a328d5f35bfb827004dc692b79a521b5e2880`,
+`258c453787fd7ba2f4263ad6dd71395c671ab2e8325654b8626ea6df089f8c03`,
+`35b6734321b3825b72e1f3dac7cf0cb555bd57108e3b6a54d6425cc4df5ee725`.
+
+Private evidence lives under
+`work/coordination/p1-payload-{itskymeadow,solusweb,itancientloft}-discovery-v1/`:
+`refine-done.json`, `public-invocation.json`, `public-host-v1/result.json`
+(`public-invocation-v2.json` and `public-host-v2/result.json` for guarded
+Solusweb), and
+`public-independent-compare.json`. Solusweb adds
+`source-preload-contract.json`; Ancient Loft adds
+`source-meta-provenance.json`. Raw/generated data remains ignored.
+
+Readiness is rerun after each completed bundle. The first Sky Meadow/Solusweb
+unions reach 204/205 ready. Preserving the player owner's later J1144 ColorGrade
+file, their revised unions reach 205/206. Final canonical
+`work/coordination/p1-payload-ancientloft-source-host-v1` reports **207/705 ready**,
+**498 missing (379 APK / 119 payload)** and zero invalid/mismatched entries.
+Hard links preserve all prior source outputs; the guarded Solusweb output is
+used in the final tree. This is fifteen complete host bundles, including eight
+streamed scenes, alongside the separately produced player cohort. Comparison
+manifests remain validation-only inputs. Full catalog/manifests cannot replace
+missing active files or imported-artifact hash production.
+
+**First failure and contracts.** Sky Meadow's conservative graph initially
+favors prefab Tree owners; original Transform/component relationships resolve
+those identities. Solusweb's direct-reference-only preload is one entry short;
+original preload membership resolves the measured extra dependency. Its changed
+CharacterMaster source field requires consistent body/schema/hash handling,
+not a target type supplier. All public productions pass on their first attempt;
+the guarded Solusweb rerun also passes. Extending the synthetic scene fixture
+initially shifts the old negative test's row index; selecting its named object
+fixes the fixture, without masking a content failure.
+
+The synthetic full-scene and managed fixtures verify complete emitted bytes,
+source tails, script/type hash coherence, preload-only dependencies and failed
+receipts. Re-pinned authored source mutants reject wrong classes, identities,
+array counts, original membership/external members, fields, shared schema
+strings, alignment, values and padding. Focused object/writer/hash/recipe tests,
+Ruff and host preflight pass. Independent recipe/provenance and final owner/test
+reviews are GO; public pattern audit supplements manual IP/privacy/licensing
+review. Main-checkout pruning retains receipts and reports no eligible data.
+
+**Remaining.** Ordinary-app phone production, installation, runtime/performance,
+remaining payload/player files, source shaders, native reflection cubes,
+manifest imported-artifact hashes and complete catalog remain open. These are
+J850 source-reproduction results, not original stage behavior acceptance or a
+finished owner-installation product. Revisit only on source/profile drift or a
+failed host/Android contract.

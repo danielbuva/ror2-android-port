@@ -202,7 +202,7 @@ def packed_fixture(root):
     return pc, profile_path, directory, profile, row, serialized
 
 
-def scene_fixture(root):
+def scene_fixture(root, *, preload_dependency=False):
     """Authored two-member scene with overlapping IDs and external scripts."""
     pc = root / "pc"
     pc.mkdir()
@@ -218,22 +218,26 @@ def scene_fixture(root):
     original_second = bytes(16) + struct.pack("<iqiqiq", 0, 72, 9, 80, 4, 123)
     second = bytes(16) + struct.pack("<iqiqiq", 1, 8, 3, 80, 4, 123)
     original_gameobject = struct.pack("<II", 0, 0) + string("Map owner") + struct.pack("<HB", 0, 1)
-    gameobject = original_gameobject[:-1] + bytes(1)
+    gameobject = struct.pack("<Iiq", 1, 0, 1) + original_gameobject[4:-1] + bytes(1)
+    original_occlusion = bytes(range(16)) + struct.pack("<iqIiqiqIiq", 8, 80, 2, 0, 81, 0, 82, 1, 0, 83)
+    occlusion_without_renderers = original_occlusion[:28] + bytes(4) + original_occlusion[56:]
+    occlusion = bytes(range(16)) + struct.pack("<iqIIiq", 3, 80, 0, 1, 0, 4)
     source_bodies = {
         71: (typ(115), b"FIRST"),
         72: (typ(115), b"SECOND"),
         81: (mono, original_first),
         82: (mono, original_second),
         83: (typ(1), original_gameobject),
+        84: (typ(29), original_occlusion),
         91: (typ(43), b"ORIGINAL-MESH"),
-        101: (typ(150), b"ORIGINAL-PRELOAD"),
+        101: (typ(150), string("Original preload") + struct.pack("<Iiq", 1, 0, 83)),
         102: (typ(142), b"ORIGINAL-CONTAINER"),
     }
     source_layout = {
         "engine": "2021.3.1f1",
         "platform": 19,
         "trees": True,
-        "types": [typ(115), mono, typ(1), typ(43), typ(150), typ(142)],
+        "types": [typ(115), mono, typ(1), typ(43), typ(150), typ(142), typ(29)],
         "objects": [],
         "scripts": [],
         "externals": [],
@@ -251,7 +255,9 @@ def scene_fixture(root):
     source.write_bytes(FIXTURE.bundle([("CAB-original", source_serialized.getvalue(), 4)], True))
     # Independent expected native bodies: sorted unique dependencies translated
     # into the shared member's external table; all scene-local PPtrs excluded.
-    preload = string("") + struct.pack("<IiqiqiqI", 3, 1, 80, 2, 123, 3, 90, 1) + string("authored-dependency") + bytes(1)
+    pointers = [(1, 80), (1, 404), (2, 123), (3, 90)] if preload_dependency else [(1, 80), (2, 123), (3, 90)]
+    preload = string("") + struct.pack("<I", len(pointers)) + b"".join(struct.pack("<iq", *pointer) for pointer in pointers)
+    preload += struct.pack("<I", 1) + string("authored-dependency") + bytes(1)
     container = (
         string("authored-scene")
         + struct.pack("<II", 0, 1)
@@ -264,7 +270,7 @@ def scene_fixture(root):
     )
     bodies = {
         shared: {1: preload, 2: container, 3: b"SHARED", 7: b"FIRST", 8: b"SECOND"},
-        main: {1: first, 2: second, 3: b"MAIN", 4: gameobject},
+        main: {1: first, 2: second, 3: b"MAIN", 4: gameobject, 5: occlusion},
     }
     shared_external = ["CAB-A", "Library/unity default resources", "CAB-B"]
     main_external = [shared, "CAB-B", "CAB-A", "Library/unity default resources"]
@@ -279,7 +285,7 @@ def scene_fixture(root):
             "externals": [external("archive:/CAB-A/CAB-A"), external("Library/unity default resources", True), external("archive:/CAB-B/CAB-B")],
         },
         main: {
-            "types": [{**mono, "script_type": 0}, {**mono, "script_type": 1}, typ(43), typ(1)],
+            "types": [{**mono, "script_type": 0}, {**mono, "script_type": 1}, typ(43), typ(1), typ(29)],
             "scripts": [(1, 7), (1, 8)],
             "externals": [
                 external("archive:/" + main + "/" + shared),
@@ -290,7 +296,7 @@ def scene_fixture(root):
         },
     }
     serialized = {}
-    for name, physical, type_ids in ((shared, [7, 8, 1, 2, 3], [0, 0, 1, 2, 3]), (main, [1, 2, 3, 4], [0, 1, 2, 3])):
+    for name, physical, type_ids in ((shared, [7, 8, 1, 2, 3], [0, 0, 1, 2, 3]), (main, [1, 2, 3, 4, 5], [0, 1, 2, 3, 4])):
         layout = {"engine": "2021.3.45f2", "platform": 13, "trees": True, "ref_types": [], "user": "", **expected_layouts[name]}
         offset, objects = 0, []
         for identity, type_id in zip(physical, type_ids, strict=True):
@@ -375,25 +381,73 @@ def scene_fixture(root):
                         source_selection(main, 1, 81, references=refs(original_first, first, [16, 28, 40, 52])),
                         source_selection(main, 2, 82, references=refs(original_second, second, [16, 28, 40])),
                         packed_selection(main),
-                        source_selection(main, 4, 83, inactive_map_zone=True),
+                        source_selection(main, 4, 83, inactive_map_zone=True, append_components=[1]),
+                        source_selection(main, 5, 84, clear_static_renderers=2, references=refs(occlusion_without_renderers, occlusion, [16, 36])),
                     ],
                 },
             ],
         },
     }
+    if preload_dependency:
+        profile["bundle"]["preload_dependencies"] = [
+            {
+                "source": [0, 83],
+                "source_sha256": digest(original_gameobject),
+                "preload_source": [0, 101],
+                "preload_sha256": digest(source_bodies[101][1]),
+                "source_pointer": [0, 83],
+                "to": [1, 404],
+            }
+        ]
     path = root / "scene-profile.json"
     path.write_text(json.dumps(profile))
     return pc, path, profile, pack, bodies, serialized, expected_bundle.getvalue()
 
 
-def managed_fixture(root):
+def character_master_schema(include_debug=True):
+    """Authored native vocabulary plus one retained custom field and debug flag."""
+    strings = b"AuthoredValue\0" + (b"isUnkillable\0" if include_debug else b"")
+    nodes = [
+        struct.pack("<hBBIIiiiQ", 1, 0, 0, 0x80000107, 0x80000037, -1, 0, 0, 0),
+        struct.pack("<hBBIIiiiQ", 1, 1, 0, 0x800003A6, 0, 4, 1, 0, 0),
+    ]
+    if include_debug:
+        nodes.append(struct.pack("<hBBIIiiiQ", 1, 1, 0, 0x800003A0, len(b"AuthoredValue\0"), 1, 2, 0x4000, 0))
+    return struct.pack("<II", len(nodes), len(strings)) + b"".join(nodes) + strings
+
+
+def rewrite_managed_source(pc, profile, mutate):
+    """Re-pin deliberately changed authored source, so policy admission is tested."""
+    source = pc / "source.bundle"
+    member = P.B.Bundle(source).member("CAB-source")
+    layout = P.W.read_serialized(member)
+    bodies = {}
+    for row in layout["objects"]:
+        member.seek(layout["data_offset"] + row["offset"])
+        bodies[row["path_id"]] = P.B.exact(member, row["bytes"])
+    mutate(layout, bodies)
+    offset = 0
+    for row in layout["objects"]:
+        offset = (offset + 7) // 8 * 8
+        row.update(offset=offset, bytes=len(bodies[row["path_id"]]))
+        offset += row["bytes"]
+    stream = io.BytesIO()
+    P.W.write_serialized(stream, layout, lambda row: io.BytesIO(bodies[row["path_id"]]))
+    source.write_bytes(FIXTURE.bundle([("CAB-source", stream.getvalue(), 4)], True))
+    profile["sources"][0]["sha256"] = P.B.sha(source)
+    for row in profile["objects"]:
+        if "source" in row:
+            row["source_sha256"] = digest(bodies[row["source"][1]])
+
+
+def managed_fixture(root, *, omit_master=False, disable=False):
     pc, path, profile, _, original_target = fixture(root)
     source = pc / "source.bundle"
     source_layout = P.W.read_serialized(P.B.Bundle(source).member("CAB-source"))
     target_stream = io.BytesIO(original_target)
     target_stream.size = len(original_target)
     target_layout = P.W.read_serialized(target_stream)
-    names = ("AuthoredBehaviour", "Fixture.Namespace", "Fixture.Assembly")
+    names = ("CharacterMaster", "RoR2", "RoR2.dll") if omit_master else ("AuthoredBehaviour", "Fixture.Namespace", "Fixture.Assembly")
     script = io.BytesIO()
     P.aligned_string(script, "Different display name")
     script.write(struct.pack("<i", -17))
@@ -406,8 +460,18 @@ def managed_fixture(root):
     source_script = script.getvalue()
     target_script = source_script[:hash_offset] + derived_hash + source_script[hash_offset + 16 :]
     source_behaviour = bytes(range(16)) + struct.pack("<iq", 0, 51) + b"PRESERVE BEHAVIOUR"
+    if disable:
+        source_behaviour = source_behaviour[:12] + b"\x01\0\0\0" + source_behaviour[16:]
+    if omit_master:
+        source_behaviour += bytes(4)
     target_behaviour = source_behaviour[:16] + struct.pack("<iq", 0, 2) + source_behaviour[28:]
+    if disable:
+        target_behaviour = target_behaviour[:12] + bytes(1) + target_behaviour[13:]
+    if omit_master:
+        target_behaviour = target_behaviour[:-4]
     behaviour_type = {**typ(114), "script_id": b"AUTHORED-SCRIPT!", "tree": struct.pack("<II", 1, 4) + bytes(32) + b"PC!\0"}
+    if omit_master:
+        behaviour_type["tree"] = character_master_schema()
     source_layout["types"][0] = behaviour_type
     source_bodies = {51: source_script, 61: source_behaviour}
     for layout in (source_layout, target_layout):
@@ -429,10 +493,16 @@ def managed_fixture(root):
         if identity != 1:
             selected["source_sha256"] = digest(source_bodies[selected["source"][1]])
             selected["properties_hash"] = selectors
+            if omit_master:
+                selected["omit_character_master_unkillable"] = True
             if identity == -7:
                 selected["references"][0]["offset"] = 16
+                if disable:
+                    selected["disable_original_behaviour"] = True
     script_end = (len(target_script) + 7) // 8 * 8
     target_layout["types"][1] = {**behaviour_type, "hash": derived_hash, "script_type": 0}
+    if omit_master:
+        target_layout["types"][1]["tree"] = character_master_schema(False)
     for row in target_layout["objects"]:
         identity = row["path_id"]
         row.update(bytes=len(bodies[identity]), offset={2: 0, -7: script_end, 1: (script_end + len(target_behaviour) + 7) // 8 * 8}[identity])
@@ -454,6 +524,225 @@ def managed_fixture(root):
 
 
 class ObjectProducerTests(unittest.TestCase):
+    def test_original_preload_admits_only_pinned_gameobject_membership(self):
+        gameobject = b"AUTHORED GAMEOBJECT"
+        preload = struct.pack("<I", 3) + b"Old\0" + struct.pack("<Iiq", 1, 1, 19)
+        for failure, message in (
+            (None, None),
+            ("object-class", "preload GameObject drift"),
+            ("object-hash", "preload GameObject drift"),
+            ("preload-class", "scene preload drift"),
+            ("preload-hash", "scene preload drift"),
+            ("external-index", "external file drift"),
+            ("external-member", "relationship drift"),
+            ("local-member", "relationship drift"),
+            ("membership", "relationship drift"),
+            ("identity", "relationship drift"),
+            ("duplicate", "relationship drift"),
+        ):
+            with self.subTest(failure=failure):
+                original = preload
+                profiles = [{"member": "CAB-scene"}, {"member": "CAB-original-dependency"}]
+                dependency = {
+                    "source": [1, 19],
+                    "source_sha256": digest(gameobject),
+                    "preload_source": [0, 1],
+                    "preload_sha256": digest(preload),
+                    "source_pointer": [1, 19],
+                    "to": [2, 91],
+                }
+                external = "archive:/original/CAB-original-dependency"
+                if failure == "external-index":
+                    dependency["source_pointer"][0] = 2
+                elif failure == "external-member":
+                    external = "archive:/original/CAB-unrelated"
+                elif failure == "local-member":
+                    dependency["source_pointer"][0] = 0
+                    original = original[:-12] + struct.pack("<iq", 0, 19)
+                elif failure == "membership":
+                    original = original[:-12] + struct.pack("<iq", 1, 20)
+                elif failure == "identity":
+                    dependency["source_pointer"][1] = 20
+                    original = original[:-12] + struct.pack("<iq", 1, 20)
+                elif failure == "duplicate":
+                    original = original[:8] + struct.pack("<Iiqiq", 2, 1, 19, 1, 19)
+                dependency["preload_sha256"] = "0" * 64 if failure == "preload-hash" else digest(original)
+                if failure == "object-hash":
+                    dependency["source_sha256"] = "0" * 64
+                sources = []
+                for body, kind, identity, externals in (
+                    (original, 4 if failure == "preload-class" else 150, 1, [{"path": external}]),
+                    (gameobject, 4 if failure == "object-class" else 1, 19, []),
+                ):
+                    metadata = {"data_offset": 0, "types": [typ(kind)], "externals": externals}
+                    objects = {identity: {"offset": 0, "bytes": len(body), "type_id": 0}}
+                    sources.append((None, None, io.BytesIO(body), metadata, objects))
+                if message:
+                    with self.assertRaisesRegex(ValueError, message):
+                        P.check_preload_dependencies(sources, profiles, [dependency])
+                else:
+                    P.check_preload_dependencies(sources, profiles, [dependency])
+
+    def test_complete_scene_retains_original_preload_dependency_beyond_direct_references(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            pc, path, profile, pack, bodies, _, expected_bundle = scene_fixture(root, preload_dependency=True)
+            with patch.object(P.W, "codec", return_value=nullcontext(literal_lz4)):
+                result = P.produce(path, P.B.sha(path), pc, root / "produced", Path("codec"), "pin", [(pack, P.B.sha(pack / "result.json"))])
+            self.assertTrue(result["success"])
+            self.assertEqual((root / "produced/payload/authored-scene").read_bytes(), expected_bundle)
+            member = P.B.Bundle(root / "produced/payload/authored-scene").member(profile["bundle"]["members"][0]["name"])
+            layout = P.W.read_serialized(member)
+            preload = next(row for row in layout["objects"] if row["path_id"] == 1)
+            member.seek(layout["data_offset"] + preload["offset"])
+            body = P.B.exact(member, preload["bytes"])
+            self.assertEqual(body, next(iter(bodies.values()))[1])
+            count = struct.unpack_from("<I", body, 4)[0]
+            self.assertEqual([struct.unpack_from("<iq", body, 8 + 12 * i) for i in range(count)], [(1, 80), (1, 404), (2, 123), (3, 90)])
+            for destination in ([0, 404], [4, 404], [1, 0]):
+                profile["bundle"]["preload_dependencies"][0]["to"] = destination
+                with self.subTest(destination=destination), self.assertRaisesRegex(ValueError, "absent destination"):
+                    P.preload_data(profile["bundle"], profile["bundle"]["members"][0], profile["bundle"]["members"])
+            profile["bundle"]["preload_dependencies"][0].update(to=[1, 404], source_pointer=[0, 84])
+            path.write_text(json.dumps(profile))
+            with self.assertRaisesRegex(ValueError, "GameObject relationship drift"):
+                P.produce(path, P.B.sha(path), pc, root / "failed", Path("codec"), "pin", [(pack, P.B.sha(pack / "result.json"))])
+            self.assertFalse(json.loads((root / "failed/result.json").read_text())["success"])
+
+    def test_character_master_omission_keeps_script_and_behaviour_schema_hashes_consistent(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            pc, path, _, sdk, names, original_type, sdk_tree, derived, bodies, serialized = managed_fixture(root, omit_master=True)
+            identity = load("authored_script_identity", ROOT / "scripts/lab/script_identity.py")
+            helper = Mock(properties_hash=Mock(return_value=derived), tree_nodes=identity.tree_nodes)
+            real_module = P.module
+            with (
+                patch.object(P, "module", side_effect=lambda name, location=None: helper if name == "script_identity" else real_module(name, location)),
+                patch.object(P.W, "codec", return_value=nullcontext(literal_lz4)),
+            ):
+                result = P.produce(path, P.B.sha(path), pc, root / "produced", Path("codec"), "pin", sdk=sdk)
+            self.assertTrue(result["success"])
+            helper.properties_hash.assert_called_once_with(*names, character_master_schema(False), sdk_tree)
+            member = P.B.Bundle(root / "produced/payload/authored-target").member("CAB-target")
+            self.assertEqual(P.B.exact(member, member.size), serialized)
+            layout = P.W.read_serialized(member)
+            mb = next(kind for kind in layout["types"] if kind["class_id"] == 114)
+            self.assertEqual(mb, {**original_type, "hash": derived, "script_type": 0, "tree": character_master_schema(False)})
+            self.assertEqual([node["name"] for node in identity.tree_nodes(mb["tree"])], ["Base", "AuthoredValue"])
+            for row in layout["objects"]:
+                member.seek(layout["data_offset"] + row["offset"])
+                actual = P.B.exact(member, row["bytes"])
+                self.assertEqual(actual, bodies[row["path_id"]])
+                if row["path_id"] == 2:
+                    offset, actual_names = P.script_fields(actual)
+                    self.assertEqual(actual_names, names)
+                    self.assertEqual(actual[offset : offset + 16], derived)
+
+    def test_character_master_omission_rejects_identity_schema_class_and_value_drift(self):
+        for failure, message in (
+            ("name", "requires original CharacterMaster"),
+            ("class", "selectors have wrong classes"),
+            ("field", "final field drift"),
+            ("field-type", "final field drift"),
+            ("field-alignment", "final field drift"),
+            ("shared-string", "final field string is shared"),
+            ("string-tail", "final field drift"),
+            ("value", "final value drift"),
+            ("padding", "final value drift"),
+            ("policy", "requires original CharacterMaster"),
+        ):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                pc, path, profile, sdk, _, _, _, derived, _, _ = managed_fixture(root, omit_master=True)
+
+                def mutate(layout, bodies):
+                    if failure == "name":
+                        bodies[51] = bodies[51].replace(b"CharacterMaster", b"AuthoredMasterX")
+                    elif failure == "class":
+                        layout["types"][0]["class_id"] = 4
+                    elif failure in ("field", "field-type", "field-alignment", "shared-string", "string-tail"):
+                        tree = layout["types"][0]["tree"]
+                        if failure == "field":
+                            tree = tree.replace(b"isUnkillable", b"otherFlagXYZ")
+                        elif failure == "field-type":
+                            tree = bytearray(tree)
+                            struct.pack_into("<I", tree, 8 + 2 * 32 + 4, 0x800003A6)
+                            tree = bytes(tree)
+                        elif failure in ("field-alignment", "shared-string"):
+                            tree = bytearray(tree)
+                            if failure == "field-alignment":
+                                struct.pack_into("<i", tree, 8 + 2 * 32 + 20, 0)
+                            else:
+                                struct.pack_into("<I", tree, 8 + 32 + 8, len(b"AuthoredValue\0"))
+                            tree = bytes(tree)
+                        else:
+                            tree = bytearray(tree)
+                            struct.pack_into("<I", tree, 4, struct.unpack_from("<I", tree, 4)[0] + 5)
+                            tree = bytes(tree) + b"TAIL\0"
+                        layout["types"][0]["tree"] = tree
+                    elif failure in ("value", "padding"):
+                        body = bytearray(bodies[61])
+                        body[-4 if failure == "value" else -1] = 1
+                        bodies[61] = bytes(body)
+
+                rewrite_managed_source(pc, profile, mutate)
+                if failure == "policy":
+                    for selected in profile["objects"]:
+                        if "omit_character_master_unkillable" in selected:
+                            selected["omit_character_master_unkillable"] = "yes"
+                path.write_text(json.dumps(profile))
+                identity = load("authored_script_identity", ROOT / "scripts/lab/script_identity.py")
+                helper = Mock(properties_hash=Mock(return_value=derived), tree_nodes=identity.tree_nodes)
+                real_module = P.module
+                with (
+                    patch.object(P, "module", side_effect=lambda name, location=None: helper if name == "script_identity" else real_module(name, location)),
+                    self.assertRaisesRegex(ValueError, message),
+                ):
+                    P.produce(path, P.B.sha(path), pc, root / "failed", Path("codec"), "pin", sdk=sdk)
+                self.assertFalse(json.loads((root / "failed/result.json").read_text())["success"])
+
+    def test_original_behaviour_disable_preserves_all_other_emitted_bytes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            pc, path, _, sdk, _, _, _, derived, bodies, serialized = managed_fixture(root, disable=True)
+            original = (pc / "source.bundle").read_bytes()
+            helper = Mock(properties_hash=Mock(return_value=derived))
+            real_module = P.module
+            with (
+                patch.object(P, "module", side_effect=lambda name, location=None: helper if name == "script_identity" else real_module(name, location)),
+                patch.object(P.W, "codec", return_value=nullcontext(literal_lz4)),
+            ):
+                result = P.produce(path, P.B.sha(path), pc, root / "produced", Path("codec"), "pin", sdk=sdk)
+            self.assertTrue(result["success"])
+            emitted = P.B.Bundle(root / "produced/payload/authored-target").member("CAB-target")
+            self.assertEqual(P.B.exact(emitted, emitted.size), serialized)
+            self.assertEqual(bodies[-7][12:16], bytes(4))
+            self.assertEqual(bodies[-7][:12], bytes(range(12)))
+            self.assertTrue(bodies[-7].endswith(b"PRESERVE BEHAVIOUR"))
+            self.assertEqual((pc / "source.bundle").read_bytes(), original)
+
+    def test_original_behaviour_disable_rejects_class_enabled_padding_and_policy_drift(self):
+        for failure in ("class", "disabled", "padding", "policy"):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                pc, path, profile, sdk, _, _, _, _, _, _ = managed_fixture(root, disable=True)
+
+                def mutate(layout, bodies):
+                    if failure == "class":
+                        layout["types"][0]["class_id"] = 4
+                    elif failure in ("disabled", "padding"):
+                        body = bytearray(bodies[61])
+                        body[12 if failure == "disabled" else 13] = 0 if failure == "disabled" else 1
+                        bodies[61] = bytes(body)
+
+                rewrite_managed_source(pc, profile, mutate)
+                if failure == "policy":
+                    profile["objects"][0]["disable_original_behaviour"] = False
+                path.write_text(json.dumps(profile))
+                with self.assertRaisesRegex(ValueError, "requires an enabled MonoBehaviour"):
+                    P.produce(path, P.B.sha(path), pc, root / "failed", Path("codec"), "pin", sdk=sdk)
+                self.assertFalse(json.loads((root / "failed/result.json").read_text())["success"])
+
     def test_managed_properties_are_derived_from_original_identity_and_sdk_tree(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -537,7 +826,7 @@ class ObjectProducerTests(unittest.TestCase):
             with patch.object(P.W, "codec", return_value=nullcontext(literal_lz4)):
                 result = P.produce(path, P.B.sha(path), pc, root / "produced", Path("codec"), "pin", [(pack, P.B.sha(pack / "result.json"))])
             self.assertTrue(result["success"])
-            self.assertEqual(result["objects"], 9)
+            self.assertEqual(result["objects"], 10)
             self.assertEqual(result["object_bytes"], sum(len(body) for member in bodies.values() for body in member.values()))
             self.assertEqual((root / "produced/payload/authored-scene").read_bytes(), expected_bundle)
             emitted = P.B.Bundle(root / "produced/payload/authored-scene")
@@ -571,10 +860,11 @@ class ObjectProducerTests(unittest.TestCase):
                 root = Path(temporary)
                 pc, path, profile, pack, _, _, _ = scene_fixture(root)
                 shared, main = profile["bundle"]["members"]
-                owner = main["objects"][-1]
+                owner = next(row for row in main["objects"] if row["path_id"] == 4)
                 if failure == "policy":
                     owner["inactive_map_zone"] = False
                 elif failure == "class":
+                    owner.pop("append_components")
                     owner.update(source=[0, 91], source_sha256=digest(b"ORIGINAL-MESH"))
                 elif failure == "preload":
                     shared["objects"][0]["type_source"] = [0, 102]
@@ -594,6 +884,31 @@ class ObjectProducerTests(unittest.TestCase):
                 P.remove_components(original, removals)
         with self.assertRaisesRegex(ValueError, "truncated"):
             P.remove_components(original[:10], [])
+
+    def test_scene_array_policies_reject_wrong_source_classes_and_relationships(self):
+        for failure, message in (
+            ("append-class", "component addition requires"),
+            ("append-missing", "existing produced components"),
+            ("occlusion-class", "original OcclusionCullingSettings"),
+            ("occlusion-count", "static-renderer array drift"),
+        ):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                pc, path, profile, pack, _, _, _ = scene_fixture(root)
+                owner, occlusion = profile["bundle"]["members"][1]["objects"][-2:]
+                if failure == "append-class":
+                    owner.pop("inactive_map_zone")
+                    owner.update(source=[0, 91], source_sha256=digest(b"ORIGINAL-MESH"))
+                elif failure == "append-missing":
+                    owner["append_components"] = [999]
+                elif failure == "occlusion-class":
+                    occlusion.update(source=[0, 91], source_sha256=digest(b"ORIGINAL-MESH"))
+                else:
+                    occlusion["clear_static_renderers"] = 3
+                path.write_text(json.dumps(profile))
+                with self.assertRaisesRegex(ValueError, message):
+                    P.produce(path, P.B.sha(path), pc, root / "failed", Path("codec"), "pin", [(pack, P.B.sha(pack / "result.json"))])
+                self.assertFalse(json.loads((root / "failed/result.json").read_text())["success"])
 
     def test_android_builtin_sprite_external_uses_native_resource_identity(self):
         layout, _ = P.make_layout({"externals": ["Resources/unity_builtin_extra", "CAB-external", "Library/unity default resources"]}, [])
