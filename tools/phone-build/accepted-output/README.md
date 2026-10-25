@@ -900,3 +900,26 @@ every level. For sRGB import all four channels first normalize with float32
 existing byte-unit first reduction. The exact-editor fixture includes varying
 alpha to distinguish these arithmetic contracts. No Editor/project executes in
 production. Android cohort qualification remains open.
+
+## Produce source-derived cubemaps
+
+Use the existing texture producer with `recipe/owner-cubemap-textures.json`,
+SHA-256
+`319691fd4c11591b87b4aae654b00a1cd7789105b43be2cd52a090bb98cb2526`,
+and explicit current `--etc-codec`, `--jpeg-codec` and `--sdk-toolchain` paths
+and SHA-256 pins. Its 110 records select originals from 68 PC bundles:
+50 `cube-mips`, 56 `cube-hdr` and four `cube-rgba-mips`. The existing
+`objects.bin`, `resources.bin`, `index.jsonl` and `result.json` contract is
+unchanged. Thirteen native generated-sky/baked-probe records are excluded;
+their source pixel derivation remains open.
+
+Each operation reads the six original face chains with their original per-face
+stride and regenerates levels from each face's top mip, preserving face order
+and orientation. Ordinary colour uses the existing continuous float mip and
+perceptual ETC path. HDR import preserves the measured exporter half conversion,
+float mip filtering and DoubleLDR quantization before uniform ETC encoding;
+destination colour space selects the transfer before quantization. The four
+RGBA cubes use the SDK colour/public EAC alpha path. CompleteImageSize remains
+per face; the resource extent contains all six faces. Original metadata outside
+the selected nine fields is retained. No target pixel supplier or Editor/project
+executes in production. Complete Android qualification remains open.
