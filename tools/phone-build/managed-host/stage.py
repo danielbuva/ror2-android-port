@@ -59,7 +59,7 @@ def tool_manifest(source, destination, package=None):
         raise ValueError("separate lab tool package required")
     android = "{http://schemas.android.com/apk/res/android}"
     for node in manifest.iter():
-        if node.tag in {"activity", "instrumentation", "provider"}:
+        if node.tag in {"activity", "instrumentation", "provider", "receiver"}:
             name = node.attrib.get(android + "name", "")
             if name.startswith("."):
                 node.set(android + "name", original + name)
@@ -113,6 +113,7 @@ def stage(profile_source, sdk, destination, *, root=ROOT, owner_backend=False):
         "NativeDotnetMuxer.c",
         "NativeJavaHost.c",
         "ToolHostActivity.java",
+        "OwnerInstaller.java",
         "run_profile.py",
         "stage.py",
         "build_fixture.py",
@@ -123,7 +124,7 @@ def stage(profile_source, sdk, destination, *, root=ROOT, owner_backend=False):
         bind(SOURCE.parent / "native-host" / name, name)
     bind(METADATA, "python-native-plan.json")
     for name, path in {
-        "android.jar": "platforms/android-30/android.jar",
+        "android.jar": "platforms/android-33/android.jar",
         "d8.jar": "build-tools/34.0.0/lib/d8.jar",
         "apksigner.jar": "build-tools/34.0.0/lib/apksigner.jar",
     }.items():

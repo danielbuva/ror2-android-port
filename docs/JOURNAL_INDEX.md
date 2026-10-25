@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1175](PORTING_JOURNAL.md#j1175--stage-owner-apks-through-android-install-sessions) | 2026-10-25 | Stage owner APKs through Android install sessions | 2026-10-25. |
 | [J1164](PORTING_JOURNAL.md#j1164--recover-an-interrupted-native-save-and-classify-stage-load-thermal-refusal) | 2026-10-25 | Recover an interrupted native save and classify stage-load thermal refusal | **Hypothesis and scope.** |
 | [J1160](PORTING_JOURNAL.md#j1160--budget-alpha-capture-storage-separately-from-full-builds) | 2026-10-25 | Budget alpha capture storage separately from full builds | **Hypothesis and change.** |
 | [J1156](PORTING_JOURNAL.md#j1156--qualify-per-zone-gameplay-thermal-duration-and-limits) | 2026-10-25 | Qualify per-zone gameplay thermal duration and limits | **Hypothesis and scope.** |

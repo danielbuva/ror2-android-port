@@ -25,17 +25,26 @@ import java.util.concurrent.TimeUnit;
 import org.json.*;
 
 public final class ToolHostActivity extends Activity {
+    private TextView installStatus;
+    @Override public void onResume() {
+        super.onResume();
+        if (installStatus != null) installStatus.setText(OwnerInstaller.status(this));
+    }
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         final TextView view = new TextView(this); view.setText("Private build-tool host test");
         final Button install = new Button(this); install.setText("Install owner-built APK"); install.setEnabled(false);
-        LinearLayout layout = new LinearLayout(this); layout.setOrientation(LinearLayout.VERTICAL); layout.addView(view); layout.addView(install); setContentView(layout);
+        LinearLayout layout = new LinearLayout(this); layout.setOrientation(LinearLayout.VERTICAL); layout.addView(view); layout.addView(install);
+        installStatus = new TextView(this); layout.addView(installStatus); setContentView(layout);
         final Runnable ready = new Runnable() { public void run() {
             try {
                 File apk=readyApk(ToolHostActivity.this);
                 android.content.pm.PackageInfo info=getPackageManager().getPackageArchiveInfo(apk.getPath(),0);
                 if(info==null)throw new IOException("APK manifest unavailable");
-                view.setText("Owner-built APK ready: "+info.packageName+" ("+info.versionName+")"); install.setEnabled(true);
+                view.setText("Owner-built APK ready: "+info.packageName+" ("+info.versionName+")");
+                try { getPackageManager().getPackageInfo(info.packageName, 0); install.setText("Update installed game"); }
+                catch (android.content.pm.PackageManager.NameNotFoundException absent) { install.setText("Install owner-built APK"); }
+                install.setEnabled(true);
             } catch(Exception error) { view.setText("Build result: "+error.getMessage()); }
         }};
         install.setOnClickListener(new android.view.View.OnClickListener() { public void onClick(android.view.View ignored) {
@@ -44,8 +53,17 @@ public final class ToolHostActivity extends Activity {
                 if(android.os.Build.VERSION.SDK_INT>=26 && !getPackageManager().canRequestPackageInstalls()) {
                     startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,Uri.parse("package:"+getPackageName()))); return;
                 }
-                Intent intent=new Intent(Intent.ACTION_INSTALL_PACKAGE,Uri.parse("content://"+getPackageName()+".apk/owner.apk"));
-                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION); startActivity(intent);
+                install.setEnabled(false);
+                new Thread(new Runnable() { public void run() {
+                    try {
+                        JSONObject report = new JSONObject(new Worker(ToolHostActivity.this).text(new File(getFilesDir(), "tool-host-report.json")));
+                        OwnerInstaller.install(ToolHostActivity.this, readyApk(ToolHostActivity.this), report.getJSONObject("ownerApk").getString("sha256"));
+                    } catch (final Exception error) {
+                        runOnUiThread(new Runnable() { public void run() { view.setText("Installer unavailable: " + error.getMessage()); } });
+                    } finally {
+                        runOnUiThread(new Runnable() { public void run() { installStatus.setText(OwnerInstaller.status(ToolHostActivity.this)); install.setEnabled(true); } });
+                    }
+                } }).start();
             }catch(Exception error){view.setText("Installer unavailable: "+error.getMessage());}
         }});
         try { readyApk(this); ready.run(); }

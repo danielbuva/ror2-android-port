@@ -266,6 +266,7 @@ try:
         "-d",
         classes,
         source / "ToolHostActivity.java",
+        source / "OwnerInstaller.java",
     )
     jar = out / "classes.jar"
     with zipfile.ZipFile(jar, "w", zipfile.ZIP_DEFLATED) as z:

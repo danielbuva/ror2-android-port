@@ -194,3 +194,17 @@ ordinary app host, with actual native hash/mapping/UID/context evidence. It does
 not qualify full-player assembly, installer UI or game performance. The separate
 original-input native compilation remains active until its own terminal result
 and explicit corrected relink. Device policy/security qualification stays open.
+
+## Session installation (host-qualified)
+
+The Install/Update button submits the completed private owner APK through
+`OwnerInstaller.java`. Updates require a higher versionCode and the installed
+signing certificate. APK bytes are hashed while streaming into the session;
+failed staging is abandoned. The callback persists Android confirmation and
+terminal status for Activity return. Android 12+ updates request
+`USER_ACTION_NOT_REQUIRED`; Android may still require confirmation. No uninstall
+or game-data clear is performed. Keep the existing durable owner key; if it is
+lost, export saves before a separately approved reinstall, then restore them.
+The public release download/rebuild UI and device save-survival check remain open.
+
+API contract: [Android session parameters](https://developer.android.com/reference/android/content/pm/PackageInstaller.SessionParams).

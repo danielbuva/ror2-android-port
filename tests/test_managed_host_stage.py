@@ -27,7 +27,7 @@ class ManagedHostStageTests(unittest.TestCase):
             source_head="authored fixture", public_profile_source_hashes={"source.py": hashlib.sha256((self.profile / "source.py").read_bytes()).hexdigest()}
         )
         self.sdk = self.root / "sdk"
-        for name in ("platforms/android-30/android.jar", "build-tools/34.0.0/lib/d8.jar", "build-tools/34.0.0/lib/apksigner.jar"):
+        for name in ("platforms/android-33/android.jar", "build-tools/34.0.0/lib/d8.jar", "build-tools/34.0.0/lib/apksigner.jar"):
             path = self.sdk / name
             path.parent.mkdir(exist_ok=True, parents=True)
             path.write_bytes(b"authored jar placeholder; never executed")
@@ -93,6 +93,9 @@ class ManagedHostStageTests(unittest.TestCase):
         self.assertEqual(provider.attrib[android + "authorities"], "dev.ror2lab.authoredtool.apk")
         self.assertEqual(provider.attrib[android + "exported"], "false")
         self.assertEqual(provider.attrib[android + "grantUriPermissions"], "true")
+        receiver = value.find("application/receiver")
+        self.assertEqual(receiver.attrib[android + "name"], "dev.ror2lab.phonebuildhostfixture.OwnerInstaller$Result")
+        self.assertEqual(receiver.attrib[android + "exported"], "false")
         self.assertEqual(source.read_bytes(), before)
         with self.assertRaisesRegex(ValueError, "separate lab tool"):
             stage.tool_manifest(source, self.root / "refused.xml", "dev.ror2lab.arm64")
