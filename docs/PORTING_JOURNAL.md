@@ -42139,3 +42139,68 @@ input, genuine ENOSPC and the other public-alpha gates remain open. Generic
 errors after a thermal stop abort conservatively instead of retrying an
 unclassified failure.
 
+## J1127 — Stop cold startup at the CPU threshold and retain failure diagnostics
+
+**Hypothesis/scope:** J1125's independent CPU supervisor must stop the existing
+frozen player before an unsafe sustained case. Inspect the first failed queue
+before repeating it; this is generic device supervision and evidence handling,
+not a new RoR2 reconstruction or runtime mechanism.
+
+**Device result:** the single detached queue fails during initial settings-menu
+startup, before the interrupted-write observer is armed. No SDK, heap or
+sustained stage completes. The installed R55 APK remains
+`111b1facec5b021c87dce03be24c9b81e913160809e685dc94b23e161786917a`
+(source `eb2acf07c55a6ba67a649494ba77a7c65e6c6b45`). Its 76 CPU samples start at
+36.2 C, reach 72.0 C at the stop threshold, and end at 43.4 C. Maximum sample
+gap is 0.737 s; no above-80 C observation occurs. The stage reports generic
+process loss and conservatively aborts, preserving J1125's first-error rule.
+
+The original stage failure saved neither its last report nor terminal PID log.
+One subsequent atomic, read-only forensic lease retrieves retained Android
+exit history, the failed PID log and crash buffer. The matching PID's Android
+exit is USER REQUESTED / FORCE STOP, 181 ms after the 72 C sample; the existing
+PID-specific classifier finds no runtime errors in the retained log. This
+supports supervisor shutdown rather than a native crash, without proving the
+menu or interrupted-write contract. A missing last report remains unknown.
+Independent actual-APK/idle/selector/pending readbacks pass before and after
+forensics; the OLED is asleep and both leases are released. No install,
+profile mutation, gameplay continuation or other worker's scratch deletion
+occurs. The unchanged queue is not repeated: even cold startup exceeded the
+then-current 70 C limit, so blind whole-stage replay was not attempted.
+
+**Evidence:** private `work/coordination/alpha-touch-acceptance-20261024/` holds
+`alpha-stability-20261025T050009Z.done.json`, its `.done.thermal.jsonl` and
+`failed-start-forensics/{done.json,pid.log,crash.log,exit-info.txt}`. Raw records
+remain ignored. The batch's terminal receipt also records completed canonical
+pruning. The independent forensic receipt records unchanged bytes and cleanup.
+
+**Host correction/validation:** the existing settings interruption owner now
+retains the last matching report and actual-PID logs on failure, including
+before menu readiness. Native report/log failures remain authoritative; an
+unavailable capture records its error while preserving the original exception.
+Four focused failure-path fixtures cover evidence retention, independent capture
+failure and runtime-error precedence. The action registry now matches the
+implemented CPU supervisor; its formerly stale help blocked the previous
+push's fresh-clone pre-push check. Regenerated help, focused tests and Ruff pass.
+These changes have no player-build input or device-acceptance claim.
+
+**Policy refinement/implementation:** the orchestrator subsequently clarifies
+that the 70/55 C pause/resume policy applies to pausable tool jobs. Gameplay
+must continue through 80 C, abort only above 80 C, sample at most one second
+apart and cool all temperature zones to at most 50 C before the next run. The
+shared game supervisor adopts that rule, retains independent bounded shutdown,
+records the peak and removes the obsolete gameplay replay path. Initial and
+recovery launches remain forbidden after a supervision failure. This explicit
+policy refinement, rather than reclassification of generic process loss, admits
+a fresh scheduled case. Host fixtures cover the new boundaries, including a hotter non-CPU physical
+zone blocking admission and sentinel refusal before launch. The cooldown
+observation retains raw types/values and explicitly identifies known electrical
+level zones; unrecognized negative wireless readings refuse admission rather
+than being assumed cool or disconnected. Device proof of the revised rule
+remains pending.
+
+**Result/revisit:** SDK interruption, corrected heap attribution, managed-growth
+bounds and sustained play remain open. Run one fresh queue under the refined
+gameplay policy, retaining this failed case separately. Physical input, ordinary
+play and real ENOSPC remain separate gates.
+

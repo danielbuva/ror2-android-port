@@ -476,7 +476,7 @@ _ENTRIES = (
         "check_alpha_stability_batch",
         {},
         "current",
-        "Detached diagnostic driver: one canonical device lease across SDK settings interruption, three-session native heap attribution and 30-minute assisted sustained play. Requires explicit --device, --expected-apk-sha256 and a new absolute --done-file. Stop on first failure; publish terminal cleanup and lease release in that receipt. No automatic installation, physical-input, ordinary-play or memory-bound claim. Currently refuses before device access: the mandatory one-second CPU thermal pause/resume/abort owner is not implemented.",
+        "Detached diagnostic driver: one canonical device lease across SDK settings interruption, three-session native heap attribution and 30-minute assisted sustained play. Requires explicit --device, --expected-apk-sha256 and a new absolute --done-file. Stop on first failure; publish terminal cleanup and lease release in that receipt. No automatic installation, physical-input, ordinary-play or memory-bound claim. Independent CPU sampling targets 250 ms; gaps above 1 s abort. Gameplay continues through 80 C; above 80 C abort without retry. Before each stage cool all temperature zones to at most 50 C. Completed stages checkpoint; one three-hour deadline. Thermal device qualification remains open.",
         handler=_alpha_stability_batch,
     ),
     Action(

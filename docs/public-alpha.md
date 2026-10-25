@@ -205,7 +205,8 @@ qualification remain separate from these laboratory installs.
       cases on supported hardware. [J1071](PORTING_JOURNAL.md#j1071--qualify-software-touch-native-pause-and-recovery)
       qualifies controlled VM-crash and genuine ANR cold recovery, invalid-pending
       refusal, validated-backup recovery, directory-write failure/retry and fresh
-      background return. Injected persistence states do not establish a power-cut
+      background return. J1127 stops cold startup at the CPU thermal threshold
+      before any interrupted-write, heap or sustained stage completes. Injected persistence states do not establish a power-cut
       or filled-filesystem result.
 - [ ] Qualify the [prepared-lab owner-build/install/playtest checklist](PLAYTESTING.md)
       on fresh public inputs, then establish final player installation, ordinary

@@ -1324,16 +1324,22 @@ The batch stops on the first failure; independent actual APK/idle/OLED readback
 and canonical pruning precede lease release and atomic done-file publication.
 Foreign selectors/pending transactions are preserved, and failed terminal
 verification retains the lease for diagnosis. No installation is performed.
-The batch's CPU-zone observer samples independently of stage operations, targets
-250 ms intervals and refuses a measured gap above 1 s. At 70 C it stops the owned
-game and invalidates the current attempt. Only a classified cancellation can
-restart the entire stage after verified idle/OLED cleanup and cooling to at most
-55 C; runtime and unexpected failures stop the queue. Cooldown never counts as play
-or joins two heap series. Above 80 C, missing sensors or failed supervision abort
-the batch. Completed stages are checkpointed; failed evidence is retained. The
-driver has one three-hour deadline and runs one workload at a time. Battery/HAL
-checks remain additional limits. This host control requires device qualification;
-it does not establish sustained thermal acceptance or suspend the native runtime.
+The batch's independent temperature-zone observer targets 250 ms intervals and
+refuses a measured gap above 1 s. Gameplay continues through 80 C; above 80 C,
+missing sensors or failed supervision abort the batch without retry. Before
+each stage, all temperature zones must cool to at most 50 C with the OLED
+asleep. Runtime and unexpected failures retain first-failure authority; a
+bounded stop worker cannot block temperature sampling. The owner records the
+peak, prevents launches after cancellation and never suspends the native
+runtime. Completed stages checkpoint within one three-hour deadline; failed
+evidence is retained and cooldown never counts as play. The separate 70/55 C
+pause/resume policy applies to pausable tool jobs. Battery/HAL checks remain
+additional limits. This supervision does not establish sustained acceptance.
+The settings interruption owner captures its last matching report and actual-PID
+logs on failure before teardown, including before menu readiness. Capture
+failures preserve the original exception; established native errors take
+precedence over a transition failure. Private captures remain ignored.
+
 
 `AndroidTouchInput` is the playable bridge's pointer producer. Stable finger IDs
 own independent movement, camera and eight native action captures, plus pause.

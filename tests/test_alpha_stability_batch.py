@@ -73,7 +73,7 @@ class AlphaStabilityBatchTests(unittest.TestCase):
         self.assertFalse(self.lease.exists())
         device.assert_not_called()
 
-    def run_case(self, fail_at=None, terminal_error=None, free_bytes=None, expect_failure=False, thermal_outcomes=None):
+    def run_case(self, fail_at=None, terminal_error=None, free_bytes=None, expect_failure=False, thermal_errors=None):
         events = []
         original_work = common.WORK
         storage_samples = iter(free_bytes or (20 * 1024**3,) * 10)
@@ -125,7 +125,8 @@ class AlphaStabilityBatchTests(unittest.TestCase):
             mock.patch.object(batch.shutil, "disk_usage", return_value=SimpleNamespace(free=101 * 1024**3)),
             mock.patch.object(batch, "command_selectors", return_value=(None, None)),
         ):
-            thermal.return_value.finish.side_effect = thermal_outcomes or [None, None, None]
+            thermal.return_value.finish.side_effect = thermal_errors or [None, None, None]
+            thermal.return_value.peak_cpu_celsius = 79.5
             if fail_at or terminal_error or expect_failure:
                 with self.assertRaises(RuntimeError):
                     batch.check_alpha_stability_batch(**self.args)
@@ -145,31 +146,17 @@ class AlphaStabilityBatchTests(unittest.TestCase):
         self.assertTrue(result["lease_released"])
         self.assertFalse(self.lease.exists())
 
-    def test_thermal_interruption_replays_only_current_stage_and_keeps_checkpoint(self):
-        events, result = self.run_case(thermal_outcomes=[None, "interrupted-at-70C", None, None])
-        stages = [event[0] for event in events if isinstance(event, tuple)]
-        self.assertEqual(stages, ["sdk", "memory", "memory", "sustained"])
-        self.assertEqual([stage["name"] for stage in result["stages"]], ["settings-write-interrupt", "session-memory", "session-sustained"])
-        self.assertEqual(result["interrupted_attempts"][0]["name"], "session-memory")
-        self.assertEqual(json.loads(self.done.with_suffix(".progress.json").read_text())["stages"], result["stages"])
-
-    def test_interrupted_heap_retry_rechecks_and_refuses_lost_capture_headroom(self):
-        events, result = self.run_case(
-            free_bytes=(20 * 1024**3, 20 * 1024**3, 18 * 1024**3), thermal_outcomes=[None, "interrupted-at-70C"], expect_failure=True
-        )
+    def test_thermal_abort_never_replays_stage_and_retains_peak(self):
+        events, result = self.run_case(thermal_errors=[None, RuntimeError("CPU above80")], expect_failure=True)
         self.assertEqual([event[0] for event in events if isinstance(event, tuple)], ["sdk", "memory"])
-        self.assertIn("4 GiB headroom", result["error"])
-        self.assertFalse(result["success"])
-
-    def test_runtime_failure_coincident_thermal_trip_aborts_without_replay(self):
-        events, result = self.run_case(fail_at="sdk", thermal_outcomes=["interrupted-at-70C"])
-        self.assertEqual([event[0] for event in events if isinstance(event, tuple)], ["sdk"])
-        self.assertEqual(result["error"], "authored first failure")
-        self.assertFalse(result["success"])
-        self.assertEqual(result["interrupted_attempts"], [])
+        self.assertEqual([stage["name"] for stage in result["stages"]], ["settings-write-interrupt"])
+        self.assertEqual(result["peak_cpu_celsius"], 79.5)
+        self.assertEqual(result["active_stage_peak_cpu_celsius"], 79.5)
+        self.assertNotIn("interrupted_attempts", result)
+        self.assertIn("CPU above80", result["error"])
 
     def test_runtime_failure_remains_primary_when_thermal_shutdown_also_aborts(self):
-        events, result = self.run_case(fail_at="sdk", thermal_outcomes=[RuntimeError("CPU above80")])
+        events, result = self.run_case(fail_at="sdk", thermal_errors=[RuntimeError("CPU above80")])
         self.assertEqual([event[0] for event in events if isinstance(event, tuple)], ["sdk"])
         self.assertEqual(result["error"], "authored first failure")
         self.assertEqual(result["thermal_error"], "CPU above80")
@@ -260,34 +247,72 @@ class GameThermalOwnerTests(unittest.TestCase):
         with self.assertRaisesRegex(TimeoutError, "hung ADB"):
             self.owner.sample()
 
-    def test_above_80_aborts_but_80_itself_is_pause_temperature(self):
+    def test_above_80_aborts_but_80_itself_continues(self):
         self.device.cmd.return_value = "cpu-0 80000"
         self.assertEqual(self.owner.sample(), 80)
         self.device.cmd.return_value = "cpu-0 80001"
         with self.assertRaisesRegex(RuntimeError, "80 C hard abort"):
             self.owner.sample()
+        self.assertEqual(self.owner.peak_cpu_celsius, 80.001)
 
     def test_cooling_hysteresis_excludes_wait_from_game_attempt(self):
         self.device.display.return_value = True
-        with mock.patch.object(self.owner, "sample", side_effect=[70, 56, 55]) as sample, mock.patch.object(batch.time, "sleep") as sleep:
+        with mock.patch.object(self.owner, "sample", side_effect=[70, 51, 50]) as sample, mock.patch.object(batch.time, "sleep") as sleep:
             self.owner.cool()
         self.assertEqual(sample.call_count, 3)
         self.assertEqual(sleep.call_count, 2)
         self.device.display.assert_called_once_with(False)
         self.assertIsNone(self.owner.previous)
+        sample.assert_called_with(all_zones=True)
 
-    def test_observer_remains_active_after_stop_until_stage_unwinds(self):
-        owner = self.owner
-        observed = __import__("threading").Event()
-        with (
-            mock.patch.object(owner, "sample", side_effect=[55, 70, 81, 70]),
-            mock.patch.object(owner, "terminate_game", side_effect=lambda: observed.set()) as stop,
-        ):
-            owner.start()
-            self.assertTrue(observed.wait(2))
-            self.assertTrue(owner.thread.is_alive())
-            self.assertEqual(owner.finish(), "interrupted-at-70C")
-            self.assertGreaterEqual(stop.call_count, 1)
+    def test_cooldown_waits_for_pmic_even_when_cpu_is_below_50(self):
+        self.device.display.return_value = True
+        self.device.cmd.side_effect = ["cpu-0\t49000\npm8550_tz\t51000", "cpu-0\t49000\npm8550_tz\t50000"]
+        with mock.patch.object(batch.time, "sleep") as sleep:
+            self.owner.cool()
+        sleep.assert_called_once_with(batch.THERMAL_INTERVAL_SECONDS)
+        self.device.cmd.assert_called_with("shell", batch.ALL_ZONES, timeout=0.7)
+        rows = [json.loads(line) for line in self.owner.trace.read_text().splitlines()]
+        self.assertEqual([row["maximum_zone_celsius"] for row in rows], [51, 50])
+        self.assertEqual(self.owner.peak_cpu_celsius, 49)
+
+    def test_unknown_sentinel_or_missing_cpu_refuses_cooldown_with_raw_trace(self):
+        for text in ("cpu-0 49000\nwireless -40000", "pm8550_tz 49000", "cpu-0 49000\nunknown 0", "cpu-0 49000\nbroken"):
+            with self.subTest(text=text):
+                self.device.cmd.return_value = text
+                with self.assertRaises(RuntimeError):
+                    self.owner.cool()
+                row = json.loads(self.owner.trace.read_text().splitlines()[-1])
+                self.assertEqual(row["all_zones_raw"], text)
+                self.assertIn("error", row)
+        self.device.launch.assert_not_called()
+
+    def test_cooldown_retains_explicit_non_temperature_exclusions(self):
+        for name in batch.NON_TEMPERATURE_ZONES:
+            with self.subTest(name=name):
+                maximum, cpu, excluded = batch.cooldown_temperatures("cpu-0 49000\n" + name + " 0")
+                self.assertEqual((maximum, cpu), (49, 49))
+                self.assertEqual(excluded, [dict(type=name, raw=0, reason="Non-temperature battery/current/voltage level")])
+
+    def test_observer_does_not_stop_game_at_or_below_80(self):
+        import threading
+
+        sampled = threading.Event()
+        count = 0
+
+        def sample():
+            nonlocal count
+            count += 1
+            if count >= 3:
+                sampled.set()
+            return 80
+
+        with mock.patch.object(self.owner, "sample", side_effect=sample), mock.patch.object(self.owner, "terminate_game") as stop:
+            self.owner.start()
+            self.assertTrue(sampled.wait(2))
+            stop.assert_not_called()
+            self.assertFalse(self.owner.cancelled.is_set())
+            self.assertIsNone(self.owner.finish())
 
     def test_sampler_continues_while_bounded_stop_is_blocked(self):
         import threading
@@ -300,7 +325,9 @@ class GameThermalOwnerTests(unittest.TestCase):
             count += 1
             if count >= 4:
                 sampled.set()
-            return 55 if count == 1 else 70
+            if count > 1:
+                raise RuntimeError("CPU exceeded 80 C hard abort")
+            return 50
 
         def blocked_stop():
             entered.set()
@@ -314,19 +341,20 @@ class GameThermalOwnerTests(unittest.TestCase):
                 self.assertTrue(self.owner.thread.is_alive())
             finally:
                 release.set()
-                self.owner.finish()
+                with self.assertRaisesRegex(RuntimeError, "80 C hard abort"):
+                    self.owner.finish()
         self.assertFalse(self.owner.thread.is_alive())
         self.assertFalse(self.owner.stopper.is_alive())
 
     def test_thermally_cancelled_launch_and_recovery_are_refused(self):
-        self.owner.outcome = "interrupted-at-70C"
+        self.owner.error = "CPU exceeded 80 C hard abort"
         with self.assertRaisesRegex(RuntimeError, "cannot launch/recover"):
             self.owner.launch(self.device)
         self.device.launch.assert_not_called()
-        self.owner.outcome = None
+        self.owner.error = None
 
         def crossed():
-            self.owner.outcome = "interrupted-at-70C"
+            self.owner.error = "CPU exceeded 80 C hard abort"
             return dict(pid="73")
 
         self.device.launch.side_effect = crossed

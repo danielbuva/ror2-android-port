@@ -64,13 +64,16 @@ def check_settings_write_interrupt(expected_apk_sha256=None, _launch=None):
         scope="Observed native pending transaction interrupted by same-UID writer termination; no power-cut/ENOSPC claim",
     )
     pid = None
+    last_report = None
     remote = []
 
     def wait(check, timeout=100):
+        nonlocal last_report
         end = time.monotonic() + timeout
         while time.monotonic() < end:
             report = _read_json(device, runtime + "/movement-batch-" + SPINE_ID + ".json")
             if matches_run(report, pid, attempt):
+                last_report = report
                 if report.get("firstFailure"):
                     raise RuntimeError("Native first failure: " + str(report["firstFailure"]))
                 if check(report):
@@ -81,7 +84,8 @@ def check_settings_write_interrupt(expected_apk_sha256=None, _launch=None):
         raise RuntimeError("Current native report deadline")
 
     def menu():
-        nonlocal pid
+        nonlocal pid, last_report
+        last_report = None
         pid = (_launch(device) if _launch else device.launch())["pid"]
         return wait(lambda r: r.get("phase") == "offline-start-menu" and r.get("settings", {}).get("ready") is True)
 
@@ -103,8 +107,7 @@ def check_settings_write_interrupt(expected_apk_sha256=None, _launch=None):
         (out / (name + ".log")).write_text(logs)
         errors = current_errors(logs, pid)
         result.setdefault("runtime_errors", []).extend(errors)
-        if errors:
-            raise RuntimeError("Actual-PID runtime error during native persistence case")
+        return errors
 
     def protected_hashes():
         roots = [runtime + "/" + name for name in ("android-profile-v1", "offline-run-results-v1")]
@@ -190,7 +193,8 @@ def check_settings_write_interrupt(expected_apk_sha256=None, _launch=None):
             observed = json.loads(raw)
         result["interruption_observer"] = observed
         stopped_pid = pid
-        capture_owned_errors("interrupted-process")
+        if capture_owned_errors("interrupted-process"):
+            raise RuntimeError("Actual-PID runtime error during native persistence case")
         deadline = time.monotonic() + 10
         while device.sh("pidof", PACKAGE, check=False).strip() and time.monotonic() < deadline:
             time.sleep(0.1)
@@ -225,11 +229,37 @@ def check_settings_write_interrupt(expected_apk_sha256=None, _launch=None):
         after_profile = protected_hashes()
         if not before_profile or after_profile != before_profile:
             raise RuntimeError("Existing native profile/results changed")
-        capture_owned_errors("recovered-process")
+        if capture_owned_errors("recovered-process"):
+            raise RuntimeError("Actual-PID runtime error during native persistence case")
         result.update(success=True, protected_files=len(before_profile), recovered_pid=pid, interrupted_pid=stopped_pid)
         write(out / "native-resave.json", report)
     except Exception as error:
         result["error"] = str(error)
+        if pid:
+            # Capture before teardown even if the first menu transition failed.
+            # A transport failure must not hide either the original exception or
+            # runtime evidence collected through the other channel.
+            try:
+                report = _read_json(device, runtime + "/movement-batch-" + SPINE_ID + ".json")
+                if matches_run(report, pid, attempt):
+                    last_report = report
+            except Exception as capture_error:
+                result.setdefault("capture_errors", []).append(str(capture_error))
+            try:
+                if last_report is not None:
+                    write(out / "failure-current-report.json", last_report)
+            except Exception as capture_error:
+                result.setdefault("capture_errors", []).append(str(capture_error))
+            try:
+                capture_owned_errors("failure-process")
+            except Exception as capture_error:
+                result.setdefault("capture_errors", []).append(str(capture_error))
+            failure = last_report.get("firstFailure") if last_report is not None else None
+            if failure or result.get("runtime_errors"):
+                message = "Native first failure: " + str(failure) if failure else "Actual-PID runtime error during native persistence case"
+                result["original_error"] = str(error)
+                result["error"] = message
+                raise RuntimeError(message) from error
         raise
     finally:
         errors = []

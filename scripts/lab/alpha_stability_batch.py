@@ -3,9 +3,8 @@
 The caller launches this driver once and waits on its explicit atomic done file.
 No detached child owns the lease. Public checks retain their own scoped cleanup;
 an independent installed-byte/idle/display readback gates release of this lease.
-CPU thermal pauses terminate the current game attempt and replay that entire
-stage after cooldown. Interrupted observations are preserved, never combined
-with the replacement attempt or counted toward continuous sustained play.
+Gameplay continues through 80 C, with independent sampling and a recorded peak.
+An observation above 80 C aborts the batch; each new stage requires cooldown.
 """
 
 import importlib
@@ -33,6 +32,21 @@ NATIVE_CAPTURE_HEADROOM_BYTES = 4 * 1024**3
 # Read-only sysfs observation, using shell builtins to avoid spawning one cat per
 # zone. Android's thermal ABI reports millidegrees Celsius.
 CPU_ZONES = 'for z in /sys/class/thermal/thermal_zone*; do read -r t < "$z/type" || continue; case "$t" in cpu*|CPU*) read -r v < "$z/temp" || exit 1; printf "%s\\t%s\\n" "$t" "$v";; esac; done'
+ALL_ZONES = (
+    'for z in /sys/class/thermal/thermal_zone*; do read -r t < "$z/type" || exit 1; read -r v < "$z/temp" || exit 1; printf "%s\\t%s\\n" "$t" "$v"; done'
+)
+NON_TEMPERATURE_ZONES = {
+    "pm8550-bcl-lvl0",
+    "pm8550-bcl-lvl1",
+    "pm8550-bcl-lvl2",
+    "pm8550b-ibat-lvl0",
+    "pm8550b-ibat-lvl1",
+    "pm8550b-bcl-lvl0",
+    "pm8550b-bcl-lvl1",
+    "pm8550b-bcl-lvl2",
+    "socd",
+    "vbat",
+}
 THERMAL_INTERVAL_SECONDS = 0.25
 BATCH_DEADLINE_SECONDS = 3 * 60 * 60
 
@@ -55,6 +69,30 @@ def cpu_temperature(text):
     return max(values)
 
 
+def cooldown_temperatures(text):
+    physical, excluded, cpu = [], [], []
+    for line in text.splitlines():
+        fields = line.split()
+        if len(fields) != 2:
+            raise RuntimeError("Malformed all-zone thermal observation")
+        name, raw = fields
+        try:
+            value = int(raw)
+        except ValueError as error:
+            raise RuntimeError("Invalid all-zone thermal value") from error
+        if name in NON_TEMPERATURE_ZONES:
+            excluded.append(dict(type=name, raw=value, reason="Non-temperature battery/current/voltage level"))
+            continue
+        if not 0 < value < 150000:
+            raise RuntimeError("Unknown/sentinel all-zone thermal value: " + name)
+        physical.append(value / 1000)
+        if name.lower().startswith("cpu"):
+            cpu.append(value / 1000)
+    if not cpu:
+        raise RuntimeError("No readable CPU thermal zones in cooldown")
+    return max(physical), max(cpu), excluded
+
+
 class ThermalCancelled(RuntimeError):
     """The launch boundary observed the already-latched thermal cancellation."""
 
@@ -62,9 +100,8 @@ class ThermalCancelled(RuntimeError):
 class _GameThermalOwner:
     """One lightweight observer; the stage is the only heavy job.
 
-    At 70 C terminate the owned game, let its existing owner clean up, then
-    restart the *whole* stage after 55 C. No process suspension, simulated native
-    pause, merged memory samples or cooldown time presented as gameplay.
+    Observe gameplay without pausing or replaying it. A reading above 80 C
+    aborts; cooldown before a new stage requires at most 50 C.
     """
 
     def __init__(self, device, expected, trace, deadline):
@@ -76,26 +113,40 @@ class _GameThermalOwner:
         self.cancelled = threading.Event()
         self.stop_lock = threading.Lock()
         self.previous = None
-        self.outcome = None
         self.error = None
+        self.peak_cpu_celsius = None
 
-    def sample(self):
+    def sample(self, all_zones=False):
         before = time.monotonic()
-        text = self.device.cmd("shell", CPU_ZONES, timeout=0.7)
+        text = self.device.cmd("shell", ALL_ZONES if all_zones else CPU_ZONES, timeout=0.7)
         at = time.monotonic()
         gap = at - self.previous if self.previous is not None else at - before
         self.previous = at
-        value = cpu_temperature(text)
         self.trace.parent.mkdir(parents=True, exist_ok=True)
-        with self.trace.open("a") as stream:
-            stream.write(json.dumps(dict(utc=common.now(), cpu_celsius=value, gap_seconds=gap)) + "\n")
+        observation = dict(utc=common.now(), gap_seconds=gap)
+        if all_zones:
+            observation["all_zones_raw"] = text
+        try:
+            if all_zones:
+                maximum, value, excluded = cooldown_temperatures(text)
+                observation.update(maximum_zone_celsius=maximum, excluded_zones=excluded)
+            else:
+                maximum = value = cpu_temperature(text)
+            self.peak_cpu_celsius = max(value, self.peak_cpu_celsius or value)
+            observation["cpu_celsius"] = value
+        except BaseException as error:
+            observation["error"] = str(error)
+            raise
+        finally:
+            with self.trace.open("a") as stream:
+                stream.write(json.dumps(observation) + "\n")
         if gap > 1:
             raise RuntimeError("CPU thermal sample gap exceeded one second")
         if at >= self.deadline:
             raise RuntimeError("Three-hour alpha driver deadline reached")
         if value > 80:
             raise RuntimeError("CPU exceeded 80 C hard abort")
-        return value
+        return maximum
 
     def terminate_game(self):
         from device import PACKAGE
@@ -123,24 +174,22 @@ class _GameThermalOwner:
         if not self.device.display(False):
             raise RuntimeError("Thermal cooldown requires verified OLED sleep")
         self.previous = None  # No heavy job during display/idle setup.
-        while self.sample() > 55:
+        while self.sample(all_zones=True) > 50:
             time.sleep(THERMAL_INTERVAL_SECONDS)
         self.previous = None
 
     def start(self):
-        if self.sample() >= 70:
-            raise RuntimeError("CPU thermal admission requires cooldown before workload")
+        self.sample()
 
         def observe():
             # Stay alive until the stage has unwound: SDK recovery and an
             # already-running Device.launch may otherwise launch after a stop.
             while not self.sample_stop.wait(THERMAL_INTERVAL_SECONDS):
                 try:
-                    if self.sample() >= 70:
-                        self.outcome = "interrupted-at-70C"
+                    self.sample()
                 except BaseException as error:
                     self.error = self.error or str(error) or type(error).__name__
-                if self.outcome or self.error:
+                if self.error:
                     self.cancelled.set()
 
         def stop_workload():
@@ -165,10 +214,10 @@ class _GameThermalOwner:
             self.terminate_game()
 
     def launch(self, device):
-        if self.outcome or self.error:
+        if self.error:
             raise ThermalCancelled("Thermally cancelled stage cannot launch/recover game")
         launched = device.launch()
-        if self.outcome or self.error:
+        if self.error:
             self._terminate_serially()
             raise ThermalCancelled("Game launch crossed thermal cancellation")
         return launched
@@ -192,7 +241,6 @@ class _GameThermalOwner:
                     raise RuntimeError("CPU thermal observer failed to terminate")
         if self.error:
             raise RuntimeError(self.error)
-        return self.outcome
 
 
 def _modules():
@@ -315,20 +363,18 @@ def check_alpha_stability_batch(*, device_serial, expected_apk_sha256, canonical
         progress = done.with_suffix(".progress.json")
         thermal_trace = done.with_suffix(".thermal.jsonl")
         result["thermal_trace"] = str(thermal_trace)
-        result["interrupted_attempts"] = []
         for name, function, kwargs in (
             ("settings-write-interrupt", sdk.check_settings_write_interrupt, {}),
             ("session-memory", memory.check_session_memory, dict(sessions=3, memory_snapshots=True)),
             ("session-sustained", sustained.check_session_sustained, {}),
         ):
             result["active_stage"] = name
-            while True:
-                if name == "session-memory":
-                    _require_capture_capacity(device)
-                thermal = _GameThermalOwner(device, expected, thermal_trace, deadline)
-                thermal.cool()  # Initial/retry admission <=55 C; no game running.
-                stage = None
-                stage_error = None
+            if name == "session-memory":
+                _require_capture_capacity(device)
+            thermal = _GameThermalOwner(device, expected, thermal_trace, deadline)
+            stage_error = None
+            try:
+                thermal.cool()  # No game running; admit the next stage at <=50 C.
                 thermal.start()
                 try:
                     stage = function(expected_apk_sha256=expected, _launch=thermal.launch, **kwargs)
@@ -336,31 +382,22 @@ def check_alpha_stability_batch(*, device_serial, expected_apk_sha256, canonical
                     stage_error = error
                 finally:
                     try:
-                        interruption = thermal.finish()
+                        thermal.finish()
                     except BaseException as thermal_error:
                         result["thermal_error"] = str(thermal_error) or type(thermal_error).__name__
                         if stage_error:
                             raise stage_error from thermal_error
                         raise
-                if interruption:
-                    # Preserve first-failure authority. A coincident thermal trip
-                    # never converts native/runtime/unknown failure into a retry.
-                    # Existing owners with generic failure wrappers fail closed.
-                    if stage_error and not isinstance(stage_error, ThermalCancelled):
-                        raise stage_error
-                    result["interrupted_attempts"].append(dict(name=name, reason=interruption, error=str(stage_error) if stage_error else None, result=stage))
-                    # Existing owners must remove their own selector and pending
-                    # state. Preserve any interrupted write; never erase to retry.
-                    result["retry_idle_readback"] = _idle_readback(device, expected)
-                    common.write(progress, result)
-                    continue
                 if stage_error:
                     raise stage_error
                 if not isinstance(stage, dict) or stage.get("success") is not True:
                     raise RuntimeError(name + " did not return explicit success")
-                result["stages"].append(dict(name=name, result=stage))
-                common.write(progress, result)  # Completed-stage checkpoint.
-                break
+                result["stages"].append(dict(name=name, result=stage, peak_cpu_celsius=thermal.peak_cpu_celsius))
+            finally:
+                result["active_stage_peak_cpu_celsius"] = thermal.peak_cpu_celsius
+                peaks = [value for value in (result.get("peak_cpu_celsius"), thermal.peak_cpu_celsius) if value is not None]
+                result["peak_cpu_celsius"] = max(peaks) if peaks else None
+            common.write(progress, result)  # Completed-stage checkpoint.
         result["success"] = True
     except BaseException as error:
         result["error"] = str(error) or type(error).__name__

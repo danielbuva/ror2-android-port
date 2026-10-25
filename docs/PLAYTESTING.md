@@ -154,15 +154,17 @@ root. A fresh matched heap pair must inspect
 actual GC/static roots and native bridges; stable native object counts alone do
 not establish a managed-memory bound.
 
-The combined batch supervises CPU zones independently, targeting 250 ms samples
-and refusing gaps above 1 s. At 70 C it stops the game, preserves the interrupted
-attempt and cools with the OLED asleep to at most 55 C before restarting a
-classified cancellation as a whole stage. Runtime or unexpected errors stop the
-queue even when they coincide with a thermal interruption. The sustained timer and heap series start again; cooldown never
-counts toward acceptance. Above 80 C, missing sensors or failed supervision abort
-the batch. Completed stages are checkpointed within one three-hour deadline.
-Battery/HAL checks remain additional limits. The host control still requires
-device qualification; it does not establish sustained thermal acceptance.
+The combined batch supervises temperature zones independently, targeting 250 ms
+samples and refusing gaps above 1 s. Gameplay continues through 80 C; above
+80 C, missing sensors or failed supervision abort the batch without retry.
+Before each stage, cool all temperature zones to at most 50 C with the OLED
+asleep. Record the peak and retain runtime or unexpected errors as first
+failures. Completed stages checkpoint within one three-hour deadline; cooldown
+never counts as play. The 70/55 C pause/resume rule applies to pausable tool jobs,
+not gameplay. Battery/HAL checks remain additional limits.
+J1127 records the superseded 70 C rule stopping cold startup at 72 C before menu
+readiness, with a maximum sample gap of 0.737 s and Android force-stop evidence.
+No stage completed; that observation does not establish sustained acceptance.
 
 For an explicitly scheduled combined case, `alpha-stability-batch` owns **one**
 canonical lease across the SDK interruption case, three-session heap pair and
