@@ -665,6 +665,88 @@ def copy_original_bundle(profile, profile_sha256, pc, output):
         (output / "result.json").write_text(json.dumps(receipt, indent=2) + "\n")
 
 
+def strip_compute_programs(body, typ):
+    """Remove original DXBC compute resources while retaining native declarations.
+
+    This is the observed class-72 projection, not executable Android compute.
+    Existing source-schema spans identify arrays; no target bytes are inputs.
+    """
+    if typ["class_id"] != 72:
+        raise ValueError("compute projection requires original ComputeShader")
+    records = module("record_produce")
+    root = records.SCHEMA.type_tree(io.BytesIO(typ["tree"]))
+    if [child.name for child in root.children] != ["m_Name", "variants"]:
+        raise ValueError("original ComputeShader schema drift")
+    _, fields = records.fields(body, root)
+    edits = []
+
+    def extent(path):
+        if path not in fields:
+            raise ValueError("original ComputeShader field missing")
+        return fields[path]
+
+    def count(path):
+        start, end = extent(path)
+        if end - start < 4:
+            raise ValueError("truncated original ComputeShader array")
+        return struct.unpack_from("<I", body, start)[0]
+
+    def clear(path):
+        start, end = extent(path)
+        count(path)
+        edits.append((start, end, bytes(4)))
+
+    if count(("variants",)) != 1:
+        raise ValueError("only the observed single compute renderer is qualified")
+    variant = ("variants", "Array", "0")
+    for name, value in (("targetRenderer", 2), ("targetLevel", 0)):
+        start, end = extent(variant + (name,))
+        if body[start:end] != struct.pack("<I", value):
+            raise ValueError("original compute renderer/level drift")
+    start, end = extent(variant + ("resourcesResolved",))
+    if body[start:end] != b"\x01\0\0\0":
+        raise ValueError("original compute resources are not resolved")
+    clear(variant + ("constantBuffers",))
+    kernel_count = count(variant + ("kernels",))
+    programs = 0
+    for kernel in range(kernel_count):
+        parent = variant + ("kernels", "Array", str(kernel), "variantMap")
+        for index in range(count(parent)):
+            pair = parent + ("Array", str(index))
+            # The native map value is a common-string label; select its actual
+            # schema path through its direct code field, never a guessed offset.
+            candidates = [path[:-1] for path in fields if len(path) == len(pair) + 2 and path[: len(pair)] == pair and path[-1] == "code"]
+            if len(candidates) != 1:
+                raise ValueError("original compute program schema drift")
+            program = candidates[0]
+            arrays = ("cbVariantIndices", "cbs", "textures", "builtinSamplers", "inBuffers", "outBuffers", "code")
+            names = {path[-1] for path in fields if len(path) == len(program) + 1 and path[:-1] == program}
+            if names != set(arrays) | {"threadGroupSize", "requirements"}:
+                raise ValueError("original compute program fields differ")
+            start, end = extent(program + ("code",))
+            size = count(program + ("code",))
+            if size < 4 or end - start != (4 + size + 3) // 4 * 4 or body[start + 4 : start + 8] != b"DXBC":
+                raise ValueError("original compute program is not DXBC")
+            for name in arrays:
+                clear(program + (name,))
+            start, end = extent(program + ("threadGroupSize",))
+            if end - start != 16 or count(program + ("threadGroupSize",)) != 3:
+                raise ValueError("original compute thread group dimensions differ")
+            edits.append((start, end, body[start : start + 4] + bytes(12)))
+            programs += 1
+    if not programs:
+        raise ValueError("original ComputeShader has no compiled programs")
+    result, cursor = bytearray(), 0
+    for start, end, replacement in sorted(edits):
+        if start < cursor:
+            raise ValueError("overlapping original compute field spans")
+        result.extend(body[cursor:start])
+        result.extend(replacement)
+        cursor = end
+    result.extend(body[cursor:])
+    return bytes(result)
+
+
 def plugin_import_order(body):
     """Use PluginImporter's default for the selected original RoR2 DLL script."""
     offset, names = script_fields(body)
@@ -770,6 +852,10 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                     if hashlib.sha256(body).hexdigest() != selected["source_sha256"]:
                         raise ValueError("original object body drift")
                     typ = metadata["types"][row["type_id"]]
+                    if "strip_compute_programs" in selected:
+                        if selected["strip_compute_programs"] is not True:
+                            raise ValueError("compute projection requires the named source policy")
+                        body = strip_compute_programs(body, typ)
                     if "remove_components" in selected:
                         if typ["class_id"] != 1:
                             raise ValueError("component omission requires an original GameObject")
