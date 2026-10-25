@@ -107,7 +107,7 @@ def validate_mips(attempt, commit):
     if report["unity"] != VERSION or report["source_commit"] != commit:
         raise ValueError("Texture mip oracle identity differs")
     identities = {(r["pattern"], r["mode"]) for r in report["images"]}
-    if len(report["images"]) != 9 or identities != {(p, m) for p in ("ramp", "noise", "normal") for m in ("linear", "srgb", "normal")}:
+    if len(report["images"]) != 12 or identities != {(p, m) for p in ("ramp", "noise", "normal", "alpha") for m in ("linear", "srgb", "normal")}:
         raise ValueError("Texture mip oracle import cohort differs")
     outputs = {}
     for row in report["images"]:
@@ -161,4 +161,4 @@ def validate_mips(attempt, commit):
     if report["transfer"] != "runtime-transfer.f32" or (root / report["transfer"]).stat().st_size != 256 * 8:
         raise ValueError("Texture oracle native transfer extent differs")
     outputs[report["transfer"]] = {"bytes": 256 * 8, "sha256": sha(root / report["transfer"])}
-    return {"report": str(root / "result.json"), "images": 9, "float_mirror": True, "outputs": outputs}
+    return {"report": str(root / "result.json"), "images": 12, "float_mirror": True, "outputs": outputs}
