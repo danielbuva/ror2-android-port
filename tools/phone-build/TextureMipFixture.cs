@@ -54,7 +54,7 @@ public static class TextureMipFixture
         Directory.CreateDirectory(output);
         if (!AssetDatabase.IsValidFolder("Assets/TextureMipFixture")) AssetDatabase.CreateFolder("Assets", "TextureMipFixture");
         var images = new List<ImageReport>();
-        foreach (string pattern in new [] { "ramp", "noise", "normal" })
+        foreach (string pattern in new [] { "ramp", "noise", "normal", "alpha" })
         {
             int width = pattern == "noise" ? 1024 : 256, height = pattern == "ramp" ? 4 : width;
             var pixels = new Color32[width * height]; uint state = 731;
@@ -64,7 +64,9 @@ public static class TextureMipFixture
                 if (pattern == "ramp") { r=x; g=(x*17)%256; b=(x*73)%256; }
                 else if (pattern == "normal") { r=64+(x*13+y*11)%128; g=64+(x*7+y*19)%128; b=(int)((Math.Sqrt(Math.Max(0,255*255-(2*r-255)*(2*r-255)-(2*g-255)*(2*g-255)))+255)/2); }
                 else { state=unchecked(state*1664525+1013904223); r=(int)(state>>24); state=unchecked(state*1664525+1013904223); g=(int)(state>>24); state=unchecked(state*1664525+1013904223); b=(int)(state>>24); }
-                pixels[y*width+x]=new Color32((byte)r,(byte)g,(byte)b,255);
+                int alpha=255;
+                if (pattern == "alpha") { state=unchecked(state*1664525+1013904223); alpha=(int)(state>>24); }
+                pixels[y*width+x]=new Color32((byte)r,(byte)g,(byte)b,(byte)alpha);
             }
             File.WriteAllBytes(Path.Combine(output,pattern+".input.rgba"), Bytes(pixels));
             var source = new Texture2D(width,height,TextureFormat.RGBA32,false,true);

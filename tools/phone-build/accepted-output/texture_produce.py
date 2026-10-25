@@ -2,7 +2,6 @@
 
 import argparse
 from array import array
-from concurrent.futures import ThreadPoolExecutor
 import hashlib
 import importlib.util
 import json
@@ -194,7 +193,8 @@ def field(body, fields, name):
 
 def body_output(body, fields, pixels, target, operation):
     required = {"m_Name", "m_CompleteImageSize", "m_TextureFormat", "m_IsAlphaChannelOptional", "m_LightmapFormat", "image data", "m_StreamData"}
-    if operation == "etc1-mips":
+    cube = operation in {"cube-mips", "cube-hdr", "cube-rgba-mips"}
+    if operation in {"etc1-mips", "sdk-rgba-mips"} or cube:
         required |= {"m_MipCount", "m_ColorSpace"}
     if set(fields) != required:
         raise ValueError("unknown texture field selection")
@@ -202,18 +202,18 @@ def body_output(body, fields, pixels, target, operation):
         field(body, fields, name)
     replacements = {
         "m_Name": text(target["name"]),
-        "m_CompleteImageSize": struct.pack("<I", len(pixels)),
+        "m_CompleteImageSize": struct.pack("<I", len(pixels) // 6 if cube else len(pixels)),
         "m_IsAlphaChannelOptional": bytes([target["alpha_optional"]]) + field(body, fields, "m_IsAlphaChannelOptional")[1:],
         "m_LightmapFormat": struct.pack("<i", target["usage"]),
         "image data": struct.pack("<I", len(pixels)) + pixels + bytes(-len(pixels) % 4) if target["inline"] else bytes(4),
     }
     if operation in {"dxt1-rgb", "dxt1-rgb-jpeg"}:
         replacements["m_TextureFormat"] = struct.pack("<i", 3)
-    elif operation in {"alpha8-etc2", "sdk-rgba"}:
+    elif operation in {"alpha8-etc2", "sdk-rgba", "sdk-rgba-mips", "cube-rgba-mips"}:
         replacements["m_TextureFormat"] = struct.pack("<i", 47)
-    elif operation in {"etc1", "etc1-mips"}:
+    elif operation in {"etc1", "etc1-mips", "cube-mips", "cube-hdr"}:
         replacements["m_TextureFormat"] = struct.pack("<i", 34)
-    if operation == "etc1-mips":
+    if operation in {"etc1-mips", "sdk-rgba-mips"} or cube:
         replacements["m_MipCount"] = struct.pack("<i", target["mips"])
         replacements["m_ColorSpace"] = struct.pack("<i", target["colour_space"])
     stream = target["stream"]
@@ -281,11 +281,8 @@ def sdk_encode_rgba(rgba, width, height, sdk, etc_codec):
         colours = encode(0)
     else:
         colours = bytearray()
-        with ThreadPoolExecutor(max_workers=2) as workers:
-            for row in range(0, height, band_height * 4):
-                jobs = [workers.submit(encode, selected) for selected in range(row, min(height, row + band_height * 4), band_height)]
-                for job in jobs:
-                    colours.extend(job.result())
+        for row in range(0, height, band_height):
+            colours.extend(encode(row))
     output = bytearray(width * height)
     for offset in range(0, len(output), 16):
         output[offset : offset + 8] = alpha.stdout[offset : offset + 8]
@@ -295,11 +292,11 @@ def sdk_encode_rgba(rgba, width, height, sdk, etc_codec):
 
 def source_rgba(pixels, width, height, fmt, sdk):
     """Use pinned native block decoders where the source format requires them."""
-    if sdk is not None and fmt in (10, 12, 25, 26, 27):
+    if sdk is not None and fmt in (10, 12, 24, 25, 26, 27):
         top_bytes = ((width + 3) // 4) * ((height + 3) // 4) * (8 if fmt in (10, 26) else 16)
         if len(pixels) < top_bytes:
             raise ValueError("truncated BC top mip")
-        mode = {10: ["bc1"], 12: ["bc3"], 25: [], 26: ["bc4"], 27: ["bc5"]}[fmt]
+        mode = {10: ["bc1"], 12: ["bc3"], 24: ["bc6"], 25: [], 26: ["bc4"], 27: ["bc5"]}[fmt]
         decoded = subprocess.run([sdk["pixels"], str(width), str(height), *mode], input=pixels[:top_bytes], capture_output=True, timeout=120)
         if decoded.returncode or len(decoded.stdout) != width * height * 4:
             raise ValueError("native BC decoder failed or returned a different extent")
@@ -307,7 +304,30 @@ def source_rgba(pixels, width, height, fmt, sdk):
     return rgba_source(pixels, width, height, fmt)
 
 
-def etc1_mips(rgb, width, height, selected, sdk, etc_codec):
+def sdk_rgba_mips(rgba, width, height, selected, sdk, etc_codec):
+    target = selected["outputs"][0]
+    count = max(width, height).bit_length()
+    settings = (count, target["colour_space"])
+    if target["colour_space"] not in (0, 1) or any((row["mips"], row["colour_space"]) != settings for row in selected["outputs"]):
+        raise ValueError("inconsistent full-chain RGBA mip settings")
+    mode = "mips-srgb" if target["colour_space"] else "mips-linear"
+    result = subprocess.run([sdk["pixels"], str(width), str(height), mode], input=rgba, capture_output=True, timeout=120)
+    expected = sum(max(1, width >> mip) * max(1, height >> mip) * 4 for mip in range(count))
+    if result.returncode or len(result.stdout) != expected:
+        raise ValueError("native RGBA mip filter failed or returned a different extent")
+    encoded, offset = [], 0
+    for mip in range(count):
+        w, h = max(1, width >> mip), max(1, height >> mip)
+        level = result.stdout[offset : offset + w * h * 4]
+        offset += len(level)
+        ew, eh = max(4, w), max(4, h)
+        if (ew, eh) != (w, h):
+            level = b"".join(level[((y % h) * w + x % w) * 4 : ((y % h) * w + x % w + 1) * 4] for y in range(eh) for x in range(ew))
+        encoded.append(sdk_encode_rgba(level, ew, eh, sdk, etc_codec))
+    return b"".join(encoded)
+
+
+def etc1_mips(rgb, width, height, selected, sdk, etc_codec, hdr=False):
     target = selected["outputs"][0]
     count = max(width, height).bit_length()
     settings = (count, target["colour_space"], target["usage"] == 4)
@@ -316,6 +336,8 @@ def etc1_mips(rgb, width, height, selected, sdk, etc_codec):
     rgba = bytearray(width * height * 4)
     rgba[0::4], rgba[1::4], rgba[2::4], rgba[3::4] = rgb[0::3], rgb[1::3], rgb[2::3], bytes([255]) * (width * height)
     mode = "mips-srgb" if target["colour_space"] else "mips-linear"
+    if hdr:
+        mode = "hdr-" + mode
     result = subprocess.run([sdk["pixels"], str(width), str(height), mode], input=rgba, capture_output=True, timeout=120)
     del rgba
     expected = sum(max(1, width >> mip) * max(1, height >> mip) * 4 for mip in range(count))
@@ -330,11 +352,35 @@ def etc1_mips(rgb, width, height, selected, sdk, etc_codec):
         ew, eh = max(4, w), max(4, h)
         if (ew, eh) != (w, h):
             pixels = b"".join(pixels[((y % h) * w + x % w) * 3 : ((y % h) * w + x % w + 1) * 3] for y in range(eh) for x in range(ew))
-        part = subprocess.run([str(etc_codec), str(ew), str(eh), "normal" if target["usage"] == 4 else "rgb"], input=pixels, capture_output=True, timeout=120)
+        part = subprocess.run(
+            [str(etc_codec), str(ew), str(eh), "normal" if hdr or target["usage"] == 4 else "rgb"], input=pixels, capture_output=True, timeout=120
+        )
         if part.returncode or len(part.stdout) != ew * eh // 2:
             raise ValueError("public ETC mip codec failed or returned a different extent")
         encoded.append(part.stdout)
     return b"".join(encoded)
+
+
+def cube_mips(pixels, body, selected, sdk, etc_codec):
+    """Preserve six face-major full-chain strides; regenerate each from its top."""
+    if sdk is None or etc_codec is None:
+        raise ValueError("pinned native pixel/ETC tools required for cubemap production")
+    width, height = selected["width"], selected["height"]
+    stride = struct.unpack("<I", field(body, selected["fields"], "m_CompleteImageSize"))[0]
+    fmt = struct.unpack("<i", field(body, selected["fields"], "m_TextureFormat"))[0]
+    if not stride or len(pixels) != stride * 6:
+        raise ValueError("cubemap source must contain six complete face strides")
+    parts = []
+    for face in range(6):
+        source = pixels[face * stride : (face + 1) * stride]
+        if fmt in (3, 4):
+            source = source[: width * height * (3 if fmt == 3 else 4)]
+        rgba = source_rgba(source, width, height, fmt, sdk)
+        if selected["operation"] == "cube-rgba-mips":
+            parts.append(sdk_rgba_mips(rgba, width, height, selected, sdk, etc_codec))
+        else:
+            parts.append(etc1_mips(rgb_channels(rgba), width, height, selected, sdk, etc_codec, hdr=selected["operation"] == "cube-hdr"))
+    return b"".join(parts)
 
 
 def pixels_input(bundle, body, selected, jpeg_codec=None, etc_codec=None, sdk=None):
@@ -351,19 +397,37 @@ def pixels_input(bundle, body, selected, jpeg_codec=None, etc_codec=None, sdk=No
     if len(pixels) != location["bytes"] or hashlib.sha256(pixels).hexdigest() != location["sha256"]:
         raise ValueError("original texture pixels drift")
     operation = selected["operation"]
+    if operation in {"cube-mips", "cube-hdr", "cube-rgba-mips"}:
+        return cube_mips(pixels, body, selected, sdk, etc_codec)
     if operation == "copy":
         return pixels
-    if operation == "sdk-rgba":
+    if operation in {"sdk-rgba", "sdk-rgba-mips"}:
         if sdk is None:
             raise ValueError("pinned SDK texture toolchain required")
         width, height = selected["width"], selected["height"]
         fmt = struct.unpack("<i", field(body, selected["fields"], "m_TextureFormat"))[0]
-        rgba = source_rgba(pixels, width, height, fmt, sdk)
+        if operation == "sdk-rgba-mips" and fmt == 29:
+            unpacked = subprocess.run([str(etc_codec), str(width), str(height), "uncrunch-bc3"], input=pixels, capture_output=True, timeout=120)
+            if unpacked.returncode or len(unpacked.stdout) != ((width + 3) // 4) * ((height + 3) // 4) * 16:
+                raise ValueError("public Unity Crunch decoder failed or returned a different extent")
+            pixels, fmt = unpacked.stdout, 12
+        if operation == "sdk-rgba-mips" and fmt == 4:
+            pixels = pixels[: width * height * 4]
+        if operation == "sdk-rgba-mips" and fmt == 1:
+            if len(pixels) < width * height:
+                raise ValueError("truncated Alpha8 top mip")
+            rgba = bytearray(width * height * 4)
+            rgba[3::4] = pixels[: width * height]
+            rgba = bytes(rgba)
+        else:
+            rgba = source_rgba(pixels, width, height, fmt, sdk)
         if 0 in rgba[3::4]:
             dilated = subprocess.run([sdk["pixels"], str(width), str(height), "dilate"], input=rgba, capture_output=True, timeout=120)
             if dilated.returncode or len(dilated.stdout) != width * height * 4:
                 raise ValueError("native pixel dilation failed or returned a different extent")
             rgba = dilated.stdout
+        if operation == "sdk-rgba-mips":
+            return sdk_rgba_mips(rgba, width, height, selected, sdk, etc_codec)
         return sdk_encode_rgba(rgba, width, height, sdk, etc_codec)
     if operation in {"alpha8-etc2", "etc1", "etc1-mips"}:
         if etc_codec is None:
@@ -424,6 +488,71 @@ def pixels_input(bundle, body, selected, jpeg_codec=None, etc_codec=None, sdk=No
     raise ValueError("unqualified texture operation")
 
 
+def texture_row(target, object_offset, resource_offset):
+    row = {
+        "bundle": target["bundle"],
+        "member": target["member"],
+        "path_id": target["path_id"],
+        "offset": object_offset,
+        "bytes": target["bytes"],
+        "sha256": target["sha256"],
+    }
+    if not target["inline"] and target["pixel_bytes"]:
+        row["resource"] = {"offset": resource_offset, "bytes": target["pixel_bytes"], "sha256": target["pixel_sha256"], "stream": target["stream"]}
+    return row
+
+
+def texture_receipt(output, receipt):
+    # Replacement keeps the initial pins readable even if the process is killed
+    # while replacing the final status. The index alone commits each extent.
+    with (output / "result.json.tmp").open("w") as stream:
+        stream.write(json.dumps(receipt, indent=2) + "\n")
+        stream.flush()
+        os.fsync(stream.fileno())
+    os.replace(output / "result.json.tmp", output / "result.json")
+    directory = os.open(output, os.O_RDONLY)
+    try:
+        os.fsync(directory)
+    finally:
+        os.close(directory)
+
+
+def texture_resume(output, profile, pins):
+    names = {"objects.bin", "resources.bin", "index.jsonl", "result.json"}
+    if not names <= {p.name for p in output.iterdir()} <= names | {"result.json.tmp"} or any(not p.is_file() or p.is_symlink() for p in output.iterdir()):
+        raise ValueError("unknown texture checkpoint output")
+    previous = json.loads((output / "result.json").read_text())
+    pin_names = {"input_id", "profile_sha256", "jpeg_codec_sha256", "etc_codec_sha256", "sdk_toolchain_sha256"}
+    if {k: previous[k] for k in pin_names if k in previous} != {k: pins[k] for k in pin_names if k in pins}:
+        raise ValueError("texture checkpoint input/profile/tool drift")
+    targets = iter(target for bundle in profile["bundles"] for member in bundle["members"] for texture in member["textures"] for target in texture["outputs"])
+    counts = {"objects": 0, "object_bytes": 0, "resource_bytes": 0}
+    index_end = 0
+    with (output / "objects.bin").open("rb") as objects, (output / "resources.bin").open("rb") as resources, (output / "index.jsonl").open("rb") as index:
+        for line in index:
+            if not line.endswith(b"\n"):
+                break  # An incomplete final line never committed its data.
+            target = next(targets, None)
+            row = json.loads(line)
+            if target is None or row != texture_row(target, counts["object_bytes"], counts["resource_bytes"]):
+                raise ValueError("texture checkpoint index order/extent drift")
+            for stream, extent in ((objects, row), (resources, row.get("resource"))):
+                if extent is not None:
+                    if hashlib.sha256(BUNDLE.exact(stream, extent["bytes"])).hexdigest() != extent["sha256"]:
+                        raise ValueError("persisted texture checkpoint extent drift")
+            counts["objects"] += 1
+            counts["object_bytes"] += row["bytes"]
+            counts["resource_bytes"] += row.get("resource", {}).get("bytes", 0)
+            index_end = index.tell()
+    # Validate the entire committed prefix before discarding uncommitted tails.
+    for name, size in (("objects.bin", counts["object_bytes"]), ("resources.bin", counts["resource_bytes"]), ("index.jsonl", index_end)):
+        with (output / name).open("r+b") as stream:
+            stream.truncate(size)
+            stream.flush()
+            os.fsync(stream.fileno())
+    return counts
+
+
 def produce(
     profile_path,
     profile_sha256,
@@ -435,6 +564,7 @@ def produce(
     etc_codec_sha256=None,
     sdk_toolchain=None,
     sdk_toolchain_sha256=None,
+    resume=False,
 ):
     if BUNDLE.sha(profile_path) != profile_sha256:
         raise ValueError("texture profile drift")
@@ -443,7 +573,10 @@ def produce(
         raise ValueError("unknown texture input")
     pc = pc.resolve(strict=True)
     needs_sdk = any(
-        texture["operation"] in {"sdk-rgba", "etc1-mips"} for bundle in profile["bundles"] for member in bundle["members"] for texture in member["textures"]
+        texture["operation"] in {"sdk-rgba", "sdk-rgba-mips", "etc1-mips", "cube-mips", "cube-hdr", "cube-rgba-mips"}
+        for bundle in profile["bundles"]
+        for member in bundle["members"]
+        for texture in member["textures"]
     )
     sdk = sdk_inputs(sdk_toolchain, sdk_toolchain_sha256, pc) if needs_sdk or sdk_toolchain is not None or sdk_toolchain_sha256 is not None else None
     needs_jpeg = any(
@@ -459,7 +592,7 @@ def produce(
         if jpeg_codec.is_relative_to(pc) or BUNDLE.sha(jpeg_codec) != jpeg_codec_sha256:
             raise ValueError("public JPEG codec drift or overlap with original input")
     needs_etc = any(
-        texture["operation"] in {"alpha8-etc2", "etc1", "etc1-mips", "sdk-rgba"}
+        texture["operation"] in {"alpha8-etc2", "etc1", "etc1-mips", "sdk-rgba", "sdk-rgba-mips", "cube-mips", "cube-hdr", "cube-rgba-mips"}
         for bundle in profile["bundles"]
         for member in bundle["members"]
         for texture in member["textures"]
@@ -472,8 +605,15 @@ def produce(
             raise ValueError("public ETC codec drift or overlap with original input")
     parent = output.parent.resolve(strict=True)
     output = parent / output.name
-    if output.name in ("", ".", "..") or output.exists() or output.is_symlink() or parent.is_relative_to(pc) or pc.is_relative_to(output):
-        raise ValueError("texture output must be new and outside original input")
+    if (
+        output.name in ("", ".", "..")
+        or output.is_symlink()
+        or parent.is_relative_to(pc)
+        or pc.is_relative_to(output)
+        or (not resume and output.exists())
+        or (resume and not output.is_dir())
+    ):
+        raise ValueError("texture output must be new (or explicitly resumed) and outside original input")
     if sdk and any(Path(name).is_relative_to(output) for name in sdk["inputs"]):
         raise ValueError("texture output overlaps SDK toolchain")
     expected = sum(
@@ -483,9 +623,6 @@ def produce(
         for texture in member["textures"]
         for target in texture["outputs"]
     )
-    if shutil.disk_usage(parent).free < expected + 2 * 1024**3:
-        raise ValueError("insufficient texture output capacity")
-    output.mkdir()
     started = time.monotonic()
     receipt = {"success": False, "input_id": MESH.INPUT_ID, "profile_sha256": profile_sha256, "objects": 0, "object_bytes": 0, "resource_bytes": 0}
     if jpeg_codec is not None:
@@ -494,8 +631,20 @@ def produce(
         receipt["etc_codec_sha256"] = etc_codec_sha256
     if sdk is not None:
         receipt["sdk_toolchain_sha256"] = sdk_toolchain_sha256
+    if resume:
+        receipt.update(texture_resume(output, profile, receipt))
+    if shutil.disk_usage(parent).free < expected - receipt["object_bytes"] - receipt["resource_bytes"] + 2 * 1024**3:
+        raise ValueError("insufficient texture output capacity")
+    if not resume:
+        output.mkdir()
+        for name in ("objects.bin", "resources.bin", "index.jsonl"):
+            (output / name).touch(exist_ok=False)
+    texture_receipt(output, receipt)
+    committed, visited = receipt["objects"], 0
     try:
-        with (output / "objects.bin").open("xb") as objects, (output / "resources.bin").open("xb") as resources, (output / "index.jsonl").open("x") as index:
+        with (output / "objects.bin").open("r+b") as objects, (output / "resources.bin").open("r+b") as resources, (output / "index.jsonl").open("a") as index:
+            objects.seek(receipt["object_bytes"])
+            resources.seek(receipt["resource_bytes"])
             for selected_bundle in profile["bundles"]:
                 path = MESH.safe_input(pc, selected_bundle["path"])
                 before = path.stat()
@@ -505,33 +654,34 @@ def produce(
                 for selected_member in selected_bundle["members"]:
                     member = bundle.member(selected_member["name"])
                     for selected in selected_member["textures"]:
+                        completed = min(max(committed - visited, 0), len(selected["outputs"]))
+                        visited += len(selected["outputs"])
+                        if completed == len(selected["outputs"]):
+                            continue
                         member.seek(selected["offset"])
                         body = BUNDLE.exact(member, selected["bytes"])
                         if hashlib.sha256(body).hexdigest() != selected["sha256"]:
                             raise ValueError("original texture body drift")
                         pixels = pixels_input(bundle, body, selected, jpeg_codec, etc_codec, sdk)
                         pixel_sha = hashlib.sha256(pixels).hexdigest()
-                        for target in selected["outputs"]:
+                        for target in selected["outputs"][completed:]:
                             if pixel_sha != target["pixel_sha256"] or len(pixels) != target["pixel_bytes"]:
                                 raise ValueError("produced texture pixels differ from accepted hash")
                             result = body_output(body, selected["fields"], pixels, target, selected["operation"])
                             digest = hashlib.sha256(result).hexdigest()
                             if len(result) != target["bytes"] or digest != target["sha256"]:
                                 raise ValueError("produced texture body differs from accepted hash")
-                            row = {
-                                "bundle": target["bundle"],
-                                "member": target["member"],
-                                "path_id": target["path_id"],
-                                "offset": objects.tell(),
-                                "bytes": len(result),
-                                "sha256": digest,
-                            }
+                            row = texture_row(target, objects.tell(), resources.tell())
                             objects.write(result)
                             if not target["inline"] and pixels:
-                                row["resource"] = {"offset": resources.tell(), "bytes": len(pixels), "sha256": pixel_sha, "stream": target["stream"]}
                                 resources.write(pixels)
                                 receipt["resource_bytes"] += len(pixels)
+                            for stream in (objects, resources):
+                                stream.flush()
+                                os.fsync(stream.fileno())
                             index.write(json.dumps(row, sort_keys=True) + "\n")
+                            index.flush()
+                            os.fsync(index.fileno())
                             receipt["objects"] += 1
                             receipt["object_bytes"] += len(result)
                 after = path.stat()
@@ -562,7 +712,7 @@ def produce(
     finally:
         receipt["seconds"] = time.monotonic() - started
         receipt["peak_rss_bytes"] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * (1 if sys.platform == "darwin" else 1024)
-        (output / "result.json").write_text(json.dumps(receipt, indent=2) + "\n")
+        texture_receipt(output, receipt)
 
 
 def main():
@@ -571,6 +721,7 @@ def main():
     parser.add_argument("--profile-sha256", required=True)
     parser.add_argument("--pc", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--resume", action="store_true", help="verify and resume an existing durable texture checkpoint")
     parser.add_argument("--jpeg-codec", type=Path)
     parser.add_argument("--jpeg-codec-sha256")
     parser.add_argument("--etc-codec", type=Path)
@@ -589,6 +740,7 @@ def main():
         args.etc_codec_sha256,
         args.sdk_toolchain,
         args.sdk_toolchain_sha256,
+        resume=args.resume,
     )
 
 

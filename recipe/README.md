@@ -173,6 +173,8 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 | `owner-material-records.json` | Qualified private Material object cohort | Original selectors/hashes, checked PPtr relationships and existing dummy-shader keyword policy. | No material value, keyword string, shader program, body template or target scalar; audit below, 2026-10-25. | Source-only `record_produce.py`; J1119 host qualification, remaining materials/phone gate open. |
 | `owner-animator-controllers.json` | Qualified private AnimatorController object cohort | Original selectors/hashes and checked PPtr relationships only. | No native controller body, TOS table, curve/state value or target template; audit below, 2026-10-25. | Source-only `record_produce.py`; J1119 host qualification, full cohort/phone gate open. |
 | `owner-rgb-mip-textures.json` | Complete ETC1 mip-chain target cohort | Original/destination selectors, field/pixel extents, hashes, full mip counts and source JPEG/normal relationships. | No pixels, vectors, encoded blocks, SDK bytes or target frames; audit below, 2026-10-24. | Existing texture owner, native pixel/mip helper and public ETC/JPEG/Unity Crunch tools; J1110 qualifies the full host cohort, Android pending. |
+| `owner-rgba-mip-textures.json` | Full RGBA mip-chain target cohort | Original/destination selectors, field/resource extents, source import relationships and hashes. | No pixels, block literals, serialized templates or SDK bytes; audit below, 2026-10-25. | Existing texture owner plus explicit SDK/public EAC tools; J1128 host qualification, Android open. |
+| `owner-cubemap-textures.json` | 110 source-derived Cubemaps | Original face-chain selectors, field/resource extents, import relationships and hashes. | No pixels, encoded blocks, target body templates or native-probe fallback; audit below, 2026-10-25. | Existing texture owner and pinned public/SDK tools; J1128 host qualification, Android open. |
 | `owner-avatars.json` | Private replay Avatar bodies (J1075) | Minimum original/destination identities, hashes, source extents and source-entry permutations. | No strings, poses, rig/geometry values, target literals or byte frames; full audit above, 2026-10-24. | Explicit PC-input-only `avatar_produce.py`; no current game-build consumer. |
 | `owner-meshes.json` | Protected mesh bodies in the private replay packet, for the included cohort only (J1070) | Original bundle/object/resource selectors, destination identities/hashes and authored import/conversion settings. | No geometry arrays, collision data, target byte frames or float literals; full audit above, 2026-10-24. Two cases remain excluded. | Explicit original-input-only `mesh_produce.py`; no current game-build consumer. |
 | `shader-postprocessing-bloom-candidate.json` | Exported one-pass Bloom and exact source-camera CopyStd placeholders | Accepted-input source/meta/resource identities, official Unity package/license hashes and pass contracts; authored camera staging pin refreshed without changing camera transforms. | Authored selection metadata only; upstream source and generated content stay local under Unity Companion License. Manual audit 2026-10-23 described above. | `shader_postprocessing_bloom`, whole-catalog preparation and catalog replay comparison; default off. |
@@ -2700,3 +2702,51 @@ required for reconstruction are published. No protected pixel/block/curve table,
 SDK implementation or target frame is included. Full public-producer and Android
 qualification remain separate gates; generated packs and raw evidence stay
 ignored. Provider licenses grant no game or SDK redistribution permission.
+
+
+`owner-rgba-mip-textures.json` extends the existing source texture owner to
+1,523 full-chain RGBA records: 1,519 bundle records and four standalone player
+records. The 1,399 canonical source transformations select 319 original PC
+bundle entries. Profile SHA-256:
+`723c4e641349941a172aef28d6a4b23eee2954c5390cd7257a75a54cd0bf66fd`.
+It contains original bundle/member/path-ID selectors, field/pixel extents and
+hashes, destination identities and import/storage relationships. The nine-field
+projection preserves all unselected source metadata. Seven ambiguous original
+names are resolved by exact target/source identities; there is no name-wide
+pixel override. Every decoded, extended, filtered and encoded pixel comes from
+original PC input. No exporter image or accepted target byte supplier is read
+by production.
+
+Provenance, privacy, licensing and sensitive-content audit: 2026-10-25; J1128.
+This profile carries no pixel/block literals, serialized templates, proprietary
+implementation, private path/device identity, credential or SDK bytes. The
+existing public BC/Crunch decoders and ETCPACK retain their prior notices; SDK
+compression uses the separately supplied permitted toolchain. Authored mip
+controls observe only generated nongame patterns. No game/SDK redistribution,
+ownership, authentication or entitlement success is granted. Generated packs
+and raw evidence remain ignored; host equivalence and Android qualification
+are separate gates.
+
+
+`owner-cubemap-textures.json` selects 110 source-derived Cubemap records from
+68 original PC bundles. SHA-256:
+`319691fd4c11591b87b4aae654b00a1cd7789105b43be2cd52a090bb98cb2526`.
+Its source selectors, field/resource extents, hashes and destination import/
+storage relationships use the existing texture profile shape. Original
+AssetBundle container paths resolve renamed/unnamed originals without retaining
+exported images. The 50 ordinary ETC1, 56 HDR ETC1 and four RGBA records regenerate
+all six faces and their mip chains from original top-level pixels. The 13
+unresolved native reflection cubes are absent; this profile supplies no fallback
+for them.
+
+Provenance, privacy, licensing and sensitive-content audit: 2026-10-25; J1128.
+Only reconstruction identifiers, comparison hashes and generic import/storage
+settings are distributed. No target pixels, mip/block literals, serialized
+body/type templates, protected implementation, private paths/identifiers or
+credentials are present. The unchanged public bcdec decoder retains its MIT
+alternative notice; authored BC6 byte/export-half/DoubleLDR transformations are
+source algorithms. Existing ETCPACK/SDK acquisition and licensing boundaries
+apply. Pinned AssetRipper TextureConverter/ExrWriter source informs face strides,
+orientation and export half conversion; no upstream implementation or exporter
+image is copied. Provider terms grant no game/SDK redistribution, ownership,
+authentication or entitlement capability. Generated packs remain ignored.

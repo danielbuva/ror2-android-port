@@ -39742,3 +39742,210 @@ the existing content owners; this helper alone closes zero final-file readiness
 entries. Not every script needs recomputation, and genuinely changed/custom
 schemas remain separate source-transform work. Revisit on SDK, input, schema
 or identity changes; ordinary-app/device qualification remains open.
+
+## J1123 — Guarded RGBA phone batch loses transport; admission stays open
+
+2026-10-25. Source-only tool case against the fixed J850 content target. The
+complete phone cohort is interrupted and unqualified; no game build,
+installation or gameplay acceptance is claimed.
+
+**Hypothesis and prior art.** J1107's admitted public QEMU/GNU SDK controls and
+host-exact 1,333-record profile could complete together with the previously
+qualified 5,006-record regression under its revised two-job thermal protocol.
+The texture conversion, public decoder and codec prior art remains J1107's;
+this case introduces no new reconstruction mechanism. The frozen producer is
+source `9aea69926fb6673c7a64ee45453b99cb33250576`, retaining the explicit PC input,
+provider pins and existing object/resource/index interface.
+
+**Observed result and first failure.** The v8 host driver exits after
+7,141.789 seconds. Its first surfaced failure is the RGBA ADB shell returning
+255. Subsequent monitor, PID and thermal-log transfers fail because the device
+is unavailable. No completed production case is admitted: the terminal
+receipt's `cases` is empty. Production stdout/stderr retained on the host are
+empty. The orchestrator separately reports emergency/FastBoot state and a
+user reboot with data intact, followed by a hot zone and a cooldown lease.
+Host-file mtimes precede the later incident report; they do not establish a
+reconciled crash timestamp or its cause.
+
+The last retained idle observation is 38.6 degrees C. The subsequent 13-second
+authored SDK control observes at most 37.4 degrees C, a maximum 1.00138-second
+sample interval, battery 28 degrees C and HAL status 0. These are pre-production
+controls. The initial heavy-producer trace/result transfers fail. Later bounded
+recovery obtains the trace prefix described below; the terminal monitor result
+and final interval remain unavailable. Neither a thermal cause nor successful
+terminal guard operation follows from the available evidence.
+
+**Guard and terminal limits.** The sampler runs on the device while the host
+waits on the producer. Its one-second loop allows intervals up to two seconds,
+uses synchronous CPU/`cpuss` sensor reads and tests staleness after those reads
+return. Individual sensor read errors are skipped. The older contract permits
+two SDK children and pause/resume/abort at 75/60/85 degrees C. Abort continues
+the owned group before termination and permits five seconds before forced
+kill. These controls do not provide hard real-time protection.
+
+Pre-run readback observes installed R55 APK SHA-256
+`111b1facec5b021c87dce03be24c9b81e913160809e685dc94b23e161786917a`.
+The driver requests no game install or launch. Terminal ADB failure prevents
+verification of process absence, scratch cleanup, display state and the
+installed APK after the interruption. The old host driver is subsequently
+absent; its local lease release and primary-checkout prune complete. Those
+host facts do not establish the device's terminal state. The subsequent bounded
+recovery below supplies a separate post-reboot readback; preserve the original
+remote scratch until its evidence and partial binary extents are reviewed.
+
+**Post-reboot recovery.** After the orchestrator releases its cooldown lease,
+a bounded read-only recovery acquires and releases a separate lease. Both boot
+reason properties report generic `reboot`, which does not identify a cause.
+The actual installed APK still matches the pre-run R55 hash, the game is absent
+and the OLED is asleep. No game installation, launch or heavy producer runs.
+
+The recovered heavy trace has 6,824 valid samples through 6,830.911 elapsed
+seconds, followed by a 2,250-byte NUL tail. Maximum observed CPU temperature is
+49.3 degrees C; the last valid sample is 42.6. Maximum battery temperature is
+31 degrees C and HAL status stays zero. There are no observed pause/resume
+events or 85-degree samples. All 6,823 measured gaps range from 1.00009 to
+1.00657 seconds: within the old two-second contract, but not a strict one-second
+limit. The trace does not demonstrate a missed abort or reconcile the separately
+reported 87.6-degree zone without its sensor identity and timestamp. Its final
+interval and reboot cause remain unknown.
+
+The recovered index contains 511 complete records. Every row matches the
+profile's ordered identities, offsets, sizes, hashes and stream relationships;
+it is also byte-exact against the corresponding host-index prefix. The implied
+committed ends are 450,132 object bytes and 28,906,336 resource bytes. Actual
+binary extents have not been read or verified; this is not a completed cohort
+or an admitted checkpoint. The remote producer result and final monitor JSON
+remain unavailable. Recovery receipts and raw files stay under the adjacent
+`device-rgba-batch-v8-recovery-v1/` directory.
+
+**Revisit conditions.** No heavy rerun occurs in this result. Later heavy cases must use one heavy job, a subsecond
+sampler enforcing at most one-second gaps, pause at 70 degrees C, resume at 55,
+abort above 80 and stop on lost telemetry. Long batches must checkpoint
+progress. Sequential SDK bands and durable verified index checkpoints belong
+in the existing texture owner; the pack interface stays unchanged. Review
+recovered boot/load evidence before another run. Full cohort, ordinary app
+delivery, bundle/player assembly and owner installation remain open.
+
+**Host repair after interruption.** The existing owner now serializes SDK colour
+bands and adds explicit `--resume` without changing the three pack formats.
+Initial input/profile/tool pins are persisted atomically; each body/resource
+fsync precedes its committed index row. Recovery verifies the complete ordered
+prefix and every extent before trimming uncommitted tails, then skips completed
+outputs. Five authored tests cover actual SIGKILL recovery, a partially committed
+canonical texture, binary/index tails, unchanged fresh-run packs, corruption and
+pin/source drift refusals, and data-before-index fsync ordering. The existing
+texture tests and Ruff also pass. This is a host recovery contract, not a phone
+crash-recovery, thermal or full-cohort qualification.
+
+**Evidence.** Private host receipts, authored controls, failed transfers and
+terminal output remain under
+`work/coordination/accepted-build-reconstruction/media-source-v1/device-rgba-batch-v8/`.
+The retained `driver-result.json`, `authored-sdk-controls-monitor.json` and
+numbered failed-transfer receipts are authoritative for the statements above.
+The ignored `device_rgba_batch_v8.py` and `measure_family_v6.py` retain the exact
+harness. Raw logs, original inputs, SDK providers and remote identifiers remain
+private; only this authored summary is published.
+
+## J1128 — Produce complete RGBA mip and source cubemap cohorts on the host
+
+2026-10-25. Fixed J850 target, APK SHA-256
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+**Host-only result:** all 1,523 RGBA mip-chain records and all 110 source-derived
+Cubemaps match the target body/pixel contracts. These are record packs, not
+complete bundles or an installable owner build. No device command, game build,
+installation or launch occurs in these cases. Android qualification remains open.
+
+**Hypothesis and prior art.** Original top-level pixels plus the measured
+import/filter/encoder rules can produce these entire cohorts without target
+pixel literals or an Editor/project in production. Consulted
+`community-prior-art.md`, J1110 and J332's original reflection relationships.
+Pinned AssetRipper TextureConverter/ExrWriter face strides, layer traversal,
+orientation and exporter half conversion inform source interpretation. Existing
+UnityPy serialized fields, public bcdec BC6/BC7 decoding and ETCPACK alpha/colour
+contracts remain in use with retained licenses. The exact-editor fixture supplies
+only independently authored nongame arithmetic controls; original PC/J850
+comparisons determine accepted content relationships. No exported image or
+upstream implementation is copied into the recipe.
+
+**Implementation.** Existing `texture_produce.py`, `texture_pixels.c` and the
+SDK/public codec builders own every operation; no new runtime owner is added.
+The RGBA recipe selects 1,399 canonical transformations for 1,519 bundle records
+plus four player records from 319 original bundle entries. Only original top
+pixels feed continuous float32 mip generation, logical-tail block tiling,
+SDK colour and public EAC alpha encoding. sRGB imports normalize all channels
+with float32 `1 / 255` before filtering, applying gamma transfer only to RGB;
+linear imports preserve the first byte-unit reduction. Authored varying-alpha
+controls distinguish that arithmetic from premature division/quantization.
+
+The cubemap recipe selects 68 original PC bundles: 50 ordinary ETC1, 56 HDR ETC1
+and four RGBA Cubemaps. Original six-face chain strides preserve face order and
+orientation. HDR import reproduces exporter half conversion, float filtering
+and DoubleLDR quantization before uniform ETC encoding; destination colour space
+selects the transfer. RGBA cubes reuse the SDK colour/public alpha path. All four
+varying 254/255-alpha cases pass without pixel patches. CompleteImageSize remains
+per face, while the resource extent contains all six. Nine selected fields are
+projected; every unselected original byte is retained. Thirteen native cubes
+(five generated skies and eight baked probes) are excluded, with no fallback.
+
+Both audited profiles contain selectors, hashes and import/storage relationships,
+never pixels, block literals, serialized body/type templates or SDK code.
+Explicit original inputs, profile/tool pins, new output and capacity admission
+set up the existing producer. Source/tool and persisted extent verification gate
+success. Sequential SDK colour bands and fsynced per-object object/resource/index
+checkpoints preserve the existing pack interface. Host interruption controls
+qualify ordered prefix recovery; Android recovery remains open after J1123.
+
+**Complete host evidence.** Private output and raw reviews remain under
+`work/coordination/accepted-build-reconstruction/media-source-v1/`.
+`rgba-mip-public-host-v1/` produces 1,523 records in 1,293.865 seconds with
+541,032,448 bytes peak RSS; `cubemap-public-host-v1/` produces 110 records in
+140.995 seconds with 315,572,224 bytes peak RSS.
+
+| Cohort / output | Bytes | SHA-256 |
+| --- | ---: | --- |
+| RGBA `objects.bin` | 2,641,656 | `2f179e31e3ed27116d230ce133a9390400e53231ebdcfe5416a30de11797329b` |
+| RGBA `resources.bin` | 993,403,152 | `a3c5f9efda4d2befa95b88a54044be6608de57271d4c876d6ce848bf22251b80` |
+| RGBA `index.jsonl` | 741,775 | `d92264482fe249e6c8b346fb42f41eeeca31c48cae6b09c8237d8098ce2dd3db` |
+| Cubemap `objects.bin` | 1,997,624 | `f81481e015a15647c5a6b176d7ef9c95b048b8e0eb0dcb985564bf0077685d60` |
+| Cubemap `resources.bin` | 162,589,248 | `49ba8752dda165c433215212fe7acceb5ee984c3852bd91c8368bacd3ad81132` |
+| Cubemap `index.jsonl` | 46,564 | `cebd30c461359b9397e4e66bded8bfa143c7382ec374f3c5ba903d8921dd412a` |
+
+RGBA profile SHA-256 is
+`723c4e641349941a172aef28d6a4b23eee2954c5390cd7257a75a54cd0bf66fd`;
+Cubemap profile SHA-256 is
+`319691fd4c11591b87b4aae654b00a1cd7789105b43be2cd52a090bb98cb2526`.
+RGBA execution uses source `7253e828` (producer identical to `8e647630`) and
+helper v10 descriptor
+`1c5efdb467f875899a5f1d2370e51df52df0763ca72bbf4ad9912619195fc880`.
+Cubemap execution uses source `d45eb536` and helper v11 descriptor
+`ad05fa2b534dd80b143fbe90787e4b8de8dcb6eaaa2b1b9edc8eb488e3fa0bae`.
+Rebased commits do not relabel those runs. Independent launch/current source
+review finds unchanged RGBA encoder/filter ASTs, 54 identical authored helper
+comparisons and 22 passing focused controls; it does not promote v10 to v11 or
+permit resuming with a changed descriptor.
+
+Independent persisted Cubemap review verifies all three pack hashes, source/tool
+pins, 110 body/pixel extents (30 inline, 80 external) and 110 nine-field scalar
+projections. Independent RGBA review verifies all three pack hashes, launch/source/tool
+pins, 1,523 ordered unique bodies/pixel extents (88 inline, 1,435 external),
+nine-field projections, mip/block sizes and contiguous storage. Terminal and
+persisted receipt agree; the full review is retained beside the run. Focused producer, SDK, interruption and recipe
+checks pass. The first pre-push suite refuses two missing recipe audit-table
+rows; both rows are added without weakening the check. Doctor and host preflight
+still refuse this worktree's missing inventory/lab-project generation; no game
+build bypass is attempted.
+
+**First failures and remaining gates.** Earlier varying-alpha mip mismatches
+come from arithmetic ordering; the generic float32 correction passes authored
+and real-data controls without target pixel exceptions. Native reflection
+relationships alone do not produce the remaining 13 native cube records. Six distinct
+pixel groups and possible historical scene/cache lineage remain a bounded
+follow-up; auto-generated scene lighting is an inference, not a rendering
+contract. Retain private comparisons and source lineage, and revisit on changed
+input, import settings, helper/libm, source selection or SDK encoder.
+
+The unchanged objects/resource/index/result interface is handed to the existing
+bundle/player owners. These packs close no final-file readiness entry by
+themselves. Complete source content, Android encoder/filter agreement, guarded
+single-job recovery, source-derived APK production/install, standard controls
+and performance remain open. Architecture C and native IL2CPP ARM64 remain fixed.

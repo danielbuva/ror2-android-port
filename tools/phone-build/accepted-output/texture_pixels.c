@@ -7,8 +7,8 @@
 #define BCDEC_IMPLEMENTATION
 #include "third_party/bcdec/bcdec.h"
 
-/* The byte import path reduces once in byte units before float normalization. */
-static int mips(int width, int height, int gamma) {
+/* Linear bytes reduce before normalization; sRGB normalizes RGBA on import. */
+static int mips(int width, int height, int gamma, int hdr) {
     size_t bytes = (size_t)width * height * 4;
     unsigned char *pixels = malloc(bytes);
     float *values = malloc(bytes * sizeof(float));
@@ -16,19 +16,27 @@ static int mips(int width, int height, int gamma) {
     if (fread(pixels, 1, bytes, stdin) != bytes || fgetc(stdin) != EOF) return 67;
     for (size_t i = 0; i < bytes; i++) {
         float v = pixels[i];
-        if (gamma && i % 4 != 3) {
+        if (hdr) {
+            v /= 255.f;
+            if (i % 4 != 3) {
+                v = v < .04045f ? v / 12.92f : powf((v + .055f) / 1.055f, 2.4f);
+                v = (float)(_Float16)v;
+            }
+        } else if (gamma) {
             v *= 1.f / 255.f;
-            v = v <= .04045f ? v / 12.92f : powf((v + .055f) / 1.055f, 2.4f);
+            if (i % 4 != 3)
+                v = v <= .04045f ? v / 12.92f : powf((v + .055f) / 1.055f, 2.4f);
         }
         values[i] = v;
     }
     for (int level = 0;; level++) {
         size_t count = (size_t)width * height * 4;
-        if (level) for (size_t i = 0; i < count; i++) {
+        if (level || hdr) for (size_t i = 0; i < count; i++) {
             float v = values[i];
             if (gamma && i % 4 != 3)
                 v = v <= .0031308f ? v * 12.92f : 1.055f * powf(v, .4166667f) - .055f;
-            pixels[i] = (unsigned char)fminf(255.f, fmaxf(0.f, floorf(v * 255.f + .5f)));
+            float scale = hdr && i % 4 != 3 ? 127.5f : 255.f;
+            pixels[i] = (unsigned char)fminf(255.f, fmaxf(0.f, floorf(v * scale + .5f)));
         }
         if (fwrite(pixels, 1, count, stdout) != count) return 68;
         if (width == 1 && height == 1) break;
@@ -39,7 +47,7 @@ static int mips(int width, int height, int gamma) {
             float a = values[(y0 * width + x0) * 4 + c], b = values[(y0 * width + x1) * 4 + c];
             float d = values[(y1 * width + x0) * 4 + c], e = values[(y1 * width + x1) * 4 + c];
             float v = ((a + b) + d + e) * .25f;
-            if (level == 0 && (!gamma || c == 3)) v *= 1.f / 255.f;
+            if (level == 0 && !gamma && !hdr) v *= 1.f / 255.f;
             values[(y * nw + x) * 4 + c] = v;
         }
         width = nw; height = nh;
@@ -182,10 +190,13 @@ int main(int argc, char **argv) {
     int is_bc1 = argc == 4 && !strcmp(argv[3], "bc1");
     int is_bc4 = argc == 4 && !strcmp(argv[3], "bc4");
     int is_bc5 = argc == 4 && !strcmp(argv[3], "bc5");
-    if (argc == 4 && !is_bc1 && !is_bc3 && !is_bc4 && !is_bc5) {
+    int is_bc6 = argc == 4 && !strcmp(argv[3], "bc6");
+    if (argc == 4 && !is_bc1 && !is_bc3 && !is_bc4 && !is_bc5 && !is_bc6) {
         if (!strcmp(argv[3], "dilate")) return dilate((int)width, (int)height);
-        if (!strcmp(argv[3], "mips-linear")) return mips((int)width, (int)height, 0);
-        if (!strcmp(argv[3], "mips-srgb")) return mips((int)width, (int)height, 1);
+        if (!strcmp(argv[3], "mips-linear")) return mips((int)width, (int)height, 0, 0);
+        if (!strcmp(argv[3], "mips-srgb")) return mips((int)width, (int)height, 1, 0);
+        if (!strcmp(argv[3], "hdr-mips-linear")) return mips((int)width, (int)height, 0, 1);
+        if (!strcmp(argv[3], "hdr-mips-srgb")) return mips((int)width, (int)height, 1, 1);
         return 65;
     }
     unsigned char *rows = malloc(width * 16);
@@ -203,6 +214,14 @@ int main(int argc, char **argv) {
                 for (int i = 0; i < 16; i++) decoded[i * 4 + 3] = 255;
                 bc45_channel(block, decoded, 0);
                 if (is_bc5) bc45_channel(block + 8, decoded, 1);
+            } else if (is_bc6) {
+                float values[16 * 3];
+                bcdec_bc6h_float(block, values, 12, 0);
+                for (int i = 0; i < 16; i++) {
+                    for (int c = 0; c < 3; c++)
+                        decoded[i * 4 + c] = (unsigned char)fminf(255.f, fmaxf(0.f, values[i * 3 + c] * 255.f));
+                    decoded[i * 4 + 3] = 255;
+                }
             } else if (is_bc1) bc1(block, decoded);
             else if (is_bc3) bc3(block, decoded);
             else bcdec_bc7(block, decoded, 16);

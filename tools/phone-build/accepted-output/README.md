@@ -708,6 +708,25 @@ no output rewriting is used. Composed installation remains open. Failed new
 outputs are retained, and active private inputs are unchanged. Remove only disposable generated outputs after evidence
 is recorded; run the mandatory repository pruner after build/run work.
 
+## Resume interrupted texture production
+
+The existing texture producer's current experimental `--resume` accepts the
+same command, profile, PC input, codec/toolchain pins and output directory as
+the interrupted run. Normal invocation still requires a new output directory.
+The initial `result.json` persists those pins before encoding. Every completed
+object/resource extent is flushed and fsynced before its index row commits.
+Resume verifies the ordered index and all persisted extents against the
+profile, removes only uncommitted tails, and skips completed texture outputs.
+Unknown files, mismatched pins and corrupt committed data refuse recovery.
+The `objects.bin`, `resources.bin` and `index.jsonl` formats stay unchanged.
+
+Five authored host tests include real SIGKILL recovery and byte-exact fresh-run
+comparison. Android crash recovery remains open after
+[J1123](../../../docs/PORTING_JOURNAL.md#j1123--guarded-rgba-phone-batch-loses-transport-admission-stays-open).
+Recover the interrupted device's evidence and boot reason before cleanup or
+another run. SDK colour bands now execute one at a time; thermal monitoring
+and device ownership remain the caller's responsibility.
+
 ## Produce single-mip RGBA textures with the owner-supplied SDK
 
 Current experimental source-only support; full phone-cohort qualification is
@@ -778,7 +797,7 @@ The same native pixel helper performs the existing integer transparency
 dilation, keeping coordinate buffers outside the Python parent and freeing them
 before pipe output. Its authored seed/tie controls match the standard-library
 implementation; whole-cohort hashes remain the admission authority.
-SDK encoding uses at most two independent block bands at once, each at most
+SDK encoding runs one block band at a time, each at most
 262,144 pixels and aligned to four rows. Raster-order concatenation preserves
 the exact block stream; decoding/dilation still cover the complete source image.
 Each codec child retains its 120-second deadline, with bounded pending input and
@@ -861,3 +880,48 @@ format and a single face, and emit only its top BC level. These are intermediate
 owner-derived bytes; no Crunch image is distributed. The builder pins all three
 headers and their complete license before/after compilation and emits
 `CRUNCH-LICENSE.txt` alongside the existing provider notices.
+
+
+## Produce RGBA mip chains
+
+Current experimental source operation: `sdk-rgba-mips`. J1128 qualifies all
+1,523 records on the host; Android qualification remains open. Use the existing texture
+producer and explicit SDK/public ETC tools with
+`recipe/owner-rgba-mip-textures.json`, SHA-256
+`723c4e641349941a172aef28d6a4b23eee2954c5390cd7257a75a54cd0bf66fd`.
+The profile selects 1,399 canonical source transformations for 1,523 records,
+including four standalone player textures. It retains the same object/resource
+pack and index interface consumed by the bundle/player owners.
+
+The owner decodes only the original top mip, extends transparent RGB, generates
+continuous float32 mip levels and repeats logical tail levels into complete
+blocks. SDK colour compression and the existing public EAC alpha encoder derive
+every level. For sRGB import all four channels first normalize with float32
+`1 / 255`; the gamma transfer applies only to RGB. Linear import preserves the
+existing byte-unit first reduction. The exact-editor fixture includes varying
+alpha to distinguish these arithmetic contracts. No Editor/project executes in
+production. Android cohort qualification remains open.
+
+## Produce source-derived cubemaps
+
+J1128 qualifies the complete 110-record profile on the host.
+Use the existing texture producer with `recipe/owner-cubemap-textures.json`,
+SHA-256
+`319691fd4c11591b87b4aae654b00a1cd7789105b43be2cd52a090bb98cb2526`,
+and explicit current `--etc-codec`, `--jpeg-codec` and `--sdk-toolchain` paths
+and SHA-256 pins. Its 110 records select originals from 68 PC bundles:
+50 `cube-mips`, 56 `cube-hdr` and four `cube-rgba-mips`. The existing
+`objects.bin`, `resources.bin`, `index.jsonl` and `result.json` contract is
+unchanged. Thirteen native generated-sky/baked-probe records are excluded;
+their source pixel derivation remains open.
+
+Each operation reads the six original face chains with their original per-face
+stride and regenerates levels from each face's top mip, preserving face order
+and orientation. Ordinary colour uses the existing continuous float mip and
+perceptual ETC path. HDR import preserves the measured exporter half conversion,
+float mip filtering and DoubleLDR quantization before uniform ETC encoding;
+destination colour space selects the transfer before quantization. The four
+RGBA cubes use the SDK colour/public EAC alpha path. CompleteImageSize remains
+per face; the resource extent contains all six faces. Original metadata outside
+the selected nine fields is retained. No target pixel supplier or Editor/project
+executes in production. Complete Android qualification remains open.

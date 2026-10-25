@@ -171,6 +171,26 @@ adds a pinned public stb/IJG JPEG tool but no Unity SDK, Editor or private
 discovery input. J1079 qualifies all 399 uncompressed records and the public
 JPEG-tool build on Android. Other texture formats and complete bundle assembly
 remain separate gates; no current game build or runtime consumes these packs.
+The same owner's current experimental `--resume` reuses its original profile,
+input/tool pins and existing output. Data fsync precedes every committed index
+row; recovery checks the ordered persisted prefix before truncating uncommitted
+tails and continuing. Initial/final receipts are replaced atomically. Host
+SIGKILL recovery qualifies this contract; Android crash recovery remains open
+after J1123. SDK colour bands run sequentially.
+The same owner derives full-chain RGBA through `sdk-rgba-mips` and audited
+`recipe/owner-rgba-mip-textures.json`; source top-level decode, transparency
+extension, continuous float mip filtering and per-level SDK/public encoding
+share the existing setup, verification, checkpoint and teardown. No target-byte
+provider or separate output interface is added. Android qualification remains
+open.
+The same owner additionally derives face-major Cubemap records with audited
+`recipe/owner-cubemap-textures.json`. It preserves the original full-chain face
+stride, regenerates each face from its top level without a vertical flip, and
+writes CompleteImageSize per face. Existing BC decoding, float mip filtering,
+public ETC and SDK RGBA encoders share the same pack/checkpoint contract. The
+native pixel helper owns BC6 byte conversion and HDR export-half/DoubleLDR mip
+handling. Source identity and unresolved native reflections remain explicit
+gates; no target pixel fallback is available.
 The same owner supports the source Alpha8 cohort through
 `recipe/owner-alpha-textures.json`: canonical original bodies/pixels are reused
 with explicit target names, storage extents and unchanged-field admission.
