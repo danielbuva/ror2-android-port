@@ -66,6 +66,9 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       qualification open. [J1128](PORTING_JOURNAL.md#j1128--produce-complete-rgba-mip-and-source-cubemap-cohorts-on-the-host) qualifies all 1,523 RGBA mip-chain records
       and 110 source-derived Cubemaps on the host. Their Android production,
       13 native reflection cubes and complete bundle assembly remain open.
+      [J1136](PORTING_JOURNAL.md#j1136--bound-native-cubemap-residue-with-omitted-original-pc-sources)
+      tests omitted original scene/player sources without closing that residue;
+      no replacement lighting or target pixels enter the producer.
       [J1113](PORTING_JOURNAL.md#j1113--produce-a-complete-source-only-bundle-and-seven-player-data-files)
       qualifies the first complete PC-only bundle and seven player-data files;
       J1135 extends the host cohort to nine complete bundles; the combined

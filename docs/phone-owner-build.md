@@ -122,7 +122,10 @@ J1110 qualifies all 1,589 ETC1 mip-chain records
 on the host; Android production remains open. [J1128](PORTING_JOURNAL.md#j1128--produce-complete-rgba-mip-and-source-cubemap-cohorts-on-the-host) qualifies all
 1,523 RGBA mip-chain records and 110 source-derived Cubemaps on the host. Their
 Android production, 13 native reflection cubes and complete bundle production
-remain open. Owner-build v1 uses the single accepted
+remain open. [J1136](PORTING_JOURNAL.md#j1136--bound-native-cubemap-residue-with-omitted-original-pc-sources)
+bounds the native-cube residue after testing omitted original scene/player
+sources; its missing pixel transform remains separate from object layout.
+Owner-build v1 uses the single accepted
 J850 target; current target metadata is an explicit profile input, and a newer
 target follows a complete v1 phone build/run.
 
