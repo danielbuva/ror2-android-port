@@ -225,3 +225,8 @@ absent. The 54 RGBA selections use PR75's landed public producer/profile. Phone
 replay and complete content/shader/animation production remain open. The two
 new files still require an ordinary-app rerun; corrected phone-native output,
 complete content, installation, controls and matched performance remain open.
+
+[J1133](PORTING_JOURNAL.md#j1133--produce-source-animation-hierarchy-and-generic-records-on-the-host)
+extends the source-only object producers. These host-qualified packs still
+require complete bundle/player-file assembly and ordinary-app qualification;
+they do not independently close a final-file readiness entry.

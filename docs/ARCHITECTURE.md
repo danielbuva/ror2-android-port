@@ -134,14 +134,21 @@ source-only EffectManagerHelper case; complete content and phone qualification
 remain separate. Original script-file-ID derivation remains unchanged.
 `record_produce.py` owns source-only AnimationClip and generic object-record
 production through the same object-pack interface. Audited
-`recipe/owner-animation-clips.json`, `recipe/owner-animator-controllers.json`
-and `recipe/owner-material-records.json`
+`recipe/owner-animation-clips.json`, `recipe/owner-animator-controllers.json`,
+`recipe/owner-material-records.json`, `recipe/owner-gameobjects.json`,
+`recipe/owner-transforms.json` and `recipe/owner-generic-records.json`
 select original records, checked pointer relationships and source-only animation
 policies. Original embedded schemas identify typed float fields, reference-pose
-and streamed/constant arrays. Setup admits a pinned recipe, unchanged original
+and streamed/dense/constant arrays. Native Hermite packing reconstructs source
+tangents with float32 operation order. Source binding permutations reorder
+whole stream keys, delta ranges and root indices; dense curves retain the
+measured import endpoint/signed-zero rules. Root rotations derive from original
+indexed delta endpoints using ARM reciprocal-square-root arithmetic.
+Setup admits a pinned recipe, unchanged original
 PC bundles and separate new output with capacity reserve; source and persisted
 record hashes gate its complete/failed receipt. It retains outputs and ends the
-process on failure/exit. Generic controllers preserve every non-pointer byte;
+process on failure/exit. Generic and hierarchy records preserve every
+non-pointer byte and native script/type identity;
 material keyword demotion reuses the existing object owner's policy. No runtime
 owner or Editor is added. [Setup and qualified scope](../tools/phone-build/accepted-output/README.md#produce-animation-and-generic-object-records)
 remain separate from complete bundle/player-file assembly and phone acceptance.

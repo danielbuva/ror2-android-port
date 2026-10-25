@@ -820,15 +820,25 @@ python3 -I -S -B tools/phone-build/accepted-output/record_produce.py \
 ```
 
 Use `recipe/owner-animator-controllers.json` for the qualified controller
-cohort and `recipe/owner-material-records.json` for materials. A recipe contains source selectors/hashes, target relationships/hashes
+cohort, `recipe/owner-material-records.json` for materials,
+`recipe/owner-gameobjects.json` / `recipe/owner-transforms.json` for hierarchy
+records, and `recipe/owner-generic-records.json` for the qualified native and
+scripted records. A recipe contains source selectors/hashes, target relationships/hashes
 and named source transformations, never target object bytes. The producer
 reads original embedded schemas and records, relocates checked PPtrs, and
 verifies each full result against its accepted hash. Animation policies clear
 original reference-pose arrays while preserving the importer size, canonicalize
 schema-declared float values or packed float words, and fold only complete,
-exclusive constant streamed curves. Original event strings, values, paths,
+exclusive constant streamed curves. The expanded profile additionally selects
+native Hermite coefficient packing, original binding permutations, constant
+folding and measured dense endpoint/signed-zero rules. Whole streamed keys sort
+by their remapped indices; value ranges and root indices follow the same source
+permutation. Root quaternions derive from indexed original delta endpoints,
+with the measured ARM float32 normalization. No native library or instruction
+emulator is required. Original event strings, values, paths,
 curve data and other non-transformed bytes remain original. Generic controllers
-change only PPtrs. The material path reuses the existing original keyword
+and the qualified hierarchy/native/scripted records change only PPtrs,
+preserving original type and script identities. The material path reuses the existing original keyword
 demotion operation; it introduces no material or shader value.
 
 Setup requires a matching recipe hash, pinned unchanged original PC bundles,
@@ -841,8 +851,9 @@ Bundle/player-file callers independently obtain original native type metadata
 and generate destination layout. There is no replay, SDK, UnityPy or Editor
 input to production.
 
-J1119 qualifies 320 AnimationClip, 232 AnimatorController and 4,979 Material
-records on the host. This partial cohort closes no final-file readiness entry by
+J1133 qualifies 3,246 AnimationClips, 27,114 GameObjects, 176,689 Transforms
+and 29,473 generic records on the host. J1119 additionally qualifies 232
+AnimatorControllers and 4,979 Materials. This partial cohort closes no final-file readiness entry by
 itself; complete source-only content and ordinary-app/device qualification
 remain open. Outputs and all discovery/comparison evidence stay ignored.
 The native pixel tool additionally exposes experimental `bc4`, `bc5`,
