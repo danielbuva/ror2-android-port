@@ -26,6 +26,33 @@ class AlphaStabilityBatchTests(unittest.TestCase):
         self.lease = self.root / ".local/orchestrator/leases" / SERIAL
         self.args = dict(device_serial=SERIAL, expected_apk_sha256=HASH, canonical_root=self.root, done_file=self.done)
 
+    def test_host_capture_admission_uses_output_estimate_plus_margin(self):
+        for free_gib in (28, 29, 96):
+            with self.subTest(free_gib=free_gib), mock.patch.object(batch.shutil, "disk_usage", return_value=SimpleNamespace(free=free_gib * 1024**3)):
+                budget = batch._host_capture_budget(self.root)
+                self.assertEqual(budget["estimated_output_bytes"], 9 * 1024**3)
+                self.assertEqual(budget["margin_bytes"], 20 * 1024**3)
+                self.assertEqual(budget["required_free_bytes"], 29 * 1024**3)
+                with (
+                    mock.patch.object(batch, "_device", side_effect=RuntimeError("admitted to device")) as device,
+                    mock.patch.object(batch, "_terminal_readback", return_value={}),
+                    mock.patch.object(batch, "_sleep_awakened"),
+                    mock.patch.object(batch, "_prune"),
+                ):
+                    with self.assertRaisesRegex(RuntimeError, "batch failed"):
+                        batch.check_alpha_stability_batch(**self.args)
+                result = json.loads(self.done.read_text())
+                self.assertEqual(result["host_capture_budget"], budget)
+                if free_gib < 29:
+                    device.assert_not_called()
+                    self.assertFalse(self.lease.exists())
+                    self.assertIn("20 GiB margin", result["error"])
+                else:
+                    device.assert_called_once()
+                    self.assertEqual(result["error"], "admitted to device")
+                    self.assertTrue(result["lease_released"])
+                self.done.unlink()
+
     def test_cpu_observation_rejects_absent_sentinel_and_malformed_zones(self):
         self.assertEqual(batch.cpu_temperature("cpu-0 55000\ncpu-1 70100"), 70.1)
         for text in ("", "cpu-0 0", "cpu-0 -1000", "cpu-0 150000", "cpu-0 unknown", "battery 55000", "cpu-0"):

@@ -1319,7 +1319,11 @@ input and small software camera drags. Fresh advancing diagnostics, native clock
 and frame counters, battery/HAL stops and original End Run/menu teardown are
 required. It retains the exact assisted/all-off refusal separately and requires
 all assists restored off. This is an assisted workload, not ordinary play or a
-performance guarantee. Host fixtures exercise admission and failure contracts.
+performance guarantee. Host admission estimates two 4 GiB snapshots plus
+1 GiB of diagnostic output and requires a further 20 GiB margin; the receipt
+records that budget and observed free bytes. The 100 GiB full-build floor does
+not apply to this capture-only queue. Host fixtures exercise admission and
+failure contracts.
 The batch stops on the first failure; independent actual APK/idle/OLED readback
 and canonical pruning precede lease release and atomic done-file publication.
 Foreign selectors/pending transactions are preserved, and failed terminal

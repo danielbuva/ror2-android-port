@@ -29,6 +29,10 @@ DEVICE_FREE_RESERVE_BYTES = 15 * 1024**3
 # J1091's native capture sizes inform this allowance. Only one capture remains
 # on the device at a time; its verified host transfer removes the device file.
 NATIVE_CAPTURE_HEADROOM_BYTES = 4 * 1024**3
+# Two retained native snapshots (menus 2/4), plus SDK/session logs and thermal
+# traces. This is a capture estimate, not the full Unity build storage floor.
+HOST_DIAGNOSTIC_ESTIMATE_BYTES = 1024**3
+HOST_CAPTURE_MARGIN_BYTES = 20 * 1024**3
 
 
 # Read-only sysfs observation, using shell builtins to avoid spawning one cat per
@@ -388,6 +392,19 @@ def _require_capture_capacity(device):
         raise RuntimeError("Native heap capture requires 4 GiB headroom above the retained 15 GiB device free-space reserve")
 
 
+def _host_capture_budget(root):
+    estimated = 2 * NATIVE_CAPTURE_HEADROOM_BYTES + HOST_DIAGNOSTIC_ESTIMATE_BYTES
+    return dict(
+        snapshot_count=2,
+        estimated_snapshot_bytes=NATIVE_CAPTURE_HEADROOM_BYTES,
+        estimated_diagnostic_bytes=HOST_DIAGNOSTIC_ESTIMATE_BYTES,
+        estimated_output_bytes=estimated,
+        margin_bytes=HOST_CAPTURE_MARGIN_BYTES,
+        required_free_bytes=estimated + HOST_CAPTURE_MARGIN_BYTES,
+        free_bytes=shutil.disk_usage(root).free,
+    )
+
+
 def check_alpha_stability_batch(*, device_serial, expected_apk_sha256, canonical_root, done_file):
     """Run fixed stages synchronously; publish terminal status on success or failure."""
     root = Path(canonical_root).expanduser().resolve()
@@ -418,6 +435,10 @@ def check_alpha_stability_batch(*, device_serial, expected_apk_sha256, canonical
         if expected is None:
             raise ValueError("alpha-stability-batch requires --expected-apk-sha256")
         result["apk_sha256"] = expected
+        result["host_capture_budget"] = _host_capture_budget(root)
+        budget = result["host_capture_budget"]
+        if budget["free_bytes"] < budget["required_free_bytes"]:
+            raise RuntimeError("Host free space is below estimated capture output plus 20 GiB margin")
         lease = root / ".local/orchestrator/leases" / serial
         lease.parent.mkdir(parents=True, exist_ok=True)
         if lease.parent.resolve() != lease.parent:
@@ -432,8 +453,6 @@ def check_alpha_stability_batch(*, device_serial, expected_apk_sha256, canonical
         if previous_selectors[1] not in (None, serial):
             raise ValueError("LAB_DEVICE conflicts with explicit batch serial")
         set_command_selector(serial, previous_selectors[1])
-        if shutil.disk_usage(root).free < 100 * 1024**3:
-            raise RuntimeError("At least 100 GiB host free space is required before native heap capture")
         device = _device(serial)
         result["initial_readback"] = _idle_readback(device, expected)
         _require_capture_capacity(device)
