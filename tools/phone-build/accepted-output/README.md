@@ -167,7 +167,7 @@ their build-cache hashes are not reproduced by this slice.
 
 `owner-enemy-reward-objects.json` uses the same owner with
 `--sdk OWNER_UNITY_APP_ROOT`. Its pinned SDK input is
-`Contents/Resources/unityeditorresources`; the Editor is never started.
+`Contents/Resources/unity editor resources`; the Editor is never started.
 Original MonoScript and MonoBehaviour selectors feed the existing
 `scripts/lab/script_identity.py::properties_hash` helper. Original identity
 strings and custom schema fields, combined with the SDK editor base schema,
@@ -176,7 +176,9 @@ or target type template. Every other script/type byte remains source-owned.
 SDK hashes are checked before/after, and the complete serialized member/bundle
 still must match its comparison hashes. Physical preload partitions and sorted
 container paths are independent; native default resources retain their SDK
-GUID/path rather than an AssetBundle archive path.
+GUID/path rather than an AssetBundle archive path. J1132 qualifies all 203
+objects and the complete 65,286-byte enemy-reward bundle raw-exact on the host,
+bringing the complete source bundle count to seven. Phone qualification remains open.
 
 ## Produce named player-data files
 

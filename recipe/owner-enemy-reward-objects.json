@@ -8470,7 +8470,7 @@
     }
   ],
   "sdk": {
-    "path": "Contents/Resources/unityeditorresources",
+    "path": "Contents/Resources/unity editor resources",
     "sha256": "25bcb42474a8e1d639d4835a28fa2017dc153e2612e3961c6b09895f5ac3a190",
     "path_id": -9215203055440829681
   }

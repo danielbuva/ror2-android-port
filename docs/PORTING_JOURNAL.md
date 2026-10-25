@@ -40077,3 +40077,70 @@ authentication, entitlement or redistribution capability is granted.
 Revisit on original input, schema, selected relationship, algorithm, interpreter
 or reader changes. Phone production, complete source content, installation and
 matched runtime/performance remain open; Architecture C/IL2CPP ARM64 is fixed.
+
+## J1132 — Produce the complete enemy-reward payload from original input
+
+Date: 2026-10-25 UTC. Host-only source production; no Unity Editor, device,
+installation or runtime test. Accepted comparison: J850 APK SHA-256
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+**Hypothesis and prior art.** J1050 and J1120 identify enemy reward as a
+high-reuse candidate blocked by one original MonoScript properties hash and
+five MonoBehaviour type hashes. J1116 already qualifies the structural writer;
+do not repeat its accepted-record census. Read those entries and J1124 before
+production. Consulted `community-prior-art.md` and pinned UnityPy 1.25.3
+`ObjectReader`/`SerializedFile`: their source object/type/script identities
+separate original bytes from regenerated reference tables. J1124's existing
+source-schema hash helper resolves the missing hash computation. No upstream
+implementation, original body or SDK schema is copied into public source.
+
+**Implementation.** Extend the existing `object_produce.py` and audited
+`owner-enemy-reward-objects.json`. Physical preload partitions retain their
+original rooted order independently of sorted container paths. Native
+`Library/unity default resources` uses its resource identity. The explicit
+`--sdk` admission reads the pinned native MonoBehaviour editor base; original
+MonoScript identity strings and original custom schema feed the landed
+`script_identity.properties_hash` helper. Only the properties-hash body span
+or matching behaviour type-hash field changes. Every other body/type byte
+remains source-owned. Original source selectors supply both unchanged meshes.
+No target type/hash/body template, accepted provider or replay supplier exists.
+SDK/PC hashes are verified before and after production.
+
+**Result.** Run the unmodified public producer with `python3 -I -S -B` and
+explicit PC/SDK/public LZ4 inputs into new private output. All **203 objects**,
+**201,369 body bytes**, the **388,484-byte serialized member** and the complete
+**65,286-byte enemy-reward-lab** match J850. Serialized SHA-256:
+`5f9794a1c9ce9c45de211755f1834e361ac08e1fc81284c0ca9c178d245927c0`.
+Full UnityFS SHA-256:
+`e685a5b23c33ba3a6c2eff39dc53a3c582691aef3780b1f76ad91d51d73a85b6`.
+Production takes 0.784 seconds. Independent post-production readback compares
+the entire bundle and member raw-exact, and verifies all 203 persisted object
+extents. This is the seventh complete source-derived host bundle.
+
+Private evidence is under
+`work/coordination/p1-payload-reward-discovery-v1/`: `public-host-v2/result.json`
+and `public-host-v2-comparison.json`. The recipe SHA-256 is
+`7ae92750f7b36b21a9db4172326be99b5d2dc9e7624057c591002e71218e8900`.
+The SDK source SHA-256 is
+`25bcb42474a8e1d639d4835a28fa2017dc153e2612e3961c6b09895f5ac3a190`.
+Raw source/comparison material stays ignored. Canonical source union
+`work/coordination/p1-content-source-host-v9` also incorporates the player's
+qualified UI source slice: **186/705 ready**, **519 missing**
+(**392 APK / 127 payload**), **zero invalid/mismatched**. The checker consumes
+its comparison manifest only as an inventory oracle, never as a content provider.
+
+**First failure and checks.** The first public attempt refuses the recipe's
+incorrect SDK filename before reading any object. Correct it to the actual
+pinned `unity editor resources` path; the second new output completes. Fourteen
+authored producer contracts, Ruff and host preflight pass. Tests cover the
+independent preload/container order, native resource identity, SDK admission,
+original script-string parsing, hash application and preserved unrelated bytes.
+Staged scan and manual recipe/source review retain the public privacy/IP boundary.
+
+**Remaining/revisit.** Complete player/payload/catalog production and phone
+qualification remain open; this source-only host result establishes neither
+an installed game nor runtime/performance equivalence. The root bundle's
+Unity AssetBundleHash values require imported-artifact dependency derivation,
+separately from final bundle SHA/length generation. Native shader and remaining
+content producer gates are unchanged. Revisit this slice only for source/SDK
+drift, a failed reconstruction contract or actual phone evidence.
