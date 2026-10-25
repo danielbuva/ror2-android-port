@@ -644,6 +644,11 @@ separate player build; `ContentFixture.cs` loads either its embedded bundle or
 a hash-bound candidate at a fixed path in its own data directory. It checks two
 load/unload cycles and writes a private report. The three `phone-content-*` prototype
 actions stage/check/build only this fixture under the primary checkout mutex.
+The check also captures the native properties hash and binary serialization of
+the authored `NativeScriptSchemaFixture.cs` fields. It destroys the temporary
+objects after capture; the host must inspect actual type-tree presence before
+using the output as schema evidence. The fixture class is Editor-only and has
+no game-build consumer.
 See [probe setup and boundaries](../tools/phone-build/README.md). No game-runtime
 owner or whole-catalog build calls this support path.
 
