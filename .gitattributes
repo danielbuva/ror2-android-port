@@ -8,3 +8,9 @@ tools/phone-build/accepted-output/third_party/unitycrunch/LICENSE -text -whitesp
 tools/phone-build/accepted-output/third_party/unitycrunch/crn_decomp.h -text -whitespace
 tools/phone-build/accepted-output/third_party/unitycrunch/crn_defs.h -text -whitespace
 tools/phone-build/accepted-output/third_party/unitycrunch/crnlib.h -text -whitespace
+
+# Parallel workers append journal entries at the end of the file; union merge keeps both sides
+# during local rebases instead of conflicting. Regenerate the index after any rebase
+# (python3 scripts/journal-index.py); CI's --check catches a stale one.
+docs/PORTING_JOURNAL.md merge=union
+docs/JOURNAL_INDEX.md merge=union
