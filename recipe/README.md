@@ -3060,3 +3060,9 @@ callback without changing native audio ownership, bank data, event routing or
 provider generation. It adds no build input, SDK payload or original bytes to
 the repository. Existing first-stage defaults remain unchanged; original audio
 playback and destination statistics require separate device evidence.
+
+The destination arm gate refreshes the existing `PortSession.cs` source pin,
+its owner-recipe digest and the dependent producer/camera provenance pins.
+Only that reviewed authored source changes in the frozen owner cohort. These
+checks remain mandatory; the normal player build must regenerate its source-bound
+bootstrap rather than reuse an older frozen payload.
