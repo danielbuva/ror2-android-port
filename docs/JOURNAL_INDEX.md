@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1155](PORTING_JOURNAL.md#j1155--reconstruct-wisps-source-scene-and-qualify-the-original-windows-copy) | 2026-10-25 | Reconstruct Wisp's source scene and qualify the original Windows copy | Date: 2026-10-25 UTC. |
 | [J1151](PORTING_JOURNAL.md#j1151--reconstruct-125-complete-shader-files-from-original-and-authored-source) | 2026-10-25 | Reconstruct 125 complete Shader files from original and authored source | **Hypothesis / prior art.** |
 | [J1147](PORTING_JOURNAL.md#j1147--reconstruct-original-ui-alpha-and-five-more-authored-shader-files) | 2026-10-25 | Reconstruct original UI Alpha and five more authored Shader files | 2026-10-25 UTC. |
 | [J1146](PORTING_JOURNAL.md#j1146--produce-two-complete-moon-preview-shaders-from-source) | 2026-10-25 | Produce two complete Moon preview Shaders from source | 2026-10-25 UTC. |

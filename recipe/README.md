@@ -172,6 +172,7 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 | `owner-ai-test-objects.json` | Private AI Test scene | Original selectors, checked CharacterMaster body/schema omission, source Sprite identities, SDK schema and qualified mesh/texture profiles. | No body/tree/geometry/pixel/scalar template; provenance/privacy/licensing audit below, 2026-10-25. | Existing `object_produce.py`; J1150 host exact, phone open. |
 | `owner-testscene-objects.json` | Private Testscene scene | Original selectors, checked CharacterMaster body/schema omission, source Sprite identities, original preload membership, SDK schema and qualified mesh/texture profiles. | No body/tree/geometry/pixel/scalar template; provenance/privacy/licensing audit below, 2026-10-25. | Existing `object_produce.py`; J1150 host exact, phone open. |
 | `owner-windows-shaders.json` | Original Windows comparison payload | Current original bundle path, length and integrity hash for the existing unchanged-file copy operation. | Provenance/privacy/licensing audit below, 2026-10-25; no programs or historical reconstruction input. | Existing `object_produce.py`; current host drift-explained, phone open. |
+| `owner-wispgraveyard-source-objects.json` | Private Wispgraveyard source-scene variant | Original object/type selectors, checked source pointers and import policies, original curve/component relationships, current Sprite identities, SDK schema and qualified media profiles. | No body/tree/curve/geometry/pixel template; provenance/privacy/licensing audit below, 2026-10-25. | Existing `object_produce.py`; J1155 host exact, phone open. |
 | `owner-teleport-material-objects.json` | Private teleport-material bundle | Original material/type selectors, checked references, named dummy-shader keyword policy and container relationships. | No material/shader body, keyword literal, numeric override or target template; audit below, 2026-10-25. | Source-only `object_produce.py`; J1117 host qualification, phone gate open. |
 | `owner-death-effect-objects.json` | Private replay player-death-effect bundle | Rooted original graph/script selectors, checked pointer extents, preload/dependency identities and hashes. | No body, type-tree snapshot, scalar/curve override or target delta; audit below, 2026-10-25. | Existing original-input-only `object_produce.py`; J1115 host qualification, phone gate open. |
 | `owner-pickup-objects.json` | Private replay pickup bundle | Original selectors, hashes, checked pointer extents and destination relationships. | No bodies, type trees or target deltas; full audit below, 2026-10-25. | Original-input-only `object_produce.py`; J1113 host qualification, phone gate open. |
@@ -3015,3 +3016,16 @@ Historical originals qualify the same copy transformation against J850 only;
 the current reconstruction uses the current legitimate installation exclusively.
 Its current output is drift-explained, separate from exact reconstruction.
 The recipe grants no redistribution, ownership or authentication rights.
+
+`owner-wispgraveyard-source-objects.json` receives the same provenance,
+privacy, licensing and sensitive-content audit on 2026-10-25. All curve operands
+come from original behaviours and Transform hierarchies; the recipe contains
+only their selectors. The authored mathematical reconstruction introduces no
+curve samples, numeric delta or copied game implementation. Named global-owner
+suppression follows the existing source-scene import policy. Current Sprite
+GUIDs are checked against the current accepted-input export and original scene
+references. Independent review checks every original-schema pointer extent and
+source value; equivalent source wind/mesh relationships remain explicit.
+The compact JSON decodes identically to the audited profile. No protected body,
+type tree, media, private path, credential, account or redistribution grant is
+included. J1155 owns the complete host result; phone qualification remains open.

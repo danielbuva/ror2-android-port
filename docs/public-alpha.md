@@ -74,14 +74,17 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       [J1113](PORTING_JOURNAL.md#j1113--produce-a-complete-source-only-bundle-and-seven-player-data-files)
       qualifies the first complete PC-only bundle and seven player-data files;
       J1139 supplies 173 complete player files, including source-derived TMP
-      hashes and native selection manifests. J1145 extends the independently
-      produced payload cohort to fifteen complete bundles. The shared source
-      tree also retains J1144's separately qualified ColorGrade file; its
-      publication and phone gates remain separate. The fixed-target readiness
-      check now has 372 missing content entries; all 18 code/SDK
+      hashes and native selection manifests. J1155 extends the independently
+      produced payload cohort to eighteen complete bundles. The shared source
+      tree preserves J1151's 125 separately qualified Shader files. The exact
+      fixed-target readiness check has 371 missing content entries; all 18 code/SDK
       entries are available. Phone replay, the
       remaining bundles/player data and complete source-derived installation
       remain open; the structural writer produces no missing content itself.
+      J1155 additionally qualifies the unchanged current-original Windows
+      comparison-bundle copy as drift-explained, separately from exact output.
+      Its admission through the code owner's developing drift checker is a host
+      control; no historical file becomes a reconstruction input.
       [J1081](PORTING_JOURNAL.md#j1081--run-owner-supplied-standalone-sdk-tools-through-a-public-android-runner)
       qualifies a reproducible public Android runner for standalone SDK build
       tools. The full Linux RGBA cohort, original shader/content production and ordinary
@@ -229,9 +232,10 @@ explicit replay content; it does not qualify phone production or installation.
 closes the two generic Android build-metadata producer gaps. Fresh host SDK
 production yields all 15 entries raw-exact to J850. The shared readiness request
 combined with
-[J1145](PORTING_JOURNAL.md#j1145--produce-complete-sky-meadow-solusweb-and-ancient-loft-scene-bundles)
-has all 18 code/SDK files and 189 content files ready, with 498 content entries
-absent. The 173 player files include the twelve newly completed manifests,
+[J1155](PORTING_JOURNAL.md#j1155--reconstruct-wisps-source-scene-and-qualify-the-original-windows-copy)
+has all 18 code/SDK files and 316 content files exact, with 371 content entries
+absent from the exact tree. The Windows copy is separately drift-explained.
+The 173 player files include the twelve newly completed manifests,
 fonts and mip textures. Phone
 replay and complete content/shader/animation production remain open. The two
 new files still require an ordinary-app rerun; corrected phone-native output,
