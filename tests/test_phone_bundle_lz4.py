@@ -121,13 +121,13 @@ class Lz4NativeTests(unittest.TestCase):
 
     def test_known_blocks_and_multiple_requests(self):
         controls = [(b"", b"\0"), (b"abc", b"\x30abc"), (b"a" * 32, bytes.fromhex("1f61010007506161616161"))]
-        frames = [(data, method, expected) for method in (2, 3) for data, expected in controls]
+        frames = [(data, method, expected) for method in (2, 3, 9) for data, expected in controls]
         result = self.run_worker(b"".join(request(data, method) for data, method, _ in frames))
         self.assertEqual(result.returncode, 0, result.stderr)
         expected = b"".join(struct.pack("<I", len(block)) + block for _, _, block in frames)
         self.assertEqual(result.stdout, expected)
 
-    def test_distinct_fast_and_hc12_authored_controls(self):
+    def test_fast_hc12_and_shader_hc9_authored_controls(self):
         # Deterministic public fixture: variable-length runs from an LCG.
         seed = 0x12345678
         control = bytearray()
@@ -137,6 +137,7 @@ class Lz4NativeTests(unittest.TestCase):
         pins = {
             2: "a05fbaba424077757aeeffdb42e930a1198b37a94ef4dbff8bedd853a75544d2",
             3: "8fbf73b8beefe43e07efb33465db24c610f1705263d065c1fde0bebe7e7e3f86",
+            9: "8db0624fc93261a38b5ad7c8f7e43ffeff3df665e0b4d1473f0e9d087a3913a6",
         }
         for method, pin in pins.items():
             with self.subTest(method=method):

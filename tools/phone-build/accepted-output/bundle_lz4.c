@@ -26,7 +26,9 @@ int main(int argc, char **argv) {
         if (read == 0 && feof(stdin) && !ferror(stdin)) return 0;
         if (read != sizeof(header)) return fail("incomplete request header");
         uint32_t size = little32(header), method = little32(header + 4);
-        if (size > LIMIT || (method != 2 && method != 3))
+        /* 2/3 retain UnityFS fast/HC12. 9 selects shader-segment default HC9;
+           it is a worker request, not a UnityFS compression-format flag. */
+        if (size > LIMIT || (method != 2 && method != 3 && method != 9))
             return fail("invalid size or method");
         int bound = LZ4_compressBound((int)size);
         if (bound <= 0) return fail("invalid compression bound");
@@ -42,7 +44,8 @@ int main(int argc, char **argv) {
         }
         int compressed = method == 2
             ? LZ4_compress_default(source, output, (int)size, bound)
-            : LZ4_compress_HC(source, output, (int)size, bound, 12);
+            : LZ4_compress_HC(source, output, (int)size, bound,
+                              method == 9 ? LZ4HC_CLEVEL_DEFAULT : 12);
         free(source);
         if (compressed <= 0 || compressed > bound) {
             free(output);

@@ -176,6 +176,7 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 | `owner-pickup-objects.json` | Private replay pickup bundle | Original selectors, hashes, checked pointer extents and destination relationships. | No bodies, type trees or target deltas; full audit below, 2026-10-25. | Original-input-only `object_produce.py`; J1113 host qualification, phone gate open. |
 | `owner-bootstrap.json` | Authored bootstrap TextAsset | Existing public build-entry attempt identity/input ID and four original preload GUID relationships absent from the original catalog. | No object/body/type-tree/target template or protected text; audit below, 2026-10-25. | Existing `player_data.text_files`; J1118 host qualification, phone gate open. |
 | `owner-player-data.json` | 175 private player files | Original object selectors, checked pointers/importer relationships, authored JSON/assembly order and existing texture-pack record identities. | No game bodies, pixels, text payloads, type-hash overrides or private identifiers; full audits below, 2026-10-25. | Explicit PC/SDK/fresh-converter and pinned source-produced texture packs; J1118 host qualification; landed PR75 provider, phone gate open. |
+| `owner-player-shaders.json` | Private source-derived player Shader files | Authored ShaderLab/settings pins, original Shader/material/schema selectors, acquired SDK/include pins and final comparison hashes. | No target record, type hash, pass key, program, protected math or private identifier; full audit below, 2026-10-25. | Source-only `shader_produce.py`; J1144 host qualification, phone/runtime gates open. |
 | `owner-player-shader-manifests.json` | Two native selection TextAssets | Original Material/Shader selectors, source asset identities and admission hashes. | No keyword inventory, shader programs, material values, serialized templates or private identifiers; audit below, 2026-10-25. | Original PC fields plus the shared authored selection policy; complete shader and phone gates remain open. |
 | `owner-uncompressed-textures.json` | Private replay uncompressed texture bodies/pixels | Original/destination selectors, source extents, generic import/placement metadata and hashes; copy, BC1, source-coordinate dilation and public JPEG policy. | No pixels, palettes, target literals/patches, native SDK implementation or image/library bytes; full audit above, 2026-10-24. All 399 records qualify on host/Android in J1079. | Explicit PC-input-only `texture_produce.py` and separately built public JPEG tool; no current game-build consumer. |
 | `owner-alpha-textures.json` | Private replay source Alpha8/single-mip texture cohort (J1082) | Canonical original/destination selectors, source/field extents, import/storage settings and hashes. | No alpha samples, encoded blocks, target byte frames, protected source or private identifiers; full audit below, 2026-10-24. | Original-PC-input-only `texture_produce.py` plus separately built public codec; no game-build consumer. |
@@ -2960,3 +2961,47 @@ No new scalar policy, schema/body template, protected media, private path,
 identifier, credential or redistribution/ownership/authentication grant is
 introduced. Generated data and raw evidence stay ignored. J1150 owns the full
 host results; Android and complete installation remain open.
+
+### Source-derived player Shader profile (J1144)
+
+`owner-player-shaders.json` is an authored selection for the bounded complete
+authored/original Cloud and UI Alpha producer. It records only the accepted original-input identity,
+original native-schema/Shader/material provider paths/members/path IDs and hashes, public authored
+source/settings pins, acquired SDK tool/include-inventory pins and explained
+build settings. Output names and final size/hash are comparison contracts after
+source-only generation. They supply no Shader body, type-hash literal, program,
+include contents, game math, target pass key or serialized template.
+
+Provenance/privacy/licensing review: the ten authored shaders are existing tracked
+lab-authored identity/visibility/presentation passes; native schema and builtin registry remain sourced
+from the owner's legitimate PC files. Platform defaults and compiler-version data
+are read from the exact owner-acquired SDK, never shipped as SDK binary data.
+The existing public LZ4 provider retains its upstream license; the SpookyHash V2
+algorithm is public domain and its test vectors use authored bytes. No protected
+input, private path, account/device identifier, credential or generated shader
+output is added. This audit authorizes tooling/selection metadata only, with no
+new redistribution or ownership claim. Full evidence and remaining gates are
+recorded once in J1144/J1146/J1147/J1151.
+
+The original UI Alpha extension selects one original Shader and two original
+Materials, derives their feature sets and regenerates every selected original
+program through the existing pinned public d3dasm/NativePrograms owner. Original
+property/render state is source-owned; generated HLSL and Android variant/native
+records remain private. The existing source emitter is factored without changing
+its generated ShaderLab. No retained decompilation, original body/template,
+accepted Shader program/table or target key is embedded in the recipe. The public
+MIT-licensed decompiler is separately built and caller-supplied with a hash;
+this audit grants no distribution right for the resulting game-derived HLSL or
+Android files. Manual extension review: 2026-10-25, J1147.
+
+The Cloud extension reuses the existing audited shader-manifest material policy,
+selects original Shader/material relationships and regenerates the qualified 113
+feature sets through the same original-program recovery/compiler. The source
+emitter factoring retains existing generated text; no broad replacement census,
+retained source, native body, original program or accepted table is shipped.
+The Particle/Water extension reads existing tracked authored source and build
+fog settings. Only selectors, authored-source/tool identities and postproduction
+comparison hashes extend the existing recipe. Manual provenance, privacy,
+licensing and sensitive-content review: 2026-10-25, J1151. This introduces no
+SDK/game redistribution or ownership/entitlement grant; phone qualification
+remains open.

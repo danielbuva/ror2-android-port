@@ -41197,3 +41197,310 @@ installation, matched runtime/performance, remaining shaders/content and those
 manifest/catalog gates stay open. These host results do not qualify normal
 play or game readiness. Revisit on source/profile drift, failed contracts or
 new source-produced shader/import-hash evidence.
+
+## J1144 — Reconstruct one complete Android Shader from source without the Editor
+
+2026-10-25 UTC. **Host-only complete-file result; phone and runtime gates open.**
+
+**Hypothesis / prior art.** The smallest complete Shader48 control can combine
+an authored ShaderLab source, original PC native schema, acquired SDK compiler
+and source build settings without supplying accepted Android records. Consulted
+J1094/J1102 and the shader-recovery subsystem. Re-inspected pinned EditorKit
+`4128710f74ffbd90bfebc523812e7155fa7bdee3`'s
+`AssetRipperShaderPostprocessor.cs`: YAML registration supplies neither native
+compilation nor serialization. Pinned Unity_Shader_Decompiler
+`1ce3a1c47609f8574e091b30e8425d528f2b457c`'s `ShaderSubProgram.cs` supplies
+version/header/keyword/code-array parsing clues, but leaves the native tail
+unimplemented. Existing `shader_segments.parameter_layout` owns the parameter
+encoding clue. No upstream or SDK implementation is vendored. Bob Jenkins's
+public-domain SpookyHash V2 defines the hash algorithm; authored Python vectors
+are independently checked against its retained native reference. Public LZ4
+v1.9.4 supplies shader-segment HC9 compression.
+
+**Change / source suppliers.** `owner-code/shader.py` now preprocesses complete
+ShaderLab, preserving source snippets, program IDs, include hashes, dependency
+paths, variant declarations, requirements and diagnostics through the existing
+session. `accepted-output/shader_produce.py` consumes audited
+`recipe/owner-player-shaders.json`, the tracked AndroidColorGrade source, one
+pinned legitimate PC Shader48 schema/keyword registry and exact acquired SDK.
+The existing original shader bundle supplies native type identity; it supplies
+no Android program or object body. Fresh compiler reflection owns names,
+constant buffers, resources and vertex channels. Source ShaderLab and native
+schema defaults construct properties, render state and parsed form; linked
+Vulkan output belongs to the vertex table. The outer file uses the existing
+serialized-v22 writer. The codec's new worker request 9 selects default HC9;
+existing UnityFS methods 2 and 3 retain their fast/HC12 behavior.
+
+The pass identity is the second output of SDK `ComputeShaderSnippetKey`, a
+zero-seed SpookyHash128 over an 80-byte source/SDK preimage: processed-source
+hash, preprocessor include hash, platform/caching flags, compiler version,
+platform-capability hash and common-include hash. Authored J850 Android tier
+settings and SDK platform defaults derive the capability bitset. The SDK hashes
+all 59 immediate include files in sorted order as raw contents, including SDK
+metadata files. Its native executable is read as pinned metadata only; no Editor
+process or project is opened.
+
+**First failure / correction.** The initial complete derivation used a preserved
+uncached preprocess response while the authored build enables cached
+preprocessing. The generated source is identical, but its include hash differs;
+that inconsistent input produces the wrong pass key. A fresh request using the
+actual source setting resolves it. No hash permutation search, target hash
+substitution or compiled-program mutation is used. The separate stage-count
+correction counts serialized executable owners: a linked Vulkan pair has one
+native owner, although its semantic program mask includes vertex and fragment.
+
+**Complete-file evidence.** Fresh public production and a separate guarded
+reconstruction both emit `19e91578880954efeab1111b405232b9`, 7,784 B,
+SHA-256 `fb6f38549e1336f51e87d60672350305c745c4017a044bc50189c1c2f534e98c`.
+Independent comparison finds zero differing bytes or fields against J850.
+Production finishes before comparison; the guarded run denies private packet,
+accepted-output evidence and prior analysis inputs. Only its new output and
+pinned public codec directory are admitted under ignored `work/`. Expected
+final-file hashes compare fully generated files; they never supply record bytes.
+Input hashes are rechecked after production, and the existing compiler/codec
+contexts own child/socket teardown. Setup requires a new disjoint output;
+completed or failed outputs and terminal receipts remain local.
+
+Evidence under `work/coordination/p1-player-shaders-v1/`:
+`caps-agent-report.md`, `cached-pass-hash-source-result-v1.json`,
+`complete-source-colorgrade-v1-comparison.json`,
+`public-colorgrade-v1/result.json`,
+`public-colorgrade-guarded-v1/result.json` and `source-only-guard.json`;
+`qualify_public_guarded.py` records the read-denial control. The retained earlier
+uncached mismatch is not overwritten. No APK is built or installed: J850's
+accepted APK remains
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+No device, lease, display, original installation or SDK input is changed.
+
+**Readiness / limits.** A hard-linked source-only union at
+`work/coordination/p1-player-shaders-source-host-v1/` adds this one final file to
+the previous manifests/fonts union. Its checker moves from 202 to 203 ready.
+The updated `p1-player-shaders-source-host-v2` union additionally retains the
+concurrent Wispgraveyard source bundle. The unchanged owner-APK checker moves
+from that union's 203 to **204 of 705** ready entries, with **501 missing**
+(379 APK, 122 payload),
+zero mismatched/invalid entries and all 18 produced code/SDK selections retained.
+The checker deliberately leaves provenance/device qualification false. This
+closes one complete host readiness entry, not all Shader48 records, shader
+appearance, original game grading or phone-only installation. ColorGrade is the
+existing authored identity grading pass. The source map partitions the 368
+standalone files into 349 native, 14 authored, one intersection and four TMP
+files; no extrapolated producer claim is made.
+
+**Validation / revisit.** Sixteen authored shader IPC/native/default/hash tests,
+seven writer tests and eight native public-LZ4 tests pass; Ruff passes. The native
+hash reference agrees across 293 authored lengths, including short/long boundary
+cases. Doctor retains the known generic Bootstrap failure while legitimate
+input/inventory/parser/project/checkpoint checks pass. Next qualify the remaining
+source families and complete mixed/built-in Shader files, then run the producer
+through the guarded phone route. Revisit on source/SDK/settings drift, a new
+variant/reflection/state contract or a phone byte mismatch. Host equality alone
+does not qualify runtime behavior or SDK redistribution.
+
+## J1146 — Produce two complete Moon preview Shaders from source
+
+2026-10-25 UTC. **Host-only complete-file extension of J1144.**
+
+**Hypothesis / source contract.** Reuse J1144's source-derived pass identity,
+compiler, native records and final-file owner for the existing authored Beacon
+and Beam preview shaders. The tracked ShaderLab declares their property defaults,
+alpha blend, depth state and SubShader tags. The same original native schema and
+SDK inputs remain the suppliers. These authored visibility previews do not claim
+original Hopoo shader appearance. Prior art and record-format boundaries remain
+J1144's pinned EditorKit/ShaderSubProgram sources, rechecked before extending the
+owner; neither implements the native importer defaults needed here.
+
+**Implementation / observed corrections.** Extend the existing constructor only
+for these measured source contracts: absent Properties, Color/Float/2D defaults,
+LEqual depth test, unindexed Blend and inherited tags. Native SDK observations
+establish that an unindexed Blend changes RT0 while the other targets retain their
+defaults; the tag registry canonicalizes Queue as QUEUE. Beam's fragment and
+vertex constant buffers expose name-table allocation: all buffer names precede
+their members. Native common-parameter deduplication marks each retained buffer
+partial, including fragment buffers. Fresh reflection supplies those identities;
+no accepted common table or target state is copied. Three synthetic contracts
+cover the newly required blend/property/multiple-buffer behavior.
+
+**Complete-file result.** Fresh `shader_produce.py` production and a separate
+read-denial guarded run both succeed for all three authored files. ColorGrade's
+J1144 output remains unchanged. The two new complete files are independently
+compared after source production, with zero differing fields or bytes:
+
+| Authored source | Complete file | Bytes | SHA-256 |
+| --- | --- | ---: | --- |
+| MoonPillarBeaconPreview | `25346ec2465c244a0b4757833c1b7ffb` | 7,948 | `786970b00e0de060112998be781ba44606e3a89cdbd7c0c4f8f93d413aad0d55` |
+| MoonPillarBeamPreview | `a64cd6eb27f5b41f0b8fd35fb109c753` | 9,092 | `f76336523735f8852eaac710efb415e81bf1bd8ba6ea14bfb132475bb4a4acfa` |
+
+Private evidence under `work/coordination/p1-player-shaders-v1/`:
+`moon-source-v2/source-result.json`, `beacon-comparison.json`,
+`beam-comparison.json`, `public-authored-three-v1/result.json` and
+`public-authored-three-guarded-v1/{result.json,source-only-guard.json}`.
+The canonical hard-linked union `p1-player-shaders-source-host-v3` retains all
+previous source files and moves the unchanged readiness checker from 204 to
+**206 of 705** ready, **499 missing** (377 APK, 122 payload), zero mismatched or
+invalid files. Code/SDK suppliers are retained. Provenance/device qualification
+fields deliberately remain false; this is three complete host Shader files.
+
+**Validation / limits.** Nineteen authored shader contracts, recipe-audit tests
+and Ruff pass. The first fresh-clone CI attempt for J1144 runs 2,120 tests and
+finds one missing recipe audit-table row; the detailed audit already exists.
+Adding the row resolves that failure. No compiler/content regression is observed.
+No APK, Unity Editor/project, phone, device lease, original installation or SDK
+input changes. J850's accepted APK remains
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+Other authored/native variants, mixed/built-in Shader files, phone production and
+runtime appearance remain open. Revisit on a source/SDK change or the first
+unsupported property/state/variant/native record; never infer other families
+from these three files.
+
+## J1147 — Reconstruct original UI Alpha and five more authored Shader files
+
+2026-10-25 UTC. **Complete host source production; phone/runtime gates open.**
+
+**Hypothesis / prior art.** Extend the existing J1144/J1146 producer to original
+UI Animate Alpha and the next source-complete authored files. Reuse the pinned
+PC shader/material selectors and original DXBC recovery/binding owners. Pinned
+EditorKit's registration-only behavior and Unity_Shader_Decompiler's native
+header/parser limitation remain J1144's prior-art boundary. The existing pinned
+public d3dasm source revision `a292206a15daf0723d945a475c6254413eda8551`
+provides fresh native-program HLSL recovery and lossless DXBC assembly validation;
+no retained HLSL, Wine fallback, target program or target parsed form is used.
+
+**Ownership / complete implementation.** The existing
+`shader_materials.ui_source` emits the same source wrapper used by its established
+`generate` action. `shader_produce.native_ui_sources` selects the original UI
+shader and two original Materials from pinned PC files, derives the two feature
+sets and uses existing `NativePrograms`/`shader_segments` directly. Generated
+ShaderLab, DXBC, HLSL and compiler files belong to the new output directory.
+A caller supplies an explicit separately built public d3dasm tool and hash;
+original inputs/tool/source pins are rechecked after completion. The original
+UI property/render state comes from the legitimate PC schema/body; Android
+programs, pass identities and variant/common tables are independently generated.
+These two files each contain one Shader48, not Menu/Hud prefabs or native Canvas
+objects; those remain with their existing owners.
+
+Native reflection is intersected across variants to derive common parameters.
+Variant-specific buffers retain constants/bindings in native parameter records;
+parameters precede executable records, with independent deduplication. Native
+keyword strings sort separately from the source keyword registry. Four local
+clip/alpha variants and both original material feature selections are retained.
+Fresh original-program generation reproduces the accepted wrapper source; no
+captured source or final record is promoted into a provider.
+
+The authored extension adds only measured source property/default/depth/cull/tag
+contracts, property-bound state and the named GrabPass. SDK observations identify
+normal-property flag 8 and canonical tag registration, including IgnoreProjector
+and true. All 33 compiler capability keyword names are read from the pinned SDK;
+its capability-to-compiler flag moves select compilation operands. Preprocessing
+keeps the separately verified mobile-only import keywords. The SDK's native tier
+field transfer resolves inverse cascaded-shadow bit 8 and detail-normal bit 16;
+the accepted settings keep both fields zero, so earlier complete files remain
+unchanged. No appearance tuning or target-byte patch is introduced.
+
+**Complete files.** Fresh strict guarded public production emits ten complete
+files, 103,416 B, including the three already qualified in J1144/J1146. A separate
+comparison after production verifies every byte of all ten against J850. The seven
+additional complete files are:
+
+| Source | Complete file | Bytes | SHA-256 |
+| --- | --- | ---: | --- |
+| Original UI Alpha, first feature set | `0ad6e8aee52b6441b97187951fa9730a` | 13,400 | `cfad12e2bba9da9f6ece5e43b4bf39748a5375515cfdcde728d624fb7604c012` |
+| Original UI Alpha, second feature set | `111aa310821d74e19a9c4144bf25f8af` | 13,980 | `7034cbc74c336284bd30905a665f922c25bf655cb2a695ebe44aeacc556910b9` |
+| CommandoMaterialPreview | `95401c496311c41d88e5c3f490444838` | 9,204 | `8335f254b871a55076598b989f5f81cbf22ad7b064fe7067875dbdb108978487` |
+| CommandoPreview | `2b3b24a29a5564b38a4640b20012bc4f` | 8,360 | `3c15880d72302c617e39aec9cc74eef3c3325e2989fff74e3ce585e7f4e0c950` |
+| StageSurfacePreview | `a855c2ac6b11443848e0414d94271fd6` | 9,124 | `b815dbcbb94ab9f6ed15687a6bf7da5167bbdf8c88f7c74d0e8219d54ce0697c` |
+| StageTerrainPreview | `f841c3cf2a0cb4036aef85eae3b43fae` | 11,076 | `13107297647e7b630807566ad90f7a36caa66df719f28a2b8e6ce2cf203d5916` |
+| AndroidDistortionPresentation | `2a429ea9e4edb4e15a2756ca05616eee` | 13,448 | `172cc9863b7e432ffe9a17994697ade22e7f6cb88057c89bf711ba34dd5550ff` |
+
+Evidence under `work/coordination/p1-player-shaders-v1/`:
+`family6-public-report.md`, `family6-v1/form-v3/comparison.json`,
+`public-nine-v1/{result.json,comparison-only.json}`,
+`cohort-source-distortion-v3/`, and
+`public-ten-guarded-v1/{result.json,source-only-guard.json,comparison-only.json}`.
+The strict read guard denies every other ignored-work input except the new
+output and explicit public codec/decompiler tool trees, plus the entire accepted
+oracle work root. No accepted/template/retained-source input is available to the
+producer. Canonical union `work/coordination/p1-player-shaders-source-host-v4/`
+retains the prior source tree and advances the unchanged checker from 206 to
+**213 of 705** ready: **492 missing** (370 APK, 122 payload), zero mismatched or
+invalid entries. The revised `p1-player-shaders-source-host-v5` union additionally retains the
+concurrent J1145 scene outputs, advancing their 207-entry tree to **216 of 705**
+ready with **489 missing** (370 APK, 119 payload) and no invalid/mismatched files.
+The independent code/SDK selections stay unchanged; the checker keeps
+source-provenance/device qualification fields false.
+
+**Validation / remaining gates.** Twenty-five owner Shader contracts, 119 existing
+shader tests and Ruff pass. Source/native/compiler failures and fixes remain in
+the private reports: missing variant-local parameter bodies/keyword headers,
+source tag order/canonicalization and omitted normal-decoding capability keywords
+are corrected from source/SDK mechanisms. No target header, HLSL, state literal
+or pass hash is substituted. Reviewer returns GO for code/source boundaries;
+the fresh rebased run `public-ten-rebased-guarded-v1` also reproduces all ten
+files after reviewing the landed metadata-owner extraction and refreshing its
+source pins. This reuses the shared shader selection owner without changing
+program math or output. Full fresh-clone CI publication follows. No APK,
+Editor/project, device lease or
+phone run occurs; J850's accepted APK remains
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+The other native/authored shader families, mixed/built-in files and guarded phone
+producer qualification remain open. Revisit on a concrete source/variant/native
+record change or failed independent comparison; full-file host equality does not
+establish PC shader appearance or complete phone-only installation.
+
+## J1151 — Reconstruct 125 complete Shader files from original and authored source
+
+**Hypothesis / prior art.** The complete original Cloud family can use the same
+source-derived compiler/native-form owner as J1147, with shared qualified
+material selection rather than accepted program/form templates. AssetRipper,
+UABEA and uTinyRipper shader readers in `docs/community-prior-art.md` identify
+the source/native record and compressed program relationships; current original
+PC objects and standalone SDK observations decide the actual Android encoding.
+
+**Change.** Extend the existing public `shader_produce.py` and audited
+`owner-player-shaders.json`, without a new command, provider framework or runtime
+owner. The shared `shader_metadata.material_selection` policy selects the 113
+original Cloud feature sets from qualified original material relationships.
+`shader_materials.cloud_source` factors the existing source emitter without
+changing its generated ShaderLab. The caller supplies the pinned public MIT
+d3dasm tool; NativePrograms regenerates source from original DXBC and refuses
+retained HLSL or independent executable fallback. Ten authored passes now include
+Particle and Water. Their source registers fog keywords, while the fresh
+LabBuild empty-scene configuration retains only the no-fog program.
+
+SDK reflection determines common parameter intersection, vector-before-matrix
+constant ordering, separate native keyword sorting and linked-stage ownership.
+Source declarations determine global/local axes, cube defaults and stencil
+state. The first guarded run exposed an inline Blend parser consuming following
+Cull/ZTest commands; the parser now consumes exactly the two unindexed Blend
+operands, with an authored regression fixture. No target fields fixed this
+source-syntax failure.
+
+**Result / evidence.** A fresh strict guarded public run produces **125 complete
+files, 1,732,576 B**, in 112.93 seconds: 113 original Cloud, two original UI Alpha
+and ten authored shaders. All 125 independently compare raw-exact to J850 after
+production; the ten previous complete files remain unchanged. The guard denies
+the accepted oracle and every other ignored-work packet except the new output
+and explicit public tool trees. Profile SHA-256:
+`f66af6f9ac8442e8399cc12eb6bc35df13136d401391c48e46ee2d69058e3fbb`.
+Evidence under `work/coordination/p1-player-shaders-v1/`:
+`public-cloud125-integration-report.md`, the preserved
+`public-cloud125-guarded-v1/` failure and
+`public-cloud125-guarded-v2/{result.json,source-only-guard.json,comparison-only.json}`.
+Canonical `work/coordination/p1-player-shaders-source-host-v6/` hardlinks the
+latest concurrent 218-entry source tree plus these newly produced files.
+The unchanged final-file checker advances to **333 of 705 ready**, **372 missing**
+(**255 APK, 117 payload**), zero invalid/mismatched entries. Its source-provenance
+and device-qualified fields remain false; content availability alone does not
+qualify the full installation pipeline.
+
+**Validation / remaining gates.** Independent review returns GO after checking
+all persisted output identities, input pins and read-guard evidence. Thirty-one
+owner shader contracts and 126 existing shader tests pass; Ruff passes. Only
+authored tooling and audited selectors/hashes are public; generated source,
+programs, native bodies and raw evidence stay ignored. No Editor/project, APK
+build, device lease or run occurs. The accepted J850 APK remains
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+Remaining native/authored/font cohorts, built-in/mixed files and ordinary-app
+source production remain separate gates. Revisit on source/variant/native-form
+changes or an independent comparison failure; host equality establishes neither
+PC appearance nor complete phone-only installation.

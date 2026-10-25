@@ -78,7 +78,7 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       produced payload cohort to fifteen complete bundles. The shared source
       tree also retains J1144's separately qualified ColorGrade file; its
       publication and phone gates remain separate. The fixed-target readiness
-      check now has 498 missing content entries; all 18 code/SDK
+      check now has 372 missing content entries; all 18 code/SDK
       entries are available. Phone replay, the
       remaining bundles/player data and complete source-derived installation
       remain open; the structural writer produces no missing content itself.
@@ -88,7 +88,10 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       owner delivery remain open; game execution remains native IL2CPP ARM64.
       [J1094](PORTING_JOURNAL.md#j1094--qualify-exact-sdk-vulkan-shader-compilation-on-android)
       qualifies exact host/phone authored Vulkan shader-tool output. Original
-      shader recovery, variants, serialization and app integration remain open.
+      shader recovery, variants and app integration remain open. J1144/J1146/J1147/J1151 add 125
+      complete source-derived host Shader files through the standalone compiler
+      and existing writer; the source-only final-file union reaches 333 of 705
+      entries. Remaining shader families and phone serialization are still open.
       [J1102](PORTING_JOURNAL.md#j1102--qualify-linked-vulkan-fragment-output-and-explicit-owner-apk-code-inputs)
       confirms both executable stages in that linked payload and accepts all
       three produced code outputs in the existing APK owner without replay

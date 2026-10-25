@@ -65,6 +65,7 @@ class Connection:
         self.send_string(json.dumps({}))
         available = self.number(32)
         capabilities = [(self.number(64), self.number(32)) for _ in range(25)]
+        self.capabilities = capabilities
         if not available & (1 << 18):
             raise ValueError("acquired SDK compiler does not support Vulkan")
         return capabilities
@@ -107,6 +108,67 @@ class Connection:
                 diagnostics.append({"location": message, "file": self.string(), "message": self.string()})
             else:
                 reflection.append(message)
+
+    def preprocess(self, source, filename, *, platform_keywords=(), disabled_keywords=(), caching_preprocessor=False):
+        """Preprocess complete ShaderLab for Android Vulkan without an Editor.
+
+        Preserve snippet identifiers/include hashes, generated source, keyword
+        requirements and include dependencies. The include hash is not the
+        serialized pass's editor-data hash. Session teardown belongs to compiler.
+        """
+        filename = Path(filename)
+        self.send_string("c:preprocess")
+        for value in (source, str(filename.parent), filename.name):
+            self.send_string(value)
+        for value in (0, int(caching_preprocessor), 13, 1 << 18):  # full shader, preprocessing mode, Android, Vulkan
+            self.send_number(value)
+        for group in (platform_keywords, disabled_keywords):
+            self.send_number(len(group))
+            for keyword in group:
+                self.send_string(keyword)
+        snippets, records, diagnostics = [], [], []
+        while True:
+            message = self.string()
+            kind, _, fields = message.partition(":")
+            if kind == "shader":
+                status = list(map(int, fields.split()))
+                return {
+                    "success": bool(status) and status[0] == 1,
+                    "status": status,
+                    "shaderlab": self.string(),
+                    "snippets": snippets,
+                    "records": records,
+                    "diagnostics": diagnostics,
+                }
+            if kind == "snip":
+                values = list(map(int, fields.split()))
+                if len(values) != 13:
+                    raise ValueError("shader snippet metadata differs from the qualified SDK")
+                snippets.append({"fields": values, "source": self.string()})
+            elif kind == "err":
+                diagnostics.append({"location": message, "file": self.string(), "message": self.string()})
+            elif kind in ("includes", "filepaths", "keywordsUserGlobal", "keywordsUserLocal", "keywordsBuiltin"):
+                metadata = list(map(int, fields.split()))
+                count = metadata[-1]
+                if count < 0:
+                    raise ValueError("negative shader preprocessing record count")
+                records.append({"kind": kind, "fields": metadata[:-1], "values": [self.string() for _ in range(count)]})
+            elif kind == "keywordsEnd":
+                keywords, always_included = self.string(), self.string()
+                requirements = self.number(64)
+                overrides = [{"keyword": self.string(), "requirements": self.number(64)} for _ in range(self.number(32))]
+                records.append(
+                    {
+                        "kind": kind,
+                        "fields": list(map(int, fields.split())),
+                        "keywords": keywords,
+                        "always_included": always_included,
+                        "requirements": requirements,
+                        "overrides": overrides,
+                    }
+                )
+            else:
+                raise ValueError("unknown shader preprocessing response: " + message)
 
 
 @contextmanager

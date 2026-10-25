@@ -261,14 +261,15 @@ class Codec:
     def __call__(self, data, method):
         if method == 0:
             return data
-        if method not in (2, 3) or not 0 < len(data) <= B.LIMIT:
+        # Worker method 9 selects HC9 shader segments; UnityFS flags stay 2/3.
+        if method not in (2, 3, 9) or not 0 < len(data) <= B.LIMIT:
             raise ValueError("unqualified compression request")
         self.transfer(self.child.stdin, struct.pack("<II", len(data), method) + data)
         (size,) = struct.unpack("<I", self.transfer(self.child.stdout, size=4))
         if not 0 < size <= len(data) + len(data) // 255 + 16:
             raise ValueError("invalid bundle codec output size")
         encoded = self.transfer(self.child.stdout, size=size)
-        if B.decompress(encoded, len(data), method) != data:
+        if B.decompress(encoded, len(data), 3 if method == 9 else method) != data:
             raise ValueError("bundle codec roundtrip differs")
         return encoded
 

@@ -48,6 +48,68 @@ def align_exported_subshader_tags(path, tree, evidence):
     }
 
 
+def ui_source(context, keys, resource, emitter):
+    """Emit one existing UI Alpha wrapper from original PC metadata/programs.
+
+    Callers own original selectors and source checks. The emitter binds freshly
+    recovered native programs; no retained ShaderLab or HLSL is an input here.
+    """
+    tree = context[0]
+    sub = tree["m_ParsedForm"]["m_SubShaders"][0]
+    shader_pass = sub["m_Passes"][0]
+    pairs = []
+    for clip in [False, True]:
+        for alpha in [False, True]:
+            engine = ({"UNITY_UI_CLIP_RECT"} if clip else set()) | ({"UNITY_UI_ALPHACLIP"} if alpha else set())
+            vertex, fragment = emitter.pair(context, 0, set(keys) | engine)
+            condition = ("" if clip else "!") + "defined(UNITY_UI_CLIP_RECT) && " + ("" if alpha else "!") + "defined(UNITY_UI_ALPHACLIP)"
+            pairs.append((condition, vertex, fragment))
+    return (
+        '// Private native candidate; PC draw/semantic parity unverified.\nShader "Porting Lab/'
+        + resource
+        + '" {\nProperties {\n'
+        + properties(tree)
+        + "\n}\nSubShader {\n"
+        + tags(sub["m_Tags"]["tags"])
+        + "Pass {Name "
+        + json.dumps(shader_pass["m_State"]["m_Name"])
+        + " "
+        + tags(shader_pass["m_State"]["m_Tags"]["tags"])
+        + render_state(shader_pass["m_State"], ui=True)
+        + emitter.block(context, pairs, "#pragma multi_compile_local __ UNITY_UI_CLIP_RECT\n#pragma multi_compile_local __ UNITY_UI_ALPHACLIP\n")
+        + "}\n}}\n"
+    )
+
+
+def cloud_source(context, keys, resource, emitter):
+    """Emit the existing Cloud wrapper from original metadata and fresh programs."""
+    tree = context[0]
+    sub = tree["m_ParsedForm"]["m_SubShaders"][0]
+    shader_pass = sub["m_Passes"][0]
+    pairs = []
+    for sh in [False, True]:
+        for soft in [False, True]:
+            engine = {"DIRECTIONAL"} | ({"LIGHTPROBE_SH"} if sh else set()) | ({"SOFTPARTICLES_ON"} if soft else set())
+            vertex, fragment = emitter.pair(context, 0, set(keys) | engine)
+            condition = ("" if sh else "!") + "defined(LIGHTPROBE_SH) && " + ("" if soft else "!") + "defined(SOFTPARTICLES_ON)"
+            pairs.append((condition, vertex, fragment))
+    return (
+        '// Private native candidate; PC draw/semantic parity unverified.\nShader "Porting Lab/'
+        + resource
+        + '" {\nProperties {\n'
+        + properties(tree)
+        + "\n}\nSubShader {\n"
+        + tags(sub["m_Tags"]["tags"])
+        + "Pass {Name "
+        + json.dumps(shader_pass["m_State"]["m_Name"])
+        + " "
+        + tags(shader_pass["m_State"]["m_Tags"]["tags"])
+        + render_state(shader_pass["m_State"])
+        + emitter.block(context, pairs, "#pragma multi_compile __ LIGHTPROBE_SH\n#pragma multi_compile_particles\n")
+        + "}\n}}\n"
+    )
+
+
 def generate(output=None, resources=None, work=WORK, root=ROOT, independent=None, selection=None):
     """Generate into private work by default, or an isolated caller-owned output without updating pointers."""
     WORK, ROOT = Path(work).resolve(), Path(root).resolve()
@@ -110,6 +172,11 @@ def generate(output=None, resources=None, work=WORK, root=ROOT, independent=None
                     resource = "AndroidNativeFamily" + str(ordinal) + "Variant" + str(i)
                     if resources is not None and resource not in resources:
                         continue
+                    if ui or name == "cloud":
+                        text = (ui_source if ui else cloud_source)(context, keys, resource, emitter)
+                        (sources / (resource + ".shader")).write_text(text)
+                        variants.append({"resource": resource, "keywords": list(keys)})
+                        continue
                     text = (
                         '// Private native candidate; PC draw/semantic parity unverified.\nShader "Porting Lab/'
                         + resource
@@ -171,27 +238,7 @@ def generate(output=None, resources=None, work=WORK, root=ROOT, independent=None
                         + tags(passes[first_pass]["m_State"]["m_Tags"]["tags"])
                         + render_state(passes[first_pass]["m_State"], ui=ui)
                     )
-                    if ui:
-                        pairs = []
-                        for clip in [False, True]:
-                            for alpha in [False, True]:
-                                engine = ({"UNITY_UI_CLIP_RECT"} if clip else set()) | ({"UNITY_UI_ALPHACLIP"} if alpha else set())
-                                vi, fi = emitter.pair(context, 0, set(keys) | engine)
-                                condition = ("" if clip else "!") + "defined(UNITY_UI_CLIP_RECT) && " + ("" if alpha else "!") + "defined(UNITY_UI_ALPHACLIP)"
-                                pairs.append((condition, vi, fi))
-                        text += emitter.block(
-                            context, pairs, "#pragma multi_compile_local __ UNITY_UI_CLIP_RECT\n#pragma multi_compile_local __ UNITY_UI_ALPHACLIP\n"
-                        )
-                    elif name == "cloud":
-                        pairs = []
-                        for sh in [False, True]:
-                            for soft in [False, True]:
-                                engine = {"DIRECTIONAL"} | ({"LIGHTPROBE_SH"} if sh else set()) | ({"SOFTPARTICLES_ON"} if soft else set())
-                                vi, fi = emitter.pair(context, 0, set(keys) | engine)
-                                condition = ("" if sh else "!") + "defined(LIGHTPROBE_SH) && " + ("" if soft else "!") + "defined(SOFTPARTICLES_ON)"
-                                pairs.append((condition, vi, fi))
-                        text += emitter.block(context, pairs, "#pragma multi_compile __ LIGHTPROBE_SH\n#pragma multi_compile_particles\n")
-                    elif name == "distortion":
+                    if name == "distortion":
                         pairs = []
                         for soft in [False, True]:
                             vi, fi = emitter.pair(context, first_pass, set(keys) | ({"SOFTPARTICLES_ON"} if soft else set()))

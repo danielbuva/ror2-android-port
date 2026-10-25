@@ -1037,3 +1037,39 @@ policies preserve original record data outside the measured changes. The
 Solusweb extra preload verifies membership in original PC metadata before using
 its mapped GameObject identity. Setup and output lifecycle are unchanged;
 J1145 owns the host result, with phone/runtime acceptance open.
+
+
+## Source-derived player shaders
+
+Current bounded owner: `shader_produce.py`. It reconstructs 125 complete Shader files: ten authored,
+113 original Cloud and two original UI Alpha files from public/original source, one original PC native schema and
+the exact acquired macOS ARM64 SDK. The SDK Editor executable supplies pinned
+metadata only; the standalone shader compiler executes without an Editor/project.
+The original Cloud/UI paths regenerate HLSL from the selected original programs via
+the existing native recovery/binder, with an explicit separately built public
+d3dasm tool. No retained HLSL is consumed. Other shader families and phone
+execution remain unqualified (J1144/J1146/J1147/J1151).
+
+Build the existing public LZ4 worker with `build_bundle_lz4.py`; its worker method
+9 selects shader HC9 while UnityFS methods 2/3 stay fast/HC12. Then run:
+
+```sh
+python3 tools/phone-build/accepted-output/shader_produce.py \
+  --profile recipe/owner-player-shaders.json --profile-sha256 PROFILE_SHA256 \
+  --pc ORIGINAL_INSTALL --sdk UNITY_APP_CONTENTS \
+  --codec PUBLIC_LZ4_WORKER --codec-sha256 WORKER_SHA256 \
+  --d3dasm PUBLIC_D3DASM_TOOL --d3dasm-sha256 TOOL_SHA256 \
+  --output NEW_PRIVATE_DIRECTORY
+```
+
+All paths are explicit. Setup verifies original, authored, SDK, include-inventory
+and codec pins; output must be new and disjoint from original/SDK inputs. Source
+settings select cached preprocessing; its include hash is distinct from an
+uncached request even when the generated source is identical. The producer derives
+pass identity from source/SDK inputs and constructs every object field before
+checking its final comparison hash. Output uses the assembler's existing
+`apk/assets/bin/Data/` tree, with a terminal `result.json`. Inputs and files are
+checked again after completion. Errors retain private output and failure details;
+compiler/socket/codec children close through existing context owners. No target
+packet or previous run directory supplies content. Full phone assembly, runtime
+appearance and SDK distribution rights remain separate gates.
