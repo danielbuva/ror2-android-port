@@ -3051,3 +3051,12 @@ physics and legitimate input remain unchanged. No new private build input,
 source implementation, original asset bytes or runtime export is tracked; the
 existing world-owner source pin is refreshed for the reviewed authored change.
 Host and editor contracts remain separate from Android route acceptance.
+
+
+The destination MainOutput candidate adds only an explicit per-run arm gate and
+owned scalar witnesses in the existing session, plus its public diagnostic
+runner/tests. It reuses the accepted one-shot capture and original authority
+callback without changing native audio ownership, bank data, event routing or
+provider generation. It adds no build input, SDK payload or original bytes to
+the repository. Existing first-stage defaults remain unchanged; original audio
+playback and destination statistics require separate device evidence.

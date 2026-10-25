@@ -111,6 +111,7 @@ authentication is needed to inspect the supplied installation.
 | `./dev doctor [--json]` | Toolchain, inventory and dependency-pin health. |
 | `./dev preflight [--device SERIAL] [--host-only]` | Current: host/input gates plus selected-device storage; `--host-only` omits device access. |
 | `./dev check-baseline` | The standard device check on the installed APK: 35 s of assisted Lakes play, no report error, profile run count unchanged ([docs/BASELINE.md](BASELINE.md)). |
+| `./dev check-baseline --stage-exit --capture-in-destination` | Current audio diagnostic: require a finite, nonzero MainOutput window after a native skill in the verified next stage; fresh process/skill-deferred MainOutput build required, at most 30 s there. Original audio lifecycle is unchanged. |
 | `./dev editor --target lab --action open` | Start the isolated exact editor and connect the pinned Unity MCP. One editor mutation at a time. |
 | `./dev editor --target lab --action lightning-stake-host` | Current: verify the original stake prefab and all 528 imported collision-layer pairs against the accepted local input; no live impact or NaN-fix acceptance. |
 | `./dev editor --target lab --action siren-input-host` | Current: run the staged source-asset and range-aware Siren input fixture in the idle exact editor; no game/server or encounter acceptance. |

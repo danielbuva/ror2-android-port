@@ -4166,3 +4166,27 @@ production admission in `test_world_mobility_landing.py`; the current
 `siren-input-host` fixture checks imported original configuration, actual Unity
 vector math and source immutability without gameplay/network startup. This
 candidate follows J1105's route stall; device recovery is not yet qualified.
+
+
+## Destination-stage MainOutput observation
+
+Current `check-baseline --stage-exit --capture-in-destination` uses the existing
+`PortSession` activity policy and `SurvivorSkillObserver` authority callback. The
+explicit per-run request defers its one process-lifetime MainOutput window until
+one verified native transition, completed transport, matching live scene and
+positive destination-stage time. It requires the existing skill-deferred
+MainOutput build selection. Early callbacks do not claim the policy; a capture
+window already used by an earlier session is refused. Native Wwise capture,
+service, callbacks, banks, listener routing and Term ownership are unchanged.
+
+`PortSession` clears caller-supplied arm witnesses at selection loading and
+records the scene, transition count and world time only after accepted arm.
+Cleanup closes the existing activity policy before retained callbacks can run.
+The baseline owner requires those witnesses, a completed finite/nonzero window
+and strict existing current-process error classification, including during
+first-stage play. It preserves the earliest runtime error through later log
+turnover, then performs existing owned cleanup/OLED sleep. The destination limit
+is 30 s; the ordinary 10-second stage check and first-stage defaults are unchanged.
+Host tests execute the real session methods with the existing core policy and
+verify driver cleanup on a synthetic native NaN. Device audio attribution, full
+mix and audibility remain separate gates.

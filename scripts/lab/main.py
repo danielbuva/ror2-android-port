@@ -132,6 +132,11 @@ p.add_argument(
 )
 p.add_argument("--debug-options", help="Ignored local JSON for one integrated run; all acceleration defaults off")
 p.add_argument("--stage-exit", action="store_true", help="Current: check-baseline through one original stage exit and 10 s of next-stage play")
+p.add_argument(
+    "--capture-in-destination",
+    action="store_true",
+    help="Current diagnostic: defer MainOutput capture to a destination-stage skill; requires --stage-exit, waits at most 30 s there",
+)
 p.add_argument("--compare", nargs=2, metavar=("A", "B"), help="Current: compare two project-manifest receipts")
 a = p.parse_args()
 from device_context import set_command_selector
@@ -200,6 +205,8 @@ if a.dest and not (is_destination_preflight or is_rebuild or is_owner_assemblies
     p.error("--dest requires rebuild-step, owner-assembly-prefix or isolated preflight")
 if a.stage_exit and a.command != "check-baseline":
     p.error("--stage-exit requires check-baseline")
+if a.capture_in_destination and (a.command != "check-baseline" or not a.stage_exit):
+    p.error("--capture-in-destination requires check-baseline --stage-exit")
 if a.sessions is not None and (a.command != "prototype" or a.action not in {"session-memory-check", "session-memory-root-check"}):
     p.error("--sessions requires prototype --action session-memory-check or session-memory-root-check")
 if a.memory_snapshots and (a.command != "prototype" or a.action != "session-memory-check"):
@@ -281,7 +288,7 @@ try:
     elif a.command == "check-baseline":
         from baseline import check_baseline
 
-        result = check_baseline(stage_exit=a.stage_exit)
+        result = check_baseline(stage_exit=a.stage_exit, capture_in_destination=a.capture_in_destination)
         print(json.dumps(result, indent=2))
         if not result["success"]:
             sys.exit(1)

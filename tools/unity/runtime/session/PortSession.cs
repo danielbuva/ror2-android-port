@@ -242,6 +242,10 @@ public sealed partial class PortSession : MonoBehaviour
         public bool passivePcmCaptureRequested, passivePcmGameplayArmRequested;
         public bool passivePcmCaptureAfterAuthoritySkillRequested;
         public bool passivePcmPlayableWorldObserved, passivePcmAuthoritySkillObserved;
+        public bool passivePcmCaptureInDestinationRequested, passivePcmCaptureInDestinationObserved;
+        public string passivePcmArmStageScene;
+        public int passivePcmArmStageTransitions;
+        public float passivePcmArmWorldSeconds;
         // Snapshot contains only bounded primitive values; no Unity objects.
         public OriginalEquipmentHighlightAssetsReport originalEquipmentHighlightAssets;
         public PortSessionOriginalAudioOwner.Snapshot originalAudio;
@@ -513,6 +517,11 @@ public sealed partial class PortSession : MonoBehaviour
         // Do not cache the default false values as this session's selection.
         if (!GameAudioOriginalRequestBootstrap.IsConfigured)
             return null;
+        if (r.passivePcmCaptureInDestinationRequested &&
+            (!PortSessionOriginalAudioOwner.PassivePcmCaptureRequested ||
+             !PortSessionOriginalAudioOwner.PassivePcmCaptureAfterAuthoritySkillRequested ||
+             GameAudioOriginalRequestBootstrap.PassivePcmCaptureMusicOutputRequested))
+            throw new InvalidOperationException("Destination PCM observation requires skill-deferred MainOutput capture.");
         if (passivePcmActivityArmPolicy == null)
             passivePcmActivityArmPolicy = new GameAudioOriginalPassivePcmActivityArmPolicy(
                 PortSessionOriginalAudioOwner.PassivePcmCaptureRequested,
@@ -521,12 +530,36 @@ public sealed partial class PortSession : MonoBehaviour
         return passivePcmActivityArmPolicy;
     }
 
+    bool PassivePcmDestinationReady()
+    {
+        if (!r.passivePcmCaptureInDestinationRequested)
+            return true;
+        var progress = r.stageProgress;
+        return progress != null && progress.transitions == 1 && !progress.transporting && progress.activeSceneVerified &&
+               r.stage != null && !string.IsNullOrEmpty(r.stage.scene) && r.stage.scene == progress.current &&
+               !float.IsNaN(progress.enteredAt) && !float.IsInfinity(progress.enteredAt) && progress.enteredAt >= 0 &&
+               r.world != null && r.world.seconds > progress.enteredAt;
+    }
+
     void RequestPassivePcmGameplayArm()
     {
         passivePcmGameplayArmBoundaryAttempted = true;
+        if (r.passivePcmCaptureInDestinationRequested && PortSessionOriginalAudioOwner.PassivePcmGameplayArmRequested)
+        {
+            RecordPrimarySessionFailure(r, new InvalidOperationException(
+                "Destination PCM observation requires an unused process-lifetime capture window."));
+            return;
+        }
         if (!PortSessionOriginalAudioOwner.ArmPassivePcmCaptureAtGameplayBoundary(true))
             RecordPrimarySessionFailure(r, new InvalidOperationException(
                 "Passive PCM capture arm was refused at the selected playable-world activity boundary."));
+        else if (r.passivePcmCaptureInDestinationRequested)
+        {
+            r.passivePcmCaptureInDestinationObserved = true;
+            r.passivePcmArmStageScene = r.stage != null ? r.stage.scene : null;
+            r.passivePcmArmStageTransitions = r.stageProgress != null ? r.stageProgress.transitions : 0;
+            r.passivePcmArmWorldSeconds = r.world != null ? r.world.seconds : 0;
+        }
     }
 
     // Called only by the existing local player's recognized authority-skill callback.
@@ -544,7 +577,7 @@ public sealed partial class PortSession : MonoBehaviour
         if (policy == null) return;
         bool validWorld = r.world != null && GameAudioOriginalPassivePcmGameplayGate.ShouldRequestArm(
             PortSessionOriginalAudioOwner.PassivePcmCaptureRequested,
-            passivePcmGameplayArmBoundaryAttempted, r.integratedWorld, r.phase, r.world.seconds);
+            passivePcmGameplayArmBoundaryAttempted, r.integratedWorld, r.phase, r.world.seconds) && PassivePcmDestinationReady();
         if (!policy.ObserveAuthoritySkill(true, validWorld))
             return;
         r.passivePcmPlayableWorldObserved = true;
@@ -563,7 +596,7 @@ public sealed partial class PortSession : MonoBehaviour
             bool playableWorldObserved = r.world != null &&
                 GameAudioOriginalPassivePcmGameplayGate.ShouldRequestArm(
                     PortSessionOriginalAudioOwner.PassivePcmCaptureRequested,
-                    passivePcmGameplayArmBoundaryAttempted, r.integratedWorld, r.phase, r.world.seconds);
+                    passivePcmGameplayArmBoundaryAttempted, r.integratedWorld, r.phase, r.world.seconds) && PassivePcmDestinationReady();
             var activityPolicy = GetPassivePcmActivityArmPolicy();
             if (playableWorldObserved)
             {
@@ -661,6 +694,12 @@ public sealed partial class PortSession : MonoBehaviour
             r = JsonUtility.FromJson<SessionReport>(selectionJson);
             if (r.attempt != config.attempt)
                 yield break;
+            // The selector requests observation; only a successful native arm owns
+            // these witnesses. Never accept caller-supplied destination evidence.
+            r.passivePcmCaptureInDestinationObserved = false;
+            r.passivePcmArmStageScene = null;
+            r.passivePcmArmStageTransitions = 0;
+            r.passivePcmArmWorldSeconds = 0;
             var pointSoundRouteRefusal = PointSoundDiagnosticObserver.RouteRefusal(
                 r.pointSoundDiagnosticRequested, config.integratedWorld);
             if (pointSoundRouteRefusal != null)
