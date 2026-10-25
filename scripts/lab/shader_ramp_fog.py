@@ -83,7 +83,7 @@ def validate_tree(tree: dict, blob: bytes, records: list[dict], programs: dict[i
         for key, value in expected.items():
             if actual.get(key) != value:
                 raise RuntimeError(f"Native record {expected['index']} {key} drift")
-    if set(programs) != {1, 2}:
+    if set(programs) != {row["index"] for row in source["records"] if row["kind"] == "program"}:
         raise RuntimeError("Expected the exact vertex/fragment program indices")
 
 
@@ -409,14 +409,23 @@ def _publish_staging(staging: Path, destination: Path, bundle: Path, initial_has
 def generate(work: Path = WORK, root: Path = ROOT, *, target: str = "ramp-fog") -> dict:
     work = Path(work).resolve()
     root = Path(root).resolve()
-    if target not in {"ramp-fog", "screen-damage"}:
+    target = target or "ramp-fog"
+    if target not in {"ramp-fog", "screen-damage", "sobel-buffer", "sobel-outline"}:
         raise RuntimeError("Unsupported native post-process target")
     recipe_path = root / "recipe" / f"shader-{target}-candidate.json"
     recipe = json.loads(recipe_path.read_text(encoding="utf-8"))
     if recipe.get("target") != target:
         raise RuntimeError("Native post-process recipe target differs")
     source = recipe["source"]
-    shader_relative = "sources/" + {"ramp-fog": "RampFogCandidate.shader", "screen-damage": "ScreenDamageCandidate.shader"}[target]
+    shader_relative = (
+        "sources/"
+        + {
+            "ramp-fog": "RampFogCandidate.shader",
+            "screen-damage": "ScreenDamageCandidate.shader",
+            "sobel-buffer": "SobelBufferCandidate.shader",
+            "sobel-outline": "SobelOutlineCandidate.shader",
+        }[target]
+    )
     destination = output_path(work, source["input_id"], recipe=recipe)
     if destination.exists() or destination.is_symlink():
         raise RuntimeError(f"Stable candidate already exists; refusing overwrite: {destination}")
@@ -440,7 +449,10 @@ def generate(work: Path = WORK, root: Path = ROOT, *, target: str = "ramp-fog") 
         recovered_sources: dict[int, str] = {}
         layouts: dict[int, dict] = {}
         signature_tables: dict[int, dict[str, list[tuple[str, int, str]]]] = {}
-        for index in (1, 2):
+        stage_indices = {rec["stage"]: rec["index"] for rec in records if rec["kind"] == "program"}
+        if set(stage_indices) != {"progVertex", "progFragment"}:
+            raise RuntimeError("Expected one native vertex and fragment program")
+        for index in (stage_indices["progVertex"], stage_indices["progFragment"]):
             rec = records[index]
             program = programs[index]
             dxbc = staging / f"program-{index}.dxbc"
@@ -495,7 +507,15 @@ def generate(work: Path = WORK, root: Path = ROOT, *, target: str = "ramp-fog") 
         parsed = tree["m_ParsedForm"]
         state = parsed["m_SubShaders"][0]["m_Passes"][0]["m_State"]
         (staging / "serialized-pass-state.json").write_text(json.dumps(state, sort_keys=True, indent=2) + "\n", encoding="utf-8")
-        shader_source = _shaderlab_candidate(tree, recovered_sources, layouts, signature_tables)
+        # Binding slots identify stages; serialized record indices may include
+        # a separate fragment parameter record (the original SobelBuffer).
+        slots = {1: stage_indices["progVertex"], 2: stage_indices["progFragment"]}
+        shader_source = _shaderlab_candidate(
+            tree,
+            {slot: recovered_sources[index] for slot, index in slots.items()},
+            {slot: layouts[index] for slot, index in slots.items()},
+            {slot: signature_tables[index] for slot, index in slots.items()},
+        )
         sources_dir = staging / "sources"
         sources_dir.mkdir()
         shader_path = staging / shader_relative

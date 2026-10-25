@@ -41607,10 +41607,11 @@ readiness receipt. Checker publication remains with that owner.
 
 **Readiness, failures and checks.** The exact source union
 `work/coordination/p1-payload-wisp-source-host-v1` preserves J1151's 125 Shader
-files and all prior content: **334/705 exact**, **371 missing (255 APK /
-116 payload)**, zero invalid/mismatched entries. This is eighteen complete source
+files and all prior content: **334/705 ready** (332 raw-exact entries and two
+code entries requiring comparison), **371 missing (255 APK / 116 payload)**,
+zero invalid/mismatched entries. This is eighteen complete source
 payload bundles. The separate developing-checker union
-`p1-payload-wisp-windows-source-host-v1` has **334 exact + 1 drift-explained**,
+`p1-payload-wisp-windows-source-host-v1` has **334 ready + 1 drift-explained**,
 **370 missing (255 APK / 115 payload)**. It does not silently count drift as exact
 or qualify the two separate player-file drift cases. No partial catalog is emitted.
 
@@ -42205,7 +42206,6 @@ adbd behavior nor identifies the actual v9 signal sender. No producer memory
 rewrite or full phone rerun follows from these observations; retain the bounded
 reader, sequential encoder, durable prefix and fail-closed thermal/signal
 contracts while isolating host cancellation before the next phone attempt.
-=======
 ## J1106 — Observe the real settings commit race and prepare same-UID writer termination
 
 **Date:** 2026-10-24. **Hypothesis:** J1104's explicit SDK exit makes the
@@ -42926,3 +42926,1494 @@ remain open. No continuation result is inferred from these measurements.
   hash-verified owned package without clearing data, and continue in a fresh
   output using the retained prefix and unchanged J1167 thermal/active-time
   policy. Retain the terminal result before comparing native library bytes.
+## J1163 — Reconstruct Barrier and all three Goldshores payloads
+
+2026-10-25 UTC. Host only; no Editor/project build, APK, device lease,
+installation or game launch. Accepted comparison APK remains J850
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+**Hypothesis / prior art.** Existing source object/media owners plus freshly
+compiled source Shader records can close four complete payload entries.
+Consulted `community-prior-art.md`, pinned UnityPy schema/PPtr contracts and
+AssetRipper revision `1ac666f47d8e9dedf96afb0b914c70d7656151ea` shader
+exporters/templates. Their property/template selection describes historical
+import behavior, not original rendering parity. J1157's supported SDK API and
+source-native program ordering replace private compiler experiments. Current
+originals, acquired SDK metadata and source staging policies govern production;
+accepted records are opened only for independent comparison.
+
+**Implementation.** Extend `object_produce.py` with checked source plugin import
+order, legacy type/curve projection and Barrier managed-schema reconstruction.
+Original field schemas and authored omission policies produce the retained
+script shape; no copied game source, target scalar/body/tree or binary template
+supplies it. Compute declaration projection preserves original names, keywords,
+requirements, schema and hash while removing programs through the explicit
+`strip_compute_programs` policy; twelve Root records and all 48 destinations
+qualify independently. This does not provide executable Android Compute.
+
+`payload_shader_records.py` uses the existing public shader compiler/serializer
+and emits the existing record-pack interface. Original declarations, actual
+Material/scene relationships and checked fog/GI/build settings select variants.
+Source-derived keyword ordering controls native pool packing through J1157's
+supported API. Five freshly produced packs contain 29 unique shaders and 56
+independently exact destinations: Barrier, 24 post-processing forms, whole-scene
+Standard and distinct Gold/Root reduced-spine Standard. Barrier reads acquired
+33f1 metadata/includes with the current 45f2 compiler; neither Editor nor the
+old compiler executes. Public template resources are acquired explicitly with
+pins and notices, not vendored. Root packs alone close no complete file.
+
+Audited `owner-goldshores*-objects.json` select whole/source/reduced-spine
+forms through existing object/layout/writer owners and qualified media packs.
+Actual source schemas verify pointer extents and values, script/component
+relationships and current GUID provenance. Recipes contain selectors,
+relationships, named policies and integrity pins only; original/SDK content,
+compiled source/programs and generated assets stay ignored.
+
+**Result.** The final tracked-source CLI run at source `86b3d527` completes in
+134.19 seconds. After persistence, independent readers verify every packed
+object, every member including native resource membership, and complete
+compressed bundle bytes. Four complete final files close:
+
+| Payload | Objects | Bundle bytes | SHA-256 |
+| --- | ---: | ---: | --- |
+| `barrier-effect-lab` | 30 | 1,077,583 | `aaf162416b4d6fc714a9c692beb285d8a39c684034a883a0071d2b2c532e4f36` |
+| `whole-scene-goldshores` | 6,164 | 21,783,442 | `c0409e8808648557c4ccbaf3a9e5cbffc7bda3339b40f1b6fba40e41fe779395` |
+| `goldshores-source-lab` | 6,145 | 21,614,663 | `070b0a8529e46a99fad34cbcd41985503c429596440e34cf9a08a1caa02b13ec` |
+| `goldshores-spine-lab` | 4,617 | 21,350,915 | `4b9928225923f3549ceee6c23ddadc0a1c34431289e3d49efb1687d1ae190678` |
+
+Final evidence under the assigned checkout's ignored
+`work/coordination/p1-payload-complete-shaders-host-v1/`:
+`qualify-done.json`, `qualified-packs.json`, each pack's
+`source-read-guard.json`, each bundle's `independent-comparison.json` and
+`result.json`. The source guard denies accepted targets, generated exports and
+prior packet suppliers; source pins stay unchanged before/after production.
+Preparation/schema evidence remains in
+`p1-payload-barrier-public-prep-v1/`, `p1-payload-goldshores-public-prep-v1/`
+and `p1-payload-goldshores-family-prep-v1/`. These are qualification evidence,
+never reconstruction-time content suppliers. Preserved first failures include
+Standard's default SDK native order (48 of 780 serialized records exact),
+unsupported 2DArray declaration parsing and pending explicit Shader holes.
+Source-order emission, the shared declaration parser fix and qualified providers
+resolve those failures without target index tables or body substitutions.
+
+`readiness-union/` links the four final products into J1162's qualified current
+source composition and reruns the existing public checker. All 583 previously
+available entries preserve content/status. Result: **587 of 705 available**,
+**582 raw-exact**, **two code outputs requiring separate comparisons** and
+**three drift-explained**; **118 missing (7 APK, 111 payload)**, zero invalid
+or mismatched. Overall source provenance, assembly and device flags stay false.
+
+**Validation / limits / revisit.** Forty-four object, five Compute and twenty
+payload Shader host tests pass; changed Python passes Ruff format/check.
+Independent producer/recipe/privacy review returns GO. Doctor accepts current
+input, parser pins and project but retains the known bootstrap failure. No
+phone production, ownership/signing, installation, runtime/rendering or
+performance gate closes. Architecture C is unchanged. Root's three complete
+bundle closures are the next step. Revisit on source/SDK/policy drift or an
+independent mismatch. Mandatory generated-output pruning passes after the run.
+
+## J1083 — Reconstruct source Sobel graphics and freeze corrected normal player
+
+2026-10-24 UTC.
+
+**Source contract and implementation.** The accepted loading and source-stage
+application roots contain a disabled global `ppApplication_opt` volume. Original
+startup enables it; the lab leaves that application inactive. Its Sobel role is
+therefore missing, and both Sobel shader exports are placeholders. Reinspect
+pinned RoR2ImportExtensions `477ad9b5` for its single Post Processing provider and
+custom deferred paths, d3dasm `a292206a` for typed HLSL/interface/resource lowering
+and byte roundtrips, and dxbc-spirv `c7f06970` for independent signatures. Original
+input and consumers govern the reconstruction; no application/service startup,
+new identity, ownership success or invented lighting/exposure is introduced.
+
+Extend the existing native single-pass generator for SobelBuffer/SobelOutline.
+SobelBuffer has a separate fragment parameter record, so source record indices
+are bound to vertex/fragment slots explicitly. Both catalog keys and distinct
+exporter metadata GUIDs survive. Current staging/replay selects nine shaders;
+historical two/six/seven-row receipts remain readable. The existing visual
+camera owner clones only the recovered Sobel setting and volume fields beneath
+its inactive staging root. Original PostProcessLayer, SobelCommandBuffer and
+SobelOutlineRenderer retain rendering. A one-shot exact-camera observation
+records blended settings separately from appearance; disable/disposal removes
+the callback, invokes native volume-disable cleanup and destroys owned assets.
+The non-rendering audio-context route does not create this presentation.
+
+**Host checks and corrections.** All 23 source stages have the same startup
+volume/layer contract. Four original Sobel programs roundtrip byte-identically
+with independent signature agreement; original bundles remain unchanged.
+Regenerating RampFog/ScreenDamage with the shared generator change produces
+identical shader bodies, with prior receipts retained. A production-method
+fixture checks source immutability, exact cloning, unsupported shader/layer
+refusal, foreign-camera exclusion, one-shot sampling and idempotent retirement.
+R3/R4 fixtures cover both identity domains and all nine rows.
+
+The first full host suite runs 2,048 tests with 12 skips and six stale CLI/root/
+fixture/audit expectations. Correct the missing editor-side root declarations,
+fixture seam and audit rows. The affected suite passes 301 checks. Fresh-clone
+CI then catches the remaining exact R3 root expectation; add both entries and
+their built-bundle requirement, with three profile checks passing. Fresh-clone
+CI passes 1,948 tests with 140 skips. Doctor reports the exact editor ready.
+Initial dispatch refusals for missing explicit device selection and an
+unsupported baseline-only CLI argument are retained; both happen before their
+requested operations. Restore the canonical argument contracts without
+weakening guards.
+
+**R45 normal build/install.** The typed editor import passes 7,466 roots. Normal
+full request `20261024T151848.298707Z`, source
+`70f4415134276adc7f4a46109168cfcffa1c6c67`, completes in 721.471490 seconds with
+zero Unity errors. APK SHA-256 is
+`43a8c0ffd5e98fd7f04e7030df3c3e29e765ebfe06a50a647231c7d3103a8d7a`.
+All 267 artifact references rehash. Only whole-game-content/generated-data,
+their manifests and catalog metadata change; no payload path is added/removed.
+A read-only editor sample attributes the long content phase to LZ4 HC archive
+compression. Normal compression remains unchanged. Host free space is 133 GiB
+before this build.
+
+Streaming install takes 26.509346 seconds. Current adopted placement/backing,
+payload sync, independent installed APK bytes and unchanged profile bytes pass.
+The first actual plain control then loses the assigned ADB transport before a
+current world report/capture is available. Its failed directory retains the
+selection, and canonical cleanup/display attempts also fail because the device
+is missing. This is a transport observation, not an attributed game/shader crash.
+No plain/stage/source-view acceptance follows. Main process/selector/display
+state after loss remains unverified. Host USB inventory still exposes its serial;
+serial-scoped attach/reconnect cannot find an ADB transport, and a bounded
+read-only bootloader-variable query times out. No global server reset, reboot,
+flash, storage change or other-device command is performed.
+
+**Explicit stage correction and R46/R47.** Independent host tracing catches a
+real setup-order problem before dispatching the new visual route: Nova creates
+the camera before RunClock selects the source stage as active. Pass the already
+loaded stage through NovaDiagnosticDisplay into camera setup. The fixture now
+keeps an unrelated active scene and verifies the explicit stage is used. The
+51 affected checks pass with three skips; fresh-clone CI again passes. No source
+profile/scene/shader bytes change for this correction.
+
+Source `4a72b630bfaf8f7e9d9ea5f444409b9cfd26d53e` produces R46 fast request
+`20261024T155254.811424Z` in 90.449344 seconds, APK
+`1ab6c29c238aa71779292768716723b4f4811d4e09c32cc8792ff924c1d8038f`.
+It uses the exact R45 normal anchor and changes eight allowed APK members.
+The owned pre-Gradle export cancellation is expected; final splice/alignment/
+signing succeeds. This is iteration only, not a normal player-build success.
+All 266 payload hashes remain identical and 267 references rehash.
+
+R47 is the corrected normal full acceptance candidate: request
+`20261024T155919.802444Z`, the same source, 96.878775 seconds, zero Unity errors,
+normal player result Succeeded, APK SHA-256
+`ef3ba8b699ce6b9327da5437e27a9bca17c30f97e03f8e3ca4c00dc705309950`.
+Its payload is exactly R45's; all 267 references rehash. R46/R47 are not installed
+or device-qualified. Main retains the previously verified R45 installation
+until a new device readback; R44/J1080 remains the latest qualified diagnostic
+and J850 the accepted rollback. Generated pruning runs after tasks.
+
+**Evidence and remaining gates.** Source/kernel/topology/contracts, generation
+receipts and failed host checks are under
+`work/coordination/main-port-rendering-next-r1/`. R45 install/sync/transport
+failure and target-only recovery observations are under
+`work/coordination/main-port-r45/`, with failed control
+`work/experiments/baseline/20261024T153930.312573Z/`. R46/R47 build, immutable
+reference manifests and normal-anchor metadata are under their matching
+`work/coordination/main-port-r46/` and `main-port-r47/` packets. No binaries or
+raw images/logs are published. The authorized shared fallback remains leased
+to another workstream; no fallback install or run occurs in this result.
+
+Revisit on authorized device availability: establish terminal state and retain
+failure logs, install the corrected normal candidate, qualify both controls and
+source-camera blended Sobel/image/End Run/Quit. Full AO/grading compute roles,
+configured graphics, matched PC appearance and the existing gameplay/audio/
+performance gates remain open. The public role remains opt-in/unaccepted.
+
+## J1085 — Restore the original source-camera global post-processing roles
+
+2026-10-24 UTC.
+
+**Observation and hypothesis.** J1083 reconstructs Sobel but still leaves the
+suppressed application's original ambient-occlusion and gamma/colour-grading
+roles unavailable. The accepted stage application's startup list contains both
+`ppApplication_opt` and `ppDisabler_opt`; J46/J47 already established original
+volume registration and priority behavior. The source camera's own run profile
+disables grading/exposure. Restore the two original global profiles and their
+required program references, preserving serialized settings rather than guessing
+exposure, saturation, lighting or tone-mapping values. This is a host-qualified
+candidate, not an observed correction of Android appearance.
+
+**Prior art and source contract.** Consulted `docs/community-prior-art.md` and
+pinned RoR2ImportExtensions `Editor/PostProcessingInstaller.cs`: it selects
+Post Processing 2.3.0 and avoids duplicate runtime providers. That package is a
+compatible public program reference, not proof of the game's shipped package
+version or exact original shader equivalence. Original accepted-input
+PostProcessResources, PostProcessLayer, MultiScaleVO and ColorGradingRenderer
+supply the resource fields, public Init API, consumed kernel names and pass
+calls. All 22 original kernel names match the pinned public programs. Original
+kernel thread-group sizes are independently checked against actual editor
+imports. J330/J368/J369 lighting/HDR findings are retained; no new lighting or
+color-space adjustment is introduced.
+
+**Complete implementation.** The existing default-off
+`shader_postprocessing_uber` generator and audited recipe now produce five
+AO/LUT compute and two AO/LUT graphics programs plus an 18-file HLSL closure.
+Original asset/meta hashes and exact source-camera resource-field/GUID joins
+bind each program. New programs use deterministic lab GUIDs and the existing
+loading-scene Resources directory. Original camera/resource/compute/profile
+assets stay unchanged. Stable generated inputs live under
+`work/generated/shader-candidates/postprocessing-source-camera/<input_id>`;
+no timestamped evidence folder is a build input. Catalog receipts and replay
+validate program membership, paths, hashes and metadata alongside shared
+Bloom/Uber includes. Unknown stage preimages still refuse before writes.
+
+The requested visual camera owner clones both original startup profiles and
+each setting, preserving active/enabled flags, parameter values and volume
+priority/weight/layer. It clones the source resource object and both nested
+program tables, replaces only the seven program references and invokes the
+original public `PostProcessLayer.Init` before activation. Original application
+and services stay inactive; Console graphics preferences remain unavailable.
+Audio-context-only cameras bypass this presentation. Original post-processing
+renderers retain execution ownership. One exact-camera post-render sample
+records blended Sobel/AO/grading enablement and resource/kernel readiness.
+Disable/disposal unregisters both owned volumes and destroys only owned
+profiles/settings/resources; cleanup is idempotent.
+
+**Host qualification and first failures.** 161 affected tests pass with three
+skips; another 22 composition tests pass. The fresh-clone pre-push CI passes
+1,948 tests with 140 skips, Ruff, public audit and generated-document checks. The extracted
+production lifecycle fixture verifies immutable original profiles/resource
+tables, preserved inactive effects, missing-resource/kernel rejection, a
+foreign-camera refusal, one-shot observation and owned teardown. Synthetic
+staging/replay/comparison covers the new compute resource and metadata,
+incomplete receipt refusal and changed original-input refusal. All seven
+runtime resource names/fields and 22 kernel names equal the recipe; staged
+program/meta pairs independently rehash.
+
+First preparation refuses because primary composition staging still calls the
+device-inclusive preflight. It now uses the existing host/input preflight;
+install retains live storage checks. Next, the editor detects a new host-fixture
+call to a build helper before that helper is staged. Remove that cross-phase
+call: `WholeCatalogBuild.ValidateSourceCameraPrograms` stays in the full-build
+owner. A subsequent stale failed-compilation latch requires the supported
+`./dev editor --target lab --action refresh`; it recovers and the editor's
+7,466 typed catalog roots pass. Refusal/compile/refresh logs are preserved in
+`work/coordination/main-port-r48`; mandatory pruning follows failures and the
+successful build. These are host preparation issues, not Android failures.
+
+**Normal full build.** Source
+`498ef5e3a78c3a8d137de34cb951cc8fc1e9e8d7`, request
+`20261024T164245.024905Z`, completes in 140.570 seconds with zero Unity errors.
+The actual editor import gate passes all seven programs and 22 kernel/thread
+contracts before content/player construction. APK SHA-256
+`1578bc0d8cad458967341e58a629459c2ee631d358d845d1bab96215d3440bec`.
+This is a normal full player, not a fast-splice or ScriptsOnly result. All 267
+APK/payload references are independently rehashed; only `whole-catalog.json`
+changes among the 266 payload files versus R47. The new Resources programs are
+in player data. Receipts, reference-only manifest, normal iteration anchors,
+source/package contracts and host logs are in
+`work/coordination/main-port-r48`; no APK or payload is copied into evidence.
+
+**Device gate / first unresolved failure.** Main's assigned ADB transport remains
+absent. No server reset, new install, run or graphics observation occurs. The
+authorized fallback's shared lease belongs to the alpha worker's active tests,
+so it is not accessed. Main's last byte-verified installation remains R45 before
+its J1083 transport loss; cleanup/process/selector/display state remains unknown
+while unreachable. R44/J1080 remains the latest qualified Main diagnostic.
+R48 and R47 are uninstalled candidates. PC parity, original configured graphics,
+AO/tonemapping appearance and Android lifetime/performance remain unaccepted.
+
+**Next / revisit.** When an authorized device is available, first collect and
+clean up the interrupted Main run if its transport returns. Install the frozen
+R48 over the owned lab package, check live storage/profile/bytes, run both
+standard controls and the requested source-view/End Run/Quit cycle, then compare
+against a matched PC reference. A host build is insufficient to merge a claim
+that the nearly-black/washed-out output is fixed. Stage-audio evidence remains
+J1080; full original mix/audibility and normal-play gates remain open.
+
+## J1087 — Honor native Siren target range and verify original graphics clones
+
+2026-10-24 UTC.
+
+**Observation / complete input change.** J822 measured a visible selected egg
+167 m away, outside the active original Huntress tracker's 60 m limit; visibility
+alone still won target ranking. J943 retains the later stock-Commando timeout
+without causal hit evidence. Fix the demonstrated tracking-range contract in the
+existing explicit assisted Siren input owner, rather than extending its budget,
+assigning a native target or applying damage. This does not claim to explain the
+separate Commando failure.
+
+A visible egg within the active native tracking range now outranks a nearer
+occluded candidate. If none is attackable, approach the nearest registered egg
+rather than a distant visible egg. Range is measured from the original input
+bank aim origin to the egg's main HurtBox, matching the native tracker search;
+the accepted original egg prefab has one main HurtBox. Release primary outside
+the supplied range. Once a visible egg is within range, hold movement/sprint
+instead of requiring a path within 1.5 m of its perch. Nontracking survivors
+retain their existing skill behavior. Original tracking, skill execution,
+damage, native egg counters, network identities and the 180-second bound remain
+authoritative. Existing manual/nearby-combat yields and exact-value input lease
+retain their cleanup behavior.
+
+**Prior art.** Consulted `docs/community-prior-art.md`, current accepted
+HuntressTracker and the pinned Starstorm2 `Components/NemMerc/NemMercTracker.cs`
+search-origin/direction/range/LOS pattern. The latter identifies API ownership,
+not a team-mask or target-selection workaround. No community/game implementation
+or profile values are copied into public source. Existing R2API.Director scene
+identity and J812/J822/J943 evidence remain authoritative.
+
+**Host / exact editor.** All 34 Siren host checks pass, including native range
+boundary, beyond-range/nonfinite/occluded refusal and unchanged nontracking
+behavior. Two source-seam expectations are updated to follow the actual primary
+request rather than equating it with visibility. All 48 catalog checks and 45
+camera checks (three skips) pass. The existing actual-editor Siren fixture also
+passes: original prefab/registration metadata, range-aware selection/approach/
+hold, eight terminal reasons, temporary yields, default-off noninterference,
+fresh producer preservation and owned input release. It uses inactive fixture
+objects; native skill execution and encounter completion are not tested.
+
+The same batch adds `SourceCameraGraphicsHost` to existing build-source staging.
+Current `./dev editor --target lab --action source-camera-graphics-host` checks
+the actual imported PostProcessResources, two original profiles, all twelve
+settings and their serialized override/parameter values. Seven resource fields
+select the exact generated assets; the native Init binding and all 22 runtime
+kernel checks pass. Both nested resource tables are separate. Original resource
+and setting assets serialize unchanged before/after. The fixture stays inactive,
+starts no server and immediately destroys only owned editor objects. Native
+rendering and production deferred teardown are not exercised.
+
+Current `siren-input-host` and `source-camera-graphics-host` editor actions use the
+existing pinned MCP client/mutex, refuse stale staged runtime source hashes,
+stage only their own authored Editor fixture and refresh before execution. No
+new runtime owner, selector or ignored build input is introduced. Architecture
+and developer documentation describe these current commands.
+
+**First failures retained.** The first fast dispatch rejects the reviewed
+whole-catalog source pin after the additive fixture staging change. Refresh the
+pin after reviewing that change and passing camera contracts; no input drift is
+accepted. Next dispatch cannot reach the local MCP server after the worker
+restart. Restart the pinned server; the existing editor reconnects automatically,
+and the supported refresh compiles current source. Do not restart ADB or the
+editor. The first real graphics comparison rejects clone serialization; its
+comparison had removed the clone name at the wrong JSON level. Unity wraps
+these objects in `MonoBehaviour`. Compare that exact wrapper, excluding only
+`m_Name`; all twelve actual effect parameter/override objects then match.
+Failures, corrected queries and pruning records are preserved, without
+attributing these host issues to Android.
+
+Clean-clone pre-push CI also exposes a missing new fixture in the synthetic
+build-entry checkout and an old world-owner hash in the frozen audio cohort.
+Add the fixture to that test setup and refresh the reviewed world-owner and
+manifest pins; the changed world seam only reads native egg tracking distance.
+
+**R49 iteration build.** Committed source
+`d79a9bc4b639b8009b16ed2d097cbc2d2f1f7142`, request
+`20261024T172403.804717Z`, completes in 89.796 seconds. APK SHA-256
+`86bd59dfe71ec0b4889ce68b188c1184923d4657cf3db66819d5d21fe61cc3b6`.
+It uses the R48 normal anchor
+`1578bc0d8cad458967341e58a629459c2ee631d358d845d1bab96215d3440bec`.
+All 267 frozen references independently rehash; all 266 payload hashes equal
+R48. Six permitted APK members change. This is a fresh-Data pre-Gradle splice:
+`iteration_export_complete=true`, the owned export cancellation leaves
+`player_build_result=Failed`, and final splice/alignment/signature validation
+succeeds. It is not a normal acceptance build. Reference-only artifacts, host
+and editor results live under `work/coordination/main-port-r49`.
+
+**Device and next work.** Main remains unreachable. A lease-bound recovery-first
+collector records the absent transport and releases its temporary lease without
+package actions. The shared fallback remains in the alpha twelve-session series.
+R49 is uninstalled; J1080/R44 remains the latest qualified Main diagnostic and
+R45 remains the last byte-verified installation before transport loss. On Main
+return, collect the interrupted R45 evidence, clean up and sleep OLED before
+installing anything. PC appearance, real egg hits, native boss start/defeat,
+rewards and ordinary-difficulty acceptance remain open. Continue independent
+host work; inspection identifies that ordinary Siren entry still omits the
+source-entry egg-spawner owner which currently runs only when a diagnostic flag
+is selected. That lifecycle is the next implementation, preserving exact source
+admission and native mission behavior rather than forcing its counter or boss.
+
+## J1089 — Prepare original Siren eggs on ordinary stage entry
+
+2026-10-24 UTC.
+
+**Observation / hypothesis.** Ordinary integrated Ship Graveyard transport
+attached the source ID-10 encounter but omitted the original ID-11 toggle and
+egg-spawner lifecycle unless the source-entry diagnostic flag was selected.
+J795 already qualified exact native source entry under that diagnostic. Reuse
+its existing owner and strict ordering for ordinary stage entry so the original
+mission can receive its source eggs; do not force a route, input, damage, native
+counter, boss state or reward.
+
+**Change and ownership.** IntegratedStageSession now selects source preparation
+from the actual destination scene. Retain the source owner before activating
+the exact ID-2 Director under the temporary Stage; activate ID 11 before that
+Stage is released. Original destination RNG, the one Run stage callback, full
+native multicast, natural spawner Start, exact twelve-egg bijection, empty queues
+and egg-input-off admission remain unchanged. Every Siren ID-10 admission now
+requires those exact source identities. Diagnostic iterator tracing, route
+pauses and assisted input remain separately selected. No normal run is marked
+assisted by this source-entry selection.
+
+Ordinary play can naturally destroy eggs. The source owner now subscribes to
+the original server death event only after complete source-cohort verification.
+It records a death only for the exact captured body, original health/identity
+components, dead health and matching positive server map. Cleanup detaches the
+subscription before any mutation. A captured egg is accounted as naturally
+retired only when that death was observed, both retained Unity references are
+destroyed and its captured ID is unmapped. Count it once without another
+UnSpawn/Destroy. Missing, replaced, still-mapped or unknown destruction refuses;
+remaining live eggs retain the original pose/identity/census and retry guards.
+One scalar count distinguishes natural retirement from owned cleanup. Existing
+source witnesses, toggle restoration, recovery context and manual Moon gate
+remain intact.
+
+**Prior art.** Consulted the community ledger, pinned R2API.Director
+DirectorAPIexternal.cs scene identity and Starstorm2 ExtinctionController.cs
+subscription/teardown pattern. The accepted current GlobalEventManager API
+distinguishes the system server-death event from the deprecated proc-dependent
+kill event; use the former. Original VultureEggDeathState/BirdsharkDeathState
+provide the native destruction lifecycle. These observations define API and
+lifetime knowledge only; no protected or community implementation is copied.
+J785/J795/J800 and the current legitimate scene govern ordering and ownership.
+
+**Host and exact editor.** All 36 Siren host tests pass, including ordinary
+scene selection without diagnostic input, exact Stage/Director/controller order,
+real production death observation/accounting/retirement under host doubles, all
+five natural-retirement operands, unknown destruction refusal and partial
+UnSpawn/Destroy retry behavior. All 59 catalog tests pass after supplying their
+normal module search path. Initial narrow discovery without that path failed
+two imports; no production failure follows. Host preflight passes.
+
+The current siren-encounter-host editor action verifies staged runtime source
+hashes, stages the existing fixture and refreshes through the pinned MCP/mutex.
+It additively owns the imported source scene, checks inactive IDs 2/10/11, all
+32 unique typed original egg spawners, source group dimensions and all three
+disabled MapZones, then closes only its scene/restores prior active scene.
+Admission, rollback and natural-retirement refusal policies pass. It starts no
+server and exercises no native egg death, boss or gameplay teardown.
+
+**First failures retained.** Fast reuse refuses one changed content input: the
+generated original-audio bootstrap DLL after J1087's reviewed recipe rebinding.
+Do not bypass the content gate; select a normal full build. Its initial typed
+host query reports pending compilation. The first new source-scene fixture
+omitted the GenericSceneSpawnPoint namespace; Unity retained an older compiled
+fixture which could still execute. Preserve that stale result as unqualified.
+Add the correct existing API namespace and make both scene/graphics editor
+actions refuse failed or pending compilation. The corrected current fixture
+returns its new 32-spawner result with no compilation failure. Failed dispatch
+receipts and mandatory pruning records remain local.
+
+**Normal build and artifacts.** Source
+`6dc7d1403219130710e47289b3df5c27193ae88e`, request
+`20261024T174305.150818Z`, completes a normal full build in 126.580 seconds
+with player result Succeeded and zero errors. APK SHA-256
+`7623aca2498b452760984c7670de67e779ef368bc7af7c384cc4363b9b0e1620`.
+All 267 reference-only artifacts independently rehash; all 266 payload hashes
+match R48 exactly. This batch inherits
+R48's graphics content and J1087's range-aware input; the full build refreshes
+the normal iteration anchor after the bootstrap DLL change. Private receipts,
+source/host/editor checks, fingerprint diff and cleanup records remain in
+`work/coordination/main-port-r50`. No APK or payload is copied into that packet.
+
+**Device and next action.** Main remains absent from ADB; the authorized fallback
+remains leased by alpha. R50 is uninstalled. Latest qualified Main behavior is
+still J1080/R44, with R45 last byte-verified before transport loss. Recovery of
+that interrupted run, owned cleanup and display sleep precede any installation.
+Ordinary Siren entry, natural deaths, live actor cleanup, boss start/defeat,
+rewards, normal runs and PC appearance remain device gates. Source review of
+the exact boss/probe prefabs and native CharacterMaster reveals another concrete
+mission-lifetime gap: native master destruction after death conflicts with the
+encounter owner's live-master-only cleanup preflight. Continue that causal
+retirement implementation before the next batched device qualification; do not
+weaken missing/foreign identity refusals or claim mission acceptance here.
+
+## J1090 — Account for original Siren boss and probe destruction
+
+2026-10-24 UTC.
+
+**Observation and complete change.** Follow J1089's ordinary source-entry
+promotion through the remaining mission lifetime. Both original boss/probe
+master prefabs retain destruction on body death; current CharacterMaster
+schedules that native destruction. The existing Siren cleanup requires a live
+captured master even after a real defeat, so it would refuse a normal destroyed
+actor. Preserve native deaths and implement their causal cleanup accounting in
+the existing SirenEncounterSession, without preventing destruction or forcing
+a boss, kill, squad event or reward.
+
+The encounter owner adds one owned original server-death subscription before
+its network-spawn transaction. For already captured bosses/probes, record only
+the exact terminal victim master, original body prefab/index, monster team,
+original minion-owner relationship, dead health component and positive exact
+master/body server mappings in the owned scene. Native extra-life eligibility
+is read through the same original terminal-death API used by CombatSquad.
+The native BossGroup defeat event remains the independent completion witness.
+
+Detach the new subscription with the existing cleanup cursor before any actor
+mutation. A missing captured master is accepted only with that death witness,
+its retained destroyed reference and absent captured network mapping. A remaining
+corpse must still have the captured identity, dead health and exact server map
+before an owned destruction request. If already destroyed, all captured body
+components and its map must also be absent. Account for natural master retirement
+once, separately from requested master/body destruction. Preserve the complete
+squad preflight before requests, captured probe ancestry, identity/team/body
+checks, cleanup retries, foreign-object refusal and manual Moon boundary. No
+new runtime owner, selector or probe-switch behavior is added.
+
+**Prior art and source authority.** Consulted the community ledger, pinned
+R2API.Director identity and Starstorm2 ExtinctionController event lifetime;
+J594/J596/J601/J795/J1089 remain the recorded context. In particular J601
+already distinguishes current onCharacterDeathServer from the deprecated
+proc-dependent global alias. The accepted current CombatSquad terminal-death
+check, CharacterMaster lifetime and the actual two source prefabs govern this
+implementation. No community or protected game implementation is reproduced.
+
+**Host and exact editor.** All 38 Siren host tests pass. The new fixture compiles
+and runs the actual production observation, validation, complete squad preflight
+and request methods with host doubles. Cases include fully native retirement,
+master destruction preceding its corpse, ordinary live cleanup, natural probes,
+corpse-request retry/idempotence, revivable/living/client/disposed refusal,
+unknown disappearance, replaced master/body maps, changed components/scene,
+revived health and foreign squad members. A foreign member refuses before
+another actor receives a destructive request. Callback code issues no gameplay
+mutation; subscription detach precedes actor cleanup. Unity Mono/Roslyn absence
+skips the compiler-dependent case on clean CI hosts.
+
+The current exact-editor source-scene fixture also passes and independently
+reads the original boss/probe destruction settings in addition to inactive
+IDs 2/10/11, all 32 unique source egg spawners, three disabled MapZones and the
+existing admission/rollback policies. It starts no server and proves no native
+death or boss lifecycle.
+
+**Iteration artifact.** Source
+`3c9f2615029ad0c0a9896f02c184e76030d6dd20`, request
+`20261024T175329.161376Z`, exports in 70.872 seconds. APK SHA-256
+`1ede47e0af95e47100d624230793559cdbb1c407e3c1d54d070c8c6469c049e7`.
+All 267 reference-only artifacts independently rehash; all 266 payload hashes
+are identical to normal R50. Five permitted APK members change. This uses
+R50's normal anchor
+`7623aca2498b452760984c7670de67e779ef368bc7af7c384cc4363b9b0e1620`.
+The fresh-Data splice has iteration_export_complete true, with the owned
+pre-Gradle cancellation recorded as player_build_result Failed/three original
+BuildReport errors. Final splice/alignment/signature validation succeeds with
+zero final errors. It is iteration-only; normal full acceptance remains required.
+Receipts, actual-editor result, host contracts and mandatory pruning record live
+under `work/coordination/main-port-r51`. Artifacts are referenced, never copied.
+
+**Device and next action.** R51 is uninstalled. Main remains absent and alpha
+retains the shared fallback lease. Recovery-first collection of interrupted R45,
+owned cleanup and OLED sleep still precede any Main install. Lease-guarded
+operators are prepared for both authorized devices; they bind preservation to
+the actual pre-install profile bytes/count rather than a remembered shared-device
+count. No new device, egg-hit, native boss/defeat/reward, normal-run or PC-parity
+claim follows. Qualify the entire rendering/audio/Siren batch on one available
+authorized device, and complete normal full acceptance after iteration findings.
+
+
+## J1096 — Restore the source collision policy before native projectile impacts
+
+**Hypothesis and prior evidence.** J634 shows mutually attached finite stakes;
+J667 identifies the original blue-elite Wisp source, and J946/J957 preserve the
+intermittent corruption without a cause claim. The fresh alpha Commando/seed-2
+case confirms three native blue-elite stakes. One transitions from finite to NaN
+position/velocity/local offset on its first observed terrain impact, before its
+stuck transform resolves. Two siblings attach to the player hull and remain
+finite. This is not evidence that Loader or reciprocal attachment caused it.
+The private final report is
+`work/coordination/alpha-touch-acceptance-20261024/failed39-last-report.json`.
+
+**Source comparison and prior art.** The accepted original `globalgamemanagers`
+SHA-256 is
+`292966bcba420ae931250b19633717684d0add5277abec3e9d3c4605cc5cd236`.
+Its layer names match the lab, but the lab matrix enables all pairs while the
+source disables 278 unordered pairs, including projectile self and body-hull
+contacts. World and precise-hitbox contacts remain enabled. The original
+AssetRipper export independently matches the measured matrix encoding.
+The community-prior-art index's pinned ThunderKit `95a6236d`,
+`ImportProjectSettings.cs`, explicitly maps original PhysicsManager to
+DynamicsManager and imports project settings from `globalgamemanagers`.
+Pinned Starstorm2 `a9a4badd`'s `FireFusionLaunch.cs` and DebugToolkit
+`d1e2f0aa`'s `Command_Noclip.cs` rebuild the native motor collision mask after
+layer changes. The accepted motor's `RebuildCollidableLayers` confirms that
+cache reads `Physics.GetIgnoreLayerCollision`. No community implementation or
+game settings bytes are copied into public source.
+
+**Change.** The existing whole-catalog build owner restores only the collision
+matrix from the verified legitimate input before editor import and body
+construction. Both build destinations generate their own private comparison
+receipt. The actual editor compares all 528 unordered pairs and all 32 layer
+names before bundle production. The existing world owner exposes a read-only
+projectile policy precondition before gameplay. Original elite dispatch,
+projectile operands, stick/impact callbacks, lifetime and fatal error
+classification remain unchanged. No NaN clamp or projectile suppression is added.
+
+**Host and exact-editor result.** R52 is a normal full build from
+`63ce8ca6`, request `20261024T210949.542784Z`,
+149.549 s, zero errors. APK SHA-256:
+`9ce08c18188fb5919cb278ebff793bfdfe9cbe30ad4eb626d0d10f50c74f175f`.
+All 267 artifact references were rehashed without copying outputs. The four
+source-policy tests cover original-input identity, exact matrix encoding,
+unchanged other settings, destination writes and malformed/drift refusals;
+coordinator checks include flushing destination settings before editor launch.
+The targeted policy/build/recipe/destination suite passes 52 tests; camera
+pin checks pass three. The actual idle-editor `lightning-stake-host` fixture
+passes all 528 pairs, imported original stake component/geometry checks and
+bounded observation contracts. The full host suite runs 2,052 tests with one
+Cecil compiler setup failure while the producer was compiling concurrently;
+that isolated four-test suite passes after the build. This is not a clean
+whole-suite pass; clean-clone CI remains the publication gate. Evidence:
+`work/coordination/main-port-r52/` and
+`work/coordination/main-port-lightning-root/`.
+Mandatory generated-output pruning follows the build.
+
+**First failure and remaining gate.** The confirmed defect is the missing
+original collision policy. Its causal relationship to the terrain-impact NaN
+remains unproven: terrain contact is permitted by the source matrix. R52 is
+uninstalled and has no device claim. Repeat the actual Commando seed-2 workload
+with positive native elite/stake observations and strict current-process error
+checks; retain all failures. Fold in alpha's existing diagnostic-retention
+commits for sustained-session measurement. Rendering, audio, Siren mission and
+normal-game acceptance remain separate device gates.
+
+
+## J1097 — Batch original collision, rendering and Siren changes with existing retention fixes
+
+**Hypothesis and reuse.** A sustained device run needs alpha's existing periodic
+diagnostic publication and destroyed returned-hit cleanup, rather than the
+known retained-log producer. Inspected and reused PR #72 commits `ead5e612` and
+`e27cffac` as `21e73efa` and `cf33a8b1` on the existing port branch. Only their
+actual documentation deltas were retained during cherry-pick conflicts; no
+parent-branch touch/capture features were implicitly imported. The existing
+`LabDiagnostics` and `SessionResourceBoundary` retain their owner boundaries.
+Their recorded J1091 community/source evidence remains authoritative; native
+logging and live/checked-out pool targets are unchanged. J1096's original
+collision-policy repair and all R48–R51 graphics/input/Siren work are inherited.
+
+**Host and build result.** Both builds use source `cf33a8b1`.
+The two production-method retention checks and five CI-cleanup checks pass.
+The pushed source passes clean-clone CI: 1,957 tests, 142 expected skips, Ruff,
+public audit, journal index and action documentation. GitHub host-tests passes.
+The earlier local compiler setup failure is retained in J1096, with its isolated
+retry passing.
+
+- R53 fast request `20261024T211815.645088Z`: 83.344 s, final zero
+  errors, APK `8c53767a53f29e31b23f38b7ec9d0bc4b0d39340756351cc07f1544c2cc597d5`.
+  Its owned pre-Gradle cancellation is an iteration export, not normal player
+  acceptance. All 266 payload hashes match normal R52; 267 references rehashed.
+- R54 normal request `20261024T212213.367435Z`: 74.637 s, normal full
+  player build, zero errors, APK
+  `796f8954a0e9a657b2434fe24c5dd22d73f5b63a3994b972ef1d756850605a2a`.
+  All 267 artifact references rehashed and all 266 payload hashes match R52.
+  This is the complete candidate for device qualification and the later
+  sustained-session workload.
+
+Build receipts, path/SHA references and operator preparation stay in
+`work/coordination/main-port-r53/` and `work/coordination/main-port-r54/`.
+No APK, payload or project is copied into a run/review directory. Mandatory
+pruning follows both builds. The shared editor mutex is released after R54,
+with no further editor work queued for the higher-priority content fixture.
+
+**Remaining device gate.** Both APKs are uninstalled at this checkpoint. Main
+remains unreachable; collect its interrupted R45 evidence and verify owned
+cleanup/display sleep before any new installation when it reconnects. Shared
+Nova remains occupied by the existing alpha series, then priority content work
+and alpha's short SDK case. Later install over the owned package, preserve the
+profile, run both strict controls, inspect source-view/End Run/Quit evidence and
+exercise native elite/stake contacts with fatal runtime errors retained.
+No NaN-resolution, memory-bound, PC-parity, full audio, Siren mission completion
+or normal-game acceptance is established by these host/build results.
+
+
+## J1101 — Integrate current UI and heap owners with the collision/rendering/Siren candidate
+
+**Hypothesis and integration.** Alpha's planned idle native heap comparison
+requires the landed PR #61 capture owner, which is absent from the R54
+pre-integration branch. Rebase only the unmerged PR #68 feature onto fetched
+main `459c51aa`, retaining the landed touch/settings, idle heap, PR #72 retention
+and `.prune-keep` support. Main and merged history are unchanged. Preserve both
+independent journal/provenance appends, the landed editor-source staging helper
+and audio restoration order. Skip the now-upstream retention/test cherry-picks.
+Refresh the actual merged world-owner and transitive camera source pins after
+review; retain current main's other workstream/installation facts in state.
+
+**Read-only packaged control.** J1100's old `39f3dd9b…` player really serializes
+an all-enabled collision matrix; it is not merely a stale editor assumption.
+R54 and R55 serialize the exact accepted original policy: 278 excluded unordered
+pairs, projectile self/player-hull/enemy-hull exclusions, with world and precise
+hitbox contacts retained. Source matrix SHA-256 is
+`711e9b0f16fd7bb8671b7a63f2730616176322816ff3b2f476f19431b24806fb`.
+Direct UnityPy reads of `assets/bin/Data/globalgamemanagers` use the frozen APK
+references, without extracting/copying a player. The private comparison is
+`work/coordination/main-port-r54/packaged-collision-policy-comparison.json`.
+A new bounded analysis of J1100's completed reports finds 27 native blue-elite
+stake identities, 160 retained finite samples and six world-fallback body-hull
+samples under the old policy. Thus a clean twelve-session case alone cannot
+establish the intermittent NaN's causal resolution. This analysis is saved in
+`work/coordination/main-port-r55/old-policy-twelve-session-stakes.json`;
+J1100 remains the only full record of that memory series.
+
+**Normal build and host result.** R55 from `eb2acf07`, request
+`20261024T215402.025993Z`, passes the normal full player build in
+149.711 s with zero errors. APK SHA-256:
+`111b1facec5b021c87dce03be24c9b81e913160809e685dc94b23e161786917a`.
+All 267 artifact references are rehashed. Its actual packaged matrix matches
+the source; actual IL2CPP metadata contains the idle heap-capture and retained-hit
+cleanup identifiers. This establishes packaging, not callback execution.
+The focused source-policy/build/destination/camera suite passes 48 tests and
+Ruff passes all 27 changed Python files. The actual idle exact editor passes
+`lightning-stake-host` (all 528 pairs/source prefab),
+`source-camera-graphics-host` (two profiles, 12 settings, seven programs,
+22 kernels and original-asset immutability), `siren-encounter-host` and
+`siren-input-host` (native-range selection/approach/hold). Native gameplay and
+rendering are explicitly outside those fixture claims.
+
+Evidence and immutable path/hash references are in
+`work/coordination/main-port-r55/`. Mandatory pruning uses the current
+marker-aware main script, preserving costly marked packets. No APK, payload or
+Unity project is copied into a run folder.
+
+**First failure and device gate.** The host integration gap is corrected; no
+R54 heap request is dispatched. R55 is uninstalled at this checkpoint. Nova is
+still held by the priority content case, followed by alpha's short SDK case;
+no shared-device lease is held here. After handoff install over the owned package
+with fresh storage/receipt/profile checks, qualify both strict controls and
+source-view/End Run/Quit, then collect positive native elite/stake evidence.
+A native Siren source-entry check is prepared separately, with original input
+and bounded route/cleanup; boss defeat/rewards remain separate. Main still
+requires interrupted-R45 recovery, owned cleanup and OLED sleep before install
+on reconnect. NaN causality, PC appearance, full mix, mission completion,
+long-session bounds and normal-game acceptance remain open.
+
+
+### First Nova plain control and host-classifier refusal
+
+The shared phone is updated in place to R55 with canonical streamed install
+(26.627 s), fresh internal-storage/placement receipts and complete payload sync.
+Installed bytes match the frozen APK; profile bytes match before/after install.
+The selected-volume 15 GiB reserve guard passes. No uninstall, data clear or
+storage change occurs. The first plain baseline completes at 35.07785 world
+seconds, with the actual runtime projectile policy precondition true and
+profile applied-run count unchanged at zero. Its native report has no
+LightningStake identity in that bounded window; no elite-impact fix is inferred.
+Screenshot review confirms world, survivor and HUD visibility in the ordinary
+control; opt-in source-camera appearance remains untested.
+
+The post-run strict wrapper initially refuses its old whole-file checksum for
+`nova_bridge.py`. This is a host verification refusal, not a native game failure.
+Review against the prior published source finds exactly one unrelated change:
+AndroidTouchInput membership in `prepare_spine`; `current_errors` is
+byte-identical. A private reviewed shim pins the current file and unchanged
+historical strict wrapper without editing historical evidence or widening any
+error filter. A synthetic LightningStake NaN remains fatal. Reclassification of
+the preserved actual-process log passes with zero unexplained errors, 448
+MainOutput callbacks, 516,096 finite samples, 211,967 nonzero samples and zero
+nonfinite samples. The original refused workflow/log remains preserved.
+
+Plain evidence is `work/experiments/baseline/20261024T221128.919258Z`; the
+classification review and separate passing `plain-qualification.json` are
+under the R55 coordination directory. Baseline cleanup independently verifies
+process and selector absence and OLED sleep; the outer workflow verifies sleep
+again and releases the lease. A subsequent terminal-readback lease attempt
+refuses atomically before any ADB command because the ready priority content
+worker has acquired it. Thus the post-case full profile hash readback, stage-exit
+control and source-view/End Run/Quit remain pending. Existing installed bytes
+remain R55; later continuation uses its fresh owned receipt without reinstalling
+or repeating this successful plain observation. The rare NaN, appearance,
+mission and normal-game gates remain open.
+
+## J1105 — Qualify R55 controls and source-view teardown; retain the route stall before Siren
+
+**Hypothesis and fixed player.** J1101's integrated normal candidate can preserve
+standard transport/audio and original source-view lifecycles while exercising
+the restored collision policy in native combat. Reuse R55 from `eb2acf07`, APK
+`111b1facec5b021c87dce03be24c9b81e913160809e685dc94b23e161786917a`;
+no runtime change or new build follows its first plain control. Its frozen
+267-reference manifest remains in `work/coordination/main-port-r55/`.
+Nova's retained-data install is unchanged: no reinstall, uninstall, data clear
+or storage change. Fresh owned bytes/profile/idle state and the selected-volume
+15 GiB floor are checked before continuation. The shared queue grants one
+bounded root window before the priority content case and alpha's later checks.
+
+**Standard transport and audio.** The second strict control passes at
+160.5675 world seconds: one original Lakes-to-Goolake transition and 10.8222 s
+in the destination. Current-process review finds zero unexplained errors;
+the runtime source-projectile policy precondition is true. Skill-timed
+MainOutput has 470 callbacks, 541,440 samples, 91,584 nonzero finite samples
+and zero nonfinite samples. This window remains first-stage/skill-timed;
+it does not establish destination-stage PCM or full mix/event/audibility parity.
+Applied runs stay zero, full profile bytes match, and baseline cleanup verifies
+process/selector absence and OLED sleep. This window observes no stakes.
+Evidence: `work/experiments/baseline/20261024T225254.989753Z/` and the separate
+`stage-exit-qualification.json` in the R55 coordination directory. J1101 remains
+the only full account of the earlier passing plain control.
+
+**Source view and native Quit.** Huntress reaches 35.0794 world seconds with
+the original source skin/camera, live Sobel intensity 0.75/scale 3, enabled
+ambient occlusion and grading, bound owned resources and all 22 compute kernels.
+The screenshot shows terrain, vegetation, survivor and HUD; it remains bright
+and flat, so PC appearance is unaccepted. Its image SHA-256 is
+`cc65759ad2760b4ff2e2ee3e79dbe5e7f91301bd2ae4f087c69af4ded85a81d0`.
+MainOutput independently records 696 callbacks, 801,792 samples, 389,376 nonzero
+finite samples and zero nonfinite samples. This does not attribute those samples
+to Huntress's particular event or qualify its complete mix.
+
+The native settings UI confirms End Run in two steps. The completed first-session
+report observes owned Sobel retirement, then the same process reaches its next
+menu. Original bank-release wakeup succeeds, original Wwise Term succeeds, and
+the application-owned Quit makes the process absent after 7.4434 s. No force-stop
+is sent for that Quit; profile bytes remain unchanged and final cleanup verifies
+selector/process absence and OLED sleep. These are Nova observations, not a
+matched latency improvement over Main. Evidence:
+`work/experiments/original-game-audio/r55-source-camera-siren-collision-retention-batch-warm-quit-20261024T225920.906502Z/`.
+
+**Preserved host refusal.** The strict full-system-log review initially refuses
+one current-process Android `BLASTBufferQueue` line after native Term. The exact
+Android 13 [AOSP destructor](https://android.googlesource.com/platform/frameworks/native/+/refs/tags/android-13.0.0_r1/libs/gui/BLASTBufferQueue.cpp)
+logs pending transaction application at error severity while completing ordinary
+queue destruction. The retrieved source hash is
+`32d583117076ae89ee65c980b8e515522ee18d476973802ff251e3cd5e10c4ea`.
+A private qualification annotation accepts only the one exact measured platform
+message, after successful native Term, observed natural process exit and no
+force-stop. The unchanged global classifier still reports that raw line; all
+other errors remain fatal, including a synthetic exact LightningStake NaN.
+The initial refused qualification and workflow remain preserved beside the
+separate passing result. No historical log, classifier or original source is
+edited. The harness had already automatically released its first lease; a
+bounded continuation acquires a new atomic lease before the scheduled handoff,
+without repeating controls or installing another player.
+
+**Positive native elite path.** The longer Huntress route completes two native
+stage transitions and observes six blue-elite Wisp-owned LightningStake
+identities. All six pre-fire snapshots have finite source operands. Twenty-three
+retained projectile snapshots remain finite, including native precise-HurtBox
+attachment and a world-platform attachment before/after its stuck-transform
+resolution. Original fire/impact/sticking callbacks are unchanged. The saved
+positive report is
+`work/experiments/siren-route/r55-20261024T230612.419406Z/positive-elite-stakes-third-stage-report.json`.
+Periodic strict current-process checks find no unexplained errors. This is
+positive exercised-path evidence under the restored source matrix, not proof
+that J1092's rare first-terrain-contact corruption is causally resolved; J1101's
+old-policy twelve-session negative control also remains relevant.
+
+**First route failure and bound.** Siren is never reached. On Scorched Acres the
+native teleporter is charged, its bosses are dead and its next scene is
+shipgraveyard. At world 482.1795 s, scripted navigation still reports a reachable
+37-waypoint route but no safe terrain candidate. Objective distance is 84.1782 m
+and progress has stalled for 159.2397 s. The body is near Y -53.99 while the
+teleporter is near Y 29.62. This identifies a concrete route/recovery failure;
+it does not yet establish why the body reached that lower location. Preserve
+`bounded-navigation-stall-report.json`, `operator-stop.json`, final report/logs
+and the screenshot under the same Siren run. The operator stops the owned
+attempt at the shared budget; this is not a native exception, a successful route
+or a completed 900-second timeout. No teleport, forced damage, direct targeting,
+expanded egg-input budget or progression grant is introduced. Native egg input,
+Siren encounter start/defeat/rewards and the R48–R51 Siren device gates remain open.
+
+**Cleanup and next step.** Last-active actual APK and profile hashes are checked
+before the diagnostic stop; this is explicitly separate from post-stop cleanup.
+The child verifies unchanged profile bytes, process/selector absence and OLED
+sleep, and the outer owner verifies sleep again before release. Total physical
+lease time is about 23.36 min across the two holds; elapsed window is about
+25.4 min including the host-refusal gap. Mandatory marker-aware pruning completes
+after each run, preserving all receipts/evidence and copying no APK/payload.
+Priority content takes the next lease; alpha follows it. A safe-point readback
+requested by alpha finds no matching shell observer and no pending settings
+file, so no actor is killed and no setting is changed. Main remains unreachable;
+its interrupted-R45 recovery/cleanup/sleep still precedes any future install.
+
+Next inspect the existing navigation and original out-of-bounds owners against
+the saved body/graph/terrain evidence, then host/exact-editor qualify the smallest
+repair. Keep native physics and source elite behavior intact. PC appearance,
+complete audio, rare-NaN causality, Siren completion, memory bounds and ordinary
+normal-difficulty runs remain open.
+
+
+## J1108 — Admit automatic Huntress mobility against original landing terrain
+
+**Hypothesis and source review.** J1105's bounded route ends below the original
+Scorched Acres teleporter after three native Blink and three Arrow Rain callbacks.
+Its sparse snapshots do not identify the movement that caused that displacement.
+Source review nevertheless finds a concrete unsafe diagnostic assumption:
+automatic combat requests utility while aiming at nearby airborne threats, and
+the native default Blink follows the three-dimensional aim ray rather than the
+ground navigator's movement. Default Arrow Rain also applies configured root
+motion. Decline unsafe automatic requests using source movement/landing data;
+do not rewrite native movement or introduce a recovery teleport.
+
+Read J291/J292/J295/J298/J301/J401 before changing navigation/bounds. The original
+Scorched Acres box can contain the saved lower position, so a missing out-of-bounds
+volume is not established. Re-read the community stage/authority map, pinned
+Starstorm2 `SlateMines` (a9a4badd) scene identity and DebugToolkit `Command_Noclip`
+(d1e2f0aa) typed motor/physics ownership. Their useful boundary is preserving
+original scene and motor state; neither supplies an Android landing repair.
+Accepted-input Blink/BeginArrowRain/EntityState configuration and the actual
+failed route remain authoritative. No community or decompiled implementation
+is copied.
+
+**Existing owner change.** `TeleporterWorldSession` conservatively admits only
+the two exact default Huntress mobility types against original configured
+endpoints and five capsule-width ground samples. The samples require source
+World geometry, original stable slope/jump-height limits and original bounds.
+Requests without a supported landing or while airborne are released. Other
+states, manual input and explicit kit-coverage diagnostics keep their existing
+paths. The integrated wrapper applies admission after route/combat production;
+no native state, root motion, health, transform, physics setting or jump limit
+is changed. Existing WorldReport stores check/rejection counts and the last
+reason. At most two inert native instances read their configured fields through
+original constructors; no OnEnter/body attachment occurs, and existing Dispose
+clears both before teardown. Repeated blocked requests do not allocate states
+or temporary sample arrays each tick. This repairs unsafe automatic admission;
+it does not yet prove recovery of the observed route.
+
+**Off-device qualification.** Thirty-seven focused tests pass with two expected
+missing-tool skips, including execution of the actual admission methods against
+synthetic floors, drops, edges, slopes, foreign scenes, bounds, invalid values,
+airborne requests, manual noninterference and bounded template construction.
+Ruff passes all three changed Python files. The exact current `siren-input-host`
+fixture reads both imported original configurations, invokes production movement
+prediction with real Unity vector math, and verifies source immutability without
+network/profile/combat startup. It passes with the existing native range/input
+contracts. Ownership/setup/teardown and recipe provenance are documented.
+
+Two initial host pin tests refuse the changed world-owner cohort; review and
+refresh only that source hash, the owner recipe digest and their transitive
+producer/camera pins. The corrected producer/camera contracts pass. The first
+fast-build attempt then correctly refuses frozen bundle reuse: the source-bound
+`GameAudioOriginalBootstrap.dll` changed from ba0047e6… to 86e97185…. A private
+modified-since-base comparison records that input; no guard is bypassed. Preserve
+`work/coordination/main-port-r56/fast-build.log` and the reviewed comparison.
+
+**Normal player result.** After pruning and accepted-input/free-space preflight,
+R56 from `3da3af79bcbf1e54bf710793f6e76590ef3e64a0`, request
+`20261024T234136.476859Z`, passes a normal full build in 165.383 s with zero errors
+(274.569 s complete pipeline wall time). APK SHA-256:
+`39413fcf04d7d8da5c4eb56576b8facc3d3fd605ed8800503ef7daafe56094d2`.
+All 267 path/hash references are rehashed, with no APK/payload copies in evidence
+folders. Frozen manifest, source/build receipt, host notes and actual-editor
+result are in `work/coordination/main-port-r56/`. Mandatory marker-aware pruning
+runs after the refused build and after normal build/fixture completion.
+
+R56 is uninstalled. Nova remains on J1105's R55 for the priority content case and
+alpha's explicitly matched heap comparison. Main remains unreachable and still
+requires interrupted-R45 recovery/cleanup/sleep first. Next qualify the current
+normal candidate on the same native route, require useful landing-rejection
+observations and actual Siren arrival/egg input, and retain the first failure.
+Rare-NaN causality, native mission completion, PC appearance, complete audio and
+normal-difficulty readiness remain open.
+
+
+## J1111 — Build the destination-only MainOutput observation candidate
+
+**Hypothesis and existing ownership.** J1043 schedules one passive MainOutput
+window after genuine authoritative skill activity, but its process-lifetime
+window can be consumed before the destination stage. Add an explicit
+`check-baseline --stage-exit --capture-in-destination` request to defer that
+same window until one verified native transition, completed transport, matching
+live scene and positive destination time. The first recognized authoritative
+skill can then arm the existing policy. Early callbacks do not claim it;
+previous-session window reuse is refused. No event, audio routing, bank, native
+callback, gameplay authority or Term owner changes. J1043/J1067's pinned
+R2API.Sound `f539511e` lifecycle boundary remains applicable; this slice extends
+the existing observation timing rather than adding middleware machinery.
+
+`PortSession` clears caller-supplied witnesses when loading the selection and
+records scene, transition count and world time only after accepted arming.
+Cleanup closes the activity policy before retained callbacks can run. The
+baseline owner requires those witnesses and a complete finite/nonzero window
+within 30 s in the destination. It preserves the first current-process runtime
+error through log turnover, then performs existing owned cleanup. Ordinary
+first-stage timing and the 10-second stage check retain their defaults.
+
+**Host qualification and provenance.** The integrated host cohort reports
+272 passing checks. The focused production-session and driver suite passes
+39 tests, including premature callbacks, caller-witness reset, one-shot reuse,
+destination validation and cleanup after a synthetic native NaN. The reviewed
+source-pin refresh changes only the authored `PortSession.cs` member of the
+frozen owner cohort and its transitive recipe/producer/camera digests. The
+34 provenance checks (two missing-tool skips) and 10 cache checks pass; Ruff,
+staged privacy audit and whitespace checks pass. Ownership and the current
+command are documented in ARCHITECTURE and DEVELOPING.
+
+**Refusals and normal build.** The earlier fast attempt refuses changed
+source-bound bootstrap content. The first normal attempt refuses an absent
+pinned HTTP MCP server before compilation. Restoring the existing server
+reconnects the existing editor; the next attempt refuses pending compilation
+before player build. The existing editor refresh then reports the exact pinned
+project/editor idle. Preserve `fast-build.log`, `mcp-startup-refusal/` and
+`pending-compilation-refusal/` under `work/coordination/main-port-r57/`; no guard
+is bypassed and no failed attempt supplies an accepted player.
+
+The subsequent normal full build from
+`b96a881d77bac5edf88e50cdd54287363591c516`, request
+`20261025T010008.189338Z`, passes in 149.432 s with zero errors
+(314.984 s complete pipeline). APK SHA-256:
+`e950fcb18ff8ed69c56b9399bd528657277af901525b6563cd4ed988c5a43f37`.
+All 267 artifact references, sizes and the frozen manifest digest are independently
+rehashed successfully. Build receipt, frozen references, host checks and normal
+logs remain under `work/coordination/main-port-r57/`; no APK or payload is copied
+into evidence folders. Mandatory pruning completes after the failed attempts
+and successful normal build. Doctor still reports Bootstrap FAIL despite all
+listed input/tool checks passing; accepted-input host preflight and typed host
+preparation pass for this build.
+
+**Device gate.** R57 is uninstalled. The last recorded shared-device installation
+remains J1105's R55 for priority content and alpha's matched heap case; later
+owners' receipts must be read before acquiring/installing. Main remains
+unreachable and requires interrupted-R45 evidence, cleanup and display sleep
+first. Next run both strict controls and the explicit destination-only capture
+on this frozen normal candidate, then qualify J1108's landing admission on the
+Siren route. Destination audio attribution, full mix/audibility, mission
+completion, PC appearance, rare-NaN causality and normal-game readiness remain
+open.
+
+
+## J1121 — Match native Blink travel ticks and qualify Engineer beam configuration
+
+**Hypothesis and prior evidence.** J1108's automatic landing admission must
+measure the actual native displacement before the next Siren route. Read
+J291/J292/J295/J298/J301/J310/J497 and retain the source graph/motor boundary:
+J1105's final path does not establish a usable lower-platform start, and changing
+recovery without that evidence would weaken the existing terrain-circling guard.
+The accepted original Blink instead exposes a precise admission error: its
+fixed callback moves for the complete tick before testing its float stopwatch.
+A configured 0.3 s duration at 0.02 s takes 16 ticks. At speed 7 and coefficient
+14 this is 31.36 m, rather than the 29.4 m nominal endpoint. Five supported
+samples around the old endpoint therefore do not prove support at the native
+endpoint. No cause of J1105's displacement is established by this finding.
+
+Reviewed the community stage/authority map, pinned DebugToolkit's typed
+motor/teleport boundary at d1e2f0aa, and the accepted input's actual state APIs.
+An initial comparison to an older input suggested a different jump-power field;
+matching the current assembly input rejects that hypothesis. Keep the accepted
+baseJumpPower and original movement axes. For the independent kit slice, read
+J685/J705's remaining beam semantics and J700's native configuration precedent.
+Pinned R2API.Loadout at f539511e separates state registration from native
+configuration, while Starstorm2's SS2VanillaSurvivor at a9a4badd preserves native
+state/network relationships. Neither supplies an Android beam implementation.
+No original/community implementation or serialized curve payload is copied.
+
+**Authored change and ownership.** Source e84ec048 changes only Blink endpoint
+prediction inside the existing TeleporterWorldSession automatic-input admission:
+count complete float-accumulated fixed ticks. Original state methods, source
+configuration, root motion, physics, health, transforms and input eligibility
+remain unchanged. The source fixture uses an inactive machine with no motor,
+direction, network identity or authority, calls the original Blink.FixedUpdate
+without OnEnter/SetState, reads its clock and destroys its temporary host.
+The normal fixture staging guard now checks this objective owner as well as its
+existing wrapper/input owners. An authored ledge test rejects ground supporting
+only the nominal endpoint, while admitting supported actual endpoints.
+
+The existing FirstStageDiagnosticGateFixture source gains an inert Engineer
+Laser Cutter configuration/phase fixture. Current action
+`./dev editor --target lab --action engineer-laser-host` stages it through the
+existing mutex/MCP path. It verifies four original config targets and minimal
+asset identities, applies native ApplyStatic and BuildInstanceInitializer after
+distinct sentinels, and includes inherited serialized fields in phases 2/3.
+Deferred prefab references are inspected without invoking Addressables loads.
+Native GetNextState calls verify phase construction and aim/timer handoff;
+finally restores every captured static and verifies asset bytes/dirty state.
+No state entry, catalog startup, Run, profile or network session is created.
+Live charge/release, damage, healing and effect/audio lifetimes remain open.
+
+**Off-device result.** The focused suite passes 253 tests with one expected
+missing-tool skip. Ruff and public staged audit pass; independent source review
+returns GO. The production admission and the Engineer sentinel/failure-detection
+helpers execute against authored host doubles. After staging all 130 current
+runtime sources through the existing staging owner, the exact 2021.3.45f2 editor
+passes refresh, siren-input-host and engineer-laser-host. The original Blink clock
+confirms 16 ticks; the native Engineer field counts are 3 for charge and
+18/17/17 for the three beam phases. Native phase handoff, static restoration
+and unchanged source assets all pass. Private source-bound receipts/logs live
+under `work/coordination/main-port-r58/`, including host.done.json,
+host-tests.log and both named editor-action logs. No artifact copies are made.
+
+**Normal build result.** Shared space subsequently recovers to 113,445,085,184
+free bytes and accepted-input host preflight passes again. One normal R58 full
+content/player build from source 55149b48 completes successfully, request
+`20261025T044743.886014Z`: 185.312 s build, 313.353 s complete pipeline,
+zero errors. APK SHA-256:
+`4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`.
+All 267 references (3,224,670,805 bytes) and the frozen manifest digest are
+independently rehashed successfully. Build receipts, reference-only manifest,
+independent verification and cleanup result remain in
+`work/coordination/main-port-r58/`; no artifact copies are made. Mandatory
+post-build pruning passes. The earlier below-floor deferral is historical
+within this batch. Doctor retains the known Bootstrap FAIL.
+
+**Retained-data installation and first device failure.** The explicit shared
+handoff permits one detached R58 job. Installation over the owned package and
+payload sync succeed in internal storage; packaged APK bytes match the frozen
+hash, free space remains above 15 GiB, and the existing profile hash is unchanged.
+Private evidence is `work/coordination/main-port-r58/install.log`, `sync.log`,
+`pre-install-device.json` and `device.done.json`. Before any control launches,
+the shared thermal owner encounters a sysfs temperature read returning
+`Invalid argument`; no gameplay or audio acceptance follows. Owned cleanup
+verifies process/selector absence, OLED sleep and lease release. Mandatory
+post-run pruning passes. The existing R55/J1105 gameplay qualification stands.
+
+**Readable-zone continuation.** After the shared owner implements the clarified
+readable-zone policy, the installed R58 continuation stops during its first
+cooldown inventory: the all-zone adb shell command exceeds its 0.7 s timeout.
+No control launches and no thermal peak is established. The first error and
+traceback are retained in
+`work/coordination/main-port-r58/controls-retry/device.done.json`, with the
+failed observation in `plain-thermal.jsonl`. The terminal receipt independently
+records process/selector absence, OLED sleep and lease release; mandatory pruning
+passes. This is a prelaunch observation failure, not a native gameplay failure.
+The phone is explicitly handed back to the owner-build workstream; no automatic
+retry is queued.
+
+**Next step.** Reuse the shared thermal owner's reviewed timeout/sampling
+correction without weakening the clarified policy: record and exclude
+unsupported temperature reads, require every readable
+zone at or below 50 C before launch, sample at most 1 s apart and abort gameplay
+if any readable zone exceeds 80 C. Run both strict controls, then destination
+PCM and the complete Siren route under the explicit shared handoff. Native
+Engineer effects, mission completion, rare-NaN causality, PC appearance, full
+audio and normal-run acceptance remain open. R57 remains a frozen uninstalled
+predecessor.
+
+
+## J1152 — Preserve R58 thermal abort before baseline world play
+
+**Hypothesis and fixed candidate.** Continue J1121's installed normal R58 with
+the reviewed shared thermal owner from J1148, without rebuilding, reinstalling
+or changing gameplay. Read J1121's prior inventory failures and the shared-owner
+handoff before the single continuation. The helper is pinned to source 039ebda8
+and SHA-256
+`b39b1478a085a1fe8978a0740729c8cf2cd49ec76e2d9dafd5bf2abe94209836`.
+Admission requires CPU/GPU/battery/skin at or below 50 C; all readable physical
+temperature zones remain sampled at runtime with an above-80 C abort. Unsupported
+reads and unavailable admission sentinels are recorded separately. No threshold
+is relaxed and no new runtime diagnostic or platform adapter is implemented.
+
+**Observed first failure.** Retained-data/profile and current installed-byte
+checks pass for R58, source 55149b48, APK SHA-256
+`4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`.
+Fresh internal free space exceeds 15 GiB. Admission passes with a 31.4 C maximum
+for its selected sensor classes. The plain control launches, but the shared
+thermal observer records CPU/all-zone peak 81.6 C and a hard abort during setup.
+The baseline returns process-exited and zero world-play seconds; it does not
+complete the required 35 s. The stage-exit and destination controls never run.
+The over-limit sample identifies cpu-1-9, about 193 s after baseline evidence
+begins; the maximum runtime sampling gap is 0.487 s. The last source log records
+SceneDirector population about 3 s before the crossing. The retained report has
+blank error/first-failure fields; the JobTempAlloc warning does not establish
+causality.
+This is a guarded thermal termination, not evidence of a spontaneous native
+crash, an accepted control, or a rendering/audio/gameplay regression.
+
+Private evidence is
+`work/coordination/main-port-r58/controls-admission-retry/`: the single terminal
+`device.done.json`, `plain.json`, `plain-thermal.jsonl`, pre-control receipt,
+failure report/log and both prune logs. Baseline evidence remains at
+`work/experiments/baseline/20261025T111240.271111Z`. The terminal receipt is read
+once. All evidence and original failed attempts remain local; no artifacts are
+copied. Doctor still passes accepted-input/project checks and reports the known
+historical bootstrap gate as blocked.
+
+**Read-only comparison and publication.** Accepted R55's plain-control log and
+report at `work/experiments/baseline/20261024T221128.919258Z` show essentially
+the same startup intervals: shader warning to population is 166.818 s versus
+166.991 s for R58; baseline-profile backup to population is 54.525 s versus
+54.466 s. Both report a roughly 47.2 s maximum frame. These observations do not
+establish a new R58 setup regression or identify which original setup operation
+owns the stall. Additional cooldown alone is not established as a remedy.
+Baseline-start to population is about 190.1 s for R58 and 190.4 s for R55;
+J850's older baseline (`work/experiments/baseline/20261020T232945.363181Z`)
+takes 167.4 s to that landmark. These are not exact time-to-world observations.
+Comparable old CPU-temperature curves are absent, so hotter execution and
+regression versus environment cannot be determined. Recorded display refresh
+is 120 Hz for J850/R55 and 60 Hz for R58, without established causality; the
+300 FPS request follows setup, which retains the prior -1 setting.
+
+The crossing neighborhood records maxima 76.8, 77.2, 81.6, 78.8, 63.7, 78.8
+and 60.1 C at roughly 0.30 s intervals. It does not contain three consecutive
+above-80 C samples. However, force-stop begins after the first crossing:
+subsequent cooling is affected by that intervention, so this trace cannot show
+that requiring three crossings would safely allow continued play or avoid later
+sustained heat. No thermal limit is changed. The focused post-rebase suite passes
+426 tests; Ruff and staged provenance/privacy checks remain required before push.
+The branch is rebased onto current main, preserving its journal entries and
+other workstreams' snapshot facts. Merged shader-helper metadata validation
+requires refreshed direct and transitive hash pins; these are source changes
+since the frozen APK, not a claim that R58 contains rebased source. Native
+behavior and the installed candidate are unchanged by this host publication.
+
+**Terminal ownership and remaining gates.** Independent cleanup records app
+process and selector absent, OLED asleep and lease released. Mandatory post-run
+pruning passes. Explicit terminal handoff yields the shared device to the queued
+owner-build case, followed by bundles and alpha; no new main-port device job is
+queued. R55/J1105 remains the latest gameplay-qualified candidate on this device.
+R58 remains installed but unqualified. Both strict controls, destination PCM,
+Siren-route recovery/mission, live Engineer semantics, PC appearance, full audio
+and normal unassisted runs remain open. Revisit the launch/setup thermal cost
+from the retained trace and logs before another attempt, preserving the current
+thresholds and explicit device order.
+## J1159 — Phone player assembly refuses an omitted original shader input
+
+**Hypothesis.** The existing 173-file player owner can reproduce its qualified
+host cohort on Android from legitimate originals, the exact SDK/converter and
+five source-produced texture packs, without a Unity project or target supplier.
+This checks assembly from host-produced pixel records, not phone texture
+production, installation, launch or game readiness. The source is frozen at
+`378e71638da62095c70824c6e76488fe520194b5`, profile
+`a8cc2a42bef5d629211fb69a3e972b59f01768308511aa9c04103244a4cb5f46`.
+
+**Change and controls.** No public producer changes were made for the run. The
+private driver is pinned by SHA-256
+`79f7879b74537e3bb65482e736a0ed941194f8b6c46c948cfacb0ea656c8ebec`,
+with 21 host harness contracts, independent review and dry source admission.
+An explicit terminal peer handoff preceded atomic lease acquisition. A 250 ms
+CPU stream covers staging and execution; the driver pauses at 70 C, resumes
+only after a later sample at or below 55 C and aborts above 80 C. Existing
+500 MiB sampled family RSS, 512 MiB available memory and 15 GiB free-space
+floors remain enforced. This reuses the J1139 player/shader-selection owners;
+no new reconstruction mechanism or community assumption is introduced.
+
+**Result and first failure.** Staging transferred 803 files / 4,034,980,411 bytes;
+phone hash admission passed in 4.946 s. Assembly then correctly refused a
+missing original base-shaders bundle while deriving the shader-selection
+TextAssets. The host staging walker had collected original Material providers
+but omitted Shader providers represented by the manifest recipe's dependency
+relationships. Its input admission checked that incomplete list, so admission
+success did not prove source closure. Assembly exited 1 after 14.728 s; sampled
+family peak RSS was 47,906,816 bytes, maximum CPU sample was 76 C and the maximum
+sample interval was 0.252 s. Eighteen thermal pauses are recorded. This is a
+harness discovery defect, not a completed output comparison, source mismatch,
+OOM attribution or phone qualification.
+
+**Evidence and cleanup.** Full private receipts, traceback, thermal samples and
+recovered partial producer receipt are retained under
+`work/coordination/p1-player-phone-assembly-v1/`, including
+`phone173-execute-v1-done.json`, `phone173-parent-terminal-v1.json` and
+`run-82ea226e2ee146ab8f2fb4e4fd274f83/`. Terminal evidence was checked by size
+and SHA-256 on the host and rechecked remotely before scratch removal. Owned
+groups are absent/completed, the game is absent, the display is asleep, scratch
+is removed and the lease is released. More than 42 GiB remains free. The
+installed R58 APK remains unchanged at
+`4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`.
+No APK was built, installed or launched. The next worker received an explicit
+terminal handoff. Revisit only after repairing original-provider discovery and
+independently verifying complete host admission; a future phone run requires
+another explicit device slot. No completed 173-file phone result is claimed.
+
+## J1161 — Assemble the complete player script registry and default-scene shared file
+
+**Hypothesis and scope.** Original PC script records and embedded schemas,
+source-produced managed assemblies, original SDK/package importers and the
+existing writer can reconstruct both complete startup-content files. The
+source owner should allocate IDs from importer identities, compute properties
+hashes from actual source metadata and compose native defaults from original
+and SDK records. Accepted bytes may be compared only after production. This
+is a host content slice; phone memory and complete installation remain open.
+
+**Prior art and native control.** The implementation reuses the pinned
+AssetRipper/ThunderKit MD4 importer-ID knowledge recorded by J430/J597, existing
+J1124 properties hashing and AssetRipper CLR field/generic serialization rules.
+An authored Editor-only `NativeScriptSchemaFixture` captures the exact SDK's
+native properties hash and binary serialization for primitive, PropertyName,
+ExposedReference and integer-vector scalar/array/list fields. The first binary
+save rejected a persistent MonoScript argument; retaining only the temporary
+authored objects fixes it. The isolated exact-editor check passes. Its native
+API hash, saved native type hash and the public properties-hash implementation
+agree at `b973b4cdbb26cc540f29bd68e3c41be7`. The generated 5,640-byte fixture is
+private verification evidence, never a producer input. It independently fixes
+the native value-array alignment fact; original source schemas also corroborate
+it. Both temporary SDK projects were deleted after preserving evidence, with
+no game project/build or device mutation.
+
+**Implementation.** Existing `script_identity.registry` now admits the code
+owner's successful source-produced managed directory, actual provider/compiler
+receipts, immutable authored sources and original package source/meta pairs.
+`owner-player-registry.json` selects 429 source members in 427 original files,
+with 1,692 unique identity/schema witnesses and one script-table dependency.
+The census comes from original sources. Duplicate original script identities
+must agree, and source importer GUID plus signed importer local ID determines
+the final allocation; no target-ID table is supplied. Actual CLR inheritance,
+ordered eligible fields, native SDK base/curve schemas and original native
+field witnesses determine supported properties hashes. Explicitly unsupported
+native transfers retain the original record only when its actual DLL provider
+is unchanged. Source-only controls qualify all 1,691 original custom schemas.
+The complete output contains 2,753 MonoScripts plus the two original native
+records. Existing `player_data.py` writes the returned layout/bodies and owns
+terminal provider rechecks.
+
+The original package factory retains all prior compiler inputs, adding original
+importer sidecars and the importer-only TestRunner/MCP source sets through its
+existing request and flat `input-hashes.json`. These add no compiler sources.
+The one previously unset Siren importer GUID is explicit configuration from the
+laboratory's own authored project; the public recipe audit records the missing
+adjacent archived J850 source/meta pair. No raw generated meta, game code, body,
+tree snapshot or target hash override is published.
+
+The same player owner assembles `sharedassets0.assets` from original native
+class identities, original Skybox/RenderSettings relationships, SDK resource
+and material records, and the shader owner's existing Standard/Skybox record
+pack. A source-native RenderSettings hash match precedes schema reuse. The
+material helper drops the SDK editor prefix by metadata, filters textures by
+Shader declarations, retains original scalar bits and adds/sorts missing SDK
+defaults. Cube and diagnostics preloads follow the authored LabBuild policy and
+source-derived script IDs. Existing `write_serialized` owns framing and padding.
+All original, SDK, source-managed, recipe and pack providers are rechecked.
+No peer object producer was edited.
+
+**Host result.** A fresh guarded public run writes **177 complete files /
+35,281,913 bytes** in 248.315 s, with no private-cache, fixture or accepted-target
+reads and unchanged source pins. Comparison occurs separately after persistence:
+**175 raw-exact J850 files plus two previously explained current-input drift
+files**. Every prior 175-file output is unchanged. The two new final-file
+closures are `globalgamemanagers.assets`, 346,760 bytes, SHA-256
+`29461f8555c1c2ddf8f8c8c0b16705cf231095cd944a36b552925f656a0532df`,
+and `sharedassets0.assets`, 114,496 bytes, SHA-256
+`8c233ceb1511437e3358d745cf671a683fd93260061addfc04ff239e3190d054`.
+Strings/font remain current-input drift; neither is relabelled as exact.
+The code owner's composed readiness preserves all prior suppliers and the
+complete shader cohort: **583 of 705 files available**, comprising 578 raw-exact,
+two separately compared code outputs and three drift-explained current files.
+The 122 missing files are seven APK entries and 115 payload entries, with zero
+invalid or mismatched suppliers. Source provenance and device qualification stay
+separate from this host availability report. Fresh final-player-owner historical
+and repeated current font/Strings invocations preserve the existing complete
+difference proofs; historical inputs are never assembly suppliers. The composed
+request/report is `work/coordination/phone-code/drift-readiness-v6/` in the code
+owner's worktree; raw qualification is `final-player-drift-v2/` beside it.
+The source-only profile is
+`8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767`;
+registry recipe is
+`d30549957de20c686c00ff8987199edeffbd9afb56158046152354f87cd95840`.
+
+**Resource and review limits.** Lazy metadata reads and releasing the original
+resolver before current production reduce private control peak RSS from
+4.44 GiB to 2.12 GiB; the complete run peaks at 2,226,257,920 bytes. This still
+exceeds the 500 MiB phone guard, so complete phone registry production is
+unqualified. Review also finds a rejected non-CLR PE could escape ownership;
+registering each acquired PE before validation makes existing scope teardown
+cover that failure. A fresh final-source run at helper
+`8d9f6cd0c0582acae7bbd5962ce74da6e22286d0dd1e9bee81f1ae71c913ab41`
+passes the same source guard and terminal pins in 311.601 s; all 177 persisted
+files remain byte-identical to the first run, with peak RSS 2,146,566,144 bytes.
+Independent review verifies the full files and source/provider boundary.
+A regression checks both absent CLR and absent TypeDef,
+exactly one close and an empty owner cache. Synthetic host contracts cover
+source inheritance, field/generic/native hashing, lifecycle, material metadata
+projection, raw scalar retention and early/late provider drift. The existing
+42 player tests and 25 script-family tests pass, with Ruff and host preflight.
+The known generic doctor Bootstrap failure remains; original-input, inventory,
+parser, project and checkpoint checks pass.
+
+**Evidence and revisit.** Complete public source-only production and separate
+comparison are under `work/coordination/p1-player-registry-public-v1/`.
+Original schema/native controls and independent reports remain in
+`work/coordination/p1-player-startup-v2/`,
+`work/coordination/p1-player-registry-hashes-v1/` and
+`work/coordination/p1-player-shared-assets-v1/`. The isolated SDK control is in
+`work/rebuild/phone-content/20261025T120748.884504Z/`; no generated fixture is
+read by production. J1159 separately records the earlier 173-file phone
+harness's staging failure and verified cleanup, without a complete phone
+comparison. No APK was built, installed or launched for this host slice; J850
+remains comparison APK
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+Revisit phone qualification with bounded metadata ownership and complete
+original-provider staging. Remaining startup metadata identities, UI graph
+allocation and complete source-derived installation retain their own gates.
+
+## J1166 — Guarded phone player assembly stops on thermal limit
+
+**Hypothesis.** Repairing J1159's two omitted original shader bundles should
+allow the frozen 173-file source-only player assembly to reach independent
+whole-file comparison. Registry expansion remains outside this phone case.
+
+**Change and controls.** Frozen source `378e71638da62095c70824c6e76488fe520194b5`
+and private driver SHA-256
+`83fdc389c91eeade6d3b394ccb6014403c4ae614fc34e603c65d0da2fcd9e902`
+retain original providers, 500 MiB allowance and shared thermal observation.
+All 39 driver controls and fresh host dry admission pass. The driver stages
+805 files / 4,037,754,679 bytes and verifies admitted input hashes successfully.
+No installation or game launch occurs.
+
+**First failure.** Assembly is cancelled by the existing instantaneous CPU
+80 °C guard at 80.4 °C, after 59.106 s including 105 pauses. Sampled process
+family RSS peaks at 60,342,272 bytes; maximum CPU sample interval is 0.253 s.
+This is a thermal stop, not a complete-output or memory qualification. There
+is no complete production comparison and no passing phone-content claim.
+
+**Evidence and cleanup.** Local evidence lives under
+`work/coordination/p1-player-phone-assembly-v1/`: wrapper terminal
+`phone173-execute-v3-done.json`, case
+`run-23e6e0c082c644879b2086d7dabbc6a3/` and independently checked
+`phone173-parent-terminal-v3.json`. Every recovered terminal artifact matches
+its recorded size and SHA-256. Parent readback verifies owned processes and
+scratch absent, game/selector/pending absent, display asleep, more than 15 GiB
+free and lease released. Installed R58 remains SHA-256
+`4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`.
+The next owner receives an explicit terminal handoff; no retry is queued.
+
+**Revisit.** Preserve the failed evidence and diagnose CPU scheduling/cooling
+under the existing thermal limits before another exclusive device slot. The
+177-file registry additionally needs a fresh bounded-memory host proof and
+its own subsequent phone qualification.
+
+## J1169 — Bound the complete source-only player registry metadata lifetime
+
+**Hypothesis and prior art.** J1161's byte-exact source registry needs only CLR
+serialization identities, eligible fields and their references, rather than
+persistent PE/table graphs. Preserve its pinned AssetRipper CLR serialization
+and importer rules while releasing SDK and original-schema discovery state
+before traversing current managed providers. This is a host resource closure;
+it does not qualify phone execution.
+
+**Change.** The existing `script_identity` owner projects raw lazy `dnfile`
+metadata into the fields consumed by its current serializer. MethodDef and
+MemberRef constructors independently identify serialization attributes; field
+signatures, generic ownership, type forwarding and nested-type membership
+preserve their existing meaning. Each PE closes immediately after projection,
+including rejected non-CLR inputs. The registry releases SDK/curve layouts and
+final original witnesses before managed traversal, rereading original witness
+layouts for validation instead of retaining all 429 layouts. Terminal resolver
+cleanup still covers completion and exceptions. No new producer input, cache,
+target body or object-owner interface is introduced.
+
+**Host result.** Fresh public helper SHA-256
+`bdac038fba518dad8c6891a17c408a53a7a7548be207733ced7b68762721f7da`
+and unchanged player owner
+`06958562713570774a028121fadbb617b2a15842f93582bfde45ab5db8efa7b6`
+produce **177 files / 35,281,913 bytes in 146.285 s**, with whole-process peak
+RSS **289,341,440 bytes**, below the 500 MiB allowance. The guarded producer
+records no forbidden reads; the guard additionally excludes the private
+compact experiment. A separate comparison after persistence verifies all 177
+files against J1161's qualified outputs, preserving its **175 raw-exact files
+and two explained current-input differences**. The registry remains 2,753
+MonoScripts / 346,760 bytes, SHA-256
+`29461f8555c1c2ddf8f8c8c0b16705cf231095cd944a36b552925f656a0532df`.
+The source-only recipe hashes and all final-file bytes are unchanged.
+The prior composed availability remains 583 of 705; this memory change closes
+no additional content entry and does not substitute for a fresh full union.
+
+**Verification and evidence.** All 21 registry and 42 player host contracts
+pass; the registry contracts also pass under isolated standard-library startup.
+They cover attribute constructor forms, fields, inheritance, generics,
+forwarders, unsupported metadata, PE close on rejection and SDK/final-witness
+lifetime release. Ruff format/check and host preflight pass. Doctor confirms
+legitimate input, inventory and parser pins; its known Bootstrap gate remains
+blocked. Evidence is under
+`work/coordination/p1-player-registry-public-v1/`: terminal
+`full-host-v3-done.json`, separate `full-host-v3-comparison.json`, frozen source
+map, producer log and persisted `full-host-v3/` output. Producer receipt SHA-256
+is `5742ca49620f55036c7de934ffbb0abbe33fc46fb21ba44511b4a2d9aa3b006f`;
+comparison SHA-256 is
+`bd8c64f961e6b35f1b095a4e15073269f08863207e4cc42075c12d4846f76229`.
+
+**Remaining gate.** No APK, installation, phone lease or game launch occurs.
+J850 remains comparison APK
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+J1166's separate 173-file phone case stops thermally and cannot qualify this
+177-file cohort. Require a fresh exclusive phone replay under the existing
+memory/thermal guards before claiming phone production. Seven APK files and
+115 payload files remain missing from the last composed availability report.
+
+## J1171 — Identical-input scene exports change historical YAML identity hashes
+
+- Hypothesis: the pinned original-only exporter and stage owner can reproduce the WholeStageContexts full YAML digests.
+- Prior art: community extraction guidance and pinned AssetRipper `AssetExportCollection.cs:47–52,78` assign random collection GUIDs to external YAML pointers.
+- Two exports use identical original scene, dependency and executable hashes; source and staged YAML each differ on exactly 82 lines through seven bijective GUID substitutions.
+- GUID-normalized whole YAML files match; scene meta identity is stable, while its export timestamp differs. Normalization is comparison-only.
+- Both staging runs preserve 841 behaviours and 22 roots, omit 31 unavailable audio components and disable 16 render callbacks. Neither full hash matches the historical comparator.
+- Evidence: `work/coordination/p1-player-stage-contexts-v2/repeat-comparison.json`, `current-pair-v2/done.json`, `current-pair-repeat-v1/done.json` and `pair-comparison.json`.
+- First failure: historical arbitrary exporter identities are not reproducible through this path from identical original inputs; completing dependencies alone does not remove the observed randomness.
+- All 26 WholeStageContexts YAML digest requirements remain open; no final file, readiness entry or input-drift exception is claimed. No target-derived substitution is admitted.
+- Revisit with a source-reproducible historical identity provider, or an explicitly authorized comparison-policy decision. Existing input-drift permission does not cover exporter entropy.
+- Host only; no Editor, device lease, installation or game launch. J850 comparison APK remains `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.

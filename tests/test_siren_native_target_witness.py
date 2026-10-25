@@ -79,6 +79,14 @@ public static class Program
     {
         Require(SirenEggTargetSelectionPolicy.Prefer(true, 100f, true, false, 4f), "visible target did not outrank nearer occluded target");
         Require(!SirenEggTargetSelectionPolicy.Prefer(false, Single.NaN, false, false, 0f), "NaN distance was accepted");
+        Require(!SirenEggTargetSelectionPolicy.CanRequestPrimary(true, true, 167f, 60f), "out-of-range primary accepted");
+        Require(SirenEggTargetSelectionPolicy.CanRequestPrimary(true, true, 60f, 60f), "native range boundary rejected");
+        Require(!SirenEggTargetSelectionPolicy.CanRequestPrimary(true, true, 60.001f, 60f), "range was expanded");
+        Require(!SirenEggTargetSelectionPolicy.CanRequestPrimary(false, true, 1f, 60f), "occluded primary accepted");
+        Require(!SirenEggTargetSelectionPolicy.CanRequestPrimary(true, true, Single.NaN, 60f) &&
+                !SirenEggTargetSelectionPolicy.CanRequestPrimary(true, true, 1f, Single.PositiveInfinity) &&
+                !SirenEggTargetSelectionPolicy.CanRequestPrimary(true, true, -1f, 60f), "invalid range operands accepted");
+        Require(SirenEggTargetSelectionPolicy.CanRequestPrimary(true, false, 0f, 0f), "non-tracking survivor changed");
         Require(SirenEggTargetSelectionPolicy.IsCandidateCountSupported(12) &&
                 !SirenEggTargetSelectionPolicy.IsCandidateCountSupported(13) &&
                 !SirenEggTargetSelectionPolicy.IsCandidateCountSupported(-1), "candidate limit was not strict");
@@ -172,19 +180,19 @@ public static class Program
         self.assertNotIn("Physics.", sample)
         self.assertNotIn("new ", sample)
         self.assertIn("SirenNativeTargetWitnessPolicy.Record(report, observation", sample)
-        self.assertIn("ObserveNativeHuntressTarget(player, egg, selectedEggNetworkId, visible, point)", source)
-        self.assertIn("bridge.diagnosticPrimary = visible", source)
+        self.assertIn("ObserveNativeHuntressTarget(player, egg, selectedEggNetworkId, primaryRequested, point)", source)
+        self.assertIn("bridge.diagnosticPrimary = primaryRequested", source)
         self.assertIn('"visible-egg-requested-primary"', source)
         self.assertIn('"no-visible-egg-primary-released"', source)
         self.assertIn(
             "if (!context.RevalidatedSourceEggs(player.corePosition, sourceEggCandidates))",
             source,
         )
-        self.assertIn("CharacterBody egg = hasVisible ? visibleEgg : nearestEgg", source)
+        self.assertIn("CharacterBody egg = hasAttackable ? attackableEgg : nearestEgg", source)
         self.assertIn("if (!context.Selected)", source)
         self.assertLess(
             source.index("if (!context.Selected)"),
-            source.index("ObserveNativeHuntressTarget(player, egg, selectedEggNetworkId, visible, point)"),
+            source.index("ObserveNativeHuntressTarget(player, egg, selectedEggNetworkId, primaryRequested, point)"),
         )
 
         targets, world, stage = (

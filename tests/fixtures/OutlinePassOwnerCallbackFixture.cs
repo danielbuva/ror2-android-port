@@ -71,6 +71,7 @@ internal sealed class OwnerCallbackFixture : MonoBehaviour
     public void DestroyOwner() => OnDestroy();
     void RemoveOwnedOverride() { }
     void RestoreGlobalSceneCameraPointer() { }
+    void ReleaseSourceSobel() { } // Separate Sobel fixture executes this production lifecycle.
     public void DisposeOwnedView() { }
 }
 

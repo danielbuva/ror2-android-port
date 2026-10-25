@@ -60,6 +60,8 @@ public static class WholeCatalogBuild
         { 2538, "12e87e7c7fde8e74db9f75172456c5c3" }, // TranslucentImage EfficientBlur
         { 2539, "d996ab4381100014d99e25e68e9aac84" }, // TranslucentImage FillCrop
         { 2540, "b12e02e9a9b684543a286089a03cb04b" }, // TranslucentImage QuickDumbBlur
+        { 16024, "780f79b2a62a0df439dedf59c533eee6" }, // SobelBuffer
+        { 15952, "7d6541fe01591cd418caf48d3c099e52" }, // SobelOutline
     };
     const string ShaderLocationType = "UnityEngine.Shader, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null";
 
@@ -98,6 +100,8 @@ public static class WholeCatalogBuild
         if (!manifest.StartsWith(Path.Combine(work, "experiments/whole-catalog") + Path.DirectorySeparatorChar, StringComparison.Ordinal))
             throw new Exception("Whole catalog recipe outside owned input");
         catalog = JObject.Parse(File.ReadAllText(manifest));
+        ValidateSourceCameraPrograms();
+        ValidateSourceCollisionPolicy();
         var owners = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var build in builds)
             foreach (string path in build.assetNames)
@@ -129,6 +133,76 @@ public static class WholeCatalogBuild
         foreach (var row in catalog["locations"])
             row["bundle"] = owners[(string)row["path"]];
         ValidateCameraShaderRows(new HashSet<string>(owners.Keys, StringComparer.OrdinalIgnoreCase));
+    }
+
+    // Compare imported settings with the locally generated original-input receipt.
+    public static object ValidateSourceCollisionPolicy()
+    {
+        var path = Path.Combine(Path.GetDirectoryName(Application.dataPath), ".rebuild/source-collision-policy.json");
+        var expected = JObject.Parse(File.ReadAllText(path));
+        var rows = expected["rows"].ToObject<uint[]>();
+        var layers = expected["layers"].ToObject<string[]>();
+        if (rows.Length != 32 || layers.Length != 32)
+            throw new Exception("Original collision policy dimensions changed");
+        int pairs = 0;
+        for (int a = 0; a < 32; a++)
+        {
+            if (LayerMask.LayerToName(a) != layers[a])
+                throw new Exception("Collision policy layer index differs from its accepted source");
+            for (int b = a; b < 32; b++)
+            {
+                bool collides = (rows[a] & (1u << b)) != 0;
+                if (Physics.GetIgnoreLayerCollision(a, b) == collides)
+                    throw new Exception("Collision policy differs from accepted source at " + a + "/" + b);
+                pairs++;
+            }
+        }
+        return new { sourcePolicyVerified = true, unorderedPairs = pairs,
+                     projectileSelfIgnored = Physics.GetIgnoreLayerCollision(14, 14),
+                     projectileWorldCollides = !Physics.GetIgnoreLayerCollision(14, 11),
+                     projectileHurtBoxCollides = !Physics.GetIgnoreLayerCollision(14, 12) };
+    }
+
+    // The existing optional source-camera batch owns these Resources assets.
+    // Exercise the real editor importer before building.
+    public static void ValidateSourceCameraPrograms()
+    {
+        const string receiptPath = ".rebuild/postprocessing-uber-receipt.json";
+        if (!File.Exists(receiptPath))
+            return;
+        var programs = JObject.Parse(File.ReadAllText(receiptPath))["programs"] as JArray;
+        if (programs == null)
+            return; // Historical Uber-only receipts remain readable.
+        foreach (var program in programs)
+        {
+            string path = (string)program["target"];
+            if (path.EndsWith(".compute", StringComparison.Ordinal))
+            {
+                var shader = AssetDatabase.LoadAssetAtPath<ComputeShader>(path);
+                if (!shader)
+                    throw new Exception("Source camera compute import missing: " + path);
+                foreach (var message in ShaderUtil.GetComputeShaderMessages(shader))
+                    if (message.severity.ToString() == "Error")
+                        throw new Exception("Source camera compute compile error: " + path + ": " + message.message);
+                var kernels = (JArray)program["kernels"];
+                var groups = (JArray)program["kernel_thread_groups"];
+                for (int i = 0; i < kernels.Count; i++)
+                {
+                    string kernel = (string)kernels[i];
+                    if (!shader.HasKernel(kernel))
+                        throw new Exception("Source camera compute kernel missing: " + kernel);
+                    shader.GetKernelThreadGroupSizes(shader.FindKernel(kernel), out uint x, out uint y, out uint z);
+                    if (x != (uint)groups[i][0] || y != (uint)groups[i][1] || z != (uint)groups[i][2])
+                        throw new Exception("Source camera compute thread group differs: " + kernel);
+                }
+            }
+            else
+            {
+                var shader = AssetDatabase.LoadAssetAtPath<Shader>(path);
+                if (!shader || !shader.isSupported || ShaderUtil.ShaderHasError(shader))
+                    throw new Exception("Source camera graphics shader import failed: " + path);
+            }
+        }
     }
     public static void Complete(AssetBundleManifest manifest)
     {

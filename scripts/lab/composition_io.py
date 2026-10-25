@@ -139,9 +139,9 @@ class StageIO:
 
     def preflight(self):
         if not self.rebuilding:
-            from build import preflight
+            from build import preflight_host
 
-            return preflight()
+            return preflight_host()
         # Same host/input gates as build.preflight. Device storage and its receipt
         # belong to install/build, never to this host-only reconstruction step.
         from build import validate_project_generation

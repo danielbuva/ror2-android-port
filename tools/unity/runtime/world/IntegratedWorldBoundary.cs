@@ -101,6 +101,7 @@ public sealed partial class PortSession
     [Serializable]
     public class WorldReport
     {
+        public bool sourceCollisionPolicyVerified;
         public int nativeEffectSourceRenderers, nativeEffectSourceMaterials;
         public ObjectiveRendererObservation[] nativeEffectViews;
 
@@ -212,6 +213,8 @@ public sealed partial class PortSession
         public int inputControllerSuspensions, inputControllerReconnections;
         public float liveTimeScale, liveFixedDeltaTime;
         public int combatMotionSamples, combatMotionBlocked, combatCandidates, combatBoundsRejected, travelDefenseFrames;
+        public int combatMobilityChecks, combatMobilityRejectedRequests;
+        public string combatMobilityLastRejection;
         public string combatTarget, travelDefenseTarget;
         public Vector3 combatGround, combatDestination;
         public Vector2 combatMotion;
@@ -394,6 +397,8 @@ public sealed partial class PortSession
     {
         var session = GetIntegratedWorldSession();
         session.IntegratedWorldStimulus(player, bridge, elapsed);
+        if (!r.diagnosticSkillCoverage)
+            GetTeleporterWorldSession().ApplyWorldMobilityLanding(player, bridge);
         session.ApplySurvivorSkillCoverage(player, bridge, elapsed);
     }
     void EarnedFeatherInput(CharacterBody player, NovaInputBridge bridge, float elapsed)
@@ -1250,6 +1255,12 @@ public sealed partial class PortSession
                     "Persistent original Commando/default skills, recovered golemplains collision/navigation, continuous original one-card director, local HLAPI client/authority, original Money purchases/chest animation/droplet/default pickup/server grants/gold/XP/stats. Authored layout/HUD/input/materials and explicit audio-unavailable pickup presentation. Original Run clock only: stock startup/menu/profile/route/victory remain unavailable; composed original teleporter is observed separately; no NetworkUser, LocalUser or entitlement grant.",
                 feedbackCapability = "Authored pickup HUD; original native-audio notification handler unavailable."
             };
+            coordinator.r.world.sourceCollisionPolicyVerified =
+                Physics.GetIgnoreLayerCollision(LayerIndex.projectile.intVal, LayerIndex.projectile.intVal) &&
+                !Physics.GetIgnoreLayerCollision(LayerIndex.projectile.intVal, LayerIndex.world.intVal) &&
+                !Physics.GetIgnoreLayerCollision(LayerIndex.projectile.intVal, LayerIndex.entityPrecise.intVal);
+            coordinator.Check(coordinator.r.world.sourceCollisionPolicyVerified,
+                              "Original projectile collision policy is missing before integrated gameplay");
             if (survivorCombatOutputs != null)
                 coordinator.r.world.survivorCombatOutputs = survivorCombatOutputs.report;
             try
@@ -2380,7 +2391,11 @@ public sealed partial class PortSession
                 var tracker = player.GetComponent<HuntressTracker>();
                 if (!tracker || !tracker.isActiveAndEnabled)
                     return false;
-                eggDistance = Vector3.Distance(player.corePosition, egg.corePosition);
+                // Match HuntressTracker's search origin and its actual target
+                // point, rather than body centers or pathfinding foot position.
+                if (!egg.mainHurtBox)
+                    return false;
+                eggDistance = Vector3.Distance(player.inputBank.aimOrigin, egg.mainHurtBox.transform.position);
                 trackerMaximumDistance = tracker.maxTrackingDistance;
                 return IntegratedWorldSession.Finite(eggDistance) && IntegratedWorldSession.Finite(trackerMaximumDistance) &&
                        trackerMaximumDistance >= 0;
