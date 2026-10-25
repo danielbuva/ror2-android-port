@@ -56,6 +56,13 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       qualifies all 281 ETC1/single-mip records and the shared public codec build
       on Android, with all 5,006 RGB/Alpha8/uncompressed records reverified.
       Remaining compressed textures, mips, cubemaps and complete bundles stay open.
+      [J1113](PORTING_JOURNAL.md#j1113--produce-a-complete-source-only-bundle-and-seven-player-data-files)
+      qualifies the first complete PC-only bundle and seven player-data files
+      on the host, through the direct UnityFS/serialized writer. The fixed-target
+      readiness check now has 679 missing content entries, plus two generic
+      package metadata entries owned by final packaging. Phone replay, the
+      remaining bundles/player data and complete source-derived installation
+      remain open; the structural writer produces no missing content itself.
       [J1081](PORTING_JOURNAL.md#j1081--run-owner-supplied-standalone-sdk-tools-through-a-public-android-runner)
       qualifies a reproducible public Android runner for standalone SDK build
       tools. The full Linux RGBA cohort, original shader/content production and ordinary

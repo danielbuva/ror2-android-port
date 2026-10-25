@@ -52,6 +52,31 @@ reproduction and framed emission. It verifies supplied target/profile/PC/SDK
 inputs without generating independent Android target information. `assemble.py`
 owns hash-bound unsigned APK assembly and required uncompressed/aligned resource
 storage; canonical alignment and owner signing follow separately.
+`unity_write.py` owns current experimental bounded UnityFS 7/8 and
+serialized-v22 construction from explicit type metadata, object bodies and
+resource streams. Object table order and physical body order remain independent.
+It owns one temporary compressed stream, a bounded pinned codec child, block
+deadlines and child teardown; callers own input provenance and retained outputs.
+`build_bundle_lz4.py` builds the HC12/fast block helper `bundle_lz4.c` from a
+separately acquired pinned public LZ4 archive, retaining its license, build logs
+and terminal receipt. These structural writers generate no game content or
+target relationships and have no game-build/runtime consumer.
+`object_produce.py` owns the current source-only prefab slice: audited
+`recipe/owner-pickup-objects.json` selects original bodies/type metadata and
+checked pointer relationships. It generates container/preload metadata, packs,
+layout and a canonical target-tree bundle through those writers. New disjoint
+output, pinned PC files/recipe/codec and capacity checks set up the process;
+persisted output and unchanged inputs precede a complete/failed terminal receipt.
+Failure retains outputs and the codec context reaps its child; exit ends the
+producer. `player_data.py` owns the separate current seven-file named player
+cohort: SDK default resources, converter resources, PC-derived script JSON and
+the three-object PC font file. Its audited `recipe/owner-player-data.json`,
+explicit original PC/SDK/converter inputs and converter receipt set up a new
+target tree; checked pointer relocation and `unity_write.py` build the font
+file. Persisted/input hashes and complete/failed receipts define state and
+teardown. Neither owner consumes replay files or a Unity project. Their
+[setup and limits](../tools/phone-build/accepted-output/README.md#produce-the-first-complete-source-only-bundle)
+remain separate from full content assembly, installation and runtime acceptance.
 `mesh_produce.py` owns a separate current experimental PC-input-only mesh
 producer, using read-only bounded UnityFS access in `unity_bundle.py`, embedded
 serialized-field extents and authored operations in `unity_mesh.py`, and the

@@ -1,0 +1,368 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "sources": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-common_static_assets_all_c5d8595dcf1ebb5f39b6e5cea0902f85.bundle",
+      "sha256": "c8069f10e8c930d4cfba363c2f57523e1b1eb23b2032c81a48dc77f7dbfcfcd3",
+      "member": "CAB-7aadc3876a6282688f5d01e2e4272074"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_monoscripts_a69c140580dd1456807433bb923cc5ba.bundle",
+      "sha256": "68aee1b2d2633c3ce1713cc44238025f750d3ae0aa66f42e748d421b19178022",
+      "member": "CAB-29d1a7582c548fe5e49f4c4c7a96e47e"
+    }
+  ],
+  "bundle": {
+    "name": "pickup-droplet-lab",
+    "member": "CAB-39a96da59748e55be506227df3e3f7ac",
+    "sha256": "894f3a5894e9d8eca6788ff18ac1cf01af9e25d8f29729342809ac68f8fb8865",
+    "bytes": 4039,
+    "serialized_sha256": "06f5e95cb54cf81aa998eae0f9fab16a0173425d73daad4c3f64d44bff62ee6c",
+    "asset": "Assets/WholeGame/RoR2/Base/Common/PickupDroplet.prefab",
+    "root": -994736039467739048,
+    "dependencies": [
+      "commando-prefab-lab"
+    ],
+    "externals": [
+      "CAB-b0611b01bbffecd06329c6d6eecf278c"
+    ],
+    "external_objects": [
+      [
+        1,
+        2449231894644702408
+      ]
+    ]
+  },
+  "objects": [
+    {
+      "path_id": -5344198659659708577,
+      "bytes": 36,
+      "sha256": "2896e5e267b8fb86f97c83a036c6824ec9a8fa82d5cb73859bb9b8cc5766e4ca",
+      "source": [
+        0,
+        3317545377130337174
+      ],
+      "source_sha256": "d2997083b009dd876b246643a67d148b7192b1830d732f7ae01470a97ad2fdf5",
+      "references": [
+        {
+          "offset": 0,
+          "from": [
+            0,
+            1256088053567968150
+          ],
+          "to": [
+            0,
+            -994736039467739048
+          ]
+        }
+      ]
+    },
+    {
+      "path_id": -5210633131740670619,
+      "bytes": 132,
+      "sha256": "c621c966fa3a2a2799186669456f4d0ef77134699203000668c45aaca646dc09",
+      "source": [
+        1,
+        7750620829037894719
+      ],
+      "source_sha256": "c621c966fa3a2a2799186669456f4d0ef77134699203000668c45aaca646dc09"
+    },
+    {
+      "path_id": -4083556372418179048,
+      "bytes": 44,
+      "sha256": "6efea940ca47c8a9422da8b04c73d615122648603fdcc9bcb07b824db36fa7bf",
+      "source": [
+        0,
+        -6816102766938827882
+      ],
+      "source_sha256": "41a6c8b028893061ae53e863aada2b48848d004aeaf5299e9b3541a46a72b6b9",
+      "references": [
+        {
+          "offset": 0,
+          "from": [
+            0,
+            1256088053567968150
+          ],
+          "to": [
+            0,
+            -994736039467739048
+          ]
+        },
+        {
+          "offset": 12,
+          "from": [
+            7,
+            8354923705172261031
+          ],
+          "to": [
+            1,
+            2449231894644702408
+          ]
+        }
+      ]
+    },
+    {
+      "path_id": -3897710021282152339,
+      "bytes": 80,
+      "sha256": "152f31ce9c680b4117ed34fb1ee12474e22fa4b7e5ecebe36e0e7a1622848aec",
+      "source": [
+        0,
+        -4666266842739911786
+      ],
+      "source_sha256": "4300fea311225586aedadf1ab7e82a4ce01eb6093080710d69095f8246300b2b",
+      "references": [
+        {
+          "offset": 0,
+          "from": [
+            0,
+            1256088053567968150
+          ],
+          "to": [
+            0,
+            -994736039467739048
+          ]
+        },
+        {
+          "offset": 16,
+          "from": [
+            1,
+            3942047210284500023
+          ],
+          "to": [
+            0,
+            47249387616556721
+          ]
+        }
+      ]
+    },
+    {
+      "path_id": -2526787617056106653,
+      "bytes": 32,
+      "sha256": "64d7750d3d691a4a9e672a1f9294272d88fa4924ee72260decc435b13035b2ac",
+      "source": [
+        0,
+        5502232418758874006
+      ],
+      "source_sha256": "4fbf5227207401a025832ca11fd423f7ea2a4d4bc63bd9825378046528ee8b5b",
+      "references": [
+        {
+          "offset": 0,
+          "from": [
+            0,
+            1256088053567968150
+          ],
+          "to": [
+            0,
+            -994736039467739048
+          ]
+        },
+        {
+          "offset": 16,
+          "from": [
+            1,
+            3658291672775045242
+          ],
+          "to": [
+            0,
+            8511288862164909831
+          ]
+        }
+      ]
+    },
+    {
+      "path_id": -1415503327031590536,
+      "bytes": 64,
+      "sha256": "d98e454e2b6af660bf417d99268a50fff12a80ff853e4742fc0b9194c9223536",
+      "source": [
+        0,
+        3930539699560436630
+      ],
+      "source_sha256": "ffe3fc40b6177b62f83d8c311193cca32901d507b163e31b1257038fc4f4a097",
+      "references": [
+        {
+          "offset": 0,
+          "from": [
+            0,
+            1256088053567968150
+          ],
+          "to": [
+            0,
+            -994736039467739048
+          ]
+        }
+      ]
+    },
+    {
+      "path_id": -994736039467739048,
+      "bytes": 115,
+      "sha256": "d48687b9ef23168febf40d92089cd8c83c6191115876525d62455a08f547b15c",
+      "source": [
+        0,
+        1256088053567968150
+      ],
+      "source_sha256": "1ba8332b792c2a58eacd0ebecce466064dada58ef283b3839dad845154a30a7c",
+      "references": [
+        {
+          "offset": 4,
+          "from": [
+            0,
+            -2215797269714185322
+          ],
+          "to": [
+            0,
+            5220862317128354365
+          ]
+        },
+        {
+          "offset": 16,
+          "from": [
+            0,
+            8367589459544167318
+          ],
+          "to": [
+            0,
+            5793619476629457857
+          ]
+        },
+        {
+          "offset": 28,
+          "from": [
+            0,
+            3317545377130337174
+          ],
+          "to": [
+            0,
+            -5344198659659708577
+          ]
+        },
+        {
+          "offset": 40,
+          "from": [
+            0,
+            -6816102766938827882
+          ],
+          "to": [
+            0,
+            -4083556372418179048
+          ]
+        },
+        {
+          "offset": 52,
+          "from": [
+            0,
+            5502232418758874006
+          ],
+          "to": [
+            0,
+            -2526787617056106653
+          ]
+        },
+        {
+          "offset": 64,
+          "from": [
+            0,
+            3930539699560436630
+          ],
+          "to": [
+            0,
+            -1415503327031590536
+          ]
+        },
+        {
+          "offset": 76,
+          "from": [
+            0,
+            -4666266842739911786
+          ],
+          "to": [
+            0,
+            -3897710021282152339
+          ]
+        }
+      ]
+    },
+    {
+      "path_id": 1,
+      "bytes": 348,
+      "sha256": "19874c38292f16d621e768a38907bb3343dc1410df5a6828ee354c1ec5c35d91",
+      "type_source": 0
+    },
+    {
+      "path_id": 47249387616556721,
+      "bytes": 116,
+      "sha256": "2fde410c5b76f0f994025c3b2d9a33c74e5906e635ac334a442c702ea5bcd40a",
+      "source": [
+        1,
+        3942047210284500023
+      ],
+      "source_sha256": "2fde410c5b76f0f994025c3b2d9a33c74e5906e635ac334a442c702ea5bcd40a"
+    },
+    {
+      "path_id": 5220862317128354365,
+      "bytes": 68,
+      "sha256": "2e58b25b2fcf8424e426e99d6cc03cf409610567519a4b204c0f87a10eb7c566",
+      "source": [
+        0,
+        -2215797269714185322
+      ],
+      "source_sha256": "e0f89ed75cd61dbbbe2702ed372dea6507228e9232ad26ed2b20219ee3e2ba13",
+      "references": [
+        {
+          "offset": 0,
+          "from": [
+            0,
+            1256088053567968150
+          ],
+          "to": [
+            0,
+            -994736039467739048
+          ]
+        }
+      ]
+    },
+    {
+      "path_id": 5793619476629457857,
+      "bytes": 108,
+      "sha256": "8c521779045137cc77d4d58a46f873e7079f16dccb3d00b1ea66c658e1e74706",
+      "source": [
+        0,
+        8367589459544167318
+      ],
+      "source_sha256": "3ed8330f3159155bf133db2bf8e03377489bcf015126afe931b69355300745fb",
+      "references": [
+        {
+          "offset": 0,
+          "from": [
+            0,
+            1256088053567968150
+          ],
+          "to": [
+            0,
+            -994736039467739048
+          ]
+        },
+        {
+          "offset": 16,
+          "from": [
+            1,
+            7750620829037894719
+          ],
+          "to": [
+            0,
+            -5210633131740670619
+          ]
+        }
+      ]
+    },
+    {
+      "path_id": 8511288862164909831,
+      "bytes": 96,
+      "sha256": "647fc28a9b93cea8bbe6a8082ccf378fe533523fee284b8ee983d356aae919da",
+      "source": [
+        1,
+        3658291672775045242
+      ],
+      "source_sha256": "647fc28a9b93cea8bbe6a8082ccf378fe533523fee284b8ee983d356aae919da"
+    }
+  ]
+}

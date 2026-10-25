@@ -38797,3 +38797,99 @@ thermal owner/lease remain untouched. Corrected phone-native relinking,
 complete source content, phone composition/signing, compatible retained-data
 signer provisioning, user installer, both controls and matched first-stage
 performance remain open. No APK is installed and no device behaviour is claimed.
+## J1113 — Produce a complete source-only bundle and seven player-data files
+
+Date: 2026-10-25 UTC. Host-only independent content production; no editor,
+Android command, installation or game run.
+
+**Hypothesis and scope.** The existing mesh/avatar/texture packs do not close
+one final content entry until objects, type metadata, references, serialized
+layout and UnityFS compression are assembled. Complete a small source prefab
+bundle plus independently derivable player files through one bounded structural
+writer before treating the writer as a content converter. Comparison target is
+J850, APK SHA-256
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+Its accepted PC input and runtime architecture remain unchanged.
+
+**Prior art and design.** Consulted `community-prior-art.md`, pinned UnityPy
+1.25.3 `SerializedFile.py`, `TypeTreeHelper.py`, `BundleFile.py` and
+`CompressionHelper.py`, and pinned AssetRipper
+`1ac666f47d8e9dedf96afb0b914c70d7656151ea` serialized-file/type parsers.
+UnityPy documents the native/script type identities and tree/dependency wire
+fields; its default object-tail padding and HC9 policy do not reproduce this
+accepted layout. The existing authored `phone_bundle.py` supplies the public
+AssetBundle/TextAsset construction precedent. Public LZ4 v1.9.4's `lz4hc.h`
+defines the HC block API and level 12; the unchanged BSD provider is acquired
+separately and its license is retained, never vendored into recipes.
+
+The authored `unity_write.py` writes v22 structure and streams ordered members
+through generated UnityFS blocks. Object-table order and physical body order
+remain independent. A pinned persistent native helper bounds requests and
+applies HC12 or fast LZ4; the writer independently decompresses every reply,
+uses raw storage when compression expands data, and owns temporary/child cleanup.
+Its structural interface generates no game bodies or target relationships.
+Source and tests were checkpointed in `9115d317`; a separate full accepted-record
+roundtrip is running and is not a PC-only result in this entry.
+
+**Complete source-only bundle.** `object_produce.py` plus audited
+`recipe/owner-pickup-objects.json` derives all 12 pickup-droplet objects,
+1,239 body bytes, every embedded type identity/tree, script table index,
+reference/external relationship and physical layout from two original bundles
+plus minimum target identities. Eleven content/script bodies reuse original
+bytes with checked PPtr relocation; generic AssetBundle container/preload metadata
+is generated from those identities. No original gameplay value or type-tree
+snapshot is stored in the recipe. The full serialized member matches SHA-256
+`06f5e95cb54cf81aa998eae0f9fab16a0173425d73daad4c3f64d44bff62ee6c`.
+The final 4,039-byte UnityFS matches J850 SHA-256
+`894f3a5894e9d8eca6788ff18ac1cf01af9e25d8f29729342809ac68f8fb8865`.
+The private process completes in 0.056 seconds. Its dependent Commando bundle
+is not produced by this slice, so this is not an independent runtime load proof.
+
+**Seven complete player files.** `player_data.py` plus audited
+`recipe/owner-player-data.json` produces 21,104,949 bytes in seven canonical
+APK data entries, all independently compared byte-exact with J850 afterward:
+SDK default resources; three fresh IL2CPP converter resource outputs;
+ScriptingAssemblies/RuntimeInitializeOnLoads JSON derived from PC metadata and
+public authored initialization/order; and the 16,416,842-byte embedded font file.
+The font's original material, texture and font bodies, type hashes and external
+dependency are reused with four checked reference identities relocated. The
+writer generates its tree-stripped Android metadata and 8-byte object layout.
+Neither producer reads a target APK/tree, private replay packet, captured project
+or editor output as a supplier. SDK and converter inputs remain explicit owner
+providers, not a claim that these seven files all come from PC bytes alone.
+The seven-file process completes in 0.522 seconds.
+
+**First failure, controls and scoreboard.** The first player staging used
+converter resource paths without the APK's `Managed/` prefix; that private v1
+result remains preserved. Corrected v2 qualifies six named files; v3 adds the
+complete font, with canonical target paths. Authored controls cover native
+compression protocol/bounds/admission, embedded/no-tree serialized metadata,
+physical versus table order, raw fallback/cross-member chunking, pointer extent
+and identity drift, metadata generation, source/codec/input drift, new output
+admission and persisted readback. All 27 new focused tests pass with the explicit
+public codec provider; affected existing producer/input checks also pass.
+Ruff, public pattern scan and independent read-only source/privacy review pass.
+No game/SDK bytes, raw evidence, private identifiers or secrets are staged.
+
+A new partial target tree hardlinks only these eight immutable producer outputs.
+The existing APK readiness checker at `a78d5eaa` consumes the same 16 produced
+code/SDK inputs as its prior report: **705 required, 24 ready, 681 missing**,
+zero invalid/mismatched content entries. The remaining gaps are **679 content**
+(546 player-data files and 133 payload files), plus two generic package metadata
+entries owned by final packaging. No missing input is filled from the private
+replay tree. This is an entry-count change, not a completed-conversion percentage.
+
+**Evidence and terminal state.** Pickup packs, generated layout, full bundle,
+source pins and proof remain under
+`work/coordination/accepted-build-reconstruction/bundle-source-v1/`:
+`pickup-objects-host-v3/result.json` and `pickup-proof.json`. Player source/output
+comparison and terminal receipt remain in
+`work/coordination/p1-player-data-host-v3/`. The composition sources, request and
+full readiness report are in `work/coordination/p1-content-source-host-v1/`.
+All generated content stays ignored. No device lease is acquired; installed
+package, processes, selectors and displays are not changed. Phone replay,
+remaining object/animation/shader production, complete content assembly and
+ordinary signed installation/runtime/performance remain open. Revisit this
+slice for a changed input/target, a source-pointer/format drift or its first
+phone qualification, not by counting a successful structural writer as missing
+content production.
