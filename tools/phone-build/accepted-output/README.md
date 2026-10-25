@@ -107,7 +107,7 @@ existing acquired native Clang 21 layout. No SDK codec or Unity project is used.
 The Python `codec(path, sha256)` context owns one helper process, 64 MiB request
 bounds, per-block deadlines, independent decoded-byte verification and teardown.
 Object provenance, new final-output admission, drift checks and retained failure
-receipts belong to the calling producer. Structural qualification against a
+receipts belong to the calling producer. Structural qualification against
 all 133 accepted bundles passes byte-exact in J1116 with 198.125 MiB peak
 host RSS. This is an accepted-record roundtrip control, not PC-input-only
 production or phone qualification.
@@ -146,18 +146,20 @@ gates.
 
 ## Produce named player-data files
 
-`player_data.py` produces 22 canonical `apk/assets/bin/Data/...` files:
+`player_data.py` produces 75 canonical `apk/assets/bin/Data/...` files:
 SDK default resources, three fresh converter resource files, two script metadata
 JSON files derived from original PC metadata plus authored initialization/order,
 the embedded font serialized file, two original line-breaking TextAssets, the
-authored runtime JSON TextAsset and twelve standalone Sprite files. The font,
-material and texture bodies
-and their type identities/dependency come from one original PC bundle; only
+authored runtime JSON TextAsset, 64 standalone Sprite files and one original
+TimerStringFormatter object. The font, material and texture bodies and their
+type identities/dependency come from one original PC bundle; only
 four checked reference identities change. The generic writer generates its
-tree-stripped Android metadata and object layout. Standalone Sprites retain
-original geometry/UVs, regenerate their importer GUID/local identity from the
+tree-stripped Android metadata and object layout. Original Sprites retain
+geometry/UVs, regenerate their importer GUID/local identity from the
 destination filename and relocate one checked texture reference. Their texture
-providers remain separate inputs to full composition. The runtime TextAsset
+providers remain separate inputs to full composition. The authored full-rectangle
+Sprite generates four corners and two triangles from original bounds and
+recovered pivot/border/pixel scale, matching the existing HUD policy. The runtime TextAsset
 formats the pinned sibling `runtime-config.json` through the existing authored
 JSON policy.
 
@@ -186,6 +188,17 @@ Both producers emit target paths accepted by the existing owner-APK readiness
 checker. A partial tree remains incomplete: no missing file is supplied from
 the private replay tree. Full-source assembly and device/runtime qualification
 remain required before promotion.
+
+J1117 extends this owner to 75 files, including all 63 PC-derived standalone
+Sprites, an authored full-rectangle Sprite and one original TimerStringFormatter object. Explicit per-file source
+selectors retain their actual receipt provenance. A source render-data crop
+selector recovers standalone coordinates through pinned AssetRipper arithmetic;
+no target geometry/pixel/coordinate values are supplied. The original scripted
+object retains its type hash and fields with a generated external script table.
+The same `object_produce.py` invocation accepts the audited
+`owner-teleport-material-objects.json`: its qualified dummy shader demotes the
+original keyword strings while preserving material values. All 75 player files
+and that full bundle are host byte-exact; phone/runtime gates remain open.
 
 ## Produce meshes directly from original PC bundles
 

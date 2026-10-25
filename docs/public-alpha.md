@@ -58,10 +58,10 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       Remaining compressed textures, mips, cubemaps and complete bundles stay open.
       [J1113](PORTING_JOURNAL.md#j1113--produce-a-complete-source-only-bundle-and-seven-player-data-files)
       qualifies the first complete PC-only bundle and seven player-data files;
-      J1115 extends the host cohort to two complete bundles and 22 player files
+      J1117 extends the host cohort to three complete bundles and 75 player files
       on the host, through the direct UnityFS/serialized writer. The fixed-target
-      readiness check now has 679 missing content entries, plus two generic
-      package metadata entries owned by final packaging. Phone replay, the
+      readiness check now has 609 missing content entries; all 18 code/SDK
+      entries are available. Phone replay, the
       remaining bundles/player data and complete source-derived installation
       remain open; the structural writer produces no missing content itself.
       [J1081](PORTING_JOURNAL.md#j1081--run-owner-supplied-standalone-sdk-tools-through-a-public-android-runner)
@@ -208,8 +208,8 @@ explicit replay content; it does not qualify phone production or installation.
 closes the two generic Android build-metadata producer gaps. Fresh host SDK
 production yields all 15 entries raw-exact to J850. The shared readiness request
 combined with
-[J1115](PORTING_JOURNAL.md#j1115--assemble-a-second-source-only-bundle-and-fifteen-more-player-files)
-has all 18 code/SDK files and 24 content files ready, with 663 content entries
+[J1117](PORTING_JOURNAL.md#j1117--produce-every-standalone-sprite-and-the-third-source-only-bundle)
+has all 18 code/SDK files and 78 content files ready, with 609 content entries
 absent. Phone replay and complete content/shader/animation production remain
 open. The two
 new files still require an ordinary-app rerun; corrected phone-native output,

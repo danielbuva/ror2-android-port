@@ -311,6 +311,71 @@ class PlayerDataTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "must be new"):
             self.produce()
 
+    def test_sprite_source_override_is_used_and_recorded(self):
+        sprites = self.profile["sprites"]
+        selected = sprites["files"][0]
+        selected["source"] = dict(sprites["source"])
+        source = self.pc / selected["source"]["path"]
+        alternate = self.pc / "alternate-sprites.assets"
+        source.rename(alternate)
+        selected["source"]["path"] = alternate.name
+        self.profile_path.write_text(json.dumps(self.profile))
+        self.profile_hash = P.sha(self.profile_path)
+        result = self.produce()
+        name = P.TARGET + selected["file"]
+        self.assertEqual(result["files"][name]["source"], alternate.name)
+        self.assertEqual((self.output / name).read_bytes(), self.generated[selected["file"]])
+
+    def test_standalone_script_keeps_type_and_fields_with_external_script_table(self):
+        source_body = bytes(16) + struct.pack("<iq", 1, 77) + b"DATA"
+        target_body = bytes(16) + struct.pack("<iq", 1, 33) + b"DATA"
+        source = self.pc / "authored-script.assets"
+        source_type = {"class_id": 114, "stripped": 0, "script_type": 9, "script_id": b"I" * 16, "hash": b"H" * 16}
+        layout = {
+            "engine": "2021.3.45f2",
+            "platform": 19,
+            "trees": False,
+            "types": [source_type],
+            "objects": [{"path_id": 55, "offset": 0, "bytes": 32, "type_id": 0}],
+            "scripts": [(1, 77)] * 10,
+            "externals": [],
+            "ref_types": [],
+            "user": "",
+        }
+        with source.open("xb") as output:
+            P.W.write_serialized(output, layout, lambda row: io.BytesIO(source_body))
+        selected = {
+            "file": "00112233445566778899aabbccddeeff",
+            "source": {"path": source.name, "bytes": source.stat().st_size, "sha256": P.sha(source)},
+            "objects": [
+                {
+                    "source_path_id": 55,
+                    "path_id": 1,
+                    "bytes": 32,
+                    "source_sha256": pin(source_body)[1],
+                    "sha256": pin(target_body)[1],
+                    "references": [{"offset": 16, "from": [1, 77], "to": [1, 33]}],
+                }
+            ],
+            "script": [1, 33],
+            "externals": ["globalgamemanagers.assets"],
+        }
+        destination = self.root / "script-output"
+        before = P.sha(source)
+        P.object_file(self.pc, selected, destination)
+        with destination.open("rb") as stream:
+            stream.size = destination.stat().st_size
+            result = P.W.read_serialized(stream)
+            stream.seek(result["data_offset"])
+            self.assertEqual(stream.read(), target_body)
+        self.assertEqual(result["types"], [{**source_type, "script_type": 0}])
+        self.assertEqual(result["scripts"], [(1, 33)])
+        self.assertEqual(result["externals"][0]["path"], "globalgamemanagers.assets")
+        self.assertEqual(P.sha(source), before)
+        selected["script"] = [1, 34]
+        with self.assertRaisesRegex(ValueError, "script relationship"):
+            P.object_file(self.pc, selected, self.root / "wrong-script")
+
     def test_receipt_drift_failure_membership_and_resource_hash_fail_closed(self):
         mutations = ("pin", "failure", "changed-inputs", "missing", "comparison-hash")
         for mutation in mutations:
@@ -444,6 +509,87 @@ class PlayerDataTests(unittest.TestCase):
                 P.sprite_key(changed, "0123456789abcdef0011223344556677")
         with self.assertRaisesRegex(ValueError, "GUID"):
             P.sprite_key(body, "../escaped")
+
+    def test_sprite_crop_recovers_source_rect_pivot_border_and_preserves_geometry(self):
+        body = bytearray(b"!" * 200)
+        struct.pack_into("<I", body, 0, 4)
+        body[4:8] = b"Demo"
+        header, rectangle_offset = 8, 144
+        struct.pack_into("<4f2f4f", body, header, 0, 0, 100, 80, 0, 0, 10, 0, 20, 12)
+        struct.pack_into("<2f", body, header + 44, 0.5, 0.5)
+        struct.pack_into("<6f", body, rectangle_offset, 5, 7, 80, 60, 10, 8)
+        result = P.sprite_crop(body, rectangle_offset)
+        self.assertEqual(struct.unpack_from("<4f", result, header), (5, 7, 80, 60))
+        self.assertEqual(struct.unpack_from("<2f", result, header + 16), (0, 2.0000016689300537))
+        self.assertEqual(struct.unpack_from("<4f", result, header + 24), (0, 0, 10, 0))
+        self.assertEqual(struct.unpack_from("<2f", result, header + 44), (0.5, 0.5333333611488342))
+        self.assertEqual(result[rectangle_offset + 16 : rectangle_offset + 24], bytes(8))
+        self.assertEqual(result[header + 52 : rectangle_offset], body[header + 52 : rectangle_offset])
+        self.assertEqual(result[rectangle_offset + 24 :], body[rectangle_offset + 24 :])
+        with self.assertRaisesRegex(ValueError, "crop extent"):
+            P.sprite_crop(body, len(body))
+
+    def test_authored_full_rectangle_uses_original_bounds_pivot_and_pixel_scale(self):
+        original = bytearray(200)
+        struct.pack_into("<I", original, 0, 4)
+        original[4:8] = b"Demo"
+        struct.pack_into("<4f", original, 8, 0, 0, 100, 80)
+        struct.pack_into("<f2f", original, 48, 20, 0.25, 0.75)
+        struct.pack_into("<6f", original, 144, 0, 0, 100, 80, 0, 0)
+        before = bytes(original)
+        result = P.full_rectangle_sprite(original, 144)
+        size = struct.unpack_from("<I", result)[0]
+        self.assertEqual(result[4 : size + 4], b"Owned full-rectangle Demo")
+        header = (size + 7) // 4 * 4
+        self.assertEqual(struct.unpack_from("<4f", result, header), (0, 0, 100, 80))
+        self.assertEqual(struct.unpack_from("<6H", result, header + 184), (0, 1, 2, 2, 1, 3))
+        self.assertEqual(struct.unpack_from("<12f", result, header + 264), (-1.25, 1, 0, 3.75, 1, 0, -1.25, -3, 0, 3.75, -3, 0))
+        self.assertEqual(result[header + 312 : header + 344], bytes(32))
+        self.assertEqual(bytes(original), before)
+        source = self.pc / "full-rectangle-source.assets"
+        layout = {
+            "engine": "2021.3.45f2",
+            "platform": 19,
+            "trees": False,
+            "types": [{"class_id": 213, "stripped": 0, "script_type": -1, "hash": b"S" * 16}],
+            "objects": [{"path_id": 51, "offset": 0, "bytes": len(original), "type_id": 0}],
+            "scripts": [],
+            "externals": [],
+            "ref_types": [],
+            "user": "",
+        }
+        with source.open("xb") as stream:
+            P.W.write_serialized(stream, layout, lambda row: io.BytesIO(original))
+        name = "0123456789abcdef0011223344556677"
+        expected = P.sprite_key(result, name)
+        selected = {
+            "source": {"path": source.name, "bytes": source.stat().st_size, "sha256": P.sha(source)},
+            "file": name,
+            "texture": "fedcba98765432100011223344556677",
+            "full_rectangle": True,
+            "crop_rectangle_offset": 144,
+            "objects": [
+                {
+                    "source_path_id": 51,
+                    "path_id": 1,
+                    "source_bytes": len(original),
+                    "bytes": len(expected),
+                    "source_sha256": pin(original)[1],
+                    "sha256": pin(expected)[1],
+                }
+            ],
+        }
+        destination = self.root / "full-rectangle-output"
+        P.object_file(self.pc, selected, destination)
+        with destination.open("rb") as stream:
+            stream.size = destination.stat().st_size
+            output_layout = P.W.read_serialized(stream)
+            self.assertEqual(output_layout["objects"][0]["bytes"], len(expected))
+            stream.seek(output_layout["data_offset"])
+            self.assertEqual(stream.read(), expected)
+        struct.pack_into("<f", original, 48, 0)
+        with self.assertRaisesRegex(ValueError, "pixels-per-unit"):
+            P.full_rectangle_sprite(original, 144)
 
     def test_font_source_object_reference_and_output_metadata_drift_refuse(self):
         for mutation in ("bundle", "body", "reference", "metadata", "memory-bound"):

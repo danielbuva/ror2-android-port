@@ -1,0 +1,95 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "sources": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-common_assets_all_b6fdc58edc06db17638fcebe236610e4.bundle",
+      "sha256": "cd6fd1cec1d1df56068858a6744750e69c2931e88a8447d500f1204166af092a",
+      "member": "CAB-eaebb18b70f57fc21a04c5bde375f03a"
+    }
+  ],
+  "bundle": {
+    "name": "teleport-material-lab",
+    "member": "CAB-1f39f14ba419c47f4c0954be5436f02e",
+    "bytes": 3176,
+    "sha256": "4dc6d713dae47efab10d280d178dc39fd9e6d300bcc3d7b9f2a6ce9555032b46",
+    "asset": "Assets/WholeGame/RoR2/Base/Common/TeleportOutController/matTPInOut.mat",
+    "root": 3666767769916158014,
+    "externals": [
+      "CAB-b0611b01bbffecd06329c6d6eecf278c",
+      "CAB-db73b5db4016675ba5b1a0ee354adfb9"
+    ],
+    "dependencies": [
+      "commando-prefab-lab",
+      "whole-game-content"
+    ],
+    "external_objects": [
+      [
+        1,
+        -8842138065564068001
+      ],
+      [
+        1,
+        -7654450177102856894
+      ],
+      [
+        2,
+        -4611508323823805518
+      ]
+    ],
+    "serialized_sha256": "ac35f88488546fded85f601c8abc343c3341bd4b92820662045ddd3a50c28322"
+  },
+  "objects": [
+    {
+      "path_id": 1,
+      "bytes": 300,
+      "sha256": "b553e93f6c92f8a9647ed66b838b37a25ddf608b8c2b09822cd3dbca8c88c099",
+      "type_source": 0
+    },
+    {
+      "path_id": 3666767769916158014,
+      "source": [
+        0,
+        -3215175406908074399
+      ],
+      "source_sha256": "668e0bfc5df2d59769d9ec8ae18ab462fabf4bb0a2961f0ff98afa6f9ace12d5",
+      "bytes": 1492,
+      "sha256": "821d4038762af2399481ce2bf05fcd6f87ede64220aedb4288eb8eef896f6f33",
+      "references": [
+        {
+          "offset": 16,
+          "from": [
+            3,
+            -658352061839041481
+          ],
+          "to": [
+            1,
+            -7654450177102856894
+          ]
+        },
+        {
+          "offset": 188,
+          "from": [
+            4,
+            952921304617992815
+          ],
+          "to": [
+            1,
+            -8842138065564068001
+          ]
+        },
+        {
+          "offset": 232,
+          "from": [
+            5,
+            -1890362854954841369
+          ],
+          "to": [
+            2,
+            -4611508323823805518
+          ]
+        }
+      ],
+      "keyword_policy": "dummy-shader-demote-valid"
+    }
+  ]
+}

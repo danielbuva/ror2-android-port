@@ -98,6 +98,79 @@ def sprite_key(body, filename):
     return bytes(result)
 
 
+def f32(value):
+    return struct.unpack("<f", struct.pack("<f", value))[0]
+
+
+def sprite_crop(body, rectangle_offset):
+    """Recover standalone import coordinates from original render-data crop.
+
+    AssetRipper SpriteExtensions.GetSpriteCoordinatesInAtlas documents this
+    source-coordinate recovery. Round each Vector2 operation as float32, retain
+    geometry/UVs, and clear the crop offset already absorbed into the new pivot.
+    rectangle_offset selects the original variable-length render-data field.
+    """
+
+    name_size = struct.unpack_from("<I", body)[0]
+    header = (name_size + 7) // 4 * 4
+    if type(rectangle_offset) is not int or rectangle_offset % 4 or rectangle_offset < header + 112 or rectangle_offset + 24 > len(body):
+        raise ValueError("invalid original Sprite crop extent")
+    rectangle = struct.unpack_from("<4f", body, rectangle_offset)
+    crop = struct.unpack_from("<2f", body, rectangle_offset + 16)
+    old_size = struct.unpack_from("<2f", body, header + 8)
+    pivot = struct.unpack_from("<2f", body, header + 44)
+    new_size = rectangle[2:]
+    if min(new_size) <= 0:
+        raise ValueError("invalid original Sprite crop size")
+    new_pivot = [f32(f32(f32(pivot[i] * old_size[i]) - crop[i]) / new_size[i]) for i in range(2)]
+    offset = [f32(f32(new_pivot[i] - 0.5) * new_size[i]) for i in range(2)]
+    top = [f32(f32(old_size[i] - new_size[i]) - crop[i]) for i in range(2)]
+    border = struct.unpack_from("<4f", body, header + 24)
+    border = [f32(value - (*crop, *top)[i]) if value else 0.0 for i, value in enumerate(border)]
+    result = bytearray(body)
+    struct.pack_into("<4f2f4f", result, header, *rectangle, *offset, *border)
+    struct.pack_into("<2f", result, header + 44, *new_pivot)
+    result[rectangle_offset + 16 : rectangle_offset + 24] = bytes(8)
+    return bytes(result)
+
+
+def full_rectangle_sprite(body, rectangle_offset):
+    """Replay RecoveredHudBuilder's authored Sprite.Create FullRect policy.
+
+    Source bounds, recovered pivot/border and pixels-per-unit generate four
+    corners and two triangles. Unity's standalone vertex/index/channel layout
+    is structural; no target vectors or image bytes are supplied.
+    """
+    recovered = sprite_crop(body, rectangle_offset)
+    name_size = struct.unpack_from("<I", body)[0]
+    header = (name_size + 7) // 4 * 4
+    bounds = struct.unpack_from("<4f", body, header)
+    pivot = struct.unpack_from("<2f", recovered, header + 44)
+    border = struct.unpack_from("<4f", recovered, header + 24)
+    ppu = struct.unpack_from("<f", body, header + 40)[0]
+    if ppu <= 0:
+        raise ValueError("invalid original Sprite pixels-per-unit")
+    pixel_pivot = [f32(pivot[i] * bounds[i + 2]) for i in range(2)]
+    offset = [f32(f32(pivot[i] - 0.5) * bounds[i + 2]) for i in range(2)]
+    left, bottom = [f32(-value / ppu) for value in pixel_pivot]
+    right, top = [f32(f32(bounds[i + 2] - pixel_pivot[i]) / ppu) for i in range(2)]
+    stream = io.BytesIO()
+    OBJECTS.aligned_string(stream, "Owned full-rectangle " + body[4 : 4 + name_size].decode("utf-8"))
+    stream.write(struct.pack("<4f2f4ff2fI?3x", *bounds, *offset, *border, ppu, *pivot, 0, False))
+    stream.write(bytes(24))  # Importer identity follows generation.
+    stream.write(struct.pack("<IiqiqiqI", 0, 0, 0, 1, 1, 0, 0, 0))
+    stream.write(struct.pack("<7I6f", 1, 0, 6, 0, 0, 0, 4, *([0.0] * 6)))
+    stream.write(struct.pack("<I6H", 12, 0, 1, 2, 2, 1, 3))
+    stream.write(struct.pack("<II", 4, 14))
+    channels = bytearray(14 * 4)
+    channels[3], channels[16], channels[19] = 3, 1, 2
+    stream.write(channels)
+    stream.write(struct.pack("<I12f", 80, left, top, 0.0, right, top, 0.0, left, bottom, 0.0, right, bottom, 0.0))
+    stream.write(bytes(32))  # Four zero native UV vectors.
+    stream.write(struct.pack("<I4f2f2fI4ffII", 0, *bounds, 0.0, 0.0, -1.0, -1.0, 0, ppu, pixel_pivot[0], ppu, pixel_pivot[1], 1.0, 0, 0))
+    return stream.getvalue()
+
+
 def object_file(pc, selected, destination):
     """Reuse original player-object bodies and source type identities.
 
@@ -119,26 +192,33 @@ def object_file(pc, selected, destination):
         offset = 0
         for target in selected["objects"]:
             row = objects[target["source_path_id"]]
-            if row["bytes"] != target["bytes"]:
+            if row["bytes"] != target.get("source_bytes", target["bytes"]):
                 raise ValueError("original player object size drift")
-            typ = original["types"][row["type_id"]]
+            typ = dict(original["types"][row["type_id"]])
+            if typ["class_id"] == 114:
+                if len(selected["objects"]) != 1 or "script" not in selected:
+                    raise ValueError("only standalone scripted player objects are qualified")
+                typ["script_type"] = 0
             if typ not in types:
                 types.append(typ)
             offset = (offset + 7) // 8 * 8
             identity = target["path_id"]
-            rows.append({"path_id": identity, "offset": offset, "bytes": row["bytes"], "type_id": types.index(typ)})
+            rows.append({"path_id": identity, "offset": offset, "bytes": target["bytes"], "type_id": types.index(typ)})
             selections[identity] = (target, row)
-            offset += row["bytes"]
+            offset += target["bytes"]
         layout = {
             "engine": original["engine"],
             "platform": 13,
             "trees": False,
             "types": types,
             "objects": rows,
-            "scripts": [],
+            "scripts": [selected["script"]] if "script" in selected else [],
             "externals": [{"empty": "", "guid": bytes(16), "type": 0, "path": selected["texture"]}]
             if "texture" in selected
-            else [original["externals"][index] for index in selected["externals"]],
+            else [
+                {"empty": "", "guid": bytes(16), "type": 0, "path": index} if isinstance(index, str) else original["externals"][index]
+                for index in selected["externals"]
+            ],
             "ref_types": [],
             "user": "",
         }
@@ -152,8 +232,14 @@ def object_file(pc, selected, destination):
             if types[target["type_id"]]["class_id"] == 213:
                 if len(selected["objects"]) != 1:
                     raise ValueError("only standalone sprite player files are qualified")
+                if selected.get("full_rectangle", False):
+                    data = full_rectangle_sprite(data, selected["crop_rectangle_offset"])
+                elif "crop_rectangle_offset" in selected:
+                    data = sprite_crop(data, selected["crop_rectangle_offset"])
                 data = sprite_key(data, selected["file"])
             data = OBJECTS.remap(data, selection.get("references", []))
+            if types[target["type_id"]]["class_id"] == 114 and list(struct.unpack_from("<iq", data, 16)) != selected["script"]:
+                raise ValueError("player object script relationship differs")
             if hashlib.sha256(data).hexdigest() != selection["sha256"]:
                 raise ValueError("produced player object differs")
             return io.BytesIO(data)
@@ -230,7 +316,10 @@ def produce(profile_path, profile_sha256, pc, sdk, converter, converter_receipt_
     if sha(profile_path) != profile_sha256:
         raise ValueError("player-data profile drift")
     profile = json.loads(profile_path.read_text())
-    if set(profile) != {"input_id", "sources", "outputs", "project_assemblies", "font", "text_assets", "sprites"} or profile["input_id"] != INPUT_ID:
+    if (
+        set(profile) - {"script_objects"} != {"input_id", "sources", "outputs", "project_assemblies", "font", "text_assets", "sprites"}
+        or profile["input_id"] != INPUT_ID
+    ):
         raise ValueError("unknown player-data profile")
     pc, sdk, converter = [Path(path).resolve(strict=True) for path in (pc, sdk, converter)]
     if any(not path.is_dir() for path in (pc, sdk, converter)):
@@ -298,12 +387,13 @@ def produce(profile_path, profile_sha256, pc, sdk, converter, converter_receipt_
         object_file(pc, font, output / (TARGET + name))
         result["files"][TARGET + name] = {**profile["outputs"][name], "source_role": "pc-objects", "source": font["source"]["path"]}
         sprites = profile["sprites"]
-        for selected in sprites["files"]:
-            name = selected["file"]
+        selections = [{"source": sprites["source"], **selected} for selected in sprites["files"]] + profile.get("script_objects", [])
+        for selection in selections:
+            name = selection["file"]
             if name in ("", ".", "..") or PurePosixPath(name).name != name or "\\" in name:
                 raise ValueError("unsafe sprite player filename")
-            object_file(pc, {"source": sprites["source"], **selected}, output / (TARGET + name))
-            result["files"][TARGET + name] = {**profile["outputs"][name], "source_role": "pc-objects", "source": sprites["source"]["path"]}
+            object_file(pc, selection, output / (TARGET + name))
+            result["files"][TARGET + name] = {**profile["outputs"][name], "source_role": "pc-objects", "source": selection["source"]["path"]}
         text_files(profile_path.parent.resolve(strict=True), pc, profile["text_assets"], output)
         for item in profile["text_assets"]["files"]:
             name = item["file"]

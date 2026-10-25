@@ -43,6 +43,40 @@ def remap(body, references):
     return bytes(result)
 
 
+def demote_material_keywords(body):
+    """Retain original keywords as invalid for the qualified dummy shader.
+
+    The authored dummy shader declares no material keywords. Preserve the
+    original valid-then-invalid order, every keyword string and all other
+    original material values; no shader/material payload comes from a recipe.
+    """
+    stream = io.BytesIO(body)
+
+    def string():
+        size = B.unpack(stream, "<I")[0]
+        B.exact(stream, size)
+        B.exact(stream, -stream.tell() % 4)
+
+    string()  # Original material name.
+    B.exact(stream, 12)  # Shader PPtr, relocated separately.
+    start = stream.tell()
+    valid_count = B.unpack(stream, "<I")[0]
+    if valid_count > len(body) // 4:
+        raise ValueError("invalid material keyword count")
+    valid_start = stream.tell()
+    for _ in range(valid_count):
+        string()
+    valid_end = stream.tell()
+    invalid_count = B.unpack(stream, "<I")[0]
+    if invalid_count > len(body) // 4:
+        raise ValueError("invalid material keyword count")
+    invalid_start = stream.tell()
+    for _ in range(invalid_count):
+        string()
+    end = stream.tell()
+    return body[:start] + struct.pack("<II", 0, valid_count + invalid_count) + body[valid_start:valid_end] + body[invalid_start:end] + body[end:]
+
+
 def aligned_string(stream, value):
     data = value.encode("utf-8")
     stream.write(struct.pack("<I", len(data)) + data)
@@ -161,6 +195,10 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256):
                     raise ValueError("original object body drift")
                 body = remap(body, selected.get("references", []))
                 typ = metadata["types"][row["type_id"]]
+                if "keyword_policy" in selected:
+                    if typ["class_id"] != 21 or selected["keyword_policy"] != "dummy-shader-demote-valid":
+                        raise ValueError("unqualified material keyword policy")
+                    body = demote_material_keywords(body)
             else:
                 source = selected["type_source"]
                 candidates = [row for row in sources[source][3]["types"] if row["class_id"] == 142]
