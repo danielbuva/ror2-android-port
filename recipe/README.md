@@ -3035,6 +3035,7 @@ source value; equivalent source wind/mesh relationships remain explicit.
 The compact JSON decodes identically to the audited profile. No protected body,
 type tree, media, private path, credential, account or redistribution grant is
 included. J1155 owns the complete host result; phone qualification remains open.
+
 The four compressed hierarchy-record recipes contain only original bundle,
 member and object selectors/hashes plus destination identities, verification
 hashes and checked PPtr relationships. They preserve every original non-PPtr
