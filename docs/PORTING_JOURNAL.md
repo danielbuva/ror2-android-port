@@ -40292,3 +40292,83 @@ not the root manifest's imported-artifact MD4. Complete catalog emission still
 waits for independently produced active files and source-metadata admission.
 No accepted catalog or integration manifest becomes a provider. Revisit this
 scene only on source/profile drift or a failed host/Android contract.
+
+## J1136 — Bound native cubemap residue with omitted original PC sources
+
+2026-10-25. Fixed J850 APK SHA-256
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+**Host-only result:** three newly located original PC sources produce zero exact
+matches across six independent comparisons. The native residue remains
+13 Cubemap records, six distinct pixel groups and 4,785,168 encoded pixel bytes.
+No device command, Editor, game build, installation or launch occurs.
+
+**Hypothesis and prior art.** The existing HDR source transform may reproduce
+native reflections from original baked pixels omitted by the earlier census.
+Consulted `community-prior-art.md`, J332 and J1128. Pinned AssetRipper
+`1ac666f` LightingDataProcessor adds the generated sky reference but does not
+reconstruct the missing native probe table; ExrWriter retains the already
+qualified half-conversion contract. These explain source interpretation, not
+accepted pixel production. No new renderer, bake, replacement lighting or
+parameter sweep is introduced.
+
+**New source lineage.** The prior native-scene filename filter omits the generic
+DLC1 scene bundle. Its original Promo scene contains two baked probes whose
+owner names and exact positions resolve cube 25 to target cube 1, and cube 27
+to target cube 2. Both source objects are BC6H, usage 0 and colour 0: respectively
+128 pixels/eight mips and 512 pixels/ten mips. The bundle SHA-256 is
+`edd7aefc758ed50170cc71670538a1171a49bc7ebe535d62dc83996d3e88a418`.
+Its sky cube 26 has the already tested Snowy sky's decoded top pixels; that
+transformation is not repeated.
+
+The original PC player `level0` supplies an additional 128-pixel/eight-mip BC6H
+sky cube outside the bundle census. Its `level0.resS` extent is 131,232 bytes,
+SHA-256 `ccb4049cf09c76910c4de037d80f69657126d30cdcbf54c25edbd1ef2e3dcc4a`.
+Its compressed input differs from the previously inspected Splash source.
+Original level0 and accepted Moon reference the same Default-Skybox material;
+all material fields match except the relocated shader pointer. The original PC
+Moon instead uses a different sky material. That is a source-candidate clue,
+not proof of pixel identity or a derivation rule.
+
+**Method and evidence.** Current public `texture_produce.py` `cube-hdr` produces
+the three candidate pixel outputs from original input and the pinned v11 tools.
+Private adapters supply selectors and import/storage settings; produced bytes
+are persisted before independent target comparison. The two Promo bodies also
+pass independent serialization/projection checks. Substituting target pixels
+only in the private diagnostic makes those bodies exact, isolating the unresolved
+pixel transform; no such substitution enters a producer, public recipe or pack.
+The level0 source is transformed once and compared against the four distinct
+128-pixel target groups. Existing Snowy/Moon conversions are not rerun.
+
+| Source / target | Matching encoded bytes | Exact |
+| --- | ---: | --- |
+| Promo probe 25 / Promo cube 1 | 11,801 / 65,616 | No |
+| Promo probe 27 / Promo cube 2 | 318,027 / 1,048,656 | No |
+| level0 sky / Moon sky | 15,870 / 65,616 | No |
+| level0 sky / Snowy first probe | 19,873 / 65,616 | No |
+| level0 sky / Snowy sky | 28,117 / 65,616 | No |
+| level0 sky / Promo first probe | 10,523 / 65,616 | No |
+
+Private evidence is under
+`work/coordination/accepted-build-reconstruction/media-source-v1/`:
+`native-cube-omitted-source-lineage-review-v2.md`,
+`cubemap-source-v1/promo-native-source-v1/`,
+`cubemap-source-v1/promo-native-source-v1-level0/` and their scripts/review.
+The combined terminal `cubemap-source-v1/native-new-sources-v1-done.json`
+has SHA-256
+`7ffa45699512113bc4968d84b61f77180eee61a86dc524729f48f9858a4159c6`;
+it pins original/tool/target inputs, persisted outputs and every face/mip check.
+Producer file SHA-256 is
+`ea29094e9f8e4740329bb84ee4b59e5d4b5c7a989cf0ea44924c9b7519cadb14`;
+v11 descriptor is
+`ad05fa2b534dd80b143fbe90787e4b8de8dcb6eaaa2b1b9edc8eb488e3fa0bae`.
+Initial level0 stripped-schema adapter failures occur before conversion; corrected
+source-body decoding admits exactly one transformation. No public code changes.
+
+**First failure and revisit.** Original source identity and object layout are
+insufficient: every new candidate's encoded pixels differ. Keep all 13 excluded
+from the qualified 110-record profile. The exact missing pixel derivation,
+including any import or prefilter step, remains unknown; these mismatches do not
+establish that rendering or rebaking is necessary. Revisit only with new source
+lineage or a measured source-only transform. No target pixel fallback, repeated
+parameter search, final-file readiness closure or phone-install claim follows.
+Continue the independently unblocked guarded Android producer qualification.
