@@ -73,7 +73,7 @@ def cpu_temperature(text):
     return max(values)
 
 
-def cooldown_temperatures(text):
+def cooldown_temperatures(text, *, admission=False):
     physical, excluded, cpu = [], [], []
     for line in text.splitlines():
         fields = line.split()
@@ -89,6 +89,12 @@ def cooldown_temperatures(text):
             raise RuntimeError("Invalid all-zone thermal value") from error
         if name in NON_TEMPERATURE_ZONES:
             excluded.append(dict(type=name, raw=value, reason="Non-temperature battery/current/voltage level"))
+            continue
+        if admission and value <= -30000:
+            exclusion = dict(type=name, raw=value, reason="Unavailable thermal sentinel at or below -30 C")
+            if len(fields) == 3:
+                exclusion["path"] = fields[2]
+            excluded.append(exclusion)
             continue
         if not 0 < value < 150000:
             raise RuntimeError("Unknown/sentinel all-zone thermal value: " + name)
@@ -150,12 +156,12 @@ class _GameThermalOwner:
             self.previous = at
             observation["gap_seconds"] = gap
             observation["all_zones_raw"] = text
-            maximum, value, excluded = cooldown_temperatures(text)
+            maximum, value, excluded = cooldown_temperatures(text, admission=all_zones)
             if all_zones:
                 self.runtime_zones = [
                     (fields[0], fields[2])
                     for line in text.splitlines()
-                    if len(fields := line.split()) == 3 and fields[1] != "UNREADABLE" and fields[0] not in NON_TEMPERATURE_ZONES
+                    if len(fields := line.split()) == 3 and fields[1] != "UNREADABLE" and fields[0] not in NON_TEMPERATURE_ZONES and int(fields[1]) > -30000
                 ]
                 self.excluded_zones = excluded
             else:

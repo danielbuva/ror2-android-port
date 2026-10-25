@@ -159,9 +159,13 @@ samples and refusing gaps above 1 s. Gameplay continues through 80 C; any
 readable physical temperature above 80 C aborts the batch without retry.
 Before each stage, cool every readable physical temperature zone to at most
 50 C with the OLED asleep. Record unreadable temperature interfaces as exclusions
-with their type/path; they do not establish cool or absent sensors. Missing
-readable CPU coverage, numeric sentinels, malformed readings, ADB failure or
-failed supervision still abort. Exact known electrical pseudo-zones are excluded.
+with their type/path; they do not establish cool or absent sensors. Admission
+readings at or below -30 C are also unavailable: record their type/path/raw value
+and exclude them. A previously valid zone becoming a sentinel during gameplay
+still aborts. Missing readable CPU coverage, other invalid numeric readings,
+malformed readings, ADB failure or failed supervision also abort. Exact known
+electrical pseudo-zones are excluded. The sentinel policy and host fixtures are
+recorded in [J1141](PORTING_JOURNAL.md#j1141--exclude-unavailable-admission-thermal-sentinels).
 Record CPU and all-zone peaks and retain runtime or unexpected errors as first
 failures, following
 [J1131](PORTING_JOURNAL.md#j1131--supervise-all-readable-gameplay-thermal-zones).

@@ -264,6 +264,7 @@ class PrototypeActionTests(unittest.TestCase):
         self.calls.clear()
         self.dispatch("phone-texture-check", target="work/authored-project")
         self.assertEqual(self.calls, [dict(module="phone_texture_oracle", function="run_editor", args=("work/authored-project",), kwargs={})])
+
     def test_alpha_batch_requires_explicit_identity_and_known_done_file(self):
         for options in (
             (),

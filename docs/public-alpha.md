@@ -212,7 +212,10 @@ qualification remain separate from these laboratory installs.
       host-qualifies the clarified readable-zone admission/runtime policy.
       [J1137](PORTING_JOURNAL.md#j1137--separate-thermal-admission-discovery-from-runtime-sampling)
       separates admission discovery from strict runtime sampling after a prelaunch
-      timeout. Fresh
+      timeout.
+      [J1141](PORTING_JOURNAL.md#j1141--exclude-unavailable-admission-thermal-sentinels)
+      host-qualifies the revised admission-only unavailable-sentinel policy;
+      previously valid sensors becoming sentinels still abort gameplay. Fresh
       device qualification remains open.
       Injected persistence states do not establish a power-cut
       or filled-filesystem result.

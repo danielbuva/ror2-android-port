@@ -42331,3 +42331,35 @@ The revised shared handoff and `thermal-timeout-ready.done.json` select the exac
 helper for Main's next controls continuation. Fresh device sampling cadence and
 all alpha stability/physical-input acceptance gates remain open.
 
+## J1141 — Exclude unavailable admission thermal sentinels
+
+**Hypothesis/scope:** Main's next R58 continuation completes admission discovery
+but refuses a readable numeric sentinel before launching any control. The
+orchestrator's explicit revised policy classifies admission values at or below
+-30 C as unavailable sensors, with recorded exclusions. This is a generic device
+supervision change; no game reconstruction or runtime behavior changes.
+
+**Change:** the existing parser excludes these values only during idle admission,
+retaining type, path and raw value. Runtime reads only admitted valid physical
+paths. A previously valid zone becoming a sentinel still refuses supervision.
+Readable CPU coverage remains mandatory, which also prevents admission without
+any valid CPU/GPU/battery/skin sensor. Malformed values, other invalid numeric
+readings, failed reads and missing coverage still refuse. The 50 C admission,
+above-80 C abort and one-second runtime gap limits remain unchanged.
+
+**Validation:** 35 focused batch host fixtures, five sustained-owner regression
+fixtures and Ruff pass. Controls cover both observed sentinel values, the exact
+-30 C admission boundary, retained exclusions, runtime path selection, valid-to-
+sentinel runtime transitions and absent valid CPU coverage. No new device command,
+build, installation or gameplay qualification occurs in this checkpoint.
+
+**Evidence/limits:** Main owns the full failed-run result. Its retained private
+`work/coordination/main-port-r58/controls-timeout-retry/plain-thermal.jsonl`
+records the unavailable readings and
+`work/coordination/main-port-r58/controls-timeout-retry/device.done.json`
+records no launched controls, process/selector absence, OLED asleep and lease
+release. The retained installed R58 APK is
+`4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`, source
+`55149b48`. The revised shared handoff pins this helper for one further Main
+retry. Fresh sampling cadence and all alpha device acceptance gates remain open.
+

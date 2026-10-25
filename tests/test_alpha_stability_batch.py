@@ -399,7 +399,7 @@ class GameThermalOwnerTests(unittest.TestCase):
         self.assertEqual(self.owner.peak_cpu_celsius, 49)
 
     def test_unknown_sentinel_or_missing_cpu_refuses_cooldown_with_raw_trace(self):
-        for text in ("cpu-0 49000\nwireless -40000", "pm8550_tz 49000", "cpu-0 49000\nunknown 0", "cpu-0 49000\nbroken"):
+        for text in ("cpu-0 49000\nwireless -29999", "pm8550_tz 49000", "cpu-0 49000\nunknown 0", "cpu-0 49000\nbroken"):
             with self.subTest(text=text):
                 self.device.cmd.return_value = text
                 with self.assertRaises(RuntimeError):
@@ -408,6 +408,42 @@ class GameThermalOwnerTests(unittest.TestCase):
                 self.assertEqual(row["all_zones_raw"], text)
                 self.assertIn("error", row)
         self.device.launch.assert_not_called()
+
+    def test_admission_records_sentinels_and_runtime_reads_only_valid_paths(self):
+        self.device.display.return_value = True
+        self.device.cmd.return_value = (
+            "cpu-0 49000 /thermal_zone0/temp\nwls-therm -40960 /thermal_zone89/temp\nwireless -40000 /thermal_zone93/temp\nskin -30000 /thermal_zone95/temp"
+        )
+        self.owner.cool()
+        row = json.loads(self.owner.trace.read_text())
+        self.assertEqual(row["maximum_zone_celsius"], 49)
+        self.assertEqual(
+            [(e["type"], e["raw"], e["path"]) for e in row["excluded_zones"]],
+            [
+                ("wls-therm", -40960, "/thermal_zone89/temp"),
+                ("wireless", -40000, "/thermal_zone93/temp"),
+                ("skin", -30000, "/thermal_zone95/temp"),
+            ],
+        )
+        self.device.cmd.return_value = "50000"
+        self.assertEqual(self.owner.sample(), 50)
+        self.device.cmd.assert_called_with("shell", "cat /thermal_zone0/temp", timeout=0.7)
+        runtime = json.loads(self.owner.trace.read_text().splitlines()[-1])
+        self.assertEqual(runtime["excluded_zones"], row["excluded_zones"])
+
+    def test_previously_valid_sensor_becoming_sentinel_refuses_runtime(self):
+        for raw in (-30000, -40000, -40960):
+            with self.subTest(raw=raw):
+                self.device.cmd.return_value = "cpu-0 49000 /thermal_zone0/temp\nskin 30000 /thermal_zone1/temp"
+                self.owner.sample(all_zones=True)
+                self.device.cmd.return_value = "49000\n" + str(raw)
+                with self.assertRaisesRegex(RuntimeError, "Unknown/sentinel.*skin"):
+                    self.owner.sample()
+
+    def test_sentinel_cpu_does_not_supply_valid_coverage(self):
+        self.device.cmd.return_value = "cpu-0 -40000 /thermal_zone0/temp\nwls-therm -40960 /thermal_zone89/temp\nwireless -40000 /thermal_zone93/temp"
+        with self.assertRaisesRegex(RuntimeError, "No readable CPU"):
+            self.owner.sample(all_zones=True)
 
     def test_cooldown_retains_explicit_non_temperature_exclusions(self):
         for name in batch.NON_TEMPERATURE_ZONES:
