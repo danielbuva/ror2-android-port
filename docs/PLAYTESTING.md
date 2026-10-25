@@ -157,8 +157,12 @@ not establish a managed-memory bound.
 The combined batch supervises temperature zones independently, targeting 250 ms
 samples and refusing gaps above 1 s. Gameplay continues through 80 C; any
 readable physical temperature above 80 C aborts the batch without retry.
-Before each stage, cool every readable physical temperature zone to at most
-50 C with the OLED asleep. Record unreadable temperature interfaces as exclusions
+Before each stage, cool readable CPU/GPU/battery/skin zones to at most 50 C
+with the OLED asleep. Record other physical zones, including power-management,
+charger and USB sensors, as excluded from admission only; continue sampling
+them and abort if any exceeds 80 C, following
+[J1148](PORTING_JOURNAL.md#j1148--restrict-gameplay-admission-to-cpu-gpu-battery-and-skin).
+Record unreadable temperature interfaces as exclusions
 with their type/path; they do not establish cool or absent sensors. Admission
 readings at or below -30 C are also unavailable: record their type/path/raw value
 and exclude them. A previously valid zone becoming a sentinel during gameplay
