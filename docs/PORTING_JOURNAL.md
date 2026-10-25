@@ -38567,6 +38567,19 @@ evidence: `android-sdk-phone-v1-instrumentation.log`,
 `android-sdk-phone-v2-report.json` and
 `android-sdk-phone-v2-compile-helper{.log,.process.json}`.
 
+The third ordinary-app run passes the Java helper and manifest formatter, then
+fails resource compilation before AAPT2 starts: QEMU cannot find its installed
+`libandroid-shmem.so` dependency. The two resource invocations had likewise
+discarded the host library path; QEMU's explicit guest library setting cannot
+replace its own host dependencies. Both now retain the app host environment and
+their own temporary directory. The existing regression fixture checks all five
+Java/QEMU launches, including distinct host and guest library paths. Private
+evidence: `android-sdk-phone-v3-report.json` and
+`android-sdk-phone-v3-compile-resources{.log,.process.json}`. All 21 affected SDK
+and owner-backend tests pass; Ruff passes. The broader SDK wildcard also selects
+an unrelated metadata test that needs CI's module search path; that invocation
+fails at import and supplies no metadata result.
+
 **Open and revisit.** Corrected ordinary-app SDK execution remains open.
 The complete original-input native job and full content assembly also remain
 open. No game APK is assembled, installed or launched by this result, and no

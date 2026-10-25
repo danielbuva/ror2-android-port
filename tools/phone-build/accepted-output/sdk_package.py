@@ -131,7 +131,10 @@ def resources(sdk, android_jar, aapt, output, *, formatter, prefix=()):
             env=dict(os.environ, LC_ALL="C", TMPDIR=str(output / "tmp")),
         )
         NATIVE.invoke(
-            [*prefix, str(aapt), "compile", "--no-crunch", "--dir", str(output / "res"), "-o", str(output / "compiled.zip")], output, "compile-resources"
+            [*prefix, str(aapt), "compile", "--no-crunch", "--dir", str(output / "res"), "-o", str(output / "compiled.zip")],
+            output,
+            "compile-resources",
+            env=dict(os.environ, LC_ALL="C", TMPDIR=str(output / "tmp")),
         )
         NATIVE.invoke(
             [
@@ -162,6 +165,7 @@ def resources(sdk, android_jar, aapt, output, *, formatter, prefix=()):
             ],
             output,
             "link-resources",
+            env=dict(os.environ, LC_ALL="C", TMPDIR=str(output / "tmp")),
         )
         with zipfile.ZipFile(output / "resources.apk") as archive:
             for name in archive.namelist():

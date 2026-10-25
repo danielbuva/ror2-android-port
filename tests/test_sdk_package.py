@@ -18,7 +18,7 @@ SPEC.loader.exec_module(PACKAGE)
 
 
 class SDKPackageTests(unittest.TestCase):
-    def test_produce_preserves_app_host_environment_for_all_jvm_launches(self):
+    def test_produce_preserves_app_host_environment_for_java_and_qemu_launches(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp).resolve()
             sdk = root / "sdk"
@@ -53,16 +53,17 @@ class SDKPackageTests(unittest.TestCase):
                 "TMPDIR": str(root / "inherited-tmp"),
             }
             jvm_calls = []
+            aapt_calls = []
 
             def process(argv, *, cwd, env, **kwargs):
-                # Keep NATIVE.invoke real so its sanitized default cannot hide a
-                # missing caller environment at any of the three JVM sites.
+                # Keep NATIVE.invoke real so its sanitized default cannot hide
+                # lost JVM settings or QEMU's own native-library dependencies.
+                for name in ("ROR2LAB_BUILD_JVM", "ROR2LAB_BUILD_JAVA_HOME", "HOME", "LD_LIBRARY_PATH"):
+                    self.assertEqual(env.get(name), environment[name])
+                self.assertEqual(env.get("LC_ALL"), "C")
+                self.assertEqual(env.get("TMPDIR"), str(cwd / "tmp"))
+                self.assertTrue((cwd / "tmp").is_dir())
                 if argv[0] in (str(tools["java"]), str(tools["javac"])):
-                    for name in ("ROR2LAB_BUILD_JVM", "ROR2LAB_BUILD_JAVA_HOME", "HOME", "LD_LIBRARY_PATH"):
-                        self.assertEqual(env.get(name), environment[name])
-                    self.assertEqual(env.get("LC_ALL"), "C")
-                    self.assertEqual(env.get("TMPDIR"), str(cwd / "tmp"))
-                    self.assertTrue((cwd / "tmp").is_dir())
                     if argv[0] == str(tools["javac"]):
                         jvm_calls.append("compile-helper")
                     elif "manifest" in argv:
@@ -75,8 +76,12 @@ class SDKPackageTests(unittest.TestCase):
                         for name in ("classes.dex", "classes2.dex", "classes3.dex", "classes4.dex"):
                             (dex / name).write_bytes(b"authored dex")
                 elif "compile" in argv:
+                    self.assertEqual(argv[:3], ["authored-qemu", "-E", "LD_LIBRARY_PATH=authored-guest-libs"])
+                    aapt_calls.append("compile")
                     (cwd / "compiled.zip").write_bytes(b"authored compiled resources")
                 else:
+                    self.assertEqual(argv[:3], ["authored-qemu", "-E", "LD_LIBRARY_PATH=authored-guest-libs"])
+                    aapt_calls.append("link")
                     self.assertIn("link", argv)
                     (cwd / "R.txt").write_text("authored symbols")
                     with zipfile.ZipFile(cwd / "resources.apk", "w") as archive:
@@ -104,10 +109,12 @@ class SDKPackageTests(unittest.TestCase):
                         "javac": str(tools["javac"]),
                         "jars": {"tool.jar": str(tools["tool.jar"])},
                         "output": str(root / "output"),
+                        "aapt_prefix": ["authored-qemu", "-E", "LD_LIBRARY_PATH=authored-guest-libs"],
                     }
                 )
             self.assertTrue(result["success"])
             self.assertEqual(jvm_calls, ["compile-helper", "format-manifest", "produce-dex"])
+            self.assertEqual(aapt_calls, ["compile", "link"])
 
     def test_manifest_retains_sdk_entry_points_and_applies_fixed_target(self):
         with tempfile.TemporaryDirectory() as temp:
