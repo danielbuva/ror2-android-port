@@ -165,6 +165,19 @@ content production and phone/runtime qualification remain open. Unity's textual
 build-side `.manifest` files are excluded by the existing APK readiness checker;
 their build-cache hashes are not reproduced by this slice.
 
+`owner-enemy-reward-objects.json` uses the same owner with
+`--sdk OWNER_UNITY_APP_ROOT`. Its pinned SDK input is
+`Contents/Resources/unityeditorresources`; the Editor is never started.
+Original MonoScript and MonoBehaviour selectors feed the existing
+`scripts/lab/script_identity.py::properties_hash` helper. Original identity
+strings and custom schema fields, combined with the SDK editor base schema,
+generate the script properties/type hash. The recipe includes no hash literal
+or target type template. Every other script/type byte remains source-owned.
+SDK hashes are checked before/after, and the complete serialized member/bundle
+still must match its comparison hashes. Physical preload partitions and sorted
+container paths are independent; native default resources retain their SDK
+GUID/path rather than an AssetBundle archive path.
+
 ## Produce named player-data files
 
 `player_data.py` produces 153 canonical `apk/assets/bin/Data/...` files:

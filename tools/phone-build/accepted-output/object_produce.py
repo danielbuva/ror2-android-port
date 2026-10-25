@@ -17,8 +17,8 @@ import struct
 import time
 
 
-def module(name):
-    spec = importlib.util.spec_from_file_location("_objects_" + name, Path(__file__).with_name(name + ".py"))
+def module(name, path=None):
+    spec = importlib.util.spec_from_file_location("_objects_" + name, path or Path(__file__).with_name(name + ".py"))
     value = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(value)
     return value
@@ -120,12 +120,15 @@ def asset_bundle(selected, identities):
         stream.write(struct.pack("<iq", file_id, path_id))
     stream.write(struct.pack("<I", len(assets)))
     start = 0
+    containers = []
     for asset in assets:
         if asset["root"] not in identities:
             raise ValueError("container root references an absent local object")
+        containers.append((asset, start))
+        start += len(asset["preload"])
+    for asset, start in sorted(containers, key=lambda item: item[0]["path"].lower()):
         aligned_string(stream, asset["path"].lower())
         stream.write(struct.pack("<iiiq", start, len(asset["preload"]), 0, asset["root"]))
-        start += len(asset["preload"])
     stream.write(struct.pack("<iiiqI", 0, 0, 0, 0, 1))
     aligned_string(stream, selected["name"])
     stream.write(struct.pack("<I", len(selected["dependencies"])))
@@ -168,10 +171,11 @@ def make_layout(selected, records):
         bodies[identity] = row["body"]
         objects.append({"path_id": identity, "offset": offset, "bytes": len(row["body"]), "type_id": types.index(typ)})
         offset += len(row["body"])
-    # Unity's Android built-in Sprite shader lives outside the AssetBundles.
+    # Unity's native resources live outside the AssetBundles.
+    native = {"Resources/unity_builtin_extra": 0x0F, "Library/unity default resources": 0x0E}
     externals = [
-        {"empty": "", "guid": bytes(8) + b"\x0f" + bytes(7), "type": 0, "path": name}
-        if name == "Resources/unity_builtin_extra"
+        {"empty": "", "guid": bytes(8) + bytes([native[name]]) + bytes(7), "type": 0, "path": name}
+        if name in native
         else {"empty": "", "guid": bytes(16), "type": 0, "path": "archive:/" + name + "/" + name}
         for name in selected["externals"]
     ]
@@ -245,11 +249,36 @@ def record_extent(path, row):
     return data
 
 
-def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, packs=()):
+def source_record(sources, selector):
+    source, identity = selector
+    _, _, member, metadata, objects = sources[source]
+    row = objects[identity]
+    member.seek(metadata["data_offset"] + row["offset"])
+    return B.exact(member, row["bytes"]), metadata["types"][row["type_id"]]
+
+
+def script_fields(body):
+    """Read original release MonoScript identity and its properties-hash extent."""
+    stream = io.BytesIO(body)
+
+    def string():
+        size = struct.unpack("<I", B.exact(stream, 4))[0]
+        value = B.exact(stream, size).decode("utf-8")
+        stream.seek((stream.tell() + 3) // 4 * 4)
+        return value
+
+    string()  # m_Name
+    B.exact(stream, 4)  # m_ExecutionOrder
+    offset = stream.tell()
+    B.exact(stream, 16)
+    return offset, (string(), string(), string())
+
+
+def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, packs=(), sdk=None):
     if B.sha(profile_path) != profile_sha256:
         raise ValueError("object profile drift")
     profile = json.loads(profile_path.read_text())
-    if set(profile) != {"input_id", "sources", "bundle", "objects"} or profile["input_id"] != M.INPUT_ID:
+    if set(profile) - {"sdk"} != {"input_id", "sources", "bundle", "objects"} or profile["input_id"] != M.INPUT_ID:
         raise ValueError("unknown object input profile")
     pc = pc.resolve(strict=True)
     parent = output.parent.resolve(strict=True)
@@ -265,6 +294,23 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
     started = time.monotonic()
     receipt = {"success": False, "input_id": M.INPUT_ID, "profile_sha256": profile_sha256, "objects": 0, "object_bytes": 0}
     try:
+        sdk_path, sdk_tree = None, None
+        if "sdk" in profile:
+            if sdk is None:
+                raise ValueError("script properties require the pinned owner SDK")
+            sdk_path = M.safe_input(sdk.resolve(strict=True), profile["sdk"]["path"])
+            if output.is_relative_to(sdk.resolve()) or B.sha(sdk_path) != profile["sdk"]["sha256"]:
+                raise ValueError("SDK script metadata drift or output overlap")
+            with sdk_path.open("rb") as stream:
+                stream.size = sdk_path.stat().st_size
+                metadata = W.read_serialized(stream)
+            row = next(row for row in metadata["objects"] if row["path_id"] == profile["sdk"]["path_id"])
+            typ = metadata["types"][row["type_id"]]
+            if typ["class_id"] != 114:
+                raise ValueError("SDK script base is not MonoBehaviour")
+            sdk_tree = typ["tree"]
+        properties = {}
+        identity_owner = module("script_identity", Path(__file__).resolve().parents[3] / "scripts/lab/script_identity.py") if sdk_tree is not None else None
         sources = []
         for selected in profile["sources"]:
             path = M.safe_input(pc, selected["path"])
@@ -332,6 +378,27 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                     raise ValueError("missing original AssetBundle type")
                 typ = candidates[0]
                 body = asset_bundle(selected_bundle, identities)
+            if "properties_hash" in selected:
+                if sdk_tree is None:
+                    raise ValueError("script properties require SDK metadata")
+                selectors = selected["properties_hash"]
+                key = tuple(selectors["script"]), tuple(selectors["behaviour"])
+                if key not in properties:
+                    script, script_type = source_record(sources, selectors["script"])
+                    _, behaviour_type = source_record(sources, selectors["behaviour"])
+                    if script_type["class_id"] != 115 or behaviour_type["class_id"] != 114:
+                        raise ValueError("script properties selectors have wrong classes")
+                    _, names = script_fields(script)
+                    properties[key] = identity_owner.properties_hash(*names, behaviour_type["tree"], sdk_tree)
+                value = properties[key]
+                if typ["class_id"] == 115:
+                    offset, _ = script_fields(body)
+                    body = body[:offset] + value + body[offset + 16 :]
+                elif typ["class_id"] == 114:
+                    typ = copy.deepcopy(typ)
+                    typ["hash"] = value
+                else:
+                    raise ValueError("script properties require MonoScript or MonoBehaviour")
             if len(body) != selected["bytes"] or hashlib.sha256(body).hexdigest() != selected["sha256"]:
                 raise ValueError("produced object differs from accepted hash")
             records.append({"path_id": selected["path_id"], "body": body, "type": typ})
@@ -389,6 +456,8 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
             if (before.st_size, before.st_mtime_ns) != (after.st_size, after.st_mtime_ns) or B.sha(path) != selected["sha256"]:
                 raise ValueError("original object input changed during production")
         check_record_packs(providers)
+        if sdk_path is not None and B.sha(sdk_path) != profile["sdk"]["sha256"]:
+            raise ValueError("SDK script metadata changed during production")
         with (output / "objects.bin").open("rb") as data:
             for line in (output / "index.jsonl").read_text().splitlines():
                 row = json.loads(line)
@@ -415,6 +484,7 @@ def main():
     parser.add_argument("--profile", type=Path, required=True)
     parser.add_argument("--profile-sha256", required=True)
     parser.add_argument("--pc", type=Path, required=True)
+    parser.add_argument("--sdk", type=Path, help="owner's pinned Unity SDK root; required only for script properties derivation")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--codec", type=Path, required=True)
     parser.add_argument("--codec-sha256", required=True)
@@ -427,7 +497,7 @@ def main():
         help="independently produced record pack and pinned result.json; repeat for each producer",
     )
     args = parser.parse_args()
-    produce(args.profile, args.profile_sha256, args.pc, args.output, args.codec, args.codec_sha256, args.record_pack)
+    produce(args.profile, args.profile_sha256, args.pc, args.output, args.codec, args.codec_sha256, args.record_pack, args.sdk)
 
 
 if __name__ == "__main__":

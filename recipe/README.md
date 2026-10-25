@@ -160,6 +160,7 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 | `owner-objective-ui-objects.json` | Private objective-UI bundle | Original object/type selectors, checked pointers, Sprite importer/crop relationships, produced texture profile and rooted container preloads. | No content body, type-tree/hash template, pixels, geometry or scalar override; audit below, 2026-10-25. | Existing `object_produce.py`; J1120 host qualification, phone gate open. |
 | `owner-teleporter-indicator-objects.json` | Private teleporter-indicator bundle | Original selectors, Sprite relationships, produced RGBA/Alpha8 profiles, dummy-material keyword policy and rooted container preloads. | No content/type/pixel/keyword literals or scalar patches; audit below, 2026-10-25. | Existing `object_produce.py`; J1120 host qualification, phone gate open. |
 | `owner-generic-pickup-objects.json` | Private generic-pickup bundle | Original rooted object/type selectors, checked PPtrs, one omitted component identity, Sprite/texture profiles and container relationships. | No content/type/pixel/template or scalar patches; audit below, 2026-10-25. | Existing `object_produce.py`; J1120 host qualification, phone gate open. |
+| `owner-enemy-reward-objects.json` | Private enemy-reward bundle | Original object/script/behaviour selectors, pinned SDK base-schema selector, checked PPtrs, component omissions and rooted container relationships. | No body, type tree/hash or scalar template; audit below, 2026-10-25. | Existing `object_produce.py`; complete host and phone qualification tracked separately. |
 | `owner-teleport-material-objects.json` | Private teleport-material bundle | Original material/type selectors, checked references, named dummy-shader keyword policy and container relationships. | No material/shader body, keyword literal, numeric override or target template; audit below, 2026-10-25. | Source-only `object_produce.py`; J1117 host qualification, phone gate open. |
 | `owner-death-effect-objects.json` | Private replay player-death-effect bundle | Rooted original graph/script selectors, checked pointer extents, preload/dependency identities and hashes. | No body, type-tree snapshot, scalar/curve override or target delta; audit below, 2026-10-25. | Existing original-input-only `object_produce.py`; J1115 host qualification, phone gate open. |
 | `owner-pickup-objects.json` | Private replay pickup bundle | Original selectors, hashes, checked pointer extents and destination relationships. | No bodies, type trees or target deltas; full audit below, 2026-10-25. | Original-input-only `object_produce.py`; J1113 host qualification, phone gate open. |
@@ -2786,3 +2787,20 @@ only source ordinals, field-policy flags and verification hashes. It contains
 no target sample, pose, curve coefficient, range or byte patch. The existing
 pointer/attribute transformations remain checked original relationships.
 Provenance/privacy/licensing/sensitive-content audit: 2026-10-25.
+
+`owner-enemy-reward-objects.json` is audited for provenance, privacy, licensing
+and sensitive content (2026-10-25). Original PC object/body/type selectors,
+checked pointer relationships and component omissions reconstruct the selected
+rooted effects. Container roots, dependencies and preload partitions are
+audited minimum reconstruction relationships; accepted outputs informed their
+discovery but supply no body or type template. The two mesh bodies are
+unchanged original records, already covered by the source mesh qualification.
+The SDK selector names a native MonoBehaviour base schema in the separately
+supplied pinned toolchain. Original MonoScript identity strings and original
+MonoBehaviour custom fields feed the existing source hash helper. No target
+properties/type hash, serialized tree/body, protected text, pixel, geometry,
+shader, gameplay scalar, private path/device identity or credential is stored.
+Generated records, raw comparisons and source discovery remain ignored. This
+recipe grants no ownership, authentication, entitlement, SDK/game acquisition
+or redistribution capability; phone execution and complete installation remain
+separate gates.
