@@ -42526,12 +42526,22 @@ independent verification and cleanup result remain in
 post-build pruning passes. The earlier below-floor deferral is historical
 within this batch. Doctor retains the known Bootstrap FAIL.
 
-**Device boundary and next step.** R58 is uninstalled and includes the complete
-Blink correction plus R57's destination-only MainOutput selection. No device
-access or new device claim occurs in this slice. Installed/qualified facts
-remain J1105, subject to subsequent owners' receipts. Run both strict controls,
-then destination PCM and the complete Siren route after the explicit shared
-handoff and a game-aware thermal owner supporting the new 70/55/80 C policy.
-Native Engineer effects, mission completion, rare-NaN causality, PC appearance,
-full audio and normal-run acceptance remain open. R57 remains a frozen
-uninstalled predecessor.
+**Retained-data installation and first device failure.** The explicit shared
+handoff permits one detached R58 job. Installation over the owned package and
+payload sync succeed in internal storage; packaged APK bytes match the frozen
+hash, free space remains above 15 GiB, and the existing profile hash is unchanged.
+Private evidence is `work/coordination/main-port-r58/install.log`, `sync.log`,
+`pre-install-device.json` and `device.done.json`. Before any control launches,
+the shared thermal owner encounters a sysfs temperature read returning
+`Invalid argument`; no gameplay or audio acceptance follows. Owned cleanup
+verifies process/selector absence, OLED sleep and lease release. Mandatory
+post-run pruning passes. The existing R55/J1105 gameplay qualification stands.
+
+**Next step.** Reuse the shared thermal owner's correction under the clarified
+policy: record and exclude unsupported temperature reads, require every readable
+zone at or below 50 C before launch, sample at most 1 s apart and abort gameplay
+if any readable zone exceeds 80 C. Run both strict controls, then destination
+PCM and the complete Siren route under the explicit shared handoff. Native
+Engineer effects, mission completion, rare-NaN causality, PC appearance, full
+audio and normal-run acceptance remain open. R57 remains a frozen uninstalled
+predecessor.
