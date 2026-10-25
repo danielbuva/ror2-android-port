@@ -42537,8 +42537,21 @@ the shared thermal owner encounters a sysfs temperature read returning
 verifies process/selector absence, OLED sleep and lease release. Mandatory
 post-run pruning passes. The existing R55/J1105 gameplay qualification stands.
 
-**Next step.** Reuse the shared thermal owner's correction under the clarified
-policy: record and exclude unsupported temperature reads, require every readable
+**Readable-zone continuation.** After the shared owner implements the clarified
+readable-zone policy, the installed R58 continuation stops during its first
+cooldown inventory: the all-zone adb shell command exceeds its 0.7 s timeout.
+No control launches and no thermal peak is established. The first error and
+traceback are retained in
+`work/coordination/main-port-r58/controls-retry/device.done.json`, with the
+failed observation in `plain-thermal.jsonl`. The terminal receipt independently
+records process/selector absence, OLED sleep and lease release; mandatory pruning
+passes. This is a prelaunch observation failure, not a native gameplay failure.
+The phone is explicitly handed back to the owner-build workstream; no automatic
+retry is queued.
+
+**Next step.** Reuse the shared thermal owner's reviewed timeout/sampling
+correction without weakening the clarified policy: record and exclude
+unsupported temperature reads, require every readable
 zone at or below 50 C before launch, sample at most 1 s apart and abort gameplay
 if any readable zone exceeds 80 C. Run both strict controls, then destination
 PCM and the complete Siren route under the explicit shared handoff. Native
