@@ -203,7 +203,7 @@ def packed_fixture(root):
     return pc, profile_path, directory, profile, row, serialized
 
 
-def scene_fixture(root, *, preload_dependency=False, global_owner=False):
+def scene_fixture(root, *, preload_dependency=False, global_owner=False, engine="2021.3.45f2"):
     """Authored two-member scene with overlapping IDs and external scripts."""
     pc = root / "pc"
     pc.mkdir()
@@ -298,7 +298,7 @@ def scene_fixture(root, *, preload_dependency=False, global_owner=False):
     }
     serialized = {}
     for name, physical, type_ids in ((shared, [7, 8, 1, 2, 3], [0, 0, 1, 2, 3]), (main, [1, 2, 3, 4, 5], [0, 1, 2, 3, 4])):
-        layout = {"engine": "2021.3.45f2", "platform": 13, "trees": True, "ref_types": [], "user": "", **expected_layouts[name]}
+        layout = {"engine": engine, "platform": 13, "trees": True, "ref_types": [], "user": "", **expected_layouts[name]}
         offset, objects = 0, []
         for identity, type_id in zip(physical, type_ids, strict=True):
             offset = (offset + 7) // 8 * 8
@@ -310,7 +310,9 @@ def scene_fixture(root, *, preload_dependency=False, global_owner=False):
         P.W.write_serialized(stream, layout, lambda row, name=name: io.BytesIO(bodies[name][row["path_id"]]))
         serialized[name] = stream.getvalue()
     expected_bundle = io.BytesIO()
-    P.W.write_bundle(expected_bundle, [(name, 4, len(data), lambda data=data: io.BytesIO(data)) for name, data in serialized.items()], literal_lz4)
+    P.W.write_bundle(
+        expected_bundle, [(name, 4, len(data), lambda data=data: io.BytesIO(data)) for name, data in serialized.items()], literal_lz4, engine=engine
+    )
     pack = root / "pack"
     pack.mkdir()
     (pack / "objects.bin").write_bytes(b"SHAREDMAIN")
@@ -402,6 +404,8 @@ def scene_fixture(root, *, preload_dependency=False, global_owner=False):
                 "to": [1, 404],
             }
         ]
+    if engine != "2021.3.45f2":
+        profile["bundle"]["engine"] = engine
     path = root / "scene-profile.json"
     path.write_text(json.dumps(profile))
     return pc, path, profile, pack, bodies, serialized, expected_bundle.getvalue()
@@ -443,7 +447,7 @@ def rewrite_managed_source(pc, profile, mutate):
             row["source_sha256"] = digest(bodies[row["source"][1]])
 
 
-def managed_fixture(root, *, omit_master=False, disable=False):
+def managed_fixture(root, *, omit_master=False, disable=False, plugin_order=False):
     pc, path, profile, _, original_target = fixture(root)
     source = pc / "source.bundle"
     source_layout = P.W.read_serialized(P.B.Bundle(source).member("CAB-source"))
@@ -451,6 +455,8 @@ def managed_fixture(root, *, omit_master=False, disable=False):
     target_stream.size = len(original_target)
     target_layout = P.W.read_serialized(target_stream)
     names = ("CharacterMaster", "RoR2", "RoR2.dll") if omit_master else ("AuthoredBehaviour", "Fixture.Namespace", "Fixture.Assembly")
+    if plugin_order:
+        names = names[:2] + ("RoR2.dll",)
     script = io.BytesIO()
     P.aligned_string(script, "Different display name")
     script.write(struct.pack("<i", -17))
@@ -462,6 +468,8 @@ def managed_fixture(root, *, omit_master=False, disable=False):
     script.write(b"PRESERVE SCRIPT TAIL")
     source_script = script.getvalue()
     target_script = source_script[:hash_offset] + derived_hash + source_script[hash_offset + 16 :]
+    if plugin_order:
+        target_script = target_script[: hash_offset - 4] + bytes(4) + target_script[hash_offset:]
     source_behaviour = bytes(range(16)) + struct.pack("<iq", 0, 51) + b"PRESERVE BEHAVIOUR"
     if disable:
         source_behaviour = source_behaviour[:12] + b"\x01\0\0\0" + source_behaviour[16:]
@@ -502,6 +510,8 @@ def managed_fixture(root, *, omit_master=False, disable=False):
                 selected["references"][0]["offset"] = 16
                 if disable:
                     selected["disable_original_behaviour"] = True
+            elif plugin_order:
+                selected["plugin_import_default_execution_order"] = True
     script_end = (len(target_script) + 7) // 8 * 8
     target_layout["types"][1] = {**behaviour_type, "hash": derived_hash, "script_type": 0}
     if omit_master:
@@ -527,6 +537,27 @@ def managed_fixture(root, *, omit_master=False, disable=False):
 
 
 class ObjectProducerTests(unittest.TestCase):
+    def test_plugin_import_order_preserves_script_identity_and_derived_hash_in_complete_bundle(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            pc, path, profile, sdk, names, _, _, derived, bodies, serialized = managed_fixture(root, plugin_order=True)
+            real_module = P.module
+            helper = Mock(properties_hash=Mock(return_value=derived))
+            with (
+                patch.object(P, "module", side_effect=lambda name, location=None: helper if name == "script_identity" else real_module(name, location)),
+                patch.object(P.W, "codec", return_value=nullcontext(literal_lz4)),
+            ):
+                result = P.produce(path, P.B.sha(path), pc, root / "produced", Path("codec"), "pin", sdk=sdk)
+            self.assertTrue(result["success"])
+            member = P.B.Bundle(root / "produced/payload/authored-target").member("CAB-target")
+            self.assertEqual(P.B.exact(member, member.size), serialized)
+            offset, actual_names = P.script_fields(bodies[2])
+            self.assertEqual(actual_names, names)
+            self.assertEqual(bodies[2][offset - 4 : offset], bytes(4))
+            self.assertEqual(bodies[2][offset : offset + 16], derived)
+            with self.assertRaisesRegex(ValueError, "RoR2.dll script"):
+                P.plugin_import_order(bodies[2].replace(b"RoR2.dll", b"Evil.dll"))
+
     def test_original_preload_admits_only_pinned_gameobject_membership(self):
         gameobject = b"AUTHORED GAMEOBJECT"
         preload = struct.pack("<I", 3) + b"Old\0" + struct.pack("<Iiq", 1, 1, 19)
@@ -886,6 +917,18 @@ class ObjectProducerTests(unittest.TestCase):
                 result = P.produce(path, P.B.sha(path), pc, root / "produced", Path("codec"), "pin", [(pack, P.B.sha(pack / "result.json"))])
             self.assertTrue(result["success"])
             self.assertEqual((root / "produced/payload/authored-scene").read_bytes(), expected)
+
+    def test_retained_legacy_engine_is_preserved_in_both_headers(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            pc, path, profile, pack, _, _, expected = scene_fixture(root, engine="2021.3.33f1")
+            with patch.object(P.W, "codec", return_value=nullcontext(literal_lz4)):
+                result = P.produce(path, P.B.sha(path), pc, root / "produced", Path("codec"), "pin", [(pack, P.B.sha(pack / "result.json"))])
+            self.assertTrue(result["success"])
+            self.assertEqual((root / "produced/payload/authored-scene").read_bytes(), expected)
+            emitted = P.B.Bundle(root / "produced/payload/authored-scene")
+            for member in emitted.members:
+                self.assertEqual(P.W.read_serialized(emitted.member(member))["engine"], "2021.3.33f1")
 
     def test_global_owner_suppression_checks_original_identity_and_active_tail(self):
         for name in ("SceneInfo", "Director", "GameManager", "RoR2Application"):

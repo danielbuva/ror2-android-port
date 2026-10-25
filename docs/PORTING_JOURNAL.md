@@ -41607,10 +41607,11 @@ readiness receipt. Checker publication remains with that owner.
 
 **Readiness, failures and checks.** The exact source union
 `work/coordination/p1-payload-wisp-source-host-v1` preserves J1151's 125 Shader
-files and all prior content: **334/705 exact**, **371 missing (255 APK /
-116 payload)**, zero invalid/mismatched entries. This is eighteen complete source
+files and all prior content: **334/705 ready** (332 raw-exact entries and two
+code entries requiring comparison), **371 missing (255 APK / 116 payload)**,
+zero invalid/mismatched entries. This is eighteen complete source
 payload bundles. The separate developing-checker union
-`p1-payload-wisp-windows-source-host-v1` has **334 exact + 1 drift-explained**,
+`p1-payload-wisp-windows-source-host-v1` has **334 ready + 1 drift-explained**,
 **370 missing (255 APK / 115 payload)**. It does not silently count drift as exact
 or qualify the two separate player-file drift cases. No partial catalog is emitted.
 

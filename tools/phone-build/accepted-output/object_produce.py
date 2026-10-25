@@ -342,7 +342,7 @@ def json_layout(value):
     return value
 
 
-def make_layout(selected, records, scene_members=()):
+def make_layout(selected, records, scene_members=(), engine="2021.3.45f2"):
     """Canonical release order: script records first, then remaining path IDs."""
     local_scripts = sorted(row["path_id"] for row in records if row["type"]["class_id"] == 115)
     scripts = (
@@ -383,7 +383,7 @@ def make_layout(selected, records, scene_members=()):
         for name in selected["externals"]
     ]
     return {
-        "engine": "2021.3.45f2",
+        "engine": engine,
         "platform": 13,
         "trees": True,
         "types": types,
@@ -564,6 +564,14 @@ def copy_original_bundle(profile, profile_sha256, pc, output):
         (output / "result.json").write_text(json.dumps(receipt, indent=2) + "\n")
 
 
+def plugin_import_order(body):
+    """Use PluginImporter's default for the selected original RoR2 DLL script."""
+    offset, names = script_fields(body)
+    if names[2] != "RoR2.dll":
+        raise ValueError("plugin import order requires an original RoR2.dll script")
+    return body[: offset - 4] + bytes(4) + body[offset:]
+
+
 def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, packs=(), sdk=None):
     if B.sha(profile_path) != profile_sha256:
         raise ValueError("object profile drift")
@@ -584,6 +592,9 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
     if output.name in ("", ".", "..") or output.exists() or output.is_symlink() or parent.is_relative_to(pc) or pc.is_relative_to(output):
         raise ValueError("object output must be new and outside original input")
     selected_bundle = profile["bundle"]
+    engine = selected_bundle.get("engine", "2021.3.45f2")
+    if engine not in ("2021.3.45f2", "2021.3.33f1"):
+        raise ValueError("unqualified source bundle engine")
     selected_members = selected_bundle["members"] if scene else [{**selected_bundle, "name": selected_bundle["member"], "objects": profile["objects"]}]
     expected = sum(row["bytes"] for member in selected_members for row in member["objects"])
     if not 0 < expected <= B.LIMIT:
@@ -690,6 +701,10 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                         if selected["disable_original_behaviour"] is not True or typ["class_id"] != 114 or body[12:16] != b"\x01\0\0\0":
                             raise ValueError("disabled original behaviour requires an enabled MonoBehaviour")
                         body = body[:12] + bytes(1) + body[13:]
+                    if "plugin_import_default_execution_order" in selected:
+                        if selected["plugin_import_default_execution_order"] is not True or typ["class_id"] != 115:
+                            raise ValueError("plugin import order requires an original MonoScript")
+                        body = plugin_import_order(body)
                     body = remap(body, selected.get("references", []))
                     if "keyword_policy" in selected:
                         if typ["class_id"] != 21 or selected["keyword_policy"] != "dummy-shader-demote-valid":
@@ -747,7 +762,7 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                 if len(body) != selected["bytes"] or hashlib.sha256(body).hexdigest() != selected["sha256"]:
                     raise ValueError("produced object differs from accepted hash")
                 member_records.append({"path_id": selected["path_id"], "body": body, "type": typ, "member": selected_member["name"]})
-            layout, bodies = make_layout(selected_member, member_records, [member["name"] for member in selected_members] if scene else ())
+            layout, bodies = make_layout(selected_member, member_records, [member["name"] for member in selected_members] if scene else (), engine)
             serialized = io.BytesIO()
             W.write_serialized(serialized, layout, lambda row: io.BytesIO(bodies[row["path_id"]]))
             serialized_bytes = serialized.getvalue()
@@ -773,7 +788,7 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                 data.extend(extent)
             members.append((name, 0, len(data), lambda data=data: io.BytesIO(data)))
         with W.codec(codec_path, codec_sha256) as compress, bundle_path.open("xb") as stream:
-            W.write_bundle(stream, members, compress)
+            W.write_bundle(stream, members, compress, engine=engine)
         if bundle_path.stat().st_size != selected_bundle["bytes"] or B.sha(bundle_path) != selected_bundle["sha256"]:
             raise ValueError("produced UnityFS differs from accepted hash")
         with (output / "objects.bin").open("xb") as data, (output / "index.jsonl").open("x") as index:
