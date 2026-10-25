@@ -356,7 +356,7 @@ Pass
             }
             bodies = {
                 "source_camera_prefab": b"m_Resources: {fileID: 1, guid: " + b"a" * 32 + b", type: 2}\nstopNaNPropagation: 1\n",
-                "resource": b"uber: {fileID: 2, guid: " + b"b" * 32 + b", type: 3}\n",
+                "resource": b"uber: {fileID: 2, guid: " + b"b" * 32 + b", type: 3}\n  lut3DBaker: {fileID: 3, guid: " + b"f" * 32 + b", type: 2}\n",
                 "shader": b'Shader "Hidden/Dummy" { Pass {} }\n',
                 "profile": b"--- !u!114\n  m_Name: Bloom\n  active: 1\n  enabled:\n    overrideState: 1\n    value: 1\n--- !u!114\n  m_Name: ColorGrading\n  active: 1\n  enabled:\n    overrideState: 1\n    value: 0\n--- !u!114\n  m_Name: AutoExposure\n  active: 1\n  enabled:\n    overrideState: 1\n    value: 0\n",
             }
@@ -371,6 +371,9 @@ Pass
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_bytes(bodies[key])
                 Path(str(target) + ".meta").write_bytes(metas[key])
+            compute_source = export / "Assets/Game/OriginalCompute.asset"
+            compute_source.write_bytes(b"    name: FixtureKernel\n    threadGroupSize: 020000000300000001000000\n")
+            Path(str(compute_source) + ".meta").write_bytes(b"guid: " + b"f" * 32 + b"\n")
             package_source = (
                 b'Shader "Hidden/PostProcessing/Uber"\n{\n#include "../StdLib.hlsl"\n_MainTex; _BloomTex; BLOOM_LOW;\nPass\n{}\nPass\n{}\nPass\n{}\n}\n'
             )
@@ -383,6 +386,10 @@ Pass
                 include_path = package_root / "PostProcessing/Shaders/StdLib.hlsl"
                 include_path.write_bytes(include_source)
                 Path(str(include_path) + ".meta").write_bytes(include_meta)
+                compute = shader_path.with_name("Fixture.compute")
+                compute.write_bytes(b'#pragma kernel FixtureKernel\n#include "../StdLib.hlsl"\n')
+                compute_meta = Path(str(compute) + ".meta")
+                compute_meta.write_bytes(b"guid: " + b"9" * 32 + b"\nComputeShaderImporter: {}\n")
                 (package_root / "package.json").write_text(json.dumps({"version": "2.3.0", "repository": {"revision": "test-revision"}}))
                 (package_root / "LICENSE.md").write_bytes(b"test license")
                 archive = work / "packages/post.tgz"
@@ -393,6 +400,8 @@ Pass
                     tar.add(shader_path, "package/PostProcessing/Shaders/Builtins/Uber.shader")
                     tar.add(include_path, "package/PostProcessing/Shaders/StdLib.hlsl")
                     tar.add(Path(str(include_path) + ".meta"), "package/PostProcessing/Shaders/StdLib.hlsl.meta")
+                    tar.add(compute, "package/PostProcessing/Shaders/Builtins/Fixture.compute")
+                    tar.add(compute_meta, "package/PostProcessing/Shaders/Builtins/Fixture.compute.meta")
                 contract = {key: value for key, value in paths.items()}
                 contract.update(
                     {
@@ -426,6 +435,21 @@ Pass
                     "shader_name": "Hidden/PostProcessing/Uber",
                     "stable_output": "generated/uber/{input_id}",
                     "include_target_prefix": "Assets/WholeGame/Shader/PostProcessing/",
+                    "programs": [
+                        {
+                            "field": "lut3DBaker",
+                            "source_path": "Assets/Game/OriginalCompute.asset",
+                            "source_sha256": sha(compute_source.read_bytes()),
+                            "source_meta_sha256": sha(Path(str(compute_source) + ".meta").read_bytes()),
+                            "source_guid": "f" * 32,
+                            "package_path": "Builtins/Fixture.compute",
+                            "package_sha256": sha(compute.read_bytes()),
+                            "package_meta_sha256": sha(compute_meta.read_bytes()),
+                            "kernels": ["FixtureKernel"],
+                            "kernel_thread_groups": [[2, 3, 1]],
+                            "target": "Assets/LabLoadingScene/Resources/SourceCameraFixture.compute",
+                        }
+                    ],
                 }
                 recipe_path = root / "recipe.json"
                 recipe_path.write_text(json.dumps(recipe), encoding="utf-8")
@@ -464,6 +488,10 @@ Pass
                     self.assertEqual(Path(str(target_shader) + ".meta").read_bytes(), metas["shader"])
                     self.assertEqual((project / "Assets/WholeGame/Shader/PostProcessing/StdLib.hlsl").read_bytes(), include_source)
                     self.assertEqual((project / "Assets/WholeGame/Shader/PostProcessing/StdLib.hlsl.meta").read_bytes(), include_meta)
+                    staged_compute = project / recipe["programs"][0]["target"]
+                    self.assertIn(b'"Assets/WholeGame/Shader/PostProcessing/StdLib.hlsl"', staged_compute.read_bytes())
+                    self.assertEqual(uber.parse_guid(Path(str(staged_compute) + ".meta")), uber.program_guid(recipe["programs"][0]["target"]))
+                    self.assertEqual(compute_source.read_bytes(), b"    name: FixtureKernel\n    threadGroupSize: 020000000300000001000000\n")
                     self.assertTrue((project / ".rebuild/postprocessing-uber.json").is_file())
                     import importlib.util
 
@@ -486,6 +514,9 @@ Pass
                         loaded = catalog_rebuild.read_postprocessing_uber_receipt(project, "fixture-input", work)
                         replay_rows = catalog_rebuild.postprocessing_uber_rows(loaded, "fixture-input", set(), {}, candidate_work=work)
                         catalog_rebuild.verify_outputs(io, set(replay_rows), {}, input_id="fixture-input", postprocessing_uber=loaded)
+                        incomplete = {**loaded, "programs": []}
+                        with self.assertRaisesRegex(RuntimeError, "incomplete programs"):
+                            catalog_rebuild.postprocessing_uber_rows(incomplete, "fixture-input", set(), {}, candidate_work=work)
                     self.assertIn("Assets/WholeGame/Shader/PostProcessing/StdLib.hlsl", replay_rows)
                     self.assertIn("Assets/WholeGame/Shader/PostProcessing/StdLib.hlsl.meta", replay_rows)
                     import sys as sys_module
@@ -527,6 +558,11 @@ Pass
                     with patch.object(uber, "RECIPE", recipe_path):
                         self.assertIsNotNone(uber.stage(io, export=export, mapped=mapped, owners=owners, destination=attempt, input_id="fixture-input"))
                     before = len(io.writes)
+                    compute_source.write_bytes(b"    name: UnexpectedKernel\n")
+                    with self.assertRaisesRegex(RuntimeError, "program/resource identity changed"):
+                        uber.stage(io, export=export, mapped=mapped, owners=owners, destination=attempt, input_id="fixture-input")
+                    self.assertEqual(len(io.writes), before)
+                    compute_source.write_bytes(b"    name: FixtureKernel\n    threadGroupSize: 020000000300000001000000\n")
                     target_shader.write_bytes(b"unknown local edit")
                     with self.assertRaisesRegex(RuntimeError, "unknown staged Uber"):
                         uber.stage(io, export=export, mapped=mapped, owners=owners, destination=attempt, input_id="fixture-input")

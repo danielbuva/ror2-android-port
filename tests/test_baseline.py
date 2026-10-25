@@ -252,7 +252,16 @@ class BaselineCliTests(unittest.TestCase):
                 code, calls = self.cli(*arguments)
                 self.assertEqual(code, 0)
                 self.assertEqual(len(calls), 1)
-                self.assertEqual(calls[0].kwargs, {"stage_exit": enabled})
+                self.assertEqual(calls[0].kwargs, {"stage_exit": enabled, "capture_in_destination": False})
+
+    def test_destination_capture_requires_and_reaches_one_exit_mode(self):
+        code, calls = self.cli("check-baseline", "--stage-exit", "--capture-in-destination")
+        self.assertEqual(code, 0)
+        self.assertEqual(calls[0].kwargs, {"stage_exit": True, "capture_in_destination": True})
+        for arguments in (["check-baseline"], ["test", "--stage-exit"]):
+            code, calls = self.cli(*arguments, "--capture-in-destination")
+            self.assertEqual(code, 2)
+            self.assertEqual(calls, [])
 
     def test_stage_flag_is_rejected_for_other_commands(self):
         code, calls = self.cli("test", "--stage-exit")

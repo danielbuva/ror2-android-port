@@ -456,7 +456,7 @@ namespace EntityStates.Missions.SuperRoboBallEncounter
             input_source.index("report.lastTargetSampleKnown = false;", input_source.index("public bool Apply(")),
             input_source.index("if (disposed || terminal)", input_source.index("public bool Apply(")),
         )
-        self.assertIn("report.lastTargetPrimaryRequested = visible;", input_source)
+        self.assertIn("report.lastTargetPrimaryRequested = primaryRequested;", input_source)
         self.assertIn("report.lastTargetSampleKnown = true;", input_source)
         self.assertIn("if (current == null)", source)
         self.assertIn("snapshot.retainedAfterListenerExit = true", source)

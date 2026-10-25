@@ -14,6 +14,20 @@ SPEC.loader.exec_module(AUDIT)
 
 
 class PublicBrandingAuditTests(unittest.TestCase):
+    def test_email_detection_matches_legacy_pattern_for_token_boundaries(self):
+        import itertools
+        import re
+
+        legacy = rb"[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}"
+        current = AUDIT.PATTERNS["email"]
+        for length in range(7):
+            for parts in itertools.product((b"a", b".", b"@", b"!"), repeat=length):
+                data = b"".join(parts)
+                self.assertEqual(bool(re.search(legacy, data)), bool(re.search(current, data)))
+        for data in (b"encoded" * 100000, b"a" * 100000 + b"@" + b"b" * 100000):
+            self.assertNotIn("email", AUDIT.violations("recipe/authored.json", data))
+        self.assertIn("email", AUDIT.violations("recipe/authored.json", b"a" * 100000 + b"@example.invalid"))
+
     def test_compressed_recipe_patterns_are_checked_after_bounded_expansion(self):
         path = "recipe/authored.jsonl.gz"
         header = json.dumps({"input_id": "authored"}).encode() + b"\n"

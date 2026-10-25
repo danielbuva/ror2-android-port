@@ -103,7 +103,7 @@ public sealed class SirenSourceEntrySession : IDisposable
         public SirenSourceEntrySpawnWitness witness;
         public bool selected;
         public bool observed;
-        public bool retired;
+        public bool retired, nativeDeathObserved;
         public NetworkIdentity identity;
         public GameObject body;
         public NetworkInstanceId networkId;
@@ -167,6 +167,7 @@ public sealed class SirenSourceEntrySession : IDisposable
     bool globalDispatched;
     bool complete;
     bool cleanupStarted;
+    bool deathSubscriptionOwned;
     bool disposed;
     int cleanupStep;
     Exception cleanupFirstFailure;
@@ -499,7 +500,46 @@ public sealed class SirenSourceEntrySession : IDisposable
         report.mappedEggNetworkIds = selected.Select(row => row.networkId.Value).ToArray();
         report.mappedSpawnerInstanceIds = selected.Select(row => row.spawner.GetInstanceID()).ToArray();
         complete = true;
+        GlobalEventManager.onCharacterDeathServer += ObserveNativeEggDeath;
+        deathSubscriptionOwned = true;
         report.status = "source-egg-bijection-proven-before-id-10-admission";
+    }
+
+    // Observe the source death event, not the proc-chance-dependent kill event.
+    // No native health, death state, destruction or encounter operand is written.
+    void ObserveNativeEggDeath(DamageReport damage)
+    {
+        if (cleanupStarted || !complete || !NetworkServer.active || damage == null ||
+            !damage.victimBody || !damage.victim || damage.victim.alive)
+            return;
+        var body = damage.victimBody.gameObject;
+        foreach (var row in sourceEggs)
+        {
+            if (!row.selected || !row.observed || row.retired || !ReferenceEquals(row.body, body))
+                continue;
+            if (row.identity && row.identity.isServer && row.networkId.Value != 0 && row.identity.netId == row.networkId &&
+                ReferenceEquals(body.GetComponent<NetworkIdentity>(), row.identity) &&
+                ReferenceEquals(body.GetComponent<HealthComponent>(), damage.victim) &&
+                ReferenceEquals(NetworkServer.FindLocalObject(row.networkId), body))
+                row.nativeDeathObserved = true;
+        }
+    }
+
+    void AccountForNaturallyRetiredEggs()
+    {
+        foreach (var row in sourceEggs)
+        {
+            if (!row.selected || !row.observed || row.retired)
+                continue;
+            if (!SirenSourceEntryContract.IsNaturallyRetiredEgg(row.nativeDeathObserved,
+                    !ReferenceEquals(row.body, null) && !ReferenceEquals(row.identity, null),
+                    row.body, row.identity,
+                    row.networkId.Value != 0 && ReferenceEquals(NetworkServer.FindLocalObject(row.networkId), null)))
+                continue;
+            row.retired = true;
+            report.retiredEggCount++;
+            report.naturallyRetiredEggCount++;
+        }
     }
 
     void VerifyNoUntrackedSourceEggs()
@@ -795,6 +835,11 @@ public sealed class SirenSourceEntrySession : IDisposable
         if (disposed)
             return;
         cleanupStarted = true;
+        if (deathSubscriptionOwned)
+        {
+            GlobalEventManager.onCharacterDeathServer -= ObserveNativeEggDeath;
+            deathSubscriptionOwned = false;
+        }
         Exception stepFailure;
         if (!SirenEncounterContract.TryAdvanceCleanupStep(ref cleanupStep, 0, RetireOwnedEggs,
                                                            ref cleanupFirstFailure, out stepFailure))
@@ -820,13 +865,14 @@ public sealed class SirenSourceEntrySession : IDisposable
     {
         if (!globalDispatchAttempted)
             return;
+        if (!NetworkServer.active)
+            throw new InvalidOperationException("Cannot retire exact Siren source eggs while server is inactive");
+        AccountForNaturallyRetiredEggs();
         bool capturedEggsUnmoved = SirenSourceEntryContract.PendingEggRowsAtCapturedPose(
             sourceEggs, row => row.selected, row => row.observed, row => row.retired, IsEggAtCapturedSpawnPose);
         if (!SirenSourceEntryContract.MayRetireSourceEggs(globalDispatchAttempted,
                 complete && report.exactEggBijection, captureFailure, capturedEggsUnmoved))
             throw new InvalidOperationException("Native source egg cohort is incomplete, ambiguous, or moved; retaining source context");
-        if (!NetworkServer.active)
-            throw new InvalidOperationException("Cannot retire exact Siren source eggs while server is inactive");
         if (sourceEggs.Any(row => row.observed && !row.selected))
             throw new InvalidOperationException("An unselected source spawner produced a captured egg; retaining source context");
         VerifyNoUntrackedSourceEggs();
@@ -1008,6 +1054,12 @@ public static class SirenSourceEntryContract
                                          bool originalEncounterInactive, bool diagnosticEggInputOff)
     {
         return sourceBijection && toggleQueueEmpty && spawnQueueEmpty && originalEncounterInactive && diagnosticEggInputOff;
+    }
+
+    public static bool IsNaturallyRetiredEgg(bool nativeDeathObserved, bool capturedReferencesRetained,
+                                             bool bodyAlive, bool identityAlive, bool capturedIdUnmapped)
+    {
+        return nativeDeathObserved && capturedReferencesRetained && !bodyAlive && !identityAlive && capturedIdUnmapped;
     }
 
     public static bool MayRetireSourceEggs(bool globalDispatchAttempted, bool exactSourceBijection,

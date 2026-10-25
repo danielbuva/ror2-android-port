@@ -31,9 +31,244 @@
   "package_sha256": "e073d47579d5b2278964853e584829c3c967ab69563a0d163c993cd163b6aaaf",
   "package_uber_shader_sha256": "392dc1c8fcccb332bb0c50f07e9cb68a3bd1006193ca3f220aaa62cf130e0a00",
   "package_version": "2.3.0",
+  "programs": [
+    {
+      "field": "lut3DBaker",
+      "kernel_thread_groups": [
+        [
+          4,
+          4,
+          4
+        ],
+        [
+          4,
+          4,
+          4
+        ],
+        [
+          4,
+          4,
+          4
+        ],
+        [
+          4,
+          4,
+          4
+        ]
+      ],
+      "kernels": [
+        "KGenLut3D_NoTonemap",
+        "KGenLut3D_AcesTonemap",
+        "KGenLut3D_NeutralTonemap",
+        "KGenLut3D_CustomTonemap"
+      ],
+      "package_meta_sha256": "0bbebc7bc4b06d396b8b752541cfe4be0ffcfb423615b8d8ebae89690f21c0bc",
+      "package_path": "Builtins/Lut3DBaker.compute",
+      "package_sha256": "b34a0d9cff76010c20e0b2d4c5c37b5772a7cba4aea3d8b57f6332ff10f758c1",
+      "source_guid": "90bb1d58b1cd0714ab1f5d98178c91f8",
+      "source_meta_sha256": "0a2e8efba591883263944c9f9aea8f97cba183af9fa062a0be9fe46963deaf16",
+      "source_path": "Assets/ComputeShader/Lut3DBaker_53.asset",
+      "source_sha256": "16af50d7ac9e379d3d697725d3808f824f43d657a34bcbbf6115d05e0faf0582",
+      "target": "Assets/LabLoadingScene/Resources/SourceCameraLut3DBaker.compute"
+    },
+    {
+      "field": "multiScaleAODownsample1",
+      "kernel_thread_groups": [
+        [
+          8,
+          8,
+          1
+        ],
+        [
+          8,
+          8,
+          1
+        ]
+      ],
+      "kernels": [
+        "MultiScaleVODownsample1",
+        "MultiScaleVODownsample1_MSAA"
+      ],
+      "package_meta_sha256": "e031880544d28672ba501d8995f9dfc04f01b340c794e5951887b82925e28b05",
+      "package_path": "Builtins/MultiScaleVODownsample1.compute",
+      "package_sha256": "79d00d4f12a0fc96a77640323e15d55b9739dbbc56e17cfaab8e2502f2598730",
+      "source_guid": "be0f8b1d43a4cea4b918fb9db9c72da2",
+      "source_meta_sha256": "8770b3795ff1e78f800b318443afba0215d48cc9c5c46405164f836455a3371a",
+      "source_path": "Assets/ComputeShader/MultiScaleVODownsample1_53.asset",
+      "source_sha256": "83f1a914eb8bd3bad6d89e3c861f74404cb11ef2e31a2f64167ba2c078ea05f4",
+      "target": "Assets/LabLoadingScene/Resources/SourceCameraMultiScaleVODownsample1.compute"
+    },
+    {
+      "field": "multiScaleAODownsample2",
+      "kernel_thread_groups": [
+        [
+          8,
+          8,
+          1
+        ],
+        [
+          8,
+          8,
+          1
+        ]
+      ],
+      "kernels": [
+        "MultiScaleVODownsample2",
+        "MultiScaleVODownsample2_MSAA"
+      ],
+      "package_meta_sha256": "3c44727cc9c0407b0e84213301eadb0b85446a4603d61a960bec94d32acd4796",
+      "package_path": "Builtins/MultiScaleVODownsample2.compute",
+      "package_sha256": "c2d1281a56dc77cc0f764419bc5c9a89799bfffb14236676a6235a15b5a2e662",
+      "source_guid": "362a09f449db772409761f7923690a6c",
+      "source_meta_sha256": "cc8e39621b9c2e5dfa6780c754364727bb330e1a53d3cea2dc818297490c6d68",
+      "source_path": "Assets/ComputeShader/MultiScaleVODownsample2_53.asset",
+      "source_sha256": "6af73fee2b9154c43cea953a7e82ab28f12c634b992aa50e3c3ea93ac6f3d4ac",
+      "target": "Assets/LabLoadingScene/Resources/SourceCameraMultiScaleVODownsample2.compute"
+    },
+    {
+      "field": "multiScaleAORender",
+      "kernel_thread_groups": [
+        [
+          16,
+          16,
+          1
+        ],
+        [
+          8,
+          8,
+          1
+        ],
+        [
+          16,
+          16,
+          1
+        ],
+        [
+          8,
+          8,
+          1
+        ]
+      ],
+      "kernels": [
+        "MultiScaleVORender",
+        "MultiScaleVORender_interleaved",
+        "MultiScaleVORender_MSAA",
+        "MultiScaleVORender_MSAA_interleaved"
+      ],
+      "package_meta_sha256": "748ff60fb1759fc15cc7d77c7f45dad3b4aaddb3cb0337ee35ec00c68a177c86",
+      "package_path": "Builtins/MultiScaleVORender.compute",
+      "package_sha256": "45ff0fada61f2048f0e61796c6cb4ecc97ed9719f870b895362be4a9b44d4d84",
+      "source_guid": "310d03a780b4a9141ba424de7e686c2d",
+      "source_meta_sha256": "a74d208fda97368b411b10e03064adf6a95bd71821226af875197e4caa61f669",
+      "source_path": "Assets/ComputeShader/MultiScaleVORender_53.asset",
+      "source_sha256": "a9f295668d5134df66829723d42a6e8527e32a30bf383ef1734692d33aaa586f",
+      "target": "Assets/LabLoadingScene/Resources/SourceCameraMultiScaleVORender.compute"
+    },
+    {
+      "field": "multiScaleAOUpsample",
+      "kernel_thread_groups": [
+        [
+          8,
+          8,
+          1
+        ],
+        [
+          8,
+          8,
+          1
+        ],
+        [
+          8,
+          8,
+          1
+        ],
+        [
+          8,
+          8,
+          1
+        ],
+        [
+          8,
+          8,
+          1
+        ],
+        [
+          8,
+          8,
+          1
+        ],
+        [
+          8,
+          8,
+          1
+        ],
+        [
+          8,
+          8,
+          1
+        ],
+        [
+          8,
+          8,
+          1
+        ],
+        [
+          8,
+          8,
+          1
+        ]
+      ],
+      "kernels": [
+        "MultiScaleVOUpSample",
+        "MultiScaleVOUpSample_invert",
+        "MultiScaleVOUpSample_premin",
+        "MultiScaleVOUpSample_blendout",
+        "MultiScaleVOUpSample_premin_blendout",
+        "MultiScaleVOUpSample_MSAA",
+        "MultiScaleVOUpSample_MSAA_invert",
+        "MultiScaleVOUpSample_MSAA_premin",
+        "MultiScaleVOUpSample_MSAA_blendout",
+        "MultiScaleVOUpSample_MSAA_premin_blendout"
+      ],
+      "package_meta_sha256": "58e02544f5d97b65a6e714e767b76e56083859ae65da0d0b03fac9e40d7b7c67",
+      "package_path": "Builtins/MultiScaleVOUpsample.compute",
+      "package_sha256": "e8e85a7d01b476960df943d143c7d3007f2f3e418e3cb9101fbab3a84b91a13e",
+      "source_guid": "74f72859a132be847b29b358e924b955",
+      "source_meta_sha256": "603efb7e75f92dbde4eb629d303a365fd1d17ca5df4e55114450de4a138d370f",
+      "source_path": "Assets/ComputeShader/MultiScaleVOUpsample_53.asset",
+      "source_sha256": "97eff64ea6c04b30ba896d249d7b500a7f14b35944f7c7e2467debbd99516784",
+      "target": "Assets/LabLoadingScene/Resources/SourceCameraMultiScaleVOUpsample.compute"
+    },
+    {
+      "field": "multiScaleAO",
+      "kernel_thread_groups": [],
+      "kernels": [],
+      "package_meta_sha256": "81b9c6814138066b7b1f389f20574f81d9174c945389fe620030a4f9d8739d53",
+      "package_path": "Builtins/MultiScaleVO.shader",
+      "package_sha256": "51d77f2ef3dda002239f5554bfb87a04deb0f33f543d50a1fb75f1534cefadf5",
+      "source_guid": "0d388881788241546b7af7696e8ee6bc",
+      "source_meta_sha256": "e11a8a17db5fd0721b4d3b0d6e3da3e95bb207aad1f8ac94ac10ee936c63230b",
+      "source_path": "Assets/Shader/Hidden_PostProcessing_MultiScaleVO_53.shader",
+      "source_sha256": "dccbd749a3c26e0c13bc2c076be454d14a25f8669548af7a4cdcf18d0e691102",
+      "target": "Assets/LabLoadingScene/Resources/SourceCameraMultiScaleVO.shader"
+    },
+    {
+      "field": "lut2DBaker",
+      "kernel_thread_groups": [],
+      "kernels": [],
+      "package_meta_sha256": "15f7a6f2af625ca0d6d30d26a8bd89c6977dd674cb1fa6b9318802ae57b9b769",
+      "package_path": "Builtins/Lut2DBaker.shader",
+      "package_sha256": "fa229bac780b1088bab513620f70370e8360ee5d87e1edc237ffc2155871f8b3",
+      "source_guid": "536164f58b6f82249b7f9c4ac349d2cf",
+      "source_meta_sha256": "82dd967239295b982ce8b77189381388e0564df70f7dbf8b7a8ca72675efcd77",
+      "source_path": "Assets/Shader/Hidden_PostProcessing_Lut2DBaker_53.shader",
+      "source_sha256": "8be02272032970be4eabcd7a1e323bec8c80ceb481063adc9141f4879b91aa87",
+      "target": "Assets/LabLoadingScene/Resources/SourceCameraLut2DBaker.shader"
+    }
+  ],
   "schema": "whole-catalog-postprocessing-uber-candidate-r1",
   "selected_pass": 0,
   "shader_name": "Hidden/PostProcessing/Uber",
   "source_pass_count": 3,
-  "stable_output": "generated/shader-candidates/postprocessing-uber/{input_id}"
+  "stable_output": "generated/shader-candidates/postprocessing-source-camera/{input_id}"
 }
