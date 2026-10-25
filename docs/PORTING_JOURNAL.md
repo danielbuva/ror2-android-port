@@ -42896,3 +42896,33 @@ orchestration only and introduces no new RoR2 mechanism requiring prior art.
 Complete native production/comparison, current-only final APK assembly, durable
 compatible signing, ordinary install, both controls and matched performance
 remain open. No continuation result is inferred from these measurements.
+
+## J1168 — Android native continuation requires a checked object-copy fallback
+
+- **Observation / hypothesis:** J1167's measured active-time budget admits a
+  continuation from the original 498 completed native jobs, but the embedded
+  Android Python does not expose `os.link`. Generic Python platform portability
+  is the subsystem here; no RoR2 reconstruction or runtime policy changes.
+- **First failure / evidence:**
+  `work/coordination/phone-code/measure-native-v26-done.json` records
+  `AttributeError` during the first reused object, before any fresh native
+  compilation. The tool APK remains
+  `4d30299364a2f58a9433e574cf5c9df79c4b0bfb38f8a76e9029168c23a2fa69`.
+  Metadata remains raw-exact at
+  `082b458b6b18447c8a01bdf59adc4cfdab644eba9a545cb173692e5adb167ff8`.
+  The guard records 539 samples, 77.2 C peak and 370 ms maximum sample gap.
+  Cleanup verifies stopped tool jobs, both panels asleep and released lease.
+- **Change:** The existing native owner keeps hard links when the API exists.
+  When absent, it checks per-object storage headroom, copies only previously
+  validated completed objects and checks persisted size and SHA-256 before
+  writing the new job receipt. An existing hard-link error remains fatal.
+  The original failed output and its partial job 498 remain unchanged.
+- **Host validation:** The 498-prefix fixture exercises hard links and the
+  absent-API copy path, compiles only jobs 498 and 499, and completes corrected
+  linking. It checks low-space, corrupt-copy and hard-link-error refusals.
+  No complete native library, new tool installation, game APK or gameplay
+  qualification follows from these host checks.
+- **Revisit:** Rebuild the tool app from committed source, install over its
+  hash-verified owned package without clearing data, and continue in a fresh
+  output using the retained prefix and unchanged J1167 thermal/active-time
+  policy. Retain the terminal result before comparing native library bytes.

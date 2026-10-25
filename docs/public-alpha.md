@@ -317,3 +317,7 @@ sleeping panels and lease release.
 They size the active-time budget for checked continuation from 498 retained
 objects; complete native production, final assembly and game qualification
 remain open.
+
+J1168 records the first continuation failure before compilation: Android
+Python lacks `os.link`. A receipt-checked copy fallback passes host contracts;
+full phone native production and gameplay qualification remain open.
