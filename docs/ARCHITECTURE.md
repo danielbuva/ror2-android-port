@@ -67,9 +67,9 @@ object/layout derivation and phone qualification remain separate.
 teleport-material, objective-UI, teleporter-indicator, generic-pickup and
 enemy-reward, Village Night, Helminth Roost, Habitat, Habitatfall and
 Wispgraveyard, Sky Meadow, Solusweb, Ancient Loft, AI Test and Testscene slices.
-It also owns the retained Barrier payload, the complete Wispgraveyard
-source-scene variant and the unchanged
-original Windows comparison-bundle copy.
+It also owns the retained Barrier and three Goldshores payloads, the complete
+Wispgraveyard source-scene variant and the unchanged original Windows
+comparison-bundle copy.
 Audited profiles `recipe/owner-pickup-objects.json`,
 `recipe/owner-death-effect-objects.json`,
 `recipe/owner-teleport-material-objects.json`, `recipe/owner-objective-ui-objects.json`,
@@ -614,7 +614,9 @@ before and after compilation. The owner emits the existing `objects.bin`,
 `index.jsonl` and terminal `result.json` interface; failure retains evidence and
 the existing compiler/codec contexts reap their children.
 `object_produce.py` consumes that pack, qualified media and
-`recipe/owner-barrier-objects.json` to produce the complete payload. Neither owner
+`recipe/owner-barrier-objects.json` to produce the complete payload. The three
+`recipe/owner-goldshores*-objects.json` profiles select the whole, source and
+reduced spine scene forms through the same object/layout/writer owners. Neither owner
 reads a historical game file, accepted output or discovery directory for content.
 The same owner reads `recipe/owner-rootjungle-postprocess-shaders.json` to
 regenerate 24 original post-processing forms through pinned public templates and

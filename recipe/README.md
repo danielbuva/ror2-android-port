@@ -173,6 +173,9 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 | `owner-testscene-objects.json` | Private Testscene scene | Original selectors, checked CharacterMaster body/schema omission, source Sprite identities, original preload membership, SDK schema and qualified mesh/texture profiles. | No body/tree/geometry/pixel/scalar template; provenance/privacy/licensing audit below, 2026-10-25. | Existing `object_produce.py`; J1150 host exact, phone open. |
 | `owner-windows-shaders.json` | Original Windows comparison payload | Current original bundle path, length and integrity hash for the existing unchanged-file copy operation. | Provenance/privacy/licensing audit below, 2026-10-25; no programs or historical reconstruction input. | Existing `object_produce.py`; current host drift-explained, phone open. |
 | `owner-barrier-objects.json` | Retained Barrier payload | Original body/type selectors, checked source pointers, named legacy import policies and independently produced media/Shader pins. | Provenance/privacy/licensing audit below, 2026-10-25; no protected body, tree or media template. | Existing `object_produce.py`; host exact, phone open. |
+| `owner-goldshores-spine-objects.json` | Goldshores reduced spine payload | Current original object/type selectors, actual-schema PPtr relationships, qualified media and source Shader profiles. | Provenance/privacy/licensing audit below, 2026-10-25; no body/tree/media/program template. | Existing `object_produce.py`; complete host qualification, phone open. |
+| `owner-goldshores-source-objects.json` | Goldshores source-scene payload | Current original object/type selectors, actual-schema PPtr relationships, qualified media and source Shader profiles. | Provenance/privacy/licensing audit below, 2026-10-25; no body/tree/media/program template. | Existing `object_produce.py`; complete host qualification, phone open. |
+| `owner-goldshores-objects.json` | Goldshores whole-scene payload | Current original object/type selectors, actual-schema PPtr relationships, qualified media and source Shader profiles. | Provenance/privacy/licensing audit below, 2026-10-25; no body/tree/media/program template. | Existing `object_produce.py`; complete host qualification, phone open. |
 | `owner-barrier-shaders.json` | Barrier source Shader records | Current original Shader selector, pinned public template revision, supplied SDK33 source metadata and SDK45 compiler identities, source filename and destination relationships. | Provenance/privacy/licensing audit below, 2026-10-25; no programs, pass keys or accepted tables. | `payload_shader_records.py`; bounded two-record host proof, phone open. |
 | `owner-rootjungle-postprocess-shaders.json` | Rootjungle post-processing Shader records | Current original forms, source filenames, pinned public templates and acquired SDK45 context; shared record extents for two scene variants. | Provenance/privacy/licensing audit below, 2026-10-25; no protected source, programs or target tables. | Existing `payload_shader_records.py`; 24 host records exact, phone open. |
 | `owner-rootjungle-spine-standard-shaders.json` | Root spine Standard | Current original Material/Shader/scene selectors, SDK45 source/compiler pins and destination relationships. | Provenance/privacy/licensing audit below, 2026-10-25; no programs, hashes-as-input or target tables. | Existing `payload_shader_records.py`; bounded host record exact, phone open. |
@@ -3170,3 +3173,15 @@ programs, native records, type trees, scalar replacements or target tables
 supply reconstruction. Generated source, compiled content and raw evidence
 remain ignored. The profiles grant no ownership, authentication or SDK/game
 redistribution rights. Complete bundles and phone acceptance are separate gates.
+
+The three `owner-goldshores*-objects.json` profiles receive provenance, privacy,
+licensing and sensitive-content review on 2026-10-25. Their compact authored
+JSON contains only current original object/type selectors, checked pointer
+relationships, current input GUID relationships, named import policies and
+qualified media/Shader profile identities. Independent schema audits verify
+original pointer extents/values and source script/component relationships.
+Existing owners derive mesh/texture records, script identities, scene tables
+and preloads; no generated object or type-tree template enters a recipe.
+The profiles carry no historical input requirement, credential, private path,
+protected body, curve, geometry, pixel or program. Original/SDK data and all
+produced bundles stay ignored; no redistribution or ownership right is granted.

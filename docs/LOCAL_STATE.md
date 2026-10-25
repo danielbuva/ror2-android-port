@@ -1,6 +1,6 @@
 # Local state dependency inventory
 
-## Retained Barrier source payload
+## Barrier and Goldshores source payloads
 
 The optional Barrier generator reads current legitimate originals, tracked
 `owner-barrier-objects.json` and `owner-barrier-shaders.json`, explicit qualified
@@ -11,6 +11,10 @@ metadata only, and the pinned public AssetRipper Git source for its template
 and license. The recipe pins all consumed SDK files and include inventories.
 The old Editor/compiler is never executed. These SDK inputs are required local
 toolchain state, not generated game suppliers or redistributed repository data.
+The three Goldshores object profiles use the same current-original, SDK and
+qualified media/Shader providers. Their shared scene preparation evidence is
+retained under `p1-payload-goldshores-public-prep-v1/` and
+`p1-payload-goldshores-family-prep-v1/`, with no production lookup there.
 Both generators require new private outputs and emit their own record/bundle
 receipts. Retained evidence under
 `work/coordination/p1-payload-barrier-{shaders,public-prep}-v1/` is comparison and
