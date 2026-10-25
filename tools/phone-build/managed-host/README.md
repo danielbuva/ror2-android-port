@@ -121,7 +121,11 @@ Use `ToolHostActivity.Runner` instrumentation to execute the worker without an
 Activity or a display wake. `files/owner-input/request.json` selects either
 explicit managed providers or the fixed-target source request consumed by
 `owner-code/run_android.py`. The worker owns its fresh source/framework directory,
-native/data checks and child deadline. Timeout first signals the controller so
+native/data checks and child deadline. Each tool child starts through Android's
+`taskset 1`, restricting startup and inherited descendants to CPU 0 before Python
+or the JVM initializes. This trades throughput for bounded startup CPU use on
+the assigned devices; it supplements the caller's thermal watcher and does not
+establish a temperature limit. Timeout first signals the controller so
 it can reap its process groups. The caller retains receipts/results, verifies
 loaded providers/output bytes, monitors kernel temperatures and releases the
 owned package/lease afterward. The thermal service can be unavailable despite

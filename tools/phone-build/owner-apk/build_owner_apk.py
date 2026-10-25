@@ -52,8 +52,12 @@ def code_sources(request):
     """Use the complete explicitly produced code cohort, never replay fallbacks."""
     if "code" not in request:
         return {}
-    if not isinstance(request["code"], dict) or set(request["code"]) != CODE_ENTRIES:
+    if not isinstance(request["code"], dict) or not CODE_ENTRIES <= set(request["code"]):
         raise ValueError("all native, metadata and Burst code outputs required")
+    if set(request["code"]) != CODE_ENTRIES:
+        sdk = module("_owner_sdk_package", SOURCE.parent / "accepted-output/sdk_package.py")
+        if set(request["code"]) != CODE_ENTRIES | sdk.SDK_ENTRIES:
+            raise ValueError("complete SDK Android cohort required alongside code outputs")
     sources = {}
     for name, value in request["code"].items():
         path = Path(value)
@@ -224,6 +228,8 @@ def build(request_path, output):
         ]
         tracked += [roots["frontend"] / n for n in ("app.js", "controller.js", "style.css", "background.png")]
         tracked += [Path(PACKET.__file__), Path(ASSEMBLY.__file__)]
+        if len(code) > len(CODE_ENTRIES):
+            tracked.append(SOURCE.parent / "accepted-output/sdk_package.py")
         tracked += [roots[k] for k in ("java", "android_jar", "d8_jar", "wire_helper", "manifest")]
         tracked += [Path(row["path"]) for row in code.values()]
         if "javac" in roots:
@@ -278,7 +284,11 @@ def build(request_path, output):
             raise ValueError("bootstrap requires exactly one authored DEX")
         apk_rows = {r["path"][4:]: r for r in profile["targets"] if r["path"].startswith("apk/") and not ASSEMBLY.obsolete_signature(r["path"][4:])}
         manifest_row = apk_rows["AndroidManifest.xml"]
-        patched = MANIFEST.patch(PACKET.verify(roots["targets"], manifest_row).read_bytes(), wire, version_code=version_code)
+        manifest_source = Path(code["AndroidManifest.xml"]["path"]) if "AndroidManifest.xml" in code else PACKET.verify(roots["targets"], manifest_row)
+        manifest_bytes = manifest_source.read_bytes()
+        if "AndroidManifest.xml" in code and hashlib.sha256(manifest_bytes).hexdigest() != code["AndroidManifest.xml"]["sha256"]:
+            raise ValueError("owner APK source bytes differ")
+        patched = MANIFEST.patch(manifest_bytes, wire, version_code=version_code)
         (output / "AndroidManifest.xml").write_bytes(patched)
         payload = [r for r in profile["targets"] if r["path"].startswith("payload/") and not r["path"].endswith(".manifest")]
         index = {"schema": 1, "profile": PROFILE, "files": [{"name": r["path"][8:], "bytes": r["bytes"], "sha256": r["sha256"]} for r in payload]}
@@ -356,7 +366,7 @@ def build(request_path, output):
             success=True,
             apk_sha256=sha(unsigned),
             apk_bytes=unsigned.stat().st_size,
-            original_entries_preserved=len(apk_rows) - 1 - len(code),
+            original_entries_preserved=len(apk_rows) - len(set(code) | {"AndroidManifest.xml"}),
             original_entry_changed="AndroidManifest.xml",
             new_dex=next_dex,
             entries_verified=len(expected),

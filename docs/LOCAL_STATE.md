@@ -1726,3 +1726,21 @@ outputs; removing app data without backing up that directory loses update
 compatibility. Keys, passwords, generated game objects/APKs and raw logs remain
 private. Retained coordination folders are evidence only; no code discovers a
 timestamped folder or supplies an accepted library automatically.
+
+
+## Generic Android SDK package inputs
+
+`accepted-output/sdk_package.py` requires the owner's separately acquired pinned
+SDK Java/templates/resources, API-30 `android.jar`, AAPT2 7.4.2-8841542, a JDK and
+the exact public Maven JAR cohort named and hash-pinned in `TOOL_JARS`. Acquire
+AGP/Android providers from Google's Maven repository and their listed Java
+library providers from Maven Central. The SDK component is extracted by
+`sdk_inputs.py --android-package`; the JDK, platform and public Maven binaries
+are required local tool inputs rather than generated game content. The private
+request supplies every path explicitly; no run-directory discovery occurs.
+Android additionally supplies the existing app-host JVM/QEMU and GNU loader
+closure. Retain these providers and their acquisition/hash receipts under
+ignored local storage; the public repository distributes no provider binaries.
+[Setup and output lifecycle](../tools/phone-build/accepted-output/README.md#produce-the-generic-android-package-entries)
+explain their use. Host Java 11 and phone Java 21 produce the documented J1109
+class-checksum-only DEX difference; accepted DEX bytes never supply production.

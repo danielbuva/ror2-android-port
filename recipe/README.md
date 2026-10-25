@@ -2455,3 +2455,10 @@ private keys remain local. Completed-object relinking reads explicit validated
 owner outputs, never accepted ELF bytes. Public tests contain authored synthetic
 ELF/command/path witnesses. Provenance/privacy/licensing and sensitive-content
 audit: 2026-10-24; acquisition/distribution rights remain separate gates.
+
+Generic Android SDK package transformation audit (J1109): the authored
+`sdk_package.py`/`SdkAndroidCode.java` callers and fixed package settings contain
+no SDK implementation, game Java, assets, captured bytecode or signing material.
+Exact SDK/public-tool hashes identify owner-acquired inputs only. SDK Java and
+resource data, generated classes/DEX/APK members and raw receipts remain ignored.
+The fixed package label/settings originate in the lab's authored build setup.

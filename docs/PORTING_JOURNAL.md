@@ -38510,3 +38510,148 @@ needs completion and explicit corrected relinking. Android packaging members,
 complete content/player data, the source-produced full APK, compatible owner
 signer provisioning, ordinary installer and matched game controls/performance
 remain open. These tool passes do not establish game readiness or entitlement.
+
+## J1109 — Reproduce the generic Android package entries from the owner SDK
+
+2026-10-25. Host and ordinary-app production qualification; composed installation
+remains open. This slice supplies no game content or managed/native gameplay code.
+
+**Hypothesis and source.** The remaining four DEX files, binary manifest, resource
+table, five icon files and two generic native libraries can be produced from the
+owner-acquired pinned SDK plus public Android tools, without accepted APK bytes
+as production inputs. J1064 already qualifies component extraction. This is
+generic Android packaging, so the game-specific community prerequisite does not
+apply. Public AGP 7.4.2's BuildConfig generator, R-class writer, XML formatter and
+D8 archive configuration establish the SDK contracts; unchanged D8 4.0.52 and
+AAPT2 7.4.2-8841542 implement them. No SDK implementation is copied into source.
+
+**Owner and lifecycle.** `accepted-output/sdk_inputs.py --android-package` extends
+the existing exact component extraction with the required SDK Java/templates and
+resources. `sdk_package.py` validates those pinned inputs and the public Java-tool
+cohort, creates a new private output, compiles the small authored
+`SdkAndroidCode.java` API caller, formats/compiles the SDK resources and authored
+settings, generates BuildConfig/R classes and produces all four DEX entries.
+It retains logs and terminal results, rechecks source/tool hashes and never
+opens a game or accepted APK. `owner-code/run_android.py::android_sdk_job` maps
+explicit private provider paths to the existing installed JVM/QEMU hosts.
+Content remains with its existing owner; there is no accepted-byte fallback.
+
+**Result.** The complete public host producer succeeds in 11.354876 seconds; all
+13 produced APK entries are raw byte-identical to J850. This includes the binary
+manifest, all four DEX files, resource table, all five icons, libmain and libunity.
+The unchanged SDK classes need D8's checksum option. Java source/target 11 yields
+the recorded class checksums; the application BuildConfig uses D8's public
+intermediate per-class output, explaining its absence of a D8 marker. AGP's
+manifest formatter with the standard XML declaration reproduces source-line
+metadata without padding or editing binary output. AAPT2's no-crunch setting
+preserves the SDK PNGs. Source inputs remain unchanged.
+
+**Evidence and checks.** Private `work/coordination/phone-code/` contains
+`android-sdk-package-full-host-v1-request.json`,
+`android-sdk-package-full-host-v1/result.json`, its compiler/process logs and
+`android-sdk-package-full-host-v1-proof.json`. The latter compares every produced
+member directly with accepted APK
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949` as validation
+only. Eight affected SDK tests pass, including explicit extraction membership,
+source immutability and unknown/redirected-input refusal. Source-only preflight
+refuses the absent lab project/checkpoint; no Editor/project is introduced.
+
+**Phone first failure.** The first private driver never entered instrumentation
+because its shell expanded the nested runner class suffix; quoting the component
+fixes that launch. The next ordinary app run reaches `compile-helper` and exits 2:
+`Explicit JVM library and Java home required`. The generic native invocation
+helper had discarded the app host's explicit JVM/home/library environment. The
+producer now forwards that environment to each Java child with its own temporary
+directory. The original long-running native app/package is untouched. Private
+evidence: `android-sdk-phone-v1-instrumentation.log`,
+`android-sdk-phone-v2-report.json` and
+`android-sdk-phone-v2-compile-helper{.log,.process.json}`.
+
+The third ordinary-app run passes the Java helper and manifest formatter, then
+fails resource compilation before AAPT2 starts: QEMU cannot find its installed
+`libandroid-shmem.so` dependency. The two resource invocations had likewise
+discarded the host library path; QEMU's explicit guest library setting cannot
+replace its own host dependencies. Both now retain the app host environment and
+their own temporary directory. The existing regression fixture checks all five
+Java/QEMU launches, including distinct host and guest library paths. Private
+evidence: `android-sdk-phone-v3-report.json` and
+`android-sdk-phone-v3-compile-resources{.log,.process.json}`. All 21 affected SDK
+and owner-backend tests pass; Ruff passes. The broader SDK wildcard also selects
+an unrelated metadata test that needs CI's module search path; that invocation
+fails at import and supplies no metadata result.
+
+**Ordinary-app result and deterministic difference.** The fourth run completes
+all production steps in the existing ordinary app host: backend exit 0 in
+37.404543 seconds, 45.086035 seconds including collection. The installed tool APK
+is `f8f2f3a135cbae88fe065a50f2480dd04475d2d37233fc8b0d97201a60867dbb`, built
+from `1969a04c`. Eleven of the 13 output entries are raw-exact to J850. Only
+`classes2.dex` and `classes4.dex` differ. Every difference is confined to D8's
+embedded source-class CRC strings and the DEX header checksum/signature derived
+from them. Every other byte, including executable code, matches. The SDK
+activity and generated BuildConfig classes target Java 11 on both platforms,
+but the Android OpenJDK 21 compiler orders their class constant pools differently
+from the host OpenJDK 11 compiler. No output bytes are rewritten or substituted.
+The private comparison driver reports `success: false` because its raw-hash
+assertion fails; the independent app and backend reports both succeed.
+
+Private `android-sdk-phone-v4-{report,result,proof}.json` records execution and
+all 13 comparisons; `android-sdk-phone-v4-collected/` retains the two DEX files,
+source-class JARs and D8 process evidence, and
+`android-sdk-phone-v4-difference-proof.json` bounds the byte differences. These
+outputs come from SDK/public-tool inputs only. The original long-running native
+app package and inputs remain untouched. The existing sole thermal guard
+continues; no display or game launch is needed for this headless job.
+
+The sampled tool UID peaks at 319,516 KiB RSS, and the completed output uses
+60,241 KiB on-device. Private `android-sdk-phone-v4-resources.json` records those
+observations, free storage and both physical panels off. The kernel CPU sensor
+briefly reaches **95.5 C** at startup: the sole guard pauses the jobs and resumes
+at 52.5 C. This is a thermal failure, not a cool-run qualification. A periodic
+watcher cannot constrain a child before observing its PID. The tool host now
+prefixes children with Android `taskset 1`, setting CPU 0 before interpreter/JVM
+startup and inheriting that affinity into descendants. The existing guard stays
+in place. This authored change is qualified by the following fifth run; it does
+not alter the original running native package.
+
+**Startup affinity and guarded rerun.** The fifth ordinary-app run uses tool APK
+`d766e8532f03d1a8c0c4914afddf880a749a1e239fa267ec7cf00eca98bf2bf8`, source
+`dbf312ea`, installed over the separate next-tool package with exact readback,
+retained inputs and the original native package unchanged. The backend completes
+in 37.938397 seconds, 51.587967 seconds including collection. The same 11 entries
+are raw-exact to J850; the remaining two hashes exactly reproduce the independently
+classified fourth-run DEX files. No output normalization or target-byte input is
+introduced.
+
+The original native job stays paused throughout this short proof. A sole private
+persistent-device guard samples CPU thermal zones independently of slower process
+inspection/control, pauses at 75 C, resumes at 60 C and aborts new work above
+88 C or on a sample gap over one second. Across 182 observed samples, the maximum
+gap is 340 ms and peak CPU temperature is **79.2 C**. Three pause/resume pairs
+occur; no abort occurs. The sampled next-tool UID peaks at 334,168 KiB RSS and
+output occupies 60,241 KiB. Both panels remain off; the battery is 30 C and device
+free space exceeds 800 GiB. This rerun meets the specified guarded short-job
+thermal protocol; it does not qualify sustained native compilation or game
+thermal/performance behavior. The separate tool app is stopped afterwards; the
+original native job resumes only after CPU temperature is at most 60 C.
+
+Private evidence: `toolhost-install-v26.json`,
+`android-sdk-phone-v5-{done,report,result,proof,resources}.json`,
+`owned-code-thermal-v2.jsonl` and `owned-code-process-v2.jsonl` under the same
+coordination root. Fourth-run evidence retains the earlier thermal failure.
+
+**Composition contract.** The existing owner-APK `code` mapping now accepts the
+three mandatory gameplay outputs plus this complete 13-entry SDK cohort.
+`SDK_ENTRIES` in the producer owns the exact membership; partial SDK cohorts and
+unknown names refuse before file reads. The produced manifest feeds the existing
+routing/version patch; the other selected SDK bytes stream unchanged. Eleven
+focused host tests pass across SDK packaging and owner signing/composition,
+including complete 16-entry assembly with no comparison-target source files,
+manifest input consumption, source drift and partial selection refusal. These
+fixtures do not qualify a composed game APK on the phone.
+
+**Open and revisit.** Raw DEX identity retains the documented compiler-checksum
+difference; byte identity would require using the same Java compiler. The
+complete original-input native job and full content assembly remain open. No
+game APK is assembled, installed or launched by this result, and no phone
+runtime/performance/security qualification is inferred. Revisit final composition
+when both code and content producers have completed.

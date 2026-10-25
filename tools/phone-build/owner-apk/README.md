@@ -18,8 +18,9 @@ APK. An authored Android entry activity prepares its own
 `WholeCatalogComposed` contract, then starts the original Unity activity.
 Android [provides this app-specific location without storage permission](https://developer.android.com/training/data-storage/app-specific).
 
-The native IL2CPP libraries, original DEX files, game resources and all payload
-contents retain their hashes. Binary manifest structure editing moves only the
+The replay control preserves native IL2CPP libraries, original DEX files, game
+resources and payload hashes. Explicit produced-code selection replaces the
+selected cohort with the producer's actual bytes. Binary manifest structure editing moves only the
 original MAIN/LAUNCHER filter into the new authored activity and makes the
 original Unity entry private to prevent bypassing preparation. Resource indices
 and all other original activity/application attributes remain intact. No Unity
@@ -99,9 +100,21 @@ APK entry names to canonical absolute output files:
 - `lib/arm64-v8a/lib_burst_generated.so`
 
 All three are required together: a source-code build never silently falls back
-to replayed Burst or metadata. Their comparison-target files need not exist.
+to replayed Burst or metadata. To consume the independent Android SDK producer,
+include its complete 13-entry cohort in the same dictionary: `AndroidManifest.xml`,
+the four original DEX files, `libmain.so`, `libunity.so`, `resources.arsc` and all
+five compiled `res/` files. `accepted-output/sdk_package.py` owns the exact
+`SDK_ENTRIES` membership. The selection accepts exactly three or 16 entries;
+partial SDK cohorts and unknown names refuse. Each value is an explicit
+canonical absolute file path. The produced manifest feeds the existing launcher
+and version patch; produced DEX/resource/native bytes stream unchanged into the
+APK, including independently explained compiler checksum differences.
+Their comparison-target files need not exist.
 The builder records actual hashes/sizes, rechecks every source and verifies ZIP
 readback; every other content/payload path retains its existing target hash.
+Host assembly fixtures cover all 16 selected outputs with no corresponding
+replay files, produced-manifest consumption and input-drift refusal. Complete
+phone composition, installation, controls and matched performance remain open.
 The `targets` root is the content producer's existing `apk/` plus `payload/`
 file tree, not a record pack. Omitting `code` retains the existing private replay
 control. This input selection does not establish source provenance or runtime

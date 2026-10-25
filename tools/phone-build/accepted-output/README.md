@@ -503,3 +503,30 @@ qualifies all 281 records, the shared codec build and the complete 5,006-record
 RGB/Alpha8/uncompressed regression case on Android. Twelve authored contracts
 pass with both real codecs. Complete bundles, mip/cubemap production and
 ordinary app delivery remain open.
+
+### Produce the generic Android package entries
+
+Current experimental support: `sdk_inputs.py --android-package` extracts the
+additional pinned SDK Java/templates/resources from the same owner-downloaded
+component. No installer or Editor runs. `sdk_package.py --request PRIVATE.json`
+accepts explicit absolute `sdk`, `android_jar`, `aapt`, `java`, `javac`, `jars` and
+new `output` paths. `jars` maps the exact filenames in `TOOL_JARS` to separately
+acquired public provider files. AGP/Android tools come from Google's Maven
+repository; Guava, Kotlin, JavaWriter and ASM come from Maven Central. Source and
+provider binaries are never distributed here. Public hashes are pinned in the
+owner; raw requests/results stay ignored. On Android the existing app-host
+`android_sdk` request supplies private inputs and the installed read-only JVM
+plus QEMU with its explicit GNU loader/library directories.
+
+The producer creates `resources/apk/` with the generic Android entries and
+retains intermediate source, process logs and `result.json`. The authored Java
+caller invokes unchanged public SDK tools; it contains no SDK implementation or
+game Java. The APK tree is disjoint from content's `assets/bin/Data`/payload and
+the three explicit game-code outputs. Accepted APK bytes are never suppliers.
+J1109 records host equivalence and successful ordinary-app production. Eleven
+phone entries are raw-exact; `classes2.dex` and `classes4.dex` differ only in
+embedded class checksums and derived DEX headers because the Java 11 and 21
+compilers order class constant pools differently. All remaining DEX bytes match;
+no output rewriting is used. Composed installation remains open. Failed new
+outputs are retained, and active private inputs are unchanged. Remove only disposable generated outputs after evidence
+is recorded; run the mandatory repository pruner after build/run work.
