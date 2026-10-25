@@ -284,3 +284,52 @@ A fresh owner key supports that owner's first install and subsequent updates.
 The existing shared lab package requires explicit provisioning of its matching
 signer before a retained-data update; a new key does not inherit that identity.
 No existing lab key is shipped or silently selected by this producer.
+
+## Public release updates
+
+`release.py` owns the current host-qualified release contract and incremental
+cache. The installer owns download, trust-key provisioning, signature verification,
+producer dispatch and PackageInstaller; complete phone updates remain open.
+Release assets are `release.json` and `public-tools.zip`, containing only public
+recipes, producers, installer and permitted toolchain material. Neither asset
+contains an APK, original inputs or game-derived outputs.
+
+`release.json` contains a `release` object and a `signature` object. The release
+fields are `version` (display text), `version_code` (positive Android integer),
+`application_id`, `minimum_installer_version`, `bundle_sha256` (public-tools.zip),
+and `entries`. Each entry key is its relative `apk/` or `payload/` output path;
+its value has `recipe_sha256` and `producer_sha256`. Each hash binds the complete
+transitive recipe or producer dependency closure, including configuration and
+shared tools; dependency changes must change every affected entry fingerprint.
+These hashes identify transformations, never downloadable game data.
+
+Signature fields are `algorithm: "SHA256withRSA"`, `key_id`, and base64 `value`.
+Sign the bytes from `signed_bytes(release)`: ASCII JSON with sorted keys, compact
+separators, ASCII escapes and no trailing newline. Use RSA PKCS1 v1.5 SHA-256.
+The installer must verify against its embedded trusted X509 SubjectPublicKeyInfo
+key selected by key_id, then hash the downloaded bundle before executing tools.
+A downloaded key never establishes trust. Publisher key provisioning and actual
+release publication remain separate gates; no private key is tracked.
+
+After verification, call `rebuild` with the release body, actual installed
+applicationId/versionCode, installer version, accepted original-input inventory
+SHA-256, private persistent cache root and `produce(name, hashes, destination)`.
+The callback dispatches existing source-only producers after checking their
+recipe/tool hashes; it writes one complete output. The owner checks cached output
+hashes and reuses unchanged entries; changed dependencies, missing outputs or a
+changed original-input inventory trigger production. Failed production retains
+the previous completed output. A successful result returns `rebuilt`, `reused`
+and `outputs` (entry-to-path map). Removed entries are absent from that map and
+must not be included by a directory scan. Cache files remain owner-private;
+no output receipt alone establishes installation or game readiness.
+
+Assemble the selected outputs using the release versionCode, then call
+`sign_release` with the existing signing request and durable key directory.
+It validates package/version selection and delegates unchanged signing to the
+existing owner; updates refuse missing key material before invoking signing.
+The installer must independently verify the assembled APK's actual package,
+version and signing certificate, then install over the matching installed app.
+Losing the key requires exporting saves and an explicit reinstall/reimport path;
+a replacement key cannot update an existing installation. Never clear game data
+as part of an update. The final alpha identity remains `dev.ror2lab.alpha`;
+current disposable lab packaging retains its separately qualified identity.

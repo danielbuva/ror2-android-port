@@ -1,5 +1,9 @@
 # Public alpha checklist
 
+
+The host-qualified [release update contract](../tools/phone-build/owner-apk/README.md#public-release-updates)
+now covers per-entry incremental reuse and existing-key signing. Installer trust
+provisioning, complete phone production and installed-game update retention remain open.
 Open work only. Remove completed items and record their results in the journal.
 The user accepts [owner-built Route A](ADR-002-public-alpha-distribution.md);
 [ADR-001](ADR-001-port-architecture.md) retains architecture C. This checklist

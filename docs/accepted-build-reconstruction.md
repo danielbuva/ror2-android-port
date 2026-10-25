@@ -1,5 +1,9 @@
 # Reconstruct the accepted Android build from owner inputs
 
+
+The host-qualified [release update contract](../tools/phone-build/owner-apk/README.md#public-release-updates)
+now covers per-entry incremental reuse and existing-key signing. Installer trust
+provisioning, complete phone production and installed-game update retention remain open.
 Assessment and implementation evidence: 2026-10-23. **Complete private
 accepted-output reconstruction now works on Android without Unity Editor or game
 compilation.** A pinned delta/frame package plus verified owner PC and SDK inputs

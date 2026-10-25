@@ -486,6 +486,12 @@ alignment/signing, content verification and failed-output retention. J1095
 qualifies separate phone signing processes; no install is performed.
 [Key/output lifecycle](../tools/phone-build/owner-apk/README.md#durable-owner-signing)
 keeps signing identity outside disposable build output.
+`owner-apk/release.py` owns the public release body/canonical signing bytes and
+owner-private incremental output cache. Setup takes a signature-verified release,
+accepted original inventory and existing producer callback; teardown retains
+completed outputs/cache and durable signing state. The installer owns trust-key
+verification, acquisition, dispatch and installation; the release owner reuses
+unchanged dependency/output hashes and refuses key loss on updates.
 
 `tools/phone-build/package-assemblies/` owns a separate current experimental
 host producer for the four retained Unity package assemblies and their required
