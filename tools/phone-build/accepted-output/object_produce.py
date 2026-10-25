@@ -665,6 +665,24 @@ def copy_original_bundle(profile, profile_sha256, pc, output):
         (output / "result.json").write_text(json.dumps(receipt, indent=2) + "\n")
 
 
+def custom_reflection_probe(body, typ):
+    """Retain the authored baked-to-Custom mode adapter; relocate textures separately."""
+    if typ["class_id"] != 215:
+        raise ValueError("custom reflection policy requires an original ReflectionProbe")
+    records = module("record_produce")
+    root = records.SCHEMA.type_tree(io.BytesIO(typ["tree"]))
+    _, fields = records.fields(body, root)
+    if ("m_Mode",) not in fields or ("m_CustomBakedTexture",) not in fields:
+        raise ValueError("original reflection mode/texture fields missing")
+    start, end = fields[("m_Mode",)]
+    texture_start, texture_end = fields[("m_CustomBakedTexture",)]
+    if end - start != 4 or body[start:end] != bytes(4):
+        raise ValueError("original reflection mode is not Baked")
+    if texture_end - texture_start != 12 or body[texture_start:texture_end] != bytes(12):
+        raise ValueError("original custom reflection texture is not null")
+    return body[:start] + struct.pack("<i", 2) + body[end:]
+
+
 def strip_compute_programs(body, typ):
     """Remove original DXBC compute resources while retaining native declarations.
 
@@ -852,6 +870,10 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                     if hashlib.sha256(body).hexdigest() != selected["source_sha256"]:
                         raise ValueError("original object body drift")
                     typ = metadata["types"][row["type_id"]]
+                    if "custom_reflection_probe" in selected:
+                        if selected["custom_reflection_probe"] is not True:
+                            raise ValueError("custom reflection projection requires the named source policy")
+                        body = custom_reflection_probe(body, typ)
                     if "strip_compute_programs" in selected:
                         if selected["strip_compute_programs"] is not True:
                             raise ValueError("compute projection requires the named source policy")

@@ -1600,5 +1600,52 @@ class LegacyBarrierPolicyTests(unittest.TestCase):
             P.legacy_animate_hash_tree(projected, sdk.replace(b"tangentMode\x00", b"tangentMade\x00"), LEGACY_IDENTITY)
 
 
+class ReflectionProbeImportTests(unittest.TestCase):
+    def fixture(self, mode=0, texture=(0, 0), mode_name="m_Mode"):
+        f = CURVE_MESH_FIXTURE
+        root = f.node(
+            "Base",
+            kind="ReflectionProbe",
+            children=[
+                f.node("m_IntensityMultiplier", 4, kind="float"),
+                f.node(mode_name, 4, kind="int"),
+                f.node("m_BakedTexture", 12, kind="PPtr<Texture>"),
+                f.node("m_CustomBakedTexture", 12, kind="PPtr<Texture>"),
+                f.node("m_BoxSize", 12, kind="Vector3f"),
+            ],
+        )
+        body = struct.pack("<fiiqiq3f", 1.25, mode, 34, -9876543, *texture, 20, 30, 40)
+        raw = CURVE_RECORD_FIXTURE.serialized(body, root, 215)
+        stream = io.BytesIO(raw)
+        stream.size = len(raw)
+        return body, P.W.read_serialized(stream)["types"][0]
+
+    def test_only_mode_changes_and_original_textures_and_bounds_are_retained(self):
+        body, typ = self.fixture()
+        result = P.custom_reflection_probe(body, typ)
+        self.assertEqual(result, body[:4] + struct.pack("<i", 2) + body[8:])
+        self.assertEqual(body[4:8], bytes(4))
+        self.assertEqual(typ["class_id"], 215)
+
+    def test_wrong_class_nonbaked_mode_and_assigned_custom_texture_are_rejected(self):
+        body, typ = self.fixture()
+        with self.assertRaisesRegex(ValueError, "ReflectionProbe"):
+            P.custom_reflection_probe(body, {**typ, "class_id": 114})
+        for options in [{"mode": 1}, {"mode": 2}, {"texture": (0, 12)}, {"texture": (3, 0)}]:
+            with self.subTest(options=options):
+                body, typ = self.fixture(**options)
+                with self.assertRaises(ValueError):
+                    P.custom_reflection_probe(body, typ)
+
+    def test_schema_drift_and_unowned_trailing_bytes_cannot_be_discarded(self):
+        body, typ = self.fixture(mode_name="unknown")
+        with self.assertRaisesRegex(ValueError, "fields missing"):
+            P.custom_reflection_probe(body, typ)
+        body, typ = self.fixture()
+        for malformed in [body[:-1], body + b"UNOWNED"]:
+            with self.assertRaises((ValueError, struct.error)):
+                P.custom_reflection_probe(malformed, typ)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,1042 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "sdk": {
+    "path": "Contents/Resources/unity editor resources",
+    "sha256": "25bcb42474a8e1d639d4835a28fa2017dc153e2612e3961c6b09895f5ac3a190",
+    "path_id": -6915182000546612788
+  },
+  "sources": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_monoscripts_a69c140580dd1456807433bb923cc5ba.bundle",
+      "member": "CAB-29d1a7582c548fe5e49f4c4c7a96e47e",
+      "sha256": "68aee1b2d2633c3ce1713cc44238025f750d3ae0aa66f42e748d421b19178022"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-common-vfx_static_assets_all_1f7e2784b81e2f8b2f7385ecabf2745f.bundle",
+      "member": "CAB-dda3fcbee5e91ffb8ceeb5487060e4df",
+      "sha256": "570118eff4e8db491c2b62f900f505255dd8c6f089052864479bd241b6c865b4"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-common-tiledtextures_assets_all_29cf297455c3c0c7eb664ffa131f5f76.bundle",
+      "member": "CAB-ffb0c4d761352d4e85e55c070848efff",
+      "sha256": "884085876d4e3f23ea8dbbdee774f42e9b68852794bccdf06d089bcb04149c25"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-shaders_shader_assets_all_45ab8c24dd5dcd99e5cb60900de0231b.bundle",
+      "member": "CAB-779f6fd4edc30ec27d018e8344a8081e",
+      "sha256": "bd1acda75caf15bcb9014dc14e7a0fc5680419e39d61cf24baca429509c12906"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-barrieronkill_assets_all_2b7609c2b3370fa896705d6a1181d2e2.bundle",
+      "member": "CAB-ca9c692c92bb8d2ba39a31fa012210b6",
+      "sha256": "78f2380e04eb557ad21f362bb16e93795e8f51eaf56b6100248faab1c651f670"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-common-colorramps_assets_all_77fd489b0c556f906a4c0864186eefc1.bundle",
+      "member": "CAB-8b77eeffcb99636bcef20b5f7282185f",
+      "sha256": "54107c4d126c4bc96af12d44c58088ab61e59ab634f3d390c894be6235202afe"
+    }
+  ],
+  "bundle": {
+    "name": "barrier-effect-lab",
+    "member": "CAB-ad06aa33a47d6983e36dda9ff33ebde2",
+    "engine": "2021.3.33f1",
+    "asset": "Assets/LabLoadingScene/LandingArtifactClosure/RoR2/Base/Common/VFX/BarrierEffect.prefab",
+    "root": 9210430536651135743,
+    "dependencies": [],
+    "externals": [],
+    "external_objects": [],
+    "bytes": 1077583,
+    "sha256": "aaf162416b4d6fc714a9c692beb285d8a39c684034a883a0071d2b2c532e4f36",
+    "serialized_bytes": 157519,
+    "serialized_sha256": "ebd0fe7832ab2377dee21278737eaa16a18ba814bc3395287206b0d4dfa796a3"
+  },
+  "objects": [
+    {
+      "path_id": -9153740744094774908,
+      "bytes": 220,
+      "sha256": "4f842814a4afd66921fbb2fc1af793582400c923846065a9081646af0e326685",
+      "record": "723c4e641349941a172aef28d6a4b23eee2954c5390cd7257a75a54cd0bf66fd",
+      "type_source": [
+        2,
+        6177799839838059743
+      ]
+    },
+    {
+      "path_id": -8928063368941091227,
+      "bytes": 212,
+      "sha256": "147e016e582cdc5bad03140bb1d661c5671f3e77120bf16693fdd190dbad47fd",
+      "record": "723c4e641349941a172aef28d6a4b23eee2954c5390cd7257a75a54cd0bf66fd",
+      "type_source": [
+        2,
+        -6480006357738878459
+      ]
+    },
+    {
+      "path_id": -8566925627359605846,
+      "source": [
+        1,
+        5186642478791573249
+      ],
+      "source_sha256": "ddebc0826958642e8dbb359f77b3bf1d1ff7194459b0f128e1eb3911c72b72d7",
+      "bytes": 176,
+      "sha256": "624fec5fbfa70b0bc6f585a516852db90dade74731e572ebbb68e60c33812504",
+      "omit_animate_shader_alpha_legacy_fields": true,
+      "references": [
+        {
+          "offset": 0,
+          "from": [
+            0,
+            -930885218895937791
+          ],
+          "to": [
+            0,
+            6901823143745227430
+          ]
+        },
+        {
+          "offset": 16,
+          "from": [
+            1,
+            -4649755032825100113
+          ],
+          "to": [
+            0,
+            8744676495530577047
+          ]
+        }
+      ],
+      "properties_hash": {
+        "script": [
+          0,
+          -4649755032825100113
+        ],
+        "behaviour": [
+          1,
+          5186642478791573249
+        ]
+      }
+    },
+    {
+      "path_id": -7624086469602227366,
+      "source": [
+        1,
+        -5821988744522318079
+      ],
+      "source_sha256": "fd4a6b674b39b35cc2c4e8c5f0f8dde4ee375cdd95db6366ee90a3d2532ac4e0",
+      "bytes": 32,
+      "sha256": "86ad52af7296901fb05151858451a5c83ca3a06753455e5b98bbe6db0664924c",
+      "references": [
+        {
+          "offset": 0,
+          "from": [
+            0,
+            7412003338812505857
+          ],
+          "to": [
+            0,
+            -1903285301649205890
+          ]
+        },
+        {
+          "offset": 16,
+          "from": [
+            1,
+            3621303437485872767
+          ],
+          "to": [
+            0,
+            5843333067051961989
+          ]
+        }
+      ],
+      "properties_hash": {
+        "script": [
+          0,
+          3621303437485872767
+        ],
+        "behaviour": [
+          1,
+          -5821988744522318079
+        ]
+      }
+    },
+    {
+      "path_id": -6362973405072239269,
+      "type_source": [
+        3,
+        -658352061839041481
+      ],
+      "record": "f06ddd41e78e653169631a49d11df6b3901a422b5bcf65062a2897ae5b3818bb",
+      "bytes": 6624,
+      "sha256": "cb38a427e4ac58e5a7c2d67fad8b107d895adddb4843e173d41f695468356964"
+    },
+    {
+      "path_id": -6087130411855682024,
+      "source": [
+        1,
+        -8631637350434881791
+      ],
+      "source_sha256": "ffd0636cf0c431b08c06b44b3fa3eedc6ce074801c48696da62f8ccba2cc6db6",
+      "bytes": 80,
+      "sha256": "a09d9804a2c4597e88d731829e83a6ca4df71231a71922a6523af441e51a5ade",
+      "references": [
+        {
+          "offset": 0,
+          "from": [
+            0,
+            -8674586903097065727
+          ],
+          "to": [
+            0,
+            9210430536651135743
+          ]
+        },
+        {
+          "offset": 56,
+          "from": [
+            0,
+            2758013084681420545
+          ],
+          "to": [
+            0,
+            2914138012292094003
+          ]
+        }
+      ]
+    },
+    {
+      "path_id": -5005741305509330691,
+      "source": [
+        1,
+        604386040268766977
+      ],
+      "source_sha256": "eaeab31635064793022e1ce3fc9065062d5c75c99e4a0768f0a2e131b91c4d56",
+      "bytes": 148,
+      "sha256": "558b70016ba130dadcef62b67ef8f4fdc969fdcc7f1facdb10dbc9f68e06bb20",
+      "omit_animate_shader_alpha_legacy_fields": true,
+      "references": [
+        {
+          "offset": 0,
+          "from": [
+            0,
+            -930885218895937791
+          ],
+          "to": [
+            0,
+            6901823143745227430
+          ]
+        },
+        {
+          "offset": 16,
+          "from": [
+            1,
+            -4649755032825100113
+          ],
+          "to": [
+            0,
+            8744676495530577047
+          ]
+        }
+      ],
+      "properties_hash": {
+        "script": [
+          0,
+          -4649755032825100113
+        ],
+        "behaviour": [
+          1,
+          604386040268766977
+        ]
+      }
+    },
+    {
+      "path_id": -4404651390618690416,
+      "type_source": [
+        3,
+        -658352061839041481
+      ],
+      "record": "f06ddd41e78e653169631a49d11df6b3901a422b5bcf65062a2897ae5b3818bb",
+      "bytes": 14624,
+      "sha256": "7ebbddb9d1e1f4edb0635448e6f95c7fb399d06c17ec61b0c489dbe2ee0a34ff"
+    },
+    {
+      "path_id": -4394450943090976522,
+      "source": [
+        0,
+        -2509234350906983365
+      ],
+      "source_sha256": "50558ff00698935c273bc6333093541618bc2ea121e960f07ed5eb11dde667dd",
+      "bytes": 80,
+      "sha256": "50558ff00698935c273bc6333093541618bc2ea121e960f07ed5eb11dde667dd",
+      "properties_hash": {
+        "script": [
+          0,
+          -2509234350906983365
+        ],
+        "behaviour": [
+          1,
+          -6466505421680623871
+        ]
+      }
+    },
+    {
+      "path_id": -1903285301649205890,
+      "source": [
+        1,
+        7412003338812505857
+      ],
+      "source_sha256": "136452ec519c3bf31ce3c2d7d8eff767d793c5ac54efce2819ec5ab45ee11a5d",
+      "bytes": 63,
+      "sha256": "5e630849595dc22d8cf1c99a6aaf27b14e9f626ca9dd0ffa0724bb3a338110dc",
+      "references": [
+        {
+          "offset": 4,
+          "from": [
+            0,
+            2758013084681420545
+          ],
+          "to": [
+            0,
+            2914138012292094003
+          ]
+        },
+        {
+          "offset": 16,
+          "from": [
+            0,
+            938998849416969985
+          ],
+          "to": [
+            0,
+            7706544772882538289
+          ]
+        },
+        {
+          "offset": 28,
+          "from": [
+            0,
+            -5821988744522318079
+          ],
+          "to": [
+            0,
+            -7624086469602227366
+          ]
+        }
+      ]
+    },
+    {
+      "path_id": -1884557579904139795,
+      "source": [
+        4,
+        2532054689204563567
+      ],
+      "source_sha256": "8f9e5680f83a02f5cb97da7e6afa458eef3ca22b1bef5b8b115d2b4c6b0bebbb",
+      "bytes": 1316,
+      "sha256": "97a531c110746616f81f1965d15ff66f57b8e12055793ca6e5e5c3c2ee706d17",
+      "keyword_policy": "dummy-shader-demote-valid",
+      "references": [
+        {
+          "offset": 16,
+          "from": [
+            2,
+            -658352061839041481
+          ],
+          "to": [
+            0,
+            -6362973405072239269
+          ]
+        },
+        {
+          "offset": 104,
+          "from": [
+            4,
+            -6480006357738878459
+          ],
+          "to": [
+            0,
+            -8928063368941091227
+          ]
+        },
+        {
+          "offset": 188,
+          "from": [
+            4,
+            6177799839838059743
+          ],
+          "to": [
+            0,
+            -9153740744094774908
+          ]
+        },
+        {
+          "offset": 232,
+          "from": [
+            3,
+            8407424061377367741
+          ],
+          "to": [
+            0,
+            2068437726183303146
+          ]
+        }
+      ]
+    },
+    {
+      "path_id": -1313070050180266217,
+      "source": [
+        0,
+        7600799001136405904
+      ],
+      "source_sha256": "e470ba3e7d628ab5b3bd4b3c005e1fe1427b5fc4326c01ddf27686b257c9caf8",
+      "bytes": 96,
+      "sha256": "d49072b425555bd055671c8f2557603d64668f9f6b69c384cc1fc120ed86956e",
+      "properties_hash": {
+        "script": [
+          0,
+          7600799001136405904
+        ],
+        "behaviour": [
+          1,
+          1031043241956392705
+        ]
+      },
+      "plugin_import_default_execution_order": true
+    },
+    {
+      "path_id": -1249750544703865663,
+      "bytes": 24900,
+      "sha256": "73f63c288c6f0fa78a6c2ad639cb33388e35b1e441dee6ae462d280f71743618",
+      "record": "6540b15092906d4ddb43e9eb7dc49481e15e359724541f6b307042f1a62aff23",
+      "type_source": [
+        4,
+        -7053651903246409454
+      ]
+    },
+    {
+      "path_id": -1226764292889586272,
+      "source": [
+        0,
+        7102062851462842901
+      ],
+      "source_sha256": "8f16de048f63e5fd1ceab4568329e3b30c4bc707c63d2f1d1eb18ded3b676f9c",
+      "bytes": 120,
+      "sha256": "8f16de048f63e5fd1ceab4568329e3b30c4bc707c63d2f1d1eb18ded3b676f9c",
+      "properties_hash": {
+        "script": [
+          0,
+          7102062851462842901
+        ],
+        "behaviour": [
+          1,
+          3381447723278647041
+        ]
+      }
+    },
+    {
+      "path_id": 1,
+      "type_source": [
+        1,
+        1
+      ],
+      "generate": "AssetBundle",
+      "bytes": 560,
+      "sha256": "d3bc7fa346e367b069448154dc6c5eb3950aff9116a75122e50411ecfb721637"
+    },
+    {
+      "path_id": 192205618565413631,
+      "source": [
+        1,
+        3213772093396729601
+      ],
+      "source_sha256": "aeddc4e5d9bcd861c530cad9d049989951dfb3cf5e273f288291cad5a754cfe8",
+      "bytes": 156,
+      "sha256": "fb4221f5481f4d58a52f9dbe01bf3b3ee88f70731b9f6c8f8681a06a5d40a468",
+      "references": [
+        {
+          "offset": 0,
+          "from": [
+            0,
+            -930885218895937791
+          ],
+          "to": [
+            0,
+            6901823143745227430
+          ]
+        },
+        {
+          "offset": 72,
+          "from": [
+            11,
+            2532054689204563567
+          ],
+          "to": [
+            0,
+            -1884557579904139795
+          ]
+        }
+      ]
+    },
+    {
+      "path_id": 377722541853514709,
+      "source": [
+        1,
+        -6466505421680623871
+      ],
+      "source_sha256": "f236b38df8ff224ebdeec7ac91feb67d0f062902ec638ed71533a9e712a3327a",
+      "bytes": 40,
+      "sha256": "794d875faf1465205ea4dab29cc86fcfca561322e6a3e9766aec0309acba2848",
+      "references": [
+        {
+          "offset": 0,
+          "from": [
+            0,
+            -8674586903097065727
+          ],
+          "to": [
+            0,
+            9210430536651135743
+          ]
+        },
+        {
+          "offset": 16,
+          "from": [
+            1,
+            -2509234350906983365
+          ],
+          "to": [
+            0,
+            -4394450943090976522
+          ]
+        }
+      ],
+      "properties_hash": {
+        "script": [
+          0,
+          -2509234350906983365
+        ],
+        "behaviour": [
+          1,
+          -6466505421680623871
+        ]
+      }
+    },
+    {
+      "path_id": 2068437726183303146,
+      "bytes": 212,
+      "sha256": "b11b83fe883e0c19635aa57a487203f67548bb067821956fc544c0930c6888e7",
+      "record": "2c4c1c416f676d09a93f987d1ea9f1ecda46aa279baee5799a196beec59fc4ed",
+      "type_source": [
+        5,
+        8407424061377367741
+      ]
+    },
+    {
+      "path_id": 2914138012292094003,
+      "source": [
+        1,
+        2758013084681420545
+      ],
+      "source_sha256": "224bc144c1795103a67aeb075b2c62259f6e6b2643fee46b7d620c71b89f2243",
+      "bytes": 80,
+      "sha256": "06159e0fdd75ff767f4d0d563abc231715d73d02892ec79a849deab8bfdaf4b0",
+      "references": [
+        {
+          "offset": 0,
+          "from": [
+            0,
+            7412003338812505857
+          ],
+          "to": [
+            0,
+            -1903285301649205890
+          ]
+        },
+        {
+          "offset": 56,
+          "from": [
+            0,
+            -2800574533067882751
+          ],
+          "to": [
+            0,
+            6212599978407348640
+          ]
+        },
+        {
+          "offset": 68,
+          "from": [
+            0,
+            -8631637350434881791
+          ],
+          "to": [
+            0,
+            -6087130411855682024
+          ]
+        }
+      ]
+    },
+    {
+      "path_id": 3575754614135991882,
+      "source": [
+        1,
+        3381447723278647041
+      ],
+      "source_sha256": "3b69f4b8a6c9e34e9259c3b5e86a972f4f6b87eaccee2e5ae6feaa633bb73949",
+      "bytes": 56,
+      "sha256": "5b6aebfbde89ba3b0d6e30465899326a393bf70aca374133714c0e4751f15e63",
+      "references": [
+        {
+          "offset": 0,
+          "from": [
+            0,
+            -930885218895937791
+          ],
+          "to": [
+            0,
+            6901823143745227430
+          ]
+        },
+        {
+          "offset": 16,
+          "from": [
+            1,
+            7102062851462842901
+          ],
+          "to": [
+            0,
+            -1226764292889586272
+          ]
+        }
+      ],
+      "properties_hash": {
+        "script": [
+          0,
+          7102062851462842901
+        ],
+        "behaviour": [
+          1,
+          3381447723278647041
+        ]
+      }
+    },
+    {
+      "path_id": 5843333067051961989,
+      "source": [
+        0,
+        3621303437485872767
+      ],
+      "source_sha256": "5e809c27ebee54406a9b0cdb98c81d2073bed3da1ae00b8a182678e8d5ad4808",
+      "bytes": 72,
+      "sha256": "5e809c27ebee54406a9b0cdb98c81d2073bed3da1ae00b8a182678e8d5ad4808",
+      "properties_hash": {
+        "script": [
+          0,
+          3621303437485872767
+        ],
+        "behaviour": [
+          1,
+          -5821988744522318079
+        ]
+      }
+    },
+    {
+      "path_id": 6212599978407348640,
+      "source": [
+        1,
+        -2800574533067882751
+      ],
+      "source_sha256": "ccf62d66329ba75ea23f002d2e3005b63ff689124af9dda2546d8fc344536337",
+      "bytes": 68,
+      "sha256": "f309a690ca853ad022bec86f5ccc2a561b843f955571daf3069293b1f01e33aa",
+      "references": [
+        {
+          "offset": 0,
+          "from": [
+            0,
+            -930885218895937791
+          ],
+          "to": [
+            0,
+            6901823143745227430
+          ]
+        },
+        {
+          "offset": 56,
+          "from": [
+            0,
+            2758013084681420545
+          ],
+          "to": [
+            0,
+            2914138012292094003
+          ]
+        }
+      ]
+    },
+    {
+      "path_id": 6422098611115975846,
+      "source": [
+        1,
+        5125385599820283649
+      ],
+      "source_sha256": "deab93b554f9e5428facdb6d7c1c5318d839e87ea62a612ea5c6da2b5bfb437f",
+      "bytes": 24,
+      "sha256": "31e1c71ded82fec317a72c69a1581c8a6b8e133056dc67589c9c31fa4b39b160",
+      "references": [
+        {
+          "offset": 0,
+          "from": [
+            0,
+            -930885218895937791
+          ],
+          "to": [
+            0,
+            6901823143745227430
+          ]
+        },
+        {
+          "offset": 12,
+          "from": [
+            11,
+            -7053651903246409454
+          ],
+          "to": [
+            0,
+            -1249750544703865663
+          ]
+        }
+      ]
+    },
+    {
+      "path_id": 6901823143745227430,
+      "source": [
+        1,
+        -930885218895937791
+      ],
+      "source_sha256": "3d8d538aeb4f7eb683683ba69672db1a316fe7270eee2f2bf3c3e16a0b4458f5",
+      "bytes": 99,
+      "sha256": "747d2e53a9cdc3c170e7661011d40db9d92f6926228f6671be04858e4f2dedca",
+      "references": [
+        {
+          "offset": 4,
+          "from": [
+            0,
+            -2800574533067882751
+          ],
+          "to": [
+            0,
+            6212599978407348640
+          ]
+        },
+        {
+          "offset": 16,
+          "from": [
+            0,
+            5125385599820283649
+          ],
+          "to": [
+            0,
+            6422098611115975846
+          ]
+        },
+        {
+          "offset": 28,
+          "from": [
+            0,
+            3213772093396729601
+          ],
+          "to": [
+            0,
+            192205618565413631
+          ]
+        },
+        {
+          "offset": 40,
+          "from": [
+            0,
+            5186642478791573249
+          ],
+          "to": [
+            0,
+            -8566925627359605846
+          ]
+        },
+        {
+          "offset": 52,
+          "from": [
+            0,
+            3381447723278647041
+          ],
+          "to": [
+            0,
+            3575754614135991882
+          ]
+        },
+        {
+          "offset": 64,
+          "from": [
+            0,
+            604386040268766977
+          ],
+          "to": [
+            0,
+            -5005741305509330691
+          ]
+        }
+      ]
+    },
+    {
+      "path_id": 7569813843433810915,
+      "source": [
+        1,
+        1031043241956392705
+      ],
+      "source_sha256": "03c98006a97db7aab89440a41d91b0a6d6690f981e6f5c1d7650dba2bcbd56c7",
+      "bytes": 120,
+      "sha256": "504a65717277c7ae46bfd5f33843a2e626b89a99d56010630091763e38b48ba2",
+      "references": [
+        {
+          "offset": 0,
+          "from": [
+            0,
+            -8674586903097065727
+          ],
+          "to": [
+            0,
+            9210430536651135743
+          ]
+        },
+        {
+          "offset": 16,
+          "from": [
+            1,
+            7600799001136405904
+          ],
+          "to": [
+            0,
+            -1313070050180266217
+          ]
+        },
+        {
+          "offset": 48,
+          "from": [
+            0,
+            2758013084681420545
+          ],
+          "to": [
+            0,
+            2914138012292094003
+          ]
+        },
+        {
+          "offset": 64,
+          "from": [
+            0,
+            5186642478791573249
+          ],
+          "to": [
+            0,
+            -8566925627359605846
+          ]
+        },
+        {
+          "offset": 80,
+          "from": [
+            0,
+            604386040268766977
+          ],
+          "to": [
+            0,
+            -5005741305509330691
+          ]
+        },
+        {
+          "offset": 92,
+          "from": [
+            0,
+            -6466505421680623871
+          ],
+          "to": [
+            0,
+            377722541853514709
+          ]
+        }
+      ],
+      "properties_hash": {
+        "script": [
+          0,
+          7600799001136405904
+        ],
+        "behaviour": [
+          1,
+          1031043241956392705
+        ]
+      }
+    },
+    {
+      "path_id": 7706544772882538289,
+      "source": [
+        1,
+        938998849416969985
+      ],
+      "source_sha256": "72b92ff1c08cf79f7c9845fb1dc265afaf8fbbb8342bfcf103cc78800d78926b",
+      "bytes": 56,
+      "sha256": "7befb067d9f77a7ee8f6847a5f53f85ee88afcac3f5e4a84b2670f8723735adb",
+      "references": [
+        {
+          "offset": 0,
+          "from": [
+            0,
+            7412003338812505857
+          ],
+          "to": [
+            0,
+            -1903285301649205890
+          ]
+        },
+        {
+          "offset": 16,
+          "from": [
+            1,
+            -5645647000644976965
+          ],
+          "to": [
+            0,
+            8753035256636095147
+          ]
+        }
+      ],
+      "properties_hash": {
+        "script": [
+          0,
+          -5645647000644976965
+        ],
+        "behaviour": [
+          1,
+          938998849416969985
+        ]
+      }
+    },
+    {
+      "path_id": 8744676495530577047,
+      "source": [
+        0,
+        -4649755032825100113
+      ],
+      "source_sha256": "a8a9900ff08e33a6850a80e7190eb1212f14b9f0e2461c24f0b08a2266147dd5",
+      "bytes": 88,
+      "sha256": "755e508afc9c9c9254d1a4a69f2c43a702b9b012330ff76d9d6c699becff4597",
+      "properties_hash": {
+        "script": [
+          0,
+          -4649755032825100113
+        ],
+        "behaviour": [
+          1,
+          604386040268766977
+        ]
+      },
+      "omit_animate_shader_alpha_legacy_fields": true
+    },
+    {
+      "path_id": 8753035256636095147,
+      "source": [
+        0,
+        -5645647000644976965
+      ],
+      "source_sha256": "9810e7c7b78cb19852b58d5a4f29e7ffc306c679bccd51cb99fd1161ded84e46",
+      "bytes": 80,
+      "sha256": "9810e7c7b78cb19852b58d5a4f29e7ffc306c679bccd51cb99fd1161ded84e46",
+      "properties_hash": {
+        "script": [
+          0,
+          -5645647000644976965
+        ],
+        "behaviour": [
+          1,
+          938998849416969985
+        ]
+      }
+    },
+    {
+      "path_id": 8879447621845588517,
+      "source": [
+        1,
+        3670986488044961537
+      ],
+      "source_sha256": "378d69b6a8ecba0ea91c72a11d7402f9a4e04b5cd8dffee3fbe16be31cf1bbb4",
+      "bytes": 36,
+      "sha256": "c2cf795260f3749171f8f4d539c9fdea923425ef9b33e10e9e96a25b1a0d7f3d",
+      "references": [
+        {
+          "offset": 0,
+          "from": [
+            0,
+            -8674586903097065727
+          ],
+          "to": [
+            0,
+            9210430536651135743
+          ]
+        }
+      ]
+    },
+    {
+      "path_id": 9210430536651135743,
+      "source": [
+        1,
+        -8674586903097065727
+      ],
+      "source_sha256": "63a4953f3824f16d82fd72e2231cd610aa684580ba4431fa58b737627661225e",
+      "bytes": 79,
+      "sha256": "7eb07c864fe16b09e1a02d9f5c39c8f430c3423e917e0dc35dc07000c4a0033e",
+      "references": [
+        {
+          "offset": 4,
+          "from": [
+            0,
+            -8631637350434881791
+          ],
+          "to": [
+            0,
+            -6087130411855682024
+          ]
+        },
+        {
+          "offset": 16,
+          "from": [
+            0,
+            1031043241956392705
+          ],
+          "to": [
+            0,
+            7569813843433810915
+          ]
+        },
+        {
+          "offset": 28,
+          "from": [
+            0,
+            -6466505421680623871
+          ],
+          "to": [
+            0,
+            377722541853514709
+          ]
+        },
+        {
+          "offset": 40,
+          "from": [
+            0,
+            3670986488044961537
+          ],
+          "to": [
+            0,
+            8879447621845588517
+          ]
+        }
+      ]
+    }
+  ]
+}

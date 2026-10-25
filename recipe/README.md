@@ -172,6 +172,12 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 | `owner-ai-test-objects.json` | Private AI Test scene | Original selectors, checked CharacterMaster body/schema omission, source Sprite identities, SDK schema and qualified mesh/texture profiles. | No body/tree/geometry/pixel/scalar template; provenance/privacy/licensing audit below, 2026-10-25. | Existing `object_produce.py`; J1150 host exact, phone open. |
 | `owner-testscene-objects.json` | Private Testscene scene | Original selectors, checked CharacterMaster body/schema omission, source Sprite identities, original preload membership, SDK schema and qualified mesh/texture profiles. | No body/tree/geometry/pixel/scalar template; provenance/privacy/licensing audit below, 2026-10-25. | Existing `object_produce.py`; J1150 host exact, phone open. |
 | `owner-windows-shaders.json` | Original Windows comparison payload | Current original bundle path, length and integrity hash for the existing unchanged-file copy operation. | Provenance/privacy/licensing audit below, 2026-10-25; no programs or historical reconstruction input. | Existing `object_produce.py`; current host drift-explained, phone open. |
+| `owner-barrier-objects.json` | Retained Barrier payload | Original body/type selectors, checked source pointers, named legacy import policies and independently produced media/Shader pins. | Provenance/privacy/licensing audit below, 2026-10-25; no protected body, tree or media template. | Existing `object_produce.py`; host exact, phone open. |
+| `owner-barrier-shaders.json` | Barrier source Shader records | Current original Shader selector, pinned public template revision, supplied SDK33 source metadata and SDK45 compiler identities, source filename and destination relationships. | Provenance/privacy/licensing audit below, 2026-10-25; no programs, pass keys or accepted tables. | `payload_shader_records.py`; bounded two-record host proof, phone open. |
+| `owner-rootjungle-postprocess-shaders.json` | Rootjungle post-processing Shader records | Current original forms, source filenames, pinned public templates and acquired SDK45 context; shared record extents for two scene variants. | Provenance/privacy/licensing audit below, 2026-10-25; no protected source, programs or target tables. | Existing `payload_shader_records.py`; 24 host records exact, phone open. |
+| `owner-rootjungle-spine-standard-shaders.json` | Root spine Standard | Current original Material/Shader/scene selectors, SDK45 source/compiler pins and destination relationships. | Provenance/privacy/licensing audit below, 2026-10-25; no programs, hashes-as-input or target tables. | Existing `payload_shader_records.py`; bounded host record exact, phone open. |
+| `owner-goldshores-spine-standard-shaders.json` | Gold spine Standard | Current original Material/Shader/scene selectors, SDK45 source/compiler pins and destination relationships. | Provenance/privacy/licensing audit below, 2026-10-25; no programs, hashes-as-input or target tables. | Existing `payload_shader_records.py`; bounded host record exact, phone open. |
+| `owner-goldshores-standard-shaders.json` | Gold/Root whole and Gold source Standard | Current original Material/Shader/scene selectors, SDK45 source/compiler pins and destination relationships. | Provenance/privacy/licensing audit below, 2026-10-25; no programs, hashes-as-input or target tables. | Existing `payload_shader_records.py`; bounded host record exact, phone open. |
 | `owner-wispgraveyard-source-objects.json` | Private Wispgraveyard source-scene variant | Original object/type selectors, checked source pointers and import policies, original curve/component relationships, current Sprite identities, SDK schema and qualified media profiles. | No body/tree/curve/geometry/pixel template; provenance/privacy/licensing audit below, 2026-10-25. | Existing `object_produce.py`; J1155 host exact, phone open. |
 | `owner-teleport-material-objects.json` | Private teleport-material bundle | Original material/type selectors, checked references, named dummy-shader keyword policy and container relationships. | No material/shader body, keyword literal, numeric override or target template; audit below, 2026-10-25. | Source-only `object_produce.py`; J1117 host qualification, phone gate open. |
 | `owner-death-effect-objects.json` | Private replay player-death-effect bundle | Rooted original graph/script selectors, checked pointer extents, preload/dependency identities and hashes. | No body, type-tree snapshot, scalar/curve override or target delta; audit below, 2026-10-25. | Existing original-input-only `object_produce.py`; J1115 host qualification, phone gate open. |
@@ -3106,3 +3112,61 @@ pins reflect the existing emitter factoring, with no previous source-generation
 behavior change. Manual audit: 2026-10-25, J1157. All SDK/game/source-derived
 bodies and detailed observations remain local; existing acquisition, license
 and redistribution boundaries continue to apply.
+
+### Retained Barrier source profiles
+
+`owner-barrier-objects.json` and `owner-barrier-shaders.json` receive provenance,
+privacy, licensing and sensitive-content review on 2026-10-25. These authored
+selectors reconstruct the fixed retained Barrier build from current legitimate
+originals. Its source engine metadata, Gamma settings and default Android tiers
+follow its original build lineage. The SDK33 files are separately acquired
+source/hash metadata; only the pinned SDK45 standalone compiler executes.
+The public pinned AssetRipper template is acquired separately with its license.
+No original Shader, SDK include, generated ShaderLab, compiled program, type
+tree, pass hash or target table is stored in either recipe.
+
+The named legacy AnimateShaderAlpha import projection removes only two checked
+zero-valued additions in current original records and derives the corresponding
+hashes through the existing SDK editor-schema owner. The historical original
+DLL/prefab qualifies that retained shape only; production opens neither. The
+PluginImporter default-order policy changes one checked original script field.
+All other source bytes remain original apart from checked pointer relocations
+and existing qualified media transformations. The independent source audit
+checks actual original PPtr spans and script/component relationships. This
+metadata grants no game/SDK redistribution, ownership or authentication rights.
+Generated objects, resource streams, templates and compiler logs remain ignored.
+Phone reconstruction, installation and runtime qualification remain open.
+
+`owner-rootjungle-postprocess-shaders.json` receives the same provenance,
+privacy, licensing and sensitive-content review on 2026-10-25. It selects 24
+current original Shader forms and their original source-body hashes, public
+Default/SingleTexture templates and the current acquired SDK45 context. Original
+PostProcessResources relationships and current export GUID metadata independently
+qualify its authored filenames; exports are never production suppliers. The
+profile contains no template text, executable, reflection, type tree, key or
+accepted record table. Fresh SDK compilation qualifies identical native programs
+for the selected Android quality tiers, including the original 2DArray property.
+One produced extent serves both explicit destination relationships through the
+existing record-pack contract. This closes no final Rootjungle bundle by itself.
+Original content, generated source, SDK data and compiled outputs stay ignored;
+no new redistribution or ownership right is granted.
+
+The three `owner-*-standard-shaders.json` profiles receive provenance, privacy,
+licensing and sensitive-content review on 2026-10-25. They select current
+original Material/Shader relationships and supplied SDK45 Standard source.
+Original scene/retained authored dependency relationships explain the bounded
+material seeds: Default/DebugRed/JunkShrineRock for the whole context,
+Default/DebugRed for Gold spine and Default/Green for Root spine. Original
+DebugRed enables emission and instancing; Green enables emission without
+instancing. Source fog and actual lightmap/renderer usage qualify runtime
+retention. Baking preferences alone do not establish a runtime lightmap.
+The same source-derived row order drives the shared SDK compiler's native pool
+ordering; no accepted record/index mapping is read. Original and SDK fallback
+relationships resolve the explicit destination resource identity.
+
+Only selectors, tool/source pins, authored context and destination identities
+are tracked. Neither historical game inputs nor exported scenes/templates,
+programs, native records, type trees, scalar replacements or target tables
+supply reconstruction. Generated source, compiled content and raw evidence
+remain ignored. The profiles grant no ownership, authentication or SDK/game
+redistribution rights. Complete bundles and phone acceptance are separate gates.
