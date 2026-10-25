@@ -640,6 +640,54 @@
     "28599ef043ac14e47885c86aa6842213": {
       "bytes": 5692,
       "sha256": "32752f8a580b597cbe7bacbe0860fddc25d682a9690b3d76b33e3a48eb0294db"
+    },
+    "c705d7c6a226e4e8cbdc5816bcd0d0e5": {
+      "bytes": 30788,
+      "sha256": "c833b41d4f535a73c21d7d41e7d9510735397267a67182e92bff3fe75ab3980f"
+    },
+    "6454e23a42fa440c4892eb325b55f9f1": {
+      "bytes": 52404,
+      "sha256": "7a7d7b1bab24275ecaeb53e91fde702617708d425881fc74b05efe1171d9f1c9"
+    },
+    "31ef5309ba05beb4d9bf9b6c2669555b": {
+      "bytes": 353776,
+      "sha256": "89c16f2358e0bb765caa129d8a6e78aa4cafc0cd4cda5d9f57b953219dd24eb5"
+    },
+    "5f16ef6ac5dbd9e49ad589596ff5ed67": {
+      "bytes": 26096,
+      "sha256": "f14ba0020aed806b23f4bcae14c614656ad10c481ce198495e658a20bb06abbf"
+    },
+    "e30e6b68edd9c3d4ea05fa2c57c73530": {
+      "bytes": 353768,
+      "sha256": "232a27c4ef70ef3954d1b11c467a6ad66ec4826ee48d648e37046c146246bb90"
+    },
+    "70ba3881ee718514898063d2f742a28b": {
+      "bytes": 353772,
+      "sha256": "088dfdf48fbdbbd4bf39ec18df5adc4b12a9d7a85027ac91acfc3b92b2b6dae8"
+    },
+    "140c2ce3d986c5b4c97c9362be916ee6": {
+      "bytes": 23828,
+      "sha256": "c42114bfe6cfcf5a49c99b1e343b28a0e9a3309848ac9a694c3abfe4e92f10b2"
+    },
+    "80d553c6719ea5a448ffa3124bd1ad91": {
+      "bytes": 30504,
+      "sha256": "b44be33c56172ceba9d9e8f1be3d61f198eeee0faaf3a274266dae252a6e932b"
+    },
+    "8a0a0f3152b48f4429b9a6854e2c0109": {
+      "bytes": 15044,
+      "sha256": "4b8c95bef50441731afec3960e804b54a4b6f053ad3c78c6bc3a017600e5ec68"
+    },
+    "a7168cf4aa86d984ea43a0f795f50b0c": {
+      "bytes": 126408,
+      "sha256": "11dbca8b7e928efb497ce15095f2676dc18568ff9062f9c7d055c3f8385a487f"
+    },
+    "d2b991c33c623b74aa099628746c555a": {
+      "bytes": 14964,
+      "sha256": "9e390fe99ba485c5826b62a2326fee17b7e78e707e6dbd97a227748ca42619b6"
+    },
+    "e24ad2e9e87603348befae7014f52a5c": {
+      "bytes": 36232,
+      "sha256": "5a4b1f3469ca5c3571bfcbcab563bf15594d3942576c8838614890c021beb6eb"
     }
   },
   "project_assemblies": [
@@ -828,8 +876,27 @@
           "bytes": 333,
           "sha256": "05e6888c0ce89b86079923137e04368daf6443dbf147d0e4ca0ff3d0a81d2382"
         }
+      },
+      {
+        "file": "c705d7c6a226e4e8cbdc5816bcd0d0e5",
+        "name": "AndroidNativeStandardVariants",
+        "manifest": "standard",
+        "bytes": 26692,
+        "sha256": "3cf03bfa11c6b407acd9e2a74aea8aef115f749a0591e8f85c4b2e630d3338f3"
+      },
+      {
+        "file": "6454e23a42fa440c4892eb325b55f9f1",
+        "name": "AndroidNativeMaterialFamilies",
+        "manifest": "families",
+        "bytes": 48308,
+        "sha256": "b176a42158bd15a325bf8f72e581f2a401292cdd61e36bbd2a515c408aeb3db7"
       }
-    ]
+    ],
+    "manifests": {
+      "path": "owner-player-shader-manifests.json",
+      "bytes": 2214369,
+      "sha256": "5c55f316b6098569f62b25eff767f2eed2936557e0700b8f7f78de59cb489ab1"
+    }
   },
   "sprites": {
     "source": {
@@ -3943,6 +4010,466 @@
         "fc09a4c7f1fa342f6bc0a974d09572cf",
         "6f4d11dfb9c8cc94e86ed1cdf49f4674"
       ]
+    },
+    {
+      "file": "140c2ce3d986c5b4c97c9362be916ee6",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc3-items-sharedsuffering_assets_all_00fb14708d80a853c7e390241f52a430.bundle",
+        "bytes": 440501,
+        "sha256": "e52ce1003fc962c075dcf59c5654341b65bef83538f87d884c78903f5914af50",
+        "member": "CAB-37278393c77ce867b01e270506b66bfe"
+      },
+      "objects": [
+        {
+          "source_path_id": 8052735338839854771,
+          "path_id": 1,
+          "bytes": 19732,
+          "source_sha256": "ae35080033b7098c8db69e2121ba1691607574f466ca899a2f67a9a64a471ead",
+          "sha256": "5882cc31a7902dce2774f045dbf20dedef5b562a8b1b00684d47d99912608855",
+          "references": [
+            {
+              "offset": 16,
+              "from": [
+                1,
+                -3075889661304172018
+              ],
+              "to": [
+                1,
+                775
+              ]
+            },
+            {
+              "offset": 56,
+              "from": [
+                0,
+                -2406584223105888589
+              ],
+              "to": [
+                2,
+                1
+              ]
+            },
+            {
+              "offset": 13816,
+              "from": [
+                0,
+                4896315350987296435
+              ],
+              "to": [
+                3,
+                1
+              ]
+            }
+          ]
+        }
+      ],
+      "externals": [
+        "globalgamemanagers.assets",
+        "98f55e3ca8e2dbc42866806e87ca60c4",
+        "ff579ba37da12e3428ceb17a6db2a4ec"
+      ],
+      "script": [
+        1,
+        775
+      ],
+      "script_properties": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_monoscripts_a69c140580dd1456807433bb923cc5ba.bundle",
+        "member": "CAB-29d1a7582c548fe5e49f4c4c7a96e47e",
+        "bytes": 87323,
+        "sha256": "68aee1b2d2633c3ce1713cc44238025f750d3ae0aa66f42e748d421b19178022",
+        "path_id": -3075889661304172018
+      }
+    },
+    {
+      "file": "80d553c6719ea5a448ffa3124bd1ad91",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-common-fonts-noto_assets_all_577d99b3ba49181d5b80de3725245e01.bundle",
+        "bytes": 15521356,
+        "sha256": "ce5332be8285053f057f9ee0aaca65701c898ccfba69495b3adfcce966209ff9",
+        "member": "CAB-6c8c13484990024e48f0af7d1ab3d2e1"
+      },
+      "objects": [
+        {
+          "source_path_id": -525197869626570821,
+          "path_id": 1,
+          "bytes": 26408,
+          "source_sha256": "199ce8389e7e3e7aaeda27e1ffec115cc6bc5de2b6fa10a815ffbd995f3b3801",
+          "sha256": "2a5338caaf5877f74ec588c2c12653b118af58fe76d74f48c66f947a6872bad7",
+          "references": [
+            {
+              "offset": 16,
+              "from": [
+                1,
+                -3075889661304172018
+              ],
+              "to": [
+                1,
+                775
+              ]
+            },
+            {
+              "offset": 72,
+              "from": [
+                0,
+                1794542172784412603
+              ],
+              "to": [
+                2,
+                1
+              ]
+            },
+            {
+              "offset": 136,
+              "from": [
+                0,
+                -4907756795729362039
+              ],
+              "to": [
+                3,
+                3
+              ]
+            },
+            {
+              "offset": 476,
+              "from": [
+                0,
+                -7232181904344234053
+              ],
+              "to": [
+                4,
+                1
+              ]
+            }
+          ]
+        }
+      ],
+      "externals": [
+        "globalgamemanagers.assets",
+        "452b53151060c4246833b8aa00b3f31a",
+        "4d8cf12989e2c504f85bb921e236c6a4",
+        "69f40642faca7a04390f2169d9890ea1"
+      ],
+      "script": [
+        1,
+        775
+      ],
+      "script_properties": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_monoscripts_a69c140580dd1456807433bb923cc5ba.bundle",
+        "member": "CAB-29d1a7582c548fe5e49f4c4c7a96e47e",
+        "bytes": 87323,
+        "sha256": "68aee1b2d2633c3ce1713cc44238025f750d3ae0aa66f42e748d421b19178022",
+        "path_id": -3075889661304172018
+      }
+    },
+    {
+      "file": "8a0a0f3152b48f4429b9a6854e2c0109",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-common-fonts-squaresbold_assets_all_49ffaeb6258d040d6fbd7043a4b7160d.bundle",
+        "bytes": 161004,
+        "sha256": "03b5521c6a804c8044f9bc20fb3282d83932b5e6c12aa163d07e360bfe54a3e6",
+        "member": "CAB-c1c42a877bb02cbc4a0b2b9bc31eba9d"
+      },
+      "objects": [
+        {
+          "source_path_id": 7548717596057129139,
+          "path_id": 1,
+          "bytes": 10948,
+          "source_sha256": "26aa753f31d4f76587bce2729106ddac6cad99adb768e1d12cf4f82a637748c7",
+          "sha256": "27cc41cf884374741eb95dc2ae35d8757f60e43bb02d6e80e05c1b363995e9bb",
+          "references": [
+            {
+              "offset": 16,
+              "from": [
+                1,
+                -3075889661304172018
+              ],
+              "to": [
+                1,
+                775
+              ]
+            },
+            {
+              "offset": 56,
+              "from": [
+                0,
+                1188887953541353651
+              ],
+              "to": [
+                2,
+                1
+              ]
+            },
+            {
+              "offset": 6740,
+              "from": [
+                0,
+                5396532730158436531
+              ],
+              "to": [
+                3,
+                1
+              ]
+            },
+            {
+              "offset": 6868,
+              "from": [
+                0,
+                5396532730158436531
+              ],
+              "to": [
+                3,
+                1
+              ]
+            }
+          ]
+        }
+      ],
+      "externals": [
+        "globalgamemanagers.assets",
+        "d5ae9c58bb768f5438715270ac659dc0",
+        "ecbcdaff4cab5d64c99e2b377c233153"
+      ],
+      "script": [
+        1,
+        775
+      ],
+      "script_properties": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_monoscripts_a69c140580dd1456807433bb923cc5ba.bundle",
+        "member": "CAB-29d1a7582c548fe5e49f4c4c7a96e47e",
+        "bytes": 87323,
+        "sha256": "68aee1b2d2633c3ce1713cc44238025f750d3ae0aa66f42e748d421b19178022",
+        "path_id": -3075889661304172018
+      }
+    },
+    {
+      "file": "a7168cf4aa86d984ea43a0f795f50b0c",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-common-fonts-noto_assets_all_577d99b3ba49181d5b80de3725245e01.bundle",
+        "bytes": 15521356,
+        "sha256": "ce5332be8285053f057f9ee0aaca65701c898ccfba69495b3adfcce966209ff9",
+        "member": "CAB-6c8c13484990024e48f0af7d1ab3d2e1"
+      },
+      "objects": [
+        {
+          "source_path_id": 4597277033764267162,
+          "path_id": 1,
+          "bytes": 122312,
+          "source_sha256": "974a7333e4e523aa754ae7f35f58cc5f7403fc16afa2dbf30190d65a6d656a8a",
+          "sha256": "d08ab14d4d369a778c74466ecf95aac6fb2855483422df349f9e8d723690a370",
+          "references": [
+            {
+              "offset": 16,
+              "from": [
+                1,
+                -3075889661304172018
+              ],
+              "to": [
+                1,
+                775
+              ]
+            },
+            {
+              "offset": 88,
+              "from": [
+                0,
+                -6869146203260279654
+              ],
+              "to": [
+                2,
+                1
+              ]
+            },
+            {
+              "offset": 16400,
+              "from": [
+                0,
+                6833859139072730266
+              ],
+              "to": [
+                3,
+                1
+              ]
+            },
+            {
+              "offset": 98004,
+              "from": [
+                0,
+                -525197869626570821
+              ],
+              "to": [
+                4,
+                1
+              ]
+            }
+          ]
+        }
+      ],
+      "externals": [
+        "globalgamemanagers.assets",
+        "a8753b3887cba66408ced0b3fd85df3a",
+        "6f4d11dfb9c8cc94e86ed1cdf49f4674",
+        "80d553c6719ea5a448ffa3124bd1ad91"
+      ],
+      "script": [
+        1,
+        775
+      ],
+      "script_properties": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_monoscripts_a69c140580dd1456807433bb923cc5ba.bundle",
+        "member": "CAB-29d1a7582c548fe5e49f4c4c7a96e47e",
+        "bytes": 87323,
+        "sha256": "68aee1b2d2633c3ce1713cc44238025f750d3ae0aa66f42e748d421b19178022",
+        "path_id": -3075889661304172018
+      }
+    },
+    {
+      "file": "d2b991c33c623b74aa099628746c555a",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-common-fonts-riskofrain_assets_all_af18ba36b0beea88fd31594edaa6d02b.bundle",
+        "bytes": 56204,
+        "sha256": "9e61d40123d807d523fc70532589c28aa76a01d291eef4fde17d2f193cb825f9",
+        "member": "CAB-bac8ed7ccae670f43410310604e51749"
+      },
+      "objects": [
+        {
+          "source_path_id": -3102604010342103316,
+          "path_id": 1,
+          "bytes": 10868,
+          "source_sha256": "cf8aa0efe72b4ed32902c1e07f516e82e2e518f294a030a6affc5ad0fe68d3c5",
+          "sha256": "f0c59848e8f45f39a1ad9280e2fedc80d1b3247d5c13ac4d471c32912057e6b9",
+          "references": [
+            {
+              "offset": 16,
+              "from": [
+                1,
+                -3075889661304172018
+              ],
+              "to": [
+                1,
+                775
+              ]
+            },
+            {
+              "offset": 72,
+              "from": [
+                0,
+                -2368549767984625940
+              ],
+              "to": [
+                2,
+                1
+              ]
+            },
+            {
+              "offset": 6692,
+              "from": [
+                0,
+                4019152015143552748
+              ],
+              "to": [
+                3,
+                1
+              ]
+            },
+            {
+              "offset": 6824,
+              "from": [
+                0,
+                4019152015143552748
+              ],
+              "to": [
+                3,
+                1
+              ]
+            }
+          ]
+        }
+      ],
+      "externals": [
+        "globalgamemanagers.assets",
+        "5c5ec0bcb0d9710409cd342ccfb2f7fe",
+        "3080439f9fea4a744a038b12f49800b1"
+      ],
+      "script": [
+        1,
+        775
+      ],
+      "script_properties": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_monoscripts_a69c140580dd1456807433bb923cc5ba.bundle",
+        "member": "CAB-29d1a7582c548fe5e49f4c4c7a96e47e",
+        "bytes": 87323,
+        "sha256": "68aee1b2d2633c3ce1713cc44238025f750d3ae0aa66f42e748d421b19178022",
+        "path_id": -3075889661304172018
+      }
+    },
+    {
+      "file": "e24ad2e9e87603348befae7014f52a5c",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-common-fonts-bombardier_assets_all_166164a969bd2f4d9fed6b4ec7d56ce5.bundle",
+        "bytes": 299230,
+        "sha256": "0e95eb21e2a33d2e9e9652e9effd235e046c96ee69a78cf0a30fbc90aaa82881",
+        "member": "CAB-46a81233d59874ab3e2d5f685fc3a09b"
+      },
+      "objects": [
+        {
+          "source_path_id": 3888779353165285049,
+          "path_id": 1,
+          "bytes": 32136,
+          "source_sha256": "e35f08bc7ebb32939e0f6572640bbf26837ef1de0b271499d350657ec9e067d3",
+          "sha256": "220fe7278504ca4fb36168d1dd291dcced6325219b263eeb6ee976cd178710fd",
+          "references": [
+            {
+              "offset": 16,
+              "from": [
+                1,
+                -3075889661304172018
+              ],
+              "to": [
+                1,
+                775
+              ]
+            },
+            {
+              "offset": 56,
+              "from": [
+                0,
+                -3497243749660211527
+              ],
+              "to": [
+                2,
+                1
+              ]
+            },
+            {
+              "offset": 13952,
+              "from": [
+                0,
+                -1300467617572174151
+              ],
+              "to": [
+                3,
+                1
+              ]
+            }
+          ]
+        }
+      ],
+      "externals": [
+        "globalgamemanagers.assets",
+        "b4274b35db558904eb40ed4c4e738a2b",
+        "8097df9f2df3c0d49b91b615e733c726"
+      ],
+      "script": [
+        1,
+        775
+      ],
+      "script_properties": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_monoscripts_a69c140580dd1456807433bb923cc5ba.bundle",
+        "member": "CAB-29d1a7582c548fe5e49f4c4c7a96e47e",
+        "bytes": 87323,
+        "sha256": "68aee1b2d2633c3ce1713cc44238025f750d3ae0aa66f42e748d421b19178022",
+        "path_id": -3075889661304172018
+      }
     }
   ],
   "textures": [
@@ -4373,6 +4900,35 @@
           "path_id": -8582350653611174741
         }
       ]
+    },
+    {
+      "profile_sha256": "723c4e641349941a172aef28d6a4b23eee2954c5390cd7257a75a54cd0bf66fd",
+      "files": [
+        {
+          "file": "31ef5309ba05beb4d9bf9b6c2669555b",
+          "bundle": "apk/assets/bin/Data/31ef5309ba05beb4d9bf9b6c2669555b",
+          "member": "31ef5309ba05beb4d9bf9b6c2669555b",
+          "path_id": 1
+        },
+        {
+          "file": "5f16ef6ac5dbd9e49ad589596ff5ed67",
+          "bundle": "apk/assets/bin/Data/5f16ef6ac5dbd9e49ad589596ff5ed67",
+          "member": "5f16ef6ac5dbd9e49ad589596ff5ed67",
+          "path_id": 1
+        },
+        {
+          "file": "e30e6b68edd9c3d4ea05fa2c57c73530",
+          "bundle": "apk/assets/bin/Data/e30e6b68edd9c3d4ea05fa2c57c73530",
+          "member": "e30e6b68edd9c3d4ea05fa2c57c73530",
+          "path_id": 1
+        },
+        {
+          "file": "70ba3881ee718514898063d2f742a28b",
+          "bundle": "apk/assets/bin/Data/70ba3881ee718514898063d2f742a28b",
+          "member": "70ba3881ee718514898063d2f742a28b",
+          "path_id": 1
+        }
+      ]
     }
   ],
   "builtin_ui": {
@@ -4391,5 +4947,10 @@
       10907,
       10917
     ]
+  },
+  "script_properties_sdk": {
+    "bytes": 240756040,
+    "sha256": "25bcb42474a8e1d639d4835a28fa2017dc153e2612e3961c6b09895f5ac3a190",
+    "path_id": -9215203055440829681
   }
 }

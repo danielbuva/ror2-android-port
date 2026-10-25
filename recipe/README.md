@@ -167,7 +167,8 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 | `owner-death-effect-objects.json` | Private replay player-death-effect bundle | Rooted original graph/script selectors, checked pointer extents, preload/dependency identities and hashes. | No body, type-tree snapshot, scalar/curve override or target delta; audit below, 2026-10-25. | Existing original-input-only `object_produce.py`; J1115 host qualification, phone gate open. |
 | `owner-pickup-objects.json` | Private replay pickup bundle | Original selectors, hashes, checked pointer extents and destination relationships. | No bodies, type trees or target deltas; full audit below, 2026-10-25. | Original-input-only `object_produce.py`; J1113 host qualification, phone gate open. |
 | `owner-bootstrap.json` | Authored bootstrap TextAsset | Existing public build-entry attempt identity/input ID and four original preload GUID relationships absent from the original catalog. | No object/body/type-tree/target template or protected text; audit below, 2026-10-25. | Existing `player_data.text_files`; J1118 host qualification, phone gate open. |
-| `owner-player-data.json` | 161 private player files | Original object selectors, checked pointers/importer relationships, authored JSON/assembly order and existing texture-pack record identities. | No game bodies, pixels, text payloads, type-hash overrides or private identifiers; full audits below, 2026-10-25. | Explicit PC/SDK/fresh-converter and pinned source-produced texture packs; J1118 host qualification; landed PR75 provider, phone gate open. |
+| `owner-player-data.json` | 173 private player files | Original object selectors, checked pointers/importer relationships, authored JSON/assembly order and existing texture-pack record identities. | No game bodies, pixels, text payloads, type-hash overrides or private identifiers; full audits below, 2026-10-25. | Explicit PC/SDK/fresh-converter and pinned source-produced texture packs; J1118 host qualification; landed PR75 provider, phone gate open. |
+| `owner-player-shader-manifests.json` | Two native selection TextAssets | Original Material/Shader selectors, source asset identities and admission hashes. | No keyword inventory, shader programs, material values, serialized templates or private identifiers; audit below, 2026-10-25. | Original PC fields plus the shared authored selection policy; complete shader and phone gates remain open. |
 | `owner-uncompressed-textures.json` | Private replay uncompressed texture bodies/pixels | Original/destination selectors, source extents, generic import/placement metadata and hashes; copy, BC1, source-coordinate dilation and public JPEG policy. | No pixels, palettes, target literals/patches, native SDK implementation or image/library bytes; full audit above, 2026-10-24. All 399 records qualify on host/Android in J1079. | Explicit PC-input-only `texture_produce.py` and separately built public JPEG tool; no current game-build consumer. |
 | `owner-alpha-textures.json` | Private replay source Alpha8/single-mip texture cohort (J1082) | Canonical original/destination selectors, source/field extents, import/storage settings and hashes. | No alpha samples, encoded blocks, target byte frames, protected source or private identifiers; full audit below, 2026-10-24. | Original-PC-input-only `texture_produce.py` plus separately built public codec; no game-build consumer. |
 | `owner-rgb-textures.json` | Complete ETC1/single-mip target cohort | Original/destination selectors, field/pixel extents, hashes and source JPEG policy; composition aliases reuse original Warp/Elite ramps. | No colors, normal vectors, palettes, encoded blocks or target byte frames; audit below, 2026-10-24. | Original-input-only `texture_produce.py` and public ETC/JPEG tools; J1088 qualifies all 281 records on Android. |
@@ -2843,3 +2844,36 @@ templates are tracked. The profile contains minimum source/dependency identities
 and comparison hashes. Provenance/privacy/licensing/sensitive-content audit:
 2026-10-25; J1126. SDK acquisition and use remain subject to the owner's Unity
 rights; all generated content and raw evidence remain ignored.
+
+
+`owner-player-shader-manifests.json` selects 4,904 original Material records and
+12 original Shader declarations for the two native selection TextAssets. Bundle,
+member and path IDs, source asset identities, relationship selectors and hashes
+are the minimum inputs needed to reread the existing shader-selection policy
+from the owner's original files. Embedded schemas locate fields at runtime; no
+keyword inventory, shader program, material value, text payload or serialized
+target template is stored. The player profile pins this sibling recipe.
+
+Provenance, privacy, licensing and sensitive-content audit: 2026-10-25. The shared
+pure metadata functions are factored from existing authored shader generators;
+no extracted upstream implementation or AST-extraction mechanism is distributed.
+Source selectors grant no game or SDK redistribution rights, ownership,
+authentication or entitlement capability. All generated JSON, original fields
+and raw evidence remain ignored. Compiled Shader production and phone
+qualification remain independent gates.
+
+The player profile additionally selects six original TMP font objects and one
+SDK native MonoBehaviour base from the explicitly supplied `unity editor
+resources`. Original MonoScript identities and schemas feed the existing public
+properties-hash algorithm; no destination type hash or schema is stored. Source
+script relationships are admitted before hash derivation. Four standalone mip
+textures consume the landed public RGBA mip profile without changing its producer
+or storing pixel data. Provenance/privacy/licensing/sensitive-content review:
+2026-10-25. Only required source selectors, dependency relationships and
+comparison hashes are added; original SDK/game files and raw evidence remain
+private. The existing SDK acquisition and use requirements apply.
+
+Shared shader-policy factoring also refreshes existing generator helper pins,
+their recipe pins and all seven current catalog override pin pairs. The change
+introduces only authored helper identity hashes, without altering original
+shader-selection identities or relaxing source admission. Review: 2026-10-25.

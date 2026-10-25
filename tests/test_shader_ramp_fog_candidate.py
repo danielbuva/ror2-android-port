@@ -22,7 +22,7 @@ def load_isolated_module(root: Path):
     lab = root / "scripts/lab"
     (lab).mkdir(parents=True)
     (root / "recipe").mkdir()
-    for name in ("common.py", "shader_segments.py", "shader_ramp_fog.py"):
+    for name in ("common.py", "shader_metadata.py", "shader_segments.py", "shader_ramp_fog.py"):
         source = PROJECT_ROOT / "scripts/lab" / name if name != "shader_ramp_fog.py" else SOURCE_MODULE
         shutil.copy2(source, lab / name)
     shutil.copy2(PUBLIC_RECIPE, root / "recipe/shader-ramp-fog-candidate.json")
@@ -34,7 +34,7 @@ def load_isolated_module(root: Path):
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module
     old_path = list(sys.path)
-    old_modules = {name: sys.modules.pop(name, None) for name in ("common", "shader_segments")}
+    old_modules = {name: sys.modules.pop(name, None) for name in ("common", "shader_metadata", "shader_segments")}
     sys.path.insert(0, str(lab))
     try:
         spec.loader.exec_module(module)
@@ -58,7 +58,17 @@ class ShaderRampFogCandidateTests(unittest.TestCase):
             self.assertFalse(module.RECIPE["generation_limits"]["unity_compiled"])
             helper_hash = hashlib.sha256((INTEGRATION / "scripts/lab/shader_deferred.py").read_bytes()).hexdigest()
             self.assertEqual(module.RECIPE["tools"]["shader_deferred_sha256"], helper_hash)
+            metadata_hash = hashlib.sha256((INTEGRATION / "scripts/lab/shader_metadata.py").read_bytes()).hexdigest()
+            self.assertEqual(module.RECIPE["tools"]["shader_metadata_sha256"], metadata_hash)
             self.assertEqual(module.RECIPE["stable_output"], "generated-shader-candidates/ramp-fog-r5/{input_id}")
+
+    def test_shared_metadata_drift_refuses_before_native_tools(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="ramp-fog-metadata-pin-") as temp:
+            root = Path(temp)
+            module = load_isolated_module(root)
+            (root / "scripts/lab/shader_metadata.py").write_text("changed authored metadata policy")
+            with self.assertRaisesRegex(RuntimeError, "helper drift: shader_metadata.py"):
+                module._verify_tools(root / "work", root)
 
     def test_output_is_stable_input_scoped_and_work_contained(self) -> None:
         with tempfile.TemporaryDirectory(prefix="ramp-fog-path-test-") as temp:

@@ -107,11 +107,11 @@ pinned producer pack. Setup, input admission, persisted verification and failure
 retention share the prefab owner. Failure retains outputs and the codec context
 reaps its child; exit ends the producer.
 
-`player_data.py` owns the separate current 161-file player cohort: SDK/converter
+`player_data.py` owns the separate current 173-file player cohort: SDK/converter
 resources, PC-derived script JSON, the three-object font file, original
 line-breaking TextAssets, authored runtime/bootstrap JSON, 64 standalone Sprites and one
-original TimerStringFormatter object, three original TMP objects, 13 materials
-and 68 standalone textures, plus the six-object SDK built-in UI file. Its audited
+original TimerStringFormatter object, nine original TMP objects, 13 materials
+and 72 standalone textures, plus the six-object SDK built-in UI file. Its audited
 `recipe/owner-player-data.json`,
 explicit original PC/SDK/converter inputs and converter receipt set up a new
 target tree; checked pointer relocation and `unity_write.py` build serialized
@@ -137,7 +137,23 @@ objects' editor-only fields and relocates original local texture/importer IDs.
 Original SDK mip pixels, Sprite geometry/physics/bones and the original PC
 font/sharedassets Sprite native type identities supply the runtime output.
 No Editor process is required.
-The landed RGBA producer/profile from PR75 supplies 54 selections;
+The same player owner derives its two native shader-selection TextAssets from
+original Material keywords and Shader declaration metadata. Its pinned
+`recipe/owner-player-shader-manifests.json` supplies source selectors; embedded
+type trees locate fields on every run. `scripts/lab/shader_metadata.py` owns the
+shared pure declaration/variant policy used by both this reader and the existing
+shader generators. It has no file, compiler or retained-state access. The player
+owner admits and rechecks every original provider through final serialized
+output. These JSON files supply selection metadata; compiled Shader production
+remains a separate gate.
+Selected TMP fonts derive their managed properties hashes through the shared
+`script_identity.py` owner, using the actual original MonoScript identity,
+original custom schema and an explicitly supplied pinned SDK
+`unity editor resources` native base. Original script relationships are checked
+before derivation; unselected scripted objects retain their original hashes.
+The SDK provider and original script are rechecked through final output.
+The landed RGBA producer/profile from PR75 supplies 54 selections; PR95 supplies
+four additional standalone mip records;
 the combined phone replay remains open. Persisted/input
 hashes and complete/failed receipts define state and teardown. Neither owner consumes
 replay files or a Unity project. Their

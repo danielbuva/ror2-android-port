@@ -92,6 +92,7 @@ def _verify_tools(input_work: Path, root: Path, *, recipe: dict | None = None) -
     from common import sha
 
     helper_pins = {
+        "shader_metadata.py": recipe["tools"]["shader_metadata_sha256"],
         "shader_segments.py": recipe["tools"]["shader_segments_sha256"],
         "shader_source.py": recipe["tools"]["shader_source_sha256"],
         "shader_deferred.py": recipe["tools"]["shader_deferred_sha256"],
@@ -507,6 +508,7 @@ def generate(work: Path = WORK, root: Path = ROOT, *, target: str = "ramp-fog") 
             "helper_sha256": {
                 name: recipe_hash
                 for name, recipe_hash in {
+                    "shader_metadata.py": recipe["tools"]["shader_metadata_sha256"],
                     "shader_segments.py": recipe["tools"]["shader_segments_sha256"],
                     "shader_source.py": recipe["tools"]["shader_source_sha256"],
                     "shader_deferred.py": recipe["tools"]["shader_deferred_sha256"],

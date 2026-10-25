@@ -1,14 +1,11 @@
 """Resource/I-O emitter shared only by the measured native shader candidates."""
 
 from common import *
+from shader_metadata import MetadataPrograms, NativeVariantUnavailable
 from shader_segments import selected_layout
 from shader_source import bind_hlsl
 from shader_recovery import PINS
 import shutil
-
-
-class NativeVariantUnavailable(RuntimeError):
-    """No original program exists for the requested, recorded feature contract."""
 
 
 def structure(name, semantics):
@@ -25,7 +22,7 @@ def call(index, params, inputs="i", outputs="o"):
     return "native_" + str(index) + "(" + ",".join(argument(p) for p in params) + ");"
 
 
-class NativePrograms:
+class NativePrograms(MetadataPrograms):
     def __init__(self, out, result, exe, allow_independent=True, independent=None):
         self.independent = Path(independent) if independent is not None else None
         self.allow_independent = allow_independent
@@ -172,24 +169,3 @@ class NativePrograms:
             + "".join(entry)
             + "ENDHLSL\n"
         )
-
-    def pair(self, context, pass_index, keys, subshader_index=0):
-        matches = []
-        for stage in ["progVertex", "progFragment"]:
-            found = [
-                r["index"]
-                for r in context[2]
-                if r["kind"] == "program"
-                and r["stage"] == stage
-                and r["keywords"] == sorted(keys)
-                and any(c["pass_index"] == pass_index and c["subshader_index"] == subshader_index for c in r.get("consumers", [r]))
-            ]
-            if len(found) != 1:
-                detail = dict(
-                    shader=context[0]["m_ParsedForm"]["m_Name"], stage=stage, pass_index=pass_index, subshader_index=subshader_index, keywords=sorted(keys)
-                )
-                if not found:
-                    raise NativeVariantUnavailable("Original native variant absent: " + json.dumps(detail, sort_keys=True))
-                raise RuntimeError("Native feature/pass pair is ambiguous: " + json.dumps(dict(detail, matches=found), sort_keys=True))
-            matches.append(found[0])
-        return matches
