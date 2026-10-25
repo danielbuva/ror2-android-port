@@ -1325,13 +1325,18 @@ and canonical pruning precede lease release and atomic done-file publication.
 Foreign selectors/pending transactions are preserved, and failed terminal
 verification retains the lease for diagnosis. No installation is performed.
 The batch's independent temperature-zone observer targets 250 ms intervals and
-refuses a measured gap above 1 s. Gameplay continues through 80 C; any readable
-physical zone above 80 C or failed supervision aborts the batch without retry.
+refuses a measured gap above 1 s. Runtime aborts if one CPU/GPU zone remains
+above 80 C for at least one second, with at least three consecutive observations
+spaced at most 0.35 s apart; a reading at or below 80 C or a longer gap resets
+that zone's continuity. Any CPU/GPU reading above 88 C or battery/skin reading
+above 45 C aborts immediately. Brief core spikes remain recorded. Failed
+supervision also aborts without retry.
 Before each stage, readable CPU/GPU/battery/skin zones must cool to at most
 50 C with the OLED asleep. Other physical zones, including power-management,
 charger and USB sensors, are recorded as excluded from admission only; they
-remain sampled and subject to the same above-80 C abort. Admission discovers zone types and readable paths with a
-separate 10-second ADB timeout while no gameplay runs. Runtime reads those
+remain sampled in raw observations and all-zone peaks. The runtime thresholds
+apply to CPU/GPU/battery/skin. Admission discovers zone types and readable paths
+with a separate 10-second ADB timeout while no gameplay runs. Runtime reads those
 physical temperature paths in one batch, retaining the 0.7-second ADB timeout
 and measured one-second maximum sampling gap. Unreadable temperature interfaces
 are excluded with their

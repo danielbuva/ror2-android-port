@@ -41637,7 +41637,6 @@ and all nonShader extents ready, but still needs its independently generated
 Standard record/retention selection. Revisit on source/profile/contract drift or
 new qualified shader/import-hash evidence; do not repeat broad native censuses.
 
-<<<<<<< HEAD
 ## J1153 — Admit reviewed current-input drift without historical runtime suppliers
 
 2026-10-25 UTC. Host-only readiness and assembly contract against accepted J850
@@ -42263,7 +42262,6 @@ cold native recovery/resave and unchanged protected profile/results before
 advancing acceptance. Heap and sustained cases remain separately queued; this
 case establishes no memory, power-loss, ENOSPC or ordinary-input guarantee.
 
-
 ## J1122 — Prepare alpha host contracts and identify an old-heap fingerprint
 
 **Hypothesis/scope:** J1100's corrected menu growth, 0.578617 MiB per session,
@@ -42344,8 +42342,6 @@ acceptance; classify LightningStake/runtime failures separately without waiving
 strict teardown. Physical input, real ENOSPC, ordinary long play, final owner
 installation/update and outward publication remain open.
 
-
->>>>>>> 4dbb7239 (docs: align playtest admission with workload sensor policy)
 ## J1125 — Supervise the alpha queue after the shared-device emergency reboot
 
 **Hypothesis/scope:** enforce the new CPU thermal policy around the existing
@@ -42394,7 +42390,6 @@ Native heap attribution, managed-growth bounds, ordinary long play, physical
 input, genuine ENOSPC and the other public-alpha gates remain open. Generic
 errors after a thermal stop abort conservatively instead of retrying an
 unclassified failure.
-
 
 ## J1127 — Stop cold startup at the CPU threshold and retain failure diagnostics
 
@@ -42650,3 +42645,55 @@ case and terminal evidence; this checkpoint does not qualify its sampling
 cadence or any outstanding alpha device gate. Revisit on actual fresh runtime
 sensor or cadence failure; preserve the current device queue and explicit
 terminal handoffs.
+
+## J1156 — Qualify per-zone gameplay thermal duration and limits
+
+**Hypothesis and scope.** J1152 preserves a guarded R58 startup termination,
+not a spontaneous crash or gameplay qualification. Its crossing neighborhood
+includes maxima 76.8, 77.2, 81.6, 78.8 and 63.7 C; later cooling is affected by
+force-stop. The orchestrator's explicit revised runtime policy distinguishes
+brief core spikes from sustained heat. This host-only change implements that
+policy in the existing gameplay supervisor; no player source, APK, native
+execution, device storage or ownership boundary changes.
+
+**Change.** `scripts/lab/alpha_stability_batch.py` retains raw observations and
+CPU/all-zone peaks. For each CPU/GPU sensor, keyed by type and sysfs path, a
+reading above 80 C starts or extends its own streak. At least one continuous
+second and at least three consecutive samples spaced at most 0.35 s apart are
+required to abort. A reading at or below 80 C or a longer sample interval resets
+that sensor's streak. A CPU/GPU reading above 88 C or battery/skin above 45 C
+aborts immediately; a runtime sampling gap above one second still refuses.
+Other readable physical sensors remain recorded without these runtime class
+thresholds. Admission, unsupported/sentinel handling, valid CPU coverage,
+launch cancellation, bounded stop ownership and the separate pausable-tool
+policy remain unchanged. Admission still rejects any readable physical zone
+above its existing 80 C hard limit before its CPU/GPU/battery/skin cooldown.
+The helper SHA-256 is
+`a08b64b420e25d1a97223e75eead83fa3f9ba097ab413ad8402d0772ccce515b`.
+This modifies existing generic sysfs supervision and adds no RoR2-specific
+observer, platform adapter or new diagnostic mechanism.
+
+**Host validation.** All 42 batch fixtures, five sustained fixtures and 228 CLI
+fixtures pass. The supplied five-point J1152 trace at 0.30 s intervals continues
+while retaining its 81.6 C peak. CPU and GPU 81 C streaks continue before one
+second and abort at the first qualifying sample at 0.25 s or 0.35 s spacing.
+Boundary fixtures cover 88 versus above 88 C, 45 versus above 45 C, a reading
+at 80 C, interrupted sampling continuity, same-type sensors with different
+paths, the one-second sampling-gap boundary and continued PMIC raw/peak
+recording. Existing admission, sentinel-transition, cancellation and cleanup
+contracts remain covered. Ruff format/check and diff checks pass; independent
+read-only review approves the algorithm and fixtures. Operational architecture,
+playtest guidance and open alpha gates describe the current policy.
+
+**Publication and remaining gate.** Shared helper metadata is published under
+ignored `work/coordination/main-port-r58/thermal-handoff.json` with the exact
+committed helper and a new `thermal-duration-ready.done.json`; the prior
+helper/failed-run evidence remains retained. No device command, lease,
+installation or run occurs for this result. R58's retained APK
+`4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`
+remains installed according to the latest shared readback and remains gameplay
+unqualified. Main's next explicit controls handoff and alpha's SDK interrupted
+write, fresh corrected heaps and sustained cases remain open. Do not replay the
+historical R55 private driver or relax thresholds after a refusal. Fresh device
+qualification follows the explicit shared-device queue and current APK receipt;
+this host result does not establish safe uninterrupted heat or accepted play.

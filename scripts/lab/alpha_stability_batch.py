@@ -3,8 +3,9 @@
 The caller launches this driver once and waits on its explicit atomic done file.
 No detached child owns the lease. Public checks retain their own scoped cleanup;
 an independent installed-byte/idle/display readback gates release of this lease.
-Gameplay continues through 80 C, with independent sampling and a recorded peak.
-An observation above 80 C aborts the batch; each new stage requires cooldown.
+Independent sampling records all readable zones and peaks. Runtime aborts on
+sustained CPU/GPU heat above 80 C, any CPU/GPU reading above 88 C, battery/skin
+above 45 C or a sampling gap above one second. Each new stage requires cooldown.
 """
 
 import importlib
@@ -113,8 +114,9 @@ class ThermalCancelled(RuntimeError):
 class _GameThermalOwner:
     """One lightweight observer; the stage is the only heavy job.
 
-    Observe gameplay without pausing or replaying it. A reading above 80 C
-    aborts; CPU/GPU/battery/skin cooldown before a new stage requires at most 50 C.
+    Observe gameplay without pausing or replaying it. Sustained CPU/GPU heat,
+    extreme core spikes or battery/skin heat abort. CPU/GPU/battery/skin
+    cooldown before a new stage requires at most 50 C.
     """
 
     def __init__(self, device, expected, trace, deadline):
@@ -131,6 +133,7 @@ class _GameThermalOwner:
         self.peak_zone_celsius = None
         self.runtime_zones = []
         self.excluded_zones = []
+        self.hot_core_zones = {}
 
     def sample(self, all_zones=False):
         before = time.monotonic()
@@ -195,8 +198,32 @@ class _GameThermalOwner:
             raise RuntimeError("Thermal sample gap exceeded one second")
         if at >= self.deadline:
             raise RuntimeError("Three-hour alpha driver deadline reached")
-        if maximum > 80:
-            raise RuntimeError("Readable thermal zone exceeded 80 C hard abort")
+        if all_zones:
+            self.hot_core_zones.clear()
+            if maximum > 80:
+                raise RuntimeError("Readable thermal zone exceeded 80 C hard abort")
+        else:
+            for line in text.splitlines():
+                name, raw, path = line.split()
+                celsius = int(raw) / 1000
+                if name.lower().startswith(("battery", "skin")) and celsius > 45:
+                    raise RuntimeError("Battery/skin thermal zone exceeded 45 C: " + name)
+                if not name.lower().startswith(("cpu", "gpu")):
+                    continue
+                if celsius > 88:
+                    raise RuntimeError("CPU/GPU thermal zone exceeded 88 C: " + name)
+                key = (name, path)
+                if celsius <= 80:
+                    self.hot_core_zones.pop(key, None)
+                    continue
+                since, last, count = self.hot_core_zones.get(key, (at, at, 0))
+                # Allow only floating-point subtraction noise at the boundaries.
+                if at - last > 0.35 + 1e-9:
+                    since, count = at, 0
+                count += 1
+                self.hot_core_zones[key] = (since, at, count)
+                if count >= 3 and at - since >= 1.0 - 1e-9:
+                    raise RuntimeError("CPU/GPU thermal zone stayed above 80 C for one second: " + name)
         return admission_maximum if all_zones else maximum
 
     def terminate_game(self):

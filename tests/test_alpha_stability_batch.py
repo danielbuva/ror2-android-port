@@ -262,8 +262,8 @@ class GameThermalOwnerTests(unittest.TestCase):
         self.assertIsNone(self.owner.previous)
         self.assertEqual(self.owner.runtime_zones, [("cpu-0", "/thermal_zone0/temp"), ("pm8550_tz", "/thermal_zone1/temp")])
         self.device.cmd.return_value = "49000\n80001\n"
-        with mock.patch.object(batch.time, "monotonic", side_effect=[3, 3.2]), self.assertRaisesRegex(RuntimeError, "80 C hard abort"):
-            self.owner.sample()
+        with mock.patch.object(batch.time, "monotonic", side_effect=[3, 3.2]):
+            self.assertEqual(self.owner.sample(), 80.001)
         self.device.cmd.assert_called_with("shell", "cat /thermal_zone0/temp /thermal_zone1/temp", timeout=0.7)
         rows = [json.loads(line) for line in self.owner.trace.read_text().splitlines()]
         self.assertTrue(rows[0]["admission"])
@@ -387,7 +387,7 @@ class GameThermalOwnerTests(unittest.TestCase):
         self.assertIsNone(self.owner.previous)
         sample.assert_called_with(all_zones=True)
 
-    def test_cooldown_excludes_power_zones_but_keeps_runtime_abort(self):
+    def test_cooldown_excludes_power_zones_but_keeps_runtime_recording(self):
         self.device.display.return_value = True
         names = ("pm8550b_lite_tz", "pmic", "charger", "usb")
         text = "cpu-0 49000 /thermal_zone0/temp\n" + "\n".join(name + " 57763 /thermal_zone" + str(i) + "/temp" for i, name in enumerate(names, 1))
@@ -401,10 +401,63 @@ class GameThermalOwnerTests(unittest.TestCase):
         self.assertEqual([entry["type"] for entry in row["admission_excluded_zones"]], list(names))
         self.assertTrue(all(entry["raw"] == 57763 and entry["path"].endswith("/temp") for entry in row["admission_excluded_zones"]))
         self.assertEqual(len(self.owner.runtime_zones), 5)
-        self.device.cmd.return_value = "49000\n57763\n80001\n57763\n57763"
-        with self.assertRaisesRegex(RuntimeError, "80 C hard abort"):
-            self.owner.sample()
-        self.assertEqual(self.owner.peak_zone_celsius, 80.001)
+        self.device.cmd.return_value = "49000\n57763\n81000\n57763\n57763"
+        self.assertEqual(self.owner.sample(), 81)
+        self.assertEqual(self.owner.peak_zone_celsius, 81)
+        self.assertIn("81000", json.loads(self.owner.trace.read_text().splitlines()[-1])["all_zones_raw"])
+
+    def runtime_sequence(self, zones, readings, times):
+        self.owner.runtime_zones = [(name, "/thermal_zone" + str(i) + "/temp") for i, name in enumerate(zones)]
+        self.device.cmd.side_effect = ["\n".join(str(round(value * 1000)) for value in row) for row in readings]
+        with mock.patch.object(batch.time, "monotonic", side_effect=[at for at in times for _ in range(2)]):
+            return [self.owner.sample() for _ in times]
+
+    def test_j1152_isolated_core_spike_continues_and_is_recorded(self):
+        values = [76.8, 77.2, 81.6, 78.8, 63.7]
+        self.assertEqual(self.runtime_sequence(["cpu-0"], [[value] for value in values], [0, 0.3, 0.6, 0.9, 1.2]), values)
+        self.assertEqual(self.owner.peak_cpu_celsius, 81.6)
+        rows = [json.loads(line) for line in self.owner.trace.read_text().splitlines()]
+        self.assertEqual([row["cpu_celsius"] for row in rows], values)
+        self.assertIn("81600", rows[2]["all_zones_raw"])
+
+    def test_sustained_core_heat_aborts_at_one_second_with_dense_samples(self):
+        for name in ("cpu-0", "GPU-0"):
+            for times in ([0, 0.25, 0.5, 0.75, 1.0], [0, 0.35, 0.7, 1.05]):
+                with self.subTest(name=name, times=times):
+                    self.owner.previous = None
+                    self.owner.hot_core_zones.clear()
+                    self.assertEqual(self.runtime_sequence(["cpu-0", name], [[49, 81]] * (len(times) - 1), times[:-1]), [81] * (len(times) - 1))
+                    with self.assertRaisesRegex(RuntimeError, "stayed above 80 C for one second"):
+                        self.runtime_sequence(["cpu-0", name], [[49, 81]], times[-1:])
+                    self.assertEqual(self.owner.hot_core_zones[(name, "/thermal_zone1/temp")][2], len(times))
+
+    def test_core_and_surface_single_sample_boundaries(self):
+        for name, boundary in (("cpu-0", 88), ("GPU-0", 88), ("battery", 45), ("skin", 45)):
+            with self.subTest(name=name):
+                self.owner.previous = None
+                self.owner.hot_core_zones.clear()
+                self.assertEqual(self.runtime_sequence(["cpu-0", name], [[49, boundary]], [0]), [max(49, boundary)])
+                with self.assertRaisesRegex(RuntimeError, str(boundary) + " C"):
+                    self.runtime_sequence(["cpu-0", name], [[49, boundary + 0.001]], [0.25])
+
+    def test_core_streak_resets_at_80_or_a_gap_above_350ms(self):
+        for values, times in (
+            ([81, 81, 80, 81, 81, 81, 81], [0, 0.25, 0.5, 0.75, 1, 1.25, 1.5]),
+            ([81] * 6, [0, 0.25, 0.5, 0.851, 1.101, 1.351]),
+        ):
+            with self.subTest(values=values, times=times):
+                self.owner.previous = None
+                self.owner.hot_core_zones.clear()
+                self.assertEqual(self.runtime_sequence(["cpu-0"], [[value] for value in values], times), values)
+
+    def test_heat_streak_cannot_transfer_between_zones_with_the_same_type(self):
+        readings = [[81, 79], [79, 81]] * 4
+        self.assertEqual(self.runtime_sequence(["cpu-0", "cpu-0"], readings, [i * 0.25 for i in range(8)]), [81] * 8)
+
+    def test_runtime_gap_boundary_still_refuses_above_one_second(self):
+        self.assertEqual(self.runtime_sequence(["cpu-0"], [[81], [81]], [0, 1]), [81, 81])
+        with self.assertRaisesRegex(RuntimeError, "gap exceeded"):
+            self.runtime_sequence(["cpu-0"], [[81]], [2.001])
 
     def test_admission_waits_for_cpu_gpu_battery_skin_only(self):
         for name in ("cpu-0", "GPU-0", "battery", "skin"):

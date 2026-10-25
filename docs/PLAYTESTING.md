@@ -155,12 +155,16 @@ actual GC/static roots and native bridges; stable native object counts alone do
 not establish a managed-memory bound.
 
 The combined batch supervises temperature zones independently, targeting 250 ms
-samples and refusing gaps above 1 s. Gameplay continues through 80 C; any
-readable physical temperature above 80 C aborts the batch without retry.
+samples and refusing gaps above 1 s. Abort when one CPU/GPU zone remains above
+80 C for at least one second, with at least three consecutive samples spaced
+at most 0.35 s apart. A reading at or below 80 C or a longer gap resets that
+zone's continuity. Abort immediately for CPU/GPU above 88 C or battery/skin
+above 45 C. Record brief core spikes and retain the failed case without retry,
+following [J1156](PORTING_JOURNAL.md#j1156--qualify-per-zone-gameplay-thermal-duration-and-limits).
 Before each stage, cool readable CPU/GPU/battery/skin zones to at most 50 C
 with the OLED asleep. Record other physical zones, including power-management,
 charger and USB sensors, as excluded from admission only; continue sampling
-them and abort if any exceeds 80 C, following
+them in raw observations and all-zone peaks. Admission follows
 [J1148](PORTING_JOURNAL.md#j1148--restrict-gameplay-admission-to-cpu-gpu-battery-and-skin).
 Record unreadable temperature interfaces as exclusions
 with their type/path; they do not establish cool or absent sensors. Admission

@@ -6,7 +6,8 @@ restart, with confirmed End Run, original Term/disarm and application-owned Quit
 The alpha candidate adds device-verified software touch, native pause,
 recoverable settings saves and fresh background return. Physical input, memory
 bounds, ordinary full runs, PC appearance and full audio remain open. This
-laboratory is not a finished port.
+laboratory is not a finished port. J1156 host-qualifies the revised per-zone
+gameplay thermal policy; it adds no installed-player or gameplay qualification.
 
 Full results belong in the [journal](docs/PORTING_JOURNAL.md), searchable
 through the [index](docs/JOURNAL_INDEX.md).
