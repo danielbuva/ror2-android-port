@@ -124,7 +124,12 @@ def resources(sdk, android_jar, aapt, output, *, formatter, prefix=()):
         next(node for node in root if node.get("name") == "app_name").text = "RoR2 Porting Lab"
         strings.write_bytes(ET.tostring(root, encoding="utf-8", xml_declaration=True))
         (output / "manifest-source.xml").write_bytes(manifest(sdk))
-        NATIVE.invoke([*formatter, "manifest", str(output / "manifest-source.xml"), str(output / "AndroidManifest.xml")], output, "format-manifest")
+        NATIVE.invoke(
+            [*formatter, "manifest", str(output / "manifest-source.xml"), str(output / "AndroidManifest.xml")],
+            output,
+            "format-manifest",
+            env=dict(os.environ, LC_ALL="C", TMPDIR=str(output / "tmp")),
+        )
         NATIVE.invoke(
             [*prefix, str(aapt), "compile", "--no-crunch", "--dir", str(output / "res"), "-o", str(output / "compiled.zip")], output, "compile-resources"
         )
@@ -204,10 +209,16 @@ def produce(request):
             [str(paths["javac"]), "-source", "11", "-target", "11", "-cp", classpath, "-d", str(output / "helper"), str(HERE / "SdkAndroidCode.java")],
             output,
             "compile-helper",
+            env=dict(os.environ, LC_ALL="C", TMPDIR=str(output / "tmp")),
         )
         java = [str(paths["java"]), "-Xmx512m", "-XX:ActiveProcessorCount=2", "-cp", str(output / "helper") + os.pathsep + classpath, "SdkAndroidCode"]
         resources(paths["sdk"], paths["android_jar"], paths["aapt"], output / "resources", formatter=java, prefix=request.get("aapt_prefix", []))
-        NATIVE.invoke([*java, str(paths["sdk"]), str(paths["android_jar"]), str(output / "resources/R.txt"), str(output / "dex")], output, "produce-dex")
+        NATIVE.invoke(
+            [*java, str(paths["sdk"]), str(paths["android_jar"]), str(output / "resources/R.txt"), str(output / "dex")],
+            output,
+            "produce-dex",
+            env=dict(os.environ, LC_ALL="C", TMPDIR=str(output / "tmp")),
+        )
         tree = output / "resources/apk"
         for name in ("classes.dex", "classes2.dex", "classes3.dex", "classes4.dex"):
             shutil.copyfile(output / "dex" / name, tree / name)

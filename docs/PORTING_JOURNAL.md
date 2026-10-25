@@ -38556,7 +38556,18 @@ only. Eight affected SDK tests pass, including explicit extraction membership,
 source immutability and unknown/redirected-input refusal. Source-only preflight
 refuses the absent lab project/checkpoint; no Editor/project is introduced.
 
-**Open and revisit.** The installed app-host job has not run this new slice yet.
+**Phone first failure.** The first private driver never entered instrumentation
+because its shell expanded the nested runner class suffix; quoting the component
+fixes that launch. The next ordinary app run reaches `compile-helper` and exits 2:
+`Explicit JVM library and Java home required`. The generic native invocation
+helper had discarded the app host's explicit JVM/home/library environment. The
+producer now forwards that environment to each Java child with its own temporary
+directory. The original long-running native app/package is untouched. Private
+evidence: `android-sdk-phone-v1-instrumentation.log`,
+`android-sdk-phone-v2-report.json` and
+`android-sdk-phone-v2-compile-helper{.log,.process.json}`.
+
+**Open and revisit.** Corrected ordinary-app SDK execution remains open.
 The complete original-input native job and full content assembly also remain
 open. No game APK is assembled, installed or launched by this result, and no
 phone runtime/performance/security qualification is inferred. Revisit after the

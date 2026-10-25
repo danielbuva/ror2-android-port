@@ -128,7 +128,8 @@ four DEX entries, manifest/resources/icons and the two SDK native libraries.
 Setup creates new private outputs; teardown bounds children and retains logs;
 source/tool hashes are checked before and after production. The existing
 `owner-code/run_android.py::android_sdk_job` supplies the installed read-only JVM
-and QEMU host. [Setup/lifecycle](../tools/phone-build/accepted-output/README.md#produce-the-generic-android-package-entries)
+and QEMU host. Java children retain the explicit app-host JVM/home/library
+environment and use the current output's temporary directory. [Setup/lifecycle](../tools/phone-build/accepted-output/README.md#produce-the-generic-android-package-entries)
 keeps this owner separate from content, game-code production and final signing.
 J1109 qualifies host byte equivalence; phone execution remains open.
 `phone_decode.py` in that directory owns current

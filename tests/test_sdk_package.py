@@ -2,11 +2,14 @@
 
 import hashlib
 import importlib.util
+import os
 from pathlib import Path
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 import xml.etree.ElementTree as ET
+import zipfile
 
 PATH = Path(__file__).resolve().parents[1] / "tools/phone-build/accepted-output/sdk_package.py"
 SPEC = importlib.util.spec_from_file_location("sdk_package", PATH)
@@ -15,6 +18,97 @@ SPEC.loader.exec_module(PACKAGE)
 
 
 class SDKPackageTests(unittest.TestCase):
+    def test_produce_preserves_app_host_environment_for_all_jvm_launches(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp).resolve()
+            sdk = root / "sdk"
+            files = {
+                "Variations/il2cpp/Development/Libs/arm64-v8a/libmain.so": b"authored main",
+                "Variations/il2cpp/Development/Libs/arm64-v8a/libunity.so": b"authored unity",
+            }
+            android_files = {
+                "Apk/LauncherManifest.xml": b'<manifest xmlns:android="http://schemas.android.com/apk/res/android"><application/></manifest>',
+                "Apk/UnityManifest.xml": b'<manifest xmlns:android="http://schemas.android.com/apk/res/android"><application><activity/></application></manifest>',
+                "Apk/res/values/strings.xml": b'<resources><string name="app_name">Authored</string></resources>',
+            }
+            for name, data in (files | android_files).items():
+                path = sdk / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(data)
+
+            def rows(values):
+                return {name: (len(data), hashlib.sha256(data).hexdigest()) for name, data in values.items()}
+
+            tools = {}
+            for name in ("java", "javac", "aapt", "android.jar", "tool.jar"):
+                path = root / name
+                path.write_bytes(("authored " + name).encode())
+                tools[name] = path
+            environment = {
+                "ROR2LAB_BUILD_JVM": str(root / "app-host-jvm"),
+                "ROR2LAB_BUILD_JAVA_HOME": str(root / "app-java-home"),
+                "HOME": str(root / "app-home"),
+                "LD_LIBRARY_PATH": str(root / "app-native-libs"),
+                "LC_ALL": "inherited-locale",
+                "TMPDIR": str(root / "inherited-tmp"),
+            }
+            jvm_calls = []
+
+            def process(argv, *, cwd, env, **kwargs):
+                # Keep NATIVE.invoke real so its sanitized default cannot hide a
+                # missing caller environment at any of the three JVM sites.
+                if argv[0] in (str(tools["java"]), str(tools["javac"])):
+                    for name in ("ROR2LAB_BUILD_JVM", "ROR2LAB_BUILD_JAVA_HOME", "HOME", "LD_LIBRARY_PATH"):
+                        self.assertEqual(env.get(name), environment[name])
+                    self.assertEqual(env.get("LC_ALL"), "C")
+                    self.assertEqual(env.get("TMPDIR"), str(cwd / "tmp"))
+                    self.assertTrue((cwd / "tmp").is_dir())
+                    if argv[0] == str(tools["javac"]):
+                        jvm_calls.append("compile-helper")
+                    elif "manifest" in argv:
+                        jvm_calls.append("format-manifest")
+                        Path(argv[-1]).write_bytes(Path(argv[-2]).read_bytes())
+                    else:
+                        jvm_calls.append("produce-dex")
+                        dex = Path(argv[-1])
+                        dex.mkdir()
+                        for name in ("classes.dex", "classes2.dex", "classes3.dex", "classes4.dex"):
+                            (dex / name).write_bytes(b"authored dex")
+                elif "compile" in argv:
+                    (cwd / "compiled.zip").write_bytes(b"authored compiled resources")
+                else:
+                    self.assertIn("link", argv)
+                    (cwd / "R.txt").write_text("authored symbols")
+                    with zipfile.ZipFile(cwd / "resources.apk", "w") as archive:
+                        archive.writestr("AndroidManifest.xml", b"authored binary manifest")
+                        archive.writestr("resources.arsc", b"authored resource table")
+                return SimpleNamespace(wait=lambda timeout: 0)
+
+            with (
+                patch.multiple(PACKAGE.SDK, FILES=rows(files), ANDROID_FILES=rows(android_files)),
+                patch.multiple(
+                    PACKAGE,
+                    TOOL_JARS={"tool.jar": PACKAGE.NATIVE.sha(tools["tool.jar"])},
+                    PLATFORM_SHA=PACKAGE.NATIVE.sha(tools["android.jar"]),
+                    AAPT_SHAS={PACKAGE.NATIVE.sha(tools["aapt"])},
+                ),
+                patch.dict(os.environ, environment),
+                patch.object(PACKAGE.NATIVE.subprocess, "Popen", side_effect=process),
+            ):
+                result = PACKAGE.produce(
+                    {
+                        "sdk": str(sdk),
+                        "android_jar": str(tools["android.jar"]),
+                        "aapt": str(tools["aapt"]),
+                        "java": str(tools["java"]),
+                        "javac": str(tools["javac"]),
+                        "jars": {"tool.jar": str(tools["tool.jar"])},
+                        "output": str(root / "output"),
+                    }
+                )
+            self.assertTrue(result["success"])
+            self.assertEqual(jvm_calls, ["compile-helper", "format-manifest", "produce-dex"])
+
     def test_manifest_retains_sdk_entry_points_and_applies_fixed_target(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
