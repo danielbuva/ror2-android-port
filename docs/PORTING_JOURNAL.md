@@ -42089,3 +42089,68 @@ Input/tool pins pass doctor; the isolated checkout's absent lab project produces
 the expected doctor/preflight refusal. Main-checkout storage pruning passes.
 This changes orchestration evidence and source composition only; it introduces
 no RoR2 reconstruction or runtime mechanism requiring new community prior art.
+## J1158 — RGBA phone cohort interrupted by recorded hangup
+
+2026-10-25 UTC. The fixed J850 reconstruction target and existing pack interface
+remain unchanged. This is an interrupted source-only tool case, not a completed
+phone cohort or owner installation. No Editor, game build, installation or game
+launch occurs. The pre-run installed R58 hash remains
+`4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`;
+terminal package readback is still required.
+
+**Hypothesis and change.** After J1140's bounded Android guard and recovery
+qualification, one checkpointed 1,333-record RGBA cohort can complete with the
+existing producer. The v9 driver uses the original public producer/profile,
+sequential SDK bands, CPU affinity, independent CPU sampling, thermal admission
+and the separately pinned readable-zone observer. It retains the exact phone
+v4 SDK descriptor lineage; host v10/v11 helpers are not substituted. Prior art
+and transformation evidence remain J1107/J1128; no texture transformation or
+new reconstruction mechanism is introduced.
+
+**Observed result.** Authored controls pass in 27.325 seconds. The subsequent
+producer is interrupted after 1,457.896 seconds. Its host ADB command receipt
+records return code `-9`; the device monitor records signal `1` (SIGHUP),
+producer return code `-9`, no thermal stop and no timeout. The guard's signal
+handler records SIGHUP, its main loop exits on any recorded signal, and its
+finally block kills the owned producer group. A host ADB kill followed by remote
+hangup and guard termination is consistent with this evidence; the sender and
+cause of the host signal remain unknown. This does not establish Android OOM.
+
+The monitor retains 5,827 CPU samples, maximum gap 0.303346 seconds, peak CPU
+41.0 degrees C, battery 27.0 degrees C and HAL status zero. Its sampled peak
+parent/family RSS is 38,150,144 / 64,249,856 bytes. These samples do not exclude
+unobserved memory peaks. The captured index has 176 rows; the remote binary
+manifest reports 37,984 object bytes and 3,075,360 resource bytes. Full binary
+transfer and extent verification are pending recovery, so this prefix is not
+admitted as a completed cohort or independently verified checkpoint.
+
+**First failure and terminal limits.** The original cleanup immediately observes
+one registered monitor identity still present after killing its group. It does
+not prove group absence, idle state, display state or terminal installed bytes,
+and deliberately retains the lease and remote scratch. The host later reports
+the holder dead and moves its stale lease aside. Neither that host action nor
+the earlier J1140 cleanup establishes this attempt's terminal device state.
+Recovery must atomically acquire its own lease, capture available diagnostic
+logs, verify owned process/namespace absence, preserve and hash the interrupted
+checkpoint, remove only its owned scratch, sleep the OLED and explicitly hand
+remaining device work to the next owner. No heavy rerun is authorized by this
+result.
+
+**Source review and remaining.** The bundle reader retains at most two expanded
+blocks; a read-only census of the 535 profile bundles observes a maximum block
+size of 128 KiB. The producer writes and commits individual records, and SDK
+bands run sequentially. The next canonical record after the captured prefix is
+a 512 by 512 texture with 1 MiB source pixels. These facts provide no basis for
+attributing the interruption to unbounded cohort accumulation. Inspect host ADB
+lifetime/cancellation before changing the producer; retain fail-closed signal
+and thermal behavior. Full Android RGBA/mip/cubemap production and phone-only
+installation remain open.
+
+**Evidence.** Private files remain under
+`work/coordination/accepted-build-reconstruction/media-source-v1/`:
+`device-rgba-batch-v9-done.json`, SHA-256
+`3e11d033c74e4cbc7ce0856f641b2ab3657c3b1cb9ff98dff2d12a9fd3499432`,
+its referenced case's `103-command.json`, producer monitor, captured index and
+thermal traces; `device-rgba-batch-v9-handoff-done.json` records unsafe handoff.
+Keep these receipts unchanged. The separate recovery outcome will be recorded
+when terminal; no recovery or full-cohort success is inferred here.
