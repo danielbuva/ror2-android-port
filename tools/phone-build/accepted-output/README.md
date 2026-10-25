@@ -110,6 +110,70 @@ Object provenance, new final-output admission, drift checks and retained failure
 receipts belong to the calling producer. Structural qualification against a
 private accepted bundle is a roundtrip control, not PC-input-only production.
 
+## Produce the first complete source-only bundle
+
+`object_produce.py` currently qualifies the complete pickup-droplet bundle from
+original PC records. The audited recipe contains original selectors, checked
+PPtr relationships, destination identities/dependencies and comparison hashes.
+All content bodies and embedded type metadata come from the original input;
+the producer generates AssetBundle container/preload metadata and relocates
+only checked pointers. It generates the complete serialized member and writes
+the UnityFS with the pinned native helper:
+
+```sh
+python3 -I -S -B tools/phone-build/accepted-output/object_produce.py \
+  --profile recipe/owner-pickup-objects.json --profile-sha256 RECIPE_SHA256 \
+  --pc ORIGINAL_PC_ROOT --codec NATIVE_BUNDLE_LZ4 \
+  --codec-sha256 CODEC_SHA256 --output NEW_PRIVATE_OUTPUT
+```
+
+The output retains `objects.bin`, `index.jsonl` and `layout.json` in the existing
+pack interface, plus the actual `payload/pickup-droplet-lab` target-tree file.
+The layout's type hash/tree/script identity and external GUID bytes are encoded
+as hexadecimal for JSON transport; they are source-derived output, never public
+target templates. Explicit source/recipe/codec admission and 2 GiB reserve
+precede processing. Every body, serialized member, final bundle and persisted
+extent must match its comparison hash; source hashes/stats are checked before
+and after. A complete/failed `result.json` retains state, failure retains its
+output, and the codec context reaps its child. This one source prefab is a
+complete bundle slice, not a general object converter. Its dependent Commando
+bundle and full target tree remain separate gates.
+
+## Produce named player-data files
+
+`player_data.py` produces seven canonical `apk/assets/bin/Data/...` files:
+SDK default resources, three fresh converter resource files, two script metadata
+JSON files derived from original PC metadata plus authored initialization/order,
+and the embedded font serialized file. The font, material and texture bodies
+and their type identities/dependency come from one original PC bundle; only
+four checked reference identities change. The generic writer generates its
+tree-stripped Android metadata and object layout.
+
+```sh
+python3 -I -S -B tools/phone-build/accepted-output/player_data.py \
+  --profile recipe/owner-player-data.json --profile-sha256 RECIPE_SHA256 \
+  --pc ORIGINAL_PC_ROOT --sdk OWNER_ANDROID_PLAYER_SDK \
+  --converter FRESH_CONVERTER_OUTPUT \
+  --converter-receipt-sha256 CONVERTER_RECEIPT_SHA256 \
+  --output NEW_PRIVATE_TARGET_TREE
+```
+
+Stage `player_data.py`, `sdk_inputs.py`, `object_produce.py`, `mesh_produce.py`,
+`unity_mesh.py`, `unity_bundle.py`, `unity_write.py` and the selected recipe as
+sibling Python inputs for an Android replay. No native codec is needed for this
+player cohort. The converter input is its successful `result.json` and its
+three `data/Resources/...` outputs, not files extracted from an accepted APK.
+The original PC root, SDK and converter are read-only and disjoint from the new
+output. Input hashes, converter completion, source/body/reference relationships,
+capacity and persisted readbacks precede the complete/failed receipt. Failure
+retains output; exit ends the producer. These seven host-qualified files do not
+close the remaining player-data, shader, animation or phone-install gates.
+
+Both producers emit target paths accepted by the existing owner-APK readiness
+checker. A partial tree remains incomplete: no missing file is supplied from
+the private replay tree. Full-source assembly and device/runtime qualification
+remain required before promotion.
+
 ## Produce meshes directly from original PC bundles
 
 `mesh_produce.py`, `unity_bundle.py` and `unity_mesh.py` own current experimental

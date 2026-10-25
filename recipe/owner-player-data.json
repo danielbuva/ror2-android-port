@@ -1,0 +1,172 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "sources": {
+    "RuntimeInitializeOnLoads.json": {
+      "path": "Risk of Rain 2_Data/RuntimeInitializeOnLoads.json",
+      "bytes": 4630,
+      "sha256": "eaa5a6c96faf9bcf30779c0998096037aee470e593013d5cac14f7983c4c7370"
+    },
+    "ScriptingAssemblies.json": {
+      "path": "Risk of Rain 2_Data/ScriptingAssemblies.json",
+      "bytes": 4150,
+      "sha256": "db7a7bcfe11c6b19ae9956fb4a887340061ea640d36932f823b8beb1577c0eae"
+    }
+  },
+  "outputs": {
+    "RuntimeInitializeOnLoads.json": {
+      "bytes": 5158,
+      "sha256": "f583f136f47a1160592bd542f5218733aa038935bf1efdfbc9a870ec25056a73"
+    },
+    "ScriptingAssemblies.json": {
+      "bytes": 4047,
+      "sha256": "0ac4a765d2d6b2ebca0fe0f9b55fb22b6acb0b5bf3ec74e327bbf7185c7bcc79"
+    },
+    "4d8cf12989e2c504f85bb921e236c6a4": {
+      "bytes": 16416842,
+      "sha256": "d0c56e27569f5961c685af0e1f49682740dd36432c1c79f309ee87bae8632293"
+    }
+  },
+  "project_assemblies": [
+    "Assembly-CSharp.dll",
+    "Unity.Burst.dll",
+    "MCPForUnity.Runtime.dll",
+    "Unity.Collections.dll",
+    "UnityEngine.UI.dll",
+    "Unity.Mathematics.dll",
+    "Newtonsoft.Json.dll",
+    "Unity.Collections.LowLevel.ILSupport.dll",
+    "Unity.ZombieObjectDetector.Runtime.dll",
+    "Unity.TextMeshPro.dll",
+    "Decalicious.dll",
+    "RoR2.dll",
+    "AsyncManagement.dll",
+    "UnityEngine.SpatialTracking.dll",
+    "Unity.ScriptableBuildPipeline.dll",
+    "Unity.ProBuilder.Csg.dll",
+    "Unity.ProBuilder.Poly2Tri.dll",
+    "KinematicCharacterController.dll",
+    "Unity.Recorder.Base.dll",
+    "AK.Wwise.Unity.Timeline.dll",
+    "SonyPS4CommonDialog.dll",
+    "AK.Wwise.Unity.MonoBehaviour.dll",
+    "LegacyResourcesAPI.dll",
+    "Unity.ResourceManager.dll",
+    "SonyPS4SaveData.dll",
+    "Rewired_Core.dll",
+    "Unity.Postprocessing.Runtime.dll",
+    "GenericIK.dll",
+    "Rewired_Windows.dll",
+    "Unity.Recorder.dll",
+    "SimpleJSON.dll",
+    "Tayx.Graphy.dll",
+    "Grumpy.dll",
+    "Unity.Addressables.dll",
+    "Rewired_CSharp.dll",
+    "Ak.Wwise.Api.WAAPI.dll",
+    "AK.Wwise.Unity.API.dll",
+    "Unity.MemoryProfiler.dll",
+    "Unity.Timeline.dll",
+    "com.unity.multiplayer-hlapi.Runtime.dll",
+    "AK.Wwise.Unity.API.WwiseTypes.dll",
+    "SonyNP.dll",
+    "ModLoader.dll",
+    "Unity.Burst.Unsafe.dll",
+    "HGCSharpUtils.dll",
+    "HGSignup.dll",
+    "Unity.ProBuilder.KdTree.dll",
+    "Zio.dll",
+    "UnityEngine.XR.LegacyInputHelpers.dll",
+    "PlayFab.dll",
+    "Unity.ProBuilder.Stl.dll",
+    "Unity.RenderPipelines.Core.Runtime.dll",
+    "Facepunch.Steamworks.dll",
+    "Unity.ProBuilder.dll",
+    "Rewired_Windows_Functions.dll",
+    "EOS.dll",
+    "Unity.RenderPipelines.Core.ShaderLibrary.dll",
+    "HGUnityUtils.dll"
+  ],
+  "font": {
+    "file": "4d8cf12989e2c504f85bb921e236c6a4",
+    "source": {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-common-fonts-noto_assets_all_577d99b3ba49181d5b80de3725245e01.bundle",
+      "bytes": 15521356,
+      "sha256": "ce5332be8285053f057f9ee0aaca65701c898ccfba69495b3adfcce966209ff9",
+      "member": "CAB-6c8c13484990024e48f0af7d1ab3d2e1"
+    },
+    "externals": [
+      2
+    ],
+    "objects": [
+      {
+        "source_path_id": -622288119451106423,
+        "path_id": 1,
+        "bytes": 148,
+        "source_sha256": "ea72eb4af2a77147e725cfeb94e96937cd5e6fe1c9bd8c1b6bb1f35ec1158ad5",
+        "sha256": "096837154344ab197174247a1c41b361f6bbddcf2c8a0fee3c339e44144ec602",
+        "references": [
+          {
+            "offset": 20,
+            "from": [
+              3,
+              10101
+            ],
+            "to": [
+              1,
+              10101
+            ]
+          },
+          {
+            "offset": 76,
+            "from": [
+              0,
+              -2687115588010982519
+            ],
+            "to": [
+              0,
+              2
+            ]
+          }
+        ]
+      },
+      {
+        "source_path_id": -2687115588010982519,
+        "path_id": 2,
+        "bytes": 120,
+        "source_sha256": "cee4ee01807188f1a091c4c732e747d0c4dbebf026fd5f5a2013483a431eb7cb",
+        "sha256": "cee4ee01807188f1a091c4c732e747d0c4dbebf026fd5f5a2013483a431eb7cb"
+      },
+      {
+        "source_path_id": -4907756795729362039,
+        "path_id": 3,
+        "bytes": 16412474,
+        "source_sha256": "68d3398836e0690ae067f496423ec4f10ea96cd8857970e587c193c1be5ff41f",
+        "sha256": "e1f2eab543365006da7abb8d9fe09db9c562e170013af3e4841583a7646c473c",
+        "references": [
+          {
+            "offset": 32,
+            "from": [
+              0,
+              -622288119451106423
+            ],
+            "to": [
+              0,
+              1
+            ]
+          },
+          {
+            "offset": 48,
+            "from": [
+              0,
+              -2687115588010982519
+            ],
+            "to": [
+              0,
+              2
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

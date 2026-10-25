@@ -157,6 +157,8 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 
 | File | Replaces | Provenance | Privacy and licensing | Readers |
 | --- | --- | --- | --- | --- |
+| `owner-pickup-objects.json` | Private replay pickup bundle | Original selectors, hashes, checked pointer extents and destination relationships. | No bodies, type trees or target deltas; full audit below, 2026-10-25. | Original-input-only `object_produce.py`; J1113 host qualification, phone gate open. |
+| `owner-player-data.json` | Seven private replay player files | Original metadata/font selectors, hashes, pointer relationships and authored assembly order. | No game bodies, images, SDK bytes or private identifiers; full audit below, 2026-10-25. | Explicit PC/SDK/fresh-converter `player_data.py`; J1113 host qualification, phone gate open. |
 | `owner-uncompressed-textures.json` | Private replay uncompressed texture bodies/pixels | Original/destination selectors, source extents, generic import/placement metadata and hashes; copy, BC1, source-coordinate dilation and public JPEG policy. | No pixels, palettes, target literals/patches, native SDK implementation or image/library bytes; full audit above, 2026-10-24. All 399 records qualify on host/Android in J1079. | Explicit PC-input-only `texture_produce.py` and separately built public JPEG tool; no current game-build consumer. |
 | `owner-alpha-textures.json` | Private replay source Alpha8/single-mip texture cohort (J1082) | Canonical original/destination selectors, source/field extents, import/storage settings and hashes. | No alpha samples, encoded blocks, target byte frames, protected source or private identifiers; full audit below, 2026-10-24. | Original-PC-input-only `texture_produce.py` plus separately built public codec; no game-build consumer. |
 | `owner-rgb-textures.json` | Complete ETC1/single-mip target cohort | Original/destination selectors, field/pixel extents, hashes and source JPEG policy; composition aliases reuse original Warp/Elite ramps. | No colors, normal vectors, palettes, encoded blocks or target byte frames; audit below, 2026-10-24. | Original-input-only `texture_produce.py` and public ETC/JPEG tools; J1088 qualifies all 281 records on Android. |
@@ -2477,3 +2479,19 @@ target byte literal or private path is embedded in the writer or its authored
 fixtures. Structural target roundtrips remain private validation, independent
 of source-only object production. Provenance/privacy/licensing and
 sensitive-content audit: 2026-10-25.
+
+`owner-pickup-objects.json` selects two legitimate original bundles, their object
+and type identities, exact source/comparison hashes, checked PPtr extents and
+destination/dependency/container relationships. It contains no object body,
+type-tree snapshot, protected gameplay field value or target delta. The producer
+copies source type trees and source-owned fields, relocates only those declared
+identities and generates generic container metadata. `owner-player-data.json`
+similarly records original script JSON selectors, fixed project assembly order,
+font/material/texture selectors, checked pointer relationships and comparison
+hashes. Font/image/body/type/dependency bytes come from original input; SDK and
+fresh converter resources remain owner-supplied generated inputs. Assembly names
+and source/target identities are minimum fixed-target reconstruction metadata,
+not copied implementations. The five initializer identities are public authored
+lab declarations. No private path, credential, native binary, target literal or
+redistribution grant is added. Provenance, privacy, licensing and sensitive-content
+audit: 2026-10-25; J1113. All game-derived output stays private.
