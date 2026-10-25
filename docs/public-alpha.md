@@ -63,7 +63,9 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       checkpointed single-job rerun are required.
       [J1110](PORTING_JOURNAL.md#j1110--produce-every-etc1-mip-chain-from-original-pc-textures-on-the-host)
       qualifies all 1,589 ETC1 mip-chain records on the host, with Android
-      qualification open. [J1128](PORTING_JOURNAL.md#j1128--produce-complete-rgba-mip-and-source-cubemap-cohorts-on-the-host) qualifies all 1,523 RGBA mip-chain records
+      qualification open. [J1140](PORTING_JOURNAL.md#j1140--qualify-the-bounded-android-tool-guard-and-checkpoint-recovery)
+      qualifies bounded Android guard and checkpoint-recovery controls, without
+      admitting a full texture cohort. [J1128](PORTING_JOURNAL.md#j1128--produce-complete-rgba-mip-and-source-cubemap-cohorts-on-the-host) qualifies all 1,523 RGBA mip-chain records
       and 110 source-derived Cubemaps on the host. Their Android production,
       13 native reflection cubes and complete bundle assembly remain open.
       [J1136](PORTING_JOURNAL.md#j1136--bound-native-cubemap-residue-with-omitted-original-pc-sources)
