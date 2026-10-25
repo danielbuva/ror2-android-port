@@ -206,7 +206,9 @@ qualification remain separate from these laboratory installs.
       qualifies controlled VM-crash and genuine ANR cold recovery, invalid-pending
       refusal, validated-backup recovery, directory-write failure/retry and fresh
       background return. J1127 stops cold startup at the CPU thermal threshold
-      before any interrupted-write, heap or sustained stage completes. Injected persistence states do not establish a power-cut
+      before any interrupted-write, heap or sustained stage completes. J1130 confirms
+      unreadable thermal sensors block admission under the revised all-zone rule.
+      Injected persistence states do not establish a power-cut
       or filled-filesystem result.
 - [ ] Qualify the [prepared-lab owner-build/install/playtest checklist](PLAYTESTING.md)
       on fresh public inputs, then establish final player installation, ordinary

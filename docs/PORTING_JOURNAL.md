@@ -42224,3 +42224,43 @@ final-flow codes, final alpha identity, actual profile/settings update retention
 and compatible rollback still require complete owner-flow integration/device
 evidence. No public-alpha packaging checkbox is closed by these host contracts.
 
+## J1130 — Retain unreadable thermal-zone failures before gameplay admission
+
+**Hypothesis/scope:** J1127's shared gameplay supervisor must preserve failed
+sysfs observations as evidence while refusing unknown temperatures. Main's R58
+qualification stops in initial cooldown after installation/sync, before any
+control or gameplay stage. Its shell reports `read: Invalid argument` after the
+first readable zone. This is generic device evidence handling; no new game
+runtime mechanism or build is introduced.
+
+**Observation:** one atomic read-only alpha lease inventories all 95 sysfs
+thermal zones using `cat`, independently of the shell `read` builtin. Exactly
+28 temperature files return EINVAL, including `pa1` and several modem families.
+This confirms an unreadable sysfs interface rather than invalid shell syntax;
+it does not prove those sensors disconnected, absent or cool. The installed
+receipt names R58 APK
+`4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`,
+source `55149b4846744f5f9d8c521928858a63f0eba314`. Main's preceding driver verifies
+those actual bytes after install; alpha performs no new byte verification,
+installation or launch. Its read-only inventory observes no game PID and the
+OLED asleep, then releases its lease. No game/profile/payload changes occur.
+
+**Change/validation:** the existing all-zone command now identifies the failed
+path/type. Command errors, including partial output and timeout exceptions,
+enter the existing JSONL trace before the original exception is re-raised.
+Admission remains refused; there is no new sensor exclusion, retry or policy
+relaxation. All 26 batch host tests and Ruff pass, including an executable
+shell fixture preserving preceding output and a trace/exception-identity fixture.
+
+**Evidence:** ignored
+`work/coordination/alpha-touch-acceptance-20261024/thermal-read-forensics/result.json`
+contains the complete inventory and idle/power readbacks. Main's separate
+`work/coordination/main-port-r58/device.done.json` retains its original failed
+qualification and cleanup/release result. Raw device paths stay private.
+
+**First failure/revisit:** all-zone at-most-50 C admission cannot be established
+while these physical sensor identities are unreadable. Obtain documented
+platform sensor applicability or an explicit revised thermal policy before a
+new gameplay case. SDK interruption, corrected heap attribution, sustained
+play and ordinary physical controls remain unqualified; no checklist item closes.
+

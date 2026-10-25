@@ -33,7 +33,10 @@ NATIVE_CAPTURE_HEADROOM_BYTES = 4 * 1024**3
 # zone. Android's thermal ABI reports millidegrees Celsius.
 CPU_ZONES = 'for z in /sys/class/thermal/thermal_zone*; do read -r t < "$z/type" || continue; case "$t" in cpu*|CPU*) read -r v < "$z/temp" || exit 1; printf "%s\\t%s\\n" "$t" "$v";; esac; done'
 ALL_ZONES = (
-    'for z in /sys/class/thermal/thermal_zone*; do read -r t < "$z/type" || exit 1; read -r v < "$z/temp" || exit 1; printf "%s\\t%s\\n" "$t" "$v"; done'
+    "for z in /sys/class/thermal/thermal_zone*; do "
+    'read -r t < "$z/type" || { printf "Thermal type read failed: %s\\n" "$z/type" >&2; exit 1; }; '
+    'read -r v < "$z/temp" || { printf "Thermal temp read failed: %s type=%s\\n" "$z/temp" "$t" >&2; exit 1; }; '
+    'printf "%s\\t%s\\n" "$t" "$v"; done'
 )
 NON_TEMPERATURE_ZONES = {
     "pm8550-bcl-lvl0",
@@ -118,15 +121,16 @@ class _GameThermalOwner:
 
     def sample(self, all_zones=False):
         before = time.monotonic()
-        text = self.device.cmd("shell", ALL_ZONES if all_zones else CPU_ZONES, timeout=0.7)
-        at = time.monotonic()
-        gap = at - self.previous if self.previous is not None else at - before
-        self.previous = at
         self.trace.parent.mkdir(parents=True, exist_ok=True)
-        observation = dict(utc=common.now(), gap_seconds=gap)
-        if all_zones:
-            observation["all_zones_raw"] = text
+        observation = dict(utc=common.now(), all_zones=all_zones)
         try:
+            text = self.device.cmd("shell", ALL_ZONES if all_zones else CPU_ZONES, timeout=0.7)
+            at = time.monotonic()
+            gap = at - self.previous if self.previous is not None else at - before
+            self.previous = at
+            observation["gap_seconds"] = gap
+            if all_zones:
+                observation["all_zones_raw"] = text
             if all_zones:
                 maximum, value, excluded = cooldown_temperatures(text)
                 observation.update(maximum_zone_celsius=maximum, excluded_zones=excluded)

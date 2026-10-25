@@ -2,6 +2,7 @@ import json
 import os
 from pathlib import Path
 import sys
+import subprocess
 import tempfile
 from types import SimpleNamespace
 import unittest
@@ -246,6 +247,37 @@ class GameThermalOwnerTests(unittest.TestCase):
         self.device.cmd.side_effect = TimeoutError("hung ADB")
         with self.assertRaisesRegex(TimeoutError, "hung ADB"):
             self.owner.sample()
+
+    def test_shell_read_failure_names_zone_and_preserves_previous_output(self):
+        root = Path(self.temp.name)
+        first, failed = root / "thermal_zone0", root / "thermal_zone1"
+        first.mkdir()
+        failed.mkdir()
+        (first / "type").write_text("pa\n")
+        (first / "temp").write_text("34600\n")
+        (failed / "type").write_text("pa1\n")
+        (failed / "temp").write_text("")
+        command = batch.ALL_ZONES.replace("/sys/class/thermal/thermal_zone*", str(root / "thermal_zone*"))
+        result = subprocess.run(["/bin/sh", "-c", command], capture_output=True, text=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(result.stdout, "pa\t34600\n")
+        self.assertIn(str(failed / "temp") + " type=pa1", result.stderr)
+        (failed / "type").unlink()
+        result = subprocess.run(["/bin/sh", "-c", command], capture_output=True, text=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Thermal type read failed: " + str(failed / "type"), result.stderr)
+
+    def test_shell_failure_is_retained_in_trace_and_never_admits_cooldown(self):
+        error = RuntimeError("adb exited 1: read: Invalid argument\nThermal temp read failed: /thermal_zone1/temp type=pa1\npa\t34600\n")
+        self.device.cmd.side_effect = error
+        with self.assertRaises(RuntimeError) as caught:
+            self.owner.sample(all_zones=True)
+        self.assertIs(caught.exception, error)
+        row = json.loads(self.owner.trace.read_text())
+        self.assertEqual(row["error"], str(error))
+        self.assertTrue(row["all_zones"])
+        self.assertNotIn("cpu_celsius", row)
+        self.assertIsNone(self.owner.peak_cpu_celsius)
 
     def test_above_80_aborts_but_80_itself_continues(self):
         self.device.cmd.return_value = "cpu-0 80000"
