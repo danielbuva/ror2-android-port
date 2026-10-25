@@ -138,6 +138,23 @@ def _settings_write_interrupt(function, options, args):
     return _json_result(function, dict(expected_apk_sha256=getattr(args, "expected_apk_sha256", None)), args, indent=2)
 
 
+def _alpha_stability_batch(function, options, args):
+    from common import ROOT, Path, subprocess
+
+    if args.target != "lab":
+        raise SystemExit("alpha-stability-batch uses fixed native menu cases; omit --target")
+    common_dir = subprocess.check_output(["git", "rev-parse", "--path-format=absolute", "--git-common-dir"], cwd=ROOT, text=True).strip()
+    result = function(
+        device_serial=args.device,
+        expected_apk_sha256=args.expected_apk_sha256,
+        canonical_root=Path(common_dir).parent,
+        done_file=args.done_file,
+    )
+    print(json.dumps(result, indent=2))
+    if result.get("success") is not True:
+        raise SystemExit(1)
+
+
 def _touch_gesture(function, kwargs, args):
     return _json_result(function, dict(kwargs, target=args.target, expected_apk_sha256=getattr(args, "expected_apk_sha256", None)), args, indent=2)
 
@@ -452,6 +469,15 @@ _ENTRIES = (
         "current",
         "Cold native settings transaction: observe the pending-file create, stop only its owned writer, require an unchanged primary and retained pending file, then cold-recover and resave. Uses a diagnostic menu selector, no gameplay, power-cut or ENOSPC claim. Requires --expected-apk-sha256.",
         handler=_settings_write_interrupt,
+    ),
+    Action(
+        "alpha-stability-batch",
+        "alpha_stability_batch",
+        "check_alpha_stability_batch",
+        {},
+        "current",
+        "Detached diagnostic driver: one canonical device lease across SDK settings interruption, three-session native heap attribution and 30-minute assisted sustained play. Requires explicit --device, --expected-apk-sha256 and a new absolute --done-file. Stop on first failure; publish terminal cleanup and lease release in that receipt. No automatic installation, physical-input, ordinary-play or memory-bound claim.",
+        handler=_alpha_stability_batch,
     ),
     Action(
         "touch-gesture",

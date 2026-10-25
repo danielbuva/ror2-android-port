@@ -39479,6 +39479,81 @@ no eligible outputs; free host capacity remains about 98 GiB, so no full build
 is started. Revisit after the specific source producers advance or for the
 first phone qualification, rather than repeat J1116 or accept replay suppliers.
 
+## J1122 — Prepare alpha host contracts and identify an old-heap fingerprint
+
+**Hypothesis/scope:** J1100's corrected menu growth, 0.578617 MiB per session,
+resembles one retained player-stat graph. Reanalyse existing pre-fix J1091 heaps
+without repeating a device experiment, then prepare the remaining acceptance
+cases while the shared device is unavailable. This entry records host work only;
+no APK was built, installed or run and no physical-input or stability gate closes.
+
+**Prior art/method:** reuse the pinned public Unity `MemorySnapshotDataTools`
+source at `86af1fe8` and its existing private parser/root-logging adaptations.
+Its reader/crawler describe managed connections and object sizes. The input
+review uses pinned Starstorm2 `BorgMain.cs` for native bank/authority observation,
+not an Android backend; details are in [INPUT_QUALIFICATION.md](INPUT_QUALIFICATION.md).
+No protected implementation or parser is vendored. Query managed-object edges,
+seed reachability with snapshot GC handles and static roots, then compare reach
+with and without returned BulletHit-to-HurtBox edges. Cross-check raw stack size,
+all array slots, hit references and inherited cached native pointers. Sizes below
+are declared object sizes, not allocator-resident usage.
+
+**Existing heap result:** after one versus three completed sessions, the returned
+stack has 75/128 versus 177/256 active/capacity entries. Every unused slot is null.
+The 24/48 hit-to-HurtBox targets and all three retained player-stat wrappers have
+zero cached native pointers and no native bridge. Cutting those hit edges removes
+1,040/2,537 exclusively reachable objects, totalling 717,390/2,077,876 bytes.
+Player-exclusive descendant graphs are 608,136–608,184 bytes each
+(0.579964–0.580009 MiB): three stat sheets each own a 195,800-byte array of
+8,157 stat fields. That graph size is within 0.24% of the corrected slope.
+Old pool-item/backing-capacity growth is only 6,224 bytes per session.
+
+This is a **candidate fingerprint**, not attribution of the corrected growth.
+Those snapshots precede the J1100 fixes. J1100 actually releases 341 destroyed
+HurtBox references across its 12 sessions, and its later stable native counts do
+not prove that managed roots disappeared. Fresh matched post-fix heaps must
+identify actual retained roots; the full managed-growth bound remains refused.
+Keep the earlier 664.629 MiB post-collection spike and every runtime error.
+
+**Host implementation:** physical mapping fixtures execute actual production
+validation, stick conversion and neutral admission. A regression first exposed
+per-axis neutral admission accepting diagonal input that radial conversion made
+active. Admission now uses that same conversion for both sticks; bindings,
+deadzone defaults and reacquisition duration are unchanged. The input contract
+specifies remaining physical/rebinding work without claiming it implemented.
+The [alpha policy](ALPHA_POLICY.md#final-flow-acceptance-contract) maps selected
+packaging/acquisition decisions to existing owners and explicit final-flow
+refusals. Signing tests add unsafe existing-custody cases without modifying the
+phone-only production workstream.
+
+The current `alpha-stability-batch` diagnostic owns one canonical lease and
+explicit installed digest across SDK interruption, three-session heap captures
+and a 30-minute assisted first-stage observation. Its PID is the detached lease
+owner; first failure stops the queue. Independent actual package/idle/OLED
+verification, mandatory pruning and lease-release decisions precede atomic
+terminal receipt publication. The sustained owner requires fresh advancing
+measurements, invincibility only, thermal stops, original End Run and assist
+restoration. These are prepared host contracts; actual SDK replacement recovery,
+fresh heap attribution and sustained observation remain unqualified.
+
+**Evidence/validation:** private packet
+`work/coordination/alpha-touch-acceptance-20261024/` retains
+`residual-memory-host-attribution.json`, `heap-after1.duckdb`,
+`heap-after3.duckdb`, `old-pair-analysis-replay.json` and
+`heap-evidence-relocation.json`. Original J1091 snapshot paths remain valid via
+hash-verified private archive references; evidence was not discarded. Seven
+production mapping cases, ten signing/payload cases, sixteen queue/sustained
+cases and 227 CLI cases pass, alongside related existing host checks. Ruff and
+staged public audit pass. No current device APK or installed-state claim follows.
+
+**First failure/revisit:** the device queue is blocked on orchestrator clearance
+and explicit safe handoff after emergency reboot, then atomic lease acquisition.
+Use the actual handed-off installed digest, never the global build pointer.
+Require retained pending state/unchanged primary/native cold recovery for SDK
+acceptance; classify LightningStake/runtime failures separately without waiving
+strict teardown. Physical input, real ENOSPC, ordinary long play, final owner
+installation/update and outward publication remain open.
+
 ## J1123 — Guarded RGBA phone batch loses transport; admission stays open
 
 2026-10-25. Source-only tool case against the fixed J850 content target. The

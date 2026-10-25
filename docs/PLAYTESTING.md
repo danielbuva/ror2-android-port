@@ -81,6 +81,10 @@ ADB/synthetic events, automatic diagnostics and host fixtures are distinct
 supporting evidence. Thor has a separate ordinary touch route; its physical
 controller mapping remains unqualified. The scoped software motion case does
 not qualify the physical touchscreen digitizer.
+Use the [input qualification contract](INPUT_QUALIFICATION.md) for measured
+mapping provenance, the remaining rebinding implementation and physical cases.
+The host radial-neutral regression fixture does not qualify reconnect behavior
+on an installed candidate.
 
 | Case | Required observation |
 | --- | --- |
@@ -128,7 +132,7 @@ main gameplay owner; a nonzero audio meter or loaded bundle is insufficient.
   unqualified until their own evidence exists; fixture retention is separate.
 
 For a prepared owned lab installation, bind diagnostics to the actual installed
-APK SHA-256 from its verified receipt. Run each case under a separate shared
+APK SHA-256 from its verified receipt. Individual checks require their own shared
 device lease, verifying idle teardown before releasing it:
 
 ```sh
@@ -144,6 +148,36 @@ off, uses diagnostic automatic input and requires strict cleanup for every
 completed session. A runtime error stops the case; incomplete series and old
 archived reports do not establish a growth bound. Native heap captures are a
 separate opt-in attribution case and must not be mixed with this measurement.
+The pre-fix heap analysis identifies a roughly 0.580 MiB player-stat graph as a
+candidate fingerprint for the remaining 0.579 MiB/session slope. It does not
+identify the corrected retained root. A fresh matched heap pair must inspect
+actual GC/static roots and native bridges; stable native object counts alone do
+not establish a managed-memory bound.
+
+For an explicitly scheduled combined case, `alpha-stability-batch` owns **one**
+canonical lease across the SDK interruption case, three-session heap pair and
+30-minute assisted first-stage observation. Do not wrap it in another lease.
+It requires an idle owned installation, an explicit verified APK digest, host
+and device storage reserves and a new absolute done-file under canonical ignored
+`work/`. Schedule it only after the device owner reports safe handoff; a device
+reboot/emergency state requires explicit clearance first. Launch once detached:
+
+```sh
+: "${PLAYTEST_DONE:?Set a new absolute JSON path under canonical work/}"
+nohup ./dev prototype --action alpha-stability-batch \
+  --device "$PLAYTEST_DEVICE" --expected-apk-sha256 "$PLAYTEST_APK_SHA256" \
+  --done-file "$PLAYTEST_DONE" >"${PLAYTEST_DONE%.json}.driver.txt" 2>&1 &
+```
+
+The long-lived driver records its own PID in the lease, stops on the first
+failure and publishes the done receipt after terminal verification and pruning.
+Read that receipt after completion rather than polling the device. A failed
+terminal readback preserves the lease and evidence for diagnosis. The sustained
+case uses invincibility only, manual neutral input and small software camera
+drags, fresh advancing JSON and battery/HAL stop limits. It requires native
+End Run and restoration of every assist. It does not qualify ordinary play,
+physical input, thermal performance across a full run or a memory bound. Keep
+native-heap pause/allocation effects separate from repeated-session measurement.
 
 The settings case observes a native pending-file creation and terminates only
 the bound writer from its own Development-package UID, preserving the existing

@@ -92,6 +92,9 @@ p.add_argument(
     help="Current: additionally capture the same-request IL2CPP input directory for either whole-catalog build; requires --capture-player-linker-inputs",
 )
 p.add_argument("--json", action="store_true")
+p.add_argument(
+    "--done-file", help="Current: alpha-stability-batch requires a new absolute host JSON receipt path; launch detached and inspect it after completion"
+)
 p.add_argument("--assembly")
 p.add_argument("--target", default="lab")
 p.add_argument("--action", default="inspect")
@@ -217,12 +220,18 @@ if a.expected_apk_sha256 is not None and (
         "session-memory-root-check",
         "touch-gesture",
         "settings-write-interrupt-check",
+        "alpha-stability-batch",
     }
 ):
     p.error(
         "--expected-apk-sha256 requires prototype --action survivor-kit-check, session-cleanup-check, "
-        "session-abandon-check, session-memory-check, session-memory-root-check, touch-gesture or settings-write-interrupt-check"
+        "session-abandon-check, session-memory-check, session-memory-root-check, touch-gesture, settings-write-interrupt-check or alpha-stability-batch"
     )
+is_alpha_batch = a.command == "prototype" and a.action == "alpha-stability-batch"
+if a.done_file is not None and not is_alpha_batch:
+    p.error("--done-file requires prototype --action alpha-stability-batch")
+if is_alpha_batch and (not a.done_file or not a.device or not a.expected_apk_sha256):
+    p.error("alpha-stability-batch requires --device, --expected-apk-sha256 and --done-file")
 if (a.skill_slot or a.toolbot_offhand or a.captain_supply_beacon) and (a.command != "prototype" or a.action != "survivor-kit-check"):
     p.error("--skill-slot, --toolbot-offhand and --captain-supply-beacon require prototype --action survivor-kit-check")
 if a.debug_options and (a.command != "prototype" or a.action not in ["movement-batch-run", "movement-batch-retry"]):
@@ -329,10 +338,13 @@ except Exception as e:
     sys.exit(1)
 
 finally:
-    from device import Device
+    # The detached batch publishes its receipt after all cleanup and lease
+    # release. It owns display teardown inside that lease, including failures.
+    if not is_alpha_batch:
+        from device import Device
 
-    cleanup_errors = Device.sleep_awakened()
-    if cleanup_errors:
-        print(json.dumps({"success": False, "display_cleanup_errors": cleanup_errors}), file=sys.stderr)
-        if not command_failed:
-            sys.exit(1)
+        cleanup_errors = Device.sleep_awakened()
+        if cleanup_errors:
+            print(json.dumps({"success": False, "display_cleanup_errors": cleanup_errors}), file=sys.stderr)
+            if not command_failed:
+                sys.exit(1)

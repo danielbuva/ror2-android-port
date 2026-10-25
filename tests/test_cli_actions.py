@@ -264,6 +264,45 @@ class PrototypeActionTests(unittest.TestCase):
         self.calls.clear()
         self.dispatch("phone-texture-check", target="work/authored-project")
         self.assertEqual(self.calls, [dict(module="phone_texture_oracle", function="run_editor", args=("work/authored-project",), kwargs={})])
+    def test_alpha_batch_requires_explicit_identity_and_known_done_file(self):
+        for options in (
+            (),
+            ("--device", "fixture-device"),
+            ("--device", "fixture-device", "--expected-apk-sha256", "a" * 64),
+        ):
+            code, _, error = self.cli("--action", "alpha-stability-batch", *options)
+            self.assertEqual(code, 2)
+            self.assertIn("requires --device", error)
+        self.modules["device"].Device.assert_not_called()
+
+    def test_alpha_batch_uses_canonical_repository_and_owns_final_cleanup(self):
+        module = ModuleType("alpha_stability_batch")
+        module.check_alpha_stability_batch = Mock(return_value={"success": True})
+        self.modules["alpha_stability_batch"] = module
+        with (
+            patch.dict(sys.modules, {"alpha_stability_batch": module}),
+            patch.object(common.subprocess, "check_output", return_value="/canonical/.git\n") as git,
+        ):
+            code, output, error = self.cli(
+                "--action",
+                "alpha-stability-batch",
+                "--device",
+                "fixture-device",
+                "--expected-apk-sha256",
+                "a" * 64,
+                "--done-file",
+                "/private-evidence/done.json",
+            )
+        self.assertEqual((code, error), (0, ""))
+        self.assertTrue(json.loads(output)["success"])
+        module.check_alpha_stability_batch.assert_called_once_with(
+            device_serial="fixture-device",
+            expected_apk_sha256="a" * 64,
+            canonical_root=Path("/canonical"),
+            done_file="/private-evidence/done.json",
+        )
+        self.assertEqual(git.call_args.kwargs["cwd"], FIXTURE_ROOT)
+        self.modules["device"].Device.sleep_awakened.assert_not_called()
 
     def test_registry_names_and_current_status_match_documented_contract(self):
         # Added actions have separate dispatch contracts rather than changing
@@ -279,6 +318,7 @@ class PrototypeActionTests(unittest.TestCase):
             "apk-member-compare",
             "touch-gesture",
             "settings-write-interrupt-check",
+            "alpha-stability-batch",
             "rebuild-step",
             "shader-outline-candidate",
             "shader-ramp-fog",
@@ -335,6 +375,7 @@ class PrototypeActionTests(unittest.TestCase):
                 "session-memory-root-check",
                 "touch-gesture",
                 "settings-write-interrupt-check",
+                "alpha-stability-batch",
                 "whole-catalog-repair-bindings",
                 "whole-catalog-contracts",
                 "whole-catalog-host-providers",

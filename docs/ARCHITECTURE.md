@@ -1309,6 +1309,22 @@ walk is a separate diagnostic. Heap files, databases and analysis stay private.
 The public Unity `MemorySnapshotDataTools` CLI can analyze them without an Editor
 package; no parser or third-party implementation is vendored into the lab/player.
 
+`alpha_stability_batch.py` owns the current detached diagnostic queue. The
+explicit device, installed APK digest and new absolute done-file select one
+canonical device lease before any device access. The actual driver PID owns that
+lease while existing SDK interruption and three-session native-heap owners run,
+followed by `session_sustained_check.py`. The latter observes one original
+Commando first-stage world for 30 minutes with invincibility only, manual neutral
+input and small software camera drags. Fresh advancing diagnostics, native clock
+and frame counters, battery/HAL stops and original End Run/menu teardown are
+required. It retains the exact assisted/all-off refusal separately and requires
+all assists restored off. This is an assisted workload, not ordinary play or a
+performance guarantee. Host fixtures exercise admission and failure contracts.
+The batch stops on the first failure; independent actual APK/idle/OLED readback
+and canonical pruning precede lease release and atomic done-file publication.
+Foreign selectors/pending transactions are preserved, and failed terminal
+verification retains the lease for diagnosis. No installation is performed.
+
 `AndroidTouchInput` is the playable bridge's pointer producer. Stable finger IDs
 own independent movement, camera and eight native action captures, plus pause.
 Short action taps remain pending until a fixed tick consumes them; missing/canceled pointers,
@@ -1325,6 +1341,13 @@ transform, native skill or gameplay clock. The original world owner presents the
 controls and permits explicit touch takeover of automatic diagnostics. Thor's
 ordinary route is touch-only, with no measured controller mapping. Nova's
 measured physical route and the explicit automatic route remain separate.
+Physical reconnect admission uses the same radial stick conversion as movement
+and aim; diagonal input cannot pass neutral admission while producing movement.
+`test_nova_input_mapping.py` executes the production mapping and conversion
+methods against the pinned managed Unity API. The measured mapping, existing
+owner boundaries and remaining rebinding implementation/physical cases are in
+[INPUT_QUALIFICATION.md](INPUT_QUALIFICATION.md); host fixtures do not accept
+hardware or native gameplay.
 The actual production pointer owner and camera-delta method execute against the
 pinned editor's managed Unity API in `test_android_touch_input.py`; native
 consumption and full gestures still require the device case.

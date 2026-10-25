@@ -153,6 +153,9 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
 [ALPHA_POLICY.md](ALPHA_POLICY.md) records the local-file-only acquisition,
 separate alpha identity, owner signing/update/rollback and cloud deferral
 decisions. The following items are implementation and acceptance gates.
+The policy's [acceptance matrix](ALPHA_POLICY.md#final-flow-acceptance-contract)
+separates reusable host owners from final-flow work; it does not qualify an
+installed alpha package.
 
 - [ ] Enforce the selected alpha identity, increasing version code, private
       signing custody and update/rollback policy; prove actual game
@@ -168,6 +171,7 @@ qualification remain separate from these laboratory installs.
 ## Controls, UI and sessions
 
 - [ ] Qualify ordinary physical input, original/native mappings and rebinding;
+      follow the [measured-input contract and remaining implementation](INPUT_QUALIFICATION.md).
       automatic diagnostics do not qualify ordinary control
       ([J762](PORTING_JOURNAL.md#j762--accept-explicit-thor-game-diagnostics-and-unchanged-nova-controls)).
 - [ ] Qualify the physical touchscreen digitizer, acquired-equipment activation
@@ -195,6 +199,8 @@ qualification remain separate from these laboratory installs.
       [J1100](PORTING_JOURNAL.md#j1100--complete-twelve-corrected-commando-sessions-and-retain-a-smaller-growth-frontier)
       completes 12 corrected Commando sessions, reducing matched menu growth to
       0.579 MiB/session; the remaining positive slope still prevents a full bound.
+      The old-heap graph fingerprint and host-only queued-case qualification are
+      recorded in [J1122](PORTING_JOURNAL.md#j1122--prepare-alpha-host-contracts-and-identify-an-old-heap-fingerprint).
 - [ ] Complete real interrupted-write/ENOSPC and sustained performance/thermal
       cases on supported hardware. [J1071](PORTING_JOURNAL.md#j1071--qualify-software-touch-native-pause-and-recovery)
       qualifies controlled VM-crash and genuine ANR cold recovery, invalid-pending
