@@ -415,3 +415,14 @@ bytes exact. The guarded startup-affinity rerun completes with a 79.2 C peak and
 340 ms maximum sampling gap, meeting the short-job thermal protocol; the earlier
 95.5 C failure remains recorded. Complete content composition, sustained thermal
 qualification and final installation remain open.
+
+[J1112](PORTING_JOURNAL.md#j1112--inventory-final-owner-apk-inputs-before-launcher-compilation) records the current owner APK `--check-request` action inventories the existing final
+`targets[].path` tree plus the complete 16-entry code/SDK selection before any
+launcher compilation. Missing files remain explicit; it never substitutes a
+replay file for an absent produced code output. Raw code differences remain
+separate from file availability, source provenance and runtime qualification.
+Use the same request for assembly once the content owner supplies final bundle/
+player-data files; its intermediate record packs cannot fill those paths.
+Follow unsigned assembly with the existing durable owner-signing action. A
+separately labelled replay-content validation can exercise that wiring while
+the source-derived content and corrected phone-native gates remain open.

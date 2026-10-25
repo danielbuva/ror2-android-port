@@ -186,3 +186,10 @@ the three mandatory IL2CPP/metadata/Burst files through its existing explicit
 check produced-manifest routing, source drift and partial-cohort refusal. This
 wiring does not close complete phone composition, installation, controls or
 matched performance.
+
+[J1112](PORTING_JOURNAL.md#j1112--inventory-final-owner-apk-inputs-before-launcher-compilation) records the current assembler's `--check-request` inventories the complete final target
+tree and explicit code cohort before launcher compilation. It reports every
+absent/mismatched content file and raw code difference, while retaining false
+source-provenance and device-qualification fields. Object/resource packs from
+the content producers still require bundle/player-data assembly; the complete
+source-derived tree and corrected phone-native output remain open.
