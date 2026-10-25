@@ -1901,3 +1901,13 @@ profile-pinned original mobile Shader record. No private discovery/cache or
 timestamped path is a production provider. Generated host receipts/comparisons
 are under `work/coordination/p1-player-ui-assembly-v1/`; the separate guarded
 phone assembly support/evidence is `work/coordination/p1-player-phone-assembly-v1/`.
+
+J1143's expanded clips/controllers and four compressed hierarchy profiles use
+the same generated object-pack contract. Private directories
+`work/coordination/p1-anim/clip-expansion-public-host-v2/`,
+`controllers-expanded-host-v1/` and `graph-public-host-v1/part-{1,2,3,4}/`
+are reproducible `record_produce.py` outputs, not required ungenerated state.
+The final qualification terminals, independent comparisons, reviews and
+readiness ranking under that coordination root are retained local evidence.
+Callers consume explicit pack paths plus receipt hashes; no public producer
+reads these comparison/ranking files or an implicit run directory.

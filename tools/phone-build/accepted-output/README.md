@@ -880,7 +880,12 @@ Use `recipe/owner-animator-controllers.json` for the qualified controller
 cohort, `recipe/owner-material-records.json` for materials,
 `recipe/owner-gameobjects.json` / `recipe/owner-transforms.json` for hierarchy
 records, and `recipe/owner-generic-records.json` for the qualified native and
-scripted records. A recipe contains source selectors/hashes, target relationships/hashes
+scripted records. The four `recipe/owner-hierarchy-records-*.jsonl.gz` shards use
+the same CLI, one invocation and separate output per shard. Their header pins
+the input; each following line contains an ordinary source-bundle group bounded
+to 8 MiB. Capacity and production read the groups sequentially; the complete
+compressed recipe hash is checked before and after production. No decompressed
+recipe copy is needed. A recipe contains source selectors/hashes, target relationships/hashes
 and named source transformations, never target object bytes. The producer
 reads original embedded schemas and records, relocates checked PPtrs, and
 verifies each full result against its accepted hash. Animation policies clear
@@ -893,8 +898,14 @@ by their remapped indices; value ranges and root indices follow the same source
 permutation. Root quaternions derive from indexed original delta endpoints,
 with the measured ARM float32 normalization. No native library or instruction
 emulator is required. Original event strings, values, paths,
-curve data and other non-transformed bytes remain original. Generic controllers
-and the qualified hierarchy/native/scripted records change only PPtrs,
+curve data and other non-transformed bytes remain original. Selected root
+average motion uses original channel sampling and masks. Duplicate bindings
+require equal source entries, values and delta endpoints; finite keys remain,
+and selected key permutations stay within one curve index. Unknown material
+path attributes derive from the original path CRC. Controller policies reorder
+complete original clip/behaviour entries, regenerate selected exported names and
+CRCs, derive opposed angles from original vectors and read original clip loop
+flags through pinned source dependencies. Hierarchy/native/scripted records change only PPtrs,
 preserving original type and script identities. The material path reuses the existing original keyword
 demotion operation; it introduces no material or shader value.
 
@@ -908,11 +919,16 @@ Bundle/player-file callers independently obtain original native type metadata
 and generate destination layout. There is no replay, SDK, UnityPy or Editor
 input to production.
 
-J1133 qualifies 3,246 AnimationClips, 27,114 GameObjects, 176,689 Transforms
-and 29,473 generic records on the host. J1119 additionally qualifies 232
-AnimatorControllers and 4,979 Materials. This partial cohort closes no final-file readiness entry by
-itself; complete source-only content and ordinary-app/device qualification
-remain open. Outputs and all discovery/comparison evidence stay ignored.
+[J1143](../../../docs/PORTING_JOURNAL.md#j1143--qualify-expanded-source-animation-controller-and-graph-records)
+qualifies 3,317 of 3,323 AnimationClips, 334 of 388 AnimatorControllers and
+2,498,566 graph-selected hierarchy/native/scripted records on the host. The
+graph shards overlap the earlier J1133 hierarchy/generic packs; do not add
+their counts as unique coverage. J1119's 4,979 Materials remain qualified.
+Every admitted record was independently compared with J850 after persistence.
+These packs close zero final-file readiness entries by themselves and contain
+no APK destination records. Complete bundle/player-file assembly and
+ordinary-app/device qualification remain open. Outputs and all discovery/
+comparison evidence stay ignored.
 The native pixel tool additionally exposes experimental `bc4`, `bc5`,
 `mips-linear` and `mips-srgb` pipe modes. BC4/BC5 accept the complete compressed
 logical top mip and emit cropped RGBA with unused colour channels zero and alpha

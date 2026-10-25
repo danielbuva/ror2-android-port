@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 """Check the Git index for common private captures and identifiers; print no values."""
 
+import gzip
 import hashlib
+import io
+import json
 import re
 import subprocess
 import sys
+import zlib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -23,7 +27,7 @@ PUBLIC_ENVIRONMENT = {
     "environment/turnip-target.json",
     "environment/toolchain.json",
 }
-PRIVATE_SUFFIXES = {".apk", ".aab", ".dll", ".exe", ".bundle", ".assets", ".bank", ".wem", ".so", ".dylib", ".keystore", ".jks", ".log", ".png"}
+PRIVATE_SUFFIXES = {".gz", ".apk", ".aab", ".dll", ".exe", ".bundle", ".assets", ".bank", ".wem", ".so", ".dylib", ".keystore", ".jks", ".log", ".png"}
 
 
 # Exact reviewed marketing graphics only; see docs/assets/branding/README.md.
@@ -45,6 +49,22 @@ WWISE_ASSET_NAME = re.compile(rb"(?i)Wwise/ScriptableObjects/[A-Za-z]+/[0-9a-f]{
 
 def violations(path, data):
     found = []
+    if path.startswith("recipe/") and path.endswith(".jsonl.gz"):
+        try:
+            with gzip.GzipFile(fileobj=io.BytesIO(data)) as stream:
+                for index, line in enumerate(iter(lambda: stream.readline(8 * 1024**2 + 1), b"")):
+                    if len(line) > 8 * 1024**2 or not line.endswith(b"\n"):
+                        raise ValueError("unbounded compressed recipe row")
+                    row = json.loads(line)
+                    expected = {"input_id"} if index == 0 else {"path", "sha256", "members"}
+                    if set(row) != expected:
+                        raise ValueError("unknown compressed recipe row")
+                    found.extend(violations(path[:-3], line))
+                if not stream.tell():
+                    raise ValueError("empty compressed recipe")
+        except (OSError, EOFError, ValueError, TypeError, zlib.error):
+            found.append("invalid compressed recipe")
+        return sorted(set(found))
     if path.startswith(("work/", ".local/", "logs/", "screenshots/")):
         found.append("private output directory")
     if path.startswith("environment/") and path not in PUBLIC_ENVIRONMENT:

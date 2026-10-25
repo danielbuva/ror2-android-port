@@ -184,6 +184,10 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 | `owner-alpha-textures.json` | Private replay source Alpha8/single-mip texture cohort (J1082) | Canonical original/destination selectors, source/field extents, import/storage settings and hashes. | No alpha samples, encoded blocks, target byte frames, protected source or private identifiers; full audit below, 2026-10-24. | Original-PC-input-only `texture_produce.py` plus separately built public codec; no game-build consumer. |
 | `owner-rgb-textures.json` | Complete ETC1/single-mip target cohort | Original/destination selectors, field/pixel extents, hashes and source JPEG policy; composition aliases reuse original Warp/Elite ramps. | No colors, normal vectors, palettes, encoded blocks or target byte frames; audit below, 2026-10-24. | Original-input-only `texture_produce.py` and public ETC/JPEG tools; J1088 qualifies all 281 records on Android. |
 | `owner-rgba-textures.json` | Complete non-Alpha8 ETC2 RGBA/single-mip target cohort | Original/destination selectors, byte/field extents, hashes and canonical source relationships. | No pixels, palettes, encoded blocks, SDK implementation, private paths or target byte frames; audit below, 2026-10-24. | Existing source-only texture owner plus separately supplied SDK codec and public BC7 decoder; full phone qualification pending. |
+| `owner-hierarchy-records-1.jsonl.gz` | Qualified graph-selected original object relationships | Pinned original/destination selectors, hashes and checked PPtrs only; bounded source groups, decoded by the public audit. | No body/type template, scalar, float, gameplay value or private identifier; audit below, 2026-10-25. | Existing `record_produce.py`; J1143 full source-only host qualification; phone/assembly gates open. |
+| `owner-hierarchy-records-2.jsonl.gz` | Qualified graph-selected original object relationships | Pinned original/destination selectors, hashes and checked PPtrs only; bounded source groups, decoded by the public audit. | No body/type template, scalar, float, gameplay value or private identifier; audit below, 2026-10-25. | Existing `record_produce.py`; J1143 full source-only host qualification; phone/assembly gates open. |
+| `owner-hierarchy-records-3.jsonl.gz` | Qualified graph-selected original object relationships | Pinned original/destination selectors, hashes and checked PPtrs only; bounded source groups, decoded by the public audit. | No body/type template, scalar, float, gameplay value or private identifier; audit below, 2026-10-25. | Existing `record_produce.py`; J1143 full source-only host qualification; phone/assembly gates open. |
+| `owner-hierarchy-records-4.jsonl.gz` | Qualified graph-selected original object relationships | Pinned original/destination selectors, hashes and checked PPtrs only; bounded source groups, decoded by the public audit. | No body/type template, scalar, float, gameplay value or private identifier; audit below, 2026-10-25. | Existing `record_produce.py`; J1143 full source-only host qualification; phone/assembly gates open. |
 | `owner-generic-records.json` | Qualified remaining native/scripted object records | Original selectors/hashes, destination identities and checked PPtr relationships. | Every source field, script ID and native type hash is preserved; no state/property/particle value or target template. Audit below, 2026-10-25. | Source-only `record_produce.py`; host cohort and open phone/assembly gates recorded with the generic slice. |
 | `owner-gameobjects.json` | Qualified private GameObject record cohort | Original source bundle/member/object selectors and hashes, destination identities and checked PPtrs. | No component value, body or target template; original fields and native type identity preserved. Audit below, 2026-10-25. | Source-only `record_produce.py`; host qualification and remaining gates recorded with the hierarchy slice. |
 | `owner-transforms.json` | Qualified private Transform record cohort | Original source bundle/member/object selectors and hashes, destination identities and checked PPtrs. | No position, rotation, scale, hierarchy template or target scalar; source fields/native type identity preserved. Audit below, 2026-10-25. | Source-only `record_produce.py`; host qualification and remaining gates recorded with the hierarchy slice. |
@@ -2671,8 +2675,10 @@ Animation policies select schema-typed float canonicalization, original
 reference-pose removal, constant-curve folding, checked PPtr remaps and the
 existing importer binding-attribute mask. No pose vector, curve coefficient,
 event string, native controller value, state graph, target byte template or
-arbitrary scalar replacement is present. Controllers preserve all non-pointer
-bytes. Materials reuse checked original fields and the existing named keyword
+arbitrary scalar replacement is present. Controller policies preserve original
+state data while selecting complete clip/behaviour permutations, exported
+path/name CRC regeneration, opposed-vector endpoint calculation and loop flags
+read from pinned original clip leaves. Materials reuse checked original fields and the existing named keyword
 demotion policy, preserving every original keyword string/value and total body
 length. Source matching admits only unique original records with unchanged
 native type identity; ambiguous matches remain excluded. These are partial
@@ -3029,3 +3035,32 @@ source value; equivalent source wind/mesh relationships remain explicit.
 The compact JSON decodes identically to the audited profile. No protected body,
 type tree, media, private path, credential, account or redistribution grant is
 included. J1155 owns the complete host result; phone qualification remains open.
+
+The four compressed hierarchy-record recipes contain only original bundle,
+member and object selectors/hashes plus destination identities, verification
+hashes and checked PPtr relationships. They preserve every original non-PPtr
+byte and native/script type identity. Discovery anchors identity through
+qualified Transform/RectTransform graphs and component backlinks, excluding
+conflicts; body fingerprints alone do not seed GameObject identity.
+Provenance/privacy/licensing/sensitive-content audit: 2026-10-25. A complete
+field whitelist walk admits 2,498,566 rows with no value, float, curve, code,
+body or type template. Compression is deterministic metadata storage, required
+to keep individual public files below the hosting limit. JSONL source groups
+are bounded to 8 MiB so phone production need not load the whole cohort;
+the staged public audit expands and scans every group. Existing CLI and output
+pack fields remain unchanged. J1143 qualifies full public host execution and independent persisted comparison;
+no phone, assembled-file or runtime result is implied. All bodies,
+raw source/target evidence and generated packs remain ignored. This grants no
+game/SDK redistribution, ownership, authentication or entitlement permission.
+
+
+The expanded animation/controller policies derive root-average motion, merged
+Hermite coefficients, equal-curve ordering, material path CRCs and controller
+clip/state/behaviour relationships from original source values and selected
+source identities. Complete equal binding/channel/delta checks precede duplicate
+binding collapse. Controller loop flags come from hash-pinned original clip
+leaves, not recipe booleans. Provenance/privacy/licensing/sensitive-content
+audit: 2026-10-25; J1143. The profiles contain source ordinals, named operations,
+selectors, hashes and relationships; no target float/scalar/body/type template,
+SDK implementation or private identifier. Existing source, SDK, ownership and
+redistribution boundaries remain unchanged. Generated content stays ignored.

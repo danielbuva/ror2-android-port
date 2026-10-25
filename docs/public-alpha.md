@@ -259,3 +259,8 @@ J1154 collects the phone native job's failed terminal timeout at compilation
 job 498. Its retained successful objects may support checked continuation;
 complete phone-native production, ordinary installation, both controls and
 matched first-stage performance remain open.
+
+[J1143](PORTING_JOURNAL.md#j1143--qualify-expanded-source-animation-controller-and-graph-records) qualifies expanded
+source animation/controller and checked hierarchy graph packs on the host.
+They add no complete final-file readiness entry or APK destination record.
+Complete file assembly and ordinary-app production remain required.

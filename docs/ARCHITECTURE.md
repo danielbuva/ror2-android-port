@@ -231,7 +231,8 @@ remain separate. Original script-file-ID derivation remains unchanged.
 production through the same object-pack interface. Audited
 `recipe/owner-animation-clips.json`, `recipe/owner-animator-controllers.json`,
 `recipe/owner-material-records.json`, `recipe/owner-gameobjects.json`,
-`recipe/owner-transforms.json` and `recipe/owner-generic-records.json`
+`recipe/owner-transforms.json`, `recipe/owner-generic-records.json` and
+the four `recipe/owner-hierarchy-records-*.jsonl.gz` shards
 select original records, checked pointer relationships and source-only animation
 policies. Original embedded schemas identify typed float fields, reference-pose
 and streamed/dense/constant arrays. Native Hermite packing reconstructs source
@@ -239,7 +240,17 @@ tangents with float32 operation order. Source binding permutations reorder
 whole stream keys, delta ranges and root indices; dense curves retain the
 measured import endpoint/signed-zero rules. Root rotations derive from original
 indexed delta endpoints using ARM reciprocal-square-root arithmetic.
-Setup admits a pinned recipe, unchanged original
+Root average motion samples original channels at 20 intervals and applies the
+original orientation, loop and mirror masks. Duplicate bindings may collapse
+only when complete source entries, channel values and delta endpoints agree;
+finite streamed keys remain, with selected permutations restricted to equal
+curve indices. Unknown material-path bindings derive their attribute from the
+original path CRC. Controller policies permute original clips/behaviours,
+rebuild selected export-path CRC/name entries and compile opposed-vector angles
+and state loop flags from original vectors and pinned original clip leaves.
+Large compressed recipes retain the same source-bundle rows, bounded to 8 MiB,
+and stream twice for capacity and production without an expanded metadata copy.
+The public audit expands and scans their bounded rows. Setup admits a pinned recipe, unchanged original
 PC bundles and separate new output with capacity reserve; source and persisted
 record hashes gate its complete/failed receipt. It retains outputs and ends the
 process on failure/exit. Generic and hierarchy records preserve every
@@ -247,6 +258,9 @@ non-pointer byte and native script/type identity;
 material keyword demotion reuses the existing object owner's policy. No runtime
 owner or Editor is added. [Setup and qualified scope](../tools/phone-build/accepted-output/README.md#produce-animation-and-generic-object-records)
 remain separate from complete bundle/player-file assembly and phone acceptance.
+[J1143](PORTING_JOURNAL.md#j1143--qualify-expanded-source-animation-controller-and-graph-records) qualifies the full
+expanded host cohorts; their payload destination identities are not APK
+identities and callers must supply their own checked player relationships.
 `avatar_produce.py` owns current experimental PC-only Avatar production using
 the same bounded reader and input-path admission. Its audited
 `recipe/owner-avatars.json` selects original body/table extents and complete
