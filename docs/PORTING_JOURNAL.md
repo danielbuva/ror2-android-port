@@ -42513,16 +42513,25 @@ and unchanged source assets all pass. Private source-bound receipts/logs live
 under `work/coordination/main-port-r58/`, including host.done.json,
 host-tests.log and both named editor-action logs. No artifact copies are made.
 
-**Build/device boundary and next step.** No player build or device access occurs
-in this slice. Host preflight initially passes at 107,537,514,496 free bytes;
-shared use then reduces free space below 100 GiB. Mandatory pruning succeeds
-with no eligible items and does not restore the build floor, so a full player
-build is deferred. Doctor retains the known Bootstrap FAIL. R57/J1111 remains
-the frozen, uninstalled normal candidate, APK
-`e950fcb18ff8ed69c56b9399bd528657277af901525b6563cd4ed988c5a43f37`;
-it does not contain this newer correction. Installed/qualified device facts
-remain J1105, subject to subsequent owners' receipts. Build one normal successor
-when host space permits, then qualify destination PCM and the complete Siren
-route after the explicit shared-device handoff. Native mission completion,
-rare-NaN causality, PC appearance, full audio and normal-run acceptance remain
-open. Current cooldown/lease restrictions are honored without device queries.
+**Normal build result.** Shared space subsequently recovers to 113,445,085,184
+free bytes and accepted-input host preflight passes again. One normal R58 full
+content/player build from source 55149b48 completes successfully, request
+`20261025T044743.886014Z`: 185.312 s build, 313.353 s complete pipeline,
+zero errors. APK SHA-256:
+`4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`.
+All 267 references (3,224,670,805 bytes) and the frozen manifest digest are
+independently rehashed successfully. Build receipts, reference-only manifest,
+independent verification and cleanup result remain in
+`work/coordination/main-port-r58/`; no artifact copies are made. Mandatory
+post-build pruning passes. The earlier below-floor deferral is historical
+within this batch. Doctor retains the known Bootstrap FAIL.
+
+**Device boundary and next step.** R58 is uninstalled and includes the complete
+Blink correction plus R57's destination-only MainOutput selection. No device
+access or new device claim occurs in this slice. Installed/qualified facts
+remain J1105, subject to subsequent owners' receipts. Run both strict controls,
+then destination PCM and the complete Siren route after the explicit shared
+handoff and a game-aware thermal owner supporting the new 70/55/80 C policy.
+Native Engineer effects, mission completion, rare-NaN causality, PC appearance,
+full audio and normal-run acceptance remain open. R57 remains a frozen
+uninstalled predecessor.
