@@ -239,8 +239,9 @@ extends the source-only object producers. These host-qualified packs still
 require complete bundle/player-file assembly and ordinary-app qualification;
 they do not independently close a final-file readiness entry.
 
-Exact J850 Strings reproduction additionally requires the owner's retained
-legitimate historical PC English inputs; current-input-only reproduction remains
-open. Those historical files are outside the public source profile. The bounded
-source-lineage and Shader findings are recorded in
-[J1139](PORTING_JOURNAL.md#j1139--assemble-source-shader-manifests-and-managed-font-files).
+[J1149](PORTING_JOURNAL.md#j1149--produce-current-english-and-font-material-with-explained-input-drift)
+adds current-input English and the fifth font material through the same player
+owner. Historical originals qualify the transformation; reconstruction consumes
+the current installation only. Their complete byte differences are explained by
+original-input drift and remain separate from exact J850 matching. Checker
+classification and phone qualification remain open.

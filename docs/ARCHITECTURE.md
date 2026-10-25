@@ -126,10 +126,10 @@ preload relationship checks the original preload record, GameObject body and
 external-member membership before emitting the mapped identity. These policies
 retain the existing setup, input checks, persisted verification and teardown.
 
-`player_data.py` owns the separate current 173-file player cohort: SDK/converter
+`player_data.py` owns the separate current 175-file player cohort: SDK/converter
 resources, PC-derived script JSON, the three-object font file, original
 line-breaking TextAssets, authored runtime/bootstrap JSON, 64 standalone Sprites and one
-original TimerStringFormatter object, nine original TMP objects, 13 materials
+original TimerStringFormatter object, nine original TMP objects, 14 materials
 and 72 standalone textures, plus the six-object SDK built-in UI file. Its audited
 `recipe/owner-player-data.json`,
 explicit original PC/SDK/converter inputs and converter receipt set up a new
@@ -156,6 +156,16 @@ objects' editor-only fields and relocates original local texture/importer IDs.
 Original SDK mip pixels, Sprite geometry/physics/bones and the original PC
 font/sharedassets Sprite native type identities supply the runtime output.
 No Editor process is required.
+The same owner reads the complete pinned current English JSON directory for
+the authored `StageStrings` policy. It preserves quoted text while admitting
+original trailing commas, applies the qualified filename/token collation and
+later-file replacement order, then emits compact JSON inside a native TextAsset.
+Original language providers are rechecked after the serialized output is written.
+The additional font material preserves its original Sharpness value. Current
+outputs use current originals only; historical originals serve independent
+transformation qualification, with input drift kept separate from exact output
+comparison. Serialized object/TextAsset destinations use the fixed Android
+toolchain engine version while retaining source-derived native schemas.
 The same player owner derives its two native shader-selection TextAssets from
 original Material keywords and Shader declaration metadata. Its pinned
 `recipe/owner-player-shader-manifests.json` supplies source selectors; embedded

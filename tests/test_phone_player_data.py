@@ -617,7 +617,7 @@ class PlayerDataTests(unittest.TestCase):
         source = self.pc / "authored-script.assets"
         source_type = {"class_id": 114, "stripped": 0, "script_type": 9, "script_id": b"I" * 16, "hash": b"H" * 16}
         layout = {
-            "engine": "2021.3.45f2",
+            "engine": "2021.3.33f1",
             "platform": 19,
             "trees": False,
             "types": [source_type],
@@ -654,6 +654,7 @@ class PlayerDataTests(unittest.TestCase):
             stream.seek(result["data_offset"])
             self.assertEqual(stream.read(), target_body)
         self.assertEqual(result["types"], [{**source_type, "script_type": 0}])
+        self.assertEqual(result["engine"], "2021.3.45f2")
         self.assertEqual(result["scripts"], [(1, 33)])
         self.assertEqual(result["externals"][0]["path"], "globalgamemanagers.assets")
         self.assertEqual(P.sha(source), before)
@@ -1276,6 +1277,142 @@ class PlayerDataTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     self.produce(output)
                 self.assertFalse(json.loads((output / "result.json").read_text())["success"])
+
+
+class EnglishStringsTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name).resolve()
+        self.directory = self.root / "Risk of Rain 2_Data/StreamingAssets/Language/en"
+        self.directory.mkdir(parents=True)
+        self.sources = []
+        self.add("z.json", b'{"strings":{"TITLE_SINGLEPLAYER":"last","SUBMENU_QUIT":"quit","_B":"b","9":"nine","/":"slash",".":"dot"}}')
+        self.add("A.json", b'{"strings":{"TITLE_SINGLEPLAYER":"first","IGNORED":7,},}')
+
+    def add(self, name, raw):
+        path = self.directory / name
+        path.write_bytes(raw)
+        self.sources.append({"path": path.relative_to(self.root).as_posix(), "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()})
+
+    def run_strings(self):
+        return P.language_strings(self.root, self.sources)
+
+    def test_jobject_trailing_commas_preserve_quoted_text_and_escaping(self):
+        raw = b'\xef\xbb\xbf{"strings":{"X":"literal ,} and ,] and \\"quote\\" and \\\\path",},}'
+        self.assertEqual(P.language_json(raw), {"strings": {"X": 'literal ,} and ,] and "quote" and \\path'}})
+
+    def test_source_overwrite_collation_nonstring_and_final_pins(self):
+        script, pins = self.run_strings()
+        self.assertEqual(
+            json.loads(script)["entries"],
+            [
+                {"key": ".", "value": "dot"},
+                {"key": "/", "value": "slash"},
+                {"key": "_B", "value": "b"},
+                {"key": "9", "value": "nine"},
+                {"key": "SUBMENU_QUIT", "value": "quit"},
+                {"key": "TITLE_SINGLEPLAYER", "value": "last"},
+            ],
+        )
+        self.assertEqual(len(pins), 2)
+        for path, pin in pins:
+            P.checked(path, pin)
+
+    def test_original_provider_drift_refused(self):
+        (self.directory / "A.json").write_text("{}")
+        with self.assertRaisesRegex(ValueError, "bytes differ"):
+            self.run_strings()
+
+    def test_unlisted_or_missing_file_refused(self):
+        path = self.directory / "extra.json"
+        path.write_text("{}")
+        with self.assertRaisesRegex(ValueError, "file set"):
+            self.run_strings()
+        path.unlink()
+        (self.directory / "A.json").unlink()
+        with self.assertRaisesRegex(ValueError, "file set"):
+            self.run_strings()
+
+    def test_filename_collation_collision_refused(self):
+        self.sources.append({**self.sources[0], "path": self.sources[0]["path"].replace("z.json", "Z.json")})
+        # The default host FS is case-insensitive; test the policy independent
+        # of directory enumeration rather than requiring two physical files.
+        with unittest.mock.patch.object(Path, "glob", return_value=[self.directory / "z.json", self.directory / "Z.json", self.directory / "A.json"]):
+            with self.assertRaisesRegex(ValueError, "ambiguous"):
+                self.run_strings()
+
+    def test_unqualified_token_collation_refused(self):
+        self.add("more.json", '{"strings":{"LOWERcase":"v"}}'.encode())
+        with self.assertRaisesRegex(ValueError, "collation"):
+            self.run_strings()
+
+    def text_selection(self):
+        selected, _ = text_fixture(self.root, self.root)
+        source = self.root / selected["source"]["path"]
+        source.write_bytes(source.read_bytes().replace(b"2021.3.45f2", b"2021.3.33f1"))
+        selected["source"].update(bytes=source.stat().st_size, sha256=P.sha(source))
+        script, _ = self.run_strings()
+        body = io.BytesIO()
+        P.OBJECTS.aligned_string(body, "Strings")
+        P.OBJECTS.aligned_string(body, script)
+        selected["language"] = self.sources
+        selected["files"] = [{"file": "strings-player", "name": "Strings", "language": True, "bytes": len(body.getvalue()), "sha256": pin(body.getvalue())[1]}]
+        return selected, body.getvalue()
+
+    def test_public_text_owner_uses_destination_engine_and_source_generated_body(self):
+        selected, expected = self.text_selection()
+        output = self.root / "output"
+        (output / P.TARGET).mkdir(parents=True)
+        P.text_files(self.root, self.root, selected, output)
+        data = (output / P.TARGET / "strings-player").read_bytes()
+        stream = io.BytesIO(data)
+        stream.size = len(data)
+        layout = P.W.read_serialized(stream)
+        self.assertEqual(layout["engine"], "2021.3.45f2")
+        self.assertEqual(data[layout["data_offset"] :], expected)
+
+    def test_public_text_owner_rechecks_language_after_persisting_output(self):
+        selected, _ = self.text_selection()
+        output = self.root / "output"
+        (output / P.TARGET).mkdir(parents=True)
+        writer = P.W.write_serialized
+
+        def change_original(*args):
+            writer(*args)
+            (self.directory / "z.json").write_text("{}")
+
+        with patch.object(P.W, "write_serialized", change_original):
+            with self.assertRaisesRegex(ValueError, "bytes differ"):
+                P.text_files(self.root, self.root, selected, output)
+
+    def test_language_provider_pins_survive_shader_manifest_composition(self):
+        selected, _ = self.text_selection()
+        selected["manifests"] = {"path": "authored-selector-fixture.json"}
+        output = self.root / "output"
+        (output / P.TARGET).mkdir(parents=True)
+
+        def generate_manifests(*args):
+            (self.directory / "z.json").write_text("{}")
+            return {}, []
+
+        with patch.object(P, "shader_manifests", generate_manifests):
+            with self.assertRaisesRegex(ValueError, "bytes differ"):
+                P.text_files(self.root, self.root, selected, output)
+
+    def test_complete_language_directory_rechecked_after_output(self):
+        selected, _ = self.text_selection()
+        output = self.root / "output"
+        (output / P.TARGET).mkdir(parents=True)
+        writer = P.W.write_serialized
+
+        def add_original(*args):
+            writer(*args)
+            (self.directory / "extra.json").write_text('{"strings":{"SUBMENU_QUIT":"changed"}}')
+
+        with patch.object(P.W, "write_serialized", add_original):
+            with self.assertRaisesRegex(ValueError, "file set differs"):
+                P.text_files(self.root, self.root, selected, output)
 
 
 if __name__ == "__main__":

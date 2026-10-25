@@ -40992,3 +40992,111 @@ manifest imported-artifact hashes and complete catalog remain open. These are
 J850 source-reproduction results, not original stage behavior acceptance or a
 finished owner-installation product. Revisit only on source/profile drift or a
 failed host/Android contract.
+
+## J1149 — Produce current English and font material with explained input drift
+
+2026-10-25 UTC. Host-only source production against accepted J850 APK SHA-256
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+No device, lease, Editor process, installation or game run occurs.
+
+**Hypothesis and policy.** The two outstanding English/font discrepancies are
+original-input changes, rather than missing serializer behavior. Apply the
+orchestrator's current-input policy: the same public producer must reproduce
+J850 from retained historical originals, then produce current output with every
+changed byte traced to named original inputs. Historical files are qualification
+oracles, never reconstruction dependencies. Consulted J562/J1126/J1139,
+community-prior-art, pinned AssetRipper MaterialExtensions and existing original
+schema/PPtr interpretation. Material texture enumeration grants no authority to
+replace original scalars. The authored `RecoveredHudBuilder.StageStrings` owns
+language ordering, replacement and JSON policy; no game or upstream
+implementation is copied into public source.
+
+**Implementation.** Existing `player_data.py` reads the complete pinned current
+English JSON directory, accepts original trailing commas without modifying quoted
+text, applies the independently qualified filename/token collation, preserves
+later-file replacements and emits the native Strings TextAsset. The source
+cohorts' token alphabets and filename order independently match the exact SDK's
+Mono collation; Mono is not a producer dependency. All original providers and
+the directory's complete filename set are rechecked after output persistence.
+The profile contains only current original paths, sizes, hashes and output
+comparison pins. No cached string table, historical input flag or text payload
+is distributed.
+
+The fifth font-material selection uses the existing original shader-declared
+texture filtering, importer rename and checked PPtr relocation. It preserves
+all original scalar values. Serialized object/TextAsset destinations now name
+the fixed Android toolchain engine, as the existing object producer does;
+native schemas still come from original input. This lets retained older native
+sources qualify the same transformation without a metadata template.
+
+**Complete output and drift proof.** The final public owner SHA-256 is
+`c7749055dc25c92c95c366b9cf6d19539d68eb70ebe8ebda6d3a82c0cf7aed25`;
+profile SHA-256 is
+`c85d5dfcfd99f3b6c3fb7b4e17fc03bce08a98821b1b887b9ad18f08fa5dea88`.
+The complete current-input invocation produces **175 files, 34,820,657 bytes**,
+in **57.554 seconds**. All prior 173 files remain raw-exact. The two additional
+current files are:
+
+- Strings `3ae4a4bcaf8ce40c48d9595af20c1bff`: **928,816 bytes**, SHA-256
+  `3e16c489a60dcca4958fb1ab05f34c64cefa1b8d1abdf2445d2e2f9783637a94`.
+  The same public owner, using all 39 inventory-verified historical English
+  files and their original TextAsset native schema, reproduces the complete
+  **773,524-byte** J850 file, SHA-256
+  `493ce8626bf486dc9aa6ac82873f2a539795e5b8dc3e64f842aea4562fc6af26`.
+  Current originals contain 901 additions, all from the original DLC4 language
+  file, and 14 changed values in six named original files; no tokens disappear.
+  Original winner provenance and hashes explain each token. A separately
+  verified 5,587-operation edit replay consumes every historical byte and
+  generates every current byte, including three serialized length fields and
+  alignment padding: **zero unexplained bytes**. No replay data is a public
+  producer input.
+- FontMaterial4 `852bc9f46df26480bb862df820e94806`: **5,676 bytes**, SHA-256
+  `d12b4a65926af9260305c1b344d2473b972a7a87cc34c8f39e85ad2c73774aa5`.
+  The same public object owner produces historical J850 bytes exactly,
+  SHA-256 `a228dbb617c02f703f4ac04c3c1d367af5a5933d0d188c57484b1896eac805ae`.
+  The original historical material stores Sharpness 0 and the current one 1.
+  Only current file bytes `[4938, 4940)` differ; their scalar's source body range
+  is `[1012, 1016)` and destination range `[4936, 4940)`. The shader external-table
+  index changes between originals but resolves to the same checked shader
+  identity. Every other output byte matches; no scalar override exists.
+
+Private evidence: `work/coordination/p1-player-language-public-v1/` contains
+`full-host-v2-comparison.json`, both public original-cohort outputs,
+`drift-explanation.json`, `token-byte-lineage.json`, `result.json` and independent
+`REVIEW.md`/`review-result.json`. Material evidence is
+`work/coordination/p1-player-font-sharpness-v2/`, including inventory checks,
+`public-original-only-result.json` and `public-comparison-result.json`.
+Outputs persist and original providers are rehashed before independent accepted
+comparison. Current repeated production is deterministic.
+
+**Verification and first failures.** Thirty-six player tests, sixteen object
+producer tests, six content tests, eight package tests, forty-seven catalog
+tests and three recipe tests pass, with Ruff format/check, host preflight,
+whitespace and public pattern audit. Independent review rehashes all 175 outputs,
+checks both historical exact files and independently replays every Strings edit.
+It finds and closes two admission defects: shader-manifest setup overwrote the
+language provider-pin list, and a late added English file escaped per-file
+rechecks. Combined-provider and late-directory-mutation tests cover both fixes.
+Failed private qualification attempts and their persisted outputs are retained;
+the terminal v4 evidence binds the final source hash. Doctor retains the known
+generic Bootstrap failure while input/inventory/parser/project/checkpoint
+checks pass. Mandatory main-checkout pruning preserves receipts and reports no
+eligible generated binaries; free host space remains above 100 GB.
+
+**Remaining gates and bounded findings.** These two entries meet host input-drift
+qualification; the final-file checker still needs its distinct drift-explained
+state, owned by the code worker. Do not count them as exact J850 entries or
+claim a new readiness total before that integration. The reviewed 173-file phone
+replay remains separately queued; this 175-file host result does not qualify
+phone content or texture production.
+
+The bounded Menu continuation proves all 591 accepted IDs follow the saved
+prefab's local-ID order, but deriving those authored saved identities from
+original files remains open. Comparison-selected IDs are not producer inputs.
+WholeStageContexts now derives all 115 policy groups across 23 stages from
+original catalog/pool/scene owners; its full file remains blocked by 26 complete
+source/staged YAML digests and 21 activation-lineage cases. Evidence is retained
+in `p1-player-menu-source-v2/` and `p1-player-stage-contexts-v2/`. Revisit only
+with source-derived saved identity/export contracts. Startup registry, baked
+scene content and private build metadata remain separate gates; no target
+literal, digest, original scalar or object-body template is substituted.

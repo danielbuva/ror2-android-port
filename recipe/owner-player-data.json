@@ -688,6 +688,14 @@
     "e24ad2e9e87603348befae7014f52a5c": {
       "bytes": 36232,
       "sha256": "5a4b1f3469ca5c3571bfcbcab563bf15594d3942576c8838614890c021beb6eb"
+    },
+    "3ae4a4bcaf8ce40c48d9595af20c1bff": {
+      "bytes": 928816,
+      "sha256": "3e16c489a60dcca4958fb1ab05f34c64cefa1b8d1abdf2445d2e2f9783637a94"
+    },
+    "852bc9f46df26480bb862df820e94806": {
+      "bytes": 5676,
+      "sha256": "d12b4a65926af9260305c1b344d2473b972a7a87cc34c8f39e85ad2c73774aa5"
     }
   },
   "project_assemblies": [
@@ -890,13 +898,222 @@
         "manifest": "families",
         "bytes": 48308,
         "sha256": "b176a42158bd15a325bf8f72e581f2a401292cdd61e36bbd2a515c408aeb3db7"
+      },
+      {
+        "file": "3ae4a4bcaf8ce40c48d9595af20c1bff",
+        "name": "Strings",
+        "language": true,
+        "bytes": 924720,
+        "sha256": "50c2c815fd44843eccf192c0e42afe9e74a99e5b2ab84bfc21b8377da5b2f0d1"
       }
     ],
     "manifests": {
       "path": "owner-player-shader-manifests.json",
       "bytes": 2214369,
       "sha256": "5c55f316b6098569f62b25eff767f2eed2936557e0700b8f7f78de59cb489ab1"
-    }
+    },
+    "language": [
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/Achievements.json",
+        "bytes": 20063,
+        "sha256": "ba39c9239b2c479b30f91ee77d9d8cd81cd08af6c9d139939f026cf1c6bb835a"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/Artifacts.json",
+        "bytes": 3429,
+        "sha256": "10eb64c3c4954702d1d5729fcf9310097695ea48f4212b09265976f0f88e9a12"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/CharacterBodies.json",
+        "bytes": 127738,
+        "sha256": "8321d3317e77e74cd44fbc2b34c50c9762a28a7541efb64f87518bbe58b8cc52"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/CharacterSelect.json",
+        "bytes": 682,
+        "sha256": "03f09f1c37acd44ee5b33ed2032e1c5030ae3397a619548ac053cb00698bb065"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/Controls.json",
+        "bytes": 993,
+        "sha256": "93c417a1b79b8561974267c6e6132b65cae5b023c1595f2f4858b7412495329e"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/credits.json",
+        "bytes": 3170,
+        "sha256": "f7123e355e4e23da608cd5a3617330a4b65ee72bdf566a0c3de5005d3f0fb5af"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/credits_roles.json",
+        "bytes": 17756,
+        "sha256": "f532fb98fdbf42392fcad200f600f1c714559f61acf4113912dfacc7acd1abc5"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/cu8.json",
+        "bytes": 3104,
+        "sha256": "0b17f1062445512e8c3fb41f4a2badfe8c1b1f9ffff5c2d40035bab1f4e3cdf7"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/Cutscene.json",
+        "bytes": 3560,
+        "sha256": "beabb3191e71507c05a9c18bbaf96a280a76ebcc724b7dc8435c0ee18a744b27"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/Dialogue.json",
+        "bytes": 2828,
+        "sha256": "2d5e07ba660694be316dced7686a3b363451ec1b863d0b91ad81f47728f78fd0"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/Difficulty.json",
+        "bytes": 479,
+        "sha256": "07a31fe715230bae36ad926448b740977757c39a650625b5154f7b2b32b3936b"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/Discord.json",
+        "bytes": 293,
+        "sha256": "1e97ca7344e80667e0f0177be519fd3e55170ae71aa7ab7d7292a1ce2c700ff1"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/DLC1.json",
+        "bytes": 157,
+        "sha256": "327a426a2e9d15048bb6f090b627846382a630281f69f8c44abb8d277be53faa"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/DLC2.json",
+        "bytes": 86079,
+        "sha256": "f905f85e1ff58c7d106eea9658ca2941476cd808c517ec59103fba3324ceab4a"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/DLC3.json",
+        "bytes": 128221,
+        "sha256": "d6fc84d450bec4453089457eedfe46856850d370c746fa45f36fbee988e5ac7b"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/DLC4.json",
+        "bytes": 150079,
+        "sha256": "1d3157dbe5a17e6400f916687e1f952236be0274847653a61a6968f130632c43"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/EarlyAccess.json",
+        "bytes": 769,
+        "sha256": "dd70641b165a556bac20aae01f535af5019ff103e2583a9b7670f8fd46cdcbaf"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/Eclipse.json",
+        "bytes": 4402,
+        "sha256": "0ec94ee6cf843ebf21ba43b1a5809c32369968ccc33c27553024a7f4ba67b800"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/EOS.json",
+        "bytes": 2239,
+        "sha256": "1d7ff914f3e68fd9d733611d9210a32d6d7ca6604b33f183b4d20ea432e412ba"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/Equipment.json",
+        "bytes": 34509,
+        "sha256": "7159f09123bac50c88aa045941a863fca943a77d0ab2bc34930467eb9d0ebade"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/GameBrowser.json",
+        "bytes": 3415,
+        "sha256": "e666f7e27d653ac4955f0a04c8b1c97068660f91a54993e1cbc8990e90b13226"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/GameModes.json",
+        "bytes": 113,
+        "sha256": "783de60d068e7a6ddb695483d2717190087a158551df28214cf30afbcd747f98"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/HostGamePanel.json",
+        "bytes": 2083,
+        "sha256": "639384242f271c18b0afe0078726094ddb4806fca949553613340e7d9c077285"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/InfiniteTower.json",
+        "bytes": 5458,
+        "sha256": "9f893315e8629908286e990b1ce5f6ab5c759ffe0d4dbd225d5febdd107c6dba"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/Interactors.json",
+        "bytes": 22679,
+        "sha256": "66a0e820b75fd5f21a381799bca51bc1e5adbc22e7dc2214e15d5737eb9e05ee"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/Items.json",
+        "bytes": 164077,
+        "sha256": "c66483c8006ff77f51e9c2b8634d21fc207fabb45184800584fad1551e3731b1"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/Keywords.json",
+        "bytes": 3225,
+        "sha256": "ea8f09999f24fd9a8c9917dc8a9f879c5a7a235dd4c783937982e45c8f6ae296"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/language.json",
+        "bytes": 47,
+        "sha256": "2a76c1c714a8375616ff3a55c0451f69f14f09e926b7c1f62197db751fa5ba9a"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/Lobby.json",
+        "bytes": 201,
+        "sha256": "185951e979e2e56fc772396b981b01251dc22ecb38a1e41b79e6ce8ce8748be2"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/Logbook.json",
+        "bytes": 1423,
+        "sha256": "095354df5c843b315b8327b9d95d7400e2100b467ce1f9d22445622588dfebe9"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/Main.json",
+        "bytes": 16297,
+        "sha256": "4de04ae370ebccc0b403e86e2c1936409c935620bcd50d0ed196d15ae30de645"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/Maps.json",
+        "bytes": 29556,
+        "sha256": "e0f1a55b1a76f3526e1f21fd8a2d7f257d1adbccfff6706d776b07845daeb2ae"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/Messages.json",
+        "bytes": 12395,
+        "sha256": "e847034a73f464a22c83ec63ddb6d39c9c41b24e0c657895840b971b33f45f0d"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/Objectives.json",
+        "bytes": 2970,
+        "sha256": "a41b75bfe7395ef7fef006a0619a06f49668e47e21b75770861f8a168f194157"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/Rules.json",
+        "bytes": 2434,
+        "sha256": "66f4899f44c3bdb4add3c355261109c392ef79d196bb2bc8a1205f3082291a53"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/Settings.json",
+        "bytes": 16280,
+        "sha256": "8665f0a8349b6156abd53ba73d041dd640e98c4fb47abbdd800af04373a437a2"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/Stats.json",
+        "bytes": 3496,
+        "sha256": "86598125f4d88f070e6f25fe0e06c02af7bf6a63e58f3696574824d11552a5d2"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/Steam.json",
+        "bytes": 1638,
+        "sha256": "cb2917342b3c81b287508566a99b59eace180b2c28b39fe57a7af0454862d17d"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/Tooltips.json",
+        "bytes": 1231,
+        "sha256": "a3fab093bde38a553a9e605927901b9a5794c063c618b97a9eff508b843e5a38"
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/Language/en/Unlockables.json",
+        "bytes": 4856,
+        "sha256": "84a06823f2f7382b3de1c6376a32433319af48926eba2f8a9b26859038fb07f4"
+      }
+    ]
   },
   "sprites": {
     "source": {
@@ -4470,6 +4687,61 @@
         "sha256": "68aee1b2d2633c3ce1713cc44238025f750d3ae0aa66f42e748d421b19178022",
         "path_id": -3075889661304172018
       }
+    },
+    {
+      "file": "852bc9f46df26480bb862df820e94806",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-common-fonts-squaresbold_assets_all_49ffaeb6258d040d6fbd7043a4b7160d.bundle",
+        "bytes": 161004,
+        "sha256": "03b5521c6a804c8044f9bc20fb3282d83932b5e6c12aa163d07e360bfe54a3e6",
+        "member": "CAB-c1c42a877bb02cbc4a0b2b9bc31eba9d"
+      },
+      "material_shader": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/textmeshpro-formerresources-shaders_assets_all_417237179ff4ade74c214cc315d331a9.bundle",
+        "bytes": 74541,
+        "sha256": "8a35d57bbc505e293298f717ee7b0460b57b54605d492ea34b5902b9280bb6a5",
+        "member": "CAB-fefb3bd8c2e00d01daf14c5ecd5a5d7d",
+        "path_id": 7030032868776217633
+      },
+      "objects": [
+        {
+          "source_path_id": 1188887953541353651,
+          "path_id": 1,
+          "bytes": 1580,
+          "source_bytes": 1752,
+          "source_sha256": "16127e0f98b39001fd38a2924a21a04dfe7943c771de3389eeec361680d2896b",
+          "sha256": "13e70de055425d336c44f38bca8bdaca94933a70f517fd8f3b23d7f807a245f9",
+          "references": [
+            {
+              "offset": 28,
+              "from": [
+                2,
+                683148379888368288
+              ],
+              "to": [
+                1,
+                1
+              ]
+            },
+            {
+              "offset": 204,
+              "from": [
+                0,
+                5396532730158436531
+              ],
+              "to": [
+                2,
+                1
+              ]
+            }
+          ],
+          "rename": "FontMaterial4"
+        }
+      ],
+      "externals": [
+        "fc09a4c7f1fa342f6bc0a974d09572cf",
+        "ecbcdaff4cab5d64c99e2b377c233153"
+      ]
     }
   ],
   "textures": [

@@ -182,12 +182,12 @@ bringing the complete source bundle count to seven. Phone qualification remains 
 
 ## Produce named player-data files
 
-`player_data.py` produces 173 canonical `apk/assets/bin/Data/...` files:
+`player_data.py` produces 175 canonical `apk/assets/bin/Data/...` files:
 SDK default resources, three fresh converter resource files, two script metadata
 JSON files derived from original PC metadata plus authored initialization/order,
 the embedded font serialized file, two original line-breaking TextAssets, the
 authored runtime and bootstrap JSON TextAssets, 64 standalone Sprite files,
-the original TimerStringFormatter, nine original TMP objects, 13 materials, the six-object SDK built-in UI file and 72 standalone
+the original TimerStringFormatter, nine original TMP objects, 14 materials, the six-object SDK built-in UI file and 72 standalone
 textures from existing source-produced packs. The font, material and texture bodies and their
 type identities/dependency come from one original PC bundle; only
 four checked reference identities change. The generic writer generates its
@@ -202,6 +202,17 @@ JSON policy. The pinned `owner-bootstrap.json` follows the existing
 `generate_build_bootstrap` policy with the public fixed attempt identity and
 four original preload keys absent from the original catalog. These are minimum
 source relationships, not object bodies or a target byte template.
+
+The English Strings TextAsset reads all pinned JSON files from the current
+original `StreamingAssets/Language/en` directory. The authored builder's
+qualified collation and later-file replacements determine its contents; no
+cached table, historical installation or game text is distributed. Original
+trailing commas are accepted without changing quoted values. The complete
+file set and source hashes must match the profile. The fifth font-material
+clone likewise preserves every original scalar, including Sharpness. Both
+files differ from J850 because their current original inputs changed; historical
+originals qualify the same transformation separately. This does not make either
+file an exact J850 match or qualify phone production.
 
 ```sh
 python3 -I -S -B tools/phone-build/accepted-output/player_data.py \
