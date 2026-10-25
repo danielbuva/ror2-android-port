@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1163](PORTING_JOURNAL.md#j1163--reconstruct-barrier-and-all-three-goldshores-payloads) | 2026-10-25 | Reconstruct Barrier and all three Goldshores payloads | 2026-10-25 UTC. |
 | [J1165](PORTING_JOURNAL.md#j1165--bound-historical-input-drift-in-native-snowy-cubemaps) | 2026-10-25 | Bound historical-input drift in native Snowy cubemaps | 2026-10-25 UTC. |
 | [J1164](PORTING_JOURNAL.md#j1164--recover-an-interrupted-native-save-and-classify-stage-load-thermal-refusal) | 2026-10-25 | Recover an interrupted native save and classify stage-load thermal refusal | **Hypothesis and scope.** |
 | [J1160](PORTING_JOURNAL.md#j1160--budget-alpha-capture-storage-separately-from-full-builds) | 2026-10-25 | Budget alpha capture storage separately from full builds | **Hypothesis and change.** |
@@ -26,7 +27,6 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1106](PORTING_JOURNAL.md#j1106--observe-the-real-settings-commit-race-and-prepare-same-uid-writer-termination) | 2026-10-25 | Observe the real settings commit race and prepare same-UID writer termination | **Date:** 2026-10-24. |
 | [J1158](PORTING_JOURNAL.md#j1158--rgba-phone-cohort-interrupted-by-recorded-hangup) | 2026-10-25 | RGBA phone cohort interrupted by recorded hangup | 2026-10-25 UTC. |
 | [J1162](PORTING_JOURNAL.md#j1162--retain-the-native-measurement-transport-failure-and-refresh-source-readiness) | 2026-10-25 | Retain the native measurement transport failure and refresh source readiness | 2026-10-25 UTC. |
-| [J1163](PORTING_JOURNAL.md#j1163--reconstruct-barrier-and-all-three-goldshores-payloads) | 2026-10-25 | Reconstruct Barrier and all three Goldshores payloads | 2026-10-25 UTC. |
 | [J1157](PORTING_JOURNAL.md#j1157--reconstruct-every-apk-shader48-object-from-source) | 2026-10-25 | Reconstruct every APK Shader48 object from source | **Hypothesis / prior art.** |
 | [J1143](PORTING_JOURNAL.md#j1143--qualify-expanded-source-animation-controller-and-graph-records) | 2026-10-25 | Qualify expanded source animation, controller and graph records | Date: 2026-10-25 UTC. |
 | [J1154](PORTING_JOURNAL.md#j1154--collect-the-paused-native-jobs-terminal-timeout-without-restarting-it) | 2026-10-25 | Collect the paused native job's terminal timeout without restarting it | 2026-10-25 UTC. |
