@@ -486,6 +486,107 @@ def check_preload_dependencies(sources, source_profiles, dependencies):
             raise ValueError("original preload GameObject relationship drift")
 
 
+def legacy_animate_fields(body, tree, identity_owner):
+    """Project current zero-valued additions to the J133 retained field shape."""
+    nodes = identity_owner.tree_nodes(tree)
+    top = [i for i, node in enumerate(nodes) if node["level"] == 1]
+    names = [nodes[i]["name"] for i in top]
+    required = ["disableObjectOnEnd", "resetOnEnable"]
+    present = [name for name in required if name in names]
+    if not present:
+        if names.count("disableOnEnd") != 1 or names.count("time") != 1 or names.index("time") != names.index("disableOnEnd") + 1:
+            raise ValueError("original legacy AnimateShaderAlpha field order drift")
+        return body, tree
+    if present != required or any(names.count(name) != 1 for name in required):
+        raise ValueError("original AnimateShaderAlpha field membership drift")
+    first = names.index(required[0])
+    if first == 0 or names[first - 1 : first + 3] != ["disableOnEnd", *required, "time"]:
+        raise ValueError("original AnimateShaderAlpha field order drift")
+    indices = [top[first], top[first + 1]]
+    for index in indices:
+        node = nodes[index]
+        if node["type"] != "UInt8" or node["size"] != 1 or not node["meta"] & 0x4000 or index + 1 < len(nodes) and nodes[index + 1]["level"] > 1:
+            raise ValueError("original AnimateShaderAlpha field schema drift")
+    records = module("record_produce")
+    _, spans = records.fields(body, records.SCHEMA.type_tree(io.BytesIO(tree)))
+    ranges = [spans[(name,)] for name in required]
+    if ranges[0][1] != ranges[1][0] or any(end - start != 4 or body[start:end] != bytes(4) for start, end in ranges):
+        raise ValueError("original AnimateShaderAlpha fields must be zero aligned values")
+    count, _ = struct.unpack_from("<II", tree)
+    buffer = tree[8 + count * 32 :]
+    rows = [list(struct.unpack_from("<HBBIIiiiQ", tree, 8 + i * 32)) for i in range(count)]
+    removed = []
+    for index in indices:
+        start = rows[index][4]
+        if start & 0x80000000:
+            raise ValueError("original AnimateShaderAlpha field label drift")
+        end = buffer.index(bytes(1), start) + 1
+        removed.append((start, end))
+    remaining = [row for i, row in enumerate(rows) if i not in indices]
+    for i, row in enumerate(remaining):
+        row[6] = i
+        for k in (3, 4):
+            offset = row[k]
+            if offset & 0x80000000:
+                continue
+            if any(start <= offset < end for start, end in removed):
+                raise ValueError("omitted AnimateShaderAlpha label is still referenced")
+            row[k] -= sum(end - start for start, end in removed if end <= offset)
+    chunks, cursor = [], 0
+    for start, end in sorted(removed):
+        chunks.append(buffer[cursor:start])
+        cursor = end
+    chunks.append(buffer[cursor:])
+    strings = b"".join(chunks)
+    projected = struct.pack("<II", len(remaining), len(strings)) + b"".join(struct.pack("<HBBIIiiiQ", *row) for row in remaining) + strings
+    return body[: ranges[0][0]] + body[ranges[-1][1] :], projected
+
+
+def legacy_animate_hash_tree(tree, sdk_tree, identity_owner):
+    """Hash SDK editor Curve/Keyframe nodes; preserve serialized runtime schema."""
+    source = identity_owner.tree_nodes(tree)
+    native = identity_owner.tree_nodes(sdk_tree)
+
+    def extent(nodes, index):
+        end = index + 1
+        while end < len(nodes) and nodes[end]["level"] > nodes[index]["level"]:
+            end += 1
+        return end
+
+    src = [i for i, node in enumerate(source) if node["type"] == "AnimationCurve" and node["name"] == "alphaCurve"]
+    sdk = [i for i, node in enumerate(native) if node["type"] == "AnimationCurve" and node["name"] == "m_Falloff"]
+    if len(src) != 1 or len(sdk) != 1:
+        raise ValueError("original/SDK AnimateShaderAlpha curve schema absent")
+    i, j = src[0], sdk[0]
+    end = extent(source, i)
+    shift = source[i]["level"] - native[j]["level"]
+    editor = [{**node, "level": node["level"] + shift} for node in native[j : extent(native, j)]]
+    editor[0]["name"] = source[i]["name"]
+    key = [k for k, node in enumerate(editor) if node["type"] == "Keyframe"]
+    tangent = [k for k, node in enumerate(editor) if node["name"] == "tangentMode"]
+    if len(key) != 1 or len(tangent) != 1 or editor[key[0]]["size"] != 32 or editor[tangent[0]]["type"] != "int" or editor[tangent[0]]["size"] != 4:
+        raise ValueError("SDK editor Keyframe tangent schema drift")
+    runtime = [dict(node) for k, node in enumerate(editor) if k != tangent[0]]
+    runtime[key[0]]["size"] -= 4
+    if runtime != source[i:end]:
+        raise ValueError("original runtime AnimationCurve differs from SDK editor projection")
+    revised = source[:i] + editor + source[end:]
+    strings = bytearray()
+    labels = {}
+
+    def label(value):
+        if value not in labels:
+            labels[value] = len(strings)
+            strings.extend(value.encode() + bytes(1))
+        return labels[value]
+
+    rows = [
+        struct.pack("<HBBIIiiiQ", n["version"], n["level"], n["flags"], label(n["type"]), label(n["name"]), n["size"], k, n["meta"], 0)
+        for k, n in enumerate(revised)
+    ]
+    return struct.pack("<II", len(rows), len(strings)) + b"".join(rows) + strings
+
+
 def omit_character_master_field(tree, identity_owner):
     """Remove only the measured final original debug field from its native schema."""
     nodes = identity_owner.tree_nodes(tree)
@@ -567,8 +668,8 @@ def copy_original_bundle(profile, profile_sha256, pc, output):
 def plugin_import_order(body):
     """Use PluginImporter's default for the selected original RoR2 DLL script."""
     offset, names = script_fields(body)
-    if names[2] != "RoR2.dll":
-        raise ValueError("plugin import order requires an original RoR2.dll script")
+    if names[2] not in {"RoR2.dll", "AK.Wwise.Unity.MonoBehaviour.dll", "Unity.TextMeshPro.dll"}:
+        raise ValueError("plugin import order requires an admitted original DLL script")
     return body[: offset - 4] + bytes(4) + body[offset:]
 
 
@@ -705,6 +806,17 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                         if selected["plugin_import_default_execution_order"] is not True or typ["class_id"] != 115:
                             raise ValueError("plugin import order requires an original MonoScript")
                         body = plugin_import_order(body)
+                    if "omit_animate_shader_alpha_legacy_fields" in selected:
+                        if (
+                            selected["omit_animate_shader_alpha_legacy_fields"] is not True
+                            or typ["class_id"] not in (114, 115)
+                            or "properties_hash" not in selected
+                            or sdk_tree is None
+                        ):
+                            raise ValueError("legacy AnimateShaderAlpha policy requires source script properties")
+                        if typ["class_id"] == 114:
+                            body, schema = legacy_animate_fields(body, typ["tree"], identity_owner)
+                            typ = {**typ, "tree": schema}
                     body = remap(body, selected.get("references", []))
                     if "keyword_policy" in selected:
                         if typ["class_id"] != 21 or selected["keyword_policy"] != "dummy-shader-demote-valid":
@@ -732,10 +844,11 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                         raise ValueError("script properties require SDK metadata")
                     selectors = selected["properties_hash"]
                     omit_master = selected.get("omit_character_master_unkillable", False)
-                    key = tuple(selectors["script"]), tuple(selectors["behaviour"]), omit_master
+                    omit_alpha = selected.get("omit_animate_shader_alpha_legacy_fields", False)
+                    key = tuple(selectors["script"]), tuple(selectors["behaviour"]), omit_master, omit_alpha
                     if key not in properties:
                         script, script_type = source_record(sources, selectors["script"])
-                        _, behaviour_type = source_record(sources, selectors["behaviour"])
+                        original_behaviour, behaviour_type = source_record(sources, selectors["behaviour"])
                         if script_type["class_id"] != 115 or behaviour_type["class_id"] != 114:
                             raise ValueError("script properties selectors have wrong classes")
                         _, names = script_fields(script)
@@ -744,6 +857,11 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                             if omit_master is not True or names != ("CharacterMaster", "RoR2", "RoR2.dll"):
                                 raise ValueError("final field omission requires original CharacterMaster")
                             schema = omit_character_master_field(schema, identity_owner)
+                        if omit_alpha:
+                            if omit_alpha is not True or names != ("AnimateShaderAlpha", "RoR2", "RoR2.dll"):
+                                raise ValueError("legacy schema requires original AnimateShaderAlpha")
+                            _, schema = legacy_animate_fields(original_behaviour, schema, identity_owner)
+                            schema = legacy_animate_hash_tree(schema, sdk_tree, identity_owner)
                         properties[key] = identity_owner.properties_hash(*names, schema, sdk_tree)
                     value = properties[key]
                     if typ["class_id"] == 115:

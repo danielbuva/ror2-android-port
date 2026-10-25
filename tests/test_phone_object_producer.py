@@ -555,7 +555,7 @@ class ObjectProducerTests(unittest.TestCase):
             self.assertEqual(actual_names, names)
             self.assertEqual(bodies[2][offset - 4 : offset], bytes(4))
             self.assertEqual(bodies[2][offset : offset + 16], derived)
-            with self.assertRaisesRegex(ValueError, "RoR2.dll script"):
+            with self.assertRaisesRegex(ValueError, "admitted original DLL script"):
                 P.plugin_import_order(bodies[2].replace(b"RoR2.dll", b"Evil.dll"))
 
     def test_original_preload_admits_only_pinned_gameobject_membership(self):
@@ -1506,6 +1506,98 @@ class BezierOwnerProductionTests(unittest.TestCase):
             self.assertEqual(data, line)
             self.assertEqual(data[20:80], BezierCurveLineTests.EXPECTED)
             self.assertEqual(struct.unpack_from("<iq", data, 80), (1, 88))
+
+
+LEGACY_IDENTITY = P.module("script_identity", ROOT / "scripts/lab/script_identity.py")
+
+
+def legacy_policy_fixture():
+    def curve(name, editor):
+        children = [CURVE_MESH_FIXTURE.node(n, 4, kind="float") for n in ["time", "value", "inSlope", "outSlope"]]
+        if editor:
+            children.append(CURVE_MESH_FIXTURE.node("tangentMode", 4, kind="int"))
+        children.extend(
+            [
+                CURVE_MESH_FIXTURE.node("weightedMode", 4, kind="int"),
+                CURVE_MESH_FIXTURE.node("inWeight", 4, kind="float"),
+                CURVE_MESH_FIXTURE.node("outWeight", 4, kind="float"),
+            ]
+        )
+        key = CURVE_MESH_FIXTURE.node("data", 32 if editor else 28, children=children, kind="Keyframe")
+        return CURVE_MESH_FIXTURE.node(
+            name,
+            kind="AnimationCurve",
+            children=[
+                CURVE_MESH_FIXTURE.array("m_Curve", key),
+                *[CURVE_MESH_FIXTURE.node(n, 4, kind="int") for n in ["m_PreInfinity", "m_PostInfinity", "m_RotationOrder"]],
+            ],
+        )
+
+    boolean = lambda name: CURVE_MESH_FIXTURE.node(name, 1, kind="UInt8", meta=0x4000)
+    source = CURVE_MESH_FIXTURE.node(
+        "Base",
+        kind="MonoBehaviour",
+        children=[
+            curve("alphaCurve", False),
+            boolean("disableOnEnd"),
+            boolean("disableObjectOnEnd"),
+            boolean("resetOnEnable"),
+            CURVE_MESH_FIXTURE.node("time", 4, kind="float"),
+            CURVE_MESH_FIXTURE.node("retained", 12, kind="PPtr<Object>"),
+        ],
+    )
+    sdk = CURVE_MESH_FIXTURE.node("Base", kind="MonoBehaviour", children=[CURVE_MESH_FIXTURE.text("m_EditorClassIdentifier"), curve("m_Falloff", True)])
+    body = struct.pack("<I4fI2f3I", 1, 0, 1, 2, 3, 0, 0.25, 0.75, 2, 2, 4) + bytes(12) + struct.pack("<fiq", 3.5, 7, -1234567)
+
+    def tree(body, node):
+        raw = CURVE_RECORD_FIXTURE.serialized(body, node, 114)
+        stream = io.BytesIO(raw)
+        stream.size = len(raw)
+        md = P.W.read_serialized(stream)
+        return md["types"][0]["tree"]
+
+    sdkbody = bytes(4) + struct.pack("<I4fII2f3I", 1, 0, 1, 2, 3, 0, 0, 0.25, 0.75, 2, 2, 4)
+    return body, tree(body, source), tree(sdkbody, sdk)
+
+
+class LegacyBarrierPolicyTests(unittest.TestCase):
+    def test_only_zero_additions_are_removed_and_tail_and_runtime_curve_are_retained(self):
+        body, tree, sdk = legacy_policy_fixture()
+        result, projected = P.legacy_animate_fields(body, tree, LEGACY_IDENTITY)
+        self.assertEqual(result, body[:48] + body[56:])
+        self.assertEqual(result[-16:], body[-16:])
+        self.assertEqual(P.legacy_animate_fields(result, projected, LEGACY_IDENTITY), (result, projected))
+        fields = [n["name"] for n in LEGACY_IDENTITY.tree_nodes(projected) if n["level"] == 1]
+        self.assertEqual(fields, ["alphaCurve", "disableOnEnd", "time", "retained"])
+        hashed = P.legacy_animate_hash_tree(projected, sdk, LEGACY_IDENTITY)
+        self.assertEqual(next((n["size"] for n in LEGACY_IDENTITY.tree_nodes(projected) if n["type"] == "Keyframe")), 28)
+        self.assertEqual(next((n["size"] for n in LEGACY_IDENTITY.tree_nodes(hashed) if n["type"] == "Keyframe")), 32)
+        self.assertEqual(sum((n["name"] == "tangentMode" for n in LEGACY_IDENTITY.tree_nodes(hashed))), 1)
+        self.assertNotEqual(
+            LEGACY_IDENTITY.properties_hash("AnimateShaderAlpha", "RoR2", "RoR2.dll", projected, sdk),
+            LEGACY_IDENTITY.properties_hash("AnimateShaderAlpha", "RoR2", "RoR2.dll", hashed, sdk),
+        )
+
+    def test_nonzero_value_or_alignment_padding_is_never_discarded(self):
+        body, tree, _ = legacy_policy_fixture()
+        for offset in [48, 49, 52, 55]:
+            with self.subTest(offset=offset):
+                changed = bytearray(body)
+                changed[offset] = 1
+                with self.assertRaisesRegex(ValueError, "zero aligned"):
+                    P.legacy_animate_fields(bytes(changed), tree, LEGACY_IDENTITY)
+
+    def test_wrong_field_shape_and_sdk_curve_are_rejected(self):
+        body, tree, sdk = legacy_policy_fixture()
+        for original, replacement in [(b"disableObjectOnEnd\x00", b"disableObjectOnBad\x00"), (b"resetOnEnable\x00", b"resetOnEnabXX\x00")]:
+            with self.subTest(original=original):
+                with self.assertRaisesRegex(ValueError, "membership"):
+                    P.legacy_animate_fields(body, tree.replace(original, replacement), LEGACY_IDENTITY)
+        _, projected = P.legacy_animate_fields(body, tree, LEGACY_IDENTITY)
+        with self.assertRaisesRegex(ValueError, "curve schema absent"):
+            P.legacy_animate_hash_tree(projected, sdk.replace(b"m_Falloff\x00", b"m_FallBad\x00"), LEGACY_IDENTITY)
+        with self.assertRaisesRegex(ValueError, "tangent schema"):
+            P.legacy_animate_hash_tree(projected, sdk.replace(b"tangentMode\x00", b"tangentMade\x00"), LEGACY_IDENTITY)
 
 
 if __name__ == "__main__":
