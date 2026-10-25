@@ -169,6 +169,8 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 | `owner-itskymeadow-objects.json` | Private Sky Meadow scene | Original selectors, checked SceneInfo component/occlusion-array/PPtr policies, Sprite relationships, SDK schema and qualified mesh/texture profiles. | No body/tree/geometry/pixel/scalar template; provenance/privacy/licensing audit below, 2026-10-25. | Existing `object_produce.py`; J1145 host exact, phone open. |
 | `owner-solusweb-objects.json` | Private Solusweb scene | Original selectors, checked SceneInfo/bank/final CharacterMaster field policies, original preload GameObject membership and qualified mesh profile. | No body/tree/geometry/pixel/scalar template; provenance/privacy/licensing audit below, 2026-10-25. | Existing `object_produce.py`; J1145 host exact, phone open. |
 | `owner-itancientloft-objects.json` | Private Ancient Loft scene | Original selectors, checked SceneInfo/occlusion-array/PPtr policies, current-input Sprite GUID relationships, SDK schema and qualified mesh/texture profiles. | No body/tree/geometry/pixel/scalar template; provenance/privacy/licensing audit below, 2026-10-25. | Existing `object_produce.py`; J1145 host exact, phone open. |
+| `owner-ai-test-objects.json` | Private AI Test scene | Original selectors, checked CharacterMaster body/schema omission, source Sprite identities, SDK schema and qualified mesh/texture profiles. | No body/tree/geometry/pixel/scalar template; provenance/privacy/licensing audit below, 2026-10-25. | Existing `object_produce.py`; J1150 host exact, phone open. |
+| `owner-testscene-objects.json` | Private Testscene scene | Original selectors, checked CharacterMaster body/schema omission, source Sprite identities, original preload membership, SDK schema and qualified mesh/texture profiles. | No body/tree/geometry/pixel/scalar template; provenance/privacy/licensing audit below, 2026-10-25. | Existing `object_produce.py`; J1150 host exact, phone open. |
 | `owner-teleport-material-objects.json` | Private teleport-material bundle | Original material/type selectors, checked references, named dummy-shader keyword policy and container relationships. | No material/shader body, keyword literal, numeric override or target template; audit below, 2026-10-25. | Source-only `object_produce.py`; J1117 host qualification, phone gate open. |
 | `owner-death-effect-objects.json` | Private replay player-death-effect bundle | Rooted original graph/script selectors, checked pointer extents, preload/dependency identities and hashes. | No body, type-tree snapshot, scalar/curve override or target delta; audit below, 2026-10-25. | Existing original-input-only `object_produce.py`; J1115 host qualification, phone gate open. |
 | `owner-pickup-objects.json` | Private replay pickup bundle | Original selectors, hashes, checked pointer extents and destination relationships. | No bodies, type trees or target deltas; full audit below, 2026-10-25. | Original-input-only `object_produce.py`; J1113 host qualification, phone gate open. |
@@ -2944,3 +2946,17 @@ reconstruction. Serialized destinations retain the fixed Android toolchain
 identity and original native schemas. These selectors grant no game/SDK
 redistribution, ownership, authentication or entitlement capability. All original
 text, material values, generated files and detailed drift evidence stay ignored.
+
+`owner-ai-test-objects.json` and `owner-testscene-objects.json` receive the same
+provenance, privacy, licensing and sensitive-content audit on 2026-10-25.
+They extend only the existing original-body/type selectors, checked pointer
+relationships, SDK schema and mesh/texture pack identities. Their icon Sprite
+GUIDs are checked against the current accepted-input export, its input receipt
+and the corresponding original scene reference. Testscene's additional preload
+GameObject is checked against the original preload membership and member
+identity; it is not a target body supplier. CharacterMaster uses the existing
+guarded final-field body/schema omission and original custom-field hash owner.
+No new scalar policy, schema/body template, protected media, private path,
+identifier, credential or redistribution/ownership/authentication grant is
+introduced. Generated data and raw evidence stay ignored. J1150 owns the full
+host results; Android and complete installation remain open.

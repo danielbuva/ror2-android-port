@@ -41100,3 +41100,100 @@ in `p1-player-menu-source-v2/` and `p1-player-stage-contexts-v2/`. Revisit only
 with source-derived saved identity/export contracts. Startup registry, baked
 scene content and private build metadata remain separate gates; no target
 literal, digest, original scalar or object-body template is substituted.
+
+## J1150 — Reconstruct complete AI Test and Testscene payloads
+
+Date: 2026-10-25 UTC. Host-only source production; no Unity Editor, device,
+installation or game launch. Comparison remains J850 APK SHA-256
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+**Hypothesis and prior art.** Complete the two remaining shader-free scene
+candidates using the existing source-only object owner and audited policies.
+The retained J1050 census and qualified producer inventories select them;
+no full census or J1116 writer control is repeated. Consulted
+`community-prior-art.md`, J1124/J1134/J1145 and pinned UnityPy 1.25.3
+object/type/reference contracts. Source graph relationships resolve original
+identities; unique original GameObject component relationships resolve the
+remaining CharacterMaster bodies. The existing SDK schema/hash helper and
+checked final-field omission handle those bodies and their MonoScript hashes.
+No new runtime, serializer, producer branch or scalar policy is introduced.
+
+**Implementation and results.** Add the two audited relationship recipes
+`owner-ai-test-objects.json` and `owner-testscene-objects.json`. Original
+bodies/types, checked PPtrs and existing mesh/texture producer packs supply
+all content. The isolated public `python3 -I -S -B` producer requires only the
+original PC input, exact supplied SDK resources, pinned codec and qualified
+packs. It reads no comparison body, tree, metadata snapshot or replay file.
+Both complete files independently compare raw-exact against J850:
+
+| Bundle | Objects | Body bytes | Bundle bytes | SHA-256 |
+| --- | ---: | ---: | ---: | --- |
+| `whole-scene-ai_test` | 509 | 1,406,632 | 999,005 | `5cda33ec811790783bf680b7bea276707b73c477ce85f548ed54c3bee52a3f3d` |
+| `whole-scene-testscene` | 629 | 397,565 | 158,798 | `1b592cb8d1fad2d9e2ad1b1aa2627504b4a4cbd198db06e1b484dec31591f0f5` |
+
+Independent persisted readback verifies all four complete serialized members,
+all 1,138 object extents and each producer receipt's output hashes/lengths.
+AI Test's member sizes are 1,394,168 and 135,560 bytes; Testscene's are 181,276
+and 499,948 bytes. AI Test consumes four qualified meshes and two textures;
+Testscene consumes three meshes and two textures. All seven CharacterMaster
+bodies and both associated script schemas use the existing guarded policy.
+The original custom schemas plus SDK editor base derive nine AI Test and eight
+Testscene script/body hashes through the unchanged hash owner.
+
+Both icon Sprite importer GUIDs are independently checked against the current
+accepted-input export receipt, original asset metadata and exactly one matching
+scene reference. No historical export becomes a reconstruction input. Testscene
+adds one external preload GameObject relationship admitted by the existing
+original class/body-hash, preload membership and external-member checks. All
+remaining Sprite geometry, material/scene values and source schema bytes remain
+original. An independent review confirms every source relocation is an actual
+PPtr in the original schema: 1,222 in AI Test and 1,515 in Testscene. Empty
+component-removal arrays in AI Test's discovery profile are removed before its
+final public qualification; the first proof remains preserved separately.
+
+Recipe SHA-256 values:
+
+- AI Test: `4000af956c0e0f10f5fefa8278080a7a75546475f7f9215a7b65e1de62c8f930`.
+- Testscene: `781c670b14dac384fcc72c7c3792ab892abccc6e49ade48c30fba90bcafec524`.
+
+Private evidence is in `work/coordination/p1-payload-ai_test-discovery-v1/`
+(`public-host-v2/result.json`, `public-independent-compare.json`,
+`source-meta-provenance.json`, `candidate-handoff.json`) and
+`work/coordination/p1-payload-testscene-discovery-v1/`
+(`public-host-v1/result.json`, `public-independent-compare.json`,
+`provenance-audit.json`, `source-preload-contract.json`). Producer receipt hashes
+are respectively
+`fd85ab394735f31693d44109defb66bf28ee97aafd925b1f7c197f23bb2230df` and
+`a582e89e366526ec74d84fb91932aea2b5b5934ae240eb6ec7668079676fa840`.
+
+**Readiness and checks.** The source-only union
+`work/coordination/p1-payload-test-scenes-source-host-v1` preserves the shader
+worker's ten-file cohort and all prior source files. The existing checker reports
+**218/705 ready**, **487 missing (370 APK / 117 payload)** and zero invalid or
+mismatched entries. Files are hard-linked from source-produced outputs; the
+comparison manifest supplies validation only. There are now 17 complete
+source-derived payload bundles, including ten streamed scenes. The checker does
+not independently certify provenance or device behavior; those remain separate
+from its byte-availability result. All 36 affected object/writer/hash/recipe
+checks pass. Host preflight passes with 108,497,297,408 free bytes; manual
+provenance/privacy/licensing review and staged public audit pass. Main-checkout
+generated-storage cleanup passes and retains all evidence. No public-producer
+failure or code repair is required.
+
+**Bounded remaining gates.** Goldshores native source mapping is retained but
+its compiled Android Standard Shader is not a reusable SDK editor body.
+Barrier's Cloud Remap/VertexLit likewise require the shader owner's independent
+compiled records; no second compiler implementation is introduced. Metadata-only
+catalog review independently extracts hashes, lengths and direct dependencies
+from all fifteen previously produced bundles; these agree with comparison
+metadata, but 99 of 114 active files remain absent in that review tree. The
+catalog does not depend on the binary root manifest's imported ArtifactID hash.
+The required root manifest still needs an independent Android ArtifactID/ordered
+native feed producer; Windows bundle/catalog hashes are not that primitive.
+Text manifest sidecars are outside the 705-file checker. Bounded evidence and
+reproducer are in `work/coordination/p1-payload-manifest-next-v1/`; no partial
+catalog advertising missing files is emitted. Phone reconstruction, complete
+installation, matched runtime/performance, remaining shaders/content and those
+manifest/catalog gates stay open. These host results do not qualify normal
+play or game readiness. Revisit on source/profile drift, failed contracts or
+new source-produced shader/import-hash evidence.
