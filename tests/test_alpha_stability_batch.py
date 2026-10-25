@@ -18,6 +18,7 @@ SERIAL = "authored-fixture"
 
 class AlphaStabilityBatchTests(unittest.TestCase):
     def setUp(self):
+        self.enterContext(mock.patch.object(batch.shutil, "disk_usage", return_value=SimpleNamespace(free=101 * 1024**3)))
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
         self.root = Path(self.temporary.name).resolve()

@@ -42697,3 +42697,33 @@ write, fresh corrected heaps and sustained cases remain open. Do not replay the
 historical R55 private driver or relax thresholds after a refusal. Fresh device
 qualification follows the explicit shared-device queue and current APK receipt;
 this host result does not establish safe uninterrupted heat or accepted play.
+
+## J1160 — Budget alpha capture storage separately from full builds
+
+**Hypothesis and change.** The 100 GiB storage floor applies to a full Unity
+build. The orchestrator explicitly authorizes the existing capture-only alpha
+batch to admit against estimated output plus a 20 GiB margin. The existing
+`alpha_stability_batch.py` owner now records two 4 GiB native snapshot estimates
+(menus 2 and 4), plus 1 GiB for SDK/session/thermal diagnostics, and the 20 GiB
+margin: 29 GiB required in total. Admission records observed free bytes and
+refuses before acquiring a lease or accessing a device when below that budget.
+The full-build floor and 19 GiB device capture admission remain unchanged.
+This generic host storage correction adds no runtime mechanism or player build.
+
+**Evidence and validation.** J1091's retained evidence totals 2,595,839,863 bytes,
+including 2,585,038,011 bytes in its two snapshots. The corrected later memory
+series retains 17,390,129 bytes of diagnostics; inspected prior SDK cases are
+under 215 KB. These local read-only measurements support the conservative
+9 GiB estimate; no heap parser/export is part of this queue. All 43 batch,
+five sustained, 228 CLI and ten SDK interruption fixtures pass. Boundary
+fixtures refuse 28 GiB, admit 29 and 96 GiB, record the complete budget and
+prove no device/lease access on insufficient capacity. Ruff and diff checks
+pass; independent read-only review approves the estimate and admission.
+Canonical host-only preflight passes; canonical doctor validates input/project
+but retains its absent historical bootstrap-smoke gate.
+
+**Scope and remaining gate.** This is host qualification only, with no APK
+change or device acceptance claim. The prior host-only storage refusal is not
+a device experiment. SDK interrupted-write, fresh corrected native heaps and
+sustained runtime qualification remain open until their separately retained
+batch result, with actual installed APK readback and J1148/J1156 supervision.
