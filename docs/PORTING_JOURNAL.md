@@ -42386,3 +42386,68 @@ normal candidate on the same native route, require useful landing-rejection
 observations and actual Siren arrival/egg input, and retain the first failure.
 Rare-NaN causality, native mission completion, PC appearance, complete audio and
 normal-difficulty readiness remain open.
+
+
+## J1111 — Build the destination-only MainOutput observation candidate
+
+**Hypothesis and existing ownership.** J1043 schedules one passive MainOutput
+window after genuine authoritative skill activity, but its process-lifetime
+window can be consumed before the destination stage. Add an explicit
+`check-baseline --stage-exit --capture-in-destination` request to defer that
+same window until one verified native transition, completed transport, matching
+live scene and positive destination time. The first recognized authoritative
+skill can then arm the existing policy. Early callbacks do not claim it;
+previous-session window reuse is refused. No event, audio routing, bank, native
+callback, gameplay authority or Term owner changes. J1043/J1067's pinned
+R2API.Sound `f539511e` lifecycle boundary remains applicable; this slice extends
+the existing observation timing rather than adding middleware machinery.
+
+`PortSession` clears caller-supplied witnesses when loading the selection and
+records scene, transition count and world time only after accepted arming.
+Cleanup closes the activity policy before retained callbacks can run. The
+baseline owner requires those witnesses and a complete finite/nonzero window
+within 30 s in the destination. It preserves the first current-process runtime
+error through log turnover, then performs existing owned cleanup. Ordinary
+first-stage timing and the 10-second stage check retain their defaults.
+
+**Host qualification and provenance.** The integrated host cohort reports
+272 passing checks. The focused production-session and driver suite passes
+39 tests, including premature callbacks, caller-witness reset, one-shot reuse,
+destination validation and cleanup after a synthetic native NaN. The reviewed
+source-pin refresh changes only the authored `PortSession.cs` member of the
+frozen owner cohort and its transitive recipe/producer/camera digests. The
+34 provenance checks (two missing-tool skips) and 10 cache checks pass; Ruff,
+staged privacy audit and whitespace checks pass. Ownership and the current
+command are documented in ARCHITECTURE and DEVELOPING.
+
+**Refusals and normal build.** The earlier fast attempt refuses changed
+source-bound bootstrap content. The first normal attempt refuses an absent
+pinned HTTP MCP server before compilation. Restoring the existing server
+reconnects the existing editor; the next attempt refuses pending compilation
+before player build. The existing editor refresh then reports the exact pinned
+project/editor idle. Preserve `fast-build.log`, `mcp-startup-refusal/` and
+`pending-compilation-refusal/` under `work/coordination/main-port-r57/`; no guard
+is bypassed and no failed attempt supplies an accepted player.
+
+The subsequent normal full build from
+`b96a881d77bac5edf88e50cdd54287363591c516`, request
+`20261025T010008.189338Z`, passes in 149.432 s with zero errors
+(314.984 s complete pipeline). APK SHA-256:
+`e950fcb18ff8ed69c56b9399bd528657277af901525b6563cd4ed988c5a43f37`.
+All 267 artifact references, sizes and the frozen manifest digest are independently
+rehashed successfully. Build receipt, frozen references, host checks and normal
+logs remain under `work/coordination/main-port-r57/`; no APK or payload is copied
+into evidence folders. Mandatory pruning completes after the failed attempts
+and successful normal build. Doctor still reports Bootstrap FAIL despite all
+listed input/tool checks passing; accepted-input host preflight and typed host
+preparation pass for this build.
+
+**Device gate.** R57 is uninstalled. The last recorded shared-device installation
+remains J1105's R55 for priority content and alpha's matched heap case; later
+owners' receipts must be read before acquiring/installing. Main remains
+unreachable and requires interrupted-R45 evidence, cleanup and display sleep
+first. Next run both strict controls and the explicit destination-only capture
+on this frozen normal candidate, then qualify J1108's landing admission on the
+Siren route. Destination audio attribution, full mix/audibility, mission
+completion, PC appearance, rare-NaN causality and normal-game readiness remain
+open.
