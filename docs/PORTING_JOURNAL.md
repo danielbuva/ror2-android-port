@@ -38986,3 +38986,54 @@ package/process/display state changes. Queued phone replay, remaining object/
 animation/shader production, complete content composition and ordinary signed
 installation/runtime/performance remain open. Revisit for input/target drift,
 first phone qualification or the next fully producible content cohort.
+
+## J1116 — Qualify bounded writing against every accepted UnityFS bundle
+
+Date: 2026-10-25 UTC. Host-only structural control, separate from J1113/J1115
+independent PC-content production. Accepted comparison is J850 APK SHA-256
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+No Editor, device command, installation or runtime test occurs.
+
+**Hypothesis and prior art.** J1113 introduces bounded serialized-v22 and
+UnityFS writing, but two independently produced small prefabs do not exercise
+the complete accepted layout. Reuse its inspected pinned UnityPy 1.25.3
+`SerializedFile.py`/`BundleFile.py`/`CompressionHelper.py`, AssetRipper serialized
+parsers and public LZ4 v1.9.4 HC12/fast APIs. The structural control supplies
+accepted object bodies, embedded type metadata, resource members and layout to
+the writer; it does not derive those inputs from PC data. Original accepted
+files remain read-only comparison/supplier inputs for this control only.
+
+**Method and complete result.** The private driver processes all 133 accepted
+UnityFS payloads in increasing size. It rewrites each serialized member from
+parsed type/object/dependency metadata and bounded body reads, independently
+compares that complete member, then streams the generated members and unchanged
+resource streams through the public native LZ4 helper. It independently checks
+every final bundle hash and its original input hash. Temporary serialized
+members are removed after each bundle; completed outputs, rows and the terminal
+receipt remain private. Source/helper hashes are verified again at exit.
+
+All **133 bundles**, **251 serialized members** and **3,145,885 objects** pass.
+The final bundles total **2,241,080,891 bytes**, each byte-exact with J850,
+including the 1,055,087,698-byte `whole-game-content` with 23,681 blocks.
+Elapsed time is **1,148.842 seconds**; process peak RSS is **207,749,120 bytes**
+(198.125 MiB). No structural mismatch or terminal failure occurs. The frozen
+writer source is the J1113 checkpoint, unchanged in the landed owner.
+
+**Evidence and limits.** Driver and terminal receipt are
+`work/coordination/accepted-build-reconstruction/bundle-source-v1/qualify_writer.py`
+and `writer-host-v1-done.json`; the receipt SHA-256 is
+`cec8730978cab662f45b709ad9eb0bc5ea96fcae7c465a1d3adec03de45085cc`.
+Retained output `rows.jsonl` SHA-256 is
+`90d9ab72cab874a5df4d75aee5e31473c1dd92648300a869d77266f7cea6f18b`.
+The output directory carries a local `.prune-keep` marker. It is validation
+material and never supplies the independently produced canonical content tree.
+
+This closes the observed whole-catalog structural writing control, **not**
+missing source-object, reference/layout derivation or phone/runtime production.
+Readiness remains **42 of 705 available, 663 content files missing**, with no
+replay fallback. J1113/J1115 remain the only completed source-only bundle/player
+cohorts. Existing host compression/metadata/bounds contracts are unchanged; no
+new implementation or redundant tests are added for this result. No device
+lease or installed/process/display state changes. Revisit for a changed writer,
+codec, accepted layout or its first phone qualification. Remaining content and
+ordinary signed installation/controls/performance gates stay open.
