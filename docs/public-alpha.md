@@ -77,6 +77,9 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       [J1136](PORTING_JOURNAL.md#j1136--bound-native-cubemap-residue-with-omitted-original-pc-sources)
       tests omitted original scene/player sources without closing that residue;
       no replacement lighting or target pixels enter the producer.
+      [J1165](PORTING_JOURNAL.md#j1165--bound-historical-input-drift-in-native-snowy-cubemaps)
+      also excludes the retained historical Snowy triplet: none reproduces J850,
+      so those records remain outside drift-explained qualification.
       [J1113](PORTING_JOURNAL.md#j1113--produce-a-complete-source-only-bundle-and-seven-player-data-files)
       qualifies the first complete PC-only bundle and seven player-data files;
       J1139 supplies 173 complete player files, including source-derived TMP
