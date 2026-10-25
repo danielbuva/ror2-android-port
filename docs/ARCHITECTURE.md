@@ -1324,10 +1324,16 @@ The batch stops on the first failure; independent actual APK/idle/OLED readback
 and canonical pruning precede lease release and atomic done-file publication.
 Foreign selectors/pending transactions are preserved, and failed terminal
 verification retains the lease for diagnosis. No installation is performed.
-Following the emergency-reboot thermal policy, the batch currently refuses
-before acquiring a lease or accessing a device: it lacks a game-aware CPU-zone
-monitor with at most 1 s sampling, 70/55 C pause/resume and above-80 C abort. The
-existing battery/HAL checks and build-process suspension are not substitutes.
+The batch's CPU-zone observer samples independently of stage operations, targets
+250 ms intervals and refuses a measured gap above 1 s. At 70 C it stops the owned
+game and invalidates the current attempt. Only a classified cancellation can
+restart the entire stage after verified idle/OLED cleanup and cooling to at most
+55 C; runtime and unexpected failures stop the queue. Cooldown never counts as play
+or joins two heap series. Above 80 C, missing sensors or failed supervision abort
+the batch. Completed stages are checkpointed; failed evidence is retained. The
+driver has one three-hour deadline and runs one workload at a time. Battery/HAL
+checks remain additional limits. This host control requires device qualification;
+it does not establish sustained thermal acceptance or suspend the native runtime.
 
 `AndroidTouchInput` is the playable bridge's pointer producer. Stable finger IDs
 own independent movement, camera and eight native action captures, plus pause.

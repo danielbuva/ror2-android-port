@@ -135,7 +135,7 @@ def assisted_teardown_contract(completed, pid, attempt, baseline):
     return failures
 
 
-def check_session_sustained(expected_apk_sha256=None):
+def check_session_sustained(expected_apk_sha256=None, _launch=None):
     expected = validate_expected_apk_sha256(expected_apk_sha256)
     if expected is None:
         raise ValueError("session-sustained-check requires --expected-apk-sha256")
@@ -215,7 +215,7 @@ def check_session_sustained(expected_apk_sha256=None):
         selected["debugOptions"].update(invincibility=True, purpose=SCOPE)
         write(out / "selection.json", selected)
         device.cmd("push", str(out / "selection.json"), selector)
-        pid = str(device.launch()["pid"])
+        pid = str((_launch(device) if _launch else device.launch())["pid"])
         write(out / "launch.json", dict(pid=pid, attempt=attempt, apk_sha256=expected))
         if not device.display(True):
             raise RuntimeError("Selected test display cannot be verified awake")

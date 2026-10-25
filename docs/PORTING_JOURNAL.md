@@ -42090,3 +42090,52 @@ adbd behavior nor identifies the actual v9 signal sender. No producer memory
 rewrite or full phone rerun follows from these observations; retain the bounded
 reader, sequential encoder, durable prefix and fail-closed thermal/signal
 contracts while isolating host cancellation before the next phone attempt.
+## J1125 — Supervise the alpha queue after the shared-device emergency reboot
+
+**Hypothesis/scope:** enforce the new CPU thermal policy around the existing
+SDK, heap and sustained owners without a player rebuild, native-process
+suspension or counting cooldown as gameplay. This entry qualifies host contracts
+and an idle post-reboot readback, not a new game run or a thermal acceptance gate.
+
+**Implementation:** the existing `alpha_stability_batch.py` owns independent
+CPU sampling and bounded package shutdown. Sampling targets 250 ms; an observed
+gap above one second, missing/invalid CPU readings, temperature above 80 C or
+supervision failure aborts. At 70 C the owned game stops. Only a classified
+cancellation may restart the complete stage after verified idle/OLED cleanup
+and cooling to at most 55 C. Runtime/unexpected errors remain first failures
+even when a thermal interruption or hard abort coincides. No interrupted heap
+series or sustained timer is combined with its replacement.
+
+The three existing stage owners accept an optional launch callback; the batch
+rejects initial/recovery launches after cancellation and checks launches that
+were already in flight. Package identity, ownership receipt, live PID and
+placement are revalidated before stopping. Shutdown transport is bounded and
+separate from sampling. Capture capacity is rechecked before every memory
+attempt; pending transactions are preserved and refuse retry. Completed stages
+are checkpointed under one three-hour deadline; the single driver retains the
+lease through independent terminal APK/idle/OLED checks and canonical pruning.
+This is generic host/device supervision using the existing runtime owners,
+not a new game diagnostic or reconstructed platform implementation.
+
+**Evidence/validation:** focused batch, SDK, memory, sustained and CLI contracts
+pass, including a slow stop with continuing samples, canceled initial/recovery
+launches, low-space retry refusal and coincident native/thermal failures. Ruff,
+diff checks and the staged public audit pass. The independent idle inspection
+is `work/coordination/alpha-touch-acceptance-20261024/postreboot-idle.done.json`.
+After explicit reboot clearance it acquires one atomic lease, observes boot
+reason `reboot`, verifies actual installed R55 bytes
+`111b1facec5b021c87dce03be24c9b81e913160809e685dc94b23e161786917a`
+(source `eb2acf07c55a6ba67a649494ba77a7c65e6c6b45`), absent game/selector/pending
+state and more than 42 GiB free. Independent terminal verification leaves the
+OLED asleep and releases the lease. No install, gameplay launch or other
+worker's scratch deletion occurs. Canonical pruning keeps evidence and removes
+no candidates. Doctor reports valid canonical input/project state but an absent
+historical bootstrap smoke; no passing smoke is inferred.
+
+**Result/revisit:** the queue can be scheduled once after a safe device handoff.
+Actual CPU-trace cadence and SDK interrupted-write recovery remain device gates.
+Native heap attribution, managed-growth bounds, ordinary long play, physical
+input, genuine ENOSPC and the other public-alpha gates remain open. Generic
+errors after a thermal stop abort conservatively instead of retrying an
+unclassified failure.
+

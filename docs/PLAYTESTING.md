@@ -154,11 +154,15 @@ root. A fresh matched heap pair must inspect
 actual GC/static roots and native bridges; stable native object counts alone do
 not establish a managed-memory bound.
 
-The combined batch currently refuses before device access: the new mandatory
-CPU-zone thermal owner (sample at most 1 s apart, pause at 70 C, resume at 55 C,
-abort above 80 C) is not implemented for these game workloads. Battery/HAL checks
-are insufficient. Do not launch the queued recipe until that owner exists and
-its pause accounting preserves each case's measurement contract.
+The combined batch supervises CPU zones independently, targeting 250 ms samples
+and refusing gaps above 1 s. At 70 C it stops the game, preserves the interrupted
+attempt and cools with the OLED asleep to at most 55 C before restarting a
+classified cancellation as a whole stage. Runtime or unexpected errors stop the
+queue even when they coincide with a thermal interruption. The sustained timer and heap series start again; cooldown never
+counts toward acceptance. Above 80 C, missing sensors or failed supervision abort
+the batch. Completed stages are checkpointed within one three-hour deadline.
+Battery/HAL checks remain additional limits. The host control still requires
+device qualification; it does not establish sustained thermal acceptance.
 
 For an explicitly scheduled combined case, `alpha-stability-batch` owns **one**
 canonical lease across the SDK interruption case, three-session heap pair and

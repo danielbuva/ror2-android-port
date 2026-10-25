@@ -25,26 +25,11 @@ class AlphaStabilityBatchTests(unittest.TestCase):
         self.lease = self.root / ".local/orchestrator/leases" / SERIAL
         self.args = dict(device_serial=SERIAL, expected_apk_sha256=HASH, canonical_root=self.root, done_file=self.done)
 
-    def test_production_thermal_guard_publishes_failed_done_before_lease_or_device_access(self):
-        with (
-            mock.patch.object(batch, "_device") as device,
-            mock.patch.object(batch, "_modules") as stages,
-            mock.patch.object(batch, "_sleep_awakened") as sleep,
-            mock.patch.object(batch, "_prune") as prune,
-        ):
-            with self.assertRaisesRegex(RuntimeError, "batch failed"):
-                batch.check_alpha_stability_batch(**self.args)
-            device.assert_not_called()
-            stages.assert_not_called()
-            sleep.assert_not_called()
-            prune.assert_not_called()
-        self.assertFalse(self.lease.parent.exists())
-        result = json.loads(self.done.read_text())
-        self.assertFalse(result["success"])
-        self.assertFalse(result["lease_released"])
-        self.assertIn("missing game-aware CPU thermal owner", result["error"])
-        for protocol in ("<= 1 s sampling", "pause at 70 C", "resume at 55 C", "abort above 80 C"):
-            self.assertIn(protocol, result["error"])
+    def test_cpu_observation_rejects_absent_sentinel_and_malformed_zones(self):
+        self.assertEqual(batch.cpu_temperature("cpu-0 55000\ncpu-1 70100"), 70.1)
+        for text in ("", "cpu-0 0", "cpu-0 -1000", "cpu-0 150000", "cpu-0 unknown", "battery 55000", "cpu-0"):
+            with self.subTest(text=text), self.assertRaises(RuntimeError):
+                batch.cpu_temperature(text)
 
     def test_busy_lease_refuses_before_any_device_or_stage_and_preserves_owner(self):
         self.lease.mkdir(parents=True)
@@ -52,7 +37,6 @@ class AlphaStabilityBatchTests(unittest.TestCase):
         owner.write_text('{"pid": 73, "workstream": "foreign"}\n')
         before = owner.read_bytes()
         with (
-            mock.patch.object(batch, "_require_game_thermal_owner"),
             mock.patch.object(batch, "_device") as device,
             mock.patch.object(batch, "_modules") as stages,
             mock.patch.object(batch, "_prune") as prune,
@@ -89,15 +73,16 @@ class AlphaStabilityBatchTests(unittest.TestCase):
         self.assertFalse(self.lease.exists())
         device.assert_not_called()
 
-    def run_case(self, fail_at=None, terminal_error=None, free_bytes=None, expect_failure=False):
+    def run_case(self, fail_at=None, terminal_error=None, free_bytes=None, expect_failure=False, thermal_outcomes=None):
         events = []
         original_work = common.WORK
-        storage_samples = iter(free_bytes or (20 * 1024**3, 20 * 1024**3))
+        storage_samples = iter(free_bytes or (20 * 1024**3,) * 10)
 
         def stage(name, **kwargs):
             self.assertEqual(common.WORK, self.root / "work")
             self.assertEqual(json.loads((self.lease / "owner.json").read_text())["pid"], os.getpid())
             self.assertFalse(self.done.exists())
+            kwargs.pop("_launch")
             events.append((name, kwargs))
             if name == fail_at:
                 raise RuntimeError("authored first failure")
@@ -130,7 +115,7 @@ class AlphaStabilityBatchTests(unittest.TestCase):
             events.append("prune")
 
         with (
-            mock.patch.object(batch, "_require_game_thermal_owner"),
+            mock.patch.object(batch, "_GameThermalOwner") as thermal,
             mock.patch.object(batch, "_device", side_effect=device),
             mock.patch.object(batch, "_idle_readback", return_value={}),
             mock.patch.object(batch, "_modules", return_value=modules),
@@ -140,6 +125,7 @@ class AlphaStabilityBatchTests(unittest.TestCase):
             mock.patch.object(batch.shutil, "disk_usage", return_value=SimpleNamespace(free=101 * 1024**3)),
             mock.patch.object(batch, "command_selectors", return_value=(None, None)),
         ):
+            thermal.return_value.finish.side_effect = thermal_outcomes or [None, None, None]
             if fail_at or terminal_error or expect_failure:
                 with self.assertRaises(RuntimeError):
                     batch.check_alpha_stability_batch(**self.args)
@@ -158,6 +144,36 @@ class AlphaStabilityBatchTests(unittest.TestCase):
         self.assertTrue(result["success"])
         self.assertTrue(result["lease_released"])
         self.assertFalse(self.lease.exists())
+
+    def test_thermal_interruption_replays_only_current_stage_and_keeps_checkpoint(self):
+        events, result = self.run_case(thermal_outcomes=[None, "interrupted-at-70C", None, None])
+        stages = [event[0] for event in events if isinstance(event, tuple)]
+        self.assertEqual(stages, ["sdk", "memory", "memory", "sustained"])
+        self.assertEqual([stage["name"] for stage in result["stages"]], ["settings-write-interrupt", "session-memory", "session-sustained"])
+        self.assertEqual(result["interrupted_attempts"][0]["name"], "session-memory")
+        self.assertEqual(json.loads(self.done.with_suffix(".progress.json").read_text())["stages"], result["stages"])
+
+    def test_interrupted_heap_retry_rechecks_and_refuses_lost_capture_headroom(self):
+        events, result = self.run_case(
+            free_bytes=(20 * 1024**3, 20 * 1024**3, 18 * 1024**3), thermal_outcomes=[None, "interrupted-at-70C"], expect_failure=True
+        )
+        self.assertEqual([event[0] for event in events if isinstance(event, tuple)], ["sdk", "memory"])
+        self.assertIn("4 GiB headroom", result["error"])
+        self.assertFalse(result["success"])
+
+    def test_runtime_failure_coincident_thermal_trip_aborts_without_replay(self):
+        events, result = self.run_case(fail_at="sdk", thermal_outcomes=["interrupted-at-70C"])
+        self.assertEqual([event[0] for event in events if isinstance(event, tuple)], ["sdk"])
+        self.assertEqual(result["error"], "authored first failure")
+        self.assertFalse(result["success"])
+        self.assertEqual(result["interrupted_attempts"], [])
+
+    def test_runtime_failure_remains_primary_when_thermal_shutdown_also_aborts(self):
+        events, result = self.run_case(fail_at="sdk", thermal_outcomes=[RuntimeError("CPU above80")])
+        self.assertEqual([event[0] for event in events if isinstance(event, tuple)], ["sdk"])
+        self.assertEqual(result["error"], "authored first failure")
+        self.assertEqual(result["thermal_error"], "CPU above80")
+        self.assertFalse(result["success"])
 
     def test_first_failure_stops_queue_and_publishes_failed_done_after_cleanup(self):
         events, result = self.run_case(fail_at="sdk")
@@ -222,6 +238,123 @@ class AlphaStabilityBatchTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "foreign state"):
                 batch._terminal_readback(SERIAL, HASH)
         device.display.assert_called_once_with(False)
+
+
+class GameThermalOwnerTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.device = mock.Mock()
+        self.device.serial = SERIAL
+        self.device.read_receipt.return_value = dict(apk_sha256=HASH, serial=SERIAL, package="dev.ror2lab.arm64", package_path="package:/fixture/base.apk")
+        self.owner = batch._GameThermalOwner(self.device, HASH, Path(self.temp.name) / "thermal.jsonl", float("inf"))
+
+    def test_actual_gap_and_unknown_read_are_hard_refusals(self):
+        self.device.cmd.return_value = "cpu-0 56000"
+        with mock.patch.object(batch.time, "monotonic", side_effect=[0, 0.2, 0.4, 1.3]):
+            self.assertEqual(self.owner.sample(), 56)
+            with self.assertRaisesRegex(RuntimeError, "gap exceeded"):
+                self.owner.sample()
+        self.device.cmd.assert_called_with("shell", batch.CPU_ZONES, timeout=0.7)
+        self.device.cmd.side_effect = TimeoutError("hung ADB")
+        with self.assertRaisesRegex(TimeoutError, "hung ADB"):
+            self.owner.sample()
+
+    def test_above_80_aborts_but_80_itself_is_pause_temperature(self):
+        self.device.cmd.return_value = "cpu-0 80000"
+        self.assertEqual(self.owner.sample(), 80)
+        self.device.cmd.return_value = "cpu-0 80001"
+        with self.assertRaisesRegex(RuntimeError, "80 C hard abort"):
+            self.owner.sample()
+
+    def test_cooling_hysteresis_excludes_wait_from_game_attempt(self):
+        self.device.display.return_value = True
+        with mock.patch.object(self.owner, "sample", side_effect=[70, 56, 55]) as sample, mock.patch.object(batch.time, "sleep") as sleep:
+            self.owner.cool()
+        self.assertEqual(sample.call_count, 3)
+        self.assertEqual(sleep.call_count, 2)
+        self.device.display.assert_called_once_with(False)
+        self.assertIsNone(self.owner.previous)
+
+    def test_observer_remains_active_after_stop_until_stage_unwinds(self):
+        owner = self.owner
+        observed = __import__("threading").Event()
+        with (
+            mock.patch.object(owner, "sample", side_effect=[55, 70, 81, 70]),
+            mock.patch.object(owner, "terminate_game", side_effect=lambda: observed.set()) as stop,
+        ):
+            owner.start()
+            self.assertTrue(observed.wait(2))
+            self.assertTrue(owner.thread.is_alive())
+            self.assertEqual(owner.finish(), "interrupted-at-70C")
+            self.assertGreaterEqual(stop.call_count, 1)
+
+    def test_sampler_continues_while_bounded_stop_is_blocked(self):
+        import threading
+
+        entered, release, sampled = threading.Event(), threading.Event(), threading.Event()
+        count = 0
+
+        def sample():
+            nonlocal count
+            count += 1
+            if count >= 4:
+                sampled.set()
+            return 55 if count == 1 else 70
+
+        def blocked_stop():
+            entered.set()
+            release.wait(2)
+
+        with mock.patch.object(self.owner, "sample", side_effect=sample), mock.patch.object(self.owner, "terminate_game", side_effect=blocked_stop):
+            self.owner.start()
+            try:
+                self.assertTrue(entered.wait(1))
+                self.assertTrue(sampled.wait(1))
+                self.assertTrue(self.owner.thread.is_alive())
+            finally:
+                release.set()
+                self.owner.finish()
+        self.assertFalse(self.owner.thread.is_alive())
+        self.assertFalse(self.owner.stopper.is_alive())
+
+    def test_thermally_cancelled_launch_and_recovery_are_refused(self):
+        self.owner.outcome = "interrupted-at-70C"
+        with self.assertRaisesRegex(RuntimeError, "cannot launch/recover"):
+            self.owner.launch(self.device)
+        self.device.launch.assert_not_called()
+        self.owner.outcome = None
+
+        def crossed():
+            self.owner.outcome = "interrupted-at-70C"
+            return dict(pid="73")
+
+        self.device.launch.side_effect = crossed
+        with mock.patch.object(self.owner, "terminate_game") as stop, self.assertRaisesRegex(RuntimeError, "crossed thermal"):
+            self.owner.launch(self.device)
+        stop.assert_called_once_with()
+
+    def test_late_or_foreign_pid_never_causes_force_stop(self):
+        from device import PACKAGE
+
+        for receipt, replies in (
+            (dict(apk_sha256="b" * 64), []),
+            (dict(apk_sha256=HASH), ["73", "foreign\x00\n73"]),
+            (dict(apk_sha256=HASH), ["73", PACKAGE + "\x00\n74"]),
+        ):
+            with self.subTest(replies=replies):
+                self.device.reset_mock()
+                self.device.read_receipt.return_value = dict(receipt, serial=SERIAL, package=PACKAGE, package_path="package:/fixture/base.apk")
+                self.device.cmd.side_effect = ["package:/fixture/base.apk"] + replies
+                with self.assertRaises(RuntimeError):
+                    self.owner.terminate_game()
+                self.assertFalse(any("force-stop" in str(call) for call in self.device.cmd.call_args_list))
+        self.device.reset_mock()
+        self.device.serial = SERIAL
+        self.device.read_receipt.return_value = dict(apk_sha256=HASH, serial=SERIAL, package="dev.ror2lab.arm64", package_path="package:/fixture/base.apk")
+        self.device.cmd.side_effect = ["package:/fixture/base.apk", "73", PACKAGE + "\x00\n73", ""]
+        self.owner.terminate_game()
+        self.device.cmd.assert_called_with("shell", "am force-stop " + PACKAGE, timeout=2)
 
 
 if __name__ == "__main__":

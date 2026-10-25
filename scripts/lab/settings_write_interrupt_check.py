@@ -39,7 +39,7 @@ def pending_observer(device, command):
     return device.cmd("shell", command, timeout=40)
 
 
-def check_settings_write_interrupt(expected_apk_sha256=None):
+def check_settings_write_interrupt(expected_apk_sha256=None, _launch=None):
     expected = validate_expected_apk_sha256(expected_apk_sha256)
     if expected is None:
         raise ValueError("settings-write-interrupt-check requires --expected-apk-sha256")
@@ -82,7 +82,7 @@ def check_settings_write_interrupt(expected_apk_sha256=None):
 
     def menu():
         nonlocal pid
-        pid = device.launch()["pid"]
+        pid = (_launch(device) if _launch else device.launch())["pid"]
         return wait(lambda r: r.get("phase") == "offline-start-menu" and r.get("settings", {}).get("ready") is True)
 
     def tap(name, report, x, y):
