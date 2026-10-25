@@ -177,7 +177,8 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 | `owner-death-effect-objects.json` | Private replay player-death-effect bundle | Rooted original graph/script selectors, checked pointer extents, preload/dependency identities and hashes. | No body, type-tree snapshot, scalar/curve override or target delta; audit below, 2026-10-25. | Existing original-input-only `object_produce.py`; J1115 host qualification, phone gate open. |
 | `owner-pickup-objects.json` | Private replay pickup bundle | Original selectors, hashes, checked pointer extents and destination relationships. | No bodies, type trees or target deltas; full audit below, 2026-10-25. | Original-input-only `object_produce.py`; J1113 host qualification, phone gate open. |
 | `owner-bootstrap.json` | Authored bootstrap TextAsset | Existing public build-entry attempt identity/input ID and four original preload GUID relationships absent from the original catalog. | No object/body/type-tree/target template or protected text; audit below, 2026-10-25. | Existing `player_data.text_files`; J1118 host qualification, phone gate open. |
-| `owner-player-data.json` | 175 private player files | Original object selectors, checked pointers/importer relationships, authored JSON/assembly order and existing texture-pack record identities. | No game bodies, pixels, text payloads, type-hash overrides or private identifiers; full audits below, 2026-10-25. | Explicit PC/SDK/fresh-converter and pinned source-produced texture packs; J1118 host qualification; landed PR75 provider, phone gate open. |
+| `owner-player-data.json` | 177 private player files | Original object selectors, checked pointers/importer relationships, authored JSON/assembly order, registry witnesses and existing source-produced record identities. | No game bodies, pixels, text payloads, type-hash overrides or private identifiers; full audits below, 2026-10-25. | Explicit PC/SDK/fresh-converter, source-produced managed providers, original importer inputs and pinned record packs; phone gate open. |
+| `owner-player-registry.json` | Complete script registry source selection | Minimum original bundle/member/type witnesses, source tree hashes, immutable authored membership and importer identities. | No native/custom tree bytes, DLLs, code bodies, target IDs or property-hash overrides; audit below, 2026-10-25. | Existing script identity/player owners, original PC files, exact SDK, successful managed production and original package sources/metas. |
 | `owner-player-shaders.json` | Private source-derived player Shader files | Authored ShaderLab/settings pins, original Shader/material/schema selectors, acquired SDK/include pins and final comparison hashes. | No target record, type hash, pass key, program, protected math or private identifier; full audit below, 2026-10-25. | Source-only `shader_produce.py`; J1144 host qualification, phone/runtime gates open. |
 | `owner-player-shader-manifests.json` | Two native selection TextAssets | Original Material/Shader selectors, source asset identities and admission hashes. | No keyword inventory, shader programs, material values, serialized templates or private identifiers; audit below, 2026-10-25. | Original PC fields plus the shared authored selection policy; complete shader and phone gates remain open. |
 | `owner-uncompressed-textures.json` | Private replay uncompressed texture bodies/pixels | Original/destination selectors, source extents, generic import/placement metadata and hashes; copy, BC1, source-coordinate dilation and public JPEG policy. | No pixels, palettes, target literals/patches, native SDK implementation or image/library bytes; full audit above, 2026-10-24. All 399 records qualify on host/Android in J1079. | Explicit PC-input-only `texture_produce.py` and separately built public JPEG tool; no current game-build consumer. |
@@ -3106,3 +3107,52 @@ pins reflect the existing emitter factoring, with no previous source-generation
 behavior change. Manual audit: 2026-10-25, J1157. All SDK/game/source-derived
 bodies and detailed observations remain local; existing acquisition, license
 and redistribution boundaries continue to apply.
+
+## Complete player registry and default-scene recipe audit — 2026-10-25
+
+`owner-player-registry.json` selects one canonical original witness per unique
+script identity/schema, with the source MonoScript member needed to resolve
+those relationships. Paths, member names, type indexes, source hashes and CLR
+identities are minimum reconstruction metadata. The source census, never an
+accepted comparison, determines membership. No tree bytes, object bodies, DLLs,
+decompiled implementation, protected text, pixels or middleware are included.
+The original PC installation remains read-only. Its original bundles and native
+startup file supply all game-derived records locally.
+
+Authored source membership and known importer identities come from the existing
+public J850 source/configuration and current public identity maps. Siren's one
+previously unset importer identity is preserved from the current authored
+project as explicit recipe configuration. It belongs to the laboratory's own
+C# source; its raw generated `.meta` file is not published. The adjacent archived
+J850 source/meta pair is unavailable: source admission establishes the existing
+current importer, stable class/path/assembly and observed pre-J850 timestamps,
+with that provenance limitation retained in the private audit. This does not
+introduce a historical game-input dependency, an implicit identity fallback or
+a change to the current game project's importer map.
+
+Original package source/meta pairs use the existing code-owner input contract:
+archive-qualified Burst, Collections and Mathematics, exact SDK UGUI and
+TestRunner sources, and the pinned public MCP runtime source/asmdef/meta set.
+Importer-only sources do not change compilation membership. Dependency source
+licenses and SDK acquisition/ownership boundaries remain with their existing
+providers; none of their binaries or source bodies is copied into this recipe.
+`dnfile` and `pefile` are existing pinned metadata-reader dependencies.
+
+The implementation uses pinned AssetRipper/ThunderKit importer identity
+knowledge and AssetRipper's CLR field/generic serialization rules. Exact native
+field-transfer facts are verified on an authored SDK-only fixture. Its generated
+binary is private verification evidence, never a production provider. Native
+hashes are computed from original schemas and actual CLR metadata; an explicitly
+unsupported native contract may retain its original record only when its DLL
+provider is unchanged. The recipe contains no comparison-selected replacement
+hashes or destination script-ID table.
+
+`owner-player-data.json` also names the original startup/shared source records
+and Wisp native RenderSettings witness for the default-scene file. Runtime native
+type identity must match before schema reuse. SDK resources, source-produced
+shader declarations and the existing shader object pack supply the other
+records; the authored Cube/diagnostics construction policy selects preloads by
+source identity. The shared writer owns allocation/linkage, with no target
+header or captured metadata template. All source and pack providers are checked
+again at completion. Pattern scanning supplements this manual provenance,
+privacy and sensitive-content review; phone/runtime qualification is separate.

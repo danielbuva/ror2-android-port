@@ -12,6 +12,10 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | --- | --- | --- | --- |
 | [J1168](PORTING_JOURNAL.md#j1168--android-native-continuation-requires-a-checked-object-copy-fallback) | 2026-10-25 | Android native continuation requires a checked object-copy fallback | - **Observation / hypothesis:** J1167's measured active-time budget admits a continuation from the original 498 completed native jobs, but the embedded Android… |
 | [J1167](PORTING_JOURNAL.md#j1167--measure-representative-native-compilation-on-the-phone) | 2026-10-25 | Measure representative native compilation on the phone | 2026-10-25 UTC. |
+| [J1169](PORTING_JOURNAL.md#j1169--bound-the-complete-source-only-player-registry-metadata-lifetime) | 2026-10-25 | Bound the complete source-only player registry metadata lifetime | **Hypothesis and prior art.** |
+| [J1166](PORTING_JOURNAL.md#j1166--guarded-phone-player-assembly-stops-on-thermal-limit) | 2026-10-25 | Guarded phone player assembly stops on thermal limit | **Hypothesis.** |
+| [J1161](PORTING_JOURNAL.md#j1161--assemble-the-complete-player-script-registry-and-default-scene-shared-file) | 2026-10-25 | Assemble the complete player script registry and default-scene shared file | **Hypothesis and scope.** |
+| [J1159](PORTING_JOURNAL.md#j1159--phone-player-assembly-refuses-an-omitted-original-shader-input) | 2026-10-25 | Phone player assembly refuses an omitted original shader input | **Hypothesis.** |
 | [J1165](PORTING_JOURNAL.md#j1165--bound-historical-input-drift-in-native-snowy-cubemaps) | 2026-10-25 | Bound historical-input drift in native Snowy cubemaps | 2026-10-25 UTC. |
 | [J1164](PORTING_JOURNAL.md#j1164--recover-an-interrupted-native-save-and-classify-stage-load-thermal-refusal) | 2026-10-25 | Recover an interrupted native save and classify stage-load thermal refusal | **Hypothesis and scope.** |
 | [J1160](PORTING_JOURNAL.md#j1160--budget-alpha-capture-storage-separately-from-full-builds) | 2026-10-25 | Budget alpha capture storage separately from full builds | **Hypothesis and change.** |

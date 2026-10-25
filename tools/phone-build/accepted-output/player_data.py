@@ -862,14 +862,300 @@ def builtin_ui(pc, profile, builtin_extra, destination):
     checked(source, pin)
 
 
-def produce(profile_path, profile_sha256, pc, sdk, converter, converter_receipt_sha256, output, texture_packs=(), builtin_extra=None, editor_resources=None):
+def shared_shader_properties(body):
+    """Read source-produced Shader m_PropInfo using the existing table framing."""
+    stream = io.BytesIO(body)
+    material_string(stream)
+    textures, scalars = set(), {}
+    for _ in range(material_count(stream)):
+        name = material_string(stream)
+        material_string(stream)
+        for _ in range(material_count(stream)):
+            material_string(stream)
+        kind = W.B.unpack(stream, "<i")[0]
+        W.B.exact(stream, 4)  # source property flags
+        defaults = W.B.exact(stream, 16)
+        material_string(stream)
+        W.B.exact(stream, 4)
+        if kind == 4:
+            textures.add(name)
+        elif kind in (2, 3):
+            scalars[name] = defaults[:4]
+    return textures, scalars
+
+
+def shared_default_material(body, definition, shader_body):
+    """Drop editor Object prefix and reconcile only SDK-declared properties."""
+    mesh = OBJECTS.M._mesh
+    root = mesh.type_tree(io.BytesIO(definition["tree"]))
+    spans = mesh.spans(body, root)
+    prefix, _ = spans["m_Name",]
+    # The metadata, not a body offset from a target, determines runtime start.
+    name_index = next(i for i, node in enumerate(root.children) if node.name == "m_Name")
+    if [node.size for node in root.children[:name_index]] != [4, 12, 12, 12]:
+        raise ValueError("SDK editor Material Object prefix differs")
+    body = body[prefix:]
+    root.children = root.children[name_index:]
+    textures, defaults = shared_shader_properties(shader_body)
+    body = material_textures(body, textures)
+    spans = mesh.spans(body, root)
+    start, end = spans["m_SavedProperties", "m_Floats"]
+    stream = io.BytesIO(body[start:end])
+    scalars = {}
+    for _ in range(material_count(stream)):
+        name = material_string(stream)
+        scalars[name] = W.B.exact(stream, 4)
+    if stream.tell() != end - start:
+        raise ValueError("unconsumed original material scalar fields")
+    for name, value in defaults.items():
+        scalars.setdefault(name, value)
+    replacement = io.BytesIO()
+    replacement.write(struct.pack("<I", len(scalars)))
+    for name, value in sorted(scalars.items()):
+        OBJECTS.aligned_string(replacement, name)
+        replacement.write(value)
+    return body[:start] + replacement.getvalue() + body[end:]
+
+
+def shared_defaults(pc, selected, sdk, builtin_extra, registry, packs, destination):
+    """Render J850's authored default scene from original/SDK source records.
+
+    Source 1780ea9 LabBuild creates the Cube primitive and LabDiagnostics; that
+    fixed scene policy owns these preloads. Original native RenderSettings owns
+    the cookie relationship, with a hash-matched original scene schema. Shader
+    bodies come through the existing source-produced record-pack contract.
+    Return provider pins in the same form as shader_manifests for final checks.
+    """
+    if builtin_extra is None:
+        raise ValueError("shared defaults require explicit SDK builtin-extra input")
+    pc, sdk = Path(pc), Path(sdk)
+    shared = OBJECTS.M.safe_input(pc, selected["source"]["path"])
+    scene = OBJECTS.M.safe_input(pc, selected["scene"]["path"])
+    schema_path = OBJECTS.M.safe_input(pc, selected["render_schema"]["path"])
+    extra = Path(builtin_extra).absolute()
+    defaults = sdk / "Data" / DEFAULT
+    pins = {
+        shared: (selected["source"]["bytes"], selected["source"]["sha256"]),
+        scene: (selected["scene"]["bytes"], selected["scene"]["sha256"]),
+        schema_path: (schema_path.stat().st_size, selected["render_schema"]["sha256"]),
+        extra: (selected["sdk_source"]["bytes"], selected["sdk_source"]["sha256"]),
+        defaults: SDK.FILES["Data/" + DEFAULT],
+    }
+    for path, pin in pins.items():
+        checked(path, pin)
+    selections = [
+        {
+            "name": "assets/bin/Data/" + selected["file"],
+            "objects": [{"path_id": identity, "record": selected["shader_record"]} for identity in (4, 5)],
+        }
+    ]
+    records, providers = OBJECTS.record_packs(selections, packs, {"name": "apk"})
+    shader_bodies = {identity: OBJECTS.record_extent(directory / "objects.bin", row) for (_, identity), (directory, row) in records.items()}
+    if set(shader_bodies) != {4, 5}:
+        raise ValueError("missing shared source shader")
+
+    def read(path):
+        with path.open("rb") as raw:
+            raw.size = path.stat().st_size
+            return W.read_serialized(raw)
+
+    def body(path, metadata, row):
+        with path.open("rb") as raw:
+            raw.seek(metadata["data_offset"] + row["offset"])
+            return W.B.exact(raw, row["bytes"])
+
+    def named_object(path, metadata, class_id, name, editor=False):
+        selected = []
+        for row in metadata["objects"]:
+            definition = metadata["types"][row["type_id"]]
+            if definition["class_id"] != class_id:
+                continue
+            raw = body(path, metadata, row)
+            if editor:
+                actual = metadata_fields(raw, definition, {"m_Name"})["m_Name"]
+            else:
+                actual = material_string(io.BytesIO(raw))
+            if actual == name:
+                selected.append((row, raw, definition))
+        if len(selected) != 1:
+            raise ValueError("source native name not unique: " + name)
+        return selected[0]
+
+    original, native_scene, sdk, default = map(read, (shared, scene, extra, defaults))
+    types_by_class = {row["class_id"]: row for row in original["types"]}
+    source_external = {row["path"]: row for row in original["externals"]}
+    _, sdk_material, sdk_material_type = named_object(extra, sdk, 21, "Default-Material", True)
+    sdk_material_fields = metadata_fields(sdk_material, sdk_material_type, {"m_Shader"})
+    standard_pointer = sdk_material_fields["m_Shader"]
+    if standard_pointer["m_FileID"] != 0:
+        raise ValueError("SDK default Material shader must be same-file")
+    default_material = shared_default_material(sdk_material, sdk_material_type, shader_bodies[4])
+    _, skybox, _ = named_object(shared, original, 21, "Default-Skybox")
+    bodies = {2: default_material, 3: skybox}
+    for identity in (2, 3):
+        stream = io.BytesIO(bodies[identity])
+        material_string(stream)
+        location = stream.tell()
+        file_id, shader_id = W.B.unpack(stream, "<iq")
+        if file_id != 0 or (identity == 2 and shader_id != standard_pointer["m_PathID"]):
+            raise ValueError("native source material shader pointer differs")
+        revised = bytearray(bodies[identity])
+        struct.pack_into("<iq", revised, location, 0, identity + 2)
+        bodies[identity] = bytes(revised)
+    # Read the actual original SDK Standard dependency through its embedded tree.
+    standard_row = next(row for row in sdk["objects"] if row["path_id"] == standard_pointer["m_PathID"])
+    standard_type = sdk["types"][standard_row["type_id"]]
+    standard_fields = metadata_fields(body(extra, sdk, standard_row), standard_type, {"m_Dependencies"})
+    references = set()
+    for pointer in standard_fields["m_Dependencies"]:
+        if pointer["m_FileID"] != 0:
+            raise ValueError("unqualified SDK default shader external")
+        references.add((1, pointer["m_PathID"]))
+    # Original PC level0 is stripped. An existing admitted original scene owns
+    # the same native release schema; its type hash must match before reuse.
+    schema_member = W.B.Bundle(schema_path).member(selected["render_schema"]["member"])
+    schema_layout = W.read_serialized(schema_member)
+    schemas = [row for row in schema_layout["types"] if row["class_id"] == 104]
+    native_renders = [row for row in native_scene["objects"] if native_scene["types"][row["type_id"]]["class_id"] == 104]
+    if len(schemas) != 1 or len(native_renders) != 1:
+        raise ValueError("original RenderSettings source schema is ambiguous")
+    native_definition = native_scene["types"][native_renders[0]["type_id"]]
+    if {k: v for k, v in schemas[0].items() if k not in {"tree", "dependencies"}} != native_definition:
+        raise ValueError("original RenderSettings native schema identity differs")
+    cookie = metadata_fields(body(scene, native_scene, native_renders[0]), schemas[0], {"m_SpotCookie"})["m_SpotCookie"]
+    if (
+        not 0 < cookie["m_FileID"] <= len(native_scene["externals"])
+        or native_scene["externals"][cookie["m_FileID"] - 1]["path"] != "Library/unity default resources"
+    ):
+        raise ValueError("original cookie external resource differs")
+    cookie_row, _, _ = named_object(defaults, default, 28, "Soft")
+    if cookie["m_PathID"] != cookie_row["path_id"]:
+        raise ValueError("original cookie source named identity differs")
+    references.add((2, cookie["m_PathID"]))
+    cube_row, _, _ = named_object(defaults, default, 43, "Cube")
+    references.add((2, cube_row["path_id"]))
+    script_ids = registry["script_ids"]
+    script_identity = ("Assembly-CSharp.dll", "", "LabDiagnostics")
+    if script_identity not in script_ids:
+        raise ValueError("source LabDiagnostics registry identity missing")
+    references.add((3, script_ids[script_identity]))
+    preloads = [row for row in original["objects"] if original["types"][row["type_id"]]["class_id"] == 150]
+    if len(preloads) != 1:
+        raise ValueError("source scene preload is ambiguous")
+    source_preload = body(shared, original, preloads[0])
+    stream = io.BytesIO(source_preload)
+    if material_string(stream) != "":
+        raise ValueError("source scene preload name differs")
+    start = stream.tell()
+    count = material_count(stream)
+    W.B.exact(stream, count * 12)
+    suffix = source_preload[stream.tell() :]
+    result = io.BytesIO(source_preload[:start])
+    result.seek(0, 2)
+    result.write(struct.pack("<I", len(references)))
+    for pointer in sorted(references):
+        result.write(struct.pack("<iq", *pointer))
+    result.write(suffix)
+    bodies[1] = result.getvalue()
+    bodies.update(shader_bodies)
+    classes = {1: 150, 2: 21, 3: 21, 4: 48, 5: 48}
+    types, objects, cursor = [], [], 0
+    for identity in sorted(bodies):
+        typ = types_by_class[classes[identity]]
+        if typ not in types:
+            types.append(typ)
+        cursor = (cursor + 7) // 8 * 8
+        objects.append(
+            {
+                "path_id": identity,
+                "offset": cursor,
+                "bytes": len(bodies[identity]),
+                "type_id": types.index(typ),
+            }
+        )
+        cursor += len(bodies[identity])
+    layout = {
+        "engine": "2021.3.45f2",
+        "platform": default["platform"],
+        "trees": False,
+        "types": types,
+        "objects": objects,
+        "scripts": [],
+        "externals": [
+            source_external[name]
+            for name in (
+                "Resources/unity_builtin_extra",
+                "Library/unity default resources",
+                "globalgamemanagers.assets",
+            )
+        ],
+        "ref_types": [],
+        "user": "",
+    }
+    with destination.open("xb") as output:
+        W.write_serialized(output, layout, lambda row: io.BytesIO(bodies[row["path_id"]]))
+    OBJECTS.check_record_packs(providers)
+    for path, pin in pins.items():
+        checked(path, pin)
+    result = list(pins.items())
+    for directory, receipt_sha256, value in providers.values():
+        receipt = directory / "result.json"
+        result.append((receipt, (receipt.stat().st_size, receipt_sha256)))
+        result.extend((directory / name, (pin["bytes"], pin["sha256"])) for name, pin in value["outputs"].items())
+    return result
+
+
+def registry_records(profile_root, selected, pc, editor_resources, code_request, managed_production):
+    """Bind the existing original-input code request to the script identity owner."""
+    if code_request is None or managed_production is None or editor_resources is None:
+        raise ValueError("registry requires code request, managed production and editor resources")
+    recipe = OBJECTS.M.safe_input(profile_root, selected["path"])
+    checked(recipe, (recipe.stat().st_size, selected["sha256"]))
+    request_path = Path(code_request).resolve(strict=True)
+    request_pin = request_path.stat().st_size, sha(request_path)
+    request = json.loads(request_path.read_text())
+    packages = Path(request["source_inputs"]["packages"]).resolve(strict=True)
+    # The existing source-input factory keeps its flat packages/<relative>
+    # manifest beside the packages directory; it is not a new receipt format.
+    value = SCRIPT.registry(
+        pc,
+        editor_resources,
+        managed_production,
+        request["target"]["source"],
+        packages,
+        packages.parent / "input-hashes.json",
+        json.loads(recipe.read_text()),
+        W,
+    )
+    value["provider_pins"][str(recipe)] = {"bytes": recipe.stat().st_size, "sha256": selected["sha256"]}
+    value["provider_pins"][str(request_path)] = {"bytes": request_pin[0], "sha256": request_pin[1]}
+    checked(recipe, (recipe.stat().st_size, selected["sha256"]))
+    checked(request_path, request_pin)
+    return value
+
+
+def produce(
+    profile_path,
+    profile_sha256,
+    pc,
+    sdk,
+    converter,
+    converter_receipt_sha256,
+    output,
+    texture_packs=(),
+    builtin_extra=None,
+    editor_resources=None,
+    code_request=None,
+    managed_production=None,
+    record_packs=(),
+):
     """Write a new target tree; never use target bytes as a source provider."""
     profile_path = Path(profile_path)
     if sha(profile_path) != profile_sha256:
         raise ValueError("player-data profile drift")
     profile = json.loads(profile_path.read_text())
     if (
-        set(profile) - {"objects", "textures", "builtin_ui", "script_properties_sdk"}
+        set(profile) - {"objects", "textures", "builtin_ui", "script_properties_sdk", "registry", "shared_defaults"}
         != {"input_id", "sources", "outputs", "project_assemblies", "font", "text_assets", "sprites"}
         or profile["input_id"] != INPUT_ID
     ):
@@ -890,6 +1176,7 @@ def produce(profile_path, profile_sha256, pc, sdk, converter, converter_receipt_
     started = time.monotonic()
     result = {"success": False, "input_id": INPUT_ID, "profile_sha256": profile_sha256, "converter_receipt_sha256": converter_receipt_sha256, "files": {}}
     try:
+        registry_pins = []
         script_sdk_tree = None
         if "script_properties_sdk" in profile:
             script_sdk_tree = script_sdk_schema(editor_resources, profile["script_properties_sdk"])
@@ -971,6 +1258,25 @@ def produce(profile_path, profile_sha256, pc, sdk, converter, converter_receipt_
                 if item.get("language") is True
                 else profile["text_assets"]["source"]["path"],
             }
+        if "registry" in profile:
+            registry = registry_records(profile_path.parent.resolve(strict=True), profile["registry"], pc, editor_resources, code_request, managed_production)
+            name = profile["registry"]["file"]
+            if PurePosixPath(name).name != name or name in ("", ".", "..") or "\\" in name:
+                raise ValueError("unsafe registry player filename")
+            with (output / (TARGET + name)).open("xb") as target:
+                W.write_serialized(target, registry["layout"], lambda row: io.BytesIO(registry["bodies"][row["path_id"]]))
+            result["files"][TARGET + name] = {"source_role": "pc-sdk-and-authored", "source": profile["registry"]["path"]}
+            registry_pins = [(Path(path), (pin["bytes"], pin["sha256"])) for path, pin in registry["provider_pins"].items()]
+            if "shared_defaults" in profile:
+                selected = profile["shared_defaults"]
+                name = selected["file"]
+                if PurePosixPath(name).name != name or name in ("", ".", "..") or "\\" in name:
+                    raise ValueError("unsafe shared-default player filename")
+                registry_pins.extend(shared_defaults(pc, selected, sdk, builtin_extra, registry, record_packs, output / (TARGET + name)))
+                result["files"][TARGET + name] = {"source_role": "pc-sdk-and-record-packs", "source": selected["source"]["path"]}
+            result["registry_inputs"] = {str(path): {"bytes": pin[0], "sha256": pin[1]} for path, pin in registry_pins}
+        elif "shared_defaults" in profile:
+            raise ValueError("shared defaults require the source registry")
         # Re-read persisted files and their providers before declaring success.
         for name, pin in expected.items():
             checked(output / (TARGET + name), pin)
@@ -986,6 +1292,8 @@ def produce(profile_path, profile_sha256, pc, sdk, converter, converter_receipt_
         if "script_properties_sdk" in profile:
             pin = profile["script_properties_sdk"]
             checked(Path(editor_resources).absolute(), (pin["bytes"], pin["sha256"]))
+        for path, pin in registry_pins:
+            checked(path, pin)
         result["success"] = True
         return result
     except Exception as error:
@@ -1007,6 +1315,18 @@ def main():
     parser.add_argument("--converter", type=Path, required=True, help="fresh converter directory containing data/ and result.json")
     parser.add_argument("--converter-receipt-sha256", required=True)
     parser.add_argument(
+        "--code-request", type=Path, help="existing original-input code request, with target.source and source_inputs.packages; required for registry"
+    )
+    parser.add_argument("--managed-production", type=Path, help="successful source-produced managed directory; required for registry")
+    parser.add_argument(
+        "--record-pack",
+        nargs=2,
+        action="append",
+        default=[],
+        metavar=("DIRECTORY", "RECEIPT_SHA256"),
+        help="existing source-produced object pack; repeat for shared shaders",
+    )
+    parser.add_argument(
         "--texture-pack",
         nargs=2,
         action="append",
@@ -1027,6 +1347,9 @@ def main():
         args.texture_pack,
         args.builtin_extra,
         args.editor_resources,
+        args.code_request,
+        args.managed_production,
+        args.record_pack,
     )
 
 
