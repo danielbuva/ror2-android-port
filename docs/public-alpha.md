@@ -215,8 +215,11 @@ qualification remain separate from these laboratory installs.
       timeout.
       [J1141](PORTING_JOURNAL.md#j1141--exclude-unavailable-admission-thermal-sentinels)
       host-qualifies the revised admission-only unavailable-sentinel policy;
-      previously valid sensors becoming sentinels still abort gameplay. Fresh
-      device qualification remains open.
+      previously valid sensors becoming sentinels still abort gameplay.
+      [J1148](PORTING_JOURNAL.md#j1148--restrict-gameplay-admission-to-cpu-gpu-battery-and-skin)
+      host-qualifies the revised CPU/GPU/battery/skin admission scope, preserving
+      runtime aborts for power-management and charger sensors. Fresh device
+      qualification remains open.
       Injected persistence states do not establish a power-cut
       or filled-filesystem result.
 - [ ] Qualify the [prepared-lab owner-build/install/playtest checklist](PLAYTESTING.md)

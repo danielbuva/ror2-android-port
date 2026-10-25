@@ -42363,3 +42363,34 @@ release. The retained installed R58 APK is
 `55149b48`. The revised shared handoff pins this helper for one further Main
 retry. Fresh sampling cadence and all alpha device acceptance gates remain open.
 
+## J1148 — Restrict gameplay admission to CPU GPU battery and skin
+
+**Hypothesis/scope:** USB-charging power-management sensors can remain above
+50 C while the CPU is cool. The orchestrator explicitly refines the gameplay
+admission policy to readable CPU/GPU/battery/skin zones only. This generic host
+device-supervision correction does not change the game or pausable tool policy.
+
+**Change:** the existing shared gameplay owner computes a separate admission
+maximum. Other valid physical zones, including PMIC, charger and USB sensors,
+are named with raw values and paths in `admission_excluded_zones`; all remain in
+the runtime sampling set and in the above-80 C hard abort and peak accounting.
+Unreadable/sentinel admission exclusions remain separate. Readable CPU coverage,
+valid-to-sentinel refusal, strict runtime timeout and one-second gap limits are
+unchanged.
+
+**Validation:** 36 batch fixtures, five sustained-owner regressions, 228 CLI
+fixtures and Ruff pass. A 57.763 C power-zone fixture admits a 49 C CPU, records
+all four power-zone names and paths, then refuses a runtime PMIC value of
+80.001 C. CPU/GPU/battery/skin fixtures each wait at 51 C and admit at 50 C.
+Existing sentinel, unsupported-zone, failure and cadence controls remain passing.
+
+**Evidence/limits:** host-only; no ADB, build, installation or gameplay test.
+Main's installed R58 receipt remains the last handed-off identity:
+`4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`, source
+`55149b48`. The private `work/coordination/main-port-r58/thermal-handoff.json`
+pins the updated helper and invocation. Main owns its running sentinel-retry
+case and terminal evidence; this checkpoint does not qualify its sampling
+cadence or any outstanding alpha device gate. Revisit on actual fresh runtime
+sensor or cadence failure; preserve the current device queue and explicit
+terminal handoffs.
+

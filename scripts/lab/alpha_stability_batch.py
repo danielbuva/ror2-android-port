@@ -114,7 +114,7 @@ class _GameThermalOwner:
     """One lightweight observer; the stage is the only heavy job.
 
     Observe gameplay without pausing or replaying it. A reading above 80 C
-    aborts; cooldown before a new stage requires at most 50 C.
+    aborts; CPU/GPU/battery/skin cooldown before a new stage requires at most 50 C.
     """
 
     def __init__(self, device, expected, trace, deadline):
@@ -157,7 +157,22 @@ class _GameThermalOwner:
             observation["gap_seconds"] = gap
             observation["all_zones_raw"] = text
             maximum, value, excluded = cooldown_temperatures(text, admission=all_zones)
+            admission_maximum = maximum
             if all_zones:
+                admission_values, admission_excluded = [], []
+                for line in text.splitlines():
+                    fields = line.split()
+                    if fields[1] == "UNREADABLE" or fields[0] in NON_TEMPERATURE_ZONES or int(fields[1]) <= -30000:
+                        continue
+                    if fields[0].lower().startswith(("cpu", "gpu", "battery", "skin")):
+                        admission_values.append(int(fields[1]) / 1000)
+                    else:
+                        entry = dict(type=fields[0], raw=int(fields[1]), reason="Outside CPU/GPU/battery/skin admission; retained for runtime sampling")
+                        if len(fields) == 3:
+                            entry["path"] = fields[2]
+                        admission_excluded.append(entry)
+                admission_maximum = max(admission_values)  # Readable CPU coverage was required above.
+                observation.update(admission_maximum_celsius=admission_maximum, admission_excluded_zones=admission_excluded)
                 self.runtime_zones = [
                     (fields[0], fields[2])
                     for line in text.splitlines()
@@ -182,7 +197,7 @@ class _GameThermalOwner:
             raise RuntimeError("Three-hour alpha driver deadline reached")
         if maximum > 80:
             raise RuntimeError("Readable thermal zone exceeded 80 C hard abort")
-        return maximum
+        return admission_maximum if all_zones else maximum
 
     def terminate_game(self):
         from device import PACKAGE
