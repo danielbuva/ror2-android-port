@@ -39,6 +39,7 @@ namespace UnityEngine {
  }
  public struct Quaternion { public Vector3 forward; public static Vector3 operator *(Quaternion q,Vector3 a)=>new Vector3(q.forward.z*a.x+q.forward.x*a.z,a.y,-q.forward.x*a.x+q.forward.z*a.z); }
  public static class Mathf { public static float Max(float a,float b)=>Math.Max(a,b);public static float Abs(float a)=>Math.Abs(a); }
+ public static class Time {public static float fixedDeltaTime=.02f;}
  public class GameObject { public int scene=1; }
  public class Collider { public GameObject gameObject=new GameObject(); }
  public struct RaycastHit { public Collider collider;public Vector3 point,normal; }
@@ -87,6 +88,17 @@ public class Harness {
   for(int i=0;i<30;i++)ApplyWorldMobilityLanding(player,bridge);
   Assert(EntityStates.Huntress.BlinkState.Created==1,"rejected/ready requests must not allocate native states per tick");
   Assert(diagnosticBlink.duration==.4f&&diagnosticBlink.speedCoefficient==2,"native template fields unchanged");
+  // A nominal .3-second Blink ends after 16 float-accumulated .02-second
+  // ticks. The old 29.4 m endpoint has floor; the native 31.36 m endpoint does not.
+  diagnosticBlink.duration=.3f;diagnosticBlink.speedCoefficient=14;player.moveSpeed=7;
+  var offset=DiagnosticMobilityOffset(diagnosticBlink,Vector3.right,player.moveSpeed,player.baseJumpPower);
+  Assert(offset.x>31.35f&&offset.x<31.37f,"complete native fixed ticks must bound Blink displacement");
+  Physics.Sample=p=>p.x>=28.9f&&p.x<=29.9f?(RaycastHit?)Floor(p):null;
+  bridge.diagnosticUtility=true;ApplyWorldMobilityLanding(player,bridge);
+  Assert(!bridge.diagnosticUtility,"nominal landing must not admit fixed-tick travel beyond a ledge");
+  Physics.Sample=p=>Floor(p);bridge.diagnosticUtility=true;ApplyWorldMobilityLanding(player,bridge);
+  Assert(bridge.diagnosticUtility,"supported actual fixed-tick endpoint remains admitted");
+  diagnosticBlink.duration=.4f;diagnosticBlink.speedCoefficient=2;player.moveSpeed=10;
   Physics.Sample=null;ApplyWorldMobilityLanding(player,bridge);
   Assert(!bridge.diagnosticUtility&&bridge.diagnosticPrimary&&bridge.diagnosticSecondary,"missing floor releases only requested mobility");
   Assert(coordinator.r.world.combatMobilityLastRejection=="no supported source landing","explicit rejection evidence");

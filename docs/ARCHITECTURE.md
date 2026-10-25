@@ -3269,6 +3269,16 @@ editor fixture source also owns `MageEarthShardsStaticConfigFixture`: exact
 staged config/projectile GUID-path identity, native `ApplyStatic` after distinct
 sentinels, and finally verified restoration of all captured mutable state fields.
 It creates no Run/catalog/network and proves no device projectile output.
+The same file owns `EngineerConfigFixture.EngineerLaserCutterConfigFixture`.
+Current `./dev editor --target lab --action engineer-laser-host` stages that
+fixture and validates original charge plus three beam configs through native
+`ApplyStatic` and `BuildInstanceInitializer`, including inherited serialized
+fields. It checks deferred prefab identities without loading Addressables,
+invokes native phase construction on inert states and verifies original asset
+bytes and captured static restoration. Its objects live only for the fixture
+call. Live charging/release, beam damage/healing and effect/audio lifetimes
+remain device gates. `test_engineer_laser_config_fixture.py` checks sentinel
+failure detection and deferred-reference non-loading using authored doubles.
 Portable tests execute
 the authored helper against an authored catalog double.
 Cleanup detaches before body/skill retirement and releases owner references.
@@ -4152,7 +4162,9 @@ intermittent native LightningStake corruption is resolved.
 
 The existing `TeleporterWorldSession` admits automatic default Huntress Blink
 and Arrow Rain requests against the original configured movement endpoint and
-a five-point capsule-width landing footprint. The integrated input wrapper calls
+a five-point capsule-width landing footprint. Blink includes every original
+fixed movement tick before its duration check, using the original float clock
+accumulation rather than nominal duration. The integrated input wrapper calls
 it after ordinary route/combat production and before explicit kit coverage.
 Manual input, explicit kit coverage and other activation types retain their
 existing paths. The guard changes only automatic button requests; native states,
@@ -4164,7 +4176,9 @@ configured instance fields, without entering them or retaining a body. Existing
 checks, declined requests and the last reason. Synthetic geometry executes the
 production admission in `test_world_mobility_landing.py`; the current
 `siren-input-host` fixture checks imported original configuration, actual Unity
-vector math and source immutability without gameplay/network startup. This
+vector math, the original Blink clock on an inert machine, and source immutability
+without gameplay/network startup. Its staging guard also checks the objective
+owner that supplies the prediction. This
 candidate follows J1105's route stall; device recovery is not yet qualified.
 
 

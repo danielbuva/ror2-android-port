@@ -2322,7 +2322,15 @@ public sealed partial class PortSession
         {
             var blink = state as EntityStates.Huntress.BlinkState;
             if (blink != null)
-                return aim.normalized * (speed * blink.speedCoefficient * blink.duration);
+            {
+                // Native movement includes the whole fixed tick before its duration
+                // check. Float accumulation can require one more tick than division
+                // predicts; sample that actual endpoint rather than the nominal time.
+                float travelTime = Time.fixedDeltaTime;
+                while (travelTime < blink.duration)
+                    travelTime += Time.fixedDeltaTime;
+                return aim.normalized * (speed * blink.speedCoefficient * travelTime);
+            }
             var rain = (EntityStates.Huntress.BeginArrowRain)state;
             aim.y = 0;
             var direction = Util.QuaternionSafeLookRotation(aim.normalized, Vector3.up) * rain.blinkVector;

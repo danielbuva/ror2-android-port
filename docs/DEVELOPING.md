@@ -115,6 +115,7 @@ authentication is needed to inspect the supplied installation.
 | `./dev editor --target lab --action open` | Start the isolated exact editor and connect the pinned Unity MCP. One editor mutation at a time. |
 | `./dev editor --target lab --action lightning-stake-host` | Current: verify the original stake prefab and all 528 imported collision-layer pairs against the accepted local input; no live impact or NaN-fix acceptance. |
 | `./dev editor --target lab --action siren-input-host` | Current: run the staged source-asset and range-aware Siren input fixture in the idle exact editor; no game/server or encounter acceptance. |
+| `./dev editor --target lab --action engineer-laser-host` | Current: validate original Laser Cutter charge/beam configuration, native phase construction and static restoration in the idle exact editor; live release, damage and healing remain device gates. |
 | `./dev editor --target lab --action siren-encounter-host` | Current: inspect original inactive Siren encounter, Director, toggle controller and 32 egg spawners plus retirement policy; no network, egg death or boss acceptance. |
 | `./dev editor --target lab --action source-camera-graphics-host` | Current: check real imported profile/resource clones and seven program bindings using inactive editor fixtures; no rendering acceptance. |
 | `./dev build [--target vulkan] [--force]` | Host preflight and instrumented IL2CPP ARM64 build through MCP with a content-addressed APK receipt. Rejects stale staged runtime sources. |

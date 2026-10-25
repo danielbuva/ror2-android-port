@@ -143,7 +143,8 @@ public static class SirenEggDiagnosticInputExactEditorFixture
         var method = owner.GetMethod("DiagnosticMobilityOffset", BindingFlags.Static | BindingFlags.NonPublic);
         var forward = (Vector3)method.Invoke(null, new object[] { blink, Vector3.forward, 7f, 15f });
         var right = (Vector3)method.Invoke(null, new object[] { blink, Vector3.right, 7f, 15f });
-        float blinkLength = 7f * blink.duration * blink.speedCoefficient;
+        float nativeTravelTime = MeasureNativeBlinkClock(blink);
+        float blinkLength = 7f * nativeTravelTime * blink.speedCoefficient;
         Require(Vector3.Distance(forward, Vector3.forward * blinkLength) < .0001f &&
                     Vector3.Distance(right, Vector3.right * blinkLength) < .0001f,
                 "Automatic Blink prediction must use original configured fields and three-dimensional aim");
@@ -152,6 +153,42 @@ public static class SirenEggDiagnosticInputExactEditorFixture
                 "Automatic Arrow Rain prediction must retain original configured leap");
         Require(beforeBlink == JsonUtility.ToJson(blinkConfig) && beforeRain == JsonUtility.ToJson(rainConfig),
                 "Read-only movement fixture changed a source configuration");
+    }
+
+    static float MeasureNativeBlinkClock(EntityStates.Huntress.BlinkState blink)
+    {
+        var host = new GameObject("Inert original Blink clock fixture");
+        host.SetActive(false);
+        try
+        {
+            var machine = host.AddComponent<EntityStateMachine>();
+            machine.enabled = false;
+            machine.commonComponents = new EntityStateMachine.CommonComponentCache(host);
+            Require(!machine.commonComponents.characterMotor && !machine.commonComponents.characterDirection &&
+                        !machine.networkIdentity && !machine.networker,
+                    "Native clock fixture must have no motor, direction or network authority");
+            blink.outer = machine;
+            var stopwatch = typeof(EntityStates.Huntress.BlinkState).GetField("stopwatch", BindingFlags.Instance | BindingFlags.NonPublic);
+            Require(stopwatch != null, "Original Blink clock field changed");
+            int ticks = 0;
+            while ((float)stopwatch.GetValue(blink) < blink.duration && ticks < 32)
+            {
+                // No OnEnter/SetState: the original callback advances its clock,
+                // with no body to move or authority to request a transition.
+                blink.FixedUpdate();
+                ticks++;
+            }
+            float nativeTime = (float)stopwatch.GetValue(blink);
+            Require(ticks == 16 && nativeTime > blink.duration &&
+                        Mathf.Approximately(blink.duration, .3f) && Mathf.Approximately(Time.fixedDeltaTime, .02f),
+                    "Accepted native Blink fixed-clock contract changed");
+            return nativeTime;
+        }
+        finally
+        {
+            blink.outer = null;
+            UnityEngine.Object.DestroyImmediate(host);
+        }
     }
 
     static void VerifyImportedSourceEggPrefab()

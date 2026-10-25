@@ -108,6 +108,14 @@ async def _main():
                         "code": 'if(EditorApplication.isUpdating||EditorUtility.scriptCompilationFailed)throw new System.Exception("Current editor source is not compiled and idle");return SirenEggDiagnosticInputExactEditorFixture.Run();',
                     },
                 )
+            elif action == "engineer-laser-host":
+                evidence["result"] = await call(
+                    "execute_code",
+                    {
+                        "action": "execute",
+                        "code": 'if(EditorApplication.isUpdating||EditorApplication.isCompiling||EditorUtility.scriptCompilationFailed)throw new System.Exception("Current editor source is not compiled and idle");return EngineerConfigFixture.EngineerLaserCutterConfigFixture.Run();',
+                    },
+                )
             elif action == "lightning-stake-host":
                 evidence["result"] = await call(
                     "execute_code",

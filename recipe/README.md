@@ -3066,3 +3066,13 @@ its owner-recipe digest and the dependent producer/camera provenance pins.
 Only that reviewed authored source changes in the frozen owner cohort. These
 checks remain mandatory; the normal player build must regenerate its source-bound
 bootstrap rather than reuse an older frozen payload.
+
+The follow-up mobility correction counts complete native fixed ticks when
+predicting automatic Blink admission. An authored ledge fixture distinguishes
+the nominal endpoint from the actual endpoint; an inert exact-editor machine
+executes only the original clock callback, with no motor or network authority.
+The Engineer Laser Cutter fixture reads minimal original config/asset identities,
+applies the native config APIs to inert states, inspects their native phase
+construction and restores every captured static. It retains no original config
+payload, implementation, audio or asset bytes in Git. These are authored contract
+checks and an input-admission correction, with device behavior still unverified.
