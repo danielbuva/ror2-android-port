@@ -273,9 +273,10 @@ public sealed class NovaInputBridge : MonoBehaviour
         for (int i = 0; i < raw.buttons.Length; i++)
             if (raw.buttons[i])
                 return false;
-        var limit = AndroidOfflineSettings.current.deadzone;
-        return Mathf.Abs(raw.axes[map.moveX]) <= limit && Mathf.Abs(raw.axes[map.moveY]) <= limit &&
-               Mathf.Abs(raw.axes[map.aimX]) <= limit && Mathf.Abs(raw.axes[map.aimY]) <= limit;
+        // Admission must use the same radial deadzone as delivery: independent
+        // component checks can admit a diagonal that immediately produces input.
+        return Stick(raw, map.moveX, map.moveY, map.moveYSign).sqrMagnitude == 0 &&
+               Stick(raw, map.aimX, map.aimY, map.aimYSign).sqrMagnitude == 0;
     }
     void Update()
     {
