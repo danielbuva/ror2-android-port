@@ -38707,6 +38707,30 @@ Ruff and public audit pass. Fresh-clone pre-push CI passes on `a78d5eaa`.
 Doctor/preflight retain the expected isolated lab-project refusal; no project or
 Editor is introduced to satisfy host packaging checks.
 
+**Full host composition and signing.** The detached validation completes in
+491.264 seconds: assembly takes 166.226 seconds and signing takes 317.477 seconds.
+It consumes all 16 produced host code/SDK files with the existing private
+accepted-output replay content, strictly as a wiring validation. The assembler
+verifies 713 entries, retains 134 runtime payload files (2,265,941,767 bytes),
+and creates the unsigned APK
+`f2103f96f6d227fb026634e36aa6f84e1cdd60b48f2d6d6c12a7058b2686c73d`
+(1,995,909,317 bytes). A new separate durable host owner key signs APK
+`45e9c5e2bea347aba591c7d0552ca6e45f7d7fa45ca8c3651ad1956708b785e1`
+(1,995,994,444 bytes); signature and 16 KiB ZIP alignment verification pass.
+No shared lab key is used or provisioned. The official Google build-tools 35
+archive is checked against its catalog checksum before extracting zipalign;
+the older host tool lacks the required page-alignment option.
+
+Private evidence: `owner-replay-validation-v1-done.json`,
+`owner-replay-validation-v1-{build,sign}.log`,
+`owner-replay-validation-v1-sign-request.json` and
+`host-zipalign-provider-v1.json` under the same coordination root. Unsigned and
+signed artifacts/results are referenced in that receipt on the external
+qualification volume; the rebuildable aligned intermediate is removed.
+The content remains replay-derived, and the native files are host outputs.
+All phone-native, source-production, installation and device-qualification gates
+remain false/open. No installation compatibility or game readiness is inferred.
+
 **Open gates.** Complete source-derived target files (including both generic
 build-metadata files), corrected phone-native output, composed phone assembly,
 compatible retained-data signer provisioning, user installer, both controls and

@@ -192,4 +192,6 @@ tree and explicit code cohort before launcher compilation. It reports every
 absent/mismatched content file and raw code difference, while retaining false
 source-provenance and device-qualification fields. Object/resource packs from
 the content producers still require bundle/player-data assembly; the complete
-source-derived tree and corrected phone-native output remain open.
+source-derived tree and corrected phone-native output remain open. A separate
+host composition/signing validation passes with produced host code/SDK and
+explicit replay content; it does not qualify phone production or installation.

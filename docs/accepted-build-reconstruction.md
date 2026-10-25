@@ -423,6 +423,7 @@ replay file for an absent produced code output. Raw code differences remain
 separate from file availability, source provenance and runtime qualification.
 Use the same request for assembly once the content owner supplies final bundle/
 player-data files; its intermediate record packs cannot fill those paths.
-Follow unsigned assembly with the existing durable owner-signing action. A
-separately labelled replay-content validation can exercise that wiring while
-the source-derived content and corrected phone-native gates remain open.
+Follow unsigned assembly with the existing durable owner-signing action. The
+separately labelled full host replay-content validation passes composition,
+durable signing, signature verification and alignment. Source-derived content,
+corrected phone-native production and device installation remain open.
