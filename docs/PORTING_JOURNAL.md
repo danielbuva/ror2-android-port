@@ -40372,3 +40372,74 @@ establish that rendering or rebaking is necessary. Revisit only with new source
 lineage or a measured source-only transform. No target pixel fallback, repeated
 parameter search, final-file readiness closure or phone-install claim follows.
 Continue the independently unblocked guarded Android producer qualification.
+
+## J1140 — Qualify the bounded Android tool guard and checkpoint recovery
+
+2026-10-25 UTC. This qualifies a small tool-harness case, not a completed
+texture cohort, phone-built game or gameplay test. No Editor, game build,
+installation or game launch occurs. Installed R58 remains SHA-256
+`4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`.
+The reconstruction target remains J850, unchanged.
+
+**Hypothesis and change.** After J1123's interrupted batch and host checkpoint
+repair, the revised one-job guard can enforce its measured CPU sampling,
+pause/resume, abort, deadline and process-ownership contracts on Android.
+The texture import/codec prior art remains J1107/J1128; this case introduces
+no reconstruction or gameplay mechanism. The private qualification driver uses
+the unchanged v7 guard and current committed texture owner from `a764eb81`.
+A prelaunch review rejects registry-only cleanup: an interrupted child can exist
+before its durable registration. The corrected driver requires an independent
+wide process-argument census of its fresh namespace before releasing its lease.
+An intentionally unregistered child proves detection and identity-bound recovery;
+the forced-kill control also tags its otherwise anonymous nested child.
+Historical controls and the rejected review remain retained separately.
+
+**Device result.** All 12 injected controls pass: pause/resume, overtemperature
+abort, sample gap, lost/changed CPU sensors, lost/stale battery/HAL telemetry,
+deadline, forced monitor death, changed ownership, blocked sensor and blocked
+persistence. The real three-process case exits its leader and verifies that its
+child and grandchild are absent. All five current texture recovery tests pass
+with no skips, including actual SIGKILL, completed-prefix reuse, incomplete
+body/index tails, corruption/drift refusals and data-before-index fsync order.
+The real codec case passes 33 authored cases, including 12 SDK golden patterns
+and band cases. These are authored fixtures; no original texture cohort is
+produced in this qualification.
+
+| Real case | Seconds | CPU samples | Largest CPU sample gap |
+| --- | ---: | ---: | ---: |
+| Descendant cleanup | 3.144 | 12 | 0.263384 s |
+| Checkpoint recovery | 3.315 | 13 | 0.272098 s |
+| Authored codecs | 26.315 | 105 | 0.289359 s |
+
+Across these three traces, peak CPU is 32.2 degrees C, battery 25.0 degrees C
+and HAL status zero. There is no real pause, thermal stop or timeout. Injected
+blocked-reader/writer cases observe process death after 0.759324 and 1.002382
+seconds respectively. This is measured fail-closed behavior, not a hard
+real-time one-second termination guarantee. The guard monitors CPU sensors plus
+battery/HAL; the separately owned gameplay readable-zone policy is unchanged.
+
+**Terminal state and first failure.** All 17 case calls and 167 ADB commands
+return zero. Thirty recorded owned sessions and the fresh namespace are absent;
+the game process and selector are absent, OLED asleep and installed bytes
+unchanged. All 196 captured files, totaling 502,374 bytes, match the pre-transfer
+manifest before this case's remote scratch is removed. The lease is released
+and an explicit terminal handoff goes to Main before any heavy texture batch.
+The sole driver failure is the subsequent host prune exceeding its 30-second
+cap: retain the original `success: false` receipt. A separate main-checkout
+prune retry passes, removing zero items and retaining 52. The entire original
+receipt completes in 89.636 seconds; no device recovery or rerun is needed.
+
+**Evidence and remaining.** Private receipts are under
+`work/coordination/accepted-build-reconstruction/media-source-v1/`:
+`device-guard-qualification-reviewed-v2-done.json`,
+`device-guard-qualification-v1-done.json`, its referenced case directory,
+`qualification-review-v1-done.json` and
+`device-guard-qualification-v1-host-cleanup-done.json`. Raw terminal receipt
+SHA-256 is `c8bdee6f50caa3c181d5200a5a320a0db0b76636f704a4351d7d4e04bbc56854`;
+independent review SHA-256 is
+`67f7b851ec0a501f5df43d79d504fefc72770fafbb9a46018c62d74c6d2ca5c6`.
+Full RGBA/mip/cubemap phone production remains open. Resume the checkpointed
+single-job cohort only after Main's explicit terminal release; admission,
+subsecond CPU telemetry, 70/55-degree pause/resume and above-80-degree abort
+remain required. This short case establishes no sustained thermal, performance,
+ordinary-app or owner-installation qualification.
