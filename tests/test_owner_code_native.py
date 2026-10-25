@@ -8,8 +8,9 @@ from pathlib import Path
 import struct
 import sys
 import tempfile
+from types import SimpleNamespace
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 PATH = Path(__file__).resolve().parents[1] / "tools/phone-build/owner-code/native.py"
 SPEC = importlib.util.spec_from_file_location("owner_code_native", PATH)
@@ -73,6 +74,34 @@ class OwnerCodeNativeTests(unittest.TestCase):
             self.assertEqual(len(rows), 3)
             self.assertEqual(rows[1][0].read_bytes(), b"independent compiled witness 1")
 
+    def test_relocated_reused_lump_keeps_original_compile_hash_and_can_be_reused_again(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            folder, current, profile, sdk, inputs = self.compiled_fixture(root)
+            rows = NATIVE.compiled_jobs(folder, current, profile, sdk, inputs)
+            old_receipt = json.loads((folder / "job-results/2.json").read_text())
+            self.assertEqual(rows[2][1]["source_sha256"], old_receipt["source_sha256"])
+            self.assertEqual(rows[2][1]["lump_sdk_root"], str(root / "old-sdk"))
+            continued = Path(current["library"]).parent
+            for directory in (continued / "job-results", continued / "objects"):
+                directory.mkdir(parents=True)
+            for index, (obj, row) in enumerate(rows):
+                NATIVE.os.link(obj, continued / "objects" / (str(index) + ".o"))
+                NATIVE.write(continued / "job-results" / (str(index) + ".json"), row)
+            for name, value in {
+                "plan": current,
+                "inputs": inputs,
+                "result": {"success": True, "phase": "native-built", "input_id": profile["input_id"], "compile_tasks": 0, "reused_compile_tasks": 3},
+            }.items():
+                NATIVE.write(continued / (name + ".json"), value)
+            readmitted = NATIVE.compiled_jobs(continued, NATIVE.plan(profile, sdk, root / "another-link"), profile, sdk, inputs)
+            self.assertEqual(readmitted[2][1], rows[2][1])
+            self.assertEqual(json.loads((folder / "job-results/2.json").read_text()), old_receipt)
+            changed = {**rows[2][1], "lump_sdk_root": str(sdk)}
+            (continued / "job-results/2.json").write_text(json.dumps(changed))
+            with self.assertRaisesRegex(ValueError, "object/source receipt"):
+                NATIVE.compiled_jobs(continued, NATIVE.plan(profile, sdk, root / "another-link"), profile, sdk, inputs)
+
     def test_relink_refuses_object_drift_or_changed_compilation_flags(self):
         with tempfile.TemporaryDirectory() as temporary:
             fixture = self.compiled_fixture(Path(temporary).resolve())
@@ -93,6 +122,158 @@ class OwnerCodeNativeTests(unittest.TestCase):
             (fixture[0] / "result.json").write_text(json.dumps({"input_id": fixture[2]["input_id"], "compile_tasks": 2}))
             with self.assertRaisesRegex(ValueError, "complete original compilation"):
                 NATIVE.compiled_jobs(*fixture)
+
+    def test_active_timeout_subtracts_pause_when_parent_cannot_sample(self):
+        child = Mock(args=["independent compiler"], poll=Mock(side_effect=[None, None, 0]))
+        child.wait.side_effect = NATIVE.subprocess.TimeoutExpired(child.args, 0.1)
+        record = {}
+        # Parent sees only before/after a 100 second guard STOP interval.
+        with patch.object(NATIVE, "paused_seconds", side_effect=[(10, 4), (10, 4), (111, 104), (112, 104)]):
+            self.assertEqual(NATIVE.wait_active(child, 3, Path("clock"), record), 0)
+        self.assertEqual(record, {"active_seconds": 2, "paused_seconds": 100})
+        with patch.object(NATIVE, "paused_seconds", side_effect=[(10, 4), (14, 4)]):
+            child.poll.return_value = None
+            child.poll.side_effect = None
+            with self.assertRaises(NATIVE.subprocess.TimeoutExpired):
+                NATIVE.wait_active(child, 3, Path("clock"), {})
+
+    def test_pause_clock_preserves_existing_pause_and_refuses_invalid_or_reset_state(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            clock = Path(temporary) / "clock"
+            clock.write_text(json.dumps({"paused_seconds": 7, "paused_at": 12}))
+            with patch.object(NATIVE, "elapsed_clock", return_value=20):
+                self.assertEqual(NATIVE.paused_seconds(clock), (20, 15))
+            for total, at in [(-1, None), (True, None), (0, float("nan")), (0, 21)]:
+                clock.write_text(json.dumps({"paused_seconds": total, "paused_at": at}))
+                with patch.object(NATIVE, "elapsed_clock", return_value=20), self.assertRaises(ValueError):
+                    NATIVE.paused_seconds(clock)
+        for samples in [[(10, 4), (11, 3)], [(10, 4), (11, 6)]]:
+            with patch.object(NATIVE, "paused_seconds", side_effect=samples), self.assertRaisesRegex(ValueError, "reset or exceeds"):
+                NATIVE.wait_active(Mock(), 100, Path("clock"), {})
+
+    def test_resume_reuses_498_receipts_and_only_compiles_missing_jobs(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            sdk, failed, output = [root / n for n in ("sdk", "failed", "continued")]
+            for directory in (sdk, failed / "objects", failed / "job-results", root / "game", root / "sources"):
+                directory.mkdir(parents=True)
+            source = sdk / "fixture.c"
+            source.write_bytes(b"independent SDK translation unit")
+            receipt, metadata = root / "converter.json", root / "metadata.dat"
+            receipt.write_text("independent converter witness")
+            metadata.write_bytes(b"independent metadata witness")
+            profile = {
+                "input_id": "fixture",
+                "compiler": "tools/clang",
+                "objcopy": "tools/objcopy",
+                "arguments": [["-c", "SOURCE", "-o", "OBJECT"]],
+                "jobs": [{"sdk": "fixture.c", "arguments": 0} for _ in range(500)],
+                "link": ["-shared", *[{"object": i} for i in range(500)], "-o", "LIBRARY"],
+            }
+            old = NATIVE.plan(profile, sdk, failed)
+            inputs = {
+                "inventory": {},
+                "sdk": {},
+                "converter_receipt_sha256": NATIVE.sha(receipt),
+                "sources": {},
+                "metadata": {},
+                "android_tools": None,
+                "linux_tools": None,
+            }
+            for index in range(498):
+                obj = failed / "objects" / (str(index) + ".o")
+                obj.write_bytes(("compiled fixture " + str(index)).encode())
+                NATIVE.write(
+                    failed / "job-results" / (str(index) + ".json"),
+                    {"source_sha256": NATIVE.sha(source), "output_sha256": NATIVE.sha(obj), "bytes": obj.stat().st_size},
+                )
+            # A timed-out output is never a reusable object without its receipt.
+            (failed / "objects/498.o").write_bytes(b"failed partial object")
+            original_result = {"success": False, "phase": "compiling", "input_id": "fixture", "compile_tasks": 498}
+            for name, value in {"plan": old, "inputs": inputs, "result": original_result}.items():
+                NATIVE.write(failed / (name + ".json"), value)
+            request = {
+                "owner_work": str(root),
+                "sdk_install": str(sdk),
+                "converter_receipt": str(receipt),
+                "converter_receipt_sha256": NATIVE.sha(receipt),
+                "sources": str(root / "sources"),
+                "sources_compressed": False,
+                "metadata": str(metadata),
+                "output": str(output),
+                "resume": str(failed),
+                "compile_timeout_seconds": 7200,
+            }
+            invoked = []
+
+            def invoke(argv, where, name, **kwargs):
+                invoked.append(name)
+                if name.isdigit():
+                    self.assertEqual(kwargs["timeout"], 7200)
+                    Path(argv[-1]).write_bytes(b"fresh missing object")
+                elif name == "link":
+                    Path(argv[-1]).write_bytes(b"unstripped fixture")
+                elif name == "strip":
+                    header = bytearray(64)
+                    header[:6] = b"\x7fELF\x02\x01"
+                    struct.pack_into("<HH", header, 16, 3, 183)
+                    Path(argv[-1]).write_bytes(header)
+
+            with (
+                patch.object(NATIVE, "input_state", return_value=("fixture", root / "game", {})),
+                patch.object(NATIVE, "sdk_files", return_value={}),
+                patch.object(NATIVE, "converter_inputs", return_value=({}, {})),
+                patch.object(NATIVE.shutil, "disk_usage", return_value=SimpleNamespace(free=10 * 1024**3)),
+                patch.object(NATIVE, "invoke", side_effect=invoke),
+            ):
+                # Metadata result must carry the validated source receipt hash.
+                with patch.object(NATIVE, "converter_inputs", return_value=({}, {"sha256": "metadata witness"})):
+                    inputs["metadata"] = {"sha256": "metadata witness"}
+                    (failed / "inputs.json").write_text(json.dumps(inputs))
+                    for selection in ([], [True], [-1], [500], [497, 497]):
+                        with self.assertRaisesRegex(ValueError, "measurement job indexes"):
+                            NATIVE.run({**request, "output": str(root / "invalid-measure"), "measure_jobs": selection}, profile=profile)
+                        self.assertFalse((root / "invalid-measure").exists())
+                    measured_output = root / "measurement"
+                    measured = NATIVE.run({**request, "output": str(measured_output), "measure_jobs": [497, 499]}, profile=profile)
+                    self.assertEqual(invoked, ["497", "499"])
+                    self.assertEqual((measured["phase"], measured["compile_tasks"], measured["reused_compile_tasks"]), ("native-measured", 2, 0))
+                    self.assertFalse((measured_output / "libil2cpp.so").exists())
+                    self.assertNotEqual((measured_output / "objects/497.o").stat().st_ino, (failed / "objects/497.o").stat().st_ino)
+                    with self.assertRaisesRegex(ValueError, "complete original compilation"):
+                        NATIVE.compiled_jobs(measured_output, NATIVE.plan(profile, sdk, root / "measurement-relink"), profile, sdk, inputs)
+                    invoked.clear()
+                    result = NATIVE.run(request, profile=profile)
+            self.assertEqual(invoked, ["498", "499", "link", "strip"])
+            self.assertEqual((result["compile_tasks"], result["reused_compile_tasks"]), (2, 498))
+            self.assertEqual(json.loads((failed / "result.json").read_text()), original_result)
+            self.assertEqual((failed / "objects/498.o").read_bytes(), b"failed partial object")
+            self.assertEqual((output / "objects/497.o").stat().st_ino, (failed / "objects/497.o").stat().st_ino)
+            self.assertEqual(len(NATIVE.compiled_jobs(output, NATIVE.plan(profile, sdk, root / "relink"), profile, sdk, inputs)), 500)
+
+    def test_resume_refuses_missing_receipts_and_changed_providers_but_allows_corrected_link(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = self.compiled_fixture(Path(temporary).resolve())
+            folder, current, profile, sdk, inputs = fixture
+            old = json.loads((folder / "plan.json").read_text())
+            old["link"][1:4] = reversed(old["link"][1:4])
+            (folder / "plan.json").write_text(json.dumps(old))
+            (folder / "result.json").write_text(json.dumps({"success": False, "phase": "compiling", "input_id": profile["input_id"], "compile_tasks": 2}))
+            (folder / "job-results/2.json").unlink()
+            self.assertEqual(len(NATIVE.compiled_jobs(*fixture, resume=True)), 2)
+            inputs["sources"]["Fixture.cpp"]["sha256"] = "changed"
+            with self.assertRaisesRegex(ValueError, "source cohort"):
+                NATIVE.compiled_jobs(*fixture, resume=True)
+            inputs["sources"]["Fixture.cpp"]["sha256"] = json.loads((folder / "inputs.json").read_text())["sources"]["Fixture.cpp"]["sha256"]
+            current["link"].append("-changed-link-option")
+            self.assertEqual(len(NATIVE.compiled_jobs(*fixture, resume=True)), 2)
+            current["jobs"][0]["argv"].append("-changed-compile-option")
+            with self.assertRaisesRegex(ValueError, "command policy"):
+                NATIVE.compiled_jobs(*fixture, resume=True)
+            current["jobs"][0]["argv"].pop()
+            (folder / "job-results/1.json").unlink()
+            with self.assertRaisesRegex(ValueError, "job receipts"):
+                NATIVE.compiled_jobs(*fixture, resume=True)
 
     def test_burst_ndk_layout_keeps_original_target_data_and_selects_linux_bfd(self):
         with tempfile.TemporaryDirectory() as temporary:

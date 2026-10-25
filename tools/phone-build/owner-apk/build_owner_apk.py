@@ -71,12 +71,117 @@ def code_sources(request):
     return sources
 
 
+def explain_drift(pins, row):
+    """Check retained qualification evidence; never read historical game files.
+
+    Producer receipts establish provenance/causation for human review. Here we
+    bind those receipts to one target, two current runs and a complete extent
+    map, checking every current extent against the actual assembly supplier.
+    """
+    evidence = []
+
+    def digest(value):
+        if not isinstance(value, str) or len(value) != 64 or any(c not in "0123456789abcdef" for c in value):
+            raise ValueError("drift evidence requires SHA-256 pins")
+        return value
+
+    def receipt(value, *, qualification=True):
+        path = Path(value["path"])
+        if not path.is_absolute() or path != path.resolve(strict=True) or not path.is_file() or sha(path) != digest(value["sha256"]):
+            raise ValueError("drift receipt pin differs")
+        evidence.append({"path": str(path), "sha256": value["sha256"]})
+        document = json.loads(path.read_text())
+        if document.get("success") is False:
+            raise ValueError("failed drift evidence")
+        if qualification:
+            if document["success"] is not True or document["path"] != row["path"]:
+                raise ValueError("drift receipt failed or target differs")
+            if not document["evidence"]:
+                raise ValueError("raw producer/lineage evidence required")
+            for raw in document["evidence"]:
+                receipt(raw, qualification=False)
+        return document
+
+    def output(value):
+        if type(value["bytes"]) is not int or value["bytes"] < 0:
+            raise ValueError("invalid drift output size")
+        return value["bytes"], digest(value["sha256"])
+
+    historical = receipt(pins["historical_exact"])
+    current = receipt(pins["current_deterministic"])
+    if digest(historical["producer_sha256"]) != digest(current["producer_sha256"]):
+        raise ValueError("historical and current drift producers differ")
+    if output(historical) != (row["target_bytes"], row["target_sha256"]):
+        raise ValueError("historical production is not exact to the target")
+    if len(current["runs"]) < 2:
+        raise ValueError("two current deterministic runs required")
+    run_ids = set()
+    for run in current["runs"]:
+        if not isinstance(run["id"], str) or not run["id"].strip() or run["id"] in run_ids:
+            raise ValueError("distinct current production run IDs required")
+        run_ids.add(run["id"])
+        if output(run) != (row["bytes"], row["sha256"]):
+            raise ValueError("current deterministic production differs")
+    mapping = receipt(pins["difference_map"])
+    inputs = mapping["inputs"]
+    if not inputs:
+        raise ValueError("named original input differences required")
+    for pair in inputs:
+        identities = []
+        for kind in ("historical", "current"):
+            original = pair[kind]
+            if original is None:
+                identities.append(None)
+                continue
+            name = original["path"]
+            if not isinstance(name, str) or not name or name.startswith("/") or "\\" in name or any(p in ("", ".", "..") for p in name.split("/")):
+                raise ValueError("original drift input must name a relative game path")
+            identities.append((name, *output(original)))
+        if identities[0] == identities[1]:
+            raise ValueError("drift must name a changed original input")
+    old_end = new_end = 0
+    changed = False
+    with Path(row["source"]).open("rb") as stream:
+        for operation in mapping["operations"]:
+            old, new = operation["historical_range"], operation["current_range"]
+            if any(not isinstance(r, list) or len(r) != 2 or any(type(v) is not int for v in r) for r in (old, new)):
+                raise ValueError("invalid drift extent range")
+            if old[0] != old_end or new[0] != new_end or not old[0] <= old[1] <= row["target_bytes"] or not new[0] <= new[1] <= row["bytes"]:
+                raise ValueError("drift extent gap, overlap or bounds differ")
+            old_hash, new_hash = digest(operation["historical_sha256"]), digest(operation["current_sha256"])
+            if old[0] == old[1] and new[0] == new[1]:
+                raise ValueError("empty drift operation")
+            equal = old[1] - old[0] == new[1] - new[0] and old_hash == new_hash
+            if not equal:
+                changed = True
+                origins = operation["inputs"]
+                if not origins or any(type(i) is not int or not 0 <= i < len(inputs) for i in origins) or not operation["reason"].strip():
+                    raise ValueError("changed output extent lacks named input lineage")
+            digest_value = hashlib.sha256()
+            remaining = new[1] - new[0]
+            while remaining:
+                chunk = stream.read(min(remaining, 65536))
+                if not chunk:
+                    raise ValueError("current drift output truncated")
+                digest_value.update(chunk)
+                remaining -= len(chunk)
+            if digest_value.hexdigest() != new_hash:
+                raise ValueError("current drift extent hash differs")
+            old_end, new_end = old[1], new[1]
+    if not changed or (old_end, new_end) != (row["target_bytes"], row["bytes"]):
+        raise ValueError("drift map must explain both complete outputs")
+    return evidence
+
+
 def check(request):
     """Inventory final assembly inputs; byte equality never establishes provenance."""
     if request["manifest_sha256"] != PROFILE:
         raise ValueError("unsupported owner APK request/profile")
     _, profile = PACKET.profile(Path(request["manifest"]), PROFILE)
     code = code_paths(request)
+    drift = request.get("drift", {})
+    if not isinstance(drift, dict):
+        raise ValueError("drift must map content target paths to pinned proofs")
     targets = Path(request["targets"]).resolve()
     entries, omitted = [], []
     for target in profile["targets"]:
@@ -116,17 +221,26 @@ def check(request):
                 row.update(bytes=path.stat().st_size, sha256=sha(path))
                 equal = row["bytes"] == target["bytes"] and row["sha256"] == target["sha256"]
                 row.update(status="ready" if produced or equal else "mismatch", target_equal=equal)
-        except (OSError, ValueError, TypeError) as error:
+                if name in drift:
+                    if produced or equal:
+                        raise ValueError("drift proof requires changed content, not code or exact output")
+                    row["drift_evidence"] = explain_drift(drift[name], row)
+                    row["status"] = "drift-explained"
+        except (OSError, ValueError, TypeError, KeyError, AttributeError) as error:
             row.update(status="invalid", error=str(error))
         entries.append(row)
     selected = {row["path"][4:] for row in entries if row["owner"] == "code"}
     if selected != set(code):
         raise ValueError("produced code cohort not present in target profile")
-    blocked = [row["path"] for row in entries if row["status"] != "ready"]
+    if set(drift) - {row["path"] for row in entries if row["owner"] != "code"}:
+        raise ValueError("drift proof target not in content selection")
+    blocked = [row["path"] for row in entries if row["status"] not in ("ready", "drift-explained")]
     return {
         "assembly_ready": not blocked,
         "selection": "produced-code-and-sdk" if len(code) > len(CODE_ENTRIES) else "produced-code" if code else "replay-control",
         "blocked_entries": blocked,
+        "exact_count": sum(row.get("target_equal") is True and row["status"] == "ready" for row in entries),
+        "drift_explained_count": sum(row["status"] == "drift-explained" for row in entries),
         "code_comparison_required": [row["path"] for row in entries if row["owner"] == "code" and row.get("target_equal") is False],
         "entries": entries,
         "omitted_entries": omitted,
@@ -261,7 +375,7 @@ def sign(request_path, output):
 def build(request_path, output):
     request = json.loads(Path(request_path).read_text())
     fields = {"manifest", "manifest_sha256", "targets", "frontend", "java", "android_jar", "d8_jar", "wire_helper"}
-    if set(request) - {"version_code", "code", "javac"} != fields or request["manifest_sha256"] != PROFILE:
+    if set(request) - {"version_code", "code", "javac", "drift"} != fields or request["manifest_sha256"] != PROFILE:
         raise ValueError("unsupported owner APK request/profile")
     code = code_paths(request)
     version_code = request.get("version_code")
@@ -306,9 +420,16 @@ def build(request_path, output):
             tracked.append(SOURCE.parent / "accepted-output/sdk_package.py")
         tracked += [roots[k] for k in ("java", "android_jar", "d8_jar", "wire_helper", "manifest")]
         tracked += [Path(row["path"]) for row in code.values()]
+        drift_evidence = [pin for row in readiness["entries"] for pin in row.get("drift_evidence", [])]
+        tracked += [Path(pin["path"]) for pin in drift_evidence]
         if "javac" in roots:
             tracked.append(roots["javac"])
         result["inputs"] = {str(p): {"bytes": p.stat().st_size, "sha256": sha(p)} for p in tracked}
+        if any(result["inputs"][pin["path"]]["sha256"] != pin["sha256"] for pin in drift_evidence):
+            raise ValueError("drift evidence changed after readiness check")
+        # Availability and qualification are checked above. Bind assembly to the
+        # actual current bytes, including the payload index used by Android.
+        content = {row["path"]: {"path": row["path"], "bytes": row["bytes"], "sha256": row["sha256"]} for row in readiness["entries"]}
 
         def run(command, label):
             with (output / (label + ".log")).open("x") as log:
@@ -356,7 +477,7 @@ def build(request_path, output):
         )
         if {p.name for p in dex.iterdir()} != {"classes.dex"}:
             raise ValueError("bootstrap requires exactly one authored DEX")
-        apk_rows = {r["path"][4:]: r for r in profile["targets"] if r["path"].startswith("apk/") and not ASSEMBLY.obsolete_signature(r["path"][4:])}
+        apk_rows = {name[4:]: row for name, row in content.items() if name.startswith("apk/")}
         manifest_row = apk_rows["AndroidManifest.xml"]
         manifest_source = Path(code["AndroidManifest.xml"]["path"]) if "AndroidManifest.xml" in code else PACKET.verify(roots["targets"], manifest_row)
         manifest_bytes = manifest_source.read_bytes()
@@ -364,7 +485,7 @@ def build(request_path, output):
             raise ValueError("owner APK source bytes differ")
         patched = MANIFEST.patch(manifest_bytes, wire, version_code=version_code)
         (output / "AndroidManifest.xml").write_bytes(patched)
-        payload = [r for r in profile["targets"] if r["path"].startswith("payload/") and not r["path"].endswith(".manifest")]
+        payload = [row for name, row in content.items() if name.startswith("payload/")]
         index = {"schema": 1, "profile": PROFILE, "files": [{"name": r["path"][8:], "bytes": r["bytes"], "sha256": r["sha256"]} for r in payload]}
         index_bytes = (json.dumps(index, sort_keys=True, separators=(",", ":")) + "\n").encode()
         next_dex = "classes" + str(1 + sum(n.endswith(".dex") and n.startswith("classes") for n in apk_rows)) + ".dex"

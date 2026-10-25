@@ -746,6 +746,21 @@ readiness request names it explicitly and the checker refuses every missing
 entry. The private J850 replay tree is only a comparison control. See
 [setup/lifecycle](../tools/phone-build/accepted-output/README.md#produce-the-first-complete-source-only-bundle).
 
+Changed current-input content additionally requires the explicit private
+`drift` documents named by the owner APK request: historical-exact production,
+current deterministic production and a complete named input/output difference
+map. These are required local qualification state because they summarize
+retained owner-specific original inputs and producer invocations; they are not
+distributable game data or rebuildable cache. Each document pins its retained
+raw producer/comparison evidence and is normalized and reviewed against that
+evidence using the [checker contract](../tools/phone-build/owner-apk/README.md#current-input-drift-evidence).
+Retain both the documents and raw evidence for as long as the corresponding
+output is used. A different producer or supplier requires new qualification.
+The checker/assembler reads only these receipts and current output files; it
+does not read historical originals or outputs. J1153's private normalization
+and composition are under `work/coordination/phone-code/drift-readiness-v1/`,
+with the retained adapter beside it. No timestamped run path is embedded in code.
+
 Selected TMP player objects additionally require the explicitly supplied full SDK
 `unity editor resources` provider. The player profile pins its identity and
 selects its native MonoBehaviour schema; `script_identity.py` derives managed
@@ -1759,6 +1774,17 @@ providers. `produce.py::burst` generates its options, preservation XML, library
 and receipts; `native.py::burst_ndk` generates aliases without modifying either
 SDK. The authored `GnuToolAdapter.c` is compiled by the existing phone tool APK
 builder. No generated game or accepted-output byte is a tool supplier.
+
+An externally paused native request additionally requires its explicit
+`pause_clock` file, generated atomically by an independent controller outside
+the stopped tool UID. It is required mutable local control state, rather than
+an immutable source input: cumulative completed pause seconds and the active
+pause's BOOTTIME start follow the [native owner contract](../tools/phone-build/owner-code/README.md).
+The controller retains the same counter throughout an invocation, writes before
+STOP/CONT and owns thermal admission/abort. Keep process/thermal evidence with
+the failed or completed output before removing this disposable clock. Native
+continuation reads only its explicitly named failed output and validated prefix;
+selected-job timing outputs never stand in for a complete native library.
 
 The managed-host builder selects an explicit local JDK and SDK JARs, generating
 read-only JNI tool entry points and verified data links. Its durable

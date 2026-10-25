@@ -230,16 +230,13 @@ explicit replay content; it does not qualify phone production or installation.
 
 [J1114](PORTING_JOURNAL.md#j1114--produce-both-generic-android-build-metadata-files)
 closes the two generic Android build-metadata producer gaps. Fresh host SDK
-production yields all 15 entries raw-exact to J850. The shared readiness request
-combined with
-[J1155](PORTING_JOURNAL.md#j1155--reconstruct-wisps-source-scene-and-qualify-the-original-windows-copy)
-has all 18 code/SDK files and 316 content files exact, with 371 content entries
-absent from the exact tree. The Windows copy is separately drift-explained.
-The 173 player files include the twelve newly completed manifests,
-fonts and mip textures. Phone
-replay and complete content/shader/animation production remain open. The two
-new files still require an ordinary-app rerun; corrected phone-native output,
-complete content, installation, controls and matched performance remain open.
+production yields all 15 entries raw-exact to J850. Final-file availability and
+raw equality remain separate from source provenance,
+phone production and runtime acceptance. J1153 records the current exact,
+drift-explained and missing cohorts; the checker preserves actual admitted
+current bytes. Ordinary-app metadata qualification, corrected phone-native
+output, complete content, installation, controls and matched performance remain
+open.
 
 [J1133](PORTING_JOURNAL.md#j1133--produce-source-animation-hierarchy-and-generic-records-on-the-host)
 extends the source-only object producers. These host-qualified packs still
@@ -250,5 +247,15 @@ they do not independently close a final-file readiness entry.
 adds current-input English and the fifth font material through the same player
 owner. Historical originals qualify the transformation; reconstruction consumes
 the current installation only. Their complete byte differences are explained by
-original-input drift and remain separate from exact J850 matching. Checker
-classification and phone qualification remain open.
+original-input drift and remain separate from exact J850 matching.
+J1153 adds the explicit checker classification through pinned historical exact,
+repeated current and complete input/output difference evidence. Exact and
+drift-explained counts remain separate, and assembly preserves the current
+supplier bytes and payload-index hashes. The checker never reads historical
+originals or outputs; causal lineage and independent invocations still need
+review of the raw producer receipts. Phone qualification remains open.
+
+J1154 collects the phone native job's failed terminal timeout at compilation
+job 498. Its retained successful objects may support checked continuation;
+complete phone-native production, ordinary installation, both controls and
+matched first-stage performance remain open.
