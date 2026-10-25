@@ -35,7 +35,7 @@ CPU_ZONES = 'for z in /sys/class/thermal/thermal_zone*; do read -r t < "$z/type"
 ALL_ZONES = (
     "for z in /sys/class/thermal/thermal_zone*; do "
     'read -r t < "$z/type" || { printf "Thermal type read failed: %s\\n" "$z/type" >&2; exit 1; }; '
-    'read -r v < "$z/temp" || { printf "Thermal temp read failed: %s type=%s\\n" "$z/temp" "$t" >&2; exit 1; }; '
+    'read -r v < "$z/temp" || { printf "%s\\tUNREADABLE\\t%s\\n" "$t" "$z/temp"; continue; }; '
     'printf "%s\\t%s\\n" "$t" "$v"; done'
 )
 NON_TEMPERATURE_ZONES = {
@@ -76,6 +76,9 @@ def cooldown_temperatures(text):
     physical, excluded, cpu = [], [], []
     for line in text.splitlines():
         fields = line.split()
+        if len(fields) == 3 and fields[1] == "UNREADABLE":
+            excluded.append(dict(type=fields[0], path=fields[2], reason="Thermal temp read failed/unsupported"))
+            continue
         if len(fields) != 2:
             raise RuntimeError("Malformed all-zone thermal observation")
         name, raw = fields
@@ -118,24 +121,22 @@ class _GameThermalOwner:
         self.previous = None
         self.error = None
         self.peak_cpu_celsius = None
+        self.peak_zone_celsius = None
 
-    def sample(self, all_zones=False):
+    def sample(self, all_zones=True):
         before = time.monotonic()
         self.trace.parent.mkdir(parents=True, exist_ok=True)
-        observation = dict(utc=common.now(), all_zones=all_zones)
+        observation = dict(utc=common.now(), all_zones=True)
         try:
-            text = self.device.cmd("shell", ALL_ZONES if all_zones else CPU_ZONES, timeout=0.7)
+            text = self.device.cmd("shell", ALL_ZONES, timeout=0.7)
             at = time.monotonic()
             gap = at - self.previous if self.previous is not None else at - before
             self.previous = at
             observation["gap_seconds"] = gap
-            if all_zones:
-                observation["all_zones_raw"] = text
-            if all_zones:
-                maximum, value, excluded = cooldown_temperatures(text)
-                observation.update(maximum_zone_celsius=maximum, excluded_zones=excluded)
-            else:
-                maximum = value = cpu_temperature(text)
+            observation["all_zones_raw"] = text
+            maximum, value, excluded = cooldown_temperatures(text)
+            observation.update(maximum_zone_celsius=maximum, excluded_zones=excluded)
+            self.peak_zone_celsius = max(maximum, self.peak_zone_celsius or maximum)
             self.peak_cpu_celsius = max(value, self.peak_cpu_celsius or value)
             observation["cpu_celsius"] = value
         except BaseException as error:
@@ -145,11 +146,11 @@ class _GameThermalOwner:
             with self.trace.open("a") as stream:
                 stream.write(json.dumps(observation) + "\n")
         if gap > 1:
-            raise RuntimeError("CPU thermal sample gap exceeded one second")
+            raise RuntimeError("Thermal sample gap exceeded one second")
         if at >= self.deadline:
             raise RuntimeError("Three-hour alpha driver deadline reached")
-        if value > 80:
-            raise RuntimeError("CPU exceeded 80 C hard abort")
+        if maximum > 80:
+            raise RuntimeError("Readable thermal zone exceeded 80 C hard abort")
         return maximum
 
     def terminate_game(self):
@@ -198,7 +199,7 @@ class _GameThermalOwner:
 
         def stop_workload():
             # Package manager/ADB shutdown can be slow. It must never block the
-            # independent CPU sampler, including while a launch is in flight.
+            # independent thermal sampler, including while a launch is in flight.
             while not self.stop.is_set():
                 if not self.cancelled.wait(THERMAL_INTERVAL_SECONDS):
                     continue
@@ -234,7 +235,7 @@ class _GameThermalOwner:
                 if self.stopper.is_alive():
                     raise RuntimeError("Thermal stop worker failed to terminate")
             # The stage has unwound; no launch can race this final bounded stop.
-            # Keep CPU sampling alive through this operation, even if the stage
+            # Keep all-zone sampling alive through this operation, even if the stage
             # reported successful cleanup while a thermal shutdown was in flight.
             self._terminate_serially()
         finally:
@@ -396,8 +397,11 @@ def check_alpha_stability_batch(*, device_serial, expected_apk_sha256, canonical
                     raise stage_error
                 if not isinstance(stage, dict) or stage.get("success") is not True:
                     raise RuntimeError(name + " did not return explicit success")
-                result["stages"].append(dict(name=name, result=stage, peak_cpu_celsius=thermal.peak_cpu_celsius))
+                result["stages"].append(dict(name=name, result=stage, peak_cpu_celsius=thermal.peak_cpu_celsius, peak_zone_celsius=thermal.peak_zone_celsius))
             finally:
+                result["active_stage_peak_zone_celsius"] = thermal.peak_zone_celsius
+                zone_peaks = [value for value in (result.get("peak_zone_celsius"), thermal.peak_zone_celsius) if value is not None]
+                result["peak_zone_celsius"] = max(zone_peaks) if zone_peaks else None
                 result["active_stage_peak_cpu_celsius"] = thermal.peak_cpu_celsius
                 peaks = [value for value in (result.get("peak_cpu_celsius"), thermal.peak_cpu_celsius) if value is not None]
                 result["peak_cpu_celsius"] = max(peaks) if peaks else None

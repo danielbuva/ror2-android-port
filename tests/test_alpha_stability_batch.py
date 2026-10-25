@@ -128,6 +128,7 @@ class AlphaStabilityBatchTests(unittest.TestCase):
         ):
             thermal.return_value.finish.side_effect = thermal_errors or [None, None, None]
             thermal.return_value.peak_cpu_celsius = 79.5
+            thermal.return_value.peak_zone_celsius = 79.8
             if fail_at or terminal_error or expect_failure:
                 with self.assertRaises(RuntimeError):
                     batch.check_alpha_stability_batch(**self.args)
@@ -152,6 +153,7 @@ class AlphaStabilityBatchTests(unittest.TestCase):
         self.assertEqual([event[0] for event in events if isinstance(event, tuple)], ["sdk", "memory"])
         self.assertEqual([stage["name"] for stage in result["stages"]], ["settings-write-interrupt"])
         self.assertEqual(result["peak_cpu_celsius"], 79.5)
+        self.assertEqual(result["peak_zone_celsius"], 79.8)
         self.assertEqual(result["active_stage_peak_cpu_celsius"], 79.5)
         self.assertNotIn("interrupted_attempts", result)
         self.assertIn("CPU above80", result["error"])
@@ -243,7 +245,7 @@ class GameThermalOwnerTests(unittest.TestCase):
             self.assertEqual(self.owner.sample(), 56)
             with self.assertRaisesRegex(RuntimeError, "gap exceeded"):
                 self.owner.sample()
-        self.device.cmd.assert_called_with("shell", batch.CPU_ZONES, timeout=0.7)
+        self.device.cmd.assert_called_with("shell", batch.ALL_ZONES, timeout=0.7)
         self.device.cmd.side_effect = TimeoutError("hung ADB")
         with self.assertRaisesRegex(TimeoutError, "hung ADB"):
             self.owner.sample()
@@ -257,11 +259,14 @@ class GameThermalOwnerTests(unittest.TestCase):
         (first / "temp").write_text("34600\n")
         (failed / "type").write_text("pa1\n")
         (failed / "temp").write_text("")
+        last = root / "thermal_zone2"
+        last.mkdir()
+        (last / "type").write_text("cpu-0\n")
+        (last / "temp").write_text("49000\n")
         command = batch.ALL_ZONES.replace("/sys/class/thermal/thermal_zone*", str(root / "thermal_zone*"))
         result = subprocess.run(["/bin/sh", "-c", command], capture_output=True, text=True)
-        self.assertNotEqual(result.returncode, 0)
-        self.assertEqual(result.stdout, "pa\t34600\n")
-        self.assertIn(str(failed / "temp") + " type=pa1", result.stderr)
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(result.stdout, "pa\t34600\npa1\tUNREADABLE\t" + str(failed / "temp") + "\ncpu-0\t49000\n")
         (failed / "type").unlink()
         result = subprocess.run(["/bin/sh", "-c", command], capture_output=True, text=True)
         self.assertNotEqual(result.returncode, 0)
@@ -286,6 +291,34 @@ class GameThermalOwnerTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "80 C hard abort"):
             self.owner.sample()
         self.assertEqual(self.owner.peak_cpu_celsius, 80.001)
+
+    def test_runtime_uses_non_cpu_readable_zone_and_records_unsupported(self):
+        self.device.cmd.return_value = "cpu-0 49000\npm8550_tz 80000\npa1 UNREADABLE /thermal_zone1/temp"
+        self.assertEqual(self.owner.sample(), 80)
+        row = json.loads(self.owner.trace.read_text())
+        self.assertEqual(row["maximum_zone_celsius"], 80)
+        self.assertEqual(row["excluded_zones"], [dict(type="pa1", path="/thermal_zone1/temp", reason="Thermal temp read failed/unsupported")])
+        self.device.cmd.return_value = "cpu-0 49000\npm8550_tz 80001"
+        with self.assertRaisesRegex(RuntimeError, "80 C hard abort"):
+            self.owner.sample()
+        self.assertEqual(self.owner.peak_zone_celsius, 80.001)
+        self.assertEqual(self.owner.peak_cpu_celsius, 49)
+
+    def test_unreadable_zone_is_recorded_and_excluded_from_cooldown(self):
+        self.device.display.return_value = True
+        self.device.cmd.return_value = "cpu-0 50000\npa1 UNREADABLE /thermal_zone1/temp"
+        self.owner.cool()
+        row = json.loads(self.owner.trace.read_text())
+        self.assertEqual(row["maximum_zone_celsius"], 50)
+        self.assertEqual(row["excluded_zones"][0]["type"], "pa1")
+        self.device.cmd.return_value = "cpu-0 UNREADABLE /thermal_zone0/temp"
+        with self.assertRaisesRegex(RuntimeError, "No readable CPU"):
+            self.owner.cool()
+
+    def test_unreadable_cpu_does_not_substitute_for_a_readable_cpu(self):
+        self.device.cmd.return_value = "cpu-0 UNREADABLE /thermal_zone0/temp\npm8550_tz 40000"
+        with self.assertRaisesRegex(RuntimeError, "No readable CPU"):
+            self.owner.sample()
 
     def test_cooling_hysteresis_excludes_wait_from_game_attempt(self):
         self.device.display.return_value = True

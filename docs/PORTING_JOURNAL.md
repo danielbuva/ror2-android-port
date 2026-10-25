@@ -42264,3 +42264,35 @@ platform sensor applicability or an explicit revised thermal policy before a
 new gameplay case. SDK interruption, corrected heap attribution, sustained
 play and ordinary physical controls remain unqualified; no checklist item closes.
 
+## J1131 — Supervise all readable gameplay thermal zones
+
+**Hypothesis/scope:** the orchestrator's clarified gameplay policy excludes
+unreadable temperature interfaces while recording them, requires every readable
+physical zone at or below 50 C before launch, and aborts above 80 C on any
+readable physical zone. J1130's 28 EINVAL observations remain evidence of
+unreadable interfaces, without a claim that the sensors are cool or absent.
+This extends the existing generic device supervisor, without game runtime changes.
+
+**Change:** the shared owner records unreadable temperature type/path exclusions
+and continues reading remaining zones. Admission and runtime both sample the
+complete zone list. Non-CPU heat now aborts too; CPU and all-zone peaks remain
+separate. Exact known electrical pseudo-zones retain their exclusions. Unknown
+numeric sentinels, missing readable CPU coverage, malformed observations, ADB
+failures and gaps above one second still refuse. Gameplay never pauses or retries;
+the separate pausable-tool 70/55 C policy remains unchanged.
+
+**Validation:** 29 batch host tests and Ruff pass. Executable shell fixtures
+cover an unreadable temperature without losing preceding or later observations;
+parser/owner controls cover recorded admission/runtime exclusions, non-CPU
+80 C acceptance and above-80 C abort, all-unreadable refusal, sentinel refusal,
+and sampling gaps. Independent review reports GO. No build, installation,
+launch or new device evidence occurs in this checkpoint.
+
+**Evidence/next:** the existing ignored shared handoff
+`work/coordination/main-port-r58/thermal-handoff.json` pins the reviewed helper
+path and SHA for Main's R58 controls continuation; its separate ready done-file
+notifies the dispatcher. R58 APK
+`4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`
+remains the last installation receipt, with no accepted gameplay controls.
+Fresh device evidence is required before closing any public-alpha gate.
+

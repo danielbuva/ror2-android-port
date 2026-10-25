@@ -1325,10 +1325,12 @@ and canonical pruning precede lease release and atomic done-file publication.
 Foreign selectors/pending transactions are preserved, and failed terminal
 verification retains the lease for diagnosis. No installation is performed.
 The batch's independent temperature-zone observer targets 250 ms intervals and
-refuses a measured gap above 1 s. Gameplay continues through 80 C; above 80 C,
-missing sensors or failed supervision abort the batch without retry. Before
-each stage, all temperature zones must cool to at most 50 C with the OLED
-asleep. Runtime and unexpected failures retain first-failure authority; a
+refuses a measured gap above 1 s. Gameplay continues through 80 C; any readable
+physical zone above 80 C or failed supervision aborts the batch without retry.
+Before each stage, all readable temperature zones must cool to at most 50 C
+with the OLED asleep. Unreadable temperature interfaces are excluded with their
+type/path recorded; known electrical pseudo-zones remain excluded. Unknown
+numeric sentinels and missing readable CPU coverage still refuse admission. Runtime and unexpected failures retain first-failure authority; a
 bounded stop worker cannot block temperature sampling. The owner records the
 peak, prevents launches after cancellation and never suspends the native
 runtime. Completed stages checkpoint within one three-hour deadline; failed
