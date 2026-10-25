@@ -115,7 +115,10 @@ codec on Android (J1082). The same owner's
 qualifies all 281 single-mip records, the shared codec build and a complete
 5,006-record RGB/Alpha8/uncompressed phone regression (J1088).
 J1107 qualifies all 1,333 remaining single-mip RGBA records on the host, with
-its complete phone cohort open. J1110 qualifies all 1,589 ETC1 mip-chain records
+its complete phone cohort open after the interrupted guarded run in
+[J1123](PORTING_JOURNAL.md#j1123--guarded-rgba-phone-batch-loses-transport-admission-stays-open).
+Post-reboot evidence and a checkpointed single-job rerun are required.
+J1110 qualifies all 1,589 ETC1 mip-chain records
 on the host; Android production remains open. RGBA mips, cubemaps and complete
 bundle production remain open. Owner-build v1 uses the single accepted
 J850 target; current target metadata is an explicit profile input, and a newer
@@ -124,8 +127,9 @@ target follows a complete v1 phone build/run.
 The [standalone SDK tool runner](../tools/phone-build/accepted-output/README.md#build-the-standalone-sdk-tool-runner)
 has a public source build and shell-only Android controls (J1081). This permits
 testing separately acquired Linux SDK tools without an Editor/project workflow.
-The Linux RGBA codec does not reproduce the accepted target; neither shader/
-Burst execution nor ordinary app tool delivery follows from this control.
+J1081's Box64 RGBA control is not exact. J1107's later QEMU controls are exact,
+but the full phone cohort remains open; no complete owner installation follows
+from these standalone controls.
 The game keeps its native IL2CPP ARM64 execution backend.
 
 Many preparation and packaging stages have Android-capable open-source building

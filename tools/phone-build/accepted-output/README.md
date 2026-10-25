@@ -708,6 +708,25 @@ no output rewriting is used. Composed installation remains open. Failed new
 outputs are retained, and active private inputs are unchanged. Remove only disposable generated outputs after evidence
 is recorded; run the mandatory repository pruner after build/run work.
 
+## Resume interrupted texture production
+
+The existing texture producer's current experimental `--resume` accepts the
+same command, profile, PC input, codec/toolchain pins and output directory as
+the interrupted run. Normal invocation still requires a new output directory.
+The initial `result.json` persists those pins before encoding. Every completed
+object/resource extent is flushed and fsynced before its index row commits.
+Resume verifies the ordered index and all persisted extents against the
+profile, removes only uncommitted tails, and skips completed texture outputs.
+Unknown files, mismatched pins and corrupt committed data refuse recovery.
+The `objects.bin`, `resources.bin` and `index.jsonl` formats stay unchanged.
+
+Five authored host tests include real SIGKILL recovery and byte-exact fresh-run
+comparison. Android crash recovery remains open after
+[J1123](../../../docs/PORTING_JOURNAL.md#j1123--guarded-rgba-phone-batch-loses-transport-admission-stays-open).
+Recover the interrupted device's evidence and boot reason before cleanup or
+another run. SDK colour bands now execute one at a time; thermal monitoring
+and device ownership remain the caller's responsibility.
+
 ## Produce single-mip RGBA textures with the owner-supplied SDK
 
 Current experimental source-only support; full phone-cohort qualification is

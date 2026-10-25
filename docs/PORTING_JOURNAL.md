@@ -39742,3 +39742,82 @@ the existing content owners; this helper alone closes zero final-file readiness
 entries. Not every script needs recomputation, and genuinely changed/custom
 schemas remain separate source-transform work. Revisit on SDK, input, schema
 or identity changes; ordinary-app/device qualification remains open.
+
+## J1123 — Guarded RGBA phone batch loses transport; admission stays open
+
+2026-10-25. Source-only tool case against the fixed J850 content target. The
+complete phone cohort is interrupted and unqualified; no game build,
+installation or gameplay acceptance is claimed.
+
+**Hypothesis and prior art.** J1107's admitted public QEMU/GNU SDK controls and
+host-exact 1,333-record profile could complete together with the previously
+qualified 5,006-record regression under its revised two-job thermal protocol.
+The texture conversion, public decoder and codec prior art remains J1107's;
+this case introduces no new reconstruction mechanism. The frozen producer is
+source `9aea69926fb6673c7a64ee45453b99cb33250576`, retaining the explicit PC input,
+provider pins and existing object/resource/index interface.
+
+**Observed result and first failure.** The v8 host driver exits after
+7,141.789 seconds. Its first surfaced failure is the RGBA ADB shell returning
+255. Subsequent monitor, PID and thermal-log transfers fail because the device
+is unavailable. No completed production case is admitted: the terminal
+receipt's `cases` is empty. Production stdout/stderr retained on the host are
+empty. The orchestrator separately reports emergency/FastBoot state and a
+user reboot with data intact, followed by a hot zone and a cooldown lease.
+Host-file mtimes precede the later incident report; they do not establish a
+reconciled crash timestamp or its cause.
+
+The last retained idle observation is 38.6 degrees C. The subsequent 13-second
+authored SDK control observes at most 37.4 degrees C, a maximum 1.00138-second
+sample interval, battery 28 degrees C and HAL status 0. These are pre-production
+controls. The heavy producer's thermal trace and monitor result never reach
+the host. Its maximum temperature, sampling gaps, pauses, progress and reason
+for termination therefore remain unknown. Neither a thermal cause nor
+successful guard operation follows from the available evidence.
+
+**Guard and terminal limits.** The sampler runs on the device while the host
+waits on the producer. Its one-second loop allows intervals up to two seconds,
+uses synchronous CPU/`cpuss` sensor reads and tests staleness after those reads
+return. Individual sensor read errors are skipped. The older contract permits
+two SDK children and pause/resume/abort at 75/60/85 degrees C. Abort continues
+the owned group before termination and permits five seconds before forced
+kill. These controls do not provide hard real-time protection.
+
+Pre-run readback observes installed R55 APK SHA-256
+`111b1facec5b021c87dce03be24c9b81e913160809e685dc94b23e161786917a`.
+The driver requests no game install or launch. Terminal ADB failure prevents
+verification of process absence, scratch cleanup, display state and the
+installed APK after the interruption. The old host driver is subsequently
+absent; its local lease release and primary-checkout prune complete. Those
+host facts do not establish the device's terminal state. Preserve the remote
+scratch and recover its thermal log, partial index and boot reason before
+cleanup once device ownership is explicitly released.
+
+**Revisit conditions.** The orchestrator now owns the cooldown lease. No rerun
+occurs in this result. Later heavy cases must use one heavy job, a subsecond
+sampler enforcing at most one-second gaps, pause at 70 degrees C, resume at 55,
+abort above 80 and stop on lost telemetry. Long batches must checkpoint
+progress. Sequential SDK bands and durable verified index checkpoints belong
+in the existing texture owner; the pack interface stays unchanged. Review
+recovered boot/load evidence before another run. Full cohort, ordinary app
+delivery, bundle/player assembly and owner installation remain open.
+
+**Host repair after interruption.** The existing owner now serializes SDK colour
+bands and adds explicit `--resume` without changing the three pack formats.
+Initial input/profile/tool pins are persisted atomically; each body/resource
+fsync precedes its committed index row. Recovery verifies the complete ordered
+prefix and every extent before trimming uncommitted tails, then skips completed
+outputs. Five authored tests cover actual SIGKILL recovery, a partially committed
+canonical texture, binary/index tails, unchanged fresh-run packs, corruption and
+pin/source drift refusals, and data-before-index fsync ordering. The existing
+texture tests and Ruff also pass. This is a host recovery contract, not a phone
+crash-recovery, thermal or full-cohort qualification.
+
+**Evidence.** Private host receipts, authored controls, failed transfers and
+terminal output remain under
+`work/coordination/accepted-build-reconstruction/media-source-v1/device-rgba-batch-v8/`.
+The retained `driver-result.json`, `authored-sdk-controls-monitor.json` and
+numbered failed-transfer receipts are authoritative for the statements above.
+The ignored `device_rgba_batch_v8.py` and `measure_family_v6.py` retain the exact
+harness. Raw logs, original inputs, SDK providers and remote identifiers remain
+private; only this authored summary is published.

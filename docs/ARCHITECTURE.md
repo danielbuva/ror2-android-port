@@ -171,6 +171,12 @@ adds a pinned public stb/IJG JPEG tool but no Unity SDK, Editor or private
 discovery input. J1079 qualifies all 399 uncompressed records and the public
 JPEG-tool build on Android. Other texture formats and complete bundle assembly
 remain separate gates; no current game build or runtime consumes these packs.
+The same owner's current experimental `--resume` reuses its original profile,
+input/tool pins and existing output. Data fsync precedes every committed index
+row; recovery checks the ordered persisted prefix before truncating uncommitted
+tails and continuing. Initial/final receipts are replaced atomically. Host
+SIGKILL recovery qualifies this contract; Android crash recovery remains open
+after J1123. SDK colour bands run sequentially.
 The same owner supports the source Alpha8 cohort through
 `recipe/owner-alpha-textures.json`: canonical original bodies/pixels are reused
 with explicit target names, storage extents and unchanged-field admission.

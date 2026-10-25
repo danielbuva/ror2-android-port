@@ -57,7 +57,10 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       on Android, with all 5,006 RGB/Alpha8/uncompressed records reverified.
       [J1107](PORTING_JOURNAL.md#j1107--complete-host-rgba-production-and-bound-the-phone-thermal-refusal)
       qualifies all 1,333 remaining single-mip RGBA records on the host; its
-      complete phone cohort remains open.
+      complete phone cohort remains open after
+      [J1123](PORTING_JOURNAL.md#j1123--guarded-rgba-phone-batch-loses-transport-admission-stays-open)
+      records the interrupted guarded run. Post-reboot evidence and a
+      checkpointed single-job rerun are required.
       [J1110](PORTING_JOURNAL.md#j1110--produce-every-etc1-mip-chain-from-original-pc-textures-on-the-host)
       qualifies all 1,589 ETC1 mip-chain records on the host, with Android
       qualification open. RGBA mips, cubemaps and complete bundles stay open.

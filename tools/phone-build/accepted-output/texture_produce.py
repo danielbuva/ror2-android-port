@@ -459,6 +459,71 @@ def pixels_input(bundle, body, selected, jpeg_codec=None, etc_codec=None, sdk=No
     raise ValueError("unqualified texture operation")
 
 
+def texture_row(target, object_offset, resource_offset):
+    row = {
+        "bundle": target["bundle"],
+        "member": target["member"],
+        "path_id": target["path_id"],
+        "offset": object_offset,
+        "bytes": target["bytes"],
+        "sha256": target["sha256"],
+    }
+    if not target["inline"] and target["pixel_bytes"]:
+        row["resource"] = {"offset": resource_offset, "bytes": target["pixel_bytes"], "sha256": target["pixel_sha256"], "stream": target["stream"]}
+    return row
+
+
+def texture_receipt(output, receipt):
+    # Replacement keeps the initial pins readable even if the process is killed
+    # while replacing the final status. The index alone commits each extent.
+    with (output / "result.json.tmp").open("w") as stream:
+        stream.write(json.dumps(receipt, indent=2) + "\n")
+        stream.flush()
+        os.fsync(stream.fileno())
+    os.replace(output / "result.json.tmp", output / "result.json")
+    directory = os.open(output, os.O_RDONLY)
+    try:
+        os.fsync(directory)
+    finally:
+        os.close(directory)
+
+
+def texture_resume(output, profile, pins):
+    names = {"objects.bin", "resources.bin", "index.jsonl", "result.json"}
+    if not names <= {p.name for p in output.iterdir()} <= names | {"result.json.tmp"} or any(not p.is_file() or p.is_symlink() for p in output.iterdir()):
+        raise ValueError("unknown texture checkpoint output")
+    previous = json.loads((output / "result.json").read_text())
+    pin_names = {"input_id", "profile_sha256", "jpeg_codec_sha256", "etc_codec_sha256", "sdk_toolchain_sha256"}
+    if {k: previous[k] for k in pin_names if k in previous} != {k: pins[k] for k in pin_names if k in pins}:
+        raise ValueError("texture checkpoint input/profile/tool drift")
+    targets = iter(target for bundle in profile["bundles"] for member in bundle["members"] for texture in member["textures"] for target in texture["outputs"])
+    counts = {"objects": 0, "object_bytes": 0, "resource_bytes": 0}
+    index_end = 0
+    with (output / "objects.bin").open("rb") as objects, (output / "resources.bin").open("rb") as resources, (output / "index.jsonl").open("rb") as index:
+        for line in index:
+            if not line.endswith(b"\n"):
+                break  # An incomplete final line never committed its data.
+            target = next(targets, None)
+            row = json.loads(line)
+            if target is None or row != texture_row(target, counts["object_bytes"], counts["resource_bytes"]):
+                raise ValueError("texture checkpoint index order/extent drift")
+            for stream, extent in ((objects, row), (resources, row.get("resource"))):
+                if extent is not None:
+                    if hashlib.sha256(BUNDLE.exact(stream, extent["bytes"])).hexdigest() != extent["sha256"]:
+                        raise ValueError("persisted texture checkpoint extent drift")
+            counts["objects"] += 1
+            counts["object_bytes"] += row["bytes"]
+            counts["resource_bytes"] += row.get("resource", {}).get("bytes", 0)
+            index_end = index.tell()
+    # Validate the entire committed prefix before discarding uncommitted tails.
+    for name, size in (("objects.bin", counts["object_bytes"]), ("resources.bin", counts["resource_bytes"]), ("index.jsonl", index_end)):
+        with (output / name).open("r+b") as stream:
+            stream.truncate(size)
+            stream.flush()
+            os.fsync(stream.fileno())
+    return counts
+
+
 def produce(
     profile_path,
     profile_sha256,
@@ -470,6 +535,7 @@ def produce(
     etc_codec_sha256=None,
     sdk_toolchain=None,
     sdk_toolchain_sha256=None,
+    resume=False,
 ):
     if BUNDLE.sha(profile_path) != profile_sha256:
         raise ValueError("texture profile drift")
@@ -510,8 +576,15 @@ def produce(
             raise ValueError("public ETC codec drift or overlap with original input")
     parent = output.parent.resolve(strict=True)
     output = parent / output.name
-    if output.name in ("", ".", "..") or output.exists() or output.is_symlink() or parent.is_relative_to(pc) or pc.is_relative_to(output):
-        raise ValueError("texture output must be new and outside original input")
+    if (
+        output.name in ("", ".", "..")
+        or output.is_symlink()
+        or parent.is_relative_to(pc)
+        or pc.is_relative_to(output)
+        or (not resume and output.exists())
+        or (resume and not output.is_dir())
+    ):
+        raise ValueError("texture output must be new (or explicitly resumed) and outside original input")
     if sdk and any(Path(name).is_relative_to(output) for name in sdk["inputs"]):
         raise ValueError("texture output overlaps SDK toolchain")
     expected = sum(
@@ -521,9 +594,6 @@ def produce(
         for texture in member["textures"]
         for target in texture["outputs"]
     )
-    if shutil.disk_usage(parent).free < expected + 2 * 1024**3:
-        raise ValueError("insufficient texture output capacity")
-    output.mkdir()
     started = time.monotonic()
     receipt = {"success": False, "input_id": MESH.INPUT_ID, "profile_sha256": profile_sha256, "objects": 0, "object_bytes": 0, "resource_bytes": 0}
     if jpeg_codec is not None:
@@ -532,8 +602,20 @@ def produce(
         receipt["etc_codec_sha256"] = etc_codec_sha256
     if sdk is not None:
         receipt["sdk_toolchain_sha256"] = sdk_toolchain_sha256
+    if resume:
+        receipt.update(texture_resume(output, profile, receipt))
+    if shutil.disk_usage(parent).free < expected - receipt["object_bytes"] - receipt["resource_bytes"] + 2 * 1024**3:
+        raise ValueError("insufficient texture output capacity")
+    if not resume:
+        output.mkdir()
+        for name in ("objects.bin", "resources.bin", "index.jsonl"):
+            (output / name).touch(exist_ok=False)
+    texture_receipt(output, receipt)
+    committed, visited = receipt["objects"], 0
     try:
-        with (output / "objects.bin").open("xb") as objects, (output / "resources.bin").open("xb") as resources, (output / "index.jsonl").open("x") as index:
+        with (output / "objects.bin").open("r+b") as objects, (output / "resources.bin").open("r+b") as resources, (output / "index.jsonl").open("a") as index:
+            objects.seek(receipt["object_bytes"])
+            resources.seek(receipt["resource_bytes"])
             for selected_bundle in profile["bundles"]:
                 path = MESH.safe_input(pc, selected_bundle["path"])
                 before = path.stat()
@@ -543,33 +625,34 @@ def produce(
                 for selected_member in selected_bundle["members"]:
                     member = bundle.member(selected_member["name"])
                     for selected in selected_member["textures"]:
+                        completed = min(max(committed - visited, 0), len(selected["outputs"]))
+                        visited += len(selected["outputs"])
+                        if completed == len(selected["outputs"]):
+                            continue
                         member.seek(selected["offset"])
                         body = BUNDLE.exact(member, selected["bytes"])
                         if hashlib.sha256(body).hexdigest() != selected["sha256"]:
                             raise ValueError("original texture body drift")
                         pixels = pixels_input(bundle, body, selected, jpeg_codec, etc_codec, sdk)
                         pixel_sha = hashlib.sha256(pixels).hexdigest()
-                        for target in selected["outputs"]:
+                        for target in selected["outputs"][completed:]:
                             if pixel_sha != target["pixel_sha256"] or len(pixels) != target["pixel_bytes"]:
                                 raise ValueError("produced texture pixels differ from accepted hash")
                             result = body_output(body, selected["fields"], pixels, target, selected["operation"])
                             digest = hashlib.sha256(result).hexdigest()
                             if len(result) != target["bytes"] or digest != target["sha256"]:
                                 raise ValueError("produced texture body differs from accepted hash")
-                            row = {
-                                "bundle": target["bundle"],
-                                "member": target["member"],
-                                "path_id": target["path_id"],
-                                "offset": objects.tell(),
-                                "bytes": len(result),
-                                "sha256": digest,
-                            }
+                            row = texture_row(target, objects.tell(), resources.tell())
                             objects.write(result)
                             if not target["inline"] and pixels:
-                                row["resource"] = {"offset": resources.tell(), "bytes": len(pixels), "sha256": pixel_sha, "stream": target["stream"]}
                                 resources.write(pixels)
                                 receipt["resource_bytes"] += len(pixels)
+                            for stream in (objects, resources):
+                                stream.flush()
+                                os.fsync(stream.fileno())
                             index.write(json.dumps(row, sort_keys=True) + "\n")
+                            index.flush()
+                            os.fsync(index.fileno())
                             receipt["objects"] += 1
                             receipt["object_bytes"] += len(result)
                 after = path.stat()
@@ -600,7 +683,7 @@ def produce(
     finally:
         receipt["seconds"] = time.monotonic() - started
         receipt["peak_rss_bytes"] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * (1 if sys.platform == "darwin" else 1024)
-        (output / "result.json").write_text(json.dumps(receipt, indent=2) + "\n")
+        texture_receipt(output, receipt)
 
 
 def main():
@@ -609,6 +692,7 @@ def main():
     parser.add_argument("--profile-sha256", required=True)
     parser.add_argument("--pc", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--resume", action="store_true", help="verify and resume an existing durable texture checkpoint")
     parser.add_argument("--jpeg-codec", type=Path)
     parser.add_argument("--jpeg-codec-sha256")
     parser.add_argument("--etc-codec", type=Path)
@@ -627,6 +711,7 @@ def main():
         args.etc_codec_sha256,
         args.sdk_toolchain,
         args.sdk_toolchain_sha256,
+        resume=args.resume,
     )
 
 
