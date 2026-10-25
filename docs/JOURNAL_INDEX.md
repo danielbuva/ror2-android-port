@@ -10,6 +10,19 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1152](PORTING_JOURNAL.md#j1152--preserve-r58-thermal-abort-before-baseline-world-play) | 2026-10-25 | Preserve R58 thermal abort before baseline world play | **Hypothesis and fixed candidate.** |
+| [J1121](PORTING_JOURNAL.md#j1121--match-native-blink-travel-ticks-and-qualify-engineer-beam-configuration) | 2026-10-24 | Match native Blink travel ticks and qualify Engineer beam configuration | **Hypothesis and prior evidence.** |
+| [J1111](PORTING_JOURNAL.md#j1111--build-the-destination-only-mainoutput-observation-candidate) | 2026-10-24 | Build the destination-only MainOutput observation candidate | **Hypothesis and existing ownership.** |
+| [J1108](PORTING_JOURNAL.md#j1108--admit-automatic-huntress-mobility-against-original-landing-terrain) | 2026-10-24 | Admit automatic Huntress mobility against original landing terrain | **Hypothesis and source review.** |
+| [J1105](PORTING_JOURNAL.md#j1105--qualify-r55-controls-and-source-view-teardown-retain-the-route-stall-before-siren) | 2026-10-24 | Qualify R55 controls and source-view teardown; retain the route stall before Siren | **Hypothesis and fixed player.** |
+| [J1101](PORTING_JOURNAL.md#j1101--integrate-current-ui-and-heap-owners-with-the-collisionrenderingsiren-candidate) | 2026-10-24 | Integrate current UI and heap owners with the collision/rendering/Siren candidate | **Hypothesis and integration.** |
+| [J1097](PORTING_JOURNAL.md#j1097--batch-original-collision-rendering-and-siren-changes-with-existing-retention-fixes) | 2026-10-24 | Batch original collision, rendering and Siren changes with existing retention fixes | **Hypothesis and reuse.** |
+| [J1096](PORTING_JOURNAL.md#j1096--restore-the-source-collision-policy-before-native-projectile-impacts) | 2026-10-24 | Restore the source collision policy before native projectile impacts | **Hypothesis and prior evidence.** |
+| [J1090](PORTING_JOURNAL.md#j1090--account-for-original-siren-boss-and-probe-destruction) | 2026-10-24 | Account for original Siren boss and probe destruction | 2026-10-24 UTC. |
+| [J1089](PORTING_JOURNAL.md#j1089--prepare-original-siren-eggs-on-ordinary-stage-entry) | 2026-10-24 | Prepare original Siren eggs on ordinary stage entry | 2026-10-24 UTC. |
+| [J1087](PORTING_JOURNAL.md#j1087--honor-native-siren-target-range-and-verify-original-graphics-clones) | 2026-10-24 | Honor native Siren target range and verify original graphics clones | 2026-10-24 UTC. |
+| [J1085](PORTING_JOURNAL.md#j1085--restore-the-original-source-camera-global-post-processing-roles) | 2026-10-24 | Restore the original source-camera global post-processing roles | 2026-10-24 UTC. |
+| [J1083](PORTING_JOURNAL.md#j1083--reconstruct-source-sobel-graphics-and-freeze-corrected-normal-player) | 2026-10-24 | Reconstruct source Sobel graphics and freeze corrected normal player | 2026-10-24 UTC. |
 | [J1151](PORTING_JOURNAL.md#j1151--reconstruct-125-complete-shader-files-from-original-and-authored-source) | 2026-10-25 | Reconstruct 125 complete Shader files from original and authored source | **Hypothesis / prior art.** |
 | [J1147](PORTING_JOURNAL.md#j1147--reconstruct-original-ui-alpha-and-five-more-authored-shader-files) | 2026-10-25 | Reconstruct original UI Alpha and five more authored Shader files | 2026-10-25 UTC. |
 | [J1146](PORTING_JOURNAL.md#j1146--produce-two-complete-moon-preview-shaders-from-source) | 2026-10-25 | Produce two complete Moon preview Shaders from source | 2026-10-25 UTC. |

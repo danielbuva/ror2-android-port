@@ -3076,3 +3076,9 @@ applies the native config APIs to inert states, inspects their native phase
 construction and restores every captured static. It retains no original config
 payload, implementation, audio or asset bytes in Git. These are authored contract
 checks and an input-admission correction, with device behavior still unverified.
+
+J1152 integration refreshes direct and transitive shader-helper hash pins after
+merging current main's metadata validation with the source Sobel producer.
+Manual provenance/privacy review retains existing authored tooling and recipe
+selectors only; no protected content or new build input is introduced. Frozen
+R58 predates this integration; no device qualification is implied.

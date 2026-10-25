@@ -87,7 +87,7 @@ EXPECTED_SHADER_ROWS = [
 EXPECTED_HELPERS = {
     "shader_deferred.py": "9fa121e6b5f3e769c365eb3b4092c2a460c7a05bbe5617f3ccba01958acaef39",
     "shader_metadata.py": "1701b9a0f621cd29c4f16fbb594676401d4a81cf2d02b5ab10664ce8aa629318",
-    "shader_ramp_fog.py": "7e7fe1089b5a64f80e30151948072e9becd658569e8fd277dc02a4335af9e865",
+    "shader_ramp_fog.py": "a81eade20c1771e4511925a64d6c3b66fe7acab6ef3687fc19b08fe3b17dfece",
     "shader_segments.py": "2cba875459a7ea35f9f0279696569fd05a6429c9f4b206ad331d5b723dca4872",
     "shader_source.py": "d712407d715c37e79806207bd763bf2dc7d502a861366af2784ae8e63e3c026c",
 }

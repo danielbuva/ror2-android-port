@@ -42598,6 +42598,34 @@ once. All evidence and original failed attempts remain local; no artifacts are
 copied. Doctor still passes accepted-input/project checks and reports the known
 historical bootstrap gate as blocked.
 
+**Read-only comparison and publication.** Accepted R55's plain-control log and
+report at `work/experiments/baseline/20261024T221128.919258Z` show essentially
+the same startup intervals: shader warning to population is 166.818 s versus
+166.991 s for R58; baseline-profile backup to population is 54.525 s versus
+54.466 s. Both report a roughly 47.2 s maximum frame. These observations do not
+establish a new R58 setup regression or identify which original setup operation
+owns the stall. Additional cooldown alone is not established as a remedy.
+Baseline-start to population is about 190.1 s for R58 and 190.4 s for R55;
+J850's older baseline (`work/experiments/baseline/20261020T232945.363181Z`)
+takes 167.4 s to that landmark. These are not exact time-to-world observations.
+Comparable old CPU-temperature curves are absent, so hotter execution and
+regression versus environment cannot be determined. Recorded display refresh
+is 120 Hz for J850/R55 and 60 Hz for R58, without established causality; the
+300 FPS request follows setup, which retains the prior -1 setting.
+
+The crossing neighborhood records maxima 76.8, 77.2, 81.6, 78.8, 63.7, 78.8
+and 60.1 C at roughly 0.30 s intervals. It does not contain three consecutive
+above-80 C samples. However, force-stop begins after the first crossing:
+subsequent cooling is affected by that intervention, so this trace cannot show
+that requiring three crossings would safely allow continued play or avoid later
+sustained heat. No thermal limit is changed. The focused post-rebase suite passes
+426 tests; Ruff and staged provenance/privacy checks remain required before push.
+The branch is rebased onto current main, preserving its journal entries and
+other workstreams' snapshot facts. Merged shader-helper metadata validation
+requires refreshed direct and transitive hash pins; these are source changes
+since the frozen APK, not a claim that R58 contains rebased source. Native
+behavior and the installed candidate are unchanged by this host publication.
+
 **Terminal ownership and remaining gates.** Independent cleanup records app
 process and selector absent, OLED asleep and lease released. Mandatory post-run
 pruning passes. Explicit terminal handoff yields the shared device to the queued
