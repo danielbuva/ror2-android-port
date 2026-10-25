@@ -146,12 +146,12 @@ gates.
 
 ## Produce named player-data files
 
-`player_data.py` produces 152 canonical `apk/assets/bin/Data/...` files:
+`player_data.py` produces 153 canonical `apk/assets/bin/Data/...` files:
 SDK default resources, three fresh converter resource files, two script metadata
 JSON files derived from original PC metadata plus authored initialization/order,
 the embedded font serialized file, two original line-breaking TextAssets, the
-authored runtime JSON TextAsset, 64 standalone Sprite files, the original
-TimerStringFormatter, three original TMP objects, six materials and 68 standalone
+authored runtime and bootstrap JSON TextAssets, 64 standalone Sprite files,
+the original TimerStringFormatter, three original TMP objects, six materials and 68 standalone
 textures from existing source-produced packs. The font, material and texture bodies and their
 type identities/dependency come from one original PC bundle; only
 four checked reference identities change. The generic writer generates its
@@ -162,7 +162,10 @@ providers remain separate inputs to full composition. The authored full-rectangl
 Sprite generates four corners and two triangles from original bounds and
 recovered pivot/border/pixel scale, matching the existing HUD policy. The runtime TextAsset
 formats the pinned sibling `runtime-config.json` through the existing authored
-JSON policy.
+JSON policy. The pinned `owner-bootstrap.json` follows the existing
+`generate_build_bootstrap` policy with the public fixed attempt identity and
+four original preload keys absent from the original catalog. These are minimum
+source relationships, not object bodies or a target byte template.
 
 ```sh
 python3 -I -S -B tools/phone-build/accepted-output/player_data.py \
@@ -194,7 +197,7 @@ hashes are checked again before completion. A missing/failed/changed pack refuse
 Stage `player_data.py`, `sdk_inputs.py`, `object_produce.py`, `mesh_produce.py`,
 `unity_mesh.py`, `unity_bundle.py`, `unity_write.py` and the selected recipe as
 sibling Python inputs for an Android replay. Keep the pinned
-`runtime-config.json` beside the selected player profile. No native codec is
+`runtime-config.json` and `owner-bootstrap.json` beside the selected player profile. No native codec is
 needed for this assembly step; its texture producers retain their own codec/SDK
 requirements. The converter input is its successful `result.json` and its
 three `data/Resources/...` outputs, not files extracted from an accepted APK.

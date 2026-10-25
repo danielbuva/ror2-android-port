@@ -604,6 +604,10 @@
     "ff579ba37da12e3428ceb17a6db2a4ec": {
       "bytes": 1052804,
       "sha256": "5b895ff868b0a8273db6d6f20b5b114c4e2cd5285abad74cc15d28bd0b26bb9f"
+    },
+    "1a65bcd77dc4a4ea1b339b04cfa6b11c": {
+      "bytes": 4464,
+      "sha256": "1245e0ff492b52d8227ba708f4370896a94ed9f3871d508e142c411fcaa811a5"
     }
   },
   "project_assemblies": [
@@ -781,6 +785,17 @@
         "sha256": "ed7456b8000739975fa0b8368776271896cdbe7ff81c923eb3f0eefa1d59a4e8",
         "source_path_id": -5385084587632863328,
         "source_sha256": "ed7456b8000739975fa0b8368776271896cdbe7ff81c923eb3f0eefa1d59a4e8"
+      },
+      {
+        "file": "1a65bcd77dc4a4ea1b339b04cfa6b11c",
+        "bytes": 368,
+        "sha256": "c9a8150a877b81a06612e51b911c73fab917f04ab7c854a3393bdb7b503eaa2d",
+        "name": "WholeCatalogBootstrap",
+        "recipe": {
+          "path": "owner-bootstrap.json",
+          "bytes": 333,
+          "sha256": "05e6888c0ce89b86079923137e04368daf6443dbf147d0e4ca0ff3d0a81d2382"
+        }
       }
     ]
   },

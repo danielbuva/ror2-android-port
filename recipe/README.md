@@ -160,7 +160,8 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-23.
 | `owner-teleport-material-objects.json` | Private teleport-material bundle | Original material/type selectors, checked references, named dummy-shader keyword policy and container relationships. | No material/shader body, keyword literal, numeric override or target template; audit below, 2026-10-25. | Source-only `object_produce.py`; J1117 host qualification, phone gate open. |
 | `owner-death-effect-objects.json` | Private replay player-death-effect bundle | Rooted original graph/script selectors, checked pointer extents, preload/dependency identities and hashes. | No body, type-tree snapshot, scalar/curve override or target delta; audit below, 2026-10-25. | Existing original-input-only `object_produce.py`; J1115 host qualification, phone gate open. |
 | `owner-pickup-objects.json` | Private replay pickup bundle | Original selectors, hashes, checked pointer extents and destination relationships. | No bodies, type trees or target deltas; full audit below, 2026-10-25. | Original-input-only `object_produce.py`; J1113 host qualification, phone gate open. |
-| `owner-player-data.json` | 152 private player files | Original object selectors, checked pointers/importer relationships, authored JSON/assembly order and existing texture-pack record identities. | No game bodies, pixels, text payloads, type-hash overrides or private identifiers; full audits below, 2026-10-25. | Explicit PC/SDK/fresh-converter and pinned source-produced texture packs; J1118 host qualification, PR75 dependency and phone gates open. |
+| `owner-bootstrap.json` | Authored bootstrap TextAsset | Existing public build-entry attempt identity/input ID and four original preload GUID relationships absent from the original catalog. | No object/body/type-tree/target template or protected text; audit below, 2026-10-25. | Existing `player_data.text_files`; J1118 host qualification, phone gate open. |
+| `owner-player-data.json` | 153 private player files | Original object selectors, checked pointers/importer relationships, authored JSON/assembly order and existing texture-pack record identities. | No game bodies, pixels, text payloads, type-hash overrides or private identifiers; full audits below, 2026-10-25. | Explicit PC/SDK/fresh-converter and pinned source-produced texture packs; J1118 host qualification, PR75 dependency and phone gates open. |
 | `owner-uncompressed-textures.json` | Private replay uncompressed texture bodies/pixels | Original/destination selectors, source extents, generic import/placement metadata and hashes; copy, BC1, source-coordinate dilation and public JPEG policy. | No pixels, palettes, target literals/patches, native SDK implementation or image/library bytes; full audit above, 2026-10-24. All 399 records qualify on host/Android in J1079. | Explicit PC-input-only `texture_produce.py` and separately built public JPEG tool; no current game-build consumer. |
 | `owner-alpha-textures.json` | Private replay source Alpha8/single-mip texture cohort (J1082) | Canonical original/destination selectors, source/field extents, import/storage settings and hashes. | No alpha samples, encoded blocks, target byte frames, protected source or private identifiers; full audit below, 2026-10-24. | Original-PC-input-only `texture_produce.py` plus separately built public codec; no game-build consumer. |
 | `owner-rgb-textures.json` | Complete ETC1/single-mip target cohort | Original/destination selectors, field/pixel extents, hashes and source JPEG policy; composition aliases reuse original Warp/Elite ramps. | No colors, normal vectors, palettes, encoded blocks or target byte frames; audit below, 2026-10-24. | Original-input-only `texture_produce.py` and public ETC/JPEG tools; J1088 qualifies all 281 records on Android. |
@@ -2600,3 +2601,15 @@ providers remain unchanged. Provenance/privacy/licensing/sensitive-content
 audit: 2026-10-25; J1118. Raw discovery, receipts and all generated content stay
 ignored. Phone qualification and ownership/entitlement/distribution boundaries
 remain unchanged.
+
+J1118's `owner-bootstrap.json` uses the existing public fixed attempt identity
+from `build-entry-inputs.json` and the accepted input identity. Four minimum
+original `preloadGUIDReferences` relationships are selected from the original
+Engi, Huntress, Reaperboss and Totem state records and independently confirmed
+absent from the original Addressables catalog's decoded string keys. Their
+sorted membership follows the existing `generate_build_bootstrap` policy.
+The existing TextAsset writer reads its native type metadata from the already
+selected original PC bundle and serializes this authored descriptor. No game
+text, object body, type hash, shader, target byte frame or private identifier
+is included. Full original field extents and membership proof stay ignored.
+Provenance/privacy/licensing/sensitive-content audit: 2026-10-25; J1118.

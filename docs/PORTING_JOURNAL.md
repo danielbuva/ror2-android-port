@@ -39317,6 +39317,23 @@ The complete source/SDK/fresh-converter player cohort is **152 files**,
 independently compared byte-for-byte with the frozen J850 reference; all pass.
 Production itself reads no accepted APK, target file or replay packet.
 
+A final source-text extension uses the existing TextAsset recipe path for
+`WholeCatalogBootstrap`, without changing producer code. Its attempt identity
+already exists in public `recipe/build-entry-inputs.json`; its four sorted
+missing preload GUID relationships are read independently from original Engi,
+Huntress, Reaperboss and Totem state records and checked absent from the original
+Addressables catalog's 83,490 decoded keys. This follows the existing
+`generate_build_bootstrap` policy and the prior-art catalog-key identity rule.
+The pinned `owner-bootstrap.json` contains only those minimum relationships and
+authored attempt/input metadata. Original PC native TextAsset metadata supplies
+the envelope; no accepted body or target type template is read. The resulting
+4,464-byte file has SHA-256
+`1245e0ff492b52d8227ba708f4370896a94ed9f3871d508e142c411fcaa811a5`.
+The complete extended cohort is **153 files**, **32,407,245 bytes**, produced
+in **5.369 seconds**, with all complete files independently raw-exact. Existing player,
+writer, object and recipe fixtures pass **32 checks**, with **four architecture
+checks** also passing. Independent provenance review finds no blocker.
+
 **Dependencies, first limits and verification.** Independent review identifies
 an explicit public dependency: 54 selected texture files use RGBA profile
 `76e596c4ec3049e471f292d42b2b623092e05596a1a756be66ff08e73bbe6f96`
@@ -39342,20 +39359,21 @@ pointer relationships and producer-record identities, with no game/SDK bytes,
 raw evidence, private identifiers/paths or secrets published.
 
 **Readiness and terminal state.** The canonical partial tree hardlinks only
-**155 independently produced content files**: three previous complete bundles
-and 152 player files, **32,441,666 bytes**. With the same 18 code/SDK suppliers,
-readiness is **173 of 705 available, 532 content files missing** (401 APK and
+**156 independently produced content files**: three previous complete bundles
+and 153 player files, **32,446,130 bytes**. With the same 18 code/SDK suppliers,
+readiness is **174 of 705 available, 531 content files missing** (400 APK and
 131 payload), zero invalid/mismatched entries and no replay fallback. This
-closes **77 final entries**, **10,777,960 bytes**. Availability is separate from
+closes **78 final entries**, **10,782,424 bytes**. Availability is separate from
 complete public source provenance and phone/runtime qualification, which remain
 false/open. The required RGBA publication dependency remains explicit.
 
 Full production and independent comparison are
-`work/coordination/p1-player-assembly-v1/full-host-v1/result.json` and
-`full-host-v1-comparison.json`. The same evidence root retains
-`generic-nine-proof.json`, `texture-68-proof.json`, the original-input selector
+`work/coordination/p1-player-assembly-v1/full-host-v2/result.json` and
+`full-host-v2-comparison.json`. The same evidence root retains
+`generic-nine-proof.json`, `texture-68-proof.json`,
+`bootstrap-source-proof-v1.json`, the original-input selector
 qualifiers and explicit local producer arguments. Canonical composition and
-readiness request/report are in `work/coordination/p1-content-source-host-v6/`.
+readiness request/report are in `work/coordination/p1-content-source-host-v7/`.
 Main-checkout pruning removes zero bytes and preserves evidence. No device
 state changes; the combined source-only phone replay remains queued behind the
 texture worker's independently released lease. Revisit after PR75 lands, for
