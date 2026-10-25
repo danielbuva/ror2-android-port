@@ -120,7 +120,10 @@ public final class ToolHostActivity extends Activity {
     }
     private JSONObject child(String label, List<String> arguments, File directory, File nativeDir, File links) throws Exception {
         File output=new File(directory,label+".log");
-        ProcessBuilder builder=new ProcessBuilder(arguments).directory(directory).redirectErrorStream(true).redirectOutput(output);
+        // Pin before interpreter/JVM startup; a periodic watcher can miss its short heat spike.
+        List<String> command=new ArrayList<>(Arrays.asList("/system/bin/taskset","1"));
+        command.addAll(arguments);
+        ProcessBuilder builder=new ProcessBuilder(command).directory(directory).redirectErrorStream(true).redirectOutput(output);
         Map<String,String> env=builder.environment();
         for(String key:new ArrayList<>(env.keySet())) if(key.startsWith("DOTNET_") || key.startsWith("MONO_") || key.startsWith("CORECLR_") || key.startsWith("COMPlus_")) env.remove(key);
         env.put("LD_LIBRARY_PATH",nativeDir.getCanonicalPath()+":"+links.getCanonicalPath());

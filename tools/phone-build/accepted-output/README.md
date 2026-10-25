@@ -523,7 +523,10 @@ retains intermediate source, process logs and `result.json`. The authored Java
 caller invokes unchanged public SDK tools; it contains no SDK implementation or
 game Java. The APK tree is disjoint from content's `assets/bin/Data`/payload and
 the three explicit game-code outputs. Accepted APK bytes are never suppliers.
-The host equivalence result is J1109; ordinary app execution and composed
-installation remain open. Failed new outputs are retained, and active private
-inputs are unchanged. Remove only disposable generated outputs after evidence
+J1109 records host equivalence and successful ordinary-app production. Eleven
+phone entries are raw-exact; `classes2.dex` and `classes4.dex` differ only in
+embedded class checksums and derived DEX headers because the Java 11 and 21
+compilers order class constant pools differently. All remaining DEX bytes match;
+no output rewriting is used. Composed installation remains open. Failed new
+outputs are retained, and active private inputs are unchanged. Remove only disposable generated outputs after evidence
 is recorded; run the mandatory repository pruner after build/run work.

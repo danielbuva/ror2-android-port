@@ -399,5 +399,9 @@ while the phone product is completed. No final distribution architecture is
 adopted solely from byte-reconstruction success.
 
 J1109 qualifies all 13 generic Android package entries from pinned SDK/public
-tools on the host, raw byte-identical to J850. The ordinary Android app-host
-producer, complete content composition and final installation remain open.
+tools on the host, raw byte-identical to J850. Ordinary Android app-host production
+also succeeds: 11 entries are raw-exact; the other two DEX files differ only in
+compiler-generated class checksums and derived DEX headers, with all remaining
+bytes exact. Startup reaches 95.5 C before the guard pauses the jobs; startup CPU
+affinity is being qualified separately. Complete content composition, thermal
+qualification and final installation remain open.

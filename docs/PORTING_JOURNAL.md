@@ -38513,8 +38513,8 @@ remain open. These tool passes do not establish game readiness or entitlement.
 
 ## J1109 — Reproduce the generic Android package entries from the owner SDK
 
-2026-10-25. Host qualification; Android execution and composed installation remain
-open. This slice supplies no game content or managed/native gameplay code.
+2026-10-25. Host and ordinary-app production qualification; composed installation
+remains open. This slice supplies no game content or managed/native gameplay code.
 
 **Hypothesis and source.** The remaining four DEX files, binary manifest, resource
 table, five icon files and two generic native libraries can be produced from the
@@ -38580,8 +38580,42 @@ and owner-backend tests pass; Ruff passes. The broader SDK wildcard also selects
 an unrelated metadata test that needs CI's module search path; that invocation
 fails at import and supplies no metadata result.
 
-**Open and revisit.** Corrected ordinary-app SDK execution remains open.
-The complete original-input native job and full content assembly also remain
-open. No game APK is assembled, installed or launched by this result, and no
-phone runtime/performance/security qualification is inferred. Revisit after the
-exact public producer runs in the ordinary Android tool host.
+**Ordinary-app result and deterministic difference.** The fourth run completes
+all production steps in the existing ordinary app host: backend exit 0 in
+37.404543 seconds, 45.086035 seconds including collection. The installed tool APK
+is `f8f2f3a135cbae88fe065a50f2480dd04475d2d37233fc8b0d97201a60867dbb`, built
+from `1969a04c`. Eleven of the 13 output entries are raw-exact to J850. Only
+`classes2.dex` and `classes4.dex` differ. Every difference is confined to D8's
+embedded source-class CRC strings and the DEX header checksum/signature derived
+from them. Every other byte, including executable code, matches. The SDK
+activity and generated BuildConfig classes target Java 11 on both platforms,
+but the Android OpenJDK 21 compiler orders their class constant pools differently
+from the host OpenJDK 11 compiler. No output bytes are rewritten or substituted.
+The private comparison driver reports `success: false` because its raw-hash
+assertion fails; the independent app and backend reports both succeed.
+
+Private `android-sdk-phone-v4-{report,result,proof}.json` records execution and
+all 13 comparisons; `android-sdk-phone-v4-collected/` retains the two DEX files,
+source-class JARs and D8 process evidence, and
+`android-sdk-phone-v4-difference-proof.json` bounds the byte differences. These
+outputs come from SDK/public-tool inputs only. The original long-running native
+app package and inputs remain untouched. The existing sole thermal guard
+continues; no display or game launch is needed for this headless job.
+
+The sampled tool UID peaks at 319,516 KiB RSS, and the completed output uses
+60,241 KiB on-device. Private `android-sdk-phone-v4-resources.json` records those
+observations, free storage and both physical panels off. The kernel CPU sensor
+briefly reaches **95.5 C** at startup: the sole guard pauses the jobs and resumes
+at 52.5 C. This is a thermal failure, not a cool-run qualification. A periodic
+watcher cannot constrain a child before observing its PID. The tool host now
+prefixes children with Android `taskset 1`, setting CPU 0 before interpreter/JVM
+startup and inheriting that affinity into descendants. The existing guard stays
+in place. This authored change awaits the next tool APK/device check; it does not
+alter the original running native package.
+
+**Open and revisit.** Raw DEX identity retains the documented compiler-checksum
+difference; byte identity would require using the same Java compiler. The
+complete original-input native job and full content assembly remain open. No
+game APK is assembled, installed or launched by this result, and no phone
+runtime/performance/security qualification is inferred. Revisit final composition
+when both code and content producers have completed.

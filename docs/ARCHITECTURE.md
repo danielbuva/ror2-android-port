@@ -131,7 +131,12 @@ source/tool hashes are checked before and after production. The existing
 and QEMU host. Java children retain the explicit app-host JVM/home/library
 environment and use the current output's temporary directory. [Setup/lifecycle](../tools/phone-build/accepted-output/README.md#produce-the-generic-android-package-entries)
 keeps this owner separate from content, game-code production and final signing.
-J1109 qualifies host byte equivalence; phone execution remains open.
+The tool host starts children through Android `taskset 1` before interpreter/JVM
+initialization; descendants inherit CPU 0 while the external thermal guard
+continues. This applies to build tools only and trades throughput for startup
+CPU restraint. J1109 qualifies host byte equivalence and ordinary-app production. Eleven phone
+entries are raw-exact; two DEX files retain only compiler-class checksum and
+header differences. Final composed installation remains open.
 `phone_decode.py` in that directory owns current
 experimental **support**, not game runtime: explicit new owned workspace, pinned
 private package and verified PC/SDK inputs produce complete target files and an
