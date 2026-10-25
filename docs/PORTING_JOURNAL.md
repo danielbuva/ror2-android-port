@@ -40077,3 +40077,218 @@ authentication, entitlement or redistribution capability is granted.
 Revisit on original input, schema, selected relationship, algorithm, interpreter
 or reader changes. Phone production, complete source content, installation and
 matched runtime/performance remain open; Architecture C/IL2CPP ARM64 is fixed.
+
+## J1132 — Produce the complete enemy-reward payload from original input
+
+Date: 2026-10-25 UTC. Host-only source production; no Unity Editor, device,
+installation or runtime test. Accepted comparison: J850 APK SHA-256
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+**Hypothesis and prior art.** J1050 and J1120 identify enemy reward as a
+high-reuse candidate blocked by one original MonoScript properties hash and
+five MonoBehaviour type hashes. J1116 already qualifies the structural writer;
+do not repeat its accepted-record census. Read those entries and J1124 before
+production. Consulted `community-prior-art.md` and pinned UnityPy 1.25.3
+`ObjectReader`/`SerializedFile`: their source object/type/script identities
+separate original bytes from regenerated reference tables. J1124's existing
+source-schema hash helper resolves the missing hash computation. No upstream
+implementation, original body or SDK schema is copied into public source.
+
+**Implementation.** Extend the existing `object_produce.py` and audited
+`owner-enemy-reward-objects.json`. Physical preload partitions retain their
+original rooted order independently of sorted container paths. Native
+`Library/unity default resources` uses its resource identity. The explicit
+`--sdk` admission reads the pinned native MonoBehaviour editor base; original
+MonoScript identity strings and original custom schema feed the landed
+`script_identity.properties_hash` helper. Only the properties-hash body span
+or matching behaviour type-hash field changes. Every other body/type byte
+remains source-owned. Original source selectors supply both unchanged meshes.
+No target type/hash/body template, accepted provider or replay supplier exists.
+SDK/PC hashes are verified before and after production.
+
+**Result.** Run the unmodified public producer with `python3 -I -S -B` and
+explicit PC/SDK/public LZ4 inputs into new private output. All **203 objects**,
+**201,369 body bytes**, the **388,484-byte serialized member** and the complete
+**65,286-byte enemy-reward-lab** match J850. Serialized SHA-256:
+`5f9794a1c9ce9c45de211755f1834e361ac08e1fc81284c0ca9c178d245927c0`.
+Full UnityFS SHA-256:
+`e685a5b23c33ba3a6c2eff39dc53a3c582691aef3780b1f76ad91d51d73a85b6`.
+Production takes 0.784 seconds. Independent post-production readback compares
+the entire bundle and member raw-exact, and verifies all 203 persisted object
+extents. This is the seventh complete source-derived host bundle.
+
+Private evidence is under
+`work/coordination/p1-payload-reward-discovery-v1/`: `public-host-v2/result.json`
+and `public-host-v2-comparison.json`. The recipe SHA-256 is
+`7ae92750f7b36b21a9db4172326be99b5d2dc9e7624057c591002e71218e8900`.
+The SDK source SHA-256 is
+`25bcb42474a8e1d639d4835a28fa2017dc153e2612e3961c6b09895f5ac3a190`.
+Raw source/comparison material stays ignored. Canonical source union
+`work/coordination/p1-content-source-host-v9` also incorporates the player's
+qualified UI source slice: **186/705 ready**, **519 missing**
+(**392 APK / 127 payload**), **zero invalid/mismatched**. The checker consumes
+its comparison manifest only as an inventory oracle, never as a content provider.
+
+**First failure and checks.** The first public attempt refuses the recipe's
+incorrect SDK filename before reading any object. Correct it to the actual
+pinned `unity editor resources` path; the second new output completes. Fourteen
+authored producer contracts, Ruff and host preflight pass. Tests cover the
+independent preload/container order, native resource identity, SDK admission,
+original script-string parsing, hash application and preserved unrelated bytes.
+Staged scan and manual recipe/source review retain the public privacy/IP boundary.
+
+**Remaining/revisit.** Complete player/payload/catalog production and phone
+qualification remain open; this source-only host result establishes neither
+an installed game nor runtime/performance equivalence. The root bundle's
+Unity AssetBundleHash values require imported-artifact dependency derivation,
+separately from final bundle SHA/length generation. Native shader and remaining
+content producer gates are unchanged. Revisit this slice only for source/SDK
+drift, a failed reconstruction contract or actual phone evidence.
+
+## J1134 — Reconstruct the complete Village Night streamed-scene bundle
+
+Date: 2026-10-25 UTC. Host-only source production; no Unity Editor, device,
+installation or game launch. J850 comparison APK SHA-256:
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+**Hypothesis and prior art.** J1050's reuse census selects the next high-value
+shader/clip-free scene after J1132. J1116 already qualifies the writer; neither
+census is repeated. Read those entries and J1120 before mapping the scene.
+Consulted `community-prior-art.md`, pinned UnityPy 1.25.3's generated
+AssetBundle/PreloadData contracts and `SerializedFile.script_types`, plus the
+existing `nova_bridge.py` authored scene keep/MapZone/component policies.
+Original graph identity and current legitimate source outrank same-name/equal
+bodies. Existing source/target structural comparisons discover relationships;
+accepted bodies, type trees or metadata snapshots never become production inputs.
+
+**Complete slice.** Extend only the existing `object_produce.py`, its fixture
+and audited `owner-villagenight-objects.json`. Process shared assets then the
+scene member. Preserve each member's source-native type metadata and checked
+object relationships, with independent physical script-first body order and
+actually used MonoBehaviour script tables. Shared assets have two MonoScripts
+and an empty script table; the main member uses both external script pointers.
+Cross-member references use the scene archive path. Original source scripts
+require no properties/type-hash recomputation. The existing source mesh pack
+provides all 46 inline meshes; its receipt and persisted extents are checked.
+
+Generate native PreloadData from the qualified checked external relationships,
+translated through member external tables and deduplicated/sorted. Its 77
+preloads exclude local scene members. Generate the streamed-scene AssetBundle
+container from its minimum original relocated scene path, preserving case,
+root zero and empty container bundle-name/dependency metadata. Dependencies
+live in PreloadData. Checked component omissions preserve remaining original
+bytes. The existing MapZone policy disables one originally active owner; the
+original omitted ReflectionProbe bake uses an ordinary checked null PPtr.
+No additional parser, writer, geometry/media producer or framework is added.
+
+**Result.** The public `python3 -I -S -B` producer consumes only the original
+PC input, explicit public codec, audited recipe and pinned mesh pack. In
+6.438 seconds it produces **12,332 objects / 11,192,096 body bytes** and the
+complete **6,468,004-byte villagenight-spine-lab** bundle. Full SHA-256:
+`4a79889afcdc08f37075ea0530e4028a73f1366344eb1c4c4510e7c6c480be80`.
+Both complete serialized members match J850:
+
+| Member | Objects | Bytes | SHA-256 |
+| --- | ---: | ---: | --- |
+| `BuildPlayer-villagenight.sharedAssets` | 51 | 9,982,800 | `09cf987a20e988e029be91f5c689d57f4399ccd59b606858f521f0a551895066` |
+| `BuildPlayer-villagenight` | 12,281 | 1,719,056 | `bde37b760ed72f2f98b1f91c1a34ae31a68741c6cf7bfa6107710c7e6c804677` |
+
+Independent persistent readback compares the entire bundle and both members
+raw-exact, and verifies all 12,332 object extents. Private evidence lives in
+`work/coordination/p1-payload-village-discovery-v1/`: `refine-done.json`,
+`public-host-v1/result.json` and `public-host-v1-comparison.json`. Public recipe
+SHA-256: `2ede8a44bca33616f8a29fdc81abb6d5752b02911d283751dd3c8ec52ff8ac69`.
+The source-produced mesh profile is
+`6540b15092906d4ddb43e9eb7dc49481e15e359724541f6b307042f1a62aff23`.
+This is the eighth complete source-derived host bundle and first complete
+streamed-scene slice through this owner. Canonical source union
+`work/coordination/p1-content-source-host-v10` reports **187/705 ready**,
+**518 missing (392 APK / 126 payload)** and **zero invalid/mismatched** entries.
+No APK/payload copy is made for review; the union hard-links produced files.
+
+**First failure and verification.** Initial bounded graph discovery resolves
+12,328 of 12,332 records. The remaining records are generated native PreloadData/
+AssetBundle, the inactive MapZone owner and omitted reflection bake. Resolve
+them through existing export policies and source relationships. Six ambiguous
+rope duplicates retain original within-class source order after graph matching.
+Both private serialized members then compare exact. The first public producer
+run succeeds. Sixteen authored object contracts and seven writer checks pass;
+the new two-member fixture checks independently constructed metadata/bundle
+bytes, external script tables, member-qualified duplicate path IDs, translated
+preloads, persisted output identities and inactive-owner refusal on drift.
+Ruff, host preflight, staged/public/manual provenance audit pass.
+
+**Remaining.** Full original content/catalog production and phone execution
+remain open. This complete source-derived host file does not qualify installed
+behaviour, game readiness or performance. Helminthroost is the next bounded
+shader/clip-free scene candidate; native shader and imported-artifact root
+manifest hash gates remain separate. Revisit only on source/profile drift, a
+failed contract or actual Android evidence.
+
+## J1135 — Reconstruct the complete Helminth Roost streamed-scene bundle
+
+Date: 2026-10-25 UTC. Host-only source production; no Unity Editor, device,
+installation or game launch. Comparison remains J850 APK SHA-256
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+**Hypothesis and prior art.** Reuse J1134's complete streamed-scene owner for
+the next high-reuse scene. J1050 records 76.91% chunk reuse; that metric alone
+proves no reconstruction. Consulted `community-prior-art.md`, J1050/J1116/J1134,
+pinned UnityPy 1.25.3 object/reference/type contracts and the existing
+`nova_bridge.py` scene keep/component/MapZone policies. No full census or writer
+experiment is repeated. Bounded original scene, source-script and mesh-selector
+graph matching resolves source identities; ambiguous equal bodies must satisfy
+source graph relationships. Both original MonoScripts and MonoBehaviour types
+match without SDK/hash changes, apart from regenerated script-table ordinals.
+
+**Implementation and result.** Add only the audited relationship recipe
+`owner-helminthroost-objects.json`; the J1134 object owner and J1116 writer remain
+unchanged. Its existing generated native metadata, member-specific external
+script tables, original-body/reference admission, component omission and
+inactive MapZone policies suffice. The source mesh producer supplies all
+102 inline meshes through its pinned pack/receipt. Source graph matching
+qualifies all bodies and both serialized members before public production.
+The public `python3 -I -S -B` command, explicit PC/codec/mesh inputs and the
+new recipe produce **6,853 objects / 16,324,951 body bytes** in 8.030 seconds.
+The complete **9,593,495-byte helminthroost-spine-lab** bundle is raw-exact
+against J850, SHA-256:
+`0af52610abc0f30ea8bb064a63c1f8134ec8e61207e93e095bb1ca4e21fb877c`.
+
+| Member | Objects | Bytes | SHA-256 |
+| --- | ---: | ---: | --- |
+| `BuildPlayer-helminthroost.sharedAssets` | 107 | 14,572,968 | `3d43d26b11cad1976f0703d9d3079355f8811322d622388ee999593e4013ba41` |
+| `BuildPlayer-helminthroost` | 6,746 | 2,108,720 | `8bf5e090a1fc616ad77ae9d0a21caf62726ec9d3b2de24864b5cbe03bd2229e0` |
+
+The recipe retains 383 owners with 700 checked omitted components, 12
+inactive MapZone owners and two original bake PPtrs cleared by the existing
+scene policy. LightProbes and NavMeshSettings preserve original bodies/types;
+LightmapSettings changes only its original LightProbes pointer. No new scalar
+transformation, producer, receipt framework or target template is introduced.
+Independent persisted readback verifies the entire bundle, both members and
+all 6,853 object extents. This is the ninth complete source-derived host bundle.
+
+Private evidence: `work/coordination/p1-payload-helminth-discovery-v1/` contains
+`refine-done.json`, `public-host-v1/result.json` and
+`public-host-v1-comparison.json`. Recipe SHA-256:
+`cf0f619b4f117fd6d04b1944235dcba0b3fbfe4e0101784aa045f6035f011266`.
+The unchanged mesh profile is
+`6540b15092906d4ddb43e9eb7dc49481e15e359724541f6b307042f1a62aff23`.
+Canonical `work/coordination/p1-content-source-host-v11` reports **188/705
+ready**, **517 missing (392 APK / 125 payload)** and zero invalid/mismatched
+entries. Source files are hard-linked into the union; no review copies exist.
+
+**Checks and remaining.** No public-producer failure or additional code change
+is needed. J1134's 16 object and seven writer checks remain the affected
+contracts; public/manual staged recipe audit and read-only review pass.
+Main-checkout generated-storage cleanup retains evidence. Complete content,
+Android replay, controls/performance and owner installation remain open.
+
+Catalog research confirms existing `content.json` and LabBuild ownership rules
+reproduce all 30,322 location owners and the 114 active names. J714/J725's
+existing source catalog/GUID/conversion/closure generators remain the metadata
+route, without Editor; a direct raw-PC replacement is unqualified. The catalog
+itself needs actual final bundle SHA/length and transitive dependency closure,
+not the root manifest's imported-artifact MD4. Complete catalog emission still
+waits for independently produced active files and source-metadata admission.
+No accepted catalog or integration manifest becomes a provider. Revisit this
+scene only on source/profile drift or a failed host/Android contract.

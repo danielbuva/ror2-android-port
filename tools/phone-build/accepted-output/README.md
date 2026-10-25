@@ -165,6 +165,21 @@ content production and phone/runtime qualification remain open. Unity's textual
 build-side `.manifest` files are excluded by the existing APK readiness checker;
 their build-cache hashes are not reproduced by this slice.
 
+`owner-enemy-reward-objects.json` uses the same owner with
+`--sdk OWNER_UNITY_APP_ROOT`. Its pinned SDK input is
+`Contents/Resources/unity editor resources`; the Editor is never started.
+Original MonoScript and MonoBehaviour selectors feed the existing
+`scripts/lab/script_identity.py::properties_hash` helper. Original identity
+strings and custom schema fields, combined with the SDK editor base schema,
+generate the script properties/type hash. The recipe includes no hash literal
+or target type template. Every other script/type byte remains source-owned.
+SDK hashes are checked before/after, and the complete serialized member/bundle
+still must match its comparison hashes. Physical preload partitions and sorted
+container paths are independent; native default resources retain their SDK
+GUID/path rather than an AssetBundle archive path. J1132 qualifies all 203
+objects and the complete 65,286-byte enemy-reward bundle raw-exact on the host,
+bringing the complete source bundle count to seven. Phone qualification remains open.
+
 ## Produce named player-data files
 
 `player_data.py` produces 153 canonical `apk/assets/bin/Data/...` files:
@@ -936,3 +951,23 @@ RGBA cubes use the SDK colour/public EAC alpha path. CompleteImageSize remains
 per face; the resource extent contains all six faces. Original metadata outside
 the selected nine fields is retained. No target pixel supplier or Editor/project
 executes in production. Complete Android qualification remains open.
+
+`owner-villagenight-objects.json` uses the same object owner for the complete
+two-member streamed-scene bundle. Supply its independently produced mesh pack
+with `--record-pack DIRECTORY RESULT_JSON_SHA256`. Shared assets precede the
+scene member; each retains its own type/script/external tables and persisted
+index member identity. The scene's script table includes only actually used
+script pointers, including references into the shared member. Generated native
+PreloadData collects the qualified external reference relationships; the native
+streamed-scene container preserves original path case. Original scene export
+component omissions and inactive MapZone policy remain checked transformations.
+The scene layout output uses a `members` list in physical member order and the
+receipt records each serialized member hash. No Editor or accepted target input
+is needed for production; complete bundle comparison and phone acceptance are
+separate gates.
+
+The same streamed-scene command accepts `owner-helminthroost-objects.json`
+and the existing mesh pack. J1135 qualifies its 6,853 records and complete
+9,593,495-byte bundle raw-exact on the host without further producer changes.
+Together with J1134 and J1132, nine full source-derived host bundles are now
+qualified. Phone and complete catalog/content acceptance remain open.

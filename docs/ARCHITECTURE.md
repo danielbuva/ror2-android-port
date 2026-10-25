@@ -64,12 +64,16 @@ target relationships and have no game-build/runtime consumer. J1116 qualifies
 all 133 accepted bundles as a structural control using accepted records; PC-only
 object/layout derivation and phone qualification remain separate.
 `object_produce.py` owns the current source-only pickup, player-death-effect,
-teleport-material, objective-UI, teleporter-indicator and generic-pickup slices.
+teleport-material, objective-UI, teleporter-indicator, generic-pickup and
+enemy-reward, Village Night and Helminth Roost scene slices.
 Audited profiles `recipe/owner-pickup-objects.json`,
 `recipe/owner-death-effect-objects.json`,
 `recipe/owner-teleport-material-objects.json`, `recipe/owner-objective-ui-objects.json`,
-`recipe/owner-teleporter-indicator-objects.json` and
-`recipe/owner-generic-pickup-objects.json` select original bodies/type
+`recipe/owner-teleporter-indicator-objects.json`,
+`recipe/owner-generic-pickup-objects.json`,
+`recipe/owner-enemy-reward-objects.json`,
+`recipe/owner-villagenight-objects.json` and
+`recipe/owner-helminthroost-objects.json` select original bodies/type
 metadata and checked pointer relationships. It generates container/preload
 metadata with explicit local/external order, packs, layout and canonical
 bundles through those writers. New disjoint output, pinned PC files/recipe/
@@ -83,7 +87,24 @@ It calls the existing `player_data.py` Sprite crop/importer helpers only when
 needed, after module setup; no helper implementation is duplicated. The original
 GenericPickup GameObject omits one checked native-audio component relationship,
 preserving every remaining byte. Native Android Sprite shader references use
-Unity's built-in resource identity. Failure retains outputs and the codec context
+Unity's built-in resource identity. Physical preload partitions retain their
+own order while container paths sort independently. Enemy reward explicitly
+admits the owner's pinned SDK resource file and original script/behaviour
+selectors. The existing `script_identity.properties_hash` owner derives the
+MonoScript properties hash and MonoBehaviour type hash from original custom
+fields and the SDK's editor base schema. All other body/type bytes remain
+source-owned; SDK hashes are checked before and after production.
+The streamed-scene slices process shared assets then the scene member. Each
+member retains its own object/type/external tables and index identities. Scene
+script tables derive from actual MonoBehaviour script pointers, independently
+of physical script-first body placement. The existing checked reference
+relationships generate sorted external PreloadData; native scene containers
+preserve the original relocated scene path and streamed-scene semantics. The
+existing scene export policy disables the selected MapZone owner and omits
+checked original components; reflected bake removal uses ordinary PPtr remaps.
+Village Night's 46 and Helminth Roost's 102 meshes come through the existing
+pinned producer pack. Setup, input admission, persisted verification and failure
+retention share the prefab owner. Failure retains outputs and the codec context
 reaps its child; exit ends the producer.
 
 `player_data.py` owns the separate current 153-file player cohort: SDK/converter

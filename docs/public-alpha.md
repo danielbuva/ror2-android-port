@@ -68,10 +68,11 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       13 native reflection cubes and complete bundle assembly remain open.
       [J1113](PORTING_JOURNAL.md#j1113--produce-a-complete-source-only-bundle-and-seven-player-data-files)
       qualifies the first complete PC-only bundle and seven player-data files;
-      J1120 extends the host cohort to six complete bundles and 153 player files
+      J1135 extends the host cohort to nine complete bundles; the combined
+      readiness tree includes 161 player files
       through the existing owners; 54 texture selections use PR75's landed
       public RGBA producer/profile. The fixed-target readiness check now
-      has 528 missing content entries; all 18 code/SDK
+      has 517 missing content entries; all 18 code/SDK
       entries are available. Phone replay, the
       remaining bundles/player data and complete source-derived installation
       remain open; the structural writer produces no missing content itself.
@@ -219,8 +220,8 @@ explicit replay content; it does not qualify phone production or installation.
 closes the two generic Android build-metadata producer gaps. Fresh host SDK
 production yields all 15 entries raw-exact to J850. The shared readiness request
 combined with
-[J1120](PORTING_JOURNAL.md#j1120--assemble-three-more-source-derived-payload-bundles)
-has all 18 code/SDK files and 159 content files ready, with 528 content entries
+[J1135](PORTING_JOURNAL.md#j1135--reconstruct-the-complete-helminth-roost-streamed-scene-bundle)
+has all 18 code/SDK files and 170 content files ready, with 517 content entries
 absent. The 54 RGBA selections use PR75's landed public producer/profile. Phone
 replay and complete content/shader/animation production remain open. The two
 new files still require an ordinary-app rerun; corrected phone-native output,
