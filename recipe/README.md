@@ -2700,3 +2700,51 @@ required for reconstruction are published. No protected pixel/block/curve table,
 SDK implementation or target frame is included. Full public-producer and Android
 qualification remain separate gates; generated packs and raw evidence stay
 ignored. Provider licenses grant no game or SDK redistribution permission.
+
+
+`owner-rgba-mip-textures.json` extends the existing source texture owner to
+1,523 full-chain RGBA records: 1,519 bundle records and four standalone player
+records. The 1,399 canonical source transformations select 319 original PC
+bundle entries. Profile SHA-256:
+`723c4e641349941a172aef28d6a4b23eee2954c5390cd7257a75a54cd0bf66fd`.
+It contains original bundle/member/path-ID selectors, field/pixel extents and
+hashes, destination identities and import/storage relationships. The nine-field
+projection preserves all unselected source metadata. Seven ambiguous original
+names are resolved by exact target/source identities; there is no name-wide
+pixel override. Every decoded, extended, filtered and encoded pixel comes from
+original PC input. No exporter image or accepted target byte supplier is read
+by production.
+
+Provenance, privacy, licensing and sensitive-content audit: 2026-10-25; J1128.
+This profile carries no pixel/block literals, serialized templates, proprietary
+implementation, private path/device identity, credential or SDK bytes. The
+existing public BC/Crunch decoders and ETCPACK retain their prior notices; SDK
+compression uses the separately supplied permitted toolchain. Authored mip
+controls observe only generated nongame patterns. No game/SDK redistribution,
+ownership, authentication or entitlement success is granted. Generated packs
+and raw evidence remain ignored; host equivalence and Android qualification
+are separate gates.
+
+
+`owner-cubemap-textures.json` selects 110 source-derived Cubemap records from
+68 original PC bundles. SHA-256:
+`319691fd4c11591b87b4aae654b00a1cd7789105b43be2cd52a090bb98cb2526`.
+Its source selectors, field/resource extents, hashes and destination import/
+storage relationships use the existing texture profile shape. Original
+AssetBundle container paths resolve renamed/unnamed originals without retaining
+exported images. The 50 ordinary ETC1, 56 HDR ETC1 and four RGBA records regenerate
+all six faces and their mip chains from original top-level pixels. The 13
+unresolved native reflection cubes are absent; this profile supplies no fallback
+for them.
+
+Provenance, privacy, licensing and sensitive-content audit: 2026-10-25; J1128.
+Only reconstruction identifiers, comparison hashes and generic import/storage
+settings are distributed. No target pixels, mip/block literals, serialized
+body/type templates, protected implementation, private paths/identifiers or
+credentials are present. The unchanged public bcdec decoder retains its MIT
+alternative notice; authored BC6 byte/export-half/DoubleLDR transformations are
+source algorithms. Existing ETCPACK/SDK acquisition and licensing boundaries
+apply. Pinned AssetRipper TextureConverter/ExrWriter source informs face strides,
+orientation and export half conversion; no upstream implementation or exporter
+image is copied. Provider terms grant no game/SDK redistribution, ownership,
+authentication or entitlement capability. Generated packs remain ignored.

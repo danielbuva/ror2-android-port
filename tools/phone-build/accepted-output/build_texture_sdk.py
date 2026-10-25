@@ -138,7 +138,7 @@ def build(compiler, linker, library, output, qemu_root=None, sysroot=None, andro
         (output / "sdk-tools.json").write_text(json.dumps(toolchain, indent=2) + "\n")
         (output / "BCDEC-LICENSE.txt").write_bytes((header.parent / "LICENSE").read_bytes())
         (output / "NOTICE.txt").write_text(
-            "BC7 decoding uses unchanged public bcdec 0.985 under its MIT alternative; retain its license.\n"
+            "BC6/BC7 decoding uses unchanged public bcdec 0.985 under its MIT alternative; retain its license.\n"
             "The SDK is supplied separately by the owner under its provider terms; no SDK is distributed.\n"
             "QEMU/GNU runtime providers retain their separate GPL/LGPL licenses and notices.\n"
             "The pipe adapters and this build recipe are authored additions; no game data is included.\n"

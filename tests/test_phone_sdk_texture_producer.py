@@ -200,10 +200,47 @@ class SdkTextureTests(unittest.TestCase):
         source = source[:-4] + struct.pack("<ii", 1, 0) + b"TAIL"
         pixels = bytes(range(24))
         target = {"name": "Owner", "alpha_optional": False, "usage": 4, "inline": True, "stream": stream, "mips": 3, "colour_space": 1}
-        for operation, fmt in (("etc1-mips", 34), ("sdk-rgba-mips", 47)):
-            expected, _ = authored_body("Owner", 24, fmt, pixels, stream, 4)
+        for operation, fmt, size in (("etc1-mips", 34, 24), ("sdk-rgba-mips", 47, 24), ("cube-mips", 34, 4), ("cube-hdr", 34, 4), ("cube-rgba-mips", 47, 4)):
+            expected, _ = authored_body("Owner", size, fmt, pixels, stream, 4)
             expected = expected[:-4] + struct.pack("<ii", 3, 1) + b"TAIL"
             self.assertEqual(T.body_output(source, fields, pixels, target, operation), expected)
+
+    def test_cubemap_reads_face_top_levels_without_flipping_or_mip_stride_drift(self):
+        # Six distinct faces contain asymmetric rows and poisoned old mip tails.
+        faces = [bytes(value for y in range(4) for x in range(4) for value in (face * 30 + x, y * 40, 17)) for face in range(6)]
+        pixels = b"".join(face + b"\xff" * 15 for face in faces)
+        stream = {"offset": 0, "size": 0, "path": ""}
+        body, fields = authored_body("Cube", 63, 3, pixels, stream)
+        selected = {"width": 4, "height": 4, "fields": fields, "operation": "cube-rgba-mips", "outputs": [{"mips": 3, "colour_space": 0}]}
+        calls = []
+
+        def encode(rgba, width, height, sdk, etc_codec):
+            calls.append(rgba)
+            return bytes([len(calls)]) * 16
+
+        with patch.object(T, "sdk_encode_rgba", side_effect=encode):
+            produced = T.cube_mips(pixels, body, selected, {"pixels": str(self.decoder)}, self.alpha)
+        self.assertEqual(produced, b"".join(bytes([i]) * 16 for i in range(1, 19)))
+        for face, original in enumerate(faces):
+            self.assertEqual(T.rgb_channels(calls[face * 3]), original)
+        with self.assertRaisesRegex(ValueError, "six complete face strides"):
+            T.cube_mips(pixels[:-1], body, selected, {"pixels": str(self.decoder)}, self.alpha)
+
+    def test_hdr_half_import_doubleldr_and_destination_colour_space(self):
+        # Constant authored values preserve their radiance at every mip. Byte
+        # 128 becomes half-linear 0.2158203125; DoubleLDR linear/sRGB give 28/64. The inverse float32 transfer
+        # rounds white just below one, yielding 127 after sRGB DoubleLDR.
+        rgba = bytes((0, 128, 255, 255)) * 16
+        for mode, colour in (("linear", (0, 28, 128, 255)), ("srgb", (0, 64, 127, 255))):
+            result = subprocess.run([str(self.decoder), "4", "4", "hdr-mips-" + mode], input=rgba, capture_output=True, timeout=10)
+            self.assertEqual((result.returncode, result.stdout), (0, bytes(colour) * 21))
+        for data in (rgba[:-1], rgba + b"x"):
+            result = subprocess.run([str(self.decoder), "4", "4", "hdr-mips-linear"], input=data, capture_output=True, timeout=10)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual(result.stdout, b"")
+        # A public BC6 zero block decodes opaque black, including cropped edges.
+        result = subprocess.run([str(self.decoder), "1", "3", "bc6"], input=bytes(16), capture_output=True, timeout=10)
+        self.assertEqual((result.returncode, result.stdout), (0, bytes((0, 0, 0, 255)) * 3))
 
     def test_native_crunch_rejects_wrong_extents_and_malformed_streams(self):
         compiler = shutil.which("c++")

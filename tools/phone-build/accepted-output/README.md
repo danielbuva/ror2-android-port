@@ -797,7 +797,7 @@ The same native pixel helper performs the existing integer transparency
 dilation, keeping coordinate buffers outside the Python parent and freeing them
 before pipe output. Its authored seed/tie controls match the standard-library
 implementation; whole-cohort hashes remain the admission authority.
-SDK encoding uses at most two independent block bands at once, each at most
+SDK encoding runs one block band at a time, each at most
 262,144 pixels and aligned to four rows. Raster-order concatenation preserves
 the exact block stream; decoding/dilation still cover the complete source image.
 Each codec child retains its 120-second deadline, with bounded pending input and
@@ -880,3 +880,23 @@ format and a single face, and emit only its top BC level. These are intermediate
 owner-derived bytes; no Crunch image is distributed. The builder pins all three
 headers and their complete license before/after compilation and emits
 `CRUNCH-LICENSE.txt` alongside the existing provider notices.
+
+
+## Produce RGBA mip chains
+
+Current experimental source operation: `sdk-rgba-mips`. Use the existing texture
+producer and explicit SDK/public ETC tools with
+`recipe/owner-rgba-mip-textures.json`, SHA-256
+`723c4e641349941a172aef28d6a4b23eee2954c5390cd7257a75a54cd0bf66fd`.
+The profile selects 1,399 canonical source transformations for 1,523 records,
+including four standalone player textures. It retains the same object/resource
+pack and index interface consumed by the bundle/player owners.
+
+The owner decodes only the original top mip, extends transparent RGB, generates
+continuous float32 mip levels and repeats logical tail levels into complete
+blocks. SDK colour compression and the existing public EAC alpha encoder derive
+every level. For sRGB import all four channels first normalize with float32
+`1 / 255`; the gamma transfer applies only to RGB. Linear import preserves the
+existing byte-unit first reduction. The exact-editor fixture includes varying
+alpha to distinguish these arithmetic contracts. No Editor/project executes in
+production. Android cohort qualification remains open.
