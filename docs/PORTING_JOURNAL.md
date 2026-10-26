@@ -245,3 +245,18 @@ Evidence: `work/coordination/p1-ultima-sdk-material-v3/` and
 Audited Ultima profiles extend existing owners; focused host checks pass.
 Complete-scene assembly, readiness closure and phone qualification remain open.
 APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1195 — Four complete source scene bundles
+
+2026-10-26. Existing object/Shader owners reproduce Golemplains2, Ancientloft,
+Habitat and Blackbeach source bundles from legitimate PC input and SDK resources.
+Guarded public CLI production persists before independent comparison:
+60,493 objects, eight serialized members and all four compressed bundles match J850.
+Evidence and per-output SHA-256: `work/coordination/p1-scenes-ss/source-qualification-v2/`
+(`qualification-done.json`, `readiness-union-v2/readiness.json`).
+The retained union closes exactly four missing payload entries, other rows unchanged:
+632/705 available, 627 raw-exact, two code comparisons and three drift-explained;
+73 missing (7 APK, 66 payload). Audited profiles extend existing owners only.
+Focused object/Shader contracts (81 tests), host preflight and public audit pass.
+Host-only; phone production, installation and original scene behavior remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
