@@ -1369,3 +1369,9 @@ producer while local receipts persist. The existing member-aware writer exposes
 `payload/sulfurpools-source-lab`. All 19,503 persisted objects, both serialized
 members and the compressed bundle are host raw-exact against J850. No runtime
 owner is added; phone production, installation and original scene behavior remain open.
+Soul, Mire and Crystalworld use `recipe/owner-{soul_perftest,mire,crystalworld}-objects.json`
+with the same object command and independently source-produced record packs.
+Host qualification matches all 319,607 objects, both members per scene and the
+three compressed bundles byte for byte against J850. The original null-script
+type slots remain distinct in Soul and Mire. Original files and pinned SDK
+resources remain required; phone execution and runtime behavior remain open.
