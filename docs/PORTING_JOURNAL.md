@@ -441,3 +441,15 @@ Retained Golemplains/ArtReview/Damp union plus this entry: 642/705 available,
 (7 APK, 56 payload). Existing policies and accepted particle Shader pack reused.
 Host-only; phone production, installation and original scene behavior remain open.
 APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1208 — R58 assisted controls and skill-timed MainOutput
+
+2026-10-26. R58 preparation-trace candidate passes all three strict assisted controls.
+APK `9dd424f4a183d299b0ee03cd325a0cae7c9f863edb8e0b6332c81cd43c3a4dc1`, source `3749f5d8`.
+All 267 frozen artifacts rehashed; install-over preserves the profile.
+Plain 35.047 s; both transitions reach Goolake; destination-only capture succeeds.
+Finite nonzero MainOutput samples: 117504 / 132234 / 497664; nonfinite: 0.
+Original teardown and terminal process/selector/pending absence/OLED sleep pass.
+CPU/GPU peak 95.5 C transient; battery at most 35 C; runtime gap at most 0.698 s.
+Evidence: `work/coordination/main-port-r58-safety-retry/controls-duration-retry/`.
+Ordinary runs, audio attribution/audibility and PC appearance remain open.
