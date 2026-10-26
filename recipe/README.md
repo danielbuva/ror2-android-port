@@ -3460,3 +3460,20 @@ credential is included. The bounded reader is unchanged; legitimate input and
 source-produced bundles remain external and ignored. Host contracts preserve
 cyclic references and refuse incomplete graphs. Full catalog production and phone
 execution remain open; no redistribution or ownership right is granted.
+
+## Loadingbasic scene object profile (2026-10-26)
+
+`owner-loadingbasic-objects.json` SHA-256
+`3e46d0b7d2200ee8fa581328a6787d1687f2a66ea1f3bd7b15c3fa66cdb8de64`.
+
+Manual provenance, privacy, licensing and sensitive-content audit: this profile
+contains original selectors, hashes, checked pointer relationships and existing
+authored import policies only. Compaction preserves every decoded selector.
+The original SpriteNumberImage preload membership supplies its omitted local
+GameObject dependency; existing component and global-owner policies preserve
+the accepted startup layout. Source-produced texture, cubemap and Skybox packs
+remain explicit pinned inputs to the existing object producer. No original body,
+curve, scalar, pixel, program, copied source, private path or credential is
+included. Current legitimate PC files and SDK resources remain required;
+generated content and evidence stay ignored. Existing ownership and
+redistribution boundaries apply. Phone and runtime qualification remain open.
