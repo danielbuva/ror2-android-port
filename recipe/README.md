@@ -3455,3 +3455,37 @@ credential is included. Current legitimate PC files, SDK resources and checked
 source-produced record packs remain required. Generated outputs and evidence
 stay ignored. Existing redistribution and ownership boundaries apply; phone
 execution and runtime qualification remain open.
+
+## Conduit Canyon complete scene object profile (2026-10-26)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-conduitcanyon-objects.json` | `28241c71cbe333cb25a2ac210c75cf10c91e92aab7887dec0179248e37827474` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: this profile
+contains source selectors, hashes, checked pointer relationships and authored
+import policies only. No original body, curve, scalar, pixel, program, copied
+source, private path or credential is included. Source-qualified preload
+relationships use original GameObject witnesses, pinned SDK dependencies and
+the qualified imported-model exclusion. Current legitimate PC files, SDK
+resources and independently source-produced Mesh, director and Shader record
+packs remain required. Generated outputs and evidence stay ignored. Existing
+redistribution and ownership boundaries apply; phone execution and runtime
+qualification remain open.
+
+## Conduit and Fungal source Shader selections (2026-10-26)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-conduitcanyon-standard-shaders.json` | `e8825d706eb5e6c234e536b7d05e9f36febbce5ec64dff90e89c3eac40c69f5c` |
+| `owner-fungal-standard-shaders.json` | `8f51bfdf66770c08142bfd46b416fcc90f52f38623d4393137131aa6ebd3a63e` |
+| `owner-fungal-postprocess-shaders.json` | `d91cb5e6ffbdd9e4a885ba93bdadab4aafe568071b4ddeba7f77f28a9fbf55d7` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles retain original material/scene selectors, source hashes, SDK/compiler
+pins and authored output relationships only. Standard fog variants follow the
+original RenderSettings mode; dummy Shader templates follow pinned AssetRipper
+ParsedForm export rules. No original program, body, copied source, private path
+or credential is included. Current legitimate PC files and separately acquired
+SDK/public tools remain required. Generated records and evidence stay ignored;
+Fungal complete-scene assembly and phone/runtime qualification remain open.

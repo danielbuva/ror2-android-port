@@ -42,6 +42,16 @@ Two focused lifecycle/presence checks, Ruff and host preflight pass; doctor reta
 No device install/run: R58 remains last verified installed; strict three controls and measured loading heat remain open.
 Mandatory prune passes; revisit after authorized device admission under unchanged J1156 limits.
 
+## J1182 — Android producer affinity mask compatibility
+
+2026-10-26. Shared phone runner passes selected CPUs as a hexadecimal mask;
+Android Toybox on the assigned phone rejects the previous `-c` option before input admission.
+The existing tool-host mask contract supplies the compatible command form; worker and thermal policies stay fixed.
+Seven focused host tests, Ruff and host preflight pass; complete phone replay remains open.
+Evidence: `work/coordination/p1-player-phone-assembly-v1/android-taskset-mask-host.json`
+and `phone177-parent-terminal-v4.json` in that directory; independent device cleanup passed.
+Runner SHA-256: `15fdc82f66808db46cf9b25ba17251af12237a32728cc12aecf1391f2e2eb649`.
+No installation or game launch; accepted J850 APK and content readiness are unchanged.
 ## J1183 — Eight complete source-derived scene bundles
 
 2026-10-26. Eight object and eleven Shader profiles complete Lakes/Lakesnight/Sulfurpools spine,
@@ -68,3 +78,57 @@ Ten focused trace checks, 45 camera checks (three skips), host preflight and pub
 Cleanup now tolerates a concurrently removed payload and continues the plan; other errors propagate.
 Nine cleanup regressions and Ruff pass; cleanup receipts are in the same evidence directory.
 Device qualification, hotspot attribution and measured thermal improvement remain open; no gameplay claim.
+## J1184 — Isolated ambient observation fixture
+
+2026-10-26. Existing phone-content owner gains authored ambient staging and graphical capture actions.
+The exact-editor session waits for controller arming, saves the scene, and exits on completion or timeout.
+Host validation requires six ordered finite 64 by 64 float images, uncached SH and a nonempty GPU trace;
+native job association remains the external controller's contract. No captured bytes are producer inputs.
+Seven focused host checks and the pinned editor API compile pass; generated action documentation is current.
+Evidence: `work/coordination/accepted-build-reconstruction/media-source-v1/default-sky-source-v1/ambient-fixture-checkpoint-done.json`;
+fixture implementation commit `6a73e581e53a127c15b34c94e5cf261f46d4b286`. No APK generated or changed.
+Prior art: pinned AssetRipper copies baked lighting values; independent sky generation remains unsolved.
+Actual SaveScene bake, GPU execution, target equality and phone production remain unqualified.
+
+## J1185 — Complete Conduit Canyon and source fog Shader retention
+
+2026-10-26. Existing object/Shader owners complete Conduit Canyon: 49,573 records,
+all serialized members and the compressed bundle raw-exact against J850 on the host.
+Source-qualified preload relationships retain imported-model Mesh-only exclusion.
+Standard source fog validation now retains original linear/exponential/exponential-squared modes;
+Fungal Standard (642,752 B) and 25 postprocess records (87,712 B) are independently raw-exact,
+with complete Fungal scene assembly still open. Prior art: pinned AssetRipper FogMode/ParsedForm
+and SDK UnityCG fog defines; existing J1157/J1163 Shader/compiler contracts remain unchanged.
+Evidence/output hashes: animation worktree `work/coordination/p1-anim/conduit-final-host-v2/`;
+`work/coordination/p1-fungal-standard-v2/done.json` and `work/coordination/p1-fungal-shaders-v1/`.
+Readiness: Conduit union 607/705 available, 602 exact, two code and three drift-explained;
+98 missing (7 APK, 91 payload). Host-only; phone production/install/runtime remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1186 — Apply the user-selected gameplay thermal safety limits
+
+2026-10-26. Existing gameplay and producer thermal owners abort CPU/GPU only
+above 95 C continuously for at least 3 s, or battery above 46 C; sample gaps
+above 1 s still invalidate supervision. Admission and producer duty cycles stay.
+Skin/HAL heat is recorded; receipts retain sampled time above 80 C, peak and phase.
+The sustained-session battery check uses the same limit. No runtime pause/replay added.
+57 focused host tests pass; retained J1152/J1164/J1177 traces all pass new limits,
+with CPU/GPU peaks 81.6/84.8/83.6 C and sampled hot times 0.30/5.23/2.47 s.
+Evidence: alpha worktree `work/coordination/alpha-thermal-policy/replay-results.json`.
+No APK/output generated or installed. Fresh heap/sustained device qualification remains open;
+preflight is blocked by this checkout's missing ignored local configuration.
+
+## J1187 — Exact ordinary-app Android SDK cohort and producer battery cutoff
+
+2026-10-26. Existing SDK producer emits all 15 persisted package entries raw-exact to J850
+inside the ordinary Android app host; the prior 13 are unchanged, including all four DEX files.
+Both generic META-INF metadata outputs now have phone equality evidence; no game input or Editor used.
+Producer 44.279 s; supervised process 48.614 s; peak UID RSS 358,784 KiB; output 60,271 KiB.
+Observed CPU/GPU peak 54.5 C, zero duty pauses or time above 80 C; both OLEDs asleep afterwards.
+Evidence/per-entry SHA-256: `work/coordination/phone-code/android-sdk-phone-v6-proof.json`,
+`android-sdk-phone-v6-result.json`, resources and terminal receipts in the same directory.
+Tool APK SHA-256: `988b8850dffc134c02e7a86cf8bce73b724284c75ff87c4541faaa11bfea87b9`.
+Owned-job cleanup, lease release and mandatory prune passed; game APK unchanged, no game launched.
+Shared producer cutoff corrected to battery >= 43 C; eight focused host tests and Ruff pass.
+Run predates correction and lacks battery/charge admission evidence: current thermal policy unqualified.
+Complete source composition, installation, controls and matched performance remain open.

@@ -345,6 +345,19 @@ class StandardRetentionTests(unittest.TestCase):
         self.assertEqual(selections[10][0], selections[10][1])
         self.assertEqual(selections[10][1], selections[10][2])
 
+    def test_exp2_retains_only_the_enabled_source_fog_keyword(self):
+        source, materials = self.fixture()
+        snippet = source["m_CompileInfo"]["m_Snippets"][0][1]
+        snippet["m_NonStrippedUserKeywords"] += " FOG_EXP2"
+        for stage in range(2):
+            for axis in snippet["m_VariantsUserGlobal" + str(stage)]:
+                if "FOG_LINEAR" in axis and "FOG_EXP2" not in axis:
+                    axis.append("FOG_EXP2")
+        _, selections = S.standard_selections(source, materials, "FOG_EXP2")
+        rows = selections[10][0]
+        self.assertTrue(any("FOG_EXP2" in row for row in rows))
+        self.assertFalse(any("FOG_LINEAR" in row or "FOG_EXP" in row for row in rows))
+
     def test_runtime_retention_uses_source_tags_without_mutating_sdk_tree(self):
         source, materials = self.fixture()
         original = deepcopy(source)
@@ -441,9 +454,18 @@ class StandardSceneUsageTests(unittest.TestCase):
         fog, maps, renderers = self.fixture()
         fog[0].update(m_Fog=False, m_FogMode=3)
         self.assertIsNone(S.validate_standard_scene(fog, maps, renderers))
-        fog[0].update(m_Fog=True)
+        fog[0].update(m_Fog=True, m_FogMode=0)
         with self.assertRaisesRegex(ValueError, "fog retention"):
             S.validate_standard_scene(fog, maps, renderers)
+
+    def test_enabled_source_fog_modes_select_sdk_keyword_without_mutation(self):
+        for mode, keyword in ((1, "FOG_LINEAR"), (2, "FOG_EXP"), (3, "FOG_EXP2")):
+            with self.subTest(mode=mode):
+                fog, maps, renderers = self.fixture()
+                fog[0]["m_FogMode"] = mode
+                before = deepcopy((fog, maps, renderers))
+                self.assertEqual(S.validate_standard_scene(fog, maps, renderers), keyword)
+                self.assertEqual(before, (fog, maps, renderers))
 
     def test_actual_baked_data_and_realtime_mapping_reject(self):
         fog, maps, renderers = self.fixture()

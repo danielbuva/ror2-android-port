@@ -437,8 +437,16 @@ extends the existing SDK producer to both generic Android `META-INF` metadata
 files without accepted-byte inputs. Fresh host production makes all 15 SDK
 entries raw-exact. The current explicit selection contains 18 code/SDK files;
 the readiness report leaves 687 missing final content files and no code-file
-availability gaps. Ordinary-app production of the added metadata and corrected
-native output remain separate gates from host equality.
+availability gaps. J1187 verifies all 15 persisted outputs raw-exact in the ordinary
+Android app host,
+including the added metadata and all four DEX files; the prior 13 are unchanged.
+Producer time is 44.279 s (48.614 s supervised), peak UID RSS 358,784 KiB,
+output 60,271 KiB and observed CPU/GPU peak 54.5 C. Evidence and per-file hashes:
+`work/coordination/phone-code/android-sdk-phone-v6-proof.json`. Cleanup passes
+with both displays asleep and the lease released. This run lacks current battery/charge
+admission evidence; thermal qualification remains open despite the cool CPU/GPU trace.
+The shared producer cutoff is corrected to battery >= 43 C. Complete native/content
+composition, installation, controls and matched performance remain separate gates.
 
 [J1153](history/journal-J1-J1177/PORTING_JOURNAL.md#j1153--admit-reviewed-current-input-drift-without-historical-runtime-suppliers)
 adds explicit `drift-explained` readiness for current-install content. Three
@@ -499,3 +507,8 @@ phone comparison or installation is qualified.
 confirms exporter GUID entropy in identical-input scene YAML repeats. The
 WholeStageContexts full-digest gate remains open; semantic agreement and
 comparison-only GUID normalization do not qualify its final file.
+
+J1185 completes source-derived Conduit Canyon through the existing owners:
+607/705 files available (602 raw-exact, two code comparisons, three drift-explained),
+98 missing (7 APK, 91 payload). Fungal Shader packs qualify separately; complete
+Fungal assembly and phone/runtime qualification remain open.
