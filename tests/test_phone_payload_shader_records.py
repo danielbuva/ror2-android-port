@@ -359,6 +359,12 @@ class StandardRetentionTests(unittest.TestCase):
 class TwoSeedRetentionTests(unittest.TestCase):
     fixture = StandardRetentionTests.fixture
 
+    def test_recursive_scene_closure_accepts_four_material_feature_seeds(self):
+        source, materials = self.fixture()
+        _, expected = S.standard_selections(source, materials, None)
+        _, actual = S.standard_selections(source, materials + [materials[0]], None)
+        self.assertEqual(actual, expected)
+
     def test_single_default_material_without_fog_removes_fog_and_instancing(self):
         source, materials = self.fixture()
         materials = materials[:1]

@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1178](PORTING_JOURNAL.md#j1178--four-recursive-source-standard-shader-packs) | 2026-10-25 | Four recursive-source Standard Shader packs | Hypothesis: original scene PPtr closure supplies missing material feature and instancing seeds. |
 | [J1177](PORTING_JOURNAL.md#j1177--r58-controls-stop-on-sustained-stage-load-cpu-heat) | 2026-10-25 | R58 controls stop on sustained stage-load CPU heat | 2026-10-25. |
 | [J1170](PORTING_JOURNAL.md#j1170--reconstruct-rootjungle-and-three-post-processing-scene-payloads) | 2026-10-25 | Reconstruct Rootjungle and three post-processing scene payloads | Hypothesis: existing source object/media/Shader owners close six scene bundles; prior art J1070/J1075/J1143/J1157/J1163. |
 | [J1172](PORTING_JOURNAL.md#j1172--three-source-derived-scene-shader-packs) | 2026-10-25 | Three source-derived scene Shader packs | - Hypothesis: original material/scene pointers plus pinned SDK/public templates suffice for these records. |

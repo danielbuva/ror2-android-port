@@ -44485,3 +44485,15 @@ Report phase `integrated-world-loot`, measured world 0 s; process exit follows g
 No plain control accepted; stage-exit/destination controls never launch. R58 gameplay, destination capture and Siren remain open.
 Cleanup confirms process/selector absent, OLED asleep and lease released; mandatory prune passes, zero items, 52 kept.
 Revisit after measured stage-load heat reduction or restored authorized Main transport; unchanged replay is not the next experiment.
+
+## J1178 — Four recursive-source Standard Shader packs
+
+Hypothesis: original scene PPtr closure supplies missing material feature and instancing seeds.
+Existing Shader owner accepts the observed four-seed context and exposes its validated original VertexLit → SDK6 dependency relocation.
+Four public selector profiles retain first-seen distinct original keyword/instancing pairs, without a target retention table.
+Guarded actual CLI persists all production before independent comparison; all four complete Shader records match J850.
+Blackbeach2, Shipgraveyard and TestOtherBrother each reproduce 261,528 B; Repurposed Crater reproduces 301,384 B.
+Evidence: `work/coordination/p1-payload-scene-shaders-v1/recursive-standard-qualify-v1/qualify-done.json`; original pointer chains: `recursive-standard-v1/`.
+Prior art: pinned AssetRipper DummyShaderTextExporter property/fallback relationships; SDK/native contracts remain J1157/J1163.
+The direct-only seed failure in J1172 is resolved; full scene/preload closure and readiness union remain consumer-owned.
+Host-only; phone Shader production/runtime remain open. APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.

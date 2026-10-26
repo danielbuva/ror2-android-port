@@ -3358,3 +3358,12 @@ source relationships, public-template/SDK pins and destination identities are
 tracked. No game/SDK source, program, target keyword table, private path or
 credential is included. All generated content stays ignored; these profiles
 grant no ownership or redistribution right. Phone execution remains open.
+
+The four `owner-{blackbeach2,shipgraveyard,testotherbrother,repurposedcrater}-standard-shaders.json`
+profiles receive provenance, privacy, licensing and sensitive-content review on
+2026-10-26. They contain original material/scene selectors, source and SDK hashes,
+authored compiler settings and destination identities. Recursive original pointer
+closure determines the selected material features; no target program, keyword
+table, source text, private path or serialized body is included. The existing
+Shader owner generates private packs; all original/SDK inputs remain external.
+These recipes grant no redistribution or ownership right; phone gates stay open.
