@@ -332,6 +332,23 @@ _ENTRIES = (
         "Experimental: generate an authored TextAsset bundle and isolated exact-editor fixture under work/rebuild/phone-content; no game input, build, install or runtime change.",
     ),
     Action(
+        "phone-content-ambient-fixture",
+        "phone_content",
+        "stage_ambient_action",
+        {},
+        "current",
+        "Experimental: stage an isolated authored sky capture fixture; requires an external read-only capture controller, not a game build or content producer.",
+    ),
+    Action(
+        "phone-content-ambient-check",
+        "phone_content",
+        "run_editor",
+        {"ambient": True},
+        "current",
+        "Experimental: run --target ambient fixture with Metal under the primary editor mutex; waits for external capture-armed/capture-complete markers and exits explicitly. No target equivalence claim.",
+        handler=_target,
+    ),
+    Action(
         "rebuild-step",
         "rebuild",
         "rebuild_action",
