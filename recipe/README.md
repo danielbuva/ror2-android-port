@@ -3456,6 +3456,35 @@ source-produced record packs remain required. Generated outputs and evidence
 stay ignored. Existing redistribution and ownership boundaries apply; phone
 execution and runtime qualification remain open.
 
+## Produced catalog metadata adapter (2026-10-26)
+
+Manual provenance, privacy, licensing and sensitive-content audit: the existing
+whole-catalog owner now reads structural dependency records from locally produced
+Android bundles, hashes their real bytes and completes a supplied source-declared
+graph. The camera recipe source pin tracks that authored helper change only.
+No accepted dependency table, object body, original source, private path or
+credential is included. The bounded reader is unchanged; legitimate input and
+source-produced bundles remain external and ignored. Host contracts preserve
+cyclic references and refuse incomplete graphs. Full catalog production and phone
+execution remain open; no redistribution or ownership right is granted.
+
+## Loadingbasic scene object profile (2026-10-26)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-loadingbasic-objects.json` | `3e46d0b7d2200ee8fa581328a6787d1687f2a66ea1f3bd7b15c3fa66cdb8de64` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: this profile
+contains original selectors, hashes, checked pointer relationships and existing
+authored import policies only. Compaction preserves every decoded selector.
+The original SpriteNumberImage preload membership supplies its omitted local
+GameObject dependency; existing component and global-owner policies preserve
+the accepted startup layout. Source-produced texture, cubemap and Skybox packs
+remain explicit pinned inputs to the existing object producer. No original body,
+curve, scalar, pixel, program, copied source, private path or credential is
+included. Current legitimate PC files and SDK resources remain required;
+generated content and evidence stay ignored. Existing ownership and
+redistribution boundaries apply. Phone and runtime qualification remain open.
 ## Conduit Canyon complete scene object profile (2026-10-26)
 
 | Recipe | SHA-256 |
