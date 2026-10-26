@@ -1389,6 +1389,16 @@ producer while local receipts persist. The existing member-aware writer exposes
 members and the compressed bundle are host raw-exact against J850. No runtime
 owner is added; phone production, installation and original scene behavior remain open.
 
+ArtReview Shader selections use `recipe/owner-artreview-{postprocess,standard}-shaders.json`
+through the existing `payload_shader_records.py` owner. Explicit original/SDK/
+public-tool roots, pinned profiles and a new output directory set up production;
+process exit tears down producers while local receipts persist. Its 24
+post-processing records and one Standard record are host raw-exact against J850.
+The matching `recipe/owner-artreview-whole-objects.json` supplies the complete
+object selection to the existing member-aware writer: 965 objects, two serialized
+members and the compressed bundle are host raw-exact to J850. Phone production
+and runtime behavior remain open.
+
 Dampcavesimple complete source-scene selections extend the existing object/Shader
 owners through `recipe/owner-dampcavesimple-source-objects.json` and matching
 source-lab Standard/post-processing profiles. Explicit current PC/SDK roots,
