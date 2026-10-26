@@ -260,3 +260,48 @@ The retained union closes exactly four missing payload entries, other rows uncha
 Focused object/Shader contracts (81 tests), host preflight and public audit pass.
 Host-only; phone production, installation and original scene behavior remain open.
 APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1196 — Complete source-derived Ultima bundle
+
+2026-10-26. Existing object/Shader owners reproduce the complete Ultima bundle
+from legitimate PC input, acquired SDK resources and source-produced record packs.
+Guarded public CLI production persists before independent comparison:
+6,077 objects, both serialized members and the compressed bundle are raw-exact to J850.
+Output: 4,087,244 B, SHA-256
+`6f5076c1b328a020c7477e65e022794fdc4b667fa50e4db842eb00bca576ee1f`.
+Evidence: `work/coordination/p1-scenes-w/final-ultima-v2/` and
+`work/coordination/p1-scenes-w/publication-batch-v4/` (readiness union).
+The retained union adds one payload entry: 633/705 available, 628 raw-exact,
+two code comparisons and three drift-explained; 72 missing (7 APK, 65 payload).
+Audited compact object selectors reuse J1194 Shader packs; no target supplier.
+Host-only; phone production, installation and original scene behavior remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1197 — Complete source-derived Sulfurpools bundle
+
+2026-10-26. Existing object/Shader owners reproduce the complete Sulfurpools source
+bundle from legitimate PC input, acquired SDK resources and source-produced packs.
+Guarded public CLI production persists before independent comparison:
+19,503 objects, both serialized members and the compressed bundle are raw-exact to J850.
+Output: 11,414,871 B, SHA-256
+`b51278fc7096113071cf24cd5a7591ff8b262aa531ab0e2b40ef7aca7f825c37`.
+Evidence: `work/coordination/p1-scenes-ss/source-qualification-v3/`
+(`done.json`, `publication-gate-done.json`, `readiness-union/readiness.json`).
+Retained union closes one payload entry: 634/705 available, 629 raw-exact,
+two code comparisons and three drift-explained; 71 missing (7 APK, 64 payload).
+Audited selectors reuse existing owners; 81 focused object/Shader tests pass.
+Host-only; phone production, installation and original scene behavior remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1198 — Source-derived Soul, Mire and Crystalworld Shader records
+
+2026-10-26. Five audited profiles extend the existing Shader record owner:
+Soul perftest 25 records, Mire 25 and Crystalworld 24, from original scene
+resource/material relationships and pinned SDK/public-tool inputs.
+Source-read-guarded CLI output persists before independent comparison;
+all 74 records are byte-exact to J850. Soul uses its own resource/export GUIDs.
+Evidence, profile/output pins: `work/coordination/p1-anim-priority-shaders-v1/`
+(`done.json` and per-pack `independent-comparison.json`).
+32 focused host tests and host preflight pass. Complete-scene readiness
+and phone production, installation and original behavior remain separate gates.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.

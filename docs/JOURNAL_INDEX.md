@@ -10,6 +10,9 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1198](PORTING_JOURNAL.md#j1198--source-derived-soul-mire-and-crystalworld-shader-records) | 2026-10-26 | Source-derived Soul, Mire and Crystalworld Shader records | 2026-10-26. |
+| [J1197](PORTING_JOURNAL.md#j1197--complete-source-derived-sulfurpools-bundle) | 2026-10-26 | Complete source-derived Sulfurpools bundle | 2026-10-26. |
+| [J1196](PORTING_JOURNAL.md#j1196--complete-source-derived-ultima-bundle) | 2026-10-26 | Complete source-derived Ultima bundle | 2026-10-26. |
 | [J1195](PORTING_JOURNAL.md#j1195--four-complete-source-scene-bundles) | 2026-10-26 | Four complete source scene bundles | 2026-10-26. |
 | [J1194](PORTING_JOURNAL.md#j1194--source-qualified-ultima-shader-records) | 2026-10-26 | Source-qualified Ultima Shader records | 2026-10-26. |
 | [J1192](PORTING_JOURNAL.md#j1192--ten-complete-source-derived-spine-bundles) | 2026-10-26 | Ten complete source-derived spine bundles | 2026-10-26. |
