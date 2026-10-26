@@ -31,11 +31,16 @@ class DutyCycleTests(unittest.TestCase):
 
     def test_last_resort_safety_during_pause(self):
         policy = runner.ThermalDutyCycle()
-        for tick in (0, 0.25, 0.5, 0.75):
-            policy.observe(zones(cpu=81), tick)
-        with self.assertRaisesRegex(RuntimeError, "80 C for 1 s"):
-            policy.observe(zones(cpu=81), 1)
-        for values, message in ((zones(gpu=88), "88 C"), (zones(battery=45.1), "45 C"), ({}, "unavailable")):
+        for tick in range(13):
+            policy.observe(zones(cpu=85), tick * 0.25)
+        self.assertEqual(policy.receipt(3)["time_above_80_seconds"], 3)
+        self.assertEqual(policy.receipt(3)["peak_cpu_gpu_celsius"], 85)
+        for tick in range(12):
+            policy.observe(zones(cpu=96), 3.25 + tick * 0.25)
+        with self.assertRaisesRegex(RuntimeError, "95 C for 3 s"):
+            policy.observe(zones(cpu=96), 6.25)
+        runner.ThermalDutyCycle().observe(zones(cpu=95, battery=46), 0)
+        for values, message in ((zones(battery=46.1), "46 C"), ({}, "unavailable")):
             with self.subTest(values=values), self.assertRaisesRegex(RuntimeError, message):
                 runner.ThermalDutyCycle().observe(values, 0)
         policy = runner.ThermalDutyCycle()
