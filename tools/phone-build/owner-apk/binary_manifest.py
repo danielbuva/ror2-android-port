@@ -6,6 +6,7 @@ This is binary structure editing, never exact-text source replacement.
 """
 
 import struct
+import re
 
 
 NONE = 0xFFFFFFFF
@@ -40,9 +41,13 @@ def string_pool(strings, utf8):
     )
 
 
-def patch(data, wire, *, version_code=None):
+def patch(data, wire, *, version_code=None, application_id=None):
     if version_code is not None and (type(version_code) is not int or not 1 <= version_code <= 2100000000):
         raise ValueError("owner version code must be between 1 and 2100000000")
+    if application_id is not None and (
+        not isinstance(application_id, str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)+", application_id)
+    ):
+        raise ValueError("valid owner applicationId required")
     if len(data) < 8 or struct.unpack_from("<HHI", data) != (3, 8, len(data)):
         raise ValueError("invalid complete binary Android manifest")
     chunks = list(wire._chunks(data, 8, len(data)))
@@ -103,6 +108,52 @@ def patch(data, wire, *, version_code=None):
     activities = [n for app in applications for n in app["children"] if isinstance(n, dict) and n["tag"] == "activity" and n["attrs"].get("name") == UNITY]
     if len(manifests) != 1 or len(applications) != 1 or len(activities) != 1:
         raise ValueError("expected one original Unity activity")
+    if application_id is not None:
+        original = manifests[0]["start"]
+        node_header = struct.unpack_from("<H", original, 2)[0]
+        relative, stride, count = struct.unpack_from("<HHH", original, node_header + 8)
+        packages = []
+        for i in range(count):
+            position = node_header + relative + i * stride
+            ns, key, _, _, _, kind, value = struct.unpack_from("<IIIHBBI", original, position)
+            if ns == NONE and strings[key] == "package":
+                if kind != 3 or value >= original_count:
+                    raise ValueError("literal owner package required")
+                packages.append((position, strings[value]))
+        if len(packages) != 1:
+            raise ValueError("one owner package required")
+        position, old_package = packages[0]
+        changed = bytearray(original)
+        selected = index(application_id)
+        struct.pack_into("<I", changed, position + 8, selected)
+        struct.pack_into("<I", changed, position + 16, selected)
+        manifests[0]["start"] = bytes(changed)
+
+        # Relative component class names resolve against the original code package,
+        # not the new installation identity. Do not rewrite class/resource bytes.
+        def qualify(node):
+            if not isinstance(node, dict):
+                return
+            class_fields = {"parentActivityName", "targetActivity", "backupAgent", "appComponentFactory"}
+            if node["tag"] in {"application", "activity", "activity-alias", "service", "receiver", "provider", "instrumentation"}:
+                class_fields.add("name")
+            raw = bytearray(node["start"])
+            header = struct.unpack_from("<H", raw, 2)[0]
+            relative, stride, count = struct.unpack_from("<HHH", raw, header + 8)
+            for i in range(count):
+                at = header + relative + i * stride
+                ns, key, _, _, _, kind, value = struct.unpack_from("<IIIHBBI", raw, at)
+                if ns == android and strings[key] in class_fields and kind == 3 and value < len(strings):
+                    text = strings[value]
+                    if text.startswith(".") or "." not in text:
+                        qualified = index(old_package + ("" if text.startswith(".") else ".") + text)
+                        struct.pack_into("<I", raw, at + 8, qualified)
+                        struct.pack_into("<I", raw, at + 16, qualified)
+            node["start"] = bytes(raw)
+            for child in node["children"]:
+                qualify(child)
+
+        qualify(manifests[0])
     if version_code is not None:
         original = manifests[0]["start"]
         node_header = struct.unpack_from("<H", original, 2)[0]
@@ -115,7 +166,10 @@ def patch(data, wire, *, version_code=None):
                 if kind not in (0x10, 0x11):
                     raise ValueError("expected a literal owner version code")
                 versions.append((position, value))
-        if len(versions) != 1 or version_code <= versions[0][1]:
+        # Explicit release identity uses the signed release version, including a
+        # first install at version 1. The frozen source template is not an
+        # installed package; updater/PackageInstaller enforce actual anti-rollback.
+        if len(versions) != 1 or (application_id is None and version_code <= versions[0][1]):
             raise ValueError("owner version code must increase one original version")
         changed = bytearray(original)
         struct.pack_into("<I", changed, versions[0][0] + 8, NONE)

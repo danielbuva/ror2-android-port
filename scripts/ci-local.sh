@@ -56,7 +56,12 @@ cd "$scratch/repo"
 
 tmp="$scratch/tmp"
 setup_status=0
-"$python" "$root/scripts/ci-hdiutil-volume.py" 30 "$scratch/volume.sparseimage" "$volume" || setup_status=$?
+if [ "$(uname -s)" = Darwin ]; then
+  "$python" "$root/scripts/ci-hdiutil-volume.py" 30 "$scratch/volume.sparseimage" "$volume" || setup_status=$?
+else
+  # Linux CI/VMs already use case-sensitive storage and have no Unity installation.
+  setup_status=1
+fi
 if [ "$setup_status" -eq 0 ]; then
   tmp="$volume/tmp"
 elif [ "$setup_status" -eq 2 ]; then
@@ -64,9 +69,13 @@ elif [ "$setup_status" -eq 2 ]; then
   # image/volume on this ambiguous outcome; the cleanup trap preserves the scratch.
   preserve_scratch=1
 else
-  echo "ci-local: no case-sensitive volume; temporary files stay case-insensitive" >&2
+  echo "ci-local: using the host temporary filesystem" >&2
 fi
 mkdir -p "$tmp"
-TMPDIR="$tmp" sandbox-exec -p '(version 1)(allow default)(deny file-read* (subpath "/Applications/Unity"))' \
-  "$python" -m unittest discover -s tests
+if [ "$(uname -s)" = Darwin ]; then
+  TMPDIR="$tmp" sandbox-exec -p '(version 1)(allow default)(deny file-read* (subpath "/Applications/Unity"))' \
+    "$python" -m unittest discover -s tests
+else
+  TMPDIR="$tmp" "$python" -m unittest discover -s tests
+fi
 echo "ci-local: all CI steps pass for $target"

@@ -518,9 +518,21 @@ keeps signing identity outside disposable build output.
 `owner-apk/release.py` owns the public release body/canonical signing bytes and
 owner-private incremental output cache. Setup takes a signature-verified release,
 accepted original inventory and existing producer callback; teardown retains
-completed outputs/cache and durable signing state. The installer owns trust-key
-verification, acquisition, dispatch and installation; the release owner reuses
-unchanged dependency/output hashes and refuses key loss on updates.
+completed outputs/cache and durable signing state. The release owner reuses unchanged dependency/output hashes and refuses key loss
+on updates. `owner-apk/public_release.py` owns canonical public manifests, detached
+signatures and tracked-only bundles; `.github/workflows/public-release.yml`
+publishes these on authorized version tags using an externally provisioned key.
+`owner-apk/updates.py` owns bounded GitHub acquisition, signature/archive
+verification and the private update transaction; `release_jobs.py` dispatches
+signed job recipes to existing source-only producers. The managed-host
+`ToolHostActivity` presents check/download/rebuild/install states, while
+`OwnerUpdateState` is Android-free presentation policy. PR #119
+`OwnerInstaller` remains the PackageInstaller owner, including streamed hashing,
+package/version/signer continuity and persistent asynchronous status. Successful
+package-manager readback alone advances the installed manifest. Native tools
+remain installer-owned, private output/cache/key state remains owner-local, and
+no public release includes a game APK/data. [Provisioning and update flow](../tools/phone-build/owner-apk/README.md#publishing-and-checking-updates)
+separate publisher trust, private input setup and device acceptance.
 
 `tools/phone-build/package-assemblies/` owns a separate current experimental
 host producer for the four retained Unity package assemblies and their required
@@ -1357,7 +1369,8 @@ device receipts and the coordination lock; agents run it after each build/run ta
 (AGENTS.md "Storage hygiene").
 
 `scripts/git-hooks/pre-push` delegates committed-source checks to
-`scripts/ci-local.sh` in a fresh clone. Its support helper
+`scripts/ci-local.sh` in a fresh clone. Linux runs the same host checks directly;
+macOS retains its Unity-read sandbox and optional case-sensitive volume. Its support helper
 `scripts/ci-hdiutil-volume.py` requests a 30 s timeout for each optional image
 create/attach CLI, killing and reaping only its own timed-out caller. Ordinary
 setup failure uses the existing temporary-directory fallback; an uncertain

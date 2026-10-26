@@ -2,8 +2,11 @@
 
 
 The host-qualified [release update contract](../tools/phone-build/owner-apk/README.md#public-release-updates)
-now covers per-entry incremental reuse and existing-key signing. Installer trust
-provisioning, complete phone production and installed-game update retention remain open.
+covers signed public-tool acquisition, per-entry incremental reuse, existing-key
+signing and session installation. Publisher trust and a reviewed complete release
+plan require maintainer provisioning; complete phone production and installed-game
+update/save retention still require device qualification. No APK or game data
+is published by the release workflow.
 Assessment and implementation evidence: 2026-10-23. **Complete private
 accepted-output reconstruction now works on Android without Unity Editor or game
 compilation.** A pinned delta/frame package plus verified owner PC and SDK inputs

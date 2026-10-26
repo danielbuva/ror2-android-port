@@ -8,6 +8,8 @@ import hashlib
 import json
 from pathlib import Path, PurePosixPath
 import os
+import re
+import tempfile
 
 
 def signed_bytes(release):
@@ -21,10 +23,12 @@ def digest(path):
 
 
 def validate(release, installer_version, application_id, installed_version):
-    if set(release) != {"version", "version_code", "application_id", "minimum_installer_version", "bundle_sha256", "entries"}:
+    if not isinstance(release, dict) or set(release) != {"version", "version_code", "application_id", "minimum_installer_version", "bundle_sha256", "entries"}:
         raise ValueError("explicit release fields required")
     if not isinstance(release["version"], str) or not release["version"].strip():
         raise ValueError("release version required")
+    if not isinstance(release["application_id"], str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)+", release["application_id"]):
+        raise ValueError("Android applicationId required")
     if release["application_id"] != application_id:
         raise ValueError("release applicationId differs")
     code, minimum = release["version_code"], release["minimum_installer_version"]
@@ -38,10 +42,14 @@ def validate(release, installer_version, application_id, installed_version):
     if not isinstance(bundle, str) or len(bundle) != 64 or any(c not in "0123456789abcdef" for c in bundle):
         raise ValueError("public tools bundle SHA-256 required")
     for name, row in release["entries"].items():
+        if not isinstance(name, str) or "\\" in name or any(ord(c) < 32 or ord(c) == 127 for c in name):
+            raise ValueError("relative apk/ or payload/ output required")
         path = PurePosixPath(name)
         if path.is_absolute() or ".." in path.parts or str(path) != name or len(path.parts) < 2 or path.parts[0] not in {"apk", "payload"}:
             raise ValueError("relative apk/ or payload/ output required")
-        if set(row) != {"recipe_sha256", "producer_sha256"}:
+        if any(str(parent) in release["entries"] for parent in path.parents) or name + ".building" in release["entries"]:
+            raise ValueError("overlapping release output paths")
+        if not isinstance(row, dict) or set(row) != {"recipe_sha256", "producer_sha256"}:
             raise ValueError("entry dependency hashes required")
         for value in row.values():
             if not isinstance(value, str) or len(value) != 64 or any(c not in "0123456789abcdef" for c in value):
@@ -74,7 +82,7 @@ def rebuild(release, *, installer_version, application_id, installed_version, in
             stage = output.with_name(output.name + ".building")
             stage.unlink(missing_ok=True)
             produce(name, dependencies, stage)
-            if not stage.is_file():
+            if stage.is_symlink() or not stage.is_file():
                 raise ValueError("producer did not produce entry: " + name)
             stage.replace(output)
             changed.append(name)
@@ -99,10 +107,12 @@ def sign_release(owner, release, signing_request, output, *, installer_version, 
         raise ValueError("owner key lost: export saves and reinstall; update refused")
     output = Path(output)
     output.parent.mkdir(parents=True, exist_ok=True)
-    request_path = output.with_name(output.name + "-request.json")
-    with request_path.open("x") as stream:
-        json.dump(request, stream)
-    # The existing signer checks private custody, key continuity and APK content.
-    result = owner.sign(request_path, output)
-    os.chmod(request_path, 0o600)
-    return result
+    descriptor, temporary = tempfile.mkstemp(prefix=output.name + "-request-", suffix=".json", dir=output.parent)
+    request_path = Path(temporary)
+    try:
+        with os.fdopen(descriptor, "w") as stream:
+            json.dump(request, stream)
+        # The existing signer checks private custody, key continuity and APK content.
+        return owner.sign(request_path, output)
+    finally:
+        request_path.unlink(missing_ok=True)
