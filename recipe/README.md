@@ -3931,3 +3931,35 @@ SDK and independently source-produced media/Shader record packs remain required.
 The existing object producer preserves source null-script type slots for Soul
 and Mire. Generated outputs and raw comparison evidence stay ignored; ownership
 and redistribution boundaries apply. Phone production and runtime remain open.
+
+## ArtReview Shader selections (2026-10-26)
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-artreview-postprocess-shaders.json` | `6ea7d573778b2c400361d5473eb63c377c8320ba2c384afb1b285548872f8c66` |
+| `owner-artreview-standard-shaders.json` | `031403f7e1e3aaddce1267716201c6702df12375fdddf3596dbfc304d5e87480` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain original selectors, hashes, checked resource/material
+relationships and SDK/public-tool pins only. Standard variant order comes
+from original fragment feature declarations; post-processing uses the pinned
+public exporter templates. No original body, program, copied source, private
+path or credential is included. Legitimate PC input and separately acquired
+SDK remain required; generated records and evidence stay ignored. All 25
+persisted records are host raw-exact against J850. The matching complete object
+selection below also passes the host complete-scene comparison; phone
+qualification remains open.
+## ArtReview complete object selection (2026-10-26)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-artreview-whole-objects.json` | `e8911198ddd990b59debe714d500661f8a7a94e2be2f733ec4219b77cec5c7bd` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: this
+profile contains source selectors, hashes, checked pointer relationships and
+authored import policies only. Lossless compaction preserves decoded selectors.
+No original body, curve, scalar, pixel, program, copied source, private path or
+credential is included. Current legitimate PC files, SDK resources and checked
+source-produced record packs remain required. Generated outputs and evidence
+stay ignored. Existing redistribution and ownership boundaries apply; phone
+production and runtime qualification remain open.

@@ -40,6 +40,30 @@ class Compiler:
 
 
 class SDKSource(unittest.TestCase):
+    def test_resource_buffers_preserve_sdk_indices_and_factor_shared_rows(self):
+        rows = ["texbind: image 3 4 0 2", "cbbind: Draws 7", "bufferbind: Instances 67108864 0"]
+        reflected = S.P.reflection(rows)
+        self.assertEqual(reflected["resource_buffers"], [{"name": "Instances", "index": 67108864, "array": 1}])
+        table = S.P.common_parameters(reflected)
+        self.assertEqual(dict(table["m_NameIndices"]), {"image": 0, "Draws": 1, "Instances": 2})
+        self.assertEqual(table["m_CommonParameters"]["m_BufferParams"], [{"m_NameIndex": 2, "m_Index": 67108864, "m_ArraySize": 1}])
+        variants = []
+        for keywords, extra in (([], []), (["FEATURE"], ["bufferbind: Conditional 67108866 3"])):
+            variants.append({"keywords": keywords, "requirements": 33, "compilation": {"data": b"linked", "gpu_program_type": 25, "reflection": rows + extra}})
+        raw, common, _, parameters = S.P.variant_records(variants, ["FEATURE"])
+        self.assertEqual(common["m_CommonParameters"]["m_BufferParams"], table["m_CommonParameters"]["m_BufferParams"])
+        self.assertNotIn(S.P.string("Instances"), raw)
+        expected = S.P.words(202012090, 1, 0, 0, 0, 0, 1) + S.P.string("Conditional") + S.P.words(2, 67108866, 3)
+        self.assertIn(expected, raw)
+        self.assertEqual(parameters, [0, 1])
+        # Independently decode the complete noncommon resource sequence.
+        with patch.object(sys, "path", [str(OWNER.parents[2] / "scripts/lab"), *sys.path]):
+            from shader_segments import parameter_layout
+
+        native = S.P.native_parameters(reflected, {"constants": [], "buffers": [], "textures": [], "bindings": []})
+        decoded = parameter_layout(native)["bindings"]
+        self.assertEqual([(row["kind"], row["slot"], row["extra"]) for row in decoded], [(0, 3, 4), (1, 7, 0), (2, 67108864, 1)])
+
     def test_global_and_structured_constants_follow_sdk_scope_and_name_order(self):
         reflected = S.P.reflection(
             [

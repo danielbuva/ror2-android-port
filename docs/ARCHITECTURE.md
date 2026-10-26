@@ -608,7 +608,9 @@ ShaderLab preprocessing, snippet/include identities and linked Vulkan emission;
 fresh reflection supplies native parameter/program records and common tables.
 Root specialization constants and structured instancing buffers retain their SDK
 scope, member layout and count contracts; ordinary CB counts exclude separate
-struct declarations and dotted members.
+struct declarations and dotted members. Compiler resource-buffer bindings retain
+the full SDK index and normalized array count in native kind-2 records and
+common tables; the existing segment reader consumes those records.
 The producer derives the pass key from source/capabilities/SDK inputs, constructs
 the parsed form from source and schema defaults, requests HC9 through the existing
 codec worker and emits complete files through `unity_write`. The SDK executable
@@ -1456,6 +1458,11 @@ stay unchanged. During completed-session reclamation, `SessionResourceBoundary`
 releases already-destroyed HurtBox targets from returned bullet-hit pool entries,
 with no live world/network, after deferred destruction. It preserves live and
 checked-out hits and records its release count with existing registry cleanup.
+The same owner prunes deferred loadout callbacks targeting already-destroyed
+`CharacterSpawnCard` clones after world/network teardown. It writes the boxed
+original availability struct back, preserving its availability flag, live and
+unrelated callbacks and their order. Native menu captures attribute this owner;
+a changed repeated-session slope remains a device gate.
 The host memory summary keeps immediate post-collection and subsequent-menu
 managed slopes separate, including the observed final menu without extrapolation.
 The current `settings-write-interrupt-check` host diagnostic uses
@@ -4687,3 +4694,15 @@ producer while local receipts persist. The member-aware writer exposes
 `payload/whole-scene-{soul_perftest,mire,crystalworld}`. All 319,607 objects,
 six serialized members and three compressed bundles are host raw-exact to J850.
 Phone production, installation and original scene behavior remain open.
+
+ArtReview Shader selections use `recipe/owner-artreview-{postprocess,standard}-shaders.json`
+through the existing `payload_shader_records.py` owner. Explicit original/SDK/
+public-tool roots, pinned profiles and a new output directory set up production;
+process exit tears down producers while local receipts persist. Its 24
+post-processing records and one Standard record are host raw-exact against J850.
+The complete object selection uses `recipe/owner-artreview-whole-objects.json`
+through the existing object producer and member-aware writer. Its 965 objects,
+both serialized members and compressed bundle are host raw-exact to J850.
+Setup and teardown retain the same explicit roots, pinned source-produced packs,
+fresh output and process-exit contract. Phone production and runtime behavior
+remain open.
