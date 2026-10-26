@@ -3596,3 +3596,19 @@ curve, scalar, pixel, program, copied source, private path or credential is
 included. Current legitimate PC files and SDK resources remain required;
 generated content and evidence stay ignored. Existing ownership and
 redistribution boundaries apply. Phone and runtime qualification remain open.
+## Fungal complete scene object profile (2026-10-26)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-fungal-objects.json` | `217f1270df3fee57abaa3beffbc80aaeb41ef42f36c3c0523efa14d46dca246e` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: this profile
+contains selectors, hashes, checked pointer relationships and authored import
+policies only. It contains no original object bodies, curves, scalar data,
+pixels, shader programs, copied source, private paths or credentials. Original
+GameObject and typed reciprocal Rigidbody witnesses qualify preload membership;
+the producer derives the preload from original dependencies. Current legitimate
+PC files, the pinned SDK and independently source-produced media/Shader record
+packs remain required. Generated outputs and raw evidence stay ignored.
+Existing ownership and redistribution boundaries apply; phone production,
+installation and runtime behavior remain open.

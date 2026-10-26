@@ -1257,6 +1257,17 @@ members and five compressed bundles are host-exact against J850. The existing
 target-tree interface exposes these as `payload/<bundle-name>`; phone production,
 assembly and runtime qualification remain open.
 
+Eight further scene selections use the same object command:
+`owner-lakes-spine-objects.json`, `owner-lakesnight-spine-objects.json`,
+`owner-sulfurpools-spine-objects.json`, `owner-satellitescene-objects.json`,
+`owner-limbo-objects.json`, `owner-ironalluvium-objects.json`,
+`owner-ironalluvium2-objects.json` and `owner-lobby-objects.json` under `recipe/`.
+Supply their independently produced media/Shader packs through the existing
+receipt-pinned `--record-pack` interface. These profiles expose 135,541 records,
+16 serialized members and eight compressed bundles, all host-exact against
+J850, as `payload/<bundle-name>`. They add no producer owner or runtime state;
+phone production, installation and scene behavior remain open.
+
 ### Shared on-device producer thermal runner
 
 `phone_runner.py --receipt NEW.json -- COMMAND...` is the current experimental
@@ -1315,3 +1326,8 @@ member and compressed bundle is host-exact against J850. Setup remains explicit
 PC/SDK roots and a separate new output directory; process exit tears down the
 producer while local receipts persist. Phone production and original scene
 behavior remain open.
+Fungal uses `recipe/owner-fungal-objects.json` with the existing object command
+and receipt-pinned media/Shader packs. Its 123,671 objects, two serialized
+members and complete compressed bundle are host-exact against J850. The
+existing target-tree interface exposes `payload/whole-scene-fungal`;
+phone production, installation and original scene behavior remain open.
