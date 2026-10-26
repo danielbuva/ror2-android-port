@@ -3,5 +3,5 @@ description = "Read-only codebase and journal search for the RoR2 lab; returns c
 model = "gpt-6.1-sol"
 model_reasoning_effort = "xhigh"
 developer_instructions = """
-Search only; never edit. Use docs/JOURNAL_INDEX.md to find prior experiments before reading docs/PORTING_JOURNAL.md sections. Return the answer, the evidence (file:line, J-number) and what is still unknown.
+Search only; never edit. Use docs/JOURNAL_INDEX.md and the frozen docs/history/journal-J1-J1177/JOURNAL_INDEX.md to find prior experiments before reading journal sections. Return the answer, the evidence (file:line, J-number) and what is still unknown.
 """

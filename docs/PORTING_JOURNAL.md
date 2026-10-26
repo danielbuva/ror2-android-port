@@ -44498,3 +44498,16 @@ First attempt refused artifact snapshot identity after successful Unity build; n
 Two focused lifecycle/presence checks, Ruff and host preflight pass; doctor retains historical bootstrap failure.
 No device install/run: R58 remains last verified installed; strict three controls and measured loading heat remain open.
 Mandatory prune passes; revisit after authorized device admission under unchanged J1156 limits.
+Shipped results only, one short entry each (at most 15 lines): what changed, the evidence path, the
+APK or output hash where relevant, and what remains. Exploratory and negative results go to dated notes
+under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to 2026-10-25) are frozen in
+[history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
+[index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
+
+## J1178 — Journal archived and documentation slimmed
+
+2026-10-26. The 3.8 MB, 1,132-entry journal and its index moved unchanged to `docs/history/journal-J1-J1177/`;
+206 anchor links in docs and tool READMEs now point there. AGENTS.md documentation rules now record only
+shipped results here, keep exploratory notes in ignored scratch, refresh `PORTING_STATE.md` once a day,
+and add the speed, token-efficiency and branch-update rules the parallel workers follow.
+Evidence: this commit. Remaining: none for this change.

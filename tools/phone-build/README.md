@@ -40,7 +40,7 @@ exported types/forwarders. Multiple-module assemblies refuse. The existing
 `phone-root-contract` host action uses the reader for fixture coverage; its
 short-name candidates remain guesses. Default compilation uses host .NET 10
 and the exact supplied SDK's Cecil. The separate scoped net8.0 reader/resolver
-has [J866's Android shell proof](../../docs/PORTING_JOURNAL.md#j866--qualify-scoped-sdk-assembly-metadata-and-forwarding-on-android);
+has [J866's Android shell proof](../../docs/history/journal-J1-J1177/PORTING_JOURNAL.md#j866--qualify-scoped-sdk-assembly-metadata-and-forwarding-on-android);
 app-host policy and complete root production remain separate gates.
 An explicit `MetadataTargetFramework` MSBuild property selects another build-tool
 target when its reference pack is supplied; this never selects a game backend.
@@ -63,7 +63,7 @@ return checks, including Darwin variadic stack arguments. It reads no earlier
 SDK dump or captured mapping, executes no SDK code and produces no scene roots
 or game input. Output and input drift refuse; failed attempts remain private.
 Its bounded Android shell qualification is recorded in
-[J869](../../docs/PORTING_JOURNAL.md#j869--decode-pinned-sdk-wrapper-search-order-on-android);
+[J869](../../docs/history/journal-J1-J1177/PORTING_JOURNAL.md#j869--decode-pinned-sdk-wrapper-search-order-on-android);
 complete wrapper-cache/mapping, scene usage and app hosting remain open.
 
 `phone_native_flags.py` is separate current experimental metadata support:
@@ -76,7 +76,7 @@ It needs the two unchanged authored registry readers alongside it; no editor,
 game files or previous captured mapping is an input. Reports stay private and
 no cache, scene-root or game-build consumer is selected.
 The bounded Android shell qualification is recorded in
-[J876](../../docs/PORTING_JOURNAL.md#j876--decode-native-sdk-type-flags-on-android).
+[J876](../../docs/history/journal-J1-J1177/PORTING_JOURNAL.md#j876--decode-native-sdk-type-flags-on-android).
 
 Current experimental population investigation: `phone_wrapper_population.py`
 separates direct names, forward inheritance and reverse registrations. Invoke
@@ -84,7 +84,7 @@ separates direct names, forward inheritance and reverse registrations. Invoke
 with explicit owner inputs. The complete pinned 84-file managed set and all
 reader/input hashes are checked; inventory paths may be relocated only through
 this complete file-set binding. J878 verifies supported forward queries;
-[J883](../../docs/PORTING_JOURNAL.md#j883--include-the-object-root-and-match-android-metadata-to-native-sdk-caches)
+[J883](../../docs/history/journal-J1-J1177/PORTING_JOURNAL.md#j883--include-the-object-root-and-match-android-metadata-to-native-sdk-caches)
 matches root-inclusive Android metadata to native SDK cache observations.
 Emitted caches and complete cache-consumer/root qualification remain open.
 The separate desktop verification command is

@@ -6,7 +6,7 @@ owner-generated APKs/payloads and raw evidence private. Read the
 [player guide](PLAYER_GUIDE.md), [alpha policy](ALPHA_POLICY.md),
 [screen inventory](SCREEN_COVERAGE.md) and [current status](../PORTING_STATE.md).
 A prepared-lab result does not close the fresh-owner gate.
-[J1071](PORTING_JOURNAL.md#j1071--qualify-software-touch-native-pause-and-recovery)
+[J1071](history/journal-J1-J1177/PORTING_JOURNAL.md#j1071--qualify-software-touch-native-pause-and-recovery)
 records matching artifact/install receipts, both assisted controls, strict native
 restart, a complete software-touch transaction and bounded recovery cases.
 Hardware controls and fresh public-input installation remain unqualified.
@@ -148,7 +148,7 @@ off, uses diagnostic automatic input and requires strict cleanup for every
 completed session. A runtime error stops the case; incomplete series and old
 archived reports do not establish a growth bound. Native heap captures are a
 separate opt-in attribution case and must not be mixed with this measurement.
-[J1122](PORTING_JOURNAL.md#j1122--prepare-alpha-host-contracts-and-identify-an-old-heap-fingerprint)
+[J1122](history/journal-J1-J1177/PORTING_JOURNAL.md#j1122--prepare-alpha-host-contracts-and-identify-an-old-heap-fingerprint)
 records an old-heap graph fingerprint, without identifying the corrected retained
 root. A fresh matched heap pair must inspect
 actual GC/static roots and native bridges; stable native object counts alone do
@@ -160,12 +160,12 @@ samples and refusing gaps above 1 s. Abort when one CPU/GPU zone remains above
 at most 0.35 s apart. A reading at or below 80 C or a longer gap resets that
 zone's continuity. Abort immediately for CPU/GPU above 88 C or battery/skin
 above 45 C. Record brief core spikes and retain the failed case without retry,
-following [J1156](PORTING_JOURNAL.md#j1156--qualify-per-zone-gameplay-thermal-duration-and-limits).
+following [J1156](history/journal-J1-J1177/PORTING_JOURNAL.md#j1156--qualify-per-zone-gameplay-thermal-duration-and-limits).
 Before each stage, cool readable CPU/GPU/battery/skin zones to at most 50 C
 with the OLED asleep. Record other physical zones, including power-management,
 charger and USB sensors, as excluded from admission only; continue sampling
 them in raw observations and all-zone peaks. Admission follows
-[J1148](PORTING_JOURNAL.md#j1148--restrict-gameplay-admission-to-cpu-gpu-battery-and-skin).
+[J1148](history/journal-J1-J1177/PORTING_JOURNAL.md#j1148--restrict-gameplay-admission-to-cpu-gpu-battery-and-skin).
 Record unreadable temperature interfaces as exclusions
 with their type/path; they do not establish cool or absent sensors. Admission
 readings at or below -30 C are also unavailable: record their type/path/raw value
@@ -173,13 +173,13 @@ and exclude them. A previously valid zone becoming a sentinel during gameplay
 still aborts. Missing readable CPU coverage, other invalid numeric readings,
 malformed readings, ADB failure or failed supervision also abort. Exact known
 electrical pseudo-zones are excluded. The sentinel policy and host fixtures are
-recorded in [J1141](PORTING_JOURNAL.md#j1141--exclude-unavailable-admission-thermal-sentinels).
+recorded in [J1141](history/journal-J1-J1177/PORTING_JOURNAL.md#j1141--exclude-unavailable-admission-thermal-sentinels).
 Record CPU and all-zone peaks and retain runtime or unexpected errors as first
 failures, following
-[J1131](PORTING_JOURNAL.md#j1131--supervise-all-readable-gameplay-thermal-zones).
+[J1131](history/journal-J1-J1177/PORTING_JOURNAL.md#j1131--supervise-all-readable-gameplay-thermal-zones).
 Admission discovery uses a separate 10-second timeout while idle; gameplay
 reads the discovered physical temperature paths in one batch with the strict
-runtime timeout and gap bound ([J1137](PORTING_JOURNAL.md#j1137--separate-thermal-admission-discovery-from-runtime-sampling)).
+runtime timeout and gap bound ([J1137](history/journal-J1-J1177/PORTING_JOURNAL.md#j1137--separate-thermal-admission-discovery-from-runtime-sampling)).
 Completed stages checkpoint within one three-hour deadline; cooldown never
 counts as play. The 70/55 C pause/resume rule applies to pausable tool jobs,
 not gameplay. Battery/HAL checks remain additional limits.

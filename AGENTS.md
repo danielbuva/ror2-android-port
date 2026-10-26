@@ -1,6 +1,6 @@
 # Porting laboratory handoff
 
-Reading order: `PORTING_STATE.md` (current snapshot) → `docs/ARCHITECTURE.md` (pipeline, runtime, ownership) → the subsystem doc you need → search `docs/JOURNAL_INDEX.md` and read the matching `docs/PORTING_JOURNAL.md` entries before repeating any experiment. `environment/ENVIRONMENT_REPORT.md` and `docs/ADR-001-port-architecture.md` explain the toolchain and the chosen architecture. Run `./dev doctor`. This is a laboratory, not a finished port: never infer game readiness from a build, a host test or an assisted run.
+Reading order: `PORTING_STATE.md` (current snapshot) → `docs/ARCHITECTURE.md` (pipeline, runtime, ownership) → the subsystem doc you need → search `docs/JOURNAL_INDEX.md` (and the frozen [J1–J1177 index](docs/history/journal-J1-J1177/JOURNAL_INDEX.md)) before repeating an experiment. `environment/ENVIRONMENT_REPORT.md` and `docs/ADR-001-port-architecture.md` explain the toolchain and the chosen architecture. Run `./dev doctor`. This is a laboratory, not a finished port: never infer game readiness from a build, a host test or an assisted run.
 
 ## Non-negotiable boundaries
 
@@ -53,7 +53,7 @@ final report). Project Codex subagents are in `.codex/agents/`.
 
 ## Scientific workflow
 
-Observe → state a hypothesis → smallest meaningful change → `./dev preflight` → build → install/sync → run → collect logs/crash/screenshot → classify first failure → update state/journal → commit a logical checkpoint.
+Observe → implement the full change → `./dev preflight` → build → install/sync → run → collect logs/crash/screenshot → classify first failure → fix → ship. Record shipped results (see Documentation rules); commit logical checkpoints.
 
 Use `./dev` as the obvious interface; see [docs/DEVELOPING.md](docs/DEVELOPING.md) for supported commands. Use the pinned Unity MCP for editor state/actions and deterministic CLIs for filesystem, Git/GitHub, device operations and editor/server startup. Never send concurrent editor mutations to the same Unity instance. Check an outstanding build completes before loading scenes or entering Play Mode. If compilation prevents MCP connection, repair the recorded first error and restart the isolated editor; do not treat mere tool presence as a passing test.
 
@@ -67,20 +67,39 @@ Commit small logical changes after checking staged files for proprietary materia
 
 ## Documentation rules
 
-Each document has one job; record each result once and link to it elsewhere.
+Documentation serves the next implementer; keep it short and current.
 
-- `docs/PORTING_JOURNAL.md`: the only place an experiment's full result is written (hypothesis, change, evidence paths, APK hash, first failure, revisit conditions). Append a `## J<n> — <title>` entry, then run `python3 scripts/journal-index.py` to refresh `docs/JOURNAL_INDEX.md`.
-- `PORTING_STATE.md`: a one-page snapshot. **Replace** its content after meaningful progress; never append history there. Keep "latest device-verified APK", "installed now" and "runtime source since that APK" as separate facts: Git history alone does not prove what is installed.
-- `docs/execution-backlog.md`: open work only. `docs/milestones.md`: gate definitions and current status. `docs/risk-register.md`: risks with links to evidence. None of them copies journal reports.
+- `docs/PORTING_JOURNAL.md`: one entry per **shipped** result (merged change, closed readiness entry,
+  device-verified behaviour), at most 15 lines: what changed, evidence path, APK/output hash, what remains.
+  Run `python3 scripts/journal-index.py` after editing. Exploratory, negative or in-progress results go to
+  a dated note under ignored `work/coordination/`, or three lines folded into the next feature PR; never a
+  docs-only PR. J1–J1177 are frozen in `docs/history/journal-J1-J1177/`.
+- `PORTING_STATE.md`: a one-page snapshot, **replaced** (never appended) at most once a day. Keep "latest
+  device-verified APK", "installed now" and "runtime source since that APK" as separate facts.
+- `docs/execution-backlog.md`: open work only. `docs/milestones.md`: gate status. `docs/risk-register.md`:
+  risks with evidence links. None of them copies journal text.
 - `docs/ARCHITECTURE.md`: update it when a file, owner or pipeline step is added, moved or retired.
 - Superseded material moves to `docs/history/`; nothing labelled "current" lives there.
 - Wrap prose at a readable width and put spaces between numbers and words.
+
+## Working speed and token efficiency
+
+The goal is speed of implementation, not theoretical safety; boundaries above still apply in full.
+
+- Define the acceptance check before starting (for example "bytes match J850" or "phone run passes").
+  When it passes: focused tests once, commit, PR, merge, next item. No re-qualification runs, no second
+  review after a GO, no tests or guards for failures that have not been observed.
+- Batch: close several entries per PR. Update a pushed branch by merging `origin/main` into it (never
+  rebase a pushed branch, never force-push); if a publish fails twice, stop and report the exact error.
+- Agents: keep each turn short (about 30 tool calls), hand off through a compact state file (at most
+  6 KB), start long builds, phone runs and tests detached with an absolute done-file and end the turn
+  instead of polling. At most two subagents at a time, for bounded read-only work.
 
 ## Definition of done
 
 A feature is done when it has an understandable place in the current system, not only when its experiment passed:
 
-1. Device evidence is recorded once in the journal and the index is regenerated; `PORTING_STATE.md` is replaced, not appended.
+1. Shipped device evidence has one short journal entry and the index is regenerated; `PORTING_STATE.md` is refreshed (replaced, not appended) at most once a day.
 2. The behaviour lives in a named owner listed in `docs/ARCHITECTURE.md`, with its setup, teardown and state; shipped behaviour is not added as another case of the experiment switch in `MovementBatchProbe.RunSelectedProbe`.
 3. Any new file under `work/` that the build reads has a generator in the repo, or is listed in `docs/LOCAL_STATE.md` as required local state with its reason. No new code reads a timestamped run folder directly.
 4. A contract that can be checked off-device has a host test or an exact-editor fixture.

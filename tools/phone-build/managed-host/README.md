@@ -4,8 +4,8 @@ Current experimental support connecting the existing public transform producer
 to the separate [native-host fixture](../native-host/README.md). It uses the
 existing Python and .NET build tools. Route A's IL2CPP game runtime and desktop
 fallback remain authoritative. Full results and limits are recorded once in
-[J1001](../../../docs/PORTING_JOURNAL.md#j1001--run-the-unchanged-public-transform-producer-inside-the-android-app-host).
-[J1074](../../../docs/PORTING_JOURNAL.md#j1074--qualify-the-integrated-public-transform-tools-inside-the-android-app-host)
+[J1001](../../../docs/history/journal-J1-J1177/PORTING_JOURNAL.md#j1001--run-the-unchanged-public-transform-producer-inside-the-android-app-host).
+[J1074](../../../docs/history/journal-J1-J1177/PORTING_JOURNAL.md#j1074--qualify-the-integrated-public-transform-tools-inside-the-android-app-host)
 qualifies the integrated source pins with a complete phone build, two cold
 app-host runs and copied-input refusal. Full game construction remains open.
 
@@ -188,7 +188,7 @@ Runner jobs never launch UI. Retain the private owner key independently of
 disposable outputs and before removing this tool package. Final installer/game
 acceptance remains separate from successful tool execution.
 
-[J1103](../../../docs/PORTING_JOURNAL.md#j1103--produce-fixed-target-burst-and-sign-owner-apks-in-the-android-tool-host)
+[J1103](../../../docs/history/journal-J1-J1177/PORTING_JOURNAL.md#j1103--produce-fixed-target-burst-and-sign-owner-apks-in-the-android-tool-host)
 qualifies fixed-target Burst and two authored APK signing processes in this
 ordinary app host, with actual native hash/mapping/UID/context evidence. It does
 not qualify full-player assembly, installer UI or game performance. The separate

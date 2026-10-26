@@ -301,7 +301,7 @@ non-pointer byte and native script/type identity;
 material keyword demotion reuses the existing object owner's policy. No runtime
 owner or Editor is added. [Setup and qualified scope](../tools/phone-build/accepted-output/README.md#produce-animation-and-generic-object-records)
 remain separate from complete bundle/player-file assembly and phone acceptance.
-[J1143](PORTING_JOURNAL.md#j1143--qualify-expanded-source-animation-controller-and-graph-records) qualifies the full
+[J1143](history/journal-J1-J1177/PORTING_JOURNAL.md#j1143--qualify-expanded-source-animation-controller-and-graph-records) qualifies the full
 expanded host cohorts; their payload destination identities are not APK
 identities and callers must supply their own checked player relationships.
 `avatar_produce.py` owns current experimental PC-only Avatar production using
@@ -513,12 +513,12 @@ and terminal receipt, and retains failures without updating lab/current state.
 keep the original lab gate and runtime stage/request guards intact. No game build
 automatically selects this source-only input path; Android execution is open.
 
-[J1058's whole-player host case](PORTING_JOURNAL.md#j1058--strip-and-convert-the-complete-player-with-fixed-target-root-configuration)
+[J1058's whole-player host case](history/journal-J1-J1177/PORTING_JOURNAL.md#j1058--strip-and-convert-the-complete-player-with-fixed-target-root-configuration)
 reuses the named metadata/SDK registry/root-composition owners and exact SDK
 UnityLinker/IL2CPP tools with independent DLL providers. Current target root and
 preservation identities are explicit supplied configuration, not independently
 derived scene semantics. LOCAL_STATE records setup, retained inputs and teardown.
-[J1059](PORTING_JOURNAL.md#j1059--build-the-complete-native-arm64-game-library-without-unity-editor)
+[J1059](history/journal-J1-J1177/PORTING_JOURNAL.md#j1059--build-the-complete-native-arm64-game-library-without-unity-editor)
 then completes native construction using the original SDK compiler policy.
 These experiments have no current game-build consumer; public orchestration,
 content production and Android execution remain separate gates.
