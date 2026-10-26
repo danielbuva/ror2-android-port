@@ -12,6 +12,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | --- | --- | --- | --- |
 | [J1172](PORTING_JOURNAL.md#j1172--three-source-derived-scene-shader-packs) | 2026-10-25 | Three source-derived scene Shader packs | - Hypothesis: original material/scene pointers plus pinned SDK/public templates suffice for these records. |
 | [J1173](PORTING_JOURNAL.md#j1173--preserve-the-rgba-phone-prefix-after-bounded-wall-timeout) | 2026-10-25 | Preserve the RGBA phone prefix after bounded wall timeout | 2026-10-25 UTC. |
+| [J1174](PORTING_JOURNAL.md#j1174--define-public-release-updates-and-incremental-owner-outputs) | 2026-10-25 | Define public release updates and incremental owner outputs | 2026-10-25. |
 | [J1171](PORTING_JOURNAL.md#j1171--identical-input-scene-exports-change-historical-yaml-identity-hashes) | 2026-10-25 | Identical-input scene exports change historical YAML identity hashes | - Hypothesis: the pinned original-only exporter and stage owner can reproduce the WholeStageContexts full YAML digests. |
 | [J1169](PORTING_JOURNAL.md#j1169--bound-the-complete-source-only-player-registry-metadata-lifetime) | 2026-10-25 | Bound the complete source-only player registry metadata lifetime | **Hypothesis and prior art.** |
 | [J1166](PORTING_JOURNAL.md#j1166--guarded-phone-player-assembly-stops-on-thermal-limit) | 2026-10-25 | Guarded phone player assembly stops on thermal limit | **Hypothesis.** |

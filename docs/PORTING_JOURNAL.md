@@ -44418,6 +44418,20 @@ memory/thermal guards before claiming phone production. Seven APK files and
 - Revisit with a source-reproducible historical identity provider, or an explicitly authorized comparison-policy decision. Existing input-drift permission does not cover exporter entropy.
 - Host only; no Editor, device lease, installation or game launch. J850 comparison APK remains `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
 
+## J1174 — Define public release updates and incremental owner outputs
+
+2026-10-25. Hypothesis: existing source-only producers and durable signer can
+support per-entry updates without distributing game bytes or replacing keys.
+`owner-apk/release.py` defines canonical signed release bytes, public bundle and
+per-entry dependency hashes; installer owns trust verification and dispatch.
+Cache binds originals, dependency hashes and actual output hashes;
+only changed/missing entries regenerate. Existing signer handles APK signing;
+updates refuse lost keys, mismatched identity and non-increasing versions.
+Acceptance: initial/unchanged/one-entry-change/input-change/key-loss contracts PASS.
+Focused tests: 4 release + 17 signer PASS; Ruff PASS. Preflight blocked by
+absent matching lab input generation; no build attempted. Review GO, host only.
+Phone producer dispatch, trust provisioning, install/save retention and native
+continuation remain open; revisit with the complete source-produced candidate.
 ## J1173 — Preserve the RGBA phone prefix after bounded wall timeout
 
 2026-10-25 UTC. Hypothesis: J1140's guarded source-only producer completes all 1,333 single-mip RGBA records in one detached run.
