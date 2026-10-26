@@ -274,6 +274,9 @@ try:
         source / "ToolHostActivity.java",
         source / "OwnerInstaller.java",
         source / "OwnerUpdateState.java",
+        source / "OwnerBuildService.java",
+        source / "OwnerInputImport.java",
+        source / "OwnerInputSource.java",
     )
     jar = out / "classes.jar"
     with zipfile.ZipFile(jar, "w", zipfile.ZIP_DEFLATED) as z:

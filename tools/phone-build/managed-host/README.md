@@ -210,3 +210,52 @@ ordinary app host, with actual native hash/mapping/UID/context evidence. It does
 not qualify full-player assembly, installer UI or game performance. The separate
 original-input native compilation remains active until its own terminal result
 and explicit corrected relink. Device policy/security qualification stays open.
+
+## Phone-only installer surface (host-qualified, not device-qualified)
+
+Installer version 2 keeps the existing signed release updater, source-only
+producers, thermal supervisor and `OwnerInstaller` PackageInstaller path. The
+Activity now prepares a signed installation plan, asks Android's Storage Access
+Framework for a folder or ZIP and retains read-only URI permission. No input URI,
+file bytes or local inventory is sent to the release network client.
+
+`OwnerInputSource` owns Android provider access and revocation recovery;
+`OwnerInputImport` is the host-tested stream copier. It imports only signed-manifest
+paths directly into `owner-input/import/files`, verifies sizes/SHA-256 and retains
+whole verified files for resume. ZIP input is streamed once, without a private
+archive-sized copy; ignored extra members have a bounded decompression budget.
+Traversal, aliases, duplicate ZIP entries, mismatches and missing inputs refuse.
+The free-space estimate includes remaining copies, the signed workspace budget,
+2 GiB reserve and 5% of remaining input bytes. A changed manifest retains the
+previous files in an import-local `previous-import-*` directory rather than
+silently deleting them. Python rehashes exact final membership before reconstruction;
+Java progress/receipts are never input admission proof. Only deterministic unfinished
+native copy fragments are discarded automatically.
+
+`OwnerBuildService` owns the worker independently of Activity recreation and task
+removal, with an ongoing foreground notification and a partial wake lock during
+local work. Pause/resume/cancel feed the existing thermal supervisor; user pause
+never pauses its sensor loop or overrides its cooling decision. Provider cancel
+uses `CancellationSignal` and closes the active source stream. Battery admission
+retains the documented caller rule (at most 35 C and 85%, no charging at or above
+80%); the supervisor's thermal limits are unchanged. The screen displays signed
+stages, byte/job progress, elapsed time, first failure, live duty-runner readings
+and Android battery charge/health; unavailable or old readings are marked.
+
+Process death/reboot preserves source grants, verified files and stage checkpoints.
+There is no boot receiver, sticky restart or automatic work after reboot: Resume is
+explicit and all reused bytes are revalidated. Cancelling keeps verified checkpoints.
+The service signals the existing supervisor, whose teardown kills/reaps its process
+family even while paused. Retrying an install failure uses the existing session
+installer rather than reconstructing completed stages. After an explicitly started
+reconstruction succeeds, the service hands the ready APK to `OwnerInstaller` if
+Android permits installation; otherwise the UI asks the user to grant permission
+and continue. The notification remains through a pending session/consent; only
+package/version/signer readback marks installation complete. No uninstall or save
+reset is added.
+
+Synthetic JVM import/session tests, source/manifest lifecycle contracts and Android
+API compilation do not establish real SAF-provider behavior, Android process-death
+or reboot behavior, notification delivery, battery/thermal measurements, actual
+PackageInstaller consent, a complete signed release recipe or a playable game.
+Those remain device/release acceptance gates. This work creates no APK or key.

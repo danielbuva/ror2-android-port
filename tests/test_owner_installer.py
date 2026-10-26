@@ -12,6 +12,8 @@ SOURCE = ROOT / "tools/phone-build/managed-host/OwnerInstaller.java"
 STATE_SOURCE = SOURCE.with_name("OwnerUpdateState.java")
 
 STUBS = {
+    "dev/ror2lab/phonebuildhostfixture/ToolHostActivity.java": """package dev.ror2lab.phonebuildhostfixture;
+public class ToolHostActivity {public static String checkpointState;public static void updateInstallCheckpoint(android.content.Context c,String state,String message){checkpointState=state;}}""",
     "android/os/Build.java": "package android.os; public class Build { public static class VERSION { public static int SDK_INT=33; } }",
     "android/content/IntentSender.java": "package android.content; public class IntentSender {}",
     "android/content/Intent.java": """package android.content; public class Intent {
@@ -75,6 +77,7 @@ import android.content.pm.*;
 import android.os.Build;
 import dev.ror2lab.phonebuildhostfixture.OwnerInstaller;
 import dev.ror2lab.phonebuildhostfixture.OwnerUpdateState;
+import dev.ror2lab.phonebuildhostfixture.ToolHostActivity;
 import java.io.*;
 import java.nio.file.*;
 import java.security.*;
@@ -125,7 +128,7 @@ public class Harness {
         c=new Context();OwnerInstaller.install(c,apk,hash);c.manager.installer.info.sealed=false;
         OwnerInstaller.reconcile(c);check(c.manager.installer.abandoned && OwnerInstaller.state(c).equals("ERROR"));
         c=new Context();OwnerInstaller.install(c,apk,hash);c.manager.installer.info=null;c.manager.current=new PackageInfo();
-        OwnerInstaller.reconcile(c);check(OwnerInstaller.state(c).equals("INSTALLED"));
+        OwnerInstaller.reconcile(c);check(OwnerInstaller.state(c).equals("INSTALLED"));check(ToolHostActivity.checkpointState.equals("INSTALLED"));
         c=new Context();OwnerInstaller.install(c,apk,hash);c.manager.installer.info=null;
         OwnerInstaller.reconcile(c);check(OwnerInstaller.state(c).equals("ERROR"));
         c=new Context();OwnerInstaller.install(c,apk,hash);i=new Intent();i.code=-1;

@@ -346,7 +346,7 @@ empty key map deliberately fails closed. Staging accepts an explicit
 `--release-trust` file for a maintainer-provisioned build. A key downloaded with a release is
 never trusted. Configure repository variables `PUBLISHER_KEY_ID`,
 `PUBLISHER_PUBLIC_KEY`, `PUBLIC_RELEASE_PLAN_PATH`, and optional
-`PUBLIC_MINIMUM_INSTALLER_VERSION` (default 1), and the repository secret
+`PUBLIC_MINIMUM_INSTALLER_VERSION` (default 2), and the repository secret
 `PUBLISHER_PRIVATE_KEY` with an **existing** matching publisher PEM. Protect the
 `public-release` GitHub environment and version tags. Do not put a private key in
 Git, a recipe, an artifact or a log. This implementation creates/configures no keys.
@@ -404,3 +404,46 @@ If the owner key is lost, stop: export saves through the game's supported path,
 explicitly reinstall with a new key, then restore saves. There is no automatic
 uninstall or save export. Host tests use synthetic data; phone install/update,
 interruption recovery and save survival remain the local orchestrator's checks.
+
+### Phone-only import and installation
+
+Installer version 2 adds a foreground-service flow: prepare the signed public
+release, choose the owner's PC game directory with Android's folder picker (or
+choose a ZIP), import, then reconstruct and install. Only required files are
+copied to app-private storage. Missing paths and size/hash/version mismatches
+block admission; extra files are reported and left untouched. Nothing from the
+selected folder/archive is uploaded. ZIP paths, duplicates and expanded lengths
+are checked before accepting output; other archive formats must be extracted by
+the owner first. A revoked picker grant requires selecting the source again.
+
+The signed bundle's optional `install_plan` has schema 1, `required_inputs`
+(a bundled JSON with `schema: 1`, `game_version`, and `files` rows containing
+`path`, `bytes`, `sha256`), `workspace_bytes`, `configuration: {bindings: ...}`,
+and eight ordered `stages` (`id`, `title`, `jobs`). Stage IDs are `admission`,
+`staging`, `assembly`, `textures`, `native`, `apk`, `signing`, `install`.
+Every producer and dependency occurs once in a production stage; dependencies
+cannot follow their consumer's stage. Bindings select only admitted original
+files/directories (`.` selects the imported root). Such releases require minimum
+installer version 2. Maintainers must supply a complete reviewed source recipe;
+this feature does not invent missing game producers or supply private replay
+packets. The assembly receipt is generated locally from verified producer outputs,
+not shipped historical target hashes or game bytes.
+
+Before import, the app estimates missing input bytes plus the release's declared
+peak reconstruction workspace, a 5% input margin and a 2 GiB reserve. Existing
+assembly/tool reserve checks still apply. Completed imports and stage results are
+rehash-checked on resume; an incomplete file is restarted, not trusted. Space can
+change while running, so failures retain completed work and report the first
+failing stage. Cancel stops work without deleting original files, completed
+checkpoints, saves or the durable signing key. Retry reuses only verified results.
+
+A foreground notification keeps the operation visible when the activity closes.
+After process death or reboot, open the app and explicitly resume; reboot does
+not launch an installation. The UI shows stage progress, elapsed time and the
+existing thermal supervisor's battery/temperature observations. User pause is
+combined with thermal pause; resume never bypasses cooling, battery-health
+admission or existing cutoffs. Sensor loss is a failure, not permission to run
+unprotected. Successful reconstruction hands off to the existing Android package
+session; Android may request installation consent. Updates keep the same package
+and on-device key and never clear saves. If that key is lost, export saves before
+an explicit uninstall/reinstall; the app refuses to silently replace it.

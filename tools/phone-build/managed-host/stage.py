@@ -93,7 +93,7 @@ def tool_manifest(source, destination, package=None, game_package=None):
             queries.remove(old)
         ET.SubElement(queries, "package", {android + "name": game_package})
     for node in manifest.iter():
-        if node.tag in {"activity", "instrumentation", "provider", "receiver"}:
+        if node.tag in {"activity", "instrumentation", "provider", "receiver", "service"}:
             name = node.attrib.get(android + "name", "")
             if name.startswith("."):
                 node.set(android + "name", original + name)
@@ -136,6 +136,9 @@ def stage(profile_source, sdk, destination, *, root=ROOT, owner_backend=False, r
         "owner-apk/updates.py",
         "owner-apk/public_release.py",
         "owner-apk/release_jobs.py",
+        "owner-apk/game_import.py",
+        "owner-apk/install_flow.py",
+        "owner-apk/install_inputs.py",
         "owner-apk/binary_manifest.py",
         "accepted-output/package.py",
         "accepted-output/assemble.py",
@@ -159,6 +162,9 @@ def stage(profile_source, sdk, destination, *, root=ROOT, owner_backend=False, r
         "ToolHostActivity.java",
         "OwnerInstaller.java",
         "OwnerUpdateState.java",
+        "OwnerBuildService.java",
+        "OwnerInputImport.java",
+        "OwnerInputSource.java",
         "run_profile.py",
         "stage.py",
         "build_fixture.py",

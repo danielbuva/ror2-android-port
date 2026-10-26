@@ -44,9 +44,16 @@ class ManagedHostStageTests(unittest.TestCase):
         for name, expected in result["files"].items():
             self.assertEqual(hashlib.sha256((self.destination / name).read_bytes()).hexdigest(), expected)
         self.assertEqual(json.loads((self.destination / "stage-receipt.json").read_text()), result)
-        for name in ("OwnerInstaller.java", "OwnerUpdateState.java", "release-trust.json"):
+        for name in (
+            "OwnerInstaller.java",
+            "OwnerUpdateState.java",
+            "OwnerBuildService.java",
+            "OwnerInputImport.java",
+            "OwnerInputSource.java",
+            "release-trust.json",
+        ):
             self.assertIn(name, result["files"])
-        for name in ("release.py", "updates.py", "public_release.py", "release_jobs.py"):
+        for name in ("release.py", "updates.py", "public_release.py", "release_jobs.py", "game_import.py", "install_flow.py", "install_inputs.py"):
             self.assertIn("repo/tools/phone-build/owner-apk/" + name, result["files"])
         trust = json.loads((self.destination / "release-trust.json").read_text())
         self.assertEqual(trust["keys"], {})
@@ -104,6 +111,10 @@ class ManagedHostStageTests(unittest.TestCase):
         receiver = value.find("application/receiver")
         self.assertEqual(receiver.attrib[android + "name"], "dev.ror2lab.phonebuildhostfixture.OwnerInstaller$Result")
         self.assertEqual(receiver.attrib[android + "exported"], "false")
+        service = value.find("application/service")
+        self.assertEqual(service.attrib[android + "name"], "dev.ror2lab.phonebuildhostfixture.OwnerBuildService")
+        self.assertEqual(service.attrib[android + "exported"], "false")
+        self.assertEqual(service.attrib[android + "stopWithTask"], "false")
         permissions = {node.attrib[android + "name"] for node in value.findall("uses-permission")}
         self.assertIn("android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION", permissions)
         self.assertIn("dev.ror2lab.alpha", {node.attrib[android + "name"] for node in value.findall("queries/package")})

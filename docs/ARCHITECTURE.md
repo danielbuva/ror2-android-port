@@ -534,6 +534,22 @@ remain installer-owned, private output/cache/key state remains owner-local, and
 no public release includes a game APK/data. [Provisioning and update flow](../tools/phone-build/owner-apk/README.md#publishing-and-checking-updates)
 separate publisher trust, private input setup and device acceptance.
 
+Phone installation uses the same release transaction. `owner-apk/game_import.py`
+owns bounded original-file validation, free-space estimates and resumable private
+copies; `install_inputs.py` binds the signed input/stage plan to admitted local
+paths and generates a local source-output assembly receipt. No private replay
+profile is a public release dependency. `install_flow.py` owns durable stage
+checkpoints and failure/retry state; producer receipts remain the authority for
+reuse. Managed-host `OwnerInputImport` is the Android-free stream counterpart,
+`OwnerInputSource` adapts SAF trees/ZIP streams, and `OwnerBuildService` owns the
+foreground operation independently of `ToolHostActivity`. Explicit resume after
+restart revalidates completed work. The existing `accepted-output/phone_runner.py`
+combines user pause/cancel with its unchanged thermal/battery safety policy and
+publishes private telemetry. Teardown reaps owned children and retains verified
+checkpoints; PackageInstaller alone establishes installation success.
+[User flow and storage behavior](../tools/phone-build/owner-apk/README.md#phone-only-import-and-installation)
+remain separate from complete game/device qualification.
+
 `tools/phone-build/package-assemblies/` owns a separate current experimental
 host producer for the four retained Unity package assemblies and their required
 Burst managed post-processing. It validates explicit owner SDK/package inputs,

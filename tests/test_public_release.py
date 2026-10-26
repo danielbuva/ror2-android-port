@@ -159,6 +159,27 @@ class PublicBundleTests(unittest.TestCase):
     def build(self, name="public.zip"):
         return PUBLIC.build_bundle(self.root, self.plan, Path(self.temporary.name) / name)
 
+    def test_install_plan_and_required_manifest_are_inside_signed_bundle(self):
+        manifest = {"schema": 1, "game_version": "synthetic-v1", "files": [{"path": "Data/test", "bytes": 1, "sha256": "a" * 64}]}
+        (self.root / "recipe/inputs.json").write_text(json.dumps(manifest))
+        self.commit()
+        stages = ("admission", "staging", "assembly", "textures", "native", "apk", "signing", "install")
+        self.plan["install_plan"] = {
+            "schema": 1,
+            "required_inputs": "recipe/inputs.json",
+            "workspace_bytes": 100,
+            "configuration": {"bindings": {"originals": "."}},
+            "stages": [{"id": name, "title": name, "jobs": []} for name in stages],
+        }
+        result = self.build()
+        self.assertEqual(result["index"]["install_plan"], self.plan["install_plan"])
+        self.assertIn("recipe/inputs.json", result["index"]["files"])
+        with zipfile.ZipFile(Path(self.temporary.name) / "public.zip") as archive:
+            self.assertEqual(PUBLIC.load_json(archive.read("recipe/inputs.json")), manifest)
+        self.plan["install_plan"]["configuration"]["bindings"]["originals"] = "../../escape"
+        with self.assertRaises(ValueError):
+            self.build("bad.zip")
+
     def test_repeatable_archive_and_exact_members(self):
         first, second = self.build("first.zip"), self.build("second.zip")
         self.assertEqual(first, second)

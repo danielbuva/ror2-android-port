@@ -3,12 +3,12 @@ package dev.ror2lab.phonebuildhostfixture;
 /** Android-free presentation policy; persisted worker/install facts are authoritative. */
 public final class OwnerUpdateState {
     public enum Phase { IDLE, CHECKING, UP_TO_DATE, UPDATE_AVAILABLE, DOWNLOADING, VERIFYING,
-        BUILDING, SIGNING, READY, INSTALLING, AWAITING_CONFIRMATION, INSTALLED, ERROR }
+        BUILDING, SIGNING, READY, INSTALLING, AWAITING_CONFIRMATION, INSTALLED, INPUT_REQUIRED, IMPORTING, IMPORTED, PAUSED, CANCELLED, INTERRUPTED, ERROR }
     private Phase phase = Phase.IDLE;
     private String message = "Check for a signed public release.";
     public static String backendScript(String action) {
         if (action == null) return "repo/tools/phone-build/owner-code/run_android.py";
-        if ("release-check".equals(action) || "release-build".equals(action)) return "repo/tools/phone-build/owner-apk/updates.py";
+        if ("release-check".equals(action) || "release-build".equals(action) || "install-prepare".equals(action)) return "repo/tools/phone-build/owner-apk/updates.py";
         throw new IllegalArgumentException("Unsupported installer action");
     }
     public Phase phase() { return phase; }

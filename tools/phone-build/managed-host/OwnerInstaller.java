@@ -36,6 +36,7 @@ public final class OwnerInstaller {
 
     private static void status(Context app, String state, String value) {
         app.getSharedPreferences(STATUS, 0).edit().putString("state", state).putString("status", value).commit();
+        ToolHostActivity.updateInstallCheckpoint(app, state, value);
     }
 
     public static String signer(PackageInfo info) throws Exception {

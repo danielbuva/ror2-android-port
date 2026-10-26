@@ -95,6 +95,9 @@ PUBLISHING_SOURCE_FILES = {
             "public_release.py",
             "updates.py",
             "release_jobs.py",
+            "install_inputs.py",
+            "install_flow.py",
+            "game_import.py",
         )
     },
     *{"tools/phone-build/accepted-output/" + name + ".py" for name in ("package", "assemble", "sdk_package", "sdk_inputs")},
@@ -107,6 +110,9 @@ PUBLISHING_SOURCE_FILES = {
             "ToolHostActivity.java",
             "OwnerInstaller.java",
             "OwnerUpdateState.java",
+            "OwnerBuildService.java",
+            "OwnerInputImport.java",
+            "OwnerInputSource.java",
             "NativePythonHost.c",
             "NativeDotnetMuxer.c",
             "NativeJavaHost.c",
@@ -289,8 +295,16 @@ def entry_dependencies(index, name):
 
 
 def validate_bundle_index(index, release):
-    if not isinstance(index, dict) or set(index) != {"schema", "files", "entries"} or type(index["schema"]) is not int or index["schema"] != 1:
+    if (
+        not isinstance(index, dict)
+        or set(index) - {"install_plan"} != {"schema", "files", "entries"}
+        or type(index["schema"]) is not int
+        or index["schema"] != 1
+    ):
         raise ValueError("public bundle index schema 1 required")
+    if "install_plan" in index:
+        installer = _module("public_install_inputs", Path(__file__).with_name("install_inputs.py"))
+        installer.validate_plan(index["install_plan"], index["files"])
     if not isinstance(index["files"], dict) or not index["files"] or INDEX in index["files"]:
         raise ValueError("explicit public bundle files required")
     for path, digest in index["files"].items():
@@ -340,7 +354,7 @@ def build_bundle(repository, plan, output):
     closures are reviewed release-author inputs, not guessed import discovery.
     """
     root, output = Path(repository).resolve(), Path(output)
-    if not isinstance(plan, dict) or set(plan) != {"schema", "files", "entries"} or type(plan["schema"]) is not int or plan["schema"] != 1:
+    if not isinstance(plan, dict) or set(plan) - {"install_plan"} != {"schema", "files", "entries"} or type(plan["schema"]) is not int or plan["schema"] != 1:
         raise ValueError("release bundle plan schema 1 required")
     if not isinstance(plan["files"], list) or any(not isinstance(path, str) for path in plan["files"]) or not isinstance(plan["entries"], dict):
         raise ValueError("explicit public files and entries required")
@@ -352,6 +366,10 @@ def build_bundle(repository, plan, output):
             if not isinstance(row[field], list) or any(not isinstance(path, str) for path in row[field]):
                 raise ValueError("dependency file list required")
             selected.update(row[field])
+    if "install_plan" in plan:
+        selected.add(public_path(plan["install_plan"]["required_inputs"]))
+        for stage in plan["install_plan"]["stages"]:
+            selected.update(stage["jobs"])
     if INDEX in selected:
         raise ValueError("bundle index is generated, not supplied")
     tracked = _tracked(root)
@@ -366,6 +384,8 @@ def build_bundle(repository, plan, output):
         if sum(map(len, contents.values())) > MAX_BUNDLE_BYTES:
             raise ValueError("public source bundle size limit exceeded")
     index = {"schema": 1, "files": {name: hashlib.sha256(data).hexdigest() for name, data in contents.items()}, "entries": plan["entries"]}
+    if "install_plan" in plan:
+        index["install_plan"] = plan["install_plan"]
     dependencies = {name: entry_dependencies(index, name) for name in index["entries"]}
     body = {
         "version": "validation",
@@ -404,7 +424,16 @@ def validate_publication(bundle_path, body):
         here = Path(__file__).resolve().parent
         jobs = _module("publisher_source_jobs", here / "release_jobs.py")
         jobs.validate_jobs(index, body, lambda name: load_json(archive.read(public_path(name))))
+        if "install_plan" in index:
+            if body["minimum_installer_version"] < 2:
+                raise ValueError("phone install plans require installer version 2 or later")
+            flow = _module("publication_install_flow", here / "install_flow.py")
+            flow.validate_plan(index["install_plan"], index, lambda name: load_json(archive.read(public_path(name))))
+            inputs = _module("publication_install_inputs", here / "install_inputs.py")
+            inputs.input_description(index["install_plan"], load_json(archive.read(index["install_plan"]["required_inputs"])))
         owner = _module("publisher_apk_owner", here / "build_owner_apk.py")
+        if "install_plan" in index:
+            owner.validate_source_payload(body["entries"])
         sdk = _module("publisher_sdk_owner", here.parent / "accepted-output/sdk_package.py")
         if not {"apk/" + name for name in owner.CODE_ENTRIES | sdk.SDK_ENTRIES} <= body["entries"].keys():
             raise ValueError("public release requires all native, metadata, Burst and Android SDK outputs")

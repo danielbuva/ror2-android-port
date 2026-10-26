@@ -80,13 +80,14 @@ def validate_jobs(index, release, read_job):
 
 
 class Dispatcher:
-    def __init__(self, repo, index, release, inputs, runtime, native, config, input_sha256, *, python=None):
+    def __init__(self, repo, index, release, inputs, runtime, native, config, input_sha256, *, python=None, progress=None):
         self.repo, self.inputs, self.runtime = [Path(p).resolve(strict=True) for p in (repo, inputs, runtime)]
         installed_runtime = self.runtime
         self.native = Path(native).resolve(strict=True)
         self.index, self.release, self.config, self.input_sha256 = index, release, config, input_sha256
         self.python = python or [str(self.native / "libpythonhost.so"), str(self.native / "libpython3.14.so"), str(self.runtime / "python")]
         self.completed, self.running, self.descriptors = {}, set(), {}
+        self.progress = progress or (lambda name, reused: None)
         self.jobs_root = UPDATES.within(self.inputs, "work/releases/jobs")
         self.jobs_root.mkdir(parents=True, exist_ok=True)
         self.validate()
@@ -217,6 +218,7 @@ class Dispatcher:
                     reusable = False
                 if reusable:
                     self.completed[name] = cached
+                    self.progress(name, True)
                     return cached
             attempt = Path(tempfile.mkdtemp(prefix=identity[:16] + "-", dir=self.jobs_root))
             output = attempt / "output"
@@ -231,7 +233,20 @@ class Dispatcher:
                 # Preserve the updater lock in the producer if its Python parent
                 # is interrupted. The outer phone runner supervises its family.
                 lock_fds = (int(inherited_lock),) if inherited_lock is not None else ()
-                subprocess.run(command, cwd=self.repo, stdout=log, stderr=subprocess.STDOUT, check=True, pass_fds=lock_fds)
+                process = subprocess.Popen(command, cwd=self.repo, stdout=log, stderr=subprocess.STDOUT, pass_fds=lock_fds)
+                try:
+                    while True:
+                        try:
+                            result = process.wait(timeout=0.5)
+                            if result:
+                                raise subprocess.CalledProcessError(result, command)
+                            break
+                        except subprocess.TimeoutExpired:
+                            self.progress(name, None)  # Persist elapsed time, not invented sub-job progress.
+                except BaseException:
+                    process.kill()
+                    process.wait()
+                    raise
             if not output.is_dir() or output.is_symlink():
                 raise ValueError("producer did not create its private output directory")
             for relative in job["outputs"].values():
@@ -243,6 +258,7 @@ class Dispatcher:
             outputs = self.files_in(output, job)
             UPDATES.write_json(receipt_path, {"directory": output.relative_to(self.jobs_root).as_posix(), "files": outputs})
             self.completed[name] = output
+            self.progress(name, False)
             return output
         finally:
             self.running.remove(name)
