@@ -155,8 +155,12 @@ class AlphaStabilityBatchTests(unittest.TestCase):
             mock.patch.object(batch, "command_selectors", return_value=(None, None)),
         ):
             thermal.return_value.finish.side_effect = thermal_errors or [None, None, None]
+            thermal.return_value.battery = dict(celsius=34, level=80, status=4)
+            thermal.return_value.admission_battery = dict(celsius=34, level=80, status=4)
             thermal.return_value.peak_cpu_celsius = 79.5
             thermal.return_value.peak_zone_celsius = 79.8
+            thermal.return_value.time_above_80_seconds = 0
+            thermal.return_value.peak_cpu_gpu_celsius = 79.5
             if fail_at or terminal_error or expect_failure:
                 with self.assertRaises(RuntimeError):
                     batch.check_alpha_stability_batch(**self.args)
@@ -263,6 +267,7 @@ class GameThermalOwnerTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.device = mock.Mock()
+        self.device.sh.return_value = "temperature: 340\nlevel: 80\nstatus: 4\n"
         self.device.serial = SERIAL
         self.device.read_receipt.return_value = dict(apk_sha256=HASH, serial=SERIAL, package="dev.ror2lab.arm64", package_path="package:/fixture/base.apk")
         self.owner = batch._GameThermalOwner(self.device, HASH, Path(self.temp.name) / "thermal.jsonl", float("inf"))
@@ -406,6 +411,8 @@ class GameThermalOwnerTests(unittest.TestCase):
             self.owner.sample(all_zones=True)
 
     def test_cooling_hysteresis_excludes_wait_from_game_attempt(self):
+        self.owner.battery = dict(celsius=34, level=80, status=4)
+        self.owner.battery_zone_celsius = 34
         self.device.display.return_value = True
         with mock.patch.object(self.owner, "sample", side_effect=[70, 51, 50]) as sample, mock.patch.object(batch.time, "sleep") as sleep:
             self.owner.cool()
@@ -448,39 +455,34 @@ class GameThermalOwnerTests(unittest.TestCase):
         self.assertEqual([row["cpu_celsius"] for row in rows], values)
         self.assertIn("81600", rows[2]["all_zones_raw"])
 
-    def test_sustained_core_heat_aborts_at_one_second_with_dense_samples(self):
+    def test_sustained_core_heat_aborts_only_after_three_seconds(self):
         for name in ("cpu-0", "GPU-0"):
-            for times in ([0, 0.25, 0.5, 0.75, 1.0], [0, 0.35, 0.7, 1.05]):
-                with self.subTest(name=name, times=times):
-                    self.owner.previous = None
-                    self.owner.hot_core_zones.clear()
-                    self.assertEqual(self.runtime_sequence(["cpu-0", name], [[49, 81]] * (len(times) - 1), times[:-1]), [81] * (len(times) - 1))
-                    with self.assertRaisesRegex(RuntimeError, "stayed above 80 C for one second"):
-                        self.runtime_sequence(["cpu-0", name], [[49, 81]], times[-1:])
-                    self.assertEqual(self.owner.hot_core_zones[(name, "/thermal_zone1/temp")][2], len(times))
+            self.owner.previous = None
+            self.owner.hot_core_zones.clear()
+            times = [i * 0.25 for i in range(12)]
+            self.runtime_sequence(["cpu-0", name], [[49, 96]] * 12, times)
+            with self.assertRaisesRegex(RuntimeError, "above 95 C for three seconds"):
+                self.runtime_sequence(["cpu-0", name], [[49, 96]], [3])
 
-    def test_core_and_surface_single_sample_boundaries(self):
-        for name, boundary in (("cpu-0", 88), ("GPU-0", 88), ("battery", 45), ("skin", 45)):
-            with self.subTest(name=name):
-                self.owner.previous = None
-                self.owner.hot_core_zones.clear()
-                self.assertEqual(self.runtime_sequence(["cpu-0", name], [[49, boundary]], [0]), [max(49, boundary)])
-                with self.assertRaisesRegex(RuntimeError, str(boundary) + " C"):
-                    self.runtime_sequence(["cpu-0", name], [[49, boundary + 0.001]], [0.25])
+    def test_heat_is_a_metric_and_skin_has_no_runtime_abort(self):
+        values = [81, 85, 89, 95, 95]
+        self.assertEqual(self.runtime_sequence(["cpu-0", "skin"], [[v, 60] for v in values], [0, 0.5, 1, 1.5, 2]), values)
+        self.assertEqual(self.owner.time_above_80_seconds, 2)
+        self.assertEqual(self.owner.peak_cpu_gpu_celsius, 95)
+        self.assertEqual(json.loads(self.owner.trace.read_text().splitlines()[-1])["phase"], "gameplay")
 
-    def test_core_streak_resets_at_80_or_a_gap_above_350ms(self):
-        for values, times in (
-            ([81, 81, 80, 81, 81, 81, 81], [0, 0.25, 0.5, 0.75, 1, 1.25, 1.5]),
-            ([81] * 6, [0, 0.25, 0.5, 0.851, 1.101, 1.351]),
-        ):
-            with self.subTest(values=values, times=times):
-                self.owner.previous = None
-                self.owner.hot_core_zones.clear()
-                self.assertEqual(self.runtime_sequence(["cpu-0"], [[value] for value in values], times), values)
+    def test_battery_boundary(self):
+        self.runtime_sequence(["cpu-0", "battery"], [[49, 42.999]], [0])
+        with self.assertRaisesRegex(RuntimeError, "43 C"):
+            self.runtime_sequence(["cpu-0", "battery"], [[49, 43]], [0.25])
+
+    def test_core_streak_resets_at_95(self):
+        values = [96, 96, 96, 95, 96, 96, 96]
+        self.assertEqual(self.runtime_sequence(["cpu-0"], [[v] for v in values], [i * 0.5 for i in range(7)]), values)
 
     def test_heat_streak_cannot_transfer_between_zones_with_the_same_type(self):
-        readings = [[81, 79], [79, 81]] * 4
-        self.assertEqual(self.runtime_sequence(["cpu-0", "cpu-0"], readings, [i * 0.25 for i in range(8)]), [81] * 8)
+        readings = [[96, 79], [79, 96]] * 8
+        self.assertEqual(self.runtime_sequence(["cpu-0", "cpu-0"], readings, [i * 0.25 for i in range(16)]), [96] * 16)
 
     def test_runtime_gap_boundary_still_refuses_above_one_second(self):
         self.assertEqual(self.runtime_sequence(["cpu-0"], [[81], [81]], [0, 1]), [81, 81])
@@ -488,7 +490,7 @@ class GameThermalOwnerTests(unittest.TestCase):
             self.runtime_sequence(["cpu-0"], [[81]], [2.001])
 
     def test_admission_waits_for_cpu_gpu_battery_skin_only(self):
-        for name in ("cpu-0", "GPU-0", "battery", "skin"):
+        for name in ("cpu-0", "GPU-0", "skin"):
             with self.subTest(name=name):
                 self.device.cmd.side_effect = ["cpu-0 49000\n" + name + " 51000\nother 70000", "cpu-0 49000\n" + name + " 50000\nother 70000"]
                 with mock.patch.object(batch.time, "sleep") as sleep:
@@ -497,6 +499,35 @@ class GameThermalOwnerTests(unittest.TestCase):
                 row = json.loads(self.owner.trace.read_text().splitlines()[-1])
                 self.assertEqual(row["admission_maximum_celsius"], 50)
                 self.assertEqual(row["maximum_zone_celsius"], 70)
+
+    def test_battery_cooldown_and_charge_admission(self):
+        for level, status, refused in ((80, 2, True), (86, 4, True), (85, 4, False), (79, 2, False)):
+            with self.subTest(level=level, status=status):
+                self.device.cmd.return_value = "cpu-0 49000 /thermal_zone0/temp"
+                self.device.sh.side_effect = [f"temperature: {temp}\nlevel: {level}\nstatus: {status}" for temp in (351, 350)]
+                with mock.patch.object(batch.time, "sleep") as sleep:
+                    if refused:
+                        with self.assertRaisesRegex(RuntimeError, "charge separation/limit"):
+                            self.owner.cool()
+                        sleep.assert_not_called()
+                    else:
+                        self.owner.cool()
+                        sleep.assert_called_once_with(batch.THERMAL_INTERVAL_SECONDS)
+                        self.assertEqual(self.owner.admission_battery, dict(celsius=35, level=level, status=status))
+
+    def test_runtime_battery_service_boundary_is_recorded(self):
+        self.owner.runtime_zones = [("cpu-0", "/thermal_zone0/temp")]
+        self.device.cmd.return_value = "49000"
+        self.device.sh.side_effect = ["temperature: 429\nlevel: 80\nstatus: 4", "temperature: 430\nlevel: 80\nstatus: 4"]
+        self.owner.sample()
+        with self.assertRaisesRegex(RuntimeError, "43 C"):
+            self.owner.sample()
+        self.assertEqual(json.loads(self.owner.trace.read_text().splitlines()[-1])["battery"], dict(celsius=43, level=80, status=4))
+
+    def test_battery_missing_observation_refuses(self):
+        for text in ("", "temperature: 340\nlevel: 80", "temperature: 340\nstatus: 4"):
+            with self.subTest(text=text), self.assertRaisesRegex(RuntimeError, "Missing battery"):
+                batch.battery_observation(text)
 
     def test_unknown_sentinel_or_missing_cpu_refuses_cooldown_with_raw_trace(self):
         for text in ("cpu-0 49000\nwireless -29999", "pm8550_tz 49000", "cpu-0 49000\nunknown 0", "cpu-0 49000\nbroken"):
@@ -636,6 +667,7 @@ class GameThermalOwnerTests(unittest.TestCase):
                     self.owner.terminate_game()
                 self.assertFalse(any("force-stop" in str(call) for call in self.device.cmd.call_args_list))
         self.device.reset_mock()
+        self.device.sh.return_value = "temperature: 340\nlevel: 80\nstatus: 4\n"
         self.device.serial = SERIAL
         self.device.read_receipt.return_value = dict(apk_sha256=HASH, serial=SERIAL, package="dev.ror2lab.arm64", package_path="package:/fixture/base.apk")
         self.device.cmd.side_effect = ["package:/fixture/base.apk", "73", PACKAGE + "\x00\n73", ""]

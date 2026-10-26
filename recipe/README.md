@@ -3482,3 +3482,19 @@ PC files, the pinned SDK and independently source-produced media/Shader record
 packs remain required. Generated outputs and raw evidence stay ignored.
 Existing ownership and redistribution boundaries apply; phone production,
 installation and runtime behavior remain open.
+## Conduit and Fungal source Shader selections (2026-10-26)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-conduitcanyon-standard-shaders.json` | `e8825d706eb5e6c234e536b7d05e9f36febbce5ec64dff90e89c3eac40c69f5c` |
+| `owner-fungal-standard-shaders.json` | `8f51bfdf66770c08142bfd46b416fcc90f52f38623d4393137131aa6ebd3a63e` |
+| `owner-fungal-postprocess-shaders.json` | `d91cb5e6ffbdd9e4a885ba93bdadab4aafe568071b4ddeba7f77f28a9fbf55d7` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles retain original material/scene selectors, source hashes, SDK/compiler
+pins and authored output relationships only. Standard fog variants follow the
+original RenderSettings mode; dummy Shader templates follow pinned AssetRipper
+ParsedForm export rules. No original program, body, copied source, private path
+or credential is included. Current legitimate PC files and separately acquired
+SDK/public tools remain required. Generated records and evidence stay ignored;
+Fungal complete-scene assembly and phone/runtime qualification remain open.

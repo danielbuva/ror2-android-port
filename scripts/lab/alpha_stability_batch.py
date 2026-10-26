@@ -4,13 +4,13 @@ The caller launches this driver once and waits on its explicit atomic done file.
 No detached child owns the lease. Public checks retain their own scoped cleanup;
 an independent installed-byte/idle/display readback gates release of this lease.
 Independent sampling records all readable zones and peaks. Runtime aborts on
-sustained CPU/GPU heat above 80 C, any CPU/GPU reading above 88 C, battery/skin
-above 45 C or a sampling gap above one second. Each new stage requires cooldown.
+CPU/GPU heat above 95 C for three seconds or battery at or above 43 C or a sampling gap above one second. Each new stage requires cooldown.
 """
 
 import importlib
 import json
 import os
+import re
 from pathlib import Path
 import shlex
 import shutil
@@ -115,12 +115,22 @@ class ThermalCancelled(RuntimeError):
     """The launch boundary observed the already-latched thermal cancellation."""
 
 
+def battery_observation(text):
+    values = {}
+    for name in ("temperature", "level", "status"):
+        match = re.search(r"^\s*" + name + r":\s*(\d+)\s*$", text, re.M)
+        if not match:
+            raise RuntimeError("Missing battery " + name + "; refuse device run")
+        values[name] = int(match[1])
+    return dict(celsius=values["temperature"] / 10, level=values["level"], status=values["status"])
+
+
 class _GameThermalOwner:
     """One lightweight observer; the stage is the only heavy job.
 
     Observe gameplay without pausing or replaying it. Sustained CPU/GPU heat,
-    extreme core spikes or battery/skin heat abort. CPU/GPU/battery/skin
-    cooldown before a new stage requires at most 50 C.
+    or battery heat abort. Skin heat remains a metric. CPU/GPU/battery/skin
+    cooldown before a new stage requires at most 50 C, battery at most 35 C.
     """
 
     def __init__(self, device, expected, trace, deadline):
@@ -138,11 +148,18 @@ class _GameThermalOwner:
         self.runtime_zones = []
         self.excluded_zones = []
         self.hot_core_zones = {}
+        self.phase = "gameplay"
+        self.time_above_80_seconds = 0.0
+        self.previous_above_80 = False
+        self.peak_cpu_gpu_celsius = None
+        self.battery = None
+        self.admission_battery = None
+        self.battery_zone_celsius = None
 
     def sample(self, all_zones=False):
         before = time.monotonic()
         self.trace.parent.mkdir(parents=True, exist_ok=True)
-        observation = dict(utc=common.now(), all_zones=True, admission=all_zones)
+        observation = dict(utc=common.now(), all_zones=True, admission=all_zones, phase=self.phase)
         try:
             if all_zones:
                 text = self.device.cmd("shell", ALL_ZONES, timeout=10)
@@ -158,6 +175,8 @@ class _GameThermalOwner:
                 if len(values) != len(self.runtime_zones) or any(len(value.split()) != 1 for value in values):
                     raise RuntimeError("Malformed runtime thermal observation")
                 text = "\n".join(name + "\t" + value + "\t" + path for (name, path), value in zip(self.runtime_zones, values))
+            self.battery = battery_observation(self.device.sh("dumpsys", "battery", timeout=0.7))
+            observation["battery"] = self.battery
             at = time.monotonic()
             gap = at - self.previous if self.previous is not None else at - before
             self.previous = at
@@ -188,10 +207,28 @@ class _GameThermalOwner:
                 self.excluded_zones = excluded
             else:
                 excluded = self.excluded_zones
+            batteries = [
+                int(line.split()[1]) / 1000
+                for line in text.splitlines()
+                if line.split()[0].lower().startswith("battery") and line.split()[1] != "UNREADABLE" and int(line.split()[1]) > -30000
+            ]
+            self.battery_zone_celsius = max(batteries, default=self.battery["celsius"])
             observation.update(maximum_zone_celsius=maximum, excluded_zones=excluded)
             self.peak_zone_celsius = max(maximum, self.peak_zone_celsius or maximum)
             self.peak_cpu_celsius = max(value, self.peak_cpu_celsius or value)
             observation["cpu_celsius"] = value
+            processors = [
+                int(line.split()[1]) / 1000
+                for line in text.splitlines()
+                if line.split()[0].lower().startswith(("cpu", "gpu")) and line.split()[1] != "UNREADABLE" and int(line.split()[1]) > -30000
+            ]
+            processor_peak = max(processors)
+            if not all_zones:
+                if self.previous_above_80 and gap <= 1:
+                    self.time_above_80_seconds += gap
+                self.previous_above_80 = processor_peak > 80
+                self.peak_cpu_gpu_celsius = max(processor_peak, self.peak_cpu_gpu_celsius or processor_peak)
+            observation.update(time_above_80_seconds=self.time_above_80_seconds, peak_cpu_gpu_celsius=self.peak_cpu_gpu_celsius)
         except BaseException as error:
             observation["error"] = str(error)
             raise
@@ -203,31 +240,33 @@ class _GameThermalOwner:
         if at >= self.deadline:
             raise RuntimeError("Three-hour alpha driver deadline reached")
         if all_zones:
+            if self.battery["level"] > 85 or (self.battery["status"] == 2 and self.battery["level"] >= 80):
+                raise RuntimeError("Battery charge separation/limit admission refused; report without retry")
             self.hot_core_zones.clear()
             if maximum > 80:
                 raise RuntimeError("Readable thermal zone exceeded 80 C hard abort")
         else:
+            if self.battery["celsius"] >= 43:
+                raise RuntimeError("Battery at or above 43 C")
             for line in text.splitlines():
                 name, raw, path = line.split()
                 celsius = int(raw) / 1000
-                if name.lower().startswith(("battery", "skin")) and celsius > 45:
-                    raise RuntimeError("Battery/skin thermal zone exceeded 45 C: " + name)
+                if name.lower().startswith("battery") and celsius >= 43:
+                    raise RuntimeError("Battery thermal zone at or above 43 C: " + name)
                 if not name.lower().startswith(("cpu", "gpu")):
                     continue
-                if celsius > 88:
-                    raise RuntimeError("CPU/GPU thermal zone exceeded 88 C: " + name)
                 key = (name, path)
-                if celsius <= 80:
+                if celsius <= 95:
                     self.hot_core_zones.pop(key, None)
                     continue
                 since, last, count = self.hot_core_zones.get(key, (at, at, 0))
                 # Allow only floating-point subtraction noise at the boundaries.
-                if at - last > 0.35 + 1e-9:
+                if at - last > 1 + 1e-9:
                     since, count = at, 0
                 count += 1
                 self.hot_core_zones[key] = (since, at, count)
-                if count >= 3 and at - since >= 1.0 - 1e-9:
-                    raise RuntimeError("CPU/GPU thermal zone stayed above 80 C for one second: " + name)
+                if count >= 3 and at - since >= 3.0 - 1e-9:
+                    raise RuntimeError("CPU/GPU thermal zone stayed above 95 C for three seconds: " + name)
         return admission_maximum if all_zones else maximum
 
     def terminate_game(self):
@@ -256,7 +295,11 @@ class _GameThermalOwner:
         if not self.device.display(False):
             raise RuntimeError("Thermal cooldown requires verified OLED sleep")
         self.previous = None  # No heavy job during display/idle setup.
-        while self.sample(all_zones=True) > 50:
+        while True:
+            maximum = self.sample(all_zones=True)
+            if maximum <= 50 and max(self.battery["celsius"], self.battery_zone_celsius) <= 35:
+                self.admission_battery = self.battery.copy()
+                break
             time.sleep(THERMAL_INTERVAL_SECONDS)
         self.previous = None
 
@@ -469,6 +512,7 @@ def check_alpha_stability_batch(*, device_serial, expected_apk_sha256, canonical
             if name == "session-memory":
                 _require_capture_capacity(device)
             thermal = _GameThermalOwner(device, expected, thermal_trace, deadline)
+            thermal.phase = name
             stage_error = None
             try:
                 thermal.cool()  # No game running; admit the next stage at <=50 C.
@@ -489,8 +533,26 @@ def check_alpha_stability_batch(*, device_serial, expected_apk_sha256, canonical
                     raise stage_error
                 if not isinstance(stage, dict) or stage.get("success") is not True:
                     raise RuntimeError(name + " did not return explicit success")
-                result["stages"].append(dict(name=name, result=stage, peak_cpu_celsius=thermal.peak_cpu_celsius, peak_zone_celsius=thermal.peak_zone_celsius))
+                result["stages"].append(
+                    dict(
+                        name=name,
+                        result=stage,
+                        battery=thermal.battery,
+                        admission_battery=thermal.admission_battery,
+                        peak_cpu_celsius=thermal.peak_cpu_celsius,
+                        peak_zone_celsius=thermal.peak_zone_celsius,
+                        time_above_80_seconds=thermal.time_above_80_seconds,
+                        peak_cpu_gpu_celsius=thermal.peak_cpu_gpu_celsius,
+                    )
+                )
             finally:
+                result["active_stage_thermal"] = dict(
+                    phase=name,
+                    battery=thermal.battery,
+                    admission_battery=thermal.admission_battery,
+                    time_above_80_seconds=thermal.time_above_80_seconds,
+                    peak_cpu_gpu_celsius=thermal.peak_cpu_gpu_celsius,
+                )
                 result["active_stage_peak_zone_celsius"] = thermal.peak_zone_celsius
                 zone_peaks = [value for value in (result.get("peak_zone_celsius"), thermal.peak_zone_celsius) if value is not None]
                 result["peak_zone_celsius"] = max(zone_peaks) if zone_peaks else None
