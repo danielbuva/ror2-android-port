@@ -15,6 +15,49 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools/phone-build/
 S = importlib.import_module("payload_shader_records")
 
 
+class ParticleCarrierTests(unittest.TestCase):
+    def fixture(self):
+        names = ["_ALPHABLEND_ON", "_ALPHAMODULATE_ON", "FOG_LINEAR", "FOG_EXP", "INSTANCING_ON", "PROCEDURAL_INSTANCING_ON"]
+
+        def shader_pass(name, kind, program):
+            return {"m_Type": kind, "m_State": {"m_Name": name, "gpuProgramID": program, "m_Tags": {"tags": []}}}
+
+        source = {
+            "m_ParsedForm": {
+                "m_Name": "Particles/Standard Unlit",
+                "m_PropInfo": {"m_Props": []},
+                "m_KeywordNames": names,
+                "m_SubShaders": [
+                    {"m_Passes": [shader_pass("Grab", 1, -1), shader_pass("EditorPicking", 0, 5), shader_pass("Shadow", 0, 10), shader_pass("Main", 0, 20)]}
+                ],
+            }
+        }
+        carrier = deepcopy(source)
+        passes = carrier["m_ParsedForm"]["m_SubShaders"][0]["m_Passes"]
+        del passes[1]
+        for shader in passes[1:]:
+            shader["progFragment"] = {"m_PlayerSubPrograms": [[], [], [], [{"m_KeywordIndices": keys} for keys in ([1, 2], [0, 3], [0, 2, 4], [0, 2, 5], [2])]]}
+        return source, carrier, [{"m_EnableInstancingVariants": False, "m_ShaderKeywords": "_ALPHABLEND_ON"}]
+
+    def test_original_runtime_passes_and_fragment_order_preserve_procedural_instancing(self):
+        source, carrier, materials = self.fixture()
+        before = deepcopy(source)
+        runtime, rows = S.particles_selections(source, materials, carrier=carrier)
+        self.assertEqual(source, before)
+        self.assertEqual([row["m_State"]["m_Name"] for row in runtime["m_ParsedForm"]["m_SubShaders"][0]["m_Passes"]], ["Grab", "Shadow", "Main"])
+        expected = [["FOG_LINEAR", "_ALPHAMODULATE_ON"], ["FOG_LINEAR", "PROCEDURAL_INSTANCING_ON", "_ALPHABLEND_ON"], ["FOG_LINEAR"]]
+        self.assertEqual(rows[10], [expected] * 3)
+        self.assertEqual(rows[20], [expected] * 3)
+        rows[10][0][0].append("CALLER")
+        self.assertNotIn("CALLER", rows[10][1][0])
+
+    def test_property_declaration_must_match(self):
+        source, carrier, materials = self.fixture()
+        carrier["m_ParsedForm"]["m_PropInfo"]["m_Props"].append({"m_Name": "_Different"})
+        with self.assertRaisesRegex(ValueError, "properties differ"):
+            S.particles_selections(source, materials, carrier=carrier)
+
+
 class TerrainBaseGeneratorTests(unittest.TestCase):
     def fixture(self):
         return {

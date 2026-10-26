@@ -3912,3 +3912,15 @@ SDK and independently source-produced media/Shader record packs remain required.
 The existing object producer preserves source null-script type slots for Soul
 and Mire. Generated outputs and raw comparison evidence stay ignored; ownership
 and redistribution boundaries apply. Phone production and runtime remain open.
+
+## Skymeadow source particle Shader selection (2026-10-26)
+
+`owner-skymeadow-source-lab-particles-shaders.json` SHA-256
+`0f248eaf36b78b8025884d680e48946ea79d8a0a1fe30d452d69bde0050e90aa`.
+
+Manual provenance, privacy, licensing and sensitive-content audit: this profile
+contains original source/material selectors, body hashes and pinned public SDK
+and tool identities only. No shader body, program, copied source, private path
+or credential is included. Legitimate PC input and independently acquired SDK
+remain required; generated records and evidence stay ignored. Host raw equality
+is a separate qualification gate; phone production and runtime remain open.

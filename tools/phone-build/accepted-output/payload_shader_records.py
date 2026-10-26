@@ -392,6 +392,43 @@ def standard_selections(original_sdk, materials, fog_keyword="FOG_LINEAR", *, ca
     return source, selections
 
 
+def particles_selections(original_sdk, materials, fog_keyword="FOG_LINEAR", *, carrier):
+    """Project original particle fragment order onto declared SDK runtime passes."""
+    source = deepcopy(original_sdk)
+    form, original = source["m_ParsedForm"], carrier["m_ParsedForm"]
+    if form["m_Name"] != "Particles/Standard Unlit" or original["m_Name"] != form["m_Name"] or not materials:
+        raise ValueError("bounded Particles source selection differs")
+    if original["m_PropInfo"] != form["m_PropInfo"]:
+        raise ValueError("Particles original/SDK properties differ")
+
+    def identity(shader_pass):
+        tags = {name.upper(): value.upper() for name, value in shader_pass["m_State"]["m_Tags"]["tags"]}
+        return shader_pass["m_Type"], shader_pass["m_State"]["m_Name"], tags.get("LIGHTMODE")
+
+    selections = {}
+    instancing = any(material["m_EnableInstancingVariants"] for material in materials)
+    for subshader, original_subshader in zip(form["m_SubShaders"], original["m_SubShaders"], strict=True):
+        runtime = []
+        for original_pass in original_subshader["m_Passes"]:
+            (shader_pass,) = [row for row in subshader["m_Passes"] if identity(row) == identity(original_pass)]
+            runtime.append(shader_pass)
+            if shader_pass["m_Type"] != 0:
+                continue
+            ordered = []
+            for tier in original_pass["progFragment"]["m_PlayerSubPrograms"]:
+                for row in tier:
+                    keys = sorted(original["m_KeywordNames"][index] for index in row["m_KeywordIndices"])
+                    if any(key.startswith("FOG_") and key != fog_keyword for key in keys):
+                        continue
+                    if "INSTANCING_ON" in keys and not instancing:
+                        continue
+                    if keys not in ordered:
+                        ordered.append(keys)
+            selections[shader_pass["m_State"]["gpuProgramID"]] = [deepcopy(ordered) for _ in range(3)]
+        subshader["m_Passes"] = runtime
+    return source, selections
+
+
 def terrain_basegen_selections(original, sdk_source, materials):
     """Retain the SDK generator's declared passes without material keywords."""
     if materials or original["m_Dependencies"] or sdk_source["m_Dependencies"]:
@@ -438,7 +475,7 @@ def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec
     obj = original_object(source, "Shader")
     original = obj.read_typetree()
     sdk_id = profile.get("sdk_shader", 46)
-    expected_name = {46: "Standard", 106: "Skybox/Procedural", 10626: "Hidden/TerrainEngine/Splatmap/Standard-BaseGen"}[sdk_id]
+    expected_name = {46: "Standard", 106: "Skybox/Procedural", 211: "Particles/Standard Unlit", 10626: "Hidden/TerrainEngine/Splatmap/Standard-BaseGen"}[sdk_id]
     if original["m_ParsedForm"]["m_Name"] != expected_name:
         raise ValueError("Standard native type source differs")
     materials = []
@@ -487,7 +524,8 @@ def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec
             source_runtime, set(materials[0].get("m_ValidKeywords", [])) | set(materials[0].get("m_ShaderKeywords", "").split())
         )
     else:
-        source_runtime, keyword_rows = standard_selections(sdk_source, materials, fog_keyword, carrier=original)
+        select = particles_selections if sdk_id == 211 else standard_selections
+        source_runtime, keyword_rows = select(sdk_source, materials, fog_keyword, carrier=original)
         # SDK source Standard depends on its own Legacy/VertexLit6. The original
         # PC dependency independently resolves that same named shader in its CAB.
         dependencies = original["m_Dependencies"]
@@ -549,7 +587,7 @@ def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec
                 common,
                 compress,
                 native_output,
-                native_order={identity: rows[0] for identity, rows in keyword_rows.items()} if sdk_id == 46 else None,
+                native_order={identity: rows[0] for identity, rows in keyword_rows.items()} if sdk_id in (46, 211) else None,
             )
         # One produced byte extent supplies the three independently named rows.
         (output / "objects.bin").write_bytes(body)
