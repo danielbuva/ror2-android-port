@@ -52,6 +52,18 @@ Evidence: `work/coordination/p1-player-phone-assembly-v1/android-taskset-mask-ho
 and `phone177-parent-terminal-v4.json` in that directory; independent device cleanup passed.
 Runner SHA-256: `15fdc82f66808db46cf9b25ba17251af12237a32728cc12aecf1391f2e2eb649`.
 No installation or game launch; accepted J850 APK and content readiness are unchanged.
+## J1182 — Source-only J850 catalog identity projection
+
+2026-10-26. Existing integration metadata owner accepts an explicit camera-root extension; current defaults stay intact.
+J850 selects no extension and only closure/mesh sources, following receipted public source commit `1780ea9545`.
+Fresh PC-source catalog analysis plus public importer declarations reproduces all 30,322 locations,
+84,016 keys and 7,458 roots in order against the receipt-linked final catalog's metadata projection.
+Only attempt is normalized; final bundle fields are excluded from this metadata comparison.
+Evidence: `work/coordination/p1-payload-catalog-fresh-v1/metadata-done.json`; generated metadata SHA-256
+`ea85d7903fb23fa103d36c9b877966cdc65506a75f8468d862724d8361718a30`.
+Pinned ThunderKit copies desktop catalogs only; existing J714/J725 host reconstruction remains authoritative.
+33 focused tests, Ruff and host preflight pass. Host-only; readiness stays 598/705, final catalog/manifests,
+remaining payload bundles and phone qualification stay open. No new APK or device claim.
 ## J1183 — Eight complete source-derived scene bundles
 
 2026-10-26. Eight object and eleven Shader profiles complete Lakes/Lakesnight/Sulfurpools spine,
