@@ -305,3 +305,19 @@ Evidence, profile/output pins: `work/coordination/p1-anim-priority-shaders-v1/`
 32 focused host tests and host preflight pass. Complete-scene readiness
 and phone production, installation and original behavior remain separate gates.
 APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1201 — Complete Soul, Mire and Crystalworld scene bundles
+
+2026-10-26. Three audited object profiles extend the existing object/Shader owners,
+reusing J1198 Shader packs and legitimate PC/SDK input: 319,607 objects,
+six serialized members and three compressed bundles are host raw-exact to J850.
+Evidence and per-output SHA-256: animation worktree
+`work/coordination/p1-anim/priority-scenes-final-v1/` (`done.json`, `publication-inputs.json`).
+Retained readiness union: `work/coordination/p1-three-complete-scenes-v1/readiness-union/`;
+three payload entries close, all other rows unchanged: 638/705 available,
+633 raw-exact, two code comparisons, three drift-explained; 67 missing (7 APK, 60 payload).
+This includes the independently qualified Habitatfall union; no production replay.
+Three focused host contracts, host preflight and public audit pass; selectors only,
+with original null-script type slots preserved. No new runtime owner or target supplier.
+Host-only; phone production, installation and original scene behavior remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
