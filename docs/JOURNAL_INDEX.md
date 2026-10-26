@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1191](PORTING_JOURNAL.md#j1191--integrated-preparation-timing-and-cleanup-race-repair) | 2026-10-26 | Integrated preparation timing and cleanup race repair | 2026-10-26. |
 | [J1190](PORTING_JOURNAL.md#j1190--complete-source-derived-fungal-scene) | 2026-10-26 | Complete source-derived Fungal scene | 2026-10-26. |
 | [J1189](PORTING_JOURNAL.md#j1189--reconstruct-eight-further-complete-scene-payloads) | 2026-10-26 | Reconstruct eight further complete scene payloads | 2026-10-26. |
 | [J1191](PORTING_JOURNAL.md#j1191--source-only-catalog-identity-and-loadingbasic-reconstruction) | 2026-10-26 | Source-only catalog identity and Loadingbasic reconstruction | 2026-10-26. |

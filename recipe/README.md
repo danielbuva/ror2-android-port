@@ -3400,6 +3400,13 @@ The camera transform recipe whole-catalog source pin follows the pure integratio
 metadata extraction. Manual provenance/privacy review: this pin references only
 authored public Python; no game content, local paths or device evidence is added.
 
+The preparation-trace source cohort refresh pins only authored world-owner log
+markers and updates the matching audio/camera manifest and build-hook hashes.
+Manual provenance,
+privacy, licensing and sensitive-content review found public source hashes only;
+no game-derived content, private paths or runtime evidence is included. Existing
+input and redistribution requirements remain unchanged.
+
 ## Eight scene Shader profiles (2026-10-26)
 
 | Recipe | SHA-256 |

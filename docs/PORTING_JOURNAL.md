@@ -188,3 +188,16 @@ Prior art: retained J1070/J1075 producer and original typed preload policies;
 R2API addressed/direct distinction from the pinned community source index.
 Focused host checks, source-only qualification and provenance review pass.
 Host-only; phone production, installation and original scene behavior remain open.
+
+
+## J1191 — Integrated preparation timing and cleanup race repair
+
+2026-10-26. Existing IntegratedWorldSession emits bounded monotonic-time/frame markers around preparation
+and its existing resource waits; report writes, scheduling and ownership remain unchanged.
+Prior art: pinned R2API AddressReferencedAsset distinguishes request, handle and completion; no code copied.
+Normal IL2CPP code-build source `3749f5d8`, APK `9dd424f4a183d299b0ee03cd325a0cae7c9f863edb8e0b6332c81cd43c3a4dc1`.
+Evidence: `work/coordination/main-port-preparation-trace/` build receipt, focused checks and preflight logs.
+Ten focused trace checks, 45 camera checks (three skips), host preflight and public audit pass.
+Cleanup now tolerates a concurrently removed payload and continues the plan; other errors propagate.
+Nine cleanup regressions and Ruff pass; cleanup receipts are in the same evidence directory.
+Device qualification, hotspot attribution and measured thermal improvement remain open; no gameplay claim.
