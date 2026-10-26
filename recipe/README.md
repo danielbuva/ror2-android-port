@@ -3519,3 +3519,18 @@ credential is included. Current legitimate PC files, SDK resources and checked
 source-produced record packs remain required. Generated outputs and evidence
 stay ignored. Existing redistribution and ownership boundaries apply; phone
 production and runtime qualification remain open.
+
+## Artifact World complete object selection (2026-10-26)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-artifactworld01-whole-objects.json` | `f7b8b3e0d8728db50512201250c4d842bcd6e54705a69123a1b8e438017d3813` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain source selectors, hashes, checked pointer relationships and
+authored import policies only. Lossless compaction preserves decoded selectors.
+No original body, curve, scalar, pixel, program, copied source, private path or
+credential is included. Current legitimate PC files, SDK resources and checked
+source-produced record packs remain required. Generated outputs and evidence
+stay ignored. Existing redistribution and ownership boundaries apply; phone
+production and runtime qualification remain open.
