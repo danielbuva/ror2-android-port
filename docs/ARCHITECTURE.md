@@ -322,6 +322,14 @@ readbacks precede its terminal complete/failed receipt. Exit tears down the
 process and retains private packs. [Setup/lifecycle](../tools/phone-build/accepted-output/README.md#produce-avatars-directly-from-original-pc-bundles)
 requires no private target/discovery file. All 228 accepted records qualify in
 J1075; bundle assembly and game-build integration remain separate owners/gates.
+`owner-code/run_android.py::texture_job` exposes that source texture owner to
+the existing app worker, with explicit staged profile, private PC inputs,
+installed native codec pins and private SDK descriptor. It sets up a new private
+output or verified checkpoint resume; process exit tears down the producer while
+receipts persist. Existing input checks and thermal supervision remain owners of
+those contracts. The app route has host evidence only; the complete 1,333-record
+single-mip RGBA shell producer is device-qualified in J1199.
+
 `texture_produce.py` owns the current experimental Texture2D source producer. Audited `recipe/owner-uncompressed-textures.json` selects
 original body/pixel ranges and generic import/stream placement; standard BC1
 decoding, raw copying, fixed source-coordinate color extension and public
@@ -4632,6 +4640,16 @@ pinned profiles/tools, receipt-pinned source-produced media/Shader packs and a
 separate output directory set up production; process exit tears down each
 producer while local receipts persist. The existing member-aware writer exposes
 `payload/sulfurpools-source-lab`. All 19,503 persisted objects, both serialized
+members and the compressed bundle are host raw-exact against J850. No runtime
+owner is added; phone production, installation and original scene behavior remain open.
+
+Habitatfall complete source-scene selections extend the existing object/Shader
+owners through `recipe/owner-habitatfall-source-objects.json` and matching
+source-lab post-processing profile. Explicit current PC/SDK roots,
+pinned profiles/tools, receipt-pinned source-produced media/Shader packs and a
+separate output directory set up production; process exit tears down each
+producer while local receipts persist. The existing member-aware writer exposes
+`payload/habitatfall-source-lab`. All 13,895 persisted objects, both serialized
 members and the compressed bundle are host raw-exact against J850. No runtime
 owner is added; phone production, installation and original scene behavior remain open.
 
