@@ -3399,3 +3399,52 @@ runtime qualification remain open.
 The camera transform recipe whole-catalog source pin follows the pure integration
 metadata extraction. Manual provenance/privacy review: this pin references only
 authored public Python; no game content, local paths or device evidence is added.
+
+## Eight scene Shader profiles (2026-10-26)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-lakes-standard-shaders.json` | `909c81d5ce199cdc9fb2288c1f207d89bf35a3f08bd44c553fea869cd944263c` |
+| `owner-satellitescene-standard-shaders.json` | `389344fc34516a51e51a29abbbef3c832cc0f9b38c5a18bbc3b0f919ffe04b37` |
+| `owner-satellitescene-postprocess.json` | `a1c4c9ede7fd719a0189418381a740faddcc1af561a339283f805572e072c07e` |
+| `owner-limbo-standard-shaders.json` | `51cab1669445c77eb6e34af47d76e7ccc651b3fa574d6df20e29b0e7b89a867a` |
+| `owner-limbo-postprocess.json` | `c6ac914674ec39c3bb9a60aabd24c1a1f711813494b784a8c34a0a012a29be05` |
+| `owner-ironalluvium-standard-shaders.json` | `5389038e2f5d396d2388ae7eff4a433e6f196f249bacf24431742cbd81c34604` |
+| `owner-ironalluvium2-standard-shaders.json` | `edc265021b929f0c8b84a57a23ffe61435f3bb94fb6892f4f5f11f35ea375e34` |
+| `owner-lobby-standard-shaders.json` | `4890fc07442deef8af5cda6e534464c1447fa0045b6feb8249934106c55228ab` |
+| `owner-lobby-postprocess.json` | `0fd3c91afc4c616711d2f643d0f075492f4d832fe5822dead6ad8fd931bba469` |
+| `owner-lakesnight-standard-shaders.json` | `baa87545412df2669b7fb6b812a2d0e5ba681abba5ce707fffcf9d256811969c` |
+| `owner-sulfurpools-standard-shaders.json` | `cb83bfa29b2db908dcbbe58190e8a5326cac8ea6cc6c5afdd292b236d9030ee2` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these eleven
+byte-unchanged qualified profiles contain only original source selectors, hashes,
+SDK/public-template pins, authored compiler settings and destination identities.
+The existing Shader record owner consumes them; no source text, serialized body,
+program, target keyword table, private path or credential is included. Standard
+material selection follows original scene renderer roots for spine scenes and
+original recursive content closure for whole scenes. The two scopes preserve
+the existing scene builders. Original/SDK inputs and generated packs remain
+external and ignored; these recipes grant no redistribution or ownership right.
+Phone execution and runtime qualification remain open.
+
+## Eight complete scene object profiles (2026-10-26)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-lakes-spine-objects.json` | `1b63b04f29691d6872d46167c3b57700ebf5238563ec15ee76806c6eb999e356` |
+| `owner-satellitescene-objects.json` | `88badff0f98ba8809a13581b6883fc70f360ce5e6bfde17b9a902cc25994d4d2` |
+| `owner-limbo-objects.json` | `35448d0f31ee8aaaa16d16c19a84e9a3ff5d31731f045c088d32296057c385e9` |
+| `owner-ironalluvium-objects.json` | `2fa43d0a4c91c483320567db92b40641a477643a614981e59a11aae1c43aa96d` |
+| `owner-ironalluvium2-objects.json` | `c9d2b7ee0e32723e8b6806b1a380985c60dbbfb14a1421bcf015a124a98a5a63` |
+| `owner-lobby-objects.json` | `1c447dde4392ec2964bd5fe481006273506041305203b75b3f8596fbba314a43` |
+| `owner-lakesnight-spine-objects.json` | `f2ed065a672383d9516c150e497719be84530f3d9aaf667f7d02a3dddb768d2a` |
+| `owner-sulfurpools-spine-objects.json` | `53bdf1ed34a7582ac0ddb5b75127d9c502f4bf3c2d1a5d1020418b9da9570524` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain source selectors, hashes, checked pointer relationships and
+authored import policies only. Compaction preserves every decoded selector.
+No original body, curve, scalar, pixel, program, copied source, private path or
+credential is included. Current legitimate PC files, SDK resources and checked
+source-produced record packs remain required. Generated outputs and evidence
+stay ignored. Existing redistribution and ownership boundaries apply; phone
+execution and runtime qualification remain open.

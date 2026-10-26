@@ -953,10 +953,36 @@ def controller_loop_states(body, root, states, read_clip):
     return bytes(result)
 
 
+def director_exposed_names(body, root):
+    """Reimport AssetRipper decimal PropertyName strings and retain their PPtrs."""
+    _, located = fields(body, root)
+    prefix = ("m_ExposedReferences", "m_References", "Array")
+    start, end = located[prefix]
+    count = struct.unpack_from("<I", body, start)[0]
+    entries = []
+    for index in range(count):
+        left, right = located[prefix + (str(index),)]
+        length = struct.unpack_from("<I", body, left)[0]
+        text = body[left + 4 : left + 4 + length].decode("utf-8")
+        value = int(text)
+        if str(value) != text or not -(2**31) <= value < 2**31:
+            raise ValueError("original PropertyName is not an exported signed integer")
+        pointer = (left + 4 + length + 3) // 4 * 4
+        if pointer + 12 != right:
+            raise ValueError("invalid original exposed-reference entry")
+        hashed = zlib.crc32(text.encode("utf-8"))
+        signed = hashed if hashed < 2**31 else hashed - 2**32
+        encoded = str(signed).encode("utf-8")
+        key = struct.pack("<I", len(encoded)) + encoded
+        entries.append((signed, key + bytes(-len(key) % 4) + body[pointer:right]))
+    return body[:start] + struct.pack("<I", count) + b"".join(row for _, row in sorted(entries, key=lambda row: row[0])) + body[end:]
+
+
 def transform_generic(body, class_id, selected, root=None, read_clip=None):
     if set(selected) - {
         "references",
         "demote_keywords",
+        "director_exposed_names",
         "controller_clip_order",
         "controller_loop_states",
         "controller_tos",
@@ -967,6 +993,10 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None):
         raise ValueError("unknown generic object operation")
     if any(key.startswith("controller_") or key == "canonical" for key in selected) and (class_id != 91 or root is None):
         raise ValueError("controller operations require original controller schema")
+    if "director_exposed_names" in selected:
+        if selected["director_exposed_names"] is not True or class_id != 320 or root is None:
+            raise ValueError("exposed-name import requires original PlayableDirector schema")
+        body = director_exposed_names(body, root)
     if "controller_loop_states" in selected:
         body = controller_loop_states(body, root, selected["controller_loop_states"], read_clip)
     if "controller_clip_order" in selected:
@@ -1093,6 +1123,7 @@ def produce(profile_path, profile_sha256, pc, output):
                             223,
                             224,
                             225,
+                            320,
                         ):
                             raise ValueError("unqualified original object class")
                         member.seek(metadata["data_offset"] + obj["offset"])
@@ -1100,7 +1131,7 @@ def produce(profile_path, profile_sha256, pc, output):
                         if hashlib.sha256(body).hexdigest() != selected["sha256"]:
                             raise ValueError("original object-record body drift")
                         root = None
-                        if typ["class_id"] in (74, 91):
+                        if typ["class_id"] in (74, 91, 320):
                             if obj["type_id"] not in trees:
                                 trees[obj["type_id"]] = SCHEMA.type_tree(io.BytesIO(typ["tree"]))
                             root = trees[obj["type_id"]]
