@@ -206,7 +206,7 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-24.
 | `owner-uncompressed-textures.json` | Private replay uncompressed texture bodies/pixels | Original/destination selectors, source extents, generic import/placement metadata and hashes; copy, BC1, source-coordinate dilation and public JPEG policy. | No pixels, palettes, target literals/patches, native SDK implementation or image/library bytes; full audit above, 2026-10-24. All 399 records qualify on host/Android in J1079. | Explicit PC-input-only `texture_produce.py` and separately built public JPEG tool; no current game-build consumer. |
 | `owner-alpha-textures.json` | Private replay source Alpha8/single-mip texture cohort (J1082) | Canonical original/destination selectors, source/field extents, import/storage settings and hashes. | No alpha samples, encoded blocks, target byte frames, protected source or private identifiers; full audit below, 2026-10-24. | Original-PC-input-only `texture_produce.py` plus separately built public codec; no game-build consumer. |
 | `owner-rgb-textures.json` | Complete ETC1/single-mip target cohort | Original/destination selectors, field/pixel extents, hashes and source JPEG policy; composition aliases reuse original Warp/Elite ramps. | No colors, normal vectors, palettes, encoded blocks or target byte frames; audit below, 2026-10-24. | Original-input-only `texture_produce.py` and public ETC/JPEG tools; J1088 qualifies all 281 records on Android. |
-| `owner-rgba-textures.json` | Complete non-Alpha8 ETC2 RGBA/single-mip target cohort | Original/destination selectors, byte/field extents, hashes and canonical source relationships. | No pixels, palettes, encoded blocks, SDK implementation, private paths or target byte frames; audit below, 2026-10-24. | Existing source-only texture owner plus separately supplied SDK codec and public BC7 decoder; full phone qualification pending. |
+| `owner-rgba-textures.json` | Complete non-Alpha8 ETC2 RGBA/single-mip target cohort | Original/destination selectors, byte/field extents, hashes and canonical source relationships. | No pixels, palettes, encoded blocks, SDK implementation, private paths or target byte frames; audit below, 2026-10-24. | Existing source-only texture owner plus separately supplied SDK codec and public BC7 decoder; J1199 qualifies all 1,333 records through the Android shell producer; app-host execution remains open. |
 | `owner-hierarchy-records-1.jsonl.gz` | Qualified graph-selected original object relationships | Pinned original/destination selectors, hashes and checked PPtrs only; bounded source groups, decoded by the public audit. | No body/type template, scalar, float, gameplay value or private identifier; audit below, 2026-10-25. | Existing `record_produce.py`; J1143 full source-only host qualification; phone/assembly gates open. |
 | `owner-hierarchy-records-2.jsonl.gz` | Qualified graph-selected original object relationships | Pinned original/destination selectors, hashes and checked PPtrs only; bounded source groups, decoded by the public audit. | No body/type template, scalar, float, gameplay value or private identifier; audit below, 2026-10-25. | Existing `record_produce.py`; J1143 full source-only host qualification; phone/assembly gates open. |
 | `owner-hierarchy-records-3.jsonl.gz` | Qualified graph-selected original object relationships | Pinned original/destination selectors, hashes and checked PPtrs only; bounded source groups, decoded by the public audit. | No body/type template, scalar, float, gameplay value or private identifier; audit below, 2026-10-25. | Existing `record_produce.py`; J1143 full source-only host qualification; phone/assembly gates open. |
@@ -3456,6 +3456,35 @@ source-produced record packs remain required. Generated outputs and evidence
 stay ignored. Existing redistribution and ownership boundaries apply; phone
 execution and runtime qualification remain open.
 
+## Produced catalog metadata adapter (2026-10-26)
+
+Manual provenance, privacy, licensing and sensitive-content audit: the existing
+whole-catalog owner now reads structural dependency records from locally produced
+Android bundles, hashes their real bytes and completes a supplied source-declared
+graph. The camera recipe source pin tracks that authored helper change only.
+No accepted dependency table, object body, original source, private path or
+credential is included. The bounded reader is unchanged; legitimate input and
+source-produced bundles remain external and ignored. Host contracts preserve
+cyclic references and refuse incomplete graphs. Full catalog production and phone
+execution remain open; no redistribution or ownership right is granted.
+
+## Loadingbasic scene object profile (2026-10-26)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-loadingbasic-objects.json` | `3e46d0b7d2200ee8fa581328a6787d1687f2a66ea1f3bd7b15c3fa66cdb8de64` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: this profile
+contains original selectors, hashes, checked pointer relationships and existing
+authored import policies only. Compaction preserves every decoded selector.
+The original SpriteNumberImage preload membership supplies its omitted local
+GameObject dependency; existing component and global-owner policies preserve
+the accepted startup layout. Source-produced texture, cubemap and Skybox packs
+remain explicit pinned inputs to the existing object producer. No original body,
+curve, scalar, pixel, program, copied source, private path or credential is
+included. Current legitimate PC files and SDK resources remain required;
+generated content and evidence stay ignored. Existing ownership and
+redistribution boundaries apply. Phone and runtime qualification remain open.
 ## Conduit Canyon complete scene object profile (2026-10-26)
 
 | Recipe | SHA-256 |
@@ -3656,3 +3685,249 @@ relationships only. No original bodies, shader programs, copied source, private
 paths or credentials are included. Current legitimate PC files and separately
 acquired SDK remain required. Generated records and evidence stay ignored;
 complete Title assembly, phone production and runtime qualification remain open.
+## Title and Satellite complete object selections (2026-10-26)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-title-whole-objects.json` | `1f4ea96d713b60b159e5c1cd030bb5b49e7df1e387d9cbe10831290b033498ee` |
+| `owner-satellitescene-whole-objects.json` | `a035d84e5f5e930eb24bf23bd3ef37bd400d34bce1b0a7d9f665c63a672cd911` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain source selectors, hashes, checked pointer relationships and
+authored import policies only. Lossless compaction preserves decoded selectors.
+No original body, curve, scalar, pixel, program, copied source, private path or
+credential is included. Current legitimate PC files, SDK resources and checked
+source-produced record packs remain required. Generated outputs and evidence
+stay ignored. Existing redistribution and ownership boundaries apply; phone
+production and runtime qualification remain open.
+
+## Artifact World complete object selection (2026-10-26)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-artifactworld01-whole-objects.json` | `f7b8b3e0d8728db50512201250c4d842bcd6e54705a69123a1b8e438017d3813` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain source selectors, hashes, checked pointer relationships and
+authored import policies only. Lossless compaction preserves decoded selectors.
+No original body, curve, scalar, pixel, program, copied source, private path or
+credential is included. Current legitimate PC files, SDK resources and checked
+source-produced record packs remain required. Generated outputs and evidence
+stay ignored. Existing redistribution and ownership boundaries apply; phone
+production and runtime qualification remain open.
+
+## Satellite and Artifact World Shader selections (2026-10-26)
+
+The existing Shader record owner consumes these source-qualified profiles for
+48 post-processing records and one Standard record. Original resource fields,
+export filename/GUID relationships and recursively reached materials determine
+selection. Guarded actual CLI production persisted before independent raw comparison.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-satellitescene-postprocess-shaders.json` | `a1c4c9ede7fd719a0189418381a740faddcc1af561a339283f805572e072c07e` |
+| `owner-satellitescene-standard-shaders.json` | `389344fc34516a51e51a29abbbef3c832cc0f9b38c5a18bbc3b0f919ffe04b37` |
+| `owner-artifactworld01-postprocess-shaders.json` | `b202cf2d9d3722e7febbadecb27c7337f879b85ab6af2d56c44feeb10f62637a` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: only source
+selectors, hashes, public SDK/tool pins and destination relationships are included.
+No original bodies, shader programs, copied source, private paths or credentials
+are included. Legitimate PC files and separately acquired SDK remain required;
+generated records stay ignored. Phone and runtime qualification remain open.
+
+
+## Ten complete spine scene selections (2026-10-26)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-golemplains2-spine-objects.json` | `fdbc8c2042ff83839ecf31359c6161cf583ac7304822d19fe8083e8c1b5e596b` |
+| `owner-golemplains2-spine-lab-standard-shaders.json` | `f815eb48f56767b995df124f0cbf745d43927c1ba0f3318339682c926ee40deb` |
+| `owner-dampcavesimple-spine-objects.json` | `9ac17ef9dbbd1c5bea99ca4b65a5431b7bbf2bcbf33a899e4acb6f9f5b2a9d46` |
+| `owner-dampcavesimple-spine-lab-standard-shaders.json` | `fe93297b7d5332fd30be4482fc3913a07da34c4b9439ec2b9cbe913401c34d03` |
+| `owner-blackbeach2-spine-objects.json` | `e4eb716afda5d23a505bb48728cffc6c10de43b3fabfb53fa38e1a78e58c26fa` |
+| `owner-blackbeach2-spine-lab-standard-shaders.json` | `c5434c885801bf58b90157c7a32ee30093ab552d5f317cad59c877a0f1a2a406` |
+| `owner-foggyswamp-spine-objects.json` | `74c27d2df8f6aba241ef8da26fe075590652699e65a2a39aac8339c0e6ce8418` |
+| `owner-foggyswamp-spine-lab-standard-shaders.json` | `98699484ef630f10a3f1b46ae179882632222dcd1e7287628d4480a064ddd6b3` |
+| `owner-ancientloft-spine-objects.json` | `9c0feb85d569b6762918d4d5fcfa2027979b52e141fdf5ce67437c32a2c50f44` |
+| `owner-ancientloft-spine-lab-standard-shaders.json` | `c3bc501603146d9b536f1f6aa28533109971aa75eea16d2dca00ef4e5f0c13e3` |
+| `owner-village-spine-objects.json` | `7dac53626b27ddb08e951d934015e237279b920f07ba5a2effcc569715e4cc49` |
+| `owner-village-spine-lab-standard-shaders.json` | `fed66e3f3f11e27ce2f7d281ce2f1f0e26a19ccc1b9c59feb528aa4e51be7e47` |
+| `owner-shipgraveyard-spine-objects.json` | `a62dd18b06ae62970984089ddd31fe11d26c4e2081432029a7e16ee0a4195b24` |
+| `owner-shipgraveyard-spine-lab-standard-shaders.json` | `27c295f0fc7dfed9f6cb1009829f0698943ea3fde79096a235d1b4846e28d393` |
+| `owner-goolake-spine-objects.json` | `396ec87613ecbc97e825f7680fa89800920239057a4436d6875c93cd000ad10a` |
+| `owner-goolake-spine-lab-standard-shaders.json` | `485f9a4d3477285cf2c061245ffc7c74f91a3df83dab520a0279b500f94ac918` |
+| `owner-golemplains-spine-objects.json` | `88350424b9e313ec47bacdf8210d962aa9cafeda2fc1610c01d4ce5a881382e0` |
+| `owner-golemplains-spine-lab-standard-shaders.json` | `84cca571218bc56551f82813e3aeb01b45e27dc1b48441365181155849743665` |
+| `owner-blackbeach-spine-objects.json` | `18adebc9c4b4dc9aaa8aa4ea1f54ea23b91d4787a8904801534035382d3f97a1` |
+| `owner-blackbeach-spine-lab-standard-shaders.json` | `591baf62fe9b4b06c270b25bbe0f617b90583e21da174aed00b6d36c1d93ba42` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain original selectors, hashes, checked pointer relationships,
+SDK/public-tool pins and existing authored import policies only. Lossless JSON
+compaction preserves all decoded object selections. Original scene renderer
+and skybox material roots select the reduced-spine Standard variants. No original
+body, curve, scalar payload, pixel, shader program, copied source, private path
+or credential is included. Legitimate PC files, separately acquired SDK and
+receipt-pinned source-produced media/Shader packs remain required. Generated
+outputs and evidence stay ignored. Existing ownership and redistribution
+boundaries apply; phone production, installation and runtime behavior remain open.
+
+## Ultima source-derived Shader selections (2026-10-26)
+
+The existing Shader owner selects 24 post-processing records from original
+resource fields and Standard from recursively reached original materials.
+The original Colossus item renderer and acquired export identify the SDK
+default material; its explicit selector supplies pinned SDK features after
+original material/body/shader validation. Other original emissive materials
+retain their features. Source-only CLI output is persisted before comparison.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-ultima-standard-shaders.json` | `3aa00bbca4a256991344d8228e59280b2e6e4ee81b22b979edfb7c1f27d923cd` |
+| `owner-ultima-postprocess-shaders.json` | `d7a6ca82d474202320229d17d5e0d048d8476dc4d3f4de60b32f218de569be70` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain source selectors, hashes, source relationships and pinned
+SDK/public-tool identities only. No original bodies, programs, copied source,
+private paths or credentials are included. Legitimate PC input and separately
+acquired SDK remain required; generated records and evidence stay ignored.
+Phone production, installation and runtime qualification remain open.
+
+## Four complete source-scene selections (2026-10-26)
+
+Golemplains2, Ancientloft, Habitat and Blackbeach extend the existing object
+and Shader owners. Their source-only CLI output persists before independent
+comparison: all 60,493 objects, eight serialized members and four compressed
+bundles are raw-exact to J850. Lossless JSON compaction preserves every
+decoded object selection. The five Shader profiles are unchanged from their
+separately qualified source-produced packs.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-golemplains2-source-objects.json` | `31341ace31b15a939e2c05bd9cbe65da49fed2b5163b89e75e92faf35573c46b` |
+| `owner-golemplains2-source-lab-standard-shaders.json` | `fff8d88f8d13bbb9f544bbafac5c0209bc63ddd3755786a36748b535311e81f1` |
+| `owner-ancientloft-source-objects.json` | `30ee01b31ca59830c17d320b8df866b6e178bab502864ce5c2e95843354d0426` |
+| `owner-ancientloft-source-lab-standard-shaders.json` | `d7db4c8699040dc7e4698aceaf13bac1ade720002347266b0642a12277617934` |
+| `owner-ancientloft-source-lab-postprocess-shaders.json` | `eda9e4b0c2dccfdb6b0a15c6299deb4ec6c01a8f551d8f5b97254083ceaa7ec7` |
+| `owner-habitat-source-objects.json` | `dce1bd3a7e624c3e320f86ad3f29f3dddfd20f7954ef514909bd6aa77b6f2316` |
+| `owner-habitat-source-lab-postprocess-shaders.json` | `ef701e0931128d559ff0e6621d44ab56d5ca3d8def2b1ca22375dc8eff7f60df` |
+| `owner-blackbeach-source-objects.json` | `20ce8f218ca27c732f2d486791c623031f0af7234bdd5b15b93ac11077964232` |
+| `owner-blackbeach-source-lab-standard-shaders.json` | `ad46d5531f503361f8e9db24c2019d7979281ca22deb8052abb9d109190e06bb` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain original selectors, hashes, checked pointer relationships,
+SDK/public-tool pins and existing authored import policies only. No original
+body, curve, scalar payload, pixel, shader program, copied source, private path
+or credential is included. Legitimate PC files, separately acquired SDK and
+receipt-pinned source-produced media/Shader packs remain required. Generated
+outputs and evidence stay ignored. Existing ownership and redistribution
+boundaries apply; phone production, installation and runtime behavior remain open.
+
+## Ultima complete object selection (2026-10-26)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-ultima-whole-objects.json` | `d7e0941ffd920f07f48cbf27e400ea9958551c8dc2713a127337c1c3e9661a36` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: this
+profile contains source selectors, hashes, checked pointer relationships and
+authored import policies only. Lossless compaction preserves decoded selectors.
+No original body, curve, scalar, pixel, program, copied source, private path or
+credential is included. Current legitimate PC files, SDK resources and checked
+source-produced record packs remain required. Generated outputs and evidence
+stay ignored. Existing redistribution and ownership boundaries apply; phone
+production and runtime qualification remain open.
+
+## Sulfurpools complete source-scene selections (2026-10-26)
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-sulfurpools-source-objects.json` | `4ad4cd14854456a66d4326d3f9d9aef783a65f8ede7778773c798d4f12204d72` |
+| `owner-sulfurpools-source-lab-postprocess-shaders.json` | `8cae5e2fb635198d8b92df35c97bcbf1750059271be429c1e27ade4978b5ed4f` |
+| `owner-sulfurpools-source-lab-standard-shaders.json` | `634ace2d8f1ea8e80bfc9dc2756c41acb25a8aa611c0fea3e213310e66516bd2` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain original selectors, hashes, checked pointer relationships,
+SDK/public-tool pins and existing authored import policies only. Lossless JSON
+compaction preserves every decoded object selection; both Shader profiles are
+unchanged from the separately qualified source-produced packs. No original
+body, curve, scalar payload, pixel, shader program, copied source, private path
+or credential is included. Legitimate PC files, separately acquired SDK and
+receipt-pinned source-produced media/Shader packs remain required. Generated
+outputs and evidence stay ignored. Existing ownership and redistribution
+boundaries apply; phone production, installation and runtime behavior remain open.
+
+## Habitatfall complete source-scene selections (2026-10-26)
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-habitatfall-source-objects.json` | `57dbaeb22a902e71d6178898b390ff0848bc6aa18ae6b9dae9b62396705b80e6` |
+| `owner-habitatfall-source-lab-postprocess-shaders.json` | `6de150e41fed20628b0590fa5b3a4353df3e6d69bad01e2b3ccfcb9ffd8d276b` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain original selectors, hashes, checked pointer relationships,
+SDK/public-tool pins and existing authored import policies only. Lossless JSON
+compaction preserves every decoded object selection; the Shader profile is
+unchanged from the separately qualified source-produced packs. No original
+body, curve, scalar payload, pixel, shader program, copied source, private path
+or credential is included. Legitimate PC files, separately acquired SDK and
+receipt-pinned source-produced media/Shader packs remain required. Generated
+outputs and evidence stay ignored. Existing ownership and redistribution
+boundaries apply; phone production, installation and runtime behavior remain open.
+
+## Soul, Mire and Crystalworld Shader selections (2026-10-26)
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-crystalworld-postprocess-shaders.json` | `ea6966e5e5086b9547cfd83663198adce6c0125e6b1ff4e2beead7d8b2935fa8` |
+| `owner-mire-postprocess-shaders.json` | `b91ed6fc82718236bc7445a65651f7c7a25dafacc2b74cdee76506fe15c2f693` |
+| `owner-mire-standard-shaders.json` | `98d68b25432acfeb1771d54f7f2b8f60688b721e1e36e99657ce6e459ad12f26` |
+| `owner-soul_perftest-postprocess-shaders.json` | `5d0daae7698d0344edc1ec7daedfc15fd5c8e536bb06e15cae8ff7c18fa9a289` |
+| `owner-soul_perftest-standard-shaders.json` | `bfd878baca6e50ae5b74b4c3e7cfd73577d68e6702a70c9511c03e487996bf10` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain original selectors, hashes, checked resource/material
+relationships and SDK/public-tool pins only. Soul uses its own original
+scene resource and acquired-export GUID relationships. No original body,
+program, copied source, private path or credential is included. Legitimate
+PC input and separately acquired SDK remain required; generated records
+and evidence stay ignored. All 74 persisted Shader records are host
+raw-exact against J850. Complete-scene readiness and phone qualification
+remain separate gates.
+
+## Dampcavesimple complete source-scene selections (2026-10-26)
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-dampcavesimple-source-objects.json` | `b9b63ecc12cb8357f5ce240441a10c8b340d8bb883e55f82c29857c8b4fd286c` |
+| `owner-dampcavesimple-source-lab-postprocess-shaders.json` | `7a1e036001844e5f2ad527b130e5c0e66aa5d515686b825c5ee08e7026476476` |
+| `owner-dampcavesimple-source-lab-standard-shaders.json` | `3313421454be04453770f570aa4e86893631e1c9136a6760f069cff4e18bc338` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain original selectors, hashes, checked pointer relationships,
+SDK/public-tool pins and existing authored import policies only. Lossless JSON
+compaction preserves every decoded object selection; both Shader profiles are
+unchanged from the separately qualified source-produced packs. No original
+body, curve, scalar payload, pixel, shader program, copied source, private path
+or credential is included. Legitimate PC files, separately acquired SDK and
+receipt-pinned source-produced media/Shader packs remain required. Generated
+outputs and evidence stay ignored. Existing ownership and redistribution
+boundaries apply; phone production, installation and runtime behavior remain open.
+
+## Soul, Mire and Crystalworld complete scene selections (2026-10-26)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-soul_perftest-objects.json` | `7ff7efa24163a2268c978b6bd1bc8b89417d336e45e664105bce68ea13c0b371` |
+| `owner-mire-objects.json` | `e177548f7fd8a1659427b5fea6eabfe644fb0ee55f054b44ddb5af47658d1ccb` |
+| `owner-crystalworld-objects.json` | `3648a7e92bb91d626390761a799a9c10ae775c0f0bfb6f92b2ede1c1bb6de1d2` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain source selectors, hashes, checked pointer relationships and
+authored import policies only. Compaction preserves every decoded selector.
+No original body, curve, scalar data, pixel, shader program, copied source,
+private path or credential is included. Current legitimate PC files, the pinned
+SDK and independently source-produced media/Shader record packs remain required.
+The existing object producer preserves source null-script type slots for Soul
+and Mire. Generated outputs and raw comparison evidence stay ignored; ownership
+and redistribution boundaries apply. Phone production and runtime remain open.

@@ -322,6 +322,14 @@ readbacks precede its terminal complete/failed receipt. Exit tears down the
 process and retains private packs. [Setup/lifecycle](../tools/phone-build/accepted-output/README.md#produce-avatars-directly-from-original-pc-bundles)
 requires no private target/discovery file. All 228 accepted records qualify in
 J1075; bundle assembly and game-build integration remain separate owners/gates.
+`owner-code/run_android.py::texture_job` exposes that source texture owner to
+the existing app worker, with explicit staged profile, private PC inputs,
+installed native codec pins and private SDK descriptor. It sets up a new private
+output or verified checkpoint resume; process exit tears down the producer while
+receipts persist. Existing input checks and thermal supervision remain owners of
+those contracts. The app route has host evidence only; the complete 1,333-record
+single-mip RGBA shell producer is device-qualified in J1199.
+
 `texture_produce.py` owns the current experimental Texture2D source producer. Audited `recipe/owner-uncompressed-textures.json` selects
 original body/pixel ranges and generic import/stream placement; standard BC1
 decoding, raw copying, fixed source-coordinate color extension and public
@@ -4582,3 +4590,105 @@ tears down producers while local receipts persist. The same Shader owner adds
 Title post-processing/Standard selections and SDK terrain base-generation
 passes, selected from original native properties and SDK pass declarations.
 No runtime owner is added; phone production and original scene behavior remain open.
+
+Title, Satellite and Artifactworld01 complete object selections also use these
+existing owners. Satellite Standard/post-processing and Artifactworld01
+post-processing profiles generate their Shader record packs from original
+resource/material relationships and pinned SDK/public tool inputs. Explicit
+roots, receipt-pinned packs, separate output and process-exit teardown retain
+the same contract; no runtime owner is added. Phone qualification remains open.
+
+Ten further complete spine scenes use the existing object and Shader owners:
+Golemplains2, Dampcavesimple, Blackbeach2, Foggyswamp, Ancientloft, Village,
+Shipgraveyard, Goolake, Golemplains and Blackbeach. Their
+`recipe/owner-<scene>-spine-objects.json` profiles consume receipt-pinned
+source-produced media packs and the matching
+`recipe/owner-<scene>-spine-lab-standard-shaders.json` selection. Explicit
+current PC/SDK roots, pinned profile/tools and a separate output directory
+set up production; process exit tears down each producer while receipts persist.
+The existing member-aware layout/writer exposes `payload/<scene>-spine-lab`.
+All 140,029 persisted objects, 20 serialized members and ten compressed bundles
+are host raw-exact against J850. No owner or runtime state is added; phone
+production, installation and original scene behavior remain open.
+
+Ultima Shader selections extend the existing record owner with an explicit
+original-material to pinned SDK default-material selector. After original
+material, body and shader identity checks, the SDK supplies that material's
+feature configuration; other original materials retain their features.
+The existing explicit input roots, source/tool pins, fresh output directory
+and process-exit teardown apply. No runtime owner or target supplier is added.
+
+Four complete source scenes, Golemplains2, Ancientloft, Habitat and Blackbeach,
+also use the existing object/Shader owners. Their audited
+`recipe/owner-<scene>-source-objects.json` profiles consume receipt-pinned
+source-produced media and the matching source-lab Standard/post-processing
+Shader selections. Explicit current PC/SDK roots, pinned profiles/tools and
+a separate output directory set up production; process exit tears down each
+producer while receipts persist. The existing member-aware writer exposes
+`payload/<scene>-source-lab`. All 60,493 persisted objects, eight serialized
+members and four compressed bundles are host raw-exact against J850.
+Phone production, installation and original scene behavior remain open.
+
+The complete Ultima object selection also uses the existing object/Shader owners.
+Its audited `recipe/owner-ultima-whole-objects.json` consumes receipt-pinned
+source-produced media and the J1194 Shader packs. Explicit current PC/SDK roots,
+pinned profiles/tools and a separate output directory set up production; process
+exit tears down producers while receipts persist. The existing member-aware
+writer exposes `payload/whole-scene-ultima`. All 6,077 persisted objects, both
+serialized members and the compressed bundle are host raw-exact against J850.
+Phone production, installation and original scene behavior remain open.
+
+Sulfurpools complete source-scene selections extend the existing object/Shader
+owners through `recipe/owner-sulfurpools-source-objects.json` and matching
+source-lab Standard/post-processing profiles. Explicit current PC/SDK roots,
+pinned profiles/tools, receipt-pinned source-produced media/Shader packs and a
+separate output directory set up production; process exit tears down each
+producer while local receipts persist. The existing member-aware writer exposes
+`payload/sulfurpools-source-lab`. All 19,503 persisted objects, both serialized
+members and the compressed bundle are host raw-exact against J850. No runtime
+owner is added; phone production, installation and original scene behavior remain open.
+
+The existing Standard Shader record owner derives retained material feature order
+from the pinned original Shader's fragment keyword identities, independently of
+recursive closure encounter order. It validates original/SDK pass identity and
+feature coverage, then retains existing SDK global/builtin cycles and native
+ordering. Setup uses the already pinned original input; process-exit teardown
+and retained pack receipts are unchanged. J1203 qualifies Dampcavesimple's
+source Standard record; full-scene and phone behavior remain separate gates.
+
+Habitatfall complete source-scene selections extend the existing object/Shader
+owners through `recipe/owner-habitatfall-source-objects.json` and matching
+source-lab post-processing profile. Explicit current PC/SDK roots,
+pinned profiles/tools, receipt-pinned source-produced media/Shader packs and a
+separate output directory set up production; process exit tears down each
+producer while local receipts persist. The existing member-aware writer exposes
+`payload/habitatfall-source-lab`. All 13,895 persisted objects, both serialized
+members and the compressed bundle are host raw-exact against J850. No runtime
+owner is added; phone production, installation and original scene behavior remain open.
+
+Soul perftest, Mire and Crystalworld Shader selections extend the existing
+`payload_shader_records.py` owner. Original scene resource relationships
+select post-processing shaders; recursive original materials select Standard.
+Explicit current PC/SDK roots, pinned profiles/tools and a separate output
+directory set up production; process exit tears down producers while local
+receipts persist. All 74 persisted records are host raw-exact to J850.
+Complete-scene readiness and phone qualification remain separate gates.
+
+Dampcavesimple complete source-scene selections extend the existing object/Shader
+owners through `recipe/owner-dampcavesimple-source-objects.json` and matching
+source-lab Standard/post-processing profiles. Explicit current PC/SDK roots,
+pinned profiles/tools, receipt-pinned source-produced media/Shader packs and a
+separate output directory set up production; process exit tears down each
+producer while local receipts persist. The existing member-aware writer exposes
+`payload/dampcavesimple-source-lab`. All 29,718 persisted objects, both serialized
+members and the compressed bundle are host raw-exact against J850. No runtime
+owner is added; phone production, installation and original scene behavior remain open.
+
+Complete Soul perftest, Mire and Crystalworld scene selections use the existing
+object/Shader owners through `recipe/owner-{soul_perftest,mire,crystalworld}-objects.json`.
+Explicit current PC/SDK roots, pinned profiles/tools, source-produced record packs
+and a separate output directory set up production; process exit tears down each
+producer while local receipts persist. The member-aware writer exposes
+`payload/whole-scene-{soul_perftest,mire,crystalworld}`. All 319,607 objects,
+six serialized members and three compressed bundles are host raw-exact to J850.
+Phone production, installation and original scene behavior remain open.

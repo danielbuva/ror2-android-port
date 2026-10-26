@@ -59,25 +59,17 @@ Decision preparation: [J829](history/journal-J1-J1177/PORTING_JOURNAL.md#j829--r
       [J1088](history/journal-J1-J1177/PORTING_JOURNAL.md#j1088--produce-every-single-mip-etc1-texture-from-pc-bundles-on-android)
       qualifies all 281 ETC1/single-mip records and the shared public codec build
       on Android, with all 5,006 RGB/Alpha8/uncompressed records reverified.
-      [J1107](history/journal-J1-J1177/PORTING_JOURNAL.md#j1107--complete-host-rgba-production-and-bound-the-phone-thermal-refusal)
-      qualifies all 1,333 remaining single-mip RGBA records on the host; its
-      complete phone cohort remains open after
-      [J1123](history/journal-J1-J1177/PORTING_JOURNAL.md#j1123--guarded-rgba-phone-batch-loses-transport-admission-stays-open)
-      records the interrupted guarded run. Recovered evidence review and a
-      checkpointed single-job rerun are required.
+      [J1199](PORTING_JOURNAL.md#j1199--complete-phone-rgba-production-and-app-texture-dispatch) completes all 1,333 single-mip RGBA records on Android through
+      the source-only SDK/public codec producer, resuming a verified 521-record
+      prefix. All three persisted pack hashes match the host target. The shared
+      runner records 48.1 C peak and no thermal pauses during the 7.16-hour resume.
+      Existing app-host dispatch now accepts source texture jobs and durable
+      resume; that route has host contracts only, with app execution still open.
       [J1110](history/journal-J1-J1177/PORTING_JOURNAL.md#j1110--produce-every-etc1-mip-chain-from-original-pc-textures-on-the-host)
       qualifies all 1,589 ETC1 mip-chain records on the host, with Android
       qualification open. [J1140](history/journal-J1-J1177/PORTING_JOURNAL.md#j1140--qualify-the-bounded-android-tool-guard-and-checkpoint-recovery)
       qualifies bounded Android guard and checkpoint-recovery controls, without
       admitting a full texture cohort.
-      [J1158](history/journal-J1-J1177/PORTING_JOURNAL.md#j1158--rgba-phone-cohort-interrupted-by-recorded-hangup)
-      records the next interrupted cohort: host ADB is killed, the guard records
-      hangup, and full phone qualification remains open. Separate recovery
-      preserves the interrupted checkpoint, verifies idle state and unchanged
-      installed bytes, removes owned scratch and releases the device.
-      [J1173](history/journal-J1-J1177/PORTING_JOURNAL.md#j1173--preserve-the-rgba-phone-prefix-after-bounded-wall-timeout)
-      preserves 506 verified records after the retry wall timeout; a complete
-      source-only phone cohort remains open.
       [J1128](history/journal-J1-J1177/PORTING_JOURNAL.md#j1128--produce-complete-rgba-mip-and-source-cubemap-cohorts-on-the-host) qualifies all 1,523 RGBA mip-chain records
       and 110 source-derived Cubemaps on the host. Their Android production,
       13 native reflection cubes and complete bundle assembly remain open.
@@ -103,16 +95,16 @@ Decision preparation: [J829](history/journal-J1-J1177/PORTING_JOURNAL.md#j829--r
       control; no historical file becomes a reconstruction input.
       [J1081](history/journal-J1-J1177/PORTING_JOURNAL.md#j1081--run-owner-supplied-standalone-sdk-tools-through-a-public-android-runner)
       qualifies a reproducible public Android runner for standalone SDK build
-      tools. The full Linux RGBA cohort, original shader/content production and ordinary
+      tools. Original shader/content phone production and ordinary
       owner delivery remain open; game execution remains native IL2CPP ARM64.
       [J1094](history/journal-J1-J1177/PORTING_JOURNAL.md#j1094--qualify-exact-sdk-vulkan-shader-compilation-on-android)
       qualifies exact host/phone authored Vulkan shader-tool output. Phone
       original-shader recovery and app integration remain open. J1157 qualifies
       all 414 APK Shader48 objects through source-only host
       production: 369 complete files plus two shared records. The combined
-      source tree has 616 of 705 entries available (611 raw-exact, two code
-      comparison entries and three separately drift-explained); 89 remain
-      missing (J1189: 7 APK, 82 payload). Host shared mixed-file assembly is qualified; phone serialization remains open.
+      source tree has 626 of 705 entries available (621 raw-exact, two code
+      comparison entries and three separately drift-explained); 79 remain
+      missing (J1192: 7 APK, 72 payload). Host shared mixed-file assembly is qualified; phone serialization remains open.
       [J1184](PORTING_JOURNAL.md#j1184--isolated-ambient-observation-fixture) adds host-qualified ambient observation tooling;
       the live bake, target equality and source-only sky production remain open.
       [J1102](history/journal-J1-J1177/PORTING_JOURNAL.md#j1102--qualify-linked-vulkan-fragment-output-and-explicit-owner-apk-code-inputs)

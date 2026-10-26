@@ -374,23 +374,27 @@ def make_layout(selected, records, scene_members=(), engine="2021.3.45f2"):
     offset = 0
     for row in physical:
         typ = copy.deepcopy(row["type"])
+        null_script = False
         if typ["class_id"] == 114:
             file_id, script = struct.unpack_from("<iq", row["body"], 16)
             if (file_id, script) == (0, 0):
                 if not scene_members or len(row["body"]) != 32 or typ["script_type"] != -1 or typ["hash"] != bytes(16) or typ["script_id"] != bytes(16):
                     raise ValueError("original null-script MonoBehaviour metadata drift")
+                null_script = True
             else:
                 if (file_id and not scene_members) or (not file_id and script not in local_scripts) or not 0 <= file_id <= len(selected["externals"]):
                     raise ValueError("MonoBehaviour script absent from produced bundle")
                 typ["script_type"] = scripts.index((file_id, script))
-        if typ not in types:
+        # Unity retains an individual type slot for each missing-script component.
+        if null_script or typ not in types:
             types.append(typ)
+        type_id = len(types) - 1 if null_script else types.index(typ)
         offset = (offset + 7) // 8 * 8
         identity = row["path_id"]
         if identity in bodies:
             raise ValueError("duplicate produced object identity")
         bodies[identity] = row["body"]
-        objects.append({"path_id": identity, "offset": offset, "bytes": len(row["body"]), "type_id": types.index(typ)})
+        objects.append({"path_id": identity, "offset": offset, "bytes": len(row["body"]), "type_id": type_id})
         offset += len(row["body"])
     # Unity's native resources live outside the AssetBundles.
     native = {"Resources/unity_builtin_extra": 0x0F, "Library/unity default resources": 0x0E}

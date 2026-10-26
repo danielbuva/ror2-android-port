@@ -512,3 +512,19 @@ J1185 completes source-derived Conduit Canyon through the existing owners:
 607/705 files available (602 raw-exact, two code comparisons, three drift-explained),
 98 missing (7 APK, 91 payload). Fungal Shader packs qualify separately; complete
 Fungal assembly and phone/runtime qualification remain open.
+
+J1192 closes ten further source-derived spine payloads: Golemplains2,
+Dampcavesimple, Blackbeach2, Foggyswamp, Ancientloft, Village, Shipgraveyard,
+Goolake, Golemplains and Blackbeach. Guarded public CLI production followed by
+independent comparison verifies all 140,029 persisted objects, 20 serialized
+members and ten compressed bundles raw-exact against J850. Current host readiness
+is 626/705 available (621 raw-exact, two code comparisons, three drift-explained),
+with 79 missing (7 APK, 72 payload). Existing object/Shader owners and the
+target-tree writer consume audited public selectors and separately produced
+record packs. Phone production, installation and original behavior remain open.
+
+The complete single-mip RGBA source pack now has Android shell evidence
+([J1199](PORTING_JOURNAL.md#j1199--complete-phone-rgba-production-and-app-texture-dispatch)): 1,333 records and all three persisted output hashes match the
+host target after verified checkpoint continuation. This supplies existing
+receipt-pinned texture consumers; it does not close missing complete bundles.
+App-host texture dispatch reuses this producer, with device execution still open.

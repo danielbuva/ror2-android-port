@@ -10,9 +10,22 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1202](PORTING_JOURNAL.md#j1202--complete-source-derived-dampcavesimple-bundle) | 2026-10-26 | Complete source-derived Dampcavesimple bundle | 2026-10-26. |
+| [J1199](PORTING_JOURNAL.md#j1199--complete-phone-rgba-production-and-app-texture-dispatch) | 2026-10-26 | Complete phone RGBA production and app texture dispatch | 2026-10-26. |
+| [J1201](PORTING_JOURNAL.md#j1201--complete-soul-mire-and-crystalworld-scene-bundles) | 2026-10-26 | Complete Soul, Mire and Crystalworld scene bundles | 2026-10-26. |
+| [J1203](PORTING_JOURNAL.md#j1203--original-fragment-standard-material-ordering) | 2026-10-26 | Original-fragment Standard material ordering | 2026-10-26. |
+| [J1198](PORTING_JOURNAL.md#j1198--source-derived-soul-mire-and-crystalworld-shader-records) | 2026-10-26 | Source-derived Soul, Mire and Crystalworld Shader records | 2026-10-26. |
+| [J1200](PORTING_JOURNAL.md#j1200--complete-source-derived-habitatfall-bundle) | 2026-10-26 | Complete source-derived Habitatfall bundle | 2026-10-26. |
+| [J1197](PORTING_JOURNAL.md#j1197--complete-source-derived-sulfurpools-bundle) | 2026-10-26 | Complete source-derived Sulfurpools bundle | 2026-10-26. |
+| [J1196](PORTING_JOURNAL.md#j1196--complete-source-derived-ultima-bundle) | 2026-10-26 | Complete source-derived Ultima bundle | 2026-10-26. |
+| [J1195](PORTING_JOURNAL.md#j1195--four-complete-source-scene-bundles) | 2026-10-26 | Four complete source scene bundles | 2026-10-26. |
+| [J1194](PORTING_JOURNAL.md#j1194--source-qualified-ultima-shader-records) | 2026-10-26 | Source-qualified Ultima Shader records | 2026-10-26. |
+| [J1192](PORTING_JOURNAL.md#j1192--ten-complete-source-derived-spine-bundles) | 2026-10-26 | Ten complete source-derived spine bundles | 2026-10-26. |
+| [J1193](PORTING_JOURNAL.md#j1193--complete-title-satellite-and-artifact-world-source-profiles) | 2026-10-26 | Complete Title, Satellite and Artifact World source profiles | 2026-10-26. |
 | [J1191](PORTING_JOURNAL.md#j1191--integrated-preparation-timing-and-cleanup-race-repair) | 2026-10-26 | Integrated preparation timing and cleanup race repair | 2026-10-26. |
 | [J1190](PORTING_JOURNAL.md#j1190--complete-source-derived-fungal-scene) | 2026-10-26 | Complete source-derived Fungal scene | 2026-10-26. |
 | [J1189](PORTING_JOURNAL.md#j1189--reconstruct-eight-further-complete-scene-payloads) | 2026-10-26 | Reconstruct eight further complete scene payloads | 2026-10-26. |
+| [J1191](PORTING_JOURNAL.md#j1191--source-only-catalog-identity-and-loadingbasic-reconstruction) | 2026-10-26 | Source-only catalog identity and Loadingbasic reconstruction | 2026-10-26. |
 | [J1188](PORTING_JOURNAL.md#j1188--battery-health-admission-and-gameplay-safety-cutoff) | 2026-10-26 | Battery health admission and gameplay safety cutoff | 2026-10-26. |
 | [J1187](PORTING_JOURNAL.md#j1187--exact-ordinary-app-android-sdk-cohort-and-producer-battery-cutoff) | 2026-10-26 | Exact ordinary-app Android SDK cohort and producer battery cutoff | 2026-10-26. |
 | [J1186](PORTING_JOURNAL.md#j1186--apply-the-user-selected-gameplay-thermal-safety-limits) | 2026-10-26 | Apply the user-selected gameplay thermal safety limits | 2026-10-26. |

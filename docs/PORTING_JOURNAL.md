@@ -146,6 +146,21 @@ charging settings remain untouched. CPU/GPU > 95 C for >= 3 s and gap > 1 s rule
 Evidence: alpha worktree `work/coordination/alpha-battery-health/validation.json`.
 No APK/output generated or installed. Fresh stability/device qualification remains open.
 
+## J1191 — Source-only catalog identity and Loadingbasic reconstruction
+
+2026-10-26. Existing integration metadata owner accepts an explicit camera-root extension; current defaults stay intact.
+J850 selects no extension and only closure/mesh sources, following receipted public source commit `1780ea9545`.
+Fresh PC-source catalog analysis plus public importer declarations reproduces all 30,322 locations,
+84,016 keys and 7,458 roots in order against the receipt-linked final catalog's metadata projection.
+Evidence: `work/coordination/p1-payload-catalog-fresh-v1/metadata-done.json`; generated metadata SHA-256
+`ea85d7903fb23fa103d36c9b877966cdc65506a75f8468d862724d8361718a30`.
+Pinned ThunderKit copies desktop catalogs only; existing J714/J725 host reconstruction remains authoritative.
+Loadingbasic reproduces 304 objects, two members and its 71,264 B compressed bundle raw-exact;
+evidence: `work/coordination/p1-payload-loadingbasic-final-host-v1/qualification-done.json`; output SHA-256
+`e5989e63267128ec7784ea3ee1a4131181ea888b2ca43f42ad9c63c4c807ae8c`.
+Source-backed literal-null script slots preserve exact Soul/Mire type tables; complete bundles remain unverified.
+Readiness: `work/coordination/p1-payload-publish-20261026/readiness.json`; 599/705 available, 594 exact,
+two code comparisons, three drift-explained; 106 missing. Tests/Ruff/host preflight pass; final catalog/phone gates open.
 ## J1189 — Reconstruct eight further complete scene payloads
 
 2026-10-26. Existing source-only owners reproduce Splash, Habitat, Helminthroost,
@@ -186,3 +201,181 @@ Ten focused trace checks, 45 camera checks (three skips), host preflight and pub
 Cleanup now tolerates a concurrently removed payload and continues the plan; other errors propagate.
 Nine cleanup regressions and Ruff pass; cleanup receipts are in the same evidence directory.
 Device qualification, hotspot attribution and measured thermal improvement remain open; no gameplay claim.
+
+## J1193 — Complete Title, Satellite and Artifact World source profiles
+
+2026-10-26. Existing object and Shader owners reproduce three complete payloads;
+23,389 persisted records, all members and compressed bundles are raw-exact to J850.
+Title output SHA-256 `e9c47888e8bdd1d03f5a5e9798baca0a9628710a085771140b9d37a086659ee8`;
+Satellite `7aba9443d00566a59e7de47d63d0bcd9a1754accead89caedc62d3225e941aba`;
+Artifact World `2a9a0892b8877525743910b73b7570bfba60a1a8a933150048835c8bb741483c`.
+Evidence: `work/coordination/p1-scenes-w/publication-batch-v{2,3}/` and
+`work/coordination/p1-{satellite-ultima-shaders-v2,meridian-artifact-shaders-v1}/`.
+Audited source selectors include Satellite/Artifact Shader packs; no target-byte supplier.
+Retained union: 618/705 available, 613 exact; 87 missing (7 APK, 80 payload).
+Title and Artifact close two entries; Satellite was already counted in J1189.
+Host-only; phone production/install/runtime remain open; J850 APK unchanged.
+
+## J1192 — Ten complete source-derived spine bundles
+
+2026-10-26. Existing object/Shader owners reproduce Golemplains2, Dampcavesimple,
+Blackbeach2, Foggyswamp, Ancientloft, Village, Shipgraveyard, Goolake, Golemplains
+and Blackbeach spines from legitimate PC input and acquired SDK resources.
+Guarded public CLI production persists before independent raw comparison:
+140,029 objects, 20 serialized members and all ten compressed bundles match J850.
+Evidence and per-output hashes: `work/coordination/p1-scenes-ss/full-qualification-v1/`
+(`qualification-done.json`, `publication-inputs.json`, `readiness-union/readiness.json`).
+Readiness closes ten missing payload entries: 626/705 available, 621 raw-exact,
+two code comparisons and three drift-explained; 79 missing (7 APK, 72 payload).
+Audited object and reduced-spine Standard selectors extend existing owners only.
+Host-only; phone production, installation and original scene behavior remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1194 — Source-qualified Ultima Shader records
+
+2026-10-26. Existing Shader owner reproduces all 25 Ultima Shader records from
+original PC relationships and pinned SDK/public-tool inputs, without target providers.
+An explicit original-material identity selects SDK default-material features;
+other original emissive materials retain their own features.
+All 24 retained post-processing records and freshly produced Standard match J850.
+Standard output: 261,528 B, SHA-256
+`e1796cd46e548f64cc337e841d83bd23a1772c22861b69bdb9b162787f4f6689`.
+Evidence: `work/coordination/p1-ultima-sdk-material-v3/` and
+`work/coordination/p1-scenes-w/pending-shader-delivery-v2/done.json`.
+Audited Ultima profiles extend existing owners; focused host checks pass.
+Complete-scene assembly, readiness closure and phone qualification remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1195 — Four complete source scene bundles
+
+2026-10-26. Existing object/Shader owners reproduce Golemplains2, Ancientloft,
+Habitat and Blackbeach source bundles from legitimate PC input and SDK resources.
+Guarded public CLI production persists before independent comparison:
+60,493 objects, eight serialized members and all four compressed bundles match J850.
+Evidence and per-output SHA-256: `work/coordination/p1-scenes-ss/source-qualification-v2/`
+(`qualification-done.json`, `readiness-union-v2/readiness.json`).
+The retained union closes exactly four missing payload entries, other rows unchanged:
+632/705 available, 627 raw-exact, two code comparisons and three drift-explained;
+73 missing (7 APK, 66 payload). Audited profiles extend existing owners only.
+Focused object/Shader contracts (81 tests), host preflight and public audit pass.
+Host-only; phone production, installation and original scene behavior remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1196 — Complete source-derived Ultima bundle
+
+2026-10-26. Existing object/Shader owners reproduce the complete Ultima bundle
+from legitimate PC input, acquired SDK resources and source-produced record packs.
+Guarded public CLI production persists before independent comparison:
+6,077 objects, both serialized members and the compressed bundle are raw-exact to J850.
+Output: 4,087,244 B, SHA-256
+`6f5076c1b328a020c7477e65e022794fdc4b667fa50e4db842eb00bca576ee1f`.
+Evidence: `work/coordination/p1-scenes-w/final-ultima-v2/` and
+`work/coordination/p1-scenes-w/publication-batch-v4/` (readiness union).
+The retained union adds one payload entry: 633/705 available, 628 raw-exact,
+two code comparisons and three drift-explained; 72 missing (7 APK, 65 payload).
+Audited compact object selectors reuse J1194 Shader packs; no target supplier.
+Host-only; phone production, installation and original scene behavior remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1197 — Complete source-derived Sulfurpools bundle
+
+2026-10-26. Existing object/Shader owners reproduce the complete Sulfurpools source
+bundle from legitimate PC input, acquired SDK resources and source-produced packs.
+Guarded public CLI production persists before independent comparison:
+19,503 objects, both serialized members and the compressed bundle are raw-exact to J850.
+Output: 11,414,871 B, SHA-256
+`b51278fc7096113071cf24cd5a7591ff8b262aa531ab0e2b40ef7aca7f825c37`.
+Evidence: `work/coordination/p1-scenes-ss/source-qualification-v3/`
+(`done.json`, `publication-gate-done.json`, `readiness-union/readiness.json`).
+Retained union closes one payload entry: 634/705 available, 629 raw-exact,
+two code comparisons and three drift-explained; 71 missing (7 APK, 64 payload).
+Audited selectors reuse existing owners; 81 focused object/Shader tests pass.
+Host-only; phone production, installation and original scene behavior remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1200 — Complete source-derived Habitatfall bundle
+
+2026-10-26. Existing object/Shader owners reproduce the complete Habitatfall source
+bundle from legitimate PC input, acquired SDK resources and source-produced packs.
+Guarded public CLI production persists before independent comparison:
+13,895 objects, both serialized members and the compressed bundle are raw-exact to J850.
+Output: 6,750,293 B, SHA-256
+`0fb9f48c4c369208041464232eb4f71bde3155b65cd09375104c46f259bffa4b`.
+Evidence: `work/coordination/p1-scenes-ss/source-qualification-v4/`
+(`done.json`, `qualification-done.json`, `readiness-union/readiness.json`).
+Retained union closes one payload entry: 635/705 available, 630 raw-exact,
+two code comparisons and three drift-explained; 70 missing (7 APK, 63 payload).
+Audited selectors reuse existing owners; 81 focused object/Shader tests pass.
+Host-only; phone production, installation and original scene behavior remain open.
+## J1198 — Source-derived Soul, Mire and Crystalworld Shader records
+
+2026-10-26. Five audited profiles extend the existing Shader record owner:
+Soul perftest 25 records, Mire 25 and Crystalworld 24, from original scene
+resource/material relationships and pinned SDK/public-tool inputs.
+Source-read-guarded CLI output persists before independent comparison;
+all 74 records are byte-exact to J850. Soul uses its own resource/export GUIDs.
+Evidence, profile/output pins: `work/coordination/p1-anim-priority-shaders-v1/`
+(`done.json` and per-pack `independent-comparison.json`).
+32 focused host tests and host preflight pass. Complete-scene readiness
+and phone production, installation and original behavior remain separate gates.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1203 — Original-fragment Standard material ordering
+
+2026-10-26. Existing Shader producer orders retained Standard material features by
+original fragment identities before applying SDK global/builtin variant cycles.
+Recursive material encounter order no longer changes the emitted native order.
+Guarded failed-only Dampcavesimple source Standard production persists before
+independent raw equality: 301,384 B, SHA-256
+`80ae8f64f26f1009e2d394f8111354038105512e6e75d57464b272fb7b0d7acb`.
+Evidence: `work/coordination/p1-shaders-2/qualified-damp-original-order-v1/`
+(`done.json`, `notes.md`, per-pack `independent-comparison.json`).
+Prior art: J1179/J1157 and pinned AssetRipper property/fallback contract.
+Authored encounter-order regression, 46 focused host tests and Ruff pass.
+Host-only; complete scene qualification and phone production/runtime remain open.
+## J1201 — Complete Soul, Mire and Crystalworld scene bundles
+
+2026-10-26. Three audited object profiles extend the existing object/Shader owners,
+reusing J1198 Shader packs and legitimate PC/SDK input: 319,607 objects,
+six serialized members and three compressed bundles are host raw-exact to J850.
+Evidence and per-output SHA-256: animation worktree
+`work/coordination/p1-anim/priority-scenes-final-v1/` (`done.json`, `publication-inputs.json`).
+Retained readiness union: `work/coordination/p1-three-complete-scenes-v1/readiness-union/`;
+three payload entries close, all other rows unchanged: 638/705 available,
+633 raw-exact, two code comparisons, three drift-explained; 67 missing (7 APK, 60 payload).
+This includes the independently qualified Habitatfall union; no production replay.
+Three focused host contracts, host preflight and public audit pass; selectors only,
+with original null-script type slots preserved. No new runtime owner or target supplier.
+Host-only; phone production, installation and original scene behavior remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+## J1199 — Complete phone RGBA production and app texture dispatch
+
+2026-10-26. Existing source texture owner completes all 1,333 single-mip RGBA records on Android,
+resuming 521 verified records; all three persisted pack sizes/hashes match the target.
+Objects SHA-256 `9e408304853cbdcd94203937b4ba65566c84506366f4ffc97d92e7163da3e171`;
+resources `82a2be78f7bae0b95f818661b819905ce3db741745140d69ba51a5a435b5f2a4`;
+index `aa9b475422b424f2da6f4ee8be35b5c4f5302e75f7358b2a683927f3437f1bdd`.
+Resume: 25,768 s, peak RSS 255,905,792 B, CPU/GPU 48.1 C, no pauses/time above 80 C;
+shared continuous thermal runner passes; battery admission 27 C, 80%, not charging.
+Evidence: `work/coordination/accepted-build-reconstruction/media-source-v1/rgba-shared-resume521-v2/`
+(`done.json`, `acceptance.json`, captured checkpoint). Scratch removed, display asleep, lease released.
+Installed APK unchanged: `4666a1107e812d19b3186aa6f528adb745f6b3bb256fbe37f87472cc85b247ac`.
+Existing app worker gains source texture dispatch/resume; seven authored host checks and Ruff pass.
+App-host execution, mip/cube/sky cohorts, complete APK assembly/install and gameplay remain open.
+
+
+## J1202 — Complete source-derived Dampcavesimple bundle
+
+2026-10-26. Existing object/Shader owners reproduce the complete Dampcavesimple
+source bundle from legitimate PC input, acquired SDK and source-produced packs.
+Guarded CLI output persists before independent comparison: all 29,718 objects,
+both serialized members and the compressed bundle are raw-exact to J850.
+Output: 27,013,338 B, SHA-256
+`b638653220321691f0fdde5a3ce8e5fd2bc1648ec56c93d25e7eb7aac1d3d44a`.
+Evidence: `work/coordination/p1-scenes-ss/source-qualification-v5/`
+(`qualification-done.json`, `readiness-union/readiness.json`).
+Retained union closes one payload entry: 636/705 available, 631 raw-exact,
+two code comparisons and three drift-explained; 69 missing (7 APK, 62 payload).
+Audited selectors reuse existing owners and original-backed Standard ordering.
+Host-only; phone production, installation and original scene behavior remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.

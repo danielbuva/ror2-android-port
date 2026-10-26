@@ -379,6 +379,40 @@ class StandardRetentionTests(unittest.TestCase):
         self.assertEqual(selections[10][0], selections[10][1])
         self.assertEqual(selections[10][1], selections[10][2])
 
+    def test_original_fragment_order_is_independent_of_closure_encounter_order(self):
+        source, materials = self.fixture()
+        source["m_ParsedForm"]["m_SubShaders"][0]["m_Passes"][0]["m_State"]["m_Name"] = "FORWARD"
+        carrier = deepcopy(source)
+        carrier["m_ParsedForm"]["m_SubShaders"][0]["m_Passes"][0]["progFragment"] = {
+            "m_PlayerSubPrograms": [
+                [],
+                [],
+                [],
+                [{"m_KeywordIndices": keys} for keys in ([7], [3, 7], [6, 7], [3, 4, 5, 7])],
+            ]
+        }
+        _, expected = S.standard_selections(source, materials, carrier=carrier)
+        _, actual = S.standard_selections(source, list(reversed(materials)), carrier=carrier)
+        self.assertEqual(expected, actual)
+        self.assertEqual(["DIRECTIONAL", "_EMISSION"], actual[10][0][1])
+        self.assertEqual(["DIRECTIONAL", "_GLOSSYREFLECTIONS_OFF", "_NORMALMAP", "_SPECULARHIGHLIGHTS_OFF"], actual[10][0][2])
+
+    def test_explicit_sdk_mapping_removes_only_mapped_emission(self):
+        source, materials = self.fixture()
+        original = deepcopy(materials[1])
+        default = {**materials[0], "m_Shader": {"m_FileID": 0, "m_PathID": 46}}
+        sdk = {10303: SimpleNamespace(type=SimpleNamespace(name="Material"), read_typetree=lambda: default)}
+        mapped = S.standard_material({"sdk_material": 10303}, original, sdk)
+        _, rows = S.standard_selections(source, [materials[0], mapped])
+        self.assertFalse(any("_EMISSION" in keys for keys in rows[10][0]))
+        # Another material with identical keywords remains genuinely emissive.
+        genuine = S.standard_material({}, original, sdk)
+        _, rows = S.standard_selections(source, [mapped, genuine])
+        self.assertTrue(any("_EMISSION" in keys for keys in rows[10][0]))
+        self.assertEqual(original, materials[1])
+        with self.assertRaisesRegex(ValueError, "identity differs"):
+            S.standard_material({"sdk_material": 7}, original, sdk)
+
     def test_exp2_retains_only_the_enabled_source_fog_keyword(self):
         source, materials = self.fixture()
         snippet = source["m_CompileInfo"]["m_Snippets"][0][1]
