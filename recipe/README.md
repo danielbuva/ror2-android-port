@@ -4014,3 +4014,15 @@ files, separately acquired SDK and receipt-pinned source-produced media/Shader
 packs remain required. Generated outputs and evidence stay ignored. Existing
 ownership and redistribution boundaries apply; phone production, installation
 and original scene behavior remain open.
+
+## Native graph detour owner repin (2026-10-26)
+
+Refresh the authored integrated-world owner hash after preserving progressing
+native graph detours, and refresh the producer/camera recipe pins together.
+The prior recipe remains the parent hash. Reviewed changes contain only authored
+source and hashes; no game content, middleware, private paths or identifiers.
+This pin update does not qualify native encounter or audio behavior.
+
+The same audit covers the camera build-hook hash following its refreshed
+authored audio-producer recipe pin. This changes source validation metadata
+only; no generated content or additional input identifiers are published.
