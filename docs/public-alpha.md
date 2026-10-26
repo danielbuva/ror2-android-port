@@ -113,6 +113,8 @@ Decision preparation: [J829](history/journal-J1-J1177/PORTING_JOURNAL.md#j829--r
       source tree has 606 of 705 entries available (601 raw-exact, two code
       comparison entries and three separately drift-explained); 99 remain
       missing (J1183: 7 APK, 92 payload). Host shared mixed-file assembly is qualified; phone serialization remains open.
+      [J1184](PORTING_JOURNAL.md#j1184--isolated-ambient-observation-fixture) adds host-qualified ambient observation tooling;
+      the live bake, target equality and source-only sky production remain open.
       [J1102](history/journal-J1-J1177/PORTING_JOURNAL.md#j1102--qualify-linked-vulkan-fragment-output-and-explicit-owner-apk-code-inputs)
       confirms both executable stages in that linked payload and accepts all
       three produced code outputs in the existing APK owner without replay

@@ -56,3 +56,15 @@ Evidence and per-output SHA-256: `work/coordination/p1-anim/six-scenes-final-hos
 Prior art: pinned AssetRipper property/fallback relationships; existing J1157/J1163 Shader contracts.
 Host-only; phone production, installation and runtime remain open. APK unchanged: J850
 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1184 — Isolated ambient observation fixture
+
+2026-10-26. Existing phone-content owner gains authored ambient staging and graphical capture actions.
+The exact-editor session waits for controller arming, saves the scene, and exits on completion or timeout.
+Host validation requires six ordered finite 64 by 64 float images, uncached SH and a nonempty GPU trace;
+native job association remains the external controller's contract. No captured bytes are producer inputs.
+Seven focused host checks and the pinned editor API compile pass; generated action documentation is current.
+Evidence: `work/coordination/accepted-build-reconstruction/media-source-v1/default-sky-source-v1/ambient-fixture-checkpoint-done.json`;
+fixture implementation commit `6a73e581e53a127c15b34c94e5cf261f46d4b286`. No APK generated or changed.
+Prior art: pinned AssetRipper copies baked lighting values; independent sky generation remains unsolved.
+Actual SaveScene bake, GPU execution, target equality and phone production remain unqualified.
