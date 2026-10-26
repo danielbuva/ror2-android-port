@@ -305,3 +305,18 @@ Evidence, profile/output pins: `work/coordination/p1-anim-priority-shaders-v1/`
 32 focused host tests and host preflight pass. Complete-scene readiness
 and phone production, installation and original behavior remain separate gates.
 APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1199 — Complete phone RGBA production and app texture dispatch
+
+2026-10-26. Existing source texture owner completes all 1,333 single-mip RGBA records on Android,
+resuming 521 verified records; all three persisted pack sizes/hashes match the target.
+Objects SHA-256 `9e408304853cbdcd94203937b4ba65566c84506366f4ffc97d92e7163da3e171`;
+resources `82a2be78f7bae0b95f818661b819905ce3db741745140d69ba51a5a435b5f2a4`;
+index `aa9b475422b424f2da6f4ee8be35b5c4f5302e75f7358b2a683927f3437f1bdd`.
+Resume: 25,768 s, peak RSS 255,905,792 B, CPU/GPU 48.1 C, no pauses/time above 80 C;
+shared continuous thermal runner passes; battery admission 27 C, 80%, not charging.
+Evidence: `work/coordination/accepted-build-reconstruction/media-source-v1/rgba-shared-resume521-v2/`
+(`done.json`, `acceptance.json`, captured checkpoint). Scratch removed, display asleep, lease released.
+Installed APK unchanged: `4666a1107e812d19b3186aa6f528adb745f6b3bb256fbe37f87472cc85b247ac`.
+Existing app worker gains source texture dispatch/resume; seven authored host checks and Ruff pass.
+App-host execution, mip/cube/sky cohorts, complete APK assembly/install and gameplay remain open.
