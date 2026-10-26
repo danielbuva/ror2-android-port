@@ -4498,3 +4498,11 @@ contain monotonic process time and frame count so thermal traces can identify
 the interrupted operation. They add no retained state, report writes or yields;
 the existing report phase and resource teardown remain authoritative. A marker
 names the operation about to begin; the next marker bounds its elapsed time.
+
+J1183 adds eight scene object selections and eleven Shader selections to those
+same owners. Explicit original scene renderer roots select spine Shader variants;
+whole scenes retain their original recursive content closure. Setup, record-pack
+teardown and local receipts follow the existing contract above. The existing
+`record_produce.py` Director path derives exposed-reference names from original
+asset identity; it adds no runtime state. Its host contract is qualified separately
+from complete Conduit assembly, which remains open.
