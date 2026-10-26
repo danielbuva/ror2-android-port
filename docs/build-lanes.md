@@ -101,4 +101,4 @@ the measured comparison limits. The uncompressed option adds no device or
 byte-equivalence acceptance claim.
 
 Measured concurrency, compression costs, comparison limits and cleanup evidence
-are recorded once in [J1078](PORTING_JOURNAL.md#j1078--isolate-parallel-build-lanes-and-measure-iteration-bundle-compression).
+are recorded once in [J1078](history/journal-J1-J1177/PORTING_JOURNAL.md#j1078--isolate-parallel-build-lanes-and-measure-iteration-bundle-compression).

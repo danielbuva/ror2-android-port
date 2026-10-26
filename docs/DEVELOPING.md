@@ -95,7 +95,7 @@ profile also requires `display_count: 2`. Before wake, `Device.display` saves
 physical `Built-in Screen ON` / `Screen-2 OFF` observations. Teardown restores
 the original mode and verifies both panels OFF. A brief wake transition or a
 black vendor overlay is insufficient. The current firmware fails this gate
-([J1071](PORTING_JOURNAL.md#j1071--qualify-bounded-touch-consumers-and-recovery-while-preserving-the-failed-lifetime-case));
+([J1071](history/journal-J1-J1177/PORTING_JOURNAL.md#j1071--qualify-bounded-touch-consumers-and-recovery-while-preserving-the-failed-lifetime-case));
 further Thor gameplay/thermal checks wait for a supported top-only power path.
 Independent device runs have overlapped, while Unity builds remain serialized.
 

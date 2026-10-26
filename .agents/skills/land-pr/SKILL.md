@@ -1,11 +1,11 @@
 ---
 name: land-pr
-description: Use when rebasing, verifying and merging a branch or draft PR of the RoR2 Android lab into main, or when deciding whether an existing PR/branch's work can be reused. Covers rebase, CI-local, privacy audit, journal-number collisions and merge.
+description: Use when updating, verifying and merging a branch or draft PR of the RoR2 Android lab into main, or when deciding whether an existing PR/branch's work can be reused. Covers branch update (merge, not rebase), CI-local, privacy audit, journal-number collisions and merge.
 ---
 
 # Land a branch
 
-1. `git fetch origin && git rebase origin/main` in the branch's own worktree. Resolve journal conflicts by renumbering your entry to the next free `J<n>` and rerunning `python3 scripts/journal-index.py`; never renumber someone else's entry.
+1. `git fetch origin && git merge origin/main` in the branch's own worktree (a not-yet-pushed branch may rebase instead; never rebase or force-push a pushed branch). Resolve journal conflicts by renumbering your entry to the next free `J<n>` and rerunning `python3 scripts/journal-index.py`; never renumber someone else's entry.
 2. `.local/lab-venv/bin/ruff format` + `ruff check` on changed Python; `python3 -m unittest discover -s tests` for affected tests.
 3. `python3 scripts/audit-public.py` on staged content; manually confirm no game-derived bytes, device serials, private paths or credentials.
 4. Push; the pre-push hook runs `scripts/ci-local.sh` in a fresh clone (rerun once if a capture-transfer step flakes).

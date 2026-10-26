@@ -11,89 +11,89 @@ mandate to reproduce every desktop Editor step on the phone.
 [ADR-002](ADR-002-public-alpha-distribution.md), keeping the IL2CPP ARM64 game
 and Android renderer fixed. This combines source/tool inspection and isolated
 authored probes, not a complete phone build or gameplay proof.
-Evidence: [J831](PORTING_JOURNAL.md#j831--assess-phone-only-owner-builds-with-the-il2cpp-runtime-fixed).
-First probe checkpoint: [J832](PORTING_JOURNAL.md#j832--run-the-exact-converter-on-android-and-load-content-built-without-a-template).
+Evidence: [J831](history/journal-J1-J1177/PORTING_JOURNAL.md#j831--assess-phone-only-owner-builds-with-the-il2cpp-runtime-fixed).
+First probe checkpoint: [J832](history/journal-J1-J1177/PORTING_JOURNAL.md#j832--run-the-exact-converter-on-android-and-load-content-built-without-a-template).
 Phone generation/update checkpoint:
-[J833](PORTING_JOURNAL.md#j833--generate-content-and-sign-increasing-fixture-updates-on-android).
-Storage/oracle review qualification: [J834](PORTING_JOURNAL.md#j834--bind-phone-fixture-paths-and-the-exact-editor-oracle-after-review).
-Authored phone-app build and unresolved sandbox control: [J836](PORTING_JOURNAL.md#j836--build-an-authored-apk-on-android-and-test-app-host-execution).
-Target-33 follow-up: [J929](PORTING_JOURNAL.md#j929--test-the-authored-app-host-refusal-at-target-sdk-33).
+[J833](history/journal-J1-J1177/PORTING_JOURNAL.md#j833--generate-content-and-sign-increasing-fixture-updates-on-android).
+Storage/oracle review qualification: [J834](history/journal-J1-J1177/PORTING_JOURNAL.md#j834--bind-phone-fixture-paths-and-the-exact-editor-oracle-after-review).
+Authored phone-app build and unresolved sandbox control: [J836](history/journal-J1-J1177/PORTING_JOURNAL.md#j836--build-an-authored-apk-on-android-and-test-app-host-execution).
+Target-33 follow-up: [J929](history/journal-J1-J1177/PORTING_JOURNAL.md#j929--test-the-authored-app-host-refusal-at-target-sdk-33).
 Raw-export tool-host investigation:
-[J1008](PORTING_JOURNAL.md#j1008--bound-android-assetripper-startup-and-full-input-import-failures).
+[J1008](history/journal-J1-J1177/PORTING_JOURNAL.md#j1008--bound-android-assetripper-startup-and-full-input-import-failures).
 Complete accepted-input export remains an open gate.
-[J1016](PORTING_JOURNAL.md#j1016--separate-raw-retention-from-incomplete-android-asset-materialization) narrows the raw-retention and
+[J1016](history/journal-J1-J1177/PORTING_JOURNAL.md#j1016--separate-raw-retention-from-incomplete-android-asset-materialization) narrows the raw-retention and
 materialization boundary; complete export remains unqualified.
-[J1018](PORTING_JOURNAL.md#j1018--test-consumed-buffer-ownership-during-android-asset-materialization)
+[J1018](history/journal-J1-J1177/PORTING_JOURNAL.md#j1018--test-consumed-buffer-ownership-during-android-asset-materialization)
 qualifies narrow consumed-buffer controls and an intentional partial typed graph
 after raw-frame unwind; complete direct-API imports still terminate before
 bundle return.
-[J1020](PORTING_JOURNAL.md#j1020--test-deferred-serialized-object-reads-on-android)
+[J1020](history/journal-J1-J1177/PORTING_JOURNAL.md#j1020--test-deferred-serialized-object-reads-on-android)
 matches deferred-read payloads and bounds later capacity failures; complete
 materialization/export remains open.
-[J1023](PORTING_JOURNAL.md#j1023--qualify-an-authored-android-nativeaot-build-tool-fixture)
+[J1023](history/journal-J1-J1177/PORTING_JOURNAL.md#j1023--qualify-an-authored-android-nativeaot-build-tool-fixture)
 qualifies an authored NativeAOT build-tool graph and records the stock exporter's
 unavailable Bionic ASP.NET runtime pack. It establishes neither a memory
 improvement nor complete export.
-[J1025](PORTING_JOURNAL.md#j1025--run-the-pinned-importer-through-an-android-nativeaot-console)
+[J1025](history/journal-J1-J1177/PORTING_JOURNAL.md#j1025--run-the-pinned-importer-through-an-android-nativeaot-console)
 passes a separate console's authored importer control without the web frontend;
 complete accepted-input processing/export and memory behavior stay unqualified.
 
 
 Connected public transform producer inside the app:
-[J1001](PORTING_JOURNAL.md#j1001--run-the-unchanged-public-transform-producer-inside-the-android-app-host).
+[J1001](history/journal-J1-J1177/PORTING_JOURNAL.md#j1001--run-the-unchanged-public-transform-producer-inside-the-android-app-host).
 The failed security/refusal gate and complete phone-build gates remain open.
 The integrated-source replay is
-[J1074](PORTING_JOURNAL.md#j1074--qualify-the-integrated-public-transform-tools-inside-the-android-app-host):
+[J1074](history/journal-J1-J1177/PORTING_JOURNAL.md#j1074--qualify-the-integrated-public-transform-tools-inside-the-android-app-host):
 two cold app-host transformations and copied-input refusal pass; full-player
 construction and policy enforcement remain separate gates.
 Separate positive managed build-tool app host:
-[J999](PORTING_JOURNAL.md#j999--host-the-existing-managed-build-tools-from-read-only-app-native-libraries).
+[J999](history/journal-J1-J1177/PORTING_JOURNAL.md#j999--host-the-existing-managed-build-tools-from-read-only-app-native-libraries).
 The earlier refusal/security gate remains open; this fixture supplies no
 complete app bootstrap or game-build acceptance.
-[J1027](PORTING_JOURNAL.md#j1027--bind-explicit-importer-configuration-and-reject-drift-on-android)
+[J1027](history/journal-J1-J1177/PORTING_JOURNAL.md#j1027--bind-explicit-importer-configuration-and-reject-drift-on-android)
 qualifies explicit importer configuration and refusal controls on Android;
 actual-input initialization/lifecycle and complete export remain open.
-[J1029](PORTING_JOURNAL.md#j1029--preserve-a-native-importer-failure-during-raw-loading)
+[J1029](history/journal-J1-J1177/PORTING_JOURNAL.md#j1029--preserve-a-native-importer-failure-during-raw-loading)
 fails the first real-input native call before typed materialization; the observed
 OOM formats an earlier read exception, whose identity remains unknown.
-Native fixture compile/link/loading: [J839](PORTING_JOURNAL.md#j839--compile-and-link-the-authored-il2cpp-native-library-on-android).
-Full authored converter/native/device closure: [J842](PORTING_JOURNAL.md#j842--run-the-full-authored-converter-and-load-its-phone-compiled-native-output).
-Authored input capture and Android stripping: [J846](PORTING_JOURNAL.md#j846--capture-authored-stripping-inputs-and-replay-unitylinker-on-android).
-Connected stripping/converter boundary: [J849](PORTING_JOURNAL.md#j849--feed-actual-phone-stripping-output-into-the-exact-converter).
-Independent-root contract inventory: [J851](PORTING_JOURNAL.md#j851--measure-sdk-metadata-coverage-and-identify-the-native-registry-gap).
-Partial native-registry extraction on Android: [J853](PORTING_JOURNAL.md#j853--read-partial-owner-sdk-native-registration-metadata-on-android).
-Explicit static-record module completion: [J855](PORTING_JOURNAL.md#j855--resolve-static-sdk-modules-from-explicit-registration-call-arguments).
-Complete pinned native-registry metadata: [J857](PORTING_JOURNAL.md#j857--recover-the-complete-pinned-native-registry-from-owner-sdk-metadata-literals).
-SDK-native metadata into stripping/conversion: [J859](PORTING_JOURNAL.md#j859--generate-sdk-native-root-metadata-on-android-and-preserve-strippingconversion).
-Restricted fixture module policy into stripping/conversion: [J862](PORTING_JOURNAL.md#j862--derive-authored-fixture-module-policy-from-owner-sdk-and-package-data-on-android).
-Persistent native class-ID prerequisite: [J864](PORTING_JOURNAL.md#j864--read-persistent-native-class-ids-from-the-pinned-sdk-on-android).
-Scoped managed metadata/forwarding on Android: [J866](PORTING_JOURNAL.md#j866--qualify-scoped-sdk-assembly-metadata-and-forwarding-on-android).
-SDK normal-path wrapper-search metadata: [J869](PORTING_JOURNAL.md#j869--decode-pinned-sdk-wrapper-search-order-on-android).
+Native fixture compile/link/loading: [J839](history/journal-J1-J1177/PORTING_JOURNAL.md#j839--compile-and-link-the-authored-il2cpp-native-library-on-android).
+Full authored converter/native/device closure: [J842](history/journal-J1-J1177/PORTING_JOURNAL.md#j842--run-the-full-authored-converter-and-load-its-phone-compiled-native-output).
+Authored input capture and Android stripping: [J846](history/journal-J1-J1177/PORTING_JOURNAL.md#j846--capture-authored-stripping-inputs-and-replay-unitylinker-on-android).
+Connected stripping/converter boundary: [J849](history/journal-J1-J1177/PORTING_JOURNAL.md#j849--feed-actual-phone-stripping-output-into-the-exact-converter).
+Independent-root contract inventory: [J851](history/journal-J1-J1177/PORTING_JOURNAL.md#j851--measure-sdk-metadata-coverage-and-identify-the-native-registry-gap).
+Partial native-registry extraction on Android: [J853](history/journal-J1-J1177/PORTING_JOURNAL.md#j853--read-partial-owner-sdk-native-registration-metadata-on-android).
+Explicit static-record module completion: [J855](history/journal-J1-J1177/PORTING_JOURNAL.md#j855--resolve-static-sdk-modules-from-explicit-registration-call-arguments).
+Complete pinned native-registry metadata: [J857](history/journal-J1-J1177/PORTING_JOURNAL.md#j857--recover-the-complete-pinned-native-registry-from-owner-sdk-metadata-literals).
+SDK-native metadata into stripping/conversion: [J859](history/journal-J1-J1177/PORTING_JOURNAL.md#j859--generate-sdk-native-root-metadata-on-android-and-preserve-strippingconversion).
+Restricted fixture module policy into stripping/conversion: [J862](history/journal-J1-J1177/PORTING_JOURNAL.md#j862--derive-authored-fixture-module-policy-from-owner-sdk-and-package-data-on-android).
+Persistent native class-ID prerequisite: [J864](history/journal-J1-J1177/PORTING_JOURNAL.md#j864--read-persistent-native-class-ids-from-the-pinned-sdk-on-android).
+Scoped managed metadata/forwarding on Android: [J866](history/journal-J1-J1177/PORTING_JOURNAL.md#j866--qualify-scoped-sdk-assembly-metadata-and-forwarding-on-android).
+SDK normal-path wrapper-search metadata: [J869](history/journal-J1-J1177/PORTING_JOURNAL.md#j869--decode-pinned-sdk-wrapper-search-order-on-android).
 Independent desktop wrapper-query oracle:
-[J873](PORTING_JOURNAL.md#j873--separate-direct-scene-names-from-sdk-wrapper-cache-queries).
+[J873](history/journal-J1-J1177/PORTING_JOURNAL.md#j873--separate-direct-scene-names-from-sdk-wrapper-cache-queries).
 Native SDK abstract/sealed/editor flags on Android:
-[J876](PORTING_JOURNAL.md#j876--decode-native-sdk-type-flags-on-android).
+[J876](history/journal-J1-J1177/PORTING_JOURNAL.md#j876--decode-native-sdk-type-flags-on-android).
 SDK forward wrapper population on Android:
-[J878](PORTING_JOURNAL.md#j878--reconstruct-sdk-wrapper-population-on-android-with-a-complete-forward-oracle).
+[J878](history/journal-J1-J1177/PORTING_JOURNAL.md#j878--reconstruct-sdk-wrapper-population-on-android-with-a-complete-forward-oracle).
 Root-inclusive Android metadata/native SDK cache comparison:
-[J883](PORTING_JOURNAL.md#j883--include-the-object-root-and-match-android-metadata-to-native-sdk-caches).
+[J883](history/journal-J1-J1177/PORTING_JOURNAL.md#j883--include-the-object-root-and-match-android-metadata-to-native-sdk-caches).
 Independent desktop scene/manager observation and bounded name comparison:
-[J893](PORTING_JOURNAL.md#j893--observe-authored-scene-and-manager-dependencies-without-conflating-native-identities).
+[J893](history/journal-J1-J1177/PORTING_JOURNAL.md#j893--observe-authored-scene-and-manager-dependencies-without-conflating-native-identities).
 Android SDK manager registration declarations and asset-dependency metadata:
-[J895](PORTING_JOURNAL.md#j895--read-sdk-manager-registration-declarations-on-android-and-preserve-retention-boundaries).
+[J895](history/journal-J1-J1177/PORTING_JOURNAL.md#j895--read-sdk-manager-registration-declarations-on-android-and-preserve-retention-boundaries).
 Exact SDK C# compiler on Android, with unequal cross-host debug outputs:
-[J899](PORTING_JOURNAL.md#j899--compile-an-authored-c-fixture-on-android-and-preserve-cross-host-output-differences).
+[J899](history/journal-J1-J1177/PORTING_JOURNAL.md#j899--compile-an-authored-c-fixture-on-android-and-preserve-cross-host-output-differences).
 SDK/package-derived Unity API fixture compilation on Android:
-[J902](PORTING_JOURNAL.md#j902--compile-the-authored-unity-fixture-with-sdkpackage-derived-references-on-android).
+[J902](history/journal-J1-J1177/PORTING_JOURNAL.md#j902--compile-the-authored-unity-fixture-with-sdkpackage-derived-references-on-android).
 Android-compiled fixture inputs through a separate stripping handoff:
-[J905](PORTING_JOURNAL.md#j905--feed-the-android-compiled-unity-fixture-into-a-separate-stripping-handoff).
+[J905](history/journal-J1-J1177/PORTING_JOURNAL.md#j905--feed-the-android-compiled-unity-fixture-into-a-separate-stripping-handoff).
 
 **Finding:** this repository has no demonstrated phone-only build path.
 The bounded SDK-compatible acquisition sequence is preserved in
-[J986](PORTING_JOURNAL.md#j986--compile-owner-assembly-transforms-on-android-with-a-public-compiler),
-[J990](PORTING_JOURNAL.md#j990--build-unchanged-owner-transforms-on-android-from-public-tool-inputs) and
-[J992](PORTING_JOURNAL.md#j992--connect-phone-acquired-public-tools-to-owner-assembly-transforms).
-[J995](PORTING_JOURNAL.md#j995--integrate-the-public-transform-profile-with-owner-prefix-and-portable-cli)
+[J986](history/journal-J1-J1177/PORTING_JOURNAL.md#j986--compile-owner-assembly-transforms-on-android-with-a-public-compiler),
+[J990](history/journal-J1-J1177/PORTING_JOURNAL.md#j990--build-unchanged-owner-transforms-on-android-from-public-tool-inputs) and
+[J992](history/journal-J1-J1177/PORTING_JOURNAL.md#j992--connect-phone-acquired-public-tools-to-owner-assembly-transforms).
+[J995](history/journal-J1-J1177/PORTING_JOURNAL.md#j995--integrate-the-public-transform-profile-with-owner-prefix-and-portable-cli)
 adds the optional public transform profile. These qualify three transformed
 DLLs and host prefix production, not the complete game compiler/native chain,
 app-host delivery, content conversion or owner installation.
@@ -116,17 +116,17 @@ qualifies all 281 single-mip records, the shared codec build and a complete
 5,006-record RGB/Alpha8/uncompressed phone regression (J1088).
 J1107 qualifies all 1,333 remaining single-mip RGBA records on the host, with
 its complete phone cohort open after the interrupted guarded run in
-[J1123](PORTING_JOURNAL.md#j1123--guarded-rgba-phone-batch-loses-transport-admission-stays-open).
-[J1140](PORTING_JOURNAL.md#j1140--qualify-the-bounded-android-tool-guard-and-checkpoint-recovery)
+[J1123](history/journal-J1-J1177/PORTING_JOURNAL.md#j1123--guarded-rgba-phone-batch-loses-transport-admission-stays-open).
+[J1140](history/journal-J1-J1177/PORTING_JOURNAL.md#j1140--qualify-the-bounded-android-tool-guard-and-checkpoint-recovery)
 qualifies bounded Android guard and real checkpoint-recovery controls; the
-complete checkpointed single-job cohort remains open. [J1173](PORTING_JOURNAL.md#j1173--preserve-the-rgba-phone-prefix-after-bounded-wall-timeout)
+complete checkpointed single-job cohort remains open. [J1173](history/journal-J1-J1177/PORTING_JOURNAL.md#j1173--preserve-the-rgba-phone-prefix-after-bounded-wall-timeout)
 records the retry wall timeout and verified 506-record prefix; full cohort
 admission still requires completed source-only production.
 J1110 qualifies all 1,589 ETC1 mip-chain records
-on the host; Android production remains open. [J1128](PORTING_JOURNAL.md#j1128--produce-complete-rgba-mip-and-source-cubemap-cohorts-on-the-host) qualifies all
+on the host; Android production remains open. [J1128](history/journal-J1-J1177/PORTING_JOURNAL.md#j1128--produce-complete-rgba-mip-and-source-cubemap-cohorts-on-the-host) qualifies all
 1,523 RGBA mip-chain records and 110 source-derived Cubemaps on the host. Their
 Android production, 13 native reflection cubes and complete bundle production
-remain open. [J1136](PORTING_JOURNAL.md#j1136--bound-native-cubemap-residue-with-omitted-original-pc-sources)
+remain open. [J1136](history/journal-J1-J1177/PORTING_JOURNAL.md#j1136--bound-native-cubemap-residue-with-omitted-original-pc-sources)
 bounds the native-cube residue after testing omitted original scene/player
 sources; its missing pixel transform remains separate from object layout.
 Owner-build v1 uses the single accepted
@@ -183,18 +183,18 @@ the oracle is never a phone-build input.
 J895 qualifies manager registration declarations on Android while retaining
 live-context, target/serialization and complete native-usage gates. Dependency
 exclusions remain separate from native class retention.
-[J931](PORTING_JOURNAL.md#j931--read-manager-write-dispatch-bindings-on-android-without-evaluating-retention)
+[J931](history/journal-J1-J1177/PORTING_JOURNAL.md#j931--read-manager-write-dispatch-bindings-on-android-without-evaluating-retention)
 qualifies static write-method bindings and consumer dispatch offsets on Android;
 actual target/state decisions and independent root production remain open.
-[J934](PORTING_JOURNAL.md#j934--read-android-sdk-feature-declarations-and-compare-independent-api-observations)
+[J934](history/journal-J1-J1177/PORTING_JOURNAL.md#j934--read-android-sdk-feature-declarations-and-compare-independent-api-observations)
 qualifies a separate Android feature-declaration reader against SDK API
 observations; module inclusion, live state and native usage remain separate
 requirements before independent root production.
-[J939](PORTING_JOURNAL.md#j939--read-sdk-target-key-input-bindings-on-android-and-preserve-lookup-mismatches)
+[J939](history/journal-J1-J1177/PORTING_JOURNAL.md#j939--read-sdk-target-key-input-bindings-on-android-and-preserve-lookup-mismatches)
 qualifies static target-key input bindings on Android while preserving SDK API
 lookup mismatches. These declarations do not establish constructed maps or
 current target/module availability.
-[J948](PORTING_JOURNAL.md#j948--link-sdk-target-record-copy-and-consumer-operands-on-android)
+[J948](history/journal-J1-J1177/PORTING_JOURNAL.md#j948--link-sdk-target-record-copy-and-consumer-operands-on-android)
 qualifies a separate static record-copy/insertion/consumer field alignment on
 Android. Node selection, container semantics, constructed records and live
 target/module/state decisions remain open; the report is not a root input.
@@ -216,7 +216,7 @@ Desktop scene roots and base engine/content remain inputs.
 These are build-pipeline problems; keep the game runtime
 and desktop fallback while investigating them independently.
 
-[J1065](PORTING_JOURNAL.md#j1065--qualify-private-owner-apk-preparation-upgrade-and-unity-lifecycle)
+[J1065](history/journal-J1-J1177/PORTING_JOURNAL.md#j1065--qualify-private-owner-apk-preparation-upgrade-and-unity-lifecycle)
 qualifies the separate private owner-APK candidate's device preparation,
 increasing-version update, Unity lifecycle and assisted standard controls.
 It consumes reconstructed target files; independent PC-input production,
@@ -231,7 +231,7 @@ not proof that reimplementation is impossible. Owners: [ARCHITECTURE](ARCHITECTU
 | Stage / owner | Desktop Unity required today? | Android assessment |
 | --- | --- | --- |
 | Acquisition, inventory, acceptance (`inventory.py`) | No | File/ZIP import, hashing and version checks are portable. Owned-account downloads need Guard, entitlement and accepted-version tests; no offline authentication substitute. |
-| Decompile/export (`recovery.py`, ILSpy, AssetRipper) | No editor API; supplied tools are desktop builds | [J1008](PORTING_JOURNAL.md#j1008--bound-android-assetripper-startup-and-full-input-import-failures) bounds managed AssetRipper hosting and failed full-input imports. Complete export, tool acquisition/app delivery and output equivalence remain open. An exported project still needs Android content production. |
+| Decompile/export (`recovery.py`, ILSpy, AssetRipper) | No editor API; supplied tools are desktop builds | [J1008](history/journal-J1-J1177/PORTING_JOURNAL.md#j1008--bound-android-assetripper-startup-and-full-input-import-failures) bounds managed AssetRipper hosting and failed full-input imports. Complete export, tool acquisition/app delivery and output equivalence remain open. An exported project still needs Android content production. |
 | Assembly transforms/R1 (`assembly_transforms.py`, `AssemblyProbe`) | No | Cecil-based IL/metadata transforms are port candidates. Preserve exact DLL hashes/type identity. An Android build-tool host is unproven; it does not run gameplay. |
 | R2–R6 composition, catalog, dependency and scene transforms | Mostly host code after export | Port candidates. Python, native texture/compression libraries, C# helpers and process/path assumptions all need qualification. A phone Python interpreter alone is insufficient. |
 | Shader recovery/HLSL generation (`shader_recovery.py`, `shader_programs.py`) | Not inherently editor-bound | Pinned native tools and a CrossOver/Wine fallback remain; 46 local analysis inputs still need producers. Android-native replacements are unresolved. No Windows emulation route is selected. |
@@ -283,7 +283,7 @@ host; wider dependencies, editor-root production,
 subprocesses and app sandbox execution remain open.
 The build-tool host is separate from the IL2CPP game runtime.
 
-[J1064](PORTING_JOURNAL.md#j1064--acquire-exact-generic-android-sdk-inputs-without-installing-the-editor)
+[J1064](history/journal-J1-J1177/PORTING_JOURNAL.md#j1064--acquire-exact-generic-android-sdk-inputs-without-installing-the-editor)
 qualifies direct owner acquisition of the three exact runtime/resource SDK-copy
 inputs from the provider's pinned component, without installing the Editor.
 The public [extractor](../tools/phone-build/accepted-output/README.md#acquire-the-three-sdk-copy-inputs)
@@ -469,7 +469,7 @@ player/native integration and performance remain separate gates.
 
 ## Complete requested-audio host support
 
-[J1056](PORTING_JOURNAL.md#j1056--stage-and-compile-the-complete-requested-audio-support-closure-without-the-editor)
+[J1056](history/journal-J1-J1177/PORTING_JOURNAL.md#j1056--stage-and-compile-the-complete-requested-audio-support-closure-without-the-editor)
 reuses the existing bank stager, request/stage generators and lower-level audio
 compiler owners with independently reproduced source inputs. All 274 staged
 payloads match the exact receipt; observer/core/bootstrap compile without a
@@ -481,7 +481,7 @@ complete result.
 
 ## Complete gameplay source host support
 
-[J1057](PORTING_JOURNAL.md#j1057--compile-the-complete-gameplay-source-cohort-directly-from-owner-inputs)
+[J1057](history/journal-J1-J1177/PORTING_JOURNAL.md#j1057--compile-the-complete-gameplay-source-cohort-directly-from-owner-inputs)
 uses the existing PC catalog/IL readers, map generators, runtime recipe, SDK
 compiler/reference owner and retained Burst processor. All three maps reproduce
 exactly and the complete current 145-source gameplay cohort compiles without a
@@ -492,7 +492,7 @@ case; the journal owns its full result.
 
 ## Whole-player fixed-root host chain
 
-[J1058](PORTING_JOURNAL.md#j1058--strip-and-convert-the-complete-player-with-fixed-target-root-configuration)
+[J1058](history/journal-J1-J1177/PORTING_JOURNAL.md#j1058--strip-and-convert-the-complete-player-with-fixed-target-root-configuration)
 connects the complete independent managed inputs to actual UnityLinker and
 IL2CPP converter execution. It treats current target retention identities as
 explicit supplied configuration and independently extracts the SDK-native table.
@@ -503,7 +503,7 @@ working game build or installation architecture adopts the candidate.
 
 ## Complete host native game-code construction
 
-[J1063](PORTING_JOURNAL.md#j1063--complete-the-source-input-host-native-owner-build) executes the public source-input command through all managed production,
+[J1063](history/journal-J1-J1177/PORTING_JOURNAL.md#j1063--complete-the-source-input-host-native-owner-build) executes the public source-input command through all managed production,
 stripping, conversion, 825 native compilations, linking and stripping on the host.
 It retains fresh paired metadata and a statically checked native library; see the
 journal for independent evidence and comparison limits. Explicit licensed native
@@ -512,7 +512,7 @@ update and matched device behavior/performance remain gates. The working game
 and desktop fallback stay unchanged.
 
 
-The historical [J951 preload operand result](PORTING_JOURNAL.md#j951--bind-sdk-preload-platform-assignment-operands-on-android)
+The historical [J951 preload operand result](history/journal-J1-J1177/PORTING_JOURNAL.md#j951--bind-sdk-preload-platform-assignment-operands-on-android)
 is retained for future general-target work. Its optional implementation remains
 in PR #38. The current accepted-target route uses J1063's explicit audited roots;
 preload record/alias/module discovery is not part of that fixed-target producer.

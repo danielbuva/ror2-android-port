@@ -3,8 +3,8 @@
 Current experimental installation support after accepted-output reconstruction.
 The private candidate's preparation, increasing-version upgrade, Unity lifecycle
 and assisted standard controls are device-qualified in
-[J1065](../../../docs/PORTING_JOURNAL.md#j1065--qualify-private-owner-apk-preparation-upgrade-and-unity-lifecycle).
-[J1095](../../../docs/PORTING_JOURNAL.md#j1095--retain-one-on-device-owner-key-across-separate-apk-signing-builds)
+[J1065](../../../docs/history/journal-J1-J1177/PORTING_JOURNAL.md#j1065--qualify-private-owner-apk-preparation-upgrade-and-unity-lifecycle).
+[J1095](../../../docs/history/journal-J1-J1177/PORTING_JOURNAL.md#j1095--retain-one-on-device-owner-key-across-separate-apk-signing-builds)
 qualifies durable phone signing on authored APKs. Ordinary app packaging-tool
 hosting, installer UI and independent PC-input production remain open; this is not an adopted final distribution architecture.
 Game-bearing packets, APKs, metadata and outputs remain private under
