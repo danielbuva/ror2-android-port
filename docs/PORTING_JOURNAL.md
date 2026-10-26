@@ -14,17 +14,21 @@ shipped results here, keep exploratory notes in ignored scratch, refresh `PORTIN
 and add the speed, token-efficiency and branch-update rules the parallel workers follow.
 Evidence: this commit. Remaining: none for this change.
 
-## J1179 — Four recursive-source Standard Shader packs
+## J1179 — Recursive Standard Shaders and five complete scene bundles
 
-Hypothesis: original scene PPtr closure supplies missing material feature and instancing seeds.
-Existing Shader owner accepts the observed four-seed context and exposes its validated original VertexLit → SDK6 dependency relocation.
-Four public selector profiles retain first-seen distinct original keyword/instancing pairs, without a target retention table.
-Guarded actual CLI persists all production before independent comparison; all four complete Shader records match J850.
-Blackbeach2, Shipgraveyard and TestOtherBrother each reproduce 261,528 B; Repurposed Crater reproduces 301,384 B.
-Evidence: `work/coordination/p1-payload-scene-shaders-v1/recursive-standard-qualify-v1/qualify-done.json`; original pointer chains: `recursive-standard-v1/`.
-Prior art: pinned AssetRipper DummyShaderTextExporter property/fallback relationships; SDK/native contracts remain J1157/J1163.
-The direct-only seed failure in J1172 is resolved; full scene/preload closure and readiness union remain consumer-owned.
-Host-only; phone Shader production/runtime remain open. APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+2026-10-26. Existing Shader owner derives material/instancing seeds from original scene PPtr closure;
+four source-selected Standard packs reproduce complete J850 Shader records (261,528 B each for
+Blackbeach2, Shipgraveyard and TestOtherBrother; 301,384 B for Repurposed Crater).
+Existing object producer adds original preload and SDK DefaultMaterial dispatch; six audited source
+profiles complete Logbook and those four scenes: five compressed bundles, 94,099 objects, all members raw-exact.
+Evidence: `work/coordination/p1-payload-scene-shaders-v1/recursive-standard-qualify-v1/qualify-done.json`
+and `work/coordination/p1-payload-preload-five-v3/done.json` (per-bundle output SHA-256 receipts).
+Readiness: `work/coordination/p1-anim/five-scene-publication-v1/readiness-union/`; 598/705 available,
+593 raw-exact, two code comparisons and three drift-explained; 107 missing (7 APK, 100 payload).
+Prior art: pinned AssetRipper property/fallback relationships; SDK/native contracts remain J1157/J1163.
+Host-only; phone production/runtime remain open. APK unchanged: J850
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
 ## J1181 — Loading presentation pacing
 
 2026-10-26. Shipped loading-only presentation pacing; measured thermal improvement remains unqualified.
