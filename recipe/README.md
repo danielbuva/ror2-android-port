@@ -4026,3 +4026,18 @@ This pin update does not qualify native encounter or audio behavior.
 The same audit covers the camera build-hook hash following its refreshed
 authored audio-producer recipe pin. This changes source validation metadata
 only; no generated content or additional input identifiers are published.
+
+## Meridian complete object selection (2026-10-26)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-meridian-whole-objects.json` | `bc6d4093b53ea0d345855e51360dd1983f43b35f947eb9ab491eb69555c60f9f` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: this profile
+contains source selectors, hashes, checked pointer relationships and authored
+import policies only. Lossless compaction preserves every decoded selection.
+No original body, curve, scalar, pixel, program, copied source, private path or
+credential is included. Legitimate PC files, SDK resources and receipt-pinned
+source-produced record packs remain required. Generated outputs and evidence
+stay ignored. Existing ownership and redistribution boundaries apply; phone
+production, installation and original scene behavior remain open.
