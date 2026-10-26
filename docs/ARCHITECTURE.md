@@ -129,8 +129,14 @@ The streamed-scene slices process shared assets then the scene member. Each
 member retains its own object/type/external tables and index identities. Scene
 script tables derive from actual MonoBehaviour script pointers, independently
 of physical script-first body placement. The existing checked reference
-relationships generate sorted external PreloadData; native scene containers
-preserve the original relocated scene path and streamed-scene semantics. The
+relationships and pinned record-pack dependency relocations generate sorted
+external PreloadData. Original preload built-in resource pointers retain their
+path IDs after checking preload membership and the original resource external;
+no source object body is required for these SDK-owned identities. Generated
+DefaultMaterial records reuse the existing `player_data.shared_default_material`
+projection of a pinned SDK Material and original Shader, followed by checked
+PPtr relocation; their destination native type remains original. Native scene
+containers preserve the original relocated scene path and streamed-scene semantics. The
 existing scene export policy disables the selected MapZone owner and omits
 checked original components; reflected bake removal uses ordinary PPtr remaps.
 All scene meshes come through the existing pinned producer pack. Habitat also
@@ -655,7 +661,12 @@ profiles select original material relationships and exact SDK Standard source.
 Original emission/instancing values and scene fog/actual lightmap usage govern
 retention; source keyword order controls the shared API's native pool emission.
 The owner resolves original/SDK fallback identity before emitting final resource
-pointers. Each context writes one body extent for its explicit destinations.
+pointers. Its index rows expose that validated source-to-destination dependency
+for consumer preload traversal through the owning member's externals.
+The Blackbeach2, Shipgraveyard, TestOtherBrother and Repurposed Crater Standard
+profiles select original materials reached through recursive scene pointer
+closure; source keyword/instancing pairs govern retention in the same owner.
+Each context writes one body extent for its explicit destinations.
 The same pack owner selects Shipgraveyard post-processing and Repurposed Crater
 HideVertices through public templates. Its Skybox context follows original scene
 RenderSettings and material Shader pointers, reads SDK106 and retains source
