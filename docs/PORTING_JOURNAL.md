@@ -146,16 +146,30 @@ charging settings remain untouched. CPU/GPU > 95 C for >= 3 s and gap > 1 s rule
 Evidence: alpha worktree `work/coordination/alpha-battery-health/validation.json`.
 No APK/output generated or installed. Fresh stability/device qualification remains open.
 
-## J1189 — Reconstruct nine further complete scene payloads
+## J1189 — Reconstruct eight further complete scene payloads
 
 2026-10-26. Existing source-only owners reproduce Splash, Habitat, Helminthroost,
-Itgolemplains, Artifactworld03, Itgoolake, Itmoon, Loadingbasic and Fungal.
-All 184,244 persisted objects, serialized members and compressed bundles are raw-exact
+Itgolemplains, Artifactworld03, Itgoolake, Itmoon and Loadingbasic.
+All 60,573 persisted objects, serialized members and compressed bundles are raw-exact
 to J850 after guarded production. Title separately has 26 source-qualified Shader records,
 including SDK terrain base-generation passes; complete Title assembly remains open.
 Evidence/output hashes: `work/coordination/p1-shaders-publication-v2/`,
-`work/coordination/p1-scenes-w/publication-batch-v1/`, Loadingbasic and Fungal qualifier receipts.
-Fungal bundle SHA-256 `e2addd8bbd3cbb1f30971a114b312ae434b8673905c2cc6fc34e3a6fd4f3edc2`.
+`work/coordination/p1-scenes-w/publication-batch-v1/` and Loadingbasic qualifier receipts.
+The readiness union includes Fungal, independently shipped in J1190.
 Readiness: 616/705 available, 611 exact, two code and three drift-explained;
 89 missing (7 APK, 82 payload). Host-only; phone production/install/runtime remain open.
 APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1190 — Complete source-derived Fungal scene
+
+2026-10-26. Audited Fungal selectors extend the existing object producer:
+123,671 records (36,645,626 B), both serialized members and the complete compressed
+bundle are host raw-exact against J850. Output: 14,723,479 B, SHA-256
+`e2addd8bbd3cbb1f30971a114b312ae434b8673905c2cc6fc34e3a6fd4f3edc2`.
+Evidence: `work/coordination/p1-anim/fungal-final-host-v2/qualification-done.json`
+and `work/coordination/p1-anim/fungal-publication-v1/checks-done.json` in the animation worktree.
+Existing target-tree interface exposes `payload/whole-scene-fungal`; no union recount claimed.
+Prior art: retained J1070/J1075 producer and original typed preload policies;
+R2API addressed/direct distinction from the pinned community source index.
+Focused host checks, source-only qualification and provenance review pass.
+Host-only; phone production, installation and original scene behavior remain open.
