@@ -3399,3 +3399,9 @@ runtime qualification remain open.
 The camera transform recipe whole-catalog source pin follows the pure integration
 metadata extraction. Manual provenance/privacy review: this pin references only
 authored public Python; no game content, local paths or device evidence is added.
+
+The preparation-trace source cohort refresh pins only authored world-owner log
+markers and updates the matching audio/camera manifest hashes. Manual provenance,
+privacy, licensing and sensitive-content review found public source hashes only;
+no game-derived content, private paths or runtime evidence is included. Existing
+input and redistribution requirements remain unchanged.
