@@ -63,8 +63,8 @@ def build_shared_checkout(
         clean(primary)
         if git(root, "rev-parse", "HEAD") != target:
             raise RuntimeError("Worktree HEAD changed while waiting for the shared editor")
-        if shutil.disk_usage(primary).free < 100 * 1024**3:
-            raise RuntimeError("Less than 100 GiB free; prune generated outputs before the shared build")
+        if not code_only and shutil.disk_usage(primary).free < 100 * 1024**3:
+            raise RuntimeError("Less than 100 GiB free; prune generated outputs before the full shared build")
         original = git(primary, "rev-parse", "HEAD")
         branch = git(primary, "symbolic-ref", "--quiet", "--short", "HEAD") if git(primary, "rev-parse", "--abbrev-ref", "HEAD") != "HEAD" else None
         receipt_dir = primary / "work/coordination/shared-builds"
