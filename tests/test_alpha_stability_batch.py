@@ -157,6 +157,8 @@ class AlphaStabilityBatchTests(unittest.TestCase):
             thermal.return_value.finish.side_effect = thermal_errors or [None, None, None]
             thermal.return_value.peak_cpu_celsius = 79.5
             thermal.return_value.peak_zone_celsius = 79.8
+            thermal.return_value.time_above_80_seconds = 0
+            thermal.return_value.peak_cpu_gpu_celsius = 79.5
             if fail_at or terminal_error or expect_failure:
                 with self.assertRaises(RuntimeError):
                     batch.check_alpha_stability_batch(**self.args)
@@ -448,39 +450,34 @@ class GameThermalOwnerTests(unittest.TestCase):
         self.assertEqual([row["cpu_celsius"] for row in rows], values)
         self.assertIn("81600", rows[2]["all_zones_raw"])
 
-    def test_sustained_core_heat_aborts_at_one_second_with_dense_samples(self):
+    def test_sustained_core_heat_aborts_only_after_three_seconds(self):
         for name in ("cpu-0", "GPU-0"):
-            for times in ([0, 0.25, 0.5, 0.75, 1.0], [0, 0.35, 0.7, 1.05]):
-                with self.subTest(name=name, times=times):
-                    self.owner.previous = None
-                    self.owner.hot_core_zones.clear()
-                    self.assertEqual(self.runtime_sequence(["cpu-0", name], [[49, 81]] * (len(times) - 1), times[:-1]), [81] * (len(times) - 1))
-                    with self.assertRaisesRegex(RuntimeError, "stayed above 80 C for one second"):
-                        self.runtime_sequence(["cpu-0", name], [[49, 81]], times[-1:])
-                    self.assertEqual(self.owner.hot_core_zones[(name, "/thermal_zone1/temp")][2], len(times))
+            self.owner.previous = None
+            self.owner.hot_core_zones.clear()
+            times = [i * 0.25 for i in range(12)]
+            self.runtime_sequence(["cpu-0", name], [[49, 96]] * 12, times)
+            with self.assertRaisesRegex(RuntimeError, "above 95 C for three seconds"):
+                self.runtime_sequence(["cpu-0", name], [[49, 96]], [3])
 
-    def test_core_and_surface_single_sample_boundaries(self):
-        for name, boundary in (("cpu-0", 88), ("GPU-0", 88), ("battery", 45), ("skin", 45)):
-            with self.subTest(name=name):
-                self.owner.previous = None
-                self.owner.hot_core_zones.clear()
-                self.assertEqual(self.runtime_sequence(["cpu-0", name], [[49, boundary]], [0]), [max(49, boundary)])
-                with self.assertRaisesRegex(RuntimeError, str(boundary) + " C"):
-                    self.runtime_sequence(["cpu-0", name], [[49, boundary + 0.001]], [0.25])
+    def test_heat_is_a_metric_and_skin_has_no_runtime_abort(self):
+        values = [81, 85, 89, 95, 95]
+        self.assertEqual(self.runtime_sequence(["cpu-0", "skin"], [[v, 60] for v in values], [0, 0.5, 1, 1.5, 2]), values)
+        self.assertEqual(self.owner.time_above_80_seconds, 2)
+        self.assertEqual(self.owner.peak_cpu_gpu_celsius, 95)
+        self.assertEqual(json.loads(self.owner.trace.read_text().splitlines()[-1])["phase"], "gameplay")
 
-    def test_core_streak_resets_at_80_or_a_gap_above_350ms(self):
-        for values, times in (
-            ([81, 81, 80, 81, 81, 81, 81], [0, 0.25, 0.5, 0.75, 1, 1.25, 1.5]),
-            ([81] * 6, [0, 0.25, 0.5, 0.851, 1.101, 1.351]),
-        ):
-            with self.subTest(values=values, times=times):
-                self.owner.previous = None
-                self.owner.hot_core_zones.clear()
-                self.assertEqual(self.runtime_sequence(["cpu-0"], [[value] for value in values], times), values)
+    def test_battery_boundary(self):
+        self.runtime_sequence(["cpu-0", "battery"], [[49, 46]], [0])
+        with self.assertRaisesRegex(RuntimeError, "46 C"):
+            self.runtime_sequence(["cpu-0", "battery"], [[49, 46.001]], [0.25])
+
+    def test_core_streak_resets_at_95(self):
+        values = [96, 96, 96, 95, 96, 96, 96]
+        self.assertEqual(self.runtime_sequence(["cpu-0"], [[v] for v in values], [i * 0.5 for i in range(7)]), values)
 
     def test_heat_streak_cannot_transfer_between_zones_with_the_same_type(self):
-        readings = [[81, 79], [79, 81]] * 4
-        self.assertEqual(self.runtime_sequence(["cpu-0", "cpu-0"], readings, [i * 0.25 for i in range(8)]), [81] * 8)
+        readings = [[96, 79], [79, 96]] * 8
+        self.assertEqual(self.runtime_sequence(["cpu-0", "cpu-0"], readings, [i * 0.25 for i in range(16)]), [96] * 16)
 
     def test_runtime_gap_boundary_still_refuses_above_one_second(self):
         self.assertEqual(self.runtime_sequence(["cpu-0"], [[81], [81]], [0, 1]), [81, 81])

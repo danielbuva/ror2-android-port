@@ -431,7 +431,7 @@ owner-backend/public-profile launches. Setup reads kernel CPU/GPU/battery/skin
 zones, checks thermal admission and selects inherited efficiency-core affinity
 with two-worker runtime limits. Its independent supervisor pauses the owned
 process group and nested-session descendants at 70/55 C by default (explicit
-Thor profile 75/60 C), retaining existing 80/88 C aborts and 250 ms sampling.
+Thor profile 75/60 C), using the current 95 C/3 s CPU/GPU and 46 C battery limits with 250 ms sampling.
 Teardown kills owned processes; receipts retain pause time and failures. The
 atomic BOOTTIME clock feeds the existing native active-time contract through
 `run_android.py`. Phone sensor access and sustained qualification remain open.
@@ -1470,16 +1470,16 @@ Foreign selectors/pending transactions are preserved, and failed terminal
 verification retains the lease for diagnosis. No installation is performed.
 The batch's independent temperature-zone observer targets 250 ms intervals and
 refuses a measured gap above 1 s. Runtime aborts if one CPU/GPU zone remains
-above 80 C for at least one second, with at least three consecutive observations
-spaced at most 0.35 s apart; a reading at or below 80 C or a longer gap resets
-that zone's continuity. Any CPU/GPU reading above 88 C or battery/skin reading
-above 45 C aborts immediately. Brief core spikes remain recorded. Failed
-supervision also aborts without retry.
+above 95 C for at least three seconds, with no gap above 1 s. A reading at or
+below 95 C resets that zone's continuity. Battery above 46 C aborts immediately.
+Skin and HAL status are metrics. Trace rows and stage receipts record sampled
+time above 80 C, CPU/GPU peak and phase; heat below the safety limits does not
+fail gameplay. Failed supervision also aborts without retry.
 Before each stage, readable CPU/GPU/battery/skin zones must cool to at most
 50 C with the OLED asleep. Other physical zones, including power-management,
 charger and USB sensors, are recorded as excluded from admission only; they
 remain sampled in raw observations and all-zone peaks. The runtime thresholds
-apply to CPU/GPU/battery/skin. Admission discovers zone types and readable paths
+apply to CPU/GPU and battery. Admission discovers zone types and readable paths
 with a separate 10-second ADB timeout while no gameplay runs. Runtime reads those
 physical temperature paths in one batch, retaining the 0.7-second ADB timeout
 and measured one-second maximum sampling gap. Unreadable temperature interfaces

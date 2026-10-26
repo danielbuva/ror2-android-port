@@ -31,11 +31,11 @@ class DutyCycleTests(unittest.TestCase):
 
     def test_last_resort_safety_during_pause(self):
         policy = runner.ThermalDutyCycle()
-        for tick in (0, 0.25, 0.5, 0.75):
-            policy.observe(zones(cpu=81), tick)
-        with self.assertRaisesRegex(RuntimeError, "80 C for 1 s"):
-            policy.observe(zones(cpu=81), 1)
-        for values, message in ((zones(gpu=88), "88 C"), (zones(battery=45.1), "45 C"), ({}, "unavailable")):
+        for tick in [i * 0.25 for i in range(12)]:
+            policy.observe(zones(cpu=96), tick)
+        with self.assertRaisesRegex(RuntimeError, "95 C for 3 s"):
+            policy.observe(zones(cpu=96), 3)
+        for values, message in ((zones(battery=46.1), "46 C"), ({}, "unavailable")):
             with self.subTest(values=values), self.assertRaisesRegex(RuntimeError, message):
                 runner.ThermalDutyCycle().observe(values, 0)
         policy = runner.ThermalDutyCycle()
@@ -44,6 +44,15 @@ class DutyCycleTests(unittest.TestCase):
             policy.observe(zones(), 1.01)
         with self.assertRaisesRegex(RuntimeError, "admission"):
             runner.ThermalDutyCycle().observe(zones(gpu=50.1), 0, admission=True)
+
+    def test_heat_metrics_do_not_abort_and_streak_resets(self):
+        policy = runner.ThermalDutyCycle()
+        for tick, value in enumerate([81, 89, 95, 96, 95, 96, 95]):
+            policy.observe(zones(cpu=value, battery=46), tick * 0.5)
+        receipt = policy.receipt(3)
+        self.assertEqual(receipt["time_above_80_seconds"], 3)
+        self.assertEqual(receipt["peak_cpu_gpu_celsius"], 96)
+        self.assertEqual(receipt["peak_phase"], "paused")
 
     def test_fake_sensor_supervises_command_and_records_pauses(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -69,7 +78,7 @@ class DutyCycleTests(unittest.TestCase):
             self.assertEqual(result["pause_seconds"], 0.25)
             self.assertEqual([row.args[0] for row in family.send.call_args_list], [signal.SIGSTOP, signal.SIGCONT, signal.SIGKILL])
             self.assertEqual(spawn.call_args.kwargs["env"]["OMP_NUM_THREADS"], "2")
-            self.assertEqual(spawn.call_args.args[0][:4], ["/system/bin/taskset", "-c", "0,1", "producer"])
+            self.assertEqual(spawn.call_args.args[0], ["/system/bin/taskset", "3", "producer"])
             self.assertEqual(json.loads(receipt.read_text()), result)
             self.assertEqual(json.loads(Path(str(receipt) + ".pause.json").read_text()), {"paused_seconds": 0.25, "paused_at": None})
             self.assertEqual(spawn.call_args.kwargs["env"]["ROR2LAB_BUILD_PAUSE_CLOCK"], str(Path(str(receipt) + ".pause.json").resolve()))
