@@ -25,33 +25,175 @@ import java.util.concurrent.TimeUnit;
 import org.json.*;
 
 public final class ToolHostActivity extends Activity {
+    private static final Object JOB_LOCK = new Object();
+    private static volatile boolean running;
+    private final OwnerUpdateState model = new OwnerUpdateState();
+    private final android.os.Handler handler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private TextView statusView;
+    private Button checkButton, buildButton, installButton;
+    private final Runnable refresh = new Runnable() { public void run() { refreshStatus(); handler.postDelayed(this, 500); } };
+    private final android.content.SharedPreferences.OnSharedPreferenceChangeListener installObserver =
+        new android.content.SharedPreferences.OnSharedPreferenceChangeListener() {
+            public void onSharedPreferenceChanged(android.content.SharedPreferences preferences, String key) {
+                handler.post(new Runnable() { public void run() { refreshStatus(); } });
+            }
+        };
+
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
-        final TextView view = new TextView(this); view.setText("Private build-tool host test");
-        final Button install = new Button(this); install.setText("Install owner-built APK"); install.setEnabled(false);
-        LinearLayout layout = new LinearLayout(this); layout.setOrientation(LinearLayout.VERTICAL); layout.addView(view); layout.addView(install); setContentView(layout);
-        final Runnable ready = new Runnable() { public void run() {
-            try {
-                File apk=readyApk(ToolHostActivity.this);
-                android.content.pm.PackageInfo info=getPackageManager().getPackageArchiveInfo(apk.getPath(),0);
-                if(info==null)throw new IOException("APK manifest unavailable");
-                view.setText("Owner-built APK ready: "+info.packageName+" ("+info.versionName+")"); install.setEnabled(true);
-            } catch(Exception error) { view.setText("Build result: "+error.getMessage()); }
-        }};
-        install.setOnClickListener(new android.view.View.OnClickListener() { public void onClick(android.view.View ignored) {
-            try {
-                readyApk(ToolHostActivity.this);
-                if(android.os.Build.VERSION.SDK_INT>=26 && !getPackageManager().canRequestPackageInstalls()) {
-                    startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,Uri.parse("package:"+getPackageName()))); return;
-                }
-                Intent intent=new Intent(Intent.ACTION_INSTALL_PACKAGE,Uri.parse("content://"+getPackageName()+".apk/owner.apk"));
-                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION); startActivity(intent);
-            }catch(Exception error){view.setText("Installer unavailable: "+error.getMessage());}
-        }});
-        try { readyApk(this); ready.run(); }
-        catch(Exception missing) {
-            new Thread(new Runnable() { public void run() { new Worker(ToolHostActivity.this).executeFixture(); runOnUiThread(ready); } }).start();
+        LinearLayout layout = new LinearLayout(this); layout.setOrientation(LinearLayout.VERTICAL);
+        statusView = new TextView(this); layout.addView(statusView);
+        checkButton = new Button(this); checkButton.setText("Check for updates"); layout.addView(checkButton);
+        buildButton = new Button(this); buildButton.setText("Download and rebuild update"); layout.addView(buildButton);
+        installButton = new Button(this); installButton.setText("Install owner-built update"); layout.addView(installButton);
+        setContentView(layout);
+        checkButton.setOnClickListener(new android.view.View.OnClickListener() { public void onClick(android.view.View ignored) { startUpdate("release-check"); } });
+        buildButton.setOnClickListener(new android.view.View.OnClickListener() { public void onClick(android.view.View ignored) { startUpdate("release-build"); } });
+        installButton.setOnClickListener(new android.view.View.OnClickListener() { public void onClick(android.view.View ignored) { installReady(); } });
+        // Opening the installer is observational: never launch the old fixture or an install implicitly.
+        refreshStatus();
+    }
+    @Override public void onResume() {
+        super.onResume();
+        getSharedPreferences(OwnerInstaller.STATUS, 0).registerOnSharedPreferenceChangeListener(installObserver);
+        handler.removeCallbacks(refresh); handler.post(refresh);
+    }
+    @Override public void onPause() {
+        handler.removeCallbacks(refresh);
+        getSharedPreferences(OwnerInstaller.STATUS, 0).unregisterOnSharedPreferenceChangeListener(installObserver);
+        super.onPause();
+    }
+    private static JSONObject readJson(File file) throws Exception {
+        if (file.length() > 4 * 1024 * 1024) throw new IOException("Private status is too large");
+        try (InputStream input = new FileInputStream(file)) { return readJson(input); }
+    }
+    private static JSONObject readJson(InputStream input) throws Exception {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream(); byte[] buffer = new byte[8192]; int count;
+        while ((count = input.read(buffer)) != -1) {
+            if (bytes.size() + count > 4 * 1024 * 1024) throw new IOException("Private metadata is too large");
+            bytes.write(buffer, 0, count);
         }
+        return new JSONObject(new String(bytes.toByteArray(), StandardCharsets.UTF_8));
+    }
+    private static void writeJson(File file, JSONObject value) throws Exception {
+        File parent = file.getParentFile(); if (!parent.isDirectory() && !parent.mkdirs()) throw new IOException("Private owner directory unavailable");
+        File staged = new File(parent, file.getName() + ".writing");
+        try (FileOutputStream output = new FileOutputStream(staged)) { output.write(value.toString().getBytes(StandardCharsets.UTF_8)); output.getFD().sync(); }
+        if (!staged.renameTo(file)) throw new IOException("Could not publish private status");
+    }
+    private static void updateStatus(Context app, String phase, String message) {
+        try { writeJson(new File(app.getFilesDir(), "owner-input/update-state.json"), new JSONObject().put("state", phase).put("message", message)); }
+        catch (Exception ignored) { /* Worker report retains the underlying failure if storage is unavailable. */ }
+    }
+    private JSONObject installedRequest(String action) throws Exception {
+        JSONObject trust;
+        try (InputStream input = getAssets().open("release-trust.json")) { trust = readJson(input); }
+        String packageName = trust.getString("application_id");
+        long installed = 0;
+        try { installed = OwnerInstaller.version(getPackageManager().getPackageInfo(packageName, 0)); }
+        catch (android.content.pm.PackageManager.NameNotFoundException absent) { /* first install */ }
+        long installer = OwnerInstaller.version(getPackageManager().getPackageInfo(getPackageName(), 0));
+        return new JSONObject().put("action", action).put("application_id", packageName)
+            .put("installed_version", installed).put("installer_version", installer);
+    }
+    private void startUpdate(final String action) {
+        final Context app = getApplicationContext();
+        synchronized (JOB_LOCK) {
+            if (running || OwnerInstaller.busy(app)) return;
+            try {
+                if ("release-check".equals(action)) model.beginCheck(); else model.beginBuild();
+                recordInstalledRelease();
+                OwnerInstaller.clearTerminalStatus(app);
+                writeJson(new File(getFilesDir(), "owner-input/update-request.json"), installedRequest(action));
+                updateStatus(app, model.phase().toString(), model.message());
+                running = true;
+            } catch (Exception error) { updateStatus(app, "ERROR", error.getMessage()); refreshStatus(); return; }
+        }
+        render();
+        new Thread(new Runnable() { public void run() {
+            try { new Worker(app).executeUpdate(action); }
+            finally { synchronized (JOB_LOCK) { running = false; } }
+        } }, "owner-release-update").start();
+    }
+    private void installReady() {
+        final Context app = getApplicationContext();
+        synchronized (JOB_LOCK) {
+            if (running || OwnerInstaller.busy(app)) return;
+            try {
+                if (!model.canInstall()) throw new IOException("Check and rebuild a verified release first");
+                if (android.os.Build.VERSION.SDK_INT >= 26 && !getPackageManager().canRequestPackageInstalls()) {
+                    startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + getPackageName()))); return;
+                }
+                model.beginInstall(); running = true;
+            } catch (Exception error) { updateStatus(app, "ERROR", error.getMessage()); refreshStatus(); return; }
+        }
+        render();
+        new Thread(new Runnable() { public void run() {
+            try {
+                JSONObject ready = readJson(new File(app.getFilesDir(), "owner-input/owner-apk-ready.json"));
+                JSONObject request = installedRequest("release-build");
+                if (!ready.getString("application_id").equals(request.getString("application_id"))) throw new IOException("Ready package differs from trusted release configuration");
+                File apk = new File(ready.getString("apk")).getCanonicalFile();
+                if (!apk.getPath().startsWith(app.getFilesDir().getCanonicalPath() + "/") || !apk.isFile()) throw new IOException("Private owner APK required");
+                OwnerInstaller.install(app, apk, ready.getString("sha256"), ready.getString("application_id"), ready.getLong("version_code"));
+            } catch (Exception error) { updateStatus(app, "ERROR", "Installer unavailable: " + error.getMessage()); }
+            finally { synchronized (JOB_LOCK) { running = false; } }
+        } }, "owner-package-install").start();
+    }
+    private void recordInstalledRelease() throws Exception {
+        if (!"INSTALLED".equals(OwnerInstaller.state(this))) return;
+        File readyFile = new File(getFilesDir(), "owner-input/owner-apk-ready.json");
+        if (!readyFile.isFile()) return;
+        JSONObject ready = readJson(readyFile);
+        if (!ready.has("release")) return;
+        android.content.pm.PackageInfo actual = getPackageManager().getPackageInfo(ready.getString("application_id"), android.content.pm.PackageManager.GET_SIGNATURES);
+        if (OwnerInstaller.version(actual) != ready.getLong("version_code") ||
+            !OwnerInstaller.signer(actual).equals(getSharedPreferences(OwnerInstaller.STATUS, 0).getString("signer", ""))) return;
+        JSONObject release = ready.getJSONObject("release");
+        File receiptFile = new File(getFilesDir(), "owner-input/installed-release.json");
+        if (receiptFile.isFile()) {
+            JSONObject previous = readJson(receiptFile);
+            if (previous.optLong("version_code") == OwnerInstaller.version(actual) &&
+                previous.optString("application_id").equals(actual.packageName) &&
+                previous.optString("bundle_sha256").equals(release.getString("bundle_sha256")) &&
+                previous.optString("signer_sha256").equals(OwnerInstaller.signer(actual))) return;
+        }
+        writeJson(receiptFile, new JSONObject()
+            .put("application_id", actual.packageName).put("version_code", OwnerInstaller.version(actual))
+            .put("bundle_sha256", release.getString("bundle_sha256")).put("release", release).put("signer_sha256", OwnerInstaller.signer(actual)));
+    }
+    private void refreshStatus() {
+        if (statusView == null) return;
+        try {
+            File progress = new File(getFilesDir(), "owner-input/update-state.json");
+            if (progress.isFile()) {
+                JSONObject value = readJson(progress); String detail = value.optString("message");
+                if (value.has("release")) {
+                    JSONObject release = value.getJSONObject("release");
+                    detail += "\nRelease " + release.optString("version") + " (" + release.optLong("version_code") + ")";
+                }
+                if (value.has("changed_entries")) detail += "\nChanged outputs: " + value.getJSONArray("changed_entries").length();
+                if (value.has("rebuilt")) detail += "\nRebuilt: " + value.getJSONArray("rebuilt").length() + "; reused: " + value.getJSONArray("reused").length();
+                model.observe(value.getString("state"), detail);
+            }
+            String installation = OwnerInstaller.state(this);
+            if (!running && OwnerInstaller.busy(this)) { OwnerInstaller.reconcile(this); installation = OwnerInstaller.state(this); }
+            if (OwnerInstaller.busy(this)) model.observe(installation, OwnerInstaller.status(this));
+            else if (!running && (model.phase() == OwnerUpdateState.Phase.READY || model.phase() == OwnerUpdateState.Phase.INSTALLING || model.phase() == OwnerUpdateState.Phase.AWAITING_CONFIRMATION)) {
+                if ("INSTALLED".equals(installation)) { recordInstalledRelease(); model.observe(installation, OwnerInstaller.status(this)); }
+                else if ("ERROR".equals(installation)) model.observe("ERROR", OwnerInstaller.status(this));
+            }
+            // A killed worker is not still running. Rechecking safely rediscovers the release/cache.
+            if (!running && model.busy() && !OwnerInstaller.busy(this)) model.observe("ERROR", "Update work was interrupted. Check for updates to resume from retained outputs.");
+        } catch (Exception error) { model.observe("ERROR", error.getMessage()); }
+        render();
+    }
+    private void render() {
+        String phase = model.phase() == OwnerUpdateState.Phase.ERROR ? "FAILED" : model.phase().toString().replace('_', ' ');
+        statusView.setText(phase + "\n" + model.message());
+        checkButton.setEnabled(!running && model.canCheck());
+        buildButton.setEnabled(!running && model.canBuild());
+        installButton.setEnabled(!running && model.canInstall());
     }
     private static File readyApk(Context app) throws Exception {
         File report=new File(app.getFilesDir(),"tool-host-report.json");
@@ -118,6 +260,27 @@ public final class ToolHostActivity extends Activity {
         try (InputStream source=new FileInputStream(file)) {byte[] b=new byte[65536]; int n; while((n=source.read(b))!=-1) digest.update(b,0,n);}
         StringBuilder s=new StringBuilder(); for(byte b:digest.digest()) s.append(String.format(Locale.ROOT,"%02x",b&255)); return s.toString();
     }
+    private void systemTrust(File directory) throws Exception {
+        // Use this Android app's default TLS trust, not the embedded OpenSSL
+        // build's host-specific CA path. Publisher signature trust is separate.
+        javax.net.ssl.TrustManagerFactory factory = javax.net.ssl.TrustManagerFactory.getInstance(javax.net.ssl.TrustManagerFactory.getDefaultAlgorithm());
+        factory.init((java.security.KeyStore) null);
+        File bundle = new File(directory, "system-ca.pem"); int count = 0;
+        try (FileOutputStream output = new FileOutputStream(bundle)) {
+            for (javax.net.ssl.TrustManager manager : factory.getTrustManagers()) {
+                if (!(manager instanceof javax.net.ssl.X509TrustManager)) continue;
+                for (java.security.cert.X509Certificate certificate : ((javax.net.ssl.X509TrustManager) manager).getAcceptedIssuers()) {
+                    String encoded = android.util.Base64.encodeToString(certificate.getEncoded(), android.util.Base64.NO_WRAP);
+                    output.write(("-----BEGIN CERTIFICATE-----\n" + encoded + "\n-----END CERTIFICATE-----\n").getBytes(StandardCharsets.US_ASCII));
+                    count++;
+                }
+            }
+            output.getFD().sync();
+        }
+        if (count == 0 || !bundle.setReadOnly()) throw new IOException("Android system TLS trust unavailable");
+        File empty = new File(directory, "empty-ca-directory");
+        if (!empty.mkdir() || !empty.setReadOnly()) throw new IOException("Private TLS CA directory unavailable");
+    }
     private JSONObject child(String label, List<String> arguments, File directory, File nativeDir, File links) throws Exception {
         File output=new File(directory,label+".log");
         // Pin before interpreter/JVM startup; a periodic watcher can miss its short heat spike.
@@ -132,6 +295,11 @@ public final class ToolHostActivity extends Activity {
         command.addAll(arguments);
         ProcessBuilder builder=new ProcessBuilder(command).directory(directory).redirectErrorStream(true).redirectOutput(output);
         Map<String,String> env=builder.environment();
+        File systemCa = new File(directory, "system-ca.pem");
+        if (systemCa.isFile()) {
+            env.put("SSL_CERT_FILE", systemCa.getCanonicalPath());
+            env.put("SSL_CERT_DIR", new File(directory, "empty-ca-directory").getCanonicalPath());
+        }
         for(String key:new ArrayList<>(env.keySet())) if(key.startsWith("DOTNET_") || key.startsWith("MONO_") || key.startsWith("CORECLR_") || key.startsWith("COMPlus_")) env.remove(key);
         env.put("LD_LIBRARY_PATH",nativeDir.getCanonicalPath()+":"+links.getCanonicalPath());
         env.put("DOTNET_SYSTEM_GLOBALIZATION_INVARIANT","1"); env.put("DOTNET_MULTILEVEL_LOOKUP","0");
@@ -156,7 +324,9 @@ public final class ToolHostActivity extends Activity {
         if(process.exitValue()!=0) throw new IOException(label+" exit "+process.exitValue()+" "+text(output).substring(0,Math.min(2000,text(output).length())));
         return result;
     }
-    private void executeFixture() {
+    private void executeFixture() { execute(null); }
+    private void executeUpdate(String action) { execute(action); }
+    private void execute(String updateAction) {
         JSONObject report=new JSONObject();
         try {
             report.put("schema",1);report.put("success",false);report.put("securityQualified",false);report.put("gameRuntimeChanged",false);
@@ -191,19 +361,21 @@ public final class ToolHostActivity extends Activity {
                 if(link.exists()){if(!link.getCanonicalFile().equals(target))throw new IOException("existing native link differs");}
                 else Os.symlink(target.getPath(),link.getPath());
             }
-            File ownerJob=new File(getFilesDir(),"owner-input/request.json");
+            if (updateAction != null) systemTrust(root);
+            File ownerJob=new File(getFilesDir(), updateAction == null ? "owner-input/request.json" : "owner-input/update-request.json");
             if(ownerJob.isFile()) {
-                List<String> backend=Arrays.asList(new File(nativeDir,"libpythonhost.so").getPath(),new File(nativeDir,"libpython3.14.so").getPath(),new File(root,"python").getPath(),new File(root,"repo/tools/phone-build/owner-code/run_android.py").getPath(),ownerJob.getPath(),root.getPath(),nativeDir.getPath());
+                List<String> backend=Arrays.asList(new File(nativeDir,"libpythonhost.so").getPath(),new File(nativeDir,"libpython3.14.so").getPath(),new File(root,"python").getPath(),new File(root, OwnerUpdateState.backendScript(updateAction)).getPath(),ownerJob.getPath(),root.getPath(),nativeDir.getPath());
                 report.put("ownerBackend",child("owner-backend",backend,root,nativeDir,links));
                 File ready=new File(getFilesDir(),"owner-input/owner-apk-ready.json");
                 JSONObject job=new JSONObject(text(ownerJob));
-                if((job.has("signing")||job.has("packaging"))&&ready.isFile()) {
+                if((job.has("signing")||job.has("packaging")||"release-build".equals(updateAction))&&ready.isFile()) {
                     JSONObject apk=new JSONObject(text(ready)); File file=new File(apk.getString("apk")).getCanonicalFile();
                     if(!file.getPath().startsWith(getFilesDir().getCanonicalPath()+"/")||!hash(file).equals(apk.getString("sha256")))throw new IOException("owner APK output drift");
                     report.put("ownerApk",apk);
                 }
                 report.put("success",true);
             } else {
+            if (updateAction != null) throw new IOException("Explicit update request required");
             List<String> prefix=Arrays.asList(new File(nativeDir,"libtoolhost.so").getPath(),new File(nativeDir,"libhostfxr.so").getPath(),runtime.getPath());
             List<String> version=new ArrayList<>(prefix);version.add(new File(root,"compiler/csc.dll").getPath());version.add("-version");
             report.put("compilerVersion",child("version",version,root,nativeDir,links));
@@ -222,8 +394,15 @@ public final class ToolHostActivity extends Activity {
             if(!pythonReport.getBoolean("success") || !publicReceipt.getBoolean("success") || publicReceipt.getBoolean("game_assemblies_executed"))throw new IOException("public producer contract differs");
             report.put("pythonProfile",pythonReport);report.put("publicReceipt",publicReceipt);report.put("success",true);
             }
-        }catch(Exception error){try{report.put("failure",error.toString());}catch(Exception ignored){}}
-        try(FileOutputStream output=new FileOutputStream(new File(getFilesDir(),"tool-host-report.json"))){output.write(report.toString(2).getBytes(StandardCharsets.UTF_8));}catch(Exception ignored){}
+        }catch(Exception error){
+            try{report.put("failure",error.toString());}catch(Exception ignored){}
+            if (updateAction != null) updateStatus(app, "ERROR", error.toString());
+        }
+        try {
+            writeJson(new File(getFilesDir(), updateAction == null ? "tool-host-report.json" : "update-tool-report.json"), report);
+            if ("release-build".equals(updateAction) && report.getBoolean("success") && report.has("ownerApk"))
+                writeJson(new File(getFilesDir(), "tool-host-report.json"), report);
+        } catch(Exception error) { if (updateAction != null) updateStatus(app, "ERROR", "Could not retain build result: " + error.getMessage()); }
     }
     }
 }

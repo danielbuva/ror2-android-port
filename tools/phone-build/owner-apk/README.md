@@ -287,15 +287,18 @@ No existing lab key is shipped or silently selected by this producer.
 
 ## Public release updates
 
-`release.py` owns the current host-qualified release contract and incremental
-cache. The installer owns download, trust-key provisioning, signature verification,
-producer dispatch and PackageInstaller; complete phone updates remain open.
-Release assets are `release.json` and `public-tools.zip`, containing only public
-recipes, producers, installer and permitted toolchain material. Neither asset
-contains an APK, original inputs or game-derived outputs.
+`release.py` owns the incremental cache; `public_release.py` owns publisher
+metadata, signatures and committed-source bundles. `updates.py` owns GitHub
+acquisition, verification and rebuild orchestration; `release_jobs.py` dispatches
+existing source-only producers. Release assets are `release.json`, detached
+`release.sig`, and `public-tools.zip`. The bundle contains reviewed public
+recipes, producer/installer source and toolchain descriptions, never an APK,
+original input, native executable or generated game data. Native tools remain
+in the installed tool host; incompatible tool changes require a newer installer.
 
-`release.json` contains a `release` object and a `signature` object. The release
-fields are `version` (display text), `version_code` (positive Android integer),
+`release.json` contains the release body; `release.sig` contains the detached
+signature metadata. Internally the verifier combines them into the PR #117
+`{release, signature}` envelope. The release fields are `version` (display text), `version_code` (positive Android integer),
 `application_id`, `minimum_installer_version`, `bundle_sha256` (public-tools.zip),
 and `entries`. Each entry key is its relative `apk/` or `payload/` output path;
 its value has `recipe_sha256` and `producer_sha256`. Each hash binds the complete
@@ -333,3 +336,71 @@ Losing the key requires exporting saves and an explicit reinstall/reimport path;
 a replacement key cannot update an existing installation. Never clear game data
 as part of an update. The final alpha identity remains `dev.ror2lab.alpha`;
 current disposable lab packaging retains its separately qualified identity.
+
+
+### Publishing and checking updates
+
+A maintainer provisions the existing publisher public SPKI PEM in the installer's
+`managed-host/release-trust.json` (`keys` maps `key_id` to PEM). The committed
+empty key map deliberately fails closed. Staging accepts an explicit
+`--release-trust` file for a maintainer-provisioned build. A key downloaded with a release is
+never trusted. Configure repository variables `PUBLISHER_KEY_ID`,
+`PUBLISHER_PUBLIC_KEY`, `PUBLIC_RELEASE_PLAN_PATH`, and optional
+`PUBLIC_MINIMUM_INSTALLER_VERSION` (default 1), and the repository secret
+`PUBLISHER_PRIVATE_KEY` with an **existing** matching publisher PEM. Protect the
+`public-release` GitHub environment and version tags. Do not put a private key in
+Git, a recipe, an artifact or a log. This implementation creates/configures no keys.
+
+The installer build also requires the matching Python 3.14 distribution's
+`_socket` and `_ssl` modules in its existing caller-pinned `backend-tools.json`:
+`natives` targets `libpyext__socket.so` and `libpyext__ssl.so` each carry a canonical
+provider `path` and `sha256`; `links` maps
+`python/lib/python3.14/lib-dynload/_socket.cpython-314-aarch64-linux-android.so`
+and the corresponding `_ssl` path to those targets. Missing or mismatched
+providers refuse before compilation. Android's default Java trust manager supplies
+public TLS roots to Python; no trust-all mode or downloaded trust roots are used.
+
+Push an authorized `owner-v<versionCode>` tag to run `public-release.yml`.
+It audits public source, runs synthetic tests, builds a deterministic ZIP from
+committed regular Git blobs only, signs the canonical manifest, verifies the
+result and publishes exactly the three assets above. Dirty working-tree bytes and untracked files are never included; symlinks
+and binary outputs are refused. No release is published by opening a PR.
+The reviewed plan at `PUBLIC_RELEASE_PLAN_PATH` has `schema: 1`, extra public
+`files`, and `entries` mapping each final output to `recipe_files`,
+`producer_files`, and a `job` JSON path. Each closure must include its transitive
+configuration, imports and prerequisite jobs. The builder hashes these closures;
+it does not guess them or turn an incomplete producer inventory into a release.
+See `public_release.py` and synthetic `test_public_release.py` for the exact contract.
+
+On the phone, **Check for updates** obtains GitHub's latest published release,
+verifies its detached signature and package/version/minimum-installer policy,
+and reports changed entries. **Download and rebuild update** verifies the ZIP
+and every indexed member before running any acquired source. Complete outputs
+are reused only when their dependency, original-input and output hashes agree.
+Source-only jobs use the installed Python/native tool host, never a shell or a
+native executable downloaded in the bundle. Failed/interrupted work retains
+completed cache entries and can be retried. Missing producers fail explicitly.
+
+The owner-private `owner-input/update-config.json` selects the existing assembly
+`manifest`, durable `key_directory`, optional `input_hashes` (default
+`input-hashes.json`), named private `bindings`, and optional qualified `drift`
+receipts. Paths stay within that owner directory. The input hash inventory pins
+immutable originals/tools, not generated `work/config/local.json` or
+`work/inventory/files.json`; those two bookkeeping paths are explicitly refused.
+Existing source owners separately validate accepted original-file inventories.
+The private update configuration contains no publisher key.
+Job schema 1 names an existing producer `script`, argument array, complete
+`outputs` map and optional `request`, prerequisite `needs` and named `artifacts`;
+`release_jobs.py` defines substitutions and checks dependency membership.
+Provision legitimate inputs through the existing owner-input flow, not releases.
+
+**Install owner-built update** reuses PR #119's `OwnerInstaller` session owner.
+It checks the actual package, increasing version and retained signing certificate,
+streams/hash-checks the APK, and observes Android's terminal callback while visible.
+Android 12+ requests `USER_ACTION_NOT_REQUIRED` with the required permission;
+Android can still require confirmation. Only successful package-manager readback
+advances `installed-release.json`. Updates never uninstall or clear game data.
+If the owner key is lost, stop: export saves through the game's supported path,
+explicitly reinstall with a new key, then restore saves. There is no automatic
+uninstall or save export. Host tests use synthetic data; phone install/update,
+interruption recovery and save survival remain the local orchestrator's checks.

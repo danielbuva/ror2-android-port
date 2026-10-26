@@ -375,7 +375,7 @@ def sign(request_path, output):
 def build(request_path, output):
     request = json.loads(Path(request_path).read_text())
     fields = {"manifest", "manifest_sha256", "targets", "frontend", "java", "android_jar", "d8_jar", "wire_helper"}
-    if set(request) - {"version_code", "code", "javac", "drift"} != fields or request["manifest_sha256"] != PROFILE:
+    if set(request) - {"version_code", "application_id", "code", "javac", "drift"} != fields or request["manifest_sha256"] != PROFILE:
         raise ValueError("unsupported owner APK request/profile")
     code = code_paths(request)
     version_code = request.get("version_code")
@@ -483,7 +483,7 @@ def build(request_path, output):
         manifest_bytes = manifest_source.read_bytes()
         if "AndroidManifest.xml" in code and hashlib.sha256(manifest_bytes).hexdigest() != code["AndroidManifest.xml"]["sha256"]:
             raise ValueError("owner APK source bytes differ")
-        patched = MANIFEST.patch(manifest_bytes, wire, version_code=version_code)
+        patched = MANIFEST.patch(manifest_bytes, wire, version_code=version_code, application_id=request.get("application_id"))
         (output / "AndroidManifest.xml").write_bytes(patched)
         payload = [row for name, row in content.items() if name.startswith("payload/")]
         index = {"schema": 1, "profile": PROFILE, "files": [{"name": r["path"][8:], "bytes": r["bytes"], "sha256": r["sha256"]} for r in payload]}
@@ -572,6 +572,7 @@ def build(request_path, output):
             signed=False,
             device_qualified=False,
             requested_version_code=version_code,
+            requested_application_id=request.get("application_id"),
         )
         return result
     except Exception as error:
