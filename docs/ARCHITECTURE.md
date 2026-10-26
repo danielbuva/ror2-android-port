@@ -434,7 +434,7 @@ owner-backend/public-profile launches. Setup reads kernel CPU/GPU/battery/skin
 zones, checks thermal admission and selects inherited efficiency-core affinity
 with two-worker runtime limits. Its independent supervisor pauses the owned
 process group and nested-session descendants at 70/55 C by default (explicit
-Thor profile 75/60 C), retaining existing 80/88 C aborts and 250 ms sampling.
+Thor profile 75/60 C), using the current 95 C/3 s CPU/GPU and 46 C battery limits with 250 ms sampling.
 Teardown kills owned processes; receipts retain pause time and failures. The
 atomic BOOTTIME clock feeds the existing native active-time contract through
 `run_android.py`. Phone sensor access and sustained qualification remain open.
@@ -751,8 +751,9 @@ project staging and source/bundle hash checks for that fixture.
 `tools/phone-build/ContentFixtureBuilder.cs` owns its exact-editor check and
 separate player build; `ContentFixture.cs` loads either its embedded bundle or
 a hash-bound candidate at a fixed path in its own data directory. It checks two
-load/unload cycles and writes a private report. The three `phone-content-*` prototype
-actions stage/check/build only this fixture under the primary checkout mutex.
+load/unload cycles and writes a private report. `phone-content-fixture`,
+`phone-content-check` and `phone-content-build` stage/check/build this fixture
+under the primary checkout mutex.
 The check also captures the native properties hash and binary serialization of
 the authored `NativeScriptSchemaFixture.cs` fields. It destroys the temporary
 objects after capture; the host must inspect actual type-tree presence before
@@ -760,6 +761,19 @@ using the output as schema evidence. The fixture class is Editor-only and has
 no game-build consumer.
 See [probe setup and boundaries](../tools/phone-build/README.md). No game-runtime
 owner or whole-catalog build calls this support path.
+
+The same staging/launch owner supports the current experimental
+`phone-content-ambient-fixture` and `phone-content-ambient-check` actions.
+`AmbientSkyFixture.cs` stages an authored Lab scene and explicit procedural sky
+in a fresh project. Its Metal batch session waits for an external read-only
+controller to arm capture before scene setup, then exits explicitly after
+completion or 90 seconds. The shared editor mutex covers the full session;
+ordinary content checks retain their headless arguments. The host requires six
+ordered finite 64 by 64 float images, uncached SH bytes and a nonempty GPU trace
+from the controller. Native job association remains the controller's contract.
+Logs, observations and trace stay private; this fixture supplies no player-data
+bytes and does not establish target equivalence. Its actual internal-bake
+trigger and graphical execution remain unqualified.
 
 `scripts/lab/phone_texture_oracle.py` owns a separate current experimental
 exact-editor texture oracle. The `phone-texture-fixture` action stages a fresh
@@ -1480,16 +1494,20 @@ Foreign selectors/pending transactions are preserved, and failed terminal
 verification retains the lease for diagnosis. No installation is performed.
 The batch's independent temperature-zone observer targets 250 ms intervals and
 refuses a measured gap above 1 s. Runtime aborts if one CPU/GPU zone remains
-above 80 C for at least one second, with at least three consecutive observations
-spaced at most 0.35 s apart; a reading at or below 80 C or a longer gap resets
-that zone's continuity. Any CPU/GPU reading above 88 C or battery/skin reading
-above 45 C aborts immediately. Brief core spikes remain recorded. Failed
-supervision also aborts without retry.
+above 95 C for at least three seconds, with no gap above 1 s. A reading at or
+below 95 C resets that zone's continuity. Battery at or above 43 C aborts immediately.
+Skin and HAL status are metrics. Trace rows and stage receipts record sampled
+time above 80 C, CPU/GPU peak and phase; heat below the safety limits does not
+fail gameplay. Failed supervision also aborts without retry.
 Before each stage, readable CPU/GPU/battery/skin zones must cool to at most
-50 C with the OLED asleep. Other physical zones, including power-management,
+50 C with the OLED asleep, with battery back to at most 35 C before every
+stage. Battery status charging (2) at level >= 80%, or level > 85%, refuses
+admission without retry; charging settings remain user-owned. The observer
+reads battery temperature, level and status through bounded dumpsys calls and
+retains them in trace rows and stage receipts. Other physical zones, including power-management,
 charger and USB sensors, are recorded as excluded from admission only; they
 remain sampled in raw observations and all-zone peaks. The runtime thresholds
-apply to CPU/GPU/battery/skin. Admission discovers zone types and readable paths
+apply to CPU/GPU and battery. Admission discovers zone types and readable paths
 with a separate 10-second ADB timeout while no gameplay runs. Runtime reads those
 physical temperature paths in one batch, retaining the 0.7-second ADB timeout
 and measured one-second maximum sampling gap. Unreadable temperature interfaces
@@ -4522,3 +4540,9 @@ teardown and local receipts follow the existing contract above. The existing
 `record_produce.py` Director path derives exposed-reference names from original
 asset identity; it adds no runtime state. Its host contract is qualified separately
 from complete Conduit assembly, which remains open.
+
+J1185 adds Conduit Canyon object/Standard selections and Fungal Standard/postprocess
+selections to those owners. Existing Standard scene validation derives enabled fog
+variants from original RenderSettings; setup and process teardown retain the same
+explicit roots, source/SDK pins, new output and retained receipt contract. No new
+runtime owner or target-data supplier is introduced.

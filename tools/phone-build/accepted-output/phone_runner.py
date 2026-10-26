@@ -25,29 +25,37 @@ class ThermalDutyCycle:
         self.last = None
         self.hot_since = {}
         self.peak = 0
+        self.time_above_80_seconds = 0.0
+        self.previous_above_80 = False
+        self.peak_phase = None
 
     def observe(self, zones, now, admission=False):
         if self.last is not None and now - self.last > 1:
             raise RuntimeError("thermal sample gap above 1 s")
+        gap = now - self.last if self.last is not None else 0
         self.last = now
         processors = [v for kind, v in zones.values() if kind in ("cpu", "gpu")]
         if not processors or not any(kind == "cpu" for kind, _ in zones.values()):
             raise RuntimeError("CPU telemetry unavailable")
-        self.peak = max(self.peak, max(processors))
+        phase = "admission" if admission else "paused" if self.paused else "production"
+        if max(processors) > self.peak:
+            self.peak, self.peak_phase = max(processors), phase
+        if not admission:
+            if self.previous_above_80:
+                self.time_above_80_seconds += gap
+            self.previous_above_80 = max(processors) > 80
         for name, (kind, value) in zones.items():
             if not math.isfinite(value) or not 0 < value < 150:
                 raise RuntimeError("invalid thermal value: " + name)
             if admission and value > 50:
                 raise RuntimeError("thermal admission above 50 C")
-            if kind in ("battery", "skin") and not admission and value > 45:
-                raise RuntimeError("battery/skin above 45 C")
+            if kind == "battery" and not admission and value >= 43:
+                raise RuntimeError("battery at or above 43 C")
             if kind in ("cpu", "gpu"):
-                if value >= 88:
-                    raise RuntimeError("CPU/GPU at 88 C")
-                if value > 80:
+                if value > 95:
                     self.hot_since.setdefault(name, now)
-                    if now - self.hot_since[name] >= 1:
-                        raise RuntimeError("CPU/GPU above 80 C for 1 s")
+                    if now - self.hot_since[name] >= 3:
+                        raise RuntimeError("CPU/GPU above 95 C for 3 s")
                 else:
                     self.hot_since.pop(name, None)
         if not self.paused and max(processors) >= self.high:
@@ -67,6 +75,8 @@ class ThermalDutyCycle:
             pauses=self.pauses,
             pause_seconds=self.pause_seconds + (now - self.since if self.paused else 0),
             peak_cpu_gpu_celsius=self.peak,
+            peak_phase=self.peak_phase,
+            time_above_80_seconds=self.time_above_80_seconds,
         )
 
 
@@ -184,8 +194,9 @@ def run(command, receipt, *, profile="nova", timeout=86400, sensor=read_zones, c
         for name in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "DOTNET_PROCESSOR_COUNT"):
             env[name] = "2"
         env["ROR2LAB_BUILD_PAUSE_CLOCK"] = str(pause_clock.resolve())
-        # taskset applies before interpreter/compiler startup; failure refuses.
-        child = subprocess.Popen(["/system/bin/taskset", "-c", ",".join(map(str, sorted(cpus))), *command], env=env, start_new_session=True)
+        # Android Toybox versions without -c still accept a hexadecimal CPU mask.
+        # Apply before interpreter/compiler startup; failure refuses.
+        child = subprocess.Popen(["/system/bin/taskset", format(sum(1 << cpu for cpu in cpus), "x"), *command], env=env, start_new_session=True)
         family = Family(child)
         while True:
             tick = clock()

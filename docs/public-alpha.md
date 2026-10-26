@@ -113,6 +113,8 @@ Decision preparation: [J829](history/journal-J1-J1177/PORTING_JOURNAL.md#j829--r
       source tree has 606 of 705 entries available (601 raw-exact, two code
       comparison entries and three separately drift-explained); 99 remain
       missing (J1183: 7 APK, 92 payload). Host shared mixed-file assembly is qualified; phone serialization remains open.
+      [J1184](PORTING_JOURNAL.md#j1184--isolated-ambient-observation-fixture) adds host-qualified ambient observation tooling;
+      the live bake, target equality and source-only sky production remain open.
       [J1102](history/journal-J1-J1177/PORTING_JOURNAL.md#j1102--qualify-linked-vulkan-fragment-output-and-explicit-owner-apk-code-inputs)
       confirms both executable stages in that linked payload and accepts all
       three produced code outputs in the existing APK owner without replay
@@ -235,8 +237,9 @@ qualification remain separate from these laboratory installs.
       remains open.
       [J1164](history/journal-J1-J1177/PORTING_JOURNAL.md#j1164--recover-an-interrupted-native-save-and-classify-stage-load-thermal-refusal)
       qualifies native pending-write interruption/recovery on the installed R58.
-      Its next stage is deliberately stopped by the sustained CPU thermal guard
-      during stage startup; fresh heaps and sustained play remain open.
+      Its next stage stopped under the historical thermal guard during startup.
+      The current [thermal policy](PLAYTESTING.md#stability-persistence-and-updates)
+      permits that heat; fresh heaps and sustained play remain open.
       Injected persistence states and this writer interruption do not establish
       a power-cut or filled-filesystem result.
 - [ ] Qualify the [prepared-lab owner-build/install/playtest checklist](PLAYTESTING.md)
@@ -257,6 +260,12 @@ bytes exact. The guarded startup-affinity rerun completes with a 79.2 C peak and
 340 ms maximum sampling gap, meeting the short-job thermal protocol; the earlier
 95.5 C failure remains recorded. Complete content composition, sustained thermal
 qualification and final installation remain open.
+
+J1187 supersedes the SDK output comparison: all 15 persisted entries are raw-exact
+in the ordinary app host, including both metadata files; prior 13 outputs are unchanged.
+Producer time is 44.279 s, peak UID RSS 358,784 KiB and observed CPU/GPU peak 54.5 C.
+The saved run lacks current battery/charge admission evidence; thermal qualification
+remains open. The shared producer now aborts battery at or above 43 C.
 
 The owner APK assembler accepts the complete 15-entry SDK output cohort alongside
 the three mandatory IL2CPP/metadata/Burst files through its existing explicit
@@ -280,9 +289,9 @@ production yields all 15 entries raw-exact to J850. Final-file availability and
 raw equality remain separate from source provenance,
 phone production and runtime acceptance. J1153 records the current exact,
 drift-explained and missing cohorts; the checker preserves actual admitted
-current bytes. Ordinary-app metadata qualification, corrected phone-native
-output, complete content, installation, controls and matched performance remain
-open.
+current bytes. Ordinary-app metadata equality is qualified by J1187. Corrected phone-native
+output, complete content, current thermal policy, installation, controls and matched
+performance remain open.
 
 [J1133](history/journal-J1-J1177/PORTING_JOURNAL.md#j1133--produce-source-animation-hierarchy-and-generic-records-on-the-host)
 extends the source-only object producers. These host-qualified packs still
