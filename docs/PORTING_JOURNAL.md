@@ -133,3 +133,17 @@ charging settings remain untouched. CPU/GPU > 95 C for >= 3 s and gap > 1 s rule
 52 focused host tests and Ruff pass; preflight lacks ignored local configuration.
 Evidence: alpha worktree `work/coordination/alpha-battery-health/validation.json`.
 No APK/output generated or installed. Fresh stability/device qualification remains open.
+
+## J1190 — Complete source-derived Fungal scene
+
+2026-10-26. Audited Fungal selectors extend the existing object producer:
+123,671 records (36,645,626 B), both serialized members and the complete compressed
+bundle are host raw-exact against J850. Output: 14,723,479 B, SHA-256
+`e2addd8bbd3cbb1f30971a114b312ae434b8673905c2cc6fc34e3a6fd4f3edc2`.
+Evidence: `work/coordination/p1-anim/fungal-final-host-v2/qualification-done.json`
+and `work/coordination/p1-anim/fungal-publication-v1/checks-done.json` in the animation worktree.
+Existing target-tree interface exposes `payload/whole-scene-fungal`; no union recount claimed.
+Prior art: retained J1070/J1075 producer and original typed preload policies;
+R2API addressed/direct distinction from the pinned community source index.
+Focused host checks, source-only qualification and provenance review pass.
+Host-only; phone production, installation and original scene behavior remain open.
