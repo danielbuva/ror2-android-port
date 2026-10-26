@@ -3856,3 +3856,23 @@ or credential is included. Legitimate PC files, separately acquired SDK and
 receipt-pinned source-produced media/Shader packs remain required. Generated
 outputs and evidence stay ignored. Existing ownership and redistribution
 boundaries apply; phone production, installation and runtime behavior remain open.
+
+## Soul, Mire and Crystalworld Shader selections (2026-10-26)
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-crystalworld-postprocess-shaders.json` | `ea6966e5e5086b9547cfd83663198adce6c0125e6b1ff4e2beead7d8b2935fa8` |
+| `owner-mire-postprocess-shaders.json` | `b91ed6fc82718236bc7445a65651f7c7a25dafacc2b74cdee76506fe15c2f693` |
+| `owner-mire-standard-shaders.json` | `98d68b25432acfeb1771d54f7f2b8f60688b721e1e36e99657ce6e459ad12f26` |
+| `owner-soul_perftest-postprocess-shaders.json` | `5d0daae7698d0344edc1ec7daedfc15fd5c8e536bb06e15cae8ff7c18fa9a289` |
+| `owner-soul_perftest-standard-shaders.json` | `bfd878baca6e50ae5b74b4c3e7cfd73577d68e6702a70c9511c03e487996bf10` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain original selectors, hashes, checked resource/material
+relationships and SDK/public-tool pins only. Soul uses its own original
+scene resource and acquired-export GUID relationships. No original body,
+program, copied source, private path or credential is included. Legitimate
+PC input and separately acquired SDK remain required; generated records
+and evidence stay ignored. All 74 persisted Shader records are host
+raw-exact against J850. Complete-scene readiness and phone qualification
+remain separate gates.
