@@ -4041,3 +4041,22 @@ order. No shader body, program, copied source, private path or credential is
 included. Legitimate PC input and independently acquired SDK remain required;
 generated records and evidence stay ignored. The persisted 25,056 B record is
 host raw-exact against J850; full-scene and phone gates remain separate.
+
+## Frozenwall complete spine-scene selections (2026-10-26)
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-frozenwall-spine-objects.json` | `9cb32f87690d2b479eb778ec2e27b50d52249eff781affe93e7cee58bdc9200f` |
+| `owner-frozenwall-spine-lab-standard-shaders.json` | `c7afd2cce11237e6db2131c5eddeb7037ca360866de80ecbe75825bc5fbe5829` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain original selectors, hashes, checked pointer relationships,
+SDK/public-tool pins and existing authored import policies only. Lossless JSON
+compaction preserves every decoded object selection; the separately qualified
+Standard profile is unchanged. Original renderer, skybox and local-material
+roots select reduced-spine Standard variants using the J1183/J1192 policy.
+No original body, curve, scalar payload, pixel, shader program, copied source,
+private path or credential is included. Legitimate PC files, separately acquired
+SDK and receipt-pinned source-produced media/Shader packs remain required.
+Generated outputs and evidence stay ignored. Existing ownership and
+redistribution boundaries apply; phone production and runtime remain open.

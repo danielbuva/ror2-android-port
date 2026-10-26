@@ -4760,3 +4760,15 @@ Explicit pinned PC/SDK/tool inputs and a separate output directory set up
 production; process exit tears down producers while receipts persist. The
 persisted 25,056 B Shader record is host raw-exact to J850. Full-scene assembly
 belongs to the scene owner; phone production and runtime remain open.
+
+Frozenwall complete spine-scene selections extend the existing object/Shader
+owners through `recipe/owner-frozenwall-spine-objects.json` and
+`recipe/owner-frozenwall-spine-lab-standard-shaders.json`. Original renderer,
+skybox and local-material roots select the reduced-spine Standard variants.
+Explicit current PC/SDK roots, pinned profiles/tools, receipt-pinned
+source-produced media/Shader packs and a separate output directory set up
+production; process exit tears down producers while receipts persist. The
+existing member-aware writer exposes `payload/frozenwall-spine-lab`.
+All 9,672 persisted objects, both serialized members and the compressed bundle
+are host raw-exact against J850. No runtime owner is added; phone production,
+installation and original scene behavior remain open.
