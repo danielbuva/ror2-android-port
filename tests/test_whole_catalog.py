@@ -75,6 +75,16 @@ class IntegrationMetadataTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "Provider roots lost"):
             integration_metadata(self.metadata, self.closure, self.mapped, [], attempt="integration-fixture")
 
+    def test_pre_camera_build_uses_its_source_selection_and_root_policy(self):
+        # J850 predates the camera extension: one shader remains a non-root
+        # dependency, while shaders outside the historical closure are absent.
+        mapped = {key: value for key, value in self.mapped.items() if key not in {"Assets/" + str(i) for i in self.camera[1:]}}
+        result = integration_metadata(self.metadata, self.closure, mapped, [], attempt="accepted-fixture", camera_roots=())
+        self.assertEqual(result["roots"], [900001, 900003])
+        self.assertEqual([row["id"] for row in result["locations"]], [self.camera[0], 900001, 900003])
+        self.assertFalse(result["locations"][0]["root"])
+        self.assertEqual(result["keys"], self.metadata["keys"])
+
     def test_recipe_mapping_supplies_metadata_and_mesh_aliases_without_project_scan(self):
         from composition_rebuild import integration_declarations, integration_mapping
 

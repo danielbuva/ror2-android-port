@@ -1630,13 +1630,15 @@ def recover_ambiguous_mesh_subobjects(export, unresolved, metadata, native, rece
     return resolved
 
 
-def integration_metadata(metadata, closure, mapped, mesh_subobjects, *, attempt):
+def integration_metadata(metadata, closure, mapped, mesh_subobjects, *, attempt, camera_roots=None):
     """Assemble catalog identities from regenerated inputs and explicit destination paths.
 
     No project, filesystem, or Editor access; callers own source GUID/path resolution.
     This is integration metadata, not a final bundle catalog or readiness proof.
+    The current build adds camera roots by default; an accepted build predating
+    that extension supplies an empty camera_roots iterable and its source mapping.
     """
-    roots = set(closure["roots"]) | set(closure.get("runtime_roots", [])) | set(CAMERA_SHADER_ROOTS)
+    roots = set(closure["roots"]) | set(closure.get("runtime_roots", [])) | set(CAMERA_SHADER_ROOTS if camera_roots is None else camera_roots)
     locations = []
     for row in metadata["locations"]:
         conversion = closure["converted"].get(str(row["id"]))
