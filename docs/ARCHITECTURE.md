@@ -1387,6 +1387,13 @@ synced content payload comes out. Everything game-derived stays under the ignore
 
 Steps 6–9a are the `./dev prototype --action whole-catalog-*` actions listed in
 [whole-catalog-integration.md](whole-catalog-integration.md#reusable-fixes-and-commands).
+`build.whole_player_inputs` treats the authored `GameAudioOriginalBootstrap.dll`
+as player code alongside staged runtime C#. The existing audio producer compiles
+and pins it before reuse validation; code-only builds retain its current owner
+contract instead of restoring an older DLL. Its importer metadata, the other
+plugin assemblies, banks and every frozen payload hash remain content inputs.
+The validator migrates older receipts for this exact DLL path only.
+
 `whole_catalog.integration_metadata` assembles integration locations, mesh aliases
 and root roles from regenerated metadata, closure and explicit destination paths.
 It has no filesystem or Editor state; `prepare_integration` still owns source
