@@ -237,8 +237,9 @@ qualification remain separate from these laboratory installs.
       remains open.
       [J1164](history/journal-J1-J1177/PORTING_JOURNAL.md#j1164--recover-an-interrupted-native-save-and-classify-stage-load-thermal-refusal)
       qualifies native pending-write interruption/recovery on the installed R58.
-      Its next stage is deliberately stopped by the sustained CPU thermal guard
-      during stage startup; fresh heaps and sustained play remain open.
+      Its next stage stopped under the historical thermal guard during startup.
+      The current [thermal policy](PLAYTESTING.md#stability-persistence-and-updates)
+      permits that heat; fresh heaps and sustained play remain open.
       Injected persistence states and this writer interruption do not establish
       a power-cut or filled-filesystem result.
 - [ ] Qualify the [prepared-lab owner-build/install/playtest checklist](PLAYTESTING.md)
