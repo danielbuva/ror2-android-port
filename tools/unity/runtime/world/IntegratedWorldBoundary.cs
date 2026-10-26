@@ -1237,8 +1237,18 @@ public sealed partial class PortSession
                     Addressables.Release(lease);
             worldProjectileGhostLeases.Clear();
         }
+        // One marker per preparation seam, never per frame. Keep report phase and
+        // coroutine scheduling intact while locating thermal stops in this owner.
+        void TracePreparation(string step)
+        {
+            Debug.Log("Integrated preparation step=" + step + " at=" +
+                      Time.realtimeSinceStartup.ToString("R", System.Globalization.CultureInfo.InvariantCulture) +
+                      " frame=" + Time.frameCount);
+        }
+
         public IEnumerator PrepareIntegratedWorld(CharacterBody player, SessionConfig cfg)
         {
+            TracePreparation("begin");
             ResetOriginalAudioCameraContextAttemptForWorld();
             survivorCombatOutputs?.Dispose();
             if (survivorCombatOutputs != null && survivorCombatOutputs.report.cleaned)
@@ -1469,11 +1479,14 @@ public sealed partial class PortSession
             coordinator.Check(CostTypeCatalog.costTypeCount == (int)CostTypeIndex.Count &&
                                   CostTypeCatalog.GetCostTypeDef(CostTypeIndex.Money).name == "Money",
                               "Original integrated cost catalog initialization differs");
+            TracePreparation("default-pickup");
             var generic = coordinator.PrepareOriginalDefaultPickup(cfg);
             while (generic.MoveNext())
                 yield return generic.Current;
             coordinator.r.phase = "integrated-world-loot";
+            TracePreparation("loot-report-save");
             coordinator.Save();
+            TracePreparation("pickup-droplet");
             worldDropletField = PortSession.RewardField(typeof(PickupDropletController), "pickupDropletPrefab");
             priorWorldDroplet = worldDropletField.GetValue(null);
             coordinator.Check(priorWorldDroplet == null, "Unowned integrated droplet source");
@@ -1494,6 +1507,7 @@ public sealed partial class PortSession
             ownsWorldDroplet = worldDropletSource;
             coordinator.Check(worldDropletSource && worldDropletSource.name == "PickupDroplet" && LegacyResourcesAPI.ActiveCount == 0,
                               "Integrated original droplet Init failed");
+            TracePreparation("chest-drop-table");
             coordinator.worldChestTable = coordinator.artifactBundle.LoadAsset<BasicPickupDropTable>(cfg.chestDropTableAsset);
             coordinator.Check(coordinator.worldChestTable && coordinator.worldChestTable.name == "dtChest1" &&
                                   coordinator.worldChestTable.canDropBeReplaced,
@@ -1503,7 +1517,9 @@ public sealed partial class PortSession
             coordinator.r.world.lootDomain = coordinator.worldChestTable.GetPickupCount();
             coordinator.Check(coordinator.r.world.lootDomain == coordinator.worldLootDefinitions.Length,
                               "Integrated source chest loot domain missing");
+            TracePreparation("world-messages");
             PrepareWorldMessages();
+            TracePreparation("coin-emitter");
             worldCoinLease = LegacyResourcesAPI.LoadAsync<GameObject>("Prefabs/Effects/CoinEmitter");
             ownsWorldCoinLease = true;
             yield return worldCoinLease;
@@ -1511,6 +1527,7 @@ public sealed partial class PortSession
             worldCoinBaseline = (int)typeof(AsyncOperationHandle<GameObject>)
                                     .GetProperty("ReferenceCount", BindingFlags.Instance | BindingFlags.NonPublic)
                                     .GetValue(worldCoinLease);
+            TracePreparation("pause-context");
             coordinator.worldPause = new GameObject("Offline gameplay pause context");
             coordinator.worldPause.SetActive(false);
             coordinator.worldPause.AddComponent<NetworkIdentity>();
@@ -1528,8 +1545,11 @@ public sealed partial class PortSession
             PortSession.Call(player.equipmentSlot, "UpdateInventory");
             coordinator.Check(player.equipmentSlot.equipmentIndex == EquipmentIndex.None && !player.equipmentSlot.enabled,
                               "Integrated equipment must start empty/ungranted");
+            TracePreparation("equipment");
             coordinator.PrepareWorldEquipment(player, cfg);
+            TracePreparation("item-displays");
             coordinator.PrepareWorldItemDisplays(player, cfg);
+            TracePreparation("interactable-sources");
             if (PortSession.DriverField(coordinator.worldDriver, "networkIdentity") == null)
                 PortSession.Call(coordinator.worldDriver, "Awake");
             coordinator.worldStaging = new GameObject("Inactive offline content staging");
@@ -1583,6 +1603,7 @@ public sealed partial class PortSession
                                         coordinator.rewardDirector && coordinator.rewardDirector.enabled;
             if (cfg.teleporterLoop)
             {
+                TracePreparation("teleporter");
                 if (coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt)
                 {
                     var nativeDirector = coordinator.PrepareNativeFirstStageDirectorContext(player, cfg);
@@ -1609,35 +1630,45 @@ public sealed partial class PortSession
             }
             if (coordinator.r.liveCatalogs != null)
             {
+                TracePreparation("body-visual-references");
                 var visuals = coordinator.PrepareOriginalBodyVisualReferences();
                 while (visuals.MoveNext())
                     yield return visuals.Current;
+                TracePreparation("global-common-assets");
                 var common = coordinator.PrepareOriginalGlobalCommonAssets();
                 while (common.MoveNext())
                     yield return common.Current;
             }
             if (coordinator.r.liveCatalogs != null && cfg.teleporterLoop)
             {
+                TracePreparation("transmutation");
                 var transmutation = PrepareWorldTransmutation();
                 while (transmutation.MoveNext())
                     yield return transmutation.Current;
             }
+            TracePreparation("item-behaviors");
             coordinator.PrepareWorldItemBehaviors(cfg);
+            TracePreparation("commerce");
             coordinator.PrepareWorldCommerce(cfg, origin);
+            TracePreparation("stage-population");
             var population = coordinator.PopulateWholeStage();
             while (population.MoveNext())
                 yield return population.Current;
+            TracePreparation("original-stage");
             var stage = coordinator.BeginOriginalStage();
             while (stage.MoveNext())
                 yield return stage.Current;
             if (coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt)
             {
+                TracePreparation("native-stage-population");
                 var nativePopulation = coordinator.StartNativeWholeStagePopulation();
                 while (nativePopulation.MoveNext())
                     yield return nativePopulation.Current;
             }
+            TracePreparation("hud");
             coordinator.PlaceGoldshoresDiagnosticShrine();
             coordinator.PrepareRecoveredHud();
+            TracePreparation("complete");
             coordinator.Check(coordinator.r.world.ready, "Integrated session setup incomplete");
             coordinator.r.phase = "integrated-world-playing";
             coordinator.Save();

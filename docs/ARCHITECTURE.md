@@ -4539,6 +4539,14 @@ and member-aware layout feed `unity_write.py`; process exit tears down the
 producer while receipts and evidence remain local. No runtime state, Editor,
 new owner or private target-tree supplier is added.
 
+`IntegratedWorldSession.TracePreparation` emits a bounded log marker at each
+initial world-preparation seam, including the existing loot report write,
+asynchronous resource waits, equipment/displays and stage population. Markers
+contain monotonic process time and frame count so thermal traces can identify
+the interrupted operation. They add no retained state, report writes or yields;
+the existing report phase and resource teardown remain authoritative. A marker
+names the operation about to begin; the next marker bounds its elapsed time.
+
 J1183 adds eight scene object selections and eleven Shader selections to those
 same owners. Explicit original scene renderer roots select spine Shader variants;
 whole scenes retain their original recursive content closure. Setup, record-pack
