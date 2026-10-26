@@ -3423,6 +3423,12 @@ owned by the existing navigator/motor. Reports contain no Unity references.
 `test_siren_navigation_observation.py` executes the production recorder with a
 tracked synthetic reader/contract fixture; the original native-target test
 includes the new report types without replacing its witness assertions.
+The existing `IntegratedWorldSession` navigator preserves a reachable,
+unfinished multi-waypoint native detour while its waypoints progress, even if
+straight-line distance to the objective stalls. Its `NavigationRecoveryPolicy`
+still admits terrain recovery for a blocked waypoint or an unreachable,
+finished or short path. `test_siren_gameplay_route_ownership.py` executes this
+policy against the retained Siren detour failure and recovery cases.
 The existing aim helper can issue at most 24 linecasts per active
 sample for the inspected original egg shape; inactive selection does no witness
 work. It yields to manual control and nearby hostile combat. Native encounter start, source/stage
