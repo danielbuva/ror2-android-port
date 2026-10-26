@@ -3685,3 +3685,18 @@ relationships only. No original bodies, shader programs, copied source, private
 paths or credentials are included. Current legitimate PC files and separately
 acquired SDK remain required. Generated records and evidence stay ignored;
 complete Title assembly, phone production and runtime qualification remain open.
+## Title and Satellite complete object selections (2026-10-26)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-title-whole-objects.json` | `1f4ea96d713b60b159e5c1cd030bb5b49e7df1e387d9cbe10831290b033498ee` |
+| `owner-satellitescene-whole-objects.json` | `a035d84e5f5e930eb24bf23bd3ef37bd400d34bce1b0a7d9f665c63a672cd911` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain source selectors, hashes, checked pointer relationships and
+authored import policies only. Lossless compaction preserves decoded selectors.
+No original body, curve, scalar, pixel, program, copied source, private path or
+credential is included. Current legitimate PC files, SDK resources and checked
+source-produced record packs remain required. Generated outputs and evidence
+stay ignored. Existing redistribution and ownership boundaries apply; phone
+production and runtime qualification remain open.
