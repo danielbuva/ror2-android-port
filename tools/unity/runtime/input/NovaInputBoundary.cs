@@ -313,6 +313,7 @@ public sealed partial class PortSession
             NovaInputBridge bridge = null;
             NovaDiagnosticDisplay display = null;
             int sleepTimeout = Screen.sleepTimeout, priorTargetFrameRate = Application.targetFrameRate;
+            int priorRenderFrameInterval = UnityEngine.Rendering.OnDemandRendering.renderFrameInterval;
             bool ownsScreenSleepTimeout = !coordinator.IsPlayableSpine();
             if (ownsScreenSleepTimeout)
                 Screen.sleepTimeout = SleepTimeout.NeverSleep;
@@ -351,6 +352,13 @@ public sealed partial class PortSession
                 coordinator.Check(solver.GroundingStatus.IsStableOnGround && coordinator.r.nova.landings == 1 &&
                                       body.healthComponent.health == body.maxHealth,
                                   "Original spawned body landing before physical input");
+                if (cfg.integratedWorld)
+                {
+                    // Draw loading presentation less often without changing native simulation clocks.
+                    UnityEngine.Rendering.OnDemandRendering.renderFrameInterval = 3;
+                    Debug.Log("Integrated loading presentation interval=" + UnityEngine.Rendering.OnDemandRendering.renderFrameInterval +
+                              " targetFrameRate=" + Application.targetFrameRate + " at=" + Time.realtimeSinceStartup);
+                }
                 // Diagnostic aim stance only; original state/direction still choose and turn toward bank aim.
                 body.SetAimTimer(130);
                 display = new NovaDiagnosticDisplay(body.modelLocator.modelTransform, coordinator.artifactBundle, cfg.displayAssets,
@@ -473,7 +481,10 @@ public sealed partial class PortSession
                                                           : "nova-commando-ready";
                 if (cfg.integratedWorld)
                 {
+                    UnityEngine.Rendering.OnDemandRendering.renderFrameInterval = priorRenderFrameInterval;
                     Application.targetFrameRate = 300;
+                    Debug.Log("Integrated playing presentation interval=" + UnityEngine.Rendering.OnDemandRendering.renderFrameInterval +
+                              " targetFrameRate=" + Application.targetFrameRate + " at=" + Time.realtimeSinceStartup);
                     coordinator.r.performance =
                         new PerformanceReport { targetFrameRate = priorTargetFrameRate, requestedFrameRate = Application.targetFrameRate,
                                                 vSyncCount = QualitySettings.vSyncCount,
@@ -1010,6 +1021,8 @@ public sealed partial class PortSession
             }
             finally
             {
+                if (cfg.integratedWorld)
+                    UnityEngine.Rendering.OnDemandRendering.renderFrameInterval = priorRenderFrameInterval;
                 if (coordinator.r.sourceStageLifecycleRecoveryRequired)
                 {
                     // Preserve the input/physics owners and service graph while the
