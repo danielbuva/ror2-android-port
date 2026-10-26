@@ -4708,3 +4708,13 @@ both serialized members and compressed bundle are host raw-exact to J850.
 Setup and teardown retain the same explicit roots, pinned source-produced packs,
 fresh output and process-exit contract. Phone production and runtime behavior
 remain open.
+
+Golemplains complete source-scene selections extend the existing object/Shader
+owners through `recipe/owner-golemplains-source-objects.json` and matching
+source-lab Standard/post-processing profiles. Explicit current PC/SDK roots,
+pinned profiles/tools, receipt-pinned source-produced media/Shader packs and a
+separate output directory set up production; process exit tears down each
+producer while local receipts persist. The existing member-aware writer exposes
+`payload/golemplains-source-lab`. All 10,828 persisted objects, both serialized
+members and the compressed bundle are host raw-exact against J850. No runtime
+owner is added; phone production, installation and original scene behavior remain open.
