@@ -4643,6 +4643,14 @@ producer while local receipts persist. The existing member-aware writer exposes
 members and the compressed bundle are host raw-exact against J850. No runtime
 owner is added; phone production, installation and original scene behavior remain open.
 
+The existing Standard Shader record owner derives retained material feature order
+from the pinned original Shader's fragment keyword identities, independently of
+recursive closure encounter order. It validates original/SDK pass identity and
+feature coverage, then retains existing SDK global/builtin cycles and native
+ordering. Setup uses the already pinned original input; process-exit teardown
+and retained pack receipts are unchanged. J1203 qualifies Dampcavesimple's
+source Standard record; full-scene and phone behavior remain separate gates.
+
 Habitatfall complete source-scene selections extend the existing object/Shader
 owners through `recipe/owner-habitatfall-source-objects.json` and matching
 source-lab post-processing profile. Explicit current PC/SDK roots,
