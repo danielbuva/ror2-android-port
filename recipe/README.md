@@ -3895,6 +3895,25 @@ and evidence stay ignored. All 74 persisted Shader records are host
 raw-exact against J850. Complete-scene readiness and phone qualification
 remain separate gates.
 
+## Dampcavesimple complete source-scene selections (2026-10-26)
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-dampcavesimple-source-objects.json` | `b9b63ecc12cb8357f5ce240441a10c8b340d8bb883e55f82c29857c8b4fd286c` |
+| `owner-dampcavesimple-source-lab-postprocess-shaders.json` | `7a1e036001844e5f2ad527b130e5c0e66aa5d515686b825c5ee08e7026476476` |
+| `owner-dampcavesimple-source-lab-standard-shaders.json` | `3313421454be04453770f570aa4e86893631e1c9136a6760f069cff4e18bc338` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain original selectors, hashes, checked pointer relationships,
+SDK/public-tool pins and existing authored import policies only. Lossless JSON
+compaction preserves every decoded object selection; both Shader profiles are
+unchanged from the separately qualified source-produced packs. No original
+body, curve, scalar payload, pixel, shader program, copied source, private path
+or credential is included. Legitimate PC files, separately acquired SDK and
+receipt-pinned source-produced media/Shader packs remain required. Generated
+outputs and evidence stay ignored. Existing ownership and redistribution
+boundaries apply; phone production, installation and runtime behavior remain open.
+
 ## Soul, Mire and Crystalworld complete scene selections (2026-10-26)
 
 | Recipe | SHA-256 |
