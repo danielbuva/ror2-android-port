@@ -1342,6 +1342,11 @@ synced content payload comes out. Everything game-derived stays under the ignore
 
 Steps 6–9a are the `./dev prototype --action whole-catalog-*` actions listed in
 [whole-catalog-integration.md](whole-catalog-integration.md#reusable-fixes-and-commands).
+`whole_catalog.integration_metadata` assembles integration locations, mesh aliases
+and root roles from regenerated metadata, closure and explicit destination paths.
+It has no filesystem or Editor state; `prepare_integration` still owns source
+GUID/path resolution, staging and receipt writes. Source-only destination mapping
+and final bundle hashes/dependency closure remain separate qualification gates.
 `whole-catalog-run` installs, syncs and launches, but it pushes `whole-catalog-selection.json`,
 which makes `PortSession.Start` exit: it checks catalog registration
 (`whole-catalog-result.json`), not gameplay. Gameplay is launched by a runner that pushes an
