@@ -75,6 +75,29 @@ class IntegrationMetadataTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "Provider roots lost"):
             integration_metadata(self.metadata, self.closure, self.mapped, [], attempt="integration-fixture")
 
+    def test_recipe_mapping_supplies_metadata_and_mesh_aliases_without_project_scan(self):
+        from composition_rebuild import integration_declarations, integration_mapping
+
+        sources = ["Assets/" + str(row["id"]) for row in self.metadata["locations"]]
+        index = {"guid-" + source: source for source in sources}
+        with patch("builtins.open", side_effect=AssertionError("mapping and metadata must not access files")):
+            declarations = integration_declarations(
+                index,
+                [],
+                [],
+                [],
+                [dict(source="Assets/900001", output="Assets/Relocated.asset")],
+                [],
+                dict(runtime_source_guids={"runtime/input/NovaInputBridge.cs": "bridge"}),
+            )
+            mapped = integration_mapping(index, sources, declarations)
+            result = integration_metadata(
+                self.metadata, self.closure, mapped, [dict(source="Assets/900001", type="UnityEngine.Mesh", key="mesh-alias")], attempt="fixture"
+            )
+        self.assertEqual(result["locations"][-1]["path"], "Assets/Relocated.asset")
+        self.assertEqual(next(row for row in result["locations"] if row["id"] == 900001)["path"], "Assets/Relocated.asset")
+        self.assertEqual(result["roots"], sorted(self.camera + [900001, 900003]))
+
     def test_missing_mesh_owner_refuses(self):
         with self.assertRaisesRegex(RuntimeError, "Exact original mesh subobject was not staged"):
             integration_metadata(self.metadata, self.closure, self.mapped, [dict(source="missing", key="mesh-alias")], attempt="integration-fixture")
