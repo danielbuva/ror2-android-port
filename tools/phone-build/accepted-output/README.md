@@ -1296,3 +1296,14 @@ seconds, CPU/GPU peak, affinity, exit and cleanup failures. An adjacent atomic
 BOOTTIME pause clock, passed through `ROR2LAB_BUILD_PAUSE_CLOCK`, preserves the
 existing native compiler active-time deadline contract. This host-tested owner
 does not qualify source equivalence, final installation or phone thermal safety.
+
+Eight further scene selections use the same object command:
+`owner-lakes-spine-objects.json`, `owner-lakesnight-spine-objects.json`,
+`owner-sulfurpools-spine-objects.json`, `owner-satellitescene-objects.json`,
+`owner-limbo-objects.json`, `owner-ironalluvium-objects.json`,
+`owner-ironalluvium2-objects.json` and `owner-lobby-objects.json` under `recipe/`.
+Supply their independently produced media/Shader packs through the existing
+receipt-pinned `--record-pack` interface. These profiles expose 135,541 records,
+16 serialized members and eight compressed bundles, all host-exact against
+J850, as `payload/<bundle-name>`. They add no producer owner or runtime state;
+phone production, installation and scene behavior remain open.

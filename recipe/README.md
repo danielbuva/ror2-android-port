@@ -3400,6 +3400,33 @@ The camera transform recipe whole-catalog source pin follows the pure integratio
 metadata extraction. Manual provenance/privacy review: this pin references only
 authored public Python; no game content, local paths or device evidence is added.
 
+## Eight scene Shader profiles (2026-10-26)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-lakes-standard-shaders.json` | `909c81d5ce199cdc9fb2288c1f207d89bf35a3f08bd44c553fea869cd944263c` |
+| `owner-satellitescene-standard-shaders.json` | `389344fc34516a51e51a29abbbef3c832cc0f9b38c5a18bbc3b0f919ffe04b37` |
+| `owner-satellitescene-postprocess.json` | `a1c4c9ede7fd719a0189418381a740faddcc1af561a339283f805572e072c07e` |
+| `owner-limbo-standard-shaders.json` | `51cab1669445c77eb6e34af47d76e7ccc651b3fa574d6df20e29b0e7b89a867a` |
+| `owner-limbo-postprocess.json` | `c6ac914674ec39c3bb9a60aabd24c1a1f711813494b784a8c34a0a012a29be05` |
+| `owner-ironalluvium-standard-shaders.json` | `5389038e2f5d396d2388ae7eff4a433e6f196f249bacf24431742cbd81c34604` |
+| `owner-ironalluvium2-standard-shaders.json` | `edc265021b929f0c8b84a57a23ffe61435f3bb94fb6892f4f5f11f35ea375e34` |
+| `owner-lobby-standard-shaders.json` | `4890fc07442deef8af5cda6e534464c1447fa0045b6feb8249934106c55228ab` |
+| `owner-lobby-postprocess.json` | `0fd3c91afc4c616711d2f643d0f075492f4d832fe5822dead6ad8fd931bba469` |
+| `owner-lakesnight-standard-shaders.json` | `baa87545412df2669b7fb6b812a2d0e5ba681abba5ce707fffcf9d256811969c` |
+| `owner-sulfurpools-standard-shaders.json` | `cb83bfa29b2db908dcbbe58190e8a5326cac8ea6cc6c5afdd292b236d9030ee2` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these eleven
+byte-unchanged qualified profiles contain only original source selectors, hashes,
+SDK/public-template pins, authored compiler settings and destination identities.
+The existing Shader record owner consumes them; no source text, serialized body,
+program, target keyword table, private path or credential is included. Standard
+material selection follows original scene renderer roots for spine scenes and
+original recursive content closure for whole scenes. The two scopes preserve
+the existing scene builders. Original/SDK inputs and generated packs remain
+external and ignored; these recipes grant no redistribution or ownership right.
+Phone execution and runtime qualification remain open.
+
 ## Eight complete scene object profiles (2026-10-26)
 
 | Recipe | SHA-256 |
