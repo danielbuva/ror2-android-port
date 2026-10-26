@@ -83,6 +83,16 @@ public sealed partial class PortSession
         public Vector3 position;
         public float minimumJumpHeight;
     }
+    public static class NavigationRecoveryPolicy
+    {
+        // Native graph detours may move away from the objective while their
+        // waypoints advance. Recover from an actual waypoint stall instead.
+        public static bool ObjectiveRecovery(bool objectiveStalled, bool reachable, bool pathFinished,
+                                             int waypointCount, bool waypointStalled)
+        {
+            return objectiveStalled && !(reachable && !pathFinished && waypointCount > 2 && !waypointStalled);
+        }
+    }
     [Serializable]
     public sealed class ObjectiveCombatInputFailureReport
     {
@@ -2932,10 +2942,11 @@ public sealed partial class PortSession
             bool objectiveStalled = worldNavigationHasObjectiveProgress &&
                                     Vector3.Distance(routeDestination, worldNavigationObjective) < 2 &&
                                     elapsed - worldNavigationObjectiveProgressAt > 6;
-            bool followingElevatedSourcePath = worldElevatedApproachActive && coordinator.r.world.navigationReachable &&
-                                               !coordinator.worldPathFollower.isFinished && coordinator.r.world.navigationWaypoints > 2;
+            bool objectiveRecovery = NavigationRecoveryPolicy.ObjectiveRecovery(
+                objectiveStalled, coordinator.r.world.navigationReachable, coordinator.worldPathFollower.isFinished,
+                coordinator.r.world.navigationWaypoints, stalled);
             if (needsRoute && ((graph && !coordinator.r.world.navigationReachable && !sourceApproach) || stalled ||
-                               objectiveStalled && !followingElevatedSourcePath))
+                               objectiveRecovery))
                 coordinator.worldTerrainRecoveryUntil = elapsed + 4;
             if (needsRoute && elapsed < coordinator.worldTerrainRecoveryUntil)
             {

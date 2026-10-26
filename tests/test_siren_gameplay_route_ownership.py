@@ -28,6 +28,41 @@ def declaration(source, name):
 
 
 class SirenGameplayRouteOwnershipTests(unittest.TestCase):
+    def test_native_detour_keeps_graph_input_until_waypoint_stalls(self):
+        if not MONO.is_file() or not CSC.is_file():
+            self.skipTest("Pinned Unity Mono/Roslyn host compiler unavailable")
+        source = (SOURCE.parent / "world/IntegratedWorldBoundary.cs").read_text()
+        policy = declaration(source, "public static class NavigationRecoveryPolicy")
+        host = (
+            "using System;\n"
+            + policy
+            + """
+class DetourContract {
+    static void Need(bool value) { if (!value) throw new Exception("native detour recovery contract"); }
+    static void Main() {
+        // R58: the egg remains farther away while a reachable 13-node path
+        // advances around the terrain. Euclidean distance alone cannot reject it.
+        Need(!NavigationRecoveryPolicy.ObjectiveRecovery(true, true, false, 13, false));
+        Need(NavigationRecoveryPolicy.ObjectiveRecovery(true, true, false, 13, true));
+        Need(NavigationRecoveryPolicy.ObjectiveRecovery(true, false, false, 13, false));
+        Need(NavigationRecoveryPolicy.ObjectiveRecovery(true, true, true, 13, false));
+        Need(NavigationRecoveryPolicy.ObjectiveRecovery(true, true, false, 1, false));
+        Need(!NavigationRecoveryPolicy.ObjectiveRecovery(false, false, true, 0, true));
+    }
+}
+"""
+        )
+        with tempfile.TemporaryDirectory(prefix="native-detour-host-") as temporary:
+            directory = Path(temporary)
+            source_path = directory / "Detour.cs"
+            executable = directory / "Detour.exe"
+            source_path.write_text(host)
+            subprocess.run([str(MONO), str(CSC), "-nologo", "-out:" + str(executable), str(source_path)], check=True)
+            subprocess.run([str(MONO), str(executable)], check=True)
+        route = declaration(source, "public void NavigateWorldInput(CharacterBody player, NovaInputBridge bridge, Vector3 destination,")
+        self.assertIn("NavigationRecoveryPolicy.ObjectiveRecovery(", route)
+        self.assertIn("|| stalled ||\n                               objectiveRecovery", route)
+
     def test_owner_policy_and_recorder_execute_under_pinned_host_compiler(self):
         if not MONO.is_file() or not CSC.is_file():
             self.skipTest("Pinned Unity Mono/Roslyn host compiler unavailable")

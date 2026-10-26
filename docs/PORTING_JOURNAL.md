@@ -453,3 +453,17 @@ Original teardown and terminal process/selector/pending absence/OLED sleep pass.
 CPU/GPU peak 95.5 C transient; battery at most 35 C; runtime gap at most 0.698 s.
 Evidence: `work/coordination/main-port-r58-safety-retry/controls-duration-retry/`.
 Ordinary runs, audio attribution/audibility and PC appearance remain open.
+
+## J1210 — Source-derived Meridian particle Shader
+
+2026-10-26. Existing payload Shader owner reproduces Meridian Particles164 from
+legitimate PC scene/material dependencies and pinned public SDK 211 source.
+Guarded production persists before independent comparison: the 25,056 B record
+is raw-exact to J850, SHA-256
+`93db2650a39fb9a85edb6ebd40590454611772251d7376554ad485ab8d17783f`.
+Evidence: `work/coordination/p1-meridian-particles-v1/done.json` and
+`whole-scene-meridian-particles/independent-comparison.json` under that directory.
+Audited source selector reuses existing particle pass, buffer and ordering owners.
+Host preflight and 32 focused producer contracts pass; retained scene packs are
+not replayed. Host-only; full-scene readiness and phone gates remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
