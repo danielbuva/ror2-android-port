@@ -3946,8 +3946,9 @@ from original fragment feature declarations; post-processing uses the pinned
 public exporter templates. No original body, program, copied source, private
 path or credential is included. Legitimate PC input and separately acquired
 SDK remain required; generated records and evidence stay ignored. All 25
-persisted records are host raw-exact against J850. Complete-scene readiness
-and phone qualification remain separate gates.
+persisted records are host raw-exact against J850. The matching complete object
+selection below also passes the host complete-scene comparison; phone
+qualification remains open.
 ## ArtReview complete object selection (2026-10-26)
 
 | Recipe | SHA-256 |
