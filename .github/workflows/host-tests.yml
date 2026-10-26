@@ -19,6 +19,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.14"  # matches the workstation lab venv
+          # Download/wheel cache only; never restore a venv or generated lab data.
+          # setup-python also keys this on the runner OS/architecture and Python.
+          cache: pip
+          cache-dependency-path: tools/lab-requirements.txt
       - name: Install lab requirements
         run: python -m pip install -r tools/lab-requirements.txt
       # Lint and format-check touched Python files (ruff.toml explains the rule set).
@@ -54,4 +58,11 @@ jobs:
       - name: README actions are current
         run: python scripts/readme-actions.py --check
       - name: Host tests (fresh clone, no work/)
-        run: python -m unittest discover -s tests -v
+        run: python scripts/host-tests.py --workers 4 --report "$RUNNER_TEMP/host-test-results.json"
+      - name: Host-test outcomes and timings
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: host-test-results-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/host-test-results.json
+          if-no-files-found: ignore

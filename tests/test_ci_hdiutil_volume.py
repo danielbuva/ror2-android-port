@@ -122,6 +122,9 @@ class HdiutilVolumeTests(unittest.TestCase):
         scripts.mkdir(parents=True)
         tests.mkdir()
         shutil.copy2(CI_LOCAL, scripts / "ci-local.sh")
+        shutil.copy2(ROOT / "scripts/ci-local-cache.py", scripts / "ci-local-cache.py")
+        (repo / "tools").mkdir()
+        (repo / "tools/lab-requirements.txt").write_text("")
         (scripts / "ci-hdiutil-volume.py").write_text(
             "import pathlib, sys\n"
             "pathlib.Path(sys.argv[2]).write_bytes(b'image')\n"
