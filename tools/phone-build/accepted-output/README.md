@@ -1273,7 +1273,8 @@ CPU/GPU zones are <= 55 C. Explicit `--profile thor` selects 75/60 C. PID/start
 identities protect descendant signals. Before startup, taskset restricts the
 producer to up to two allowed minimum-capacity CPUs (one allowed CPU if capacity
 information is unavailable); supported numerical/.NET runtime worker settings
-are limited to two. Affinity failure refuses production.
+are limited to two. The selected CPUs are passed as a hexadecimal mask for Android Toybox versions
+without the `-c` CPU-list option. Affinity failure refuses production.
 
 Admission requires readable CPU telemetry and observed CPU/GPU/battery/skin
 <= 50 C. The 250 ms sampler continues during pauses and aborts on a gap > 1 s,
@@ -1296,3 +1297,10 @@ receipt-pinned `--record-pack` interface. These profiles expose 135,541 records,
 16 serialized members and eight compressed bundles, all host-exact against
 J850, as `payload/<bundle-name>`. They add no producer owner or runtime state;
 phone production, installation and scene behavior remain open.
+
+Conduit Canyon uses `recipe/owner-conduitcanyon-objects.json` with the same
+object command and receipt-pinned Mesh, director and Standard Shader packs.
+Its 49,573 objects, two serialized members and complete compressed bundle are
+host-exact against J850. The existing target-tree interface exposes
+`payload/whole-scene-conduitcanyon`; phone production, installation and original
+scene behavior remain open.

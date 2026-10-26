@@ -748,8 +748,9 @@ project staging and source/bundle hash checks for that fixture.
 `tools/phone-build/ContentFixtureBuilder.cs` owns its exact-editor check and
 separate player build; `ContentFixture.cs` loads either its embedded bundle or
 a hash-bound candidate at a fixed path in its own data directory. It checks two
-load/unload cycles and writes a private report. The three `phone-content-*` prototype
-actions stage/check/build only this fixture under the primary checkout mutex.
+load/unload cycles and writes a private report. `phone-content-fixture`,
+`phone-content-check` and `phone-content-build` stage/check/build this fixture
+under the primary checkout mutex.
 The check also captures the native properties hash and binary serialization of
 the authored `NativeScriptSchemaFixture.cs` fields. It destroys the temporary
 objects after capture; the host must inspect actual type-tree presence before
@@ -757,6 +758,19 @@ using the output as schema evidence. The fixture class is Editor-only and has
 no game-build consumer.
 See [probe setup and boundaries](../tools/phone-build/README.md). No game-runtime
 owner or whole-catalog build calls this support path.
+
+The same staging/launch owner supports the current experimental
+`phone-content-ambient-fixture` and `phone-content-ambient-check` actions.
+`AmbientSkyFixture.cs` stages an authored Lab scene and explicit procedural sky
+in a fresh project. Its Metal batch session waits for an external read-only
+controller to arm capture before scene setup, then exits explicitly after
+completion or 90 seconds. The shared editor mutex covers the full session;
+ordinary content checks retain their headless arguments. The host requires six
+ordered finite 64 by 64 float images, uncached SH bytes and a nonempty GPU trace
+from the controller. Native job association remains the controller's contract.
+Logs, observations and trace stay private; this fixture supplies no player-data
+bytes and does not establish target equivalence. Its actual internal-bake
+trigger and graphical execution remain unqualified.
 
 `scripts/lab/phone_texture_oracle.py` owns a separate current experimental
 exact-editor texture oracle. The `phone-texture-fixture` action stages a fresh
@@ -4498,3 +4512,9 @@ teardown and local receipts follow the existing contract above. The existing
 `record_produce.py` Director path derives exposed-reference names from original
 asset identity; it adds no runtime state. Its host contract is qualified separately
 from complete Conduit assembly, which remains open.
+
+J1185 adds Conduit Canyon object/Standard selections and Fungal Standard/postprocess
+selections to those owners. Existing Standard scene validation derives enabled fog
+variants from original RenderSettings; setup and process teardown retain the same
+explicit roots, source/SDK pins, new output and retained receipt contract. No new
+runtime owner or target-data supplier is introduced.

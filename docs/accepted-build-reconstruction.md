@@ -499,3 +499,8 @@ phone comparison or installation is qualified.
 confirms exporter GUID entropy in identical-input scene YAML repeats. The
 WholeStageContexts full-digest gate remains open; semantic agreement and
 comparison-only GUID normalization do not qualify its final file.
+
+J1185 completes source-derived Conduit Canyon through the existing owners:
+607/705 files available (602 raw-exact, two code comparisons, three drift-explained),
+98 missing (7 APK, 91 payload). Fungal Shader packs qualify separately; complete
+Fungal assembly and phone/runtime qualification remain open.

@@ -42,6 +42,16 @@ Two focused lifecycle/presence checks, Ruff and host preflight pass; doctor reta
 No device install/run: R58 remains last verified installed; strict three controls and measured loading heat remain open.
 Mandatory prune passes; revisit after authorized device admission under unchanged J1156 limits.
 
+## J1182 — Android producer affinity mask compatibility
+
+2026-10-26. Shared phone runner passes selected CPUs as a hexadecimal mask;
+Android Toybox on the assigned phone rejects the previous `-c` option before input admission.
+The existing tool-host mask contract supplies the compatible command form; worker and thermal policies stay fixed.
+Seven focused host tests, Ruff and host preflight pass; complete phone replay remains open.
+Evidence: `work/coordination/p1-player-phone-assembly-v1/android-taskset-mask-host.json`
+and `phone177-parent-terminal-v4.json` in that directory; independent device cleanup passed.
+Runner SHA-256: `15fdc82f66808db46cf9b25ba17251af12237a32728cc12aecf1391f2e2eb649`.
+No installation or game launch; accepted J850 APK and content readiness are unchanged.
 ## J1183 — Eight complete source-derived scene bundles
 
 2026-10-26. Eight object and eleven Shader profiles complete Lakes/Lakesnight/Sulfurpools spine,
@@ -56,3 +66,30 @@ Evidence and per-output SHA-256: `work/coordination/p1-anim/six-scenes-final-hos
 Prior art: pinned AssetRipper property/fallback relationships; existing J1157/J1163 Shader contracts.
 Host-only; phone production, installation and runtime remain open. APK unchanged: J850
 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1184 — Isolated ambient observation fixture
+
+2026-10-26. Existing phone-content owner gains authored ambient staging and graphical capture actions.
+The exact-editor session waits for controller arming, saves the scene, and exits on completion or timeout.
+Host validation requires six ordered finite 64 by 64 float images, uncached SH and a nonempty GPU trace;
+native job association remains the external controller's contract. No captured bytes are producer inputs.
+Seven focused host checks and the pinned editor API compile pass; generated action documentation is current.
+Evidence: `work/coordination/accepted-build-reconstruction/media-source-v1/default-sky-source-v1/ambient-fixture-checkpoint-done.json`;
+fixture implementation commit `6a73e581e53a127c15b34c94e5cf261f46d4b286`. No APK generated or changed.
+Prior art: pinned AssetRipper copies baked lighting values; independent sky generation remains unsolved.
+Actual SaveScene bake, GPU execution, target equality and phone production remain unqualified.
+
+## J1185 — Complete Conduit Canyon and source fog Shader retention
+
+2026-10-26. Existing object/Shader owners complete Conduit Canyon: 49,573 records,
+all serialized members and the compressed bundle raw-exact against J850 on the host.
+Source-qualified preload relationships retain imported-model Mesh-only exclusion.
+Standard source fog validation now retains original linear/exponential/exponential-squared modes;
+Fungal Standard (642,752 B) and 25 postprocess records (87,712 B) are independently raw-exact,
+with complete Fungal scene assembly still open. Prior art: pinned AssetRipper FogMode/ParsedForm
+and SDK UnityCG fog defines; existing J1157/J1163 Shader/compiler contracts remain unchanged.
+Evidence/output hashes: animation worktree `work/coordination/p1-anim/conduit-final-host-v2/`;
+`work/coordination/p1-fungal-standard-v2/done.json` and `work/coordination/p1-fungal-shaders-v1/`.
+Readiness: Conduit union 607/705 available, 602 exact, two code and three drift-explained;
+98 missing (7 APK, 91 payload). Host-only; phone production/install/runtime remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
