@@ -1456,6 +1456,11 @@ stay unchanged. During completed-session reclamation, `SessionResourceBoundary`
 releases already-destroyed HurtBox targets from returned bullet-hit pool entries,
 with no live world/network, after deferred destruction. It preserves live and
 checked-out hits and records its release count with existing registry cleanup.
+The same owner prunes deferred loadout callbacks targeting already-destroyed
+`CharacterSpawnCard` clones after world/network teardown. It writes the boxed
+original availability struct back, preserving its availability flag, live and
+unrelated callbacks and their order. Native menu captures attribute this owner;
+a changed repeated-session slope remains a device gate.
 The host memory summary keeps immediate post-collection and subsequent-menu
 managed slopes separate, including the observed final menu without extrapolation.
 The current `settings-write-interrupt-check` host diagnostic uses
