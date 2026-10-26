@@ -68,3 +68,18 @@ Evidence: `work/coordination/accepted-build-reconstruction/media-source-v1/defau
 fixture implementation commit `6a73e581e53a127c15b34c94e5cf261f46d4b286`. No APK generated or changed.
 Prior art: pinned AssetRipper copies baked lighting values; independent sky generation remains unsolved.
 Actual SaveScene bake, GPU execution, target equality and phone production remain unqualified.
+
+## J1185 — Complete Conduit Canyon and source fog Shader retention
+
+2026-10-26. Existing object/Shader owners complete Conduit Canyon: 49,573 records,
+all serialized members and the compressed bundle raw-exact against J850 on the host.
+Source-qualified preload relationships retain imported-model Mesh-only exclusion.
+Standard source fog validation now retains original linear/exponential/exponential-squared modes;
+Fungal Standard (642,752 B) and 25 postprocess records (87,712 B) are independently raw-exact,
+with complete Fungal scene assembly still open. Prior art: pinned AssetRipper FogMode/ParsedForm
+and SDK UnityCG fog defines; existing J1157/J1163 Shader/compiler contracts remain unchanged.
+Evidence/output hashes: animation worktree `work/coordination/p1-anim/conduit-final-host-v2/`;
+`work/coordination/p1-fungal-standard-v2/done.json` and `work/coordination/p1-fungal-shaders-v1/`.
+Readiness: Conduit union 607/705 available, 602 exact, two code and three drift-explained;
+98 missing (7 APK, 91 payload). Host-only; phone production/install/runtime remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
