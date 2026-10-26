@@ -3498,3 +3498,154 @@ ParsedForm export rules. No original program, body, copied source, private path
 or credential is included. Current legitimate PC files and separately acquired
 SDK/public tools remain required. Generated records and evidence stay ignored;
 Fungal complete-scene assembly and phone/runtime qualification remain open.
+## Produced catalog metadata adapter (2026-10-26)
+
+Manual provenance, privacy, licensing and sensitive-content audit: the existing
+whole-catalog owner now reads structural dependency records from locally produced
+Android bundles, hashes their real bytes and completes a supplied source-declared
+graph. The camera recipe source pin tracks that authored helper change only.
+No accepted dependency table, object body, original source, private path or
+credential is included. The bounded reader is unchanged; legitimate input and
+source-produced bundles remain external and ignored. Host contracts preserve
+cyclic references and refuse incomplete graphs. Full catalog production and phone
+execution remain open; no redistribution or ownership right is granted.
+
+
+## Six whole-scene Shader producers (2026-10-26)
+
+The existing `payload_shader_records.py` owner consumes these seven profiles
+for 122 source-produced records. Pinned public AssetRipper ParsedForm template
+selection and original resource fields determine post-processing exports;
+original RenderSettings and material relationships select SDK Standard/skybox
+variants. Independent comparisons pass for all records after guarded production
+that refuses accepted outputs and retained packs as suppliers.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-splash-postprocess-shaders.json` | `a8dab79b958798d951e7fc74425c6eb905de74eaf0b307e4eff4d0986d65c959` |
+| `owner-splash-skybox-shaders.json` | `8e604923ca9bf2149ca42d9fb0c018fffb6e666b84a1ebf4d45ad08470c81322` |
+| `owner-habitat-postprocess-shaders.json` | `611a10651c31861c40444d365613f30e95b88cdff0c4a4247efaf8b8901e9179` |
+| `owner-helminthroost-postprocess-shaders.json` | `c701edee2c076c472d98d4d9ba9c91f46c8ef3600cb20b3d5479c37dfeffe00d` |
+| `owner-artifactworld03-postprocess-shaders.json` | `ca7637756f3512e21bf40f5838e827082fd49fc5970cf8b75dbedae3d0e00043` |
+| `owner-itgoolake-postprocess-shaders.json` | `690b6fc062494cde95c8e34271d787e352d0037be37c75b0025a42f8e8cf8808` |
+| `owner-itgolemplains-standard-shaders.json` | `82643e59c40cd03766c16c023aeb844d604610ab9bb48778f8a886df2c2eafa9` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: profiles
+contain original file/object selectors, source hashes, SDK/public-tool pins and
+output relationships only. No original body, program, copied shader source,
+private path or credential is included. Current legitimate PC input and the
+separately acquired SDK remain required. Generated records and raw evidence stay
+ignored. Full-bundle qualification is separate; phone/runtime gates remain open.
+
+
+## Itmoon Shader producers (2026-10-26)
+
+The existing record-pack owner consumes these two profiles for 24
+post-processing records and one Standard record. Original resource fields,
+export filename/GUID witnesses and recursive scene material relationships
+select the inputs. Guarded actual CLI production persisted before independent
+raw comparison; all 25 records match.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-itmoon-postprocess-shaders.json` | `e0e4168ad9cb21c90ca2f17a6b6e20eb65e915d1c604228f1fa0574e0aad8182` |
+| `owner-itmoon-standard-shaders.json` | `b55116099ac69aa181fb7478e1bba966608b626567da035dd14a52fc3925122e` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: only
+source selectors, hashes, public-tool/SDK pins and destination relationships
+are included. No game bodies, shader programs, copied source, private paths
+or credentials are included. Legitimate PC input and separately acquired SDK
+remain required; generated records stay ignored. Complete-scene, phone and
+runtime qualification remain separate.
+
+## Seven complete scene object profiles (2026-10-26)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-splash-whole-objects.json` | `3b9366dbf00fbc4cd5733381557ff08f2ef8607ac7246bff01ffc0e77b7a2e9f` |
+| `owner-habitat-whole-objects.json` | `b7bdedfe0acc7ea849ae8b3600fb1e8ed75ea32a536f4d7d06bfbc620b37e742` |
+| `owner-helminthroost-whole-objects.json` | `3fbe8d7ac9ebec5cbda8220fcb174f91e0a694e69223de22407d8025740e66b1` |
+| `owner-itgolemplains-whole-objects.json` | `798c87752dcda4b5b4fa5cc5754523483384475fba48fa1e5653b58b2cf7a947` |
+| `owner-artifactworld03-whole-objects.json` | `ff50e0cc77b6f899c1efbf200c021ad1d2364f9140ba817f677fe79ae152de91` |
+| `owner-itgoolake-whole-objects.json` | `0f94960f9e5427dcf0895a85e977233174f5a46e9a4890e76bd80cf30cefb6cd` |
+| `owner-itmoon-whole-objects.json` | `b26b5e2c011ea6f20bbbd0886042506c63479854d011e0bd7b146afeb7d04cbd` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain source selectors, hashes, checked pointer relationships and
+authored import policies only. Lossless compaction preserves decoded selectors.
+No original body, curve, scalar, pixel, program, copied source, private path or
+credential is included. Current legitimate PC files, SDK resources and checked
+source-produced record packs remain required. Generated outputs and evidence
+stay ignored. Existing redistribution and ownership boundaries apply; phone
+production and runtime qualification remain open.
+
+
+## Loadingbasic skybox Shader selection (2026-10-26)
+
+The existing SDK skybox record owner follows original RenderSettings to the
+Default-Skybox material and its built-in Shader pointer. Guarded actual CLI
+production persisted before independent comparison; the single record matches.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-loadingbasic-skybox-shaders.json` | `a6a45b569a9ff08e1f09ec2b2136729367b72c221387b95b5b3e6155c55d0235` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: this profile
+contains only original file/object selectors, source hashes, SDK/public-tool
+pins and output relationships. No original body, shader program, copied source,
+private path or credential is included. Legitimate PC files and the separately
+acquired SDK remain required. Generated records and evidence stay ignored;
+complete-bundle, phone and runtime qualification remain separate.
+## Loadingbasic scene object profile (2026-10-26)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-loadingbasic-objects.json` | `3e46d0b7d2200ee8fa581328a6787d1687f2a66ea1f3bd7b15c3fa66cdb8de64` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: this profile
+contains original selectors, hashes, checked pointer relationships and existing
+authored import policies only. Compaction preserves every decoded selector.
+The original SpriteNumberImage preload membership supplies its omitted local
+GameObject dependency; existing component and global-owner policies preserve
+the accepted startup layout. Source-produced texture, cubemap and Skybox packs
+remain explicit pinned inputs to the existing object producer. No original body,
+curve, scalar, pixel, program, copied source, private path or credential is
+included. Current legitimate PC files and SDK resources remain required;
+generated content and evidence stay ignored. Existing ownership and
+redistribution boundaries apply. Phone and runtime qualification remain open.
+## Fungal complete scene object profile (2026-10-26)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-fungal-objects.json` | `217f1270df3fee57abaa3beffbc80aaeb41ef42f36c3c0523efa14d46dca246e` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: this profile
+contains selectors, hashes, checked pointer relationships and authored import
+policies only. It contains no original object bodies, curves, scalar data,
+pixels, shader programs, copied source, private paths or credentials. Original
+GameObject and typed reciprocal Rigidbody witnesses qualify preload membership;
+the producer derives the preload from original dependencies. Current legitimate
+PC files, the pinned SDK and independently source-produced media/Shader record
+packs remain required. Generated outputs and raw evidence stay ignored.
+Existing ownership and redistribution boundaries apply; phone production,
+installation and runtime behavior remain open.
+
+## Title Shader source selections (2026-10-26)
+
+The existing Shader record owner produces 24 post-processing records, Standard
+and the SDK terrain base generator. Original resource/material relationships
+and SDK-declared pass metadata select the variants; guarded CLI production
+persists before separate raw comparison of all 26 records.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-title-postprocess-shaders.json` | `0eb16753bed7a2cae353db866db39dcd7ca4b80a028b4026ccb7a4e4a3ab6bbc` |
+| `owner-title-standard-shaders.json` | `fd8ab6354a8cc0712ed3278d6785831497ec01fc5539152486c1a956039a597b` |
+| `owner-title-terrain-shaders.json` | `9252627420b8def7f6e051317edbdd568b6e81e38a65e51811fa604aab753589` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain original selectors, hashes, public SDK/tool pins and output
+relationships only. No original bodies, shader programs, copied source, private
+paths or credentials are included. Current legitimate PC files and separately
+acquired SDK remain required. Generated records and evidence stay ignored;
+complete Title assembly, phone production and runtime qualification remain open.

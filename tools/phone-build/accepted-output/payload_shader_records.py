@@ -352,6 +352,15 @@ def standard_selections(original_sdk, materials, fog_keyword="FOG_LINEAR"):
     return source, selections
 
 
+def terrain_basegen_selections(original, sdk_source, materials):
+    """Retain the SDK generator's declared passes without material keywords."""
+    if materials or original["m_Dependencies"] or sdk_source["m_Dependencies"]:
+        raise ValueError("terrain base generator has no material variants or dependencies")
+    if original["m_ParsedForm"]["m_PropInfo"] != sdk_source["m_ParsedForm"]["m_PropInfo"]:
+        raise ValueError("terrain base generator original/SDK properties differ")
+    return P.sdk_scene_selections(sdk_source, set())
+
+
 def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec_sha256):
     """Produce the bounded Standard source record through the shared SDK owner."""
     import UnityPy
@@ -389,7 +398,7 @@ def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec
     obj = original_object(source, "Shader")
     original = obj.read_typetree()
     sdk_id = profile.get("sdk_shader", 46)
-    expected_name = {46: "Standard", 106: "Skybox/Procedural"}[sdk_id]
+    expected_name = {46: "Standard", 106: "Skybox/Procedural", 10626: "Hidden/TerrainEngine/Splatmap/Standard-BaseGen"}[sdk_id]
     if original["m_ParsedForm"]["m_Name"] != expected_name:
         raise ValueError("Standard native type source differs")
     materials = []
@@ -415,7 +424,10 @@ def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec
     sdk_pin = profile["compiler_sdk"]["Resources/unity_builtin_extra"]["sha256"]
     sdk_source = SDK.sdk_source(sdk, sdk_id, sdk_pin)
     dependency_relocations = []
-    if sdk_id == 106:
+    if sdk_id == 10626:
+        source_runtime = sdk_source
+        keyword_rows = terrain_basegen_selections(original, source_runtime, materials)
+    elif sdk_id == 106:
         selected = profile["materials"][0]
         pointer = fog[0]["m_SkyboxMaterial"]
         render = next(row for row in scene_objects if row.type.name == "RenderSettings")

@@ -151,7 +151,10 @@ It does not establish full original stage behavior.
 source-scene variant. The owner suppresses only checked named original global
 GameObjects, following `source_scene_candidate.py`. Its two LineRenderer arrays
 derive from original BezierCurveLine operands and original local Transform
-hierarchies with identity rotations. Existing schema/field parsers locate their
+hierarchies with identity rotations. The same owner evaluates rotated local
+Transform/RectTransform hierarchies from original quaternion, scale and translation operands with
+per-operation float32 rounding; animated Bezier wind remains refused.
+Existing schema/field parsers locate their
 arrays; float32 arithmetic preserves all other original bytes before pointer
 relocation. Synthetic typed sources and full-bundle fixtures check these
 contracts. No additional runtime or experiment-switch case is introduced.
@@ -684,6 +687,12 @@ HideVertices through public templates. Its Skybox context follows original scene
 RenderSettings and material Shader pointers, reads SDK106 and retains source
 material keywords through the shared SDK compiler. These contexts emit the same
 pack interface and use the existing compiler teardown.
+The Splash, Habitat, Helminth Roost, Artifactworld03, Itgoolake, Itgolemplains
+and Itmoon whole-scene profiles extend these same contexts. Original resource
+fields and export filename/GUID witnesses select post-processing templates;
+recursive scene material relationships select Standard, and Splash uses the
+existing RenderSettings skybox context. Setup, output packs and teardown remain
+with this owner; audited selectors are listed in `recipe/README.md`.
 This is host qualification of retained content;
 phone execution stays open.
 
@@ -1373,6 +1382,27 @@ and root roles from regenerated metadata, closure and explicit destination paths
 It has no filesystem or Editor state; `prepare_integration` still owns source
 GUID/path resolution, staging and receipt writes. Source-only destination mapping
 and final bundle hashes/dependency closure remain separate qualification gates.
+The optional `camera_roots` argument preserves the current camera extension by
+default. Reconstructing J850 uses an empty extension and the source set from its
+receipted public producer: closure files plus recovered mesh sources. Fresh source
+analysis and recipe declarations reproduce all 30,322 J850 location identities,
+84,016 keys and 7,458 root roles. The optional `bundle_builds` declarations feed
+`integration_bundle_metadata`, which assigns explicit case-insensitive owners and
+ordinary/scene fallbacks without filesystem access. Callers supply all explicit
+`assetBundleName`/`assetNames` declarations, including presentation and geometry.
+The source-derived J850 projection matches all 30,322 location owners.
+`produced_bundle_metadata` reads real produced Android UnityFS/v22 files through
+the existing bounded reader, hashes them and extracts direct dependency names
+from AssetBundle/PreloadData records. CAB externals and the separate Windows
+Addressables bundle are not Android catalog edges.
+`integration_catalog` accepts these file facts plus the complete source-declared
+build-name set, including builds without location rows. It refuses missing nodes
+and undeclared references, preserves native cycles with self-exclusion, then emits
+compact UTF-8 with ordered bundle keys and transitive dependency arrays. Callers
+retain metadata member order and write the returned bytes; these helpers retain
+no session or Editor state. The 41-file source reader and 114-name source selection
+are host-qualified, but 76 active bundles remain unavailable in that cohort.
+Full catalog bytes and phone execution remain open.
 `composition_rebuild.integration_declarations` renders ordered R1/R2 importer
 identities from assembly recipes, explicit export metadata copies, additions and
 source-GUID-preserving transforms, then removes unselected native shader importers
@@ -1381,8 +1411,8 @@ Body-only texture/shader writes preserve their existing importer. Its pure
 `integration_mapping` replays those declarations, refuses duplicate GUID owners,
 resolves owned DLLs before omitting exporter DLLs and supplies WholeGame defaults
 for remaining source identities. Host contracts feed that mapping to
-`integration_metadata`; complete regenerated-input mapping comparison and final
-catalog production remain open. The later importer-identities stage is excluded.
+`integration_metadata`; the J850 metadata projection comparison passes, while final
+catalog production remains open. The later importer-identities stage is excluded.
 `whole-catalog-run` installs, syncs and launches, but it pushes `whole-catalog-selection.json`,
 which makes `PortSession.Start` exit: it checks catalog registration
 (`whole-catalog-result.json`), not gameplay. Gameplay is launched by a runner that pushes an
@@ -4522,3 +4552,13 @@ selections to those owners. Existing Standard scene validation derives enabled f
 variants from original RenderSettings; setup and process teardown retain the same
 explicit roots, source/SDK pins, new output and retained receipt contract. No new
 runtime owner or target-data supplier is introduced.
+
+Nine further complete payloads use the existing object/writer owners:
+Splash, Habitat, Helminthroost, Itgolemplains, Artifactworld03, Itgoolake,
+Itmoon, Loadingbasic and Fungal. Their audited object profiles consume
+receipt-pinned source-produced media and Shader packs. Current PC/SDK roots,
+profile/tool pins and a separate output directory set up each process; exit
+tears down producers while local receipts persist. The same Shader owner adds
+Title post-processing/Standard selections and SDK terrain base-generation
+passes, selected from original native properties and SDK pass declarations.
+No runtime owner is added; phone production and original scene behavior remain open.
