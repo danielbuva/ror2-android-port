@@ -3771,3 +3771,24 @@ or credential is included. Legitimate PC files, separately acquired SDK and
 receipt-pinned source-produced media/Shader packs remain required. Generated
 outputs and evidence stay ignored. Existing ownership and redistribution
 boundaries apply; phone production, installation and runtime behavior remain open.
+
+## Ultima source-derived Shader selections (2026-10-26)
+
+The existing Shader owner selects 24 post-processing records from original
+resource fields and Standard from recursively reached original materials.
+The original Colossus item renderer and acquired export identify the SDK
+default material; its explicit selector supplies pinned SDK features after
+original material/body/shader validation. Other original emissive materials
+retain their features. Source-only CLI output is persisted before comparison.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-ultima-standard-shaders.json` | `3aa00bbca4a256991344d8228e59280b2e6e4ee81b22b979edfb7c1f27d923cd` |
+| `owner-ultima-postprocess-shaders.json` | `d7a6ca82d474202320229d17d5e0d048d8476dc4d3f4de60b32f218de569be70` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain source selectors, hashes, source relationships and pinned
+SDK/public-tool identities only. No original bodies, programs, copied source,
+private paths or credentials are included. Legitimate PC input and separately
+acquired SDK remain required; generated records and evidence stay ignored.
+Phone production, installation and runtime qualification remain open.
