@@ -1314,3 +1314,9 @@ Its 49,573 objects, two serialized members and complete compressed bundle are
 host-exact against J850. The existing target-tree interface exposes
 `payload/whole-scene-conduitcanyon`; phone production, installation and original
 scene behavior remain open.
+
+Fungal uses `recipe/owner-fungal-objects.json` with the existing object command
+and receipt-pinned media/Shader packs. Its 123,671 objects, two serialized
+members and complete compressed bundle are host-exact against J850. The
+existing target-tree interface exposes `payload/whole-scene-fungal`;
+phone production, installation and original scene behavior remain open.
