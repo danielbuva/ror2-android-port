@@ -365,7 +365,7 @@ def make_layout(selected, records, scene_members=(), engine="2021.3.45f2"):
     """Canonical release order: script records first, then remaining path IDs."""
     local_scripts = sorted(row["path_id"] for row in records if row["type"]["class_id"] == 115)
     scripts = (
-        sorted({struct.unpack_from("<iq", row["body"], 16) for row in records if row["type"]["class_id"] == 114})
+        sorted({pointer for row in records if row["type"]["class_id"] == 114 if (pointer := struct.unpack_from("<iq", row["body"], 16)) != (0, 0)})
         if scene_members
         else [(0, identity) for identity in local_scripts]
     )
@@ -376,9 +376,13 @@ def make_layout(selected, records, scene_members=(), engine="2021.3.45f2"):
         typ = copy.deepcopy(row["type"])
         if typ["class_id"] == 114:
             file_id, script = struct.unpack_from("<iq", row["body"], 16)
-            if (file_id and not scene_members) or (not file_id and script not in local_scripts) or not 0 <= file_id <= len(selected["externals"]):
-                raise ValueError("MonoBehaviour script absent from produced bundle")
-            typ["script_type"] = scripts.index((file_id, script))
+            if (file_id, script) == (0, 0):
+                if not scene_members or len(row["body"]) != 32 or typ["script_type"] != -1 or typ["hash"] != bytes(16) or typ["script_id"] != bytes(16):
+                    raise ValueError("original null-script MonoBehaviour metadata drift")
+            else:
+                if (file_id and not scene_members) or (not file_id and script not in local_scripts) or not 0 <= file_id <= len(selected["externals"]):
+                    raise ValueError("MonoBehaviour script absent from produced bundle")
+                typ["script_type"] = scripts.index((file_id, script))
         if typ not in types:
             types.append(typ)
         offset = (offset + 7) // 8 * 8
@@ -481,7 +485,7 @@ def source_record(sources, selector):
 
 
 def check_preload_dependencies(sources, source_profiles, dependencies):
-    """Admit original scene preload GameObjects and identity-preserving builtins."""
+    """Admit original preload GameObjects, typed Rigidbody owners and builtins."""
     for dependency in dependencies:
         preload, preload_type = source_record(sources, dependency["preload_source"])
         if preload_type["class_id"] != 150 or hashlib.sha256(preload).hexdigest() != dependency["preload_sha256"]:
@@ -505,7 +509,24 @@ def check_preload_dependencies(sources, source_profiles, dependencies):
         body, typ = source_record(sources, dependency["source"])
         if typ["class_id"] != 1 or hashlib.sha256(body).hexdigest() != dependency["source_sha256"]:
             raise ValueError("original preload GameObject drift")
-        if pointers.count(pointer) != 1 or path_id != dependency["source"][1] or member != source_profiles[dependency["source"][0]]["member"]:
+        selector = dependency["source"]
+        if "rigidbody" in dependency:
+            witness = dependency["rigidbody"]
+            rigidbody, rigidbody_type = source_record(sources, witness["source"])
+            if rigidbody_type["class_id"] != 54 or len(rigidbody) != 36 or hashlib.sha256(rigidbody).hexdigest() != witness["sha256"]:
+                raise ValueError("original preload Rigidbody drift")
+            if witness["source"][0] != selector[0] or struct.unpack_from("<iq", rigidbody) != (0, selector[1]):
+                raise ValueError("original preload Rigidbody GameObject drift")
+            count = struct.unpack_from("<I", body)[0]
+            if 4 + count * 12 > len(body):
+                raise ValueError("truncated original preload GameObject components")
+            components = [struct.unpack_from("<iq", body, 4 + i * 12) for i in range(count)]
+            index = witness["component_index"]
+            component = (0, witness["source"][1])
+            if type(index) is not int or not 0 <= index < count or components[index] != component or components.count(component) != 1:
+                raise ValueError("original preload Rigidbody component membership drift")
+            selector = witness["source"]
+        if pointers.count(pointer) != 1 or path_id != selector[1] or member != source_profiles[selector[0]]["member"]:
             raise ValueError("original preload GameObject relationship drift")
 
 

@@ -641,6 +641,43 @@ class ObjectProducerTests(unittest.TestCase):
                 else:
                     P.check_preload_dependencies(sources, profiles, [dependency])
 
+    def test_original_preload_rigidbody_requires_unique_reciprocal_component(self):
+        for failure in (None, "class", "length", "hash", "owner", "member", "index", "duplicate", "pointer"):
+            with self.subTest(failure=failure):
+                components = [(0, 71), (0, 72), (0, 73), (0, 20)]
+                if failure == "duplicate":
+                    components[0] = (0, 20)
+                gameobject = struct.pack("<I", len(components)) + b"".join(struct.pack("<iq", *p) for p in components)
+                rigidbody = struct.pack("<iq", 0, 99 if failure == "owner" else 19) + bytes(24)
+                if failure == "length":
+                    rigidbody += bytes(4)
+                preload = struct.pack("<IIiq", 0, 1, 1, 21 if failure == "pointer" else 20)
+                profiles = [{"member": "CAB-scene"}, {"member": "CAB-original"}]
+                dependency = {
+                    "source": [1, 19],
+                    "source_sha256": digest(gameobject),
+                    "preload_source": [0, 1],
+                    "preload_sha256": digest(preload),
+                    "source_pointer": [1, 21 if failure == "pointer" else 20],
+                    "to": [2, 91],
+                    "rigidbody": {
+                        "source": [0 if failure == "member" else 1, 20],
+                        "sha256": "0" * 64 if failure == "hash" else digest(rigidbody),
+                        "component_index": 2 if failure == "index" else 3,
+                    },
+                }
+                bodies = [
+                    {1: (preload, typ(150)), 20: (rigidbody, typ(54))},
+                    {19: (gameobject, typ(1)), 20: (rigidbody, typ(4 if failure == "class" else 54))},
+                ]
+                sources = curve_sources(bodies, profiles)
+                sources[0][3]["externals"] = [{"path": "archive:/original/CAB-original"}]
+                if failure:
+                    with self.assertRaisesRegex(ValueError, "Rigidbody|relationship drift"):
+                        P.check_preload_dependencies(sources, profiles, [dependency])
+                else:
+                    P.check_preload_dependencies(sources, profiles, [dependency])
+
     def test_original_preload_builtin_membership_without_source_object(self):
         pointers = [(26, identity) for identity in (10001, 10202, 10210)]
         preload = struct.pack("<II", 0, len(pointers)) + b"".join(struct.pack("<iq", *pointer) for pointer in pointers)
@@ -1247,6 +1284,35 @@ class ObjectProducerTests(unittest.TestCase):
         row = {"path_id": 8, "type": typ(4), "body": b"AUTHORED"}
         with self.assertRaisesRegex(ValueError, "duplicate"):
             P.make_layout(selected, [row, row])
+
+    def test_scene_null_script_preserves_native_type_without_shifting_script_table(self):
+        null_type = {**typ(114), "hash": bytes(16), "script_id": bytes(16)}
+        for failure in (None, "length", "hash", "script_id", "script_type", "dangling"):
+            with self.subTest(failure=failure):
+                original_type = copy.deepcopy(null_type)
+                body = bytes(32)
+                if failure == "length":
+                    body += bytes(4)
+                elif failure in ("hash", "script_id"):
+                    original_type[failure] = bytes([1]) * 16
+                elif failure == "script_type":
+                    original_type["script_type"] = 0
+                elif failure == "dangling":
+                    body = bytes(16) + struct.pack("<iq", 0, 999) + bytes(4)
+                records = [
+                    {"path_id": 8, "type": original_type, "body": body},
+                    {"path_id": 9, "type": {**null_type, "script_type": 99}, "body": bytes(16) + struct.pack("<iq", 1, 12) + bytes(4)},
+                ]
+                if failure:
+                    with self.assertRaisesRegex(ValueError, "null-script|script absent"):
+                        P.make_layout({"externals": ["CAB-scripts"]}, records, ["CAB-scene"])
+                else:
+                    layout, bodies = P.make_layout({"externals": ["CAB-scripts"]}, records, ["CAB-scene"])
+                    self.assertEqual(layout["scripts"], [(1, 12)])
+                    self.assertEqual(layout["types"][0], null_type)
+                    self.assertEqual(layout["types"][1]["script_type"], 0)
+                    self.assertEqual(bodies[8], bytes(32))
+                    self.assertEqual(records[0]["type"], null_type)
 
     def test_script_table_and_type_indices_follow_produced_script_order(self):
         mono = {**typ(114), "script_id": bytes(16), "script_type": 99}
