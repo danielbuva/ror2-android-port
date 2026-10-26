@@ -3541,3 +3541,24 @@ are included. No game bodies, shader programs, copied source, private paths
 or credentials are included. Legitimate PC input and separately acquired SDK
 remain required; generated records stay ignored. Complete-scene, phone and
 runtime qualification remain separate.
+
+## Seven complete scene object profiles (2026-10-26)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-splash-whole-objects.json` | `3b9366dbf00fbc4cd5733381557ff08f2ef8607ac7246bff01ffc0e77b7a2e9f` |
+| `owner-habitat-whole-objects.json` | `b7bdedfe0acc7ea849ae8b3600fb1e8ed75ea32a536f4d7d06bfbc620b37e742` |
+| `owner-helminthroost-whole-objects.json` | `3fbe8d7ac9ebec5cbda8220fcb174f91e0a694e69223de22407d8025740e66b1` |
+| `owner-itgolemplains-whole-objects.json` | `798c87752dcda4b5b4fa5cc5754523483384475fba48fa1e5653b58b2cf7a947` |
+| `owner-artifactworld03-whole-objects.json` | `ff50e0cc77b6f899c1efbf200c021ad1d2364f9140ba817f677fe79ae152de91` |
+| `owner-itgoolake-whole-objects.json` | `0f94960f9e5427dcf0895a85e977233174f5a46e9a4890e76bd80cf30cefb6cd` |
+| `owner-itmoon-whole-objects.json` | `b26b5e2c011ea6f20bbbd0886042506c63479854d011e0bd7b146afeb7d04cbd` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain source selectors, hashes, checked pointer relationships and
+authored import policies only. Lossless compaction preserves decoded selectors.
+No original body, curve, scalar, pixel, program, copied source, private path or
+credential is included. Current legitimate PC files, SDK resources and checked
+source-produced record packs remain required. Generated outputs and evidence
+stay ignored. Existing redistribution and ownership boundaries apply; phone
+production and runtime qualification remain open.
