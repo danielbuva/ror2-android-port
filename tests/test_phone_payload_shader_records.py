@@ -379,6 +379,24 @@ class StandardRetentionTests(unittest.TestCase):
         self.assertEqual(selections[10][0], selections[10][1])
         self.assertEqual(selections[10][1], selections[10][2])
 
+    def test_original_fragment_order_is_independent_of_closure_encounter_order(self):
+        source, materials = self.fixture()
+        source["m_ParsedForm"]["m_SubShaders"][0]["m_Passes"][0]["m_State"]["m_Name"] = "FORWARD"
+        carrier = deepcopy(source)
+        carrier["m_ParsedForm"]["m_SubShaders"][0]["m_Passes"][0]["progFragment"] = {
+            "m_PlayerSubPrograms": [
+                [],
+                [],
+                [],
+                [{"m_KeywordIndices": keys} for keys in ([7], [3, 7], [6, 7], [3, 4, 5, 7])],
+            ]
+        }
+        _, expected = S.standard_selections(source, materials, carrier=carrier)
+        _, actual = S.standard_selections(source, list(reversed(materials)), carrier=carrier)
+        self.assertEqual(expected, actual)
+        self.assertEqual(["DIRECTIONAL", "_EMISSION"], actual[10][0][1])
+        self.assertEqual(["DIRECTIONAL", "_GLOSSYREFLECTIONS_OFF", "_NORMALMAP", "_SPECULARHIGHLIGHTS_OFF"], actual[10][0][2])
+
     def test_explicit_sdk_mapping_removes_only_mapped_emission(self):
         source, materials = self.fixture()
         original = deepcopy(materials[1])
@@ -417,6 +435,78 @@ class StandardRetentionTests(unittest.TestCase):
         self.assertFalse(any("FOG_EXP" in row or "LIGHTMAP_ON" in row for row in selections[10][0]))
         self.assertTrue(any("FOG_LINEAR" in row for row in selections[10][0]))
         self.assertTrue(any("INSTANCING_ON" in row for row in selections[10][0]))
+
+
+class ParticlesRetentionTests(unittest.TestCase):
+    def fixture(self):
+        names = [
+            "_ALPHABLEND_ON",
+            "_ALPHATEST_ON",
+            "_NORMALMAP",
+            "FOG_LINEAR",
+            "FOG_EXP",
+            "INSTANCING_ON",
+            "PROCEDURAL_INSTANCING_ON",
+            "SOFTPARTICLES_ON",
+            "_EMISSION",
+        ]
+        snippets = []
+        passes = []
+        for identity, mask, axes, builtin in (
+            (10, [], [["__", "FOG_LINEAR", "FOG_EXP"]], []),
+            (20, [0, 1, 2, 8], [["__", "SOFTPARTICLES_ON"], ["__", "INSTANCING_ON", "PROCEDURAL_INSTANCING_ON"]], [["SHADOWS_DEPTH"], ["SHADOWS_CUBE"]]),
+        ):
+            snippet = {"m_NonStrippedUserKeywords": "FOG_LINEAR FOG_EXP INSTANCING_ON PROCEDURAL_INSTANCING_ON SOFTPARTICLES_ON"}
+            for stage in range(2):
+                snippet["m_VariantsUserGlobal" + str(stage)] = deepcopy(axes)
+                snippet["m_VariantsBuiltin" + str(stage)] = deepcopy(builtin)
+            if identity == 20:
+                snippet["m_VariantsUserGlobal1"].append(["_", "_EMISSION"])
+            snippets.append((identity, snippet))
+            passes.append({"m_Type": 0, "m_State": {"gpuProgramID": identity, "m_Tags": {"tags": []}}, "m_SerializedKeywordStateMask": mask})
+        meta = deepcopy(passes[0])
+        meta["m_State"]["m_Tags"]["tags"] = [("LightMode", "Meta")]
+        source = {
+            "m_ParsedForm": {
+                "m_Name": "Particles/Standard Unlit",
+                "m_KeywordNames": names,
+                "m_KeywordFlags": [1, 1, 1, 0, 0, 0, 0, 0, 0],
+                "m_SubShaders": [{"m_Passes": passes + [meta]}],
+            },
+            "m_CompileInfo": {"m_Snippets": snippets},
+        }
+        materials = [{"m_ValidKeywords": ["_ALPHABLEND_ON"], "m_EnableInstancingVariants": False}]
+        return source, materials
+
+    def test_alpha_only_source_keeps_runtime_fog_soft_particles_and_shadow_axes(self):
+        source, materials = self.fixture()
+        before = deepcopy(source)
+        runtime, rows = S.particles_selections(source, materials)
+        self.assertEqual(source, before)
+        self.assertEqual(len(runtime["m_ParsedForm"]["m_SubShaders"][0]["m_Passes"]), 2)
+        self.assertEqual(rows[10], [[[], ["FOG_LINEAR"]]] * 3)
+        self.assertEqual(
+            rows[20][0],
+            [
+                ["SHADOWS_DEPTH", "_ALPHABLEND_ON"],
+                ["SHADOWS_CUBE", "_ALPHABLEND_ON"],
+                ["SHADOWS_DEPTH", "SOFTPARTICLES_ON", "_ALPHABLEND_ON"],
+                ["SHADOWS_CUBE", "SOFTPARTICLES_ON", "_ALPHABLEND_ON"],
+            ],
+        )
+        self.assertFalse(any("INSTANCING_ON" in key or key == "_EMISSION" for row in rows[20][0] for key in row))
+        rows[20][0][0].append("CALLER")
+        self.assertNotIn("CALLER", rows[20][1][0])
+
+    def test_material_combinations_are_deduplicated_without_cross_product(self):
+        source, materials = self.fixture()
+        materials += [{"m_ShaderKeywords": "_ALPHATEST_ON _NORMALMAP _EMISSION", "m_EnableInstancingVariants": True}, deepcopy(materials[0])]
+        _, rows = S.particles_selections(source, materials, None)
+        self.assertEqual(rows[10][0], [[]])
+        self.assertEqual(len(rows[20][0]), 24)
+        self.assertTrue(any("PROCEDURAL_INSTANCING_ON" in row for row in rows[20][0]))
+        self.assertTrue(any("_EMISSION" in row for row in rows[20][0]))
+        self.assertFalse(any("_ALPHABLEND_ON" in row and "_ALPHATEST_ON" in row for row in rows[20][0]))
 
 
 class TwoSeedRetentionTests(unittest.TestCase):
