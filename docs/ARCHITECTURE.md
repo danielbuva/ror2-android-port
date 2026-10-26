@@ -687,6 +687,12 @@ HideVertices through public templates. Its Skybox context follows original scene
 RenderSettings and material Shader pointers, reads SDK106 and retains source
 material keywords through the shared SDK compiler. These contexts emit the same
 pack interface and use the existing compiler teardown.
+The Splash, Habitat, Helminth Roost, Artifactworld03, Itgoolake, Itgolemplains
+and Itmoon whole-scene profiles extend these same contexts. Original resource
+fields and export filename/GUID witnesses select post-processing templates;
+recursive scene material relationships select Standard, and Splash uses the
+existing RenderSettings skybox context. Setup, output packs and teardown remain
+with this owner; audited selectors are listed in `recipe/README.md`.
 This is host qualification of retained content;
 phone execution stays open.
 
@@ -4546,3 +4552,13 @@ selections to those owners. Existing Standard scene validation derives enabled f
 variants from original RenderSettings; setup and process teardown retain the same
 explicit roots, source/SDK pins, new output and retained receipt contract. No new
 runtime owner or target-data supplier is introduced.
+
+Nine further complete payloads use the existing object/writer owners:
+Splash, Habitat, Helminthroost, Itgolemplains, Artifactworld03, Itgoolake,
+Itmoon, Loadingbasic and Fungal. Their audited object profiles consume
+receipt-pinned source-produced media and Shader packs. Current PC/SDK roots,
+profile/tool pins and a separate output directory set up each process; exit
+tears down producers while local receipts persist. The same Shader owner adds
+Title post-processing/Standard selections and SDK terrain base-generation
+passes, selected from original native properties and SDK pass declarations.
+No runtime owner is added; phone production and original scene behavior remain open.
