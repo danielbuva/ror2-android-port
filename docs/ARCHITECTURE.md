@@ -4642,3 +4642,11 @@ feature coverage, then retains existing SDK global/builtin cycles and native
 ordering. Setup uses the already pinned original input; process-exit teardown
 and retained pack receipts are unchanged. J1199 qualifies Dampcavesimple's
 source Standard record; full-scene and phone behavior remain separate gates.
+
+Soul perftest, Mire and Crystalworld Shader selections extend the existing
+`payload_shader_records.py` owner. Original scene resource relationships
+select post-processing shaders; recursive original materials select Standard.
+Explicit current PC/SDK roots, pinned profiles/tools and a separate output
+directory set up production; process exit tears down producers while local
+receipts persist. All 74 persisted records are host raw-exact to J850.
+Complete-scene readiness and phone qualification remain separate gates.
