@@ -129,8 +129,14 @@ The streamed-scene slices process shared assets then the scene member. Each
 member retains its own object/type/external tables and index identities. Scene
 script tables derive from actual MonoBehaviour script pointers, independently
 of physical script-first body placement. The existing checked reference
-relationships generate sorted external PreloadData; native scene containers
-preserve the original relocated scene path and streamed-scene semantics. The
+relationships and pinned record-pack dependency relocations generate sorted
+external PreloadData. Original preload built-in resource pointers retain their
+path IDs after checking preload membership and the original resource external;
+no source object body is required for these SDK-owned identities. Generated
+DefaultMaterial records reuse the existing `player_data.shared_default_material`
+projection of a pinned SDK Material and original Shader, followed by checked
+PPtr relocation; their destination native type remains original. Native scene
+containers preserve the original relocated scene path and streamed-scene semantics. The
 existing scene export policy disables the selected MapZone owner and omits
 checked original components; reflected bake removal uses ordinary PPtr remaps.
 All scene meshes come through the existing pinned producer pack. Habitat also
