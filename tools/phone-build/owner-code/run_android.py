@@ -252,7 +252,11 @@ def run(request_file, runtime, installed):
         production["measure_jobs"] = request["measure_jobs"]
     if "compile_timeout_seconds" in request:
         production["compile_timeout_seconds"] = request["compile_timeout_seconds"]
-    if "pause_clock" in request:
+    if os.environ.get("ROR2LAB_BUILD_PAUSE_CLOCK"):
+        # The shared on-device supervisor owns this BOOTTIME clock, outside
+        # the stopped producer family. Prefer its clock over an outer watcher.
+        production["pause_clock"] = str(Path(os.environ["ROR2LAB_BUILD_PAUSE_CLOCK"]).resolve(strict=True))
+    elif "pause_clock" in request:
         clock = (inputs / backend.native.relative(request["pause_clock"])).resolve(strict=True)
         if not clock.is_relative_to(inputs):
             raise ValueError("pause clock escapes private owner files")

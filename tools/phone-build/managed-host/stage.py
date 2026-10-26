@@ -96,7 +96,13 @@ def stage(profile_source, sdk, destination, *, root=ROOT, owner_backend=False):
         bind(path, "repo/" + name)
         if files["repo/" + name][1] != expected:
             raise ValueError("Public transform source drift: " + name)
-    for name in ("owner-apk/build_owner_apk.py", "owner-apk/binary_manifest.py", "accepted-output/package.py", "accepted-output/assemble.py"):
+    for name in (
+        "owner-apk/build_owner_apk.py",
+        "owner-apk/binary_manifest.py",
+        "accepted-output/package.py",
+        "accepted-output/assemble.py",
+        "accepted-output/phone_runner.py",
+    ):
         bind(SOURCE.parent / name, "repo/tools/phone-build/" + name)
     if owner_backend:
         names = (
