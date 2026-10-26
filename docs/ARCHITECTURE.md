@@ -151,7 +151,10 @@ It does not establish full original stage behavior.
 source-scene variant. The owner suppresses only checked named original global
 GameObjects, following `source_scene_candidate.py`. Its two LineRenderer arrays
 derive from original BezierCurveLine operands and original local Transform
-hierarchies with identity rotations. Existing schema/field parsers locate their
+hierarchies with identity rotations. The same owner evaluates rotated local
+Transform/RectTransform hierarchies from original quaternion, scale and translation operands with
+per-operation float32 rounding; animated Bezier wind remains refused.
+Existing schema/field parsers locate their
 arrays; float32 arithmetic preserves all other original bytes before pointer
 relocation. Synthetic typed sources and full-bundle fixtures check these
 contracts. No additional runtime or experiment-switch case is introduced.

@@ -140,7 +140,7 @@ def rebuild_bezier_line(body, sources, source_profiles, line_selector, behaviour
 
     Called before PPtr relocation. All operands are read from original records;
     source schemas locate the line array and declare the curve field contract.
-    The qualified source hierarchy has identity rotations and local links only.
+    Original local TRS operands are evaluated leaf-to-root with float32 rounding.
     """
     import math
 
@@ -217,13 +217,29 @@ def rebuild_bezier_line(body, sources, source_profiles, line_selector, behaviour
             if identity in seen:
                 raise ValueError("original transform parent cycle")
             seen.add(identity)
-            transform, _ = read([source, identity], 4)
+            transform, transform_type = source_record(sources, [source, identity])
+            if transform_type["class_id"] not in (4, 224):
+                raise ValueError("original Bezier record class drift (ancestor)")
             children = struct.unpack_from("<I", transform, 52)[0]
-            if len(transform) != 68 + children * 12 or struct.unpack_from("<4f", transform, 12) != (0.0, 0.0, 0.0, 1.0):
-                raise ValueError("Bezier requires original identity-rotation transform hierarchy")
+            if len(transform) != 68 + children * 12 + (40 if transform_type["class_id"] == 224 else 0):
+                raise ValueError("original Bezier transform layout drift")
             local = struct.unpack_from("<3f", transform, 28)
             scale = struct.unpack_from("<3f", transform, 40)
-            position = tuple(single(single(value * factor) + offset) for value, factor, offset in zip(position, scale, local))
+            x, y, z, w = (single(value) for value in struct.unpack_from("<4f", transform, 12))
+            x2, y2, z2 = single(x + x), single(y + y), single(z + z)
+            xx, yy, zz = single(x * x2), single(y * y2), single(z * z2)
+            xy, xz, yz = single(x * y2), single(x * z2), single(y * z2)
+            wx, wy, wz = single(w * x2), single(w * y2), single(w * z2)
+            rotation = (
+                (single(1 - single(yy + zz)), single(xy - wz), single(xz + wy)),
+                (single(xy + wz), single(1 - single(xx + zz)), single(yz - wx)),
+                (single(xz - wy), single(yz + wx), single(1 - single(xx + yy))),
+            )
+            scaled = tuple(single(value * factor) for value, factor in zip(position, scale))
+            position = tuple(
+                single(single(single(single(row[0] * scaled[0]) + single(row[1] * scaled[1])) + single(row[2] * scaled[2])) + offset)
+                for row, offset in zip(rotation, local)
+            )
             father_file, identity = struct.unpack_from("<iq", transform, 56 + children * 12)
             if father_file:
                 raise ValueError("original Bezier parent escapes source scene")

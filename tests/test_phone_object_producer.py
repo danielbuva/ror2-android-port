@@ -1410,6 +1410,23 @@ class BezierCurveLineTests(unittest.TestCase):
         records, profiles = bezier_fixture(endpoint=False)
         self.assertEqual(self.result(records, profiles)[20:80], self.EXPECTED)
 
+    def test_rotated_scaled_parent_rebuilds_known_world_polynomial(self):
+        records, profiles = bezier_fixture()
+        # Exact half-turn around Z: parent TRS maps (x,y,z) to
+        # (10-2x,20-3y,30+4z). Original control offsets stay in world space.
+        self.mutate(records, 31, 12, struct.pack("<4f", 0, 0, 1, 0))
+        expected = struct.pack("<15f", 8, 14, 42, 9, 15.5, 43.5, 10, 16, 44, 11, 15.5, 43.5, 12, 14, 42)
+        self.assertEqual(self.result(records, profiles)[20:80], expected)
+
+    def test_rect_transform_parent_preserves_common_trs(self):
+        records, profiles = bezier_fixture()
+        body, parent_type = records[0][31]
+        records[0][31] = (body + bytes(40), {**parent_type, "class_id": 224})
+        self.assertEqual(self.result(records, profiles)[20:80], self.EXPECTED)
+        records[0][31] = (body + bytes(40), {**parent_type, "class_id": 54})
+        with self.assertRaisesRegex(ValueError, "record class drift"):
+            self.result(records, profiles)
+
     def test_mutated_body_must_equal_original_line(self):
         records, profiles = bezier_fixture()
         body = bytearray(records[0][10][0])
@@ -1427,7 +1444,6 @@ class BezierCurveLineTests(unittest.TestCase):
             ("starting transform backlink", 30, 0, struct.pack("<iq", 0, 999), "GameObject"),
             ("parent cycle", 31, 56, struct.pack("<iq", 0, 30), "parent cycle"),
             ("external parent", 30, 56, struct.pack("<iq", 1, 31), "parent escapes"),
-            ("nonidentity rotation", 31, 12, struct.pack("<4f", 0, 0, 1, 0), "identity-rotation"),
             ("animated wind", 20, 80, bytes([1]), "animated Bezier wind"),
             ("external endpoint", 20, 68, struct.pack("<iq", 1, 40), "endTransform escapes"),
             ("nonfinite source", 20, 32, struct.pack("<f", float("nan")), "nonfinite"),
