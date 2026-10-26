@@ -522,3 +522,9 @@ is 626/705 available (621 raw-exact, two code comparisons, three drift-explained
 with 79 missing (7 APK, 72 payload). Existing object/Shader owners and the
 target-tree writer consume audited public selectors and separately produced
 record packs. Phone production, installation and original behavior remain open.
+
+The complete single-mip RGBA source pack now has Android shell evidence
+([J1199](PORTING_JOURNAL.md#j1199--complete-phone-rgba-production-and-app-texture-dispatch)): 1,333 records and all three persisted output hashes match the
+host target after verified checkpoint continuation. This supplies existing
+receipt-pinned texture consumers; it does not close missing complete bundles.
+App-host texture dispatch reuses this producer, with device execution still open.

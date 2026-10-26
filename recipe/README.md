@@ -206,7 +206,7 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-24.
 | `owner-uncompressed-textures.json` | Private replay uncompressed texture bodies/pixels | Original/destination selectors, source extents, generic import/placement metadata and hashes; copy, BC1, source-coordinate dilation and public JPEG policy. | No pixels, palettes, target literals/patches, native SDK implementation or image/library bytes; full audit above, 2026-10-24. All 399 records qualify on host/Android in J1079. | Explicit PC-input-only `texture_produce.py` and separately built public JPEG tool; no current game-build consumer. |
 | `owner-alpha-textures.json` | Private replay source Alpha8/single-mip texture cohort (J1082) | Canonical original/destination selectors, source/field extents, import/storage settings and hashes. | No alpha samples, encoded blocks, target byte frames, protected source or private identifiers; full audit below, 2026-10-24. | Original-PC-input-only `texture_produce.py` plus separately built public codec; no game-build consumer. |
 | `owner-rgb-textures.json` | Complete ETC1/single-mip target cohort | Original/destination selectors, field/pixel extents, hashes and source JPEG policy; composition aliases reuse original Warp/Elite ramps. | No colors, normal vectors, palettes, encoded blocks or target byte frames; audit below, 2026-10-24. | Original-input-only `texture_produce.py` and public ETC/JPEG tools; J1088 qualifies all 281 records on Android. |
-| `owner-rgba-textures.json` | Complete non-Alpha8 ETC2 RGBA/single-mip target cohort | Original/destination selectors, byte/field extents, hashes and canonical source relationships. | No pixels, palettes, encoded blocks, SDK implementation, private paths or target byte frames; audit below, 2026-10-24. | Existing source-only texture owner plus separately supplied SDK codec and public BC7 decoder; full phone qualification pending. |
+| `owner-rgba-textures.json` | Complete non-Alpha8 ETC2 RGBA/single-mip target cohort | Original/destination selectors, byte/field extents, hashes and canonical source relationships. | No pixels, palettes, encoded blocks, SDK implementation, private paths or target byte frames; audit below, 2026-10-24. | Existing source-only texture owner plus separately supplied SDK codec and public BC7 decoder; J1199 qualifies all 1,333 records through the Android shell producer; app-host execution remains open. |
 | `owner-hierarchy-records-1.jsonl.gz` | Qualified graph-selected original object relationships | Pinned original/destination selectors, hashes and checked PPtrs only; bounded source groups, decoded by the public audit. | No body/type template, scalar, float, gameplay value or private identifier; audit below, 2026-10-25. | Existing `record_produce.py`; J1143 full source-only host qualification; phone/assembly gates open. |
 | `owner-hierarchy-records-2.jsonl.gz` | Qualified graph-selected original object relationships | Pinned original/destination selectors, hashes and checked PPtrs only; bounded source groups, decoded by the public audit. | No body/type template, scalar, float, gameplay value or private identifier; audit below, 2026-10-25. | Existing `record_produce.py`; J1143 full source-only host qualification; phone/assembly gates open. |
 | `owner-hierarchy-records-3.jsonl.gz` | Qualified graph-selected original object relationships | Pinned original/destination selectors, hashes and checked PPtrs only; bounded source groups, decoded by the public audit. | No body/type template, scalar, float, gameplay value or private identifier; audit below, 2026-10-25. | Existing `record_produce.py`; J1143 full source-only host qualification; phone/assembly gates open. |
@@ -3857,6 +3857,24 @@ receipt-pinned source-produced media/Shader packs remain required. Generated
 outputs and evidence stay ignored. Existing ownership and redistribution
 boundaries apply; phone production, installation and runtime behavior remain open.
 
+## Habitatfall complete source-scene selections (2026-10-26)
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-habitatfall-source-objects.json` | `57dbaeb22a902e71d6178898b390ff0848bc6aa18ae6b9dae9b62396705b80e6` |
+| `owner-habitatfall-source-lab-postprocess-shaders.json` | `6de150e41fed20628b0590fa5b3a4353df3e6d69bad01e2b3ccfcb9ffd8d276b` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain original selectors, hashes, checked pointer relationships,
+SDK/public-tool pins and existing authored import policies only. Lossless JSON
+compaction preserves every decoded object selection; the Shader profile is
+unchanged from the separately qualified source-produced packs. No original
+body, curve, scalar payload, pixel, shader program, copied source, private path
+or credential is included. Legitimate PC files, separately acquired SDK and
+receipt-pinned source-produced media/Shader packs remain required. Generated
+outputs and evidence stay ignored. Existing ownership and redistribution
+boundaries apply; phone production, installation and runtime behavior remain open.
+
 ## Soul, Mire and Crystalworld Shader selections (2026-10-26)
 
 | Profile | SHA-256 |
@@ -3876,3 +3894,21 @@ PC input and separately acquired SDK remain required; generated records
 and evidence stay ignored. All 74 persisted Shader records are host
 raw-exact against J850. Complete-scene readiness and phone qualification
 remain separate gates.
+
+## Soul, Mire and Crystalworld complete scene selections (2026-10-26)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-soul_perftest-objects.json` | `7ff7efa24163a2268c978b6bd1bc8b89417d336e45e664105bce68ea13c0b371` |
+| `owner-mire-objects.json` | `e177548f7fd8a1659427b5fea6eabfe644fb0ee55f054b44ddb5af47658d1ccb` |
+| `owner-crystalworld-objects.json` | `3648a7e92bb91d626390761a799a9c10ae775c0f0bfb6f92b2ede1c1bb6de1d2` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain source selectors, hashes, checked pointer relationships and
+authored import policies only. Compaction preserves every decoded selector.
+No original body, curve, scalar data, pixel, shader program, copied source,
+private path or credential is included. Current legitimate PC files, the pinned
+SDK and independently source-produced media/Shader record packs remain required.
+The existing object producer preserves source null-script type slots for Soul
+and Mire. Generated outputs and raw comparison evidence stay ignored; ownership
+and redistribution boundaries apply. Phone production and runtime remain open.

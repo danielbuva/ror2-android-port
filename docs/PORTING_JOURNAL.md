@@ -293,6 +293,20 @@ Audited selectors reuse existing owners; 81 focused object/Shader tests pass.
 Host-only; phone production, installation and original scene behavior remain open.
 APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
 
+## J1200 — Complete source-derived Habitatfall bundle
+
+2026-10-26. Existing object/Shader owners reproduce the complete Habitatfall source
+bundle from legitimate PC input, acquired SDK resources and source-produced packs.
+Guarded public CLI production persists before independent comparison:
+13,895 objects, both serialized members and the compressed bundle are raw-exact to J850.
+Output: 6,750,293 B, SHA-256
+`0fb9f48c4c369208041464232eb4f71bde3155b65cd09375104c46f259bffa4b`.
+Evidence: `work/coordination/p1-scenes-ss/source-qualification-v4/`
+(`done.json`, `qualification-done.json`, `readiness-union/readiness.json`).
+Retained union closes one payload entry: 635/705 available, 630 raw-exact,
+two code comparisons and three drift-explained; 70 missing (7 APK, 63 payload).
+Audited selectors reuse existing owners; 81 focused object/Shader tests pass.
+Host-only; phone production, installation and original scene behavior remain open.
 ## J1198 — Source-derived Soul, Mire and Crystalworld Shader records
 
 2026-10-26. Five audited profiles extend the existing Shader record owner:
@@ -306,7 +320,7 @@ Evidence, profile/output pins: `work/coordination/p1-anim-priority-shaders-v1/`
 and phone production, installation and original behavior remain separate gates.
 APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
 
-## J1199 — Original-fragment Standard material ordering
+## J1203 — Original-fragment Standard material ordering
 
 2026-10-26. Existing Shader producer orders retained Standard material features by
 original fragment identities before applying SDK global/builtin variant cycles.
@@ -319,3 +333,32 @@ Evidence: `work/coordination/p1-shaders-2/qualified-damp-original-order-v1/`
 Prior art: J1179/J1157 and pinned AssetRipper property/fallback contract.
 Authored encounter-order regression, 46 focused host tests and Ruff pass.
 Host-only; complete scene qualification and phone production/runtime remain open.
+## J1201 — Complete Soul, Mire and Crystalworld scene bundles
+
+2026-10-26. Three audited object profiles extend the existing object/Shader owners,
+reusing J1198 Shader packs and legitimate PC/SDK input: 319,607 objects,
+six serialized members and three compressed bundles are host raw-exact to J850.
+Evidence and per-output SHA-256: animation worktree
+`work/coordination/p1-anim/priority-scenes-final-v1/` (`done.json`, `publication-inputs.json`).
+Retained readiness union: `work/coordination/p1-three-complete-scenes-v1/readiness-union/`;
+three payload entries close, all other rows unchanged: 638/705 available,
+633 raw-exact, two code comparisons, three drift-explained; 67 missing (7 APK, 60 payload).
+This includes the independently qualified Habitatfall union; no production replay.
+Three focused host contracts, host preflight and public audit pass; selectors only,
+with original null-script type slots preserved. No new runtime owner or target supplier.
+Host-only; phone production, installation and original scene behavior remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+## J1199 — Complete phone RGBA production and app texture dispatch
+
+2026-10-26. Existing source texture owner completes all 1,333 single-mip RGBA records on Android,
+resuming 521 verified records; all three persisted pack sizes/hashes match the target.
+Objects SHA-256 `9e408304853cbdcd94203937b4ba65566c84506366f4ffc97d92e7163da3e171`;
+resources `82a2be78f7bae0b95f818661b819905ce3db741745140d69ba51a5a435b5f2a4`;
+index `aa9b475422b424f2da6f4ee8be35b5c4f5302e75f7358b2a683927f3437f1bdd`.
+Resume: 25,768 s, peak RSS 255,905,792 B, CPU/GPU 48.1 C, no pauses/time above 80 C;
+shared continuous thermal runner passes; battery admission 27 C, 80%, not charging.
+Evidence: `work/coordination/accepted-build-reconstruction/media-source-v1/rgba-shared-resume521-v2/`
+(`done.json`, `acceptance.json`, captured checkpoint). Scratch removed, display asleep, lease released.
+Installed APK unchanged: `4666a1107e812d19b3186aa6f528adb745f6b3bb256fbe37f87472cc85b247ac`.
+Existing app worker gains source texture dispatch/resume; seven authored host checks and Ruff pass.
+App-host execution, mip/cube/sky cohorts, complete APK assembly/install and gameplay remain open.

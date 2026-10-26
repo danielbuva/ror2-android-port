@@ -816,8 +816,10 @@ and device ownership remain the caller's responsibility.
 
 ## Produce single-mip RGBA textures with the owner-supplied SDK
 
-Current experimental source-only support; full phone-cohort qualification is
-pending. `recipe/owner-rgba-textures.json`, SHA-256
+Current experimental source-only support. J1199 completes the 1,333-record
+Android shell cohort with all three persisted pack hashes exact, resuming a
+verified 521-record prefix. App-host execution remains open.
+`recipe/owner-rgba-textures.json`, SHA-256
 `76e596c4ec3049e471f292d42b2b623092e05596a1a756be66ff08e73bbe6f96`,
 selects 1,277 canonical original textures from 535 PC bundles for the remaining
 1,333 non-Alpha8 ETC2 RGBA/single-mip records. It contains selectors, hashes and
@@ -1367,5 +1369,22 @@ pinned profiles/tools, receipt-pinned source-produced media/Shader packs and a
 separate output directory set up production; process exit tears down each
 producer while local receipts persist. The existing member-aware writer exposes
 `payload/sulfurpools-source-lab`. All 19,503 persisted objects, both serialized
+members and the compressed bundle are host raw-exact against J850. No runtime
+owner is added; phone production, installation and original scene behavior remain open.
+Soul, Mire and Crystalworld use `recipe/owner-{soul_perftest,mire,crystalworld}-objects.json`
+with the same object command and independently source-produced record packs.
+Host qualification matches all 319,607 objects, both members per scene and the
+three compressed bundles byte for byte against J850. The original null-script
+type slots remain distinct in Soul and Mire. Original files and pinned SDK
+resources remain required; phone execution and runtime behavior remain open.
+
+
+Habitatfall complete source-scene selections extend the existing object/Shader
+owners through `recipe/owner-habitatfall-source-objects.json` and matching
+source-lab post-processing profile. Explicit current PC/SDK roots,
+pinned profiles/tools, receipt-pinned source-produced media/Shader packs and a
+separate output directory set up production; process exit tears down each
+producer while local receipts persist. The existing member-aware writer exposes
+`payload/habitatfall-source-lab`. All 13,895 persisted objects, both serialized
 members and the compressed bundle are host raw-exact against J850. No runtime
 owner is added; phone production, installation and original scene behavior remain open.

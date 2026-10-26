@@ -322,6 +322,14 @@ readbacks precede its terminal complete/failed receipt. Exit tears down the
 process and retains private packs. [Setup/lifecycle](../tools/phone-build/accepted-output/README.md#produce-avatars-directly-from-original-pc-bundles)
 requires no private target/discovery file. All 228 accepted records qualify in
 J1075; bundle assembly and game-build integration remain separate owners/gates.
+`owner-code/run_android.py::texture_job` exposes that source texture owner to
+the existing app worker, with explicit staged profile, private PC inputs,
+installed native codec pins and private SDK descriptor. It sets up a new private
+output or verified checkpoint resume; process exit tears down the producer while
+receipts persist. Existing input checks and thermal supervision remain owners of
+those contracts. The app route has host evidence only; the complete 1,333-record
+single-mip RGBA shell producer is device-qualified in J1199.
+
 `texture_produce.py` owns the current experimental Texture2D source producer. Audited `recipe/owner-uncompressed-textures.json` selects
 original body/pixel ranges and generic import/stream placement; standard BC1
 decoding, raw copying, fixed source-coordinate color extension and public
@@ -4640,8 +4648,18 @@ from the pinned original Shader's fragment keyword identities, independently of
 recursive closure encounter order. It validates original/SDK pass identity and
 feature coverage, then retains existing SDK global/builtin cycles and native
 ordering. Setup uses the already pinned original input; process-exit teardown
-and retained pack receipts are unchanged. J1199 qualifies Dampcavesimple's
+and retained pack receipts are unchanged. J1203 qualifies Dampcavesimple's
 source Standard record; full-scene and phone behavior remain separate gates.
+
+Habitatfall complete source-scene selections extend the existing object/Shader
+owners through `recipe/owner-habitatfall-source-objects.json` and matching
+source-lab post-processing profile. Explicit current PC/SDK roots,
+pinned profiles/tools, receipt-pinned source-produced media/Shader packs and a
+separate output directory set up production; process exit tears down each
+producer while local receipts persist. The existing member-aware writer exposes
+`payload/habitatfall-source-lab`. All 13,895 persisted objects, both serialized
+members and the compressed bundle are host raw-exact against J850. No runtime
+owner is added; phone production, installation and original scene behavior remain open.
 
 Soul perftest, Mire and Crystalworld Shader selections extend the existing
 `payload_shader_records.py` owner. Original scene resource relationships
@@ -4650,3 +4668,12 @@ Explicit current PC/SDK roots, pinned profiles/tools and a separate output
 directory set up production; process exit tears down producers while local
 receipts persist. All 74 persisted records are host raw-exact to J850.
 Complete-scene readiness and phone qualification remain separate gates.
+
+Complete Soul perftest, Mire and Crystalworld scene selections use the existing
+object/Shader owners through `recipe/owner-{soul_perftest,mire,crystalworld}-objects.json`.
+Explicit current PC/SDK roots, pinned profiles/tools, source-produced record packs
+and a separate output directory set up production; process exit tears down each
+producer while local receipts persist. The member-aware writer exposes
+`payload/whole-scene-{soul_perftest,mire,crystalworld}`. All 319,607 objects,
+six serialized members and three compressed bundles are host raw-exact to J850.
+Phone production, installation and original scene behavior remain open.

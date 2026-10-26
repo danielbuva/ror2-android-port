@@ -114,14 +114,13 @@ codec on Android (J1082). The same owner's
 [ETC1 profile](../tools/phone-build/accepted-output/README.md#produce-etc1-single-mip-textures-directly-from-original-pc-bundles)
 qualifies all 281 single-mip records, the shared codec build and a complete
 5,006-record RGB/Alpha8/uncompressed phone regression (J1088).
-J1107 qualifies all 1,333 remaining single-mip RGBA records on the host, with
-its complete phone cohort open after the interrupted guarded run in
-[J1123](history/journal-J1-J1177/PORTING_JOURNAL.md#j1123--guarded-rgba-phone-batch-loses-transport-admission-stays-open).
-[J1140](history/journal-J1-J1177/PORTING_JOURNAL.md#j1140--qualify-the-bounded-android-tool-guard-and-checkpoint-recovery)
-qualifies bounded Android guard and real checkpoint-recovery controls; the
-complete checkpointed single-job cohort remains open. [J1173](history/journal-J1-J1177/PORTING_JOURNAL.md#j1173--preserve-the-rgba-phone-prefix-after-bounded-wall-timeout)
-records the retry wall timeout and verified 506-record prefix; full cohort
-admission still requires completed source-only production.
+[J1199](PORTING_JOURNAL.md#j1199--complete-phone-rgba-production-and-app-texture-dispatch) completes all 1,333 single-mip RGBA records on Android with
+all three pack hashes exact after verified continuation from 521 records.
+The resumed production takes 25,768 seconds with peak CPU/GPU 48.1 C, no pauses
+and no time above 80 C. The installed APK is unchanged; owned scratch is removed,
+the display is asleep and the device lease is released. The existing app worker
+also accepts source texture requests and resume, with host-only dispatch evidence.
+Ordinary-app texture execution and complete APK assembly/install remain open.
 J1110 qualifies all 1,589 ETC1 mip-chain records
 on the host; Android production remains open. [J1128](history/journal-J1-J1177/PORTING_JOURNAL.md#j1128--produce-complete-rgba-mip-and-source-cubemap-cohorts-on-the-host) qualifies all
 1,523 RGBA mip-chain records and 110 source-derived Cubemaps on the host. Their
@@ -136,9 +135,8 @@ target follows a complete v1 phone build/run.
 The [standalone SDK tool runner](../tools/phone-build/accepted-output/README.md#build-the-standalone-sdk-tool-runner)
 has a public source build and shell-only Android controls (J1081). This permits
 testing separately acquired Linux SDK tools without an Editor/project workflow.
-J1081's Box64 RGBA control is not exact. J1107's later QEMU controls are exact,
-but the full phone cohort remains open; no complete owner installation follows
-from these standalone controls.
+J1081's Box64 RGBA control is not exact. J1107's later QEMU controls and J1199's
+complete shell cohort are exact; complete owner installation remains open.
 The game keeps its native IL2CPP ARM64 execution backend.
 
 Many preparation and packaging stages have Android-capable open-source building
