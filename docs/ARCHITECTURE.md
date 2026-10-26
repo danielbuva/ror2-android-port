@@ -4699,3 +4699,12 @@ public-tool roots, pinned profiles and a new output directory set up production;
 process exit tears down producers while local receipts persist. Its 24
 post-processing records and one Standard record are host raw-exact against J850.
 Complete-scene assembly, phone production and runtime behavior remain open.
+
+Skymeadow source-lab particle and Golemplains source-lab Standard selections
+extend the existing `payload_shader_records.py` owner through their matching
+`recipe/owner-*-source-lab-*-shaders.json` profiles. Original fragment identities
+supply particle runtime pass selection and native order; SDK source supplies
+programs, including procedural instancing resource buffers. Explicit pinned
+PC/SDK/tool inputs and a separate output directory set up production; process
+exit tears down producers while receipts persist. Both persisted Shader records
+are host raw-exact to J850. Full-scene and phone qualification remain separate.
