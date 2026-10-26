@@ -1256,3 +1256,14 @@ with independently produced media/Shader packs; Logbook post-processing uses
 members and five compressed bundles are host-exact against J850. The existing
 target-tree interface exposes these as `payload/<bundle-name>`; phone production,
 assembly and runtime qualification remain open.
+
+Eight further scene selections use the same object command:
+`owner-lakes-spine-objects.json`, `owner-lakesnight-spine-objects.json`,
+`owner-sulfurpools-spine-objects.json`, `owner-satellitescene-objects.json`,
+`owner-limbo-objects.json`, `owner-ironalluvium-objects.json`,
+`owner-ironalluvium2-objects.json` and `owner-lobby-objects.json` under `recipe/`.
+Supply their independently produced media/Shader packs through the existing
+receipt-pinned `--record-pack` interface. These profiles expose 135,541 records,
+16 serialized members and eight compressed bundles, all host-exact against
+J850, as `payload/<bundle-name>`. They add no producer owner or runtime state;
+phone production, installation and scene behavior remain open.
