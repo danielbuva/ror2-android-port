@@ -380,6 +380,22 @@ Audited selectors reuse existing owners and original-backed Standard ordering.
 Host-only; phone production, installation and original scene behavior remain open.
 APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
 
+## J1205 — Source-lab particle and Standard Shader records
+
+2026-10-26. Existing Shader owner reproduces Skymeadow particle Shader97 and
+Golemplains Standard Shader121 from legitimate originals and pinned SDK source.
+Original fragment identities retain particle runtime passes and native order;
+procedural instancing uses the existing SDK resource-buffer implementation.
+Guarded CLI records persist before independent J850 comparison; both raw-exact.
+Skymeadow: 30,516 B, SHA-256
+`64c74893870676bf65ef721b44e8547104f7385b6121da8b07ff9073aeb536ab`.
+Golemplains: 487,132 B; receipt SHA-256
+`6846e21c5228b9bb87732a55012fcf1bb47dca19f77583515e66ef7e62a45b97`.
+Evidence: `work/coordination/p1-shaders-2/qualified-skymeadow-particles-v5/`
+and `work/coordination/p1-shaders-2/qualified-golemplains-v11-standard-v2/`.
+Audited public selectors; 32 focused host tests, Ruff and host preflight pass.
+Host-only; full-scene qualification belongs to the scene owner; phone gates remain open.
+
 ## J1204 — Complete ArtReview bundle and SDK resource buffers
 
 2026-10-26. Existing object/Shader owners reproduce ArtReview from legitimate
@@ -407,3 +423,45 @@ Evidence: `work/coordination/alpha-callback-build/rebinding-host-notes.md`;
 36 focused host contracts and Ruff pass. No APK/output generated or installed.
 Host-only; Android writes/restart, human-labelled native effects, Thor physical
 input, callback-removal acceptance and managed-growth bounds remain open.
+## J1206 — Complete source-derived Golemplains bundle
+
+2026-10-26. Existing object/Shader owners reproduce Golemplains from legitimate
+PC input, acquired SDK and source-produced packs. Guarded production persists
+before independent comparison: all 10,828 objects, both serialized members
+and the compressed bundle are raw-exact to J850. Output: 8,037,702 B, SHA-256
+`62a13207fba05bb5bee0d9958bcbd4eba0a808e0044a591081f2b18865da0202`.
+Evidence: `work/coordination/p1-scenes-ss/source-qualification-v6/`
+(`qualification-done.json`, `readiness-union/readiness.json`).
+Retained ArtReview+Damp union plus this entry: 641/705 available, 636 raw-exact,
+two code comparisons, three drift-explained; 64 missing (7 APK, 57 payload).
+Audited selectors retain own-resource post-processing provenance and Standard pins.
+Three focused producer contracts, host preflight and public audit pass.
+Host-only; phone production, installation and original scene behavior remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1207 — Complete source-derived Skymeadow bundle
+
+2026-10-26. Existing object/Shader owners reproduce Skymeadow from legitimate
+PC input, acquired SDK and source-produced packs. Guarded production persists
+before independent comparison: all 37,402 objects, both serialized members
+and the compressed bundle are raw-exact to J850. Output: 12,368,588 B, SHA-256
+`1e51258fbd0936530580723c91810e1cd3e8bda243245b525fb41067129456da`.
+Evidence: `work/coordination/p1-scenes-ss/source-qualification-v7/`
+(`qualification-done.json`, `readiness-union/readiness.json`).
+Retained Golemplains/ArtReview/Damp union plus this entry: 642/705 available,
+637 raw-exact, two code comparisons, three drift-explained; 63 missing
+(7 APK, 56 payload). Existing policies and accepted particle Shader pack reused.
+Host-only; phone production, installation and original scene behavior remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1208 — R58 assisted controls and skill-timed MainOutput
+
+2026-10-26. R58 preparation-trace candidate passes all three strict assisted controls.
+APK `9dd424f4a183d299b0ee03cd325a0cae7c9f863edb8e0b6332c81cd43c3a4dc1`, source `3749f5d8`.
+All 267 frozen artifacts rehashed; install-over preserves the profile.
+Plain 35.047 s; both transitions reach Goolake; destination-only capture succeeds.
+Finite nonzero MainOutput samples: 117504 / 132234 / 497664; nonfinite: 0.
+Original teardown and terminal process/selector/pending absence/OLED sleep pass.
+CPU/GPU peak 95.5 C transient; battery at most 35 C; runtime gap at most 0.698 s.
+Evidence: `work/coordination/main-port-r58-safety-retry/controls-duration-retry/`.
+Ordinary runs, audio attribution/audibility and PC appearance remain open.

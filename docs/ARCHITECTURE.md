@@ -1387,6 +1387,13 @@ synced content payload comes out. Everything game-derived stays under the ignore
 
 Steps 6–9a are the `./dev prototype --action whole-catalog-*` actions listed in
 [whole-catalog-integration.md](whole-catalog-integration.md#reusable-fixes-and-commands).
+`build.whole_player_inputs` treats the authored `GameAudioOriginalBootstrap.dll`
+as player code alongside staged runtime C#. The existing audio producer compiles
+and pins it before reuse validation; code-only builds retain its current owner
+contract instead of restoring an older DLL. Its importer metadata, the other
+plugin assemblies, banks and every frozen payload hash remain content inputs.
+The validator migrates older receipts for this exact DLL path only.
+
 `whole_catalog.integration_metadata` assembles integration locations, mesh aliases
 and root roles from regenerated metadata, closure and explicit destination paths.
 It has no filesystem or Editor state; `prepare_integration` still owns source
@@ -4722,3 +4729,33 @@ both serialized members and compressed bundle are host raw-exact to J850.
 Setup and teardown retain the same explicit roots, pinned source-produced packs,
 fresh output and process-exit contract. Phone production and runtime behavior
 remain open.
+
+Golemplains complete source-scene selections extend the existing object/Shader
+owners through `recipe/owner-golemplains-source-objects.json` and matching
+source-lab Standard/post-processing profiles. Explicit current PC/SDK roots,
+pinned profiles/tools, receipt-pinned source-produced media/Shader packs and a
+separate output directory set up production; process exit tears down each
+producer while local receipts persist. The existing member-aware writer exposes
+`payload/golemplains-source-lab`. All 10,828 persisted objects, both serialized
+members and the compressed bundle are host raw-exact against J850. No runtime
+owner is added; phone production, installation and original scene behavior remain open.
+
+Skymeadow source-lab particle selections extend the existing
+`payload_shader_records.py` owner through
+`recipe/owner-skymeadow-source-lab-particles-shaders.json`. Original fragment
+identities supply runtime pass selection and native order; SDK source supplies
+programs, including procedural instancing resource buffers. Explicit pinned
+PC/SDK/tool inputs and a separate output directory set up production; process
+exit tears down producers while receipts persist. The persisted Shader record
+is host raw-exact to J850. Full-scene host qualification is recorded below;
+phone qualification remains open.
+
+Skymeadow complete source-scene selections extend the existing object/Shader
+owners through `recipe/owner-skymeadow-source-objects.json` and the source-lab
+particle Shader profile. Explicit current PC/SDK roots, pinned profiles/tools,
+receipt-pinned source-produced media/Shader packs and a separate output directory
+set up production; process exit tears down producers while receipts persist.
+The existing member-aware writer exposes `payload/skymeadow-source-lab`.
+All 37,402 persisted objects, both serialized members and the compressed bundle
+are host raw-exact against J850. No runtime owner is added; phone production,
+installation and original scene behavior remain open.
