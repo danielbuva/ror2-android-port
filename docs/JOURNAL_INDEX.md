@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1210](PORTING_JOURNAL.md#j1210--source-derived-meridian-particle-shader) | 2026-10-26 | Source-derived Meridian particle Shader | 2026-10-26. |
 | [J1208](PORTING_JOURNAL.md#j1208--r58-assisted-controls-and-skill-timed-mainoutput) | 2026-10-26 | R58 assisted controls and skill-timed MainOutput | 2026-10-26. |
 | [J1207](PORTING_JOURNAL.md#j1207--complete-source-derived-skymeadow-bundle) | 2026-10-26 | Complete source-derived Skymeadow bundle | 2026-10-26. |
 | [J1206](PORTING_JOURNAL.md#j1206--complete-source-derived-golemplains-bundle) | 2026-10-26 | Complete source-derived Golemplains bundle | 2026-10-26. |

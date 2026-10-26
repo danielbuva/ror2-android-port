@@ -4014,3 +4014,30 @@ files, separately acquired SDK and receipt-pinned source-produced media/Shader
 packs remain required. Generated outputs and evidence stay ignored. Existing
 ownership and redistribution boundaries apply; phone production, installation
 and original scene behavior remain open.
+
+## Native graph detour owner repin (2026-10-26)
+
+Refresh the authored integrated-world owner hash after preserving progressing
+native graph detours, and refresh the producer/camera recipe pins together.
+The prior recipe remains the parent hash. Reviewed changes contain only authored
+source and hashes; no game content, middleware, private paths or identifiers.
+This pin update does not qualify native encounter or audio behavior.
+
+The same audit covers the camera build-hook hash following its refreshed
+authored audio-producer recipe pin. This changes source validation metadata
+only; no generated content or additional input identifiers are published.
+
+## Meridian source particle Shader selection (2026-10-26)
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-meridian-source-lab-particles-shaders.json` | `f4790f6f732e987af47d3af7aeb1cfa156d398bcd0ac653336a31b1212b62d79` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: this profile
+contains original source/material selectors, body hashes and pinned public SDK
+and tool identities only. Recursive original scene dependencies select three
+particle materials; the existing SDK 211 producer supplies programs and native
+order. No shader body, program, copied source, private path or credential is
+included. Legitimate PC input and independently acquired SDK remain required;
+generated records and evidence stay ignored. The persisted 25,056 B record is
+host raw-exact against J850; full-scene and phone gates remain separate.
