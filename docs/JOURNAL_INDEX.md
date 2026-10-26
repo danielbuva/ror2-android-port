@@ -11,6 +11,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
 | [J1192](PORTING_JOURNAL.md#j1192--ten-complete-source-derived-spine-bundles) | 2026-10-26 | Ten complete source-derived spine bundles | 2026-10-26. |
+| [J1193](PORTING_JOURNAL.md#j1193--complete-title-satellite-and-artifact-world-source-profiles) | 2026-10-26 | Complete Title, Satellite and Artifact World source profiles | 2026-10-26. |
 | [J1191](PORTING_JOURNAL.md#j1191--integrated-preparation-timing-and-cleanup-race-repair) | 2026-10-26 | Integrated preparation timing and cleanup race repair | 2026-10-26. |
 | [J1190](PORTING_JOURNAL.md#j1190--complete-source-derived-fungal-scene) | 2026-10-26 | Complete source-derived Fungal scene | 2026-10-26. |
 | [J1189](PORTING_JOURNAL.md#j1189--reconstruct-eight-further-complete-scene-payloads) | 2026-10-26 | Reconstruct eight further complete scene payloads | 2026-10-26. |

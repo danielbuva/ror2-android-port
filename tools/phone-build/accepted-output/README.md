@@ -1338,7 +1338,14 @@ and compressed bundle are host-exact against J850. The Shader record command
 also accepts `owner-title-{postprocess,standard,terrain}-shaders.json`; the terrain
 selection retains SDK-declared passes without material keyword variants.
 Explicit original/SDK/tool roots and a new output directory retain the existing
-setup/teardown contract. Complete Title and phone/runtime gates remain open.
+setup/teardown contract. Complete Title assembly is host-qualified below; phone/runtime gates remain open.
+
+Title, Satellite and Artifactworld01 accept `owner-{title,satellitescene,artifactworld01}-whole-objects.json`
+through the existing object command and pinned record packs. Satellite accepts
+`owner-satellitescene-{postprocess,standard}-shaders.json`; Artifactworld01 accepts
+`owner-artifactworld01-postprocess-shaders.json` through the existing Shader command.
+All three complete outputs are host-exact against J850; phone/runtime gates remain open.
+
 
 Ten further complete spine scenes use the existing object and Shader owners:
 Golemplains2, Dampcavesimple, Blackbeach2, Foggyswamp, Ancientloft, Village,

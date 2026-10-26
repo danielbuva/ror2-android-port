@@ -202,6 +202,20 @@ Cleanup now tolerates a concurrently removed payload and continues the plan; oth
 Nine cleanup regressions and Ruff pass; cleanup receipts are in the same evidence directory.
 Device qualification, hotspot attribution and measured thermal improvement remain open; no gameplay claim.
 
+## J1193 — Complete Title, Satellite and Artifact World source profiles
+
+2026-10-26. Existing object and Shader owners reproduce three complete payloads;
+23,389 persisted records, all members and compressed bundles are raw-exact to J850.
+Title output SHA-256 `e9c47888e8bdd1d03f5a5e9798baca0a9628710a085771140b9d37a086659ee8`;
+Satellite `7aba9443d00566a59e7de47d63d0bcd9a1754accead89caedc62d3225e941aba`;
+Artifact World `2a9a0892b8877525743910b73b7570bfba60a1a8a933150048835c8bb741483c`.
+Evidence: `work/coordination/p1-scenes-w/publication-batch-v{2,3}/` and
+`work/coordination/p1-{satellite-ultima-shaders-v2,meridian-artifact-shaders-v1}/`.
+Audited source selectors include Satellite/Artifact Shader packs; no target-byte supplier.
+Retained union: 618/705 available, 613 exact; 87 missing (7 APK, 80 payload).
+Title and Artifact close two entries; Satellite was already counted in J1189.
+Host-only; phone production/install/runtime remain open; J850 APK unchanged.
+
 ## J1192 — Ten complete source-derived spine bundles
 
 2026-10-26. Existing object/Shader owners reproduce Golemplains2, Dampcavesimple,
