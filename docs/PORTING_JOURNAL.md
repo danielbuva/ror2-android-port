@@ -292,3 +292,17 @@ two code comparisons and three drift-explained; 71 missing (7 APK, 64 payload).
 Audited selectors reuse existing owners; 81 focused object/Shader tests pass.
 Host-only; phone production, installation and original scene behavior remain open.
 APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1198 — Original-fragment Standard material ordering
+
+2026-10-26. Existing Shader producer orders retained Standard material features by
+original fragment identities before applying SDK global/builtin variant cycles.
+Recursive material encounter order no longer changes the emitted native order.
+Guarded failed-only Dampcavesimple source Standard production persists before
+independent raw equality: 301,384 B, SHA-256
+`80ae8f64f26f1009e2d394f8111354038105512e6e75d57464b272fb7b0d7acb`.
+Evidence: `work/coordination/p1-shaders-2/qualified-damp-original-order-v1/`
+(`done.json`, `notes.md`, per-pack `independent-comparison.json`).
+Prior art: J1179/J1157 and pinned AssetRipper property/fallback contract.
+Authored encounter-order regression, 46 focused host tests and Ruff pass.
+Host-only; complete scene qualification and phone production/runtime remain open.

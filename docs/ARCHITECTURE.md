@@ -4634,3 +4634,11 @@ producer while local receipts persist. The existing member-aware writer exposes
 `payload/sulfurpools-source-lab`. All 19,503 persisted objects, both serialized
 members and the compressed bundle are host raw-exact against J850. No runtime
 owner is added; phone production, installation and original scene behavior remain open.
+
+The existing Standard Shader record owner derives retained material feature order
+from the pinned original Shader's fragment keyword identities, independently of
+recursive closure encounter order. It validates original/SDK pass identity and
+feature coverage, then retains existing SDK global/builtin cycles and native
+ordering. Setup uses the already pinned original input; process-exit teardown
+and retained pack receipts are unchanged. J1198 qualifies Dampcavesimple's
+source Standard record; full-scene and phone behavior remain separate gates.

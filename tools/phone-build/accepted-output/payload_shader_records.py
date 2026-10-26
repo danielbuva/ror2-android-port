@@ -392,70 +392,6 @@ def standard_selections(original_sdk, materials, fog_keyword="FOG_LINEAR", *, ca
     return source, selections
 
 
-def particles_selections(original_sdk, materials, fog_keyword="FOG_LINEAR"):
-    """Select per-material particle features and SDK runtime axes in source order."""
-    source = deepcopy(original_sdk)
-    form = source["m_ParsedForm"]
-    if form["m_Name"] != "Particles/Standard Unlit" or not materials:
-        raise ValueError("bounded Particles source selection differs")
-    snippets = dict(source["m_CompileInfo"]["m_Snippets"])
-    features = {name for name, flag in zip(form["m_KeywordNames"], form["m_KeywordFlags"]) if flag == 1}
-    for snippet in snippets.values():
-        runtime = set(snippet["m_NonStrippedUserKeywords"].split())
-        for stage in range(2):
-            for axis in snippet["m_VariantsUserGlobal" + str(stage)]:
-                features.update(set(axis) - runtime - {"_", "__"})
-    material_features = [
-        (set(material.get("m_ValidKeywords", [])) | set(material.get("m_InvalidKeywords", [])) | set(material.get("m_ShaderKeywords", "").split())) & features
-        for material in materials
-    ]
-    selections = {}
-    for subshader in form["m_SubShaders"]:
-        subshader["m_Passes"] = [
-            shader_pass
-            for shader_pass in subshader["m_Passes"]
-            if not any(key.upper() == "LIGHTMODE" and value.upper() == "META" for key, value in shader_pass["m_State"]["m_Tags"]["tags"])
-        ]
-        for shader_pass in subshader["m_Passes"]:
-            if shader_pass["m_Type"] != 0:
-                continue
-            identity = shader_pass["m_State"]["gpuProgramID"]
-            snippet = snippets[identity]
-            allowed = {form["m_KeywordNames"][i] for i in shader_pass["m_SerializedKeywordStateMask"]}
-            local = []
-            for selected in material_features:
-                keys = sorted(selected & allowed)
-                if keys not in local:
-                    local.append(keys)
-            axes, builtin = [], []
-            for stage in range(2):
-                for keys in snippet["m_VariantsBuiltin" + str(stage)]:
-                    if keys not in builtin:
-                        builtin.append(keys)
-                for axis in snippet["m_VariantsUserGlobal" + str(stage)]:
-                    if set(axis) - {"_", "__"} <= features:
-                        continue
-                    choices = []
-                    for name in axis:
-                        if name.startswith("FOG_") and name != fog_keyword:
-                            continue
-                        if name in ("INSTANCING_ON", "PROCEDURAL_INSTANCING_ON") and not any(material["m_EnableInstancingVariants"] for material in materials):
-                            continue
-                        choices.append([] if name in ("_", "__") else [name])
-                    if choices not in axes:
-                        axes.append(choices)
-            global_rows = [sum(values, []) for values in product(*axes)] if axes else [[]]
-            ordered = []
-            for global_keys in global_rows:
-                for engine_keys in builtin or [[]]:
-                    for local_keys in local:
-                        keys = sorted(set(global_keys + engine_keys + local_keys))
-                        if keys not in ordered:
-                            ordered.append(keys)
-            selections[identity] = [deepcopy(ordered) for _ in range(3)]
-    return source, selections
-
-
 def terrain_basegen_selections(original, sdk_source, materials):
     """Retain the SDK generator's declared passes without material keywords."""
     if materials or original["m_Dependencies"] or sdk_source["m_Dependencies"]:
@@ -502,7 +438,7 @@ def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec
     obj = original_object(source, "Shader")
     original = obj.read_typetree()
     sdk_id = profile.get("sdk_shader", 46)
-    expected_name = {46: "Standard", 106: "Skybox/Procedural", 211: "Particles/Standard Unlit", 10626: "Hidden/TerrainEngine/Splatmap/Standard-BaseGen"}[sdk_id]
+    expected_name = {46: "Standard", 106: "Skybox/Procedural", 10626: "Hidden/TerrainEngine/Splatmap/Standard-BaseGen"}[sdk_id]
     if original["m_ParsedForm"]["m_Name"] != expected_name:
         raise ValueError("Standard native type source differs")
     materials = []
@@ -551,11 +487,8 @@ def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec
             source_runtime, set(materials[0].get("m_ValidKeywords", [])) | set(materials[0].get("m_ShaderKeywords", "").split())
         )
     else:
-        if sdk_id == 211:
-            source_runtime, keyword_rows = particles_selections(sdk_source, materials, fog_keyword)
-        else:
-            source_runtime, keyword_rows = standard_selections(sdk_source, materials, fog_keyword, carrier=original)
-        # SDK Standard and Particles depend on their own Legacy/VertexLit6. The original
+        source_runtime, keyword_rows = standard_selections(sdk_source, materials, fog_keyword, carrier=original)
+        # SDK source Standard depends on its own Legacy/VertexLit6. The original
         # PC dependency independently resolves that same named shader in its CAB.
         dependencies = original["m_Dependencies"]
         if len(dependencies) != 1 or dependencies[0]["m_FileID"] != 0:
@@ -616,7 +549,7 @@ def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec
                 common,
                 compress,
                 native_output,
-                native_order={identity: rows[0] for identity, rows in keyword_rows.items()} if sdk_id in (46, 211) else None,
+                native_order={identity: rows[0] for identity, rows in keyword_rows.items()} if sdk_id == 46 else None,
             )
         # One produced byte extent supplies the three independently named rows.
         (output / "objects.bin").write_bytes(body)
