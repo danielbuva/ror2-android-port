@@ -4512,3 +4512,9 @@ teardown and local receipts follow the existing contract above. The existing
 `record_produce.py` Director path derives exposed-reference names from original
 asset identity; it adds no runtime state. Its host contract is qualified separately
 from complete Conduit assembly, which remains open.
+
+J1185 adds Conduit Canyon object/Standard selections and Fungal Standard/postprocess
+selections to those owners. Existing Standard scene validation derives enabled fog
+variants from original RenderSettings; setup and process teardown retain the same
+explicit roots, source/SDK pins, new output and retained receipt contract. No new
+runtime owner or target-data supplier is introduced.

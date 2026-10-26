@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1185](PORTING_JOURNAL.md#j1185--complete-conduit-canyon-and-source-fog-shader-retention) | 2026-10-25 | Complete Conduit Canyon and source fog Shader retention | 2026-10-26. |
 | [J1184](PORTING_JOURNAL.md#j1184--isolated-ambient-observation-fixture) | 2026-10-25 | Isolated ambient observation fixture | 2026-10-26. |
 | [J1183](PORTING_JOURNAL.md#j1183--eight-complete-source-derived-scene-bundles) | 2026-10-25 | Eight complete source-derived scene bundles | 2026-10-26. |
 | [J1182](PORTING_JOURNAL.md#j1182--android-producer-affinity-mask-compatibility) | 2026-10-25 | Android producer affinity mask compatibility | 2026-10-26. |
