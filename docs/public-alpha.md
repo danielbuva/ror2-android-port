@@ -110,9 +110,9 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       original-shader recovery and app integration remain open. J1157 qualifies
       all 414 APK Shader48 objects through source-only host
       production: 369 complete files plus two shared records. The combined
-      source tree has 587 of 705 entries available (582 raw-exact, two code
-      comparison entries and three separately drift-explained); 118 remain
-      missing (J1163). Host shared mixed-file assembly is qualified; phone serialization remains open.
+      source tree has 593 of 705 entries available (588 raw-exact, two code
+      comparison entries and three separately drift-explained); 112 remain
+      missing (J1170). Host shared mixed-file assembly is qualified; phone serialization remains open.
       [J1102](PORTING_JOURNAL.md#j1102--qualify-linked-vulkan-fragment-output-and-explicit-owner-apk-code-inputs)
       confirms both executable stages in that linked payload and accepts all
       three produced code outputs in the existing APK owner without replay

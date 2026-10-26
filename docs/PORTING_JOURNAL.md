@@ -44456,3 +44456,32 @@ Revisit through bounded measured continuation of the validated prefix; full RGBA
 - First remaining failure: four Standard contexts lack shared feature/instancing retention; those profiles remain unqualified and unpublished.
 - Acceptance: 23 focused host tests and Ruff pass. Complete scene assembly belongs to the consumer; phone Shader execution remains open.
 - APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`; no device run.
+
+## J1170 — Reconstruct Rootjungle and three post-processing scene payloads
+
+Hypothesis: existing source object/media/Shader owners close six scene bundles; prior art J1070/J1075/J1143/J1157/J1163.
+Six object selectors and three PP selectors reuse existing owners; no bodies, target-fed values or historical suppliers.
+Guarded source production and separate J850 comparison pass every extent, 12 members and six compressed bundles:
+| Payload | Records | SHA-256 |
+| --- | ---: | --- |
+| `whole-scene-rootjungle` | 26,168 | `c758405a027adb672de8a9db3c74d2295d68ab90986dbf11382bd6f1be0c5ee3` |
+| `rootjungle-source-lab` | 26,131 | `40206a665e417eef80806c2a37395e36bc7eeae69d7ba586699e77306c14d7c2` |
+| `rootjungle-spine-lab` | 22,139 | `d8955e8d07e0fd0e6236e059ed4e8475d869c804da144e11db04f8871242fda1` |
+| `whole-scene-mysteryspace` | 4,571 | `c6fcf0a93003be0195f3661c92d3216426b4de3c8e09dfa983152def3cbe7507` |
+| `whole-scene-eclipseworld` | 882 | `969fefdc663257ea5d11922f308a771777d77ab0f61a94423682abccf1398bbf` |
+| `helminthroost-source-lab` | 7,724 | `edd72b3e122d82251baa298dad283335e9a498fc0c9460fc4cae7d2fa5af0dd1` |
+Evidence: assigned checkout `work/coordination/p1-anim/{root-final-source-host-v1,pp-scenes-final-host-v1,scene-publication-v1}/`; 87,615 records, independent GO for nine profiles; readiness union 593/705 (588 exact, two code, three drift), missing 7 APK/105 payload, zero invalid/mismatch.
+First failure: shader holes resolved; Foggyswamp wind/ancestor rotations and four Standard/Skybox scenes remain outside this slice. J1163 producer dependency landed in PR113 (`a18917f4`). Host-only: phone assembly/install/runtime/performance remain unqualified; revisit on source/SDK/policy drift or mismatch.
+
+## J1177 — R58 controls stop on sustained stage-load CPU heat
+
+2026-10-25. Hypothesis: J1156's duration policy permits R58's three strict controls.
+Unchanged normal R58 APK `4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`, source `55149b48`; no rebuild or install.
+Fresh installed-byte/profile/storage/idle admission passes before the plain control.
+Evidence: `work/coordination/main-port-r58/controls-duration-retry/` terminal, raw thermal trace and failure report; baseline `work/experiments/baseline/20261025T234940.894725Z`.
+First failure: J1156 guard stops CPU heat sustained above 80 C; peak 83.6 C.
+One CPU sensor remains 82.0/80.8/82.0/81.6/82.4 C across 1.215 s, with sample gaps below 0.35 s.
+Report phase `integrated-world-loot`, measured world 0 s; process exit follows guarded stop, not evidence of a spontaneous crash.
+No plain control accepted; stage-exit/destination controls never launch. R58 gameplay, destination capture and Siren remain open.
+Cleanup confirms process/selector absent, OLED asleep and lease released; mandatory prune passes, zero items, 52 kept.
+Revisit after measured stage-load heat reduction or restored authorized Main transport; unchanged replay is not the next experiment.

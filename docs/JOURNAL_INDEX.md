@@ -10,6 +10,8 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1177](PORTING_JOURNAL.md#j1177--r58-controls-stop-on-sustained-stage-load-cpu-heat) | 2026-10-25 | R58 controls stop on sustained stage-load CPU heat | 2026-10-25. |
+| [J1170](PORTING_JOURNAL.md#j1170--reconstruct-rootjungle-and-three-post-processing-scene-payloads) | 2026-10-25 | Reconstruct Rootjungle and three post-processing scene payloads | Hypothesis: existing source object/media/Shader owners close six scene bundles; prior art J1070/J1075/J1143/J1157/J1163. |
 | [J1172](PORTING_JOURNAL.md#j1172--three-source-derived-scene-shader-packs) | 2026-10-25 | Three source-derived scene Shader packs | - Hypothesis: original material/scene pointers plus pinned SDK/public templates suffice for these records. |
 | [J1173](PORTING_JOURNAL.md#j1173--preserve-the-rgba-phone-prefix-after-bounded-wall-timeout) | 2026-10-25 | Preserve the RGBA phone prefix after bounded wall timeout | 2026-10-25 UTC. |
 | [J1174](PORTING_JOURNAL.md#j1174--define-public-release-updates-and-incremental-owner-outputs) | 2026-10-25 | Define public release updates and incremental owner outputs | 2026-10-25. |
