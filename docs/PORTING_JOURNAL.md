@@ -454,6 +454,16 @@ CPU/GPU peak 95.5 C transient; battery at most 35 C; runtime gap at most 0.698 s
 Evidence: `work/coordination/main-port-r58-safety-retry/controls-duration-retry/`.
 Ordinary runs, audio attribution/audibility and PC appearance remain open.
 
+## J1209 — Admit the qualified CharacterMaster Boolean tail
+
+2026-10-26. The existing object producer accepts only aligned Boolean false/true
+when omitting the measured final `CharacterMaster.isUnkillable` field.
+Original identity, schema, properties-hash and complete-output checks remain.
+Retained source-derived proof: `work/coordination/p1-scenes-w/`
+`computational-character-two-record-v1/consumed.json`; script and behaviour
+are independently raw-exact to J850. No production replay or readiness delta.
+52 focused host tests, Ruff and host preflight pass, including rejection of
+non-Boolean values and nonzero padding. Complete-scene and phone gates stay open.
 ## J1210 — Source-derived Meridian particle Shader
 
 2026-10-26. Existing payload Shader owner reproduces Meridian Particles164 from

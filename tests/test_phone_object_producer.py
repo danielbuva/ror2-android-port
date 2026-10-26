@@ -447,7 +447,7 @@ def rewrite_managed_source(pc, profile, mutate):
             row["source_sha256"] = digest(bodies[row["source"][1]])
 
 
-def managed_fixture(root, *, omit_master=False, disable=False, plugin_order=False):
+def managed_fixture(root, *, omit_master=False, disable=False, plugin_order=False, master_value=False):
     pc, path, profile, _, original_target = fixture(root)
     source = pc / "source.bundle"
     source_layout = P.W.read_serialized(P.B.Bundle(source).member("CAB-source"))
@@ -474,7 +474,7 @@ def managed_fixture(root, *, omit_master=False, disable=False, plugin_order=Fals
     if disable:
         source_behaviour = source_behaviour[:12] + b"\x01\0\0\0" + source_behaviour[16:]
     if omit_master:
-        source_behaviour += bytes(4)
+        source_behaviour += struct.pack("<I", master_value)
     target_behaviour = source_behaviour[:16] + struct.pack("<iq", 0, 2) + source_behaviour[28:]
     if disable:
         target_behaviour = target_behaviour[:12] + bytes(1) + target_behaviour[13:]
@@ -733,33 +733,36 @@ class ObjectProducerTests(unittest.TestCase):
             self.assertFalse(json.loads((root / "failed/result.json").read_text())["success"])
 
     def test_character_master_omission_keeps_script_and_behaviour_schema_hashes_consistent(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            pc, path, _, sdk, names, original_type, sdk_tree, derived, bodies, serialized = managed_fixture(root, omit_master=True)
-            identity = load("authored_script_identity", ROOT / "scripts/lab/script_identity.py")
-            helper = Mock(properties_hash=Mock(return_value=derived), tree_nodes=identity.tree_nodes)
-            real_module = P.module
-            with (
-                patch.object(P, "module", side_effect=lambda name, location=None: helper if name == "script_identity" else real_module(name, location)),
-                patch.object(P.W, "codec", return_value=nullcontext(literal_lz4)),
-            ):
-                result = P.produce(path, P.B.sha(path), pc, root / "produced", Path("codec"), "pin", sdk=sdk)
-            self.assertTrue(result["success"])
-            helper.properties_hash.assert_called_once_with(*names, character_master_schema(False), sdk_tree)
-            member = P.B.Bundle(root / "produced/payload/authored-target").member("CAB-target")
-            self.assertEqual(P.B.exact(member, member.size), serialized)
-            layout = P.W.read_serialized(member)
-            mb = next(kind for kind in layout["types"] if kind["class_id"] == 114)
-            self.assertEqual(mb, {**original_type, "hash": derived, "script_type": 0, "tree": character_master_schema(False)})
-            self.assertEqual([node["name"] for node in identity.tree_nodes(mb["tree"])], ["Base", "AuthoredValue"])
-            for row in layout["objects"]:
-                member.seek(layout["data_offset"] + row["offset"])
-                actual = P.B.exact(member, row["bytes"])
-                self.assertEqual(actual, bodies[row["path_id"]])
-                if row["path_id"] == 2:
-                    offset, actual_names = P.script_fields(actual)
-                    self.assertEqual(actual_names, names)
-                    self.assertEqual(actual[offset : offset + 16], derived)
+        for master_value in (False, True):
+            with tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                pc, path, _, sdk, names, original_type, sdk_tree, derived, bodies, serialized = managed_fixture(
+                    root, omit_master=True, master_value=master_value
+                )
+                identity = load("authored_script_identity", ROOT / "scripts/lab/script_identity.py")
+                helper = Mock(properties_hash=Mock(return_value=derived), tree_nodes=identity.tree_nodes)
+                real_module = P.module
+                with (
+                    patch.object(P, "module", side_effect=lambda name, location=None: helper if name == "script_identity" else real_module(name, location)),
+                    patch.object(P.W, "codec", return_value=nullcontext(literal_lz4)),
+                ):
+                    result = P.produce(path, P.B.sha(path), pc, root / "produced", Path("codec"), "pin", sdk=sdk)
+                self.assertTrue(result["success"])
+                helper.properties_hash.assert_called_once_with(*names, character_master_schema(False), sdk_tree)
+                member = P.B.Bundle(root / "produced/payload/authored-target").member("CAB-target")
+                self.assertEqual(P.B.exact(member, member.size), serialized)
+                layout = P.W.read_serialized(member)
+                mb = next(kind for kind in layout["types"] if kind["class_id"] == 114)
+                self.assertEqual(mb, {**original_type, "hash": derived, "script_type": 0, "tree": character_master_schema(False)})
+                self.assertEqual([node["name"] for node in identity.tree_nodes(mb["tree"])], ["Base", "AuthoredValue"])
+                for row in layout["objects"]:
+                    member.seek(layout["data_offset"] + row["offset"])
+                    actual = P.B.exact(member, row["bytes"])
+                    self.assertEqual(actual, bodies[row["path_id"]])
+                    if row["path_id"] == 2:
+                        offset, actual_names = P.script_fields(actual)
+                        self.assertEqual(actual_names, names)
+                        self.assertEqual(actual[offset : offset + 16], derived)
 
     def test_character_master_omission_rejects_identity_schema_class_and_value_drift(self):
         for failure, message in (
@@ -805,7 +808,7 @@ class ObjectProducerTests(unittest.TestCase):
                         layout["types"][0]["tree"] = tree
                     elif failure in ("value", "padding"):
                         body = bytearray(bodies[61])
-                        body[-4 if failure == "value" else -1] = 1
+                        body[-4 if failure == "value" else -1] = 2 if failure == "value" else 1
                         bodies[61] = bytes(body)
 
                 rewrite_managed_source(pc, profile, mutate)
