@@ -3426,3 +3426,25 @@ original recursive content closure for whole scenes. The two scopes preserve
 the existing scene builders. Original/SDK inputs and generated packs remain
 external and ignored; these recipes grant no redistribution or ownership right.
 Phone execution and runtime qualification remain open.
+
+## Eight complete scene object profiles (2026-10-26)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-lakes-spine-objects.json` | `1b63b04f29691d6872d46167c3b57700ebf5238563ec15ee76806c6eb999e356` |
+| `owner-satellitescene-objects.json` | `88badff0f98ba8809a13581b6883fc70f360ce5e6bfde17b9a902cc25994d4d2` |
+| `owner-limbo-objects.json` | `35448d0f31ee8aaaa16d16c19a84e9a3ff5d31731f045c088d32296057c385e9` |
+| `owner-ironalluvium-objects.json` | `2fa43d0a4c91c483320567db92b40641a477643a614981e59a11aae1c43aa96d` |
+| `owner-ironalluvium2-objects.json` | `c9d2b7ee0e32723e8b6806b1a380985c60dbbfb14a1421bcf015a124a98a5a63` |
+| `owner-lobby-objects.json` | `1c447dde4392ec2964bd5fe481006273506041305203b75b3f8596fbba314a43` |
+| `owner-lakesnight-spine-objects.json` | `f2ed065a672383d9516c150e497719be84530f3d9aaf667f7d02a3dddb768d2a` |
+| `owner-sulfurpools-spine-objects.json` | `53bdf1ed34a7582ac0ddb5b75127d9c502f4bf3c2d1a5d1020418b9da9570524` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain source selectors, hashes, checked pointer relationships and
+authored import policies only. Compaction preserves every decoded selector.
+No original body, curve, scalar, pixel, program, copied source, private path or
+credential is included. Current legitimate PC files, SDK resources and checked
+source-produced record packs remain required. Generated outputs and evidence
+stay ignored. Existing redistribution and ownership boundaries apply; phone
+execution and runtime qualification remain open.
