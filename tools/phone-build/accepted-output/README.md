@@ -1306,3 +1306,12 @@ Its 49,573 objects, two serialized members and complete compressed bundle are
 host-exact against J850. The existing target-tree interface exposes
 `payload/whole-scene-conduitcanyon`; phone production, installation and original
 scene behavior remain open.
+
+Seven additional complete whole scenes use the existing object command with
+`recipe/owner-{splash,habitat,helminthroost,itgolemplains,artifactworld03,itgoolake,itmoon}-whole-objects.json`.
+Receipt-pinned source-produced record packs supply Mesh, texture, director and
+Shader records as selected by each profile. Every persisted object, serialized
+member and compressed bundle is host-exact against J850. Setup remains explicit
+PC/SDK roots and a separate new output directory; process exit tears down the
+producer while local receipts persist. Phone production and original scene
+behavior remain open.
