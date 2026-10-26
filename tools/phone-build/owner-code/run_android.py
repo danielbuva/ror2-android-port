@@ -112,6 +112,40 @@ def android_sdk_job(request, inputs, runtime, installed, native):
     return owner.produce(production)
 
 
+def texture_job(request, inputs, runtime, installed, native):
+    """Run the existing source texture owner using private inputs and installed tools."""
+    selection = request["textures"]
+    if set(selection) - {"jpeg_codec", "etc_codec", "sdk_toolchain", "resume"} != {"profile", "profile_sha256", "pc"}:
+        raise ValueError("explicit source texture profile and original inputs required")
+    resume = selection.get("resume", False)
+    if not isinstance(resume, bool):
+        raise ValueError("texture resume selector must be boolean")
+
+    def path(root, name, *, exists=True):
+        value = (root / native.relative(name)).resolve(strict=exists)
+        if not value.is_relative_to(root.resolve()):
+            raise ValueError("texture path escapes its owner root")
+        return value
+
+    repo = runtime / "repo"
+    spec = importlib.util.spec_from_file_location("android_owner_texture", repo / "tools/phone-build/accepted-output/texture_produce.py")
+    owner = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(owner)
+    options = {"resume": resume}
+    for name in ("jpeg_codec", "etc_codec", "sdk_toolchain"):
+        if name in selection:
+            pin = selection[name]
+            if set(pin) != {"path", "sha256"}:
+                raise ValueError("explicit pinned texture tool required")
+            # Executable native providers must reside in PackageManager's
+            # read-only library directory; the SDK descriptor is private data.
+            options[name] = path(inputs if name == "sdk_toolchain" else installed, pin["path"])
+            options[name + "_sha256"] = pin["sha256"]
+    output = path(inputs, request["output"], exists=False)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    return owner.produce(path(repo, selection["profile"]), selection["profile_sha256"], path(inputs, selection["pc"]), output, **options)
+
+
 def run(request_file, runtime, installed):
     request_file, runtime, installed = (Path(p).resolve(strict=True) for p in (request_file, runtime, installed))
     inputs = request_file.parent
@@ -128,6 +162,11 @@ def run(request_file, runtime, installed):
 
     check_inputs()
     request = json.loads(request_file.read_text())
+    if set(request) == {"textures", "output"}:
+        result = texture_job(request, inputs, runtime, installed, backend.native)
+        check_inputs()
+        print(json.dumps(result), flush=True)
+        return
     if set(request) in ({"signing", "output"}, {"packaging", "output"}):
         result = package_job(request, inputs, runtime, installed, backend.native)
         check_inputs()
