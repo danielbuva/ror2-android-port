@@ -134,7 +134,7 @@ charging settings remain untouched. CPU/GPU > 95 C for >= 3 s and gap > 1 s rule
 Evidence: alpha worktree `work/coordination/alpha-battery-health/validation.json`.
 No APK/output generated or installed. Fresh stability/device qualification remains open.
 
-## J1189 — Source-only catalog identity and Loadingbasic reconstruction
+## J1190 — Source-only catalog identity and Loadingbasic reconstruction
 
 2026-10-26. Existing integration metadata owner accepts an explicit camera-root extension; current defaults stay intact.
 J850 selects no extension and only closure/mesh sources, following receipted public source commit `1780ea9545`.

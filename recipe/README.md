@@ -3463,8 +3463,9 @@ execution remain open; no redistribution or ownership right is granted.
 
 ## Loadingbasic scene object profile (2026-10-26)
 
-`owner-loadingbasic-objects.json` SHA-256
-`3e46d0b7d2200ee8fa581328a6787d1687f2a66ea1f3bd7b15c3fa66cdb8de64`.
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-loadingbasic-objects.json` | `3e46d0b7d2200ee8fa581328a6787d1687f2a66ea1f3bd7b15c3fa66cdb8de64` |
 
 Manual provenance, privacy, licensing and sensitive-content audit: this profile
 contains original selectors, hashes, checked pointer relationships and existing
