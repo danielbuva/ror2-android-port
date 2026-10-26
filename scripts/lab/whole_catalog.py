@@ -1630,6 +1630,42 @@ def recover_ambiguous_mesh_subobjects(export, unresolved, metadata, native, rece
     return resolved
 
 
+def integration_metadata(metadata, closure, mapped, mesh_subobjects, *, attempt):
+    """Assemble catalog identities from regenerated inputs and explicit destination paths.
+
+    No project, filesystem, or Editor access; callers own source GUID/path resolution.
+    This is integration metadata, not a final bundle catalog or readiness proof.
+    """
+    roots = set(closure["roots"]) | set(closure.get("runtime_roots", [])) | set(CAMERA_SHADER_ROOTS)
+    locations = []
+    for row in metadata["locations"]:
+        conversion = closure["converted"].get(str(row["id"]))
+        if conversion and conversion["source"] in mapped:
+            locations.append(dict(id=row["id"], path=mapped[conversion["source"]], type=row["type"], primaryKey=row["primaryKey"], root=row["id"] in roots))
+    next_location_id = max(row["id"] for row in metadata["locations"]) + 1
+    subobject_keys = []
+    for row in mesh_subobjects:
+        if row["source"] not in mapped:
+            raise RuntimeError("Exact original mesh subobject was not staged: " + row["key"])
+        locations.append(dict(id=next_location_id, path=mapped[row["source"]], type=row["type"], primaryKey=row["key"], root=False))
+        subobject_keys.append(dict(key=row["key"], keyType="System.String", locations=[next_location_id]))
+        next_location_id += 1
+    if not roots <= {row["id"] for row in locations}:
+        raise RuntimeError("Provider roots lost during staging")
+    return dict(
+        input_id=closure["input_id"],
+        attempt=attempt,
+        locations=locations,
+        keys=metadata["keys"] + subobject_keys,
+        providers=metadata["providers"],
+        source_catalog_sha256=closure["source_catalog_sha256"],
+        roots=sorted(roots),
+        provider_roots=closure["roots"],
+        runtime_roots=closure.get("runtime_roots", []),
+        quarantine=[],
+    )
+
+
 def prepare_integration(io=None, *, attempt=None):
     """Import the complete discovered closure, reusing existing GUID owners once."""
     from composition_io import StageIO
@@ -1732,34 +1768,9 @@ def prepare_integration(io=None, *, attempt=None):
         repair_support_source(export, mapped, project, destination, io)
     for copied in copies:
         copied["sha256"] = io.sha(project / copied["target"])
-    roots = set(closure["roots"]) | set(closure.get("runtime_roots", [])) | set(CAMERA_SHADER_ROOTS)
-    locations = []
-    for row in metadata["locations"]:
-        conversion = closure["converted"].get(str(row["id"]))
-        if conversion and conversion["source"] in mapped:
-            locations.append(dict(id=row["id"], path=mapped[conversion["source"]], type=row["type"], primaryKey=row["primaryKey"], root=row["id"] in roots))
-    next_location_id = max(row["id"] for row in metadata["locations"]) + 1
-    subobject_keys = []
-    for row in mesh_subobjects:
-        if row["source"] not in mapped:
-            raise RuntimeError("Exact original mesh subobject was not staged: " + row["key"])
-        locations.append(dict(id=next_location_id, path=mapped[row["source"]], type=row["type"], primaryKey=row["key"], root=False))
-        subobject_keys.append(dict(key=row["key"], keyType="System.String", locations=[next_location_id]))
-        next_location_id += 1
-    if not roots <= {row["id"] for row in locations}:
-        raise RuntimeError("Provider roots lost during staging")
-    manifest = dict(
-        input_id=closure["input_id"],
-        attempt=destination.name,
-        locations=locations,
-        keys=metadata["keys"] + subobject_keys,
-        providers=metadata["providers"],
-        source_catalog_sha256=closure["source_catalog_sha256"],
-        roots=sorted(roots),
-        provider_roots=closure["roots"],
-        runtime_roots=closure.get("runtime_roots", []),
-        quarantine=[],
-    )
+    manifest = integration_metadata(metadata, closure, mapped, mesh_subobjects, attempt=destination.name)
+    roots = manifest["roots"]
+    locations = manifest["locations"]
     io.write(destination / "manifest.json", manifest)
     io.write(
         destination / "mesh-subobjects.json",

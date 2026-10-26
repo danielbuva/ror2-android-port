@@ -3395,3 +3395,7 @@ credential is included. Current legitimate PC files, SDK resources and checked
 record packs remain required. Generated outputs and evidence stay ignored.
 Existing redistribution and ownership boundaries apply; phone execution and
 runtime qualification remain open.
+
+The camera transform recipe whole-catalog source pin follows the pure integration
+metadata extraction. Manual provenance/privacy review: this pin references only
+authored public Python; no game content, local paths or device evidence is added.
