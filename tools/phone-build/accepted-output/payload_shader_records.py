@@ -253,7 +253,8 @@ def produce_postprocessing(
 
 def validate_standard_scene(fog, maps, renderers):
     """Check source scene fog and actual lightmap use, independent of bake preferences."""
-    if len(fog) != 1 or len(maps) != 1 or (fog[0]["m_Fog"] and fog[0]["m_FogMode"] != 1):
+    fog_keywords = {1: "FOG_LINEAR", 2: "FOG_EXP", 3: "FOG_EXP2"}
+    if len(fog) != 1 or len(maps) != 1 or (fog[0]["m_Fog"] and fog[0]["m_FogMode"] not in fog_keywords):
         raise ValueError("Standard source scene fog retention differs")
     lighting = maps[0]
     if lighting["m_Lightmaps"]:
@@ -272,7 +273,7 @@ def validate_standard_scene(fog, maps, renderers):
     for value in renderers:
         if any(value[key] != 65535 for key in ("m_LightmapIndex", "m_LightmapIndexDynamic") if key in value):
             raise ValueError("Standard source renderer uses a lightmap")
-    return "FOG_LINEAR" if fog[0]["m_Fog"] else None
+    return fog_keywords[fog[0]["m_FogMode"]] if fog[0]["m_Fog"] else None
 
 
 def standard_selections(original_sdk, materials, fog_keyword="FOG_LINEAR"):
