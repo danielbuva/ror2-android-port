@@ -1273,7 +1273,8 @@ CPU/GPU zones are <= 55 C. Explicit `--profile thor` selects 75/60 C. PID/start
 identities protect descendant signals. Before startup, taskset restricts the
 producer to up to two allowed minimum-capacity CPUs (one allowed CPU if capacity
 information is unavailable); supported numerical/.NET runtime worker settings
-are limited to two. Affinity failure refuses production.
+are limited to two. The selected CPUs are passed as a hexadecimal mask for Android Toybox versions
+without the `-c` CPU-list option. Affinity failure refuses production.
 
 Admission requires readable CPU telemetry and observed CPU/GPU/battery/skin
 <= 50 C. The 250 ms sampler continues during pauses and aborts on a gap > 1 s,
