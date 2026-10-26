@@ -4490,3 +4490,11 @@ record packs and a separate new output directory. The existing object pack
 and member-aware layout feed `unity_write.py`; process exit tears down the
 producer while receipts and evidence remain local. No runtime state, Editor,
 new owner or private target-tree supplier is added.
+
+J1183 adds eight scene object selections and eleven Shader selections to those
+same owners. Explicit original scene renderer roots select spine Shader variants;
+whole scenes retain their original recursive content closure. Setup, record-pack
+teardown and local receipts follow the existing contract above. The existing
+`record_produce.py` Director path derives exposed-reference names from original
+asset identity; it adds no runtime state. Its host contract is qualified separately
+from complete Conduit assembly, which remains open.
