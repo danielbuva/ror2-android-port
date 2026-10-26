@@ -89,6 +89,9 @@ class AndroidFeedbackTests(unittest.TestCase):
     def test_escape_clears_notes_consent_and_focus(self):
         self.run_case("screen-escape")
 
+    def test_rebind_modal_owns_buttons_cancel_failed_save_retry_focus_and_cleanup(self):
+        self.run_case("rebind-modal")
+
     def test_settings_pause_input_isolation_and_cleanup(self):
         self.run_case("settings-lifecycle")
 

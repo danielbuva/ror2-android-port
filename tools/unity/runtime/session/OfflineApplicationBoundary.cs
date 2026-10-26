@@ -232,8 +232,8 @@ public sealed partial class PortSession
                 offlineMenuMapping = null;
             else
             {
-                offlineMenuMapping = JsonUtility.FromJson<NovaInputBridge.Mapping>(
-                    File.ReadAllText(System.IO.Path.Combine(Application.persistentDataPath, "nova-input-mapping.json")));
+                offlineMenuMapping = NovaInputBridge.MappingStore.Load(
+                    System.IO.Path.Combine(Application.persistentDataPath, "nova-input-mapping.json"), coordinator.r.attempt);
                 offlineMenuMapping.Validate(coordinator.r.attempt);
             }
             coordinator.PrepareRecoveredMenu();

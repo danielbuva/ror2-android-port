@@ -1,5 +1,8 @@
 // Authored host samples only. No recorded hardware mappings or game implementation.
 using System;
+using System.IO;
+using System.Runtime.Serialization.Json;
+using System.Text;
 using UnityEngine;
 
 public static class NovaInputMappingHost
@@ -188,10 +191,117 @@ public static class NovaInputMappingHost
             Need(!NovaInputBridge.SampleNeutral(raw, map), "negative diagonal blocks attach");
         }
     }
+    static NovaInputBridge.ButtonRebind Capture(NovaInputBridge.Mapping live, out NovaInputBridge.Raw raw)
+    {
+        var capture = new NovaInputBridge.ButtonRebind(live, "jump", "Authored controller");
+        raw = new NovaInputBridge.Raw();
+        return capture;
+    }
+    static void Sample(NovaInputBridge.ButtonRebind c, NovaInputBridge.Raw r, float t)
+    {
+        c.Observe(new[] { "Authored controller" }, r, t);
+    }
+    static void Arm(NovaInputBridge.ButtonRebind c, NovaInputBridge.Raw r, float t)
+    {
+        Sample(c, r, t); Sample(c, r, t + .25f);
+    }
+    static void RebindCapture()
+    {
+        var live = Candidate();
+        var c = Capture(live, out var raw);
+        raw.buttons[19] = true;
+        Sample(c, raw, 0); Sample(c, raw, 1);
+        Need(c.candidate == -1 && !c.ready, "opening held press excluded");
+        raw.buttons[19] = false;
+        Arm(c, raw, 2);
+        raw.buttons[18] = true; Sample(c, raw, 3);
+        Need(!c.ready, "release required");
+        raw.buttons[18] = false; Sample(c, raw, 4);
+        Need(c.ready && c.candidate == 18 && c.draft.jump == 18, "capture after release");
+        Need(live.jump == 10, "live map mutated");
+        Need(c.draft.moveX == live.moveX && c.draft.enableSkills == live.enableSkills &&
+             c.draft.enableInteraction == live.enableInteraction, "unrelated policy changed");
+    }
+    static void RebindRefusals()
+    {
+        var live = Candidate();
+        var c = Capture(live, out var raw);
+        Arm(c, raw, 0);
+        raw.buttons[live.primary] = true; Sample(c, raw, 1);
+        raw.buttons[live.primary] = false; Sample(c, raw, 2);
+        Need(!c.ready && c.error != null && c.draft.jump == live.jump, "collision accepted");
+        Need(c.error.Contains("primary"), "collision action missing");
+        Arm(c, raw, 2.5f);
+        raw.buttons[1] = true; Sample(c, raw, 2.8f);
+        raw.buttons[1] = false; Sample(c, raw, 2.9f);
+        Need(!c.ready && c.error.Contains("menu / back"), "reserved back button accepted");
+        Arm(c, raw, 3);
+        raw.buttons[18] = raw.buttons[19] = true; Sample(c, raw, 4);
+        Need(c.candidate == -1 && !c.ready, "ambiguous chord accepted");
+        raw.buttons[18] = raw.buttons[19] = false;
+        Arm(c, raw, 5);
+        raw.buttons[18] = true; Sample(c, raw, 6);
+        raw.buttons[18] = false; Sample(c, raw, 7);
+        c.Observe(new[] { "Other controller" }, raw, 8);
+        Need(!c.ready && c.candidate == -1 && c.draft.jump == live.jump, "disconnect kept candidate");
+        bool rejected = false;
+        try { new NovaInputBridge.ButtonRebind(live, "interact", "Authored controller"); }
+        catch (ArgumentException) { rejected = true; }
+        Need(rejected, "disabled interaction exposed");
+    }
+    static void MappingDisk(string mode, string directory)
+    {
+        Directory.CreateDirectory(directory);
+        string path = Path.Combine(directory, "mapping.json");
+        var live = Candidate();
+        live.observation_sha256 = new string('a', 64);
+        live.accepted_mapping_attempt = "original-exposure";
+        File.WriteAllText(path, JsonUtility.ToJson(live, false));
+        string original = File.ReadAllText(path);
+        var draft = live.Copy(); draft.jump = 18;
+        if (mode == "mapping-save-failure")
+        {
+            Directory.CreateDirectory(path + ".pending");
+            Need(!NovaInputBridge.MappingStore.TrySave(path, draft, live.attempt), "blocked write accepted");
+            Need(File.ReadAllText(path) == original && live.jump == 10, "failed write changed primary/live");
+            Directory.Delete(path + ".pending");
+        }
+        Need(NovaInputBridge.MappingStore.TrySave(path, draft, live.attempt), "save/retry");
+        Need(live.jump == 10, "save replaced live session map");
+        var loaded = NovaInputBridge.MappingStore.Load(path, live.attempt);
+        Need(loaded.jump == 18 && loaded.observation_sha256 == live.observation_sha256 &&
+             loaded.accepted_mapping_attempt == live.accepted_mapping_attempt, "reload/provenance");
+        Need(File.ReadAllText(path + ".backup") == original, "backup lost");
+        if (mode == "mapping-roundtrip")
+        {
+            var second = new NovaInputBridge.ButtonRebind(loaded, "secondary", "Authored controller");
+            var raw = new NovaInputBridge.Raw(); Arm(second, raw, 0);
+            raw.buttons[19] = true; Sample(second, raw, 1);
+            raw.buttons[19] = false; Sample(second, raw, 2);
+            Need(second.ready && second.draft.jump == 18, "second edit discarded first saved binding");
+            Need(NovaInputBridge.MappingStore.TrySave(path, second.draft, live.attempt), "second save");
+            var next = NovaInputBridge.MappingStore.Load(path, live.attempt);
+            Need(next.jump == 18 && next.secondary == 19 && live.jump == 10 && live.secondary == 12, "composed next-session bindings");
+        }
+        if (mode != "mapping-recovery") return;
+        File.WriteAllText(path + ".pending", "{partial");
+        Need(NovaInputBridge.MappingStore.Load(path, live.attempt).jump == 18, "pending promoted");
+        File.WriteAllText(path, "{corrupt");
+        Need(NovaInputBridge.MappingStore.Load(path, live.attempt).jump == 10, "backup not restored");
+        Need(Directory.GetFiles(directory, "*.rejected-*").Length == 1, "corrupt original not retained");
+        File.Delete(path);
+        Need(!NovaInputBridge.MappingStore.TryLoad(path, "next-attempt", out _), "stale backup admitted");
+        Need(NovaInputBridge.MappingStore.Load(path, live.attempt).jump == 10, "missing primary backup recovery");
+    }
     public static void Main(string[] args)
     {
         switch (args[0])
         {
+            case "rebind-capture": RebindCapture(); break;
+            case "rebind-refusals": RebindRefusals(); break;
+            case "mapping-roundtrip":
+            case "mapping-recovery":
+            case "mapping-save-failure": MappingDisk(args[0], args[1]); break;
             case "provenance": Provenance(); break;
             case "binding-ranges": BindingRanges(); break;
             case "interaction": Interaction(); break;
@@ -202,5 +312,33 @@ public static class NovaInputMappingHost
             default: throw new Exception("unknown host case");
         }
         Console.WriteLine(args[0] + ": PASS");
+    }
+}
+
+namespace UnityEngine
+{
+    public static class JsonUtility
+    {
+        public static string ToJson(object value, bool pretty)
+        {
+            using (var stream = new MemoryStream())
+            {
+                new DataContractJsonSerializer(value.GetType()).WriteObject(stream, value);
+                return Encoding.UTF8.GetString(stream.ToArray());
+            }
+        }
+        public static void FromJsonOverwrite(string json, object value)
+        {
+            try
+            {
+                using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(json)))
+                {
+                    var restored = new DataContractJsonSerializer(value.GetType()).ReadObject(stream);
+                    foreach (var field in value.GetType().GetFields())
+                        field.SetValue(value, field.GetValue(restored));
+                }
+            }
+            catch (System.Runtime.Serialization.SerializationException e) { throw new ArgumentException("invalid JSON", e); }
+        }
     }
 }

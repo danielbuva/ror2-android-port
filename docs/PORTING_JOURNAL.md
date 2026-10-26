@@ -394,3 +394,16 @@ SDK resource-buffer index/array bindings and common tables; 48 focused tests,
 Ruff and host preflight pass. ABI/prior art: `work/coordination/p1-shader-resource-buffers-v1/notes.md`.
 Host-only; resource-buffer target equality, phone production and runtime remain open.
 APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1209 — Add paused measured-button rebinding host contracts
+
+2026-10-26. Existing settings/input owners capture an isolated button draft
+after stable neutral, one press/release and explicit physical confirmation.
+Collisions/menu-back remain reserved; modal input, cancel/focus/cleanup and
+failed-save retry preserve pause and the active map. All three mapping readers
+share validated pending/readback/backup recovery; known observation provenance
+and delivery permissions survive saves for next-session activation.
+Evidence: `work/coordination/alpha-callback-build/rebinding-host-notes.md`;
+36 focused host contracts and Ruff pass. No APK/output generated or installed.
+Host-only; Android writes/restart, human-labelled native effects, Thor physical
+input, callback-removal acceptance and managed-growth bounds remain open.
