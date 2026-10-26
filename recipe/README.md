@@ -3685,6 +3685,56 @@ relationships only. No original bodies, shader programs, copied source, private
 paths or credentials are included. Current legitimate PC files and separately
 acquired SDK remain required. Generated records and evidence stay ignored;
 complete Title assembly, phone production and runtime qualification remain open.
+## Title and Satellite complete object selections (2026-10-26)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-title-whole-objects.json` | `1f4ea96d713b60b159e5c1cd030bb5b49e7df1e387d9cbe10831290b033498ee` |
+| `owner-satellitescene-whole-objects.json` | `a035d84e5f5e930eb24bf23bd3ef37bd400d34bce1b0a7d9f665c63a672cd911` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain source selectors, hashes, checked pointer relationships and
+authored import policies only. Lossless compaction preserves decoded selectors.
+No original body, curve, scalar, pixel, program, copied source, private path or
+credential is included. Current legitimate PC files, SDK resources and checked
+source-produced record packs remain required. Generated outputs and evidence
+stay ignored. Existing redistribution and ownership boundaries apply; phone
+production and runtime qualification remain open.
+
+## Artifact World complete object selection (2026-10-26)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-artifactworld01-whole-objects.json` | `f7b8b3e0d8728db50512201250c4d842bcd6e54705a69123a1b8e438017d3813` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain source selectors, hashes, checked pointer relationships and
+authored import policies only. Lossless compaction preserves decoded selectors.
+No original body, curve, scalar, pixel, program, copied source, private path or
+credential is included. Current legitimate PC files, SDK resources and checked
+source-produced record packs remain required. Generated outputs and evidence
+stay ignored. Existing redistribution and ownership boundaries apply; phone
+production and runtime qualification remain open.
+
+## Satellite and Artifact World Shader selections (2026-10-26)
+
+The existing Shader record owner consumes these source-qualified profiles for
+48 post-processing records and one Standard record. Original resource fields,
+export filename/GUID relationships and recursively reached materials determine
+selection. Guarded actual CLI production persisted before independent raw comparison.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-satellitescene-postprocess-shaders.json` | `a1c4c9ede7fd719a0189418381a740faddcc1af561a339283f805572e072c07e` |
+| `owner-satellitescene-standard-shaders.json` | `389344fc34516a51e51a29abbbef3c832cc0f9b38c5a18bbc3b0f919ffe04b37` |
+| `owner-artifactworld01-postprocess-shaders.json` | `b202cf2d9d3722e7febbadecb27c7337f879b85ab6af2d56c44feeb10f62637a` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: only source
+selectors, hashes, public SDK/tool pins and destination relationships are included.
+No original bodies, shader programs, copied source, private paths or credentials
+are included. Legitimate PC files and separately acquired SDK remain required;
+generated records stay ignored. Phone and runtime qualification remain open.
+
 
 ## Ten complete spine scene selections (2026-10-26)
 
