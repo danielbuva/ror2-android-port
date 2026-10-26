@@ -3932,19 +3932,6 @@ The existing object producer preserves source null-script type slots for Soul
 and Mire. Generated outputs and raw comparison evidence stay ignored; ownership
 and redistribution boundaries apply. Phone production and runtime remain open.
 
-## Skymeadow source particle Shader selection (2026-10-26)
-
-| Profile | SHA-256 |
-| --- | --- |
-| `owner-skymeadow-source-lab-particles-shaders.json` | `0f248eaf36b78b8025884d680e48946ea79d8a0a1fe30d452d69bde0050e90aa` |.
-
-Manual provenance, privacy, licensing and sensitive-content audit: this profile
-contains original source/material selectors, body hashes and pinned public SDK
-and tool identities only. No shader body, program, copied source, private path
-or credential is included. Legitimate PC input and independently acquired SDK
-remain required; generated records and evidence stay ignored. The persisted
-30,516 B record is host raw-exact against J850; phone production and runtime
-remain open.
 ## ArtReview Shader selections (2026-10-26)
 
 | Profile | SHA-256 |
@@ -3959,24 +3946,49 @@ from original fragment feature declarations; post-processing uses the pinned
 public exporter templates. No original body, program, copied source, private
 path or credential is included. Legitimate PC input and separately acquired
 SDK remain required; generated records and evidence stay ignored. All 25
-persisted records are host raw-exact against J850. Complete-scene readiness
-and phone qualification remain separate gates.
+persisted records are host raw-exact against J850. The matching complete object
+selection below also passes the host complete-scene comparison; phone
+qualification remains open.
+## ArtReview complete object selection (2026-10-26)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-artreview-whole-objects.json` | `e8911198ddd990b59debe714d500661f8a7a94e2be2f733ec4219b77cec5c7bd` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: this
+profile contains source selectors, hashes, checked pointer relationships and
+authored import policies only. Lossless compaction preserves decoded selectors.
+No original body, curve, scalar, pixel, program, copied source, private path or
+credential is included. Current legitimate PC files, SDK resources and checked
+source-produced record packs remain required. Generated outputs and evidence
+stay ignored. Existing redistribution and ownership boundaries apply; phone
+production and runtime qualification remain open.
+
+## Skymeadow source particle Shader selection (2026-10-26)
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-skymeadow-source-lab-particles-shaders.json` | `0f248eaf36b78b8025884d680e48946ea79d8a0a1fe30d452d69bde0050e90aa` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: this profile
+contains original source/material selectors, body hashes and pinned public SDK
+and tool identities only. No shader body, program, copied source, private path
+or credential is included. Legitimate PC input and independently acquired SDK
+remain required; generated records and evidence stay ignored. The persisted
+30,516 B record is host raw-exact against J850; phone production and runtime
+remain open.
 
 ## Golemplains source-lab Standard selection (2026-10-26)
 
 | Profile | SHA-256 |
 | --- | --- |
 | `owner-golemplains-source-lab-standard-shaders.json` | `96e031413ee2d338eb00e56302249674ae029d663daa2a42045f09e7ed6ce99d` |
-contains original selectors, source/material hashes, output relationships and
-SDK/toolchain pins only. Manual provenance, privacy, licensing and sensitive-
+
+This profile contains original selectors, source/material hashes, output
+relationships and SDK/toolchain pins only. Manual provenance, privacy, licensing and sensitive-
 content review found no copied bodies, programs, private paths or credentials.
 Legitimate PC input and an independently acquired SDK remain required. The
 existing Standard owner derives feature order from original fragment records;
 its persisted 487,132 B Shader record is host raw-exact against J850. Generated
 records and evidence stay ignored; full-scene and phone gates remain separate.
 
-The existing translucent candidate refreshes its reviewed `shader_segments.py`
-helper pin after the additive SDK resource-buffer reader change. Manual
-provenance/privacy/licensing review: only the authored helper digest changes;
-no generated shader, game content, private identity or SDK implementation is
-included. Historical recipes retain their separately qualified tool pins.

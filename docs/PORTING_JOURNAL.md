@@ -394,4 +394,19 @@ Golemplains: 487,132 B; receipt SHA-256
 Evidence: `work/coordination/p1-shaders-2/qualified-skymeadow-particles-v5/`
 and `work/coordination/p1-shaders-2/qualified-golemplains-v11-standard-v2/`.
 Audited public selectors; 32 focused host tests, Ruff and host preflight pass.
-Host-only; full scenes, Golemplains post-processing and phone gates remain open.
+Host-only; full-scene qualification belongs to the scene owner; phone gates remain open.
+
+## J1204 — Complete ArtReview bundle and SDK resource buffers
+
+2026-10-26. Existing object/Shader owners reproduce ArtReview from legitimate
+PC/SDK inputs: 25 Shader records, all 965 objects, both serialized members
+and the compressed bundle are host raw-exact to J850. Output: 1,290,573 B,
+SHA-256 `dd221b74a283ac0f72064a0a3d6b5270a8f74cda47d6adf7f401e4c51e4956c4`.
+Evidence: `work/coordination/p1-scenes-w/publication-batch-v5/publication-inputs.json`.
+Retained ArtReview+Damp union: `work/coordination/p1-artreview-publication-v1/`;
+640/705 available, 635 raw-exact, two code comparisons, three drift-explained,
+65 missing. No production replay. Existing compiler/segment owners also preserve
+SDK resource-buffer index/array bindings and common tables; 48 focused tests,
+Ruff and host preflight pass. ABI/prior art: `work/coordination/p1-shader-resource-buffers-v1/notes.md`.
+Host-only; resource-buffer target equality, phone production and runtime remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
