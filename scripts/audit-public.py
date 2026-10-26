@@ -21,6 +21,16 @@ PATTERNS = {
     "email": rb"(?<![\w.+-])[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}",
     "device/account identifier value": rb'(?i)"(?:serial|device_serial|uniqueId|displayUniqueId|accountId|steamId)"\s*:\s*"(?!AUTHORIZED_SERIAL"|REDACTED")[^"\n]+"',
 }
+# Necessary literal bytes only: a missing literal proves that its unchanged
+# regex cannot match. Large encoded recipe rows usually contain no email @.
+PATTERN_LITERALS = {
+    "personal home path": b"/",
+    "concrete storage UUID": b"/",
+    "UUID": b"-",
+    "private key": b"-----BEGIN ",
+    "email": b"@",
+    "device/account identifier value": b'"',
+}
 PUBLIC_ENVIRONMENT = {
     "environment/ENVIRONMENT_REPORT.md",
     "environment/lab-config.example.json",
@@ -77,19 +87,64 @@ def violations(path, data):
     if path.startswith("recipe/"):
         # Wwise ScriptableObject assets are named by their event or bank GUID. Those file
         # names are game asset identifiers (J548), not storage UUIDs; every other UUID still fails.
-        data = WWISE_ASSET_NAME.sub(b"Wwise/ScriptableObjects/WWISE-ASSET.asset", data)
+        # bytes.lower has the same ASCII case folding as the bytes regex's (?i).
+        if b"wwise/scriptableobjects/" in data.lower():
+            data = WWISE_ASSET_NAME.sub(b"Wwise/ScriptableObjects/WWISE-ASSET.asset", data)
     for label, pattern in PATTERNS.items():
-        if re.search(pattern, data):
+        literal = PATTERN_LITERALS.get(label, b"")
+        if literal in data and re.search(pattern, data):
             found.append(label)
     return found
 
 
+def index_blobs():
+    """Read staged bytes, without interpreting filenames as Git revision syntax.
+
+    NUL-delimited index records preserve every filename byte. Object IDs come
+    from that index (not HEAD or the worktree); one cat-file process streams
+    blobs without retaining the whole repository in memory.
+    """
+    records = subprocess.check_output(["git", "ls-files", "--stage", "-z"], cwd=ROOT).split(b"\0")
+    entries = []
+    for record in filter(None, records):
+        metadata, encoded = record.split(b"\t", 1)
+        mode, object_id, stage = metadata.split()
+        if stage != b"0":
+            # Like git show :path, never choose one side of an unresolved merge.
+            raise RuntimeError("Public index audit cannot inspect an unresolved merge")
+        if re.match(rb"[0-3]:", encoded):
+            # The former :path reader interpreted these as a stage selector,
+            # sometimes reading another path. Refuse rather than audit it wrong.
+            raise RuntimeError("Public index audit cannot inspect a stage-ambiguous filename")
+        # Retain the existing fail-closed policy for non-UTF-8 filenames.
+        entries.append((mode, object_id, encoded.decode()))
+
+    command = ["git", "cat-file", "--batch"]
+    with subprocess.Popen(command, cwd=ROOT, stdin=subprocess.PIPE, stdout=subprocess.PIPE) as process:
+        for mode, object_id, path in entries:
+            if mode == b"160000":
+                # A gitlink is not a blob. Retain git show's existing behavior
+                # (including failure if its commit is unavailable locally).
+                yield path, subprocess.check_output(["git", "show", ":0:" + path], cwd=ROOT)
+                continue
+            process.stdin.write(object_id + b"\n")
+            process.stdin.flush()
+            header = process.stdout.readline().rstrip(b"\n").split(b" ")
+            if len(header) != 3 or header[:2] != [object_id, b"blob"]:
+                raise RuntimeError("Public index audit could not read a staged blob")
+            size = int(header[2])
+            data = process.stdout.read(size)
+            if len(data) != size or process.stdout.read(1) != b"\n":
+                raise RuntimeError("Public index audit received an incomplete staged blob")
+            yield path, data
+        process.stdin.close()
+        if process.wait():
+            raise subprocess.CalledProcessError(process.returncode, command)
+
+
 def main():
-    paths = subprocess.check_output(["git", "ls-files", "-z"], cwd=ROOT).split(b"\0")
     failures = []
-    for encoded in filter(None, paths):
-        path = encoded.decode()
-        data = subprocess.check_output(["git", "show", ":" + path], cwd=ROOT)
+    for path, data in index_blobs():
         for label in violations(path, data):
             failures.append(f"{path}: {label}")
     print("\n".join(failures) if failures else "Public index audit passed (pattern checks; not a complete IP/secret review).")

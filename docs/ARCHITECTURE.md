@@ -1357,13 +1357,20 @@ device receipts and the coordination lock; agents run it after each build/run ta
 (AGENTS.md "Storage hygiene").
 
 `scripts/git-hooks/pre-push` delegates committed-source checks to
-`scripts/ci-local.sh` in a fresh clone. Its support helper
+`scripts/ci-local.sh` in a fresh exact-commit checkout. `scripts/ci-local-cache.py`
+owns a locked Git-object store and interpreter/requirements-keyed dependency
+cache under Git-private `ci-cache/`; no working tree, result or lab output is
+reused. Per-run checkout/index/config and test scratch remain disposable. Linux
+runs the same host checks directly; macOS retains its Unity-read sandbox and
+optional case-sensitive volume. Its support helper
 `scripts/ci-hdiutil-volume.py` requests a 30 s timeout for each optional image
 create/attach CLI, killing and reaping only its own timed-out caller. Ordinary
 setup failure uses the existing temporary-directory fallback; an uncertain
 attach preserves the scratch image without detach/removal. Verification retains
-its original exit status. Disposable host-volume cleanup runs separately after verification,
-with phase logs in Git-private `ci-cleanup/` metadata; a failed detach preserves
+its original exit status. Linux scratch removal completes before exit so a terminated
+executor cannot strand the checkout. Disposable macOS host-volume cleanup runs
+separately after verification, with phase logs in Git-private `ci-cleanup/`
+metadata; a failed detach preserves
 the scratch directory rather than deleting a mounted volume. Cleanup never
 opens or stops an editor or uses a device. A blocked cleanup cannot hold a
 completed verification, and failing verification still refuses the push.
@@ -3865,6 +3872,17 @@ C# under `tools/` is formatted with `clang-format -i` using the repository's `.c
 (J544). It never rewraps string literals or comments, so a correct reformat leaves each file
 identical once whitespace is removed; check that before committing a reformat. CI does not
 enforce it, because other clang-format versions format C# differently.
+
+`scripts/host-tests.py` owns full unittest discovery, module-preserving process
+isolation, per-test/module timing and explicit serial/parallel outcome comparison.
+It runs every discovered test, groups the known shared-project compiler fixtures,
+reaps worker families on failure/timeout and retains native skip/failure semantics.
+GitHub and the local hook use this owner without result caching or changed-test
+selection. `scripts/audit-public.py` streams every index blob by its staged object
+ID and validates every compressed recipe row; necessary-byte regex prefilters
+retain the existing detection rules. GitHub caches only pinned pip downloads.
+[Timing and cache operation](DEVELOPING.md#full-host-checks-and-timing) describe
+setup, reuse and isolation.
 
 Host CI also runs Ruff (pinned in `tools/lab-requirements.txt`, configured in `ruff.toml`):
 `ruff check` and `ruff format --check` on every Python file a change touches. `scripts/` and
