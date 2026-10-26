@@ -158,11 +158,15 @@ The combined batch supervises temperature zones independently, targeting 250 ms
 samples and refusing gaps above 1 s. Abort when one CPU/GPU zone remains above
 95 C for at least three seconds, with no sampling gap above one second.
 A reading at or below 95 C resets that zone's continuity. Abort immediately
-for battery above 46 C. Skin temperature and HAL status remain metrics.
+for battery at or above 43 C. Skin temperature and HAL status remain metrics.
 Record sampled time above 80 C, CPU/GPU peak and phase; demanding moments at
 80–85 C do not fail a run. Retain failed cases without automatic retry.
 Before each stage, cool readable CPU/GPU/battery/skin zones to at most 50 C
-with the OLED asleep. Record other physical zones, including power-management,
+with the OLED asleep, and battery back to at most 35 C before every stage.
+Refuse admission while battery status is charging (2) at level >= 80%, or
+level > 85%; report without retry and never change charging settings. Record
+battery temperature, level and status in the trace and stage receipts.
+Record other physical zones, including power-management,
 charger and USB sensors, as excluded from admission only; continue sampling
 them in raw observations and all-zone peaks. Admission follows
 [J1148](history/journal-J1-J1177/PORTING_JOURNAL.md#j1148--restrict-gameplay-admission-to-cpu-gpu-battery-and-skin).

@@ -38,8 +38,8 @@ def thermal_sample(battery, thermal):
     if not temperature or not status:
         raise RuntimeError("No interpretable battery/HAL observation; refuse sustained case")
     row = dict(battery_celsius=int(temperature[1]) / 10, thermal_status=int(status[1]))
-    if row["battery_celsius"] > 46:
-        raise RuntimeError("Sustained case reached battery above 46 C stop: " + repr(row))
+    if row["battery_celsius"] >= 43:
+        raise RuntimeError("Sustained case reached battery at or above 43 C stop: " + repr(row))
     return row
 
 

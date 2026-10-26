@@ -121,3 +121,15 @@ Owned-job cleanup, lease release and mandatory prune passed; game APK unchanged,
 Shared producer cutoff corrected to battery >= 43 C; eight focused host tests and Ruff pass.
 Run predates correction and lacks battery/charge admission evidence: current thermal policy unqualified.
 Complete source composition, installation, controls and matched performance remain open.
+
+## J1188 — Battery health admission and gameplay safety cutoff
+
+2026-10-26. Existing alpha thermal owner now admits each stage only with battery <= 35 C,
+including cooldown between stages; CPU/GPU/skin admission remains <= 50 C.
+Charging status 2 at level >= 80%, or level > 85%, refuses without retry.
+Runtime battery >= 43 C aborts in the zone observer and sustained-session check.
+Bounded battery reads retain temperature/level/status in trace and stage receipts;
+charging settings remain untouched. CPU/GPU > 95 C for >= 3 s and gap > 1 s rules remain.
+52 focused host tests and Ruff pass; preflight lacks ignored local configuration.
+Evidence: alpha worktree `work/coordination/alpha-battery-health/validation.json`.
+No APK/output generated or installed. Fresh stability/device qualification remains open.
