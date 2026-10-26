@@ -3963,3 +3963,22 @@ credential is included. Current legitimate PC files, SDK resources and checked
 source-produced record packs remain required. Generated outputs and evidence
 stay ignored. Existing redistribution and ownership boundaries apply; phone
 production and runtime qualification remain open.
+
+## Golemplains complete source-scene selections (2026-10-26)
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-golemplains-source-objects.json` | `3bc05216bfa7e6f5e0f364e7d422b1b710354af7e70fe3b5e9fbd0693a683232` |
+| `owner-golemplains-source-lab-standard-shaders.json` | `96e031413ee2d338eb00e56302249674ae029d663daa2a42045f09e7ed6ce99d` |
+| `owner-golemplains-source-lab-postprocess-shaders.json` | `fc9a9db1781e05cdb2de065893e5e742cafa248178ee81db6362d9b7c56e7485` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain original selectors, hashes, checked pointer relationships,
+SDK/public-tool pins and existing authored import policies only. Lossless JSON
+compaction preserves every decoded object selection; both Shader profiles are
+unchanged from the separately qualified source-produced packs. No original
+body, curve, scalar payload, pixel, shader program, copied source, private path
+or credential is included. Legitimate PC files, separately acquired SDK and
+receipt-pinned source-produced media/Shader packs remain required. Generated
+outputs and evidence stay ignored. Existing ownership and redistribution
+boundaries apply; phone production, installation and runtime behavior remain open.
