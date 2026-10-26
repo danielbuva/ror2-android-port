@@ -4,7 +4,7 @@ Current experimental support for one positive Android app-host contract. It
 contains authored C, Java, C# and XML only. It is separate from the game, the
 launcher and `tools/phone-build/host/`'s installed/writable refusal probe.
 Results and limits are recorded once in
-[J999](../../../docs/PORTING_JOURNAL.md#j999--host-the-existing-managed-build-tools-from-read-only-app-native-libraries).
+[J999](../../../docs/history/journal-J1-J1177/PORTING_JOURNAL.md#j999--host-the-existing-managed-build-tools-from-read-only-app-native-libraries).
 
 `NativeToolHost.c` binds the existing .NET `hostfxr` command-line hosting ABI,
 passes an explicit framework root and runs one managed application. Its ABI

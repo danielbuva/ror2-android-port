@@ -37,17 +37,17 @@ result in the journal.
 - [ ] Qualify J914's retained dependencies over a long repeated-session series
       while preserving ordinary survivor/profile/entitlement checks. The native
       menu/restart boundary now has J1045/J1046
-      and [J1066](PORTING_JOURNAL.md#j1066--qualify-native-settings-feedback-and-two-step-end-run-controls)
+      and [J1066](history/journal-J1-J1177/PORTING_JOURNAL.md#j1066--qualify-native-settings-feedback-and-two-step-end-run-controls)
       device coverage; original Term/disarm and bounded application-owned Quit pass
       in J1077. Long-run retention remains open.
 - [ ] Bound corrected repeated-session managed usage and PSS over a completed
       internal-device series, then qualify a sustained session. J1086 supplies
       the completed uncorrected measurement;
-      [J1091](PORTING_JOURNAL.md#j1091--qualify-native-heap-capture-and-identify-retained-laboratory-log-payloads)
+      [J1091](history/journal-J1-J1177/PORTING_JOURNAL.md#j1091--qualify-native-heap-capture-and-identify-retained-laboratory-log-payloads)
       attributes captured retention to diagnostic JSON and returned bullet hits.
-      [J1092](PORTING_JOURNAL.md#j1092--correct-captured-retention-producers-and-preserve-a-failed-commando-series)
+      [J1092](history/journal-J1-J1177/PORTING_JOURNAL.md#j1092--correct-captured-retention-producers-and-preserve-a-failed-commando-series)
       builds and installs the corrections; preserve its zero-session failure.
-      [J1100](PORTING_JOURNAL.md#j1100--complete-twelve-corrected-commando-sessions-and-retain-a-smaller-growth-frontier)
+      [J1100](history/journal-J1-J1177/PORTING_JOURNAL.md#j1100--complete-twelve-corrected-commando-sessions-and-retain-a-smaller-growth-frontier)
       completes all 12 corrected Commando sessions with no runtime errors, but
       the consistent menu samples retain 0.579 MiB/session positive growth.
       Attribute that smaller frontier with a separate native heap pair before

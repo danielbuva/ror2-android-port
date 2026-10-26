@@ -631,7 +631,7 @@ uses `prefabAssets` from a separate runtime probe config, not this work manifest
 | `integrated_moon.py` | R 363 (reused for both writes) | W 389, 419 |
 | `android/Assets/Editor/LabBuild.cs` | R 68 (presentation-only), 117 (current build); schema 218 | none |
 
-Implementation/verification outcome: [J550](../docs/PORTING_JOURNAL.md#j550--track-the-content-recipe-as-a-public-recipe).
+Implementation/verification outcome: [J550](../docs/history/journal-J1-J1177/PORTING_JOURNAL.md#j550--track-the-content-recipe-as-a-public-recipe).
 
 ## Config generation
 

@@ -248,7 +248,7 @@ pin is refreshed with that API change. Generic transform/decoder helpers likewis
 accept explicit tools with their default callers unchanged. No network package
 restore, installer, license acceptance or original input mutation is added.
 
-[J1063](../../../docs/PORTING_JOURNAL.md#j1063--complete-the-source-input-host-native-owner-build)
+[J1063](../../../docs/history/journal-J1-J1177/PORTING_JOURNAL.md#j1063--complete-the-source-input-host-native-owner-build)
 executes this default source-input command through all 332 providers, 93 stripped
 DLLs, 691 converter outputs, 687 checked frames and 825 actual native tasks plus
 link and strip. Main independently verifies the sealed host evidence. Fresh
@@ -273,7 +273,7 @@ and requirements; it returns SDK status, bytes, reflection and diagnostics.
 An SDK-successful skipped request can return no data; callers must check payload
 presence for their content contract. There is no current game-build consumer.
 
-[J1094](../../../docs/PORTING_JOURNAL.md#j1094--qualify-exact-sdk-vulkan-shader-compilation-on-android)
+[J1094](../../../docs/history/journal-J1-J1177/PORTING_JOURNAL.md#j1094--qualify-exact-sdk-vulkan-shader-compilation-on-android)
 compares authored Vulkan shader payloads, reflection and errors exactly on host
 and Android. Original game shader recovery/variants and serialized content
 production are separate content-owner work. Ordinary app hosting, final APK
@@ -376,7 +376,7 @@ ignored. The caller owns thermal monitoring and output retention; preserve
 receipts/failures before deleting only the explicitly owned output. Runtime
 acceptance always requires the final phone APK and matched device controls.
 
-[J1103](../../../docs/PORTING_JOURNAL.md#j1103--produce-fixed-target-burst-and-sign-owner-apks-in-the-android-tool-host)
+[J1103](../../../docs/history/journal-J1-J1177/PORTING_JOURNAL.md#j1103--produce-fixed-target-burst-and-sign-owner-apks-in-the-android-tool-host)
 qualifies the complete public Burst producer in the ordinary app from the actual
 phone source-produced managed cohort. Its 20 runtime sections and fresh linker
 roots match J850 exactly; original bytes and debug/build-ID differences remain

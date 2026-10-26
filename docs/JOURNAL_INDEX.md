@@ -1179,3 +1179,4 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J03](PORTING_JOURNAL.md#j03--decompiler-language-mismatch-and-real-source-blockers) | 2026-09-12 | Decompiler language mismatch and real source blockers | Hypothesis: default decompiler project output can be fed directly to Unity's compiler. |
 | [J02](PORTING_JOURNAL.md#j02--scanner-api-mismatch) | 2026-09-12 | Scanner API mismatch | Hypothesis: serialized metadata exposes a public enable_type_tree field. |
 | [J01](PORTING_JOURNAL.md#j01--technical-inventory-and-recovery) | 2026-09-12 | Technical inventory and recovery | Hypothesis: this installed Windows build is the expected Mono Unity title and its content/code are inspectable. |
+| [J1178](PORTING_JOURNAL.md#j1178--journal-archived-and-documentation-slimmed) | 2026-10-25 | Journal archived and documentation slimmed | 2026-10-26. |
