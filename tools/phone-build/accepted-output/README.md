@@ -1339,3 +1339,16 @@ also accepts `owner-title-{postprocess,standard,terrain}-shaders.json`; the terr
 selection retains SDK-declared passes without material keyword variants.
 Explicit original/SDK/tool roots and a new output directory retain the existing
 setup/teardown contract. Complete Title and phone/runtime gates remain open.
+
+Ten further complete spine scenes use the existing object and Shader owners:
+Golemplains2, Dampcavesimple, Blackbeach2, Foggyswamp, Ancientloft, Village,
+Shipgraveyard, Goolake, Golemplains and Blackbeach. Their
+`recipe/owner-<scene>-spine-objects.json` profiles consume receipt-pinned
+source-produced media packs and the matching
+`recipe/owner-<scene>-spine-lab-standard-shaders.json` selection. Explicit
+current PC/SDK roots, pinned profile/tools and a separate output directory
+set up production; process exit tears down each producer while receipts persist.
+The existing member-aware layout/writer exposes `payload/<scene>-spine-lab`.
+All 140,029 persisted objects, 20 serialized members and ten compressed bundles
+are host raw-exact against J850. No owner or runtime state is added; phone
+production, installation and original scene behavior remain open.
