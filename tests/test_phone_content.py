@@ -5,14 +5,90 @@ import json
 import subprocess
 import sys
 import hashlib
+from unittest.mock import patch
 
 import UnityPy
 
 from phone_bundle import ASSET, PAYLOAD, make_bundle
-from phone_content import stage, validate_linker_capture, validate_oracle
+from phone_content import run_editor, stage, validate_ambient_capture, validate_linker_capture, validate_oracle
 
 
 class PhoneContentTests(unittest.TestCase):
+    def test_ambient_fixture_compiles_against_exact_editor_api(self):
+        sdk = Path("/Applications/Unity/Hub/Editor/2021.3.45f2/Unity.app/Contents")
+        mono = sdk / "MonoBleedingEdge/bin/mono"
+        compiler = sdk / "MonoBleedingEdge/lib/mono/msbuild/Current/bin/Roslyn/csc.exe"
+        if not mono.exists() or not compiler.exists():
+            self.skipTest("Exact editor Mono/Roslyn unavailable")
+        with tempfile.TemporaryDirectory() as root:
+            args = [str(mono), str(compiler), "/nologo", "/target:library", "/out:" + str(Path(root) / "fixture.dll")]
+            args += ["/r:" + str(path) for path in sorted((sdk / "Managed/UnityEngine").glob("UnityEngine*.dll"))]
+            args += ["/r:" + str(sdk / "Managed/UnityEditor.dll"), str(Path(__file__).resolve().parents[1] / "tools/phone-build/AmbientSkyFixture.cs")]
+            result = subprocess.run(args, capture_output=True, text=True, timeout=45)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_graphical_capture_keeps_editor_alive_and_requires_real_observation_bytes(self):
+        def launched(args, *, env, **kwargs):
+            report_path = Path(env["ROR2_PHONE_ORACLE_REPORT"])
+            ambient = "ROR2_AMBIENT_CAPTURE" in env
+            self.assertEqual("-nographics" not in args, ambient)
+            self.assertEqual("-quit" not in args, ambient)
+            self.assertIn("-batchmode", args)
+            if ambient:
+                self.assertIn("AmbientSkyFixture.Begin", args)
+                report = {"unity": "2021.3.45f2", "gpu": "Metal", "captureCompleted": True}
+                receipt = {"faces": [], "sh": {}}
+                for index in range(7):
+                    data = bytes(108 if index == 6 else 64 * 64 * 16)
+                    name = "observation-" + str(index) + ".bin"
+                    (report_path.parent / name).write_bytes(data)
+                    row = {"file": name, "sha256": hashlib.sha256(data).hexdigest()}
+                    if index == 6:
+                        receipt["sh"] = row | {"cached": False}
+                    else:
+                        receipt["faces"].append(row | {"face": index, "width": 64, "height": 64, "format": 89})
+                (report_path.parent / "capture-complete.json").write_text(json.dumps(receipt))
+                (report_path.parent / "ambient.gputrace").write_bytes(b"authored trace fixture")
+            else:
+                self.assertIn("ContentFixtureBuilder.Check", args)
+                report = {"unity": "2021.3.45f2", "bundleLoaded": True, "textMatched": True, "unloaded": True}
+            report_path.write_text(json.dumps(report))
+            return subprocess.CompletedProcess(args, 0, b"", b"")
+
+        with (
+            tempfile.TemporaryDirectory() as root,
+            patch("common.WORK", Path(root)),
+            patch.dict("os.environ", {"UNITY_EDITOR": "authored-editor"}),
+            patch("build_lock.host_build_lock") as lock,
+        ):
+            for ambient in (False, True):
+                project = Path(root) / "rebuild/phone-content" / str(ambient) / "project"
+                receipt = stage(project, ambient=ambient)
+                self.assertEqual(receipt["ambient_capture"], ambient)
+                self.assertEqual((project / "Assets/Editor/AmbientSkyFixture.cs").exists(), ambient)
+                with (
+                    patch("phone_content.subprocess.run", side_effect=launched),
+                    patch(
+                        "phone_content.subprocess.check_output",
+                        side_effect=lambda args, **kwargs: str(Path(root) / ".git") if "--git-common-dir" in args else "c" * 40,
+                    ),
+                    patch("builtins.print"),
+                ):
+                    run_editor(project, ambient=ambient)
+                self.assertTrue(lock.called)
+                if ambient:
+                    attempt = next(project.parent.glob("editor-ambient-capture-*"))
+                    captured = validate_ambient_capture(attempt)
+                    captured["sh"]["cached"] = True
+                    (attempt / "capture-complete.json").write_text(json.dumps(captured))
+                    with self.assertRaisesRegex(RuntimeError, "uncached SH"):
+                        validate_ambient_capture(attempt)
+                    captured["sh"]["cached"] = False
+                    (attempt / "capture-complete.json").write_text(json.dumps(captured))
+                    (attempt / captured["faces"][0]["file"]).write_bytes(b"changed")
+                    with self.assertRaisesRegex(RuntimeError, "bytes changed"):
+                        validate_ambient_capture(attempt)
+
     def test_linker_snapshot_requires_same_build_complete_input_set_and_unchanged_bytes(self):
         with tempfile.TemporaryDirectory() as temporary:
             attempt = Path(temporary)

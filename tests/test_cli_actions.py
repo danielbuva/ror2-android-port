@@ -311,6 +311,8 @@ class PrototypeActionTests(unittest.TestCase):
         # Added actions have separate dispatch contracts rather than changing
         # the historical pre-registry snapshot.
         added = {
+            "phone-content-ambient-fixture",
+            "phone-content-ambient-check",
             "phone-texture-fixture",
             "phone-texture-check",
             "shared-catalog-code-build",
@@ -348,6 +350,8 @@ class PrototypeActionTests(unittest.TestCase):
                 "shader-translucent",
                 "phone-content-fixture",
                 "phone-content-check",
+                "phone-content-ambient-fixture",
+                "phone-content-ambient-check",
                 "phone-content-build",
                 "phone-apk-fixture",
                 "phone-package-check",
