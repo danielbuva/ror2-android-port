@@ -52,3 +52,17 @@ Evidence: `work/coordination/p1-player-phone-assembly-v1/android-taskset-mask-ho
 and `phone177-parent-terminal-v4.json` in that directory; independent device cleanup passed.
 Runner SHA-256: `15fdc82f66808db46cf9b25ba17251af12237a32728cc12aecf1391f2e2eb649`.
 No installation or game launch; accepted J850 APK and content readiness are unchanged.
+## J1183 — Eight complete source-derived scene bundles
+
+2026-10-26. Eight object and eleven Shader profiles complete Lakes/Lakesnight/Sulfurpools spine,
+Satellitescene, Limbo, IronAlluvium, IronAlluvium2 and Lobby: 135,541 records, including 80 Shaders.
+All 16 serialized members and eight compressed bundles are raw-exact against J850 on the host.
+Existing owners and source-selected variants are retained; Director exposed-reference naming gains
+an original-identity derivation and host contract, without a complete Conduit qualification claim.
+Evidence and per-output SHA-256: `work/coordination/p1-anim/six-scenes-final-host-v1/` and
+`work/coordination/p1-anim/two-scenes-final-host-v1/` in the animation worktree; readiness union:
+`work/coordination/p1-anim/eight-scene-publication-v1/readiness-union/` (606/705 available,
+601 raw-exact, two code comparisons, three drift-explained; 99 missing: 7 APK, 92 payload).
+Prior art: pinned AssetRipper property/fallback relationships; existing J1157/J1163 Shader contracts.
+Host-only; phone production, installation and runtime remain open. APK unchanged: J850
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.

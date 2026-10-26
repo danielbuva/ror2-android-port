@@ -232,6 +232,24 @@ def root_motion_fixture(turn=False):
 
 
 class AnimationProducerTests(unittest.TestCase):
+    def test_director_reimport_sorts_signed_keys_with_their_references(self):
+        # Fixed CRC32 vectors cover signed ordering, alignment changes and null PPtrs.
+        entry = F.node("data", children=[F.text("first"), F.node("second", 12, kind="PPtr<Object>")])
+        schema = F.node("Base", children=[F.node("prefix", 4), F.node("m_ExposedReferences", children=[F.array("m_References", entry)]), F.node("suffix", 4)])
+
+        def pair(text, pointer):
+            encoded = text.encode()
+            return F.vector(encoded, len(encoded)) + struct.pack("<iq", *pointer)
+
+        body = struct.pack("<II", 123, 3) + pair("0", (0, 0)) + pair("1", (2, 91)) + pair("-1", (3, -12)) + struct.pack("<I", 456)
+        # CRC32("0") is unsigned 4108050209, represented as signed -186917087;
+        # CRC32("1") is -2082672713; CRC32("-1") is 808273962.
+        expected = struct.pack("<II", 123, 3) + pair("-2082672713", (2, 91)) + pair("-186917087", (0, 0)) + pair("808273962", (3, -12)) + struct.pack("<I", 456)
+        made = A.transform_generic(body, 320, {"director_exposed_names": True}, schema)
+        self.assertEqual(made, expected)
+        with self.assertRaisesRegex(ValueError, "PlayableDirector"):
+            A.transform_generic(body, 91, {"director_exposed_names": True}, schema)
+
     def test_empty_dense_metadata_uses_original_clip_stop_and_rate(self):
         body, schema = layout_fixture()
         _, spans = A.fields(body, schema)
