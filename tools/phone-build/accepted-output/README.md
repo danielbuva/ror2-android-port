@@ -1381,3 +1381,13 @@ producer while local receipts persist. The existing member-aware writer exposes
 `payload/habitatfall-source-lab`. All 13,895 persisted objects, both serialized
 members and the compressed bundle are host raw-exact against J850. No runtime
 owner is added; phone production, installation and original scene behavior remain open.
+
+Dampcavesimple complete source-scene selections extend the existing object/Shader
+owners through `recipe/owner-dampcavesimple-source-objects.json` and matching
+source-lab Standard/post-processing profiles. Explicit current PC/SDK roots,
+pinned profiles/tools, receipt-pinned source-produced media/Shader packs and a
+separate output directory set up production; process exit tears down each
+producer while local receipts persist. The existing member-aware writer exposes
+`payload/dampcavesimple-source-lab`. All 29,718 persisted objects, both serialized
+members and the compressed bundle are host raw-exact against J850. No runtime
+owner is added; phone production, installation and original scene behavior remain open.
