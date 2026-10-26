@@ -380,6 +380,22 @@ Audited selectors reuse existing owners and original-backed Standard ordering.
 Host-only; phone production, installation and original scene behavior remain open.
 APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
 
+## J1205 — Source-lab particle and Standard Shader records
+
+2026-10-26. Existing Shader owner reproduces Skymeadow particle Shader97 and
+Golemplains Standard Shader121 from legitimate originals and pinned SDK source.
+Original fragment identities retain particle runtime passes and native order;
+procedural instancing uses the existing SDK resource-buffer implementation.
+Guarded CLI records persist before independent J850 comparison; both raw-exact.
+Skymeadow: 30,516 B, SHA-256
+`64c74893870676bf65ef721b44e8547104f7385b6121da8b07ff9073aeb536ab`.
+Golemplains: 487,132 B; receipt SHA-256
+`6846e21c5228b9bb87732a55012fcf1bb47dca19f77583515e66ef7e62a45b97`.
+Evidence: `work/coordination/p1-shaders-2/qualified-skymeadow-particles-v5/`
+and `work/coordination/p1-shaders-2/qualified-golemplains-v11-standard-v2/`.
+Audited public selectors; 32 focused host tests, Ruff and host preflight pass.
+Host-only; full-scene qualification belongs to the scene owner; phone gates remain open.
+
 ## J1204 — Complete ArtReview bundle and SDK resource buffers
 
 2026-10-26. Existing object/Shader owners reproduce ArtReview from legitimate
