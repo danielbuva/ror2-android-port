@@ -4751,3 +4751,12 @@ The existing member-aware writer exposes `payload/skymeadow-source-lab`.
 All 37,402 persisted objects, both serialized members and the compressed bundle
 are host raw-exact against J850. No runtime owner is added; phone production,
 installation and original scene behavior remain open.
+
+Meridian source-lab particle selections extend `payload_shader_records.py`
+through `recipe/owner-meridian-source-lab-particles-shaders.json`. Recursive
+original scene dependencies select particle materials; existing SDK 211 source
+compilation and original runtime pass/native-order policies produce the record.
+Explicit pinned PC/SDK/tool inputs and a separate output directory set up
+production; process exit tears down producers while receipts persist. The
+persisted 25,056 B Shader record is host raw-exact to J850. Full-scene assembly
+belongs to the scene owner; phone production and runtime remain open.
