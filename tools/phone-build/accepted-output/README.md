@@ -1267,3 +1267,32 @@ receipt-pinned `--record-pack` interface. These profiles expose 135,541 records,
 16 serialized members and eight compressed bundles, all host-exact against
 J850, as `payload/<bundle-name>`. They add no producer owner or runtime state;
 phone production, installation and scene behavior remain open.
+
+### Shared on-device producer thermal runner
+
+`phone_runner.py --receipt NEW.json -- COMMAND...` is the current experimental
+supervisor for content, RGBA, native and SDK producer commands on Android. The
+managed tool host wraps owner-backend and public-profile commands with it;
+shell callers invoke it through their supplied Android Python. It performs no
+ADB, installation, storage admission or display operations: those remain with
+the caller and its device lease. The ordinary app's ability to read the required
+kernel sensors and sustained thermal behaviour remain device gates.
+
+The default profile pauses the owned process group and independently sessioned
+codec/compiler descendants at CPU/GPU >= 70 C, resuming only when all readable
+CPU/GPU zones are <= 55 C. Explicit `--profile thor` selects 75/60 C. PID/start
+identities protect descendant signals. Before startup, taskset restricts the
+producer to up to two allowed minimum-capacity CPUs (one allowed CPU if capacity
+information is unavailable); supported numerical/.NET runtime worker settings
+are limited to two. Affinity failure refuses production.
+
+Admission requires readable CPU telemetry and observed CPU/GPU/battery/skin
+<= 50 C. The 250 ms sampler continues during pauses and aborts on a gap > 1 s,
+CPU/GPU >= 88 C once, > 80 C for >= 1 s per zone, or battery/skin > 45 C.
+Unavailable sentinel zones and unrelated PMIC zones are excluded. Runtime limits
+are unchanged by duty cycling. Deadline/cancellation/error cleanup kills the
+owned family without resuming a paused workload. Receipts retain pause count,
+seconds, CPU/GPU peak, affinity, exit and cleanup failures. An adjacent atomic
+BOOTTIME pause clock, passed through `ROR2LAB_BUILD_PAUSE_CLOCK`, preserves the
+existing native compiler active-time deadline contract. This host-tested owner
+does not qualify source equivalence, final installation or phone thermal safety.
