@@ -56,3 +56,15 @@ Evidence and per-output SHA-256: `work/coordination/p1-anim/six-scenes-final-hos
 Prior art: pinned AssetRipper property/fallback relationships; existing J1157/J1163 Shader contracts.
 Host-only; phone production, installation and runtime remain open. APK unchanged: J850
 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1185 — Integrated preparation timing and cleanup race repair
+
+2026-10-26. Existing IntegratedWorldSession emits bounded monotonic-time/frame markers around preparation
+and its existing resource waits; report writes, scheduling and ownership remain unchanged.
+Prior art: pinned R2API AddressReferencedAsset distinguishes request, handle and completion; no code copied.
+Normal IL2CPP code-build source `3749f5d8`, APK `9dd424f4a183d299b0ee03cd325a0cae7c9f863edb8e0b6332c81cd43c3a4dc1`.
+Evidence: `work/coordination/main-port-preparation-trace/` build receipt, focused checks and preflight logs.
+Ten focused trace checks, 45 camera checks (three skips), host preflight and public audit pass.
+Cleanup now tolerates a concurrently removed payload and continues the plan; other errors propagate.
+Nine cleanup regressions and Ruff pass; cleanup receipts are in the same evidence directory.
+Device qualification, hotspot attribution and measured thermal improvement remain open; no gameplay claim.

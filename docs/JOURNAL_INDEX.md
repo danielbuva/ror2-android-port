@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1185](PORTING_JOURNAL.md#j1185--integrated-preparation-timing-and-cleanup-race-repair) | 2026-10-25 | Integrated preparation timing and cleanup race repair | 2026-10-26. |
 | [J1183](PORTING_JOURNAL.md#j1183--eight-complete-source-derived-scene-bundles) | 2026-10-25 | Eight complete source-derived scene bundles | 2026-10-26. |
 | [J1181](PORTING_JOURNAL.md#j1181--loading-presentation-pacing) | 2026-10-25 | Loading presentation pacing | 2026-10-26. |
 | [J1179](PORTING_JOURNAL.md#j1179--recursive-standard-shaders-and-five-complete-scene-bundles) | 2026-10-25 | Recursive Standard Shaders and five complete scene bundles | 2026-10-26. |
