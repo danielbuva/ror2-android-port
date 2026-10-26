@@ -4022,3 +4022,7 @@ native graph detours, and refresh the producer/camera recipe pins together.
 The prior recipe remains the parent hash. Reviewed changes contain only authored
 source and hashes; no game content, middleware, private paths or identifiers.
 This pin update does not qualify native encounter or audio behavior.
+
+The same audit covers the camera build-hook hash following its refreshed
+authored audio-producer recipe pin. This changes source validation metadata
+only; no generated content or additional input identifiers are published.
