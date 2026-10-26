@@ -398,6 +398,29 @@ public sealed partial class PortSession
         report.Add("TeamComponent.indicatorSetupQueue:" + (before - queue.Count) + "/" + queue.Count);
         return report.ToArray();
     }
+    // Native menu captures identify destroyed cloned cards retained by the original
+    // deferred loadout callback. Drop only destroyed targets after world teardown;
+    // preserve live callbacks and the ResourceAvailability value-type state.
+    int PruneDestroyedSpawnCardCallbacks()
+    {
+        Check(r.world.cleaned && !Run.instance && !NetworkServer.active && !NetworkClient.active,
+              "Refuse spawn-card callback cleanup in a live session");
+        var field = typeof(CharacterSpawnCard).GetField("loadoutAvailability", BindingFlags.Static | BindingFlags.NonPublic);
+        Check(field != null, "Original spawn-card loadout availability changed");
+        var availability = field.GetValue(null);
+        var callbacks = field.FieldType.GetField("onAvailable", BindingFlags.Instance | BindingFlags.NonPublic);
+        Check(callbacks != null && typeof(Delegate).IsAssignableFrom(callbacks.FieldType),
+              "Original loadout availability callback changed");
+        int removed;
+        var kept = CompletedSessionRootWalk.RemoveTargets(callbacks.GetValue(availability) as Delegate,
+            target => target is CharacterSpawnCard && !(UnityEngine.Object)target, out removed);
+        if (removed > 0)
+        {
+            callbacks.SetValue(availability, kept);
+            field.SetValue(null, availability);
+        }
+        return removed;
+    }
     // The captured J1091 graph identifies the original BulletHitPool as a root
     // for completed actors. Its Reset leaves hitHurtBox assigned. Visit only
     // returned items, after teardown, and release only Unity-destroyed targets.
@@ -430,7 +453,8 @@ public sealed partial class PortSession
         yield return null;
         int pruned = PruneDestroyedDepossessionSubscribers();
         var registries = PruneDestroyedOriginalRegistries().Concat(new[] {
-            "BulletAttack.bulletHitPool.destroyedTargets:" + ReleaseDestroyedPooledHitTargets()
+            "BulletAttack.bulletHitPool.destroyedTargets:" + ReleaseDestroyedPooledHitTargets(),
+            "CharacterSpawnCard.loadoutAvailability.destroyedTargets:" + PruneDestroyedSpawnCardCallbacks()
         }).ToArray();
         ObserveSessionResources("completed-before-reclaim");
         r.sessionResources.Last().prunedDestroyedDepossessionSubscribers = pruned;

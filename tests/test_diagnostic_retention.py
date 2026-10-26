@@ -35,6 +35,18 @@ class LabDiagnostics {
   if(Directory.GetFiles(root).Length!=1)throw new Exception("Unbounded snapshot files");
  }
 }
+struct ResourceAvailability {
+ public bool available;
+ private event Action onAvailable;
+ public void Add(Action callback){onAvailable+=callback;}
+ public Delegate Callbacks {get{return onAvailable;}}
+}
+class CharacterSpawnCard : UnityEngine.Object {
+ private static ResourceAvailability loadoutAvailability;
+ public void Callback(){}
+ public static ResourceAvailability Availability {get{return loadoutAvailability;}set{loadoutAvailability=value;}}
+}
+static class CompletedSessionRootWalk { REMOVE_TARGETS }
 class HurtBox : UnityEngine.Object {}
 class PoolBase<T> { private Stack<T> items=new Stack<T>(); public Stack<T> Returned {get{return items;}} }
 class HitPool : PoolBase<BulletAttack.BulletHit> {}
@@ -52,6 +64,21 @@ class ResourceOwner {
  public Report r=new Report();
  void Check(bool pass,string message){if(!pass)throw new InvalidOperationException(message);}
  CLEANUP
+ SPAWN_METHOD
+ public static void VerifySpawn(){
+  var owner=new ResourceOwner();var dead=new CharacterSpawnCard {destroyed=true};var live=new CharacterSpawnCard();
+  Action foreign=()=>{};var state=new ResourceAvailability {available=true};state.Add(dead.Callback);state.Add(live.Callback);state.Add(foreign);state.Add(dead.Callback);CharacterSpawnCard.Availability=state;
+  for(int flag=0;flag<4;flag++){
+   owner.r.world.cleaned=flag!=0;Run.instance=flag==1?new UnityEngine.Object():null;NetworkServer.active=flag==2;NetworkClient.active=flag==3;
+   bool refused=false;try{owner.PruneDestroyedSpawnCardCallbacks();}catch(InvalidOperationException){refused=true;}
+   if(!refused||CharacterSpawnCard.Availability.Callbacks.GetInvocationList().Length!=4)throw new Exception("Live-world callbacks mutated");
+  }
+  owner.r.world.cleaned=true;Run.instance=null;NetworkServer.active=NetworkClient.active=false;
+  if(owner.PruneDestroyedSpawnCardCallbacks()!=2)throw new Exception("Destroyed callbacks retained");
+  var after=CharacterSpawnCard.Availability;var callbacks=after.Callbacks.GetInvocationList();
+  if(!after.available||callbacks.Length!=2||!ReferenceEquals(callbacks[0].Target,live)||!callbacks[1].Equals(foreign))throw new Exception("Availability/live callback/order changed");
+  if(owner.PruneDestroyedSpawnCardCallbacks()!=0)throw new Exception("Cleanup not idempotent");
+ }
  public static void Verify(){
   var owner=new ResourceOwner();var dead=new HurtBox {destroyed=true};var live=new HurtBox();var other=new object();
   var returned=new BulletAttack.BulletHit {hitHurtBox=dead,other=other};var active=new BulletAttack.BulletHit {hitHurtBox=live};var empty=new BulletAttack.BulletHit();var rented=new BulletAttack.BulletHit {hitHurtBox=dead};
@@ -67,7 +94,7 @@ class ResourceOwner {
   if(owner.ReleaseDestroyedPooledHitTargets()!=0)throw new Exception("Cleanup not idempotent");
  }
 }
-class Program {static void Main(string[] args){if(args[0]=="publication")LabDiagnostics.Verify(args[1]);else ResourceOwner.Verify();Console.WriteLine(args[0]+": PASS");}}
+class Program {static void Main(string[] args){if(args[0]=="publication")LabDiagnostics.Verify(args[1]);else if(args[0]=="spawn")ResourceOwner.VerifySpawn();else ResourceOwner.Verify();Console.WriteLine(args[0]+": PASS");}}
 """
 
 
@@ -86,6 +113,9 @@ class DiagnosticRetentionTests(unittest.TestCase):
             "CLEANUP",
             extract_method((ROOT / "tools/unity/runtime/session/SessionResourceBoundary.cs").read_text(), "    int ReleaseDestroyedPooledHitTargets()"),
         )
+        resource = (ROOT / "tools/unity/runtime/session/SessionResourceBoundary.cs").read_text()
+        code = code.replace("SPAWN_METHOD", extract_method(resource, "    int PruneDestroyedSpawnCardCallbacks()"))
+        code = code.replace("REMOVE_TARGETS", extract_method(resource, "    public static Delegate RemoveTargets("))
         source = directory / "Production.cs"
         source.write_text(code)
         cls.exe = directory / "retention.exe"
@@ -123,3 +153,6 @@ class DiagnosticRetentionTests(unittest.TestCase):
 
     def test_teardown_releases_only_destroyed_targets_of_returned_hits(self):
         self.case("cleanup")
+
+    def test_teardown_releases_only_destroyed_spawn_card_callbacks(self):
+        self.case("spawn")
