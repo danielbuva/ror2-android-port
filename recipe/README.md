@@ -3822,3 +3822,37 @@ or credential is included. Legitimate PC files, separately acquired SDK and
 receipt-pinned source-produced media/Shader packs remain required. Generated
 outputs and evidence stay ignored. Existing ownership and redistribution
 boundaries apply; phone production, installation and runtime behavior remain open.
+
+## Ultima complete object selection (2026-10-26)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-ultima-whole-objects.json` | `d7e0941ffd920f07f48cbf27e400ea9958551c8dc2713a127337c1c3e9661a36` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: this
+profile contains source selectors, hashes, checked pointer relationships and
+authored import policies only. Lossless compaction preserves decoded selectors.
+No original body, curve, scalar, pixel, program, copied source, private path or
+credential is included. Current legitimate PC files, SDK resources and checked
+source-produced record packs remain required. Generated outputs and evidence
+stay ignored. Existing redistribution and ownership boundaries apply; phone
+production and runtime qualification remain open.
+
+## Sulfurpools complete source-scene selections (2026-10-26)
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-sulfurpools-source-objects.json` | `4ad4cd14854456a66d4326d3f9d9aef783a65f8ede7778773c798d4f12204d72` |
+| `owner-sulfurpools-source-lab-postprocess-shaders.json` | `8cae5e2fb635198d8b92df35c97bcbf1750059271be429c1e27ade4978b5ed4f` |
+| `owner-sulfurpools-source-lab-standard-shaders.json` | `634ace2d8f1ea8e80bfc9dc2756c41acb25a8aa611c0fea3e213310e66516bd2` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain original selectors, hashes, checked pointer relationships,
+SDK/public-tool pins and existing authored import policies only. Lossless JSON
+compaction preserves every decoded object selection; both Shader profiles are
+unchanged from the separately qualified source-produced packs. No original
+body, curve, scalar payload, pixel, shader program, copied source, private path
+or credential is included. Legitimate PC files, separately acquired SDK and
+receipt-pinned source-produced media/Shader packs remain required. Generated
+outputs and evidence stay ignored. Existing ownership and redistribution
+boundaries apply; phone production, installation and runtime behavior remain open.

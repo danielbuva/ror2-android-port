@@ -1359,3 +1359,13 @@ The existing member-aware layout/writer exposes `payload/<scene>-spine-lab`.
 All 140,029 persisted objects, 20 serialized members and ten compressed bundles
 are host raw-exact against J850. No owner or runtime state is added; phone
 production, installation and original scene behavior remain open.
+
+Sulfurpools complete source-scene selections extend the existing object/Shader
+owners through `recipe/owner-sulfurpools-source-objects.json` and matching
+source-lab Standard/post-processing profiles. Explicit current PC/SDK roots,
+pinned profiles/tools, receipt-pinned source-produced media/Shader packs and a
+separate output directory set up production; process exit tears down each
+producer while local receipts persist. The existing member-aware writer exposes
+`payload/sulfurpools-source-lab`. All 19,503 persisted objects, both serialized
+members and the compressed bundle are host raw-exact against J850. No runtime
+owner is added; phone production, installation and original scene behavior remain open.

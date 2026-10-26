@@ -4615,3 +4615,22 @@ producer while receipts persist. The existing member-aware writer exposes
 `payload/<scene>-source-lab`. All 60,493 persisted objects, eight serialized
 members and four compressed bundles are host raw-exact against J850.
 Phone production, installation and original scene behavior remain open.
+
+The complete Ultima object selection also uses the existing object/Shader owners.
+Its audited `recipe/owner-ultima-whole-objects.json` consumes receipt-pinned
+source-produced media and the J1194 Shader packs. Explicit current PC/SDK roots,
+pinned profiles/tools and a separate output directory set up production; process
+exit tears down producers while receipts persist. The existing member-aware
+writer exposes `payload/whole-scene-ultima`. All 6,077 persisted objects, both
+serialized members and the compressed bundle are host raw-exact against J850.
+Phone production, installation and original scene behavior remain open.
+
+Sulfurpools complete source-scene selections extend the existing object/Shader
+owners through `recipe/owner-sulfurpools-source-objects.json` and matching
+source-lab Standard/post-processing profiles. Explicit current PC/SDK roots,
+pinned profiles/tools, receipt-pinned source-produced media/Shader packs and a
+separate output directory set up production; process exit tears down each
+producer while local receipts persist. The existing member-aware writer exposes
+`payload/sulfurpools-source-lab`. All 19,503 persisted objects, both serialized
+members and the compressed bundle are host raw-exact against J850. No runtime
+owner is added; phone production, installation and original scene behavior remain open.
