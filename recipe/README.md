@@ -3912,3 +3912,20 @@ SDK and independently source-produced media/Shader record packs remain required.
 The existing object producer preserves source null-script type slots for Soul
 and Mire. Generated outputs and raw comparison evidence stay ignored; ownership
 and redistribution boundaries apply. Phone production and runtime remain open.
+
+## ArtReview Shader selections (2026-10-26)
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-artreview-postprocess-shaders.json` | `6ea7d573778b2c400361d5473eb63c377c8320ba2c384afb1b285548872f8c66` |
+| `owner-artreview-standard-shaders.json` | `031403f7e1e3aaddce1267716201c6702df12375fdddf3596dbfc304d5e87480` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain original selectors, hashes, checked resource/material
+relationships and SDK/public-tool pins only. Standard variant order comes
+from original fragment feature declarations; post-processing uses the pinned
+public exporter templates. No original body, program, copied source, private
+path or credential is included. Legitimate PC input and separately acquired
+SDK remain required; generated records and evidence stay ignored. All 25
+persisted records are host raw-exact against J850. Complete-scene readiness
+and phone qualification remain separate gates.

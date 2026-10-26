@@ -4669,3 +4669,10 @@ producer while local receipts persist. The member-aware writer exposes
 `payload/whole-scene-{soul_perftest,mire,crystalworld}`. All 319,607 objects,
 six serialized members and three compressed bundles are host raw-exact to J850.
 Phone production, installation and original scene behavior remain open.
+
+ArtReview Shader selections use `recipe/owner-artreview-{postprocess,standard}-shaders.json`
+through the existing `payload_shader_records.py` owner. Explicit original/SDK/
+public-tool roots, pinned profiles and a new output directory set up production;
+process exit tears down producers while local receipts persist. Its 24
+post-processing records and one Standard record are host raw-exact against J850.
+Complete-scene assembly, phone production and runtime behavior remain open.

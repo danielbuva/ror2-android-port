@@ -1388,3 +1388,10 @@ producer while local receipts persist. The existing member-aware writer exposes
 `payload/habitatfall-source-lab`. All 13,895 persisted objects, both serialized
 members and the compressed bundle are host raw-exact against J850. No runtime
 owner is added; phone production, installation and original scene behavior remain open.
+
+ArtReview Shader selections use `recipe/owner-artreview-{postprocess,standard}-shaders.json`
+through the existing `payload_shader_records.py` owner. Explicit original/SDK/
+public-tool roots, pinned profiles and a new output directory set up production;
+process exit tears down producers while local receipts persist. Its 24
+post-processing records and one Standard record are host raw-exact against J850.
+Complete-scene assembly, phone production and runtime behavior remain open.
