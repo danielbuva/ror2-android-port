@@ -4584,3 +4584,16 @@ post-processing profiles generate their Shader record packs from original
 resource/material relationships and pinned SDK/public tool inputs. Explicit
 roots, receipt-pinned packs, separate output and process-exit teardown retain
 the same contract; no runtime owner is added. Phone qualification remains open.
+
+Ten further complete spine scenes use the existing object and Shader owners:
+Golemplains2, Dampcavesimple, Blackbeach2, Foggyswamp, Ancientloft, Village,
+Shipgraveyard, Goolake, Golemplains and Blackbeach. Their
+`recipe/owner-<scene>-spine-objects.json` profiles consume receipt-pinned
+source-produced media packs and the matching
+`recipe/owner-<scene>-spine-lab-standard-shaders.json` selection. Explicit
+current PC/SDK roots, pinned profile/tools and a separate output directory
+set up production; process exit tears down each producer while receipts persist.
+The existing member-aware layout/writer exposes `payload/<scene>-spine-lab`.
+All 140,029 persisted objects, 20 serialized members and ten compressed bundles
+are host raw-exact against J850. No owner or runtime state is added; phone
+production, installation and original scene behavior remain open.
