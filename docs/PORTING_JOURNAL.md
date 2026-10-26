@@ -410,3 +410,19 @@ SDK resource-buffer index/array bindings and common tables; 48 focused tests,
 Ruff and host preflight pass. ABI/prior art: `work/coordination/p1-shader-resource-buffers-v1/notes.md`.
 Host-only; resource-buffer target equality, phone production and runtime remain open.
 APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1206 — Complete source-derived Golemplains bundle
+
+2026-10-26. Existing object/Shader owners reproduce Golemplains from legitimate
+PC input, acquired SDK and source-produced packs. Guarded production persists
+before independent comparison: all 10,828 objects, both serialized members
+and the compressed bundle are raw-exact to J850. Output: 8,037,702 B, SHA-256
+`62a13207fba05bb5bee0d9958bcbd4eba0a808e0044a591081f2b18865da0202`.
+Evidence: `work/coordination/p1-scenes-ss/source-qualification-v6/`
+(`qualification-done.json`, `readiness-union/readiness.json`).
+Retained ArtReview+Damp union plus this entry: 641/705 available, 636 raw-exact,
+two code comparisons, three drift-explained; 64 missing (7 APK, 57 payload).
+Audited selectors retain own-resource post-processing provenance and Standard pins.
+Three focused producer contracts, host preflight and public audit pass.
+Host-only; phone production, installation and original scene behavior remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
