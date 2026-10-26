@@ -8,6 +8,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
 from whole_catalog import (
+    CAMERA_SHADER_ROOTS,
+    integration_metadata,
     original_stage_contexts,
     analyze,
     catalog_roots,
@@ -25,6 +27,57 @@ from whole_catalog import (
 )
 import build
 from common import sha, write
+
+
+class IntegrationMetadataTests(unittest.TestCase):
+    def setUp(self):
+        self.camera = sorted(CAMERA_SHADER_ROOTS)
+        ids = self.camera + [900001, 900003, 900002]
+        self.metadata = dict(
+            locations=[dict(id=i, type="Fixture.Type", primaryKey="key-" + str(i)) for i in ids],
+            keys=[dict(key="alias", keyType="System.String", locations=[900001])],
+            providers=["Fixture.Provider"],
+        )
+        self.closure = dict(
+            input_id="fixture-input",
+            source_catalog_sha256="fixture-source-hash",
+            roots=[900001],
+            runtime_roots=[900003],
+            converted={str(i): dict(source="Assets/" + str(i)) for i in ids},
+        )
+        self.mapped = {"Assets/" + str(i): "Assets/WholeGame/" + str(i) for i in ids if i != 900002}
+
+    def test_preserves_catalog_order_alias_numbering_and_root_roles_without_io(self):
+        mesh = [dict(source="Assets/900001", type="UnityEngine.Mesh", key="mesh-alias")]
+        with patch("builtins.open", side_effect=AssertionError("metadata must not access files")):
+            result = integration_metadata(self.metadata, self.closure, self.mapped, mesh, attempt="integration-fixture")
+        expected = [dict(row, path=self.mapped["Assets/" + str(row["id"])], root=True) for row in self.metadata["locations"] if row["id"] != 900002]
+        alias_id = max(row["id"] for row in self.metadata["locations"]) + 1
+        expected.append(dict(id=alias_id, path=self.mapped["Assets/900001"], type="UnityEngine.Mesh", primaryKey="mesh-alias", root=False))
+        self.assertEqual(
+            result,
+            dict(
+                input_id="fixture-input",
+                attempt="integration-fixture",
+                locations=expected,
+                keys=self.metadata["keys"] + [dict(key="mesh-alias", keyType="System.String", locations=[alias_id])],
+                providers=self.metadata["providers"],
+                source_catalog_sha256="fixture-source-hash",
+                roots=sorted(self.camera + [900001, 900003]),
+                provider_roots=[900001],
+                runtime_roots=[900003],
+                quarantine=[],
+            ),
+        )
+
+    def test_missing_runtime_root_refuses(self):
+        del self.mapped["Assets/900003"]
+        with self.assertRaisesRegex(RuntimeError, "Provider roots lost"):
+            integration_metadata(self.metadata, self.closure, self.mapped, [], attempt="integration-fixture")
+
+    def test_missing_mesh_owner_refuses(self):
+        with self.assertRaisesRegex(RuntimeError, "Exact original mesh subobject was not staged"):
+            integration_metadata(self.metadata, self.closure, self.mapped, [dict(source="missing", key="mesh-alias")], attempt="integration-fixture")
 
 
 class WholePayloadReuseTests(unittest.TestCase):
