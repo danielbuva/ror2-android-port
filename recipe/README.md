@@ -3948,3 +3948,17 @@ path or credential is included. Legitimate PC input and separately acquired
 SDK remain required; generated records and evidence stay ignored. All 25
 persisted records are host raw-exact against J850. Complete-scene readiness
 and phone qualification remain separate gates.
+## ArtReview complete object selection (2026-10-26)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-artreview-whole-objects.json` | `e8911198ddd990b59debe714d500661f8a7a94e2be2f733ec4219b77cec5c7bd` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: this
+profile contains source selectors, hashes, checked pointer relationships and
+authored import policies only. Lossless compaction preserves decoded selectors.
+No original body, curve, scalar, pixel, program, copied source, private path or
+credential is included. Current legitimate PC files, SDK resources and checked
+source-produced record packs remain required. Generated outputs and evidence
+stay ignored. Existing redistribution and ownership boundaries apply; phone
+production and runtime qualification remain open.
