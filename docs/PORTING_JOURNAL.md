@@ -320,6 +320,34 @@ Evidence, profile/output pins: `work/coordination/p1-anim-priority-shaders-v1/`
 and phone production, installation and original behavior remain separate gates.
 APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
 
+## J1203 — Original-fragment Standard material ordering
+
+2026-10-26. Existing Shader producer orders retained Standard material features by
+original fragment identities before applying SDK global/builtin variant cycles.
+Recursive material encounter order no longer changes the emitted native order.
+Guarded failed-only Dampcavesimple source Standard production persists before
+independent raw equality: 301,384 B, SHA-256
+`80ae8f64f26f1009e2d394f8111354038105512e6e75d57464b272fb7b0d7acb`.
+Evidence: `work/coordination/p1-shaders-2/qualified-damp-original-order-v1/`
+(`done.json`, `notes.md`, per-pack `independent-comparison.json`).
+Prior art: J1179/J1157 and pinned AssetRipper property/fallback contract.
+Authored encounter-order regression, 46 focused host tests and Ruff pass.
+Host-only; complete scene qualification and phone production/runtime remain open.
+## J1201 — Complete Soul, Mire and Crystalworld scene bundles
+
+2026-10-26. Three audited object profiles extend the existing object/Shader owners,
+reusing J1198 Shader packs and legitimate PC/SDK input: 319,607 objects,
+six serialized members and three compressed bundles are host raw-exact to J850.
+Evidence and per-output SHA-256: animation worktree
+`work/coordination/p1-anim/priority-scenes-final-v1/` (`done.json`, `publication-inputs.json`).
+Retained readiness union: `work/coordination/p1-three-complete-scenes-v1/readiness-union/`;
+three payload entries close, all other rows unchanged: 638/705 available,
+633 raw-exact, two code comparisons, three drift-explained; 67 missing (7 APK, 60 payload).
+This includes the independently qualified Habitatfall union; no production replay.
+Three focused host contracts, host preflight and public audit pass; selectors only,
+with original null-script type slots preserved. No new runtime owner or target supplier.
+Host-only; phone production, installation and original scene behavior remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
 ## J1199 — Complete phone RGBA production and app texture dispatch
 
 2026-10-26. Existing source texture owner completes all 1,333 single-mip RGBA records on Android,
