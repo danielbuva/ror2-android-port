@@ -180,6 +180,41 @@ class AlphaStabilityBatchTests(unittest.TestCase):
         self.assertTrue(result["lease_released"])
         self.assertFalse(self.lease.exists())
 
+    def prior_settings(self, apk=HASH, success=True):
+        source = self.root / "prior.json"
+        source.write_text(
+            json.dumps(dict(success=False, apk_sha256=apk, stages=[dict(name="settings-write-interrupt", result=dict(success=success, apk_sha256=apk))]))
+        )
+        return source
+
+    def test_prior_settings_runs_only_fresh_heaps_and_sustained(self):
+        source = self.prior_settings()
+        self.args["prior_settings_batch"] = source
+        events, result = self.run_case()
+        self.assertEqual([event[0] for event in events if isinstance(event, tuple)], ["memory", "sustained"])
+        self.assertEqual([stage["name"] for stage in result["stages"]], ["session-memory", "session-sustained"])
+        self.assertEqual(result["prior_settings_batch"]["path"], str(source))
+        self.assertEqual(result["prior_settings_batch"]["sha256"], batch.hashlib.sha256(source.read_bytes()).hexdigest())
+        self.assertTrue(result["lease_released"])
+
+    def test_prior_settings_failure_stops_before_sustained(self):
+        self.args["prior_settings_batch"] = self.prior_settings()
+        events, result = self.run_case(fail_at="memory")
+        self.assertEqual([event[0] for event in events if isinstance(event, tuple)], ["memory"])
+        self.assertFalse(result["success"])
+        self.assertTrue(result["lease_released"])
+
+    def test_unpassed_or_different_apk_prior_refused_before_device_access(self):
+        for apk, success in (("b" * 64, True), (HASH, False)):
+            with self.subTest(apk=apk, success=success):
+                self.done.unlink(missing_ok=True)
+                self.args["prior_settings_batch"] = self.prior_settings(apk, success)
+                with mock.patch.object(batch, "_device") as device, self.assertRaises(RuntimeError):
+                    batch.check_alpha_stability_batch(**self.args)
+                device.assert_not_called()
+                self.assertFalse(self.lease.exists())
+                self.assertFalse(json.loads(self.done.read_text())["success"])
+
     def test_thermal_abort_never_replays_stage_and_retains_peak(self):
         events, result = self.run_case(thermal_errors=[None, RuntimeError("CPU above80")], expect_failure=True)
         self.assertEqual([event[0] for event in events if isinstance(event, tuple)], ["sdk", "memory"])

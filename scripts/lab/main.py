@@ -95,6 +95,10 @@ p.add_argument("--json", action="store_true")
 p.add_argument(
     "--done-file", help="Current: alpha-stability-batch requires a new absolute host JSON receipt path; launch detached and inspect it after completion"
 )
+p.add_argument(
+    "--prior-settings-batch",
+    help="Current: alpha-stability-batch skips settings interruption using a retained successful same-APK settings stage; heap and sustained stages run fresh",
+)
 p.add_argument("--assembly")
 p.add_argument("--target", default="lab")
 p.add_argument("--action", default="inspect")
@@ -237,6 +241,8 @@ if a.expected_apk_sha256 is not None and (
 is_alpha_batch = a.command == "prototype" and a.action == "alpha-stability-batch"
 if a.done_file is not None and not is_alpha_batch:
     p.error("--done-file requires prototype --action alpha-stability-batch")
+if a.prior_settings_batch is not None and not is_alpha_batch:
+    p.error("--prior-settings-batch requires prototype --action alpha-stability-batch")
 if is_alpha_batch and (not a.done_file or not a.device or not a.expected_apk_sha256):
     p.error("alpha-stability-batch requires --device, --expected-apk-sha256 and --done-file")
 if (a.skill_slot or a.toolbot_offhand or a.captain_supply_beacon) and (a.command != "prototype" or a.action != "survivor-kit-check"):
