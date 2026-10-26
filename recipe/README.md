@@ -3493,3 +3493,30 @@ credential is included. The bounded reader is unchanged; legitimate input and
 source-produced bundles remain external and ignored. Host contracts preserve
 cyclic references and refuse incomplete graphs. Full catalog production and phone
 execution remain open; no redistribution or ownership right is granted.
+
+
+## Six whole-scene Shader producers (2026-10-26)
+
+The existing `payload_shader_records.py` owner consumes these seven profiles
+for 122 source-produced records. Pinned public AssetRipper ParsedForm template
+selection and original resource fields determine post-processing exports;
+original RenderSettings and material relationships select SDK Standard/skybox
+variants. Independent comparisons pass for all records after guarded production
+that refuses accepted outputs and retained packs as suppliers.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-splash-postprocess-shaders.json` | `a8dab79b958798d951e7fc74425c6eb905de74eaf0b307e4eff4d0986d65c959` |
+| `owner-splash-skybox-shaders.json` | `8e604923ca9bf2149ca42d9fb0c018fffb6e666b84a1ebf4d45ad08470c81322` |
+| `owner-habitat-postprocess-shaders.json` | `611a10651c31861c40444d365613f30e95b88cdff0c4a4247efaf8b8901e9179` |
+| `owner-helminthroost-postprocess-shaders.json` | `c701edee2c076c472d98d4d9ba9c91f46c8ef3600cb20b3d5479c37dfeffe00d` |
+| `owner-artifactworld03-postprocess-shaders.json` | `ca7637756f3512e21bf40f5838e827082fd49fc5970cf8b75dbedae3d0e00043` |
+| `owner-itgoolake-postprocess-shaders.json` | `690b6fc062494cde95c8e34271d787e352d0037be37c75b0025a42f8e8cf8808` |
+| `owner-itgolemplains-standard-shaders.json` | `82643e59c40cd03766c16c023aeb844d604610ab9bb48778f8a886df2c2eafa9` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: profiles
+contain original file/object selectors, source hashes, SDK/public-tool pins and
+output relationships only. No original body, program, copied shader source,
+private path or credential is included. Current legitimate PC input and the
+separately acquired SDK remain required. Generated records and raw evidence stay
+ignored. Full-bundle qualification is separate; phone/runtime gates remain open.
