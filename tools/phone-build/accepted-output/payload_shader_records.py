@@ -276,6 +276,21 @@ def validate_standard_scene(fog, maps, renderers):
     return fog_keywords[fog[0]["m_FogMode"]] if fog[0]["m_Fog"] else None
 
 
+def standard_material(selected, original, sdk_objects):
+    """Apply an explicit source-identity mapping to the pinned SDK default."""
+    if "sdk_material" not in selected:
+        return original
+    if selected["sdk_material"] != 10303:
+        raise ValueError("Standard SDK material identity differs")
+    obj = sdk_objects[10303]
+    if obj.type.name != "Material":
+        raise ValueError("Standard SDK default is not a Material")
+    value = obj.read_typetree()
+    if value["m_Shader"] != {"m_FileID": 0, "m_PathID": 46}:
+        raise ValueError("Standard SDK default shader differs")
+    return value
+
+
 def standard_selections(original_sdk, materials, fog_keyword="FOG_LINEAR"):
     """Return source runtime form and ordered per-tier Standard keyword rows."""
     source = deepcopy(original_sdk)
@@ -352,6 +367,15 @@ def standard_selections(original_sdk, materials, fog_keyword="FOG_LINEAR"):
     return source, selections
 
 
+def terrain_basegen_selections(original, sdk_source, materials):
+    """Retain the SDK generator's declared passes without material keywords."""
+    if materials or original["m_Dependencies"] or sdk_source["m_Dependencies"]:
+        raise ValueError("terrain base generator has no material variants or dependencies")
+    if original["m_ParsedForm"]["m_PropInfo"] != sdk_source["m_ParsedForm"]["m_PropInfo"]:
+        raise ValueError("terrain base generator original/SDK properties differ")
+    return P.sdk_scene_selections(sdk_source, set())
+
+
 def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec_sha256):
     """Produce the bounded Standard source record through the shared SDK owner."""
     import UnityPy
@@ -389,10 +413,13 @@ def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec
     obj = original_object(source, "Shader")
     original = obj.read_typetree()
     sdk_id = profile.get("sdk_shader", 46)
-    expected_name = {46: "Standard", 106: "Skybox/Procedural"}[sdk_id]
+    expected_name = {46: "Standard", 106: "Skybox/Procedural", 10626: "Hidden/TerrainEngine/Splatmap/Standard-BaseGen"}[sdk_id]
     if original["m_ParsedForm"]["m_Name"] != expected_name:
         raise ValueError("Standard native type source differs")
     materials = []
+    sdk_materials = {}
+    if any("sdk_material" in selected for selected in profile["materials"]):
+        sdk_materials = {obj.path_id: obj for obj in UnityPy.load(str(sdk / "Resources/unity_builtin_extra")).objects}
     for selected in profile["materials"]:
         material = original_object(selected, "Material")
         value = material.read_typetree()
@@ -402,7 +429,9 @@ def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec
         external = material.assets_file.externals[pointer["m_FileID"] - 1].path
         if Path(external).name != source["member"]:
             raise ValueError("Standard material shader member differs")
-        materials.append(value)
+        # Original body and shader/PPtr checks above still apply to mapped
+        # materials. Only the explicit profile identity chooses SDK features.
+        materials.append(standard_material(selected, value, sdk_materials))
     environment = UnityPy.load(str(P.relative(pc, profile["scene"]["path"])))
     scene_objects = [obj for obj in environment.objects if "member" not in profile["scene"] or obj.assets_file.name == profile["scene"]["member"]]
     fog = [obj.read_typetree() for obj in scene_objects if obj.type.name == "RenderSettings"]
@@ -415,7 +444,10 @@ def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec
     sdk_pin = profile["compiler_sdk"]["Resources/unity_builtin_extra"]["sha256"]
     sdk_source = SDK.sdk_source(sdk, sdk_id, sdk_pin)
     dependency_relocations = []
-    if sdk_id == 106:
+    if sdk_id == 10626:
+        source_runtime = sdk_source
+        keyword_rows = terrain_basegen_selections(original, source_runtime, materials)
+    elif sdk_id == 106:
         selected = profile["materials"][0]
         pointer = fog[0]["m_SkyboxMaterial"]
         render = next(row for row in scene_objects if row.type.name == "RenderSettings")

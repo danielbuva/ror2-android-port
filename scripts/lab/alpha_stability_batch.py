@@ -8,6 +8,7 @@ CPU/GPU heat above 95 C for three seconds or battery at or above 43 C or a sampl
 """
 
 import importlib
+import hashlib
 import json
 import os
 import re
@@ -448,7 +449,20 @@ def _host_capture_budget(root):
     )
 
 
-def check_alpha_stability_batch(*, device_serial, expected_apk_sha256, canonical_root, done_file):
+def _prior_settings_batch(path, expected):
+    """Retain prior APK-matched settings evidence separately from fresh stages."""
+    source = Path(path).expanduser().resolve()
+    raw = source.read_bytes()
+    prior = json.loads(raw)
+    if prior.get("apk_sha256") != expected:
+        raise ValueError("Prior settings batch APK does not match selected APK")
+    passed = [stage for stage in prior.get("stages", []) if stage.get("name") == "settings-write-interrupt"]
+    if len(passed) != 1 or passed[0].get("result", {}).get("success") is not True or passed[0]["result"].get("apk_sha256") != expected:
+        raise ValueError("Prior settings batch requires one successful APK-matched settings stage")
+    return dict(path=str(source), sha256=hashlib.sha256(raw).hexdigest(), stage=passed[0])
+
+
+def check_alpha_stability_batch(*, device_serial, expected_apk_sha256, canonical_root, done_file, prior_settings_batch=None):
     """Run fixed stages synchronously; publish terminal status on success or failure."""
     root = Path(canonical_root).expanduser().resolve()
     if not (root / ".git").is_dir():
@@ -478,6 +492,8 @@ def check_alpha_stability_batch(*, device_serial, expected_apk_sha256, canonical
         if expected is None:
             raise ValueError("alpha-stability-batch requires --expected-apk-sha256")
         result["apk_sha256"] = expected
+        if prior_settings_batch is not None:
+            result["prior_settings_batch"] = _prior_settings_batch(prior_settings_batch, expected)
         result["host_capture_budget"] = _host_capture_budget(root)
         budget = result["host_capture_budget"]
         if budget["free_bytes"] < budget["required_free_bytes"]:
@@ -508,6 +524,8 @@ def check_alpha_stability_batch(*, device_serial, expected_apk_sha256, canonical
             ("session-memory", memory.check_session_memory, dict(sessions=3, memory_snapshots=True)),
             ("session-sustained", sustained.check_session_sustained, {}),
         ):
+            if name == "settings-write-interrupt" and prior_settings_batch is not None:
+                continue
             result["active_stage"] = name
             if name == "session-memory":
                 _require_capture_capacity(device)

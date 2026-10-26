@@ -11,7 +11,9 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from test_phone_texture_producer import FIXTURE, ROOT, T, authored_body, digest
+from test_phone_texture_producer import FIXTURE, ROOT, T, authored_body, digest, load
+
+ANDROID = load("texture_android_dispatch", ROOT / "tools/phone-build/owner-code/run_android.py")
 
 
 class TextureResumeTests(unittest.TestCase):
@@ -120,6 +122,38 @@ t.produce(p, t.BUNDLE.sha(p), Path(sys.argv[3]), Path(sys.argv[4]))
     def assert_fresh(self):
         for name in ("objects.bin", "resources.bin", "index.jsonl"):
             self.assertEqual((self.interrupted / name).read_bytes(), (self.fresh / name).read_bytes(), name)
+
+    def android_request(self):
+        runtime, installed = self.root / "runtime", self.root / "installed"
+        (runtime / "repo").mkdir(parents=True)
+        installed.mkdir()
+        (runtime / "repo/tools").symlink_to(ROOT / "tools", target_is_directory=True)
+        shutil.copyfile(self.profile, runtime / "repo/profile.json")
+        (self.root / "input-hashes.json").write_text(json.dumps({"pc/authored.bundle": T.BUNDLE.sha(self.pc / "authored.bundle")}))
+        request = {"textures": {"profile": "profile.json", "profile_sha256": T.BUNDLE.sha(self.profile), "pc": "pc"}, "output": "android/pack"}
+        return runtime, installed, request
+
+    def test_android_texture_dispatch_produces_and_resumes_real_authored_pack(self):
+        runtime, installed, request = self.android_request()
+        request_file = self.root / "request.json"
+        for resume in (False, True):
+            request["textures"]["resume"] = resume
+            request_file.write_text(json.dumps(request))
+            ANDROID.run(request_file, runtime, installed)
+            output = self.root / request["output"]
+            receipt = json.loads((output / "result.json").read_text())
+            self.assertTrue(receipt["success"])
+            for name in ("objects.bin", "resources.bin", "index.jsonl"):
+                self.assertEqual((output / name).read_bytes(), (self.fresh / name).read_bytes())
+
+    def test_android_texture_dispatch_checks_original_hash_before_output(self):
+        runtime, installed, request = self.android_request()
+        request_file = self.root / "request.json"
+        request_file.write_text(json.dumps(request))
+        (self.pc / "authored.bundle").write_bytes(b"changed original fixture")
+        with self.assertRaisesRegex(ValueError, "Android owner input drift"):
+            ANDROID.run(request_file, runtime, installed)
+        self.assertFalse((self.root / "android").exists())
 
     def test_data_is_durable_before_each_index_commit(self):
         output = self.root / "durable"

@@ -295,6 +295,8 @@ class PrototypeActionTests(unittest.TestCase):
                 "a" * 64,
                 "--done-file",
                 "/private-evidence/done.json",
+                "--prior-settings-batch",
+                "/private-evidence/prior.json",
             )
         self.assertEqual((code, error), (0, ""))
         self.assertTrue(json.loads(output)["success"])
@@ -303,6 +305,7 @@ class PrototypeActionTests(unittest.TestCase):
             expected_apk_sha256="a" * 64,
             canonical_root=Path("/canonical"),
             done_file="/private-evidence/done.json",
+            prior_settings_batch="/private-evidence/prior.json",
         )
         self.assertEqual(git.call_args.kwargs["cwd"], FIXTURE_ROOT)
         self.modules["device"].Device.sleep_awakened.assert_not_called()

@@ -3,7 +3,10 @@
 from common import *
 from scene_closure import REFERENCE
 from collections import Counter, deque
+import importlib.util
+import io
 import re
+import struct
 
 
 # The original Main Camera prefab's current opt-in overlay calls these shaders
@@ -1630,13 +1633,146 @@ def recover_ambiguous_mesh_subobjects(export, unresolved, metadata, native, rece
     return resolved
 
 
-def integration_metadata(metadata, closure, mapped, mesh_subobjects, *, attempt):
+def _bundle_dependency_names(data, class_id):
+    """Read release Android AssetBundle/PreloadData dependency names, not CAB links."""
+    stream = io.BytesIO(data)
+
+    def uint():
+        return struct.unpack("<I", stream.read(4))[0]
+
+    def skip(length):
+        if length > len(data) - stream.tell():
+            raise ValueError("Truncated bundle dependency record")
+        stream.seek(length, 1)
+
+    def text():
+        length = uint()
+        value = stream.read(length)
+        if len(value) != length:
+            raise ValueError("Truncated bundle dependency name")
+        skip(-stream.tell() % 4)
+        return value.decode("utf-8")
+
+    text()  # NamedObject.m_Name
+    skip(uint() * 12)  # PPtr preload table
+    if class_id == 142:
+        for _ in range(uint()):
+            text()  # container asset path
+            skip(20)  # AssetInfo: preload index/size, PPtr
+        skip(24)  # main AssetInfo and runtime compatibility
+        text()  # bundle name
+    elif class_id != 150:
+        raise ValueError("Expected AssetBundle or PreloadData")
+    return [text() for _ in range(uint())]
+
+
+def produced_bundle_metadata(files):
+    """Hash real produced files and read their release Android dependency records.
+
+    files maps bundle names to paths; neither target catalogs nor CAB externals
+    supply dependencies. Reuses the bounded UnityFS/v22 reader without changing it.
+    """
+    spec = importlib.util.spec_from_file_location("_catalog_unity_write", ROOT / "tools/phone-build/accepted-output/unity_write.py")
+    writer = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(writer)
+    result = {}
+    for name, path in files.items():
+        path = Path(path)
+        bundle = writer.B.Bundle(path)
+        dependencies = []
+        records = 0
+        for member_name in bundle.members:
+            if member_name.endswith((".resS", ".resource")):
+                continue
+            member = bundle.member(member_name)
+            layout = writer.read_serialized(member)
+            if layout["platform"] != 13:
+                raise ValueError("Expected produced Android bundle: " + name)
+            for row in layout["objects"]:
+                class_id = layout["types"][row["type_id"]]["class_id"]
+                if class_id not in (142, 150):
+                    continue
+                member.seek(layout["data_offset"] + row["offset"])
+                dependencies.extend(_bundle_dependency_names(writer.B.exact(member, row["bytes"]), class_id))
+                records += 1
+        if not records:
+            raise ValueError("Produced bundle has no dependency record: " + name)
+        result[name] = dict(sha256=sha(path), bytes=path.stat().st_size, dependencies=list(dict.fromkeys(dependencies)))
+    return result
+
+
+def integration_catalog(metadata, bundles, *, bundle_names):
+    """Finish catalog bytes from produced file facts and a complete direct graph.
+
+    Mirrors WholeCatalogBuild.Complete's member order and transitive dependency
+    arrays. Native cycles are retained; the requesting bundle excludes itself.
+    bundle_names must include every declared build, including bundles without
+    location rows. Incomplete graphs cannot advertise unavailable content.
+    """
+    names = set(bundle_names)
+    required = names | {row["bundle"] for row in metadata["locations"]}
+    required.update(dependency for name in names if name in bundles for dependency in bundles[name]["dependencies"])
+    missing = required - bundles.keys()
+    if missing:
+        raise ValueError("Missing produced catalog bundles: " + ", ".join(sorted(missing)))
+    if required - names:
+        raise ValueError("Catalog references undeclared bundles: " + ", ".join(sorted(required - names)))
+    completed = {}
+    for name in sorted(names):
+        seen = {name}
+        pending = list(bundles[name]["dependencies"])
+        while pending:
+            dependency = pending.pop()
+            if dependency not in seen:
+                seen.add(dependency)
+                pending.extend(bundles[dependency]["dependencies"])
+        seen.remove(name)
+        row = bundles[name]
+        completed[name] = dict(sha256=row["sha256"], bytes=row["bytes"], dependencies=sorted(seen))
+    return json.dumps(dict(metadata, bundles=completed), ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+
+
+def integration_bundle_metadata(metadata, builds):
+    """Assign location owners from explicit AssetBundleBuild declarations, without I/O.
+
+    Mirrors WholeCatalogBuild.Append ownership, not imported dependencies or hashes.
+    Callers supply every explicit build, including presentation and geometry inputs.
+    """
+    owners = {}
+    names = {build["assetBundleName"] for build in builds}
+    for build in builds:
+        for path in build["assetNames"]:
+            key = path.casefold()
+            if key in owners:
+                raise RuntimeError("Duplicate explicit bundle ownership: " + path)
+            owners[key] = build["assetBundleName"]
+    paths = {}
+    for row in metadata["locations"]:
+        key = row["path"].casefold()
+        if key not in owners:
+            paths.setdefault(key, row["path"])
+    names.add("whole-game-content")
+    for key, path in paths.items():
+        if path.lower().endswith(".unity"):
+            name = "whole-scene-" + Path(path).stem.lower()
+            if name in names:
+                raise RuntimeError("Scene bundle name collision: " + name)
+            names.add(name)
+        else:
+            name = "whole-game-content"
+        owners[key] = name
+    return dict(metadata, locations=[dict(row, bundle=owners[row["path"].casefold()]) for row in metadata["locations"]])
+
+
+def integration_metadata(metadata, closure, mapped, mesh_subobjects, *, attempt, camera_roots=None, bundle_builds=None):
     """Assemble catalog identities from regenerated inputs and explicit destination paths.
 
     No project, filesystem, or Editor access; callers own source GUID/path resolution.
     This is integration metadata, not a final bundle catalog or readiness proof.
+    The current build adds camera roots by default; an accepted build predating
+    that extension supplies an empty camera_roots iterable and its source mapping.
     """
-    roots = set(closure["roots"]) | set(closure.get("runtime_roots", [])) | set(CAMERA_SHADER_ROOTS)
+    roots = set(closure["roots"]) | set(closure.get("runtime_roots", [])) | set(CAMERA_SHADER_ROOTS if camera_roots is None else camera_roots)
     locations = []
     for row in metadata["locations"]:
         conversion = closure["converted"].get(str(row["id"]))
@@ -1652,7 +1788,7 @@ def integration_metadata(metadata, closure, mapped, mesh_subobjects, *, attempt)
         next_location_id += 1
     if not roots <= {row["id"] for row in locations}:
         raise RuntimeError("Provider roots lost during staging")
-    return dict(
+    result = dict(
         input_id=closure["input_id"],
         attempt=attempt,
         locations=locations,
@@ -1664,6 +1800,7 @@ def integration_metadata(metadata, closure, mapped, mesh_subobjects, *, attempt)
         runtime_roots=closure.get("runtime_roots", []),
         quarantine=[],
     )
+    return result if bundle_builds is None else integration_bundle_metadata(result, bundle_builds)
 
 
 def prepare_integration(io=None, *, attempt=None):

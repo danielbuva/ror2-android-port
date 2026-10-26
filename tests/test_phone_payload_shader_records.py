@@ -15,6 +15,40 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools/phone-build/
 S = importlib.import_module("payload_shader_records")
 
 
+class TerrainBaseGeneratorTests(unittest.TestCase):
+    def fixture(self):
+        return {
+            "m_Dependencies": [],
+            "m_ParsedForm": {
+                "m_PropInfo": {"m_Props": []},
+                "m_SubShaders": [{"m_Passes": [{"m_Type": 0, "m_State": {"gpuProgramID": identity, "m_Tags": {"tags": []}}} for identity in (10, 20, 30)]}],
+            },
+            "m_CompileInfo": {
+                "m_Snippets": [
+                    (
+                        identity,
+                        {
+                            **{group + str(stage): [] for group in ("m_VariantsUserGlobal", "m_VariantsUserLocal") for stage in range(7)},
+                            "m_VariantsBuiltin0": [],
+                            "m_NonStrippedUserKeywords": "",
+                        },
+                    )
+                    for identity in (10, 20, 30)
+                ]
+            },
+        }
+
+    def test_three_source_passes_retain_empty_variant_in_each_tier(self):
+        source = self.fixture()
+        self.assertEqual(S.terrain_basegen_selections(deepcopy(source), source, []), {identity: [[[]], [[]], [[]]] for identity in (10, 20, 30)})
+
+    def test_original_property_contract_must_match_sdk(self):
+        original, sdk = self.fixture(), self.fixture()
+        original["m_ParsedForm"]["m_PropInfo"]["m_Props"] = [{"m_Name": "_Different"}]
+        with self.assertRaisesRegex(ValueError, "properties differ"):
+            S.terrain_basegen_selections(original, sdk, [])
+
+
 class BarrierShaderSelectionTests(unittest.TestCase):
     def fixture(self):
         return {
@@ -344,6 +378,22 @@ class StandardRetentionTests(unittest.TestCase):
         self.assertFalse(any("_EMISSION" in row and "_NORMALMAP" in row for row in rows))
         self.assertEqual(selections[10][0], selections[10][1])
         self.assertEqual(selections[10][1], selections[10][2])
+
+    def test_explicit_sdk_mapping_removes_only_mapped_emission(self):
+        source, materials = self.fixture()
+        original = deepcopy(materials[1])
+        default = {**materials[0], "m_Shader": {"m_FileID": 0, "m_PathID": 46}}
+        sdk = {10303: SimpleNamespace(type=SimpleNamespace(name="Material"), read_typetree=lambda: default)}
+        mapped = S.standard_material({"sdk_material": 10303}, original, sdk)
+        _, rows = S.standard_selections(source, [materials[0], mapped])
+        self.assertFalse(any("_EMISSION" in keys for keys in rows[10][0]))
+        # Another material with identical keywords remains genuinely emissive.
+        genuine = S.standard_material({}, original, sdk)
+        _, rows = S.standard_selections(source, [mapped, genuine])
+        self.assertTrue(any("_EMISSION" in keys for keys in rows[10][0]))
+        self.assertEqual(original, materials[1])
+        with self.assertRaisesRegex(ValueError, "identity differs"):
+            S.standard_material({"sdk_material": 7}, original, sdk)
 
     def test_exp2_retains_only_the_enabled_source_fog_keyword(self):
         source, materials = self.fixture()

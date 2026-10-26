@@ -261,10 +261,16 @@ def apply(plan, work, ledger_path):
             shutil.rmtree(path)
         else:
             marker = path.with_name(path.name + ".retired.json")
-            if path.is_dir():
-                shutil.rmtree(path)
-            else:
-                path.unlink()
+            try:
+                if path.is_dir():
+                    shutil.rmtree(path)
+                else:
+                    path.unlink()
+            except FileNotFoundError:
+                if path.exists():
+                    raise
+                item["skipped"] = "already removed by concurrent cleanup"
+                continue
             if item["kind"] != "staged symbol package":
                 marker.write_text(
                     json.dumps(

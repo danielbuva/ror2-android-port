@@ -1,0 +1,78 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "source_type": {
+    "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_unitybuiltinshaders_244d4ed79dda70fa38b62dcf46d4ccd7.bundle",
+    "bytes": 1802189,
+    "sha256": "949b28d89f3db1c8da8362f5dd96cc27bae5b3f0d4f2a807fc89be692c494805",
+    "member": "CAB-3795e044f5be9199dfbb711bdc9d52a8",
+    "path_id": -8014961710185377972
+  },
+  "compiler_sdk": {
+    "MacOS/Unity": {
+      "bytes": 79453472,
+      "sha256": "906123118e45d56c6bcf20f3776ed2373417553042500714023daeb9e53058e8"
+    },
+    "Tools/UnityShaderCompiler": {
+      "bytes": 12603248,
+      "sha256": "4f4e5be21d27dd7541fa9385ea480b15816e70ddaa83b516df0ab60b819142b5"
+    },
+    "Resources/unity_builtin_extra": {
+      "bytes": 133069551,
+      "sha256": "db99888b83efb4ec35e6ce219de78c951fc37bc0129712579131360312cc4f8e"
+    }
+  },
+  "compiler_includes_sha256": "163fad0ca42bd98ea1628888dedd01d91fcbb9f6bda60a8120f9b453cc565144",
+  "settings": {
+    "color_space": 1,
+    "caching_preprocessor": true,
+    "tier0": {
+      "standardShaderQuality": 0,
+      "renderingPath": 3,
+      "hdrMode": 1,
+      "realtimeGICPUUsage": 25,
+      "useReflectionProbeBoxProjection": 0,
+      "useReflectionProbeBlending": 0,
+      "useHDR": 1,
+      "useDetailNormalMap": 0,
+      "useCascadedShadowMaps": 0,
+      "prefer32BitShadowMaps": 0,
+      "enableLPPV": 0,
+      "useDitherMaskForAlphaBlendedShadows": 0
+    },
+    "virtual_texturing": 0,
+    "vulkan_pretransform": 0,
+    "shader_precision_model": 0,
+    "deferred_reflections": 1
+  },
+  "materials": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-blackbeach_assets_all_8be51f888d4a9b679b288243f863a9a0.bundle",
+      "member": "CAB-a25a9907dd1fcf3a4edc31454f92cc8a",
+      "path_id": 6402547302839160652,
+      "bytes": 26377210,
+      "sha256": "78eeccaa037ae101f7e9f41d99508fe009d4374716d6660b7f17e2d9395d98fb",
+      "body_sha256": "ba418948c31f4af321747711e285bd5d1673cf46bc7fcc776fd03b9886247912"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_assets_all_a16c1a11e509901e7476994993da244d.bundle",
+      "member": "CAB-2e26225c1f7ae095341b1dfda3d38b6e",
+      "path_id": 3130274879375513187,
+      "bytes": 912797,
+      "sha256": "63d592081320c7309fa047ccab449302ac44e4270b16520a604429267794c0a6",
+      "body_sha256": "0bde321a07e2cd61735f2269c97def63b35465435628c49c8417abb57f1dfb77"
+    }
+  ],
+  "scene": {
+    "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-dampcavesimple_scenes_all_11368146d1efb65ea8c53a97e324a48b.bundle",
+    "member": "CAB-58e9c8464402ead1558744bb02a66b63",
+    "bytes": 20447512,
+    "sha256": "13e30a27aede6400cd50074d931fb53f261bee6efa263fbabb51a3e360ec1949"
+  },
+  "outputs": [
+    {
+      "bundle": "dampcavesimple-spine-lab",
+      "member": "BuildPlayer-dampcavesimple.sharedAssets",
+      "path_id": 82
+    }
+  ]
+}

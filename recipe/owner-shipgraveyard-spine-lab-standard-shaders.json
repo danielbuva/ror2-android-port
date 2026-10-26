@@ -1,0 +1,70 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "source_type": {
+    "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_unitybuiltinshaders_244d4ed79dda70fa38b62dcf46d4ccd7.bundle",
+    "bytes": 1802189,
+    "sha256": "949b28d89f3db1c8da8362f5dd96cc27bae5b3f0d4f2a807fc89be692c494805",
+    "member": "CAB-3795e044f5be9199dfbb711bdc9d52a8",
+    "path_id": -8014961710185377972
+  },
+  "compiler_sdk": {
+    "MacOS/Unity": {
+      "bytes": 79453472,
+      "sha256": "906123118e45d56c6bcf20f3776ed2373417553042500714023daeb9e53058e8"
+    },
+    "Tools/UnityShaderCompiler": {
+      "bytes": 12603248,
+      "sha256": "4f4e5be21d27dd7541fa9385ea480b15816e70ddaa83b516df0ab60b819142b5"
+    },
+    "Resources/unity_builtin_extra": {
+      "bytes": 133069551,
+      "sha256": "db99888b83efb4ec35e6ce219de78c951fc37bc0129712579131360312cc4f8e"
+    }
+  },
+  "compiler_includes_sha256": "163fad0ca42bd98ea1628888dedd01d91fcbb9f6bda60a8120f9b453cc565144",
+  "settings": {
+    "color_space": 1,
+    "caching_preprocessor": true,
+    "tier0": {
+      "standardShaderQuality": 0,
+      "renderingPath": 3,
+      "hdrMode": 1,
+      "realtimeGICPUUsage": 25,
+      "useReflectionProbeBoxProjection": 0,
+      "useReflectionProbeBlending": 0,
+      "useHDR": 1,
+      "useDetailNormalMap": 0,
+      "useCascadedShadowMaps": 0,
+      "prefer32BitShadowMaps": 0,
+      "enableLPPV": 0,
+      "useDitherMaskForAlphaBlendedShadows": 0
+    },
+    "virtual_texturing": 0,
+    "vulkan_pretransform": 0,
+    "shader_precision_model": 0,
+    "deferred_reflections": 1
+  },
+  "materials": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc2-elites-elitebead_assets_all_b2f070bae5c126d1ccb9044a84dc11e5.bundle",
+      "member": "CAB-d88304431985fc02d3dd119dcd6fff63",
+      "path_id": 6402547302839160652,
+      "bytes": 211295,
+      "sha256": "711df05e68091e656f39fefc8a5fd7e4ed59c5d2aadcf0312f1f124796f392a0",
+      "body_sha256": "91c147e5875e2c3e3c7761291f79d3d63a4bb072b3f5c9e988089c126f3daabb"
+    }
+  ],
+  "scene": {
+    "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-shipgraveyard_scenes_all_e7ccff8125e5952dd0bdd1ba1b9bbef4.bundle",
+    "member": "CAB-962fccc5c2aa481cd884115a70dd5676",
+    "bytes": 15180019,
+    "sha256": "e8919bb2c73822ff6023fad2ed06f670097e49d3a1306fcaebf5b3b89db75f5b"
+  },
+  "outputs": [
+    {
+      "bundle": "shipgraveyard-spine-lab",
+      "member": "BuildPlayer-shipgraveyard.sharedAssets",
+      "path_id": 92
+    }
+  ]
+}
