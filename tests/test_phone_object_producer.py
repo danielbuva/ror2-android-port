@@ -1314,6 +1314,22 @@ class ObjectProducerTests(unittest.TestCase):
                     self.assertEqual(bodies[8], bytes(32))
                     self.assertEqual(records[0]["type"], null_type)
 
+    def test_scene_null_script_components_retain_individual_type_slots(self):
+        null_type = {**typ(114), "hash": bytes(16), "script_id": bytes(16)}
+        records = [
+            {"path_id": 12, "type": null_type, "body": bytes(32)},
+            {"path_id": 8, "type": typ(4), "body": b"FIRST"},
+            {"path_id": 9, "type": null_type, "body": bytes(32)},
+            {"path_id": 10, "type": typ(4), "body": b"SECOND"},
+            {"path_id": 11, "type": {**null_type, "script_type": 99}, "body": bytes(16) + struct.pack("<iq", 1, 42) + bytes(4)},
+        ]
+        layout, bodies = P.make_layout({"externals": ["CAB-scripts"]}, records, ["CAB-scene"])
+        self.assertEqual(layout["types"], [typ(4), null_type, {**null_type, "script_type": 0}, null_type])
+        self.assertEqual([(row["path_id"], row["type_id"]) for row in layout["objects"]], [(8, 0), (9, 1), (10, 0), (11, 2), (12, 3)])
+        self.assertEqual(layout["scripts"], [(1, 42)])
+        self.assertEqual(bodies, {row["path_id"]: row["body"] for row in records})
+        self.assertEqual(null_type["script_type"], -1)
+
     def test_script_table_and_type_indices_follow_produced_script_order(self):
         mono = {**typ(114), "script_id": bytes(16), "script_type": 99}
         body = bytes(16) + struct.pack("<iq", 0, 12) + b"PRESERVED"

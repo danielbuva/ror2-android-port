@@ -13,6 +13,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1191](PORTING_JOURNAL.md#j1191--integrated-preparation-timing-and-cleanup-race-repair) | 2026-10-26 | Integrated preparation timing and cleanup race repair | 2026-10-26. |
 | [J1190](PORTING_JOURNAL.md#j1190--complete-source-derived-fungal-scene) | 2026-10-26 | Complete source-derived Fungal scene | 2026-10-26. |
 | [J1189](PORTING_JOURNAL.md#j1189--reconstruct-eight-further-complete-scene-payloads) | 2026-10-26 | Reconstruct eight further complete scene payloads | 2026-10-26. |
+| [J1191](PORTING_JOURNAL.md#j1191--source-only-catalog-identity-and-loadingbasic-reconstruction) | 2026-10-26 | Source-only catalog identity and Loadingbasic reconstruction | 2026-10-26. |
 | [J1188](PORTING_JOURNAL.md#j1188--battery-health-admission-and-gameplay-safety-cutoff) | 2026-10-26 | Battery health admission and gameplay safety cutoff | 2026-10-26. |
 | [J1187](PORTING_JOURNAL.md#j1187--exact-ordinary-app-android-sdk-cohort-and-producer-battery-cutoff) | 2026-10-26 | Exact ordinary-app Android SDK cohort and producer battery cutoff | 2026-10-26. |
 | [J1186](PORTING_JOURNAL.md#j1186--apply-the-user-selected-gameplay-thermal-safety-limits) | 2026-10-26 | Apply the user-selected gameplay thermal safety limits | 2026-10-26. |

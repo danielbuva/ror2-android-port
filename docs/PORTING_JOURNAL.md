@@ -146,6 +146,21 @@ charging settings remain untouched. CPU/GPU > 95 C for >= 3 s and gap > 1 s rule
 Evidence: alpha worktree `work/coordination/alpha-battery-health/validation.json`.
 No APK/output generated or installed. Fresh stability/device qualification remains open.
 
+## J1191 — Source-only catalog identity and Loadingbasic reconstruction
+
+2026-10-26. Existing integration metadata owner accepts an explicit camera-root extension; current defaults stay intact.
+J850 selects no extension and only closure/mesh sources, following receipted public source commit `1780ea9545`.
+Fresh PC-source catalog analysis plus public importer declarations reproduces all 30,322 locations,
+84,016 keys and 7,458 roots in order against the receipt-linked final catalog's metadata projection.
+Evidence: `work/coordination/p1-payload-catalog-fresh-v1/metadata-done.json`; generated metadata SHA-256
+`ea85d7903fb23fa103d36c9b877966cdc65506a75f8468d862724d8361718a30`.
+Pinned ThunderKit copies desktop catalogs only; existing J714/J725 host reconstruction remains authoritative.
+Loadingbasic reproduces 304 objects, two members and its 71,264 B compressed bundle raw-exact;
+evidence: `work/coordination/p1-payload-loadingbasic-final-host-v1/qualification-done.json`; output SHA-256
+`e5989e63267128ec7784ea3ee1a4131181ea888b2ca43f42ad9c63c4c807ae8c`.
+Source-backed literal-null script slots preserve exact Soul/Mire type tables; complete bundles remain unverified.
+Readiness: `work/coordination/p1-payload-publish-20261026/readiness.json`; 599/705 available, 594 exact,
+two code comparisons, three drift-explained; 106 missing. Tests/Ruff/host preflight pass; final catalog/phone gates open.
 ## J1189 — Reconstruct eight further complete scene payloads
 
 2026-10-26. Existing source-only owners reproduce Splash, Habitat, Helminthroost,
