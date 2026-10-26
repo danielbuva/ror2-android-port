@@ -4041,3 +4041,32 @@ order. No shader body, program, copied source, private path or credential is
 included. Legitimate PC input and independently acquired SDK remain required;
 generated records and evidence stay ignored. The persisted 25,056 B record is
 host raw-exact against J850; full-scene and phone gates remain separate.
+## Meridian complete object selection (2026-10-26)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-meridian-whole-objects.json` | `bc6d4093b53ea0d345855e51360dd1983f43b35f947eb9ab491eb69555c60f9f` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: this profile
+contains source selectors, hashes, checked pointer relationships and authored
+import policies only. Lossless compaction preserves every decoded selection.
+No original body, curve, scalar, pixel, program, copied source, private path or
+credential is included. Legitimate PC files, SDK resources and receipt-pinned
+source-produced record packs remain required. Generated outputs and evidence
+stay ignored. Existing ownership and redistribution boundaries apply; phone
+production, installation and original scene behavior remain open.
+
+## Computational Exchange Standard selection (2026-10-26)
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-computationalexchange-whole-standard-shaders.json` | `74d83b24333b4d44ab832629953f3150fca8833088fcb9256993cbc72b401272` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: this profile
+contains original scene/material selectors, body hashes, pinned public SDK/tool
+identities and existing authored import settings only. Recursive original
+dependencies select Standard features; the existing SDK compiler supplies
+programs. No original body, program, copied source, private path or credential
+is included. Legitimate PC input and independently acquired SDK remain required;
+generated records and evidence stay ignored. The persisted 301,384 B record is
+host raw-exact to J850; complete-scene and phone gates remain separate.
