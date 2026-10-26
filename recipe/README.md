@@ -191,6 +191,9 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-24.
 | `owner-rootjungle-spine-standard-shaders.json` | Root spine Standard | Current original Material/Shader/scene selectors, SDK45 source/compiler pins and destination relationships. | Provenance/privacy/licensing audit below, 2026-10-25; no programs, hashes-as-input or target tables. | Existing `payload_shader_records.py`; bounded host record exact, phone open. |
 | `owner-goldshores-spine-standard-shaders.json` | Gold spine Standard | Current original Material/Shader/scene selectors, SDK45 source/compiler pins and destination relationships. | Provenance/privacy/licensing audit below, 2026-10-25; no programs, hashes-as-input or target tables. | Existing `payload_shader_records.py`; bounded host record exact, phone open. |
 | `owner-goldshores-standard-shaders.json` | Gold/Root whole and Gold source Standard | Current original Material/Shader/scene selectors, SDK45 source/compiler pins and destination relationships. | Provenance/privacy/licensing audit below, 2026-10-25; no programs, hashes-as-input or target tables. | Existing `payload_shader_records.py`; bounded host record exact, phone open. |
+| `owner-shipgraveyard-postprocess-shaders.json` | Shipgraveyard post-processing | Current original forms, resource field identities, pinned templates and SDK compiler context. | Audited below, 2026-10-25; no protected source/program/table. | Existing Shader pack owner; 24 host records exact, phone open. |
+| `owner-repurposedcrater-hidevertices-shaders.json` | Repurposed Crater HideVertices | Original Shader/form selector, public dummy-source template and SDK pins. | Audited below, 2026-10-25; no generated content. | Existing Shader pack owner; host record exact, phone open. |
+| `owner-testotherbrother-skybox-shaders.json` | TestOtherBrother Skybox | Original scene/material/Shader pointer chain and pinned SDK106 source/compiler. | Audited below, 2026-10-25; no target variants or program content. | Existing Shader pack owner; host record exact, phone open. |
 | `owner-wispgraveyard-source-objects.json` | Private Wispgraveyard source-scene variant | Original object/type selectors, checked source pointers and import policies, original curve/component relationships, current Sprite identities, SDK schema and qualified media profiles. | No body/tree/curve/geometry/pixel template; provenance/privacy/licensing audit below, 2026-10-25. | Existing `object_produce.py`; J1155 host exact, phone open. |
 | `owner-teleport-material-objects.json` | Private teleport-material bundle | Original material/type selectors, checked references, named dummy-shader keyword policy and container relationships. | No material/shader body, keyword literal, numeric override or target template; audit below, 2026-10-25. | Source-only `object_produce.py`; J1117 host qualification, phone gate open. |
 | `owner-death-effect-objects.json` | Private replay player-death-effect bundle | Rooted original graph/script selectors, checked pointer extents, preload/dependency identities and hashes. | No body, type-tree snapshot, scalar/curve override or target delta; audit below, 2026-10-25. | Existing original-input-only `object_produce.py`; J1115 host qualification, phone gate open. |
@@ -628,7 +631,7 @@ uses `prefabAssets` from a separate runtime probe config, not this work manifest
 | `integrated_moon.py` | R 363 (reused for both writes) | W 389, 419 |
 | `android/Assets/Editor/LabBuild.cs` | R 68 (presentation-only), 117 (current build); schema 218 | none |
 
-Implementation/verification outcome: [J550](../docs/PORTING_JOURNAL.md#j550--track-the-content-recipe-as-a-public-recipe).
+Implementation/verification outcome: [J550](../docs/history/journal-J1-J1177/PORTING_JOURNAL.md#j550--track-the-content-recipe-as-a-public-recipe).
 
 ## Config generation
 
@@ -3311,3 +3314,47 @@ source identity. The shared writer owns allocation/linkage, with no target
 header or captured metadata template. All source and pack providers are checked
 again at completion. Pattern scanning supplements this manual provenance,
 privacy and sensitive-content review; phone/runtime qualification is separate.
+
+## Root and PP scene object profiles (J1170, 2026-10-25)
+
+The six profiles below select current original object/type records, checked
+pointer relationships, source GUID relationships and existing named import
+policies. Their source-only producer is the existing `object_produce.py`;
+media and Shader bodies arrive through independently produced record packs.
+No new producer or runtime owner is added.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-rootjungle-objects.json` | `6e17c9e40ced968b73cb4d27956217b7b04bbb0293585e13f267ee3983d9402b` |
+| `owner-rootjungle-source-objects.json` | `6fecc35de3b3aac0ca7ee34af3542a803ed12cae2a409f40952f3553354e42e4` |
+| `owner-rootjungle-spine-objects.json` | `99ca43f8d6c2e61189338e0ebdef428df266615024233d3185fcf7c667a29c8d` |
+| `owner-mysteryspace-objects.json` | `c3441252ca1efb648ca73b59122c1b8fbdffcd6a58986826f904f77d7730e246` |
+| `owner-eclipseworld-objects.json` | `4c0aa1fd65112878256bcf3dc295825adaaeafcb86a5a4de84690a95204c77b7` |
+| `owner-helminthroost-source-objects.json` | `897151fdc9fc781e80b3fdec37aa7bd8554cbc976d23eb4af0aaf063fbfbdbe5` |
+
+| `owner-eclipseworld-postprocess.json` | `40110337a0dcbf92c7d1f96665dc73c37c0d357b2ead9fad5574090d4e46b68d` |
+| `owner-helminthroost-source-postprocess.json` | `b2ffee927b6d87cb2dd013f29e4868ace34ecaf92362b838a7b7dbb0fe8ba4a6` |
+| `owner-mysteryspace-postprocess.json` | `e8325b36e76478f734e4f243858c87d00afb1ee0bdbad4206f2b926ba94aea2a` |
+
+The three `owner-{mysteryspace,eclipseworld,helminthroost-source}-postprocess.json`
+profiles are byte-unchanged qualified peer selector recipes for the existing
+source Shader carrier. They pin SDK/public-tool inputs, authored build settings,
+original Shader identities and source-derived export paths/destinations; they
+contain no ShaderLab, template text, native program or serialized body.
+
+Manual provenance, privacy, licensing and sensitive-content audit: 2026-10-25.
+All nine recipes contain only selectors, pins, checked relationships and
+authored policies. Object profile compaction preserves every decoded value.
+No private identifiers, copied game source, original scalar/curve/pixel/body
+values or target type-tree templates are published. Current originals and
+explicitly acquired SDK/public resources remain required; no historical file
+is a reconstruction supplier. Generated content and raw evidence stay ignored.
+Existing ownership, license and redistribution boundaries remain unchanged.
+
+The Shipgraveyard post-processing, Repurposed Crater HideVertices and
+TestOtherBrother Skybox Shader profiles receive provenance, privacy, licensing
+and sensitive-content review on 2026-10-25. Only original selectors, hashes,
+source relationships, public-template/SDK pins and destination identities are
+tracked. No game/SDK source, program, target keyword table, private path or
+credential is included. All generated content stays ignored; these profiles
+grant no ownership or redistribution right. Phone execution remains open.

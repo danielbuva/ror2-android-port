@@ -49,7 +49,7 @@ interaction with the original teleporter. The host only taps Start at the report
 `hud.menuStartX`/`menuStartY` coordinates. This follows the ignored local
 `run-huntress-premoon-j504.py` runner and the J504 survivor-breadth runner under
 `work/experiments/whole-catalog/gameplay/`; neither sends a teleporter tap. J504's
-[journal entry](PORTING_JOURNAL.md#j504--broaden-original-survivor-execution-without-changing-the-apk)
+[journal entry](history/journal-J1-J1177/PORTING_JOURNAL.md#j504--broaden-original-survivor-execution-without-changing-the-apk)
 records the assisted multi-stage evidence. In the authored runtime,
 `IntegratedWorldStimulus` invokes `ObjectiveWorldStimulus`, which navigates and presses
 interact when the original selector targets the idle or charged teleporter.
@@ -88,7 +88,7 @@ The plain check and its acceptance criteria remain unchanged.
 
 ## Current baseline (2026-10-24)
 
-[J1068](PORTING_JOURNAL.md#j1068--resume-original-audio-for-bank-release-and-verify-healthy-quit)
+[J1068](history/journal-J1-J1177/PORTING_JOURNAL.md#j1068--resume-original-audio-for-bank-release-and-verify-healthy-quit)
 qualifies diagnostic R38 APK
 `ede957ee8faaa12106d7c36685625ed5459619452704a1c45517f5c65e6c2cba`, source
 `fad0247e`, through both unchanged standard modes and independent installed-byte,
@@ -101,7 +101,7 @@ Plain/fresh MainOutput windows and the final saved prefix contain nonzero
 samples; the stage window is silent. Full mix, event attribution and audibility
 remain open. All 266 payload hashes match R37, whose almost-black source-view
 failure remains unaccepted in
-[J1067](PORTING_JOURNAL.md#j1067--activate-source-camera-uber-and-skill-timed-mainoutput-together).
+[J1067](history/journal-J1-J1177/PORTING_JOURNAL.md#j1067--activate-source-camera-uber-and-skill-timed-mainoutput-together).
 See the [current snapshot](../PORTING_STATE.md) for installed/source facts.
 
 The accepted baseline below remains the rollback.
@@ -121,7 +121,7 @@ target updates/Siren execution, indicator rendering/teardown and special
 first-stage recovery remain open; the default checks do not qualify them. J801's observer and strict cleanup failures remain
 evidence on that player. J790's earlier native
 offhand activation and J795's bounded native Siren registration/cleanup remain
-evidence on their recorded APKs. [J898](PORTING_JOURNAL.md#j898--observe-siren-registration-and-five-ordered-navigation-pairs-without-a-boss-start)
+evidence on their recorded APKs. [J898](history/journal-J1-J1177/PORTING_JOURNAL.md#j898--observe-siren-registration-and-five-ordered-navigation-pairs-without-a-boss-start)
 records the later bounded fae79734 Siren observation; encounter execution remains open.
 
 The default checks keep native diagnostic flags off. Native first-stage defeat,

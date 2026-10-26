@@ -9,14 +9,14 @@ accepted-output reconstruction now works on Android without Unity Editor or game
 compilation.** A pinned delta/frame package plus verified owner PC and SDK inputs
 reproduces every file of the frozen target. This is a practical narrow replay
 architecture; independent PC-input-only conversion and a phone installation
-product remain open. [J1065](PORTING_JOURNAL.md#j1065--qualify-private-owner-apk-preparation-upgrade-and-unity-lifecycle)
+product remain open. [J1065](history/journal-J1-J1177/PORTING_JOURNAL.md#j1065--qualify-private-owner-apk-preparation-upgrade-and-unity-lifecycle)
 qualifies the private host-built/signed bootstrap candidate's device
 preparation, upgrade, Unity lifecycle and assisted standard controls.
 The package carries substantial game-derived
 output information and stays private. No new execution backend is needed.
 
 The complete host/Android result is recorded once in
-[J1042](PORTING_JOURNAL.md#j1042--reconstruct-the-complete-accepted-output-on-android).
+[J1042](history/journal-J1-J1177/PORTING_JOURNAL.md#j1042--reconstruct-the-complete-accepted-output-on-android).
 The open [receiver and its setup](../tools/phone-build/accepted-output/README.md)
 preserve the proven stream implementation. The earlier census and producer
 assessment below remain useful, but their missing-producer findings apply to
@@ -26,7 +26,7 @@ Keep Architecture C, Unity 2021.3.45f2, IL2CPP ARM64, the current renderer and
 original gameplay implementations. ADR-002's Route A is its owner-build delivery
 direction, not ADR-001's source-reconstruction Architecture A. The desktop
 owner-build fallback remains available; it is not selected as the final player
-experience. Experiment evidence is recorded once in [J1036](PORTING_JOURNAL.md#j1036--assess-fixed-target-reconstruction-of-the-accepted-android-build).
+experience. Experiment evidence is recorded once in [J1036](history/journal-J1-J1177/PORTING_JOURNAL.md#j1036--assess-fixed-target-reconstruction-of-the-accepted-android-build).
 
 ## What the accepted build actually contains
 
@@ -71,7 +71,7 @@ code to fresh native compilation, replacement in a fixed player and actual
 Android load/update checks. They retain desktop scene roots and base content;
 they are not a game build.
 
-[J1063](PORTING_JOURNAL.md#j1063--complete-the-source-input-host-native-owner-build) completes one public source-input host command through fresh managed
+[J1063](history/journal-J1-J1177/PORTING_JOURNAL.md#j1063--complete-the-source-input-host-native-owner-build) completes one public source-input host command through fresh managed
 production, stripping, IL2CPP conversion and native linking, without an Editor
 project or captured native graph. Explicit authorized SDK products remain inputs.
 The static loader contract passes; byte, performance and device equivalence
@@ -118,7 +118,7 @@ this is not a one-to-one bundle mapping. No complete raw object record matched
 within that scoped pair. Unchanged vertex, image, animation or other subranges
 were not exhaustively measured and may still be reusable.
 
-[J1050's complete decompressed-range census](PORTING_JOURNAL.md#j1050--measure-exact-data-reuse-across-every-pc-and-accepted-android-bundle)
+[J1050's complete decompressed-range census](history/journal-J1-J1177/PORTING_JOURNAL.md#j1050--measure-exact-data-reuse-across-every-pc-and-accepted-android-bundle)
 now establishes substantial reuse across all PC/accepted payload bundles. It
 supersedes the scoped raw-record comparison as the coverage assessment, while
 leaving that experiment's observations intact. Exact ranges are useful inputs,
@@ -126,7 +126,7 @@ not serialized-object producers; the remaining code/content/shader construction
 and public-input conversion gates stay open. Do not read chunk coverage as a
 completed-conversion percentage or a public-patch size/rights result.
 
-[J1070](PORTING_JOURNAL.md#j1070--produce-the-accepted-mesh-cohort-from-original-pc-bundles-on-android)
+[J1070](history/journal-J1-J1177/PORTING_JOURNAL.md#j1070--produce-the-accepted-mesh-cohort-from-original-pc-bundles-on-android)
 adds an independent source-only producer for 13,231 accepted mesh records,
 with two tangent/importer cases excluded. Its tracked recipe contains selectors,
 hashes and authored operations; no target geometry, byte deltas or target float
@@ -135,23 +135,23 @@ than assembled bundles, so it does not replace the replay packet or establish
 a whole-content conversion percentage. See the
 [producer setup](../tools/phone-build/accepted-output/README.md#produce-meshes-directly-from-original-pc-bundles).
 
-[J1075](PORTING_JOURNAL.md#j1075--produce-every-accepted-avatar-from-original-pc-bundles-on-android)
+[J1075](history/journal-J1-J1177/PORTING_JOURNAL.md#j1075--produce-every-accepted-avatar-from-original-pc-bundles-on-android)
 adds complete source-only Avatar production. Every byte is copied from original
 body ranges, with complete original table entries reordered where required.
 Its [producer setup](../tools/phone-build/accepted-output/README.md#produce-avatars-directly-from-original-pc-bundles)
 uses tracked layout/identity metadata rather than target bodies. This completes
 one object class; it does not complete bundles or the private-packet replacement.
 
-[J1079](PORTING_JOURNAL.md#j1079--complete-uncompressed-texture-production-from-pc-bundles-on-android)
+[J1079](history/journal-J1-J1177/PORTING_JOURNAL.md#j1079--complete-uncompressed-texture-production-from-pc-bundles-on-android)
 completes source-only production of all 399 uncompressed texture records,
 including the public-source JPEG tool built on Android. Its
 [setup](../tools/phone-build/accepted-output/README.md#produce-uncompressed-textures-directly-from-original-pc-bundles)
 needs original PC pixels and tracked metadata, not target image literals.
-[J1082](PORTING_JOURNAL.md#j1082--produce-the-complete-alpha8-texture-cohort-from-pc-bundles-on-android)
+[J1082](history/journal-J1-J1177/PORTING_JOURNAL.md#j1082--produce-the-complete-alpha8-texture-cohort-from-pc-bundles-on-android)
 adds the complete 4,326-record source Alpha8/single-mip cohort and public codec
 build on Android. Its [setup](../tools/phone-build/accepted-output/README.md#produce-alpha8-textures-directly-from-original-pc-bundles)
 uses canonical original sources plus metadata relationships.
-[J1088](PORTING_JOURNAL.md#j1088--produce-every-single-mip-etc1-texture-from-pc-bundles-on-android)
+[J1088](history/journal-J1-J1177/PORTING_JOURNAL.md#j1088--produce-every-single-mip-etc1-texture-from-pc-bundles-on-android)
 adds all 281 ETC1/single-mip records through the same source-only owner and
 shared public codec, with a complete 5,006-record phone regression.
 Other compressed formats/mips, complete bundle assembly and full replay-packet
@@ -182,35 +182,35 @@ a prior project. R2-R9 and the exporter are useful derivation knowledge, not a
 finished binary-content converter. Existing inherited assets and private analysis
 inputs also remain public-bootstrap debt in the desktop workflow.
 
-The [complete managed-input case (J1052)](PORTING_JOURNAL.md#j1052--trace-the-full-player-managed-closure-and-reproduce-its-raw-audio-api-input)
+The [complete managed-input case (J1052)](history/journal-J1-J1177/PORTING_JOURNAL.md#j1052--trace-the-full-player-managed-closure-and-reproduce-its-raw-audio-api-input)
 traces the real full-player closure and executes the existing raw-input producer
 without the Editor or modified project assemblies. It identifies concrete source,
 post-processing and linker-root dependencies rather than treating an Editor
 rebuild as inevitable. Its host result is not full-player or phone qualification;
 reuse these existing producers instead of starting a second raw audio pipeline.
 
-The [complete retained-package producer (J1053)](PORTING_JOURNAL.md#j1053--produce-all-four-retained-package-assemblies-without-the-editor)
+The [complete retained-package producer (J1053)](history/journal-J1-J1177/PORTING_JOURNAL.md#j1053--produce-all-four-retained-package-assemblies-without-the-editor)
 now compiles all four retained package assemblies and their required managed
 post-processor from explicit owner SDK/package inputs without the Editor.
 This closes their host production dependency; DLL bytes still differ from the
 capture, the declared managed projection is bounded, and Android execution,
 full-player/native integration and performance remain unqualified.
 
-The [complete source-audio input case (J1054)](PORTING_JOURNAL.md#j1054--reproduce-the-complete-source-bank-index-without-a-lab-project)
+The [complete source-audio input case (J1054)](history/journal-J1-J1177/PORTING_JOURNAL.md#j1054--reproduce-the-complete-source-bank-index-without-a-lab-project)
 reproduces the exact full bank index from legitimate PC files without a project,
 and reproduces Init bytes with the existing public transformation. The historical
 receipt is reproduced by actually executing its retained producer; its separate
 public-source audit remains open. No stage/request guard changes. These concrete
 input results do not complete the requested-audio assemblies or the game build.
 
-The [complete source prefab producer (J1055)](PORTING_JOURNAL.md#j1055--reconstruct-the-complete-source-audio-prefab-directly-from-pc-bundles)
+The [complete source prefab producer (J1055)](history/journal-J1-J1177/PORTING_JOURNAL.md#j1055--reconstruct-the-complete-source-audio-prefab-directly-from-pc-bundles)
 derives all bytes of the required WwiseGlobal prefab from four original bundles,
 existing script identity and one explicitly audited export-GUID binding. It
 executes neither Editor nor exporter and consumes no target asset. This resolves
 another whole source input without general import; Android execution and the
 remaining game/player/native/content producers are still open.
 
-The [complete requested-audio support case (J1056)](PORTING_JOURNAL.md#j1056--stage-and-compile-the-complete-requested-audio-support-closure-without-the-editor)
+The [complete requested-audio support case (J1056)](history/journal-J1-J1177/PORTING_JOURNAL.md#j1056--stage-and-compile-the-complete-requested-audio-support-closure-without-the-editor)
 now stages all 274 payload files to the exact existing receipt and compiles the
 observer/core/bootstrap through existing lower-level owners without a project
 or Editor. Strict request/stage generators accept the independent input chain;
@@ -218,7 +218,7 @@ the instrumented native library remains supplied licensed local state.
 Whole-player/native/device equivalence remains open, and existing project/runtime
 admissions are unchanged.
 
-The [complete gameplay source case (J1057)](PORTING_JOURNAL.md#j1057--compile-the-complete-gameplay-source-cohort-directly-from-owner-inputs)
+The [complete gameplay source case (J1057)](history/journal-J1-J1177/PORTING_JOURNAL.md#j1057--compile-the-complete-gameplay-source-cohort-directly-from-owner-inputs)
 produces all three exact visual maps from PC DLLs/catalog and compiles the full
 145-source current gameplay cohort with 243 independent references. The matching
 SDK compiler and fresh retained Burst processor run without a project or Editor;
@@ -226,7 +226,7 @@ all sixteen selected support types match the declared R27 target projection.
 Full assembly/native/gameplay equivalence and independent player roots remain
 open. Captured game DLLs are comparison oracles only.
 
-The [whole-player fixed-root case (J1058)](PORTING_JOURNAL.md#j1058--strip-and-convert-the-complete-player-with-fixed-target-root-configuration)
+The [whole-player fixed-root case (J1058)](history/journal-J1-J1177/PORTING_JOURNAL.md#j1058--strip-and-convert-the-complete-player-with-fixed-target-root-configuration)
 now runs the complete host chain: 332 independent DLL providers → 93 stripped
 DLLs → 691 generated C++/metadata files. It reuses supplied, explicitly labeled
 current target root/preservation configuration and generates the SDK-native table
@@ -251,7 +251,7 @@ production, Android execution and installation remain open.
 
 **Missing producers/qualification:** independent licensed native SDK product
 production/acquisition, the full target serialized content and shader producer,
-Burst and Android integration. [J1063](PORTING_JOURNAL.md#j1063--complete-the-source-input-host-native-owner-build) completes public source-input
+Burst and Android integration. [J1063](history/journal-J1-J1177/PORTING_JOURNAL.md#j1063--complete-the-source-input-host-native-owner-build) completes public source-input
 host game-code orchestration through the native library. Remaining missing
 implementations/qualifications do not prove the Editor is mathematically
 indispensable. A frozen destination removes general authoring and discovery
@@ -330,20 +330,20 @@ optimization, libraries and shaders. An alternate Clang 21 build is not the
 accepted Clang 9 build merely because both are IL2CPP. End-to-end device behavior
 and matched performance remain required before adopting a new producer.
 
-[J1084](PORTING_JOURNAL.md#j1084--run-whole-player-stripping-conversion-and-arm64-compilation-in-the-android-tool-host) qualifies the supplied-provider Android backend
+[J1084](history/journal-J1-J1177/PORTING_JOURNAL.md#j1084--run-whole-player-stripping-conversion-and-arm64-compilation-in-the-android-tool-host) qualifies the supplied-provider Android backend
 control. Its linker/converter match the host, but its separately corrected native
-link differs under Android Clang 21. [J1098](PORTING_JOURNAL.md#j1098--preserve-recorded-object-order-for-the-fixed-target-native-link) preserves the recorded native object order for the fixed
+link differs under Android Clang 21. [J1098](history/journal-J1-J1177/PORTING_JOURNAL.md#j1098--preserve-recorded-object-order-for-the-fixed-target-native-link) preserves the recorded native object order for the fixed
 target: host metadata and all 23 native executable/data sections match J850
 exactly, with build-ID/debug-link differences retained. The source-only phone
 native job, corrected phone linking and complete APK/device/performance
 acceptance remain open; the accepted target supplies no
 hidden output bytes.
 
-[J1094](PORTING_JOURNAL.md#j1094--qualify-exact-sdk-vulkan-shader-compilation-on-android) qualifies standalone exact-SDK
+[J1094](history/journal-J1-J1177/PORTING_JOURNAL.md#j1094--qualify-exact-sdk-vulkan-shader-compilation-on-android) qualifies standalone exact-SDK
 Vulkan tool execution with identical authored host/phone payloads, reflection and
 diagnostics. It does not qualify original shader recovery, complete variants,
 serialized shader records, ordinary app delivery or accepted-target appearance.
-[J1102](PORTING_JOURNAL.md#j1102--qualify-linked-vulkan-fragment-output-and-explicit-owner-apk-code-inputs)
+[J1102](history/journal-J1-J1177/PORTING_JOURNAL.md#j1102--qualify-linked-vulkan-fragment-output-and-explicit-owner-apk-code-inputs)
 confirms the linked payload contains both executable graphics stages; an authored
 fragment-only operation change preserves its vertex module and changes the
 fragment instructions, raw-exact across host/phone. The existing APK builder now
@@ -360,7 +360,7 @@ Host fixtures verify complete 16-entry selection without replay source files,
 including manifest consumption and drift refusal. Complete phone composition,
 installation, controls and matched performance remain open.
 
-[J1103](PORTING_JOURNAL.md#j1103--produce-fixed-target-burst-and-sign-owner-apks-in-the-android-tool-host)
+[J1103](history/journal-J1-J1177/PORTING_JOURNAL.md#j1103--produce-fixed-target-burst-and-sign-owner-apks-in-the-android-tool-host)
 closes the fixed-target ordinary-app Burst producer and authored-APK app-signing
 gates. All 20 Burst runtime sections and fresh linker roots match J850; raw
 build-ID/debug differences remain. The app retains a private owner key across
@@ -396,7 +396,7 @@ search nor proof that a small independently distributable patch exists.
 
 **Continue the narrow replay implementation before another large exporter:**
 use the reproducible packet producer and corrected resource-storage assembler;
-integrate [J1095 durable signing](PORTING_JOURNAL.md#j1095--retain-one-on-device-owner-key-across-separate-apk-signing-builds)
+integrate [J1095 durable signing](history/journal-J1-J1177/PORTING_JOURNAL.md#j1095--retain-one-on-device-owner-key-across-separate-apk-signing-builds)
 into the full-player path, connect an ordinary Android host to the
 approved launcher adapter, and qualify normal installation/update and performance
 on device. The initial phone-produced archive needs the corrected assembly step.
@@ -420,7 +420,7 @@ bytes exact. The guarded startup-affinity rerun completes with a 79.2 C peak and
 95.5 C failure remains recorded. Complete content composition, sustained thermal
 qualification and final installation remain open.
 
-[J1112](PORTING_JOURNAL.md#j1112--inventory-final-owner-apk-inputs-before-launcher-compilation) records the current owner APK `--check-request` action inventories the existing final
+[J1112](history/journal-J1-J1177/PORTING_JOURNAL.md#j1112--inventory-final-owner-apk-inputs-before-launcher-compilation) records the current owner APK `--check-request` action inventories the existing final
 `targets[].path` tree plus the complete 16-entry code/SDK selection before any
 launcher compilation. Missing files remain explicit; it never substitutes a
 replay file for an absent produced code output. Raw code differences remain
@@ -432,7 +432,7 @@ separately labelled full host replay-content validation passes composition,
 durable signing, signature verification and alignment. Source-derived content,
 corrected phone-native production and device installation remain open.
 
-[J1114](PORTING_JOURNAL.md#j1114--produce-both-generic-android-build-metadata-files)
+[J1114](history/journal-J1-J1177/PORTING_JOURNAL.md#j1114--produce-both-generic-android-build-metadata-files)
 extends the existing SDK producer to both generic Android `META-INF` metadata
 files without accepted-byte inputs. Fresh host production makes all 15 SDK
 entries raw-exact. The current explicit selection contains 18 code/SDK files;
@@ -440,7 +440,7 @@ the readiness report leaves 687 missing final content files and no code-file
 availability gaps. Ordinary-app production of the added metadata and corrected
 native output remain separate gates from host equality.
 
-[J1153](PORTING_JOURNAL.md#j1153--admit-reviewed-current-input-drift-without-historical-runtime-suppliers)
+[J1153](history/journal-J1-J1177/PORTING_JOURNAL.md#j1153--admit-reviewed-current-input-drift-without-historical-runtime-suppliers)
 adds explicit `drift-explained` readiness for current-install content. Three
 pinned private documents bind historical exact production, repeated current
 production by the same public producer, and a complete named input/output
@@ -451,13 +451,13 @@ evidence only. The [evidence contract](../tools/phone-build/owner-apk/README.md#
 still requires human review of source lineage and independent invocations.
 It does not qualify runtime behavior or permit replay filling missing inputs.
 
-[J1154](PORTING_JOURNAL.md#j1154--collect-the-paused-native-jobs-terminal-timeout-without-restarting-it)
+[J1154](history/journal-J1-J1177/PORTING_JOURNAL.md#j1154--collect-the-paused-native-jobs-terminal-timeout-without-restarting-it)
 collects the original phone native job's failed terminal report. Job 498 times
 out at the existing 3,600 s wall deadline; retained objects and receipts remain
 available for checked continuation. A complete phone-native library and matched
 game controls/performance remain open.
 
-[J1162](PORTING_JOURNAL.md#j1162--retain-the-native-measurement-transport-failure-and-refresh-source-readiness)
+[J1162](history/journal-J1-J1177/PORTING_JOURNAL.md#j1162--retain-the-native-measurement-transport-failure-and-refresh-source-readiness)
 updates current host readiness to 583 of 705 files: 578 raw-exact, two produced
 code outputs requiring separate comparisons and three drift-explained files.
 Seven APK files and 115 payload files remain missing; current-only assembly,
@@ -466,7 +466,12 @@ attempt stops on a host ADB stream SIGKILL during tool-host compilation, before
 any native timings. Its sender is unknown; cleanup verifies stopped tools,
 sleeping panels and lease release.
 
-[J1167](PORTING_JOURNAL.md#j1167--measure-representative-native-compilation-on-the-phone) completes the three representative ordinary-app native compiler timings.
+J1170 adds six source-derived scene bundles: current host readiness is
+593 of 705 files (588 raw-exact, two code comparison entries and three
+drift-explained); 112 remain missing (7 APK, 105 payload).
+Complete phone assembly and runtime qualification remain open.
+
+[J1167](history/journal-J1-J1177/PORTING_JOURNAL.md#j1167--measure-representative-native-compilation-on-the-phone) completes the three representative ordinary-app native compiler timings.
 They size the active-time budget for checked continuation from 498 retained
 objects; complete native production, final assembly and game qualification
 remain open.
@@ -475,19 +480,19 @@ J1168 records the first continuation failure before compilation: Android
 Python lacks `os.link`. A receipt-checked copy fallback passes host contracts;
 full phone native production and gameplay qualification remain open.
 
-[J1161](PORTING_JOURNAL.md#j1161--assemble-the-complete-player-script-registry-and-default-scene-shared-file)
+[J1161](history/journal-J1-J1177/PORTING_JOURNAL.md#j1161--assemble-the-complete-player-script-registry-and-default-scene-shared-file)
 adds complete source-derived script-registry and default-scene files through the
 existing player owner. Its 177-file host cohort has 175 raw-exact files and two
 current-input differences; complete host availability is 583 of 705 files.
-[J1169](PORTING_JOURNAL.md#j1169--bound-the-complete-source-only-player-registry-metadata-lifetime) closes the host metadata memory gate;
+[J1169](history/journal-J1-J1177/PORTING_JOURNAL.md#j1169--bound-the-complete-source-only-player-registry-metadata-lifetime) closes the host metadata memory gate;
 a fresh bounded phone replay remains open.
-[J1159](PORTING_JOURNAL.md#j1159--phone-player-assembly-refuses-an-omitted-original-shader-input)
+[J1159](history/journal-J1-J1177/PORTING_JOURNAL.md#j1159--phone-player-assembly-refuses-an-omitted-original-shader-input)
 records the separate phone replay's incomplete staging;
-[J1166](PORTING_JOURNAL.md#j1166--guarded-phone-player-assembly-stops-on-thermal-limit)
+[J1166](history/journal-J1-J1177/PORTING_JOURNAL.md#j1166--guarded-phone-player-assembly-stops-on-thermal-limit)
 records its repaired retry's thermal stop and verified cleanup. No complete
 phone comparison or installation is qualified.
 
-[J1171](PORTING_JOURNAL.md#j1171--identical-input-scene-exports-change-historical-yaml-identity-hashes)
+[J1171](history/journal-J1-J1177/PORTING_JOURNAL.md#j1171--identical-input-scene-exports-change-historical-yaml-identity-hashes)
 confirms exporter GUID entropy in identical-input scene YAML repeats. The
 WholeStageContexts full-digest gate remains open; semantic agreement and
 comparison-only GUID normalization do not qualify its final file.
