@@ -42,6 +42,16 @@ Two focused lifecycle/presence checks, Ruff and host preflight pass; doctor reta
 No device install/run: R58 remains last verified installed; strict three controls and measured loading heat remain open.
 Mandatory prune passes; revisit after authorized device admission under unchanged J1156 limits.
 
+## J1182 — Android producer affinity mask compatibility
+
+2026-10-26. Shared phone runner passes selected CPUs as a hexadecimal mask;
+Android Toybox on the assigned phone rejects the previous `-c` option before input admission.
+The existing tool-host mask contract supplies the compatible command form; worker and thermal policies stay fixed.
+Seven focused host tests, Ruff and host preflight pass; complete phone replay remains open.
+Evidence: `work/coordination/p1-player-phone-assembly-v1/android-taskset-mask-host.json`
+and `phone177-parent-terminal-v4.json` in that directory; independent device cleanup passed.
+Runner SHA-256: `15fdc82f66808db46cf9b25ba17251af12237a32728cc12aecf1391f2e2eb649`.
+No installation or game launch; accepted J850 APK and content readiness are unchanged.
 ## J1183 — Eight complete source-derived scene bundles
 
 2026-10-26. Eight object and eleven Shader profiles complete Lakes/Lakesnight/Sulfurpools spine,

@@ -184,8 +184,9 @@ def run(command, receipt, *, profile="nova", timeout=86400, sensor=read_zones, c
         for name in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "DOTNET_PROCESSOR_COUNT"):
             env[name] = "2"
         env["ROR2LAB_BUILD_PAUSE_CLOCK"] = str(pause_clock.resolve())
-        # taskset applies before interpreter/compiler startup; failure refuses.
-        child = subprocess.Popen(["/system/bin/taskset", "-c", ",".join(map(str, sorted(cpus))), *command], env=env, start_new_session=True)
+        # Android Toybox versions without -c still accept a hexadecimal CPU mask.
+        # Apply before interpreter/compiler startup; failure refuses.
+        child = subprocess.Popen(["/system/bin/taskset", format(sum(1 << cpu for cpu in cpus), "x"), *command], env=env, start_new_session=True)
         family = Family(child)
         while True:
             tick = clock()

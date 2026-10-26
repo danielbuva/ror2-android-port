@@ -69,7 +69,7 @@ class DutyCycleTests(unittest.TestCase):
             self.assertEqual(result["pause_seconds"], 0.25)
             self.assertEqual([row.args[0] for row in family.send.call_args_list], [signal.SIGSTOP, signal.SIGCONT, signal.SIGKILL])
             self.assertEqual(spawn.call_args.kwargs["env"]["OMP_NUM_THREADS"], "2")
-            self.assertEqual(spawn.call_args.args[0][:4], ["/system/bin/taskset", "-c", "0,1", "producer"])
+            self.assertEqual(spawn.call_args.args[0], ["/system/bin/taskset", "3", "producer"])
             self.assertEqual(json.loads(receipt.read_text()), result)
             self.assertEqual(json.loads(Path(str(receipt) + ".pause.json").read_text()), {"paused_seconds": 0.25, "paused_at": None})
             self.assertEqual(spawn.call_args.kwargs["env"]["ROR2LAB_BUILD_PAUSE_CLOCK"], str(Path(str(receipt) + ".pause.json").resolve()))
