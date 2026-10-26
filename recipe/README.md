@@ -3982,3 +3982,18 @@ or credential is included. Legitimate PC files, separately acquired SDK and
 receipt-pinned source-produced media/Shader packs remain required. Generated
 outputs and evidence stay ignored. Existing ownership and redistribution
 boundaries apply; phone production, installation and runtime behavior remain open.
+
+## Skymeadow source particle Shader selection (2026-10-26)
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-skymeadow-source-lab-particles-shaders.json` | `0f248eaf36b78b8025884d680e48946ea79d8a0a1fe30d452d69bde0050e90aa` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: this profile
+contains original source/material selectors, body hashes and pinned public SDK
+and tool identities only. No shader body, program, copied source, private path
+or credential is included. Legitimate PC input and independently acquired SDK
+remain required; generated records and evidence stay ignored. The persisted
+30,516 B record is host raw-exact against J850; phone production and runtime
+remain open.
+

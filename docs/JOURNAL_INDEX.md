@@ -12,6 +12,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | --- | --- | --- | --- |
 | [J1206](PORTING_JOURNAL.md#j1206--complete-source-derived-golemplains-bundle) | 2026-10-26 | Complete source-derived Golemplains bundle | 2026-10-26. |
 | [J1204](PORTING_JOURNAL.md#j1204--complete-artreview-bundle-and-sdk-resource-buffers) | 2026-10-26 | Complete ArtReview bundle and SDK resource buffers | 2026-10-26. |
+| [J1205](PORTING_JOURNAL.md#j1205--source-lab-particle-and-standard-shader-records) | 2026-10-26 | Source-lab particle and Standard Shader records | 2026-10-26. |
 | [J1202](PORTING_JOURNAL.md#j1202--complete-source-derived-dampcavesimple-bundle) | 2026-10-26 | Complete source-derived Dampcavesimple bundle | 2026-10-26. |
 | [J1199](PORTING_JOURNAL.md#j1199--complete-phone-rgba-production-and-app-texture-dispatch) | 2026-10-26 | Complete phone RGBA production and app texture dispatch | 2026-10-26. |
 | [J1201](PORTING_JOURNAL.md#j1201--complete-soul-mire-and-crystalworld-scene-bundles) | 2026-10-26 | Complete Soul, Mire and Crystalworld scene bundles | 2026-10-26. |
