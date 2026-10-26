@@ -1247,3 +1247,12 @@ contract consumed by `unity_write.py`; no private target tree or run folder
 is a production input. Exit ends the producer process and retains the terminal
 receipt and failed outputs. Host comparison does not qualify phone production,
 installation or original scene behavior.
+
+Five additional source scene profiles use `object_produce.py`: Logbook,
+Blackbeach2 source, Shipgraveyard source, TestOtherBrother and RepurposedCrater.
+Their `recipe/owner-*-objects.json` selections combine checked source records
+with independently produced media/Shader packs; Logbook post-processing uses
+`recipe/owner-logbook-postprocess.json`. All 94,099 records, ten serialized
+members and five compressed bundles are host-exact against J850. The existing
+target-tree interface exposes these as `payload/<bundle-name>`; phone production,
+assembly and runtime qualification remain open.
