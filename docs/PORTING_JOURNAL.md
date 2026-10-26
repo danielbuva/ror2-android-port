@@ -260,3 +260,19 @@ The retained union closes exactly four missing payload entries, other rows uncha
 Focused object/Shader contracts (81 tests), host preflight and public audit pass.
 Host-only; phone production, installation and original scene behavior remain open.
 APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1196 — Complete source-derived Ultima bundle
+
+2026-10-26. Existing object/Shader owners reproduce the complete Ultima bundle
+from legitimate PC input, acquired SDK resources and source-produced record packs.
+Guarded public CLI production persists before independent comparison:
+6,077 objects, both serialized members and the compressed bundle are raw-exact to J850.
+Output: 4,087,244 B, SHA-256
+`6f5076c1b328a020c7477e65e022794fdc4b667fa50e4db842eb00bca576ee1f`.
+Evidence: `work/coordination/p1-scenes-w/final-ultima-v2/` and
+`work/coordination/p1-scenes-w/publication-batch-v4/` (readiness union).
+The retained union adds one payload entry: 633/705 available, 628 raw-exact,
+two code comparisons and three drift-explained; 72 missing (7 APK, 65 payload).
+Audited compact object selectors reuse J1194 Shader packs; no target supplier.
+Host-only; phone production, installation and original scene behavior remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
