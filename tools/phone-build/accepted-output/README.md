@@ -1312,3 +1312,10 @@ and receipt-pinned media/Shader packs. Its 123,671 objects, two serialized
 members and complete compressed bundle are host-exact against J850. The
 existing target-tree interface exposes `payload/whole-scene-fungal`;
 phone production, installation and original scene behavior remain open.
+
+Soul, Mire and Crystalworld use `recipe/owner-{soul_perftest,mire,crystalworld}-objects.json`
+with the same object command and independently source-produced record packs.
+Host qualification matches all 319,607 objects, both members per scene and the
+three compressed bundles byte for byte against J850. The original null-script
+type slots remain distinct in Soul and Mire. Original files and pinned SDK
+resources remain required; phone execution and runtime behavior remain open.
