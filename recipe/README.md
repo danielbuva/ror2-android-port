@@ -3771,3 +3771,54 @@ or credential is included. Legitimate PC files, separately acquired SDK and
 receipt-pinned source-produced media/Shader packs remain required. Generated
 outputs and evidence stay ignored. Existing ownership and redistribution
 boundaries apply; phone production, installation and runtime behavior remain open.
+
+## Ultima source-derived Shader selections (2026-10-26)
+
+The existing Shader owner selects 24 post-processing records from original
+resource fields and Standard from recursively reached original materials.
+The original Colossus item renderer and acquired export identify the SDK
+default material; its explicit selector supplies pinned SDK features after
+original material/body/shader validation. Other original emissive materials
+retain their features. Source-only CLI output is persisted before comparison.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-ultima-standard-shaders.json` | `3aa00bbca4a256991344d8228e59280b2e6e4ee81b22b979edfb7c1f27d923cd` |
+| `owner-ultima-postprocess-shaders.json` | `d7a6ca82d474202320229d17d5e0d048d8476dc4d3f4de60b32f218de569be70` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain source selectors, hashes, source relationships and pinned
+SDK/public-tool identities only. No original bodies, programs, copied source,
+private paths or credentials are included. Legitimate PC input and separately
+acquired SDK remain required; generated records and evidence stay ignored.
+Phone production, installation and runtime qualification remain open.
+
+## Four complete source-scene selections (2026-10-26)
+
+Golemplains2, Ancientloft, Habitat and Blackbeach extend the existing object
+and Shader owners. Their source-only CLI output persists before independent
+comparison: all 60,493 objects, eight serialized members and four compressed
+bundles are raw-exact to J850. Lossless JSON compaction preserves every
+decoded object selection. The five Shader profiles are unchanged from their
+separately qualified source-produced packs.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-golemplains2-source-objects.json` | `31341ace31b15a939e2c05bd9cbe65da49fed2b5163b89e75e92faf35573c46b` |
+| `owner-golemplains2-source-lab-standard-shaders.json` | `fff8d88f8d13bbb9f544bbafac5c0209bc63ddd3755786a36748b535311e81f1` |
+| `owner-ancientloft-source-objects.json` | `30ee01b31ca59830c17d320b8df866b6e178bab502864ce5c2e95843354d0426` |
+| `owner-ancientloft-source-lab-standard-shaders.json` | `d7db4c8699040dc7e4698aceaf13bac1ade720002347266b0642a12277617934` |
+| `owner-ancientloft-source-lab-postprocess-shaders.json` | `eda9e4b0c2dccfdb6b0a15c6299deb4ec6c01a8f551d8f5b97254083ceaa7ec7` |
+| `owner-habitat-source-objects.json` | `dce1bd3a7e624c3e320f86ad3f29f3dddfd20f7954ef514909bd6aa77b6f2316` |
+| `owner-habitat-source-lab-postprocess-shaders.json` | `ef701e0931128d559ff0e6621d44ab56d5ca3d8def2b1ca22375dc8eff7f60df` |
+| `owner-blackbeach-source-objects.json` | `20ce8f218ca27c732f2d486791c623031f0af7234bdd5b15b93ac11077964232` |
+| `owner-blackbeach-source-lab-standard-shaders.json` | `ad46d5531f503361f8e9db24c2019d7979281ca22deb8052abb9d109190e06bb` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain original selectors, hashes, checked pointer relationships,
+SDK/public-tool pins and existing authored import policies only. No original
+body, curve, scalar payload, pixel, shader program, copied source, private path
+or credential is included. Legitimate PC files, separately acquired SDK and
+receipt-pinned source-produced media/Shader packs remain required. Generated
+outputs and evidence stay ignored. Existing ownership and redistribution
+boundaries apply; phone production, installation and runtime behavior remain open.
