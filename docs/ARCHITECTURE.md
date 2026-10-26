@@ -4413,6 +4413,14 @@ owner that supplies the prediction. This
 candidate follows J1105's route stall; device recovery is not yet qualified.
 
 
+The existing `NovaInputSession` captures the render interval before setup and
+uses Unity `OnDemandRendering.renderFrameInterval = 3` after initial landing,
+through integrated-world preparation. It restores the captured interval before
+the gameplay input loop and at the start of its iterator `finally`, including
+native-stage recovery. Timestamped loading/playing logs expose both transitions.
+Native simulation clocks, physics and the existing gameplay frame request remain
+unchanged. This is a loading-heat candidate; device qualification remains open.
+
 ## Destination-stage MainOutput observation
 
 Current `check-baseline --stage-exit --capture-in-destination` uses the existing
