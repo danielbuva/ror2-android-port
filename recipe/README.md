@@ -3857,6 +3857,24 @@ receipt-pinned source-produced media/Shader packs remain required. Generated
 outputs and evidence stay ignored. Existing ownership and redistribution
 boundaries apply; phone production, installation and runtime behavior remain open.
 
+## Habitatfall complete source-scene selections (2026-10-26)
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-habitatfall-source-objects.json` | `57dbaeb22a902e71d6178898b390ff0848bc6aa18ae6b9dae9b62396705b80e6` |
+| `owner-habitatfall-source-lab-postprocess-shaders.json` | `6de150e41fed20628b0590fa5b3a4353df3e6d69bad01e2b3ccfcb9ffd8d276b` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain original selectors, hashes, checked pointer relationships,
+SDK/public-tool pins and existing authored import policies only. Lossless JSON
+compaction preserves every decoded object selection; the Shader profile is
+unchanged from the separately qualified source-produced packs. No original
+body, curve, scalar payload, pixel, shader program, copied source, private path
+or credential is included. Legitimate PC files, separately acquired SDK and
+receipt-pinned source-produced media/Shader packs remain required. Generated
+outputs and evidence stay ignored. Existing ownership and redistribution
+boundaries apply; phone production, installation and runtime behavior remain open.
+
 ## Soul, Mire and Crystalworld Shader selections (2026-10-26)
 
 | Profile | SHA-256 |

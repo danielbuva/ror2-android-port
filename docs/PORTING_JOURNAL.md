@@ -293,6 +293,20 @@ Audited selectors reuse existing owners; 81 focused object/Shader tests pass.
 Host-only; phone production, installation and original scene behavior remain open.
 APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
 
+## J1200 — Complete source-derived Habitatfall bundle
+
+2026-10-26. Existing object/Shader owners reproduce the complete Habitatfall source
+bundle from legitimate PC input, acquired SDK resources and source-produced packs.
+Guarded public CLI production persists before independent comparison:
+13,895 objects, both serialized members and the compressed bundle are raw-exact to J850.
+Output: 6,750,293 B, SHA-256
+`0fb9f48c4c369208041464232eb4f71bde3155b65cd09375104c46f259bffa4b`.
+Evidence: `work/coordination/p1-scenes-ss/source-qualification-v4/`
+(`done.json`, `qualification-done.json`, `readiness-union/readiness.json`).
+Retained union closes one payload entry: 635/705 available, 630 raw-exact,
+two code comparisons and three drift-explained; 70 missing (7 APK, 63 payload).
+Audited selectors reuse existing owners; 81 focused object/Shader tests pass.
+Host-only; phone production, installation and original scene behavior remain open.
 ## J1198 — Source-derived Soul, Mire and Crystalworld Shader records
 
 2026-10-26. Five audited profiles extend the existing Shader record owner:
