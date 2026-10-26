@@ -687,6 +687,12 @@ HideVertices through public templates. Its Skybox context follows original scene
 RenderSettings and material Shader pointers, reads SDK106 and retains source
 material keywords through the shared SDK compiler. These contexts emit the same
 pack interface and use the existing compiler teardown.
+The Splash, Habitat, Helminth Roost, Artifactworld03, Itgoolake, Itgolemplains
+and Itmoon whole-scene profiles extend these same contexts. Original resource
+fields and export filename/GUID witnesses select post-processing templates;
+recursive scene material relationships select Standard, and Splash uses the
+existing RenderSettings skybox context. Setup, output packs and teardown remain
+with this owner; audited selectors are listed in `recipe/README.md`.
 This is host qualification of retained content;
 phone execution stays open.
 

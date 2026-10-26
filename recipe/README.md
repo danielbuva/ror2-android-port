@@ -3520,3 +3520,24 @@ output relationships only. No original body, program, copied shader source,
 private path or credential is included. Current legitimate PC input and the
 separately acquired SDK remain required. Generated records and raw evidence stay
 ignored. Full-bundle qualification is separate; phone/runtime gates remain open.
+
+
+## Itmoon Shader producers (2026-10-26)
+
+The existing record-pack owner consumes these two profiles for 24
+post-processing records and one Standard record. Original resource fields,
+export filename/GUID witnesses and recursive scene material relationships
+select the inputs. Guarded actual CLI production persisted before independent
+raw comparison; all 25 records match.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-itmoon-postprocess-shaders.json` | `e0e4168ad9cb21c90ca2f17a6b6e20eb65e915d1c604228f1fa0574e0aad8182` |
+| `owner-itmoon-standard-shaders.json` | `b55116099ac69aa181fb7478e1bba966608b626567da035dd14a52fc3925122e` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: only
+source selectors, hashes, public-tool/SDK pins and destination relationships
+are included. No game bodies, shader programs, copied source, private paths
+or credentials are included. Legitimate PC input and separately acquired SDK
+remain required; generated records stay ignored. Complete-scene, phone and
+runtime qualification remain separate.
