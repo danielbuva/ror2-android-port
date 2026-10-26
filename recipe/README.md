@@ -3562,3 +3562,21 @@ credential is included. Current legitimate PC files, SDK resources and checked
 source-produced record packs remain required. Generated outputs and evidence
 stay ignored. Existing redistribution and ownership boundaries apply; phone
 production and runtime qualification remain open.
+
+
+## Loadingbasic skybox Shader selection (2026-10-26)
+
+The existing SDK skybox record owner follows original RenderSettings to the
+Default-Skybox material and its built-in Shader pointer. Guarded actual CLI
+production persisted before independent comparison; the single record matches.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-loadingbasic-skybox-shaders.json` | `a6a45b569a9ff08e1f09ec2b2136729367b72c221387b95b5b3e6155c55d0235` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: this profile
+contains only original file/object selectors, source hashes, SDK/public-tool
+pins and output relationships. No original body, shader program, copied source,
+private path or credential is included. Legitimate PC files and the separately
+acquired SDK remain required. Generated records and evidence stay ignored;
+complete-bundle, phone and runtime qualification remain separate.
