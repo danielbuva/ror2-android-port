@@ -10,7 +10,18 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1209](PORTING_JOURNAL.md#j1209--admit-the-qualified-charactermaster-boolean-tail) | 2026-10-26 | Admit the qualified CharacterMaster Boolean tail | 2026-10-26. |
+| [J1208](PORTING_JOURNAL.md#j1208--r58-assisted-controls-and-skill-timed-mainoutput) | 2026-10-26 | R58 assisted controls and skill-timed MainOutput | 2026-10-26. |
+| [J1207](PORTING_JOURNAL.md#j1207--complete-source-derived-skymeadow-bundle) | 2026-10-26 | Complete source-derived Skymeadow bundle | 2026-10-26. |
+| [J1206](PORTING_JOURNAL.md#j1206--complete-source-derived-golemplains-bundle) | 2026-10-26 | Complete source-derived Golemplains bundle | 2026-10-26. |
+| [J1204](PORTING_JOURNAL.md#j1204--complete-artreview-bundle-and-sdk-resource-buffers) | 2026-10-26 | Complete ArtReview bundle and SDK resource buffers | 2026-10-26. |
+| [J1205](PORTING_JOURNAL.md#j1205--source-lab-particle-and-standard-shader-records) | 2026-10-26 | Source-lab particle and Standard Shader records | 2026-10-26. |
+| [J1202](PORTING_JOURNAL.md#j1202--complete-source-derived-dampcavesimple-bundle) | 2026-10-26 | Complete source-derived Dampcavesimple bundle | 2026-10-26. |
+| [J1199](PORTING_JOURNAL.md#j1199--complete-phone-rgba-production-and-app-texture-dispatch) | 2026-10-26 | Complete phone RGBA production and app texture dispatch | 2026-10-26. |
+| [J1201](PORTING_JOURNAL.md#j1201--complete-soul-mire-and-crystalworld-scene-bundles) | 2026-10-26 | Complete Soul, Mire and Crystalworld scene bundles | 2026-10-26. |
+| [J1203](PORTING_JOURNAL.md#j1203--original-fragment-standard-material-ordering) | 2026-10-26 | Original-fragment Standard material ordering | 2026-10-26. |
 | [J1198](PORTING_JOURNAL.md#j1198--source-derived-soul-mire-and-crystalworld-shader-records) | 2026-10-26 | Source-derived Soul, Mire and Crystalworld Shader records | 2026-10-26. |
+| [J1200](PORTING_JOURNAL.md#j1200--complete-source-derived-habitatfall-bundle) | 2026-10-26 | Complete source-derived Habitatfall bundle | 2026-10-26. |
 | [J1197](PORTING_JOURNAL.md#j1197--complete-source-derived-sulfurpools-bundle) | 2026-10-26 | Complete source-derived Sulfurpools bundle | 2026-10-26. |
 | [J1196](PORTING_JOURNAL.md#j1196--complete-source-derived-ultima-bundle) | 2026-10-26 | Complete source-derived Ultima bundle | 2026-10-26. |
 | [J1195](PORTING_JOURNAL.md#j1195--four-complete-source-scene-bundles) | 2026-10-26 | Four complete source scene bundles | 2026-10-26. |

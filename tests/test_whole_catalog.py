@@ -32,7 +32,7 @@ from whole_catalog import (
     source_mesh_subobjects,
 )
 import build
-from common import sha, write
+from common import read, sha, write
 
 
 class ProducedCatalogTests(unittest.TestCase):
@@ -259,6 +259,39 @@ class WholePayloadReuseTests(unittest.TestCase):
         (self.project / "Assets/Content.prefab").write_text("changed game content")
         with self.assertRaisesRegex(RuntimeError, "Content inputs changed"):
             build.validate_whole_payload_reuse(self.project)
+
+    def test_authored_bootstrap_migrates_old_receipt_without_changing_payload(self):
+        receipt = self.work / "whole-catalog-code-base.json"
+        frozen = read(receipt)
+        bootstrap = next(iter(build.WHOLE_APK_ASSEMBLIES))
+        frozen["allowed"].remove(bootstrap)
+        frozen["files"][bootstrap] = "previous authored bootstrap hash"
+        write(receipt, frozen)
+        (self.project / bootstrap).write_text("current authored owner contract")
+        build.validate_whole_payload_reuse(self.project)
+        updated = read(receipt)
+        self.assertEqual(updated["payload"], frozen["payload"])
+        self.assertNotIn(bootstrap, updated["files"])
+        self.assertIn(bootstrap, updated["allowed"])
+        (self.work / "generated-android-data/content").write_text("changed payload")
+        with self.assertRaisesRegex(RuntimeError, "payload identity changed"):
+            build.validate_whole_payload_reuse(self.project)
+
+    def test_bootstrap_importer_and_game_assemblies_remain_frozen(self):
+        for relative in (
+            "Assets/LabLoadingScene/Plugins/GameAudioOriginalBootstrap.dll.meta",
+            "Assets/LabLoadingScene/Plugins/RoR2.dll",
+            "Assets/LabLoadingScene/Plugins/AK.Wwise.Unity.API.dll",
+        ):
+            with self.subTest(relative=relative):
+                path = self.project / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("frozen")
+                build.freeze_whole_payload(self.project, {"payload": {}, "key": "fixture"})
+                path.write_text("changed")
+                with self.assertRaisesRegex(RuntimeError, "Content inputs changed"):
+                    build.validate_whole_payload_reuse(self.project)
+                path.unlink()
 
     def test_uncompressed_reuse_is_separate_and_requires_exact_content_and_payload(self):
         normal = self.work / "whole-catalog-code-base.json"

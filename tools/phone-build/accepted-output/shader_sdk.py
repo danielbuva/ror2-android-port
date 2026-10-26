@@ -157,7 +157,7 @@ def compile_body(connection, source, node, selections, tier_settings, sdk_image,
             reflects = [P.reflection(v["compilation"]["reflection"]) for v in all_variants]
             common = {
                 k: [r for r in reflects[0][k] if all(r in reflect[k] for reflect in reflects[1:])] if reflects else []
-                for k in ("constants", "buffers", "bindings", "textures")
+                for k in ("constants", "buffers", "bindings", "textures", "resource_buffers")
             }
             table = P.common_parameters(common)
             parameters = [intern(P.native_parameters(reflect, common)) for reflect in reflects]

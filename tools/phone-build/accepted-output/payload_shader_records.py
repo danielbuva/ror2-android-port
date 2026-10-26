@@ -291,7 +291,30 @@ def standard_material(selected, original, sdk_objects):
     return value
 
 
-def standard_selections(original_sdk, materials, fog_keyword="FOG_LINEAR"):
+def original_feature_order(carrier, subshader_index, pass_index, shader_pass, features, selected):
+    """Order retained material identities by original fragment records."""
+    form = carrier["m_ParsedForm"]
+    original_pass = form["m_SubShaders"][subshader_index]["m_Passes"][pass_index]
+
+    def identity(value):
+        tags = {name.upper(): text.upper() for name, text in value["m_State"]["m_Tags"]["tags"]}
+        return value["m_State"]["m_Name"], tags.get("LIGHTMODE")
+
+    if identity(original_pass) != identity(shader_pass):
+        raise ValueError("Standard original/SDK carrier pass differs")
+    wanted = {frozenset(keys) for keys in selected}
+    ranks = {}
+    for tier in original_pass["progFragment"]["m_PlayerSubPrograms"]:
+        for row in tier:
+            keys = frozenset(form["m_KeywordNames"][index] for index in row["m_KeywordIndices"]) & features
+            if keys in wanted and keys not in ranks:
+                ranks[keys] = len(ranks)
+    if set(ranks) != wanted:
+        raise ValueError("Standard original fragment records do not cover retained material identities")
+    return sorted(selected, key=lambda keys: ranks[frozenset(keys)])
+
+
+def standard_selections(original_sdk, materials, fog_keyword="FOG_LINEAR", *, carrier=None):
     """Return source runtime form and ordered per-tier Standard keyword rows."""
     source = deepcopy(original_sdk)
     if source["m_ParsedForm"]["m_Name"] != "Standard" or not materials:
@@ -316,9 +339,9 @@ def standard_selections(original_sdk, materials, fog_keyword="FOG_LINEAR"):
         "LIGHTMAP_SHADOW_MIXING",
     }
     selections = {}
-    for subshader in form["m_SubShaders"]:
+    for subshader_index, subshader in enumerate(form["m_SubShaders"]):
         runtime_passes = []
-        for shader_pass in subshader["m_Passes"]:
+        for pass_index, shader_pass in enumerate(subshader["m_Passes"]):
             tags = {name.upper(): value.upper() for name, value in shader_pass["m_State"]["m_Tags"]["tags"]}
             if tags.get("LIGHTMODE") == "META":
                 continue
@@ -333,6 +356,8 @@ def standard_selections(original_sdk, materials, fog_keyword="FOG_LINEAR"):
                     local.append(keys)
             if [] not in local:
                 raise ValueError("original default Standard material is absent")
+            if carrier is not None:
+                local = original_feature_order(carrier, subshader_index, pass_index, shader_pass, features & allowed, local)
             builtin = []
             for stage in range(2):
                 for keys in snippet["m_VariantsBuiltin" + str(stage)]:
@@ -364,6 +389,43 @@ def standard_selections(original_sdk, materials, fog_keyword="FOG_LINEAR"):
                         ordered.append(keys)
             selections[identity] = [deepcopy(ordered) for _ in range(3)]
         subshader["m_Passes"] = runtime_passes
+    return source, selections
+
+
+def particles_selections(original_sdk, materials, fog_keyword="FOG_LINEAR", *, carrier):
+    """Project original particle fragment order onto declared SDK runtime passes."""
+    source = deepcopy(original_sdk)
+    form, original = source["m_ParsedForm"], carrier["m_ParsedForm"]
+    if form["m_Name"] != "Particles/Standard Unlit" or original["m_Name"] != form["m_Name"] or not materials:
+        raise ValueError("bounded Particles source selection differs")
+    if original["m_PropInfo"] != form["m_PropInfo"]:
+        raise ValueError("Particles original/SDK properties differ")
+
+    def identity(shader_pass):
+        tags = {name.upper(): value.upper() for name, value in shader_pass["m_State"]["m_Tags"]["tags"]}
+        return shader_pass["m_Type"], shader_pass["m_State"]["m_Name"], tags.get("LIGHTMODE")
+
+    selections = {}
+    instancing = any(material["m_EnableInstancingVariants"] for material in materials)
+    for subshader, original_subshader in zip(form["m_SubShaders"], original["m_SubShaders"], strict=True):
+        runtime = []
+        for original_pass in original_subshader["m_Passes"]:
+            (shader_pass,) = [row for row in subshader["m_Passes"] if identity(row) == identity(original_pass)]
+            runtime.append(shader_pass)
+            if shader_pass["m_Type"] != 0:
+                continue
+            ordered = []
+            for tier in original_pass["progFragment"]["m_PlayerSubPrograms"]:
+                for row in tier:
+                    keys = sorted(original["m_KeywordNames"][index] for index in row["m_KeywordIndices"])
+                    if any(key.startswith("FOG_") and key != fog_keyword for key in keys):
+                        continue
+                    if "INSTANCING_ON" in keys and not instancing:
+                        continue
+                    if keys not in ordered:
+                        ordered.append(keys)
+            selections[shader_pass["m_State"]["gpuProgramID"]] = [deepcopy(ordered) for _ in range(3)]
+        subshader["m_Passes"] = runtime
     return source, selections
 
 
@@ -413,7 +475,7 @@ def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec
     obj = original_object(source, "Shader")
     original = obj.read_typetree()
     sdk_id = profile.get("sdk_shader", 46)
-    expected_name = {46: "Standard", 106: "Skybox/Procedural", 10626: "Hidden/TerrainEngine/Splatmap/Standard-BaseGen"}[sdk_id]
+    expected_name = {46: "Standard", 106: "Skybox/Procedural", 211: "Particles/Standard Unlit", 10626: "Hidden/TerrainEngine/Splatmap/Standard-BaseGen"}[sdk_id]
     if original["m_ParsedForm"]["m_Name"] != expected_name:
         raise ValueError("Standard native type source differs")
     materials = []
@@ -462,7 +524,8 @@ def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec
             source_runtime, set(materials[0].get("m_ValidKeywords", [])) | set(materials[0].get("m_ShaderKeywords", "").split())
         )
     else:
-        source_runtime, keyword_rows = standard_selections(sdk_source, materials, fog_keyword)
+        select = particles_selections if sdk_id == 211 else standard_selections
+        source_runtime, keyword_rows = select(sdk_source, materials, fog_keyword, carrier=original)
         # SDK source Standard depends on its own Legacy/VertexLit6. The original
         # PC dependency independently resolves that same named shader in its CAB.
         dependencies = original["m_Dependencies"]
@@ -524,7 +587,7 @@ def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec
                 common,
                 compress,
                 native_output,
-                native_order={identity: rows[0] for identity, rows in keyword_rows.items()} if sdk_id == 46 else None,
+                native_order={identity: rows[0] for identity, rows in keyword_rows.items()} if sdk_id in (46, 211) else None,
             )
         # One produced byte extent supplies the three independently named rows.
         (output / "objects.bin").write_bytes(body)

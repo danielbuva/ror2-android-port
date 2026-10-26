@@ -322,6 +322,14 @@ readbacks precede its terminal complete/failed receipt. Exit tears down the
 process and retains private packs. [Setup/lifecycle](../tools/phone-build/accepted-output/README.md#produce-avatars-directly-from-original-pc-bundles)
 requires no private target/discovery file. All 228 accepted records qualify in
 J1075; bundle assembly and game-build integration remain separate owners/gates.
+`owner-code/run_android.py::texture_job` exposes that source texture owner to
+the existing app worker, with explicit staged profile, private PC inputs,
+installed native codec pins and private SDK descriptor. It sets up a new private
+output or verified checkpoint resume; process exit tears down the producer while
+receipts persist. Existing input checks and thermal supervision remain owners of
+those contracts. The app route has host evidence only; the complete 1,333-record
+single-mip RGBA shell producer is device-qualified in J1199.
+
 `texture_produce.py` owns the current experimental Texture2D source producer. Audited `recipe/owner-uncompressed-textures.json` selects
 original body/pixel ranges and generic import/stream placement; standard BC1
 decoding, raw copying, fixed source-coordinate color extension and public
@@ -600,7 +608,9 @@ ShaderLab preprocessing, snippet/include identities and linked Vulkan emission;
 fresh reflection supplies native parameter/program records and common tables.
 Root specialization constants and structured instancing buffers retain their SDK
 scope, member layout and count contracts; ordinary CB counts exclude separate
-struct declarations and dotted members.
+struct declarations and dotted members. Compiler resource-buffer bindings retain
+the full SDK index and normalized array count in native kind-2 records and
+common tables; the existing segment reader consumes those records.
 The producer derives the pass key from source/capabilities/SDK inputs, constructs
 the parsed form from source and schema defaults, requests HC9 through the existing
 codec worker and emits complete files through `unity_write`. The SDK executable
@@ -1377,6 +1387,13 @@ synced content payload comes out. Everything game-derived stays under the ignore
 
 Steps 6–9a are the `./dev prototype --action whole-catalog-*` actions listed in
 [whole-catalog-integration.md](whole-catalog-integration.md#reusable-fixes-and-commands).
+`build.whole_player_inputs` treats the authored `GameAudioOriginalBootstrap.dll`
+as player code alongside staged runtime C#. The existing audio producer compiles
+and pins it before reuse validation; code-only builds retain its current owner
+contract instead of restoring an older DLL. Its importer metadata, the other
+plugin assemblies, banks and every frozen payload hash remain content inputs.
+The validator migrates older receipts for this exact DLL path only.
+
 `whole_catalog.integration_metadata` assembles integration locations, mesh aliases
 and root roles from regenerated metadata, closure and explicit destination paths.
 It has no filesystem or Editor state; `prepare_integration` still owns source
@@ -1448,6 +1465,11 @@ stay unchanged. During completed-session reclamation, `SessionResourceBoundary`
 releases already-destroyed HurtBox targets from returned bullet-hit pool entries,
 with no live world/network, after deferred destruction. It preserves live and
 checked-out hits and records its release count with existing registry cleanup.
+The same owner prunes deferred loadout callbacks targeting already-destroyed
+`CharacterSpawnCard` clones after world/network teardown. It writes the boxed
+original availability struct back, preserving its availability flag, live and
+unrelated callbacks and their order. Native menu captures attribute this owner;
+a changed repeated-session slope remains a device gate.
 The host memory summary keeps immediate post-collection and subsequent-menu
 managed slopes separate, including the observed final menu without extrapolation.
 The current `settings-write-interrupt-check` host diagnostic uses
@@ -3401,6 +3423,12 @@ owned by the existing navigator/motor. Reports contain no Unity references.
 `test_siren_navigation_observation.py` executes the production recorder with a
 tracked synthetic reader/contract fixture; the original native-target test
 includes the new report types without replacing its witness assertions.
+The existing `IntegratedWorldSession` navigator preserves a reachable,
+unfinished multi-waypoint native detour while its waypoints progress, even if
+straight-line distance to the objective stalls. Its `NavigationRecoveryPolicy`
+still admits terrain recovery for a blocked waypoint or an unreachable,
+finished or short path. `test_siren_gameplay_route_ownership.py` executes this
+policy against the retained Siren detour failure and recovery cases.
 The existing aim helper can issue at most 24 linecasts per active
 sample for the inspected original egg shape; inactive selection does no witness
 work. It yields to manual control and nearby hostile combat. Native encounter start, source/stage
@@ -4145,6 +4173,8 @@ checkout selects its clean committed HEAD in the clean primary checkout only
 while holding the primary Unity mutex. The ordinary primary `./dev` host
 preflight, source staging and selected ordinary build action run with that same
 inherited lock.
+Only full content builds require 100 GiB free before checkout; code-only builds
+retain the ordinary host preflight's storage check.
 The action copies no Unity project and performs no device operation. Its
 private receipt under `work/coordination/shared-builds/` records the selected
 commit and restoration outcome.
@@ -4635,6 +4665,24 @@ producer while local receipts persist. The existing member-aware writer exposes
 members and the compressed bundle are host raw-exact against J850. No runtime
 owner is added; phone production, installation and original scene behavior remain open.
 
+The existing Standard Shader record owner derives retained material feature order
+from the pinned original Shader's fragment keyword identities, independently of
+recursive closure encounter order. It validates original/SDK pass identity and
+feature coverage, then retains existing SDK global/builtin cycles and native
+ordering. Setup uses the already pinned original input; process-exit teardown
+and retained pack receipts are unchanged. J1203 qualifies Dampcavesimple's
+source Standard record; full-scene and phone behavior remain separate gates.
+
+Habitatfall complete source-scene selections extend the existing object/Shader
+owners through `recipe/owner-habitatfall-source-objects.json` and matching
+source-lab post-processing profile. Explicit current PC/SDK roots,
+pinned profiles/tools, receipt-pinned source-produced media/Shader packs and a
+separate output directory set up production; process exit tears down each
+producer while local receipts persist. The existing member-aware writer exposes
+`payload/habitatfall-source-lab`. All 13,895 persisted objects, both serialized
+members and the compressed bundle are host raw-exact against J850. No runtime
+owner is added; phone production, installation and original scene behavior remain open.
+
 Soul perftest, Mire and Crystalworld Shader selections extend the existing
 `payload_shader_records.py` owner. Original scene resource relationships
 select post-processing shaders; recursive original materials select Standard.
@@ -4642,3 +4690,64 @@ Explicit current PC/SDK roots, pinned profiles/tools and a separate output
 directory set up production; process exit tears down producers while local
 receipts persist. All 74 persisted records are host raw-exact to J850.
 Complete-scene readiness and phone qualification remain separate gates.
+
+Dampcavesimple complete source-scene selections extend the existing object/Shader
+owners through `recipe/owner-dampcavesimple-source-objects.json` and matching
+source-lab Standard/post-processing profiles. Explicit current PC/SDK roots,
+pinned profiles/tools, receipt-pinned source-produced media/Shader packs and a
+separate output directory set up production; process exit tears down each
+producer while local receipts persist. The existing member-aware writer exposes
+`payload/dampcavesimple-source-lab`. All 29,718 persisted objects, both serialized
+members and the compressed bundle are host raw-exact against J850. No runtime
+owner is added; phone production, installation and original scene behavior remain open.
+
+Complete Soul perftest, Mire and Crystalworld scene selections use the existing
+object/Shader owners through `recipe/owner-{soul_perftest,mire,crystalworld}-objects.json`.
+Explicit current PC/SDK roots, pinned profiles/tools, source-produced record packs
+and a separate output directory set up production; process exit tears down each
+producer while local receipts persist. The member-aware writer exposes
+`payload/whole-scene-{soul_perftest,mire,crystalworld}`. All 319,607 objects,
+six serialized members and three compressed bundles are host raw-exact to J850.
+Phone production, installation and original scene behavior remain open.
+
+ArtReview Shader selections use `recipe/owner-artreview-{postprocess,standard}-shaders.json`
+through the existing `payload_shader_records.py` owner. Explicit original/SDK/
+public-tool roots, pinned profiles and a new output directory set up production;
+process exit tears down producers while local receipts persist. Its 24
+post-processing records and one Standard record are host raw-exact against J850.
+The complete object selection uses `recipe/owner-artreview-whole-objects.json`
+through the existing object producer and member-aware writer. Its 965 objects,
+both serialized members and compressed bundle are host raw-exact to J850.
+Setup and teardown retain the same explicit roots, pinned source-produced packs,
+fresh output and process-exit contract. Phone production and runtime behavior
+remain open.
+
+Golemplains complete source-scene selections extend the existing object/Shader
+owners through `recipe/owner-golemplains-source-objects.json` and matching
+source-lab Standard/post-processing profiles. Explicit current PC/SDK roots,
+pinned profiles/tools, receipt-pinned source-produced media/Shader packs and a
+separate output directory set up production; process exit tears down each
+producer while local receipts persist. The existing member-aware writer exposes
+`payload/golemplains-source-lab`. All 10,828 persisted objects, both serialized
+members and the compressed bundle are host raw-exact against J850. No runtime
+owner is added; phone production, installation and original scene behavior remain open.
+
+Skymeadow source-lab particle selections extend the existing
+`payload_shader_records.py` owner through
+`recipe/owner-skymeadow-source-lab-particles-shaders.json`. Original fragment
+identities supply runtime pass selection and native order; SDK source supplies
+programs, including procedural instancing resource buffers. Explicit pinned
+PC/SDK/tool inputs and a separate output directory set up production; process
+exit tears down producers while receipts persist. The persisted Shader record
+is host raw-exact to J850. Full-scene host qualification is recorded below;
+phone qualification remains open.
+
+Skymeadow complete source-scene selections extend the existing object/Shader
+owners through `recipe/owner-skymeadow-source-objects.json` and the source-lab
+particle Shader profile. Explicit current PC/SDK roots, pinned profiles/tools,
+receipt-pinned source-produced media/Shader packs and a separate output directory
+set up production; process exit tears down producers while receipts persist.
+The existing member-aware writer exposes `payload/skymeadow-source-lab`.
+All 37,402 persisted objects, both serialized members and the compressed bundle
+are host raw-exact against J850. No runtime owner is added; phone production,
+installation and original scene behavior remain open.

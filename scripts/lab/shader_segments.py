@@ -133,7 +133,7 @@ def parameter_layout(data):
     for _ in range(count()):
         resource_name = name()
         kind, slot, extra = integer(), integer(), integer()
-        if kind not in [0, 1] or slot < 0 or (kind == 1 and extra != 0):
+        if kind not in [0, 1, 2] or slot < 0 or (kind == 1 and extra != 0):
             raise RuntimeError(f"Unsupported shader resource binding: {resource_name!r} ({kind},{slot},{extra}) at {cursor}")
         binding = {"name": resource_name, "kind": kind, "slot": slot, "extra": extra}
         if kind == 0:
