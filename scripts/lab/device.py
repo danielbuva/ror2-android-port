@@ -179,8 +179,8 @@ class Device:
         require_device_access()
         return run(self.base + list(args), check=check, timeout=timeout).stdout.decode(errors="replace").strip()
 
-    def sh(self, *args, check=True):
-        return self.cmd("shell", shlex.join(str(a) for a in args), check=check)
+    def sh(self, *args, check=True, timeout=120):
+        return self.cmd("shell", shlex.join(str(a) for a in args), check=check, timeout=timeout)
 
     def display(self, awake):
         if not self.settings.get("sleep_display_when_idle", False):
