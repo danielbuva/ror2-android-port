@@ -44461,3 +44461,16 @@ Guarded source production and separate J850 comparison pass every extent, 12 mem
 | `helminthroost-source-lab` | 7,724 | `edd72b3e122d82251baa298dad283335e9a498fc0c9460fc4cae7d2fa5af0dd1` |
 Evidence: assigned checkout `work/coordination/p1-anim/{root-final-source-host-v1,pp-scenes-final-host-v1,scene-publication-v1}/`; 87,615 records, independent GO for nine profiles; readiness union 593/705 (588 exact, two code, three drift), missing 7 APK/105 payload, zero invalid/mismatch.
 First failure: shader holes resolved; Foggyswamp wind/ancestor rotations and four Standard/Skybox scenes remain outside this slice. J1163 producer dependency landed in PR113 (`a18917f4`). Host-only: phone assembly/install/runtime/performance remain unqualified; revisit on source/SDK/policy drift or mismatch.
+
+## J1177 — R58 controls stop on sustained stage-load CPU heat
+
+2026-10-25. Hypothesis: J1156's duration policy permits R58's three strict controls.
+Unchanged normal R58 APK `4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`, source `55149b48`; no rebuild or install.
+Fresh installed-byte/profile/storage/idle admission passes before the plain control.
+Evidence: `work/coordination/main-port-r58/controls-duration-retry/` terminal, raw thermal trace and failure report; baseline `work/experiments/baseline/20261025T234940.894725Z`.
+First failure: J1156 guard stops CPU heat sustained above 80 C; peak 83.6 C.
+One CPU sensor remains 82.0/80.8/82.0/81.6/82.4 C across 1.215 s, with sample gaps below 0.35 s.
+Report phase `integrated-world-loot`, measured world 0 s; process exit follows guarded stop, not evidence of a spontaneous crash.
+No plain control accepted; stage-exit/destination controls never launch. R58 gameplay, destination capture and Siren remain open.
+Cleanup confirms process/selector absent, OLED asleep and lease released; mandatory prune passes, zero items, 52 kept.
+Revisit after measured stage-load heat reduction or restored authorized Main transport; unchanged replay is not the next experiment.
