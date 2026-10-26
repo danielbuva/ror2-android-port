@@ -379,6 +379,22 @@ class StandardRetentionTests(unittest.TestCase):
         self.assertEqual(selections[10][0], selections[10][1])
         self.assertEqual(selections[10][1], selections[10][2])
 
+    def test_explicit_sdk_mapping_removes_only_mapped_emission(self):
+        source, materials = self.fixture()
+        original = deepcopy(materials[1])
+        default = {**materials[0], "m_Shader": {"m_FileID": 0, "m_PathID": 46}}
+        sdk = {10303: SimpleNamespace(type=SimpleNamespace(name="Material"), read_typetree=lambda: default)}
+        mapped = S.standard_material({"sdk_material": 10303}, original, sdk)
+        _, rows = S.standard_selections(source, [materials[0], mapped])
+        self.assertFalse(any("_EMISSION" in keys for keys in rows[10][0]))
+        # Another material with identical keywords remains genuinely emissive.
+        genuine = S.standard_material({}, original, sdk)
+        _, rows = S.standard_selections(source, [mapped, genuine])
+        self.assertTrue(any("_EMISSION" in keys for keys in rows[10][0]))
+        self.assertEqual(original, materials[1])
+        with self.assertRaisesRegex(ValueError, "identity differs"):
+            S.standard_material({"sdk_material": 7}, original, sdk)
+
     def test_exp2_retains_only_the_enabled_source_fog_keyword(self):
         source, materials = self.fixture()
         snippet = source["m_CompileInfo"]["m_Snippets"][0][1]

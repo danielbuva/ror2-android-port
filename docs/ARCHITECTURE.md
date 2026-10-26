@@ -4578,6 +4578,13 @@ Title post-processing/Standard selections and SDK terrain base-generation
 passes, selected from original native properties and SDK pass declarations.
 No runtime owner is added; phone production and original scene behavior remain open.
 
+Title, Satellite and Artifactworld01 complete object selections also use these
+existing owners. Satellite Standard/post-processing and Artifactworld01
+post-processing profiles generate their Shader record packs from original
+resource/material relationships and pinned SDK/public tool inputs. Explicit
+roots, receipt-pinned packs, separate output and process-exit teardown retain
+the same contract; no runtime owner is added. Phone qualification remains open.
+
 Ten further complete spine scenes use the existing object and Shader owners:
 Golemplains2, Dampcavesimple, Blackbeach2, Foggyswamp, Ancientloft, Village,
 Shipgraveyard, Goolake, Golemplains and Blackbeach. Their
@@ -4590,3 +4597,21 @@ The existing member-aware layout/writer exposes `payload/<scene>-spine-lab`.
 All 140,029 persisted objects, 20 serialized members and ten compressed bundles
 are host raw-exact against J850. No owner or runtime state is added; phone
 production, installation and original scene behavior remain open.
+
+Ultima Shader selections extend the existing record owner with an explicit
+original-material to pinned SDK default-material selector. After original
+material, body and shader identity checks, the SDK supplies that material's
+feature configuration; other original materials retain their features.
+The existing explicit input roots, source/tool pins, fresh output directory
+and process-exit teardown apply. No runtime owner or target supplier is added.
+
+Four complete source scenes, Golemplains2, Ancientloft, Habitat and Blackbeach,
+also use the existing object/Shader owners. Their audited
+`recipe/owner-<scene>-source-objects.json` profiles consume receipt-pinned
+source-produced media and the matching source-lab Standard/post-processing
+Shader selections. Explicit current PC/SDK roots, pinned profiles/tools and
+a separate output directory set up production; process exit tears down each
+producer while receipts persist. The existing member-aware writer exposes
+`payload/<scene>-source-lab`. All 60,493 persisted objects, eight serialized
+members and four compressed bundles are host raw-exact against J850.
+Phone production, installation and original scene behavior remain open.
