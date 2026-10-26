@@ -4604,3 +4604,14 @@ material, body and shader identity checks, the SDK supplies that material's
 feature configuration; other original materials retain their features.
 The existing explicit input roots, source/tool pins, fresh output directory
 and process-exit teardown apply. No runtime owner or target supplier is added.
+
+Four complete source scenes, Golemplains2, Ancientloft, Habitat and Blackbeach,
+also use the existing object/Shader owners. Their audited
+`recipe/owner-<scene>-source-objects.json` profiles consume receipt-pinned
+source-produced media and the matching source-lab Standard/post-processing
+Shader selections. Explicit current PC/SDK roots, pinned profiles/tools and
+a separate output directory set up production; process exit tears down each
+producer while receipts persist. The existing member-aware writer exposes
+`payload/<scene>-source-lab`. All 60,493 persisted objects, eight serialized
+members and four compressed bundles are host raw-exact against J850.
+Phone production, installation and original scene behavior remain open.
