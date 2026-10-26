@@ -151,7 +151,10 @@ It does not establish full original stage behavior.
 source-scene variant. The owner suppresses only checked named original global
 GameObjects, following `source_scene_candidate.py`. Its two LineRenderer arrays
 derive from original BezierCurveLine operands and original local Transform
-hierarchies with identity rotations. Existing schema/field parsers locate their
+hierarchies with identity rotations. The same owner evaluates rotated local
+Transform/RectTransform hierarchies from original quaternion, scale and translation operands with
+per-operation float32 rounding; animated Bezier wind remains refused.
+Existing schema/field parsers locate their
 arrays; float32 arithmetic preserves all other original bytes before pointer
 relocation. Synthetic typed sources and full-bundle fixtures check these
 contracts. No additional runtime or experiment-switch case is introduced.
@@ -684,6 +687,12 @@ HideVertices through public templates. Its Skybox context follows original scene
 RenderSettings and material Shader pointers, reads SDK106 and retains source
 material keywords through the shared SDK compiler. These contexts emit the same
 pack interface and use the existing compiler teardown.
+The Splash, Habitat, Helminth Roost, Artifactworld03, Itgoolake, Itgolemplains
+and Itmoon whole-scene profiles extend these same contexts. Original resource
+fields and export filename/GUID witnesses select post-processing templates;
+recursive scene material relationships select Standard, and Splash uses the
+existing RenderSettings skybox context. Setup, output packs and teardown remain
+with this owner; audited selectors are listed in `recipe/README.md`.
 This is host qualification of retained content;
 phone execution stays open.
 
@@ -1373,6 +1382,27 @@ and root roles from regenerated metadata, closure and explicit destination paths
 It has no filesystem or Editor state; `prepare_integration` still owns source
 GUID/path resolution, staging and receipt writes. Source-only destination mapping
 and final bundle hashes/dependency closure remain separate qualification gates.
+The optional `camera_roots` argument preserves the current camera extension by
+default. Reconstructing J850 uses an empty extension and the source set from its
+receipted public producer: closure files plus recovered mesh sources. Fresh source
+analysis and recipe declarations reproduce all 30,322 J850 location identities,
+84,016 keys and 7,458 root roles. The optional `bundle_builds` declarations feed
+`integration_bundle_metadata`, which assigns explicit case-insensitive owners and
+ordinary/scene fallbacks without filesystem access. Callers supply all explicit
+`assetBundleName`/`assetNames` declarations, including presentation and geometry.
+The source-derived J850 projection matches all 30,322 location owners.
+`produced_bundle_metadata` reads real produced Android UnityFS/v22 files through
+the existing bounded reader, hashes them and extracts direct dependency names
+from AssetBundle/PreloadData records. CAB externals and the separate Windows
+Addressables bundle are not Android catalog edges.
+`integration_catalog` accepts these file facts plus the complete source-declared
+build-name set, including builds without location rows. It refuses missing nodes
+and undeclared references, preserves native cycles with self-exclusion, then emits
+compact UTF-8 with ordered bundle keys and transitive dependency arrays. Callers
+retain metadata member order and write the returned bytes; these helpers retain
+no session or Editor state. The 41-file source reader and 114-name source selection
+are host-qualified, but 76 active bundles remain unavailable in that cohort.
+Full catalog bytes and phone execution remain open.
 `composition_rebuild.integration_declarations` renders ordered R1/R2 importer
 identities from assembly recipes, explicit export metadata copies, additions and
 source-GUID-preserving transforms, then removes unselected native shader importers
@@ -1381,8 +1411,8 @@ Body-only texture/shader writes preserve their existing importer. Its pure
 `integration_mapping` replays those declarations, refuses duplicate GUID owners,
 resolves owned DLLs before omitting exporter DLLs and supplies WholeGame defaults
 for remaining source identities. Host contracts feed that mapping to
-`integration_metadata`; complete regenerated-input mapping comparison and final
-catalog production remain open. The later importer-identities stage is excluded.
+`integration_metadata`; the J850 metadata projection comparison passes, while final
+catalog production remains open. The later importer-identities stage is excluded.
 `whole-catalog-run` installs, syncs and launches, but it pushes `whole-catalog-selection.json`,
 which makes `PortSession.Start` exit: it checks catalog registration
 (`whole-catalog-result.json`), not gameplay. Gameplay is launched by a runner that pushes an
@@ -1464,6 +1494,13 @@ performance guarantee. Host admission estimates two 4 GiB snapshots plus
 records that budget and observed free bytes. The 100 GiB full-build floor does
 not apply to this capture-only queue. Host fixtures exercise admission and
 failure contracts.
+`--prior-settings-batch PATH` retains a successful settings-interruption stage
+from a prior batch with matching outer and nested APK digests, even when a later
+stage failed. Its source path, SHA-256 and stage remain separate from fresh
+results. Only settings interruption is skipped; heap capture and sustained play
+run fresh under all current admission, thermal and cleanup rules. This can reuse
+settings behaviour evidence across devices with identical APK bytes; it does not
+qualify settings on the newly selected device or inherit old thermal acceptance.
 The batch stops on the first failure; independent actual APK/idle/OLED readback
 and canonical pruning precede lease release and atomic done-file publication.
 Foreign selectors/pending transactions are preserved, and failed terminal
@@ -1471,12 +1508,16 @@ verification retains the lease for diagnosis. No installation is performed.
 The batch's independent temperature-zone observer targets 250 ms intervals and
 refuses a measured gap above 1 s. Runtime aborts if one CPU/GPU zone remains
 above 95 C for at least three seconds, with no gap above 1 s. A reading at or
-below 95 C resets that zone's continuity. Battery above 46 C aborts immediately.
+below 95 C resets that zone's continuity. Battery at or above 43 C aborts immediately.
 Skin and HAL status are metrics. Trace rows and stage receipts record sampled
 time above 80 C, CPU/GPU peak and phase; heat below the safety limits does not
 fail gameplay. Failed supervision also aborts without retry.
 Before each stage, readable CPU/GPU/battery/skin zones must cool to at most
-50 C with the OLED asleep. Other physical zones, including power-management,
+50 C with the OLED asleep, with battery back to at most 35 C before every
+stage. Battery status charging (2) at level >= 80%, or level > 85%, refuses
+admission without retry; charging settings remain user-owned. The observer
+reads battery temperature, level and status through bounded dumpsys calls and
+retains them in trace rows and stage receipts. Other physical zones, including power-management,
 charger and USB sensors, are recorded as excluded from admission only; they
 remain sampled in raw observations and all-zone peaks. The runtime thresholds
 apply to CPU/GPU and battery. Admission discovers zone types and readable paths
@@ -4505,6 +4546,14 @@ and member-aware layout feed `unity_write.py`; process exit tears down the
 producer while receipts and evidence remain local. No runtime state, Editor,
 new owner or private target-tree supplier is added.
 
+`IntegratedWorldSession.TracePreparation` emits a bounded log marker at each
+initial world-preparation seam, including the existing loot report write,
+asynchronous resource waits, equipment/displays and stage population. Markers
+contain monotonic process time and frame count so thermal traces can identify
+the interrupted operation. They add no retained state, report writes or yields;
+the existing report phase and resource teardown remain authoritative. A marker
+names the operation about to begin; the next marker bounds its elapsed time.
+
 J1183 adds eight scene object selections and eleven Shader selections to those
 same owners. Explicit original scene renderer roots select spine Shader variants;
 whole scenes retain their original recursive content closure. Setup, record-pack
@@ -4518,3 +4567,33 @@ selections to those owners. Existing Standard scene validation derives enabled f
 variants from original RenderSettings; setup and process teardown retain the same
 explicit roots, source/SDK pins, new output and retained receipt contract. No new
 runtime owner or target-data supplier is introduced.
+
+Nine further complete payloads use the existing object/writer owners:
+Splash, Habitat, Helminthroost, Itgolemplains, Artifactworld03, Itgoolake,
+Itmoon, Loadingbasic and Fungal. Their audited object profiles consume
+receipt-pinned source-produced media and Shader packs. Current PC/SDK roots,
+profile/tool pins and a separate output directory set up each process; exit
+tears down producers while local receipts persist. The same Shader owner adds
+Title post-processing/Standard selections and SDK terrain base-generation
+passes, selected from original native properties and SDK pass declarations.
+No runtime owner is added; phone production and original scene behavior remain open.
+
+Title, Satellite and Artifactworld01 complete object selections also use these
+existing owners. Satellite Standard/post-processing and Artifactworld01
+post-processing profiles generate their Shader record packs from original
+resource/material relationships and pinned SDK/public tool inputs. Explicit
+roots, receipt-pinned packs, separate output and process-exit teardown retain
+the same contract; no runtime owner is added. Phone qualification remains open.
+
+Ten further complete spine scenes use the existing object and Shader owners:
+Golemplains2, Dampcavesimple, Blackbeach2, Foggyswamp, Ancientloft, Village,
+Shipgraveyard, Goolake, Golemplains and Blackbeach. Their
+`recipe/owner-<scene>-spine-objects.json` profiles consume receipt-pinned
+source-produced media packs and the matching
+`recipe/owner-<scene>-spine-lab-standard-shaders.json` selection. Explicit
+current PC/SDK roots, pinned profile/tools and a separate output directory
+set up production; process exit tears down each producer while receipts persist.
+The existing member-aware layout/writer exposes `payload/<scene>-spine-lab`.
+All 140,029 persisted objects, 20 serialized members and ten compressed bundles
+are host raw-exact against J850. No owner or runtime state is added; phone
+production, installation and original scene behavior remain open.

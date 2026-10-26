@@ -140,7 +140,7 @@ def rebuild_bezier_line(body, sources, source_profiles, line_selector, behaviour
 
     Called before PPtr relocation. All operands are read from original records;
     source schemas locate the line array and declare the curve field contract.
-    The qualified source hierarchy has identity rotations and local links only.
+    Original local TRS operands are evaluated leaf-to-root with float32 rounding.
     """
     import math
 
@@ -217,13 +217,29 @@ def rebuild_bezier_line(body, sources, source_profiles, line_selector, behaviour
             if identity in seen:
                 raise ValueError("original transform parent cycle")
             seen.add(identity)
-            transform, _ = read([source, identity], 4)
+            transform, transform_type = source_record(sources, [source, identity])
+            if transform_type["class_id"] not in (4, 224):
+                raise ValueError("original Bezier record class drift (ancestor)")
             children = struct.unpack_from("<I", transform, 52)[0]
-            if len(transform) != 68 + children * 12 or struct.unpack_from("<4f", transform, 12) != (0.0, 0.0, 0.0, 1.0):
-                raise ValueError("Bezier requires original identity-rotation transform hierarchy")
+            if len(transform) != 68 + children * 12 + (40 if transform_type["class_id"] == 224 else 0):
+                raise ValueError("original Bezier transform layout drift")
             local = struct.unpack_from("<3f", transform, 28)
             scale = struct.unpack_from("<3f", transform, 40)
-            position = tuple(single(single(value * factor) + offset) for value, factor, offset in zip(position, scale, local))
+            x, y, z, w = (single(value) for value in struct.unpack_from("<4f", transform, 12))
+            x2, y2, z2 = single(x + x), single(y + y), single(z + z)
+            xx, yy, zz = single(x * x2), single(y * y2), single(z * z2)
+            xy, xz, yz = single(x * y2), single(x * z2), single(y * z2)
+            wx, wy, wz = single(w * x2), single(w * y2), single(w * z2)
+            rotation = (
+                (single(1 - single(yy + zz)), single(xy - wz), single(xz + wy)),
+                (single(xy + wz), single(1 - single(xx + zz)), single(yz - wx)),
+                (single(xz - wy), single(yz + wx), single(1 - single(xx + yy))),
+            )
+            scaled = tuple(single(value * factor) for value, factor in zip(position, scale))
+            position = tuple(
+                single(single(single(single(row[0] * scaled[0]) + single(row[1] * scaled[1])) + single(row[2] * scaled[2])) + offset)
+                for row, offset in zip(rotation, local)
+            )
             father_file, identity = struct.unpack_from("<iq", transform, 56 + children * 12)
             if father_file:
                 raise ValueError("original Bezier parent escapes source scene")
@@ -349,7 +365,7 @@ def make_layout(selected, records, scene_members=(), engine="2021.3.45f2"):
     """Canonical release order: script records first, then remaining path IDs."""
     local_scripts = sorted(row["path_id"] for row in records if row["type"]["class_id"] == 115)
     scripts = (
-        sorted({struct.unpack_from("<iq", row["body"], 16) for row in records if row["type"]["class_id"] == 114})
+        sorted({pointer for row in records if row["type"]["class_id"] == 114 if (pointer := struct.unpack_from("<iq", row["body"], 16)) != (0, 0)})
         if scene_members
         else [(0, identity) for identity in local_scripts]
     )
@@ -358,19 +374,27 @@ def make_layout(selected, records, scene_members=(), engine="2021.3.45f2"):
     offset = 0
     for row in physical:
         typ = copy.deepcopy(row["type"])
+        null_script = False
         if typ["class_id"] == 114:
             file_id, script = struct.unpack_from("<iq", row["body"], 16)
-            if (file_id and not scene_members) or (not file_id and script not in local_scripts) or not 0 <= file_id <= len(selected["externals"]):
-                raise ValueError("MonoBehaviour script absent from produced bundle")
-            typ["script_type"] = scripts.index((file_id, script))
-        if typ not in types:
+            if (file_id, script) == (0, 0):
+                if not scene_members or len(row["body"]) != 32 or typ["script_type"] != -1 or typ["hash"] != bytes(16) or typ["script_id"] != bytes(16):
+                    raise ValueError("original null-script MonoBehaviour metadata drift")
+                null_script = True
+            else:
+                if (file_id and not scene_members) or (not file_id and script not in local_scripts) or not 0 <= file_id <= len(selected["externals"]):
+                    raise ValueError("MonoBehaviour script absent from produced bundle")
+                typ["script_type"] = scripts.index((file_id, script))
+        # Unity retains an individual type slot for each missing-script component.
+        if null_script or typ not in types:
             types.append(typ)
+        type_id = len(types) - 1 if null_script else types.index(typ)
         offset = (offset + 7) // 8 * 8
         identity = row["path_id"]
         if identity in bodies:
             raise ValueError("duplicate produced object identity")
         bodies[identity] = row["body"]
-        objects.append({"path_id": identity, "offset": offset, "bytes": len(row["body"]), "type_id": types.index(typ)})
+        objects.append({"path_id": identity, "offset": offset, "bytes": len(row["body"]), "type_id": type_id})
         offset += len(row["body"])
     # Unity's native resources live outside the AssetBundles.
     native = {"Resources/unity_builtin_extra": 0x0F, "Library/unity default resources": 0x0E}
@@ -465,7 +489,7 @@ def source_record(sources, selector):
 
 
 def check_preload_dependencies(sources, source_profiles, dependencies):
-    """Admit original scene preload GameObjects and identity-preserving builtins."""
+    """Admit original preload GameObjects, typed Rigidbody owners and builtins."""
     for dependency in dependencies:
         preload, preload_type = source_record(sources, dependency["preload_source"])
         if preload_type["class_id"] != 150 or hashlib.sha256(preload).hexdigest() != dependency["preload_sha256"]:
@@ -489,7 +513,24 @@ def check_preload_dependencies(sources, source_profiles, dependencies):
         body, typ = source_record(sources, dependency["source"])
         if typ["class_id"] != 1 or hashlib.sha256(body).hexdigest() != dependency["source_sha256"]:
             raise ValueError("original preload GameObject drift")
-        if pointers.count(pointer) != 1 or path_id != dependency["source"][1] or member != source_profiles[dependency["source"][0]]["member"]:
+        selector = dependency["source"]
+        if "rigidbody" in dependency:
+            witness = dependency["rigidbody"]
+            rigidbody, rigidbody_type = source_record(sources, witness["source"])
+            if rigidbody_type["class_id"] != 54 or len(rigidbody) != 36 or hashlib.sha256(rigidbody).hexdigest() != witness["sha256"]:
+                raise ValueError("original preload Rigidbody drift")
+            if witness["source"][0] != selector[0] or struct.unpack_from("<iq", rigidbody) != (0, selector[1]):
+                raise ValueError("original preload Rigidbody GameObject drift")
+            count = struct.unpack_from("<I", body)[0]
+            if 4 + count * 12 > len(body):
+                raise ValueError("truncated original preload GameObject components")
+            components = [struct.unpack_from("<iq", body, 4 + i * 12) for i in range(count)]
+            index = witness["component_index"]
+            component = (0, witness["source"][1])
+            if type(index) is not int or not 0 <= index < count or components[index] != component or components.count(component) != 1:
+                raise ValueError("original preload Rigidbody component membership drift")
+            selector = witness["source"]
+        if pointers.count(pointer) != 1 or path_id != selector[1] or member != source_profiles[selector[0]]["member"]:
             raise ValueError("original preload GameObject relationship drift")
 
 

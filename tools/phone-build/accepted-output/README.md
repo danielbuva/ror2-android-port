@@ -1257,6 +1257,17 @@ members and five compressed bundles are host-exact against J850. The existing
 target-tree interface exposes these as `payload/<bundle-name>`; phone production,
 assembly and runtime qualification remain open.
 
+Eight further scene selections use the same object command:
+`owner-lakes-spine-objects.json`, `owner-lakesnight-spine-objects.json`,
+`owner-sulfurpools-spine-objects.json`, `owner-satellitescene-objects.json`,
+`owner-limbo-objects.json`, `owner-ironalluvium-objects.json`,
+`owner-ironalluvium2-objects.json` and `owner-lobby-objects.json` under `recipe/`.
+Supply their independently produced media/Shader packs through the existing
+receipt-pinned `--record-pack` interface. These profiles expose 135,541 records,
+16 serialized members and eight compressed bundles, all host-exact against
+J850, as `payload/<bundle-name>`. They add no producer owner or runtime state;
+phone production, installation and scene behavior remain open.
+
 ### Shared on-device producer thermal runner
 
 `phone_runner.py --receipt NEW.json -- COMMAND...` is the current experimental
@@ -1315,3 +1326,36 @@ member and compressed bundle is host-exact against J850. Setup remains explicit
 PC/SDK roots and a separate new output directory; process exit tears down the
 producer while local receipts persist. Phone production and original scene
 behavior remain open.
+Fungal uses `recipe/owner-fungal-objects.json` with the existing object command
+and receipt-pinned media/Shader packs. Its 123,671 objects, two serialized
+members and complete compressed bundle are host-exact against J850. The
+existing target-tree interface exposes `payload/whole-scene-fungal`;
+phone production, installation and original scene behavior remain open.
+
+Loadingbasic uses `recipe/owner-loadingbasic-objects.json` and its pinned
+Skybox pack through the existing object command. Its 304 records, two members
+and compressed bundle are host-exact against J850. The Shader record command
+also accepts `owner-title-{postprocess,standard,terrain}-shaders.json`; the terrain
+selection retains SDK-declared passes without material keyword variants.
+Explicit original/SDK/tool roots and a new output directory retain the existing
+setup/teardown contract. Complete Title assembly is host-qualified below; phone/runtime gates remain open.
+
+Title, Satellite and Artifactworld01 accept `owner-{title,satellitescene,artifactworld01}-whole-objects.json`
+through the existing object command and pinned record packs. Satellite accepts
+`owner-satellitescene-{postprocess,standard}-shaders.json`; Artifactworld01 accepts
+`owner-artifactworld01-postprocess-shaders.json` through the existing Shader command.
+All three complete outputs are host-exact against J850; phone/runtime gates remain open.
+
+
+Ten further complete spine scenes use the existing object and Shader owners:
+Golemplains2, Dampcavesimple, Blackbeach2, Foggyswamp, Ancientloft, Village,
+Shipgraveyard, Goolake, Golemplains and Blackbeach. Their
+`recipe/owner-<scene>-spine-objects.json` profiles consume receipt-pinned
+source-produced media packs and the matching
+`recipe/owner-<scene>-spine-lab-standard-shaders.json` selection. Explicit
+current PC/SDK roots, pinned profile/tools and a separate output directory
+set up production; process exit tears down each producer while receipts persist.
+The existing member-aware layout/writer exposes `payload/<scene>-spine-lab`.
+All 140,029 persisted objects, 20 serialized members and ten compressed bundles
+are host raw-exact against J850. No owner or runtime state is added; phone
+production, installation and original scene behavior remain open.

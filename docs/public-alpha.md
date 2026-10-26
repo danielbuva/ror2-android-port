@@ -110,9 +110,9 @@ Decision preparation: [J829](history/journal-J1-J1177/PORTING_JOURNAL.md#j829--r
       original-shader recovery and app integration remain open. J1157 qualifies
       all 414 APK Shader48 objects through source-only host
       production: 369 complete files plus two shared records. The combined
-      source tree has 606 of 705 entries available (601 raw-exact, two code
-      comparison entries and three separately drift-explained); 99 remain
-      missing (J1183: 7 APK, 92 payload). Host shared mixed-file assembly is qualified; phone serialization remains open.
+      source tree has 626 of 705 entries available (621 raw-exact, two code
+      comparison entries and three separately drift-explained); 79 remain
+      missing (J1192: 7 APK, 72 payload). Host shared mixed-file assembly is qualified; phone serialization remains open.
       [J1184](PORTING_JOURNAL.md#j1184--isolated-ambient-observation-fixture) adds host-qualified ambient observation tooling;
       the live bake, target equality and source-only sky production remain open.
       [J1102](history/journal-J1-J1177/PORTING_JOURNAL.md#j1102--qualify-linked-vulkan-fragment-output-and-explicit-owner-apk-code-inputs)
