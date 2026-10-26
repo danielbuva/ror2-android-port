@@ -278,7 +278,7 @@ def validate_standard_scene(fog, maps, renderers):
 def standard_selections(original_sdk, materials, fog_keyword="FOG_LINEAR"):
     """Return source runtime form and ordered per-tier Standard keyword rows."""
     source = deepcopy(original_sdk)
-    if source["m_ParsedForm"]["m_Name"] != "Standard" or len(materials) not in (1, 2, 3):
+    if source["m_ParsedForm"]["m_Name"] != "Standard" or not materials:
         raise ValueError("bounded Standard source selection differs")
     form = source["m_ParsedForm"]
     snippets = dict(source["m_CompileInfo"]["m_Snippets"])
@@ -413,6 +413,7 @@ def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec
     )
     sdk_pin = profile["compiler_sdk"]["Resources/unity_builtin_extra"]["sha256"]
     sdk_source = SDK.sdk_source(sdk, sdk_id, sdk_pin)
+    dependency_relocations = []
     if sdk_id == 106:
         selected = profile["materials"][0]
         pointer = fog[0]["m_SkyboxMaterial"]
@@ -443,6 +444,16 @@ def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec
             raise ValueError("Standard SDK fallback relationship differs")
         # All three selected scene members put Resources/unity_builtin_extra first.
         source_runtime["m_Dependencies"] = [{"m_FileID": 1, "m_PathID": 6}]
+        dependency_relocations.append(
+            {
+                "source": {
+                    "member": fallback.assets_file.name,
+                    "path_id": fallback.path_id,
+                    "body_sha256": hashlib.sha256(fallback.get_raw_data()).hexdigest(),
+                },
+                "to": [1, 6],
+            }
+        )
     tiers = [deepcopy(profile["settings"]) for _ in range(3)]
     for tier, quality in zip(tiers, (0, 1, 1)):
         tier["tier0"]["standardShaderQuality"] = quality
@@ -493,6 +504,8 @@ def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec
             identities.add(identity)
             rows.append({key: selected[key] for key in ("bundle", "member", "path_id")})
             rows[-1].update(offset=0, bytes=len(body), sha256=hashlib.sha256(body).hexdigest())
+            if dependency_relocations:
+                rows[-1]["dependencies"] = dependency_relocations
         (output / "index.jsonl").write_text("".join(json.dumps(row) + "\n" for row in rows))
         for path, pin in pins:
             P.checked(path, pin)

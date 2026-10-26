@@ -300,13 +300,14 @@ def asset_bundle(selected, identities):
     return stream.getvalue()
 
 
-def preload_data(bundle, selected, members):
+def preload_data(bundle, selected, members, packed=None):
     """Collect scene dependencies from checked relocated external PPtrs."""
     references = set()
     names = {member["name"] for member in members}
     for member in members:
         for row in member["objects"]:
-            for reference in row.get("references", []):
+            dependencies = packed.get((member["name"], row["path_id"]), (None, {}))[1].get("dependencies", []) if packed else []
+            for reference in [*row.get("references", []), *dependencies]:
                 file_id, path_id = reference["to"]
                 if not file_id or not path_id:
                     continue
@@ -319,6 +320,8 @@ def preload_data(bundle, selected, members):
         file_id, path_id = dependency["to"]
         if not 1 <= file_id <= len(selected["externals"]) or not path_id:
             raise ValueError("original preload dependency has an absent destination")
+        if "source" not in dependency and selected["externals"][file_id - 1].rsplit("/", 1)[-1] != "unity default resources":
+            raise ValueError("original preload builtin destination drift")
         references.add((file_id, path_id))
     stream = io.BytesIO()
     aligned_string(stream, "")
@@ -462,12 +465,9 @@ def source_record(sources, selector):
 
 
 def check_preload_dependencies(sources, source_profiles, dependencies):
-    """Admit mapped GameObjects explicitly retained by the original scene preload."""
+    """Admit original scene preload GameObjects and identity-preserving builtins."""
     for dependency in dependencies:
-        body, typ = source_record(sources, dependency["source"])
         preload, preload_type = source_record(sources, dependency["preload_source"])
-        if typ["class_id"] != 1 or hashlib.sha256(body).hexdigest() != dependency["source_sha256"]:
-            raise ValueError("original preload GameObject drift")
         if preload_type["class_id"] != 150 or hashlib.sha256(preload).hexdigest() != dependency["preload_sha256"]:
             raise ValueError("original scene preload drift")
         stream = io.BytesIO(preload)
@@ -482,6 +482,13 @@ def check_preload_dependencies(sources, source_profiles, dependencies):
         if not 0 <= file_id <= len(metadata["externals"]):
             raise ValueError("original preload external file drift")
         member = metadata["externals"][file_id - 1]["path"].rsplit("/", 1)[-1] if file_id else source_profiles[dependency["preload_source"][0]]["member"]
+        if "source" not in dependency:
+            if not file_id or member != "unity default resources" or pointers.count(pointer) != 1 or not path_id or dependency["to"][1] != path_id:
+                raise ValueError("original preload builtin relationship drift")
+            continue
+        body, typ = source_record(sources, dependency["source"])
+        if typ["class_id"] != 1 or hashlib.sha256(body).hexdigest() != dependency["source_sha256"]:
+            raise ValueError("original preload GameObject drift")
         if pointers.count(pointer) != 1 or path_id != dependency["source"][1] or member != source_profiles[dependency["source"][0]]["member"]:
             raise ValueError("original preload GameObject relationship drift")
 
@@ -773,6 +780,30 @@ def plugin_import_order(body):
     return body[: offset - 4] + bytes(4) + body[offset:]
 
 
+def default_material(selected, sources, sdk, output):
+    """Reuse the player owner's SDK Material / original Shader projection."""
+    if sdk is None:
+        raise ValueError("default material requires the pinned owner SDK")
+    source = selected["sdk_source"]
+    path = M.safe_input(sdk.resolve(strict=True), source["path"])
+    if output.is_relative_to(sdk.resolve()) or B.sha(path) != source["sha256"]:
+        raise ValueError("SDK default material drift or output overlap")
+    with path.open("rb") as stream:
+        stream.size = path.stat().st_size
+        metadata = W.read_serialized(stream)
+        row = next(row for row in metadata["objects"] if row["path_id"] == source["path_id"])
+        definition = metadata["types"][row["type_id"]]
+        stream.seek(metadata["data_offset"] + row["offset"])
+        body = B.exact(stream, row["bytes"])
+    shader, shader_type = source_record(sources, selected["shader_source"])
+    if definition["class_id"] != 21 or shader_type["class_id"] != 48:
+        raise ValueError("default material requires SDK Material and original Shader")
+    body = module("player_data").shared_default_material(body, definition, shader)
+    if B.sha(path) != source["sha256"]:
+        raise ValueError("SDK default material changed during production")
+    return remap(body, selected.get("references", []))
+
+
 def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, packs=(), sdk=None):
     if B.sha(profile_path) != profile_sha256:
         raise ValueError("object profile drift")
@@ -942,7 +973,11 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                     if selected.get("generate") == "PreloadData":
                         if typ["class_id"] != 150:
                             raise ValueError("scene preload requires original PreloadData type")
-                        body = preload_data(selected_bundle, selected_member, selected_members)
+                        body = preload_data(selected_bundle, selected_member, selected_members, packed)
+                    elif selected.get("generate") == "DefaultMaterial":
+                        if typ["class_id"] != 21:
+                            raise ValueError("default material requires original Material type")
+                        body = default_material(selected, sources, sdk, output)
                     else:
                         if selected.get("generate", "AssetBundle") != "AssetBundle" or typ["class_id"] != 142:
                             raise ValueError("bundle container requires original AssetBundle type")
