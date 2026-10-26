@@ -1367,8 +1367,19 @@ analysis and recipe declarations reproduce all 30,322 J850 location identities,
 `integration_bundle_metadata`, which assigns explicit case-insensitive owners and
 ordinary/scene fallbacks without filesystem access. Callers supply all explicit
 `assetBundleName`/`assetNames` declarations, including presentation and geometry.
-The source-derived J850 projection matches all 30,322 location owners; final
-bundle hashes, transitive dependencies and catalog bytes remain open.
+The source-derived J850 projection matches all 30,322 location owners.
+`produced_bundle_metadata` reads real produced Android UnityFS/v22 files through
+the existing bounded reader, hashes them and extracts direct dependency names
+from AssetBundle/PreloadData records. CAB externals and the separate Windows
+Addressables bundle are not Android catalog edges.
+`integration_catalog` accepts these file facts plus the complete source-declared
+build-name set, including builds without location rows. It refuses missing nodes
+and undeclared references, preserves native cycles with self-exclusion, then emits
+compact UTF-8 with ordered bundle keys and transitive dependency arrays. Callers
+retain metadata member order and write the returned bytes; these helpers retain
+no session or Editor state. The 41-file source reader and 114-name source selection
+are host-qualified, but 76 active bundles remain unavailable in that cohort.
+Full catalog bytes and phone execution remain open.
 `composition_rebuild.integration_declarations` renders ordered R1/R2 importer
 identities from assembly recipes, explicit export metadata copies, additions and
 source-GUID-preserving transforms, then removes unselected native shader importers

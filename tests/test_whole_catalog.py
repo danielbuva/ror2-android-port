@@ -1,5 +1,8 @@
 import json
+import importlib.util
+import io
 import re
+import struct
 import sys
 import tempfile
 import unittest
@@ -11,6 +14,8 @@ from whole_catalog import (
     CAMERA_SHADER_ROOTS,
     integration_metadata,
     integration_bundle_metadata,
+    integration_catalog,
+    produced_bundle_metadata,
     original_stage_contexts,
     analyze,
     catalog_roots,
@@ -28,6 +33,85 @@ from whole_catalog import (
 )
 import build
 from common import sha, write
+
+
+class ProducedCatalogTests(unittest.TestCase):
+    def test_native_cycle_closure_sorted_members_and_compact_utf8(self):
+        metadata = dict(attempt="authored é\n", locations=[dict(bundle="b")], keys=[])
+        bundles = {
+            "b": dict(sha256="b-hash", bytes=2, dependencies=["a", "c", "a"]),
+            "c": dict(sha256="c-hash", bytes=3, dependencies=[]),
+            "a": dict(sha256="a-hash", bytes=1, dependencies=["b"]),
+        }
+        result = integration_catalog(metadata, bundles, bundle_names=["c", "b", "a"])
+        self.assertEqual(
+            result,
+            (
+                '{"attempt":"authored é\\n","locations":[{"bundle":"b"}],"keys":[],"bundles":{'
+                '"a":{"sha256":"a-hash","bytes":1,"dependencies":["b","c"]},'
+                '"b":{"sha256":"b-hash","bytes":2,"dependencies":["a","c"]},'
+                '"c":{"sha256":"c-hash","bytes":3,"dependencies":[]}}}'
+            ).encode(),
+        )
+        self.assertEqual(bundles["b"]["dependencies"], ["a", "c", "a"])
+        self.assertNotIn("bundles", metadata)
+
+    def test_missing_location_owner_or_graph_node_refuses_output(self):
+        with self.assertRaisesRegex(ValueError, "Missing produced catalog bundles: absent"):
+            integration_catalog(dict(locations=[dict(bundle="absent")]), {}, bundle_names=["absent"])
+        with self.assertRaisesRegex(ValueError, "Missing produced catalog bundles: missing"):
+            integration_catalog(dict(locations=[]), {"a": dict(sha256="hash", bytes=1, dependencies=["missing"])}, bundle_names=["a"])
+
+    def test_declared_bundles_without_locations_are_required_and_unselected_files_omitted(self):
+        with self.assertRaisesRegex(ValueError, "Missing produced catalog bundles: unlocated"):
+            integration_catalog(dict(locations=[]), {}, bundle_names=["unlocated"])
+        facts = {"unlocated": dict(sha256="hash", bytes=1, dependencies=[]), "unselected": {}}
+        self.assertEqual(list(json.loads(integration_catalog(dict(locations=[]), facts, bundle_names=["unlocated"]))["bundles"]), ["unlocated"])
+        facts["unlocated"]["dependencies"] = ["unselected"]
+        with self.assertRaisesRegex(ValueError, "Catalog references undeclared bundles: unselected"):
+            integration_catalog(dict(locations=[]), facts, bundle_names=["unlocated"])
+
+    def test_produced_records_supply_dependencies_not_serialized_cab_links(self):
+        spec = importlib.util.spec_from_file_location(
+            "catalog_fixture_writer", Path(__file__).resolve().parents[1] / "tools/phone-build/accepted-output/unity_write.py"
+        )
+        writer = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(writer)
+
+        def text(value):
+            data = value.encode()
+            result = struct.pack("<I", len(data)) + data
+            return result + bytes(-len(result) % 4)
+
+        named_preload = text("") + struct.pack("<Iiq", 1, 2, 123)
+        container = struct.pack("<I", 1) + text("assets/authored.asset") + bytes(20)
+        asset_bundle = named_preload + container + bytes(24) + text("authored")
+        asset_bundle += struct.pack("<I", 1) + text("bundle-a") + bytes(16)
+        preload = named_preload + struct.pack("<I", 2) + text("bundle-b") + text("bundle-a") + bytes(1)
+        serialized = []
+        for class_id, body in [(142, asset_bundle), (150, preload)]:
+            layout = dict(
+                engine="2021.3.45f2",
+                platform=13,
+                trees=False,
+                types=[dict(class_id=class_id, stripped=0, script_type=-1, hash=bytes(16))],
+                objects=[dict(path_id=1, offset=0, bytes=len(body), type_id=0)],
+                scripts=[],
+                externals=[dict(empty="", guid=bytes(16), type=0, path="archive:/CAB-not-a-dependency")],
+                ref_types=[],
+                user="",
+            )
+            stream = io.BytesIO()
+            writer.write_serialized(stream, layout, lambda row, body=body: io.BytesIO(body))
+            serialized.append(stream.getvalue())
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "authored"
+            members = [("CAB-" + str(index), 4, len(data), lambda data=data: io.BytesIO(data)) for index, data in enumerate(serialized)]
+            members.append(("CAB-0.resS", 0, 3, lambda: io.BytesIO(b"res")))
+            with path.open("wb") as output:
+                writer.write_bundle(output, members, lambda data, method: data, flags=0x40)
+            facts = produced_bundle_metadata({"authored": path})
+            self.assertEqual(facts, {"authored": dict(sha256=sha(path), bytes=path.stat().st_size, dependencies=["bundle-a", "bundle-b"])})
 
 
 class IntegrationMetadataTests(unittest.TestCase):

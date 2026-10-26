@@ -3448,3 +3448,15 @@ credential is included. Current legitimate PC files, SDK resources and checked
 source-produced record packs remain required. Generated outputs and evidence
 stay ignored. Existing redistribution and ownership boundaries apply; phone
 execution and runtime qualification remain open.
+
+## Produced catalog metadata adapter (2026-10-26)
+
+Manual provenance, privacy, licensing and sensitive-content audit: the existing
+whole-catalog owner now reads structural dependency records from locally produced
+Android bundles, hashes their real bytes and completes a supplied source-declared
+graph. The camera recipe source pin tracks that authored helper change only.
+No accepted dependency table, object body, original source, private path or
+credential is included. The bounded reader is unchanged; legitimate input and
+source-produced bundles remain external and ignored. Host contracts preserve
+cyclic references and refuse incomplete graphs. Full catalog production and phone
+execution remain open; no redistribution or ownership right is granted.
