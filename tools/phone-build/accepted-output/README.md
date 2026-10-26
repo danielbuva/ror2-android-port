@@ -7,7 +7,7 @@ managed compiler or game native compiler. It adds no game runtime owner.
 
 The receiver is authored public tooling. **Its input package is private
 game-bearing data, not a public reconstruction recipe.** The complete result
-and failure history are recorded in [J1042](../../../docs/PORTING_JOURNAL.md#j1042--reconstruct-the-complete-accepted-output-on-android).
+and failure history are recorded in [J1042](../../../docs/history/journal-J1-J1177/PORTING_JOURNAL.md#j1042--reconstruct-the-complete-accepted-output-on-android).
 The [assessment](../../../docs/accepted-build-reconstruction.md) distinguishes
 this working replay path from independent PC-input-only production and public
 distribution. No package, SDK binary, original input, output or signing key is
@@ -367,7 +367,7 @@ plus 2 GiB free before starting. Peak RSS uses the platform's native
 
 These game-derived packs remain private. They are inputs for a future bundle
 assembler, not UnityFS bundles, a replacement private replay packet, or an APK.
-[J1070](../../../docs/PORTING_JOURNAL.md#j1070--produce-the-accepted-mesh-cohort-from-original-pc-bundles-on-android)
+[J1070](../../../docs/history/journal-J1-J1177/PORTING_JOURNAL.md#j1070--produce-the-accepted-mesh-cohort-from-original-pc-bundles-on-android)
 records host and phone qualification. Remaining meshes, non-mesh content,
 bundle assembly, native game-code phone production and the complete owner
 installation remain separate gates. No current game build consumes this path.
@@ -395,7 +395,7 @@ It checks original bundle hashes before/after, requires every output hash and
 re-reads persisted `objects.bin` extents through `index.jsonl`. A terminal
 complete/failed `result.json` retains outputs; process exit is teardown. Keep
 all output private. Android lab staging requires explicit authorized selection
-and the existing workspace/interpreter receipts. [J1075](../../../docs/PORTING_JOURNAL.md#j1075--produce-every-accepted-avatar-from-original-pc-bundles-on-android)
+and the existing workspace/interpreter receipts. [J1075](../../../docs/history/journal-J1-J1177/PORTING_JOURNAL.md#j1075--produce-every-accepted-avatar-from-original-pc-bundles-on-android)
 qualifies all 228 records on host and phone. Packs require later complete bundle
 assembly; no current build or runtime consumes them.
 
@@ -478,7 +478,7 @@ No current game build consumes this path.
 
 The complete host/phone case, public-source Android codec build and controls
 are recorded in
-[J1079](../../../docs/PORTING_JOURNAL.md#j1079--complete-uncompressed-texture-production-from-pc-bundles-on-android).
+[J1079](../../../docs/history/journal-J1-J1177/PORTING_JOURNAL.md#j1079--complete-uncompressed-texture-production-from-pc-bundles-on-android).
 The current explicit profile targets the accepted J850 content; a later target
 needs its own reviewed profile. No current game build consumes these packs.
 
@@ -504,7 +504,7 @@ unknown input, unsafe paths, selected symlinks, duplicate/missing members and
 content drift refuse. The process exits after its complete/failed receipt;
 there is no service, installer-script execution or current game-build mutation.
 
-[J1064](../../../docs/PORTING_JOURNAL.md#j1064--acquire-exact-generic-android-sdk-inputs-without-installing-the-editor)
+[J1064](../../../docs/history/journal-J1-J1177/PORTING_JOURNAL.md#j1064--acquire-exact-generic-android-sdk-inputs-without-installing-the-editor)
 records the complete host component case. Android execution is unqualified.
 The directory can supply `package.py`'s explicit SDK root; it is not the complete
 compiler, game/content producer, Android converter or public SDK distribution.
@@ -604,7 +604,7 @@ replace the game toolchain or execution backend.
 Current experimental support for **build tools only**. The game retains native
 IL2CPP ARM64 execution. The runner starts explicit owner-supplied standalone
 libraries/programs; it registers no executable handler and opens no Editor or
-Unity project. Shell qualification is recorded in [J1081](../../../docs/PORTING_JOURNAL.md#j1081--run-owner-supplied-standalone-sdk-tools-through-a-public-android-runner).
+Unity project. Shell qualification is recorded in [J1081](../../../docs/history/journal-J1-J1177/PORTING_JOURNAL.md#j1081--run-owner-supplied-standalone-sdk-tools-through-a-public-android-runner).
 Ordinary app execution and each further SDK tool require their own qualification.
 
 Acquire unchanged public [Box64](https://github.com/ptitSeb/box64) source at
@@ -677,7 +677,7 @@ build consumes this runner or the diagnostic output.
 
 Current experimental source-only content producer, qualified for the complete
 4,326-record **source Alpha8/single-mip** target cohort in
-[J1082](../../../docs/PORTING_JOURNAL.md#j1082--produce-the-complete-alpha8-texture-cohort-from-pc-bundles-on-android).
+[J1082](../../../docs/history/journal-J1-J1177/PORTING_JOURNAL.md#j1082--produce-the-complete-alpha8-texture-cohort-from-pc-bundles-on-android).
 The explicit `recipe/owner-alpha-textures.json` profile requires SHA-256
 `fa23bc2cdc71234e3a5d4a084519a63bb59c6ef321e790fb964c295c8bd1d51a`.
 It reuses 82 original texture bodies/pixel extents from nine original PC bundles,
@@ -756,7 +756,7 @@ paths select JPEG export. Normal unpacking uses original AG coordinates and an
 integer square root; original pixel samples feed every output. The shared
 producer verifies every original input and produced/persisted body/resource
 extent before success, retaining failed outputs and refusing existing output
-or codec drift. [J1088](../../../docs/PORTING_JOURNAL.md#j1088--produce-every-single-mip-etc1-texture-from-pc-bundles-on-android)
+or codec drift. [J1088](../../../docs/history/journal-J1-J1177/PORTING_JOURNAL.md#j1088--produce-every-single-mip-etc1-texture-from-pc-bundles-on-android)
 qualifies all 281 records, the shared codec build and the complete 5,006-record
 RGB/Alpha8/uncompressed regression case on Android. Twelve authored contracts
 pass with both real codecs. Complete bundles, mip/cubemap production and
@@ -809,7 +809,7 @@ The `objects.bin`, `resources.bin` and `index.jsonl` formats stay unchanged.
 
 Five authored host tests include real SIGKILL recovery and byte-exact fresh-run
 comparison. Android crash recovery remains open after
-[J1123](../../../docs/PORTING_JOURNAL.md#j1123--guarded-rgba-phone-batch-loses-transport-admission-stays-open).
+[J1123](../../../docs/history/journal-J1-J1177/PORTING_JOURNAL.md#j1123--guarded-rgba-phone-batch-loses-transport-admission-stays-open).
 Recover the interrupted device's evidence and boot reason before cleanup or
 another run. SDK colour bands now execute one at a time; thermal monitoring
 and device ownership remain the caller's responsibility.
@@ -949,7 +949,7 @@ Bundle/player-file callers independently obtain original native type metadata
 and generate destination layout. There is no replay, SDK, UnityPy or Editor
 input to production.
 
-[J1143](../../../docs/PORTING_JOURNAL.md#j1143--qualify-expanded-source-animation-controller-and-graph-records)
+[J1143](../../../docs/history/journal-J1-J1177/PORTING_JOURNAL.md#j1143--qualify-expanded-source-animation-controller-and-graph-records)
 qualifies 3,317 of 3,323 AnimationClips, 334 of 388 AnimatorControllers and
 2,498,566 graph-selected hierarchy/native/scripted records on the host. The
 graph shards overlap the earlier J1133 hierarchy/generic packs; do not add
@@ -1217,3 +1217,33 @@ lightmap arrays and renderer bindings determine usage, independently of baking
 preferences. SDK45 source and the shared compiler supply programs; the existing
 record-pack interface carries the final fallback pointer and explicit output
 identities. No accepted table or generated-run lookup supplies content.
+
+## Root and post-processing scene object profiles
+
+J1170 qualifies six complete host bundles through the existing streamed-scene
+object command. Select `recipe/owner-rootjungle-objects.json`,
+`owner-rootjungle-source-objects.json`, `owner-rootjungle-spine-objects.json`,
+`owner-mysteryspace-objects.json`, `owner-eclipseworld-objects.json` or
+`owner-helminthroost-source-objects.json`; exact profile pins are listed in
+`recipe/README.md`. Supply explicit `--pc`, pinned `--profile-sha256`,
+`--codec`/`--codec-sha256`, separate new `--output` and the acquired `--sdk`
+root when selected. Repeat `--record-pack DIRECTORY RESULT_JSON_SHA256`
+for each referenced source pack.
+
+Root whole/source use mesh, uncompressed texture, RGBA-mip, alpha texture,
+whole-context Standard and Root PP24 packs; Root spine uses mesh and its
+separate reduced-spine Standard pack. MysterySpace and Helminthroost source
+use mesh, uncompressed texture, RGBA-mip and their own PP24 packs. EclipseWorld
+uses uncompressed texture, RGBA-mip, qualified cubemap and its PP24 pack.
+The three new `owner-*-postprocess.json` selectors run through
+`payload_shader_records.py` with the same SDK/public-template inputs as the
+existing Root PP24 carrier. Their unchanged profile pins are the object
+profiles' `record.profile_sha256` values. Only those source-produced records
+may supply the pack inputs; the accepted J850 bundle is a later comparison
+input.
+
+Outputs retain the existing object-pack and member-aware `layout.json`
+contract consumed by `unity_write.py`; no private target tree or run folder
+is a production input. Exit ends the producer process and retains the terminal
+receipt and failed outputs. Host comparison does not qualify phone production,
+installation or original scene behavior.

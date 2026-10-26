@@ -301,7 +301,7 @@ non-pointer byte and native script/type identity;
 material keyword demotion reuses the existing object owner's policy. No runtime
 owner or Editor is added. [Setup and qualified scope](../tools/phone-build/accepted-output/README.md#produce-animation-and-generic-object-records)
 remain separate from complete bundle/player-file assembly and phone acceptance.
-[J1143](PORTING_JOURNAL.md#j1143--qualify-expanded-source-animation-controller-and-graph-records) qualifies the full
+[J1143](history/journal-J1-J1177/PORTING_JOURNAL.md#j1143--qualify-expanded-source-animation-controller-and-graph-records) qualifies the full
 expanded host cohorts; their payload destination identities are not APK
 identities and callers must supply their own checked player relationships.
 `avatar_produce.py` owns current experimental PC-only Avatar production using
@@ -486,6 +486,12 @@ alignment/signing, content verification and failed-output retention. J1095
 qualifies separate phone signing processes; no install is performed.
 [Key/output lifecycle](../tools/phone-build/owner-apk/README.md#durable-owner-signing)
 keeps signing identity outside disposable build output.
+`owner-apk/release.py` owns the public release body/canonical signing bytes and
+owner-private incremental output cache. Setup takes a signature-verified release,
+accepted original inventory and existing producer callback; teardown retains
+completed outputs/cache and durable signing state. The installer owns trust-key
+verification, acquisition, dispatch and installation; the release owner reuses
+unchanged dependency/output hashes and refuses key loss on updates.
 
 `tools/phone-build/package-assemblies/` owns a separate current experimental
 host producer for the four retained Unity package assemblies and their required
@@ -507,12 +513,12 @@ and terminal receipt, and retains failures without updating lab/current state.
 keep the original lab gate and runtime stage/request guards intact. No game build
 automatically selects this source-only input path; Android execution is open.
 
-[J1058's whole-player host case](PORTING_JOURNAL.md#j1058--strip-and-convert-the-complete-player-with-fixed-target-root-configuration)
+[J1058's whole-player host case](history/journal-J1-J1177/PORTING_JOURNAL.md#j1058--strip-and-convert-the-complete-player-with-fixed-target-root-configuration)
 reuses the named metadata/SDK registry/root-composition owners and exact SDK
 UnityLinker/IL2CPP tools with independent DLL providers. Current target root and
 preservation identities are explicit supplied configuration, not independently
 derived scene semantics. LOCAL_STATE records setup, retained inputs and teardown.
-[J1059](PORTING_JOURNAL.md#j1059--build-the-complete-native-arm64-game-library-without-unity-editor)
+[J1059](history/journal-J1-J1177/PORTING_JOURNAL.md#j1059--build-the-complete-native-arm64-game-library-without-unity-editor)
 then completes native construction using the original SDK compiler policy.
 These experiments have no current game-build consumer; public orchestration,
 content production and Android execution remain separate gates.
@@ -650,6 +656,11 @@ Original emission/instancing values and scene fog/actual lightmap usage govern
 retention; source keyword order controls the shared API's native pool emission.
 The owner resolves original/SDK fallback identity before emitting final resource
 pointers. Each context writes one body extent for its explicit destinations.
+The same pack owner selects Shipgraveyard post-processing and Repurposed Crater
+HideVertices through public templates. Its Skybox context follows original scene
+RenderSettings and material Shader pointers, reads SDK106 and retains source
+material keywords through the shared SDK compiler. These contexts emit the same
+pack interface and use the existing compiler teardown.
 This is host qualification of retained content;
 phone execution stays open.
 
@@ -4424,3 +4435,12 @@ is 30 s; the ordinary 10-second stage check and first-stage defaults are unchang
 Host tests execute the real session methods with the existing core policy and
 verify driver cleanup on a synthetic native NaN. Device audio attribution, full
 mix and audibility remain separate gates.
+
+J1170 adds six audited `owner-*-objects.json` scene selections and three
+`owner-*-postprocess.json` Shader selections to the existing
+`object_produce.py` / `payload_shader_records.py` owners. Setup remains
+explicit current PC/SDK roots, profile/tool pins, independently produced
+record packs and a separate new output directory. The existing object pack
+and member-aware layout feed `unity_write.py`; process exit tears down the
+producer while receipts and evidence remain local. No runtime state, Editor,
+new owner or private target-tree supplier is added.
