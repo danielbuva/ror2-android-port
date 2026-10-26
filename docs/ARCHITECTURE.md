@@ -4769,3 +4769,11 @@ up production; process exit tears down producers while local receipts persist.
 The member-aware writer exposes `payload/whole-scene-meridian`. All 15,814
 objects, both serialized members and the compressed bundle are host raw-exact
 to J850. Phone production, installation and original behavior remain open.
+
+Computational Exchange Standard selections extend `payload_shader_records.py`
+through `recipe/owner-computationalexchange-whole-standard-shaders.json`.
+Recursive original material dependencies supply features and original Shader
+identities supply order; the existing pinned SDK compiler supplies programs.
+Explicit PC/SDK/tool roots, pinned profiles and fresh output set up production;
+process exit tears down producers while receipts persist. The persisted
+301,384 B record is host raw-exact to J850; full-scene and phone gates remain open.
