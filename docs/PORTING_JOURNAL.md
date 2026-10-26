@@ -44485,3 +44485,16 @@ Report phase `integrated-world-loot`, measured world 0 s; process exit follows g
 No plain control accepted; stage-exit/destination controls never launch. R58 gameplay, destination capture and Siren remain open.
 Cleanup confirms process/selector absent, OLED asleep and lease released; mandatory prune passes, zero items, 52 kept.
 Revisit after measured stage-load heat reduction or restored authorized Main transport; unchanged replay is not the next experiment.
+
+## J1178 — Loading presentation pacing normal player build
+
+2026-10-26. Hypothesis: rendering every third loading frame reduces J1177 heat without changing native simulation.
+Existing NovaInputSession sets interval 3 after landing, restores before gameplay and first in finally before recovery.
+Prior art: pinned UnityExplorer ReflectionInspector paced observations; Unity OnDemandRendering preserves simulation; no TimeScaleWidget clock change.
+Normal code build source `b12e81ea0ff9968d20a6df8bdd5ebfd19e3b98e9`, APK `4666a1107e812d19b3186aa6f528adb745f6b3bb256fbe37f87472cc85b247ac`.
+Player succeeds in 28.912 s, zero errors; pipeline 115.870 s; existing frozen payload reused.
+Evidence: `work/coordination/main-port-loading-pacing/` build receipts, retry terminal and logs.
+First attempt refused artifact snapshot identity after successful Unity build; normal retry passes unchanged checks; cause unproven.
+Two focused lifecycle/presence checks, Ruff and host preflight pass; doctor retains historical bootstrap failure.
+No device install/run: R58 remains last verified installed; strict three controls and measured loading heat remain open.
+Mandatory prune passes; revisit after authorized device admission under unchanged J1156 limits.
