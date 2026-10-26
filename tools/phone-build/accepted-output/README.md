@@ -1277,8 +1277,9 @@ are limited to two. The selected CPUs are passed as a hexadecimal mask for Andro
 without the `-c` CPU-list option. Affinity failure refuses production.
 
 Admission requires readable CPU telemetry and observed CPU/GPU/battery/skin
-<= 50 C. The 250 ms sampler continues during pauses and aborts on a gap > 1 s,
-CPU/GPU > 95 C for >= 3 s per zone, or battery > 46 C. Skin is a metric.
+<= 50 C. Callers must additionally require battery <= 35 C, level <= 85%,
+and refuse charging status 2 at level >= 80% before each job. The 250 ms sampler continues during pauses and aborts on a gap > 1 s,
+CPU/GPU > 95 C for >= 3 s per zone, or battery >= 43 C. Skin is a metric.
 Unavailable sentinel zones and unrelated PMIC zones are excluded. Runtime limits
 are unchanged by duty cycling. Deadline/cancellation/error cleanup kills the
 owned family without resuming a paused workload. Receipts retain pause count,

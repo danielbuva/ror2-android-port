@@ -49,8 +49,8 @@ class ThermalDutyCycle:
                 raise RuntimeError("invalid thermal value: " + name)
             if admission and value > 50:
                 raise RuntimeError("thermal admission above 50 C")
-            if kind == "battery" and not admission and value > 46:
-                raise RuntimeError("battery above 46 C")
+            if kind == "battery" and not admission and value >= 43:
+                raise RuntimeError("battery at or above 43 C")
             if kind in ("cpu", "gpu"):
                 if value > 95:
                     self.hot_since.setdefault(name, now)
