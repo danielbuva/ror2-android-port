@@ -1307,3 +1307,10 @@ receipt-pinned `--record-pack` interface. These profiles expose 135,541 records,
 16 serialized members and eight compressed bundles, all host-exact against
 J850, as `payload/<bundle-name>`. They add no producer owner or runtime state;
 phone production, installation and scene behavior remain open.
+
+Conduit Canyon uses `recipe/owner-conduitcanyon-objects.json` with the same
+object command and receipt-pinned Mesh, director and Standard Shader packs.
+Its 49,573 objects, two serialized members and complete compressed bundle are
+host-exact against J850. The existing target-tree interface exposes
+`payload/whole-scene-conduitcanyon`; phone production, installation and original
+scene behavior remain open.
