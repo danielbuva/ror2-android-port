@@ -4160,6 +4160,8 @@ checkout selects its clean committed HEAD in the clean primary checkout only
 while holding the primary Unity mutex. The ordinary primary `./dev` host
 preflight, source staging and selected ordinary build action run with that same
 inherited lock.
+Only full content builds require 100 GiB free before checkout; code-only builds
+retain the ordinary host preflight's storage check.
 The action copies no Unity project and performs no device operation. Its
 private receipt under `work/coordination/shared-builds/` records the selected
 commit and restoration outcome.

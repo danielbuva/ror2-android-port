@@ -128,12 +128,20 @@ class SharedCheckoutBuildTests(unittest.TestCase):
             shared.build_shared_checkout(root=self.worker)
         invoke.assert_not_called()
 
-    def test_real_build_headroom_gate_refuses_before_checkout(self):
+    def test_full_build_headroom_gate_refuses_before_checkout(self):
         with patch.object(shared.shutil, "disk_usage", return_value=SimpleNamespace(free=99 * 1024**3)):
             with patch.object(shared, "invoke") as invoke, self.assertRaisesRegex(RuntimeError, "100 GiB"):
-                shared.build_shared_checkout(root=self.worker)
+                shared.build_shared_checkout(root=self.worker, code_only=False)
         invoke.assert_not_called()
         self.assertEqual(self.git("rev-parse", "HEAD"), self.original)
+
+    def test_code_only_uses_ordinary_preflight_below_full_build_floor(self):
+        with patch.object(shared.shutil, "disk_usage", return_value=SimpleNamespace(free=74 * 1024**3)):
+            with patch.object(shared, "invoke", side_effect=self.invoke):
+                result = shared.build_shared_checkout(root=self.worker)
+        self.assertTrue(result["success"])
+        self.assertEqual(self.calls[0], ["preflight", "--host-only"])
+        self.assertEqual(self.calls[1], ["prototype", "--action", "whole-catalog-code-build"])
 
 
 if __name__ == "__main__":
