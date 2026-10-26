@@ -425,6 +425,18 @@ source/tool hashes are checked before and after production. The existing
 and QEMU host. Java children retain the explicit app-host JVM/home/library
 environment and use the current output's temporary directory. [Setup/lifecycle](../tools/phone-build/accepted-output/README.md#produce-the-generic-android-package-entries)
 keeps this owner separate from content, game-code production and final signing.
+`accepted-output/phone_runner.py` now owns shared experimental on-device
+producer duty cycling for shell commands and the managed host
+owner-backend/public-profile launches. Setup reads kernel CPU/GPU/battery/skin
+zones, checks thermal admission and selects inherited efficiency-core affinity
+with two-worker runtime limits. Its independent supervisor pauses the owned
+process group and nested-session descendants at 70/55 C by default (explicit
+Thor profile 75/60 C), retaining existing 80/88 C aborts and 250 ms sampling.
+Teardown kills owned processes; receipts retain pause time and failures. The
+atomic BOOTTIME clock feeds the existing native active-time contract through
+`run_android.py`. Phone sensor access and sustained qualification remain open.
+[Interface and limits](../tools/phone-build/accepted-output/README.md#shared-on-device-producer-thermal-runner).
+
 The tool host starts children through Android `taskset 1` before interpreter/JVM
 initialization; descendants inherit CPU 0 while the external thermal guard
 continues. This applies to build tools only and trades throughput for startup
