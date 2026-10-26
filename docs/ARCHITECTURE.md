@@ -661,7 +661,12 @@ profiles select original material relationships and exact SDK Standard source.
 Original emission/instancing values and scene fog/actual lightmap usage govern
 retention; source keyword order controls the shared API's native pool emission.
 The owner resolves original/SDK fallback identity before emitting final resource
-pointers. Each context writes one body extent for its explicit destinations.
+pointers. Its index rows expose that validated source-to-destination dependency
+for consumer preload traversal through the owning member's externals.
+The Blackbeach2, Shipgraveyard, TestOtherBrother and Repurposed Crater Standard
+profiles select original materials reached through recursive scene pointer
+closure; source keyword/instancing pairs govern retention in the same owner.
+Each context writes one body extent for its explicit destinations.
 The same pack owner selects Shipgraveyard post-processing and Repurposed Crater
 HideVertices through public templates. Its Skybox context follows original scene
 RenderSettings and material Shader pointers, reads SDK106 and retains source

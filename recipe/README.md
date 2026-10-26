@@ -3359,6 +3359,22 @@ tracked. No game/SDK source, program, target keyword table, private path or
 credential is included. All generated content stays ignored; these profiles
 grant no ownership or redistribution right. Phone execution remains open.
 
+The four `owner-{blackbeach2,shipgraveyard,testotherbrother,repurposedcrater}-standard-shaders.json`
+profiles receive provenance, privacy, licensing and sensitive-content review on
+2026-10-26. They contain original material/scene selectors, source and SDK hashes,
+authored compiler settings and destination identities. Recursive original pointer
+closure determines the selected material features; no target program, keyword
+table, source text, private path or serialized body is included. The existing
+Shader owner generates private packs; all original/SDK inputs remain external.
+These recipes grant no redistribution or ownership right; phone gates stay open.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-blackbeach2-standard-shaders.json` | `941f10f7aa298fdc02ad5ab09aed57a86178b2e242ac0f577d7d31d6a6ea8d9e` |
+| `owner-repurposedcrater-standard-shaders.json` | `b54f8b21390941b606c1f3d1bf94763d34bebc05d2146345524aed52319d32ab` |
+| `owner-shipgraveyard-standard-shaders.json` | `4f4a62fa2e02f7d6b3c7f2f297f65ed0fb9e06326068b5ebddc43fad22f80cdd` |
+| `owner-testotherbrother-standard-shaders.json` | `7912dc1de94cd12163c793463be09b106461671911116d062e1cfd4f5a0dd963` |
+
 ## Five complete scene object profiles (2026-10-26)
 
 | Recipe | SHA-256 |
