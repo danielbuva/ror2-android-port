@@ -1494,6 +1494,13 @@ performance guarantee. Host admission estimates two 4 GiB snapshots plus
 records that budget and observed free bytes. The 100 GiB full-build floor does
 not apply to this capture-only queue. Host fixtures exercise admission and
 failure contracts.
+`--prior-settings-batch PATH` retains a successful settings-interruption stage
+from a prior batch with matching outer and nested APK digests, even when a later
+stage failed. Its source path, SHA-256 and stage remain separate from fresh
+results. Only settings interruption is skipped; heap capture and sustained play
+run fresh under all current admission, thermal and cleanup rules. This can reuse
+settings behaviour evidence across devices with identical APK bytes; it does not
+qualify settings on the newly selected device or inherit old thermal acceptance.
 The batch stops on the first failure; independent actual APK/idle/OLED readback
 and canonical pruning precede lease release and atomic done-file publication.
 Foreign selectors/pending transactions are preserved, and failed terminal
