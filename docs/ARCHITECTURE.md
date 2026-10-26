@@ -4660,3 +4660,12 @@ Explicit current PC/SDK roots, pinned profiles/tools and a separate output
 directory set up production; process exit tears down producers while local
 receipts persist. All 74 persisted records are host raw-exact to J850.
 Complete-scene readiness and phone qualification remain separate gates.
+
+Complete Soul perftest, Mire and Crystalworld scene selections use the existing
+object/Shader owners through `recipe/owner-{soul_perftest,mire,crystalworld}-objects.json`.
+Explicit current PC/SDK roots, pinned profiles/tools, source-produced record packs
+and a separate output directory set up production; process exit tears down each
+producer while local receipts persist. The member-aware writer exposes
+`payload/whole-scene-{soul_perftest,mire,crystalworld}`. All 319,607 objects,
+six serialized members and three compressed bundles are host raw-exact to J850.
+Phone production, installation and original scene behavior remain open.

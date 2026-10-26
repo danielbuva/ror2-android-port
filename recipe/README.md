@@ -3894,3 +3894,21 @@ PC input and separately acquired SDK remain required; generated records
 and evidence stay ignored. All 74 persisted Shader records are host
 raw-exact against J850. Complete-scene readiness and phone qualification
 remain separate gates.
+
+## Soul, Mire and Crystalworld complete scene selections (2026-10-26)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-soul_perftest-objects.json` | `7ff7efa24163a2268c978b6bd1bc8b89417d336e45e664105bce68ea13c0b371` |
+| `owner-mire-objects.json` | `e177548f7fd8a1659427b5fea6eabfe644fb0ee55f054b44ddb5af47658d1ccb` |
+| `owner-crystalworld-objects.json` | `3648a7e92bb91d626390761a799a9c10ae775c0f0bfb6f92b2ede1c1bb6de1d2` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain source selectors, hashes, checked pointer relationships and
+authored import policies only. Compaction preserves every decoded selector.
+No original body, curve, scalar data, pixel, shader program, copied source,
+private path or credential is included. Current legitimate PC files, the pinned
+SDK and independently source-produced media/Shader record packs remain required.
+The existing object producer preserves source null-script type slots for Soul
+and Mire. Generated outputs and raw comparison evidence stay ignored; ownership
+and redistribution boundaries apply. Phone production and runtime remain open.
