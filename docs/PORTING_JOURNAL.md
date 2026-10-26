@@ -52,6 +52,18 @@ Evidence: `work/coordination/p1-player-phone-assembly-v1/android-taskset-mask-ho
 and `phone177-parent-terminal-v4.json` in that directory; independent device cleanup passed.
 Runner SHA-256: `15fdc82f66808db46cf9b25ba17251af12237a32728cc12aecf1391f2e2eb649`.
 No installation or game launch; accepted J850 APK and content readiness are unchanged.
+## J1182 — Source-only J850 catalog identity projection
+
+2026-10-26. Existing integration metadata owner accepts an explicit camera-root extension; current defaults stay intact.
+J850 selects no extension and only closure/mesh sources, following receipted public source commit `1780ea9545`.
+Fresh PC-source catalog analysis plus public importer declarations reproduces all 30,322 locations,
+84,016 keys and 7,458 roots in order against the receipt-linked final catalog's metadata projection.
+Only attempt is normalized; final bundle fields are excluded from this metadata comparison.
+Evidence: `work/coordination/p1-payload-catalog-fresh-v1/metadata-done.json`; generated metadata SHA-256
+`ea85d7903fb23fa103d36c9b877966cdc65506a75f8468d862724d8361718a30`.
+Pinned ThunderKit copies desktop catalogs only; existing J714/J725 host reconstruction remains authoritative.
+33 focused tests, Ruff and host preflight pass. Host-only; readiness stays 598/705, final catalog/manifests,
+remaining payload bundles and phone qualification stay open. No new APK or device claim.
 ## J1183 — Eight complete source-derived scene bundles
 
 2026-10-26. Eight object and eleven Shader profiles complete Lakes/Lakesnight/Sulfurpools spine,
@@ -132,3 +144,43 @@ Owned-job cleanup, lease release and mandatory prune passed; game APK unchanged,
 Shared producer cutoff corrected to battery >= 43 C; eight focused host tests and Ruff pass.
 Run predates correction and lacks battery/charge admission evidence: current thermal policy unqualified.
 Complete source composition, installation, controls and matched performance remain open.
+
+## J1188 — Battery health admission and gameplay safety cutoff
+
+2026-10-26. Existing alpha thermal owner now admits each stage only with battery <= 35 C,
+including cooldown between stages; CPU/GPU/skin admission remains <= 50 C.
+Charging status 2 at level >= 80%, or level > 85%, refuses without retry.
+Runtime battery >= 43 C aborts in the zone observer and sustained-session check.
+Bounded battery reads retain temperature/level/status in trace and stage receipts;
+charging settings remain untouched. CPU/GPU > 95 C for >= 3 s and gap > 1 s rules remain.
+52 focused host tests and Ruff pass; preflight lacks ignored local configuration.
+Evidence: alpha worktree `work/coordination/alpha-battery-health/validation.json`.
+No APK/output generated or installed. Fresh stability/device qualification remains open.
+
+## J1189 — Reconstruct eight further complete scene payloads
+
+2026-10-26. Existing source-only owners reproduce Splash, Habitat, Helminthroost,
+Itgolemplains, Artifactworld03, Itgoolake, Itmoon and Loadingbasic.
+All 60,573 persisted objects, serialized members and compressed bundles are raw-exact
+to J850 after guarded production. Title separately has 26 source-qualified Shader records,
+including SDK terrain base-generation passes; complete Title assembly remains open.
+Evidence/output hashes: `work/coordination/p1-shaders-publication-v2/`,
+`work/coordination/p1-scenes-w/publication-batch-v1/` and Loadingbasic qualifier receipts.
+The readiness union includes Fungal, independently shipped in J1190.
+Readiness: 616/705 available, 611 exact, two code and three drift-explained;
+89 missing (7 APK, 82 payload). Host-only; phone production/install/runtime remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1190 — Complete source-derived Fungal scene
+
+2026-10-26. Audited Fungal selectors extend the existing object producer:
+123,671 records (36,645,626 B), both serialized members and the complete compressed
+bundle are host raw-exact against J850. Output: 14,723,479 B, SHA-256
+`e2addd8bbd3cbb1f30971a114b312ae434b8673905c2cc6fc34e3a6fd4f3edc2`.
+Evidence: `work/coordination/p1-anim/fungal-final-host-v2/qualification-done.json`
+and `work/coordination/p1-anim/fungal-publication-v1/checks-done.json` in the animation worktree.
+Existing target-tree interface exposes `payload/whole-scene-fungal`; no union recount claimed.
+Prior art: retained J1070/J1075 producer and original typed preload policies;
+R2API addressed/direct distinction from the pinned community source index.
+Focused host checks, source-only qualification and provenance review pass.
+Host-only; phone production, installation and original scene behavior remain open.
