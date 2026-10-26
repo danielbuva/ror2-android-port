@@ -4014,3 +4014,9 @@ files, separately acquired SDK and receipt-pinned source-produced media/Shader
 packs remain required. Generated outputs and evidence stay ignored. Existing
 ownership and redistribution boundaries apply; phone production, installation
 and original scene behavior remain open.
+
+J1209 refreshes the existing audio-owner manifest's authored `PortSession.cs`
+source hash for the reviewed mapping-startup reader change. Only that source
+identity changes; no original audio data, account input or proprietary content
+is added. Manual provenance/privacy/licensing review: 2026-10-26. Audio output
+and device behavior gain no qualification from this pin refresh.
