@@ -537,6 +537,30 @@ def managed_fixture(root, *, omit_master=False, disable=False, plugin_order=Fals
 
 
 class ObjectProducerTests(unittest.TestCase):
+    def test_default_material_uses_pinned_sdk_and_existing_player_helper(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            sdk = root / "sdk"
+            sdk.mkdir()
+            source = sdk / "builtin"
+            source.write_bytes(b"SDK-MATERIAL")
+            definition = typ(21)
+            metadata = {"objects": [{"path_id": 10303, "type_id": 0, "offset": 0, "bytes": source.stat().st_size}], "types": [definition], "data_offset": 0}
+            selected = {
+                "sdk_source": {"path": "builtin", "sha256": digest(source.read_bytes()), "path_id": 10303},
+                "shader_source": [0, 46],
+                "references": [{"offset": 0, "from": [0, 46], "to": [0, 114]}],
+            }
+            helper = Mock()
+            helper.shared_default_material.return_value = struct.pack("<iq", 0, 46)
+            with (
+                patch.object(P.W, "read_serialized", return_value=metadata),
+                patch.object(P, "source_record", return_value=(b"ORIGINAL-SHADER", typ(48))),
+                patch.object(P, "module", return_value=helper),
+            ):
+                self.assertEqual(P.default_material(selected, [], sdk, root / "output"), struct.pack("<iq", 0, 114))
+            helper.shared_default_material.assert_called_once_with(b"SDK-MATERIAL", definition, b"ORIGINAL-SHADER")
+
     def test_plugin_import_order_preserves_script_identity_and_derived_hash_in_complete_bundle(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -616,6 +640,34 @@ class ObjectProducerTests(unittest.TestCase):
                         P.check_preload_dependencies(sources, profiles, [dependency])
                 else:
                     P.check_preload_dependencies(sources, profiles, [dependency])
+
+    def test_original_preload_builtin_membership_without_source_object(self):
+        pointers = [(26, identity) for identity in (10001, 10202, 10210)]
+        preload = struct.pack("<II", 0, len(pointers)) + b"".join(struct.pack("<iq", *pointer) for pointer in pointers)
+        metadata = {"data_offset": 0, "types": [typ(150)], "externals": [{"path": "unused"}] * 25 + [{"path": "archive:/builtin/unity default resources"}]}
+        sources = [(None, None, io.BytesIO(preload), metadata, {1: {"offset": 0, "bytes": len(preload), "type_id": 0}})]
+        dependencies = [
+            {"preload_source": [0, 1], "preload_sha256": digest(preload), "source_pointer": list(pointer), "to": [1, pointer[1]]} for pointer in pointers
+        ]
+        P.check_preload_dependencies(sources, [{"member": "CAB-scene"}], dependencies)
+        dependencies[0]["to"][1] = 999
+        with self.assertRaisesRegex(ValueError, "builtin relationship drift"):
+            P.check_preload_dependencies(sources, [{"member": "CAB-scene"}], dependencies)
+        dependencies[0]["to"][1] = 10001
+        metadata["externals"][-1] = {"path": "archive:/builtin/unrelated"}
+        with self.assertRaisesRegex(ValueError, "builtin relationship drift"):
+            P.check_preload_dependencies(sources, [{"member": "CAB-scene"}], dependencies)
+
+    def test_preload_uses_record_dependencies_in_owning_member_external_order(self):
+        members = [
+            {"name": "CAB-shared", "externals": ["unity default resources", "unity_builtin_extra"], "objects": [{"path_id": 4, "record": "shader-profile"}]},
+            {"name": "CAB-scene", "externals": ["CAB-shared", "unity_builtin_extra", "unity default resources"], "objects": []},
+        ]
+        packed = {
+            ("CAB-shared", 4): (None, {"dependencies": [{"source": {"member": "CAB-original", "path_id": 90, "body_sha256": "original-pin"}, "to": [2, 6]}]})
+        }
+        body = P.preload_data({"preload_dependencies": [], "dependencies": []}, members[1], members, packed)
+        self.assertEqual(body, struct.pack("<IIiqIB", 0, 1, 2, 6, 0, 0))
 
     def test_complete_scene_retains_original_preload_dependency_beyond_direct_references(self):
         with tempfile.TemporaryDirectory() as temporary:

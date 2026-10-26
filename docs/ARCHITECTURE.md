@@ -129,8 +129,14 @@ The streamed-scene slices process shared assets then the scene member. Each
 member retains its own object/type/external tables and index identities. Scene
 script tables derive from actual MonoBehaviour script pointers, independently
 of physical script-first body placement. The existing checked reference
-relationships generate sorted external PreloadData; native scene containers
-preserve the original relocated scene path and streamed-scene semantics. The
+relationships and pinned record-pack dependency relocations generate sorted
+external PreloadData. Original preload built-in resource pointers retain their
+path IDs after checking preload membership and the original resource external;
+no source object body is required for these SDK-owned identities. Generated
+DefaultMaterial records reuse the existing `player_data.shared_default_material`
+projection of a pinned SDK Material and original Shader, followed by checked
+PPtr relocation; their destination native type remains original. Native scene
+containers preserve the original relocated scene path and streamed-scene semantics. The
 existing scene export policy disables the selected MapZone owner and omits
 checked original components; reflected bake removal uses ordinary PPtr remaps.
 All scene meshes come through the existing pinned producer pack. Habitat also
@@ -655,7 +661,12 @@ profiles select original material relationships and exact SDK Standard source.
 Original emission/instancing values and scene fog/actual lightmap usage govern
 retention; source keyword order controls the shared API's native pool emission.
 The owner resolves original/SDK fallback identity before emitting final resource
-pointers. Each context writes one body extent for its explicit destinations.
+pointers. Its index rows expose that validated source-to-destination dependency
+for consumer preload traversal through the owning member's externals.
+The Blackbeach2, Shipgraveyard, TestOtherBrother and Repurposed Crater Standard
+profiles select original materials reached through recursive scene pointer
+closure; source keyword/instancing pairs govern retention in the same owner.
+Each context writes one body extent for its explicit destinations.
 The same pack owner selects Shipgraveyard post-processing and Repurposed Crater
 HideVertices through public templates. Its Skybox context follows original scene
 RenderSettings and material Shader pointers, reads SDK106 and retains source
@@ -1331,6 +1342,21 @@ synced content payload comes out. Everything game-derived stays under the ignore
 
 Steps 6–9a are the `./dev prototype --action whole-catalog-*` actions listed in
 [whole-catalog-integration.md](whole-catalog-integration.md#reusable-fixes-and-commands).
+`whole_catalog.integration_metadata` assembles integration locations, mesh aliases
+and root roles from regenerated metadata, closure and explicit destination paths.
+It has no filesystem or Editor state; `prepare_integration` still owns source
+GUID/path resolution, staging and receipt writes. Source-only destination mapping
+and final bundle hashes/dependency closure remain separate qualification gates.
+`composition_rebuild.integration_declarations` renders ordered R1/R2 importer
+identities from assembly recipes, explicit export metadata copies, additions and
+source-GUID-preserving transforms, then removes unselected native shader importers
+and applies the intervening project-inputs Nova bridge importer.
+Body-only texture/shader writes preserve their existing importer. Its pure
+`integration_mapping` replays those declarations, refuses duplicate GUID owners,
+resolves owned DLLs before omitting exporter DLLs and supplies WholeGame defaults
+for remaining source identities. Host contracts feed that mapping to
+`integration_metadata`; complete regenerated-input mapping comparison and final
+catalog production remain open. The later importer-identities stage is excluded.
 `whole-catalog-run` installs, syncs and launches, but it pushes `whole-catalog-selection.json`,
 which makes `PortSession.Start` exit: it checks catalog registration
 (`whole-catalog-result.json`), not gameplay. Gameplay is launched by a runner that pushes an
@@ -4412,6 +4438,14 @@ without gameplay/network startup. Its staging guard also checks the objective
 owner that supplies the prediction. This
 candidate follows J1105's route stall; device recovery is not yet qualified.
 
+
+The existing `NovaInputSession` captures the render interval before setup and
+uses Unity `OnDemandRendering.renderFrameInterval = 3` after initial landing,
+through integrated-world preparation. It restores the captured interval before
+the gameplay input loop and at the start of its iterator `finally`, including
+native-stage recovery. Timestamped loading/playing logs expose both transitions.
+Native simulation clocks, physics and the existing gameplay frame request remain
+unchanged. This is a loading-heat candidate; device qualification remains open.
 
 ## Destination-stage MainOutput observation
 

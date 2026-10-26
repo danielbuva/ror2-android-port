@@ -3358,3 +3358,44 @@ source relationships, public-template/SDK pins and destination identities are
 tracked. No game/SDK source, program, target keyword table, private path or
 credential is included. All generated content stays ignored; these profiles
 grant no ownership or redistribution right. Phone execution remains open.
+
+The four `owner-{blackbeach2,shipgraveyard,testotherbrother,repurposedcrater}-standard-shaders.json`
+profiles receive provenance, privacy, licensing and sensitive-content review on
+2026-10-26. They contain original material/scene selectors, source and SDK hashes,
+authored compiler settings and destination identities. Recursive original pointer
+closure determines the selected material features; no target program, keyword
+table, source text, private path or serialized body is included. The existing
+Shader owner generates private packs; all original/SDK inputs remain external.
+These recipes grant no redistribution or ownership right; phone gates stay open.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-blackbeach2-standard-shaders.json` | `941f10f7aa298fdc02ad5ab09aed57a86178b2e242ac0f577d7d31d6a6ea8d9e` |
+| `owner-repurposedcrater-standard-shaders.json` | `b54f8b21390941b606c1f3d1bf94763d34bebc05d2146345524aed52319d32ab` |
+| `owner-shipgraveyard-standard-shaders.json` | `4f4a62fa2e02f7d6b3c7f2f297f65ed0fb9e06326068b5ebddc43fad22f80cdd` |
+| `owner-testotherbrother-standard-shaders.json` | `7912dc1de94cd12163c793463be09b106461671911116d062e1cfd4f5a0dd963` |
+
+## Five complete scene object profiles (2026-10-26)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-logbook-objects.json` | `f22910dea81582365fdc3bb5660af38e6bcbbfec33c8c7d4ac2e5bd2b033a5b8` |
+| `owner-blackbeach2-source-objects.json` | `742d0f289dbb6cca936859f5bd9b0cdb2ecd11ead58379ebdf48c044b41d8819` |
+| `owner-shipgraveyard-source-objects.json` | `84140a27fe439a1c53ac24da70f2080afc240954314500ab7722499aca1e6e96` |
+| `owner-testotherbrother-objects.json` | `1fe65b6b2f9029d3f65b1b7203f8305263d8db8abc72af316c3bee4cfcdee46a` |
+| `owner-repurposedcrater-objects.json` | `dce073a775ec75d33dad778d41a8b130795a7ae8548828196c56f0911ac49b33` |
+| `owner-logbook-postprocess.json` | `4c8c3eb31ab469a53d5875212be856a6fb601e561ac9410280ce5983d3a4a85d` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain source selectors, hashes, checked pointer relationships and
+authored import policies only. Compaction preserves every decoded selector.
+Logbook post-processing is the byte-unchanged qualified source Shader recipe.
+No original body, curve, scalar, pixel, program, copied source, private path or
+credential is included. Current legitimate PC files, SDK resources and checked
+record packs remain required. Generated outputs and evidence stay ignored.
+Existing redistribution and ownership boundaries apply; phone execution and
+runtime qualification remain open.
+
+The camera transform recipe whole-catalog source pin follows the pure integration
+metadata extraction. Manual provenance/privacy review: this pin references only
+authored public Python; no game content, local paths or device evidence is added.

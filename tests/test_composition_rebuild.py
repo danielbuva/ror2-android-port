@@ -17,6 +17,76 @@ import composition_io
 from composition_io import StageIO
 import rebuild
 from common import sha, write
+from composition_rebuild import integration_declarations, integration_mapping
+
+
+class IntegrationMappingTests(unittest.TestCase):
+    def test_recipe_declarations_follow_staging_and_preserve_body_only_importers(self):
+        prefix = "Assets/LabLoadingScene/Resources/"
+        index = {"copy": "Assets/Copy.asset", "transform": "Assets/Transform.asset", "ramp": "Assets/Ramp.png"}
+        declarations = integration_declarations(
+            index,
+            [("Assets/Copy.asset.meta", "Assets/Relocated.asset.meta"), ("Assets/Ramp.png", prefix + "Ramp.png")],
+            [dict(path="Assets/Plugins/Owned.dll", guid="assembly")],
+            [
+                dict(project_path="Assets/Relocated.asset", guid="addition"),
+                dict(project_path=prefix + "Ramp.png", guid="native-ramp"),
+                dict(project_path=prefix + "AndroidNativeRemoved.shader", guid="removed"),
+                dict(project_path=prefix + "AndroidNativeKept.shader", guid="kept"),
+            ],
+            [dict(source="Assets/Transform.asset", output="Assets/Relocated.asset")],
+            ["AndroidNativeKept.shader"],
+            dict(runtime_source_guids={"runtime/input/NovaInputBridge.cs": "bridge"}),
+        )
+        self.assertEqual(
+            declarations,
+            [
+                ("Assets/Plugins/Owned.dll", "assembly"),
+                ("Assets/Relocated.asset", "copy"),
+                ("Assets/Relocated.asset", "addition"),
+                (prefix + "Ramp.png", "native-ramp"),
+                (prefix + "AndroidNativeRemoved.shader", "removed"),
+                (prefix + "AndroidNativeKept.shader", "kept"),
+                ("Assets/Relocated.asset", "transform"),
+                (prefix + "AndroidNativeRemoved.shader", None),
+                ("Assets/LabLoadingScene/NovaInputBridge.cs", "bridge"),
+            ],
+        )
+        self.assertEqual(
+            integration_mapping(index, index.values(), declarations),
+            {
+                "Assets/Copy.asset": "Assets/WholeGame/Copy.asset",
+                "Assets/Ramp.png": "Assets/WholeGame/Ramp.png",
+                "Assets/Transform.asset": "Assets/Relocated.asset",
+            },
+        )
+
+    def test_ordered_ownership_defaults_and_dll_omission_without_io(self):
+        index = {"a": "Assets/Relocated.asset", "b": "Assets/Default.asset", "c": "Assets/Owned.dll", "d": "Assets/Omitted.dll"}
+        declarations = [("Assets/Old.asset", "a"), ("Assets/Old.asset", "e"), ("Assets/Current.asset", "a"), ("Assets/Plugins/Owned.dll", "c")]
+        with patch("builtins.open", side_effect=AssertionError("mapping must not access files")):
+            self.assertEqual(
+                integration_mapping(index, reversed(list(index.values())), declarations),
+                {
+                    "Assets/Default.asset": "Assets/WholeGame/Default.asset",
+                    "Assets/Owned.dll": "Assets/Plugins/Owned.dll",
+                    "Assets/Relocated.asset": "Assets/Current.asset",
+                },
+            )
+
+    def test_removed_shader_importer_does_not_own_source(self):
+        self.assertEqual(
+            integration_mapping({"a": "Assets/Source.shader"}, ["Assets/Source.shader"], [("Assets/Native.shader", "a"), ("Assets/Native.shader", None)]),
+            {"Assets/Source.shader": "Assets/WholeGame/Source.shader"},
+        )
+
+    def test_duplicate_guid_across_targets_refuses(self):
+        with self.assertRaisesRegex(RuntimeError, "Duplicate imported GUID"):
+            integration_mapping({}, [], [("Assets/First.asset", "a"), ("Assets/Second.asset", "a")])
+
+    def test_missing_regenerated_identity_refuses_even_for_dll(self):
+        with self.assertRaisesRegex(RuntimeError, "Missing discovered source identity"):
+            integration_mapping({}, ["Assets/Missing.dll"], [])
 
 
 class CompositionStageTests(unittest.TestCase):
