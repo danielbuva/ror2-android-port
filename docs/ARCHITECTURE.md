@@ -4577,3 +4577,10 @@ tears down producers while local receipts persist. The same Shader owner adds
 Title post-processing/Standard selections and SDK terrain base-generation
 passes, selected from original native properties and SDK pass declarations.
 No runtime owner is added; phone production and original scene behavior remain open.
+
+Title, Satellite and Artifactworld01 complete object selections also use these
+existing owners. Satellite Standard/post-processing and Artifactworld01
+post-processing profiles generate their Shader record packs from original
+resource/material relationships and pinned SDK/public tool inputs. Explicit
+roots, receipt-pinned packs, separate output and process-exit teardown retain
+the same contract; no runtime owner is added. Phone qualification remains open.

@@ -3715,3 +3715,22 @@ credential is included. Current legitimate PC files, SDK resources and checked
 source-produced record packs remain required. Generated outputs and evidence
 stay ignored. Existing redistribution and ownership boundaries apply; phone
 production and runtime qualification remain open.
+
+## Satellite and Artifact World Shader selections (2026-10-26)
+
+The existing Shader record owner consumes these source-qualified profiles for
+48 post-processing records and one Standard record. Original resource fields,
+export filename/GUID relationships and recursively reached materials determine
+selection. Guarded actual CLI production persisted before independent raw comparison.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-satellitescene-postprocess-shaders.json` | `a1c4c9ede7fd719a0189418381a740faddcc1af561a339283f805572e072c07e` |
+| `owner-satellitescene-standard-shaders.json` | `389344fc34516a51e51a29abbbef3c832cc0f9b38c5a18bbc3b0f919ffe04b37` |
+| `owner-artifactworld01-postprocess-shaders.json` | `b202cf2d9d3722e7febbadecb27c7337f879b85ab6af2d56c44feeb10f62637a` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: only source
+selectors, hashes, public SDK/tool pins and destination relationships are included.
+No original bodies, shader programs, copied source, private paths or credentials
+are included. Legitimate PC files and separately acquired SDK remain required;
+generated records stay ignored. Phone and runtime qualification remain open.
