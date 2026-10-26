@@ -425,6 +425,18 @@ source/tool hashes are checked before and after production. The existing
 and QEMU host. Java children retain the explicit app-host JVM/home/library
 environment and use the current output's temporary directory. [Setup/lifecycle](../tools/phone-build/accepted-output/README.md#produce-the-generic-android-package-entries)
 keeps this owner separate from content, game-code production and final signing.
+`accepted-output/phone_runner.py` now owns shared experimental on-device
+producer duty cycling for shell commands and the managed host
+owner-backend/public-profile launches. Setup reads kernel CPU/GPU/battery/skin
+zones, checks thermal admission and selects inherited efficiency-core affinity
+with two-worker runtime limits. Its independent supervisor pauses the owned
+process group and nested-session descendants at 70/55 C by default (explicit
+Thor profile 75/60 C), retaining existing 80/88 C aborts and 250 ms sampling.
+Teardown kills owned processes; receipts retain pause time and failures. The
+atomic BOOTTIME clock feeds the existing native active-time contract through
+`run_android.py`. Phone sensor access and sustained qualification remain open.
+[Interface and limits](../tools/phone-build/accepted-output/README.md#shared-on-device-producer-thermal-runner).
+
 The tool host starts children through Android `taskset 1` before interpreter/JVM
 initialization; descendants inherit CPU 0 while the external thermal guard
 continues. This applies to build tools only and trades throughput for startup
@@ -1347,6 +1359,16 @@ and root roles from regenerated metadata, closure and explicit destination paths
 It has no filesystem or Editor state; `prepare_integration` still owns source
 GUID/path resolution, staging and receipt writes. Source-only destination mapping
 and final bundle hashes/dependency closure remain separate qualification gates.
+`composition_rebuild.integration_declarations` renders ordered R1/R2 importer
+identities from assembly recipes, explicit export metadata copies, additions and
+source-GUID-preserving transforms, then removes unselected native shader importers
+and applies the intervening project-inputs Nova bridge importer.
+Body-only texture/shader writes preserve their existing importer. Its pure
+`integration_mapping` replays those declarations, refuses duplicate GUID owners,
+resolves owned DLLs before omitting exporter DLLs and supplies WholeGame defaults
+for remaining source identities. Host contracts feed that mapping to
+`integration_metadata`; complete regenerated-input mapping comparison and final
+catalog production remain open. The later importer-identities stage is excluded.
 `whole-catalog-run` installs, syncs and launches, but it pushes `whole-catalog-selection.json`,
 which makes `PortSession.Start` exit: it checks catalog registration
 (`whole-catalog-result.json`), not gameplay. Gameplay is launched by a runner that pushes an
@@ -4468,3 +4490,11 @@ record packs and a separate new output directory. The existing object pack
 and member-aware layout feed `unity_write.py`; process exit tears down the
 producer while receipts and evidence remain local. No runtime state, Editor,
 new owner or private target-tree supplier is added.
+
+J1183 adds eight scene object selections and eleven Shader selections to those
+same owners. Explicit original scene renderer roots select spine Shader variants;
+whole scenes retain their original recursive content closure. Setup, record-pack
+teardown and local receipts follow the existing contract above. The existing
+`record_produce.py` Director path derives exposed-reference names from original
+asset identity; it adds no runtime state. Its host contract is qualified separately
+from complete Conduit assembly, which remains open.
