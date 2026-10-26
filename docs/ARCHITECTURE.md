@@ -4726,4 +4726,15 @@ identities supply runtime pass selection and native order; SDK source supplies
 programs, including procedural instancing resource buffers. Explicit pinned
 PC/SDK/tool inputs and a separate output directory set up production; process
 exit tears down producers while receipts persist. The persisted Shader record
-is host raw-exact to J850. Full-scene and phone qualification remain open.
+is host raw-exact to J850. Full-scene host qualification is recorded below;
+phone qualification remains open.
+
+Skymeadow complete source-scene selections extend the existing object/Shader
+owners through `recipe/owner-skymeadow-source-objects.json` and the source-lab
+particle Shader profile. Explicit current PC/SDK roots, pinned profiles/tools,
+receipt-pinned source-produced media/Shader packs and a separate output directory
+set up production; process exit tears down producers while receipts persist.
+The existing member-aware writer exposes `payload/skymeadow-source-lab`.
+All 37,402 persisted objects, both serialized members and the compressed bundle
+are host raw-exact against J850. No runtime owner is added; phone production,
+installation and original scene behavior remain open.
