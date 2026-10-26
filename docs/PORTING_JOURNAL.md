@@ -307,4 +307,15 @@ Retained union closes one payload entry: 635/705 available, 630 raw-exact,
 two code comparisons and three drift-explained; 70 missing (7 APK, 63 payload).
 Audited selectors reuse existing owners; 81 focused object/Shader tests pass.
 Host-only; phone production, installation and original scene behavior remain open.
+## J1198 — Source-derived Soul, Mire and Crystalworld Shader records
+
+2026-10-26. Five audited profiles extend the existing Shader record owner:
+Soul perftest 25 records, Mire 25 and Crystalworld 24, from original scene
+resource/material relationships and pinned SDK/public-tool inputs.
+Source-read-guarded CLI output persists before independent comparison;
+all 74 records are byte-exact to J850. Soul uses its own resource/export GUIDs.
+Evidence, profile/output pins: `work/coordination/p1-anim-priority-shaders-v1/`
+(`done.json` and per-pack `independent-comparison.json`).
+32 focused host tests and host preflight pass. Complete-scene readiness
+and phone production, installation and original behavior remain separate gates.
 APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
