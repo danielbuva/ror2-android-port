@@ -122,6 +122,13 @@ public final class ToolHostActivity extends Activity {
         File output=new File(directory,label+".log");
         // Pin before interpreter/JVM startup; a periodic watcher can miss its short heat spike.
         List<String> command=new ArrayList<>(Arrays.asList("/system/bin/taskset","1"));
+        File thermalReceipt=new File(directory,label+"-thermal.json");
+        if(label.equals("owner-backend") || label.equals("public-profile")) {
+            command.addAll(Arrays.asList(new File(nativeDir,"libpythonhost.so").getPath(),
+                new File(nativeDir,"libpython3.14.so").getPath(),new File(directory,"python").getPath(),
+                new File(directory,"repo/tools/phone-build/accepted-output/phone_runner.py").getPath(),
+                "--receipt",thermalReceipt.getPath(),"--timeout","86400","--"));
+        }
         command.addAll(arguments);
         ProcessBuilder builder=new ProcessBuilder(command).directory(directory).redirectErrorStream(true).redirectOutput(output);
         Map<String,String> env=builder.environment();
@@ -139,12 +146,13 @@ public final class ToolHostActivity extends Activity {
             env.put("ROR2LAB_BUILD_JAVA_HOME",new File(directory,"java").getPath());
         }
         java.lang.Process process=builder.start();
-        if(!process.waitFor(label.equals("owner-backend")?86400:90,TimeUnit.SECONDS)){
+        if(!process.waitFor((label.equals("owner-backend") || label.equals("public-profile"))?86400:90,TimeUnit.SECONDS)){
             process.destroy();
             if(!process.waitFor(15,TimeUnit.SECONDS)) process.destroyForcibly();
             throw new IOException(label+" timeout");
         }
         JSONObject result=new JSONObject(); result.put("exit",process.exitValue());result.put("log",output.getName());result.put("sha256",hash(output));
+        if(thermalReceipt.isFile()) result.put("thermal",new JSONObject(text(thermalReceipt)));
         if(process.exitValue()!=0) throw new IOException(label+" exit "+process.exitValue()+" "+text(output).substring(0,Math.min(2000,text(output).length())));
         return result;
     }
