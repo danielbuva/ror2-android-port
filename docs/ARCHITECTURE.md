@@ -4490,3 +4490,11 @@ record packs and a separate new output directory. The existing object pack
 and member-aware layout feed `unity_write.py`; process exit tears down the
 producer while receipts and evidence remain local. No runtime state, Editor,
 new owner or private target-tree supplier is added.
+
+`IntegratedWorldSession.TracePreparation` emits a bounded log marker at each
+initial world-preparation seam, including the existing loot report write,
+asynchronous resource waits, equipment/displays and stage population. Markers
+contain monotonic process time and frame count so thermal traces can identify
+the interrupted operation. They add no retained state, report writes or yields;
+the existing report phase and resource teardown remain authoritative. A marker
+names the operation about to begin; the next marker bounds its elapsed time.
