@@ -1278,11 +1278,12 @@ without the `-c` CPU-list option. Affinity failure refuses production.
 
 Admission requires readable CPU telemetry and observed CPU/GPU/battery/skin
 <= 50 C. The 250 ms sampler continues during pauses and aborts on a gap > 1 s,
-CPU/GPU >= 88 C once, > 80 C for >= 1 s per zone, or battery/skin > 45 C.
+CPU/GPU > 95 C for >= 3 s per zone, or battery >= 43 C. Skin is a metric.
 Unavailable sentinel zones and unrelated PMIC zones are excluded. Runtime limits
 are unchanged by duty cycling. Deadline/cancellation/error cleanup kills the
 owned family without resuming a paused workload. Receipts retain pause count,
-seconds, CPU/GPU peak, affinity, exit and cleanup failures. An adjacent atomic
+seconds, sampled time above 80 C, CPU/GPU peak and its phase (admission,
+production or paused), affinity, exit and cleanup failures. An adjacent atomic
 BOOTTIME pause clock, passed through `ROR2LAB_BUILD_PAUSE_CLOCK`, preserves the
 existing native compiler active-time deadline contract. This host-tested owner
 does not qualify source equivalence, final installation or phone thermal safety.

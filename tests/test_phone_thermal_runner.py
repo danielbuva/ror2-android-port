@@ -31,16 +31,12 @@ class DutyCycleTests(unittest.TestCase):
 
     def test_last_resort_safety_during_pause(self):
         policy = runner.ThermalDutyCycle()
-        for tick in range(13):
-            policy.observe(zones(cpu=85), tick * 0.25)
-        self.assertEqual(policy.receipt(3)["time_above_80_seconds"], 3)
-        self.assertEqual(policy.receipt(3)["peak_cpu_gpu_celsius"], 85)
-        for tick in range(12):
-            policy.observe(zones(cpu=96), 3.25 + tick * 0.25)
+        runner.ThermalDutyCycle().observe(zones(cpu=95, battery=42.9), 0)
+        for tick in [i * 0.25 for i in range(12)]:
+            policy.observe(zones(cpu=96), tick)
         with self.assertRaisesRegex(RuntimeError, "95 C for 3 s"):
-            policy.observe(zones(cpu=96), 6.25)
-        runner.ThermalDutyCycle().observe(zones(cpu=95, battery=46), 0)
-        for values, message in ((zones(battery=46.1), "46 C"), ({}, "unavailable")):
+            policy.observe(zones(cpu=96), 3)
+        for values, message in ((zones(battery=43), "43 C"), ({}, "unavailable")):
             with self.subTest(values=values), self.assertRaisesRegex(RuntimeError, message):
                 runner.ThermalDutyCycle().observe(values, 0)
         policy = runner.ThermalDutyCycle()
@@ -49,6 +45,15 @@ class DutyCycleTests(unittest.TestCase):
             policy.observe(zones(), 1.01)
         with self.assertRaisesRegex(RuntimeError, "admission"):
             runner.ThermalDutyCycle().observe(zones(gpu=50.1), 0, admission=True)
+
+    def test_heat_metrics_do_not_abort_and_streak_resets(self):
+        policy = runner.ThermalDutyCycle()
+        for tick, value in enumerate([81, 89, 95, 96, 95, 96, 95]):
+            policy.observe(zones(cpu=value, battery=42.9), tick * 0.5)
+        receipt = policy.receipt(3)
+        self.assertEqual(receipt["time_above_80_seconds"], 3)
+        self.assertEqual(receipt["peak_cpu_gpu_celsius"], 96)
+        self.assertEqual(receipt["peak_phase"], "paused")
 
     def test_fake_sensor_supervises_command_and_records_pauses(self):
         with tempfile.TemporaryDirectory() as temporary:
