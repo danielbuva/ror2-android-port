@@ -293,7 +293,7 @@ Audited selectors reuse existing owners; 81 focused object/Shader tests pass.
 Host-only; phone production, installation and original scene behavior remain open.
 APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
 
-## J1198 — Original-fragment Standard material ordering
+## J1199 — Original-fragment Standard material ordering
 
 2026-10-26. Existing Shader producer orders retained Standard material features by
 original fragment identities before applying SDK global/builtin variant cycles.
