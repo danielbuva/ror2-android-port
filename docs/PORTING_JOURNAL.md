@@ -52,6 +52,18 @@ Evidence: `work/coordination/p1-player-phone-assembly-v1/android-taskset-mask-ho
 and `phone177-parent-terminal-v4.json` in that directory; independent device cleanup passed.
 Runner SHA-256: `15fdc82f66808db46cf9b25ba17251af12237a32728cc12aecf1391f2e2eb649`.
 No installation or game launch; accepted J850 APK and content readiness are unchanged.
+## J1182 — Source-only J850 catalog identity projection
+
+2026-10-26. Existing integration metadata owner accepts an explicit camera-root extension; current defaults stay intact.
+J850 selects no extension and only closure/mesh sources, following receipted public source commit `1780ea9545`.
+Fresh PC-source catalog analysis plus public importer declarations reproduces all 30,322 locations,
+84,016 keys and 7,458 roots in order against the receipt-linked final catalog's metadata projection.
+Only attempt is normalized; final bundle fields are excluded from this metadata comparison.
+Evidence: `work/coordination/p1-payload-catalog-fresh-v1/metadata-done.json`; generated metadata SHA-256
+`ea85d7903fb23fa103d36c9b877966cdc65506a75f8468d862724d8361718a30`.
+Pinned ThunderKit copies desktop catalogs only; existing J714/J725 host reconstruction remains authoritative.
+33 focused tests, Ruff and host preflight pass. Host-only; readiness stays 598/705, final catalog/manifests,
+remaining payload bundles and phone qualification stay open. No new APK or device claim.
 ## J1183 — Eight complete source-derived scene bundles
 
 2026-10-26. Eight object and eleven Shader profiles complete Lakes/Lakesnight/Sulfurpools spine,
@@ -133,3 +145,44 @@ charging settings remain untouched. CPU/GPU > 95 C for >= 3 s and gap > 1 s rule
 52 focused host tests and Ruff pass; preflight lacks ignored local configuration.
 Evidence: alpha worktree `work/coordination/alpha-battery-health/validation.json`.
 No APK/output generated or installed. Fresh stability/device qualification remains open.
+
+## J1189 — Reconstruct eight further complete scene payloads
+
+2026-10-26. Existing source-only owners reproduce Splash, Habitat, Helminthroost,
+Itgolemplains, Artifactworld03, Itgoolake, Itmoon and Loadingbasic.
+All 60,573 persisted objects, serialized members and compressed bundles are raw-exact
+to J850 after guarded production. Title separately has 26 source-qualified Shader records,
+including SDK terrain base-generation passes; complete Title assembly remains open.
+Evidence/output hashes: `work/coordination/p1-shaders-publication-v2/`,
+`work/coordination/p1-scenes-w/publication-batch-v1/` and Loadingbasic qualifier receipts.
+The readiness union includes Fungal, independently shipped in J1190.
+Readiness: 616/705 available, 611 exact, two code and three drift-explained;
+89 missing (7 APK, 82 payload). Host-only; phone production/install/runtime remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1190 — Complete source-derived Fungal scene
+
+2026-10-26. Audited Fungal selectors extend the existing object producer:
+123,671 records (36,645,626 B), both serialized members and the complete compressed
+bundle are host raw-exact against J850. Output: 14,723,479 B, SHA-256
+`e2addd8bbd3cbb1f30971a114b312ae434b8673905c2cc6fc34e3a6fd4f3edc2`.
+Evidence: `work/coordination/p1-anim/fungal-final-host-v2/qualification-done.json`
+and `work/coordination/p1-anim/fungal-publication-v1/checks-done.json` in the animation worktree.
+Existing target-tree interface exposes `payload/whole-scene-fungal`; no union recount claimed.
+Prior art: retained J1070/J1075 producer and original typed preload policies;
+R2API addressed/direct distinction from the pinned community source index.
+Focused host checks, source-only qualification and provenance review pass.
+Host-only; phone production, installation and original scene behavior remain open.
+
+
+## J1191 — Integrated preparation timing and cleanup race repair
+
+2026-10-26. Existing IntegratedWorldSession emits bounded monotonic-time/frame markers around preparation
+and its existing resource waits; report writes, scheduling and ownership remain unchanged.
+Prior art: pinned R2API AddressReferencedAsset distinguishes request, handle and completion; no code copied.
+Normal IL2CPP code-build source `3749f5d8`, APK `9dd424f4a183d299b0ee03cd325a0cae7c9f863edb8e0b6332c81cd43c3a4dc1`.
+Evidence: `work/coordination/main-port-preparation-trace/` build receipt, focused checks and preflight logs.
+Ten focused trace checks, 45 camera checks (three skips), host preflight and public audit pass.
+Cleanup now tolerates a concurrently removed payload and continues the plan; other errors propagate.
+Nine cleanup regressions and Ruff pass; cleanup receipts are in the same evidence directory.
+Device qualification, hotspot attribution and measured thermal improvement remain open; no gameplay claim.

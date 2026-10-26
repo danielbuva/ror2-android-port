@@ -1257,6 +1257,17 @@ members and five compressed bundles are host-exact against J850. The existing
 target-tree interface exposes these as `payload/<bundle-name>`; phone production,
 assembly and runtime qualification remain open.
 
+Eight further scene selections use the same object command:
+`owner-lakes-spine-objects.json`, `owner-lakesnight-spine-objects.json`,
+`owner-sulfurpools-spine-objects.json`, `owner-satellitescene-objects.json`,
+`owner-limbo-objects.json`, `owner-ironalluvium-objects.json`,
+`owner-ironalluvium2-objects.json` and `owner-lobby-objects.json` under `recipe/`.
+Supply their independently produced media/Shader packs through the existing
+receipt-pinned `--record-pack` interface. These profiles expose 135,541 records,
+16 serialized members and eight compressed bundles, all host-exact against
+J850, as `payload/<bundle-name>`. They add no producer owner or runtime state;
+phone production, installation and scene behavior remain open.
+
 ### Shared on-device producer thermal runner
 
 `phone_runner.py --receipt NEW.json -- COMMAND...` is the current experimental
@@ -1306,3 +1317,25 @@ Its 49,573 objects, two serialized members and complete compressed bundle are
 host-exact against J850. The existing target-tree interface exposes
 `payload/whole-scene-conduitcanyon`; phone production, installation and original
 scene behavior remain open.
+
+Seven additional complete whole scenes use the existing object command with
+`recipe/owner-{splash,habitat,helminthroost,itgolemplains,artifactworld03,itgoolake,itmoon}-whole-objects.json`.
+Receipt-pinned source-produced record packs supply Mesh, texture, director and
+Shader records as selected by each profile. Every persisted object, serialized
+member and compressed bundle is host-exact against J850. Setup remains explicit
+PC/SDK roots and a separate new output directory; process exit tears down the
+producer while local receipts persist. Phone production and original scene
+behavior remain open.
+Fungal uses `recipe/owner-fungal-objects.json` with the existing object command
+and receipt-pinned media/Shader packs. Its 123,671 objects, two serialized
+members and complete compressed bundle are host-exact against J850. The
+existing target-tree interface exposes `payload/whole-scene-fungal`;
+phone production, installation and original scene behavior remain open.
+
+Loadingbasic uses `recipe/owner-loadingbasic-objects.json` and its pinned
+Skybox pack through the existing object command. Its 304 records, two members
+and compressed bundle are host-exact against J850. The Shader record command
+also accepts `owner-title-{postprocess,standard,terrain}-shaders.json`; the terrain
+selection retains SDK-declared passes without material keyword variants.
+Explicit original/SDK/tool roots and a new output directory retain the existing
+setup/teardown contract. Complete Title and phone/runtime gates remain open.
