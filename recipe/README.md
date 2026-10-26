@@ -3656,3 +3656,39 @@ relationships only. No original bodies, shader programs, copied source, private
 paths or credentials are included. Current legitimate PC files and separately
 acquired SDK remain required. Generated records and evidence stay ignored;
 complete Title assembly, phone production and runtime qualification remain open.
+
+## Ten complete spine scene selections (2026-10-26)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-golemplains2-spine-objects.json` | `fdbc8c2042ff83839ecf31359c6161cf583ac7304822d19fe8083e8c1b5e596b` |
+| `owner-golemplains2-spine-lab-standard-shaders.json` | `f815eb48f56767b995df124f0cbf745d43927c1ba0f3318339682c926ee40deb` |
+| `owner-dampcavesimple-spine-objects.json` | `9ac17ef9dbbd1c5bea99ca4b65a5431b7bbf2bcbf33a899e4acb6f9f5b2a9d46` |
+| `owner-dampcavesimple-spine-lab-standard-shaders.json` | `fe93297b7d5332fd30be4482fc3913a07da34c4b9439ec2b9cbe913401c34d03` |
+| `owner-blackbeach2-spine-objects.json` | `e4eb716afda5d23a505bb48728cffc6c10de43b3fabfb53fa38e1a78e58c26fa` |
+| `owner-blackbeach2-spine-lab-standard-shaders.json` | `c5434c885801bf58b90157c7a32ee30093ab552d5f317cad59c877a0f1a2a406` |
+| `owner-foggyswamp-spine-objects.json` | `74c27d2df8f6aba241ef8da26fe075590652699e65a2a39aac8339c0e6ce8418` |
+| `owner-foggyswamp-spine-lab-standard-shaders.json` | `98699484ef630f10a3f1b46ae179882632222dcd1e7287628d4480a064ddd6b3` |
+| `owner-ancientloft-spine-objects.json` | `9c0feb85d569b6762918d4d5fcfa2027979b52e141fdf5ce67437c32a2c50f44` |
+| `owner-ancientloft-spine-lab-standard-shaders.json` | `c3bc501603146d9b536f1f6aa28533109971aa75eea16d2dca00ef4e5f0c13e3` |
+| `owner-village-spine-objects.json` | `7dac53626b27ddb08e951d934015e237279b920f07ba5a2effcc569715e4cc49` |
+| `owner-village-spine-lab-standard-shaders.json` | `fed66e3f3f11e27ce2f7d281ce2f1f0e26a19ccc1b9c59feb528aa4e51be7e47` |
+| `owner-shipgraveyard-spine-objects.json` | `a62dd18b06ae62970984089ddd31fe11d26c4e2081432029a7e16ee0a4195b24` |
+| `owner-shipgraveyard-spine-lab-standard-shaders.json` | `27c295f0fc7dfed9f6cb1009829f0698943ea3fde79096a235d1b4846e28d393` |
+| `owner-goolake-spine-objects.json` | `396ec87613ecbc97e825f7680fa89800920239057a4436d6875c93cd000ad10a` |
+| `owner-goolake-spine-lab-standard-shaders.json` | `485f9a4d3477285cf2c061245ffc7c74f91a3df83dab520a0279b500f94ac918` |
+| `owner-golemplains-spine-objects.json` | `88350424b9e313ec47bacdf8210d962aa9cafeda2fc1610c01d4ce5a881382e0` |
+| `owner-golemplains-spine-lab-standard-shaders.json` | `84cca571218bc56551f82813e3aeb01b45e27dc1b48441365181155849743665` |
+| `owner-blackbeach-spine-objects.json` | `18adebc9c4b4dc9aaa8aa4ea1f54ea23b91d4787a8904801534035382d3f97a1` |
+| `owner-blackbeach-spine-lab-standard-shaders.json` | `591baf62fe9b4b06c270b25bbe0f617b90583e21da174aed00b6d36c1d93ba42` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain original selectors, hashes, checked pointer relationships,
+SDK/public-tool pins and existing authored import policies only. Lossless JSON
+compaction preserves all decoded object selections. Original scene renderer
+and skybox material roots select the reduced-spine Standard variants. No original
+body, curve, scalar payload, pixel, shader program, copied source, private path
+or credential is included. Legitimate PC files, separately acquired SDK and
+receipt-pinned source-produced media/Shader packs remain required. Generated
+outputs and evidence stay ignored. Existing ownership and redistribution
+boundaries apply; phone production, installation and runtime behavior remain open.
