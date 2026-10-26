@@ -4624,3 +4624,21 @@ exit tears down producers while receipts persist. The existing member-aware
 writer exposes `payload/whole-scene-ultima`. All 6,077 persisted objects, both
 serialized members and the compressed bundle are host raw-exact against J850.
 Phone production, installation and original scene behavior remain open.
+
+Sulfurpools complete source-scene selections extend the existing object/Shader
+owners through `recipe/owner-sulfurpools-source-objects.json` and matching
+source-lab Standard/post-processing profiles. Explicit current PC/SDK roots,
+pinned profiles/tools, receipt-pinned source-produced media/Shader packs and a
+separate output directory set up production; process exit tears down each
+producer while local receipts persist. The existing member-aware writer exposes
+`payload/sulfurpools-source-lab`. All 19,503 persisted objects, both serialized
+members and the compressed bundle are host raw-exact against J850. No runtime
+owner is added; phone production, installation and original scene behavior remain open.
+
+Soul perftest, Mire and Crystalworld Shader selections extend the existing
+`payload_shader_records.py` owner. Original scene resource relationships
+select post-processing shaders; recursive original materials select Standard.
+Explicit current PC/SDK roots, pinned profiles/tools and a separate output
+directory set up production; process exit tears down producers while local
+receipts persist. All 74 persisted records are host raw-exact to J850.
+Complete-scene readiness and phone qualification remain separate gates.
