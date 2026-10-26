@@ -98,6 +98,22 @@ writable-execution refusal remains failed.
 
 ## Headless whole-player code jobs
 
+The existing worker also accepts `{"textures": {...}, "output": "work/rgba"}`
+requests. `textures` requires `profile` (relative to staged `repo`),
+`profile_sha256` and `pc` (relative to private `owner-input`). Optional
+`jpeg_codec` and `etc_codec` pins contain `path` relative to the installed native
+library directory and `sha256`; `sdk_toolchain` uses the same pin shape with a
+private input-relative descriptor path. The descriptor retains the texture
+producer's exact absolute SDK/runtime dependency pins. Providers must already
+be acquired and executable in the app sandbox; this route does not acquire or
+relocate them. Optional boolean `resume` selects a verified durable checkpoint.
+Output is private input-relative; a new output is required unless resuming.
+The existing texture owner checks profiles, original bundles, tools and persisted
+extents; the worker checks supplied input hashes before and after production.
+Process exit tears down the job; receipts/checkpoints persist for the caller.
+The existing thermal supervisor still wraps the worker. Host authored-pack
+production/resume passes; ordinary-app texture execution remains unqualified.
+
 `stage.py --owner-backend` also stages the tracked authored owners and target
 profiles. An explicit private `backend-tools.json` supplies hash-bound generic
 compiler/linker/strip/Python-extension ELF providers, native data-tree links and

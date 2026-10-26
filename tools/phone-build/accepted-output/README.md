@@ -816,8 +816,10 @@ and device ownership remain the caller's responsibility.
 
 ## Produce single-mip RGBA textures with the owner-supplied SDK
 
-Current experimental source-only support; full phone-cohort qualification is
-pending. `recipe/owner-rgba-textures.json`, SHA-256
+Current experimental source-only support. J1199 completes the 1,333-record
+Android shell cohort with all three persisted pack hashes exact, resuming a
+verified 521-record prefix. App-host execution remains open.
+`recipe/owner-rgba-textures.json`, SHA-256
 `76e596c4ec3049e471f292d42b2b623092e05596a1a756be66ff08e73bbe6f96`,
 selects 1,277 canonical original textures from 535 PC bundles for the remaining
 1,333 non-Alpha8 ETC2 RGBA/single-mip records. It contains selectors, hashes and
