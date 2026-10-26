@@ -3895,6 +3895,25 @@ and evidence stay ignored. All 74 persisted Shader records are host
 raw-exact against J850. Complete-scene readiness and phone qualification
 remain separate gates.
 
+## Dampcavesimple complete source-scene selections (2026-10-26)
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-dampcavesimple-source-objects.json` | `b9b63ecc12cb8357f5ce240441a10c8b340d8bb883e55f82c29857c8b4fd286c` |
+| `owner-dampcavesimple-source-lab-postprocess-shaders.json` | `7a1e036001844e5f2ad527b130e5c0e66aa5d515686b825c5ee08e7026476476` |
+| `owner-dampcavesimple-source-lab-standard-shaders.json` | `3313421454be04453770f570aa4e86893631e1c9136a6760f069cff4e18bc338` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain original selectors, hashes, checked pointer relationships,
+SDK/public-tool pins and existing authored import policies only. Lossless JSON
+compaction preserves every decoded object selection; both Shader profiles are
+unchanged from the separately qualified source-produced packs. No original
+body, curve, scalar payload, pixel, shader program, copied source, private path
+or credential is included. Legitimate PC files, separately acquired SDK and
+receipt-pinned source-produced media/Shader packs remain required. Generated
+outputs and evidence stay ignored. Existing ownership and redistribution
+boundaries apply; phone production, installation and runtime behavior remain open.
+
 ## Soul, Mire and Crystalworld complete scene selections (2026-10-26)
 
 | Recipe | SHA-256 |
@@ -3924,3 +3943,19 @@ and tool identities only. No shader body, program, copied source, private path
 or credential is included. Legitimate PC input and independently acquired SDK
 remain required; generated records and evidence stay ignored. Host raw equality
 is a separate qualification gate; phone production and runtime remain open.
+## ArtReview Shader selections (2026-10-26)
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-artreview-postprocess-shaders.json` | `6ea7d573778b2c400361d5473eb63c377c8320ba2c384afb1b285548872f8c66` |
+| `owner-artreview-standard-shaders.json` | `031403f7e1e3aaddce1267716201c6702df12375fdddf3596dbfc304d5e87480` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain original selectors, hashes, checked resource/material
+relationships and SDK/public-tool pins only. Standard variant order comes
+from original fragment feature declarations; post-processing uses the pinned
+public exporter templates. No original body, program, copied source, private
+path or credential is included. Legitimate PC input and separately acquired
+SDK remain required; generated records and evidence stay ignored. All 25
+persisted records are host raw-exact against J850. Complete-scene readiness
+and phone qualification remain separate gates.

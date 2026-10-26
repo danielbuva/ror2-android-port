@@ -362,3 +362,20 @@ Evidence: `work/coordination/accepted-build-reconstruction/media-source-v1/rgba-
 Installed APK unchanged: `4666a1107e812d19b3186aa6f528adb745f6b3bb256fbe37f87472cc85b247ac`.
 Existing app worker gains source texture dispatch/resume; seven authored host checks and Ruff pass.
 App-host execution, mip/cube/sky cohorts, complete APK assembly/install and gameplay remain open.
+
+
+## J1202 — Complete source-derived Dampcavesimple bundle
+
+2026-10-26. Existing object/Shader owners reproduce the complete Dampcavesimple
+source bundle from legitimate PC input, acquired SDK and source-produced packs.
+Guarded CLI output persists before independent comparison: all 29,718 objects,
+both serialized members and the compressed bundle are raw-exact to J850.
+Output: 27,013,338 B, SHA-256
+`b638653220321691f0fdde5a3ce8e5fd2bc1648ec56c93d25e7eb7aac1d3d44a`.
+Evidence: `work/coordination/p1-scenes-ss/source-qualification-v5/`
+(`qualification-done.json`, `readiness-union/readiness.json`).
+Retained union closes one payload entry: 636/705 available, 631 raw-exact,
+two code comparisons and three drift-explained; 69 missing (7 APK, 62 payload).
+Audited selectors reuse existing owners and original-backed Standard ordering.
+Host-only; phone production, installation and original scene behavior remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.

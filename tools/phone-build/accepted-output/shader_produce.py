@@ -101,7 +101,7 @@ def string(value):
 
 
 def reflection(rows):
-    result = {"inputs": [], "constants": [], "buffers": [], "textures": [], "bindings": []}
+    result = {"inputs": [], "constants": [], "buffers": [], "textures": [], "bindings": [], "resource_buffers": []}
     current = None
     for line in rows:
         kind, fields = line.split(": ", 1)
@@ -141,6 +141,9 @@ def reflection(rows):
         elif kind == "cbbind":
             name, index = fields
             result["bindings"].append({"name": name, "index": int(index)})
+        elif kind == "bufferbind":
+            name, index, array = fields
+            result["resource_buffers"].append({"name": name, "index": int(index), "array": max(1, int(array))})
         elif kind == "texbind":
             name, texture, sampler, multisample, dimension = fields
             result["textures"].append(
@@ -181,13 +184,15 @@ def native_parameters(reflect, common=None):
             variables(structure["constants"])
     bindings = [row for row in reflect.get("bindings", []) if row not in common.get("bindings", [])]
     textures = [row for row in reflect.get("textures", []) if row not in common.get("textures", [])]
-    result.append(words(len(textures) + len(bindings)))
+    resource_buffers = [row for row in reflect.get("resource_buffers", []) if row not in common.get("resource_buffers", [])]
+    result.append(words(len(textures) + len(bindings) + len(resource_buffers)))
     # SDK SaveParametersToData writes noncommon textures before CB bindings.
     result.extend(
         string(row["name"]) + words(0, row["texture"], row["sampler"] & 0xFFFFFFFF, ((row["dimension"] & 0xFF) << 1) | int(row["multisample"]))
         for row in textures
     )
     result.extend(string(row["name"]) + words(1, row["index"], 0) for row in bindings)
+    result.extend(string(row["name"]) + words(2, row["index"], row["array"]) for row in resource_buffers)
     return b"".join(result)
 
 
@@ -286,6 +291,9 @@ def common_parameters(reflect):
         result["m_ConstantBuffers"].append(row)
     for binding in reflect["bindings"]:
         result["m_ConstantBufferBindings"].append({"m_NameIndex": index(binding["name"]), "m_Index": binding["index"], "m_ArraySize": 1})
+    # SDK CreateNamesTable visits resource buffers after CB bindings.
+    for binding in reflect.get("resource_buffers", []):
+        result["m_BufferParams"].append({"m_NameIndex": index(binding["name"]), "m_Index": binding["index"], "m_ArraySize": binding["array"]})
     return {"m_NameIndices": sorted([[name, i] for i, name in enumerate(names)]), "m_CommonParameters": result}
 
 
@@ -294,7 +302,7 @@ def variant_records(variants, keyword_names):
     reflects = [reflection(variant["compilation"]["reflection"]) for variant in variants]
     common = {
         key: [row for row in reflects[0][key] if all(row in reflect[key] for reflect in reflects[1:])]
-        for key in ("constants", "buffers", "bindings", "textures")
+        for key in ("constants", "buffers", "bindings", "textures", "resource_buffers")
     }
     records, parameters, programs = [], [], []
 

@@ -475,7 +475,7 @@ def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec
     obj = original_object(source, "Shader")
     original = obj.read_typetree()
     sdk_id = profile.get("sdk_shader", 46)
-    expected_name = {46: "Standard", 106: "Skybox/Procedural", 211: "Particles/Standard Unlit", 10626: "Hidden/TerrainEngine/Splatmap/Standard-BaseGen"}[sdk_id]
+    expected_name = {46: "Standard", 106: "Skybox/Procedural", 10626: "Hidden/TerrainEngine/Splatmap/Standard-BaseGen"}[sdk_id]
     if original["m_ParsedForm"]["m_Name"] != expected_name:
         raise ValueError("Standard native type source differs")
     materials = []
@@ -587,7 +587,7 @@ def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec
                 common,
                 compress,
                 native_output,
-                native_order={identity: rows[0] for identity, rows in keyword_rows.items()} if sdk_id in (46, 211) else None,
+                native_order={identity: rows[0] for identity, rows in keyword_rows.items()} if sdk_id == 46 else None,
             )
         # One produced byte extent supplies the three independently named rows.
         (output / "objects.bin").write_bytes(body)
