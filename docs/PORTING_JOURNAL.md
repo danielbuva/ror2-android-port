@@ -118,3 +118,18 @@ with CPU/GPU peaks 81.6/84.8/83.6 C and sampled hot times 0.30/5.23/2.47 s.
 Evidence: alpha worktree `work/coordination/alpha-thermal-policy/replay-results.json`.
 No APK/output generated or installed. Fresh heap/sustained device qualification remains open;
 preflight is blocked by this checkout's missing ignored local configuration.
+
+## J1187 — Exact ordinary-app Android SDK cohort and producer battery cutoff
+
+2026-10-26. Existing SDK producer emits all 15 persisted package entries raw-exact to J850
+inside the ordinary Android app host; the prior 13 are unchanged, including all four DEX files.
+Both generic META-INF metadata outputs now have phone equality evidence; no game input or Editor used.
+Producer 44.279 s; supervised process 48.614 s; peak UID RSS 358,784 KiB; output 60,271 KiB.
+Observed CPU/GPU peak 54.5 C, zero duty pauses or time above 80 C; both OLEDs asleep afterwards.
+Evidence/per-entry SHA-256: `work/coordination/phone-code/android-sdk-phone-v6-proof.json`,
+`android-sdk-phone-v6-result.json`, resources and terminal receipts in the same directory.
+Tool APK SHA-256: `988b8850dffc134c02e7a86cf8bce73b724284c75ff87c4541faaa11bfea87b9`.
+Owned-job cleanup, lease release and mandatory prune passed; game APK unchanged, no game launched.
+Shared producer cutoff corrected to battery >= 43 C; eight focused host tests and Ruff pass.
+Run predates correction and lacks battery/charge admission evidence: current thermal policy unqualified.
+Complete source composition, installation, controls and matched performance remain open.

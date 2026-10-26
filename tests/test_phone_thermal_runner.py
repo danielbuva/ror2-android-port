@@ -31,11 +31,12 @@ class DutyCycleTests(unittest.TestCase):
 
     def test_last_resort_safety_during_pause(self):
         policy = runner.ThermalDutyCycle()
+        runner.ThermalDutyCycle().observe(zones(cpu=95, battery=42.9), 0)
         for tick in [i * 0.25 for i in range(12)]:
             policy.observe(zones(cpu=96), tick)
         with self.assertRaisesRegex(RuntimeError, "95 C for 3 s"):
             policy.observe(zones(cpu=96), 3)
-        for values, message in ((zones(battery=46.1), "46 C"), ({}, "unavailable")):
+        for values, message in ((zones(battery=43), "43 C"), ({}, "unavailable")):
             with self.subTest(values=values), self.assertRaisesRegex(RuntimeError, message):
                 runner.ThermalDutyCycle().observe(values, 0)
         policy = runner.ThermalDutyCycle()
@@ -48,7 +49,7 @@ class DutyCycleTests(unittest.TestCase):
     def test_heat_metrics_do_not_abort_and_streak_resets(self):
         policy = runner.ThermalDutyCycle()
         for tick, value in enumerate([81, 89, 95, 96, 95, 96, 95]):
-            policy.observe(zones(cpu=value, battery=46), tick * 0.5)
+            policy.observe(zones(cpu=value, battery=42.9), tick * 0.5)
         receipt = policy.receipt(3)
         self.assertEqual(receipt["time_above_80_seconds"], 3)
         self.assertEqual(receipt["peak_cpu_gpu_celsius"], 96)
