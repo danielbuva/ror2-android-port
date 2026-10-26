@@ -3582,8 +3582,9 @@ acquired SDK remain required. Generated records and evidence stay ignored;
 complete-bundle, phone and runtime qualification remain separate.
 ## Loadingbasic scene object profile (2026-10-26)
 
-`owner-loadingbasic-objects.json` SHA-256
-`3e46d0b7d2200ee8fa581328a6787d1687f2a66ea1f3bd7b15c3fa66cdb8de64`.
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-loadingbasic-objects.json` | `3e46d0b7d2200ee8fa581328a6787d1687f2a66ea1f3bd7b15c3fa66cdb8de64` |
 
 Manual provenance, privacy, licensing and sensitive-content audit: this profile
 contains original selectors, hashes, checked pointer relationships and existing
@@ -3612,3 +3613,23 @@ PC files, the pinned SDK and independently source-produced media/Shader record
 packs remain required. Generated outputs and raw evidence stay ignored.
 Existing ownership and redistribution boundaries apply; phone production,
 installation and runtime behavior remain open.
+
+## Title Shader source selections (2026-10-26)
+
+The existing Shader record owner produces 24 post-processing records, Standard
+and the SDK terrain base generator. Original resource/material relationships
+and SDK-declared pass metadata select the variants; guarded CLI production
+persists before separate raw comparison of all 26 records.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-title-postprocess-shaders.json` | `0eb16753bed7a2cae353db866db39dcd7ca4b80a028b4026ccb7a4e4a3ab6bbc` |
+| `owner-title-standard-shaders.json` | `fd8ab6354a8cc0712ed3278d6785831497ec01fc5539152486c1a956039a597b` |
+| `owner-title-terrain-shaders.json` | `9252627420b8def7f6e051317edbdd568b6e81e38a65e51811fa604aab753589` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain original selectors, hashes, public SDK/tool pins and output
+relationships only. No original bodies, shader programs, copied source, private
+paths or credentials are included. Current legitimate PC files and separately
+acquired SDK remain required. Generated records and evidence stay ignored;
+complete Title assembly, phone production and runtime qualification remain open.

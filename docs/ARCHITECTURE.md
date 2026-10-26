@@ -4552,3 +4552,13 @@ selections to those owners. Existing Standard scene validation derives enabled f
 variants from original RenderSettings; setup and process teardown retain the same
 explicit roots, source/SDK pins, new output and retained receipt contract. No new
 runtime owner or target-data supplier is introduced.
+
+Nine further complete payloads use the existing object/writer owners:
+Splash, Habitat, Helminthroost, Itgolemplains, Artifactworld03, Itgoolake,
+Itmoon, Loadingbasic and Fungal. Their audited object profiles consume
+receipt-pinned source-produced media and Shader packs. Current PC/SDK roots,
+profile/tool pins and a separate output directory set up each process; exit
+tears down producers while local receipts persist. The same Shader owner adds
+Title post-processing/Standard selections and SDK terrain base-generation
+passes, selected from original native properties and SDK pass declarations.
+No runtime owner is added; phone production and original scene behavior remain open.

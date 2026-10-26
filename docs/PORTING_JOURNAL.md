@@ -145,3 +145,17 @@ charging settings remain untouched. CPU/GPU > 95 C for >= 3 s and gap > 1 s rule
 52 focused host tests and Ruff pass; preflight lacks ignored local configuration.
 Evidence: alpha worktree `work/coordination/alpha-battery-health/validation.json`.
 No APK/output generated or installed. Fresh stability/device qualification remains open.
+
+## J1189 — Reconstruct nine further complete scene payloads
+
+2026-10-26. Existing source-only owners reproduce Splash, Habitat, Helminthroost,
+Itgolemplains, Artifactworld03, Itgoolake, Itmoon, Loadingbasic and Fungal.
+All 184,244 persisted objects, serialized members and compressed bundles are raw-exact
+to J850 after guarded production. Title separately has 26 source-qualified Shader records,
+including SDK terrain base-generation passes; complete Title assembly remains open.
+Evidence/output hashes: `work/coordination/p1-shaders-publication-v2/`,
+`work/coordination/p1-scenes-w/publication-batch-v1/`, Loadingbasic and Fungal qualifier receipts.
+Fungal bundle SHA-256 `e2addd8bbd3cbb1f30971a114b312ae434b8673905c2cc6fc34e3a6fd4f3edc2`.
+Readiness: 616/705 available, 611 exact, two code and three drift-explained;
+89 missing (7 APK, 82 payload). Host-only; phone production/install/runtime remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.

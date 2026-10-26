@@ -1331,3 +1331,11 @@ and receipt-pinned media/Shader packs. Its 123,671 objects, two serialized
 members and complete compressed bundle are host-exact against J850. The
 existing target-tree interface exposes `payload/whole-scene-fungal`;
 phone production, installation and original scene behavior remain open.
+
+Loadingbasic uses `recipe/owner-loadingbasic-objects.json` and its pinned
+Skybox pack through the existing object command. Its 304 records, two members
+and compressed bundle are host-exact against J850. The Shader record command
+also accepts `owner-title-{postprocess,standard,terrain}-shaders.json`; the terrain
+selection retains SDK-declared passes without material keyword variants.
+Explicit original/SDK/tool roots and a new output directory retain the existing
+setup/teardown contract. Complete Title and phone/runtime gates remain open.
