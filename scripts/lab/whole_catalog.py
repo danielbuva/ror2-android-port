@@ -1630,7 +1630,39 @@ def recover_ambiguous_mesh_subobjects(export, unresolved, metadata, native, rece
     return resolved
 
 
-def integration_metadata(metadata, closure, mapped, mesh_subobjects, *, attempt, camera_roots=None):
+def integration_bundle_metadata(metadata, builds):
+    """Assign location owners from explicit AssetBundleBuild declarations, without I/O.
+
+    Mirrors WholeCatalogBuild.Append ownership, not imported dependencies or hashes.
+    Callers supply every explicit build, including presentation and geometry inputs.
+    """
+    owners = {}
+    names = {build["assetBundleName"] for build in builds}
+    for build in builds:
+        for path in build["assetNames"]:
+            key = path.casefold()
+            if key in owners:
+                raise RuntimeError("Duplicate explicit bundle ownership: " + path)
+            owners[key] = build["assetBundleName"]
+    paths = {}
+    for row in metadata["locations"]:
+        key = row["path"].casefold()
+        if key not in owners:
+            paths.setdefault(key, row["path"])
+    names.add("whole-game-content")
+    for key, path in paths.items():
+        if path.lower().endswith(".unity"):
+            name = "whole-scene-" + Path(path).stem.lower()
+            if name in names:
+                raise RuntimeError("Scene bundle name collision: " + name)
+            names.add(name)
+        else:
+            name = "whole-game-content"
+        owners[key] = name
+    return dict(metadata, locations=[dict(row, bundle=owners[row["path"].casefold()]) for row in metadata["locations"]])
+
+
+def integration_metadata(metadata, closure, mapped, mesh_subobjects, *, attempt, camera_roots=None, bundle_builds=None):
     """Assemble catalog identities from regenerated inputs and explicit destination paths.
 
     No project, filesystem, or Editor access; callers own source GUID/path resolution.
@@ -1654,7 +1686,7 @@ def integration_metadata(metadata, closure, mapped, mesh_subobjects, *, attempt,
         next_location_id += 1
     if not roots <= {row["id"] for row in locations}:
         raise RuntimeError("Provider roots lost during staging")
-    return dict(
+    result = dict(
         input_id=closure["input_id"],
         attempt=attempt,
         locations=locations,
@@ -1666,6 +1698,7 @@ def integration_metadata(metadata, closure, mapped, mesh_subobjects, *, attempt,
         runtime_roots=closure.get("runtime_roots", []),
         quarantine=[],
     )
+    return result if bundle_builds is None else integration_bundle_metadata(result, bundle_builds)
 
 
 def prepare_integration(io=None, *, attempt=None):

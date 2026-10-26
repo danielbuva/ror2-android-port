@@ -10,6 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
 from whole_catalog import (
     CAMERA_SHADER_ROOTS,
     integration_metadata,
+    integration_bundle_metadata,
     original_stage_contexts,
     analyze,
     catalog_roots,
@@ -30,6 +31,35 @@ from common import sha, write
 
 
 class IntegrationMetadataTests(unittest.TestCase):
+    def test_bundle_owners_preserve_rows_and_override_scene_fallback_without_io(self):
+        rows = [
+            dict(id=1, path="Assets/Explicit.UNITY", root=True),
+            dict(id=2, path="assets/explicit.unity", root=False),
+            dict(id=3, path="Assets/Ordinary.asset"),
+            dict(id=4, path="Assets/Scene.UNITY"),
+            dict(id=5, path="assets/scene.unity"),
+            dict(id=6, path="Assets/Recovered/geometry.obj"),
+        ]
+        metadata = dict(locations=rows, keys=[dict(key="alias", locations=[1, 2])], roots=[1])
+        builds = [
+            dict(assetBundleName="source-scene", assetNames=["Assets/Explicit.unity"]),
+            dict(assetBundleName="labgeometry", assetNames=["Assets/Recovered/geometry.obj"]),
+        ]
+        with patch("builtins.open", side_effect=AssertionError("ownership must not access files")):
+            result = integration_bundle_metadata(metadata, builds)
+        names = ["source-scene", "source-scene", "whole-game-content", "whole-scene-scene", "whole-scene-scene", "labgeometry"]
+        self.assertEqual(result, dict(metadata, locations=[dict(row, bundle=name) for row, name in zip(rows, names)]))
+        self.assertNotIn("bundle", rows[0])
+
+    def test_bundle_owners_refuse_observed_explicit_and_scene_collisions(self):
+        with self.assertRaisesRegex(RuntimeError, "Duplicate explicit bundle ownership"):
+            integration_bundle_metadata(
+                dict(locations=[]),
+                [dict(assetBundleName="a", assetNames=["Assets/a", "assets/A"])],
+            )
+        with self.assertRaisesRegex(RuntimeError, "Scene bundle name collision"):
+            integration_bundle_metadata(dict(locations=[dict(path="Assets/A/Scene.unity"), dict(path="Assets/B/Scene.unity")]), [])
+
     def setUp(self):
         self.camera = sorted(CAMERA_SHADER_ROOTS)
         ids = self.camera + [900001, 900003, 900002]
@@ -84,6 +114,8 @@ class IntegrationMetadataTests(unittest.TestCase):
         self.assertEqual([row["id"] for row in result["locations"]], [self.camera[0], 900001, 900003])
         self.assertFalse(result["locations"][0]["root"])
         self.assertEqual(result["keys"], self.metadata["keys"])
+        owned = integration_metadata(self.metadata, self.closure, mapped, [], attempt="accepted-fixture", camera_roots=(), bundle_builds=[])
+        self.assertEqual(owned, integration_bundle_metadata(result, []))
 
     def test_recipe_mapping_supplies_metadata_and_mesh_aliases_without_project_scan(self):
         from composition_rebuild import integration_declarations, integration_mapping

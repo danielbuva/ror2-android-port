@@ -1363,7 +1363,12 @@ The optional `camera_roots` argument preserves the current camera extension by
 default. Reconstructing J850 uses an empty extension and the source set from its
 receipted public producer: closure files plus recovered mesh sources. Fresh source
 analysis and recipe declarations reproduce all 30,322 J850 location identities,
-84,016 keys and 7,458 root roles; final bundle fields and catalog bytes remain open.
+84,016 keys and 7,458 root roles. The optional `bundle_builds` declarations feed
+`integration_bundle_metadata`, which assigns explicit case-insensitive owners and
+ordinary/scene fallbacks without filesystem access. Callers supply all explicit
+`assetBundleName`/`assetNames` declarations, including presentation and geometry.
+The source-derived J850 projection matches all 30,322 location owners; final
+bundle hashes, transitive dependencies and catalog bytes remain open.
 `composition_rebuild.integration_declarations` renders ordered R1/R2 importer
 identities from assembly recipes, explicit export metadata copies, additions and
 source-GUID-preserving transforms, then removes unselected native shader importers
