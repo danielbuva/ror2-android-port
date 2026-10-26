@@ -261,6 +261,12 @@ bytes exact. The guarded startup-affinity rerun completes with a 79.2 C peak and
 95.5 C failure remains recorded. Complete content composition, sustained thermal
 qualification and final installation remain open.
 
+J1187 supersedes the SDK output comparison: all 15 persisted entries are raw-exact
+in the ordinary app host, including both metadata files; prior 13 outputs are unchanged.
+Producer time is 44.279 s, peak UID RSS 358,784 KiB and observed CPU/GPU peak 54.5 C.
+The saved run lacks current battery/charge admission evidence; thermal qualification
+remains open. The shared producer now aborts battery at or above 43 C.
+
 The owner APK assembler accepts the complete 15-entry SDK output cohort alongside
 the three mandatory IL2CPP/metadata/Burst files through its existing explicit
 `code` mapping. Host fixtures assemble all 18 outputs without replay files and
@@ -283,9 +289,9 @@ production yields all 15 entries raw-exact to J850. Final-file availability and
 raw equality remain separate from source provenance,
 phone production and runtime acceptance. J1153 records the current exact,
 drift-explained and missing cohorts; the checker preserves actual admitted
-current bytes. Ordinary-app metadata qualification, corrected phone-native
-output, complete content, installation, controls and matched performance remain
-open.
+current bytes. Ordinary-app metadata equality is qualified by J1187. Corrected phone-native
+output, complete content, current thermal policy, installation, controls and matched
+performance remain open.
 
 [J1133](history/journal-J1-J1177/PORTING_JOURNAL.md#j1133--produce-source-animation-hierarchy-and-generic-records-on-the-host)
 extends the source-only object producers. These host-qualified packs still

@@ -11,6 +11,8 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
 | [J1186](PORTING_JOURNAL.md#j1186--apply-the-user-selected-gameplay-thermal-safety-limits) | 2026-10-25 | Apply the user-selected gameplay thermal safety limits | 2026-10-26. |
+| [J1187](PORTING_JOURNAL.md#j1187--exact-ordinary-app-android-sdk-cohort-and-producer-battery-cutoff) | 2026-10-26 | Exact ordinary-app Android SDK cohort and producer battery cutoff | 2026-10-26. |
+| [J1186](PORTING_JOURNAL.md#j1186--apply-the-user-selected-gameplay-thermal-safety-limits) | 2026-10-26 | Apply the user-selected gameplay thermal safety limits | 2026-10-26. |
 | [J1185](PORTING_JOURNAL.md#j1185--complete-conduit-canyon-and-source-fog-shader-retention) | 2026-10-25 | Complete Conduit Canyon and source fog Shader retention | 2026-10-26. |
 | [J1184](PORTING_JOURNAL.md#j1184--isolated-ambient-observation-fixture) | 2026-10-25 | Isolated ambient observation fixture | 2026-10-26. |
 | [J1183](PORTING_JOURNAL.md#j1183--eight-complete-source-derived-scene-bundles) | 2026-10-25 | Eight complete source-derived scene bundles | 2026-10-26. |
