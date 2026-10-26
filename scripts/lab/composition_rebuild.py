@@ -21,6 +21,71 @@ from pathlib import Path
 from common import RECIPE, read
 
 
+def integration_declarations(index, copies, assemblies, additions, transforms, shader_outputs, layout):
+    """Importer writes before R3, from recipes and regenerated source GUIDs.
+
+    Body-only export copies and generated shader bodies preserve their destination
+    importer. R3's default WholeGame copies are resolved by integration_mapping;
+    the final importer-identities stage has not run yet and is not an input here.
+    """
+    guids = {source: guid for guid, source in index.items()}
+
+    def source_guid(source):
+        if source not in guids:
+            raise RuntimeError("Missing discovered source identity: " + source)
+        return guids[source]
+
+    declarations = [(row["path"], row["guid"]) for row in assemblies]
+    declarations.extend((target.removesuffix(".meta"), source_guid(source.removesuffix(".meta"))) for source, target in copies if target.endswith(".meta"))
+    declarations.extend((row["project_path"], row["guid"]) for row in additions)
+    declarations.extend((row["output"], source_guid(row["source"])) for row in transforms)
+    prefix = "Assets/LabLoadingScene/Resources/"
+    selected = {prefix + filename for filename in shader_outputs}
+    # composition_migration.stage removes both body and importer for these names.
+    declarations.extend(
+        (target, None)
+        for target in sorted({target for target, _ in declarations})
+        if target.startswith(prefix + "AndroidNative") and target.endswith(".shader") and target not in selected
+    )
+    # project-inputs runs between composition and catalog-closure.
+    declarations.append(("Assets/LabLoadingScene/NovaInputBridge.cs", layout["runtime_source_guids"]["runtime/input/NovaInputBridge.cs"]))
+    return declarations
+
+
+def integration_mapping(index, sources, declarations):
+    """Resolve regenerated source identities against ordered importer declarations.
+
+    Each declaration is (asset target, GUID); None removes that target's importer.
+    Replay writes before inverting so replacing one target does not retain its old
+    GUID. Callers supply only declarations made before catalog integration, never
+    a scan of the comparison project or the later importer-identities stage.
+    """
+    targets = {}
+    for target, guid in declarations:
+        if guid is None:
+            targets.pop(target, None)
+        else:
+            targets[target] = guid
+    owners = {}
+    for target, guid in targets.items():
+        if guid in owners:
+            raise RuntimeError("Duplicate imported GUID; refuse ambiguous whole-content ownership")
+        owners[guid] = target
+    guids = {source: guid for guid, source in index.items()}
+    mapped = {}
+    for source in sorted(set(sources)):
+        if source not in guids:
+            raise RuntimeError("Missing discovered source identity: " + source)
+        existing = owners.get(guids[source])
+        if existing:
+            mapped[source] = existing
+        elif not source.endswith(".dll"):
+            target = "Assets/WholeGame/" + source.removeprefix("Assets/")
+            mapped[source] = target
+            owners[guids[source]] = target
+    return mapped
+
+
 def catalog_input_path(work, destination, name):
     """One file of the destination's regenerated catalog analysis, never the live catalog pointer (J725)."""
     from catalog_analysis import OUTPUTS, ensure

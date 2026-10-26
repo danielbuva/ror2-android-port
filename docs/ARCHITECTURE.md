@@ -1342,6 +1342,21 @@ synced content payload comes out. Everything game-derived stays under the ignore
 
 Steps 6–9a are the `./dev prototype --action whole-catalog-*` actions listed in
 [whole-catalog-integration.md](whole-catalog-integration.md#reusable-fixes-and-commands).
+`whole_catalog.integration_metadata` assembles integration locations, mesh aliases
+and root roles from regenerated metadata, closure and explicit destination paths.
+It has no filesystem or Editor state; `prepare_integration` still owns source
+GUID/path resolution, staging and receipt writes. Source-only destination mapping
+and final bundle hashes/dependency closure remain separate qualification gates.
+`composition_rebuild.integration_declarations` renders ordered R1/R2 importer
+identities from assembly recipes, explicit export metadata copies, additions and
+source-GUID-preserving transforms, then removes unselected native shader importers
+and applies the intervening project-inputs Nova bridge importer.
+Body-only texture/shader writes preserve their existing importer. Its pure
+`integration_mapping` replays those declarations, refuses duplicate GUID owners,
+resolves owned DLLs before omitting exporter DLLs and supplies WholeGame defaults
+for remaining source identities. Host contracts feed that mapping to
+`integration_metadata`; complete regenerated-input mapping comparison and final
+catalog production remain open. The later importer-identities stage is excluded.
 `whole-catalog-run` installs, syncs and launches, but it pushes `whole-catalog-selection.json`,
 which makes `PortSession.Start` exit: it checks catalog registration
 (`whole-catalog-result.json`), not gameplay. Gameplay is launched by a runner that pushes an
