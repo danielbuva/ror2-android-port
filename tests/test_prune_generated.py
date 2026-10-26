@@ -1,6 +1,7 @@
 import importlib.util
 import json
 import os
+import shutil
 import sys
 import subprocess
 import tempfile
@@ -95,6 +96,29 @@ class PruneGeneratedTests(unittest.TestCase):
         digest = prune.sha256(run / "candidate.apk")
         (self.root / "PORTING_STATE.md").write_text("`" + digest + "`\n")
         self.assertEqual(self.plan().items, [])
+
+    def test_payload_removed_during_deletion_does_not_abort_remaining_cleanup(self):
+        run = self.work / "coordination/concurrent"
+        payload = run / "payload"
+        payload.mkdir(parents=True)
+        binary = run / "candidate.apk"
+        binary.write_bytes(b"old apk")
+        age(run)
+        planner = self.plan()
+        planner.items.sort(key=lambda item: item["path"] != payload)
+        remove_tree = shutil.rmtree
+
+        def concurrent_remove(path):
+            remove_tree(path)
+            raise FileNotFoundError(path)
+
+        ledger = self.work / "cleanup-analysis/ledger.json"
+        with patch.object(prune.shutil, "rmtree", side_effect=concurrent_remove):
+            prune.apply(planner.items, self.work, ledger)
+        self.assertFalse(payload.exists())
+        self.assertFalse(binary.exists())
+        self.assertTrue(binary.with_name("candidate.apk.retired.json").is_file())
+        self.assertEqual(json.loads(ledger.read_text())[0]["skipped"], "already removed by concurrent cleanup")
 
     def test_lane_pruning_retains_recent_live_and_busy_lanes(self):
         lanes = self.root / ".local/build-lanes"
