@@ -4760,3 +4760,12 @@ Explicit pinned PC/SDK/tool inputs and a separate output directory set up
 production; process exit tears down producers while receipts persist. The
 persisted 25,056 B Shader record is host raw-exact to J850. Full-scene assembly
 belongs to the scene owner; phone production and runtime remain open.
+
+Meridian complete source-scene selections extend the existing object/Shader
+owners through `recipe/owner-meridian-whole-objects.json` and the separately
+qualified source-lab particle Shader profile. Explicit current PC/SDK/tool roots,
+pinned profiles, source-produced record packs and a fresh output directory set
+up production; process exit tears down producers while local receipts persist.
+The member-aware writer exposes `payload/whole-scene-meridian`. All 15,814
+objects, both serialized members and the compressed bundle are host raw-exact
+to J850. Phone production, installation and original behavior remain open.

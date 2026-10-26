@@ -467,3 +467,19 @@ Audited source selector reuses existing particle pass, buffer and ordering owner
 Host preflight and 32 focused producer contracts pass; retained scene packs are
 not replayed. Host-only; full-scene readiness and phone gates remain open.
 APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1212 — Complete source-derived Meridian bundle
+
+2026-10-26. Existing object/Shader owners reproduce Meridian from legitimate
+PC input, acquired SDK and receipt-pinned source-produced packs. Guarded
+production persists before independent comparison: all 15,814 objects, both
+serialized members and the compressed bundle are raw-exact to J850.
+Output: 5,507,304 B, SHA-256
+`5333d76ef7a6250132bfc9cec6709fc4252da7346eb2222f9c9175f9575d7a13`.
+Evidence: `work/coordination/p1-scenes-w/final-meridian-v1/whole-scene-meridian/`
+(`qualification-done.json`) and `publication-batch-v6/contribution-done.json`
+under the same scene-owner coordination root. Audited selectors reuse J1210.
+Retained union: 643/705 available, 638 raw-exact; 62 missing (7 APK, 55 payload).
+Readiness: `work/coordination/p1-meridian-scene-publication-v1/done.json`.
+Host-only; phone production, installation and original scene behavior remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
