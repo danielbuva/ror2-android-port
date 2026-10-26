@@ -3997,3 +3997,20 @@ remain required; generated records and evidence stay ignored. The persisted
 30,516 B record is host raw-exact against J850; phone production and runtime
 remain open.
 
+
+## Skymeadow complete source-scene selection (2026-10-26)
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-skymeadow-source-objects.json` | `ed511391e2acb2779237fbda202050d17e7bc8e284257719a78e5adf934b51b5` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: this profile
+contains original selectors, hashes, checked pointer relationships, SDK pins
+and existing authored import policies only. Lossless JSON compaction preserves
+every decoded selection; the separately qualified particle Shader profile above
+is reused unchanged. No original body, curve, scalar payload, pixel, shader
+program, copied source, private path or credential is included. Legitimate PC
+files, separately acquired SDK and receipt-pinned source-produced media/Shader
+packs remain required. Generated outputs and evidence stay ignored. Existing
+ownership and redistribution boundaries apply; phone production, installation
+and original scene behavior remain open.

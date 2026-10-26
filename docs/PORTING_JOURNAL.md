@@ -426,3 +426,18 @@ Audited selectors retain own-resource post-processing provenance and Standard pi
 Three focused producer contracts, host preflight and public audit pass.
 Host-only; phone production, installation and original scene behavior remain open.
 APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1207 — Complete source-derived Skymeadow bundle
+
+2026-10-26. Existing object/Shader owners reproduce Skymeadow from legitimate
+PC input, acquired SDK and source-produced packs. Guarded production persists
+before independent comparison: all 37,402 objects, both serialized members
+and the compressed bundle are raw-exact to J850. Output: 12,368,588 B, SHA-256
+`1e51258fbd0936530580723c91810e1cd3e8bda243245b525fb41067129456da`.
+Evidence: `work/coordination/p1-scenes-ss/source-qualification-v7/`
+(`qualification-done.json`, `readiness-union/readiness.json`).
+Retained Golemplains/ArtReview/Damp union plus this entry: 642/705 available,
+637 raw-exact, two code comparisons, three drift-explained; 63 missing
+(7 APK, 56 payload). Existing policies and accepted particle Shader pack reused.
+Host-only; phone production, installation and original scene behavior remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
