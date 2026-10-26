@@ -156,11 +156,11 @@ not establish a managed-memory bound.
 
 The combined batch supervises temperature zones independently, targeting 250 ms
 samples and refusing gaps above 1 s. Abort when one CPU/GPU zone remains above
-80 C for at least one second, with at least three consecutive samples spaced
-at most 0.35 s apart. A reading at or below 80 C or a longer gap resets that
-zone's continuity. Abort immediately for CPU/GPU above 88 C or battery/skin
-above 45 C. Record brief core spikes and retain the failed case without retry,
-following [J1156](history/journal-J1-J1177/PORTING_JOURNAL.md#j1156--qualify-per-zone-gameplay-thermal-duration-and-limits).
+95 C for at least three seconds, with no sampling gap above one second.
+A reading at or below 95 C resets that zone's continuity. Abort immediately
+for battery above 46 C. Skin temperature and HAL status remain metrics.
+Record sampled time above 80 C, CPU/GPU peak and phase; demanding moments at
+80–85 C do not fail a run. Retain failed cases without automatic retry.
 Before each stage, cool readable CPU/GPU/battery/skin zones to at most 50 C
 with the OLED asleep. Record other physical zones, including power-management,
 charger and USB sensors, as excluded from admission only; continue sampling

@@ -50,11 +50,10 @@ class SustainedCheckTests(unittest.TestCase):
                 sustained.check_session_sustained()
             device.assert_not_called()
 
-    def test_battery_42_and_hal_severe_are_hard_stop_including_missing_observations(self):
-        self.assertEqual(sustained.thermal_sample("temperature: 419", "Thermal Status: 2"), dict(battery_celsius=41.9, thermal_status=2))
+    def test_battery_above_46_stops_and_hal_is_a_metric(self):
+        self.assertEqual(sustained.thermal_sample("temperature: 460", "Thermal Status: 3"), dict(battery_celsius=46, thermal_status=3))
         for battery, thermal in (
-            ("temperature: 420", "Thermal Status: 0"),
-            ("temperature: 400", "Thermal Status: 3"),
+            ("temperature: 461", "Thermal Status: 0"),
             ("", "Thermal Status: 0"),
             ("temperature: 400", ""),
         ):

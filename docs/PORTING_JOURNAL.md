@@ -93,3 +93,16 @@ Evidence/output hashes: animation worktree `work/coordination/p1-anim/conduit-fi
 Readiness: Conduit union 607/705 available, 602 exact, two code and three drift-explained;
 98 missing (7 APK, 91 payload). Host-only; phone production/install/runtime remain open.
 APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1186 — Apply the user-selected gameplay thermal safety limits
+
+2026-10-26. Existing gameplay and producer thermal owners abort CPU/GPU only
+above 95 C continuously for at least 3 s, or battery above 46 C; sample gaps
+above 1 s still invalidate supervision. Admission and producer duty cycles stay.
+Skin/HAL heat is recorded; receipts retain sampled time above 80 C, peak and phase.
+The sustained-session battery check uses the same limit. No runtime pause/replay added.
+57 focused host tests pass; retained J1152/J1164/J1177 traces all pass new limits,
+with CPU/GPU peaks 81.6/84.8/83.6 C and sampled hot times 0.30/5.23/2.47 s.
+Evidence: alpha worktree `work/coordination/alpha-thermal-policy/replay-results.json`.
+No APK/output generated or installed. Fresh heap/sustained device qualification remains open;
+preflight is blocked by this checkout's missing ignored local configuration.
