@@ -359,6 +359,22 @@ class StandardRetentionTests(unittest.TestCase):
 class TwoSeedRetentionTests(unittest.TestCase):
     fixture = StandardRetentionTests.fixture
 
+    def test_single_default_material_without_fog_removes_fog_and_instancing(self):
+        source, materials = self.fixture()
+        materials = materials[:1]
+        materials[0]["m_EnableInstancingVariants"] = False
+        _, selections = S.standard_selections(source, materials, None)
+        self.assertEqual(selections[10], [[["DIRECTIONAL"]]] * 3)
+
+    def test_no_fog_still_retains_original_emission_and_instancing(self):
+        source, materials = self.fixture()
+        _, selections = S.standard_selections(source, materials[:2], None)
+        rows = selections[10][0]
+        self.assertEqual(4, len(rows))
+        self.assertTrue(any("_EMISSION" in row for row in rows))
+        self.assertTrue(any("INSTANCING_ON" in row for row in rows))
+        self.assertFalse(any(key.startswith("FOG_") for row in rows for key in row))
+
     def test_two_original_materials_retain_emission_and_instancing_without_other_features(
         self,
     ):
@@ -414,6 +430,14 @@ class StandardSceneUsageTests(unittest.TestCase):
         before = deepcopy((fog, maps, renderers))
         S.validate_standard_scene(fog, maps, renderers)
         self.assertEqual(before, (fog, maps, renderers))
+
+    def test_disabled_fog_ignores_inactive_exp_mode(self):
+        fog, maps, renderers = self.fixture()
+        fog[0].update(m_Fog=False, m_FogMode=3)
+        self.assertIsNone(S.validate_standard_scene(fog, maps, renderers))
+        fog[0].update(m_Fog=True)
+        with self.assertRaisesRegex(ValueError, "fog retention"):
+            S.validate_standard_scene(fog, maps, renderers)
 
     def test_actual_baked_data_and_realtime_mapping_reject(self):
         fog, maps, renderers = self.fixture()

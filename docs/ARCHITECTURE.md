@@ -656,6 +656,11 @@ Original emission/instancing values and scene fog/actual lightmap usage govern
 retention; source keyword order controls the shared API's native pool emission.
 The owner resolves original/SDK fallback identity before emitting final resource
 pointers. Each context writes one body extent for its explicit destinations.
+The same pack owner selects Shipgraveyard post-processing and Repurposed Crater
+HideVertices through public templates. Its Skybox context follows original scene
+RenderSettings and material Shader pointers, reads SDK106 and retains source
+material keywords through the shared SDK compiler. These contexts emit the same
+pack interface and use the existing compiler teardown.
 This is host qualification of retained content;
 phone execution stays open.
 

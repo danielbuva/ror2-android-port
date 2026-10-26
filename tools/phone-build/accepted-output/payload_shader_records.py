@@ -253,7 +253,7 @@ def produce_postprocessing(
 
 def validate_standard_scene(fog, maps, renderers):
     """Check source scene fog and actual lightmap use, independent of bake preferences."""
-    if len(fog) != 1 or len(maps) != 1 or not fog[0]["m_Fog"] or fog[0]["m_FogMode"] != 1:
+    if len(fog) != 1 or len(maps) != 1 or (fog[0]["m_Fog"] and fog[0]["m_FogMode"] != 1):
         raise ValueError("Standard source scene fog retention differs")
     lighting = maps[0]
     if lighting["m_Lightmaps"]:
@@ -272,12 +272,13 @@ def validate_standard_scene(fog, maps, renderers):
     for value in renderers:
         if any(value[key] != 65535 for key in ("m_LightmapIndex", "m_LightmapIndexDynamic") if key in value):
             raise ValueError("Standard source renderer uses a lightmap")
+    return "FOG_LINEAR" if fog[0]["m_Fog"] else None
 
 
-def standard_selections(original_sdk, materials):
+def standard_selections(original_sdk, materials, fog_keyword="FOG_LINEAR"):
     """Return source runtime form and ordered per-tier Standard keyword rows."""
     source = deepcopy(original_sdk)
-    if source["m_ParsedForm"]["m_Name"] != "Standard" or len(materials) not in (2, 3):
+    if source["m_ParsedForm"]["m_Name"] != "Standard" or len(materials) not in (1, 2, 3):
         raise ValueError("bounded Standard source selection differs")
     form = source["m_ParsedForm"]
     snippets = dict(source["m_CompileInfo"]["m_Snippets"])
@@ -329,7 +330,7 @@ def standard_selections(original_sdk, materials):
                         continue
                     choices = []
                     for name in axis:
-                        if name.startswith("FOG_") and name != "FOG_LINEAR":
+                        if name.startswith("FOG_") and name != fog_keyword:
                             continue
                         if name == "INSTANCING_ON" and not any(material["m_EnableInstancingVariants"] for material in materials):
                             continue
@@ -386,7 +387,9 @@ def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec
 
     obj = original_object(source, "Shader")
     original = obj.read_typetree()
-    if original["m_ParsedForm"]["m_Name"] != "Standard":
+    sdk_id = profile.get("sdk_shader", 46)
+    expected_name = {46: "Standard", 106: "Skybox/Procedural"}[sdk_id]
+    if original["m_ParsedForm"]["m_Name"] != expected_name:
         raise ValueError("Standard native type source differs")
     materials = []
     for selected in profile["materials"]:
@@ -400,30 +403,46 @@ def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec
             raise ValueError("Standard material shader member differs")
         materials.append(value)
     environment = UnityPy.load(str(P.relative(pc, profile["scene"]["path"])))
-    fog = [obj.read_typetree() for obj in environment.objects if obj.type.name == "RenderSettings"]
-    maps = [obj.read_typetree() for obj in environment.objects if obj.type.name == "LightmapSettings"]
-    validate_standard_scene(
+    scene_objects = [obj for obj in environment.objects if "member" not in profile["scene"] or obj.assets_file.name == profile["scene"]["member"]]
+    fog = [obj.read_typetree() for obj in scene_objects if obj.type.name == "RenderSettings"]
+    maps = [obj.read_typetree() for obj in scene_objects if obj.type.name == "LightmapSettings"]
+    fog_keyword = validate_standard_scene(
         fog,
         maps,
-        [renderer.read_typetree() for renderer in environment.objects if renderer.type.name.endswith("Renderer")],
+        [renderer.read_typetree() for renderer in scene_objects if renderer.type.name.endswith("Renderer")],
     )
     sdk_pin = profile["compiler_sdk"]["Resources/unity_builtin_extra"]["sha256"]
-    sdk_source = SDK.sdk_source(sdk, 46, sdk_pin)
-    source_runtime, keyword_rows = standard_selections(sdk_source, materials)
-    # SDK source Standard depends on its own Legacy/VertexLit6. The original
-    # PC dependency independently resolves that same named shader in its CAB.
-    dependencies = original["m_Dependencies"]
-    if len(dependencies) != 1 or dependencies[0]["m_FileID"] != 0:
-        raise ValueError("Standard original fallback relationship differs")
-    fallback = obj.assets_file.objects[dependencies[0]["m_PathID"]]
-    name = fallback.read_typetree()["m_ParsedForm"]["m_Name"]
-    sdk_fallback = SDK.sdk_source(sdk, 6, sdk_pin)
-    if fallback.type.name != "Shader" or name != "Legacy Shaders/VertexLit" or sdk_fallback["m_ParsedForm"]["m_Name"] != name:
-        raise ValueError("Standard original/SDK fallback identities differ")
-    if source_runtime["m_Dependencies"] != [{"m_FileID": 0, "m_PathID": 6}]:
-        raise ValueError("Standard SDK fallback relationship differs")
-    # All three selected scene members put Resources/unity_builtin_extra first.
-    source_runtime["m_Dependencies"] = [{"m_FileID": 1, "m_PathID": 6}]
+    sdk_source = SDK.sdk_source(sdk, sdk_id, sdk_pin)
+    if sdk_id == 106:
+        selected = profile["materials"][0]
+        pointer = fog[0]["m_SkyboxMaterial"]
+        render = next(row for row in scene_objects if row.type.name == "RenderSettings")
+        if len(materials) != 1 or pointer["m_PathID"] != selected["path_id"] or not pointer["m_FileID"]:
+            raise ValueError("source scene skybox material differs")
+        if Path(render.assets_file.externals[pointer["m_FileID"] - 1].path).name != selected["member"]:
+            raise ValueError("source scene skybox member differs")
+        if original["m_Dependencies"] or sdk_source["m_Dependencies"]:
+            raise ValueError("source skybox dependencies differ")
+        source_runtime = sdk_source
+        keyword_rows = P.sdk_scene_selections(
+            source_runtime, set(materials[0].get("m_ValidKeywords", [])) | set(materials[0].get("m_ShaderKeywords", "").split())
+        )
+    else:
+        source_runtime, keyword_rows = standard_selections(sdk_source, materials, fog_keyword)
+        # SDK source Standard depends on its own Legacy/VertexLit6. The original
+        # PC dependency independently resolves that same named shader in its CAB.
+        dependencies = original["m_Dependencies"]
+        if len(dependencies) != 1 or dependencies[0]["m_FileID"] != 0:
+            raise ValueError("Standard original fallback relationship differs")
+        fallback = obj.assets_file.objects[dependencies[0]["m_PathID"]]
+        name = fallback.read_typetree()["m_ParsedForm"]["m_Name"]
+        sdk_fallback = SDK.sdk_source(sdk, 6, sdk_pin)
+        if fallback.type.name != "Shader" or name != "Legacy Shaders/VertexLit" or sdk_fallback["m_ParsedForm"]["m_Name"] != name:
+            raise ValueError("Standard original/SDK fallback identities differ")
+        if source_runtime["m_Dependencies"] != [{"m_FileID": 0, "m_PathID": 6}]:
+            raise ValueError("Standard SDK fallback relationship differs")
+        # All three selected scene members put Resources/unity_builtin_extra first.
+        source_runtime["m_Dependencies"] = [{"m_FileID": 1, "m_PathID": 6}]
     tiers = [deepcopy(profile["settings"]) for _ in range(3)]
     for tier, quality in zip(tiers, (0, 1, 1)):
         tier["tier0"]["standardShaderQuality"] = quality
@@ -461,7 +480,7 @@ def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec
                 common,
                 compress,
                 native_output,
-                native_order={identity: rows[0] for identity, rows in keyword_rows.items()},
+                native_order={identity: rows[0] for identity, rows in keyword_rows.items()} if sdk_id == 46 else None,
             )
         # One produced byte extent supplies the three independently named rows.
         (output / "objects.bin").write_bytes(body)
