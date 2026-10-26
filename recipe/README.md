@@ -3448,3 +3448,20 @@ credential is included. Current legitimate PC files, SDK resources and checked
 source-produced record packs remain required. Generated outputs and evidence
 stay ignored. Existing redistribution and ownership boundaries apply; phone
 execution and runtime qualification remain open.
+
+## Conduit Canyon complete scene object profile (2026-10-26)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-conduitcanyon-objects.json` | `28241c71cbe333cb25a2ac210c75cf10c91e92aab7887dec0179248e37827474` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: this profile
+contains source selectors, hashes, checked pointer relationships and authored
+import policies only. No original body, curve, scalar, pixel, program, copied
+source, private path or credential is included. Source-qualified preload
+relationships use original GameObject witnesses, pinned SDK dependencies and
+the qualified imported-model exclusion. Current legitimate PC files, SDK
+resources and independently source-produced Mesh, director and Shader record
+packs remain required. Generated outputs and evidence stay ignored. Existing
+redistribution and ownership boundaries apply; phone execution and runtime
+qualification remain open.
