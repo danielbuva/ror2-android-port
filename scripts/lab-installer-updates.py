@@ -35,6 +35,8 @@ PRODUCER = "tools/phone-build/accepted-output/record_produce.py"
 JOB = "recipe/synthetic-installer-update-job.json"
 INPUTS = "recipe/synthetic-installer-update-inputs.json"
 KEY_ID = "dots-synthetic-extra-test"
+DIAGNOSTICS = None
+CURRENT_PHASE = "setup"
 
 
 class Failure(Exception):
@@ -56,11 +58,46 @@ def sha(value):
     return hashlib.sha256(value).hexdigest()
 
 
-def run(argv, *, label, stdin=None, timeout=300):
+class PrivateDiagnostics:
+    """Persist raw child output locally, never command arguments or stdin."""
+
+    def __init__(self, parent):
+        parent.mkdir(parents=True, exist_ok=True)
+        self.directory = Path(tempfile.mkdtemp(prefix="run-", dir=parent))
+        self.sequence = 0
+
+    def write(self, name, data):
+        descriptor = os.open(self.directory / name, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        with os.fdopen(descriptor, "wb") as stream:
+            stream.write(data)
+
+    def record(self, category, *, stdout=b"", stderr=b"", returncode=None, outcome="returned"):
+        self.sequence += 1
+        prefix = f"{self.sequence:05d}-{category}"
+        self.write(prefix + ".stdout.log", stdout or b"")
+        self.write(prefix + ".stderr.log", stderr or b"")
+        self.write(prefix + ".json", encoded({"phase": CURRENT_PHASE, "category": category, "returncode": returncode, "outcome": outcome}))
+
+
+def set_phase(phase):
+    global CURRENT_PHASE
+    CURRENT_PHASE = phase
+
+
+def execute(argv, *, label, stdin=None, timeout=300):
     try:
         result = subprocess.run(list(map(str, argv)), input=stdin, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout, check=False)
     except (OSError, subprocess.TimeoutExpired) as error:
+        if DIAGNOSTICS is not None:
+            DIAGNOSTICS.record(label, stdout=getattr(error, "stdout", b""), stderr=getattr(error, "stderr", b""), outcome=type(error).__name__)
         raise Failure(label) from error
+    if DIAGNOSTICS is not None:
+        DIAGNOSTICS.record(label, stdout=result.stdout, stderr=result.stderr, returncode=result.returncode)
+    return result
+
+
+def run(argv, *, label, stdin=None, timeout=300):
+    result = execute(argv, label=label, stdin=stdin, timeout=timeout)
     if result.returncode:
         raise Failure(label)
     return result.stdout
@@ -288,13 +325,14 @@ class Phone:
         self.allow_test_installs = allow_test_installs
         self.adb = Path("/opt/homebrew/bin/adb")
         self.owned_installer = False
+        self.install_attempted = False
         self.installer_hash = None
         self.alpha_hash = None
         self.reverse_port = None
         self.install_volume = None
         self.ui_path = "/data/local/tmp/ror2-installer-ui-" + secrets.token_hex(8) + ".xml"
 
-    def command(self, *args, stdin=None, label="device-command", timeout=60):
+    def command(self, *args, stdin=None, label, timeout=60):
         return run([self.adb, "-s", self.serial, *args], label=label, stdin=stdin, timeout=timeout)
 
     def shell(self, *args, **kwargs):
@@ -303,16 +341,7 @@ class Phone:
     def package_paths(self, package):
         # Android pm path reports an absent package with either exit 0 or 1.
         # This exception belongs only to this read-only query, not generic ADB.
-        try:
-            result = subprocess.run(
-                [str(self.adb), "-s", self.serial, "shell", "pm", "path", package],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                timeout=60,
-                check=False,
-            )
-        except (OSError, subprocess.TimeoutExpired) as error:
-            raise Failure("device-package-path-query") from error
+        result = execute([self.adb, "-s", self.serial, "shell", "pm", "path", package], label="device-package-path-query", timeout=60)
         if result.returncode in (0, 1) and result.stdout == b"" and result.stderr == b"":
             return []
         if result.returncode or result.stderr:
@@ -330,7 +359,7 @@ class Phone:
         if len(paths) != 1 or not paths[0].startswith("package:"):
             raise Failure("installed-package-shape")
         # Hash only; APK bytes never leave the lab device for readback.
-        value = self.shell("sha256sum", paths[0][8:]).decode().split()[0]
+        value = self.shell("sha256sum", paths[0][8:], label="device-package-hash").decode().split()[0]
         if not re.fullmatch(r"[0-9a-f]{64}", value):
             raise Failure("installed-package-hash")
         return value
@@ -348,7 +377,7 @@ class Phone:
     def storage(self):
         # Discover today's mounted adopted volumes; do not remember, print,
         # reconfigure, or move anything between their private identifiers.
-        volumes = self.shell("sm", "list-volumes", "private").decode().splitlines()
+        volumes = self.shell("sm", "list-volumes", "private", label="device-storage-volumes").decode().splitlines()
         choices = [("internal", "/data")]
         for row in volumes:
             fields = row.split()
@@ -356,7 +385,7 @@ class Phone:
                 if not re.fullmatch(r"[A-Za-z0-9-]+", fields[2]):
                     raise Failure("device-storage-volume-shape")
                 choices.append((fields[2], "/mnt/expand/" + fields[2]))
-        observed = [(self.available(self.shell("df", "-k", path)), volume) for volume, path in choices]
+        observed = [(self.available(self.shell("df", "-k", path, label="device-storage-volume-free")), volume) for volume, path in choices]
         if not self.owned_installer:
             available, self.install_volume = max(observed)
             if available < 15 * 1024**3:
@@ -368,8 +397,8 @@ class Phone:
             paths = self.package_paths(package)
             if len(paths) != 1 or not paths[0].startswith("package:"):
                 raise Failure("device-package-placement-unavailable")
-            code = self.available(self.shell("df", "-k", paths[0][8:]))
-            data = self.available(self.shell("run-as", package, "df", "-k", "."))
+            code = self.available(self.shell("df", "-k", paths[0][8:], label="device-storage-code-free"))
+            data = self.available(self.shell("run-as", package, "df", "-k", ".", label="device-storage-data-free"))
             if min(code, data) < 15 * 1024**3:
                 raise Failure("device-storage-reserve")
 
@@ -379,20 +408,22 @@ class Phone:
         path = "files/owner-input/" + name
         if not re.fullmatch(r"[A-Za-z0-9_./+-]+", path) or ".." in path.split("/"):
             raise Failure("test-input-path")
-        self.shell("run-as", PACKAGE, "mkdir", "-p", str(Path(path).parent))
-        self.command("shell", "run-as", PACKAGE, "sh", "-c", "'cat > " + path + "'", stdin=data)
+        self.shell("run-as", PACKAGE, "mkdir", "-p", str(Path(path).parent), label="device-input-directory")
+        self.command("shell", "run-as", PACKAGE, "sh", "-c", "'cat > " + path + "'", stdin=data, label="device-input-write")
 
     def read(self, name):
         path = "files/owner-input/" + name
-        result = self.command("shell", "run-as", PACKAGE, "sh", "-c", "'if [ -f " + path + " ]; then cat " + path + "; else printf null; fi'")
+        result = self.command(
+            "shell", "run-as", PACKAGE, "sh", "-c", "'if [ -f " + path + " ]; then cat " + path + "; else printf null; fi'", label="device-state-read"
+        )
         return json.loads(result)
 
     def ui(self):
-        self.shell("uiautomator", "dump", self.ui_path, timeout=30)
+        self.shell("uiautomator", "dump", self.ui_path, timeout=30, label="device-ui-dump")
         try:
-            value = self.shell("cat", self.ui_path)
+            value = self.shell("cat", self.ui_path, label="device-ui-read")
         finally:
-            self.shell("rm", "-f", self.ui_path)
+            self.shell("rm", "-f", self.ui_path, label="device-ui-remove")
         start, end = value.find(b"<?xml"), value.rfind(b"</hierarchy>")
         if start < 0 or end < 0:
             raise Failure("ui-hierarchy-unavailable")
@@ -406,7 +437,7 @@ class Phone:
                 if not bounds:
                     raise Failure("ui-button-bounds")
                 x1, y1, x2, y2 = map(int, bounds.groups())
-                self.shell("input", "tap", str((x1 + x2) // 2), str((y1 + y2) // 2))
+                self.shell("input", "tap", str((x1 + x2) // 2), str((y1 + y2) // 2), label="device-ui-tap")
                 return True
         return False
 
@@ -434,15 +465,15 @@ class Phone:
                 if current and current == previous:
                     break
                 previous = current
-                self.shell("input", "swipe", str(x), str(direction[0]), str(x), str(direction[1]), "250")
+                self.shell("input", "swipe", str(x), str(direction[0]), str(x), str(direction[1]), "250", label="device-ui-scroll")
                 if self.tap_visible(label):
                     return True
         raise Failure("ui-button-unavailable")
 
     def start(self):
-        self.shell("input", "keyevent", "KEYCODE_WAKEUP")
-        self.shell("wm", "dismiss-keyguard")
-        self.shell("am", "start", "-n", ACTIVITY)
+        self.shell("input", "keyevent", "KEYCODE_WAKEUP", label="device-display-wake")
+        self.shell("wm", "dismiss-keyguard", label="device-keyguard-dismiss")
+        self.shell("am", "start", "-n", ACTIVITY, label="device-installer-launch")
         time.sleep(1)
 
     def wait_state(self, expected):
@@ -490,23 +521,24 @@ class Phone:
         raise Failure("install-readback-timeout")
 
     def await_install_permission(self):
-        value = self.shell("appops", "get", PACKAGE, "REQUEST_INSTALL_PACKAGES").decode()
+        value = self.shell("appops", "get", PACKAGE, "REQUEST_INSTALL_PACKAGES", label="device-install-permission-query").decode()
         if re.search(r"REQUEST_INSTALL_PACKAGES: allow\b", value):
             return
         if not self.allow_test_installs or not self.owned_installer:
             raise Failure("install-permission-owner-authorization-required")
         # The root lab invocation may pass this flag ONLY after explicit owner
         # authorization for this fresh disposable test package on the leased phone.
-        self.shell("appops", "set", PACKAGE, "REQUEST_INSTALL_PACKAGES", "allow")
+        self.shell("appops", "set", PACKAGE, "REQUEST_INSTALL_PACKAGES", "allow", label="device-install-permission-enable")
 
     def cleanup(self):
         # Only delete exact packages installed by this fresh run. Unknown or
         # changed packages, including a failed in-flight alpha, are retained.
+        packages_absent = False
         try:
             if self.reverse_port is not None:
-                self.command("reverse", "--remove", "tcp:" + str(self.reverse_port))
+                self.command("reverse", "--remove", "tcp:" + str(self.reverse_port), label="device-reverse-remove")
             if self.owned_installer:
-                self.shell("am", "force-stop", PACKAGE)
+                self.shell("am", "force-stop", PACKAGE, label="device-installer-stop")
                 if self.occupied(GAME):
                     ready = self.read("owner-apk-ready.json")
                     owned = self.read("installed-release.json")
@@ -516,16 +548,24 @@ class Phone:
                     matches = [row for row in (ready, owned) if row and row.get("application_id") == GAME and row.get("sha256") == actual]
                     if not matches:
                         raise Failure("cleanup-alpha-ownership-not-established")
-                    self.command("uninstall", GAME)
+                    self.command("uninstall", GAME, label="cleanup-alpha-uninstall")
                     if self.occupied(GAME):
                         raise Failure("cleanup-alpha-still-installed")
                 if self.package_hash(PACKAGE) != self.installer_hash:
                     raise Failure("cleanup-installer-ownership-changed")
-                self.command("uninstall", PACKAGE)
+                self.command("uninstall", PACKAGE, label="cleanup-installer-uninstall")
                 if self.occupied(PACKAGE):
                     raise Failure("cleanup-installer-still-installed")
+                packages_absent = True
+            elif self.install_attempted:
+                # Installation may have completed before an ADB/readback error.
+                # Unknown ownership permits observation, never deletion.
+                if self.occupied(PACKAGE) or self.occupied(GAME):
+                    raise Failure("cleanup-package-ownership-unverified")
+                packages_absent = True
         finally:
-            self.shell("input", "keyevent", "KEYCODE_SLEEP")
+            self.shell("input", "keyevent", "KEYCODE_SLEEP", label="device-display-sleep")
+        return "verified-absent" if packages_absent else "not-checked"
 
 
 def publisher_keys(temporary, name):
@@ -564,21 +604,29 @@ def prepare_artifacts(config, temporary):
 
 
 def acceptance(phone, config, temporary, passed):
+    set_phase("pre-install-checks")
     if phone.occupied(GAME) or phone.occupied(PACKAGE):
         raise Failure("occupied-package-no-fresh-run-ownership")
     phone.storage()
+    set_phase("host-fixture-build")
     apk, inputs, key, releases, wrong = prepare_artifacts(config, temporary)
+    set_phase("pre-install-storage")
     phone.storage()
+    set_phase("installer-install")
+    phone.install_attempted = True
     phone.command("install", "--force-uuid", phone.install_volume, str(apk), timeout=600, label="install-fresh-test-installer")
     phone.installer_hash = sha(apk.read_bytes())
     if phone.package_hash(PACKAGE) != phone.installer_hash:
         raise Failure("test-installer-readback")
     phone.owned_installer = True
+    set_phase("installer-storage")
     phone.storage()
+    set_phase("installer-permission")
     phone.await_install_permission()
+    set_phase("fixture-provision")
     with server() as service:
         base = publish(service, releases[1], 1)
-        phone.command("reverse", "--no-rebind", "tcp:" + str(service.server_port), "tcp:" + str(service.server_port))
+        phone.command("reverse", "--no-rebind", "tcp:" + str(service.server_port), "tcp:" + str(service.server_port), label="device-reverse-create")
         phone.reverse_port = service.server_port
         phone.put("debug-release-source.json", encoded({"enabled": True, "base_url": base, "key_id": KEY_ID, "public_key": key.decode()}))
         for name, data in inputs.items():
@@ -586,23 +634,28 @@ def acceptance(phone, config, temporary, passed):
         # Input bytes are generated above, not copied from any owner directory.
         # The production Python admission rehashes the signed manifest itself.
         phone.put("import-state.json", encoded({"state": "IMPORTED", "message": "Synthetic test inputs only"}))
+        set_phase("baseline-N-check")
         phone.start()
         phone.tap("Don't allow", required=False)
         phone.check(1)
         if not any("TEST RELEASE SOURCE" in node.get("text", "") for node in phone.ui().iter("node")):
             raise Failure("debug-source-warning-not-visible")
+        set_phase("baseline-N-install")
         phone.storage()
         phone.tap("Reconstruct and install verified game")
         first = phone.installed(1)
+        set_phase("check-for-updates")
         publish(service, releases[2], 2)
         phone.check(2)
         if "/public-tools.zip" in service.requests:
             raise Failure("check-downloaded-bundle-before-consent")
         passed("check-for-updates")
+        set_phase("update-N-to-N+1")
         phone.storage()
         phone.tap("Reconstruct and install verified game")
         second = phone.installed(2, first)
         passed("update-N-to-N+1")
+        set_phase("same-key-rollback")
         phone.storage()
         phone.tap("Rebuild and install previous release (same key)")
         rolled = phone.installed(1, second)
@@ -612,6 +665,7 @@ def acceptance(phone, config, temporary, passed):
         body["version"] = "synthetic-tampered"
         tampered["release.json"] = encoded(body)
         for case, files in (("tampered-manifest-refused", tampered), ("wrong-key-release-refused", wrong)):
+            set_phase(case)
             publish(service, files, 2)
             before = phone.read("installed-release.json")
             phone.put("update-state.json", encoded({"state": "TEST_WAIT"}))
@@ -624,7 +678,66 @@ def acceptance(phone, config, temporary, passed):
             passed(case)
 
 
+def inspect_state(expected_installer_hash, timeout, *, conflicting_mode=False):
+    """Observe only the two fixed packages; never adopt ownership or clean up."""
+    result = {
+        "mode": "inspect-state",
+        "status": "observed",
+        "installer": {"presence": "unknown", "hash": "not-read", "install_permission": "unknown"},
+        "alpha": {"presence": "unknown", "hash": "not-read"},
+        "errors": [],
+    }
+
+    def failed(error):
+        result["status"] = "error"
+        result["errors"].append(str(error) if isinstance(error, Failure) else "unexpected-inspection-error")
+
+    try:
+        if conflicting_mode:
+            raise Failure("inspection-cannot-build-or-enable-installs")
+        if not expected_installer_hash or not re.fullmatch(r"[0-9a-f]{64}", expected_installer_hash):
+            raise Failure("inspection-requires-expected-installer-sha256")
+        serial = os.environ.get("LAB_DEVICE_SERIAL")
+        if not serial:
+            raise Failure("LAB_DEVICE_SERIAL-required-use-authorized-lab-runner")
+        phone = Phone(serial, timeout)
+        for name, package in (("installer", PACKAGE), ("alpha", GAME)):
+            row = result[name]
+            try:
+                present = phone.occupied(package)
+                row["presence"] = "present" if present else "absent"
+                if present:
+                    digest = phone.package_hash(package)
+                    row["hash"] = ("match" if digest == expected_installer_hash else "mismatch") if name == "installer" else "read"
+                else:
+                    row["hash"] = "absent"
+            except Exception as error:
+                failed(error)
+        if result["installer"]["presence"] == "present":
+            try:
+                value = phone.shell("appops", "get", PACKAGE, "REQUEST_INSTALL_PACKAGES", label="device-install-permission-query").decode()
+                mode = re.search(r"\bREQUEST_INSTALL_PACKAGES: (allow|ignore|deny|default|foreground)\b", value)
+                if mode:
+                    result["installer"]["install_permission"] = mode.group(1)
+                elif value.strip() == "No operations.":
+                    result["installer"]["install_permission"] = "unset"
+                else:
+                    raise Failure("device-install-permission-shape")
+            except Exception as error:
+                failed(error)
+        elif result["installer"]["presence"] == "absent":
+            result["installer"]["install_permission"] = "not-installed"
+    except Exception as error:
+        failed(error)
+    # Hashes, APK paths, identifiers and raw ADB output never leave this process.
+    # A successful observation (even a mismatch) is not an acceptance PASS.
+    print(encoded(result).decode(), end="", flush=True)
+    return 1 if result["errors"] else 0
+
+
 def main(argv=None):
+    global DIAGNOSTICS
+    set_phase("setup")
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--host-only", action="store_true", help="Build/sign synthetic fixtures on the lab host, without any phone operation or phone PASS claim"
@@ -633,10 +746,22 @@ def main(argv=None):
     parser.add_argument(
         "--allow-test-installs", action="store_true", help="Only after explicit owner authorization: allow installs for this fresh disposable test package"
     )
+    parser.add_argument("--inspect-state", action="store_true", help="Read-only fixed-package presence/hash and installer permission; no build, UI or cleanup")
+    parser.add_argument(
+        "--expected-installer-sha256", help="Required for --inspect-state: last known installer hash, used only for comparison, never ownership"
+    )
     args = parser.parse_args(argv)
+    if args.inspect_state:
+        # This driver-only observation makes no claim about APK source identity.
+        # Bypass cache/toolchain setup, private log writes and all cleanup paths.
+        DIAGNOSTICS = None
+        return inspect_state(args.expected_installer_sha256, args.timeout, conflicting_mode=args.host_only or args.allow_test_installs)
     completed = set()
     phone = None
     reason = None
+    failure_phase = "setup"
+    cleanup_reason = None
+    cleanup_verified = False
 
     def passed(case):
         completed.add(case)
@@ -646,6 +771,7 @@ def main(argv=None):
         serial = os.environ.get("LAB_DEVICE_SERIAL")
         if not serial and not args.host_only:
             raise Failure("LAB_DEVICE_SERIAL-required-use-authorized-lab-runner")
+        DIAGNOSTICS = PrivateDiagnostics(ROOT / "work/coordination/installer-update-acceptance")
         config = read_context()
         if not args.host_only:
             phone = Phone(serial, args.timeout, args.allow_test_installs)
@@ -655,31 +781,43 @@ def main(argv=None):
             if temporary.is_relative_to(ROOT.resolve()):
                 raise Failure("throwaway-root-must-be-outside-repository")
             if args.host_only:
+                set_phase("host-fixture-build")
                 prepare_artifacts(config, temporary)
                 print("PASS host-fixture-build (phone acceptance NOT RUN)", flush=True)
             else:
                 acceptance(phone, config, temporary, passed)
     except Failure as error:
         reason = str(error)
+        failure_phase = CURRENT_PHASE
     except Exception:
         reason = "unexpected-local-error-see-private-lab-environment"
+        failure_phase = CURRENT_PHASE
     finally:
         if phone is not None:
+            set_phase("cleanup")
             try:
-                phone.cleanup()
+                cleanup_verified = phone.cleanup() == "verified-absent"
+            except Failure as error:
+                cleanup_reason = str(error)
             except Exception:
-                reason = reason or "owned-run-cleanup-failed"
+                cleanup_reason = "unexpected-cleanup-error-see-private-lab-environment"
+        DIAGNOSTICS = None
     if reason:
         if args.host_only:
-            print("FAIL host-fixture-build reason=" + reason, flush=True)
-            return 1
-        for case in CASES:
-            if case not in completed:
-                print("FAIL " + case + " reason=" + reason, flush=True)
-        if len(completed) == len(CASES):
-            print("FAIL cleanup reason=" + reason, flush=True)
-        return 1
-    return 0
+            print("FAIL host-fixture-build phase=" + failure_phase + " reason=" + reason, flush=True)
+        else:
+            for case in CASES:
+                if case not in completed:
+                    print("FAIL " + case + " phase=" + failure_phase + " reason=" + reason, flush=True)
+    if phone is not None:
+        if cleanup_reason:
+            print("FAIL cleanup phase=cleanup reason=" + cleanup_reason, flush=True)
+        else:
+            if cleanup_verified:
+                print("PASS cleanup packages=verified-absent", flush=True)
+            else:
+                print("SKIP cleanup packages=not-checked reason=no-owned-package-mutation", flush=True)
+    return 1 if reason or cleanup_reason else 0
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 """Host-only contracts: no keys, APKs, game inputs, tools, or device calls."""
 
-from contextlib import redirect_stdout
+from contextlib import ExitStack, redirect_stdout
 import importlib.util
 import io
 import json
@@ -20,6 +20,102 @@ SPEC.loader.exec_module(LAB)
 
 
 class LabInstallerUpdatesTests(unittest.TestCase):
+    def inspection(self, results, extra_args=(), environment=None):
+        output = io.StringIO()
+        with ExitStack() as stack:
+            stack.enter_context(
+                patch.dict(os.environ, environment if environment is not None else {"LAB_DEVICE_SERIAL": "synthetic-private-selector"}, clear=True)
+            )
+            for name in ("read_context", "PrivateDiagnostics", "prepare_artifacts", "publisher_keys", "acceptance", "server"):
+                stack.enter_context(patch.object(LAB, name, side_effect=AssertionError("inspection must not call " + name)))
+            for name in ("cleanup", "ui", "start", "put", "read", "storage", "await_install_permission"):
+                stack.enter_context(patch.object(LAB.Phone, name, side_effect=AssertionError("inspection must not call " + name)))
+            run = stack.enter_context(patch.object(LAB.subprocess, "run", side_effect=results))
+            stack.enter_context(redirect_stdout(output))
+            code = LAB.main(["--inspect-state", *extra_args])
+        self.assertEqual(len(output.getvalue().splitlines()), 1)
+        return code, json.loads(output.getvalue()), run.call_args_list
+
+    def test_inspection_only_queries_fixed_packages_and_normalizes_permission(self):
+        path = subprocess.CompletedProcess([], 0, b"package:/synthetic/private/base.apk\n", b"")
+        digest = subprocess.CompletedProcess([], 0, b"a" * 64 + b"  /synthetic/private/base.apk\n", b"")
+        for mode in ("allow", "ignore", "deny", "default", "foreground", "unset"):
+            with self.subTest(mode=mode):
+                permission = b"No operations.\n" if mode == "unset" else ("REQUEST_INSTALL_PACKAGES: " + mode + "; time=synthetic-private\n").encode()
+                code, result, calls = self.inspection(
+                    [path, path, digest, path, path, digest, subprocess.CompletedProcess([], 0, permission, b"")],
+                    ["--expected-installer-sha256", "a" * 64],
+                )
+                self.assertEqual(code, 0)
+                self.assertEqual(result["status"], "observed")
+                self.assertEqual(result["installer"], {"presence": "present", "hash": "match", "install_permission": mode})
+                self.assertEqual(result["alpha"], {"presence": "present", "hash": "read"})
+                self.assertEqual(
+                    [call.args[0][3:] for call in calls],
+                    [
+                        ["shell", "pm", "path", LAB.PACKAGE],
+                        ["shell", "pm", "path", LAB.PACKAGE],
+                        ["shell", "sha256sum", "/synthetic/private/base.apk"],
+                        ["shell", "pm", "path", LAB.GAME],
+                        ["shell", "pm", "path", LAB.GAME],
+                        ["shell", "sha256sum", "/synthetic/private/base.apk"],
+                        ["shell", "appops", "get", LAB.PACKAGE, "REQUEST_INSTALL_PACKAGES"],
+                    ],
+                )
+                for private in ("synthetic", "a" * 64, "/", "PASS"):
+                    self.assertNotIn(private, json.dumps(result))
+
+    def test_inspection_absence_and_hash_mismatch_do_not_adopt_or_mutate(self):
+        absent = subprocess.CompletedProcess([], 1, b"", b"")
+        code, result, calls = self.inspection([absent, absent], ["--expected-installer-sha256", "a" * 64])
+        self.assertEqual(code, 0)
+        self.assertEqual(result["installer"], {"presence": "absent", "hash": "absent", "install_permission": "not-installed"})
+        self.assertEqual(result["alpha"], {"presence": "absent", "hash": "absent"})
+        self.assertEqual(len(calls), 2)
+        path = subprocess.CompletedProcess([], 0, b"package:/synthetic/private/base.apk\n", b"")
+        code, result, calls = self.inspection(
+            [
+                path,
+                path,
+                subprocess.CompletedProcess([], 0, b"b" * 64 + b"  /synthetic/private/base.apk", b""),
+                absent,
+                subprocess.CompletedProcess([], 0, b"No operations.", b""),
+            ],
+            ["--expected-installer-sha256", "a" * 64],
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual(result["installer"]["hash"], "mismatch")
+        self.assertEqual(result["status"], "observed")
+        self.assertEqual(calls[-1].args[0][-4:], ["appops", "get", LAB.PACKAGE, "REQUEST_INSTALL_PACKAGES"])
+
+    def test_inspection_requires_explicit_device_and_expected_hash_before_queries(self):
+        for args, environment in (
+            ([], None),
+            (["--expected-installer-sha256", "synthetic-private-invalid"], None),
+            (["--expected-installer-sha256", "a" * 64], {}),
+            (["--expected-installer-sha256", "a" * 64, "--allow-test-installs"], None),
+            (["--expected-installer-sha256", "a" * 64, "--host-only"], None),
+        ):
+            with self.subTest(args=args, environment=environment):
+                code, result, calls = self.inspection([], args, environment)
+                self.assertEqual(code, 1)
+                self.assertEqual(result["status"], "error")
+                self.assertEqual(result["installer"]["presence"], "unknown")
+                self.assertEqual(calls, [])
+                self.assertNotIn("synthetic-private", json.dumps(result))
+
+    def test_inspection_query_failure_is_unknown_not_absent_and_redacts_output(self):
+        code, result, calls = self.inspection(
+            [subprocess.CompletedProcess([], 1, b"synthetic-private-output", b"synthetic-private-error"), subprocess.CompletedProcess([], 1, b"", b"")],
+            ["--expected-installer-sha256", "a" * 64],
+        )
+        self.assertEqual(code, 1)
+        self.assertEqual(result["installer"]["presence"], "unknown")
+        self.assertEqual(result["alpha"]["presence"], "absent")
+        self.assertEqual(result["errors"], ["device-package-path-query"])
+        self.assertEqual(len(calls), 2)
+        self.assertNotIn("synthetic-private", json.dumps(result))
+
     def test_missing_explicit_device_emits_all_failures_without_setup(self):
         output = io.StringIO()
         with patch.dict(os.environ, {}, clear=True), patch.object(LAB, "read_context") as config, redirect_stdout(output):
@@ -81,7 +177,7 @@ class LabInstallerUpdatesTests(unittest.TestCase):
         ):
             self.assertTrue(phone.occupied(LAB.GAME))
             self.assertEqual(phone.package_hash(LAB.GAME), "a" * 64)
-        shell.assert_called_once_with("sha256sum", "/synthetic/app/base.apk")
+        shell.assert_called_once_with("sha256sum", "/synthetic/app/base.apk", label="device-package-hash")
 
     def test_pm_path_other_errors_never_count_as_absence_or_print_raw_error(self):
         phone = LAB.Phone("synthetic-private-selector", 1)
@@ -109,7 +205,7 @@ class LabInstallerUpdatesTests(unittest.TestCase):
             with patch.object(phone, "shell", return_value=b"No operations.") as shell:
                 with self.assertRaisesRegex(LAB.Failure, "owner-authorization-required"):
                     phone.await_install_permission()
-                shell.assert_called_once_with("appops", "get", LAB.PACKAGE, "REQUEST_INSTALL_PACKAGES")
+                shell.assert_called_once_with("appops", "get", LAB.PACKAGE, "REQUEST_INSTALL_PACKAGES", label="device-install-permission-query")
 
     def test_permission_flag_is_scoped_to_fresh_test_package(self):
         phone = LAB.Phone("synthetic-private-selector", 1, True)
@@ -137,7 +233,7 @@ class LabInstallerUpdatesTests(unittest.TestCase):
             phone.cleanup()
         command.assert_not_called()
         read.assert_not_called()
-        shell.assert_called_once_with("input", "keyevent", "KEYCODE_SLEEP")
+        shell.assert_called_once_with("input", "keyevent", "KEYCODE_SLEEP", label="device-display-sleep")
 
     def test_changed_alpha_blocks_uninstall_and_keeps_installer_receipts(self):
         phone = LAB.Phone("synthetic-private-selector", 1)
@@ -155,11 +251,71 @@ class LabInstallerUpdatesTests(unittest.TestCase):
         command.assert_not_called()
         self.assertEqual(shell.call_args.args, ("input", "keyevent", "KEYCODE_SLEEP"))
 
+    def test_unknown_install_outcome_cannot_claim_cleanup_or_delete(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        phone.install_attempted = True
+        with patch.object(phone, "occupied", return_value=True) as occupied, patch.object(phone, "command") as command, patch.object(phone, "shell") as shell:
+            with self.assertRaisesRegex(LAB.Failure, "cleanup-package-ownership-unverified"):
+                phone.cleanup()
+        occupied.assert_called_once_with(LAB.PACKAGE)
+        command.assert_not_called()
+        shell.assert_called_once_with("input", "keyevent", "KEYCODE_SLEEP", label="device-display-sleep")
+
+    def test_unknown_install_outcome_only_claims_absence_after_readback(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        phone.install_attempted = True
+        with patch.object(phone, "occupied", return_value=False) as occupied, patch.object(phone, "command") as command, patch.object(phone, "shell"):
+            self.assertEqual(phone.cleanup(), "verified-absent")
+        self.assertEqual([call.args[0] for call in occupied.call_args_list], [LAB.PACKAGE, LAB.GAME])
+        command.assert_not_called()
+
+    def test_private_diagnostics_persist_and_operation_and_cleanup_failures_stay_separate(self):
+        output = io.StringIO()
+        temporary_artifacts = []
+
+        def fail_operation(phone, config, temporary, passed):
+            temporary_artifacts.append(temporary)
+            LAB.set_phase("pre-install-storage")
+            LAB.run(["not-executed", "synthetic-argv-secret"], stdin=b"synthetic-stdin-secret", label="device-storage-volume-free")
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            with (
+                patch.object(LAB, "ROOT", root),
+                patch.dict(os.environ, {"LAB_DEVICE_SERIAL": "synthetic-selector-not-for-publication"}),
+                patch.object(LAB, "read_context", return_value={}),
+                patch.object(LAB, "Phone") as phone,
+                patch.object(LAB, "acceptance", side_effect=fail_operation),
+                patch.object(LAB.subprocess, "run", return_value=subprocess.CompletedProcess([], 1, b"synthetic-private-stdout", b"synthetic-private-stderr")),
+                redirect_stdout(output),
+            ):
+                phone.return_value.cleanup.side_effect = LAB.Failure("device-display-sleep")
+                self.assertEqual(LAB.main([]), 1)
+            self.assertFalse(temporary_artifacts[0].exists())
+            logs = list((root / "work/coordination/installer-update-acceptance").glob("run-*"))
+            self.assertEqual(len(logs), 1)
+            self.assertEqual(logs[0].stat().st_mode & 0o777, 0o700)
+            files = list(logs[0].iterdir())
+            self.assertTrue(all(path.stat().st_mode & 0o777 == 0o600 for path in files))
+            self.assertEqual(next(logs[0].glob("*.stderr.log")).read_bytes(), b"synthetic-private-stderr")
+            metadata = json.loads(next(logs[0].glob("*.json")).read_text())
+            self.assertEqual(metadata, {"phase": "pre-install-storage", "category": "device-storage-volume-free", "returncode": 1, "outcome": "returned"})
+            retained = b"".join(path.read_bytes() for path in files)
+            self.assertNotIn(b"synthetic-argv-secret", retained)
+            self.assertNotIn(b"synthetic-stdin-secret", retained)
+        result = output.getvalue()
+        self.assertIn("FAIL check-for-updates phase=pre-install-storage reason=device-storage-volume-free", result)
+        self.assertIn("FAIL cleanup phase=cleanup reason=device-display-sleep", result)
+        self.assertNotIn("PASS cleanup", result)
+        for private in ("synthetic-private", "synthetic-argv-secret", "synthetic-stdin-secret", "synthetic-selector-not-for-publication", directory):
+            self.assertNotIn(private, result)
+
     def test_subprocess_error_does_not_publish_argv_stderr_or_identifiers(self):
         output = io.StringIO()
         with (
             patch.dict(os.environ, {"LAB_DEVICE_SERIAL": "not-for-publication"}),
             patch.object(LAB, "read_context", side_effect=RuntimeError("private-path-not-for-publication")),
+            patch.object(LAB, "PrivateDiagnostics"),
             redirect_stdout(output),
         ):
             self.assertEqual(LAB.main([]), 1)
