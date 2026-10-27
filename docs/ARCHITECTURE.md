@@ -3767,6 +3767,24 @@ and certifies no leak fix. It binds only an explicit owned APK hash, refuses a
 `--target`, and keeps evidence under `work/device/<serial>/experiments/session-memory/`.
 Host contracts: `tests/test_session_memory_check.py`.
 
+`scripts/lab/session_memory_batch.py` adapts that owner to runner-owned leases.
+Its `preflight`, `capture` and `measure` modes bind the actual installed APK,
+reuse the existing thermal/storage/idle owners unchanged, and write an explicit
+new ignored receipt under `work/coordination/`. Capture preserves menu-2/menu-4
+snapshot digests; only a separate no-snapshot measure can qualify the slope.
+Terminal teardown verifies idle state and sleeps the display; the bridge releases
+its lease. Public output contains only fixed outcomes and aggregate measurements.
+`session_heap_growth.py` reads the selected capture receipt and exact exported
+DuckDB pair (`duckdb==1.4.4` in the pinned requirements), verifying local snapshot
+hashes and export provenance. Its `--export-dir` mode archives the pinned public
+parser, applies the reviewed empty-array/root-label patches and retains private
+export logs and a hash-bound receipt; `--export-receipt` reuses that exact export.
+It compares type totals and inclusive native-bridge reachability;
+overlapping reachable bytes are not exclusive retained size or proof of a leak.
+GC/static roots require the paired snapshot-indexed exporter sidecar and its
+provenance receipt; reflection-walk indexes are never substituted. Both owners
+have synthetic host tests; neither changes runtime policy.
+
 `session-memory-root-check` is the same runner with the launch selector's
 `diagnosticCompletedRootWalkSession` set to the final menu's session index.
 `SessionResourceBoundary` reads only that value (and the attempt) from the

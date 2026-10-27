@@ -205,6 +205,12 @@ qualification remain separate from these laboratory installs.
       0.579 MiB/session; the remaining positive slope still prevents a full bound.
       The old-heap graph fingerprint and host-only queued-case qualification are
       recorded in [J1122](history/journal-J1-J1177/PORTING_JOURNAL.md#j1122--prepare-alpha-host-contracts-and-identify-an-old-heap-fingerprint).
+      Runner diagnostics use `scripts/lab/session_memory_batch.py`: first
+      `preflight`, then a receipt-bound `capture` for attribution, and a separate
+      no-snapshot `measure` for acceptance. `session_heap_growth.py` compares
+      that capture's exact exported heaps without publishing values or addresses.
+      Snapshot-contaminated slopes and graph-entry nodes do not qualify a bound
+      or prove a GC/static retaining root; this gate remains open.
 - [ ] Complete real interrupted-write/ENOSPC and sustained performance/thermal
       cases on supported hardware. [J1071](history/journal-J1-J1177/PORTING_JOURNAL.md#j1071--qualify-software-touch-native-pause-and-recovery)
       qualifies controlled VM-crash and genuine ANR cold recovery, invalid-pending
